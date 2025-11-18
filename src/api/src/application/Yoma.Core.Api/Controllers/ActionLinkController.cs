@@ -100,7 +100,7 @@ namespace Yoma.Core.Api.Controllers
     [HttpPatch("{linkId}/status")]
     [ProducesResponseType(typeof(LinkInfo), (int)HttpStatusCode.OK)]
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
-    public async Task<IActionResult> UpdateStatus([FromRoute] Guid linkId, [FromQuery] LinkStatus status)
+    public async Task<IActionResult> UpdateStatus([FromRoute] Guid linkId, [FromQuery] ActionLinkStatus status)
     {
       _logger.LogInformation("Handling request {requestName}", nameof(UpdateStatus));
 

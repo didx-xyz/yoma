@@ -4,5 +4,7 @@ namespace Yoma.Core.Domain.Core.Interfaces
         where T : class
   {
     IQueryable<T> Query(bool includeChildItems);
+
+    IQueryable<T> Query(bool includeChildItems, LockMode lockMode);
   }
 }

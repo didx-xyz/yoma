@@ -11,6 +11,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Interfaces
 
     MyOpportunityResponseVerifyStatus GetVerificationStatus(Guid opportunityId, User? user);
 
+    MyOpportunityResponseVerifyStatus GetVerificationStatus(Guid opportunityId, Guid userId);
+
     MyOpportunityResponseVerifyCompletedExternal GetVerificationCompletedExternal(Guid opportunityId);
 
     Task DownloadVerificationFilesSchedule(MyOpportunitySearchFilterVerificationFiles filter, bool ensureOrganizationAuthorization);

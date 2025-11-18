@@ -7,6 +7,7 @@ using Yoma.Core.Domain.BlobProvider;
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.Core.Extensions;
+using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Entity.Extensions;
@@ -16,6 +17,9 @@ using Yoma.Core.Domain.Entity.Interfaces.Lookups;
 using Yoma.Core.Domain.Entity.Models;
 using Yoma.Core.Domain.Entity.Validators;
 using Yoma.Core.Domain.Lookups.Interfaces;
+using Yoma.Core.Domain.Referral;
+using Yoma.Core.Domain.Referral.Events;
+using Yoma.Core.Domain.Referral.Models;
 using Yoma.Core.Domain.SSI.Interfaces;
 
 namespace Yoma.Core.Domain.Entity.Services
@@ -37,6 +41,7 @@ namespace Yoma.Core.Domain.Entity.Services
     private readonly IRepository<UserSkillOrganization> _userSkillOrganizationRepository;
     private readonly IRepository<UserLoginHistory> _userLoginHistoryRepository;
     private readonly IExecutionStrategyService _executionStrategyService;
+    private readonly IEventPublisher _eventPublisher;
     #endregion
 
     #region Constructor
@@ -54,22 +59,25 @@ namespace Yoma.Core.Domain.Entity.Services
         IRepository<UserSkill> userSkillRepository,
         IRepository<UserSkillOrganization> userSkillOrganizationRepository,
         IRepository<UserLoginHistory> userLoginHistoryRepository,
-        IExecutionStrategyService executionStrategyService)
+        IExecutionStrategyService executionStrategyService,
+        IEventPublisher eventPublisher)
     {
-      _appSettings = appSettings.Value;
-      _blobService = blobService;
-      _skillService = skillService;
-      _ssiTenantService = ssiTenantService;
-      _ssiCredentialService = ssiCredentialService;
-      _settingsDefinitionService = settingsDefinitionService;
-      _userRequestValidator = userValidator;
-      _userSearchFilterValidator = userSearchFilterValidator;
-      _settingsRequestValidator = settingsRequestValidator;
-      _userRepository = userRepository;
-      _userSkillRepository = userSkillRepository;
-      _userSkillOrganizationRepository = userSkillOrganizationRepository;
-      _userLoginHistoryRepository = userLoginHistoryRepository;
-      _executionStrategyService = executionStrategyService;
+      _appSettings = appSettings?.Value ?? throw new ArgumentNullException(nameof(appSettings));
+      _blobService = blobService ?? throw new ArgumentNullException(nameof(blobService));
+      _skillService = skillService ?? throw new ArgumentNullException(nameof(skillService));
+      _ssiTenantService = ssiTenantService ?? throw new ArgumentNullException(nameof(ssiTenantService));
+      _ssiCredentialService = ssiCredentialService ?? throw new ArgumentNullException(nameof(ssiCredentialService));
+      _settingsDefinitionService = settingsDefinitionService ?? throw new ArgumentNullException(nameof(settingsDefinitionService));
+      _userRequestValidator = userValidator ?? throw new ArgumentNullException(nameof(userValidator));
+      _userSearchFilterValidator = userSearchFilterValidator ?? throw new ArgumentNullException(nameof(userSearchFilterValidator));
+      _settingsRequestValidator = settingsRequestValidator ?? throw new ArgumentNullException(nameof(settingsRequestValidator));
+      _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
+      _userSkillRepository = userSkillRepository ?? throw new ArgumentNullException(nameof(userSkillRepository));
+      _userSkillOrganizationRepository = userSkillOrganizationRepository ?? throw new ArgumentNullException(nameof(userSkillOrganizationRepository));
+      _userLoginHistoryRepository = userLoginHistoryRepository ?? throw new ArgumentNullException(nameof(userLoginHistoryRepository));
+      _executionStrategyService = executionStrategyService ?? throw new ArgumentNullException(nameof(executionStrategyService));
+      _eventPublisher = eventPublisher ?? throw new ArgumentNullException(nameof(eventPublisher));
+      _eventPublisher = eventPublisher ?? throw new ArgumentNullException(nameof(eventPublisher));
     }
     #endregion
 
@@ -307,12 +315,17 @@ namespace Yoma.Core.Domain.Entity.Services
 
       result = isNew ? await _userRepository.Create(result) : await _userRepository.Update(result);
 
+      await PublishReferralProgressEvent(result);
+
       return result;
     }
 
-    public async Task<User> UpsertPhoto(string username, IFormFile? file)
+    public async Task<User> UpsertPhoto(string username, IFormFile file)
     {
       var result = GetByUsername(username, true, true);
+
+      if (file == null || file.Length == 0)
+        throw new ValidationException("File is required");
 
       ArgumentNullException.ThrowIfNull(file, nameof(file));
 
@@ -323,7 +336,7 @@ namespace Yoma.Core.Domain.Entity.Services
       {
         await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
         {
-          using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+          using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
           blobObject = await _blobService.Create(FileType.Photos, StorageType.Public, file, null);
           result.PhotoId = blobObject.Id;
           result.PhotoStorageType = blobObject.StorageType;
@@ -387,7 +400,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
-        using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
+        using var scope = TransactionScopeHelper.CreateReadCommitted();
         foreach (var skillId in skillIds)
         {
           var skill = _skillService.GetById(skillId);
@@ -429,7 +442,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
-        using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
+        using var scope = TransactionScopeHelper.CreateReadCommitted();
 
         user.YoIDOnboarded = true;
         user.DateYoIDOnboarded = DateTimeOffset.UtcNow;
@@ -440,6 +453,8 @@ namespace Yoma.Core.Domain.Entity.Services
 
         scope.Complete();
       });
+
+      await PublishReferralProgressEvent(user);
 
       return user;
     }
@@ -472,9 +487,37 @@ namespace Yoma.Core.Domain.Entity.Services
 
       await _userLoginHistoryRepository.Create(item);
     }
+
+    public bool HasSocialIdentityProviders(Guid id)
+    {
+      var user = GetById(id, false, false);
+
+      var providerIds = Enum.GetValues<ExternalIdpProvider>()
+        .Select(p => p.ToDescription().ToLower())
+        .ToList();
+
+      return _userLoginHistoryRepository.Query()
+        .Any(o => o.UserId == id && !string.IsNullOrEmpty(o.IdentityProvider) && providerIds.Contains(o.IdentityProvider.ToLower()));
+    }
+
     #endregion
 
     #region Private Members
+    // Raises a referral event of type 'IdentityAction'. Invoked by:
+    // - Upsert (above): syncs the user using the IdP as the source of truth, triggered by Keycloak events or opportunity verification imports (which act as a virtual IdP).
+    // - YoIDOnboard (below): raises another event of the same type, as it is a precondition for claiming and serves as a fallback to progress referrals.
+    private async Task PublishReferralProgressEvent(User user)
+    {
+
+      await _eventPublisher.Publish(new ReferralProgressTriggerEvent(new ReferralProgressTriggerMessage
+      {
+        Source = ReferralTriggerSource.IdentityAction,
+        UserId = user.Id,
+        Username = user.Username,
+        UserDisplayName = user.DisplayName
+      }));
+    }
+
     private string? GetBlobObjectURL(StorageType? storageType, string? key)
     {
       if (!storageType.HasValue || string.IsNullOrEmpty(key)) return null;

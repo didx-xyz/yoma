@@ -11,11 +11,11 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Entities
     [Required]
     [ForeignKey("UserId")]
     public Guid UserId { get; set; }
-    public User User { get; set; }
+    public User User { get; set; } = null!;
 
     [Required]
     [Column(TypeName = "varchar(255)")]
-    public string ClientId { get; set; }
+    public string ClientId { get; set; } = null!;
 
     [Column(TypeName = "varchar(39)")]
     public string? IpAddress { get; set; }

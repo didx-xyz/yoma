@@ -1,4 +1,5 @@
 using FluentValidation;
+using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -33,6 +34,7 @@ using Yoma.Core.Domain.Opportunity;
 using Yoma.Core.Domain.Opportunity.Extensions;
 using Yoma.Core.Domain.Opportunity.Interfaces;
 using Yoma.Core.Domain.Opportunity.Interfaces.Lookups;
+using Yoma.Core.Domain.Referral.Events;
 using Yoma.Core.Domain.Reward.Interfaces;
 using Yoma.Core.Domain.SSI.Interfaces;
 
@@ -62,12 +64,14 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
     private readonly ITimeIntervalService _timeIntervalService;
     private readonly IDownloadService _downloadService;
     private readonly IOpportunityVerificationTypeService _opportunityVerificationTypeService;
+    private readonly IDelayedExecutionService _delayedExecutionService;
     private readonly MyOpportunitySearchFilterVerificationFilesAdminValidator _myOpportunitySearchFilterVerificationFilesAdminValidator;
     private readonly MyOpportunitySearchFilterAdminValidator _myOpportunitySearchFilterAdminValidator;
     private readonly MyOpportunityRequestValidatorVerify _myOpportunityRequestValidatorVerify;
     private readonly MyOpportunityRequestValidatorVerifyFinalize _myOpportunityRequestValidatorVerifyFinalize;
     private readonly MyOpportunityRequestValidatorVerifyFinalizeBatch _myOpportunityRequestValidatorVerifyFinalizeBatch;
     private readonly MyOpportunityRequestValidatorVerifyImportCsv _myOpportunityRequestValidatorVerifyImportCsv;
+    private readonly IMediator _mediator;
     private readonly IRepositoryBatchedWithNavigation<Models.MyOpportunity> _myOpportunityRepository;
     private readonly IRepository<MyOpportunityVerification> _myOpportunityVerificationRepository;
     private readonly IExecutionStrategyService _executionStrategyService;
@@ -101,46 +105,50 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         ITimeIntervalService timeIntervalService,
         IDownloadService downloadService,
         IOpportunityVerificationTypeService opportunityVerificationTypeService,
+        IDelayedExecutionService delayedExecutionService,
         MyOpportunitySearchFilterVerificationFilesAdminValidator myOpportunitySearchFilterVerificationFilesAdminValidator,
         MyOpportunitySearchFilterAdminValidator myOpportunitySearchFilterAdminValidator,
         MyOpportunityRequestValidatorVerify myOpportunityRequestValidatorVerify,
         MyOpportunityRequestValidatorVerifyFinalize myOpportunityRequestValidatorVerifyFinalize,
         MyOpportunityRequestValidatorVerifyFinalizeBatch myOpportunityRequestValidatorVerifyFinalizeBatch,
         MyOpportunityRequestValidatorVerifyImportCsv myOpportunityRequestValidatorVerifyImportCsv,
+        IMediator mediator,
         IRepositoryBatchedWithNavigation<Models.MyOpportunity> myOpportunityRepository,
         IRepository<MyOpportunityVerification> myOpportunityVerificationRepository,
         IExecutionStrategyService executionStrategyService)
     {
-      _logger = logger;
-      _appSettings = appSettings.Value;
-      _httpContextAccessor = httpContextAccessor;
-      _userService = userService;
-      _organizationService = organizationService;
-      _opportunityService = opportunityService;
-      _myOpportunityActionService = myOpportunityActionService;
-      _myOpportunityVerificationStatusService = myOpportunityVerificationStatusService;
-      _opportunityStatusService = opportunityStatusService;
-      _organizationStatusService = organizationStatusService;
-      _blobService = blobService;
-      _ssiCredentialService = ssiCredentialService;
-      _rewardService = rewardService;
-      _linkService = linkService;
-      _notificationURLFactory = notificationURLFactory;
-      _notificationDeliveryService = notificationDeliveryService;
-      _countryService = countryService;
-      _genderService = genderService;
-      _timeIntervalService = timeIntervalService;
-      _downloadService = downloadService;
-      _opportunityVerificationTypeService = opportunityVerificationTypeService;
-      _myOpportunitySearchFilterVerificationFilesAdminValidator = myOpportunitySearchFilterVerificationFilesAdminValidator;
-      _myOpportunitySearchFilterAdminValidator = myOpportunitySearchFilterAdminValidator;
-      _myOpportunityRequestValidatorVerify = myOpportunityRequestValidatorVerify;
-      _myOpportunityRequestValidatorVerifyFinalize = myOpportunityRequestValidatorVerifyFinalize;
-      _myOpportunityRequestValidatorVerifyFinalizeBatch = myOpportunityRequestValidatorVerifyFinalizeBatch;
-      _myOpportunityRequestValidatorVerifyImportCsv = myOpportunityRequestValidatorVerifyImportCsv;
-      _myOpportunityRepository = myOpportunityRepository;
-      _myOpportunityVerificationRepository = myOpportunityVerificationRepository;
-      _executionStrategyService = executionStrategyService;
+      _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+      _appSettings = appSettings?.Value ?? throw new ArgumentNullException(nameof(appSettings));
+      _httpContextAccessor = httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
+      _userService = userService ?? throw new ArgumentNullException(nameof(userService));
+      _organizationService = organizationService ?? throw new ArgumentNullException(nameof(organizationService));
+      _opportunityService = opportunityService ?? throw new ArgumentNullException(nameof(opportunityService));
+      _myOpportunityActionService = myOpportunityActionService ?? throw new ArgumentNullException(nameof(myOpportunityActionService));
+      _myOpportunityVerificationStatusService = myOpportunityVerificationStatusService ?? throw new ArgumentNullException(nameof(myOpportunityVerificationStatusService));
+      _opportunityStatusService = opportunityStatusService ?? throw new ArgumentNullException(nameof(opportunityStatusService));
+      _organizationStatusService = organizationStatusService ?? throw new ArgumentNullException(nameof(organizationStatusService));
+      _blobService = blobService ?? throw new ArgumentNullException(nameof(blobService));
+      _ssiCredentialService = ssiCredentialService ?? throw new ArgumentNullException(nameof(ssiCredentialService));
+      _rewardService = rewardService ?? throw new ArgumentNullException(nameof(rewardService));
+      _linkService = linkService ?? throw new ArgumentNullException(nameof(linkService));
+      _notificationURLFactory = notificationURLFactory ?? throw new ArgumentNullException(nameof(notificationURLFactory));
+      _notificationDeliveryService = notificationDeliveryService ?? throw new ArgumentNullException(nameof(notificationDeliveryService));
+      _countryService = countryService ?? throw new ArgumentNullException(nameof(countryService));
+      _genderService = genderService ?? throw new ArgumentNullException(nameof(genderService));
+      _timeIntervalService = timeIntervalService ?? throw new ArgumentNullException(nameof(timeIntervalService));
+      _downloadService = downloadService ?? throw new ArgumentNullException(nameof(downloadService));
+      _opportunityVerificationTypeService = opportunityVerificationTypeService ?? throw new ArgumentNullException(nameof(opportunityVerificationTypeService));
+      _delayedExecutionService = delayedExecutionService ?? throw new ArgumentNullException(nameof(delayedExecutionService));
+      _myOpportunitySearchFilterVerificationFilesAdminValidator = myOpportunitySearchFilterVerificationFilesAdminValidator ?? throw new ArgumentNullException(nameof(myOpportunitySearchFilterVerificationFilesAdminValidator));
+      _myOpportunitySearchFilterAdminValidator = myOpportunitySearchFilterAdminValidator ?? throw new ArgumentNullException(nameof(myOpportunitySearchFilterAdminValidator));
+      _myOpportunityRequestValidatorVerify = myOpportunityRequestValidatorVerify ?? throw new ArgumentNullException(nameof(myOpportunityRequestValidatorVerify));
+      _myOpportunityRequestValidatorVerifyFinalize = myOpportunityRequestValidatorVerifyFinalize ?? throw new ArgumentNullException(nameof(myOpportunityRequestValidatorVerifyFinalize));
+      _myOpportunityRequestValidatorVerifyFinalizeBatch = myOpportunityRequestValidatorVerifyFinalizeBatch ?? throw new ArgumentNullException(nameof(myOpportunityRequestValidatorVerifyFinalizeBatch));
+      _myOpportunityRequestValidatorVerifyImportCsv = myOpportunityRequestValidatorVerifyImportCsv ?? throw new ArgumentNullException(nameof(myOpportunityRequestValidatorVerifyImportCsv));
+      _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
+      _myOpportunityRepository = myOpportunityRepository ?? throw new ArgumentNullException(nameof(myOpportunityRepository));
+      _myOpportunityVerificationRepository = myOpportunityVerificationRepository ?? throw new ArgumentNullException(nameof(myOpportunityVerificationRepository));
+      _executionStrategyService = executionStrategyService ?? throw new ArgumentNullException(nameof(executionStrategyService));
     }
     #endregion
 
@@ -270,7 +278,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
-        using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+        using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
 
         for (var page = 1; page <= totalPages; page++)
         {
@@ -419,18 +427,26 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
     public MyOpportunityResponseVerifyStatus GetVerificationStatus(Guid opportunityId, User? user)
     {
-      var opportunity = _opportunityService.GetById(opportunityId, false, false, false);
+      if (opportunityId == Guid.Empty)
+        throw new ArgumentNullException(nameof(opportunityId));
 
-      user ??= _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+      user ??= _userService.GetByUsername(
+        HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false),
+        false,
+        false);
 
-      var actionVerificationId = _myOpportunityActionService.GetByName(Action.Verification.ToString()).Id;
-      var myOpportunity = _myOpportunityRepository.Query(false).SingleOrDefault(o => o.UserId == user.Id && o.OpportunityId == opportunity.Id && o.ActionId == actionVerificationId);
-      if (myOpportunity == null) return new MyOpportunityResponseVerifyStatus { Status = VerificationStatus.None };
+      return GetVerificationStatusInternal(opportunityId, user.Id);
+    }
 
-      if (!myOpportunity.VerificationStatus.HasValue)
-        throw new InvalidOperationException($"Verification status expected for 'my' opportunity with id '{myOpportunity.Id}'");
+    public MyOpportunityResponseVerifyStatus GetVerificationStatus(Guid opportunityId, Guid userId)
+    {
+      if (opportunityId == Guid.Empty)
+        throw new ArgumentNullException(nameof(opportunityId));
 
-      return new MyOpportunityResponseVerifyStatus { Status = myOpportunity.VerificationStatus.Value, Comment = myOpportunity.CommentVerification };
+      if (userId == Guid.Empty)
+        throw new ArgumentNullException(nameof(userId));
+
+      return GetVerificationStatusInternal(opportunityId, userId);
     }
 
     public MyOpportunityResponseVerifyCompletedExternal GetVerificationCompletedExternal(Guid opportunityId)
@@ -738,7 +754,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       //published opportunities (irrespective of started)
       var opportunity = _opportunityService.GetById(opportunityId, false, true, false);
       if (!opportunity.Published)
-        throw new ValidationException(PerformActionNotPossibleValidationMessage(opportunity, "cannot be actioned"));
+        throw new ValidationException(PerformActionNotPossibleValidationMessage(opportunity, "cannot be actioned", false));
 
       var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 
@@ -764,7 +780,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       //published opportunities (irrespective of started)
       var opportunity = _opportunityService.GetById(opportunityId, false, true, false);
       if (!opportunity.Published)
-        throw new ValidationException(PerformActionNotPossibleValidationMessage(opportunity, "cannot be actioned"));
+        throw new ValidationException(PerformActionNotPossibleValidationMessage(opportunity, "cannot be actioned", false));
 
       var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 
@@ -805,7 +821,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       //published opportunities (irrespective of started)
       var opportunity = _opportunityService.GetById(opportunityId, false, true, false);
       if (!opportunity.Published)
-        throw new ValidationException(PerformActionNotPossibleValidationMessage(opportunity, "cannot be actioned"));
+        throw new ValidationException(PerformActionNotPossibleValidationMessage(opportunity, "cannot be actioned", false));
 
       var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 
@@ -831,7 +847,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       //published opportunities (irrespective of started)
       var opportunity = _opportunityService.GetById(opportunityId, false, true, false);
       if (!opportunity.Published)
-        throw new ValidationException(PerformActionNotPossibleValidationMessage(opportunity, "cannot be actioned"));
+        throw new ValidationException(PerformActionNotPossibleValidationMessage(opportunity, "cannot be actioned", false));
 
       var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 
@@ -849,14 +865,14 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
       request.OverridePending = overridePending;
 
-      await PerformActionSendForVerification(user, opportunityId, request, VerificationMethod.Manual);
+      await PerformActionSendForVerification(user, opportunityId, request, VerificationMethod.Manual, false);
     }
 
     public async Task PerformActionSendForVerificationManual(Guid opportunityId, MyOpportunityRequestVerify request)
     {
       var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 
-      await PerformActionSendForVerification(user, opportunityId, request, VerificationMethod.Manual);
+      await PerformActionSendForVerification(user, opportunityId, request, VerificationMethod.Manual, false);
     }
 
     public async Task PerformActionInstantVerification(Guid linkId)
@@ -874,19 +890,30 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       //ensure link is still usable
       _linkService.AssertActive(link.Id);
 
-      await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+      try
       {
-        using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+        await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+        {
+          _delayedExecutionService.Reset();
 
-        await _linkService.LogUsage(link.Id);
+          using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
 
-        var request = new MyOpportunityRequestVerify { InstantOrImportedVerification = true, OverridePending = true };
-        await PerformActionSendForVerification(user, link.EntityId, request, null); //any verification method
+          await _linkService.LogUsage(link.Id);
 
-        await FinalizeVerification(user, opportunity, VerificationStatus.Completed, true, null, "Auto-verification");
+          var request = new MyOpportunityRequestVerify { InstantOrImportedVerification = true, OverridePending = true };
+          await PerformActionSendForVerification(user, link.EntityId, request, null, true); //any verification method
 
-        scope.Complete();
-      });
+          await FinalizeVerification(user, opportunity, VerificationStatus.Completed, true, null, "Auto-verification", true, true);
+
+          scope.Complete();
+        });
+
+        await _delayedExecutionService.FlushAsync();
+      }
+      finally
+      {
+        _delayedExecutionService.Reset();
+      }
     }
 
     public async Task PerformActionSendForVerificationManualDelete(Guid opportunityId)
@@ -910,7 +937,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       {
         await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
         {
-          using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+          using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
 
           var items = myOpportunity.Verifications?.Where(o => o.FileId.HasValue).ToList();
           if (items != null)
@@ -973,7 +1000,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
           user = _userService.GetById(item.UserId, false, false);
           opportunity = _opportunityService.GetById(item.OpportunityId, true, true, false);
 
-          await FinalizeVerification(user, opportunity, request.Status, false, null, request.Comment);
+          await FinalizeVerification(user, opportunity, request.Status, false, null, request.Comment, true, false);
 
           var successItem = new MyOpportunityResponseVerifyFinalizeBatchItem
           {
@@ -1021,7 +1048,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       var user = _userService.GetById(request.UserId, false, false);
       var opportunity = _opportunityService.GetById(request.OpportunityId, true, true, false);
 
-      await FinalizeVerification(user, opportunity, request.Status, false, null, request.Comment);
+      await FinalizeVerification(user, opportunity, request.Status, false, null, request.Comment, true, false);
     }
 
     public Dictionary<Guid, int>? ListAggregatedOpportunityByViewed(bool includeExpired)
@@ -1151,7 +1178,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
           await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
           {
-            using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+            using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
             await ProcessImportVerification(request, dto, true); //probe only; notifications not send
             if (!string.IsNullOrEmpty(dto.VerificationEntry)) probedVerifications.Add(dto.VerificationEntry);
             //probe only, do not commit the scope; disposed as aborted
@@ -1178,7 +1205,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       // PASS B — commit: single atomic transaction for the whole file
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
-        using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+        using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
 
         foreach (var (dto, row) in parsed)
           await ProcessImportVerification(request, dto, false);
@@ -1191,6 +1218,35 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
     #endregion
 
     #region Private Members
+    private MyOpportunityResponseVerifyStatus GetVerificationStatusInternal(Guid opportunityId, Guid userId)
+    {
+      var opportunity = _opportunityService.GetById(opportunityId, false, false, false);
+
+      var actionVerificationId = _myOpportunityActionService
+        .GetByName(Action.Verification.ToString())
+        .Id;
+
+      var myOpportunity = _myOpportunityRepository.Query(false)
+        .SingleOrDefault(o =>
+          o.UserId == userId &&
+          o.OpportunityId == opportunity.Id &&
+          o.ActionId == actionVerificationId);
+
+      if (myOpportunity == null)
+        return new MyOpportunityResponseVerifyStatus { Status = VerificationStatus.None };
+
+      if (!myOpportunity.VerificationStatus.HasValue)
+        throw new InvalidOperationException(
+          $"Verification status expected for 'my' opportunity with id '{myOpportunity.Id}'");
+
+      return new MyOpportunityResponseVerifyStatus
+      {
+        Status = myOpportunity.VerificationStatus.Value,
+        Comment = myOpportunity.CommentVerification,
+        DateCompleted = myOpportunity.DateCompleted
+      };
+    }
+
     private async Task<IFormFile?> DownloadToFile(Guid fileId, string userDisplayName, bool userExplictlySpecified)
     {
       var (originalFileName, contentType, tempSourceFile) = await _blobService.DownloadRawToFile(fileId);
@@ -1256,17 +1312,28 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         user = await _userService.Upsert(request);
       }
 
-      await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+      try
       {
-        using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
+        await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+        {
+          _delayedExecutionService.Reset();
 
-        var requestVerify = new MyOpportunityRequestVerify { InstantOrImportedVerification = true }; //with instant or imported verifications, pending notifications are not sent
-        await PerformActionSendForVerification(user, opportunity.Id, requestVerify, null); //any verification method
+          using var scope = TransactionScopeHelper.CreateReadCommitted();
 
-        await FinalizeVerification(user, opportunity, VerificationStatus.Completed, true, item.DateCompleted?.ToDateTimeOffset().ToEndOfDay(), requestImport.Comment, !probeOnly);
+          var requestVerify = new MyOpportunityRequestVerify { InstantOrImportedVerification = true }; //with instant or imported verifications, pending notifications are not sent
+          await PerformActionSendForVerification(user, opportunity.Id, requestVerify, null, true); //any verification method
 
-        scope.Complete();
-      });
+          await FinalizeVerification(user, opportunity, VerificationStatus.Completed, true, item.DateCompleted?.ToDateTimeOffset().ToEndOfDay(), requestImport.Comment, !probeOnly, true);
+
+          scope.Complete();
+        });
+
+        await _delayedExecutionService.FlushAsync();
+      }
+      finally
+      {
+        _delayedExecutionService.Reset();
+      }
     }
 
     private static List<(DateTime WeekEnding, int Count)> SummaryGroupByWeekItems(List<MyOpportunityInfo> items)
@@ -1289,16 +1356,18 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
     //supported statuses: Rejected or Completed
     private async Task FinalizeVerification(User user,
       Opportunity.Models.Opportunity opportunity,
-      VerificationStatus status, bool instantVerification,
+      VerificationStatus status,
+      bool instantVerification,
       DateTimeOffset? dateCompleted,
       string? comment,
-      bool sendNotification = true)
+      bool sendNotification,
+      bool enqueueOutcomes)
     {
       //can complete, provided opportunity is published (and started) or expired (actioned prior to expiration)
       var canFinalize = opportunity.Status == Status.Expired;
       if (!canFinalize) canFinalize = opportunity.Published && opportunity.DateStart <= DateTimeOffset.UtcNow;
       if (!canFinalize)
-        throw new ValidationException(PerformActionNotPossibleValidationMessage(opportunity, "verification cannot be finalized"));
+        throw new ValidationException(PerformActionNotPossibleValidationMessage(opportunity, "verification cannot be finalized", true));
 
       var actionVerificationId = _myOpportunityActionService.GetByName(Action.Verification.ToString()).Id;
       var item = _myOpportunityRepository.Query(false).SingleOrDefault(o => o.UserId == user.Id && o.OpportunityId == opportunity.Id && o.ActionId == actionVerificationId)
@@ -1314,7 +1383,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       NotificationType? notificationType = null;
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
-        using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
+        using var scope = TransactionScopeHelper.CreateReadCommitted();
 
         item.VerificationStatusId = statusId;
         item.CommentVerification = comment;
@@ -1381,7 +1450,29 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         throw new InvalidOperationException($"Notification type expected");
 
       if (sendNotification)
-        await SendNotification(item, notificationType.Value);
+      {
+        if (enqueueOutcomes)
+          _delayedExecutionService.Enqueue(async () => await SendNotification(item, notificationType.Value),
+            nameof(SendNotification), $"{nameof(Models.MyOpportunity)}.{nameof(FinalizeVerification)}");
+        else
+          await SendNotification(item, notificationType.Value);
+      }
+
+      var myEvent = new ReferralProgressTriggerEvent(
+        new Referral.Models.ReferralProgressTriggerMessage
+        {
+          Source = Referral.ReferralTriggerSource.OpportunityCompletion,
+          UserId = user.Id,
+          Username = user.Username,
+          UserDisplayName = user.DisplayName,
+          OpportunityId = opportunity.Id,
+          OpportunityTitle = opportunity.Title
+        });
+
+      if (enqueueOutcomes)
+        _delayedExecutionService.Enqueue(async () => await _mediator.Publish(myEvent), $"{nameof(ReferralProgressTriggerEvent)}", "Publish");
+      else
+        await _mediator.Publish(myEvent);
     }
 
     private void EnsureNoEarlierPendingVerificationsForOtherStudents(User user, Opportunity.Models.Opportunity opportunity, Models.MyOpportunity currentItem, bool instantVerification)
@@ -1436,14 +1527,14 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       return _blobService.GetURL(storageType.Value, key);
     }
 
-    private static string PerformActionNotPossibleValidationMessage(Opportunity.Models.Opportunity opportunity, string description)
+    private static string PerformActionNotPossibleValidationMessage(Opportunity.Models.Opportunity opportunity, string description, bool includeExpiredAsAcceptable)
     {
       var reasons = new List<string>();
 
       if (!opportunity.Published)
         reasons.Add("it has not been published");
 
-      if (opportunity.Status != Status.Active)
+      if (opportunity.Status != Status.Active && (!includeExpiredAsAcceptable || opportunity.Status != Status.Expired))
         reasons.Add($"its status is '{opportunity.Status.ToDescription()}'");
 
       if (opportunity.DateStart > DateTimeOffset.UtcNow)
@@ -1451,7 +1542,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
       var reasonText = string.Join(", ", reasons);
 
-      return $"Opportunity '{opportunity.Title}' {description}, because {reasonText}. Please check these conditions and try again";
+      return $"Opportunity '{opportunity.Title}' {description}, because {reasonText}. Please check these conditions and try again.";
     }
 
     private static void PerformActionSendForVerificationApplyDefaults(MyOpportunityRequestVerify request, Opportunity.Models.Opportunity opportunity)
@@ -1528,7 +1619,11 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       };
     }
 
-    private async Task PerformActionSendForVerification(User user, Guid opportunityId, MyOpportunityRequestVerify request, VerificationMethod? requiredVerificationMethod)
+    private async Task PerformActionSendForVerification(User user,
+      Guid opportunityId,
+      MyOpportunityRequestVerify request,
+      VerificationMethod? requiredVerificationMethod,
+      bool enqueueOutcomes)
     {
       ArgumentNullException.ThrowIfNull(request, nameof(request));
 
@@ -1542,7 +1637,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       var canSendForVerification = opportunity.Status == Status.Expired;
       if (!canSendForVerification) canSendForVerification = opportunity.Published && opportunity.DateStart <= DateTimeOffset.UtcNow;
       if (!canSendForVerification)
-        throw new ValidationException(PerformActionNotPossibleValidationMessage(opportunity, "cannot be sent for verification"));
+        throw new ValidationException(PerformActionNotPossibleValidationMessage(opportunity, "cannot be sent for verification", true));
 
       PerformActionSendForVerificationParseCommitment(request, opportunity);
 
@@ -1620,10 +1715,18 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       if (request.InstantOrImportedVerification) return; //with instant or imported verifications, pending notifications are not sent
 
       //sent to youth
-      await SendNotification(myOpportunity, NotificationType.Opportunity_Verification_Pending);
+      if (enqueueOutcomes)
+        _delayedExecutionService.Enqueue(async () => await SendNotification(myOpportunity, NotificationType.Opportunity_Verification_Pending),
+            nameof(SendNotification), $"{nameof(Models.MyOpportunity)}.{nameof(PerformActionSendForVerification)}");
+      else
+        await SendNotification(myOpportunity, NotificationType.Opportunity_Verification_Pending);
 
       //sent to organization admins
-      await SendNotification(myOpportunity, NotificationType.Opportunity_Verification_Pending_Admin);
+      if (enqueueOutcomes)
+        _delayedExecutionService.Enqueue(async () => await SendNotification(myOpportunity, NotificationType.Opportunity_Verification_Pending_Admin),
+            nameof(SendNotification), $"{nameof(Models.MyOpportunity)}.{nameof(PerformActionSendForVerification)}");
+      else
+        await SendNotification(myOpportunity, NotificationType.Opportunity_Verification_Pending_Admin);
     }
 
     private async Task SendNotification(Models.MyOpportunity myOpportunity, NotificationType type)
@@ -1688,7 +1791,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       {
         await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
         {
-          using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
+          using var scope = TransactionScopeHelper.CreateReadCommitted();
 
           if (isNew)
             myOpportunity = await _myOpportunityRepository.Create(myOpportunity);

@@ -2,10 +2,10 @@ namespace Yoma.Core.Domain.SSI.Models.Provider
 {
   public class SchemaRequest
   {
-    public string Name { get; set; }
+    public string Name { get; set; } = null!;
 
     public ArtifactType ArtifactType { get; set; }
 
-    public ICollection<string> Attributes { get; set; }
+    public ICollection<string> Attributes { get; set; } = null!;
   }
 }

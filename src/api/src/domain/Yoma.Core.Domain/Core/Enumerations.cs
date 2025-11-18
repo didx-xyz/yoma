@@ -2,6 +2,24 @@ using System.ComponentModel;
 
 namespace Yoma.Core.Domain.Core
 {
+  // TODO: Implement SkipLocked for opportunity completions and referral program progress updates
+
+  public enum LockMode
+  {
+    // SELECT ... FOR UPDATE
+    // When reading rows, PostgreSQL attempts to acquire a write-intent row lock.
+    // If another transaction already holds a lock on a row,
+    // the SELECT will WAIT at read-time until that row becomes unlocked.
+    Wait,
+
+    // SELECT ... FOR UPDATE SKIP LOCKED
+    // When reading rows, PostgreSQL attempts to acquire a write-intent row lock.
+    // If another transaction already holds a lock on a row,
+    // the SELECT will NOT wait — the locked row is SKIPPED during read-time
+    // and only currently-unlocked rows are returned.
+    SkipLocked
+  }
+
   [Flags]
   public enum Environment
   {
@@ -27,7 +45,7 @@ namespace Yoma.Core.Domain.Core
 
   public enum FileType
   {
-    Photos, //logo and profile photo
+    Photos, //general image storage: organization logos, referral program thumbnails, user profile photos, and opportunity completion photos
     Certificates,
     Documents,
     VoiceNotes,
@@ -76,6 +94,12 @@ namespace Yoma.Core.Domain.Core
     PreferNotToSay
   }
 
+  /// <summary>
+  /// Defines the CRUD-style operation represented by an event.
+  /// This value is optional and should only be specified when the event
+  /// semantically represents a Create, Update, or Delete action.
+  /// For business or non-CRUD events, omit this value (set to on the event payload)
+  /// </summary>
   public enum EventType
   {
     Create,
@@ -129,5 +153,26 @@ namespace Yoma.Core.Domain.Core
     InvalidFieldValue,
     [Description("Processing Error")]
     ProcessingError
+  }
+
+  /// <summary>
+  /// Combines entity status with start and end dates to determine its published state
+  /// </summary>
+  public enum PublishedState
+  {
+    /// <summary>
+    /// Active but not yet started.
+    /// </summary>
+    NotStarted,
+
+    /// <summary>
+    /// Active and currently running.
+    /// </summary>
+    Active,
+
+    /// <summary>
+    /// End date reached or expired.
+    /// </summary>
+    Expired
   }
 }

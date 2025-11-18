@@ -1,7 +1,9 @@
+using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.MyOpportunity.Models.Lookups;
 using Yoma.Core.Infrastructure.Database.Context;
 using Yoma.Core.Infrastructure.Database.Core.Repositories;
+using Yoma.Core.Infrastructure.Shared.Extensions;
 
 namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories.Lookups
 {
@@ -14,6 +16,11 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories.Lookups
     #endregion
 
     #region Public Members
+    public IQueryable<MyOpportunityAction> Query(LockMode lockMode)
+    {
+      return Query().WithLock(lockMode);
+    }
+
     public IQueryable<MyOpportunityAction> Query()
     {
       return _context.MyOpportunityAction.Select(entity => new MyOpportunityAction

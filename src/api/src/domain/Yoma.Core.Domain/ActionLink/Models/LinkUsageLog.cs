@@ -10,7 +10,7 @@ namespace Yoma.Core.Domain.ActionLink.Models
 
     public string? UsernameClaimed { get; set; }
 
-    public string Username { get; set; }
+    public string Username { get; set; } = null!;
 
     public string? UserEmail { get; set; }
 

@@ -172,7 +172,17 @@ export function getSafeUrl(
   returnUrl: string | undefined,
   defaultUrl: string,
 ): string {
-  return returnUrl?.startsWith("/") ? returnUrl : defaultUrl;
+  // Allow only a path that starts with exactly one "/" and is NOT followed by another "/" (i.e., not "//...")
+  // Also exclude directory traversals like '/../' and '/./'
+  if (
+    typeof returnUrl === "string" &&
+    /^\/(?!\/)[^?#]*$/g.test(returnUrl) && // starts with single '/', not '//' and no query/hash
+    !returnUrl.includes("/../") &&
+    !returnUrl.includes("/./")
+  ) {
+    return returnUrl;
+  }
+  return defaultUrl;
 }
 
 // This function determines the theme to be used based on the user's role and optional organisation ID.

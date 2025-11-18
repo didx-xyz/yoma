@@ -521,12 +521,11 @@ const OpportunityPublicDetails: React.FC<{
 
                 <h3>Your application has been submitted!</h3>
 
-                <div className="rounded-lg p-4 text-center md:w-[450px]">
+                <div className="rounded-lg p-4 text-center">
                   <strong>{opportunityInfo.organizationName}</strong> is busy
                   reviewing your submission. Once approved, the opportunity will
-                  be automatically added to your CV. This may take between
-                  <br />
-                  <span className="text-blue decoration-blue font-bold underline decoration-2">
+                  be automatically added to your CV. This may take between{" "}
+                  <span className="text-blue decoration-blue font-bold text-nowrap underline decoration-2">
                     3-4 business days
                   </span>
                   .
@@ -644,7 +643,10 @@ const OpportunityPublicDetails: React.FC<{
                 </h6>
 
                 {/* BADGES */}
-                <PublicBadges opportunity={opportunityInfo} />
+                <PublicBadges
+                  opportunity={opportunityInfo}
+                  showToolTips={true}
+                />
 
                 {/* DATES */}
                 {opportunityInfo.status == "Active" && (

@@ -11,7 +11,8 @@ namespace Yoma.Core.Domain.Reward
 
   public enum RewardTransactionEntityType
   {
-    MyOpportunity
+    MyOpportunity,
+    ReferralLinkUsage
   }
 
   public enum RewardTransactionStatus

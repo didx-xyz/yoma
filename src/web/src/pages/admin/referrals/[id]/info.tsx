@@ -1,0 +1,216 @@
+import { QueryClient, dehydrate, useQuery } from "@tanstack/react-query";
+import axios from "axios";
+import { type GetServerSidePropsContext } from "next";
+import { getServerSession } from "next-auth";
+import Head from "next/head";
+import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/router";
+import { type ParsedUrlQuery } from "querystring";
+import { type ReactElement } from "react";
+import { IoMdArrowRoundBack } from "react-icons/io";
+import { Program } from "~/api/models/referrals";
+import { getReferralProgramById } from "~/api/services/referrals";
+import MainLayout from "~/components/Layout/Main";
+import { PageBackground } from "~/components/PageBackground";
+import { InternalServerError } from "~/components/Status/InternalServerError";
+import { Loading } from "~/components/Status/Loading";
+import { Unauthenticated } from "~/components/Status/Unauthenticated";
+import { Unauthorized } from "~/components/Status/Unauthorized";
+import { config } from "~/lib/react-query-config";
+import { getSafeUrl, getThemeFromRole } from "~/lib/utils";
+import type { NextPageWithLayout } from "~/pages/_app";
+import { authOptions, type User } from "~/server/auth";
+import {
+  ReferralProgramActionOptions,
+  AdminReferralProgramActions,
+} from "~/components/Referrals/AdminReferralProgramActions";
+import {
+  AdminProgramInfo,
+  ProgramInfoFilterOptions,
+} from "~/components/Referrals/AdminProgramInfo";
+
+interface IParams extends ParsedUrlQuery {
+  id: string;
+}
+
+export async function getServerSideProps(context: GetServerSidePropsContext) {
+  const { id } = context.params as IParams;
+  const session = await getServerSession(context.req, context.res, authOptions);
+  const queryClient = new QueryClient(config);
+  let errorCode = null;
+
+  if (!session) {
+    return {
+      props: {
+        error: 401,
+      },
+    };
+  }
+
+  const theme = getThemeFromRole(session);
+
+  try {
+    const programData = await getReferralProgramById(id, context);
+    await queryClient.prefetchQuery({
+      queryKey: ["referralProgram", id],
+      queryFn: () => programData,
+    });
+  } catch (error) {
+    console.log("Error fetching referral program data:", error);
+    if (axios.isAxiosError(error) && error.response?.status) {
+      if (error.response.status === 404) {
+        return {
+          notFound: true,
+          props: { theme: theme },
+        };
+      } else errorCode = error.response.status;
+    } else errorCode = 500;
+  }
+
+  return {
+    props: {
+      dehydratedState: dehydrate(queryClient),
+      user: session?.user ?? null,
+      id: id ?? null,
+      theme,
+      error: errorCode,
+    },
+  };
+}
+
+const ReferralProgramInfo: NextPageWithLayout<{
+  id: string;
+  user: User;
+  theme: string;
+  error?: number;
+}> = ({ id, error }) => {
+  const router = useRouter();
+  const { returnUrl } = router.query;
+
+  const { data: program, isLoading } = useQuery<Program>({
+    queryKey: ["referralProgram", id],
+    queryFn: () => getReferralProgramById(id),
+    enabled: !error,
+  });
+
+  if (error) {
+    if (error === 401) return <Unauthenticated />;
+    else if (error === 403) return <Unauthorized />;
+    else return <InternalServerError />;
+  }
+
+  if (isLoading) return <Loading />;
+
+  return (
+    <>
+      <Head>
+        <title>{`Yoma | ${program?.name || "Program Details"}`}</title>
+      </Head>
+
+      <PageBackground />
+
+      <div className="z-10 container mt-20 max-w-5xl px-2 py-8">
+        <div className="flex flex-row text-xs text-white">
+          <Link
+            className="hover:text-gray flex items-center justify-center font-bold"
+            href={getSafeUrl(returnUrl?.toString(), `/admin/referrals`)}
+          >
+            <IoMdArrowRoundBack className="mr-2 inline-block h-4 w-4" />
+            Referral Programs
+          </Link>
+          <div className="mx-2 font-bold">|</div>
+          <span className="max-w-[600px] overflow-hidden text-ellipsis whitespace-nowrap">
+            {program?.name}
+          </span>
+        </div>
+
+        <div className="animate-fade-in mx-auto mt-5 space-y-6 rounded-2xl bg-white p-6 shadow-md">
+          <div className="flex flex-row items-start justify-between gap-4">
+            {/* Program Image */}
+            {program?.imageURL && (
+              <div className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-lg border-2 border-gray-200">
+                <Image
+                  src={program.imageURL}
+                  alt={program.name}
+                  fill
+                  className="object-cover"
+                  priority
+                />
+              </div>
+            )}
+
+            <div className="flex-1">
+              <div className="flex items-center gap-2">
+                <h1 className="text-2xl font-bold">{program?.name ?? "N/A"}</h1>
+                {program?.isDefault && (
+                  <span className="badge badge-primary">Default</span>
+                )}
+              </div>
+              <p className="mt-2 text-gray-500">
+                {program?.description ?? "No description provided"}
+              </p>
+            </div>
+
+            {program && (
+              <AdminReferralProgramActions
+                program={program}
+                returnUrl={returnUrl?.toString()}
+                actionOptions={[
+                  ReferralProgramActionOptions.ACTIVATE,
+                  ReferralProgramActionOptions.INACTIVATE,
+                  ReferralProgramActionOptions.EDIT,
+                  ReferralProgramActionOptions.VIEW_LINKS,
+                  ReferralProgramActionOptions.DELETE,
+                ]}
+              />
+            )}
+          </div>
+
+          {/* Program Information Sections */}
+          {program && (
+            <AdminProgramInfo
+              program={program}
+              filterOptions={[
+                ProgramInfoFilterOptions.PROGRAM_INFO,
+                ProgramInfoFilterOptions.COMPLETION_REWARDS,
+                ProgramInfoFilterOptions.ZLTO_REWARDS,
+                ProgramInfoFilterOptions.FEATURES,
+                ProgramInfoFilterOptions.PATHWAY,
+              ]}
+            />
+          )}
+
+          {/* Link Usage */}
+
+          <div className="flex flex-row justify-center gap-4 pt-4">
+            <Link
+              href={getSafeUrl(returnUrl?.toString(), `/admin/referrals`)}
+              className="btn btn-warning btn-md rounded-full px-8 normal-case"
+            >
+              Back to List
+            </Link>
+            <Link
+              href={`/admin/referrals/${id}${returnUrl ? `?returnUrl=${encodeURIComponent(returnUrl.toString())}` : ""}`}
+              className="btn btn-primary btn-md rounded-full px-8 normal-case"
+            >
+              Edit Program
+            </Link>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+};
+
+ReferralProgramInfo.getLayout = function getLayout(page: ReactElement) {
+  return <MainLayout>{page}</MainLayout>;
+};
+
+ReferralProgramInfo.theme = function getTheme(
+  page: ReactElement<{ theme: string }>,
+) {
+  return page.props.theme;
+};
+
+export default ReferralProgramInfo;

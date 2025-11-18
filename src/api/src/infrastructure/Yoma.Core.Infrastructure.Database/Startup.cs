@@ -14,7 +14,6 @@ using Yoma.Core.Domain.Opportunity.Models;
 using Yoma.Core.Domain.SSI.Models;
 using Yoma.Core.Domain.SSI.Models.Lookups;
 using Yoma.Core.Infrastructure.Database.ActionLink.Repositories;
-using Yoma.Core.Infrastructure.Database.ActionLink.Repositories.Lookups;
 using Yoma.Core.Infrastructure.Database.Context;
 using Yoma.Core.Infrastructure.Database.Core.Repositories;
 using Yoma.Core.Infrastructure.Database.Core.Repositories.Lookups;
@@ -25,31 +24,24 @@ using Yoma.Core.Infrastructure.Database.Marketplace.Repositories;
 using Yoma.Core.Infrastructure.Database.Marketplace.Repositories.Lookup;
 using Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories;
 using Yoma.Core.Infrastructure.Database.Opportunity.Repositories;
+using Yoma.Core.Infrastructure.Database.Referral.Repositories;
+using Yoma.Core.Infrastructure.Database.Referral.Repositories.Lookups;
 using Yoma.Core.Infrastructure.Database.Reward.Repositories;
 using Yoma.Core.Infrastructure.Database.Reward.Repositories.Lookup;
 using Yoma.Core.Infrastructure.Database.SSI.Repositories;
 using Yoma.Core.Infrastructure.Database.SSI.Repositories.Lookups;
+using Yoma.Core.Infrastructure.Shared;
+using Yoma.Core.Infrastructure.Shared.Interceptors;
 
 namespace Yoma.Core.Infrastructure.Database
 {
   public static class Startup
   {
-    private const string ConnectionStrings_SQLConnection = "SQLConnection";
-
     #region Public Members
-    public static string Configuration_ConnectionString(this IConfiguration configuration)
-    {
-      var result = configuration.GetConnectionString(ConnectionStrings_SQLConnection);
-      if (string.IsNullOrEmpty(result))
-        throw new InvalidOperationException($"Failed to retrieve configuration section 'ConnectionStrings.{ConnectionStrings_SQLConnection}'");
-
-      return result;
-    }
-
     public static void ConfigureServices_InfrastructureDatabase(this IServiceCollection services, IConfiguration configuration, AppSettings appSettings)
     {
       // infrastructure
-      services.AddDbContext<ApplicationDbContext>(options =>
+      services.AddDbContext<ApplicationDbContext>((sp, options) =>
       {
         options.UseNpgsql(configuration.Configuration_ConnectionString(), npgsqlOptions =>
               {
@@ -60,8 +52,8 @@ namespace Yoma.Core.Infrastructure.Database
               })
         //disable warning related to not using AsSplitQuery() as per MS SQL implementation
         //.UseLazyLoadingProxies(): without arguments is used to enable lazy loading. Simply not calling UseLazyLoadingProxies() ensure lazy loading is not enabled
-        .ConfigureWarnings(warnings => warnings.Ignore(RelationalEventId.MultipleCollectionIncludeWarning));
-
+        .ConfigureWarnings(warnings => warnings.Ignore(RelationalEventId.MultipleCollectionIncludeWarning))
+        .AddInterceptors(sp.GetRequiredService<ForUpdateInterceptor>());
       }, ServiceLifetime.Scoped, ServiceLifetime.Scoped);
 
       services.AddHealthChecks().AddNpgSql(
@@ -76,9 +68,10 @@ namespace Yoma.Core.Infrastructure.Database
       // repositories
       #region ActionLink
       #region Lookups
-      services.AddScoped<IRepository<LinkStatus>, LinkStatusRepository>();
+      services.AddScoped<IRepository<LinkStatus>, ActionLink.Repositories.Lookups.LinkStatusRepository>();
       #endregion Lookups
-      services.AddScoped<IRepositoryBatchedValueContainsWithUnnested<Link>, LinkRepository>();
+
+      services.AddScoped<IRepositoryBatchedValueContainsWithUnnested<Link>, ActionLink.Repositories.LinkRepository>();
       services.AddScoped<IRepositoryValueContains<LinkUsageLog>, LinkUsageLogRepository>();
       #endregion ActionLink
 
@@ -164,6 +157,23 @@ namespace Yoma.Core.Infrastructure.Database
 
       services.AddScoped<IRepositoryBatched<Domain.PartnerSharing.Models.ProcessingLog>, PartnerSharing.Repositories.ProcessingLogRepository>();
       #endregion PartnerSharing
+
+      #region Referral
+      #region Lookups
+      services.AddScoped<IRepository<Domain.Referral.Models.Lookups.BlockReason>, BlockReasonRepository>();
+      services.AddScoped<IRepository<Domain.Referral.Models.Lookups.LinkStatus>, LinkStatusRepository>();
+      services.AddScoped<IRepository<Domain.Referral.Models.Lookups.LinkUsageStatus>, LinkUsageStatusRepository>();
+      services.AddScoped<IRepository<Domain.Referral.Models.Lookups.ProgramStatus>, ProgramStatusRepository>();
+      #endregion Lookups
+
+      services.AddScoped<IRepository<Domain.Referral.Models.Block>, BlockRepository>();
+      services.AddScoped<IRepositoryBatchedValueContainsWithNavigation<Domain.Referral.Models.ReferralLink>, Referral.Repositories.LinkRepository>();
+      services.AddScoped<IRepositoryBatched<Domain.Referral.Models.ReferralLinkUsage>, LinkUsageRepository>();
+      services.AddScoped<IRepositoryWithNavigation<Domain.Referral.Models.ProgramPathway>, ProgramPathwayRepository>();
+      services.AddScoped<IRepositoryWithNavigation<Domain.Referral.Models.ProgramPathwayStep>, ProgramPathwayStepRepository>();
+      services.AddScoped<IRepository<Domain.Referral.Models.ProgramPathwayTask>, ProgramPathwayTaskRepository>();
+      services.AddScoped<IRepositoryBatchedValueContainsWithNavigation<Domain.Referral.Models.Program>, ProgramRepository>();
+      #endregion Referral
 
       #region Reward
       #region Lookups

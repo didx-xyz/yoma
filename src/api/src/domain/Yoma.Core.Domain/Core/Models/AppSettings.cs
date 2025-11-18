@@ -7,19 +7,19 @@ namespace Yoma.Core.Domain.Core.Models
     #endregion
 
     #region Public Members
-    public string AppBaseURL { get; set; }
+    public string AppBaseURL { get; set; } = null!;
 
-    public AppSettingsCredentials Hangfire { get; set; }
+    public AppSettingsCredentials Hangfire { get; set; } = null!;
 
-    public string YomaWebClientId { get; set; }
+    public string YomaWebClientId { get; set; } = null!;
 
-    public string AuthorizationPolicyAudience { get; set; }
+    public string AuthorizationPolicyAudience { get; set; } = null!;
 
-    public string AuthorizationPolicyScope { get; set; }
+    public string AuthorizationPolicyScope { get; set; } = null!;
 
-    public string SwaggerScopesAuthorizationCode { get; set; }
+    public string SwaggerScopesAuthorizationCode { get; set; } = null!;
 
-    public string SwaggerScopesClientCredentials { get; set; }
+    public string SwaggerScopesClientCredentials { get; set; } = null!;
 
     public int CacheSlidingExpirationInHours { get; set; }
 
@@ -27,7 +27,7 @@ namespace Yoma.Core.Domain.Core.Models
 
     public int CacheAbsoluteExpirationRelativeToNowInHoursAnalytics { get; set; }
 
-    public string CacheEnabledByCacheItemTypes { get; set; }
+    public string CacheEnabledByCacheItemTypes { get; set; } = null!;
 
     public CacheItemType CacheEnabledByCacheItemTypesAsEnum
     {
@@ -51,9 +51,9 @@ namespace Yoma.Core.Domain.Core.Models
       }
     }
 
-    public string YomaOrganizationName { get; set; }
+    public string YomaOrganizationName { get; set; } = null!;
 
-    public string YomaSupportEmailAddress { get; set; }
+    public string YomaSupportEmailAddress { get; set; } = null!;
 
     /// <summary>
     /// -1: Represents infinite retries. Never transitions to an error state.
@@ -61,7 +61,7 @@ namespace Yoma.Core.Domain.Core.Models
     /// >0: Represents the maximum number of retries. Transitions to an error state when retries exceed the specified value.
     public int SSIMaximumRetryAttempts { get; set; }
 
-    public string SSISchemaFullNameYoID { get; set; }
+    public string SSISchemaFullNameYoID { get; set; } = null!;
 
     /// <summary>
     /// -1: Represents infinite retries. Never transitions to an error state.
@@ -69,45 +69,45 @@ namespace Yoma.Core.Domain.Core.Models
     /// >0: Represents the maximum number of retries. Transitions to an error state when retries exceed the specified value.
     public int RewardMaximumRetryAttempts { get; set; }
 
-    public string TestDataSeedingEnvironments { get; set; }
+    public string TestDataSeedingEnvironments { get; set; } = null!;
 
     public Environment TestDataSeedingEnvironmentsAsEnum => ParseEnvironmentInput(TestDataSeedingEnvironments);
 
     public int TestDataSeedingDelayInMinutes { get; set; }
 
-    public string SendGridEnabledEnvironments { get; set; }
+    public string SendGridEnabledEnvironments { get; set; } = null!;
 
     public Environment SendGridEnabledEnvironmentsAsEnum => ParseEnvironmentInput(SendGridEnabledEnvironments);
 
-    public string SentryEnabledEnvironments { get; set; }
+    public string SentryEnabledEnvironments { get; set; } = null!;
 
     public Environment SentryEnabledEnvironmentsAsEnum => ParseEnvironmentInput(SentryEnabledEnvironments);
 
-    public string TwilioEnabledEnvironments { get; set; }
+    public string TwilioEnabledEnvironments { get; set; } = null!;
 
     public Environment TwilioEnabledEnvironmentsAsEnum => ParseEnvironmentInput(TwilioEnabledEnvironments);
 
-    public string HttpsRedirectionEnabledEnvironments { get; set; }
+    public string HttpsRedirectionEnabledEnvironments { get; set; } = null!;
 
     public Environment HttpsRedirectionEnabledEnvironmentsAsEnum => ParseEnvironmentInput(HttpsRedirectionEnabledEnvironments);
 
-    public string LaborMarketProviderAsSourceEnabledEnvironments { get; set; }
+    public string LaborMarketProviderAsSourceEnabledEnvironments { get; set; } = null!;
 
     public Environment LaborMarketProviderAsSourceEnabledEnvironmentsAsEnum => ParseEnvironmentInput(LaborMarketProviderAsSourceEnabledEnvironments);
 
-    public string ShortLinkProviderAsSourceEnabledEnvironments { get; set; }
+    public string ShortLinkProviderAsSourceEnabledEnvironments { get; set; } = null!;
 
     public Environment ShortLinkProviderAsSourceEnabledEnvironmentsAsEnum => ParseEnvironmentInput(ShortLinkProviderAsSourceEnabledEnvironments);
 
-    public string PartnerSharingEnabledEnvironments { get; set; }
+    public string PartnerSharingEnabledEnvironments { get; set; } = null!;
 
     public Environment PartnerSharingEnabledEnvironmentsAsEnum => ParseEnvironmentInput(PartnerSharingEnabledEnvironments);
 
-    public string SSIEnabledEnvironments { get; set; }
+    public string SSIEnabledEnvironments { get; set; } = null!;
 
     public Environment SSIEnabledEnvironmentsAsEnum => ParseEnvironmentInput(SSIEnabledEnvironments);
 
-    public string NewsFeedProviderAsSourceEnabledEnvironments { get; set; }
+    public string NewsFeedProviderAsSourceEnabledEnvironments { get; set; } = null!;
 
     public Environment NewsFeedProviderAsSourceEnabledEnvironmentsAsEnum => ParseEnvironmentInput(NewsFeedProviderAsSourceEnabledEnvironments);
 
@@ -125,7 +125,7 @@ namespace Yoma.Core.Domain.Core.Models
     /// </summary>
     public int MarketplaceItemReservationExpirationInMinutes { get; set; }
 
-    public AppSettingsDatabaseRetryPolicy DatabaseRetryPolicy { get; set; }
+    public AppSettingsDatabaseRetryPolicy DatabaseRetryPolicy { get; set; } = null!;
 
     public bool? RedisSSLCertificateValidationBypass { get; set; }
 
@@ -146,7 +146,7 @@ namespace Yoma.Core.Domain.Core.Models
     /// </summary>
     public int DownloadScheduleVerificationFilesBatchSize { get; set; }
 
-    public AppSettingsSSIParallelism SSIParallelism { get; set; }
+    public AppSettingsSSIParallelism SSIParallelism { get; set; } = null!;
 
     public int CSVImportMaxProbeErrorCount { get; set; }
 
@@ -155,6 +155,12 @@ namespace Yoma.Core.Domain.Core.Models
     public int DistributedLockRetryDelayInMilliseconds { get; set; }
 
     public int DistributedLockKeycloakEventDurationInSeconds { get; set; }
+
+    public int DistributedLockReferralProgressDurationInSeconds { get; set; }
+
+    public bool ReferralRestrictRefereeToSingleProgram { get; set; }
+
+    public int ReferralFirstClaimSinceYoIDOnboardedTimeoutInHours { get; set; }
     #endregion
 
     #region Private Members

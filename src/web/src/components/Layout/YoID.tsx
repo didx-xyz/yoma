@@ -71,6 +71,14 @@ const YoIDLayout: TabProps = ({ children }) => {
         selected: router.asPath.startsWith("/yoid/skills"),
         iconImage: iconTools,
       },
+      {
+        title: "🎁 Referrals",
+        description: "Share referral links, earn rewards and track earnings",
+        url: "/yoid/referrals",
+        badgeCount: null,
+        selected: router.asPath.startsWith("/yoid/referrals"),
+        iconImage: iconTools,
+      },
     ]);
   }, [router.asPath, setTabItems]);
 
@@ -81,7 +89,7 @@ const YoIDLayout: TabProps = ({ children }) => {
           <title>Yoma | Yo-ID</title>
         </Head>
 
-        <PageBackground className="h-[16rem]" includeStamps={true} />
+        <PageBackground className="h-[16rem]" />
 
         <YoIdModal
           isOpen={yoIdModalVisible}
@@ -131,7 +139,7 @@ const YoIDLayout: TabProps = ({ children }) => {
                     className={`btn btn-xs border-orange bg-orange lg:btn-sm hover:border-orange hover:bg-purple flex h-8 items-center text-xs tracking-wide text-white shadow-md hover:text-white ${
                       tab.selected ? "border-orange bg-purple text-white" : ""
                     }`}
-                    title={`Go to ${tab.title}`}
+                    title={tab.description ?? `Go to ${tab.title}`}
                   >
                     {tab.title}
                   </Link>

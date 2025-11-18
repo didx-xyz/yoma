@@ -1,8 +1,10 @@
+using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Reward;
 using Yoma.Core.Domain.Reward.Models;
 using Yoma.Core.Infrastructure.Database.Context;
 using Yoma.Core.Infrastructure.Database.Core.Repositories;
+using Yoma.Core.Infrastructure.Shared.Extensions;
 
 namespace Yoma.Core.Infrastructure.Database.Reward.Repositories
 {
@@ -13,6 +15,11 @@ namespace Yoma.Core.Infrastructure.Database.Reward.Repositories
     #endregion
 
     #region Public Members
+    public IQueryable<RewardTransaction> Query(LockMode lockMode)
+    {
+      return Query().WithLock(lockMode);
+    }
+
     public IQueryable<RewardTransaction> Query()
     {
       return _context.RewardTransaction.Select(entity => new RewardTransaction
@@ -23,6 +30,7 @@ namespace Yoma.Core.Infrastructure.Database.Reward.Repositories
         Status = Enum.Parse<RewardTransactionStatus>(entity.Status.Name, true),
         SourceEntityType = entity.SourceEntityType,
         MyOpportunityId = entity.MyOpportunityId,
+        ReferralLinkUsageId = entity.ReferralLinkUsageId,
         Amount = entity.Amount,
         TransactionId = entity.TransactionId,
         ErrorReason = entity.ErrorReason,
@@ -44,6 +52,7 @@ namespace Yoma.Core.Infrastructure.Database.Reward.Repositories
         StatusId = item.StatusId,
         SourceEntityType = item.SourceEntityType,
         MyOpportunityId = item.MyOpportunityId,
+        ReferralLinkUsageId = item.ReferralLinkUsageId,
         TransactionId = item.TransactionId,
         Amount = item.Amount,
         ErrorReason = item.ErrorReason,
@@ -72,6 +81,7 @@ namespace Yoma.Core.Infrastructure.Database.Reward.Repositories
            StatusId = item.StatusId,
            SourceEntityType = item.SourceEntityType,
            MyOpportunityId = item.MyOpportunityId,
+           ReferralLinkUsageId = item.ReferralLinkUsageId,
            TransactionId = item.TransactionId,
            Amount = item.Amount,
            ErrorReason = item.ErrorReason,

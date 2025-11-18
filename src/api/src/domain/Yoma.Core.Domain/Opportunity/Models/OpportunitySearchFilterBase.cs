@@ -1,4 +1,5 @@
 using Newtonsoft.Json;
+using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Models;
 
 namespace Yoma.Core.Domain.Opportunity.Models
@@ -27,8 +28,8 @@ namespace Yoma.Core.Domain.Opportunity.Models
     public string? ValueContains { get; set; }
 
     /// <summary>
-    /// Optionally defines the published states to filter opportunities. Results are always associated with an active organization. By default published opportunities are included,
-    /// thus active opportunities, irrespective of whether they started (includes both NotStarted and Active states). This default behavior is overridable
+    /// Optionally filters opportunities by their published state. By default, results include opportunities that are published (both the opportunity and its organization are Active), 
+    /// regardless of whether they have started (thus published states NotStarted and Active). This default behavior can be overridden
     /// </summary>
     [JsonIgnore]
     internal List<PublishedState>? PublishedStates { get; set; }

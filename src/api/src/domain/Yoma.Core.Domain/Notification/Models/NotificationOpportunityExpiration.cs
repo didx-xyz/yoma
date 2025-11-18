@@ -8,7 +8,7 @@ namespace Yoma.Core.Domain.Notification.Models
     public int? WithinNextDays { get; set; }
 
     [JsonProperty("opportunities")]
-    public List<NotificationOpportunityExpirationItem> Opportunities { get; set; }
+    public List<NotificationOpportunityExpirationItem> Opportunities { get; set; } = null!;
 
     public override List<NotificationBase> FlattenItems()
     {
@@ -28,7 +28,7 @@ namespace Yoma.Core.Domain.Notification.Models
   public class NotificationOpportunityExpirationItem
   {
     [JsonProperty("title")]
-    public string Title { get; set; }
+    public string Title { get; set; } = null!;
 
     [JsonProperty("dateStart")]
     public DateTimeOffset DateStart { get; set; }
@@ -43,6 +43,6 @@ namespace Yoma.Core.Domain.Notification.Models
     public string DateEndFormatted => DateEnd.HasValue ? DateEnd.Value.ToString("ddd, MMM dd, yyyy HH:mm") : "No end date";
 
     [JsonProperty("url")]
-    public string URL { get; set; }
+    public string URL { get; set; } = null!;
   }
 }

@@ -13,7 +13,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
     public Guid UserId { get; set; }
 
     [Ignore]
-    public string Username { get; set; }
+    public string Username { get; set; } = null!;
 
     [Name("Student Email")]
     public string? UserEmail { get; set; }
@@ -22,7 +22,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
     public string? UserPhoneNumer { get; set; }
 
     [Name("Student Display Name")]
-    public string UserDisplayName { get; set; }
+    public string UserDisplayName { get; set; } = null!;
 
     [Name("Student Country")]
     public string? UserCountry { get; set; }
@@ -44,19 +44,19 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
     public Guid OpportunityId { get; set; }
 
     [Name("Opportunity Title")]
-    public string OpportunityTitle { get; set; }
+    public string OpportunityTitle { get; set; } = null!;
 
     [Ignore]
-    public string OpportunityDescription { get; set; }
+    public string OpportunityDescription { get; set; } = null!;
 
     [Ignore]
     public string? OpportunitySummary { get; set; }
 
     [Ignore]
-    public string OpportunityType { get; set; }
+    public string OpportunityType { get; set; } = null!;
 
     [Ignore]
-    public string OpportunityCommitmentIntervalDescription { get; set; }
+    public string OpportunityCommitmentIntervalDescription { get; set; } = null!;
 
     #region Verification Counts
     [Ignore]
@@ -73,7 +73,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
     public Guid OrganizationId { get; set; }
 
     [Ignore]
-    public string OrganizationName { get; set; }
+    public string OrganizationName { get; set; } = null!;
 
     [Ignore]
     public string? OrganizationLogoURL { get; set; }

@@ -11,12 +11,12 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Entities
     [Required]
     [ForeignKey("OpportunityId")]
     public Guid OpportunityId { get; set; }
-    public Opportunity Opportunity { get; set; }
+    public Opportunity Opportunity { get; set; } = null!;
 
     [Required]
     [ForeignKey("VerificationTypeId")]
     public Guid VerificationTypeId { get; set; }
-    public Lookups.OpportunityVerificationType VerificationType { get; set; }
+    public Lookups.OpportunityVerificationType VerificationType { get; set; } = null!;
 
     [Column(TypeName = "varchar(255)")]
     public string? Description { get; set; }

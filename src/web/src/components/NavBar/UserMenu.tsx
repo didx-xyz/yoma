@@ -3,11 +3,10 @@ import { useAtomValue } from "jotai";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
-import React, { useEffect } from "react";
 import stamp1 from "public/images/stamp-1.png";
 import stamp2 from "public/images/stamp-2.png";
 import worldMap from "public/images/world-map.png";
-import { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { FaArrowRight } from "react-icons/fa";
 import {
   IoIosCheckmarkCircle,
@@ -17,7 +16,9 @@ import {
 import { MdKeyboardArrowDown, MdKeyboardArrowUp } from "react-icons/md";
 import { searchCredentials } from "~/api/services/credentials";
 import { searchMyOpportunitiesSummary } from "~/api/services/myOpportunities";
+import { searchReferralLinks } from "~/api/services/referrals";
 import { getUserSkills } from "~/api/services/user";
+import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
 import { MAXINT32 } from "~/lib/constants";
 import {
   RoleView,
@@ -25,20 +26,22 @@ import {
   currentOrganisationLogoAtom,
   userProfileAtom,
 } from "~/lib/store";
+import { fetchClientEnv } from "~/lib/utils";
 import { AvatarImage } from "../AvatarImage";
 import { Header } from "../Common/Header";
 import Suspense from "../Common/Suspense";
+import NoRowsMessage from "../NoRowsMessage";
+import { SignOutButton } from "../SignOutButton";
+import { LoadingInline } from "../Status/LoadingInline";
 import { LineChart } from "../YoID/LineChart";
 import { OpportunitiesSummary } from "../YoID/OpportunitiesSummary";
 import { PassportCard } from "../YoID/PassportCard";
+import { ReferralBlockedCard } from "../YoID/ReferralBlockedCard";
+import { ReferralCard } from "../YoID/ReferralCard";
+import { ReferrerProgressCard } from "../YoID/ReferrerProgressCard";
 import { SkillsCard } from "../YoID/SkillsCard";
 import { WalletCard } from "../YoID/WalletCard";
 import { YoIdModal } from "../YoID/YoIdModal";
-import { SignOutButton } from "../SignOutButton";
-import { LoadingInline } from "../Status/LoadingInline";
-import NoRowsMessage from "../NoRowsMessage";
-import { fetchClientEnv } from "~/lib/utils";
-import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
 
 export const UserMenu: React.FC = () => {
   const [isDrawerOpen, setDrawerOpen] = useState(false);
@@ -120,6 +123,35 @@ export const UserMenu: React.FC = () => {
       }),
     enabled: isDrawerOpen && !isCollapsedPassport && passport_enabled,
   });
+
+  // Check for active referrer status (created links)
+  const { data: referrerPrograms, isLoading: referrerProgramsLoading } =
+    useQuery({
+      queryKey: ["ReferralLinks", "usermenu"],
+      queryFn: () =>
+        searchReferralLinks({
+          pageNumber: 1,
+          pageSize: 1,
+          programId: null,
+          valueContains: null,
+          statuses: null,
+        }),
+      enabled: isDrawerOpen,
+    });
+
+  // Check if user has any completed referral programs (means they've already onboarded)
+  const hasCompletedReferral =
+    userProfile?.referral?.linkUsages?.some((p) => p.status === "Completed") ??
+    false;
+
+  // Get all pending referral programs (as referee)
+  const pendingReferralPrograms =
+    userProfile?.referral?.linkUsages?.filter((p) => p.status === "Pending") ??
+    [];
+
+  // Check if user has created any links (as referrer)
+  const hasCreatedLinks = (referrerPrograms?.items?.length ?? 0) > 0;
+  const firstReferrerProgram = referrerPrograms?.items?.[0];
   //#endregion
 
   return (
@@ -273,6 +305,75 @@ export const UserMenu: React.FC = () => {
                   </Link>
                 </div>
               </div>
+
+              {/* REFERRALS */}
+              <Suspense
+                isLoading={!userProfile || referrerProgramsLoading}
+                loader={
+                  <LoadingInline
+                    className="flex-col p-0"
+                    classNameSpinner="h-12 w-12"
+                  />
+                }
+              >
+                <div className="flex w-full flex-col gap-2">
+                  {/* Show ReferralBlockedCard if user is blocked */}
+                  {userProfile?.referral?.blocked && (
+                    <ReferralBlockedCard
+                      blockedDate={
+                        userProfile?.referral?.blockedDate ?? undefined
+                      }
+                      onClick={() => setDrawerOpen(false)}
+                    />
+                  )}
+                  {/* Show default ReferralCard if no links created as referrer and not blocked */}
+                  {!userProfile?.referral?.blocked && !hasCreatedLinks && (
+                    <ReferralCard onClick={() => setDrawerOpen(false)} />
+                  )}
+                  {/* TRACK PROGRESS (REFERRER) - Show if user has created links and not blocked */}
+                  {!userProfile?.referral?.blocked &&
+                    hasCreatedLinks &&
+                    firstReferrerProgram && (
+                      <ReferrerProgressCard
+                        programName={firstReferrerProgram.programName}
+                        onClick={() => setDrawerOpen(false)}
+                        tabIndex={isDrawerOpen ? 0 : -1}
+                      />
+                    )}
+
+                  {/* TRACK PROGRESS (REFEREE) - Show all pending programs, hide if user has completed any */}
+                  {!hasCompletedReferral &&
+                    pendingReferralPrograms.length > 0 && (
+                      <div className="flex flex-col gap-2 rounded-lg border-2 border-blue-300 bg-gradient-to-br from-blue-50 to-white p-4 shadow-md">
+                        <div className="flex items-center gap-2">
+                          <span className="text-lg">🎯</span>
+                          <span className="font-bold text-blue-900">
+                            My Referral Progress
+                          </span>
+                        </div>
+                        <p className="text-xs text-gray-600">
+                          Track your progress on these programs:
+                        </p>
+                        <div className="flex flex-col gap-2">
+                          {pendingReferralPrograms.map((program) => (
+                            <Link
+                              key={program.id}
+                              href={`/yoid/referee/${program.programId}`}
+                              className="font-family-nunito flex items-center justify-between rounded-md border border-blue-200 bg-white p-3 transition-all hover:border-blue-400 hover:shadow-sm"
+                              onClick={() => setDrawerOpen(false)}
+                              tabIndex={isDrawerOpen ? 0 : -1}
+                            >
+                              <span className="text-sm text-gray-700">
+                                🚀 {program.programName}
+                              </span>
+                              <FaArrowRight className="h-3 w-3 flex-shrink-0 text-blue-600" />
+                            </Link>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                </div>
+              </Suspense>
 
               <div className="divider !bg-gray my-2" />
 
@@ -450,6 +551,7 @@ export const UserMenu: React.FC = () => {
                     <FaArrowRight className="h-4 w-4" />
                   </Link>
                 </div>
+
                 <div className="flex w-full flex-col gap-2">
                   <div className="divider !bg-gray my-4" />
                   <SignOutButton />

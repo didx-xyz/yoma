@@ -81,8 +81,9 @@ namespace Yoma.Core.Api.Controllers
       return StatusCode((int)HttpStatusCode.OK, result);
     }
 
-    [SwaggerOperation(Summary = "Search for published opportunities based on the supplied filter (Anonymous)",
-        Description = "Results are always associated with an active organization. By default published opportunities are included, thus active opportunities, irrespective of whether they started (includes both NotStarted and Active states). This default behavior is overridable")]
+    [SwaggerOperation(
+    Summary = "Search for published opportunities based on the supplied filter (Anonymous)",
+      Description = "By default, results include opportunities that are published (both the opportunity and its organization are Active), regardless of whether they have started (thus published states NotStarted and Active). This default behavior can be overridden")]
     [HttpPost("search")]
     [ProducesResponseType(typeof(OpportunitySearchResultsInfo), (int)HttpStatusCode.OK)]
     [AllowAnonymous]
@@ -113,7 +114,7 @@ namespace Yoma.Core.Api.Controllers
     }
 
     [SwaggerOperation(Summary = "Return a list of categories associated with published opportunities (Anonymous)",
-        Description = "Results are always associated with an active organization. By default published opportunities are included, thus active opportunities, irrespective of whether they started (includes both NotStarted and Active states). This default behavior is overridable")]
+        Description = "By default, results include opportunities that are published (both the opportunity and its organization are Active), regardless of whether they have started (thus published states NotStarted and Active). This default behavior can be overridden")]
     [HttpGet("search/filter/category")]
     [ProducesResponseType(typeof(List<Domain.Opportunity.Models.Lookups.OpportunityCategory>), (int)HttpStatusCode.OK)]
     [AllowAnonymous]
@@ -129,7 +130,7 @@ namespace Yoma.Core.Api.Controllers
     }
 
     [SwaggerOperation(Summary = "Return a list of countries associated with published opportunities (Anonymous)",
-        Description = "Results are always associated with an active organization. By default published opportunities are included, thus active opportunities, irrespective of whether they started (includes both NotStarted and Active states). This default behavior is overridable")]
+        Description = "By default, results include opportunities that are published (both the opportunity and its organization are Active), regardless of whether they have started (thus published states NotStarted and Active). This default behavior can be overridden")]
     [HttpGet("search/filter/country")]
     [ProducesResponseType(typeof(List<Domain.Lookups.Models.Country>), (int)HttpStatusCode.OK)]
     [AllowAnonymous]
@@ -145,7 +146,7 @@ namespace Yoma.Core.Api.Controllers
     }
 
     [SwaggerOperation(Summary = "Return a list of languages associated with published opportunities (Anonymous)",
-        Description = "Results are always associated with an active organization. By default published opportunities are included, thus active opportunities, irrespective of whether they started (includes both NotStarted and Active states). This default behavior is overridable")]
+        Description = "By default, results include opportunities that are published (both the opportunity and its organization are Active), regardless of whether they have started (thus published states NotStarted and Active). This default behavior can be overridden")]
     [HttpGet("search/filter/language")]
     [ProducesResponseType(typeof(List<Domain.Lookups.Models.Language>), (int)HttpStatusCode.OK)]
     [AllowAnonymous]
@@ -161,7 +162,7 @@ namespace Yoma.Core.Api.Controllers
     }
 
     [SwaggerOperation(Summary = "Return a list of active organizations associated with published opportunities (Anonymous)",
-        Description = "Results are always associated with an active organization. By default published opportunities are included, thus active opportunities, irrespective of whether they started (includes both NotStarted and Active states). This default behavior is overridable")]
+        Description = "By default, results include opportunities that are published (both the opportunity and its organization are Active), regardless of whether they have started (thus published states NotStarted and Active). This default behavior can be overridden")]
     [HttpGet("search/filter/organization")]
     [ProducesResponseType(typeof(List<Domain.Entity.Models.OrganizationInfo>), (int)HttpStatusCode.OK)]
     [AllowAnonymous]
@@ -177,7 +178,7 @@ namespace Yoma.Core.Api.Controllers
     }
 
     [SwaggerOperation(Summary = "Return a list of commitment interval options associated with published opportunities (Anonymous)",
-        Description = "Results are always associated with an active organization. By default published opportunities are included, thus active opportunities, irrespective of whether they started (includes both NotStarted and Active states). This default behavior is overridable")]
+        Description = "By default, results include opportunities that are published (both the opportunity and its organization are Active), regardless of whether they have started (thus published states NotStarted and Active). This default behavior can be overridden")]
     [HttpGet("search/filter/commitmentInterval")]
     [ProducesResponseType(typeof(List<OpportunitySearchCriteriaCommitmentIntervalOption>), (int)HttpStatusCode.OK)]
     [AllowAnonymous]
@@ -193,7 +194,7 @@ namespace Yoma.Core.Api.Controllers
     }
 
     [SwaggerOperation(Summary = "Retrieve a list of Zlto reward ranges associated with published opportunities (Anonymous)",
-        Description = "Results are always associated with an active organization. By default published opportunities are included, thus active opportunities, irrespective of whether they started (includes both NotStarted and Active states). This default behavior is overridable")]
+        Description = "By default, results include opportunities that are published (both the opportunity and its organization are Active), regardless of whether they have started (thus published states NotStarted and Active). This default behavior can be overridden")]
     [HttpGet("search/filter/zltoReward")]
     [ProducesResponseType(typeof(List<OpportunitySearchCriteriaZltoRewardRange>), (int)HttpStatusCode.OK)]
     [AllowAnonymous]

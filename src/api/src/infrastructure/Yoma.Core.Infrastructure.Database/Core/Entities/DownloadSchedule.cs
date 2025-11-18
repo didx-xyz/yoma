@@ -12,24 +12,24 @@ namespace Yoma.Core.Infrastructure.Database.Core.Entities
   {
     [ForeignKey("UserId")]
     public Guid UserId { get; set; }
-    public User User { get; set; }
+    public User User { get; set; } = null!;
 
     [Required]
     [Column(TypeName = "varchar(50)")]
-    public string Type { get; set; }
+    public string Type { get; set; } = null!;
 
     [Required]
     [Column(TypeName = "text")] //MS SQL: varchar(MAX)
-    public string Filter { get; set; }
+    public string Filter { get; set; } = null!;
 
     [Required]
     [Column(TypeName = "varchar(64)")]
-    public string FilterHash { get; set; }
+    public string FilterHash { get; set; } = null!;
 
     [Required]
     [ForeignKey("StatusId")]
     public Guid StatusId { get; set; }
-    public DownloadScheduleStatus Status { get; set; }
+    public DownloadScheduleStatus Status { get; set; } = null!;
 
     [ForeignKey(nameof(FileId))]
     public Guid? FileId { get; set; }

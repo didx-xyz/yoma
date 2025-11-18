@@ -33,7 +33,7 @@ namespace Yoma.Core.Domain.Entity.Interfaces
 
     Task<User> Upsert(UserRequest request);
 
-    Task<User> UpsertPhoto(string username, IFormFile? file);
+    Task<User> UpsertPhoto(string username, IFormFile file);
 
     Task<User> UpdateSettings(string username, List<string> roles, SettingsRequest request);
 
@@ -44,5 +44,7 @@ namespace Yoma.Core.Domain.Entity.Interfaces
     Task<User> YoIDOnboard(User user);
 
     Task TrackLogin(UserRequestLoginEvent request);
+
+    bool HasSocialIdentityProviders(Guid id);
   }
 }

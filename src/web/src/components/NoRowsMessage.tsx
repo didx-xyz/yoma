@@ -3,12 +3,14 @@ import React, { type ReactNode } from "react";
 const NoRowsMessage: React.FC<{
   icon?: string | ReactNode | null;
   title?: string | null;
+  subTitle?: string | null;
   description?: string | null;
   className?: string | null;
   classNameIcon?: string | null;
 }> = ({
   icon = "⚠️",
   title,
+  subTitle,
   description,
   className,
   classNameIcon = "text-xl",
@@ -23,11 +25,18 @@ const NoRowsMessage: React.FC<{
         {icon}
       </div>
 
-      <div className="mt-1 max-w-lg">
+      <div className="mt-1">
         <div className="my-2 font-semibold text-black md:text-sm">
           <div className="text-sm md:text-lg">
             {title ?? "No rows found..."}
           </div>
+
+          {subTitle && (
+            <div className="text-xs md:text-sm">
+              Good things are better when shared. Invite your friends to Yoma
+              and help them start their journey.
+            </div>
+          )}
         </div>
 
         <div

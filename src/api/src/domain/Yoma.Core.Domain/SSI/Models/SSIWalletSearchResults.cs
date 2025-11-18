@@ -4,6 +4,6 @@ namespace Yoma.Core.Domain.SSI.Models
   {
     public int? TotalCount { get; set; }
 
-    public List<SSICredentialInfo> Items { get; set; }
+    public List<SSICredentialInfo> Items { get; set; } = null!;
   }
 }

@@ -1,8 +1,10 @@
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
+using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.NewsFeedProvider.Models;
+using Yoma.Core.Infrastructure.Shared.Extensions;
 using Yoma.Core.Infrastructure.Substack.Context;
 
 namespace Yoma.Core.Infrastructure.Substack.Repositories
@@ -14,6 +16,11 @@ namespace Yoma.Core.Infrastructure.Substack.Repositories
     #endregion
 
     #region Public Members
+    public IQueryable<NewsArticle> Query(LockMode lockMode)
+    {
+      return Query().WithLock(lockMode);
+    }
+
     public IQueryable<NewsArticle> Query()
     {
       return _context.NewsArticle.Select(entity => new NewsArticle

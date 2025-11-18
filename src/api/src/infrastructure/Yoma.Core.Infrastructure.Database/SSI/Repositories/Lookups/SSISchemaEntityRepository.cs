@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.SSI;
 using Yoma.Core.Domain.SSI.Models.Lookups;
@@ -23,7 +24,7 @@ namespace Yoma.Core.Infrastructure.Database.SSI.Repositories.Lookups
 
     public IQueryable<SSISchemaEntity> Query(bool includeChildItems)
     {
-      return _context.SSISchemaEntity.Select(entity => new SSISchemaEntity
+      var query = _context.SSISchemaEntity.Select(entity => new SSISchemaEntity
       {
         Id = entity.Id,
         TypeName = entity.TypeName,
@@ -49,7 +50,10 @@ namespace Yoma.Core.Infrastructure.Database.SSI.Repositories.Lookups
                 Description = o.SSISchemaType.Description,
                 SupportMultiple = o.SSISchemaType.SupportMultiple
               }).OrderBy(o => o.Name).ToList() : null
-      }).AsSplitQuery();
+      });
+
+      if (includeChildItems) query = query.AsSplitQuery();
+      return query;
     }
 
     public Task<SSISchemaEntity> Create(SSISchemaEntity item)
@@ -63,6 +67,16 @@ namespace Yoma.Core.Infrastructure.Database.SSI.Repositories.Lookups
     }
 
     public Task Delete(SSISchemaEntity item)
+    {
+      throw new NotImplementedException();
+    }
+
+    public IQueryable<SSISchemaEntity> Query(bool includeChildItems, LockMode lockMode)
+    {
+      throw new NotImplementedException();
+    }
+
+    public IQueryable<SSISchemaEntity> Query(LockMode lockMode)
     {
       throw new NotImplementedException();
     }

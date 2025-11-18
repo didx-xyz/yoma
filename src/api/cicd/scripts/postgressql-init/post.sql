@@ -655,3 +655,738 @@ FROM
     rewardsums
 WHERE
     org."Id" = rewardsums."OrganizationId";
+
+-- ============================================================
+-- Referral Programs (50) — valid combos & server rules enforced
+-- Author: testadminuser@gmail.com
+-- ============================================================
+DO $$
+DECLARE
+  v_admin_user_id        uuid := (SELECT "Id" FROM "Entity"."User" WHERE "Email" = 'testadminuser@gmail.com');
+  v_now                  timestamptz := (CURRENT_TIMESTAMP AT TIME ZONE 'UTC');
+
+  v_status_active_id     uuid := (SELECT "Id" FROM "Referral"."ProgramStatus" WHERE "Name" = 'Active');
+  v_status_inactive_id   uuid := (SELECT "Id" FROM "Referral"."ProgramStatus" WHERE "Name" = 'Inactive');
+  v_status_deleted_id    uuid := (SELECT "Id" FROM "Referral"."ProgramStatus" WHERE "Name" = 'Deleted');
+
+  v_words                text := 'Youth,Referral,Learn,Apply,Round,Flow,Onboard,Capstone,Community,Engage,Pathway,Skills,Program,Launch,Venture,Starter,Pro,Advanced,Scholar,Track,Journey';
+
+  v_is_default_assigned  boolean := false;
+  v_make_default_index   int := 1 + floor(random()*50)::int; -- random default among the 50
+
+  v_i int := 0;
+
+  -- program fields
+  v_program_id uuid;
+  v_program_name varchar(255);
+  v_program_desc varchar(500);
+  v_status_id uuid;
+  v_is_default boolean;
+  v_pop boolean;
+  v_pathway_required boolean;
+  v_multiple_links boolean;
+  v_z_referrer numeric(8,2);
+  v_z_referee  numeric(8,2);
+  v_z_pool     numeric(12,2);
+  v_comp_window int;
+  v_cap_per_ref int;
+  v_cap_program int;
+  v_date_start timestamptz;
+  v_date_end   timestamptz;
+
+  -- pathway fields
+  v_pathway_id uuid;
+  v_pathway_name varchar(255);
+  v_pathway_desc varchar(500);
+  v_pathway_rule varchar(10);        -- 'All' | 'Any'
+  v_pathway_order_mode varchar(10);  -- 'Sequential' | 'AnyOrder'
+
+  -- step/task
+  v_steps_count int;
+  v_tasks_count int;
+  v_step_id uuid;
+  v_step_name varchar(255);
+  v_step_desc varchar(500);
+  v_step_rule varchar(10);
+  v_step_order_mode varchar(10);
+  v_step_order_display smallint;
+  v_step_order smallint;
+
+  v_task_order_display smallint;
+  v_task_order smallint;
+  v_task_id uuid;
+
+  -- random name helpers
+  v_arr text[];
+  v_cnt int;
+
+  -- opportunity for tasks (must be active + verification enabled + method present)
+  v_opp_id uuid;
+
+BEGIN
+  IF v_admin_user_id IS NULL THEN
+    RAISE EXCEPTION 'Admin user not found: %', 'testadminuser@gmail.com';
+  END IF;
+
+  WHILE v_i < 50 LOOP
+    -- -------------------------
+    -- Random state bucket
+    -- 1=Active, 2=Inactive, 3=Expired(Active+past end), 4=Deleted
+    -- -------------------------
+    CASE 1 + floor(random()*4)::int
+      WHEN 1 THEN v_status_id := v_status_active_id;    -- Active window (not expired)
+      WHEN 2 THEN v_status_id := v_status_inactive_id;  -- Inactive
+      WHEN 3 THEN v_status_id := v_status_active_id;    -- Expired shape (Active + past end)
+      WHEN 4 THEN v_status_id := v_status_deleted_id;   -- Deleted
+    END CASE;
+
+    -- -------------------------
+    -- Program name/desc (unique, concise ~50–80 chars)
+    -- -------------------------
+    v_cnt := 2 + floor(random()*3)::int; -- 2..4 words
+    SELECT array_agg(w ORDER BY random()) INTO v_arr
+    FROM regexp_split_to_table(v_words, ',') AS w
+    LIMIT v_cnt;
+
+    v_program_name :=
+      left(trim(both ' ' from array_to_string(v_arr, ' ')), 70)
+      || ' ' || (100 + floor(random()*900))::text; -- 100..999
+
+    v_program_desc := 'Seeded program for QA automation and manual testing';
+
+    -- -------------------------
+    -- Dates to match state
+    -- -------------------------
+    IF v_status_id = v_status_deleted_id THEN
+      -- Deleted: dates irrelevant; keep sane window
+      v_date_start := date_trunc('day', v_now - interval '5 days');
+      v_date_end   := NULL;
+
+    ELSIF v_status_id = v_status_inactive_id THEN
+      -- Inactive but current/future window (not enforced by status)
+      v_date_start := date_trunc('day', v_now - interval '2 days');
+      v_date_end   := CASE WHEN random() < 0.5
+                       THEN date_trunc('day', v_now + interval '20 days') + interval '1 day' - interval '1 millisecond'
+                       ELSE NULL
+                     END;
+
+    ELSE
+      -- Active or Expired:
+      IF random() < 0.5 THEN
+        -- bounded window (likely active)
+        v_date_start := date_trunc('day', v_now - interval '3 days');
+        v_date_end   := date_trunc('day', v_now + interval '10 days') + interval '1 day' - interval '1 millisecond';
+      ELSE
+        -- open-ended (active)
+        v_date_start := date_trunc('day', v_now - interval '7 days');
+        v_date_end   := NULL;
+      END IF;
+
+      -- For variety, force some "expired" shape (Active status but end in the past)
+      IF v_i % 4 = 0 THEN
+        v_date_start := date_trunc('day', v_now - interval '30 days');
+        v_date_end   := date_trunc('day', v_now - interval '5 days') + interval '1 day' - interval '1 millisecond';
+      END IF;
+    END IF;
+
+    -- -------------------------
+    -- Random flags (then correct to satisfy rules)
+    -- -------------------------
+    v_is_default       := (v_i + 1 = v_make_default_index);  -- exactly one default
+    v_pop              := (random() < 0.5);                  -- ProofOfPersonhoodRequired
+    v_pathway_required := (random() < 0.5);                  -- allow some without pathway
+    v_multiple_links   := (random() < 0.5);
+
+    -- -------------------------
+    -- Rewards & caps (respect limits)
+    -- 30% no rewards; else pick integers 1..2000 and pool ≥ sum, ≤ 10M
+    -- -------------------------
+    IF random() < 0.30 THEN
+      v_z_referrer := NULL;
+      v_z_referee  := NULL;
+      v_z_pool     := NULL;
+      v_comp_window := NULL;
+      v_cap_per_ref := NULL;
+      v_cap_program := NULL;
+    ELSE
+      -- integer rewards within [1..2000]
+      v_z_referrer := (1 + floor(random()*2000)::int)::numeric;
+      v_z_referee  := (1 + floor(random()*2000)::int)::numeric;
+
+      -- pool >= sum and ≤ 10M (integer)
+      v_z_pool := (v_z_referrer + v_z_referee) + (floor(random()*5000)::int);
+      IF v_z_pool > 10000000 THEN v_z_pool := 10000000; END IF;
+
+      -- at least one cap
+      IF random() < 0.5 THEN
+        v_cap_per_ref := 1 + floor(random()*5)::int;
+        v_cap_program := NULL;
+      ELSE
+        v_cap_per_ref := NULL;
+        v_cap_program := 10 + floor(random()*200)::int;
+      END IF;
+
+      -- reasonable completion window (days)
+      v_comp_window := 7 + floor(random()*30)::int;
+    END IF;
+
+    -- -------------------------
+    -- Enforce global rules
+    -- -------------------------
+    -- If rewards set → require POP or Pathway
+    IF (coalesce(v_z_referrer,0) + coalesce(v_z_referee,0)) > 0 THEN
+      IF NOT (v_pop OR v_pathway_required) THEN
+        IF random() < 0.5 THEN v_pop := true; ELSE v_pathway_required := true; END IF;
+      END IF;
+      -- require at least one cap
+      IF coalesce(v_cap_per_ref,0) = 0 AND coalesce(v_cap_program,0) = 0 THEN
+        IF random() < 0.5 THEN
+          v_cap_per_ref := 1 + floor(random()*5)::int;
+        ELSE
+          v_cap_program := 10 + floor(random()*200)::int;
+        END IF;
+      END IF;
+    END IF;
+
+    -- If default → require POP or Pathway
+    IF v_is_default AND NOT (v_pop OR v_pathway_required) THEN
+      IF random() < 0.5 THEN v_pop := true; ELSE v_pathway_required := true; END IF;
+    END IF;
+
+    -- If multiple links → require POP or per-ref cap or Pathway
+    IF v_multiple_links AND NOT (v_pop OR v_pathway_required OR (coalesce(v_cap_per_ref,0) > 0)) THEN
+      v_cap_per_ref := 1 + floor(random()*5)::int;
+    END IF;
+
+    -- -------------------------
+    -- INSERT Program
+    -- -------------------------
+    v_program_id := gen_random_uuid();
+
+    INSERT INTO "Referral"."Program"(
+      "Id","Name","Description","ImageId",
+      "CompletionWindowInDays","CompletionLimitReferee","CompletionLimit",
+      "CompletionTotal",
+      "ZltoRewardReferrer","ZltoRewardReferee","ZltoRewardPool","ZltoRewardCumulative",
+      "ProofOfPersonhoodRequired","PathwayRequired","MultipleLinksAllowed",
+      "StatusId","IsDefault","DateStart","DateEnd",
+      "DateCreated","CreatedByUserId","DateModified","ModifiedByUserId")
+    VALUES(
+      v_program_id, v_program_name, v_program_desc, NULL,
+      v_comp_window, v_cap_per_ref, v_cap_program,
+      NULL,
+      v_z_referrer, v_z_referee, v_z_pool, NULL,
+      v_pop, v_pathway_required, v_multiple_links,
+      v_status_id, v_is_default, v_date_start, v_date_end,
+      v_now, v_admin_user_id, v_now, v_admin_user_id
+    );
+
+    -- -------------------------
+    -- Pathway (only if required)
+    -- -------------------------
+    IF v_pathway_required THEN
+      v_pathway_id := gen_random_uuid();
+
+      -- Pathway name (concise)
+      v_cnt := 2 + floor(random()*3)::int; -- 2..4 words
+      SELECT array_agg(w ORDER BY random()) INTO v_arr
+      FROM regexp_split_to_table(v_words, ',') AS w
+      LIMIT v_cnt;
+
+      v_pathway_name := left(trim(both ' ' from array_to_string(v_arr, ' ')), 55) || ' Pathway';
+      v_pathway_desc := 'Seeded pathway (minimal valid structure)';
+
+      -- pathway rule/order mode (if Sequential → must be All)
+      v_pathway_rule := CASE WHEN random() < 0.5 THEN 'All' ELSE 'Any' END;
+      v_pathway_order_mode := CASE WHEN random() < 0.5 THEN 'Sequential' ELSE 'AnyOrder' END;
+      IF v_pathway_order_mode = 'Sequential' AND v_pathway_rule = 'Any' THEN
+        v_pathway_rule := 'All';
+      END IF;
+
+      INSERT INTO "Referral"."ProgramPathway"(
+        "Id","ProgramId","Name","Description","Rule","OrderMode",
+        "DateCreated","DateModified")
+      VALUES(
+        v_pathway_id, v_program_id, v_pathway_name, v_pathway_desc, v_pathway_rule, v_pathway_order_mode,
+        v_now, v_now
+      );
+
+      -- 1..3 steps
+      v_steps_count := 1 + floor(random()*3)::int;
+      v_step_order_display := 1;
+
+      FOR s IN 1..v_steps_count LOOP
+        v_step_id := gen_random_uuid();
+
+        -- Step name (concise)
+        v_cnt := 2 + floor(random()*3)::int; -- 2..4 words
+        SELECT array_agg(w ORDER BY random()) INTO v_arr
+        FROM regexp_split_to_table(v_words, ',') AS w
+        LIMIT v_cnt;
+
+        v_step_name := left(trim(both ' ' from array_to_string(v_arr, ' ')), 45);
+        v_step_desc := 'Seeded step';
+
+        v_step_rule := CASE WHEN random() < 0.5 THEN 'All' ELSE 'Any' END;
+        v_step_order_mode := CASE WHEN random() < 0.5 THEN 'Sequential' ELSE 'AnyOrder' END;
+        -- sequential steps must be All
+        IF v_step_order_mode = 'Sequential' AND v_step_rule = 'Any' THEN
+          v_step_rule := 'All';
+        END IF;
+
+        v_step_order := CASE WHEN v_pathway_order_mode = 'Sequential' THEN v_step_order_display ELSE NULL END;
+
+        INSERT INTO "Referral"."ProgramPathwayStep"(
+          "Id","PathwayId","Name","Description","Rule","OrderMode","Order","OrderDisplay",
+          "DateCreated","DateModified")
+        VALUES(
+          v_step_id, v_pathway_id, v_step_name, v_step_desc, v_step_rule, v_step_order_mode, v_step_order, v_step_order_display,
+          v_now, v_now
+        );
+
+        -- 1..3 tasks per step
+        v_tasks_count := 1 + floor(random()*3)::int;
+        v_task_order_display := 1;
+
+        FOR t IN 1..v_tasks_count LOOP
+          -- choose a valid opportunity
+          SELECT "Id"
+          INTO v_opp_id
+          FROM "Opportunity"."Opportunity"
+          WHERE "VerificationEnabled" = TRUE
+            AND "VerificationMethod" IS NOT NULL
+            AND "StatusId" = (SELECT "Id" FROM "Opportunity"."OpportunityStatus" WHERE "Name"='Active')
+          ORDER BY random()
+          LIMIT 1;
+
+          IF v_opp_id IS NULL THEN
+            -- if none found, skip task create (keeps schema valid; unlikely given seed)
+            CONTINUE;
+          END IF;
+
+          v_task_id := gen_random_uuid();
+          v_task_order := CASE WHEN v_step_order_mode = 'Sequential' THEN v_task_order_display ELSE NULL END;
+
+          INSERT INTO "Referral"."ProgramPathwayTask"(
+            "Id","StepId","EntityType","OpportunityId","Order","OrderDisplay","DateCreated","DateModified")
+          VALUES(
+            v_task_id, v_step_id, 'Opportunity', v_opp_id, v_task_order, v_task_order_display, v_now, v_now
+          );
+
+          v_task_order_display := v_task_order_display + 1;
+        END LOOP;
+
+        v_step_order_display := v_step_order_display + 1;
+      END LOOP;
+    END IF;
+
+    v_i := v_i + 1;
+  END LOOP;
+
+  -- Safety: ensure exactly one default exists (if random pick missed)
+  IF NOT EXISTS (SELECT 1 FROM "Referral"."Program" WHERE "IsDefault" = TRUE) THEN
+    UPDATE "Referral"."Program"
+    SET "IsDefault" = TRUE,
+        "ProofOfPersonhoodRequired" = TRUE -- enforce default rule
+    WHERE "Id" = (
+      SELECT "Id"
+      FROM "Referral"."Program"
+      ORDER BY random()
+      LIMIT 1
+    );
+  END IF;
+
+END $$ LANGUAGE plpgsql;
+
+-- ============================================================
+-- Referral Links (100) for testuser@gmail.com
+-- States: Active, Cancelled, Expired (only on truly expired programs)
+-- NOTE: LimitReached will be set later after we add usages
+-- ============================================================
+
+DO $$
+DECLARE
+  v_ref_user_id         uuid := (SELECT "Id" FROM "Entity"."User" WHERE "Email" = 'testuser@gmail.com');
+  v_now                 timestamptz := (CURRENT_TIMESTAMP AT TIME ZONE 'UTC');
+
+  v_status_active_id    uuid := (SELECT "Id" FROM "Referral"."LinkStatus" WHERE "Name" = 'Active');
+  v_status_cancelled_id uuid := (SELECT "Id" FROM "Referral"."LinkStatus" WHERE "Name" = 'Cancelled');
+  v_status_expired_id   uuid := (SELECT "Id" FROM "Referral"."LinkStatus" WHERE "Name" = 'Expired');
+
+  v_words               text := 'Spark,Route,Growth,Engage,Pulse,Loop,Edge,Flow,Track,Boost,Orbit,Bridge,Lift,Peak,Stride,Signal,Anchor,Path,Trail,Link';
+  v_arr                 text[];
+  v_cnt                 int;
+
+  v_link_id             uuid;
+  v_state_pick          int;
+  v_program_id          uuid;
+  v_status_id           uuid;
+  v_link_name           varchar(255);
+  v_url                 varchar(2048);
+  v_shorturl            varchar(2048);
+
+  v_i int := 0;
+BEGIN
+  IF v_ref_user_id IS NULL THEN
+    RAISE EXCEPTION 'Referrer user not found: %', 'testuser@gmail.com';
+  END IF;
+
+  -- Ensure we have at least one active and one expired program
+  IF NOT EXISTS (
+    SELECT 1 FROM "Referral"."Program" p
+    WHERE p."StatusId" = (SELECT "Id" FROM "Referral"."ProgramStatus" WHERE "Name"='Active')
+      AND p."DateStart" <= v_now
+      AND (p."DateEnd" IS NULL OR p."DateEnd" > v_now)
+  ) THEN
+    RAISE EXCEPTION 'No active program found to attach Active/Cancelled links';
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM "Referral"."Program" p
+    WHERE p."DateEnd" IS NOT NULL AND p."DateEnd" < v_now
+  ) THEN
+    RAISE EXCEPTION 'No expired program found to attach Expired links';
+  END IF;
+
+  WHILE v_i < 100 LOOP
+    -- Distribution: 60% Active, 25% Cancelled, 15% Expired
+    v_state_pick := 1 + floor(random()*100)::int;
+
+    IF v_state_pick <= 60 THEN
+      v_status_id := v_status_active_id;
+      SELECT p."Id" INTO v_program_id
+      FROM "Referral"."Program" p
+      WHERE p."StatusId" = (SELECT "Id" FROM "Referral"."ProgramStatus" WHERE "Name"='Active')
+        AND p."DateStart" <= v_now
+        AND (p."DateEnd" IS NULL OR p."DateEnd" > v_now)
+      ORDER BY random() LIMIT 1;
+
+    ELSIF v_state_pick <= 85 THEN
+      v_status_id := v_status_cancelled_id;
+      SELECT p."Id" INTO v_program_id
+      FROM "Referral"."Program" p
+      WHERE p."StatusId" = (SELECT "Id" FROM "Referral"."ProgramStatus" WHERE "Name"='Active')
+        AND p."DateStart" <= v_now
+        AND (p."DateEnd" IS NULL OR p."DateEnd" > v_now)
+      ORDER BY random() LIMIT 1;
+
+    ELSE
+      v_status_id := v_status_expired_id;
+      SELECT p."Id" INTO v_program_id
+      FROM "Referral"."Program" p
+      WHERE p."DateEnd" IS NOT NULL AND p."DateEnd" < v_now
+      ORDER BY random() LIMIT 1;
+    END IF;
+
+    IF v_program_id IS NULL THEN
+      CONTINUE;
+    END IF;
+
+    -- Short, usable name: 2..4 words (trimmed) + compact suffix
+    v_cnt := 2 + floor(random()*3)::int; -- 2..4
+    SELECT array_agg(w ORDER BY random()) INTO v_arr
+    FROM regexp_split_to_table(v_words, ',') AS w
+    LIMIT v_cnt;
+
+    v_link_name :=
+      left(trim(both ' ' from array_to_string(v_arr, ' ')), 40) || ' Lk ' || (v_i + 1)::text;
+
+    -- Unique URLs (respect unique constraints)
+    v_link_id := gen_random_uuid();
+    v_url := 'https://www.yoma.world/ref/' || v_link_id::text;
+    v_shorturl := 'https://y.w/' || substring(v_link_id::text from 1 for 8);
+
+    INSERT INTO "Referral"."Link"(
+      "Id","Name","Description","ProgramId","UserId","StatusId","URL","ShortURL",
+      "CompletionTotal","ZltoRewardCumulative","DateCreated","DateModified"
+    )
+    VALUES(
+      v_link_id, v_link_name, 'Seeded referral link', v_program_id, v_ref_user_id, v_status_id, v_url, v_shorturl,
+      NULL, NULL, v_now, v_now
+    );
+
+    v_i := v_i + 1;
+  END LOOP;
+END $$ LANGUAGE plpgsql;
+
+-- ==========================================================================================
+-- Referral Link Usages (seed) for testuser@gmail.com AS REFEREE
+-- NOTE: This intentionally BREAKS the "you cannot claim your own link" rule for seed data.
+-- Adds per-usage reward snapshots when status = Completed:
+--   LinkUsage."ZltoRewardReferrer" and LinkUsage."ZltoRewardReferee"
+-- ==========================================================================================
+
+DO $$
+DECLARE
+  v_user_id                uuid := (SELECT "Id" FROM "Entity"."User" WHERE "Email" = 'testuser@gmail.com');
+  v_now                    timestamptz := (CURRENT_TIMESTAMP AT TIME ZONE 'UTC');
+
+  -- LinkUsage statuses
+  v_usage_pending_id       uuid := (SELECT "Id" FROM "Referral"."LinkUsageStatus" WHERE "Name" = 'Pending');
+  v_usage_completed_id     uuid := (SELECT "Id" FROM "Referral"."LinkUsageStatus" WHERE "Name" = 'Completed');
+  v_usage_expired_id       uuid := (SELECT "Id" FROM "Referral"."LinkUsageStatus" WHERE "Name" = 'Expired');
+
+  -- MyOpportunity enums
+  v_mo_action_verif_id     uuid := (SELECT "Id" FROM "Opportunity"."MyOpportunityAction" WHERE "Name" = 'Verification');
+  v_mo_status_completed_id uuid := (SELECT "Id" FROM "Opportunity"."MyOpportunityVerificationStatus" WHERE "Name" = 'Completed');
+
+  rec RECORD;
+  v_status_id uuid;
+
+  -- reward snapshots (from Program at seed-time)
+  v_prog_reward_referrer numeric;
+  v_prog_reward_referee  numeric;
+BEGIN
+  IF v_user_id IS NULL THEN
+    RAISE EXCEPTION 'Seed referee user not found: %', 'testuser@gmail.com';
+  END IF;
+  IF v_usage_pending_id IS NULL OR v_usage_completed_id IS NULL OR v_usage_expired_id IS NULL THEN
+    RAISE EXCEPTION 'LinkUsageStatus rows missing (Pending/Completed/Expired)';
+  END IF;
+  IF v_mo_action_verif_id IS NULL OR v_mo_status_completed_id IS NULL THEN
+    RAISE EXCEPTION 'MyOpportunity enums missing (Action=Verification or Status=Completed)';
+  END IF;
+
+  FOR rec IN
+    SELECT DISTINCT ON (l."ProgramId")
+           l."Id"        AS link_id,
+           l."ProgramId" AS program_id
+    FROM "Referral"."Link" l
+    WHERE l."UserId" = v_user_id
+    ORDER BY l."ProgramId", random()
+  LOOP
+    -- skip if usage already exists for this user & program
+    IF EXISTS (
+      SELECT 1
+      FROM "Referral"."LinkUsage" u
+      WHERE u."UserId" = v_user_id
+        AND u."ProgramId" = rec.program_id
+    ) THEN
+      CONTINUE;
+    END IF;
+
+    -- compute status (Expired > Completed > Pending)
+    WITH prog AS (
+      SELECT
+        p."Id",
+        p."ProofOfPersonhoodRequired"  AS pop_required,
+        p."PathwayRequired"            AS pathway_required,
+        p."DateStart",
+        p."DateEnd",
+        CASE WHEN p."DateEnd" IS NOT NULL AND p."DateEnd" < v_now THEN TRUE ELSE FALSE END AS is_expired
+      FROM "Referral"."Program" p
+      WHERE p."Id" = rec.program_id
+    ),
+    pw AS (
+      SELECT pw."Id", pw."Rule" AS pathway_rule, pw."OrderMode" AS pathway_order_mode
+      FROM "Referral"."ProgramPathway" pw
+      WHERE pw."ProgramId" = rec.program_id
+    ),
+    steps AS (
+      SELECT s."Id", s."Rule" AS step_rule
+      FROM "Referral"."ProgramPathwayStep" s
+      JOIN pw ON pw."Id" = s."PathwayId"
+    ),
+    step_task AS (
+      SELECT
+        s."Id" AS step_id,
+        COUNT(t."Id") AS total_tasks,
+        COUNT(*) FILTER (
+          WHERE EXISTS (
+            SELECT 1
+            FROM "Opportunity"."MyOpportunity" mo
+            WHERE mo."UserId" = v_user_id
+              AND mo."OpportunityId" = t."OpportunityId"
+              AND mo."ActionId" = v_mo_action_verif_id
+              AND mo."VerificationStatusId" = v_mo_status_completed_id
+          )
+        ) AS completed_tasks
+      FROM steps s
+      JOIN "Referral"."ProgramPathwayTask" t ON t."StepId" = s."Id"
+      GROUP BY s."Id"
+    ),
+    step_satisfied AS (
+      SELECT
+        s."Id" AS step_id,
+        CASE
+          WHEN s.step_rule = 'All' THEN (st.completed_tasks = st.total_tasks)
+          WHEN s.step_rule = 'Any' THEN (st.completed_tasks >= 1)
+          ELSE FALSE
+        END AS is_satisfied
+      FROM (
+        SELECT s."Id", s."Rule" AS step_rule
+        FROM "Referral"."ProgramPathwayStep" s
+        JOIN pw ON pw."Id" = s."PathwayId"
+      ) s
+      JOIN step_task st ON st.step_id = s."Id"
+    ),
+    pathway_eval AS (
+      SELECT
+        pw."Id" AS pathway_id,
+        CASE
+          WHEN pw."Id" IS NULL THEN FALSE
+          WHEN pw.pathway_rule = 'All'
+            THEN NOT EXISTS (
+                   SELECT 1 FROM "Referral"."ProgramPathwayStep" s
+                   WHERE s."PathwayId" = pw."Id"
+                     AND NOT EXISTS (
+                       SELECT 1 FROM step_satisfied ss WHERE ss.step_id = s."Id" AND ss.is_satisfied = TRUE
+                     )
+                 )
+          WHEN pw.pathway_rule = 'Any'
+            THEN EXISTS (SELECT 1 FROM step_satisfied ss WHERE ss.is_satisfied = TRUE)
+          ELSE FALSE
+        END AS pathway_satisfied
+      FROM pw
+    )
+    SELECT
+      CASE
+        WHEN (SELECT is_expired FROM prog) = TRUE
+          THEN v_usage_expired_id
+        WHEN (SELECT pop_required FROM prog) = TRUE
+          THEN v_usage_pending_id
+        WHEN (SELECT pathway_required FROM prog) = TRUE
+          THEN CASE WHEN COALESCE((SELECT pathway_satisfied FROM pathway_eval), FALSE)
+                    THEN v_usage_completed_id
+                    ELSE v_usage_pending_id
+               END
+        ELSE
+          v_usage_pending_id
+      END
+    INTO v_status_id;
+
+    -- load program reward snapshots (for insert)
+    SELECT p."ZltoRewardReferrer", p."ZltoRewardReferee"
+    INTO   v_prog_reward_referrer,  v_prog_reward_referee
+    FROM "Referral"."Program" p
+    WHERE p."Id" = rec.program_id;
+
+    INSERT INTO "Referral"."LinkUsage"(
+      "Id","ProgramId","LinkId","UserId","StatusId",
+      "ZltoRewardReferrer","ZltoRewardReferee",
+      "DateCreated","DateModified"
+    )
+    VALUES (
+      gen_random_uuid(), rec.program_id, rec.link_id, v_user_id, v_status_id,
+      CASE WHEN v_status_id = v_usage_completed_id THEN v_prog_reward_referrer ELSE NULL END,
+      CASE WHEN v_status_id = v_usage_completed_id THEN v_prog_reward_referee  ELSE NULL END,
+      v_now, v_now
+    );
+  END LOOP;
+END $$ LANGUAGE plpgsql;
+
+-- ============================================================
+-- Referral Running Totals & Computed States
+-- - Program: CompletionTotal, ZltoRewardCumulative
+-- - Link:    CompletionTotal, ZltoRewardCumulative, Status=LimitReached
+-- ============================================================
+
+DO $$
+DECLARE
+  v_now                   timestamptz := (CURRENT_TIMESTAMP AT TIME ZONE 'UTC');
+  v_status_active_id      uuid := (SELECT "Id" FROM "Referral"."LinkStatus" WHERE "Name"='Active');
+  v_status_limit_id       uuid := (SELECT "Id" FROM "Referral"."LinkStatus" WHERE "Name"='LimitReached');
+BEGIN
+  -- Safety
+  IF v_status_active_id IS NULL OR v_status_limit_id IS NULL THEN
+    RAISE EXCEPTION 'Missing LinkStatus rows (Active/LimitReached)';
+  END IF;
+
+  -- ===========================================
+  -- PROGRAM: CompletionTotal & ZltoRewardCumulative
+  -- ===========================================
+  WITH usage_completed AS (
+    SELECT u."ProgramId", COUNT(*)::int AS completed_cnt
+    FROM "Referral"."LinkUsage" u
+    JOIN "Referral"."LinkUsageStatus" s ON s."Id" = u."StatusId" AND s."Name" = 'Completed'
+    GROUP BY u."ProgramId"
+  ),
+  rewards AS (
+    SELECT p."Id" AS program_id,
+           COALESCE(p."ZltoRewardReferrer", 0)::numeric +
+           COALESCE(p."ZltoRewardReferee", 0)::numeric AS reward_per_completion,
+           p."ZltoRewardPool" AS pool
+    FROM "Referral"."Program" p
+  ),
+  agg AS (
+    SELECT r.program_id,
+           COALESCE(uc.completed_cnt, 0) AS completed_cnt,
+           r.reward_per_completion,
+           r.pool,
+           CASE
+             WHEN r.reward_per_completion IS NULL OR r.reward_per_completion = 0 THEN NULL
+             WHEN COALESCE(uc.completed_cnt,0) = 0 THEN NULL
+             ELSE (r.reward_per_completion * COALESCE(uc.completed_cnt,0))
+           END AS raw_cumulative
+    FROM rewards r
+    LEFT JOIN usage_completed uc ON uc."ProgramId" = r.program_id
+  ),
+  capped AS (
+    SELECT program_id,
+           completed_cnt,
+           CASE
+             WHEN raw_cumulative IS NULL THEN NULL
+             WHEN pool IS NULL THEN raw_cumulative
+             ELSE LEAST(raw_cumulative, pool)
+           END AS zlto_cumulative
+    FROM agg
+  )
+  UPDATE "Referral"."Program" p
+  SET "CompletionTotal"      = c.completed_cnt,
+      "ZltoRewardCumulative" = c.zlto_cumulative,
+      "DateModified"         = v_now
+  FROM capped c
+  WHERE p."Id" = c.program_id;
+
+  -- ===========================================
+  -- LINK: CompletionTotal & ZltoRewardCumulative
+  --  (per-link cumulative computed from program reward-per-completion;
+  --   not capped here to avoid double pool application across many links)
+  -- ===========================================
+  WITH usage_completed AS (
+    SELECT u."LinkId", COUNT(*)::int AS completed_cnt
+    FROM "Referral"."LinkUsage" u
+    JOIN "Referral"."LinkUsageStatus" s ON s."Id" = u."StatusId" AND s."Name"='Completed'
+    GROUP BY u."LinkId"
+  ),
+  reward_map AS (
+    SELECT l."Id" AS link_id,
+           COALESCE(p."ZltoRewardReferrer",0)::numeric +
+           COALESCE(p."ZltoRewardReferee",0)::numeric AS reward_per_completion
+    FROM "Referral"."Link" l
+    JOIN "Referral"."Program" p ON p."Id" = l."ProgramId"
+  ),
+  agg AS (
+    SELECT rm.link_id,
+           COALESCE(uc.completed_cnt, 0) AS completed_cnt,
+           CASE
+             WHEN rm.reward_per_completion IS NULL OR rm.reward_per_completion = 0 THEN NULL
+             WHEN COALESCE(uc.completed_cnt,0) = 0 THEN NULL
+             ELSE (rm.reward_per_completion * COALESCE(uc.completed_cnt,0))
+           END AS zlto_cumulative
+    FROM reward_map rm
+    LEFT JOIN usage_completed uc ON uc."LinkId" = rm.link_id
+  )
+  UPDATE "Referral"."Link" l
+  SET "CompletionTotal"      = a.completed_cnt,
+      "ZltoRewardCumulative" = a.zlto_cumulative,
+      "DateModified"         = v_now
+  FROM agg a
+  WHERE l."Id" = a.link_id;
+
+  -- ===========================================
+  -- LINK: flip Active -> LimitReached
+  --  Rule: if program has per-referrer cap AND
+  --        link.CompletionTotal >= cap
+  -- ===========================================
+  UPDATE "Referral"."Link" l
+  SET "StatusId"    = v_status_limit_id,
+      "DateModified" = v_now
+  FROM "Referral"."Program" p
+  WHERE l."ProgramId" = p."Id"
+    AND p."CompletionLimitReferee" IS NOT NULL
+    AND l."CompletionTotal" IS NOT NULL
+    AND l."CompletionTotal" >= p."CompletionLimitReferee"
+    AND l."StatusId" = v_status_active_id;  -- only flip Active
+
+END $$ LANGUAGE plpgsql;

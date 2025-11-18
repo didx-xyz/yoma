@@ -1,8 +1,10 @@
+using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.SSI;
 using Yoma.Core.Domain.SSI.Models.Lookups;
 using Yoma.Core.Infrastructure.Database.Context;
 using Yoma.Core.Infrastructure.Database.Core.Repositories;
+using Yoma.Core.Infrastructure.Shared.Extensions;
 
 namespace Yoma.Core.Infrastructure.Database.SSI.Repositories.Lookups
 {
@@ -15,6 +17,11 @@ namespace Yoma.Core.Infrastructure.Database.SSI.Repositories.Lookups
     #endregion
 
     #region Public Members
+    public IQueryable<SSISchemaType> Query(LockMode lockMode)
+    {
+      return Query().WithLock(lockMode);
+    }
+
     public IQueryable<SSISchemaType> Query()
     {
       return _context.SSISchemaType.Select(entity => new SSISchemaType

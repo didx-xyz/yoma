@@ -6,8 +6,8 @@ namespace Yoma.Core.Domain.Opportunity.Models.Lookups
 
     public VerificationType Type { get; set; }
 
-    public string DisplayName { get; set; }
+    public string DisplayName { get; set; } = null!;
 
-    public string Description { get; set; }
+    public string Description { get; set; } = null!;
   }
 }

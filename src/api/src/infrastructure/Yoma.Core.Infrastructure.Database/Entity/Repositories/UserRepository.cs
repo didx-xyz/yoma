@@ -1,11 +1,13 @@
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 using Yoma.Core.Domain.BlobProvider;
+using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Infrastructure.Database.Context;
 using Yoma.Core.Infrastructure.Database.Core.Repositories;
 using Yoma.Core.Infrastructure.Database.Entity.Entities;
+using Yoma.Core.Infrastructure.Shared.Extensions;
 
 namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
 {
@@ -21,9 +23,19 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
       return Query(false);
     }
 
+    public IQueryable<Domain.Entity.Models.User> Query(LockMode lockMode)
+    {
+      return Query(false).WithLock(lockMode);
+    }
+
+    public IQueryable<Domain.Entity.Models.User> Query(bool includeChildItems, LockMode lockMode)
+    {
+      return Query(includeChildItems).WithLock(lockMode);
+    }
+
     public IQueryable<Domain.Entity.Models.User> Query(bool includeChildItems)
     {
-      return _context.User.Select(entity => new Domain.Entity.Models.User()
+      var query = _context.User.Select(entity => new Domain.Entity.Models.User()
       {
         Id = entity.Id,
         Username = entity.Email ?? entity.PhoneNumber ?? string.Empty,
@@ -67,7 +79,10 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
                 }).OrderBy(o => o.Name).ToList()
 
               }).OrderBy(o => o.Name).ToList() : null
-      }).AsSplitQuery();
+      });
+
+      if (includeChildItems) query = query.AsSplitQuery();
+      return query;
     }
 
     public Expression<Func<Domain.Entity.Models.User, bool>> Contains(Expression<Func<Domain.Entity.Models.User, bool>> predicate, string value)

@@ -13,23 +13,23 @@ namespace Yoma.Core.Infrastructure.Database.ActionLink.Entities
   {
     [Required]
     [Column(TypeName = "varchar(255)")] //MS SQL: nvarchar(255)
-    public string Name { get; set; }
+    public string Name { get; set; } = null!;
 
-    [Column(TypeName = "varchar(500)")] //MS SQL: nvarchar(MAX)
+    [Column(TypeName = "varchar(500)")] //MS SQL: nvarchar(500)
     public string? Description { get; set; }
 
     [Required]
     [Column(TypeName = "varchar(25)")]
-    public string EntityType { get; set; }
+    public string EntityType { get; set; } = null!;
 
     [Required]
     [Column(TypeName = "varchar(25)")]
-    public string Action { get; set; }
+    public string Action { get; set; } = null!;
 
     [Required]
     [ForeignKey("StatusId")]
     public Guid StatusId { get; set; }
-    public Lookups.LinkStatus Status { get; set; }
+    public Lookups.LinkStatus Status { get; set; } = null!;
 
     [ForeignKey("OpportunityId")]
     public Guid? OpportunityId { get; set; }
@@ -37,11 +37,11 @@ namespace Yoma.Core.Infrastructure.Database.ActionLink.Entities
 
     [Required]
     [Column(TypeName = "varchar(2048)")]
-    public string URL { get; set; }
+    public string URL { get; set; } = null!;
 
     [Required]
     [Column(TypeName = "varchar(2048)")]
-    public string ShortURL { get; set; }
+    public string ShortURL { get; set; } = null!;
 
     public int? UsagesLimit { get; set; }
 
@@ -60,7 +60,7 @@ namespace Yoma.Core.Infrastructure.Database.ActionLink.Entities
     [Required]
     [ForeignKey("CreatedByUserId")]
     public Guid CreatedByUserId { get; set; }
-    public User CreatedByUser { get; set; }
+    public User CreatedByUser { get; set; } = null!;
 
     [Required]
     public DateTimeOffset DateModified { get; set; }
@@ -68,6 +68,6 @@ namespace Yoma.Core.Infrastructure.Database.ActionLink.Entities
     [Required]
     [ForeignKey("ModifiedByUserId")]
     public Guid ModifiedByUserId { get; set; }
-    public User ModifiedByUser { get; set; }
+    public User ModifiedByUser { get; set; } = null!;
   }
 }

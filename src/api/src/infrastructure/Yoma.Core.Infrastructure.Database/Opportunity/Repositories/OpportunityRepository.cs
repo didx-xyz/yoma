@@ -9,6 +9,7 @@ using Yoma.Core.Domain.Opportunity;
 using Yoma.Core.Domain.Opportunity.Services;
 using Yoma.Core.Infrastructure.Database.Context;
 using Yoma.Core.Infrastructure.Database.Core.Repositories;
+using Yoma.Core.Infrastructure.Shared.Extensions;
 
 namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
 {
@@ -24,9 +25,19 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
       return Query(false);
     }
 
+    public IQueryable<Domain.Opportunity.Models.Opportunity> Query(LockMode lockMode)
+    {
+      return Query(false).WithLock(lockMode);
+    }
+
+    public IQueryable<Domain.Opportunity.Models.Opportunity> Query(bool includeChildItems, LockMode lockMode)
+    {
+      return Query(includeChildItems).WithLock(lockMode);
+    }
+
     public IQueryable<Domain.Opportunity.Models.Opportunity> Query(bool includeChildItems)
     {
-      return _context.Opportunity.Select(entity => new Domain.Opportunity.Models.Opportunity()
+      var query = _context.Opportunity.Select(entity => new Domain.Opportunity.Models.Opportunity()
       {
         Id = entity.Id,
         Title = entity.Title,
@@ -119,8 +130,11 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
                 Type = Enum.Parse<VerificationType>(o.VerificationType.Name, true),
                 DisplayName = o.VerificationType.DisplayName,
                 Description = o.Description ?? o.VerificationType.Description
-              }).OrderBy(o => o.DisplayName).ToList() : null,
-      }).AsSplitQuery();
+              }).OrderBy(o => o.DisplayName).ToList() : null
+      });
+
+      if (includeChildItems) query = query.AsSplitQuery();
+      return query;
     }
 
     public Expression<Func<Domain.Opportunity.Models.Opportunity, bool>> Contains(Expression<Func<Domain.Opportunity.Models.Opportunity, bool>> predicate, string value)

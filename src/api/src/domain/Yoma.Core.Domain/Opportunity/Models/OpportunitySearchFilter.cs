@@ -1,10 +1,12 @@
+using Yoma.Core.Domain.Core;
+
 namespace Yoma.Core.Domain.Opportunity.Models
 {
   public class OpportunitySearchFilter : OpportunitySearchFilterBase
   {
     /// <summary>
-    /// Optionally defines the published states to filter opportunities. Results are always associated with an active organization. By default active (published) opportunities are included,
-    /// irrespective of whether they started (includes both NotStarted and Active states). This default behavior is overridable
+    /// Optionally filters opportunities by their published state. By default, results include opportunities that are published (both the opportunity and its organization are Active), 
+    /// regardless of whether they have started (thus published states NotStarted and Active). This default behavior can be overridden
     /// </summary>
     public new List<PublishedState>? PublishedStates { get; set; }
 

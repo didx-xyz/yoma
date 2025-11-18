@@ -1,6 +1,7 @@
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models.Lookups;
 using Yoma.Core.Infrastructure.Database.Context;
+using Yoma.Core.Infrastructure.Shared.Extensions;
 
 namespace Yoma.Core.Infrastructure.Database.Core.Repositories.Lookups
 {
@@ -13,6 +14,11 @@ namespace Yoma.Core.Infrastructure.Database.Core.Repositories.Lookups
     #endregion
 
     #region Public Members
+    public IQueryable<DownloadScheduleStatus> Query(Domain.Core.LockMode lockMode)
+    {
+      return Query().WithLock(lockMode);
+    }
+
     public IQueryable<DownloadScheduleStatus> Query()
     {
       return _context.DownloadScheduleStatus.Select(entity => new DownloadScheduleStatus

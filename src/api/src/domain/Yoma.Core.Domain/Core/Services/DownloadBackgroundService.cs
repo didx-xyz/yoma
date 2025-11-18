@@ -81,6 +81,8 @@ namespace Yoma.Core.Domain.Core.Services
         var itemIdsToSkip = new List<Guid>();
         while (executeUntil > DateTimeOffset.UtcNow)
         {
+          var now = DateTimeOffset.UtcNow;
+
           var items = _downloadService.ListPendingSchedule(_scheduleJobOptions.DownloadScheduleProcessingBatchSize, itemIdsToSkip);
           if (items.Count == 0) break;
 
@@ -193,7 +195,7 @@ namespace Yoma.Core.Domain.Core.Services
 
                 var data = new NotificationDownload
                 {
-                  DateStamp = DateTimeOffset.UtcNow,
+                  DateStamp = now,
                   FileName = blobObject?.OriginalFileName,
                   FileURL = blobObject == null ? null : _blobService.GetURL(blobObject.StorageType, blobObject.Key, blobObject.OriginalFileName, _appSettings.DownloadScheduleLinkExpirationHours * 60),
                   ExpirationHours = _appSettings.DownloadScheduleLinkExpirationHours,
@@ -277,7 +279,7 @@ namespace Yoma.Core.Domain.Core.Services
               // ensuring data consistency.
               await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
               {
-                using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+                using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
 
                 var fileId = item.FileId.Value;
 

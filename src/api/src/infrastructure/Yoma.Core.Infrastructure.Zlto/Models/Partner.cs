@@ -7,28 +7,28 @@ namespace Yoma.Core.Infrastructure.Zlto.Models
   public class PartnerRequestLogin
   {
     [JsonProperty("partner_username")]
-    public string Username { get; set; }
+    public string Username { get; set; } = null!;
 
     [JsonProperty("partner_password")]
-    public string Password { get; set; }
+    public string Password { get; set; } = null!;
   }
 
   public class PartnerResponseLogin
   {
     [JsonProperty("access_token")]
-    public string AccessToken { get; set; }
+    public string AccessToken { get; set; } = null!;
 
     [JsonProperty("account_info")]
-    public PartnerAccount AccountInfo { get; set; }
+    public PartnerAccount AccountInfo { get; set; } = null!;
   }
 
   public class PartnerAccount
   {
     [JsonProperty("partner_name")]
-    public string PartnerName { get; set; }
+    public string PartnerName { get; set; } = null!;
 
     [JsonProperty("partner_username")]
-    public string PartnerUsername { get; set; }
+    public string PartnerUsername { get; set; } = null!;
 
     [JsonProperty("partner_type")]
     public int PartnerType { get; set; }
@@ -37,10 +37,10 @@ namespace Yoma.Core.Infrastructure.Zlto.Models
     public DateTime LastLogin { get; set; }
 
     [JsonProperty("partner_password")]
-    public string PartnerPassword { get; set; }
+    public string PartnerPassword { get; set; } = null!;
 
     [JsonProperty("partner_id")]
-    public string PartnerId { get; set; }
+    public string PartnerId { get; set; } = null!;
 
     [JsonProperty("partner_status")]
     [JsonConverter(typeof(StringEnumConverter))]

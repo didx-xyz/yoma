@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Http;
-using System.Transactions;
 using Yoma.Core.Domain.BlobProvider;
 using Yoma.Core.Domain.BlobProvider.Interfaces;
 using Yoma.Core.Domain.Core.Exceptions;
@@ -122,7 +121,7 @@ namespace Yoma.Core.Domain.Core.Services
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
-        using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
+        using var scope = TransactionScopeHelper.CreateReadCommitted();
 
         await _blobObjectRepository.Delete(item);
         await client.Delete(item.Key);
@@ -176,7 +175,7 @@ namespace Yoma.Core.Domain.Core.Services
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
-        using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
+        using var scope = TransactionScopeHelper.CreateReadCommitted();
 
         result = await _blobObjectRepository.Create(result);
 
@@ -217,7 +216,7 @@ namespace Yoma.Core.Domain.Core.Services
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
-        using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
+        using var scope = TransactionScopeHelper.CreateReadCommitted();
 
         result = await _blobObjectRepository.Create(result);
 

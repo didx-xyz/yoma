@@ -157,6 +157,8 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({
     <Link
       href={`/opportunities/${data.id}`}
       className="relative flex h-[17.5rem] w-[19.2rem] flex-col gap-1 overflow-hidden rounded-lg bg-white p-4 shadow-xs"
+      target="_blank"
+      rel="noopener noreferrer"
     >
       {renderContent()}
     </Link>

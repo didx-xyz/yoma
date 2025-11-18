@@ -3,7 +3,7 @@ import type { PaginationFilter } from "./common";
 export interface LinkRequestCreateBase {
   name: string | null;
   description: string | null;
-  entityType: LinkEntityType | string | null; // NB: string | null is not in the original model
+  entityType: ActionLinkEntityType | string | null; // NB: string | null is not in the original model
   entityId: string | null; // NB: null is not in the original model
   includeQRCode: boolean | null;
 }
@@ -21,10 +21,10 @@ export interface LinkInfo {
   id: string;
   name: string;
   description: string | null;
-  entityType: LinkEntityType | string; //NB: string is not in the original model
+  entityType: ActionLinkEntityType | string; //NB: string is not in the original model
   action: LinkAction | string; //NB:
   statusId: string;
-  status: LinkStatus | string; //NB:
+  status: ActionLinkStatus | string; //NB:
   entityId: string;
   entityTitle: string;
   entityOrganizationId: string | null;
@@ -42,27 +42,27 @@ export interface LinkInfo {
   dateModified: string;
 }
 
-export enum LinkEntityType {
-  Opportunity,
+export enum ActionLinkEntityType {
+  Opportunity = "Opportunity",
 }
 
 export enum LinkAction {
-  Share,
-  Verify,
+  Share = "Share",
+  Verify = "Verify",
 }
 
-export enum LinkStatus {
-  Active,
-  Inactive,
-  Expired,
-  LimitReached,
-  Deleted,
+export enum ActionLinkStatus {
+  Active = "Active",
+  Inactive = "Inactive",
+  Expired = "Expired",
+  LimitReached = "LimitReached",
+  Deleted = "Deleted",
 }
 
 export interface LinkSearchFilter extends PaginationFilter {
-  entityType: LinkEntityType | string | null; // NB: string | null is not in the original model
+  entityType: ActionLinkEntityType | string | null; // NB: string | null is not in the original model
   action: LinkAction | string | null; // NB: string | null is not in the original model
-  statuses: LinkStatus[] | null | string[]; // NB: string[] null is not in the original model
+  statuses: ActionLinkStatus[] | null | string[]; // NB: string[] null is not in the original model
   entities: string[] | null;
   organizations: string[] | null;
   valueContains: string | null;
@@ -75,14 +75,14 @@ export interface LinkSearchResult {
 
 export interface LinkSearchFilterUsage extends PaginationFilter {
   id: string;
-  usage: LinkUsageStatus | string | null; // NB: string | null is not in the original model
+  usage: ActionLinkUsageStatus | string | null; // NB: string | null is not in the original model
   valueContains: string | null;
 }
 
-export enum LinkUsageStatus {
-  All,
-  Claimed,
-  Unclaimed,
+export enum ActionLinkUsageStatus {
+  All = "All",
+  Claimed = "Claimed",
+  Unclaimed = "Unclaimed",
 }
 
 export interface LinkSearchResultsUsage {

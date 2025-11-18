@@ -6,7 +6,7 @@ namespace Yoma.Core.Domain.Entity.Models
   public abstract class OrganizationRequestBase
   {
     [Required]
-    public string Name { get; set; }
+    public string Name { get; set; } = null!;
 
     public string? WebsiteURL { get; set; }
 
@@ -47,7 +47,7 @@ namespace Yoma.Core.Domain.Entity.Models
     public IFormFile? Logo { get; set; }
 
     [Required]
-    public List<Guid> ProviderTypes { get; set; }
+    public List<Guid> ProviderTypes { get; set; } = null!;
 
     public List<IFormFile>? RegistrationDocuments { get; set; }
 

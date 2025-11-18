@@ -4,29 +4,29 @@ namespace Yoma.Core.Domain.ActionLink.Models
   {
     public Guid Id { get; set; }
 
-    public string Name { get; set; }
+    public string Name { get; set; } = null!;
 
     public string? Description { get; set; }
 
-    public LinkEntityType EntityType { get; set; }
+    public ActionLinkEntityType EntityType { get; set; }
 
     public LinkAction Action { get; set; }
 
     public Guid StatusId { get; set; }
 
-    public LinkStatus Status { get; set; }
+    public ActionLinkStatus Status { get; set; }
 
     public Guid EntityId { get; set; }
 
-    public string EntityTitle { get; set; }
+    public string EntityTitle { get; set; } = null!;
 
     public Guid? EntityOrganizationId { get; set; }
 
     public string? EntityOrganizationName { get; set; }
 
-    public string URL { get; set; }
+    public string URL { get; set; } = null!;
 
-    public string ShortURL { get; set; }
+    public string ShortURL { get; set; } = null!;
 
     public string? QRCodeBase64 { get; set; }
 

@@ -60,11 +60,14 @@ const CustomModal: FC<CustomModalProps> = ({
 
     return () => {
       // Clean up the modal container on unmount
-      document.body.removeChild(div);
+      if (document.body.contains(div)) {
+        document.body.removeChild(div);
+      }
     };
   }, []);
 
-  if (!isOpen || !modalContainer) return null;
+  // Don't render portal content if modal is closed or container not ready
+  if (!modalContainer) return null;
 
   const handleOverlayClick = () => {
     if (shouldCloseOnOverlayClick && onRequestClose) {
@@ -127,22 +130,24 @@ const CustomModal: FC<CustomModalProps> = ({
 
   return (
     <>
-      {createPortal(
-        <div className="fixed inset-0 z-40">
-          <div
-            className="bg-overlay fixed inset-0"
-            onClick={handleOverlayClick}
-          />
-          <div
-            ref={modalRef}
-            tabIndex={-1}
-            className={`visible fixed top-0 right-0 bottom-0 left-0 grow overflow-hidden overflow-y-auto bg-white transition-all duration-300 ease-in-out ${animationClasses} md:m-auto md:rounded-3xl ${className}`}
-          >
-            {children}
-          </div>
-        </div>,
-        modalContainer,
-      )}
+      {isOpen &&
+        createPortal(
+          <div className="fixed inset-0 z-40">
+            <div
+              className="bg-overlay fixed inset-0"
+              onClick={handleOverlayClick}
+            />
+            <div
+              ref={modalRef}
+              tabIndex={-1}
+              id="custom-modal-content"
+              className={`visible fixed top-0 right-0 bottom-0 left-0 grow overflow-hidden overflow-y-auto bg-white transition-all duration-300 ease-in-out ${animationClasses} md:m-auto md:rounded-3xl ${className}`}
+            >
+              {children}
+            </div>
+          </div>,
+          modalContainer,
+        )}
     </>
   );
 };

@@ -4,7 +4,7 @@ namespace Yoma.Core.Infrastructure.Substack.Models
   {
     public Guid Id { get; set; }
 
-    public string FeedType { get; set; }
+    public string FeedType { get; set; } = null!;
 
     public string? ETag { get; set; }
 

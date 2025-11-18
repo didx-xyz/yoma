@@ -1,17 +1,6 @@
 namespace Yoma.Core.Domain.ActionLink
 {
-  public enum LinkEntityType
-  {
-    Opportunity
-  }
-
-  public enum LinkAction
-  {
-    Share,
-    Verify
-  }
-
-  public enum LinkStatus
+  public enum ActionLinkStatus
   {
     Active, // flagged as expired if end date reached
     Inactive, // flagged as deleted if inactive for x days
@@ -20,10 +9,21 @@ namespace Yoma.Core.Domain.ActionLink
     Deleted
   }
 
-  public enum LinkUsageStatus
+  public enum ActionLinkUsageStatus
   {
     All,
     Claimed,
     Unclaimed
+  }
+
+  public enum ActionLinkEntityType
+  {
+    Opportunity
+  }
+
+  public enum LinkAction
+  {
+    Share,
+    Verify
   }
 }

@@ -3,6 +3,7 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Yoma.Core.Infrastructure.Database.Core.Entities;
 using Yoma.Core.Infrastructure.Database.Lookups.Entities;
+using Yoma.Core.Infrastructure.Database.Referral.Entities;
 
 namespace Yoma.Core.Infrastructure.Database.Entity.Entities
 {
@@ -69,5 +70,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Entities
     public DateTimeOffset DateModified { get; set; }
 
     public ICollection<UserSkill>? Skills { get; set; }
+
+    public ICollection<Block>? Blocks { get; set; }
   }
 }

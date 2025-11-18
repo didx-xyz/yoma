@@ -7,15 +7,15 @@ namespace Yoma.Core.Infrastructure.Substack.Models
   {
     public const string Section = "Substack";
 
-    public string PollSchedule { get; init; }
+    public string PollSchedule { get; init; } = null!;
 
     public int RetentionDays { get; init; }
 
     public int RequestTimeoutSeconds { get; init; }
 
-    public string UserAgent { get; init; }
+    public string UserAgent { get; init; } = null!;
 
-    public Dictionary<FeedType, SubstackOptionsFeed> Feeds { get; set; }
+    public Dictionary<FeedType, SubstackOptionsFeed> Feeds { get; set; } = null!;
   }
 
   public class SubstackOptionsFeed

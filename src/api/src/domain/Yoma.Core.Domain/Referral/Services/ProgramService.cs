@@ -1,0 +1,965 @@
+using FluentValidation;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
+using System.Transactions;
+using Yoma.Core.Domain.BlobProvider;
+using Yoma.Core.Domain.Core;
+using Yoma.Core.Domain.Core.Exceptions;
+using Yoma.Core.Domain.Core.Extensions;
+using Yoma.Core.Domain.Core.Helpers;
+using Yoma.Core.Domain.Core.Interfaces;
+using Yoma.Core.Domain.Core.Models;
+using Yoma.Core.Domain.Entity.Interfaces;
+using Yoma.Core.Domain.Opportunity.Interfaces;
+using Yoma.Core.Domain.Opportunity.Models;
+using Yoma.Core.Domain.Referral.Interfaces;
+using Yoma.Core.Domain.Referral.Interfaces.Lookups;
+using Yoma.Core.Domain.Referral.Models;
+using Yoma.Core.Domain.Referral.Validators;
+
+namespace Yoma.Core.Domain.Referral.Services
+{
+  public class ProgramService : IProgramService
+  {
+    #region Class Variables
+    private readonly ILogger<ProgramService> _logger;
+    private readonly IHttpContextAccessor _httpContextAccessor;
+
+    private readonly IProgramStatusService _programStatusService;
+    private readonly IOpportunityService _opportunityService;
+    private readonly IBlobService _blobService;
+    private readonly IUserService _userService;
+    private readonly ILinkMaintenanceService _linkMaintenanceService;
+
+    private readonly IExecutionStrategyService _executionStrategyService;
+
+    private readonly ProgramSearchFilterValidator _programSearchFilterValidator;
+    private readonly ProgramRequestValidatorCreate _programRequestValidatorCreate;
+    private readonly ProgramRequestValidatorUpdate _programRequestValidatorUpdate;
+
+    private readonly IRepositoryBatchedValueContainsWithNavigation<Program> _programRepository;
+    private readonly IRepositoryWithNavigation<ProgramPathway> _programPathwayRepository;
+    private readonly IRepositoryWithNavigation<ProgramPathwayStep> _programPathwayStepRepository;
+    private readonly IRepository<ProgramPathwayTask> _programPathwayTaskRepository;
+
+    private static readonly ProgramStatus[] Statuses_Updatable = [ProgramStatus.Active, ProgramStatus.Inactive, ProgramStatus.UnCompletable];
+    private static readonly ProgramStatus[] Statuses_Activatable = [ProgramStatus.Inactive]; // Expired must go Inactive→fix→Active; LimitReached is locked
+    private static readonly ProgramStatus[] Statuses_CanDelete = [ProgramStatus.Active, ProgramStatus.Inactive, ProgramStatus.UnCompletable];
+    private static readonly ProgramStatus[] Statuses_DeActivatable = [ProgramStatus.Active, ProgramStatus.Expired]; // allow moving Expired→Inactive to edit
+
+    #endregion
+
+    #region Constrcutor
+    public ProgramService(
+      ILogger<ProgramService> logger,
+      IHttpContextAccessor httpContextAccessor,
+
+      IProgramStatusService programStatusService,
+      IOpportunityService opportunityService,
+      IBlobService blobService,
+      IUserService userService,
+      ILinkMaintenanceService linkMaintenanceService,
+
+      IExecutionStrategyService executionStrategyService,
+
+      ProgramSearchFilterValidator programSearchFilterValidator,
+      ProgramRequestValidatorCreate programRequestValidatorCreate,
+      ProgramRequestValidatorUpdate programRequestValidatorUpdate,
+
+      IRepositoryBatchedValueContainsWithNavigation<Program> programRepository,
+      IRepositoryWithNavigation<ProgramPathway> programPathwayRepository,
+      IRepositoryWithNavigation<ProgramPathwayStep> programPathwayStepRepository,
+      IRepository<ProgramPathwayTask> programPathwayTaskRepository
+    )
+    {
+      _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+      _httpContextAccessor = httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
+
+      _programStatusService = programStatusService ?? throw new ArgumentNullException(nameof(programStatusService));
+      _opportunityService = opportunityService ?? throw new ArgumentNullException(nameof(opportunityService));
+      _blobService = blobService ?? throw new ArgumentNullException(nameof(blobService));
+      _userService = userService ?? throw new ArgumentNullException(nameof(userService));
+      _linkMaintenanceService = linkMaintenanceService ?? throw new ArgumentNullException(nameof(linkMaintenanceService));
+
+      _executionStrategyService = executionStrategyService ?? throw new ArgumentNullException(nameof(executionStrategyService));
+
+      _programSearchFilterValidator = programSearchFilterValidator ?? throw new ArgumentNullException(nameof(programSearchFilterValidator));
+      _programRequestValidatorCreate = programRequestValidatorCreate ?? throw new ArgumentNullException(nameof(programRequestValidatorCreate));
+      _programRequestValidatorUpdate = programRequestValidatorUpdate ?? throw new ArgumentNullException(nameof(programRequestValidatorUpdate));
+
+      _programRepository = programRepository ?? throw new ArgumentNullException(nameof(programRepository));
+      _programPathwayRepository = programPathwayRepository ?? throw new ArgumentNullException(nameof(programPathwayRepository));
+      _programPathwayStepRepository = programPathwayStepRepository ?? throw new ArgumentNullException(nameof(programPathwayStepRepository));
+      _programPathwayTaskRepository = programPathwayTaskRepository ?? throw new ArgumentNullException(nameof(programPathwayTaskRepository));
+    }
+    #endregion
+
+    #region Public Membmers
+    public Program GetById(Guid id, bool includeChildItems, bool includeComputed)
+    {
+      var result = GetByIdOrNull(id, includeChildItems, includeComputed)
+        ?? throw new EntityNotFoundException($"{nameof(Program)} with id '{id}' does not exist");
+
+      return result;
+    }
+
+    public Program? GetByIdOrNull(Guid id, bool includeChildItems, bool includeComputed)
+    {
+      if (id == Guid.Empty)
+        throw new ArgumentNullException(nameof(id));
+
+      var result = _programRepository.Query(includeChildItems).SingleOrDefault(o => o.Id == id);
+      if (result == null) return null;
+
+      if (includeComputed)
+        result.ImageURL = GetBlobObjectURL(result.ImageStorageType, result.ImageKey);
+
+      return result;
+    }
+
+    public Program? GetByNameOrNull(string name, bool includeChildItems, bool includeComputed)
+    {
+      if (string.IsNullOrWhiteSpace(name)) throw new ArgumentNullException(nameof(name));
+      name = name.Trim();
+
+#pragma warning disable CA1862 // Use the 'StringComparison' method overloads to perform case-insensitive string comparisons
+      var result = _programRepository.Query(includeChildItems).SingleOrDefault(o => o.Name.ToLower() == name.ToLower());
+#pragma warning restore CA1862 // Use the 'StringComparison' method overloads to perform case-insensitive string comparisons
+      if (result == null) return null;
+
+      if (includeComputed)
+        result.ImageURL = GetBlobObjectURL(result.ImageStorageType, result.ImageKey);
+
+      return result;
+    }
+
+    public Program GetByLinkId(Guid linkId, bool includeChildItems, bool includeComputed)
+    {
+      var link = _linkMaintenanceService.GetById(linkId);
+
+      return GetById(link.ProgramId, includeChildItems, includeComputed);
+    }
+
+    public Program? GetDefaultOrNull(bool includeChildItems, bool includeComputed)
+    {
+      var results = _programRepository.Query(includeChildItems).Where(o => o.IsDefault).ToList();
+      if (results.Count > 1)
+        throw new DataInconsistencyException($"Multiple {nameof(Program)} records are marked as default");
+
+      var result = results.SingleOrDefault();
+      if (result == null) return null;
+
+      if (includeComputed)
+        result.ImageURL = GetBlobObjectURL(result.ImageStorageType, result.ImageKey);
+
+      return result;
+    }
+
+    public ProgramSearchResults Search(ProgramSearchFilterAdmin filter)
+    {
+      ArgumentNullException.ThrowIfNull(filter, nameof(filter));
+
+      _programSearchFilterValidator.ValidateAndThrow(filter);
+
+      var query = _programRepository.Query(true);
+
+      //valueContains
+      if (!string.IsNullOrEmpty(filter.ValueContains))
+      {
+        filter.ValueContains = filter.ValueContains.Trim();
+        query = _programRepository.Contains(query, filter.ValueContains);
+      }
+
+      if (filter.PublishedStates != null)
+      {
+        var statusActiveId = _programStatusService.GetByName(ProgramStatus.Active.ToString()).Id;
+        var statusExpiredId = _programStatusService.GetByName(ProgramStatus.Expired.ToString()).Id;
+
+        var predicate = PredicateBuilder.False<Program>();
+        foreach (var state in filter.PublishedStates)
+        {
+          switch (state)
+          {
+            case PublishedState.NotStarted:
+              predicate = predicate.Or(o => o.StatusId == statusActiveId && o.DateStart > DateTimeOffset.UtcNow);
+
+              break;
+
+            case PublishedState.Active:
+              predicate = predicate.Or(o => o.StatusId == statusActiveId && o.DateStart <= DateTimeOffset.UtcNow);
+              break;
+
+            case PublishedState.Expired:
+              predicate = predicate.Or(o => o.StatusId == statusExpiredId);
+              break;
+          }
+        }
+
+        query = query.Where(predicate);
+      }
+
+      //date range
+      if (filter.DateStart.HasValue)
+      {
+        filter.DateStart = filter.DateStart.Value.RemoveTime();
+        query = query.Where(o => o.DateStart >= filter.DateStart.Value);
+      }
+
+      if (filter.DateEnd.HasValue)
+      {
+        filter.DateEnd = filter.DateEnd.Value.ToEndOfDay();
+        query = query.Where(o => o.DateEnd <= filter.DateEnd.Value);
+      }
+
+      //statuses
+      if (filter.Statuses != null && filter.Statuses.Count != 0)
+      {
+        filter.Statuses = [.. filter.Statuses.Distinct()];
+        var statusIds = filter.Statuses.Select(o => _programStatusService.GetByName(o.ToString()).Id).ToList();
+        query = query.Where(o => statusIds.Contains(o.StatusId));
+      }
+
+      query = query.OrderBy(o => o.Name).ThenBy(o => o.Id);
+
+      var results = new ProgramSearchResults();
+
+      if (filter.TotalCountOnly)
+      {
+        results.TotalCount = query.Count();
+        return results;
+      }
+
+      if (filter.PaginationEnabled)
+      {
+        results.TotalCount = query.Count();
+        query = query.Skip((filter.PageNumber.Value - 1) * filter.PageSize.Value).Take(filter.PageSize.Value);
+      }
+
+      results.Items = [.. query];
+
+      results.Items.ForEach(o => o.ImageURL = GetBlobObjectURL(o.ImageStorageType, o.ImageKey));
+      return results;
+    }
+
+    public async Task<Program> Create(ProgramRequestCreate request)
+    {
+      ArgumentNullException.ThrowIfNull(request, nameof(request));
+
+      await _programRequestValidatorCreate.ValidateAndThrowAsync(request);
+
+      request.DateStart = request.DateStart.RemoveTime();
+      if (request.DateEnd.HasValue) request.DateEnd = request.DateEnd.Value.ToEndOfDay();
+
+      if (request.DateStart < DateTimeOffset.UtcNow.RemoveTime())
+        throw new ValidationException("The start date cannot be in the past, it can be today or later");
+
+      var existingByName = GetByNameOrNull(request.Name, false, false);
+      if (existingByName != null)
+        throw new ValidationException($"{nameof(Program)} with the specified name '{request.Name}' already exists");
+
+      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+
+      var result = new Program
+      {
+        Name = request.Name,
+        Description = request.Description,
+        CompletionWindowInDays = request.CompletionWindowInDays,
+        CompletionLimitReferee = request.CompletionLimitReferee,
+        CompletionLimit = request.CompletionLimit,
+        ZltoRewardReferrer = request.ZltoRewardReferrer,
+        ZltoRewardReferee = request.ZltoRewardReferee,
+        ZltoRewardPool = request.ZltoRewardPool,
+        ProofOfPersonhoodRequired = request.ProofOfPersonhoodRequired,
+        PathwayRequired = request.PathwayRequired,
+        MultipleLinksAllowed = request.MultipleLinksAllowed,
+        StatusId = _programStatusService.GetByName(ProgramStatus.Active.ToString()).Id,
+        Status = ProgramStatus.Active,
+        IsDefault = false, //processed below if true
+        DateStart = request.DateStart,
+        DateEnd = request.DateEnd,
+        CreatedByUserId = user.Id,
+        ModifiedByUserId = user.Id
+      };
+
+      await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+      {
+        using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
+
+        //create the program
+        result = await _programRepository.Create(result);
+
+        //set as default
+        if (request.IsDefault)
+        {
+          var outcome = await SetAsDefault(result);
+          if (outcome.Updated) result = outcome.Program;
+        }
+
+        //pathway
+        if (request.Pathway != null) result = await UpsertProgramPathway(result, request.Pathway);
+
+        scope.Complete();
+      });
+
+      return result;
+    }
+
+    public async Task<Program> Update(ProgramRequestUpdate request)
+    {
+      ArgumentNullException.ThrowIfNull(request, nameof(request));
+
+      await _programRequestValidatorUpdate.ValidateAndThrowAsync(request);
+
+      request.DateStart = request.DateStart.RemoveTime();
+      if (request.DateEnd.HasValue) request.DateEnd = request.DateEnd.Value.ToEndOfDay();
+
+      var result = GetById(request.Id, true, false);
+      var now = DateTimeOffset.UtcNow;
+
+      AssertUpdatable(result);
+
+      _logger.LogInformation("Updating Program {ProgramId}. Current(Status={Status}, Start={Start:yyyy-MM-dd}, End={End:yyyy-MM-dd}, Limit={Limit}, Total={Total}) Requested(Start={RStart:yyyy-MM-dd}, End={REnd:yyyy-MM-dd}, Limit={RLimit})",
+        result.Id, result.Status, result.DateStart, result.DateEnd, result.CompletionLimit, result.CompletionTotal, request.DateStart, request.DateEnd, request.CompletionLimit);
+
+      var existingByName = GetByNameOrNull(request.Name, false, false);
+      if (existingByName != null && result.Id != existingByName.Id)
+        throw new ValidationException($"{nameof(Program)} with the specified name '{request.Name}' already exists");
+
+      if (!result.DateStart.Equals(request.DateStart) && request.DateStart < now.RemoveTime())
+        throw new ValidationException("The start date cannot be in the past. The start date has been updated and must be today or later");
+
+      // If DateEnd is in the past/now, immediately expire 
+      if (request.DateEnd.HasValue && request.DateEnd.Value <= now)
+      {
+        result.Status = ProgramStatus.Expired;
+        result.StatusId = _programStatusService.GetByName(ProgramStatus.Expired.ToString()).Id;
+
+        //notification not send NotificationType.ReferralProgram_Expiration_Expired (sent to admin); explicit admin action
+      }
+      // If program was UnCompletable but the edit makes it healthy, flip to Active provided not limit reached
+      else if (result.Status == ProgramStatus.UnCompletable)
+      {
+        if (request.CompletionLimit.HasValue && (result.CompletionTotal ?? 0) >= request.CompletionLimit.Value)
+        {
+          _logger.LogInformation("Program {ProgramId} edited from UnCompletable -> LimitReached (cap hit: {CompletionTotal}/{CompletionLimit})",
+            result.Id, result.CompletionTotal, request.CompletionLimit);
+
+          result.Status = ProgramStatus.LimitReached;
+          result.StatusId = _programStatusService.GetByName(ProgramStatus.LimitReached.ToString()).Id;
+        }
+        else
+        {
+          _logger.LogInformation("Program {ProgramId} edited from UnCompletable -> Active", result.Id);
+
+          result.Status = ProgramStatus.Active;
+          result.StatusId = _programStatusService.GetByName(ProgramStatus.Active.ToString()).Id;
+        }
+      }
+
+      if (request.ZltoRewardPool.HasValue && result.ZltoRewardCumulative.HasValue && request.ZltoRewardPool.Value < result.ZltoRewardCumulative.Value)
+        throw new ValidationException($"The Zlto reward pool cannot be less than the cumulative Zlto rewards ({result.ZltoRewardCumulative.Value:F0}) already allocated to participants");
+
+      if (request.CompletionLimitReferee.HasValue && request.CompletionLimit.HasValue && request.CompletionLimitReferee.Value > request.CompletionLimit.Value)
+        throw new ValidationException($"The per-referrer completion limit cannot exceed the overall completion limit of {request.CompletionLimit.Value}");
+
+      if (request.CompletionLimit.HasValue && result.CompletionTotal.HasValue && request.CompletionLimit.Value < result.CompletionTotal.Value)
+        throw new ValidationException($"The overall completion limit cannot be lower than the total completions already recorded ({result.CompletionTotal.Value:F0})");
+
+      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+
+      result.Name = request.Name;
+      result.Description = request.Description;
+      result.CompletionWindowInDays = request.CompletionWindowInDays;
+      result.CompletionLimitReferee = request.CompletionLimitReferee;
+      result.CompletionLimit = request.CompletionLimit;
+      result.ZltoRewardReferrer = request.ZltoRewardReferrer;
+      result.ZltoRewardReferee = request.ZltoRewardReferee;
+      result.ZltoRewardPool = request.ZltoRewardPool;
+      result.ProofOfPersonhoodRequired = request.ProofOfPersonhoodRequired;
+      result.PathwayRequired = request.PathwayRequired;
+      result.MultipleLinksAllowed = request.MultipleLinksAllowed;
+      //status processed above
+      if (!request.IsDefault) result.IsDefault = false; //processed below if true to avoid unique index constraint 
+      result.DateStart = request.DateStart;
+      result.DateEnd = request.DateEnd;
+      result.ModifiedByUserId = user.Id;
+
+      await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+      {
+        using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
+
+        //pathway
+        if (request.Pathway == null)
+          result = await DeleteProgramPathway(result);
+        else
+        {
+          result = await DeletePathwayChildren(result, request.Pathway);
+          result = await UpsertProgramPathway(result, request.Pathway);
+        }
+
+        //update the program
+        result = await _programRepository.Update(result);
+
+        //set as default
+        if (request.IsDefault)
+        {
+          var outcome = await SetAsDefault(result);
+          if (outcome.Updated) result = outcome.Program;
+        }
+
+        if (result.Status == ProgramStatus.Expired)
+          await _linkMaintenanceService.ExpireByProgramId([result.Id], _logger);
+        else if (result.Status == ProgramStatus.LimitReached)
+          await _linkMaintenanceService.LimitReachedByProgramId([result.Id], _logger);
+
+        scope.Complete();
+      });
+
+      _logger.LogInformation("Program {ProgramId} updated. FinalStatus={Status}", result.Id, result.Status);
+
+      return result;
+    }
+
+    public async Task<Program> UpdateImage(Guid id, IFormFile file)
+    {
+      var result = GetById(id, false, false);
+
+      AssertUpdatable(result);
+
+      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+
+      (Program? Program, BlobObject? ItemAdded) resultImage = (null, null);
+      await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+      {
+        using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
+        resultImage = await UpdateImage(result, file);
+        result.ModifiedByUserId = user.Id;
+        result = await _programRepository.Update(result);
+        scope.Complete();
+      });
+
+      if (resultImage.Program == null)
+        throw new InvalidOperationException($"{nameof(Program)} expected");
+
+      return resultImage.Program;
+    }
+
+    public async Task<Program> UpdateStatus(Guid id, ProgramStatus status)
+    {
+      var result = GetById(id, true, false);
+      var now = DateTimeOffset.UtcNow;
+
+      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+
+      bool cancelReferralLinks = false;
+      bool flipLinksToLimitReached = false;
+
+      var originalStatus = result.Status;
+      var finalStatus = status;
+
+      _logger.LogInformation("UpdateStatus requested for Program {ProgramId}. Requested={Requested} Current={Current} End={End} CompletionLimit={CompletionLimit} CompletionTotal={CompletionTotal}",
+        result.Id, status, result.Status, result.DateEnd?.ToString("yyyy-MM-dd") ?? "(null)", result.CompletionLimit, result.CompletionTotal);
+
+      switch (status)
+      {
+        case ProgramStatus.Active:
+          if (result.Status == ProgramStatus.Active) return result;
+          if (!Statuses_Activatable.Contains(result.Status))
+            throw new ValidationException($"The {nameof(Program)} cannot be activated (current status '{result.Status.ToDescription()}'). Required state '{Statuses_Activatable.JoinNames()}'");
+
+          //ensure DateEnd was updated for re-activation of previously expired program
+          if (result.DateEnd.HasValue && result.DateEnd.Value <= now)
+            throw new ValidationException($"The {nameof(Program)} cannot be activated because its end date ('{result.DateEnd:yyyy-MM-dd}') is in the past. Please update the {nameof(Program).ToLower()} before proceeding with activation");
+
+          EnsurePathwayIsCompletableOrThrow(result.Pathway);
+
+          if (result.CompletionLimit.HasValue && (result.CompletionTotal ?? 0) >= result.CompletionLimit.Value)
+          {
+            finalStatus = ProgramStatus.LimitReached;
+            _logger.LogInformation("Program {ProgramId} activation resolved to LimitReached (cap hit: {Total}/{Limit})", result.Id, result.CompletionTotal, result.CompletionLimit);
+
+            flipLinksToLimitReached = true;
+          }
+          else
+            finalStatus = ProgramStatus.Active;
+          break;
+
+        case ProgramStatus.Inactive:
+          // existing referral links remain usable and can still be completed, but new links cannot be created
+          if (result.Status == ProgramStatus.Inactive) return result;
+          if (!Statuses_DeActivatable.Contains(result.Status))
+            throw new ValidationException($"The {nameof(Program)} cannot be deactivated (current status '{result.Status.ToDescription()}'). Required state '{Statuses_DeActivatable.JoinNames()}'");
+
+          break;
+
+        case ProgramStatus.Deleted:
+          if (result.Status == ProgramStatus.Deleted) return result;
+          if (!Statuses_CanDelete.Contains(result.Status))
+            throw new ValidationException($"The {nameof(Program)} cannot be deleted (current status '{result.Status.ToDescription()}'). Required state '{Statuses_CanDelete.JoinNames()}'");
+
+          cancelReferralLinks = true;
+
+          break;
+
+        default:
+          throw new ArgumentOutOfRangeException(nameof(status), $"{nameof(ProgramStatus)} of '{status.ToDescription()}' not supported");
+      }
+
+      if (finalStatus == originalStatus && !cancelReferralLinks && !flipLinksToLimitReached) return result;
+
+      var statusId = _programStatusService.GetByName(finalStatus.ToString()).Id;
+
+      await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+      {
+        using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
+
+        result.StatusId = statusId;
+        result.Status = finalStatus;
+        result.ModifiedByUserId = user.Id;
+
+        result = await _programRepository.Update(result);
+
+        if (cancelReferralLinks)
+        {
+          _logger.LogInformation("Cancelling all referral links for program {ProgramId}", result.Id);
+          await _linkMaintenanceService.CancelByProgramId(result.Id);
+        }
+        else if (flipLinksToLimitReached)
+        {
+          _logger.LogInformation("Flipping links to limit-reached for program {ProgramId}", result.Id);
+          await _linkMaintenanceService.LimitReachedByProgramId(result.Id, _logger);
+        }
+
+        scope.Complete();
+      });
+
+      _logger.LogInformation("Program {ProgramId} status updated. Requested={Requested} Final={Final}", result.Id, status, finalStatus);
+
+      return result;
+    }
+
+    public async Task<Program> SetAsDefault(Guid id)
+    {
+      var result = GetById(id, false, false);
+
+      AssertUpdatable(result);
+
+      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+
+      await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+      {
+        using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
+
+        var outcome = await SetAsDefault(result);
+        if (!outcome.Updated) return;
+
+        result = outcome.Program;
+        result.ModifiedByUserId = user.Id;
+        result = await _programRepository.Update(result);
+
+        scope.Complete();
+      });
+
+      return result;
+    }
+
+    public async Task<Program> ProcessCompletion(Guid programId, decimal? rewardAmount)
+    {
+      if (programId == Guid.Empty)
+        throw new ArgumentNullException(nameof(programId));
+
+      var statusLimitReached = _programStatusService.GetByName(ProgramStatus.LimitReached.ToString());
+
+      Program program = null!;
+      await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+      {
+        using var scope = TransactionScopeHelper.CreateReadCommitted();
+
+        program = _programRepository.Query(LockMode.Wait).SingleOrDefault(p => p.Id == programId)
+          ?? throw new EntityNotFoundException($"{nameof(Program)} with id '{programId}' does not exist");
+
+        // Increment global completion total (always)
+        program.CompletionTotal = (program.CompletionTotal ?? 0) + 1;
+
+        // Only init (if needed) and add reward if any reward
+        if (rewardAmount.HasValue && rewardAmount.Value > 0m)
+          program.ZltoRewardCumulative = (program.ZltoRewardCumulative ?? 0m) + rewardAmount.Value;
+
+        // Only flip to LimitReached if:
+        //  • cap is configured
+        //  • total >= cap
+        //  • program currently Active
+        if (program.Status == ProgramStatus.Active &&
+            program.CompletionLimit.HasValue &&
+            program.CompletionTotal >= program.CompletionLimit.Value)
+        {
+          _logger.LogInformation(
+            "Referral program {ProgramId}: global completion cap reached (total {Total} >= limit {Limit}) — flipping to LIMIT_REACHED",
+            program.Id, program.CompletionTotal, program.CompletionLimit.Value);
+
+          program.Status = ProgramStatus.LimitReached;
+          program.StatusId = statusLimitReached.Id;
+
+          await _linkMaintenanceService.LimitReachedByProgramId(program.Id, _logger);
+        }
+        else
+        {
+          _logger.LogDebug(
+            "Referral program {ProgramId}: totals updated (total {Total}, rewardΔ {RewardDelta}); status remains {Status} (cap {Cap}, active={IsActive})",
+            program.Id, program.CompletionTotal, rewardAmount ?? 0m, program.Status,
+            program.CompletionLimit?.ToString() ?? "null", program.Status == ProgramStatus.Active);
+        }
+
+        program = await _programRepository.Update(program);
+
+        scope.Complete();
+      });
+      return program;
+    }
+    #endregion
+
+    #region Private Members
+    private static void EnsurePathwayIsCompletableOrThrow(ProgramPathway? pathway)
+    {
+      if (pathway == null) return;
+
+      if (pathway.IsCompletable) return;
+
+      var stepMessages = new List<string>();
+
+      foreach (var step in pathway.Steps?.Where(s => !s.IsCompletable) ?? [])
+      {
+        var taskReasons = step.Tasks?
+          .Where(t => !t.IsCompletable)
+          .Select(t => t.NonCompletableReason!)
+          .ToList() ?? [];
+
+        var combinedReasons = string.Join(", ", taskReasons);
+        stepMessages.Add($"step '{step.Name}' is not completable: {combinedReasons}");
+      }
+
+      var message = $"Program pathway '{pathway.Name}' cannot be completed because {string.Join(", ", stepMessages)}.";
+      throw new ValidationException(message);
+    }
+
+    private static void AssertUpdatable(Program program)
+    {
+      if (!Statuses_Updatable.Contains(program.Status))
+        throw new ValidationException($"The {nameof(Program)} can no longer be updated (current status '{program.Status.ToDescription()}'). Required state '{Statuses_Updatable.JoinNames()}'");
+    }
+
+    private string? GetBlobObjectURL(StorageType? storageType, string? key)
+    {
+      if (!storageType.HasValue || string.IsNullOrEmpty(key)) return null;
+      return _blobService.GetURL(storageType.Value, key);
+    }
+
+    private async Task<Program> DeleteProgramPathway(Program program)
+    {
+      if (program.Pathway == null) return program;
+
+      var pathway = program.Pathway;
+
+      pathway.Steps ??= [];
+
+      foreach (var step in pathway.Steps.ToList())
+      {
+        step.Tasks ??= [];
+
+        foreach (var task in step.Tasks.ToList())
+          await _programPathwayTaskRepository.Delete(task);
+
+        await _programPathwayStepRepository.Delete(step);
+      }
+
+      await _programPathwayRepository.Delete(pathway);
+
+      program.Pathway = null;
+      return program;
+    }
+
+    private async Task<Program> DeletePathwayChildren(Program program, ProgramPathwayRequestUpsert request)
+    {
+      if (program.Pathway == null) return program;
+
+      var pathway = program.Pathway;
+
+      pathway.Steps ??= [];
+
+      var requestStepIds = request.Steps.Where(s => s.Id.HasValue).Select(s => s.Id!.Value).ToHashSet();
+      var stepsToDelete = pathway.Steps.Where(s => !requestStepIds.Contains(s.Id)).ToList();
+
+      //deleted steps and related tasks
+      foreach (var step in stepsToDelete)
+      {
+        step.Tasks ??= [];
+
+        foreach (var task in step.Tasks.ToList())
+          await _programPathwayTaskRepository.Delete(task);
+
+        await _programPathwayStepRepository.Delete(step);
+        pathway.Steps.Remove(step);
+      }
+
+      //deleted tasks for steps preserved
+      foreach (var stepReq in request.Steps.Where(s => s.Id.HasValue))
+      {
+        var step = pathway.Steps.SingleOrDefault(s => s.Id == stepReq.Id!.Value);
+        if (step == null) continue;
+        step.Tasks ??= [];
+
+        var reqTaskIds = stepReq.Tasks.Where(t => t.Id.HasValue).Select(t => t.Id!.Value).ToHashSet();
+        var tasksToDelete = step.Tasks.Where(t => !reqTaskIds.Contains(t.Id)).ToList();
+
+        foreach (var task in tasksToDelete)
+        {
+          await _programPathwayTaskRepository.Delete(task);
+          step.Tasks.Remove(task);
+        }
+      }
+
+      program.Pathway = pathway;
+      return program;
+    }
+
+    private async Task<Program> UpsertProgramPathway(Program program, ProgramPathwayRequestUpsert request)
+    {
+      //pathway name is implicitly unique per program — currently a program can only have one pathway
+      var resultPathway = program.Pathway;
+      if (resultPathway == null)
+      {
+        //program has no pathway, but the request includes an existing pathway
+        if (request.Id.HasValue)
+          throw new ValidationException($"This program does not have a pathway, but a pathway was specified to update");
+
+        resultPathway = new ProgramPathway
+        {
+          ProgramId = program.Id,
+          Name = request.Name,
+          Description = request.Description,
+          Rule = request.Rule,
+          OrderMode = request.OrderMode
+        };
+
+        resultPathway = await _programPathwayRepository.Create(resultPathway);
+      }
+      else
+      {
+        if (!request.Id.HasValue)
+          throw new ValidationException("The program has an existing pathway, but a new pathway was added");
+
+        //program has an existing pathway, but the request references a different one
+        if (resultPathway.Id != request.Id)
+          throw new ValidationException($"The specified pathway does not match the existing pathway for this program");
+
+        resultPathway.Name = request.Name;
+        resultPathway.Description = request.Description;
+        resultPathway.Rule = request.Rule;
+        resultPathway.OrderMode = request.OrderMode;
+
+        resultPathway = await _programPathwayRepository.Update(resultPathway);
+      }
+
+      program.Pathway = await UpsertProgramPathwaySteps(resultPathway, request.Steps);
+
+      EnsurePathwayIsCompletableOrThrow(program.Pathway);
+
+      return program;
+    }
+
+    private async Task<ProgramPathway> UpsertProgramPathwaySteps(ProgramPathway pathway, List<ProgramPathwayStepRequestUpsert> requests)
+    {
+      //step names already validated – persisted steps will match the request
+      pathway.Steps ??= [];
+      var resultSteps = new List<ProgramPathwayStep>();
+
+      //set display order to match request sequence
+      for (int i = 0; i < requests.Count; i++) requests[i].OrderDisplay = (short)(i + 1);
+
+      //updates before inserts – prevents unique constraint conflicts
+      foreach (var request in requests.Where(r => r.Id.HasValue))
+      {
+        var resultStep = pathway.Steps.Single(s => s.Id == request.Id);
+        resultStep.Name = request.Name;
+        resultStep.Description = request.Description;
+        resultStep.Rule = request.Rule;
+        resultStep.OrderMode = request.OrderMode;
+        resultStep.Order = pathway.OrderMode == PathwayOrderMode.Sequential ? request.OrderDisplay : null;
+        resultStep.OrderDisplay = request.OrderDisplay;
+
+        resultStep = await _programPathwayStepRepository.Update(resultStep);
+        resultStep = await UpsertProgramPathwayTasks(resultStep, request.Tasks);
+        resultSteps.Add(resultStep);
+      }
+
+      //process inserts second
+      foreach (var request in requests.Where(r => !r.Id.HasValue))
+      {
+        var resultStep = new ProgramPathwayStep
+        {
+          PathwayId = pathway.Id,
+          Name = request.Name,
+          Description = request.Description,
+          Rule = request.Rule,
+          OrderMode = request.OrderMode,
+          Order = pathway.OrderMode == PathwayOrderMode.Sequential ? request.OrderDisplay : null,
+          OrderDisplay = request.OrderDisplay
+        };
+
+        resultStep = await _programPathwayStepRepository.Create(resultStep);
+        resultStep = await UpsertProgramPathwayTasks(resultStep, request.Tasks);
+        resultSteps.Add(resultStep);
+      }
+
+      //reorder to match final display order
+      pathway.Steps = [.. resultSteps.OrderBy(s => s.OrderDisplay)];
+      return pathway;
+    }
+
+    private async Task<ProgramPathwayStep> UpsertProgramPathwayTasks(ProgramPathwayStep step, List<ProgramPathwayTaskRequestUpsert> requests)
+    {
+      //tasks already validated – persisted tasks will match the request
+      step.Tasks ??= [];
+      var resultTasks = new List<ProgramPathwayTask>();
+
+      //set display order to match request sequence
+      for (int i = 0; i < requests.Count; i++) requests[i].OrderDisplay = (short)(i + 1);
+
+      //updates before inserts – prevents unique constraint conflicts
+      foreach (var request in requests.Where(o => o.Id.HasValue))
+      {
+        var resultTask = step.Tasks.Single(t => t.Id == request.Id);
+        resultTask.EntityType = request.EntityType;
+        resultTask.Order = step.OrderMode == PathwayOrderMode.Sequential ? request.OrderDisplay : null;
+        resultTask.OrderDisplay = request.OrderDisplay;
+        resultTask = ParseTaskEntity(resultTask, request);
+
+        resultTask = await _programPathwayTaskRepository.Update(resultTask);
+        resultTasks.Add(resultTask);
+      }
+
+      //process inserts second
+      foreach (var request in requests.Where(o => !o.Id.HasValue))
+      {
+        var resultTask = new ProgramPathwayTask
+        {
+          StepId = step.Id,
+          EntityType = request.EntityType,
+          Order = step.OrderMode == PathwayOrderMode.Sequential ? request.OrderDisplay : null,
+          OrderDisplay = request.OrderDisplay
+        };
+        resultTask = ParseTaskEntity(resultTask, request);
+
+        resultTask = await _programPathwayTaskRepository.Create(resultTask);
+        resultTasks.Add(resultTask);
+      }
+
+      //reorder to match final display order
+      step.Tasks = [.. resultTasks.OrderBy(s => s.OrderDisplay)];
+      return step;
+    }
+
+    private ProgramPathwayTask ParseTaskEntity(ProgramPathwayTask task, ProgramPathwayTaskRequestUpsert request)
+    {
+      switch (request.EntityType)
+      {
+        case PathwayTaskEntityType.Opportunity:
+          var opportunity = _opportunityService.GetById(request.EntityId, false, false, false);
+
+          task.Opportunity = new OpportunityItem
+          {
+            Id = opportunity.Id,
+            Title = opportunity.Title,
+            OrganizationStatus = opportunity.OrganizationStatus,
+            VerificationEnabled = opportunity.VerificationEnabled,
+            Status = opportunity.Status,
+            DateStart = opportunity.DateStart
+          };
+
+          break;
+
+        default:
+          throw new InvalidOperationException($"Entity type of '{request.EntityType}' is not supported");
+      }
+
+      return task;
+    }
+
+    private async Task<(Program Program, BlobObject ItemAdded)> UpdateImage(Program program, IFormFile? file)
+    {
+      if (file == null || file.Length == 0)
+        throw new ValidationException("File is required");
+
+      var currentLogoId = program.ImageId;
+
+      BlobObject? blobObject = null;
+      try
+      {
+        await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+        {
+          using var scope = TransactionScopeHelper.CreateReadCommitted();
+          blobObject = await _blobService.Create(FileType.Photos, StorageType.Public, file, null); // public storage; images must remain permanently accessible (e.g., emails, shared links).
+          program.ImageId = blobObject.Id;
+          program.ImageStorageType = blobObject.StorageType;
+          program.ImageKey = blobObject.Key;
+          program = await _programRepository.Update(program);
+          //ModifiedByUserId: set by caller
+
+          if (currentLogoId.HasValue)
+            await _blobService.Archive(currentLogoId.Value, blobObject); //preserve / archive images; they may still appear in sent emails or other public communications
+
+          scope.Complete();
+        });
+      }
+      catch
+      {
+        if (blobObject != null)
+          await _blobService.Delete(blobObject);
+        throw;
+      }
+
+      if (blobObject == null)
+        throw new InvalidOperationException("Blob object expected");
+
+      program.ImageURL = GetBlobObjectURL(program.ImageStorageType, program.ImageKey);
+
+      return (program, blobObject);
+    }
+
+    private async Task<(Program Program, bool Updated)> SetAsDefault(Program program)
+    {
+      var updated = false;
+
+      await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+      {
+        using var scope = TransactionScopeHelper.CreateReadCommitted();
+
+        var currentDefault = GetDefaultOrNull(false, false);
+        if (currentDefault?.Id == program.Id) // avoid TOCTOU
+        {
+          scope.Complete();
+          return;
+        }
+
+        var items = new List<Program>();
+
+        if (currentDefault != null)
+        {
+          currentDefault.IsDefault = false;
+          currentDefault = await _programRepository.Update(currentDefault);
+        }
+
+        program.IsDefault = true;
+        program = await _programRepository.Update(program);
+        //ModifiedByUserId: set by caller
+
+        scope.Complete();
+
+        updated = true;
+      });
+
+      return (program, updated);
+    }
+    #endregion
+  }
+}

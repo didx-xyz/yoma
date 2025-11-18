@@ -4,10 +4,10 @@ namespace Yoma.Core.Infrastructure.SAYouth.Models
   {
     public const string Section = "SAYouth";
 
-    public string BaseUrl { get; set; }
+    public string BaseUrl { get; set; } = null!;
 
-    public string ApiVersion { get; set; }
+    public string ApiVersion { get; set; } = null!;
 
-    public string ApiKey { get; set; }
+    public string ApiKey { get; set; } = null!;
   }
 }

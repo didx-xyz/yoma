@@ -1,8 +1,10 @@
+using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.PartnerSharing;
 using Yoma.Core.Domain.PartnerSharing.Models;
 using Yoma.Core.Infrastructure.Database.Context;
 using Yoma.Core.Infrastructure.Database.Core.Repositories;
+using Yoma.Core.Infrastructure.Shared.Extensions;
 
 namespace Yoma.Core.Infrastructure.Database.PartnerSharing.Repositories
 {
@@ -13,6 +15,11 @@ namespace Yoma.Core.Infrastructure.Database.PartnerSharing.Repositories
     #endregion
 
     #region Public Members
+    public IQueryable<ProcessingLog> Query(LockMode lockMode)
+    {
+      return Query().WithLock(lockMode);
+    }
+
     public IQueryable<ProcessingLog> Query()
     {
       return _context.PartnerSharingProcessingLog.Select(entity => new ProcessingLog

@@ -129,12 +129,10 @@ export const StoreAccessControlRuleSearchFilters: React.FC<{
     1000,
   );
 
+  // ⚠️ Avoid nested <form>: wrap controls in a <div> instead
   return (
     <div className="flex grow flex-col">
-      <form
-        onSubmit={handleSubmit(onSubmitHandler)}
-        className="flex flex-col gap-2"
-      >
+      <div className="flex flex-col gap-2">
         <div className="flex w-full grow flex-row flex-wrap gap-2 md:w-fit lg:flex-row">
           {/* ORGANISATIONS */}
           {filterOptions?.includes(
@@ -240,7 +238,7 @@ export const StoreAccessControlRuleSearchFilters: React.FC<{
             </span>
           )}
         </div>
-      </form>
+      </div>
     </div>
   );
 };

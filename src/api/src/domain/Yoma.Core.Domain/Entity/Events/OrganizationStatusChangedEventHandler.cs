@@ -31,11 +31,11 @@ namespace Yoma.Core.Domain.Entity.Events
       try
       {
         _logger.LogInformation("Handling organization status change event for organization with id {organizationId} and status {organizationStatus}",
-          notification.Organization.Id, notification.Organization.Status);
+          notification.Entity.Id, notification.Entity.Status);
 
         var filter = new OpportunitySearchFilterAdmin
         {
-          Organizations = [notification.Organization.Id],
+          Organizations = [notification.Entity.Id],
           PageNumber = 1,
           PageSize = 100
         };
@@ -43,7 +43,7 @@ namespace Yoma.Core.Domain.Entity.Events
         OpportunitySearchResults? result = null;
         do
         {
-          switch (notification.Organization.Status)
+          switch (notification.Entity.Status)
           {
             case OrganizationStatus.Active:
             case OrganizationStatus.Inactive:
@@ -74,7 +74,7 @@ namespace Yoma.Core.Domain.Entity.Events
               return;
 
             default:
-              throw new InvalidOperationException($"Organization status '{notification.Organization.Status}' is not supported");
+              throw new InvalidOperationException($"Organization status '{notification.Entity.Status}' is not supported");
           }
 
           filter.PageNumber++;
@@ -84,7 +84,7 @@ namespace Yoma.Core.Domain.Entity.Events
       catch (Exception ex)
       {
         _logger.LogError(ex, "Error handling organization status change event for organization with id {organizationId} and status {organizationStatus}: {errorMessage}",
-          notification.Organization.Id, notification.Organization.Status, ex.Message);
+          notification.Entity.Id, notification.Entity.Status, ex.Message);
       }
     }
     #endregion

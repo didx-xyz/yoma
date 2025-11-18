@@ -11,7 +11,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
 
     public Guid UserId { get; set; }
 
-    public string Username { get; set; }
+    public string Username { get; set; } = null!;
 
     public string? UserEmail { get; set; }
 
@@ -21,7 +21,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
 
     public bool? UserPhoneNumberConfirmed { get; set; }
 
-    public string UserDisplayName { get; set; }
+    public string UserDisplayName { get; set; } = null!;
 
     public DateTimeOffset? UserDateOfBirth { get; set; }
 
@@ -48,19 +48,19 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
 
     public Guid OpportunityId { get; set; }
 
-    public string OpportunityTitle { get; set; }
+    public string OpportunityTitle { get; set; } = null!;
 
-    public string OpportunityDescription { get; set; }
+    public string OpportunityDescription { get; set; } = null!;
 
     public string? OpportunitySummary { get; set; }
 
-    public string OpportunityType { get; set; }
+    public string OpportunityType { get; set; } = null!;
 
     public Guid OpportunityStatusId { get; set; }
 
     public Opportunity.Status OpportunityStatus { get; set; }
 
-    public string OpportunityCommitmentIntervalDescription { get; set; }
+    public string OpportunityCommitmentIntervalDescription { get; set; } = null!;
 
     #region Verification Counts
     public int OpportunityParticipantCountTotal { get; set; }
@@ -78,7 +78,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
 
     public Guid OrganizationId { get; set; }
 
-    public string OrganizationName { get; set; }
+    public string OrganizationName { get; set; } = null!;
 
     public Guid? OrganizationLogoId { get; set; }
 

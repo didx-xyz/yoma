@@ -22,9 +22,9 @@ using Yoma.Core.Domain.Entity.Interfaces;
 using Yoma.Core.Domain.Entity.Interfaces.Lookups;
 using Yoma.Core.Domain.Entity.Models;
 using Yoma.Core.Domain.Entity.Validators;
-using Yoma.Core.Domain.IdentityProvider.Extensions;
 using Yoma.Core.Domain.IdentityProvider.Interfaces;
 using Yoma.Core.Domain.SSI.Interfaces;
+using Yoma.Core.Domain.IdentityProvider.Extensions;
 
 namespace Yoma.Core.Domain.Entity.Services
 {
@@ -346,7 +346,7 @@ namespace Yoma.Core.Domain.Entity.Services
       {
         await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
         {
-          using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+          using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
           //create org
           result = await _organizationRepository.Create(result);
 
@@ -501,7 +501,7 @@ namespace Yoma.Core.Domain.Entity.Services
       {
         await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
         {
-          using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+          using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
 
           //update org
           result = await _organizationRepository.Update(result);
@@ -620,7 +620,7 @@ namespace Yoma.Core.Domain.Entity.Services
       NotificationType? notificationType = null;
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
-        using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+        using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
 
         switch (request.Status)
         {
@@ -741,7 +741,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
-        using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+        using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
         result = await AssignProviderTypes(result, providerTypeIds, OrganizationReapprovalAction.ReapprovalWithNotification);
         result.ModifiedByUserId = user.Id;
         result = await _organizationRepository.Update(result);
@@ -772,7 +772,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
-        using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+        using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
         result = await RemoveProviderTypes(result, providerTypeIds, OrganizationReapprovalAction.ReapprovalWithNotification);
         result.ModifiedByUserId = user.Id;
         result = await _organizationRepository.Update(result);
@@ -785,7 +785,7 @@ namespace Yoma.Core.Domain.Entity.Services
       return result;
     }
 
-    public async Task<Organization> UpdateLogo(Guid id, IFormFile? file, bool ensureOrganizationAuthorization)
+    public async Task<Organization> UpdateLogo(Guid id, IFormFile file, bool ensureOrganizationAuthorization)
     {
       //determine if the current user context is a user role only. If no user context (system process), IsUserRoleOnly returns false.
       var userRoleOnly = HttpContextAccessorHelper.IsUserRoleOnly(_httpContextAccessor);
@@ -808,7 +808,7 @@ namespace Yoma.Core.Domain.Entity.Services
       (Organization? Organization, BlobObject? ItemAdded) resultLogo = (null, null);
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
-        using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+        using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
         resultLogo = await UpdateLogo(result, file, OrganizationReapprovalAction.ReapprovalWithNotification);
         result.ModifiedByUserId = user.Id;
         result = await _organizationRepository.Update(result);
@@ -837,7 +837,7 @@ namespace Yoma.Core.Domain.Entity.Services
       (Organization? Organization, List<BlobObject>? ItemsAdded) resultDocuments = (null, null);
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
-        using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+        using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
         resultDocuments = await AddDocuments(result, type, documents, OrganizationReapprovalAction.ReapprovalWithNotification);
         result.ModifiedByUserId = user.Id;
         result = await _organizationRepository.Update(result);
@@ -877,7 +877,7 @@ namespace Yoma.Core.Domain.Entity.Services
       (Organization? Organization, List<OrganizationDocument>? ItemsDeleted) resultDelete = (null, null);
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
-        using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+        using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
         resultDelete = await DeleteDocuments(result, type, documentFileIds, OrganizationReapprovalAction.ReapprovalWithNotification);
         result.ModifiedByUserId = user.Id;
         result = await _organizationRepository.Update(result);
@@ -921,7 +921,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
-        using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+        using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
         result = await AssignAdmins(result, normalizedUsernames, OrganizationReapprovalAction.ReapprovalWithNotification);
         result.ModifiedByUserId = user.Id;
         result = await _organizationRepository.Update(result);
@@ -949,7 +949,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
-        using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+        using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
         result = await RemoveAdmins(result, usernames, OrganizationReapprovalAction.ReapprovalWithNotification);
         result.ModifiedByUserId = user.Id;
         result = await _organizationRepository.Update(result);
@@ -1065,7 +1065,7 @@ namespace Yoma.Core.Domain.Entity.Services
       string? typesAssignedNames = null;
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
-        using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
+        using var scope = TransactionScopeHelper.CreateReadCommitted();
         foreach (var typeId in providerTypeIds)
         {
           var type = _providerTypeService.GetById(typeId);
@@ -1110,7 +1110,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
-        using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
+        using var scope = TransactionScopeHelper.CreateReadCommitted();
         var updated = false;
         foreach (var typeId in providerTypeIds)
         {
@@ -1137,7 +1137,8 @@ namespace Yoma.Core.Domain.Entity.Services
     private async Task<(Organization Organization, BlobObject ItemAdded)> UpdateLogo(
         Organization organization, IFormFile? file, OrganizationReapprovalAction reapprovalAction)
     {
-      ArgumentNullException.ThrowIfNull(file, nameof(file));
+      if (file == null || file.Length == 0)
+        throw new ValidationException("File is required");
 
       var currentLogoId = organization.LogoId;
 
@@ -1146,7 +1147,7 @@ namespace Yoma.Core.Domain.Entity.Services
       {
         await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
         {
-          using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
+          using var scope = TransactionScopeHelper.CreateReadCommitted();
           blobObject = await _blobService.Create(FileType.Photos, StorageType.Public, file, null);
           organization.LogoId = blobObject.Id;
           organization.LogoStorageType = blobObject.StorageType;
@@ -1183,7 +1184,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
-        using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
+        using var scope = TransactionScopeHelper.CreateReadCommitted();
         var updated = false;
         foreach (var username in usernames)
         {
@@ -1231,7 +1232,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
-        using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
+        using var scope = TransactionScopeHelper.CreateReadCommitted();
         var updated = false;
         foreach (var username in usernames)
         {
@@ -1306,7 +1307,7 @@ namespace Yoma.Core.Domain.Entity.Services
       {
         await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
         {
-          using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
+          using var scope = TransactionScopeHelper.CreateReadCommitted();
 
           //new items
           foreach (var file in documents)
@@ -1368,7 +1369,7 @@ namespace Yoma.Core.Domain.Entity.Services
       {
         await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
         {
-          using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
+          using var scope = TransactionScopeHelper.CreateReadCommitted();
 
           //download and delete existing items in blob storage and db
           foreach (var item in itemsExisting)

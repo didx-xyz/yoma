@@ -20,7 +20,7 @@ namespace Yoma.Core.Infrastructure.Emsi.Client
     private readonly IEnvironmentProvider _environmentProvider;
     private readonly AppSettings _appSettings;
     private readonly EmsiOptions _options;
-    private static OAuthResponse _accessToken;
+    private static OAuthResponse _accessToken = null!;
 
     private const string Header_Authorization = "Authorization";
     private const string Header_Authorization_Value_Prefix = "Bearer";

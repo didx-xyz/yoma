@@ -7,6 +7,7 @@ using Yoma.Core.Domain.MyOpportunity;
 using Yoma.Core.Domain.Opportunity;
 using Yoma.Core.Infrastructure.Database.Context;
 using Yoma.Core.Infrastructure.Database.Core.Repositories;
+using Yoma.Core.Infrastructure.Shared.Extensions;
 
 namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories
 {
@@ -22,9 +23,19 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories
       return Query(false);
     }
 
+    public IQueryable<Domain.MyOpportunity.Models.MyOpportunity> Query(LockMode lockMode)
+    {
+      return Query(false).WithLock(lockMode);
+    }
+
+    public IQueryable<Domain.MyOpportunity.Models.MyOpportunity> Query(bool includeChildItems, LockMode lockMode)
+    {
+      return Query(includeChildItems).WithLock(lockMode);
+    }
+
     public IQueryable<Domain.MyOpportunity.Models.MyOpportunity> Query(bool includeChildItems)
     {
-      return _context.MyOpportunity.Select(entity => new Domain.MyOpportunity.Models.MyOpportunity()
+      var query = _context.MyOpportunity.Select(entity => new Domain.MyOpportunity.Models.MyOpportunity()
       {
         Id = entity.Id,
         UserId = entity.UserId,
@@ -102,8 +113,11 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories
                 Id = o.SkillId,
                 Name = o.Skill.Name,
                 InfoURL = o.Skill.InfoURL
-              }).OrderBy(o => o.Name).ToList() : null,
-      }).AsSplitQuery();
+              }).OrderBy(o => o.Name).ToList() : null
+      });
+
+      if (includeChildItems) query = query.AsSplitQuery();
+      return query;
     }
 
     public async Task<Domain.MyOpportunity.Models.MyOpportunity> Create(Domain.MyOpportunity.Models.MyOpportunity item)

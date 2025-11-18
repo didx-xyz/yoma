@@ -4,7 +4,7 @@ namespace Yoma.Core.Domain.Entity.Models
   {
     public Guid Id { get; set; }
 
-    public string Username { get; set; }
+    public string Username { get; set; } = null!;
 
     public string? Email { get; set; }
 
@@ -44,9 +44,11 @@ namespace Yoma.Core.Domain.Entity.Models
 
     public DateTimeOffset DateModified { get; set; }
 
-    public List<OrganizationInfo> AdminsOf { get; set; }
+    public List<OrganizationInfo> AdminsOf { get; set; } = null!;
 
-    public UserProfileZlto Zlto { get; set; }
+    public UserProfileZlto Zlto { get; set; } = null!;
+
+    public UserProfileReferral Referral { get; set; } = null!;
 
     public int OpportunityCountSaved { get; set; }
 

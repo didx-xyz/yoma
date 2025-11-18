@@ -6,6 +6,17 @@ namespace Yoma.Core.Domain.Core.Events
     where T : class
   {
     #region Constructor
+    /// <summary>
+    /// Represents a business or non-CRUD
+    /// </summary>
+    public BaseEvent(T entity)
+    {
+      Entity = entity;
+    }
+
+    /// <summary>
+    /// Represents a CRUD-style event
+    /// </summary>
     public BaseEvent(EventType eventType, T entity)
     {
       EventType = eventType;
@@ -13,11 +24,10 @@ namespace Yoma.Core.Domain.Core.Events
     }
     #endregion
 
-    #region Public Members
-    public EventType EventType { get; set; }
+    #region Public Memberst
+    public EventType? EventType { get; init; }
 
-    public T Entity { get; set; }
+    public T Entity { get; init; }
     #endregion
-
   }
 }

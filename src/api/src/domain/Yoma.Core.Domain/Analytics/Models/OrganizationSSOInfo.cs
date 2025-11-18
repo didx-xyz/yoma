@@ -7,7 +7,7 @@ namespace Yoma.Core.Domain.Analytics.Models
   {
     public Guid Id { get; set; }
 
-    public string Name { get; set; }
+    public string Name { get; set; } = null!;
 
     public Guid? LogoId { get; set; }
 
@@ -22,11 +22,11 @@ namespace Yoma.Core.Domain.Analytics.Models
     /// <summary>
     /// Outbound SSO allowing logins on third-party systems using Yoma credentials
     /// </summary>
-    public OrganizationSSO Outbound { get; set; }
+    public OrganizationSSO Outbound { get; set; } = null!;
 
     /// <summary>
     /// Inbound SSO allowing logins on Yoma's site using third-party credentials
     /// </summary>
-    public OrganizationSSO Inbound { get; set; }
+    public OrganizationSSO Inbound { get; set; } = null!;
   }
 }

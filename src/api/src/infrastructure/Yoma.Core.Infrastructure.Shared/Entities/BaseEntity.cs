@@ -6,6 +6,6 @@ namespace Yoma.Core.Infrastructure.Shared.Entities
   {
     [Required]
     [Key]
-    public virtual TKey Id { get; set; }
+    public virtual TKey Id { get; set; } = default!;
   }
 }

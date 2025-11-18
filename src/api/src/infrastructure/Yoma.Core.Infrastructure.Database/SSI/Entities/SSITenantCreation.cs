@@ -13,12 +13,12 @@ namespace Yoma.Core.Infrastructure.Database.SSI.Entities
   {
     [Required]
     [Column(TypeName = "varchar(25)")]
-    public string EntityType { get; set; }
+    public string EntityType { get; set; } = null!;
 
     [Required]
     [ForeignKey("StatusId")]
     public Guid StatusId { get; set; }
-    public SSITenantCreationStatus Status { get; set; }
+    public SSITenantCreationStatus Status { get; set; } = null!;
 
     [ForeignKey("UserId")]
     public Guid? UserId { get; set; }

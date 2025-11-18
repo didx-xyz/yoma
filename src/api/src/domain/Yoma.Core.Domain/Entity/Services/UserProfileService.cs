@@ -17,6 +17,8 @@ using Yoma.Core.Domain.Lookups.Interfaces;
 using Yoma.Core.Domain.MyOpportunity;
 using Yoma.Core.Domain.MyOpportunity.Interfaces;
 using Yoma.Core.Domain.MyOpportunity.Models;
+using Yoma.Core.Domain.Referral.Interfaces;
+using Yoma.Core.Domain.Referral.Models;
 using Yoma.Core.Domain.Reward.Interfaces;
 
 namespace Yoma.Core.Domain.Entity.Services
@@ -35,6 +37,8 @@ namespace Yoma.Core.Domain.Entity.Services
     private readonly IMyOpportunityService _myOpportunityService;
     private readonly IWalletService _walletService;
     private readonly ISettingsDefinitionService _settingsDefinitionService;
+    private readonly IBlockService _referralBlockService;
+    private readonly ILinkUsageService _linkUsageService;
     private readonly UserRequestCreateProfileValidator _userRequestCreateProfileValidator;
     private readonly UserRequestUpdateProfileValidator _userRequestUpdateProfileValidator;
     private readonly IRepositoryValueContainsWithNavigation<User> _userRepository;
@@ -53,6 +57,8 @@ namespace Yoma.Core.Domain.Entity.Services
       IMyOpportunityService myOpportunityService,
       IWalletService walletService,
       ISettingsDefinitionService settingsDefinitionService,
+      IBlockService referralBlockService,
+      ILinkUsageService linkUsageService,
       UserRequestCreateProfileValidator userRequestCreateProfileValidator,
       UserRequestUpdateProfileValidator userRequestUpdateProfileValidator,
       IRepositoryValueContainsWithNavigation<User> userRepository,
@@ -69,6 +75,8 @@ namespace Yoma.Core.Domain.Entity.Services
       _myOpportunityService = myOpportunityService;
       _walletService = walletService;
       _settingsDefinitionService = settingsDefinitionService;
+      _referralBlockService = referralBlockService;
+      _linkUsageService = linkUsageService;
       _userRequestCreateProfileValidator = userRequestCreateProfileValidator;
       _userRequestUpdateProfileValidator = userRequestUpdateProfileValidator;
       _userRepository = userRepository;
@@ -241,7 +249,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
-        using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+        using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
         result = await _userRepository.Update(result);
 
         username = result.Email ?? result.PhoneNumber;
@@ -317,6 +325,25 @@ namespace Yoma.Core.Domain.Entity.Services
 
       filter.VerificationStatuses = [VerificationStatus.Rejected];
       result.OpportunityCountRejected = _myOpportunityService.Search(filter, user).TotalCount ?? default;
+
+      //referral status
+      var resultBlock = _referralBlockService.GetByUserIdOrNull(result.Id);
+
+      result.Referral = new UserProfileReferral
+      {
+        Blocked = resultBlock != null,
+        BlockedDate = resultBlock?.DateCreated
+      };
+
+      var resultLinkUsage = _linkUsageService.SearchAsReferee(new ReferralLinkUsageSearchFilter { PageNumber = 1, PageSize = 10 });
+      result.Referral.LinkUsages = resultLinkUsage.Items.Count == 0 ? null : [..resultLinkUsage.Items.Select(lu => new ReferralLinkUsageItem
+      {
+        Id = lu.Id,
+        Status = lu.Status,
+        ProgramId = lu.ProgramId,
+        ProgramName = lu.ProgramName,
+        DateClaimed = lu.DateClaimed
+      })];
 
       return result;
     }

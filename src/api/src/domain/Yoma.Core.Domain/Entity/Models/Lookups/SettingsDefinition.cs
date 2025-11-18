@@ -6,13 +6,13 @@ namespace Yoma.Core.Domain.Entity.Models.Lookups
 
     public EntityType EntityType { get; set; }
 
-    public string Key { get; set; }
+    public string Key { get; set; } = null!;
 
-    public string Title { get; set; }
+    public string Title { get; set; } = null!;
 
-    public string Description { get; set; }
+    public string Description { get; set; } = null!;
 
-    public string Group { get; set; }
+    public string Group { get; set; } = null!;
 
     public string? SubGroup { get; set; }
 
@@ -20,7 +20,7 @@ namespace Yoma.Core.Domain.Entity.Models.Lookups
 
     public List<string>? Roles { get; set; }
 
-    public string DefaultValue { get; set; }
+    public string DefaultValue { get; set; } = null!;
 
     public SettingType Type { get; set; }
 

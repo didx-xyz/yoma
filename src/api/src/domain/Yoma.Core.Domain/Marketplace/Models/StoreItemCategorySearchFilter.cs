@@ -5,7 +5,7 @@ namespace Yoma.Core.Domain.Marketplace.Models
 {
   public class StoreItemCategorySearchFilter : PaginationFilter
   {
-    public string StoreId { get; set; }
+    public string StoreId { get; set; } = null!;
 
     [JsonIgnore]
     internal bool EvaluateStoreAccessControlRules { get; set; } = true;

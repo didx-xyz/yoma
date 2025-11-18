@@ -4,6 +4,8 @@ namespace Yoma.Core.Domain.Core.Interfaces
   {
     IQueryable<T> Query();
 
+    IQueryable<T> Query(LockMode lockMode);
+
     Task<T> Create(T item);
 
     Task<T> Update(T item);

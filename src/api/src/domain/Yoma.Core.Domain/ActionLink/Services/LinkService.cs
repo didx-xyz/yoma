@@ -24,6 +24,7 @@ using Yoma.Core.Domain.Notification.Interfaces;
 using Yoma.Core.Domain.Notification.Models;
 using Yoma.Core.Domain.Opportunity.Extensions;
 using Yoma.Core.Domain.Opportunity.Interfaces;
+using Yoma.Core.Domain.ShortLinkProvider;
 using Yoma.Core.Domain.ShortLinkProvider.Interfaces;
 using Yoma.Core.Domain.ShortLinkProvider.Models;
 
@@ -54,8 +55,8 @@ namespace Yoma.Core.Domain.ActionLink.Services
     private readonly LinkSearchFilterUsageValidator _linkSearchFilterUsageValidator;
 
     //a link can only be made active ONCE as it might have a distribution list that gets notified upon activation; thus an active link can not be deactivated 
-    private static readonly LinkStatus[] Statuses_Activatable = [LinkStatus.Inactive];
-    private static readonly LinkStatus[] Statuses_CanDelete = [LinkStatus.Active, LinkStatus.Inactive];
+    private static readonly ActionLinkStatus[] Statuses_Activatable = [ActionLinkStatus.Inactive];
+    private static readonly ActionLinkStatus[] Statuses_CanDelete = [ActionLinkStatus.Active, ActionLinkStatus.Inactive];
     #endregion
 
     #region Constructor
@@ -153,7 +154,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
 
       switch (filter.EntityType)
       {
-        case LinkEntityType.Opportunity:
+        case ActionLinkEntityType.Opportunity:
           // opportunities
           if (filter.Entities != null && filter.Entities.Count != 0)
           {
@@ -179,17 +180,17 @@ namespace Yoma.Core.Domain.ActionLink.Services
 
       query = query.OrderBy(o => o.Name).ThenBy(o => o.Id);
 
-      var result = new LinkSearchResult();
+      var results = new LinkSearchResult();
 
       //pagination
       if (filter.PaginationEnabled)
       {
-        result.TotalCount = query.Count();
+        results.TotalCount = query.Count();
         query = query.Skip((filter.PageNumber.Value - 1) * filter.PageSize.Value).Take(filter.PageSize.Value);
       }
 
-      result.Items = [.. query.ToList().Select(o => o.ToLinkInfo(false))];
-      return result;
+      results.Items = [.. query.ToList().Select(o => o.ToLinkInfo(false))];
+      return results;
     }
 
     public async Task<LinkInfo> GetOrCreateShare(LinkRequestCreateShare request, bool publishedOrExpiredOnly, bool ensureOrganizationAuthorization)
@@ -198,11 +199,11 @@ namespace Yoma.Core.Domain.ActionLink.Services
 
       await _linkRequestCreateValidatorShare.ValidateAndThrowAsync(request);
 
-      var item = LinkFromRequest(request, LinkStatus.Active, ensureOrganizationAuthorization);
+      var item = LinkFromRequest(request, ActionLinkStatus.Active, ensureOrganizationAuthorization);
 
       switch (request.EntityType)
       {
-        case LinkEntityType.Opportunity:
+        case ActionLinkEntityType.Opportunity:
           var opportunity = ValidateAndInitializeOpportunity(request, item, publishedOrExpiredOnly, ensureOrganizationAuthorization);
           item.URL = opportunity.YomaInfoURL(_appSettings.AppBaseURL);
 
@@ -225,7 +226,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
-        using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+        using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
 
         item = await GenerateShortLinkAndCreate(request, item);
 
@@ -254,10 +255,10 @@ namespace Yoma.Core.Domain.ActionLink.Services
 
       await _linkRequestCreateValidatorVerify.ValidateAndThrowAsync(request);
 
-      var status = LinkStatus.Active;
+      var status = ActionLinkStatus.Active;
       if (request.DistributionList != null)
       {
-        status = LinkStatus.Inactive; //initially inactive require manual activation before distribution
+        status = ActionLinkStatus.Inactive; //initially inactive require manual activation before distribution
         request.DistributionList = [.. request.DistributionList.Distinct()];
         //with LockToDistributionList, DistributionList is required and usage limit is set to the count of the distribution list
         if (request.LockToDistributionList == true) request.UsagesLimit = request.DistributionList.Count;
@@ -274,7 +275,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
 
       switch (request.EntityType)
       {
-        case LinkEntityType.Opportunity:
+        case ActionLinkEntityType.Opportunity:
           var opportunity = ValidateAndInitializeOpportunity(request, item, false, ensureOrganizationAuthorization);
 
           if (!opportunity.VerificationEnabled)
@@ -315,7 +316,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
       return await LogUsage(link);
     }
 
-    public async Task<LinkInfo> UpdateStatus(Guid id, LinkStatus status, bool ensureOrganizationAuthorization)
+    public async Task<LinkInfo> UpdateStatus(Guid id, ActionLinkStatus status, bool ensureOrganizationAuthorization)
     {
       var link = GetById(id);
 
@@ -334,8 +335,8 @@ namespace Yoma.Core.Domain.ActionLink.Services
         case LinkAction.Verify:
           switch (status)
           {
-            case LinkStatus.Active:
-              if (link.Status == LinkStatus.Active) return link.ToLinkInfo(false);
+            case ActionLinkStatus.Active:
+              if (link.Status == ActionLinkStatus.Active) return link.ToLinkInfo(false);
 
               if (!Statuses_Activatable.Contains(link.Status))
                 throw new ValidationException($"Link can not be activated (current status '{link.Status}'). Required state '{Statuses_Activatable.JoinNames()}'");
@@ -344,10 +345,10 @@ namespace Yoma.Core.Domain.ActionLink.Services
               if (link.DateEnd.HasValue && link.DateEnd.Value <= DateTimeOffset.UtcNow)
                 throw new ValidationException($"Link cannot be activated because its end date ('{link.DateEnd:yyyy-MM-dd}') is in the past");
 
-              var entityType = Enum.Parse<LinkEntityType>(link.EntityType, true);
+              var entityType = Enum.Parse<ActionLinkEntityType>(link.EntityType, true);
               switch (entityType)
               {
-                case LinkEntityType.Opportunity:
+                case ActionLinkEntityType.Opportunity:
                   if (!link.OpportunityId.HasValue || string.IsNullOrEmpty(link.OpportunityTitle))
                     throw new InvalidOperationException("Opportunity details expected");
 
@@ -372,8 +373,8 @@ namespace Yoma.Core.Domain.ActionLink.Services
 
               break;
 
-            case LinkStatus.Deleted:
-              if (link.Status == LinkStatus.Deleted) return link.ToLinkInfo(false);
+            case ActionLinkStatus.Deleted:
+              if (link.Status == ActionLinkStatus.Deleted) return link.ToLinkInfo(false);
 
               if (!Statuses_CanDelete.Contains(link.Status))
                 throw new ValidationException($"Link can not be deactivated (current status '{link.Status}'). Required state '{Statuses_CanDelete.JoinNames()}'");
@@ -422,11 +423,11 @@ namespace Yoma.Core.Domain.ActionLink.Services
 
       switch (filter.Usage)
       {
-        case LinkUsageStatus.All:
-        case LinkUsageStatus.Unclaimed:
+        case ActionLinkUsageStatus.All:
+        case ActionLinkUsageStatus.Unclaimed:
           // when no distribution list is supplied
           if (distributionList == null || distributionList.Count == 0)
-            if (filter.Usage == LinkUsageStatus.Unclaimed) break; else goto case LinkUsageStatus.Claimed;
+            if (filter.Usage == ActionLinkUsageStatus.Unclaimed) break; else goto case ActionLinkUsageStatus.Claimed;
 
           var queryUnclaimedIdentifiers = QueryUnclaimedIdentifiers(link, distributionList);
 
@@ -444,7 +445,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
             });
 
           IQueryable<LinkSearchResultsUsageItem> queryAll;
-          if (filter.Usage == LinkUsageStatus.All)
+          if (filter.Usage == ActionLinkUsageStatus.All)
           {
             var claimedQuery = _linkUsageLogRepository.Query().Where(x => x.LinkId == link.Id).Join(
               _userRepository.Query(false), usage => usage.UserId, user => user.Id,
@@ -491,7 +492,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
           result.Items.ForEach(o => o.Age = o.DateOfBirth.HasValue ? o.DateOfBirth.Value.CalculateAge(null) : null);
           break;
 
-        case LinkUsageStatus.Claimed:
+        case ActionLinkUsageStatus.Claimed:
           var query = _linkUsageLogRepository.Query().Where(o => o.LinkId == link.Id);
 
           if (!string.IsNullOrEmpty(filter.ValueContains))
@@ -537,7 +538,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
       AssertActive(link);
 
       var action = Enum.Parse<LinkAction>(link.Action);
-      var entityType = Enum.Parse<LinkEntityType>(link.EntityType, true);
+      var entityType = Enum.Parse<ActionLinkEntityType>(link.EntityType, true);
 
       NotificationActionLinkVerify? notificationDataDistributionList;
       switch (action)
@@ -548,7 +549,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
         case LinkAction.Verify:
           switch (entityType)
           {
-            case LinkEntityType.Opportunity:
+            case ActionLinkEntityType.Opportunity:
               if (!link.OpportunityId.HasValue || !link.OpportunityOrganizationId.HasValue)
                 throw new DataInconsistencyException("Opportunity expected");
 
@@ -611,7 +612,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
       return unclaimedIdentifiers;
     }
 
-    private NotificationActionLinkVerify ToNotificationActionLinkVerify(Link link, LinkEntityType entityType, Opportunity.Models.Opportunity opportunity)
+    private NotificationActionLinkVerify ToNotificationActionLinkVerify(Link link, ActionLinkEntityType entityType, Opportunity.Models.Opportunity opportunity)
     {
       return new NotificationActionLinkVerify
       {
@@ -645,11 +646,11 @@ namespace Yoma.Core.Domain.ActionLink.Services
 
     private void EnsureOrganizationAuthorization(Link link)
     {
-      var entityType = Enum.Parse<LinkEntityType>(link.EntityType);
+      var entityType = Enum.Parse<ActionLinkEntityType>(link.EntityType);
 
       switch (entityType)
       {
-        case LinkEntityType.Opportunity:
+        case ActionLinkEntityType.Opportunity:
           if (!link.OpportunityId.HasValue || !link.OpportunityOrganizationId.HasValue)
             throw new DataInconsistencyException("Opportunity expected");
 
@@ -665,13 +666,13 @@ namespace Yoma.Core.Domain.ActionLink.Services
     {
       switch (link.Status)
       {
-        case LinkStatus.Inactive:
+        case ActionLinkStatus.Inactive:
           throw new ValidationException("This link is no longer active");
-        case LinkStatus.Expired:
+        case ActionLinkStatus.Expired:
           throw new ValidationException("This link has expired and can no longer be used");
-        case LinkStatus.LimitReached:
+        case ActionLinkStatus.LimitReached:
           throw new ValidationException("This link has reached its usage limit and cannot be used further");
-        case LinkStatus.Active:
+        case ActionLinkStatus.Active:
           //ensure not expired but not yet flagged by background service
           if (link.DateEnd.HasValue && link.DateEnd.Value <= DateTimeOffset.UtcNow)
             throw new ValidationException("This link has expired and can no longer be used");
@@ -705,7 +706,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
       return opportunity;
     }
 
-    private Link LinkFromRequest(LinkRequestCreateBase request, LinkStatus status, bool ensureOrganizationAuthorization)
+    private Link LinkFromRequest(LinkRequestCreateBase request, ActionLinkStatus status, bool ensureOrganizationAuthorization)
     {
       var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
 
@@ -726,10 +727,23 @@ namespace Yoma.Core.Domain.ActionLink.Services
 
     private async Task<Link> GenerateShortLinkAndCreate(LinkRequestCreateBase request, Link item)
     {
+      var type = request.EntityType switch
+      {
+        ActionLinkEntityType.Opportunity => LinkType.Opportunity,
+        _ => throw new InvalidOperationException($"Invalid / unsupported entity type of '{request.EntityType}'"),
+      };
+
+      var action = request.Action switch
+      {
+        LinkAction.Share => ShortLinkProvider.LinkAction.Share,
+        LinkAction.Verify => ShortLinkProvider.LinkAction.Verify,
+        _ => throw new InvalidOperationException($"Invalid / unsupported action of '{request.Action}'"),
+      };
+
       var responseShortLink = await _shortLinkProviderClient.CreateShortLink(new ShortLinkRequest
       {
-        Type = request.EntityType,
-        Action = request.Action,
+        Type = type,
+        Action = action,
         Title = item.Name,
         URL = item.URL
       });
@@ -793,7 +807,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
-        using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
+        using var scope = TransactionScopeHelper.CreateReadCommitted();
 
         usageLog = await _linkUsageLogRepository.Create(new LinkUsageLog
         {
@@ -805,8 +819,8 @@ namespace Yoma.Core.Domain.ActionLink.Services
         link.UsagesTotal = (link.UsagesTotal ?? 0) + 1;
         if (link.UsagesLimit.HasValue && link.UsagesTotal >= link.UsagesLimit)
         {
-          link.StatusId = _linkStatusService.GetByName(LinkStatus.LimitReached.ToString()).Id;
-          link.Status = LinkStatus.LimitReached;
+          link.StatusId = _linkStatusService.GetByName(ActionLinkStatus.LimitReached.ToString()).Id;
+          link.Status = ActionLinkStatus.LimitReached;
         }
         link = await _linkRepository.Update(link);
 
@@ -871,7 +885,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
 
     private async Task SendNotification(Link link, NotificationType type)
     {
-      if (link.Status != LinkStatus.Active)
+      if (link.Status != ActionLinkStatus.Active)
       {
         _logger.LogInformation("Link with id '{linkId}' is not active, skipping notification", link.Id);
         return;
@@ -886,10 +900,10 @@ namespace Yoma.Core.Domain.ActionLink.Services
         switch (type)
         {
           case NotificationType.ActionLink_Verify_Activated:
-            var entityType = Enum.Parse<LinkEntityType>(link.EntityType, true);
+            var entityType = Enum.Parse<ActionLinkEntityType>(link.EntityType, true);
             switch (entityType)
             {
-              case LinkEntityType.Opportunity:
+              case ActionLinkEntityType.Opportunity:
                 if (!link.OpportunityOrganizationId.HasValue)
                   throw new InvalidOperationException("Opportunity organization details expected");
 

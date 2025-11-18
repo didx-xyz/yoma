@@ -1,7 +1,9 @@
+using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Infrastructure.Database.Context;
 using Yoma.Core.Infrastructure.Database.Core.Repositories;
 using Yoma.Core.Infrastructure.Database.Lookups.Entities;
+using Yoma.Core.Infrastructure.Shared.Extensions;
 
 namespace Yoma.Core.Infrastructure.Database.Lookups.Repositories
 {
@@ -14,6 +16,11 @@ namespace Yoma.Core.Infrastructure.Database.Lookups.Repositories
     #endregion
 
     #region Public Members
+    public IQueryable<Domain.Lookups.Models.EngagementType> Query(LockMode lockMode)
+    {
+      return Query().WithLock(lockMode);
+    }
+
     public IQueryable<Domain.Lookups.Models.EngagementType> Query()
     {
       return _context.EngagementType.Select(entity => new Domain.Lookups.Models.EngagementType

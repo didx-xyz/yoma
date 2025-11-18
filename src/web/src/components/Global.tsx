@@ -32,6 +32,11 @@ import {
   screenWidthAtom,
   userProfileAtom,
 } from "~/lib/store";
+import {
+  isUserProfileCompleted,
+  isUserSettingsConfigured,
+  hasUserPhoto,
+} from "~/lib/utils/profile";
 import CustomModal from "./Common/CustomModal";
 import Suspense from "./Common/Suspense";
 import SettingsForm from "./Settings/SettingsForm";
@@ -85,46 +90,20 @@ export const Global: React.FC = () => {
   //#region Functions
   const postLoginChecks = useCallback(
     (userProfile: UserProfile, skipSettings = false) => {
-      const isUserProfileCompleted = (userProfile: UserProfile) => {
-        if (!userProfile) return null;
-
-        const {
-          firstName,
-          surname,
-          countryId,
-          educationId,
-          genderId,
-          dateOfBirth,
-        } = userProfile;
-
-        if (
-          !firstName ||
-          !surname ||
-          !countryId ||
-          !educationId ||
-          !genderId ||
-          !dateOfBirth
-        ) {
-          return false;
-        }
-
-        return true;
-      };
-
       if (!userProfile) return;
+
+      // Skip profile completion modals on claim page - handled inline there
+      if (router.asPath.includes("/referrals/claim/")) {
+        return;
+      }
 
       if (!isUserProfileCompleted(userProfile)) {
         // show update profile dialog
         setUpdateProfileDialogVisible(true);
-      } else if (
-        !skipSettings &&
-        !userProfile?.settings?.items.find(
-          (x) => x.key === SETTING_USER_SETTINGS_CONFIGURED,
-        )?.value
-      ) {
+      } else if (!skipSettings && !isUserSettingsConfigured(userProfile)) {
         // show settings dialog
         setSettingsDialogVisible(true);
-      } else if (!userProfile?.photoURL) {
+      } else if (!hasUserPhoto(userProfile)) {
         // show photo upload dialog
         setPhotoUploadDialogVisible(true);
       } else {
@@ -132,6 +111,7 @@ export const Global: React.FC = () => {
       }
     },
     [
+      router.asPath,
       setUpdateProfileDialogVisible,
       setSettingsDialogVisible,
       setPhotoUploadDialogVisible,
@@ -459,7 +439,15 @@ export const Global: React.FC = () => {
             <div className="w-full">
               <UserProfileForm
                 userProfile={userProfile}
-                onSubmit={(updatedUserProfile) => {
+                onSubmit={async (updatedUserProfile) => {
+                  // update atom with new profile data
+                  setUserProfile(updatedUserProfile);
+
+                  // invalidate userProfile query to ensure all components get fresh data
+                  await queryClient.invalidateQueries({
+                    queryKey: ["userProfile"],
+                  });
+
                   // hide popup
                   setUpdateProfileDialogVisible(false);
 
@@ -560,16 +548,18 @@ export const Global: React.FC = () => {
               </h5>
             </div>
 
-            {/* <p className="text-sm text-gray-dark">
-              Please take a moment to update your profile to ensure your details
-              are current. Your information will be used to issue credentials in
-              your Yo-ID wallet.
-            </p> */}
-
             <div className="w-full">
               <UserProfileForm
                 userProfile={userProfile}
-                onSubmit={() => {
+                onSubmit={async (updatedUserProfile) => {
+                  // update atom with new profile data (includes photo)
+                  setUserProfile(updatedUserProfile);
+
+                  // invalidate userProfile query to ensure all components get fresh data
+                  await queryClient.invalidateQueries({
+                    queryKey: ["userProfile"],
+                  });
+
                   // hide popup
                   setPhotoUploadDialogVisible(false);
                 }}

@@ -1,7 +1,9 @@
+using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Marketplace.Models.Lookups;
 using Yoma.Core.Infrastructure.Database.Context;
 using Yoma.Core.Infrastructure.Database.Core.Repositories;
+using Yoma.Core.Infrastructure.Shared.Extensions;
 
 namespace Yoma.Core.Infrastructure.Database.Marketplace.Repositories.Lookup
 {
@@ -14,6 +16,11 @@ namespace Yoma.Core.Infrastructure.Database.Marketplace.Repositories.Lookup
     #endregion
 
     #region Public Members
+    public IQueryable<StoreAccessControlRuleStatus> Query(LockMode lockMode)
+    {
+      return Query().WithLock(lockMode);
+    }
+
     public IQueryable<StoreAccessControlRuleStatus> Query()
     {
       return _context.StoreAccessControlRuleStatus.Select(entity => new StoreAccessControlRuleStatus

@@ -87,8 +87,10 @@ namespace Yoma.Core.Domain.Entity.Services
 
         while (executeUntil > DateTimeOffset.UtcNow)
         {
+          var now = DateTimeOffset.UtcNow;
+
           var items = _organizationRepository.Query(true).Where(o => statusDeclinationIds.Contains(o.StatusId) &&
-           o.DateModified <= DateTimeOffset.UtcNow.AddDays(-_scheduleJobOptions.OrganizationDeclinationIntervalInDays))
+           o.DateModified <= now.AddDays(-_scheduleJobOptions.OrganizationDeclinationIntervalInDays))
            .OrderBy(o => o.DateModified).Take(_scheduleJobOptions.OrganizationDeclinationBatchSize).ToList();
           if (items.Count == 0) break;
 
@@ -179,8 +181,10 @@ namespace Yoma.Core.Domain.Entity.Services
 
         while (executeUntil > DateTimeOffset.UtcNow)
         {
+          var now = DateTimeOffset.UtcNow;
+
           var items = _organizationRepository.Query().Where(o => statusDeletionIds.Contains(o.StatusId) &&
-              o.DateModified <= DateTimeOffset.UtcNow.AddDays(-_scheduleJobOptions.OrganizationDeletionIntervalInDays))
+              o.DateModified <= now.AddDays(-_scheduleJobOptions.OrganizationDeletionIntervalInDays))
               .OrderBy(o => o.DateModified).Take(_scheduleJobOptions.OrganizationDeletionBatchSize).ToList();
           if (items.Count == 0) break;
 

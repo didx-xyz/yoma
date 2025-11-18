@@ -11,12 +11,12 @@ namespace Yoma.Core.Infrastructure.Database.SSI.Entities.Lookups
     [Required]
     [ForeignKey("SSISchemaEntityId")]
     public Guid SSISchemaEntityId { get; set; }
-    public SSISchemaEntity SSISchemaEntity { get; set; }
+    public SSISchemaEntity SSISchemaEntity { get; set; } = null!;
 
     [Required]
     [ForeignKey("SSISchemaTypeId")]
     public Guid SSISchemaTypeId { get; set; }
-    public SSISchemaType SSISchemaType { get; set; }
+    public SSISchemaType SSISchemaType { get; set; } = null!;
 
     [Required]
     public DateTimeOffset DateCreated { get; set; }

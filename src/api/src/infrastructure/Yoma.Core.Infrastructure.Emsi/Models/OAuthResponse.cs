@@ -5,13 +5,13 @@ namespace Yoma.Core.Infrastructure.Emsi.Models
   public class OAuthResponse
   {
     [JsonProperty("access_token")]
-    public string Access_token { get; set; }
+    public string Access_token { get; set; } = null!;
 
     [JsonProperty("expires_in")]
     public int Expires_in { get; set; }
 
     [JsonProperty("token_type")]
-    public string Token_type { get; set; }
+    public string Token_type { get; set; } = null!;
 
     [JsonIgnore]
     public DateTimeOffset Date { get; } = DateTimeOffset.UtcNow;

@@ -1,12 +1,14 @@
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 using Yoma.Core.Domain.BlobProvider;
+using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Entity;
 using Yoma.Core.Infrastructure.Database.Context;
 using Yoma.Core.Infrastructure.Database.Core.Repositories;
 using Yoma.Core.Infrastructure.Database.Entity.Entities;
+using Yoma.Core.Infrastructure.Shared.Extensions;
 
 namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
 {
@@ -22,9 +24,19 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
       return Query(false);
     }
 
+    public IQueryable<Domain.Entity.Models.Organization> Query(LockMode lockMode)
+    {
+      return Query(false).WithLock(lockMode);
+    }
+
+    public IQueryable<Domain.Entity.Models.Organization> Query(bool includeChildItems, LockMode lockMode)
+    {
+      return Query(includeChildItems).WithLock(lockMode);
+    }
+
     public IQueryable<Domain.Entity.Models.Organization> Query(bool includeChildItems)
     {
-      return _context.Organization.Select(entity => new Domain.Entity.Models.Organization()
+      var query = _context.Organization.Select(entity => new Domain.Entity.Models.Organization()
       {
         Id = entity.Id,
         Name = entity.Name,
@@ -92,7 +104,10 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
                 CountryId = o.User.CountryId
               }).OrderBy(o => o.DisplayName).ToList() : null
 
-      }).AsSplitQuery();
+      });
+
+      if (includeChildItems) query = query.AsSplitQuery();
+      return query;
     }
 
     public Expression<Func<Domain.Entity.Models.Organization, bool>> Contains(Expression<Func<Domain.Entity.Models.Organization, bool>> predicate, string value)

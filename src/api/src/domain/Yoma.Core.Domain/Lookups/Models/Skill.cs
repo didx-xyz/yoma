@@ -7,10 +7,10 @@ namespace Yoma.Core.Domain.Lookups.Models
   {
     public Guid Id { get; set; }
 
-    public string Name { get; set; }
+    public string Name { get; set; } = null!;
 
     [JsonIgnore]
-    public string ExternalId { get; set; }
+    public string ExternalId { get; set; } = null!;
 
     public string? InfoURL { get; set; }
 

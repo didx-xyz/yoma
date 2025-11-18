@@ -6,9 +6,9 @@ namespace Yoma.Core.Domain.Marketplace.Models
 
     public Guid UserId { get; set; }
 
-    public string ItemCategoryId { get; set; }
+    public string ItemCategoryId { get; set; } = null!;
 
-    public string ItemId { get; set; }
+    public string ItemId { get; set; } = null!;
 
     public Guid StatusId { get; set; }
 
@@ -16,7 +16,7 @@ namespace Yoma.Core.Domain.Marketplace.Models
 
     public decimal Amount { get; set; }
 
-    public string TransactionId { get; set; }
+    public string TransactionId { get; set; } = null!;
 
     public DateTimeOffset DateCreated { get; set; }
 

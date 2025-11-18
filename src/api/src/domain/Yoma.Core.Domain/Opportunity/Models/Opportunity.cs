@@ -9,17 +9,17 @@ namespace Yoma.Core.Domain.Opportunity.Models
   {
     public Guid Id { get; set; }
 
-    public string Title { get; set; }
+    public string Title { get; set; } = null!;
 
-    public string Description { get; set; }
+    public string Description { get; set; } = null!;
 
     public Guid TypeId { get; set; }
 
-    public string Type { get; set; }
+    public string Type { get; set; } = null!;
 
     public Guid OrganizationId { get; set; }
 
-    public string OrganizationName { get; set; }
+    public string OrganizationName { get; set; } = null!;
 
     public Guid? OrganizationLogoId { get; set; }
 
@@ -78,7 +78,7 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
     public Guid DifficultyId { get; set; }
 
-    public string Difficulty { get; set; }
+    public string Difficulty { get; set; } = null!;
 
     public Guid CommitmentIntervalId { get; set; }
 
@@ -86,7 +86,7 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
     public short CommitmentIntervalCount { get; set; }
 
-    public string CommitmentIntervalDescription { get; set; }
+    public string CommitmentIntervalDescription { get; set; } = null!;
 
     #region Verification Limits and Counts
     public int? ParticipantLimit { get; set; }

@@ -4,11 +4,13 @@ using NpgsqlTypes;
 using System.Linq.Expressions;
 using Yoma.Core.Domain.ActionLink;
 using Yoma.Core.Domain.ActionLink.Models;
+using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Infrastructure.Database.Context;
 using Yoma.Core.Infrastructure.Database.Core.Repositories;
+using Yoma.Core.Infrastructure.Shared.Extensions;
 
 namespace Yoma.Core.Infrastructure.Database.ActionLink.Repositories
 {
@@ -19,6 +21,11 @@ namespace Yoma.Core.Infrastructure.Database.ActionLink.Repositories
     #endregion
 
     #region Public Members
+    public IQueryable<Link> Query(LockMode lockMode)
+    {
+      return Query().WithLock(lockMode);
+    }
+
     public IQueryable<Link> Query()
     {
       return _context.Link.Select(entity => new Link
@@ -29,7 +36,7 @@ namespace Yoma.Core.Infrastructure.Database.ActionLink.Repositories
         EntityType = entity.EntityType,
         Action = entity.Action,
         StatusId = entity.StatusId,
-        Status = Enum.Parse<LinkStatus>(entity.Status.Name, true),
+        Status = Enum.Parse<ActionLinkStatus>(entity.Status.Name, true),
         OpportunityId = entity.OpportunityId,
         OpportunityTitle = entity.Opportunity == null ? null : entity.Opportunity.Title,
         OpportunityOrganizationId = entity.Opportunity == null ? null : entity.Opportunity.OrganizationId,

@@ -8,7 +8,7 @@ namespace Yoma.Core.Domain.ActionLink.Models
 
     public string? Description { get; set; }
 
-    public LinkEntityType EntityType { get; set; }
+    public ActionLinkEntityType EntityType { get; set; }
 
     public Guid EntityId { get; set; }
 

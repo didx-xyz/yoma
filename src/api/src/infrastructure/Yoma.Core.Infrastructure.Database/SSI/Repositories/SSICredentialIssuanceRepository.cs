@@ -1,9 +1,11 @@
 using System.Data;
+using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.SSI;
 using Yoma.Core.Domain.SSI.Models;
 using Yoma.Core.Infrastructure.Database.Context;
 using Yoma.Core.Infrastructure.Database.Core.Repositories;
+using Yoma.Core.Infrastructure.Shared.Extensions;
 
 namespace Yoma.Core.Infrastructure.Database.SSI.Repositories
 {
@@ -14,6 +16,11 @@ namespace Yoma.Core.Infrastructure.Database.SSI.Repositories
     #endregion
 
     #region Public Members
+    public IQueryable<SSICredentialIssuance> Query(LockMode lockMode)
+    {
+      return Query().WithLock(lockMode);
+    }
+
     public IQueryable<SSICredentialIssuance> Query()
     {
       return _context.SSICredentialIssuance.Select(entity => new SSICredentialIssuance

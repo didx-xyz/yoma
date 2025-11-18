@@ -13,20 +13,24 @@ namespace Yoma.Core.Infrastructure.Database.Reward.Entities
   {
     [ForeignKey("UserId")]
     public Guid UserId { get; set; }
-    public User User { get; set; }
+    public User User { get; set; } = null!;
 
     [Required]
     [ForeignKey("StatusId")]
     public Guid StatusId { get; set; }
-    public RewardTransactionStatus Status { get; set; }
+    public RewardTransactionStatus Status { get; set; } = null!;
 
     [Required]
     [Column(TypeName = "varchar(25)")]
-    public string SourceEntityType { get; set; }
+    public string SourceEntityType { get; set; } = null!;
 
     [ForeignKey("MyOpportunityId")]
     public Guid? MyOpportunityId { get; set; }
     public MyOpportunity.Entities.MyOpportunity? MyOpportunity { get; set; }
+
+    [ForeignKey("LinkUsageId")]
+    public Guid? ReferralLinkUsageId { get; set; }
+    public Referral.Entities.LinkUsage? ReferralLinkUsage { get; set; }
 
     [Required]
     [Column(TypeName = "decimal(8,2)")]

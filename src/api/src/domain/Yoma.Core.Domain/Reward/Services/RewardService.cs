@@ -50,9 +50,16 @@ namespace Yoma.Core.Domain.Reward.Services
       {
         case RewardTransactionEntityType.MyOpportunity:
 #pragma warning disable CA1862 // Use the 'StringComparison' method overloads to perform case-insensitive string comparisons
-          existingItem = _rewardTransactionRepository.Query().SingleOrDefault(o => o.SourceEntityType.ToLower() == entityType.ToString().ToLower() && o.MyOpportunityId == entityId);
+          existingItem = _rewardTransactionRepository.Query().SingleOrDefault(o => o.UserId == userId && o.SourceEntityType.ToLower() == entityType.ToString().ToLower() && o.MyOpportunityId == entityId);
 #pragma warning restore CA1862 // Use the 'StringComparison' method overloads to perform case-insensitive string comparisons
           item.MyOpportunityId = entityId;
+          break;
+
+        case RewardTransactionEntityType.ReferralLinkUsage:
+#pragma warning disable CA1862 // Use the 'StringComparison' method overloads to perform case-insensitive string comparisons
+          existingItem = _rewardTransactionRepository.Query().SingleOrDefault(o => o.UserId == userId && o.SourceEntityType.ToLower() == entityType.ToString().ToLower() && o.ReferralLinkUsageId == entityId);
+#pragma warning restore CA1862 // Use the 'StringComparison' method overloads to perform case-insensitive string comparisons
+          item.ReferralLinkUsageId = entityId;
           break;
 
         default:
@@ -61,7 +68,8 @@ namespace Yoma.Core.Domain.Reward.Services
 
       if (existingItem != null)
       {
-        _logger.LogInformation("Scheduling of reward transaction skipped: Already '{status}' for entity type '{entityType}' and entity id '{entityId}'", existingItem.Status, entityType, entityId);
+        _logger.LogInformation("Scheduling of reward transaction skipped: Already '{status}' for user id '{userId}' entity type '{entityType}' and entity id '{entityId}'",
+          userId, existingItem.Status, entityType, entityId);
         return;
       }
 

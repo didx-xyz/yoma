@@ -5,6 +5,8 @@ using Yoma.Core.Infrastructure.Database.Entity.Entities;
 using Yoma.Core.Infrastructure.Database.Lookups.Entities;
 using Yoma.Core.Infrastructure.Database.Marketplace.Entities.Lookups;
 using Yoma.Core.Infrastructure.Database.Opportunity.Entities;
+using Yoma.Core.Infrastructure.Database.Referral.Entities;
+using Yoma.Core.Infrastructure.Database.Referral.Entities.Lookups;
 using Yoma.Core.Infrastructure.Database.Reward.Entities.Lookups;
 using Yoma.Core.Infrastructure.Database.SSI.Entities;
 using Yoma.Core.Infrastructure.Database.SSI.Entities.Lookups;
@@ -25,7 +27,7 @@ namespace Yoma.Core.Infrastructure.Database.Context
     public DbSet<ActionLink.Entities.Lookups.LinkStatus> LinkStatus { get; set; }
     #endregion Lookups
 
-    public DbSet<Link> Link { get; set; }
+    public DbSet<ActionLink.Entities.Link> Link { get; set; }
 
     public DbSet<LinkUsageLog> LinkUsageLog { get; set; }
     #endregion ActionLink
@@ -144,6 +146,32 @@ namespace Yoma.Core.Infrastructure.Database.Context
     public DbSet<PartnerSharing.Entities.ProcessingLog> PartnerSharingProcessingLog { get; set; }
     #endregion PartnerSharing
 
+    #region Referral
+    #region Lookups
+    public DbSet<BlockReason> ReferralBlockReason { get; set; }
+
+    public DbSet<LinkStatus> ReferralLinkStatus { get; set; }
+
+    public DbSet<LinkUsageStatus> ReferralLinkUsageStatus { get; set; }
+
+    public DbSet<ProgramStatus> ReferralProgramStatus { get; set; }
+    #endregion Lookups
+
+    public DbSet<Block> ReferralBlock { get; set; }
+
+    public DbSet<Referral.Entities.Link> ReferralLink { get; set; }
+
+    public DbSet<LinkUsage> ReferralLinkUsage { get; set; }
+
+    public DbSet<Program> ReferralProgram { get; set; }
+
+    public DbSet<ProgramPathway> ReferralProgramPathway { get; set; }
+
+    public DbSet<ProgramPathwayStep> ReferralProgramPathwayStep { get; set; }
+
+    public DbSet<ProgramPathwayTask> ReferralProgramPathwayTask { get; set; }
+    #endregion Referral
+
     #region Reward
     #region Lookups
     public DbSet<RewardTransactionStatus> RewardTransactionStatus { get; set; }
@@ -202,6 +230,35 @@ namespace Yoma.Core.Infrastructure.Database.Context
         }
       }
 
+      #region ActionLink
+      builder.Entity<ActionLink.Entities.Link>()
+          .HasOne(o => o.CreatedByUser)
+          .WithMany()
+          .HasForeignKey(o => o.CreatedByUserId)
+          .OnDelete(DeleteBehavior.NoAction);
+
+      builder.Entity<ActionLink.Entities.Link>()
+          .HasOne(o => o.ModifiedByUser)
+          .WithMany()
+          .HasForeignKey(o => o.ModifiedByUserId)
+          .OnDelete(DeleteBehavior.NoAction);
+      #endregion
+
+      #region Entity
+      builder.Entity<Organization>()
+          .HasOne(o => o.CreatedByUser)
+          .WithMany()
+          .HasForeignKey(o => o.CreatedByUserId)
+          .OnDelete(DeleteBehavior.NoAction);
+
+      builder.Entity<Organization>()
+          .HasOne(o => o.ModifiedByUser)
+          .WithMany()
+          .HasForeignKey(o => o.ModifiedByUserId)
+          .OnDelete(DeleteBehavior.NoAction);
+      #endregion
+
+      #region Opportunity
       builder.Entity<Opportunity.Entities.Opportunity>()
           .HasIndex(o => new { o.Description })
           .HasMethod("GIN")
@@ -218,31 +275,62 @@ namespace Yoma.Core.Infrastructure.Database.Context
           .WithMany()
           .HasForeignKey(o => o.ModifiedByUserId)
           .OnDelete(DeleteBehavior.NoAction);
+      #endregion Opportunity
 
-      builder.Entity<Organization>()
+      #region Referral
+      builder.Entity<Block>()
+          .HasOne(b => b.User)
+          .WithMany(u => u.Blocks)
+          .HasForeignKey(b => b.UserId)
+          .OnDelete(DeleteBehavior.NoAction);
+
+      builder.Entity<Block>()
+          .HasOne(b => b.CreatedByUser)
+          .WithMany()
+          .HasForeignKey(b => b.CreatedByUserId)
+          .OnDelete(DeleteBehavior.NoAction);
+
+      builder.Entity<Block>()
+          .HasOne(b => b.ModifiedByUser)
+          .WithMany()
+          .HasForeignKey(b => b.ModifiedByUserId)
+          .OnDelete(DeleteBehavior.NoAction);
+
+      builder.Entity<Block>().HasIndex(o => o.UserId)
+          .IsUnique()
+          .HasFilter($"\"{nameof(Block.Active)}\" = true");
+
+      builder.Entity<Program>()
           .HasOne(o => o.CreatedByUser)
           .WithMany()
           .HasForeignKey(o => o.CreatedByUserId)
           .OnDelete(DeleteBehavior.NoAction);
 
-      builder.Entity<Organization>()
+      builder.Entity<Program>()
           .HasOne(o => o.ModifiedByUser)
           .WithMany()
           .HasForeignKey(o => o.ModifiedByUserId)
           .OnDelete(DeleteBehavior.NoAction);
 
-      builder.Entity<Link>()
-          .HasOne(o => o.CreatedByUser)
-          .WithMany()
-          .HasForeignKey(o => o.CreatedByUserId)
-          .OnDelete(DeleteBehavior.NoAction);
+      builder.Entity<Program>()
+          .HasIndex(o => o.IsDefault)
+          .IsUnique()
+          .HasFilter($"\"{nameof(Program.IsDefault)}\" = true");
 
-      builder.Entity<Link>()
-          .HasOne(o => o.ModifiedByUser)
-          .WithMany()
-          .HasForeignKey(o => o.ModifiedByUserId)
-          .OnDelete(DeleteBehavior.NoAction);
+      builder.Entity<ProgramPathwayTask>()
+          .HasIndex(e => new { e.StepId, e.EntityType, e.OpportunityId })
+          .IsUnique()
+          .HasFilter(null);
+      #endregion
 
+      #region Reward
+      builder.Entity<Reward.Entities.RewardTransaction>()
+          .HasIndex(e => new { e.UserId, e.SourceEntityType, e.MyOpportunityId, e.ReferralLinkUsageId })
+          .IsUnique()
+          .HasFilter(null);
+      #endregion Reward
+
+      #region SSI
       builder.Entity<SSITenantCreation>()
           .HasIndex(e => new { e.EntityType, e.UserId, e.OrganizationId })
           .IsUnique()
@@ -252,11 +340,7 @@ namespace Yoma.Core.Infrastructure.Database.Context
           .HasIndex(e => new { e.SchemaName, e.UserId, e.OrganizationId, e.MyOpportunityId })
           .IsUnique()
           .HasFilter(null);
-
-      builder.Entity<Reward.Entities.RewardTransaction>()
-        .HasIndex(e => new { e.UserId, e.SourceEntityType, e.MyOpportunityId })
-        .IsUnique()
-        .HasFilter(null);
+      #endregion
     }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)

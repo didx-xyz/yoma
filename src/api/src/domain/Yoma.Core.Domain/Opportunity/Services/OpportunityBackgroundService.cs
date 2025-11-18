@@ -128,13 +128,15 @@ namespace Yoma.Core.Domain.Opportunity.Services
         var statusExpiredId = _opportunityStatusService.GetByName(Status.Expired.ToString()).Id;
         var statusExpirableIds = Statuses_Expirable.Select(o => _opportunityStatusService.GetByName(o.ToString()).Id).ToList();
 
+        var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsernameSystem, false, false);
+
         while (executeUntil > DateTimeOffset.UtcNow)
         {
-          var items = _opportunityRepository.Query().Where(o => statusExpirableIds.Contains(o.StatusId) &&
-              o.DateEnd.HasValue && o.DateEnd.Value <= DateTimeOffset.UtcNow).OrderBy(o => o.DateEnd).Take(_scheduleJobOptions.OpportunityExpirationBatchSize).ToList();
-          if (items.Count == 0) break;
+          var now = DateTimeOffset.UtcNow;
 
-          var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsernameSystem, false, false);
+          var items = _opportunityRepository.Query().Where(o => statusExpirableIds.Contains(o.StatusId) &&
+              o.DateEnd.HasValue && o.DateEnd.Value <= now).OrderBy(o => o.DateEnd).Take(_scheduleJobOptions.OpportunityExpirationBatchSize).ToList();
+          if (items.Count == 0) break;
 
           foreach (var item in items)
           {
@@ -179,7 +181,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
         _logger.LogInformation("Processing opportunity expiration notifications");
 
-        var datetimeFrom = new DateTimeOffset(DateTime.Today).ToUniversalTime();
+        var datetimeFrom = DateTimeOffset.UtcNow;
         var datetimeTo = datetimeFrom.AddDays(_scheduleJobOptions.OpportunityExpirationNotificationIntervalInDays);
         var statusExpirableIds = Statuses_Expirable.Select(o => _opportunityStatusService.GetByName(o.ToString()).Id).ToList();
 
@@ -220,14 +222,16 @@ namespace Yoma.Core.Domain.Opportunity.Services
         var statusDeletionIds = Statuses_Deletion.Select(o => _opportunityStatusService.GetByName(o.ToString()).Id).ToList();
         var statusDeletedId = _opportunityStatusService.GetByName(Status.Deleted.ToString()).Id;
 
+        var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsernameSystem, false, false);
+
         while (executeUntil > DateTimeOffset.UtcNow)
         {
+          var now = DateTimeOffset.UtcNow;
+
           var items = _opportunityRepository.Query().Where(o => statusDeletionIds.Contains(o.StatusId) &&
-              o.DateModified <= DateTimeOffset.UtcNow.AddDays(-_scheduleJobOptions.OpportunityDeletionIntervalInDays))
+              o.DateModified <= now.AddDays(-_scheduleJobOptions.OpportunityDeletionIntervalInDays))
               .OrderBy(o => o.DateModified).Take(_scheduleJobOptions.OpportunityDeletionBatchSize).ToList();
           if (items.Count == 0) break;
-
-          var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsernameSystem, false, false);
 
           foreach (var item in items)
           {
