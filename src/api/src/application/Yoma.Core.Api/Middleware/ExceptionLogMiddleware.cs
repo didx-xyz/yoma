@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.Net;
 using Yoma.Core.Domain.Core.Exceptions;
+using Yoma.Core.Domain.Core.Extensions;
 
 namespace Yoma.Core.Api.Middleware
 {
@@ -30,8 +31,12 @@ namespace Yoma.Core.Api.Middleware
         var e = ex is AggregateException agg ? agg.Flatten() : ex;
         var (level, status) = Classify(e);
         var type = e.GetType().Name;
+
         var method = httpContext.Request?.Method ?? "method:unknown";
+        method = method.SanitizeLogValue();
+
         var path = httpContext.Request?.Path.Value ?? "path:unknown";
+        path = path.SanitizeLogValue(); 
 
         LogAtLevel(level, e, method, path, type, status, e.Message);
 
