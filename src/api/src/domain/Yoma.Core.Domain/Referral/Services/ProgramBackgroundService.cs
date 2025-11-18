@@ -43,7 +43,7 @@ namespace Yoma.Core.Domain.Referral.Services
       ILogger<ProgramBackgroundService> logger,
       IOptions<ScheduleJobOptions> scheduleJobOptions,
 
-      IIdentityProviderClient identityProviderClient,
+      IIdentityProviderClientFactory identityProviderClientFactory,
 
       IUserService userService,
       IProgramStatusService programStatusService,
@@ -57,7 +57,7 @@ namespace Yoma.Core.Domain.Referral.Services
       _logger = logger ?? throw new ArgumentNullException(nameof(logger));
       _scheduleJobOptions = scheduleJobOptions.Value ?? throw new ArgumentNullException(nameof(scheduleJobOptions));
 
-      _identityProviderClient = identityProviderClient ?? throw new ArgumentNullException(nameof(identityProviderClient));
+      _identityProviderClient = identityProviderClientFactory.CreateClient() ?? throw new ArgumentNullException(nameof(identityProviderClientFactory));
 
       _userService = userService ?? throw new ArgumentNullException(nameof(userService));
       _programStatusService = programStatusService ?? throw new ArgumentNullException(nameof(programStatusService));
