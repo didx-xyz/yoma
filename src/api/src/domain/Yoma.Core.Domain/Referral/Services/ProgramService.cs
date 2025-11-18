@@ -563,15 +563,20 @@ namespace Yoma.Core.Domain.Referral.Services
       return result;
     }
 
-    public async Task<Program> ProcessCompletion(Program program, decimal? rewardAmount)
+    public async Task<Program> ProcessCompletion(Guid programId, decimal? rewardAmount)
     {
-      ArgumentNullException.ThrowIfNull(program, nameof(program));
+      if (programId == Guid.Empty)
+        throw new ArgumentNullException(nameof(programId));
 
       var statusLimitReached = _programStatusService.GetByName(ProgramStatus.LimitReached.ToString());
 
+      Program program = null!;
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
         using var scope = TransactionScopeHelper.CreateReadCommitted();
+
+        program = _programRepository.Query(LockMode.Wait).SingleOrDefault(p => p.Id == programId)
+          ?? throw new EntityNotFoundException($"{nameof(Program)} with id '{programId}' does not exist");
 
         // Increment global completion total (always)
         program.CompletionTotal = (program.CompletionTotal ?? 0) + 1;

@@ -25,8 +25,8 @@ namespace Yoma.Core.Domain.Notification.Services
     #region Public Members
     public string ReferralRefereeYoIDURL(NotificationType notificationType, Guid programId)
     {
-      if(programId == Guid.Empty)
-        throw new ArgumentNullException(nameof(programId)); 
+      if (programId == Guid.Empty)
+        throw new ArgumentNullException(nameof(programId));
 
       return notificationType switch
       {

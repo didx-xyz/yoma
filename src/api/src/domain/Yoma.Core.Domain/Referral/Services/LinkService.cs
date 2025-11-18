@@ -323,12 +323,22 @@ namespace Yoma.Core.Domain.Referral.Services
       return result;
     }
 
-    public async Task<ReferralLink> ProcessCompletion(Program program, ReferralLink link, decimal? rewardAmount)
+    // NOTE:
+    // Assumes an ambient TransactionScope and (optionally) execution strategy
+    // at the call site (e.g. LinkUsageService.ProcessProgressByUserId).
+    // This method relies on row-level locking via LockMode.Wait to ensure
+    // atomic updates of completion counters and status transitions.
+    public async Task<ReferralLink> ProcessCompletion(Program program, Guid linkId, decimal? rewardAmount)
     {
       ArgumentNullException.ThrowIfNull(program, nameof(program));
-      ArgumentNullException.ThrowIfNull(link, nameof(link));
+
+      if (linkId == Guid.Empty)
+        throw new ArgumentNullException(nameof(linkId));
 
       var statusLimitReached = _linkStatusService.GetByName(ReferralLinkStatus.LimitReached.ToString());
+
+      var link = _linkRepository.Query(Core.LockMode.Wait).SingleOrDefault(o => o.Id == linkId)
+        ?? throw new EntityNotFoundException($"Referral link with id '{linkId}' does not exist");
 
       // Increment total (always)
       link.CompletionTotal = (link.CompletionTotal ?? 0) + 1;
@@ -383,6 +393,7 @@ namespace Yoma.Core.Domain.Referral.Services
       }
 
       link = await _linkRepository.Update(link);
+
       return link;
     }
     #endregion

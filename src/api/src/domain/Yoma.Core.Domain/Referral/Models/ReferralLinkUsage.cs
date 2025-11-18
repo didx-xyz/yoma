@@ -32,7 +32,7 @@ namespace Yoma.Core.Domain.Referral.Models
 
     public string? UserEmailReferrer { get; set; }
 
-    public bool? UserEmailConfirmedReferrer { get; set; } 
+    public bool? UserEmailConfirmedReferrer { get; set; }
 
     public string? UserPhoneNumberReferrer { get; set; }
 
@@ -42,7 +42,7 @@ namespace Yoma.Core.Domain.Referral.Models
     #region Referee Info (mapped to the usage)
     public Guid UserId { get; set; }
 
-    public string Username { get; set; } = null!; 
+    public string Username { get; set; } = null!;
 
     public string? UserDisplayName { get; set; } = null!;
 

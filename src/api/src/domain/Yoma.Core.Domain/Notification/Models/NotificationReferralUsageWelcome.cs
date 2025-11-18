@@ -5,10 +5,10 @@ namespace Yoma.Core.Domain.Notification.Models
   public sealed class NotificationReferralUsageWelcome : NotificationBase
   {
     [JsonProperty("yoIDURL")]
-    public string? YoIDURL { get; set; } 
+    public string? YoIDURL { get; set; }
 
     [JsonProperty("linkClaimURL")]
-    public string? LinkClaimURL { get; set; } 
+    public string? LinkClaimURL { get; set; }
 
     [JsonProperty("dateClaimed")]
     public DateTimeOffset DateClaimed { get; set; }

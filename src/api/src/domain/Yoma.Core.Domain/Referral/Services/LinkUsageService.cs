@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.Transactions;
+using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Helpers;
@@ -428,7 +429,7 @@ namespace Yoma.Core.Domain.Referral.Services
           {
             using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
 
-            var myUsage = _linkUsageRepository.Query().Single(o => o.Id == usageId);
+            var myUsage = _linkUsageRepository.Query(LockMode.Wait).Single(o => o.Id == usageId);
             if (myUsage.Status != ReferralLinkUsageStatus.Pending) //state change between fetching the worklist and processing
             {
               _logger.LogInformation("Referral progress: skipping LinkUsage '{LinkUsageId}' with status '{Status}'", myUsage.Id, myUsage.Status);
@@ -659,7 +660,7 @@ namespace Yoma.Core.Domain.Referral.Services
             var linkStatusCurrent = link.Status;
 
             // Increment running totals (CompletionTotal and ZltoRewardCumulative); may flip Program to LIMIT_REACHED if ACTIVE, inclusive of all ACTIVE links (global completion cap hit)
-            program = await _programService.ProcessCompletion(program, totalAwarded);
+            program = await _programService.ProcessCompletion(program.Id, totalAwarded);
 
             // If the program flipped from ACTIVE → LIMIT_REACHED, all ACTIVE links will also be flipped to LIMIT_REACHED
             if (programStatusCurrent == ProgramStatus.Active && program.Status == ProgramStatus.LimitReached && linkStatusCurrent == ReferralLinkStatus.Active)
@@ -667,7 +668,7 @@ namespace Yoma.Core.Domain.Referral.Services
               link = _linkService.GetById(myUsage.LinkId, false, false, false, false);
 
             // Increment running totals (CompletionTotal and ZltoRewardCumulative); may flip to LIMIT_REACHED if ACTIVE (per-referrer completion cap hit)
-            link = await _linkService.ProcessCompletion(program, link, totalAwarded);
+            link = await _linkService.ProcessCompletion(program, link.Id, totalAwarded);
 
             linkCache[link.Id] = link;
             programCache[program.Id] = program;
