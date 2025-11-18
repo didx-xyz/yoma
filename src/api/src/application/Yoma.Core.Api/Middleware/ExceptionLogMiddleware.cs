@@ -36,7 +36,7 @@ namespace Yoma.Core.Api.Middleware
         method = method.SanitizeLogValue();
 
         var path = httpContext.Request?.Path.Value ?? "path:unknown";
-        path = path.SanitizeLogValue(); 
+        path = path.SanitizeLogValue();
 
         LogAtLevel(level, e, method, path, type, status, e.Message);
 
