@@ -56,16 +56,16 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
 
       var statuses = new Status[] { Status.Active, Status.Expired }; //ignore DateStart, includes both not started and started
       if (!statuses.Contains(opportunity.Status))
-        return (false, $"Opportunity with id '{opportunity.Id}' has an invalid status. Expected status(es): '{statuses.JoinNames()}");
+        return (false, $"Opportunity with id '{opportunity.Id}' has an invalid status. Expected status(es): '{statuses.JoinNames()}'");
 
       return (true, null);
     }
 
-    public static void SetPublished(this Models.Opportunity opportunity) //maintain private Published
+    public static void SetPublished(this Models.Opportunity opportunity)
     {
       ArgumentNullException.ThrowIfNull(opportunity, nameof(opportunity));
 
-      opportunity.Published = opportunity.Status == Status.Active && opportunity.OrganizationStatus == Entity.OrganizationStatus.Active;
+      opportunity.Published = Published(opportunity.Status, opportunity.OrganizationStatus);
     }
 
     public static OpportunityItem ToOpportunityItem(this Models.Opportunity value)
@@ -172,65 +172,19 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
     {
       ArgumentNullException.ThrowIfNull(item, nameof(item));
 
-      reason = null;
-
-      item.SetPublished();
-
-      var canSendForVerification = item.Status == Status.Expired || (item.Published && item.DateStart <= DateTimeOffset.Now);
-      var isCompletable = canSendForVerification && item.VerificationEnabled;
-
-      if (isCompletable) return true;
-
-      var reasons = new List<string>();
-
-      if (!item.Published)
-        reasons.Add("it has not been published");
-
-      if (item.Status != Status.Active && item.Status != Status.Expired)
-        reasons.Add($"its status is '{item.Status.ToDescription()}'");
-
-      if (item.DateStart > DateTimeOffset.UtcNow)
-        reasons.Add($"it has not yet started (start date: {item.DateStart:yyyy-MM-dd})");
-
-      if (!item.VerificationEnabled)
-        reasons.Add("verification is not enabled");
-
-      reason = $"Opportunity '{item.Title}' can not be completed, because {string.Join(", ", reasons)}";
-      return false;
+      return EvaluateCompletable(item.Title, item.Status, item.OrganizationStatus, item.VerificationEnabled, item.DateStart, out reason);
     }
 
     public static bool Completable(this OpportunityItem item, out string? reason)
     {
       ArgumentNullException.ThrowIfNull(item, nameof(item));
 
-      reason = null;
-
-      var canSendForVerification = item.Status == Status.Expired || (item.Published() && item.DateStart <= DateTimeOffset.Now);
-      var isCompletable = canSendForVerification && item.VerificationEnabled;
-
-      if (isCompletable) return true;
-
-      var reasons = new List<string>();
-
-      if (!item.Published())
-        reasons.Add("it has not been published");
-
-      if (item.Status != Status.Active && item.Status != Status.Expired)
-        reasons.Add($"its status is '{item.Status.ToDescription()}'");
-
-      if (item.DateStart > DateTimeOffset.UtcNow)
-        reasons.Add($"it has not yet started (start date: {item.DateStart:yyyy-MM-dd})");
-
-      if (!item.VerificationEnabled)
-        reasons.Add("verification is not enabled");
-
-      reason = $"Opportunity '{item.Title}' can not be completed, because {string.Join(", ", reasons)}";
-      return false;
+      return EvaluateCompletable(item.Title, item.Status, item.OrganizationStatus, item.VerificationEnabled, item.DateStart, out reason);
     }
     #endregion
 
     #region Private Members
-    private static decimal? CalculateEstimatedReward(decimal? reward, decimal? organizationBalance, decimal? opportynityBalance)
+    private static decimal? CalculateEstimatedReward(decimal? reward, decimal? organizationBalance, decimal? opportunityBalance)
     {
       if (!reward.HasValue) return null;
 
@@ -240,18 +194,54 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
         if (reward == default) return default;
       }
 
-      if (opportynityBalance.HasValue)
-        reward = Math.Max(Math.Min(reward.Value, opportynityBalance.Value), default);
+      if (opportunityBalance.HasValue)
+        reward = Math.Max(Math.Min(reward.Value, opportunityBalance.Value), default);
 
       return reward;
     }
 
-    private static bool Published(this OpportunityItem item)
+    private static bool Published(Status status, Entity.OrganizationStatus organizationStatus)
     {
-      ArgumentNullException.ThrowIfNull(item, nameof(item));
-
-      return item.Status == Status.Active && item.OrganizationStatus == Entity.OrganizationStatus.Active;
+      return status == Status.Active && organizationStatus == Entity.OrganizationStatus.Active;
     }
+
+    private static bool EvaluateCompletable(
+        string title,
+        Status status,
+        Entity.OrganizationStatus organizationStatus,
+        bool verificationEnabled,
+        DateTimeOffset dateStart,
+        out string? reason)
+    {
+      reason = null;
+
+      var published = Published(status, organizationStatus);
+
+      var canSendForVerification = status == Status.Expired || (published && dateStart <= DateTimeOffset.UtcNow);
+      var isCompletable = canSendForVerification && verificationEnabled;
+
+      if (isCompletable)
+        return true;
+
+      // collect reasons
+      var reasons = new List<string>();
+
+      if (!published)
+        reasons.Add("it has not been published");
+
+      if (status != Status.Active && status != Status.Expired)
+        reasons.Add($"its status is '{status.ToDescription()}'");
+
+      if (dateStart > DateTimeOffset.UtcNow)
+        reasons.Add($"it has not yet started (start date: {dateStart:yyyy-MM-dd})");
+
+      if (!verificationEnabled)
+        reasons.Add("verification is not enabled");
+
+      reason = $"Opportunity '{title}' can not be completed, because {string.Join(", ", reasons)}";
+      return false;
+    }
+
     #endregion
   }
 }
