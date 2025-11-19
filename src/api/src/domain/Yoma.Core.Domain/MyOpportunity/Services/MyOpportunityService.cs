@@ -1386,6 +1386,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
         if (item.VerificationStatus == status)
         {
+          // idempotent no-op: no changes, but complete transaction cleanly
           scope.Complete();
           return;
         }
@@ -1450,6 +1451,9 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
         scope.Complete();
       });
+
+      // idempotent no-op: no changes; exited executionStrategyService early
+      if (item.VerificationStatus == status) return;
 
       if (!notificationType.HasValue)
         throw new InvalidOperationException($"Notification type expected");
