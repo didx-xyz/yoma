@@ -72,8 +72,6 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
     {
       ArgumentNullException.ThrowIfNull(value, nameof(value));
 
-      var resultCompletable = value.Completable(out var reasonNonCompletable);
-
       return new OpportunityItem
       {
         Id = value.Id,
@@ -81,9 +79,7 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
         OrganizationStatus = value.OrganizationStatus,
         VerificationEnabled = value.VerificationEnabled,
         Status = value.Status,
-        DateStart = value.DateStart,
-        IsCompletable = resultCompletable,
-        NonCompletableReason = reasonNonCompletable
+        DateStart = value.DateStart
       };
     }
 
@@ -200,6 +196,35 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
       reason = $"Opportunity '{item.Title}' can not be completed, because {string.Join(", ", reasons)}";
       return false;
     }
+
+    public static bool Completable(this OpportunityItem item, out string? reason)
+    {
+      ArgumentNullException.ThrowIfNull(item, nameof(item));
+
+      reason = null;
+
+      var canSendForVerification = item.Status == Status.Expired || (item.Published() && item.DateStart <= DateTimeOffset.Now);
+      var isCompletable = canSendForVerification && item.VerificationEnabled;
+
+      if (isCompletable) return true;
+
+      var reasons = new List<string>();
+
+      if (!item.Published())
+        reasons.Add("it has not been published");
+
+      if (item.Status != Status.Active && item.Status != Status.Expired)
+        reasons.Add($"its status is '{item.Status.ToDescription()}'");
+
+      if (item.DateStart > DateTimeOffset.UtcNow)
+        reasons.Add($"it has not yet started (start date: {item.DateStart:yyyy-MM-dd})");
+
+      if (!item.VerificationEnabled)
+        reasons.Add("verification is not enabled");
+
+      reason = $"Opportunity '{item.Title}' can not be completed, because {string.Join(", ", reasons)}";
+      return false;
+    }
     #endregion
 
     #region Private Members
@@ -217,6 +242,13 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
         reward = Math.Max(Math.Min(reward.Value, opportynityBalance.Value), default);
 
       return reward;
+    }
+
+    private static bool Published(this OpportunityItem item)
+    {
+      ArgumentNullException.ThrowIfNull(item, nameof(item));
+
+      return item.Status == Status.Active && item.OrganizationStatus == Entity.OrganizationStatus.Active;
     }
     #endregion
   }

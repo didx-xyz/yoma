@@ -1,5 +1,6 @@
 using Newtonsoft.Json;
 using Yoma.Core.Domain.Entity;
+using Yoma.Core.Domain.Opportunity.Extensions;
 
 namespace Yoma.Core.Domain.Opportunity.Models
 {
@@ -21,10 +22,17 @@ namespace Yoma.Core.Domain.Opportunity.Models
     [JsonIgnore]
     public DateTimeOffset DateStart { get; set; }
 
-    [JsonIgnore]
-    public bool IsCompletable { get; set; }
+    public bool IsCompletable
+    {
+      get
+      {
+        var result = this.Completable(out var reason);
+        NonCompletableReason = reason;
+        return result;
+      }
+    }
 
     [JsonIgnore]
-    public string? NonCompletableReason { get; set; }
+    public string? NonCompletableReason { get; private set; }
   }
 }
