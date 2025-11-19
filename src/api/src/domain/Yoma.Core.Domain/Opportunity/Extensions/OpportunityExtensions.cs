@@ -72,7 +72,7 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
     {
       ArgumentNullException.ThrowIfNull(value, nameof(value));
 
-      // completable calculated inline as loaded directly from the repo with referrals and not going through ToOpportunityInfo
+      // completable calculated inline on OpportunityItem (loaded directly from the repo in some cases and not always initialized via ToOpportunityItem)
 
       return new OpportunityItem
       {
@@ -119,7 +119,7 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
       ArgumentException.ThrowIfNullOrWhiteSpace(appBaseURL, nameof(appBaseURL));
       appBaseURL = appBaseURL.Trim();
 
-      var resultCompletable = value.Completable(out var reasonNonCompletable);
+      // completable calculated inline on Opportunity (map below to OpportunityInfo)
 
       return new OpportunityInfo
       {
@@ -158,8 +158,8 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
         ExternalId = value.ExternalId,
         Published = value.Published,
         YomaInfoURL = value.YomaInfoURL(appBaseURL),
-        IsCompletable = resultCompletable,
-        NonCompletableReason = reasonNonCompletable,
+        IsCompletable = value.IsCompletable,
+        NonCompletableReason = value.NonCompletableReason,
         Categories = value.Categories,
         Countries = value.Countries,
         Languages = value.Languages,
@@ -241,7 +241,6 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
       reason = $"Opportunity '{title}' can not be completed, because {string.Join(", ", reasons)}";
       return false;
     }
-
     #endregion
   }
 }

@@ -2,6 +2,7 @@ using Newtonsoft.Json;
 using Yoma.Core.Domain.BlobProvider;
 using Yoma.Core.Domain.Entity;
 using Yoma.Core.Domain.Lookups.Models;
+using Yoma.Core.Domain.Opportunity.Extensions;
 
 namespace Yoma.Core.Domain.Opportunity.Models
 {
@@ -133,6 +134,18 @@ namespace Yoma.Core.Domain.Opportunity.Models
     public Guid ModifiedByUserId { get; set; }
 
     public bool Published { get; set; }
+
+    public bool IsCompletable
+    {
+      get
+      {
+        var result = this.Completable(out var reason);
+        NonCompletableReason = reason;
+        return result;
+      }
+    }
+
+    public string? NonCompletableReason { get; private set; }
 
     public List<Lookups.OpportunityCategory>? Categories { get; set; }
 

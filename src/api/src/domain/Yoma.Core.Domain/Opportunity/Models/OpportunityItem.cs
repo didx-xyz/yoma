@@ -22,6 +22,7 @@ namespace Yoma.Core.Domain.Opportunity.Models
     [JsonIgnore]
     public DateTimeOffset DateStart { get; set; }
 
+    [JsonIgnore]
     public bool IsCompletable
     {
       get
