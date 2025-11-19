@@ -1370,20 +1370,25 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         throw new ValidationException(PerformActionNotPossibleValidationMessage(opportunity, "verification cannot be finalized", true));
 
       var actionVerificationId = _myOpportunityActionService.GetByName(Action.Verification.ToString()).Id;
-      var item = _myOpportunityRepository.Query(false).SingleOrDefault(o => o.UserId == user.Id && o.OpportunityId == opportunity.Id && o.ActionId == actionVerificationId)
-          ?? throw new ValidationException($"Opportunity '{opportunity.Title}' has not been sent for verification for user '{user.Username}'");
-
-      if (item.VerificationStatus != VerificationStatus.Pending)
-        throw new ValidationException($"Verification is not {VerificationStatus.Pending.ToDescription().ToLower()} for opportunity '{opportunity.Title}'");
-
-      if (item.VerificationStatus == status) return;
-
       var statusId = _myOpportunityVerificationStatusService.GetByName(status.ToString()).Id;
 
       NotificationType? notificationType = null;
+      Models.MyOpportunity item = null!;
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
         using var scope = TransactionScopeHelper.CreateReadCommitted();
+
+        item = _myOpportunityRepository.Query(false, LockMode.Wait).SingleOrDefault(o => o.UserId == user.Id && o.OpportunityId == opportunity.Id && o.ActionId == actionVerificationId)
+          ?? throw new ValidationException($"Opportunity '{opportunity.Title}' has not been sent for verification for user '{user.Username}'");
+
+        if (item.VerificationStatus != VerificationStatus.Pending)
+          throw new ValidationException($"Verification is not {VerificationStatus.Pending.ToDescription().ToLower()} for opportunity '{opportunity.Title}'");
+
+        if (item.VerificationStatus == status)
+        {
+          scope.Complete();
+          return;
+        }
 
         item.VerificationStatusId = statusId;
         item.CommentVerification = comment;
