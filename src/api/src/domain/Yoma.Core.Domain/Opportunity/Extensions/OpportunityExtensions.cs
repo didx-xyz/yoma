@@ -72,7 +72,7 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
     {
       ArgumentNullException.ThrowIfNull(value, nameof(value));
 
-      // completable calculated inline on OpportunityItem (loaded directly from the repo in some cases)
+      // completable calculated inline on OpportunityItem (loaded directly from the repo in some cases and not always initialized via ToOpportunityItem)
 
       return new OpportunityItem
       {
@@ -241,7 +241,6 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
       reason = $"Opportunity '{title}' can not be completed, because {string.Join(", ", reasons)}";
       return false;
     }
-
     #endregion
   }
 }
