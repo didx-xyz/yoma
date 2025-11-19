@@ -61,7 +61,7 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
       return (true, null);
     }
 
-    public static void SetPublished(this Models.Opportunity opportunity)
+    public static void SetPublished(this Models.Opportunity opportunity) //maintain private Published
     {
       ArgumentNullException.ThrowIfNull(opportunity, nameof(opportunity));
 
@@ -71,6 +71,8 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
     public static OpportunityItem ToOpportunityItem(this Models.Opportunity value)
     {
       ArgumentNullException.ThrowIfNull(value, nameof(value));
+
+      // completable calculated inline as loaded directly from the repo with referrals and not going through ToOpportunityInfo
 
       return new OpportunityItem
       {
