@@ -72,6 +72,8 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
     {
       ArgumentNullException.ThrowIfNull(value, nameof(value));
 
+      var resultCompletable = value.Completable(out var reasonNonCompletable);
+
       return new OpportunityItem
       {
         Id = value.Id,
@@ -79,7 +81,9 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
         OrganizationStatus = value.OrganizationStatus,
         VerificationEnabled = value.VerificationEnabled,
         Status = value.Status,
-        DateStart = value.DateStart
+        DateStart = value.DateStart,
+        IsCompletable = resultCompletable,
+        NonCompletableReason = reasonNonCompletable
       };
     }
 
@@ -116,6 +120,8 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
 
       ArgumentException.ThrowIfNullOrWhiteSpace(appBaseURL, nameof(appBaseURL));
       appBaseURL = appBaseURL.Trim();
+
+      var resultCompletable = value.Completable(out var reasonNonCompletable);
 
       return new OpportunityInfo
       {
@@ -154,6 +160,8 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
         ExternalId = value.ExternalId,
         Published = value.Published,
         YomaInfoURL = value.YomaInfoURL(appBaseURL),
+        IsCompletable = resultCompletable,
+        NonCompletableReason = reasonNonCompletable,
         Categories = value.Categories,
         Countries = value.Countries,
         Languages = value.Languages,
@@ -162,27 +170,22 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
       };
     }
 
-    public static bool Published(this OpportunityItem item)
-    {
-      ArgumentNullException.ThrowIfNull(item, nameof(item));
-
-      return item.Status == Status.Active && item.OrganizationStatus == Entity.OrganizationStatus.Active;
-    }
-
-    public static bool Completable(this OpportunityItem item, out string? reason)
+    public static bool Completable(this Models.Opportunity item, out string? reason)
     {
       ArgumentNullException.ThrowIfNull(item, nameof(item));
 
       reason = null;
 
-      var canSendForVerification = item.Status == Status.Expired || (item.Published() && item.DateStart <= DateTimeOffset.Now);
+      item.SetPublished();
+
+      var canSendForVerification = item.Status == Status.Expired || (item.Published && item.DateStart <= DateTimeOffset.Now);
       var isCompletable = canSendForVerification && item.VerificationEnabled;
 
       if (isCompletable) return true;
 
       var reasons = new List<string>();
 
-      if (!item.Published())
+      if (!item.Published)
         reasons.Add("it has not been published");
 
       if (item.Status != Status.Active && item.Status != Status.Expired)

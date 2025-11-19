@@ -133,6 +133,12 @@ namespace Yoma.Core.Domain.Opportunity.Models
     public string YomaInfoURL { get; set; } = null!;
 
     [Ignore]
+    public bool IsCompletable { get; set; }
+
+    [Ignore]
+    public string? NonCompletableReason { get; set; }
+
+    [Ignore]
     public List<Lookups.OpportunityCategory>? Categories { get; set; }
 
     [JsonIgnore]
