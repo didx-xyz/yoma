@@ -1374,6 +1374,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
       NotificationType? notificationType = null;
       Models.MyOpportunity item = null!;
+      var isNoOp = false;
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
         using var scope = TransactionScopeHelper.CreateReadCommitted();
@@ -1384,9 +1385,10 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         if (item.VerificationStatus != VerificationStatus.Pending)
           throw new ValidationException($"Verification is not {VerificationStatus.Pending.ToDescription().ToLower()} for opportunity '{opportunity.Title}'");
 
+        // Idempotent no-op: already at requested status
         if (item.VerificationStatus == status)
         {
-          // idempotent no-op: no changes, but complete transaction cleanly
+          isNoOp = true;
           scope.Complete();
           return;
         }
@@ -1452,8 +1454,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         scope.Complete();
       });
 
-      // idempotent no-op: no changes; exited executionStrategyService early
-      if (item.VerificationStatus == status) return;
+      // Idempotent no-op path: nothing changed, no notifications / events
+      if (isNoOp) return;
 
       if (!notificationType.HasValue)
         throw new InvalidOperationException($"Notification type expected");
