@@ -116,23 +116,24 @@ namespace Yoma.Core.Domain.Entity.Services
     #endregion
 
     #region Public Members
-    public Organization GetById(Guid id, bool includeChildItems, bool includeComputed, bool ensureOrganizationAuthorization)
+    public Organization GetById(Guid id, bool includeChildItems, bool includeComputed, bool ensureOrganizationAuthorization, LockMode? lockMode = null)
     {
       if (id == Guid.Empty)
         throw new ArgumentNullException(nameof(id));
 
-      var result = GetByIdOrNull(id, includeChildItems, includeComputed, ensureOrganizationAuthorization)
+      var result = GetByIdOrNull(id, includeChildItems, includeComputed, ensureOrganizationAuthorization, lockMode)
           ?? throw new EntityNotFoundException($"{nameof(Organization)} with id '{id}' does not exist");
 
       return result;
     }
 
-    public Organization? GetByIdOrNull(Guid id, bool includeChildItems, bool includeComputed, bool ensureOrganizationAuthorization)
+    public Organization? GetByIdOrNull(Guid id, bool includeChildItems, bool includeComputed, bool ensureOrganizationAuthorization, LockMode? lockMode = null)
     {
       if (id == Guid.Empty)
         throw new ArgumentNullException(nameof(id));
 
-      var result = _organizationRepository.Query(includeChildItems).SingleOrDefault(o => o.Id == id);
+      var query = lockMode == null ? _organizationRepository.Query(includeChildItems) : _organizationRepository.Query(includeChildItems, lockMode.Value);
+      var result = query.SingleOrDefault(o => o.Id == id);
       if (result == null) return null;
 
       if (ensureOrganizationAuthorization)

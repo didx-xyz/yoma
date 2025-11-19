@@ -1,13 +1,14 @@
 using Microsoft.AspNetCore.Http;
+using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Entity.Models;
 
 namespace Yoma.Core.Domain.Entity.Interfaces
 {
   public interface IOrganizationService
   {
-    Organization GetById(Guid id, bool includeChildItems, bool includeComputed, bool ensureOrganizationAuthorization);
+    Organization GetById(Guid id, bool includeChildItems, bool includeComputed, bool ensureOrganizationAuthorization, LockMode? lockMode = null);
 
-    Organization? GetByIdOrNull(Guid id, bool includeChildItems, bool includeComputed, bool ensureOrganizationAuthorization);
+    Organization? GetByIdOrNull(Guid id, bool includeChildItems, bool includeComputed, bool ensureOrganizationAuthorization, LockMode? lockMode = null);
 
     Organization? GetByNameOrNull(string name, bool includeChildItems, bool includeComputed);
 

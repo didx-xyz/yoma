@@ -2,8 +2,6 @@ using System.ComponentModel;
 
 namespace Yoma.Core.Domain.Core
 {
-  // TODO: Implement SkipLocked for opportunity completions and referral program progress updates
-
   public enum LockMode
   {
     // SELECT ... FOR UPDATE

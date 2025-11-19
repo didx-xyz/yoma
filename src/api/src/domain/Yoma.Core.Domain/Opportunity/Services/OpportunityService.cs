@@ -162,20 +162,21 @@ namespace Yoma.Core.Domain.Opportunity.Services
     #endregion
 
     #region Public Members
-    public Models.Opportunity GetById(Guid id, bool includeChildItems, bool includeComputed, bool ensureOrganizationAuthorization)
+    public Models.Opportunity GetById(Guid id, bool includeChildItems, bool includeComputed, bool ensureOrganizationAuthorization, LockMode? lockMode = null)
     {
-      var result = GetByIdOrNull(id, includeChildItems, includeComputed, ensureOrganizationAuthorization)
+      var result = GetByIdOrNull(id, includeChildItems, includeComputed, ensureOrganizationAuthorization, lockMode)
           ?? throw new EntityNotFoundException($"{nameof(Models.Opportunity)} with id '{id}' does not exist");
 
       return result;
     }
 
-    public Models.Opportunity? GetByIdOrNull(Guid id, bool includeChildItems, bool includeComputed, bool ensureOrganizationAuthorization)
+    public Models.Opportunity? GetByIdOrNull(Guid id, bool includeChildItems, bool includeComputed, bool ensureOrganizationAuthorization, LockMode? lockMode = null)
     {
       if (id == Guid.Empty)
         throw new ArgumentNullException(nameof(id));
 
-      var result = _opportunityRepository.Query(includeChildItems).SingleOrDefault(o => o.Id == id);
+      var query = lockMode == null ? _opportunityRepository.Query(includeChildItems) : _opportunityRepository.Query(includeChildItems, lockMode.Value);
+      var result = query.SingleOrDefault(o => o.Id == id);
       if (result == null) return null;
 
       if (ensureOrganizationAuthorization)
@@ -1441,60 +1442,67 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
     public async Task<OpportunityAllocateRewardResponse> AllocateRewards(Guid id, bool ensureOrganizationAuthorization)
     {
-      var opportunity = GetById(id, false, true, ensureOrganizationAuthorization);
+      if (id == Guid.Empty)
+        throw new ArgumentNullException(nameof(id));
 
-      //can complete, provided published (and started) or expired (action prior to expiration)
-      var canComplete = opportunity.Published && opportunity.DateStart <= DateTimeOffset.UtcNow;
-      if (!canComplete) canComplete = opportunity.Status == Status.Expired;
-
-      if (!canComplete)
-      {
-        var reasons = new List<string>();
-
-        if (!opportunity.Published)
-          reasons.Add("it has not been published");
-
-        if (opportunity.Status != Status.Active)
-          reasons.Add($"its status is '{opportunity.Status.ToDescription()}'");
-
-        if (opportunity.DateStart > DateTimeOffset.UtcNow)
-          reasons.Add($"it has not yet started (start date: {opportunity.DateStart:yyyy-MM-dd})");
-
-        var reasonText = string.Join(", ", reasons);
-
-        throw new ValidationException($"Opportunity '{opportunity.Title}' rewards can no longer be allocated, because {reasonText}. Please check these conditions and try again");
-      }
-
-      var count = (opportunity.ParticipantCount ?? 0) + 1;
-      if (opportunity.ParticipantLimit.HasValue && count > opportunity.ParticipantLimit.Value)
-        throw new ValidationException($"The number of participants cannot exceed the limit. The current count is '{opportunity.ParticipantCount ?? 0}', and the limit is '{opportunity.ParticipantLimit.Value}'. Please edit the opportunity to increase or remove the limit, or reject the verification request");
-
-      var organization = _organizationService.GetById(opportunity.OrganizationId, false, false, false);
-      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsernameSystem, false, false);
-
-      var result = new OpportunityAllocateRewardResponse
-      {
-        ZltoReward = opportunity.ZltoReward,
-        YomaReward = opportunity.YomaReward
-      };
-
-      // zlto reward
-      (result.ZltoReward, result.ZltoRewardReduced, result.ZltoRewardPoolDepleted) =
-        ProcessRewardAllocation(result.ZltoReward, organization.ZltoRewardPool, organization.ZltoRewardCumulative, null, null);
-
-      (result.ZltoReward, result.ZltoRewardReduced, result.ZltoRewardPoolDepleted) =
-       ProcessRewardAllocation(result.ZltoReward, opportunity.ZltoRewardPool, opportunity.ZltoRewardCumulative, result.ZltoRewardReduced, result.ZltoRewardPoolDepleted);
-
-      // yoma reward
-      (result.YomaReward, result.YomaRewardReduced, result.YomaRewardPoolDepleted) =
-        ProcessRewardAllocation(result.YomaReward, organization.YomaRewardPool, organization.YomaRewardCumulative, null, null);
-
-      (result.YomaReward, result.YomaRewardReduced, result.YomaRewardPoolDepleted) =
-        ProcessRewardAllocation(result.YomaReward, opportunity.YomaRewardPool, opportunity.YomaRewardCumulative, result.YomaRewardReduced, result.YomaRewardPoolDepleted);
+      OpportunityAllocateRewardResponse result = null!;
+      Models.Opportunity opportunity = null!;
+      Organization organization = null!;
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
         using var scope = TransactionScopeHelper.CreateReadCommitted();
+
+        opportunity = GetById(id, false, true, ensureOrganizationAuthorization, LockMode.Wait);
+
+        //can complete, provided published (and started) or expired (action prior to expiration)
+        var canComplete = opportunity.Published && opportunity.DateStart <= DateTimeOffset.UtcNow;
+        if (!canComplete) canComplete = opportunity.Status == Status.Expired;
+
+        if (!canComplete)
+        {
+          var reasons = new List<string>();
+
+          if (!opportunity.Published)
+            reasons.Add("it has not been published");
+
+          if (opportunity.Status != Status.Active)
+            reasons.Add($"its status is '{opportunity.Status.ToDescription()}'");
+
+          if (opportunity.DateStart > DateTimeOffset.UtcNow)
+            reasons.Add($"it has not yet started (start date: {opportunity.DateStart:yyyy-MM-dd})");
+
+          var reasonText = string.Join(", ", reasons);
+
+          throw new ValidationException($"Opportunity '{opportunity.Title}' rewards can no longer be allocated, because {reasonText}. Please check these conditions and try again");
+        }
+
+        var count = (opportunity.ParticipantCount ?? 0) + 1;
+        if (opportunity.ParticipantLimit.HasValue && count > opportunity.ParticipantLimit.Value)
+          throw new ValidationException($"The number of participants cannot exceed the limit. The current count is '{opportunity.ParticipantCount ?? 0}', and the limit is '{opportunity.ParticipantLimit.Value}'. Please edit the opportunity to increase or remove the limit, or reject the verification request");
+
+        organization = _organizationService.GetById(opportunity.OrganizationId, false, true, false, LockMode.Wait);
+        var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsernameSystem, false, false);
+
+        result = new OpportunityAllocateRewardResponse
+        {
+          ZltoReward = opportunity.ZltoReward,
+          YomaReward = opportunity.YomaReward
+        };
+
+        // zlto reward
+        (result.ZltoReward, result.ZltoRewardReduced, result.ZltoRewardPoolDepleted) =
+          ProcessRewardAllocation(result.ZltoReward, organization.ZltoRewardPool, organization.ZltoRewardCumulative, null, null);
+
+        (result.ZltoReward, result.ZltoRewardReduced, result.ZltoRewardPoolDepleted) =
+         ProcessRewardAllocation(result.ZltoReward, opportunity.ZltoRewardPool, opportunity.ZltoRewardCumulative, result.ZltoRewardReduced, result.ZltoRewardPoolDepleted);
+
+        // yoma reward
+        (result.YomaReward, result.YomaRewardReduced, result.YomaRewardPoolDepleted) =
+          ProcessRewardAllocation(result.YomaReward, organization.YomaRewardPool, organization.YomaRewardCumulative, null, null);
+
+        (result.YomaReward, result.YomaRewardReduced, result.YomaRewardPoolDepleted) =
+          ProcessRewardAllocation(result.YomaReward, opportunity.YomaRewardPool, opportunity.YomaRewardCumulative, result.YomaRewardReduced, result.YomaRewardPoolDepleted);
 
         opportunity.ParticipantCount = count;
         opportunity.ModifiedByUserId = user.Id;

@@ -8,9 +8,9 @@ namespace Yoma.Core.Domain.Opportunity.Interfaces
 {
   public interface IOpportunityService
   {
-    Models.Opportunity GetById(Guid id, bool includeChildItems, bool includeComputed, bool ensureOrganizationAuthorization);
+    Models.Opportunity GetById(Guid id, bool includeChildItems, bool includeComputed, bool ensureOrganizationAuthorization, LockMode? lockMode = null);
 
-    Models.Opportunity? GetByIdOrNull(Guid id, bool includeChildItems, bool includeComputed, bool ensureOrganizationAuthorization);
+    Models.Opportunity? GetByIdOrNull(Guid id, bool includeChildItems, bool includeComputed, bool ensureOrganizationAuthorization, LockMode? lockMode = null);
 
     Models.Opportunity? GetByTitleOrNull(string title, bool includeChildItems, bool includeComputed);
 
