@@ -1,4 +1,3 @@
-import Image from "next/image";
 import { useState } from "react";
 import {
   IoChevronDown,
@@ -9,6 +8,8 @@ import {
 } from "react-icons/io5";
 import type { ProgramInfo } from "~/api/models/referrals";
 import ProgramBadges from "./ProgramBadges";
+import { ProgramImage } from "./ProgramImage";
+import { ProgramStatusBadge } from "./ProgramStatusBadge";
 
 export interface ProgramDetailsProps {
   program: ProgramInfo;
@@ -58,19 +59,11 @@ export const RefereeProgramDetails: React.FC<ProgramDetailsProps> = ({
         <div className="flex items-start justify-between gap-3">
           {/* Program Image or Placeholder Icon */}
           <div className="flex-shrink-0">
-            {program.imageURL ? (
-              <Image
-                src={program.imageURL}
-                alt={program.name}
-                width={50}
-                height={50}
-                className="rounded-lg object-cover shadow-md"
-              />
-            ) : (
-              <div className="flex h-[50px] w-[50px] items-center justify-center rounded-lg bg-gradient-to-br from-orange-100 to-yellow-100 shadow-md">
-                <span className="text-3xl">🎯</span>
-              </div>
-            )}
+            <ProgramImage
+              imageURL={program.imageURL}
+              name={program.name}
+              size={50}
+            />
           </div>
 
           <div className="min-w-0 flex-1">
@@ -81,18 +74,9 @@ export const RefereeProgramDetails: React.FC<ProgramDetailsProps> = ({
               >
                 {program.name}
               </h3>
+
               {/* Status Badge */}
-              <span
-                className={`badge badge-sm flex-shrink-0 ${
-                  program.status === "Active"
-                    ? "bg-green-100 text-green-700"
-                    : program.status === "Inactive"
-                      ? "bg-gray-100 text-gray-700"
-                      : "bg-red-100 text-red-700"
-                }`}
-              >
-                {program.status}
-              </span>
+              <ProgramStatusBadge status={program.status} />
             </div>
 
             {/* Description */}

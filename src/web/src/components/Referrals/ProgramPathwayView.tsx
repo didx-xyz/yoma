@@ -9,40 +9,32 @@ import {
   StepNumberBadge,
   TaskInstructionHeader,
   PathwayTasksList,
+  PathwayWarning,
+  StepWarning,
+  StepDivider,
 } from "./InstructionHeaders";
 import { PathwayHeader } from "./PathwayComponents";
 
 export interface ProgramPathwayViewProps {
   pathway: ProgramPathwayInfo;
   className?: string;
+  isAdmin?: boolean;
+  opportunityDataMap?: Record<string, any>; // Opportunity or OpportunityInfo
 }
 
 export const ProgramPathwayView: React.FC<ProgramPathwayViewProps> = ({
   pathway,
   className = "rounded-lg border border-gray-200 bg-gray-50 p-4",
+  isAdmin = false,
+  opportunityDataMap,
 }) => {
   return (
-    <div className={`flex w-full flex-col gap-4 ${className}`}>
+    <div className={`flex w-full flex-col gap-2 ${className}`}>
       {/* Pathway Header */}
       <PathwayHeader name={pathway.name} description={pathway.description} />
 
       {/* Non-Completable Pathway Warning */}
-      {!pathway.isCompletable && (
-        <div className="mt-3 flex items-start gap-2 rounded-lg border-2 border-red-300 bg-red-50 p-3">
-          <span className="text-lg">🚫</span>
-          <div className="flex-1">
-            <p className="text-xs font-semibold text-red-900">
-              Pathway Currently Unavailable
-            </p>
-            <p className="mt-1 text-[10px] text-red-800">
-              Some tasks in this pathway cannot be completed at this time. This
-              may be because opportunities have not started yet, are not
-              published, or have other restrictions. Check the individual task
-              warnings below for more details.
-            </p>
-          </div>
-        </div>
-      )}
+      {!pathway.isCompletable && <PathwayWarning />}
 
       {pathway.steps && pathway.steps.length > 0 ? (
         <div className="w-full space-y-6 rounded-lg border border-gray-200 bg-white p-4">
@@ -88,26 +80,13 @@ export const ProgramPathwayView: React.FC<ProgramPathwayViewProps> = ({
                           )}
 
                           {/* Non-Completable Step Warning */}
-                          {!step.isCompletable && (
-                            <div className="mt-2 flex items-start gap-2 rounded-lg border-2 border-red-300 bg-red-50 p-2">
-                              <span className="text-sm">🚫</span>
-                              <div className="flex-1">
-                                <p className="text-[10px] font-semibold text-red-900">
-                                  Step Not Available
-                                </p>
-                                <p className="mt-0.5 text-[10px] text-red-800">
-                                  Some tasks in this step cannot be completed
-                                  yet.
-                                </p>
-                              </div>
-                            </div>
-                          )}
+                          {!step.isCompletable && <StepWarning />}
                         </div>
                       </div>
 
                       {/* Tasks Section */}
                       {step.tasks && step.tasks.length > 0 && (
-                        <div className="mt-2 w-full space-y-3 pl-8">
+                        <div className="mt-2 w-full space-y-3 pl-9">
                           {/* Task Instruction Header */}
                           <TaskInstructionHeader
                             tasksLength={step.tasks.length}
@@ -120,33 +99,18 @@ export const ProgramPathwayView: React.FC<ProgramPathwayViewProps> = ({
                             tasks={step.tasks as any}
                             rule={step.rule}
                             orderMode={step.orderMode}
+                            isAdmin={isAdmin}
+                            opportunityDataMap={opportunityDataMap}
                           />
                         </div>
                       )}
 
                       {/* Divider between steps */}
                       {stepIndex < (pathway.steps?.length ?? 0) - 1 && (
-                        <div className="my-4 flex items-center gap-3">
-                          {showNumberedSteps ? (
-                            <>
-                              <div className="h-0.5 flex-1 bg-gray-200" />
-                              <span className="text-xs font-semibold text-blue-600">
-                                THEN
-                              </span>
-                              <div className="h-0.5 flex-1 bg-gray-200" />
-                            </>
-                          ) : (
-                            <>
-                              <div className="h-0.5 flex-1 bg-gray-200" />
-                              <span className="text-xs font-semibold text-blue-600">
-                                {pathway.rule === PathwayCompletionRule.Any
-                                  ? "OR"
-                                  : "AND"}
-                              </span>
-                              <div className="h-0.5 flex-1 bg-gray-200" />
-                            </>
-                          )}
-                        </div>
+                        <StepDivider
+                          isSequential={showNumberedSteps}
+                          rule={pathway.rule}
+                        />
                       )}
                     </div>
                   );

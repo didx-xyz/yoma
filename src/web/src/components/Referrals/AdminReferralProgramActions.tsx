@@ -54,19 +54,6 @@ export const AdminReferralProgramActions: React.FC<
   const modalContext = useConfirmationModalContext();
   const [isLoading, setIsLoading] = useState(false);
 
-  // Helper to get status as enum value
-  const getStatusEnum = (
-    program: Program | ProgramItem,
-  ): ProgramStatus | null => {
-    if (!program.status) return null;
-    // If it's already an enum
-    if (typeof program.status === "string") {
-      return program.status as ProgramStatus;
-    }
-
-    return null;
-  };
-
   const handleStatusUpdate = useCallback(
     async (item: Program | ProgramItem, status: ProgramStatus) => {
       // confirm dialog
@@ -130,6 +117,13 @@ export const AdminReferralProgramActions: React.FC<
         });
 
         toast.success("Program status updated");
+
+        // Redirect to returnUrl or list page when deleting/archiving a program
+        if (status === ProgramStatus.Deleted) {
+          void router.push(
+            getSafeUrl(returnUrl, "/admin/referrals?status=Deleted"),
+          );
+        }
       } catch (error) {
         toast(<ApiErrors error={error as AxiosError} />, {
           type: "error",
@@ -142,7 +136,7 @@ export const AdminReferralProgramActions: React.FC<
 
       return;
     },
-    [queryClient, modalContext],
+    [queryClient, modalContext, returnUrl, router],
   );
 
   return (
@@ -210,7 +204,7 @@ export const AdminReferralProgramActions: React.FC<
 
           {/* ACTIVATE */}
           {actionOptions.includes(ReferralProgramActionOptions.ACTIVATE) &&
-            getStatusEnum(program) === ProgramStatus.Inactive && (
+            program.status === "Inactive" && (
               <li>
                 <button
                   type="button"
@@ -227,7 +221,7 @@ export const AdminReferralProgramActions: React.FC<
 
           {/* INACTIVATE */}
           {actionOptions.includes(ReferralProgramActionOptions.INACTIVATE) &&
-            getStatusEnum(program) === ProgramStatus.Active && (
+            program.status === "Active" && (
               <li>
                 <button
                   type="button"
@@ -244,8 +238,10 @@ export const AdminReferralProgramActions: React.FC<
 
           {/* DELETE */}
           {actionOptions.includes(ReferralProgramActionOptions.DELETE) &&
-            (getStatusEnum(program) === ProgramStatus.Inactive ||
-              getStatusEnum(program) === ProgramStatus.Active) && (
+            (program.status === "Inactive" ||
+              program.status === "Active" ||
+              program.status === "LimitReached" ||
+              program.status === "UnCompletable") && (
               <li>
                 <button
                   type="button"

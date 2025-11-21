@@ -1029,6 +1029,8 @@ const OpportunityAdminDetails: NextPageWithLayout<{
           : [],
       verificationTypes: formData.verificationTypes,
       hidden: formData.hidden ?? false,
+      isCompletable: true,
+      nonCompletableReason: null,
     }),
     [
       formData,

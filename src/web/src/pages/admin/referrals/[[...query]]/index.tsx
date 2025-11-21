@@ -9,7 +9,7 @@ import { useRouter } from "next/router";
 import iconZlto from "public/images/icon-zlto.svg";
 import { useCallback, useState, type ReactElement } from "react";
 import { FaPlusCircle } from "react-icons/fa";
-import { IoIosCheckmarkCircle, IoMdClose, IoMdImage } from "react-icons/io";
+import { IoIosCheckmarkCircle, IoMdClose } from "react-icons/io";
 import {
   ProgramStatus,
   type ProgramSearchFilterAdmin,
@@ -35,6 +35,8 @@ import {
   ReferralFilterOptions,
 } from "~/components/Referrals/AdminReferralProgramSearchFilter";
 import { AdminReferralProgramActions } from "~/components/Referrals/AdminReferralProgramActions";
+import { ProgramStatusBadge } from "~/components/Referrals/ProgramStatusBadge";
+import { ProgramImage } from "~/components/Referrals/ProgramImage";
 import Moment from "react-moment";
 
 // ⚠️ SSR
@@ -238,6 +240,42 @@ const ReferralPrograms: NextPageWithLayout<{
     enabled: !error,
   });
 
+  const { data: totalCountLimitReached } = useQuery<number>({
+    queryKey: ["referralPrograms", "totalCount", ProgramStatus.LimitReached],
+    queryFn: () => {
+      const filter: ProgramSearchFilterAdmin = {
+        pageNumber: 1,
+        pageSize: PAGE_SIZE,
+        valueContains: null,
+        statuses: [ProgramStatus.LimitReached],
+        dateStart: null,
+        dateEnd: null,
+      };
+      return searchReferralPrograms(filter).then(
+        (data) => data.totalCount ?? 0,
+      );
+    },
+    enabled: !error,
+  });
+
+  const { data: totalCountUnCompletable } = useQuery<number>({
+    queryKey: ["referralPrograms", "totalCount", ProgramStatus.UnCompletable],
+    queryFn: () => {
+      const filter: ProgramSearchFilterAdmin = {
+        pageNumber: 1,
+        pageSize: PAGE_SIZE,
+        valueContains: null,
+        statuses: [ProgramStatus.UnCompletable],
+        dateStart: null,
+        dateEnd: null,
+      };
+      return searchReferralPrograms(filter).then(
+        (data) => data.totalCount ?? 0,
+      );
+    },
+    enabled: !error,
+  });
+
   // 🎈 FUNCTIONS
   const getSearchFilterAsQueryString = useCallback(
     (searchFilter: ProgramSearchFilterAdmin) => {
@@ -257,7 +295,7 @@ const ReferralPrograms: NextPageWithLayout<{
 
       if (searchFilter.statuses && searchFilter.statuses.length > 0) {
         const status = searchFilter.statuses[0];
-        if (status) params.append("status", status);
+        if (status) params.append("status", status.toString());
       }
 
       if (searchFilter.dateStart)
@@ -313,7 +351,7 @@ const ReferralPrograms: NextPageWithLayout<{
   return (
     <>
       <Head>
-        <title>Yoma | 🔗 Referral Programs</title>
+        <title>Yoma | 🎯 Referral Programs</title>
       </Head>
 
       <PageBackground className="h-[14.3rem] md:h-[18.4rem]" />
@@ -321,7 +359,7 @@ const ReferralPrograms: NextPageWithLayout<{
       <div className="z-10 container mt-14 max-w-7xl px-2 py-8 md:mt-[7rem]">
         <div className="flex flex-col gap-4 py-4">
           <h3 className="mt-3 mb-6 flex items-center text-xl font-semibold tracking-normal whitespace-nowrap text-white md:mt-0 md:mb-9 md:text-3xl">
-            🔗 Referral Programs
+            🎯 Referral Programs
           </h3>
 
           {/* TABBED NAVIGATION */}
@@ -406,6 +444,38 @@ const ReferralPrograms: NextPageWithLayout<{
                 </div>
               )}
             </Link>
+            <Link
+              href={`/admin/referrals?status=LimitReached`}
+              role="tab"
+              className={`border-b-4 py-2 whitespace-nowrap text-white ${
+                status === "LimitReached"
+                  ? "border-orange"
+                  : "hover:border-orange hover:text-gray"
+              }`}
+            >
+              Limit Reached
+              {(totalCountLimitReached ?? 0) > 0 && (
+                <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
+                  {totalCountLimitReached}
+                </div>
+              )}
+            </Link>
+            <Link
+              href={`/admin/referrals?status=UnCompletable`}
+              role="tab"
+              className={`border-b-4 py-2 whitespace-nowrap text-white ${
+                status === "UnCompletable"
+                  ? "border-orange"
+                  : "hover:border-orange hover:text-gray"
+              }`}
+            >
+              Uncompletable
+              {(totalCountUnCompletable ?? 0) > 0 && (
+                <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
+                  {totalCountUnCompletable}
+                </div>
+              )}
+            </Link>
           </CustomSlider>
 
           <div className="flex w-full grow flex-col items-center justify-between gap-4 sm:justify-end md:flex-row">
@@ -465,16 +535,12 @@ const ReferralPrograms: NextPageWithLayout<{
                     >
                       <div className="border-gray-light flex flex-row items-center gap-2 border-b-2 pb-2">
                         {/* Program Image */}
-                        {program.imageURL && (
-                          <div className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-md border border-gray-200">
-                            <Image
-                              src={program.imageURL}
-                              alt={program.name}
-                              fill
-                              className="object-cover"
-                            />
-                          </div>
-                        )}
+                        <ProgramImage
+                          imageURL={program.imageURL}
+                          name={program.name}
+                          size={48}
+                          className="border border-gray-200 bg-white"
+                        />
                         <div className="flex-grow">
                           <Link
                             href={`/admin/referrals/${program.id}/info${`?returnUrl=${encodeURIComponent(
@@ -500,19 +566,7 @@ const ReferralPrograms: NextPageWithLayout<{
                         {/* Status */}
                         <div className="flex justify-between">
                           <p className="text-sm tracking-wider">Status</p>
-                          <span
-                            className={`badge ${
-                              program.status === "Active"
-                                ? "bg-green-light text-green"
-                                : program.status === "Inactive"
-                                  ? "bg-yellow-tint text-yellow"
-                                  : program.status === "Expired"
-                                    ? "bg-orange-light text-orange"
-                                    : "bg-gray-light text-gray-dark"
-                            }`}
-                          >
-                            {program.status}
-                          </span>
+                          <ProgramStatusBadge status={program.status} />
                         </div>
 
                         {/* Program Cap */}
@@ -543,43 +597,40 @@ const ReferralPrograms: NextPageWithLayout<{
 
                         {/* ZLTO Pool */}
                         <div className="flex justify-between">
-                          <p className="text-sm tracking-wider">ZLTO Pool</p>
+                          <p className="text-sm tracking-wider">ZLTO</p>
                           {program.zltoRewardPool ? (
-                            <span className="badge bg-gray-light text-gray-dark">
-                              <Image
-                                src={iconZlto}
-                                alt="Zlto icon"
-                                width={16}
-                                className="h-auto"
-                              />
-                              <span className="ml-1 text-xs">
-                                {program.zltoRewardPool}
-                              </span>
-                            </span>
+                            <div className="flex flex-col items-end gap-1">
+                              <div className="flex items-center gap-1.5">
+                                <Image
+                                  src={iconZlto}
+                                  alt="Zlto icon"
+                                  width={16}
+                                  height={16}
+                                  className="h-4 w-4"
+                                />
+                                <span className="text-xs font-semibold">
+                                  {program.zltoRewardPool.toLocaleString()}
+                                </span>
+                              </div>
+                              {program.zltoRewardBalance !== null && (
+                                <span className="text-xs text-gray-500">
+                                  {program.zltoRewardBalance.toLocaleString()}{" "}
+                                  left
+                                </span>
+                              )}
+                              {program.zltoRewardCumulative !== null && (
+                                <span className="text-xs text-gray-500">
+                                  {program.zltoRewardCumulative.toLocaleString()}{" "}
+                                  used
+                                </span>
+                              )}
+                            </div>
                           ) : (
-                            <span className="text-sm">Not set</span>
+                            <span className="text-sm text-gray-400">
+                              Not set
+                            </span>
                           )}
                         </div>
-
-                        {/* ZLTO Balance */}
-                        {program.zltoRewardBalance !== null && (
-                          <div className="flex justify-between">
-                            <p className="text-sm tracking-wider">
-                              ZLTO Balance
-                            </p>
-                            <span className="badge bg-green-light text-green">
-                              <Image
-                                src={iconZlto}
-                                alt="Zlto icon"
-                                width={16}
-                                className="h-auto"
-                              />
-                              <span className="ml-1 text-xs">
-                                {program.zltoRewardBalance}
-                              </span>
-                            </span>
-                          </div>
-                        )}
 
                         {/* Features */}
                         <div className="flex justify-between">
@@ -642,38 +693,12 @@ const ReferralPrograms: NextPageWithLayout<{
                               )}`}`}
                               className="flex justify-center"
                             >
-                              {/* <AvatarImage
-                                  icon={program.imageURL ?? null}
-                                  alt={program.name ?? null}
-                                  size={60}
-                                /> */}
-                              <div
-                                className={`shadow-custom flex aspect-square shrink-0 overflow-hidden rounded-full bg-white/20`}
-                                style={{
-                                  width: 60,
-                                  height: 60,
-                                }}
-                              >
-                                {program.imageURL ? (
-                                  <Image
-                                    src={program.imageURL}
-                                    alt={program.name}
-                                    width={60}
-                                    height={60}
-                                    className="h-auto"
-                                    sizes="100vw"
-                                    priority={true}
-                                  />
-                                ) : (
-                                  <IoMdImage
-                                    className={`text-gray p-2`}
-                                    style={{
-                                      width: 60,
-                                      height: 60,
-                                    }}
-                                  />
-                                )}
-                              </div>
+                              <ProgramImage
+                                imageURL={program.imageURL}
+                                name={program.name}
+                                size={60}
+                                className="bg-white"
+                              />
                             </Link>
 
                             <div className="flex flex-col">
@@ -718,23 +743,7 @@ const ReferralPrograms: NextPageWithLayout<{
                           </div>
                         </td>
                         <td className="border-gray-light border-b-2 !align-top">
-                          <span
-                            className={`badge ${
-                              program.status === "Active"
-                                ? "bg-green-light text-green"
-                                : program.status === "Inactive"
-                                  ? "bg-yellow-tint text-yellow"
-                                  : program.status === "Expired"
-                                    ? "bg-orange-light text-orange"
-                                    : program.status === "Deleted"
-                                      ? "text-red bg-warning"
-                                      : "bg-gray-light text-gray-dark"
-                            }`}
-                          >
-                            {program.status == "Deleted"
-                              ? "Archived"
-                              : program.status}
-                          </span>
+                          <ProgramStatusBadge status={program.status} />
                         </td>
                         <td className="border-gray-light text-gray-dark border-b-2 !align-top">
                           <div className="flex flex-col gap-1 text-xs">
@@ -765,58 +774,50 @@ const ReferralPrograms: NextPageWithLayout<{
                           </div>
                         </td>
                         <td className="border-gray-light text-gray-dark border-b-2 !align-top">
-                          <div className="flex flex-col gap-1">
-                            {program.zltoRewardPool && (
-                              <div className="flex items-center gap-1 text-xs">
-                                <span className="text-gray-dark w-14 font-bold">
-                                  Pool:
-                                </span>
-                                <Image
-                                  src={iconZlto}
-                                  alt="Zlto"
-                                  width={14}
-                                  className="h-auto"
-                                />
-                                <span>{program.zltoRewardPool}</span>
+                          <div className="flex flex-col gap-2">
+                            {program.zltoRewardPool ? (
+                              <div className="flex flex-col gap-1">
+                                <div className="flex items-center gap-1.5">
+                                  <Image
+                                    src={iconZlto}
+                                    alt="Zlto"
+                                    width={16}
+                                    height={16}
+                                    className="h-4 w-4"
+                                  />
+                                  <span className="text-xs font-bold">
+                                    {program.zltoRewardPool.toLocaleString()}
+                                  </span>
+                                  <span className="text-xs text-gray-500">
+                                    pool
+                                  </span>
+                                </div>
+                                {program.zltoRewardBalance !== null && (
+                                  <div className="flex items-center gap-1.5 pl-5">
+                                    <span className="text-xs">
+                                      {program.zltoRewardBalance.toLocaleString()}
+                                    </span>
+                                    <span className="text-xs text-gray-500">
+                                      left
+                                    </span>
+                                  </div>
+                                )}
+                                {program.zltoRewardCumulative !== null && (
+                                  <div className="flex items-center gap-1.5 pl-5">
+                                    <span className="text-xs text-gray-600">
+                                      {program.zltoRewardCumulative.toLocaleString()}
+                                    </span>
+                                    <span className="text-xs text-gray-500">
+                                      used
+                                    </span>
+                                  </div>
+                                )}
                               </div>
+                            ) : (
+                              <span className="text-xs text-gray-400">
+                                No ZLTO rewards
+                              </span>
                             )}
-                            {program.zltoRewardBalance !== null && (
-                              <div className="flex items-center gap-1 text-xs">
-                                <span className="text-gray-dark w-14 font-bold">
-                                  Balance:
-                                </span>
-                                <Image
-                                  src={iconZlto}
-                                  alt="Zlto"
-                                  width={14}
-                                  className="h-auto"
-                                />
-                                <span className="font-semibold">
-                                  {program.zltoRewardBalance}
-                                </span>
-                              </div>
-                            )}
-                            {program.zltoRewardCumulative !== null && (
-                              <div className="flex items-center gap-1 text-xs">
-                                <span className="text-gray-dark w-14 font-bold">
-                                  Total:
-                                </span>
-                                <Image
-                                  src={iconZlto}
-                                  alt="Zlto"
-                                  width={14}
-                                  className="h-auto"
-                                />
-                                <span>{program.zltoRewardCumulative}</span>
-                              </div>
-                            )}
-                            {!program.zltoRewardPool &&
-                              program.zltoRewardBalance === null &&
-                              program.zltoRewardCumulative === null && (
-                                <span className="text-gray-dark text-xs">
-                                  -
-                                </span>
-                              )}
                           </div>
                         </td>
                         <td className="border-gray-light border-b-2 !align-top">

@@ -64,6 +64,8 @@ export interface Opportunity {
   dateModified: string;
   modifiedByUserId: string;
   published: boolean;
+  isCompletable: boolean;
+  nonCompletableReason: string | null;
   categories: OpportunityCategory[] | null;
   countries: Country[] | null;
   languages: Language[] | null;
@@ -109,6 +111,8 @@ export interface OpportunityInfo {
   engagementType: string | null;
   published: boolean;
   yomaInfoURL: string;
+  isCompletable: boolean;
+  nonCompletableReason: string | null;
   categories: OpportunityCategory[] | null;
   countries: Country[] | null;
   languages: Language[] | null;

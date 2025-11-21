@@ -4,10 +4,89 @@ import {
   PathwayCompletionRule,
   type ProgramPathwayTaskProgress,
 } from "~/api/models/referrals";
-import type { Opportunity } from "~/api/models/opportunity";
-import RefereePathwayTaskOpportunity from "./RefereePathwayTaskOpportunity";
+import type { OpportunityInfo } from "~/api/models/opportunity";
+import PathwayTaskOpportunity from "./PathwayTaskOpportunity";
 import Link from "next/link";
 import { IoArrowForward } from "react-icons/io5";
+
+// Reusable Warning Components
+export const PathwayWarning: React.FC = () => (
+  <div className="flex items-start gap-2 rounded-lg border-2 border-red-300 bg-red-50 p-3">
+    <span className="text-lg">🚫</span>
+    <div className="flex-1">
+      <p className="text-xs font-semibold text-red-900">
+        Pathway Currently Unavailable
+      </p>
+      <p className="mt-1 text-[10px] text-red-800">
+        Some tasks in this pathway cannot be completed at this time. This may be
+        because opportunities have not started yet, are not published, or have
+        other restrictions. Check the individual task warnings below for more
+        details.
+      </p>
+    </div>
+  </div>
+);
+
+export const StepWarning: React.FC = () => (
+  <div className="mt-2 flex items-start gap-2 rounded-lg border-2 border-red-300 bg-red-50 p-2">
+    <span className="text-sm">🚫</span>
+    <div className="flex-1">
+      <p className="text-[10px] font-semibold text-red-900">
+        Step Not Available
+      </p>
+      <p className="mt-0.5 text-[10px] text-red-800">
+        Some tasks in this step cannot be completed yet.
+      </p>
+    </div>
+  </div>
+);
+
+export interface TaskWarningProps {
+  reason?: string;
+}
+
+export const TaskWarning: React.FC<TaskWarningProps> = ({ reason }) => (
+  <div className="flex items-start gap-2 rounded-lg border-2 border-yellow-300 bg-yellow-50 p-2">
+    <span className="text-sm">⚠️</span>
+    <div className="flex-1">
+      <p className="text-[10px] font-semibold text-yellow-900">
+        Task Currently Unavailable
+      </p>
+      <p className="mt-0.5 text-[10px] text-yellow-800">
+        {reason ||
+          "This opportunity is no longer available or has been removed."}
+      </p>
+    </div>
+  </div>
+);
+
+export interface StepDividerProps {
+  isSequential: boolean;
+  rule: string;
+}
+
+export const StepDivider: React.FC<StepDividerProps> = ({
+  isSequential,
+  rule,
+}) => (
+  <div className="my-4 flex items-center gap-3">
+    {isSequential ? (
+      <>
+        <div className="h-0.5 flex-1 bg-gray-200" />
+        <span className="text-xs font-semibold text-blue-600">THEN</span>
+        <div className="h-0.5 flex-1 bg-gray-200" />
+      </>
+    ) : (
+      <>
+        <div className="h-0.5 flex-1 bg-gray-200" />
+        <span className="text-xs font-semibold text-blue-600">
+          {rule === PathwayCompletionRule.Any ? "OR" : "AND"}
+        </span>
+        <div className="h-0.5 flex-1 bg-gray-200" />
+      </>
+    )}
+  </div>
+);
 
 // Reusable Progress Display Component
 const ProgressDisplay: React.FC<{
@@ -348,10 +427,11 @@ export interface PathwayTaskDisplayProps {
   taskIndex: number;
   isSequential: boolean;
   isAnyRule: boolean;
-  mockOpportunity?: Opportunity;
+  opportunityData?: OpportunityInfo; // Optional opportunity data to avoid fetching
   showActionButton?: boolean;
   color?: "green" | "orange";
   totalTasks?: number;
+  isAdmin?: boolean;
 }
 
 export const PathwayTaskDisplay: React.FC<PathwayTaskDisplayProps> = ({
@@ -359,10 +439,11 @@ export const PathwayTaskDisplay: React.FC<PathwayTaskDisplayProps> = ({
   taskIndex,
   isSequential,
   isAnyRule,
-  mockOpportunity,
+  opportunityData,
   showActionButton = false,
   color = "green",
   totalTasks = 1,
+  isAdmin = false,
 }) => {
   const badgeClasses =
     color === "orange"
@@ -401,25 +482,12 @@ export const PathwayTaskDisplay: React.FC<PathwayTaskDisplayProps> = ({
       <div className="mb-4 min-w-0 flex-1">
         {task.opportunity?.id ? (
           <>
-            <RefereePathwayTaskOpportunity
+            <PathwayTaskOpportunity
               opportunityId={task.opportunity.id}
-              mockOpportunity={mockOpportunity}
+              opportunity={opportunityData}
               isCompleted={task.completed ?? false}
+              isAdmin={isAdmin}
             />
-            {/* Non-Completable Warning */}
-            {!task.isCompletable && task.nonCompletableReason && (
-              <div className="mt-3 flex items-start gap-2 rounded-lg border-2 border-yellow-300 bg-yellow-50 p-3">
-                <span className="text-base">⚠️</span>
-                <div className="flex-1">
-                  <p className="text-[10px] font-semibold text-yellow-900">
-                    Task Currently Unavailable
-                  </p>
-                  <p className="mt-1 text-[10px] text-yellow-800">
-                    {task.nonCompletableReason}
-                  </p>
-                </div>
-              </div>
-            )}
             {/* Action Button */}
             {showActionButton && (
               <div className="mt-3 flex justify-end">
@@ -464,18 +532,20 @@ export interface PathwayTasksListProps {
   tasks: ProgramPathwayTaskProgress[];
   rule: string;
   orderMode: string;
-  mockOpportunities?: Record<string, Opportunity>;
+  opportunityDataMap?: Record<string, OpportunityInfo>; // Optional map of opportunity data by ID
   showActionButtons?: boolean;
   color?: "green" | "orange";
+  isAdmin?: boolean;
 }
 
 export const PathwayTasksList: React.FC<PathwayTasksListProps> = ({
   tasks,
   rule,
   orderMode,
-  mockOpportunities,
+  opportunityDataMap,
   showActionButtons = false,
   color = "green",
+  isAdmin = false,
 }) => {
   const hasSequentialTasks =
     rule !== PathwayCompletionRule.Any &&
@@ -493,10 +563,15 @@ export const PathwayTasksList: React.FC<PathwayTasksListProps> = ({
             taskIndex={taskIndex}
             isSequential={hasSequentialTasks}
             isAnyRule={isAnyRule}
-            mockOpportunity={mockOpportunities?.[task.opportunity?.id || ""]}
+            opportunityData={
+              task.opportunity?.id
+                ? opportunityDataMap?.[task.opportunity.id]
+                : undefined
+            }
             showActionButton={showActionButtons}
             color={color}
             totalTasks={tasks.length}
+            isAdmin={isAdmin}
           />
 
           {/* AND/OR indicator between tasks */}

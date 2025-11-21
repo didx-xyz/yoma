@@ -246,14 +246,15 @@ const ReferralClaimPage: NextPageWithLayout<{
   if (programLoading || claimingAfterProfile) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <div className="loading loading-spinner loading-lg"></div>
-          {claimingAfterProfile && (
-            <p className="text-lg font-semibold text-gray-700">
-              Claiming your referral...
-            </p>
-          )}
-        </div>
+        <LoadingInline
+          classNameSpinner="h-32 w-32 border-t-4 border-b-4 border-orange"
+          classNameLabel={"text-lg font-semibold"}
+          label={
+            claimingAfterProfile
+              ? "Claiming your referral..."
+              : "Please wait..."
+          }
+        />
       </div>
     );
   }

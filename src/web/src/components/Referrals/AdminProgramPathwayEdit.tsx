@@ -7,7 +7,7 @@ import {
 } from "react-hook-form";
 import { IoMdAdd, IoMdAlert, IoMdTrash } from "react-icons/io";
 import Async from "react-select/async";
-import type { OpportunityInfo } from "~/api/models/opportunity";
+import type { Opportunity, OpportunityInfo } from "~/api/models/opportunity";
 import {
   PathwayCompletionRule,
   PathwayOrderMode,
@@ -18,17 +18,18 @@ import { debounce } from "~/lib/utils";
 import FormError from "../Common/FormError";
 import FormField from "../Common/FormField";
 import FormInput from "../Common/FormInput";
-import AdminPathwayTaskOpportunity from "./AdminPathwayTaskOpportunity";
+import PathwayTaskOpportunity from "./PathwayTaskOpportunity";
 
 const PAGE_SIZE_MEDIUM = 10;
 
 export interface ProgramPathwayEditProps {
   control: Control<any>;
+  opportunityDataMap?: Record<string, Opportunity>;
 }
 
 export const AdminProgramPathwayEditComponent: React.FC<
   ProgramPathwayEditProps
-> = ({ control }) => {
+> = ({ control, opportunityDataMap }) => {
   const { errors } = useFormState({ control });
 
   const {
@@ -260,6 +261,7 @@ export const AdminProgramPathwayEditComponent: React.FC<
                           isLast={displayIndex === stepFields.length - 1}
                           showDivider={displayIndex < stepFields.length - 1}
                           errors={errors}
+                          opportunityDataMap={opportunityDataMap}
                         />
                       );
                     })}
@@ -309,6 +311,7 @@ interface StepEditComponentProps {
   isLast: boolean;
   showDivider: boolean;
   errors: any;
+  opportunityDataMap?: Record<string, Opportunity>;
 }
 
 const StepEditComponent: React.FC<StepEditComponentProps> = ({
@@ -324,6 +327,7 @@ const StepEditComponent: React.FC<StepEditComponentProps> = ({
   isLast,
   showDivider,
   errors,
+  opportunityDataMap,
 }) => {
   const {
     fields: taskFields,
@@ -341,16 +345,27 @@ const StepEditComponent: React.FC<StepEditComponentProps> = ({
     const opportunities: OpportunityInfo[] = [];
 
     tasks.forEach((task) => {
+      // Check task.opportunity first (from loaded data)
       if (task.opportunity && task.opportunity.id) {
         opportunities.push({
           id: task.opportunity.id,
           title: task.opportunity.title,
         } as OpportunityInfo);
       }
+      // Then check entityId with opportunityDataMap (from page-level fetch)
+      else if (task.entityId && opportunityDataMap?.[task.entityId]) {
+        const opp = opportunityDataMap[task.entityId];
+        if (opp) {
+          opportunities.push({
+            id: opp.id,
+            title: opp.title,
+          } as OpportunityInfo);
+        }
+      }
     });
 
     return opportunities;
-  }, [taskFields]);
+  }, [taskFields, opportunityDataMap]);
 
   // Cache for opportunities (starts with opportunities from tasks)
   const [dataOpportunities, setDataOpportunities] = useState<OpportunityInfo[]>(
@@ -750,8 +765,12 @@ const StepEditComponent: React.FC<StepEditComponentProps> = ({
                                   <>
                                     {field.value && (
                                       <div className="rounded border border-gray-200 bg-white p-3">
-                                        <AdminPathwayTaskOpportunity
+                                        <PathwayTaskOpportunity
                                           opportunityId={field.value}
+                                          opportunity={
+                                            opportunityDataMap?.[field.value]
+                                          }
+                                          isAdmin={true}
                                         />
                                       </div>
                                     )}
