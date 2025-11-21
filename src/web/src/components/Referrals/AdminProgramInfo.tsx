@@ -3,15 +3,16 @@ import iconZlto from "public/images/icon-zlto.svg";
 import { useMemo } from "react";
 import { IoIosCheckmarkCircle, IoMdClose } from "react-icons/io";
 import Moment from "react-moment";
+import type { Opportunity } from "~/api/models/opportunity";
 import {
   PathwayCompletionRule,
   PathwayTaskEntityType,
   Program,
-  ProgramPathwayProgress,
+  ProgramPathwayInfo,
 } from "~/api/models/referrals";
 import { DATE_FORMAT_HUMAN } from "~/lib/constants";
-import { AvatarImage } from "../AvatarImage";
 import { ProgramPathwayView } from "./ProgramPathwayView";
+import { ProgramStatusBadge } from "./ProgramStatusBadge";
 
 export enum ProgramInfoFilterOptions {
   PROGRAM_INFO = "programInfo",
@@ -27,6 +28,7 @@ interface AdminProgramInfoProps {
   filterOptions?: ProgramInfoFilterOptions[];
   isExpanded?: boolean;
   imagePreviewUrl?: string | null;
+  opportunityDataMap?: Record<string, Opportunity>;
 }
 
 export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
@@ -39,26 +41,42 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
     ProgramInfoFilterOptions.PATHWAY,
     ProgramInfoFilterOptions.AUDIT_INFO,
   ],
-  imagePreviewUrl,
+  opportunityDataMap,
 }) => {
-  // Map ProgramPathway to ProgramPathwayProgress for preview display
-  const pathwayProgress = useMemo((): ProgramPathwayProgress | null => {
+  // Map ProgramPathway to ProgramPathwayInfo for preview display
+  const pathwayInfo = useMemo((): ProgramPathwayInfo | null => {
     if (!program.pathway) return null;
 
-    return {
-      id: program.pathway.id,
-      name: program.pathway.name,
-      description: program.pathway.description ?? null,
-      rule: program.pathway.rule as PathwayCompletionRule,
-      orderMode: program.pathway.orderMode ?? null,
-      completed: false,
-      dateCompleted: null,
-      stepsTotal: program.pathway.steps?.length ?? 0,
-      stepsCompleted: 0,
-      percentComplete: 0,
-      isCompletable: true,
-      steps:
-        program.pathway.steps?.map((step) => ({
+    const steps =
+      program.pathway.steps?.map((step) => {
+        const tasks =
+          step.tasks?.map((task) => {
+            const oppId = task.opportunity?.id || (task as any).entityId;
+            const oppData = oppId ? opportunityDataMap?.[oppId] : null;
+
+            return {
+              id: task.id,
+              entityType: task.entityType as PathwayTaskEntityType,
+              opportunity: task.opportunity
+                ? task.opportunity
+                : oppId
+                  ? {
+                      id: oppId,
+                      title: oppData?.title || "Selected Opportunity",
+                    }
+                  : null,
+              order: task.order,
+              orderDisplay: task.orderDisplay ?? 0,
+              completed: null,
+              isCompletable: oppData?.isCompletable ?? true,
+              nonCompletableReason: oppData?.nonCompletableReason ?? null,
+            };
+          }) ?? [];
+
+        // Step is completable if all its tasks are completable
+        const stepIsCompletable = tasks.every((t) => t.isCompletable !== false);
+
+        return {
           id: step.id,
           name: step.name,
           description: step.description ?? null,
@@ -66,39 +84,25 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
           orderMode: step.orderMode ?? null,
           order: step.order,
           orderDisplay: step.orderDisplay ?? null,
-          completed: false,
-          dateCompleted: null,
-          tasksTotal: step.tasks?.length ?? 0,
-          tasksCompleted: 0,
-          percentComplete: 0,
-          isCompletable: true,
-          tasks:
-            step.tasks?.map((task) => ({
-              id: task.id,
-              entityType: task.entityType as PathwayTaskEntityType,
-              // Construct opportunity object from entityId if opportunity is not populated
-              // This happens during create/edit before the program is saved
-              opportunity: task.opportunity
-                ? task.opportunity
-                : (task as any).entityId
-                  ? {
-                      id: (task as any).entityId,
-                      title: "Selected Opportunity",
-                    }
-                  : null,
-              order: task.order,
-              orderDisplay: task.orderDisplay ?? 0,
-              completed: false,
-              dateCompleted: null,
-              isCompletable: true,
-              nonCompletableReason: null,
-            })) ?? [],
-        })) ?? [],
-    };
-  }, [program.pathway]);
+          completed: null,
+          isCompletable: stepIsCompletable,
+          tasks,
+        };
+      }) ?? [];
 
-  // Determine which image to display: preview URL (newly uploaded) or existing URL
-  const displayImageUrl = imagePreviewUrl || program.imageURL;
+    // Pathway is completable if all steps are completable
+    const pathwayIsCompletable = steps.every((s) => s.isCompletable !== false);
+
+    return {
+      id: program.pathway.id,
+      name: program.pathway.name,
+      description: program.pathway.description ?? null,
+      rule: program.pathway.rule as PathwayCompletionRule,
+      orderMode: program.pathway.orderMode ?? null,
+      isCompletable: pathwayIsCompletable,
+      steps,
+    };
+  }, [program.pathway, opportunityDataMap]);
 
   return (
     <div className="space-y-6">
@@ -116,19 +120,7 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
                 </div>
                 <div className="flex-1 border border-gray-200 px-4 py-2 text-sm hover:bg-gray-100">
                   {program?.status ? (
-                    <span
-                      className={`badge ${
-                        program.status === "Active"
-                          ? "bg-green-light text-green"
-                          : program.status === "Inactive"
-                            ? "bg-yellow-tint text-yellow"
-                            : program.status === "Expired"
-                              ? "bg-orange-light text-orange"
-                              : "bg-gray-light text-gray-dark"
-                      }`}
-                    >
-                      {program.status}
-                    </span>
+                    <ProgramStatusBadge status={program.status} />
                   ) : (
                     "Not set"
                   )}
@@ -180,7 +172,7 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
             </div>
 
             {/* Program Image */}
-            {displayImageUrl && (
+            {/* {displayImageUrl && (
               <div className="mt-4 flex w-full justify-center rounded-lg bg-white py-8">
                 <AvatarImage
                   icon={displayImageUrl}
@@ -188,7 +180,7 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
                   size={150}
                 />
               </div>
-            )}
+            )} */}
           </div>
         </section>
       )}
@@ -461,8 +453,12 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
             🛤️ Engagement Pathway
           </h2>
           <div className="overflow-x-auto">
-            {pathwayProgress ? (
-              <ProgramPathwayView pathway={program.pathway as any} />
+            {pathwayInfo ? (
+              <ProgramPathwayView
+                pathway={pathwayInfo}
+                isAdmin={true}
+                opportunityDataMap={opportunityDataMap}
+              />
             ) : (
               <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
                 <p className="text-sm text-gray-500">No pathway configured</p>

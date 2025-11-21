@@ -3,10 +3,12 @@ import { OpportunityItem } from "./marketplace";
 
 // Enums
 export enum ProgramStatus {
-  Active = "Active",
-  Inactive = "Inactive",
-  Expired = "Expired",
-  Deleted = "Deleted",
+  Active,
+  Inactive,
+  Expired,
+  LimitReached,
+  UnCompletable,
+  Deleted,
 }
 
 export enum PathwayCompletionRule {
@@ -124,7 +126,7 @@ export interface ProgramInfo {
   zltoRewardCumulative: number | null;
   proofOfPersonhoodRequired: boolean;
   pathwayRequired: boolean;
-  status: ProgramStatus;
+  status: ProgramStatus | string;
   isDefault: boolean;
   dateStart: string;
   dateEnd: string | null;
