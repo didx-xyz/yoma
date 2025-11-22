@@ -2,6 +2,12 @@ using Newtonsoft.Json;
 
 namespace Yoma.Core.Domain.Referral.Models
 {
+  /// Redaction:
+  /// - Not required. This model is only ever returned to:
+  ///   • The referee (for their own usage),
+  ///   • The referrer (for usages on their own links), or
+  ///   • Admin users.
+  /// No anonymous or system-wide exposure.
   public class ReferralLinkUsageInfo
   {
     public Guid Id { get; set; }
@@ -19,7 +25,7 @@ namespace Yoma.Core.Domain.Referral.Models
     #region Referrer Info (mapped to the link)
     public Guid UserIdReferrer { get; set; }
 
-    public string? UserDisplayNameReferrer { get; set; } = null!;
+    public string UserDisplayNameReferrer { get; set; } = null!;
 
     public string? UserEmailReferrer { get; set; }
 
@@ -29,7 +35,7 @@ namespace Yoma.Core.Domain.Referral.Models
     #region Referee Info (mapped to the usage)
     public Guid UserId { get; set; }
 
-    public string? UserDisplayName { get; set; } = null!;
+    public string UserDisplayName { get; set; } = null!;
 
     public string? UserEmail { get; set; }
 

@@ -25,6 +25,7 @@ namespace Yoma.Core.Domain.Referral.Services
     private readonly ILogger<LinkService> _logger;
     private readonly AppSettings _appSettings;
 
+
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly IShortLinkProviderClient _shortLinkProviderClient;
 
@@ -196,13 +197,19 @@ namespace Yoma.Core.Domain.Referral.Services
         query = query.Where(o => o.DateCreated <= filter.DateEnd.Value);
       }
 
+      var results = new ReferralLinkSearchResults();
+
+      if (filter.TotalCountOnly)
+      {
+        results.TotalCount = query.Count();
+        return results;
+      }
+
       query = query.OrderByDescending(o => o.DateModified)
         .ThenBy(o => o.Name)
         .ThenBy(o => o.ProgramName)
         .ThenBy(o => o.UserDisplayName)
         .ThenBy(o => o.Id);
-
-      var results = new ReferralLinkSearchResults();
 
       if (filter.PaginationEnabled)
       {
@@ -256,8 +263,8 @@ namespace Yoma.Core.Domain.Referral.Services
         ProgramDescription = program.Description,
         ProgramCompletionLimitReferee = program.CompletionLimitReferee,
         UserId = user.Id,
-        UserDisplayName = user.DisplayName,
-        Username = user.Email ?? user.PhoneNumber ?? string.Empty,
+        UserDisplayName = user.DisplayName ?? user.Username,
+        Username = user.Username,
         UserEmail = user.Email,
         UserEmailConfirmed = user.EmailConfirmed,
         UserPhoneNumber = user.PhoneNumber,
