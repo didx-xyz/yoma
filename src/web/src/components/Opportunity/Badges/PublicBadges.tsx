@@ -44,7 +44,7 @@ const PublicBadges: React.FC<BadgesProps> = ({
       {opportunity?.commitmentIntervalCount && (
         <div
           className={`${showToolTips ? "tooltip tooltip-secondary cursor-help before:text-[0.6875rem]" : ""}`}
-          {...(showToolTips && { "data-tip": "Time commitment required" })}
+          {...(showToolTips && { "data-tip": "Time needed" })}
         >
           <span className="badge badge-sm border border-green-200 bg-green-50 whitespace-nowrap text-green-700">
             <Image
@@ -223,7 +223,9 @@ const PublicBadges: React.FC<BadgesProps> = ({
             !opportunity?.participantLimitReached && (
               <div
                 className={`${showToolTips ? "tooltip tooltip-secondary cursor-help before:text-[0.6875rem]" : ""}`}
-                {...(showToolTips && { "data-tip": "Can upload verification" })}
+                {...(showToolTips && {
+                  "data-tip": "Can upload completion files",
+                })}
               >
                 <span className="badge badge-sm border border-red-200 bg-red-50 whitespace-nowrap text-red-600">
                   <IoMdCloudUpload className="h-4 w-4" />

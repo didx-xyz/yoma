@@ -3,7 +3,6 @@ import axios from "axios";
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
 import Head from "next/head";
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { type ParsedUrlQuery } from "querystring";
@@ -13,6 +12,15 @@ import { Program } from "~/api/models/referrals";
 import { getReferralProgramById } from "~/api/services/referrals";
 import MainLayout from "~/components/Layout/Main";
 import { PageBackground } from "~/components/PageBackground";
+import {
+  AdminProgramInfo,
+  ProgramInfoFilterOptions,
+} from "~/components/Referrals/AdminProgramInfo";
+import {
+  AdminReferralProgramActions,
+  ReferralProgramActionOptions,
+} from "~/components/Referrals/AdminReferralProgramActions";
+import { ProgramImage } from "~/components/Referrals/ProgramImage";
 import { InternalServerError } from "~/components/Status/InternalServerError";
 import { Loading } from "~/components/Status/Loading";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
@@ -21,14 +29,6 @@ import { config } from "~/lib/react-query-config";
 import { getSafeUrl, getThemeFromRole } from "~/lib/utils";
 import type { NextPageWithLayout } from "~/pages/_app";
 import { authOptions, type User } from "~/server/auth";
-import {
-  ReferralProgramActionOptions,
-  AdminReferralProgramActions,
-} from "~/components/Referrals/AdminReferralProgramActions";
-import {
-  AdminProgramInfo,
-  ProgramInfoFilterOptions,
-} from "~/components/Referrals/AdminProgramInfo";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -128,17 +128,14 @@ const ReferralProgramInfo: NextPageWithLayout<{
         <div className="animate-fade-in mx-auto mt-5 space-y-6 rounded-2xl bg-white p-6 shadow-md">
           <div className="flex flex-row items-start justify-between gap-4">
             {/* Program Image */}
-            {program?.imageURL && (
-              <div className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-lg border-2 border-gray-200">
-                <Image
-                  src={program.imageURL}
-                  alt={program.name}
-                  fill
-                  className="object-cover"
-                  priority
-                />
-              </div>
-            )}
+            <div className="flex-shrink-0">
+              <ProgramImage
+                imageURL={program?.imageURL}
+                name={program?.name ?? "Program"}
+                size={80}
+                className="border-2 border-gray-200"
+              />
+            </div>
 
             <div className="flex-1">
               <div className="flex items-center gap-2">
@@ -182,7 +179,6 @@ const ReferralProgramInfo: NextPageWithLayout<{
           )}
 
           {/* Link Usage */}
-
           <div className="flex flex-row justify-center gap-4 pt-4">
             <Link
               href={getSafeUrl(returnUrl?.toString(), `/admin/referrals`)}
@@ -191,10 +187,16 @@ const ReferralProgramInfo: NextPageWithLayout<{
               Back to List
             </Link>
             <Link
-              href={`/admin/referrals/${id}${returnUrl ? `?returnUrl=${encodeURIComponent(returnUrl.toString())}` : ""}`}
+              href={`/admin/referrals/${id}${returnUrl ? `?returnUrl=${encodeURIComponent(getSafeUrl(returnUrl.toString(), router.asPath))}` : ""}`}
               className="btn btn-primary btn-md rounded-full px-8 normal-case"
             >
               Edit Program
+            </Link>
+            <Link
+              href={`/admin/referrals/${id}/links${returnUrl ? `?returnUrl=${encodeURIComponent(getSafeUrl(returnUrl.toString(), router.asPath))}` : ""}`}
+              className="btn btn-secondary btn-md rounded-full px-8 normal-case"
+            >
+              View Referral Links
             </Link>
           </div>
         </div>

@@ -45,12 +45,14 @@ import {
   type ProgramRequestCreate,
   type ProgramRequestUpdate,
 } from "~/api/models/referrals";
+import type { Opportunity } from "~/api/models/opportunity";
 import {
   createReferralProgram,
   getReferralProgramById,
   updateReferralProgram,
   updateReferralProgramImage,
 } from "~/api/services/referrals";
+import { getOpportunityById } from "~/api/services/opportunities";
 import AvatarUpload from "~/components/Organisation/Upsert/AvatarUpload";
 import CustomModal from "~/components/Common/CustomModal";
 import FormField from "~/components/Common/FormField";
@@ -63,6 +65,11 @@ import {
   ProgramInfoFilterOptions,
 } from "~/components/Referrals/AdminProgramInfo";
 import { AdminProgramPathwayEditComponent } from "~/components/Referrals/AdminProgramPathwayEdit";
+import { ProgramStatusBadge } from "~/components/Referrals/ProgramStatusBadge";
+import {
+  AdminReferralProgramActions,
+  ReferralProgramActionOptions,
+} from "~/components/Referrals/AdminReferralProgramActions";
 import { ApiErrors } from "~/components/Status/ApiErrors";
 import { InternalServerError } from "~/components/Status/InternalServerError";
 import { Loading } from "~/components/Status/Loading";
@@ -79,6 +86,7 @@ import {
 import type { NextPageWithLayout } from "~/pages/_app";
 import { authOptions, type User } from "~/server/auth";
 import FormMessage, { FormMessageType } from "~/components/Common/FormMessage";
+import { ProgramImage } from "~/components/Referrals/ProgramImage";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -547,6 +555,9 @@ const ReferralProgramForm: NextPageWithLayout<{
   const [isLoading, setIsLoading] = useState(false);
   const previouspathwayRequired = useRef<boolean | null>(null);
   const htmlRef = useRef<HTMLDivElement>(null);
+  const [opportunityDataMap, setOpportunityDataMap] = useState<
+    Record<string, Opportunity>
+  >({});
 
   //#region Form
   const formRef1 = useRef<HTMLFormElement>(null);
@@ -681,6 +692,43 @@ const ReferralProgramForm: NextPageWithLayout<{
 
   // Watch pathwayRequired from step 5 form for real-time updates
   const pathwayRequiredWatch = watchStep5("pathwayRequired");
+
+  // Fetch all opportunities referenced in the pathway
+  useEffect(() => {
+    const fetchOpportunities = async () => {
+      if (!formData.pathway?.steps) {
+        setOpportunityDataMap({});
+        return;
+      }
+
+      const opportunityIds = new Set<string>();
+      formData.pathway.steps.forEach((step) => {
+        step.tasks?.forEach((task) => {
+          const oppId = task.opportunity?.id || (task as any).entityId;
+          if (oppId) opportunityIds.add(oppId);
+        });
+      });
+
+      if (opportunityIds.size === 0) {
+        setOpportunityDataMap({});
+        return;
+      }
+
+      const dataMap: Record<string, Opportunity> = {};
+      await Promise.all(
+        Array.from(opportunityIds).map(async (id) => {
+          try {
+            const opp = await getOpportunityById(id);
+            dataMap[id] = opp;
+          } catch {}
+        }),
+      );
+
+      setOpportunityDataMap(dataMap);
+    };
+
+    fetchOpportunities();
+  }, [formData.pathway]);
 
   // Watch Step 3 fields for cross-field validation
   const zltoRewardReferrerWatch = watchStep3("zltoRewardReferrer");
@@ -1190,7 +1238,7 @@ const ReferralProgramForm: NextPageWithLayout<{
           );
         }
       } catch (error) {
-        console.error("Error saving program:", error);
+        //console.error("Error saving program:", error);
         toast(<ApiErrors error={error as AxiosError} />, {
           type: "error",
           toastId: "program",
@@ -1370,9 +1418,33 @@ const ReferralProgramForm: NextPageWithLayout<{
         </div>
 
         {/* HEADING */}
-        <h3 className="mt-2 mb-6 font-bold text-white">
-          {id === "create" ? "New referral program" : program?.name}
-        </h3>
+        {id === "create" ? (
+          <h3 className="mt-2 mb-6 font-bold text-white">
+            New referral program
+          </h3>
+        ) : (
+          <div className="mt-2 mb-6 flex flex-row items-center justify-between gap-2">
+            <div className="flex min-w-0 flex-row items-center gap-2">
+              <h3 className="overflow-hidden font-bold text-ellipsis whitespace-nowrap text-white">
+                {program?.name}
+              </h3>
+              {program && <ProgramStatusBadge status={program.status} />}
+            </div>
+            {program && (
+              <AdminReferralProgramActions
+                program={program}
+                returnUrl={returnUrl?.toString()}
+                actionOptions={[
+                  ReferralProgramActionOptions.ACTIVATE,
+                  ReferralProgramActionOptions.INACTIVATE,
+                  ReferralProgramActionOptions.VIEW,
+                  ReferralProgramActionOptions.VIEW_LINKS,
+                  ReferralProgramActionOptions.DELETE,
+                ]}
+              />
+            )}
+          </div>
+        )}
 
         {/* MAIN CONTENT */}
         <div className="flex flex-col gap-4 md:flex-row">
@@ -2121,6 +2193,7 @@ const ReferralProgramForm: NextPageWithLayout<{
                     {pathwayRequiredWatch ? (
                       <AdminProgramPathwayEditComponent
                         control={controlStep5}
+                        opportunityDataMap={opportunityDataMap}
                       />
                     ) : (
                       <FormMessage messageType={FormMessageType.Info}>
@@ -2152,20 +2225,43 @@ const ReferralProgramForm: NextPageWithLayout<{
 
               {/* STEP 6: Preview */}
               {step === 6 && (
-                <>
-                  <div className="mb-4 flex flex-col gap-2">
-                    <h5 className="font-bold tracking-wider">
-                      Preview & Submit
-                    </h5>
-                    <p className="-mt-2 text-sm">
-                      Review your program configuration before saving
-                    </p>
+                <div className="space-y-6">
+                  <div className="flex flex-row items-start justify-between gap-4">
+                    {/* Program Image */}
+                    <div className="flex-shrink-0">
+                      <ProgramImage
+                        imageURL={
+                          imagePreviewUrl ?? program?.imageURL ?? undefined
+                        }
+                        name={formData?.name ?? program?.name ?? "Program"}
+                        size={80}
+                        className="border-2 border-gray-200"
+                      />
+                    </div>
+
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <h1 className="text-2xl font-bold">
+                          {formData?.name ?? program?.name ?? "N/A"}
+                        </h1>
+                        {formData?.isDefault && (
+                          <span className="badge badge-primary">Default</span>
+                        )}
+                      </div>
+                      <p className="mt-2 text-gray-500">
+                        {formData?.description ??
+                          program?.description ??
+                          "No description provided"}
+                      </p>
+                    </div>
                   </div>
 
+                  {/* Program Information Sections */}
                   {programPreview && (
                     <AdminProgramInfo
                       program={programPreview}
                       imagePreviewUrl={imagePreviewUrl}
+                      opportunityDataMap={opportunityDataMap}
                       filterOptions={[
                         ProgramInfoFilterOptions.PROGRAM_INFO,
                         ProgramInfoFilterOptions.COMPLETION_REWARDS,
@@ -2177,7 +2273,7 @@ const ReferralProgramForm: NextPageWithLayout<{
                   )}
 
                   {/* Action Buttons */}
-                  <div className="mt-6 flex flex-row items-center justify-center gap-2 md:justify-end md:gap-4">
+                  <div className="flex flex-row items-center justify-center gap-2 pt-4 md:justify-end md:gap-4">
                     <button
                       type="button"
                       onClick={() => onStep(5)}
@@ -2207,7 +2303,7 @@ const ReferralProgramForm: NextPageWithLayout<{
                       {id === "create" ? "Create Program" : "Save Changes"}
                     </button>
                   </div>
-                </>
+                </div>
               )}
             </div>
           </div>

@@ -4,7 +4,13 @@ export const LoadingSkeleton: React.FC<{
   className?: string;
   columns?: number;
   rows?: number;
-}> = ({ className = "w-full h-full", columns = 1, rows = 1 }) => {
+  height?: string;
+}> = ({
+  className = "w-full h-full",
+  columns = 1,
+  rows = 1,
+  height = "h-32",
+}) => {
   const rowsArray = Array.from({ length: rows });
   const columnsArray = Array.from({ length: columns });
 
@@ -21,7 +27,7 @@ export const LoadingSkeleton: React.FC<{
                   <div className="skeleton bg-gray h-4 w-32"></div>
                 </div>
               </div>
-              <div className="skeleton bg-gray h-32 w-full"></div>
+              <div className={`skeleton bg-gray ${height} w-full`}></div>
             </div>
           ))}
         </div>
