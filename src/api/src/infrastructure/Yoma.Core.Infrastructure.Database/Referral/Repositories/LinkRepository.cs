@@ -45,7 +45,7 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
         ProgramCompletionLimitReferee = entity.Program.CompletionLimitReferee,
         UserId = entity.UserId,
         Username = entity.User.Email ?? entity.User.PhoneNumber ?? string.Empty,
-        UserDisplayName = entity.User.DisplayName,
+        UserDisplayName = entity.User.DisplayName ?? entity.User.Email ?? entity.User.PhoneNumber ?? string.Empty,
         UserEmail = entity.User.Email,
         UserEmailConfirmed = entity.User.EmailConfirmed,
         UserPhoneNumber = entity.User.PhoneNumber,
@@ -70,7 +70,6 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
         DateModified = entity.DateModified,
         UsageCountsRaw = includeChildItems && entity.Usages != null
           ? entity.Usages
-            .Where(u => u.UserId == entity.UserId && u.ProgramId == entity.ProgramId)
             .GroupBy(u => u.StatusId)
             .Select(g => new ReferralLinkUsageCount
             {

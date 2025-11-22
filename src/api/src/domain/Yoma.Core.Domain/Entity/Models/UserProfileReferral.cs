@@ -1,4 +1,4 @@
-using Yoma.Core.Domain.Referral.Models;
+using Yoma.Core.Domain.Referral;
 
 namespace Yoma.Core.Domain.Entity.Models
 {
@@ -11,6 +11,6 @@ namespace Yoma.Core.Domain.Entity.Models
 
     public DateTimeOffset? BlockedDate { get; set; }
 
-    public List<ReferralLinkUsageItem>? LinkUsages { get; set; }
+    public List<ReferralParticipationRole>? Roles { get; set; }
   }
 }

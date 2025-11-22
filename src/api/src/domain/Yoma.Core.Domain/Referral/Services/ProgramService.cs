@@ -219,8 +219,6 @@ namespace Yoma.Core.Domain.Referral.Services
         query = query.Where(o => statusIds.Contains(o.StatusId));
       }
 
-      query = query.OrderBy(o => o.Name).ThenBy(o => o.Id);
-
       var results = new ProgramSearchResults();
 
       if (filter.TotalCountOnly)
@@ -228,6 +226,8 @@ namespace Yoma.Core.Domain.Referral.Services
         results.TotalCount = query.Count();
         return results;
       }
+
+      query = query.OrderBy(o => o.Name).ThenBy(o => o.Id);
 
       if (filter.PaginationEnabled)
       {

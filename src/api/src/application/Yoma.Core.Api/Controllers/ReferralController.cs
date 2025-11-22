@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 using System.ComponentModel.DataAnnotations;
 using Yoma.Core.Domain.Core;
+using Yoma.Core.Domain.Referral;
 using Yoma.Core.Domain.Referral.Interfaces;
 using Yoma.Core.Domain.Referral.Interfaces.Lookups;
 using Yoma.Core.Domain.Referral.Models;
@@ -24,6 +25,7 @@ namespace Yoma.Core.Api.Controllers
     private readonly ILinkService _linkService;
     private readonly ILinkUsageService _linkUsageService;
     private readonly IBlockReasonService _blockReasonService;
+    private readonly IAnalyticsService _analyticsService;
     #endregion
 
     #region Constructor
@@ -33,7 +35,8 @@ namespace Yoma.Core.Api.Controllers
       IProgramInfoService programInfoService,
       ILinkService linkService,
       ILinkUsageService linkUsageService,
-      IBlockReasonService blockReasonService)
+      IBlockReasonService blockReasonService,
+      IAnalyticsService analyticsService)
     {
       _logger = logger ?? throw new ArgumentNullException(nameof(logger));
       _blockService = blockService ?? throw new ArgumentNullException(nameof(blockService));
@@ -42,6 +45,7 @@ namespace Yoma.Core.Api.Controllers
       _linkService = linkService ?? throw new ArgumentNullException(nameof(linkService));
       _linkUsageService = linkUsageService ?? throw new ArgumentNullException(nameof(linkUsageService));
       _blockReasonService = blockReasonService ?? throw new ArgumentNullException(nameof(blockReasonService));
+      _analyticsService = analyticsService ?? throw new ArgumentNullException(nameof(analyticsService));
     }
     #endregion
 
@@ -93,7 +97,7 @@ namespace Yoma.Core.Api.Controllers
     }
 
     [SwaggerOperation(Summary = "Get the referral program by Id (Anonymous)",
-      Description = "By default, only programs that are active and have started can be retrieved. Authenticated users can retrieve any program")]
+      Description = "By default, only programs that are active or uncompleted, and have started can be retrieved. Authenticated users can retrieve any program")]
     [HttpGet("program/{id}/info")]
     [AllowAnonymous]
     public ActionResult<ProgramInfo> GetProgramInfoById([FromRoute] Guid id)
@@ -108,7 +112,7 @@ namespace Yoma.Core.Api.Controllers
     }
 
     [SwaggerOperation(Summary = "Get the referral program by link Id (Anonymous)",
-      Description = "By default, only programs that are active and have started can be retrieved. Authenticated users can retrieve any program")]
+      Description = "By default, only programs that are active or uncompleted, and have started can be retrieved. Authenticated users can retrieve any program")]
     [HttpGet("program/by-link/{linkId}/info")]
     [AllowAnonymous]
     public ActionResult<ProgramInfo> GetProgramInfoByLinkId([FromRoute] Guid linkId)
@@ -266,6 +270,36 @@ namespace Yoma.Core.Api.Controllers
       _logger.LogInformation("Request {requestName} handled", nameof(ClaimAsReferee));
 
       return Ok();
+    }
+
+    [SwaggerOperation(Summary = "Get my referral analytics (Authenticated User)",
+      Description = "Returns my statistics for links (as referrer only), link usages / claims and rewards based on the specified role")]
+    [HttpGet("analytics/{role}")]
+    [Authorize(Roles = Constants.Role_User)]
+    public ActionResult<ReferralAnalyticsUser> GetMyAnalytics([FromRoute] ReferralParticipationRole role)
+    {
+      _logger.LogInformation("Handling request {requestName}", nameof(GetMyAnalytics));
+
+      var result = _analyticsService.ByUser(role);
+
+      _logger.LogInformation("Request {requestName} handled", nameof(GetMyAnalytics));
+
+      return Ok(result);
+    }
+
+    [SwaggerOperation(Summary = "Search referral analytics based on the supplied filter (Authenticated User)",
+      Description = "Returns system-wide obfuscated statistics per user for links (as referrer only), link usages / claims and rewards based on the specified role i.e. leaderboards")]
+    [HttpPost("analytics/search")]
+    [Authorize(Roles = $"{Constants.Role_User}")]
+    public ActionResult<ReferralAnalyticsSearchResultsInfo> SearchAnalytics([FromBody] ReferralAnalyticsSearchFilter filter)
+    {
+      _logger.LogInformation("Handling request {requestName}", nameof(SearchAnalytics));
+
+      var result = _analyticsService.Search(filter);
+
+      _logger.LogInformation("Request {requestName} handled", nameof(SearchAnalytics));
+
+      return Ok(result);
     }
     #endregion
 
@@ -435,6 +469,21 @@ namespace Yoma.Core.Api.Controllers
       var result = _linkUsageService.Search(filter);
 
       _logger.LogInformation("Request {requestName} handled", nameof(SearchLinkUsage));
+
+      return Ok(result);
+    }
+
+    [SwaggerOperation(Summary = "Search referral analytics based on the supplied filter (Admin role required)",
+      Description = "Returns system-wide statistics per user for links (as referrer), link usages / claims and rewards with advanced filtering i.e. leaderboards")]
+    [Authorize(Roles = $"{Constants.Role_Admin}")]
+    [HttpPost("analytics/search/admin")]
+    public ActionResult<ReferralAnalyticsSearchResults> SearchReferralAnalyticsAdmin([FromBody] ReferralAnalyticsSearchFilterAdmin filter)
+    {
+      _logger.LogInformation("Handling request {requestName}", nameof(SearchReferralAnalyticsAdmin));
+
+      var result = _analyticsService.Search(filter);
+
+      _logger.LogInformation("Request {requestName} handled", nameof(SearchReferralAnalyticsAdmin));
 
       return Ok(result);
     }

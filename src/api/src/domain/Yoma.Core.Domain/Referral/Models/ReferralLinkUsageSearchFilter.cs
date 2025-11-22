@@ -1,3 +1,4 @@
+using Newtonsoft.Json;
 using Yoma.Core.Domain.Core.Models;
 
 namespace Yoma.Core.Domain.Referral.Models
@@ -13,6 +14,9 @@ namespace Yoma.Core.Domain.Referral.Models
     public DateTimeOffset? DateStart { get; set; }
 
     public DateTimeOffset? DateEnd { get; set; }
+
+    [JsonIgnore]
+    internal bool TotalCountOnly { get; set; }
   }
 
   public class ReferralLinkUsageSearchFilterAdmin : ReferralLinkUsageSearchFilter

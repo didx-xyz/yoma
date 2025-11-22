@@ -8,6 +8,13 @@ namespace Yoma.Core.Domain.Referral.Models
   /// Whether multiple active links can exist per program for a given referrer
   /// is determined by the program configuration (MultipleLinksAllowed).
   /// The link's Id serves as the unique referral code embedded in both the full and shortened URLs.
+  ///
+  /// Redaction:
+  /// - Not required. This model is only ever returned to:
+  ///   • The referee (for their own usage),
+  ///   • The referrer (for usages on their own links), or
+  ///   • Admin users.
+  /// No anonymous or system-wide exposure.
   /// </summary>
   public class ReferralLink
   {
@@ -27,7 +34,7 @@ namespace Yoma.Core.Domain.Referral.Models
 
     public Guid UserId { get; set; }
 
-    public string? UserDisplayName { get; set; } = null!;
+    public string UserDisplayName { get; set; } = null!;
 
     public string Username { get; set; } = null!;
 

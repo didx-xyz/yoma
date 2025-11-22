@@ -14,6 +14,9 @@ namespace Yoma.Core.Domain.Referral.Models
     internal List<PublishedState>? PublishedStates { get; set; }
 
     public string? ValueContains { get; set; }
+
+    [JsonIgnore]
+    internal bool TotalCountOnly { get; set; }
   }
 
   public class ProgramSearchFilter : ProgramSearchFilterBase
@@ -28,8 +31,5 @@ namespace Yoma.Core.Domain.Referral.Models
     public DateTimeOffset? DateStart { get; set; }
 
     public DateTimeOffset? DateEnd { get; set; }
-
-    [JsonIgnore]
-    internal bool TotalCountOnly { get; set; }
   }
 }

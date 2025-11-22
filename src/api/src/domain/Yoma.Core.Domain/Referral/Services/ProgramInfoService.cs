@@ -13,6 +13,8 @@ namespace Yoma.Core.Domain.Referral.Services
     #region Class Variables
     private readonly IProgramService _programService;
     private readonly IHttpContextAccessor _httpContextAccessor;
+
+    private static readonly ProgramStatus[] Statuses_AnonymousAllowed = [ProgramStatus.Active, ProgramStatus.UnCompletable];
     #endregion
 
     #region Constructor
@@ -56,7 +58,7 @@ namespace Yoma.Core.Domain.Referral.Services
       if (!HttpContextAccessorHelper.UserContextAvailable(_httpContextAccessor))
       {
         //only allow active and started programs for anonymous users
-        if (result.Status != ProgramStatus.Active || result.DateStart > DateTimeOffset.UtcNow)
+        if (!Statuses_AnonymousAllowed.Contains(result.Status) || result.DateStart > DateTimeOffset.UtcNow)
           throw new EntityNotFoundException($"Program not found");
       }
 
@@ -70,7 +72,7 @@ namespace Yoma.Core.Domain.Referral.Services
       if (!HttpContextAccessorHelper.UserContextAvailable(_httpContextAccessor))
       {
         //only allow active and started programs for anonymous users
-        if (result.Status != ProgramStatus.Active || result.DateStart > DateTimeOffset.UtcNow)
+        if (!Statuses_AnonymousAllowed.Contains(result.Status) || result.DateStart > DateTimeOffset.UtcNow)
           throw new EntityNotFoundException($"Program not found");
       }
 

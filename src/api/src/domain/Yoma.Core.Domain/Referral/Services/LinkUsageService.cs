@@ -222,13 +222,19 @@ namespace Yoma.Core.Domain.Referral.Services
       if (filter.UserIdReferrer.HasValue)
         query = query.Where(x => x.UserIdReferrer == filter.UserIdReferrer.Value);
 
+      var results = new ReferralLinkUsageSearchResults();
+
+      if (filter.TotalCountOnly)
+      {
+        results.TotalCount = query.Count();
+        return results;
+      }
+
       query = query.OrderByDescending(o => o.DateModified)
         .ThenBy(o => o.LinkName)
         .ThenBy(o => o.ProgramName)
         .ThenBy(o => o.UserDisplayName)
         .ThenBy(o => o.Id);
-
-      var results = new ReferralLinkUsageSearchResults();
 
       if (filter.PaginationEnabled)
       {
@@ -368,7 +374,7 @@ namespace Yoma.Core.Domain.Referral.Services
         UserPhoneNumberReferrer = link.UserPhoneNumber,
         UserPhoneNumberConfirmedReferrer = link.UserPhoneNumberConfirmed,
         Username = user.Username,
-        UserDisplayName = user.DisplayName,
+        UserDisplayName = user.DisplayName ?? user.Username,
         UserEmail = user.Email,
         UserEmailConfirmed = user.EmailConfirmed,
         UserPhoneNumber = user.PhoneNumber,
@@ -800,11 +806,11 @@ namespace Yoma.Core.Domain.Referral.Services
         LinkId = item.LinkId,
         LinkName = item.LinkName,
         UserIdReferrer = item.UserIdReferrer,
-        UserDisplayNameReferrer = item.UserDisplayNameReferrer!,
+        UserDisplayNameReferrer = item.UserDisplayNameReferrer,
         UserEmailReferrer = item.UserEmailReferrer,
         UserPhoneNumberReferrer = item.UserPhoneNumberReferrer,
         UserId = item.UserId,
-        UserDisplayName = item.UserDisplayName!,
+        UserDisplayName = item.UserDisplayName,
         UserEmail = item.UserEmail,
         UserPhoneNumber = item.UserPhoneNumber,
         StatusId = item.StatusId,

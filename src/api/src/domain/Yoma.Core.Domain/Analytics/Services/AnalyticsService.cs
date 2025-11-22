@@ -44,7 +44,6 @@ namespace Yoma.Core.Domain.Analytics.Services
     private readonly IRepositoryBatchedValueContainsWithNavigation<Organization> _organizationRepository;
 
     private const int Skill_Count = 10;
-    private const int Country_Count = 5;
     private const string Education_Group_Default = "Unspecified";
     private const string Gender_Group_Default = "Other";
     private const string Country_Group_Default = "Unspecified";

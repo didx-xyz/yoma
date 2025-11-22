@@ -6,6 +6,13 @@ namespace Yoma.Core.Domain.Referral.Models
   /// Each engagement is uniquely tied to the referral link and the associated program.
   /// Only one engagement is allowed per referee per program.
   /// Tracks the referee user's progress and current claim status.
+  ///
+  /// Redaction:
+  /// - Not required. This model is only ever returned to:
+  ///   • The referee (for their own usage),
+  ///   • The referrer (for usages on their own links), or
+  ///   • Admin users.
+  /// No anonymous or system-wide exposure.
   /// </summary>
   public class ReferralLinkUsage
   {
@@ -28,7 +35,7 @@ namespace Yoma.Core.Domain.Referral.Models
 
     public string UsernameReferrer { get; set; } = null!;
 
-    public string? UserDisplayNameReferrer { get; set; } = null!;
+    public string UserDisplayNameReferrer { get; set; } = null!;
 
     public string? UserEmailReferrer { get; set; }
 
@@ -44,7 +51,7 @@ namespace Yoma.Core.Domain.Referral.Models
 
     public string Username { get; set; } = null!;
 
-    public string? UserDisplayName { get; set; } = null!;
+    public string UserDisplayName { get; set; } = null!;
 
     public string? UserEmail { get; set; }
 
