@@ -12,7 +12,7 @@ namespace Yoma.Core.Domain.Core.Helpers
 
       if (displayName.Contains('@')) return MaskEmail(displayName);
 
-      if (PhoneNumberValidator.IsValidPhoneNumber(displayName)) return MaskPhone(displayName); 
+      if (PhoneNumberValidator.IsValidPhoneNumber(displayName)) return MaskPhone(displayName);
 
       var parts = displayName.Split(' ', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
 
@@ -44,7 +44,7 @@ namespace Yoma.Core.Domain.Core.Helpers
     {
       var phoneNumberNormalized = phoneNumber.NormalizePhoneNumber(true);
 
-      ArgumentException.ThrowIfNullOrWhiteSpace(phoneNumberNormalized, nameof(phoneNumber)); 
+      ArgumentException.ThrowIfNullOrWhiteSpace(phoneNumberNormalized, nameof(phoneNumber));
 
       if (!PhoneNumberValidator.IsValidPhoneNumber(phoneNumberNormalized)) throw new ArgumentException("Phone number invalid", nameof(phoneNumber));
 
@@ -56,7 +56,7 @@ namespace Yoma.Core.Domain.Core.Helpers
 
       if (!phoneNumberNormalized.StartsWith('+')) return result;
 
-      return $"+{result}"; 
+      return $"+{result}";
     }
   }
 }

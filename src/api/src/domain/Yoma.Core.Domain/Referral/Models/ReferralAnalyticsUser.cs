@@ -22,7 +22,7 @@ namespace Yoma.Core.Domain.Referral.Models
     /// <summary>
     /// Count of active links (as referrer)
     /// </summary>
-    public int? LinkCountActive { get; set; } 
+    public int? LinkCountActive { get; set; }
 
     /// <summary>
     /// Total usages / claims count (as referrer > usages / claims by referees; as referee >> your usages / claims)

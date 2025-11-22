@@ -58,7 +58,7 @@ namespace Yoma.Core.Domain.Referral.Services
       if (!HttpContextAccessorHelper.UserContextAvailable(_httpContextAccessor))
       {
         //only allow active and started programs for anonymous users
-        if(!Statuses_AnonymousAllowed.Contains(result.Status) || result.DateStart > DateTimeOffset.UtcNow)
+        if (!Statuses_AnonymousAllowed.Contains(result.Status) || result.DateStart > DateTimeOffset.UtcNow)
           throw new EntityNotFoundException($"Program not found");
       }
 
