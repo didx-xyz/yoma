@@ -104,14 +104,9 @@ namespace Yoma.Core.Domain.Referral.Services
 
       var results = new ReferralAnalyticsSearchResults();
 
-      // UsageCountTotal is a computed property => we must order by its expression
+      // order by usage count completed (leader board), then by user display name, and lastly by user ID to ensure deterministic sorting / consistent pagination results
       if (!filter.UnrestrictedQuery || filter.PaginationEnabled)
-      {
-        query = query
-         .OrderByDescending(x => x.UsageCountCompleted + x.UsageCountPending + x.UsageCountExpired)
-         .ThenByDescending(x => x.UsageCountCompleted)
-         .ThenBy(x => x.UserDisplayName);
-      }
+        query = query.OrderByDescending(x => x.UsageCountCompleted).ThenBy(x => x.UserDisplayName).ThenBy(o => o.UserId);
 
       if (filter.PaginationEnabled)
       {

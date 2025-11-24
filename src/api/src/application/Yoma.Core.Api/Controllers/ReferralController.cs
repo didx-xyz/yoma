@@ -273,7 +273,7 @@ namespace Yoma.Core.Api.Controllers
     }
 
     [SwaggerOperation(Summary = "Get my referral analytics (Authenticated User)",
-      Description = "Returns my statistics for links (as referrer only), link usages / claims and rewards based on the specified role")]
+      Description = "Returns your referral statistics based on the selected role. Link statistics are referrer-only; usage and reward statistics apply to both roles")]
     [HttpGet("analytics/{role}")]
     [Authorize(Roles = Constants.Role_User)]
     public ActionResult<ReferralAnalyticsUser> GetMyAnalytics([FromRoute] ReferralParticipationRole role)
@@ -287,8 +287,8 @@ namespace Yoma.Core.Api.Controllers
       return Ok(result);
     }
 
-    [SwaggerOperation(Summary = "Search referral analytics based on the supplied filter (Authenticated User)",
-      Description = "Returns system-wide obfuscated statistics per user for links (as referrer only), link usages / claims and rewards based on the specified role i.e. leaderboards")]
+    [SwaggerOperation(Summary = "Search referral analytics (Authenticated User)",
+      Description = "Returns system-wide referral statistics based on role. Link statistics are referrer-only; usage and reward statistics apply to both roles")]
     [HttpPost("analytics/search")]
     [Authorize(Roles = $"{Constants.Role_User}")]
     public ActionResult<ReferralAnalyticsSearchResultsInfo> SearchAnalytics([FromBody] ReferralAnalyticsSearchFilter filter)
@@ -473,8 +473,8 @@ namespace Yoma.Core.Api.Controllers
       return Ok(result);
     }
 
-    [SwaggerOperation(Summary = "Search referral analytics based on the supplied filter (Admin role required)",
-      Description = "Returns system-wide statistics per user for links (as referrer), link usages / claims and rewards with advanced filtering i.e. leaderboards")]
+    [SwaggerOperation(Summary = "Search referral analytics (Admin)",
+      Description = "Returns system-wide referral statistics. Link statistics are referrer-only; usage and reward statistics apply to both roles")]
     [Authorize(Roles = $"{Constants.Role_Admin}")]
     [HttpPost("analytics/search/admin")]
     public ActionResult<ReferralAnalyticsSearchResults> SearchReferralAnalyticsAdmin([FromBody] ReferralAnalyticsSearchFilterAdmin filter)
