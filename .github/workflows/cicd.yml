@@ -83,7 +83,7 @@ jobs:
             changes:
               - '${{ matrix.dir }}/**'
 
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@v6
         if: (steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch') && matrix.lang == 'js'
         with:
           node-version: 20
@@ -362,7 +362,7 @@ jobs:
           API_TAG: ${{ steps.filter.outputs.api == 'true' && needs.docker-push.outputs.image_version || 'latest' }}
           YOUTH_TAG: ${{ steps.filter.outputs.web == 'true' && needs.docker-push.outputs.image_version || 'latest' }}
 
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@v6
         if: steps.should-run.outputs.run == 'true'
         with:
           node-version: 20
