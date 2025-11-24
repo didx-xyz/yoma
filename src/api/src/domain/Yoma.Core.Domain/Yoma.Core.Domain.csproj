@@ -50,4 +50,8 @@
     <PackageReference Include="StackExchange.Redis" Version="2.9.25" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Referral\Helpers\" />
+  </ItemGroup>
+
 </Project>

@@ -17,6 +17,7 @@ using Yoma.Core.Domain.Lookups.Interfaces;
 using Yoma.Core.Domain.MyOpportunity;
 using Yoma.Core.Domain.MyOpportunity.Interfaces;
 using Yoma.Core.Domain.MyOpportunity.Models;
+using Yoma.Core.Domain.Referral;
 using Yoma.Core.Domain.Referral.Interfaces;
 using Yoma.Core.Domain.Referral.Models;
 using Yoma.Core.Domain.Reward.Interfaces;
@@ -38,6 +39,7 @@ namespace Yoma.Core.Domain.Entity.Services
     private readonly IWalletService _walletService;
     private readonly ISettingsDefinitionService _settingsDefinitionService;
     private readonly IBlockService _referralBlockService;
+    private readonly ILinkService _linkService;
     private readonly ILinkUsageService _linkUsageService;
     private readonly UserRequestCreateProfileValidator _userRequestCreateProfileValidator;
     private readonly UserRequestUpdateProfileValidator _userRequestUpdateProfileValidator;
@@ -58,6 +60,7 @@ namespace Yoma.Core.Domain.Entity.Services
       IWalletService walletService,
       ISettingsDefinitionService settingsDefinitionService,
       IBlockService referralBlockService,
+      ILinkService linkService,
       ILinkUsageService linkUsageService,
       UserRequestCreateProfileValidator userRequestCreateProfileValidator,
       UserRequestUpdateProfileValidator userRequestUpdateProfileValidator,
@@ -76,6 +79,7 @@ namespace Yoma.Core.Domain.Entity.Services
       _walletService = walletService;
       _settingsDefinitionService = settingsDefinitionService;
       _referralBlockService = referralBlockService;
+      _linkService = linkService;
       _linkUsageService = linkUsageService;
       _userRequestCreateProfileValidator = userRequestCreateProfileValidator;
       _userRequestUpdateProfileValidator = userRequestUpdateProfileValidator;
@@ -328,22 +332,18 @@ namespace Yoma.Core.Domain.Entity.Services
 
       //referral status
       var resultBlock = _referralBlockService.GetByUserIdOrNull(result.Id);
+      var searchLinkTotal = _linkService.Search(new ReferralLinkSearchFilterAdmin { UserId = user.Id, TotalCountOnly = true });
+      var searchLinkUsageTotal = _linkUsageService.Search(new ReferralLinkUsageSearchFilterAdmin { UserIdReferee = user.Id, TotalCountOnly = true });
+      var rolesReferral = new List<ReferralParticipationRole>();
+      if (searchLinkTotal.TotalCount > 0) rolesReferral.Add(ReferralParticipationRole.Referrer);
+      if (searchLinkUsageTotal.TotalCount > 0) rolesReferral.Add(ReferralParticipationRole.Referee);
 
       result.Referral = new UserProfileReferral
       {
         Blocked = resultBlock != null,
-        BlockedDate = resultBlock?.DateCreated
+        BlockedDate = resultBlock?.DateCreated,
+        Roles = rolesReferral.Count == 0 ? null : rolesReferral
       };
-
-      var resultLinkUsage = _linkUsageService.SearchAsReferee(new ReferralLinkUsageSearchFilter { PageNumber = 1, PageSize = 10 });
-      result.Referral.LinkUsages = resultLinkUsage.Items.Count == 0 ? null : [..resultLinkUsage.Items.Select(lu => new ReferralLinkUsageItem
-      {
-        Id = lu.Id,
-        Status = lu.Status,
-        ProgramId = lu.ProgramId,
-        ProgramName = lu.ProgramName,
-        DateClaimed = lu.DateClaimed
-      })];
 
       return result;
     }

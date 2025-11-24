@@ -167,4 +167,10 @@ namespace Yoma.Core.Domain.Referral
     IdentityAction,
     OpportunityCompletion
   }
+
+  public enum ReferralParticipationRole
+  {
+    Referrer,
+    Referee
+  }
 }

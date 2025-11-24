@@ -5,8 +5,6 @@ using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
 using Yoma.Core.Domain.ActionLink.Interfaces;
 using Yoma.Core.Domain.ActionLink.Services;
-using Yoma.Core.Domain.Analytics.Interfaces;
-using Yoma.Core.Domain.Analytics.Services;
 using Yoma.Core.Domain.BlobProvider.Interfaces;
 using Yoma.Core.Domain.BlobProvider.Services;
 using Yoma.Core.Domain.Core;
@@ -81,7 +79,7 @@ namespace Yoma.Core.Domain
       #endregion Action Link
 
       #region Analytics
-      services.AddScoped<IAnalyticsService, AnalyticsService>();
+      services.AddScoped<Analytics.Interfaces.IAnalyticsService, Analytics.Services.AnalyticsService>();
       #endregion Analytics
 
       #region Blob Provider
@@ -192,6 +190,7 @@ namespace Yoma.Core.Domain
       services.AddScoped<IBlockReasonService, BlockReasonService>();
       #endregion Lookups
 
+      services.AddScoped<IAnalyticsService, AnalyticsService>();
       services.AddScoped<IBlockService, BlockService>();
       services.AddScoped<ILinkMaintenanceService, LinkMaintenanceService>();
       services.AddScoped<Referral.Interfaces.ILinkService, Referral.Services.LinkService>();
