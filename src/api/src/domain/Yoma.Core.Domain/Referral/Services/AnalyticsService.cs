@@ -151,16 +151,16 @@ namespace Yoma.Core.Domain.Referral.Services
         query = query.Where(o => o.UserId == filter.UserId.Value);
 
       var groupedQuery =
-        query
-          .GroupBy(l => new { l.UserId, l.UserDisplayName })
+         query
+          .GroupBy(l => l.UserId)
           .Select(g => new ReferralAnalyticsUser
           {
-            UserId = g.Key.UserId,
-            UserDisplayName = g.Key.UserDisplayName,
+            UserId = g.Key,
+            UserDisplayName = g.Max(x => x.UserDisplayName) ?? string.Empty,
 
-            UsageCountCompleted = g.Where(x => x.StatusId == statusCompletedId).Count(),
-            UsageCountPending = g.Where(x => x.StatusId == statusPendingId).Count(),
-            UsageCountExpired = g.Where(x => x.StatusId == statusExpiredId).Count(),
+            UsageCountCompleted = g.Count(x => x.StatusId == statusCompletedId),
+            UsageCountPending = g.Count(x => x.StatusId == statusPendingId),
+            UsageCountExpired = g.Count(x => x.StatusId == statusExpiredId),
 
             ZltoRewardTotal = g.Sum(x => x.ZltoRewardReferee ?? 0)
           });
