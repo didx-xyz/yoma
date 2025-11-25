@@ -175,7 +175,7 @@ namespace Yoma.Core.Domain.Referral.Services
       var usageStatusExpiredId = _linkUsageStatusService.GetByName(ReferralLinkUsageStatus.Expired.ToString()).Id;
 
       // base link query (referrer = link owner)
-      var linkQuery = _linkRepository.Query(includeChildItems: true);
+      var linkQuery = _linkRepository.Query();
 
       // program
       if (filter.ProgramId.HasValue)
@@ -209,23 +209,22 @@ namespace Yoma.Core.Domain.Referral.Services
        .Select(g => new
        {
          UserIdReferrer = g.Key,
-         Pending = g.Count(x => x.StatusId == usageStatusPendingId),
-         Expired = g.Count(x => x.StatusId == usageStatusExpiredId),
-         Total = g.Count()
+         Pending = (int?)g.Count(x => x.StatusId == usageStatusPendingId),
+         Expired = (int?)g.Count(x => x.StatusId == usageStatusExpiredId)
        });
 
       // aggregate links per referrer
       var linkAgg =
         linkQuery
-          .GroupBy(l => new { l.UserId, l.UserDisplayName })
+          .GroupBy(l => l.UserId)
           .Select(g => new
           {
-            g.Key.UserId,
-            g.Key.UserDisplayName,
+            UserId = g.Key,
+            UserDisplayName = g.Max(x => x.UserDisplayName) ?? string.Empty,
             LinkCount = g.Count(),
             LinkCountActive = g.Count(x => x.StatusId == linkStatusActiveId),
-            Completed = g.Sum(x => x.CompletionTotal.HasValue ? x.CompletionTotal.Value : 0),
-            ZltoReward = g.Sum(x => x.ZltoRewardCumulative.HasValue ? x.ZltoRewardCumulative.Value : 0)
+            Completed = g.Sum(x => x.CompletionTotal ?? 0),
+            ZltoReward = g.Sum(x => x.ZltoRewardCumulative ?? 0)
           });
 
       // left join link + usage aggregates on referrer
@@ -245,8 +244,8 @@ namespace Yoma.Core.Domain.Referral.Services
             LinkCount = x.l.LinkCount,
             LinkCountActive = x.l.LinkCountActive,
             UsageCountCompleted = x.l.Completed,
-            UsageCountPending = u != null ? u.Pending : 0,
-            UsageCountExpired = u != null ? u.Expired : 0,
+            UsageCountPending = u != null ? (u.Pending ?? 0) : 0,
+            UsageCountExpired = u != null ? (u.Expired ?? 0) : 0,
             ZltoRewardTotal = x.l.ZltoReward
           });
     }
