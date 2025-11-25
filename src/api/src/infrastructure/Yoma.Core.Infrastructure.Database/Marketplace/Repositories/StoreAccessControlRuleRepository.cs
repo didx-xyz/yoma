@@ -6,6 +6,7 @@ using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Marketplace;
 using Yoma.Core.Domain.Marketplace.Models;
+using Yoma.Core.Domain.Opportunity;
 using Yoma.Core.Domain.Opportunity.Models;
 using Yoma.Core.Infrastructure.Database.Context;
 using Yoma.Core.Infrastructure.Database.Core.Repositories;
@@ -66,7 +67,9 @@ namespace Yoma.Core.Infrastructure.Database.Marketplace.Repositories
             Title = o.Opportunity.Title,
             OrganizationStatus = Enum.Parse<Domain.Entity.OrganizationStatus>(o.Opportunity.Organization.Status.Name, true),
             VerificationEnabled = o.Opportunity.VerificationEnabled,
+            VerificationMethod = string.IsNullOrEmpty(o.Opportunity.VerificationMethod) ? null : Enum.Parse<VerificationMethod>(o.Opportunity.VerificationMethod, true),
             Status = Enum.Parse<Domain.Opportunity.Status>(o.Opportunity.Status.Name, true),
+            Hidden = o.Opportunity.Hidden,
             DateStart = o.Opportunity.DateStart,
           }).OrderBy(o => o.Title).ToList() : null,
       });

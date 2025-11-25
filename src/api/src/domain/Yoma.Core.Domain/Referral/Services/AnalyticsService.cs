@@ -204,17 +204,15 @@ namespace Yoma.Core.Domain.Referral.Services
       // aggregate usages per referrer, limited by filtered links via FK LinkId
       var usageAgg =
        _linkUsageRepository.Query()
-         .Where(u => linkIds.Contains(u.LinkId))
-         .GroupBy(u => new { u.UserIdReferrer, u.UserDisplayNameReferrer })
-         .Select(g => new
-         {
-           g.Key.UserIdReferrer,
-           g.Key.UserDisplayNameReferrer,
-
-           Pending = g.Count(x => x.StatusId == usageStatusPendingId),
-           Expired = g.Count(x => x.StatusId == usageStatusExpiredId),
-           Total = g.Count()
-         });
+       .Where(u => linkIds.Contains(u.LinkId))
+       .GroupBy(u => u.UserIdReferrer)
+       .Select(g => new
+       {
+         UserIdReferrer = g.Key,
+         Pending = g.Count(x => x.StatusId == usageStatusPendingId),
+         Expired = g.Count(x => x.StatusId == usageStatusExpiredId),
+         Total = g.Count()
+       });
 
       // aggregate links per referrer
       var linkAgg =
@@ -224,10 +222,8 @@ namespace Yoma.Core.Domain.Referral.Services
           {
             g.Key.UserId,
             g.Key.UserDisplayName,
-
             LinkCount = g.Count(),
             LinkCountActive = g.Count(x => x.StatusId == linkStatusActiveId),
-
             Completed = g.Sum(x => x.CompletionTotal ?? 0),
             ZltoReward = g.Sum(x => x.ZltoRewardCumulative ?? 0)
           });
@@ -236,8 +232,8 @@ namespace Yoma.Core.Domain.Referral.Services
       return linkAgg
         .GroupJoin(
           usageAgg,
-          l => new { l.UserId, l.UserDisplayName },
-          u => new { UserId = u.UserIdReferrer, UserDisplayName = u.UserDisplayNameReferrer },
+          l => l.UserId,
+          u => u.UserIdReferrer,
           (l, usages) => new { l, usages }
         )
         .SelectMany(
@@ -246,14 +242,11 @@ namespace Yoma.Core.Domain.Referral.Services
           {
             UserId = x.l.UserId,
             UserDisplayName = x.l.UserDisplayName,
-
             LinkCount = x.l.LinkCount,
             LinkCountActive = x.l.LinkCountActive,
-
             UsageCountCompleted = x.l.Completed,
             UsageCountPending = u != null ? u.Pending : 0,
             UsageCountExpired = u != null ? u.Expired : 0,
-
             ZltoRewardTotal = x.l.ZltoReward
           });
     }

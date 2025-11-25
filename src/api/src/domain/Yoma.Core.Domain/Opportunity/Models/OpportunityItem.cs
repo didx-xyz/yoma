@@ -17,7 +17,13 @@ namespace Yoma.Core.Domain.Opportunity.Models
     public bool VerificationEnabled { get; set; }
 
     [JsonIgnore]
+    public VerificationMethod? VerificationMethod { get; set; }
+
+    [JsonIgnore]
     public Status Status { get; set; }
+
+    [JsonIgnore]
+    public bool? Hidden { get; set; }
 
     [JsonIgnore]
     public DateTimeOffset DateStart { get; set; }
