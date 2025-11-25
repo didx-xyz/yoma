@@ -433,156 +433,156 @@ namespace Yoma.Core.Domain.Referral.Services
           // Process each usage independently; a broken row must not abort the batch
           await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
           {
-          using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
+            using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
 
-          var myUsage = _linkUsageRepository.Query(LockMode.Wait).Single(o => o.Id == usageId);
-          if (myUsage.Status != ReferralLinkUsageStatus.Pending) //state change between fetching the worklist and processing
-          {
-            _logger.LogInformation("Referral progress: skipping LinkUsage '{LinkUsageId}' with status '{Status}'", myUsage.Id, myUsage.Status);
-            return;
-          }
+            var myUsage = _linkUsageRepository.Query(LockMode.Wait).Single(o => o.Id == usageId);
+            if (myUsage.Status != ReferralLinkUsageStatus.Pending) //state change between fetching the worklist and processing
+            {
+              _logger.LogInformation("Referral progress: skipping LinkUsage '{LinkUsageId}' with status '{Status}'", myUsage.Id, myUsage.Status);
+              return;
+            }
 
             // Fallback completion window check (see LinkUsageBackgroundService.ProcessExpiration); if elapsed expire the usage and continue
-          if (statusExpirableIds.Contains(myUsage.StatusId)
-            && myUsage.ProgramCompletionWindowInDays.HasValue && myUsage.DateClaimed <= now.AddDays(-myUsage.ProgramCompletionWindowInDays.Value))
-          {
-            myUsage.StatusId = statusExpiredId;
-            myUsage.Status = ReferralLinkUsageStatus.Expired;
-            myUsage = await _linkUsageRepository.Update(myUsage);
+            if (statusExpirableIds.Contains(myUsage.StatusId)
+              && myUsage.ProgramCompletionWindowInDays.HasValue && myUsage.DateClaimed <= now.AddDays(-myUsage.ProgramCompletionWindowInDays.Value))
+            {
+              myUsage.StatusId = statusExpiredId;
+              myUsage.Status = ReferralLinkUsageStatus.Expired;
+              myUsage = await _linkUsageRepository.Update(myUsage);
 
-            _logger.LogInformation("Referral progress: Expiring LinkUsage '{LinkUsageId}' (claimed {DateClaimed:yyyy-MM-dd}, window {WindowDays} days, program {ProgramId}, link {LinkId})",
-              myUsage.Id, myUsage.DateClaimed, myUsage.ProgramCompletionWindowInDays, myUsage.ProgramId, myUsage.LinkId);
+              _logger.LogInformation("Referral progress: Expiring LinkUsage '{LinkUsageId}' (claimed {DateClaimed:yyyy-MM-dd}, window {WindowDays} days, program {ProgramId}, link {LinkId})",
+                myUsage.Id, myUsage.DateClaimed, myUsage.ProgramCompletionWindowInDays, myUsage.ProgramId, myUsage.LinkId);
 
-            scope.Complete();
-            return;
-          }
+              scope.Complete();
+              return;
+            }
 
             // Evaluate pathway completion
-          var usageProgress = ToInfoParseProgress(myUsage, true);
-          if (usageProgress.EffectiveCompleted != true)
-          {
-            _logger.LogDebug("Referral progress: usage {UsageId} not completed yet; skipping", myUsage.Id);
+            var usageProgress = ToInfoParseProgress(myUsage, true);
+            if (usageProgress.EffectiveCompleted != true)
+            {
+              _logger.LogDebug("Referral progress: usage {UsageId} not completed yet; skipping", myUsage.Id);
 
-            scope.Complete();
-            return;
-          }
+              scope.Complete();
+              return;
+            }
 
-          if (!programCache.TryGetValue(myUsage.ProgramId, out var program))
-          {
-            program = _programService.GetById(myUsage.ProgramId, false, false);
-            programCache[program.Id] = program;
-          }
+            if (!programCache.TryGetValue(myUsage.ProgramId, out var program))
+            {
+              program = _programService.GetById(myUsage.ProgramId, false, false);
+              programCache[program.Id] = program;
+            }
 
-          if (!linkCache.TryGetValue(myUsage.LinkId, out var link))
-          {
-            link = _linkService.GetById(myUsage.LinkId, false, false, false, false);
-            linkCache[link.Id] = link;
-          }
+            if (!linkCache.TryGetValue(myUsage.LinkId, out var link))
+            {
+              link = _linkService.GetById(myUsage.LinkId, false, false, false, false);
+              linkCache[link.Id] = link;
+            }
 
             // Default: eligible for rewards unless a cap was reached (do not punish in-flight)
-          var eligibleForRewards = true;
+            var eligibleForRewards = true;
 
             // Program gating
-          switch (program.Status)
-          {
-            case ProgramStatus.Active:
+            switch (program.Status)
+            {
+              case ProgramStatus.Active:
                 // allowed, rewards allowed
-              _logger.LogDebug("Referral progress: program {ProgramId} ACTIVE for usage {UsageId}", program.Id, myUsage.Id);
+                _logger.LogDebug("Referral progress: program {ProgramId} ACTIVE for usage {UsageId}", program.Id, myUsage.Id);
 
-              break;
+                break;
 
-            case ProgramStatus.Inactive:
+              case ProgramStatus.Inactive:
                 // do not punish in-flight; rewards allowed
-              _logger.LogDebug("Referral progress: program {ProgramId} INACTIVE (in-flight allowed) for usage {UsageId}", program.Id, myUsage.Id);
+                _logger.LogDebug("Referral progress: program {ProgramId} INACTIVE (in-flight allowed) for usage {UsageId}", program.Id, myUsage.Id);
 
-              break;
+                break;
 
-            case ProgramStatus.UnCompletable:
+              case ProgramStatus.UnCompletable:
                 // race condition: usage might have just completed; do not punish in-flight; rewards allowed
-              _logger.LogDebug("Referral progress: program {ProgramId} UNCOMPLETABLE (in-flight allowed) for usage {UsageId}", program.Id, myUsage.Id);
+                _logger.LogDebug("Referral progress: program {ProgramId} UNCOMPLETABLE (in-flight allowed) for usage {UsageId}", program.Id, myUsage.Id);
 
-              break;
+                break;
 
-            case ProgramStatus.Deleted:
+              case ProgramStatus.Deleted:
                 // do not punish in-flight; but the link should have been cancelled via cascade
-              if (LinkService.Statuses_Cancellable.Contains(link.Status))
-              {
-                throw new DataInconsistencyException(
-                  $"Program {program.Id} is Deleted but link {link.Id} status is {link.Status}. " +
-                  $"Expected link to be Cancelled by cascade. Usage {myUsage.Id} cannot be processed safely");
-              }
+                if (LinkService.Statuses_Cancellable.Contains(link.Status))
+                {
+                  throw new DataInconsistencyException(
+                    $"Program {program.Id} is Deleted but link {link.Id} status is {link.Status}. " +
+                    $"Expected link to be Cancelled by cascade. Usage {myUsage.Id} cannot be processed safely");
+                }
 
-              _logger.LogInformation("Referral progress: program {ProgramId} DELETED (in-flight allowed) for usage {UsageId}; link status {LinkStatus}",
-                program.Id, myUsage.Id, link.Status);
+                _logger.LogInformation("Referral progress: program {ProgramId} DELETED (in-flight allowed) for usage {UsageId}; link status {LinkStatus}",
+                  program.Id, myUsage.Id, link.Status);
 
-              break;
+                break;
 
-            case ProgramStatus.LimitReached:
+              case ProgramStatus.LimitReached:
                 // In-flight completions allowed; rewards suppressed
-              eligibleForRewards = false;
-              _logger.LogInformation("Referral progress: program {ProgramId} LIMIT_REACHED → rewards suppressed for usage {UsageId}", program.Id, myUsage.Id);
-              break;
+                eligibleForRewards = false;
+                _logger.LogInformation("Referral progress: program {ProgramId} LIMIT_REACHED → rewards suppressed for usage {UsageId}", program.Id, myUsage.Id);
+                break;
 
-            case ProgramStatus.Expired:
+              case ProgramStatus.Expired:
                 // By cascade, link+usage should already be expired
-              throw new DataInconsistencyException(
-                $"Program {program.Id} is Expired but usage {myUsage.Id} is still Pending and link {link.Id} has status {link.Status}. " +
-                $"Expected cascade: link Expired and usage Expired");
+                throw new DataInconsistencyException(
+                  $"Program {program.Id} is Expired but usage {myUsage.Id} is still Pending and link {link.Id} has status {link.Status}. " +
+                  $"Expected cascade: link Expired and usage Expired");
 
-            default:
-              throw new InvalidOperationException($"Unsupported program status: {program.Status}");
-          }
+              default:
+                throw new InvalidOperationException($"Unsupported program status: {program.Status}");
+            }
 
             // fallback limit reached check if eligibility; only flip active to limit reached (see below); might remain in another state until activated (update, status update or health probe)
-          if (eligibleForRewards && program.CompletionLimit.HasValue && (program.CompletionTotal ?? 0) >= program.CompletionLimit.Value)
-          {
-            eligibleForRewards = false;
-            _logger.LogInformation("Referral progress: program {ProgramId} completion cap reached (total {Total} >= limit {Limit}); suppressing rewards for usage {UsageId}",
-              program.Id, program.CompletionTotal, program.CompletionLimit, myUsage.Id);
-          }
+            if (eligibleForRewards && program.CompletionLimit.HasValue && (program.CompletionTotal ?? 0) >= program.CompletionLimit.Value)
+            {
+              eligibleForRewards = false;
+              _logger.LogInformation("Referral progress: program {ProgramId} completion cap reached (total {Total} >= limit {Limit}); suppressing rewards for usage {UsageId}",
+                program.Id, program.CompletionTotal, program.CompletionLimit, myUsage.Id);
+            }
 
             // Link gating
-          switch (link.Status)
-          {
-            case ReferralLinkStatus.Active:
+            switch (link.Status)
+            {
+              case ReferralLinkStatus.Active:
                 // allowed, rewards allowed unless program suppressed
-              _logger.LogDebug("Referral progress: link {LinkId} ACTIVE for usage {UsageId}", link.Id, myUsage.Id);
+                _logger.LogDebug("Referral progress: link {LinkId} ACTIVE for usage {UsageId}", link.Id, myUsage.Id);
 
-              break;
+                break;
 
-            case ReferralLinkStatus.Cancelled:
+              case ReferralLinkStatus.Cancelled:
                 // do not punish in-flight; rewards allowed unless program suppressed
-              _logger.LogDebug("Referral progress: link {LinkId} CANCELLED (in-flight allowed) for usage {UsageId}", link.Id, myUsage.Id);
+                _logger.LogDebug("Referral progress: link {LinkId} CANCELLED (in-flight allowed) for usage {UsageId}", link.Id, myUsage.Id);
 
-              break;
+                break;
 
-            case ReferralLinkStatus.LimitReached:
+              case ReferralLinkStatus.LimitReached:
                 // In-flight completions allowed; rewards suppressed
-              eligibleForRewards = false;
-              _logger.LogInformation("Referral progress: link {LinkId} LIMIT_REACHED → rewards suppressed for usage {UsageId}", link.Id, myUsage.Id);
+                eligibleForRewards = false;
+                _logger.LogInformation("Referral progress: link {LinkId} LIMIT_REACHED → rewards suppressed for usage {UsageId}", link.Id, myUsage.Id);
 
-              break;
+                break;
 
-            case ReferralLinkStatus.Expired:
+              case ReferralLinkStatus.Expired:
                 // By cascade, usage should already be expired
-              throw new DataInconsistencyException(
-                $"Link {link.Id} is Expired but usage {myUsage.Id} is still Pending under program {program.Id}. " +
-                $"Expected cascade: usage Expired");
+                throw new DataInconsistencyException(
+                  $"Link {link.Id} is Expired but usage {myUsage.Id} is still Pending under program {program.Id}. " +
+                  $"Expected cascade: usage Expired");
 
-            default:
-              throw new InvalidOperationException($"Unsupported link status: {link.Status}");
-          }
+              default:
+                throw new InvalidOperationException($"Unsupported link status: {link.Status}");
+            }
 
             // fallback limit reached check if eligibility; only flip active to limit reached (see below); can be in cancelled state and processing in flight
-          if (eligibleForRewards && program.CompletionLimitReferee.HasValue && link.CompletionTotal >= program.CompletionLimitReferee.Value)
-          {
-            eligibleForRewards = false;
-            _logger.LogInformation("Referral progress: link {LinkId} per-referrer cap reached (total {Total} >= limit {Limit}); suppressing rewards for usage {UsageId}",
-              link.Id, link.CompletionTotal, program.CompletionLimitReferee, myUsage.Id);
-          }
+            if (eligibleForRewards && program.CompletionLimitReferee.HasValue && link.CompletionTotal >= program.CompletionLimitReferee.Value)
+            {
+              eligibleForRewards = false;
+              _logger.LogInformation("Referral progress: link {LinkId} per-referrer cap reached (total {Total} >= limit {Limit}); suppressing rewards for usage {UsageId}",
+                link.Id, link.CompletionTotal, program.CompletionLimitReferee, myUsage.Id);
+            }
 
-          _logger.LogDebug("Referral progress: eligibility for rewards on usage {UsageId} = {Eligible}",
-            myUsage.Id, eligibleForRewards);
+            _logger.LogDebug("Referral progress: eligibility for rewards on usage {UsageId} = {Eligible}",
+              myUsage.Id, eligibleForRewards);
 
             // Calculates and assigns completion rewards for a referral usage based on the program’s
             // configured reward amounts and remaining ZLTO reward pool.
@@ -592,105 +592,105 @@ namespace Yoma.Core.Domain.Referral.Services
             // • Null handling:
             //   – Null program targets ⇒ corresponding usage rewards remain null.
             //   – Non-null targets but insufficient pool ⇒ usage rewards set to 0 (never negative).
-          decimal? rewardReferee = null;
-          decimal? rewardReferrer = null;
+            decimal? rewardReferee = null;
+            decimal? rewardReferrer = null;
 
-          if (eligibleForRewards)
-          {
+            if (eligibleForRewards)
+            {
               // Program-configured targets (nullable)
-            decimal? refereeTarget = program.ZltoRewardReferee;
-            decimal? referrerTarget = program.ZltoRewardReferrer;
+              decimal? refereeTarget = program.ZltoRewardReferee;
+              decimal? referrerTarget = program.ZltoRewardReferrer;
 
               // Pool balance (treat null as 0, clamp to ≥ 0)
-            decimal pool = Math.Max(program.ZltoRewardBalance ?? 0m, 0m);
+              decimal pool = Math.Max(program.ZltoRewardBalance ?? 0m, 0m);
 
               // Pay referee first (up to target if configured)
-            if (refereeTarget.HasValue)
-            {
-              var payReferee = Math.Min(pool, refereeTarget.Value);
-              rewardReferee = payReferee;
-              pool -= payReferee;
-            }
+              if (refereeTarget.HasValue)
+              {
+                var payReferee = Math.Min(pool, refereeTarget.Value);
+                rewardReferee = payReferee;
+                pool -= payReferee;
+              }
 
               // Pay referrer next (whatever remains, up to target if configured)
-            if (referrerTarget.HasValue)
-            {
-              var payReferrer = Math.Min(pool, referrerTarget.Value);
-              rewardReferrer = payReferrer;
-              pool -= payReferrer;
-            }
+              if (referrerTarget.HasValue)
+              {
+                var payReferrer = Math.Min(pool, referrerTarget.Value);
+                rewardReferrer = payReferrer;
+                pool -= payReferrer;
+              }
 
               // Per-party logging (full/partial/zero)
-            if (refereeTarget.HasValue)
-            {
-              if (rewardReferee == refereeTarget.Value)
-                _logger.LogInformation("Referral progress: referee FULL payout for usage {UsageId} => {Amount}", myUsage.Id, rewardReferee);
-              else if ((rewardReferee ?? 0m) > 0m)
-                _logger.LogInformation("Referral progress: referee PARTIAL payout for usage {UsageId} => {Amount} (target {Target})", myUsage.Id, rewardReferee, refereeTarget);
+              if (refereeTarget.HasValue)
+              {
+                if (rewardReferee == refereeTarget.Value)
+                  _logger.LogInformation("Referral progress: referee FULL payout for usage {UsageId} => {Amount}", myUsage.Id, rewardReferee);
+                else if ((rewardReferee ?? 0m) > 0m)
+                  _logger.LogInformation("Referral progress: referee PARTIAL payout for usage {UsageId} => {Amount} (target {Target})", myUsage.Id, rewardReferee, refereeTarget);
+                else
+                  _logger.LogInformation("Referral progress: referee ZERO payout for usage {UsageId}", myUsage.Id);
+              }
               else
-                _logger.LogInformation("Referral progress: referee ZERO payout for usage {UsageId}", myUsage.Id);
+                _logger.LogInformation("Referral progress: referee payout not configured (null) for usage {UsageId}", myUsage.Id);
+
+              if (referrerTarget.HasValue)
+              {
+                if (rewardReferrer == referrerTarget.Value)
+                  _logger.LogInformation("Referral progress: referrer FULL payout for usage {UsageId} => {Amount}", myUsage.Id, rewardReferrer);
+                else if ((rewardReferrer ?? 0m) > 0m)
+                  _logger.LogInformation("Referral progress: referrer PARTIAL payout for usage {UsageId} => {Amount} (target {Target})", myUsage.Id, rewardReferrer, referrerTarget);
+                else
+                  _logger.LogInformation("Referral progress: referrer ZERO payout for usage {UsageId}", myUsage.Id);
+              }
+              else
+                _logger.LogInformation("Referral progress: referrer payout not configured (null) for usage {UsageId}", myUsage.Id);
+
+              _logger.LogInformation("Referral progress: summary for usage {UsageId} — referee {RefereePaid}, referrer {ReferrerPaid}",
+                myUsage.Id, rewardReferee ?? 0m, rewardReferrer ?? 0m);
             }
             else
-              _logger.LogInformation("Referral progress: referee payout not configured (null) for usage {UsageId}", myUsage.Id);
+              _logger.LogInformation("Referral progress: rewards suppressed by eligibility for usage {UsageId}", myUsage.Id);
 
-            if (referrerTarget.HasValue)
-            {
-              if (rewardReferrer == referrerTarget.Value)
-                _logger.LogInformation("Referral progress: referrer FULL payout for usage {UsageId} => {Amount}", myUsage.Id, rewardReferrer);
-              else if ((rewardReferrer ?? 0m) > 0m)
-                _logger.LogInformation("Referral progress: referrer PARTIAL payout for usage {UsageId} => {Amount} (target {Target})", myUsage.Id, rewardReferrer, referrerTarget);
-              else
-                _logger.LogInformation("Referral progress: referrer ZERO payout for usage {UsageId}", myUsage.Id);
-            }
-            else
-              _logger.LogInformation("Referral progress: referrer payout not configured (null) for usage {UsageId}", myUsage.Id);
+            myUsage.ZltoRewardReferee = rewardReferee;
+            myUsage.ZltoRewardReferrer = rewardReferrer;
+            myUsage.Status = ReferralLinkUsageStatus.Completed;
+            myUsage.StatusId = statusCompletedId;
+            myUsage = await _linkUsageRepository.Update(myUsage);
 
-            _logger.LogInformation("Referral progress: summary for usage {UsageId} — referee {RefereePaid}, referrer {ReferrerPaid}",
-              myUsage.Id, rewardReferee ?? 0m, rewardReferrer ?? 0m);
-          }
-          else
-            _logger.LogInformation("Referral progress: rewards suppressed by eligibility for usage {UsageId}", myUsage.Id);
-
-          myUsage.ZltoRewardReferee = rewardReferee;
-          myUsage.ZltoRewardReferrer = rewardReferrer;
-          myUsage.Status = ReferralLinkUsageStatus.Completed;
-          myUsage.StatusId = statusCompletedId;
-          myUsage = await _linkUsageRepository.Update(myUsage);
-
-          decimal? totalAwarded = (rewardReferee.HasValue || rewardReferrer.HasValue)
-            ? (rewardReferee ?? 0m) + (rewardReferrer ?? 0m)
-            : null;
+            decimal? totalAwarded = (rewardReferee.HasValue || rewardReferrer.HasValue)
+              ? (rewardReferee ?? 0m) + (rewardReferrer ?? 0m)
+              : null;
 
             // We update Program first so global cap logic can cascade-close all active links (set to LIMIT_REACHED)
-          var programStatusCurrent = program.Status;
-          var linkStatusCurrent = link.Status;
+            var programStatusCurrent = program.Status;
+            var linkStatusCurrent = link.Status;
 
             // Increment running totals (CompletionTotal and ZltoRewardCumulative); may flip Program to LIMIT_REACHED if ACTIVE, inclusive of all ACTIVE links (global completion cap hit)
-          program = await _programService.ProcessCompletion(program.Id, totalAwarded);
+            program = await _programService.ProcessCompletion(program.Id, totalAwarded);
 
             // If the program flipped from ACTIVE → LIMIT_REACHED, all ACTIVE links will also be flipped to LIMIT_REACHED
-          if (programStatusCurrent == ProgramStatus.Active && program.Status == ProgramStatus.LimitReached && linkStatusCurrent == ReferralLinkStatus.Active)
+            if (programStatusCurrent == ProgramStatus.Active && program.Status == ProgramStatus.LimitReached && linkStatusCurrent == ReferralLinkStatus.Active)
               // Re-read ensures we don't rely on a stale in-memory link
-            link = _linkService.GetById(myUsage.LinkId, false, false, false, false);
+              link = _linkService.GetById(myUsage.LinkId, false, false, false, false);
 
             // Increment running totals (CompletionTotal and ZltoRewardCumulative); may flip to LIMIT_REACHED if ACTIVE (per-referrer completion cap hit)
-          link = await _linkService.ProcessCompletion(program, link.Id, totalAwarded);
+            link = await _linkService.ProcessCompletion(program, link.Id, totalAwarded);
 
-          linkCache[link.Id] = link;
-          programCache[program.Id] = program;
+            linkCache[link.Id] = link;
+            programCache[program.Id] = program;
 
             // schedule reward transactions
-          if ((rewardReferrer ?? 0m) > 0m)
-            await _rewardService.ScheduleRewardTransaction(myUsage.UserIdReferrer, Reward.RewardTransactionEntityType.ReferralLinkUsage, myUsage.Id, rewardReferrer!.Value);
+            if ((rewardReferrer ?? 0m) > 0m)
+              await _rewardService.ScheduleRewardTransaction(myUsage.UserIdReferrer, Reward.RewardTransactionEntityType.ReferralLinkUsage, myUsage.Id, rewardReferrer!.Value);
 
-          if ((rewardReferee ?? 0m) > 0m)
-            await _rewardService.ScheduleRewardTransaction(myUsage.UserId, Reward.RewardTransactionEntityType.ReferralLinkUsage, myUsage.Id, rewardReferee!.Value);
+            if ((rewardReferee ?? 0m) > 0m)
+              await _rewardService.ScheduleRewardTransaction(myUsage.UserId, Reward.RewardTransactionEntityType.ReferralLinkUsage, myUsage.Id, rewardReferee!.Value);
 
-          await SendNotification(NotificationType.ReferralLink_Completed_ReferrerAwarded, program, link, myUsage);
-          await SendNotification(NotificationType.ReferralUsage_Completion, program, link, myUsage);
+            await SendNotification(NotificationType.ReferralLink_Completed_ReferrerAwarded, program, link, myUsage);
+            await SendNotification(NotificationType.ReferralUsage_Completion, program, link, myUsage);
 
-          scope.Complete();
-        });
+            scope.Complete();
+          });
         }
       });
     }
