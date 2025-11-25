@@ -35,7 +35,7 @@ export const ReferrerLeaderboard: React.FC<ReferrerLeaderboardProps> = ({
         <h2 className="mb-4 flex items-center gap-4 text-lg font-bold text-gray-900">
           <IoTrophy className="text-yellow h-8 w-8" /> Top Referrers
         </h2>
-        <LoadingInline />
+        <LoadingInline classNameSpinner="h-12 border-orange w-12" />
       </div>
     );
   }
