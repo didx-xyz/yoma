@@ -88,29 +88,6 @@ export interface Program {
   pathway: ProgramPathway | null;
 }
 
-// export interface ProgramInfo {
-//   id: string;
-//   name: string;
-//   description: string | null;
-//   imageURL: string | null;
-//   completionWindowInDays: number | null;
-//   completionLimitReferee: number | null;
-//   zltoRewardReferrer: number | null;
-//   zltoRewardReferee: number | null;
-//   proofOfPersonhoodRequired: boolean;
-//   pathwayRequired: boolean;
-//   dateStart: string;
-//   dateEnd: string | null;
-//   pathway: ProgramPathwayInfo | null;
-//   // Referee Status
-//   linkUsageStatus: ReferralLinkUsageStatus | null;
-//   dateClaimed: string | null;
-//   dateCompleted: string | null;
-//   proofOfPersonhoodCompleted: boolean | null;
-//   proofOfPersonhoodMethod: ProofOfPersonhoodMethod | null;
-//   pathwaysCompleted: boolean | null;
-// }
-
 export interface ProgramInfo {
   id: string;
   name: string;
@@ -397,18 +374,25 @@ export interface ReferralLinkUsage {
   programCompletionWindowInDays: number | null;
   linkId: string;
   linkName: string;
-  // Referrer Info (from link)
   userIdReferrer: string;
-  userDisplayNameReferrer: string | null;
+  usernameReferrer: string;
+  userDisplayNameReferrer: string;
   userEmailReferrer: string | null;
+  userEmailConfirmedReferrer: boolean | null;
   userPhoneNumberReferrer: string | null;
-  // Referee Info (from usage)
+  userPhoneNumberConfirmedReferrer: boolean | null;
   userId: string;
-  userDisplayName: string | null;
+  username: string;
+  userDisplayName: string;
   userEmail: string | null;
+  userEmailConfirmed: boolean | null;
   userPhoneNumber: string | null;
+  userPhoneNumberConfirmed: boolean | null;
+  userYoIDOnboarded: boolean | null;
   statusId: string;
-  status: ReferralLinkUsageStatus;
+  status: ReferralLinkUsageStatus | string;
+  zltoRewardReferrer: number | null;
+  zltoRewardReferee: number | null;
   dateClaimed: string;
   dateCompleted: string | null;
   dateExpired: string | null;
@@ -508,7 +492,7 @@ export interface ProgramPathwayTaskProgress {
 
 export interface ReferralLinkUsageSearchResults {
   totalCount: number | null;
-  items: ReferralLinkUsageInfo[];
+  items: ReferralLinkUsage[];
 }
 
 // Block/Unblock Models

@@ -16,6 +16,7 @@ import type {
   ReferralLinkUsageSearchResults,
   ReferralLinkUsageStatus,
   ProgramInfo,
+  ReferralLinkUsage,
 } from "~/api/models/referrals";
 import {
   searchReferralLinkUsagesAsReferrer,
@@ -86,33 +87,36 @@ export const ReferrerLinkUsageModal: React.FC<LinkUsageModalProps> = ({
     enabled: isOpen && !!link?.id,
   });
 
-  const getStatusBadge = useCallback((status: ReferralLinkUsageStatus) => {
-    switch (status) {
-      case "Completed":
-        return (
-          <span className="badge badge-sm bg-green-light text-green gap-1">
-            <IoCheckmarkCircle className="h-3 w-3" />
-            Completed
-          </span>
-        );
-      case "Pending":
-        return (
-          <span className="badge badge-sm gap-1 bg-blue-50 text-blue-700">
-            <IoHourglassOutline className="h-3 w-3" />
-            Pending
-          </span>
-        );
-      case "Expired":
-        return (
-          <span className="badge badge-sm bg-orange-light text-orange gap-1">
-            <IoTimeOutline className="h-3 w-3" />
-            Expired
-          </span>
-        );
-      default:
-        return <span className="badge badge-sm">{status}</span>;
-    }
-  }, []);
+  const getStatusBadge = useCallback(
+    (status: ReferralLinkUsageStatus | string) => {
+      switch (status) {
+        case "Completed":
+          return (
+            <span className="badge badge-sm bg-green-light text-green gap-1">
+              <IoCheckmarkCircle className="h-3 w-3" />
+              Completed
+            </span>
+          );
+        case "Pending":
+          return (
+            <span className="badge badge-sm gap-1 bg-blue-50 text-blue-700">
+              <IoHourglassOutline className="h-3 w-3" />
+              Pending
+            </span>
+          );
+        case "Expired":
+          return (
+            <span className="badge badge-sm bg-orange-light text-orange gap-1">
+              <IoTimeOutline className="h-3 w-3" />
+              Expired
+            </span>
+          );
+        default:
+          return <span className="badge badge-sm">{status}</span>;
+      }
+    },
+    [],
+  );
 
   const isLoading = linkLoading || programLoading || usageLoading;
   const error = linkError || programError || usageError;
@@ -231,18 +235,30 @@ export const ReferrerLinkUsageModal: React.FC<LinkUsageModalProps> = ({
                     Referrals ({totalCount})
                   </h2>
 
-                  <div className="border-gray rounded-lg border">
+                  <div
+                  //className="border-gray rounded-lg border"
+                  >
                     {!hasUsage && (
                       <NoRowsMessage
                         title="No Referrals Yet"
                         description="When someone uses your referral link, their progress will appear here."
                         icon={"👥"}
+                        className="border-gray rounded-lg border"
                       />
                     )}
                     {hasUsage && (
-                      <div className="space-y-3">
-                        {usageData?.items?.map(
-                          (usage: ReferralLinkUsageInfo) => (
+                      <>
+                        {/* Info Message */}
+                        <FormMessage
+                          messageType={FormMessageType.Info}
+                          className="mb-2"
+                        >
+                          This shows everyone who has used your referral link
+                          and their progress through the program.
+                        </FormMessage>
+
+                        <div className="border-gray space-y-3 rounded-lg border">
+                          {usageData?.items?.map((usage: ReferralLinkUsage) => (
                             <div
                               key={usage.id}
                               className="border-gray rounded-lg border bg-white p-4 transition-shadow hover:shadow-md"
@@ -261,104 +277,6 @@ export const ReferrerLinkUsageModal: React.FC<LinkUsageModalProps> = ({
                                   {getStatusBadge(usage.status)}
                                 </div>
                               </div>
-
-                              {/* Proof of Personhood */}
-                              {programData?.proofOfPersonhoodRequired && (
-                                <div className="mb-3 flex items-center gap-2 text-xs">
-                                  {usage.proofOfPersonhoodCompleted ? (
-                                    <>
-                                      <IoCheckmarkCircle className="h-4 w-4 text-green-600" />
-                                      <span className="text-green-600">
-                                        Identity Verified
-                                      </span>
-                                      {usage.proofOfPersonhoodMethod && (
-                                        <span className="text-gray-dark">
-                                          ({usage.proofOfPersonhoodMethod})
-                                        </span>
-                                      )}
-                                    </>
-                                  ) : (
-                                    <>
-                                      <IoTimeOutline className="h-4 w-4 text-yellow-600" />
-                                      <span className="text-yellow-600">
-                                        Identity Verification Pending
-                                      </span>
-                                    </>
-                                  )}
-                                </div>
-                              )}
-
-                              {/* Pathway Progress */}
-                              {usage.pathway && (
-                                <div className="mb-3 rounded-lg bg-gray-50 p-3">
-                                  <div className="mb-2 flex items-center justify-between">
-                                    <span className="text-sm font-semibold text-gray-900">
-                                      {usage.pathway.name}
-                                    </span>
-                                    <span className="text-sm font-bold text-gray-900">
-                                      {usage.percentComplete}%
-                                    </span>
-                                  </div>
-                                  <div className="mb-2 h-2 w-full rounded-full bg-gray-200">
-                                    <div
-                                      className={`h-2 rounded-full transition-all ${
-                                        usage.percentComplete === 100
-                                          ? "bg-green-600"
-                                          : "bg-blue-500"
-                                      }`}
-                                      style={{
-                                        width: `${usage.percentComplete}%`,
-                                      }}
-                                    />
-                                  </div>
-                                  <div className="text-gray-dark text-xs">
-                                    <span className="font-semibold">
-                                      {usage.pathway.stepsCompleted}
-                                    </span>{" "}
-                                    of{" "}
-                                    <span className="font-semibold">
-                                      {usage.pathway.stepsTotal}
-                                    </span>{" "}
-                                    steps completed
-                                  </div>
-
-                                  {/* Step Details */}
-                                  {usage.pathway.steps &&
-                                    usage.pathway.steps.length > 0 && (
-                                      <div className="mt-3 space-y-2 border-t border-gray-200 pt-3">
-                                        {usage.pathway.steps.map((step) => (
-                                          <div
-                                            key={step.id}
-                                            className="text-xs"
-                                          >
-                                            <div className="flex items-center gap-2">
-                                              {step.completed ? (
-                                                <IoCheckmarkCircle className="h-4 w-4 flex-shrink-0 text-green-600" />
-                                              ) : step.tasksCompleted > 0 ? (
-                                                <IoHourglassOutline className="h-4 w-4 flex-shrink-0 text-yellow-600" />
-                                              ) : (
-                                                <div className="h-4 w-4 flex-shrink-0 rounded-full border-2 border-gray-300" />
-                                              )}
-                                              <span
-                                                className={
-                                                  step.completed
-                                                    ? "font-medium text-gray-900"
-                                                    : "text-gray-600"
-                                                }
-                                              >
-                                                {step.name}
-                                              </span>
-                                              <span className="text-gray-dark">
-                                                ({step.tasksCompleted}/
-                                                {step.tasksTotal})
-                                              </span>
-                                            </div>
-                                          </div>
-                                        ))}
-                                      </div>
-                                    )}
-                                </div>
-                              )}
 
                               {/* Timeline */}
                               <div className="text-gray-dark flex flex-wrap gap-x-4 gap-y-1 border-t border-gray-100 pt-3 text-xs">
@@ -404,9 +322,9 @@ export const ReferrerLinkUsageModal: React.FC<LinkUsageModalProps> = ({
                                 )}
                               </div>
                             </div>
-                          ),
-                        )}
-                      </div>
+                          ))}
+                        </div>
+                      </>
                     )}
 
                     {/* Pagination */}
@@ -438,12 +356,6 @@ export const ReferrerLinkUsageModal: React.FC<LinkUsageModalProps> = ({
                     )}
                   </div>
                 </div>
-
-                {/* Info Message */}
-                <FormMessage messageType={FormMessageType.Info}>
-                  This shows everyone who has used your referral link and their
-                  progress through the program pathway.
-                </FormMessage>
 
                 {/* Action Buttons */}
                 <div className="mt-10 flex gap-3">
