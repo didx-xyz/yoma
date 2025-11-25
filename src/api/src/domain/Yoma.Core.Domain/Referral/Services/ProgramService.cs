@@ -872,7 +872,9 @@ namespace Yoma.Core.Domain.Referral.Services
             Title = opportunity.Title,
             OrganizationStatus = opportunity.OrganizationStatus,
             VerificationEnabled = opportunity.VerificationEnabled,
+            VerificationMethod = opportunity.VerificationMethod,
             Status = opportunity.Status,
+            Hidden = opportunity.Hidden,
             DateStart = opportunity.DateStart
           };
 

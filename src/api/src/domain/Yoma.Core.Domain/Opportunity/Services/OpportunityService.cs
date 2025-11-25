@@ -970,7 +970,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       if (filter.ShareWithPartners == true)
         query = query.Where(o => o.ShareWithPartners == true);
 
-      //hidden
+      //excludeHidden
       if (filter.ExcludeHidden)
         query = query.Where(o => !o.Hidden.HasValue || o.Hidden == false);
 

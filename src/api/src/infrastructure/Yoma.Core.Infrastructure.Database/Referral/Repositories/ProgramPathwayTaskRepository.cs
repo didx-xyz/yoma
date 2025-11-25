@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Interfaces;
+using Yoma.Core.Domain.Opportunity;
 using Yoma.Core.Domain.Referral;
 using Yoma.Core.Domain.Referral.Models;
 using Yoma.Core.Infrastructure.Database.Context;
@@ -34,7 +35,9 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
           Title = entity.Opportunity.Title,
           OrganizationStatus = Enum.Parse<Domain.Entity.OrganizationStatus>(entity.Opportunity.Organization.Status.Name, true),
           VerificationEnabled = entity.Opportunity.VerificationEnabled,
-          Status = Enum.Parse<Domain.Opportunity.Status>(entity.Opportunity.Status.Name, true),
+          VerificationMethod = string.IsNullOrEmpty(entity.Opportunity.VerificationMethod) ? null : Enum.Parse<VerificationMethod>(entity.Opportunity.VerificationMethod, true),
+          Status = Enum.Parse<Status>(entity.Opportunity.Status.Name, true),
+          Hidden = entity.Opportunity.Hidden,
           DateStart = entity.Opportunity.DateStart
         },
         Order = entity.Order,
