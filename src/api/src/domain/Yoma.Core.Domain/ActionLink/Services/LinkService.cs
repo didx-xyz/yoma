@@ -617,7 +617,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
       return new NotificationActionLinkVerify
       {
         EntityTypeDesc = $"{entityType.ToString().ToLower()}(ies)",
-        YoIDURL = _notificationURLFactory.OpportunityVerificationYoIDURL(NotificationType.ActionLink_Verify_Distribution),
+        YoIDURL = _notificationURLFactory.OpportunityYoIDDashboardURL(NotificationType.ActionLink_Verify_Distribution),
         Items =
         [
           new NotificationActionLinkVerifyItem

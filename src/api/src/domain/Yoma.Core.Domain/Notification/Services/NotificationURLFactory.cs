@@ -23,25 +23,36 @@ namespace Yoma.Core.Domain.Notification.Services
     #endregion
 
     #region Public Members
-    public string ReferralRefereeYoIDURL(NotificationType notificationType, Guid programId)
+    public string ReferralYoIDDashboardURL(NotificationType notificationType, Guid programId)
     {
       if (programId == Guid.Empty)
         throw new ArgumentNullException(nameof(programId));
 
       return notificationType switch
       {
-        NotificationType.ReferralUsage_Welcome or NotificationType.ReferralUsage_Completion => _appSettings.AppBaseURL.AppendPathSegment("yoid/referee").AppendPathSegment(programId).ToString(),
+        NotificationType.ReferralLink_Completed_ReferrerAwarded
+         => _appSettings.AppBaseURL.AppendPathSegment("yoid").AppendPathSegment("referrals").ToString(),
+
+        NotificationType.ReferralUsage_Welcome
+          or NotificationType.ReferralUsage_Completion
+          => _appSettings.AppBaseURL.AppendPathSegment("yoid").AppendPathSegment("referee").AppendPathSegment(programId).ToString(),
+
         _ => throw new ArgumentOutOfRangeException(nameof(notificationType), $"Type of '{notificationType}' not supported"),
       };
     }
 
-    public string ReferralReferrerDashboardURL(NotificationType notificationType, Guid userId)
+    public string ReferralProgramItemURL(NotificationType notificationType, Guid programId)
     {
-      if (userId == Guid.Empty)
-        throw new ArgumentNullException(nameof(userId));
+      if (programId == Guid.Empty)
+        throw new ArgumentNullException(nameof(programId));
+
       return notificationType switch
       {
-        NotificationType.ReferralLink_Completed_ReferrerAwarded => _appSettings.AppBaseURL.AppendPathSegment("yoid/referrals").ToString(),
+        NotificationType.ReferralProgram_Expiration_Expired
+            or NotificationType.ReferralProgram_Expiration_WithinNextDays
+            or NotificationType.ReferralProgram_UnCompletable
+         => _appSettings.AppBaseURL.AppendPathSegment("admin").AppendPathSegment("referrals").AppendPathSegment(programId).AppendPathSegment("info").ToString(),
+
         _ => throw new ArgumentOutOfRangeException(nameof(notificationType), $"Type of '{notificationType}' not supported"),
       };
     }
@@ -111,7 +122,7 @@ namespace Yoma.Core.Domain.Notification.Services
       return result;
     }
 
-    public string? OpportunityVerificationYoIDURL(NotificationType notificationType)
+    public string? OpportunityYoIDDashboardURL(NotificationType notificationType)
     {
       var result = _appSettings.AppBaseURL.AppendPathSegment("yoid/opportunities").ToString();
       switch (notificationType)

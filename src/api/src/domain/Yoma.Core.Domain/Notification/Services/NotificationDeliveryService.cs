@@ -121,28 +121,57 @@ namespace Yoma.Core.Domain.Notification.Services
     {
       var supported = type switch
       {
-        NotificationType.Organization_Approval_Requested => MessageType.Email, //sent to admin
-        NotificationType.Organization_Approval_Approved => MessageType.Email, //sent to organization admin
-        NotificationType.Organization_Approval_Declined => MessageType.Email, //sent to organization admin
-        NotificationType.Opportunity_Verification_Rejected => MessageType.Email | MessageType.SMS | MessageType.WhatsApp, //sent to youth
-        NotificationType.Opportunity_Verification_Completed => MessageType.Email | MessageType.SMS | MessageType.WhatsApp, //sent to youth
-        NotificationType.Opportunity_Expiration_Expired => MessageType.Email, //sent to organization admin
-        NotificationType.Opportunity_Expiration_WithinNextDays => MessageType.Email, //sent to organization admin
-        NotificationType.Opportunity_Posted_Admin => MessageType.Email, //sent to admin
-        NotificationType.Opportunity_Verification_Pending => MessageType.Email, //sent to youth; SMS and WhatsApp not supported due to cost constraints
-        NotificationType.Opportunity_Verification_Pending_Admin => MessageType.Email, //sent to organization admin
-        NotificationType.ActionLink_Verify_Distribution => MessageType.Email | MessageType.SMS | MessageType.WhatsApp, //sent to youth mailing / distribution list
-        NotificationType.ActionLink_Verify_Activated => MessageType.Email, //sent to organization admin
-        NotificationType.Opportunity_Published => MessageType.Email | MessageType.SMS | MessageType.WhatsApp, //sent to youth
-        NotificationType.Download => MessageType.Email, //sent to admin or organization admin,
-        NotificationType.ReferralProgram_Expiration_Expired => MessageType.Email, // sent to admin
-        NotificationType.ReferralProgram_Expiration_WithinNextDays => MessageType.Email, // sent to admin
-        NotificationType.ReferralProgram_UnCompletable => MessageType.Email, // sent to admin
-        NotificationType.ReferralLink_Completed_ReferrerAwarded => MessageType.Email | MessageType.SMS | MessageType.WhatsApp, // sent to referrer (youth)
-        NotificationType.Referral_Blocked_Referrer => MessageType.Email | MessageType.SMS | MessageType.WhatsApp, // sent to referrer (youth)
-        NotificationType.Referral_Unblocked_Referrer => MessageType.Email | MessageType.SMS | MessageType.WhatsApp, // sent to referrer (youth)
-        NotificationType.ReferralUsage_Welcome => MessageType.Email | MessageType.SMS | MessageType.WhatsApp, // sent to referee (youth)
-        NotificationType.ReferralUsage_Completion => MessageType.Email | MessageType.SMS | MessageType.WhatsApp, // sent to referee (youth)
+        // admin
+        NotificationType.Organization_Approval_Requested
+            => MessageType.Email,
+
+        NotificationType.Opportunity_Posted_Admin
+            => MessageType.Email,
+
+        NotificationType.Download
+            => MessageType.Email,
+
+        NotificationType.ReferralProgram_Expiration_Expired
+            or NotificationType.ReferralProgram_Expiration_WithinNextDays
+            or NotificationType.ReferralProgram_UnCompletable
+            => MessageType.Email,
+
+        // organization admin
+        NotificationType.Organization_Approval_Approved
+            or NotificationType.Organization_Approval_Declined
+            => MessageType.Email,
+
+        NotificationType.Opportunity_Expiration_Expired
+            or NotificationType.Opportunity_Expiration_WithinNextDays
+            => MessageType.Email,
+
+        NotificationType.Opportunity_Verification_Pending_Admin
+            => MessageType.Email,
+
+        NotificationType.ActionLink_Verify_Activated
+            => MessageType.Email,
+
+        // youth
+        NotificationType.Opportunity_Verification_Rejected
+            or NotificationType.Opportunity_Verification_Completed
+            => MessageType.Email | MessageType.SMS | MessageType.WhatsApp,
+
+        NotificationType.Opportunity_Verification_Pending
+            => MessageType.Email, // SMS and WhatsApp not supported due to cost constraints
+
+        NotificationType.Opportunity_Published
+            => MessageType.Email, // SMS and WhatsApp diabled [from 2025/12] / not supported due to cost constraints
+
+        NotificationType.ActionLink_Verify_Distribution
+            => MessageType.Email | MessageType.SMS | MessageType.WhatsApp,
+
+        NotificationType.ReferralLink_Completed_ReferrerAwarded
+            or NotificationType.Referral_Blocked_Referrer
+            or NotificationType.Referral_Unblocked_Referrer
+            or NotificationType.ReferralUsage_Welcome
+            or NotificationType.ReferralUsage_Completion
+            => MessageType.Email,// SMS and WhatsApp not supported due to cost constraints
+
         _ => throw new ArgumentOutOfRangeException(nameof(type), $"Type of '{type}' not supported"),
       };
 

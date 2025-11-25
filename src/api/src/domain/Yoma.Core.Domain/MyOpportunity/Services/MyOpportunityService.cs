@@ -1764,7 +1764,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
         var data = new NotificationOpportunityVerification
         {
-          YoIDURL = _notificationURLFactory.OpportunityVerificationYoIDURL(type),
+          YoIDURL = _notificationURLFactory.OpportunityYoIDDashboardURL(type),
           VerificationURL = _notificationURLFactory.OpportunityVerificationURL(type, myOpportunity.OrganizationId),
           Opportunities = [
             new()

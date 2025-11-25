@@ -6,7 +6,7 @@ namespace Yoma.Core.Domain.Notification.Interfaces
 
     string OpportunityVerificationItemURL(NotificationType notificationType, Guid opportunityId, Guid? organizationId);
 
-    string? OpportunityVerificationYoIDURL(NotificationType notificationType);
+    string? OpportunityYoIDDashboardURL(NotificationType notificationType);
 
     string? OpportunityVerificationURL(NotificationType notificationType, Guid organizationId);
 
@@ -18,8 +18,8 @@ namespace Yoma.Core.Domain.Notification.Interfaces
 
     string ActionLinkVerifyActivatedItemUrl(NotificationType notificationType, Guid organizationId, Guid linkId);
 
-    string ReferralRefereeYoIDURL(NotificationType notificationType, Guid programId);
+    string ReferralProgramItemURL(NotificationType notificationType, Guid programId);
 
-    string ReferralReferrerDashboardURL(NotificationType notificationType, Guid userId);
+    string ReferralYoIDDashboardURL(NotificationType notificationType, Guid programId);
   }
 }

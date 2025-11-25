@@ -2,8 +2,6 @@ namespace Yoma.Core.Domain.Referral.Models
 {
   public sealed class ReferralAnalyticsSearchResults : ReferralAnalyticsSearchResultsInfo
   {
-    public decimal ZltoRewardTotal => Items?.Sum(i => i.ZltoRewardTotal) ?? 0;
-
     public new List<ReferralAnalyticsUser> Items { get; set; } = null!;
   }
 
@@ -20,6 +18,8 @@ namespace Yoma.Core.Domain.Referral.Models
     public int UsageCountTotal => Items?.Sum(i => i.UsageCountTotal) ?? 0;
 
     public int UsageCountCompleted => Items?.Sum(i => i.UsageCountCompleted) ?? 0;
+
+    public decimal ZltoRewardTotal => Items?.Sum(i => i.ZltoRewardTotal) ?? 0;
 
     public List<ReferralAnalyticsUserInfo> Items { get; set; } = null!;
   }

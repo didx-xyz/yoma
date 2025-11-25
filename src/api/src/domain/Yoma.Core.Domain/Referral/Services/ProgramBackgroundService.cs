@@ -30,6 +30,7 @@ namespace Yoma.Core.Domain.Referral.Services
     private readonly IDistributedLockService _distributedLockService;
     private readonly IExecutionStrategyService _executionStrategyService;
     private readonly INotificationDeliveryService _notificationDeliveryService;
+    private readonly INotificationURLFactory _notificationURLFactory;
 
     private readonly IRepositoryBatchedValueContainsWithNavigation<Program> _programRepository;
 
@@ -51,6 +52,7 @@ namespace Yoma.Core.Domain.Referral.Services
       IDistributedLockService distributedLockService,
       IExecutionStrategyService executionStrategyService,
       INotificationDeliveryService notificationDeliveryService,
+      INotificationURLFactory notificationURLFactory,
 
       IRepositoryBatchedValueContainsWithNavigation<Program> programRepository)
     {
@@ -65,6 +67,7 @@ namespace Yoma.Core.Domain.Referral.Services
       _distributedLockService = distributedLockService ?? throw new ArgumentNullException(nameof(distributedLockService));
       _executionStrategyService = executionStrategyService ?? throw new ArgumentNullException(nameof(executionStrategyService));
       _notificationDeliveryService = notificationDeliveryService ?? throw new ArgumentNullException(nameof(notificationDeliveryService));
+      _notificationURLFactory = notificationURLFactory ?? throw new ArgumentNullException(nameof(notificationURLFactory));
 
       _programRepository = programRepository ?? throw new ArgumentNullException(nameof(programRepository));
     }
@@ -436,7 +439,7 @@ namespace Yoma.Core.Domain.Referral.Services
                 Name = o.Name,
                 DateStart = o.DateStart,
                 DateEnd = o.DateEnd,
-                URL = "TODO"
+                URL = _notificationURLFactory.ReferralProgramItemURL(type, o.Id)
               })]
             };
 
@@ -470,7 +473,7 @@ namespace Yoma.Core.Domain.Referral.Services
                 DateUnCompletable = o.DateModified,
                 DateStart = o.DateStart,
                 DateEnd = o.DateEnd,
-                URL = "TODO"
+                URL = _notificationURLFactory.ReferralProgramItemURL(type, o.Id)
               })]
               };
 
@@ -488,7 +491,7 @@ namespace Yoma.Core.Domain.Referral.Services
                 DateUnCompletable = o.DateModified,
                 DateStart = o.DateStart,
                 DateEnd = o.DateEnd,
-                URL = "TODO"
+                URL = _notificationURLFactory.ReferralProgramItemURL(type, o.Id)
               })]
               };
 

@@ -38,24 +38,48 @@ namespace Yoma.Core.Domain.Notification.Services
       var setting = type switch
       {
         // user
-        NotificationType.Opportunity_Verification_Rejected or NotificationType.Opportunity_Verification_Completed or NotificationType.Opportunity_Verification_Pending => Setting.User_Notification_Opportunity_Completion,
-        NotificationType.Opportunity_Published => Setting.User_Notification_Opportunity_Published,
-        NotificationType.ReferralLink_Completed_ReferrerAwarded => Setting.User_Referrer_Notification_ReferralLink_Completed_Awarded,
-        NotificationType.Referral_Blocked_Referrer or NotificationType.Referral_Unblocked_Referrer => Setting.User_Referrer_Notification_Referral_AccessChange,
-        NotificationType.ReferralUsage_Welcome => Setting.User_Referee_Notification_ReferralUsage_Welcome,
-        NotificationType.ReferralUsage_Completion => Setting.User_Referee_Notification_ReferralUsage_Completed,
+        NotificationType.Opportunity_Verification_Rejected
+          or NotificationType.Opportunity_Verification_Completed
+          or NotificationType.Opportunity_Verification_Pending
+          => Setting.User_Notification_Opportunity_Completion,
+
+        NotificationType.Opportunity_Published
+          => Setting.User_Notification_Opportunity_Published,
+
+        NotificationType.ReferralLink_Completed_ReferrerAwarded
+          or NotificationType.Referral_Blocked_Referrer
+          or NotificationType.Referral_Unblocked_Referrer
+          or NotificationType.ReferralUsage_Welcome
+          or NotificationType.ReferralUsage_Completion
+          => Setting.User_Notifications_Referrals,
 
         // organization admin
-        NotificationType.Organization_Approval_Approved or NotificationType.Organization_Approval_Declined => Setting.Organization_Admin_Notification_Organization_Approval,
-        NotificationType.Opportunity_Expiration_Expired or NotificationType.Opportunity_Expiration_WithinNextDays => Setting.Organization_Admin_Notification_Opportunity_Expiration,
-        NotificationType.Opportunity_Verification_Pending_Admin => Setting.Organization_Admin_Notification_Opportunity_Completion,
-        NotificationType.ActionLink_Verify_Activated => Setting.Organization_Admin_Notification_ActionLink_Verify_Activated,
+        NotificationType.Organization_Approval_Approved
+          or NotificationType.Organization_Approval_Declined
+          => Setting.Organization_Admin_Notification_Organization_Approval,
+
+        NotificationType.Opportunity_Expiration_Expired
+          or NotificationType.Opportunity_Expiration_WithinNextDays
+          => Setting.Organization_Admin_Notification_Opportunity_Expiration,
+
+        NotificationType.Opportunity_Verification_Pending_Admin
+          => Setting.Organization_Admin_Notification_Opportunity_Completion,
+
+        NotificationType.ActionLink_Verify_Activated
+          => Setting.Organization_Admin_Notification_ActionLink_Verify_Activated,
 
         // admin
-        NotificationType.Organization_Approval_Requested => Setting.Admin_Notification_Organization_Approval,
-        NotificationType.Opportunity_Posted_Admin => Setting.Admin_Notification_Opportunity_Posted,
-        NotificationType.ReferralProgram_Expiration_Expired or NotificationType.ReferralProgram_Expiration_WithinNextDays => Setting.Admin_Notification_ReferralProgram_Expiration,
-        NotificationType.ReferralProgram_UnCompletable => Setting.Admin_Notification_ReferralProgram_UnCompletable,
+        NotificationType.Organization_Approval_Requested
+          => Setting.Admin_Notification_Organization_Approval,
+
+        NotificationType.Opportunity_Posted_Admin
+          => Setting.Admin_Notification_Opportunity_Posted,
+
+        NotificationType.ReferralProgram_Expiration_Expired
+          or NotificationType.ReferralProgram_Expiration_WithinNextDays
+          or NotificationType.ReferralProgram_UnCompletable
+          => Setting.Admin_Notifications_Referrals,
+
         _ => throw new ArgumentOutOfRangeException(nameof(type), $"Type of '{type}' not supported"),
       };
       var result = new List<NotificationRecipient>();
