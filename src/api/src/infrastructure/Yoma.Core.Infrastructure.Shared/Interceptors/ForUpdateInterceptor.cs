@@ -182,7 +182,7 @@ namespace Yoma.Core.Infrastructure.Shared.Interceptors
 
       foreach (var (mode, hint) in HintConfig.LockHints)
       {
-        if (sql.IndexOf(hint, StringComparison.OrdinalIgnoreCase) >= 0)
+        if (sql.Contains(hint, StringComparison.OrdinalIgnoreCase))
         {
           resolved = resolved is null ? mode : ChooseStronger(resolved.Value, mode);
         }
