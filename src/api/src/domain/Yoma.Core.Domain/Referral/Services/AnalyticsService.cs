@@ -116,7 +116,6 @@ namespace Yoma.Core.Domain.Referral.Services
         pagedQuery = pagedQuery.Skip((filter.PageNumber!.Value - 1) * filter.PageSize!.Value).Take(filter.PageSize.Value);
       }
 
-      // EF Core materializer bug with nullable aggregates in GroupJoin → force client-side projection
       var projectedQuery =
         pagedQuery.Select(x => new
         {
@@ -131,7 +130,7 @@ namespace Yoma.Core.Domain.Referral.Services
         });
 
       var items = projectedQuery
-        .AsEnumerable()
+        .AsEnumerable() // EF Core materializer bug with nullable aggregates in GroupJoin → force client-side projection
         .Select(x => new ReferralAnalyticsUser
         {
           UserId = x.UserId,
