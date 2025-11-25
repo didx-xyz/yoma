@@ -224,8 +224,8 @@ namespace Yoma.Core.Domain.Referral.Services
             g.Key.UserDisplayName,
             LinkCount = g.Count(),
             LinkCountActive = g.Count(x => x.StatusId == linkStatusActiveId),
-            Completed = g.Sum(x => x.CompletionTotal ?? 0),
-            ZltoReward = g.Sum(x => x.ZltoRewardCumulative ?? 0)
+            Completed = g.Sum(x => x.CompletionTotal.HasValue ? x.CompletionTotal.Value : 0),
+            ZltoReward = g.Sum(x => x.ZltoRewardCumulative.HasValue ? x.ZltoRewardCumulative.Value : 0)
           });
 
       // left join link + usage aggregates on referrer
