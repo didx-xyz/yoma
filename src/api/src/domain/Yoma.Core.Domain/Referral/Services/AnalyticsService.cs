@@ -151,16 +151,16 @@ namespace Yoma.Core.Domain.Referral.Services
         query = query.Where(o => o.UserId == filter.UserId.Value);
 
       var groupedQuery =
-        query
-          .GroupBy(l => new { l.UserId, l.UserDisplayName })
+         query
+          .GroupBy(l => l.UserId)
           .Select(g => new ReferralAnalyticsUser
           {
-            UserId = g.Key.UserId,
-            UserDisplayName = g.Key.UserDisplayName,
+            UserId = g.Key,
+            UserDisplayName = g.Max(x => x.UserDisplayName) ?? string.Empty,
 
-            UsageCountCompleted = g.Where(x => x.StatusId == statusCompletedId).Count(),
-            UsageCountPending = g.Where(x => x.StatusId == statusPendingId).Count(),
-            UsageCountExpired = g.Where(x => x.StatusId == statusExpiredId).Count(),
+            UsageCountCompleted = g.Count(x => x.StatusId == statusCompletedId),
+            UsageCountPending = g.Count(x => x.StatusId == statusPendingId),
+            UsageCountExpired = g.Count(x => x.StatusId == statusExpiredId),
 
             ZltoRewardTotal = g.Sum(x => x.ZltoRewardReferee ?? 0)
           });
@@ -209,9 +209,8 @@ namespace Yoma.Core.Domain.Referral.Services
        .Select(g => new
        {
          UserIdReferrer = g.Key,
-         Pending = g.Count(x => x.StatusId == usageStatusPendingId),
-         Expired = g.Count(x => x.StatusId == usageStatusExpiredId),
-         Total = g.Count()
+         Pending = (int?)g.Count(x => x.StatusId == usageStatusPendingId),
+         Expired = (int?)g.Count(x => x.StatusId == usageStatusExpiredId)
        });
 
       // aggregate links per referrer
@@ -221,7 +220,7 @@ namespace Yoma.Core.Domain.Referral.Services
           .Select(g => new
           {
             UserId = g.Key,
-            UserDisplayName = g.Select(x => x.UserDisplayName).FirstOrDefault() ?? string.Empty,
+            UserDisplayName = g.Max(x => x.UserDisplayName) ?? string.Empty,
             LinkCount = g.Count(),
             LinkCountActive = g.Count(x => x.StatusId == linkStatusActiveId),
             Completed = g.Sum(x => x.CompletionTotal ?? 0),
@@ -245,8 +244,8 @@ namespace Yoma.Core.Domain.Referral.Services
             LinkCount = x.l.LinkCount,
             LinkCountActive = x.l.LinkCountActive,
             UsageCountCompleted = x.l.Completed,
-            UsageCountPending = u != null ? u.Pending : 0,
-            UsageCountExpired = u != null ? u.Expired : 0,
+            UsageCountPending = u != null ? (u.Pending ?? 0) : 0,
+            UsageCountExpired = u != null ? (u.Expired ?? 0) : 0,
             ZltoRewardTotal = x.l.ZltoReward
           });
     }
