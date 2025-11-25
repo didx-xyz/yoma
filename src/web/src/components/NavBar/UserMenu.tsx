@@ -177,7 +177,6 @@ export const UserMenu: React.FC = () => {
 
   // Check if user has created any links (as referrer)
   const hasCreatedLinks = (referrerPrograms?.items?.length ?? 0) > 0;
-  const firstReferrerProgram = referrerPrograms?.items?.[0];
 
   // Get pending and completed referral programs (as referee)
   const pendingReferralPrograms =

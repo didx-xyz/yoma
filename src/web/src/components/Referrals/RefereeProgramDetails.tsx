@@ -15,6 +15,7 @@ export interface ProgramDetailsProps {
   program: ProgramInfo;
   perspective: "referrer" | "referee";
   isExpanded?: boolean;
+  showDetails?: boolean;
   // Referrer-specific props
   onClick?: () => void;
   onCreateLink?: () => void;
@@ -27,6 +28,7 @@ export const RefereeProgramDetails: React.FC<ProgramDetailsProps> = ({
   program,
   perspective,
   isExpanded = false,
+  showDetails: showDetailsOption = true,
   onClick,
   onCreateLink,
   selected = false,
@@ -92,65 +94,69 @@ export const RefereeProgramDetails: React.FC<ProgramDetailsProps> = ({
       {/* Content Section */}
       <div className="p-4">
         {/* Badges */}
-        <ProgramBadges program={program} />
+        {showDetailsOption && <ProgramBadges program={program} />}
 
         {/* Action Buttons Row */}
-        <div className="mt-3 flex gap-2">
-          {perspective === "referrer" && context !== "preview" && (
+        {showDetailsOption && (
+          <div className="mt-3 flex gap-2">
+            {perspective === "referrer" && context !== "preview" && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (context === "select") {
+                    onClick?.();
+                  } else {
+                    onCreateLink?.();
+                  }
+                }}
+                disabled={program.status !== "Active"}
+                className={`btn btn-sm gap-1 text-white shadow-md transition-all hover:scale-105 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100 ${
+                  context === "select"
+                    ? "border-orange-500 bg-gradient-to-r from-orange-500 to-yellow-500"
+                    : "border-blue-600 bg-gradient-to-r from-blue-600 to-blue-500"
+                }`}
+                style={context === "list" ? { maxWidth: "50%" } : undefined}
+              >
+                {context === "select" ? (
+                  <>
+                    <IoAdd className="h-4 w-4" />
+                    <span className="text-xs font-semibold">
+                      Select Program
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <IoAdd className="h-4 w-4" />
+                    <span className="text-xs font-semibold">Create Link</span>
+                  </>
+                )}
+              </button>
+            )}
             <button
               type="button"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                if (context === "select") {
-                  onClick?.();
-                } else {
-                  onCreateLink?.();
-                }
-              }}
-              disabled={program.status !== "Active"}
-              className={`btn btn-sm gap-1 text-white shadow-md transition-all hover:scale-105 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100 ${
-                context === "select"
-                  ? "border-orange-500 bg-gradient-to-r from-orange-500 to-yellow-500"
-                  : "border-blue-600 bg-gradient-to-r from-blue-600 to-blue-500"
+              onClick={handleToggleDetails}
+              className={`btn btn-sm gap-1 border-orange-300 bg-transparent text-orange-600 hover:bg-orange-100 ${
+                perspective === "referee" || context === "preview"
+                  ? "mx-auto"
+                  : ""
               }`}
-              style={context === "list" ? { maxWidth: "50%" } : undefined}
             >
-              {context === "select" ? (
+              {showDetails ? (
                 <>
-                  <IoAdd className="h-4 w-4" />
-                  <span className="text-xs font-semibold">Select Program</span>
+                  <IoChevronUp className="h-4 w-4" />
+                  <span className="text-xs">Hide</span>
                 </>
               ) : (
                 <>
-                  <IoAdd className="h-4 w-4" />
-                  <span className="text-xs font-semibold">Create Link</span>
+                  <IoChevronDown className="h-4 w-4" />
+                  <span className="text-xs">Details</span>
                 </>
               )}
             </button>
-          )}
-          <button
-            type="button"
-            onClick={handleToggleDetails}
-            className={`btn btn-sm gap-1 border-orange-300 bg-transparent text-orange-600 hover:bg-orange-100 ${
-              perspective === "referee" || context === "preview"
-                ? "mx-auto"
-                : ""
-            }`}
-          >
-            {showDetails ? (
-              <>
-                <IoChevronUp className="h-4 w-4" />
-                <span className="text-xs">Hide</span>
-              </>
-            ) : (
-              <>
-                <IoChevronDown className="h-4 w-4" />
-                <span className="text-xs">Details</span>
-              </>
-            )}
-          </button>
-        </div>
+          </div>
+        )}
 
         {/* Expandable Details */}
         {showDetails && (

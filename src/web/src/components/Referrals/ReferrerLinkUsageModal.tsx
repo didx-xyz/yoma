@@ -12,7 +12,6 @@ import {
 } from "react-icons/io5";
 import type {
   ReferralLink,
-  ReferralLinkUsageInfo,
   ReferralLinkUsageSearchResults,
   ReferralLinkUsageStatus,
   ProgramInfo,

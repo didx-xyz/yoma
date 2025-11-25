@@ -2,7 +2,7 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { FaInfoCircle } from "react-icons/fa";
 import { IoIosSettings } from "react-icons/io";
-import { ReferralLinkUsageInfo } from "~/api/models/referrals";
+import { ReferralLinkUsage } from "~/api/models/referrals";
 import { getSafeUrl } from "~/lib/utils";
 
 export enum ReferralLinkUsageActionOptions {
@@ -10,7 +10,7 @@ export enum ReferralLinkUsageActionOptions {
 }
 
 interface ReferralLinkUsageActionsProps {
-  usage: ReferralLinkUsageInfo;
+  usage: ReferralLinkUsage;
   returnUrl?: string;
   actionOptions?: ReferralLinkUsageActionOptions[];
 }

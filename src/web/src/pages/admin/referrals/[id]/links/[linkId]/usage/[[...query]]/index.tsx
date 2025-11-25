@@ -604,39 +604,55 @@ const ReferralLinkUsage: NextPageWithLayout<{
                           </span>
                         </div>
 
-                        {/* Progress */}
-                        {usage.percentComplete !== null && (
+                        {/* Username */}
+                        {usage.username && (
                           <div className="flex justify-between">
-                            <p className="text-sm tracking-wider">Progress</p>
-                            <span className="badge bg-blue-light text-blue">
-                              {usage.percentComplete}%
+                            <p className="text-sm tracking-wider">Username</p>
+                            <span className="text-sm">{usage.username}</span>
+                          </div>
+                        )}
+
+                        {/* Phone Number */}
+                        {usage.userPhoneNumber && (
+                          <div className="flex justify-between">
+                            <p className="text-sm tracking-wider">Phone</p>
+                            <span className="flex items-center gap-1 text-sm">
+                              {usage.userPhoneNumber}
+                              {usage.userPhoneNumberConfirmed && (
+                                <IoIosCheckmarkCircle className="text-green h-4 w-4" />
+                              )}
                             </span>
                           </div>
                         )}
 
-                        {/* Proof of Personhood */}
-                        <div className="flex justify-between">
-                          <p className="text-sm tracking-wider">
-                            Proof of Personhood
-                          </p>
-                          {usage.proofOfPersonhoodCompleted ? (
-                            <IoIosCheckmarkCircle className="text-green h-5 w-5" />
-                          ) : (
-                            <IoMdClose className="text-gray-dark h-5 w-5" />
+                        {/* Email Verified */}
+                        {usage.userEmail &&
+                          usage.userEmailConfirmed !== null && (
+                            <div className="flex justify-between">
+                              <p className="text-sm tracking-wider">
+                                Email Verified
+                              </p>
+                              {usage.userEmailConfirmed ? (
+                                <IoIosCheckmarkCircle className="text-green h-5 w-5" />
+                              ) : (
+                                <IoMdClose className="text-gray-dark h-5 w-5" />
+                              )}
+                            </div>
                           )}
-                        </div>
 
-                        {/* Pathways */}
-                        <div className="flex justify-between">
-                          <p className="text-sm tracking-wider">
-                            Pathways Completed
-                          </p>
-                          {usage.pathwayCompleted ? (
-                            <IoIosCheckmarkCircle className="text-green h-5 w-5" />
-                          ) : (
-                            <IoMdClose className="text-gray-dark h-5 w-5" />
-                          )}
-                        </div>
+                        {/* YoID Onboarded */}
+                        {usage.userYoIDOnboarded !== null && (
+                          <div className="flex justify-between">
+                            <p className="text-sm tracking-wider">
+                              YoID Onboarded
+                            </p>
+                            {usage.userYoIDOnboarded ? (
+                              <IoIosCheckmarkCircle className="text-green h-5 w-5" />
+                            ) : (
+                              <IoMdClose className="text-gray-dark h-5 w-5" />
+                            )}
+                          </div>
+                        )}
 
                         {/* Dates */}
                         <div className="flex justify-between">
@@ -682,9 +698,8 @@ const ReferralLinkUsage: NextPageWithLayout<{
                         User
                       </th>
                       <th className="border-gray-light border-b-2">Status</th>
-                      <th className="border-gray-light border-b-2">Progress</th>
                       <th className="border-gray-light border-b-2">
-                        Verification
+                        User Details
                       </th>
                       <th className="border-gray-light border-b-2">Dates</th>
                       <th className="border-gray-light border-b-2 text-center">
@@ -734,44 +749,53 @@ const ReferralLinkUsage: NextPageWithLayout<{
                           </span>
                         </td>
                         <td className="border-gray-light border-b-2 !align-top">
-                          {usage.percentComplete !== null ? (
-                            <div className="flex flex-col gap-1">
-                              <span className="badge bg-blue-light text-blue">
-                                {usage.percentComplete}%
-                              </span>
-                              {usage.pathway && (
-                                <p className="text-gray-dark text-xs">
-                                  {usage.pathway.stepsCompleted} /{" "}
-                                  {usage.pathway.stepsTotal} steps
-                                </p>
-                              )}
-                            </div>
-                          ) : (
-                            <span className="text-gray-dark text-sm">-</span>
-                          )}
-                        </td>
-                        <td className="border-gray-light border-b-2 !align-top">
                           <div className="flex flex-col gap-1 text-xs">
-                            <div className="flex items-center gap-1">
-                              {usage.proofOfPersonhoodCompleted ? (
-                                <IoIosCheckmarkCircle className="text-green h-4 w-4" />
-                              ) : (
-                                <IoMdClose className="text-gray-dark h-4 w-4" />
-                              )}
-                              <span className="text-gray-dark font-semibold">
-                                Proof of Personhood
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              {usage.pathwayCompleted ? (
-                                <IoIosCheckmarkCircle className="text-green h-4 w-4" />
-                              ) : (
-                                <IoMdClose className="text-gray-dark h-4 w-4" />
-                              )}
-                              <span className="text-gray-dark font-semibold">
-                                Pathways
-                              </span>
-                            </div>
+                            {usage.username && (
+                              <div className="flex gap-2">
+                                <span className="text-gray-dark w-24 font-bold">
+                                  Username:
+                                </span>
+                                <span>{usage.username}</span>
+                              </div>
+                            )}
+                            {usage.userEmail && (
+                              <div className="flex items-center gap-2">
+                                <span className="text-gray-dark w-24 font-bold">
+                                  Email:
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  {usage.userEmailConfirmed && (
+                                    <IoIosCheckmarkCircle className="text-green h-4 w-4" />
+                                  )}
+                                </span>
+                              </div>
+                            )}
+                            {usage.userPhoneNumber && (
+                              <div className="flex items-center gap-2">
+                                <span className="text-gray-dark w-24 font-bold">
+                                  Phone:
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  {usage.userPhoneNumberConfirmed && (
+                                    <IoIosCheckmarkCircle className="text-green h-4 w-4" />
+                                  )}
+                                </span>
+                              </div>
+                            )}
+                            {usage.userYoIDOnboarded !== null && (
+                              <div className="flex items-center gap-2">
+                                <span className="text-gray-dark w-24 font-bold">
+                                  YoID:
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  {usage.userYoIDOnboarded ? (
+                                    <IoIosCheckmarkCircle className="text-green h-4 w-4" />
+                                  ) : (
+                                    <IoMdClose className="text-gray-dark h-4 w-4" />
+                                  )}
+                                </span>
+                              </div>
+                            )}
                           </div>
                         </td>
                         <td className="border-gray-light border-b-2 !align-top">
