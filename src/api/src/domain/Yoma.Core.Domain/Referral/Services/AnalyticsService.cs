@@ -94,7 +94,7 @@ namespace Yoma.Core.Domain.Referral.Services
 
       _referralAnalyticsSearchFilterValidator.ValidateAndThrow(filter);
 
-      IQueryable<ReferralAnalyticsUser> query = filter.Role switch
+      IQueryable<ReferralAnalyticsUser> baseQuery = filter.Role switch
       {
         ReferralParticipationRole.Referrer => SearchQueryAsReferrer(filter),
         ReferralParticipationRole.Referee => SearchQueryAsReferee(filter),
@@ -102,19 +102,53 @@ namespace Yoma.Core.Domain.Referral.Services
           $"The role '{filter.Role}' is not supported for referral analytics search"),
       };
 
-      var results = new ReferralAnalyticsSearchResults();
+      IQueryable<ReferralAnalyticsUser> pagedQuery = baseQuery;
 
       // order by usage count completed (leader board), then by user display name, and lastly by user ID to ensure deterministic sorting / consistent pagination results
       if (!filter.UnrestrictedQuery || filter.PaginationEnabled)
-        query = query.OrderByDescending(x => x.UsageCountCompleted).ThenBy(x => x.UserDisplayName).ThenBy(o => o.UserId);
+        pagedQuery = pagedQuery.OrderByDescending(x => x.UsageCountCompleted).ThenBy(x => x.UserDisplayName).ThenBy(o => o.UserId);
+
+      var results = new ReferralAnalyticsSearchResults();
 
       if (filter.PaginationEnabled)
       {
-        results.TotalCount = query.Count();
-        query = query.Skip((filter.PageNumber!.Value - 1) * filter.PageSize!.Value).Take(filter.PageSize.Value);
+        results.TotalCount = pagedQuery.Count();
+        pagedQuery = pagedQuery.Skip((filter.PageNumber!.Value - 1) * filter.PageSize!.Value).Take(filter.PageSize.Value);
       }
 
-      results.Items = [.. query];
+      // EF Core materializer bug with nullable aggregates in GroupJoin → force client-side projection
+      var projectedQuery =
+        pagedQuery.Select(x => new
+        {
+          x.UserId,
+          x.UserDisplayName,
+          LinkCount = (int?)x.LinkCount,
+          LinkCountActive = (int?)x.LinkCountActive,
+          UsageCountCompleted = (int?)x.UsageCountCompleted,
+          UsageCountPending = (int?)x.UsageCountPending,
+          UsageCountExpired = (int?)x.UsageCountExpired,
+          ZltoRewardTotal = (decimal?)x.ZltoRewardTotal
+        });
+
+      var items = projectedQuery
+        .AsEnumerable()
+        .Select(x => new ReferralAnalyticsUser
+        {
+          UserId = x.UserId,
+          UserDisplayName = x.UserDisplayName ?? string.Empty,
+
+          LinkCount = x.LinkCount,
+          LinkCountActive = x.LinkCountActive,
+
+          UsageCountCompleted = x.UsageCountCompleted ?? 0,
+          UsageCountPending = x.UsageCountPending ?? 0,
+          UsageCountExpired = x.UsageCountExpired ?? 0,
+
+          ZltoRewardTotal = x.ZltoRewardTotal ?? 0m
+        })
+        .ToList();
+
+      results.Items = items;
 
       return results;
     }
