@@ -11,7 +11,7 @@ import Head from "next/head";
 import { useRouter } from "next/router";
 import { useCallback, useState, type ReactElement } from "react";
 import { FaPlus } from "react-icons/fa";
-import { IoGift, IoStatsChart, IoTrophy, IoWarning } from "react-icons/io5";
+import { IoGift, IoWarning } from "react-icons/io5";
 import type {
   ProgramInfo,
   ProgramSearchResultsInfo,
@@ -34,6 +34,8 @@ import { ReferrerLinkUsageModal } from "~/components/Referrals/ReferrerLinkUsage
 import { ReferrerLinksList } from "~/components/Referrals/ReferrerLinksList";
 import { ReferrerProgramsList } from "~/components/Referrals/ReferrerProgramsList";
 import { HelpReferrer } from "~/components/Referrals/HelpReferrer";
+import { ReferrerStats } from "~/components/Referrals/ReferrerStats";
+import { ReferrerLeaderboard } from "~/components/Referrals/ReferrerLeaderboard";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
@@ -264,76 +266,11 @@ const ReferralsDashboard: NextPageWithLayout<{
             <div className="grid gap-6 lg:grid-cols-3">
               {/* LEFT COLUMN - Stats & Leaderboard */}
               <div className="space-y-6 lg:col-span-1">
-                {/* STATS CARDS - TODO: Implement actual stats */}
-                <div className="shadow-custom rounded-lg bg-white p-6">
-                  <h2 className="mb-4 flex items-center gap-4 text-lg font-bold text-gray-900">
-                    <IoStatsChart className="text-green inlinex h-6 w-6" /> Your
-                    Stats
-                  </h2>
+                {/* STATS CARDS */}
+                <ReferrerStats />
 
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between rounded-lg bg-blue-50 p-3">
-                      <span className="text-sm text-gray-700">
-                        Total Referrals
-                      </span>
-                      <span className="badge bg-blue-600 text-white">0</span>
-                    </div>
-                    <div className="flex items-center justify-between rounded-lg bg-yellow-50 p-3">
-                      <span className="text-sm text-gray-700">ZLTO Earned</span>
-                      <span className="badge bg-yellow-600 text-white">0</span>
-                    </div>
-                    <div className="flex items-center justify-between rounded-lg bg-green-50 p-3">
-                      <span className="text-sm text-gray-700">Completed</span>
-                      <span className="badge bg-green-600 text-white">0</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* LEADERBOARD - Mocked */}
-                <div className="shadow-custom rounded-lg bg-white p-6">
-                  <h2 className="mb-4 flex items-center gap-4 text-lg font-bold text-gray-900">
-                    <IoTrophy className="text-green inline h-8 w-8" /> Top
-                    Referrers
-                  </h2>
-
-                  <div className="space-y-2">
-                    {[
-                      { name: "Sarah M.", referrals: 45, zlto: 900 },
-                      { name: "John D.", referrals: 38, zlto: 760 },
-                      { name: "Emily R.", referrals: 32, zlto: 640 },
-                      { name: "You", referrals: 0, zlto: 0 },
-                    ].map((user, index) => (
-                      <div
-                        key={index}
-                        className={`flex items-center justify-between rounded-lg p-3 ${
-                          user.name === "You"
-                            ? "bg-green-light border-green border-2"
-                            : "bg-gray-50"
-                        }`}
-                      >
-                        <div className="flex items-center gap-3">
-                          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white font-bold text-gray-700">
-                            {index + 1}
-                          </span>
-                          <div>
-                            <p className="font-semibold text-gray-900">
-                              {user.name}
-                            </p>
-                            <p className="text-xs text-gray-600">
-                              {user.referrals} referrals
-                            </p>
-                          </div>
-                        </div>
-                        <span className="badge bg-yellow-600 text-white">
-                          {user.zlto} ZLTO
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                  <p className="text-gray-dark mt-4 text-center text-xs italic">
-                    *Leaderboard preview - coming soon!
-                  </p>
-                </div>
+                {/* LEADERBOARD */}
+                <ReferrerLeaderboard pageSize={10} />
               </div>
 
               {/* RIGHT COLUMN - Links & Programs */}

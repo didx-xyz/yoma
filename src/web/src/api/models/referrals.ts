@@ -50,6 +50,11 @@ export enum ReferralLinkUsageStatus {
   Expired = "Expired",
 }
 
+export enum ReferralParticipationRole {
+  Referrer = 0,
+  Referee = 1,
+}
+
 // Lookups
 export interface ProgramStatusLookup {
   id: string;
@@ -512,4 +517,48 @@ export interface BlockRequest {
 export interface UnblockRequest {
   userId: string;
   comment: string | null;
+}
+
+// Analytics Models
+export interface ReferralAnalyticsUserInfo {
+  userDisplayName: string;
+  linkCount: number | null;
+  linkCountActive: number | null;
+  usageCountTotal: number;
+  usageCountCompleted: number;
+  usageCountPending: number;
+  usageCountExpired: number;
+  zltoRewardTotal: number; //***NB: API TODO */
+}
+
+export interface ReferralAnalyticsUser extends ReferralAnalyticsUserInfo {
+  userId: string;
+  zltoRewardTotal: number;
+}
+
+export interface ReferralAnalyticsSearchFilter extends PaginationFilter {
+  role: ReferralParticipationRole;
+}
+
+export interface ReferralAnalyticsSearchFilterAdmin
+  extends ReferralAnalyticsSearchFilter {
+  programId: string | null;
+  startDate: string | null;
+  endDate: string | null;
+}
+
+export interface ReferralAnalyticsSearchResultsInfo {
+  totalCount: number;
+  role: ReferralParticipationRole;
+  linkCount: number | null;
+  linkCountActive: number | null;
+  usageCountTotal: number;
+  usageCountCompleted: number;
+  items: ReferralAnalyticsUserInfo[];
+}
+
+export interface ReferralAnalyticsSearchResults
+  extends ReferralAnalyticsSearchResultsInfo {
+  zltoRewardTotal: number;
+  items: ReferralAnalyticsUser[];
 }
