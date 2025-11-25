@@ -14,6 +14,8 @@ interface LinkDetailsProps {
   showShare?: boolean;
   shareTitle?: string;
   shareDescription?: string;
+  className?: string;
+  hideLabels?: boolean;
 }
 
 export const ReferrerLinkDetails: React.FC<LinkDetailsProps> = ({
@@ -23,6 +25,8 @@ export const ReferrerLinkDetails: React.FC<LinkDetailsProps> = ({
   showShare = false,
   shareTitle = "Check out this opportunity on Yoma!",
   shareDescription = "Join me on Yoma and earn rewards together.",
+  className = "rounded-lg bg-gradient-to-br from-green-50 to-white p-6 shadow-sm",
+  hideLabels = false,
 }) => {
   const [showQRCode, setShowQRCode] = useState(!!link.qrCodeBase64);
   const [linkWithQR, setLinkWithQR] = useState<ReferralLink | null>(
@@ -86,20 +90,23 @@ export const ReferrerLinkDetails: React.FC<LinkDetailsProps> = ({
 
   if (mode === "small") {
     return (
-      <div className="rounded-lg bg-gradient-to-br from-green-50 to-white p-3 shadow-sm">
+      <div className={className}>
         {/* Short URL - Compact */}
         {displayLink.shortURL && (
           <div className="mb-3">
             {/* Header */}
             <div className="mb-2">
-              <h4 className="flex items-center gap-1 text-xs font-bold text-green-900">
-                <IoLink className="h-3.5 w-3.5" />
-                Short Link
-              </h4>
+              {!hideLabels && (
+                <h4 className="flex items-center gap-1 text-xs font-bold text-green-900">
+                  <IoLink className="h-3.5 w-3.5" />
+                  Short Link
+                </h4>
+              )}
               <p className="mt-0.5 text-[10px] text-gray-600">
                 Copy and share this link with your friends
               </p>
             </div>
+
             <div className="flex items-center gap-1">
               <input
                 type="text"
@@ -127,15 +134,17 @@ export const ReferrerLinkDetails: React.FC<LinkDetailsProps> = ({
             {showQRCode && displayLink.qrCodeBase64 ? (
               <>
                 {/* Header */}
-                <div className="mb-2">
-                  <h4 className="flex items-center gap-1 text-xs font-bold text-green-900">
-                    <IoQrCode className="h-3.5 w-3.5" />
-                    QR Code
-                  </h4>
-                  <p className="mt-0.5 text-[10px] text-gray-600">
-                    Scan to share or download for offline use
-                  </p>
-                </div>
+                {!hideLabels && (
+                  <div className="mb-2">
+                    <h4 className="flex items-center gap-1 text-xs font-bold text-green-900">
+                      <IoQrCode className="h-3.5 w-3.5" />
+                      QR Code
+                    </h4>
+                    <p className="mt-0.5 text-[10px] text-gray-600">
+                      Scan to share or download for offline use
+                    </p>
+                  </div>
+                )}
                 <div className="flex items-center gap-2">
                   <div className="rounded border border-dashed border-green-300 bg-white p-1.5 shadow-sm">
                     <Image
@@ -205,6 +214,7 @@ export const ReferrerLinkDetails: React.FC<LinkDetailsProps> = ({
                 Choose your preferred platform
               </p>
             </div>
+
             <ShareButtons
               url={link.shortURL ?? link.url}
               title={shareTitle}
@@ -219,7 +229,7 @@ export const ReferrerLinkDetails: React.FC<LinkDetailsProps> = ({
 
   // Large mode (default)
   return (
-    <div className="rounded-lg bg-gradient-to-br from-green-50 to-white p-6 shadow-sm">
+    <div className={className}>
       {/* TODO: debug */}
       {/* {displayLink.url} */}
 
@@ -228,14 +238,17 @@ export const ReferrerLinkDetails: React.FC<LinkDetailsProps> = ({
         <div className="mb-4">
           {/* Header */}
           <div className="mb-3">
-            <h3 className="flex items-center gap-2 text-base font-bold text-green-900">
-              <IoLink className="h-5 w-5" />
-              Short Link
-            </h3>
+            {!hideLabels && (
+              <h3 className="flex items-center gap-2 text-base font-bold text-green-900">
+                <IoLink className="h-5 w-5" />
+                Short Link
+              </h3>
+            )}
             <p className="mt-1 text-xs text-gray-600">
               Copy and share this link with your friends
             </p>
           </div>
+
           <div className="flex items-center gap-2">
             <input
               type="text"
@@ -255,6 +268,7 @@ export const ReferrerLinkDetails: React.FC<LinkDetailsProps> = ({
           </div>
         </div>
       )}
+
       {/* QR Code */}
       {showQRCodeProp && (
         <div className="mb-4">
@@ -326,6 +340,7 @@ export const ReferrerLinkDetails: React.FC<LinkDetailsProps> = ({
           )}
         </div>
       )}
+
       {/* Share Buttons */}
       {showShare && (
         <div className="mt-4 border-t border-green-200 pt-4">
@@ -337,6 +352,7 @@ export const ReferrerLinkDetails: React.FC<LinkDetailsProps> = ({
               Choose your preferred platform to share
             </p>
           </div>
+
           <ShareButtons
             url={link.shortURL ?? link.url}
             title={shareTitle}

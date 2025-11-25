@@ -28,6 +28,7 @@ interface CreateLinkModalProps {
   selectedProgram?: ProgramInfo; // Pre-selected program (skips step 1)
   editLink?: ReferralLink; // Existing link to edit
   existingLinksCount?: number; // Number of existing links
+  showProgramDetails?: boolean; // Show program preview and requirements (default: true)
   isOpen: boolean;
   onClose: () => void;
   onSuccess: (link: ReferralLink) => void;
@@ -55,6 +56,7 @@ export const ReferrerCreateLinkModal: React.FC<CreateLinkModalProps> = ({
   selectedProgram,
   editLink,
   existingLinksCount = 0,
+  showProgramDetails = true,
   isOpen,
   onClose,
   onSuccess,
@@ -357,28 +359,30 @@ export const ReferrerCreateLinkModal: React.FC<CreateLinkModalProps> = ({
               )}
 
               {/* Program Preview */}
-              <div className="space-y-3">
-                <div>
-                  {/* Header */}
-                  <div className="mb-3">
-                    <h3 className="flex items-center gap-2 text-base font-bold">
-                      <IoGift className="h-5 w-5 text-orange-400" />
-                      Selected Program
-                    </h3>
+              {showProgramDetails && (
+                <div className="space-y-3">
+                  <div>
+                    {/* Header */}
+                    <div className="mb-3">
+                      <h3 className="flex items-center gap-2 text-base font-bold">
+                        <IoGift className="h-5 w-5 text-orange-400" />
+                        Selected Program
+                      </h3>
+                    </div>
+                    <div className="bg-white">
+                      <RefereeProgramDetails
+                        program={currentProgram}
+                        context="preview"
+                        perspective="referrer"
+                      />
+                    </div>
                   </div>
-                  <div className="bg-white">
-                    <RefereeProgramDetails
-                      program={currentProgram}
-                      context="preview"
-                      perspective="referrer"
-                    />
-                  </div>
+                  <ProgramRequirements
+                    program={currentProgram}
+                    showPathway={true}
+                  />
                 </div>
-                <ProgramRequirements
-                  program={currentProgram}
-                  showPathway={true}
-                />
-              </div>
+              )}
 
               {/* Form Fields */}
               <div className="space-y-4">

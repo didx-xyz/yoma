@@ -1,8 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { IoStatsChart } from "react-icons/io5";
-import { ReferralParticipationRole } from "~/api/models/referrals";
 import { getMyReferralAnalytics } from "~/api/services/referrals";
 import { LoadingInline } from "../Status/LoadingInline";
+import { ReferralParticipationRole } from "~/api/models/referrals";
 
 export const ReferrerStats: React.FC = () => {
   const { data: analytics, isLoading } = useQuery({
@@ -16,7 +16,7 @@ export const ReferrerStats: React.FC = () => {
         <h2 className="mb-4 flex items-center gap-4 text-lg font-bold text-gray-900">
           <IoStatsChart className="text-green h-6 w-6" /> Your Stats
         </h2>
-        <LoadingInline />
+        <LoadingInline classNameSpinner="h-12 border-orange w-12" />
       </div>
     );
   }
