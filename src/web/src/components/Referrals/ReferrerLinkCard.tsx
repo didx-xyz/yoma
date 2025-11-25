@@ -2,8 +2,8 @@ import { useCallback, useState } from "react";
 import { IoChevronDown, IoChevronUp, IoEye, IoPencil } from "react-icons/io5";
 import type { ReferralLink, ProgramInfo } from "~/api/models/referrals";
 import { ReferrerLinkDetails } from "./ReferrerLinkDetails";
-import Image from "next/image";
 import { FaLink } from "react-icons/fa";
+import { ProgramImage } from "./ProgramImage";
 
 interface LinkCardProps {
   link: ReferralLink;
@@ -70,32 +70,6 @@ export const ReferrerLinkCard: React.FC<LinkCardProps> = ({
                 {link.description}
               </p>
             )}
-
-            {/* Program Info Section */}
-            <div className="mt-2 rounded-lg border border-orange-200 bg-gradient-to-br from-orange-50 to-white p-2">
-              <div className="flex items-start gap-2">
-                {/* Program Image */}
-                {program?.imageURL && (
-                  <Image
-                    src={program.imageURL}
-                    alt={program.name}
-                    width={48}
-                    height={48}
-                    className="flex-shrink-0 rounded-lg object-cover shadow-sm"
-                  />
-                )}
-                <div className="min-w-0 flex-1">
-                  <p className="mb-1 text-xs font-bold text-orange-900">
-                    📋 {link.programName}
-                  </p>
-                  {program?.description && (
-                    <p className="line-clamp-2 text-[10px] leading-relaxed text-gray-600">
-                      {program.description}
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
           </div>
           <span
             className={`badge badge-sm flex-shrink-0 text-xs ${
@@ -112,6 +86,30 @@ export const ReferrerLinkCard: React.FC<LinkCardProps> = ({
           >
             {link.status === "LimitReached" ? "Limit Reached" : link.status}
           </span>
+        </div>
+
+        {/* Program Info Section */}
+        <div className="mt-2 rounded-lg border border-orange-200 bg-gradient-to-br from-orange-50 to-white p-2">
+          <div className="flex items-center gap-2">
+            {/* Program Image */}
+            <div className="flex-shrink-0">
+              <ProgramImage
+                imageURL={program?.imageURL}
+                name={program?.name || "Program"}
+                size={40}
+              />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="mb-1 text-xs font-bold text-orange-900">
+                {link.programName}
+              </p>
+              {program?.description && (
+                <p className="line-clamp-2 text-[10px] leading-relaxed text-gray-600">
+                  {program.description}
+                </p>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 

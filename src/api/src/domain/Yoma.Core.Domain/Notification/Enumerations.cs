@@ -30,8 +30,6 @@ namespace Yoma.Core.Domain.Notification
     // sent to referee (youth)
     ReferralUsage_Welcome,                       // referee claimed a referral link (welcome message + instructions)
     ReferralUsage_Completion                     // referee completed the referral program associated with the claimed link (includes note of any reward earned)
-
-    // TODO: RUM Settings (https://linear.app/did-x/issue/YOMA-984/implement-user-consent-for-datadog-rum-monitoring)
   }
 
   [Flags]

@@ -115,7 +115,7 @@ namespace Yoma.Core.Test.Notification
     {
       var data = new NotificationOpportunityVerification
       {
-        YoIDURL = _notificationURLFactory.OpportunityVerificationYoIDURL(type),
+        YoIDURL = _notificationURLFactory.OpportunityYoIDDashboardURL(type),
         VerificationURL = _notificationURLFactory.OpportunityVerificationURL(type, myOpportunity.OrganizationId),
         Opportunities = [
               new NotificationOpportunityVerificationItem

@@ -50,6 +50,11 @@ export enum ReferralLinkUsageStatus {
   Expired = "Expired",
 }
 
+export enum ReferralParticipationRole {
+  Referrer = 0,
+  Referee = 1,
+}
+
 // Lookups
 export interface ProgramStatusLookup {
   id: string;
@@ -87,29 +92,6 @@ export interface Program {
   modifiedByUserId: string;
   pathway: ProgramPathway | null;
 }
-
-// export interface ProgramInfo {
-//   id: string;
-//   name: string;
-//   description: string | null;
-//   imageURL: string | null;
-//   completionWindowInDays: number | null;
-//   completionLimitReferee: number | null;
-//   zltoRewardReferrer: number | null;
-//   zltoRewardReferee: number | null;
-//   proofOfPersonhoodRequired: boolean;
-//   pathwayRequired: boolean;
-//   dateStart: string;
-//   dateEnd: string | null;
-//   pathway: ProgramPathwayInfo | null;
-//   // Referee Status
-//   linkUsageStatus: ReferralLinkUsageStatus | null;
-//   dateClaimed: string | null;
-//   dateCompleted: string | null;
-//   proofOfPersonhoodCompleted: boolean | null;
-//   proofOfPersonhoodMethod: ProofOfPersonhoodMethod | null;
-//   pathwaysCompleted: boolean | null;
-// }
 
 export interface ProgramInfo {
   id: string;
@@ -397,18 +379,25 @@ export interface ReferralLinkUsage {
   programCompletionWindowInDays: number | null;
   linkId: string;
   linkName: string;
-  // Referrer Info (from link)
   userIdReferrer: string;
-  userDisplayNameReferrer: string | null;
+  usernameReferrer: string;
+  userDisplayNameReferrer: string;
   userEmailReferrer: string | null;
+  userEmailConfirmedReferrer: boolean | null;
   userPhoneNumberReferrer: string | null;
-  // Referee Info (from usage)
+  userPhoneNumberConfirmedReferrer: boolean | null;
   userId: string;
-  userDisplayName: string | null;
+  username: string;
+  userDisplayName: string;
   userEmail: string | null;
+  userEmailConfirmed: boolean | null;
   userPhoneNumber: string | null;
+  userPhoneNumberConfirmed: boolean | null;
+  userYoIDOnboarded: boolean | null;
   statusId: string;
-  status: ReferralLinkUsageStatus;
+  status: ReferralLinkUsageStatus | string;
+  zltoRewardReferrer: number | null;
+  zltoRewardReferee: number | null;
   dateClaimed: string;
   dateCompleted: string | null;
   dateExpired: string | null;
@@ -508,7 +497,7 @@ export interface ProgramPathwayTaskProgress {
 
 export interface ReferralLinkUsageSearchResults {
   totalCount: number | null;
-  items: ReferralLinkUsageInfo[];
+  items: ReferralLinkUsage[];
 }
 
 // Block/Unblock Models
@@ -528,4 +517,48 @@ export interface BlockRequest {
 export interface UnblockRequest {
   userId: string;
   comment: string | null;
+}
+
+// Analytics Models
+export interface ReferralAnalyticsUserInfo {
+  userDisplayName: string;
+  linkCount: number | null;
+  linkCountActive: number | null;
+  usageCountTotal: number;
+  usageCountCompleted: number;
+  usageCountPending: number;
+  usageCountExpired: number;
+  zltoRewardTotal: number; //***NB: API TODO */
+}
+
+export interface ReferralAnalyticsUser extends ReferralAnalyticsUserInfo {
+  userId: string;
+  zltoRewardTotal: number;
+}
+
+export interface ReferralAnalyticsSearchFilter extends PaginationFilter {
+  role: ReferralParticipationRole;
+}
+
+export interface ReferralAnalyticsSearchFilterAdmin
+  extends ReferralAnalyticsSearchFilter {
+  programId: string | null;
+  startDate: string | null;
+  endDate: string | null;
+}
+
+export interface ReferralAnalyticsSearchResultsInfo {
+  totalCount: number;
+  role: ReferralParticipationRole;
+  linkCount: number | null;
+  linkCountActive: number | null;
+  usageCountTotal: number;
+  usageCountCompleted: number;
+  items: ReferralAnalyticsUserInfo[];
+}
+
+export interface ReferralAnalyticsSearchResults
+  extends ReferralAnalyticsSearchResultsInfo {
+  zltoRewardTotal: number;
+  items: ReferralAnalyticsUser[];
 }

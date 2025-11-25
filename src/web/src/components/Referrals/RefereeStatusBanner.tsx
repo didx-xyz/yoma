@@ -1,5 +1,4 @@
 import { useMemo } from "react";
-import { FaRoad } from "react-icons/fa";
 import {
   IoClose,
   IoGift,
@@ -12,6 +11,7 @@ import type {
   ProgramInfo,
   ReferralLinkUsageInfo,
 } from "~/api/models/referrals";
+import { RefereeProgramDetails } from "./RefereeProgramDetails";
 
 interface RefereeStatusBannerProps {
   usage: ReferralLinkUsageInfo;
@@ -185,7 +185,7 @@ export const RefereeStatusBanner: React.FC<RefereeStatusBannerProps> = ({
         </div>
 
         {/* Program Name Badge */}
-        <div className="mb-6">
+        {/* <div className="mb-6">
           <div className="inline-flex items-center gap-3 rounded-full bg-white px-5 py-2 shadow-md ring-2 ring-gray-200">
             <div className="flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-br from-purple-400 to-purple-600">
               <FaRoad className="h-3 w-3 text-white" />
@@ -197,6 +197,9 @@ export const RefereeStatusBanner: React.FC<RefereeStatusBannerProps> = ({
               <p className="text-sm font-bold text-gray-900">{program.name}</p>
             </div>
           </div>
+        </div> */}
+        <div className="mb-6">
+          <RefereeProgramDetails program={program} perspective="referee" />
         </div>
 
         {/* Progress Bar for Active Status */}

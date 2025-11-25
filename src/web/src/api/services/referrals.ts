@@ -15,6 +15,11 @@ import {
   ProgramSearchResults,
   ProgramSearchResultsInfo,
   ProgramStatus,
+  ReferralAnalyticsSearchFilter,
+  ReferralAnalyticsSearchFilterAdmin,
+  ReferralAnalyticsSearchResults,
+  ReferralAnalyticsSearchResultsInfo,
+  ReferralAnalyticsUser,
   ReferralLink,
   ReferralLinkRequestCreate,
   ReferralLinkRequestUpdate,
@@ -22,6 +27,7 @@ import {
   ReferralLinkUsageInfo,
   ReferralLinkUsageSearchFilterAdmin,
   ReferralLinkUsageSearchResults,
+  ReferralParticipationRole,
   UnblockRequest,
 } from "../models/referrals";
 
@@ -347,4 +353,40 @@ export const unblockReferrer = async (
 ): Promise<void> => {
   const instance = context ? ApiServer(context) : await ApiClient;
   await instance.patch("/referral/unblock", request);
+};
+
+// Analytics endpoints
+export const getMyReferralAnalytics = async (
+  role: ReferralParticipationRole,
+  context?: GetServerSidePropsContext | GetStaticPropsContext,
+): Promise<ReferralAnalyticsUser> => {
+  const instance = context ? ApiServer(context) : await ApiClient;
+  const { data } = await instance.get<ReferralAnalyticsUser>(
+    `/referral/analytics/${role}`,
+  );
+  return data;
+};
+
+export const searchReferralAnalytics = async (
+  filter: ReferralAnalyticsSearchFilter,
+  context?: GetServerSidePropsContext | GetStaticPropsContext,
+): Promise<ReferralAnalyticsSearchResultsInfo> => {
+  const instance = context ? ApiServer(context) : await ApiClient;
+  const { data } = await instance.post<ReferralAnalyticsSearchResultsInfo>(
+    `/referral/analytics/search`,
+    filter,
+  );
+  return data;
+};
+
+export const searchReferralAnalyticsAdmin = async (
+  filter: ReferralAnalyticsSearchFilterAdmin,
+  context?: GetServerSidePropsContext | GetStaticPropsContext,
+): Promise<ReferralAnalyticsSearchResults> => {
+  const instance = context ? ApiServer(context) : await ApiClient;
+  const { data } = await instance.post<ReferralAnalyticsSearchResults>(
+    `/referral/analytics/search/admin`,
+    filter,
+  );
+  return data;
 };

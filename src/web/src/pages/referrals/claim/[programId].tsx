@@ -160,7 +160,7 @@ const ReferralClaimPage: NextPageWithLayout<{
     setUserProfile(serverUserProfile);
   }
 
-  // Fetch program data using the new endpoint with linkId
+  // Fetch program data
   const {
     data: program,
     error: programError,
@@ -312,6 +312,23 @@ const ReferralClaimPage: NextPageWithLayout<{
     const errorMessage =
       claimError?.response?.data?.message ||
       "Failed to claim referral link. You may have already claimed it or are not eligible.";
+
+    // Check if user already claimed this link - redirect to dashboard
+    const alreadyClaimedError = customErrors?.find((error) =>
+      error.message?.includes("You already claimed this link"),
+    );
+    if (alreadyClaimedError) {
+      router.push(`/yoid/referee/${programId}`);
+      return (
+        <div className="flex min-h-screen items-center justify-center">
+          <LoadingInline
+            classNameSpinner="h-32 w-32 border-t-4 border-b-4 border-orange"
+            classNameLabel={"text-lg font-semibold"}
+            label="Redirecting to your dashboard..."
+          />
+        </div>
+      );
+    }
 
     return (
       <div className="container mx-auto mt-16 max-w-5xl px-4 py-12">

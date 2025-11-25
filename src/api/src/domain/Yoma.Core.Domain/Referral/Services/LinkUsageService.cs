@@ -387,7 +387,7 @@ namespace Yoma.Core.Domain.Referral.Services
 
       await SendNotification(NotificationType.ReferralUsage_Welcome, program, link, usage);
 
-      //process progress immediately if no pathway/proof required 
+      //process progress immediately if no pathway/proof required
       if (!program.PathwayRequired && !program.ProofOfPersonhoodRequired) await ProcessProgressByUserId(user.Id);
     }
 
@@ -724,7 +724,7 @@ namespace Yoma.Core.Domain.Referral.Services
 
             data = new NotificationReferralLinkCompleted
             {
-              DashboardURL = _notificationURLFactory.ReferralReferrerDashboardURL(type, usage.UserIdReferrer),
+              YoIDURL = _notificationURLFactory.ReferralYoIDDashboardURL(type, usage.UserIdReferrer),
               Links =
               [
                 new NotificationReferralLinkCompletedItem
@@ -746,7 +746,7 @@ namespace Yoma.Core.Domain.Referral.Services
 
             data = new NotificationReferralUsageWelcome
             {
-              YoIDURL = _notificationURLFactory.ReferralRefereeYoIDURL(type, program.Id),
+              YoIDURL = _notificationURLFactory.ReferralYoIDDashboardURL(type, program.Id),
               LinkClaimURL = link.ClaimURL(_appSettings.AppBaseURL),
               DateClaimed = usage.DateClaimed,
               ProgramName = program.Name,
@@ -772,7 +772,7 @@ namespace Yoma.Core.Domain.Referral.Services
 
             data = new NotificationReferralUsageCompletion
             {
-              YoIDURL = _notificationURLFactory.ReferralRefereeYoIDURL(type, program.Id),
+              YoIDURL = _notificationURLFactory.ReferralYoIDDashboardURL(type, program.Id),
               DateCompleted = usage.DateCompleted.Value,
               DateClaimed = usage.DateClaimed,
               ProgramName = program.Name,
@@ -870,7 +870,7 @@ namespace Yoma.Core.Domain.Referral.Services
           points += PercentComplete_Weight_Pop;
       }
 
-      // Pathway 
+      // Pathway
       if (program.PathwayRequired)
       {
         //validated above; pathway must exists if required

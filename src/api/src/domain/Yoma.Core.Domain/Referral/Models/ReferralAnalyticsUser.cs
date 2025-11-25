@@ -2,12 +2,11 @@ namespace Yoma.Core.Domain.Referral.Models
 {
   /// <summary>
   /// Full analytics row for a user, including their identifier
+  /// Zlto reward totals moved and no longer obfuscated based on designs
   ///<summary>
   public sealed class ReferralAnalyticsUser : ReferralAnalyticsUserInfo
   {
     public Guid UserId { get; set; }
-
-    public decimal ZltoRewardTotal { get; set; }
   }
 
   /// <summary>
@@ -58,5 +57,8 @@ namespace Yoma.Core.Domain.Referral.Models
     /// - As referee: your expired usages / claims
     /// </summary>
     public int UsageCountExpired { get; set; }
+
+
+    public decimal ZltoRewardTotal { get; set; }
   }
 }

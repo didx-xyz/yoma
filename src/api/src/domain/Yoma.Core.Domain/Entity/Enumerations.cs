@@ -45,6 +45,7 @@ namespace Yoma.Core.Domain.Entity
     // User notifications
     User_Notification_Opportunity_Published,
     User_Notification_Opportunity_Completion,
+    User_Notifications_Referrals,
 
     // Organization admin notifications
     Organization_Admin_Notification_Opportunity_Expiration,
@@ -55,24 +56,14 @@ namespace Yoma.Core.Domain.Entity
     // Admin notifications
     Admin_Notification_Opportunity_Posted,
     Admin_Notification_Organization_Approval,
+    Admin_Notifications_Referrals,
 
     // User privacy settings
     User_Share_Contact_Info_With_Partners,
+    User_RumConsent,
 
     // Organization privacy settings
     Organization_Share_Address_Details_With_Partners,
-    Organization_Share_Contact_Info_With_Partners,
-
-    // Referral notifications (admin)
-    Admin_Notification_ReferralProgram_Expiration,
-    Admin_Notification_ReferralProgram_UnCompletable,
-
-    // Referral notifications (referrer)
-    User_Referrer_Notification_ReferralLink_Completed_Awarded,
-    User_Referrer_Notification_Referral_AccessChange,
-
-    // Referral notifications (referee)
-    User_Referee_Notification_ReferralUsage_Welcome,
-    User_Referee_Notification_ReferralUsage_Completed,
+    Organization_Share_Contact_Info_With_Partners
   }
 }
