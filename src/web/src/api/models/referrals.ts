@@ -537,7 +537,7 @@ export interface ReferralAnalyticsUser extends ReferralAnalyticsUserInfo {
 }
 
 export interface ReferralAnalyticsSearchFilter extends PaginationFilter {
-  role: ReferralParticipationRole;
+  role: ReferralParticipationRole | string;
 }
 
 export interface ReferralAnalyticsSearchFilterAdmin
