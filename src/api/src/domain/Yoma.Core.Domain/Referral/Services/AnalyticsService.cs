@@ -1,6 +1,5 @@
 using FluentValidation;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Logging;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
@@ -15,7 +14,6 @@ namespace Yoma.Core.Domain.Referral.Services
   public sealed class AnalyticsService : IAnalyticsService
   {
     #region Class Variables
-    private readonly ILogger<AnalyticsService> _logger;
     private readonly IHttpContextAccessor _httpContextAccessor;
 
     private readonly IUserService _userService;
@@ -31,7 +29,6 @@ namespace Yoma.Core.Domain.Referral.Services
 
     #region Constructor
     public AnalyticsService(
-      ILogger<AnalyticsService> logger,
       IHttpContextAccessor httpContextAccessor,
       IUserService userService,
       ILinkStatusService linkStatusService,
@@ -40,7 +37,6 @@ namespace Yoma.Core.Domain.Referral.Services
       IRepositoryBatched<ReferralLinkUsage> linkUsageRepository,
       IRepositoryBatchedValueContainsWithNavigation<ReferralLink> linkRepository)
     {
-      _logger = logger ?? throw new ArgumentNullException(nameof(logger));
       _httpContextAccessor = httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
 
       _userService = userService ?? throw new ArgumentNullException(nameof(userService));
@@ -108,9 +104,9 @@ namespace Yoma.Core.Domain.Referral.Services
 
       if (!filter.UnrestrictedQuery || filter.PaginationEnabled)
         query = query
-          .OrderByDescending(x => x.UsageCountCompleted) //usage count completed - leader board
+          .OrderByDescending(x => x.UsageCountCompleted) // usage count completed - leader board
           .ThenBy(x => x.UserDisplayName) // then by user display name
-          .ThenBy(o => o.UserId); //ensure deterministic sorting / consistent pagination results
+          .ThenBy(o => o.UserId); // ensure deterministic sorting / consistent pagination results
 
       var results = new ReferralAnalyticsSearchResults();
 
@@ -129,33 +125,33 @@ namespace Yoma.Core.Domain.Referral.Services
     #region Private Members
     private IQueryable<ReferralAnalyticsUser> SearchQueryAsReferee(ReferralAnalyticsSearchFilterAdmin filter)
     {
-      var query = _linkUsageRepository.Query();
+      var linkUsageQuery = _linkUsageRepository.Query();
 
       var statusCompletedId = _linkUsageStatusService.GetByName(ReferralLinkUsageStatus.Completed.ToString()).Id;
       var statusPendingId = _linkUsageStatusService.GetByName(ReferralLinkUsageStatus.Pending.ToString()).Id;
       var statusExpiredId = _linkUsageStatusService.GetByName(ReferralLinkUsageStatus.Expired.ToString()).Id;
 
       if (filter.ProgramId.HasValue)
-        query = query.Where(o => o.ProgramId == filter.ProgramId.Value);
+        linkUsageQuery = linkUsageQuery.Where(o => o.ProgramId == filter.ProgramId.Value);
 
       if (filter.StartDate.HasValue)
       {
         var startDate = filter.StartDate.Value.RemoveTime();
-        query = query.Where(o => o.DateCreated >= startDate);
+        linkUsageQuery = linkUsageQuery.Where(o => o.DateCreated >= startDate);
       }
 
       if (filter.EndDate.HasValue)
       {
         var endDate = filter.EndDate.Value.ToEndOfDay();
-        query = query.Where(o => o.DateCreated <= endDate);
+        linkUsageQuery = linkUsageQuery.Where(o => o.DateCreated <= endDate);
       }
 
-      // filtered by referee
+      // filtered by referee (user who used the link)
       if (filter.UserId.HasValue)
-        query = query.Where(o => o.UserId == filter.UserId.Value);
+        linkUsageQuery = linkUsageQuery.Where(o => o.UserId == filter.UserId.Value);
 
-      var groupedQuery =
-         query
+      var resultQuery =
+         linkUsageQuery
           .GroupBy(l => l.UserId)
           .Select(g => new ReferralAnalyticsUser
           {
@@ -169,7 +165,7 @@ namespace Yoma.Core.Domain.Referral.Services
             ZltoRewardTotal = g.Sum(x => x.ZltoRewardReferee ?? 0)
           });
 
-      return groupedQuery;
+      return resultQuery;
     }
 
     private IQueryable<ReferralAnalyticsUser> SearchQueryAsReferrer(ReferralAnalyticsSearchFilterAdmin filter)
@@ -189,14 +185,14 @@ namespace Yoma.Core.Domain.Referral.Services
       if (filter.EndDate.HasValue)
         linkQuery = linkQuery.Where(o => o.DateCreated <= filter.EndDate.Value.ToEndOfDay());
 
-      // filtered by referrer
+      // filtered by referrer (user who created the link)
       if (filter.UserId.HasValue)
         linkQuery = linkQuery.Where(o => o.UserId == filter.UserId.Value);
 
-      var linkIds = linkQuery.Select(o => o.Id);
+      var linkIds = linkQuery.Select(o => o.Id); // links owned by referrer / user
 
-      var usageAgg = _linkUsageRepository.Query()
-          .Where(u => linkIds.Contains(u.LinkId))
+      var linkUsageQueryAgg = _linkUsageRepository.Query()
+          .Where(u => linkIds.Contains(u.LinkId)) // usages for links owned by referrer / user
           .GroupBy(u => u.UserIdReferrer)
           .Select(g => new
           {
@@ -205,7 +201,7 @@ namespace Yoma.Core.Domain.Referral.Services
             UsageCountExpired = (int?)g.Count(x => x.StatusId == usageStatusExpiredId)
           });
 
-      var linkAgg = linkQuery
+      var linkQueryAgg = linkQuery
           .GroupBy(l => l.UserId)
           .Select(g => new
           {
@@ -217,12 +213,20 @@ namespace Yoma.Core.Domain.Referral.Services
             ZltoRewardTotal = g.Sum(x => x.ZltoRewardCumulative ?? 0m)
           });
 
-      // Use an anonymous type with nullable aggregates during the join.
-      // Then coalesce only in the final projection.
-      // This avoids EF Core’s materializer crash on LEFT JOIN + non-nullable ints.
-      return linkAgg
+      // EF Core + Npgsql materializer bug (5+ years, still open): https://github.com/dotnet/efcore/issues/12355
+      // When a LEFT JOIN returns NULL for a column that is projected directly into a non-nullable int property,
+      // EF Core still reads the raw NULL value during materialization and crashes with "Nullable object must have a value"
+      // — even though it generates correct COALESCE(..., 0) in SQL.
+      //
+      // Only triggered on stage (PostgreSQL 16.9 + ARM64 + real data with actual NULLs).
+      // Local (PG 17 + x64 + test data) never hit the buggy path.
+      //
+      // Fix: two-stage projection — first materialize to anonymous type with nullable ints,
+      // then coalesce in the final Select to ReferralAnalyticsUser.
+      // Keeps everything in the DB, fully scalable, no memory issues.
+      var resultQuery = linkQueryAgg
           .GroupJoin(
-              usageAgg,
+              linkUsageQueryAgg,
               l => l.UserId,
               u => u.UserIdReferrer,
               (l, usages) => new { l, usages }
@@ -251,6 +255,8 @@ namespace Yoma.Core.Domain.Referral.Services
             UsageCountExpired = temp.UsageCountExpired ?? 0,
             ZltoRewardTotal = temp.ZltoRewardTotal
           });
+
+      return resultQuery;
     }
     #endregion
   }

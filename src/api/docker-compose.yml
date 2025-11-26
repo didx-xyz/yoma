@@ -1,7 +1,7 @@
 name: yoma-v3
 services:
   postgres:
-    image: postgres:17-alpine
+    image: postgres:16.9-alpine
     container_name: yoma-postgres
     # ports:
     #   - 5432:5432
@@ -12,7 +12,7 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_DB=postgres
     healthcheck:
-      test: ["CMD", "pg_isready", "-U", "postgres"]
+      test: [ "CMD", "pg_isready", "-U", "postgres" ]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -31,7 +31,7 @@ services:
     ports:
       - 6379:6379
     healthcheck:
-      test: ["CMD", "valkey-cli", "ping"]
+      test: [ "CMD", "valkey-cli", "ping" ]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -105,7 +105,7 @@ services:
     volumes:
       - keycloak-pg:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD", "pg_isready", "-U", "keycloak"]
+      test: [ "CMD", "pg_isready", "-U", "keycloak" ]
       interval: 10s
       timeout: 5s
       retries: 3
