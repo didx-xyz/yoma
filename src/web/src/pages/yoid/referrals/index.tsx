@@ -285,7 +285,7 @@ const ReferralsDashboard: NextPageWithLayout<{
             items={[
               { title: "💳 Yo-ID", url: "/yoid" },
               {
-                title: "🎁 Referrals",
+                title: "Refer a friend",
                 selected: true,
               },
             ]}
@@ -341,7 +341,7 @@ const ReferralsDashboard: NextPageWithLayout<{
                   opportunities. Share your link, and when your friend signs up
                   and completes their first onboarding opportunity, you both win
                   rewards!"
-                icon={"💝"}
+                icon={"❤️"}
                 className="max-w-3xl !bg-transparent"
               />
             </div>

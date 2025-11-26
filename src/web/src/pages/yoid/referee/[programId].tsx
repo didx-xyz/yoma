@@ -33,10 +33,7 @@ import {
   PathwayTasksList,
   TaskInstructionHeader,
 } from "~/components/Referrals/InstructionHeaders";
-import {
-  RefereeProgressTracker,
-  getNextAction,
-} from "~/components/Referrals/RefereeProgressTracker";
+import { getNextAction } from "~/components/Referrals/RefereeProgressTracker";
 import { RefereeStatusBanner } from "~/components/Referrals/RefereeStatusBanner";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import { config } from "~/lib/react-query-config";
@@ -206,7 +203,7 @@ const RefereeDashboard: NextPageWithLayout<{
             items={[
               { title: "💳 Yo-ID", url: "/yoid" },
               {
-                title: "🎁 My Referral",
+                title: "My Referral",
                 selected: true,
               },
             ]}
@@ -217,7 +214,7 @@ const RefereeDashboard: NextPageWithLayout<{
         <RefereeStatusBanner usage={usage} program={program} />
 
         {/* PROGRESS TRACKER */}
-        <RefereeProgressTracker usage={usage} program={program} />
+        {/* <RefereeProgressTracker usage={usage} program={program} /> */}
 
         {/* NEXT ACTION (PENDING) */}
         {usage.status === "Pending" &&
@@ -238,32 +235,27 @@ const RefereeDashboard: NextPageWithLayout<{
                     id="next-action-pop"
                     className="shadow-custom mb-6 rounded-lg border-2 border-orange-300 bg-gradient-to-br from-orange-50 to-white p-6"
                   >
-                    <div className="mb-4 flex items-center gap-6">
-                      <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-2xl bg-white shadow-lg ring-4 ring-white/50">
-                        <IoArrowForward className="h-10 w-10 text-orange-500" />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <h2 className="text-xl font-bold text-orange-900">
-                          Your Next Step: Verify Your Identity
-                        </h2>
-                        <p className="min-w-0 truncate text-xs font-semibold tracking-wider text-gray-600 uppercase">
-                          Required for this program
+                    <div className="mb-6 flex gap-6">
+                      {/* Icon, Title & Message */}
+                      <div className="flex flex-col gap-2">
+                        <div className="flex gap-3 md:items-center">
+                          <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-2xl bg-white shadow-lg ring-4 ring-white/50 md:h-16 md:w-16">
+                            <IoArrowForward className="h-6 w-6 text-orange-500 md:h-10 md:w-10" />
+                          </div>
+                          <h2 className="text-xl font-bold text-orange-900">
+                            Your Next Step
+                          </h2>
+                        </div>
+                        <p className="text-xs font-semibold tracking-wider text-gray-600 uppercase">
+                          Verify Your Identity
                         </p>
                       </div>
                     </div>
                     <div>
                       {/* Verification Instructions */}
                       <div className="space-y-4">
-                        <div className="rounded-lg border-2 border-blue-200 bg-blue-50 p-4">
-                          <h4 className="mb-3 flex items-center gap-2 font-bold text-blue-900">
-                            <IoInformationCircle className="h-6 w-6 text-blue-500" />
-                            How to Verify Your Identity
-                          </h4>
-                          <p className="mb-2 text-sm leading-relaxed text-gray-800">
-                            This program requires you to verify your identity to
-                            ensure all participants are real people.
-                          </p>
-                          <p className="mb-3 text-sm text-blue-900">
+                        <div>
+                          <p className="mb-3 text-sm text-gray-800">
                             Choose one of the following methods:
                           </p>
                           <div className="space-y-3">
@@ -301,17 +293,14 @@ const RefereeDashboard: NextPageWithLayout<{
                                   (Google/Facebook)
                                 </li>
                                 <li>
-                                  <strong>Important:</strong> This will require
-                                  you to sign in again
+                                  <strong>Note:</strong> This will require you
+                                  to sign in again
                                 </li>
                                 <li>
                                   <strong>Use the same email address</strong> to
-                                  continue this session
-                                </li>
-                                <li>
-                                  If you use a different email, you will be
-                                  recognized as a new user and will lose any
-                                  progress made so far
+                                  continue this session. If you use a different
+                                  email, you will be recognized as a new user
+                                  and will lose any progress made so far
                                 </li>
                               </ul>
                               <div className="mt-3">
@@ -320,10 +309,12 @@ const RefereeDashboard: NextPageWithLayout<{
                                   onClick={() =>
                                     handleUserSignOut(true, false, true)
                                   }
-                                  className="btn btn-secondary btn-sm gap-2"
+                                  className="btn btn-secondary btn-sm min-w-0 gap-2"
                                 >
-                                  <IoArrowForward className="h-4 w-4" />
-                                  Sign in with Social Media Account
+                                  <IoArrowForward className="h-4 w-4 flex-shrink-0" />
+                                  <span className="truncate">
+                                    Sign in with Social Media
+                                  </span>
                                 </button>
                               </div>
                             </div>
@@ -349,19 +340,20 @@ const RefereeDashboard: NextPageWithLayout<{
                     id="next-action"
                     className="shadow-custom mb-6 rounded-lg border-2 border-orange-300 bg-gradient-to-br from-orange-50 to-white p-6"
                   >
-                    <div className="mb-4 flex items-center gap-6">
-                      <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-2xl bg-white shadow-lg ring-4 ring-white/50">
-                        <IoArrowForward className="h-10 w-10 text-orange-500" />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="min-w-0 flex-1">
-                          <h2 className="min-w-0 truncate text-xl font-bold text-orange-900">
-                            Your Next Step: {nextAction.step.name}
+                    <div className="mb-6 flex gap-6">
+                      {/* Icon, Title & Message */}
+                      <div className="flex min-w-0 flex-col gap-2">
+                        <div className="flex gap-3 md:items-center">
+                          <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-2xl bg-white shadow-lg ring-4 ring-white/50 md:h-16 md:w-16">
+                            <IoArrowForward className="h-6 w-6 text-orange-500 md:h-10 md:w-10" />
+                          </div>
+                          <h2 className="text-xl font-bold text-orange-900">
+                            Your Next Step
                           </h2>
-                          <p className="min-w-0 truncate text-xs font-semibold tracking-wider text-gray-600 uppercase">
-                            Required for this program
-                          </p>
                         </div>
+                        <p className="truncate text-xs font-semibold tracking-wider text-gray-600 uppercase">
+                          {nextAction.step.name}
+                        </p>
                       </div>
                     </div>
                     <div>
@@ -404,38 +396,27 @@ const RefereeDashboard: NextPageWithLayout<{
                         }))}
                         rule={nextAction.step.rule}
                         orderMode={nextAction.step.orderMode}
-                        showActionButtons={true}
+                        showActionButtons={false}
+                        showBullets={false}
                         color="green"
                       />
                       {/* Helpful Tips */}
                       <div className="mt-6 rounded-lg border-2 border-green-200 bg-green-50 p-4">
                         <h4 className="mb-3 flex items-center gap-2 font-bold text-green-900">
-                          <IoInformationCircle className="h-8 w-8 text-green-500" />
-                          How to Complete Your Tasks
+                          <IoInformationCircle className="h-6 w-6 text-green-500" />
+                          How to Complete
                         </h4>
-                        <ol className="ml-5 list-decimal space-y-2 text-sm text-green-900">
+                        <ol className="ml-5 list-decimal space-y-1 text-sm text-green-900">
                           <li>
-                            <strong>Click &quot;View Opportunity&quot;</strong>{" "}
-                            above to see the full details
+                            <strong>Complete</strong> the above tasks
                           </li>
                           <li>
-                            Read the requirements carefully and complete the
-                            activities
+                            <strong>Upload proof of completion</strong> on the
+                            opportunity page
                           </li>
                           <li>
-                            <strong>Upload proof of completion</strong> (photos,
-                            documents, etc.) on the opportunity page
-                          </li>
-                          <li>
-                            Wait for verification - You&apos;ll be notified when
-                            someone has reviewed your submission.
-                          </li>
-                          <li>
-                            Check back here to track your progress - the
-                            checkmark will appear when verified!{" "}
-                            <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-green-500 text-[10px] font-bold text-white">
-                              ✓
-                            </span>
+                            <strong>Wait for verification</strong> - you&apos;ll
+                            be notified when approved
                           </li>
                         </ol>
                       </div>
@@ -452,31 +433,32 @@ const RefereeDashboard: NextPageWithLayout<{
             id="next-action"
             className="shadow-custom mb-6 rounded-lg border-2 border-orange-300 bg-gradient-to-br from-orange-50 to-white p-6"
           >
-            <div className="mb-4 flex items-start gap-6">
-              <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-2xl bg-white shadow-lg ring-4 ring-white/50">
-                <IoGift className="h-10 w-10 text-orange-500" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="min-w-0 flex-1">
+            <div className="mb-6 flex gap-6">
+              {/* Icon, Title & Message */}
+              <div className="flex flex-col gap-2">
+                <div className="flex gap-3 md:items-center">
+                  <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-2xl bg-white shadow-lg ring-4 ring-white/50 md:h-16 md:w-16">
+                    <IoGift className="h-6 w-6 text-orange-500 md:h-10 md:w-10" />
+                  </div>
                   <h2 className="text-xl font-bold text-orange-900">
                     What&apos;s Next?
                   </h2>
-                  <p className="min-w-0 text-sm leading-relaxed text-gray-800">
-                    {program.zltoRewardReferee ? (
-                      <>
-                        Your <strong>{program.zltoRewardReferee} ZLTO</strong>{" "}
-                        has been added to your wallet! Your journey doesn&apos;t
-                        have to end here.
-                      </>
-                    ) : (
-                      <>
-                        You have gained valuable skills which are stored as
-                        credentials in your wallet. Your journey doesn&apos;t
-                        have to end here.
-                      </>
-                    )}
-                  </p>
                 </div>
+                <p className="text-sm leading-relaxed text-gray-800">
+                  {program.zltoRewardReferee ? (
+                    <>
+                      Your <strong>{program.zltoRewardReferee} ZLTO</strong> has
+                      been added to your wallet! Your journey doesn&apos;t have
+                      to end here.
+                    </>
+                  ) : (
+                    <>
+                      You have gained valuable skills which are stored as
+                      credentials in your wallet. Your journey doesn&apos;t have
+                      to end here.
+                    </>
+                  )}
+                </p>
               </div>
             </div>
             <div>
@@ -587,26 +569,25 @@ const RefereeDashboard: NextPageWithLayout<{
             id="next-action"
             className="shadow-custom mb-6 rounded-lg border-2 border-orange-300 bg-gradient-to-br from-orange-50 to-white p-6"
           >
-            <div className="mb-4 flex items-start gap-6">
-              <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-2xl bg-white shadow-lg ring-4 ring-white/50">
-                <IoWarning className="h-10 w-10 text-orange-500" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="mb-4 min-w-0 flex-1">
-                  <div className="mb-2">
-                    <h2 className="text-xl font-bold text-orange-900">
-                      Don&apos;t Give Up! 💪
-                    </h2>
+            <div className="mb-6 flex gap-6">
+              {/* Icon, Title & Message */}
+              <div className="flex flex-col gap-2">
+                <div className="flex gap-3 md:items-center">
+                  <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-2xl bg-white shadow-lg ring-4 ring-white/50 md:h-16 md:w-16">
+                    <IoWarning className="h-6 w-6 text-orange-500 md:h-10 md:w-10" />
                   </div>
-                  <p className="mb-2 min-w-0 truncate text-xs font-semibold tracking-wider text-gray-600 uppercase">
-                    What&apos;s Next?
-                  </p>
-                  <p className="min-w-0 text-sm leading-relaxed text-gray-800">
-                    This program may have expired, but your journey doesn&apos;t
-                    have to end here. There are plenty of other ways to earn
-                    ZLTO and grow!
-                  </p>
+                  <h2 className="text-xl font-bold text-orange-900">
+                    Don&apos;t Give Up! 💪
+                  </h2>
                 </div>
+                <p className="text-xs font-semibold tracking-wider text-gray-600 uppercase">
+                  What&apos;s Next?
+                </p>
+                <p className="text-sm leading-relaxed text-gray-800">
+                  This program may have expired, but your journey doesn&apos;t
+                  have to end here. There are plenty of other ways to earn ZLTO
+                  and grow!
+                </p>
               </div>
             </div>
             <div>

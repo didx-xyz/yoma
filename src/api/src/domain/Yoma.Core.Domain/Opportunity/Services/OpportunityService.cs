@@ -309,21 +309,32 @@ namespace Yoma.Core.Domain.Opportunity.Services
           opportunityCountry => filter.Countries.Contains(opportunityCountry.CountryId) && opportunityCountry.OpportunityId == opportunity.Id));
       }
 
-      //published
-      if (filter.Published.HasValue)
+      var statusActiveId = _opportunityStatusService.GetByName(Status.Active.ToString()).Id;
+      var statusExpiredId = _opportunityStatusService.GetByName(Status.Expired.ToString()).Id;
+      var statusOrganizationActiveId = _organizationStatusService.GetByName(OrganizationStatus.Active.ToString()).Id;
+
+      //onlyCompletable
+      if (filter.OnlyCompletable)
       {
-        var statusActiveId = _opportunityStatusService.GetByName(Status.Active.ToString()).Id;
-        var statusOrganizationActiveId = _organizationStatusService.GetByName(OrganizationStatus.Active.ToString()).Id;
-        query = query.Where(o => o.StatusId == statusActiveId && o.OrganizationStatusId == statusOrganizationActiveId);
+        query = query.Where(
+          o => ((o.StatusId == statusActiveId && o.OrganizationStatusId == statusOrganizationActiveId && o.DateStart <= DateTimeOffset.UtcNow) || o.StatusId == statusExpiredId)
+          && o.VerificationEnabled && o.VerificationMethodValue == VerificationMethod.Manual.ToString()
+          && o.Hidden != true);
       }
+      else
+      {
+        //published
+        if (filter.Published.HasValue)
+          query = query.Where(o => o.StatusId == statusActiveId && o.OrganizationStatusId == statusOrganizationActiveId);
 
-      //verificationEnabled
-      if (filter.VerificationEnabled.HasValue)
-        query = query.Where(o => o.VerificationEnabled == filter.VerificationEnabled.Value);
+        //verificationEnabled
+        if (filter.VerificationEnabled.HasValue)
+          query = query.Where(o => o.VerificationEnabled == filter.VerificationEnabled.Value);
 
-      //verificationMethod
-      if (filter.VerificationMethod.HasValue)
-        query = query.Where(o => o.VerificationEnabled && o.VerificationMethodValue == filter.VerificationMethod.ToString());
+        //verificationMethod
+        if (filter.VerificationMethod.HasValue)
+          query = query.Where(o => o.VerificationEnabled && o.VerificationMethodValue == filter.VerificationMethod.ToString());
+      }
 
       var results = new OpportunitySearchResultsCriteria();
       query = query.OrderBy(o => o.Title).ThenBy(o => o.Id); //ensure deterministic sorting / consistent pagination results

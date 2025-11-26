@@ -408,6 +408,7 @@ const StepEditComponent: React.FC<StepEditComponentProps> = ({
           published: true,
           verificationMethod: null,
           verificationEnabled: true,
+          onlyCompletable: true,
           pageNumber: 1,
           pageSize: PAGE_SIZE_MEDIUM,
         }).then((data) => {

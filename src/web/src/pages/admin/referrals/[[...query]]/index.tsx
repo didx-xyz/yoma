@@ -718,7 +718,7 @@ const ReferralPrograms: NextPageWithLayout<{
                                 {program.description}
                               </p>
 
-                              <div className="text-gray-dark mt-2 flex flex-row gap-4 text-xs">
+                              <div className="text-gray-dark mt-2 flex flex-row items-center gap-4 text-xs">
                                 <span className="font-bold">Starts:</span>
                                 <span className="font-semibold text-black">
                                   <Moment format={DATE_FORMAT_HUMAN} utc={true}>
@@ -737,6 +737,12 @@ const ReferralPrograms: NextPageWithLayout<{
                                       </Moment>
                                     </span>
                                   </>
+                                )}
+
+                                {program.isDefault && (
+                                  <span className="badge badge-sm bg-blue-light text-blue ml-2">
+                                    Default
+                                  </span>
                                 )}
                               </div>
                             </div>

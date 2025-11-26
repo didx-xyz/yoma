@@ -14,20 +14,17 @@ import {
   IoMdClose,
 } from "react-icons/io";
 import { MdKeyboardArrowDown, MdKeyboardArrowUp } from "react-icons/md";
+import { ReferralParticipationRole } from "~/api/models/user";
 import { searchCredentials } from "~/api/services/credentials";
 import { searchMyOpportunitiesSummary } from "~/api/services/myOpportunities";
-import {
-  searchReferralLinks,
-  searchReferralLinkUsagesAsReferee,
-} from "~/api/services/referrals";
+import { searchReferralLinks } from "~/api/services/referrals";
 import { getUserSkills } from "~/api/services/user";
-import { ReferralParticipationRole } from "~/api/models/user";
 import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
 import { MAXINT32 } from "~/lib/constants";
 import {
-  RoleView,
   activeNavigationRoleViewAtom,
   currentOrganisationLogoAtom,
+  RoleView,
   userProfileAtom,
 } from "~/lib/store";
 import { fetchClientEnv } from "~/lib/utils";
@@ -42,7 +39,6 @@ import { OpportunitiesSummary } from "../YoID/OpportunitiesSummary";
 import { PassportCard } from "../YoID/PassportCard";
 import { ReferralBlockedCard } from "../YoID/ReferralBlockedCard";
 import { ReferralCard } from "../YoID/ReferralCard";
-import { RefereeProgressCard } from "../YoID/RefereeProgressCard";
 import { ReferrerProgressCard } from "../YoID/ReferrerProgressCard";
 import { SkillsCard } from "../YoID/SkillsCard";
 import { WalletCard } from "../YoID/WalletCard";
@@ -136,13 +132,6 @@ export const UserMenu: React.FC = () => {
         role === ReferralParticipationRole.Referrer || role === "Referrer",
     ) ?? false;
 
-  // Check if user is a referee (has claimed links)
-  const isReferee =
-    userProfile?.referral?.roles?.some(
-      (role) =>
-        role === ReferralParticipationRole.Referee || role === "Referee",
-    ) ?? false;
-
   // Fetch referrer programs if user is a referrer
   const { data: referrerPrograms, isLoading: referrerProgramsLoading } =
     useQuery({
@@ -159,33 +148,25 @@ export const UserMenu: React.FC = () => {
     });
 
   // Fetch referee programs if user is a referee
-  const { data: refereeLinkUsages, isLoading: refereeLinkUsagesLoading } =
-    useQuery({
-      queryKey: ["ReferralLinkUsages", "referee", "usermenu"],
-      queryFn: () =>
-        searchReferralLinkUsagesAsReferee({
-          pageNumber: 1,
-          pageSize: 10,
-          linkId: null,
-          programId: null,
-          statuses: null,
-          dateStart: null,
-          dateEnd: null,
-        }),
-      enabled: isDrawerOpen && isReferee,
-    });
+  //   const { data: refereeLinkUsages, isLoading: refereeLinkUsagesLoading } =
+  //     useQuery({
+  //       queryKey: ["ReferralLinkUsages", "referee", "usermenu"],
+  //       queryFn: () =>
+  //         searchReferralLinkUsagesAsReferee({
+  //           pageNumber: 1,
+  //           pageSize: 10,
+  //           linkId: null,
+  //           programId: null,
+  //           statuses: null,
+  //           dateStart: null,
+  //           dateEnd: null,
+  //         }),
+  //       enabled: isDrawerOpen && isReferee,
+  //     });
 
   // Check if user has created any links (as referrer)
   const hasCreatedLinks = (referrerPrograms?.items?.length ?? 0) > 0;
 
-  // Get pending and completed referral programs (as referee)
-  const pendingReferralPrograms =
-    refereeLinkUsages?.items?.filter((usage) => usage.status === "Pending") ??
-    [];
-  const hasCompletedReferral =
-    (refereeLinkUsages?.items?.some((usage) => usage.status === "Completed") ??
-      false) ||
-    pendingReferralPrograms.length === 0;
   //#endregion
 
   return (
@@ -343,9 +324,8 @@ export const UserMenu: React.FC = () => {
               {/* REFERRALS */}
               <Suspense
                 isLoading={
-                  !userProfile ||
-                  referrerProgramsLoading ||
-                  refereeLinkUsagesLoading
+                  !userProfile || referrerProgramsLoading /*||
+                  refereeLinkUsagesLoading*/
                 }
                 loader={
                   <LoadingInline
@@ -374,16 +354,6 @@ export const UserMenu: React.FC = () => {
                     referrerPrograms && (
                       <ReferrerProgressCard
                         links={referrerPrograms.items}
-                        onClick={() => setDrawerOpen(false)}
-                        tabIndex={isDrawerOpen ? 0 : -1}
-                      />
-                    )}
-
-                  {/* TRACK PROGRESS (REFEREE) - Show all pending programs, hide if user has completed any */}
-                  {!hasCompletedReferral &&
-                    pendingReferralPrograms.length > 0 && (
-                      <RefereeProgressCard
-                        programs={pendingReferralPrograms}
                         onClick={() => setDrawerOpen(false)}
                         tabIndex={isDrawerOpen ? 0 : -1}
                       />

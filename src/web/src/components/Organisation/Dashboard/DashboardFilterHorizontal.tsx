@@ -184,6 +184,7 @@ export const DashboardFilterHorizontal: React.FC<{
         published: null,
         verificationMethod: null,
         verificationEnabled: null,
+        onlyCompletable: false,
         pageNumber: 1,
         pageSize: PAGE_SIZE_MEDIUM,
       }).then((data) => {

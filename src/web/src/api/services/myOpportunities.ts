@@ -109,24 +109,6 @@ export const searchMyOpportunitiesSummary = async (
   );
 
   return data;
-
-  // //TODO: mock data:
-  // const mockTimeValueEntries: TimeValueEntry[] = [
-  //   { date: "2023-04-01", values: [10, 20, 30, 4] },
-  //   { date: "2023-04-02", values: [65, 25, 35, 13] },
-  //   { date: "2023-04-03", values: [29, 130, 140, 12] },
-  //   { date: "2023-04-04", values: [25, 35, 45, 0] },
-  //   { date: "2023-04-05", values: [130, 240, 250, 3] },
-  //   { date: "2023-04-06", values: [35, 145, 55, 1] },
-  // ];
-
-  // const mockTimeIntervalSummary: TimeIntervalSummary = {
-  //   legend: ["Completed", "Pending", "Rejected", "Saved"],
-  //   data: mockTimeValueEntries,
-  //   count: [3, 3, 3, 40],
-  // };
-
-  // return mockTimeIntervalSummary;
 };
 
 export const performActionVerifyBulk = async (

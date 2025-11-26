@@ -21,7 +21,10 @@ namespace Yoma.Core.Domain.Opportunity.Validators
       RuleFor(x => x.TitleContains).Length(3, 50).When(x => !string.IsNullOrEmpty(x.TitleContains)).WithMessage("{PropertyName} is optional, but when specified,m must be between 3 and 50 characters");
       RuleFor(x => x.Opportunities).Must(x => x == null || x.Count == 0 || x.All(id => id != Guid.Empty)).WithMessage("{PropertyName} contains empty value(s).");
       RuleFor(x => x.Countries).Must(x => x == null || x.Count == 0 || x.All(id => id != Guid.Empty)).WithMessage("{PropertyName} contains empty value(s).");
-      RuleFor(x => x.VerificationEnabled).NotEqual(false).When(x => x.VerificationMethod != null).WithMessage("VerificationEnabled cannot be false when a VerificationMethod is specified.");
+      RuleFor(x => x.VerificationEnabled).NotEqual(false).When(x => x.VerificationMethod != null).WithMessage("{PropertyName} cannot be false when a VerificationMethod is specified.");
+
+      RuleFor(x => x).Must(x => !x.OnlyCompletable || (x.Published == null && x.VerificationEnabled == null && x.VerificationMethod == null))
+        .WithMessage("When OnlyCompletable is true, Published, VerificationEnabled and VerificationMethod cannot be specified.");
     }
     #endregion
 

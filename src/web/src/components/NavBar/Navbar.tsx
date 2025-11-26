@@ -9,6 +9,9 @@ import { useMemo, useState } from "react";
 import { IoMdClose, IoMdMenu, IoMdSettings } from "react-icons/io";
 import type { TabItem } from "~/api/models/common";
 import type { OrganizationInfo } from "~/api/models/user";
+import { useQuery } from "@tanstack/react-query";
+import { searchReferralLinkUsagesAsReferee } from "~/api/services/referrals";
+import { ReferralParticipationRole } from "~/api/models/user";
 import {
   RoleView,
   activeNavigationRoleViewAtom,
@@ -26,40 +29,59 @@ import { FaChevronUp, FaChevronDown } from "react-icons/fa";
 import ScrollableContainer from "../Carousel/ScrollableContainer";
 import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
 
-const navBarLinksUser: TabItem[] = [
-  {
-    title: "Home",
-    description: "Home",
-    url: "/",
-    badgeCount: null,
-    selected: false,
-    iconImage: "🏠",
-  },
-  {
-    title: "About Us",
-    description: "About Us",
-    url: "/about",
-    badgeCount: null,
-    selected: false,
-    iconImage: "ℹ️",
-  },
-  {
-    title: "Opportunities",
-    description: "Opportunities",
-    url: "/opportunities",
-    badgeCount: null,
-    selected: false,
-    iconImage: "🏆",
-  },
-  {
-    title: "Marketplace",
-    description: "Marketplace",
-    url: "/marketplace",
-    badgeCount: null,
-    selected: false,
-    iconImage: "🛒",
-  },
-];
+const getNavBarLinksUser = (
+  hasPendingReferrals: boolean,
+  firstProgramId?: string,
+): TabItem[] => {
+  const links: TabItem[] = [
+    {
+      title: "Home",
+      description: "Home",
+      url: "/",
+      badgeCount: null,
+      selected: false,
+      iconImage: "🏠",
+    },
+    {
+      title: "About Us",
+      description: "About Us",
+      url: "/about",
+      badgeCount: null,
+      selected: false,
+      iconImage: "ℹ️",
+    },
+    {
+      title: "Opportunities",
+      description: "Opportunities",
+      url: "/opportunities",
+      badgeCount: null,
+      selected: false,
+      iconImage: "🏆",
+    },
+    {
+      title: "Marketplace",
+      description: "Marketplace",
+      url: "/marketplace",
+      badgeCount: null,
+      selected: false,
+      iconImage: "🛒",
+    },
+  ];
+
+  // Add referee progress link if user has pending referrals
+  if (hasPendingReferrals && firstProgramId) {
+    links.push({
+      title: "My Referral",
+      description: "Track your referral progress",
+      url: `/yoid/referee/${firstProgramId}`,
+      badgeCount: null,
+      selected: false,
+      iconImage: "🎁",
+    });
+  }
+
+  return links;
+};
 
 const navBarLinksAdmin: TabItem[] = [
   {
@@ -121,6 +143,38 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
   const [isDrawerOpen, setDrawerOpen] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const isAdmin = session?.user?.roles.includes(ROLE_ADMIN);
+
+  // Check if user is a referee (has claimed links)
+  const isReferee =
+    userProfile?.referral?.roles?.some(
+      (role) =>
+        role === ReferralParticipationRole.Referee || role === "Referee",
+    ) ?? false;
+
+  // Fetch referee programs if user is a referee
+  const { data: refereeLinkUsages } = useQuery({
+    queryKey: ["ReferralLinkUsages", "referee"],
+    queryFn: () =>
+      searchReferralLinkUsagesAsReferee({
+        pageNumber: 1,
+        pageSize: 10,
+        linkId: null,
+        programId: null,
+        statuses: null,
+        dateStart: null,
+        dateEnd: null,
+      }),
+    enabled: session !== null && isReferee,
+  });
+
+  // Get pending referral programs (as referee)
+  const pendingReferralPrograms = useMemo(
+    () =>
+      refereeLinkUsages?.items?.filter((usage) => usage.status === "Pending") ??
+      [],
+    [refereeLinkUsages?.items],
+  );
+  const hasPendingReferrals = pendingReferralPrograms.length > 0;
 
   // 👇 prevent scrolling on the page when the menu is open
   useDisableBodyScroll(isDrawerOpen);
@@ -199,7 +253,9 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
         },
       ];
     } else {
-      links = navBarLinksUser;
+      // Get user links with conditional referee link
+      const firstPendingProgramId = pendingReferralPrograms[0]?.programId;
+      links = getNavBarLinksUser(hasPendingReferrals, firstPendingProgramId);
     }
 
     // Set selected property based on current route
@@ -209,7 +265,13 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
         router.pathname === link.url ||
         (link.url !== "/" && router.pathname.startsWith(link.url!)),
     }));
-  }, [activeRoleView, currentOrganisationId, router.pathname]);
+  }, [
+    activeRoleView,
+    currentOrganisationId,
+    router.pathname,
+    hasPendingReferrals,
+    pendingReferralPrograms,
+  ]);
 
   const renderOrganisationMenuItem = (organisation: OrganizationInfo) => {
     if (organisation.status == "Deleted") return null;

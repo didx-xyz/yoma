@@ -22,7 +22,7 @@ const Breadcrumb: React.FC<InputProps> = ({
           <li key={index}>
             {item.url ? (
               <Link
-                className={`max-w-[200px] overflow-hidden font-bold text-ellipsis ${classNameLink}`}
+                className={`font-family-nunito max-w-[200px] overflow-hidden font-bold text-ellipsis ${classNameLink}`}
                 href={item.url}
               >
                 {item.iconImage && (
@@ -43,7 +43,7 @@ const Breadcrumb: React.FC<InputProps> = ({
                 {item.title}
               </Link>
             ) : (
-              <div className="max-w-[200px] overflow-hidden text-ellipsis whitespace-nowrap">
+              <div className="font-family-nunito max-w-[200px] overflow-hidden text-ellipsis whitespace-nowrap">
                 {item.title}
               </div>
             )}

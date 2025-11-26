@@ -11,7 +11,6 @@ import type {
   ProgramInfo,
   ReferralLinkUsageInfo,
 } from "~/api/models/referrals";
-import { RefereeProgramDetails } from "./RefereeProgramDetails";
 
 interface RefereeStatusBannerProps {
   usage: ReferralLinkUsageInfo;
@@ -145,17 +144,17 @@ export const RefereeStatusBanner: React.FC<RefereeStatusBannerProps> = ({
       {/* Main Content */}
       <div className="relative">
         {/* Header Section */}
-        <div className="mb-6 flex items-center gap-6">
-          {/* Icon */}
-          <div
-            className={`flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-2xl bg-white shadow-lg ring-4 ring-white/50 ${progressionStage.showConfetti ? "animate-bounce" : ""}`}
-          >
-            <Icon className={`h-10 w-10 ${progressionStage.iconColor}`} />
-          </div>
-
-          {/* Title & Message */}
-          <div className="flex-1">
-            <div className="flex items-center gap-3">
+        <div className="mb-6 flex gap-6">
+          {/* Icon, Title & Message */}
+          <div className="flex flex-col gap-2">
+            <div className="flex gap-3 md:items-center">
+              <div
+                className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-2xl bg-white shadow-lg ring-4 ring-white/50 md:h-16 md:w-16 ${progressionStage.showConfetti ? "animate-bounce" : ""}`}
+              >
+                <Icon
+                  className={`h-6 w-6 md:h-10 md:w-10 ${progressionStage.iconColor}`}
+                />
+              </div>
               <h2
                 className={`text-xl font-bold ${progressionStage.accentColor}`}
               >
@@ -172,7 +171,7 @@ export const RefereeStatusBanner: React.FC<RefereeStatusBannerProps> = ({
 
             {/* Completion Date for Completed Status */}
             {usage.status === "Completed" && usage.dateCompleted && (
-              <p className="mt-2 text-xs text-gray-600">
+              <p className="text-xs text-gray-600">
                 ✨ Completed on{" "}
                 {new Date(usage.dateCompleted).toLocaleDateString("en-US", {
                   year: "numeric",
@@ -198,9 +197,9 @@ export const RefereeStatusBanner: React.FC<RefereeStatusBannerProps> = ({
             </div>
           </div>
         </div> */}
-        <div className="mb-6">
+        {/* <div className="mb-6">
           <RefereeProgramDetails program={program} perspective="referee" />
-        </div>
+        </div> */}
 
         {/* Progress Bar for Active Status */}
         {usage.status === "Pending" && (

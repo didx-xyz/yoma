@@ -225,7 +225,7 @@ export const ProfileCompletionWizard: React.FC<
   return (
     <div
       ref={containerRef}
-      className="rounded-xl border-4 border-blue-300 bg-gradient-to-br from-blue-50 via-indigo-50 to-white p-6 shadow-xl md:p-8"
+      //className="rounded-xl border-4 border-blue-300 bg-gradient-to-br from-blue-50 via-indigo-50 to-white p-6 shadow-xl md:p-8"
     >
       {/* Header */}
       {showHeader && (
@@ -240,87 +240,93 @@ export const ProfileCompletionWizard: React.FC<
       )}
 
       {/* Progress Steps */}
-      <div className="mb-6 flex items-center justify-center gap-2 md:gap-4">
-        {/* Step 1: Profile */}
-        <div className="flex flex-col items-center gap-2">
+      {showHeader && (
+        <div className="mb-6 flex items-center justify-center gap-2 md:gap-4">
+          {/* Step 1: Profile */}
+          <div className="flex flex-col items-center gap-2">
+            <div
+              className={`flex h-10 w-10 items-center justify-center rounded-full border-2 md:h-12 md:w-12 ${
+                completedSteps.includes("profile")
+                  ? "border-green-500 bg-green-500"
+                  : currentStep === "profile"
+                    ? "border-green-500 bg-white"
+                    : "border-gray-300 bg-gray-100"
+              }`}
+            >
+              {completedSteps.includes("profile") ? (
+                <IoCheckmarkCircle className="h-6 w-6 text-white md:h-8 md:w-8" />
+              ) : (
+                <FcViewDetails className="h-5 w-5 md:h-6 md:w-6" />
+              )}
+            </div>
+            <span className="text-xs font-semibold text-gray-700 md:text-sm">
+              Profile
+            </span>
+          </div>
+
+          {/* Connector */}
           <div
-            className={`flex h-10 w-10 items-center justify-center rounded-full border-2 md:h-12 md:w-12 ${
+            className={`h-1 w-8 rounded md:w-16 ${
               completedSteps.includes("profile")
-                ? "border-green-500 bg-green-500"
-                : currentStep === "profile"
-                  ? "border-green-500 bg-white"
-                  : "border-gray-300 bg-gray-100"
+                ? "bg-green-500"
+                : "bg-gray-300"
             }`}
-          >
-            {completedSteps.includes("profile") ? (
-              <IoCheckmarkCircle className="h-6 w-6 text-white md:h-8 md:w-8" />
-            ) : (
-              <FcViewDetails className="h-5 w-5 md:h-6 md:w-6" />
-            )}
+          />
+
+          {/* Step 2: Settings */}
+          <div className="flex flex-col items-center gap-2">
+            <div
+              className={`flex h-10 w-10 items-center justify-center rounded-full border-2 md:h-12 md:w-12 ${
+                completedSteps.includes("settings")
+                  ? "border-green-500 bg-green-500"
+                  : currentStep === "settings"
+                    ? "border-green-500 bg-white"
+                    : "border-gray-300 bg-gray-100"
+              }`}
+            >
+              {completedSteps.includes("settings") ? (
+                <IoCheckmarkCircle className="h-6 w-6 text-white md:h-8 md:w-8" />
+              ) : (
+                <FcSettings className="h-5 w-5 md:h-6 md:w-6" />
+              )}
+            </div>
+            <span className="text-xs font-semibold text-gray-700 md:text-sm">
+              Settings
+            </span>
           </div>
-          <span className="text-xs font-semibold text-gray-700 md:text-sm">
-            Profile
-          </span>
-        </div>
 
-        {/* Connector */}
-        <div
-          className={`h-1 w-8 rounded md:w-16 ${
-            completedSteps.includes("profile") ? "bg-green-500" : "bg-gray-300"
-          }`}
-        />
-
-        {/* Step 2: Settings */}
-        <div className="flex flex-col items-center gap-2">
+          {/* Connector */}
           <div
-            className={`flex h-10 w-10 items-center justify-center rounded-full border-2 md:h-12 md:w-12 ${
+            className={`h-1 w-8 rounded md:w-16 ${
               completedSteps.includes("settings")
-                ? "border-green-500 bg-green-500"
-                : currentStep === "settings"
-                  ? "border-green-500 bg-white"
-                  : "border-gray-300 bg-gray-100"
+                ? "bg-green-500"
+                : "bg-gray-300"
             }`}
-          >
-            {completedSteps.includes("settings") ? (
-              <IoCheckmarkCircle className="h-6 w-6 text-white md:h-8 md:w-8" />
-            ) : (
-              <FcSettings className="h-5 w-5 md:h-6 md:w-6" />
-            )}
-          </div>
-          <span className="text-xs font-semibold text-gray-700 md:text-sm">
-            Settings
-          </span>
-        </div>
+          />
 
-        {/* Connector */}
-        <div
-          className={`h-1 w-8 rounded md:w-16 ${
-            completedSteps.includes("settings") ? "bg-green-500" : "bg-gray-300"
-          }`}
-        />
-
-        {/* Step 3: Photo */}
-        <div className="flex flex-col items-center gap-2">
-          <div
-            className={`flex h-10 w-10 items-center justify-center rounded-full border-2 md:h-12 md:w-12 ${
-              completedSteps.includes("photo")
-                ? "border-green-500 bg-green-500"
-                : currentStep === "photo"
-                  ? "border-green-500 bg-white"
-                  : "border-gray-300 bg-gray-100"
-            }`}
-          >
-            {completedSteps.includes("photo") ? (
-              <IoCheckmarkCircle className="h-6 w-6 text-white md:h-8 md:w-8" />
-            ) : (
-              <FcCamera className="h-5 w-5 md:h-6 md:w-6" />
-            )}
+          {/* Step 3: Photo */}
+          <div className="flex flex-col items-center gap-2">
+            <div
+              className={`flex h-10 w-10 items-center justify-center rounded-full border-2 md:h-12 md:w-12 ${
+                completedSteps.includes("photo")
+                  ? "border-green-500 bg-green-500"
+                  : currentStep === "photo"
+                    ? "border-green-500 bg-white"
+                    : "border-gray-300 bg-gray-100"
+              }`}
+            >
+              {completedSteps.includes("photo") ? (
+                <IoCheckmarkCircle className="h-6 w-6 text-white md:h-8 md:w-8" />
+              ) : (
+                <FcCamera className="h-5 w-5 md:h-6 md:w-6" />
+              )}
+            </div>
+            <span className="text-xs font-semibold text-gray-700 md:text-sm">
+              Photo
+            </span>
           </div>
-          <span className="text-xs font-semibold text-gray-700 md:text-sm">
-            Photo
-          </span>
         </div>
-      </div>
+      )}
 
       {/* Step Content */}
       <div className="rounded-lg border-2 border-blue-200 bg-white p-4 md:p-6">
@@ -334,7 +340,7 @@ export const ProfileCompletionWizard: React.FC<
                 </div>
               </div>
               <h4 className="mb-2 text-lg font-bold text-gray-900 md:text-xl">
-                Step 1: Complete Your Profile
+                Complete Your Profile
               </h4>
               <p className="mb-4 text-sm text-gray-600">
                 Your information will be used to issue credentials in your Yo-ID
@@ -367,7 +373,7 @@ export const ProfileCompletionWizard: React.FC<
                 </div>
               </div>
               <h4 className="mb-2 text-lg font-bold text-gray-900 md:text-xl">
-                Step 2: Choose Your Settings
+                Choose Your Settings
               </h4>
               <p className="mb-4 text-sm text-gray-600">
                 Configure your notification and privacy preferences
@@ -403,7 +409,7 @@ export const ProfileCompletionWizard: React.FC<
                 </div>
               </div>
               <h4 className="mb-2 text-lg font-bold text-gray-900 md:text-xl">
-                Step 3: Picture Time!
+                Picture Time!
               </h4>
               <p className="mb-4 text-sm text-gray-600">
                 Choose a profile picture to personalize your account

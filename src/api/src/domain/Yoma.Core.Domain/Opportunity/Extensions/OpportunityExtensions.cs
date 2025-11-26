@@ -207,6 +207,15 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
       return status == Status.Active && organizationStatus == Entity.OrganizationStatus.Active;
     }
 
+    /// <summary>
+    /// Determines whether an opportunity is currently completable by youth (via portal or action link).
+    ///
+    /// Logic aligns fully with <see cref="OpportunitySearchFilterCriteria.OnlyCompletable"/>:
+    /// • Opportunity is Published (Status = Active + Active organization + DateStart ≤ now) OR Status = Expired  
+    /// • VerificationEnabled = true  
+    /// • VerificationMethod = Manual  
+    /// • Not Hidden (null / false)
+    /// </summary>
     private static bool EvaluateCompletable(
         string title,
         Status status,
@@ -222,7 +231,7 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
       var published = Published(status, organizationStatus);
 
       var canSendForVerification = status == Status.Expired || (published && dateStart <= DateTimeOffset.UtcNow);
-      var isCompletable = canSendForVerification && verificationEnabled && verificationMethod == VerificationMethod.Manual;
+      var isCompletable = hidden != true && canSendForVerification && verificationEnabled && verificationMethod == VerificationMethod.Manual;
 
       if (isCompletable)
         return true;
