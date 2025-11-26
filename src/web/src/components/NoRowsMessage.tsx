@@ -31,12 +31,7 @@ const NoRowsMessage: React.FC<{
             {title ?? "No rows found..."}
           </div>
 
-          {subTitle && (
-            <div className="text-xs md:text-sm">
-              Good things are better when shared. Invite your friends to Yoma
-              and help them start their journey.
-            </div>
-          )}
+          {subTitle && <div className="text-xs md:text-sm">{subTitle}</div>}
         </div>
 
         <div

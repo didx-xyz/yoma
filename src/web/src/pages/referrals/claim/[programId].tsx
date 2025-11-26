@@ -30,6 +30,7 @@ import { currentLanguageAtom, userProfileAtom } from "~/lib/store";
 import { getProfileCompletionStep } from "~/lib/utils/profile";
 import { authOptions } from "~/server/auth";
 import { type NextPageWithLayout } from "../../_app";
+import NoRowsMessage from "~/components/NoRowsMessage";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
@@ -156,9 +157,11 @@ const ReferralClaimPage: NextPageWithLayout<{
   const setUserProfile = useSetAtom(userProfileAtom);
 
   // Update atom with server-side user profile if available
-  if (serverUserProfile && !userProfile) {
-    setUserProfile(serverUserProfile);
-  }
+  useEffect(() => {
+    if (serverUserProfile && !userProfile) {
+      setUserProfile(serverUserProfile);
+    }
+  }, [serverUserProfile, userProfile, setUserProfile]);
 
   // Fetch program data
   const {
@@ -214,6 +217,37 @@ const ReferralClaimPage: NextPageWithLayout<{
       setClaimingAfterProfile(false);
     }
   }, [linkId, programId, router, claimAttempted, setUserProfile]);
+
+  // Watch for profile updates (from global profile completion wizard)
+  // and retry claim when profile becomes complete
+  useEffect(() => {
+    const checkProfileAndClaim = async () => {
+      if (
+        isAuthenticated &&
+        userProfile &&
+        !claimAttempted &&
+        !claimingAfterProfile &&
+        program &&
+        !claimError
+      ) {
+        const completionStep = getProfileCompletionStep(userProfile);
+        if (completionStep === "complete") {
+          // Profile is now complete, attempt claim
+          performClaim();
+        }
+      }
+    };
+
+    checkProfileAndClaim();
+  }, [
+    userProfile,
+    isAuthenticated,
+    claimAttempted,
+    claimingAfterProfile,
+    program,
+    claimError,
+    performClaim,
+  ]);
 
   const handleProfileComplete = useCallback(() => {
     // After profile completion, perform the claim
@@ -394,7 +428,7 @@ const ReferralClaimPage: NextPageWithLayout<{
   return (
     <>
       <Head>
-        <title>Join {program.name} | Yoma Referral</title>
+        <title>Join Yoma Referral</title>
         <meta
           name="description"
           content={`Join ${program.name} through a friend&apos;s referral link and earn rewards!`}
@@ -403,7 +437,7 @@ const ReferralClaimPage: NextPageWithLayout<{
 
       <div className="container mx-auto mt-20 flex max-w-5xl flex-col gap-8 px-4 py-8">
         {/* Hero Section */}
-        <div className="rounded-xl border-4 border-orange-200 bg-gradient-to-br from-orange-50 via-yellow-50 to-white p-8 shadow-xl">
+        {/* <div className="rounded-xl border-4 border-orange-200 bg-gradient-to-br from-orange-50 via-yellow-50 to-white p-8 shadow-xl">
           <div className="flex flex-col items-center gap-4 md:flex-row md:justify-between">
             {!isAuthenticated && (
               <div className="flex flex-1 flex-col gap-2">
@@ -437,67 +471,101 @@ const ReferralClaimPage: NextPageWithLayout<{
               </div>
             )}
           </div>
+        </div> */}
+        {/* Welcome: Referee */}{" "}
+        <div className="flex items-center justify-center">
+          {!isAuthenticated && (
+            <NoRowsMessage
+              title="You've been invited!"
+              description="Click the button below to join Yoma and earn rewards when you complete the program requirements."
+              icon={"❤️"}
+              className="max-w-3xl !bg-transparent"
+            />
+          )}
+          {isAuthenticated && needsProfileCompletion && (
+            <NoRowsMessage
+              title="Almost there!"
+              description="Complete your profile to get started."
+              icon={"❤️"}
+              className="max-w-3xl !bg-transparent"
+            />
+          )}
         </div>
-
         {/* Profile Completion Wizard - Only show if user is authenticated but profile is incomplete */}
         {needsProfileCompletion && (
           <ProfileCompletionWizard
             userProfile={userProfile || serverUserProfile || null}
             onComplete={handleProfileComplete}
-            showHeader={true}
+            showHeader={false}
+            showSteps={false}
           />
         )}
-
         {(!isAuthenticated || (isAuthenticated && !needsProfileCompletion)) && (
           <>
             {/* How It Works - Referee Perspective */}
-            <HelpReferee isExpanded={!isAuthenticated} program={program} />
+            {/* <HelpReferee isExpanded={!isAuthenticated} program={program} /> */}
 
             {/* Requirements Section */}
-            <RefereeRequirements
+            {/* <RefereeRequirements
               program={program}
               isExpanded={!isAuthenticated}
-            />
+            /> */}
 
             {/* Important Information */}
-            <RefereeImportantInfo
+            {/* <RefereeImportantInfo
               program={program}
               isExpanded={!isAuthenticated || needsProfileCompletion}
-            />
+            /> */}
           </>
         )}
-
         {/* CTA Section */}
         {!isAuthenticated && (
-          <div className="rounded-xl border-4 border-orange-300 bg-gradient-to-br from-orange-100 to-yellow-100 p-6 shadow-2xl">
-            <div className="flex flex-col items-center gap-4 md:flex-row md:justify-between">
-              <div>
-                <h3 className="text-xl font-bold text-orange-900">
-                  Ready to Get Started?
-                </h3>
-                <p className="text-sm text-gray-700">
-                  {isAuthenticated
-                    ? "Claim this referral link to begin your journey"
-                    : "Create an account to claim this link"}
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={handleClaim}
-                disabled={claiming}
-                className="btn btn-warning btn-lg gap-2 px-8 text-white shadow-lg transition-all duration-300 ease-in-out hover:scale-105 hover:shadow-2xl disabled:opacity-50 disabled:hover:scale-100"
-              >
-                {claiming && (
-                  <LoadingInline
-                    classNameSpinner="  h-6 w-6"
-                    classNameLabel="hidden"
-                  />
-                )}
-                {!claiming && <IoLockClosed className="h-6 w-6" />}
-                <p>Claim Your Spot Now!</p>
-              </button>
-            </div>
+          <div className="flex flex-col items-center">
+            <button
+              type="button"
+              onClick={handleClaim}
+              disabled={claiming}
+              className="btn btn-warning gap-2 px-8 text-white shadow-lg transition-all duration-300 ease-in-out hover:scale-105 hover:shadow-2xl disabled:opacity-50 disabled:hover:scale-100"
+            >
+              {claiming && (
+                <LoadingInline
+                  classNameSpinner="  h-6 w-6"
+                  classNameLabel="hidden"
+                />
+              )}
+              {!claiming && <IoLockClosed className="h-6 w-6" />}
+              <p>Join Yoma!</p>
+            </button>
           </div>
+          //   <div className="rounded-xl border-4 border-orange-300 bg-gradient-to-br from-orange-100 to-yellow-100 p-6 shadow-2xl">
+          //     <div className="flex flex-col items-center gap-4 md:flex-row md:justify-between">
+          //       <div>
+          //         <h3 className="text-xl font-bold text-orange-900">
+          //           Ready to Get Started?
+          //         </h3>
+          //         <p className="text-sm text-gray-700">
+          //           {isAuthenticated
+          //             ? "Claim this referral link to begin your journey"
+          //             : "Create an account to claim this link"}
+          //         </p>
+          //       </div>
+          //       <button
+          //         type="button"
+          //         onClick={handleClaim}
+          //         disabled={claiming}
+          //         className="btn btn-warning btn-lg gap-2 px-8 text-white shadow-lg transition-all duration-300 ease-in-out hover:scale-105 hover:shadow-2xl disabled:opacity-50 disabled:hover:scale-100"
+          //       >
+          //         {claiming && (
+          //           <LoadingInline
+          //             classNameSpinner="  h-6 w-6"
+          //             classNameLabel="hidden"
+          //           />
+          //         )}
+          //         {!claiming && <IoLockClosed className="h-6 w-6" />}
+          //         <p>Claim Your Spot Now!</p>
+          //       </button>
+          //     </div>
+          //   </div>
         )}
       </div>
     </>

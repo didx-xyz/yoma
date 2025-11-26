@@ -198,9 +198,9 @@ export const RefereeStatusBanner: React.FC<RefereeStatusBannerProps> = ({
             </div>
           </div>
         </div> */}
-        <div className="mb-6">
+        {/* <div className="mb-6">
           <RefereeProgramDetails program={program} perspective="referee" />
-        </div>
+        </div> */}
 
         {/* Progress Bar for Active Status */}
         {usage.status === "Pending" && (

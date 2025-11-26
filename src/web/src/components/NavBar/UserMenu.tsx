@@ -378,16 +378,6 @@ export const UserMenu: React.FC = () => {
                         tabIndex={isDrawerOpen ? 0 : -1}
                       />
                     )}
-
-                  {/* TRACK PROGRESS (REFEREE) - Show all pending programs, hide if user has completed any */}
-                  {!hasCompletedReferral &&
-                    pendingReferralPrograms.length > 0 && (
-                      <RefereeProgressCard
-                        programs={pendingReferralPrograms}
-                        onClick={() => setDrawerOpen(false)}
-                        tabIndex={isDrawerOpen ? 0 : -1}
-                      />
-                    )}
                 </div>
               </Suspense>
 

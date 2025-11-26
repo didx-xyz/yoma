@@ -231,7 +231,7 @@ export const ReferrerLinkDetails: React.FC<LinkDetailsProps> = ({
   return (
     <div className={className}>
       {/* TODO: debug */}
-      {/* {displayLink.url} */}
+      {displayLink.url}
 
       {/* Short URL */}
       {displayLink.shortURL && (
