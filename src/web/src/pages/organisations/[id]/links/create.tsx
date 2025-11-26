@@ -645,6 +645,7 @@ const ReferrerLinkDetails: NextPageWithLayout<{
           published: true,
           verificationMethod: null,
           verificationEnabled: true,
+          onlyCompletable: false,
           pageNumber: 1,
           pageSize: PAGE_SIZE_MEDIUM,
         }).then((data) => {

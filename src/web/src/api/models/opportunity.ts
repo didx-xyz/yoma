@@ -331,6 +331,7 @@ export interface OpportunitySearchFilterCriteria extends PaginationFilter {
   published: boolean | null;
   verificationEnabled: boolean | null;
   verificationMethod: VerificationMethod | null;
+  onlyCompletable: boolean;
 }
 
 export interface CSVImportResult {

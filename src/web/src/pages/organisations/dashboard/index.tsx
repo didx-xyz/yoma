@@ -168,6 +168,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
           published: null,
           verificationMethod: null,
           verificationEnabled: null,
+          onlyCompletable: false,
           pageNumber: 1,
           pageSize: searchFilter.opportunities?.length ?? 0,
         },

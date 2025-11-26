@@ -141,6 +141,7 @@ export const LinkSearchFilters: React.FC<{
         verificationMethod: null,
         countries: null,
         verificationEnabled: null,
+        onlyCompletable: false,
         pageNumber: 1,
         pageSize: PAGE_SIZE_MEDIUM,
       }).then((data) => {
