@@ -39,7 +39,7 @@ namespace Yoma.Core.Domain.Referral.Services
       ReferralAnalyticsSearchFilterValidator referralAnalyticsSearchFilterValidator,
       IRepositoryBatched<ReferralLinkUsage> linkUsageRepository,
       IRepositoryBatchedValueContainsWithNavigation<ReferralLink> linkRepository)
-    { 
+    {
       _logger = logger ?? throw new ArgumentNullException(nameof(logger));
       _httpContextAccessor = httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
 
