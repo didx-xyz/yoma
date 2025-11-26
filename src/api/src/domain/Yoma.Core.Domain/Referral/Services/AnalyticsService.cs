@@ -106,9 +106,11 @@ namespace Yoma.Core.Domain.Referral.Services
           $"The role '{filter.Role}' is not supported for referral analytics search"),
       };
 
-      // order by usage count completed (leader board), then by user display name, and lastly by user ID to ensure deterministic sorting / consistent pagination results
       if (!filter.UnrestrictedQuery || filter.PaginationEnabled)
-        query = query.OrderByDescending(x => x.UsageCountCompleted).ThenBy(x => x.UserDisplayName).ThenBy(o => o.UserId);
+        query = query
+          .OrderByDescending(x => x.UsageCountCompleted) //usage count completed - leader board
+          .ThenBy(x => x.UserDisplayName) // then by user display name
+          .ThenBy(o => o.UserId); //ensure deterministic sorting / consistent pagination results
 
       var results = new ReferralAnalyticsSearchResults();
 
