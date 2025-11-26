@@ -118,6 +118,50 @@ if [ ! -z "${ORG_ADMIN_USER}" ]; then
         ]"
 fi
 
+# Test User
+if [ ! -z "${TEST_USER}" ]; then
+  echo "Creating Test User"
+  curl -s -X POST "${KC_BASE_URL}/admin/realms/${KC_REALM}/users" \
+    -H 'Content-Type: application/json' \
+    -H "Authorization: bearer ${KC_JWT}" \
+    -d '{
+          "username": "'"${TEST_USER}"'",
+          "enabled": true,
+          "emailVerified": true,
+          "firstName": "Test",
+          "lastName": "User",
+          "email": "'"${TEST_USER}"'",
+          "attributes": {
+            "phoneNumber": ["+27821234567"],
+            "phoneNumberVerified": ["true"],
+            "dateOfBirth": ["01/01/2001"],
+            "country": ["Afghanistan"],
+            "gender": ["Male"],
+            "terms_and_conditions": ["Yes"]
+          },
+          "credentials": [{
+            "type": "password",
+            "value": "'"${TEST_USER_PASSWORD}"'",
+            "temporary": false
+          }],
+          "realmRoles": ["default-roles-yoma", "User"]
+        }'
+  # Get Test User ID
+  userID=$(curl -s -X GET "${KC_BASE_URL}/admin/realms/${KC_REALM}/users?exact=true&username=${TEST_USER}" \
+    -H 'Content-Type: application/json' \
+    -H "Authorization: bearer ${KC_JWT}" | jq .[].id -r)
+  # Assign Test User to required roles
+  curl -s -X POST "${KC_BASE_URL}/admin/realms/${KC_REALM}/users/${userID}/role-mappings/realm" \
+    -H 'Content-Type: application/json' \
+    -H "Authorization: bearer ${KC_JWT}" \
+    -d "[
+          {
+            \"id\": \"$(echo ${roleIDs} | jq .user -r)\",
+            \"name\": \"User\"
+          }
+        ]"
+fi
+
 # Yoma System User
 if [ ! -z "${YOMA_SYSTEM_USER}" ]; then
   echo "Creating Yoma System User"
@@ -157,48 +201,6 @@ if [ ! -z "${YOMA_SYSTEM_USER}" ]; then
             \"id\": \"$(echo ${roleIDs} | jq .orgAdmin -r)\",
             \"name\": \"OrganisationAdmin\"
           },
-          {
-            \"id\": \"$(echo ${roleIDs} | jq .user -r)\",
-            \"name\": \"User\"
-          }
-        ]"
-fi
-
-# Test User
-if [ ! -z "${TEST_USER}" ]; then
-  echo "Creating Test User"
-  curl -s -X POST "${KC_BASE_URL}/admin/realms/${KC_REALM}/users" \
-    -H 'Content-Type: application/json' \
-    -H "Authorization: bearer ${KC_JWT}" \
-    -d '{
-          "username": "'"${TEST_USER}"'",
-          "enabled": true,
-          "emailVerified": true,
-          "firstName": "Test",
-          "lastName": "User",
-          "email": "'"${TEST_USER}"'",
-          "attributes": {
-            "dateOfBirth": ["01/01/2001"],
-            "country": ["Afghanistan"],
-            "gender": ["Male"],
-            "terms_and_conditions": ["Yes"]
-          },
-          "credentials": [{
-            "type": "password",
-            "value": "'"${TEST_USER_PASSWORD}"'",
-            "temporary": false
-          }],
-          "realmRoles": ["default-roles-yoma", "User"]
-        }'
-  # Get Test User ID
-  userID=$(curl -s -X GET "${KC_BASE_URL}/admin/realms/${KC_REALM}/users?exact=true&username=${TEST_USER}" \
-    -H 'Content-Type: application/json' \
-    -H "Authorization: bearer ${KC_JWT}" | jq .[].id -r)
-  # Assign Test User to required roles
-  curl -s -X POST "${KC_BASE_URL}/admin/realms/${KC_REALM}/users/${userID}/role-mappings/realm" \
-    -H 'Content-Type: application/json' \
-    -H "Authorization: bearer ${KC_JWT}" \
-    -d "[
           {
             \"id\": \"$(echo ${roleIDs} | jq .user -r)\",
             \"name\": \"User\"
