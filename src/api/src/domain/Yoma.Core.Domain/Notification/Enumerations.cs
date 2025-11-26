@@ -1,5 +1,75 @@
 namespace Yoma.Core.Domain.Notification
 {
+  /*
+  Referral Notifications – Channel Support Notes
+  -------------------------------------------------------------
+  Email is fully supported for all referral notifications.
+
+  WhatsApp and SMS are currently disabled due to cost constraints.
+  Templates for these channels are defined below for future use.
+
+  -------------------------------------------------------------
+  NotificationType.ReferralLink_Completed_ReferrerAwarded
+  A referee completed and the referrer received reward > 0 Zlto
+
+  WhatsApp:
+  Hi there{{1}}
+  Great news — your referral was completed and you’ve earned a ZLTO reward!
+  Button: View Dashboard
+
+  SMS:
+  Yoma{{1}} - Your referral link was completed. View: {{2}}
+
+  -------------------------------------------------------------
+  NotificationType.Referral_Blocked_Referrer
+  Referrer was blocked from using the referral system
+
+  WhatsApp:
+  Hi there{{1}}
+  Your referral access on Yoma has been blocked.
+  Button: View Dashboard
+
+  SMS:
+  Yoma{{1}} - Your referral access has been blocked. Need help? {{2}}
+
+  -------------------------------------------------------------
+  NotificationType.Referral_Unblocked_Referrer
+  Referrer was unblocked and can use the referral system again
+
+  WhatsApp:
+  Hi there{{1}}
+  Your referral access on Yoma has been unblocked.
+  Button: View Dashboard
+
+  SMS:
+  Yoma{{1}} - Your referral access has been unblocked. View: {{2}}
+
+  -------------------------------------------------------------
+  NotificationType.ReferralUsage_Welcome
+  Referee claimed a referral link (welcome + instructions)
+
+  WhatsApp:
+  Hi there{{1}}
+  You’ve joined a referral program on Yoma. Welcome aboard!
+  Button: View Dashboard
+
+  SMS:
+  Yoma{{1}} - You’ve joined a referral program on Yoma. View: {{2}}
+
+  -------------------------------------------------------------
+  NotificationType.ReferralUsage_Completion
+  Referee completed the referral program linked to the claimed referral
+
+  WhatsApp:
+  Hi there{{1}}
+  You’ve completed your referral program on Yoma. Well done!
+  Button: View Dashboard
+
+  SMS:
+  Yoma{{1}} - You’ve completed your referral program on Yoma. View: {{2}}
+  -------------------------------------------------------------
+  */
+
   public enum NotificationType
   {
     Organization_Approval_Requested, //sent to admin
