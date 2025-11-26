@@ -33,10 +33,7 @@ import {
   PathwayTasksList,
   TaskInstructionHeader,
 } from "~/components/Referrals/InstructionHeaders";
-import {
-  RefereeProgressTracker,
-  getNextAction,
-} from "~/components/Referrals/RefereeProgressTracker";
+import { getNextAction } from "~/components/Referrals/RefereeProgressTracker";
 import { RefereeStatusBanner } from "~/components/Referrals/RefereeStatusBanner";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import { config } from "~/lib/react-query-config";

@@ -15,12 +15,9 @@ import {
 } from "~/api/services/referrals";
 import { getUserProfile } from "~/api/services/user";
 import MainLayout from "~/components/Layout/Main";
+import NoRowsMessage from "~/components/NoRowsMessage";
 import { AlternativeActions } from "~/components/Referrals/AlternativeActions";
 import { BecomeReferrerCTA } from "~/components/Referrals/BecomeReferrerCTA";
-import { HelpReferee } from "~/components/Referrals/HelpReferee";
-import { RefereeImportantInfo } from "~/components/Referrals/RefereeImportantInfo";
-import { RefereeProgramDetails } from "~/components/Referrals/RefereeProgramDetails";
-import { RefereeRequirements } from "~/components/Referrals/RefereeRequirements";
 import { LoadingInline } from "~/components/Status/LoadingInline";
 import { ProfileCompletionWizard } from "~/components/User/ProfileCompletionWizard";
 import analytics from "~/lib/analytics";
@@ -30,7 +27,6 @@ import { currentLanguageAtom, userProfileAtom } from "~/lib/store";
 import { getProfileCompletionStep } from "~/lib/utils/profile";
 import { authOptions } from "~/server/auth";
 import { type NextPageWithLayout } from "../../_app";
-import NoRowsMessage from "~/components/NoRowsMessage";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
@@ -497,7 +493,6 @@ const ReferralClaimPage: NextPageWithLayout<{
             userProfile={userProfile || serverUserProfile || null}
             onComplete={handleProfileComplete}
             showHeader={false}
-            showSteps={false}
           />
         )}
         {(!isAuthenticated || (isAuthenticated && !needsProfileCompletion)) && (

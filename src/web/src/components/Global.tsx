@@ -5,7 +5,6 @@ import { useRouter } from "next/router";
 import { parseCookies } from "nookies";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { FcCamera, FcKey, FcSettings, FcViewDetails } from "react-icons/fc";
-import { IoGift } from "react-icons/io5";
 import { toast } from "react-toastify";
 import type { SettingsRequest } from "~/api/models/common";
 import type { UserProfile } from "~/api/models/user";
@@ -122,9 +121,12 @@ export const Global: React.FC = () => {
   });
 
   // Get pending referral programs (as referee)
-  const pendingReferralPrograms =
-    refereeLinkUsages?.items?.filter((usage) => usage.status === "Pending") ??
-    [];
+  const pendingReferralPrograms = useMemo(
+    () =>
+      refereeLinkUsages?.items?.filter((usage) => usage.status === "Pending") ??
+      [],
+    [refereeLinkUsages?.items],
+  );
 
   //#region Functions
   const postLoginChecks = useCallback(

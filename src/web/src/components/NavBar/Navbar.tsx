@@ -168,9 +168,12 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
   });
 
   // Get pending referral programs (as referee)
-  const pendingReferralPrograms =
-    refereeLinkUsages?.items?.filter((usage) => usage.status === "Pending") ??
-    [];
+  const pendingReferralPrograms = useMemo(
+    () =>
+      refereeLinkUsages?.items?.filter((usage) => usage.status === "Pending") ??
+      [],
+    [refereeLinkUsages?.items],
+  );
   const hasPendingReferrals = pendingReferralPrograms.length > 0;
 
   // 👇 prevent scrolling on the page when the menu is open

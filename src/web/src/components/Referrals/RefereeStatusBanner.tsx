@@ -11,7 +11,6 @@ import type {
   ProgramInfo,
   ReferralLinkUsageInfo,
 } from "~/api/models/referrals";
-import { RefereeProgramDetails } from "./RefereeProgramDetails";
 
 interface RefereeStatusBannerProps {
   usage: ReferralLinkUsageInfo;

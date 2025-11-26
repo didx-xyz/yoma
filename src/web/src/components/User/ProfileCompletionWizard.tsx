@@ -23,13 +23,12 @@ interface ProfileCompletionWizardProps {
   userProfile: UserProfile | null;
   onComplete?: () => void;
   showHeader?: boolean;
-  showSteps?: boolean;
   headerMessage?: string;
 }
 
 export const ProfileCompletionWizard: React.FC<
   ProfileCompletionWizardProps
-> = ({ userProfile, onComplete, showHeader = true, showSteps = true }) => {
+> = ({ userProfile, onComplete, showHeader = true }) => {
   const queryClient = useQueryClient();
   const setUserProfile = useSetAtom(userProfileAtom);
   const [currentStep, setCurrentStep] = useState<string>("profile");
