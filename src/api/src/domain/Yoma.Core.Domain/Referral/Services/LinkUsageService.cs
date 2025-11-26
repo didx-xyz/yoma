@@ -679,6 +679,15 @@ namespace Yoma.Core.Domain.Referral.Services
             linkCache[link.Id] = link;
             programCache[program.Id] = program;
 
+            // NOTE: Local and Dev seed data use the same user (testuser@gmail.com) as both
+            // referrer and referee for testing purposes.
+            //
+            // This intentionally BREAKS the "a user cannot claim their own link" rule.
+            // Because the reward service is idempotent and transaction-scheduled, only the
+            // REFERRER reward will be paid when both referrer and referee rewards are configured.
+            //
+            // This behaviour is expected for seed data only and does NOT affect production logic.
+
             // schedule reward transactions
             if ((rewardReferrer ?? 0m) > 0m)
               await _rewardService.ScheduleRewardTransaction(myUsage.UserIdReferrer, Reward.RewardTransactionEntityType.ReferralLinkUsage, myUsage.Id, rewardReferrer!.Value);

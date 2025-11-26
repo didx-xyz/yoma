@@ -32,7 +32,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
       migrationBuilder.InsertData(
         table: "SettingsDefinition", schema: "Entity",
         columns: ["Id", "EntityType", "Key", "Title", "Description", "Group", "SubGroup", "Order", "Roles", "DefaultValue", "Type", "Enabled", "Visible"],
-        values: new object[,]
+        values: new object?[,]
         {
           {
             "6C9BC28C-1F4B-4C01-8C71-4E2C9F8F2F11","User","User_Notifications_Referrals","Referrals",
@@ -47,7 +47,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           {
             "D9EE75CC-1190-4BBA-BEB0-4E25BA4A9C11","User","User_RumConsent","Platform Performance Monitoring",
             "Allow Yoma to monitor site performance to improve your experience.",
-            "Privacy","User",15,$"[\"User\"]","false","Boolean",true,true
+            "Privacy",null,15,$"[\"User\"]","false","Boolean",true,true
           }
         });
       #endregion Lookups
