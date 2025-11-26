@@ -1,5 +1,6 @@
 using FluentValidation;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
@@ -14,6 +15,7 @@ namespace Yoma.Core.Domain.Referral.Services
   public sealed class AnalyticsService : IAnalyticsService
   {
     #region Class Variables
+    private readonly ILogger<AnalyticsService> _logger;
     private readonly IHttpContextAccessor _httpContextAccessor;
 
     private readonly IUserService _userService;
@@ -29,6 +31,7 @@ namespace Yoma.Core.Domain.Referral.Services
 
     #region Constructor
     public AnalyticsService(
+      ILogger<AnalyticsService> logger,
       IHttpContextAccessor httpContextAccessor,
       IUserService userService,
       ILinkStatusService linkStatusService,
@@ -37,6 +40,7 @@ namespace Yoma.Core.Domain.Referral.Services
       IRepositoryBatched<ReferralLinkUsage> linkUsageRepository,
       IRepositoryBatchedValueContainsWithNavigation<ReferralLink> linkRepository)
     {
+      _logger = logger ?? throw new ArgumentNullException(nameof(logger));
       _httpContextAccessor = httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
 
       _userService = userService ?? throw new ArgumentNullException(nameof(userService));
@@ -94,7 +98,7 @@ namespace Yoma.Core.Domain.Referral.Services
 
       _referralAnalyticsSearchFilterValidator.ValidateAndThrow(filter);
 
-      IQueryable<ReferralAnalyticsUser> baseQuery = filter.Role switch
+      IQueryable<ReferralAnalyticsUser> query = filter.Role switch
       {
         ReferralParticipationRole.Referrer => SearchQueryAsReferrer(filter),
         ReferralParticipationRole.Referee => SearchQueryAsReferee(filter),
@@ -102,52 +106,19 @@ namespace Yoma.Core.Domain.Referral.Services
           $"The role '{filter.Role}' is not supported for referral analytics search"),
       };
 
-      IQueryable<ReferralAnalyticsUser> pagedQuery = baseQuery;
-
       // order by usage count completed (leader board), then by user display name, and lastly by user ID to ensure deterministic sorting / consistent pagination results
       if (!filter.UnrestrictedQuery || filter.PaginationEnabled)
-        pagedQuery = pagedQuery.OrderByDescending(x => x.UsageCountCompleted).ThenBy(x => x.UserDisplayName).ThenBy(o => o.UserId);
+        query = query.OrderByDescending(x => x.UsageCountCompleted).ThenBy(x => x.UserDisplayName).ThenBy(o => o.UserId);
 
       var results = new ReferralAnalyticsSearchResults();
 
       if (filter.PaginationEnabled)
       {
-        results.TotalCount = pagedQuery.Count();
-        pagedQuery = pagedQuery.Skip((filter.PageNumber!.Value - 1) * filter.PageSize!.Value).Take(filter.PageSize.Value);
+        results.TotalCount = query.Count();
+        query = query.Skip((filter.PageNumber!.Value - 1) * filter.PageSize!.Value).Take(filter.PageSize.Value);
       }
 
-      var projectedQuery =
-        pagedQuery.Select(x => new
-        {
-          x.UserId,
-          x.UserDisplayName,
-          LinkCount = (int?)x.LinkCount,
-          LinkCountActive = (int?)x.LinkCountActive,
-          UsageCountCompleted = (int?)x.UsageCountCompleted,
-          UsageCountPending = (int?)x.UsageCountPending,
-          UsageCountExpired = (int?)x.UsageCountExpired,
-          ZltoRewardTotal = (decimal?)x.ZltoRewardTotal
-        });
-
-      var items = projectedQuery
-        .AsEnumerable() // EF Core materializer bug with nullable aggregates in GroupJoin → force client-side projection
-        .Select(x => new ReferralAnalyticsUser
-        {
-          UserId = x.UserId,
-          UserDisplayName = x.UserDisplayName ?? string.Empty,
-
-          LinkCount = x.LinkCount,
-          LinkCountActive = x.LinkCountActive,
-
-          UsageCountCompleted = x.UsageCountCompleted ?? 0,
-          UsageCountPending = x.UsageCountPending ?? 0,
-          UsageCountExpired = x.UsageCountExpired ?? 0,
-
-          ZltoRewardTotal = x.ZltoRewardTotal ?? 0m
-        })
-        .ToList();
-
-      results.Items = items;
+      results.Items = [.. query];
 
       return results;
     }
@@ -207,81 +178,136 @@ namespace Yoma.Core.Domain.Referral.Services
       var usageStatusPendingId = _linkUsageStatusService.GetByName(ReferralLinkUsageStatus.Pending.ToString()).Id;
       var usageStatusExpiredId = _linkUsageStatusService.GetByName(ReferralLinkUsageStatus.Expired.ToString()).Id;
 
-      // base link query (referrer = link owner)
+      _logger.LogInformation(
+        "ReferralAnalytics Referrer: Start | ProgramId={ProgramId}, UserId={UserId}, StartDate={StartDate}, EndDate={EndDate}",
+        filter.ProgramId, filter.UserId, filter.StartDate, filter.EndDate
+      );
+
+      // base link query
       var linkQuery = _linkRepository.Query();
 
-      // program
       if (filter.ProgramId.HasValue)
         linkQuery = linkQuery.Where(o => o.ProgramId == filter.ProgramId.Value);
 
-      // date range
       if (filter.StartDate.HasValue)
-      {
-        var startDate = filter.StartDate.Value.RemoveTime();
-        linkQuery = linkQuery.Where(o => o.DateCreated >= startDate);
-      }
+        linkQuery = linkQuery.Where(o => o.DateCreated >= filter.StartDate.Value.RemoveTime());
 
       if (filter.EndDate.HasValue)
-      {
-        var endDate = filter.EndDate.Value.ToEndOfDay();
-        linkQuery = linkQuery.Where(o => o.DateCreated <= endDate);
-      }
+        linkQuery = linkQuery.Where(o => o.DateCreated <= filter.EndDate.Value.ToEndOfDay());
 
-      // referrer filter (link owner)
       if (filter.UserId.HasValue)
         linkQuery = linkQuery.Where(o => o.UserId == filter.UserId.Value);
 
-      // IMPORTANT: only now, after all filters, derive link IDs
-      var linkIds = linkQuery.Select(o => o.Id);
+      var linkIdsQuery = linkQuery.Select(o => o.Id);
 
-      // aggregate usages per referrer, limited by filtered links via FK LinkId
-      var usageAgg =
-       _linkUsageRepository.Query()
-       .Where(u => linkIds.Contains(u.LinkId))
-       .GroupBy(u => u.UserIdReferrer)
-       .Select(g => new
-       {
-         UserIdReferrer = g.Key,
-         Pending = (int?)g.Count(x => x.StatusId == usageStatusPendingId),
-         Expired = (int?)g.Count(x => x.StatusId == usageStatusExpiredId)
-       });
+      _logger.LogInformation("ReferralAnalytics Referrer: linkAggQuery building…");
 
-      // aggregate links per referrer
-      var linkAgg =
-        linkQuery
-          .GroupBy(l => l.UserId)
-          .Select(g => new
-          {
-            UserId = g.Key,
-            UserDisplayName = g.Max(x => x.UserDisplayName) ?? string.Empty,
-            LinkCount = g.Count(),
-            LinkCountActive = g.Count(x => x.StatusId == linkStatusActiveId),
-            Completed = g.Sum(x => x.CompletionTotal ?? 0),
-            ZltoReward = g.Sum(x => x.ZltoRewardCumulative ?? 0)
-          });
+      // 1️⃣ LINK AGGREGATES (DB)
+      var linkAggQuery =
+          linkQuery
+            .GroupBy(l => l.UserId)
+            .Select(g => new LinkAggDto
+            {
+              UserId = g.Key,
+              UserDisplayName = g.Max(x => x.UserDisplayName) ?? string.Empty,
+              LinkCount = g.Count(),
+              LinkCountActive = g.Count(x => x.StatusId == linkStatusActiveId),
+              Completed = g.Sum(x => x.CompletionTotal ?? 0),
+              ZltoReward = g.Sum(x => x.ZltoRewardCumulative ?? 0)
+            });
 
-      // left join link + usage aggregates on referrer
-      return linkAgg
-        .GroupJoin(
-          usageAgg,
-          l => l.UserId,
-          u => u.UserIdReferrer,
-          (l, usages) => new { l, usages }
-        )
-        .SelectMany(
-          x => x.usages.DefaultIfEmpty(),
-          (x, u) => new ReferralAnalyticsUser
-          {
-            UserId = x.l.UserId,
-            UserDisplayName = x.l.UserDisplayName,
-            LinkCount = x.l.LinkCount,
-            LinkCountActive = x.l.LinkCountActive,
-            UsageCountCompleted = x.l.Completed,
-            UsageCountPending = u != null ? (u.Pending ?? 0) : 0,
-            UsageCountExpired = u != null ? (u.Expired ?? 0) : 0,
-            ZltoRewardTotal = x.l.ZltoReward
-          });
+      List<LinkAggDto> linkAgg;
+      try
+      {
+        linkAgg = linkAggQuery.ToList();
+        _logger.LogInformation("ReferralAnalytics Referrer: linkAgg materialized | rows={Count}", linkAgg.Count);
+      }
+      catch (Exception ex)
+      {
+        _logger.LogError(ex, "ReferralAnalytics Referrer: ERROR materializing linkAgg");
+        throw;
+      }
+
+      _logger.LogInformation("ReferralAnalytics Referrer: usageAggQuery building…");
+
+      // 2️⃣ USAGE AGGREGATES (DB)
+      var usageAggQuery =
+          _linkUsageRepository.Query()
+            .Where(u => linkIdsQuery.Contains(u.LinkId))
+            .GroupBy(u => u.UserIdReferrer)
+            .Select(g => new UsageAggDto
+            {
+              UserIdReferrer = g.Key,
+              Pending = g.Count(x => x.StatusId == usageStatusPendingId),
+              Expired = g.Count(x => x.StatusId == usageStatusExpiredId)
+            });
+
+      List<UsageAggDto> usageAgg;
+      try
+      {
+        usageAgg = usageAggQuery.ToList();
+        _logger.LogInformation("ReferralAnalytics Referrer: usageAgg materialized | rows={Count}", usageAgg.Count);
+      }
+      catch (Exception ex)
+      {
+        _logger.LogError(ex, "ReferralAnalytics Referrer: ERROR materializing usageAgg");
+        throw;
+      }
+
+      // sample logs
+      foreach (var x in linkAgg.Take(2))
+        _logger.LogInformation("linkAgg sample: UserId={UserId}, Completed={Completed}, Reward={Reward}",
+          x.UserId, x.Completed, x.ZltoReward);
+
+      foreach (var x in usageAgg.Take(2))
+        _logger.LogInformation("usageAgg sample: UserIdReferrer={UserId}, Pending={Pending}, Expired={Expired}",
+          x.UserIdReferrer, x.Pending, x.Expired);
+
+      // 3️⃣ IN-MEMORY JOIN
+      _logger.LogInformation("ReferralAnalytics Referrer: joining in-memory…");
+
+      var results =
+        from l in linkAgg
+        join u in usageAgg on l.UserId equals u.UserIdReferrer into gj
+        from u in gj.DefaultIfEmpty()
+        select new ReferralAnalyticsUser
+        {
+          UserId = l.UserId,
+          UserDisplayName = l.UserDisplayName,
+          LinkCount = l.LinkCount,
+          LinkCountActive = l.LinkCountActive,
+          UsageCountCompleted = l.Completed,
+          UsageCountPending = u?.Pending ?? 0,
+          UsageCountExpired = u?.Expired ?? 0,
+          ZltoRewardTotal = l.ZltoReward
+        };
+
+      var resultList = results.ToList();
+
+      _logger.LogInformation("ReferralAnalytics Referrer: final rows={Count}", resultList.Count);
+
+      return resultList.AsQueryable();
     }
+
+    // DTOs used for typed intermediate projections:
+    private sealed class LinkAggDto
+    {
+      public Guid UserId { get; set; }
+      public string UserDisplayName { get; set; } = null!;
+      public int LinkCount { get; set; }
+      public int LinkCountActive { get; set; }
+      public int Completed { get; set; }
+      public decimal ZltoReward { get; set; }
+    }
+
+    private sealed class UsageAggDto
+    {
+      public Guid UserIdReferrer { get; set; }
+      public int Pending { get; set; }
+      public int Expired { get; set; }
+    }
+
+
     #endregion
   }
 }
