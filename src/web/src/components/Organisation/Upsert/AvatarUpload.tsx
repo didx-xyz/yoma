@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import AvatarEditor from "react-avatar-editor";
-import { IoMdClose, IoMdCrop } from "react-icons/io";
+import { IoMdClose } from "react-icons/io";
+import { FaEdit, FaTimes } from "react-icons/fa";
 import { AvatarImage } from "~/components/AvatarImage";
 import CustomModal from "~/components/Common/CustomModal";
 import styles from "./AvatarUpload.module.css";
@@ -161,7 +162,7 @@ const AvatarUpload: React.FC<AvatarUploadProps> = ({
       </CustomModal>
 
       {/* IMAGE UPLOAD */}
-      <div className="flex w-full items-center">
+      <div className="flex w-full flex-col">
         <input
           name="logo"
           type="file"
@@ -170,18 +171,6 @@ const AvatarUpload: React.FC<AvatarUploadProps> = ({
           ref={inputRef}
           className={styles.upload}
         />
-
-        {selectedImage && (
-          <div className="flex grow justify-end gap-4">
-            <button
-              type="button"
-              className="btn btn-secondary rounded-full text-white"
-              onClick={() => setCropModalVisible(true)}
-            >
-              <IoMdCrop className="h-4 w-4" />
-            </button>
-          </div>
-        )}
       </div>
 
       {/* LOGO PREVIEW */}
@@ -196,25 +185,30 @@ const AvatarUpload: React.FC<AvatarUploadProps> = ({
       ) : (
         <div className="mt-4 flex w-full justify-center rounded-lg bg-white py-8">
           <div className="indicator">
-            <button
-              className="filepond--file-action-button filepond--action-remove-item indicator-item bg-gray-light hover:bg-error !z-10 !cursor-pointer rounded-full"
-              type="button"
-              data-align="left"
-              onClick={clearFile}
-            >
-              <svg
-                width="26"
-                height="26"
-                viewBox="0 0 26 26"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M11.586 13l-2.293 2.293a1 1 0 0 0 1.414 1.414L13 14.414l2.293 2.293a1 1 0 0 0 1.414-1.414L14.414 13l2.293-2.293a1 1 0 0 0-1.414-1.414L13 11.586l-2.293-2.293a1 1 0 0 0-1.414 1.414L11.586 13z"
-                  fill="currentColor"
-                  fillRule="nonzero"
-                ></path>
-              </svg>
-            </button>
+            {croppedImage && (
+              <>
+                <button
+                  className="filepond--file-action-button filepond--action-revert-item-processing indicator-item bg-secondary tooltip tooltip-left !z-10 !cursor-pointer rounded-full p-1 text-white"
+                  type="button"
+                  data-align="right"
+                  data-tip="Edit crop"
+                  style={{ right: "1.7rem" }}
+                  onClick={() => setCropModalVisible(true)}
+                >
+                  <FaEdit className="h-4 w-4" />
+                </button>
+                <button
+                  className="filepond--file-action-button filepond--action-remove-item indicator-item bg-error tooltip tooltip-left !z-10 !cursor-pointer rounded-full p-1 text-white"
+                  type="button"
+                  data-align="left"
+                  data-tip="Remove image"
+                  onClick={clearFile}
+                >
+                  <FaTimes className="h-4 w-4" />
+                </button>
+              </>
+            )}
+
             <AvatarImage
               icon={computedImageUrl}
               alt="Cropped Avatar"

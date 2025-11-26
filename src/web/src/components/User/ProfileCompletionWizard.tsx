@@ -341,7 +341,7 @@ export const ProfileCompletionWizard: React.FC<
                 </div>
               </div>
               <h4 className="mb-2 text-lg font-bold text-gray-900 md:text-xl">
-                Step 1: Complete Your Profile
+                Complete Your Profile
               </h4>
               <p className="mb-4 text-sm text-gray-600">
                 Your information will be used to issue credentials in your Yo-ID
@@ -374,7 +374,7 @@ export const ProfileCompletionWizard: React.FC<
                 </div>
               </div>
               <h4 className="mb-2 text-lg font-bold text-gray-900 md:text-xl">
-                Step 2: Choose Your Settings
+                Choose Your Settings
               </h4>
               <p className="mb-4 text-sm text-gray-600">
                 Configure your notification and privacy preferences
@@ -410,7 +410,7 @@ export const ProfileCompletionWizard: React.FC<
                 </div>
               </div>
               <h4 className="mb-2 text-lg font-bold text-gray-900 md:text-xl">
-                Step 3: Picture Time!
+                Picture Time!
               </h4>
               <p className="mb-4 text-sm text-gray-600">
                 Choose a profile picture to personalize your account

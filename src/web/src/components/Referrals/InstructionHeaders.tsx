@@ -429,6 +429,7 @@ export interface PathwayTaskDisplayProps {
   isAnyRule: boolean;
   opportunityData?: OpportunityInfo; // Optional opportunity data to avoid fetching
   showActionButton?: boolean;
+  showBullets?: boolean;
   color?: "green" | "orange";
   totalTasks?: number;
   isAdmin?: boolean;
@@ -441,6 +442,7 @@ export const PathwayTaskDisplay: React.FC<PathwayTaskDisplayProps> = ({
   isAnyRule,
   opportunityData,
   showActionButton = false,
+  showBullets = true,
   color = "green",
   totalTasks = 1,
   isAdmin = false,
@@ -455,28 +457,30 @@ export const PathwayTaskDisplay: React.FC<PathwayTaskDisplayProps> = ({
   return (
     <div className="flex gap-3">
       {/* Task Number/Bullet */}
-      <div className="flex-shrink-0">
-        {task.completed ? (
-          <div
-            className="tooltip flex h-6 w-6 items-center justify-center rounded-full bg-green-500 text-white"
-            data-tip="You completed this task"
-          >
-            <span className="text-xs font-bold">✓</span>
-          </div>
-        ) : totalTasks === 1 || (!isAnyRule && !isSequential) || isAnyRule ? (
-          <div
-            className={`flex h-6 w-6 items-center justify-center rounded-full border-2 ${badgeClasses} text-base font-bold ${badgeTextColor}`}
-          >
-            !
-          </div>
-        ) : (
-          <div
-            className={`flex h-6 w-6 items-center justify-center rounded-full border-2 ${badgeClasses} text-sm font-semibold ${badgeTextColor}`}
-          >
-            {taskIndex + 1}
-          </div>
-        )}
-      </div>
+      {showBullets && (
+        <div className="flex-shrink-0">
+          {task.completed ? (
+            <div
+              className="tooltip flex h-6 w-6 items-center justify-center rounded-full bg-green-500 text-white"
+              data-tip="You completed this task"
+            >
+              <span className="text-xs font-bold">✓</span>
+            </div>
+          ) : totalTasks === 1 || (!isAnyRule && !isSequential) || isAnyRule ? (
+            <div
+              className={`flex h-6 w-6 items-center justify-center rounded-full border-2 ${badgeClasses} text-base font-bold ${badgeTextColor}`}
+            >
+              !
+            </div>
+          ) : (
+            <div
+              className={`flex h-6 w-6 items-center justify-center rounded-full border-2 ${badgeClasses} text-sm font-semibold ${badgeTextColor}`}
+            >
+              {taskIndex + 1}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Task Content */}
       <div className="mb-4 min-w-0 flex-1">
@@ -534,6 +538,7 @@ export interface PathwayTasksListProps {
   orderMode: string;
   opportunityDataMap?: Record<string, OpportunityInfo>; // Optional map of opportunity data by ID
   showActionButtons?: boolean;
+  showBullets?: boolean;
   color?: "green" | "orange";
   isAdmin?: boolean;
 }
@@ -544,6 +549,7 @@ export const PathwayTasksList: React.FC<PathwayTasksListProps> = ({
   orderMode,
   opportunityDataMap,
   showActionButtons = false,
+  showBullets = true,
   color = "green",
   isAdmin = false,
 }) => {
@@ -569,6 +575,7 @@ export const PathwayTasksList: React.FC<PathwayTasksListProps> = ({
                 : undefined
             }
             showActionButton={showActionButtons}
+            showBullets={showBullets}
             color={color}
             totalTasks={tasks.length}
             isAdmin={isAdmin}

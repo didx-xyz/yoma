@@ -23,6 +23,7 @@ export const ReferrerProgressCard: React.FC<ReferrerProgressCardProps> = ({
         <span className="text-lg">📊</span>
         <span className="font-bold text-orange-900">My Referral Links</span>
       </div>
+
       <p className="text-xs text-gray-600">Your active referral links:</p>
       <div className="flex flex-col gap-2">
         {displayLinks.map((link) => (
@@ -61,6 +62,7 @@ export const ReferrerProgressCard: React.FC<ReferrerProgressCardProps> = ({
           +{totalLinks - 5} more link{totalLinks - 5 > 1 ? "s" : ""}
         </p>
       )}
+
       <Link
         href="/yoid/referrals"
         className="btn btn-warning btn-sm mt-2 gap-2 text-white"

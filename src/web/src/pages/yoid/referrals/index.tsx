@@ -285,7 +285,7 @@ const ReferralsDashboard: NextPageWithLayout<{
             items={[
               { title: "💳 Yo-ID", url: "/yoid" },
               {
-                title: "🎁 Referrals",
+                title: "Refer a friend",
                 selected: true,
               },
             ]}

@@ -281,7 +281,7 @@ const ReferralClaimPage: NextPageWithLayout<{
     return (
       <div className="flex min-h-screen items-center justify-center">
         <LoadingInline
-          classNameSpinner="h-32 w-32 border-t-4 border-b-4 border-orange"
+          classNameSpinner="h-16 w-16 border-t-4 border-b-4 border-orange"
           classNameLabel={"text-lg font-semibold"}
           label={
             claimingAfterProfile

@@ -14,6 +14,7 @@ import { AvatarImage } from "../AvatarImage";
 import { PageBackground } from "../PageBackground";
 import MainLayout from "./Main";
 import { YoIdModal } from "../YoID/YoIdModal";
+import ScrollableContainer from "../Carousel/ScrollableContainer";
 
 export type TabProps = ({
   children,
@@ -72,7 +73,7 @@ const YoIDLayout: TabProps = ({ children }) => {
         iconImage: iconTools,
       },
       {
-        title: "🎁 Referrals",
+        title: "❤️ Refer a friend",
         description: "Share referral links, earn rewards and track earnings",
         url: "/yoid/referrals",
         badgeCount: null,
@@ -89,7 +90,7 @@ const YoIDLayout: TabProps = ({ children }) => {
           <title>Yoma | Yo-ID</title>
         </Head>
 
-        <PageBackground className="h-[16rem]" />
+        <PageBackground className="h-[14rem] md:h-[16rem]" />
 
         <YoIdModal
           isOpen={yoIdModalVisible}
@@ -130,26 +131,32 @@ const YoIDLayout: TabProps = ({ children }) => {
               </div>
 
               {/* NAVIGATION */}
-              <div className="flex h-[70px] flex-row flex-wrap gap-2">
-                {tabItems.map((tab) => (
-                  <Link
-                    key={tab.title}
-                    href={tab.url!}
-                    rel="noopener noreferrer"
-                    className={`btn btn-xs border-orange bg-orange lg:btn-sm hover:border-orange hover:bg-purple flex h-8 items-center text-xs tracking-wide text-white shadow-md hover:text-white ${
-                      tab.selected ? "border-orange bg-purple text-white" : ""
-                    }`}
-                    title={tab.description ?? `Go to ${tab.title}`}
-                  >
-                    {tab.title}
-                  </Link>
-                ))}
+              <div className="min-h-8">
+                <ScrollableContainer
+                  className="flex gap-2 overflow-x-auto"
+                  showShadows={true}
+                >
+                  {tabItems.map((tab) => (
+                    <Link
+                      key={tab.title}
+                      href={tab.url!}
+                      rel="noopener noreferrer"
+                      className={`btn btn-xs border-orange bg-orange lg:btn-sm hover:border-orange hover:bg-purple flex h-8 flex-shrink-0 items-center text-xs tracking-wide text-white shadow-md hover:text-white ${
+                        tab.selected ? "border-orange bg-purple text-white" : ""
+                      }`}
+                      title={tab.description ?? `Go to ${tab.title}`}
+                      draggable={false}
+                    >
+                      {tab.title}
+                    </Link>
+                  ))}
+                </ScrollableContainer>
               </div>
             </div>
           </div>
 
           {/* MAIN CONTENT */}
-          <div className="mt-[2rem] flex grow flex-col items-center justify-center md:mt-[1rem]">
+          <div className="mt-8 flex grow flex-col items-center justify-center md:mt-12">
             {/* CHILDREN */}
             {children}
           </div>
