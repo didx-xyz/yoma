@@ -5,6 +5,21 @@ namespace Yoma.Core.Domain.Core.Helpers
 {
   public static class RedactorHelper
   {
+    public static string RedactUsername(string username)
+    {
+      ArgumentException.ThrowIfNullOrWhiteSpace(username, nameof(username));
+      username = username.Trim();
+
+      if (username.Contains('@')) return MaskEmail(username);
+
+      if (PhoneNumberValidator.IsValidPhoneNumber(username)) return MaskPhone(username);
+
+      // Fallback: generic username masking (should never happen)
+      if (username.Length <= 2) return new string('*', username.Length);
+
+      return $"{username[0]}{new string('*', username.Length - 2)}{username[^1]}";
+    }
+
     public static string RedactDisplayName(string displayName)
     {
       ArgumentException.ThrowIfNullOrWhiteSpace(displayName, nameof(displayName));
