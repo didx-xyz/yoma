@@ -36,17 +36,17 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
         {
           {
             "6C9BC28C-1F4B-4C01-8C71-4E2C9F8F2F11","User","User_Notifications_Referrals","Referrals",
-            "Notifications about referral programs — including link activity, progress, rewards, and access changes.",
+            "Updates on referral activity, progress, and rewards",
             "Notifications","General",5,$"[\"User\"]","true","Boolean",true,true
           },
           {
             "9C5B4C40-6B8E-4F8D-9B36-8F0A1C9EF5AA","User","Admin_Notifications_Referrals","Referral Admin",
-            "Notifications for admins about referral activity, completions, and items needing attention.",
+            "Notifications for admins about referral activity, completions, and items needing attention",
             "Notifications","Admin",13,$"[\"Admin\"]","true","Boolean",true,true
           },
           {
             "D9EE75CC-1190-4BBA-BEB0-4E25BA4A9C11","User","User_RumConsent","Platform Performance Monitoring",
-            "Allow Yoma to monitor site performance to improve your experience.",
+            "Allow Yoma to monitor site performance to improve your experience",
             "Privacy",null,15,$"[\"User\"]","false","Boolean",true,true
           }
         });
