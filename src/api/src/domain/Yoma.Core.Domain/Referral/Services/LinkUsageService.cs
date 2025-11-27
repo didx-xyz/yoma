@@ -110,11 +110,8 @@ namespace Yoma.Core.Domain.Referral.Services
 
       var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 
-      if (result.UserId != user.Id //as referee
-        && result.UserIdReferrer != user.Id) //as referrer
-        throw new SecurityException("Unauthorized");
-
-      return ToInfoParseProgress(result, includeComputed);
+      var role = result.UserId == user.Id ? ReferralParticipationRole.Referee : result.UserIdReferrer == user.Id ? ReferralParticipationRole.Referrer : (ReferralParticipationRole?)null;
+      return role == null ? throw new SecurityException("Unauthorized") : ToInfoParseProgress(result, includeComputed, role);
     }
 
     public ReferralLinkUsageInfo GetByProgramIdAsReferee(Guid programId, bool includeComputed)
@@ -132,7 +129,7 @@ namespace Yoma.Core.Domain.Referral.Services
       if (results.Count == 0)
         throw new EntityNotFoundException($"Referral link usage for program '{programId}' and the current user does not exist");
 
-      return ToInfoParseProgress(results.Single(), includeComputed);
+      return ToInfoParseProgress(results.Single(), includeComputed, ReferralParticipationRole.Referee);
     }
 
     public ReferralLinkUsageSearchResults SearchAsReferee(ReferralLinkUsageSearchFilter filter)
@@ -152,6 +149,8 @@ namespace Yoma.Core.Domain.Referral.Services
         PageNumber = filter.PageNumber,
         PageSize = filter.PageSize
       });
+
+      results.Items.ForEach(o => RedactInfo(o, ReferralParticipationRole.Referee));
 
       return results;
     }
@@ -174,6 +173,7 @@ namespace Yoma.Core.Domain.Referral.Services
         PageSize = filter.PageSize
       });
 
+      results.Items.ForEach(o => RedactInfo(o, ReferralParticipationRole.Referrer));
       return results;
     }
 
@@ -804,7 +804,7 @@ namespace Yoma.Core.Domain.Referral.Services
       }
     }
 
-    private ReferralLinkUsageInfo ToInfoParseProgress(ReferralLinkUsage item, bool includeComputed)
+    private ReferralLinkUsageInfo ToInfoParseProgress(ReferralLinkUsage item, bool includeComputed, ReferralParticipationRole? contextRole = null)
     {
       var result = new ReferralLinkUsageInfo
       {
@@ -831,7 +831,7 @@ namespace Yoma.Core.Domain.Referral.Services
         DateExpired = item.DateExpired
       };
 
-      if (!includeComputed) return result;
+      if (!includeComputed) return RedactInfo(result, contextRole);
 
       result.ProofOfPersonhoodMethod = ProofOfPersonhoodMethod.None; //default
       if (item.UserPhoneNumberConfirmed == true) result.ProofOfPersonhoodMethod |= ProofOfPersonhoodMethod.OTP;
@@ -898,7 +898,7 @@ namespace Yoma.Core.Domain.Referral.Services
         (!program.ProofOfPersonhoodRequired || result.ProofOfPersonhoodCompleted == true)
         && (!program.PathwayRequired || result.PathwayCompleted == true);
 
-      return result;
+      return RedactInfo(result, contextRole);
     }
 
     private void ToInfoParseProgressPathway(ReferralLinkUsageInfo result, Program program)
@@ -967,6 +967,95 @@ namespace Yoma.Core.Domain.Referral.Services
       };
 
       result.PathwayCompleted = result.Pathway.Completed;
+    }
+
+    private static ReferralLinkUsage RedactInfo(ReferralLinkUsage item, ReferralParticipationRole contextRole)
+    {
+      ArgumentNullException.ThrowIfNull(item, nameof(item));
+
+      switch (contextRole)
+      {
+        case ReferralParticipationRole.Referrer:
+          // redact referee info
+          item.UserId = Guid.Empty;
+
+          item.Username = RedactorHelper.RedactUsername(item.Username);
+
+          item.UserDisplayName = RedactorHelper.RedactDisplayName(item.UserDisplayName);
+
+          if (!string.IsNullOrEmpty(item.UserEmail))
+            item.UserEmail = RedactorHelper.MaskEmail(item.UserEmail);
+
+          if (!string.IsNullOrEmpty(item.UserPhoneNumber))
+            item.UserPhoneNumber = RedactorHelper.MaskPhone(item.UserPhoneNumber);
+
+          break;
+
+        case ReferralParticipationRole.Referee:
+          // redact referrer info
+          item.UserIdReferrer = Guid.Empty;
+
+          item.UsernameReferrer = RedactorHelper.RedactUsername(item.UsernameReferrer);
+
+          item.UserDisplayNameReferrer = RedactorHelper.RedactDisplayName(item.UserDisplayNameReferrer);
+
+          if (!string.IsNullOrEmpty(item.UserEmailReferrer))
+            item.UserEmailReferrer = RedactorHelper.MaskEmail(item.UserEmailReferrer);
+
+          if (!string.IsNullOrEmpty(item.UserPhoneNumberReferrer))
+            item.UserPhoneNumberReferrer = RedactorHelper.MaskPhone(item.UserPhoneNumberReferrer);
+
+          break;
+
+        default:
+          throw new ArgumentOutOfRangeException(nameof(contextRole), $"ContextRole '{contextRole}' is not supported.");
+      }
+
+      return item;
+    }
+
+    private static ReferralLinkUsageInfo RedactInfo(ReferralLinkUsageInfo item, ReferralParticipationRole? contextRole)
+    {
+      ArgumentNullException.ThrowIfNull(item, nameof(item));
+
+      switch (contextRole)
+      {
+        case ReferralParticipationRole.Referrer:
+          // redact referee info
+          item.UserId = Guid.Empty;
+
+          item.UserDisplayName = RedactorHelper.RedactDisplayName(item.UserDisplayName);
+
+          if (!string.IsNullOrEmpty(item.UserEmail))
+            item.UserEmail = RedactorHelper.MaskEmail(item.UserEmail);
+
+          if (!string.IsNullOrEmpty(item.UserPhoneNumber))
+            item.UserPhoneNumber = RedactorHelper.MaskPhone(item.UserPhoneNumber);
+
+          break;
+
+        case ReferralParticipationRole.Referee:
+          // redact referrer info
+          item.UserIdReferrer = Guid.Empty;
+
+          item.UserDisplayNameReferrer = RedactorHelper.RedactDisplayName(item.UserDisplayNameReferrer);
+
+          if (!string.IsNullOrEmpty(item.UserEmailReferrer))
+            item.UserEmailReferrer = RedactorHelper.MaskEmail(item.UserEmailReferrer);
+
+          if (!string.IsNullOrEmpty(item.UserPhoneNumberReferrer))
+            item.UserPhoneNumberReferrer = RedactorHelper.MaskPhone(item.UserPhoneNumberReferrer);
+
+          break;
+
+        case null:
+          break; // admin / system – no redaction
+
+        default:
+          throw new ArgumentOutOfRangeException(nameof(contextRole), $"ContextRole '{contextRole}' is not supported.");
+      }
+
+      return item;
     }
     #endregion
   }
