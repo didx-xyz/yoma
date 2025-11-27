@@ -10,6 +10,7 @@ import { getServerSession } from "next-auth";
 import Head from "next/head";
 import { useRouter } from "next/router";
 import { useCallback, useEffect, useState, type ReactElement } from "react";
+import { IoMdClose } from "react-icons/io";
 import { IoWarning } from "react-icons/io5";
 import type {
   ProgramInfo,
@@ -23,13 +24,13 @@ import {
   searchReferralProgramsInfo,
 } from "~/api/services/referrals";
 import Breadcrumb from "~/components/Breadcrumb";
+import CustomModal from "~/components/Common/CustomModal";
 import YoIDLayout from "~/components/Layout/YoID";
 import NoRowsMessage from "~/components/NoRowsMessage";
 import { HelpReferrer } from "~/components/Referrals/HelpReferrer";
 import { ReferrerCreateLinkModal } from "~/components/Referrals/ReferrerCreateLinkModal";
 import { ReferrerLeaderboard } from "~/components/Referrals/ReferrerLeaderboard";
-import { ReferrerLinkUsageInline } from "~/components/Referrals/ReferrerLinkUsageInline";
-import { ReferrerLinkUsageModal } from "~/components/Referrals/ReferrerLinkUsageModal";
+import { ReferrerLinkUsage } from "~/components/Referrals/ReferrerLinkUsage";
 import { ReferrerLinksList } from "~/components/Referrals/ReferrerLinksList";
 import { ReferrerProgramsList } from "~/components/Referrals/ReferrerProgramsList";
 import { ReferrerStats } from "~/components/Referrals/ReferrerStats";
@@ -91,27 +92,36 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     });
   } else {
     // SINGLE PROGRAM MODE: fetch default program and user's first link for that program
-    const defaultProgram = await getDefaultReferralProgram(context);
+    try {
+      const defaultProgram = await getDefaultReferralProgram(context);
 
-    await queryClient.prefetchQuery({
-      queryKey: ["DefaultReferralProgram"],
-      queryFn: () => Promise.resolve(defaultProgram),
-    });
+      await queryClient.prefetchQuery({
+        queryKey: ["DefaultReferralProgram"],
+        queryFn: () => Promise.resolve(defaultProgram),
+      });
 
-    await queryClient.prefetchQuery({
-      queryKey: ["ReferralLinks", defaultProgram.id, 1, 1], // programId, pageNumber: 1, pageSize: 1
-      queryFn: () =>
-        searchReferralLinks(
-          {
-            pageNumber: 1,
-            pageSize: 1,
-            programId: defaultProgram.id,
-            valueContains: null,
-            statuses: null,
-          },
-          context,
-        ),
-    });
+      await queryClient.prefetchQuery({
+        queryKey: ["ReferralLinks", defaultProgram.id, 1, 1], // programId, pageNumber: 1, pageSize: 1
+        queryFn: () =>
+          searchReferralLinks(
+            {
+              pageNumber: 1,
+              pageSize: 1,
+              programId: defaultProgram.id,
+              valueContains: null,
+              statuses: null,
+            },
+            context,
+          ),
+      });
+    } catch (error) {
+      console.error("Failed to fetch default referral program:", error);
+      // If default program fails to load, prefetch with null to indicate unavailable
+      await queryClient.prefetchQuery({
+        queryKey: ["DefaultReferralProgram"],
+        queryFn: () => Promise.resolve(null),
+      });
+    }
   }
 
   return {
@@ -372,15 +382,15 @@ const ReferralsDashboard: NextPageWithLayout<{
                   )}
 
                   {!isAutoCreating && hasLinks && firstLink && (
-                    <ReferrerLinkUsageInline link={firstLink} />
+                    <ReferrerLinkUsage link={firstLink} />
                   )}
 
                   {!isAutoCreating && !hasLinks && !defaultProgram && (
                     <div className="shadow-custom rounded-lg bg-white p-6">
                       <NoRowsMessage
-                        title="No Program Available"
-                        description="No default referral program is available at this time."
-                        icon={"⚠️"}
+                        title="My Referral Links"
+                        description="Link currently unavailable. Please check back later."
+                        icon={"🔗"}
                       />
                     </div>
                   )}
@@ -482,11 +492,55 @@ const ReferralsDashboard: NextPageWithLayout<{
           />
 
           {/* Link Usage Modal */}
-          <ReferrerLinkUsageModal
-            link={selectedLinkForUsage}
-            isOpen={!!selectedLinkForUsage}
-            onClose={() => setSelectedLinkForUsage(null)}
-          />
+          {selectedLinkForUsage && (
+            <CustomModal
+              isOpen={!!selectedLinkForUsage}
+              onRequestClose={() => setSelectedLinkForUsage(null)}
+              className="md:max-h-[90vh] md:w-[900px]"
+            >
+              <div className="flex flex-col gap-2">
+                {/* Header */}
+                <div className="bg-theme flex flex-row p-4 shadow-lg">
+                  <div className="flex-1">
+                    <h1 className="text-lg font-semibold text-white">
+                      Link Usage
+                    </h1>
+                    <p className="mt-1 text-sm text-white/80">
+                      {selectedLinkForUsage.name}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    className="btn btn-circle text-gray-dark hover:bg-gray btn-sm"
+                    onClick={() => setSelectedLinkForUsage(null)}
+                  >
+                    <IoMdClose className="h-5 w-5" />
+                  </button>
+                </div>
+
+                <div className="p-6">
+                  <div className="flex flex-col gap-4 overflow-y-auto">
+                    <ReferrerLinkUsage
+                      link={selectedLinkForUsage}
+                      showProgramDetails={true}
+                      showQRCode={true}
+                    />
+
+                    {/* Action Buttons */}
+                    <div className="mt-10 flex gap-3">
+                      <button
+                        type="button"
+                        className="btn btn-outline flex-1 border-blue-600 text-blue-600 normal-case hover:bg-blue-600 hover:text-white"
+                        onClick={() => setSelectedLinkForUsage(null)}
+                      >
+                        Back to List
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CustomModal>
+          )}
         </>
       )}
     </>

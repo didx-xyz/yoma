@@ -7,29 +7,38 @@ import {
   IoLink,
   IoStatsChart,
   IoPeople,
+  IoGift,
 } from "react-icons/io5";
 import type {
   ReferralLink,
   ReferralLinkUsageSearchResults,
   ReferralLinkUsageStatus,
   ReferralLinkUsage,
+  ProgramInfo,
 } from "~/api/models/referrals";
 import {
   searchReferralLinkUsagesAsReferrer,
   getReferralLinkById,
+  getReferralProgramInfoById,
 } from "~/api/services/referrals";
 import FormMessage, { FormMessageType } from "~/components/Common/FormMessage";
 import Suspense from "~/components/Common/Suspense";
 import NoRowsMessage from "~/components/NoRowsMessage";
 import { PAGE_SIZE } from "~/lib/constants";
 import { ReferrerLinkDetails } from "./ReferrerLinkDetails";
+import { RefereeProgramDetails } from "./RefereeProgramDetails";
+import { ProgramRequirements } from "./ProgramRequirements";
 
-interface LinkUsageInlineProps {
+interface LinkUsageProps {
   link: ReferralLink;
+  showProgramDetails?: boolean;
+  showQRCode?: boolean;
 }
 
-export const ReferrerLinkUsageInline: React.FC<LinkUsageInlineProps> = ({
+export const ReferrerLinkUsage: React.FC<LinkUsageProps> = ({
   link,
+  showProgramDetails = false,
+  showQRCode = false,
 }) => {
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -44,16 +53,16 @@ export const ReferrerLinkUsageInline: React.FC<LinkUsageInlineProps> = ({
     enabled: !!link?.id,
   });
 
-  // Fetch full program details
-  //   const {
-  //     data: programData,
-  //     isLoading: programLoading,
-  //     error: programError,
-  //   } = useQuery<ProgramInfo>({
-  //     queryKey: ["ReferralProgramInfo", link?.programId],
-  //     queryFn: () => getReferralProgramInfoById(link?.programId ?? ""),
-  //     enabled: !!link?.programId,
-  //   });
+  // Fetch full program details (only if showProgramDetails is true)
+  const {
+    data: programData,
+    isLoading: programLoading,
+    error: programError,
+  } = useQuery<ProgramInfo>({
+    queryKey: ["ReferralProgramInfo", link?.programId],
+    queryFn: () => getReferralProgramInfoById(link?.programId ?? ""),
+    enabled: !!link?.programId && showProgramDetails,
+  });
 
   // Fetch usage data for this link
   const {
@@ -106,8 +115,8 @@ export const ReferrerLinkUsageInline: React.FC<LinkUsageInlineProps> = ({
     [],
   );
 
-  const isLoading = linkLoading || /* programLoading ||*/ usageLoading;
-  const error = linkError || /* programError ||*/ usageError;
+  const isLoading = linkLoading || programLoading || usageLoading;
+  const error = linkError || programError || usageError;
 
   const hasUsage = (usageData?.items?.length ?? 0) > 0;
   const totalCount = usageData?.totalCount ?? 0;
@@ -126,35 +135,37 @@ export const ReferrerLinkUsageInline: React.FC<LinkUsageInlineProps> = ({
               <ReferrerLinkDetails
                 link={fullLinkData}
                 mode="large"
-                showQRCode={false}
+                showQRCode={showQRCode}
                 showShare={true}
                 className=""
-                hideLabels={true}
+                hideLabels={!showQRCode}
               />
             </div>
           )}
+
           {/* Program Preview */}
-          {/* {programData && (
-          <div className="shadow-custom space-y-3 rounded-lg bg-white p-6">
-            <div>
-              {/* Header
-              <div className="mb-3">
-                <h3 className="flex items-center gap-2 text-base font-bold">
-                  <IoGift className="h-5 w-5 text-orange-400" />
-                  Program Details
-                </h3>
+          {showProgramDetails && programData && (
+            <div className="shadow-custom space-y-3 rounded-lg bg-white p-6">
+              <div>
+                {/* Header */}
+                <div className="mb-3">
+                  <h3 className="flex items-center gap-2 text-base font-bold">
+                    <IoGift className="h-5 w-5 text-orange-400" />
+                    Selected Program
+                  </h3>
+                </div>
+                <div className="bg-white">
+                  <RefereeProgramDetails
+                    program={programData}
+                    context="preview"
+                    perspective="referrer"
+                  />
+                </div>
               </div>
-              <div className="bg-white">
-                <RefereeProgramDetails
-                  program={programData}
-                  context="preview"
-                  perspective="referrer"
-                />
-              </div>
+              <ProgramRequirements program={programData} showPathway={true} />
             </div>
-            <ProgramRequirements program={programData} showPathway={true} />
-          </div>
-        )} */}
+          )}
+
           {/* Link Stats Summary */}
           <div className="shadow-custom space-y-2 rounded-lg bg-white p-6">
             <h2 className="mb-4 flex items-center gap-4 text-base font-bold text-gray-900">
@@ -188,6 +199,7 @@ export const ReferrerLinkUsageInline: React.FC<LinkUsageInlineProps> = ({
               </div>
             </div>
           </div>
+
           {/* Usage List */}
           <div className="shadow-custom rounded-lg bg-white p-6">
             <h2 className="mb-4 flex items-center gap-4 text-base font-bold text-gray-900">
