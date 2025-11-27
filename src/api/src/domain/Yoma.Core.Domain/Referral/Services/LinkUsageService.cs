@@ -585,39 +585,61 @@ namespace Yoma.Core.Domain.Referral.Services
               myUsage.Id, eligibleForRewards);
 
             // Calculates and assigns completion rewards for a referral usage based on the program’s
-            // configured reward amounts and remaining ZLTO reward pool.
-            // • Pool behavior:
-            //   – The pool funds referee first (up to target), then referrer (up to target from remainder).
-            //   – Partial payouts allowed; if pool is empty, both get 0 (completion still counts).
-            // • Null handling:
-            //   – Null program targets ⇒ corresponding usage rewards remain null.
-            //   – Non-null targets but insufficient pool ⇒ usage rewards set to 0 (never negative).
+            // configured reward amounts and optional ZLTO reward pool.
+            //
+            // Reward modes:
+            // • Pooled mode (ZltoRewardPool.HasValue = true):
+            //     – Enforces pool cap using ZltoRewardBalance.
+            //     – Referee is funded first (up to target), then referrer (up to target from remainder).
+            //     – Partial payouts allowed; if the pool is empty, both receive 0 (completion still counts).
+            //
+            // • No-pool mode (ZltoRewardPool is null):
+            //     – No pool cap enforced.
+            //     – Configured targets are paid directly (refereeTarget/referrerTarget).
+            //     – Useful when rewards should always pay out and are not tied to a fixed pool.
+            //
+            // Null handling rules:
+            // • Null program targets ⇒ corresponding usage rewards remain null (no payout configured).
+            // • Non-null targets but insufficient pool (in pooled mode) ⇒ payout may be partial or 0 (never negative).
             decimal? rewardReferee = null;
             decimal? rewardReferrer = null;
 
             if (eligibleForRewards)
             {
               // Program-configured targets (nullable)
-              decimal? refereeTarget = program.ZltoRewardReferee;
-              decimal? referrerTarget = program.ZltoRewardReferrer;
+              var refereeTarget = program.ZltoRewardReferee;
+              var referrerTarget = program.ZltoRewardReferrer;
 
-              // Pool balance (treat null as 0, clamp to ≥ 0)
-              decimal pool = Math.Max(program.ZltoRewardBalance ?? 0m, 0m);
-
-              // Pay referee first (up to target if configured)
-              if (refereeTarget.HasValue)
+              if (program.ZltoRewardPool.HasValue)
               {
-                var payReferee = Math.Min(pool, refereeTarget.Value);
-                rewardReferee = payReferee;
-                pool -= payReferee;
+                // POOLED MODE: enforce pool cap
+                var pool = Math.Max(program.ZltoRewardBalance ?? 0m, 0m);
+
+                // Pay referee first (up to target if configured)
+                if (refereeTarget.HasValue)
+                {
+                  var payReferee = Math.Min(pool, refereeTarget.Value);
+                  rewardReferee = payReferee;
+                  pool -= payReferee;
+                }
+
+                // Pay referrer next (whatever remains, up to target if configured)
+                if (referrerTarget.HasValue)
+                {
+                  var payReferrer = Math.Min(pool, referrerTarget.Value);
+                  rewardReferrer = payReferrer;
+                  pool -= payReferrer;
+                }
               }
-
-              // Pay referrer next (whatever remains, up to target if configured)
-              if (referrerTarget.HasValue)
+              else
               {
-                var payReferrer = Math.Min(pool, referrerTarget.Value);
-                rewardReferrer = payReferrer;
-                pool -= payReferrer;
+                // NO POOL CONFIGURED: pay configured targets directly
+                rewardReferee = refereeTarget;
+                rewardReferrer = referrerTarget;
+
+                _logger.LogInformation(
+                  "Referral progress: program {ProgramId} has no ZLTO pool configured → paying configured targets directly (referee {RefereeTarget}, referrer {ReferrerTarget}) for usage {UsageId}",
+                  program.Id, rewardReferee ?? 0m, rewardReferrer ?? 0m, myUsage.Id);
               }
 
               // Per-party logging (full/partial/zero)
