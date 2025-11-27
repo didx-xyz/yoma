@@ -427,8 +427,8 @@ namespace Yoma.Core.Domain.Referral.Services
       var statusExpired = _linkUsageStatusService.GetByName(ReferralLinkUsageStatus.Expired.ToString());
 
       item.CompletionTotal ??= 0;
-      item.PendingTotal = item.UsageCounts?.Count(o => o.Key == statusPending.Id) ?? 0;
-      item.ExpiredTotal = item.UsageCounts?.Count(o => o.Key == statusExpired.Id) ?? 0;
+      item.PendingTotal = item.UsageCounts?.GetValueOrDefault(statusPending.Id) ?? 0;
+      item.ExpiredTotal = item.UsageCounts?.GetValueOrDefault(statusExpired.Id) ?? 0;
     }
     #endregion
   }
