@@ -51,10 +51,11 @@ export const ReferrerLinksList: React.FC<LinksListProps> = ({
   const hasPrograms = programs.length > 0;
 
   return (
-    <div className="shadow-custom rounded-lg bg-white p-6">
-      <div className="mb-4 flex items-center justify-between">
-        <h2 className="flex items-center gap-4 text-lg font-bold text-gray-900">
-          <FaLink className="inline h-6 w-6 text-blue-600" /> My Referral Links
+    <div className="rounded-lg bg-white p-4 md:p-6">
+      <div className="items-centers mb-4 flex flex-col gap-2 md:flex-row md:justify-between md:gap-4">
+        <h2 className="flex items-center gap-2 text-base font-bold text-gray-900 md:text-lg">
+          <FaLink className="inline h-5 w-5 text-blue-600 md:h-6 md:w-6" />
+          Your Referral Links
         </h2>
         {hasPrograms && onCreateLink && (
           <button
@@ -86,14 +87,16 @@ export const ReferrerLinksList: React.FC<LinksListProps> = ({
         {hasLinks && (
           <div className="space-y-3">
             {links?.map((link: ReferralLink) => (
-              <ReferrerLinkCard
-                key={link.id}
-                link={link}
-                programs={programs}
-                onClick={onViewUsage}
-                onViewUsage={onViewUsage}
-                onEdit={onEdit}
-              />
+              <div key={link.id}>
+                <div className="divider my-3"></div>
+                <ReferrerLinkCard
+                  link={link}
+                  programs={programs}
+                  onClick={onViewUsage}
+                  onViewUsage={onViewUsage}
+                  onEdit={onEdit}
+                />
+              </div>
             ))}
 
             {/* See More Button */}

@@ -148,6 +148,7 @@ const RefereeDashboard: NextPageWithLayout<{
   if (serverError || usageError || programError || !usage || !program) {
     return (
       <div className="container mx-auto max-w-5xl px-4 py-12">
+        {/* TODO: use "NoRowsMessage" component here */}
         {/* Error Message */}
         <div className="mb-8 rounded-xl border-4 border-orange-300 bg-gradient-to-br from-orange-50 via-yellow-50 to-white p-8 shadow-xl">
           <div className="mb-6 flex flex-col items-center gap-4 text-center">

@@ -293,6 +293,7 @@ const ReferralClaimPage: NextPageWithLayout<{
   if (serverError || programError || !program) {
     return (
       <div className="container mx-auto mt-16 max-w-5xl px-4 py-12">
+        {/* TODO: use "NoRowsMessage" component here */}
         {/* Error Hero Section */}
         <div className="mb-8 rounded-xl border-4 border-orange-300 bg-gradient-to-br from-orange-50 via-yellow-50 to-white p-8 shadow-xl">
           <div className="mb-6 flex flex-col items-center gap-4 text-center">
@@ -362,6 +363,7 @@ const ReferralClaimPage: NextPageWithLayout<{
 
     return (
       <div className="container mx-auto mt-16 max-w-5xl px-4 py-12">
+        {/* TODO: use "NoRowsMessage" component here */}
         {/* Claim Error Hero Section */}
         <div className="mb-8 rounded-xl border-4 border-red-300 bg-gradient-to-br from-red-50 via-orange-50 to-white p-8 shadow-xl">
           <div className="mb-6 flex flex-col items-center gap-4 text-center">

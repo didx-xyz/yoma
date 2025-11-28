@@ -11,7 +11,7 @@ import Head from "next/head";
 import { useRouter } from "next/router";
 import { useCallback, useEffect, useState, type ReactElement } from "react";
 import { IoMdClose } from "react-icons/io";
-import { IoWarning } from "react-icons/io5";
+import { IoWarning, IoLink } from "react-icons/io5";
 import type {
   ProgramInfo,
   ProgramSearchResultsInfo,
@@ -27,13 +27,14 @@ import Breadcrumb from "~/components/Breadcrumb";
 import CustomModal from "~/components/Common/CustomModal";
 import YoIDLayout from "~/components/Layout/YoID";
 import NoRowsMessage from "~/components/NoRowsMessage";
-import { HelpReferrer } from "~/components/Referrals/HelpReferrer";
 import { ReferrerCreateLinkModal } from "~/components/Referrals/ReferrerCreateLinkModal";
 import { ReferrerLeaderboard } from "~/components/Referrals/ReferrerLeaderboard";
-import { ReferrerLinkUsage } from "~/components/Referrals/ReferrerLinkUsage";
 import { ReferrerLinksList } from "~/components/Referrals/ReferrerLinksList";
 import { ReferrerProgramsList } from "~/components/Referrals/ReferrerProgramsList";
-import { ReferrerStats } from "~/components/Referrals/ReferrerStats";
+import { ReferrerPerformanceOverview } from "~/components/Referrals/ReferrerPerformanceOverview";
+import { ReferrerReferralsList } from "~/components/Referrals/ReferrerReferralsList";
+import { ReferrerLinkDetails } from "~/components/Referrals/ReferrerLinkDetails";
+import { ReferrerProgramPreview } from "~/components/Referrals/ReferrerProgramPreview";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import { config } from "~/lib/react-query-config";
 import { userProfileAtom } from "~/lib/store";
@@ -302,6 +303,7 @@ const ReferralsDashboard: NextPageWithLayout<{
           />
         </div>
 
+        {/* TODO: use "NoRowsMessage" component here */}
         {/* BLOCKED STATE */}
         {isBlocked && (
           <div className="shadow-custom mb-6 rounded-lg bg-white p-6">
@@ -358,20 +360,20 @@ const ReferralsDashboard: NextPageWithLayout<{
 
             {/* SINGLE PROGRAM MODE */}
             {!multiProgram && (
-              <div className="grid gap-6 lg:grid-cols-3">
+              <div className="grid gap-4 overflow-hidden md:gap-6 lg:grid-cols-3">
                 {/* LEFT COLUMN - Stats & Leaderboard */}
-                <div className="space-y-6 lg:col-span-1">
+                <div className="min-w-0 space-y-4 md:space-y-6 lg:col-span-1">
                   {/* STATS CARDS */}
-                  <ReferrerStats />
+                  {/* <ReferrerStats /> */}
 
                   {/* LEADERBOARD */}
                   <ReferrerLeaderboard pageSize={10} />
                 </div>
 
                 {/* RIGHT COLUMN - Link Details & Usage */}
-                <div className="space-y-6 lg:col-span-2">
+                <div className="min-w-0 space-y-4 md:space-y-6 lg:col-span-2">
                   {isAutoCreating && (
-                    <div className="shadow-custom rounded-lg bg-white p-6">
+                    <div className="rounded-lg bg-white p-6">
                       <div className="flex flex-col items-center justify-center gap-4 py-8">
                         <span className="loading loading-spinner loading-lg text-blue-600"></span>
                         <p className="text-gray-600">
@@ -382,11 +384,37 @@ const ReferralsDashboard: NextPageWithLayout<{
                   )}
 
                   {!isAutoCreating && hasLinks && firstLink && (
-                    <ReferrerLinkUsage link={firstLink} />
+                    <>
+                      {/* Link Details Section */}
+                      <div className="rounded-lg bg-white p-4 md:p-6">
+                        <h2 className="mb-4 flex items-center gap-2 text-base font-bold md:text-lg">
+                          <IoLink className="inline h-4 w-4 text-blue-600 md:h-6 md:w-6" />
+                          Your Referral Link
+                        </h2>
+                        <ReferrerLinkDetails
+                          link={firstLink}
+                          mode="large"
+                          showQRCode={false}
+                          showShare={true}
+                          className=""
+                          hideLabels={true}
+                        />
+                      </div>
+
+                      {/* Performance Overview */}
+                      <div className="rounded-lg bg-white p-4 md:p-6">
+                        <ReferrerPerformanceOverview link={firstLink} />
+                      </div>
+
+                      {/* Referrals List */}
+                      <div className="rounded-lg bg-white p-4 md:p-6">
+                        <ReferrerReferralsList linkId={firstLink.id} />
+                      </div>
+                    </>
                   )}
 
                   {!isAutoCreating && !hasLinks && !defaultProgram && (
-                    <div className="shadow-custom rounded-lg bg-white p-6">
+                    <div className="rounded-lg bg-white p-6">
                       <NoRowsMessage
                         title="My Referral Links"
                         description="Link currently unavailable. Please check back later."
@@ -426,21 +454,21 @@ const ReferralsDashboard: NextPageWithLayout<{
                 </div> */}
 
                 {/* HOW IT WORKS */}
-                <HelpReferrer isExpanded={!hasLinks} />
+                {/* <HelpReferrer isExpanded={!hasLinks} /> */}
 
                 {/* CONTENT AREA */}
-                <div className="grid gap-6 lg:grid-cols-3">
+                <div className="grid gap-4 overflow-hidden md:gap-6 lg:grid-cols-3">
                   {/* LEFT COLUMN - Stats & Leaderboard */}
-                  <div className="space-y-6 lg:col-span-1">
+                  <div className="min-w-0 space-y-4 md:space-y-6 lg:col-span-1">
                     {/* STATS CARDS */}
-                    <ReferrerStats />
+                    {/* <ReferrerStats /> */}
 
                     {/* LEADERBOARD */}
                     <ReferrerLeaderboard pageSize={10} />
                   </div>
 
                   {/* RIGHT COLUMN - Links & Programs */}
-                  <div className="space-y-6 lg:col-span-2">
+                  <div className="min-w-0 space-y-4 md:space-y-6 lg:col-span-2">
                     {/* MY LINKS */}
                     <ReferrerLinksList
                       programs={programsData?.items || []}
@@ -492,22 +520,19 @@ const ReferralsDashboard: NextPageWithLayout<{
           />
 
           {/* Link Usage Modal */}
-          {selectedLinkForUsage && (
-            <CustomModal
-              isOpen={!!selectedLinkForUsage}
-              onRequestClose={() => setSelectedLinkForUsage(null)}
-              className="md:max-h-[90vh] md:w-[900px]"
-            >
-              <div className="flex flex-col gap-2">
+          <CustomModal
+            isOpen={!!selectedLinkForUsage}
+            onRequestClose={() => setSelectedLinkForUsage(null)}
+            className="md:max-h-[90vh] md:w-[900px]"
+          >
+            {selectedLinkForUsage && (
+              <div className="flex flex-col">
                 {/* Header */}
                 <div className="bg-theme flex flex-row p-4 shadow-lg">
                   <div className="flex-1">
                     <h1 className="text-lg font-semibold text-white">
-                      Link Usage
+                      Your Link
                     </h1>
-                    <p className="mt-1 text-sm text-white/80">
-                      {selectedLinkForUsage.name}
-                    </p>
                   </div>
                   <button
                     type="button"
@@ -518,29 +543,43 @@ const ReferralsDashboard: NextPageWithLayout<{
                   </button>
                 </div>
 
-                <div className="p-6">
-                  <div className="flex flex-col gap-4 overflow-y-auto">
-                    <ReferrerLinkUsage
-                      link={selectedLinkForUsage}
-                      showProgramDetails={true}
-                      showQRCode={true}
-                    />
+                <div className="flex flex-col gap-4 overflow-y-auto p-4 md:p-6">
+                  {/* Link Details Section */}
+                  <ReferrerLinkDetails
+                    link={selectedLinkForUsage}
+                    mode="large"
+                    showQRCode={true}
+                    showShare={true}
+                    className=""
+                    hideLabels={false}
+                  />
 
-                    {/* Action Buttons */}
-                    <div className="mt-10 flex gap-3">
-                      <button
-                        type="button"
-                        className="btn btn-outline flex-1 border-blue-600 text-blue-600 normal-case hover:bg-blue-600 hover:text-white"
-                        onClick={() => setSelectedLinkForUsage(null)}
-                      >
-                        Back to List
-                      </button>
-                    </div>
+                  {/* Program Preview */}
+                  <ReferrerProgramPreview
+                    linkId={selectedLinkForUsage.id}
+                    programId={selectedLinkForUsage.programId}
+                  />
+
+                  {/* Performance Overview */}
+                  <ReferrerPerformanceOverview link={selectedLinkForUsage} />
+
+                  {/* Referrals List */}
+                  <ReferrerReferralsList linkId={selectedLinkForUsage.id} />
+
+                  {/* Action Buttons */}
+                  <div className="flex gap-3">
+                    <button
+                      type="button"
+                      className="btn btn-outline flex-1 border-blue-600 text-blue-600 normal-case hover:bg-blue-600 hover:text-white"
+                      onClick={() => setSelectedLinkForUsage(null)}
+                    >
+                      Back to List
+                    </button>
                   </div>
                 </div>
               </div>
-            </CustomModal>
-          )}
+            )}
+          </CustomModal>
         </>
       )}
     </>

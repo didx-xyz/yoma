@@ -1,9 +1,8 @@
 import { useCallback, useState } from "react";
-import { IoChevronDown, IoChevronUp, IoEye, IoPencil } from "react-icons/io5";
+import { IoEye, IoPencil } from "react-icons/io5";
 import type { ReferralLink, ProgramInfo } from "~/api/models/referrals";
 import { ReferrerLinkDetails } from "./ReferrerLinkDetails";
 import { FaLink } from "react-icons/fa";
-import { ProgramImage } from "./ProgramImage";
 
 interface LinkCardProps {
   link: ReferralLink;
@@ -11,7 +10,6 @@ interface LinkCardProps {
   onViewUsage?: (link: ReferralLink) => void;
   onEdit?: (link: ReferralLink) => void;
   onClick?: (link: ReferralLink) => void;
-  className?: string;
 }
 
 export const ReferrerLinkCard: React.FC<LinkCardProps> = ({
@@ -20,10 +18,7 @@ export const ReferrerLinkCard: React.FC<LinkCardProps> = ({
   onViewUsage,
   onEdit,
   onClick,
-  className = "",
 }) => {
-  const [showDetails, setShowDetails] = useState(false);
-
   // Find the matching program
   const program = programs.find((p) => p.id === link.programId);
 
@@ -51,11 +46,9 @@ export const ReferrerLinkCard: React.FC<LinkCardProps> = ({
   const canEdit = link.status === "Active";
 
   return (
-    <div
-      className={`group overflow-hidden rounded-xl border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-white shadow-md transition-all hover:shadow-lg ${className}`}
-    >
+    <div>
       {/* Header Section */}
-      <div className="border-b border-blue-100 bg-gradient-to-r from-blue-50 to-transparent p-4">
+      <div>
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 flex-1">
             <h3
@@ -88,35 +81,23 @@ export const ReferrerLinkCard: React.FC<LinkCardProps> = ({
           </span>
         </div>
 
-        {/* Program Info Section */}
-        <div className="mt-2 rounded-lg border border-orange-200 bg-gradient-to-br from-orange-50 to-white p-2">
-          <div className="flex items-center gap-2">
-            {/* Program Image */}
-            <div className="flex-shrink-0">
-              <ProgramImage
-                imageURL={program?.imageURL}
-                name={program?.name || "Program"}
-                size={40}
-              />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="mb-1 text-xs font-bold text-orange-900">
-                {link.programName}
-              </p>
-              {program?.description && (
-                <p className="line-clamp-2 text-[10px] leading-relaxed text-gray-600">
-                  {program.description}
-                </p>
-              )}
-            </div>
-          </div>
+        <div className="mt-2">
+          <ReferrerLinkDetails
+            link={link}
+            mode="small"
+            className=""
+            showQRCode={true}
+            showShare={true}
+            shareTitle="Check out this opportunity on Yoma!"
+            shareDescription={`Join me on Yoma! ${program?.name ? `Complete the ${program.name} program` : "Complete programs"} and earn rewards together.`}
+          />
         </div>
       </div>
 
       {/* Content Section */}
-      <div className="p-4">
+      <div className="p-4x">
         {/* Stats Row */}
-        <div className="mb-3 flex flex-wrap gap-2">
+        {/* <div className="mb-3 flex flex-wrap gap-2">
           <div className="badge badge-sm bg-blue-100 text-blue-700">
             <span className="font-semibold">{link.pendingTotal || 0}</span>
             <span className="ml-1">pending</span>
@@ -137,20 +118,20 @@ export const ReferrerLinkCard: React.FC<LinkCardProps> = ({
               <span className="ml-1">expired</span>
             </div>
           )}
-        </div>
+        </div> */}
 
         {/* Action Buttons Row */}
-        <div className="mt-3 flex gap-2">
+        <div className="mt-3 flex flex-col gap-2 md:flex-row">
           <button
             onClick={handleViewUsage}
-            className="btn btn-sm flex-1 gap-1 border-blue-600 bg-blue-600 text-white hover:bg-blue-700"
+            className="btn btn-sm gap-1 border-blue-600 bg-blue-600 text-white hover:bg-blue-700"
           >
             <IoEye className="h-4 w-4" />
             <span className="text-xs">View</span>
           </button>
           <button
             onClick={handleEdit}
-            className="btn btn-sm flex-1 gap-1 border-blue-600 bg-transparent text-blue-600 hover:bg-blue-600 hover:text-white disabled:pointer-events-none disabled:opacity-50"
+            className="btn btn-sm gap-1 border-blue-600 bg-transparent text-blue-600 hover:bg-blue-600 hover:text-white disabled:pointer-events-none disabled:opacity-50"
             disabled={!canEdit}
             title={!canEdit ? "Only active links can be edited" : ""}
             style={
@@ -162,55 +143,7 @@ export const ReferrerLinkCard: React.FC<LinkCardProps> = ({
             <IoPencil className="h-4 w-4" />
             <span className="text-xs">Edit</span>
           </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              setShowDetails(!showDetails);
-            }}
-            className="btn btn-sm gap-1 border-green-600 bg-green-600 text-white hover:bg-green-700"
-          >
-            {showDetails ? (
-              <>
-                <IoChevronUp className="h-4 w-4" />
-                <span className="text-xs">Hide</span>
-              </>
-            ) : (
-              <>
-                <IoChevronDown className="h-4 w-4" />
-                <span className="text-xs">Details</span>
-              </>
-            )}
-          </button>
         </div>
-
-        {/* Expandable Details */}
-        {showDetails && (
-          <div className="animate-fade-in mt-3 space-y-3 border-t border-blue-100 pt-3">
-            {/* Link Details */}
-            <div>
-              <ReferrerLinkDetails
-                link={link}
-                mode="small"
-                showQRCode={true}
-                showShare={true}
-                shareTitle="Check out this opportunity on Yoma!"
-                shareDescription={`Join me on Yoma! ${program?.name ? `Complete the ${program.name} program` : "Complete programs"} and earn rewards together.`}
-              />
-            </div>
-
-            {/* Date Info */}
-            <div className="border-t border-blue-100 pt-2">
-              <p className="text-xs text-gray-600">
-                Created:{" "}
-                {new Date(link.dateCreated).toLocaleDateString("en-US", {
-                  year: "numeric",
-                  month: "short",
-                  day: "numeric",
-                })}
-              </p>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );

@@ -50,7 +50,11 @@ export const ReferrerProgramsList: React.FC<ProgramsListProps> = ({
   const hasPrograms = programs.length > 0;
 
   return (
-    <div className={showHeader ? "shadow-custom rounded-lg bg-white p-6" : ""}>
+    <div
+      className={
+        showHeader ? "shadow-custom rounded-lg bg-white p-4 md:p-6" : ""
+      }
+    >
       {showHeader && (
         <>
           <h2 className="mb-2 flex items-center gap-4 text-lg font-bold text-gray-900">

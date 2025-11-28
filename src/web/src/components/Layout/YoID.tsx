@@ -107,7 +107,7 @@ const YoIDLayout: TabProps = ({ children }) => {
                 size={85}
               />
             </div>
-            <div className="flex flex-col gap-2 lg:w-auto">
+            <div className="flex min-w-0 flex-1 flex-col gap-2 lg:w-auto lg:flex-initial">
               {/* WELCOME MSG */}
               <div className="-mb-2 max-w-xs truncate text-lg font-semibold text-white md:max-w-xl md:text-2xl">
                 {timeOfDayEmoji} Good {timeOfDay} {userProfile?.firstName}! 👋
@@ -131,7 +131,7 @@ const YoIDLayout: TabProps = ({ children }) => {
               </div>
 
               {/* NAVIGATION */}
-              <div className="min-h-8">
+              <div className="min-h-8 w-full">
                 <ScrollableContainer
                   className="flex gap-2 overflow-x-auto"
                   showShadows={true}
