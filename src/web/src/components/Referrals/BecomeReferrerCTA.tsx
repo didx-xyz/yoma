@@ -12,16 +12,16 @@ import { IoGift, IoArrowForward } from "react-icons/io5";
  */
 export const BecomeReferrerCTA: React.FC = () => {
   return (
-    <div className="rounded-xl border-4 border-green-300 bg-gradient-to-br from-green-50 to-white p-8 shadow-xl">
+    <div className="rounded-xl border-4 border-green-300 bg-gradient-to-br from-green-50 to-white p-4 shadow-xl md:p-8">
       <div className="mb-6 flex flex-col items-center gap-4 md:flex-row">
-        <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-green-500 to-blue-500 shadow-lg">
-          <IoGift className="h-10 w-10 text-white" />
+        <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-green-500 to-blue-500 shadow-lg md:h-16 md:w-16">
+          <IoGift className="h-6 w-6 text-white md:h-10 md:w-10" />
         </div>
         <div className="flex-1 text-center md:text-left">
-          <h2 className="text-lgx mb-2 font-bold text-green-900 md:text-xl">
+          <h2 className="mb-2 text-base font-bold text-green-900 md:text-xl">
             Want to Become a Referrer Instead?
           </h2>
-          <p className="text-sm text-gray-700 md:text-base">
+          <p className="text-xs text-gray-700 md:text-base">
             Share Yoma with your friends and earn rewards together! Create your
             own referral links and start earning ZLTO.
           </p>
@@ -32,28 +32,34 @@ export const BecomeReferrerCTA: React.FC = () => {
       <div className="mb-6 grid gap-4 md:grid-cols-3">
         <div className="rounded-lg border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-white p-4 text-center shadow-sm">
           <div className="mb-2 flex justify-center">
-            <span className="text-4xl">🔗</span>
+            <span className="text-2xl md:text-4xl">🔗</span>
           </div>
-          <h3 className="mb-1 font-bold text-blue-900">Create Links</h3>
-          <p className="text-xs text-gray-600">
+          <h3 className="mb-1 text-sm font-bold text-blue-900 md:text-base">
+            Create Links
+          </h3>
+          <p className="text-[10px] text-gray-600 md:text-xs">
             Get personalized referral links for different programs
           </p>
         </div>
         <div className="rounded-lg border-2 border-green-200 bg-gradient-to-br from-green-50 to-white p-4 text-center shadow-sm">
           <div className="mb-2 flex justify-center">
-            <span className="text-4xl">📊</span>
+            <span className="text-2xl md:text-4xl">📊</span>
           </div>
-          <h3 className="mb-1 font-bold text-green-900">Track Progress</h3>
-          <p className="text-xs text-gray-600">
+          <h3 className="mb-1 text-sm font-bold text-green-900 md:text-base">
+            Track Progress
+          </h3>
+          <p className="text-[10px] text-gray-600 md:text-xs">
             Monitor your referrals and see how much you&apos;ve earned
           </p>
         </div>
         <div className="rounded-lg border-2 border-yellow-200 bg-gradient-to-br from-yellow-50 to-white p-4 text-center shadow-sm">
           <div className="mb-2 flex justify-center">
-            <span className="text-4xl">💰</span>
+            <span className="text-2xl md:text-4xl">💰</span>
           </div>
-          <h3 className="mb-1 font-bold text-yellow-900">Earn ZLTO</h3>
-          <p className="text-xs text-gray-600">
+          <h3 className="mb-1 text-sm font-bold text-yellow-900 md:text-base">
+            Earn ZLTO
+          </h3>
+          <p className="text-[10px] text-gray-600 md:text-xs">
             Get rewarded when your friends complete programs
           </p>
         </div>
@@ -63,11 +69,11 @@ export const BecomeReferrerCTA: React.FC = () => {
       <div className="flex justify-center">
         <Link
           href="/yoid/referrals"
-          className="btn btn-success btn-lg gap-2 px-8 text-white shadow-lg hover:scale-105"
+          className="btn btn-success btn-sm md:btn-lg w-full gap-2 px-8 text-white shadow-lg hover:scale-105 md:w-auto"
         >
-          <IoGift className="h-5 w-5" />
-          Start Referring & Earning
-          <IoArrowForward className="h-5 w-5" />
+          <IoGift className="h-4 w-4 md:h-5 md:w-5" />
+          Start Referring
+          <IoArrowForward className="h-4 w-4 md:h-5 md:w-5" />
         </Link>
       </div>
     </div>

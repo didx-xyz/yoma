@@ -4,14 +4,14 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-import { useAtom } from "jotai";
+import { useAtom, useAtomValue } from "jotai";
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
 import Head from "next/head";
 import { useRouter } from "next/router";
 import { useCallback, useEffect, useState, type ReactElement } from "react";
 import { IoMdClose } from "react-icons/io";
-import { IoWarning, IoLink } from "react-icons/io5";
+import { IoLink } from "react-icons/io5";
 import type {
   ProgramInfo,
   ProgramSearchResultsInfo,
@@ -25,8 +25,10 @@ import {
 } from "~/api/services/referrals";
 import Breadcrumb from "~/components/Breadcrumb";
 import CustomModal from "~/components/Common/CustomModal";
+import MainLayout from "~/components/Layout/Main";
 import YoIDLayout from "~/components/Layout/YoID";
 import NoRowsMessage from "~/components/NoRowsMessage";
+import { LoadingInline } from "~/components/Status/LoadingInline";
 import { ReferrerCreateLinkModal } from "~/components/Referrals/ReferrerCreateLinkModal";
 import { ReferrerLeaderboard } from "~/components/Referrals/ReferrerLeaderboard";
 import { ReferrerLinksList } from "~/components/Referrals/ReferrerLinksList";
@@ -35,11 +37,12 @@ import { ReferrerPerformanceOverview } from "~/components/Referrals/ReferrerPerf
 import { ReferrerReferralsList } from "~/components/Referrals/ReferrerReferralsList";
 import { ReferrerLinkDetails } from "~/components/Referrals/ReferrerLinkDetails";
 import { ReferrerProgramPreview } from "~/components/Referrals/ReferrerProgramPreview";
-import { Unauthorized } from "~/components/Status/Unauthorized";
+import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { config } from "~/lib/react-query-config";
-import { userProfileAtom } from "~/lib/store";
+import { currentLanguageAtom, userProfileAtom } from "~/lib/store";
 import { authOptions } from "~/server/auth";
 import { type NextPageWithLayout } from "../../_app";
+import { handleUserSignIn } from "~/lib/authUtils";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
@@ -48,7 +51,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   if (!session) {
     return {
       props: {
-        error: "Unauthorized",
+        error: 401,
       },
     };
   }
@@ -135,7 +138,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 }
 
 const ReferralsDashboard: NextPageWithLayout<{
-  error?: string;
+  error?: number;
   multiProgram?: boolean;
 }> = ({ error, multiProgram = false }) => {
   const router = useRouter();
@@ -281,7 +284,25 @@ const ReferralsDashboard: NextPageWithLayout<{
     [multiProgram],
   );
 
-  if (error === "Unauthorized") return <Unauthorized />;
+  const currentLanguage = useAtomValue(currentLanguageAtom);
+
+  useEffect(() => {
+    if (error === 401) {
+      void handleUserSignIn(currentLanguage);
+    }
+  }, [error, currentLanguage]);
+
+  if (error === 401) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <LoadingInline
+          classNameSpinner="h-8 w-8 border-t-2 border-b-2 border-orange md:h-16 md:w-16 md:border-t-4 md:border-b-4"
+          classNameLabel={"text-sm font-semibold md:text-lg"}
+          label="Redirecting to login..."
+        />
+      </div>
+    );
+  }
 
   return (
     <>
@@ -303,41 +324,53 @@ const ReferralsDashboard: NextPageWithLayout<{
           />
         </div>
 
-        {/* TODO: use "NoRowsMessage" component here */}
         {/* BLOCKED STATE */}
         {isBlocked && (
           <div className="shadow-custom mb-6 rounded-lg bg-white p-6">
-            <div className="flex items-start gap-4">
-              <IoWarning className="text-orange h-8 w-8 flex-shrink-0" />
-              <div className="flex-1">
-                <h2 className="text-orange text-xl font-bold">
-                  Referral Access Suspended
-                </h2>
-                <p className="text-gray-dark mt-2">
-                  Your access to the referral program has been temporarily
-                  suspended. If you believe this is an error, please contact
-                  support.
-                </p>
-                {userProfile?.referral?.blockedDate && (
-                  <p className="text-gray-dark mt-2 text-sm">
-                    Suspended on:{" "}
-                    {new Date(
-                      userProfile.referral.blockedDate,
-                    ).toLocaleDateString("en-US", {
+            {(() => {
+              const blockedDate = userProfile?.referral?.blockedDate
+                ? new Date(userProfile.referral.blockedDate).toLocaleDateString(
+                    "en-US",
+                    {
                       year: "numeric",
                       month: "long",
                       day: "numeric",
-                    })}
-                  </p>
-                )}
-                <button
-                  onClick={() => router.push("/support")}
-                  className="btn btn-warning btn-sm mt-4"
-                >
-                  Contact Support
-                </button>
-              </div>
-            </div>
+                    },
+                  )
+                : null;
+
+              const blockedDescription = `
+                <div class="text-center mt-10">
+                  <p>Your access to the referral program has been temporarily suspended. If you believe this is an error, please contact support.</p>
+                  ${
+                    blockedDate
+                      ? `<p class="text-sm text-gray-600">Suspended on: ${blockedDate}</p>`
+                      : ""
+                  }
+                </div>
+              `;
+
+              return (
+                <div className="container mx-auto mt-20 flex max-w-5xl flex-col gap-8 px-4 py-8">
+                  <div className="flex flex-col items-center justify-center">
+                    <NoRowsMessage
+                      title="Referral Access Suspended"
+                      description={blockedDescription}
+                      icon={"⚠️"}
+                      className="max-w-3xl !bg-transparent"
+                    />
+                    <div className="mt-4 flex justify-center">
+                      <button
+                        onClick={() => router.push("/support")}
+                        className="btn btn-warning btn-sm"
+                      >
+                        Contact Support
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         )}
 
@@ -375,10 +408,11 @@ const ReferralsDashboard: NextPageWithLayout<{
                   {isAutoCreating && (
                     <div className="rounded-lg bg-white p-6">
                       <div className="flex flex-col items-center justify-center gap-4 py-8">
-                        <span className="loading loading-spinner loading-lg text-blue-600"></span>
-                        <p className="text-gray-600">
-                          Creating your referral link...
-                        </p>
+                        <LoadingInline
+                          classNameSpinner="h-8 w-8 border-t-2 border-b-2 border-orange md:h-16 md:w-16 md:border-t-4 md:border-b-4"
+                          classNameLabel={"text-sm font-semibold md:text-lg"}
+                          label="Creating your referral link..."
+                        />
                       </div>
                     </div>
                   )}
@@ -587,6 +621,9 @@ const ReferralsDashboard: NextPageWithLayout<{
 };
 
 ReferralsDashboard.getLayout = function getLayout(page: ReactElement) {
+  if ((page.props as any).error === 401) {
+    return <MainLayout>{page}</MainLayout>;
+  }
   return <YoIDLayout>{page}</YoIDLayout>;
 };
 

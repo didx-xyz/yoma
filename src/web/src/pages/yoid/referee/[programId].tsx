@@ -26,6 +26,7 @@ import {
   getReferralProgramInfoById,
 } from "~/api/services/referrals";
 import Breadcrumb from "~/components/Breadcrumb";
+import MainLayout from "~/components/Layout/Main";
 import YoIDLayout from "~/components/Layout/YoID";
 import { AlternativeActions } from "~/components/Referrals/AlternativeActions";
 import { BecomeReferrerCTA } from "~/components/Referrals/BecomeReferrerCTA";
@@ -35,7 +36,9 @@ import {
 } from "~/components/Referrals/InstructionHeaders";
 import { getNextAction } from "~/components/Referrals/RefereeProgressTracker";
 import { RefereeStatusBanner } from "~/components/Referrals/RefereeStatusBanner";
-import { Unauthorized } from "~/components/Status/Unauthorized";
+import NoRowsMessage from "~/components/NoRowsMessage";
+import { LoadingInline } from "~/components/Status/LoadingInline";
+import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { config } from "~/lib/react-query-config";
 import { authOptions } from "~/server/auth";
 import { handleUserSignOut } from "~/lib/authUtils";
@@ -48,7 +51,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   if (!session) {
     return {
       props: {
-        error: "Unauthorized",
+        error: 401,
       },
     };
   }
@@ -97,7 +100,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 
 const RefereeDashboard: NextPageWithLayout<{
   programId: string;
-  error?: string;
+  error?: number;
 }> = ({ programId, error: serverError }) => {
   const router = useRouter();
 
@@ -135,49 +138,43 @@ const RefereeDashboard: NextPageWithLayout<{
     enabled: !serverError,
   });
 
-  if (serverError === "Unauthorized") return <Unauthorized />;
+  if (serverError === 401) return <Unauthenticated />;
 
   if (usageLoading || programLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="loading loading-spinner loading-lg"></div>
+        <LoadingInline
+          classNameSpinner="h-8 w-8 border-t-2 border-b-2 border-orange md:h-16 md:w-16 md:border-t-4 md:border-b-4"
+          classNameLabel={"text-sm font-semibold md:text-lg"}
+          label="Please wait..."
+        />
       </div>
     );
   }
 
   if (serverError || usageError || programError || !usage || !program) {
-    return (
-      <div className="container mx-auto max-w-5xl px-4 py-12">
-        {/* TODO: use "NoRowsMessage" component here */}
-        {/* Error Message */}
-        <div className="mb-8 rounded-xl border-4 border-orange-300 bg-gradient-to-br from-orange-50 via-yellow-50 to-white p-8 shadow-xl">
-          <div className="mb-6 flex flex-col items-center gap-4 text-center">
-            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-orange-400 to-red-400 shadow-lg">
-              <IoWarning className="h-12 w-12 text-white" />
-            </div>
-            <div>
-              <h1 className="mb-2 text-2xl font-bold text-orange-900 md:text-4xl">
-                Referral Not Found
-              </h1>
-              <p className="text-gray-700">
-                You don&apos;t have an active referral for this program.
-              </p>
-            </div>
-          </div>
+    const refereeErrorDescription = `
+      <div class="text-center mt-10">
+        <h3 class="text-xs md:text-sm font-bold text-gray-900 mb-2">What might have happened?</h3>
+        <ul class="text-left text-xs md:text-sm ml-6 list-disc space-y-2 text-gray-700">
+          <li>You may not have claimed a referral link for this program yet</li>
+          <li>Your referral may have expired or been completed</li>
+          <li>The program may no longer be active</li>
+          <li>The program ID in the URL might be incorrect</li>
+        </ul>
+      </div>
+    `;
 
-          <div className="rounded-lg border-2 border-orange-200 bg-white p-6">
-            <h3 className="mb-3 text-lg font-bold text-gray-900">
-              What might have happened?
-            </h3>
-            <ul className="ml-6 list-disc space-y-2 text-sm text-gray-700">
-              <li>
-                You may not have claimed a referral link for this program yet
-              </li>
-              <li>Your referral may have expired or been completed</li>
-              <li>The program may no longer be active</li>
-              <li>The program ID in the URL might be incorrect</li>
-            </ul>
-          </div>
+    return (
+      <div className="container mx-auto mt-20 flex max-w-5xl flex-col gap-8 px-4 py-8">
+        <div className="flex items-center justify-center">
+          <NoRowsMessage
+            title="Referral Not Found"
+            subTitle="You don't have an active referral for this program."
+            description={refereeErrorDescription}
+            icon={"⚠️"}
+            className="max-w-3xl !bg-transparent"
+          />
         </div>
 
         {/* Become a Referrer Section */}
@@ -213,7 +210,7 @@ const RefereeDashboard: NextPageWithLayout<{
 
         {/* STATUS BANNER */}
         <RefereeStatusBanner usage={usage} program={program} />
-
+        {/* <div className="mt-4 w-full break-all"> {JSON.stringify(usage)}</div> */}
         {/* PROGRESS TRACKER */}
         {/* <RefereeProgressTracker usage={usage} program={program} /> */}
 
@@ -640,6 +637,9 @@ const RefereeDashboard: NextPageWithLayout<{
 };
 
 RefereeDashboard.getLayout = function getLayout(page: ReactElement) {
+  if ((page.props as any).error === 401) {
+    return <MainLayout>{page}</MainLayout>;
+  }
   return <YoIDLayout>{page}</YoIDLayout>;
 };
 

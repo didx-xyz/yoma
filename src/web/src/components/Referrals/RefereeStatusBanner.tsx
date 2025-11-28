@@ -119,7 +119,7 @@ export const RefereeStatusBanner: React.FC<RefereeStatusBannerProps> = ({
     return {
       title: "Final Sprint!",
       subtitle: "Nearly Complete",
-      message: `Outstanding! You're ${percentComplete}% done with the program. Just a little more to go!`,
+      message: `Outstanding! You're almost done with the program. Just a little more to go!`,
       icon: IoTrophy,
       iconColor: "text-amber-500",
       bgGradient: "from-amber-50 via-yellow-50 to-lime-50",
@@ -197,6 +197,7 @@ export const RefereeStatusBanner: React.FC<RefereeStatusBannerProps> = ({
             </div>
           </div>
         </div> */}
+
         {/* <div className="mb-6">
           <RefereeProgramDetails program={program} perspective="referee" />
         </div> */}
@@ -226,7 +227,6 @@ export const RefereeStatusBanner: React.FC<RefereeStatusBannerProps> = ({
             </div>
           </div>
         )}
-
         {/* Info Cards Grid */}
         <div className="grid gap-4 md:grid-cols-2">
           {/* Time Warning Card */}
