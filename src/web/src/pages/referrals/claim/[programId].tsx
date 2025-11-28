@@ -5,7 +5,7 @@ import { getServerSession } from "next-auth";
 import Head from "next/head";
 import { useRouter } from "next/router";
 import { useCallback, useEffect, useState, type ReactElement } from "react";
-import { IoGift, IoLockClosed } from "react-icons/io5";
+import { IoGift, IoLockClosed, IoWarningOutline } from "react-icons/io5";
 import type { ErrorResponseItem } from "~/api/models/common";
 import type { ProgramInfo } from "~/api/models/referrals";
 import type { UserProfile } from "~/api/models/user";
@@ -311,7 +311,7 @@ const ReferralClaimPage: NextPageWithLayout<{
             title="Referral Link Unavailable"
             subTitle="This referral link is invalid, expired, or has been removed."
             description={referralUnavailableDescription}
-            icon={"⚠️"}
+            icon={<IoWarningOutline className="h-6 w-6 text-red-500" />}
             className="max-w-3xl !bg-transparent"
           />
         </div>
@@ -377,7 +377,7 @@ const ReferralClaimPage: NextPageWithLayout<{
       <div className="container mx-auto mt-20 flex max-w-5xl flex-col gap-8 px-4 py-8">
         <div className="flex items-center justify-center">
           <NoRowsMessage
-            icon={"⚠️"}
+            icon={<IoWarningOutline className="h-6 w-6 text-red-500" />}
             title="Unable to Claim Referral Link"
             subTitle={!hasCustomErrors ? errorMessage : undefined}
             description={claimErrorDescription}

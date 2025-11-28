@@ -26,12 +26,16 @@ const NoRowsMessage: React.FC<{
       </div>
 
       <div className="mt-1">
-        <div className="my-2 font-semibold text-black md:text-sm">
-          <div className="text-sm md:text-lg">
+        <div className="my-2 text-black md:text-sm">
+          <div className="text-sm font-semibold md:text-lg">
             {title ?? "No rows found..."}
           </div>
 
-          {subTitle && <div className="text-xs md:text-sm">{subTitle}</div>}
+          {subTitle && (
+            <div className="text-gray-dark mt-1 text-xs md:text-sm">
+              {subTitle}
+            </div>
+          )}
         </div>
 
         <div

@@ -14,6 +14,7 @@ import {
   IoCart,
   IoTrophy,
   IoShareSocial,
+  IoWarningOutline,
 } from "react-icons/io5";
 import { toast } from "react-toastify";
 import type {
@@ -172,7 +173,7 @@ const RefereeDashboard: NextPageWithLayout<{
             title="Referral Not Found"
             subTitle="You don't have an active referral for this program."
             description={refereeErrorDescription}
-            icon={"⚠️"}
+            icon={<IoWarningOutline className="h-6 w-6 text-red-500" />}
             className="max-w-3xl !bg-transparent"
           />
         </div>

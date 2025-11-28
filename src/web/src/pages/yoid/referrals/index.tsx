@@ -11,7 +11,7 @@ import Head from "next/head";
 import { useRouter } from "next/router";
 import { useCallback, useEffect, useState, type ReactElement } from "react";
 import { IoMdClose } from "react-icons/io";
-import { IoLink } from "react-icons/io5";
+import { IoLink, IoWarningOutline } from "react-icons/io5";
 import type {
   ProgramInfo,
   ProgramSearchResultsInfo,
@@ -356,7 +356,9 @@ const ReferralsDashboard: NextPageWithLayout<{
                     <NoRowsMessage
                       title="Referral Access Suspended"
                       description={blockedDescription}
-                      icon={"⚠️"}
+                      icon={
+                        <IoWarningOutline className="h-6 w-6 text-red-500" />
+                      }
                       className="max-w-3xl !bg-transparent"
                     />
                     <div className="mt-4 flex justify-center">
