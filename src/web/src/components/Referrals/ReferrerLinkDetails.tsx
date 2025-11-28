@@ -25,7 +25,7 @@ export const ReferrerLinkDetails: React.FC<LinkDetailsProps> = ({
   showShare = false,
   shareTitle = "Check out this opportunity on Yoma!",
   shareDescription = "Join me on Yoma and earn rewards together.",
-  className = "rounded-lg bg-gradient-to-br from-green-50 to-white p-6 shadow-sm",
+  className = "rounded-lg bg-gradient-to-br from-blue-50 to-white p-6 shadow-sm",
   hideLabels = false,
 }) => {
   const [showQRCode, setShowQRCode] = useState(!!link.qrCodeBase64);
@@ -97,8 +97,8 @@ export const ReferrerLinkDetails: React.FC<LinkDetailsProps> = ({
             {/* Header */}
             <div className="mb-2">
               {!hideLabels && (
-                <h4 className="flex items-center gap-1 text-xs font-bold text-green-900">
-                  <IoLink className="h-3.5 w-3.5" />
+                <h4 className="flex items-center gap-1 text-xs font-bold">
+                  <IoLink className="h-3.5 w-3.5 text-blue-900" />
                   Short Link
                 </h4>
               )}
@@ -107,18 +107,18 @@ export const ReferrerLinkDetails: React.FC<LinkDetailsProps> = ({
               </p>
             </div>
 
-            <div className="flex items-center gap-1">
+            <div className="flex min-w-0 items-center gap-1">
               <input
                 type="text"
                 value={displayLink.shortURL}
                 readOnly
-                className="flex-1 truncate rounded border border-dashed border-green-300 bg-white px-2 py-1.5 font-mono text-[11px] font-semibold text-gray-900"
+                className="max-w-[250px] min-w-0 flex-1 truncate rounded border border-dashed border-blue-300 bg-white px-2 py-1.5 font-mono text-[11px] font-semibold text-gray-900"
                 onClick={(e) => e.currentTarget.select()}
               />
               <button
                 type="button"
                 onClick={() => handleCopyLink(displayLink.shortURL)}
-                className="btn btn-xs gap-1 border-green-600 bg-green-600 text-white transition-all hover:scale-105 hover:bg-green-700"
+                className="btn btn-xs gap-1 border-blue-600 bg-blue-600 text-white transition-all hover:scale-105 hover:bg-blue-700"
                 title="Copy short link"
               >
                 <IoMdCopy className="h-3 w-3" />
@@ -136,7 +136,7 @@ export const ReferrerLinkDetails: React.FC<LinkDetailsProps> = ({
                 {/* Header */}
                 {!hideLabels && (
                   <div className="mb-2">
-                    <h4 className="flex items-center gap-1 text-xs font-bold text-green-900">
+                    <h4 className="flex items-center gap-1 text-xs font-bold text-blue-900">
                       <IoQrCode className="h-3.5 w-3.5" />
                       QR Code
                     </h4>
@@ -146,7 +146,7 @@ export const ReferrerLinkDetails: React.FC<LinkDetailsProps> = ({
                   </div>
                 )}
                 <div className="flex items-center gap-2">
-                  <div className="rounded border border-dashed border-green-300 bg-white p-1.5 shadow-sm">
+                  <div className="rounded border border-dashed border-blue-300 bg-white p-1.5 shadow-sm">
                     <Image
                       src={displayLink.qrCodeBase64}
                       alt="QR Code"
@@ -163,7 +163,7 @@ export const ReferrerLinkDetails: React.FC<LinkDetailsProps> = ({
                         displayLink.name,
                       )
                     }
-                    className="btn btn-xs gap-1 border-green-600 bg-green-600 text-white transition-all hover:scale-105 hover:bg-green-700"
+                    className="btn btn-xs gap-1 border-blue-600 bg-blue-600 text-white transition-all hover:scale-105 hover:bg-blue-700"
                     title="Download QR code"
                   >
                     <IoMdDownload className="h-3 w-3" />
@@ -173,7 +173,7 @@ export const ReferrerLinkDetails: React.FC<LinkDetailsProps> = ({
                 {/* <button
                   type="button"
                   onClick={handleToggleQR}
-                  className="mt-2 flex items-center gap-1 text-xs font-medium text-green-600 transition-colors hover:text-green-700"
+                  className="mt-2 flex items-center gap-1 text-xs font-medium text-blue-600 transition-colors hover:text-blue-700"
                 >
                   <IoQrCode className="h-4 w-4" />
                   Hide QR Code
@@ -184,8 +184,7 @@ export const ReferrerLinkDetails: React.FC<LinkDetailsProps> = ({
                 type="button"
                 onClick={handleToggleQR}
                 disabled={loadingQR}
-                className="flex cursor-pointer items-center gap-1 text-xs font-bold text-green-900 underline transition-colors hover:text-green-700 disabled:opacity-50"
-                style={{ minWidth: "130px" }}
+                className="flex cursor-pointer items-center gap-1 text-xs font-bold underline transition-colors hover:text-blue-700 disabled:opacity-50"
               >
                 {loadingQR ? (
                   <>
@@ -194,7 +193,7 @@ export const ReferrerLinkDetails: React.FC<LinkDetailsProps> = ({
                   </>
                 ) : (
                   <>
-                    <IoQrCode className="h-3.5 w-3.5" />
+                    <IoQrCode className="h-3 w-3 text-blue-900" />
                     Show QR Code
                   </>
                 )}
@@ -205,9 +204,9 @@ export const ReferrerLinkDetails: React.FC<LinkDetailsProps> = ({
 
         {/* Share Buttons - Compact */}
         {showShare && (
-          <div className="mt-3 border-t border-green-200 pt-3">
+          <div className="border-tx border-blue-200x mt-3 pt-3">
             <div className="mb-2">
-              <h4 className="flex items-center gap-1 text-xs font-bold text-green-900">
+              <h4 className="flex items-center gap-1 text-xs font-bold">
                 📢 Share Your Link
               </h4>
               <p className="mt-0.5 text-[10px] text-gray-600">
@@ -219,7 +218,7 @@ export const ReferrerLinkDetails: React.FC<LinkDetailsProps> = ({
               url={link.shortURL ?? link.url}
               title={shareTitle}
               description={shareDescription}
-              size={36}
+              size={30}
             />
           </div>
         )}
@@ -239,8 +238,8 @@ export const ReferrerLinkDetails: React.FC<LinkDetailsProps> = ({
           {/* Header */}
           <div className="mb-3">
             {!hideLabels && (
-              <h3 className="flex items-center gap-2 text-base font-bold text-green-900">
-                <IoLink className="h-5 w-5" />
+              <h3 className="flex items-center gap-2 text-base font-bold">
+                <IoLink className="h-5 w-5 text-blue-900" />
                 Short Link
               </h3>
             )}
@@ -249,18 +248,18 @@ export const ReferrerLinkDetails: React.FC<LinkDetailsProps> = ({
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex min-w-0 items-center gap-2">
             <input
               type="text"
               value={displayLink.shortURL}
               readOnly
-              className="flex-1 rounded-lg border-2 border-dashed border-green-300 bg-white p-3 font-mono text-sm font-semibold text-gray-900"
+              className="max-w-[250px] min-w-0 flex-1 rounded-lg border-2 border-dashed border-blue-300 bg-white p-3 font-mono text-sm font-semibold text-gray-900"
               onClick={(e) => e.currentTarget.select()}
             />
             <button
               type="button"
               onClick={() => handleCopyLink(displayLink.shortURL)}
-              className="btn btn-sm gap-2 border-green-600 bg-green-600 whitespace-nowrap text-white transition-all hover:scale-105 hover:bg-green-700 hover:shadow-md"
+              className="btn btn-sm flex-shrink-0 gap-2 border-blue-600 bg-blue-600 text-white transition-all hover:scale-105 hover:bg-blue-700 hover:shadow-md"
             >
               <IoMdCopy className="h-4 w-4" />
               Copy
@@ -276,8 +275,8 @@ export const ReferrerLinkDetails: React.FC<LinkDetailsProps> = ({
             <>
               {/* Header */}
               <div className="mb-3">
-                <h3 className="flex items-center gap-2 text-base font-bold text-green-900">
-                  <IoQrCode className="h-5 w-5" />
+                <h3 className="flex items-center gap-2 text-base font-bold">
+                  <IoQrCode className="h-5 w-5 text-blue-900" />
                   QR Code
                 </h3>
                 <p className="mt-1 text-xs text-gray-600">
@@ -285,7 +284,7 @@ export const ReferrerLinkDetails: React.FC<LinkDetailsProps> = ({
                 </p>
               </div>
               <div className="flex items-center gap-4">
-                <div className="rounded-lg border-2 border-dashed border-green-300 bg-white p-2 shadow">
+                <div className="rounded-lg border-2 border-dashed border-blue-300 bg-white p-2 shadow">
                   <Image
                     src={displayLink.qrCodeBase64}
                     alt="QR Code"
@@ -302,7 +301,7 @@ export const ReferrerLinkDetails: React.FC<LinkDetailsProps> = ({
                       displayLink.name,
                     )
                   }
-                  className="btn btn-sm gap-2 border-green-600 bg-green-600 whitespace-nowrap text-white transition-all hover:scale-105 hover:bg-green-700 hover:shadow-md"
+                  className="btn btn-sm flex-shrink-0 gap-2 border-blue-600 bg-blue-600 text-white transition-all hover:scale-105 hover:bg-blue-700 hover:shadow-md"
                 >
                   <IoMdDownload className="h-4 w-4" />
                   Download
@@ -311,7 +310,7 @@ export const ReferrerLinkDetails: React.FC<LinkDetailsProps> = ({
               {/* <button
                 type="button"
                 onClick={handleToggleQR}
-                className="mt-3 flex items-center gap-2 text-sm font-medium text-green-600 transition-colors hover:text-green-700"
+                className="mt-3 flex items-center gap-2 text-sm font-medium text-blue-600 transition-colors hover:text-blue-700"
               >
                 <IoQrCode className="h-5 w-5" />
                 Hide QR Code
@@ -322,8 +321,7 @@ export const ReferrerLinkDetails: React.FC<LinkDetailsProps> = ({
               type="button"
               onClick={handleToggleQR}
               disabled={loadingQR}
-              className="flex items-center gap-2 text-base font-bold text-green-900 transition-colors hover:text-green-700 disabled:opacity-50"
-              style={{ minWidth: "160px" }}
+              className="flex items-center gap-2 text-base font-bold underline transition-colors hover:text-blue-700 disabled:opacity-50"
             >
               {loadingQR ? (
                 <>
@@ -332,7 +330,7 @@ export const ReferrerLinkDetails: React.FC<LinkDetailsProps> = ({
                 </>
               ) : (
                 <>
-                  <IoQrCode className="h-5 w-5" />
+                  <IoQrCode className="h-4 w-4 text-blue-900" />
                   Show QR Code
                 </>
               )}
@@ -343,9 +341,9 @@ export const ReferrerLinkDetails: React.FC<LinkDetailsProps> = ({
 
       {/* Share Buttons */}
       {showShare && (
-        <div className="mt-4 border-t border-green-200 pt-4">
+        <div className="mt-4 border-t border-blue-200 pt-4">
           <div className="mb-3">
-            <h3 className="flex items-center gap-2 text-base font-bold text-green-900">
+            <h3 className="flex items-center gap-2 text-base font-bold">
               📢 Share Your Link
             </h3>
             <p className="mt-1 text-xs text-gray-600">
@@ -357,7 +355,7 @@ export const ReferrerLinkDetails: React.FC<LinkDetailsProps> = ({
             url={link.shortURL ?? link.url}
             title={shareTitle}
             description={shareDescription}
-            size={48}
+            size={36}
           />
         </div>
       )}

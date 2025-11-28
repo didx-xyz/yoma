@@ -5,7 +5,7 @@ import { getServerSession } from "next-auth";
 import Head from "next/head";
 import { useRouter } from "next/router";
 import { useCallback, useEffect, useState, type ReactElement } from "react";
-import { IoLockClosed, IoWarning } from "react-icons/io5";
+import { IoGift, IoWarningOutline } from "react-icons/io5";
 import type { ErrorResponseItem } from "~/api/models/common";
 import type { ProgramInfo } from "~/api/models/referrals";
 import type { UserProfile } from "~/api/models/user";
@@ -27,6 +27,7 @@ import { currentLanguageAtom, userProfileAtom } from "~/lib/store";
 import { getProfileCompletionStep } from "~/lib/utils/profile";
 import { authOptions } from "~/server/auth";
 import { type NextPageWithLayout } from "../../_app";
+import FormMessage, { FormMessageType } from "~/components/Common/FormMessage";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
@@ -277,8 +278,8 @@ const ReferralClaimPage: NextPageWithLayout<{
     return (
       <div className="flex min-h-screen items-center justify-center">
         <LoadingInline
-          classNameSpinner="h-16 w-16 border-t-4 border-b-4 border-orange"
-          classNameLabel={"text-lg font-semibold"}
+          classNameSpinner="h-8 w-8 border-t-2 border-b-2 border-orange md:h-16 md:w-16 md:border-t-4 md:border-b-4"
+          classNameLabel={"text-sm font-semibold md:text-lg"}
           label={
             claimingAfterProfile
               ? "Claiming your referral..."
@@ -291,35 +292,28 @@ const ReferralClaimPage: NextPageWithLayout<{
 
   // Error states
   if (serverError || programError || !program) {
-    return (
-      <div className="container mx-auto mt-16 max-w-5xl px-4 py-12">
-        {/* Error Hero Section */}
-        <div className="mb-8 rounded-xl border-4 border-orange-300 bg-gradient-to-br from-orange-50 via-yellow-50 to-white p-8 shadow-xl">
-          <div className="mb-6 flex flex-col items-center gap-4 text-center">
-            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-orange-400 to-red-400 shadow-lg">
-              <IoWarning className="h-12 w-12 text-white" />
-            </div>
-            <div>
-              <h1 className="mb-2 text-lg font-bold text-orange-900 md:text-2xl">
-                Referral Link Unavailable
-              </h1>
-              <p className="text-sm text-gray-700 md:text-base">
-                This referral link is invalid, expired, or has been removed.
-              </p>
-            </div>
-          </div>
+    const referralUnavailableDescription = `
+      <div class="text-center mt-10">
+        <h3 class="text-xs md:text-sm font-bold text-gray-900 mb-2">What might have happened?</h3>
+        <ul class="text-left text-xs md:text-sm ml-6 list-disc space-y-2 text-gray-700">
+          <li>The link may have expired or reached its usage limit</li>
+          <li>The person who shared it may have cancelled it</li>
+          <li>The referral program may no longer be active</li>
+          <li>The link URL might be incorrect</li>
+        </ul>
+      </div>
+    `;
 
-          <div className="rounded-lg border-2 border-orange-200 bg-white p-6">
-            <h3 className="mb-3 text-lg font-bold text-gray-900">
-              What might have happened?
-            </h3>
-            <ul className="ml-6 list-disc space-y-2 text-sm text-gray-700">
-              <li>The link may have expired or reached its usage limit</li>
-              <li>The person who shared it may have cancelled it</li>
-              <li>The referral program may no longer be active</li>
-              <li>The link URL might be incorrect</li>
-            </ul>
-          </div>
+    return (
+      <div className="container mx-auto mt-20 flex max-w-5xl flex-col gap-8 px-4 py-8">
+        <div className="flex items-center justify-center">
+          <NoRowsMessage
+            title="Referral Link Unavailable"
+            subTitle="This referral link is invalid, expired, or has been removed."
+            description={referralUnavailableDescription}
+            icon={<IoWarningOutline className="h-6 w-6 text-red-500" />}
+            className="max-w-3xl !bg-transparent"
+          />
         </div>
 
         {/* Become a Referrer Section */}
@@ -352,61 +346,43 @@ const ReferralClaimPage: NextPageWithLayout<{
       return (
         <div className="flex min-h-screen items-center justify-center">
           <LoadingInline
-            classNameSpinner="h-32 w-32 border-t-4 border-b-4 border-orange"
-            classNameLabel={"text-lg font-semibold"}
+            classNameSpinner="h-8 w-8 border-t-2 border-b-2 border-orange md:h-16 md:w-16 md:border-t-4 md:border-b-4"
+            classNameLabel={"text-sm font-semibold md:text-lg"}
             label="Redirecting to your dashboard..."
           />
         </div>
       );
     }
 
-    return (
-      <div className="container mx-auto mt-16 max-w-5xl px-4 py-12">
-        {/* Claim Error Hero Section */}
-        <div className="mb-8 rounded-xl border-4 border-red-300 bg-gradient-to-br from-red-50 via-orange-50 to-white p-8 shadow-xl">
-          <div className="mb-6 flex flex-col items-center gap-4 text-center">
-            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-red-400 to-orange-400 shadow-lg">
-              <IoWarning className="h-12 w-12 text-white" />
-            </div>
-            <div>
-              <h1 className="mb-2 text-lg font-bold text-red-900 md:text-2xl">
-                Unable to Claim Referral Link
-              </h1>
-              {!hasCustomErrors && (
-                <p className="text-sm text-gray-700 md:text-base">
-                  {errorMessage}
-                </p>
-              )}
-            </div>
-          </div>
+    const claimErrorReasons = hasCustomErrors
+      ? (customErrors ?? []).map((error) => error.message || "Unknown reason")
+      : [
+          "You&apos;ve already claimed this referral link",
+          "You don&apos;t meet the program requirements",
+          "The link has reached its maximum number of claims",
+          "The link has expired",
+          "You may have already claimed a different referral for this program",
+        ];
 
-          <div className="rounded-lg border-2 border-red-200 bg-white p-6">
-            <h3 className="mb-3 text-lg font-bold text-gray-900">
-              {hasCustomErrors
-                ? "Reasons:"
-                : "Common reasons this might happen:"}
-            </h3>
-            <ul className="ml-6 list-disc space-y-2 text-sm text-gray-700">
-              {hasCustomErrors ? (
-                // Show custom errors from API
-                customErrors.map((error, index) => (
-                  <li key={index}>{error.message}</li>
-                ))
-              ) : (
-                // Show default reasons
-                <>
-                  <li>You&apos;ve already claimed this referral link</li>
-                  <li>You don&apos;t meet the program requirements</li>
-                  <li>The link has reached its maximum number of claims</li>
-                  <li>The link has expired</li>
-                  <li>
-                    You may have already claimed a different referral for this
-                    program
-                  </li>
-                </>
-              )}
-            </ul>
-          </div>
+    const claimErrorDescription = `
+      <div class="text-center mt-10">
+        <h3 class="text-xs md:text-sm font-bold text-gray-900 mb-2">${hasCustomErrors ? "Reasons:" : "Common reasons this might happen:"}</h3>
+        <ul class="text-left text-xs md:text-sm ml-6 list-disc space-y-2 text-gray-700">
+          ${claimErrorReasons.map((reason) => `<li>${reason}</li>`).join("")}
+        </ul>
+      </div>
+    `;
+
+    return (
+      <div className="container mx-auto mt-20 flex max-w-5xl flex-col gap-8 px-4 py-8">
+        <div className="flex items-center justify-center">
+          <NoRowsMessage
+            icon={<IoWarningOutline className="h-6 w-6 text-red-500" />}
+            title="Unable to Claim Referral Link"
+            subTitle={!hasCustomErrors ? errorMessage : undefined}
+            description={claimErrorDescription}
+            className="max-w-3xl !bg-transparent"
+          />
         </div>
 
         {/* Become a Referrer Section */}
@@ -468,33 +444,48 @@ const ReferralClaimPage: NextPageWithLayout<{
             )}
           </div>
         </div> */}
-        {/* Welcome: Referee */}{" "}
-        <div className="flex items-center justify-center">
-          {!isAuthenticated && (
-            <NoRowsMessage
-              title="You've been invited!"
-              description="Click the button below to join Yoma and earn rewards when you complete the program requirements."
-              icon={"❤️"}
-              className="max-w-3xl !bg-transparent"
-            />
-          )}
-          {isAuthenticated && needsProfileCompletion && (
+        {/* Welcome: Referee */}
+        {!isAuthenticated && (
+          <div className="flex items-center justify-center">
+            <div className="flex flex-col">
+              <NoRowsMessage
+                title="You've been invited!"
+                description="Click the button below to join Yoma and earn rewards when you complete the program requirements."
+                icon={"❤️"}
+                className="max-w-3xl !bg-transparent"
+              />
+
+              {program.proofOfPersonhoodRequired && (
+                <FormMessage
+                  messageType={FormMessageType.Info}
+                  className="items-center justify-center !border-0"
+                >
+                  Please sign-up using <strong>Social Media</strong>{" "}
+                  (Google/Facebook) or <strong>Phone Number</strong>
+                </FormMessage>
+              )}
+            </div>
+
+            {/* {isAuthenticated && needsProfileCompletion && (
             <NoRowsMessage
               title="Almost there!"
               description="Complete your profile to get started."
               icon={"❤️"}
               className="max-w-3xl !bg-transparent"
             />
-          )}
-        </div>
+          )} */}
+          </div>
+        )}
+
         {/* Profile Completion Wizard - Only show if user is authenticated but profile is incomplete */}
-        {needsProfileCompletion && (
+        {isAuthenticated && needsProfileCompletion && (
           <ProfileCompletionWizard
             userProfile={userProfile || serverUserProfile || null}
             onComplete={handleProfileComplete}
             showHeader={false}
           />
         )}
+
         {(!isAuthenticated || (isAuthenticated && !needsProfileCompletion)) && (
           <>
             {/* How It Works - Referee Perspective */}
@@ -513,6 +504,7 @@ const ReferralClaimPage: NextPageWithLayout<{
             /> */}
           </>
         )}
+
         {/* CTA Section */}
         {!isAuthenticated && (
           <div className="flex flex-col items-center">
@@ -524,11 +516,11 @@ const ReferralClaimPage: NextPageWithLayout<{
             >
               {claiming && (
                 <LoadingInline
-                  classNameSpinner="  h-6 w-6"
+                  classNameSpinner="h-4 w-4 md:h-6 md:w-6"
                   classNameLabel="hidden"
                 />
               )}
-              {!claiming && <IoLockClosed className="h-6 w-6" />}
+              {!claiming && <IoGift className="h-6 w-6" />}
               <p>Join Yoma!</p>
             </button>
           </div>

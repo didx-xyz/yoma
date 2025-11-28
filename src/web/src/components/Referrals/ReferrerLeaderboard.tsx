@@ -32,8 +32,8 @@ export const ReferrerLeaderboard: React.FC<ReferrerLeaderboardProps> = ({
   if (isLoading) {
     return (
       <div className="shadow-custom rounded-lg bg-white p-6">
-        <h2 className="mb-4 flex items-center gap-4 text-lg font-bold text-gray-900">
-          <IoTrophy className="text-yellow h-8 w-8" /> Top Referrers
+        <h2 className="mb-4 flex items-center gap-4 text-base font-bold text-gray-900 md:text-lg">
+          <IoTrophy className="text-yellow h-6 w-6" /> Top Referrers
         </h2>
         <LoadingInline classNameSpinner="h-12 border-orange w-12" />
       </div>
@@ -45,8 +45,8 @@ export const ReferrerLeaderboard: React.FC<ReferrerLeaderboardProps> = ({
 
   return (
     <div className="shadow-custom rounded-lg bg-white p-6">
-      <h2 className="mb-4 flex items-center gap-4 text-lg font-bold text-gray-900">
-        <IoTrophy className="text-yellow h-8 w-8" /> Top Referrers
+      <h2 className="mb-4 flex items-center gap-4 text-base font-bold text-gray-900 md:text-lg">
+        <IoTrophy className="text-yellow h-6 w-6" /> Top Referrers
       </h2>
 
       {!leaderboard?.items || leaderboard.items.length === 0 ? (
@@ -59,7 +59,7 @@ export const ReferrerLeaderboard: React.FC<ReferrerLeaderboardProps> = ({
             {leaderboard.items.map((user, index) => {
               const isCurrentUser =
                 user.userDisplayName === currentUserDisplayName;
-              const referrals = user.usageCountTotal ?? 0;
+              const referrals = user.usageCountCompleted ?? 0;
 
               return (
                 <div

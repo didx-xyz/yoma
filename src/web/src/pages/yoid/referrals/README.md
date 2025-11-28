@@ -48,7 +48,7 @@ This page supports two modes for handling referral programs:
 
 ### Components
 
-- **ReferrerLinkUsageInline:** New component for inline usage view (single mode)
+- **ReferrerLinkUsage:** New component for inline usage view (single mode)
 - **ReferrerLinkUsageModal:** Modal usage view (multi mode)
 - **ReferrerCreateLinkModal:** Works in both modes (program pre-selected in single mode)
 - **ReferrerLinksList:** Only shown in multi mode

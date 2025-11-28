@@ -98,7 +98,7 @@ export const RefereeProgramDetails: React.FC<ProgramDetailsProps> = ({
 
         {/* Action Buttons Row */}
         {showDetailsOption && (
-          <div className="mt-3 flex gap-2">
+          <div className="mt-3 flex flex-col gap-2 md:flex-row">
             {perspective === "referrer" && context !== "preview" && (
               <button
                 type="button"
@@ -117,7 +117,6 @@ export const RefereeProgramDetails: React.FC<ProgramDetailsProps> = ({
                     ? "border-orange-500 bg-gradient-to-r from-orange-500 to-yellow-500"
                     : "border-blue-600 bg-gradient-to-r from-blue-600 to-blue-500"
                 }`}
-                style={context === "list" ? { maxWidth: "50%" } : undefined}
               >
                 {context === "select" ? (
                   <>
@@ -324,7 +323,7 @@ export const RefereeProgramDetails: React.FC<ProgramDetailsProps> = ({
               {program.proofOfPersonhoodRequired || program.pathwayRequired ? (
                 <div className="space-y-1.5">
                   {program.proofOfPersonhoodRequired && (
-                    <div className="flex items-center gap-2 rounded-lg">
+                    <div className="flex flex-col items-center justify-start gap-2 rounded-lg md:flex-row">
                       <span className="badge badge-sm flex-shrink-0 bg-blue-100 text-blue-700">
                         <IoCheckmarkCircle className="h-4 w-4" />
                         <span className="ml-1">Proof of Person</span>
@@ -340,7 +339,7 @@ export const RefereeProgramDetails: React.FC<ProgramDetailsProps> = ({
                     </div>
                   )}
                   {program.pathwayRequired && (
-                    <div className="flex items-center gap-2 rounded-lg">
+                    <div className="flex flex-col items-center justify-start gap-2 rounded-lg md:flex-row">
                       <span className="badge badge-sm flex-shrink-0 bg-blue-100 text-blue-700">
                         <IoCheckmarkCircle className="h-4 w-4" />
                         <span className="ml-1">Pathway Completion</span>

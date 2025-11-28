@@ -18,6 +18,7 @@ import {
 import Suspense from "../Common/Suspense";
 import SettingsForm from "../Settings/SettingsForm";
 import { UserProfileFilterOptions, UserProfileForm } from "./UserProfileForm";
+import NoRowsMessage from "../NoRowsMessage";
 
 interface ProfileCompletionWizardProps {
   userProfile: UserProfile | null;
@@ -223,169 +224,183 @@ export const ProfileCompletionWizard: React.FC<
   }
 
   return (
-    <div
-      ref={containerRef}
-      //className="rounded-xl border-4 border-blue-300 bg-gradient-to-br from-blue-50 via-indigo-50 to-white p-6 shadow-xl md:p-8"
-    >
-      {/* Header */}
-      {showHeader && (
-        <div className="mb-6 text-center">
-          <h3 className="mb-2 text-xl font-bold text-blue-900 md:text-2xl">
-            Your Profile
-          </h3>
-          <p className="text-sm text-gray-700 md:text-base">
-            Complete these quick steps to get started
-          </p>
-        </div>
-      )}
+    <div ref={containerRef} className="flex w-full justify-center">
+      <div className="w-full max-w-3xl">
+        {/* Header */}
+        {showHeader && (
+          <div className="mb-6 text-center">
+            <h3 className="mb-2 text-xl font-bold text-blue-900 md:text-2xl">
+              Your Profile
+            </h3>
+            <p className="text-sm text-gray-700 md:text-base">
+              Complete these quick steps to get started
+            </p>
+          </div>
+        )}
 
-      {/* Progress Steps */}
-      {showHeader && (
-        <div className="mb-6 flex items-center justify-center gap-2 md:gap-4">
-          {/* Step 1: Profile */}
-          <div className="flex flex-col items-center gap-2">
+        {/* Progress Steps */}
+        {showHeader && (
+          <div className="mb-6 flex items-center justify-center gap-2 md:gap-4">
+            {/* Step 1: Profile */}
+            <div className="flex flex-col items-center gap-2">
+              <div
+                className={`flex h-10 w-10 items-center justify-center rounded-full border-2 md:h-12 md:w-12 ${
+                  completedSteps.includes("profile")
+                    ? "border-green-500 bg-green-500"
+                    : currentStep === "profile"
+                      ? "border-green-500 bg-white"
+                      : "border-gray-300 bg-gray-100"
+                }`}
+              >
+                {completedSteps.includes("profile") ? (
+                  <IoCheckmarkCircle className="h-6 w-6 text-white md:h-8 md:w-8" />
+                ) : (
+                  <FcViewDetails className="h-5 w-5 md:h-6 md:w-6" />
+                )}
+              </div>
+              <span className="text-xs font-semibold text-gray-700 md:text-sm">
+                Profile
+              </span>
+            </div>
+
+            {/* Connector */}
             <div
-              className={`flex h-10 w-10 items-center justify-center rounded-full border-2 md:h-12 md:w-12 ${
+              className={`h-1 w-8 rounded md:w-16 ${
                 completedSteps.includes("profile")
-                  ? "border-green-500 bg-green-500"
-                  : currentStep === "profile"
-                    ? "border-green-500 bg-white"
-                    : "border-gray-300 bg-gray-100"
+                  ? "bg-green-500"
+                  : "bg-gray-300"
               }`}
-            >
-              {completedSteps.includes("profile") ? (
-                <IoCheckmarkCircle className="h-6 w-6 text-white md:h-8 md:w-8" />
-              ) : (
-                <FcViewDetails className="h-5 w-5 md:h-6 md:w-6" />
-              )}
+            />
+
+            {/* Step 2: Settings */}
+            <div className="flex flex-col items-center gap-2">
+              <div
+                className={`flex h-10 w-10 items-center justify-center rounded-full border-2 md:h-12 md:w-12 ${
+                  completedSteps.includes("settings")
+                    ? "border-green-500 bg-green-500"
+                    : currentStep === "settings"
+                      ? "border-green-500 bg-white"
+                      : "border-gray-300 bg-gray-100"
+                }`}
+              >
+                {completedSteps.includes("settings") ? (
+                  <IoCheckmarkCircle className="h-6 w-6 text-white md:h-8 md:w-8" />
+                ) : (
+                  <FcSettings className="h-5 w-5 md:h-6 md:w-6" />
+                )}
+              </div>
+              <span className="text-xs font-semibold text-gray-700 md:text-sm">
+                Settings
+              </span>
             </div>
-            <span className="text-xs font-semibold text-gray-700 md:text-sm">
-              Profile
-            </span>
-          </div>
 
-          {/* Connector */}
-          <div
-            className={`h-1 w-8 rounded md:w-16 ${
-              completedSteps.includes("profile")
-                ? "bg-green-500"
-                : "bg-gray-300"
-            }`}
-          />
-
-          {/* Step 2: Settings */}
-          <div className="flex flex-col items-center gap-2">
+            {/* Connector */}
             <div
-              className={`flex h-10 w-10 items-center justify-center rounded-full border-2 md:h-12 md:w-12 ${
+              className={`h-1 w-8 rounded md:w-16 ${
                 completedSteps.includes("settings")
-                  ? "border-green-500 bg-green-500"
-                  : currentStep === "settings"
-                    ? "border-green-500 bg-white"
-                    : "border-gray-300 bg-gray-100"
+                  ? "bg-green-500"
+                  : "bg-gray-300"
               }`}
-            >
-              {completedSteps.includes("settings") ? (
-                <IoCheckmarkCircle className="h-6 w-6 text-white md:h-8 md:w-8" />
-              ) : (
-                <FcSettings className="h-5 w-5 md:h-6 md:w-6" />
-              )}
+            />
+
+            {/* Step 3: Photo */}
+            <div className="flex flex-col items-center gap-2">
+              <div
+                className={`flex h-10 w-10 items-center justify-center rounded-full border-2 md:h-12 md:w-12 ${
+                  completedSteps.includes("photo")
+                    ? "border-green-500 bg-green-500"
+                    : currentStep === "photo"
+                      ? "border-green-500 bg-white"
+                      : "border-gray-300 bg-gray-100"
+                }`}
+              >
+                {completedSteps.includes("photo") ? (
+                  <IoCheckmarkCircle className="h-6 w-6 text-white md:h-8 md:w-8" />
+                ) : (
+                  <FcCamera className="h-5 w-5 md:h-6 md:w-6" />
+                )}
+              </div>
+              <span className="text-xs font-semibold text-gray-700 md:text-sm">
+                Photo
+              </span>
             </div>
-            <span className="text-xs font-semibold text-gray-700 md:text-sm">
-              Settings
-            </span>
           </div>
+        )}
 
-          {/* Connector */}
-          <div
-            className={`h-1 w-8 rounded md:w-16 ${
-              completedSteps.includes("settings")
-                ? "bg-green-500"
-                : "bg-gray-300"
-            }`}
-          />
-
-          {/* Step 3: Photo */}
-          <div className="flex flex-col items-center gap-2">
-            <div
-              className={`flex h-10 w-10 items-center justify-center rounded-full border-2 md:h-12 md:w-12 ${
-                completedSteps.includes("photo")
-                  ? "border-green-500 bg-green-500"
-                  : currentStep === "photo"
-                    ? "border-green-500 bg-white"
-                    : "border-gray-300 bg-gray-100"
-              }`}
-            >
-              {completedSteps.includes("photo") ? (
-                <IoCheckmarkCircle className="h-6 w-6 text-white md:h-8 md:w-8" />
-              ) : (
-                <FcCamera className="h-5 w-5 md:h-6 md:w-6" />
-              )}
-            </div>
-            <span className="text-xs font-semibold text-gray-700 md:text-sm">
-              Photo
-            </span>
-          </div>
-        </div>
-      )}
-
-      {/* Step Content */}
-      <div className="rounded-lg border-2 border-blue-200 bg-white p-4 md:p-6">
+        {/* Step Content */}
+        {/* <div className="border-blue-200x bg-whitex border-2x rounded-lg p-4 md:p-6"> */}
         {/* Step 1: Update Profile */}
         {currentStep === "profile" && (
           <div className="space-y-4">
-            <div className="text-center">
+            {/* <div className="text-center">
               <div className="mb-4 flex justify-center">
-                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-blue-100">
-                  <FcViewDetails className="h-10 w-10" />
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 md:h-16 md:w-16">
+                  <FcViewDetails className="h-8 w-8 md:h-10 md:w-10" />
                 </div>
               </div>
-              <h4 className="mb-2 text-lg font-bold text-gray-900 md:text-xl">
+              <h4 className="mb-2 text-base font-bold text-gray-900 md:text-xl">
                 Complete Your Profile
               </h4>
-              <p className="mb-4 text-sm text-gray-600">
+              <p className="mb-4 text-xs text-gray-600 md:text-sm">
                 Your information will be used to issue credentials in your Yo-ID
                 wallet
               </p>
-            </div>
-
-            <UserProfileForm
-              userProfile={userProfile}
-              onSubmit={handleProfileSubmit}
-              filterOptions={[
-                UserProfileFilterOptions.FIRSTNAME,
-                UserProfileFilterOptions.SURNAME,
-                UserProfileFilterOptions.COUNTRY,
-                UserProfileFilterOptions.EDUCATION,
-                UserProfileFilterOptions.GENDER,
-                UserProfileFilterOptions.DATEOFBIRTH,
-              ]}
+            </div> */}
+            <NoRowsMessage
+              title="Almost there!"
+              description="Complete your profile to get started."
+              icon={"❤️"}
+              className="max-w-3xl !bg-transparent"
             />
+
+            <div className="rounded-lg bg-white p-4">
+              <UserProfileForm
+                userProfile={userProfile}
+                onSubmit={handleProfileSubmit}
+                filterOptions={[
+                  UserProfileFilterOptions.FIRSTNAME,
+                  UserProfileFilterOptions.SURNAME,
+                  UserProfileFilterOptions.COUNTRY,
+                  UserProfileFilterOptions.EDUCATION,
+                  UserProfileFilterOptions.GENDER,
+                  UserProfileFilterOptions.DATEOFBIRTH,
+                ]}
+              />
+            </div>
           </div>
         )}
 
         {/* Step 2: Settings */}
         {currentStep === "settings" && (
           <div className="space-y-4">
-            <div className="text-center">
+            {/* <div className="text-center">
               <div className="mb-4 flex justify-center">
-                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-blue-100">
-                  <FcSettings className="h-10 w-10" />
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 md:h-16 md:w-16">
+                  <FcSettings className="h-8 w-8 md:h-10 md:w-10" />
                 </div>
               </div>
-              <h4 className="mb-2 text-lg font-bold text-gray-900 md:text-xl">
+              <h4 className="mb-2 text-base font-bold text-gray-900 md:text-xl">
                 Choose Your Settings
               </h4>
-              <p className="mb-4 text-sm text-gray-600">
+              <p className="mb-4 text-xs text-gray-600 md:text-sm">
                 Configure your notification and privacy preferences
               </p>
-            </div>
+            </div> */}
+            <NoRowsMessage
+              title="Choose Your Settings"
+              description="Configure your notification and privacy preferences."
+              icon={"❤️"}
+              className="max-w-3xl !bg-transparent"
+            />
 
-            <Suspense isLoading={settingsIsLoading} error={settingsError}>
-              <SettingsForm
-                data={settingsData}
-                onSubmit={handleSettingsSubmit}
-              />
-            </Suspense>
+            <div className="rounded-lg bg-white p-4">
+              <Suspense isLoading={settingsIsLoading} error={settingsError}>
+                <SettingsForm
+                  data={settingsData}
+                  onSubmit={handleSettingsSubmit}
+                />
+              </Suspense>
+            </div>
 
             <div className="text-center">
               <button
@@ -402,25 +417,33 @@ export const ProfileCompletionWizard: React.FC<
         {/* Step 3: Upload Photo */}
         {currentStep === "photo" && (
           <div className="space-y-4">
-            <div className="text-center">
+            {/* <div className="text-center">
               <div className="mb-4 flex justify-center">
-                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-blue-100">
-                  <FcCamera className="h-10 w-10" />
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 md:h-16 md:w-16">
+                  <FcCamera className="h-8 w-8 md:h-10 md:w-10" />
                 </div>
               </div>
-              <h4 className="mb-2 text-lg font-bold text-gray-900 md:text-xl">
+              <h4 className="mb-2 text-base font-bold text-gray-900 md:text-xl">
                 Picture Time!
               </h4>
-              <p className="mb-4 text-sm text-gray-600">
+              <p className="mb-4 text-xs text-gray-600 md:text-sm">
                 Choose a profile picture to personalize your account
               </p>
-            </div>
-
-            <UserProfileForm
-              userProfile={userProfile}
-              onSubmit={handlePhotoSubmit}
-              filterOptions={[UserProfileFilterOptions.LOGO]}
+            </div> */}
+            <NoRowsMessage
+              title="Picture Time!"
+              description="Choose a profile picture to personalize your account."
+              icon={"❤️"}
+              className="max-w-3xl !bg-transparent"
             />
+
+            <div className="rounded-lg bg-white p-4">
+              <UserProfileForm
+                userProfile={userProfile}
+                onSubmit={handlePhotoSubmit}
+                filterOptions={[UserProfileFilterOptions.LOGO]}
+              />
+            </div>
 
             <div className="text-center">
               <button
@@ -434,6 +457,7 @@ export const ProfileCompletionWizard: React.FC<
           </div>
         )}
       </div>
+      {/* </div>{" "} */}
     </div>
   );
 };

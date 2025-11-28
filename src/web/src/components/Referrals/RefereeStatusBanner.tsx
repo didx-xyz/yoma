@@ -11,6 +11,7 @@ import type {
   ProgramInfo,
   ReferralLinkUsageInfo,
 } from "~/api/models/referrals";
+import NoRowsMessage from "../NoRowsMessage";
 
 interface RefereeStatusBannerProps {
   usage: ReferralLinkUsageInfo;
@@ -119,7 +120,7 @@ export const RefereeStatusBanner: React.FC<RefereeStatusBannerProps> = ({
     return {
       title: "Final Sprint!",
       subtitle: "Nearly Complete",
-      message: `Outstanding! You're ${percentComplete}% done with the program. Just a little more to go!`,
+      message: `Outstanding! You're almost done with the program. Just a little more to go!`,
       icon: IoTrophy,
       iconColor: "text-amber-500",
       bgGradient: "from-amber-50 via-yellow-50 to-lime-50",
@@ -132,231 +133,120 @@ export const RefereeStatusBanner: React.FC<RefereeStatusBannerProps> = ({
   const Icon = progressionStage.icon;
 
   return (
-    <div
-      className={`shadow-custom relative mb-6 overflow-hidden rounded-xl border-2 ${progressionStage.borderColor} bg-gradient-to-br ${progressionStage.bgGradient} p-6`}
-    >
-      {/* Decorative background pattern */}
-      <div className="absolute inset-0 opacity-5">
-        <div className="absolute top-0 right-0 h-64 w-64 rounded-full bg-black blur-3xl" />
-        <div className="absolute bottom-0 left-0 h-64 w-64 rounded-full bg-black blur-3xl" />
+    <>
+      <div className="mb-6 flex items-center justify-center">
+        <NoRowsMessage
+          icon={
+            <Icon
+              className={`h-6 w-6 md:h-8 md:w-8 ${progressionStage.iconColor}`}
+            />
+          }
+          title={progressionStage.title}
+          //subTitle={progressionStage.subtitle}
+          description={progressionStage.message}
+          className="max-w-3xl !bg-transparent"
+        />
       </div>
 
-      {/* Main Content */}
-      <div className="relative">
-        {/* Header Section */}
-        <div className="mb-6 flex gap-6">
-          {/* Icon, Title & Message */}
-          <div className="flex flex-col gap-2">
-            <div className="flex gap-3 md:items-center">
-              <div
-                className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-2xl bg-white shadow-lg ring-4 ring-white/50 md:h-16 md:w-16 ${progressionStage.showConfetti ? "animate-bounce" : ""}`}
-              >
-                <Icon
-                  className={`h-6 w-6 md:h-10 md:w-10 ${progressionStage.iconColor}`}
-                />
+      {usage.status === "Completed" && usage.dateCompleted && (
+        <div className="mb-6 text-center">
+          <p className="text-xs text-gray-500">
+            ✨ Completed on{" "}
+            {new Date(usage.dateCompleted).toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            })}
+          </p>
+        </div>
+      )}
+
+      {(usage.status === "Pending" || program.zltoRewardReferee) && (
+        <div className="mb-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+          {/* Main Content */}
+          <div className="relative">
+            {/* Progress Bar for Active Status */}
+            {usage.status === "Pending" && (
+              <div className="mb-8">
+                <div className="mb-2 flex items-center justify-between">
+                  <span className="text-xs font-semibold text-gray-700">
+                    Your Progress
+                  </span>
+                  <span className="text-sm font-bold text-gray-900">
+                    {usage.percentComplete}%
+                  </span>
+                </div>
+                <div className="h-3 w-full overflow-hidden rounded-full bg-gray-100">
+                  <div
+                    className="h-full bg-blue-600 transition-all duration-700"
+                    style={{ width: `${usage.percentComplete ?? 0}%` }}
+                  />
+                </div>
               </div>
-              <h2
-                className={`text-xl font-bold ${progressionStage.accentColor}`}
-              >
-                {progressionStage.title}
-              </h2>
-              {progressionStage.showConfetti && (
-                <span className="text-xl">🎉</span>
+            )}
+
+            {/* Info Cards Grid */}
+            <div className="grid gap-4 md:grid-cols-2">
+              {/* Time Warning Card */}
+              {usage.status === "Pending" && timeInfo && (
+                <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-white shadow-sm">
+                      <IoTimeOutline className="h-5 w-5 text-gray-600" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="mb-1 text-sm font-semibold text-gray-900">
+                        {timeInfo.isExpired ? "Expired" : "Time Remaining"}
+                      </p>
+                      <p className="text-lg font-bold text-gray-900">
+                        {timeInfo.isExpired ? (
+                          "—"
+                        ) : (
+                          <>
+                            {timeInfo.isUrgent && "⚠️ "}
+                            {timeInfo.days} Day{timeInfo.days !== 1 ? "s" : ""}
+                          </>
+                        )}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {timeInfo.isExpired
+                          ? "Time limit reached"
+                          : `Complete by ${timeInfo.expiryDate.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Rewards Card */}
+              {program.zltoRewardReferee && (
+                <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-white shadow-sm">
+                      <IoGift className="h-5 w-5 text-gray-600" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="mb-1 text-sm font-semibold text-gray-900">
+                        {usage.status === "Completed"
+                          ? "Your Reward"
+                          : "Earn Reward"}
+                      </p>
+                      <p className="text-lg font-bold text-gray-900">
+                        {program.zltoRewardReferee} ZLTO
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {usage.status === "Completed"
+                          ? "Added to your wallet"
+                          : "Complete all requirements"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
               )}
             </div>
-
-            <p className="text-sm leading-relaxed text-gray-800">
-              {progressionStage.message}
-            </p>
-
-            {/* Completion Date for Completed Status */}
-            {usage.status === "Completed" && usage.dateCompleted && (
-              <p className="text-xs text-gray-600">
-                ✨ Completed on{" "}
-                {new Date(usage.dateCompleted).toLocaleDateString("en-US", {
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
-                })}
-              </p>
-            )}
           </div>
         </div>
-
-        {/* Program Name Badge */}
-        {/* <div className="mb-6">
-          <div className="inline-flex items-center gap-3 rounded-full bg-white px-5 py-2 shadow-md ring-2 ring-gray-200">
-            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-br from-purple-400 to-purple-600">
-              <FaRoad className="h-3 w-3 text-white" />
-            </div>
-            <div>
-              <p className="text-xs font-semibold tracking-wider text-gray-500 uppercase">
-                Program
-              </p>
-              <p className="text-sm font-bold text-gray-900">{program.name}</p>
-            </div>
-          </div>
-        </div> */}
-        {/* <div className="mb-6">
-          <RefereeProgramDetails program={program} perspective="referee" />
-        </div> */}
-
-        {/* Progress Bar for Active Status */}
-        {usage.status === "Pending" && (
-          <div className="mb-6">
-            <div className="mb-2 flex items-center justify-between">
-              <span className="text-xs font-semibold text-gray-700">
-                Your Progress
-              </span>
-              <span className="text-lg font-bold text-gray-900">
-                {usage.percentComplete}%
-              </span>
-            </div>
-            <div className="h-4 w-full overflow-hidden rounded-full bg-white shadow-inner">
-              <div
-                className={`h-full bg-gradient-to-r transition-all duration-700 ${
-                  (usage.percentComplete ?? 0) >= 90
-                    ? "from-green-500 via-emerald-500 to-teal-500"
-                    : (usage.percentComplete ?? 0) >= 50
-                      ? "from-orange-500 via-amber-500 to-yellow-500"
-                      : "from-blue-500 via-indigo-500 to-purple-500"
-                }`}
-                style={{ width: `${usage.percentComplete ?? 0}%` }}
-              />
-            </div>
-          </div>
-        )}
-
-        {/* Info Cards Grid */}
-        <div className="grid gap-4 md:grid-cols-2">
-          {/* Time Warning Card */}
-          {usage.status === "Pending" && timeInfo && (
-            <div
-              className={`rounded-xl border-2 bg-white/80 p-4 shadow-md backdrop-blur-sm ${
-                timeInfo.isExpired
-                  ? "border-red-300"
-                  : timeInfo.isUrgent
-                    ? "border-yellow-400"
-                    : "border-blue-300"
-              }`}
-            >
-              <div className="flex items-start gap-3">
-                <div
-                  className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg ${
-                    timeInfo.isExpired
-                      ? "bg-red-100"
-                      : timeInfo.isUrgent
-                        ? "bg-yellow-100"
-                        : "bg-blue-100"
-                  }`}
-                >
-                  <IoTimeOutline
-                    className={`h-5 w-5 ${
-                      timeInfo.isExpired
-                        ? "text-red-600"
-                        : timeInfo.isUrgent
-                          ? "text-yellow-700"
-                          : "text-blue-600"
-                    }`}
-                  />
-                </div>
-                <div className="flex-1">
-                  <p
-                    className={`mb-1 text-sm font-semibold ${
-                      timeInfo.isExpired
-                        ? "text-red-900"
-                        : timeInfo.isUrgent
-                          ? "text-yellow-900"
-                          : "text-blue-900"
-                    }`}
-                  >
-                    {timeInfo.isExpired ? "Expired" : "Time Remaining"}
-                  </p>
-                  <p
-                    className={`text-xl font-bold ${
-                      timeInfo.isExpired
-                        ? "text-red-700"
-                        : timeInfo.isUrgent
-                          ? "text-yellow-700"
-                          : "text-blue-700"
-                    }`}
-                  >
-                    {timeInfo.isExpired ? (
-                      "—"
-                    ) : (
-                      <>
-                        {timeInfo.isUrgent && "⚠️ "}
-                        {timeInfo.days} Day{timeInfo.days !== 1 ? "s" : ""}
-                      </>
-                    )}
-                  </p>
-                  <p className="text-xs text-gray-600">
-                    {timeInfo.isExpired
-                      ? "Time limit reached"
-                      : `Complete by ${timeInfo.expiryDate.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`}
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Rewards Card */}
-          {program.zltoRewardReferee && (
-            <div
-              className={`rounded-xl border-2 bg-white/80 p-4 shadow-md backdrop-blur-sm ${
-                usage.status === "Completed"
-                  ? "border-green-300"
-                  : "border-purple-300"
-              }`}
-            >
-              <div className="flex items-start gap-3">
-                <div
-                  className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg ${
-                    usage.status === "Completed"
-                      ? "bg-green-100"
-                      : "bg-purple-100"
-                  }`}
-                >
-                  <IoGift
-                    className={`h-5 w-5 ${
-                      usage.status === "Completed"
-                        ? "text-green-600"
-                        : "text-purple-600"
-                    }`}
-                  />
-                </div>
-                <div className="flex-1">
-                  <p
-                    className={`mb-1 text-sm font-semibold ${
-                      usage.status === "Completed"
-                        ? "text-green-900"
-                        : "text-purple-900"
-                    }`}
-                  >
-                    {usage.status === "Completed"
-                      ? "Your Reward"
-                      : "Earn Reward"}
-                  </p>
-                  <p
-                    className={`text-xl font-bold ${
-                      usage.status === "Completed"
-                        ? "text-yellow-700"
-                        : "text-purple-700"
-                    }`}
-                  >
-                    {program.zltoRewardReferee} ZLTO
-                  </p>
-                  <p className="text-xs text-gray-600">
-                    {usage.status === "Completed"
-                      ? "Added to your wallet"
-                      : "Complete all requirements"}
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
+      )}
+    </>
   );
 };

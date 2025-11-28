@@ -4,13 +4,14 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-import { useAtom } from "jotai";
+import { useAtom, useAtomValue } from "jotai";
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
 import Head from "next/head";
 import { useRouter } from "next/router";
 import { useCallback, useEffect, useState, type ReactElement } from "react";
-import { IoWarning } from "react-icons/io5";
+import { IoMdClose } from "react-icons/io";
+import { IoLink, IoWarningOutline } from "react-icons/io5";
 import type {
   ProgramInfo,
   ProgramSearchResultsInfo,
@@ -23,21 +24,24 @@ import {
   searchReferralProgramsInfo,
 } from "~/api/services/referrals";
 import Breadcrumb from "~/components/Breadcrumb";
+import CustomModal from "~/components/Common/CustomModal";
+import MainLayout from "~/components/Layout/Main";
 import YoIDLayout from "~/components/Layout/YoID";
 import NoRowsMessage from "~/components/NoRowsMessage";
-import { HelpReferrer } from "~/components/Referrals/HelpReferrer";
+import { LoadingInline } from "~/components/Status/LoadingInline";
 import { ReferrerCreateLinkModal } from "~/components/Referrals/ReferrerCreateLinkModal";
 import { ReferrerLeaderboard } from "~/components/Referrals/ReferrerLeaderboard";
-import { ReferrerLinkUsageInline } from "~/components/Referrals/ReferrerLinkUsageInline";
-import { ReferrerLinkUsageModal } from "~/components/Referrals/ReferrerLinkUsageModal";
 import { ReferrerLinksList } from "~/components/Referrals/ReferrerLinksList";
 import { ReferrerProgramsList } from "~/components/Referrals/ReferrerProgramsList";
-import { ReferrerStats } from "~/components/Referrals/ReferrerStats";
-import { Unauthorized } from "~/components/Status/Unauthorized";
+import { ReferrerPerformanceOverview } from "~/components/Referrals/ReferrerPerformanceOverview";
+import { ReferrerReferralsList } from "~/components/Referrals/ReferrerReferralsList";
+import { ReferrerLinkDetails } from "~/components/Referrals/ReferrerLinkDetails";
+import { ReferrerProgramPreview } from "~/components/Referrals/ReferrerProgramPreview";
 import { config } from "~/lib/react-query-config";
-import { userProfileAtom } from "~/lib/store";
+import { currentLanguageAtom, userProfileAtom } from "~/lib/store";
 import { authOptions } from "~/server/auth";
 import { type NextPageWithLayout } from "../../_app";
+import { handleUserSignIn } from "~/lib/authUtils";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
@@ -46,7 +50,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   if (!session) {
     return {
       props: {
-        error: "Unauthorized",
+        error: 401,
       },
     };
   }
@@ -91,27 +95,36 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     });
   } else {
     // SINGLE PROGRAM MODE: fetch default program and user's first link for that program
-    const defaultProgram = await getDefaultReferralProgram(context);
+    try {
+      const defaultProgram = await getDefaultReferralProgram(context);
 
-    await queryClient.prefetchQuery({
-      queryKey: ["DefaultReferralProgram"],
-      queryFn: () => Promise.resolve(defaultProgram),
-    });
+      await queryClient.prefetchQuery({
+        queryKey: ["DefaultReferralProgram"],
+        queryFn: () => Promise.resolve(defaultProgram),
+      });
 
-    await queryClient.prefetchQuery({
-      queryKey: ["ReferralLinks", defaultProgram.id, 1, 1], // programId, pageNumber: 1, pageSize: 1
-      queryFn: () =>
-        searchReferralLinks(
-          {
-            pageNumber: 1,
-            pageSize: 1,
-            programId: defaultProgram.id,
-            valueContains: null,
-            statuses: null,
-          },
-          context,
-        ),
-    });
+      await queryClient.prefetchQuery({
+        queryKey: ["ReferralLinks", defaultProgram.id, 1, 1], // programId, pageNumber: 1, pageSize: 1
+        queryFn: () =>
+          searchReferralLinks(
+            {
+              pageNumber: 1,
+              pageSize: 1,
+              programId: defaultProgram.id,
+              valueContains: null,
+              statuses: null,
+            },
+            context,
+          ),
+      });
+    } catch (error) {
+      console.error("Failed to fetch default referral program:", error);
+      // If default program fails to load, prefetch with null to indicate unavailable
+      await queryClient.prefetchQuery({
+        queryKey: ["DefaultReferralProgram"],
+        queryFn: () => Promise.resolve(null),
+      });
+    }
   }
 
   return {
@@ -124,7 +137,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 }
 
 const ReferralsDashboard: NextPageWithLayout<{
-  error?: string;
+  error?: number;
   multiProgram?: boolean;
 }> = ({ error, multiProgram = false }) => {
   const router = useRouter();
@@ -270,7 +283,25 @@ const ReferralsDashboard: NextPageWithLayout<{
     [multiProgram],
   );
 
-  if (error === "Unauthorized") return <Unauthorized />;
+  const currentLanguage = useAtomValue(currentLanguageAtom);
+
+  useEffect(() => {
+    if (error === 401) {
+      void handleUserSignIn(currentLanguage);
+    }
+  }, [error, currentLanguage]);
+
+  if (error === 401) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <LoadingInline
+          classNameSpinner="h-8 w-8 border-t-2 border-b-2 border-orange md:h-16 md:w-16 md:border-t-4 md:border-b-4"
+          classNameLabel={"text-sm font-semibold md:text-lg"}
+          label="Redirecting to login..."
+        />
+      </div>
+    );
+  }
 
   return (
     <>
@@ -295,37 +326,52 @@ const ReferralsDashboard: NextPageWithLayout<{
         {/* BLOCKED STATE */}
         {isBlocked && (
           <div className="shadow-custom mb-6 rounded-lg bg-white p-6">
-            <div className="flex items-start gap-4">
-              <IoWarning className="text-orange h-8 w-8 flex-shrink-0" />
-              <div className="flex-1">
-                <h2 className="text-orange text-xl font-bold">
-                  Referral Access Suspended
-                </h2>
-                <p className="text-gray-dark mt-2">
-                  Your access to the referral program has been temporarily
-                  suspended. If you believe this is an error, please contact
-                  support.
-                </p>
-                {userProfile?.referral?.blockedDate && (
-                  <p className="text-gray-dark mt-2 text-sm">
-                    Suspended on:{" "}
-                    {new Date(
-                      userProfile.referral.blockedDate,
-                    ).toLocaleDateString("en-US", {
+            {(() => {
+              const blockedDate = userProfile?.referral?.blockedDate
+                ? new Date(userProfile.referral.blockedDate).toLocaleDateString(
+                    "en-US",
+                    {
                       year: "numeric",
                       month: "long",
                       day: "numeric",
-                    })}
-                  </p>
-                )}
-                <button
-                  onClick={() => router.push("/support")}
-                  className="btn btn-warning btn-sm mt-4"
-                >
-                  Contact Support
-                </button>
-              </div>
-            </div>
+                    },
+                  )
+                : null;
+
+              const blockedDescription = `
+                <div class="text-center mt-10">
+                  <p>Your access to the referral program has been temporarily suspended. If you believe this is an error, please contact support.</p>
+                  ${
+                    blockedDate
+                      ? `<p class="text-sm text-gray-600">Suspended on: ${blockedDate}</p>`
+                      : ""
+                  }
+                </div>
+              `;
+
+              return (
+                <div className="container mx-auto mt-20 flex max-w-5xl flex-col gap-8 px-4 py-8">
+                  <div className="flex flex-col items-center justify-center">
+                    <NoRowsMessage
+                      title="Referral Access Suspended"
+                      description={blockedDescription}
+                      icon={
+                        <IoWarningOutline className="h-6 w-6 text-red-500" />
+                      }
+                      className="max-w-3xl !bg-transparent"
+                    />
+                    <div className="mt-4 flex justify-center">
+                      <button
+                        onClick={() => router.push("/support")}
+                        className="btn btn-warning btn-sm"
+                      >
+                        Contact Support
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         )}
 
@@ -348,39 +394,66 @@ const ReferralsDashboard: NextPageWithLayout<{
 
             {/* SINGLE PROGRAM MODE */}
             {!multiProgram && (
-              <div className="grid gap-6 lg:grid-cols-3">
+              <div className="grid gap-4 overflow-hidden md:gap-6 lg:grid-cols-3">
                 {/* LEFT COLUMN - Stats & Leaderboard */}
-                <div className="space-y-6 lg:col-span-1">
+                <div className="min-w-0 space-y-4 md:space-y-6 lg:col-span-1">
                   {/* STATS CARDS */}
-                  <ReferrerStats />
+                  {/* <ReferrerStats /> */}
 
                   {/* LEADERBOARD */}
                   <ReferrerLeaderboard pageSize={10} />
                 </div>
 
                 {/* RIGHT COLUMN - Link Details & Usage */}
-                <div className="space-y-6 lg:col-span-2">
+                <div className="min-w-0 space-y-4 md:space-y-6 lg:col-span-2">
                   {isAutoCreating && (
-                    <div className="shadow-custom rounded-lg bg-white p-6">
+                    <div className="rounded-lg bg-white p-6">
                       <div className="flex flex-col items-center justify-center gap-4 py-8">
-                        <span className="loading loading-spinner loading-lg text-blue-600"></span>
-                        <p className="text-gray-600">
-                          Creating your referral link...
-                        </p>
+                        <LoadingInline
+                          classNameSpinner="h-8 w-8 border-t-2 border-b-2 border-orange md:h-16 md:w-16 md:border-t-4 md:border-b-4"
+                          classNameLabel={"text-sm font-semibold md:text-lg"}
+                          label="Creating your referral link..."
+                        />
                       </div>
                     </div>
                   )}
 
                   {!isAutoCreating && hasLinks && firstLink && (
-                    <ReferrerLinkUsageInline link={firstLink} />
+                    <>
+                      {/* Link Details Section */}
+                      <div className="rounded-lg bg-white p-4 md:p-6">
+                        <h2 className="mb-4 flex items-center gap-2 text-base font-bold md:text-lg">
+                          <IoLink className="inline h-4 w-4 text-blue-600 md:h-6 md:w-6" />
+                          Your Referral Link
+                        </h2>
+                        <ReferrerLinkDetails
+                          link={firstLink}
+                          mode="large"
+                          showQRCode={false}
+                          showShare={true}
+                          className=""
+                          hideLabels={true}
+                        />
+                      </div>
+
+                      {/* Performance Overview */}
+                      <div className="rounded-lg bg-white p-4 md:p-6">
+                        <ReferrerPerformanceOverview link={firstLink} />
+                      </div>
+
+                      {/* Referrals List */}
+                      <div className="rounded-lg bg-white p-4 md:p-6">
+                        <ReferrerReferralsList linkId={firstLink.id} />
+                      </div>
+                    </>
                   )}
 
                   {!isAutoCreating && !hasLinks && !defaultProgram && (
-                    <div className="shadow-custom rounded-lg bg-white p-6">
+                    <div className="rounded-lg bg-white p-6">
                       <NoRowsMessage
-                        title="No Program Available"
-                        description="No default referral program is available at this time."
-                        icon={"⚠️"}
+                        title="My Referral Links"
+                        description="Link currently unavailable. Please check back later."
+                        icon={"🔗"}
                       />
                     </div>
                   )}
@@ -416,21 +489,21 @@ const ReferralsDashboard: NextPageWithLayout<{
                 </div> */}
 
                 {/* HOW IT WORKS */}
-                <HelpReferrer isExpanded={!hasLinks} />
+                {/* <HelpReferrer isExpanded={!hasLinks} /> */}
 
                 {/* CONTENT AREA */}
-                <div className="grid gap-6 lg:grid-cols-3">
+                <div className="grid gap-4 overflow-hidden md:gap-6 lg:grid-cols-3">
                   {/* LEFT COLUMN - Stats & Leaderboard */}
-                  <div className="space-y-6 lg:col-span-1">
+                  <div className="min-w-0 space-y-4 md:space-y-6 lg:col-span-1">
                     {/* STATS CARDS */}
-                    <ReferrerStats />
+                    {/* <ReferrerStats /> */}
 
                     {/* LEADERBOARD */}
                     <ReferrerLeaderboard pageSize={10} />
                   </div>
 
                   {/* RIGHT COLUMN - Links & Programs */}
-                  <div className="space-y-6 lg:col-span-2">
+                  <div className="min-w-0 space-y-4 md:space-y-6 lg:col-span-2">
                     {/* MY LINKS */}
                     <ReferrerLinksList
                       programs={programsData?.items || []}
@@ -482,11 +555,65 @@ const ReferralsDashboard: NextPageWithLayout<{
           />
 
           {/* Link Usage Modal */}
-          <ReferrerLinkUsageModal
-            link={selectedLinkForUsage}
+          <CustomModal
             isOpen={!!selectedLinkForUsage}
-            onClose={() => setSelectedLinkForUsage(null)}
-          />
+            onRequestClose={() => setSelectedLinkForUsage(null)}
+            className="md:max-h-[90vh] md:w-[900px]"
+          >
+            {selectedLinkForUsage && (
+              <div className="flex flex-col">
+                {/* Header */}
+                <div className="bg-theme flex flex-row p-4 shadow-lg">
+                  <div className="flex-1">
+                    <h1 className="text-lg font-semibold text-white">
+                      Your Link
+                    </h1>
+                  </div>
+                  <button
+                    type="button"
+                    className="btn btn-circle text-gray-dark hover:bg-gray btn-sm"
+                    onClick={() => setSelectedLinkForUsage(null)}
+                  >
+                    <IoMdClose className="h-5 w-5" />
+                  </button>
+                </div>
+
+                <div className="flex flex-col gap-4 overflow-y-auto p-4 md:p-6">
+                  {/* Link Details Section */}
+                  <ReferrerLinkDetails
+                    link={selectedLinkForUsage}
+                    mode="large"
+                    showQRCode={true}
+                    showShare={true}
+                    className=""
+                    hideLabels={false}
+                  />
+
+                  {/* Program Preview */}
+                  <ReferrerProgramPreview
+                    programId={selectedLinkForUsage.programId}
+                  />
+
+                  {/* Performance Overview */}
+                  <ReferrerPerformanceOverview link={selectedLinkForUsage} />
+
+                  {/* Referrals List */}
+                  <ReferrerReferralsList linkId={selectedLinkForUsage.id} />
+
+                  {/* Action Buttons */}
+                  <div className="flex gap-3">
+                    <button
+                      type="button"
+                      className="btn btn-outline flex-1 border-blue-600 text-blue-600 normal-case hover:bg-blue-600 hover:text-white"
+                      onClick={() => setSelectedLinkForUsage(null)}
+                    >
+                      Back to List
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </CustomModal>
         </>
       )}
     </>
@@ -494,6 +621,9 @@ const ReferralsDashboard: NextPageWithLayout<{
 };
 
 ReferralsDashboard.getLayout = function getLayout(page: ReactElement) {
+  if ((page.props as any).error === 401) {
+    return <MainLayout>{page}</MainLayout>;
+  }
   return <YoIDLayout>{page}</YoIDLayout>;
 };
 
