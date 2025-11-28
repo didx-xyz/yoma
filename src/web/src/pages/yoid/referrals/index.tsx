@@ -37,7 +37,6 @@ import { ReferrerPerformanceOverview } from "~/components/Referrals/ReferrerPerf
 import { ReferrerReferralsList } from "~/components/Referrals/ReferrerReferralsList";
 import { ReferrerLinkDetails } from "~/components/Referrals/ReferrerLinkDetails";
 import { ReferrerProgramPreview } from "~/components/Referrals/ReferrerProgramPreview";
-import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { config } from "~/lib/react-query-config";
 import { currentLanguageAtom, userProfileAtom } from "~/lib/store";
 import { authOptions } from "~/server/auth";
@@ -592,7 +591,6 @@ const ReferralsDashboard: NextPageWithLayout<{
 
                   {/* Program Preview */}
                   <ReferrerProgramPreview
-                    linkId={selectedLinkForUsage.id}
                     programId={selectedLinkForUsage.programId}
                   />
 

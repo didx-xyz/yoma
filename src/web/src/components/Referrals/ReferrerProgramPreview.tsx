@@ -7,12 +7,10 @@ import { RefereeProgramDetails } from "./RefereeProgramDetails";
 import { ProgramRequirements } from "./ProgramRequirements";
 
 interface ProgramPreviewProps {
-  linkId: string;
   programId: string;
 }
 
 export const ReferrerProgramPreview: React.FC<ProgramPreviewProps> = ({
-  linkId,
   programId,
 }) => {
   const {
