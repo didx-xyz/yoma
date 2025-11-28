@@ -387,8 +387,8 @@ namespace Yoma.Core.Domain.Referral.Services
 
       await SendNotification(NotificationType.ReferralUsage_Welcome, program, link, usage);
 
-      //process progress immediately if no pathway/proof required
-      if (!program.PathwayRequired && !program.ProofOfPersonhoodRequired) await ProcessProgressByUserId(user.Id);
+      //process progress immediately unconditionally
+      await ProcessProgressByUserId(user.Id);
     }
 
     public async Task ProcessProgressByUserId(Guid userId)
