@@ -553,7 +553,16 @@ clients:
     frontchannelLogout: true
     protocol: openid-connect
     attributes:
-      post.logout.redirect.uris: $(env:CLIENT_ATINGI_URL)/*##$(env:CLIENT_ATINGI_URL_POST_LOGOUT_REDIRECT)/*##https://preprod.atingi.org/*##https://moodle.dev.atingi.org/*
+      post.logout.redirect.uris: >-
+        $(env:CLIENT_ATINGI_URL)/*##
+        https://keycloak-preprod.enovationaws.com/realms/master/broker/yoma-prod/endpoint/*##
+        https://keycloak.atingi.org/realms/master/broker/yoma-prod/endpoint/*##
+        https://keycloak.dev.atingi.org/realms/master/broker/yoma-prod/endpoint/*##
+        https://login.atingi.org/realms/master/broker/yoma-prod/endpoint/*##
+        https://preprod-login.atingi.org/realms/master/broker/yoma-prod/endpoint/*##
+        https://uatkeycloak.atingi.org/realms/master/broker/yoma-prod/endpoint/*##
+        https://preprod.atingi.org/*##
+        https://moodle.dev.atingi.org/*
       oidc.ciba.grant.enabled: "false"
       oauth2.device.authorization.grant.enabled: "false"
       backchannel.logout.session.required: "true"
