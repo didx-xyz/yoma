@@ -12,7 +12,7 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_DB=postgres
     healthcheck:
-      test: [ "CMD", "pg_isready", "-U", "postgres" ]
+      test: ["CMD", "pg_isready", "-U", "postgres"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -31,7 +31,7 @@ services:
     ports:
       - 6379:6379
     healthcheck:
-      test: [ "CMD", "valkey-cli", "ping" ]
+      test: ["CMD", "valkey-cli", "ping"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -105,7 +105,7 @@ services:
     volumes:
       - keycloak-pg:/var/lib/postgresql/data
     healthcheck:
-      test: [ "CMD", "pg_isready", "-U", "keycloak" ]
+      test: ["CMD", "pg_isready", "-U", "keycloak"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -197,7 +197,6 @@ services:
       CLIENT_YOMA_WEB_URL: "http://localhost:3000"
       CLIENT_ATINGI_ENABLED: "true"
       CLIENT_ATINGI_URL: "https://preprod.atingi.org"
-      CLIENT_ATINGI_URL_REDIRECT: "https://keycloak-preprod.enovationaws.com/realms/master/broker/yoma-prod/endpoint"
       CLIENT_ATINGI_URL_POST_LOGOUT_REDIRECT: "https://keycloak-preprod.enovationaws.com/realms/master/broker/yoma-prod/endpoint"
       CLIENT_GOODWALL_ENABLED: "true"
       CLIENT_GOODWALL_URL: "https://www.goodwall.io"
