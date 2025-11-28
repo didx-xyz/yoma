@@ -91,7 +91,7 @@ config-cli:
     CLIENT_YOMA_API_URL: https://v3api.stage.yoma.world
     CLIENT_YOMA_WEB_URL: https://stage.yoma.world
     CLIENT_ATINGI_URL: https://uatkeycloak.atingi.org
-    CLIENT_ATINGI_URL_REDIRECT: "- https://uatkeycloak.atingi.org/realms/master/broker/yoma-prod/endpoint\n      - https://uatkeycloak.atingi.org/realms/master/broker/giz/endpoint\n      - https://preprod-login.atingi.org/realms/master/broker/giz/endpoint"
+    CLIENT_ATINGI_URL_REDIRECT: "- https://uatkeycloak.atingi.org/realms/master/broker/yoma-prod/endpoint\n      - https://preprod-login.atingi.org/realms/master/broker/yoma-prod/endpoint\n      - https://keycloak.dev.atingi.org/realms/master/broker/yoma-prod/endpoint"
     CLIENT_ATINGI_URL_POST_LOGOUT_REDIRECT: https://uatkeycloak.atingi.org/realms/master/broker/yoma-prod/endpoint
     CLIENT_GOODWALL_URL: https://dev.goodlab.io
     CLIENT_GOODWALL_URL_REDIRECT: goodwallauth://yomaredirect
