@@ -138,7 +138,7 @@ export const RefereeStatusBanner: React.FC<RefereeStatusBannerProps> = ({
         <NoRowsMessage
           icon={
             <Icon
-              className={`h-6 w-6 md:h-8 md:w-8 ${progressionStage.iconColor}`}
+              className={`h-6 w-6 md:h-7 md:w-7 ${progressionStage.iconColor}`}
             />
           }
           title={progressionStage.title}
@@ -147,19 +147,6 @@ export const RefereeStatusBanner: React.FC<RefereeStatusBannerProps> = ({
           className="max-w-3xl !bg-transparent"
         />
       </div>
-
-      {usage.status === "Completed" && usage.dateCompleted && (
-        <div className="mb-6 text-center">
-          <p className="text-xs text-gray-500">
-            ✨ Completed on{" "}
-            {new Date(usage.dateCompleted).toLocaleDateString("en-US", {
-              year: "numeric",
-              month: "long",
-              day: "numeric",
-            })}
-          </p>
-        </div>
-      )}
 
       {(usage.status === "Pending" || program.zltoRewardReferee) && (
         <div className="mb-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
@@ -185,20 +172,65 @@ export const RefereeStatusBanner: React.FC<RefereeStatusBannerProps> = ({
               </div>
             )}
 
+            {usage.status === "Completed" && usage.dateCompleted && (
+              <div className="mb-6 text-center">
+                <p className="text-xs text-gray-500">
+                  ✨ Completed on{" "}
+                  {new Date(usage.dateCompleted).toLocaleDateString("en-US", {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                  })}
+                </p>
+              </div>
+            )}
+
             {/* Info Cards Grid */}
             <div className="grid gap-4 md:grid-cols-2">
               {/* Time Warning Card */}
               {usage.status === "Pending" && timeInfo && (
-                <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+                <div
+                  className={`rounded-lg border p-4 ${
+                    timeInfo.isExpired
+                      ? "border-red-200 bg-red-50"
+                      : timeInfo.isUrgent
+                        ? "border-orange-200 bg-orange-50"
+                        : "border-blue-200 bg-blue-50"
+                  }`}
+                >
                   <div className="flex items-start gap-3">
                     <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-white shadow-sm">
-                      <IoTimeOutline className="h-5 w-5 text-gray-600" />
+                      <IoTimeOutline
+                        className={`h-5 w-5 ${
+                          timeInfo.isExpired
+                            ? "text-red-600"
+                            : timeInfo.isUrgent
+                              ? "text-orange-600"
+                              : "text-blue-600"
+                        }`}
+                      />
                     </div>
                     <div className="flex-1">
-                      <p className="mb-1 text-sm font-semibold text-gray-900">
+                      <p
+                        className={`mb-1 text-sm font-semibold ${
+                          timeInfo.isExpired
+                            ? "text-red-900"
+                            : timeInfo.isUrgent
+                              ? "text-orange-900"
+                              : "text-blue-900"
+                        }`}
+                      >
                         {timeInfo.isExpired ? "Expired" : "Time Remaining"}
                       </p>
-                      <p className="text-lg font-bold text-gray-900">
+                      <p
+                        className={`font-bold md:text-lg ${
+                          timeInfo.isExpired
+                            ? "text-red-700"
+                            : timeInfo.isUrgent
+                              ? "text-orange-700"
+                              : "text-blue-700"
+                        }`}
+                      >
                         {timeInfo.isExpired ? (
                           "—"
                         ) : (
@@ -208,7 +240,15 @@ export const RefereeStatusBanner: React.FC<RefereeStatusBannerProps> = ({
                           </>
                         )}
                       </p>
-                      <p className="text-xs text-gray-500">
+                      <p
+                        className={`text-xs ${
+                          timeInfo.isExpired
+                            ? "text-red-600"
+                            : timeInfo.isUrgent
+                              ? "text-orange-600"
+                              : "text-blue-600"
+                        }`}
+                      >
                         {timeInfo.isExpired
                           ? "Time limit reached"
                           : `Complete by ${timeInfo.expiryDate.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`}
@@ -220,21 +260,51 @@ export const RefereeStatusBanner: React.FC<RefereeStatusBannerProps> = ({
 
               {/* Rewards Card */}
               {program.zltoRewardReferee && (
-                <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+                <div
+                  className={`rounded-lg border p-4 ${
+                    usage.status === "Completed"
+                      ? "border-green-200 bg-green-50"
+                      : "border-purple-200 bg-purple-50"
+                  }`}
+                >
                   <div className="flex items-start gap-3">
                     <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-white shadow-sm">
-                      <IoGift className="h-5 w-5 text-gray-600" />
+                      <IoGift
+                        className={`h-5 w-5 ${
+                          usage.status === "Completed"
+                            ? "text-green-600"
+                            : "text-purple-600"
+                        }`}
+                      />
                     </div>
                     <div className="flex-1">
-                      <p className="mb-1 text-sm font-semibold text-gray-900">
+                      <p
+                        className={`mb-1 text-sm font-semibold ${
+                          usage.status === "Completed"
+                            ? "text-green-900"
+                            : "text-purple-900"
+                        }`}
+                      >
                         {usage.status === "Completed"
                           ? "Your Reward"
                           : "Earn Reward"}
                       </p>
-                      <p className="text-lg font-bold text-gray-900">
+                      <p
+                        className={`font-bold md:text-lg ${
+                          usage.status === "Completed"
+                            ? "text-green-700"
+                            : "text-purple-700"
+                        }`}
+                      >
                         {program.zltoRewardReferee} ZLTO
                       </p>
-                      <p className="text-xs text-gray-500">
+                      <p
+                        className={`text-xs ${
+                          usage.status === "Completed"
+                            ? "text-green-600"
+                            : "text-purple-600"
+                        }`}
+                      >
                         {usage.status === "Completed"
                           ? "Added to your wallet"
                           : "Complete all requirements"}

@@ -15,6 +15,7 @@ interface PathwayTaskOpportunityProps {
   isCompleted?: boolean;
   /** Set to true to fetch full Opportunity data (admin), false for OpportunityInfo (public) */
   isAdmin?: boolean;
+  showBadges?: boolean;
 }
 
 /**
@@ -27,6 +28,7 @@ const PathwayTaskOpportunity: React.FC<PathwayTaskOpportunityProps> = ({
   opportunity,
   isCompleted = false,
   isAdmin = false,
+  showBadges = true,
 }) => {
   // Fetch opportunity data based on isAdmin flag
   const {
@@ -68,6 +70,7 @@ const PathwayTaskOpportunity: React.FC<PathwayTaskOpportunityProps> = ({
               <OpportunityPublicSmallRow
                 opportunity={displayOpportunity as any}
                 isCompleted={isCompleted}
+                showBadges={showBadges}
               />
 
               {/* Non-Completable Warning */}
@@ -110,6 +113,7 @@ const PathwayTaskOpportunity: React.FC<PathwayTaskOpportunityProps> = ({
       <OpportunityPublicSmallRow
         opportunity={displayOpportunity as any}
         isCompleted={isCompleted}
+        showBadges={showBadges}
       />
 
       {/* Non-Completable Warning */}

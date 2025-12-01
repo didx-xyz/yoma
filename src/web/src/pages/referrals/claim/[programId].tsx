@@ -27,7 +27,6 @@ import { currentLanguageAtom, userProfileAtom } from "~/lib/store";
 import { getProfileCompletionStep } from "~/lib/utils/profile";
 import { authOptions } from "~/server/auth";
 import { type NextPageWithLayout } from "../../_app";
-import FormMessage, { FormMessageType } from "~/components/Common/FormMessage";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
@@ -456,13 +455,10 @@ const ReferralClaimPage: NextPageWithLayout<{
               />
 
               {program.proofOfPersonhoodRequired && (
-                <FormMessage
-                  messageType={FormMessageType.Info}
-                  className="items-center justify-center !border-0"
-                >
+                <div className="text-gray-dark text-center text-xs md:text-sm">
                   Please sign-up using <strong>Social Media</strong>{" "}
                   (Google/Facebook) or <strong>Phone Number</strong>
-                </FormMessage>
+                </div>
               )}
             </div>
 

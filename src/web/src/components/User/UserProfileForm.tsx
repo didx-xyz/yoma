@@ -24,6 +24,7 @@ import { validateEmail } from "~/lib/validate";
 import { handleUserSignOut } from "~/lib/authUtils";
 import FormField from "../Common/FormField";
 import FormInput from "../Common/FormInput";
+import { useRouter } from "next/router";
 
 export enum UserProfileFilterOptions {
   EMAIL = "email",
@@ -53,6 +54,7 @@ export const UserProfileForm: React.FC<{
   submitButtonText = "Submit",
   filterOptions,
 }) => {
+  const router = useRouter();
   const queryClient = useQueryClient();
   const { data: session, update } = useSession();
   const [isLoading, setIsLoading] = useState(false);
@@ -332,7 +334,8 @@ export const UserProfileForm: React.FC<{
 
         if (emailUpdated || data.updatePhoneNumber || data.resetPassword) {
           // signout from keycloak
-          handleUserSignOut(true);
+          const returnUrl = router.query.returnUrl as string | undefined;
+          handleUserSignOut(true, false, returnUrl);
           return;
         }
 

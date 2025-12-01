@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useAtomValue } from "jotai";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
@@ -43,6 +43,9 @@ import { ReferrerProgressCard } from "../YoID/ReferrerProgressCard";
 import { SkillsCard } from "../YoID/SkillsCard";
 import { WalletCard } from "../YoID/WalletCard";
 import { YoIdModal } from "../YoID/YoIdModal";
+import { RefereeProgressCard } from "../YoID/RefereeProgressCard";
+import { ReferralLinkUsageStatus } from "~/api/models/referrals";
+import { useRefereeReferrals } from "~/hooks/useRefereeReferrals";
 
 export const UserMenu: React.FC = () => {
   const [isDrawerOpen, setDrawerOpen] = useState(false);
@@ -131,41 +134,43 @@ export const UserMenu: React.FC = () => {
       (role) =>
         role === ReferralParticipationRole.Referrer || role === "Referrer",
     ) ?? false;
+  // Check if user is a referee (has active programs)
+  const isReferee =
+    userProfile?.referral?.roles?.some(
+      (role) =>
+        role === ReferralParticipationRole.Referee || role === "Referee",
+    ) ?? false;
 
   // Fetch referrer programs if user is a referrer
-  const { data: referrerPrograms, isLoading: referrerProgramsLoading } =
-    useQuery({
-      queryKey: ["ReferralLinks", "usermenu"],
-      queryFn: () =>
-        searchReferralLinks({
-          pageNumber: 1,
-          pageSize: 10,
-          programId: null,
-          valueContains: null,
-          statuses: null,
-        }),
-      enabled: isDrawerOpen && isReferrer,
-    });
-
-  // Fetch referee programs if user is a referee
-  //   const { data: refereeLinkUsages, isLoading: refereeLinkUsagesLoading } =
+  //   const { data: referrerPrograms, isLoading: referrerProgramsLoading } =
   //     useQuery({
-  //       queryKey: ["ReferralLinkUsages", "referee", "usermenu"],
+  //       queryKey: ["ReferralLinks", "usermenu"],
   //       queryFn: () =>
-  //         searchReferralLinkUsagesAsReferee({
+  //         searchReferralLinks({
   //           pageNumber: 1,
   //           pageSize: 10,
-  //           linkId: null,
   //           programId: null,
+  //           valueContains: null,
   //           statuses: null,
-  //           dateStart: null,
-  //           dateEnd: null,
   //         }),
-  //       enabled: isDrawerOpen && isReferee,
+  //       enabled: isDrawerOpen && isReferrer,
   //     });
 
+  // Fetch referee programs if user is a referee
+  const [refereePageSize, setRefereePageSize] = useState(5);
+  const {
+    data: refereeLinkUsages,
+    isLoading: refereeLinkUsagesLoading,
+    isFetching: refereeLinkUsagesFetching,
+  } = useRefereeReferrals({
+    pageSize: refereePageSize,
+    statuses: [ReferralLinkUsageStatus.Pending],
+    enabled: isDrawerOpen && isReferee,
+    keepPreviousData: true,
+  });
+
   // Check if user has created any links (as referrer)
-  const hasCreatedLinks = (referrerPrograms?.items?.length ?? 0) > 0;
+  //const hasCreatedLinks = (referrerPrograms?.items?.length ?? 0) > 0;
 
   //#endregion
 
@@ -324,8 +329,8 @@ export const UserMenu: React.FC = () => {
               {/* REFERRALS */}
               <Suspense
                 isLoading={
-                  !userProfile || referrerProgramsLoading /*||
-                  refereeLinkUsagesLoading*/
+                  !userProfile /*|| referrerProgramsLoading*/ ||
+                  refereeLinkUsagesLoading
                 }
                 loader={
                   <LoadingInline
@@ -335,7 +340,7 @@ export const UserMenu: React.FC = () => {
                 }
               >
                 <div className="flex w-full flex-col gap-2">
-                  {/* Show ReferralBlockedCard if user is blocked */}
+                  {/* BLOCKED STATUS */}
                   {userProfile?.referral?.blocked && (
                     <ReferralBlockedCard
                       blockedDate={
@@ -344,20 +349,31 @@ export const UserMenu: React.FC = () => {
                       onClick={() => setDrawerOpen(false)}
                     />
                   )}
-                  {/* Show default ReferralCard if no links created as referrer and not blocked */}
-                  {!userProfile?.referral?.blocked && !hasCreatedLinks && (
+                  {/* REFERRER INVITE */}
+                  {!userProfile?.referral?.blocked && !isReferrer && (
                     <ReferralCard onClick={() => setDrawerOpen(false)} />
                   )}
-                  {/* TRACK PROGRESS (REFERRER) - Show if user has created links and not blocked */}
-                  {!userProfile?.referral?.blocked &&
-                    hasCreatedLinks &&
-                    referrerPrograms && (
-                      <ReferrerProgressCard
-                        links={referrerPrograms.items}
+                  {/* REFERRER PROGRESS */}
+                  {!userProfile?.referral?.blocked && isReferrer && (
+                    <ReferrerProgressCard
+                      onClick={() => setDrawerOpen(false)}
+                      tabIndex={isDrawerOpen ? 0 : -1}
+                    />
+                  )}
+                  {/* REFEREE PROGRESS */}
+                  {/* {!userProfile?.referral?.blocked &&
+                    isReferee &&
+                    refereeLinkUsages?.items && (
+                      <RefereeProgressCard
+                        programs={refereeLinkUsages?.items}
                         onClick={() => setDrawerOpen(false)}
-                        tabIndex={isDrawerOpen ? 0 : -1}
+                        totalCount={refereeLinkUsages?.totalCount ?? 0}
+                        onLoadMore={() =>
+                          setRefereePageSize((prev) => prev + 5)
+                        }
+                        loading={refereeLinkUsagesFetching}
                       />
-                    )}
+                    )} */}
                 </div>
               </Suspense>
 
@@ -379,6 +395,7 @@ export const UserMenu: React.FC = () => {
                   <IoIosInformationCircleOutline className="h-5 w-5" />
                 </button>
               </div>
+
               <div className="flex w-full flex-wrap items-center justify-center gap-5 pb-4">
                 {/* WALLET */}
                 <div className="flex w-full flex-col gap-2">

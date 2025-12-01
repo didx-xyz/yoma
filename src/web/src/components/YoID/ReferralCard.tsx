@@ -176,7 +176,7 @@ export const ReferralCard: React.FC<ReferralCardProps> = ({ onClick }) => {
           {/* Get Started Button */}
           <button
             onClick={handleGetStarted}
-            className="btn btn-success mt-8x w-full gap-2 rounded-lg normal-case shadow-md transition-all hover:scale-105 hover:shadow-lg"
+            className="btn btn-success w-full gap-2 rounded-lg normal-case shadow-md transition-all hover:scale-105 hover:shadow-lg"
           >
             <span className="font-semibold">Get Started</span>
             <FaArrowRight className="h-4 w-4" />

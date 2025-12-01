@@ -32,28 +32,33 @@ export const handleUserSignIn = async (currentLanguage: string) => {
 export const handleUserSignOut = async (
   signInAgain?: boolean,
   skipKeycloakLogout?: boolean,
-  redirectToCurrentUrl?: boolean,
+  returnUrl?: string,
 ) => {
   console.log("handleUserSignOut called", {
     signInAgain,
     skipKeycloakLogout,
-    redirectToCurrentUrl,
+    returnUrl,
     timestamp: new Date().toISOString(),
   });
 
   // 📊 ANALYTICS: track logout
   analytics.auth.logout();
 
+  // Clear persisted atoms
+  if (typeof window !== "undefined") {
+    localStorage.removeItem("refereeProgressDialogDismissed");
+  }
+
   // Construct the callbackUrl
   let callbackUrl = `${window.location.origin}/`;
 
-  if (redirectToCurrentUrl) {
-    // Get current URL and add signInAgain if needed
-    const currentUrl = new URL(window.location.href);
+  if (returnUrl) {
+    // Use provided return URL and add signInAgain if needed
+    const url = new URL(returnUrl, window.location.origin);
     if (signInAgain) {
-      currentUrl.searchParams.set("signInAgain", "true");
+      url.searchParams.set("signInAgain", "true");
     }
-    callbackUrl = currentUrl.href;
+    callbackUrl = url.href;
   } else if (signInAgain) {
     // Default behavior: redirect to home with signInAgain
     callbackUrl += `?signInAgain=${signInAgain}`;

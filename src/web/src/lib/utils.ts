@@ -176,7 +176,7 @@ export function getSafeUrl(
   // Also exclude directory traversals like '/../' and '/./'
   if (
     typeof returnUrl === "string" &&
-    /^\/(?!\/)[^?#]*$/g.test(returnUrl) && // starts with single '/', not '//' and no query/hash
+    /^\/(?!\/)/.test(returnUrl) && // starts with single '/', not '//'
     !returnUrl.includes("/../") &&
     !returnUrl.includes("/./")
   ) {

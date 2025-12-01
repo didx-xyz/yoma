@@ -35,6 +35,7 @@ export interface TabItem {
   selected?: boolean;
   iconImage?: any;
   iconElement?: React.ReactElement;
+  onClick?: () => void;
 }
 
 export interface Settings {

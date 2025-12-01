@@ -1,77 +1,52 @@
 import Link from "next/link";
+import { useState } from "react";
 import { FaArrowRight } from "react-icons/fa";
-import { ReferralLink } from "~/api/models/referrals";
+import { IoGift } from "react-icons/io5";
 
 interface ReferrerProgressCardProps {
-  links: ReferralLink[];
   onClick: () => void;
   tabIndex: number;
 }
 
 export const ReferrerProgressCard: React.FC<ReferrerProgressCardProps> = ({
-  links,
   onClick,
   tabIndex,
 }) => {
-  const displayLinks = links.slice(0, 5);
-  const totalLinks = links.length;
-  const hasMore = totalLinks > 5;
+  const [showDetails, setShowDetails] = useState(false);
 
   return (
-    <div className="flex flex-col gap-2 rounded-lg border-2 border-orange-300 bg-gradient-to-br from-orange-50 to-white p-4 shadow-md">
-      <div className="flex items-center gap-2">
-        <span className="text-lg">📊</span>
-        <span className="font-bold text-orange-900">My Referral Links</span>
-      </div>
-
-      <p className="text-xs text-gray-600">Your active referral links:</p>
-      <div className="flex flex-col gap-2">
-        {displayLinks.map((link) => (
-          <div
-            key={link.id}
-            className="font-family-nunito flex items-center justify-between gap-2 rounded-md border border-orange-200 bg-white p-3"
-          >
-            <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-              <div className="flex min-w-0 items-center gap-2">
-                <span className="truncate text-sm font-medium text-gray-800">
-                  {link.name}
-                </span>
-                <div className="flex flex-shrink-0 items-center gap-1">
-                  {link.completionTotal !== null &&
-                    link.completionTotal > 0 && (
-                      <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-semibold text-green-700">
-                        {link.completionTotal} completed
-                      </span>
-                    )}
-                  {link.pendingTotal !== null && link.pendingTotal > 0 && (
-                    <span className="rounded-full bg-orange-100 px-2 py-0.5 text-xs font-semibold text-orange-700">
-                      {link.pendingTotal} pending
-                    </span>
-                  )}
-                </div>
-              </div>
-              <span className="truncate text-xs text-gray-500">
-                {link.programName}
-              </span>
+    <div className="flex h-full flex-col gap-3 text-xs text-black md:text-sm">
+      <div className="overflow-hidden rounded-xl border-2 border-green-200 bg-gradient-to-br from-green-50 via-blue-50 to-purple-50 shadow-md">
+        {/* Header */}
+        <div className="border-b border-green-100 bg-gradient-to-r from-green-50 to-transparent p-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-green-500 to-blue-500 shadow-lg">
+              <IoGift className="h-6 w-6 text-white" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-base font-bold text-gray-900">
+                My Referral Links
+              </h3>
             </div>
           </div>
-        ))}
-      </div>
-      {hasMore && (
-        <p className="text-center text-xs text-gray-500">
-          +{totalLinks - 5} more link{totalLinks - 5 > 1 ? "s" : ""}
-        </p>
-      )}
+          <p className="mt-2 text-xs text-gray-600">
+            You have active referral links. Track your referrals and rewards.
+          </p>
+        </div>
 
-      <Link
-        href="/yoid/referrals"
-        className="btn btn-warning btn-sm mt-2 gap-2 text-white"
-        onClick={onClick}
-        tabIndex={tabIndex}
-      >
-        Track Progress
-        <FaArrowRight className="h-4 w-4" />
-      </Link>
+        {/* Content */}
+        <div className="p-4">
+          <Link
+            href="/yoid/referrals"
+            className="btn btn-success w-full gap-2 rounded-lg text-white normal-case shadow-md transition-all hover:scale-105 hover:shadow-lg"
+            onClick={onClick}
+            tabIndex={tabIndex}
+          >
+            <span className="font-semibold">Track Progress</span>
+            <FaArrowRight className="h-4 w-4" />
+          </Link>
+        </div>
+      </div>
     </div>
   );
 };

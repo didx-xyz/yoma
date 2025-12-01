@@ -44,6 +44,7 @@ import { config } from "~/lib/react-query-config";
 import { authOptions } from "~/server/auth";
 import { handleUserSignOut } from "~/lib/authUtils";
 import { type NextPageWithLayout } from "../../_app";
+import { getSafeUrl } from "~/lib/utils";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
@@ -211,6 +212,7 @@ const RefereeDashboard: NextPageWithLayout<{
 
         {/* STATUS BANNER */}
         <RefereeStatusBanner usage={usage} program={program} />
+
         {/* <div className="mt-4 w-full break-all"> {JSON.stringify(usage)}</div> */}
         {/* PROGRESS TRACKER */}
         {/* <RefereeProgressTracker usage={usage} program={program} /> */}
@@ -234,18 +236,18 @@ const RefereeDashboard: NextPageWithLayout<{
                     id="next-action-pop"
                     className="shadow-custom mb-6 rounded-lg border-2 border-orange-300 bg-gradient-to-br from-orange-50 to-white p-6"
                   >
-                    <div className="mb-6 flex gap-6">
-                      {/* Icon, Title & Message */}
-                      <div className="flex flex-col gap-2">
-                        <div className="flex gap-3 md:items-center">
-                          <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-2xl bg-white shadow-lg ring-4 ring-white/50 md:h-16 md:w-16">
-                            <IoArrowForward className="h-6 w-6 text-orange-500 md:h-10 md:w-10" />
-                          </div>
-                          <h2 className="text-xl font-bold text-orange-900">
-                            Your Next Step
-                          </h2>
-                        </div>
-                        <p className="text-xs font-semibold tracking-wider text-gray-600 uppercase">
+                    <div className="mb-6 flex items-start gap-4 md:gap-6">
+                      {/* Icon */}
+                      <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-white shadow-lg ring-4 ring-white/50 md:h-16 md:w-16">
+                        <IoArrowForward className="h-6 w-6 text-orange-500 md:h-8 md:w-8" />
+                      </div>
+
+                      {/* Text */}
+                      <div className="flex flex-col justify-center pt-1">
+                        <h2 className="text-sm font-semibold text-orange-900 md:text-lg">
+                          Your Next Step
+                        </h2>
+                        <p className="text-gray-dark text-xs md:text-sm">
                           Verify Your Identity
                         </p>
                       </div>
@@ -254,15 +256,15 @@ const RefereeDashboard: NextPageWithLayout<{
                       {/* Verification Instructions */}
                       <div className="space-y-4">
                         <div>
-                          <p className="mb-3 text-sm text-gray-800">
+                          <p className="text-gray-dark mb-3 text-xs md:text-sm">
                             Choose one of the following methods:
                           </p>
                           <div className="space-y-3">
                             <div className="rounded-md border border-blue-300 bg-white p-3">
-                              <h5 className="mb-2 font-bold text-blue-900">
+                              <h5 className="mb-2 text-sm font-semibold text-blue-900 md:text-base">
                                 Option 1: Phone Number Verification
                               </h5>
-                              <ul className="ml-5 list-disc space-y-1 text-sm text-gray-700">
+                              <ul className="text-gray-dark ml-5 list-disc space-y-1 text-xs md:text-sm">
                                 <li>
                                   Add a phone number to your account on the
                                   profile page
@@ -274,7 +276,9 @@ const RefereeDashboard: NextPageWithLayout<{
                               </ul>
                               <div className="mt-3">
                                 <Link
-                                  href="/user/profile"
+                                  href={`/user/profile?returnUrl=${encodeURIComponent(
+                                    getSafeUrl(router.asPath, "/yoid"),
+                                  )}`}
                                   className="btn btn-secondary btn-sm gap-2"
                                 >
                                   <IoArrowForward className="h-4 w-4" />
@@ -283,21 +287,17 @@ const RefereeDashboard: NextPageWithLayout<{
                               </div>
                             </div>
                             <div className="rounded-md border border-blue-300 bg-white p-3">
-                              <h5 className="mb-2 font-bold text-blue-900">
+                              <h5 className="mb-2 text-sm font-semibold text-blue-900 md:text-base">
                                 Option 2: Social Media Account
                               </h5>
-                              <ul className="ml-5 list-disc space-y-1 text-sm text-gray-700">
+                              <ul className="text-gray-dark ml-5 list-disc space-y-1 text-xs md:text-sm">
                                 <li>
                                   Link your social media account
                                   (Google/Facebook)
                                 </li>
+
                                 <li>
-                                  <strong>Note:</strong> This will require you
-                                  to sign in again
-                                </li>
-                                <li>
-                                  <strong>Use the same email address</strong> to
-                                  continue this session. If you use a different
+                                  <strong>Note:</strong> If you use a different
                                   email, you will be recognized as a new user
                                   and will lose any progress made so far
                                 </li>
@@ -306,7 +306,11 @@ const RefereeDashboard: NextPageWithLayout<{
                                 <button
                                   type="button"
                                   onClick={() =>
-                                    handleUserSignOut(true, false, true)
+                                    handleUserSignOut(
+                                      true,
+                                      false,
+                                      getSafeUrl(router.asPath, "/yoid"),
+                                    )
                                   }
                                   className="btn btn-secondary btn-sm min-w-0 gap-2"
                                 >
@@ -339,18 +343,18 @@ const RefereeDashboard: NextPageWithLayout<{
                     id="next-action"
                     className="shadow-custom mb-6 rounded-lg border-2 border-orange-300 bg-gradient-to-br from-orange-50 to-white p-6"
                   >
-                    <div className="mb-6 flex gap-6">
-                      {/* Icon, Title & Message */}
-                      <div className="flex min-w-0 flex-col gap-2">
-                        <div className="flex gap-3 md:items-center">
-                          <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-2xl bg-white shadow-lg ring-4 ring-white/50 md:h-16 md:w-16">
-                            <IoArrowForward className="h-6 w-6 text-orange-500 md:h-10 md:w-10" />
-                          </div>
-                          <h2 className="text-xl font-bold text-orange-900">
-                            Your Next Step
-                          </h2>
-                        </div>
-                        <p className="truncate text-xs font-semibold tracking-wider text-gray-600 uppercase">
+                    <div className="mb-6 flex items-start gap-4 md:gap-6">
+                      {/* Icon */}
+                      <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-white shadow-lg ring-4 ring-white/50 md:h-16 md:w-16">
+                        <IoArrowForward className="h-6 w-6 text-orange-500 md:h-8 md:w-8" />
+                      </div>
+
+                      {/* Text */}
+                      <div className="flex min-w-0 flex-col justify-center pt-1">
+                        <h2 className="text-sm font-semibold text-orange-900 md:text-lg">
+                          Your Next Step
+                        </h2>
+                        <p className="text-gray-dark truncate text-xs md:text-sm">
                           {nextAction.step.name}
                         </p>
                       </div>
@@ -397,15 +401,16 @@ const RefereeDashboard: NextPageWithLayout<{
                         orderMode={nextAction.step.orderMode}
                         showActionButtons={false}
                         showBullets={false}
+                        showBadges={false}
                         color="green"
                       />
                       {/* Helpful Tips */}
-                      <div className="mt-6 rounded-lg border-2 border-green-200 bg-green-50 p-4">
-                        <h4 className="mb-3 flex items-center gap-2 font-bold text-green-900">
+                      <div className="mt-2 rounded-lg border-2 border-green-200 bg-green-50 p-4">
+                        <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold text-green-900 md:text-lg">
                           <IoInformationCircle className="h-6 w-6 text-green-500" />
                           How to Complete
                         </h4>
-                        <ol className="ml-5 list-decimal space-y-1 text-sm text-green-900">
+                        <ol className="ml-5 list-decimal space-y-1 text-xs text-green-900 md:text-sm">
                           <li>
                             <strong>Complete</strong> the above tasks
                           </li>
@@ -432,18 +437,18 @@ const RefereeDashboard: NextPageWithLayout<{
             id="next-action"
             className="shadow-custom mb-6 rounded-lg border-2 border-orange-300 bg-gradient-to-br from-orange-50 to-white p-6"
           >
-            <div className="mb-6 flex gap-6">
-              {/* Icon, Title & Message */}
-              <div className="flex flex-col gap-2">
-                <div className="flex gap-3 md:items-center">
-                  <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-2xl bg-white shadow-lg ring-4 ring-white/50 md:h-16 md:w-16">
-                    <IoGift className="h-6 w-6 text-orange-500 md:h-10 md:w-10" />
-                  </div>
-                  <h2 className="text-xl font-bold text-orange-900">
-                    What&apos;s Next?
-                  </h2>
-                </div>
-                <p className="text-sm leading-relaxed text-gray-800">
+            <div className="mb-6 flex items-start gap-4 md:gap-6">
+              {/* Icon */}
+              <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-white shadow-lg ring-4 ring-white/50 md:h-16 md:w-16">
+                <IoGift className="h-6 w-6 text-orange-500 md:h-8 md:w-8" />
+              </div>
+
+              {/* Text */}
+              <div className="flex flex-col justify-center pt-1">
+                <h2 className="text-sm font-semibold text-orange-900 md:text-lg">
+                  What&apos;s Next?
+                </h2>
+                <p className="text-gray-dark text-xs md:text-sm">
                   {program.zltoRewardReferee ? (
                     <>
                       Your <strong>{program.zltoRewardReferee} ZLTO</strong> has
@@ -464,11 +469,11 @@ const RefereeDashboard: NextPageWithLayout<{
               <div className="space-y-4">
                 {/* View Dashboard */}
                 <div className="rounded-lg border-2 border-green-200 bg-green-50 p-4">
-                  <h4 className="mb-2 flex items-center gap-2 font-bold text-green-900">
+                  <h4 className="mb-2 flex items-center gap-2 text-sm font-semibold text-green-900 md:text-lg">
                     <IoTrophy className="h-5 w-5 text-green-600" />
                     View Your Achievements
                   </h4>
-                  <p className="mb-3 text-sm text-gray-700">
+                  <p className="text-gray-dark mb-3 text-xs md:text-sm">
                     Your achievements, skills and credentials are safely stored
                     in your wallet. View them now!
                   </p>
@@ -484,11 +489,11 @@ const RefereeDashboard: NextPageWithLayout<{
                 {/* Spend ZLTO on Marketplace */}
                 {program.zltoRewardReferee && (
                   <div className="rounded-lg border-2 border-purple-200 bg-purple-50 p-4">
-                    <h4 className="mb-2 flex items-center gap-2 font-bold text-purple-900">
+                    <h4 className="mb-2 flex items-center gap-2 text-sm font-semibold text-purple-900 md:text-lg">
                       <IoCart className="h-5 w-5 text-purple-600" />
                       Spend Your ZLTO
                     </h4>
-                    <p className="mb-3 text-sm text-gray-700">
+                    <p className="text-gray-dark mb-3 text-xs md:text-sm">
                       Visit the marketplace to discover amazing opportunities
                       and experiences you can unlock with your ZLTO!
                     </p>
@@ -504,11 +509,11 @@ const RefereeDashboard: NextPageWithLayout<{
 
                 {/* Explore Opportunities */}
                 <div className="rounded-lg border-2 border-blue-200 bg-blue-50 p-4">
-                  <h4 className="mb-2 flex items-center gap-2 font-bold text-blue-900">
+                  <h4 className="mb-2 flex items-center gap-2 text-sm font-semibold text-blue-900 md:text-lg">
                     <IoRocket className="h-5 w-5 text-blue-600" />
                     Explore Other Opportunities
                   </h4>
-                  <p className="mb-3 text-sm text-gray-700">
+                  <p className="text-gray-dark mb-3 text-xs md:text-sm">
                     {program.zltoRewardReferee ? (
                       <>
                         Continue earning more ZLTO and developing new skills
@@ -532,11 +537,11 @@ const RefereeDashboard: NextPageWithLayout<{
 
                 {/* Become a Referrer */}
                 <div className="rounded-lg border-2 border-yellow-200 bg-yellow-50 p-4">
-                  <h4 className="mb-2 flex items-center gap-2 font-bold text-yellow-900">
+                  <h4 className="mb-2 flex items-center gap-2 text-sm font-semibold text-yellow-900 md:text-lg">
                     <IoShareSocial className="h-5 w-5 text-yellow-600" />
                     Become a Referrer
                   </h4>
-                  <p className="mb-3 text-sm text-gray-700">
+                  <p className="text-gray-dark mb-3 text-xs md:text-sm">
                     {program.zltoRewardReferee ? (
                       <>
                         Love this program? Share the opportunity with others and
@@ -568,21 +573,19 @@ const RefereeDashboard: NextPageWithLayout<{
             id="next-action"
             className="shadow-custom mb-6 rounded-lg border-2 border-orange-300 bg-gradient-to-br from-orange-50 to-white p-6"
           >
-            <div className="mb-6 flex gap-6">
-              {/* Icon, Title & Message */}
-              <div className="flex flex-col gap-2">
-                <div className="flex gap-3 md:items-center">
-                  <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-2xl bg-white shadow-lg ring-4 ring-white/50 md:h-16 md:w-16">
-                    <IoWarning className="h-6 w-6 text-orange-500 md:h-10 md:w-10" />
-                  </div>
-                  <h2 className="text-xl font-bold text-orange-900">
-                    Don&apos;t Give Up! 💪
-                  </h2>
-                </div>
-                <p className="text-xs font-semibold tracking-wider text-gray-600 uppercase">
-                  What&apos;s Next?
-                </p>
-                <p className="text-sm leading-relaxed text-gray-800">
+            <div className="mb-6 flex items-start gap-4 md:gap-6">
+              {/* Icon */}
+              <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-white shadow-lg ring-4 ring-white/50 md:h-16 md:w-16">
+                <IoWarning className="h-6 w-6 text-orange-500 md:h-8 md:w-8" />
+              </div>
+
+              {/* Text */}
+              <div className="flex flex-col justify-center pt-1">
+                <h2 className="text-sm font-semibold text-orange-900 md:text-lg">
+                  Don&apos;t Give Up!
+                </h2>
+
+                <p className="text-gray-dark text-xs md:text-sm">
                   This program may have expired, but your journey doesn&apos;t
                   have to end here. There are plenty of other ways to earn ZLTO
                   and grow!
@@ -593,11 +596,11 @@ const RefereeDashboard: NextPageWithLayout<{
               <div className="space-y-4">
                 {/* Explore Opportunities */}
                 <div className="rounded-lg border-2 border-blue-200 bg-blue-50 p-4">
-                  <h4 className="mb-2 flex items-center gap-2 font-bold text-blue-900">
+                  <h4 className="mb-2 flex items-center gap-2 text-sm font-semibold text-blue-900 md:text-lg">
                     <IoRocket className="h-5 w-5 text-blue-600" />
                     Explore Other Opportunities
                   </h4>
-                  <p className="mb-3 text-sm text-gray-700">
+                  <p className="text-gray-dark mb-3 text-xs md:text-sm">
                     Discover new active opportunities to earn ZLTO and develop
                     valuable skills.
                   </p>
@@ -612,11 +615,11 @@ const RefereeDashboard: NextPageWithLayout<{
 
                 {/* Become a Referrer */}
                 <div className="rounded-lg border-2 border-yellow-200 bg-yellow-50 p-4">
-                  <h4 className="mb-2 flex items-center gap-2 font-bold text-yellow-900">
+                  <h4 className="mb-2 flex items-center gap-2 text-sm font-semibold text-yellow-900 md:text-lg">
                     <IoShareSocial className="h-5 w-5 text-yellow-600" />
                     Become a Referrer
                   </h4>
-                  <p className="mb-3 text-sm text-gray-700">
+                  <p className="text-gray-dark mb-3 text-xs md:text-sm">
                     Turn your experience into earnings! Refer others to active
                     programs and earn ZLTO for every successful referral.
                   </p>
