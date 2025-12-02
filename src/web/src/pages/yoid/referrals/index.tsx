@@ -33,15 +33,18 @@ import { ReferrerCreateLinkModal } from "~/components/Referrals/ReferrerCreateLi
 import { ReferrerLeaderboard } from "~/components/Referrals/ReferrerLeaderboard";
 import { ReferrerLinksList } from "~/components/Referrals/ReferrerLinksList";
 import { ReferrerProgramsList } from "~/components/Referrals/ReferrerProgramsList";
+import { ReferrerProgramPreview } from "~/components/Referrals/ReferrerProgramPreview";
+import { ReferrerLinkDetails } from "~/components/Referrals/ReferrerLinkDetails";
 import { ReferrerPerformanceOverview } from "~/components/Referrals/ReferrerPerformanceOverview";
 import { ReferrerReferralsList } from "~/components/Referrals/ReferrerReferralsList";
-import { ReferrerLinkDetails } from "~/components/Referrals/ReferrerLinkDetails";
-import { ReferrerProgramPreview } from "~/components/Referrals/ReferrerProgramPreview";
+import { ShareButtons } from "~/components/Referrals/ShareButtons";
 import { config } from "~/lib/react-query-config";
 import { currentLanguageAtom, userProfileAtom } from "~/lib/store";
 import { authOptions } from "~/server/auth";
 import { type NextPageWithLayout } from "../../_app";
 import { handleUserSignIn } from "~/lib/authUtils";
+import { FaPlus } from "react-icons/fa";
+import { ReferrerStats } from "~/components/Referrals/ReferrerStats";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
@@ -161,7 +164,7 @@ const ReferralsDashboard: NextPageWithLayout<{
   });
 
   // Fetch links - different query keys for single vs multi mode
-  const { data: linksData } = useQuery({
+  const { data: linksData, isLoading: linksLoading } = useQuery({
     queryKey: multiProgram
       ? ["ReferralLinks", 1, 3]
       : ["ReferralLinks", defaultProgram?.id, 1, 1],
@@ -394,70 +397,96 @@ const ReferralsDashboard: NextPageWithLayout<{
 
             {/* SINGLE PROGRAM MODE */}
             {!multiProgram && (
-              <div className="grid gap-4 overflow-hidden md:gap-6 lg:grid-cols-3">
-                {/* LEFT COLUMN - Stats & Leaderboard */}
-                <div className="min-w-0 space-y-4 md:space-y-6 lg:col-span-1">
-                  {/* STATS CARDS */}
-                  {/* <ReferrerStats /> */}
+              <div className="flex flex-col gap-4">
+                {linksLoading && (
+                  <LoadingInline classNameSpinner="h-12 border-orange w-12" />
+                )}
 
-                  {/* LEADERBOARD */}
-                  <ReferrerLeaderboard pageSize={10} />
-                </div>
+                {!linksLoading && (
+                  <div className="flex flex-col items-start justify-start gap-4 md:gap-6">
+                    {isAutoCreating && (
+                      <div className="rounded-lg bg-white p-6">
+                        <div className="flex flex-col items-center justify-center gap-4 py-8">
+                          <LoadingInline
+                            classNameSpinner="h-8 w-8 border-t-2 border-b-2 border-orange md:h-16 md:w-16 md:border-t-4 md:border-b-4"
+                            classNameLabel={"text-sm font-semibold md:text-lg"}
+                            label="Creating your referral link..."
+                          />
+                        </div>
+                      </div>
+                    )}
 
-                {/* RIGHT COLUMN - Link Details & Usage */}
-                <div className="min-w-0 space-y-4 md:space-y-6 lg:col-span-2">
-                  {isAutoCreating && (
-                    <div className="rounded-lg bg-white p-6">
-                      <div className="flex flex-col items-center justify-center gap-4 py-8">
-                        <LoadingInline
-                          classNameSpinner="h-8 w-8 border-t-2 border-b-2 border-orange md:h-16 md:w-16 md:border-t-4 md:border-b-4"
-                          classNameLabel={"text-sm font-semibold md:text-lg"}
-                          label="Creating your referral link..."
+                    {!isAutoCreating && firstLink && (
+                      <div className="flex w-full flex-col gap-4 md:flex-row">
+                        <div className="flex flex-1 flex-col gap-2">
+                          <div className="font-family-nunito text-sm font-semibold text-black md:text-base">
+                            Your Link
+                          </div>
+
+                          <div className="flex-1 rounded-lg bg-white p-4">
+                            <ReferrerLinkDetails
+                              link={firstLink}
+                              mode="large"
+                              showQRCode={false}
+                              className=""
+                              hideLabels={true}
+                            />
+                          </div>
+                        </div>
+
+                        <div className="flex flex-1 flex-col gap-2">
+                          <div className="font-family-nunito text-sm font-semibold text-black md:text-base">
+                            Share Your Link
+                          </div>
+
+                          <div className="flex-1 rounded-lg bg-white p-4">
+                            <p className="text-gray-dark mt-1 mb-3 text-xs md:text-sm">
+                              Choose your preferred platform
+                            </p>
+
+                            <ShareButtons
+                              url={firstLink.shortURL ?? firstLink.url}
+                              size={30}
+                            />
+                          </div>
+                        </div>
+
+                        <div className="flex flex-1 flex-col gap-2">
+                          <div className="font-family-nunito text-sm font-semibold text-black md:text-base">
+                            Your stats
+                          </div>
+
+                          <div className="flex-1 rounded-lg bg-white p-4">
+                            <ReferrerPerformanceOverview
+                              link={firstLink}
+                              mode="large"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {!isAutoCreating && !firstLink && !defaultProgram && (
+                      <div className="rounded-lg bg-white p-6">
+                        <NoRowsMessage
+                          title="My Referral Links"
+                          description="Link currently unavailable. Please check back later."
+                          icon={"🔗"}
                         />
                       </div>
+                    )}
+                  </div>
+                )}
+
+                {!linksLoading && firstLink && (
+                  <div className="space-y-2">
+                    <div className="font-family-nunito text-sm font-semibold text-black md:text-base">
+                      Referral List
                     </div>
-                  )}
 
-                  {!isAutoCreating && hasLinks && firstLink && (
-                    <>
-                      {/* Link Details Section */}
-                      <div className="rounded-lg bg-white p-4 md:p-6">
-                        <h2 className="mb-4 flex items-center gap-2 text-base font-bold md:text-lg">
-                          <IoLink className="inline h-4 w-4 text-blue-600 md:h-6 md:w-6" />
-                          Your Referral Link
-                        </h2>
-                        <ReferrerLinkDetails
-                          link={firstLink}
-                          mode="large"
-                          showQRCode={false}
-                          showShare={true}
-                          className=""
-                          hideLabels={true}
-                        />
-                      </div>
-
-                      {/* Performance Overview */}
-                      <div className="rounded-lg bg-white p-4 md:p-6">
-                        <ReferrerPerformanceOverview link={firstLink} />
-                      </div>
-
-                      {/* Referrals List */}
-                      <div className="rounded-lg bg-white p-4 md:p-6">
-                        <ReferrerReferralsList linkId={firstLink.id} />
-                      </div>
-                    </>
-                  )}
-
-                  {!isAutoCreating && !hasLinks && !defaultProgram && (
-                    <div className="rounded-lg bg-white p-6">
-                      <NoRowsMessage
-                        title="My Referral Links"
-                        description="Link currently unavailable. Please check back later."
-                        icon={"🔗"}
-                      />
-                    </div>
-                  )}
-                </div>
+                    <ReferrerReferralsList linkId={firstLink.id} />
+                  </div>
+                )}
               </div>
             )}
 
@@ -496,32 +525,70 @@ const ReferralsDashboard: NextPageWithLayout<{
                   {/* LEFT COLUMN - Stats & Leaderboard */}
                   <div className="min-w-0 space-y-4 md:space-y-6 lg:col-span-1">
                     {/* STATS CARDS */}
-                    {/* <ReferrerStats /> */}
+                    <div className="space-y-2">
+                      <div className="font-family-nunito text-sm font-semibold text-black md:text-base">
+                        Your Stats
+                      </div>
+                      <div className="rounded-lg bg-white p-4 md:p-6">
+                        <ReferrerStats />
+                      </div>
+                    </div>
 
                     {/* LEADERBOARD */}
-                    <ReferrerLeaderboard pageSize={10} />
+                    <div className="space-y-2">
+                      <div className="font-family-nunito text-sm font-semibold text-black md:text-base">
+                        Top Referrers
+                      </div>
+                      <div className="rounded-lg bg-white p-4 md:p-6">
+                        <ReferrerLeaderboard pageSize={10} />
+                      </div>
+                    </div>
                   </div>
 
                   {/* RIGHT COLUMN - Links & Programs */}
                   <div className="min-w-0 space-y-4 md:space-y-6 lg:col-span-2">
                     {/* MY LINKS */}
-                    <ReferrerLinksList
-                      programs={programsData?.items || []}
-                      onViewUsage={handleViewUsage}
-                      onEdit={handleEditLink}
-                      onCreateLink={handleCreateLink}
-                      initialPageSize={3}
-                    />
+                    <div className="space-y-2">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div className="font-family-nunito text-sm font-semibold text-black md:text-base">
+                          Your Referral Links
+                        </div>
+                        {programsData?.totalCount && (
+                          <button
+                            onClick={handleCreateLink}
+                            className="btn btn-xs gap-2 border-blue-600 bg-gradient-to-r from-blue-600 to-blue-500 text-white hover:bg-blue-700"
+                          >
+                            <FaPlus className="h-3 w-3" />
+                            Create Link
+                          </button>
+                        )}
+                      </div>
+
+                      <ReferrerLinksList
+                        programs={programsData?.items || []}
+                        onViewUsage={handleViewUsage}
+                        onEdit={handleEditLink}
+                        onCreateLink={handleCreateLink}
+                        initialPageSize={3}
+                      />
+                    </div>
 
                     {/* ACTIVE PROGRAMS */}
-                    <ReferrerProgramsList
-                      onProgramClick={handleCreateLinkForProgram}
-                      onCreateLink={handleCreateLinkForProgram}
-                      initialPageSize={4}
-                      showHeader={true}
-                      showDescription={true}
-                      context="list"
-                    />
+                    {/* <div className="space-y-2">
+                      <div className="font-family-nunito text-sm font-semibold text-black md:text-base">
+                        Available Programs
+                      </div>
+                      <div className="rounded-lg bg-white p-4 md:p-6">
+                        <ReferrerProgramsList
+                          onProgramClick={handleCreateLinkForProgram}
+                          onCreateLink={handleCreateLinkForProgram}
+                          initialPageSize={4}
+                          showHeader={true}
+                          showDescription={true}
+                          context="list"
+                        />
+                      </div>
+                    </div> */}
                   </div>
                 </div>
               </>
@@ -566,7 +633,7 @@ const ReferralsDashboard: NextPageWithLayout<{
                 <div className="bg-theme flex flex-row p-4 shadow-lg">
                   <div className="flex-1">
                     <h1 className="text-lg font-semibold text-white">
-                      Your Link
+                      Link Usage
                     </h1>
                   </div>
                   <button
@@ -578,27 +645,37 @@ const ReferralsDashboard: NextPageWithLayout<{
                   </button>
                 </div>
 
-                <div className="flex flex-col gap-4 overflow-y-auto p-4 md:p-6">
-                  {/* Link Details Section */}
-                  <ReferrerLinkDetails
-                    link={selectedLinkForUsage}
-                    mode="large"
-                    showQRCode={true}
-                    showShare={true}
-                    className=""
-                    hideLabels={false}
-                  />
+                <div className="flex flex-col gap-4 p-4 md:p-6">
+                  <div className="flex flex-col gap-4">
+                    <div className="flex w-full flex-col gap-4 md:flex-row">
+                      <div className="grow space-y-2">
+                        <div className="font-family-nunito text-sm font-semibold text-black md:text-base">
+                          Your stats
+                        </div>
+                        <div className="border-gray md:p-6x rounded-lg border p-4">
+                          <ReferrerPerformanceOverview
+                            link={selectedLinkForUsage}
+                            mode="large"
+                          />
+                        </div>
+                      </div>
+                    </div>
 
-                  {/* Program Preview */}
-                  <ReferrerProgramPreview
+                    <div className="space-y-2">
+                      <div className="font-family-nunito text-sm font-semibold text-black md:text-base">
+                        Referral List
+                      </div>
+                      <div className="border-gray rounded-lg border">
+                        <ReferrerReferralsList
+                          linkId={selectedLinkForUsage.id}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* <ReferrerProgramPreview
                     programId={selectedLinkForUsage.programId}
-                  />
-
-                  {/* Performance Overview */}
-                  <ReferrerPerformanceOverview link={selectedLinkForUsage} />
-
-                  {/* Referrals List */}
-                  <ReferrerReferralsList linkId={selectedLinkForUsage.id} />
+                  /> */}
 
                   {/* Action Buttons */}
                   <div className="flex gap-3">

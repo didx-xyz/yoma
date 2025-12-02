@@ -1,11 +1,11 @@
-import { FaLink, FaPlus } from "react-icons/fa";
 import { IoChevronDown } from "react-icons/io5";
 import type { ReferralLink, ProgramInfo } from "~/api/models/referrals";
 import { searchReferralLinks } from "~/api/services/referrals";
-import { ReferrerLinkCard } from "./ReferrerLinkCard";
+import { ReferrerLinkRow } from "./ReferrerLinkRow";
 import Suspense from "~/components/Common/Suspense";
 import NoRowsMessage from "~/components/NoRowsMessage";
 import { usePaginatedQuery } from "~/hooks/usePaginatedQuery";
+import { LoadingInline } from "../Status/LoadingInline";
 
 interface LinksListProps {
   programs?: ProgramInfo[];
@@ -51,24 +51,12 @@ export const ReferrerLinksList: React.FC<LinksListProps> = ({
   const hasPrograms = programs.length > 0;
 
   return (
-    <div className="rounded-lg bg-white p-4 md:p-6">
-      <div className="items-centers mb-4 flex flex-col gap-2 md:flex-row md:justify-between md:gap-4">
-        <h2 className="flex items-center gap-2 text-base font-bold text-gray-900 md:text-lg">
-          <FaLink className="inline h-5 w-5 text-blue-600 md:h-6 md:w-6" />
-          Your Referral Links
-        </h2>
-        {hasPrograms && onCreateLink && (
-          <button
-            onClick={onCreateLink}
-            className="btn btn-sm gap-2 border-blue-600 bg-gradient-to-r from-blue-600 to-blue-500 text-white hover:bg-blue-700"
-          >
-            <FaPlus className="h-3 w-3" />
-            Create Link
-          </button>
-        )}
-      </div>
-
-      <Suspense isLoading={isLoading && !hasLinks} error={error as any}>
+    <>
+      <Suspense
+        isLoading={isLoading && !hasLinks}
+        error={error as any}
+        loader={<LoadingInline classNameSpinner="h-12 border-orange w-12" />}
+      >
         {!hasLinks && !hasPrograms && (
           <NoRowsMessage
             title="No Links Yet"
@@ -85,18 +73,15 @@ export const ReferrerLinksList: React.FC<LinksListProps> = ({
         )}
 
         {hasLinks && (
-          <div className="space-y-3">
+          <div className="space-y-2">
             {links?.map((link: ReferralLink) => (
-              <div key={link.id}>
-                <div className="divider my-3"></div>
-                <ReferrerLinkCard
-                  link={link}
-                  programs={programs}
-                  onClick={onViewUsage}
-                  onViewUsage={onViewUsage}
-                  onEdit={onEdit}
-                />
-              </div>
+              <ReferrerLinkRow
+                key={link.id}
+                link={link}
+                programs={programs}
+                onViewUsage={onViewUsage}
+                onEdit={onEdit}
+              />
             ))}
 
             {/* See More Button */}
@@ -124,6 +109,6 @@ export const ReferrerLinksList: React.FC<LinksListProps> = ({
           </div>
         )}
       </Suspense>
-    </div>
+    </>
   );
 };

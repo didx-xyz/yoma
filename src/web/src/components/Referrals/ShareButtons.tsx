@@ -47,7 +47,7 @@ export const ShareButtons: React.FC<ShareButtonsProps> = ({
   };
 
   return (
-    <div className="flex flex-wrap justify-center gap-3">
+    <div className="justify-centerx flex flex-wrap gap-3">
       <WhatsappShareButton url={url} title={title}>
         <WhatsappIcon size={size} round />
       </WhatsappShareButton>

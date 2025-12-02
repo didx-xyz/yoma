@@ -1,12 +1,5 @@
 import { useMemo } from "react";
-import {
-  IoClose,
-  IoGift,
-  IoRocket,
-  IoSparkles,
-  IoTimeOutline,
-  IoTrophy,
-} from "react-icons/io5";
+import { IoGift, IoTimeOutline } from "react-icons/io5";
 import type {
   ProgramInfo,
   ReferralLinkUsageInfo,
@@ -49,8 +42,7 @@ export const RefereeStatusBanner: React.FC<RefereeStatusBannerProps> = ({
         title: "You've Done It!",
         subtitle: "Mission Accomplished",
         message: `Congratulations on completing the program! You've shown amazing dedication and skill.`,
-        icon: IoTrophy,
-        iconColor: "text-yellow-500",
+        icon: "🏆",
         bgGradient: "from-green-50 via-emerald-50 to-teal-50",
         borderColor: "border-green-400",
         accentColor: "text-green-900",
@@ -63,8 +55,7 @@ export const RefereeStatusBanner: React.FC<RefereeStatusBannerProps> = ({
         title: "Time's Up",
         subtitle: "Referral Expired",
         message: `The completion window for the program has closed. But don't worry - there are plenty of other amazing opportunities waiting for you!`,
-        icon: IoClose,
-        iconColor: "text-red-500",
+        icon: "⏰",
         bgGradient: "from-red-50 via-orange-50 to-yellow-50",
         borderColor: "border-red-400",
         accentColor: "text-red-900",
@@ -80,8 +71,7 @@ export const RefereeStatusBanner: React.FC<RefereeStatusBannerProps> = ({
         title: "Let's Get Started!",
         subtitle: "Your Journey Begins",
         message: `Welcome to the program! You're all set up and ready to begin this exciting journey.`,
-        icon: IoRocket,
-        iconColor: "text-blue-500",
+        icon: "🚀",
         bgGradient: "from-blue-50 via-indigo-50 to-purple-50",
         borderColor: "border-blue-400",
         accentColor: "text-blue-900",
@@ -94,8 +84,7 @@ export const RefereeStatusBanner: React.FC<RefereeStatusBannerProps> = ({
         title: "Great Start!",
         subtitle: "Building Momentum",
         message: `You're making excellent progress. Keep up the fantastic work!`,
-        icon: IoSparkles,
-        iconColor: "text-purple-500",
+        icon: "✨",
         bgGradient: "from-purple-50 via-pink-50 to-rose-50",
         borderColor: "border-purple-400",
         accentColor: "text-purple-900",
@@ -108,8 +97,7 @@ export const RefereeStatusBanner: React.FC<RefereeStatusBannerProps> = ({
         title: "You're Almost There!",
         subtitle: "So Close Now",
         message: `Amazing work! You're more than halfway through the program. The finish line is in sight!`,
-        icon: IoTrophy,
-        iconColor: "text-orange-500",
+        icon: "💪",
         bgGradient: "from-orange-50 via-amber-50 to-yellow-50",
         borderColor: "border-orange-400",
         accentColor: "text-orange-900",
@@ -121,8 +109,7 @@ export const RefereeStatusBanner: React.FC<RefereeStatusBannerProps> = ({
       title: "Final Sprint!",
       subtitle: "Nearly Complete",
       message: `Outstanding! You're almost done with the program. Just a little more to go!`,
-      icon: IoTrophy,
-      iconColor: "text-amber-500",
+      icon: "🏁",
       bgGradient: "from-amber-50 via-yellow-50 to-lime-50",
       borderColor: "border-amber-400",
       accentColor: "text-amber-900",
@@ -130,17 +117,11 @@ export const RefereeStatusBanner: React.FC<RefereeStatusBannerProps> = ({
     };
   }, [usage.status, usage.percentComplete]);
 
-  const Icon = progressionStage.icon;
-
   return (
     <>
       <div className="mb-6 flex items-center justify-center">
         <NoRowsMessage
-          icon={
-            <Icon
-              className={`h-6 w-6 md:h-7 md:w-7 ${progressionStage.iconColor}`}
-            />
-          }
+          icon={progressionStage.icon}
           title={progressionStage.title}
           //subTitle={progressionStage.subtitle}
           description={progressionStage.message}

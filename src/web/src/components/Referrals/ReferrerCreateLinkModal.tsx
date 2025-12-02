@@ -10,6 +10,7 @@ import { z } from "zod";
 import type { ProgramInfo, ReferralLink } from "~/api/models/referrals";
 import {
   createReferralLink,
+  getReferralProgramInfoById,
   updateReferralLink,
 } from "~/api/services/referrals";
 import CustomModal from "~/components/Common/CustomModal";
@@ -22,6 +23,7 @@ import { ProgramRequirements } from "./ProgramRequirements";
 import { RefereeProgramDetails } from "./RefereeProgramDetails";
 import { ReferrerLinkDetails } from "./ReferrerLinkDetails";
 import { ReferrerProgramsList } from "./ReferrerProgramsList";
+import { ShareButtons } from "./ShareButtons";
 
 interface CreateLinkModalProps {
   programs: ProgramInfo[];
@@ -89,43 +91,62 @@ export const ReferrerCreateLinkModal: React.FC<CreateLinkModalProps> = ({
 
   // Update state when modal opens with different program or link
   useEffect(() => {
-    if (isOpen) {
-      // Reset all state first
-      setCreatedLink(null);
-      setIsLoading(false);
+    const init = async () => {
+      if (isOpen) {
+        // Reset all state first
+        setCreatedLink(null);
+        setIsLoading(false);
 
-      if (editLink) {
-        // Editing mode - go to form with existing data
-        setStep("create");
-        const program = programs.find((p) => p.id === editLink.programId);
-        setCurrentProgram(program || null);
-        setValue("programId", editLink.programId);
-        setValue("name", editLink.name);
-        setValue("description", editLink.description || "");
-        setValue("includeQRCode", false); // QR code already exists
-      } else if (selectedProgram) {
-        // Creating with pre-selected program - reset form to defaults
-        setStep("create");
-        setCurrentProgram(selectedProgram);
-        reset({
-          programId: selectedProgram.id,
-          name: "",
-          description: "",
-          includeQRCode: true,
-        });
-      } else {
-        // Creating - show program selection with clean form
-        setStep("select");
-        setCurrentProgram(null);
-        reset({
-          programId: "",
-          name: "",
-          description: "",
-          includeQRCode: true,
-        });
+        if (editLink) {
+          // Editing mode - go to form with existing data
+          setStep("create");
+          let program = programs.find((p) => p.id === editLink.programId);
+
+          if (!program) {
+            setIsLoading(true);
+            try {
+              program = await getReferralProgramInfoById(editLink.programId);
+            } catch (error) {
+              console.error(error);
+              toast.error("Could not load program details");
+              onClose();
+              return;
+            } finally {
+              setIsLoading(false);
+            }
+          }
+
+          setCurrentProgram(program || null);
+          setValue("programId", editLink.programId);
+          setValue("name", editLink.name);
+          setValue("description", editLink.description || "");
+          setValue("includeQRCode", false); // QR code already exists
+        } else if (selectedProgram) {
+          // Creating with pre-selected program - reset form to defaults
+          setStep("create");
+          setCurrentProgram(selectedProgram);
+          reset({
+            programId: selectedProgram.id,
+            name: "",
+            description: "",
+            includeQRCode: true,
+          });
+        } else {
+          // Creating - show program selection with clean form
+          setStep("select");
+          setCurrentProgram(null);
+          reset({
+            programId: "",
+            name: "",
+            description: "",
+            includeQRCode: true,
+          });
+        }
       }
-    }
-  }, [isOpen, selectedProgram, editLink, programs, setValue, reset]);
+    };
+
+    void init();
+  }, [isOpen, selectedProgram, editLink, programs, setValue, reset, onClose]);
 
   // Reset modal state when closed
   const handleClose = useCallback(() => {
@@ -319,6 +340,12 @@ export const ReferrerCreateLinkModal: React.FC<CreateLinkModalProps> = ({
           )}
 
           {/* STEP 2: CREATE LINK FORM */}
+          {step === "create" && isLoading && !currentProgram && (
+            <div className="flex justify-center p-10">
+              <span className="loading loading-spinner loading-lg text-blue-600"></span>
+            </div>
+          )}
+
           {step === "create" && currentProgram && (
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
               {/* Icon */}
@@ -571,8 +598,23 @@ export const ReferrerCreateLinkModal: React.FC<CreateLinkModalProps> = ({
                 link={createdLink}
                 mode="large"
                 showQRCode={true}
-                showShare={true}
               />
+
+              <div className="mt-4 border-t border-blue-200 pt-4">
+                <div className="mb-3">
+                  <h3 className="flex items-center gap-2 text-base font-bold">
+                    📢 Share Your Link
+                  </h3>
+                  <p className="mt-1 text-xs text-gray-600">
+                    Choose your preferred platform to share
+                  </p>
+                </div>
+
+                <ShareButtons
+                  url={createdLink.shortURL ?? createdLink.url}
+                  size={36}
+                />
+              </div>
 
               {/* Next Steps */}
               <div className="rounded-lg border-2 border-dashed border-blue-300 bg-blue-50 p-4">
