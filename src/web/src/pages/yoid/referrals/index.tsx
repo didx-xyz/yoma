@@ -646,6 +646,13 @@ const ReferralsDashboard: NextPageWithLayout<{
                 </div>
 
                 <div className="flex flex-col gap-4 p-4 md:p-6">
+                  <NoRowsMessage
+                    icon="📊"
+                    title="Link Performance"
+                    description="Track how your link is performing and see who has signed up."
+                    className="!bg-transparent"
+                  />
+
                   <div className="flex flex-col gap-4">
                     <div className="flex w-full flex-col gap-4 md:flex-row">
                       <div className="grow space-y-2">

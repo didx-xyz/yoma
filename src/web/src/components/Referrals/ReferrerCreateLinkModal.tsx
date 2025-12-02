@@ -2,9 +2,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { AxiosError } from "axios";
 import { useCallback, useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
-import { FaLink, FaRoad } from "react-icons/fa";
-import { IoMdCheckmarkCircle, IoMdClose } from "react-icons/io";
-import { IoGift } from "react-icons/io5";
+import { FaRoad } from "react-icons/fa";
+import { IoMdClose } from "react-icons/io";
 import { toast } from "react-toastify";
 import { z } from "zod";
 import type { ProgramInfo, ReferralLink } from "~/api/models/referrals";
@@ -18,12 +17,14 @@ import FormField from "~/components/Common/FormField";
 import FormInput from "~/components/Common/FormInput";
 import FormMessage, { FormMessageType } from "~/components/Common/FormMessage";
 import FormToggle from "~/components/Common/FormToggle";
+import NoRowsMessage from "~/components/NoRowsMessage";
 import { ApiErrors } from "../Status/ApiErrors";
 import { ProgramRequirements } from "./ProgramRequirements";
 import { RefereeProgramDetails } from "./RefereeProgramDetails";
 import { ReferrerLinkDetails } from "./ReferrerLinkDetails";
 import { ReferrerProgramsList } from "./ReferrerProgramsList";
 import { ShareButtons } from "./ShareButtons";
+import FormLabel from "../Common/FormLabel";
 
 interface CreateLinkModalProps {
   programs: ProgramInfo[];
@@ -268,21 +269,12 @@ export const ReferrerCreateLinkModal: React.FC<CreateLinkModalProps> = ({
           {/* STEP 1: SELECT PROGRAM */}
           {step === "select" && (
             <div className="space-y-4">
-              {/* Icon */}
-              <div className="flex justify-center">
-                <div className="flex h-20 w-20 items-center justify-center rounded-full border-purple-600 bg-gradient-to-br from-purple-50 to-white shadow-lg">
-                  <IoGift className="h-10 w-10 text-purple-600" />
-                </div>
-              </div>
-
-              <div className="text-center">
-                <h2 className="text-xl font-bold text-gray-900">
-                  Choose a Referral Program
-                </h2>
-                <p className="text-gray-dark mt-2 text-sm">
-                  Select the program you want to create a referral link for
-                </p>
-              </div>
+              <NoRowsMessage
+                icon="🎁"
+                title="Choose a Referral Program"
+                description="Select the program you want to create a referral link for"
+                className="!bg-transparent"
+              />
 
               {/* Warning Messages */}
               {!isEditMode && existingLinksCount === 0 && (
@@ -348,33 +340,16 @@ export const ReferrerCreateLinkModal: React.FC<CreateLinkModalProps> = ({
 
           {step === "create" && currentProgram && (
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-              {/* Icon */}
-              <div className="flex justify-center">
-                <div className="flex h-20 w-20 items-center justify-center rounded-full border-blue-600 bg-gradient-to-br from-blue-50 to-white shadow-lg">
-                  <FaLink className="h-8 w-8 text-blue-600" />
-                </div>
-              </div>
-
-              <div className="flex flex-col items-center text-center">
-                <h2 className="text-xl font-bold text-gray-900">
-                  {isEditMode ? "Update Your Link" : "Create Your Link"}
-                </h2>
-                <p className="text-gray-dark mt-2 max-w-md text-sm">
-                  {isEditMode ? (
-                    <>
-                      Update the details for your referral link. Note that the
-                      program cannot be changed.
-                    </>
-                  ) : (
-                    <>
-                      Complete this form to generate your unique referral link
-                      for the selected program. Share it with friends, and
-                      you&apos;ll both may earn rewards when they complete the
-                      program requirements!
-                    </>
-                  )}
-                </p>
-              </div>
+              <NoRowsMessage
+                icon="🔗"
+                title={isEditMode ? "Update Your Link" : "Create Your Link"}
+                description={
+                  isEditMode
+                    ? "Update the details for your referral link. Note that the program cannot be changed."
+                    : "Complete this form to generate your unique referral link for the selected program. Share it with friends, and you'll both may earn rewards when they complete the program requirements!"
+                }
+                className="!bg-transparent"
+              />
 
               {/* Warning Messages */}
               {!isEditMode && existingLinksCount === 0 && (
@@ -387,15 +362,12 @@ export const ReferrerCreateLinkModal: React.FC<CreateLinkModalProps> = ({
 
               {/* Program Preview */}
               {showProgramDetails && (
-                <div className="space-y-3">
-                  <div>
-                    {/* Header */}
-                    <div className="mb-3">
-                      <h3 className="flex items-center gap-2 text-base font-bold">
-                        <IoGift className="h-5 w-5 text-orange-400" />
-                        Selected Program
-                      </h3>
-                    </div>
+                <div className="flex flex-col gap-8">
+                  <div className="space-y-2">
+                    <FormLabel
+                      label="Selected Program"
+                      showWarningIcon={false}
+                    />
                     <div className="bg-white">
                       <RefereeProgramDetails
                         program={currentProgram}
@@ -404,10 +376,17 @@ export const ReferrerCreateLinkModal: React.FC<CreateLinkModalProps> = ({
                       />
                     </div>
                   </div>
-                  <ProgramRequirements
-                    program={currentProgram}
-                    showPathway={true}
-                  />
+                  <div className="space-y-2">
+                    <FormLabel
+                      label="Program Requirements"
+                      showWarningIcon={false}
+                    />
+
+                    <ProgramRequirements
+                      program={currentProgram}
+                      showPathway={true}
+                    />
+                  </div>
                 </div>
               )}
 
@@ -576,22 +555,12 @@ export const ReferrerCreateLinkModal: React.FC<CreateLinkModalProps> = ({
           {/* STEP 3: SUCCESS */}
           {step === "success" && createdLink && (
             <div className="space-y-6">
-              {/* Success Icon */}
-              <div className="flex justify-center">
-                <div className="flex h-20 w-20 items-center justify-center rounded-full border-blue-600 bg-gradient-to-br from-blue-50 to-white shadow-lg">
-                  <IoMdCheckmarkCircle className="h-12 w-12 text-blue-600" />
-                </div>
-              </div>
-
-              <div className="text-center">
-                <h2 className="text-xl font-bold text-gray-900">
-                  🎉 Link {isEditMode ? "Updated" : "Created"} Successfully!
-                </h2>
-                <p className="text-gray-dark mt-2 text-sm">
-                  Your referral link is ready to share. You can always find it
-                  on your links dashboard.
-                </p>
-              </div>
+              <NoRowsMessage
+                icon="🎉"
+                title={`Link ${isEditMode ? "Updated" : "Created"} Successfully!`}
+                description="Your referral link is ready to share. You can always find it on your links dashboard."
+                className="!bg-transparent"
+              />
 
               {/* Link Details Card */}
               <ReferrerLinkDetails
