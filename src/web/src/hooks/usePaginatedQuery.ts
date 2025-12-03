@@ -1,5 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
-import { useState, useMemo, useCallback } from "react";
+import { useInfiniteQuery } from "@tanstack/react-query";
+import { useMemo, useCallback } from "react";
 
 interface PaginatedResult<T> {
   items: T[];
@@ -22,51 +22,54 @@ export function usePaginatedQuery<T>({
   pageSize,
   enabled = true,
 }: UsePaginatedQueryOptions<T>) {
-  const [currentPage, setCurrentPage] = useState(1);
-  const [accumulatedItems, setAccumulatedItems] = useState<T[]>([]);
-  const [totalCount, setTotalCount] = useState(0);
-
-  const { data, error, isLoading, isFetching } = useQuery({
-    queryKey: [...queryKey, currentPage, pageSize],
-    queryFn: () => queryFn(currentPage, pageSize),
+  const {
+    data,
+    error,
+    fetchNextPage,
+    hasNextPage,
+    isFetching,
+    isFetchingNextPage,
+    isLoading,
+  } = useInfiniteQuery({
+    queryKey: [...queryKey, "infinite", pageSize],
+    queryFn: ({ pageParam }) => queryFn(pageParam as number, pageSize),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage, allPages) => {
+      const loadedCount = allPages.reduce(
+        (acc, page) => acc + page.items.length,
+        0,
+      );
+      if (loadedCount < lastPage.totalCount) {
+        return allPages.length + 1;
+      }
+      return undefined;
+    },
     enabled,
   });
 
-  // Update accumulated items when new data arrives
-  useMemo(() => {
-    if (data) {
-      if (currentPage === 1) {
-        // First page: replace all items
-        setAccumulatedItems(data.items);
-      } else {
-        // Subsequent pages: append new items
-        setAccumulatedItems((prev) => [...prev, ...data.items]);
-      }
-      setTotalCount(data.totalCount);
-    }
-  }, [data, currentPage]);
+  const items = useMemo(() => {
+    return data?.pages.flatMap((page) => page.items) ?? [];
+  }, [data]);
 
-  const hasMore = totalCount > accumulatedItems.length;
+  const totalCount = data?.pages[0]?.totalCount ?? 0;
 
   const loadMore = useCallback(() => {
-    if (hasMore && !isFetching) {
-      setCurrentPage((prev) => prev + 1);
+    if (hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
     }
-  }, [hasMore, isFetching]);
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const reset = useCallback(() => {
-    setCurrentPage(1);
-    setAccumulatedItems([]);
-    setTotalCount(0);
+    // No-op: useInfiniteQuery manages cache automatically
   }, []);
 
   return {
-    items: accumulatedItems,
+    items,
     totalCount,
     error,
-    isLoading: isLoading && currentPage === 1,
+    isLoading,
     isFetching,
-    hasMore,
+    hasMore: hasNextPage,
     loadMore,
     reset,
   };

@@ -420,6 +420,14 @@ export interface ReferralLinkUsageSearchFilterAdmin
   userIdReferrer: string | null;
 }
 
+export interface ReferralLinkUsageSearchFilter extends PaginationFilter {
+  linkId: string | null;
+  programId: string | null;
+  statuses: ReferralLinkUsageStatus[] | null;
+  dateStart: string | null;
+  dateEnd: string | null;
+}
+
 export interface ReferralLinkUsageInfo {
   id: string;
   programId: string;

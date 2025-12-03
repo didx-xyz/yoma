@@ -1,27 +1,18 @@
 import Link from "next/link";
 import { IoGift, IoArrowForward } from "react-icons/io5";
 
-/**
- * BecomeReferrerCTA Component
- *
- * Displays an attractive call-to-action section inviting users to become referrers.
- * Shows benefits of creating referral links and earning rewards.
- *
- * @example
- * <BecomeReferrerCTA />
- */
 export const BecomeReferrerCTA: React.FC = () => {
   return (
-    <div className="rounded-xl border-4 border-green-300 bg-gradient-to-br from-green-50 to-white p-4 shadow-xl md:p-8">
+    <div className="rounded-xl border-4 border-green-300 bg-gradient-to-br from-green-50 to-white p-4 shadow-xl md:p-6">
       <div className="mb-6 flex flex-col items-center gap-4 md:flex-row">
-        <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-green-500 to-blue-500 shadow-lg md:h-16 md:w-16">
-          <IoGift className="h-6 w-6 text-white md:h-10 md:w-10" />
+        <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-green-500 to-blue-500 shadow-lg md:h-14 md:w-14">
+          <IoGift className="h-6 w-6 text-white md:h-8 md:w-8" />
         </div>
         <div className="flex-1 text-center md:text-left">
-          <h2 className="mb-2 text-base font-bold text-green-900 md:text-xl">
-            Want to Become a Referrer Instead?
+          <h2 className="text-base font-bold text-green-900 md:text-lg">
+            Become a Referrer Instead!
           </h2>
-          <p className="text-xs text-gray-700 md:text-base">
+          <p className="text-xs text-gray-700 md:text-sm">
             Share Yoma with your friends and earn rewards together! Create your
             own referral links and start earning ZLTO.
           </p>
@@ -69,7 +60,7 @@ export const BecomeReferrerCTA: React.FC = () => {
       <div className="flex justify-center">
         <Link
           href="/yoid/referrals"
-          className="btn btn-success btn-sm md:btn-lg w-full gap-2 px-8 text-white shadow-lg hover:scale-105 md:w-auto"
+          className="btn btn-success btn-sm md:btn-md w-full gap-2 px-8 text-white shadow-lg hover:scale-105 md:w-auto"
         >
           <IoGift className="h-4 w-4 md:h-5 md:w-5" />
           Start Referring

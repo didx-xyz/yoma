@@ -18,14 +18,29 @@ interface ShareButtonsProps {
   title?: string;
   description?: string;
   size?: number;
+  rewardAmount?: number | null;
 }
 
 export const ShareButtons: React.FC<ShareButtonsProps> = ({
   url,
-  title = "Check out this opportunity on Yoma!",
-  description = "Join me and earn rewards by completing programs on Yoma.",
+  title: customTitle,
+  description: customDescription,
   size = 40,
+  rewardAmount,
 }) => {
+  // Calculate title and description based on reward amount if not explicitly provided
+  const title =
+    customTitle ||
+    (rewardAmount
+      ? `Join me on Yoma and earn ${rewardAmount} ZLTO!`
+      : "Join me on Yoma!");
+
+  const description =
+    customDescription ||
+    (rewardAmount
+      ? `Join me on Yoma and earn ${rewardAmount} ZLTO! Sign up to build your digital CV and access opportunities.`
+      : "Join me on Yoma! Sign up to build your digital CV and access opportunities.");
+
   const handleNativeShare = async () => {
     if (navigator.share) {
       try {
@@ -47,7 +62,7 @@ export const ShareButtons: React.FC<ShareButtonsProps> = ({
   };
 
   return (
-    <div className="flex flex-wrap justify-center gap-3">
+    <div className="justify-centerx flex flex-wrap gap-3">
       <WhatsappShareButton url={url} title={title}>
         <WhatsappIcon size={size} round />
       </WhatsappShareButton>

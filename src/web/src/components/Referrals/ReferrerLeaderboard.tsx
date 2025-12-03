@@ -1,6 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
 import { useAtomValue } from "jotai";
-import { IoTrophy } from "react-icons/io5";
 import { ReferralParticipationRole } from "~/api/models/referrals";
 import { searchReferralAnalytics } from "~/api/services/referrals";
 import { userProfileAtom } from "~/lib/store";
@@ -30,25 +29,14 @@ export const ReferrerLeaderboard: React.FC<ReferrerLeaderboardProps> = ({
   });
 
   if (isLoading) {
-    return (
-      <div className="shadow-custom rounded-lg bg-white p-6">
-        <h2 className="mb-4 flex items-center gap-4 text-base font-bold text-gray-900 md:text-lg">
-          <IoTrophy className="text-yellow h-6 w-6" /> Top Referrers
-        </h2>
-        <LoadingInline classNameSpinner="h-12 border-orange w-12" />
-      </div>
-    );
+    return <LoadingInline classNameSpinner="h-12 border-orange w-12" />;
   }
 
   // Get current user's display name for highlighting
   const currentUserDisplayName = userProfile?.displayName || "";
 
   return (
-    <div className="shadow-custom rounded-lg bg-white p-6">
-      <h2 className="mb-4 flex items-center gap-4 text-base font-bold text-gray-900 md:text-lg">
-        <IoTrophy className="text-yellow h-6 w-6" /> Top Referrers
-      </h2>
-
+    <div>
       {!leaderboard?.items || leaderboard.items.length === 0 ? (
         <p className="text-gray-dark text-center text-sm">
           No leaderboard data available yet. Start referring to see your rank!
@@ -71,11 +59,11 @@ export const ReferrerLeaderboard: React.FC<ReferrerLeaderboardProps> = ({
                   }`}
                 >
                   <div className="flex items-center gap-3">
-                    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white font-bold text-gray-700">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white text-xs font-bold text-gray-700">
                       {index + 1}
                     </span>
                     <div>
-                      <p className="font-semibold text-gray-900">
+                      <p className="text-sm font-semibold text-gray-900">
                         {user.userDisplayName}
                         {isCurrentUser && (
                           <span className="ml-2 text-xs text-gray-600">
@@ -89,7 +77,7 @@ export const ReferrerLeaderboard: React.FC<ReferrerLeaderboardProps> = ({
                     </div>
                   </div>
                   <div className="flex flex-col items-end gap-1">
-                    <span className="badge bg-yellow text-white">
+                    <span className="badge bg-yellow text-xs text-white">
                       {user.zltoRewardTotal ?? 0} rewarded
                     </span>
                   </div>

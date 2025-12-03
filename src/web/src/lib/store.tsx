@@ -34,6 +34,16 @@ const userCountrySelectionAtom = atomWithStorage<string | null>(
   null,
 );
 
+// referee progress dialog visibility atom
+const refereeProgressDialogVisibleAtom = atom(false);
+
+// referee progress dialog dismissed state
+// persisted across browser sessions
+const refereeProgressDialogDismissedAtom = atomWithStorage<boolean>(
+  "refereeProgressDialogDismissed",
+  false,
+);
+
 export {
   userProfileAtom,
   screenWidthAtom,
@@ -43,4 +53,6 @@ export {
   currentOrganisationInactiveAtom,
   currentLanguageAtom,
   userCountrySelectionAtom,
+  refereeProgressDialogVisibleAtom,
+  refereeProgressDialogDismissedAtom,
 };

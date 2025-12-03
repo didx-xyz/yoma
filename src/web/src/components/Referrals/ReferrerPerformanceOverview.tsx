@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { IoStatsChart } from "react-icons/io5";
+import { IoCheckmarkCircle, IoGift, IoPeople, IoTime } from "react-icons/io5";
 import type {
   ReferralLink,
   ReferralLinkUsageSearchResults,
@@ -9,15 +9,17 @@ import {
   searchReferralLinkUsagesAsReferrer,
 } from "~/api/services/referrals";
 import Suspense from "~/components/Common/Suspense";
+import { LoadingInline } from "../Status/LoadingInline";
 
 interface PerformanceOverviewProps {
   link: ReferralLink;
   totalReferrals?: number;
+  mode?: "small" | "large";
 }
 
 export const ReferrerPerformanceOverview: React.FC<
   PerformanceOverviewProps
-> = ({ link, totalReferrals: providedTotal }) => {
+> = ({ link, totalReferrals: providedTotal, mode = "large" }) => {
   // Fetch full link details
   const {
     data: fullLinkData,
@@ -54,39 +56,109 @@ export const ReferrerPerformanceOverview: React.FC<
   const totalReferrals = providedTotal ?? usageData?.totalCount ?? 0;
   const displayLink = fullLinkData || link;
 
+  if (mode === "small") {
+    return (
+      <Suspense
+        isLoading={isLoading}
+        error={error as any}
+        loader={<LoadingInline classNameSpinner="h-12 border-orange w-12" />}
+      >
+        <div className="grid grid-cols-2 gap-4">
+          {/* Total */}
+          <div className="flex min-w-0 items-center gap-2 font-bold text-blue-700">
+            <span className="badge gap-1 truncate bg-blue-50 text-blue-700">
+              <IoPeople />
+              {(totalReferrals || 0).toLocaleString()}
+            </span>
+            <div className="min-w-0 flex-1 truncate text-[10px] font-normal text-gray-500">
+              Total
+            </div>
+          </div>
+
+          {/* Completed */}
+          <div className="flex min-w-0 items-center gap-2 font-bold text-green-700">
+            <span className="badge gap-1 truncate bg-green-50 text-green-700">
+              <IoCheckmarkCircle />
+              {(displayLink.completionTotal || 0).toLocaleString()}
+            </span>
+            <div className="min-w-0 flex-1 truncate text-[10px] font-normal text-gray-500">
+              Completed
+            </div>
+          </div>
+
+          {/* Pending */}
+          <div className="flex min-w-0 items-center gap-2 font-bold text-orange-700">
+            <span className="badge gap-1 truncate bg-orange-50 text-orange-700">
+              <IoTime />
+              {(displayLink.pendingTotal || 0).toLocaleString()}
+            </span>
+            <div className="min-w-0 flex-1 truncate text-[10px] font-normal text-gray-500">
+              Pending
+            </div>
+          </div>
+
+          {/* ZLTO Earned */}
+          <div className="flex min-w-0 items-center gap-2 font-bold text-yellow-700">
+            <span className="badge gap-1 truncate bg-yellow-50 text-yellow-700">
+              <IoGift />
+              {(displayLink.zltoRewardCumulative || 0).toLocaleString()}
+            </span>
+            <div className="min-w-0 flex-1 truncate text-[10px] font-normal text-gray-500">
+              ZLTO Earned
+            </div>
+          </div>
+        </div>
+      </Suspense>
+    );
+  }
+
   return (
     <Suspense isLoading={isLoading} error={error as any}>
-      <div
-      //className="space-y-2 rounded-lg bg-white p-4 md:p-6"
-      >
-        <h2 className="mb-4 flex items-center gap-2 text-base font-bold text-gray-900">
-          <IoStatsChart className="inline h-5 w-5 text-blue-600 md:h-6 md:w-6" />
-          Performance Overview
-        </h2>
-        <div className="grid grid-cols-2 gap-2 md:grid-cols-4 md:gap-3">
-          <div className="rounded-lg bg-blue-50 p-3 text-center">
-            <div className="text-2xl font-bold text-blue-700">
-              {totalReferrals || 0}
+      <div>
+        <div className="grid grid-cols-2 gap-1">
+          <div className="min-w-0">
+            <div className="text-gray-dark trunate mt-1 text-xs md:text-sm">
+              Total Referrals
             </div>
-            <div className="text-gray-dark text-xs">Total Referrals</div>
+            <div className="flex items-center gap-1 font-bold text-black">
+              <IoPeople className="mr-1 text-base text-blue-700" />
+              <span className="font-family-nunito truncate text-lg">
+                {(totalReferrals || 0).toLocaleString()}
+              </span>
+            </div>
           </div>
-          <div className="rounded-lg bg-green-50 p-3 text-center">
-            <div className="text-2xl font-bold text-green-700">
-              {displayLink.completionTotal || 0}
+          <div className="min-w-0">
+            <div className="text-gray-dark trunate mt-1 text-xs md:text-sm">
+              Completed
             </div>
-            <div className="text-gray-dark text-xs">Completed</div>
+            <div className="flex items-center gap-1 font-bold text-black">
+              <IoCheckmarkCircle className="mr-1 text-base text-green-700" />
+              <span className="font-family-nunito truncate text-lg">
+                {(displayLink.completionTotal || 0).toLocaleString()}
+              </span>
+            </div>
           </div>
-          <div className="rounded-lg bg-orange-50 p-3 text-center">
-            <div className="text-2xl font-bold text-orange-700">
-              {displayLink.pendingTotal || 0}
+          <div className="min-w-0">
+            <div className="text-gray-dark trunate mt-1 text-xs md:text-sm">
+              Pending
             </div>
-            <div className="text-gray-dark text-xs">Pending</div>
+            <div className="flex items-center gap-1 font-bold text-black">
+              <IoTime className="mr-1 text-base text-orange-700" />
+              <span className="font-family-nunito truncate text-lg">
+                {(displayLink.pendingTotal || 0).toLocaleString()}
+              </span>
+            </div>
           </div>
-          <div className="rounded-lg bg-yellow-50 p-3 text-center">
-            <div className="text-2xl font-bold text-yellow-700">
-              {displayLink.zltoRewardCumulative || 0}
+          <div className="min-w-0">
+            <div className="text-gray-dark trunate mt-1 text-xs md:text-sm">
+              ZLTO Earned
             </div>
-            <div className="text-gray-dark text-xs">ZLTO Earned</div>
+            <div className="flex items-center gap-1 font-bold text-black">
+              <IoGift className="mr-1 text-base text-yellow-700" />
+              <span className="font-family-nunito truncate text-lg">
+                {(displayLink.zltoRewardCumulative || 0).toLocaleString()}
+              </span>
+            </div>
           </div>
         </div>
       </div>

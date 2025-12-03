@@ -3,9 +3,8 @@ import {
   IoCheckmarkCircle,
   IoChevronDown,
   IoChevronUp,
-  IoShieldCheckmark,
-  IoTrophy,
   IoGiftOutline,
+  IoTrophy,
 } from "react-icons/io5";
 import type { ProgramInfo } from "~/api/models/referrals";
 import { ProgramPathwayView } from "./ProgramPathwayView";
@@ -47,14 +46,6 @@ export const ProgramRequirements: React.FC<ProgramRequirementsProps> = ({
 
   return (
     <div className={className}>
-      {/* Header */}
-      <div className="my-3">
-        <h3 className="flex items-center gap-2 text-base font-bold">
-          <IoShieldCheckmark className="h-5 w-5 text-orange-400" />
-          Program Requirements
-        </h3>
-      </div>
-
       {/* Summary */}
       <div className="space-y-3 rounded-lg border-2 border-orange-200 bg-orange-50 p-4">
         {/* Requirements Summary */}

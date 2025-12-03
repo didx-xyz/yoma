@@ -1,4 +1,4 @@
-import { useAtomValue } from "jotai";
+import { useAtomValue, useSetAtom } from "jotai";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
@@ -9,14 +9,13 @@ import { useMemo, useState } from "react";
 import { IoMdClose, IoMdMenu, IoMdSettings } from "react-icons/io";
 import type { TabItem } from "~/api/models/common";
 import type { OrganizationInfo } from "~/api/models/user";
-import { useQuery } from "@tanstack/react-query";
-import { searchReferralLinkUsagesAsReferee } from "~/api/services/referrals";
 import { ReferralParticipationRole } from "~/api/models/user";
 import {
   RoleView,
   activeNavigationRoleViewAtom,
   currentOrganisationIdAtom,
   userProfileAtom,
+  refereeProgressDialogVisibleAtom,
 } from "~/lib/store";
 import { AvatarImage } from "../AvatarImage";
 import { Footer } from "../Footer/Footer";
@@ -28,10 +27,14 @@ import { ROLE_ADMIN } from "~/lib/constants";
 import { FaChevronUp, FaChevronDown } from "react-icons/fa";
 import ScrollableContainer from "../Carousel/ScrollableContainer";
 import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
+import { useRefereeReferrals } from "~/hooks/useRefereeReferrals";
+import { ReferralLinkUsageStatus } from "~/api/models/referrals";
 
 const getNavBarLinksUser = (
   hasPendingReferrals: boolean,
   firstProgramId?: string,
+  pendingCount: number = 0,
+  onOpenRefereeProgress?: () => void,
 ): TabItem[] => {
   const links: TabItem[] = [
     {
@@ -69,15 +72,27 @@ const getNavBarLinksUser = (
   ];
 
   // Add referee progress link if user has pending referrals
-  if (hasPendingReferrals && firstProgramId) {
-    links.push({
-      title: "My Referral",
-      description: "Track your referral progress",
-      url: `/yoid/referee/${firstProgramId}`,
-      badgeCount: null,
-      selected: false,
-      iconImage: "🎁",
-    });
+  if (hasPendingReferrals) {
+    if (pendingCount > 1 && onOpenRefereeProgress) {
+      links.push({
+        title: "My Referrals",
+        description: "Track your referral progress",
+        url: "#",
+        badgeCount: null,
+        selected: false,
+        iconImage: "🎁",
+        onClick: onOpenRefereeProgress,
+      });
+    } else if (firstProgramId) {
+      links.push({
+        title: "My Referral",
+        description: "Track your referral progress",
+        url: `/yoid/referee/${firstProgramId}`,
+        badgeCount: null,
+        selected: false,
+        iconImage: "🎁",
+      });
+    }
   }
 
   return links;
@@ -124,14 +139,14 @@ const navBarLinksAdmin: TabItem[] = [
     selected: false,
     iconImage: "🛒",
   },
-  {
-    title: "Referrals",
-    description: "Referrals",
-    url: "/admin/referrals",
-    badgeCount: null,
-    selected: false,
-    iconImage: "🎯",
-  },
+  //   {
+  //     title: "Referrals",
+  //     description: "Referrals",
+  //     url: "/admin/referrals",
+  //     badgeCount: null,
+  //     selected: false,
+  //     iconImage: "🎯",
+  //   },
 ];
 
 export const Navbar: React.FC<{ theme: string }> = (theme) => {
@@ -140,6 +155,9 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
   const currentOrganisationId = useAtomValue(currentOrganisationIdAtom);
   const { data: session } = useSession();
   const userProfile = useAtomValue(userProfileAtom);
+  const setRefereeProgressDialogVisible = useSetAtom(
+    refereeProgressDialogVisibleAtom,
+  );
   const [isDrawerOpen, setDrawerOpen] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const isAdmin = session?.user?.roles.includes(ROLE_ADMIN);
@@ -152,26 +170,14 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
     ) ?? false;
 
   // Fetch referee programs if user is a referee
-  const { data: refereeLinkUsages } = useQuery({
-    queryKey: ["ReferralLinkUsages", "referee"],
-    queryFn: () =>
-      searchReferralLinkUsagesAsReferee({
-        pageNumber: 1,
-        pageSize: 10,
-        linkId: null,
-        programId: null,
-        statuses: null,
-        dateStart: null,
-        dateEnd: null,
-      }),
+  const { data: refereeLinkUsages } = useRefereeReferrals({
     enabled: session !== null && isReferee,
+    statuses: [ReferralLinkUsageStatus.Pending],
   });
 
   // Get pending referral programs (as referee)
   const pendingReferralPrograms = useMemo(
-    () =>
-      refereeLinkUsages?.items?.filter((usage) => usage.status === "Pending") ??
-      [],
+    () => refereeLinkUsages?.items ?? [],
     [refereeLinkUsages?.items],
   );
   const hasPendingReferrals = pendingReferralPrograms.length > 0;
@@ -255,7 +261,12 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
     } else {
       // Get user links with conditional referee link
       const firstPendingProgramId = pendingReferralPrograms[0]?.programId;
-      links = getNavBarLinksUser(hasPendingReferrals, firstPendingProgramId);
+      links = getNavBarLinksUser(
+        hasPendingReferrals,
+        firstPendingProgramId,
+        pendingReferralPrograms.length,
+        () => setRefereeProgressDialogVisible(true),
+      );
     }
 
     // Set selected property based on current route
@@ -271,6 +282,7 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
     router.pathname,
     hasPendingReferrals,
     pendingReferralPrograms,
+    setRefereeProgressDialogVisible,
   ]);
 
   const renderOrganisationMenuItem = (organisation: OrganizationInfo) => {
@@ -357,7 +369,7 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
   return (
     <div className="fixed top-0 right-0 left-0 z-40">
       <div className={`bg-theme navbar z-40`}>
-        <div className="flex w-full items-center gap-2">
+        <div className="gap-2xxx flex w-full items-center">
           {/* HOVER MENU */}
           <div
             className="absolute top-1/5 left-0 h-[100vh] w-[2px] bg-transparent"
@@ -442,7 +454,13 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
                         >
                           <Link
                             href={link.url!}
-                            onClick={() => setDrawerOpen(false)}
+                            onClick={(e) => {
+                              setDrawerOpen(false);
+                              if (link.onClick) {
+                                e.preventDefault();
+                                link.onClick();
+                              }
+                            }}
                             id={`lnkNavbarMenuModal_${link.title}`}
                             tabIndex={isDrawerOpen ? 0 : -1}
                             className="w-full"
@@ -622,6 +640,12 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
                       )} */}
                     <Link
                       href={link.url!}
+                      onClick={(e) => {
+                        if (link.onClick) {
+                          e.preventDefault();
+                          link.onClick();
+                        }
+                      }}
                       tabIndex={index}
                       id={`lnkNavbarMenu_${link.title}`}
                       className="bg-theme group btn font-nunito flex-shrink-0 !rounded-md border-none p-2 px-4 text-base text-white shadow-none duration-0 hover:brightness-95"
@@ -642,7 +666,7 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
           </div>
 
           {/* RIGHT MENU */}
-          <div className="flex flex-shrink-0 items-center justify-end gap-2 md:gap-4">
+          <div className="flex flex-shrink-0 items-center justify-end md:mr-2 md:gap-4">
             <LanguageSwitcher
               className="bg-theme hover:brightness-95 md:px-3"
               classNameIcon=""

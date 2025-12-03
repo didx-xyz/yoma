@@ -430,6 +430,7 @@ export interface PathwayTaskDisplayProps {
   opportunityData?: OpportunityInfo; // Optional opportunity data to avoid fetching
   showActionButton?: boolean;
   showBullets?: boolean;
+  showBadges?: boolean;
   color?: "green" | "orange";
   totalTasks?: number;
   isAdmin?: boolean;
@@ -443,6 +444,7 @@ export const PathwayTaskDisplay: React.FC<PathwayTaskDisplayProps> = ({
   opportunityData,
   showActionButton = false,
   showBullets = true,
+  showBadges = true,
   color = "green",
   totalTasks = 1,
   isAdmin = false,
@@ -491,6 +493,7 @@ export const PathwayTaskDisplay: React.FC<PathwayTaskDisplayProps> = ({
               opportunity={opportunityData}
               isCompleted={task.completed ?? false}
               isAdmin={isAdmin}
+              showBadges={showBadges}
             />
             {/* Action Button */}
             {showActionButton && (
@@ -539,6 +542,7 @@ export interface PathwayTasksListProps {
   opportunityDataMap?: Record<string, OpportunityInfo>; // Optional map of opportunity data by ID
   showActionButtons?: boolean;
   showBullets?: boolean;
+  showBadges?: boolean;
   color?: "green" | "orange";
   isAdmin?: boolean;
 }
@@ -550,6 +554,7 @@ export const PathwayTasksList: React.FC<PathwayTasksListProps> = ({
   opportunityDataMap,
   showActionButtons = false,
   showBullets = true,
+  showBadges = true,
   color = "green",
   isAdmin = false,
 }) => {
@@ -576,6 +581,7 @@ export const PathwayTasksList: React.FC<PathwayTasksListProps> = ({
             }
             showActionButton={showActionButtons}
             showBullets={showBullets}
+            showBadges={showBadges}
             color={color}
             totalTasks={tasks.length}
             isAdmin={isAdmin}

@@ -5,15 +5,11 @@ import { IoLink, IoQrCode } from "react-icons/io5";
 import { toast } from "react-toastify";
 import type { ReferralLink } from "~/api/models/referrals";
 import { getReferralLinkById } from "~/api/services/referrals";
-import { ShareButtons } from "./ShareButtons";
 
 interface LinkDetailsProps {
   link: ReferralLink;
   mode?: "large" | "small";
   showQRCode?: boolean;
-  showShare?: boolean;
-  shareTitle?: string;
-  shareDescription?: string;
   className?: string;
   hideLabels?: boolean;
 }
@@ -22,9 +18,6 @@ export const ReferrerLinkDetails: React.FC<LinkDetailsProps> = ({
   link,
   mode = "large",
   showQRCode: showQRCodeProp = true,
-  showShare = false,
-  shareTitle = "Check out this opportunity on Yoma!",
-  shareDescription = "Join me on Yoma and earn rewards together.",
   className = "rounded-lg bg-gradient-to-br from-blue-50 to-white p-6 shadow-sm",
   hideLabels = false,
 }) => {
@@ -91,137 +84,112 @@ export const ReferrerLinkDetails: React.FC<LinkDetailsProps> = ({
   if (mode === "small") {
     return (
       <div className={className}>
-        {/* Short URL - Compact */}
-        {displayLink.shortURL && (
-          <div className="mb-3">
-            {/* Header */}
-            <div className="mb-2">
-              {!hideLabels && (
-                <h4 className="flex items-center gap-1 text-xs font-bold">
-                  <IoLink className="h-3.5 w-3.5 text-blue-900" />
-                  Short Link
-                </h4>
-              )}
-              <p className="mt-0.5 text-[10px] text-gray-600">
-                Copy and share this link with your friends
-              </p>
-            </div>
-
-            <div className="flex min-w-0 items-center gap-1">
-              <input
-                type="text"
-                value={displayLink.shortURL}
-                readOnly
-                className="max-w-[250px] min-w-0 flex-1 truncate rounded border border-dashed border-blue-300 bg-white px-2 py-1.5 font-mono text-[11px] font-semibold text-gray-900"
-                onClick={(e) => e.currentTarget.select()}
-              />
-              <button
-                type="button"
-                onClick={() => handleCopyLink(displayLink.shortURL)}
-                className="btn btn-xs gap-1 border-blue-600 bg-blue-600 text-white transition-all hover:scale-105 hover:bg-blue-700"
-                title="Copy short link"
-              >
-                <IoMdCopy className="h-3 w-3" />
-                <span className="text-[10px]">Copy</span>
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* QR Code - Compact */}
-        {showQRCodeProp && (
-          <div className="mb-3">
-            {showQRCode && displayLink.qrCodeBase64 ? (
-              <>
+        <div className="flex flex-col md:flex-row md:gap-8">
+          <div className="flex-1">
+            {/* Short URL - Compact */}
+            {displayLink.shortURL && (
+              <div className="mb-3">
                 {/* Header */}
-                {!hideLabels && (
-                  <div className="mb-2">
-                    <h4 className="flex items-center gap-1 text-xs font-bold text-blue-900">
-                      <IoQrCode className="h-3.5 w-3.5" />
-                      QR Code
+                <div className="mb-2">
+                  {!hideLabels && (
+                    <h4 className="flex items-center gap-1 text-xs font-bold">
+                      <IoLink className="h-3.5 w-3.5 text-blue-900" />
+                      Short Link
                     </h4>
-                    <p className="mt-0.5 text-[10px] text-gray-600">
-                      Scan to share or download for offline use
-                    </p>
-                  </div>
-                )}
-                <div className="flex items-center gap-2">
-                  <div className="rounded border border-dashed border-blue-300 bg-white p-1.5 shadow-sm">
-                    <Image
-                      src={displayLink.qrCodeBase64}
-                      alt="QR Code"
-                      width={80}
-                      height={80}
-                      className="h-auto"
-                    />
-                  </div>
+                  )}
+                  <p className="mt-0.5 text-[10px] text-gray-600">
+                    Copy and share this link with your friends
+                  </p>
+                </div>
+
+                <div className="flex min-w-0 items-center gap-1">
+                  <input
+                    type="text"
+                    value={displayLink.shortURL}
+                    readOnly
+                    className="max-w-[250px] min-w-0 flex-1 truncate rounded border border-dashed border-blue-300 bg-white px-2 py-1.5 font-mono text-[11px] font-semibold text-gray-900"
+                    onClick={(e) => e.currentTarget.select()}
+                  />
                   <button
                     type="button"
-                    onClick={() =>
-                      handleDownloadQR(
-                        displayLink.qrCodeBase64!,
-                        displayLink.name,
-                      )
-                    }
+                    onClick={() => handleCopyLink(displayLink.shortURL)}
                     className="btn btn-xs gap-1 border-blue-600 bg-blue-600 text-white transition-all hover:scale-105 hover:bg-blue-700"
-                    title="Download QR code"
+                    title="Copy short link"
                   >
-                    <IoMdDownload className="h-3 w-3" />
-                    <span className="text-[10px]">Download</span>
+                    <IoMdCopy className="h-3 w-3" />
+                    <span className="text-[10px]">Copy</span>
                   </button>
                 </div>
-                {/* <button
-                  type="button"
-                  onClick={handleToggleQR}
-                  className="mt-2 flex items-center gap-1 text-xs font-medium text-blue-600 transition-colors hover:text-blue-700"
-                >
-                  <IoQrCode className="h-4 w-4" />
-                  Hide QR Code
-                </button> */}
-              </>
-            ) : (
-              <button
-                type="button"
-                onClick={handleToggleQR}
-                disabled={loadingQR}
-                className="flex cursor-pointer items-center gap-1 text-xs font-bold underline transition-colors hover:text-blue-700 disabled:opacity-50"
-              >
-                {loadingQR ? (
+              </div>
+            )}
+
+            {/* QR Code - Compact */}
+            {showQRCodeProp && (
+              <div className="mb-3">
+                {showQRCode && displayLink.qrCodeBase64 ? (
                   <>
-                    <span className="loading loading-spinner loading-xs"></span>
-                    Loading QR Code...
+                    {/* Header */}
+                    {!hideLabels && (
+                      <div className="mb-2">
+                        <h4 className="flex items-center gap-1 text-xs font-bold text-blue-900">
+                          <IoQrCode className="h-3.5 w-3.5" />
+                          QR Code
+                        </h4>
+                        <p className="mt-0.5 text-[10px] text-gray-600">
+                          Scan to share or download for offline use
+                        </p>
+                      </div>
+                    )}
+                    <div className="flex items-center gap-2">
+                      <div className="rounded border border-dashed border-blue-300 bg-white p-1.5 shadow-sm">
+                        <Image
+                          src={displayLink.qrCodeBase64}
+                          alt="QR Code"
+                          width={80}
+                          height={80}
+                          className="h-auto"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          handleDownloadQR(
+                            displayLink.qrCodeBase64!,
+                            displayLink.name,
+                          )
+                        }
+                        className="btn btn-xs gap-1 border-blue-600 bg-blue-600 text-white transition-all hover:scale-105 hover:bg-blue-700"
+                        title="Download QR code"
+                      >
+                        <IoMdDownload className="h-3 w-3" />
+                        <span className="text-[10px]">Download</span>
+                      </button>
+                    </div>
                   </>
                 ) : (
-                  <>
-                    <IoQrCode className="h-3 w-3 text-blue-900" />
-                    Show QR Code
-                  </>
+                  <button
+                    type="button"
+                    onClick={handleToggleQR}
+                    disabled={loadingQR}
+                    className="btn btn-xs gap-1 border-blue-600 bg-blue-600 text-white transition-all hover:scale-105 hover:bg-blue-700 disabled:!bg-blue-600"
+                  >
+                    {loadingQR ? (
+                      <>
+                        <span className="loading loading-spinner loading-xs"></span>
+                        <span className="text-[10px]">Loading QR Code...</span>
+                      </>
+                    ) : (
+                      <>
+                        <IoQrCode className="h-3 w-3" />
+                        <span className="text-[10px]">Show QR Code</span>
+                      </>
+                    )}
+                  </button>
                 )}
-              </button>
+              </div>
             )}
           </div>
-        )}
-
-        {/* Share Buttons - Compact */}
-        {showShare && (
-          <div className="border-tx border-blue-200x mt-3 pt-3">
-            <div className="mb-2">
-              <h4 className="flex items-center gap-1 text-xs font-bold">
-                📢 Share Your Link
-              </h4>
-              <p className="mt-0.5 text-[10px] text-gray-600">
-                Choose your preferred platform
-              </p>
-            </div>
-
-            <ShareButtons
-              url={link.shortURL ?? link.url}
-              title={shareTitle}
-              description={shareDescription}
-              size={30}
-            />
-          </div>
-        )}
+        </div>
       </div>
     );
   }
@@ -243,7 +211,7 @@ export const ReferrerLinkDetails: React.FC<LinkDetailsProps> = ({
                 Short Link
               </h3>
             )}
-            <p className="mt-1 text-xs text-gray-600">
+            <p className="text-gray-dark mt-1 text-xs md:text-sm">
               Copy and share this link with your friends
             </p>
           </div>
@@ -336,27 +304,6 @@ export const ReferrerLinkDetails: React.FC<LinkDetailsProps> = ({
               )}
             </button>
           )}
-        </div>
-      )}
-
-      {/* Share Buttons */}
-      {showShare && (
-        <div className="mt-4 border-t border-blue-200 pt-4">
-          <div className="mb-3">
-            <h3 className="flex items-center gap-2 text-base font-bold">
-              📢 Share Your Link
-            </h3>
-            <p className="mt-1 text-xs text-gray-600">
-              Choose your preferred platform to share
-            </p>
-          </div>
-
-          <ShareButtons
-            url={link.shortURL ?? link.url}
-            title={shareTitle}
-            description={shareDescription}
-            size={36}
-          />
         </div>
       )}
     </div>

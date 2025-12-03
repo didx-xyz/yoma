@@ -74,7 +74,12 @@ const MyProfile: NextPageWithLayout<{
   });
 
   const handleCancel = () => {
-    router.back();
+    const returnUrl = router.query.returnUrl as string | undefined;
+    if (returnUrl) {
+      router.push(returnUrl);
+    } else {
+      router.back();
+    }
   };
 
   if (error) return <Unauthorized />;

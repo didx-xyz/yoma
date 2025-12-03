@@ -84,10 +84,10 @@ export const ReferrerReferralsList: React.FC<ReferralsListProps> = ({
     <div
     // className="rounded-lg bg-white p-4 md:p-6"
     >
-      <h2 className="mb-4 flex items-center gap-2 text-base font-bold text-gray-900">
+      {/* <h2 className="mb-4 flex items-center gap-2 text-base font-bold text-gray-900">
         <IoPeople className="inline h-5 w-5 text-blue-600 md:h-6 md:w-6" />
         Referrals ({totalCount})
-      </h2>
+      </h2> */}
 
       <Suspense isLoading={isLoading} error={error as any}>
         <div>
@@ -96,7 +96,6 @@ export const ReferrerReferralsList: React.FC<ReferralsListProps> = ({
               title="No Referrals Yet"
               description="When someone uses your referral link, their progress will appear here."
               icon={"👥"}
-              className="border-gray rounded-lg border"
             />
           )}
           {hasUsage && (
@@ -107,31 +106,28 @@ export const ReferrerReferralsList: React.FC<ReferralsListProps> = ({
                 progress through the program.
               </FormMessage>
 
-              <div className="border-gray space-y-3 rounded-lg border">
+              <div className="border-base-300 bg-base-100 space-y-2 overflow-hidden rounded-lg border">
                 {usageData?.items?.map((usage: ReferralLinkUsage) => (
                   <div
                     key={usage.id}
-                    className="border-gray rounded-lg border bg-white p-4 transition-shadow hover:shadow-md"
+                    // className="border-base-300 bg-base-100 overflow-hidden rounded-lg border"
                   >
-                    {/* User Info Header */}
-                    <div className="mb-3 flex items-start justify-between">
-                      <div className="flex-1">
-                        <h4 className="font-semibold text-gray-900">
-                          {usage.userDisplayName || "Anonymous User"}
-                        </h4>
-                        <p className="text-gray-dark text-xs">
-                          {usage.userEmail}
-                        </p>
+                    <div className="flex min-w-0 items-center gap-2 p-4 hover:bg-gray-50">
+                      <div className="font-family-nunito flex min-w-0 grow flex-col justify-center gap-0.5">
+                        <div className="flex items-center gap-2 text-xs font-semibold text-black md:text-sm">
+                          <IoPeople className="h-3 w-3 flex-shrink-0 text-blue-600" />
+                          <span className="truncate">
+                            {usage.userDisplayName || "Anonymous User"}
+                          </span>
+                        </div>
+                        {usage.userEmail && (
+                          <div className="truncate pl-5 text-[10px] text-gray-500">
+                            {usage.userEmail}
+                          </div>
+                        )}
                       </div>
-                      <div className="flex items-center gap-2">
-                        {getStatusBadge(usage.status)}
-                      </div>
-                    </div>
 
-                    {/* Timeline */}
-                    <div className="text-gray-dark flex flex-wrap gap-x-4 gap-y-1 border-t border-gray-100 pt-3 text-xs">
-                      <div>
-                        <span className="font-semibold">Claimed:</span>{" "}
+                      <div className="text-gray hidden text-xs text-nowrap md:block md:text-sm">
                         {new Date(usage.dateClaimed).toLocaleDateString(
                           "en-US",
                           {
@@ -141,32 +137,10 @@ export const ReferrerReferralsList: React.FC<ReferralsListProps> = ({
                           },
                         )}
                       </div>
-                      {usage.dateCompleted && (
-                        <div className="text-green-600">
-                          <span className="font-semibold">Completed:</span>{" "}
-                          {new Date(usage.dateCompleted).toLocaleDateString(
-                            "en-US",
-                            {
-                              month: "short",
-                              day: "numeric",
-                              year: "numeric",
-                            },
-                          )}
-                        </div>
-                      )}
-                      {usage.dateExpired && (
-                        <div className="text-red-600">
-                          <span className="font-semibold">Expired:</span>{" "}
-                          {new Date(usage.dateExpired).toLocaleDateString(
-                            "en-US",
-                            {
-                              month: "short",
-                              day: "numeric",
-                              year: "numeric",
-                            },
-                          )}
-                        </div>
-                      )}
+
+                      <div className="flex-shrink-0">
+                        {getStatusBadge(usage.status)}
+                      </div>
                     </div>
                   </div>
                 ))}

@@ -128,8 +128,10 @@ const ReferralLinkUsageInfo: NextPageWithLayout<{
           {/* Header */}
           <div className="flex flex-row items-start justify-between gap-4">
             <div className="flex-1">
-              <h1 className="text-2xl font-bold">Link Usage Details</h1>
-              <p className="mt-2 text-gray-500">
+              <h1 className="text-base font-bold md:text-xl">
+                Link Usage Details
+              </h1>
+              <p className="text-xs text-gray-500 md:text-sm">
                 Track the progress of this referral link usage
               </p>
             </div>

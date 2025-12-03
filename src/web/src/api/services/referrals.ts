@@ -25,6 +25,7 @@ import {
   ReferralLinkRequestUpdate,
   ReferralLinkSearchResults,
   ReferralLinkUsageInfo,
+  ReferralLinkUsageSearchFilter,
   ReferralLinkUsageSearchFilterAdmin,
   ReferralLinkUsageSearchResults,
   ReferralParticipationRole,
@@ -288,7 +289,7 @@ export const searchReferralLinkUsagesAsReferrer = async (
 };
 
 export const searchReferralLinkUsagesAsReferee = async (
-  filter: AdminReferralLinkUsageSearchFilter,
+  filter: ReferralLinkUsageSearchFilter,
   context?: GetServerSidePropsContext | GetStaticPropsContext,
 ): Promise<ReferralLinkUsageSearchResults> => {
   const instance = context ? ApiServer(context) : await ApiClient;

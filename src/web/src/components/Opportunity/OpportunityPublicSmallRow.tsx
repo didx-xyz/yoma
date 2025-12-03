@@ -6,11 +6,13 @@ import PublicBadges from "./Badges/PublicBadges";
 interface OpportunityPublicSmallRowProps {
   opportunity: Opportunity;
   isCompleted?: boolean;
+  showBadges?: boolean;
 }
 
 const OpportunityPublicSmallRow: React.FC<OpportunityPublicSmallRowProps> = ({
   opportunity,
   isCompleted = false,
+  showBadges = true,
 }) => {
   return (
     <Link
@@ -50,9 +52,11 @@ const OpportunityPublicSmallRow: React.FC<OpportunityPublicSmallRowProps> = ({
           )}
 
           {/* Badges */}
-          <div className="mt-auto">
-            <PublicBadges opportunity={opportunity as any} />
-          </div>
+          {showBadges && (
+            <div className="mt-auto">
+              <PublicBadges opportunity={opportunity as any} />
+            </div>
+          )}
         </div>
 
         {/* Organization Logo */}

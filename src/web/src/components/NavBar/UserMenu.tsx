@@ -17,7 +17,6 @@ import { MdKeyboardArrowDown, MdKeyboardArrowUp } from "react-icons/md";
 import { ReferralParticipationRole } from "~/api/models/user";
 import { searchCredentials } from "~/api/services/credentials";
 import { searchMyOpportunitiesSummary } from "~/api/services/myOpportunities";
-import { searchReferralLinks } from "~/api/services/referrals";
 import { getUserSkills } from "~/api/services/user";
 import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
 import { MAXINT32 } from "~/lib/constants";
@@ -32,14 +31,14 @@ import { AvatarImage } from "../AvatarImage";
 import { Header } from "../Common/Header";
 import Suspense from "../Common/Suspense";
 import NoRowsMessage from "../NoRowsMessage";
+import { ReferralBlockedCard } from "../Referrals/ReferralBlockedCard";
+import { ReferrerProgressCard } from "../Referrals/ReferrerProgressCard";
 import { SignOutButton } from "../SignOutButton";
 import { LoadingInline } from "../Status/LoadingInline";
 import { LineChart } from "../YoID/LineChart";
 import { OpportunitiesSummary } from "../YoID/OpportunitiesSummary";
 import { PassportCard } from "../YoID/PassportCard";
-import { ReferralBlockedCard } from "../YoID/ReferralBlockedCard";
 import { ReferralCard } from "../YoID/ReferralCard";
-import { ReferrerProgressCard } from "../YoID/ReferrerProgressCard";
 import { SkillsCard } from "../YoID/SkillsCard";
 import { WalletCard } from "../YoID/WalletCard";
 import { YoIdModal } from "../YoID/YoIdModal";
@@ -131,41 +130,6 @@ export const UserMenu: React.FC = () => {
       (role) =>
         role === ReferralParticipationRole.Referrer || role === "Referrer",
     ) ?? false;
-
-  // Fetch referrer programs if user is a referrer
-  const { data: referrerPrograms, isLoading: referrerProgramsLoading } =
-    useQuery({
-      queryKey: ["ReferralLinks", "usermenu"],
-      queryFn: () =>
-        searchReferralLinks({
-          pageNumber: 1,
-          pageSize: 10,
-          programId: null,
-          valueContains: null,
-          statuses: null,
-        }),
-      enabled: isDrawerOpen && isReferrer,
-    });
-
-  // Fetch referee programs if user is a referee
-  //   const { data: refereeLinkUsages, isLoading: refereeLinkUsagesLoading } =
-  //     useQuery({
-  //       queryKey: ["ReferralLinkUsages", "referee", "usermenu"],
-  //       queryFn: () =>
-  //         searchReferralLinkUsagesAsReferee({
-  //           pageNumber: 1,
-  //           pageSize: 10,
-  //           linkId: null,
-  //           programId: null,
-  //           statuses: null,
-  //           dateStart: null,
-  //           dateEnd: null,
-  //         }),
-  //       enabled: isDrawerOpen && isReferee,
-  //     });
-
-  // Check if user has created any links (as referrer)
-  const hasCreatedLinks = (referrerPrograms?.items?.length ?? 0) > 0;
 
   //#endregion
 
@@ -323,10 +287,7 @@ export const UserMenu: React.FC = () => {
 
               {/* REFERRALS */}
               <Suspense
-                isLoading={
-                  !userProfile || referrerProgramsLoading /*||
-                  refereeLinkUsagesLoading*/
-                }
+                isLoading={!userProfile}
                 loader={
                   <LoadingInline
                     className="flex-col p-0"
@@ -335,7 +296,7 @@ export const UserMenu: React.FC = () => {
                 }
               >
                 <div className="flex w-full flex-col gap-2">
-                  {/* Show ReferralBlockedCard if user is blocked */}
+                  {/* BLOCKED STATUS */}
                   {userProfile?.referral?.blocked && (
                     <ReferralBlockedCard
                       blockedDate={
@@ -344,20 +305,17 @@ export const UserMenu: React.FC = () => {
                       onClick={() => setDrawerOpen(false)}
                     />
                   )}
-                  {/* Show default ReferralCard if no links created as referrer and not blocked */}
-                  {!userProfile?.referral?.blocked && !hasCreatedLinks && (
+                  {/* REFERRER INVITE */}
+                  {!userProfile?.referral?.blocked && !isReferrer && (
                     <ReferralCard onClick={() => setDrawerOpen(false)} />
                   )}
-                  {/* TRACK PROGRESS (REFERRER) - Show if user has created links and not blocked */}
-                  {!userProfile?.referral?.blocked &&
-                    hasCreatedLinks &&
-                    referrerPrograms && (
-                      <ReferrerProgressCard
-                        links={referrerPrograms.items}
-                        onClick={() => setDrawerOpen(false)}
-                        tabIndex={isDrawerOpen ? 0 : -1}
-                      />
-                    )}
+                  {/* REFERRER PROGRESS */}
+                  {!userProfile?.referral?.blocked && isReferrer && (
+                    <ReferrerProgressCard
+                      onClick={() => setDrawerOpen(false)}
+                      tabIndex={isDrawerOpen ? 0 : -1}
+                    />
+                  )}
                 </div>
               </Suspense>
 
@@ -379,6 +337,7 @@ export const UserMenu: React.FC = () => {
                   <IoIosInformationCircleOutline className="h-5 w-5" />
                 </button>
               </div>
+
               <div className="flex w-full flex-wrap items-center justify-center gap-5 pb-4">
                 {/* WALLET */}
                 <div className="flex w-full flex-col gap-2">
