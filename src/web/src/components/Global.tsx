@@ -1,17 +1,15 @@
-import {
-  keepPreviousData,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { useSession } from "next-auth/react";
-import { useRouter } from "next/router";
 import Link from "next/link";
+import { useRouter } from "next/router";
 import { parseCookies } from "nookies";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { FcCamera, FcKey, FcSettings, FcViewDetails } from "react-icons/fc";
+import { IoMdClose } from "react-icons/io";
 import { toast } from "react-toastify";
 import type { SettingsRequest } from "~/api/models/common";
+import { ReferralLinkUsageStatus } from "~/api/models/referrals";
 import type { UserProfile } from "~/api/models/user";
 import { ReferralParticipationRole } from "~/api/models/user";
 import { getOrganisationById } from "~/api/services/organisations";
@@ -20,6 +18,8 @@ import {
   getUserProfile,
   updateSettings,
 } from "~/api/services/user";
+import { useRefereeReferrals } from "~/hooks/useRefereeReferrals";
+import analytics from "~/lib/analytics";
 import { handleUserSignIn } from "~/lib/authUtils";
 import {
   COOKIE_KEYCLOAK_SESSION,
@@ -27,7 +27,6 @@ import {
   ROLE_ORG_ADMIN,
   SETTING_USER_SETTINGS_CONFIGURED,
 } from "~/lib/constants";
-import analytics from "~/lib/analytics";
 import {
   RoleView,
   activeNavigationRoleViewAtom,
@@ -35,28 +34,25 @@ import {
   currentOrganisationIdAtom,
   currentOrganisationInactiveAtom,
   currentOrganisationLogoAtom,
+  refereeProgressDialogDismissedAtom,
+  refereeProgressDialogVisibleAtom,
   screenWidthAtom,
   userProfileAtom,
-  refereeProgressDialogVisibleAtom,
-  refereeProgressDialogDismissedAtom,
 } from "~/lib/store";
 import {
+  hasUserPhoto,
   isUserProfileCompleted,
   isUserSettingsConfigured,
-  hasUserPhoto,
 } from "~/lib/utils/profile";
 import CustomModal from "./Common/CustomModal";
 import Suspense from "./Common/Suspense";
+import { RefereeProgressCard } from "./Referrals/RefereeProgressCard";
 import SettingsForm from "./Settings/SettingsForm";
 import { SignInButton } from "./SignInButton";
 import {
   UserProfileFilterOptions,
   UserProfileForm,
 } from "./User/UserProfileForm";
-import { IoMdClose } from "react-icons/io";
-import { RefereeProgressCard } from "./YoID/RefereeProgressCard";
-import { ReferralLinkUsageStatus } from "~/api/models/referrals";
-import { useRefereeReferrals } from "~/hooks/useRefereeReferrals";
 
 // * GLOBAL APP CONCERNS
 // * needs to be done here as jotai atoms are not available in _app.tsx
@@ -701,12 +697,12 @@ export const Global: React.FC = () => {
             </div>
 
             <div className="mt-5 flex flex-col gap-2 text-center">
-              <div className="text-xl font-semibold tracking-wide">
+              <div className="text-base font-semibold tracking-wide md:text-lg">
                 {refereeLinkUsages?.items.length === 1
                   ? "You Have a Pending Referral!"
                   : "You Have Pending Referrals!"}
               </div>
-              <div className="text-md text-gray-700">
+              <div className="text-sm text-gray-700 md:text-base">
                 {refereeLinkUsages?.items.length === 1
                   ? "Track your progress and complete the requirements to earn your reward."
                   : "Track your progress and complete the requirements to earn your rewards."}

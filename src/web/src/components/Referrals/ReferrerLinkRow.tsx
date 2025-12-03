@@ -54,7 +54,7 @@ export const ReferrerLinkRow: React.FC<ReferrerLinkRowProps> = ({
     <div className="border-base-300 bg-base-100 overflow-hidden rounded-lg border">
       {/* Header / Title Row */}
       <div
-        className="flex min-w-0 cursor-pointer items-center gap-2 p-4 hover:bg-gray-50"
+        className="flex min-w-0 cursor-pointer items-center gap-2 p-4 select-none hover:bg-gray-50"
         onClick={toggleExpand}
       >
         <div className="font-family-nunito flex min-w-0 grow items-center gap-2 text-xs font-semibold text-black md:text-sm">
@@ -113,7 +113,11 @@ export const ReferrerLinkRow: React.FC<ReferrerLinkRowProps> = ({
                 Share your link on your preferred platform
               </p>
 
-              <ShareButtons url={link.shortURL ?? link.url} size={30} />
+              <ShareButtons
+                url={link.shortURL ?? link.url}
+                size={30}
+                rewardAmount={program?.zltoRewardReferee}
+              />
             </div>
           </div>
 

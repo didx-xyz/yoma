@@ -1,11 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import {
-  IoCheckmarkCircle,
-  IoGift,
-  IoPeople,
-  IoStatsChart,
-  IoTime,
-} from "react-icons/io5";
+import { IoCheckmarkCircle, IoGift, IoPeople, IoTime } from "react-icons/io5";
 import type {
   ReferralLink,
   ReferralLinkUsageSearchResults,

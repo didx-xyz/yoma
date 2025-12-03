@@ -1,8 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
-import { IoStatsChart } from "react-icons/io5";
+import { ReferralParticipationRole } from "~/api/models/referrals";
 import { getMyReferralAnalytics } from "~/api/services/referrals";
 import { LoadingInline } from "../Status/LoadingInline";
-import { ReferralParticipationRole } from "~/api/models/referrals";
 
 export const ReferrerStats: React.FC = () => {
   const { data: analytics, isLoading } = useQuery({

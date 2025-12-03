@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { useState } from "react";
 import { FaArrowRight } from "react-icons/fa";
 import { IoGift } from "react-icons/io5";
 
@@ -12,8 +11,6 @@ export const ReferrerProgressCard: React.FC<ReferrerProgressCardProps> = ({
   onClick,
   tabIndex,
 }) => {
-  const [showDetails, setShowDetails] = useState(false);
-
   return (
     <div className="flex h-full flex-col gap-3 text-xs text-black md:text-sm">
       <div className="overflow-hidden rounded-xl border-2 border-green-200 bg-gradient-to-br from-green-50 via-blue-50 to-purple-50 shadow-md">

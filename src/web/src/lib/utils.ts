@@ -233,3 +233,26 @@ export const getTimeOfDayAndEmoji = (): [string, string] => {
 
   return [timeOfDay, timeOfDayEmoji];
 };
+
+/**
+ * Cleans text for use in meta tags by removing HTML, normalizing whitespace,
+ * and safely truncating while respecting emoji surrogate pairs.
+ */
+export function cleanTextForMetaTag(text: string, maxLength: number): string {
+  if (!text) return "";
+
+  // 1. Remove HTML tags
+  let clean = text.replace(/<[^>]*>?/gm, "");
+
+  // 2. Replace multiple spaces/newlines with single space
+  clean = clean.replace(/\s+/g, " ").trim();
+
+  // 3. Safe truncation respecting surrogate pairs
+  // Array.from splits by code points (grapheme clusters mostly)
+  const chars = Array.from(clean);
+  if (chars.length <= maxLength) {
+    return clean;
+  }
+
+  return chars.slice(0, maxLength - 3).join("") + "...";
+}

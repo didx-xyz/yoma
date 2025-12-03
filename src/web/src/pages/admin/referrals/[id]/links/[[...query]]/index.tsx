@@ -540,14 +540,14 @@ const ReferralLinks: NextPageWithLayout<{
                         </div>
 
                         {/* URL */}
-                        <div className="flex flex-row justify-between gap-1">
+                        <div className="flex flex-row items-center justify-between gap-1">
                           <p className="text-sm tracking-wider">URL</p>
-                          <div className="flex items-center gap-2">
+                          <div className="flex min-w-0 items-center gap-2">
                             <a
                               href={link.url}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-blue max-w-60 truncate text-sm underline"
+                              className="text-blue hidden max-w-60 truncate text-sm underline md:block"
                             >
                               {link.url}
                             </a>
@@ -561,7 +561,7 @@ const ReferralLinks: NextPageWithLayout<{
                         </div>
 
                         {/* Referrer */}
-                        <div className="flex flex-row justify-between gap-1">
+                        <div className="flex flex-row items-center justify-between gap-1">
                           <p className="text-sm tracking-wider">Referrer</p>
                           <div className="text-end text-sm">
                             <div className="font-semibold">

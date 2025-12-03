@@ -282,6 +282,7 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
     router.pathname,
     hasPendingReferrals,
     pendingReferralPrograms,
+    setRefereeProgressDialogVisible,
   ]);
 
   const renderOrganisationMenuItem = (organisation: OrganizationInfo) => {
@@ -368,7 +369,7 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
   return (
     <div className="fixed top-0 right-0 left-0 z-40">
       <div className={`bg-theme navbar z-40`}>
-        <div className="flex w-full items-center gap-2">
+        <div className="gap-2xxx flex w-full items-center">
           {/* HOVER MENU */}
           <div
             className="absolute top-1/5 left-0 h-[100vh] w-[2px] bg-transparent"
@@ -665,7 +666,7 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
           </div>
 
           {/* RIGHT MENU */}
-          <div className="flex flex-shrink-0 items-center justify-end gap-2 md:gap-4">
+          <div className="flex flex-shrink-0 items-center justify-end md:mr-2 md:gap-4">
             <LanguageSwitcher
               className="bg-theme hover:brightness-95 md:px-3"
               classNameIcon=""

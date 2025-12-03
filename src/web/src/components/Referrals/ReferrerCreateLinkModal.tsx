@@ -582,6 +582,7 @@ export const ReferrerCreateLinkModal: React.FC<CreateLinkModalProps> = ({
                 <ShareButtons
                   url={createdLink.shortURL ?? createdLink.url}
                   size={36}
+                  rewardAmount={currentProgram?.zltoRewardReferee}
                 />
               </div>
 

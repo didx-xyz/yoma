@@ -379,7 +379,8 @@ export const UserProfileForm: React.FC<{
       queryClient,
       formData.countryId,
       userProfile,
-      filterOptions, // Added to dependencies
+      filterOptions,
+      router.query.returnUrl,
     ],
   );
 

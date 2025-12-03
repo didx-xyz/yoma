@@ -24,6 +24,7 @@ import analytics from "~/lib/analytics";
 import { handleUserSignIn } from "~/lib/authUtils";
 import { config } from "~/lib/react-query-config";
 import { currentLanguageAtom, userProfileAtom } from "~/lib/store";
+import { cleanTextForMetaTag } from "~/lib/utils";
 import { getProfileCompletionStep } from "~/lib/utils/profile";
 import { authOptions } from "~/server/auth";
 import { type NextPageWithLayout } from "../../_app";
@@ -174,7 +175,7 @@ const ReferralClaimPage: NextPageWithLayout<{
     setClaiming(true);
 
     // 📊 ANALYTICS: track login button click
-    analytics.trackEvent("link_clain_login_button_clicked", {
+    analytics.trackEvent("referral_claim_login_button_clicked", {
       language: currentLanguage,
       buttonLocation: "general", // can be customized per usage
     });
@@ -275,10 +276,10 @@ const ReferralClaimPage: NextPageWithLayout<{
   // Loading state
   if (programLoading || claimingAfterProfile) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="mt-40 justify-center">
         <LoadingInline
           classNameSpinner="h-8 w-8 border-t-2 border-b-2 border-orange md:h-16 md:w-16 md:border-t-4 md:border-b-4"
-          classNameLabel={"text-sm font-semibold md:text-lg"}
+          classNameLabel={"text-sm font-semibold md:text-base"}
           label={
             claimingAfterProfile
               ? "Claiming your referral..."
@@ -315,12 +316,8 @@ const ReferralClaimPage: NextPageWithLayout<{
           />
         </div>
 
-        {/* Become a Referrer Section */}
-        <div className="mb-8">
-          <BecomeReferrerCTA />
-        </div>
+        <BecomeReferrerCTA />
 
-        {/* Alternative Actions */}
         <AlternativeActions />
       </div>
     );
@@ -384,65 +381,48 @@ const ReferralClaimPage: NextPageWithLayout<{
           />
         </div>
 
-        {/* Become a Referrer Section */}
-        <div className="mb-8">
-          <BecomeReferrerCTA />
-        </div>
+        <BecomeReferrerCTA />
 
-        {/* Alternative Actions */}
         <AlternativeActions />
       </div>
     );
   }
 
   // Main claim page
+  const rewardAmount = program?.zltoRewardReferee;
+
+  const title = rewardAmount
+    ? `Join me on Yoma and earn ${rewardAmount} ZLTO!`
+    : "Join me on Yoma!";
+
+  const description = rewardAmount
+    ? `Join me on Yoma and earn ${rewardAmount} ZLTO! Sign up to build your digital CV and access opportunities.`
+    : "Join me on Yoma! Sign up to build your digital CV and access opportunities.";
+
+  const safeTitle = cleanTextForMetaTag(title, 60);
+  const safeDescription = cleanTextForMetaTag(description, 160);
+  const imageUrl = program?.imageURL || "";
+
   return (
     <>
       <Head>
-        <title>Join Yoma Referral</title>
-        <meta
-          name="description"
-          content={`Join ${program.name} through a friend&apos;s referral link and earn rewards!`}
-        />
+        <title>{safeTitle}</title>
+        <meta name="description" content={safeDescription} />
+
+        {/* Open Graph */}
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content={safeTitle} />
+        <meta property="og:description" content={safeDescription} />
+        {imageUrl && <meta property="og:image" content={imageUrl} />}
+
+        {/* Twitter */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={safeTitle} />
+        <meta name="twitter:description" content={safeDescription} />
+        {imageUrl && <meta name="twitter:image" content={imageUrl} />}
       </Head>
 
       <div className="container mx-auto mt-20 flex max-w-5xl flex-col gap-8 px-4 py-8">
-        {/* Hero Section */}
-        {/* <div className="rounded-xl border-4 border-orange-200 bg-gradient-to-br from-orange-50 via-yellow-50 to-white p-8 shadow-xl">
-          <div className="flex flex-col items-center gap-4 md:flex-row md:justify-between">
-            {!isAuthenticated && (
-              <div className="flex flex-1 flex-col gap-2">
-                <h1 className="text-lg font-bold text-orange-900 md:text-xl">
-                  🎁 You&apos;ve Been Invited!
-                </h1>
-                <p className="mb-2x text-sm text-gray-700">
-                  A friend has invited you to join the following program:
-                </p>
-                <RefereeProgramDetails
-                  program={program}
-                  perspective="referee"
-                  isExpanded={false}
-                />
-              </div>
-            )}
-
-            {isAuthenticated && needsProfileCompletion && (
-              <div className="flex flex-1 flex-col gap-2">
-                <h1 className="text-lg font-bold text-orange-900 md:text-xl">
-                  🎁 Almost there!
-                </h1>
-                <p className="mb-2x text-sm text-gray-700">
-                  Complete your profile to join the following program:
-                </p>
-                <RefereeProgramDetails
-                  program={program}
-                  perspective="referee"
-                  isExpanded={false}
-                />
-              </div>
-            )}
-          </div>
-        </div> */}
         {/* Welcome: Referee */}
         {!isAuthenticated && (
           <div className="flex items-center justify-center">
@@ -461,15 +441,6 @@ const ReferralClaimPage: NextPageWithLayout<{
                 </div>
               )}
             </div>
-
-            {/* {isAuthenticated && needsProfileCompletion && (
-            <NoRowsMessage
-              title="Almost there!"
-              description="Complete your profile to get started."
-              icon={"❤️"}
-              className="max-w-3xl !bg-transparent"
-            />
-          )} */}
           </div>
         )}
 
@@ -480,25 +451,6 @@ const ReferralClaimPage: NextPageWithLayout<{
             onComplete={handleProfileComplete}
             showHeader={false}
           />
-        )}
-
-        {(!isAuthenticated || (isAuthenticated && !needsProfileCompletion)) && (
-          <>
-            {/* How It Works - Referee Perspective */}
-            {/* <HelpReferee isExpanded={!isAuthenticated} program={program} /> */}
-
-            {/* Requirements Section */}
-            {/* <RefereeRequirements
-              program={program}
-              isExpanded={!isAuthenticated}
-            /> */}
-
-            {/* Important Information */}
-            {/* <RefereeImportantInfo
-              program={program}
-              isExpanded={!isAuthenticated || needsProfileCompletion}
-            /> */}
-          </>
         )}
 
         {/* CTA Section */}
@@ -520,35 +472,6 @@ const ReferralClaimPage: NextPageWithLayout<{
               <p>Join Yoma!</p>
             </button>
           </div>
-          //   <div className="rounded-xl border-4 border-orange-300 bg-gradient-to-br from-orange-100 to-yellow-100 p-6 shadow-2xl">
-          //     <div className="flex flex-col items-center gap-4 md:flex-row md:justify-between">
-          //       <div>
-          //         <h3 className="text-xl font-bold text-orange-900">
-          //           Ready to Get Started?
-          //         </h3>
-          //         <p className="text-sm text-gray-700">
-          //           {isAuthenticated
-          //             ? "Claim this referral link to begin your journey"
-          //             : "Create an account to claim this link"}
-          //         </p>
-          //       </div>
-          //       <button
-          //         type="button"
-          //         onClick={handleClaim}
-          //         disabled={claiming}
-          //         className="btn btn-warning btn-lg gap-2 px-8 text-white shadow-lg transition-all duration-300 ease-in-out hover:scale-105 hover:shadow-2xl disabled:opacity-50 disabled:hover:scale-100"
-          //       >
-          //         {claiming && (
-          //           <LoadingInline
-          //             classNameSpinner="  h-6 w-6"
-          //             classNameLabel="hidden"
-          //           />
-          //         )}
-          //         {!claiming && <IoLockClosed className="h-6 w-6" />}
-          //         <p>Claim Your Spot Now!</p>
-          //       </button>
-          //     </div>
-          //   </div>
         )}
       </div>
     </>

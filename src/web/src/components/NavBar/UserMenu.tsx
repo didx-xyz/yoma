@@ -1,4 +1,4 @@
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useAtomValue } from "jotai";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
@@ -17,7 +17,6 @@ import { MdKeyboardArrowDown, MdKeyboardArrowUp } from "react-icons/md";
 import { ReferralParticipationRole } from "~/api/models/user";
 import { searchCredentials } from "~/api/services/credentials";
 import { searchMyOpportunitiesSummary } from "~/api/services/myOpportunities";
-import { searchReferralLinks } from "~/api/services/referrals";
 import { getUserSkills } from "~/api/services/user";
 import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
 import { MAXINT32 } from "~/lib/constants";
@@ -32,20 +31,17 @@ import { AvatarImage } from "../AvatarImage";
 import { Header } from "../Common/Header";
 import Suspense from "../Common/Suspense";
 import NoRowsMessage from "../NoRowsMessage";
+import { ReferralBlockedCard } from "../Referrals/ReferralBlockedCard";
+import { ReferrerProgressCard } from "../Referrals/ReferrerProgressCard";
 import { SignOutButton } from "../SignOutButton";
 import { LoadingInline } from "../Status/LoadingInline";
 import { LineChart } from "../YoID/LineChart";
 import { OpportunitiesSummary } from "../YoID/OpportunitiesSummary";
 import { PassportCard } from "../YoID/PassportCard";
-import { ReferralBlockedCard } from "../YoID/ReferralBlockedCard";
 import { ReferralCard } from "../YoID/ReferralCard";
-import { ReferrerProgressCard } from "../YoID/ReferrerProgressCard";
 import { SkillsCard } from "../YoID/SkillsCard";
 import { WalletCard } from "../YoID/WalletCard";
 import { YoIdModal } from "../YoID/YoIdModal";
-import { RefereeProgressCard } from "../YoID/RefereeProgressCard";
-import { ReferralLinkUsageStatus } from "~/api/models/referrals";
-import { useRefereeReferrals } from "~/hooks/useRefereeReferrals";
 
 export const UserMenu: React.FC = () => {
   const [isDrawerOpen, setDrawerOpen] = useState(false);
@@ -134,43 +130,6 @@ export const UserMenu: React.FC = () => {
       (role) =>
         role === ReferralParticipationRole.Referrer || role === "Referrer",
     ) ?? false;
-  // Check if user is a referee (has active programs)
-  const isReferee =
-    userProfile?.referral?.roles?.some(
-      (role) =>
-        role === ReferralParticipationRole.Referee || role === "Referee",
-    ) ?? false;
-
-  // Fetch referrer programs if user is a referrer
-  //   const { data: referrerPrograms, isLoading: referrerProgramsLoading } =
-  //     useQuery({
-  //       queryKey: ["ReferralLinks", "usermenu"],
-  //       queryFn: () =>
-  //         searchReferralLinks({
-  //           pageNumber: 1,
-  //           pageSize: 10,
-  //           programId: null,
-  //           valueContains: null,
-  //           statuses: null,
-  //         }),
-  //       enabled: isDrawerOpen && isReferrer,
-  //     });
-
-  // Fetch referee programs if user is a referee
-  const [refereePageSize, setRefereePageSize] = useState(5);
-  const {
-    data: refereeLinkUsages,
-    isLoading: refereeLinkUsagesLoading,
-    isFetching: refereeLinkUsagesFetching,
-  } = useRefereeReferrals({
-    pageSize: refereePageSize,
-    statuses: [ReferralLinkUsageStatus.Pending],
-    enabled: isDrawerOpen && isReferee,
-    keepPreviousData: true,
-  });
-
-  // Check if user has created any links (as referrer)
-  //const hasCreatedLinks = (referrerPrograms?.items?.length ?? 0) > 0;
 
   //#endregion
 
@@ -328,10 +287,7 @@ export const UserMenu: React.FC = () => {
 
               {/* REFERRALS */}
               <Suspense
-                isLoading={
-                  !userProfile /*|| referrerProgramsLoading*/ ||
-                  refereeLinkUsagesLoading
-                }
+                isLoading={!userProfile}
                 loader={
                   <LoadingInline
                     className="flex-col p-0"
@@ -360,20 +316,6 @@ export const UserMenu: React.FC = () => {
                       tabIndex={isDrawerOpen ? 0 : -1}
                     />
                   )}
-                  {/* REFEREE PROGRESS */}
-                  {/* {!userProfile?.referral?.blocked &&
-                    isReferee &&
-                    refereeLinkUsages?.items && (
-                      <RefereeProgressCard
-                        programs={refereeLinkUsages?.items}
-                        onClick={() => setDrawerOpen(false)}
-                        totalCount={refereeLinkUsages?.totalCount ?? 0}
-                        onLoadMore={() =>
-                          setRefereePageSize((prev) => prev + 5)
-                        }
-                        loading={refereeLinkUsagesFetching}
-                      />
-                    )} */}
                 </div>
               </Suspense>
 

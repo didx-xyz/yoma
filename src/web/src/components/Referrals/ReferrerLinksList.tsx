@@ -11,7 +11,6 @@ interface LinksListProps {
   programs?: ProgramInfo[];
   onViewUsage?: (link: ReferralLink) => void;
   onEdit?: (link: ReferralLink) => void;
-  onCreateLink?: () => void;
   initialPageSize?: number;
 }
 
@@ -19,7 +18,6 @@ export const ReferrerLinksList: React.FC<LinksListProps> = ({
   programs = [],
   onViewUsage,
   onEdit,
-  onCreateLink,
   initialPageSize = 3,
 }) => {
   const {

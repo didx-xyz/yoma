@@ -132,19 +132,21 @@ const ReferralProgramInfo: NextPageWithLayout<{
               <ProgramImage
                 imageURL={program?.imageURL}
                 name={program?.name ?? "Program"}
-                size={80}
+                size={60}
                 className="border-2 border-gray-200"
               />
             </div>
 
-            <div className="flex-1">
-              <div className="flex items-center gap-2">
-                <h1 className="text-2xl font-bold">{program?.name ?? "N/A"}</h1>
+            <div className="min-w-0 flex-1">
+              <div className="flex min-w-0 items-center gap-2">
+                <h1 className="truncate text-base font-bold md:text-lg">
+                  {program?.name ?? "N/A"}
+                </h1>
                 {program?.isDefault && (
                   <span className="badge badge-primary">Default</span>
                 )}
               </div>
-              <p className="mt-2 text-gray-500">
+              <p className="truncate text-xs text-gray-500 md:text-sm">
                 {program?.description ?? "No description provided"}
               </p>
             </div>
@@ -179,7 +181,7 @@ const ReferralProgramInfo: NextPageWithLayout<{
           )}
 
           {/* Link Usage */}
-          <div className="flex flex-row justify-center gap-4 pt-4">
+          <div className="flex flex-col justify-center gap-4 pt-4 md:flex-row">
             <Link
               href={getSafeUrl(returnUrl?.toString(), `/admin/referrals`)}
               className="btn btn-warning btn-md rounded-full px-8 normal-case"

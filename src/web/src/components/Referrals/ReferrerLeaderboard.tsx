@@ -1,6 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
 import { useAtomValue } from "jotai";
-import { IoTrophy } from "react-icons/io5";
 import { ReferralParticipationRole } from "~/api/models/referrals";
 import { searchReferralAnalytics } from "~/api/services/referrals";
 import { userProfileAtom } from "~/lib/store";

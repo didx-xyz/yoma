@@ -10,8 +10,9 @@ import { getServerSession } from "next-auth";
 import Head from "next/head";
 import { useRouter } from "next/router";
 import { useCallback, useEffect, useState, type ReactElement } from "react";
+import { FaPlus } from "react-icons/fa";
 import { IoMdClose } from "react-icons/io";
-import { IoLink, IoWarningOutline } from "react-icons/io5";
+import { IoWarningOutline } from "react-icons/io5";
 import type {
   ProgramInfo,
   ProgramSearchResultsInfo,
@@ -28,23 +29,20 @@ import CustomModal from "~/components/Common/CustomModal";
 import MainLayout from "~/components/Layout/Main";
 import YoIDLayout from "~/components/Layout/YoID";
 import NoRowsMessage from "~/components/NoRowsMessage";
-import { LoadingInline } from "~/components/Status/LoadingInline";
 import { ReferrerCreateLinkModal } from "~/components/Referrals/ReferrerCreateLinkModal";
 import { ReferrerLeaderboard } from "~/components/Referrals/ReferrerLeaderboard";
-import { ReferrerLinksList } from "~/components/Referrals/ReferrerLinksList";
-import { ReferrerProgramsList } from "~/components/Referrals/ReferrerProgramsList";
-import { ReferrerProgramPreview } from "~/components/Referrals/ReferrerProgramPreview";
 import { ReferrerLinkDetails } from "~/components/Referrals/ReferrerLinkDetails";
+import { ReferrerLinksList } from "~/components/Referrals/ReferrerLinksList";
 import { ReferrerPerformanceOverview } from "~/components/Referrals/ReferrerPerformanceOverview";
 import { ReferrerReferralsList } from "~/components/Referrals/ReferrerReferralsList";
+import { ReferrerStats } from "~/components/Referrals/ReferrerStats";
 import { ShareButtons } from "~/components/Referrals/ShareButtons";
+import { LoadingInline } from "~/components/Status/LoadingInline";
+import { handleUserSignIn } from "~/lib/authUtils";
 import { config } from "~/lib/react-query-config";
 import { currentLanguageAtom, userProfileAtom } from "~/lib/store";
 import { authOptions } from "~/server/auth";
 import { type NextPageWithLayout } from "../../_app";
-import { handleUserSignIn } from "~/lib/authUtils";
-import { FaPlus } from "react-icons/fa";
-import { ReferrerStats } from "~/components/Referrals/ReferrerStats";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
@@ -255,17 +253,6 @@ const ReferralsDashboard: NextPageWithLayout<{
     setCreateLinkModalVisible(true);
   }, [multiProgram]);
 
-  // Handle create link with program (program pre-selected) - multi-program mode only
-  const handleCreateLinkForProgram = useCallback(
-    (program: ProgramInfo) => {
-      if (!multiProgram) return;
-      setSelectedProgramForLink(program);
-      setSelectedLinkForEdit(null);
-      setCreateLinkModalVisible(true);
-    },
-    [multiProgram],
-  );
-
   // Handle view usage - multi-program mode only
   const handleViewUsage = useCallback(
     (link: ReferralLink) => {
@@ -353,7 +340,7 @@ const ReferralsDashboard: NextPageWithLayout<{
               `;
 
               return (
-                <div className="container mx-auto mt-20 flex max-w-5xl flex-col gap-8 px-4 py-8">
+                <div>
                   <div className="flex flex-col items-center justify-center">
                     <NoRowsMessage
                       title="Referral Access Suspended"
@@ -440,13 +427,14 @@ const ReferralsDashboard: NextPageWithLayout<{
                           </div>
 
                           <div className="flex-1 rounded-lg bg-white p-4">
-                            <p className="text-gray-dark mt-1 mb-3 text-xs md:text-sm">
+                            <p className="text-gray-dark mt-1 mb-5 text-xs md:text-sm">
                               Choose your preferred platform
                             </p>
 
                             <ShareButtons
                               url={firstLink.shortURL ?? firstLink.url}
                               size={30}
+                              rewardAmount={defaultProgram?.zltoRewardReferee}
                             />
                           </div>
                         </div>
@@ -493,33 +481,6 @@ const ReferralsDashboard: NextPageWithLayout<{
             {/* MULTI-PROGRAM MODE */}
             {multiProgram && (
               <>
-                {/* WELCOME SECTION */}
-                {/* <div className="shadow-custom rounded-lgx bg-gradient-to-br from-green-50 via-white to-blue-50 p-6">
-                  <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                    <div className="flex-1">
-                      <h1 className="text-lg font-bold text-gray-900 md:text-xl">
-                        <IoGift className="text-green mb-1 inline h-6 w-6" />{" "}
-                        Share & Earn Together
-                      </h1>
-                      <p className="text-gray-dark mt-2 text-sm md:text-base">
-                        Manage your referral links and track your rewards
-                      </p>
-                    </div>
-                    {!hasLinks && (
-                      <button
-                        onClick={handleCreateLink}
-                        className="btn btn-success gap-2"
-                      >
-                        <FaPlus className="h-4 w-4" />
-                        Create Your First Link
-                      </button>
-                    )}
-                  </div>
-                </div> */}
-
-                {/* HOW IT WORKS */}
-                {/* <HelpReferrer isExpanded={!hasLinks} /> */}
-
                 {/* CONTENT AREA */}
                 <div className="grid gap-4 overflow-hidden md:gap-6 lg:grid-cols-3">
                   {/* LEFT COLUMN - Stats & Leaderboard */}
@@ -568,27 +529,9 @@ const ReferralsDashboard: NextPageWithLayout<{
                         programs={programsData?.items || []}
                         onViewUsage={handleViewUsage}
                         onEdit={handleEditLink}
-                        onCreateLink={handleCreateLink}
                         initialPageSize={3}
                       />
                     </div>
-
-                    {/* ACTIVE PROGRAMS */}
-                    {/* <div className="space-y-2">
-                      <div className="font-family-nunito text-sm font-semibold text-black md:text-base">
-                        Available Programs
-                      </div>
-                      <div className="rounded-lg bg-white p-4 md:p-6">
-                        <ReferrerProgramsList
-                          onProgramClick={handleCreateLinkForProgram}
-                          onCreateLink={handleCreateLinkForProgram}
-                          initialPageSize={4}
-                          showHeader={true}
-                          showDescription={true}
-                          context="list"
-                        />
-                      </div>
-                    </div> */}
                   </div>
                 </div>
               </>
@@ -679,10 +622,6 @@ const ReferralsDashboard: NextPageWithLayout<{
                       </div>
                     </div>
                   </div>
-
-                  {/* <ReferrerProgramPreview
-                    programId={selectedLinkForUsage.programId}
-                  /> */}
 
                   {/* Action Buttons */}
                   <div className="flex gap-3">

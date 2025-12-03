@@ -40,7 +40,7 @@ export const SignInButton: React.FC<{
         <LoadingInline classNameSpinner="  h-6 w-6" classNameLabel="hidden" />
       )}
       {!isButtonLoading && <IoMdFingerPrint className="h-6 w-6" />}
-      <p className="uppercase">Login</p>
+      <p className="hidden uppercase sm:block">Login</p>
     </button>
   );
 };

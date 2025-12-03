@@ -3,9 +3,8 @@ import {
   IoCheckmarkCircle,
   IoChevronDown,
   IoChevronUp,
-  IoShieldCheckmark,
-  IoTrophy,
   IoGiftOutline,
+  IoTrophy,
 } from "react-icons/io5";
 import type { ProgramInfo } from "~/api/models/referrals";
 import { ProgramPathwayView } from "./ProgramPathwayView";

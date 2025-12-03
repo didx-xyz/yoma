@@ -7,13 +7,13 @@ import { useRouter } from "next/router";
 import { useEffect, type ReactElement } from "react";
 import {
   IoArrowForward,
+  IoCart,
   IoGift,
-  IoWarning,
   IoInformationCircle,
   IoRocket,
-  IoCart,
-  IoTrophy,
   IoShareSocial,
+  IoTrophy,
+  IoWarning,
   IoWarningOutline,
 } from "react-icons/io5";
 import { toast } from "react-toastify";
@@ -29,6 +29,7 @@ import {
 import Breadcrumb from "~/components/Breadcrumb";
 import MainLayout from "~/components/Layout/Main";
 import YoIDLayout from "~/components/Layout/YoID";
+import NoRowsMessage from "~/components/NoRowsMessage";
 import { AlternativeActions } from "~/components/Referrals/AlternativeActions";
 import { BecomeReferrerCTA } from "~/components/Referrals/BecomeReferrerCTA";
 import {
@@ -37,14 +38,13 @@ import {
 } from "~/components/Referrals/InstructionHeaders";
 import { getNextAction } from "~/components/Referrals/RefereeProgressTracker";
 import { RefereeStatusBanner } from "~/components/Referrals/RefereeStatusBanner";
-import NoRowsMessage from "~/components/NoRowsMessage";
 import { LoadingInline } from "~/components/Status/LoadingInline";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
-import { config } from "~/lib/react-query-config";
-import { authOptions } from "~/server/auth";
 import { handleUserSignOut } from "~/lib/authUtils";
-import { type NextPageWithLayout } from "../../_app";
+import { config } from "~/lib/react-query-config";
 import { getSafeUrl } from "~/lib/utils";
+import { authOptions } from "~/server/auth";
+import { type NextPageWithLayout } from "../../_app";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
@@ -144,10 +144,10 @@ const RefereeDashboard: NextPageWithLayout<{
 
   if (usageLoading || programLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="container mx-auto flex max-w-5xl flex-col gap-8 py-8">
         <LoadingInline
           classNameSpinner="h-8 w-8 border-t-2 border-b-2 border-orange md:h-16 md:w-16 md:border-t-4 md:border-b-4"
-          classNameLabel={"text-sm font-semibold md:text-lg"}
+          classNameLabel={"text-sm font-semibold md:text-base"}
           label="Please wait..."
         />
       </div>
@@ -168,7 +168,7 @@ const RefereeDashboard: NextPageWithLayout<{
     `;
 
     return (
-      <div className="container mx-auto mt-20 flex max-w-5xl flex-col gap-8 px-4 py-8">
+      <div className="container mx-auto flex max-w-5xl flex-col gap-8 py-8">
         <div className="flex items-center justify-center">
           <NoRowsMessage
             title="Referral Not Found"
@@ -179,12 +179,8 @@ const RefereeDashboard: NextPageWithLayout<{
           />
         </div>
 
-        {/* Become a Referrer Section */}
-        <div className="mb-8">
-          <BecomeReferrerCTA />
-        </div>
+        <BecomeReferrerCTA />
 
-        {/* Alternative Actions */}
         <AlternativeActions />
       </div>
     );
@@ -193,7 +189,7 @@ const RefereeDashboard: NextPageWithLayout<{
   return (
     <>
       <Head>
-        <title>My Referral Progress | {program.name}</title>
+        <title>Yoma | My Referral Progress | {program.name}</title>
       </Head>
 
       <div className="w-full lg:max-w-7xl">
@@ -212,10 +208,6 @@ const RefereeDashboard: NextPageWithLayout<{
 
         {/* STATUS BANNER */}
         <RefereeStatusBanner usage={usage} program={program} />
-
-        {/* <div className="mt-4 w-full break-all"> {JSON.stringify(usage)}</div> */}
-        {/* PROGRESS TRACKER */}
-        {/* <RefereeProgressTracker usage={usage} program={program} /> */}
 
         {/* NEXT ACTION (PENDING) */}
         {usage.status === "Pending" &&
