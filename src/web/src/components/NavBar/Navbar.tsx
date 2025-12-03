@@ -139,14 +139,14 @@ const navBarLinksAdmin: TabItem[] = [
     selected: false,
     iconImage: "🛒",
   },
-  {
-    title: "Referrals",
-    description: "Referrals",
-    url: "/admin/referrals",
-    badgeCount: null,
-    selected: false,
-    iconImage: "🎯",
-  },
+  //   {
+  //     title: "Referrals",
+  //     description: "Referrals",
+  //     url: "/admin/referrals",
+  //     badgeCount: null,
+  //     selected: false,
+  //     iconImage: "🎯",
+  //   },
 ];
 
 export const Navbar: React.FC<{ theme: string }> = (theme) => {
