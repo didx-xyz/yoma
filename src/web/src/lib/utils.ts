@@ -241,8 +241,13 @@ export const getTimeOfDayAndEmoji = (): [string, string] => {
 export function cleanTextForMetaTag(text: string, maxLength: number): string {
   if (!text) return "";
 
-  // 1. Remove HTML tags
-  let clean = text.replace(/<[^>]*>?/gm, "");
+  // 1. Remove HTML tags repeatedly until stable
+  let clean = text;
+  let oldClean;
+  do {
+    oldClean = clean;
+    clean = clean.replace(/<[^>]*>?/gm, "");
+  } while (clean !== oldClean);
 
   // 2. Replace multiple spaces/newlines with single space
   clean = clean.replace(/\s+/g, " ").trim();

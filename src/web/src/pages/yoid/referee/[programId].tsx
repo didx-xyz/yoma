@@ -398,7 +398,7 @@ const RefereeDashboard: NextPageWithLayout<{
                       />
                       {/* Helpful Tips */}
                       <div className="mt-2 rounded-lg border-2 border-green-200 bg-green-50 p-4">
-                        <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold text-green-900 md:text-lg">
+                        <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold text-green-900 md:text-base">
                           <IoInformationCircle className="h-6 w-6 text-green-500" />
                           How to Complete
                         </h4>
