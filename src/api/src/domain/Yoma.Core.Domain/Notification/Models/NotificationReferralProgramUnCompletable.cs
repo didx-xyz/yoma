@@ -34,7 +34,7 @@ namespace Yoma.Core.Domain.Notification.Models
     public DateTimeOffset DateUnCompletable { get; set; }
 
     [JsonProperty("dateUnCompletableFormatted")]
-    public string DateUnCompletableFormatted => DateStart.ToString("ddd, MMM dd, yyyy HH:mm");
+    public string DateUnCompletableFormatted => DateUnCompletable.ToString("ddd, MMM dd, yyyy HH:mm");
 
     [JsonProperty("dateStart")]
     public DateTimeOffset DateStart { get; set; }
