@@ -160,7 +160,7 @@ namespace Yoma.Core.Domain.Notification.Services
             => MessageType.Email, // SMS and WhatsApp not supported due to cost constraints
 
         NotificationType.Opportunity_Published
-            => MessageType.Email, // SMS and WhatsApp diabled [from 2025/12] / not supported due to cost constraints
+            => MessageType.Email, // SMS and WhatsApp disabled [from 2025/12] / not supported due to cost constraints
 
         NotificationType.ActionLink_Verify_Distribution
             => MessageType.Email | MessageType.SMS | MessageType.WhatsApp,
