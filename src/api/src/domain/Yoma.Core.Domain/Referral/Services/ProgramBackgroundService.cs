@@ -97,20 +97,25 @@ namespace Yoma.Core.Domain.Referral.Services
         var statusLimitReachedId = _programStatusService.GetByName(ProgramStatus.LimitReached.ToString()).Id;
         var statusHealthProbeIds = Statuses_HealthProbe.Select(o => _programStatusService.GetByName(o.ToString()).Id).ToList();
 
+        var processedProgramIds = new HashSet<Guid>();
+
         while (executeUntil > DateTimeOffset.UtcNow)
         {
           var now = DateTimeOffset.UtcNow;
 
-          var items = _programRepository.Query(true).Where(o => statusHealthProbeIds.Contains(o.StatusId)).OrderBy(o => o.DateModified)
+          var items = _programRepository.Query(true).Where(o => !processedProgramIds.Contains(o.Id) && statusHealthProbeIds.Contains(o.StatusId)).OrderBy(o => o.DateModified)
             .Take(_scheduleJobOptions.ReferralProgramHealthScheduleBatchSize).ToList();
           if (items.Count == 0) break;
 
           var itemsToUpdate = new List<Program>();
           var programIdsToExpire = new List<Guid>();
           var programIdsToLimitReached = new List<Guid>();
+          var unCompletableProgramsForNotification = new List<Program>();
 
           foreach (var item in items)
           {
+            processedProgramIds.Add(item.Id);
+
             var completable = item.Pathway?.IsCompletable ?? true;
 
             switch (item.Status)
@@ -167,16 +172,29 @@ namespace Yoma.Core.Domain.Referral.Services
                   break;
                 }
 
-                if (item.DateModified.AddDays(_scheduleJobOptions.ReferralProgramHealthScheduleExpirationGracePeriodInDays) > now)
+                // Still UnCompletable and pathway still broken
+                var unCompletableSince = item.DateModified;
+                var expiryDate = unCompletableSince.AddDays(_scheduleJobOptions.ReferralProgramHealthScheduleExpirationGracePeriodInDays);
+
+                // Beyond grace → Expired
+                if (expiryDate <= now)
+                {
+                  item.Status = ProgramStatus.Expired;
+                  item.StatusId = statusExpiredId;
+                  item.ModifiedByUserId = user.Id;
+                  itemsToUpdate.Add(item);
+                  programIdsToExpire.Add(item.Id);
+
+                  _logger.LogInformation(
+                    "Program '{ProgramName}' ({ProgramId}) expired — un-completable beyond grace period (modified {DateModified:yyyy-MM-dd})",
+                    item.Name, item.Id, item.DateModified);
+
                   break;
+                }
 
-                item.Status = ProgramStatus.Expired;
-                item.StatusId = statusExpiredId;
-                item.ModifiedByUserId = user.Id;
-                itemsToUpdate.Add(item);
-                programIdsToExpire.Add(item.Id);
-
-                _logger.LogInformation("Program '{ProgramName}' ({ProgramId}) expired — un-completable beyond grace period (modified {DateModified:yyyy-MM-dd})", item.Name, item.Id, item.DateModified);
+                // Already UnCompletable for a while, and expiring within X days
+                var warnWindowStart = expiryDate.AddDays(-_scheduleJobOptions.ReferralProgramHealthScheduleExpirationNotificationInDays);
+                if (now >= warnWindowStart && now < expiryDate) unCompletableProgramsForNotification.Add(item);
 
                 break;
 
@@ -212,7 +230,7 @@ namespace Yoma.Core.Domain.Referral.Services
           var expiredPrograms = itemsToUpdate.Where(o => o.Status == ProgramStatus.Expired).ToList();
           if (expiredPrograms.Count > 0) await SendNotification(NotificationType.ReferralProgram_Expiration_Expired, expiredPrograms);
 
-          var unCompletablePrograms = itemsToUpdate.Where(o => o.Status == ProgramStatus.UnCompletable).ToList();
+          var unCompletablePrograms = itemsToUpdate.Where(o => o.Status == ProgramStatus.UnCompletable).Concat(unCompletableProgramsForNotification).DistinctBy(o => o.Id).ToList();
           if (unCompletablePrograms.Count > 0) await SendNotification(NotificationType.ReferralProgram_UnCompletable, unCompletablePrograms);
 
           if (executeUntil <= DateTimeOffset.UtcNow) break;
@@ -425,13 +443,11 @@ namespace Yoma.Core.Domain.Referral.Services
           return;
         }
 
-        NotificationBase? data = null;
-
         switch (type)
         {
           case NotificationType.ReferralProgram_Expiration_Expired:
           case NotificationType.ReferralProgram_Expiration_WithinNextDays:
-            data = new NotificationReferralProgramExpiration
+            var dataExpiration = new NotificationReferralProgramExpiration
             {
               WithinNextDays = _scheduleJobOptions.ReferralProgramExpirationNotificationIntervalInDays,
               Programs = [.. items.Select(o => new NotificationReferralProgramExpirationItem
@@ -443,7 +459,7 @@ namespace Yoma.Core.Domain.Referral.Services
               })]
             };
 
-            await _notificationDeliveryService.Send(type, recipients, data);
+            await _notificationDeliveryService.Send(type, recipients, dataExpiration);
 
             break;
 
