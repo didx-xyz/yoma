@@ -387,7 +387,7 @@ namespace Yoma.Core.Domain.Referral.Services
 
       await SendNotification(NotificationType.ReferralUsage_Welcome, program, link, usage);
 
-      //process progress immediately unconditionally
+      //process progress immediately and unconditionally
       await ProcessProgressByUserId(user.Id);
     }
 
@@ -733,7 +733,6 @@ namespace Yoma.Core.Domain.Referral.Services
       try
       {
         List<NotificationRecipient>? recipients = null;
-        NotificationBase? data = null;
 
         switch (type)
         {
@@ -753,7 +752,7 @@ namespace Yoma.Core.Domain.Referral.Services
               return;
             }
 
-            data = new NotificationReferralLinkCompleted
+            var dataCompleted = new NotificationReferralLinkCompleted
             {
               YoIDURL = _notificationURLFactory.ReferralYoIDDashboardURL(type, usage.UserIdReferrer),
               Links =
@@ -769,13 +768,15 @@ namespace Yoma.Core.Domain.Referral.Services
                 }
               ]
             };
+
+            await _notificationDeliveryService.Send(type, recipients, dataCompleted);
             break;
 
           case NotificationType.ReferralUsage_Welcome: // sent to referee (youth)
             recipients = [new() { Username = usage.Username, PhoneNumber = usage.UserPhoneNumber, PhoneNumberConfirmed = usage.UserPhoneNumberConfirmed,
                 Email = usage.UserEmail, EmailConfirmed = usage.UserEmailConfirmed, DisplayName = usage.UserDisplayName }];
 
-            data = new NotificationReferralUsageWelcome
+            var dataWelcome = new NotificationReferralUsageWelcome
             {
               YoIDURL = _notificationURLFactory.ReferralYoIDDashboardURL(type, program.Id),
               LinkClaimURL = link.ClaimURL(_appSettings.AppBaseURL),
@@ -789,6 +790,7 @@ namespace Yoma.Core.Domain.Referral.Services
               PathwayRequired = program.PathwayRequired,
             };
 
+            await _notificationDeliveryService.Send(type, recipients, dataWelcome);
             break;
 
           case NotificationType.ReferralUsage_Completion: // sent to referee (youth)
@@ -801,7 +803,7 @@ namespace Yoma.Core.Domain.Referral.Services
             if (usage.DateCompleted == null)
               throw new InvalidOperationException($"'{usage.DateCompleted}' not set / value expected");
 
-            data = new NotificationReferralUsageCompletion
+            var dataCompletion = new NotificationReferralUsageCompletion
             {
               YoIDURL = _notificationURLFactory.ReferralYoIDDashboardURL(type, program.Id),
               DateCompleted = usage.DateCompleted.Value,
@@ -810,13 +812,12 @@ namespace Yoma.Core.Domain.Referral.Services
               ZltoReward = program.ZltoRewardReferee,
             };
 
+            await _notificationDeliveryService.Send(type, recipients, dataCompletion);
             break;
 
           default:
             throw new ArgumentOutOfRangeException(nameof(type), $"Type of '{type}' not supported");
         }
-
-        await _notificationDeliveryService.Send(type, recipients, data);
 
         _logger.LogInformation("Successfully sent notification");
       }

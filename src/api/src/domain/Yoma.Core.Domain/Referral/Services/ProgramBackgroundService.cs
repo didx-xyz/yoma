@@ -97,11 +97,13 @@ namespace Yoma.Core.Domain.Referral.Services
         var statusLimitReachedId = _programStatusService.GetByName(ProgramStatus.LimitReached.ToString()).Id;
         var statusHealthProbeIds = Statuses_HealthProbe.Select(o => _programStatusService.GetByName(o.ToString()).Id).ToList();
 
+        var processedProgramIds = new HashSet<Guid>();
+
         while (executeUntil > DateTimeOffset.UtcNow)
         {
           var now = DateTimeOffset.UtcNow;
 
-          var items = _programRepository.Query(true).Where(o => statusHealthProbeIds.Contains(o.StatusId)).OrderBy(o => o.DateModified)
+          var items = _programRepository.Query(true).Where(o => !processedProgramIds.Contains(o.Id) && statusHealthProbeIds.Contains(o.StatusId)).OrderBy(o => o.DateModified)
             .Take(_scheduleJobOptions.ReferralProgramHealthScheduleBatchSize).ToList();
           if (items.Count == 0) break;
 
@@ -111,6 +113,8 @@ namespace Yoma.Core.Domain.Referral.Services
 
           foreach (var item in items)
           {
+            processedProgramIds.Add(item.Id);
+
             var completable = item.Pathway?.IsCompletable ?? true;
 
             switch (item.Status)
@@ -425,13 +429,11 @@ namespace Yoma.Core.Domain.Referral.Services
           return;
         }
 
-        NotificationBase? data = null;
-
         switch (type)
         {
           case NotificationType.ReferralProgram_Expiration_Expired:
           case NotificationType.ReferralProgram_Expiration_WithinNextDays:
-            data = new NotificationReferralProgramExpiration
+            var dataExpiration = new NotificationReferralProgramExpiration
             {
               WithinNextDays = _scheduleJobOptions.ReferralProgramExpirationNotificationIntervalInDays,
               Programs = [.. items.Select(o => new NotificationReferralProgramExpirationItem
@@ -443,7 +445,7 @@ namespace Yoma.Core.Domain.Referral.Services
               })]
             };
 
-            await _notificationDeliveryService.Send(type, recipients, data);
+            await _notificationDeliveryService.Send(type, recipients, dataExpiration);
 
             break;
 
