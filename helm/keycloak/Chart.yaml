@@ -3,7 +3,7 @@ name: keycloak
 description: A Wrapper Helm chart for Keycloakx in Kubernetes
 type: application
 version: 0.4.1
-appVersion: 26.4.6
+appVersion: 26.4.7
 
 dependencies:
   - name: common
