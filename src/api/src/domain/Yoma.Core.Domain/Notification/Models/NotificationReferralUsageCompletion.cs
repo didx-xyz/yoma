@@ -26,7 +26,7 @@ namespace Yoma.Core.Domain.Notification.Models
     public decimal? ZltoReward { get; set; }
 
     [JsonProperty("zltoRewardFormatted")]
-    public string? ZltoRewardFormatted { get; set; }
+    public string? ZltoRewardFormatted  => ZltoReward.HasValue ? ZltoReward.Value.ToString("0.00") : decimal.Zero.ToString("0.00");
 
     public override Dictionary<string, string> ContentVariables(MessageType messageType)
     {
