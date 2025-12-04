@@ -15,7 +15,7 @@ namespace Yoma.Core.Domain.Referral.Interfaces
     /// Returns obfuscated statistics per user for links (referrer role only),
     /// link usages / claims and rewards based on the specified role (leaderboards).
     /// </summary>
-    ReferralAnalyticsSearchResultsInfo Search(ReferralAnalyticsSearchFilter filter);
+    ReferralAnalyticsSearchResultsInfo<ReferralAnalyticsUserInfo> Search(ReferralAnalyticsSearchFilter filter);
 
     /// <summary>
     /// Searches system-wide referral analytics as an admin.

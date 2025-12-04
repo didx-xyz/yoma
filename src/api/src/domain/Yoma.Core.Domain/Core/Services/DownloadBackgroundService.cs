@@ -167,7 +167,10 @@ namespace Yoma.Core.Domain.Core.Services
                   }
                   finally
                   {
-                    TempFileTracker.Delete([.. files, downloadZipped]);
+                    if (downloadZipped == null)
+                      TempFileTracker.Delete(files);
+                    else
+                      TempFileTracker.Delete([.. files, downloadZipped]);
                   }
                 }
 
