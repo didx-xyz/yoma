@@ -2,7 +2,11 @@ namespace Yoma.Core.Domain.Referral.Models
 {
   public sealed class ReferralAnalyticsSearchResults : ReferralAnalyticsSearchResultsInfo
   {
-    public new List<ReferralAnalyticsUser> Items { get; set; } = null!;
+    public new List<ReferralAnalyticsUser> Items
+    {
+      get => [.. base.Items.Cast<ReferralAnalyticsUser>()];
+      set => base.Items = [.. value.Cast<ReferralAnalyticsUserInfo>()];
+    }
   }
 
   public class ReferralAnalyticsSearchResultsInfo
@@ -21,6 +25,6 @@ namespace Yoma.Core.Domain.Referral.Models
 
     public decimal ZltoRewardTotal => Items?.Sum(i => i.ZltoRewardTotal) ?? 0;
 
-    public List<ReferralAnalyticsUserInfo> Items { get; set; } = null!;
+    public List<ReferralAnalyticsUserInfo> Items { get; set; } = [];
   }
 }
