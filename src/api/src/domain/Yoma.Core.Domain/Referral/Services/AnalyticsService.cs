@@ -242,7 +242,7 @@ namespace Yoma.Core.Domain.Referral.Services
                 x.l.UsageCountCompleted,
                 UsageCountPending = u != null ? u.UsageCountPending : null,
                 UsageCountExpired = u != null ? u.UsageCountExpired : null,
-                ZltoRewardTotal = u != null ? u.ZltoRewardTotal : null  
+                ZltoRewardTotal = u != null ? u.ZltoRewardTotal : null
               })
           .Select(temp => new ReferralAnalyticsUser
           {

@@ -7,6 +7,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Referral\Helpers\**" />
+    <EmbeddedResource Remove="Referral\Helpers\**" />
+    <None Remove="Referral\Helpers\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Remove="Entity\SampleBlobs\sample.pdf" />
     <None Remove="Entity\SampleBlobs\sample_logo.png" />
     <None Remove="Entity\SampleBlobs\sample_photo.png" />
@@ -48,10 +54,6 @@
     <PackageReference Include="QRCoder" Version="1.7.0" />
     <PackageReference Include="Sentry.AspNetCore" Version="5.16.2" />
     <PackageReference Include="StackExchange.Redis" Version="2.9.32" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Referral\Helpers\" />
   </ItemGroup>
 
 </Project>
