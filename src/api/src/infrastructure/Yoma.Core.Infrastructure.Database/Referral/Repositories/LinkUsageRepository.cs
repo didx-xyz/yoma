@@ -74,6 +74,7 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
       _context.ReferralLinkUsage.Add(entity);
       await _context.SaveChangesAsync();
 
+      item.DateClaimed = item.DateCreated;
       item.Id = entity.Id;
       return item;
     }

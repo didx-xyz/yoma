@@ -198,7 +198,8 @@ namespace Yoma.Core.Domain.Referral.Services
           {
             UserIdReferrer = g.Key,
             UsageCountPending = (int?)g.Count(x => x.StatusId == usageStatusPendingId),
-            UsageCountExpired = (int?)g.Count(x => x.StatusId == usageStatusExpiredId)
+            UsageCountExpired = (int?)g.Count(x => x.StatusId == usageStatusExpiredId),
+            ZltoRewardTotal = (decimal?)g.Sum(x => x.ZltoRewardReferrer ?? 0m)
           });
 
       var linkQueryAgg = linkQuery
@@ -209,8 +210,7 @@ namespace Yoma.Core.Domain.Referral.Services
             UserDisplayName = g.Max(x => x.UserDisplayName) ?? string.Empty,
             LinkCount = g.Count(),
             LinkCountActive = g.Count(x => x.StatusId == linkStatusActiveId),
-            UsageCountCompleted = g.Sum(x => x.CompletionTotal ?? 0),
-            ZltoRewardTotal = g.Sum(x => x.ZltoRewardCumulative ?? 0m)
+            UsageCountCompleted = g.Sum(x => x.CompletionTotal ?? 0)
           });
 
       // EF Core + Npgsql materializer bug (5+ years, still open): https://github.com/dotnet/efcore/issues/12355
@@ -242,7 +242,7 @@ namespace Yoma.Core.Domain.Referral.Services
                 x.l.UsageCountCompleted,
                 UsageCountPending = u != null ? u.UsageCountPending : null,
                 UsageCountExpired = u != null ? u.UsageCountExpired : null,
-                x.l.ZltoRewardTotal
+                ZltoRewardTotal = u != null ? u.ZltoRewardTotal : null  
               })
           .Select(temp => new ReferralAnalyticsUser
           {
@@ -253,7 +253,7 @@ namespace Yoma.Core.Domain.Referral.Services
             UsageCountCompleted = temp.UsageCountCompleted,
             UsageCountPending = temp.UsageCountPending ?? 0,
             UsageCountExpired = temp.UsageCountExpired ?? 0,
-            ZltoRewardTotal = temp.ZltoRewardTotal
+            ZltoRewardTotal = temp.ZltoRewardTotal ?? 0
           });
 
       return resultQuery;
