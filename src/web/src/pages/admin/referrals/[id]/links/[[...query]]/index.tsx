@@ -6,7 +6,7 @@ import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useCallback, useState, type ReactElement } from "react";
-import { IoMdCopy } from "react-icons/io";
+import { IoMdArrowRoundBack, IoMdCopy } from "react-icons/io";
 import {
   ReferralLinkStatus,
   type ReferralLinkSearchFilterAdmin,
@@ -296,10 +296,15 @@ const ReferralLinks: NextPageWithLayout<{
       if (params != null && params.size > 0)
         url = `${url}?${params.toString()}`;
 
+      if (returnUrl) {
+        const separator = url.includes("?") ? "&" : "?";
+        url = `${url}${separator}returnUrl=${encodeURIComponent(returnUrl.toString())}`;
+      }
+
       if (url != router.asPath)
         void router.push(url, undefined, { scroll: false });
     },
-    [router, id, getSearchFilterAsQueryString],
+    [router, id, getSearchFilterAsQueryString, returnUrl],
   );
 
   //#region Event Handlers
@@ -348,32 +353,23 @@ const ReferralLinks: NextPageWithLayout<{
       <div className="z-10 container mt-14 max-w-7xl px-2 py-8 md:mt-[7rem]">
         <div className="flex flex-col gap-4 py-4">
           {/* BREADCRUMB */}
-          <nav className="flex text-sm text-white" aria-label="Breadcrumb">
-            <ol className="inline-flex items-center space-x-1 overflow-hidden whitespace-nowrap md:space-x-3">
-              <li className="inline-flex items-center">
-                <Link
-                  href={`/admin/referrals${returnUrl ? `?returnUrl=${encodeURIComponent(returnUrl)}` : ""}`}
-                  className="hover:text-gray inline-flex items-center"
-                >
-                  Referral Programs
-                </Link>
-              </li>
-              <li>
-                <div className="flex items-center">
-                  <span className="mx-2">/</span>
-                  <span className="text-gray max-w-[200px] truncate">
-                    {program?.name ?? "..."}
-                  </span>
-                </div>
-              </li>
-              <li aria-current="page">
-                <div className="flex items-center">
-                  <span className="mx-2">/</span>
-                  <span className="text-gray">Referral Links</span>
-                </div>
-              </li>
-            </ol>
-          </nav>
+          <div className="flex flex-row items-center gap-2 text-xs text-white">
+            <Link
+              className="hover:text-gray flex max-w-[200px] min-w-0 items-center font-bold"
+              href={getSafeUrl(
+                returnUrl?.toString(),
+                `/admin/referrals/${program?.id}/info`,
+              )}
+            >
+              <IoMdArrowRoundBack className="mr-2 inline-block h-4 w-4 shrink-0" />
+              <span className="truncate">{program?.name}</span>
+            </Link>
+
+            <div className="font-bold">|</div>
+            <span className="max-w-[200px] min-w-0 truncate">
+              Referral Links
+            </span>
+          </div>
 
           <h3 className="flex items-center text-xl font-semibold tracking-normal whitespace-nowrap text-white md:text-3xl">
             🔗 Referral Links
@@ -382,7 +378,7 @@ const ReferralLinks: NextPageWithLayout<{
           {/* TABBED NAVIGATION */}
           <CustomSlider sliderClassName="!gap-6">
             <Link
-              href={`/admin/referrals/${id}/links`}
+              href={`/admin/referrals/${id}/links${returnUrl ? `?returnUrl=${encodeURIComponent(returnUrl.toString())}` : ""}`}
               role="tab"
               className={`border-b-4 py-2 whitespace-nowrap text-white ${
                 !status
@@ -398,7 +394,7 @@ const ReferralLinks: NextPageWithLayout<{
               )}
             </Link>
             <Link
-              href={`/admin/referrals/${id}/links?status=${ReferralLinkStatus.Active}`}
+              href={`/admin/referrals/${id}/links?status=${ReferralLinkStatus.Active}${returnUrl ? `&returnUrl=${encodeURIComponent(returnUrl.toString())}` : ""}`}
               role="tab"
               className={`border-b-4 py-2 whitespace-nowrap text-white ${
                 status === ReferralLinkStatus.Active
@@ -414,7 +410,7 @@ const ReferralLinks: NextPageWithLayout<{
               )}
             </Link>
             <Link
-              href={`/admin/referrals/${id}/links?status=${ReferralLinkStatus.Cancelled}`}
+              href={`/admin/referrals/${id}/links?status=${ReferralLinkStatus.Cancelled}${returnUrl ? `&returnUrl=${encodeURIComponent(returnUrl.toString())}` : ""}`}
               role="tab"
               className={`border-b-4 py-2 whitespace-nowrap text-white ${
                 status === ReferralLinkStatus.Cancelled
@@ -430,7 +426,7 @@ const ReferralLinks: NextPageWithLayout<{
               )}
             </Link>
             <Link
-              href={`/admin/referrals/${id}/links?status=${ReferralLinkStatus.LimitReached}`}
+              href={`/admin/referrals/${id}/links?status=${ReferralLinkStatus.LimitReached}${returnUrl ? `&returnUrl=${encodeURIComponent(returnUrl.toString())}` : ""}`}
               role="tab"
               className={`border-b-4 py-2 whitespace-nowrap text-white ${
                 status === ReferralLinkStatus.LimitReached
@@ -446,7 +442,7 @@ const ReferralLinks: NextPageWithLayout<{
               )}
             </Link>
             <Link
-              href={`/admin/referrals/${id}/links?status=${ReferralLinkStatus.Expired}`}
+              href={`/admin/referrals/${id}/links?status=${ReferralLinkStatus.Expired}${returnUrl ? `&returnUrl=${encodeURIComponent(returnUrl.toString())}` : ""}`}
               role="tab"
               className={`border-b-4 py-2 whitespace-nowrap text-white ${
                 status === ReferralLinkStatus.Expired
@@ -505,10 +501,13 @@ const ReferralLinks: NextPageWithLayout<{
                       className="shadow-custom flex flex-col justify-between gap-4 rounded-lg bg-white p-4"
                     >
                       <div className="border-gray-light flex flex-row items-center gap-2 border-b-2 pb-2">
-                        <div className="flex-grow">
-                          <p className="line-clamp-1 text-start font-semibold">
+                        <div className="min-w-0 flex-grow">
+                          <Link
+                            href={`/admin/referrals/${id}/links/${link.id}/usage?returnUrl=${encodeURIComponent(router.asPath)}`}
+                            className="line-clamp-1 block truncate text-start font-semibold hover:underline"
+                          >
                             {link.name}
-                          </p>
+                          </Link>
                         </div>
                         <AdminReferralLinkActions
                           link={link}
@@ -658,7 +657,6 @@ const ReferralLinks: NextPageWithLayout<{
                       <th className="border-gray-light border-b-2">
                         Statistics
                       </th>
-                      {/* <th className="border-gray-light border-b-2">Created</th> */}
                       <th className="border-gray-light border-b-2 text-center">
                         Actions
                       </th>
@@ -668,7 +666,12 @@ const ReferralLinks: NextPageWithLayout<{
                     {searchResults.items.map((link) => (
                       <tr key={`md_${link.id}`}>
                         <td className="border-gray-light border-b-2 !align-top">
-                          <p className="font-semibold">{link.name}</p>
+                          <Link
+                            href={`/admin/referrals/${id}/links/${link.id}/usage?returnUrl=${encodeURIComponent(router.asPath)}`}
+                            className="block max-w-[200px] truncate font-semibold text-blue-600 hover:underline"
+                          >
+                            {link.name}
+                          </Link>
                         </td>
                         <td className="border-gray-light border-b-2 !align-top">
                           <div className="flex flex-col gap-1 text-xs">
@@ -776,13 +779,6 @@ const ReferralLinks: NextPageWithLayout<{
                             </div>
                           </div>
                         </td>
-                        {/*  <td className="border-gray-light border-b-2 !align-top">
-                          <span className="text-sm">
-                            <Moment format="DD MMM YYYY" utc={true}>
-                              {link.dateCreated}
-                            </Moment>
-                          </span>
-                        </td>*/}
                         <td className="border-gray-light border-b-2 text-center !align-top">
                           <AdminReferralLinkActions
                             link={link}

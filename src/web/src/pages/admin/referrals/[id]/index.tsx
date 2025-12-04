@@ -1384,37 +1384,19 @@ const ReferralProgramForm: NextPageWithLayout<{
       {/* PAGE */}
       <div className="z-10 container mt-20 max-w-7xl px-2 py-4">
         {/* BREADCRUMB */}
-        <div className="flex flex-row items-center text-xs text-white">
+        <div className="flex flex-row items-center gap-2 text-xs text-white">
           <Link
-            className="hover:text-gray flex items-center justify-center font-bold"
+            className="hover:text-gray flex max-w-[200px] min-w-0 items-center font-bold"
             href={getSafeUrl(returnUrl?.toString(), `/admin/referrals`)}
           >
-            <IoMdArrowRoundBack className="bg-theme mr-2 inline-block h-4 w-4" />
-            Referral Programs
+            <IoMdArrowRoundBack className="mr-2 inline-block h-4 w-4 shrink-0" />
+            <span className="truncate">Referral Programs</span>
           </Link>
 
-          <div className="mx-2 font-bold">|</div>
-
-          {id === "create" ? (
-            "Create"
-          ) : (
-            <>
-              <Link
-                className="hover:text-gray mt-0 max-w-[250px] overflow-hidden font-bold text-ellipsis whitespace-nowrap md:max-w-[400px] lg:max-w-[800px]"
-                href={`/admin/referrals/${id}/info${
-                  returnUrl
-                    ? `?returnUrl=${encodeURIComponent(returnUrl.toString())}`
-                    : ""
-                }`}
-              >
-                {program?.name}
-              </Link>
-              <div className="mx-2 font-bold">|</div>
-              <div className="max-w-[600px] overflow-hidden text-ellipsis whitespace-nowrap">
-                Edit
-              </div>
-            </>
-          )}
+          <div className="font-bold">|</div>
+          <span className="max-w-[200px] min-w-0 truncate">
+            {id === "create" ? "Create" : "Edit"}
+          </span>
         </div>
 
         {/* HEADING */}
