@@ -113,7 +113,11 @@ export const ReferrerPerformanceOverview: React.FC<
   }
 
   return (
-    <Suspense isLoading={isLoading} error={error as any}>
+    <Suspense
+      isLoading={isLoading}
+      error={error as any}
+      loader={<LoadingInline classNameSpinner="h-12 border-orange w-12" />}
+    >
       <div>
         <div className="grid grid-cols-2 gap-1">
           <div className="min-w-0">

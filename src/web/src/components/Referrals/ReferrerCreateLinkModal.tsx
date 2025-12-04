@@ -25,6 +25,7 @@ import { ReferrerLinkDetails } from "./ReferrerLinkDetails";
 import { ReferrerProgramsList } from "./ReferrerProgramsList";
 import { ShareButtons } from "./ShareButtons";
 import FormLabel from "../Common/FormLabel";
+import { LoadingInline } from "../Status/LoadingInline";
 
 interface CreateLinkModalProps {
   programs: ProgramInfo[];
@@ -333,9 +334,7 @@ export const ReferrerCreateLinkModal: React.FC<CreateLinkModalProps> = ({
 
           {/* STEP 2: CREATE LINK FORM */}
           {step === "create" && isLoading && !currentProgram && (
-            <div className="flex justify-center p-10">
-              <span className="loading loading-spinner loading-lg text-blue-600"></span>
-            </div>
+            <LoadingInline classNameSpinner="h-12 border-orange w-12" />
           )}
 
           {step === "create" && currentProgram && (

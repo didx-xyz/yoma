@@ -2011,6 +2011,24 @@ const ReferralProgramForm: NextPageWithLayout<{
                   >
                     <div className="flex flex-col gap-4">
                       <label
+                        htmlFor="isDefault"
+                        className="label cursor-pointer justify-normal p-0"
+                      >
+                        <input
+                          type="checkbox"
+                          id="isDefault"
+                          className="checkbox-secondary checkbox disabled:border-gray"
+                          {...registerStep4("isDefault")}
+                        />
+                        <div className="text-gray-dark ml-4 select-none">
+                          <div>Default</div>
+                          <p className="text-sm">
+                            Make this program the default for new referral links
+                          </p>
+                        </div>
+                      </label>
+
+                      <label
                         htmlFor="proofOfPersonhoodRequired"
                         className="label cursor-pointer justify-normal p-0"
                       >
@@ -2043,24 +2061,6 @@ const ReferralProgramForm: NextPageWithLayout<{
                           <p className="text-sm">
                             Allow referrers to have multiple active links
                             simultaneously
-                          </p>
-                        </div>
-                      </label>
-
-                      <label
-                        htmlFor="isDefault"
-                        className="label cursor-pointer justify-normal p-0"
-                      >
-                        <input
-                          type="checkbox"
-                          id="isDefault"
-                          className="checkbox-secondary checkbox disabled:border-gray"
-                          {...registerStep4("isDefault")}
-                        />
-                        <div className="text-gray-dark ml-4 select-none">
-                          <div>Default</div>
-                          <p className="text-sm">
-                            Make this program the default for new referral links
                           </p>
                         </div>
                       </label>
@@ -2212,28 +2212,24 @@ const ReferralProgramForm: NextPageWithLayout<{
                     {/* Program Image */}
                     <div className="flex-shrink-0">
                       <ProgramImage
-                        imageURL={
-                          imagePreviewUrl ?? program?.imageURL ?? undefined
-                        }
-                        name={formData?.name ?? program?.name ?? "Program"}
-                        size={80}
+                        imageURL={program?.imageURL}
+                        name={program?.name ?? "Program"}
+                        size={60}
                         className="border-2 border-gray-200"
                       />
                     </div>
 
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <h1 className="text-2xl font-bold">
-                          {formData?.name ?? program?.name ?? "N/A"}
+                    <div className="min-w-0 flex-1">
+                      <div className="flex min-w-0 items-center gap-2">
+                        <h1 className="truncate text-base font-bold md:text-lg">
+                          {program?.name ?? "N/A"}
                         </h1>
-                        {formData?.isDefault && (
+                        {program?.isDefault && (
                           <span className="badge badge-primary">Default</span>
                         )}
                       </div>
-                      <p className="mt-2 text-gray-500">
-                        {formData?.description ??
-                          program?.description ??
-                          "No description provided"}
+                      <p className="truncate text-xs text-gray-500 md:text-sm">
+                        {program?.description ?? "No description provided"}
                       </p>
                     </div>
                   </div>

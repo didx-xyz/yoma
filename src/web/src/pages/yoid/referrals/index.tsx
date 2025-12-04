@@ -385,25 +385,11 @@ const ReferralsDashboard: NextPageWithLayout<{
             {/* SINGLE PROGRAM MODE */}
             {!multiProgram && (
               <div className="flex flex-col gap-4">
-                {linksLoading && (
+                {linksLoading || isAutoCreating ? (
                   <LoadingInline classNameSpinner="h-12 border-orange w-12" />
-                )}
-
-                {!linksLoading && (
+                ) : (
                   <div className="flex flex-col items-start justify-start gap-4 md:gap-6">
-                    {isAutoCreating && (
-                      <div className="rounded-lg bg-white p-6">
-                        <div className="flex flex-col items-center justify-center gap-4 py-8">
-                          <LoadingInline
-                            classNameSpinner="h-8 w-8 border-t-2 border-b-2 border-orange md:h-16 md:w-16 md:border-t-4 md:border-b-4"
-                            classNameLabel={"text-sm font-semibold md:text-lg"}
-                            label="Creating your referral link..."
-                          />
-                        </div>
-                      </div>
-                    )}
-
-                    {!isAutoCreating && firstLink && (
+                    {firstLink && (
                       <div className="flex w-full flex-col gap-4 md:flex-row">
                         <div className="flex flex-1 flex-col gap-2">
                           <div className="font-family-nunito text-sm font-semibold text-black md:text-base">
@@ -454,14 +440,12 @@ const ReferralsDashboard: NextPageWithLayout<{
                       </div>
                     )}
 
-                    {!isAutoCreating && !firstLink && !defaultProgram && (
-                      <div className="rounded-lg bg-white p-6">
-                        <NoRowsMessage
-                          title="My Referral Links"
-                          description="Link currently unavailable. Please check back later."
-                          icon={"🔗"}
-                        />
-                      </div>
+                    {!firstLink && !defaultProgram && (
+                      <NoRowsMessage
+                        title="My Referral Link"
+                        description="Link currently unavailable. Please check back later."
+                        icon={"🔗"}
+                      />
                     )}
                   </div>
                 )}
