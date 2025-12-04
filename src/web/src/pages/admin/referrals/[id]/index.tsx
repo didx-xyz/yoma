@@ -1384,37 +1384,19 @@ const ReferralProgramForm: NextPageWithLayout<{
       {/* PAGE */}
       <div className="z-10 container mt-20 max-w-7xl px-2 py-4">
         {/* BREADCRUMB */}
-        <div className="flex flex-row items-center text-xs text-white">
+        <div className="flex flex-row items-center gap-2 text-xs text-white">
           <Link
-            className="hover:text-gray flex items-center justify-center font-bold"
+            className="hover:text-gray flex max-w-[200px] min-w-0 items-center font-bold"
             href={getSafeUrl(returnUrl?.toString(), `/admin/referrals`)}
           >
-            <IoMdArrowRoundBack className="bg-theme mr-2 inline-block h-4 w-4" />
-            Referral Programs
+            <IoMdArrowRoundBack className="mr-2 inline-block h-4 w-4 shrink-0" />
+            <span className="truncate">Referral Programs</span>
           </Link>
 
-          <div className="mx-2 font-bold">|</div>
-
-          {id === "create" ? (
-            "Create"
-          ) : (
-            <>
-              <Link
-                className="hover:text-gray mt-0 max-w-[250px] overflow-hidden font-bold text-ellipsis whitespace-nowrap md:max-w-[400px] lg:max-w-[800px]"
-                href={`/admin/referrals/${id}/info${
-                  returnUrl
-                    ? `?returnUrl=${encodeURIComponent(returnUrl.toString())}`
-                    : ""
-                }`}
-              >
-                {program?.name}
-              </Link>
-              <div className="mx-2 font-bold">|</div>
-              <div className="max-w-[600px] overflow-hidden text-ellipsis whitespace-nowrap">
-                Edit
-              </div>
-            </>
-          )}
+          <div className="font-bold">|</div>
+          <span className="max-w-[200px] min-w-0 truncate">
+            {id === "create" ? "Create" : "Edit"}
+          </span>
         </div>
 
         {/* HEADING */}
@@ -2029,6 +2011,24 @@ const ReferralProgramForm: NextPageWithLayout<{
                   >
                     <div className="flex flex-col gap-4">
                       <label
+                        htmlFor="isDefault"
+                        className="label cursor-pointer justify-normal p-0"
+                      >
+                        <input
+                          type="checkbox"
+                          id="isDefault"
+                          className="checkbox-secondary checkbox disabled:border-gray"
+                          {...registerStep4("isDefault")}
+                        />
+                        <div className="text-gray-dark ml-4 select-none">
+                          <div>Default</div>
+                          <p className="text-sm">
+                            Make this program the default for new referral links
+                          </p>
+                        </div>
+                      </label>
+
+                      <label
                         htmlFor="proofOfPersonhoodRequired"
                         className="label cursor-pointer justify-normal p-0"
                       >
@@ -2061,24 +2061,6 @@ const ReferralProgramForm: NextPageWithLayout<{
                           <p className="text-sm">
                             Allow referrers to have multiple active links
                             simultaneously
-                          </p>
-                        </div>
-                      </label>
-
-                      <label
-                        htmlFor="isDefault"
-                        className="label cursor-pointer justify-normal p-0"
-                      >
-                        <input
-                          type="checkbox"
-                          id="isDefault"
-                          className="checkbox-secondary checkbox disabled:border-gray"
-                          {...registerStep4("isDefault")}
-                        />
-                        <div className="text-gray-dark ml-4 select-none">
-                          <div>Default</div>
-                          <p className="text-sm">
-                            Make this program the default for new referral links
                           </p>
                         </div>
                       </label>
@@ -2230,28 +2212,24 @@ const ReferralProgramForm: NextPageWithLayout<{
                     {/* Program Image */}
                     <div className="flex-shrink-0">
                       <ProgramImage
-                        imageURL={
-                          imagePreviewUrl ?? program?.imageURL ?? undefined
-                        }
-                        name={formData?.name ?? program?.name ?? "Program"}
-                        size={80}
+                        imageURL={program?.imageURL}
+                        name={program?.name ?? "Program"}
+                        size={60}
                         className="border-2 border-gray-200"
                       />
                     </div>
 
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <h1 className="text-2xl font-bold">
-                          {formData?.name ?? program?.name ?? "N/A"}
+                    <div className="min-w-0 flex-1">
+                      <div className="flex min-w-0 items-center gap-2">
+                        <h1 className="truncate text-base font-bold md:text-lg">
+                          {program?.name ?? "N/A"}
                         </h1>
-                        {formData?.isDefault && (
+                        {program?.isDefault && (
                           <span className="badge badge-primary">Default</span>
                         )}
                       </div>
-                      <p className="mt-2 text-gray-500">
-                        {formData?.description ??
-                          program?.description ??
-                          "No description provided"}
+                      <p className="truncate text-xs text-gray-500 md:text-sm">
+                        {program?.description ?? "No description provided"}
                       </p>
                     </div>
                   </div>

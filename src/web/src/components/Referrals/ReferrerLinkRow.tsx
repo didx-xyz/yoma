@@ -95,7 +95,7 @@ export const ReferrerLinkRow: React.FC<ReferrerLinkRowProps> = ({
 
       {/* Expanded Content */}
       {isExpanded && (
-        <div className="border-base-300 flex flex-col gap-3 border-t bg-gray-50 p-4">
+        <div className="border-base-300 animate-fade-in flex flex-col gap-3 border-t p-4">
           <div className="flex grow flex-col gap-4 md:flex-row md:gap-8">
             <div className="flex-1">
               <ReferrerLinkDetails

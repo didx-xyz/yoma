@@ -111,16 +111,18 @@ const ReferralProgramInfo: NextPageWithLayout<{
       <PageBackground />
 
       <div className="z-10 container mt-20 max-w-5xl px-2 py-8">
-        <div className="flex flex-row text-xs text-white">
+        {/* BREADCRUMB */}
+        <div className="flex flex-row items-center gap-2 text-xs text-white">
           <Link
-            className="hover:text-gray flex items-center justify-center font-bold"
+            className="hover:text-gray flex max-w-[200px] min-w-0 items-center font-bold"
             href={getSafeUrl(returnUrl?.toString(), `/admin/referrals`)}
           >
-            <IoMdArrowRoundBack className="mr-2 inline-block h-4 w-4" />
-            Referral Programs
+            <IoMdArrowRoundBack className="mr-2 inline-block h-4 w-4 shrink-0" />
+            <span className="truncate">Referral Programs</span>
           </Link>
-          <div className="mx-2 font-bold">|</div>
-          <span className="max-w-[600px] overflow-hidden text-ellipsis whitespace-nowrap">
+
+          <div className="font-bold">|</div>
+          <span className="max-w-[200px] min-w-0 truncate">
             {program?.name}
           </span>
         </div>
@@ -154,7 +156,7 @@ const ReferralProgramInfo: NextPageWithLayout<{
             {program && (
               <AdminReferralProgramActions
                 program={program}
-                returnUrl={returnUrl?.toString()}
+                returnUrl={router.asPath}
                 actionOptions={[
                   ReferralProgramActionOptions.ACTIVATE,
                   ReferralProgramActionOptions.INACTIVATE,
@@ -189,13 +191,13 @@ const ReferralProgramInfo: NextPageWithLayout<{
               Back to List
             </Link>
             <Link
-              href={`/admin/referrals/${id}${returnUrl ? `?returnUrl=${encodeURIComponent(getSafeUrl(returnUrl.toString(), router.asPath))}` : ""}`}
+              href={`/admin/referrals/${id}${returnUrl ? `?returnUrl=${encodeURIComponent(getSafeUrl("", router.asPath))}` : ""}`}
               className="btn btn-primary btn-md rounded-full px-8 normal-case"
             >
               Edit Program
             </Link>
             <Link
-              href={`/admin/referrals/${id}/links${returnUrl ? `?returnUrl=${encodeURIComponent(getSafeUrl(returnUrl.toString(), router.asPath))}` : ""}`}
+              href={`/admin/referrals/${id}/links${returnUrl ? `?returnUrl=${encodeURIComponent(getSafeUrl("", router.asPath))}` : ""}`}
               className="btn btn-secondary btn-md rounded-full px-8 normal-case"
             >
               View Referral Links

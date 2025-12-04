@@ -37,7 +37,7 @@ export const CSVImportResults: React.FC<CSVImportResultsProps> = ({
 
   return (
     <div
-      className={`bg-base-100 w-full rounded-xl border p-4 shadow-sm ${
+      className={`bg-base-100 flex w-full rounded-xl border p-4 shadow-sm ${
         result.imported
           ? "border-success/40"
           : hasErrors

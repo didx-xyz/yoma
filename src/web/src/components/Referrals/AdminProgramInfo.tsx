@@ -170,17 +170,6 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
                 </div>
               </div>
             </div>
-
-            {/* Program Image */}
-            {/* {displayImageUrl && (
-              <div className="mt-4 flex w-full justify-center rounded-lg bg-white py-8">
-                <AvatarImage
-                  icon={displayImageUrl}
-                  alt={program.name}
-                  size={150}
-                />
-              </div>
-            )} */}
           </div>
         </section>
       )}
@@ -387,6 +376,25 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
             <div className="grid overflow-hidden rounded-lg border border-gray-200 md:grid-cols-2">
               <div className="flex">
                 <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-sm font-medium text-gray-700">
+                  Default Program
+                </div>
+                <div className="flex-1 border border-gray-200 px-4 py-2 text-sm hover:bg-gray-100">
+                  {program?.isDefault ? (
+                    <div className="flex items-center gap-2">
+                      <IoIosCheckmarkCircle className="text-green h-5 w-5" />
+                      <span>Default</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <IoMdClose className="text-gray-dark h-5 w-5" />
+                      <span>Not default</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex">
+                <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-sm font-medium text-gray-700">
                   Proof of Personhood
                 </div>
                 <div className="flex-1 border border-gray-200 px-4 py-2 text-sm hover:bg-gray-100">
@@ -406,25 +414,6 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
 
               <div className="flex">
                 <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-sm font-medium text-gray-700">
-                  Engagement Pathway
-                </div>
-                <div className="flex-1 border border-gray-200 px-4 py-2 text-sm hover:bg-gray-100">
-                  {program?.pathwayRequired ? (
-                    <div className="flex items-center gap-2">
-                      <IoIosCheckmarkCircle className="text-green h-5 w-5" />
-                      <span>Required</span>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-2">
-                      <IoMdClose className="text-gray-dark h-5 w-5" />
-                      <span>Not required</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="flex md:col-span-2">
-                <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-sm font-medium text-gray-700">
                   Multiple Links
                 </div>
                 <div className="flex-1 border border-gray-200 px-4 py-2 text-sm hover:bg-gray-100">
@@ -437,6 +426,25 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
                     <div className="flex items-center gap-2">
                       <IoMdClose className="text-gray-dark h-5 w-5" />
                       <span>Not allowed</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex">
+                <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-sm font-medium text-gray-700">
+                  Engagement Pathway
+                </div>
+                <div className="flex-1 border border-gray-200 px-4 py-2 text-sm hover:bg-gray-100">
+                  {program?.pathwayRequired ? (
+                    <div className="flex items-center gap-2">
+                      <IoIosCheckmarkCircle className="text-green h-5 w-5" />
+                      <span>Required</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <IoMdClose className="text-gray-dark h-5 w-5" />
+                      <span>Not required</span>
                     </div>
                   )}
                 </div>
