@@ -72,7 +72,7 @@ namespace Yoma.Core.Domain.Referral.Services
       return result;
     }
 
-    public ReferralAnalyticsSearchResultsInfo Search(ReferralAnalyticsSearchFilter filter)
+    public ReferralAnalyticsSearchResultsInfo<ReferralAnalyticsUserInfo> Search(ReferralAnalyticsSearchFilter filter)
     {
       ArgumentNullException.ThrowIfNull(filter, nameof(filter));
 
@@ -83,9 +83,32 @@ namespace Yoma.Core.Domain.Referral.Services
         PageSize = filter.PageSize
       };
 
-      var results = Search(filterAdmin);
-      results.Items.ForEach(x => x.UserDisplayName = RedactorHelper.RedactDisplayName(x.UserDisplayName));
-      return results;
+      var adminResults = Search(filterAdmin);
+
+      var redacted = new ReferralAnalyticsSearchResultsInfo<ReferralAnalyticsUserInfo>
+      {
+        TotalCount = adminResults.TotalCount,
+        Role = adminResults.Role,
+        Items = []
+      };
+
+      foreach (var user in adminResults.Items)
+      {
+        var info = new ReferralAnalyticsUserInfo
+        {
+          UserDisplayName = RedactorHelper.RedactDisplayName(user.UserDisplayName),
+          LinkCount = user.LinkCount,
+          LinkCountActive = user.LinkCountActive,
+          UsageCountCompleted = user.UsageCountCompleted,
+          UsageCountPending = user.UsageCountPending,
+          UsageCountExpired = user.UsageCountExpired,
+          ZltoRewardTotal = user.ZltoRewardTotal
+        };
+
+        redacted.Items.Add(info);
+      }
+
+      return redacted;
     }
 
     public ReferralAnalyticsSearchResults Search(ReferralAnalyticsSearchFilterAdmin filter)

@@ -291,7 +291,7 @@ namespace Yoma.Core.Api.Controllers
       Description = "Returns system-wide referral statistics based on role. Link statistics are referrer-only; usage and reward statistics apply to both roles")]
     [HttpPost("analytics/search")]
     [Authorize(Roles = $"{Constants.Role_User}")]
-    public ActionResult<ReferralAnalyticsSearchResultsInfo> SearchAnalytics([FromBody] ReferralAnalyticsSearchFilter filter)
+    public ActionResult<ReferralAnalyticsSearchResultsInfo<ReferralAnalyticsUserInfo>> SearchAnalytics([FromBody] ReferralAnalyticsSearchFilter filter)
     {
       _logger.LogInformation("Handling request {requestName}", nameof(SearchAnalytics));
 
