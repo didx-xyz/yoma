@@ -72,13 +72,14 @@ export const ReferrerLinksList: React.FC<LinksListProps> = ({
 
         {hasLinks && (
           <div className="space-y-2">
-            {links?.map((link: ReferralLink) => (
+            {links?.map((link: ReferralLink, index: number) => (
               <ReferrerLinkRow
                 key={link.id}
                 link={link}
                 programs={programs}
                 onViewUsage={onViewUsage}
                 onEdit={onEdit}
+                isExpanded={index === 0}
               />
             ))}
 

@@ -82,7 +82,7 @@ const ReferralLinkUsageInfo: NextPageWithLayout<{
   error?: number;
 }> = ({ usageId, error }) => {
   const router = useRouter();
-  const { returnUrl, id, linkId } = router.query;
+  const { returnUrl } = router.query;
 
   const { data: usage, isLoading } = useQuery<ReferralLinkUsageInfo>({
     queryKey: ["referralLinkUsage", usageId],
@@ -107,20 +107,22 @@ const ReferralLinkUsageInfo: NextPageWithLayout<{
       <PageBackground />
 
       <div className="z-10 container mt-20 max-w-5xl px-2 py-8">
-        <div className="flex flex-row text-xs text-white">
+        {/* BREADCRUMB */}
+        <div className="flex flex-row items-center gap-2 text-xs text-white">
           <Link
-            className="hover:text-gray flex items-center justify-center font-bold"
+            className="hover:text-gray flex max-w-[200px] min-w-0 items-center font-bold"
             href={getSafeUrl(
               returnUrl?.toString(),
-              `/admin/referrals/${id}/links/${linkId}`,
+              `/admin/referrals/${usage?.programId}/links/${usage?.linkId}/usage`,
             )}
           >
-            <IoMdArrowRoundBack className="mr-2 inline-block h-4 w-4" />
-            Back to Link
+            <IoMdArrowRoundBack className="mr-2 inline-block h-4 w-4 shrink-0" />
+            <span className="truncate">Link Usages</span>
           </Link>
-          <div className="mx-2 font-bold">|</div>
-          <span className="max-w-[600px] overflow-hidden text-ellipsis whitespace-nowrap">
-            Usage Details
+
+          <div className="font-bold">|</div>
+          <span className="max-w-[200px] min-w-0 truncate">
+            {usage?.userDisplayName}
           </span>
         </div>
 
@@ -421,7 +423,7 @@ const ReferralLinkUsageInfo: NextPageWithLayout<{
             <Link
               href={getSafeUrl(
                 returnUrl?.toString(),
-                `/admin/referrals/${id}/links/${linkId}`,
+                `/admin/referrals/${usage?.programId}/links/${usage?.linkId}/usage`,
               )}
               className="btn btn-warning btn-md rounded-full px-8 normal-case"
             >

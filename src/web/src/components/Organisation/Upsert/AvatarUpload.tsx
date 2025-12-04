@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import AvatarEditor from "react-avatar-editor";
 import { IoMdClose } from "react-icons/io";
-import { FaEdit, FaTimes } from "react-icons/fa";
+import { FaPencilAlt, FaTimes } from "react-icons/fa";
 import { AvatarImage } from "~/components/AvatarImage";
 import CustomModal from "~/components/Common/CustomModal";
 import styles from "./AvatarUpload.module.css";
@@ -188,17 +188,17 @@ const AvatarUpload: React.FC<AvatarUploadProps> = ({
             {croppedImage && (
               <>
                 <button
-                  className="filepond--file-action-button filepond--action-revert-item-processing indicator-item bg-secondary tooltip tooltip-left !z-10 !cursor-pointer rounded-full p-1 text-white"
+                  className="filepond--file-action-button filepond--action-revert-item-processing indicator-item bg-secondary tooltip tooltip-top !z-10 flex size-6 !cursor-pointer items-center justify-center rounded-full text-white"
                   type="button"
                   data-align="right"
                   data-tip="Edit crop"
                   style={{ right: "1.7rem" }}
                   onClick={() => setCropModalVisible(true)}
                 >
-                  <FaEdit className="h-4 w-4" />
+                  <FaPencilAlt className="h-3 w-3" />
                 </button>
                 <button
-                  className="filepond--file-action-button filepond--action-remove-item indicator-item bg-error tooltip tooltip-left !z-10 !cursor-pointer rounded-full p-1 text-white"
+                  className="filepond--file-action-button filepond--action-remove-item indicator-item bg-error tooltip tooltip-top !z-10 flex size-6 !cursor-pointer items-center justify-center rounded-full text-white"
                   type="button"
                   data-align="left"
                   data-tip="Remove image"

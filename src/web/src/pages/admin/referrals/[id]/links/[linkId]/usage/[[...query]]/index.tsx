@@ -6,7 +6,12 @@ import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useCallback, useState, type ReactElement } from "react";
-import { IoIosCheckmarkCircle, IoMdClose } from "react-icons/io";
+import {
+  IoIosCheckmarkCircle,
+  IoMdArrowRoundBack,
+  IoMdClose,
+} from "react-icons/io";
+import { IoChevronForward } from "react-icons/io5";
 import Moment from "react-moment";
 import {
   ReferralLinkUsageStatus,
@@ -353,10 +358,15 @@ const ReferralLinkUsage: NextPageWithLayout<{
       if (params != null && params.size > 0)
         url = `${url}?${params.toString()}`;
 
+      if (returnUrl) {
+        const separator = url.includes("?") ? "&" : "?";
+        url = `${url}${separator}returnUrl=${encodeURIComponent(returnUrl.toString())}`;
+      }
+
       if (url != router.asPath)
         void router.push(url, undefined, { scroll: false });
     },
-    [router, id, linkId, getSearchFilterAsQueryString],
+    [router, id, linkId, getSearchFilterAsQueryString, returnUrl],
   );
 
   //#region Event Handlers
@@ -400,51 +410,23 @@ const ReferralLinkUsage: NextPageWithLayout<{
       <div className="z-10 container mt-14 max-w-7xl px-2 py-8 md:mt-[7rem]">
         <div className="flex flex-col gap-4 py-4">
           {/* BREADCRUMB */}
-          <nav className="flex text-sm text-white" aria-label="Breadcrumb">
-            <ol className="inline-flex items-center space-x-1 overflow-hidden whitespace-nowrap md:space-x-3">
-              <li className="inline-flex items-center">
-                <Link
-                  href={`/admin/referrals${returnUrl ? `?returnUrl=${encodeURIComponent(returnUrl)}` : ""}`}
-                  className="hover:text-gray inline-flex items-center"
-                >
-                  Referral Programs
-                </Link>
-              </li>
-              <li>
-                <div className="flex items-center">
-                  <span className="mx-2">/</span>
-                  <span className="text-gray max-w-[200px] truncate">
-                    {program?.name ?? "..."}
-                  </span>
-                </div>
-              </li>
-              <li>
-                <div className="flex items-center">
-                  <span className="mx-2">/</span>
-                  <Link
-                    href={`/admin/referrals/${id}/links${returnUrl ? `?returnUrl=${encodeURIComponent(returnUrl)}` : ""}`}
-                    className="hover:text-gray"
-                  >
-                    Referral Links
-                  </Link>
-                </div>
-              </li>
-              <li>
-                <div className="flex items-center">
-                  <span className="mx-2">/</span>
-                  <span className="text-gray max-w-[200px] truncate">
-                    {link?.name ?? "..."}
-                  </span>
-                </div>
-              </li>
-              <li aria-current="page">
-                <div className="flex items-center">
-                  <span className="mx-2">/</span>
-                  <span className="text-gray">Usage</span>
-                </div>
-              </li>
-            </ol>
-          </nav>
+          <div className="flex flex-row items-center gap-2 text-xs text-white">
+            <Link
+              className="hover:text-gray flex max-w-[200px] min-w-0 items-center font-bold"
+              href={getSafeUrl(
+                returnUrl?.toString(),
+                `/admin/referrals/${program?.id}/links`,
+              )}
+            >
+              <IoMdArrowRoundBack className="mr-2 inline-block h-4 w-4 shrink-0" />
+              <span className="truncate">Referral Links</span>
+            </Link>
+
+            <IoChevronForward className="h-4 w-4 shrink-0" />
+            <span className="max-w-[200px] min-w-0 truncate">
+              Usage ({link?.name})
+            </span>
+          </div>
 
           <h3 className="flex items-center text-xl font-semibold tracking-normal whitespace-nowrap text-white md:text-3xl">
             🔗 Referral Link Usage
@@ -453,7 +435,7 @@ const ReferralLinkUsage: NextPageWithLayout<{
           {/* TABBED NAVIGATION */}
           <CustomSlider sliderClassName="!gap-6">
             <Link
-              href={`/admin/referrals/${id}/links/${linkId}/usage`}
+              href={`/admin/referrals/${id}/links/${linkId}/usage${returnUrl ? `?returnUrl=${encodeURIComponent(returnUrl.toString())}` : ""}`}
               role="tab"
               className={`border-b-4 py-2 whitespace-nowrap text-white ${
                 !status
@@ -469,7 +451,7 @@ const ReferralLinkUsage: NextPageWithLayout<{
               )}
             </Link>
             <Link
-              href={`/admin/referrals/${id}/links/${linkId}/usage?status=${ReferralLinkUsageStatus.Pending}`}
+              href={`/admin/referrals/${id}/links/${linkId}/usage?status=${ReferralLinkUsageStatus.Pending}${returnUrl ? `&returnUrl=${encodeURIComponent(returnUrl.toString())}` : ""}`}
               role="tab"
               className={`border-b-4 py-2 whitespace-nowrap text-white ${
                 status === ReferralLinkUsageStatus.Pending
@@ -485,7 +467,7 @@ const ReferralLinkUsage: NextPageWithLayout<{
               )}
             </Link>
             <Link
-              href={`/admin/referrals/${id}/links/${linkId}/usage?status=${ReferralLinkUsageStatus.Completed}`}
+              href={`/admin/referrals/${id}/links/${linkId}/usage?status=${ReferralLinkUsageStatus.Completed}${returnUrl ? `&returnUrl=${encodeURIComponent(returnUrl.toString())}` : ""}`}
               role="tab"
               className={`border-b-4 py-2 whitespace-nowrap text-white ${
                 status === ReferralLinkUsageStatus.Completed
@@ -501,7 +483,7 @@ const ReferralLinkUsage: NextPageWithLayout<{
               )}
             </Link>
             <Link
-              href={`/admin/referrals/${id}/links/${linkId}/usage?status=${ReferralLinkUsageStatus.Expired}`}
+              href={`/admin/referrals/${id}/links/${linkId}/usage?status=${ReferralLinkUsageStatus.Expired}${returnUrl ? `&returnUrl=${encodeURIComponent(returnUrl.toString())}` : ""}`}
               role="tab"
               className={`border-b-4 py-2 whitespace-nowrap text-white ${
                 status === ReferralLinkUsageStatus.Expired
@@ -579,10 +561,7 @@ const ReferralLinkUsage: NextPageWithLayout<{
                         </div>
                         <AdminReferralLinkUsageActions
                           usage={usage}
-                          returnUrl={getSafeUrl(
-                            returnUrl?.toString(),
-                            router.asPath,
-                          )}
+                          returnUrl={getSafeUrl(router.asPath, "")}
                         />
                       </div>
 
@@ -715,10 +694,10 @@ const ReferralLinkUsage: NextPageWithLayout<{
                             <Link
                               href={`/admin/referrals/${usage.programId}/links/${usage.linkId}/usage/${usage.id}/info${
                                 returnUrl
-                                  ? `?returnUrl=${encodeURIComponent(getSafeUrl(returnUrl?.toString(), router.asPath))}`
+                                  ? `?returnUrl=${encodeURIComponent(getSafeUrl(router.asPath, ""))}`
                                   : ""
                               }`}
-                              className="font-semibold text-blue-600 hover:underline"
+                              className="block max-w-[200px] truncate font-semibold text-blue-600 hover:underline"
                             >
                               {usage.userDisplayName}
                             </Link>
@@ -839,10 +818,7 @@ const ReferralLinkUsage: NextPageWithLayout<{
                         <td className="border-gray-light border-b-2 text-center !align-top">
                           <AdminReferralLinkUsageActions
                             usage={usage}
-                            returnUrl={getSafeUrl(
-                              returnUrl?.toString(),
-                              router.asPath,
-                            )}
+                            returnUrl={getSafeUrl(router.asPath, "")}
                           />
                         </td>
                       </tr>
