@@ -8,6 +8,7 @@ import { IoMdClose } from "react-icons/io";
 import { toast } from "react-toastify";
 import z from "zod";
 import type { MyOpportunityRequestVerifyImportCsv } from "~/api/models/myOpportunity";
+import { CSVImportResult } from "~/api/models/opportunity";
 import { performActionImportVerificationFromCSV } from "~/api/services/myOpportunities";
 import {
   ACCEPTED_CSV_TYPES,
@@ -15,12 +16,11 @@ import {
   MAX_FILE_SIZE,
   MAX_FILE_SIZE_LABEL,
 } from "~/lib/constants";
+import { toCSVResult } from "~/lib/csv-import-helper";
+import { CSVImportResults } from "../../Common/CSVImportResults";
 import FormMessage, { FormMessageType } from "../../Common/FormMessage";
 import { Loading } from "../../Status/Loading";
 import { FileUpload } from "../FileUpload";
-import { CSVImportResults } from "../../Common/CSVImportResults";
-import { toCSVResult } from "~/lib/csv-import-helper";
-import { CSVImportResult } from "~/api/models/opportunity";
 
 interface InputProps {
   [id: string]: any;
@@ -330,7 +330,7 @@ export const VerificationImport: React.FC<InputProps> = ({
                     allowMultiple={false}
                     iconAlt={<FcDocument className="size-10" />}
                     onUploadComplete={(files) => {
-                      setValue("importFile", files[0], {
+                      setValue("importFile", files[0]?.file, {
                         shouldValidate: true,
                       });
                       setResult(null); // clear previous results
@@ -347,7 +347,7 @@ export const VerificationImport: React.FC<InputProps> = ({
 
               {/* IMPORT RESPONSE */}
               {result && (
-                <div ref={resultsRef}>
+                <div ref={resultsRef} className="flex w-full">
                   <CSVImportResults result={result} importType="submissions" />
                 </div>
               )}
