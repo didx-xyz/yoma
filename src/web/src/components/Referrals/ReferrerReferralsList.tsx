@@ -4,7 +4,7 @@ import {
   IoCheckmarkCircle,
   IoHourglassOutline,
   IoTimeOutline,
-  IoPeople,
+  IoPerson,
 } from "react-icons/io5";
 import type {
   ReferralLinkUsageSearchResults,
@@ -33,7 +33,7 @@ export const ReferrerReferralsList: React.FC<ReferralsListProps> = ({
     isLoading,
     error,
   } = useQuery<ReferralLinkUsageSearchResults>({
-    queryKey: ["ReferralLinkUsage", linkId, currentPage],
+    queryKey: ["ReferralLinkUsage", linkId, currentPage, PAGE_SIZE],
     queryFn: () =>
       searchReferralLinkUsagesAsReferrer({
         linkId: linkId,
@@ -85,7 +85,12 @@ export const ReferrerReferralsList: React.FC<ReferralsListProps> = ({
     <Suspense
       isLoading={isLoading}
       error={error as any}
-      loader={<LoadingInline classNameSpinner="h-12 border-orange w-12" />}
+      loader={
+        <LoadingInline
+          className="rounded-xl bg-white p-4"
+          classNameSpinner="h-12 border-orange w-12"
+        />
+      }
     >
       <div>
         {!hasUsage && (
@@ -105,14 +110,11 @@ export const ReferrerReferralsList: React.FC<ReferralsListProps> = ({
 
             <div className="border-base-300 bg-base-100 space-y-2 overflow-hidden rounded-lg border">
               {usageData?.items?.map((usage: ReferralLinkUsage) => (
-                <div
-                  key={usage.id}
-                  // className="border-base-300 bg-base-100 overflow-hidden rounded-lg border"
-                >
+                <div key={usage.id}>
                   <div className="flex min-w-0 items-center gap-2 p-4 hover:bg-gray-50">
                     <div className="font-family-nunito flex min-w-0 grow flex-col justify-center gap-0.5">
                       <div className="flex items-center gap-2 text-xs font-semibold text-black md:text-sm">
-                        <IoPeople className="h-3 w-3 flex-shrink-0 text-blue-600" />
+                        <IoPerson className="h-3 w-3 flex-shrink-0 text-blue-600" />
                         <span className="truncate">
                           {usage.userDisplayName || "Anonymous User"}
                         </span>

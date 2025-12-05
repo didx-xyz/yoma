@@ -122,7 +122,7 @@ export const ReferrerLinkRow: React.FC<ReferrerLinkRowProps> = ({
           </div>
 
           <div className="flex flex-col gap-2">
-            <p className="mb-2 text-[10px] text-gray-600">Your stats</p>
+            <p className="mb-2 text-[10px] text-gray-600">Link Performance</p>
             <ReferrerPerformanceOverview link={link} mode="small" />
           </div>
 
@@ -133,7 +133,7 @@ export const ReferrerLinkRow: React.FC<ReferrerLinkRowProps> = ({
               className="btn btn-xs grow gap-1 border-blue-600 bg-blue-600 text-white hover:bg-blue-700 md:grow-0"
             >
               <IoEye className="h-3 w-3" />
-              <span className="text-[10px]">View Usage</span>
+              <span className="text-[10px]">Link Performance</span>
             </button>
             <button
               onClick={handleEdit}
@@ -147,7 +147,7 @@ export const ReferrerLinkRow: React.FC<ReferrerLinkRowProps> = ({
               }
             >
               <IoPencil className="h-3 w-3" />
-              <span className="text-[10px]">Edit</span>
+              <span className="text-[10px]">Edit Link</span>
             </button>
           </div>
         </div>
