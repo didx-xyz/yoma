@@ -431,10 +431,7 @@ const ReferralsDashboard: NextPageWithLayout<{
                           </div>
 
                           <div className="flex-1 rounded-lg bg-white p-4">
-                            <ReferrerPerformanceOverview
-                              link={firstLink}
-                              mode="large"
-                            />
+                            <ReferrerStats />
                           </div>
                         </div>
                       </div>
@@ -474,7 +471,7 @@ const ReferralsDashboard: NextPageWithLayout<{
                       <div className="font-family-nunito text-sm font-semibold text-black md:text-base">
                         Your Stats
                       </div>
-                      <div className="rounded-lg bg-white p-4 md:p-6">
+                      <div className="rounded-lg bg-white p-4">
                         <ReferrerStats />
                       </div>
                     </div>
@@ -484,7 +481,7 @@ const ReferralsDashboard: NextPageWithLayout<{
                       <div className="font-family-nunito text-sm font-semibold text-black md:text-base">
                         Top Referrers
                       </div>
-                      <div className="rounded-lg bg-white p-4 md:p-6">
+                      <div className="rounded-lg bg-white p-4">
                         <ReferrerLeaderboard pageSize={10} />
                       </div>
                     </div>
@@ -496,7 +493,7 @@ const ReferralsDashboard: NextPageWithLayout<{
                     <div className="space-y-2">
                       <div className="flex flex-wrap items-center justify-between gap-2">
                         <div className="font-family-nunito text-sm font-semibold text-black md:text-base">
-                          Your Referral Links
+                          Your Links
                         </div>
                         {programsData?.totalCount && (
                           <button
@@ -560,7 +557,7 @@ const ReferralsDashboard: NextPageWithLayout<{
                 <div className="bg-theme flex flex-row p-4 shadow-lg">
                   <div className="flex-1">
                     <h1 className="text-lg font-semibold text-white">
-                      Link Usage
+                      Link Performance
                     </h1>
                   </div>
                   <button
@@ -584,7 +581,7 @@ const ReferralsDashboard: NextPageWithLayout<{
                     <div className="flex w-full flex-col gap-4 md:flex-row">
                       <div className="grow space-y-2">
                         <div className="font-family-nunito text-sm font-semibold text-black md:text-base">
-                          Your stats
+                          Link stats
                         </div>
                         <div className="border-gray md:p-6x rounded-lg border p-4">
                           <ReferrerPerformanceOverview
@@ -599,11 +596,8 @@ const ReferralsDashboard: NextPageWithLayout<{
                       <div className="font-family-nunito text-sm font-semibold text-black md:text-base">
                         Referral List
                       </div>
-                      <div className="border-gray rounded-lg border">
-                        <ReferrerReferralsList
-                          linkId={selectedLinkForUsage.id}
-                        />
-                      </div>
+
+                      <ReferrerReferralsList linkId={selectedLinkForUsage.id} />
                     </div>
                   </div>
 

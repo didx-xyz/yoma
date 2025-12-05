@@ -323,7 +323,7 @@ export const RefereeProgramDetails: React.FC<ProgramDetailsProps> = ({
               {program.proofOfPersonhoodRequired || program.pathwayRequired ? (
                 <div className="space-y-1.5">
                   {program.proofOfPersonhoodRequired && (
-                    <div className="flex flex-col items-center justify-start gap-2 rounded-lg md:flex-row">
+                    <div className="flex flex-col items-start gap-2 rounded-lg md:flex-row md:items-center">
                       <span className="badge badge-sm flex-shrink-0 bg-blue-100 text-blue-700">
                         <IoCheckmarkCircle className="h-4 w-4" />
                         <span className="ml-1">Proof of Person</span>
@@ -339,7 +339,7 @@ export const RefereeProgramDetails: React.FC<ProgramDetailsProps> = ({
                     </div>
                   )}
                   {program.pathwayRequired && (
-                    <div className="flex flex-col items-center justify-start gap-2 rounded-lg md:flex-row">
+                    <div className="flex flex-col items-start gap-2 rounded-lg md:flex-row md:items-center">
                       <span className="badge badge-sm flex-shrink-0 bg-blue-100 text-blue-700">
                         <IoCheckmarkCircle className="h-4 w-4" />
                         <span className="ml-1">Pathway Completion</span>
