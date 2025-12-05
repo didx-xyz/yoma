@@ -168,10 +168,14 @@ namespace Yoma.Core.Domain.Reward.Services
 
       var user = _userService.GetById(userId, false, false);
 
-      var rewardTransactions = _rewardService.ListPendingTransactionSchedule(user.Id);
+      // [2025.12] Init balance disabled; see reward scheduler for applying pending rewards.
+      // query pending rewards and calculate balance
+      // var rewardTransactions = _rewardService.ListPendingTransactionSchedule(user.Id);
+      // var balance = rewardTransactions.Sum(o => o.Amount);
 
-      //query pending rewards and calculate balance
-      var balance = rewardTransactions.Sum(o => o.Amount);
+      var rewardTransactions = new List<RewardTransaction>();
+      var balance = 0m;
+
       var username = ParseWalletUsername(user);
 
       //attempt wallet creation

@@ -488,7 +488,11 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
         OwnerOrigin = _accessToken.PartnerName,
         OwnerName = request.DisplayName,
         Username = request.Username,
+
+        // [2025.12] Initial balance disabled — see WalletService.CreateWallet.
+        // request.Balance is always 0 until ZLTO restores init_zlto_amount support.
         Balance = (int)request.Balance
+
         //OwnerId: system assigned; can not be specified
         //UserPassword: used with external wallet activation; with Yoma wallets are internal
       };

@@ -365,6 +365,7 @@ namespace Yoma.Core.Api.Controllers
       }
     }
 
+    // [2025.09] Immediate wallet creation removed due to ongoing ZLTO API latency and reliability issues. Wallet creation is now deferred
     private async Task ScheduleWalletCreation(UserRequest userRequest)
     {
       try
