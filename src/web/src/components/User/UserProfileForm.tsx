@@ -559,13 +559,17 @@ export const UserProfileForm: React.FC<{
             error={formState.errors.countryId?.message?.toString()}
           >
             <select
-              className="select border-gray focus:border-gray w-full focus:outline-none"
+              className="select border-gray focus:border-gray w-full truncate pr-8 focus:outline-none"
               {...register("countryId")}
               disabled={isLoadingCountries} // Disable while countries are loading
             >
               <option value="">Please select</option>
               {countries?.map((country) => (
-                <option key={country.id} value={country.id}>
+                <option
+                  key={country.id}
+                  value={country.id}
+                  className="truncate"
+                >
                   {country.name}
                 </option>
               ))}
@@ -583,13 +587,13 @@ export const UserProfileForm: React.FC<{
             error={formState.errors.educationId?.message?.toString()}
           >
             <select
-              className="select border-gray focus:border-gray w-full focus:outline-none"
+              className="select border-gray focus:border-gray w-full truncate pr-8 focus:outline-none"
               {...register("educationId")}
               disabled={isLoadingEducations} // Disable while educations are loading
             >
               <option value="">Please select</option>
               {educations?.map((item) => (
-                <option key={item.id} value={item.id}>
+                <option key={item.id} value={item.id} className="truncate">
                   {item.name}
                 </option>
               ))}
@@ -607,13 +611,13 @@ export const UserProfileForm: React.FC<{
             error={formState.errors.genderId?.message?.toString()}
           >
             <select
-              className="select border-gray focus:border-gray w-full focus:outline-none"
+              className="select border-gray focus:border-gray w-full truncate pr-8 focus:outline-none"
               {...register("genderId")}
               disabled={isLoadingGenders} // Disable while genders are loading
             >
               <option value="">Please select</option>
               {genders?.map((item) => (
-                <option key={item.id} value={item.id}>
+                <option key={item.id} value={item.id} className="truncate">
                   {item.name}
                 </option>
               ))}
@@ -650,7 +654,7 @@ export const UserProfileForm: React.FC<{
           >
             <div className="flex gap-2">
               <select
-                className="select border-gray focus:border-gray w-full focus:outline-none"
+                className="select border-gray focus:border-gray w-full truncate pr-8 focus:outline-none"
                 {...register("dateOfBirthDay")}
               >
                 <option value="">Day</option>
@@ -661,7 +665,7 @@ export const UserProfileForm: React.FC<{
                 ))}
               </select>
               <select
-                className="select border-gray focus:border-gray w-full focus:outline-none"
+                className="select border-gray focus:border-gray w-full truncate pr-8 focus:outline-none"
                 {...register("dateOfBirthMonth")}
               >
                 <option value="">Month</option>
@@ -682,13 +686,14 @@ export const UserProfileForm: React.FC<{
                   <option
                     key={month}
                     value={(index + 1).toString().padStart(2, "0")}
+                    className="truncate"
                   >
                     {month}
                   </option>
                 ))}
               </select>
               <select
-                className="select border-gray focus:border-gray w-full focus:outline-none"
+                className="select border-gray focus:border-gray w-full truncate pr-8 focus:outline-none"
                 {...register("dateOfBirthYear")}
               >
                 <option value="">Year</option>
