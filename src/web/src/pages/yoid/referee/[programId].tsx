@@ -564,7 +564,7 @@ const RefereeDashboard: NextPageWithLayout<{
                     )}
                   </p>
                   <Link
-                    href="/yoid/referrer"
+                    href="/yoid/referrals"
                     className="btn btn-warning btn-sm gap-2"
                   >
                     <IoShareSocial className="h-4 w-4" />
@@ -633,7 +633,7 @@ const RefereeDashboard: NextPageWithLayout<{
                     programs and earn ZLTO for every successful referral.
                   </p>
                   <Link
-                    href="/yoid/referrer"
+                    href="/yoid/referrals"
                     className="btn btn-warning btn-sm gap-2"
                   >
                     <IoShareSocial className="h-4 w-4" />
