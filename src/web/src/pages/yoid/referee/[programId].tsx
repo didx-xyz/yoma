@@ -140,7 +140,24 @@ const RefereeDashboard: NextPageWithLayout<{
     enabled: !serverError,
   });
 
-  if (serverError === 401) return <Unauthenticated />;
+  // Check if we're redirecting to Keycloak for authentication
+  const isRedirectingToKeycloak = router.query.signInAgain === "true";
+
+  if (serverError === 401) {
+    // If redirecting to Keycloak, show loading instead of unauthenticated
+    if (isRedirectingToKeycloak) {
+      return (
+        <div className="container mx-auto mt-20 flex max-w-5xl flex-col gap-8 py-8">
+          <LoadingInline
+            classNameSpinner="h-8 w-8 border-t-2 border-b-2 border-orange md:h-16 md:w-16 md:border-t-4 md:border-b-4"
+            classNameLabel={"text-sm font-semibold md:text-base"}
+            label="Redirecting to sign in..."
+          />
+        </div>
+      );
+    }
+    return <Unauthenticated />;
+  }
 
   if (usageLoading || programLoading) {
     return (
