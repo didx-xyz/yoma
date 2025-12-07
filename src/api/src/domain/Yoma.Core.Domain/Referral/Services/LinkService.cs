@@ -432,7 +432,7 @@ namespace Yoma.Core.Domain.Referral.Services
       item.CompletionTotal ??= 0;
       item.PendingTotal = item.UsageAggregate.UsageCountsByStatus.SingleOrDefault(o => o.StatusId == statusPending.Id)?.Count ?? 0;
       item.ExpiredTotal = item.UsageAggregate.UsageCountsByStatus.SingleOrDefault(o => o.StatusId == statusExpired.Id)?.Count ?? 0;
-      item.UsageTotal = item.CompletionTotal + item.PendingTotal + item.ExpiredTotal; 
+      item.UsageTotal = item.CompletionTotal + item.PendingTotal + item.ExpiredTotal;
 
       item.ZltoRewardReferrerTotal = item.UsageAggregate.ZltoRewardReferrerTotal;
       item.ZltoRewardRefereeTotal = item.UsageAggregate.ZltoRewardRefereeTotal;
