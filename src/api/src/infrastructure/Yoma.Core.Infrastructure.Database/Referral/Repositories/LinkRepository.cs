@@ -68,15 +68,22 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
         ZltoRewardCumulative = entity.ZltoRewardCumulative,
         DateCreated = entity.DateCreated,
         DateModified = entity.DateModified,
-        UsageCountsRaw = includeChildItems && entity.Usages != null
-          ? entity.Usages
-            .GroupBy(u => u.StatusId)
-            .Select(g => new ReferralLinkUsageCount
-            {
-              StatusId = g.Key,
-              Count = g.Count()
-            })
-            .ToList() : null
+        UsageAggregate = includeChildItems && entity.Usages != null
+          ? new ReferralLinkUsageAggregate
+          {
+            UsageCountsByStatus = entity.Usages
+              .GroupBy(u => u.StatusId)
+              .Select(g => new ReferralLinkUsageAggregateItem
+              {
+                StatusId = g.Key,
+                Count = g.Count()
+              })
+              .ToList(),
+
+            ZltoRewardReferrerTotal = entity.Usages.Sum(u => u.ZltoRewardReferrer ?? 0m),
+            ZltoRewardRefereeTotal = entity.Usages.Sum(u => u.ZltoRewardReferee ?? 0m)
+          }
+          : null
       });
 
       if (includeChildItems) query = query.AsSplitQuery();

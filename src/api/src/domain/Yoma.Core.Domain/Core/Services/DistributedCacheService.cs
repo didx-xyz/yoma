@@ -56,7 +56,9 @@ namespace Yoma.Core.Domain.Core.Services
       var redisKey = $"{CacheIdentifier_Prefix}:{key}";
       var payload = JsonConvert.SerializeObject(value);
 
-      await _database.StringSetAsync(redisKey, payload, absoluteExpirationRelativeToNow);
+      var expiry = absoluteExpirationRelativeToNow.HasValue ? new Expiration(absoluteExpirationRelativeToNow.Value) : Expiration.Default;
+
+      await _database.StringSetAsync(redisKey, payload, expiry);
     }
 
     public void Remove(string key)
@@ -111,7 +113,9 @@ namespace Yoma.Core.Domain.Core.Services
       var serializedValue = JsonConvert.SerializeObject(value);
       var expiration = absoluteExpirationRelativeToNow ?? slidingExpiration;
 
-      await _database.StringSetAsync(redisKey, serializedValue, expiration);
+      var expiry = expiration.HasValue ? new Expiration(expiration.Value) : Expiration.Default;
+
+      await _database.StringSetAsync(redisKey, serializedValue, expiry);
 
       return value;
     }

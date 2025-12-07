@@ -68,9 +68,11 @@ namespace Yoma.Core.Domain.Referral.Models
 
     public ReferralLinkUsageStatus Status { get; set; }
 
-    public decimal? ZltoRewardReferrer { get; set; }
-
+    /// <summary>Actual ZLTO amount paid to the referee for this usage after all eligibility and payout rules.</summary>
     public decimal? ZltoRewardReferee { get; set; }
+
+    /// <summary>Actual ZLTO amount paid to the referrer for this usage after all eligibility and payout rules.</summary>
+    public decimal? ZltoRewardReferrer { get; set; }
 
     public DateTimeOffset DateClaimed { get; set; }
 

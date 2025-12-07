@@ -58,7 +58,11 @@ namespace Yoma.Core.Domain.Referral.Models
     /// </summary>
     public int UsageCountExpired { get; set; }
 
-
+    /// <summary>
+    /// Total ZLTO reward accrued for this link:
+    /// - As referrer: ZLTO earned from your referees’ completed usages / claims
+    /// - As referee: ZLTO earned from your own completed usages / claims
+    /// </summary>
     public decimal ZltoRewardTotal { get; set; }
   }
 }
