@@ -2,6 +2,7 @@ using FluentValidation;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Yoma.Core.Domain.ActionLink.Models;
 using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Helpers;
@@ -102,7 +103,7 @@ namespace Yoma.Core.Domain.Referral.Services
       if (result == null) return null;
 
       if (includeQRCode == true) result.QRCodeBase64 = QRCodeHelper.GenerateQRCodeBase64(result.URL);
-      SetUsageCounts(result);
+      SetUsageAggregates(result);
 
       if (!ensureOwnership) return result;
 
@@ -127,7 +128,7 @@ namespace Yoma.Core.Domain.Referral.Services
       if (result == null) return null;
 
       if (includeQRCode == true) result.QRCodeBase64 = QRCodeHelper.GenerateQRCodeBase64(result.URL);
-      SetUsageCounts(result);
+      SetUsageAggregates(result);
 
       return result;
     }
@@ -218,7 +219,7 @@ namespace Yoma.Core.Domain.Referral.Services
       }
 
       results.Items = [.. query];
-      results.Items.ForEach(SetUsageCounts);
+      results.Items.ForEach(SetUsageAggregates);
 
       return results;
     }
@@ -306,7 +307,7 @@ namespace Yoma.Core.Domain.Referral.Services
       result = await _linkRepository.Update(result);
 
       if (request.IncludeQRCode == true) result.QRCodeBase64 = QRCodeHelper.GenerateQRCodeBase64(result.URL);
-      SetUsageCounts(result);
+      SetUsageAggregates(result);
 
       return result;
     }
@@ -421,14 +422,20 @@ namespace Yoma.Core.Domain.Referral.Services
       return item;
     }
 
-    private void SetUsageCounts(ReferralLink item)
+    private void SetUsageAggregates(ReferralLink item)
     {
+      if (item.UsageAggregate == null) return;
+
       var statusPending = _linkUsageStatusService.GetByName(ReferralLinkUsageStatus.Pending.ToString());
       var statusExpired = _linkUsageStatusService.GetByName(ReferralLinkUsageStatus.Expired.ToString());
 
       item.CompletionTotal ??= 0;
-      item.PendingTotal = item.UsageCounts?.GetValueOrDefault(statusPending.Id) ?? 0;
-      item.ExpiredTotal = item.UsageCounts?.GetValueOrDefault(statusExpired.Id) ?? 0;
+      item.PendingTotal = item.UsageAggregate.UsageCountsByStatus.SingleOrDefault(o => o.StatusId == statusPending.Id)?.Count ?? 0;
+      item.ExpiredTotal = item.UsageAggregate.UsageCountsByStatus.SingleOrDefault(o => o.StatusId == statusExpired.Id)?.Count ?? 0;
+      item.UsageTotal = item.CompletionTotal + item.PendingTotal + item.ExpiredTotal; 
+
+      item.ZltoRewardReferrerTotal = item.UsageAggregate.ZltoRewardReferrerTotal;
+      item.ZltoRewardRefereeTotal = item.UsageAggregate.ZltoRewardRefereeTotal;
     }
     #endregion
   }

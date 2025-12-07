@@ -22,13 +22,32 @@ namespace Yoma.Core.Domain.Referral.Models
 
     public int? CompletionBalance => CompletionLimit.HasValue ? CompletionLimit - (CompletionTotal ?? default) : null;
 
+    /// <summary>
+    /// ZLTO amount for the referrer, read at completion time (not at claim).
+    /// null = no program override (system default or 0).
+    /// </summary>
     public decimal? ZltoRewardReferrer { get; set; }
 
+    /// <summary>
+    /// ZLTO amount for the referee, read at completion time (not at claim).
+    /// null = no program override (system default or 0).
+    /// </summary>
     public decimal? ZltoRewardReferee { get; set; }
 
     [JsonIgnore]
     public decimal? ZltoRewardPool { get; set; }
 
+    /// <summary>
+    /// Total cumulative ZLTO reward generated across the entire referral program.
+    /// This represents the combined ZLTO awarded for all links and all usages within
+    /// the program:
+    /// - ZLTO paid to referrers for all referee completions
+    /// - Plus ZLTO paid to all referees for their own completions
+    ///
+    /// Calculated from the sum of all (rewardReferrer + rewardReferee) values across
+    /// every processed usage belonging to any link in this program. This is a
+    /// program-level aggregated total and not role-specific.
+    /// </summary>
     public decimal? ZltoRewardCumulative { get; set; }
 
     [JsonIgnore]
