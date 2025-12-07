@@ -53,7 +53,12 @@ export const ReferrerLinksList: React.FC<LinksListProps> = ({
       <Suspense
         isLoading={isLoading && !hasLinks}
         error={error as any}
-        loader={<LoadingInline classNameSpinner="h-12 border-orange w-12" />}
+        loader={
+          <LoadingInline
+            className="rounded-xl bg-white p-4"
+            classNameSpinner="h-12 border-orange w-12"
+          />
+        }
       >
         {!hasLinks && !hasPrograms && (
           <NoRowsMessage
