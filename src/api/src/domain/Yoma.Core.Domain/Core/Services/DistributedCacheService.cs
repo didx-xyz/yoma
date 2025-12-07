@@ -113,7 +113,7 @@ namespace Yoma.Core.Domain.Core.Services
       var serializedValue = JsonConvert.SerializeObject(value);
       var expiration = absoluteExpirationRelativeToNow ?? slidingExpiration;
 
-      var expiry = expiration.HasValue ? new Expiration(expiration.Value): Expiration.Default;
+      var expiry = expiration.HasValue ? new Expiration(expiration.Value) : Expiration.Default;
 
       await _database.StringSetAsync(redisKey, serializedValue, expiry);
 
