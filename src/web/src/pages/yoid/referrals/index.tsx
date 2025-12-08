@@ -431,7 +431,7 @@ const ReferralsDashboard: NextPageWithLayout<{
                           </div>
 
                           <div className="flex-1 rounded-lg bg-white p-4">
-                            <ReferrerStats />
+                            <ReferrerStats link={firstLink} />
                           </div>
                         </div>
                       </div>
