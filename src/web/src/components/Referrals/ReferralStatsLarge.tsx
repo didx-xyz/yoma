@@ -23,7 +23,7 @@ export const ReferralStatsLarge: React.FC<ReferralStatsLargeProps> = ({
           <div className="flex items-center gap-1 font-bold text-black">
             <IoPeople className="mr-1 text-base text-blue-700" />
             <span className="font-family-nunito truncate text-lg">
-              {(totalReferrals || 0).toLocaleString()}
+              {(totalReferrals || 0).toLocaleString("en-US")}
             </span>
           </div>
         </div>
@@ -34,7 +34,7 @@ export const ReferralStatsLarge: React.FC<ReferralStatsLargeProps> = ({
           <div className="flex items-center gap-1 font-bold text-black">
             <IoCheckmarkCircle className="mr-1 text-base text-green-700" />
             <span className="font-family-nunito truncate text-lg">
-              {(completed || 0).toLocaleString()}
+              {(completed || 0).toLocaleString("en-US")}
             </span>
           </div>
         </div>
@@ -45,7 +45,7 @@ export const ReferralStatsLarge: React.FC<ReferralStatsLargeProps> = ({
           <div className="flex items-center gap-1 font-bold text-black">
             <IoTime className="mr-1 text-base text-orange-700" />
             <span className="font-family-nunito truncate text-lg">
-              {(pending || 0).toLocaleString()}
+              {(pending || 0).toLocaleString("en-US")}
             </span>
           </div>
         </div>
@@ -56,7 +56,7 @@ export const ReferralStatsLarge: React.FC<ReferralStatsLargeProps> = ({
           <div className="flex items-center gap-1 font-bold text-black">
             <IoGift className="mr-1 text-base text-yellow-700" />
             <span className="font-family-nunito truncate text-lg">
-              {(zltoEarned || 0).toLocaleString()}
+              {(zltoEarned || 0).toLocaleString("en-US")}
             </span>
           </div>
         </div>

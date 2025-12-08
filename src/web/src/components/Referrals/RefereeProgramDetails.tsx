@@ -176,7 +176,8 @@ export const RefereeProgramDetails: React.FC<ProgramDetailsProps> = ({
                           Your Reward 🎁
                         </p>
                         <p className="text-sm font-bold text-green-900">
-                          {program.zltoRewardReferee.toLocaleString()} ZLTO
+                          {program.zltoRewardReferee.toLocaleString("en-US")}{" "}
+                          ZLTO
                         </p>
                         <p className="text-[10px] text-gray-600">
                           When you complete
@@ -189,7 +190,8 @@ export const RefereeProgramDetails: React.FC<ProgramDetailsProps> = ({
                           Friend&apos;s Reward 🤝
                         </p>
                         <p className="text-sm font-bold text-blue-900">
-                          {program.zltoRewardReferrer.toLocaleString()} ZLTO
+                          {program.zltoRewardReferrer.toLocaleString("en-US")}{" "}
+                          ZLTO
                         </p>
                         <p className="text-[10px] text-gray-600">
                           For who referred you
@@ -207,7 +209,8 @@ export const RefereeProgramDetails: React.FC<ProgramDetailsProps> = ({
                           Your Reward 🎁
                         </p>
                         <p className="text-sm font-bold text-green-900">
-                          {program.zltoRewardReferrer.toLocaleString()} ZLTO
+                          {program.zltoRewardReferrer.toLocaleString("en-US")}{" "}
+                          ZLTO
                         </p>
                         <p className="text-[10px] text-gray-600">
                           When friends complete
@@ -220,7 +223,8 @@ export const RefereeProgramDetails: React.FC<ProgramDetailsProps> = ({
                           Friend&apos;s Reward 🎉
                         </p>
                         <p className="text-sm font-bold text-green-900">
-                          {program.zltoRewardReferee.toLocaleString()} ZLTO
+                          {program.zltoRewardReferee.toLocaleString("en-US")}{" "}
+                          ZLTO
                         </p>
                         <p className="text-[10px] text-gray-600">
                           They earn too!

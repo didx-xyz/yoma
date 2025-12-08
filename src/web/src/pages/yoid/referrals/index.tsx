@@ -43,6 +43,7 @@ import { config } from "~/lib/react-query-config";
 import { currentLanguageAtom, userProfileAtom } from "~/lib/store";
 import { authOptions } from "~/server/auth";
 import { type NextPageWithLayout } from "../../_app";
+import { getUserProfile } from "~/api/services/user";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
@@ -143,7 +144,7 @@ const ReferralsDashboard: NextPageWithLayout<{
 }> = ({ error, multiProgram = false }) => {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const [userProfile] = useAtom(userProfileAtom);
+  const [userProfile, setUserProfile] = useAtom(userProfileAtom);
 
   // State for multi-program mode only
   const [createLinkModalVisible, setCreateLinkModalVisible] = useState(false);
@@ -219,6 +220,11 @@ const ReferralsDashboard: NextPageWithLayout<{
             includeQRCode: false,
           });
 
+          // Refresh user profile to include new referral data
+          // This ensures UserMenu shows the referee dashboard link
+          const updatedProfile = await getUserProfile();
+          setUserProfile(updatedProfile);
+
           // Refetch links after creation
           await queryClient.invalidateQueries({ queryKey: ["ReferralLinks"] });
         } catch (error) {
@@ -237,6 +243,7 @@ const ReferralsDashboard: NextPageWithLayout<{
     defaultProgram,
     isAutoCreating,
     queryClient,
+    setUserProfile,
   ]);
 
   // Determine programs array based on mode

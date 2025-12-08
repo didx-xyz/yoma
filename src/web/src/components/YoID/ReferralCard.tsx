@@ -84,105 +84,100 @@ export const ReferralCard: React.FC<ReferralCardProps> = ({ onClick }) => {
 
   // Default state: Not started / No links created
   return (
-    <div className="flex h-full flex-col gap-3 text-xs text-black md:text-sm">
-      {/* Main Content Card */}
-      <div className="overflow-hidden rounded-xl border-2 border-green-200 bg-gradient-to-br from-green-50 via-blue-50 to-purple-50 shadow-md">
-        {/* Header */}
-        <div className="border-b border-green-100 bg-gradient-to-r from-green-50 to-transparent p-4">
-          <div className="items-centerx flex gap-3">
-            <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-green-500 to-blue-500 shadow-lg">
-              <IoGift className="h-6 w-6 text-white" />
-            </div>
-            <div className="flex-1">
-              <h3 className="text-base font-bold text-gray-900">
-                Share Yoma & <br />
-                Earn Rewards!
-              </h3>
+    <div className="flex flex-col gap-4 overflow-hidden rounded-xl bg-white p-4 shadow">
+      {/* Header */}
+      <div>
+        <div className="items-centerx flex gap-3">
+          <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full shadow-lg">
+            <IoGift className="text-green h-6 w-6" />
+          </div>
+          <div className="flex-1">
+            <h3 className="text-base font-bold text-gray-900">
+              Share Yoma & <br />
+              Earn Rewards!
+            </h3>
+          </div>
+        </div>
+        <p className="mt-2 text-xs text-gray-600">
+          Help friends discover opportunities and you&apos;ll both earn ZLTO.
+          {"  "}
+          {/* Toggle Details Button */}
+          <button
+            type="button"
+            onClick={() => setShowDetails(!showDetails)}
+            className="text-green cursor-pointer text-xs underline"
+          >
+            {showDetails ? <>Hide details</> : <>See more...</>}
+          </button>
+        </p>
+      </div>
+
+      {/* Content */}
+      {/* Expandable Details */}
+      {showDetails && (
+        <div className="animate-fade-in mb-4 space-y-3">
+          <div className="rounded-lg border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-white p-3 shadow-sm">
+            <h4 className="mb-1 flex items-center gap-2 text-xs font-semibold text-blue-900">
+              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-600 text-xs text-white">
+                1
+              </span>
+              Get your link
+            </h4>
+            <p className="text-xs text-gray-600">
+              Choose from available programs and create personalized links
+            </p>
+          </div>
+
+          <div className="rounded-lg border-2 border-green-200 bg-gradient-to-br from-green-50 to-white p-3 shadow-sm">
+            <h4 className="mb-1 flex items-center gap-2 text-xs font-semibold text-green-900">
+              <span className="bg-green flex h-6 w-6 items-center justify-center rounded-full text-xs text-white">
+                2
+              </span>
+              Share it
+            </h4>
+            <p className="text-xs text-gray-600">
+              Spread the word through social media, messaging, or email
+            </p>
+          </div>
+
+          <div className="rounded-lg border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-white p-3 shadow-sm">
+            <h4 className="mb-1 flex items-center gap-2 text-xs font-semibold text-purple-900">
+              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-purple-600 text-xs text-white">
+                3
+              </span>
+              Earn together
+            </h4>
+            <p className="text-xs text-gray-600">
+              Both you and your referees receive rewards when they complete
+              tasks
+            </p>
+          </div>
+
+          <div className="rounded-lg border-2 border-yellow-200 bg-gradient-to-br from-yellow-50 to-white p-3 shadow-sm">
+            <div className="flex items-start gap-2">
+              <span className="text-2xl">💡</span>
+              <div>
+                <p className="text-xs font-semibold text-yellow-900">
+                  Win-Win Benefits
+                </p>
+                <p className="mt-1 text-xs text-gray-600">
+                  Help your network discover opportunities while earning
+                  rewards. It&apos;s a win for everyone!
+                </p>
+              </div>
             </div>
           </div>
-          <p className="mt-2 text-xs text-gray-600">
-            Help friends discover opportunities and you&apos;ll both earn ZLTO.
-            {"  "}
-            {/* Toggle Details Button */}
-            <button
-              type="button"
-              onClick={() => setShowDetails(!showDetails)}
-              className="text-green cursor-pointer text-xs underline"
-            >
-              {showDetails ? <>Hide details</> : <>See more...</>}
-            </button>
-          </p>
         </div>
+      )}
 
-        {/* Content */}
-        <div className="p-4">
-          {/* Expandable Details */}
-          {showDetails && (
-            <div className="animate-fade-in mb-4 space-y-3">
-              <div className="rounded-lg border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-white p-3 shadow-sm">
-                <h4 className="mb-1 flex items-center gap-2 text-xs font-semibold text-blue-900">
-                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-600 text-xs text-white">
-                    1
-                  </span>
-                  Get your link
-                </h4>
-                <p className="text-xs text-gray-600">
-                  Choose from available programs and create personalized links
-                </p>
-              </div>
-
-              <div className="rounded-lg border-2 border-green-200 bg-gradient-to-br from-green-50 to-white p-3 shadow-sm">
-                <h4 className="mb-1 flex items-center gap-2 text-xs font-semibold text-green-900">
-                  <span className="bg-green flex h-6 w-6 items-center justify-center rounded-full text-xs text-white">
-                    2
-                  </span>
-                  Share it
-                </h4>
-                <p className="text-xs text-gray-600">
-                  Spread the word through social media, messaging, or email
-                </p>
-              </div>
-
-              <div className="rounded-lg border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-white p-3 shadow-sm">
-                <h4 className="mb-1 flex items-center gap-2 text-xs font-semibold text-purple-900">
-                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-purple-600 text-xs text-white">
-                    3
-                  </span>
-                  Earn together
-                </h4>
-                <p className="text-xs text-gray-600">
-                  Both you and your referees receive rewards when they complete
-                  tasks
-                </p>
-              </div>
-
-              <div className="rounded-lg border-2 border-yellow-200 bg-gradient-to-br from-yellow-50 to-white p-3 shadow-sm">
-                <div className="flex items-start gap-2">
-                  <span className="text-2xl">💡</span>
-                  <div>
-                    <p className="text-xs font-semibold text-yellow-900">
-                      Win-Win Benefits
-                    </p>
-                    <p className="mt-1 text-xs text-gray-600">
-                      Help your network discover opportunities while earning
-                      rewards. It&apos;s a win for everyone!
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Get Started Button */}
-          <button
-            onClick={handleGetStarted}
-            className="btn btn-success w-full gap-2 rounded-lg normal-case shadow-md transition-all hover:scale-105 hover:shadow-lg"
-          >
-            <span className="font-semibold">Get Started</span>
-            <FaArrowRight className="h-4 w-4" />
-          </button>
-        </div>
-      </div>
+      {/* Get Started Button */}
+      <button
+        onClick={handleGetStarted}
+        className="btn btn-sm btn-success w-full gap-2 rounded-lg normal-case shadow-md transition-all hover:scale-105 hover:shadow-lg"
+      >
+        <span className="font-semibold">Get Started</span>
+        <FaArrowRight className="h-4 w-4" />
+      </button>
     </div>
   );
 };

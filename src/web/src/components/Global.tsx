@@ -678,7 +678,7 @@ export const Global: React.FC = () => {
         className="md:max-h-[600px] md:w-[600px]"
       >
         <div className="flex h-full flex-col gap-2 overflow-y-auto pb-8">
-          <div className="bg-purple flex flex-row p-4 shadow-lg">
+          <div className="bg-theme flex flex-row p-4 shadow-lg">
             <h1 className="grow"></h1>
             <button
               type="button"

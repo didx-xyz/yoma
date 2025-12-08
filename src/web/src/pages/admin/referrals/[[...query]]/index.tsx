@@ -609,18 +609,24 @@ const ReferralPrograms: NextPageWithLayout<{
                                   className="h-4 w-4"
                                 />
                                 <span className="text-xs font-semibold">
-                                  {program.zltoRewardPool.toLocaleString()}
+                                  {program.zltoRewardPool.toLocaleString(
+                                    "en-US",
+                                  )}
                                 </span>
                               </div>
                               {program.zltoRewardBalance !== null && (
                                 <span className="text-xs text-gray-500">
-                                  {program.zltoRewardBalance.toLocaleString()}{" "}
+                                  {program.zltoRewardBalance.toLocaleString(
+                                    "en-US",
+                                  )}{" "}
                                   left
                                 </span>
                               )}
                               {program.zltoRewardCumulative !== null && (
                                 <span className="text-xs text-gray-500">
-                                  {program.zltoRewardCumulative.toLocaleString()}{" "}
+                                  {program.zltoRewardCumulative.toLocaleString(
+                                    "en-US",
+                                  )}{" "}
                                   used
                                 </span>
                               )}
@@ -792,7 +798,9 @@ const ReferralPrograms: NextPageWithLayout<{
                                     className="h-4 w-4"
                                   />
                                   <span className="text-xs font-bold">
-                                    {program.zltoRewardPool.toLocaleString()}
+                                    {program.zltoRewardPool.toLocaleString(
+                                      "en-US",
+                                    )}
                                   </span>
                                   <span className="text-xs text-gray-500">
                                     pool
@@ -801,7 +809,9 @@ const ReferralPrograms: NextPageWithLayout<{
                                 {program.zltoRewardBalance !== null && (
                                   <div className="flex items-center gap-1.5 pl-5">
                                     <span className="text-xs">
-                                      {program.zltoRewardBalance.toLocaleString()}
+                                      {program.zltoRewardBalance.toLocaleString(
+                                        "en-US",
+                                      )}
                                     </span>
                                     <span className="text-xs text-gray-500">
                                       left
@@ -811,7 +821,9 @@ const ReferralPrograms: NextPageWithLayout<{
                                 {program.zltoRewardCumulative !== null && (
                                   <div className="flex items-center gap-1.5 pl-5">
                                     <span className="text-xs text-gray-600">
-                                      {program.zltoRewardCumulative.toLocaleString()}
+                                      {program.zltoRewardCumulative.toLocaleString(
+                                        "en-US",
+                                      )}
                                     </span>
                                     <span className="text-xs text-gray-500">
                                       used
