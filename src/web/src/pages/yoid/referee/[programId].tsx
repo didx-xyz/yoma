@@ -9,7 +9,6 @@ import {
   IoArrowForward,
   IoCart,
   IoGift,
-  IoInformationCircle,
   IoRocket,
   IoShareSocial,
   IoTrophy,
@@ -245,7 +244,7 @@ const RefereeDashboard: NextPageWithLayout<{
                     id="next-action-pop"
                     className="shadow-custom mb-6 rounded-lg border-2 border-orange-300 bg-gradient-to-br from-orange-50 to-white p-6"
                   >
-                    <div className="mb-6 flex items-start gap-4 md:gap-6">
+                    <div className="mb-4 flex items-start gap-4 md:gap-6">
                       {/* Icon */}
                       <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-white shadow-lg ring-4 ring-white/50 md:h-16 md:w-16">
                         <IoArrowForward className="h-6 w-6 text-orange-500 md:h-8 md:w-8" />
@@ -261,75 +260,71 @@ const RefereeDashboard: NextPageWithLayout<{
                         </p>
                       </div>
                     </div>
-                    <div>
-                      {/* Verification Instructions */}
-                      <div className="space-y-4">
-                        <div>
-                          <p className="text-gray-dark mb-3 text-xs md:text-sm">
-                            Choose one of the following methods:
-                          </p>
-                          <div className="space-y-3">
-                            <div className="rounded-md border border-blue-300 bg-white p-3">
-                              <h5 className="mb-2 text-sm font-semibold text-blue-900 md:text-base">
-                                Option 1: Phone Number Verification
-                              </h5>
-                              <ul className="text-gray-dark ml-5 list-disc space-y-1 text-xs md:text-sm">
-                                <li>
-                                  Add a phone number to your account on the
-                                  profile page
-                                </li>
-                                <li>
-                                  <strong>Note:</strong> This will require you
-                                  to sign in again
-                                </li>
-                              </ul>
-                              <div className="mt-3">
-                                <Link
-                                  href={`/user/profile?returnUrl=${encodeURIComponent(
-                                    getSafeUrl(router.asPath, "/yoid"),
-                                  )}`}
-                                  className="btn btn-secondary btn-sm gap-2"
-                                >
-                                  <IoArrowForward className="h-4 w-4" />
-                                  Go to Profile
-                                </Link>
-                              </div>
-                            </div>
-                            <div className="rounded-md border border-blue-300 bg-white p-3">
-                              <h5 className="mb-2 text-sm font-semibold text-blue-900 md:text-base">
-                                Option 2: Social Media Account
-                              </h5>
-                              <ul className="text-gray-dark ml-5 list-disc space-y-1 text-xs md:text-sm">
-                                <li>
-                                  Link your social media account
-                                  (Google/Facebook)
-                                </li>
 
-                                <li>
-                                  <strong>Note:</strong> If you use a different
-                                  email, you will be recognized as a new user
-                                  and will lose any progress made so far
-                                </li>
-                              </ul>
-                              <div className="mt-3">
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    handleUserSignOut(
-                                      true,
-                                      false,
-                                      getSafeUrl(router.asPath, "/yoid"),
-                                    )
-                                  }
-                                  className="btn btn-secondary btn-sm min-w-0 gap-2"
-                                >
-                                  <IoArrowForward className="h-4 w-4 flex-shrink-0" />
-                                  <span className="truncate">
-                                    Sign in with Social Media
-                                  </span>
-                                </button>
-                              </div>
-                            </div>
+                    {/* Verification Instructions */}
+                    <div>
+                      <p className="text-gray-dark mb-3 text-xs">
+                        Choose one of the following methods:
+                      </p>
+                      <div className="space-y-3">
+                        <div className="rounded-md border border-blue-300 bg-white p-3">
+                          <h5 className="mb-2 text-sm font-semibold text-blue-900">
+                            Option 1: Phone Number Verification
+                          </h5>
+                          <ul className="text-gray-dark ml-5 list-disc space-y-1 text-xs">
+                            <li>
+                              Add a phone number to your account on the profile
+                              page
+                            </li>
+                            <li>
+                              <strong>Note:</strong> This will require you to
+                              sign in again
+                            </li>
+                          </ul>
+                          <div className="mt-3">
+                            <Link
+                              href={`/user/profile?returnUrl=${encodeURIComponent(
+                                getSafeUrl(router.asPath, "/yoid"),
+                              )}`}
+                              className="btn btn-secondary btn-sm gap-2"
+                            >
+                              <IoArrowForward className="h-4 w-4" />
+                              Go to Profile
+                            </Link>
+                          </div>
+                        </div>
+                        <div className="rounded-md border border-blue-300 bg-white p-3">
+                          <h5 className="mb-2 text-sm font-semibold text-blue-900">
+                            Option 2: Social Media Account
+                          </h5>
+                          <ul className="text-gray-dark ml-5 list-disc space-y-1 text-xs">
+                            <li>
+                              Link your social media account (Google/Facebook)
+                            </li>
+
+                            <li>
+                              <strong>Note:</strong> If you use a different
+                              email, you will be recognized as a new user and
+                              will lose any progress made so far
+                            </li>
+                          </ul>
+                          <div className="mt-3">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                handleUserSignOut(
+                                  true,
+                                  false,
+                                  getSafeUrl(router.asPath, "/yoid"),
+                                )
+                              }
+                              className="btn btn-secondary btn-sm min-w-0 gap-2"
+                            >
+                              <IoArrowForward className="h-4 w-4 flex-shrink-0" />
+                              <span className="truncate">
+                                Sign in with Social Media
+                              </span>
+                            </button>
                           </div>
                         </div>
                       </div>
@@ -352,7 +347,7 @@ const RefereeDashboard: NextPageWithLayout<{
                     id="next-action"
                     className="shadow-custom mb-6 rounded-lg border-2 border-orange-300 bg-gradient-to-br from-orange-50 to-white p-6"
                   >
-                    <div className="mb-6 flex items-start gap-4 md:gap-6">
+                    <div className="mb-4 flex items-start gap-4 md:gap-6">
                       {/* Icon */}
                       <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-white shadow-lg ring-4 ring-white/50 md:h-16 md:w-16">
                         <IoArrowForward className="h-6 w-6 text-orange-500 md:h-8 md:w-8" />
@@ -375,7 +370,7 @@ const RefereeDashboard: NextPageWithLayout<{
                         rule={nextAction.step.rule}
                         orderMode={nextAction.step.orderMode}
                         isCompleted={false}
-                        color="green"
+                        color="white"
                       />
                       {/* Tasks List */}
                       <PathwayTasksList
@@ -411,15 +406,15 @@ const RefereeDashboard: NextPageWithLayout<{
                         showActionButtons={false}
                         showBullets={false}
                         showBadges={false}
-                        color="green"
+                        showTaskConnectors={false}
+                        color="white"
                       />
                       {/* Helpful Tips */}
-                      <div className="mt-2 rounded-lg border-2 border-green-200 bg-green-50 p-4">
-                        <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold text-green-900 md:text-base">
-                          <IoInformationCircle className="h-6 w-6 text-green-500" />
+                      <div className="rounded-lg border-1 border-gray-200 bg-white p-4">
+                        <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold md:text-base">
                           How to Complete
                         </h4>
-                        <ol className="ml-5 list-decimal space-y-1 text-xs text-green-900 md:text-sm">
+                        <ol className="ml-4 list-decimal space-y-1 text-xs text-gray-900">
                           <li>
                             <strong>Complete</strong> the above tasks
                           </li>
@@ -446,7 +441,7 @@ const RefereeDashboard: NextPageWithLayout<{
             id="next-action"
             className="shadow-custom mb-6 rounded-lg border-2 border-orange-300 bg-gradient-to-br from-orange-50 to-white p-6"
           >
-            <div className="mb-6 flex items-start gap-4 md:gap-6">
+            <div className="mb- flex items-start gap-4 md:gap-6">
               {/* Icon */}
               <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-white shadow-lg ring-4 ring-white/50 md:h-16 md:w-16">
                 <IoGift className="h-6 w-6 text-orange-500 md:h-8 md:w-8" />
@@ -582,7 +577,7 @@ const RefereeDashboard: NextPageWithLayout<{
             id="next-action"
             className="shadow-custom mb-6 rounded-lg border-2 border-orange-300 bg-gradient-to-br from-orange-50 to-white p-6"
           >
-            <div className="mb-6 flex items-start gap-4 md:gap-6">
+            <div className="mb-4 flex items-start gap-4 md:gap-6">
               {/* Icon */}
               <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-white shadow-lg ring-4 ring-white/50 md:h-16 md:w-16">
                 <IoWarning className="h-6 w-6 text-orange-500 md:h-8 md:w-8" />

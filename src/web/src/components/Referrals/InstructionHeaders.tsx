@@ -94,7 +94,7 @@ const ProgressDisplay: React.FC<{
   total: number;
   percentComplete: number;
   isCompleted: boolean;
-  color?: "blue" | "green";
+  color?: "blue" | "green" | "white";
 }> = ({ completed, total, percentComplete, isCompleted, color = "blue" }) => (
   <div className="flex items-center gap-2">
     <span className={`text-[10px] font-semibold text-${color}-700`}>
@@ -110,7 +110,7 @@ export interface StepNumberBadgeProps {
   isCompleted: boolean;
   isSequential: boolean;
   totalSteps: number;
-  color?: "blue" | "purple";
+  color?: "blue" | "purple" | "white";
 }
 
 export const StepNumberBadge: React.FC<StepNumberBadgeProps> = ({
@@ -132,6 +132,12 @@ export const StepNumberBadge: React.FC<StepNumberBadgeProps> = ({
       border: "border-purple-400",
       bg: "bg-white",
       text: "text-purple-600",
+    },
+    white: {
+      completed: "bg-gray-500 text-white",
+      border: "border-gray-400",
+      bg: "bg-white",
+      text: "text-gray-600",
     },
   };
 
@@ -298,7 +304,7 @@ export interface TaskInstructionHeaderProps {
   total?: number;
   percentComplete?: number;
   isCompleted?: boolean;
-  color?: "green" | "orange" | "blue";
+  color?: "green" | "orange" | "blue" | "white";
 }
 
 export const TaskInstructionHeader: React.FC<TaskInstructionHeaderProps> = ({
@@ -339,6 +345,14 @@ export const TaskInstructionHeader: React.FC<TaskInstructionHeaderProps> = ({
       iconBg: "bg-white",
       iconText: "text-blue-600",
       text: "text-blue-900",
+    },
+    white: {
+      border: "border-gray-200",
+      bg: "bg-white",
+      iconBorder: "border-gray-400",
+      iconBg: "bg-white",
+      iconText: "text-gray-600",
+      text: "text-gray-900",
     },
   };
 
@@ -431,7 +445,7 @@ export interface PathwayTaskDisplayProps {
   showActionButton?: boolean;
   showBullets?: boolean;
   showBadges?: boolean;
-  color?: "green" | "orange";
+  color?: "green" | "orange" | "white";
   totalTasks?: number;
   isAdmin?: boolean;
 }
@@ -452,9 +466,21 @@ export const PathwayTaskDisplay: React.FC<PathwayTaskDisplayProps> = ({
   const badgeClasses =
     color === "orange"
       ? "border-orange-400 bg-orange-500"
-      : "border-green-400 bg-white";
-  const badgeTextColor = color === "orange" ? "text-white" : "text-green-600";
-  const buttonClass = color === "orange" ? "btn-warning" : "btn-secondary";
+      : color === "white"
+        ? "border-gray-400 bg-white"
+        : "border-green-400 bg-white";
+  const badgeTextColor =
+    color === "orange"
+      ? "text-white"
+      : color === "white"
+        ? "text-gray-600"
+        : "text-green-600";
+  const buttonClass =
+    color === "orange"
+      ? "btn-warning"
+      : color === "white"
+        ? "btn-ghost"
+        : "btn-secondary";
 
   return (
     <div className="flex gap-3">
@@ -543,7 +569,8 @@ export interface PathwayTasksListProps {
   showActionButtons?: boolean;
   showBullets?: boolean;
   showBadges?: boolean;
-  color?: "green" | "orange";
+  showTaskConnectors?: boolean;
+  color?: "green" | "orange" | "white";
   isAdmin?: boolean;
 }
 
@@ -555,6 +582,7 @@ export const PathwayTasksList: React.FC<PathwayTasksListProps> = ({
   showActionButtons = false,
   showBullets = true,
   showBadges = true,
+  showTaskConnectors = true,
   color = "green",
   isAdmin = false,
 }) => {
@@ -563,7 +591,14 @@ export const PathwayTasksList: React.FC<PathwayTasksListProps> = ({
     orderMode === PathwayOrderMode.Sequential;
   const isAnyRule = rule === PathwayCompletionRule.Any;
 
-  const connectorColor = color === "orange" ? "orange-400" : "green-400";
+  const connectorColor =
+    color === "orange"
+      ? "orange-400"
+      : color === "white"
+        ? "gray-400"
+        : "green-400";
+
+  const connectorTextColor = color === "white" ? "text-gray-600" : "text-white";
 
   return (
     <div className="space-y-0">
@@ -588,10 +623,10 @@ export const PathwayTasksList: React.FC<PathwayTasksListProps> = ({
           />
 
           {/* AND/OR indicator between tasks */}
-          {taskIndex < tasks.length - 1 && (
+          {showTaskConnectors && taskIndex < tasks.length - 1 && (
             <div className="mb-4 flex justify-center">
               <div
-                className={`badge badge-xs border-${connectorColor} bg-${connectorColor} px-2 py-1 text-[10px] font-bold text-white`}
+                className={`badge badge-xs border-${connectorColor} bg-${connectorColor} px-2 py-1 text-[10px] font-bold ${connectorTextColor}`}
               >
                 {isAnyRule ? "OR" : hasSequentialTasks ? "THEN" : "AND"}
               </div>

@@ -3,13 +3,13 @@ import { IoGift, IoArrowForward } from "react-icons/io5";
 
 export const BecomeReferrerCTA: React.FC = () => {
   return (
-    <div className="rounded-xl border-4 border-green-300 bg-gradient-to-br from-green-50 to-white p-4 shadow-xl md:p-6">
+    <div className="rounded-xl border-1 border-gray-200 p-4 shadow-xl md:p-6">
       <div className="mb-6 flex flex-col items-center gap-4 md:flex-row">
-        <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-green-500 to-blue-500 shadow-lg md:h-14 md:w-14">
-          <IoGift className="h-6 w-6 text-white md:h-8 md:w-8" />
+        <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full shadow-lg md:h-14 md:w-14">
+          <IoGift className="text-green h-6 w-6 md:h-8 md:w-8" />
         </div>
         <div className="flex-1 text-center md:text-left">
-          <h2 className="text-base font-bold text-green-900 md:text-lg">
+          <h2 className="text-base font-bold md:text-lg">
             Become a Referrer Instead!
           </h2>
           <p className="text-xs text-gray-700 md:text-sm">

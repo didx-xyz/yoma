@@ -19,7 +19,7 @@ export const ReferralStatsSmall: React.FC<ReferralStatsSmallProps> = ({
       <div className="flex min-w-0 items-center gap-2 font-bold text-blue-700">
         <span className="badge gap-1 truncate bg-blue-50 text-blue-700">
           <IoPeople />
-          {(totalReferrals || 0).toLocaleString()}
+          {(totalReferrals || 0).toLocaleString("en-US")}
         </span>
         <div className="min-w-0 flex-1 truncate text-[10px] font-normal text-gray-500">
           Total
@@ -30,7 +30,7 @@ export const ReferralStatsSmall: React.FC<ReferralStatsSmallProps> = ({
       <div className="flex min-w-0 items-center gap-2 font-bold text-green-700">
         <span className="badge gap-1 truncate bg-green-50 text-green-700">
           <IoCheckmarkCircle />
-          {(completed || 0).toLocaleString()}
+          {(completed || 0).toLocaleString("en-US")}
         </span>
         <div className="min-w-0 flex-1 truncate text-[10px] font-normal text-gray-500">
           Completed
@@ -41,7 +41,7 @@ export const ReferralStatsSmall: React.FC<ReferralStatsSmallProps> = ({
       <div className="flex min-w-0 items-center gap-2 font-bold text-orange-700">
         <span className="badge gap-1 truncate bg-orange-50 text-orange-700">
           <IoTime />
-          {(pending || 0).toLocaleString()}
+          {(pending || 0).toLocaleString("en-US")}
         </span>
         <div className="min-w-0 flex-1 truncate text-[10px] font-normal text-gray-500">
           Pending
@@ -52,7 +52,7 @@ export const ReferralStatsSmall: React.FC<ReferralStatsSmallProps> = ({
       <div className="flex min-w-0 items-center gap-2 font-bold text-yellow-700">
         <span className="badge gap-1 truncate bg-yellow-50 text-yellow-700">
           <IoGift />
-          {(zltoEarned || 0).toLocaleString()}
+          {(zltoEarned || 0).toLocaleString("en-US")}
         </span>
         <div className="min-w-0 flex-1 truncate text-[10px] font-normal text-gray-500">
           ZLTO Earned

@@ -526,6 +526,9 @@ html:has(body.content-overflow-y) {
   background: var(--color-white) !important;
   opacity: 0.3 !important;
 }
+[data-theme="white"] #nprogress .bar {
+  background: var(--color-gray-dark) !important;
+}
 #nprogress .peg {
   display: none !important;
 }
