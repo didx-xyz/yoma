@@ -315,11 +315,15 @@ export interface ReferralLink {
   description: string | null;
   programId: string;
   programName: string;
+  programDescription: string | null;
   programCompletionLimitReferee: number | null;
   userId: string;
-  userDisplayName: string | null;
+  userDisplayName: string;
+  username: string;
   userEmail: string | null;
+  userEmailConfirmed: boolean | null;
   userPhoneNumber: string | null;
+  userPhoneNumberConfirmed: boolean | null;
   blocked: boolean;
   blockedDate: string | null;
   statusId: string;
@@ -331,7 +335,10 @@ export interface ReferralLink {
   completionBalance: number | null;
   pendingTotal: number | null;
   expiredTotal: number | null;
+  usageTotal: number | null; //
   zltoRewardCumulative: number | null;
+  zltoRewardReferrerTotal: number; //
+  zltoRewardRefereeTotal: number; //
   dateCreated: string;
   dateModified: string;
 }
