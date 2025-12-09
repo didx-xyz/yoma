@@ -9,8 +9,10 @@ import {
   IoArrowForward,
   IoCart,
   IoGift,
+  IoHeart,
   IoRocket,
   IoShareSocial,
+  IoStorefront,
   IoTrophy,
   IoWarning,
   IoWarningOutline,
@@ -441,7 +443,7 @@ const RefereeDashboard: NextPageWithLayout<{
             id="next-action"
             className="shadow-custom mb-6 rounded-lg border-2 border-orange-300 bg-gradient-to-br from-orange-50 to-white p-6"
           >
-            <div className="mb- flex items-start gap-4 md:gap-6">
+            <div className="mb-4 flex items-start gap-4 md:gap-6">
               {/* Icon */}
               <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-white shadow-lg ring-4 ring-white/50 md:h-16 md:w-16">
                 <IoGift className="h-6 w-6 text-orange-500 md:h-8 md:w-8" />
@@ -453,119 +455,107 @@ const RefereeDashboard: NextPageWithLayout<{
                   What&apos;s Next?
                 </h2>
                 <p className="text-gray-dark text-xs md:text-sm">
-                  {program.zltoRewardReferee ? (
-                    <>
-                      Your <strong>{program.zltoRewardReferee} ZLTO</strong> has
-                      been added to your wallet! Your journey doesn&apos;t have
-                      to end here.
-                    </>
-                  ) : (
-                    <>
-                      You have gained valuable skills which are stored as
-                      credentials in your wallet. Your journey doesn&apos;t have
-                      to end here.
-                    </>
-                  )}
+                  You have completed the program but your journey doesn&apos;t
+                  have to end here.
                 </p>
               </div>
             </div>
-            <div>
-              <div className="space-y-4">
-                {/* View Dashboard */}
-                <div className="rounded-lg border-2 border-green-200 bg-green-50 p-4">
-                  <h4 className="mb-2 flex items-center gap-2 text-sm font-semibold text-green-900 md:text-lg">
-                    <IoTrophy className="h-5 w-5 text-green-600" />
-                    View Your Achievements
-                  </h4>
-                  <p className="text-gray-dark mb-3 text-xs md:text-sm">
-                    Your achievements, skills and credentials are safely stored
-                    in your wallet. View them now!
-                  </p>
-                  <Link
-                    href="/yoid/wallet"
-                    className="btn btn-success btn-sm gap-2"
-                  >
-                    <IoTrophy className="h-4 w-4" />
-                    View Dashboard
-                  </Link>
-                </div>
 
-                {/* Spend ZLTO on Marketplace */}
-                {program.zltoRewardReferee && (
-                  <div className="rounded-lg border-2 border-purple-200 bg-purple-50 p-4">
-                    <h4 className="mb-2 flex items-center gap-2 text-sm font-semibold text-purple-900 md:text-lg">
-                      <IoCart className="h-5 w-5 text-purple-600" />
-                      Spend Your ZLTO
-                    </h4>
-                    <p className="text-gray-dark mb-3 text-xs md:text-sm">
-                      Visit the marketplace to discover amazing opportunities
-                      and experiences you can unlock with your ZLTO!
-                    </p>
-                    <Link
-                      href="/marketplace"
-                      className="btn btn-primary btn-sm gap-2"
-                    >
-                      <IoCart className="h-4 w-4" />
-                      Explore Marketplace
-                    </Link>
-                  </div>
-                )}
+            <div className="space-y-4">
+              {/* View Dashboard */}
+              <div className="rounded-lg border-2 border-green-200 bg-green-50 p-4">
+                <h4 className="mb-2 flex items-center gap-2 text-sm font-semibold text-green-900 md:text-lg">
+                  <IoTrophy className="h-5 w-5 text-green-600" />
+                  View Your Achievements
+                </h4>
+                <p className="text-gray-dark mb-3 text-xs md:text-sm">
+                  Your achievements, skills and credentials are safely stored in
+                  your wallet. View them now!
+                </p>
+                <Link
+                  href="/yoid/wallet"
+                  className="btn btn-success btn-sm gap-2"
+                >
+                  <IoTrophy className="h-4 w-4" />
+                  View Dashboard
+                </Link>
+              </div>
 
-                {/* Explore Opportunities */}
+              {/* Spend ZLTO on Marketplace */}
+              {program.zltoRewardReferee && (
                 <div className="rounded-lg border-2 border-blue-200 bg-blue-50 p-4">
                   <h4 className="mb-2 flex items-center gap-2 text-sm font-semibold text-blue-900 md:text-lg">
-                    <IoRocket className="h-5 w-5 text-blue-600" />
-                    Explore Other Opportunities
+                    <IoCart className="h-5 w-5 text-blue-600" />
+                    Spend Your ZLTO
                   </h4>
                   <p className="text-gray-dark mb-3 text-xs md:text-sm">
-                    {program.zltoRewardReferee ? (
-                      <>
-                        Continue earning more ZLTO and developing new skills
-                        through various opportunities.
-                      </>
-                    ) : (
-                      <>
-                        Discover opportunities to earn ZLTO and develop valuable
-                        skills.
-                      </>
-                    )}
+                    Visit the marketplace to discover amazing opportunities and
+                    experiences you can unlock with your ZLTO!
                   </p>
                   <Link
-                    href="/opportunities"
-                    className="btn btn-primary btn-sm gap-2"
+                    href="/marketplace"
+                    className="btn bg-blue btn-sm gap-2 text-white"
                   >
-                    <IoRocket className="h-4 w-4" />
-                    Find Opportunities
+                    <IoStorefront className="h-4 w-4" />
+                    Explore Marketplace
                   </Link>
                 </div>
+              )}
 
-                {/* Become a Referrer */}
-                <div className="rounded-lg border-2 border-yellow-200 bg-yellow-50 p-4">
-                  <h4 className="mb-2 flex items-center gap-2 text-sm font-semibold text-yellow-900 md:text-lg">
-                    <IoShareSocial className="h-5 w-5 text-yellow-600" />
-                    Become a Referrer
-                  </h4>
-                  <p className="text-gray-dark mb-3 text-xs md:text-sm">
-                    {program.zltoRewardReferee ? (
-                      <>
-                        Love this program? Share the opportunity with others and
-                        earn even more ZLTO for every successful referral!
-                      </>
-                    ) : (
-                      <>
-                        Share opportunities with others and earn ZLTO for every
-                        successful referral!
-                      </>
-                    )}
-                  </p>
-                  <Link
-                    href="/yoid/referrals"
-                    className="btn btn-warning btn-sm gap-2"
-                  >
-                    <IoShareSocial className="h-4 w-4" />
-                    Start Referring & Earn
-                  </Link>
-                </div>
+              {/* Explore Opportunities */}
+              <div className="rounded-lg border-2 border-purple-200 bg-purple-50 p-4">
+                <h4 className="mb-2 flex items-center gap-2 text-sm font-semibold text-purple-900 md:text-lg">
+                  <IoRocket className="h-5 w-5 text-purple-600" />
+                  Explore Other Opportunities
+                </h4>
+                <p className="text-gray-dark mb-3 text-xs md:text-sm">
+                  {program.zltoRewardReferee ? (
+                    <>
+                      Continue earning more ZLTO and developing new skills
+                      through various opportunities.
+                    </>
+                  ) : (
+                    <>
+                      Discover opportunities to earn ZLTO and develop valuable
+                      skills.
+                    </>
+                  )}
+                </p>
+                <Link
+                  href="/opportunities"
+                  className="btn btn-primary btn-sm gap-2"
+                >
+                  <IoRocket className="h-4 w-4" />
+                  Find Opportunities
+                </Link>
+              </div>
+
+              {/* Become a Referrer */}
+              <div className="rounded-lg border-2 border-pink-200 bg-pink-50 p-4">
+                <h4 className="mb-2 flex items-center gap-2 text-sm font-semibold text-pink-900 md:text-lg">
+                  <IoHeart className="h-5 w-5 text-pink-600" />
+                  Become a Referrer
+                </h4>
+                <p className="text-gray-dark mb-3 text-xs md:text-sm">
+                  {program.zltoRewardReferee ? (
+                    <>
+                      Love this program? Share the opportunity with others and
+                      earn even more ZLTO for every successful referral!
+                    </>
+                  ) : (
+                    <>
+                      Share opportunities with others and earn ZLTO for every
+                      successful referral!
+                    </>
+                  )}
+                </p>
+                <Link
+                  href="/yoid/referrals"
+                  className="btn btn-sm gap-2 bg-pink-500 text-white hover:bg-pink-600"
+                >
+                  <IoShareSocial className="h-4 w-4" />
+                  Start Referring & Earn
+                </Link>
               </div>
             </div>
           </div>
@@ -599,9 +589,9 @@ const RefereeDashboard: NextPageWithLayout<{
             <div>
               <div className="space-y-4">
                 {/* Explore Opportunities */}
-                <div className="rounded-lg border-2 border-blue-200 bg-blue-50 p-4">
-                  <h4 className="mb-2 flex items-center gap-2 text-sm font-semibold text-blue-900 md:text-lg">
-                    <IoRocket className="h-5 w-5 text-blue-600" />
+                <div className="rounded-lg border-2 border-purple-200 bg-purple-50 p-4">
+                  <h4 className="mb-2 flex items-center gap-2 text-sm font-semibold text-purple-900 md:text-lg">
+                    <IoRocket className="h-5 w-5 text-purple-600" />
                     Explore Other Opportunities
                   </h4>
                   <p className="text-gray-dark mb-3 text-xs md:text-sm">
@@ -618,18 +608,27 @@ const RefereeDashboard: NextPageWithLayout<{
                 </div>
 
                 {/* Become a Referrer */}
-                <div className="rounded-lg border-2 border-yellow-200 bg-yellow-50 p-4">
-                  <h4 className="mb-2 flex items-center gap-2 text-sm font-semibold text-yellow-900 md:text-lg">
-                    <IoShareSocial className="h-5 w-5 text-yellow-600" />
+                <div className="rounded-lg border-2 border-pink-200 bg-pink-50 p-4">
+                  <h4 className="mb-2 flex items-center gap-2 text-sm font-semibold text-pink-900 md:text-lg">
+                    <IoHeart className="h-5 w-5 text-pink-600" />
                     Become a Referrer
                   </h4>
                   <p className="text-gray-dark mb-3 text-xs md:text-sm">
-                    Turn your experience into earnings! Refer others to active
-                    programs and earn ZLTO for every successful referral.
+                    {program.zltoRewardReferee ? (
+                      <>
+                        Love this program? Share the opportunity with others and
+                        earn even more ZLTO for every successful referral!
+                      </>
+                    ) : (
+                      <>
+                        Share opportunities with others and earn ZLTO for every
+                        successful referral!
+                      </>
+                    )}
                   </p>
                   <Link
                     href="/yoid/referrals"
-                    className="btn btn-warning btn-sm gap-2"
+                    className="btn btn-sm gap-2 bg-pink-500 text-white hover:bg-pink-600"
                   >
                     <IoShareSocial className="h-4 w-4" />
                     Start Referring & Earn

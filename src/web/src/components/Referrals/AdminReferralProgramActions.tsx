@@ -84,7 +84,7 @@ export const AdminReferralProgramActions: React.FC<
               )}
               {status === ProgramStatus.Deleted && (
                 <>
-                  Are you sure you want to <i>archive</i> this referral program?
+                  Are you sure you want to <i>delete</i> this referral program?
                 </>
               )}
             </p>
@@ -251,7 +251,7 @@ export const AdminReferralProgramActions: React.FC<
                   }
                 >
                   <FaTrash className="text-green size-4" />
-                  Archive
+                  Delete
                 </button>
               </li>
             )}

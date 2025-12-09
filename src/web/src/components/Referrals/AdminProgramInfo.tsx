@@ -122,7 +122,7 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
                   {program?.status ? (
                     <ProgramStatusBadge status={program.status} />
                   ) : (
-                    "Not set"
+                    "N/A"
                   )}
                 </div>
               </div>
@@ -189,7 +189,7 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
                 <div className="flex-1 border border-gray-200 px-4 py-2 text-sm hover:bg-gray-100">
                   {program?.completionWindowInDays
                     ? `${program.completionWindowInDays} days`
-                    : "Not set"}
+                    : "N/A"}
                 </div>
               </div>
 
@@ -259,7 +259,7 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
                       </span>
                     </div>
                   ) : (
-                    "Not set"
+                    "N/A"
                   )}
                 </div>
               </div>
@@ -283,7 +283,7 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
                       </span>
                     </div>
                   ) : (
-                    "Not set"
+                    "N/A"
                   )}
                 </div>
               </div>
@@ -307,7 +307,7 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
                       </span>
                     </div>
                   ) : (
-                    "Not set"
+                    "N/A"
                   )}
                 </div>
               </div>
@@ -357,7 +357,7 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
                       </span>
                     </div>
                   ) : (
-                    "Not tracked"
+                    "N/A"
                   )}
                 </div>
               </div>

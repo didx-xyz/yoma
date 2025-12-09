@@ -635,9 +635,6 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
               <ul className="mx-auto flex w-max items-center gap-2 object-contain lg:gap-4 xl:gap-8">
                 {currentNavbarLinks.map((link, index) => (
                   <li key={index} className="relative flex-shrink-0">
-                    {/* {link.selected && (
-                        <div className="bg-green absolute top-0 right-0 left-0 h-1"></div>
-                      )} */}
                     <Link
                       href={link.url!}
                       onClick={(e) => {
@@ -651,13 +648,9 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
                       className="bg-theme group btn font-nunito flex-shrink-0 !rounded-md border-none p-2 px-4 text-base text-white shadow-none duration-0 hover:brightness-95"
                       draggable={false}
                     >
-                      {/* ICON */}
-                      {/* <span className="mr-2">{link.iconImage}</span> */}
                       <span className={link.selected ? "font-bold" : ""}>
                         {link.title}
                       </span>
-                      {/* HOVER EFFECT */}
-                      {/* <span className="bg-gray-light block h-0.5 max-w-0 transition-all duration-500 group-hover:max-w-full"></span> */}
                     </Link>
                   </li>
                 ))}

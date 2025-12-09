@@ -1,9 +1,7 @@
 import { useRouter } from "next/router";
-import { IoGift } from "react-icons/io5";
-import { FaArrowRight } from "react-icons/fa";
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { searchReferralLinkUsagesAsReferrer } from "~/api/services/referrals";
+import { FaArrowRight } from "react-icons/fa";
+import { IoGift } from "react-icons/io5";
 
 interface ReferralCardProps {
   onClick?: () => void;
@@ -13,86 +11,22 @@ export const ReferralCard: React.FC<ReferralCardProps> = ({ onClick }) => {
   const router = useRouter();
   const [showDetails, setShowDetails] = useState(false);
 
-  // Fetch referrer usage statistics
-  const { data: usageResults } = useQuery({
-    queryKey: ["ReferralLinkUsages", "Referrer", "Stats"],
-    queryFn: () =>
-      searchReferralLinkUsagesAsReferrer({
-        pageNumber: 1,
-        pageSize: 100, // Get all usages to calculate stats
-        linkId: null,
-        programId: null,
-        statuses: null,
-        dateStart: null,
-        dateEnd: null,
-      }),
-  });
-
-  const hasActiveLinks = (usageResults?.items?.length ?? 0) > 0;
-  const totalReferrals = usageResults?.totalCount ?? 0;
-
-  // Total earned would need program-level reward data which isn&apos;t in the usage response
-  // For now, show count of completed referrals as the metric
-  const completedReferrals =
-    usageResults?.items?.filter((usage) => usage.status === "Completed")
-      .length ?? 0;
-
   const handleGetStarted = () => {
     onClick?.();
     router.push("/yoid/referrals");
   };
-
-  // Active referrer state with stats
-  if (hasActiveLinks) {
-    return (
-      <div className="flex h-full flex-col gap-2 text-xs text-black md:text-sm">
-        <div className="text-gray-dark flex items-start gap-2">
-          <IoGift className="text-green mt-0.5 h-5 w-5 flex-shrink-0" />
-          <div className="flex-1">
-            <span className="font-semibold">Share & Earn Together</span>
-            <span className="ml-1 text-xs">
-              Track your referrals and rewards
-            </span>
-          </div>
-        </div>
-
-        <div className="flex flex-col gap-1 border-y-2 border-dotted border-[#D4E8D4] py-2">
-          <div className="flex flex-row items-center justify-between">
-            <p className="text-gray-dark">Total Referrals:</p>
-            <span className="badge bg-green-light text-green font-semibold">
-              {totalReferrals}
-            </span>
-          </div>
-          <div className="flex flex-row items-center justify-between">
-            <p className="text-gray-dark">Completed:</p>
-            <span className="badge bg-yellow-tint text-yellow font-semibold">
-              {completedReferrals}
-            </span>
-          </div>
-        </div>
-
-        <button
-          onClick={handleGetStarted}
-          className="text-green hover:text-green-dark mt-auto flex w-full items-center justify-between text-xs font-semibold underline"
-        >
-          <span>View Dashboard</span>
-          <FaArrowRight className="h-3 w-3" />
-        </button>
-      </div>
-    );
-  }
 
   // Default state: Not started / No links created
   return (
     <div className="flex flex-col gap-4 overflow-hidden rounded-xl bg-white p-4 shadow">
       {/* Header */}
       <div>
-        <div className="items-centerx flex gap-3">
+        <div className="flex items-center gap-3">
           <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full shadow-lg">
             <IoGift className="text-green h-6 w-6" />
           </div>
           <div className="flex-1">
-            <h3 className="text-base font-bold text-gray-900">
+            <h3 className="text-sm font-bold text-gray-900">
               Share Yoma & <br />
               Earn Rewards!
             </h3>
@@ -116,9 +50,9 @@ export const ReferralCard: React.FC<ReferralCardProps> = ({ onClick }) => {
       {/* Expandable Details */}
       {showDetails && (
         <div className="animate-fade-in mb-4 space-y-3">
-          <div className="rounded-lg border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-white p-3 shadow-sm">
-            <h4 className="mb-1 flex items-center gap-2 text-xs font-semibold text-blue-900">
-              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-600 text-xs text-white">
+          <div>
+            <h4 className="mb-1 flex items-center gap-2 text-sm font-semibold text-black">
+              <span className="bg-green flex h-6 w-6 items-center justify-center rounded-full text-xs text-white">
                 1
               </span>
               Get your link
@@ -128,8 +62,8 @@ export const ReferralCard: React.FC<ReferralCardProps> = ({ onClick }) => {
             </p>
           </div>
 
-          <div className="rounded-lg border-2 border-green-200 bg-gradient-to-br from-green-50 to-white p-3 shadow-sm">
-            <h4 className="mb-1 flex items-center gap-2 text-xs font-semibold text-green-900">
+          <div>
+            <h4 className="mb-1 flex items-center gap-2 text-sm font-semibold text-black">
               <span className="bg-green flex h-6 w-6 items-center justify-center rounded-full text-xs text-white">
                 2
               </span>
@@ -140,9 +74,9 @@ export const ReferralCard: React.FC<ReferralCardProps> = ({ onClick }) => {
             </p>
           </div>
 
-          <div className="rounded-lg border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-white p-3 shadow-sm">
-            <h4 className="mb-1 flex items-center gap-2 text-xs font-semibold text-purple-900">
-              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-purple-600 text-xs text-white">
+          <div>
+            <h4 className="mb-1 flex items-center gap-2 text-sm font-semibold text-black">
+              <span className="bg-green flex h-6 w-6 items-center justify-center rounded-full text-xs text-white">
                 3
               </span>
               Earn together
@@ -151,21 +85,6 @@ export const ReferralCard: React.FC<ReferralCardProps> = ({ onClick }) => {
               Both you and your referees receive rewards when they complete
               tasks
             </p>
-          </div>
-
-          <div className="rounded-lg border-2 border-yellow-200 bg-gradient-to-br from-yellow-50 to-white p-3 shadow-sm">
-            <div className="flex items-start gap-2">
-              <span className="text-2xl">💡</span>
-              <div>
-                <p className="text-xs font-semibold text-yellow-900">
-                  Win-Win Benefits
-                </p>
-                <p className="mt-1 text-xs text-gray-600">
-                  Help your network discover opportunities while earning
-                  rewards. It&apos;s a win for everyone!
-                </p>
-              </div>
-            </div>
           </div>
         </div>
       )}

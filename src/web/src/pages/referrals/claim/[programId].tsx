@@ -436,8 +436,9 @@ const ReferralClaimPage: NextPageWithLayout<{
 
               {program.proofOfPersonhoodRequired && (
                 <div className="text-gray-dark text-center text-xs md:text-sm">
-                  Please sign-up using <strong>Social Media</strong>{" "}
-                  (Google/Facebook) or <strong>Phone Number</strong>
+                  Please login using <strong>Social Media</strong>{" "}
+                  (Google/Facebook) or scroll to the bottom and register with a{" "}
+                  <strong>Phone Number</strong>
                 </div>
               )}
             </div>
