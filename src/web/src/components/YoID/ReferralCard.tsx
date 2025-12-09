@@ -87,12 +87,12 @@ export const ReferralCard: React.FC<ReferralCardProps> = ({ onClick }) => {
     <div className="flex flex-col gap-4 overflow-hidden rounded-xl bg-white p-4 shadow">
       {/* Header */}
       <div>
-        <div className="items-centerx flex gap-3">
+        <div className="flex items-center gap-3">
           <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full shadow-lg">
             <IoGift className="text-green h-6 w-6" />
           </div>
           <div className="flex-1">
-            <h3 className="text-base font-bold text-gray-900">
+            <h3 className="text-sm font-bold text-gray-900">
               Share Yoma & <br />
               Earn Rewards!
             </h3>
@@ -116,9 +116,9 @@ export const ReferralCard: React.FC<ReferralCardProps> = ({ onClick }) => {
       {/* Expandable Details */}
       {showDetails && (
         <div className="animate-fade-in mb-4 space-y-3">
-          <div className="rounded-lg border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-white p-3 shadow-sm">
-            <h4 className="mb-1 flex items-center gap-2 text-xs font-semibold text-blue-900">
-              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-600 text-xs text-white">
+          <div>
+            <h4 className="mb-1 flex items-center gap-2 text-sm font-semibold">
+              <span className="bg-green flex h-6 w-6 items-center justify-center rounded-full text-xs text-white">
                 1
               </span>
               Get your link
@@ -128,8 +128,8 @@ export const ReferralCard: React.FC<ReferralCardProps> = ({ onClick }) => {
             </p>
           </div>
 
-          <div className="rounded-lg border-2 border-green-200 bg-gradient-to-br from-green-50 to-white p-3 shadow-sm">
-            <h4 className="mb-1 flex items-center gap-2 text-xs font-semibold text-green-900">
+          <div>
+            <h4 className="mb-1 flex items-center gap-2 text-sm font-semibold">
               <span className="bg-green flex h-6 w-6 items-center justify-center rounded-full text-xs text-white">
                 2
               </span>
@@ -140,9 +140,9 @@ export const ReferralCard: React.FC<ReferralCardProps> = ({ onClick }) => {
             </p>
           </div>
 
-          <div className="rounded-lg border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-white p-3 shadow-sm">
-            <h4 className="mb-1 flex items-center gap-2 text-xs font-semibold text-purple-900">
-              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-purple-600 text-xs text-white">
+          <div>
+            <h4 className="mb-1 flex items-center gap-2 text-sm font-semibold">
+              <span className="bg-green flex h-6 w-6 items-center justify-center rounded-full text-xs text-white">
                 3
               </span>
               Earn together
@@ -153,19 +153,12 @@ export const ReferralCard: React.FC<ReferralCardProps> = ({ onClick }) => {
             </p>
           </div>
 
-          <div className="rounded-lg border-2 border-yellow-200 bg-gradient-to-br from-yellow-50 to-white p-3 shadow-sm">
-            <div className="flex items-start gap-2">
-              <span className="text-2xl">💡</span>
-              <div>
-                <p className="text-xs font-semibold text-yellow-900">
-                  Win-Win Benefits
-                </p>
-                <p className="mt-1 text-xs text-gray-600">
-                  Help your network discover opportunities while earning
-                  rewards. It&apos;s a win for everyone!
-                </p>
-              </div>
-            </div>
+          <div>
+            <p className="text-sm font-semibold">Win-Win Benefits</p>
+            <p className="mt-1 text-xs text-gray-600">
+              Help your network discover opportunities while earning rewards.
+              It&apos;s a win for everyone!
+            </p>
           </div>
         </div>
       )}
