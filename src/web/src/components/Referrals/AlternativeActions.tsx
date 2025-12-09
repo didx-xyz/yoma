@@ -1,6 +1,6 @@
-import Link from "next/link";
-import { IoTrophy, IoArrowForward, IoStorefront } from "react-icons/io5";
 import { useSession } from "next-auth/react";
+import Link from "next/link";
+import { IoRocket, IoStorefront, IoTrophy } from "react-icons/io5";
 
 /**
  * AlternativeActions Component
@@ -25,23 +25,23 @@ export const AlternativeActions: React.FC = () => {
           href="/opportunities"
           className="btn btn-primary btn-sm md:btn-md gap-2 shadow-md"
         >
-          <IoTrophy className="h-4 w-4 md:h-5 md:w-5" />
-          Browse Opportunities
+          <IoRocket className="h-4 w-4 md:h-5 md:w-5" />
+          Find Opportunities
         </Link>
         <Link
           href="/marketplace"
-          className="btn btn-accent btn-sm md:btn-md gap-2 shadow-md"
+          className="btn bg-blue btn-sm md:btn-md gap-2 text-white shadow-md"
         >
           <IoStorefront className="h-4 w-4 md:h-5 md:w-5" />
-          Go to Marketplace
+          Explore Marketplace
         </Link>
         {isAuthenticated && (
           <Link
             href="/yoid"
             className="btn btn-secondary btn-sm md:btn-md gap-2 shadow-md"
           >
-            <IoArrowForward className="h-4 w-4 md:h-5 md:w-5" />
-            Go to Dashboard
+            <IoTrophy className="h-4 w-4 md:h-5 md:w-5" />
+            View Dashboard
           </Link>
         )}
       </div>

@@ -1,8 +1,8 @@
-import { useRouter } from "next/router";
-import { IoGift } from "react-icons/io5";
-import { FaArrowRight } from "react-icons/fa";
-import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useRouter } from "next/router";
+import { useState } from "react";
+import { FaArrowRight } from "react-icons/fa";
+import { IoGift } from "react-icons/io5";
 import { searchReferralLinkUsagesAsReferrer } from "~/api/services/referrals";
 
 interface ReferralCardProps {
@@ -117,7 +117,7 @@ export const ReferralCard: React.FC<ReferralCardProps> = ({ onClick }) => {
       {showDetails && (
         <div className="animate-fade-in mb-4 space-y-3">
           <div>
-            <h4 className="mb-1 flex items-center gap-2 text-sm font-semibold">
+            <h4 className="mb-1 flex items-center gap-2 text-sm font-semibold text-black">
               <span className="bg-green flex h-6 w-6 items-center justify-center rounded-full text-xs text-white">
                 1
               </span>
@@ -129,7 +129,7 @@ export const ReferralCard: React.FC<ReferralCardProps> = ({ onClick }) => {
           </div>
 
           <div>
-            <h4 className="mb-1 flex items-center gap-2 text-sm font-semibold">
+            <h4 className="mb-1 flex items-center gap-2 text-sm font-semibold text-black">
               <span className="bg-green flex h-6 w-6 items-center justify-center rounded-full text-xs text-white">
                 2
               </span>
@@ -141,7 +141,7 @@ export const ReferralCard: React.FC<ReferralCardProps> = ({ onClick }) => {
           </div>
 
           <div>
-            <h4 className="mb-1 flex items-center gap-2 text-sm font-semibold">
+            <h4 className="mb-1 flex items-center gap-2 text-sm font-semibold text-black">
               <span className="bg-green flex h-6 w-6 items-center justify-center rounded-full text-xs text-white">
                 3
               </span>
@@ -150,14 +150,6 @@ export const ReferralCard: React.FC<ReferralCardProps> = ({ onClick }) => {
             <p className="text-xs text-gray-600">
               Both you and your referees receive rewards when they complete
               tasks
-            </p>
-          </div>
-
-          <div>
-            <p className="text-sm font-semibold">Win-Win Benefits</p>
-            <p className="mt-1 text-xs text-gray-600">
-              Help your network discover opportunities while earning rewards.
-              It&apos;s a win for everyone!
             </p>
           </div>
         </div>

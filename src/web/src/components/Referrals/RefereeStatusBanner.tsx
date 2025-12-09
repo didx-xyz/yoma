@@ -41,7 +41,7 @@ export const RefereeStatusBanner: React.FC<RefereeStatusBannerProps> = ({
       return {
         title: "You've Done It!",
         subtitle: "Mission Accomplished",
-        message: `Congratulations on completing the program! You've shown amazing dedication and skill.`,
+        message: `Congratulations on completing the program! You've shown amazing dedication.`,
         icon: "🏆",
         bgGradient: "from-green-50 via-emerald-50 to-teal-50",
         borderColor: "border-green-400",
@@ -167,11 +167,11 @@ export const RefereeStatusBanner: React.FC<RefereeStatusBannerProps> = ({
             )}
 
             {/* Info Cards Grid */}
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="flex flex-col gap-4 md:flex-row">
               {/* Time Warning Card */}
               {usage.status === "Pending" && timeInfo && (
                 <div
-                  className={`rounded-lg border p-4 ${
+                  className={`w-full rounded-lg border p-4 ${
                     timeInfo.isExpired
                       ? "border-red-200 bg-red-50"
                       : timeInfo.isUrgent
@@ -242,7 +242,7 @@ export const RefereeStatusBanner: React.FC<RefereeStatusBannerProps> = ({
               {/* Rewards Card */}
               {program.zltoRewardReferee && (
                 <div
-                  className={`rounded-lg border p-4 ${
+                  className={`w-full rounded-lg border p-4 ${
                     usage.status === "Completed"
                       ? "border-green-200 bg-green-50"
                       : "border-purple-200 bg-purple-50"
@@ -280,14 +280,14 @@ export const RefereeStatusBanner: React.FC<RefereeStatusBannerProps> = ({
                         {program.zltoRewardReferee} ZLTO
                       </p>
                       <p
-                        className={`text-xs ${
+                        className={`mt-2 text-xs ${
                           usage.status === "Completed"
                             ? "text-green-600"
                             : "text-purple-600"
                         }`}
                       >
                         {usage.status === "Completed"
-                          ? "Added to your wallet"
+                          ? "Your ZLTO wallet will be created tonight, and your ZLTO will be ready to be spent tomorrow!"
                           : "Complete all requirements"}
                       </p>
                     </div>
