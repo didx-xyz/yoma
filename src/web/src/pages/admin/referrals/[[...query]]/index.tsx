@@ -3,13 +3,12 @@ import axios from "axios";
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
 import Head from "next/head";
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import iconZlto from "public/images/icon-zlto.svg";
 import { useCallback, useState, type ReactElement } from "react";
 import { FaPlusCircle } from "react-icons/fa";
 import { IoIosCheckmarkCircle, IoMdClose } from "react-icons/io";
+import Moment from "react-moment";
 import {
   ProgramStatus,
   type ProgramSearchFilterAdmin,
@@ -21,6 +20,13 @@ import MainLayout from "~/components/Layout/Main";
 import NoRowsMessage from "~/components/NoRowsMessage";
 import { PageBackground } from "~/components/PageBackground";
 import { PaginationButtons } from "~/components/PaginationButtons";
+import { AdminReferralProgramActions } from "~/components/Referrals/AdminReferralProgramActions";
+import {
+  ReferralFilterOptions,
+  ReferralProgramSearchFilters,
+} from "~/components/Referrals/AdminReferralProgramSearchFilter";
+import { ProgramImage } from "~/components/Referrals/ProgramImage";
+import { ProgramStatusBadge } from "~/components/Referrals/ProgramStatusBadge";
 import { InternalServerError } from "~/components/Status/InternalServerError";
 import { LoadingSkeleton } from "~/components/Status/LoadingSkeleton";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
@@ -30,14 +36,6 @@ import { config } from "~/lib/react-query-config";
 import { getSafeUrl, getThemeFromRole } from "~/lib/utils";
 import { type NextPageWithLayout } from "~/pages/_app";
 import { authOptions } from "~/server/auth";
-import {
-  ReferralProgramSearchFilters,
-  ReferralFilterOptions,
-} from "~/components/Referrals/AdminReferralProgramSearchFilter";
-import { AdminReferralProgramActions } from "~/components/Referrals/AdminReferralProgramActions";
-import { ProgramStatusBadge } from "~/components/Referrals/ProgramStatusBadge";
-import { ProgramImage } from "~/components/Referrals/ProgramImage";
-import Moment from "react-moment";
 
 // ⚠️ SSR
 export async function getServerSideProps(context: GetServerSidePropsContext) {
@@ -572,16 +570,18 @@ const ReferralPrograms: NextPageWithLayout<{
                         {/* Program Cap */}
                         <div className="flex justify-between">
                           <p className="text-sm tracking-wider">Program Cap</p>
-                          <span className="text-sm">
-                            {program.completionLimit ?? "No limit"}
+                          <span className="text-xs text-gray-500">
+                            {program.completionLimit?.toLocaleString("en-US") ??
+                              "No limit"}
                           </span>
                         </div>
 
                         {/* Completions */}
                         <div className="flex justify-between">
                           <p className="text-sm tracking-wider">Completions</p>
-                          <span className="text-sm font-semibold">
-                            {program.completionTotal ?? 0}
+                          <span className="text-xs text-gray-500">
+                            {program.completionTotal?.toLocaleString("en-US") ??
+                              0}
                           </span>
                         </div>
 
@@ -589,8 +589,10 @@ const ReferralPrograms: NextPageWithLayout<{
                         {program.completionBalance !== null && (
                           <div className="flex justify-between">
                             <p className="text-sm tracking-wider">Remaining</p>
-                            <span className="badge bg-blue-light text-blue">
-                              {program.completionBalance}
+                            <span className="text-xs text-gray-500">
+                              {program.completionBalance?.toLocaleString(
+                                "en-US",
+                              )}
                             </span>
                           </div>
                         )}
@@ -601,17 +603,11 @@ const ReferralPrograms: NextPageWithLayout<{
                           {program.zltoRewardPool ? (
                             <div className="flex flex-col items-end gap-1">
                               <div className="flex items-center gap-1.5">
-                                <Image
-                                  src={iconZlto}
-                                  alt="Zlto icon"
-                                  width={16}
-                                  height={16}
-                                  className="h-4 w-4"
-                                />
-                                <span className="text-xs font-semibold">
+                                <span className="text-xs text-gray-500">
                                   {program.zltoRewardPool.toLocaleString(
                                     "en-US",
-                                  )}
+                                  )}{" "}
+                                  pool
                                 </span>
                               </div>
                               {program.zltoRewardBalance !== null && (
@@ -632,7 +628,7 @@ const ReferralPrograms: NextPageWithLayout<{
                               )}
                             </div>
                           ) : (
-                            <span className="text-sm text-gray-400">
+                            <span className="text-xs text-gray-500">
                               Not set
                             </span>
                           )}
@@ -763,14 +759,20 @@ const ReferralPrograms: NextPageWithLayout<{
                               <span className="text-gray-dark w-14 font-bold">
                                 Cap:
                               </span>
-                              <span>{program.completionLimit ?? "N/A"}</span>
+                              <span>
+                                {program.completionLimit?.toLocaleString(
+                                  "en-US",
+                                ) ?? "N/A"}
+                              </span>
                             </div>
                             <div className="flex gap-2">
                               <span className="text-gray-dark w-14 font-bold">
                                 Done:
                               </span>
-                              <span className="font-semibold">
-                                {program.completionTotal ?? 0}
+                              <span>
+                                {program.completionTotal?.toLocaleString(
+                                  "en-US",
+                                ) ?? 0}
                               </span>
                             </div>
                             {program.completionBalance !== null && (
@@ -778,61 +780,56 @@ const ReferralPrograms: NextPageWithLayout<{
                                 <span className="text-gray-dark w-14 font-bold">
                                   Left:
                                 </span>
-                                <span className="badge bg-blue-light text-blue">
-                                  {program.completionBalance}
+                                <span>
+                                  {program.completionBalance.toLocaleString(
+                                    "en-US",
+                                  )}
                                 </span>
                               </div>
                             )}
                           </div>
                         </td>
                         <td className="border-gray-light text-gray-dark border-b-2 !align-top">
-                          <div className="flex flex-col gap-2">
+                          <div className="flex flex-col gap-1 text-xs">
                             {program.zltoRewardPool ? (
-                              <div className="flex flex-col gap-1">
-                                <div className="flex items-center gap-1.5">
-                                  <Image
-                                    src={iconZlto}
-                                    alt="Zlto"
-                                    width={16}
-                                    height={16}
-                                    className="h-4 w-4"
-                                  />
-                                  <span className="text-xs font-bold">
+                              <>
+                                <div className="flex gap-2">
+                                  <span className="text-gray-dark w-14 font-bold">
+                                    Pool:
+                                  </span>
+                                  <span>
                                     {program.zltoRewardPool.toLocaleString(
                                       "en-US",
                                     )}
                                   </span>
-                                  <span className="text-xs text-gray-500">
-                                    pool
-                                  </span>
                                 </div>
                                 {program.zltoRewardBalance !== null && (
-                                  <div className="flex items-center gap-1.5 pl-5">
-                                    <span className="text-xs">
+                                  <div className="flex gap-2">
+                                    <span className="text-gray-dark w-14 font-bold">
+                                      Left:
+                                    </span>
+                                    <span>
                                       {program.zltoRewardBalance.toLocaleString(
                                         "en-US",
                                       )}
                                     </span>
-                                    <span className="text-xs text-gray-500">
-                                      left
-                                    </span>
                                   </div>
                                 )}
                                 {program.zltoRewardCumulative !== null && (
-                                  <div className="flex items-center gap-1.5 pl-5">
-                                    <span className="text-xs text-gray-600">
+                                  <div className="flex gap-2">
+                                    <span className="text-gray-dark w-14 font-bold">
+                                      Used:
+                                    </span>
+                                    <span>
                                       {program.zltoRewardCumulative.toLocaleString(
                                         "en-US",
                                       )}
                                     </span>
-                                    <span className="text-xs text-gray-500">
-                                      used
-                                    </span>
                                   </div>
                                 )}
-                              </div>
+                              </>
                             ) : (
-                              <span className="text-xs text-gray-400">
+                              <span className="text-gray-400">
                                 No ZLTO rewards
                               </span>
                             )}
