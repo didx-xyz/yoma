@@ -1,9 +1,7 @@
-import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/router";
 import { useState } from "react";
 import { FaArrowRight } from "react-icons/fa";
 import { IoGift } from "react-icons/io5";
-import { searchReferralLinkUsagesAsReferrer } from "~/api/services/referrals";
 
 interface ReferralCardProps {
   onClick?: () => void;
@@ -13,74 +11,10 @@ export const ReferralCard: React.FC<ReferralCardProps> = ({ onClick }) => {
   const router = useRouter();
   const [showDetails, setShowDetails] = useState(false);
 
-  // Fetch referrer usage statistics
-  const { data: usageResults } = useQuery({
-    queryKey: ["ReferralLinkUsages", "Referrer", "Stats"],
-    queryFn: () =>
-      searchReferralLinkUsagesAsReferrer({
-        pageNumber: 1,
-        pageSize: 100, // Get all usages to calculate stats
-        linkId: null,
-        programId: null,
-        statuses: null,
-        dateStart: null,
-        dateEnd: null,
-      }),
-  });
-
-  const hasActiveLinks = (usageResults?.items?.length ?? 0) > 0;
-  const totalReferrals = usageResults?.totalCount ?? 0;
-
-  // Total earned would need program-level reward data which isn&apos;t in the usage response
-  // For now, show count of completed referrals as the metric
-  const completedReferrals =
-    usageResults?.items?.filter((usage) => usage.status === "Completed")
-      .length ?? 0;
-
   const handleGetStarted = () => {
     onClick?.();
     router.push("/yoid/referrals");
   };
-
-  // Active referrer state with stats
-  if (hasActiveLinks) {
-    return (
-      <div className="flex h-full flex-col gap-2 text-xs text-black md:text-sm">
-        <div className="text-gray-dark flex items-start gap-2">
-          <IoGift className="text-green mt-0.5 h-5 w-5 flex-shrink-0" />
-          <div className="flex-1">
-            <span className="font-semibold">Share & Earn Together</span>
-            <span className="ml-1 text-xs">
-              Track your referrals and rewards
-            </span>
-          </div>
-        </div>
-
-        <div className="flex flex-col gap-1 border-y-2 border-dotted border-[#D4E8D4] py-2">
-          <div className="flex flex-row items-center justify-between">
-            <p className="text-gray-dark">Total Referrals:</p>
-            <span className="badge bg-green-light text-green font-semibold">
-              {totalReferrals}
-            </span>
-          </div>
-          <div className="flex flex-row items-center justify-between">
-            <p className="text-gray-dark">Completed:</p>
-            <span className="badge bg-yellow-tint text-yellow font-semibold">
-              {completedReferrals}
-            </span>
-          </div>
-        </div>
-
-        <button
-          onClick={handleGetStarted}
-          className="text-green hover:text-green-dark mt-auto flex w-full items-center justify-between text-xs font-semibold underline"
-        >
-          <span>View Dashboard</span>
-          <FaArrowRight className="h-3 w-3" />
-        </button>
-      </div>
-    );
-  }
 
   // Default state: Not started / No links created
   return (
