@@ -10,7 +10,7 @@ export const ProgramStatusBadge: React.FC<ProgramStatusBadgeProps> = ({
   const getStatusLabel = (status: string | ProgramStatus) => {
     switch (status) {
       case "Deleted":
-        return "Archived";
+        return "Deleted";
       case "LimitReached":
         return "Limit Reached";
       case "UnCompletable":

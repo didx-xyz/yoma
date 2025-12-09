@@ -435,7 +435,7 @@ const ReferralPrograms: NextPageWithLayout<{
                   : "hover:border-orange hover:text-gray"
               }`}
             >
-              Archived
+              Deleted
               {(totalCountDeleted ?? 0) > 0 && (
                 <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
                   {totalCountDeleted}
