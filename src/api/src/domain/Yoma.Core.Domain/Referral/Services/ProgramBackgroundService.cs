@@ -173,8 +173,7 @@ namespace Yoma.Core.Domain.Referral.Services
                 }
 
                 // Still UnCompletable and pathway still broken
-                var unCompletableSince = item.DateModified;
-                var expiryDate = unCompletableSince.AddDays(_scheduleJobOptions.ReferralProgramHealthScheduleExpirationGracePeriodInDays);
+                var expiryDate = GetUnCompletableExpiryDate(item);
 
                 // Beyond grace → Expired
                 if (expiryDate <= now)
@@ -193,8 +192,7 @@ namespace Yoma.Core.Domain.Referral.Services
                 }
 
                 // Already UnCompletable for a while, and expiring within X days
-                var warnWindowStart = expiryDate.AddDays(-_scheduleJobOptions.ReferralProgramHealthScheduleExpirationNotificationInDays);
-                if (now >= warnWindowStart && now < expiryDate) unCompletableProgramsForNotification.Add(item);
+                if (IsInUnCompletableWarningWindow(item, now)) unCompletableProgramsForNotification.Add(item);
 
                 break;
 
@@ -422,6 +420,15 @@ namespace Yoma.Core.Domain.Referral.Services
     #endregion
 
     #region Private Members
+    private DateTimeOffset GetUnCompletableExpiryDate(Program item) => item.DateModified.AddDays(_scheduleJobOptions.ReferralProgramHealthScheduleExpirationGracePeriodInDays);
+
+    private bool IsInUnCompletableWarningWindow(Program item, DateTimeOffset now)
+    {
+      var expiryDate = GetUnCompletableExpiryDate(item);
+      var warnWindowStart = expiryDate.AddDays(-_scheduleJobOptions.ReferralProgramHealthScheduleExpirationNotificationInDays);
+      return now >= warnWindowStart && now < expiryDate;
+    }
+
     private async Task SendNotification(NotificationType type, List<Program> items)
     {
       try
@@ -484,13 +491,14 @@ namespace Yoma.Core.Domain.Referral.Services
               {
                 WithinNextDays = _scheduleJobOptions.ReferralProgramHealthScheduleExpirationGracePeriodInDays,
                 Programs = [.. itemsToday.Select(o => new NotificationReferralProgramUnCompletableItem
-              {
-                Name = o.Name,
-                DateUnCompletable = o.DateModified,
-                DateStart = o.DateStart,
-                DateEnd = o.DateEnd,
-                URL = _notificationURLFactory.ReferralProgramItemURL(type, o.Id)
-              })]
+                {
+                  Name = o.Name,
+                  DateUnCompletable = o.DateModified,
+                  DateStart = o.DateStart,
+                  DateEnd = o.DateEnd,
+                  DateUncompletableAutoExpiry = GetUnCompletableExpiryDate(o),
+                  URL = _notificationURLFactory.ReferralProgramItemURL(type, o.Id)
+                })]
               };
 
               recipientDataGroups.Add((recipients, dataToday));
@@ -502,13 +510,14 @@ namespace Yoma.Core.Domain.Referral.Services
               {
                 WithinNextDays = _scheduleJobOptions.ReferralProgramHealthScheduleExpirationNotificationInDays,
                 Programs = [.. itemsOlder.Select(o => new NotificationReferralProgramUnCompletableItem
-              {
-                Name = o.Name,
-                DateUnCompletable = o.DateModified,
-                DateStart = o.DateStart,
-                DateEnd = o.DateEnd,
-                URL = _notificationURLFactory.ReferralProgramItemURL(type, o.Id)
-              })]
+                {
+                  Name = o.Name,
+                  DateUnCompletable = o.DateModified,
+                  DateStart = o.DateStart,
+                  DateEnd = o.DateEnd,
+                  DateUncompletableAutoExpiry = GetUnCompletableExpiryDate(o),
+                  URL = _notificationURLFactory.ReferralProgramItemURL(type, o.Id)
+                })]
               };
 
               recipientDataGroups.Add((recipients, dataOlder));
