@@ -48,6 +48,12 @@ namespace Yoma.Core.Domain.Notification.Models
     [JsonProperty("dateEndFormatted")]
     public string DateEndFormatted => DateEnd.HasValue ? DateEnd.Value.ToString("ddd, MMM dd, yyyy HH:mm") : "No end date";
 
+    [JsonProperty("dateUncompletableAutoExpiry")]
+    public DateTimeOffset DateUncompletableAutoExpiry { get; set; }
+
+    [JsonProperty("dateUncompletableAutoExpiryFormatted")]
+    public string DateUncompletableAutoExpiryFormatted => DateUncompletableAutoExpiry.ToString("ddd, MMM dd, yyyy HH:mm");
+
     [JsonProperty("url")]
     public string URL { get; set; } = null!;
   }

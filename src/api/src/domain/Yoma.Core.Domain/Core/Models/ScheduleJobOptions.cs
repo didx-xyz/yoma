@@ -142,8 +142,16 @@ namespace Yoma.Core.Domain.Core.Models
 
     public int ReferralProgramHealthScheduleBatchSize { get; set; }
 
+    /// <summary>
+    /// Number of days a program may remain in the Un-Completable state before it is
+    /// automatically expired by the Program Health background job.
+    /// </summary>
     public int ReferralProgramHealthScheduleExpirationGracePeriodInDays { get; set; }
 
+    /// <summary>
+    /// Number of days before the grace-period expiry where the system should begin
+    /// sending Un-Completable warning notifications to admins.
+    /// </summary>
     public int ReferralProgramHealthScheduleExpirationNotificationInDays { get; set; }
   }
 }
