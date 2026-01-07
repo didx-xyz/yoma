@@ -76,7 +76,7 @@ namespace Yoma.Core.Domain.Core.Services
         lockAcquired = await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration);
         if (!lockAcquired) return;
 
-        _logger.LogInformation("Processing download schedule");
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processing download schedule");
 
         var itemIdsToSkip = new List<Guid>();
         while (executeUntil > DateTimeOffset.UtcNow)
@@ -90,7 +90,7 @@ namespace Yoma.Core.Domain.Core.Services
           {
             try
             {
-              _logger.LogInformation("Processing download schedule for item with id '{id}'", item.Id);
+              if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processing download schedule for item with id '{id}'", item.Id);
 
               var type = Enum.Parse<DownloadScheduleType>(item.Type, true);
 
@@ -207,18 +207,18 @@ namespace Yoma.Core.Domain.Core.Services
 
                 await _notificationDeliveryService.Send(NotificationType.Download, recipients, data);
 
-                _logger.LogInformation("Successfully sent notification");
+                if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Successfully sent notification");
               }
               catch (Exception ex)
               {
-                _logger.LogError(ex, "Failed to send notification: {errorMessage}", ex.Message);
+                if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to send notification: {errorMessage}", ex.Message);
               }
 
-              _logger.LogInformation("Processed download schedule for item with id '{id}'", item.Id);
+              if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processed download schedule for item with id '{id}'", item.Id);
             }
             catch (Exception ex)
             {
-              _logger.LogError(ex, "Failed to process download schedule for item with id '{id}': {errorMessage}", item.Id, ex.Message);
+              if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to process download schedule for item with id '{id}': {errorMessage}", item.Id, ex.Message);
 
               item.Status = DownloadScheduleStatus.Error;
               item.ErrorReason = ex.Message;
@@ -231,15 +231,15 @@ namespace Yoma.Core.Domain.Core.Services
           }
         }
 
-        _logger.LogInformation("Processed download schedule");
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processed download schedule");
       }
       catch (DistributedLockTimeoutException ex)
       {
-        _logger.LogError(ex, "Could not acquire distributed lock for {process}: {errorMessage}", nameof(ProcessSchedule), ex.Message);
+        if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Could not acquire distributed lock for {process}: {errorMessage}", nameof(ProcessSchedule), ex.Message);
       }
       catch (Exception ex)
       {
-        _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(ProcessSchedule), ex.Message);
+        if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(ProcessSchedule), ex.Message);
       }
       finally
       {
@@ -260,7 +260,7 @@ namespace Yoma.Core.Domain.Core.Services
         lockAcquired = await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration);
         if (!lockAcquired) return;
 
-        _logger.LogInformation("Processing download schedule deletion");
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processing download schedule deletion");
 
         var itemIdsToSkip = new List<Guid>();
         while (executeUntil > DateTimeOffset.UtcNow)
@@ -272,7 +272,7 @@ namespace Yoma.Core.Domain.Core.Services
           {
             try
             {
-              _logger.LogInformation("Processing download schedule deletion for item with id '{id}'", item.Id);
+              if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processing download schedule deletion for item with id '{id}'", item.Id);
 
               if (!item.FileId.HasValue)
                 throw new InvalidOperationException("File id is null");
@@ -293,11 +293,11 @@ namespace Yoma.Core.Domain.Core.Services
                 scope.Complete();
               });
 
-              _logger.LogInformation("Processed download schedule deletion for item with id '{id}'", item.Id);
+              if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processed download schedule deletion for item with id '{id}'", item.Id);
             }
             catch (Exception ex)
             {
-              _logger.LogError(ex, "Failed to process download schedule deletion for item with id '{id}': {errorMessage}", item.Id, ex.Message);
+              if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to process download schedule deletion for item with id '{id}': {errorMessage}", item.Id, ex.Message);
 
               item.Status = DownloadScheduleStatus.Error;
               item.ErrorReason = ex.Message;
@@ -310,11 +310,11 @@ namespace Yoma.Core.Domain.Core.Services
           }
         }
 
-        _logger.LogInformation("Processed download schedule deletion");
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processed download schedule deletion");
       }
       catch (Exception ex)
       {
-        _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(ProcessDeletion), ex.Message);
+        if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(ProcessDeletion), ex.Message);
       }
       finally
       {

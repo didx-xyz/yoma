@@ -87,7 +87,7 @@ namespace Yoma.Core.Domain.Referral.Services
         lockAcquired = await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration);
         if (!lockAcquired) return;
 
-        _logger.LogInformation("Processing program health");
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processing program health");
 
         var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsernameSystem, false, false);
 
@@ -128,7 +128,7 @@ namespace Yoma.Core.Domain.Referral.Services
                 item.ModifiedByUserId = user.Id;
                 itemsToUpdate.Add(item);
 
-                _logger.LogInformation("Program '{ProgramName}' ({ProgramId}) marked UnCompletable — broken pathway detected", item.Name, item.Id);
+                if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Program '{ProgramName}' ({ProgramId}) marked UnCompletable — broken pathway detected", item.Name, item.Id);
 
                 break;
 
@@ -143,7 +143,7 @@ namespace Yoma.Core.Domain.Referral.Services
                     itemsToUpdate.Add(item);
                     programIdsToExpire.Add(item.Id);
 
-                    _logger.LogInformation("Program '{ProgramName}' ({ProgramId}) expired instead of reactivation — end date reached {DateEnd:yyyy-MM-dd}", item.Name, item.Id, item.DateEnd);
+                    if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Program '{ProgramName}' ({ProgramId}) expired instead of reactivation — end date reached {DateEnd:yyyy-MM-dd}", item.Name, item.Id, item.DateEnd);
 
                     break;
                   }
@@ -156,7 +156,7 @@ namespace Yoma.Core.Domain.Referral.Services
                     itemsToUpdate.Add(item);
                     programIdsToLimitReached.Add(item.Id);
 
-                    _logger.LogInformation("Program '{ProgramName}' ({ProgramId}) set to LIMIT_REACHED instead of reactivation — cap hit (total {Total} >= limit {Limit})",
+                    if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Program '{ProgramName}' ({ProgramId}) set to LIMIT_REACHED instead of reactivation — cap hit (total {Total} >= limit {Limit})",
                       item.Name, item.Id, item.CompletionTotal ?? 0, item.CompletionLimit.Value);
 
                     break;
@@ -167,7 +167,7 @@ namespace Yoma.Core.Domain.Referral.Services
                   item.ModifiedByUserId = user.Id;
                   itemsToUpdate.Add(item);
 
-                  _logger.LogInformation("Program '{ProgramName}' ({ProgramId}) reactivated — pathway now completable", item.Name, item.Id);
+                  if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Program '{ProgramName}' ({ProgramId}) reactivated — pathway now completable", item.Name, item.Id);
 
                   break;
                 }
@@ -184,7 +184,7 @@ namespace Yoma.Core.Domain.Referral.Services
                   itemsToUpdate.Add(item);
                   programIdsToExpire.Add(item.Id);
 
-                  _logger.LogInformation(
+                  if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation(
                     "Program '{ProgramName}' ({ProgramId}) expired — un-completable beyond grace period (modified {DateModified:yyyy-MM-dd})",
                     item.Name, item.Id, item.DateModified);
 
@@ -211,13 +211,13 @@ namespace Yoma.Core.Domain.Referral.Services
 
               if (programIdsToExpire.Count > 0)
               {
-                _logger.LogInformation("Expiring {Count} program(s) due to health probe or end date", programIdsToExpire.Count);
+                if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Expiring {Count} program(s) due to health probe or end date", programIdsToExpire.Count);
                 await _linkMaintenanceService.ExpireByProgramId(programIdsToExpire, _logger);
               }
 
               if (programIdsToLimitReached.Count > 0)
               {
-                _logger.LogInformation("Flipping {Count} program(s) to limit reached due to hitting cap", programIdsToLimitReached.Count);
+                if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Flipping {Count} program(s) to limit reached due to hitting cap", programIdsToLimitReached.Count);
                 await _linkMaintenanceService.LimitReachedByProgramId(programIdsToLimitReached, _logger);
               }
 
@@ -234,11 +234,11 @@ namespace Yoma.Core.Domain.Referral.Services
           if (executeUntil <= DateTimeOffset.UtcNow) break;
         }
 
-        _logger.LogInformation("Processed program health");
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processed program health");
       }
       catch (Exception ex)
       {
-        _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(ProcessProgramHealth), ex.Message);
+        if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(ProcessProgramHealth), ex.Message);
       }
       finally
       {
@@ -259,7 +259,7 @@ namespace Yoma.Core.Domain.Referral.Services
         lockAcquired = await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration);
         if (!lockAcquired) return;
 
-        _logger.LogInformation("Processing program expiration");
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processing program expiration");
 
         var statusExpiredId = _programStatusService.GetByName(ProgramStatus.Expired.ToString()).Id;
         var statusExpirableIds = Statuses_Expirable.Select(o => _programStatusService.GetByName(o.ToString()).Id).ToList();
@@ -281,7 +281,7 @@ namespace Yoma.Core.Domain.Referral.Services
             o.Status = ProgramStatus.Expired;
             o.ModifiedByUserId = user.Id;
 
-            _logger.LogInformation("Program with id '{ProgramId}' flagged for expiration — end date {DateEnd:yyyy-MM-dd}", o.Id, o.DateEnd!);
+            if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Program with id '{ProgramId}' flagged for expiration — end date {DateEnd:yyyy-MM-dd}", o.Id, o.DateEnd!);
           });
 
           var programIds = items.Select(o => o.Id).Distinct().ToList();
@@ -303,11 +303,11 @@ namespace Yoma.Core.Domain.Referral.Services
           if (executeUntil <= DateTimeOffset.UtcNow) break;
         }
 
-        _logger.LogInformation("Processed program expiration");
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processed program expiration");
       }
       catch (Exception ex)
       {
-        _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(ProcessExpiration), ex.Message);
+        if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(ProcessExpiration), ex.Message);
       }
       finally
       {
@@ -326,7 +326,7 @@ namespace Yoma.Core.Domain.Referral.Services
         lockAcquired = await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration);
         if (!lockAcquired) return;
 
-        _logger.LogInformation("Processing program expiration notifications");
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processing program expiration notifications");
 
         var datetimeFrom = DateTimeOffset.UtcNow;
         var datetimeTo = datetimeFrom.AddDays(_scheduleJobOptions.ReferralProgramExpirationNotificationIntervalInDays);
@@ -339,11 +339,11 @@ namespace Yoma.Core.Domain.Referral.Services
 
         await SendNotification(NotificationType.ReferralProgram_Expiration_WithinNextDays, items);
 
-        _logger.LogInformation("Processed program expiration notifications");
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processed program expiration notifications");
       }
       catch (Exception ex)
       {
-        _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(ProcessExpirationNotifications), ex.Message);
+        if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(ProcessExpirationNotifications), ex.Message);
       }
       finally
       {
@@ -364,7 +364,7 @@ namespace Yoma.Core.Domain.Referral.Services
         lockAcquired = await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration);
         if (!lockAcquired) return;
 
-        _logger.LogInformation("Processing program deletion");
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processing program deletion");
 
         var statusDeletionIds = Statuses_Deletion.Select(o => _programStatusService.GetByName(o.ToString()).Id).ToList();
         var statusDeletedId = _programStatusService.GetByName(ProgramStatus.Deleted.ToString()).Id;
@@ -386,7 +386,7 @@ namespace Yoma.Core.Domain.Referral.Services
             item.StatusId = statusDeletedId;
             item.Status = ProgramStatus.Deleted;
             item.ModifiedByUserId = user.Id;
-            _logger.LogInformation("Program with id '{id}' flagged for deletion", item.Id);
+            if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Program with id '{id}' flagged for deletion", item.Id);
           }
 
           var programIds = items.Select(o => o.Id).Distinct().ToList();
@@ -406,11 +406,11 @@ namespace Yoma.Core.Domain.Referral.Services
           if (executeUntil <= DateTimeOffset.UtcNow) break;
         }
 
-        _logger.LogInformation("Processed program deletion");
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processed program deletion");
       }
       catch (Exception ex)
       {
-        _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(ProcessDeletion), ex.Message);
+        if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(ProcessDeletion), ex.Message);
       }
       finally
       {
@@ -532,11 +532,11 @@ namespace Yoma.Core.Domain.Referral.Services
             throw new ArgumentOutOfRangeException(nameof(type), $"Type of '{type}' not supported");
         }
 
-        _logger.LogInformation("Successfully sent notification");
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Successfully sent notification");
       }
       catch (Exception ex)
       {
-        _logger.LogError(ex, "Failed to send notification: {errorMessage}", ex.Message);
+        if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to send notification: {errorMessage}", ex.Message);
       }
     }
     #endregion

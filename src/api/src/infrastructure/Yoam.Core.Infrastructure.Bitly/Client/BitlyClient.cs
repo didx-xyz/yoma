@@ -54,7 +54,7 @@ namespace Yoma.Core.Infrastructure.Bitly.Client
 
       if (!_appSettings.ShortLinkProviderAsSourceEnabledEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment))
       {
-        _logger.LogInformation("Used dummy short link for environment '{environment}'", _environmentProvider.Environment);
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Used dummy short link for environment '{environment}'", _environmentProvider.Environment);
         return GenerateDummyShortLink();
       }
 

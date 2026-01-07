@@ -48,7 +48,7 @@ namespace Yoma.Core.Domain.Core.Services
 
       if (existingItem != null)
       {
-        _logger.LogInformation("Scheduling of download skipped: Already '{status}' for user id '{userId}', type '{type}' and specified filter", existingItem.StatusId, userId, type);
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Scheduling of download skipped: Already '{status}' for user id '{userId}', type '{type}' and specified filter", existingItem.StatusId, userId, type);
         return;
       }
 

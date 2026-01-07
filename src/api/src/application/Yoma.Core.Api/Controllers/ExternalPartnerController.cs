@@ -42,11 +42,11 @@ namespace Yoma.Core.Api.Controllers
     [ProducesResponseType(typeof(MyOpportunityResponseVerifyCompletedExternal), (int)HttpStatusCode.OK)]
     public IActionResult OpportunityGetVerificationStatus([FromRoute] Guid opportunityId)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(OpportunityGetVerificationStatus));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(OpportunityGetVerificationStatus));
 
       var result = _myOpportunityService.GetVerificationCompletedExternal(opportunityId);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(OpportunityGetVerificationStatus));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(OpportunityGetVerificationStatus));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -60,11 +60,11 @@ namespace Yoma.Core.Api.Controllers
     [ProducesResponseType(typeof(UserProfile), (int)HttpStatusCode.OK)]
     public async Task<IActionResult> UserCreateProfile([FromBody] UserRequestCreateProfile request)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(UserCreateProfile));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(UserCreateProfile));
 
       var result = await _userProfileService.Create(request);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(UserCreateProfile));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(UserCreateProfile));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }

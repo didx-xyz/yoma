@@ -49,11 +49,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_User}")]
     public async Task<IActionResult> Create([FromForm] OrganizationRequestCreate request)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(Create));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(Create));
 
       var result = await _organizationService.Create(request);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(Create));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(Create));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -65,11 +65,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_User}")]
     public async Task<IActionResult> UpdateLogo([FromRoute] Guid id, [Required] IFormFile file)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(UpdateLogo));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(UpdateLogo));
 
       var result = await _organizationService.UpdateLogo(id, file, true);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(UpdateLogo));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(UpdateLogo));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -80,11 +80,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_User}")]
     public IActionResult ListProviderTypes()
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(ListProviderTypes));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(ListProviderTypes));
 
       var result = _providerTypeService.List();
 
-      _logger.LogInformation("Request {requestName} handled", nameof(ListProviderTypes));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(ListProviderTypes));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -97,11 +97,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
     public IActionResult GetById([FromRoute] Guid id)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(GetById));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(GetById));
 
       var result = _organizationService.GetById(id, true, true, true);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(GetById));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(GetById));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -112,11 +112,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
     public IActionResult GetSettingsById([FromRoute] Guid id)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(GetSettingsById));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(GetSettingsById));
 
       var result = _organizationService.GetSettingsById(id, true);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(GetSettingsById));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(GetSettingsById));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -127,11 +127,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
     public IActionResult Search([FromBody] OrganizationSearchFilter filter)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(Search));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(Search));
 
       var result = _organizationService.Search(filter, true);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(Search));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(Search));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -142,11 +142,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
     public async Task<IActionResult> Update([FromForm] OrganizationRequestUpdate request)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(Update));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(Update));
 
       var result = await _organizationService.Update(request, true);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(Update));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(Update));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -158,11 +158,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
     public async Task<IActionResult> UpdateStatus([FromRoute] Guid id, [FromBody] OrganizationRequestUpdateStatus request)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(UpdateStatus));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(UpdateStatus));
 
       var result = await _organizationService.UpdateStatus(id, request, true);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(UpdateStatus));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(UpdateStatus));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -173,11 +173,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
     public async Task<IActionResult> UpdateSettings([FromRoute] Guid id, [FromBody] SettingsRequest request)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(UpdateSettings));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(UpdateSettings));
 
       var result = await _organizationService.UpdateSettings(id, request, true);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(UpdateSettings));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(UpdateSettings));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -188,11 +188,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
     public async Task<IActionResult> AssignProviderTypes([FromRoute] Guid id, [Required][FromBody] List<Guid> providerTypeIds)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(AssignProviderTypes));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(AssignProviderTypes));
 
       var result = await _organizationService.AssignProviderTypes(id, providerTypeIds, true);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(AssignProviderTypes));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(AssignProviderTypes));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -203,11 +203,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
     public async Task<IActionResult> RemoveProviderTypes([FromRoute] Guid id, [Required][FromBody] List<Guid> providerTypeIds)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(RemoveProviderTypes));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(RemoveProviderTypes));
 
       var result = await _organizationService.RemoveProviderTypes(id, providerTypeIds, true);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(RemoveProviderTypes));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(RemoveProviderTypes));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -218,11 +218,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
     public async Task<IActionResult> AddDocuments([FromRoute] Guid id, [FromRoute] OrganizationDocumentType type, [Required] List<IFormFile> documents)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(AddDocuments));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(AddDocuments));
 
       var result = await _organizationService.AddDocuments(id, type, documents, true);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(AddDocuments));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(AddDocuments));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -233,11 +233,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
     public async Task<IActionResult> DeleteDocuments([FromRoute] Guid id, [FromRoute] OrganizationDocumentType type, [Required] List<Guid> documentIds)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(DeleteDocuments));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(DeleteDocuments));
 
       var result = await _organizationService.DeleteDocuments(id, type, documentIds, true);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(DeleteDocuments));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(DeleteDocuments));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -248,11 +248,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
     public async Task<IActionResult> AssignAdmins([FromRoute] Guid id, [FromRoute] List<string> usernames)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(AssignAdmins));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(AssignAdmins));
 
       var result = await _organizationService.AssignAdmins(id, usernames, true);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(AssignAdmins));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(AssignAdmins));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -263,11 +263,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
     public async Task<IActionResult> RemoveAdmins([FromRoute] Guid id, [FromRoute] List<string> usernames)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(RemoveAdmins));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(RemoveAdmins));
 
       var result = await _organizationService.RemoveAdmins(id, usernames, true);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(RemoveAdmins));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(RemoveAdmins));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -278,11 +278,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
     public IActionResult ListAdmins([FromRoute] Guid id)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(ListAdmins));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(ListAdmins));
 
       var result = _organizationService.ListAdmins(id, true, true);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(ListAdmins));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(ListAdmins));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -293,11 +293,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = Constants.Role_OrganizationAdmin)]
     public IActionResult ListAdminsOf()
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(ListAdminsOf));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(ListAdminsOf));
 
       var result = _organizationService.ListAdminsOf(true);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(ListAdminsOf));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(ListAdminsOf));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -308,11 +308,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
     public IActionResult ListSearchCriteriaCountriesEngaged([FromQuery, SwaggerParameter("Optional for Admin role. Required for Organization Admin role", Required = false)] List<Guid>? organizations)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(ListSearchCriteriaCountriesEngaged));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(ListSearchCriteriaCountriesEngaged));
 
       var result = _analyticsService.ListSearchCriteriaCountriesEngaged(organizations);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(ListSearchCriteriaCountriesEngaged));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(ListSearchCriteriaCountriesEngaged));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -324,11 +324,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
     public IActionResult SearchOrganizationEngagement([FromBody] OrganizationSearchFilterEngagement filter)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(SearchOrganizationEngagement));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(SearchOrganizationEngagement));
 
       var result = _analyticsService.SearchOrganizationEngagement(filter);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(SearchOrganizationEngagement));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(SearchOrganizationEngagement));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -340,11 +340,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
     public IActionResult SearchOrganizationOpportunities([FromBody] OrganizationSearchFilterOpportunity filter)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(SearchOrganizationOpportunities));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(SearchOrganizationOpportunities));
 
       var result = _analyticsService.SearchOrganizationOpportunities(filter);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(SearchOrganizationOpportunities));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(SearchOrganizationOpportunities));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -356,11 +356,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
     public IActionResult SearchOrganizationYouth([FromBody] OrganizationSearchFilterYouth filter)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(SearchOrganizationYouth));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(SearchOrganizationYouth));
 
       var result = _analyticsService.SearchOrganizationYouth(filter);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(SearchOrganizationYouth));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(SearchOrganizationYouth));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -371,11 +371,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
     public IActionResult SearchOrganizationSSO([FromBody] OrganizationSearchFilterSSO filter)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(SearchOrganizationSSO));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(SearchOrganizationSSO));
 
       var result = _analyticsService.SearchOrganizationSSO(filter);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(SearchOrganizationSSO));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(SearchOrganizationSSO));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }

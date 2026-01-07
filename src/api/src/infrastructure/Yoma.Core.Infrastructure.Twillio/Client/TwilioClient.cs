@@ -91,7 +91,7 @@ namespace Yoma.Core.Infrastructure.Twilio.Client
 
       if (!_appSettings.TwilioEnabledEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment))
       {
-        _logger.LogInformation("Sending of '{allowedMessageTypes}' skipped for environment '{environment}'", allowedMessageTypes, _environmentProvider.Environment);
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Sending of '{allowedMessageTypes}' skipped for environment '{environment}'", allowedMessageTypes, _environmentProvider.Environment);
         return;
       }
 
@@ -122,7 +122,7 @@ namespace Yoma.Core.Infrastructure.Twilio.Client
 
             if (string.IsNullOrWhiteSpace(recipient.PhoneNumber))
             {
-              _logger.LogInformation("{recipientId}: Skipped — Missing phone number", recipientId);
+              if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("{recipientId}: Skipped — Missing phone number", recipientId);
               return;
             }
 
@@ -147,7 +147,7 @@ namespace Yoma.Core.Infrastructure.Twilio.Client
                     var smsTemplate = SMSTemplates.ResourceManager.GetString(notificationKey);
                     if (string.IsNullOrWhiteSpace(smsTemplate))
                     {
-                      _logger.LogInformation("{recipientId}: Skipped — SMS template for '{notificationKey}' not configured", recipientId, notificationKey);
+                      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("{recipientId}: Skipped — SMS template for '{notificationKey}' not configured", recipientId, notificationKey);
                       continue;
                     }
 
@@ -157,7 +157,7 @@ namespace Yoma.Core.Infrastructure.Twilio.Client
                         !_options.From.SMS.TryGetValue(alpha2.ToUpperInvariant(), out fromNumber) ||
                         string.IsNullOrWhiteSpace(fromNumber))
                     {
-                      _logger.LogInformation("{recipientId}: Skipped — SMS 'From' number not configured for country {country}", recipientId, alpha2 ?? "Unknown");
+                      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("{recipientId}: Skipped — SMS 'From' number not configured for country {country}", recipientId, alpha2 ?? "Unknown");
                       continue;
                     }
 
@@ -275,7 +275,7 @@ namespace Yoma.Core.Infrastructure.Twilio.Client
 
             if (!messageDelivered && !string.IsNullOrEmpty(lastTwilioFailure))
             {
-              _logger.LogError("Notification failed for recipient {recipient}: {reason}", recipientId, lastTwilioFailure);
+              if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError("Notification failed for recipient {recipient}: {reason}", recipientId, lastTwilioFailure);
             }
           }));
         }

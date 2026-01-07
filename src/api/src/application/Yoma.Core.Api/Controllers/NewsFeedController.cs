@@ -34,11 +34,11 @@ namespace Yoma.Core.Api.Controllers
     [ProducesResponseType(typeof(IEnumerable<NewsFeed>), (int)HttpStatusCode.OK)]
     public ActionResult<IEnumerable<NewsFeed>> ListFeeds()
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(ListFeeds));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(ListFeeds));
 
       var feeds = _newsFeedService.ListFeeds();
 
-      _logger.LogInformation("Request {requestName} handled", nameof(ListFeeds));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(ListFeeds));
 
       return Ok(feeds);
     }
@@ -49,11 +49,11 @@ namespace Yoma.Core.Api.Controllers
     [ProducesResponseType(typeof(NewsArticleSearchResults), (int)HttpStatusCode.OK)]
     public ActionResult<NewsArticleSearchResults> Search([FromBody] NewsArticleSearchFilter filter)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(Search));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(Search));
 
       var result = _newsFeedService.Search(filter);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(Search));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(Search));
 
       return Ok(result);
     }

@@ -48,11 +48,11 @@ namespace Yoma.Core.Api.Controllers
     [AllowAnonymous]
     public IActionResult ListSearchCriteriaCountries()
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(ListSearchCriteriaCountries));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(ListSearchCriteriaCountries));
 
       var result = _marketplaceService.ListSearchCriteriaCountries();
 
-      _logger.LogInformation("Request {requestName} handled", nameof(ListSearchCriteriaCountries));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(ListSearchCriteriaCountries));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -63,11 +63,11 @@ namespace Yoma.Core.Api.Controllers
     [AllowAnonymous]
     public async Task<IActionResult> ListStoreCategories([FromRoute] string countryCodeAlpha2)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(ListStoreCategories));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(ListStoreCategories));
 
       var result = await _marketplaceService.ListStoreCategories(countryCodeAlpha2);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(ListStoreCategories));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(ListStoreCategories));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -78,11 +78,11 @@ namespace Yoma.Core.Api.Controllers
     [AllowAnonymous]
     public async Task<IActionResult> SearchStores([FromBody] StoreSearchFilter filter)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(SearchStores));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(SearchStores));
 
       var result = await _marketplaceService.SearchStores(filter);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(SearchStores));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(SearchStores));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -93,11 +93,11 @@ namespace Yoma.Core.Api.Controllers
     [AllowAnonymous]
     public async Task<IActionResult> SearchStoreItemCategories([FromBody] StoreItemCategorySearchFilter filter)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(SearchStoreItemCategories));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(SearchStoreItemCategories));
 
       var result = await _marketplaceService.SearchStoreItemCategories(filter);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(SearchStoreItemCategories));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(SearchStoreItemCategories));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -108,11 +108,11 @@ namespace Yoma.Core.Api.Controllers
     [AllowAnonymous]
     public async Task<IActionResult> SearchStoreItems([FromBody] StoreItemSearchFilter filter)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(SearchStoreItems));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(SearchStoreItems));
 
       var result = await _marketplaceService.SearchStoreItems(filter);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(SearchStoreItems));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(SearchStoreItems));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -125,11 +125,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Policy = Common.Constants.Authorization_Policy, Roles = $"{Constants.Role_User}")]
     public async Task<IActionResult> SearchVouchers([FromBody] WalletVoucherSearchFilter filter)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(SearchStoreItems));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(SearchStoreItems));
 
       var result = await _rewardWalletService.SearchVouchers(filter);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(SearchStoreItems));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(SearchStoreItems));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -140,11 +140,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Policy = Common.Constants.Authorization_Policy, Roles = $"{Constants.Role_User}")]
     public async Task<IActionResult> BuyItem([FromRoute] string storeId, [FromRoute] string itemCategoryId)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(BuyItem));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(BuyItem));
 
       await _marketplaceService.BuyItem(storeId, itemCategoryId);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(BuyItem));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(BuyItem));
 
       return StatusCode((int)HttpStatusCode.OK);
     }
@@ -157,11 +157,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_Admin}")]
     public IActionResult ListSearchCriteriaOrganizations()
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(ListSearchCriteriaOrganizations));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(ListSearchCriteriaOrganizations));
 
       var result = _storeAccessControlRuleService.ListSearchCriteriaOrganizations();
 
-      _logger.LogInformation("Request {requestName} handled", nameof(ListSearchCriteriaOrganizations));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(ListSearchCriteriaOrganizations));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -172,11 +172,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
     public async Task<IActionResult> ListSearchCriteriaStores([FromQuery] Guid? organizationId)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(ListSearchCriteriaStores));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(ListSearchCriteriaStores));
 
       var result = await _storeAccessControlRuleInfoService.ListSearchCriteriaStores(organizationId, true);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(ListSearchCriteriaStores));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(ListSearchCriteriaStores));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -187,11 +187,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_Admin}")]
     public async Task<IActionResult> GetStoreAccessControlRuleById([FromRoute] Guid id)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(GetStoreAccessControlRuleById));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(GetStoreAccessControlRuleById));
 
       var result = await _storeAccessControlRuleInfoService.GetById(id);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(GetStoreAccessControlRuleById));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(GetStoreAccessControlRuleById));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -202,10 +202,10 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
     public async Task<IActionResult> SearchStoreAccessControlRule([FromBody] StoreAccessControlRuleSearchFilter filter)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(SearchStoreAccessControlRule));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(SearchStoreAccessControlRule));
 
       var result = await _storeAccessControlRuleInfoService.Search(filter, true);
-      _logger.LogInformation("Request {requestName} handled", nameof(SearchStoreAccessControlRule));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(SearchStoreAccessControlRule));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -216,11 +216,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_Admin}")]
     public async Task<IActionResult> CreateStoreAccessControlRulePreview([FromBody] StoreAccessControlRuleRequestCreate request)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(CreateStoreAccessControlRulePreview));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(CreateStoreAccessControlRulePreview));
 
       var result = await _storeAccessControlRuleInfoService.CreatePreview(request);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(CreateStoreAccessControlRulePreview));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(CreateStoreAccessControlRulePreview));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -231,11 +231,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_Admin}")]
     public async Task<IActionResult> CreateStoreAccessControlRule([FromBody] StoreAccessControlRuleRequestCreate request)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(CreateStoreAccessControlRule));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(CreateStoreAccessControlRule));
 
       var result = await _storeAccessControlRuleInfoService.Create(request);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(CreateStoreAccessControlRule));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(CreateStoreAccessControlRule));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -246,11 +246,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_Admin}")]
     public async Task<IActionResult> UpdateStoreAccessControlRulePreview([FromBody] StoreAccessControlRuleRequestUpdate request)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(UpdateStoreAccessControlRulePreview));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(UpdateStoreAccessControlRulePreview));
 
       var result = await _storeAccessControlRuleInfoService.UpdatePreview(request);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(UpdateStoreAccessControlRulePreview));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(UpdateStoreAccessControlRulePreview));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -261,11 +261,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_Admin}")]
     public async Task<IActionResult> UpdateStoreAccessControlRule([FromBody] StoreAccessControlRuleRequestUpdate request)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(UpdateStoreAccessControlRule));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(UpdateStoreAccessControlRule));
 
       var result = await _storeAccessControlRuleInfoService.Update(request);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(UpdateStoreAccessControlRule));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(UpdateStoreAccessControlRule));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -276,11 +276,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_Admin}")]
     public async Task<IActionResult> UpdateStatusStoreAccessControlRule([FromRoute] Guid id, [FromRoute] StoreAccessControlRuleStatus status)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(UpdateStatusStoreAccessControlRule));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(UpdateStatusStoreAccessControlRule));
 
       var result = await _storeAccessControlRuleInfoService.UpdateStatus(id, status);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(UpdateStatusStoreAccessControlRule));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(UpdateStatusStoreAccessControlRule));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }

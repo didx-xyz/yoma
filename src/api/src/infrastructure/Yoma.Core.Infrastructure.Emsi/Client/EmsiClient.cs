@@ -45,7 +45,7 @@ namespace Yoma.Core.Infrastructure.Emsi.Client
     {
       if (!_appSettings.LaborMarketProviderAsSourceEnabledEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment))
       {
-        _logger.LogInformation("Used local embedded EMSI skills payload for environment '{environment}'", _environmentProvider.Environment);
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Used local embedded EMSI skills payload for environment '{environment}'", _environmentProvider.Environment);
         return ParseLocalSkills();
       }
 

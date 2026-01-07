@@ -54,20 +54,20 @@ namespace Yoma.Core.Domain.Entity.Services
 
         if (!_appSettings.TestDataSeedingEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment))
         {
-          _logger.LogInformation("User image seeding seeding skipped for environment '{environment}'", _environmentProvider.Environment);
+          if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("User image seeding seeding skipped for environment '{environment}'", _environmentProvider.Environment);
           return;
         }
 
-        _logger.LogInformation("Processing user image seeding");
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processing user image seeding");
 
         var items = _userRepository.Query().Where(o => !o.PhotoId.HasValue).ToList();
         await SeedPhotos(items);
 
-        _logger.LogInformation("Processed user image seeding");
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processed user image seeding");
       }
       catch (Exception ex)
       {
-        _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(SeedPhotos), ex.Message);
+        if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(SeedPhotos), ex.Message);
       }
       finally
       {

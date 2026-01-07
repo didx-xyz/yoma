@@ -41,11 +41,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = Constants.Role_Admin)]
     public IActionResult GetById([FromRoute] Guid id)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(GetById));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(GetById));
 
       var result = _userService.GetById(id, true, true);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(GetById));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(GetById));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -56,11 +56,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
     public IActionResult Search([FromBody] UserSearchFilter filter)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(Search));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(Search));
 
       var result = _userService.Search(filter);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(Search));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(Search));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -73,11 +73,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_User}")]
     public IActionResult Get()
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(Get));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(Get));
 
       var result = _userProfileService.Get();
 
-      _logger.LogInformation("Request {requestName} handled", nameof(Get));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(Get));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -88,11 +88,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_User}")]
     public IActionResult GetSkills()
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(GetSkills));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(GetSkills));
 
       var result = _userProfileService.GetSkills();
 
-      _logger.LogInformation("Request {requestName} handled", nameof(GetSkills));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(GetSkills));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -103,11 +103,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_User}")]
     public IActionResult GetSettings()
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(GetSettings));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(GetSettings));
 
       var result = _userProfileService.GetSettings();
 
-      _logger.LogInformation("Request {requestName} handled", nameof(GetSettings));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(GetSettings));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -119,11 +119,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_User}")]
     public async Task<IActionResult> UpdateProfile([FromBody] UserRequestUpdateProfile request)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(UpdateProfile));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(UpdateProfile));
 
       var result = await _userProfileService.Update(request);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(UpdateProfile));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(UpdateProfile));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -134,11 +134,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_User}")]
     public async Task<IActionResult> UpsertPhoto([Required] IFormFile file)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(UpsertPhoto));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(UpsertPhoto));
 
       var result = await _userProfileService.UpsertPhoto(file);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(UpsertPhoto));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(UpsertPhoto));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -149,11 +149,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_User}")]
     public async Task<IActionResult> UpdateSettings([FromBody] SettingsRequest request)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(UpdateSettings));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(UpdateSettings));
 
       var result = await _userProfileService.UpdateSettings(request);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(UpdateSettings));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(UpdateSettings));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -164,11 +164,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_User}")]
     public async Task<IActionResult> YoIDOnboard()
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(YoIDOnboard));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(YoIDOnboard));
 
       var result = await _userProfileService.YoIDOnboard();
 
-      _logger.LogInformation("Request {requestName} handled", nameof(YoIDOnboard));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(YoIDOnboard));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }

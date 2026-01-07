@@ -53,7 +53,7 @@ namespace Yoma.Core.Domain.Marketplace.Services
         var statusDeletionIds = Statuses_Deletion.Select(o => _storeAccessControlRuleStatusService.GetByName(o.ToString()).Id).ToList();
         var statusDeletedId = _storeAccessControlRuleStatusService.GetByName(StoreAccessControlRuleStatus.Deleted.ToString()).Id;
 
-        _logger.LogInformation("Processing store access control rule deletion");
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processing store access control rule deletion");
 
         while (executeUntil > DateTimeOffset.UtcNow)
         {
@@ -68,7 +68,7 @@ namespace Yoma.Core.Domain.Marketplace.Services
           {
             item.StatusId = statusDeletedId;
             item.Status = StoreAccessControlRuleStatus.Deleted;
-            _logger.LogInformation("Store access control rule with id '{id}' flagged for deletion", item.Id);
+            if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Store access control rule with id '{id}' flagged for deletion", item.Id);
           }
 
           await _storeAccessControlRuleRepository.Update(items);
@@ -76,11 +76,11 @@ namespace Yoma.Core.Domain.Marketplace.Services
           if (executeUntil <= DateTimeOffset.UtcNow) break;
         }
 
-        _logger.LogInformation("Processed store access control rule deletion");
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processed store access control rule deletion");
       }
       catch (Exception ex)
       {
-        _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(ProcessDeletion), ex.Message);
+        if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(ProcessDeletion), ex.Message);
       }
       finally
       {

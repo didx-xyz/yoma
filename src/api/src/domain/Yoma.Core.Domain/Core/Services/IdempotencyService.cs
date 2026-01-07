@@ -49,10 +49,10 @@ namespace Yoma.Core.Domain.Core.Services
       var created = await db.StringSetAsync(redisKey, value, ttl, When.NotExists);
 
       if (created)
-        _logger.LogInformation("Idempotency key created by {hostName} at {timestamp} for process {process}: {key} (ttl={ttlSeconds}s)",
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Idempotency key created by {hostName} at {timestamp} for process {process}: {key} (ttl={ttlSeconds}s)",
           System.Environment.MachineName, DateTimeOffset.UtcNow, processName, redisKey, ttlSeconds);
-      else
-        _logger.LogInformation("Duplicate idempotency key detected by {hostName} at {timestamp} for process {process}: {key}",
+        else
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Duplicate idempotency key detected by {hostName} at {timestamp} for process {process}: {key}",
           System.Environment.MachineName, DateTimeOffset.UtcNow, processName, redisKey);
 
       return created;

@@ -56,7 +56,7 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
 
       _httpClient = AuthenticationHttpClientFactory.Create(credentials);
 
-      _logger.LogDebug("AuthTokenUrl: {url}", _httpClient.AuthTokenUrl);
+      if (_logger.IsEnabled(LogLevel.Debug)) _logger.LogDebug("AuthTokenUrl: {url}", _httpClient.AuthTokenUrl);
     }
     #endregion
 
@@ -107,7 +107,7 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
           delay: TimeSpan.FromSeconds(1),
           onRetry: attempt =>
           {
-            _logger.LogDebug("Retry {attempt}: Retrying retrieval of Keycloak user '{username}' from realm '{realm}'", attempt, username.SanitizeLogValue(), _keycloakAuthenticationOptions.Realm);
+            if (_logger.IsEnabled(LogLevel.Debug)) _logger.LogDebug("Retry {attempt}: Retrying retrieval of Keycloak user '{username}' from realm '{realm}'", attempt, username.SanitizeLogValue(), _keycloakAuthenticationOptions.Realm);
           },
           logger: _logger
         );
@@ -144,7 +144,7 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
           delay: TimeSpan.FromSeconds(1),
           onRetry: attempt =>
           {
-            _logger.LogDebug("Retry {attempt}: Retrying retrieval of Keycloak user by ID '{id}' from realm '{realm}'", attempt, id, _keycloakAuthenticationOptions.Realm);
+            if (_logger.IsEnabled(LogLevel.Debug)) _logger.LogDebug("Retry {attempt}: Retrying retrieval of Keycloak user by ID '{id}' from realm '{realm}'", attempt, id, _keycloakAuthenticationOptions.Realm);
           },
           logger: _logger
         );
@@ -324,26 +324,26 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
 
       var actions = userRepresentation?.RequiredActions;
       var actionsText = (actions != null && actions.Count > 0) ? string.Join(", ", actions) : "none";
-      _logger.LogInformation("Fetched user representation for user ID: {id} - RequiredActions: {actions}", id, actionsText);
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Fetched user representation for user ID: {id} - RequiredActions: {actions}", id, actionsText);
 
       if (!string.IsNullOrEmpty(userRepresentation?.Email))
       {
-        _logger.LogInformation("No action required for user ID: {id} because email is not empty.", id);
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("No action required for user ID: {id} because email is not empty.", id);
         return;
       }
 
       if (userRepresentation?.RequiredActions == null || !userRepresentation.RequiredActions.Contains("VERIFY_EMAIL"))
       {
-        _logger.LogInformation("No action required for user ID: {id} because 'VERIFY_EMAIL' is not present in RequiredActions.", id);
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("No action required for user ID: {id} because 'VERIFY_EMAIL' is not present in RequiredActions.", id);
         return;
       }
 
       userRepresentation.RequiredActions.Remove("VERIFY_EMAIL");
-      _logger.LogInformation("'VERIFY_EMAIL' action removed for user ID: {id}.", id);
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("'VERIFY_EMAIL' action removed for user ID: {id}.", id);
 
       // Persist the updated user representation
       await userApi.PutUsersByUserIdAsync(_keycloakAuthenticationOptions.Realm, id.ToString(), userRepresentation);
-      _logger.LogInformation("Updated user representation persisted for user ID: {id}.", id);
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Updated user representation persisted for user ID: {id}.", id);
     }
 
     public async Task EnsureRoles(Guid id, List<string> roles)

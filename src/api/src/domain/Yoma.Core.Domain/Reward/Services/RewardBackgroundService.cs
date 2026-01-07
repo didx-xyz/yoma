@@ -71,7 +71,7 @@ namespace Yoma.Core.Domain.Reward.Services
         lockAcquired = await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration);
         if (!lockAcquired) return;
 
-        _logger.LogInformation("Processing reward wallet creation");
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processing reward wallet creation");
 
         var itemIdsToSkip = new List<Guid>();
         while (executeUntil > DateTimeOffset.UtcNow)
@@ -84,12 +84,12 @@ namespace Yoma.Core.Domain.Reward.Services
             var pendingStatus = item.Status;
             try
             {
-              _logger.LogInformation("Processing reward wallet creation for item with id '{id}'", item.Id);
+              if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processing reward wallet creation for item with id '{id}'", item.Id);
 
               switch (pendingStatus)
               {
                 case WalletCreationStatus.Pending:
-                  _logger.LogInformation("Creating reward wallet");
+                  if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Creating reward wallet");
 
                   await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
                   {
@@ -106,11 +106,11 @@ namespace Yoma.Core.Domain.Reward.Services
                     scope.Complete();
                   });
 
-                  _logger.LogInformation("Created reward wallet");
+                  if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Created reward wallet");
                   break;
 
                 case WalletCreationStatus.PendingUsernameUpdate:
-                  _logger.LogInformation("Updating reward wallet username");
+                  if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Updating reward wallet username");
 
                   var username = await _walletService.UpdateWalletUsername(item.UserId);
 
@@ -118,18 +118,18 @@ namespace Yoma.Core.Domain.Reward.Services
                   item.Status = WalletCreationStatus.Created;
                   await _walletService.UpdateScheduleCreation(item, pendingStatus);
 
-                  _logger.LogInformation("Updated reward wallet username");
+                  if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Updated reward wallet username");
                   break;
 
                 default:
                   throw new InvalidOperationException($"Pending status of '{pendingStatus}' not supported");
               }
 
-              _logger.LogInformation("Processed reward wallet creation for item with id '{id}'", item.Id);
+              if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processed reward wallet creation for item with id '{id}'", item.Id);
             }
             catch (Exception ex)
             {
-              _logger.LogError(ex, "Failed to process reward wallet creation for item with id '{id}': {errorMessage}", item.Id, ex.Message);
+              if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to process reward wallet creation for item with id '{id}': {errorMessage}", item.Id, ex.Message);
 
               item.Status = WalletCreationStatus.Error;
               item.ErrorReason = ex.Message;
@@ -142,11 +142,11 @@ namespace Yoma.Core.Domain.Reward.Services
           }
         }
 
-        _logger.LogInformation("Processed reward wallet creation");
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processed reward wallet creation");
       }
       catch (Exception ex)
       {
-        _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(ProcessWalletCreation), ex.Message);
+        if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(ProcessWalletCreation), ex.Message);
       }
       finally
       {
@@ -167,7 +167,7 @@ namespace Yoma.Core.Domain.Reward.Services
         lockAcquired = await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration);
         if (!lockAcquired) return;
 
-        _logger.LogInformation("Processing reward transactions");
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processing reward transactions");
 
         var itemIdsToSkip = new List<Guid>();
         while (executeUntil > DateTimeOffset.UtcNow)
@@ -179,7 +179,7 @@ namespace Yoma.Core.Domain.Reward.Services
           {
             try
             {
-              _logger.LogInformation("Processing reward transaction for item with id '{id}'", item.Id);
+              if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processing reward transaction for item with id '{id}'", item.Id);
 
               var (proceed, userEmail, walletId) = GetWalletId(item, item.UserId);
               if (!proceed)
@@ -249,11 +249,11 @@ namespace Yoma.Core.Domain.Reward.Services
               item.Status = RewardTransactionStatus.Processed;
               await _rewardService.UpdateTransaction(item);
 
-              _logger.LogInformation("Processed reward transaction for item with id '{id}'", item.Id);
+              if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processed reward transaction for item with id '{id}'", item.Id);
             }
             catch (Exception ex)
             {
-              _logger.LogError(ex, "Failed to process reward transaction for item with id '{id}': {errorMessage}", item.Id, ex.Message);
+              if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to process reward transaction for item with id '{id}': {errorMessage}", item.Id, ex.Message);
 
               item.Status = RewardTransactionStatus.Error;
               item.ErrorReason = ex.Message;
@@ -266,11 +266,11 @@ namespace Yoma.Core.Domain.Reward.Services
           }
         }
 
-        _logger.LogInformation("Processed reward transactions");
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processed reward transactions");
       }
       catch (Exception ex)
       {
-        _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(ProcessRewardTransactions), ex.Message);
+        if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(ProcessRewardTransactions), ex.Message);
       }
       finally
       {
@@ -285,7 +285,7 @@ namespace Yoma.Core.Domain.Reward.Services
       var (username, walletId) = _walletService.GetWalletIdOrNull(userId);
       if (string.IsNullOrEmpty(walletId))
       {
-        _logger.LogInformation(
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation(
             "Processing of reward transaction for item with id '{itemId}' " +
             "was skipped as the wallet creation for user with id '{userId}' has not been completed", item.Id, userId);
         return (false, null, null);

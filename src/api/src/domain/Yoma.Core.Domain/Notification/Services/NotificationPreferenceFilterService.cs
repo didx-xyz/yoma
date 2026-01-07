@@ -96,7 +96,7 @@ namespace Yoma.Core.Domain.Notification.Services
         }
         catch (Exception ex)
         {
-          _logger.LogError(ex, "Failed to evaluate recipient username preference: {errorMessage}", ex.Message);
+          if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to evaluate recipient username preference: {errorMessage}", ex.Message);
           result.Add(recipient);
         }
       }

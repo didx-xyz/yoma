@@ -318,7 +318,7 @@ namespace Yoma.Core.Domain.Referral.Services
 
       AssertUpdatable(result);
 
-      _logger.LogInformation("Updating Program {ProgramId}. Current(Status={Status}, Start={Start:yyyy-MM-dd}, End={End:yyyy-MM-dd}, Limit={Limit}, Total={Total}) Requested(Start={RStart:yyyy-MM-dd}, End={REnd:yyyy-MM-dd}, Limit={RLimit})",
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Updating Program {ProgramId}. Current(Status={Status}, Start={Start:yyyy-MM-dd}, End={End:yyyy-MM-dd}, Limit={Limit}, Total={Total}) Requested(Start={RStart:yyyy-MM-dd}, End={REnd:yyyy-MM-dd}, Limit={RLimit})",
         result.Id, result.Status, result.DateStart, result.DateEnd, result.CompletionLimit, result.CompletionTotal, request.DateStart, request.DateEnd, request.CompletionLimit);
 
       var existingByName = GetByNameOrNull(request.Name, false, false);
@@ -341,7 +341,7 @@ namespace Yoma.Core.Domain.Referral.Services
       {
         if (request.CompletionLimit.HasValue && (result.CompletionTotal ?? 0) >= request.CompletionLimit.Value)
         {
-          _logger.LogInformation("Program {ProgramId} edited from UnCompletable -> LimitReached (cap hit: {CompletionTotal}/{CompletionLimit})",
+          if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Program {ProgramId} edited from UnCompletable -> LimitReached (cap hit: {CompletionTotal}/{CompletionLimit})",
             result.Id, result.CompletionTotal, request.CompletionLimit);
 
           result.Status = ProgramStatus.LimitReached;
@@ -349,7 +349,7 @@ namespace Yoma.Core.Domain.Referral.Services
         }
         else
         {
-          _logger.LogInformation("Program {ProgramId} edited from UnCompletable -> Active", result.Id);
+          if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Program {ProgramId} edited from UnCompletable -> Active", result.Id);
 
           result.Status = ProgramStatus.Active;
           result.StatusId = _programStatusService.GetByName(ProgramStatus.Active.ToString()).Id;
@@ -415,7 +415,7 @@ namespace Yoma.Core.Domain.Referral.Services
         scope.Complete();
       });
 
-      _logger.LogInformation("Program {ProgramId} updated. FinalStatus={Status}", result.Id, result.Status);
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Program {ProgramId} updated. FinalStatus={Status}", result.Id, result.Status);
 
       return result;
     }
@@ -457,7 +457,7 @@ namespace Yoma.Core.Domain.Referral.Services
       var originalStatus = result.Status;
       var finalStatus = status;
 
-      _logger.LogInformation("UpdateStatus requested for Program {ProgramId}. Requested={Requested} Current={Current} End={End} CompletionLimit={CompletionLimit} CompletionTotal={CompletionTotal}",
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("UpdateStatus requested for Program {ProgramId}. Requested={Requested} Current={Current} End={End} CompletionLimit={CompletionLimit} CompletionTotal={CompletionTotal}",
         result.Id, status, result.Status, result.DateEnd?.ToString("yyyy-MM-dd") ?? "(null)", result.CompletionLimit, result.CompletionTotal);
 
       switch (status)
@@ -476,7 +476,7 @@ namespace Yoma.Core.Domain.Referral.Services
           if (result.CompletionLimit.HasValue && (result.CompletionTotal ?? 0) >= result.CompletionLimit.Value)
           {
             finalStatus = ProgramStatus.LimitReached;
-            _logger.LogInformation("Program {ProgramId} activation resolved to LimitReached (cap hit: {Total}/{Limit})", result.Id, result.CompletionTotal, result.CompletionLimit);
+            if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Program {ProgramId} activation resolved to LimitReached (cap hit: {Total}/{Limit})", result.Id, result.CompletionTotal, result.CompletionLimit);
 
             flipLinksToLimitReached = true;
           }
@@ -521,19 +521,19 @@ namespace Yoma.Core.Domain.Referral.Services
 
         if (cancelReferralLinks)
         {
-          _logger.LogInformation("Cancelling all referral links for program {ProgramId}", result.Id);
+          if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Cancelling all referral links for program {ProgramId}", result.Id);
           await _linkMaintenanceService.CancelByProgramId(result.Id);
         }
         else if (flipLinksToLimitReached)
         {
-          _logger.LogInformation("Flipping links to limit-reached for program {ProgramId}", result.Id);
+          if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Flipping links to limit-reached for program {ProgramId}", result.Id);
           await _linkMaintenanceService.LimitReachedByProgramId(result.Id, _logger);
         }
 
         scope.Complete();
       });
 
-      _logger.LogInformation("Program {ProgramId} status updated. Requested={Requested} Final={Final}", result.Id, status, finalStatus);
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Program {ProgramId} status updated. Requested={Requested} Final={Final}", result.Id, status, finalStatus);
 
       return result;
     }
@@ -593,7 +593,7 @@ namespace Yoma.Core.Domain.Referral.Services
             program.CompletionLimit.HasValue &&
             program.CompletionTotal >= program.CompletionLimit.Value)
         {
-          _logger.LogInformation(
+          if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation(
             "Referral program {ProgramId}: global completion cap reached (total {Total} >= limit {Limit}) — flipping to LIMIT_REACHED",
             program.Id, program.CompletionTotal, program.CompletionLimit.Value);
 
@@ -604,7 +604,7 @@ namespace Yoma.Core.Domain.Referral.Services
         }
         else
         {
-          _logger.LogDebug(
+          if (_logger.IsEnabled(LogLevel.Debug)) _logger.LogDebug(
             "Referral program {ProgramId}: totals updated (total {Total}, rewardΔ {RewardDelta}); status remains {Status} (cap {Cap}, active={IsActive})",
             program.Id, program.CompletionTotal, rewardAmount ?? 0m, program.Status,
             program.CompletionLimit?.ToString() ?? "null", program.Status == ProgramStatus.Active);

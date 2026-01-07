@@ -48,7 +48,7 @@ namespace Yoma.Core.Infrastructure.SAYouth.Client
       if (!_appSettings.PartnerSharingEnabledEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment))
       {
         var mockId = $"MOCK_{Guid.NewGuid():N}";
-        _logger.LogInformation("Partner sharing '{action}' skipped for environment '{environment}' and assuming success", nameof(CreateOpportunity), _environmentProvider.Environment);
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Partner sharing '{action}' skipped for environment '{environment}' and assuming success", nameof(CreateOpportunity), _environmentProvider.Environment);
         return mockId;
       }
 
@@ -70,7 +70,7 @@ namespace Yoma.Core.Infrastructure.SAYouth.Client
     {
       if (!_appSettings.PartnerSharingEnabledEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment))
       {
-        _logger.LogInformation("Partner sharing '{action}' skipped for environment '{environment}' and assuming success", nameof(UpdateOpportunity), _environmentProvider.Environment);
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Partner sharing '{action}' skipped for environment '{environment}' and assuming success", nameof(UpdateOpportunity), _environmentProvider.Environment);
         return;
       }
 
@@ -145,7 +145,7 @@ namespace Yoma.Core.Infrastructure.SAYouth.Client
     {
       if (!_appSettings.PartnerSharingEnabledEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment))
       {
-        _logger.LogInformation("Partner sharing '{action}' skipped for environment '{environment}' and assuming success", nameof(DeleteOpportunity), _environmentProvider.Environment);
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Partner sharing '{action}' skipped for environment '{environment}' and assuming success", nameof(DeleteOpportunity), _environmentProvider.Environment);
         return;
       }
 

@@ -68,7 +68,7 @@ namespace Yoma.Core.Domain.Reward.Services
 
       if (existingItem != null)
       {
-        _logger.LogInformation("Scheduling of reward transaction skipped: Already '{status}' for user id '{userId}' entity type '{entityType}' and entity id '{entityId}'",
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Scheduling of reward transaction skipped: Already '{status}' for user id '{userId}' entity type '{entityType}' and entity id '{entityId}'",
           userId, existingItem.Status, entityType, entityId);
         return;
       }

@@ -232,6 +232,9 @@ namespace Yoma.Core.Infrastructure.Database.Context
 
       #region ActionLink
       builder.Entity<ActionLink.Entities.Link>()
+          .HasKey(x => x.Id).HasName("PK_ActionLink_Link");
+
+      builder.Entity<ActionLink.Entities.Link>()
           .HasOne(o => o.CreatedByUser)
           .WithMany()
           .HasForeignKey(o => o.CreatedByUserId)
@@ -258,6 +261,11 @@ namespace Yoma.Core.Infrastructure.Database.Context
           .OnDelete(DeleteBehavior.NoAction);
       #endregion
 
+      #region Marketplace
+      builder.Entity<TransactionStatus>()
+          .HasKey(o => o.Id).HasName("PK_Marketplace_TransactionStatus");
+      #endregion Marketplace
+
       #region Opportunity
       builder.Entity<Opportunity.Entities.Opportunity>()
           .HasIndex(o => new { o.Description })
@@ -278,6 +286,9 @@ namespace Yoma.Core.Infrastructure.Database.Context
       #endregion Opportunity
 
       #region Referral
+      builder.Entity<Referral.Entities.Link>()
+          .HasKey(x => x.Id).HasName("PK_Referral_Link");
+
       builder.Entity<Block>()
           .HasOne(b => b.User)
           .WithMany(u => u.Blocks)
@@ -328,6 +339,9 @@ namespace Yoma.Core.Infrastructure.Database.Context
           .HasIndex(e => new { e.UserId, e.SourceEntityType, e.MyOpportunityId, e.ReferralLinkUsageId })
           .IsUnique()
           .HasFilter(null);
+
+      builder.Entity<RewardTransactionStatus>()
+          .HasKey(e => e.Id).HasName("PK_Reward_TransactionStatus");
       #endregion Reward
 
       #region SSI

@@ -80,7 +80,7 @@ namespace Yoma.Core.Domain.Entity.Services
         lockAcquired = await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration);
         if (!lockAcquired) return;
 
-        _logger.LogInformation("Processing organization declination");
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processing organization declination");
 
         var statusDeclinationIds = Statuses_Declination.Select(o => _organizationStatusService.GetByName(o.ToString()).Id).ToList();
         var statusDeclinedId = _organizationStatusService.GetByName(OrganizationStatus.Declined.ToString()).Id;
@@ -102,7 +102,7 @@ namespace Yoma.Core.Domain.Entity.Services
             item.StatusId = statusDeclinedId;
             item.Status = OrganizationStatus.Declined;
             item.ModifiedByUserId = user.Id;
-            _logger.LogInformation("Organization with id '{id}' flagged for declination", item.Id);
+            if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Organization with id '{id}' flagged for declination", item.Id);
           }
 
           items = await _organizationRepository.Update(items);
@@ -137,23 +137,23 @@ namespace Yoma.Core.Domain.Entity.Services
 
               await _notificationDeliveryService.Send(notificationType, recipients, data);
 
-              _logger.LogInformation("Successfully sent notification");
+              if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Successfully sent notification");
             }
             catch (Exception ex)
             {
-              _logger.LogError(ex, "Failed to send notification: {errorMessage}", ex.Message);
+              if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to send notification: {errorMessage}", ex.Message);
             }
           }
 
           if (executeUntil <= DateTimeOffset.UtcNow) break;
         }
 
-        _logger.LogInformation("Processed organization declination");
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processed organization declination");
       }
 
       catch (Exception ex)
       {
-        _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(ProcessDeclination), ex.Message);
+        if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(ProcessDeclination), ex.Message);
       }
       finally
       {
@@ -174,7 +174,7 @@ namespace Yoma.Core.Domain.Entity.Services
         lockAcquired = await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration);
         if (!lockAcquired) return;
 
-        _logger.LogInformation("Processing organization deletion");
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processing organization deletion");
 
         var statusDeletionIds = Statuses_Deletion.Select(o => _organizationStatusService.GetByName(o.ToString()).Id).ToList();
         var statusDeletedId = _organizationStatusService.GetByName(OrganizationStatus.Deleted.ToString()).Id;
@@ -195,7 +195,7 @@ namespace Yoma.Core.Domain.Entity.Services
             item.StatusId = statusDeletedId;
             item.Status = OrganizationStatus.Deleted;
             item.ModifiedByUserId = user.Id;
-            _logger.LogInformation("Organization with id '{id}' flagged for deletion", item.Id);
+            if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Organization with id '{id}' flagged for deletion", item.Id);
           }
 
           await _organizationRepository.Update(items);
@@ -206,11 +206,11 @@ namespace Yoma.Core.Domain.Entity.Services
           if (executeUntil <= DateTimeOffset.UtcNow) break;
         }
 
-        _logger.LogInformation("Processed organization deletion");
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processed organization deletion");
       }
       catch (Exception ex)
       {
-        _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(ProcessDeletion), ex.Message);
+        if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(ProcessDeletion), ex.Message);
       }
       finally
       {
@@ -231,20 +231,20 @@ namespace Yoma.Core.Domain.Entity.Services
 
         if (!_appSettings.TestDataSeedingEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment))
         {
-          _logger.LogInformation("Organization logo and document seeding skipped for environment '{environment}'", _environmentProvider.Environment);
+          if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Organization logo and document seeding skipped for environment '{environment}'", _environmentProvider.Environment);
           return;
         }
 
-        _logger.LogInformation("Processing organization logo and document seeding");
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processing organization logo and document seeding");
 
         await SeedLogo();
         await SeedDocuments();
 
-        _logger.LogInformation("Processed organization logo and document seeding");
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processed organization logo and document seeding");
       }
       catch (Exception ex)
       {
-        _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(SeedLogoAndDocuments), ex.Message);
+        if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(SeedLogoAndDocuments), ex.Message);
       }
       finally
       {

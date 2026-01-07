@@ -40,11 +40,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
     public IActionResult GetById([FromRoute] Guid id)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(GetById));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(GetById));
 
       var result = _myOpportunityService.GetById(id, true, true, true);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(GetById));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(GetById));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -56,11 +56,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
     public IActionResult ListMyOpportunityVerificationSearchCriteriaOpportunity([FromQuery] List<Guid>? organizations, [FromQuery] List<VerificationStatus>? verificationStatuses)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(ListMyOpportunityVerificationSearchCriteriaOpportunity));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(ListMyOpportunityVerificationSearchCriteriaOpportunity));
 
       var result = _myOpportunityService.ListMyOpportunityVerificationSearchCriteriaOpportunity(organizations, verificationStatuses, true);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(ListMyOpportunityVerificationSearchCriteriaOpportunity));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(ListMyOpportunityVerificationSearchCriteriaOpportunity));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -72,11 +72,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
     public IActionResult Search([FromBody] MyOpportunitySearchFilterAdmin filter)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(Search));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(Search));
 
       var result = _myOpportunityService.Search(filter, true);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(Search));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(Search));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -90,11 +90,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
     public async Task<IActionResult> ExportOrScheduleToCSV([FromBody] MyOpportunitySearchFilterAdmin filter)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(ExportOrScheduleToCSV));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(ExportOrScheduleToCSV));
 
       var (scheduleForProcessing, fileName, bytes) = await _myOpportunityService.ExportOrScheduleToCSV(filter, true);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(ExportOrScheduleToCSV));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(ExportOrScheduleToCSV));
 
       if (scheduleForProcessing) return StatusCode((int)HttpStatusCode.OK);
       return File(bytes!, "text/csv", fileName);
@@ -106,11 +106,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
     public async Task<IActionResult> FinalizeVerificationManual([FromBody] MyOpportunityRequestVerifyFinalizeBatch request)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(FinalizeVerificationManual));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(FinalizeVerificationManual));
 
       var result = await _myOpportunityService.FinalizeVerificationManual(request);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(FinalizeVerificationManual));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(FinalizeVerificationManual));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -121,11 +121,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
     public async Task<IActionResult> FinalizeVerificationManual([FromBody] MyOpportunityRequestVerifyFinalize request)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(FinalizeVerificationManual));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(FinalizeVerificationManual));
 
       await _myOpportunityService.FinalizeVerificationManual(request);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(FinalizeVerificationManual));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(FinalizeVerificationManual));
 
       return StatusCode((int)HttpStatusCode.OK);
     }
@@ -139,11 +139,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
     public async Task<IActionResult> PerformActionImportVerificationFromCSV([FromForm] MyOpportunityRequestVerifyImportCsv request)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(PerformActionImportVerificationFromCSV));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(PerformActionImportVerificationFromCSV));
 
       var result = await _myOpportunityService.PerformActionImportVerificationFromCSV(request, true);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(PerformActionImportVerificationFromCSV));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(PerformActionImportVerificationFromCSV));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -156,11 +156,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
     public async Task<IActionResult> DownloadVerificationFilesAdmin([FromBody] MyOpportunitySearchFilterVerificationFiles filter)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(DownloadVerificationFiles));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(DownloadVerificationFiles));
 
       await _myOpportunityService.DownloadVerificationFilesSchedule(filter, true);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(DownloadVerificationFiles));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(DownloadVerificationFiles));
 
       return StatusCode((int)HttpStatusCode.OK);
     }
@@ -173,11 +173,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_User}")]
     public IActionResult GetVerificationStatus([FromRoute] Guid opportunityId)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(GetVerificationStatus));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(GetVerificationStatus));
 
       var result = _myOpportunityService.GetVerificationStatus(opportunityId, null);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(GetVerificationStatus));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(GetVerificationStatus));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -189,11 +189,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_User}")]
     public async Task<IActionResult> DownloadVerificationFiles([FromBody] MyOpportunitySearchFilterVerificationFiles filter)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(DownloadVerificationFiles));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(DownloadVerificationFiles));
 
       var file = await _myOpportunityService.DownloadVerificationFiles(filter);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(DownloadVerificationFiles));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(DownloadVerificationFiles));
 
       return File(file.ToBinary(), file.ContentType, file.FileName);
     }
@@ -204,11 +204,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_User}")]
     public IActionResult Search([FromBody] MyOpportunitySearchFilter filter)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(Search));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(Search));
 
       var result = _myOpportunityService.Search(filter, null);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(Search));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(Search));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -219,11 +219,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_User}")]
     public IActionResult GetSummary()
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(GetSummary));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(GetSummary));
 
       var result = _myOpportunityService.GetSummary();
 
-      _logger.LogInformation("Request {requestName} handled", nameof(GetSummary));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(GetSummary));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -234,11 +234,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_User}")]
     public async Task<IActionResult> PerformActionViewed([FromRoute] Guid opportunityId)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(PerformActionViewed));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(PerformActionViewed));
 
       await _myOpportunityService.PerformActionViewed(opportunityId);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(PerformActionViewed));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(PerformActionViewed));
 
       return StatusCode((int)HttpStatusCode.OK);
     }
@@ -249,11 +249,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_User}")]
     public async Task<IActionResult> PerformActionSaved([FromRoute] Guid opportunityId)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(PerformActionSaved));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(PerformActionSaved));
 
       await _myOpportunityService.PerformActionSaved(opportunityId);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(PerformActionSaved));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(PerformActionSaved));
 
       return StatusCode((int)HttpStatusCode.OK);
     }
@@ -264,11 +264,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_User}")]
     public async Task<IActionResult> PerformActionNavigatedExternalLink([FromRoute] Guid opportunityId)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(PerformActionNavigatedExternalLink));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(PerformActionNavigatedExternalLink));
 
       await _myOpportunityService.PerformActionNavigatedExternalLink(opportunityId);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(PerformActionNavigatedExternalLink));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(PerformActionNavigatedExternalLink));
 
       return StatusCode((int)HttpStatusCode.OK);
     }
@@ -279,11 +279,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_User}")]
     public ActionResult ActionedSaved([FromRoute] Guid opportunityId)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(PerformActionSaved));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(PerformActionSaved));
 
       var result = _myOpportunityService.ActionedSaved(opportunityId);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(PerformActionSaved));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(PerformActionSaved));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -294,11 +294,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_User}")]
     public async Task<IActionResult> PerformActionSavedRemove([FromRoute] Guid opportunityId)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(PerformActionSavedRemove));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(PerformActionSavedRemove));
 
       await _myOpportunityService.PerformActionSavedRemove(opportunityId);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(PerformActionSavedRemove));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(PerformActionSavedRemove));
 
       return StatusCode((int)HttpStatusCode.OK);
     }
@@ -309,11 +309,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_User}")]
     public async Task<IActionResult> PerformActionSendForVerificationManual([FromRoute] Guid opportunityId, [FromForm] MyOpportunityRequestVerify request)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(PerformActionSendForVerificationManual));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(PerformActionSendForVerificationManual));
 
       await _myOpportunityService.PerformActionSendForVerificationManual(opportunityId, request);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(PerformActionSendForVerificationManual));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(PerformActionSendForVerificationManual));
 
       return StatusCode((int)HttpStatusCode.OK);
     }
@@ -324,11 +324,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_User}")]
     public async Task<IActionResult> PerformActionInstantVerification([FromRoute] Guid linkId)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(PerformActionInstantVerification));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(PerformActionInstantVerification));
 
       await _myOpportunityService.PerformActionInstantVerification(linkId);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(PerformActionInstantVerification));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(PerformActionInstantVerification));
 
       return StatusCode((int)HttpStatusCode.OK);
     }
@@ -339,11 +339,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_User}")]
     public async Task<IActionResult> PerformActionSendForVerificationManualDelete([FromRoute] Guid opportunityId)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(PerformActionSendForVerificationManualDelete));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(PerformActionSendForVerificationManualDelete));
 
       await _myOpportunityService.PerformActionSendForVerificationManualDelete(opportunityId);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(PerformActionSendForVerificationManualDelete));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(PerformActionSendForVerificationManualDelete));
 
       return StatusCode((int)HttpStatusCode.OK);
     }

@@ -55,16 +55,16 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Services
     {
       using var stream = await _clientFactory.CreateTenantAdminSSEClientSingleEvent(tenantId, topic, fieldName, fieldValue, desiredState);
       WebhookEvent<T>? result = null;
-      using (var reader = new StreamReader(stream))
+      using var reader = new StreamReader(stream);
       {
-        while (!reader.EndOfStream)
+        string? msg;
+        while ((msg = await reader.ReadLineAsync()) != null)
         {
-          var msg = await reader.ReadLineAsync();
           if (string.IsNullOrEmpty(msg) || msg.StartsWith(": ping")) continue;
 
           if (!msg.StartsWith("data: "))
           {
-            _logger.LogError("Unexpected SSE message: {msg}", msg);
+            if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError("Unexpected SSE message: {msg}", msg);
             continue;
           }
           msg = msg[6..];

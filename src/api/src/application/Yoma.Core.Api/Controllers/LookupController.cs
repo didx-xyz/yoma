@@ -53,11 +53,11 @@ namespace Yoma.Core.Api.Controllers
     [ProducesResponseType(typeof(List<Country>), (int)HttpStatusCode.OK)]
     public IActionResult ListCountries([FromQuery] bool? excludeWorldwide = null)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(ListCountries));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(ListCountries));
 
       var result = _countryService.List(excludeWorldwide);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(ListCountries));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(ListCountries));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -67,11 +67,11 @@ namespace Yoma.Core.Api.Controllers
     [ProducesResponseType(typeof(List<Education>), (int)HttpStatusCode.OK)]
     public IActionResult ListEducations()
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(ListEducations));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(ListEducations));
 
       var result = _educationService.List();
 
-      _logger.LogInformation("Request {requestName} handled", nameof(ListEducations));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(ListEducations));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -81,11 +81,11 @@ namespace Yoma.Core.Api.Controllers
     [ProducesResponseType(typeof(List<EngagementType>), (int)HttpStatusCode.OK)]
     public IActionResult ListEngagementTypes()
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(ListEngagementTypes));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(ListEngagementTypes));
 
       var result = _engagementTypeService.List();
 
-      _logger.LogInformation("Request {requestName} handled", nameof(ListEngagementTypes));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(ListEngagementTypes));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -95,11 +95,11 @@ namespace Yoma.Core.Api.Controllers
     [ProducesResponseType(typeof(List<Gender>), (int)HttpStatusCode.OK)]
     public IActionResult ListGenders()
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(ListGenders));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(ListGenders));
 
       var result = _genderService.List();
 
-      _logger.LogInformation("Request {requestName} handled", nameof(ListGenders));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(ListGenders));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -109,11 +109,11 @@ namespace Yoma.Core.Api.Controllers
     [ProducesResponseType(typeof(List<Language>), (int)HttpStatusCode.OK)]
     public IActionResult ListLanguages()
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(ListLanguages));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(ListLanguages));
 
       var result = _languageService.List();
 
-      _logger.LogInformation("Request {requestName} handled", nameof(ListLanguages));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(ListLanguages));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -123,11 +123,11 @@ namespace Yoma.Core.Api.Controllers
     [ProducesResponseType(typeof(SkillSearchResults), (int)HttpStatusCode.OK)]
     public IActionResult SearchSkills([FromQuery] SkillSearchFilter filter)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(SearchSkills));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(SearchSkills));
 
       var result = _skillService.Search(filter);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(SearchSkills));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(SearchSkills));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -137,11 +137,11 @@ namespace Yoma.Core.Api.Controllers
     [ProducesResponseType(typeof(List<TimeInterval>), (int)HttpStatusCode.OK)]
     public IActionResult ListTimeIntervals()
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(ListTimeIntervals));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(ListTimeIntervals));
 
       var result = _timeIntervalService.List();
 
-      _logger.LogInformation("Request {requestName} handled", nameof(ListTimeIntervals));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(ListTimeIntervals));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }

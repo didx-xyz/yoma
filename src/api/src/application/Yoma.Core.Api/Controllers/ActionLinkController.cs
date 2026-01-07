@@ -40,11 +40,11 @@ namespace Yoma.Core.Api.Controllers
     [AllowAnonymous]
     public async Task<IActionResult> GetOrCreateLinkSharing([FromBody] LinkRequestCreateShare request)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(GetOrCreateLinkSharing));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(GetOrCreateLinkSharing));
 
       var result = await _linkService.GetOrCreateShare(request, true, false);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(GetOrCreateLinkSharing));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(GetOrCreateLinkSharing));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -57,11 +57,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
     public async Task<IActionResult> CreateLinkInstantVerify([FromBody] LinkRequestCreateVerify request)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(CreateLinkInstantVerify));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(CreateLinkInstantVerify));
 
       var result = await _linkService.CreateVerify(request, true);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(CreateLinkInstantVerify));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(CreateLinkInstantVerify));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -73,10 +73,10 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
     public IActionResult GetById([FromRoute] Guid linkId, [FromQuery] bool? includeQRCode)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(GetById));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(GetById));
 
       var result = _linkService.GetById(linkId, true, includeQRCode);
-      _logger.LogInformation("Request {requestName} handled", nameof(GetById));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(GetById));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -87,10 +87,10 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
     public IActionResult Search([FromBody] LinkSearchFilter filter)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(Search));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(Search));
 
       var result = _linkService.Search(filter, true);
-      _logger.LogInformation("Request {requestName} handled", nameof(Search));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(Search));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -102,10 +102,10 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
     public async Task<IActionResult> UpdateStatus([FromRoute] Guid linkId, [FromQuery] ActionLinkStatus status)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(UpdateStatus));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(UpdateStatus));
 
       var result = await _linkService.UpdateStatus(linkId, status, true);
-      _logger.LogInformation("Request {requestName} handled", nameof(UpdateStatus));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(UpdateStatus));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -118,11 +118,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
     public IActionResult SearchUsage([FromBody] LinkSearchFilterUsage filter)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(SearchUsage));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(SearchUsage));
 
       var result = _linkService.SearchUsage(filter, true);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(SearchUsage));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(SearchUsage));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -135,11 +135,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
     public async Task<IActionResult> SendInstantVerifyReminders([FromRoute] Guid linkId)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(SendInstantVerifyReminders));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(SendInstantVerifyReminders));
 
       await _linkService.SendNotificationVerify(linkId, true);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(SendInstantVerifyReminders));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(SendInstantVerifyReminders));
 
       return StatusCode((int)HttpStatusCode.OK);
     }

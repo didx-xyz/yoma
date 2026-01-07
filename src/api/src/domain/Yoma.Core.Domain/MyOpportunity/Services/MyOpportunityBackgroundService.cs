@@ -82,7 +82,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         lockAcquired = await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration);
         if (!lockAcquired) return;
 
-        _logger.LogInformation("Processing 'my' opportunity verification rejection");
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processing 'my' opportunity verification rejection");
 
         var statusRejectedId = _myOpportunityVerificationStatusService.GetByName(VerificationStatus.Rejected.ToString()).Id;
         var statusRejectableIds = Statuses_Rejectable.Select(o => _myOpportunityVerificationStatusService.GetByName(o.ToString()).Id).ToList();
@@ -100,7 +100,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
           {
             item.CommentVerification = $"Auto-Declined due to being {Statuses_Rejectable.JoinNames().ToLower()} for more than {_scheduleJobOptions.MyOpportunityRejectionIntervalInDays} days";
             item.VerificationStatusId = statusRejectedId;
-            _logger.LogInformation("'My' opportunity with id '{id}' flagged for verification rejection", item.Id);
+            if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("'My' opportunity with id '{id}' flagged for verification rejection", item.Id);
           }
 
           items = await _myOpportunityRepository.Update(items);
@@ -141,22 +141,22 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
               await _notificationDeliveryService.Send(notificationType, recipients, data);
 
-              _logger.LogInformation("Successfully sent notification");
+              if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Successfully sent notification");
             }
             catch (Exception ex)
             {
-              _logger.LogError(ex, "Failed to send notification: {errorMessage}", ex.Message);
+              if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to send notification: {errorMessage}", ex.Message);
             }
           }
 
           if (executeUntil <= DateTimeOffset.UtcNow) break;
         }
 
-        _logger.LogInformation("Processed 'my' opportunity verification rejection");
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processed 'my' opportunity verification rejection");
       }
       catch (Exception ex)
       {
-        _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(ProcessVerificationRejection), ex.Message);
+        if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(ProcessVerificationRejection), ex.Message);
       }
       finally
       {
@@ -177,11 +177,11 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
         if (!_appSettings.TestDataSeedingEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment))
         {
-          _logger.LogInformation("Pending verification seeding skipped for environment '{environment}'", _environmentProvider.Environment);
+          if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Pending verification seeding skipped for environment '{environment}'", _environmentProvider.Environment);
           return;
         }
 
-        _logger.LogInformation("Processing pending verification seeding seeding");
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processing pending verification seeding seeding");
 
         var actionVerificationId = _myOpportunityActionService.GetByName(Action.Verification.ToString()).Id;
         var verificationStatusPendingId = _myOpportunityVerificationStatusService.GetByName(VerificationStatus.Pending.ToString()).Id;
@@ -192,11 +192,11 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
         await SeedPendingVerifications(items);
 
-        _logger.LogInformation("Processed pending verification seeding");
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processed pending verification seeding");
       }
       catch (Exception ex)
       {
-        _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(SeedPendingVerifications), ex.Message);
+        if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(SeedPendingVerifications), ex.Message);
       }
       finally
       {
@@ -336,11 +336,11 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         }
         catch (FluentValidation.ValidationException ex)
         {
-          _logger.LogError(ex, "Pending verification seeding validation failed. Seeding skipped / no longer seed-able for item with id '{id}': {errorMessage}", item.Id, ex.Message);
+          if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Pending verification seeding validation failed. Seeding skipped / no longer seed-able for item with id '{id}': {errorMessage}", item.Id, ex.Message);
         }
         catch (ValidationException ex)
         {
-          _logger.LogError(ex, "Pending verification seeding validation failed. Seeding skipped / no longer seed-able for item with id '{id}': {errorMessage}", item.Id, ex.Message);
+          if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Pending verification seeding validation failed. Seeding skipped / no longer seed-able for item with id '{id}': {errorMessage}", item.Id, ex.Message);
         }
       }
     }
