@@ -101,7 +101,7 @@ jobs:
       - uses: actions/setup-dotnet@v5
         if: (steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch') && matrix.lang == 'cs'
         with:
-          dotnet-version: 9.x
+          dotnet-version: 10.x
 
       - uses: wearerequired/lint-action@v2
         if: steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch'
@@ -410,8 +410,8 @@ jobs:
 
     env:
       TAILSCALE_VERSION: latest
-      HELMFILE_VERSION: v1.2.1
-      HELM_VERSION: v3.19.2
+      HELMFILE_VERSION: v1.2.3
+      HELM_VERSION: v3.19.4
       TAG: ${{ needs.docker-push.outputs.image_version }}
 
     concurrency:
