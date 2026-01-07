@@ -83,7 +83,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         lockAcquired = await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration);
         if (!lockAcquired) return;
 
-        _logger.LogInformation("Processing opportunity published notifications");
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processing opportunity published notifications");
 
         var datetimeFrom = new DateTimeOffset(DateTime.Today).AddDays(-_scheduleJobOptions.OpportunityPublishedNotificationIntervalInDays).RemoveTime();
         var datetimeTo = datetimeFrom.ToEndOfDay();
@@ -98,11 +98,11 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
         await SendNotificationPublished(items, executeUntil);
 
-        _logger.LogInformation("Processed opportunity published notifications");
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processed opportunity published notifications");
       }
       catch (Exception ex)
       {
-        _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(ProcessPublishedNotifications), ex.Message);
+        if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(ProcessPublishedNotifications), ex.Message);
       }
       finally
       {
@@ -123,7 +123,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         lockAcquired = await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration);
         if (!lockAcquired) return;
 
-        _logger.LogInformation("Processing opportunity expiration");
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processing opportunity expiration");
 
         var statusExpiredId = _opportunityStatusService.GetByName(Status.Expired.ToString()).Id;
         var statusExpirableIds = Statuses_Expirable.Select(o => _opportunityStatusService.GetByName(o.ToString()).Id).ToList();
@@ -143,7 +143,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
             item.StatusId = statusExpiredId;
             item.Status = Status.Expired;
             item.ModifiedByUserId = user.Id;
-            _logger.LogInformation("Opportunity with id '{id}' flagged for expiration", item.Id);
+            if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Opportunity with id '{id}' flagged for expiration", item.Id);
           }
 
           items = await _opportunityRepository.Update(items);
@@ -156,11 +156,11 @@ namespace Yoma.Core.Domain.Opportunity.Services
           if (executeUntil <= DateTimeOffset.UtcNow) break;
         }
 
-        _logger.LogInformation("Processed opportunity expiration");
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processed opportunity expiration");
       }
       catch (Exception ex)
       {
-        _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(ProcessExpiration), ex.Message);
+        if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(ProcessExpiration), ex.Message);
       }
       finally
       {
@@ -179,7 +179,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         lockAcquired = await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration);
         if (!lockAcquired) return;
 
-        _logger.LogInformation("Processing opportunity expiration notifications");
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processing opportunity expiration notifications");
 
         var datetimeFrom = DateTimeOffset.UtcNow;
         var datetimeTo = datetimeFrom.AddDays(_scheduleJobOptions.OpportunityExpirationNotificationIntervalInDays);
@@ -192,11 +192,11 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
         await SendNotificationExpiration(items, NotificationType.Opportunity_Expiration_WithinNextDays);
 
-        _logger.LogInformation("Processed opportunity expiration notifications");
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processed opportunity expiration notifications");
       }
       catch (Exception ex)
       {
-        _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(ProcessExpirationNotifications), ex.Message);
+        if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(ProcessExpirationNotifications), ex.Message);
       }
       finally
       {
@@ -217,7 +217,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         lockAcquired = await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration);
         if (!lockAcquired) return;
 
-        _logger.LogInformation("Processing opportunity deletion");
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processing opportunity deletion");
 
         var statusDeletionIds = Statuses_Deletion.Select(o => _opportunityStatusService.GetByName(o.ToString()).Id).ToList();
         var statusDeletedId = _opportunityStatusService.GetByName(Status.Deleted.ToString()).Id;
@@ -238,7 +238,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
             item.StatusId = statusDeletedId;
             item.Status = Status.Deleted;
             item.ModifiedByUserId = user.Id;
-            _logger.LogInformation("Opportunity with id '{id}' flagged for deletion", item.Id);
+            if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Opportunity with id '{id}' flagged for deletion", item.Id);
           }
 
           await _opportunityRepository.Update(items);
@@ -249,11 +249,11 @@ namespace Yoma.Core.Domain.Opportunity.Services
           if (executeUntil <= DateTimeOffset.UtcNow) break;
         }
 
-        _logger.LogInformation("Processed opportunity deletion");
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processed opportunity deletion");
       }
       catch (Exception ex)
       {
-        _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(ProcessDeletion), ex.Message);
+        if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(ProcessDeletion), ex.Message);
       }
       finally
       {
@@ -370,7 +370,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       }
       catch (Exception ex)
       {
-        _logger.LogError(ex, "Failed to send notification: {errorMessage}", ex.Message);
+        if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to send notification: {errorMessage}", ex.Message);
       }
     }
 
@@ -409,11 +409,11 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
           await _notificationDeliveryService.Send(type, recipients, data);
 
-          _logger.LogInformation("Successfully sent notification");
+          if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Successfully sent notification");
         }
         catch (Exception ex)
         {
-          _logger.LogError(ex, "Failed to send notification: {errorMessage}", ex.Message);
+          if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to send notification: {errorMessage}", ex.Message);
         }
       }
     }

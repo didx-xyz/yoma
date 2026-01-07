@@ -109,7 +109,7 @@ namespace Yoma.Core.Domain.PartnerSharing.Services.Lookups
             //once shared, flag can not be disabled
             if (opportunity.ShareWithPartners != true)
             {
-              _logger.LogInformation("Partner sharing filtering: Entity '{entityType}' with id '{entityId}' not flagged for sharing and will be skipped", EntityType.Opportunity, entityId);
+              if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Partner sharing filtering: Entity '{entityType}' with id '{entityId}' not flagged for sharing and will be skipped", EntityType.Opportunity, entityId);
               continue;
             }
 
@@ -123,7 +123,7 @@ namespace Yoma.Core.Domain.PartnerSharing.Services.Lookups
                 //once shared, the type can not be changed
                 if (!string.Equals(opportunity.Type, Opportunity.Type.Learning.ToString(), StringComparison.InvariantCultureIgnoreCase))
                 {
-                  _logger.LogInformation("Partner sharing filtering: Entity '{entityType}' with id '{entityId}' for partner '{partner}' is not a learning type and will be skipped",
+                  if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Partner sharing filtering: Entity '{entityType}' with id '{entityId}' for partner '{partner}' is not a learning type and will be skipped",
                     EntityType.Opportunity, entityId, partner);
                   continue;
                 }
@@ -131,7 +131,7 @@ namespace Yoma.Core.Domain.PartnerSharing.Services.Lookups
                 //once shared, end date can be changed but not removed
                 if (!opportunity.DateEnd.HasValue)
                 {
-                  _logger.LogInformation("Partner sharing filtering: Entity '{entityType}' with id '{entityId}' for partner '{partner}' does not have an end date and will be skipped",
+                  if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Partner sharing filtering: Entity '{entityType}' with id '{entityId}' for partner '{partner}' does not have an end date and will be skipped",
                     EntityType.Opportunity, entityId, partner);
                   continue;
                 }
@@ -140,7 +140,7 @@ namespace Yoma.Core.Domain.PartnerSharing.Services.Lookups
                 if (opportunity.Countries == null ||
                   !opportunity.Countries.Any(c => RequiredCountries_AnyOf_SAYouth.Any(s => string.Equals(s.CodeAlpha2, c.CodeAlpha2, StringComparison.InvariantCultureIgnoreCase))))
                 {
-                  _logger.LogInformation(
+                  if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation(
                     "Partner sharing filtering: Entity '{entityType}' with id '{entityId}' for partner '{partner}' is not associated with any of the required countries '{requiredCountries}' and will be skipped",
                     EntityType.Opportunity, entityId, partner, string.Join(", ", RequiredCountries_AnyOf_SAYouth.Select(c => c.Country)));
                   continue;

@@ -2083,11 +2083,11 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
         await _notificationDeliveryService.Send(type, recipients, data);
 
-        _logger.LogInformation("Successfully sent notification");
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Successfully sent notification");
       }
       catch (Exception ex)
       {
-        _logger.LogError(ex, "Failed to send notification: {errorMessage}", ex.Message);
+        if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to send notification: {errorMessage}", ex.Message);
       }
     }
 

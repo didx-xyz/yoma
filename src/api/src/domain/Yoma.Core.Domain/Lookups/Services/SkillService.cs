@@ -117,7 +117,7 @@ namespace Yoma.Core.Domain.Lookups.Services
 
         if (onStartupInitialSeeding && _skillRepository.Query().Any())
         {
-          _logger.LogInformation("Seeding (On Startup) of skills skipped");
+          if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Seeding (On Startup) of skills skipped");
           return;
         }
 
@@ -171,7 +171,7 @@ namespace Yoma.Core.Domain.Lookups.Services
       }
       catch (Exception ex)
       {
-        _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(SeedSkills), ex.Message);
+        if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(SeedSkills), ex.Message);
       }
       finally
       {

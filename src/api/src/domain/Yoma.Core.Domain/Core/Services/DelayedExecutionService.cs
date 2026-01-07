@@ -53,7 +53,7 @@ namespace Yoma.Core.Domain.Core.Services
         }
         catch (Exception ex)
         {
-          _logger.LogError(ex, "Deferred action failed during flush. Action={ActionName}, Meta={Meta}", name ?? "(unnamed)", meta ?? "(none)");
+          if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Deferred action failed during flush. Action={ActionName}, Meta={Meta}", name ?? "(unnamed)", meta ?? "(none)");
         }
       }
     }

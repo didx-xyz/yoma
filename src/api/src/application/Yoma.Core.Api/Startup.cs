@@ -9,7 +9,6 @@ using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
-using Microsoft.OpenApi.Models;
 using StackExchange.Redis;
 using System.Net.Mime;
 using tusdotnet.Helpers;
@@ -37,6 +36,7 @@ using Yoma.Core.Infrastructure.SendGrid;
 using Yoma.Core.Infrastructure.Substack;
 using Yoma.Core.Infrastructure.Twilio;
 using Yoma.Core.Infrastructure.Zlto;
+using Microsoft.OpenApi;
 
 namespace Yoma.Core.Api
 {
@@ -350,12 +350,12 @@ namespace Yoma.Core.Api
 
     private void ConfigureSwagger(IServiceCollection services)
     {
-      var scopesAuthorizationCode = _appSettings.SwaggerScopesAuthorizationCode.Split(OAuth_Scope_Separator, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToArray();
-      if (scopesAuthorizationCode.Length == 0)
+      var scopesAuthorizationCode = _appSettings.SwaggerScopesAuthorizationCode.Split(OAuth_Scope_Separator, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
+      if (scopesAuthorizationCode.Count == 0)
         throw new InvalidOperationException($"Configuration section '{AppSettings.Section}' contains no configured swagger 'Authorization Code' scopes");
 
-      var scopesClientCredentials = _appSettings.SwaggerScopesClientCredentials.Split(OAuth_Scope_Separator, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToArray();
-      if (scopesClientCredentials.Length == 0)
+      var scopesClientCredentials = _appSettings.SwaggerScopesClientCredentials.Split(OAuth_Scope_Separator, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
+      if (scopesClientCredentials.Count == 0)
         throw new InvalidOperationException($"Configuration section '{AppSettings.Section}' contains no configured swagger 'Client Credentials' scopes");
 
       services.AddSwaggerGen(c =>
@@ -403,22 +403,11 @@ namespace Yoma.Core.Api
         //    Type = SecuritySchemeType.ApiKey,
         //});
 
-        c.AddSecurityRequirement(new OpenApiSecurityRequirement
+        c.AddSecurityRequirement(document =>
+          new OpenApiSecurityRequirement
           {
-                    {
-                        new OpenApiSecurityScheme
-                        {
-                            Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = JwtBearerDefaults.AuthenticationScheme }
-                        },
-                        new[] { string.Join(OAuth_Scope_Separator, scopesAuthorizationCode) }
-                    },
-                    {
-                        new OpenApiSecurityScheme
-                        {
-                            Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = Constants.AuthenticationScheme_ClientCredentials }
-                        },
-                        new[] { string.Join(OAuth_Scope_Separator, scopesClientCredentials) }
-                    }
+            [new OpenApiSecuritySchemeReference(JwtBearerDefaults.AuthenticationScheme, document)] = scopesAuthorizationCode,
+            [new OpenApiSecuritySchemeReference(Constants.AuthenticationScheme_ClientCredentials, document)] = scopesClientCredentials
           });
 
         //custom api key authentication

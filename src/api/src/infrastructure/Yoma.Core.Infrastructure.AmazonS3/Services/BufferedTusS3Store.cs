@@ -76,7 +76,7 @@ namespace Yoma.Core.Infrastructure.AmazonS3.Services
       _expiration = TimeSpan.FromMinutes(expirationMinutes);
       _bufTtl = TimeSpan.FromMinutes(expirationMinutes + 10);
 
-      _logger.LogInformation("BufferedTusS3Store initialized: bucket={Bucket}, minPart={MinPart}MB, expiration={Expiration}min",
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("BufferedTusS3Store initialized: bucket={Bucket}, minPart={MinPart}MB, expiration={Expiration}min",
         _bucketName, _minPartSize / 1024 / 1024, expirationMinutes);
     }
     #endregion
@@ -115,7 +115,7 @@ namespace Yoma.Core.Infrastructure.AmazonS3.Services
         }
       }, ct);
 
-      _logger.LogDebug("Created upload: fileId={FileId}, length={Length}, expires={Expires}",
+      if (_logger.IsEnabled(LogLevel.Debug)) _logger.LogDebug("Created upload: fileId={FileId}, length={Length}, expires={Expires}",
         fileId, uploadLength, uploadMeta.Expires);
 
       return fileId;
@@ -176,18 +176,18 @@ namespace Yoma.Core.Infrastructure.AmazonS3.Services
             // Restore to cache for future requests
             await _cache.SetAsync(MetadataKey(fileId), meta, _bufTtl);
 
-            _logger.LogDebug("Restored metadata from S3 to cache for fileId={FileId}", fileId);
+            if (_logger.IsEnabled(LogLevel.Debug)) _logger.LogDebug("Restored metadata from S3 to cache for fileId={FileId}", fileId);
           }
         }
         catch (AmazonS3Exception ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
         {
           // File doesn't exist in S3 either
-          _logger.LogDebug("Metadata not found in S3 for fileId={FileId}", fileId);
+          if (_logger.IsEnabled(LogLevel.Debug)) _logger.LogDebug("Metadata not found in S3 for fileId={FileId}", fileId);
           return null;
         }
         catch (Exception ex)
         {
-          _logger.LogError(ex, "Failed to load metadata from S3 for fileId={FileId}: {errorMessage}", fileId, ex.Message);
+          if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to load metadata from S3 for fileId={FileId}: {errorMessage}", fileId, ex.Message);
           return null;
         }
       }
@@ -250,7 +250,7 @@ namespace Yoma.Core.Infrastructure.AmazonS3.Services
         }
         catch (Exception ex)
         {
-          _logger.LogError(ex, "Failed to delete expired file: {FileId}", fileId);
+          if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to delete expired file: {FileId}", fileId);
         }
       }
 
@@ -342,7 +342,7 @@ namespace Yoma.Core.Infrastructure.AmazonS3.Services
             if (s3Metadata != null && s3Metadata.TryGetValue("UploadOffset", out var offsetValue))
             {
               committed = Convert.ToInt64(offsetValue);
-              _logger.LogDebug("Retrieved upload offset from S3 JSON body for fileId={FileId}: {Offset}", fileId, committed);
+              if (_logger.IsEnabled(LogLevel.Debug)) _logger.LogDebug("Retrieved upload offset from S3 JSON body for fileId={FileId}: {Offset}", fileId, committed);
             }
           }
         }
@@ -358,7 +358,7 @@ namespace Yoma.Core.Infrastructure.AmazonS3.Services
       var totalLen = await GetUploadLengthAsync(fileId, ct);
       var offset = totalLen.HasValue ? Math.Min(committed + buffered, totalLen.Value) : committed + buffered;
 
-      _logger.LogDebug("GetUploadOffset: fileId={FileId}, committed={Committed}, buffered={Buffered}, total={Total}",
+      if (_logger.IsEnabled(LogLevel.Debug)) _logger.LogDebug("GetUploadOffset: fileId={FileId}, committed={Committed}, buffered={Buffered}, total={Total}",
         fileId, committed, buffered, offset);
 
       return offset;
@@ -438,7 +438,7 @@ namespace Yoma.Core.Infrastructure.AmazonS3.Services
 
               await CleanupAsync(fileId);
 
-              _logger.LogInformation("Upload complete: fileId={FileId}, totalSize={TotalSize}",
+              if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Upload complete: fileId={FileId}, totalSize={TotalSize}",
                 fileId, committed);
             }
             else
@@ -487,11 +487,11 @@ namespace Yoma.Core.Infrastructure.AmazonS3.Services
       }
       catch (Exception ex)
       {
-        _logger.LogError(ex, "Failed to delete S3 objects for fileId={FileId}", fileId);
+        if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to delete S3 objects for fileId={FileId}", fileId);
       }
 
       await CleanupAsync(fileId);
-      _logger.LogDebug("Deleted file: {FileId}", fileId);
+      if (_logger.IsEnabled(LogLevel.Debug)) _logger.LogDebug("Deleted file: {FileId}", fileId);
     }
     #endregion
 
@@ -511,7 +511,7 @@ namespace Yoma.Core.Infrastructure.AmazonS3.Services
         meta.MultipartUploadId = initResponse.UploadId;
         await _cache.SetAsync(MetadataKey(fileId), meta, _bufTtl);
 
-        _logger.LogInformation("Initiated multipart upload: fileId={FileId}, uploadId={UploadId}",
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Initiated multipart upload: fileId={FileId}, uploadId={UploadId}",
           fileId, meta.MultipartUploadId);
       }
 
@@ -540,7 +540,7 @@ namespace Yoma.Core.Infrastructure.AmazonS3.Services
       // CRITICAL: Clear buffer cache after flushing to prevent double-counting in GetUploadOffsetAsync
       await _cache.RemoveAsync(BufferKey(fileId));
 
-      _logger.LogInformation("Uploaded part {PartNum}: {Size} bytes, committed={Committed}",
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Uploaded part {PartNum}: {Size} bytes, committed={Committed}",
         partNumber, size, newCommitted);
 
       return;
@@ -577,7 +577,7 @@ namespace Yoma.Core.Infrastructure.AmazonS3.Services
           PartETags = etags.Tags
         }, ct);
 
-        _logger.LogInformation("Completed multipart upload: fileId={FileId}, parts={Parts}",
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Completed multipart upload: fileId={FileId}, parts={Parts}",
           fileId, etags.Tags.Count);
       }
       else
@@ -593,7 +593,7 @@ namespace Yoma.Core.Infrastructure.AmazonS3.Services
           ContentType = "application/octet-stream"
         }, ct);
 
-        _logger.LogInformation("Uploaded small file: fileId={FileId}, size={Size}", fileId, size);
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Uploaded small file: fileId={FileId}, size={Size}", fileId, size);
       }
 
       var newCommitted = currentCommitted + size;
@@ -608,7 +608,7 @@ namespace Yoma.Core.Infrastructure.AmazonS3.Services
       var fullMeta = await _cache.GetAsync<UploadMetadata>(MetadataKey(fileId));
       if (fullMeta == null)
       {
-        _logger.LogError("Metadata not found in cache when updating S3 for fileId={FileId}", fileId);
+        if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError("Metadata not found in cache when updating S3 for fileId={FileId}", fileId);
         return;
       }
 
@@ -638,7 +638,7 @@ namespace Yoma.Core.Infrastructure.AmazonS3.Services
         }
       }, ct);
 
-      _logger.LogInformation("Updated S3 metadata for completed upload: fileId={FileId}, offset={Offset}, metadata keys: {MetadataKeys}",
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Updated S3 metadata for completed upload: fileId={FileId}, offset={Offset}, metadata keys: {MetadataKeys}",
         fileId, committedSize, string.Join(", ", fullMeta.Metadata.Keys));
     }
 
@@ -653,7 +653,7 @@ namespace Yoma.Core.Infrastructure.AmazonS3.Services
       }
       catch (Exception ex)
       {
-        _logger.LogError(ex, "Failed to clean cache for fileId={FileId}", fileId);
+        if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to clean cache for fileId={FileId}", fileId);
       }
     }
 

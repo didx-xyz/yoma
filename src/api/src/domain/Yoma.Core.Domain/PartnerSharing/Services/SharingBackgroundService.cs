@@ -65,11 +65,11 @@ namespace Yoma.Core.Domain.PartnerSharing.Services
         var organizationYoma = _organizationService.GetByNameOrNull(_appSettings.YomaOrganizationName, true, true);
         if (organizationYoma == null)
         {
-          _logger.LogInformation("{Process} will be aborted/skipped as the '{orgName}' organization could not be found", nameof(ProcessSharing), _appSettings.YomaOrganizationName);
+          if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("{Process} will be aborted/skipped as the '{orgName}' organization could not be found", nameof(ProcessSharing), _appSettings.YomaOrganizationName);
           return;
         }
 
-        _logger.LogInformation("Processing partner sharing");
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processing partner sharing");
 
         var itemIdsToSkip = new List<Guid>();
         while (executeUntil > DateTimeOffset.UtcNow)
@@ -81,7 +81,7 @@ namespace Yoma.Core.Domain.PartnerSharing.Services
           {
             try
             {
-              _logger.LogInformation("Processing sharing for '{entityType}' and item with id '{id}'", item.EntityType, item.Id);
+              if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processing sharing for '{entityType}' and item with id '{id}'", item.EntityType, item.Id);
 
               var sharingProviderClient = _sharingProviderClientFactoryPartner.CreateClient(item.Partner);
 
@@ -124,7 +124,7 @@ namespace Yoma.Core.Domain.PartnerSharing.Services
                           ? $"Associated organization is no longer '{OrganizationStatus.Active}'"
                           : $"Opportunity status of '{SharingService.Statuses_Opportunity_Creatable.JoinNames()}' expected. Current status '{opportunity.Status.ToDescription()}'";
 
-                        _logger.LogInformation("Action '{action}': Aborting for '{entityType}' and item with id '{id}'. {reason}", action, item.EntityType, item.Id, reason);
+                        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Action '{action}': Aborting for '{entityType}' and item with id '{id}'. {reason}", action, item.EntityType, item.Id, reason);
 
                         item.Status = ProcessingStatus.Aborted;
                         await _sharingService.UpdateSchedule(item);
@@ -209,11 +209,11 @@ namespace Yoma.Core.Domain.PartnerSharing.Services
               item.Status = ProcessingStatus.Processed;
               await _sharingService.UpdateSchedule(item);
 
-              _logger.LogInformation("Processed sharing for '{entityType}' and item with id '{id}'", item.EntityType, item.Id);
+              if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processed sharing for '{entityType}' and item with id '{id}'", item.EntityType, item.Id);
             }
             catch (Exception ex)
             {
-              _logger.LogError(ex, "Failed to process sharing for '{entityType}'and item with id '{id}': {errorMessage}", item.EntityType, item.Id, ex.Message);
+              if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to process sharing for '{entityType}'and item with id '{id}': {errorMessage}", item.EntityType, item.Id, ex.Message);
 
               item.Status = ProcessingStatus.Error;
               item.ErrorReason = ex.Message;
@@ -226,11 +226,11 @@ namespace Yoma.Core.Domain.PartnerSharing.Services
           }
         }
 
-        _logger.LogInformation("Processed SSI tenant creation");
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processed SSI tenant creation");
       }
       catch (Exception ex)
       {
-        _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(ProcessSharing), ex.Message);
+        if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(ProcessSharing), ex.Message);
       }
       finally
       {

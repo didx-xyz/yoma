@@ -854,7 +854,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
     {
       if (distributionList == null || distributionList.Count == 0)
       {
-        _logger.LogInformation("Skipping {notificationType}: distribution list is null or empty", NotificationType.ActionLink_Verify_Distribution);
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Skipping {notificationType}: distribution list is null or empty", NotificationType.ActionLink_Verify_Distribution);
         return;
       }
 
@@ -875,11 +875,11 @@ namespace Yoma.Core.Domain.ActionLink.Services
 
         await _notificationDeliveryService.Send(NotificationType.ActionLink_Verify_Distribution, recipients, data);
 
-        _logger.LogInformation("Successfully sent notification");
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Successfully sent notification");
       }
       catch (Exception ex)
       {
-        _logger.LogError(ex, "Failed to send notification: {errorMessage}", ex.Message);
+        if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to send notification: {errorMessage}", ex.Message);
       }
     }
 
@@ -887,7 +887,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
     {
       if (link.Status != ActionLinkStatus.Active)
       {
-        _logger.LogInformation("Link with id '{linkId}' is not active, skipping notification", link.Id);
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Link with id '{linkId}' is not active, skipping notification", link.Id);
         return;
       }
 
@@ -940,12 +940,12 @@ namespace Yoma.Core.Domain.ActionLink.Services
 
         await _notificationDeliveryService.Send(type, recipients, data);
 
-        _logger.LogInformation("Successfully sent notification");
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Successfully sent notification");
 
       }
       catch (Exception ex)
       {
-        _logger.LogError(ex, "Failed to send notification: {errorMessage}", ex.Message);
+        if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to send notification: {errorMessage}", ex.Message);
       }
     }
     #endregion

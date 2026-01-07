@@ -43,7 +43,7 @@ namespace Yoma.Core.Domain.BlobProvider.Services
         lockAcquired = await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration);
         if (!lockAcquired) return;
 
-        _logger.LogInformation("Processing resumable upload deletion");
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processing resumable upload deletion");
 
         var itemIdsToSkip = new List<string>();
         while (executeUntil > DateTimeOffset.UtcNow)
@@ -55,25 +55,25 @@ namespace Yoma.Core.Domain.BlobProvider.Services
           {
             try
             {
-              _logger.LogInformation("Processing resumable upload deletion for upload with id '{upload}'", uploadId);
+              if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processing resumable upload deletion for upload with id '{upload}'", uploadId);
 
               await _resumableUploadStore.Delete(uploadId);
             }
             catch (Exception ex)
             {
-              _logger.LogError(ex, "Failed to process resumable upload deletion for upload with id '{upload}': {errorMessage}", uploadId, ex.Message);
+              if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to process resumable upload deletion for upload with id '{upload}': {errorMessage}", uploadId, ex.Message);
 
               itemIdsToSkip.Add(uploadId);
             }
 
             if (executeUntil <= DateTimeOffset.UtcNow) break;
           }
-          _logger.LogInformation("Processed resumable upload deletion");
+          if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processed resumable upload deletion");
         }
       }
       catch (Exception ex)
       {
-        _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(ProcessDeletion), ex.Message);
+        if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(ProcessDeletion), ex.Message);
       }
       finally
       {

@@ -366,19 +366,19 @@ namespace Yoma.Core.Domain.Referral.Services
       {
         if (perRefCapHit && programCapHit)
         {
-          _logger.LogInformation(
+          if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation(
             "Referral link {LinkId}: per-referrer cap reached (total {Total} >= limit {Limit}) AND program {ProgramId} LIMIT_REACHED — flipping link to LIMIT_REACHED",
             link.Id, link.CompletionTotal, program.CompletionLimitReferee, program.Id);
         }
         else if (perRefCapHit)
         {
-          _logger.LogInformation(
+          if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation(
             "Referral link {LinkId}: per-referrer cap reached (total {Total} >= limit {Limit}) — flipping to LIMIT_REACHED",
             link.Id, link.CompletionTotal, program.CompletionLimitReferee);
         }
         else // programCapHit
         {
-          _logger.LogInformation(
+          if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation(
             "Referral link {LinkId}: program {ProgramId} LIMIT_REACHED (global cap) — flipping link to LIMIT_REACHED",
             link.Id, program.Id);
         }
@@ -388,7 +388,7 @@ namespace Yoma.Core.Domain.Referral.Services
       }
       else
       {
-        _logger.LogDebug(
+        if (_logger.IsEnabled(LogLevel.Debug)) _logger.LogDebug(
           "Referral link {LinkId}: totals updated (total {Total}, rewardΔ {RewardDelta}); status remains {Status} (per-ref cap {Cap}, programLimitReached={ProgCap}, active={IsActive})",
           link.Id,
           link.CompletionTotal,

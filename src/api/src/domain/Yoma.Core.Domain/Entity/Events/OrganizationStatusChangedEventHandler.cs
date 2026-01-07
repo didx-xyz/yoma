@@ -30,7 +30,7 @@ namespace Yoma.Core.Domain.Entity.Events
     {
       try
       {
-        _logger.LogInformation("Handling organization status change event for organization with id {organizationId} and status {organizationStatus}",
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling organization status change event for organization with id {organizationId} and status {organizationStatus}",
           notification.Entity.Id, notification.Entity.Status);
 
         var filter = new OpportunitySearchFilterAdmin
@@ -83,7 +83,7 @@ namespace Yoma.Core.Domain.Entity.Events
       }
       catch (Exception ex)
       {
-        _logger.LogError(ex, "Error handling organization status change event for organization with id {organizationId} and status {organizationStatus}: {errorMessage}",
+        if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Error handling organization status change event for organization with id {organizationId} and status {organizationStatus}: {errorMessage}",
           notification.Entity.Id, notification.Entity.Status, ex.Message);
       }
     }

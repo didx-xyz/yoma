@@ -56,7 +56,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
         lockAcquired = await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration);
         if (!lockAcquired) return;
 
-        _logger.LogInformation("Processing action link expiration");
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processing action link expiration");
 
         var statusExpiredId = _linkStatusService.GetByName(ActionLinkStatus.Expired.ToString()).Id;
         var statusExpirableIds = Statuses_Expirable.Select(o => _linkStatusService.GetByName(o.ToString()).Id).ToList();
@@ -76,7 +76,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
             item.StatusId = statusExpiredId;
             item.Status = ActionLinkStatus.Expired;
             item.ModifiedByUserId = user.Id;
-            _logger.LogInformation("Action link with id '{id}' flagged for expiration", item.Id);
+            if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Action link with id '{id}' flagged for expiration", item.Id);
           }
 
           items = await _linkRepository.Update(items);
@@ -84,11 +84,11 @@ namespace Yoma.Core.Domain.ActionLink.Services
           if (executeUntil <= DateTimeOffset.UtcNow) break;
         }
 
-        _logger.LogInformation("Processed action link expiration");
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processed action link expiration");
       }
       catch (Exception ex)
       {
-        _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(ProcessExpiration), ex.Message);
+        if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(ProcessExpiration), ex.Message);
       }
       finally
       {
@@ -112,7 +112,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
         var statusDeletionIds = Statuses_Deletion.Select(o => _linkStatusService.GetByName(o.ToString()).Id).ToList();
         var statusDeletedId = _linkStatusService.GetByName(ActionLinkStatus.Deleted.ToString()).Id;
 
-        _logger.LogInformation("Processing action link deletion");
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processing action link deletion");
 
         while (executeUntil > DateTimeOffset.UtcNow)
         {
@@ -130,7 +130,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
             item.StatusId = statusDeletedId;
             item.Status = ActionLinkStatus.Deleted;
             item.ModifiedByUserId = user.Id;
-            _logger.LogInformation("Action link with id '{id}' flagged for deletion", item.Id);
+            if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Action link with id '{id}' flagged for deletion", item.Id);
           }
 
           await _linkRepository.Update(items);
@@ -138,11 +138,11 @@ namespace Yoma.Core.Domain.ActionLink.Services
           if (executeUntil <= DateTimeOffset.UtcNow) break;
         }
 
-        _logger.LogInformation("Processed action link deletion");
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processed action link deletion");
       }
       catch (Exception ex)
       {
-        _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(ProcessDeletion), ex.Message);
+        if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(ProcessDeletion), ex.Message);
       }
       finally
       {

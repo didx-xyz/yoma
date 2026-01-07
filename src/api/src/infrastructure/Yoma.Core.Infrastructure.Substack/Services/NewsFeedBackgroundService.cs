@@ -73,11 +73,11 @@ namespace Yoma.Core.Infrastructure.Substack.Services
 
         if (onStartupInitialRefresh && _newsArticleRepository.Query().Any())
         {
-          _logger.LogInformation("Refreshing (On Startup) of news feeds skipped");
+          if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Refreshing (On Startup) of news feeds skipped");
           return;
         }
 
-        _logger.LogInformation("Processing news feed refresh");
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processing news feed refresh");
 
         var now = DateTimeOffset.UtcNow;
         if (_appSettings.NewsFeedProviderAsSourceEnabledEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment))
@@ -85,11 +85,11 @@ namespace Yoma.Core.Infrastructure.Substack.Services
         else
           await RefreshFromFileAsync(now);
 
-        _logger.LogInformation("Processed news feed refresh");
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processed news feed refresh");
       }
       catch (Exception ex)
       {
-        _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(RefreshFeeds), ex.Message);
+        if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(RefreshFeeds), ex.Message);
       }
       finally
       {
@@ -101,13 +101,13 @@ namespace Yoma.Core.Infrastructure.Substack.Services
     #region Private Members
     private async Task RefreshFromFileAsync(DateTimeOffset now)
     {
-      _logger.LogInformation("Using embedded RSS (file mode). No state tracking will be performed");
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Using embedded RSS (file mode). No state tracking will be performed");
 
       foreach (var (feedType, _) in _options.Feeds)
       {
         try
         {
-          _logger.LogInformation("File-mode sync start: {FeedType}", feedType);
+          if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("File-mode sync start: {FeedType}", feedType);
 
           var xmlDoc = ParseLocalFeed(feedType);
 
@@ -115,18 +115,18 @@ namespace Yoma.Core.Infrastructure.Substack.Services
 
           await ProcessNewsArticles(feedType, articles, now);
 
-          _logger.LogInformation("File-mode sync complete: {FeedType}", feedType);
+          if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("File-mode sync complete: {FeedType}", feedType);
         }
         catch (Exception ex)
         {
-          _logger.LogError(ex, "Error during file-mode sync for feed {FeedType}", feedType);
+          if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Error during file-mode sync for feed {FeedType}", feedType);
         }
       }
     }
 
     private async Task RefreshFromRSSFeedAsync(DateTimeOffset now)
     {
-      _logger.LogInformation("Using Substack RSS (HTTP mode). Feed state tracking (ETag, Last-Modified) will be applied");
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Using Substack RSS (HTTP mode). Feed state tracking (ETag, Last-Modified) will be applied");
 
       var client = _httpClientFactory.CreateClient(nameof(NewsFeedBackgroundService));
       client.Timeout = TimeSpan.FromSeconds(_options.RequestTimeoutSeconds);
@@ -136,7 +136,7 @@ namespace Yoma.Core.Infrastructure.Substack.Services
       {
         try
         {
-          _logger.LogInformation("HTTP sync start: {FeedType}", feedType);
+          if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("HTTP sync start: {FeedType}", feedType);
 
           var tracking = _feedSyncTrackingRepository.Query().SingleOrDefault(t => t.FeedType == feedType.ToString());
           var isNewTracking = tracking is null;
@@ -174,7 +174,7 @@ namespace Yoma.Core.Infrastructure.Substack.Services
 
           if (resp.StatusCode == System.Net.HttpStatusCode.NotModified)
           {
-            _logger.LogInformation("HTTP sync 304 Not Modified: {FeedType}", feedType);
+            if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("HTTP sync 304 Not Modified: {FeedType}", feedType);
             continue;
           }
 
@@ -203,11 +203,11 @@ namespace Yoma.Core.Infrastructure.Substack.Services
             scope.Complete();
           });
 
-          _logger.LogInformation("HTTP sync complete: {FeedType}", feedType);
+          if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("HTTP sync complete: {FeedType}", feedType);
         }
         catch (Exception ex)
         {
-          _logger.LogError(ex, "Error during HTTP sync for feed {FeedType}", feedType);
+          if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Error during HTTP sync for feed {FeedType}", feedType);
         }
       }
     }
@@ -301,7 +301,7 @@ namespace Yoma.Core.Infrastructure.Substack.Services
         }
       }
 
-      _logger.LogInformation("Feed {FeedType} sync summary: Created={Created}, Updated={Updated}, Deleted={Deleted}",
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Feed {FeedType} sync summary: Created={Created}, Updated={Updated}, Deleted={Deleted}",
         feedType, itemsToCreate.Count, itemsToUpdate.Count, deletedCount);
     }
 

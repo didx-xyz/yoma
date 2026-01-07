@@ -399,7 +399,7 @@ namespace Yoma.Core.Domain.Referral.Services
 
       if (user.YoIDOnboarded != true)
       {
-        _logger.LogInformation("Referral progress: user {UserId} not YoIDOnboarded; skipping", user.Id);
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Referral progress: user {UserId} not YoIDOnboarded; skipping", user.Id);
         return;
       }
 
@@ -418,11 +418,11 @@ namespace Yoma.Core.Domain.Referral.Services
         var pendingUsageIds = _linkUsageRepository.Query().Where(o => o.UserId == user.Id && o.StatusId == statusPendingId).OrderBy(o => o.DateClaimed).Select(o => o.Id).ToList();
         if (pendingUsageIds.Count == 0)
         {
-          _logger.LogInformation("Referral progress: no pending usages for user {UserId}", user.Id);
+          if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Referral progress: no pending usages for user {UserId}", user.Id);
           return;
         }
 
-        _logger.LogInformation("Referral progress: processing {Count} pending usages for user {UserId}", pendingUsageIds.Count, user.Id);
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Referral progress: processing {Count} pending usages for user {UserId}", pendingUsageIds.Count, user.Id);
 
         var programCache = new Dictionary<Guid, Program>();
         var linkCache = new Dictionary<Guid, ReferralLink>();
@@ -438,7 +438,7 @@ namespace Yoma.Core.Domain.Referral.Services
             var myUsage = _linkUsageRepository.Query(LockMode.Wait).Single(o => o.Id == usageId);
             if (myUsage.Status != ReferralLinkUsageStatus.Pending) //state change between fetching the worklist and processing
             {
-              _logger.LogInformation("Referral progress: skipping LinkUsage '{LinkUsageId}' with status '{Status}'", myUsage.Id, myUsage.Status);
+              if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Referral progress: skipping LinkUsage '{LinkUsageId}' with status '{Status}'", myUsage.Id, myUsage.Status);
               return;
             }
 
@@ -450,7 +450,7 @@ namespace Yoma.Core.Domain.Referral.Services
               myUsage.Status = ReferralLinkUsageStatus.Expired;
               myUsage = await _linkUsageRepository.Update(myUsage);
 
-              _logger.LogInformation("Referral progress: Expiring LinkUsage '{LinkUsageId}' (claimed {DateClaimed:yyyy-MM-dd}, window {WindowDays} days, program {ProgramId}, link {LinkId})",
+              if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Referral progress: Expiring LinkUsage '{LinkUsageId}' (claimed {DateClaimed:yyyy-MM-dd}, window {WindowDays} days, program {ProgramId}, link {LinkId})",
                 myUsage.Id, myUsage.DateClaimed, myUsage.ProgramCompletionWindowInDays, myUsage.ProgramId, myUsage.LinkId);
 
               scope.Complete();
@@ -461,7 +461,7 @@ namespace Yoma.Core.Domain.Referral.Services
             var usageProgress = ToInfoParseProgress(myUsage, true);
             if (usageProgress.EffectiveCompleted != true)
             {
-              _logger.LogDebug("Referral progress: usage {UsageId} not completed yet; skipping", myUsage.Id);
+              if (_logger.IsEnabled(LogLevel.Debug)) _logger.LogDebug("Referral progress: usage {UsageId} not completed yet; skipping", myUsage.Id);
 
               scope.Complete();
               return;
@@ -487,19 +487,19 @@ namespace Yoma.Core.Domain.Referral.Services
             {
               case ProgramStatus.Active:
                 // allowed, rewards allowed
-                _logger.LogDebug("Referral progress: program {ProgramId} ACTIVE for usage {UsageId}", program.Id, myUsage.Id);
+                if (_logger.IsEnabled(LogLevel.Debug)) _logger.LogDebug("Referral progress: program {ProgramId} ACTIVE for usage {UsageId}", program.Id, myUsage.Id);
 
                 break;
 
               case ProgramStatus.Inactive:
                 // do not punish in-flight; rewards allowed
-                _logger.LogDebug("Referral progress: program {ProgramId} INACTIVE (in-flight allowed) for usage {UsageId}", program.Id, myUsage.Id);
+                if (_logger.IsEnabled(LogLevel.Debug)) _logger.LogDebug("Referral progress: program {ProgramId} INACTIVE (in-flight allowed) for usage {UsageId}", program.Id, myUsage.Id);
 
                 break;
 
               case ProgramStatus.UnCompletable:
                 // race condition: usage might have just completed; do not punish in-flight; rewards allowed
-                _logger.LogDebug("Referral progress: program {ProgramId} UNCOMPLETABLE (in-flight allowed) for usage {UsageId}", program.Id, myUsage.Id);
+                if (_logger.IsEnabled(LogLevel.Debug)) _logger.LogDebug("Referral progress: program {ProgramId} UNCOMPLETABLE (in-flight allowed) for usage {UsageId}", program.Id, myUsage.Id);
 
                 break;
 
@@ -512,7 +512,7 @@ namespace Yoma.Core.Domain.Referral.Services
                     $"Expected link to be Cancelled by cascade. Usage {myUsage.Id} cannot be processed safely");
                 }
 
-                _logger.LogInformation("Referral progress: program {ProgramId} DELETED (in-flight allowed) for usage {UsageId}; link status {LinkStatus}",
+                if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Referral progress: program {ProgramId} DELETED (in-flight allowed) for usage {UsageId}; link status {LinkStatus}",
                   program.Id, myUsage.Id, link.Status);
 
                 break;
@@ -520,7 +520,7 @@ namespace Yoma.Core.Domain.Referral.Services
               case ProgramStatus.LimitReached:
                 // In-flight completions allowed; rewards suppressed
                 eligibleForRewards = false;
-                _logger.LogInformation("Referral progress: program {ProgramId} LIMIT_REACHED → rewards suppressed for usage {UsageId}", program.Id, myUsage.Id);
+                if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Referral progress: program {ProgramId} LIMIT_REACHED → rewards suppressed for usage {UsageId}", program.Id, myUsage.Id);
                 break;
 
               case ProgramStatus.Expired:
@@ -537,7 +537,7 @@ namespace Yoma.Core.Domain.Referral.Services
             if (eligibleForRewards && program.CompletionLimit.HasValue && (program.CompletionTotal ?? 0) >= program.CompletionLimit.Value)
             {
               eligibleForRewards = false;
-              _logger.LogInformation("Referral progress: program {ProgramId} completion cap reached (total {Total} >= limit {Limit}); suppressing rewards for usage {UsageId}",
+              if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Referral progress: program {ProgramId} completion cap reached (total {Total} >= limit {Limit}); suppressing rewards for usage {UsageId}",
                 program.Id, program.CompletionTotal, program.CompletionLimit, myUsage.Id);
             }
 
@@ -546,20 +546,20 @@ namespace Yoma.Core.Domain.Referral.Services
             {
               case ReferralLinkStatus.Active:
                 // allowed, rewards allowed unless program suppressed
-                _logger.LogDebug("Referral progress: link {LinkId} ACTIVE for usage {UsageId}", link.Id, myUsage.Id);
+                if (_logger.IsEnabled(LogLevel.Debug)) _logger.LogDebug("Referral progress: link {LinkId} ACTIVE for usage {UsageId}", link.Id, myUsage.Id);
 
                 break;
 
               case ReferralLinkStatus.Cancelled:
                 // do not punish in-flight; rewards allowed unless program suppressed
-                _logger.LogDebug("Referral progress: link {LinkId} CANCELLED (in-flight allowed) for usage {UsageId}", link.Id, myUsage.Id);
+                if (_logger.IsEnabled(LogLevel.Debug)) _logger.LogDebug("Referral progress: link {LinkId} CANCELLED (in-flight allowed) for usage {UsageId}", link.Id, myUsage.Id);
 
                 break;
 
               case ReferralLinkStatus.LimitReached:
                 // In-flight completions allowed; rewards suppressed
                 eligibleForRewards = false;
-                _logger.LogInformation("Referral progress: link {LinkId} LIMIT_REACHED → rewards suppressed for usage {UsageId}", link.Id, myUsage.Id);
+                if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Referral progress: link {LinkId} LIMIT_REACHED → rewards suppressed for usage {UsageId}", link.Id, myUsage.Id);
 
                 break;
 
@@ -577,11 +577,11 @@ namespace Yoma.Core.Domain.Referral.Services
             if (eligibleForRewards && program.CompletionLimitReferee.HasValue && link.CompletionTotal >= program.CompletionLimitReferee.Value)
             {
               eligibleForRewards = false;
-              _logger.LogInformation("Referral progress: link {LinkId} per-referrer cap reached (total {Total} >= limit {Limit}); suppressing rewards for usage {UsageId}",
+              if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Referral progress: link {LinkId} per-referrer cap reached (total {Total} >= limit {Limit}); suppressing rewards for usage {UsageId}",
                 link.Id, link.CompletionTotal, program.CompletionLimitReferee, myUsage.Id);
             }
 
-            _logger.LogDebug("Referral progress: eligibility for rewards on usage {UsageId} = {Eligible}",
+            if (_logger.IsEnabled(LogLevel.Debug)) _logger.LogDebug("Referral progress: eligibility for rewards on usage {UsageId} = {Eligible}",
               myUsage.Id, eligibleForRewards);
 
             // Calculates and assigns completion rewards for a referral usage based on the program’s
@@ -637,7 +637,7 @@ namespace Yoma.Core.Domain.Referral.Services
                 rewardReferee = refereeTarget;
                 rewardReferrer = referrerTarget;
 
-                _logger.LogInformation(
+                if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation(
                   "Referral progress: program {ProgramId} has no ZLTO pool configured → paying configured targets directly (referee {RefereeTarget}, referrer {ReferrerTarget}) for usage {UsageId}",
                   program.Id, rewardReferee ?? 0m, rewardReferrer ?? 0m, myUsage.Id);
               }
@@ -646,32 +646,32 @@ namespace Yoma.Core.Domain.Referral.Services
               if (refereeTarget.HasValue)
               {
                 if (rewardReferee == refereeTarget.Value)
-                  _logger.LogInformation("Referral progress: referee FULL payout for usage {UsageId} => {Amount}", myUsage.Id, rewardReferee);
-                else if ((rewardReferee ?? 0m) > 0m)
-                  _logger.LogInformation("Referral progress: referee PARTIAL payout for usage {UsageId} => {Amount} (target {Target})", myUsage.Id, rewardReferee, refereeTarget);
-                else
-                  _logger.LogInformation("Referral progress: referee ZERO payout for usage {UsageId}", myUsage.Id);
+                  if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Referral progress: referee FULL payout for usage {UsageId} => {Amount}", myUsage.Id, rewardReferee);
+                  else if ((rewardReferee ?? 0m) > 0m)
+                    if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Referral progress: referee PARTIAL payout for usage {UsageId} => {Amount} (target {Target})", myUsage.Id, rewardReferee, refereeTarget);
+                    else
+                    if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Referral progress: referee ZERO payout for usage {UsageId}", myUsage.Id);
               }
               else
-                _logger.LogInformation("Referral progress: referee payout not configured (null) for usage {UsageId}", myUsage.Id);
+                if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Referral progress: referee payout not configured (null) for usage {UsageId}", myUsage.Id);
 
               if (referrerTarget.HasValue)
               {
                 if (rewardReferrer == referrerTarget.Value)
-                  _logger.LogInformation("Referral progress: referrer FULL payout for usage {UsageId} => {Amount}", myUsage.Id, rewardReferrer);
-                else if ((rewardReferrer ?? 0m) > 0m)
-                  _logger.LogInformation("Referral progress: referrer PARTIAL payout for usage {UsageId} => {Amount} (target {Target})", myUsage.Id, rewardReferrer, referrerTarget);
-                else
-                  _logger.LogInformation("Referral progress: referrer ZERO payout for usage {UsageId}", myUsage.Id);
+                  if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Referral progress: referrer FULL payout for usage {UsageId} => {Amount}", myUsage.Id, rewardReferrer);
+                  else if ((rewardReferrer ?? 0m) > 0m)
+                    if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Referral progress: referrer PARTIAL payout for usage {UsageId} => {Amount} (target {Target})", myUsage.Id, rewardReferrer, referrerTarget);
+                    else
+                    if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Referral progress: referrer ZERO payout for usage {UsageId}", myUsage.Id);
               }
               else
-                _logger.LogInformation("Referral progress: referrer payout not configured (null) for usage {UsageId}", myUsage.Id);
+                if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Referral progress: referrer payout not configured (null) for usage {UsageId}", myUsage.Id);
 
-              _logger.LogInformation("Referral progress: summary for usage {UsageId} — referee {RefereePaid}, referrer {ReferrerPaid}",
+              if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Referral progress: summary for usage {UsageId} — referee {RefereePaid}, referrer {ReferrerPaid}",
                 myUsage.Id, rewardReferee ?? 0m, rewardReferrer ?? 0m);
             }
             else
-              _logger.LogInformation("Referral progress: rewards suppressed by eligibility for usage {UsageId}", myUsage.Id);
+              if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Referral progress: rewards suppressed by eligibility for usage {UsageId}", myUsage.Id);
 
             myUsage.ZltoRewardReferee = rewardReferee;
             myUsage.ZltoRewardReferrer = rewardReferrer;
@@ -748,7 +748,7 @@ namespace Yoma.Core.Domain.Referral.Services
 
             if (usage.ZltoRewardReferrer == null || usage.ZltoRewardReferrer <= 0)
             {
-              _logger.LogInformation("Skipping sending notification of type '{notificationType}' to referrer '{usage.UsernameReferrer}' as no reward was awarded", type, usage.UsernameReferrer);
+              if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Skipping sending notification of type '{notificationType}' to referrer '{usage.UsernameReferrer}' as no reward was awarded", type, usage.UsernameReferrer);
               return;
             }
 
@@ -819,11 +819,11 @@ namespace Yoma.Core.Domain.Referral.Services
             throw new ArgumentOutOfRangeException(nameof(type), $"Type of '{type}' not supported");
         }
 
-        _logger.LogInformation("Successfully sent notification");
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Successfully sent notification");
       }
       catch (Exception ex)
       {
-        _logger.LogError(ex, "Failed to send notification: {errorMessage}", ex.Message);
+        if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to send notification: {errorMessage}", ex.Message);
       }
     }
 

@@ -49,11 +49,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = Constants.Role_Admin)]
     public IActionResult ListSchemaTypes()
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(ListSchemaTypes));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(ListSchemaTypes));
 
       var result = _ssiSchemaTypeService.List();
 
-      _logger.LogInformation("Request {requestName} handled", nameof(ListSchemaTypes));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(ListSchemaTypes));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -65,11 +65,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = Constants.Role_Admin)]
     public IActionResult ListSchemaEntities([FromQuery] SchemaType schemaType)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(ListSchemaEntities));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(ListSchemaEntities));
 
       var result = _ssiSchemaEntityService.List(schemaType);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(ListSchemaEntities));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(ListSchemaEntities));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -81,11 +81,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
     public async Task<IActionResult> ListSchemas([FromQuery] SchemaType? schemaType)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(ListSchemas));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(ListSchemas));
 
       var result = await _ssiSchemaService.List(schemaType);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(ListSchemas));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(ListSchemas));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -96,11 +96,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
     public async Task<IActionResult> GetShemaByName([FromRoute] string name)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(GetShemaByName));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(GetShemaByName));
 
       var result = await _ssiSchemaService.GetByFullName(name);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(GetShemaByName));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(GetShemaByName));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -111,11 +111,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = Constants.Role_Admin)]
     public async Task<IActionResult> CreateSchema([FromBody] SSISchemaRequestCreate request)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(CreateSchema));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(CreateSchema));
 
       var result = await _ssiSchemaService.Create(request);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(CreateSchema));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(CreateSchema));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -126,11 +126,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = Constants.Role_Admin)]
     public async Task<IActionResult> UpdateSchema([FromBody] SSISchemaRequestUpdate request)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(UpdateSchema));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(UpdateSchema));
 
       var result = await _ssiSchemaService.Update(request);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(UpdateSchema));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(UpdateSchema));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -143,11 +143,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_User}")]
     public async Task<IActionResult> SearchUserWalletCredentials([FromBody] SSIWalletSearchFilter filter)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(SearchUserWalletCredentials));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(SearchUserWalletCredentials));
 
       var result = await _ssiWalletService.SearchUserCredentials(filter);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(SearchUserWalletCredentials));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(SearchUserWalletCredentials));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -158,11 +158,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_User}")]
     public async Task<IActionResult> GetUserWalletCredentialById([FromRoute] string id)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(GetUserWalletCredentialById));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(GetUserWalletCredentialById));
 
       var result = await _ssiWalletService.GetUserCredentialById(id);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(GetUserWalletCredentialById));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(GetUserWalletCredentialById));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }

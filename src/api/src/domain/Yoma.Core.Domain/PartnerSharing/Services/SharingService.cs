@@ -59,7 +59,7 @@ namespace Yoma.Core.Domain.PartnerSharing.Services
         switch (action)
         {
           case ProcessingAction.Create:
-            _logger.LogInformation("Scheduling of partner sharing creation skipped: Currently scheduled with action '{action}' and status '{status}' for entity type '{entityType}' and entity id '{entityId}'",
+            if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Scheduling of partner sharing creation skipped: Currently scheduled with action '{action}' and status '{status}' for entity type '{entityType}' and entity id '{entityId}'",
               existingItem.Action, existingItem.Status, entityType, entityId);
             return;
 
@@ -73,7 +73,7 @@ namespace Yoma.Core.Domain.PartnerSharing.Services
       }
 
       await Schedule(ProcessingAction.Create, entityType, entityId, null);
-      _logger.LogInformation("Scheduling of partner sharing creation initiated: Entity type '{entityType}' and entity id '{entityId}'", entityType, entityId);
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Scheduling of partner sharing creation initiated: Entity type '{entityType}' and entity id '{entityId}'", entityType, entityId);
     }
 
     /// <summary>
@@ -102,7 +102,7 @@ namespace Yoma.Core.Domain.PartnerSharing.Services
 
         if (skipScheduling)
         {
-          _logger.LogInformation("Scheduling of partner sharing update skipped: Currently scheduled with action '{action}' and status '{status}' for entity type '{entityType}' and entity id '{entityId}'",
+          if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Scheduling of partner sharing update skipped: Currently scheduled with action '{action}' and status '{status}' for entity type '{entityType}' and entity id '{entityId}'",
             existingItem.Action, existingItem.Status, entityType, entityId);
           return;
         }
@@ -111,14 +111,14 @@ namespace Yoma.Core.Domain.PartnerSharing.Services
       {
         if (!canCreate)
         {
-          _logger.LogInformation("Scheduling of partner sharing create skipped: Entity type '{entityType}' and entity id '{entityId}' not creatable (active)", entityType, entityId);
+          if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Scheduling of partner sharing create skipped: Entity type '{entityType}' and entity id '{entityId}' not creatable (active)", entityType, entityId);
           return;
         }
         actionSchedule = ProcessingAction.Create;
       }
 
       await Schedule(actionSchedule, entityType, entityId, existingItem?.EntityExternalId);
-      _logger.LogInformation("Scheduling of partner sharing update initiated: Entity type '{entityType}' and entity id '{entityId}'", entityType, entityId);
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Scheduling of partner sharing update initiated: Entity type '{entityType}' and entity id '{entityId}'", entityType, entityId);
     }
 
     /// <summary>
@@ -154,7 +154,7 @@ namespace Yoma.Core.Domain.PartnerSharing.Services
             break;
 
           case ProcessingAction.Delete:
-            _logger.LogInformation("Scheduling of partner sharing deletion skipped: Already scheduled for '{action}'. Current status '{status}' for entity type '{entityType}' and entity id '{entityId}'",
+            if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Scheduling of partner sharing deletion skipped: Already scheduled for '{action}'. Current status '{status}' for entity type '{entityType}' and entity id '{entityId}'",
             existingItem.Action, existingItem.Status, entityType, entityId);
             return;
 
@@ -164,12 +164,12 @@ namespace Yoma.Core.Domain.PartnerSharing.Services
       }
       else
       {
-        _logger.LogInformation("Scheduling of partner sharing deletion skipped: Entity type '{entityType}' and entity id '{entityId}' not shared", entityType, entityId);
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Scheduling of partner sharing deletion skipped: Entity type '{entityType}' and entity id '{entityId}' not shared", entityType, entityId);
         return;
       }
 
       await Schedule(ProcessingAction.Delete, entityType, entityId, existingItem?.EntityExternalId);
-      _logger.LogInformation("Scheduling of partner sharing deletion initiated: Entity type '{entityType}' and entity id '{entityId}'", entityType, entityId);
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Scheduling of partner sharing deletion initiated: Entity type '{entityType}' and entity id '{entityId}'", entityType, entityId);
     }
 
     public List<ProcessingLog> ListPendingSchedule(int batchSize, List<Guid> idsToSkip)

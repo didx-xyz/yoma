@@ -29,7 +29,7 @@ namespace Yoma.Core.Domain.Referral.Events
         switch (notification.Entity.Source)
         {
           case ReferralTriggerSource.IdentityAction:
-            _logger.LogInformation("Referral progress: handling identity trigger for user {UserId} ({Username})",
+            if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Referral progress: handling identity trigger for user {UserId} ({Username})",
               notification.Entity.UserId,
               notification.Entity.Username);
             break;
@@ -41,7 +41,7 @@ namespace Yoma.Core.Domain.Referral.Events
             if (string.IsNullOrEmpty(notification.Entity.OpportunityTitle))
               throw new InvalidOperationException("OpportunityTitle must be provided for OpportunityCompletion source");
 
-            _logger.LogInformation(
+            if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation(
               "Referral progress: handling Opportunity trigger for user {UserId} ({Username}) — opportunity {OpportunityId} '{OpportunityTitle}'",
               notification.Entity.UserId,
               notification.Entity.Username,
@@ -57,7 +57,7 @@ namespace Yoma.Core.Domain.Referral.Events
       }
       catch (Exception ex)
       {
-        _logger.LogError(ex,
+        if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex,
           "Referral progress: failed processing {Source} trigger for user {UserId} ({Username}) — error: {ErrorMessage}",
           notification.Entity.Source.ToString(),
           notification.Entity.UserId,

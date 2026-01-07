@@ -67,13 +67,13 @@ namespace Yoma.Core.Api.Middleware
       switch (level)
       {
         case LogLevel.Information:
-          _logger.LogInformation(ex, LogTemplate, method, path, type, (int)status, text);
+          if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation(ex, LogTemplate, method, path, type, (int)status, text);
           break;
         case LogLevel.Warning:
           _logger.LogWarning(ex, LogTemplate, method, path, type, (int)status, text);
           break;
         default:
-          _logger.LogError(ex, LogTemplate, method, path, type, (int)status, text);
+          if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, LogTemplate, method, path, type, (int)status, text);
           break;
       }
     }

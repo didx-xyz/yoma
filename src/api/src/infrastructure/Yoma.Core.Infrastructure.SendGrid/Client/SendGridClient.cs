@@ -60,7 +60,7 @@ namespace Yoma.Core.Infrastructure.SendGrid.Client
     {
       if (!_appSettings.SendGridEnabledEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment))
       {
-        _logger.LogInformation("Sending of email skipped for environment '{environment}'", _environmentProvider.Environment);
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Sending of email skipped for environment '{environment}'", _environmentProvider.Environment);
         return;
       }
 
@@ -119,11 +119,11 @@ namespace Yoma.Core.Infrastructure.SendGrid.Client
                 ? string.Join(" | ", errorResponse.Errors.Select(e => e.Message?.Trim()).Where(e => !string.IsNullOrEmpty(e)))
                 : "No error details provided";
 
-            _logger.LogError("SendGrid batch failed with status {status}: {errors}", response.StatusCode, errorMessages);
+            if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError("SendGrid batch failed with status {status}: {errors}", response.StatusCode, errorMessages);
           }
           catch (Exception ex)
           {
-            _logger.LogError(ex, "Unhandled exception while sending email batch");
+            if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Unhandled exception while sending email batch");
           }
         }));
       }

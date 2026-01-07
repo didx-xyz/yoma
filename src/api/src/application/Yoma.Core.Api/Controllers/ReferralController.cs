@@ -57,11 +57,11 @@ namespace Yoma.Core.Api.Controllers
     [AllowAnonymous]
     public ActionResult<bool> GetAvailable()
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(GetAvailable));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(GetAvailable));
 
       var result = _programInfoService.Available();
 
-      _logger.LogInformation("Request {requestName} handled", nameof(GetAvailable));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(GetAvailable));
 
       return Ok(result);
     }
@@ -72,11 +72,11 @@ namespace Yoma.Core.Api.Controllers
     [AllowAnonymous]
     public ActionResult<ProgramInfo> GetProgramInfoDefault()
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(GetProgramInfoDefault));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(GetProgramInfoDefault));
 
       var result = _programInfoService.GetDefault();
 
-      _logger.LogInformation("Request {requestName} handled", nameof(GetProgramInfoDefault));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(GetProgramInfoDefault));
 
       return Ok(result);
     }
@@ -87,11 +87,11 @@ namespace Yoma.Core.Api.Controllers
     [AllowAnonymous]
     public ActionResult<ProgramSearchResultsInfo> SearchProgram([FromBody] ProgramSearchFilter filter)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(SearchProgram));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(SearchProgram));
 
       var result = _programInfoService.Search(filter);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(SearchProgram));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(SearchProgram));
 
       return Ok(result);
     }
@@ -102,11 +102,11 @@ namespace Yoma.Core.Api.Controllers
     [AllowAnonymous]
     public ActionResult<ProgramInfo> GetProgramInfoById([FromRoute] Guid id)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(GetProgramInfoById));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(GetProgramInfoById));
 
       var result = _programInfoService.GetById(id, true, true);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(GetProgramInfoById));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(GetProgramInfoById));
 
       return Ok(result);
     }
@@ -117,11 +117,11 @@ namespace Yoma.Core.Api.Controllers
     [AllowAnonymous]
     public ActionResult<ProgramInfo> GetProgramInfoByLinkId([FromRoute] Guid linkId)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(GetProgramInfoByLinkId));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(GetProgramInfoByLinkId));
 
       var result = _programInfoService.GetByLinkId(linkId, true, true);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(GetProgramInfoByLinkId));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(GetProgramInfoByLinkId));
 
       return Ok(result);
     }
@@ -134,11 +134,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_User}")]
     public ActionResult<ReferralLink> GetLinkById([FromRoute] Guid id, [FromQuery] bool? includeQRCode)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(GetLinkById));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(GetLinkById));
 
       var result = _linkService.GetById(id, true, true, true, includeQRCode);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(GetLinkById));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(GetLinkById));
 
       return Ok(result);
     }
@@ -148,11 +148,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_User}")]
     public ActionResult<ReferralLinkSearchResults> SearchLink([FromBody] ReferralLinkSearchFilter filter)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(SearchLink));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(SearchLink));
 
       var result = _linkService.Search(filter);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(SearchLink));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(SearchLink));
 
       return Ok(result);
     }
@@ -162,11 +162,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_User}")]
     public async Task<ActionResult<ReferralLink>> CreateLink([FromBody] ReferralLinkRequestCreate request)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(CreateLink));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(CreateLink));
 
       var result = await _linkService.Create(request);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(CreateLink));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(CreateLink));
 
       return Ok(result);
     }
@@ -177,11 +177,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_User}")]
     public async Task<ActionResult<ReferralLink>> UpdateLink([FromBody] ReferralLinkRequestUpdate request)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(UpdateLink));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(UpdateLink));
 
       var result = await _linkService.Update(request);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(UpdateLink));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(UpdateLink));
 
       return Ok(result);
     }
@@ -192,11 +192,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_User}")]
     public async Task<ActionResult<ReferralLink>> CancelLink([FromRoute] Guid id)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(CancelLink));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(CancelLink));
 
       var result = await _linkService.Cancel(id);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(CancelLink));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(CancelLink));
 
       return Ok(result);
     }
@@ -207,11 +207,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_User}")]
     public ActionResult<ReferralLinkUsageInfo> GetUsageById([FromRoute] Guid id)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(GetUsageById));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(GetUsageById));
 
       var result = _linkUsageService.GetById(id, true, true, true);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(GetUsageById));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(GetUsageById));
 
       return Ok(result);
     }
@@ -221,11 +221,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_User}")]
     public ActionResult<ReferralLinkUsageInfo> GetUsageByProgramIdAsReferee([FromRoute] Guid id)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(GetUsageByProgramIdAsReferee));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(GetUsageByProgramIdAsReferee));
 
       var result = _linkUsageService.GetByProgramIdAsReferee(id, true);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(GetUsageByProgramIdAsReferee));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(GetUsageByProgramIdAsReferee));
 
       return Ok(result);
     }
@@ -235,11 +235,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_User}")]
     public ActionResult<ReferralLinkUsageSearchResults> SearchLinkUsageAsReferrer([FromBody] ReferralLinkUsageSearchFilter filter)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(SearchLinkUsageAsReferrer));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(SearchLinkUsageAsReferrer));
 
       var result = _linkUsageService.SearchAsReferrer(filter);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(SearchLinkUsageAsReferrer));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(SearchLinkUsageAsReferrer));
 
       return Ok(result);
     }
@@ -249,11 +249,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_User}")]
     public ActionResult<ReferralLinkUsageSearchResults> SearchLinkUsageAsReferee([FromBody] ReferralLinkUsageSearchFilter filter)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(SearchLinkUsageAsReferee));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(SearchLinkUsageAsReferee));
 
       var result = _linkUsageService.SearchAsReferee(filter);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(SearchLinkUsageAsReferee));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(SearchLinkUsageAsReferee));
 
       return Ok(result);
     }
@@ -263,11 +263,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_User}")]
     public async Task<ActionResult> ClaimAsReferee([FromRoute] Guid id)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(ClaimAsReferee));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(ClaimAsReferee));
 
       await _linkUsageService.ClaimAsReferee(id);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(ClaimAsReferee));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(ClaimAsReferee));
 
       return Ok();
     }
@@ -278,11 +278,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = Constants.Role_User)]
     public ActionResult<ReferralAnalyticsUser> GetMyAnalytics([FromRoute] ReferralParticipationRole role)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(GetMyAnalytics));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(GetMyAnalytics));
 
       var result = _analyticsService.ByUser(role);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(GetMyAnalytics));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(GetMyAnalytics));
 
       return Ok(result);
     }
@@ -293,11 +293,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_User}")]
     public ActionResult<ReferralAnalyticsSearchResultsInfo<ReferralAnalyticsUserInfo>> SearchAnalytics([FromBody] ReferralAnalyticsSearchFilter filter)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(SearchAnalytics));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(SearchAnalytics));
 
       var result = _analyticsService.Search(filter);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(SearchAnalytics));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(SearchAnalytics));
 
       return Ok(result);
     }
@@ -309,11 +309,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_Admin}")]
     public ActionResult<BlockReason> ListBlockReasons()
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(ListBlockReasons));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(ListBlockReasons));
 
       var result = _blockReasonService.List();
 
-      _logger.LogInformation("Request {requestName} handled", nameof(ListBlockReasons));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(ListBlockReasons));
 
       return Ok(result);
     }
@@ -323,11 +323,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_Admin}")]
     public async Task<ActionResult<Block>> BlockReferrer([FromBody] BlockRequest request)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(BlockReferrer));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(BlockReferrer));
 
       var result = await _blockService.Block(request);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(BlockReferrer));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(BlockReferrer));
 
       return Ok(result);
     }
@@ -337,11 +337,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_Admin}")]
     public async Task<ActionResult> UnblockReferrer([FromBody] UnblockRequest request)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(UnblockReferrer));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(UnblockReferrer));
 
       await _blockService.Unblock(request);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(UnblockReferrer));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(UnblockReferrer));
 
       return Ok();
     }
@@ -351,11 +351,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_Admin}")]
     public ActionResult<Domain.Referral.Models.Program> GetProgramById([FromRoute] Guid id)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(GetProgramById));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(GetProgramById));
 
       var result = _programService.GetById(id, true, true);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(GetProgramById));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(GetProgramById));
 
       return Ok(result);
     }
@@ -365,11 +365,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_Admin}")]
     public ActionResult<ProgramSearchResults> SearchProgram([FromBody] ProgramSearchFilterAdmin filter)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(SearchProgram));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(SearchProgram));
 
       var result = _programService.Search(filter);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(SearchProgram));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(SearchProgram));
 
       return Ok(result);
     }
@@ -379,11 +379,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_Admin}")]
     public async Task<ActionResult<Domain.Referral.Models.Program>> CreateProgram([FromBody] ProgramRequestCreate request)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(CreateProgram));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(CreateProgram));
 
       var result = await _programService.Create(request);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(CreateProgram));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(CreateProgram));
 
       return Ok(result);
     }
@@ -393,11 +393,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_Admin}")]
     public async Task<ActionResult<Domain.Referral.Models.Program>> UpdateProgram([FromBody] ProgramRequestUpdate request)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(UpdateProgram));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(UpdateProgram));
 
       var result = await _programService.Update(request);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(UpdateProgram));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(UpdateProgram));
 
       return Ok(result);
     }
@@ -407,11 +407,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_Admin}")]
     public async Task<ActionResult<Domain.Referral.Models.Program>> UpdateProgramImage([FromRoute] Guid id, [Required] IFormFile file)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(UpdateProgramImage));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(UpdateProgramImage));
 
       var result = await _programService.UpdateImage(id, file);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(UpdateProgramImage));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(UpdateProgramImage));
 
       return Ok(result);
     }
@@ -422,11 +422,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_Admin}")]
     public async Task<ActionResult<Domain.Referral.Models.Program>> UpdateProgramStatus([FromRoute] Guid id, [FromRoute] Domain.Referral.ProgramStatus status)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(UpdateProgramStatus));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(UpdateProgramStatus));
 
       var result = await _programService.UpdateStatus(id, status);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(UpdateProgramStatus));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(UpdateProgramStatus));
 
       return Ok(result);
     }
@@ -436,11 +436,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_Admin}")]
     public async Task<ActionResult<Domain.Referral.Models.Program>> SetProgramAsDefault([FromRoute] Guid id)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(SetProgramAsDefault));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(SetProgramAsDefault));
 
       var result = await _programService.SetAsDefault(id);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(SetProgramAsDefault));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(SetProgramAsDefault));
 
       return Ok(result);
     }
@@ -450,11 +450,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_Admin}")]
     public ActionResult<ReferralLinkSearchResults> SearchLink([FromBody] ReferralLinkSearchFilterAdmin filter)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(SearchLink));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(SearchLink));
 
       var result = _linkService.Search(filter);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(SearchLink));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(SearchLink));
 
       return Ok(result);
     }
@@ -464,11 +464,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_Admin}")]
     public ActionResult<ReferralLinkUsageSearchResults> SearchLinkUsage([FromBody] ReferralLinkUsageSearchFilterAdmin filter)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(SearchLinkUsage));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(SearchLinkUsage));
 
       var result = _linkUsageService.Search(filter);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(SearchLinkUsage));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(SearchLinkUsage));
 
       return Ok(result);
     }
@@ -479,11 +479,11 @@ namespace Yoma.Core.Api.Controllers
     [HttpPost("analytics/search/admin")]
     public ActionResult<ReferralAnalyticsSearchResults> SearchReferralAnalyticsAdmin([FromBody] ReferralAnalyticsSearchFilterAdmin filter)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(SearchReferralAnalyticsAdmin));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(SearchReferralAnalyticsAdmin));
 
       var result = _analyticsService.Search(filter);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(SearchReferralAnalyticsAdmin));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(SearchReferralAnalyticsAdmin));
 
       return Ok(result);
     }

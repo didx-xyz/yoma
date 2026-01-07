@@ -57,11 +57,11 @@ namespace Yoma.Core.Api.Controllers
     [AllowAnonymous]
     public IActionResult GetPublishedOrExpiredById([FromRoute] Guid id)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(GetInfoById));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(GetInfoById));
 
       var result = _opportunityInfoService.GetPublishedOrExpiredById(id);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(GetInfoById));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(GetInfoById));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -72,11 +72,11 @@ namespace Yoma.Core.Api.Controllers
     [AllowAnonymous]
     public IActionResult GetPublishedOrExpiredByLinkInstantVerify([FromRoute] Guid linkId)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(GetPublishedOrExpiredByLinkInstantVerify));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(GetPublishedOrExpiredByLinkInstantVerify));
 
       var result = _opportunityInfoService.GetPublishedOrExpiredByLinkInstantVerify(linkId);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(GetPublishedOrExpiredByLinkInstantVerify));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(GetPublishedOrExpiredByLinkInstantVerify));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -89,11 +89,11 @@ namespace Yoma.Core.Api.Controllers
     [AllowAnonymous]
     public IActionResult Search([FromBody] OpportunitySearchFilter filter)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(Search));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(Search));
 
       var result = _opportunityInfoService.Search(filter);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(Search));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(Search));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -104,11 +104,11 @@ namespace Yoma.Core.Api.Controllers
     [AllowAnonymous]
     public IActionResult ListOpportunityTypes()
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(ListOpportunityTypes));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(ListOpportunityTypes));
 
       var result = _opportunityTypeService.List();
 
-      _logger.LogInformation("Request {requestName} handled", nameof(ListOpportunityTypes));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(ListOpportunityTypes));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -120,11 +120,11 @@ namespace Yoma.Core.Api.Controllers
     [AllowAnonymous]
     public IActionResult ListOpportunitySearchCriteriaCategories([FromQuery] List<PublishedState>? publishedStates)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(ListOpportunitySearchCriteriaCategories));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(ListOpportunitySearchCriteriaCategories));
 
       var result = _opportunityService.ListOpportunitySearchCriteriaCategories(publishedStates);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(ListOpportunitySearchCriteriaCategories));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(ListOpportunitySearchCriteriaCategories));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -136,11 +136,11 @@ namespace Yoma.Core.Api.Controllers
     [AllowAnonymous]
     public IActionResult ListOpportunitySearchCriteriaCountries([FromQuery] List<PublishedState>? publishedStates)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(ListOpportunitySearchCriteriaCountries));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(ListOpportunitySearchCriteriaCountries));
 
       var result = _opportunityService.ListOpportunitySearchCriteriaCountries(publishedStates);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(ListOpportunitySearchCriteriaCountries));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(ListOpportunitySearchCriteriaCountries));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -152,11 +152,11 @@ namespace Yoma.Core.Api.Controllers
     [AllowAnonymous]
     public IActionResult ListOpportunitySearchCriteriaLanguages([FromQuery] List<PublishedState>? publishedStates, [FromQuery] string? languageCodeAlpha2Site)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(ListOpportunitySearchCriteriaLanguages));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(ListOpportunitySearchCriteriaLanguages));
 
       var result = _opportunityService.ListOpportunitySearchCriteriaLanguages(publishedStates, languageCodeAlpha2Site);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(ListOpportunitySearchCriteriaLanguages));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(ListOpportunitySearchCriteriaLanguages));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -168,11 +168,11 @@ namespace Yoma.Core.Api.Controllers
     [AllowAnonymous]
     public IActionResult ListOpportunitySearchCriteriaOrganizations([FromQuery] List<PublishedState>? publishedStates)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(ListOpportunitySearchCriteriaOrganizations));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(ListOpportunitySearchCriteriaOrganizations));
 
       var result = _opportunityService.ListOpportunitySearchCriteriaOrganizations(publishedStates);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(ListOpportunitySearchCriteriaOrganizations));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(ListOpportunitySearchCriteriaOrganizations));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -184,11 +184,11 @@ namespace Yoma.Core.Api.Controllers
     [AllowAnonymous]
     public IActionResult ListOpportunitySearchCriteriaCommitmentIntervalOptions([FromQuery] List<PublishedState>? publishedStates)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(ListOpportunitySearchCriteriaCommitmentIntervalOptions));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(ListOpportunitySearchCriteriaCommitmentIntervalOptions));
 
       var result = _opportunityService.ListOpportunitySearchCriteriaCommitmentIntervalOptions(publishedStates);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(ListOpportunitySearchCriteriaCommitmentIntervalOptions));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(ListOpportunitySearchCriteriaCommitmentIntervalOptions));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -200,11 +200,11 @@ namespace Yoma.Core.Api.Controllers
     [AllowAnonymous]
     public IActionResult ListOpportunitySearchCriteriaZltoRewardRanges([FromQuery] List<PublishedState>? publishedStates)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(ListOpportunitySearchCriteriaZltoRewardRanges));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(ListOpportunitySearchCriteriaZltoRewardRanges));
 
       var result = _opportunityService.ListOpportunitySearchCriteriaZltoRewardRanges(publishedStates);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(ListOpportunitySearchCriteriaZltoRewardRanges));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(ListOpportunitySearchCriteriaZltoRewardRanges));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -217,11 +217,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_User}")]
     public IActionResult GetInfoById([FromRoute] Guid id)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(GetInfoById));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(GetInfoById));
 
       var result = _opportunityInfoService.GetById(id, false);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(GetInfoById));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(GetInfoById));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -235,11 +235,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
     public IActionResult ListOpportunitySearchCriteriaCategoriesAdmin([FromQuery] List<Guid>? organizations)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(ListOpportunitySearchCriteriaCategoriesAdmin));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(ListOpportunitySearchCriteriaCategoriesAdmin));
 
       var result = _opportunityService.ListOpportunitySearchCriteriaCategoriesAdmin(organizations, true);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(ListOpportunitySearchCriteriaCategoriesAdmin));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(ListOpportunitySearchCriteriaCategoriesAdmin));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -251,11 +251,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
     public IActionResult ListOpportunitySearchCriteriaCountriesAdmin([FromQuery] List<Guid>? organizations)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(ListOpportunitySearchCriteriaCountriesAdmin));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(ListOpportunitySearchCriteriaCountriesAdmin));
 
       var result = _opportunityService.ListOpportunitySearchCriteriaCountriesAdmin(organizations, true);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(ListOpportunitySearchCriteriaCountriesAdmin));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(ListOpportunitySearchCriteriaCountriesAdmin));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -267,11 +267,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
     public IActionResult ListOpportunitySearchCriteriaLanguagesAdmin([FromQuery] List<Guid>? organizations)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(ListOpportunitySearchCriteriaLanguagesAdmin));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(ListOpportunitySearchCriteriaLanguagesAdmin));
 
       var result = _opportunityService.ListOpportunitySearchCriteriaLanguagesAdmin(organizations, true);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(ListOpportunitySearchCriteriaLanguagesAdmin));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(ListOpportunitySearchCriteriaLanguagesAdmin));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -282,11 +282,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_Admin}")]
     public IActionResult ListOpportunitySearchCriteriaOrganizationsAdmin()
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(ListOpportunitySearchCriteriaOrganizationsAdmin));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(ListOpportunitySearchCriteriaOrganizationsAdmin));
 
       var result = _opportunityService.ListOpportunitySearchCriteriaOrganizationsAdmin();
 
-      _logger.LogInformation("Request {requestName} handled", nameof(ListOpportunitySearchCriteriaOrganizationsAdmin));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(ListOpportunitySearchCriteriaOrganizationsAdmin));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -298,11 +298,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
     public IActionResult SearchCriteriaOpportunities([FromBody] OpportunitySearchFilterCriteria filter)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(SearchCriteriaOpportunities));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(SearchCriteriaOpportunities));
 
       var result = _opportunityService.SearchCriteriaOpportunities(filter, true);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(SearchCriteriaOpportunities));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(SearchCriteriaOpportunities));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -313,11 +313,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
     public IActionResult ListOpportunityCategories()
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(ListOpportunityCategories));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(ListOpportunityCategories));
 
       var result = _opportunityCategoryService.List();
 
-      _logger.LogInformation("Request {requestName} handled", nameof(ListOpportunityCategories));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(ListOpportunityCategories));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -328,11 +328,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
     public IActionResult ListOpportunityDifficulties()
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(ListOpportunityDifficulties));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(ListOpportunityDifficulties));
 
       var result = _opportunityDifficultyService.List();
 
-      _logger.LogInformation("Request {requestName} handled", nameof(ListOpportunityDifficulties));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(ListOpportunityDifficulties));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -343,11 +343,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
     public IActionResult ListOpportunityVerificationTypes()
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(ListOpportunityVerificationTypes));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(ListOpportunityVerificationTypes));
 
       var result = _opportunityVerificationTypeService.List();
 
-      _logger.LogInformation("Request {requestName} handled", nameof(ListOpportunityVerificationTypes));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(ListOpportunityVerificationTypes));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -358,11 +358,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
     public IActionResult Search([FromBody] OpportunitySearchFilterAdmin filter)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(Search));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(Search));
 
       var result = _opportunityInfoService.Search(filter, true);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(Search));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(Search));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -376,11 +376,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
     public async Task<IActionResult> SearchAndExportToCSV([FromBody] OpportunitySearchFilterAdmin filter)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(SearchAndExportToCSV));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(SearchAndExportToCSV));
 
       var (scheduleForProcessing, fileName, bytes) = await _opportunityInfoService.ExportOrScheduleToCSV(filter, true);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(SearchAndExportToCSV));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(SearchAndExportToCSV));
 
       if (scheduleForProcessing) return StatusCode((int)HttpStatusCode.OK);
       return File(bytes!, "text/csv", fileName);
@@ -392,11 +392,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
     public IActionResult GetById([FromRoute] Guid id)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(GetById));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(GetById));
 
       var result = _opportunityService.GetById(id, true, true, true);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(GetById));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(GetById));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -410,11 +410,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
     public async Task<IActionResult> ImportFromCSV([FromRoute] Guid organizationId, [Required] IFormFile file, [FromQuery] bool? validateOnly)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(ImportFromCSV));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(ImportFromCSV));
 
       var result = await _opportunityService.ImportFromCSV(file, organizationId, true, validateOnly);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(ImportFromCSV));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(ImportFromCSV));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -425,11 +425,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
     public async Task<IActionResult> Create([FromBody] OpportunityRequestCreate request)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(Create));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(Create));
 
       var result = await _opportunityService.Create(request, true);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(Create));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(Create));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -440,11 +440,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
     public async Task<IActionResult> Update([FromBody] OpportunityRequestUpdate request)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(Update));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(Update));
 
       var result = await _opportunityService.Update(request, true);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(Update));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(Update));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -455,11 +455,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
     public async Task<IActionResult> UpdateStatus([FromRoute] Guid id, [FromRoute] Status status)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(UpdateStatus));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(UpdateStatus));
 
       var result = await _opportunityService.UpdateStatus(id, status, true);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(UpdateStatus));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(UpdateStatus));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -470,11 +470,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
     public async Task<IActionResult> UpdateHidden([FromRoute] Guid id, [FromRoute] bool hidden)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(UpdateHidden));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(UpdateHidden));
 
       var result = await _opportunityService.UpdateHidden(id, hidden, true);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(UpdateHidden));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(UpdateHidden));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -485,11 +485,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_Admin}")]
     public async Task<IActionResult> UpdateFeatured([FromRoute] Guid id, [FromRoute] bool featured)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(UpdateFeatured));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(UpdateFeatured));
 
       var result = await _opportunityService.UpdateFeatured(id, featured);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(UpdateFeatured));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(UpdateFeatured));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -500,11 +500,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
     public async Task<IActionResult> AssignCategories([FromRoute] Guid id, [Required][FromBody] List<Guid> categoryIds)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(AssignCategories));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(AssignCategories));
 
       await _opportunityService.AssignCategories(id, categoryIds, true);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(AssignCategories));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(AssignCategories));
 
       return StatusCode((int)HttpStatusCode.OK);
     }
@@ -515,11 +515,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
     public async Task<IActionResult> RemoveCategories([FromRoute] Guid id, [Required][FromBody] List<Guid> categoryIds)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(RemoveCategories));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(RemoveCategories));
 
       await _opportunityService.RemoveCategories(id, categoryIds, true);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(RemoveCategories));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(RemoveCategories));
 
       return StatusCode((int)HttpStatusCode.OK);
     }
@@ -530,11 +530,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
     public async Task<IActionResult> AssignCountries([FromRoute] Guid id, [Required][FromBody] List<Guid> countryIds)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(AssignCountries));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(AssignCountries));
 
       await _opportunityService.AssignCountries(id, countryIds, true);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(AssignCountries));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(AssignCountries));
 
       return StatusCode((int)HttpStatusCode.OK);
     }
@@ -545,11 +545,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
     public async Task<IActionResult> RemoveCountries([FromRoute] Guid id, [Required][FromBody] List<Guid> countryIds)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(RemoveCountries));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(RemoveCountries));
 
       await _opportunityService.RemoveCountries(id, countryIds, true);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(RemoveCountries));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(RemoveCountries));
 
       return StatusCode((int)HttpStatusCode.OK);
     }
@@ -560,11 +560,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
     public async Task<IActionResult> AssignLanguages([FromRoute] Guid id, [Required][FromBody] List<Guid> languageIds)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(AssignLanguages));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(AssignLanguages));
 
       await _opportunityService.AssignLanguages(id, languageIds, true);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(AssignLanguages));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(AssignLanguages));
 
       return StatusCode((int)HttpStatusCode.OK);
     }
@@ -575,11 +575,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
     public async Task<IActionResult> RemoveLanguages([FromRoute] Guid id, [Required][FromBody] List<Guid> languageIds)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(RemoveLanguages));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(RemoveLanguages));
 
       await _opportunityService.RemoveLanguages(id, languageIds, true);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(RemoveLanguages));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(RemoveLanguages));
 
       return StatusCode((int)HttpStatusCode.OK);
     }
@@ -590,11 +590,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
     public async Task<IActionResult> AssignSkills([FromRoute] Guid id, [Required][FromBody] List<Guid> skillIds)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(AssignSkills));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(AssignSkills));
 
       await _opportunityService.AssignSkills(id, skillIds, true);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(AssignSkills));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(AssignSkills));
 
       return StatusCode((int)HttpStatusCode.OK);
     }
@@ -605,11 +605,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
     public async Task<IActionResult> RemoveSkills([FromRoute] Guid id, [Required][FromBody] List<Guid> skillIds)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(RemoveSkills));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(RemoveSkills));
 
       await _opportunityService.RemoveSkills(id, skillIds, true);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(RemoveSkills));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(RemoveSkills));
 
       return StatusCode((int)HttpStatusCode.OK);
     }
@@ -620,11 +620,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
     public async Task<IActionResult> AssignVerificationTypes([FromRoute] Guid id, [Required][FromBody] List<OpportunityRequestVerificationType> verificationTypes)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(AssignVerificationTypes));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(AssignVerificationTypes));
 
       await _opportunityService.AssignVerificationTypes(id, verificationTypes, true);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(AssignVerificationTypes));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(AssignVerificationTypes));
 
       return StatusCode((int)HttpStatusCode.OK);
     }
@@ -635,11 +635,11 @@ namespace Yoma.Core.Api.Controllers
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
     public async Task<IActionResult> RemoveVerificationTypes([FromRoute] Guid id, [Required][FromBody] List<VerificationType> verificationTypes)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(RemoveVerificationTypes));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(RemoveVerificationTypes));
 
       await _opportunityService.RemoveVerificationTypes(id, verificationTypes, true);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(RemoveVerificationTypes));
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(RemoveVerificationTypes));
 
       return StatusCode((int)HttpStatusCode.OK);
     }

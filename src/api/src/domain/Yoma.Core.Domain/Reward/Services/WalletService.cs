@@ -231,11 +231,11 @@ namespace Yoma.Core.Domain.Reward.Services
       var existingItem = _walletCreationRepository.Query().SingleOrDefault(o => o.UserId == userId.Value);
       if (existingItem != null)
       {
-        _logger.LogInformation("Wallet creation skipped: Already '{status}' for user with id '{userId}'", existingItem.Status, userId.Value);
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Wallet creation skipped: Already '{status}' for user with id '{userId}'", existingItem.Status, userId.Value);
 
         if (existingItem.Status != WalletCreationStatus.Created)
         {
-          _logger.LogInformation("Wallet username update skipped: Current status '{status}' for user with id '{userId}'", existingItem.Status, userId.Value);
+          if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Wallet username update skipped: Current status '{status}' for user with id '{userId}'", existingItem.Status, userId.Value);
           return;
         }
 
@@ -248,7 +248,7 @@ namespace Yoma.Core.Domain.Reward.Services
 
         if (string.Equals(existingItem.Username, username, StringComparison.InvariantCultureIgnoreCase))
         {
-          _logger.LogInformation("Wallet username update skipped: Username is already up to date for user with id '{userId}'", userId.Value);
+          if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Wallet username update skipped: Username is already up to date for user with id '{userId}'", userId.Value);
           return;
         }
 
@@ -316,11 +316,11 @@ namespace Yoma.Core.Domain.Reward.Services
       var existingItem = _walletCreationRepository.Query().SingleOrDefault(o => o.UserId == userId.Value);
       if (existingItem != null)
       {
-        _logger.LogInformation("Wallet creation skipped: Already '{status}' for user with id '{userId}'", existingItem.Status, userId.Value);
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Wallet creation skipped: Already '{status}' for user with id '{userId}'", existingItem.Status, userId.Value);
 
         if (existingItem.Status != WalletCreationStatus.Created)
         {
-          _logger.LogInformation("Wallet username update skipped: Current status '{status}' for user with id '{userId}'", existingItem.Status, userId.Value);
+          if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Wallet username update skipped: Current status '{status}' for user with id '{userId}'", existingItem.Status, userId.Value);
           return;
         }
 
@@ -333,7 +333,7 @@ namespace Yoma.Core.Domain.Reward.Services
 
         if (string.Equals(existingItem.Username, username, StringComparison.InvariantCultureIgnoreCase))
         {
-          _logger.LogInformation("Wallet username update skipped: Username is already up to date for user with id '{userId}'", userId.Value);
+          if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Wallet username update skipped: Username is already up to date for user with id '{userId}'", userId.Value);
           return;
         }
 

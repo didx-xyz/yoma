@@ -56,7 +56,7 @@ namespace Yoma.Core.Domain.Referral.Services
         lockAcquired = await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration);
         if (!lockAcquired) return;
 
-        _logger.LogInformation("Processing link usage expiration");
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processing link usage expiration");
 
         var statusExpiredId = _linkUsageStatusService.GetByName(ReferralLinkUsageStatus.Expired.ToString()).Id;
         var statusExpirableIds = Statuses_Expirable.Select(o => _linkUsageStatusService.GetByName(o.ToString()).Id).ToList();
@@ -75,7 +75,7 @@ namespace Yoma.Core.Domain.Referral.Services
             o.StatusId = statusExpiredId;
             o.Status = ReferralLinkUsageStatus.Expired;
 
-            _logger.LogInformation(
+            if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation(
               "Expiring LinkUsage '{LinkUsageId}' (claimed {DateClaimed:yyyy-MM-dd}, window {WindowDays} days, program {ProgramId}, link {LinkId})",
               o.Id, o.DateClaimed, o.ProgramCompletionWindowInDays, o.ProgramId, o.LinkId);
           });
@@ -85,11 +85,11 @@ namespace Yoma.Core.Domain.Referral.Services
           if (executeUntil <= DateTimeOffset.UtcNow) break;
         }
 
-        _logger.LogInformation("Processed link usage expiration");
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processed link usage expiration");
       }
       catch (Exception ex)
       {
-        _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(ProcessExpiration), ex.Message);
+        if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(ProcessExpiration), ex.Message);
       }
       finally
       {

@@ -74,11 +74,11 @@ namespace Yoma.Core.Domain.SSI.Services
 
         if (!_appSettings.SSIEnabledEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment))
         {
-          _logger.LogInformation("{Process} skipped for environment '{environment}' at {dateStamp} as SSI is not enabled.", nameof(SeedSchemas), _environmentProvider.Environment, DateTimeOffset.UtcNow);
+          if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("{Process} skipped for environment '{environment}' at {dateStamp} as SSI is not enabled.", nameof(SeedSchemas), _environmentProvider.Environment, DateTimeOffset.UtcNow);
           return;
         }
 
-        _logger.LogInformation("Processing SSI default schema seeding");
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processing SSI default schema seeding");
 
         await SeedSchema(ArtifactType.JWS,
              SSISSchemaHelper.ToFullName(SchemaType.Opportunity, $"Default"),
@@ -88,11 +88,11 @@ namespace Yoma.Core.Domain.SSI.Services
             _appSettings.SSISchemaFullNameYoID,
             ["Organization_Name", "Organization_LogoURL", "User_DisplayName", "User_FirstName", "User_Surname", "User_DateOfBirth", "User_Email", "User_Gender", "User_Education", "User_Country"]);
 
-        _logger.LogInformation("Processed SSI default schema seeding");
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processed SSI default schema seeding");
       }
       catch (Exception ex)
       {
-        _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(SeedSchemas), ex.Message);
+        if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(SeedSchemas), ex.Message);
       }
       finally
       {
@@ -115,11 +115,11 @@ namespace Yoma.Core.Domain.SSI.Services
 
         if (!_appSettings.SSIEnabledEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment))
         {
-          _logger.LogInformation("{Process} skipped for environment '{environment}' at {dateStamp} as SSI is not enabled.", nameof(ProcessTenantCreation), _environmentProvider.Environment, DateTimeOffset.UtcNow);
+          if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("{Process} skipped for environment '{environment}' at {dateStamp} as SSI is not enabled.", nameof(ProcessTenantCreation), _environmentProvider.Environment, DateTimeOffset.UtcNow);
           return;
         }
 
-        _logger.LogInformation("Processing SSI tenant creation");
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processing SSI tenant creation");
 
         var itemIdsToSkip = new ConcurrentBag<Guid>();
         using var throttler = new SemaphoreSlim(_appSettings.SSIParallelism.TenantCreation, _appSettings.SSIParallelism.TenantCreation);
@@ -147,7 +147,7 @@ namespace Yoma.Core.Domain.SSI.Services
 
               try
               {
-                _logger.LogInformation("Processing SSI tenant creation for '{entityType}' and item with id '{id}'", item.EntityType, item.Id);
+                if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processing SSI tenant creation for '{entityType}' and item with id '{id}'", item.EntityType, item.Id);
 
                 TenantRequest request;
                 var entityType = Enum.Parse<EntityType>(item.EntityType, true);
@@ -198,11 +198,11 @@ namespace Yoma.Core.Domain.SSI.Services
                 item.Status = TenantCreationStatus.Created;
                 await tenantService.UpdateScheduleCreation(item);
 
-                _logger.LogInformation("Processed SSI tenant creation for '{entityType}' and item with id '{id}'", item.EntityType, item.Id);
+                if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processed SSI tenant creation for '{entityType}' and item with id '{id}'", item.EntityType, item.Id);
               }
               catch (Exception ex)
               {
-                _logger.LogError(ex, "Failed to created SSI tenant for '{entityType}'and item with id '{id}': {errorMessage}", item.EntityType, item.Id, ex.Message);
+                if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to created SSI tenant for '{entityType}'and item with id '{id}': {errorMessage}", item.EntityType, item.Id, ex.Message);
 
                 item.Status = TenantCreationStatus.Error;
                 item.ErrorReason = ex.Message;
@@ -220,11 +220,11 @@ namespace Yoma.Core.Domain.SSI.Services
           await Task.WhenAll(tasks).FlattenAggregateException();
         }
 
-        _logger.LogInformation("Processed SSI tenant creation");
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processed SSI tenant creation");
       }
       catch (Exception ex)
       {
-        _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(ProcessTenantCreation), ex.Message);
+        if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(ProcessTenantCreation), ex.Message);
       }
       finally
       {
@@ -247,11 +247,11 @@ namespace Yoma.Core.Domain.SSI.Services
 
         if (!_appSettings.SSIEnabledEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment))
         {
-          _logger.LogInformation("{Process} skipped for environment '{environment}' at {dateStamp} as SSI is not enabled.", nameof(ProcessCredentialIssuance), _environmentProvider.Environment, DateTimeOffset.UtcNow);
+          if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("{Process} skipped for environment '{environment}' at {dateStamp} as SSI is not enabled.", nameof(ProcessCredentialIssuance), _environmentProvider.Environment, DateTimeOffset.UtcNow);
           return;
         }
 
-        _logger.LogInformation("Processing SSI credential issuance");
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processing SSI credential issuance");
 
         var itemIdsToSkip = new ConcurrentBag<Guid>();
         using var throttler = new SemaphoreSlim(_appSettings.SSIParallelism.CredentialIssuance, _appSettings.SSIParallelism.CredentialIssuance);
@@ -285,7 +285,7 @@ namespace Yoma.Core.Domain.SSI.Services
 
               try
               {
-                _logger.LogInformation("Processing SSI credential issuance for schema type '{schemaType}' and item with id '{id}'", item.SchemaType, item.Id);
+                if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processing SSI credential issuance for schema type '{schemaType}' and item with id '{id}'", item.SchemaType, item.Id);
 
                 var request = new CredentialIssuanceRequest
                 {
@@ -315,7 +315,7 @@ namespace Yoma.Core.Domain.SSI.Services
                     var organization = organizationService.GetByNameOrNull(_appSettings.YomaOrganizationName, true, true);
                     if (organization == null)
                     {
-                      _logger.LogInformation("Processing of SSI credential issuance for schema type '{schemaType}' and item with id '{id}' " +
+                      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processing of SSI credential issuance for schema type '{schemaType}' and item with id '{id}' " +
                           "was skipped as the '{orgName}' organization could not be found", item.SchemaType, item.Id, _appSettings.YomaOrganizationName);
                       itemIdsToSkip.Add(item.Id);
                       return;
@@ -413,11 +413,11 @@ namespace Yoma.Core.Domain.SSI.Services
                 item.Status = CredentialIssuanceStatus.Issued;
                 await credentialService.UpdateScheduleIssuance(item);
 
-                _logger.LogInformation("Processed SSI credential issuance for schema type '{schemaType}' and item with id '{id}'", item.SchemaType, item.Id);
+                if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processed SSI credential issuance for schema type '{schemaType}' and item with id '{id}'", item.SchemaType, item.Id);
               }
               catch (Exception ex)
               {
-                _logger.LogError(ex, "Failed to issue SSI credential for schema type '{schemaType}' and item with id '{id}': {errorMessage}", item.SchemaType, item.Id, ex.Message);
+                if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to issue SSI credential for schema type '{schemaType}' and item with id '{id}': {errorMessage}", item.SchemaType, item.Id, ex.Message);
 
                 item.Status = CredentialIssuanceStatus.Error;
                 item.ErrorReason = ex.Message;
@@ -435,11 +435,11 @@ namespace Yoma.Core.Domain.SSI.Services
           await Task.WhenAll(tasks).FlattenAggregateException();
         }
 
-        _logger.LogInformation("Processed SSI credential issuance");
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processed SSI credential issuance");
       }
       catch (Exception ex)
       {
-        _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(ProcessCredentialIssuance), ex.Message);
+        if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(ProcessCredentialIssuance), ex.Message);
       }
       finally
       {
@@ -454,7 +454,7 @@ namespace Yoma.Core.Domain.SSI.Services
       var tenantIdIssuer = tenantService.GetTenantIdOrNull(entityType, entityId);
       if (string.IsNullOrEmpty(tenantIdIssuer))
       {
-        _logger.LogInformation(
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation(
             "Processing of SSI credential issuance for schema type '{schemaType}' and item with id '{id}' " +
             "was skipped as the SSI tenant creation for entity of type '{entityType}' and with id '{entityId}' has not been completed", item.SchemaType, item.Id, entityType, entityId);
         return (false, string.Empty);

@@ -40,10 +40,10 @@ namespace Yoma.Core.Domain.Core.Services
       bool acquired = await db.StringSetAsync(redisKey, Encoding.UTF8.GetBytes($"locked_by: {System.Environment.MachineName}"), lockDuration, When.NotExists);
 
       if (acquired)
-        _logger.LogInformation("Lock '{lockKey}' acquired by {hostName} at {timestamp} for process '{process}'. Lock duration set to {durationMinutes} minutes",
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Lock '{lockKey}' acquired by {hostName} at {timestamp} for process '{process}'. Lock duration set to {durationMinutes} minutes",
             redisKey, System.Environment.MachineName, DateTimeOffset.UtcNow, processName, lockDuration.TotalMinutes);
-      else
-        _logger.LogInformation("Lock '{lockKey}' already held. Skipping execution attempt by {hostName} at {timestamp} for process '{process}'",
+        else
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Lock '{lockKey}' already held. Skipping execution attempt by {hostName} at {timestamp} for process '{process}'",
             redisKey, System.Environment.MachineName, DateTimeOffset.UtcNow, processName);
 
       return acquired;
@@ -61,7 +61,7 @@ namespace Yoma.Core.Domain.Core.Services
       {
         await db.KeyDeleteAsync(redisKey);
 
-        _logger.LogInformation("Lock '{lockKey}' released by {hostName} at {timestamp} for process '{process}'",
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Lock '{lockKey}' released by {hostName} at {timestamp} for process '{process}'",
           redisKey, System.Environment.MachineName, DateTimeOffset.UtcNow, processName);
       }
       catch (Exception ex)

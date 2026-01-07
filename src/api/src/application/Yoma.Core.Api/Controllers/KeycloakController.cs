@@ -69,7 +69,7 @@ namespace Yoma.Core.Api.Controllers
     public IActionResult ReceiveKeyCloakEvent([FromBody] JObject request)
     {
       //only logged when logging level is set to debug
-      _logger.LogDebug("Raw request: {request}", request == null ? "Empty" : request.ToString());
+      if (_logger.IsEnabled(LogLevel.Debug)) _logger.LogDebug("Raw request: {request}", request == null ? "Empty" : request.ToString().SanitizeLogValue());
 
       var authorized = false;
       try
@@ -80,7 +80,7 @@ namespace Yoma.Core.Api.Controllers
       }
       catch (Exception ex)
       {
-        _logger.LogError(ex, "An error occurred during authentication: {errorMessage}", ex.Message);
+        if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "An error occurred during authentication: {errorMessage}", ex.Message);
         return StatusCode(StatusCodes.Status500InternalServerError);
       }
       finally
@@ -91,26 +91,26 @@ namespace Yoma.Core.Api.Controllers
           {
             if (!authorized)
             {
-              _logger.LogError("Authorization failed");
+              if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError("Authorization failed");
               return;
             }
 
             if (request == null)
             {
-              _logger.LogError("Webhook payload is empty. Processing skipped");
+              if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError("Webhook payload is empty. Processing skipped");
               return;
             }
 
             var payload = request.ToObject<KeycloakWebhookRequest>();
             if (payload == null)
             {
-              _logger.LogError("Failed to deserialize payload. Processing skipped");
+              if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError("Failed to deserialize payload. Processing skipped");
               return;
             }
 
             if (string.IsNullOrWhiteSpace(payload.Id))
             {
-              _logger.LogError("Webhook payload contains no id. Processing skipped");
+              if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError("Webhook payload contains no id. Processing skipped");
               return;
             }
 
@@ -122,17 +122,17 @@ namespace Yoma.Core.Api.Controllers
             }
             catch (Exception ex)
             {
-              _logger.LogError(ex, "Idempotency check failed for event id '{eventId}' – proceeding anyway", payload.Id);
+              if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Idempotency check failed for event id '{eventId}' – proceeding anyway", payload.Id);
             }
 
             if (!proceed)
             {
-              _logger.LogInformation("Duplicate Keycloak event suppressed (id={eventId})", payload.Id);
+              if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Duplicate Keycloak event suppressed (id={eventId})", payload.Id);
               return;
             }
 
             var sType = payload.Type;
-            _logger.LogInformation("{sType} event received (id={eventId})", sType, payload.Id);
+            if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("{sType} event received (id={eventId})", sType, payload.Id);
 
             var type = EnumHelper.GetValueFromDescription<IdentityActionType>(sType);
             if (!type.HasValue) type = IdentityActionType.Undefined;
@@ -142,21 +142,21 @@ namespace Yoma.Core.Api.Controllers
               case IdentityActionType.Register:
               case IdentityActionType.UpdateProfile:
               case IdentityActionType.Login:
-                _logger.LogInformation("{type} event processing", type.Value);
+                if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("{type} event processing", type.Value);
 
                 await UpdateUserProfile(type.Value, payload);
 
-                _logger.LogInformation("{type} event processed", type.Value);
+                if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("{type} event processed", type.Value);
                 break;
 
               default:
-                _logger.LogInformation("Unknown event type of '{sType}' receive. Processing skipped", sType);
+                if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Unknown event type of '{sType}' receive. Processing skipped", sType);
                 return;
             }
           }
           catch (Exception ex)
           {
-            _logger.LogError(ex, "An error occurred during event processing: {errorMessage}", ex.Message);
+            if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "An error occurred during event processing: {errorMessage}", ex.Message);
             return;
           }
         });
@@ -175,19 +175,19 @@ namespace Yoma.Core.Api.Controllers
       {
         if (string.IsNullOrEmpty(payload.Details?.Username))
         {
-          _logger.LogError("Webhook payload contains no associated Keycloak username");
+          if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError("Webhook payload contains no associated Keycloak username");
           return;
         }
 
-        _logger.LogInformation("Trying to find the Keycloak user with id '{userId}'", userId);
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Trying to find the Keycloak user with id '{userId}'", userId);
         var kcUser = await _identityProviderClient.GetUserById(userId);
         if (kcUser == null)
         {
-          _logger.LogError("Failed to retrieve the Keycloak user with id '{userId}'", userId);
+          if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError("Failed to retrieve the Keycloak user with id '{userId}'", userId);
           return;
         }
 
-        _logger.LogInformation("Found Keycloak user with username '{username}'", kcUser.Username);
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Found Keycloak user with username '{username}'", kcUser.Username);
 
         var userRequest = RetryHelper.RetryUntil(
             () =>
@@ -216,7 +216,7 @@ namespace Yoma.Core.Api.Controllers
             delay: TimeSpan.FromSeconds(1),
             onRetry: attempt =>
             {
-              _logger.LogDebug("Retry {attempt}: Retrying retrieval of the Yoma user: ExternalId: '{externalId}' | Username '{username}'", attempt, kcUser.Id, kcUser.Username);
+              if (_logger.IsEnabled(LogLevel.Debug)) _logger.LogDebug("Retry {attempt}: Retrying retrieval of the Yoma user: ExternalId: '{externalId}' | Username '{username}'", attempt, kcUser.Id, kcUser.Username);
             },
             logger: _logger
         );
@@ -229,7 +229,7 @@ namespace Yoma.Core.Api.Controllers
             {
               if (type == IdentityActionType.UpdateProfile)
               {
-                _logger.LogError("{type}: Failed to retrieve the Yoma user with username '{username}'", type, kcUser.Username);
+                if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError("{type}: Failed to retrieve the Yoma user with username '{username}'", type, kcUser.Username);
                 return;
               }
               userRequest = new UserRequest();
@@ -243,15 +243,17 @@ namespace Yoma.Core.Api.Controllers
             userRequest.PhoneNumber = kcUser.PhoneNumber?.Trim();
             userRequest.PhoneNumberConfirmed = kcUser.PhoneNumberVerified;
 
-            _logger.LogInformation("{type}: Updating user with username '{username}' - EmailConfirmed {emailConfirmed}", type, userRequest.Username, userRequest.EmailConfirmed);
-            _logger.LogInformation("{type}: Updating user with username '{username}' - PhoneNumberConfirmed {phoneNumberConfirmed}", type, userRequest.Username, userRequest.PhoneNumberConfirmed);
+            if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("{type}: Updating user with username '{username}' - EmailConfirmed {emailConfirmed}", type, userRequest.Username, userRequest.EmailConfirmed);
+            if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("{type}: Updating user with username '{username}' - PhoneNumberConfirmed {phoneNumberConfirmed}", type, userRequest.Username, userRequest.PhoneNumberConfirmed);
 
             if (!string.IsNullOrEmpty(kcUser.Country))
             {
               var country = _countryService.GetByNameOrNull(kcUser.Country);
 
               if (country == null)
-                _logger.LogError("Failed to parse Keycloak '{customAttribute}' with value '{country}'", CustomAttributes.Country, kcUser.Country);
+              {
+                if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError("Failed to parse Keycloak '{customAttribute}' with value '{country}'", CustomAttributes.Country, kcUser.Country);
+              }
               else
                 userRequest.CountryId = country.Id;
             }
@@ -261,7 +263,9 @@ namespace Yoma.Core.Api.Controllers
               var country = _educationService.GetByNameOrNull(kcUser.Education);
 
               if (country == null)
-                _logger.LogError("Failed to parse Keycloak '{customAttributes}' with value '{education}'", CustomAttributes.Education, kcUser.Education);
+              {
+                if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError("Failed to parse Keycloak '{customAttributes}' with value '{education}'", CustomAttributes.Education, kcUser.Education);
+              }
               else
                 userRequest.EducationId = country.Id;
             }
@@ -271,7 +275,9 @@ namespace Yoma.Core.Api.Controllers
               var gender = _genderService.GetByNameOrNull(kcUser.Gender);
 
               if (gender == null)
-                _logger.LogError("Failed to parse Keycloak '{customAttribute}' with value '{gender}'", CustomAttributes.Gender, kcUser.Gender);
+              {
+                if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError("Failed to parse Keycloak '{customAttribute}' with value '{gender}'", CustomAttributes.Gender, kcUser.Gender);
+              }
               else
                 userRequest.GenderId = gender.Id;
             }
@@ -280,9 +286,9 @@ namespace Yoma.Core.Api.Controllers
             if (!string.IsNullOrEmpty(kcUser.DateOfBirth))
             {
               if (!DateTime.TryParse(kcUser.DateOfBirth, out var dateOfBirth))
-                _logger.LogError("Failed to parse Keycloak '{customAttributes}' with value '{dateOfBirth}'", CustomAttributes.DateOfBirth, kcUser.DateOfBirth);
-              else
-                userRequest.DateOfBirth = dateOfBirth;
+                if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError("Failed to parse Keycloak '{customAttributes}' with value '{dateOfBirth}'", CustomAttributes.DateOfBirth, kcUser.DateOfBirth);
+                else
+                  userRequest.DateOfBirth = dateOfBirth;
             }
 
             if (type == IdentityActionType.UpdateProfile) break;
@@ -294,14 +300,14 @@ namespace Yoma.Core.Api.Controllers
             }
             catch (Exception ex)
             {
-              _logger.LogError(ex, "{type} - Failed to assign the default 'User' role to the newly register user with username '{username}': {errorMessage};", type, userRequest.Username, ex.Message);
+              if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "{type} - Failed to assign the default 'User' role to the newly register user with username '{username}': {errorMessage};", type, userRequest.Username, ex.Message);
             }
             break;
 
           case IdentityActionType.Login:
             if (userRequest == null)
             {
-              _logger.LogError("{type}: Failed to retrieve the Yoma user with username '{username}'", type, kcUser.Username);
+              if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError("{type}: Failed to retrieve the Yoma user with username '{username}'", type, kcUser.Username);
               return;
             }
 
@@ -315,8 +321,8 @@ namespace Yoma.Core.Api.Controllers
             userRequest.PhoneNumberConfirmed = kcUser.PhoneNumberVerified;
             userRequest.DateLastLogin = DateTimeOffset.UtcNow;
 
-            _logger.LogInformation("{type}: Updating user with username '{username}' - EmailConfirmed {emailConfirmed}", type, userRequest.Username, userRequest.EmailConfirmed);
-            _logger.LogInformation("{type}: Updating user with username '{username}' - PhoneNumberConfirmed {phoneNumberConfirmed}", type, userRequest.Username, userRequest.PhoneNumberConfirmed);
+            if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("{type}: Updating user with username '{username}' - EmailConfirmed {emailConfirmed}", type, userRequest.Username, userRequest.EmailConfirmed);
+            if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("{type}: Updating user with username '{username}' - PhoneNumberConfirmed {phoneNumberConfirmed}", type, userRequest.Username, userRequest.PhoneNumberConfirmed);
 
             try
             {
@@ -324,7 +330,7 @@ namespace Yoma.Core.Api.Controllers
             }
             catch (Exception ex)
             {
-              _logger.LogError(ex, "Failed to remove the 'VERIFY_EMAIL' action for the newly registered user with username '{username}' when no email is provided: {errorMessage}", userRequest.Username, ex.Message);
+              if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to remove the 'VERIFY_EMAIL' action for the newly registered user with username '{username}' when no email is provided: {errorMessage}", userRequest.Username, ex.Message);
             }
 
             await ScheduleWalletCreation(userRequest);
@@ -333,7 +339,7 @@ namespace Yoma.Core.Api.Controllers
             break;
 
           default: //event not supported
-            _logger.LogError("{type}: Event not supported", type);
+            if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError("{type}: Event not supported", type);
             return;
         }
 
@@ -347,7 +353,7 @@ namespace Yoma.Core.Api.Controllers
     {
       try
       {
-        _logger.LogInformation("Tracking login for user with username '{username}'", userRequest.Username);
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Tracking login for user with username '{username}'", userRequest.Username);
         await _userService.TrackLogin(new UserRequestLoginEvent
         {
           UserId = userRequest.Id,
@@ -358,11 +364,11 @@ namespace Yoma.Core.Api.Controllers
           IdentityProvider = payload.Details?.Identity_provider,
         });
 
-        _logger.LogInformation("Tracked login for user with username '{username}'", userRequest.Username);
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Tracked login for user with username '{username}'", userRequest.Username);
       }
       catch (Exception ex)
       {
-        _logger.LogError(ex, "Failed to track login for user with username '{username}': {errorMessage}", userRequest.Username, ex.Message);
+        if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to track login for user with username '{username}': {errorMessage}", userRequest.Username, ex.Message);
       }
     }
 
@@ -371,15 +377,15 @@ namespace Yoma.Core.Api.Controllers
     {
       try
       {
-        _logger.LogInformation("Scheduling rewards wallet creation (or username update) for user '{username}'", userRequest.Username);
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Scheduling rewards wallet creation (or username update) for user '{username}'", userRequest.Username);
 
         await _walletService.ScheduleWalletCreation(userRequest.Id);
 
-        _logger.LogInformation("Rewards wallet creation scheduled (or username update) for user '{username}'", userRequest.Username);
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Rewards wallet creation scheduled (or username update) for user '{username}'", userRequest.Username);
       }
       catch (Exception ex)
       {
-        _logger.LogError(ex, "Failed to schedule rewards wallet creation (or username update) for user '{username}': {errorMessage}", userRequest.Username, ex.Message);
+        if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to schedule rewards wallet creation (or username update) for user '{username}': {errorMessage}", userRequest.Username, ex.Message);
       }
     }
   }
