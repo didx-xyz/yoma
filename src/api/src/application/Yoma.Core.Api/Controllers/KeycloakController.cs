@@ -69,7 +69,7 @@ namespace Yoma.Core.Api.Controllers
     public IActionResult ReceiveKeyCloakEvent([FromBody] JObject request)
     {
       //only logged when logging level is set to debug
-      if (_logger.IsEnabled(LogLevel.Debug)) _logger.LogDebug("Raw request: {request}", request == null ? "Empty" : request.ToString());
+      if (_logger.IsEnabled(LogLevel.Debug)) _logger.LogDebug("Raw request: {request}", request == null ? "Empty" : request.ToString().SanitizeLogValue());
 
       var authorized = false;
       try
