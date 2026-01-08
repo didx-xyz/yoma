@@ -285,9 +285,11 @@ export const UserProfileForm: React.FC<{
           (option) => option !== UserProfileFilterOptions.LOGO,
         );
 
+        let photoProfileResult: UserProfile | null = null;
+
         // update photo
         if (isPhotoUpdate) {
-          await patchPhoto(logoFiles[0]);
+          photoProfileResult = await patchPhoto(logoFiles[0]);
 
           // 📊 ANALYTICS: track photo update
           analytics.trackEvent("profile_photo_updated", {
@@ -309,6 +311,21 @@ export const UserProfileForm: React.FC<{
           analytics.trackEvent("profile_updated", {
             userId: userProfile?.id,
           });
+        }
+
+        // If photo was updated, ensure we return a profile that includes the new photo fields.
+        // This fixes the photo-only update path (LOGO-only) where patchUser isn't called.
+        if (photoProfileResult) {
+          if (!userProfileResult) {
+            userProfileResult = photoProfileResult;
+          } else {
+            userProfileResult = {
+              ...userProfileResult,
+              photoId: photoProfileResult.photoId ?? userProfileResult.photoId,
+              photoURL:
+                photoProfileResult.photoURL ?? userProfileResult.photoURL,
+            };
+          }
         }
 
         // Ensure we have a valid userProfileResult

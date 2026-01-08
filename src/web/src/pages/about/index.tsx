@@ -164,7 +164,7 @@ const About: NextPageWithLayout<{
               <h6 className="text-center text-xs font-semibold tracking-widest text-[#020304] uppercase">
                 About Us
               </h6>
-              <h1 className="font-nunito text-center text-4xl font-bold tracking-normal text-black md:text-4xl">
+              <h1 className="font-nunito text-center text-3xl font-bold tracking-normal text-black">
                 Yoma is a{" "}
                 <span className="text-purple-light">digital marketplace</span>{" "}
                 that opens up a world of{" "}

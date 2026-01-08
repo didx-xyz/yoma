@@ -4,6 +4,7 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
+import { useAtomValue, useSetAtom } from "jotai";
 import type { GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
 import Head from "next/head";
@@ -17,9 +18,14 @@ import MainLayout from "~/components/Layout/Main";
 import { PageBackground } from "~/components/PageBackground";
 import SettingsForm from "~/components/Settings/SettingsForm";
 import { Unauthorized } from "~/components/Status/Unauthorized";
-import { SETTING_USER_SETTINGS_CONFIGURED } from "~/lib/constants";
+import { setRumSoftEnabled } from "~/lib/datadog";
+import {
+  SETTING_USER_RUM_CONSENT,
+  SETTING_USER_SETTINGS_CONFIGURED,
+} from "~/lib/constants";
 import analytics from "~/lib/analytics";
 import { config } from "~/lib/react-query-config";
+import { userProfileAtom } from "~/lib/store";
 import type { NextPageWithLayout } from "~/pages/_app";
 import { authOptions } from "~/server/auth";
 
@@ -54,6 +60,8 @@ const MySettings: NextPageWithLayout<{
   error?: string;
 }> = ({ error }) => {
   const queryClient = useQueryClient();
+  const userProfile = useAtomValue(userProfileAtom);
+  const setUserProfile = useSetAtom(userProfileAtom);
   const {
     data: settingsData,
     isLoading: settingsIsLoading,
@@ -70,8 +78,24 @@ const MySettings: NextPageWithLayout<{
       // this prevents the "please update your settings" popup from showing again (Global.tsx)
       updatedSettings.settings[SETTING_USER_SETTINGS_CONFIGURED] = true;
 
+      // Apply soft enable/disable immediately so our wrapper emissions stop/start
+      // without waiting for the API round-trip.
+      if (updatedSettings.settings?.[SETTING_USER_RUM_CONSENT] === false) {
+        setRumSoftEnabled(false);
+      }
+      if (updatedSettings.settings?.[SETTING_USER_RUM_CONSENT] === true) {
+        setRumSoftEnabled(true);
+      }
+
       // call api
-      await updateSettings(updatedSettings);
+      const updatedProfile = await updateSettings(updatedSettings);
+      const mergedProfile = userProfile
+        ? {
+            ...userProfile,
+            settings: updatedProfile.settings ?? userProfile.settings,
+          }
+        : updatedProfile;
+      setUserProfile(mergedProfile);
 
       // 📊 ANALYTICS: track settings update
       analytics.trackEvent("settings_updated", {
@@ -85,7 +109,7 @@ const MySettings: NextPageWithLayout<{
 
       toast.success("Settings updated");
     },
-    [queryClient],
+    [queryClient, setUserProfile, userProfile],
   );
 
   const handleCancel = () => {

@@ -160,7 +160,7 @@ const Home: NextPageWithLayout<{
         <div className="bg-beige w-full lg:pb-0">
           <div className="relative z-10 flex flex-col items-center justify-center px-4">
             <div className="flex w-full justify-center">
-              <div className="flex max-w-7xl flex-row px-6 md:px-0">
+              <div className="flex max-w-7xl flex-row">
                 {/* LEFT: HEADERS AND TEXT */}
                 <div className="relative flex max-w-md flex-col gap-3 py-6 pt-24 text-center md:mt-20 md:py-14 md:text-start">
                   {/* PURPLE STENCIL */}
@@ -179,7 +179,7 @@ const Home: NextPageWithLayout<{
                   <h6 className="text-xs font-semibold tracking-widest text-[#020304] uppercase">
                     Welcome to Yoma
                   </h6>
-                  <h1 className="font-nunito text-3xl font-bold tracking-normal text-black md:text-4xl">
+                  <h1 className="font-nunito text-3xl font-bold tracking-normal text-black">
                     Building <span className="text-orange">futures</span>,{" "}
                     <br className="md:hidden" /> one{" "}
                     <span className="text-purple-dark">opportunity</span>{" "}
