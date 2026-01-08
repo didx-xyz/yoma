@@ -33,8 +33,10 @@ const CustomModal: FC<CustomModalProps> = ({
     null,
   );
 
+  const isBannerMode = className.includes("modal-banner");
+
   // 👇 prevent scrolling on the page when the dialogs are open
-  useDisableBodyScroll(isOpen);
+  useDisableBodyScroll(isOpen && !isBannerMode);
 
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
@@ -132,16 +134,26 @@ const CustomModal: FC<CustomModalProps> = ({
     <>
       {isOpen &&
         createPortal(
-          <div className="fixed inset-0 z-40">
+          <div
+            className={`fixed inset-0 z-40 ${
+              isBannerMode ? "pointer-events-none" : ""
+            }`}
+          >
             <div
-              className="bg-overlay fixed inset-0"
+              className={`fixed inset-0 ${
+                isBannerMode
+                  ? "pointer-events-none bg-transparent"
+                  : "bg-overlay"
+              }`}
               onClick={handleOverlayClick}
             />
             <div
               ref={modalRef}
               tabIndex={-1}
               id="custom-modal-content"
-              className={`visible fixed top-0 right-0 bottom-0 left-0 grow overflow-hidden overflow-y-auto bg-white transition-all duration-300 ease-in-out ${animationClasses} md:m-auto md:rounded-3xl ${className}`}
+              className={`visible fixed top-0 right-0 bottom-0 left-0 grow overflow-hidden overflow-y-auto bg-white transition-all duration-300 ease-in-out ${animationClasses} md:m-auto md:rounded-3xl ${
+                isBannerMode ? "pointer-events-auto" : ""
+              } ${className}`}
             >
               {children}
             </div>

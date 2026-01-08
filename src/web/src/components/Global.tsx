@@ -4,7 +4,7 @@ import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { parseCookies } from "nookies";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FcCamera, FcKey, FcSettings, FcViewDetails } from "react-icons/fc";
 import { IoMdClose } from "react-icons/io";
 import { toast } from "react-toastify";
@@ -21,10 +21,12 @@ import {
 import { useRefereeReferrals } from "~/hooks/useRefereeReferrals";
 import analytics from "~/lib/analytics";
 import { handleUserSignIn } from "~/lib/authUtils";
+import { initializeDatadog, setRumSoftEnabled } from "~/lib/datadog";
 import {
   COOKIE_KEYCLOAK_SESSION,
   ROLE_ADMIN,
   ROLE_ORG_ADMIN,
+  SETTING_USER_RUM_CONSENT,
   SETTING_USER_SETTINGS_CONFIGURED,
 } from "~/lib/constants";
 import {
@@ -36,6 +38,7 @@ import {
   currentOrganisationLogoAtom,
   refereeProgressDialogDismissedAtom,
   refereeProgressDialogVisibleAtom,
+  rumConsentAtom,
   screenWidthAtom,
   userProfileAtom,
 } from "~/lib/store";
@@ -81,13 +84,28 @@ export const Global: React.FC = () => {
   const [settingsDialogVisible, setSettingsDialogVisible] = useState(false);
   const [photoUploadDialogVisible, setPhotoUploadDialogVisible] =
     useState(false);
+  const [rumConsentDialogVisible, setRumConsentDialogVisible] = useState(false);
   const [refereeProgressDialogVisible, setRefereeProgressDialogVisible] =
     useAtom(refereeProgressDialogVisibleAtom);
   const [refereeProgressDialogDismissed, setRefereeProgressDialogDismissed] =
     useAtom(refereeProgressDialogDismissedAtom);
 
+  const [rumConsent, setRumConsent] = useAtom(rumConsentAtom);
+
+  const rumConsentMigrationInFlightRef = useRef(false);
+  const postLoginChecksTriggeredRef = useRef(false);
+
+  const routePathRef = useRef<string>("");
+
   const [loginMessage, setLoginMessage] = useState("");
   const currentLanguage = useAtomValue(currentLanguageAtom);
+
+  const anyBlockingModalOpen =
+    loginDialogVisible ||
+    updateProfileDialogVisible ||
+    settingsDialogVisible ||
+    photoUploadDialogVisible ||
+    refereeProgressDialogVisible;
 
   const {
     data: settingsData,
@@ -119,19 +137,115 @@ export const Global: React.FC = () => {
       keepPreviousData: true,
     });
 
-  // Get pending referral programs (as referee)
-  //   const pendingReferralPrograms = refereeLinkUsages?.items ?? [];
+  const dbRumConsent = useMemo((): boolean | null => {
+    const items = userProfile?.settings?.items;
+    if (!items) return null;
+
+    const item = items.find((x) => x.key === SETTING_USER_RUM_CONSENT);
+    if (item?.value === true) return true;
+    if (item?.value === false) return false;
+    return null;
+  }, [userProfile]);
+
+  const initializeRumIfConsented = useCallback(async () => {
+    try {
+      setRumSoftEnabled(true);
+      if (process.env.NODE_ENV === "development") {
+        console.debug("[RUM Consent] Initializing DataDog RUM");
+      }
+      await initializeDatadog();
+    } catch (error) {
+      console.error("[RUM Consent] Failed to initialize DataDog:", error);
+    }
+  }, []);
+
+  const disableRumIfNotConsented = useCallback(() => {
+    try {
+      // Soft-disable: we don't rely on SDK consent/session APIs.
+      // This only gates our own wrapper emissions.
+      setRumSoftEnabled(false);
+    } catch (error) {
+      console.error("[RUM Consent] Failed to disable DataDog:", error);
+    }
+  }, []);
+
+  const mergeSettingsIntoUserProfile = useCallback(
+    (
+      base: UserProfile | null | undefined,
+      updated: UserProfile,
+    ): UserProfile => {
+      if (!base) return updated;
+      return {
+        ...base,
+        settings: updated.settings ?? base.settings,
+      };
+    },
+    [],
+  );
+
+  const migrateLocalRumConsentToDb = useCallback(
+    async (consent: boolean, baseProfile?: UserProfile | null) => {
+      if (rumConsentMigrationInFlightRef.current) return;
+      rumConsentMigrationInFlightRef.current = true;
+
+      try {
+        if (process.env.NODE_ENV === "development") {
+          console.debug(
+            "[RUM Consent] Migrating local consent to DB:",
+            consent,
+          );
+        }
+        const updatedProfile = await updateSettings({
+          settings: {
+            [SETTING_USER_RUM_CONSENT]: consent,
+          },
+        });
+
+        const mergedProfile = mergeSettingsIntoUserProfile(
+          baseProfile ?? userProfile,
+          updatedProfile,
+        );
+        setUserProfile(mergedProfile);
+        setRumConsent(null);
+
+        if (consent === true) {
+          await initializeRumIfConsented();
+        } else {
+          disableRumIfNotConsented();
+        }
+      } catch (error) {
+        console.error("[RUM Consent] Migration failed:", error);
+      } finally {
+        rumConsentMigrationInFlightRef.current = false;
+      }
+    },
+    [
+      userProfile,
+      setUserProfile,
+      setRumConsent,
+      initializeRumIfConsented,
+      disableRumIfNotConsented,
+      mergeSettingsIntoUserProfile,
+    ],
+  );
+
+  useEffect(() => {
+    routePathRef.current = router.asPath;
+  }, [router.asPath]);
 
   //#region Functions
   const postLoginChecks = useCallback(
     (userProfile: UserProfile, skipSettings = false) => {
       if (!userProfile) return;
 
+      const currentPath = routePathRef.current;
+
       // Skip profile completion modals on claim page - handled inline there
       if (
-        router.asPath.includes("/referrals/claim/") ||
-        router.asPath.includes("/yoid/referee/") ||
-        router.asPath.includes("/user/profile")
+        currentPath.includes("/referrals/claim/") ||
+        currentPath.includes("/yoid/referee/") ||
+        currentPath.includes("/user/profile") ||
+        currentPath.includes("/user/settings")
       ) {
         return;
       }
@@ -156,7 +270,6 @@ export const Global: React.FC = () => {
       }
     },
     [
-      router.asPath,
       setUpdateProfileDialogVisible,
       setSettingsDialogVisible,
       setPhotoUploadDialogVisible,
@@ -169,12 +282,89 @@ export const Global: React.FC = () => {
 
   //#region Event Handlers
 
+  const handleRumConsentSubmit = useCallback(
+    async (consent: boolean) => {
+      if (process.env.NODE_ENV === "development") {
+        console.debug("[RUM Consent] User selection:", consent);
+      }
+      setRumConsentDialogVisible(false);
+
+      // Unauthenticated: persist locally
+      if (!session) {
+        setRumConsent(consent);
+        if (consent) {
+          await initializeRumIfConsented();
+        } else {
+          disableRumIfNotConsented();
+        }
+        return;
+      }
+
+      // Authenticated: persist to DB
+      try {
+        const updatedProfile = await updateSettings({
+          settings: {
+            [SETTING_USER_RUM_CONSENT]: consent,
+          },
+        });
+
+        const mergedProfile = mergeSettingsIntoUserProfile(
+          userProfile,
+          updatedProfile,
+        );
+        setUserProfile(mergedProfile);
+
+        // DB becomes source of truth
+        if (rumConsent !== null) {
+          if (process.env.NODE_ENV === "development") {
+            console.debug("[RUM Consent] Clearing local consent after DB save");
+          }
+          setRumConsent(null);
+        }
+
+        if (consent) {
+          await initializeRumIfConsented();
+        } else {
+          disableRumIfNotConsented();
+        }
+      } catch (error) {
+        console.error("[RUM Consent] Failed to save consent:", error);
+        toast.error(
+          "Something went wrong saving your preference. Please try again.",
+        );
+        setRumConsentDialogVisible(true);
+      }
+    },
+    [
+      session,
+      rumConsent,
+      setRumConsent,
+      setUserProfile,
+      userProfile,
+      initializeRumIfConsented,
+      disableRumIfNotConsented,
+      mergeSettingsIntoUserProfile,
+    ],
+  );
+
   // 🔔 REFEREE DATA LOADED CHECK
   useEffect(() => {
-    if (userProfile && !refereeLinkUsagesFetching) {
+    if (
+      userProfile &&
+      !refereeLinkUsagesFetching &&
+      !postLoginChecksTriggeredRef.current
+    ) {
+      postLoginChecksTriggeredRef.current = true;
       postLoginChecks(userProfile);
     }
   }, [userProfile, refereeLinkUsagesFetching, postLoginChecks]);
+
+  // Reset one-time checks on logout
+  useEffect(() => {
+    if (!session) {
+      postLoginChecksTriggeredRef.current = false;
+    }
+  }, [session]);
 
   // 🎯 ANALYTICS: Session Management
   // Update analytics user context when session changes
@@ -228,7 +418,20 @@ export const Global: React.FC = () => {
           // update atom
           setUserProfile(res);
 
-          postLoginChecks(res);
+          // Migration: if local consent exists and DB consent is null, write to DB
+          const resDbConsent =
+            res.settings?.items?.find((x) => x.key === SETTING_USER_RUM_CONSENT)
+              ?.value ?? null;
+          const normalizedResDbConsent =
+            resDbConsent === true
+              ? true
+              : resDbConsent === false
+                ? false
+                : null;
+
+          if (normalizedResDbConsent === null && rumConsent !== null) {
+            migrateLocalRumConsentToDb(rumConsent, res);
+          }
         })
         .catch((e) => {
           if (e.response?.status === 401) {
@@ -282,6 +485,75 @@ export const Global: React.FC = () => {
     currentLanguage,
     setUserProfile,
     postLoginChecks,
+    rumConsent,
+    setRumConsent,
+    initializeRumIfConsented,
+    migrateLocalRumConsentToDb,
+  ]);
+
+  // 🔔 RUM CONSENT CHECK (best-fit: only prompt when no other modal is open)
+  useEffect(() => {
+    if (sessionStatus === "loading") return;
+
+    // Always initialize if consent is already true
+    if (!session) {
+      if (rumConsent === true) {
+        initializeRumIfConsented();
+      } else if (rumConsent === false) {
+        disableRumIfNotConsented();
+      }
+
+      if (rumConsent === null && !anyBlockingModalOpen) {
+        if (!rumConsentDialogVisible) {
+          if (process.env.NODE_ENV === "development") {
+            console.debug("[RUM Consent] Showing popup (unauthenticated)");
+          }
+          setRumConsentDialogVisible(true);
+        }
+      }
+
+      return;
+    }
+
+    // Authenticated
+    if (!userProfile) return;
+
+    if (dbRumConsent === true) {
+      initializeRumIfConsented();
+      return;
+    }
+
+    if (dbRumConsent === false) {
+      disableRumIfNotConsented();
+      return;
+    }
+
+    // dbRumConsent is null: prompt only when not competing with other modals
+    if (dbRumConsent === null && rumConsent !== null) {
+      // If there's a local value and DB is null, migrate even if user is already logged in
+      migrateLocalRumConsentToDb(rumConsent);
+      return;
+    }
+
+    if (dbRumConsent === null && rumConsent === null && !anyBlockingModalOpen) {
+      if (!rumConsentDialogVisible) {
+        if (process.env.NODE_ENV === "development") {
+          console.debug("[RUM Consent] Showing popup (authenticated)");
+        }
+        setRumConsentDialogVisible(true);
+      }
+    }
+  }, [
+    session,
+    sessionStatus,
+    userProfile,
+    dbRumConsent,
+    rumConsent,
+    anyBlockingModalOpen,
+    rumConsentDialogVisible,
+    initializeRumIfConsented,
+    disableRumIfNotConsented,
+    migrateLocalRumConsentToDb,
   ]);
 
   // 🔔 VIEWPORT DETECTION
@@ -428,9 +700,24 @@ export const Global: React.FC = () => {
       // this prevents the "please update your settings" popup from showing again (Global.tsx)
       updatedSettings.settings[SETTING_USER_SETTINGS_CONFIGURED] = true;
 
+      // Soft-disable immediately if user toggles off.
+      if (updatedSettings.settings?.[SETTING_USER_RUM_CONSENT] === false) {
+        disableRumIfNotConsented();
+      }
+
       try {
         // call api
-        await updateSettings(updatedSettings);
+        const updatedProfile = await updateSettings(updatedSettings);
+        const mergedProfile = mergeSettingsIntoUserProfile(
+          userProfile,
+          updatedProfile,
+        );
+        setUserProfile(mergedProfile);
+
+        // If user toggles on, initialize right after save.
+        if (updatedSettings.settings?.[SETTING_USER_RUM_CONSENT] === true) {
+          await initializeRumIfConsented();
+        }
 
         // 📊 ANALYTICS: track user settings update
         analytics.trackEvent("settings_updated", {
@@ -446,7 +733,7 @@ export const Global: React.FC = () => {
         setSettingsDialogVisible(false);
 
         // perform login checks (again)
-        postLoginChecks(userProfile!, true);
+        postLoginChecks(mergedProfile, true);
       } catch (error) {
         // Track settings update error
         analytics.trackError(error as Error, {
@@ -455,13 +742,64 @@ export const Global: React.FC = () => {
         throw error;
       }
     },
-    [queryClient, userProfile, setSettingsDialogVisible, postLoginChecks],
+    [
+      queryClient,
+      setUserProfile,
+      setSettingsDialogVisible,
+      postLoginChecks,
+      initializeRumIfConsented,
+      disableRumIfNotConsented,
+      userProfile,
+      mergeSettingsIntoUserProfile,
+    ],
   );
 
   //#endregion Event Handlers
 
   return (
     <>
+      {/* RUM CONSENT DIALOG */}
+      <CustomModal
+        isOpen={rumConsentDialogVisible}
+        shouldCloseOnOverlayClick={false}
+        onRequestClose={() => {}}
+        animationStyle="slide-bottom"
+        className="modal-banner top-auto right-2 bottom-2 left-2 h-auto max-h-[36vh] w-auto rounded-3xl border border-dotted border-black shadow-xl md:right-auto md:bottom-2 md:left-1/2 md:w-[640px] md:-translate-x-1/2"
+      >
+        <div className="flex flex-col gap-2 overflow-y-auto px-4 py-2 md:px-10">
+          <div className="flex flex-col gap-2 text-center">
+            <h4 className="text-sm font-semibold tracking-wide md:text-lg">
+              😊 Help us improve Yoma!
+            </h4>
+          </div>
+
+          <div className="flex flex-col gap-3 text-xs text-gray-700">
+            We&apos;d like to monitor how the platform performs for you—things
+            like page load times, errors, and what works smoothly. This helps us
+            fix issues faster and build features that actually help you find
+            opportunities. Your choice is saved and you can change it anytime in
+            Settings.
+          </div>
+
+          <div className="flex flex-row flex-nowrap gap-3">
+            <button
+              type="button"
+              className="btn btn-success btn-xs min-w-0 flex-1 text-white"
+              onClick={() => handleRumConsentSubmit(true)}
+            >
+              Allow monitoring
+            </button>
+            <button
+              type="button"
+              className="btn btn-outline btn-xs min-w-0 flex-1"
+              onClick={() => handleRumConsentSubmit(false)}
+            >
+              Not now
+            </button>
+          </div>
+        </div>
+      </CustomModal>
+
       {/* UPDATE PROFILE DIALOG */}
       <CustomModal
         isOpen={updateProfileDialogVisible}
@@ -549,12 +887,6 @@ export const Global: React.FC = () => {
                 Notifications and Privacy
               </h5>
             </div>
-
-            {/* <p className="text-sm text-gray-dark">
-              Please take a moment to update your profile to ensure your details
-              are current. Your information will be used to issue credentials in
-              your Yo-ID wallet.
-            </p> */}
 
             <div className="w-full">
               <Suspense isLoading={settingsIsLoading} error={settingsError}>

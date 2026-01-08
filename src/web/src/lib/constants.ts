@@ -136,6 +136,7 @@ export const LG_BREAKPOINT = 1280;
 
 export const SETTING_USER_SETTINGS_CONFIGURED = "User_Settings_Configured";
 export const SETTING_USER_POPUP_LEAVINGYOMA = "User_PopUp_LeavingYoma";
+export const SETTING_USER_RUM_CONSENT = "User_RumConsent";
 
 export const PLURAL_MAPPING: Record<string, string> = {
   organizations: "Organisations",

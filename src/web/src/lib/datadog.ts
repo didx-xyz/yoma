@@ -15,6 +15,18 @@ let localEvents: Array<{
   timestamp: number;
 }> = [];
 
+let localTestingEnabled = false;
+
+// Soft gate for emitting events from our wrappers.
+// This does NOT "unload" the Datadog SDK; it only prevents our code from calling it.
+let rumSoftEnabled = true;
+
+export const setRumSoftEnabled = (enabled: boolean) => {
+  rumSoftEnabled = enabled;
+};
+
+const isRumSoftEnabled = () => rumSoftEnabled;
+
 // Extend the Window interface to include DD_RUM
 declare global {
   interface Window {
@@ -43,13 +55,14 @@ export const initializeDatadog = async () => {
       console.log("🔧 LOCAL DEV: DataDog RUM initialization skipped");
       console.log("📊 Analytics events will be logged to console instead");
       setupLocalTesting();
+      console.log("[Datadog] RUM initialized");
       return;
     }
 
     // Only initialize if we have the required environment variables
     if (!env.NEXT_PUBLIC_DD_RUM_APP_ID || !env.NEXT_PUBLIC_DD_RUM_TOKEN) {
       console.warn(
-        "DataDog RUM: Missing required environment variables. Skipping initialization.",
+        "[Datadog] RUM: Missing required environment variables. Skipping initialization.",
       );
       return;
     }
@@ -89,9 +102,44 @@ export const initializeDatadog = async () => {
     // Set up global error handlers for better browser error collection
     setupBrowserErrorTracking();
 
-    console.log("DataDog RUM initialized successfully");
+    console.log("[Datadog] RUM initialized");
   } catch (error) {
-    console.error("DataDog RUM initialization failed:", error);
+    console.error("[Datadog] RUM initialization failed:", error);
+  }
+};
+
+const isRumInitialized = () => {
+  if (typeof window === "undefined") return false;
+  return !!window.DD_RUM && !!window.DD_RUM.getInitConfiguration?.();
+};
+
+export const setRumTrackingConsent = (consent: boolean) => {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  // Local development mode
+  if (isLocalDev) {
+    if (!localTestingEnabled) return;
+    const event = {
+      type: "context" as const,
+      name: "TRACKING_CONSENT",
+      data: { consent },
+      timestamp: Date.now(),
+    };
+    localEvents.push(event);
+    console.log(
+      `🧪 LOCAL DEV - Tracking consent: ${consent ? "granted" : "not-granted"}`,
+    );
+    return;
+  }
+
+  try {
+    (datadogRum as any).setTrackingConsent?.(
+      consent ? "granted" : "not-granted",
+    );
+  } catch {
+    // Ignore SDK/version differences.
   }
 };
 
@@ -101,6 +149,7 @@ export const initializeDatadog = async () => {
 const setupLocalTesting = () => {
   // Clear previous events
   localEvents = [];
+  localTestingEnabled = true;
 
   console.log("🧪 DataDog Analytics Local Testing Mode Enabled");
   console.log("📝 Use window.DD_LOCAL_EVENTS to view captured events");
@@ -128,6 +177,7 @@ const setupLocalTesting = () => {
 const setupBrowserErrorTracking = () => {
   // Global error handler for unhandled JavaScript errors
   window.addEventListener("error", (event) => {
+    if (!isRumSoftEnabled()) return;
     datadogRum.addError(event.error || new Error(event.message), {
       errorType: "javascript",
       source: event.filename || "unknown",
@@ -138,6 +188,7 @@ const setupBrowserErrorTracking = () => {
 
   // Global handler for unhandled promise rejections
   window.addEventListener("unhandledrejection", (event) => {
+    if (!isRumSoftEnabled()) return;
     datadogRum.addError(event.reason, {
       errorType: "promise-rejection",
     });
@@ -148,6 +199,8 @@ const setupBrowserErrorTracking = () => {
   console.error = (...args) => {
     // Call original console.error
     originalConsoleError.apply(console, args);
+
+    if (!isRumSoftEnabled()) return;
 
     // Send to DataDog
     const error =
@@ -169,6 +222,8 @@ export const setDatadogUser = (user: User | null) => {
 
   // Local development mode
   if (isLocalDev) {
+    if (!localTestingEnabled) return;
+    if (!isRumSoftEnabled()) return;
     const event = {
       type: "user" as const,
       data: user
@@ -188,7 +243,8 @@ export const setDatadogUser = (user: User | null) => {
     return;
   }
 
-  if (!datadogRum) return;
+  if (!isRumSoftEnabled()) return;
+  if (!isRumInitialized()) return;
 
   if (user) {
     datadogRum.setUser({
@@ -217,6 +273,8 @@ export const trackUserAction = (
 
   // Local development mode
   if (isLocalDev) {
+    if (!localTestingEnabled) return;
+    if (!isRumSoftEnabled()) return;
     const event = {
       type: "action" as const,
       name,
@@ -228,7 +286,8 @@ export const trackUserAction = (
     return;
   }
 
-  if (!datadogRum) return;
+  if (!isRumSoftEnabled()) return;
+  if (!isRumInitialized()) return;
   datadogRum.addAction(name, context);
 };
 
@@ -245,6 +304,8 @@ export const trackError = (
 
   // Local development mode
   if (isLocalDev) {
+    if (!localTestingEnabled) return;
+    if (!isRumSoftEnabled()) return;
     const errorObj = typeof error === "string" ? new Error(error) : error;
     const event = {
       type: "error" as const,
@@ -257,7 +318,8 @@ export const trackError = (
     return;
   }
 
-  if (!datadogRum) return;
+  if (!isRumSoftEnabled()) return;
+  if (!isRumInitialized()) return;
   const errorObj = typeof error === "string" ? new Error(error) : error;
   datadogRum.addError(errorObj, context);
 };
@@ -272,6 +334,8 @@ export const trackTiming = (name: string, duration: number) => {
 
   // Local development mode
   if (isLocalDev) {
+    if (!localTestingEnabled) return;
+    if (!isRumSoftEnabled()) return;
     const event = {
       type: "timing" as const,
       name,
@@ -283,7 +347,8 @@ export const trackTiming = (name: string, duration: number) => {
     return;
   }
 
-  if (!datadogRum) return;
+  if (!isRumSoftEnabled()) return;
+  if (!isRumInitialized()) return;
   datadogRum.addTiming(name, duration);
 };
 
@@ -297,6 +362,8 @@ export const addRumGlobalContext = (key: string, value: any) => {
 
   // Local development mode
   if (isLocalDev) {
+    if (!localTestingEnabled) return;
+    if (!isRumSoftEnabled()) return;
     const event = {
       type: "context" as const,
       name: `SET: ${key}`,
@@ -308,7 +375,8 @@ export const addRumGlobalContext = (key: string, value: any) => {
     return;
   }
 
-  if (!datadogRum) return;
+  if (!isRumSoftEnabled()) return;
+  if (!isRumInitialized()) return;
   datadogRum.setGlobalContextProperty(key, value);
 };
 
@@ -316,7 +384,26 @@ export const addRumGlobalContext = (key: string, value: any) => {
  * Remove custom attributes from current RUM context
  */
 export const removeRumGlobalContext = (key: string) => {
-  if (typeof window === "undefined" || !datadogRum) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  if (isLocalDev) {
+    if (!localTestingEnabled) return;
+    if (!isRumSoftEnabled()) return;
+    const event = {
+      type: "context" as const,
+      name: `REMOVE: ${key}`,
+      data: { key },
+      timestamp: Date.now(),
+    };
+    localEvents.push(event);
+    console.log(`🧹 LOCAL DEV - Context Removed: ${key}`);
+    return;
+  }
+
+  if (!isRumSoftEnabled()) return;
+  if (!isRumInitialized()) {
     return;
   }
 
@@ -327,9 +414,24 @@ export const removeRumGlobalContext = (key: string) => {
  * Start a new RUM session manually by clearing current context
  */
 export const startSession = () => {
-  if (typeof window === "undefined" || !datadogRum) {
+  if (typeof window === "undefined") {
     return;
   }
+
+  if (isLocalDev) {
+    if (!localTestingEnabled) return;
+    const event = {
+      type: "context" as const,
+      name: "START_SESSION",
+      data: {},
+      timestamp: Date.now(),
+    };
+    localEvents.push(event);
+    console.log("🆕 LOCAL DEV - Session started (context cleared)");
+    return;
+  }
+
+  if (!isRumInitialized()) return;
 
   // DataDog RUM handles sessions automatically, but we can clear context to start fresh
   datadogRum.clearGlobalContext();
@@ -339,9 +441,24 @@ export const startSession = () => {
  * Stop the current RUM session by clearing user context
  */
 export const stopSession = () => {
-  if (typeof window === "undefined" || !datadogRum) {
+  if (typeof window === "undefined") {
     return;
   }
+
+  if (isLocalDev) {
+    if (!localTestingEnabled) return;
+    const event = {
+      type: "context" as const,
+      name: "STOP_SESSION",
+      data: {},
+      timestamp: Date.now(),
+    };
+    localEvents.push(event);
+    console.log("🛑 LOCAL DEV - Session stopped (user/context cleared)");
+    return;
+  }
+
+  if (!isRumInitialized()) return;
 
   // Clear user data to effectively end user session tracking
   datadogRum.clearUser();

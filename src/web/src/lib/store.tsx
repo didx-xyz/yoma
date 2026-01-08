@@ -2,6 +2,37 @@ import { atom } from "jotai";
 import { atomWithStorage } from "jotai/utils";
 import type { UserProfile } from "~/api/models/user";
 
+const removeOnNullStorage = <T,>() => {
+  return {
+    getItem: (key: string, initialValue: T) => {
+      if (typeof window === "undefined") return initialValue;
+
+      const raw = window.localStorage.getItem(key);
+      if (raw === null) return initialValue;
+
+      try {
+        return JSON.parse(raw) as T;
+      } catch {
+        return initialValue;
+      }
+    },
+    setItem: (key: string, value: T) => {
+      if (typeof window === "undefined") return;
+
+      if (value === (null as unknown as T)) {
+        window.localStorage.removeItem(key);
+        return;
+      }
+
+      window.localStorage.setItem(key, JSON.stringify(value));
+    },
+    removeItem: (key: string) => {
+      if (typeof window === "undefined") return;
+      window.localStorage.removeItem(key);
+    },
+  };
+};
+
 // user profile atom
 const userProfileAtom = atom<UserProfile | null>(null);
 
@@ -34,6 +65,14 @@ const userCountrySelectionAtom = atomWithStorage<string | null>(
   null,
 );
 
+// RUM consent (unauthenticated users)
+// persisted across browser sessions until migrated to DB on login
+const rumConsentAtom = atomWithStorage<boolean | null>(
+  "rumConsent",
+  null,
+  removeOnNullStorage<boolean | null>(),
+);
+
 // referee progress dialog visibility atom
 const refereeProgressDialogVisibleAtom = atom(false);
 
@@ -53,6 +92,7 @@ export {
   currentOrganisationInactiveAtom,
   currentLanguageAtom,
   userCountrySelectionAtom,
+  rumConsentAtom,
   refereeProgressDialogVisibleAtom,
   refereeProgressDialogDismissedAtom,
 };
