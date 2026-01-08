@@ -17,6 +17,9 @@ let localEvents: Array<{
 
 let localTestingEnabled = false;
 
+let datadogInitialized = false;
+let datadogInitPromise: Promise<void> | null = null;
+
 // Soft gate for emitting events from our wrappers.
 // This does NOT "unload" the Datadog SDK; it only prevents our code from calling it.
 let rumSoftEnabled = true;
@@ -42,70 +45,88 @@ export const initializeDatadog = async () => {
     return;
   }
 
-  // Check if already initialized to prevent multiple initializations
-  if (window.DD_RUM && window.DD_RUM.getInitConfiguration()) {
+  if (datadogInitialized) {
     return;
   }
 
-  try {
-    const env = await fetchClientEnv();
-
-    // In local development, log instead of initializing DataDog
-    if (isLocalDev) {
-      console.log("🔧 LOCAL DEV: DataDog RUM initialization skipped");
-      console.log("📊 Analytics events will be logged to console instead");
-      setupLocalTesting();
-      console.log("[Datadog] RUM initialized");
-      return;
-    }
-
-    // Only initialize if we have the required environment variables
-    if (!env.NEXT_PUBLIC_DD_RUM_APP_ID || !env.NEXT_PUBLIC_DD_RUM_TOKEN) {
-      console.warn(
-        "[Datadog] RUM: Missing required environment variables. Skipping initialization.",
-      );
-      return;
-    }
-
-    datadogRum.init({
-      applicationId: env.NEXT_PUBLIC_DD_RUM_APP_ID,
-      clientToken: env.NEXT_PUBLIC_DD_RUM_TOKEN,
-      site: "datadoghq.eu",
-      service: "yoma-web",
-      env: env.NEXT_PUBLIC_ENVIRONMENT,
-      sessionSampleRate: env.NEXT_PUBLIC_DD_RUM_SESSION_SAMPLE_RATE
-        ? parseInt(env.NEXT_PUBLIC_DD_RUM_SESSION_SAMPLE_RATE, 10)
-        : 100,
-      sessionReplaySampleRate: env.NEXT_PUBLIC_DD_RUM_SESSION_REPLAY_SAMPLE_RATE
-        ? parseInt(env.NEXT_PUBLIC_DD_RUM_SESSION_REPLAY_SAMPLE_RATE, 10)
-        : 20,
-      trackUserInteractions: true,
-      trackResources: true,
-      trackLongTasks: true,
-      defaultPrivacyLevel: "mask-user-input",
-      allowedTracingUrls: env.NEXT_PUBLIC_API_BASE_URL
-        ? [
-            {
-              match: `${env.NEXT_PUBLIC_API_BASE_URL}/`,
-              propagatorTypes: ["tracecontext"],
-            },
-          ]
-        : [],
-      // Advanced configuration for better error tracking
-      beforeSend: () => {
-        // Custom logic to modify or filter events before sending
-        // Return false to prevent the event from being sent
-        return true;
-      },
-    });
-
-    // Set up global error handlers for better browser error collection
-    setupBrowserErrorTracking();
-
-    console.log("[Datadog] RUM initialized");
-  } catch (error) {
-    console.error("[Datadog] RUM initialization failed:", error);
+  if (datadogInitPromise) {
+    return datadogInitPromise;
   }
+
+  datadogInitPromise = (async () => {
+    // Check if already initialized to prevent multiple initializations
+    if (window.DD_RUM && window.DD_RUM.getInitConfiguration()) {
+      datadogInitialized = true;
+      return;
+    }
+
+    try {
+      const env = await fetchClientEnv();
+
+      // In local development, log instead of initializing DataDog
+      if (isLocalDev) {
+        console.log("🔧 LOCAL DEV: DataDog RUM initialization skipped");
+        console.log("📊 Analytics events will be logged to console instead");
+        setupLocalTesting();
+        datadogInitialized = true;
+        console.log("Datadog initialized");
+        return;
+      }
+
+      // Only initialize if we have the required environment variables
+      if (!env.NEXT_PUBLIC_DD_RUM_APP_ID || !env.NEXT_PUBLIC_DD_RUM_TOKEN) {
+        console.warn(
+          "[Datadog] RUM: Missing required environment variables. Skipping initialization.",
+        );
+        return;
+      }
+
+      datadogRum.init({
+        applicationId: env.NEXT_PUBLIC_DD_RUM_APP_ID,
+        clientToken: env.NEXT_PUBLIC_DD_RUM_TOKEN,
+        site: "datadoghq.eu",
+        service: "yoma-web",
+        env: env.NEXT_PUBLIC_ENVIRONMENT,
+        sessionSampleRate: env.NEXT_PUBLIC_DD_RUM_SESSION_SAMPLE_RATE
+          ? parseInt(env.NEXT_PUBLIC_DD_RUM_SESSION_SAMPLE_RATE, 10)
+          : 100,
+        sessionReplaySampleRate:
+          env.NEXT_PUBLIC_DD_RUM_SESSION_REPLAY_SAMPLE_RATE
+            ? parseInt(env.NEXT_PUBLIC_DD_RUM_SESSION_REPLAY_SAMPLE_RATE, 10)
+            : 20,
+        trackUserInteractions: true,
+        trackResources: true,
+        trackLongTasks: true,
+        defaultPrivacyLevel: "mask-user-input",
+        allowedTracingUrls: env.NEXT_PUBLIC_API_BASE_URL
+          ? [
+              {
+                match: `${env.NEXT_PUBLIC_API_BASE_URL}/`,
+                propagatorTypes: ["tracecontext"],
+              },
+            ]
+          : [],
+        // Advanced configuration for better error tracking
+        beforeSend: () => {
+          // Custom logic to modify or filter events before sending
+          // Return false to prevent the event from being sent
+          return true;
+        },
+      });
+
+      // Set up global error handlers for better browser error collection
+      setupBrowserErrorTracking();
+
+      datadogInitialized = true;
+      console.log("Datadog initialized");
+    } catch (error) {
+      console.error("[Datadog] RUM initialization failed:", error);
+    }
+  })().finally(() => {
+    datadogInitPromise = null;
+  });
+
+  return datadogInitPromise;
 };
 
 const isRumInitialized = () => {
