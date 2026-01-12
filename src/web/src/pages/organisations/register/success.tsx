@@ -49,7 +49,7 @@ const Success: NextPageWithLayout = () => {
   return (
     <div className="bg-theme flex justify-center md:w-screen">
       <div className="container my-auto max-w-md md:w-[28rem]">
-        <div className="flex flex-col place-items-center justify-center rounded-xl bg-white p-6 text-center md:p-12">
+        <div className="flex flex-col place-items-center justify-center rounded-xl bg-white p-6 text-center text-black md:p-12">
           <div className="flex h-[48px] w-[48px] items-center justify-center rounded-full bg-white shadow-lg">
             🚀
           </div>
