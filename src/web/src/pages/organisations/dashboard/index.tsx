@@ -1002,7 +1002,7 @@ const OrganisationDashboard: NextPageWithLayout<{
             </div>
 
             {/* DESCRIPTION */}
-            <div className="gap-2 overflow-hidden text-ellipsis whitespace-nowrap text-white">
+            <div className="flex flex-row gap-2 overflow-hidden text-ellipsis whitespace-nowrap text-white">
               {!searchFilter.organizations && (
                 <>
                   <span className="font-semibold">
@@ -1033,6 +1033,8 @@ const OrganisationDashboard: NextPageWithLayout<{
                   </div>
                 </>
               )}
+
+              <LimitedFunctionalityBadge />
             </div>
 
             <div className="h-6 text-sm italic">
@@ -1047,8 +1049,6 @@ const OrganisationDashboard: NextPageWithLayout<{
                 </>
               )}
             </div>
-
-            <LimitedFunctionalityBadge />
           </div>
 
           {/* FILTERS */}

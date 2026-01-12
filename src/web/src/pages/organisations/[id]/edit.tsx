@@ -434,7 +434,7 @@ const OrganisationUpdate: NextPageWithLayout<{
 
             <Link
               className="hover:text-gray flex max-w-[300px] items-center justify-center overflow-hidden font-bold text-ellipsis whitespace-nowrap md:max-w-[400px] lg:max-w-[800px]"
-              href={`/organisations/${id}${
+              href={`/organisations/dashboard?organisations=${id}${
                 returnUrl
                   ? `?returnUrl=${encodeURIComponent(returnUrl.toString())}`
                   : ""
