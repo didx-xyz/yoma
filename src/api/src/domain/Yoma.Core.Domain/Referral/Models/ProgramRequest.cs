@@ -32,6 +32,8 @@ namespace Yoma.Core.Domain.Referral.Models
 
     public DateTimeOffset? DateEnd { get; set; }
 
+    public List<Guid>? Countries { get; set; }
+
     public ProgramPathwayRequestUpsert? Pathway { get; set; }
   }
 
