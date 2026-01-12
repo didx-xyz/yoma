@@ -127,7 +127,30 @@ namespace Yoma.Core.Domain.Reward.Services
 
               item.Status = WalletCreationStatus.Error;
               item.ErrorReason = ex.Message;
-              await _walletService.UpdateScheduleCreation(item, pendingStatus);
+
+              switch (pendingStatus)
+              {
+                case WalletCreationStatus.Pending:
+                  item.Username = null;
+                  item.WalletId = null;
+                  item.Balance = default;
+                  break;
+
+                case WalletCreationStatus.PendingUsernameUpdate:
+                  item.Username = null;
+                  break;
+              }
+
+              try
+              {
+                await _walletService.UpdateScheduleCreation(item, pendingStatus);
+              }
+              catch (Exception updateEx)
+              {
+                _logger.LogCritical(updateEx,
+                  "CRITICAL: Failed to persist Error status for wallet creation item '{id}' (user '{userId}', pendingStatus '{pendingStatus}'). Original error: {originalError}",
+                  item.Id, item.UserId, pendingStatus, ex.Message);
+              }
 
               itemIdsToSkip.Add(item.Id);
             }
