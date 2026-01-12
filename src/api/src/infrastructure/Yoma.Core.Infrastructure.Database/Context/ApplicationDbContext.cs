@@ -165,6 +165,8 @@ namespace Yoma.Core.Infrastructure.Database.Context
 
     public DbSet<Program> ReferralProgram { get; set; }
 
+    public DbSet<ProgramCountry> ReferralProgramCountries { get; set; }
+
     public DbSet<ProgramPathway> ReferralProgramPathway { get; set; }
 
     public DbSet<ProgramPathwayStep> ReferralProgramPathwayStep { get; set; }

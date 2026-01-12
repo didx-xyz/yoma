@@ -109,9 +109,17 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
               DateModified = task.DateModified
             }).OrderBy(t => t.OrderDisplay).ToList()
           }).OrderBy(s => s.OrderDisplay).ToList()
-        } : null
+        } : null,
+        Countries = includeChildItems ?
+        entity.Countries.Select(o => new Domain.Lookups.Models.Country
+        {
+          Id = o.CountryId,
+          Name = o.Country.Name,
+          CodeAlpha2 = o.Country.CodeAlpha2,
+          CodeAlpha3 = o.Country.CodeAlpha3,
+          CodeNumeric = o.Country.CodeNumeric
+        }).OrderBy(o => o.Name).ToList() : null
       });
-
       if (includeChildItems) query = query.AsSplitQuery();
       return query;
     }

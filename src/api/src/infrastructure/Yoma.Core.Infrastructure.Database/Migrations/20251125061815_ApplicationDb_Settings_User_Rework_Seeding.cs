@@ -40,7 +40,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             "Notifications","General",5,$"[\"User\"]","true","Boolean",true,true
           },
           {
-            "9C5B4C40-6B8E-4F8D-9B36-8F0A1C9EF5AA","User","Admin_Notifications_Referrals","Referral Admin",
+            "9C5B4C40-6B8E-4F8D-9B36-8F0A1C9EF5AA","User","Admin_Notifications_Referrals","Referral admin",
             "Notifications for admins about referral activity, completions, and items needing attention",
             "Notifications","Admin",13,$"[\"Admin\"]","true","Boolean",true,true
           },

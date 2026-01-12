@@ -1,5 +1,6 @@
 using Newtonsoft.Json;
 using Yoma.Core.Domain.BlobProvider;
+using Yoma.Core.Domain.Lookups.Models;
 
 namespace Yoma.Core.Domain.Referral.Models
 {
@@ -143,5 +144,7 @@ namespace Yoma.Core.Domain.Referral.Models
     public Guid ModifiedByUserId { get; set; }
 
     public ProgramPathway? Pathway { get; set; }
+
+    public List<Country>? Countries { get; set; }
   }
 }

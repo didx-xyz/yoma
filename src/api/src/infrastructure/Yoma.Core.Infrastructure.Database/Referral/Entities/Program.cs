@@ -83,5 +83,7 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Entities
     public User ModifiedByUser { get; set; } = null!;
 
     public ProgramPathway? Pathway { get; set; }
+
+    public ICollection<ProgramCountry> Countries { get; set; } = null!;
   }
 }
