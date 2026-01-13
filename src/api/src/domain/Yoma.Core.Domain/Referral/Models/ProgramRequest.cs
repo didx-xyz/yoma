@@ -26,6 +26,10 @@ namespace Yoma.Core.Domain.Referral.Models
 
     public bool MultipleLinksAllowed { get; set; }
 
+    /// <summary>
+    /// When true, marks the program as default.
+    /// Default programs must be available world-wide.
+    /// </summary>
     public bool IsDefault { get; set; }
 
     public DateTimeOffset DateStart { get; set; }

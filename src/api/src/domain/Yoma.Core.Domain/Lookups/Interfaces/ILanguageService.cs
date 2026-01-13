@@ -8,9 +8,9 @@ namespace Yoma.Core.Domain.Lookups.Interfaces
 
     Language? GetByNameOrNull(string name);
 
-    Language GetByCodeAplha2(string name);
+    Language GetByCodeAlpha2(string name);
 
-    Language? GetByCodeAplha2OrNull(string name);
+    Language? GetByCodeAlpha2OrNull(string name);
 
     Language GetById(Guid id);
 

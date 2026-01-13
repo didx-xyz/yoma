@@ -266,7 +266,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
     private async Task SendNotificationPublished(List<Models.Opportunity> items, DateTimeOffset executeUntil)
     {
       var notificationType = NotificationType.Opportunity_Published;
-      var countryWorldwideId = _countryService.GetByCodeAplha2(Core.Country.Worldwide.ToDescription()).Id;
+      var countryWorldwideId = _countryService.GetByCodeAlpha2(Core.Country.Worldwide.ToDescription()).Id;
 
       try
       {

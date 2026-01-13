@@ -10,6 +10,7 @@ namespace Yoma.Core.Domain.Referral.Models
   /// NOTES
   /// • Scope:
   ///   – Programs are Yoma-wide (no per-organization programs).
+  ///   – Only programs available world-wide may be set as the default.
   ///
   /// • Claims & caps:
   ///   – Per-referrer and program-wide completion caps are enforced at claim time:

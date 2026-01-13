@@ -10,6 +10,7 @@ using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Entity.Interfaces;
+using Yoma.Core.Domain.Lookups.Interfaces;
 using Yoma.Core.Domain.Opportunity.Interfaces;
 using Yoma.Core.Domain.Opportunity.Models;
 using Yoma.Core.Domain.Referral.Interfaces;
@@ -30,6 +31,8 @@ namespace Yoma.Core.Domain.Referral.Services
     private readonly IBlobService _blobService;
     private readonly IUserService _userService;
     private readonly ILinkMaintenanceService _linkMaintenanceService;
+    private readonly ICountryService _countryService;
+    private readonly IRepository<ProgramCountry> _programCountryRepository;
 
     private readonly IExecutionStrategyService _executionStrategyService;
 
@@ -59,6 +62,8 @@ namespace Yoma.Core.Domain.Referral.Services
       IBlobService blobService,
       IUserService userService,
       ILinkMaintenanceService linkMaintenanceService,
+      ICountryService countryService,
+      IRepository<ProgramCountry> programCountryRepository,
 
       IExecutionStrategyService executionStrategyService,
 
@@ -80,6 +85,8 @@ namespace Yoma.Core.Domain.Referral.Services
       _blobService = blobService ?? throw new ArgumentNullException(nameof(blobService));
       _userService = userService ?? throw new ArgumentNullException(nameof(userService));
       _linkMaintenanceService = linkMaintenanceService ?? throw new ArgumentNullException(nameof(linkMaintenanceService));
+      _countryService = countryService ?? throw new ArgumentNullException(nameof(countryService));
+      _programCountryRepository = programCountryRepository ?? throw new ArgumentNullException(nameof(programCountryRepository));
 
       _executionStrategyService = executionStrategyService ?? throw new ArgumentNullException(nameof(executionStrategyService));
 
@@ -162,6 +169,23 @@ namespace Yoma.Core.Domain.Referral.Services
       _programSearchFilterValidator.ValidateAndThrow(filter);
 
       var query = _programRepository.Query(true);
+
+      //countries
+      if (filter.Countries?.Count > 0)
+      {
+        filter.Countries = [.. filter.Countries.Distinct()];
+
+        var countryIdWorldwide = _countryService.GetByCodeAlpha2(Country.Worldwide.ToDescription()).Id;
+        var includesWorldwide = filter.Countries.Contains(countryIdWorldwide);
+
+        var queryProgramCountries = _programCountryRepository.Query();
+
+        query = query.Where(program =>
+          // explicit match
+          queryProgramCountries.Any(programCountry => programCountry.ProgramId == program.Id && filter.Countries.Contains(programCountry.CountryId))
+          // implicit world-wide (no country rows) ONLY if filter includes world-wide
+          || (includesWorldwide && !queryProgramCountries.Any(programCountry => programCountry.ProgramId == program.Id)));
+      }
 
       //valueContains
       if (!string.IsNullOrEmpty(filter.ValueContains))
@@ -288,6 +312,9 @@ namespace Yoma.Core.Domain.Referral.Services
         //create the program
         result = await _programRepository.Create(result);
 
+        //countries
+        result = await AssignCountries(result, request.Countries);
+
         //set as default
         if (request.IsDefault)
         {
@@ -387,6 +414,10 @@ namespace Yoma.Core.Domain.Referral.Services
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
         using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
+
+        // countries
+        result = await RemoveCountries(result, result.Countries?.Select(o => o.Id).Except(request.Countries ?? []).ToList());
+        result = await AssignCountries(result, request.Countries);
 
         //pathway
         if (request.Pathway == null)
@@ -619,6 +650,71 @@ namespace Yoma.Core.Domain.Referral.Services
     #endregion
 
     #region Private Members
+    private async Task<Program> AssignCountries(Program program, List<Guid>? countryIds)
+    {
+      if (countryIds == null || countryIds.Count == 0)
+        throw new ArgumentNullException(nameof(countryIds));
+
+      countryIds = [.. countryIds.Distinct()];
+
+      var results = new List<Domain.Lookups.Models.Country>();
+
+      await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+      {
+        using var scope = TransactionScopeHelper.CreateReadCommitted();
+        foreach (var countryId in countryIds)
+        {
+          var country = _countryService.GetById(countryId);
+          results.Add(country);
+
+          var item = _programCountryRepository.Query().SingleOrDefault(o => o.ProgramId == program.Id && o.CountryId == country.Id);
+
+          if (item != null) continue;
+          item = new ProgramCountry
+          {
+            ProgramId = program.Id,
+            CountryId = country.Id
+          };
+
+          await _programCountryRepository.Create(item);
+
+          program.Countries ??= [];
+          program.Countries.Add(new Domain.Lookups.Models.Country { Id = country.Id, Name = country.Name, CodeAlpha2 = country.CodeAlpha2, CodeAlpha3 = country.CodeAlpha3, CodeNumeric = country.CodeNumeric });
+        }
+
+        scope.Complete();
+      });
+
+      return program;
+    }
+
+    private async Task<Program> RemoveCountries(Program program, List<Guid>? countryIds)
+    {
+      if (countryIds == null || countryIds.Count == 0) return program;
+
+      countryIds = [.. countryIds.Distinct()];
+
+      await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+      {
+        using var scope = TransactionScopeHelper.CreateReadCommitted();
+        foreach (var countryId in countryIds)
+        {
+          var country = _countryService.GetById(countryId);
+
+          var item = _programCountryRepository.Query().SingleOrDefault(o => o.ProgramId == program.Id && o.CountryId == country.Id);
+          if (item == null) continue;
+
+          await _programCountryRepository.Delete(item);
+
+          program.Countries?.Remove(program.Countries.Single(o => o.Id == country.Id));
+        }
+
+        scope.Complete();
+      });
+
+      return program;
+    }
+
     private static void EnsurePathwayIsCompletableOrThrow(ProgramPathway? pathway)
     {
       if (pathway == null) return;
@@ -760,14 +856,14 @@ namespace Yoma.Core.Domain.Referral.Services
         resultPathway = await _programPathwayRepository.Update(resultPathway);
       }
 
-      program.Pathway = await UpsertProgramPathwaySteps(resultPathway, request.Steps);
+      program.Pathway = await UpsertProgramPathwaySteps(program, resultPathway, request.Steps);
 
       EnsurePathwayIsCompletableOrThrow(program.Pathway);
 
       return program;
     }
 
-    private async Task<ProgramPathway> UpsertProgramPathwaySteps(ProgramPathway pathway, List<ProgramPathwayStepRequestUpsert> requests)
+    private async Task<ProgramPathway> UpsertProgramPathwaySteps(Program program, ProgramPathway pathway, List<ProgramPathwayStepRequestUpsert> requests)
     {
       //step names already validated – persisted steps will match the request
       pathway.Steps ??= [];
@@ -788,7 +884,7 @@ namespace Yoma.Core.Domain.Referral.Services
         resultStep.OrderDisplay = request.OrderDisplay;
 
         resultStep = await _programPathwayStepRepository.Update(resultStep);
-        resultStep = await UpsertProgramPathwayTasks(resultStep, request.Tasks);
+        resultStep = await UpsertProgramPathwayTasks(program, resultStep, request.Tasks);
         resultSteps.Add(resultStep);
       }
 
@@ -807,7 +903,7 @@ namespace Yoma.Core.Domain.Referral.Services
         };
 
         resultStep = await _programPathwayStepRepository.Create(resultStep);
-        resultStep = await UpsertProgramPathwayTasks(resultStep, request.Tasks);
+        resultStep = await UpsertProgramPathwayTasks(program, resultStep, request.Tasks);
         resultSteps.Add(resultStep);
       }
 
@@ -816,7 +912,7 @@ namespace Yoma.Core.Domain.Referral.Services
       return pathway;
     }
 
-    private async Task<ProgramPathwayStep> UpsertProgramPathwayTasks(ProgramPathwayStep step, List<ProgramPathwayTaskRequestUpsert> requests)
+    private async Task<ProgramPathwayStep> UpsertProgramPathwayTasks(Program program, ProgramPathwayStep step, List<ProgramPathwayTaskRequestUpsert> requests)
     {
       //tasks already validated – persisted tasks will match the request
       step.Tasks ??= [];
@@ -832,7 +928,7 @@ namespace Yoma.Core.Domain.Referral.Services
         resultTask.EntityType = request.EntityType;
         resultTask.Order = step.OrderMode == PathwayOrderMode.Sequential ? request.OrderDisplay : null;
         resultTask.OrderDisplay = request.OrderDisplay;
-        resultTask = ParseTaskEntity(resultTask, request);
+        resultTask = ParseTaskEntity(program, resultTask, request);
 
         resultTask = await _programPathwayTaskRepository.Update(resultTask);
         resultTasks.Add(resultTask);
@@ -848,7 +944,7 @@ namespace Yoma.Core.Domain.Referral.Services
           Order = step.OrderMode == PathwayOrderMode.Sequential ? request.OrderDisplay : null,
           OrderDisplay = request.OrderDisplay
         };
-        resultTask = ParseTaskEntity(resultTask, request);
+        resultTask = ParseTaskEntity(program, resultTask, request);
 
         resultTask = await _programPathwayTaskRepository.Create(resultTask);
         resultTasks.Add(resultTask);
@@ -859,12 +955,26 @@ namespace Yoma.Core.Domain.Referral.Services
       return step;
     }
 
-    private ProgramPathwayTask ParseTaskEntity(ProgramPathwayTask task, ProgramPathwayTaskRequestUpsert request)
+    private ProgramPathwayTask ParseTaskEntity(Program program, ProgramPathwayTask task, ProgramPathwayTaskRequestUpsert request)
     {
       switch (request.EntityType)
       {
         case PathwayTaskEntityType.Opportunity:
-          var opportunity = _opportunityService.GetById(request.EntityId, false, false, false);
+          var opportunity = _opportunityService.GetById(request.EntityId, true, false, false);
+
+          var countryIdWorldwide = _countryService.GetByCodeAlpha2(Country.Worldwide.ToDescription()).Id;
+
+          // Program: null/empty => treat as Worldwide
+          var programCountryIds = program.Countries?.Select(c => c.Id).ToHashSet() ?? [];
+          if (programCountryIds.Count == 0) programCountryIds.Add(countryIdWorldwide);
+
+          // Opportunity: currently countries are requird, but keep future-proof fallback
+          var opportunityCountryIds = opportunity.Countries?.Select(c => c.Id).ToHashSet() ?? [];
+          if (opportunityCountryIds.Count == 0) opportunityCountryIds.Add(countryIdWorldwide);
+
+          // Must share at least one country
+          if (!programCountryIds.Overlaps(opportunityCountryIds))
+            throw new ValidationException($"The opportunity '{opportunity.Title}' is not available in any of the countries assigned to the program '{program.Name}'");
 
           task.Opportunity = new OpportunityItem
           {
@@ -943,7 +1053,10 @@ namespace Yoma.Core.Domain.Referral.Services
           return;
         }
 
-        var items = new List<Program>();
+        // default must be world-wide: implicit (null) or explicit (contains worldwide)
+        var countryIdWorldwide = _countryService.GetByCodeAlpha2(Country.Worldwide.ToDescription()).Id;
+        if (program.Countries != null && !program.Countries.Any(o => o.Id == countryIdWorldwide))
+          throw new ValidationException($"A default {nameof(Program)} must be available world-wide");
 
         if (currentDefault != null)
         {

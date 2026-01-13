@@ -51,7 +51,7 @@ namespace Yoma.Core.Domain.Marketplace.Validators
     private bool CountryExists(string countryCodeAlpha2)
     {
       if (string.IsNullOrEmpty(countryCodeAlpha2)) return false;
-      return _countryService.GetByCodeAplha2OrNull(countryCodeAlpha2) != null;
+      return _countryService.GetByCodeAlpha2OrNull(countryCodeAlpha2) != null;
     }
 
     private bool GenderExistsAndValid(Guid id)

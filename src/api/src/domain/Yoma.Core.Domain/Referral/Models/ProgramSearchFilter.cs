@@ -6,14 +6,16 @@ namespace Yoma.Core.Domain.Referral.Models
 {
   public abstract class ProgramSearchFilterBase : PaginationFilter
   {
+    public List<Guid>? Countries { get; set; }
+
+    public string? ValueContains { get; set; }
+
     /// <summary>
     /// Optionally filters programs by their published state. By default, results include programs that are active and have started (thus published state Active).
     /// This default behavior can be overridden
     /// </summary>
     [JsonIgnore]
     internal List<PublishedState>? PublishedStates { get; set; }
-
-    public string? ValueContains { get; set; }
 
     [JsonIgnore]
     internal bool TotalCountOnly { get; set; }

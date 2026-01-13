@@ -25,7 +25,6 @@ namespace Yoma.Core.Domain.Referral.Services
     private readonly ILogger<LinkService> _logger;
     private readonly AppSettings _appSettings;
 
-
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly IShortLinkProviderClient _shortLinkProviderClient;
 

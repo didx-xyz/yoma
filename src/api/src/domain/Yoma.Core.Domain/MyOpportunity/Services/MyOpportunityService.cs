@@ -1276,7 +1276,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       item.Surname = string.IsNullOrWhiteSpace(item.Surname) ? null : item.Surname.Trim();
 
       Domain.Lookups.Models.Country? country = null;
-      if (!string.IsNullOrEmpty(item.Country)) country = _countryService.GetByCodeAplha2(item.Country);
+      if (!string.IsNullOrEmpty(item.Country)) country = _countryService.GetByCodeAlpha2(item.Country);
 
       Domain.Lookups.Models.Gender? gender = null;
       if (!string.IsNullOrEmpty(item.Gender)) gender = _genderService.GetByName(item.Gender);
