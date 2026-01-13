@@ -502,7 +502,7 @@ const ReferralsDashboard: NextPageWithLayout<{
                         <div className="font-family-nunito text-sm font-semibold text-black md:text-base">
                           Your Links
                         </div>
-                        {programsData?.totalCount && (
+                        {!!programsData?.totalCount && (
                           <button
                             onClick={handleCreateLink}
                             className="btn btn-xs gap-2 border-blue-600 bg-gradient-to-r from-blue-600 to-blue-500 text-white hover:bg-blue-700"
