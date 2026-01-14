@@ -31,7 +31,6 @@ namespace Yoma.Core.Domain.Referral.Extensions
         IsDefault = value.IsDefault,
         DateStart = value.DateStart,
         DateEnd = value.DateEnd,
-
         Pathway = value.Pathway == null ? null : new ProgramPathwayInfo
         {
           Id = value.Pathway.Id,
@@ -65,13 +64,16 @@ namespace Yoma.Core.Domain.Referral.Extensions
                 VerificationMethod = task.Opportunity.VerificationMethod,
                 Status = task.Opportunity.Status,
                 Hidden = task.Opportunity.Hidden,
-                DateStart = task.Opportunity.DateStart
+                DateStart = task.Opportunity.DateStart,
+                Countries = task.Opportunity.Countries,
               },
+              ProgramCountries = task.ProgramCountries,
               IsCompletable = task.IsCompletable,
               NonCompletableReason = task.NonCompletableReason
             }).ToList() ?? []
           }).ToList() ?? []
-        }
+        },
+        Countries = value.Countries
       };
     }
   }

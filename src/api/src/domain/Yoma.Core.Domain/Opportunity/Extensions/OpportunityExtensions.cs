@@ -83,7 +83,8 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
         VerificationMethod = value.VerificationMethod,
         Status = value.Status,
         Hidden = value.Hidden,
-        DateStart = value.DateStart
+        DateStart = value.DateStart,
+        Countries = value.Countries,
       };
     }
 

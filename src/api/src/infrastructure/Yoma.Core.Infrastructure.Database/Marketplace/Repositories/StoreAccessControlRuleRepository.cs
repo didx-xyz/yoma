@@ -71,6 +71,14 @@ namespace Yoma.Core.Infrastructure.Database.Marketplace.Repositories
             Status = Enum.Parse<Status>(o.Opportunity.Status.Name, true),
             Hidden = o.Opportunity.Hidden,
             DateStart = o.Opportunity.DateStart,
+            Countries = o.Opportunity.Countries.Select(oc => new Domain.Lookups.Models.Country
+            {
+              Id = oc.Country.Id,
+              Name = oc.Country.Name,
+              CodeAlpha2 = oc.Country.CodeAlpha2,
+              CodeAlpha3 = oc.Country.CodeAlpha3,
+              CodeNumeric = oc.Country.CodeNumeric
+            }).OrderBy(oc => oc.Name).ToList() 
           }).OrderBy(o => o.Title).ToList() : null,
       });
 

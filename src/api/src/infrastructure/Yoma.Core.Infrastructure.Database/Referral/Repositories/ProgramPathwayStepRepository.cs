@@ -60,12 +60,28 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
             VerificationMethod = string.IsNullOrEmpty(task.Opportunity.VerificationMethod) ? null : Enum.Parse<VerificationMethod>(task.Opportunity.VerificationMethod, true),
             Status = Enum.Parse<Status>(task.Opportunity.Status.Name, true),
             Hidden = task.Opportunity.Hidden,
-            DateStart = task.Opportunity.DateStart
+            DateStart = task.Opportunity.DateStart,
+            Countries = task.Opportunity.Countries.Select(oc => new Domain.Lookups.Models.Country
+            {
+              Id = oc.Country.Id,
+              Name = oc.Country.Name,
+              CodeAlpha2 = oc.Country.CodeAlpha2,
+              CodeAlpha3 = oc.Country.CodeAlpha3,
+              CodeNumeric = oc.Country.CodeNumeric
+            }).OrderBy(oc => oc.Name).ToList()
           },
           Order = task.Order,
           OrderDisplay = task.OrderDisplay,
           DateCreated = task.DateCreated,
-          DateModified = task.DateModified
+          DateModified = task.DateModified,
+          ProgramCountries = entity.Pathway .Program.Countries == null ? null : entity.Pathway.Program.Countries.Select(pc => new Domain.Lookups.Models.Country
+          {
+            Id = pc.Country.Id,
+            Name = pc.Country.Name,
+            CodeAlpha2 = pc.Country.CodeAlpha2,
+            CodeAlpha3 = pc.Country.CodeAlpha3,
+            CodeNumeric = pc.Country.CodeNumeric
+          }).OrderBy(pc => pc.Name).ToList(),
         }).OrderBy(t => t.OrderDisplay).ToList() : null
       });
 

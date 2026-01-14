@@ -856,14 +856,14 @@ namespace Yoma.Core.Domain.Referral.Services
         resultPathway = await _programPathwayRepository.Update(resultPathway);
       }
 
-      program.Pathway = await UpsertProgramPathwaySteps(program, resultPathway, request.Steps);
+      program.Pathway = await UpsertProgramPathwaySteps(resultPathway, request.Steps);
 
       EnsurePathwayIsCompletableOrThrow(program.Pathway);
 
       return program;
     }
 
-    private async Task<ProgramPathway> UpsertProgramPathwaySteps(Program program, ProgramPathway pathway, List<ProgramPathwayStepRequestUpsert> requests)
+    private async Task<ProgramPathway> UpsertProgramPathwaySteps(ProgramPathway pathway, List<ProgramPathwayStepRequestUpsert> requests)
     {
       //step names already validated – persisted steps will match the request
       pathway.Steps ??= [];
@@ -884,7 +884,7 @@ namespace Yoma.Core.Domain.Referral.Services
         resultStep.OrderDisplay = request.OrderDisplay;
 
         resultStep = await _programPathwayStepRepository.Update(resultStep);
-        resultStep = await UpsertProgramPathwayTasks(program, resultStep, request.Tasks);
+        resultStep = await UpsertProgramPathwayTasks(resultStep, request.Tasks);
         resultSteps.Add(resultStep);
       }
 
@@ -903,7 +903,7 @@ namespace Yoma.Core.Domain.Referral.Services
         };
 
         resultStep = await _programPathwayStepRepository.Create(resultStep);
-        resultStep = await UpsertProgramPathwayTasks(program, resultStep, request.Tasks);
+        resultStep = await UpsertProgramPathwayTasks(resultStep, request.Tasks);
         resultSteps.Add(resultStep);
       }
 
@@ -912,7 +912,7 @@ namespace Yoma.Core.Domain.Referral.Services
       return pathway;
     }
 
-    private async Task<ProgramPathwayStep> UpsertProgramPathwayTasks(Program program, ProgramPathwayStep step, List<ProgramPathwayTaskRequestUpsert> requests)
+    private async Task<ProgramPathwayStep> UpsertProgramPathwayTasks(ProgramPathwayStep step, List<ProgramPathwayTaskRequestUpsert> requests)
     {
       //tasks already validated – persisted tasks will match the request
       step.Tasks ??= [];
@@ -928,7 +928,7 @@ namespace Yoma.Core.Domain.Referral.Services
         resultTask.EntityType = request.EntityType;
         resultTask.Order = step.OrderMode == PathwayOrderMode.Sequential ? request.OrderDisplay : null;
         resultTask.OrderDisplay = request.OrderDisplay;
-        resultTask = ParseTaskEntity(program, resultTask, request);
+        resultTask = ParseTaskEntity(resultTask, request);
 
         resultTask = await _programPathwayTaskRepository.Update(resultTask);
         resultTasks.Add(resultTask);
@@ -944,7 +944,7 @@ namespace Yoma.Core.Domain.Referral.Services
           Order = step.OrderMode == PathwayOrderMode.Sequential ? request.OrderDisplay : null,
           OrderDisplay = request.OrderDisplay
         };
-        resultTask = ParseTaskEntity(program, resultTask, request);
+        resultTask = ParseTaskEntity(resultTask, request);
 
         resultTask = await _programPathwayTaskRepository.Create(resultTask);
         resultTasks.Add(resultTask);
@@ -955,26 +955,12 @@ namespace Yoma.Core.Domain.Referral.Services
       return step;
     }
 
-    private ProgramPathwayTask ParseTaskEntity(Program program, ProgramPathwayTask task, ProgramPathwayTaskRequestUpsert request)
+    private ProgramPathwayTask ParseTaskEntity(ProgramPathwayTask task, ProgramPathwayTaskRequestUpsert request)
     {
       switch (request.EntityType)
       {
         case PathwayTaskEntityType.Opportunity:
           var opportunity = _opportunityService.GetById(request.EntityId, true, false, false);
-
-          var countryIdWorldwide = _countryService.GetByCodeAlpha2(Country.Worldwide.ToDescription()).Id;
-
-          // Program: null/empty => treat as Worldwide
-          var programCountryIds = program.Countries?.Select(c => c.Id).ToHashSet() ?? [];
-          if (programCountryIds.Count == 0) programCountryIds.Add(countryIdWorldwide);
-
-          // Opportunity: currently countries are requird, but keep future-proof fallback
-          var opportunityCountryIds = opportunity.Countries?.Select(c => c.Id).ToHashSet() ?? [];
-          if (opportunityCountryIds.Count == 0) opportunityCountryIds.Add(countryIdWorldwide);
-
-          // Must share at least one country
-          if (!programCountryIds.Overlaps(opportunityCountryIds))
-            throw new ValidationException($"The opportunity '{opportunity.Title}' is not available in any of the countries assigned to the program '{program.Name}'");
 
           task.Opportunity = new OpportunityItem
           {
@@ -985,7 +971,8 @@ namespace Yoma.Core.Domain.Referral.Services
             VerificationMethod = opportunity.VerificationMethod,
             Status = opportunity.Status,
             Hidden = opportunity.Hidden,
-            DateStart = opportunity.DateStart
+            DateStart = opportunity.DateStart,
+            Countries = opportunity.Countries
           };
 
           break;
