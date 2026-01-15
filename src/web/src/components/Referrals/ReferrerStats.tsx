@@ -44,7 +44,11 @@ export const ReferrerStats: React.FC<ReferrerStatsProps> = ({ link }) => {
     <Suspense
       isLoading={isLoading}
       error={error as any}
-      loader={<LoadingInline classNameSpinner="h-12 border-orange w-12" />}
+      loader={
+        <div className="rounded-lg bg-white p-4">
+          <LoadingInline classNameSpinner="h-12 border-orange w-12" label="" />
+        </div>
+      }
     >
       <ReferralStatsSmall
         totalReferrals={stats.totalReferrals}

@@ -34,7 +34,7 @@ export const ReferralStatsSmall: React.FC<ReferralStatsSmallProps> = ({
 
   return (
     <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
-      <div className="bg-base-200 flex flex-col gap-1 rounded-md px-3 py-2 md:px-4 md:py-3">
+      <div className="flex flex-col gap-1 rounded-md bg-white px-3 py-2 md:px-4 md:py-3">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <IoPeople className="h-4 w-4 text-blue-600 opacity-70 md:h-5 md:w-5" />
@@ -53,7 +53,7 @@ export const ReferralStatsSmall: React.FC<ReferralStatsSmallProps> = ({
         ) : null}
       </div>
 
-      <div className="bg-base-200 flex flex-col gap-1 rounded-md px-3 py-2 md:px-4 md:py-3">
+      <div className="flex flex-col gap-1 rounded-md bg-white px-3 py-2 md:px-4 md:py-3">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <IoCheckmarkCircle className="text-success h-4 w-4 opacity-70 md:h-5 md:w-5" />
@@ -72,7 +72,7 @@ export const ReferralStatsSmall: React.FC<ReferralStatsSmallProps> = ({
         ) : null}
       </div>
 
-      <div className="bg-base-200 flex flex-col gap-1 rounded-md px-3 py-2 md:px-4 md:py-3">
+      <div className="flex flex-col gap-1 rounded-md bg-white px-3 py-2 md:px-4 md:py-3">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <IoTime className="text-warning h-4 w-4 opacity-70 md:h-5 md:w-5" />
@@ -91,7 +91,7 @@ export const ReferralStatsSmall: React.FC<ReferralStatsSmallProps> = ({
         ) : null}
       </div>
 
-      <div className="bg-base-200 flex flex-col gap-1 rounded-md px-3 py-2 md:px-4 md:py-3">
+      <div className="flex flex-col gap-1 rounded-md bg-white px-3 py-2 md:px-4 md:py-3">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <IoWalletOutline className="h-4 w-4 text-amber-600 opacity-70 md:h-5 md:w-5" />

@@ -62,9 +62,9 @@ export const ProgramRequirementsRows: React.FC<
 
     if (proofRequired) {
       if (combined) {
-        combined = `${combined} and verify Proof of Person`;
+        combined = `${combined} and verify their personhood`;
       } else {
-        combined = "Users must verify Proof of Person";
+        combined = "Users must verify their personhood";
       }
     }
 
@@ -104,15 +104,9 @@ export const ProgramRequirementsRows: React.FC<
         className={`bg-base-200 text-base-content/80 flex items-start justify-between gap-2 ${rowPadding}`}
       >
         <div className="flex min-w-0 flex-1 items-start gap-2">
-          {completionWindowInDays || taskCount > 0 ? (
-            <IoTime
-              className={`text-warning mt-0.5 ${iconSize} shrink-0 opacity-70`}
-            />
-          ) : (
-            <IoCheckmarkCircle
-              className={`text-success mt-0.5 ${iconSize} shrink-0 opacity-70`}
-            />
-          )}
+          <IoCheckmarkCircle
+            className={`text-success mt-0.5 ${iconSize} shrink-0 opacity-70`}
+          />
 
           <div
             className={`min-w-0 flex-1 ${textSize} ${lineHeight} text-gray-600`}

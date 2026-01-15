@@ -44,6 +44,13 @@ export const ReferrerLinksList: React.FC<LinksListProps> = ({
   const hasLinks = links.length > 0;
   const hasPrograms = programs.length > 0;
 
+  // Reset expansion state on refresh (e.g., after creating a link) by forcing
+  // link rows to remount whenever the first page of results changes.
+  const firstPageKey = links
+    .slice(0, initialPageSize)
+    .map((l) => l.id)
+    .join("|");
+
   return (
     <>
       <Suspense
@@ -75,7 +82,7 @@ export const ReferrerLinksList: React.FC<LinksListProps> = ({
           <div className="space-y-2">
             {links?.map((link: ReferralLink, index: number) => (
               <ReferrerLinkRow
-                key={link.id}
+                key={`${firstPageKey}-${link.id}`}
                 link={link}
                 programs={programs}
                 isExpanded={index === 0}

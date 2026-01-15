@@ -137,6 +137,7 @@ const ReferralsDashboard: NextPageWithLayout<{
   // Check if user is blocked
   const isBlocked = userProfile?.referral?.blocked ?? false;
   const hasLinks = (linksData?.items?.length ?? 0) > 0;
+  const hasPrograms = (programsData?.items?.length ?? 0) > 0;
 
   const programs = programsData?.items || [];
 
@@ -256,11 +257,21 @@ const ReferralsDashboard: NextPageWithLayout<{
             <div className="flex items-center justify-center">
               <NoRowsMessage
                 title="Refer a friend"
-                subTitle="Good things are better when shared. Invite your friends to Yoma and help them start their journey."
-                description="Earn the power to refer by completing your own Yoma
-                  opportunities. Share your link, and when your friend signs up
-                  and completes their first onboarding opportunity, you both win
-                  rewards!"
+                description={
+                  hasLinks
+                    ? '<div class="space-y-2">' +
+                      "<p>Your links are ready to share. Send your referral link to friends who haven&#39;t completed onboarding yet.</p>" +
+                      "<p>When they complete the program requirements, you both earn rewards — and you can track progress on this page.</p>" +
+                      "</div>"
+                    : hasPrograms
+                      ? '<div class="space-y-2">' +
+                        "<p>Create your first referral link in seconds. Choose a program below to generate a referral link.</p>" +
+                        "<p>Each program has different requirements and rewards — share only with new users who haven&#39;t completed onboarding.</p>" +
+                        "</div>"
+                      : '<div class="space-y-2">' +
+                        "<p>No referral programs are available right now. Please check back later.</p>" +
+                        "</div>"
+                }
                 icon={"❤️"}
                 className="max-w-3xl !bg-transparent"
               />
@@ -276,7 +287,8 @@ const ReferralsDashboard: NextPageWithLayout<{
                     <div className="font-family-nunito text-sm font-semibold text-black md:text-base">
                       Your Performance
                     </div>
-                    <label className="mt-1 flex items-center justify-between gap-2 text-[11px] text-gray-600">
+                    {/* TODO: remove */}
+                    {/* <label className="mt-1 flex items-center justify-between gap-2 text-[11px] text-gray-600">
                       <span>Mock stats (dev)</span>
                       <input
                         type="checkbox"
@@ -288,10 +300,10 @@ const ReferralsDashboard: NextPageWithLayout<{
                           setReferralStatsMockMode(enabled);
                         }}
                       />
-                    </label>
-                    <div className="rounded-lg bg-white p-4">
-                      <ReferrerStats />
-                    </div>
+                    </label> */}
+                    {/* <div className="rounded-lg bg-white p-4"> */}
+                    <ReferrerStats />
+                    {/* </div> */}
                   </div>
                 </div>
 
