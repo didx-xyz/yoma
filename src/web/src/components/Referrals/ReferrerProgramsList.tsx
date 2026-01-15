@@ -1,10 +1,12 @@
-import { IoChevronDown, IoGift } from "react-icons/io5";
+import { IoAdd, IoChevronDown, IoGift } from "react-icons/io5";
 import type { ProgramInfo } from "~/api/models/referrals";
 import { searchReferralProgramsInfo } from "~/api/services/referrals";
-import { RefereeProgramDetails } from "./RefereeProgramDetails";
 import Suspense from "~/components/Common/Suspense";
 import NoRowsMessage from "~/components/NoRowsMessage";
 import { usePaginatedQuery } from "~/hooks/usePaginatedQuery";
+import { LoadingInline } from "../Status/LoadingInline";
+import ProgramBadges from "./ProgramBadges";
+import { ProgramRow } from "./ProgramRow";
 
 interface ProgramsListProps {
   onProgramClick?: (program: ProgramInfo) => void;
@@ -50,15 +52,11 @@ export const ReferrerProgramsList: React.FC<ProgramsListProps> = ({
   const hasPrograms = programs.length > 0;
 
   return (
-    <div
-      className={
-        showHeader ? "shadow-custom rounded-lg bg-white p-4 md:p-6" : ""
-      }
-    >
+    <div className={showHeader ? "rounded-xl bg-white p-4 md:p-6" : ""}>
       {showHeader && (
         <>
           <h2 className="mb-2 flex items-center gap-4 text-lg font-bold text-gray-900">
-            <IoGift className="inline h-8 w-8 text-orange-500" /> Available
+            <IoGift className="inline h-6 w-6 text-blue-600" /> Available
             Programs
           </h2>
           {showDescription && (
@@ -70,7 +68,16 @@ export const ReferrerProgramsList: React.FC<ProgramsListProps> = ({
         </>
       )}
 
-      <Suspense isLoading={isLoading && !hasPrograms} error={error as any}>
+      <Suspense
+        isLoading={isLoading && !hasPrograms}
+        error={error as any}
+        loader={
+          <LoadingInline
+            className="rounded-xl bg-white p-4"
+            classNameSpinner="h-12 border-orange w-12"
+          />
+        }
+      >
         {!hasPrograms && (
           <NoRowsMessage
             title="No Programs Available"
@@ -80,16 +87,38 @@ export const ReferrerProgramsList: React.FC<ProgramsListProps> = ({
         )}
 
         {hasPrograms && (
-          <div className="space-y-3">
+          <div className="space-y-2">
             {programs?.map((program: ProgramInfo) => (
-              <RefereeProgramDetails
+              <ProgramRow
                 key={program.id}
                 program={program}
                 onClick={() => onProgramClick?.(program)}
-                onCreateLink={() => onCreateLink?.(program)}
-                context={context}
-                perspective="referrer"
-              />
+                action={
+                  context !== "preview" ? (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+
+                        if (context === "select") {
+                          onProgramClick?.(program);
+                          return;
+                        }
+
+                        onCreateLink?.(program);
+                      }}
+                      disabled={program.status !== "Active"}
+                      className="btn btn-sm gap-2 border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100 disabled:opacity-50"
+                    >
+                      <IoAdd className="h-4 w-4" />
+                      {context === "select" ? "Select Program" : "Create Link"}
+                    </button>
+                  ) : null
+                }
+              >
+                <ProgramBadges program={program} showToolTips={false} />
+              </ProgramRow>
             ))}
 
             {/* See More Button */}
@@ -98,7 +127,7 @@ export const ReferrerProgramsList: React.FC<ProgramsListProps> = ({
                 <button
                   onClick={loadMore}
                   disabled={isFetching}
-                  className="btn btn-sm gap-2 border-orange-300 bg-orange-50 text-orange-700 hover:bg-orange-100 disabled:opacity-50"
+                  className="btn btn-sm gap-2 border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100 disabled:opacity-50"
                 >
                   {isFetching ? (
                     <>

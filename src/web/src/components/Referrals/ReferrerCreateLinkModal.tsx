@@ -19,7 +19,6 @@ import FormMessage, { FormMessageType } from "~/components/Common/FormMessage";
 import FormToggle from "~/components/Common/FormToggle";
 import NoRowsMessage from "~/components/NoRowsMessage";
 import { ApiErrors } from "../Status/ApiErrors";
-import { ProgramRequirements } from "./ProgramRequirements";
 import { RefereeProgramDetails } from "./RefereeProgramDetails";
 import { ReferrerLinkDetails } from "./ReferrerLinkDetails";
 import { ReferrerProgramsList } from "./ReferrerProgramsList";
@@ -374,17 +373,6 @@ export const ReferrerCreateLinkModal: React.FC<CreateLinkModalProps> = ({
                         perspective="referrer"
                       />
                     </div>
-                  </div>
-                  <div className="space-y-2">
-                    <FormLabel
-                      label="Program Requirements"
-                      showWarningIcon={false}
-                    />
-
-                    <ProgramRequirements
-                      program={currentProgram}
-                      showPathway={true}
-                    />
                   </div>
                 </div>
               )}
