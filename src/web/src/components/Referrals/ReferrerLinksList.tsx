@@ -9,15 +9,11 @@ import { LoadingInline } from "../Status/LoadingInline";
 
 interface LinksListProps {
   programs?: ProgramInfo[];
-  onViewUsage?: (link: ReferralLink) => void;
-  onEdit?: (link: ReferralLink) => void;
   initialPageSize?: number;
 }
 
 export const ReferrerLinksList: React.FC<LinksListProps> = ({
   programs = [],
-  onViewUsage,
-  onEdit,
   initialPageSize = 3,
 }) => {
   const {
@@ -82,8 +78,6 @@ export const ReferrerLinksList: React.FC<LinksListProps> = ({
                 key={link.id}
                 link={link}
                 programs={programs}
-                onViewUsage={onViewUsage}
-                onEdit={onEdit}
                 isExpanded={index === 0}
               />
             ))}

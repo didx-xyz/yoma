@@ -6,16 +6,16 @@ import {
   IoTimeOutline,
   IoPerson,
 } from "react-icons/io5";
-import type {
-  ReferralLinkUsageSearchResults,
+import {
   ReferralLinkUsageStatus,
-  ReferralLinkUsage,
+  type ReferralLinkUsage,
+  type ReferralLinkUsageSearchResults,
 } from "~/api/models/referrals";
 import { searchReferralLinkUsagesAsReferrer } from "~/api/services/referrals";
 import FormMessage, { FormMessageType } from "~/components/Common/FormMessage";
 import Suspense from "~/components/Common/Suspense";
-import NoRowsMessage from "~/components/NoRowsMessage";
 import { PAGE_SIZE } from "~/lib/constants";
+import { getReferralStatsMockMode } from "~/lib/referrals/referralStatsMock";
 import { LoadingInline } from "../Status/LoadingInline";
 
 interface ReferralsListProps {
@@ -46,6 +46,22 @@ export const ReferrerReferralsList: React.FC<ReferralsListProps> = ({
       }),
     enabled: !!linkId,
   });
+
+  const shouldMock =
+    getReferralStatsMockMode() && (usageData?.items?.length ?? 0) === 0;
+
+  const mockAllItems = shouldMock ? buildMockReferralUsages(linkId) : [];
+  const mockItems = shouldMock
+    ? mockAllItems.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
+    : [];
+
+  const displayUsageData: ReferralLinkUsageSearchResults | undefined =
+    shouldMock
+      ? {
+          totalCount: mockAllItems.length,
+          items: mockItems,
+        }
+      : usageData;
 
   const getStatusBadge = useCallback(
     (status: ReferralLinkUsageStatus | string) => {
@@ -78,8 +94,8 @@ export const ReferrerReferralsList: React.FC<ReferralsListProps> = ({
     [],
   );
 
-  const hasUsage = (usageData?.items?.length ?? 0) > 0;
-  const totalCount = usageData?.totalCount ?? 0;
+  const hasUsage = (displayUsageData?.items?.length ?? 0) > 0;
+  const totalCount = displayUsageData?.totalCount ?? 0;
 
   return (
     <Suspense
@@ -94,22 +110,29 @@ export const ReferrerReferralsList: React.FC<ReferralsListProps> = ({
     >
       <div>
         {!hasUsage && (
-          <NoRowsMessage
-            title="No Referrals Yet"
-            description="When someone uses your referral link, their progress will appear here."
-            icon={"👥"}
-          />
+          <FormMessage
+            messageType={FormMessageType.Info}
+            className="mb-2"
+            classNameLabel="text-base-content/60 text-[10px] leading-snug md:text-[11px]"
+          >
+            No Referrals Yet - When someone uses your referral link, their
+            progress will appear here.
+          </FormMessage>
         )}
         {hasUsage && (
           <>
             {/* Info Message */}
-            <FormMessage messageType={FormMessageType.Info} className="mb-2">
+            <FormMessage
+              messageType={FormMessageType.Info}
+              className="mb-2"
+              classNameLabel="text-base-content/60 text-[10px] leading-snug md:text-[11px]"
+            >
               This shows everyone who has used your referral link and their
               progress through the program.
             </FormMessage>
 
-            <div className="border-base-300 bg-base-100 space-y-2 overflow-hidden rounded-lg border">
-              {usageData?.items?.map((usage: ReferralLinkUsage) => (
+            <div className="border-base-300 bg-base-100 space-y-2 overflow-visible rounded-lg border">
+              {displayUsageData?.items?.map((usage: ReferralLinkUsage) => (
                 <div key={usage.id}>
                   <div className="flex min-w-0 items-center gap-2 p-4 hover:bg-gray-50">
                     <div className="font-family-nunito flex min-w-0 grow flex-col justify-center gap-0.5">
@@ -169,4 +192,88 @@ export const ReferrerReferralsList: React.FC<ReferralsListProps> = ({
       </div>
     </Suspense>
   );
+};
+
+const buildMockReferralUsages = (linkId: string): ReferralLinkUsage[] => {
+  const now = new Date();
+  const daysAgo = (days: number) =>
+    new Date(now.getTime() - days * 24 * 60 * 60 * 1000).toISOString();
+
+  const make = (
+    index: number,
+    status: ReferralLinkUsageStatus,
+    userDisplayName: string,
+    userEmail: string | null,
+    claimedDaysAgo: number,
+  ): ReferralLinkUsage => {
+    const claimed = daysAgo(claimedDaysAgo);
+
+    return {
+      id: `${linkId}-mock-${index}`,
+      programId: "mock-program",
+      programName: "Mock Program",
+      programDescription: null,
+      programCompletionWindowInDays: 14,
+      linkId,
+      linkName: "Mock Link",
+      userIdReferrer: "mock-referrer",
+      usernameReferrer: "mock-referrer",
+      userDisplayNameReferrer: "You",
+      userEmailReferrer: null,
+      userEmailConfirmedReferrer: null,
+      userPhoneNumberReferrer: null,
+      userPhoneNumberConfirmedReferrer: null,
+      userId: `mock-user-${index}`,
+      username: `mock.user.${index}`,
+      userDisplayName,
+      userEmail,
+      userEmailConfirmed: null,
+      userPhoneNumber: null,
+      userPhoneNumberConfirmed: null,
+      userYoIDOnboarded: null,
+      statusId: status,
+      status,
+      zltoRewardReferrer: status === "Completed" ? 20 : 0,
+      zltoRewardReferee: status === "Completed" ? 20 : 0,
+      dateClaimed: claimed,
+      dateCompleted:
+        status === "Completed" ? daysAgo(claimedDaysAgo - 1) : null,
+      dateExpired: status === "Expired" ? daysAgo(claimedDaysAgo - 7) : null,
+      dateCreated: claimed,
+      dateModified: claimed,
+    };
+  };
+
+  return [
+    make(
+      1,
+      ReferralLinkUsageStatus.Pending,
+      "Ayesha N.",
+      "ayesha@example.com",
+      2,
+    ),
+    make(
+      2,
+      ReferralLinkUsageStatus.Completed,
+      "Thabo M.",
+      "thabo@example.com",
+      5,
+    ),
+    make(3, ReferralLinkUsageStatus.Pending, "Lerato K.", null, 7),
+    make(
+      4,
+      ReferralLinkUsageStatus.Completed,
+      "Sipho D.",
+      "sipho@example.com",
+      12,
+    ),
+    make(5, ReferralLinkUsageStatus.Expired, "Anonymous User", null, 20),
+    make(
+      6,
+      ReferralLinkUsageStatus.Completed,
+      "Mina R.",
+      "mina@example.com",
+      28,
+    ),
+  ];
 };

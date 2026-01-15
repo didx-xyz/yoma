@@ -6,7 +6,8 @@ import {
 import { getMyReferralAnalytics } from "~/api/services/referrals";
 import Suspense from "~/components/Common/Suspense";
 import { LoadingInline } from "../Status/LoadingInline";
-import { ReferralStatsLarge } from "./ReferralStatsLarge";
+import { withMockReferralStats } from "~/lib/referrals/referralStatsMock";
+import { ReferralStatsSmall } from "./ReferralStatsSmall";
 
 interface ReferrerStatsProps {
   link?: ReferralLink;
@@ -23,7 +24,7 @@ export const ReferrerStats: React.FC<ReferrerStatsProps> = ({ link }) => {
     enabled: !link,
   });
 
-  const stats = link
+  const rawStats = link
     ? {
         totalReferrals: link?.usageTotal || 0,
         completed: link?.completionTotal || 0,
@@ -37,17 +38,20 @@ export const ReferrerStats: React.FC<ReferrerStatsProps> = ({ link }) => {
         zltoEarned: analytics?.zltoRewardTotal || 0,
       };
 
+  const stats = withMockReferralStats(rawStats, link ? "link" : "user");
+
   return (
     <Suspense
       isLoading={isLoading}
       error={error as any}
       loader={<LoadingInline classNameSpinner="h-12 border-orange w-12" />}
     >
-      <ReferralStatsLarge
+      <ReferralStatsSmall
         totalReferrals={stats.totalReferrals}
         completed={stats.completed}
         pending={stats.pending}
         zltoEarned={stats.zltoEarned}
+        showDescriptions
       />
     </Suspense>
   );

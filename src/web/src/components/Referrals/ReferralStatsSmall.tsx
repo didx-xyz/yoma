@@ -1,10 +1,23 @@
-import { IoCheckmarkCircle, IoGift, IoPeople, IoTime } from "react-icons/io5";
+import React from "react";
+import {
+  IoCheckmarkCircle,
+  IoPeople,
+  IoTime,
+  IoWalletOutline,
+} from "react-icons/io5";
+import {
+  getCompletedDesc,
+  getPendingDesc,
+  getTotalReferralsDesc,
+  getZltoDesc,
+} from "./referralStatsDescriptions";
 
 interface ReferralStatsSmallProps {
   totalReferrals: number;
   completed: number;
   pending: number;
   zltoEarned: number;
+  showDescriptions?: boolean;
 }
 
 export const ReferralStatsSmall: React.FC<ReferralStatsSmallProps> = ({
@@ -12,51 +25,89 @@ export const ReferralStatsSmall: React.FC<ReferralStatsSmallProps> = ({
   completed,
   pending,
   zltoEarned,
+  showDescriptions = false,
 }) => {
+  const totalDesc = getTotalReferralsDesc(totalReferrals || 0);
+  const completedDesc = getCompletedDesc(completed || 0);
+  const pendingDesc = getPendingDesc(pending || 0);
+  const zltoDesc = getZltoDesc(zltoEarned || 0);
+
   return (
-    <div className="grid grid-cols-2 gap-4">
-      {/* Total */}
-      <div className="flex min-w-0 items-center gap-2 font-bold text-blue-700">
-        <span className="badge gap-1 truncate bg-blue-50 text-blue-700">
-          <IoPeople />
-          {(totalReferrals || 0).toLocaleString("en-US")}
-        </span>
-        <div className="min-w-0 flex-1 truncate text-[10px] font-normal text-gray-500">
-          Total
+    <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+      <div className="bg-base-200 flex flex-col gap-1 rounded-md px-3 py-2 md:px-4 md:py-3">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <IoPeople className="h-4 w-4 text-blue-600 opacity-70 md:h-5 md:w-5" />
+            <div className="text-base-content/70 text-[10px] md:text-xs">
+              Total
+            </div>
+          </div>
+          <div className="text-base-content text-sm font-semibold md:text-base">
+            {(totalReferrals || 0).toLocaleString("en-US")}
+          </div>
         </div>
+        {showDescriptions ? (
+          <div className="text-base-content/60 line-clamp-2 text-[10px] leading-snug md:text-xs">
+            {totalDesc}
+          </div>
+        ) : null}
       </div>
 
-      {/* Completed */}
-      <div className="flex min-w-0 items-center gap-2 font-bold text-green-700">
-        <span className="badge gap-1 truncate bg-green-50 text-green-700">
-          <IoCheckmarkCircle />
-          {(completed || 0).toLocaleString("en-US")}
-        </span>
-        <div className="min-w-0 flex-1 truncate text-[10px] font-normal text-gray-500">
-          Completed
+      <div className="bg-base-200 flex flex-col gap-1 rounded-md px-3 py-2 md:px-4 md:py-3">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <IoCheckmarkCircle className="text-success h-4 w-4 opacity-70 md:h-5 md:w-5" />
+            <div className="text-base-content/70 text-[10px] md:text-xs">
+              Completed
+            </div>
+          </div>
+          <div className="text-base-content text-sm font-semibold md:text-base">
+            {(completed || 0).toLocaleString("en-US")}
+          </div>
         </div>
+        {showDescriptions ? (
+          <div className="text-base-content/60 line-clamp-2 text-[10px] leading-snug md:text-xs">
+            {completedDesc}
+          </div>
+        ) : null}
       </div>
 
-      {/* Pending */}
-      <div className="flex min-w-0 items-center gap-2 font-bold text-orange-700">
-        <span className="badge gap-1 truncate bg-orange-50 text-orange-700">
-          <IoTime />
-          {(pending || 0).toLocaleString("en-US")}
-        </span>
-        <div className="min-w-0 flex-1 truncate text-[10px] font-normal text-gray-500">
-          Pending
+      <div className="bg-base-200 flex flex-col gap-1 rounded-md px-3 py-2 md:px-4 md:py-3">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <IoTime className="text-warning h-4 w-4 opacity-70 md:h-5 md:w-5" />
+            <div className="text-base-content/70 text-[10px] md:text-xs">
+              Pending
+            </div>
+          </div>
+          <div className="text-base-content text-sm font-semibold md:text-base">
+            {(pending || 0).toLocaleString("en-US")}
+          </div>
         </div>
+        {showDescriptions ? (
+          <div className="text-base-content/60 line-clamp-2 text-[10px] leading-snug md:text-xs">
+            {pendingDesc}
+          </div>
+        ) : null}
       </div>
 
-      {/* ZLTO Earned */}
-      <div className="flex min-w-0 items-center gap-2 font-bold text-yellow-700">
-        <span className="badge gap-1 truncate bg-yellow-50 text-yellow-700">
-          <IoGift />
-          {(zltoEarned || 0).toLocaleString("en-US")}
-        </span>
-        <div className="min-w-0 flex-1 truncate text-[10px] font-normal text-gray-500">
-          ZLTO Earned
+      <div className="bg-base-200 flex flex-col gap-1 rounded-md px-3 py-2 md:px-4 md:py-3">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <IoWalletOutline className="h-4 w-4 text-amber-600 opacity-70 md:h-5 md:w-5" />
+            <div className="text-base-content/70 text-[10px] md:text-xs">
+              ZLTO
+            </div>
+          </div>
+          <div className="text-base-content text-sm font-semibold md:text-base">
+            {(zltoEarned || 0).toLocaleString("en-US")}
+          </div>
         </div>
+        {showDescriptions ? (
+          <div className="text-base-content/60 line-clamp-2 text-[10px] leading-snug md:text-xs">
+            {zltoDesc}
+          </div>
+        ) : null}
       </div>
     </div>
   );

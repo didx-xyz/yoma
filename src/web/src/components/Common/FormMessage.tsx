@@ -23,7 +23,7 @@ interface MessageProps {
 const FormMessage: React.FC<MessageProps> = ({
   messageType,
   className = "",
-  classNameLabel = "",
+  classNameLabel = "text-xs",
   children,
 }) => {
   const iconColorClass = {
@@ -52,9 +52,7 @@ const FormMessage: React.FC<MessageProps> = ({
       className={`flex w-full flex-row rounded-lg border-[1px] p-2 ${borderColorClass} ${className}`}
     >
       <Icon className={`mr-2 h-6 w-6 flex-none ${iconColorClass}`} />
-      <span className={`content-center text-xs ${classNameLabel}`}>
-        {children}
-      </span>
+      <span className={`content-center ${classNameLabel}`}>{children}</span>
     </div>
   );
 };
