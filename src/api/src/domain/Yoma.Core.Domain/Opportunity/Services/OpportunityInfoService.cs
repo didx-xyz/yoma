@@ -141,10 +141,10 @@ namespace Yoma.Core.Domain.Opportunity.Services
         PageSize = filter.PageSize,
         OrderInstructions =
         [
-          new() { OrderBy = e => e.DateStart, SortOrder = Core.FilterSortOrder.Descending },
-          new() { OrderBy = e => e.DateEnd ?? DateTimeOffset.MaxValue, SortOrder = Core.FilterSortOrder.Ascending },
-          new() { OrderBy = e => e.Title, SortOrder = Core.FilterSortOrder.Ascending },
-          new() { OrderBy = e => e.Id, SortOrder = Core.FilterSortOrder.Ascending } //ensure deterministic sorting / consistent pagination results
+          new() { OrderBy = e => e.DateStart, SortOrder = FilterSortOrder.Descending },
+          new() { OrderBy = e => e.DateEnd ?? DateTimeOffset.MaxValue, SortOrder = FilterSortOrder.Ascending },
+          new() { OrderBy = e => e.Title, SortOrder = FilterSortOrder.Ascending },
+          new() { OrderBy = e => e.Id, SortOrder = FilterSortOrder.Ascending } //ensure deterministic sorting / consistent pagination results
         ]
       };
 
@@ -196,7 +196,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       {
         //schedule the request for processing and return
         var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
-        await _downloadService.Schedule(user.Id, Core.DownloadScheduleType.Opportunities, filter);
+        await _downloadService.Schedule(user.Id, DownloadScheduleType.Opportunities, filter);
         return (true, null, null);
       }
 
