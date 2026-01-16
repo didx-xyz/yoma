@@ -74,7 +74,7 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
           OrderDisplay = task.OrderDisplay,
           DateCreated = task.DateCreated,
           DateModified = task.DateModified,
-          ProgramCountries = entity.Pathway .Program.Countries == null ? null : entity.Pathway.Program.Countries.Select(pc => new Domain.Lookups.Models.Country
+          ProgramCountries = entity.Pathway.Program.Countries == null ? null : entity.Pathway.Program.Countries.Select(pc => new Domain.Lookups.Models.Country
           {
             Id = pc.Country.Id,
             Name = pc.Country.Name,

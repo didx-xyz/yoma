@@ -21,7 +21,7 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
 
     public IQueryable<ProgramCountry> Query()
     {
-      return _context.ReferralProgramCountries.Select(entity => new ProgramCountry 
+      return _context.ReferralProgramCountries.Select(entity => new ProgramCountry
       {
         Id = entity.Id,
         ProgramId = entity.ProgramId,

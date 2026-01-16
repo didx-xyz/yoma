@@ -47,9 +47,9 @@ namespace Yoma.Core.Domain.Referral.Models
     {
       get
       {
-       var result = Completable(out var reason);
+        var result = Completable(out var reason);
         NonCompletableReason = reason;
-        return result;  
+        return result;
       }
     }
 

@@ -8,7 +8,7 @@ namespace Yoma.Core.Domain.Referral.Models
 
     public Guid CountryId { get; set; }
 
-    public string CountryName { get; set; } = null!;  
+    public string CountryName { get; set; } = null!;
 
     public DateTimeOffset DateCreated { get; set; }
   }

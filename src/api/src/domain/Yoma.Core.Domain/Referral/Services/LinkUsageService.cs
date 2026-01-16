@@ -43,7 +43,7 @@ namespace Yoma.Core.Domain.Referral.Services
     private readonly IExecutionStrategyService _executionStrategyService;
     private readonly INotificationDeliveryService _notificationDeliveryService;
     private readonly INotificationURLFactory _notificationURLFactory;
-    private readonly ICountryService _countryService; 
+    private readonly ICountryService _countryService;
 
     private readonly ReferralLinkUsageSearchFilterValidator _referralLinkUsageSearchFilterValidator;
 

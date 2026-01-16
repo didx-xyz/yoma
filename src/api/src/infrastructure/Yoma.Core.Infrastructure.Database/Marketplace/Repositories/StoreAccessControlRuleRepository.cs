@@ -78,7 +78,7 @@ namespace Yoma.Core.Infrastructure.Database.Marketplace.Repositories
               CodeAlpha2 = oc.Country.CodeAlpha2,
               CodeAlpha3 = oc.Country.CodeAlpha3,
               CodeNumeric = oc.Country.CodeNumeric
-            }).OrderBy(oc => oc.Name).ToList() 
+            }).OrderBy(oc => oc.Name).ToList()
           }).OrderBy(o => o.Title).ToList() : null,
       });
 

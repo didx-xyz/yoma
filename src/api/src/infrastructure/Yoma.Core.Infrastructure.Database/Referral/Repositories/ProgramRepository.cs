@@ -122,7 +122,7 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
                 CodeAlpha2 = pc.Country.CodeAlpha2,
                 CodeAlpha3 = pc.Country.CodeAlpha3,
                 CodeNumeric = pc.Country.CodeNumeric
-              }).OrderBy(pc => pc.Name).ToList(), 
+              }).OrderBy(pc => pc.Name).ToList(),
             }).OrderBy(t => t.OrderDisplay).ToList()
           }).OrderBy(s => s.OrderDisplay).ToList()
         } : null,

@@ -44,7 +44,7 @@ namespace Yoma.Core.Domain.Referral.Services
       var isAuthenticated = HttpContextAccessorHelper.UserContextAvailable(_httpContextAccessor);
       var isAdmin = HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor);
       var user = isAuthenticated ? _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false) : null;
-      countries = ProgramCountryPolicy.ResolveAvailableCountriesForProgramSearch(countryIdWorldwide, isAuthenticated, isAdmin, user?.CountryId, countries); 
+      countries = ProgramCountryPolicy.ResolveAvailableCountriesForProgramSearch(countryIdWorldwide, isAuthenticated, isAdmin, user?.CountryId, countries);
 
       //active and started (published state active)
       var searchResults = _programService.Search(new ProgramSearchFilterAdmin
