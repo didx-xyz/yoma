@@ -8,7 +8,9 @@ using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Entity.Interfaces;
+using Yoma.Core.Domain.Lookups.Interfaces;
 using Yoma.Core.Domain.Referral.Extensions;
+using Yoma.Core.Domain.Referral.Helpers;
 using Yoma.Core.Domain.Referral.Interfaces;
 using Yoma.Core.Domain.Referral.Interfaces.Lookups;
 using Yoma.Core.Domain.Referral.Models;
@@ -32,6 +34,7 @@ namespace Yoma.Core.Domain.Referral.Services
     private readonly IProgramInfoService _programInfoService;
     private readonly ILinkStatusService _linkStatusService;
     private readonly ILinkUsageStatusService _linkUsageStatusService;
+    private readonly ICountryService _countryService;
 
     private readonly ReferralLinkSearchFilterValidator _referralLinkSearchFilterValidator;
     private readonly ReferralLinkRequestCreateValidator _referralLinkRequestCreateValidator;
@@ -57,6 +60,7 @@ namespace Yoma.Core.Domain.Referral.Services
       IProgramInfoService programInfoService,
       ILinkStatusService linkStatusService,
       ILinkUsageStatusService linkUsageStatusService,
+      ICountryService countryService,
 
       ReferralLinkSearchFilterValidator referralLinkSearchFilterValidator,
       ReferralLinkRequestCreateValidator referralLinkRequestCreateValidator,
@@ -74,6 +78,7 @@ namespace Yoma.Core.Domain.Referral.Services
       _programInfoService = programInfoService ?? throw new ArgumentNullException(nameof(programInfoService));
       _linkStatusService = linkStatusService ?? throw new ArgumentNullException(nameof(linkStatusService));
       _linkUsageStatusService = linkUsageStatusService ?? throw new ArgumentNullException(nameof(linkUsageStatusService));
+      _countryService = countryService ?? throw new ArgumentNullException(nameof(countryService));
 
       _referralLinkSearchFilterValidator = referralLinkSearchFilterValidator ?? throw new ArgumentNullException(nameof(referralLinkSearchFilterValidator));
       _referralLinkRequestCreateValidator = referralLinkRequestCreateValidator ?? throw new ArgumentNullException(nameof(referralLinkRequestCreateValidator));
@@ -240,6 +245,11 @@ namespace Yoma.Core.Domain.Referral.Services
         throw new ValidationException($"Referral program '{program.Name}' has reached its completion limit");
 
       var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+
+      // Country segregation: program must be accessible to the current user
+      var worldwideId = _countryService.GetByCodeAlpha2(Domain.Core.Country.Worldwide.ToDescription()).Id;
+      if (!ProgramCountryPolicy.ProgramAccessibleToUser(worldwideId, user?.CountryId, program.Countries))
+        throw new ValidationException($"Referral program '{program.Name}' is not available in your country");
 
       var statusLinkActive = _linkStatusService.GetByName(ReferralLinkStatus.Active.ToString());
 

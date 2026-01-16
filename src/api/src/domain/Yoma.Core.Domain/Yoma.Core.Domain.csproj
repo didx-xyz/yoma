@@ -7,12 +7,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Referral\Helpers\**" />
-    <EmbeddedResource Remove="Referral\Helpers\**" />
-    <None Remove="Referral\Helpers\**" />
-  </ItemGroup>
-
-  <ItemGroup>
     <None Remove="Entity\SampleBlobs\sample.pdf" />
     <None Remove="Entity\SampleBlobs\sample_logo.png" />
     <None Remove="Entity\SampleBlobs\sample_photo.png" />

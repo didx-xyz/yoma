@@ -7,6 +7,7 @@ using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Entity.Interfaces;
 using Yoma.Core.Domain.Lookups.Interfaces;
 using Yoma.Core.Domain.Referral.Extensions;
+using Yoma.Core.Domain.Referral.Helpers;
 using Yoma.Core.Domain.Referral.Interfaces;
 using Yoma.Core.Domain.Referral.Models;
 
@@ -43,13 +44,7 @@ namespace Yoma.Core.Domain.Referral.Services
       var isAuthenticated = HttpContextAccessorHelper.UserContextAvailable(_httpContextAccessor);
       var isAdmin = HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor);
       var user = isAuthenticated ? _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false) : null;
-
-      // Authenticated users (non-admin): auto-filter by user country (+ WW) when available
-      if (isAuthenticated && !isAdmin && user?.CountryId.HasValue == true)
-         countries = [user.CountryId.Value, countryIdWorldwide];
-      // Otherwise: default to WW if no countries provided
-      else if (countries == null || countries.Count == 0)
-        countries = [countryIdWorldwide];
+      countries = ProgramCountryPolicy.ResolveAvailableCountriesForProgramSearch(countryIdWorldwide, isAuthenticated, isAdmin, user?.CountryId, countries); 
 
       //active and started (published state active)
       var searchResults = _programService.Search(new ProgramSearchFilterAdmin
@@ -73,9 +68,8 @@ namespace Yoma.Core.Domain.Referral.Services
 
       // Data integrity: default must always be world-wide (implicit null/empty or explicit Worldwide)
       var countryIdWorldwide = _countryService.GetByCodeAlpha2(Country.Worldwide.ToDescription()).Id;
-      if (result.Countries != null && result.Countries.Count != 0 && !result.Countries.Any(c => c.Id == countryIdWorldwide))
-        throw new DataInconsistencyException(
-          $"Default program '{result.Name}' is not available world-wide");
+      if (!ProgramCountryPolicy.DefaultProgramIsWorldwide(countryIdWorldwide, result.Countries))
+        throw new DataInconsistencyException($"Default program '{result.Name}' is not available world-wide");
 
       return result.ToInfo();
     }
@@ -97,15 +91,10 @@ namespace Yoma.Core.Domain.Referral.Services
       else if (!isAdmin)
       {
         var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
-        if (user?.CountryId.HasValue == true)
-        {
-          var countryIdWorldwide = _countryService.GetByCodeAlpha2(Country.Worldwide.ToDescription()).Id;
-          var programCountries = result.Countries;
+        var countryIdWorldwide = _countryService.GetByCodeAlpha2(Country.Worldwide.ToDescription()).Id;
 
-          if (result.Countries != null && result.Countries.Count != 0 &&
-            !result.Countries.Any(c => c.Id == user.CountryId.Value || c.Id == countryIdWorldwide))
-            throw new EntityNotFoundException("Program not found");
-        }
+        if (!ProgramCountryPolicy.ProgramAccessibleToUser(countryIdWorldwide, user?.CountryId, result.Countries))
+          throw new EntityNotFoundException("Program not found");
       }
 
       return result.ToInfo();
@@ -128,15 +117,10 @@ namespace Yoma.Core.Domain.Referral.Services
       else if (!isAdmin)
       {
         var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
-        if (user?.CountryId.HasValue == true)
-        {
-          var countryIdWorldwide = _countryService.GetByCodeAlpha2(Country.Worldwide.ToDescription()).Id;
-          var programCountries = result.Countries;
+        var countryIdWorldwide = _countryService.GetByCodeAlpha2(Country.Worldwide.ToDescription()).Id;
 
-          if (result.Countries != null && result.Countries.Count != 0 &&
-            !result.Countries.Any(c => c.Id == user.CountryId.Value || c.Id == countryIdWorldwide))
-            throw new EntityNotFoundException("Program not found");
-        }
+        if (!ProgramCountryPolicy.ProgramAccessibleToUser(countryIdWorldwide, user?.CountryId, result.Countries))
+          throw new EntityNotFoundException("Program not found");
       }
 
       return result.ToInfo();
@@ -150,14 +134,7 @@ namespace Yoma.Core.Domain.Referral.Services
       var isAuthenticated = HttpContextAccessorHelper.UserContextAvailable(_httpContextAccessor);
       var isAdmin = HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor);
       var user = isAuthenticated ? _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false) : null;
-
-      var countries = filter.Countries?.Distinct().ToList();
-      // Authenticated users (non-admin): auto-filter by user country (+ WW) when available
-      if (isAuthenticated && !isAdmin && user?.CountryId.HasValue == true)
-        countries = [user.CountryId.Value, countryIdWorldwide];
-      // Otherwise: default to WW if no countries provided
-      else if (countries == null || countries.Count == 0)
-        countries = [countryIdWorldwide];
+      var countries = ProgramCountryPolicy.ResolveAvailableCountriesForProgramSearch(countryIdWorldwide, isAuthenticated, isAdmin, user?.CountryId, filter.Countries);
 
       var filterInternal = new ProgramSearchFilterAdmin
       {

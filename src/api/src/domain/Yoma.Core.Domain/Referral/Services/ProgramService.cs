@@ -13,6 +13,7 @@ using Yoma.Core.Domain.Entity.Interfaces;
 using Yoma.Core.Domain.Lookups.Interfaces;
 using Yoma.Core.Domain.Opportunity.Interfaces;
 using Yoma.Core.Domain.Opportunity.Models;
+using Yoma.Core.Domain.Referral.Helpers;
 using Yoma.Core.Domain.Referral.Interfaces;
 using Yoma.Core.Domain.Referral.Interfaces.Lookups;
 using Yoma.Core.Domain.Referral.Models;
@@ -1042,7 +1043,7 @@ namespace Yoma.Core.Domain.Referral.Services
 
         // default must be world-wide: implicit (null) or explicit (contains worldwide)
         var countryIdWorldwide = _countryService.GetByCodeAlpha2(Country.Worldwide.ToDescription()).Id;
-        if (program.Countries != null && !program.Countries.Any(o => o.Id == countryIdWorldwide))
+        if (!ProgramCountryPolicy.DefaultProgramIsWorldwide(countryIdWorldwide, program.Countries))
           throw new ValidationException($"A default {nameof(Program)} must be available world-wide");
 
         if (currentDefault != null)
