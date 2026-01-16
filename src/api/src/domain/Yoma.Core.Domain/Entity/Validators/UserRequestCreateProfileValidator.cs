@@ -56,10 +56,10 @@ namespace Yoma.Core.Domain.Entity.Validators
       codeAlpha2 = codeAlpha2?.Trim();
       if (string.IsNullOrEmpty(codeAlpha2)) return true;
 
-      var country = _countryService.GetByCodeAplha2OrNull(codeAlpha2);
+      var country = _countryService.GetByCodeAlpha2OrNull(codeAlpha2);
       if (country == null) return false;
 
-      var countryIdWorldwide = _countryService.GetByCodeAplha2(Country.Worldwide.ToDescription());
+      var countryIdWorldwide = _countryService.GetByCodeAlpha2(Country.Worldwide.ToDescription());
       return country.Id != countryIdWorldwide.Id;
     }
     #endregion

@@ -1,3 +1,5 @@
+using Newtonsoft.Json;
+
 namespace Yoma.Core.Domain.Referral.Models
 {
   public class ProgramPathwayTaskInfo
@@ -16,5 +18,8 @@ namespace Yoma.Core.Domain.Referral.Models
 
 
     public string? NonCompletableReason { get; set; }
+
+    [JsonIgnore]
+    public List<Domain.Lookups.Models.Country>? ProgramCountries { get; set; }
   }
 }

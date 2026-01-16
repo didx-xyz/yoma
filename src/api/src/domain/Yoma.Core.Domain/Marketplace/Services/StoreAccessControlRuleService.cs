@@ -240,7 +240,7 @@ namespace Yoma.Core.Domain.Marketplace.Services
       if (!request.RequestValidationHandled) _storeAccessControlRuleRequestValidatorCreate.ValidateAndThrow(request);
 
       var organization = _organizationService.GetById(request.OrganizationId, false, false, false);
-      var country = _countryService.GetByCodeAplha2(request.StoreCountryCodeAlpha2);
+      var country = _countryService.GetByCodeAlpha2(request.StoreCountryCodeAlpha2);
 
       ValidateRuleOrganizationAndName(request, organization, null);
       ValidateRuleDuplicatesAcrossOrganizations(request, null);
@@ -269,7 +269,7 @@ namespace Yoma.Core.Domain.Marketplace.Services
       if (!request.RequestValidationHandled) await _storeAccessControlRuleRequestValidatorCreate.ValidateAndThrowAsync(request);
 
       var organization = _organizationService.GetById(request.OrganizationId, false, false, false);
-      var country = _countryService.GetByCodeAplha2(request.StoreCountryCodeAlpha2);
+      var country = _countryService.GetByCodeAlpha2(request.StoreCountryCodeAlpha2);
       var gender = request.GenderId.HasValue ? _genderService.GetById(request.GenderId.Value) : null;
       var status = request.PostAsActive ? StoreAccessControlRuleStatus.Active : StoreAccessControlRuleStatus.Inactive;
 
@@ -325,7 +325,7 @@ namespace Yoma.Core.Domain.Marketplace.Services
 
       var ruleExisting = GetById(request.Id, true);
       var organization = _organizationService.GetById(request.OrganizationId, false, false, false);
-      var country = _countryService.GetByCodeAplha2(request.StoreCountryCodeAlpha2);
+      var country = _countryService.GetByCodeAlpha2(request.StoreCountryCodeAlpha2);
 
       ValidateRuleOrganizationAndName(request, organization, ruleExisting.Id);
       ValidateRuleDuplicatesAcrossOrganizations(request, ruleExisting.Id);
@@ -355,7 +355,7 @@ namespace Yoma.Core.Domain.Marketplace.Services
 
       var result = GetById(request.Id, true);
       var organization = _organizationService.GetById(request.OrganizationId, false, false, false);
-      var country = _countryService.GetByCodeAplha2(request.StoreCountryCodeAlpha2);
+      var country = _countryService.GetByCodeAlpha2(request.StoreCountryCodeAlpha2);
       var gender = request.GenderId.HasValue ? _genderService.GetById(request.GenderId.Value) : null;
 
       result.Name = request.Name;

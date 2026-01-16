@@ -1,5 +1,6 @@
 using Newtonsoft.Json;
 using Yoma.Core.Domain.Entity;
+using Yoma.Core.Domain.Lookups.Models;
 using Yoma.Core.Domain.Opportunity.Extensions;
 
 namespace Yoma.Core.Domain.Opportunity.Models
@@ -41,5 +42,8 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
     [JsonIgnore]
     public string? NonCompletableReason { get; private set; }
+
+    [JsonIgnore]
+    public List<Country>? Countries { get; set; }
   }
 }

@@ -49,13 +49,13 @@ namespace Yoma.Core.Domain.Lookups.Services
       return result;
     }
 
-    public Language GetByCodeAplha2(string code)
+    public Language GetByCodeAlpha2(string code)
     {
-      var result = GetByCodeAplha2OrNull(code) ?? throw new ArgumentException($"{nameof(Language)} with code '{code}' does not exists", nameof(code));
+      var result = GetByCodeAlpha2OrNull(code) ?? throw new ArgumentException($"{nameof(Language)} with code '{code}' does not exists", nameof(code));
       return result;
     }
 
-    public Language? GetByCodeAplha2OrNull(string code)
+    public Language? GetByCodeAlpha2OrNull(string code)
     {
       if (string.IsNullOrWhiteSpace(code))
         throw new ArgumentNullException(nameof(code));

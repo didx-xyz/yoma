@@ -44,13 +44,13 @@ namespace Yoma.Core.Domain.Lookups.Services
       return List().SingleOrDefault(o => string.Equals(o.Name, name, StringComparison.InvariantCultureIgnoreCase));
     }
 
-    public Models.Country GetByCodeAplha2(string code)
+    public Models.Country GetByCodeAlpha2(string code)
     {
-      var result = GetByCodeAplha2OrNull(code) ?? throw new ArgumentException($"{nameof(Country)} with code '{code}' does not exists", nameof(code));
+      var result = GetByCodeAlpha2OrNull(code) ?? throw new ArgumentException($"{nameof(Country)} with code '{code}' does not exists", nameof(code));
       return result;
     }
 
-    public Models.Country? GetByCodeAplha2OrNull(string code)
+    public Models.Country? GetByCodeAlpha2OrNull(string code)
     {
       if (string.IsNullOrWhiteSpace(code))
         throw new ArgumentNullException(nameof(code));

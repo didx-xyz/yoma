@@ -4,7 +4,7 @@ namespace Yoma.Core.Domain.Referral.Interfaces
 {
   public interface IProgramInfoService
   {
-    bool Available();
+    bool Available(List<Guid>? countries);
 
     ProgramInfo GetDefault();
 

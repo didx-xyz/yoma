@@ -6,9 +6,9 @@ namespace Yoma.Core.Domain.Lookups.Interfaces
 
     Models.Country? GetByNameOrNull(string name);
 
-    Models.Country GetByCodeAplha2(string name);
+    Models.Country GetByCodeAlpha2(string name);
 
-    Models.Country? GetByCodeAplha2OrNull(string name);
+    Models.Country? GetByCodeAlpha2OrNull(string name);
 
     Models.Country GetById(Guid id);
 

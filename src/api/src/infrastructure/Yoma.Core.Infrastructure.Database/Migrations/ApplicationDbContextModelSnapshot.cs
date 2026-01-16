@@ -2106,6 +2106,31 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.ToTable("Program", "Referral");
           });
 
+      modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Referral.Entities.ProgramCountry", b =>
+          {
+            b.Property<Guid>("Id")
+                      .ValueGeneratedOnAdd()
+                      .HasColumnType("uuid");
+
+            b.Property<Guid>("CountryId")
+                      .HasColumnType("uuid");
+
+            b.Property<DateTimeOffset>("DateCreated")
+                      .HasColumnType("timestamp with time zone");
+
+            b.Property<Guid>("ProgramId")
+                      .HasColumnType("uuid");
+
+            b.HasKey("Id");
+
+            b.HasIndex("CountryId");
+
+            b.HasIndex("ProgramId", "CountryId")
+                      .IsUnique();
+
+            b.ToTable("ProgramCountries", "Referral");
+          });
+
       modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Referral.Entities.ProgramPathway", b =>
           {
             b.Property<Guid>("Id")
@@ -3358,6 +3383,25 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.Navigation("Status");
           });
 
+      modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Referral.Entities.ProgramCountry", b =>
+          {
+            b.HasOne("Yoma.Core.Infrastructure.Database.Lookups.Entities.Country", "Country")
+                      .WithMany()
+                      .HasForeignKey("CountryId")
+                      .OnDelete(DeleteBehavior.Cascade)
+                      .IsRequired();
+
+            b.HasOne("Yoma.Core.Infrastructure.Database.Referral.Entities.Program", "Program")
+                      .WithMany("Countries")
+                      .HasForeignKey("ProgramId")
+                      .OnDelete(DeleteBehavior.Cascade)
+                      .IsRequired();
+
+            b.Navigation("Country");
+
+            b.Navigation("Program");
+          });
+
       modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Referral.Entities.ProgramPathway", b =>
           {
             b.HasOne("Yoma.Core.Infrastructure.Database.Referral.Entities.Program", "Program")
@@ -3588,6 +3632,8 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
       modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Referral.Entities.Program", b =>
           {
+            b.Navigation("Countries");
+
             b.Navigation("Pathway");
           });
 

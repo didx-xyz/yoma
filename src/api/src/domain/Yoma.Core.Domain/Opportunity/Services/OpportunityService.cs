@@ -543,7 +543,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       var statusActiveId = _opportunityStatusService.GetByName(Status.Active.ToString()).Id;
       var statusExpiredId = _opportunityStatusService.GetByName(Status.Expired.ToString()).Id;
 
-      var languageSiteId = string.IsNullOrEmpty(languageCodeAlpha2Site) ? null : (Guid?)_languageService.GetByCodeAplha2(languageCodeAlpha2Site).Id;
+      var languageSiteId = string.IsNullOrEmpty(languageCodeAlpha2Site) ? null : (Guid?)_languageService.GetByCodeAlpha2(languageCodeAlpha2Site).Id;
 
       var predicate = PredicateBuilder.False<OpportunityLanguage>();
       foreach (var state in publishedStates)
@@ -1892,12 +1892,12 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       var languages = item.Languages?
         .Where(code => !string.IsNullOrWhiteSpace(code))
-        .Select(code => _languageService.GetByCodeAplha2(code))
+        .Select(code => _languageService.GetByCodeAlpha2(code))
         .ToList() ?? [];
 
       var countries = item.Countries?
        .Where(code => !string.IsNullOrWhiteSpace(code))
-       .Select(code => _countryService.GetByCodeAplha2(code))
+       .Select(code => _countryService.GetByCodeAlpha2(code))
        .ToList() ?? [];
 
       var difficulty = _opportunityDifficultyService.GetByName(item.Difficulty);

@@ -44,7 +44,7 @@ namespace Yoma.Core.Domain.Entity.Validators
       var country = _countryService.GetByIdOrNull(id.Value);
       if (country == null) return false;
 
-      var countryIdWorldwide = _countryService.GetByCodeAplha2(Country.Worldwide.ToDescription());
+      var countryIdWorldwide = _countryService.GetByCodeAlpha2(Country.Worldwide.ToDescription());
       return country.Id != countryIdWorldwide.Id;
     }
     #endregion

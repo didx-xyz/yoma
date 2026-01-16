@@ -136,7 +136,7 @@ namespace Yoma.Core.Test.Notification
 
     private async Task SendOpportunityPublishedNotification_WhatsAppOnly(Opportunity opportunity)
     {
-      var countryWorldwideId = _countryService.GetByCodeAplha2(Country.Worldwide.ToDescription()).Id;
+      var countryWorldwideId = _countryService.GetByCodeAlpha2(Country.Worldwide.ToDescription()).Id;
 
       var data = new NotificationOpportunityPublished
       {

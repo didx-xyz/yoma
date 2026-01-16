@@ -92,7 +92,7 @@ namespace Yoma.Core.Domain.Marketplace.Services
 
     public async Task<List<StoreCategory>> ListStoreCategories(string countryCodeAlpha2)
     {
-      var country = _countryService.GetByCodeAplha2(countryCodeAlpha2);
+      var country = _countryService.GetByCodeAlpha2(countryCodeAlpha2);
 
       return await _marketplaceProviderClient.ListStoreCategories(country.CodeAlpha2);
     }

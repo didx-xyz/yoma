@@ -1,4 +1,5 @@
 using Newtonsoft.Json;
+using Yoma.Core.Domain.Lookups.Models;
 
 namespace Yoma.Core.Domain.Referral.Models
 {
@@ -69,5 +70,7 @@ namespace Yoma.Core.Domain.Referral.Models
     public DateTimeOffset? DateEnd { get; set; }
 
     public ProgramPathwayInfo? Pathway { get; set; }
+
+    public List<Country>? Countries { get; set; }
   }
 }

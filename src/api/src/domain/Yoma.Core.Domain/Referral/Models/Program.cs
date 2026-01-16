@@ -1,5 +1,6 @@
 using Newtonsoft.Json;
 using Yoma.Core.Domain.BlobProvider;
+using Yoma.Core.Domain.Lookups.Models;
 
 namespace Yoma.Core.Domain.Referral.Models
 {
@@ -9,6 +10,7 @@ namespace Yoma.Core.Domain.Referral.Models
   /// NOTES
   /// • Scope:
   ///   – Programs are Yoma-wide (no per-organization programs).
+  ///   – Only programs available world-wide may be set as the default.
   ///
   /// • Claims & caps:
   ///   – Per-referrer and program-wide completion caps are enforced at claim time:
@@ -143,5 +145,7 @@ namespace Yoma.Core.Domain.Referral.Models
     public Guid ModifiedByUserId { get; set; }
 
     public ProgramPathway? Pathway { get; set; }
+
+    public List<Country>? Countries { get; set; }
   }
 }

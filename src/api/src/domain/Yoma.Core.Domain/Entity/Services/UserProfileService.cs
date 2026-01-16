@@ -147,7 +147,7 @@ namespace Yoma.Core.Domain.Entity.Services
       if (existingByPhone != null)
         throw new ValidationException($"{nameof(User)} with the specified phone number '{request.PhoneNumber}' already exists");
 
-      var countryId = string.IsNullOrEmpty(request.CountryCodeAlpha2) ? (Guid?)null : _countryService.GetByCodeAplha2(request.CountryCodeAlpha2).Id;
+      var countryId = string.IsNullOrEmpty(request.CountryCodeAlpha2) ? (Guid?)null : _countryService.GetByCodeAlpha2(request.CountryCodeAlpha2).Id;
 
       //neither email or phone number is flagged as confirmed; both will be confirmed by keycloak and flagged as such on 1st login
       var result = new User

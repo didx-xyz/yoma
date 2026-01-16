@@ -55,6 +55,7 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
       item.Id = entity.Id;
       return item;
     }
+
     public Task<OpportunityCountry> Update(OpportunityCountry item)
     {
       throw new NotImplementedException();

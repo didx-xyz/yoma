@@ -11,6 +11,7 @@ using Yoma.Core.Domain.Core.Models.Lookups;
 using Yoma.Core.Domain.Entity.Models;
 using Yoma.Core.Domain.Lookups.Models;
 using Yoma.Core.Domain.Opportunity.Models;
+using Yoma.Core.Domain.Referral.Models;
 using Yoma.Core.Domain.SSI.Models;
 using Yoma.Core.Domain.SSI.Models.Lookups;
 using Yoma.Core.Infrastructure.Database.ActionLink.Repositories;
@@ -166,13 +167,14 @@ namespace Yoma.Core.Infrastructure.Database
       services.AddScoped<IRepository<Domain.Referral.Models.Lookups.ProgramStatus>, ProgramStatusRepository>();
       #endregion Lookups
 
-      services.AddScoped<IRepository<Domain.Referral.Models.Block>, BlockRepository>();
-      services.AddScoped<IRepositoryBatchedValueContainsWithNavigation<Domain.Referral.Models.ReferralLink>, Referral.Repositories.LinkRepository>();
-      services.AddScoped<IRepositoryBatched<Domain.Referral.Models.ReferralLinkUsage>, LinkUsageRepository>();
-      services.AddScoped<IRepositoryWithNavigation<Domain.Referral.Models.ProgramPathway>, ProgramPathwayRepository>();
-      services.AddScoped<IRepositoryWithNavigation<Domain.Referral.Models.ProgramPathwayStep>, ProgramPathwayStepRepository>();
-      services.AddScoped<IRepository<Domain.Referral.Models.ProgramPathwayTask>, ProgramPathwayTaskRepository>();
-      services.AddScoped<IRepositoryBatchedValueContainsWithNavigation<Domain.Referral.Models.Program>, ProgramRepository>();
+      services.AddScoped<IRepository<Block>, BlockRepository>();
+      services.AddScoped<IRepositoryBatchedValueContainsWithNavigation<ReferralLink>, Referral.Repositories.LinkRepository>();
+      services.AddScoped<IRepositoryBatched<ReferralLinkUsage>, LinkUsageRepository>();
+      services.AddScoped<IRepositoryWithNavigation<ProgramPathway>, ProgramPathwayRepository>();
+      services.AddScoped<IRepositoryWithNavigation<ProgramPathwayStep>, ProgramPathwayStepRepository>();
+      services.AddScoped<IRepository<ProgramPathwayTask>, ProgramPathwayTaskRepository>();
+      services.AddScoped<IRepositoryBatchedValueContainsWithNavigation<Program>, ProgramRepository>();
+      services.AddScoped<IRepository<ProgramCountry>, ProgramCountryRepository>();
       #endregion Referral
 
       #region Reward

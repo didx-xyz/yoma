@@ -1,4 +1,5 @@
 using FluentValidation;
+using Yoma.Core.Domain.Lookups.Interfaces;
 using Yoma.Core.Domain.Referral.Models;
 
 namespace Yoma.Core.Domain.Referral.Validators
@@ -6,9 +7,15 @@ namespace Yoma.Core.Domain.Referral.Validators
   public abstract class ProgramRequestValidatorBase<TRequest> : AbstractValidator<TRequest>
         where TRequest : ProgramRequestBase
   {
+    #region Class Variables
+    private readonly ICountryService _countryService;
+    #endregion
+
     #region Constructor
-    public ProgramRequestValidatorBase()
+    public ProgramRequestValidatorBase(ICountryService countryService)
     {
+      _countryService = countryService;
+
       // ---------------------------------------
       // Program-level fields
       // ---------------------------------------
@@ -121,6 +128,10 @@ namespace Yoma.Core.Domain.Referral.Validators
           .GreaterThanOrEqualTo(m => m.DateStart)
           .When(m => m.DateEnd.HasValue)
           .WithMessage("End Date cannot be earlier than the Start Date.");
+
+      RuleFor(x => x.Countries)
+          .Must(x => x == null || (x.Count > 0 && x.All(id => id != Guid.Empty && CountryExists(id))))
+          .WithMessage("Countries must contain at least one valid country if provided.");
 
       // Single default enforced by service
 
@@ -238,12 +249,20 @@ namespace Yoma.Core.Domain.Referral.Validators
       });
     }
     #endregion
+
+    #region Private Members
+    private bool CountryExists(Guid id)
+    {
+      if (id == Guid.Empty) return false;
+      return _countryService.GetByIdOrNull(id) != null;
+    }
+    #endregion
   }
 
   public class ProgramRequestValidatorCreate : ProgramRequestValidatorBase<ProgramRequestCreate>
   {
     #region Constructor
-    public ProgramRequestValidatorCreate()
+    public ProgramRequestValidatorCreate(ICountryService countryService) : base(countryService)
     {
       // Pathway and child entities must not include Ids during creation
       When(x => x.Pathway != null, () =>
@@ -275,7 +294,7 @@ namespace Yoma.Core.Domain.Referral.Validators
   public class ProgramRequestValidatorUpdate : ProgramRequestValidatorBase<ProgramRequestUpdate>
   {
     #region Constructor
-    public ProgramRequestValidatorUpdate()
+    public ProgramRequestValidatorUpdate(ICountryService countryService) : base(countryService)
     {
       RuleFor(x => x.Id).NotEmpty().WithMessage("Id is required."); //existence validated by service
 
