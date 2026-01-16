@@ -17,7 +17,7 @@ export const Footer: React.FC<{
       {/* LINKS */}
       <div className="flex flex-col gap-2 text-xs md:text-sm">
         <div className="flex flex-wrap gap-1">
-          <span className="notranslate">© 2021 Yoma.</span>
+          <span className="notranslate">© 2026 Yoma.</span>
           <span>All Rights Reserved</span>
         </div>
         <div className={`flex flex-row gap-2 ${forceSmall ? "" : "md:gap-6"}`}>

@@ -288,7 +288,7 @@ const OrganisationCreate: NextPageWithLayout<{
       {isLoading && <Loading />}
 
       {/* CONTENT */}
-      <div className="flex items-center justify-center">
+      <div className="flex items-center justify-center text-black">
         <div className="mt-20 flex w-full max-w-xl flex-col rounded-lg bg-white p-4 md:p-12">
           {step == 1 && (
             <>
