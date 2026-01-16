@@ -117,7 +117,11 @@ export const ReferrerProgramsList: React.FC<ProgramsListProps> = ({
                   ) : null
                 }
               >
-                <ProgramBadges program={program} showToolTips={false} />
+                <ProgramBadges
+                  program={program}
+                  showToolTips={false}
+                  showBadges={{ requirements: false, limit: false }}
+                />
               </ProgramRow>
             ))}
 

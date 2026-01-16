@@ -35,10 +35,6 @@ import { currentLanguageAtom, userProfileAtom } from "~/lib/store";
 import { authOptions } from "~/server/auth";
 import { type NextPageWithLayout } from "../../_app";
 import { ReferrerProgramsList } from "~/components/Referrals/ReferrerProgramsList";
-import {
-  getReferralStatsMockMode,
-  setReferralStatsMockMode,
-} from "~/lib/referrals/referralStatsMock";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
@@ -106,8 +102,6 @@ const ReferralsDashboard: NextPageWithLayout<{
   const [selectedLinkForEdit, setSelectedLinkForEdit] =
     useState<ReferralLink | null>(null);
 
-  const [mockStatsEnabled, setMockStatsEnabled] = useState(false);
-
   const { data: programsData } = useQuery<ProgramSearchResultsInfo>({
     queryKey: ["ReferralPrograms", 1, 4],
     queryFn: () =>
@@ -161,10 +155,6 @@ const ReferralsDashboard: NextPageWithLayout<{
       void handleUserSignIn(currentLanguage);
     }
   }, [error, currentLanguage]);
-
-  useEffect(() => {
-    setMockStatsEnabled(getReferralStatsMockMode());
-  }, []);
 
   if (error === 401) {
     return (
@@ -287,23 +277,8 @@ const ReferralsDashboard: NextPageWithLayout<{
                     <div className="font-family-nunito text-sm font-semibold text-black md:text-base">
                       Your Performance
                     </div>
-                    {/* TODO: remove */}
-                    {/* <label className="mt-1 flex items-center justify-between gap-2 text-[11px] text-gray-600">
-                      <span>Mock stats (dev)</span>
-                      <input
-                        type="checkbox"
-                        className="toggle toggle-xs"
-                        checked={mockStatsEnabled}
-                        onChange={(e) => {
-                          const enabled = e.target.checked;
-                          setMockStatsEnabled(enabled);
-                          setReferralStatsMockMode(enabled);
-                        }}
-                      />
-                    </label> */}
-                    {/* <div className="rounded-lg bg-white p-4"> */}
+
                     <ReferrerStats />
-                    {/* </div> */}
                   </div>
                 </div>
 

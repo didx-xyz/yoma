@@ -3,7 +3,6 @@ import {
   IoCheckmarkCircle,
   IoChevronDownOutline,
   IoPeople,
-  IoStatsChartOutline,
   IoShareSocialOutline,
   IoTime,
   IoWalletOutline,
@@ -11,10 +10,7 @@ import {
 import Moment from "react-moment";
 import type { ProgramInfo, ReferralLink } from "~/api/models/referrals";
 import { DATE_FORMAT_HUMAN } from "~/lib/constants";
-import { withMockReferralStats } from "~/lib/referrals/referralStatsMock";
 import { ReferrerLinkDetails } from "./ReferrerLinkDetails";
-import { ReferrerPerformanceOverview } from "./ReferrerPerformanceOverview";
-import { ReferrerReferralsList } from "./ReferrerReferralsList";
 import { ShareButtons } from "./ShareButtons";
 
 interface ReferrerLinkRowProps {
@@ -42,6 +38,21 @@ export const ReferrerLinkRow: React.FC<ReferrerLinkRowProps> = ({
       : link.status
     : "—";
 
+  const statusTooltip = (() => {
+    switch (link.status) {
+      case "Active":
+        return "Your link is ready to share.";
+      case "Expired":
+        return "Your link has expired.";
+      case "LimitReached":
+        return "Your link has reached its limit.";
+      case "Cancelled":
+        return "Your link has been canceled.";
+      default:
+        return hasStatus ? `Status: ${String(link.status)}` : "Status: —";
+    }
+  })();
+
   const statusDotClasses = !hasStatus
     ? "bg-gray-300"
     : link.status === "Active"
@@ -54,15 +65,12 @@ export const ReferrerLinkRow: React.FC<ReferrerLinkRowProps> = ({
             ? "bg-red-500"
             : "bg-gray-500";
 
-  const linkStats = withMockReferralStats(
-    {
-      totalReferrals: link.usageTotal || 0,
-      completed: link.completionTotal || 0,
-      pending: link.pendingTotal || 0,
-      zltoEarned: Math.round(link.zltoRewardCumulative || 0),
-    },
-    "link",
-  );
+  const linkStats = {
+    totalReferrals: link.usageTotal || 0,
+    completed: link.completionTotal || 0,
+    pending: link.pendingTotal || 0,
+    zltoEarned: Math.round(link.zltoRewardCumulative || 0),
+  };
 
   const performanceIndicatorItems = [
     {
@@ -100,7 +108,7 @@ export const ReferrerLinkRow: React.FC<ReferrerLinkRowProps> = ({
       {/* Header / Title Row */}
       <div className="p-4 select-none">
         <div className="flex min-w-0 items-center gap-3">
-          {/* 1) Link name (with date + status) */}
+          {/* 1) Program name (with date + status) */}
           <div className="min-w-0 grow">
             <button
               type="button"
@@ -110,7 +118,7 @@ export const ReferrerLinkRow: React.FC<ReferrerLinkRowProps> = ({
             >
               <div className="flex w-full min-w-0 items-center gap-2">
                 <span className="text-base-content block min-w-0 flex-1 overflow-hidden text-xs font-semibold text-ellipsis whitespace-nowrap md:text-sm">
-                  {link.name}
+                  {program?.name}
                 </span>
               </div>
 
@@ -123,7 +131,7 @@ export const ReferrerLinkRow: React.FC<ReferrerLinkRowProps> = ({
 
                 <div
                   className="tooltip tooltip-secondary tooltip-top !z-50 flex-shrink-0"
-                  data-tip={`Status: ${statusLabel}`}
+                  data-tip={statusTooltip}
                   tabIndex={0}
                 >
                   <span
@@ -166,12 +174,12 @@ export const ReferrerLinkRow: React.FC<ReferrerLinkRowProps> = ({
               .slice(0, 4)
               .map(({ key, label, value, icon }) => (
                 <div key={key} className="w-full sm:w-auto">
-                  <div className="bg-base-200 text-base-content/80 flex w-full min-w-0 items-center gap-1 rounded-md px-2 py-1 text-[10px] sm:w-auto">
+                  <div className="bg-base-200 text-base-content/80 flex w-full min-w-0 items-center gap-1 rounded-md px-2 py-1 text-[11px] sm:w-auto">
                     {icon}
-                    <span className="shrink-0 text-sm font-semibold">
+                    <span className="text-base-content shrink-0 text-[11px] leading-snug font-semibold">
                       {value}
                     </span>
-                    <span className="text-base-content/60 text-[10px] leading-snug md:text-xs">
+                    <span className="text-base-content/60 text-[11px] leading-snug">
                       {label}
                     </span>
                   </div>

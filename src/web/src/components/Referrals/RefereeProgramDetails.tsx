@@ -1,7 +1,6 @@
 import React from "react";
 import type { ProgramInfo } from "~/api/models/referrals";
 import ProgramBadges from "./ProgramBadges";
-import { ProgramRequirementsRows } from "./ProgramRequirementsRows";
 import { ProgramRow } from "./ProgramRow";
 
 export interface ProgramDetailsProps {
@@ -27,12 +26,8 @@ export const RefereeProgramDetails: React.FC<ProgramDetailsProps> = ({
     <ProgramRow program={program} onClick={onClick} className={className}>
       {showDetailsOption ? (
         context === "preview" ? (
-          <div className="mt-3">
-            <ProgramRequirementsRows
-              program={program}
-              showPathway={false}
-              variant="large"
-            />
+          <div className="mt-3 mb-2">
+            <ProgramBadges program={program} mode="large" showPathway={false} />
           </div>
         ) : (
           <ProgramBadges program={program} showToolTips={false} />

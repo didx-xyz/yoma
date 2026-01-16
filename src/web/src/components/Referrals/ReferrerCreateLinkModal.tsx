@@ -298,10 +298,6 @@ export const ReferrerCreateLinkModal: React.FC<CreateLinkModalProps> = ({
   }, [existingLinksCount, isEditMode, programs.length]);
 
   const createStepMessage = useMemo(() => {
-    const programName = currentProgram?.name
-      ? escapeHtml(currentProgram.name)
-      : "this program";
-
     const bullets: string[] = [];
     if (!isEditMode) {
       bullets.push(

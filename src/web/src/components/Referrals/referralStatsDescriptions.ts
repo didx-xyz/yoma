@@ -1,5 +1,5 @@
 export const getTotalReferralsDesc = (value: number) => {
-  if (value <= 0) return "No referrals yet — share your link to get started.";
+  if (value <= 0) return "No referrals yet — share your links to get started.";
   if (value === 1) return "Well done! You got your first referral.";
   if (value < 5) return "Nice start — keep sharing your link.";
   if (value < 10) return "Awesome work! Your network is growing.";
@@ -19,14 +19,14 @@ export const getCompletedDesc = (value: number) => {
 
 export const getPendingDesc = (value: number) => {
   if (value <= 0) return "No pending referrals right now.";
-  if (value === 1) return "1 referral in progress — follow up to help.";
+  if (value === 1) return "1 referral in progress.";
   if (value < 5) return "A few in progress — check in with them.";
   if (value < 10) return "Great pipeline — lots in progress.";
   return "Big pipeline — keep supporting them to completion.";
 };
 
 export const getZltoDesc = (value: number) => {
-  if (value <= 0) return "Start earning by sharing your link.";
+  if (value <= 0) return "Start earning by sharing your links.";
   if (value < 25) return "ZLTO rolling in — keep it going.";
   if (value < 100) return "Great earning pace — nice work.";
   if (value < 250) return "You're stacking rewards fast.";

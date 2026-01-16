@@ -6,7 +6,6 @@ import {
 import { getMyReferralAnalytics } from "~/api/services/referrals";
 import Suspense from "~/components/Common/Suspense";
 import { LoadingInline } from "../Status/LoadingInline";
-import { withMockReferralStats } from "~/lib/referrals/referralStatsMock";
 import { ReferralStatsSmall } from "./ReferralStatsSmall";
 
 interface ReferrerStatsProps {
@@ -38,7 +37,7 @@ export const ReferrerStats: React.FC<ReferrerStatsProps> = ({ link }) => {
         zltoEarned: analytics?.zltoRewardTotal || 0,
       };
 
-  const stats = withMockReferralStats(rawStats, link ? "link" : "user");
+  const stats = rawStats;
 
   return (
     <Suspense
