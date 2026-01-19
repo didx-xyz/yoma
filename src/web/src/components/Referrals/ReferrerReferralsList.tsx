@@ -6,15 +6,14 @@ import {
   IoTimeOutline,
   IoPerson,
 } from "react-icons/io5";
-import type {
-  ReferralLinkUsageSearchResults,
+import {
   ReferralLinkUsageStatus,
-  ReferralLinkUsage,
+  type ReferralLinkUsage,
+  type ReferralLinkUsageSearchResults,
 } from "~/api/models/referrals";
 import { searchReferralLinkUsagesAsReferrer } from "~/api/services/referrals";
 import FormMessage, { FormMessageType } from "~/components/Common/FormMessage";
 import Suspense from "~/components/Common/Suspense";
-import NoRowsMessage from "~/components/NoRowsMessage";
 import { PAGE_SIZE } from "~/lib/constants";
 import { LoadingInline } from "../Status/LoadingInline";
 
@@ -94,21 +93,28 @@ export const ReferrerReferralsList: React.FC<ReferralsListProps> = ({
     >
       <div>
         {!hasUsage && (
-          <NoRowsMessage
-            title="No Referrals Yet"
-            description="When someone uses your referral link, their progress will appear here."
-            icon={"👥"}
-          />
+          <FormMessage
+            messageType={FormMessageType.Info}
+            className="mb-2"
+            classNameLabel="text-base-content/60 text-[10px] leading-snug md:text-[11px]"
+          >
+            No Referrals Yet - When someone uses your referral link, their
+            progress will appear here.
+          </FormMessage>
         )}
         {hasUsage && (
           <>
             {/* Info Message */}
-            <FormMessage messageType={FormMessageType.Info} className="mb-2">
+            <FormMessage
+              messageType={FormMessageType.Info}
+              className="mb-2"
+              classNameLabel="text-base-content/60 text-[10px] leading-snug md:text-[11px]"
+            >
               This shows everyone who has used your referral link and their
               progress through the program.
             </FormMessage>
 
-            <div className="border-base-300 bg-base-100 space-y-2 overflow-hidden rounded-lg border">
+            <div className="border-base-300 bg-base-100 space-y-2 overflow-visible rounded-lg border">
               {usageData?.items?.map((usage: ReferralLinkUsage) => (
                 <div key={usage.id}>
                   <div className="flex min-w-0 items-center gap-2 p-4 hover:bg-gray-50">

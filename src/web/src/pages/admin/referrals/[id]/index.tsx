@@ -2212,8 +2212,8 @@ const ReferralProgramForm: NextPageWithLayout<{
                     {/* Program Image */}
                     <div className="flex-shrink-0">
                       <ProgramImage
-                        imageURL={program?.imageURL}
-                        name={program?.name ?? "Program"}
+                        imageURL={programPreview?.imageURL}
+                        name={programPreview?.name ?? "Program"}
                         size={60}
                         className="border-2 border-gray-200"
                       />
@@ -2222,14 +2222,15 @@ const ReferralProgramForm: NextPageWithLayout<{
                     <div className="min-w-0 flex-1">
                       <div className="flex min-w-0 items-center gap-2">
                         <h1 className="truncate text-base font-bold md:text-lg">
-                          {program?.name ?? "N/A"}
+                          {programPreview?.name ?? "N/A"}
                         </h1>
-                        {program?.isDefault && (
+                        {programPreview?.isDefault && (
                           <span className="badge badge-primary">Default</span>
                         )}
                       </div>
                       <p className="truncate text-xs text-gray-500 md:text-sm">
-                        {program?.description ?? "No description provided"}
+                        {programPreview?.description ??
+                          "No description provided"}
                       </p>
                     </div>
                   </div>

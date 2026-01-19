@@ -145,6 +145,8 @@ const ReferralClaimPage: NextPageWithLayout<{
   userProfile: serverUserProfile,
 }) => {
   const router = useRouter();
+  const panelClassName =
+    "rounded-xl border border-base-300 bg-base-100 p-4 shadow-sm md:p-5";
   const [claiming, setClaiming] = useState(false);
   const [claimingAfterProfile, setClaimingAfterProfile] = useState(false);
   const [claimError, setClaimError] = useState<any>(null);
@@ -293,9 +295,9 @@ const ReferralClaimPage: NextPageWithLayout<{
   // Error states
   if (serverError || programError || !program) {
     const referralUnavailableDescription = `
-      <div class="text-center mt-10">
-        <h3 class="text-xs md:text-sm font-bold text-gray-900 mb-2">What might have happened?</h3>
-        <ul class="text-left text-xs md:text-sm ml-6 list-disc space-y-2 text-gray-700">
+      <div class="text-center mt-8">
+        <h3 class="text-[10px] md:text-xs font-semibold text-gray-900 mb-2">What might have happened?</h3>
+        <ul class="text-left text-[10px] md:text-xs ml-6 list-disc space-y-1 text-gray-700">
           <li>The link may have expired or reached its usage limit</li>
           <li>The person who shared it may have cancelled it</li>
           <li>The referral program may no longer be active</li>
@@ -306,14 +308,16 @@ const ReferralClaimPage: NextPageWithLayout<{
 
     return (
       <div className="container mx-auto mt-20 flex max-w-5xl flex-col gap-8 px-4 py-8">
-        <div className="flex items-center justify-center">
-          <NoRowsMessage
-            title="Referral Link Unavailable"
-            subTitle="This referral link is invalid, expired, or has been removed."
-            description={referralUnavailableDescription}
-            icon={<IoWarningOutline className="h-6 w-6 text-red-500" />}
-            className="max-w-3xl !bg-transparent"
-          />
+        <div className="w-full">
+          <div className={`${panelClassName} w-full`}>
+            <NoRowsMessage
+              title="Referral Link Unavailable"
+              subTitle="This referral link is invalid, expired, or has been removed."
+              description={referralUnavailableDescription}
+              icon={<IoWarningOutline className="h-6 w-6 text-red-500" />}
+              className="w-full !bg-transparent"
+            />
+          </div>
         </div>
 
         <BecomeReferrerCTA />
@@ -360,25 +364,29 @@ const ReferralClaimPage: NextPageWithLayout<{
           "You may have already claimed a different referral for this program",
         ];
 
+    const claimErrorSummary = claimErrorReasons.join(" • ");
+
     const claimErrorDescription = `
-      <div class="text-center mt-10">
-        <h3 class="text-xs md:text-sm font-bold text-gray-900 mb-2">${hasCustomErrors ? "Reasons:" : "Common reasons this might happen:"}</h3>
-        <ul class="text-left text-xs md:text-sm ml-6 list-disc space-y-2 text-gray-700">
-          ${claimErrorReasons.map((reason) => `<li>${reason}</li>`).join("")}
-        </ul>
+      <div class="text-center mt-8">
+        <h3 class="text-[10px] md:text-xs font-semibold text-gray-900 mb-2">${hasCustomErrors ? "" : "Common reasons this might happen:"}</h3>
+        <p class="text-left text-[10px] md:text-xs text-gray-700 line-clamp-4 overflow-hidden">
+          ${claimErrorSummary}
+        </p>
       </div>
     `;
 
     return (
-      <div className="container mx-auto mt-20 flex max-w-5xl flex-col gap-8 px-4 py-8">
-        <div className="flex items-center justify-center">
-          <NoRowsMessage
-            icon={<IoWarningOutline className="h-6 w-6 text-red-500" />}
-            title="Unable to Claim Referral Link"
-            subTitle={!hasCustomErrors ? errorMessage : undefined}
-            description={claimErrorDescription}
-            className="max-w-3xl !bg-transparent"
-          />
+      <div className="container mx-auto mt-18 flex max-w-3xl flex-col gap-4 px-4 py-8">
+        <div className="w-full">
+          <div className={`${panelClassName} w-full`}>
+            <NoRowsMessage
+              icon={<IoWarningOutline className="h-6 w-6 text-red-500" />}
+              title="Unable to Claim Referral Link"
+              subTitle={!hasCustomErrors ? errorMessage : undefined}
+              description={claimErrorDescription}
+              className="w-full !bg-transparent"
+            />
+          </div>
         </div>
 
         <BecomeReferrerCTA />
@@ -429,16 +437,15 @@ const ReferralClaimPage: NextPageWithLayout<{
             <div className="flex flex-col">
               <NoRowsMessage
                 title="You've been invited!"
-                description="Click the button below to join Yoma and earn rewards when you complete the program requirements."
+                description="Sign in to claim this referral and track your progress."
                 icon={"❤️"}
                 className="max-w-3xl !bg-transparent"
               />
 
               {program.proofOfPersonhoodRequired && (
-                <div className="text-gray-dark text-center text-xs md:text-sm">
-                  Please login using <strong>Social Media</strong>{" "}
-                  (Google/Facebook) or scroll to the bottom and register with a{" "}
-                  <strong>Phone Number</strong>
+                <div className="text-base-content/70 mt-3 text-center text-[10px] font-semibold md:text-xs">
+                  Proof of Personhood required: sign in with Google/Facebook or
+                  add a phone number.
                 </div>
               )}
             </div>
@@ -461,16 +468,16 @@ const ReferralClaimPage: NextPageWithLayout<{
               type="button"
               onClick={handleClaim}
               disabled={claiming}
-              className="btn btn-warning gap-2 px-8 text-white shadow-lg transition-all duration-300 ease-in-out hover:scale-105 hover:shadow-2xl disabled:opacity-50 disabled:hover:scale-100"
+              className="btn btn-sm gap-2 border-orange-300 bg-orange-50 text-orange-700 hover:bg-orange-100 disabled:opacity-50"
             >
               {claiming && (
                 <LoadingInline
-                  classNameSpinner="h-4 w-4 md:h-6 md:w-6"
+                  classNameSpinner="h-4 w-4"
                   classNameLabel="hidden"
                 />
               )}
-              {!claiming && <IoGift className="h-6 w-6" />}
-              <p>Join Yoma!</p>
+              {!claiming && <IoGift className="h-4 w-4" />}
+              <p className="text-xs font-semibold">Join Yoma</p>
             </button>
           </div>
         )}

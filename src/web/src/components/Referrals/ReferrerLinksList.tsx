@@ -9,15 +9,11 @@ import { LoadingInline } from "../Status/LoadingInline";
 
 interface LinksListProps {
   programs?: ProgramInfo[];
-  onViewUsage?: (link: ReferralLink) => void;
-  onEdit?: (link: ReferralLink) => void;
   initialPageSize?: number;
 }
 
 export const ReferrerLinksList: React.FC<LinksListProps> = ({
   programs = [],
-  onViewUsage,
-  onEdit,
   initialPageSize = 3,
 }) => {
   const {
@@ -47,6 +43,13 @@ export const ReferrerLinksList: React.FC<LinksListProps> = ({
 
   const hasLinks = links.length > 0;
   const hasPrograms = programs.length > 0;
+
+  // Reset expansion state on refresh (e.g., after creating a link) by forcing
+  // link rows to remount whenever the first page of results changes.
+  const firstPageKey = links
+    .slice(0, initialPageSize)
+    .map((l) => l.id)
+    .join("|");
 
   return (
     <>
@@ -79,11 +82,9 @@ export const ReferrerLinksList: React.FC<LinksListProps> = ({
           <div className="space-y-2">
             {links?.map((link: ReferralLink, index: number) => (
               <ReferrerLinkRow
-                key={link.id}
+                key={`${firstPageKey}-${link.id}`}
                 link={link}
                 programs={programs}
-                onViewUsage={onViewUsage}
-                onEdit={onEdit}
                 isExpanded={index === 0}
               />
             ))}

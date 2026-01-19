@@ -1,8 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AxiosError } from "axios";
-import { useCallback, useEffect, useState } from "react";
-import { Controller, useForm } from "react-hook-form";
-import { FaRoad } from "react-icons/fa";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
 import { IoMdClose } from "react-icons/io";
 import { toast } from "react-toastify";
 import { z } from "zod";
@@ -13,17 +12,10 @@ import {
   updateReferralLink,
 } from "~/api/services/referrals";
 import CustomModal from "~/components/Common/CustomModal";
-import FormField from "~/components/Common/FormField";
-import FormInput from "~/components/Common/FormInput";
-import FormMessage, { FormMessageType } from "~/components/Common/FormMessage";
-import FormToggle from "~/components/Common/FormToggle";
 import NoRowsMessage from "~/components/NoRowsMessage";
 import { ApiErrors } from "../Status/ApiErrors";
-import { ProgramRequirements } from "./ProgramRequirements";
 import { RefereeProgramDetails } from "./RefereeProgramDetails";
-import { ReferrerLinkDetails } from "./ReferrerLinkDetails";
 import { ReferrerProgramsList } from "./ReferrerProgramsList";
-import { ShareButtons } from "./ShareButtons";
 import FormLabel from "../Common/FormLabel";
 import { LoadingInline } from "../Status/LoadingInline";
 
@@ -66,37 +58,45 @@ export const ReferrerCreateLinkModal: React.FC<CreateLinkModalProps> = ({
   onSuccess,
 }) => {
   // If editing or a program is pre-selected, skip step 1 and go directly to form
-  const [step, setStep] = useState<"select" | "create" | "success">("select");
+  const [step, setStep] = useState<"select" | "create">("select");
   const [currentProgram, setCurrentProgram] = useState<ProgramInfo | null>(
     null,
   );
-  const [createdLink, setCreatedLink] = useState<ReferralLink | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const isEditMode = !!editLink;
 
-  const {
-    control,
-    handleSubmit,
-    formState: { errors },
-    setValue,
-    reset,
-  } = useForm<LinkFormData>({
+  const { handleSubmit, setValue, reset } = useForm<LinkFormData>({
     resolver: zodResolver(linkFormSchema),
     defaultValues: {
       programId: "",
       name: "",
-      description: "",
-      includeQRCode: true,
+      description: null,
+      includeQRCode: false,
     },
   });
+
+  const generateLinkName = useCallback((programName: string) => {
+    const now = new Date();
+    const stamp = now
+      .toISOString()
+      .replace(/[-:.TZ]/g, "")
+      .slice(0, 14); // YYYYMMDDHHMMSS
+    const rand = Math.random().toString(36).slice(2, 6).toUpperCase();
+    const suffix = `${stamp}-${rand}`;
+
+    const base = (programName || "Program").trim();
+    const maxBaseLength = 150 - (suffix.length + 1);
+    const safeBase = base.slice(0, Math.max(10, maxBaseLength)).trim();
+
+    return `${safeBase} ${suffix}`;
+  }, []);
 
   // Update state when modal opens with different program or link
   useEffect(() => {
     const init = async () => {
       if (isOpen) {
         // Reset all state first
-        setCreatedLink(null);
         setIsLoading(false);
 
         if (editLink) {
@@ -130,8 +130,8 @@ export const ReferrerCreateLinkModal: React.FC<CreateLinkModalProps> = ({
           reset({
             programId: selectedProgram.id,
             name: "",
-            description: "",
-            includeQRCode: true,
+            description: null,
+            includeQRCode: false,
           });
         } else {
           // Creating - show program selection with clean form
@@ -140,8 +140,8 @@ export const ReferrerCreateLinkModal: React.FC<CreateLinkModalProps> = ({
           reset({
             programId: "",
             name: "",
-            description: "",
-            includeQRCode: true,
+            description: null,
+            includeQRCode: false,
           });
         }
       }
@@ -211,20 +211,8 @@ export const ReferrerCreateLinkModal: React.FC<CreateLinkModalProps> = ({
             toastId: `link-submit`,
           });
 
-          // Show success step for new links
-          setCreatedLink(result);
-          setStep("success");
           onSuccess(result);
-
-          // Scroll to top when moving to success step
-          setTimeout(() => {
-            const modalContent = document.getElementById(
-              "custom-modal-content",
-            );
-            if (modalContent) {
-              modalContent.scrollTop = 0;
-            }
-          }, 100);
+          handleClose();
         }
       } catch (error: any) {
         toast(<ApiErrors error={error as AxiosError} />, {
@@ -240,11 +228,96 @@ export const ReferrerCreateLinkModal: React.FC<CreateLinkModalProps> = ({
     [isEditMode, editLink, onSuccess, handleClose],
   );
 
+  const handleCreateClick = useCallback(() => {
+    if (isLoading) return;
+    if (!currentProgram) return;
+
+    setValue("name", generateLinkName(currentProgram.name), {
+      shouldDirty: true,
+    });
+    setValue("description", null, { shouldDirty: true });
+    setValue("includeQRCode", false, { shouldDirty: true });
+
+    void handleSubmit(onSubmit)();
+  }, [
+    currentProgram,
+    generateLinkName,
+    handleSubmit,
+    isLoading,
+    onSubmit,
+    setValue,
+  ]);
+
+  const selectStepMessage = useMemo(() => {
+    if (programs.length === 0) {
+      return {
+        title: "Choose a Referral Program",
+        description:
+          '<div class="space-y-2">' +
+          "<p>No active programs are available right now. Please check back later.</p>" +
+          "</div>",
+      };
+    }
+
+    const bullets: string[] = [];
+
+    bullets.push("Each program has different requirements and rewards.");
+    bullets.push(
+      "Only share with people who haven’t completed onboarding yet — otherwise neither of you will be eligible for rewards.",
+    );
+
+    if (!isEditMode && existingLinksCount === 0) {
+      bullets.push("First link tip: pick one program and share it widely.");
+    }
+
+    if (!isEditMode && existingLinksCount > 0) {
+      bullets.push(
+        "To maximize reach, share different links across different people and channels.",
+      );
+    }
+
+    return {
+      title: "Choose a Referral Program",
+      description:
+        '<div class="space-y-2">' +
+        "<p>Select the program you want to create a referral link for.</p>" +
+        '<ul class="list-disc space-y-1 pl-5 text-left">' +
+        bullets.map((b) => `<li>${b}</li>`).join("") +
+        "</ul>" +
+        "</div>",
+    };
+  }, [existingLinksCount, isEditMode, programs.length]);
+
+  const createStepMessage = useMemo(() => {
+    const bullets: string[] = [];
+    if (!isEditMode) {
+      bullets.push(
+        "You’ll get a shareable URL to send on social media, messaging apps, or email.",
+      );
+      bullets.push(
+        "Avoid creating too many links — abuse can result in your referral access being blocked.",
+      );
+    } else {
+      bullets.push("You’re updating an existing referral link.");
+      bullets.push("The program cannot be changed.");
+    }
+
+    return {
+      title: isEditMode ? "Update Your Link" : "Create Your Link",
+      description:
+        '<div class="space-y-2">' +
+        '<ul class="list-disc space-y-1 pl-5 text-left">' +
+        bullets.map((b) => `<li>${b}</li>`).join("") +
+        "</ul>" +
+        "</div>",
+    };
+  }, [isEditMode]);
+
   return (
     <CustomModal
       isOpen={isOpen}
       onRequestClose={handleClose}
-      shouldCloseOnOverlayClick={step === "success"}
+      shouldCloseOnOverlayClick={!isLoading}
       className="md:max-h-[90vh] md:w-[800px]"
     >
       <div className="flex flex-col gap-2">
@@ -254,7 +327,6 @@ export const ReferrerCreateLinkModal: React.FC<CreateLinkModalProps> = ({
             {step === "select" && "Select Program"}
             {step === "create" &&
               (isEditMode ? "Edit Link" : "Create Referral Link")}
-            {step === "success" && "Success!"}
           </h1>
           <button
             type="button"
@@ -272,40 +344,10 @@ export const ReferrerCreateLinkModal: React.FC<CreateLinkModalProps> = ({
             <div className="space-y-4">
               <NoRowsMessage
                 icon="🎁"
-                title="Choose a Referral Program"
-                description="Select the program you want to create a referral link for"
+                title={selectStepMessage.title}
+                description={selectStepMessage.description}
                 className="!bg-transparent"
               />
-
-              {/* Warning Messages */}
-              {!isEditMode && existingLinksCount === 0 && (
-                <FormMessage messageType={FormMessageType.Info}>
-                  <strong>First Link!</strong> Please note each program has
-                  different requirements &amp; rewards. Check the details before
-                  creating the link. Share this link with friends who
-                  haven&apos;t completed the onboarding yet. If someone has
-                  already completed it, neither of you will be eligible for
-                  rewards.
-                </FormMessage>
-              )}
-
-              {!isEditMode && existingLinksCount > 0 && (
-                <FormMessage messageType={FormMessageType.Warning}>
-                  <strong>Important:</strong> If a user has already completed
-                  the onboarding, they and you are not eligible for rewards.
-                  Share your links with different people or on different social
-                  networks to maximize your reach.
-                </FormMessage>
-              )}
-
-              {programs.length === 0 && (
-                <FormMessage messageType={FormMessageType.Warning}>
-                  <div className="text-base">
-                    No active programs are available at this time. Please check
-                    back later.
-                  </div>
-                </FormMessage>
-              )}
 
               {programs.length > 0 && (
                 <ReferrerProgramsList
@@ -341,23 +383,10 @@ export const ReferrerCreateLinkModal: React.FC<CreateLinkModalProps> = ({
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
               <NoRowsMessage
                 icon="🔗"
-                title={isEditMode ? "Update Your Link" : "Create Your Link"}
-                description={
-                  isEditMode
-                    ? "Update the details for your referral link. Note that the program cannot be changed."
-                    : "Complete this form to generate your unique referral link for the selected program. Share it with friends, and you'll both may earn rewards when they complete the program requirements!"
-                }
+                title={createStepMessage.title}
+                description={createStepMessage.description}
                 className="!bg-transparent"
               />
-
-              {/* Warning Messages */}
-              {!isEditMode && existingLinksCount === 0 && (
-                <FormMessage messageType={FormMessageType.Info}>
-                  <strong>Check the program details!</strong> Then share this
-                  link with friends who haven&apos;t completed the onboarding
-                  yet.
-                </FormMessage>
-              )}
 
               {/* Program Preview */}
               {showProgramDetails && (
@@ -375,141 +404,12 @@ export const ReferrerCreateLinkModal: React.FC<CreateLinkModalProps> = ({
                       />
                     </div>
                   </div>
-                  <div className="space-y-2">
-                    <FormLabel
-                      label="Program Requirements"
-                      showWarningIcon={false}
-                    />
-
-                    <ProgramRequirements
-                      program={currentProgram}
-                      showPathway={true}
-                    />
-                  </div>
                 </div>
               )}
 
               {/* Form Fields */}
               <div className="space-y-4">
-                {/* Link Name */}
-                <FormField
-                  label="Link Name"
-                  subLabel="Give your link a memorable name (max 150 characters)"
-                  showWarningIcon={!!errors.name}
-                  showError={!!errors.name}
-                  error={errors.name?.message}
-                >
-                  <Controller
-                    name="name"
-                    control={control}
-                    render={({ field }) => (
-                      <FormInput
-                        inputProps={{
-                          ...field,
-                          type: "text",
-                          placeholder: "e.g., My Summer Campaign 2025",
-                          disabled: isLoading,
-                          maxLength: 150,
-                        }}
-                      />
-                    )}
-                  />
-                </FormField>
-
-                {/* Description (Optional) */}
-                <FormField
-                  label="Description (Optional)"
-                  subLabel="Add a note to help you remember this link (max 500 characters)"
-                  showWarningIcon={!!errors.description}
-                  showError={!!errors.description}
-                  error={errors.description?.message}
-                >
-                  <Controller
-                    name="description"
-                    control={control}
-                    render={({ field }) => (
-                      <textarea
-                        {...field}
-                        value={field.value || ""}
-                        className="input input-bordered w-full rounded-md p-3 text-sm"
-                        placeholder="e.g., Sharing with my community group"
-                        rows={3}
-                        disabled={isLoading}
-                        maxLength={500}
-                      />
-                    )}
-                  />
-                </FormField>
-
-                {/* Include QR Code */}
-                <FormField
-                  label="QR Code"
-                  subLabel="Generate a QR code for easy sharing"
-                  showWarningIcon={false}
-                  showError={false}
-                  error=""
-                >
-                  <Controller
-                    name="includeQRCode"
-                    control={control}
-                    render={({ field }) => (
-                      <FormToggle
-                        id="includeQRCode"
-                        label="Include QR code with my link"
-                        inputProps={{
-                          checked: field.value,
-                          onChange: field.onChange,
-                          disabled: isLoading,
-                        }}
-                      />
-                    )}
-                  />
-                </FormField>
-
-                {/* Info Message */}
-                <FormMessage messageType={FormMessageType.Info}>
-                  {isEditMode ? (
-                    <>
-                      Your updated link will continue working with all existing
-                      referrals. You can track everyone who uses this link from
-                      your dashboard.
-                    </>
-                  ) : (
-                    <>
-                      <strong>After creating this link:</strong> You&apos;ll
-                      receive a unique URL to share across social media,
-                      messaging apps, or email. When your friends sign up using
-                      your link and complete the program requirements,
-                      you&apos;ll both earn ZLTO rewards. Track all referrals
-                      and their progress from your dashboard.
-                    </>
-                  )}
-                </FormMessage>
-
-                {/* Abuse Warning */}
-                {!isEditMode && (
-                  <FormMessage messageType={FormMessageType.Error}>
-                    <strong>Caution:</strong> Don&apos;t create too many links
-                    as you risk being blocked for abuse of the system. Share
-                    responsibly and only with genuine contacts. See our{" "}
-                    <a
-                      href="/help"
-                      target="_blank"
-                      className="underline hover:text-orange-700"
-                    >
-                      Help
-                    </a>{" "}
-                    or{" "}
-                    <a
-                      href="/terms"
-                      target="_blank"
-                      className="underline hover:text-orange-700"
-                    >
-                      Terms
-                    </a>{" "}
-                    section for more information.
-                  </FormMessage>
-                )}
+                {/* NOTE: Link name/description/QR are auto-generated on create */}
               </div>
 
               {/* Action Buttons */}
@@ -534,81 +434,34 @@ export const ReferrerCreateLinkModal: React.FC<CreateLinkModalProps> = ({
                   </button>
                 )}
 
-                <button
-                  type="submit"
-                  className="btn flex-1 border-blue-600 bg-blue-600 text-white normal-case hover:bg-blue-700 disabled:brightness-90"
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <span className="loading loading-spinner loading-sm" />
-                  ) : isEditMode ? (
-                    "Update Link"
-                  ) : (
-                    "Create Link"
-                  )}
-                </button>
+                {isEditMode ? (
+                  <button
+                    type="submit"
+                    className="btn flex-1 border-blue-600 bg-blue-600 text-white normal-case hover:bg-blue-700 disabled:brightness-90"
+                    disabled={isLoading}
+                  >
+                    {isLoading ? (
+                      <span className="loading loading-spinner loading-sm" />
+                    ) : (
+                      "Update Link"
+                    )}
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className="btn flex-1 border-blue-600 bg-blue-600 text-white normal-case hover:bg-blue-700 disabled:brightness-90"
+                    disabled={isLoading}
+                    onClick={handleCreateClick}
+                  >
+                    {isLoading ? (
+                      <span className="loading loading-spinner loading-sm" />
+                    ) : (
+                      "Create Link"
+                    )}
+                  </button>
+                )}
               </div>
             </form>
-          )}
-
-          {/* STEP 3: SUCCESS */}
-          {step === "success" && createdLink && (
-            <div className="space-y-6">
-              <NoRowsMessage
-                icon="🎉"
-                title={`Link ${isEditMode ? "Updated" : "Created"} Successfully!`}
-                description="Your referral link is ready to share. You can always find it on your links dashboard."
-                className="!bg-transparent"
-              />
-
-              {/* Link Details Card */}
-              <ReferrerLinkDetails
-                link={createdLink}
-                mode="large"
-                showQRCode={true}
-              />
-
-              <div className="mt-4 border-t border-blue-200 pt-4">
-                <div className="mb-3">
-                  <h3 className="flex items-center gap-2 text-base font-bold">
-                    📢 Share Your Link
-                  </h3>
-                  <p className="mt-1 text-xs text-gray-600">
-                    Choose your preferred platform to share
-                  </p>
-                </div>
-
-                <ShareButtons
-                  url={createdLink.shortURL ?? createdLink.url}
-                  size={36}
-                  rewardAmount={currentProgram?.zltoRewardReferee}
-                />
-              </div>
-
-              {/* Next Steps */}
-              <div className="rounded-lg border-2 border-dashed border-blue-300 bg-blue-50 p-4">
-                <h4 className="mb-2 flex items-center gap-2 font-semibold text-blue-900">
-                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-br from-purple-400 to-purple-600">
-                    <FaRoad className="h-2.5 w-2.5 text-white" />
-                  </span>
-                  What&apos;s Next?
-                </h4>
-                <ul className="space-y-1 text-sm text-blue-800">
-                  <li>📢 Share your link with friends and family</li>
-                  <li>📊 Track referrals from your dashboard</li>
-                  <li>💰 Earn ZLTO when they complete the program</li>
-                </ul>
-              </div>
-
-              {/* Close Button */}
-              <button
-                type="button"
-                onClick={handleClose}
-                className="bg-theme btn mt-10 w-full text-white normal-case hover:brightness-110"
-              >
-                Close & View My Links
-              </button>
-            </div>
           )}
         </div>
       </div>
