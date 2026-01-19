@@ -903,7 +903,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
           var request = new MyOpportunityRequestVerify { InstantOrImportedVerification = true, OverridePending = true };
           await PerformActionSendForVerification(user, link.EntityId, request, null, true); //any verification method
 
-          await FinalizeVerification(user, opportunity, VerificationStatus.Completed, true, null, "Auto-verification", true, true);
+          await FinalizeVerification(user, opportunity, VerificationStatus.Completed, true, null, "Auto-verification", true, true, true);
 
           scope.Complete();
         });
@@ -1000,7 +1000,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
           user = _userService.GetById(item.UserId, false, false);
           opportunity = _opportunityService.GetById(item.OpportunityId, true, true, false);
 
-          await FinalizeVerification(user, opportunity, request.Status, false, null, request.Comment, true, false);
+          await FinalizeVerification(user, opportunity, request.Status, false, null, request.Comment, true, false, true);
 
           var successItem = new MyOpportunityResponseVerifyFinalizeBatchItem
           {
@@ -1048,7 +1048,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       var user = _userService.GetById(request.UserId, false, false);
       var opportunity = _opportunityService.GetById(request.OpportunityId, true, true, false);
 
-      await FinalizeVerification(user, opportunity, request.Status, false, null, request.Comment, true, false);
+      await FinalizeVerification(user, opportunity, request.Status, false, null, request.Comment, true, false, true);
     }
 
     public Dictionary<Guid, int>? ListAggregatedOpportunityByViewed(bool includeExpired)
@@ -1179,7 +1179,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
           await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
           {
             using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
-            await ProcessImportVerification(request, dto, true); //probe only; notifications not send
+            await ProcessImportVerification(request, dto, true); //probe only; notifications not send and events not raised
             if (!string.IsNullOrEmpty(dto.VerificationEntry)) probedVerifications.Add(dto.VerificationEntry);
             //probe only, do not commit the scope; disposed as aborted
           });
@@ -1322,10 +1322,10 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       }
 
       var requestVerify = new MyOpportunityRequestVerify { InstantOrImportedVerification = true }; //with instant or imported verifications, pending notifications are not sent
-      await PerformActionSendForVerification(user, opportunity.Id, requestVerify, VerificationMethod.Automatic, !probeOnly,
+      await PerformActionSendForVerification(user, opportunity.Id, requestVerify, VerificationMethod.Automatic, true,
         $"Verification import not supported for opporunity '{opportunity.Title}'. The verification method must be set to '{VerificationMethod.Automatic}'"); //verification method automatic
 
-      await FinalizeVerification(user, opportunity, VerificationStatus.Completed, true, item.DateCompleted?.ToDateTimeOffset().ToEndOfDay(), requestImport.Comment, !probeOnly, !probeOnly);
+      await FinalizeVerification(user, opportunity, VerificationStatus.Completed, true, item.DateCompleted?.ToDateTimeOffset().ToEndOfDay(), requestImport.Comment, !probeOnly, true, !probeOnly);
     }
 
     private static List<(DateTime WeekEnding, int Count)> SummaryGroupByWeekItems(List<MyOpportunityInfo> items)
@@ -1353,7 +1353,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       DateTimeOffset? dateCompleted,
       string? comment,
       bool sendNotification,
-      bool enqueueOutcomes)
+      bool enqueueOutcomes,
+      bool publishEvents)
     {
       //can complete, provided opportunity is published (and started) or expired (actioned prior to expiration)
       var canFinalize = opportunity.Status == Status.Expired;
@@ -1461,6 +1462,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
           await SendNotification(item, notificationType.Value);
       }
 
+      if (!publishEvents) return;
+
       var myEvent = new ReferralProgressTriggerEvent(
         new Referral.Models.ReferralProgressTriggerMessage
         {
@@ -1559,7 +1562,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         return;
 
       // If opportunity includes Worldwide → allow any user
-      var worldwideId = _countryService.GetByCodeAlpha2(Core.Country.Worldwide.ToDescription()).Id;
+      var worldwideId = _countryService.GetByCodeAlpha2(Core.Country.Worldwide.ToDescription ()).Id;
       if (opportunity.Countries.Any(c => c.Id == worldwideId))
         return;
 
