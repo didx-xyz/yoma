@@ -76,15 +76,6 @@ export const ReferrerCreateLinkModal: React.FC<CreateLinkModalProps> = ({
     },
   });
 
-  const escapeHtml = useCallback((value: string) => {
-    return value
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#039;");
-  }, []);
-
   const generateLinkName = useCallback((programName: string) => {
     const now = new Date();
     const stamp = now
@@ -320,7 +311,7 @@ export const ReferrerCreateLinkModal: React.FC<CreateLinkModalProps> = ({
         "</ul>" +
         "</div>",
     };
-  }, [currentProgram?.name, escapeHtml, isEditMode]);
+  }, [isEditMode]);
 
   return (
     <CustomModal

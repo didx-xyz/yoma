@@ -1,71 +1,39 @@
 import Link from "next/link";
-import { IoGift, IoArrowForward } from "react-icons/io5";
+import { IoArrowForward, IoGift } from "react-icons/io5";
 
 export const BecomeReferrerCTA: React.FC = () => {
   return (
-    <div className="rounded-xl border-1 border-gray-200 p-4 shadow-xl md:p-6">
-      <div className="mb-6 flex flex-col items-center gap-4 md:flex-row">
-        <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full shadow-lg md:h-14 md:w-14">
-          <IoGift className="text-green h-6 w-6 md:h-8 md:w-8" />
+    <div className="border-base-300 bg-base-100 rounded-xl border p-4 shadow-sm md:p-5">
+      <div className="flex items-start gap-3 md:gap-4">
+        <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md bg-pink-50 md:h-12 md:w-12">
+          <IoGift className="h-5 w-5 text-pink-700 md:h-6 md:w-6" />
         </div>
-        <div className="flex-1 text-center md:text-left">
-          <h2 className="text-base font-bold md:text-lg">
-            Become a Referrer Instead!
+        <div className="min-w-0 flex-1">
+          <h2 className="font-family-nunito text-base-content text-xs font-semibold md:text-sm">
+            Become a referrer
           </h2>
-          <p className="text-xs text-gray-700 md:text-sm">
-            Share Yoma with your friends and earn rewards together! Create your
-            own referral links and start earning ZLTO.
+          <p className="text-base-content/60 mt-1 line-clamp-2 text-[10px] leading-snug md:text-xs">
+            Create referral links and earn rewards when friends complete
+            programs.
           </p>
-        </div>
-      </div>
 
-      {/* Benefits Grid */}
-      <div className="mb-6 grid gap-4 md:grid-cols-3">
-        <div className="rounded-lg border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-white p-4 text-center shadow-sm">
-          <div className="mb-2 flex justify-center">
-            <span className="text-2xl md:text-4xl">🔗</span>
-          </div>
-          <h3 className="mb-1 text-sm font-bold text-blue-900 md:text-base">
-            Create Links
-          </h3>
-          <p className="text-[10px] text-gray-600 md:text-xs">
-            Get personalized referral links for different programs
-          </p>
-        </div>
-        <div className="rounded-lg border-2 border-green-200 bg-gradient-to-br from-green-50 to-white p-4 text-center shadow-sm">
-          <div className="mb-2 flex justify-center">
-            <span className="text-2xl md:text-4xl">📊</span>
-          </div>
-          <h3 className="mb-1 text-sm font-bold text-green-900 md:text-base">
-            Track Progress
-          </h3>
-          <p className="text-[10px] text-gray-600 md:text-xs">
-            Monitor your referrals and see how much you&apos;ve earned
-          </p>
-        </div>
-        <div className="rounded-lg border-2 border-yellow-200 bg-gradient-to-br from-yellow-50 to-white p-4 text-center shadow-sm">
-          <div className="mb-2 flex justify-center">
-            <span className="text-2xl md:text-4xl">💰</span>
-          </div>
-          <h3 className="mb-1 text-sm font-bold text-yellow-900 md:text-base">
-            Earn ZLTO
-          </h3>
-          <p className="text-[10px] text-gray-600 md:text-xs">
-            Get rewarded when your friends complete programs
-          </p>
-        </div>
-      </div>
+          <ul className="text-base-content/70 mt-3 ml-5 list-disc space-y-1 text-[10px] md:text-xs">
+            <li>Create links for different programs</li>
+            <li>Track claims and completions</li>
+            <li>Earn ZLTO when they finish</li>
+          </ul>
 
-      {/* CTA */}
-      <div className="flex justify-center">
-        <Link
-          href="/yoid/referrals"
-          className="btn btn-success btn-sm md:btn-md w-full gap-2 px-8 text-white shadow-lg hover:scale-105 md:w-auto"
-        >
-          <IoGift className="h-4 w-4 md:h-5 md:w-5" />
-          Start Referring
-          <IoArrowForward className="h-4 w-4 md:h-5 md:w-5" />
-        </Link>
+          <div className="mt-4">
+            <Link
+              href="/yoid/referrals"
+              className="btn btn-sm inline-flex items-center gap-2 border-pink-300 bg-pink-50 text-pink-700 hover:bg-pink-100"
+            >
+              <IoGift className="h-4 w-4" />
+              Start referring
+              <IoArrowForward className="h-4 w-4" />
+            </Link>
+          </div>
+        </div>
       </div>
     </div>
   );

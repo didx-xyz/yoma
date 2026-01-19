@@ -626,7 +626,7 @@ const OpportunityPublicDetails: React.FC<{
             <div className="flex grow flex-col gap-1">
               <div className="flex grow flex-col">
                 <div className="relative flex justify-start">
-                  <h4 className="max-w-[215px] text-xl leading-7 font-semibold text-black md:max-w-[1125px] md:text-2xl md:leading-8">
+                  <h4 className="text-xl leading-7 font-semibold text-black md:max-w-[1125px] md:text-2xl md:leading-8">
                     {opportunityInfo.title}
                   </h4>
                   <div className="absolute -top-2 -right-2 md:top-0 md:right-0">
@@ -638,7 +638,7 @@ const OpportunityPublicDetails: React.FC<{
                   </div>
                 </div>
 
-                <h6 className="text-gray-dark max-w-[215px] text-sm md:max-w-[1125px]">
+                <h6 className="text-gray-dark text-sm md:max-w-[1125px]">
                   By {opportunityInfo.organizationName}
                 </h6>
 

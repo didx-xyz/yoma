@@ -174,7 +174,7 @@ const ReferralsDashboard: NextPageWithLayout<{
         <title>Yoma | Referrals</title>
       </Head>
 
-      <div className="w-full lg:max-w-7xl">
+      <div className="w-full lg:max-w-4xl">
         {/* BREADCRUMB */}
         <div className="mb-4 text-xs font-bold tracking-wider text-black md:text-base">
           <Breadcrumb
