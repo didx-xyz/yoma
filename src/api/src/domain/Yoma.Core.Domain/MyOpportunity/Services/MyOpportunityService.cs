@@ -1562,7 +1562,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         return;
 
       // If opportunity includes Worldwide → allow any user
-      var worldwideId = _countryService.GetByCodeAlpha2(Core.Country.Worldwide.ToDescription ()).Id;
+      var worldwideId = _countryService.GetByCodeAlpha2(Core.Country.Worldwide.ToDescription()).Id;
       if (opportunity.Countries.Any(c => c.Id == worldwideId))
         return;
 
