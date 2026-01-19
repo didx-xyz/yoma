@@ -1,6 +1,6 @@
 import { useSession } from "next-auth/react";
 import Link from "next/link";
-import { IoRocket, IoStorefront, IoTrophy } from "react-icons/io5";
+import { IoList, IoRocket, IoStorefront, IoTrophy } from "react-icons/io5";
 
 /**
  * AlternativeActions Component
@@ -16,32 +16,45 @@ export const AlternativeActions: React.FC = () => {
   const isAuthenticated = status === "authenticated";
 
   return (
-    <div className="rounded-xl border-2 border-gray-200 bg-white p-4 shadow-lg md:p-6">
-      <h3 className="mb-4 text-center text-base font-bold text-gray-900 md:text-lg">
-        Or Explore Other Options
-      </h3>
-      <div className="flex flex-col justify-center gap-4 sm:flex-row">
+    <div className="border-base-300 bg-base-100 rounded-xl border p-4 shadow-sm md:p-5">
+      <div className="flex items-start gap-3 md:gap-4">
+        <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md bg-blue-50 md:h-12 md:w-12">
+          <IoList className="h-5 w-5 text-blue-700 md:h-6 md:w-6" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <h3 className="font-family-nunito text-base-content text-xs font-semibold md:text-sm">
+            Explore other options
+          </h3>
+          <p className="text-base-content/60 mt-1 line-clamp-2 text-[10px] leading-snug md:text-xs">
+            You can still browse opportunities and the marketplace.
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
         <Link
           href="/opportunities"
-          className="btn btn-primary btn-sm md:btn-md gap-2 shadow-md"
+          className="btn btn-sm inline-flex items-center gap-2 border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100"
         >
-          <IoRocket className="h-4 w-4 md:h-5 md:w-5" />
-          Find Opportunities
+          <IoRocket className="h-4 w-4" />
+          Find more opportunities
         </Link>
+
         <Link
           href="/marketplace"
-          className="btn bg-blue btn-sm md:btn-md gap-2 text-white shadow-md"
+          className="btn btn-sm inline-flex items-center gap-2 border-green-300 bg-green-50 text-green-700 hover:bg-green-100"
         >
-          <IoStorefront className="h-4 w-4 md:h-5 md:w-5" />
-          Explore Marketplace
+          <IoStorefront className="h-4 w-4" />
+          Browse marketplace
         </Link>
+
         {isAuthenticated && (
           <Link
-            href="/yoid"
-            className="btn btn-secondary btn-sm md:btn-md gap-2 shadow-md"
+            href="/yoid/wallet"
+            className="btn btn-sm inline-flex items-center gap-2 border-orange-300 bg-orange-50 text-orange-700 hover:bg-orange-100"
           >
-            <IoTrophy className="h-4 w-4 md:h-5 md:w-5" />
-            View Dashboard
+            <IoTrophy className="h-4 w-4" />
+            See your achievements
           </Link>
         )}
       </div>

@@ -305,6 +305,8 @@ export interface TaskInstructionHeaderProps {
   percentComplete?: number;
   isCompleted?: boolean;
   color?: "green" | "orange" | "blue" | "white";
+  variant?: "default" | "compact";
+  hideIcon?: boolean;
 }
 
 export const TaskInstructionHeader: React.FC<TaskInstructionHeaderProps> = ({
@@ -316,7 +318,11 @@ export const TaskInstructionHeader: React.FC<TaskInstructionHeaderProps> = ({
   percentComplete,
   isCompleted,
   color = "green",
+  variant = "default",
+  hideIcon = false,
 }) => {
+  const isCompact = variant === "compact";
+
   const hasSequentialTasks =
     rule !== PathwayCompletionRule.Any &&
     orderMode === PathwayOrderMode.Sequential;
@@ -358,20 +364,59 @@ export const TaskInstructionHeader: React.FC<TaskInstructionHeaderProps> = ({
 
   const colors = colorClasses[color];
 
+  const containerClassName = isCompact
+    ? "mb-2"
+    : `mb-4 rounded-lg border ${colors.border} ${colors.bg} p-3`;
+
+  const textClassName = isCompact ? "text-base-content/60" : colors.text;
+
+  const completedIconClassByColor: Record<
+    NonNullable<TaskInstructionHeaderProps["color"]>,
+    string
+  > = {
+    green: "bg-green-500 text-white",
+    orange: "bg-orange-500 text-white",
+    blue: "bg-blue-500 text-white",
+    white: "bg-gray-500 text-white",
+  };
+
+  const compactIconBorderByColor: Record<
+    NonNullable<TaskInstructionHeaderProps["color"]>,
+    string
+  > = {
+    green: "border-green-200 text-green-700",
+    orange: "border-orange-200 text-orange-700",
+    blue: "border-blue-200 text-blue-700",
+    white: "border-base-300 text-base-content/70",
+  };
+
+  const compactIconClassName = `border ${compactIconBorderByColor[color]} bg-base-100`;
+  const completedIconClassName = completedIconClassByColor[color];
+
   // For single task, show simple message
   if (tasksLength === 1) {
     return (
-      <div
-        className={`mb-4 rounded-lg border ${colors.border} ${colors.bg} p-3`}
-      >
+      <div className={containerClassName}>
         <div className="flex items-center gap-2">
-          <span
-            className={`flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full text-[10px] font-bold ${isCompleted ? `bg-${color}-500 text-white` : `border-2 ${colors.iconBorder} ${colors.iconBg} ${colors.iconText}`}`}
+          {!hideIcon && (
+            <span
+              className={`flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full text-[10px] font-bold ${
+                isCompleted
+                  ? completedIconClassName
+                  : isCompact
+                    ? compactIconClassName
+                    : `border-2 ${colors.iconBorder} ${colors.iconBg} ${colors.iconText}`
+              }`}
+            >
+              {isCompleted ? "✓" : "!"}
+            </span>
+          )}
+          <p
+            className={`${
+              isCompact ? "text-[10px] md:text-xs" : "text-xs"
+            } font-medium ${textClassName}`}
           >
-            {isCompleted ? "✓" : "!"}
-          </span>
-          <p className={`text-xs font-medium ${colors.text}`}>
-            {isCompleted ? "You completed this task" : "Complete this task"}
+            {isCompleted ? "Task completed" : "Complete this task"}
           </p>
         </div>
       </div>
@@ -380,22 +425,46 @@ export const TaskInstructionHeader: React.FC<TaskInstructionHeaderProps> = ({
 
   // For multiple tasks, show detailed instruction
   return (
-    <div className={`mb-4 rounded-lg border ${colors.border} ${colors.bg} p-3`}>
+    <div className={containerClassName}>
       <div className="flex flex-col justify-between gap-2 md:flex-row">
         <div className="flex items-center gap-2">
-          <span
-            className={`flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full text-[10px] font-bold ${isCompleted ? `bg-${color}-500 text-white` : `border-2 ${colors.iconBorder} ${colors.iconBg} ${colors.iconText}`}`}
-          >
-            {isCompleted ? "✓" : "!"}
-          </span>
+          {!hideIcon && (
+            <span
+              className={`flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full text-[10px] font-bold ${
+                isCompleted
+                  ? completedIconClassName
+                  : isCompact
+                    ? compactIconClassName
+                    : `border-2 ${colors.iconBorder} ${colors.iconBg} ${colors.iconText}`
+              }`}
+            >
+              {isCompleted ? "✓" : "!"}
+            </span>
+          )}
           {isCompleted ? (
-            <p className={`text-xs font-medium ${colors.text}`}>
+            <p
+              className={`${
+                isCompact ? "text-[10px] md:text-xs" : "text-xs"
+              } font-medium ${textClassName}`}
+            >
               You completed{" "}
               <span className="font-bold">{completed ?? tasksLength}</span>{" "}
               {tasksLength === 1 ? "task" : "tasks"}
             </p>
+          ) : isCompact ? (
+            <p
+              className={`text-[10px] font-medium md:text-xs ${textClassName}`}
+            >
+              Complete these tasks
+              {rule === PathwayCompletionRule.Any
+                ? " (choose one)"
+                : hasSequentialTasks
+                  ? " (in order)"
+                  : ""}
+              .
+            </p>
           ) : (
-            <p className={`text-xs font-medium ${colors.text}`}>
+            <p className={`text-xs font-medium ${textClassName}`}>
               Complete{" "}
               <span className="font-bold">
                 {rule === PathwayCompletionRule.Any ? "ANY ONE" : "ALL"}
@@ -418,7 +487,8 @@ export const TaskInstructionHeader: React.FC<TaskInstructionHeaderProps> = ({
           )}
         </div>
         {/* Progress Display (optional) */}
-        {completed !== undefined &&
+        {!isCompact &&
+          completed !== undefined &&
           total !== undefined &&
           percentComplete !== undefined &&
           isCompleted !== undefined && (
@@ -448,6 +518,7 @@ export interface PathwayTaskDisplayProps {
   color?: "green" | "orange" | "white";
   totalTasks?: number;
   isAdmin?: boolean;
+  opportunityVariant?: "default" | "compact";
 }
 
 export const PathwayTaskDisplay: React.FC<PathwayTaskDisplayProps> = ({
@@ -462,7 +533,10 @@ export const PathwayTaskDisplay: React.FC<PathwayTaskDisplayProps> = ({
   color = "green",
   totalTasks = 1,
   isAdmin = false,
+  opportunityVariant = "default",
 }) => {
+  const isCompact = opportunityVariant === "compact";
+
   const badgeClasses =
     color === "orange"
       ? "border-orange-400 bg-orange-500"
@@ -482,27 +556,34 @@ export const PathwayTaskDisplay: React.FC<PathwayTaskDisplayProps> = ({
         ? "btn-ghost"
         : "btn-secondary";
 
+  const bulletSizeClass = isCompact ? "h-5 w-5" : "h-6 w-6";
+  const bulletTextClass = isCompact ? "text-[10px]" : "text-xs";
+  const bulletNumberTextClass = isCompact ? "text-[10px]" : "text-sm";
+  const taskContentClassName = isCompact
+    ? "min-w-0 flex-1"
+    : "mb-4 min-w-0 flex-1";
+
   return (
-    <div className="flex gap-3">
+    <div className={isCompact ? "flex gap-2" : "flex gap-3"}>
       {/* Task Number/Bullet */}
       {showBullets && (
         <div className="flex-shrink-0">
           {task.completed ? (
             <div
-              className="tooltip flex h-6 w-6 items-center justify-center rounded-full bg-green-500 text-white"
+              className={`tooltip flex ${bulletSizeClass} items-center justify-center rounded-full bg-green-500 text-white`}
               data-tip="You completed this task"
             >
-              <span className="text-xs font-bold">✓</span>
+              <span className={`${bulletTextClass} font-bold`}>✓</span>
             </div>
           ) : totalTasks === 1 || (!isAnyRule && !isSequential) || isAnyRule ? (
             <div
-              className={`flex h-6 w-6 items-center justify-center rounded-full border-2 ${badgeClasses} text-base font-bold ${badgeTextColor}`}
+              className={`flex ${bulletSizeClass} items-center justify-center rounded-full border-2 ${badgeClasses} text-base font-bold ${badgeTextColor}`}
             >
               !
             </div>
           ) : (
             <div
-              className={`flex h-6 w-6 items-center justify-center rounded-full border-2 ${badgeClasses} text-sm font-semibold ${badgeTextColor}`}
+              className={`flex ${bulletSizeClass} items-center justify-center rounded-full border-2 ${badgeClasses} ${bulletNumberTextClass} font-semibold ${badgeTextColor}`}
             >
               {taskIndex + 1}
             </div>
@@ -511,7 +592,7 @@ export const PathwayTaskDisplay: React.FC<PathwayTaskDisplayProps> = ({
       )}
 
       {/* Task Content */}
-      <div className="mb-4 min-w-0 flex-1">
+      <div className={taskContentClassName}>
         {task.opportunity?.id ? (
           <>
             <PathwayTaskOpportunity
@@ -520,6 +601,7 @@ export const PathwayTaskDisplay: React.FC<PathwayTaskDisplayProps> = ({
               isCompleted={task.completed ?? false}
               isAdmin={isAdmin}
               showBadges={showBadges}
+              opportunityVariant={opportunityVariant}
             />
             {/* Action Button */}
             {showActionButton && (
@@ -537,7 +619,7 @@ export const PathwayTaskDisplay: React.FC<PathwayTaskDisplayProps> = ({
           </>
         ) : (
           <div className="flex flex-col gap-2">
-            <div className="flex items-center gap-2 text-xs text-yellow-700">
+            <div className="flex items-center gap-2 text-[10px] text-yellow-700 md:text-xs">
               <span>⚠️</span>
               <span className="font-medium">
                 Opportunity configuration incomplete
@@ -572,6 +654,7 @@ export interface PathwayTasksListProps {
   showTaskConnectors?: boolean;
   color?: "green" | "orange" | "white";
   isAdmin?: boolean;
+  opportunityVariant?: "default" | "compact";
 }
 
 export const PathwayTasksList: React.FC<PathwayTasksListProps> = ({
@@ -585,7 +668,10 @@ export const PathwayTasksList: React.FC<PathwayTasksListProps> = ({
   showTaskConnectors = true,
   color = "green",
   isAdmin = false,
+  opportunityVariant = "default",
 }) => {
+  const isCompact = opportunityVariant === "compact";
+
   const hasSequentialTasks =
     rule !== PathwayCompletionRule.Any &&
     orderMode === PathwayOrderMode.Sequential;
@@ -601,7 +687,7 @@ export const PathwayTasksList: React.FC<PathwayTasksListProps> = ({
   const connectorTextColor = color === "white" ? "text-gray-600" : "text-white";
 
   return (
-    <div className="space-y-0">
+    <div className={isCompact ? "space-y-2" : "space-y-0"}>
       {tasks.map((task, taskIndex) => (
         <div key={task.id}>
           <PathwayTaskDisplay
@@ -620,11 +706,18 @@ export const PathwayTasksList: React.FC<PathwayTasksListProps> = ({
             color={color}
             totalTasks={tasks.length}
             isAdmin={isAdmin}
+            opportunityVariant={opportunityVariant}
           />
 
           {/* AND/OR indicator between tasks */}
           {showTaskConnectors && taskIndex < tasks.length - 1 && (
-            <div className="mb-4 flex justify-center">
+            <div
+              className={
+                isCompact
+                  ? "mb-2 flex justify-center"
+                  : "mb-4 flex justify-center"
+              }
+            >
               <div
                 className={`badge badge-xs border-${connectorColor} bg-${connectorColor} px-2 py-1 text-[10px] font-bold ${connectorTextColor}`}
               >

@@ -107,6 +107,9 @@ const RefereeDashboard: NextPageWithLayout<{
 }> = ({ programId, error: serverError }) => {
   const router = useRouter();
 
+  const panelClassName =
+    "mb-4 rounded-xl border border-base-300 bg-base-100 p-4 shadow-sm md:p-5";
+
   // Show success message if user just claimed the link
   useEffect(() => {
     if (router.query.claimed === "true") {
@@ -148,7 +151,7 @@ const RefereeDashboard: NextPageWithLayout<{
     // If redirecting to Keycloak, show loading instead of unauthenticated
     if (isRedirectingToKeycloak) {
       return (
-        <div className="container mx-auto mt-20 flex max-w-5xl flex-col gap-8 py-8">
+        <div className="container mx-auto mt-20 flex max-w-3xl flex-col gap-8 py-8">
           <LoadingInline
             classNameSpinner="h-8 w-8 border-t-2 border-b-2 border-orange md:h-16 md:w-16 md:border-t-4 md:border-b-4"
             classNameLabel={"text-sm font-semibold md:text-base"}
@@ -162,7 +165,7 @@ const RefereeDashboard: NextPageWithLayout<{
 
   if (usageLoading || programLoading) {
     return (
-      <div className="container mx-auto flex max-w-5xl flex-col gap-8 py-8">
+      <div className="container mx-auto flex max-w-3xl flex-col gap-8 py-8">
         <LoadingInline
           classNameSpinner="h-8 w-8 border-t-2 border-b-2 border-orange md:h-16 md:w-16 md:border-t-4 md:border-b-4"
           classNameLabel={"text-sm font-semibold md:text-base"}
@@ -186,7 +189,7 @@ const RefereeDashboard: NextPageWithLayout<{
     `;
 
     return (
-      <div className="container mx-auto flex max-w-5xl flex-col gap-8 py-8">
+      <div className="container mx-auto flex max-w-3xl flex-col gap-8 py-8">
         <div className="flex items-center justify-center">
           <NoRowsMessage
             title="Referral Not Found"
@@ -210,9 +213,9 @@ const RefereeDashboard: NextPageWithLayout<{
         <title>Yoma | My Referral Progress | {program.name}</title>
       </Head>
 
-      <div className="w-full lg:max-w-7xl">
+      <div className="w-full lg:max-w-3xl">
         {/* BREADCRUMB */}
-        <div className="mb-4 text-xs font-bold tracking-wider text-black md:text-base">
+        <div className="text-base-content/70 mb-4 text-[10px] font-semibold tracking-wide md:text-xs">
           <Breadcrumb
             items={[
               { title: "💳 Yo-ID", url: "/yoid" },
@@ -242,73 +245,56 @@ const RefereeDashboard: NextPageWithLayout<{
               <>
                 {/* Proof of Personhood Verification */}
                 {showPOPAction && (
-                  <div
-                    id="next-action-pop"
-                    className="shadow-custom mb-6 rounded-lg border-2 border-orange-300 bg-gradient-to-br from-orange-50 to-white p-6"
-                  >
-                    <div className="mb-4 flex items-start gap-4 md:gap-6">
-                      {/* Icon */}
-                      <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-white shadow-lg ring-4 ring-white/50 md:h-16 md:w-16">
-                        <IoArrowForward className="h-6 w-6 text-orange-500 md:h-8 md:w-8" />
+                  <div id="next-action-pop" className={panelClassName}>
+                    <div className="flex items-start gap-3 md:gap-4">
+                      <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md bg-blue-50 md:h-12 md:w-12">
+                        <IoArrowForward className="h-5 w-5 text-blue-600 md:h-6 md:w-6" />
                       </div>
 
-                      {/* Text */}
-                      <div className="flex flex-col justify-center pt-1">
-                        <h2 className="text-sm font-semibold text-orange-900 md:text-lg">
-                          Your Next Step
+                      <div className="min-w-0">
+                        <h2 className="font-family-nunito text-base-content text-xs font-semibold md:text-sm">
+                          Next step
                         </h2>
-                        <p className="text-gray-dark text-xs md:text-sm">
-                          Verify Your Identity
+                        <p className="text-base-content/60 text-[10px] md:text-xs">
+                          Verify your identity
                         </p>
                       </div>
                     </div>
 
-                    {/* Verification Instructions */}
-                    <div>
-                      <p className="text-gray-dark mb-3 text-xs">
-                        Choose one of the following methods:
+                    <div className="mt-4">
+                      <p className="text-base-content/60 text-[10px] md:text-xs">
+                        Choose one method:
                       </p>
-                      <div className="space-y-3">
-                        <div className="rounded-md border border-blue-300 bg-white p-3">
-                          <h5 className="mb-2 text-sm font-semibold text-blue-900">
-                            Option 1: Phone Number Verification
+
+                      <div className="mt-3 space-y-3">
+                        <div className="bg-base-200 rounded-lg p-3">
+                          <h5 className="text-base-content text-xs font-semibold md:text-sm">
+                            Phone verification
                           </h5>
-                          <ul className="text-gray-dark ml-5 list-disc space-y-1 text-xs">
-                            <li>
-                              Add a phone number to your account on the profile
-                              page
-                            </li>
-                            <li>
-                              <strong>Note:</strong> This will require you to
-                              sign in again
-                            </li>
+                          <ul className="text-base-content/70 mt-2 ml-5 list-disc space-y-1 text-[10px] md:text-xs">
+                            <li>Add a phone number in your profile</li>
+                            <li>You&apos;ll be asked to sign in again</li>
                           </ul>
                           <div className="mt-3">
                             <Link
                               href={`/user/profile?returnUrl=${encodeURIComponent(
                                 getSafeUrl(router.asPath, "/yoid"),
                               )}`}
-                              className="btn btn-secondary btn-sm gap-2"
+                              className="btn btn-xs gap-2 border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100"
                             >
                               <IoArrowForward className="h-4 w-4" />
                               Go to Profile
                             </Link>
                           </div>
                         </div>
-                        <div className="rounded-md border border-blue-300 bg-white p-3">
-                          <h5 className="mb-2 text-sm font-semibold text-blue-900">
-                            Option 2: Social Media Account
-                          </h5>
-                          <ul className="text-gray-dark ml-5 list-disc space-y-1 text-xs">
-                            <li>
-                              Link your social media account (Google/Facebook)
-                            </li>
 
-                            <li>
-                              <strong>Note:</strong> If you use a different
-                              email, you will be recognized as a new user and
-                              will lose any progress made so far
-                            </li>
+                        <div className="bg-base-200 rounded-lg p-3">
+                          <h5 className="text-base-content text-xs font-semibold md:text-sm">
+                            Social sign-in
+                          </h5>
+                          <ul className="text-base-content/70 mt-2 ml-5 list-disc space-y-1 text-[10px] md:text-xs">
+                            <li>Sign in with Google or Facebook</li>
+                            <li>Use the same email to keep your progress</li>
                           </ul>
                           <div className="mt-3">
                             <button
@@ -320,11 +306,11 @@ const RefereeDashboard: NextPageWithLayout<{
                                   getSafeUrl(router.asPath, "/yoid"),
                                 )
                               }
-                              className="btn btn-secondary btn-sm min-w-0 gap-2"
+                              className="btn btn-xs min-w-0 gap-2 border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100"
                             >
                               <IoArrowForward className="h-4 w-4 flex-shrink-0" />
                               <span className="truncate">
-                                Sign in with Social Media
+                                Continue with Social
                               </span>
                             </button>
                           </div>
@@ -336,99 +322,89 @@ const RefereeDashboard: NextPageWithLayout<{
 
                 {/* OR Divider */}
                 {showPOPAction && nextAction && (
-                  <div className="mb-6 flex items-center gap-4">
-                    <div className="h-px flex-1 bg-gray-300" />
-                    <span className="text-sm font-bold text-gray-500">OR</span>
-                    <div className="h-px flex-1 bg-gray-300" />
+                  <div className="my-4 flex items-center gap-3">
+                    <div className="bg-base-300 h-px flex-1" />
+                    <span className="text-base-content/50 text-[10px] font-semibold md:text-xs">
+                      OR
+                    </span>
+                    <div className="bg-base-300 h-px flex-1" />
                   </div>
                 )}
 
                 {/* Pathway Next Action */}
                 {nextAction && (
-                  <div
-                    id="next-action"
-                    className="shadow-custom mb-6 rounded-lg border-2 border-orange-300 bg-gradient-to-br from-orange-50 to-white p-6"
-                  >
-                    <div className="mb-4 flex items-start gap-4 md:gap-6">
-                      {/* Icon */}
-                      <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-white shadow-lg ring-4 ring-white/50 md:h-16 md:w-16">
-                        <IoArrowForward className="h-6 w-6 text-orange-500 md:h-8 md:w-8" />
+                  <div id="next-action" className={panelClassName}>
+                    <div className="flex items-center gap-3 md:gap-4">
+                      <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md bg-blue-50 md:h-12 md:w-12">
+                        <IoArrowForward className="h-5 w-5 text-blue-600 md:h-6 md:w-6" />
                       </div>
 
-                      {/* Text */}
-                      <div className="flex min-w-0 flex-col justify-center pt-1">
-                        <h2 className="text-sm font-semibold text-orange-900 md:text-lg">
-                          Your Next Step
+                      <div className="min-w-0">
+                        <h2 className="font-family-nunito text-base-content text-xs font-semibold md:text-sm">
+                          Next step: {nextAction.step.name}
                         </h2>
-                        <p className="text-gray-dark truncate text-xs md:text-sm">
-                          {nextAction.step.name}
-                        </p>
+
+                        <TaskInstructionHeader
+                          tasksLength={nextAction.tasks.length}
+                          rule={nextAction.step.rule}
+                          orderMode={nextAction.step.orderMode}
+                          isCompleted={false}
+                          color="blue"
+                          variant="compact"
+                          hideIcon
+                        />
                       </div>
                     </div>
-                    <div>
-                      {/* Task Instructions */}
-                      <TaskInstructionHeader
-                        tasksLength={nextAction.tasks.length}
-                        rule={nextAction.step.rule}
-                        orderMode={nextAction.step.orderMode}
-                        isCompleted={false}
-                        color="white"
-                      />
-                      {/* Tasks List */}
-                      <PathwayTasksList
-                        tasks={nextAction.tasks.map((task, index) => ({
-                          id: task.id,
-                          entityType: "Opportunity" as PathwayTaskEntityType,
-                          completed: task.completed,
-                          isCompletable: task.isCompletable,
-                          opportunity: task.opportunityId
-                            ? {
-                                id: task.opportunityId,
-                                title: task.opportunityTitle,
-                                description: null,
-                                type: null,
-                                organizationId: null,
-                                organizationName: null,
-                                organizationLogoURL: null,
-                                summary: null,
-                                dateStart: null,
-                                dateEnd: null,
-                                url: null,
-                                zltoReward: null,
-                                yomaReward: null,
-                              }
-                            : null,
-                          order: index,
-                          orderDisplay: index + 1,
-                          dateCompleted: null,
-                          nonCompletableReason: null,
-                        }))}
-                        rule={nextAction.step.rule}
-                        orderMode={nextAction.step.orderMode}
-                        showActionButtons={false}
-                        showBullets={false}
-                        showBadges={false}
-                        showTaskConnectors={false}
-                        color="white"
-                      />
-                      {/* Helpful Tips */}
-                      <div className="rounded-lg border-1 border-gray-200 bg-white p-4">
-                        <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold md:text-base">
-                          How to Complete
-                        </h4>
-                        <ol className="ml-4 list-decimal space-y-1 text-xs text-gray-900">
-                          <li>
-                            <strong>Complete</strong> the above tasks
-                          </li>
-                          <li>
-                            <strong>Upload proof of completion</strong> on the
-                            opportunity page
-                          </li>
-                          <li>
-                            <strong>Wait for verification</strong> - you&apos;ll
-                            be notified when approved
-                          </li>
-                        </ol>
+
+                    <div className="mt-4 space-y-3">
+                      <div className="bg-base-100 rounded-lg border border-blue-200 p-3">
+                        <PathwayTasksList
+                          tasks={nextAction.tasks.map((task, index) => ({
+                            id: task.id,
+                            entityType: "Opportunity" as PathwayTaskEntityType,
+                            completed: task.completed,
+                            isCompletable: task.isCompletable,
+                            opportunity: task.opportunityId
+                              ? {
+                                  id: task.opportunityId,
+                                  title: task.opportunityTitle,
+                                  description: null,
+                                  type: null,
+                                  organizationId: null,
+                                  organizationName: null,
+                                  organizationLogoURL: null,
+                                  summary: null,
+                                  dateStart: null,
+                                  dateEnd: null,
+                                  url: null,
+                                  zltoReward: null,
+                                  yomaReward: null,
+                                }
+                              : null,
+                            order: index,
+                            orderDisplay: index + 1,
+                            dateCompleted: null,
+                            nonCompletableReason: null,
+                          }))}
+                          rule={nextAction.step.rule}
+                          orderMode={nextAction.step.orderMode}
+                          showActionButtons={false}
+                          showBullets={false}
+                          showBadges={false}
+                          showTaskConnectors={false}
+                          color="white"
+                          opportunityVariant="compact"
+                        />
+                      </div>
+
+                      <div className="text-base-content/60 flex items-center gap-2 text-[10px] md:text-xs">
+                        <span className="bg-base-100 mt-0.5 flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full border border-blue-200 text-[10px] font-bold text-blue-700">
+                          !
+                        </span>
+                        <span className="min-w-0">
+                          Click a task above → Go to Opportunity → complete it.
+                          Then upload proof via “Upload your completion files”.
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -439,122 +415,110 @@ const RefereeDashboard: NextPageWithLayout<{
 
         {/* NEXT ACTION (COMPLETED) */}
         {usage.status === "Completed" && (
-          <div
-            id="next-action"
-            className="shadow-custom mb-6 rounded-lg border-2 border-orange-300 bg-gradient-to-br from-orange-50 to-white p-6"
-          >
-            <div className="mb-4 flex items-start gap-4 md:gap-6">
-              {/* Icon */}
-              <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-white shadow-lg ring-4 ring-white/50 md:h-16 md:w-16">
-                <IoGift className="h-6 w-6 text-orange-500 md:h-8 md:w-8" />
+          <div id="next-action" className={panelClassName}>
+            <div className="flex items-start gap-3 md:gap-4">
+              <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md bg-green-50 md:h-12 md:w-12">
+                <IoGift className="h-5 w-5 text-green-700 md:h-6 md:w-6" />
               </div>
 
-              {/* Text */}
-              <div className="flex flex-col justify-center pt-1">
-                <h2 className="text-sm font-semibold text-orange-900 md:text-lg">
-                  What&apos;s Next?
+              <div className="min-w-0">
+                <h2 className="font-family-nunito text-base-content text-xs font-semibold md:text-sm">
+                  What&apos;s next
                 </h2>
-                <p className="text-gray-dark text-xs md:text-sm">
-                  You have completed the program but your journey doesn&apos;t
-                  have to end here.
+                <p className="text-base-content/60 text-[10px] md:text-xs">
+                  You completed the program — but don&apos;t stop here!
                 </p>
               </div>
             </div>
 
-            <div className="space-y-4">
-              {/* View Dashboard */}
-              <div className="rounded-lg border-2 border-green-200 bg-green-50 p-4">
-                <h4 className="mb-2 flex items-center gap-2 text-sm font-semibold text-green-900 md:text-lg">
-                  <IoTrophy className="h-5 w-5 text-green-600" />
-                  View Your Achievements
-                </h4>
-                <p className="text-gray-dark mb-3 text-xs md:text-sm">
-                  Your achievements, skills and credentials are safely stored in
-                  your wallet. View them now!
-                </p>
+            <div className="divide-base-200 mt-4 divide-y">
+              <div className="flex flex-col gap-3 py-3 md:flex-row md:items-center md:justify-between">
+                <div className="flex min-w-0 items-start gap-2">
+                  <IoTrophy className="mt-0.5 h-4 w-4 flex-shrink-0 text-green-700 opacity-80" />
+                  <div className="min-w-0">
+                    <div className="text-base-content text-xs font-semibold md:text-sm">
+                      View your wallet
+                    </div>
+                    <div className="text-base-content/60 text-[10px] md:text-xs">
+                      See your achievements and credentials.
+                    </div>
+                  </div>
+                </div>
+
                 <Link
                   href="/yoid/wallet"
-                  className="btn btn-success btn-sm gap-2"
+                  className="btn btn-sm gap-2 border-green-300 bg-green-50 text-green-700 hover:bg-green-100"
                 >
                   <IoTrophy className="h-4 w-4" />
-                  View Dashboard
+                  View Wallet
                 </Link>
               </div>
 
-              {/* Spend ZLTO on Marketplace */}
               {program.zltoRewardReferee && (
-                <div className="rounded-lg border-2 border-blue-200 bg-blue-50 p-4">
-                  <h4 className="mb-2 flex items-center gap-2 text-sm font-semibold text-blue-900 md:text-lg">
-                    <IoCart className="h-5 w-5 text-blue-600" />
-                    Spend Your ZLTO
-                  </h4>
-                  <p className="text-gray-dark mb-3 text-xs md:text-sm">
-                    Visit the marketplace to discover amazing opportunities and
-                    experiences you can unlock with your ZLTO!
-                  </p>
+                <div className="flex flex-col gap-3 py-3 md:flex-row md:items-center md:justify-between">
+                  <div className="flex min-w-0 items-start gap-2">
+                    <IoCart className="mt-0.5 h-4 w-4 flex-shrink-0 text-blue-700 opacity-80" />
+                    <div className="min-w-0">
+                      <div className="text-base-content text-xs font-semibold md:text-sm">
+                        Spend your ZLTO
+                      </div>
+                      <div className="text-base-content/60 text-[10px] md:text-xs">
+                        Explore the marketplace.
+                      </div>
+                    </div>
+                  </div>
+
                   <Link
                     href="/marketplace"
-                    className="btn bg-blue btn-sm gap-2 text-white"
+                    className="btn btn-sm gap-2 border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100"
                   >
                     <IoStorefront className="h-4 w-4" />
-                    Explore Marketplace
+                    Marketplace
                   </Link>
                 </div>
               )}
 
-              {/* Explore Opportunities */}
-              <div className="rounded-lg border-2 border-purple-200 bg-purple-50 p-4">
-                <h4 className="mb-2 flex items-center gap-2 text-sm font-semibold text-purple-900 md:text-lg">
-                  <IoRocket className="h-5 w-5 text-purple-600" />
-                  Explore Other Opportunities
-                </h4>
-                <p className="text-gray-dark mb-3 text-xs md:text-sm">
-                  {program.zltoRewardReferee ? (
-                    <>
-                      Continue earning more ZLTO and developing new skills
-                      through various opportunities.
-                    </>
-                  ) : (
-                    <>
-                      Discover opportunities to earn ZLTO and develop valuable
-                      skills.
-                    </>
-                  )}
-                </p>
+              <div className="flex flex-col gap-3 py-3 md:flex-row md:items-center md:justify-between">
+                <div className="flex min-w-0 items-start gap-2">
+                  <IoRocket className="mt-0.5 h-4 w-4 flex-shrink-0 text-blue-700 opacity-80" />
+                  <div className="min-w-0">
+                    <div className="text-base-content text-xs font-semibold md:text-sm">
+                      Find opportunities
+                    </div>
+                    <div className="text-base-content/60 text-[10px] md:text-xs">
+                      Keep building skills and earning ZLTO.
+                    </div>
+                  </div>
+                </div>
+
                 <Link
                   href="/opportunities"
-                  className="btn btn-primary btn-sm gap-2"
+                  className="btn btn-sm gap-2 border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100"
                 >
                   <IoRocket className="h-4 w-4" />
-                  Find Opportunities
+                  Explore
                 </Link>
               </div>
 
-              {/* Become a Referrer */}
-              <div className="rounded-lg border-2 border-pink-200 bg-pink-50 p-4">
-                <h4 className="mb-2 flex items-center gap-2 text-sm font-semibold text-pink-900 md:text-lg">
-                  <IoHeart className="h-5 w-5 text-pink-600" />
-                  Become a Referrer
-                </h4>
-                <p className="text-gray-dark mb-3 text-xs md:text-sm">
-                  {program.zltoRewardReferee ? (
-                    <>
-                      Love this program? Share the opportunity with others and
-                      earn even more ZLTO for every successful referral!
-                    </>
-                  ) : (
-                    <>
-                      Share opportunities with others and earn ZLTO for every
-                      successful referral!
-                    </>
-                  )}
-                </p>
+              <div className="flex flex-col gap-3 py-3 md:flex-row md:items-center md:justify-between">
+                <div className="flex min-w-0 items-start gap-2">
+                  <IoHeart className="mt-0.5 h-4 w-4 flex-shrink-0 text-pink-700 opacity-80" />
+                  <div className="min-w-0">
+                    <div className="text-base-content text-xs font-semibold md:text-sm">
+                      Become a referrer
+                    </div>
+                    <div className="text-base-content/60 text-[10px] md:text-xs">
+                      Share opportunities and earn rewards.
+                    </div>
+                  </div>
+                </div>
+
                 <Link
                   href="/yoid/referrals"
-                  className="btn btn-sm gap-2 bg-pink-500 text-white hover:bg-pink-600"
+                  className="btn btn-sm gap-2 border-pink-300 bg-pink-50 text-pink-700 hover:bg-pink-100"
                 >
                   <IoShareSocial className="h-4 w-4" />
-                  Start Referring & Earn
+                  Start Referring
                 </Link>
               </div>
             </div>
@@ -563,77 +527,65 @@ const RefereeDashboard: NextPageWithLayout<{
 
         {/* NEXT ACTION (EXPIRED) */}
         {usage.status === "Expired" && (
-          <div
-            id="next-action"
-            className="shadow-custom mb-6 rounded-lg border-2 border-orange-300 bg-gradient-to-br from-orange-50 to-white p-6"
-          >
-            <div className="mb-4 flex items-start gap-4 md:gap-6">
-              {/* Icon */}
-              <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-white shadow-lg ring-4 ring-white/50 md:h-16 md:w-16">
-                <IoWarning className="h-6 w-6 text-orange-500 md:h-8 md:w-8" />
+          <div id="next-action" className={panelClassName}>
+            <div className="flex items-start gap-3 md:gap-4">
+              <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md bg-orange-50 md:h-12 md:w-12">
+                <IoWarning className="h-5 w-5 text-orange-700 md:h-6 md:w-6" />
               </div>
 
-              {/* Text */}
-              <div className="flex flex-col justify-center pt-1">
-                <h2 className="text-sm font-semibold text-orange-900 md:text-lg">
-                  Don&apos;t Give Up!
+              <div className="min-w-0">
+                <h2 className="font-family-nunito text-base-content text-xs font-semibold md:text-sm">
+                  Program expired
                 </h2>
-
-                <p className="text-gray-dark text-xs md:text-sm">
-                  This program may have expired, but your journey doesn&apos;t
-                  have to end here. There are plenty of other ways to earn ZLTO
-                  and grow!
+                <p className="text-base-content/60 text-[10px] md:text-xs">
+                  You can still earn ZLTO and build skills.
                 </p>
               </div>
             </div>
-            <div>
-              <div className="space-y-4">
-                {/* Explore Opportunities */}
-                <div className="rounded-lg border-2 border-purple-200 bg-purple-50 p-4">
-                  <h4 className="mb-2 flex items-center gap-2 text-sm font-semibold text-purple-900 md:text-lg">
-                    <IoRocket className="h-5 w-5 text-purple-600" />
-                    Explore Other Opportunities
-                  </h4>
-                  <p className="text-gray-dark mb-3 text-xs md:text-sm">
-                    Discover new active opportunities to earn ZLTO and develop
-                    valuable skills.
-                  </p>
-                  <Link
-                    href="/opportunities"
-                    className="btn btn-primary btn-sm gap-2"
-                  >
-                    <IoRocket className="h-4 w-4" />
-                    Find Opportunities
-                  </Link>
+
+            <div className="divide-base-200 mt-4 divide-y">
+              <div className="flex flex-col gap-3 py-3 md:flex-row md:items-center md:justify-between">
+                <div className="flex min-w-0 items-start gap-2">
+                  <IoRocket className="mt-0.5 h-4 w-4 flex-shrink-0 text-blue-700 opacity-80" />
+                  <div className="min-w-0">
+                    <div className="text-base-content text-xs font-semibold md:text-sm">
+                      Explore opportunities
+                    </div>
+                    <div className="text-base-content/60 text-[10px] md:text-xs">
+                      Find active programs to join.
+                    </div>
+                  </div>
                 </div>
 
-                {/* Become a Referrer */}
-                <div className="rounded-lg border-2 border-pink-200 bg-pink-50 p-4">
-                  <h4 className="mb-2 flex items-center gap-2 text-sm font-semibold text-pink-900 md:text-lg">
-                    <IoHeart className="h-5 w-5 text-pink-600" />
-                    Become a Referrer
-                  </h4>
-                  <p className="text-gray-dark mb-3 text-xs md:text-sm">
-                    {program.zltoRewardReferee ? (
-                      <>
-                        Love this program? Share the opportunity with others and
-                        earn even more ZLTO for every successful referral!
-                      </>
-                    ) : (
-                      <>
-                        Share opportunities with others and earn ZLTO for every
-                        successful referral!
-                      </>
-                    )}
-                  </p>
-                  <Link
-                    href="/yoid/referrals"
-                    className="btn btn-sm gap-2 bg-pink-500 text-white hover:bg-pink-600"
-                  >
-                    <IoShareSocial className="h-4 w-4" />
-                    Start Referring & Earn
-                  </Link>
+                <Link
+                  href="/opportunities"
+                  className="btn btn-sm gap-2 border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100"
+                >
+                  <IoRocket className="h-4 w-4" />
+                  Explore
+                </Link>
+              </div>
+
+              <div className="flex flex-col gap-3 py-3 md:flex-row md:items-center md:justify-between">
+                <div className="flex min-w-0 items-start gap-2">
+                  <IoHeart className="mt-0.5 h-4 w-4 flex-shrink-0 text-blue-700 opacity-80" />
+                  <div className="min-w-0">
+                    <div className="text-base-content text-xs font-semibold md:text-sm">
+                      Become a referrer
+                    </div>
+                    <div className="text-base-content/60 text-[10px] md:text-xs">
+                      Share opportunities and earn rewards.
+                    </div>
+                  </div>
                 </div>
+
+                <Link
+                  href="/yoid/referrals"
+                  className="btn btn-sm gap-2 border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100"
+                >
+                  <IoShareSocial className="h-4 w-4" />
+                  Start Referring
+                </Link>
               </div>
             </div>
           </div>

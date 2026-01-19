@@ -28,7 +28,7 @@ export const ProgramImage: React.FC<ProgramImageProps> = ({
   return (
     <div
       className={`flex items-center justify-center rounded-lg shadow-md ${
-        className || "bg-gradient-to-br from-orange-100 to-yellow-100"
+        className
       }`}
       style={{ width: `${size}px`, height: `${size}px` }}
     >

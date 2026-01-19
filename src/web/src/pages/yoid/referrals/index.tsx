@@ -4,14 +4,13 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-import { useAtom, useAtomValue } from "jotai";
+import { useAtomValue } from "jotai";
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
 import Head from "next/head";
 import { useRouter } from "next/router";
 import { useCallback, useEffect, useState, type ReactElement } from "react";
 import { FaPlus } from "react-icons/fa";
-import { IoMdClose } from "react-icons/io";
 import { IoWarningOutline } from "react-icons/io5";
 import type {
   ProgramInfo,
@@ -19,31 +18,23 @@ import type {
   ReferralLink,
 } from "~/api/models/referrals";
 import {
-  createReferralLink,
-  getDefaultReferralProgram,
   searchReferralLinks,
   searchReferralProgramsInfo,
 } from "~/api/services/referrals";
 import Breadcrumb from "~/components/Breadcrumb";
-import CustomModal from "~/components/Common/CustomModal";
 import MainLayout from "~/components/Layout/Main";
 import YoIDLayout from "~/components/Layout/YoID";
 import NoRowsMessage from "~/components/NoRowsMessage";
 import { ReferrerCreateLinkModal } from "~/components/Referrals/ReferrerCreateLinkModal";
-import { ReferrerLeaderboard } from "~/components/Referrals/ReferrerLeaderboard";
-import { ReferrerLinkDetails } from "~/components/Referrals/ReferrerLinkDetails";
 import { ReferrerLinksList } from "~/components/Referrals/ReferrerLinksList";
-import { ReferrerPerformanceOverview } from "~/components/Referrals/ReferrerPerformanceOverview";
-import { ReferrerReferralsList } from "~/components/Referrals/ReferrerReferralsList";
 import { ReferrerStats } from "~/components/Referrals/ReferrerStats";
-import { ShareButtons } from "~/components/Referrals/ShareButtons";
 import { LoadingInline } from "~/components/Status/LoadingInline";
 import { handleUserSignIn } from "~/lib/authUtils";
 import { config } from "~/lib/react-query-config";
 import { currentLanguageAtom, userProfileAtom } from "~/lib/store";
 import { authOptions } from "~/server/auth";
 import { type NextPageWithLayout } from "../../_app";
-import { getUserProfile } from "~/api/services/user";
+import { ReferrerProgramsList } from "~/components/Referrals/ReferrerProgramsList";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
@@ -59,92 +50,50 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 
   const queryClient = new QueryClient(config);
 
-  // 👇 check multiProgram query parameter (default: false)
-  // MULTI-PROGRAM MODE (?multiProgram=true): Shows program selection, multiple links list, modal-based usage view
-  // SINGLE PROGRAM MODE (default): Uses default program, shows only first link with inline usage view
-  const multiProgram =
-    context.query.multiProgram === "true" || context.query.multiProgram === "1";
+  // MULTI-PROGRAM MODE ONLY: prefetch queries on server
+  await queryClient.prefetchQuery({
+    queryKey: ["ReferralLinks", 1, 3], // pageNumber: 1, pageSize: 3
+    queryFn: () =>
+      searchReferralLinks(
+        {
+          pageNumber: 1,
+          pageSize: 3,
+          programId: null,
+          valueContains: null,
+          statuses: null,
+        },
+        context,
+      ),
+  });
 
-  if (multiProgram) {
-    // MULTI-PROGRAM MODE: prefetch queries on server for multiple programs
-    await queryClient.prefetchQuery({
-      queryKey: ["ReferralLinks", 1, 3], // pageNumber: 1, pageSize: 3
-      queryFn: () =>
-        searchReferralLinks(
-          {
-            pageNumber: 1,
-            pageSize: 3,
-            programId: null,
-            valueContains: null,
-            statuses: null,
-          },
-          context,
-        ),
-    });
-
-    await queryClient.prefetchQuery({
-      queryKey: ["ReferralPrograms", 1, 4], // pageNumber: 1, pageSize: 4
-      queryFn: () =>
-        searchReferralProgramsInfo(
-          {
-            pageNumber: 1,
-            pageSize: 4,
-            valueContains: null,
-            includeExpired: false,
-          },
-          context,
-        ),
-    });
-  } else {
-    // SINGLE PROGRAM MODE: fetch default program and user's first link for that program
-    try {
-      const defaultProgram = await getDefaultReferralProgram(context);
-
-      await queryClient.prefetchQuery({
-        queryKey: ["DefaultReferralProgram"],
-        queryFn: () => Promise.resolve(defaultProgram),
-      });
-
-      await queryClient.prefetchQuery({
-        queryKey: ["ReferralLinks", defaultProgram.id, 1, 1], // programId, pageNumber: 1, pageSize: 1
-        queryFn: () =>
-          searchReferralLinks(
-            {
-              pageNumber: 1,
-              pageSize: 1,
-              programId: defaultProgram.id,
-              valueContains: null,
-              statuses: null,
-            },
-            context,
-          ),
-      });
-    } catch (error) {
-      console.error("Failed to fetch default referral program:", error);
-      // If default program fails to load, prefetch with null to indicate unavailable
-      await queryClient.prefetchQuery({
-        queryKey: ["DefaultReferralProgram"],
-        queryFn: () => Promise.resolve(null),
-      });
-    }
-  }
+  await queryClient.prefetchQuery({
+    queryKey: ["ReferralPrograms", 1, 4], // pageNumber: 1, pageSize: 4
+    queryFn: () =>
+      searchReferralProgramsInfo(
+        {
+          pageNumber: 1,
+          pageSize: 4,
+          valueContains: null,
+          includeExpired: false,
+        },
+        context,
+      ),
+  });
 
   return {
     props: {
       dehydratedState: dehydrate(queryClient),
       user: session?.user ?? null,
-      multiProgram,
     },
   };
 }
 
 const ReferralsDashboard: NextPageWithLayout<{
   error?: number;
-  multiProgram?: boolean;
-}> = ({ error, multiProgram = false }) => {
+}> = ({ error }) => {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const [userProfile, setUserProfile] = useAtom(userProfileAtom);
+  const userProfile = useAtomValue(userProfileAtom);
 
   // State for multi-program mode only
   const [createLinkModalVisible, setCreateLinkModalVisible] = useState(false);
@@ -152,33 +101,7 @@ const ReferralsDashboard: NextPageWithLayout<{
     useState<ProgramInfo | null>(null);
   const [selectedLinkForEdit, setSelectedLinkForEdit] =
     useState<ReferralLink | null>(null);
-  const [selectedLinkForUsage, setSelectedLinkForUsage] =
-    useState<ReferralLink | null>(null);
 
-  // Fetch default program for single program mode
-  const { data: defaultProgram } = useQuery<ProgramInfo>({
-    queryKey: ["DefaultReferralProgram"],
-    queryFn: () => getDefaultReferralProgram(),
-    enabled: !error && !multiProgram,
-  });
-
-  // Fetch links - different query keys for single vs multi mode
-  const { data: linksData, isLoading: linksLoading } = useQuery({
-    queryKey: multiProgram
-      ? ["ReferralLinks", 1, 3]
-      : ["ReferralLinks", defaultProgram?.id, 1, 1],
-    queryFn: () =>
-      searchReferralLinks({
-        pageNumber: 1,
-        pageSize: multiProgram ? 3 : 1,
-        programId: multiProgram ? null : (defaultProgram?.id ?? null),
-        valueContains: null,
-        statuses: null,
-      }),
-    enabled: !error && (multiProgram || !!defaultProgram),
-  });
-
-  // Only fetch programs list in multi-program mode
   const { data: programsData } = useQuery<ProgramSearchResultsInfo>({
     queryKey: ["ReferralPrograms", 1, 4],
     queryFn: () =>
@@ -188,97 +111,42 @@ const ReferralsDashboard: NextPageWithLayout<{
         valueContains: null,
         includeExpired: false,
       }),
-    enabled: !error && multiProgram,
+    enabled: !error,
+  });
+
+  // Fetch links
+  const { data: linksData } = useQuery({
+    queryKey: ["ReferralLinks", 1, 3],
+    queryFn: () =>
+      searchReferralLinks({
+        pageNumber: 1,
+        pageSize: 3,
+        programId: null,
+        valueContains: null,
+        statuses: null,
+      }),
+    enabled: !error,
   });
 
   // Check if user is blocked
   const isBlocked = userProfile?.referral?.blocked ?? false;
   const hasLinks = (linksData?.items?.length ?? 0) > 0;
-  const firstLink = linksData?.items?.[0] ?? null;
+  const hasPrograms = (programsData?.items?.length ?? 0) > 0;
 
-  // Auto-create link in single program mode if no link exists
-  const [isAutoCreating, setIsAutoCreating] = useState(false);
-  useEffect(() => {
-    const autoCreateLink = async () => {
-      // Only auto-create in single program mode, when not blocked, no links exist, and we have a default program
-      if (
-        !multiProgram &&
-        !isBlocked &&
-        !hasLinks &&
-        defaultProgram &&
-        !isAutoCreating
-      ) {
-        setIsAutoCreating(true);
-        try {
-          // Generate a simple title based on the program name
-          const linkName = `${defaultProgram.name} Referral Link`;
+  const programs = programsData?.items || [];
 
-          await createReferralLink({
-            programId: defaultProgram.id,
-            name: linkName,
-            description: null,
-            includeQRCode: false,
-          });
-
-          // Refresh user profile to include new referral data
-          // This ensures UserMenu shows the referee dashboard link
-          const updatedProfile = await getUserProfile();
-          setUserProfile(updatedProfile);
-
-          // Refetch links after creation
-          await queryClient.invalidateQueries({ queryKey: ["ReferralLinks"] });
-        } catch (error) {
-          console.error("Failed to auto-create link:", error);
-        } finally {
-          setIsAutoCreating(false);
-        }
-      }
-    };
-
-    autoCreateLink();
-  }, [
-    multiProgram,
-    isBlocked,
-    hasLinks,
-    defaultProgram,
-    isAutoCreating,
-    queryClient,
-    setUserProfile,
-  ]);
-
-  // Determine programs array based on mode
-  const programs = multiProgram
-    ? programsData?.items || []
-    : defaultProgram
-      ? [defaultProgram]
-      : [];
-
-  // Handle create link (no program pre-selected) - multi-program mode only
+  // Handle create link (no program pre-selected)
   const handleCreateLink = useCallback(() => {
-    if (!multiProgram) return;
     setSelectedProgramForLink(null);
     setCreateLinkModalVisible(true);
-  }, [multiProgram]);
+  }, []);
 
-  // Handle view usage - multi-program mode only
-  const handleViewUsage = useCallback(
-    (link: ReferralLink) => {
-      if (!multiProgram) return;
-      setSelectedLinkForUsage(link);
-    },
-    [multiProgram],
-  );
-
-  // Handle edit link - multi-program mode only
-  const handleEditLink = useCallback(
-    (link: ReferralLink) => {
-      if (!multiProgram) return;
-      setSelectedLinkForEdit(link);
-      setSelectedProgramForLink(null);
-      setCreateLinkModalVisible(true);
-    },
-    [multiProgram],
-  );
+  // Handle create link with program (program pre-selected)
+  const handleCreateLinkForProgram = useCallback((program: ProgramInfo) => {
+    setSelectedProgramForLink(program);
+    setSelectedLinkForEdit(null);
+    setCreateLinkModalVisible(true);
+  }, []);
 
   const currentLanguage = useAtomValue(currentLanguageAtom);
 
@@ -306,7 +174,7 @@ const ReferralsDashboard: NextPageWithLayout<{
         <title>Yoma | Referrals</title>
       </Head>
 
-      <div className="w-full lg:max-w-7xl">
+      <div className="w-full lg:max-w-4xl">
         {/* BREADCRUMB */}
         <div className="mb-4 text-xs font-bold tracking-wider text-black md:text-base">
           <Breadcrumb
@@ -379,251 +247,110 @@ const ReferralsDashboard: NextPageWithLayout<{
             <div className="flex items-center justify-center">
               <NoRowsMessage
                 title="Refer a friend"
-                subTitle="Good things are better when shared. Invite your friends to Yoma and help them start their journey."
-                description="Earn the power to refer by completing your own Yoma
-                  opportunities. Share your link, and when your friend signs up
-                  and completes their first onboarding opportunity, you both win
-                  rewards!"
+                description={
+                  hasLinks
+                    ? '<div class="space-y-2">' +
+                      "<p>Your links are ready to share. Send your referral link to friends who haven&#39;t completed onboarding yet.</p>" +
+                      "<p>When they complete the program requirements, you both earn rewards — and you can track progress on this page.</p>" +
+                      "</div>"
+                    : hasPrograms
+                      ? '<div class="space-y-2">' +
+                        "<p>Create your first referral link in seconds. Choose a program below to generate a referral link.</p>" +
+                        "<p>Each program has different requirements and rewards — share only with new users who haven&#39;t completed onboarding.</p>" +
+                        "</div>"
+                      : '<div class="space-y-2">' +
+                        "<p>No referral programs are available right now. Please check back later.</p>" +
+                        "</div>"
+                }
                 icon={"❤️"}
                 className="max-w-3xl !bg-transparent"
               />
             </div>
 
-            {/* SINGLE PROGRAM MODE */}
-            {!multiProgram && (
-              <div className="flex flex-col gap-4">
-                {linksLoading || isAutoCreating ? (
-                  <LoadingInline classNameSpinner="h-12 border-orange w-12" />
-                ) : (
-                  <div className="flex flex-col items-start justify-start gap-4 md:gap-6">
-                    {firstLink && (
-                      <div className="flex w-full flex-col gap-4 md:flex-row">
-                        <div className="flex flex-1 flex-col gap-2">
-                          <div className="font-family-nunito text-sm font-semibold text-black md:text-base">
-                            Your Link
-                          </div>
-
-                          <div className="flex-1 rounded-lg bg-white p-4">
-                            <ReferrerLinkDetails
-                              link={firstLink}
-                              mode="large"
-                              showQRCode={false}
-                              className=""
-                              hideLabels={true}
-                            />
-                          </div>
-                        </div>
-
-                        <div className="flex flex-1 flex-col gap-2">
-                          <div className="font-family-nunito text-sm font-semibold text-black md:text-base">
-                            Share Your Link
-                          </div>
-
-                          <div className="flex-1 rounded-lg bg-white p-4">
-                            <p className="text-gray-dark mt-1 mb-5 text-xs md:text-sm">
-                              Choose your preferred platform
-                            </p>
-
-                            <ShareButtons
-                              url={firstLink.shortURL ?? firstLink.url}
-                              size={30}
-                              rewardAmount={defaultProgram?.zltoRewardReferee}
-                            />
-                          </div>
-                        </div>
-
-                        <div className="flex flex-1 flex-col gap-2">
-                          <div className="font-family-nunito text-sm font-semibold text-black md:text-base">
-                            Your stats
-                          </div>
-
-                          <div className="flex-1 rounded-lg bg-white p-4">
-                            <ReferrerStats link={firstLink} />
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {!firstLink && !defaultProgram && (
-                      <NoRowsMessage
-                        title="My Referral Link"
-                        description="Link currently unavailable. Please check back later."
-                        icon={"🔗"}
-                      />
-                    )}
-                  </div>
-                )}
-
-                {!linksLoading && firstLink && (
+            {/* MULTI-PROGRAM MODE (DEFAULT) */}
+            {hasLinks ? (
+              <div className="flex flex-col gap-8">
+                {/* LEFT COLUMN - Stats & Leaderboard */}
+                <div className="min-w-0 space-y-4 md:space-y-6 lg:col-span-1">
+                  {/* STATS CARDS */}
                   <div className="space-y-2">
                     <div className="font-family-nunito text-sm font-semibold text-black md:text-base">
-                      Referral List
+                      Your Performance
                     </div>
 
-                    <ReferrerReferralsList linkId={firstLink.id} />
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* MULTI-PROGRAM MODE */}
-            {multiProgram && (
-              <>
-                {/* CONTENT AREA */}
-                <div className="grid gap-4 overflow-hidden md:gap-6 lg:grid-cols-3">
-                  {/* LEFT COLUMN - Stats & Leaderboard */}
-                  <div className="min-w-0 space-y-4 md:space-y-6 lg:col-span-1">
-                    {/* STATS CARDS */}
-                    <div className="space-y-2">
-                      <div className="font-family-nunito text-sm font-semibold text-black md:text-base">
-                        Your Stats
-                      </div>
-                      <div className="rounded-lg bg-white p-4">
-                        <ReferrerStats />
-                      </div>
-                    </div>
-
-                    {/* LEADERBOARD */}
-                    <div className="space-y-2">
-                      <div className="font-family-nunito text-sm font-semibold text-black md:text-base">
-                        Top Referrers
-                      </div>
-                      <div className="rounded-lg bg-white p-4">
-                        <ReferrerLeaderboard pageSize={10} />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* RIGHT COLUMN - Links & Programs */}
-                  <div className="min-w-0 space-y-4 md:space-y-6 lg:col-span-2">
-                    {/* MY LINKS */}
-                    <div className="space-y-2">
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <div className="font-family-nunito text-sm font-semibold text-black md:text-base">
-                          Your Links
-                        </div>
-                        {programsData?.totalCount && (
-                          <button
-                            onClick={handleCreateLink}
-                            className="btn btn-xs gap-2 border-blue-600 bg-gradient-to-r from-blue-600 to-blue-500 text-white hover:bg-blue-700"
-                          >
-                            <FaPlus className="h-3 w-3" />
-                            Create Link
-                          </button>
-                        )}
-                      </div>
-
-                      <ReferrerLinksList
-                        programs={programsData?.items || []}
-                        onViewUsage={handleViewUsage}
-                        onEdit={handleEditLink}
-                        initialPageSize={3}
-                      />
-                    </div>
+                    <ReferrerStats />
                   </div>
                 </div>
-              </>
+
+                {/* RIGHT COLUMN - Links */}
+                <div className="min-w-0 space-y-4 md:space-y-6 lg:col-span-2">
+                  <div className="space-y-2">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="font-family-nunito text-sm font-semibold text-black md:text-base">
+                        Your Links
+                      </div>
+                      {!!programsData?.totalCount && (
+                        <button
+                          onClick={handleCreateLink}
+                          className="btn btn-xs gap-2 border-blue-600 bg-gradient-to-r from-blue-600 to-blue-500 text-white hover:bg-blue-700"
+                        >
+                          <FaPlus className="h-3 w-3" />
+                          Create Link
+                        </button>
+                      )}
+                    </div>
+
+                    <ReferrerLinksList
+                      programs={programsData?.items || []}
+                      initialPageSize={3}
+                    />
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="font-family-nunito text-sm font-semibold text-black md:text-base">
+                    Available Programs
+                  </div>
+                </div>
+
+                <ReferrerProgramsList
+                  onProgramClick={handleCreateLinkForProgram}
+                  onCreateLink={handleCreateLinkForProgram}
+                  initialPageSize={4}
+                  showHeader={false} //TODO:
+                  showDescription={true}
+                  context="list"
+                />
+              </div>
             )}
           </div>
         )}
       </div>
 
-      {/* Modals - Only in multi-program mode */}
-      {multiProgram && (
-        <>
-          {/* Create/Edit Link Modal */}
-          <ReferrerCreateLinkModal
-            programs={programs}
-            selectedProgram={selectedProgramForLink || undefined}
-            editLink={selectedLinkForEdit || undefined}
-            existingLinksCount={0}
-            showProgramDetails={multiProgram}
-            isOpen={createLinkModalVisible}
-            onClose={() => {
-              setCreateLinkModalVisible(false);
-              setSelectedLinkForEdit(null);
-              setSelectedProgramForLink(null);
-            }}
-            onSuccess={async () => {
-              // Invalidate the query to trigger a refetch
-              await queryClient.invalidateQueries({
-                queryKey: ["ReferralLinks"],
-              });
-            }}
-          />
-
-          {/* Link Usage Modal */}
-          <CustomModal
-            isOpen={!!selectedLinkForUsage}
-            onRequestClose={() => setSelectedLinkForUsage(null)}
-            className="md:max-h-[90vh] md:w-[900px]"
-          >
-            {selectedLinkForUsage && (
-              <div className="flex flex-col">
-                {/* Header */}
-                <div className="bg-theme flex flex-row p-4 shadow-lg">
-                  <div className="flex-1">
-                    <h1 className="text-lg font-semibold text-white">
-                      Link Performance
-                    </h1>
-                  </div>
-                  <button
-                    type="button"
-                    className="btn btn-circle text-gray-dark hover:bg-gray btn-sm"
-                    onClick={() => setSelectedLinkForUsage(null)}
-                  >
-                    <IoMdClose className="h-5 w-5" />
-                  </button>
-                </div>
-
-                <div className="flex flex-col gap-4 p-4 md:p-6">
-                  <NoRowsMessage
-                    icon="📊"
-                    title="Link Performance"
-                    description="Track how your link is performing and see who has signed up."
-                    className="!bg-transparent"
-                  />
-
-                  <div className="flex flex-col gap-4">
-                    <div className="flex w-full flex-col gap-4 md:flex-row">
-                      <div className="grow space-y-2">
-                        <div className="font-family-nunito text-sm font-semibold text-black md:text-base">
-                          Link stats
-                        </div>
-                        <div className="border-gray md:p-6x rounded-lg border p-4">
-                          <ReferrerPerformanceOverview
-                            link={selectedLinkForUsage}
-                            mode="large"
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <div className="font-family-nunito text-sm font-semibold text-black md:text-base">
-                        Referral List
-                      </div>
-
-                      <ReferrerReferralsList linkId={selectedLinkForUsage.id} />
-                    </div>
-                  </div>
-
-                  {/* Action Buttons */}
-                  <div className="flex gap-3">
-                    <button
-                      type="button"
-                      className="btn btn-outline flex-1 border-blue-600 text-blue-600 normal-case hover:bg-blue-600 hover:text-white"
-                      onClick={() => setSelectedLinkForUsage(null)}
-                    >
-                      Back to List
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-          </CustomModal>
-        </>
-      )}
+      {/* Modals */}
+      <>
+        {/* Create/Edit Link Modal */}
+        <ReferrerCreateLinkModal
+          programs={programs}
+          selectedProgram={selectedProgramForLink || undefined}
+          editLink={selectedLinkForEdit || undefined}
+          existingLinksCount={0}
+          showProgramDetails={true}
+          isOpen={createLinkModalVisible}
+          onClose={() => {
+            setCreateLinkModalVisible(false);
+            setSelectedLinkForEdit(null);
+            setSelectedProgramForLink(null);
+          }}
+          onSuccess={async () => {
+            await queryClient.invalidateQueries({
+              queryKey: ["ReferralLinks"],
+            });
+          }}
+        />
+      </>
     </>
   );
 };

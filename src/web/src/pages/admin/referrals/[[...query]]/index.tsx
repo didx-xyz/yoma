@@ -539,19 +539,30 @@ const ReferralPrograms: NextPageWithLayout<{
                           size={48}
                           className="border border-gray-200 bg-white"
                         />
-                        <div className="flex-grow">
-                          <Link
-                            href={`/admin/referrals/${program.id}/info${`?returnUrl=${encodeURIComponent(
-                              getSafeUrl(returnUrl?.toString(), router.asPath),
-                            )}`}`}
-                            className="line-clamp-1 text-start font-semibold"
-                          >
-                            {program.name}
-                          </Link>
-                          {program.isDefault && (
-                            <span className="badge badge-sm bg-blue-light text-blue ml-2">
-                              Default
-                            </span>
+                        <div className="flex min-w-0 flex-1 flex-col">
+                          <div className="flex min-w-0 items-center gap-2">
+                            <Link
+                              href={`/admin/referrals/${program.id}/info${`?returnUrl=${encodeURIComponent(
+                                getSafeUrl(
+                                  returnUrl?.toString(),
+                                  router.asPath,
+                                ),
+                              )}`}`}
+                              className="min-w-0 flex-1 truncate text-start font-semibold"
+                            >
+                              {program.name}
+                            </Link>
+                            {program.isDefault && (
+                              <span className="badge badge-sm bg-blue-light text-blue flex-shrink-0">
+                                Default
+                              </span>
+                            )}
+                          </div>
+
+                          {program.description && (
+                            <p className="text-gray-dark mt-0.5 line-clamp-2 text-xs">
+                              {program.description}
+                            </p>
                           )}
                         </div>
                         <AdminReferralProgramActions
@@ -704,6 +715,7 @@ const ReferralPrograms: NextPageWithLayout<{
                             </Link>
 
                             <div className="flex flex-col">
+                              {/* <div className="flex flex-row"> */}
                               <Link
                                 href={`/admin/referrals/${program.id}/info${`?returnUrl=${encodeURIComponent(
                                   getSafeUrl(
@@ -715,7 +727,12 @@ const ReferralPrograms: NextPageWithLayout<{
                               >
                                 {program.name}
                               </Link>
-
+                              {/* {program.isDefault && (
+                                  <span className="badge badge-sm bg-blue-light text-blue ml-2">
+                                    Default
+                                  </span>
+                                )} */}
+                              {/* </div> */}
                               <p className="line-clamp-1 max-w-56 truncate text-sm">
                                 {program.description}
                               </p>
@@ -741,17 +758,24 @@ const ReferralPrograms: NextPageWithLayout<{
                                   </>
                                 )}
 
-                                {program.isDefault && (
+                                {/* {program.isDefault && (
                                   <span className="badge badge-sm bg-blue-light text-blue ml-2">
                                     Default
                                   </span>
-                                )}
+                                )} */}
                               </div>
                             </div>
                           </div>
                         </td>
-                        <td className="border-gray-light border-b-2 !align-top">
-                          <ProgramStatusBadge status={program.status} />
+                        <td className="border-gray-light flex flex-col border-b-2 !align-top">
+                          <div className="flex flex-col gap-2">
+                            {program.isDefault && (
+                              <span className="badge badge-sm bg-blue-light text-blue">
+                                Default
+                              </span>
+                            )}
+                            <ProgramStatusBadge status={program.status} />
+                          </div>
                         </td>
                         <td className="border-gray-light text-gray-dark border-b-2 !align-top">
                           <div className="flex flex-col gap-1 text-xs">
