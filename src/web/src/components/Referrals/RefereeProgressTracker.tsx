@@ -42,18 +42,16 @@ export function getNextAction(
 
   // Get all incomplete tasks from this step
   const incompleteTasks = nextStep.tasks
-    .filter((task) => !task.completed && task.isCompletable && task.opportunity)
+    .filter((task) => !task.completed)
     .map((task) => ({
       id: task.id,
       opportunityId: task.opportunity?.id || null,
-      opportunityTitle: task.opportunity?.title || "Untitled Task",
+      opportunityTitle: task.opportunity?.title || "Opportunity not available",
       completed: task.completed,
       isCompletable: task.isCompletable,
     }));
 
-  if (incompleteTasks.length === 0) {
-    return null;
-  }
+  if (incompleteTasks.length === 0) return null;
 
   return {
     label: "View Tasks",
