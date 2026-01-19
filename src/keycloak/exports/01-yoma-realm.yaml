@@ -534,7 +534,7 @@ clients:
       - /*
       - https://keycloak-preprod.enovationaws.com/realms/master/broker/yoma-prod/endpoint
       - https://keycloak.atingi.org/realms/master/broker/yoma-prod/endpoint
-      - https://keycloak.dev.atingi.org/realms/master/broker/yoma-prod/endpoint
+      - https://keycloak.sandbox.atingi.org/realms/master/broker/yoma-prod/endpoint
       - https://login.atingi.org/realms/master/broker/yoma-prod/endpoint
       - https://preprod-login.atingi.org/realms/master/broker/yoma-prod/endpoint
       - https://uatkeycloak.atingi.org/realms/master/broker/yoma-prod/endpoint
@@ -557,7 +557,6 @@ clients:
         $(env:CLIENT_ATINGI_URL)/*##
         https://keycloak-preprod.enovationaws.com/realms/master/broker/yoma-prod/endpoint/*##
         https://keycloak.atingi.org/realms/master/broker/yoma-prod/endpoint/*##
-        https://keycloak.sandbox.atingi.org/realms/master/broker/yoma-prod/endpoint/*##
         https://login.atingi.org/realms/master/broker/yoma-prod/endpoint/*##
         https://preprod-login.atingi.org/realms/master/broker/yoma-prod/endpoint/*##
         https://uatkeycloak.atingi.org/realms/master/broker/yoma-prod/endpoint/*##
