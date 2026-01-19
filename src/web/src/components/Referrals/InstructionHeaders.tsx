@@ -622,13 +622,11 @@ export const PathwayTaskDisplay: React.FC<PathwayTaskDisplayProps> = ({
             <div className="flex items-center gap-2 text-[10px] text-yellow-700 md:text-xs">
               <span>⚠️</span>
               <span className="font-medium">
-                Opportunity configuration incomplete
+                This opportunity is unavailable right now.
               </span>
             </div>
             <p className="text-[10px] text-gray-500">
-              The opportunity data for this task is not available. This may
-              occur if the pathway was configured but the opportunity
-              relationship hasn&apos;t been established by the API yet.
+              We&apos;re working on it. Please check back later.
             </p>
             {task.id && (
               <div className="mt-1 text-[10px] text-gray-400">
