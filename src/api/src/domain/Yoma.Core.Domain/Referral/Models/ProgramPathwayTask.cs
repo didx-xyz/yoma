@@ -83,8 +83,12 @@ namespace Yoma.Core.Domain.Referral.Models
           var opportunityCountryCodes = Opportunity.Countries?.Select(c => c.CodeAlpha2).ToHashSet() ?? [];
           if (opportunityCountryCodes.Count == 0) opportunityCountryCodes.Add(countryCodeWorldwide);
 
-          // Must share at least one country
-          if (programCountryCodes.Overlaps(opportunityCountryCodes)) return true;
+          // Worldwide acts as a wildcard on either side.
+          // If either the program or the opportunity is marked as Worldwide,
+          // they are considered compatible with any country configuration.
+          // Otherwise, they must share at least one explicit country.
+          if (programCountryCodes.Contains(countryCodeWorldwide) || opportunityCountryCodes.Contains(countryCodeWorldwide) || programCountryCodes.Overlaps(opportunityCountryCodes))
+            return true;
 
           reason = $"Opportunity '{Opportunity.Title}' is not available in any of the countries assigned to the program";
           return false;

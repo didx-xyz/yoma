@@ -1138,7 +1138,11 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       CSVImportHelper.ValidateHeader<MyOpportunityInfoCsvImport>(csv, errors);
       if (CSVImportHelper.ContainsHeaderErrors(errors)) return CSVImportHelper.GetResults(errors);
 
-      // PASS A — probe: parse + invoke domain logic per row in its own scope, but never Complete()
+      // PASS A — probe: parse + invoke domain logic per row in its own scope, but never Complete().
+      // This is intentionally row-isolated for performance and to avoid long-lived transactions.
+      // Consequence: probe execution cannot observe uncommitted side-effects from other rows
+      // (e.g. entities created in earlier rows of the same file). Cross-row dependencies
+      // are therefore only fully validated during PASS B (atomic import transaction).
       var parsed = new List<(MyOpportunityInfoCsvImport Dto, int Row)>();
       int recordsTotal = 0;
 
@@ -1301,6 +1305,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       var opportunity = _opportunityService.GetByExternalId(requestImport.OrganizationId, item.OpportunityExternalId, true, true);
 
       var user = _userService.GetByUsernameOrNull(item.Username, false, false);
+
       //user is created if not existing, or updated if not linked to an identity provider
       if (user == null || !user.ExternalId.HasValue)
       {
@@ -1315,7 +1320,11 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
           EmailConfirmed = item.Email == null ? null : false,
           PhoneNumberConfirmed = item.PhoneNumber == null ? null : false,
           CountryId = country?.Id,
-          GenderId = gender?.Id
+          GenderId = gender?.Id,
+
+          // preserve non-import profile fields
+          EducationId = user?.EducationId,
+          DateOfBirth = user?.DateOfBirth
         };
 
         user = await _userService.Upsert(request);

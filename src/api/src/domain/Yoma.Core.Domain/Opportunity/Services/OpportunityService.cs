@@ -1070,7 +1070,11 @@ namespace Yoma.Core.Domain.Opportunity.Services
       CSVImportHelper.ValidateHeader<OpportunityInfoCsvImport>(csv, errors);
       if (CSVImportHelper.ContainsHeaderErrors(errors)) return CSVImportHelper.GetResults(errors);
 
-      // PASS A — probe: parse + invoke domain logic per row in its own scope, but never Complete()
+      // PASS A — probe: parse + invoke domain logic per row in its own scope, but never Complete().
+      // This is intentionally row-isolated for performance and to avoid long-lived transactions.
+      // Consequence: probe execution cannot observe uncommitted side-effects from other rows
+      // (e.g. entities created in earlier rows of the same file). Cross-row dependencies
+      // are therefore only fully validated during PASS B (atomic import transaction).
       var parsed = new List<(OpportunityInfoCsvImport Dto, int Row)>();
       int recordsTotal = 0;
 

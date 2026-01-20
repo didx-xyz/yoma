@@ -859,6 +859,9 @@ namespace Yoma.Core.Domain.Referral.Services
 
       program.Pathway = await UpsertProgramPathwaySteps(resultPathway, request.Steps);
 
+      // Push effective program country policy down to tasks for validation
+      program.Pathway.Steps?.SelectMany(s => s?.Tasks ?? []).ToList().ForEach(t => t.ProgramCountries = program.Countries);
+
       EnsurePathwayIsCompletableOrThrow(program.Pathway);
 
       return program;

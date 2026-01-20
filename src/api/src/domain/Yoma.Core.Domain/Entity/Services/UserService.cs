@@ -291,8 +291,10 @@ namespace Yoma.Core.Domain.Entity.Services
       if (existingByPhone != null && (isNew || result.Id != existingByPhone.Id))
         throw new ValidationException($"{nameof(User)} with the specified phone number '{request.PhoneNumber}' already exists");
 
-      // profile fields updatable via UserProfileService.Update; identity provider is source of truth
-      if (isNew)
+      // Profile fields are writable only when the user is newly created or not yet linked
+      // to an external identity provider. Once ExternalId is set, the identity provider
+      // becomes the source of truth and profile fields are no longer overwritten here.
+      if (isNew || !result.ExternalId.HasValue)
       {
         result.FirstName = request.FirstName;
         result.Surname = request.Surname;
@@ -302,7 +304,9 @@ namespace Yoma.Core.Domain.Entity.Services
         result.EducationId = request.EducationId;
         result.GenderId = request.GenderId;
         result.DateOfBirth = request.DateOfBirth.RemoveTime();
-        result.Settings = SettingsHelper.ParseInfo(_settingsDefinitionService.ListByEntityType(EntityType.User), (string?)null);
+
+        // Settings are initialized only for new users; existing user settings are preserved
+        if (isNew) result.Settings = SettingsHelper.ParseInfo(_settingsDefinitionService.ListByEntityType(EntityType.User), (string?)null);
       }
 
       result.Username = request.Username;
