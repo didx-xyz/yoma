@@ -39,6 +39,7 @@ export const ReferrerProgramsList: React.FC<ProgramsListProps> = ({
         pageNumber,
         pageSize,
         valueContains: null,
+        countries: null, // auto-filtered by user country when available, including WW (authenticated users)
         includeExpired: false,
       });
       return {

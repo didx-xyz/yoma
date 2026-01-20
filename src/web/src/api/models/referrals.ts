@@ -1,4 +1,5 @@
 import { PaginationFilter } from "./common";
+import type { Country } from "./lookups";
 import { OpportunityItem } from "./marketplace";
 
 // Enums
@@ -66,6 +67,11 @@ export interface Program {
   id: string;
   name: string;
   description: string | null;
+  /**
+   * Country segregation: backend returns countries as lookup objects.
+   * The admin create/edit form stores selected country IDs (string[]) in the same field.
+   */
+  countries?: Country[] | string[] | null;
   imageId: string | null;
   imageURL: string | null;
   completionWindowInDays: number | null;
@@ -211,6 +217,7 @@ export interface ProgramRequestBase {
   name: string;
   description: string | null;
   image: File | null;
+  countries: string[] | null;
   completionWindowInDays: number | null;
   completionLimitReferee: number | null;
   completionLimit: number | null;
@@ -258,6 +265,7 @@ export interface ProgramPathwayTaskRequestUpsert {
 
 // Search Models
 export interface ProgramSearchFilterBase extends PaginationFilter {
+  countries: string[] | null;
   valueContains: string | null;
 }
 

@@ -9,12 +9,14 @@ import { useCallback, useState, type ReactElement } from "react";
 import { FaPlusCircle } from "react-icons/fa";
 import { IoIosCheckmarkCircle, IoMdClose } from "react-icons/io";
 import Moment from "react-moment";
+import type { Country } from "~/api/models/lookups";
 import {
   ProgramStatus,
   type ProgramSearchFilterAdmin,
   type ProgramSearchResults,
 } from "~/api/models/referrals";
 import { searchReferralPrograms } from "~/api/services/referrals";
+import { getCountries } from "~/api/services/lookups";
 import CustomSlider from "~/components/Carousel/CustomSlider";
 import MainLayout from "~/components/Layout/Main";
 import NoRowsMessage from "~/components/NoRowsMessage";
@@ -37,10 +39,35 @@ import { getSafeUrl, getThemeFromRole } from "~/lib/utils";
 import { type NextPageWithLayout } from "~/pages/_app";
 import { authOptions } from "~/server/auth";
 
+const parseDelimitedQueryParam = (
+  value: string | string[] | undefined,
+): string[] | null => {
+  if (value == null) return null;
+
+  const rawParts = Array.isArray(value) ? value : value.split(/[|,]/);
+  const parts = rawParts.map((p) => p.trim()).filter(Boolean);
+  return parts.length > 0 ? parts : null;
+};
+
+const serializeDelimitedQueryParam = (
+  value: string[] | null | undefined,
+): string | null => {
+  if (!value || value.length === 0) return null;
+  return value.join("|");
+};
+
 // ⚠️ SSR
 export async function getServerSideProps(context: GetServerSidePropsContext) {
-  const { query, page, status, valueContains, returnUrl, dateStart, dateEnd } =
-    context.query;
+  const {
+    query,
+    page,
+    status,
+    valueContains,
+    returnUrl,
+    dateStart,
+    dateEnd,
+    countries,
+  } = context.query;
   const session = await getServerSession(context.req, context.res, authOptions);
   const queryClient = new QueryClient(config);
   let errorCode = null;
@@ -57,11 +84,17 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   // 👇 set theme based on role
   const theme = getThemeFromRole(session);
 
+  const parsedCountries = parseDelimitedQueryParam(
+    countries as string | string[] | undefined,
+  );
+  const countriesKeyPart = serializeDelimitedQueryParam(parsedCountries);
+
   try {
     // 👇 prefetch queries on server
     const searchFilter: ProgramSearchFilterAdmin = {
       pageNumber: page ? parseInt(page.toString()) : 1,
       pageSize: PAGE_SIZE,
+      countries: parsedCountries,
       valueContains: valueContains?.toString() ?? null,
       statuses: status ? [status.toString()] : null,
       dateStart: dateStart?.toString() ?? null,
@@ -72,7 +105,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     await queryClient.prefetchQuery({
       queryKey: [
         "referralPrograms",
-        `${query?.toString()}_${page?.toString()}_${status?.toString()}_${valueContains?.toString()}_${dateStart?.toString()}_${dateEnd?.toString()}`,
+        `${query?.toString()}_${page?.toString()}_${status?.toString()}_${valueContains?.toString()}_${dateStart?.toString()}_${dateEnd?.toString()}_${countriesKeyPart ?? ""}`,
       ],
       queryFn: () => data,
     });
@@ -94,6 +127,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       page: page ?? null,
       status: status ?? null,
       valueContains: valueContains ?? null,
+      countries: countries ?? null,
       dateStart: dateStart ?? null,
       dateEnd: dateEnd ?? null,
       theme: theme,
@@ -110,6 +144,7 @@ const ReferralPrograms: NextPageWithLayout<{
   error?: number;
   status?: string;
   valueContains?: string;
+  countries?: string | string[];
   opportunities?: string;
   dateStart?: string;
   dateEnd?: string;
@@ -119,6 +154,7 @@ const ReferralPrograms: NextPageWithLayout<{
   page,
   status,
   valueContains,
+  countries,
   dateStart,
   dateEnd,
   error,
@@ -126,10 +162,22 @@ const ReferralPrograms: NextPageWithLayout<{
 }) => {
   const router = useRouter();
 
+  const parsedCountries = parseDelimitedQueryParam(
+    countries as string | string[] | undefined,
+  );
+  const countriesKeyPart = serializeDelimitedQueryParam(parsedCountries);
+
+  const { data: lookups_countries } = useQuery<Country[]>({
+    queryKey: ["countries"],
+    queryFn: () => getCountries(),
+    enabled: !error,
+  });
+
   // search filter state
   const [searchFilter, setSearchFilter] = useState<ProgramSearchFilterAdmin>({
     pageNumber: page ? parseInt(page.toString()) : 1,
     pageSize: PAGE_SIZE,
+    countries: parsedCountries,
     valueContains: valueContains ?? null,
     statuses: status ? [status] : null,
     dateStart: dateStart ?? null,
@@ -141,7 +189,7 @@ const ReferralPrograms: NextPageWithLayout<{
     useQuery<ProgramSearchResults>({
       queryKey: [
         "referralPrograms",
-        `${query?.toString()}_${page?.toString()}_${status?.toString()}_${valueContains?.toString()}_${dateStart?.toString()}_${dateEnd?.toString()}`,
+        `${query?.toString()}_${page?.toString()}_${status?.toString()}_${valueContains?.toString()}_${dateStart?.toString()}_${dateEnd?.toString()}_${countriesKeyPart ?? ""}`,
       ],
       queryFn: () => searchReferralPrograms(searchFilter),
       enabled: !error,
@@ -154,6 +202,7 @@ const ReferralPrograms: NextPageWithLayout<{
       const filter: ProgramSearchFilterAdmin = {
         pageNumber: 1,
         pageSize: PAGE_SIZE,
+        countries: null,
         valueContains: null,
         statuses: null,
         dateStart: null,
@@ -172,6 +221,7 @@ const ReferralPrograms: NextPageWithLayout<{
       const filter: ProgramSearchFilterAdmin = {
         pageNumber: 1,
         pageSize: PAGE_SIZE,
+        countries: null,
         valueContains: null,
         statuses: [ProgramStatus.Active],
         dateStart: null,
@@ -190,6 +240,7 @@ const ReferralPrograms: NextPageWithLayout<{
       const filter: ProgramSearchFilterAdmin = {
         pageNumber: 1,
         pageSize: PAGE_SIZE,
+        countries: null,
         valueContains: null,
         statuses: [ProgramStatus.Inactive],
         dateStart: null,
@@ -208,6 +259,7 @@ const ReferralPrograms: NextPageWithLayout<{
       const filter: ProgramSearchFilterAdmin = {
         pageNumber: 1,
         pageSize: PAGE_SIZE,
+        countries: null,
         valueContains: null,
         statuses: [ProgramStatus.Expired],
         dateStart: null,
@@ -226,6 +278,7 @@ const ReferralPrograms: NextPageWithLayout<{
       const filter: ProgramSearchFilterAdmin = {
         pageNumber: 1,
         pageSize: PAGE_SIZE,
+        countries: null,
         valueContains: null,
         statuses: [ProgramStatus.Deleted],
         dateStart: null,
@@ -244,6 +297,7 @@ const ReferralPrograms: NextPageWithLayout<{
       const filter: ProgramSearchFilterAdmin = {
         pageNumber: 1,
         pageSize: PAGE_SIZE,
+        countries: null,
         valueContains: null,
         statuses: [ProgramStatus.LimitReached],
         dateStart: null,
@@ -262,6 +316,7 @@ const ReferralPrograms: NextPageWithLayout<{
       const filter: ProgramSearchFilterAdmin = {
         pageNumber: 1,
         pageSize: PAGE_SIZE,
+        countries: null,
         valueContains: null,
         statuses: [ProgramStatus.UnCompletable],
         dateStart: null,
@@ -295,6 +350,9 @@ const ReferralPrograms: NextPageWithLayout<{
         const status = searchFilter.statuses[0];
         if (status) params.append("status", status.toString());
       }
+
+      if (searchFilter.countries && searchFilter.countries.length > 0)
+        params.append("countries", searchFilter.countries.join("|"));
 
       if (searchFilter.dateStart)
         params.append("dateStart", searchFilter.dateStart);
@@ -480,8 +538,10 @@ const ReferralPrograms: NextPageWithLayout<{
             {/* FILTER */}
             <ReferralProgramSearchFilters
               searchFilter={searchFilter}
+              lookups_countries={lookups_countries}
               filterOptions={[
                 ReferralFilterOptions.VALUECONTAINS,
+                ReferralFilterOptions.COUNTRIES,
                 ReferralFilterOptions.DATERANGE,
               ]}
               onSubmit={onSearchInputSubmit}
