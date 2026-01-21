@@ -1327,7 +1327,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
           DateOfBirth = user?.DateOfBirth
         };
 
-        user = await _userService.Upsert(request);
+        user = await _userService.Upsert(request, true, !probeOnly);
       }
 
       var requestVerify = new MyOpportunityRequestVerify { InstantOrImportedVerification = true }; //with instant or imported verifications, pending notifications are not sent

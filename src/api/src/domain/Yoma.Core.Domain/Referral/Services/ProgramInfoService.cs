@@ -1,4 +1,3 @@
-using FluentValidation;
 using Microsoft.AspNetCore.Http;
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Exceptions;

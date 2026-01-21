@@ -1,4 +1,5 @@
 using FluentValidation;
+using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
@@ -33,6 +34,7 @@ namespace Yoma.Core.Domain.Entity.Services
     private readonly ISSITenantService _ssiTenantService;
     private readonly ISSICredentialService _ssiCredentialService;
     private readonly ISettingsDefinitionService _settingsDefinitionService;
+    private readonly IDelayedExecutionService _delayedExecutionService;
     private readonly UserRequestValidator _userRequestValidator;
     private readonly UserSearchFilterValidator _userSearchFilterValidator;
     private readonly SettingsRequestValidator _settingsRequestValidator;
@@ -41,7 +43,7 @@ namespace Yoma.Core.Domain.Entity.Services
     private readonly IRepository<UserSkillOrganization> _userSkillOrganizationRepository;
     private readonly IRepository<UserLoginHistory> _userLoginHistoryRepository;
     private readonly IExecutionStrategyService _executionStrategyService;
-    private readonly IEventPublisher _eventPublisher;
+    private readonly IMediator _mediator;
     #endregion
 
     #region Constructor
@@ -52,6 +54,7 @@ namespace Yoma.Core.Domain.Entity.Services
         ISSITenantService ssiTenantService,
         ISSICredentialService ssiCredentialService,
         ISettingsDefinitionService settingsDefinitionService,
+        IDelayedExecutionService delayedExecutionService,
         UserRequestValidator userValidator,
         UserSearchFilterValidator userSearchFilterValidator,
         SettingsRequestValidator settingsRequestValidator,
@@ -60,7 +63,7 @@ namespace Yoma.Core.Domain.Entity.Services
         IRepository<UserSkillOrganization> userSkillOrganizationRepository,
         IRepository<UserLoginHistory> userLoginHistoryRepository,
         IExecutionStrategyService executionStrategyService,
-        IEventPublisher eventPublisher)
+        IMediator mediator)
     {
       _appSettings = appSettings?.Value ?? throw new ArgumentNullException(nameof(appSettings));
       _blobService = blobService ?? throw new ArgumentNullException(nameof(blobService));
@@ -68,6 +71,7 @@ namespace Yoma.Core.Domain.Entity.Services
       _ssiTenantService = ssiTenantService ?? throw new ArgumentNullException(nameof(ssiTenantService));
       _ssiCredentialService = ssiCredentialService ?? throw new ArgumentNullException(nameof(ssiCredentialService));
       _settingsDefinitionService = settingsDefinitionService ?? throw new ArgumentNullException(nameof(settingsDefinitionService));
+      _delayedExecutionService = delayedExecutionService ?? throw new ArgumentNullException(nameof(delayedExecutionService));
       _userRequestValidator = userValidator ?? throw new ArgumentNullException(nameof(userValidator));
       _userSearchFilterValidator = userSearchFilterValidator ?? throw new ArgumentNullException(nameof(userSearchFilterValidator));
       _settingsRequestValidator = settingsRequestValidator ?? throw new ArgumentNullException(nameof(settingsRequestValidator));
@@ -76,8 +80,7 @@ namespace Yoma.Core.Domain.Entity.Services
       _userSkillOrganizationRepository = userSkillOrganizationRepository ?? throw new ArgumentNullException(nameof(userSkillOrganizationRepository));
       _userLoginHistoryRepository = userLoginHistoryRepository ?? throw new ArgumentNullException(nameof(userLoginHistoryRepository));
       _executionStrategyService = executionStrategyService ?? throw new ArgumentNullException(nameof(executionStrategyService));
-      _eventPublisher = eventPublisher ?? throw new ArgumentNullException(nameof(eventPublisher));
-      _eventPublisher = eventPublisher ?? throw new ArgumentNullException(nameof(eventPublisher));
+      _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
     }
     #endregion
 
@@ -263,7 +266,7 @@ namespace Yoma.Core.Domain.Entity.Services
       return results;
     }
 
-    public async Task<User> Upsert(UserRequest request)
+    public async Task<User> Upsert(UserRequest request, bool enqueueOutcomes, bool publishEvent)
     {
       ArgumentNullException.ThrowIfNull(request, nameof(request));
 
@@ -319,7 +322,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
       result = isNew ? await _userRepository.Create(result) : await _userRepository.Update(result);
 
-      await PublishReferralProgressEvent(result);
+      await PublishReferralProgressEvent(result, enqueueOutcomes, publishEvent);
 
       return result;
     }
@@ -458,7 +461,7 @@ namespace Yoma.Core.Domain.Entity.Services
         scope.Complete();
       });
 
-      await PublishReferralProgressEvent(user);
+      await PublishReferralProgressEvent(user, false, true);
 
       return user;
     }
@@ -510,16 +513,22 @@ namespace Yoma.Core.Domain.Entity.Services
     // Raises a referral event of type 'IdentityAction'. Invoked by:
     // - Upsert (above): syncs the user using the IdP as the source of truth, triggered by Keycloak events or opportunity verification imports (which act as a virtual IdP).
     // - YoIDOnboard (below): raises another event of the same type, as it is a precondition for claiming and serves as a fallback to progress referrals.
-    private async Task PublishReferralProgressEvent(User user)
+    private async Task PublishReferralProgressEvent(User user, bool enqueueOutcomes, bool publishEvent)
     {
+      if (!publishEvent) return;
 
-      await _eventPublisher.Publish(new ReferralProgressTriggerEvent(new ReferralProgressTriggerMessage
+      var myEvent = new ReferralProgressTriggerEvent(new ReferralProgressTriggerMessage
       {
         Source = ReferralTriggerSource.IdentityAction,
         UserId = user.Id,
         Username = user.Username,
         UserDisplayName = user.DisplayName
-      }));
+      });
+
+      if (enqueueOutcomes)
+        _delayedExecutionService.Enqueue(async () => await _mediator.Publish(myEvent), nameof(ReferralProgressTriggerEvent), "Publish");
+      else
+        await _mediator.Publish(myEvent);
     }
 
     private string? GetBlobObjectURL(StorageType? storageType, string? key)

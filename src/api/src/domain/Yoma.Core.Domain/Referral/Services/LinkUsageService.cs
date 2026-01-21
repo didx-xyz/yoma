@@ -267,7 +267,7 @@ namespace Yoma.Core.Domain.Referral.Services
         throw new ValidationException("You must complete your profile before claiming a referral link");
 
       // Country segregation: program must be accessible to the current user
-      var worldwideId = _countryService.GetByCodeAlpha2(Domain.Core.Country.Worldwide.ToDescription()).Id;
+      var worldwideId = _countryService.GetByCodeAlpha2(Country.Worldwide.ToDescription()).Id;
       if (!ProgramCountryPolicy.ProgramAccessibleToUser(worldwideId, user.CountryId, program.Countries))
         throw new ValidationException($"Referral program '{program.Name}' is not available in your country");
 

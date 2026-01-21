@@ -31,7 +31,7 @@ namespace Yoma.Core.Domain.Entity.Interfaces
 
     UserSearchResults Search(UserSearchFilter filter);
 
-    Task<User> Upsert(UserRequest request);
+    Task<User> Upsert(UserRequest request, bool enqueueOutcomes, bool publishEvent);
 
     Task<User> UpsertPhoto(string username, IFormFile file);
 

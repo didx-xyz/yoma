@@ -247,8 +247,8 @@ namespace Yoma.Core.Domain.Referral.Services
       var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 
       // Country segregation: program must be accessible to the current user
-      var worldwideId = _countryService.GetByCodeAlpha2(Domain.Core.Country.Worldwide.ToDescription()).Id;
-      if (!ProgramCountryPolicy.ProgramAccessibleToUser(worldwideId, user?.CountryId, program.Countries))
+      var worldwideId = _countryService.GetByCodeAlpha2(Core.Country.Worldwide.ToDescription()).Id;
+      if (!ProgramCountryPolicy.ProgramAccessibleToUser(worldwideId, user.CountryId, program.Countries))
         throw new ValidationException($"Referral program '{program.Name}' is not available in your country");
 
       var statusLinkActive = _linkStatusService.GetByName(ReferralLinkStatus.Active.ToString());
