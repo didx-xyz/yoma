@@ -96,7 +96,6 @@ namespace Yoma.Core.Domain
       services.AddSingleton<IIdempotencyService, IdempotencyService>();
       services.AddScoped<IDownloadService, DownloadService>();
       services.AddScoped<IDownloadBackgroundService, DownloadBackgroundService>();
-      services.AddScoped<IEventPublisher, EventPublisher>();
       services.AddScoped<IDelayedExecutionService, DelayedExecutionService>();
       #endregion Core
 

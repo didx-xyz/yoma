@@ -26,7 +26,7 @@ namespace Yoma.Core.Domain.Marketplace.Validators
     private bool CountryExists(string codeAplha2)
     {
       if (string.IsNullOrEmpty(codeAplha2)) return false;
-      return _countryService.GetByCodeAplha2OrNull(codeAplha2) != null;
+      return _countryService.GetByCodeAlpha2OrNull(codeAplha2) != null;
     }
     #endregion
   }

@@ -236,13 +236,6 @@ export const getReferralProgramInfoByLinkId = async (
   return data;
 };
 
-export const getReferralStatus = async (
-  context?: GetServerSidePropsContext | GetStaticPropsContext,
-): Promise<boolean> => {
-  // This is now replaced by getAvailableReferralPrograms
-  return getAvailableReferralPrograms(context);
-};
-
 export const getReferralLinkUsageById = async (
   id: string,
   context?: GetServerSidePropsContext | GetStaticPropsContext,

@@ -38,12 +38,28 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
           VerificationMethod = string.IsNullOrEmpty(entity.Opportunity.VerificationMethod) ? null : Enum.Parse<VerificationMethod>(entity.Opportunity.VerificationMethod, true),
           Status = Enum.Parse<Status>(entity.Opportunity.Status.Name, true),
           Hidden = entity.Opportunity.Hidden,
-          DateStart = entity.Opportunity.DateStart
+          DateStart = entity.Opportunity.DateStart,
+          Countries = entity.Opportunity.Countries.Select(oc => new Domain.Lookups.Models.Country
+          {
+            Id = oc.Country.Id,
+            Name = oc.Country.Name,
+            CodeAlpha2 = oc.Country.CodeAlpha2,
+            CodeAlpha3 = oc.Country.CodeAlpha3,
+            CodeNumeric = oc.Country.CodeNumeric
+          }).OrderBy(oc => oc.Name).ToList()
         },
         Order = entity.Order,
         OrderDisplay = entity.OrderDisplay,
         DateCreated = entity.DateCreated,
-        DateModified = entity.DateModified
+        DateModified = entity.DateModified,
+        ProgramCountries = entity.Step.Pathway.Program.Countries == null ? null : entity.Step.Pathway.Program.Countries.Select(pc => new Domain.Lookups.Models.Country
+        {
+          Id = pc.Country.Id,
+          Name = pc.Country.Name,
+          CodeAlpha2 = pc.Country.CodeAlpha2,
+          CodeAlpha3 = pc.Country.CodeAlpha3,
+          CodeNumeric = pc.Country.CodeNumeric
+        }).OrderBy(pc => pc.Name).ToList()
       }).AsSplitQuery();
     }
 

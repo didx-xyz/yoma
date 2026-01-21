@@ -20,8 +20,8 @@ export const PathwayWarning: React.FC = () => (
       <p className="mt-1 text-[10px] text-red-800">
         Some tasks in this pathway cannot be completed at this time. This may be
         because opportunities have not started yet, are not published, or have
-        other restrictions. Check the individual task warnings below for more
-        details.
+        other restrictions such as the countries. Check the individual task
+        warnings below for more details.
       </p>
     </div>
   </div>

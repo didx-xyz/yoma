@@ -1,8 +1,12 @@
 using Microsoft.AspNetCore.Http;
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Exceptions;
+using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Helpers;
+using Yoma.Core.Domain.Entity.Interfaces;
+using Yoma.Core.Domain.Lookups.Interfaces;
 using Yoma.Core.Domain.Referral.Extensions;
+using Yoma.Core.Domain.Referral.Helpers;
 using Yoma.Core.Domain.Referral.Interfaces;
 using Yoma.Core.Domain.Referral.Models;
 
@@ -12,6 +16,8 @@ namespace Yoma.Core.Domain.Referral.Services
   {
     #region Class Variables
     private readonly IProgramService _programService;
+    private readonly ICountryService _countryService;
+    private readonly IUserService _userService;
     private readonly IHttpContextAccessor _httpContextAccessor;
 
     private static readonly ProgramStatus[] Statuses_AnonymousAllowed = [ProgramStatus.Active, ProgramStatus.UnCompletable];
@@ -19,19 +25,30 @@ namespace Yoma.Core.Domain.Referral.Services
 
     #region Constructor
     public ProgramInfoService(IProgramService programService,
+      ICountryService countryService,
+      IUserService userService,
       IHttpContextAccessor httpContextAccessor)
     {
       _programService = programService ?? throw new ArgumentNullException(nameof(programService));
+      _countryService = countryService ?? throw new ArgumentNullException(nameof(countryService));
+      _userService = userService ?? throw new ArgumentNullException(nameof(userService));
       _httpContextAccessor = httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
     }
     #endregion
 
     #region Public Members
-    public bool Available()
+    public bool Available(List<Guid>? countries)
     {
+      var countryIdWorldwide = _countryService.GetByCodeAlpha2(Country.Worldwide.ToDescription()).Id;
+      var isAuthenticated = HttpContextAccessorHelper.UserContextAvailable(_httpContextAccessor);
+      var isAdmin = HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor);
+      var user = isAuthenticated ? _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false) : null;
+      countries = ProgramCountryPolicy.ResolveAvailableCountriesForProgramSearch(countryIdWorldwide, isAuthenticated, isAdmin, user?.CountryId, countries);
+
       //active and started (published state active)
       var searchResults = _programService.Search(new ProgramSearchFilterAdmin
       {
+        Countries = countries,
         PublishedStates = [PublishedState.Active],
         TotalCountOnly = true
       });
@@ -48,6 +65,11 @@ namespace Yoma.Core.Domain.Referral.Services
       if (result.Status != ProgramStatus.Active || result.DateStart > DateTimeOffset.UtcNow)
         throw new EntityNotFoundException($"Default program '{result.Name}' is currently unavailable");
 
+      // Data integrity: default must always be world-wide (implicit null/empty or explicit Worldwide)
+      var countryIdWorldwide = _countryService.GetByCodeAlpha2(Country.Worldwide.ToDescription()).Id;
+      if (!ProgramCountryPolicy.DefaultProgramIsWorldwide(countryIdWorldwide, result.Countries))
+        throw new DataInconsistencyException($"Default program '{result.Name}' is not available world-wide");
+
       return result.ToInfo();
     }
 
@@ -55,11 +77,23 @@ namespace Yoma.Core.Domain.Referral.Services
     {
       var result = _programService.GetById(id, includeChildItems, includeComputed);
 
-      if (!HttpContextAccessorHelper.UserContextAvailable(_httpContextAccessor))
+      var isAuthenticated = HttpContextAccessorHelper.UserContextAvailable(_httpContextAccessor);
+      var isAdmin = HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor);
+
+      // Anonymous: only allow active + started
+      if (!isAuthenticated)
       {
-        //only allow active and started programs for anonymous users
         if (!Statuses_AnonymousAllowed.Contains(result.Status) || result.DateStart > DateTimeOffset.UtcNow)
           throw new EntityNotFoundException($"Program not found");
+      }
+      // Authenticated non-admin: enforce country scope
+      else if (!isAdmin)
+      {
+        var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+        var countryIdWorldwide = _countryService.GetByCodeAlpha2(Country.Worldwide.ToDescription()).Id;
+
+        if (!ProgramCountryPolicy.ProgramAccessibleToUser(countryIdWorldwide, user?.CountryId, result.Countries))
+          throw new EntityNotFoundException("Program not found");
       }
 
       return result.ToInfo();
@@ -69,11 +103,23 @@ namespace Yoma.Core.Domain.Referral.Services
     {
       var result = _programService.GetByLinkId(linkId, includeChildItems, includeComputed);
 
-      if (!HttpContextAccessorHelper.UserContextAvailable(_httpContextAccessor))
+      var isAuthenticated = HttpContextAccessorHelper.UserContextAvailable(_httpContextAccessor);
+      var isAdmin = HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor);
+
+      // Anonymous: only allow active + started
+      if (!isAuthenticated)
       {
-        //only allow active and started programs for anonymous users
         if (!Statuses_AnonymousAllowed.Contains(result.Status) || result.DateStart > DateTimeOffset.UtcNow)
           throw new EntityNotFoundException($"Program not found");
+      }
+      // Authenticated non-admin: enforce country scope
+      else if (!isAdmin)
+      {
+        var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+        var countryIdWorldwide = _countryService.GetByCodeAlpha2(Country.Worldwide.ToDescription()).Id;
+
+        if (!ProgramCountryPolicy.ProgramAccessibleToUser(countryIdWorldwide, user?.CountryId, result.Countries))
+          throw new EntityNotFoundException("Program not found");
       }
 
       return result.ToInfo();
@@ -83,12 +129,20 @@ namespace Yoma.Core.Domain.Referral.Services
     {
       ArgumentNullException.ThrowIfNull(filter, nameof(filter));
 
+      var countryIdWorldwide = _countryService.GetByCodeAlpha2(Country.Worldwide.ToDescription()).Id;
+      var isAuthenticated = HttpContextAccessorHelper.UserContextAvailable(_httpContextAccessor);
+      var isAdmin = HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor);
+      var user = isAuthenticated ? _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false) : null;
+      var countries = ProgramCountryPolicy.ResolveAvailableCountriesForProgramSearch(countryIdWorldwide, isAuthenticated, isAdmin, user?.CountryId, filter.Countries);
+
       var filterInternal = new ProgramSearchFilterAdmin
       {
-        // Anonymous users: only allow published state active (active + started), ignore inmput
+        Countries = countries,
+        // Anonymous users: only allow published state active (active + started), ignore input
         // Authenticated users: if none specified, default to published state active; else use provided list
-        PublishedStates = !HttpContextAccessorHelper.UserContextAvailable(_httpContextAccessor) || filter.PublishedStates == null || filter.PublishedStates.Count == 0
-          ? [PublishedState.Active] : filter.PublishedStates,
+        PublishedStates = !isAuthenticated || filter.PublishedStates == null || filter.PublishedStates.Count == 0
+          ? [PublishedState.Active]
+          : filter.PublishedStates,
         ValueContains = filter.ValueContains,
         PageNumber = filter.PageNumber,
         PageSize = filter.PageSize

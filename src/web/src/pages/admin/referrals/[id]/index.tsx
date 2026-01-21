@@ -28,6 +28,7 @@ import {
   useForm,
   type FieldValues,
 } from "react-hook-form";
+import Select from "react-select";
 import { FaExclamationTriangle } from "react-icons/fa";
 import {
   IoIosCheckmarkCircle,
@@ -52,6 +53,8 @@ import {
   updateReferralProgram,
   updateReferralProgramImage,
 } from "~/api/services/referrals";
+import type { Country } from "~/api/models/lookups";
+import { getCountries } from "~/api/services/lookups";
 import { getOpportunityById } from "~/api/services/opportunities";
 import AvatarUpload from "~/components/Organisation/Upsert/AvatarUpload";
 import CustomModal from "~/components/Common/CustomModal";
@@ -83,10 +86,13 @@ import {
   dateInputToUTC,
   dateInputToUTCEndOfDay,
 } from "~/lib/utils";
+import { COUNTRY_CODE_WW } from "~/lib/constants";
 import type { NextPageWithLayout } from "~/pages/_app";
 import { authOptions, type User } from "~/server/auth";
 import FormMessage, { FormMessageType } from "~/components/Common/FormMessage";
 import { ProgramImage } from "~/components/Referrals/ProgramImage";
+
+type SelectOption = { value: string; label: string };
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -114,6 +120,9 @@ const schemaStep2 = z
   .object({
     dateStart: z.string().min(1, "Start date is required"),
     dateEnd: z.string().nullable(),
+    countries: z
+      .array(z.string(), { required_error: "Country is required" })
+      .min(1, "Country is required."),
   })
   .refine(
     (data) => {
@@ -573,6 +582,26 @@ const ReferralProgramForm: NextPageWithLayout<{
     enabled: id !== "create" && !error,
   });
 
+  // Countries lookup
+  const { data: countriesData } = useQuery<Country[]>({
+    queryKey: ["countries"],
+    queryFn: async () => getCountries(),
+    enabled: !error,
+  });
+  const countriesOptions = useMemo<SelectOption[]>(
+    () =>
+      countriesData?.map((c) => ({
+        value: c.id,
+        label: c.name,
+      })) ?? [],
+    [countriesData],
+  );
+  const worldwideCountryId = useMemo<string | null>(
+    () =>
+      countriesData?.find((c) => c.codeAlpha2 === COUNTRY_CODE_WW)?.id ?? null,
+    [countriesData],
+  );
+
   // Form state
   const [formData, setFormData] = useState<Program>(() => {
     if (program) return program;
@@ -583,6 +612,7 @@ const ReferralProgramForm: NextPageWithLayout<{
       id: "",
       name: "",
       description: null,
+      countries: [],
       dateStart: todayUTC.toISOString(),
       dateEnd: null,
       completionBalance: null,
@@ -636,6 +666,7 @@ const ReferralProgramForm: NextPageWithLayout<{
     reset: resetStep2,
     trigger: triggerStep2,
     control: controlStep2,
+    setValue: setValueStep2,
   } = useForm({
     resolver: zodResolver(schemaStep2),
     defaultValues: formData,
@@ -796,8 +827,17 @@ const ReferralProgramForm: NextPageWithLayout<{
     if (program && id !== "create") {
       // Ensure pathway has rule and orderMode with defaults if missing
       // Also transform tasks to have entityId from opportunity object
+      const programCountryIds: string[] = Array.isArray(program.countries)
+        ? program.countries.length === 0
+          ? []
+          : typeof program.countries[0] === "string"
+            ? (program.countries as string[])
+            : (program.countries as Country[]).map((c) => c.id)
+        : [];
+
       const programWithDefaults = {
         ...program,
+        countries: programCountryIds,
         pathway: program.pathway
           ? {
               ...program.pathway,
@@ -848,6 +888,43 @@ const ReferralProgramForm: NextPageWithLayout<{
     triggerStep3,
     triggerStep4,
     triggerStep5,
+  ]);
+
+  // Default new (and legacy) programs to Worldwide if no countries selected
+  const hasInitializedCountries = useRef(false);
+  useEffect(() => {
+    if (hasInitializedCountries.current) return;
+    if (!worldwideCountryId) return;
+
+    const current = (formData.countries ?? []) as string[];
+    if (current.length > 0) {
+      hasInitializedCountries.current = true;
+      return;
+    }
+
+    hasInitializedCountries.current = true;
+    const nextData: Program = {
+      ...formData,
+      countries: [worldwideCountryId],
+    };
+
+    setFormData(nextData);
+    resetStep1(nextData);
+    resetStep2(nextData);
+    resetStep3(nextData);
+    resetStep4(nextData);
+    resetStep5(nextData);
+    // Mark as touched/validated for warning icons
+    setValueStep2("countries", [worldwideCountryId], { shouldValidate: true });
+  }, [
+    formData,
+    worldwideCountryId,
+    resetStep1,
+    resetStep2,
+    resetStep3,
+    resetStep4,
+    resetStep5,
+    setValueStep2,
   ]);
 
   // Scroll to top on step change
@@ -1102,11 +1179,20 @@ const ReferralProgramForm: NextPageWithLayout<{
       try {
         let message = "";
 
+        const countryIds: string[] = Array.isArray(data.countries)
+          ? data.countries.length === 0
+            ? []
+            : typeof data.countries[0] === "string"
+              ? (data.countries as string[])
+              : (data.countries as Country[]).map((c) => c.id)
+          : [];
+
         // Build request object - convert Program to request format
         const baseRequest: Partial<ProgramRequestCreate> = {
           name: data.name,
           description: data.description,
           image: null, // Image handled separately
+          countries: countryIds,
           completionWindowInDays: data.completionWindowInDays,
           completionLimitReferee: data.completionLimitReferee,
           completionLimit: data.completionLimit,
@@ -1201,8 +1287,9 @@ const ReferralProgramForm: NextPageWithLayout<{
           message = "Program updated successfully";
         }
 
-        // Handle image upload if there's a new image
-        // Check form data first (from Step 1), then fallback to imageFiles state
+        // Handle image upload if there's a new image.
+        // IMPORTANT: image upload should not block navigation, because the program may have
+        // already been created successfully.
         const imageFile =
           (data as any).image instanceof File
             ? (data as any).image
@@ -1211,10 +1298,19 @@ const ReferralProgramForm: NextPageWithLayout<{
               : null;
 
         if (imageFile) {
-          await updateReferralProgramImage(programId, imageFile);
-          message += " (including image)";
-          setImageFiles([]); // Clear after successful upload
-          (setValueStep1 as any)("image", null); // Clear form value
+          try {
+            await updateReferralProgramImage(programId, imageFile);
+            message += " (including image)";
+            setImageFiles([]); // Clear after successful upload
+            (setValueStep1 as any)("image", null); // Clear form value
+          } catch (imageError) {
+            toast(<ApiErrors error={imageError as AxiosError} />, {
+              type: "warning",
+              toastId: "program-image",
+              autoClose: false,
+              icon: false,
+            });
+          }
         }
 
         await queryClient.invalidateQueries({ queryKey: ["referralPrograms"] });
@@ -1227,10 +1323,10 @@ const ReferralProgramForm: NextPageWithLayout<{
         // Redirect based on create vs edit
         if (id === "create") {
           // For create: redirect to info page
-          void router.push(`/admin/referrals/${programId}/info`);
+          await router.push(`/admin/referrals/${programId}/info`);
         } else {
           // For edit: go back to returnUrl or list
-          void router.push(
+          await router.push(
             getSafeUrl(
               returnUrl ? decodeURIComponent(returnUrl.toString()) : undefined,
               "/admin/referrals",
@@ -1676,6 +1772,61 @@ const ReferralProgramForm: NextPageWithLayout<{
                           )}
                         />
                       </FormField>
+
+                      <div className="md:col-span-2">
+                        <FormField
+                          label="Countries"
+                          subLabel="Where this program is available. This is used for searchability and eligibility checks."
+                          showWarningIcon={
+                            !!formStateStep2.errors.countries?.message
+                          }
+                          showError={
+                            !!formStateStep2.touchedFields.countries ||
+                            formStateStep2.isSubmitted
+                          }
+                          error={formStateStep2.errors.countries?.message}
+                        >
+                          <Controller
+                            control={controlStep2}
+                            name="countries"
+                            render={({
+                              field: { onChange, value, onBlur },
+                            }) => (
+                              <Select
+                                instanceId="countries"
+                                classNames={{
+                                  control: () =>
+                                    "input w-full !border-gray pr-0 pl-2 h-fit py-1",
+                                }}
+                                isMulti={true}
+                                options={countriesOptions}
+                                onBlur={onBlur}
+                                onChange={(val) =>
+                                  onChange(val.map((c) => c.value))
+                                }
+                                value={countriesOptions?.filter((c) =>
+                                  (
+                                    (value as string[] | undefined) ?? []
+                                  ).includes(c.value),
+                                )}
+                                menuPortalTarget={htmlRef.current}
+                                styles={{
+                                  menuPortal: (base) => ({
+                                    ...base,
+                                    zIndex: 9999,
+                                  }),
+                                  placeholder: (base) => ({
+                                    ...base,
+                                    color: "#A3A6AF",
+                                  }),
+                                }}
+                                inputId="input_countries"
+                                placeholder="Select countries..."
+                              />
+                            )}
+                          />
+                        </FormField>
+                      </div>
                     </div>
 
                     <div className="flex flex-row items-center justify-center gap-2 md:justify-end md:gap-4">

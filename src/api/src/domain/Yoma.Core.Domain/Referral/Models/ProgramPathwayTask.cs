@@ -1,3 +1,8 @@
+using Newtonsoft.Json;
+using Yoma.Core.Domain.Core;
+using Yoma.Core.Domain.Core.Exceptions;
+using Yoma.Core.Domain.Core.Extensions;
+
 namespace Yoma.Core.Domain.Referral.Models
 {
   /// <summary>
@@ -18,6 +23,7 @@ namespace Yoma.Core.Domain.Referral.Models
   /// </summary>
   public class ProgramPathwayTask
   {
+    #region Public Members
     public Guid Id { get; set; }
 
     public Guid StepId { get; set; }
@@ -34,8 +40,63 @@ namespace Yoma.Core.Domain.Referral.Models
 
     public DateTimeOffset DateModified { get; set; }
 
-    public bool IsCompletable => Opportunity == null || Opportunity.IsCompletable;
+    [JsonIgnore]
+    public List<Domain.Lookups.Models.Country>? ProgramCountries { get; set; }
 
-    public string? NonCompletableReason => Opportunity?.NonCompletableReason;
+    public bool IsCompletable
+    {
+      get
+      {
+        var result = Completable(out var reason);
+        NonCompletableReason = reason;
+        return result;
+      }
+    }
+
+    public string? NonCompletableReason { get; private set; }
+    #endregion
+
+    #region Private Members
+    private bool Completable(out string? reason)
+    {
+      reason = null;
+
+      var countryCodeWorldwide = Country.Worldwide.ToDescription();
+
+      // Program: null/empty => treat as Worldwide
+      var programCountryCodes = ProgramCountries?.Select(c => c.CodeAlpha2).ToHashSet() ?? [];
+      if (programCountryCodes.Count == 0) programCountryCodes.Add(countryCodeWorldwide);
+
+      switch (EntityType)
+      {
+        case PathwayTaskEntityType.Opportunity:
+          if (Opportunity == null)
+            throw new DataInconsistencyException("Pathway task entity type is 'Opportunity' but no opportunity is assigned");
+
+          if (!Opportunity.IsCompletable)
+          {
+            reason = Opportunity.NonCompletableReason;
+            return false;
+          }
+
+          // Opportunity: null/empty => treat as Worldwide (currently countries are required, but keep future-proof fallback)
+          var opportunityCountryCodes = Opportunity.Countries?.Select(c => c.CodeAlpha2).ToHashSet() ?? [];
+          if (opportunityCountryCodes.Count == 0) opportunityCountryCodes.Add(countryCodeWorldwide);
+
+          // Worldwide acts as a wildcard on either side.
+          // If either the program or the opportunity is marked as Worldwide,
+          // they are considered compatible with any country configuration.
+          // Otherwise, they must share at least one explicit country.
+          if (programCountryCodes.Contains(countryCodeWorldwide) || opportunityCountryCodes.Contains(countryCodeWorldwide) || programCountryCodes.Overlaps(opportunityCountryCodes))
+            return true;
+
+          reason = $"Opportunity '{Opportunity.Title}' is not available in any of the countries assigned to the program";
+          return false;
+
+        default:
+          throw new InvalidOperationException($"Unsupported pathway task entity type: {EntityType}");
+      }
+    }
+    #endregion
   }
 }

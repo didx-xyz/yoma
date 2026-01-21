@@ -1,24 +1,29 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useCallback, useEffect } from "react";
 import { Controller, useForm, type FieldValues } from "react-hook-form";
+import Select from "react-select";
 import zod from "zod";
+import type { Country } from "~/api/models/lookups";
 import type { ProgramSearchFilterAdmin } from "~/api/models/referrals";
 import { ProgramStatus } from "~/api/models/referrals";
 import { SearchInput } from "../SearchInput";
 
 export enum ReferralFilterOptions {
   VALUECONTAINS = "valueContains",
+  COUNTRIES = "countries",
   STATUSES = "statuses",
   DATERANGE = "dateRange",
 }
 
 export const ReferralProgramSearchFilters: React.FC<{
   searchFilter: ProgramSearchFilterAdmin | null;
+  lookups_countries?: Country[];
   filterOptions: ReferralFilterOptions[];
   onSubmit?: (fieldValues: ProgramSearchFilterAdmin) => void;
-}> = ({ searchFilter, filterOptions, onSubmit }) => {
+}> = ({ searchFilter, lookups_countries, filterOptions, onSubmit }) => {
   const schema = zod.object({
     valueContains: zod.string().optional().nullable(),
+    countries: zod.array(zod.string()).optional().nullable(),
     statuses: zod.array(zod.string()).optional().nullable(),
     dateStart: zod.string().optional().nullable(),
     dateEnd: zod.string().optional().nullable(),
@@ -116,6 +121,48 @@ export const ReferralProgramSearchFilters: React.FC<{
               )}
             </span>
           )}
+
+          {/* COUNTRIES */}
+          {filterOptions?.includes(ReferralFilterOptions.COUNTRIES) &&
+            lookups_countries &&
+            lookups_countries.length > 0 && (
+              <span className="w-full md:w-72">
+                <Controller
+                  name="countries"
+                  control={form.control}
+                  defaultValue={searchFilter?.countries}
+                  render={({ field: { onChange, value } }) => (
+                    <Select
+                      instanceId="countries"
+                      classNames={{
+                        control: () => "input h-fit py-1",
+                      }}
+                      isMulti={true}
+                      options={lookups_countries.map((c) => ({
+                        value: c.id,
+                        label: c.name,
+                      }))}
+                      onChange={(val) => {
+                        onChange((val ?? []).map((c) => c.value));
+                        void handleSubmit(onSubmitHandler)();
+                      }}
+                      value={lookups_countries
+                        .filter((c) => value?.includes(c.id))
+                        .map((c) => ({ value: c.id, label: c.name }))}
+                      placeholder="Countries"
+                    />
+                  )}
+                />
+
+                {formState.errors.countries && (
+                  <label className="label font-bold">
+                    <span className="label-text-alt text-red-500 italic">
+                      {`${formState.errors.countries.message}`}
+                    </span>
+                  </label>
+                )}
+              </span>
+            )}
 
           {/* DATE RANGE */}
           {filterOptions?.includes(ReferralFilterOptions.DATERANGE) && (

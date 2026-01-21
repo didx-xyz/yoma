@@ -903,7 +903,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
           var request = new MyOpportunityRequestVerify { InstantOrImportedVerification = true, OverridePending = true };
           await PerformActionSendForVerification(user, link.EntityId, request, null, true); //any verification method
 
-          await FinalizeVerification(user, opportunity, VerificationStatus.Completed, true, null, "Auto-verification", true, true);
+          await FinalizeVerification(user, opportunity, VerificationStatus.Completed, true, null, "Auto-verification", true, true, true);
 
           scope.Complete();
         });
@@ -1000,7 +1000,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
           user = _userService.GetById(item.UserId, false, false);
           opportunity = _opportunityService.GetById(item.OpportunityId, true, true, false);
 
-          await FinalizeVerification(user, opportunity, request.Status, false, null, request.Comment, true, false);
+          await FinalizeVerification(user, opportunity, request.Status, false, null, request.Comment, true, false, true);
 
           var successItem = new MyOpportunityResponseVerifyFinalizeBatchItem
           {
@@ -1048,7 +1048,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       var user = _userService.GetById(request.UserId, false, false);
       var opportunity = _opportunityService.GetById(request.OpportunityId, true, true, false);
 
-      await FinalizeVerification(user, opportunity, request.Status, false, null, request.Comment, true, false);
+      await FinalizeVerification(user, opportunity, request.Status, false, null, request.Comment, true, false, true);
     }
 
     public Dictionary<Guid, int>? ListAggregatedOpportunityByViewed(bool includeExpired)
@@ -1138,7 +1138,11 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       CSVImportHelper.ValidateHeader<MyOpportunityInfoCsvImport>(csv, errors);
       if (CSVImportHelper.ContainsHeaderErrors(errors)) return CSVImportHelper.GetResults(errors);
 
-      // PASS A — probe: parse + invoke domain logic per row in its own scope, but never Complete()
+      // PASS A — probe: parse + invoke domain logic per row in its own scope, but never Complete().
+      // This is intentionally row-isolated for performance and to avoid long-lived transactions.
+      // Consequence: probe execution cannot observe uncommitted side-effects from other rows
+      // (e.g. entities created in earlier rows of the same file). Cross-row dependencies
+      // are therefore only fully validated during PASS B (atomic import transaction).
       var parsed = new List<(MyOpportunityInfoCsvImport Dto, int Row)>();
       int recordsTotal = 0;
 
@@ -1179,7 +1183,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
           await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
           {
             using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
-            await ProcessImportVerification(request, dto, true); //probe only; notifications not send
+            await ProcessImportVerification(request, dto, true); //probe only; notifications not send and events not raised
             if (!string.IsNullOrEmpty(dto.VerificationEntry)) probedVerifications.Add(dto.VerificationEntry);
             //probe only, do not commit the scope; disposed as aborted
           });
@@ -1202,16 +1206,27 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       // Stop here if there are validation errors or we're in probe mode
       if (errors.Count > 0 || request.ValidateOnly == true) return result;
 
-      // PASS B — commit: single atomic transaction for the whole file
-      await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+      try
       {
-        using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
+        // PASS B — commit: single atomic transaction for the whole file
+        await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+        {
+          _delayedExecutionService.Reset();
 
-        foreach (var (dto, row) in parsed)
-          await ProcessImportVerification(request, dto, false);
+          using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
 
-        scope.Complete();
-      });
+          foreach (var (dto, row) in parsed)
+            await ProcessImportVerification(request, dto, false);
+
+          scope.Complete();
+        });
+
+        await _delayedExecutionService.FlushAsync();
+      }
+      finally
+      {
+        _delayedExecutionService.Reset();
+      }
 
       return result;
     }
@@ -1276,7 +1291,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       item.Surname = string.IsNullOrWhiteSpace(item.Surname) ? null : item.Surname.Trim();
 
       Domain.Lookups.Models.Country? country = null;
-      if (!string.IsNullOrEmpty(item.Country)) country = _countryService.GetByCodeAplha2(item.Country);
+      if (!string.IsNullOrEmpty(item.Country)) country = _countryService.GetByCodeAlpha2(item.Country);
 
       Domain.Lookups.Models.Gender? gender = null;
       if (!string.IsNullOrEmpty(item.Gender)) gender = _genderService.GetByName(item.Gender);
@@ -1288,10 +1303,9 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         throw new ValidationException("Opportunity external id required");
 
       var opportunity = _opportunityService.GetByExternalId(requestImport.OrganizationId, item.OpportunityExternalId, true, true);
-      if (opportunity.VerificationMethod != VerificationMethod.Automatic)
-        throw new ValidationException($"Verification import not supported for opporunity '{opportunity.Title}'. The verification method must be set to 'Automatic'");
 
       var user = _userService.GetByUsernameOrNull(item.Username, false, false);
+
       //user is created if not existing, or updated if not linked to an identity provider
       if (user == null || !user.ExternalId.HasValue)
       {
@@ -1306,34 +1320,21 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
           EmailConfirmed = item.Email == null ? null : false,
           PhoneNumberConfirmed = item.PhoneNumber == null ? null : false,
           CountryId = country?.Id,
-          GenderId = gender?.Id
+          GenderId = gender?.Id,
+
+          // preserve non-import profile fields
+          EducationId = user?.EducationId,
+          DateOfBirth = user?.DateOfBirth
         };
 
-        user = await _userService.Upsert(request);
+        user = await _userService.Upsert(request, true, !probeOnly);
       }
 
-      try
-      {
-        await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
-        {
-          _delayedExecutionService.Reset();
+      var requestVerify = new MyOpportunityRequestVerify { InstantOrImportedVerification = true }; //with instant or imported verifications, pending notifications are not sent
+      await PerformActionSendForVerification(user, opportunity.Id, requestVerify, VerificationMethod.Automatic, true,
+        $"Verification import not supported for opporunity '{opportunity.Title}'. The verification method must be set to '{VerificationMethod.Automatic}'"); //verification method automatic
 
-          using var scope = TransactionScopeHelper.CreateReadCommitted();
-
-          var requestVerify = new MyOpportunityRequestVerify { InstantOrImportedVerification = true }; //with instant or imported verifications, pending notifications are not sent
-          await PerformActionSendForVerification(user, opportunity.Id, requestVerify, null, true); //any verification method
-
-          await FinalizeVerification(user, opportunity, VerificationStatus.Completed, true, item.DateCompleted?.ToDateTimeOffset().ToEndOfDay(), requestImport.Comment, !probeOnly, true);
-
-          scope.Complete();
-        });
-
-        await _delayedExecutionService.FlushAsync();
-      }
-      finally
-      {
-        _delayedExecutionService.Reset();
-      }
+      await FinalizeVerification(user, opportunity, VerificationStatus.Completed, true, item.DateCompleted?.ToDateTimeOffset().ToEndOfDay(), requestImport.Comment, !probeOnly, true, !probeOnly);
     }
 
     private static List<(DateTime WeekEnding, int Count)> SummaryGroupByWeekItems(List<MyOpportunityInfo> items)
@@ -1361,7 +1362,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       DateTimeOffset? dateCompleted,
       string? comment,
       bool sendNotification,
-      bool enqueueOutcomes)
+      bool enqueueOutcomes,
+      bool publishEvents)
     {
       //can complete, provided opportunity is published (and started) or expired (actioned prior to expiration)
       var canFinalize = opportunity.Status == Status.Expired;
@@ -1469,6 +1471,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
           await SendNotification(item, notificationType.Value);
       }
 
+      if (!publishEvents) return;
+
       var myEvent = new ReferralProgressTriggerEvent(
         new Referral.Models.ReferralProgressTriggerMessage
         {
@@ -1556,6 +1560,27 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       return $"Opportunity '{opportunity.Title}' {description}, because {reasonText}. Please check these conditions and try again.";
     }
 
+    private void PerformActionSendForVerificationValidateCountrySegregation(User user, Opportunity.Models.Opportunity opportunity)
+    {
+      // If user has no country → skip validation (no restriction possible)
+      if (!user.CountryId.HasValue)
+        return;
+
+      // If opportunity has no countries configured → treat as worldwide → allow
+      if (opportunity.Countries == null || opportunity.Countries.Count == 0)
+        return;
+
+      // If opportunity includes Worldwide → allow any user
+      var worldwideId = _countryService.GetByCodeAlpha2(Core.Country.Worldwide.ToDescription()).Id;
+      if (opportunity.Countries.Any(c => c.Id == worldwideId))
+        return;
+
+      // Otherwise user country must match one of opportunity countries
+      if (!opportunity.Countries.Any(c => c.Id == user.CountryId.Value))
+        throw new ValidationException(
+          $"Opportunity '{opportunity.Title}' can not be completed as it is not available in your country");
+    }
+
     private static void PerformActionSendForVerificationApplyDefaults(MyOpportunityRequestVerify request, Opportunity.Models.Opportunity opportunity)
     {
       if (request.InstantOrImportedVerification) return;
@@ -1634,7 +1659,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       Guid opportunityId,
       MyOpportunityRequestVerify request,
       VerificationMethod? requiredVerificationMethod,
-      bool enqueueOutcomes)
+      bool enqueueOutcomes,
+      string? requiredVerificationMethodMessageOverride = null)
     {
       ArgumentNullException.ThrowIfNull(request, nameof(request));
 
@@ -1662,7 +1688,10 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         throw new DataInconsistencyException("Manual verification enabled but opportunity has no mapped verification types");
 
       if (requiredVerificationMethod.HasValue && opportunity.VerificationMethod != requiredVerificationMethod.Value)
-        throw new ValidationException($"Opportunity '{opportunity.Title}' cannot be completed / requires verification method {requiredVerificationMethod}");
+        throw new ValidationException(requiredVerificationMethodMessageOverride
+          ?? $"Opportunity '{opportunity.Title}' cannot be completed / requires verification method '{requiredVerificationMethod.Value}'");
+
+      PerformActionSendForVerificationValidateCountrySegregation(user, opportunity);
 
       var actionVerificationId = _myOpportunityActionService.GetByName(Action.Verification.ToString()).Id;
       var verificationStatusPendingId = _myOpportunityVerificationStatusService.GetByName(VerificationStatus.Pending.ToString()).Id;

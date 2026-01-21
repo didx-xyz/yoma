@@ -10,12 +10,14 @@ using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Entity.Interfaces;
+using Yoma.Core.Domain.Lookups.Interfaces;
 using Yoma.Core.Domain.MyOpportunity;
 using Yoma.Core.Domain.MyOpportunity.Interfaces;
 using Yoma.Core.Domain.Notification;
 using Yoma.Core.Domain.Notification.Interfaces;
 using Yoma.Core.Domain.Notification.Models;
 using Yoma.Core.Domain.Referral.Extensions;
+using Yoma.Core.Domain.Referral.Helpers;
 using Yoma.Core.Domain.Referral.Interfaces;
 using Yoma.Core.Domain.Referral.Interfaces.Lookups;
 using Yoma.Core.Domain.Referral.Models;
@@ -41,6 +43,7 @@ namespace Yoma.Core.Domain.Referral.Services
     private readonly IExecutionStrategyService _executionStrategyService;
     private readonly INotificationDeliveryService _notificationDeliveryService;
     private readonly INotificationURLFactory _notificationURLFactory;
+    private readonly ICountryService _countryService;
 
     private readonly ReferralLinkUsageSearchFilterValidator _referralLinkUsageSearchFilterValidator;
 
@@ -70,6 +73,7 @@ namespace Yoma.Core.Domain.Referral.Services
       IExecutionStrategyService executionStrategyService,
       INotificationDeliveryService notificationDeliveryService,
       INotificationURLFactory notificationURLFactory,
+      ICountryService countryService,
 
       ReferralLinkUsageSearchFilterValidator referralLinkUsageSearchFilterValidator,
 
@@ -89,6 +93,7 @@ namespace Yoma.Core.Domain.Referral.Services
       _executionStrategyService = executionStrategyService ?? throw new ArgumentNullException(nameof(executionStrategyService));
       _notificationDeliveryService = notificationDeliveryService ?? throw new ArgumentNullException(nameof(notificationDeliveryService));
       _notificationURLFactory = notificationURLFactory ?? throw new ArgumentNullException(nameof(notificationURLFactory));
+      _countryService = countryService ?? throw new ArgumentNullException(nameof(countryService));
 
       _referralLinkUsageSearchFilterValidator = referralLinkUsageSearchFilterValidator ?? throw new ArgumentNullException(nameof(referralLinkUsageSearchFilterValidator));
 
@@ -260,6 +265,11 @@ namespace Yoma.Core.Domain.Referral.Services
       // Ensure onboarded (profile updated during registration flow)
       if (!user.DateYoIDOnboarded.HasValue)
         throw new ValidationException("You must complete your profile before claiming a referral link");
+
+      // Country segregation: program must be accessible to the current user
+      var worldwideId = _countryService.GetByCodeAlpha2(Country.Worldwide.ToDescription()).Id;
+      if (!ProgramCountryPolicy.ProgramAccessibleToUser(worldwideId, user.CountryId, program.Countries))
+        throw new ValidationException($"Referral program '{program.Name}' is not available in your country");
 
       // All usages by this user (any program)
       var userUsages = _linkUsageRepository.Query().Where(u => u.UserId == user.Id).ToList();

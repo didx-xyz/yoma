@@ -10,20 +10,26 @@ SET TIMEZONE='UTC';
 -- testuser@gmail.com (KeyCloak password: P@ssword1)
 INSERT INTO "Entity"."User"("Id", "Email", "EmailConfirmed", "FirstName", "Surname", "DisplayName", "PhoneNumber", "PhoneNumberConfirmed", "CountryId", "EducationId",
             "PhotoId", "GenderId", "DateOfBirth", "DateLastLogin", "ExternalId", "YoIDOnboarded", "DateYoIDOnboarded", "DateCreated", "DateModified")
-VALUES(gen_random_uuid(), 'testuser@gmail.com', TRUE, 'Test', 'User', 'Test User', '+27821234567', TRUE, (SELECT "Id" FROM "Lookup"."Country" ORDER BY RANDOM() LIMIT 1), (SELECT "Id" FROM "Lookup"."Education" ORDER BY RANDOM() LIMIT 1),
-        NULL, (SELECT "Id" FROM "Lookup"."Gender" ORDER BY RANDOM() LIMIT 1), CURRENT_DATE - INTERVAL '20 years', NULL, NULL, TRUE, (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'), (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'), (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'));
+VALUES(gen_random_uuid(), 'testuser@gmail.com', TRUE, 'Test', 'User', 'Test User', '+27821234567', TRUE,
+        (SELECT "Id" FROM "Lookup"."Country" WHERE "CodeAlpha2"='ZA'), (SELECT "Id" FROM "Lookup"."Education" ORDER BY RANDOM() LIMIT 1),
+        NULL, (SELECT "Id" FROM "Lookup"."Gender" ORDER BY RANDOM() LIMIT 1), CURRENT_DATE - INTERVAL '20 years', NULL, NULL, TRUE,
+        (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'), (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'), (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'));
 
 -- testadminuser@gmail.com (KeyCloak password: P@ssword1)
 INSERT INTO "Entity"."User"("Id", "Email", "EmailConfirmed", "FirstName", "Surname", "DisplayName", "PhoneNumber", "PhoneNumberConfirmed", "CountryId", "EducationId",
             "PhotoId", "GenderId", "DateOfBirth", "DateLastLogin", "ExternalId", "YoIDOnboarded", "DateYoIDOnboarded", "DateCreated", "DateModified")
-VALUES(gen_random_uuid(), 'testadminuser@gmail.com', TRUE, 'Test Admin', 'User', 'Test Admin User', NULL, NULL, (SELECT "Id" FROM "Lookup"."Country" ORDER BY RANDOM() LIMIT 1), (SELECT "Id" FROM "Lookup"."Education" ORDER BY RANDOM() LIMIT 1),
-        NULL, (SELECT "Id" FROM "Lookup"."Gender" ORDER BY RANDOM() LIMIT 1), CURRENT_DATE - INTERVAL '21 years', NULL, NULL, TRUE, (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'), (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'), (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'));
+VALUES(gen_random_uuid(), 'testadminuser@gmail.com', TRUE, 'Test Admin', 'User', 'Test Admin User', NULL, NULL,
+        (SELECT "Id" FROM "Lookup"."Country" WHERE "CodeAlpha2"='ZA'), (SELECT "Id" FROM "Lookup"."Education" ORDER BY RANDOM() LIMIT 1),
+        NULL, (SELECT "Id" FROM "Lookup"."Gender" ORDER BY RANDOM() LIMIT 1), CURRENT_DATE - INTERVAL '21 years', NULL, NULL, TRUE,
+        (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'), (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'), (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'));
 
 -- testorgadminuser@gmail.com (KeyCloak password: P@ssword1)
 INSERT INTO "Entity"."User"("Id", "Email", "EmailConfirmed", "FirstName", "Surname", "DisplayName", "PhoneNumber", "PhoneNumberConfirmed", "CountryId", "EducationId",
             "PhotoId", "GenderId", "DateOfBirth", "DateLastLogin", "ExternalId", "YoIDOnboarded", "DateYoIDOnboarded", "DateCreated", "DateModified")
-VALUES(gen_random_uuid(), 'testorgadminuser@gmail.com', TRUE, 'Test Organization Admin', 'User', 'Test Organization Admin User', NULL, NULL, (SELECT "Id" FROM "Lookup"."Country" ORDER BY RANDOM() LIMIT 1), (SELECT "Id" FROM "Lookup"."Education" ORDER BY RANDOM() LIMIT 1),
-        NULL, (SELECT "Id" FROM "Lookup"."Gender" ORDER BY RANDOM() LIMIT 1), CURRENT_DATE - INTERVAL '22 years', NULL, NULL, TRUE, (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'), (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'), (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'));
+VALUES(gen_random_uuid(), 'testorgadminuser@gmail.com', TRUE, 'Test Organization Admin', 'User', 'Test Organization Admin User', NULL, NULL,
+        (SELECT "Id" FROM "Lookup"."Country" WHERE "CodeAlpha2"='ZA'), (SELECT "Id" FROM "Lookup"."Education" ORDER BY RANDOM() LIMIT 1),
+        NULL, (SELECT "Id" FROM "Lookup"."Gender" ORDER BY RANDOM() LIMIT 1), CURRENT_DATE - INTERVAL '22 years', NULL, NULL, TRUE,
+        (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'), (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'), (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'));
 
 -- SSI Tenant Creation (Pending) for YOID onboarded users
 INSERT INTO "SSI"."TenantCreation"("Id", "EntityType", "StatusId", "UserId", "OrganizationId", "TenantId", "ErrorReason", "RetryCount", "DateCreated", "DateModified")
@@ -348,20 +354,39 @@ SELECT
 FROM "Opportunity"."Opportunity" O
 CROSS JOIN "Opportunity"."OpportunityCategory" OC;
 
--- Countries
+-- Countries (ensure ZA or WW always present; cover WW-only / ZA-only / ZA+random)
 INSERT INTO "Opportunity"."OpportunityCountries"("Id", "OpportunityId", "CountryId", "DateCreated")
-SELECT
-    gen_random_uuid(),
-    O."Id" AS "OpportunityId",
-    R."CountryID",
-    (CURRENT_TIMESTAMP AT TIME ZONE 'UTC')
+SELECT gen_random_uuid(), O."Id", C."CountryId", (CURRENT_TIMESTAMP AT TIME ZONE 'UTC')
 FROM "Opportunity"."Opportunity" O
-CROSS JOIN (
-    SELECT "Id" AS "CountryID"
-    FROM "Lookup"."Country"
+CROSS JOIN LATERAL (
+  -- 40%: WW only
+  SELECT (SELECT "Id" FROM "Lookup"."Country" WHERE "CodeAlpha2"='WW' LIMIT 1) AS "CountryId"
+  WHERE (mod(abs(hashtext(O."Id"::text)), 10) < 4)
+
+  UNION ALL
+
+  -- 40%: ZA only
+  SELECT (SELECT "Id" FROM "Lookup"."Country" WHERE "CodeAlpha2"='ZA' LIMIT 1) AS "CountryId"
+  WHERE (mod(abs(hashtext(O."Id"::text)), 10) >= 4 AND mod(abs(hashtext(O."Id"::text)), 10) < 8)
+
+  UNION ALL
+
+  -- 20%: ZA + 2 random (excluding ZA/WW)
+  SELECT (SELECT "Id" FROM "Lookup"."Country" WHERE "CodeAlpha2"='ZA' LIMIT 1) AS "CountryId"
+  WHERE (mod(abs(hashtext(O."Id"::text)), 10) >= 8)
+
+  UNION ALL
+
+  SELECT X."CountryId"
+  FROM (
+    SELECT R."Id" AS "CountryId"
+    FROM "Lookup"."Country" R
+    WHERE R."CodeAlpha2" NOT IN ('ZA','WW')
     ORDER BY RANDOM()
-    LIMIT 10
-) AS R;
+    LIMIT 2
+  ) X
+  WHERE (mod(abs(hashtext(O."Id"::text)), 10) >= 8)
+) C;
 
 -- Languages
 INSERT INTO "Opportunity"."OpportunityLanguages"("Id", "OpportunityId", "LanguageId", "DateCreated")
@@ -669,6 +694,10 @@ DECLARE
   v_status_inactive_id   uuid := (SELECT "Id" FROM "Referral"."ProgramStatus" WHERE "Name" = 'Inactive');
   v_status_deleted_id    uuid := (SELECT "Id" FROM "Referral"."ProgramStatus" WHERE "Name" = 'Deleted');
 
+  -- Countries (for program-country mapping + ensuring task opp selection overlaps)
+  v_country_ww_id        uuid := (SELECT "Id" FROM "Lookup"."Country" WHERE "CodeAlpha2"='WW');
+  v_country_za_id        uuid := (SELECT "Id" FROM "Lookup"."Country" WHERE "CodeAlpha2"='ZA');
+
   v_words                text := 'Youth,Referral,Learn,Apply,Round,Flow,Onboard,Capstone,Community,Engage,Pathway,Skills,Program,Launch,Venture,Starter,Pro,Advanced,Scholar,Track,Journey';
 
   v_is_default_assigned  boolean := false;
@@ -726,6 +755,14 @@ DECLARE
 BEGIN
   IF v_admin_user_id IS NULL THEN
     RAISE EXCEPTION 'Admin user not found: %', 'testadminuser@gmail.com';
+  END IF;
+
+  IF v_country_ww_id IS NULL THEN
+    RAISE EXCEPTION 'Country not found: %', 'WW';
+  END IF;
+
+  IF v_country_za_id IS NULL THEN
+    RAISE EXCEPTION 'Country not found: %', 'ZA';
   END IF;
 
   WHILE v_i < 50 LOOP
@@ -796,6 +833,15 @@ BEGIN
     v_pop              := (random() < 0.5);                  -- ProofOfPersonhoodRequired
     v_pathway_required := (random() < 0.5);                  -- allow some without pathway
     v_multiple_links   := (random() < 0.5);
+
+    -- -------------------------
+    -- Default program must always be Active
+    -- -------------------------
+    IF v_is_default THEN
+      v_status_id := v_status_active_id;
+      v_date_start := date_trunc('day', v_now - interval '3 days');
+      v_date_end := NULL;
+    END IF;
 
     -- -------------------------
     -- Rewards & caps (respect limits)
@@ -882,6 +928,26 @@ BEGIN
     );
 
     -- -------------------------
+    -- Program Countries
+    -- Default => WW only
+    -- Others  => ZA + 0..2 random (excluding ZA/WW)
+    -- -------------------------
+    IF v_is_default THEN
+      INSERT INTO "Referral"."ProgramCountries"("Id","ProgramId","CountryId","DateCreated")
+      VALUES (gen_random_uuid(), v_program_id, v_country_ww_id, v_now);
+    ELSE
+      INSERT INTO "Referral"."ProgramCountries"("Id","ProgramId","CountryId","DateCreated")
+      VALUES (gen_random_uuid(), v_program_id, v_country_za_id, v_now);
+
+      INSERT INTO "Referral"."ProgramCountries"("Id","ProgramId","CountryId","DateCreated")
+      SELECT gen_random_uuid(), v_program_id, C."Id", v_now
+      FROM "Lookup"."Country" C
+      WHERE C."CodeAlpha2" NOT IN ('ZA','WW')
+      ORDER BY RANDOM()
+      LIMIT (floor(random()*3)::int); -- 0..2
+    END IF;
+
+    -- -------------------------
     -- Pathway (only if required)
     -- -------------------------
     IF v_pathway_required THEN
@@ -949,13 +1015,21 @@ BEGIN
         v_task_order_display := 1;
 
         FOR t IN 1..v_tasks_count LOOP
-          -- choose a valid opportunity
-          SELECT "Id"
+          -- choose a valid opportunity (must overlap program countries)
+          SELECT O."Id"
           INTO v_opp_id
-          FROM "Opportunity"."Opportunity"
-          WHERE "VerificationEnabled" = TRUE
-            AND "VerificationMethod" IS NOT NULL
-            AND "StatusId" = (SELECT "Id" FROM "Opportunity"."OpportunityStatus" WHERE "Name"='Active')
+          FROM "Opportunity"."Opportunity" O
+          WHERE O."VerificationEnabled" = TRUE
+            AND O."VerificationMethod" IS NOT NULL
+            AND O."StatusId" = (SELECT "Id" FROM "Opportunity"."OpportunityStatus" WHERE "Name"='Active')
+            AND EXISTS (
+              SELECT 1
+              FROM "Opportunity"."OpportunityCountries" OC
+              JOIN "Referral"."ProgramCountries" PC
+                ON PC."ProgramId" = v_program_id
+               AND PC."CountryId" = OC."CountryId"
+              WHERE OC."OpportunityId" = O."Id"
+            )
           ORDER BY random()
           LIMIT 1;
 
@@ -987,10 +1061,12 @@ BEGIN
   IF NOT EXISTS (SELECT 1 FROM "Referral"."Program" WHERE "IsDefault" = TRUE) THEN
     UPDATE "Referral"."Program"
     SET "IsDefault" = TRUE,
-        "ProofOfPersonhoodRequired" = TRUE -- enforce default rule
+        "StatusId" = v_status_active_id,
+        "ProofOfPersonhoodRequired" = TRUE
     WHERE "Id" = (
       SELECT "Id"
       FROM "Referral"."Program"
+      WHERE "StatusId" <> v_status_deleted_id
       ORDER BY random()
       LIMIT 1
     );

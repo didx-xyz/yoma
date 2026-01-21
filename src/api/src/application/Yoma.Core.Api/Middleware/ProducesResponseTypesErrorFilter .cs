@@ -41,6 +41,7 @@ namespace Yoma.Core.Api.Middleware
         }
       };
 
+      operation.Responses ??= [];
       foreach (var errorResponse in errorResponses)
         operation.Responses[errorResponse.Key.ToString()] = errorResponse.Value;
     }

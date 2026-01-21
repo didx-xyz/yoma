@@ -150,7 +150,7 @@ namespace Yoma.Core.Domain.Referral.Services
     #endregion
 
     #region Private Members
-    private async Task SendNotification(NotificationType type, Domain.Entity.Models.User user, Block block)
+    private async Task SendNotification(NotificationType type, Entity.Models.User user, Block block)
     {
       try
       {

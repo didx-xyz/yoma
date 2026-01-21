@@ -345,7 +345,7 @@ namespace Yoma.Core.Api.Controllers
 
         userRequest.ExternalId = kcUser.Id;
 
-        await _userService.Upsert(userRequest);
+        await _userService.Upsert(userRequest, false, true);
       });
     }
 

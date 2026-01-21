@@ -74,6 +74,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
           pageNumber: 1,
           pageSize: 4,
           valueContains: null,
+          countries: null, // auto-filtered by user country when available, including WW (authenticated users)
           includeExpired: false,
         },
         context,
@@ -109,6 +110,7 @@ const ReferralsDashboard: NextPageWithLayout<{
         pageNumber: 1,
         pageSize: 4,
         valueContains: null,
+        countries: null, // auto-filtered by user country when available, including WW (authenticated users)
         includeExpired: false,
       }),
     enabled: !error,

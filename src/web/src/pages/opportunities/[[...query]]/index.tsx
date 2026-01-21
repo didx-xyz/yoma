@@ -503,7 +503,8 @@ const Opportunities: NextPageWithLayout<{
     return {
       pageNumber: page ? parseInt(page.toString()) : 1,
       pageSize: PAGE_SIZE,
-      valueContains: query ? decodeURIComponent(query.toString()) : null,
+      valueContains:
+        query && query.length > 2 ? decodeURIComponent(query.toString()) : null,
       mostViewed: mostViewed ? Boolean(mostViewed) : null,
       mostCompleted: mostCompleted ? Boolean(mostCompleted) : null,
       featured: featured ? Boolean(featured) : null,
@@ -700,7 +701,7 @@ const Opportunities: NextPageWithLayout<{
       if (
         searchFilter.valueContains !== undefined &&
         searchFilter.valueContains !== null &&
-        searchFilter.valueContains.length > 0
+        searchFilter.valueContains.length > 2
       )
         params.append("query", searchFilter.valueContains);
 
@@ -833,7 +834,7 @@ const Opportunities: NextPageWithLayout<{
 
   const onSearchInputSubmit = useCallback(
     (query: string) => {
-      if (query && query.length >= 3) {
+      if (query && query.length > 2) {
         // uri encode the search value
         const searchValueEncoded = encodeURIComponent(query);
         query = searchValueEncoded;
