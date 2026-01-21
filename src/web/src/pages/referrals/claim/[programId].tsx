@@ -24,6 +24,7 @@ import analytics from "~/lib/analytics";
 import { handleUserSignIn } from "~/lib/authUtils";
 import { config } from "~/lib/react-query-config";
 import { currentLanguageAtom, userProfileAtom } from "~/lib/store";
+import { escapeHtml, parseApiError } from "~/lib/apiErrorUtils";
 import { cleanTextForMetaTag } from "~/lib/utils";
 import { getProfileCompletionStep } from "~/lib/utils/profile";
 import { authOptions } from "~/server/auth";
@@ -329,19 +330,20 @@ const ReferralClaimPage: NextPageWithLayout<{
 
   // Claim error state - user is authenticated but claim failed
   if (claimError && program) {
-    // Parse errors from the API response
-    const customErrors = claimError.response?.data as ErrorResponseItem[];
-    const hasCustomErrors =
-      Array.isArray(customErrors) && customErrors.length > 0;
-    const errorMessage =
-      claimError?.response?.data?.message ||
+    const { errors: customErrors, message: errorMessage } =
+      parseApiError(claimError);
+
+    const hasCustomErrors = customErrors.length > 0;
+    const fallbackMessage =
       "Failed to claim referral link. You may have already claimed it or are not eligible.";
+    const safeErrorMessage = errorMessage || fallbackMessage;
 
     // Check if user already claimed this link - redirect to dashboard
-    const alreadyClaimedError = customErrors?.find((error) =>
-      error.message?.includes("You already claimed this link"),
-    );
-    if (alreadyClaimedError) {
+    const alreadyClaimed =
+      customErrors.some((error) => /already claimed/i.test(error.message)) ||
+      /already claimed/i.test(safeErrorMessage);
+
+    if (alreadyClaimed) {
       router.push(`/yoid/referee/${programId}`);
       return (
         <div className="flex min-h-screen items-center justify-center">
@@ -354,8 +356,14 @@ const ReferralClaimPage: NextPageWithLayout<{
       );
     }
 
+    const isCountryRestricted =
+      customErrors.some((error) => /country/i.test(error.message)) ||
+      /country/i.test(safeErrorMessage);
+
     const claimErrorReasons = hasCustomErrors
-      ? (customErrors ?? []).map((error) => error.message || "Unknown reason")
+      ? customErrors.map((error) =>
+          escapeHtml(error.message || "Unknown reason"),
+        )
       : [
           "You&apos;ve already claimed this referral link",
           "You don&apos;t meet the program requirements",
@@ -364,14 +372,17 @@ const ReferralClaimPage: NextPageWithLayout<{
           "You may have already claimed a different referral for this program",
         ];
 
-    const claimErrorSummary = claimErrorReasons.join(" • ");
-
     const claimErrorDescription = `
       <div class="text-center mt-8">
-        <h3 class="text-[10px] md:text-xs font-semibold text-gray-900 mb-2">${hasCustomErrors ? "" : "Common reasons this might happen:"}</h3>
-        <p class="text-left text-[10px] md:text-xs text-gray-700 line-clamp-4 overflow-hidden">
-          ${claimErrorSummary}
-        </p>
+        <h3 class="text-[10px] md:text-xs font-semibold text-gray-900 mb-2">${
+          hasCustomErrors ? "" : "Common reasons this might happen:"
+        }</h3>
+        <ul class="text-left text-[10px] md:text-xs ml-6 list-disc space-y-1 text-gray-700">
+          ${claimErrorReasons
+            .slice(0, 6)
+            .map((reason) => `<li>${reason}</li>`)
+            .join("\n")}
+        </ul>
       </div>
     `;
 
@@ -381,8 +392,18 @@ const ReferralClaimPage: NextPageWithLayout<{
           <div className={`${panelClassName} w-full`}>
             <NoRowsMessage
               icon={<IoWarningOutline className="h-6 w-6 text-red-500" />}
-              title="Unable to Claim Referral Link"
-              subTitle={!hasCustomErrors ? errorMessage : undefined}
+              title={
+                isCountryRestricted
+                  ? "Referral Not Available"
+                  : "Unable to Claim Referral Link"
+              }
+              subTitle={
+                !hasCustomErrors
+                  ? safeErrorMessage
+                  : isCountryRestricted
+                    ? "This referral link can’t be claimed from your country."
+                    : undefined
+              }
               description={claimErrorDescription}
               className="w-full !bg-transparent"
             />
@@ -443,9 +464,9 @@ const ReferralClaimPage: NextPageWithLayout<{
               />
 
               {program.proofOfPersonhoodRequired && (
-                <div className="text-base-content/70 mt-3 text-center text-[10px] font-semibold md:text-xs">
-                  Proof of Personhood required: sign in with Google/Facebook or
-                  add a phone number.
+                <div className="text-gray-dark px-4 text-xs md:text-sm">
+                  Please login with Google/Facebook or scroll to the bottom of
+                  the page and register with a phone number.
                 </div>
               )}
             </div>

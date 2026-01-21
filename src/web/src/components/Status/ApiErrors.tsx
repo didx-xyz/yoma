@@ -1,12 +1,12 @@
 import { type AxiosError } from "axios";
 import { type ReactElement } from "react";
 import { IoMdFlame } from "react-icons/io";
-import { type ErrorResponseItem } from "~/api/models/common";
+import { parseApiError } from "~/lib/apiErrorUtils";
 
 export type Props = ({ error }: { error: any }) => ReactElement;
 
 export const ApiErrors: Props = ({ error }) => {
-  const customErrors = error.response?.data as ErrorResponseItem[];
+  const { errors: customErrors } = parseApiError(error);
 
   if (error.response?.status) {
     return (
