@@ -1287,8 +1287,9 @@ const ReferralProgramForm: NextPageWithLayout<{
           message = "Program updated successfully";
         }
 
-        // Handle image upload if there's a new image
-        // Check form data first (from Step 1), then fallback to imageFiles state
+        // Handle image upload if there's a new image.
+        // IMPORTANT: image upload should not block navigation, because the program may have
+        // already been created successfully.
         const imageFile =
           (data as any).image instanceof File
             ? (data as any).image
@@ -1297,10 +1298,19 @@ const ReferralProgramForm: NextPageWithLayout<{
               : null;
 
         if (imageFile) {
-          await updateReferralProgramImage(programId, imageFile);
-          message += " (including image)";
-          setImageFiles([]); // Clear after successful upload
-          (setValueStep1 as any)("image", null); // Clear form value
+          try {
+            await updateReferralProgramImage(programId, imageFile);
+            message += " (including image)";
+            setImageFiles([]); // Clear after successful upload
+            (setValueStep1 as any)("image", null); // Clear form value
+          } catch (imageError) {
+            toast(<ApiErrors error={imageError as AxiosError} />, {
+              type: "warning",
+              toastId: "program-image",
+              autoClose: false,
+              icon: false,
+            });
+          }
         }
 
         await queryClient.invalidateQueries({ queryKey: ["referralPrograms"] });
@@ -1313,10 +1323,10 @@ const ReferralProgramForm: NextPageWithLayout<{
         // Redirect based on create vs edit
         if (id === "create") {
           // For create: redirect to info page
-          void router.push(`/admin/referrals/${programId}/info`);
+          await router.push(`/admin/referrals/${programId}/info`);
         } else {
           // For edit: go back to returnUrl or list
-          void router.push(
+          await router.push(
             getSafeUrl(
               returnUrl ? decodeURIComponent(returnUrl.toString()) : undefined,
               "/admin/referrals",
