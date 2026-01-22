@@ -865,14 +865,14 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
       request.OverridePending = overridePending;
 
-      await PerformActionSendForVerification(user, opportunityId, request, VerificationMethod.Manual, false);
+      await PerformActionSendForVerification(user, opportunityId, request, VerificationMethod.Manual, false, true);
     }
 
     public async Task PerformActionSendForVerificationManual(Guid opportunityId, MyOpportunityRequestVerify request)
     {
       var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 
-      await PerformActionSendForVerification(user, opportunityId, request, VerificationMethod.Manual, false);
+      await PerformActionSendForVerification(user, opportunityId, request, VerificationMethod.Manual, false, true);
     }
 
     public async Task PerformActionInstantVerification(Guid linkId)
@@ -901,7 +901,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
           await _linkService.LogUsage(link.Id);
 
           var request = new MyOpportunityRequestVerify { InstantOrImportedVerification = true, OverridePending = true };
-          await PerformActionSendForVerification(user, link.EntityId, request, null, true); //any verification method
+          await PerformActionSendForVerification(user, link.EntityId, request, null, true, true); //any verification method
 
           await FinalizeVerification(user, opportunity, VerificationStatus.Completed, true, null, "Auto-verification", true, true, true);
 
@@ -1127,7 +1127,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       if (string.IsNullOrEmpty(request.Comment)) request.Comment = "Auto-verification";
 
       using var stream = request.File.OpenReadStream();
-      using var reader = new StreamReader(stream);
+      using var baseReader = new StreamReader(stream);
+      using var reader = new CSVTrailingCommaTrimmingTextReader(baseReader);
 
       var errors = new List<CSVImportErrorRow>();
       using var csv = new CsvHelper.CsvReader(reader, CSVImportHelper.CreateConfig<MyOpportunityInfoCsvImport>(errors));
@@ -1183,7 +1184,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
           await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
           {
             using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
-            await ProcessImportVerification(request, dto, true); //probe only; notifications not send and events not raised
+            await ProcessImportVerification(request, dto, true); //probe only; notifications not send, events not raised and blobs no blobl storage mutation
             if (!string.IsNullOrEmpty(dto.VerificationEntry)) probedVerifications.Add(dto.VerificationEntry);
             //probe only, do not commit the scope; disposed as aborted
           });
@@ -1331,7 +1332,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       }
 
       var requestVerify = new MyOpportunityRequestVerify { InstantOrImportedVerification = true }; //with instant or imported verifications, pending notifications are not sent
-      await PerformActionSendForVerification(user, opportunity.Id, requestVerify, VerificationMethod.Automatic, true,
+      await PerformActionSendForVerification(user, opportunity.Id, requestVerify, VerificationMethod.Automatic, true, !probeOnly,
         $"Verification import not supported for opporunity '{opportunity.Title}'. The verification method must be set to '{VerificationMethod.Automatic}'"); //verification method automatic
 
       await FinalizeVerification(user, opportunity, VerificationStatus.Completed, true, item.DateCompleted?.ToDateTimeOffset().ToEndOfDay(), requestImport.Comment, !probeOnly, true, !probeOnly);
@@ -1660,6 +1661,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       MyOpportunityRequestVerify request,
       VerificationMethod? requiredVerificationMethod,
       bool enqueueOutcomes,
+      bool mutateBlobStorage,
       string? requiredVerificationMethodMessageOverride = null)
     {
       ArgumentNullException.ThrowIfNull(request, nameof(request));
@@ -1738,7 +1740,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       myOpportunity.StarRating = request.StarRating;
       myOpportunity.Feedback = request.Feedback;
 
-      await PerformActionSendForVerificationProcessVerificationTypes(request, opportunity, myOpportunity, isNew);
+      await PerformActionSendForVerificationProcessVerificationTypes(request, opportunity, myOpportunity, isNew, mutateBlobStorage);
 
       //used by notifications
       myOpportunity.Username = user.Username;
@@ -1822,11 +1824,13 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
     private async Task PerformActionSendForVerificationProcessVerificationTypes(MyOpportunityRequestVerify request,
       Opportunity.Models.Opportunity opportunity,
       Models.MyOpportunity myOpportunity,
-      bool isNew)
+      bool isNew,
+      bool mutateBlobStorage)
     {
       var itemsExisting = new List<MyOpportunityVerification>();
       var itemsExistingDeleted = new List<MyOpportunityVerification>();
       var itemsNewBlobs = new List<BlobObject>();
+
       try
       {
         await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
@@ -1837,16 +1841,19 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             myOpportunity = await _myOpportunityRepository.Create(myOpportunity);
           else
           {
-            //delete (db) and track existing (blobs to be deleted)
-            if (myOpportunity.Verifications != null)
+            if (mutateBlobStorage)
             {
-              itemsExisting.AddRange(myOpportunity.Verifications);
-              foreach (var item in itemsExisting)
+              //delete (db) and track existing (blobs to be deleted)
+              if (myOpportunity.Verifications != null)
               {
-                await _myOpportunityVerificationRepository.Delete(item);
+                itemsExisting.AddRange(myOpportunity.Verifications);
+                foreach (var item in itemsExisting)
+                {
+                  await _myOpportunityVerificationRepository.Delete(item);
 
-                if (!item.FileId.HasValue) continue;
-                item.File = await _blobService.Download(item.FileId.Value);
+                  if (!item.FileId.HasValue) continue;
+                  item.File = await _blobService.Download(item.FileId.Value);
+                }
               }
             }
 
@@ -1854,7 +1861,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
           }
 
           //new items
-          await PerformActionSendForVerificationProcessVerificationTypes(request, opportunity, myOpportunity, itemsNewBlobs);
+          if (mutateBlobStorage) await PerformActionSendForVerificationProcessVerificationTypes(request, opportunity, myOpportunity, itemsNewBlobs);
 
           //delete existing items in blob storage (deleted in db above)
           foreach (var item in itemsExisting)

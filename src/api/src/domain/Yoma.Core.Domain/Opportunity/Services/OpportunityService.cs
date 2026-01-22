@@ -1059,7 +1059,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
       var organization = _organizationService.GetById(organizationId, false, false, ensureOrganizationAuthorization);
 
       using var stream = file.OpenReadStream();
-      using var reader = new StreamReader(stream);
+      using var baseReader = new StreamReader(stream);
+      using var reader = new CSVTrailingCommaTrimmingTextReader(baseReader);
 
       var errors = new List<CSVImportErrorRow>();
       using var csv = new CsvHelper.CsvReader(reader, CSVImportHelper.CreateConfig<OpportunityInfoCsvImport>(errors));
@@ -1310,7 +1311,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       return result;
     }
 
-    public async Task<Models.Opportunity> Update(OpportunityRequestUpdate request, bool ensureOrganizationAuthorization)
+    public async Task<Models.Opportunity> Update(OpportunityRequestUpdate request, bool ensureOrganizationAuthorization, bool raiseEvent = true)
     {
       ArgumentNullException.ThrowIfNull(request, nameof(request));
 
@@ -1450,7 +1451,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
       });
       result.SetPublished();
 
-      await _mediator.Publish(new OpportunityEvent(EventType.Update, result));
+      if (raiseEvent)
+        await _mediator.Publish(new OpportunityEvent(EventType.Update, result));
 
       return result;
     }
@@ -1976,7 +1978,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       // Events raised by invoking method upon transaction completion
       var result = isNew
         ? await Create((OpportunityRequestCreate)request, false, false, !probeOnly)
-        : await Update((OpportunityRequestUpdate)request, false);
+        : await Update((OpportunityRequestUpdate)request, false, !probeOnly);
 
       return (result, isNew ? EventType.Create : EventType.Update);
     }

@@ -48,7 +48,7 @@ namespace Yoma.Core.Domain.Opportunity.Interfaces
 
     Task<Models.Opportunity> Create(OpportunityRequestCreate request, bool ensureOrganizationAuthorization, bool raiseEvent = true, bool sendNotification = true);
 
-    Task<Models.Opportunity> Update(OpportunityRequestUpdate request, bool ensureOrganizationAuthorization);
+    Task<Models.Opportunity> Update(OpportunityRequestUpdate request, bool ensureOrganizationAuthorization, bool raiseEvent = true);
 
     Task<OpportunityAllocateRewardResponse> AllocateRewards(Guid id, bool ensureOrganizationAuthorization);
 
