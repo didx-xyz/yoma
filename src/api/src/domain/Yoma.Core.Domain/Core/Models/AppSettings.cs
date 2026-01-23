@@ -150,6 +150,11 @@ namespace Yoma.Core.Domain.Core.Models
 
     public int CSVImportMaxProbeErrorCount { get; set; }
 
+    /// <summary>
+    /// TransactionScope timeout in seconds (max 600 unless .NET runtime container config System.Transactions.MaximumTimeout is increased)
+    /// </summary>
+    public int CSVImportTransactionTimeoutSeconds { get; set; }
+
     public int IdempotencyKeyExpirationInSeconds { get; set; }
 
     public int DistributedLockRetryDelayInMilliseconds { get; set; }

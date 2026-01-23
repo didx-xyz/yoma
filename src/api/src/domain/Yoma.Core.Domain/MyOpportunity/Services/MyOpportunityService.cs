@@ -1214,7 +1214,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         {
           _delayedExecutionService.Reset();
 
-          using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
+          using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew,
+            TimeSpan.FromSeconds(_appSettings.CSVImportTransactionTimeoutSeconds));
 
           foreach (var (dto, row) in parsed)
             await ProcessImportVerification(request, dto, false);

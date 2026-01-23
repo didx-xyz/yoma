@@ -1120,7 +1120,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
           await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
           {
-            using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
+            using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew,
+              TimeSpan.FromSeconds(_appSettings.CSVImportTransactionTimeoutSeconds));
             await ProcessImportAndUpsertOpportunity(organizationId, dto, true); //probe only; notifications not send
             probedTitles.Add(dto.Title); //required; validated during processing
             probedExternalIds.Add(dto.ExternalId); //required; validated during processing
