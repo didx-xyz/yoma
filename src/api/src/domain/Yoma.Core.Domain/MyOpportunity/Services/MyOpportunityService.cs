@@ -1178,7 +1178,13 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       // PASS B — commit: single atomic transaction for the whole file
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
-        using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+        using var scope = new TransactionScope(TransactionScopeOption.RequiresNew,
+          new TransactionOptions
+          {
+            IsolationLevel = IsolationLevel.ReadCommitted, // without options the default is ReadCommitted, but with options and no IsolationLevel specified it defaults to Serializable
+            Timeout = TimeSpan.FromSeconds(_appSettings.CSVImportTransactionTimeoutSeconds)
+          },
+          TransactionScopeAsyncFlowOption.Enabled);
 
         foreach (var (dto, row) in parsed)
           await ProcessImportVerification(request, dto, false);
