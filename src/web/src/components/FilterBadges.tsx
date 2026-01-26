@@ -34,51 +34,49 @@ const FilterBadges: React.FC<{
   );
 
   return (
-    <div className="h-6">
-      <CustomSlider>
-        {filteredKeys.map(([key, value]) => {
-          const renderBadge = (item: string) => {
-            const lookup = resolveValue(key, item);
-            return (
-              <button
-                type="button"
-                key={`searchFilter_filter_badge_${key}_${item}`}
-                className="bg-green-light text-green flex h-6 max-w-[200px] cursor-pointer items-center rounded-md border-none p-2 select-none"
-                onClick={() => removeFilter(key, item)}
-              >
-                <p className="mr-2 truncate text-center text-xs font-semibold">
-                  {lookup ?? ""}
-                </p>
+    <CustomSlider sliderClassName="justify-center">
+      {filteredKeys.map(([key, value]) => {
+        const renderBadge = (item: string) => {
+          const lookup = resolveValue(key, item);
+          return (
+            <button
+              type="button"
+              key={`searchFilter_filter_badge_${key}_${item}`}
+              className="bg-green-light text-green flex h-6 max-w-[200px] cursor-pointer items-center rounded-md border-none p-2 select-none"
+              onClick={() => removeFilter(key, item)}
+            >
+              <p className="mr-2 truncate text-center text-xs font-semibold">
+                {lookup ?? ""}
+              </p>
 
-                <IoIosClose className="h-6 w-6 shrink-0" />
-              </button>
-            );
-          };
+              <IoIosClose className="h-6 w-6 shrink-0" />
+            </button>
+          );
+        };
 
-          if (Array.isArray(value) && value.length > 0) {
-            return value.map((item: string) => renderBadge(item));
-          } else if (resolveValue(key, value as string) ?? (value as string)) {
-            return renderBadge(value as string);
-          }
-          return null;
-        })}
+        if (Array.isArray(value) && value.length > 0) {
+          return value.map((item: string) => renderBadge(item));
+        } else if (resolveValue(key, value as string) ?? (value as string)) {
+          return renderBadge(value as string);
+        }
+        return null;
+      })}
 
-        {/* clear all button */}
-        {filteredKeys.length > 0 && (
-          <button
-            type="button"
-            className="bg-gray text-gray-dark flex h-6 max-w-[200px] cursor-pointer items-center justify-between rounded-md border-none p-2 select-none"
-            onClick={() => onSubmit({})}
-          >
-            <p className="mr-2 truncate text-center text-xs font-semibold">
-              Clear All
-            </p>
+      {/* clear all button */}
+      {filteredKeys.length > 0 && (
+        <button
+          type="button"
+          className="bg-gray text-gray-dark flex h-6 max-w-[200px] cursor-pointer items-center justify-between rounded-md border-none p-2 select-none"
+          onClick={() => onSubmit({})}
+        >
+          <p className="mr-2 truncate text-center text-xs font-semibold">
+            Clear All
+          </p>
 
-            <IoIosClose className="h-6 w-6" />
-          </button>
-        )}
-      </CustomSlider>
-    </div>
+          <IoIosClose className="h-6 w-6" />
+        </button>
+      )}
+    </CustomSlider>
   );
 };
 

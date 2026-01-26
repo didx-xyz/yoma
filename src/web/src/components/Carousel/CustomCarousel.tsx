@@ -69,6 +69,14 @@ const CustomCarousel: React.FC<{
     }
   }, [screenWidth]);
 
+  useEffect(() => {
+    setSlides(data);
+    setCurrentSlide(0);
+    lastSlideRef.current = -1;
+    hasMoreToLoadRef.current = true;
+    loadingMoreRef.current = false;
+  }, [data]);
+
   const onSlide = useCallback(
     (props: OnSlideProps) => {
       if (lastSlideRef.current === props.currentSlide) return;

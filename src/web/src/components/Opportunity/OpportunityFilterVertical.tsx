@@ -16,6 +16,7 @@ import {
 } from "~/api/models/opportunity";
 import type { OrganizationInfo } from "~/api/models/organisation";
 import SelectButtons from "../Common/SelectButtons";
+import FormToggle from "~/components/Common/FormToggle";
 import { useAtomValue } from "jotai";
 import { currentLanguageAtom } from "~/lib/store";
 import type { UserProfile } from "~/api/models/user";
@@ -29,7 +30,12 @@ export const OpportunityFilterVertical: React.FC<{
   lookups_organisations: OrganizationInfo[];
   lookups_timeIntervals: TimeInterval[];
   lookups_publishedStates: SelectOption[];
-  onSubmit?: (fieldValues: OpportunitySearchFilter) => void;
+  initialMyCountryOnly?: boolean;
+  onApplyMyCountryOnly?: (checked: boolean) => void;
+  onSubmit?: (
+    fieldValues: OpportunitySearchFilter,
+    myCountryOnlyDraft?: boolean,
+  ) => void;
   onCancel?: () => void;
   clearButtonText?: string;
   submitButtonText?: string;
@@ -44,6 +50,8 @@ export const OpportunityFilterVertical: React.FC<{
   lookups_organisations,
   lookups_timeIntervals,
   lookups_publishedStates,
+  initialMyCountryOnly,
+  onApplyMyCountryOnly,
   onSubmit,
   onCancel,
   submitButtonText = "Submit",
@@ -52,6 +60,20 @@ export const OpportunityFilterVertical: React.FC<{
   userProfile,
 }) => {
   const currentLanguage = useAtomValue(currentLanguageAtom);
+
+  const [myCountryOnlyDraft, setMyCountryOnlyDraft] = useState<boolean>(
+    initialMyCountryOnly ?? false,
+  );
+  const [countriesBeforeMyCountryOnly, setCountriesBeforeMyCountryOnly] =
+    useState<string[] | null>(null);
+
+  const userCountryName = (() => {
+    if (!userProfile?.countryId) return null;
+    const lookup = lookups_countries.find(
+      (country) => country.id === userProfile.countryId,
+    );
+    return lookup?.name ?? null;
+  })();
 
   const schema = zod.object({
     types: zod.array(zod.string()).optional().nullable(),
@@ -98,6 +120,7 @@ export const OpportunityFilterVertical: React.FC<{
   const { handleSubmit, formState, watch, setValue } = form;
   const watchIntervalId = watch("commitmentInterval.interval.id");
   const watchIntervalCount = watch("commitmentInterval.interval.count");
+  const watchCountries = watch("countries");
 
   const [timeIntervalMax, setTimeIntervalMax] = useState(100);
 
@@ -137,9 +160,21 @@ export const OpportunityFilterVertical: React.FC<{
   // form submission handler
   const onSubmitHandler = useCallback(
     (data: FieldValues) => {
-      if (onSubmit) onSubmit(data as OpportunitySearchFilter);
+      const payload = data as OpportunitySearchFilter;
+
+      // Apply country scope preference (handled by parent routing).
+      onApplyMyCountryOnly?.(myCountryOnlyDraft);
+
+      // Mutually exclusive behavior:
+      // - If "My country only" is ON, do not emit explicit countries.
+      // - If explicit countries are selected, "My country only" should be OFF.
+      if (myCountryOnlyDraft) {
+        payload.countries = null;
+      }
+
+      if (onSubmit) onSubmit(payload, myCountryOnlyDraft);
     },
-    [onSubmit],
+    [myCountryOnlyDraft, onApplyMyCountryOnly, onSubmit],
   );
 
   // set default values
@@ -154,21 +189,9 @@ export const OpportunityFilterVertical: React.FC<{
       setValue("commitmentInterval.interval.id", lookup?.name ?? "Day");
     } else setValue("commitmentInterval.interval.id", "Day");
 
-    // default to user's country
-    let countries = searchFilter?.countries;
-    if ((countries?.length ?? 0) == 0 && userProfile) {
-      if (userProfile.countryId) {
-        const countryLookup = lookups_countries.find(
-          (country) => country.id === userProfile.countryId,
-        );
-        if (countryLookup) {
-          countries = [countryLookup.name];
-        }
-        setValue("countries", countries);
-      }
-    } else {
-      setValue("countries", countries);
-    }
+    // countries: do NOT default to user's country here.
+    // The user can either use "My country only" scope OR select explicit countries.
+    setValue("countries", searchFilter?.countries ?? null);
 
     // default to current language
     let languages = searchFilter?.languages;
@@ -192,6 +215,18 @@ export const OpportunityFilterVertical: React.FC<{
     lookups_languages,
     lookups_timeIntervals,
   ]);
+
+  // When toggling "My country only" ON, clear explicit country selections.
+  // When toggling OFF, restore the last explicit selection (if any).
+  useEffect(() => {
+    if (myCountryOnlyDraft) {
+      const current = (watchCountries ?? null) as string[] | null;
+      if ((current?.length ?? 0) > 0) {
+        setCountriesBeforeMyCountryOnly(current);
+        setValue("countries", null);
+      }
+    }
+  }, [myCountryOnlyDraft, setValue, watchCountries]);
 
   return (
     <>
@@ -394,24 +429,90 @@ export const OpportunityFilterVertical: React.FC<{
               <span className="label-text font-semibold">Country</span>
             </label>
 
+            {userProfile && (
+              <div className="mb-2 flex flex-col gap-1">
+                <FormToggle
+                  id="opportunities_filter_my_country_only"
+                  label={
+                    userCountryName
+                      ? `My country only (${userCountryName})`
+                      : "My country only"
+                  }
+                  className="gap-2"
+                  labelClassName="text-xs font-semibold"
+                  toggleClassName="toggle-sm"
+                  inputProps={{
+                    checked: myCountryOnlyDraft,
+                    disabled: !userProfile?.countryId || !userCountryName,
+                    onChange: (e) => {
+                      const checked = e.target.checked;
+
+                      if (checked) {
+                        const current = (watchCountries ?? null) as
+                          | string[]
+                          | null;
+                        if ((current?.length ?? 0) > 0) {
+                          setCountriesBeforeMyCountryOnly(current);
+                        }
+                        setValue("countries", null);
+                      } else {
+                        if ((watchCountries?.length ?? 0) === 0) {
+                          if ((countriesBeforeMyCountryOnly?.length ?? 0) > 0)
+                            setValue("countries", countriesBeforeMyCountryOnly);
+                        }
+                      }
+
+                      setMyCountryOnlyDraft(checked);
+                    },
+                  }}
+                />
+
+                {!userProfile?.countryId && (
+                  <div className="text-gray-dark text-[10px] leading-tight">
+                    Add your country in your profile to enable this.
+                  </div>
+                )}
+
+                {myCountryOnlyDraft && (
+                  <div className="text-gray-dark text-[10px] leading-tight">
+                    Turn this off to select specific countries.
+                  </div>
+                )}
+              </div>
+            )}
+
             <Controller
               name="countries"
               control={form.control}
               render={({ field: { onChange, value } }) => (
-                <SelectButtons
-                  id="selectButtons_countries"
-                  isMulti={true}
-                  maxRows={8}
-                  buttons={lookups_countries.map((x) => ({
-                    id: x.id,
-                    title: x.name,
-                    selected: value?.includes(x.name) ?? false,
-                  }))}
-                  onChange={(val) => {
-                    const selectedButtons = val.filter((btn) => btn.selected);
-                    onChange(selectedButtons.map((c) => c.title));
-                  }}
-                />
+                <div
+                  className={
+                    myCountryOnlyDraft ? "pointer-events-none opacity-50" : ""
+                  }
+                >
+                  <SelectButtons
+                    id="selectButtons_countries"
+                    isMulti={true}
+                    maxRows={8}
+                    buttons={lookups_countries.map((x) => ({
+                      id: x.id,
+                      title: x.name,
+                      selected: value?.includes(x.name) ?? false,
+                    }))}
+                    onChange={(val) => {
+                      const selectedButtons = val.filter((btn) => btn.selected);
+                      const selectedCountries = selectedButtons.map(
+                        (c) => c.title,
+                      );
+
+                      if (selectedCountries.length > 0 && myCountryOnlyDraft) {
+                        setMyCountryOnlyDraft(false);
+                      }
+
+                      onChange(selectedCountries);
+                    }}
+                  />
+                </div>
               )}
             />
 

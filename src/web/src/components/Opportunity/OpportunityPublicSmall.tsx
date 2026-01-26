@@ -144,6 +144,12 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({
                 )}
             </>
           )}
+
+          <div className="text-gray-dark absolute right-2 bottom-2 text-xs">
+            {data.countries?.length
+              ? data.countries.map((country) => country.name).join(", ")
+              : "Global"}
+          </div>
         </div>
       </>
     );
