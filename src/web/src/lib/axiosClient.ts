@@ -13,6 +13,27 @@ import { addRumGlobalContext, trackError as ddTrackError } from "./datadog";
 
 let apiBaseUrl = "";
 
+// Most API calls intentionally use a short client-side timeout (see `SLOW_NETWORK_ABORT_TIMEOUT`)
+// to fail fast and show a “slow network” message.
+//
+// CSV uploads/imports are the exception: they legitimately take longer (file upload + server-side
+// processing), and infrastructure/proxies are configured to allow long-running requests.
+// To avoid aborting these requests at ~45s, we override Axios' per-request `timeout` only for the
+// CSV endpoints below.
+const CSV_UPLOAD_TIMEOUT = 600_000; // 10 minutes
+
+const isCsvUploadRequest = (config: any): boolean => {
+  const url = String(config?.url ?? "");
+  const method = String(config?.method ?? "").toLowerCase();
+
+  if (method !== "post") return false;
+
+  return (
+    url.includes("/myopportunity/action/verify/csv") ||
+    (url.includes("/opportunity/import/") && url.includes("/csv"))
+  );
+};
+
 // state for slow network messages
 let slowNetworkMessageDismissed = false;
 let slowNetworkAbortDismissed = false;
@@ -96,13 +117,19 @@ const ApiClient = async () => {
 
   //* Intercept requests/responses for NProgress
   instance.interceptors.request.use((config) => {
+    const isCsvUpload = isCsvUploadRequest(config);
+    if (isCsvUpload) {
+      // Override the default short timeout used for “slow network” detection.
+      config.timeout = CSV_UPLOAD_TIMEOUT;
+    }
+
     NProgress.start();
 
     // 📊 ANALYTICS: Add request start time for performance tracking
     (config as any).requestStartTime = Date.now();
 
     // Start a timeout that will show a "slow network" message after timeout
-    if (!slowNetworkMessageDismissed) {
+    if (!slowNetworkMessageDismissed && !isCsvUpload) {
       const timeoutId = setTimeout(() => {
         // 📊 ANALYTICS: Track slow network warning
         analytics.trackEvent("api_slow_network_warning", {
@@ -291,11 +318,21 @@ const ApiClient = async () => {
         error.code === "ECONNABORTED" &&
         slowNetworkAbortDismissed === false
       ) {
+        const requestTimeout =
+          error.config?.timeout ?? SLOW_NETWORK_ABORT_TIMEOUT;
+
+        console.debug("[ApiClient] Request timed out", {
+          url: error.config?.url,
+          method: error.config?.method,
+          timeout: requestTimeout,
+          isCsvUpload: isCsvUploadRequest(error.config),
+        });
+
         // 📊 ANALYTICS: Track network timeout with user notification
         analytics.trackEvent("api_network_timeout_user_notified", {
           url: error.config?.url || "unknown",
           method: error.config?.method?.toUpperCase() || "unknown",
-          timeout: SLOW_NETWORK_ABORT_TIMEOUT,
+          timeout: requestTimeout,
         });
 
         toast.error("Network is slow. Please check your connection.", {
