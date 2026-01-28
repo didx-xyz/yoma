@@ -130,7 +130,7 @@ const CustomSlider = ({
 
   return (
     <div
-      className={`relative flex min-h-[40px] items-center overflow-x-hidden ${className}`}
+      className={`relative flex min-h-[40px] w-full items-center overflow-x-hidden ${className}`}
     >
       {showPrevButton && (
         <>
@@ -148,7 +148,7 @@ const CustomSlider = ({
       )}
       <div
         ref={sliderRef}
-        className={`flex gap-4 overflow-x-auto overflow-y-hidden scroll-smooth whitespace-nowrap select-none ${styles.noscrollbar} ${sliderClassName}`}
+        className={`flex min-w-0 flex-1 gap-4 overflow-x-auto overflow-y-hidden scroll-smooth whitespace-nowrap select-none ${styles.noscrollbar} ${sliderClassName}`}
         onMouseDown={handleMouseDown}
         onMouseLeave={handleMouseLeave}
         onMouseUp={handleMouseUp}

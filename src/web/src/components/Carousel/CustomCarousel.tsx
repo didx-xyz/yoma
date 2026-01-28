@@ -44,6 +44,12 @@ const CustomCarousel: React.FC<{
   // use the provided totalAll or default to initial data length
   const effectiveTotalAll = totalAll ?? data.length;
 
+  const slideMargin = useMemo(() => {
+    if (screenWidth >= 1440) return "12px";
+    if (screenWidth >= 1024) return "8px";
+    return "0px";
+  }, [screenWidth]);
+
   const lastSlideRef = useRef(-1);
   const hasMoreToLoadRef = useRef(true);
   const loadingMoreRef = useRef(false);
@@ -68,6 +74,14 @@ const CustomCarousel: React.FC<{
       setVisibleSlides(4);
     }
   }, [screenWidth]);
+
+  useEffect(() => {
+    setSlides(data);
+    setCurrentSlide(0);
+    lastSlideRef.current = -1;
+    hasMoreToLoadRef.current = true;
+    loadingMoreRef.current = false;
+  }, [data]);
 
   const onSlide = useCallback(
     (props: OnSlideProps) => {
@@ -111,21 +125,25 @@ const CustomCarousel: React.FC<{
       id={`${id}-carousel`}
       totalSlides={effectiveTotalAll}
       visibleSlides={visibleSlides}
+      slideMargin={slideMargin}
       onSlide={onSlide}
       currentSlide={currentSlide}
       step={visibleSlides}
     >
-      <div className="mb-2 flex flex-col gap-6">
-        <div className="flex max-w-full flex-row px-2 md:max-w-7xl">
+      <div className="mb-2 flex flex-col gap-4">
+        <div className="px-2x flex max-w-full flex-row md:max-w-7xl">
           <div className="flex min-w-0 grow flex-col">
-            <div className="max-w-full overflow-hidden text-lg font-semibold text-ellipsis whitespace-nowrap text-black md:text-xl">
+            <div className="font-family-nunito max-w-full overflow-hidden text-base font-semibold text-ellipsis whitespace-nowrap text-black md:text-lg">
               {title}
             </div>
-            <div className="text-gray-dark">{description}</div>
+            <div className="text-gray-dark text-sm md:text-base">
+              {description}
+            </div>
           </div>
 
           <div className="flex items-center gap-4">
             <div className="flex items-center">
+              {/* DESKTOP */}
               <div className="hidden w-full gap-4 md:flex">
                 <SelectedSnapDisplay
                   selectedSnap={selectedSnap}
@@ -145,30 +163,28 @@ const CustomCarousel: React.FC<{
             )}
           </div>
         </div>
-      </div>
 
-      <Slider>
-        {slides.map((item, index) => {
-          return (
-            <Slide
-              key={`slide_${id}_${index}`}
-              className="flex justify-center md:justify-start"
-              id={`${id}_${item.id}`}
-            >
-              {renderSlide(item, index)}
-            </Slide>
-          );
-        })}
-      </Slider>
+        <Slider>
+          {slides.map((item, index) => {
+            return (
+              <Slide
+                key={`slide_${id}_${index}`}
+                className="flex justify-center md:justify-start"
+                id={`${id}_${item.id}`}
+              >
+                {renderSlide(item, index)}
+              </Slide>
+            );
+          })}
+        </Slider>
 
-      <div className="my-2 mt-2 flex w-full place-content-start md:mt-1 md:mb-10">
-        <div className="mx-auto flex w-full justify-center gap-4 md:mx-0 md:mr-auto md:justify-start md:gap-6">
-          {screenWidth < 768 && (
-            <SelectedSnapDisplay
-              selectedSnap={selectedSnap}
-              snapCount={effectiveTotalAll}
-            />
-          )}
+        {/* MOBILE */}
+        <div className="my-2 flex w-full flex-col items-center justify-center gap-2 text-center md:hidden">
+          {renderButtons()}
+          <SelectedSnapDisplay
+            selectedSnap={selectedSnap}
+            snapCount={effectiveTotalAll}
+          />
         </div>
       </div>
     </Carousel>
