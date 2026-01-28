@@ -247,8 +247,8 @@ const RefereeDashboard: NextPageWithLayout<{
                 {showPOPAction && (
                   <div id="next-action-pop" className={panelClassName}>
                     <div className="flex items-start gap-3 md:gap-4">
-                      <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md bg-blue-50 md:h-12 md:w-12">
-                        <IoArrowForward className="h-5 w-5 text-blue-600 md:h-6 md:w-6" />
+                      <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md bg-green-50 md:h-12 md:w-12">
+                        <IoArrowForward className="h-5 w-5 text-green-600 md:h-6 md:w-6" />
                       </div>
 
                       <div className="min-w-0">
@@ -280,7 +280,7 @@ const RefereeDashboard: NextPageWithLayout<{
                               href={`/user/profile?returnUrl=${encodeURIComponent(
                                 getSafeUrl(router.asPath, "/yoid"),
                               )}`}
-                              className="btn btn-xs gap-2 border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100"
+                              className="btn btn-xs gap-2 border-green-300 bg-green-50 text-green-700 hover:bg-green-100"
                             >
                               <IoArrowForward className="h-4 w-4" />
                               Go to Profile
@@ -306,7 +306,7 @@ const RefereeDashboard: NextPageWithLayout<{
                                   getSafeUrl(router.asPath, "/yoid"),
                                 )
                               }
-                              className="btn btn-xs min-w-0 gap-2 border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100"
+                              className="btn btn-xs min-w-0 gap-2 border-green-300 bg-green-50 text-green-700 hover:bg-green-100"
                             >
                               <IoArrowForward className="h-4 w-4 flex-shrink-0" />
                               <span className="truncate">
@@ -335,8 +335,8 @@ const RefereeDashboard: NextPageWithLayout<{
                 {nextAction && (
                   <div id="next-action" className={panelClassName}>
                     <div className="flex items-center gap-3 md:gap-4">
-                      <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md bg-blue-50 md:h-12 md:w-12">
-                        <IoArrowForward className="h-5 w-5 text-blue-600 md:h-6 md:w-6" />
+                      <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md bg-green-50 md:h-12 md:w-12">
+                        <IoArrowForward className="h-5 w-5 text-green-600 md:h-6 md:w-6" />
                       </div>
 
                       <div className="min-w-0">
@@ -357,7 +357,7 @@ const RefereeDashboard: NextPageWithLayout<{
                     </div>
 
                     <div className="mt-4 space-y-3">
-                      <div className="bg-base-100 rounded-lg border border-blue-200 p-3">
+                      <div className="bg-base-100 rounded-lg border border-green-200 p-3">
                         <PathwayTasksList
                           tasks={nextAction.tasks.map((task, index) => ({
                             id: task.id,

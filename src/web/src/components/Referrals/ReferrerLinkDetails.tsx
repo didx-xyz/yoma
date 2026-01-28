@@ -109,14 +109,14 @@ export const ReferrerLinkDetails: React.FC<LinkDetailsProps> = ({
                   type="text"
                   value={displayLink.shortURL}
                   readOnly
-                  className="w-full truncate rounded border border-dashed border-blue-300 bg-white px-2 py-1.5 font-mono text-[11px] font-semibold text-gray-900 md:max-w-[320px]"
+                  className="border-green w-full truncate rounded border border-dashed bg-white px-2 py-1.5 font-mono text-[11px] font-semibold text-gray-900 md:max-w-[320px]"
                   onClick={(e) => e.currentTarget.select()}
                 />
                 {showCopyButtonProp && (
                   <button
                     type="button"
                     onClick={() => handleCopyLink(displayLink.shortURL)}
-                    className="btn btn-xs gap-1 border-blue-600 bg-blue-600 text-white transition-all hover:scale-105 hover:bg-blue-700"
+                    className="btn btn-xs bg-green gap-1 text-white transition-all hover:scale-105 hover:brightness-110"
                     title="Copy short link"
                   >
                     <IoMdCopy className="h-3 w-3" />
@@ -160,7 +160,7 @@ export const ReferrerLinkDetails: React.FC<LinkDetailsProps> = ({
                           displayLink.name,
                         )
                       }
-                      className="btn btn-xs gap-1 border-blue-600 bg-blue-600 text-white transition-all hover:scale-105 hover:bg-blue-700"
+                      className="btn btn-xs bg-green gap-1 text-white transition-all hover:scale-105 hover:brightness-110"
                       title="Download QR code"
                     >
                       <IoMdDownload className="h-3 w-3" />
@@ -173,7 +173,7 @@ export const ReferrerLinkDetails: React.FC<LinkDetailsProps> = ({
                   type="button"
                   onClick={handleToggleQR}
                   disabled={loadingQR}
-                  className="btn btn-xs gap-1 border-blue-600 bg-blue-600 text-white transition-all hover:scale-105 hover:bg-blue-700 disabled:!bg-blue-600"
+                  className="btn btn-xs bg-green gap-1 text-white transition-all hover:scale-105 hover:brightness-110"
                 >
                   {loadingQR ? (
                     <>

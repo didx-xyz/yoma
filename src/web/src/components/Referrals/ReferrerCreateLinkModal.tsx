@@ -350,21 +350,25 @@ export const ReferrerCreateLinkModal: React.FC<CreateLinkModalProps> = ({
               />
 
               {programs.length > 0 && (
-                <ReferrerProgramsList
-                  onProgramClick={handleProgramSelect}
-                  onCreateLink={handleProgramSelect}
-                  initialPageSize={5}
-                  showHeader={false}
-                  showDescription={false}
-                  context="select"
-                />
+                <>
+                  <p className="mb-4 text-sm text-gray-600">
+                    Please choose from our available programs below to create
+                    your referral link.
+                  </p>
+                  <ReferrerProgramsList
+                    onProgramClick={handleProgramSelect}
+                    onCreateLink={handleProgramSelect}
+                    initialPageSize={5}
+                    context="select"
+                  />
+                </>
               )}
 
               {/* Action Buttons */}
               <div className="mt-10 flex gap-3">
                 <button
                   type="button"
-                  className="btn btn-outline flex-1 border-blue-600 text-blue-600 normal-case hover:bg-blue-600 hover:text-white"
+                  className="btn btn-outline hover:bg-green border-green text-green flex-1 normal-case hover:text-white"
                   onClick={onClose}
                   disabled={isLoading}
                 >
@@ -417,7 +421,7 @@ export const ReferrerCreateLinkModal: React.FC<CreateLinkModalProps> = ({
                 {!selectedProgram && !editLink ? (
                   <button
                     type="button"
-                    className="btn btn-outline flex-1 border-blue-600 text-blue-600 normal-case hover:bg-blue-600 hover:text-white"
+                    className="btn btn-outline hover:bg-green border-green text-green flex-1 normal-case hover:text-white"
                     onClick={() => setStep("select")}
                     disabled={isLoading}
                   >
@@ -426,7 +430,7 @@ export const ReferrerCreateLinkModal: React.FC<CreateLinkModalProps> = ({
                 ) : (
                   <button
                     type="button"
-                    className="btn btn-outline flex-1 border-blue-600 text-blue-600 normal-case hover:bg-blue-600 hover:text-white"
+                    className="btn btn-outline hover:bg-green border-green text-green flex-1 normal-case hover:text-white"
                     onClick={onClose}
                     disabled={isLoading}
                   >
@@ -437,7 +441,7 @@ export const ReferrerCreateLinkModal: React.FC<CreateLinkModalProps> = ({
                 {isEditMode ? (
                   <button
                     type="submit"
-                    className="btn flex-1 border-blue-600 bg-blue-600 text-white normal-case hover:bg-blue-700 disabled:brightness-90"
+                    className="btn bg-green border-green flex-1 text-white normal-case hover:brightness-110 disabled:brightness-90"
                     disabled={isLoading}
                   >
                     {isLoading ? (
@@ -449,7 +453,7 @@ export const ReferrerCreateLinkModal: React.FC<CreateLinkModalProps> = ({
                 ) : (
                   <button
                     type="button"
-                    className="btn flex-1 border-blue-600 bg-blue-600 text-white normal-case hover:bg-blue-700 disabled:brightness-90"
+                    className="btn bg-green border-green flex-1 text-white normal-case hover:brightness-110 disabled:brightness-90"
                     disabled={isLoading}
                     onClick={handleCreateClick}
                   >

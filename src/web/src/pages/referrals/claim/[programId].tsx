@@ -488,7 +488,7 @@ const ReferralClaimPage: NextPageWithLayout<{
               type="button"
               onClick={handleClaim}
               disabled={claiming}
-              className="btn btn-sm gap-2 border-orange-300 bg-orange-50 text-orange-700 hover:bg-orange-100 disabled:opacity-50"
+              className="btn btn-sm bg-orange gap-2 text-white hover:brightness-110 disabled:opacity-50"
             >
               {claiming && (
                 <LoadingInline

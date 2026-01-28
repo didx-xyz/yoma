@@ -291,21 +291,24 @@ const ReferralsDashboard: NextPageWithLayout<{
                       <div className="font-family-nunito text-sm font-semibold text-black md:text-base">
                         Your Links
                       </div>
-                      {!!programsData?.totalCount && (
-                        <button
-                          onClick={handleCreateLink}
-                          className="btn btn-xs gap-2 border-blue-600 bg-gradient-to-r from-blue-600 to-blue-500 text-white hover:bg-blue-700"
-                        >
-                          <FaPlus className="h-3 w-3" />
-                          Create Link
-                        </button>
-                      )}
                     </div>
 
                     <ReferrerLinksList
                       programs={programsData?.items || []}
                       initialPageSize={3}
                     />
+
+                    {!!programsData?.totalCount && (
+                      <div className="flex justify-center pt-2">
+                        <button
+                          onClick={handleCreateLink}
+                          className="btn btn-sm border-orange gap-2 text-orange-700 hover:bg-orange-100 disabled:opacity-50"
+                        >
+                          <FaPlus className="h-3 w-3" />
+                          Create Another Link
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -321,8 +324,6 @@ const ReferralsDashboard: NextPageWithLayout<{
                   onProgramClick={handleCreateLinkForProgram}
                   onCreateLink={handleCreateLinkForProgram}
                   initialPageSize={4}
-                  showHeader={false} //TODO:
-                  showDescription={true}
                   context="list"
                 />
               </div>

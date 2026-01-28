@@ -6,11 +6,12 @@ import { OpportunityCategoryHorizontalCard } from "./OpportunityCategoryHorizont
 const OpportunityCategoriesHorizontalFilter: React.FC<{
   lookups_categories: OpportunityCategory[];
   selected_categories: string[] | null | undefined;
+  className?: string;
   onClick?: (item: OpportunityCategory) => void;
-}> = ({ lookups_categories, selected_categories, onClick }) => {
+}> = ({ lookups_categories, selected_categories, className, onClick }) => {
   return (
     <div className="relative ml-2 flex justify-center">
-      <CustomSlider sliderClassName="pb-2">
+      <CustomSlider sliderClassName="pb-2" className={className}>
         {lookups_categories?.map((category) => (
           <OpportunityCategoryHorizontalCard
             key={category.id}
