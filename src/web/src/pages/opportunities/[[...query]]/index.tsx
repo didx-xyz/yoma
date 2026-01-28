@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAtomValue } from "jotai";
 import type { GetStaticPaths, GetStaticProps } from "next";
+import { useSession } from "next-auth/react";
 import Head from "next/head";
 import { useRouter } from "next/router";
 import {
@@ -35,7 +36,6 @@ import {
 } from "~/api/services/opportunities";
 import CustomCarousel from "~/components/Carousel/CustomCarousel";
 import CustomModal from "~/components/Common/CustomModal";
-import FormToggle from "~/components/Common/FormToggle";
 import FilterBadges from "~/components/FilterBadges";
 import MainLayout from "~/components/Layout/Main";
 import NoRowsMessage from "~/components/NoRowsMessage";
@@ -48,19 +48,18 @@ import { OpportunityPublicSmallComponent } from "~/components/Opportunity/Opport
 import { OppSearchInputLarge } from "~/components/Opportunity/OppSearchInputLarge";
 import { PageBackground } from "~/components/PageBackground";
 import { PaginationButtons } from "~/components/PaginationButtons";
+import { LoadingSkeleton } from "~/components/Status/LoadingSkeleton";
 import {
+  COUNTRY_CODE_WW,
   OPPORTUNITY_TYPES_EVENT,
   OPPORTUNITY_TYPES_LEARNING,
   OPPORTUNITY_TYPES_OTHER,
   OPPORTUNITY_TYPES_TASK,
-  COUNTRY_CODE_WW,
   PAGE_SIZE,
   PAGE_SIZE_MINIMUM,
 } from "~/lib/constants";
 import { currentLanguageAtom, userProfileAtom } from "~/lib/store";
 import { type NextPageWithLayout } from "~/pages/_app";
-import { useSession } from "next-auth/react";
-import { LoadingSkeleton } from "~/components/Status/LoadingSkeleton";
 
 // 👇 SSG
 // This page is statically generated at build time on server-side

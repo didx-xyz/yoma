@@ -51,6 +51,49 @@ const FilterBadges: React.FC<{
     [searchFilter, onSubmit],
   );
 
+  // Slider-specific hooks (always called, only used when variant === "slider")
+  const handleScroll = useCallback(() => {
+    const tolerance = 2;
+    const el = sliderRef.current;
+    if (!el) return;
+
+    const { scrollLeft, scrollWidth, clientWidth } = el;
+    setShowPrevButton(scrollLeft > tolerance);
+    setShowNextButton(
+      scrollWidth > clientWidth &&
+        scrollLeft < scrollWidth - clientWidth - tolerance,
+    );
+  }, []);
+
+  useEffect(() => {
+    if (variant !== "slider") return;
+    handleScroll();
+  }, [variant, handleScroll, filteredKeys.length]);
+
+  useEffect(() => {
+    if (variant !== "slider") return;
+    const el = sliderRef.current;
+    if (!el) return;
+
+    el.addEventListener("scroll", handleScroll);
+    window.addEventListener("resize", handleScroll);
+
+    const observer = new MutationObserver(() => handleScroll());
+    observer.observe(el, { childList: true, subtree: true });
+
+    return () => {
+      el.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("resize", handleScroll);
+      observer.disconnect();
+    };
+  }, [variant, handleScroll]);
+
+  const scrollByAmount = useCallback((delta: number) => {
+    const el = sliderRef.current;
+    if (!el) return;
+    el.scrollBy({ left: delta, behavior: "smooth" });
+  }, []);
+
   const content = (
     <>
       {filteredKeys.map(([key, value]) => {
@@ -63,7 +106,7 @@ const FilterBadges: React.FC<{
               className="bg-green-light text-green flex max-w-[150px] cursor-pointer items-center rounded-md border-none px-2 py-1 select-none sm:max-w-[200px]"
               onClick={() => removeFilter(key, item)}
             >
-              <p className="mr-2 truncate text-center text-xs leading-none font-semibold">
+              <p className="mr-2 truncate text-center text-xs leading-tight font-semibold">
                 {lookup ?? ""}
               </p>
 
@@ -87,7 +130,7 @@ const FilterBadges: React.FC<{
           className="bg-gray text-gray-dark flex max-w-full cursor-pointer items-center justify-between rounded-md border-none px-2 py-1 select-none sm:max-w-[200px]"
           onClick={() => onSubmit({})}
         >
-          <p className="mr-2 truncate text-center text-xs leading-none font-semibold">
+          <p className="mr-2 truncate text-center text-xs leading-tight font-semibold">
             Clear All
           </p>
 
@@ -104,46 +147,6 @@ const FilterBadges: React.FC<{
       </div>
     );
   }
-
-  const handleScroll = useCallback(() => {
-    const tolerance = 2;
-    const el = sliderRef.current;
-    if (!el) return;
-
-    const { scrollLeft, scrollWidth, clientWidth } = el;
-    setShowPrevButton(scrollLeft > tolerance);
-    setShowNextButton(
-      scrollWidth > clientWidth &&
-        scrollLeft < scrollWidth - clientWidth - tolerance,
-    );
-  }, []);
-
-  useEffect(() => {
-    handleScroll();
-  }, [handleScroll, filteredKeys.length]);
-
-  useEffect(() => {
-    const el = sliderRef.current;
-    if (!el) return;
-
-    el.addEventListener("scroll", handleScroll);
-    window.addEventListener("resize", handleScroll);
-
-    const observer = new MutationObserver(() => handleScroll());
-    observer.observe(el, { childList: true, subtree: true });
-
-    return () => {
-      el.removeEventListener("scroll", handleScroll);
-      window.removeEventListener("resize", handleScroll);
-      observer.disconnect();
-    };
-  }, [handleScroll]);
-
-  const scrollByAmount = useCallback((delta: number) => {
-    const el = sliderRef.current;
-    if (!el) return;
-    el.scrollBy({ left: delta, behavior: "smooth" });
-  }, []);
 
   return (
     <div
