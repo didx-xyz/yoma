@@ -95,7 +95,7 @@ export const ReferrerLinksList: React.FC<LinksListProps> = ({
                 <button
                   onClick={loadMore}
                   disabled={isFetching}
-                  className="btn btn-sm gap-2 border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100 disabled:opacity-50"
+                  className="btn btn-sm border-orange gap-2 text-orange-700 hover:bg-orange-100 disabled:opacity-50"
                 >
                   {isFetching ? (
                     <>

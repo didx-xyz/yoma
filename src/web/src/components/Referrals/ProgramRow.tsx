@@ -34,7 +34,8 @@ export const ProgramRow: React.FC<ProgramRowProps> = ({
               <ProgramImage
                 imageURL={program.imageURL}
                 name={program.name}
-                size={40}
+                size={48}
+                className="border border-gray-200 bg-white"
               />
             </div>
 

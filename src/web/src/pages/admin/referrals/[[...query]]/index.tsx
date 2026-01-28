@@ -827,7 +827,7 @@ const ReferralPrograms: NextPageWithLayout<{
                             </div>
                           </div>
                         </td>
-                        <td className="border-gray-light flex flex-col border-b-2 !align-top">
+                        <td className="border-gray-light border-b-2 !align-top">
                           <div className="flex flex-col gap-2">
                             {program.isDefault && (
                               <span className="badge badge-sm bg-blue-light text-blue">

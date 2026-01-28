@@ -1,4 +1,4 @@
-import { IoAdd, IoChevronDown, IoGift } from "react-icons/io5";
+import { IoAdd, IoChevronDown } from "react-icons/io5";
 import type { ProgramInfo } from "~/api/models/referrals";
 import { searchReferralProgramsInfo } from "~/api/services/referrals";
 import Suspense from "~/components/Common/Suspense";
@@ -12,8 +12,6 @@ interface ProgramsListProps {
   onProgramClick?: (program: ProgramInfo) => void;
   onCreateLink?: (program: ProgramInfo) => void;
   initialPageSize?: number;
-  showHeader?: boolean;
-  showDescription?: boolean;
   context?: "list" | "select" | "preview";
 }
 
@@ -21,8 +19,6 @@ export const ReferrerProgramsList: React.FC<ProgramsListProps> = ({
   onProgramClick,
   onCreateLink,
   initialPageSize = 4,
-  showHeader = true,
-  showDescription = true,
   context = "list",
 }) => {
   const {
@@ -53,104 +49,87 @@ export const ReferrerProgramsList: React.FC<ProgramsListProps> = ({
   const hasPrograms = programs.length > 0;
 
   return (
-    <div className={showHeader ? "rounded-xl bg-white p-4 md:p-6" : ""}>
-      {showHeader && (
-        <>
-          <h2 className="mb-2 flex items-center gap-4 text-lg font-bold text-gray-900">
-            <IoGift className="inline h-6 w-6 text-blue-600" /> Available
-            Programs
-          </h2>
-          {showDescription && (
-            <p className="mb-4 text-sm text-gray-600">
-              Please choose from our available programs below to create your
-              referral link.
-            </p>
-          )}
-        </>
+    <Suspense
+      isLoading={isLoading && !hasPrograms}
+      error={error as any}
+      loader={
+        <LoadingInline
+          className="rounded-xl bg-white p-4"
+          classNameSpinner="h-12 border-orange w-12"
+        />
+      }
+    >
+      {!hasPrograms && (
+        <NoRowsMessage
+          title="No Programs Available"
+          description="There are currently no active referral programs. Check back soon!"
+          icon={"🎁"}
+        />
       )}
 
-      <Suspense
-        isLoading={isLoading && !hasPrograms}
-        error={error as any}
-        loader={
-          <LoadingInline
-            className="rounded-xl bg-white p-4"
-            classNameSpinner="h-12 border-orange w-12"
-          />
-        }
-      >
-        {!hasPrograms && (
-          <NoRowsMessage
-            title="No Programs Available"
-            description="There are currently no active referral programs. Check back soon!"
-            icon={"🎁"}
-          />
-        )}
+      {hasPrograms && (
+        <div className="space-y-2">
+          {programs?.map((program: ProgramInfo) => (
+            <ProgramRow
+              key={program.id}
+              program={program}
+              onClick={() => onProgramClick?.(program)}
+              action={
+                context !== "preview" ? (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
 
-        {hasPrograms && (
-          <div className="space-y-2">
-            {programs?.map((program: ProgramInfo) => (
-              <ProgramRow
-                key={program.id}
+                      if (context === "select") {
+                        onProgramClick?.(program);
+                        return;
+                      }
+
+                      onCreateLink?.(program);
+                    }}
+                    disabled={program.status !== "Active"}
+                    className="btn btn-sm bg-orange gap-2 text-white hover:brightness-110 disabled:opacity-50"
+                  >
+                    <IoAdd className="h-4 w-4" />
+                    {context === "select" ? "Select Program" : "Create Link"}
+                  </button>
+                ) : null
+              }
+            >
+              <ProgramBadges
                 program={program}
-                onClick={() => onProgramClick?.(program)}
-                action={
-                  context !== "preview" ? (
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
+                showToolTips={false}
+                showBadges={{ requirements: false, limit: false }}
+              />
+            </ProgramRow>
+          ))}
 
-                        if (context === "select") {
-                          onProgramClick?.(program);
-                          return;
-                        }
-
-                        onCreateLink?.(program);
-                      }}
-                      disabled={program.status !== "Active"}
-                      className="btn btn-sm gap-2 border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100 disabled:opacity-50"
-                    >
-                      <IoAdd className="h-4 w-4" />
-                      {context === "select" ? "Select Program" : "Create Link"}
-                    </button>
-                  ) : null
-                }
+          {/* See More Button */}
+          {hasMore && (
+            <div className="flex justify-center pt-2">
+              <button
+                onClick={loadMore}
+                disabled={isFetching}
+                className="btn btn-sm border-orange gap-2 text-orange-700 hover:bg-orange-100 disabled:opacity-50"
               >
-                <ProgramBadges
-                  program={program}
-                  showToolTips={false}
-                  showBadges={{ requirements: false, limit: false }}
-                />
-              </ProgramRow>
-            ))}
-
-            {/* See More Button */}
-            {hasMore && (
-              <div className="flex justify-center pt-2">
-                <button
-                  onClick={loadMore}
-                  disabled={isFetching}
-                  className="btn btn-sm gap-2 border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100 disabled:opacity-50"
-                >
-                  {isFetching ? (
-                    <>
-                      <span className="loading loading-spinner loading-xs"></span>
-                      Loading...
-                    </>
-                  ) : (
-                    <>
-                      See More Programs
-                      <IoChevronDown className="h-4 w-4" />
-                    </>
-                  )}
-                </button>
-              </div>
-            )}
-          </div>
-        )}
-      </Suspense>
-    </div>
+                {isFetching ? (
+                  <>
+                    <span className="loading loading-spinner loading-xs"></span>
+                    Loading...
+                  </>
+                ) : (
+                  <>
+                    See More Programs
+                    <IoChevronDown className="h-4 w-4" />
+                  </>
+                )}
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+    </Suspense>
   );
 };
