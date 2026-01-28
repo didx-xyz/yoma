@@ -314,6 +314,8 @@ const Opportunities: NextPageWithLayout<{
   const myRef = useRef<HTMLDivElement>(null);
   const [filterFullWindowVisible, setFilterFullWindowVisible] = useState(false);
   const [isRouteTransitioning, setIsRouteTransitioning] = useState(false);
+  const [isRouteTransitioningToSearch, setIsRouteTransitioningToSearch] =
+    useState(false);
   const queryClient = useQueryClient();
   const currentLanguage = useAtomValue(currentLanguageAtom);
 
@@ -328,8 +330,20 @@ const Opportunities: NextPageWithLayout<{
   }, []);
 
   useEffect(() => {
-    const onStart = () => setIsRouteTransitioning(true);
-    const onDone = () => setIsRouteTransitioning(false);
+    const isSearchUrl = (url: string) => {
+      return /[?&](?:query|page|categories|countries|countryScope|languages|types|engagementTypes|intervalCount|intervalType|organizations|zltoReward|mostViewed|mostCompleted|featured|publishedStates)=/.test(
+        url,
+      );
+    };
+
+    const onStart = (url: string) => {
+      setIsRouteTransitioning(true);
+      setIsRouteTransitioningToSearch(isSearchUrl(url));
+    };
+    const onDone = () => {
+      setIsRouteTransitioning(false);
+      setIsRouteTransitioningToSearch(false);
+    };
 
     router.events.on("routeChangeStart", onStart);
     router.events.on("routeChangeComplete", onDone);
@@ -805,7 +819,7 @@ const Opportunities: NextPageWithLayout<{
   const landingOverlayActive =
     !isSearchPerformedForLanding &&
     (sessionStatus === "loading" ||
-      isRouteTransitioning ||
+      (isRouteTransitioning && !isRouteTransitioningToSearch) ||
       (landingWantsMyCountry &&
         (!landingCountryScopeInitialized ||
           landingPersonalizationPending ||
@@ -961,7 +975,9 @@ const Opportunities: NextPageWithLayout<{
     if (appliedFilterBadgeCount > 0)
       return `Current filters (${appliedFilterBadgeCount})`;
 
-    return sessionStatus === "authenticated" ? "Filters & country" : "Filters";
+    return sessionStatus === "authenticated"
+      ? "Filters & country 🌍"
+      : "Filters 🔎";
   }, [appliedFilterBadgeCount, sessionStatus]);
 
   const selectedCountryNamesFromQuery = useMemo(() => {
@@ -1960,7 +1976,7 @@ const Opportunities: NextPageWithLayout<{
         </div>
 
         <div className="flex flex-col">
-          <div className="flex flex-col">
+          <div className="flex flex-col gap-2">
             {/* FILTER: CATEGORIES */}
             <OpportunityCategoriesHorizontalFilter
               lookups_categories={lookups_categories}
@@ -1968,26 +1984,28 @@ const Opportunities: NextPageWithLayout<{
               onClick={onClickCategoryFilter}
             />
 
-            <div className="p-2x md:p-4x flex w-full flex-col items-center gap-3 p-4">
-              <div>
+            {/* FILTER: MESSAGE */}
+            <div className="w-full px-2 md:px-4">
+              <div className="mx-auto flex w-full flex-col md:max-w-7xl">
                 <div className="flex flex-wrap items-baseline gap-x-2">
-                  <div className="text-gray-dark text-sm font-semibold md:text-base">
+                  <div className="font-family-nunito max-w-full overflow-hidden text-base font-semibold text-ellipsis whitespace-nowrap text-black md:text-lg">
                     {filtersPanelTitle}
                   </div>
                 </div>
-                <div className="text-gray-dark text-[10px] leading-tight md:text-sm">
+                <div className="text-gray-dark text-sm md:text-base">
                   {appliedFilterBadgeCount > 0 ? (
                     <>
-                      {"Click a badge to remove or "}
+                      {"We're currently showing results for "}
+                      {filtersPanelScopeText}
+                      {". Click a badge to remove or "}
                       <button
                         type="button"
-                        className="link text-gray-dark text-xs font-semibold"
+                        className="link"
                         onClick={() => setFilterFullWindowVisible(true)}
                       >
                         open the filters
                       </button>
-                      {" - currently showing results for "}
-                      {filtersPanelScopeText}
+                      {" for more..."}
                     </>
                   ) : (
                     <>
@@ -1996,197 +2014,52 @@ const Opportunities: NextPageWithLayout<{
                       {" - "}
                       <button
                         type="button"
-                        className="link text-gray-dark text-xs font-semibold"
+                        className="link"
                         onClick={() => setFilterFullWindowVisible(true)}
                       >
                         open the filters
                       </button>
-                      {" for more filters..."}
+                      {" for more..."}
                     </>
                   )}
                 </div>
+
+                {appliedFilterBadgeCount > 0 && (
+                  <FilterBadges
+                    searchFilter={searchFilter}
+                    excludeKeys={filterBadgeExcludeKeys}
+                    className="mt-2 -ml-2 md:mt-4"
+                    resolveValue={(key, value) => {
+                      if (key === "commitmentInterval") {
+                        const lookup = lookups_timeIntervals.find(
+                          (interval) => interval.id === value.interval.id,
+                        );
+                        return `${value.interval.count} ${
+                          value.interval.count > 1
+                            ? lookup?.name + "s"
+                            : lookup?.name
+                        }`;
+                      } else if (key === "zltoReward") {
+                        return "ZLTO Reward";
+                      } else if (key === "mostViewed") {
+                        return "Trending";
+                      } else if (key === "mostCompleted") {
+                        return "Most Completed";
+                      } else if (key === "featured") {
+                        return "Featured";
+                      }
+                      return value;
+                    }}
+                    onSubmit={(e) => onSubmitFilter(e)}
+                  />
+                )}
               </div>
-
-              {appliedFilterBadgeCount > 0 && (
-                <FilterBadges
-                  searchFilter={searchFilter}
-                  excludeKeys={filterBadgeExcludeKeys}
-                  resolveValue={(key, value) => {
-                    if (key === "commitmentInterval") {
-                      const lookup = lookups_timeIntervals.find(
-                        (interval) => interval.id === value.interval.id,
-                      );
-                      return `${value.interval.count} ${
-                        value.interval.count > 1
-                          ? lookup?.name + "s"
-                          : lookup?.name
-                      }`;
-                    } else if (key === "zltoReward") {
-                      return "ZLTO Reward";
-                    } else if (key === "mostViewed") {
-                      return "Trending";
-                    } else if (key === "mostCompleted") {
-                      return "Most Completed";
-                    } else if (key === "featured") {
-                      return "Featured";
-                    }
-                    return value;
-                  }}
-                  onSubmit={(e) => onSubmitFilter(e)}
-                />
-              )}
-
-              {/* {sessionStatus === "authenticated" && (
-                <>
-                  <div className="border-gray/20 w-full border-t" />
-
-                  <div className="flex w-full flex-col items-start gap-2">
-                    <div className="flex w-full justify-start">
-                      <FormToggle
-                        id="opportunities_toggle_my_country"
-                        label={
-                          userCountryInfo?.name
-                            ? `My country only (${userCountryInfo.name})`
-                            : "My country only"
-                        }
-                        className="gap-2"
-                        labelClassName="text-xs font-semibold"
-                        toggleClassName="toggle-sm"
-                        inputProps={{
-                          checked: landingMyCountryOnly,
-                          disabled: !userCountryInfo?.id,
-                          onChange: (e) => {
-                            const checked = e.target.checked;
-                            setLandingMyCountryOnly(checked);
-
-                            const params = new URLSearchParams(
-                              router.asPath.split("?")[1] ?? "",
-                            );
-                            if (checked) {
-                              params.set("countryScope", "my");
-                              params.delete("countries");
-                              params.delete("page");
-                            } else {
-                              params.set("countryScope", "all");
-                            }
-
-                            const url =
-                              params.size > 0
-                                ? `/opportunities?${params.toString()}`
-                                : "/opportunities";
-                            if (url !== router.asPath) {
-                              void router.push(url, undefined, {
-                                scroll: false,
-                              });
-                            }
-                          },
-                        }}
-                      />
-                    </div>
-
-                    {!userCountryInfo?.id && (
-                      <div className="text-gray-dark text-[10px] leading-tight">
-                        Add your country in your profile to enable this.
-                      </div>
-                    )}
-
-                    {!landingMyCountryOnly && (
-                      <div className="text-gray-dark text-[10px] leading-tight">
-                        Tip: filter specific countries via “Open filters”.
-                      </div>
-                    )}
-
-                    <details className="border-gray/30 text-gray-dark w-full rounded border bg-white/60 p-2 text-xs">
-                      <summary className="cursor-pointer select-none">
-                        Debug: landing country scope
-                      </summary>
-                      <div className="mt-2 grid gap-1">
-                        <div>
-                          <span className="font-semibold">sessionStatus:</span>{" "}
-                          {sessionStatus}
-                        </div>
-                        <div>
-                          <span className="font-semibold">
-                            landingMyCountryOnly:
-                          </span>{" "}
-                          {String(landingMyCountryOnly)}
-                        </div>
-                        <div>
-                          <span className="font-semibold">
-                            landingCountryEnabled:
-                          </span>{" "}
-                          {String(landingCountryEnabled)}
-                        </div>
-                        <div>
-                          <span className="font-semibold">userCountry:</span>{" "}
-                          {userCountryInfo?.id
-                            ? `${userCountryInfo.name} (${userCountryInfo.id})`
-                            : "(none)"}
-                        </div>
-                        <div>
-                          <span className="font-semibold">
-                            worldwideCountry:
-                          </span>{" "}
-                          {worldwideCountryInfo?.id
-                            ? `${worldwideCountryInfo.name} (${worldwideCountryInfo.id})`
-                            : "(not found in lookups)"}
-                        </div>
-                        <div>
-                          <span className="font-semibold">
-                            landingCountryIds:
-                          </span>{" "}
-                          {landingCountryIds?.length
-                            ? landingCountryIds.join(", ")
-                            : "(null)"}
-                        </div>
-                        <div>
-                          <span className="font-semibold">
-                            landingCacheKey:
-                          </span>{" "}
-                          {landingCacheKey}
-                        </div>
-                        <div>
-                          <span className="font-semibold">
-                            isSearchPerformed:
-                          </span>{" "}
-                          {String(isSearchPerformed)}
-                        </div>
-                        <div>
-                          <span className="font-semibold">
-                            query.countryScope:
-                          </span>{" "}
-                          {router.query.countryScope
-                            ? router.query.countryScope.toString()
-                            : "(none)"}
-                        </div>
-                        <div>
-                          <span className="font-semibold">
-                            countryScopeParam:
-                          </span>{" "}
-                          {countryScopeParam ?? "(null)"}
-                        </div>
-                        <div>
-                          <span className="font-semibold">
-                            query.countries:
-                          </span>{" "}
-                          {router.query.countries
-                            ? router.query.countries.toString()
-                            : "(none)"}
-                        </div>
-                      </div>
-                    </details>
-                  </div>
-                </>
-              )} */}
             </div>
           </div>
 
-          {/* DIVIDER */}
-          <div className="divider !bg-gray" />
-
           {/* NO SEARCH, SHOW LANDING PAGE (POPULAR, LATEST, ALL etc)*/}
           {!isSearchPerformed && (
-            <div className="relative p-4">
+            <div className="px-2 md:px-4">
               {/* LOADING OVERLAY FOR LANDING CAROUSELS (does not affect layout height) */}
               {landingOverlayActive && (
                 <LoadingSkeleton rows={3} className="p-4" />
@@ -2194,212 +2067,241 @@ const Opportunities: NextPageWithLayout<{
 
               {/* CAROUSELS (kept mounted; hidden while overlay is active) */}
               <div className={landingOverlayActive ? "invisible" : ""}>
-                <>
+                <div className="flex flex-col gap-2">
                   {/* OPPORTUNITIES FOR USER'S COUNTRY - ONLY FOR LOGGED-IN USERS */}
                   {sessionStatus === "authenticated" &&
                     landingMyCountryOnly &&
                     userCountryInfo &&
                     (opportunities_user_country?.totalCount ?? 0) > 0 && (
-                      <CustomCarousel
-                        id={`opportunities_user_country`}
-                        title={`Opportunities in ${userCountryInfo.name} 🗺️`}
-                        description="Explore opportunities in your country."
-                        viewAllUrl={appendLandingCountryToUrl(
-                          "/opportunities?page=1",
-                        )}
-                        data={opportunities_user_country!.items}
-                        loadData={loadDataOpportunitiesForUserCountry}
-                        totalAll={opportunities_user_country!.totalCount!}
-                        renderSlide={(item, index) => (
-                          <OpportunityPublicSmallComponent
-                            key={`opportunities_user_country_${item.id}_${index}`}
-                            data={item}
-                          />
-                        )}
-                      />
+                      <>
+                        <div className="divider !bg-gray" />
+                        <CustomCarousel
+                          id={`opportunities_user_country`}
+                          title={`Opportunities in ${userCountryInfo.name} 🗺️`}
+                          description="Explore opportunities in your country."
+                          viewAllUrl={appendLandingCountryToUrl(
+                            "/opportunities?page=1",
+                          )}
+                          data={opportunities_user_country!.items}
+                          loadData={loadDataOpportunitiesForUserCountry}
+                          totalAll={opportunities_user_country!.totalCount!}
+                          renderSlide={(item, index) => (
+                            <OpportunityPublicSmallComponent
+                              key={`opportunities_user_country_${item.id}_${index}`}
+                              data={item}
+                            />
+                          )}
+                        />
+                      </>
                     )}
 
                   {/* FEATURED */}
                   {(opportunities_featured_render?.totalCount ?? 0) > 0 && (
-                    <CustomCarousel
-                      id={`opportunities_featured`}
-                      title="Featured 🌟"
-                      description="Explore our featured opportunities."
-                      viewAllUrl={appendLandingCountryToUrl(
-                        "/opportunities?featured=true",
-                      )}
-                      data={opportunities_featured_render.items}
-                      loadData={loadDataFeatured}
-                      totalAll={opportunities_featured_render.totalCount!}
-                      renderSlide={(item, index) => (
-                        <OpportunityPublicSmallComponent
-                          key={`opportunities_featured_${item.id}_${index}`}
-                          data={item}
-                        />
-                      )}
-                    />
+                    <>
+                      <div className="divider !bg-gray" />
+                      <CustomCarousel
+                        id={`opportunities_featured`}
+                        title="Featured 🌟"
+                        description="Explore our featured opportunities."
+                        viewAllUrl={appendLandingCountryToUrl(
+                          "/opportunities?featured=true",
+                        )}
+                        data={opportunities_featured_render.items}
+                        loadData={loadDataFeatured}
+                        totalAll={opportunities_featured_render.totalCount!}
+                        renderSlide={(item, index) => (
+                          <OpportunityPublicSmallComponent
+                            key={`opportunities_featured_${item.id}_${index}`}
+                            data={item}
+                          />
+                        )}
+                      />
+                    </>
                   )}
 
                   {/* NEW */}
                   {(opportunities_allOpportunities_render?.totalCount ?? 0) >
                     0 && (
-                    <CustomCarousel
-                      id={`opportunities_newOpportunities`}
-                      title="New 🆕"
-                      description="Fresh opportunities, updated daily."
-                      viewAllUrl={appendLandingCountryToUrl(
-                        "/opportunities?page=1",
-                      )}
-                      data={opportunities_allOpportunities_render.items}
-                      loadData={loadDataOpportunities}
-                      totalAll={
-                        opportunities_allOpportunities_render.totalCount!
-                      }
-                      renderSlide={(item, index) => (
-                        <OpportunityPublicSmallComponent
-                          key={`opportunities_newOpportunities_${item.id}_${index}`}
-                          data={item}
-                        />
-                      )}
-                    />
+                    <>
+                      <div className="divider !bg-gray" />
+                      <CustomCarousel
+                        id={`opportunities_newOpportunities`}
+                        title="New 🆕"
+                        description="Fresh opportunities, updated daily."
+                        viewAllUrl={appendLandingCountryToUrl(
+                          "/opportunities?page=1",
+                        )}
+                        data={opportunities_allOpportunities_render.items}
+                        loadData={loadDataOpportunities}
+                        totalAll={
+                          opportunities_allOpportunities_render.totalCount!
+                        }
+                        renderSlide={(item, index) => (
+                          <OpportunityPublicSmallComponent
+                            key={`opportunities_newOpportunities_${item.id}_${index}`}
+                            data={item}
+                          />
+                        )}
+                      />
+                    </>
                   )}
 
                   {/* TRENDING */}
                   {(opportunities_trending_render?.totalCount ?? 0) > 0 && (
-                    <CustomCarousel
-                      id={`opportunities_trending`}
-                      title="Trending 🔥"
-                      description="The most viewed opportunities."
-                      viewAllUrl={appendLandingCountryToUrl(
-                        "/opportunities?mostViewed=true",
-                      )}
-                      data={opportunities_trending_render.items}
-                      loadData={loadDataTrending}
-                      totalAll={opportunities_trending_render.totalCount!}
-                      renderSlide={(item, index) => (
-                        <OpportunityPublicSmallComponent
-                          key={`opportunities_trending_${item.id}_${index}`}
-                          data={item}
-                        />
-                      )}
-                    />
+                    <>
+                      <div className="divider !bg-gray" />
+                      <CustomCarousel
+                        id={`opportunities_trending`}
+                        title="Trending 🔥"
+                        description="The most viewed opportunities."
+                        viewAllUrl={appendLandingCountryToUrl(
+                          "/opportunities?mostViewed=true",
+                        )}
+                        data={opportunities_trending_render.items}
+                        loadData={loadDataTrending}
+                        totalAll={opportunities_trending_render.totalCount!}
+                        renderSlide={(item, index) => (
+                          <OpportunityPublicSmallComponent
+                            key={`opportunities_trending_${item.id}_${index}`}
+                            data={item}
+                          />
+                        )}
+                      />{" "}
+                    </>
                   )}
 
                   {/* MOST COMPLETED */}
                   {(opportunities_mostCompleted_render?.totalCount ?? 0) >
                     0 && (
-                    <CustomCarousel
-                      id={`opportunities_mostCompleted`}
-                      title="Most completed 🏆"
-                      description="The most completed opportunities."
-                      viewAllUrl={appendLandingCountryToUrl(
-                        "/opportunities?mostCompleted=true",
-                      )}
-                      data={opportunities_mostCompleted_render.items}
-                      loadData={loadDataMostCompleted}
-                      totalAll={opportunities_mostCompleted_render.totalCount!}
-                      renderSlide={(item, index) => (
-                        <OpportunityPublicSmallComponent
-                          key={`opportunities_mostCompleted_${item.id}_${index}`}
-                          data={item}
-                        />
-                      )}
-                    />
+                    <>
+                      <div className="divider !bg-gray" />
+                      <CustomCarousel
+                        id={`opportunities_mostCompleted`}
+                        title="Most completed 🏆"
+                        description="The most completed opportunities."
+                        viewAllUrl={appendLandingCountryToUrl(
+                          "/opportunities?mostCompleted=true",
+                        )}
+                        data={opportunities_mostCompleted_render.items}
+                        loadData={loadDataMostCompleted}
+                        totalAll={
+                          opportunities_mostCompleted_render.totalCount!
+                        }
+                        renderSlide={(item, index) => (
+                          <OpportunityPublicSmallComponent
+                            key={`opportunities_mostCompleted_${item.id}_${index}`}
+                            data={item}
+                          />
+                        )}
+                      />{" "}
+                    </>
                   )}
 
                   {/* LEARNING COURSES */}
                   {(opportunities_learning_render?.totalCount ?? 0) > 0 && (
-                    <CustomCarousel
-                      id={`opportunities_learning`}
-                      title="Learning Courses 📚"
-                      description="Discover exciting online courses."
-                      viewAllUrl={appendLandingCountryToUrl(
-                        "/opportunities?types=Learning",
-                      )}
-                      data={opportunities_learning_render.items}
-                      loadData={loadDataLearning}
-                      totalAll={opportunities_learning_render.totalCount!}
-                      renderSlide={(item, index) => (
-                        <OpportunityPublicSmallComponent
-                          key={`opportunities_learning_${item.id}_${index}`}
-                          data={item}
-                        />
-                      )}
-                    />
+                    <>
+                      <div className="divider !bg-gray" />
+                      <CustomCarousel
+                        id={`opportunities_learning`}
+                        title="Learning Courses 📚"
+                        description="Discover exciting online courses."
+                        viewAllUrl={appendLandingCountryToUrl(
+                          "/opportunities?types=Learning",
+                        )}
+                        data={opportunities_learning_render.items}
+                        loadData={loadDataLearning}
+                        totalAll={opportunities_learning_render.totalCount!}
+                        renderSlide={(item, index) => (
+                          <OpportunityPublicSmallComponent
+                            key={`opportunities_learning_${item.id}_${index}`}
+                            data={item}
+                          />
+                        )}
+                      />{" "}
+                    </>
                   )}
 
                   {/* TASKS */}
                   {(opportunities_tasks_render?.totalCount ?? 0) > 0 && (
-                    <CustomCarousel
-                      id={`opportunities_tasks`}
-                      title="Micro-tasks ⚡"
-                      description="Contribute to real-world projects."
-                      viewAllUrl={appendLandingCountryToUrl(
-                        "/opportunities?types=Micro-task",
-                      )}
-                      data={opportunities_tasks_render.items}
-                      loadData={loadDataTasks}
-                      totalAll={opportunities_tasks_render.totalCount!}
-                      renderSlide={(item, index) => (
-                        <OpportunityPublicSmallComponent
-                          key={`opportunities_tasks_${item.id}_${index}`}
-                          data={item}
-                        />
-                      )}
-                    />
+                    <>
+                      <div className="divider !bg-gray" />
+                      <CustomCarousel
+                        id={`opportunities_tasks`}
+                        title="Micro-tasks ⚡"
+                        description="Contribute to real-world projects."
+                        viewAllUrl={appendLandingCountryToUrl(
+                          "/opportunities?types=Micro-task",
+                        )}
+                        data={opportunities_tasks_render.items}
+                        loadData={loadDataTasks}
+                        totalAll={opportunities_tasks_render.totalCount!}
+                        renderSlide={(item, index) => (
+                          <OpportunityPublicSmallComponent
+                            key={`opportunities_tasks_${item.id}_${index}`}
+                            data={item}
+                          />
+                        )}
+                      />{" "}
+                    </>
                   )}
 
                   {/* EVENTS */}
                   {(opportunities_events_render?.totalCount ?? 0) > 0 && (
-                    <CustomCarousel
-                      id={`opportunities_events`}
-                      title="Events 🎉"
-                      description="Explore events to attend."
-                      viewAllUrl={appendLandingCountryToUrl(
-                        "/opportunities?types=Event",
-                      )}
-                      data={opportunities_events_render.items}
-                      loadData={loadDataEvents}
-                      totalAll={opportunities_events_render.totalCount!}
-                      renderSlide={(item, index) => (
-                        <OpportunityPublicSmallComponent
-                          key={`opportunities_events_${item.id}_${index}`}
-                          data={item}
-                        />
-                      )}
-                    />
+                    <>
+                      <div className="divider !bg-gray" />
+                      <CustomCarousel
+                        id={`opportunities_events`}
+                        title="Events 🎉"
+                        description="Explore events to attend."
+                        viewAllUrl={appendLandingCountryToUrl(
+                          "/opportunities?types=Event",
+                        )}
+                        data={opportunities_events_render.items}
+                        loadData={loadDataEvents}
+                        totalAll={opportunities_events_render.totalCount!}
+                        renderSlide={(item, index) => (
+                          <OpportunityPublicSmallComponent
+                            key={`opportunities_events_${item.id}_${index}`}
+                            data={item}
+                          />
+                        )}
+                      />{" "}
+                    </>
                   )}
 
                   {/* OTHER */}
                   {(opportunities_other_render?.totalCount ?? 0) > 0 && (
-                    <CustomCarousel
-                      id={`opportunities_other`}
-                      title="Other 💡"
-                      description="Explore other opportunities."
-                      viewAllUrl={appendLandingCountryToUrl(
-                        "/opportunities?types=Other",
-                      )}
-                      data={opportunities_other_render.items}
-                      loadData={loadDataOther}
-                      totalAll={opportunities_other_render.totalCount!}
-                      renderSlide={(item, index) => (
-                        <OpportunityPublicSmallComponent
-                          key={`opportunities_other_${item.id}_${index}`}
-                          data={item}
-                        />
-                      )}
-                    />
+                    <>
+                      <div className="divider !bg-gray" />
+                      <CustomCarousel
+                        id={`opportunities_other`}
+                        title="Other 💡"
+                        description="Explore other opportunities."
+                        viewAllUrl={appendLandingCountryToUrl(
+                          "/opportunities?types=Other",
+                        )}
+                        data={opportunities_other_render.items}
+                        loadData={loadDataOther}
+                        totalAll={opportunities_other_render.totalCount!}
+                        renderSlide={(item, index) => (
+                          <OpportunityPublicSmallComponent
+                            key={`opportunities_other_${item.id}_${index}`}
+                            data={item}
+                          />
+                        )}
+                      />
+                    </>
                   )}
-                </>
+                </div>
               </div>
             </div>
           )}
+
           {/* SEARCH PERFORMED, SHOW RESULTS */}
           {isSearchPerformed && (
-            <div
-              id="results"
-              className="flex flex-col items-center rounded-lg p-4"
-            >
+            <div id="results" className="pb-8x px-2 md:px-4">
+              <div className="divider !bg-gray" />
+
               <div className="flex w-full flex-col gap-2">
                 {(isRouteTransitioning ||
                   sessionStatus === "loading" ||
@@ -2436,7 +2338,7 @@ const Opportunities: NextPageWithLayout<{
                       {/* PAGINATION */}
                       {searchResults &&
                         (searchResults.totalCount as number) > 0 && (
-                          <div className="mt-2 grid place-items-center justify-center">
+                          <div className="my-4 grid place-items-center justify-center">
                             <PaginationButtons
                               currentPage={page ? parseInt(page.toString()) : 1}
                               totalItems={searchResults.totalCount as number}

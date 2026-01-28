@@ -1130,7 +1130,7 @@ const OrganisationDashboard: NextPageWithLayout<{
           {(isAdmin || searchFilter.organizations) && (
             <>
               {/* TABS */}
-              <CustomSlider sliderClassName="!gap-6 mt-4">
+              <CustomSlider sliderClassName="!gap-6">
                 {isAdmin && (
                   <a
                     role="tab"
