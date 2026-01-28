@@ -1981,6 +1981,7 @@ const Opportunities: NextPageWithLayout<{
               lookups_categories={lookups_categories}
               selected_categories={searchFilter?.categories}
               onClick={onClickCategoryFilter}
+              className="justify-center"
             />
 
             {/* FILTER: MESSAGE */}

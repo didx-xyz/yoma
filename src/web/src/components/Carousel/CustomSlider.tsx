@@ -130,7 +130,7 @@ const CustomSlider = ({
 
   return (
     <div
-      className={`relative flex min-h-[40px] w-full items-center overflow-x-hidden ${className}`}
+      className={`w-fullx relative flex min-h-[40px] items-center overflow-x-hidden ${className}`}
     >
       {showPrevButton && (
         <>
