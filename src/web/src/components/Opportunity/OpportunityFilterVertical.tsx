@@ -487,7 +487,9 @@ export const OpportunityFilterVertical: React.FC<{
               render={({ field: { onChange, value } }) => (
                 <div
                   className={
-                    myCountryOnlyDraft ? "pointer-events-none opacity-50" : ""
+                    userProfile && myCountryOnlyDraft
+                      ? "pointer-events-none opacity-50"
+                      : ""
                   }
                 >
                   <SelectButtons

@@ -110,12 +110,18 @@ const CustomCarousel: React.FC<{
   );
 
   const renderButtons = useCallback(() => {
+    const prevDisabled = currentSlide === 0;
+    const nextDisabled =
+      selectedSnap + 1 >= effectiveTotalAll && !loadingMoreRef.current;
+
+    if (prevDisabled && nextDisabled) {
+      return null;
+    }
+
     return (
       <NavigationButtons
-        prevDisabled={currentSlide === 0}
-        nextDisabled={
-          selectedSnap + 1 >= effectiveTotalAll && !loadingMoreRef.current
-        }
+        prevDisabled={prevDisabled}
+        nextDisabled={nextDisabled}
       />
     );
   }, [currentSlide, selectedSnap, effectiveTotalAll]);
@@ -179,7 +185,7 @@ const CustomCarousel: React.FC<{
         </Slider>
 
         {/* MOBILE */}
-        <div className="my-2 flex w-full flex-col items-center justify-center gap-2 text-center md:hidden">
+        <div className="flex w-full flex-col items-center justify-center gap-2 text-center md:hidden">
           {renderButtons()}
           <SelectedSnapDisplay
             selectedSnap={selectedSnap}

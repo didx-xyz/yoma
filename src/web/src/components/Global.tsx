@@ -764,7 +764,7 @@ export const Global: React.FC = () => {
         shouldCloseOnOverlayClick={false}
         onRequestClose={() => {}}
         animationStyle="slide-bottom"
-        className="modal-banner top-auto right-2 bottom-2 left-2 h-auto max-h-[36vh] w-auto rounded-3xl border border-dotted border-black shadow-xl md:right-auto md:bottom-2 md:left-1/2 md:w-[640px] md:-translate-x-1/2"
+        className="modal-banner border-gray top-auto right-2 bottom-2 left-2 h-auto max-h-[36vh] w-auto rounded-3xl border shadow-xl md:right-auto md:bottom-2 md:left-1/2 md:w-[640px] md:-translate-x-1/2"
       >
         <div className="flex flex-col gap-2 overflow-y-auto px-4 py-2 md:px-10">
           <div className="flex flex-col gap-2 text-center">
@@ -784,17 +784,17 @@ export const Global: React.FC = () => {
           <div className="flex flex-row flex-nowrap gap-3">
             <button
               type="button"
-              className="btn btn-success btn-xs min-w-0 flex-1 text-white"
-              onClick={() => handleRumConsentSubmit(true)}
-            >
-              Allow monitoring
-            </button>
-            <button
-              type="button"
               className="btn btn-outline btn-xs min-w-0 flex-1"
               onClick={() => handleRumConsentSubmit(false)}
             >
               Not now
+            </button>
+            <button
+              type="button"
+              className="btn btn-success btn-xs min-w-0 flex-1 text-white"
+              onClick={() => handleRumConsentSubmit(true)}
+            >
+              Allow monitoring
             </button>
           </div>
         </div>
