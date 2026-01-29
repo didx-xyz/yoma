@@ -110,12 +110,18 @@ const CustomCarousel: React.FC<{
   );
 
   const renderButtons = useCallback(() => {
+    const prevDisabled = currentSlide === 0;
+    const nextDisabled =
+      selectedSnap + 1 >= effectiveTotalAll && !loadingMoreRef.current;
+
+    if (prevDisabled && nextDisabled) {
+      return null;
+    }
+
     return (
       <NavigationButtons
-        prevDisabled={currentSlide === 0}
-        nextDisabled={
-          selectedSnap + 1 >= effectiveTotalAll && !loadingMoreRef.current
-        }
+        prevDisabled={prevDisabled}
+        nextDisabled={nextDisabled}
       />
     );
   }, [currentSlide, selectedSnap, effectiveTotalAll]);
