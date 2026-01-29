@@ -1026,8 +1026,8 @@ const Opportunities: NextPageWithLayout<{
 
     if (sessionStatus === "authenticated" && wantsMyScopeForSearch) {
       return userCountryInfo?.name
-        ? `your country (${userCountryInfo.name})`
-        : "your country";
+        ? `your country (${userCountryInfo.name} & worldwide)`
+        : "your country & worldwide";
     }
 
     return "all countries";
