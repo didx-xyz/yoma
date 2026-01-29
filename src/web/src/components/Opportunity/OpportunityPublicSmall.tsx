@@ -26,16 +26,16 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({
   const renderContent = () => {
     return (
       <>
-        <div className="flex flex-row">
-          <div className="flex w-full grow flex-col">
-            <div className="text-gray-dark w-[220px] truncate text-xs font-medium">
+        <div className="flex flex-row gap-2">
+          <div className="flex min-w-0 flex-1 flex-col">
+            <div className="text-gray-dark max-w-[200px] truncate text-xs font-medium">
               {data.organizationName}
             </div>
-            <div className="mt-1 line-clamp-2 h-[45px] w-[220px] overflow-hidden text-[18px] leading-tight font-semibold text-ellipsis">
+            <div className="mt-1 line-clamp-2 h-[45px] max-w-[200px] overflow-hidden text-[18px] leading-tight font-semibold text-ellipsis">
               {data.title}
             </div>
           </div>
-          <div className="-mt-2 flex items-center justify-center">
+          <div className="-mt-2 flex flex-shrink-0 items-center justify-center">
             <AvatarImage
               icon={data?.organizationLogoURL ?? null}
               alt="Company Logo"
@@ -43,7 +43,7 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({
             />
           </div>
         </div>
-        <div className="mb-auto flex w-[280px] flex-row">
+        <div className="mb-auto flex w-full flex-row">
           <p className="text-[rgba(84, 88, 89, 1)] line-clamp-4 text-sm font-light text-ellipsis">
             {data.summary ?? data.description}
           </p>
@@ -157,13 +157,13 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({
   };
 
   return preview ? (
-    <div className="relative flex h-[17.5rem] w-[19.2rem] flex-col gap-1 overflow-hidden rounded-lg bg-white p-4 shadow-2xl">
+    <div className="relative flex h-[17.5rem] w-full min-w-full flex-col gap-1 overflow-hidden rounded-lg bg-white p-4 shadow-2xl sm:max-w-[19.2rem] sm:min-w-0">
       {renderContent()}
     </div>
   ) : (
     <Link
       href={`/opportunities/${data.id}`}
-      className="relative flex h-[17.5rem] w-[19.2rem] flex-col gap-1 overflow-hidden rounded-lg bg-white p-4 shadow-xs"
+      className="relative flex h-[17.5rem] w-full min-w-full flex-col gap-1 overflow-hidden rounded-lg bg-white p-4 shadow-xs sm:max-w-[19.2rem] sm:min-w-0"
       target="_blank"
       rel="noopener noreferrer"
     >
