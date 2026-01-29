@@ -31,7 +31,7 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({
             <div className="text-gray-dark max-w-[200px] truncate text-xs font-medium">
               {data.organizationName}
             </div>
-            <div className="mt-1 line-clamp-2 h-[45px] max-w-[200px] overflow-hidden text-[18px] leading-tight font-semibold text-ellipsis">
+            <div className="mt-1 line-clamp-2 h-[38px] max-w-[200px] overflow-hidden text-sm leading-tight font-semibold text-ellipsis">
               {data.title}
             </div>
           </div>
@@ -44,7 +44,7 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({
           </div>
         </div>
         <div className="mb-auto flex w-full flex-row">
-          <p className="text-[rgba(84, 88, 89, 1)] line-clamp-4 text-sm font-light text-ellipsis">
+          <p className="text-[rgba(84, 88, 89, 1)] mt-2 line-clamp-4 text-sm font-light text-ellipsis">
             {data.summary ?? data.description}
           </p>
         </div>
@@ -157,13 +157,13 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({
   };
 
   return preview ? (
-    <div className="relative flex h-[17.5rem] w-full min-w-full flex-col gap-1 overflow-hidden rounded-lg bg-white p-4 shadow-2xl sm:max-w-[19.2rem] sm:min-w-0">
+    <div className="m-2 flex h-[17.5rem] w-64 flex-col gap-1 overflow-hidden rounded-lg bg-white p-4 shadow">
       {renderContent()}
     </div>
   ) : (
     <Link
       href={`/opportunities/${data.id}`}
-      className="relative flex h-[17.5rem] w-full min-w-full flex-col gap-1 overflow-hidden rounded-lg bg-white p-4 shadow-xs sm:max-w-[19.2rem] sm:min-w-0"
+      className="m-2 flex h-[17.5rem] w-64 flex-col gap-1 overflow-hidden rounded-lg bg-white p-4 shadow"
       target="_blank"
       rel="noopener noreferrer"
     >

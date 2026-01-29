@@ -185,7 +185,7 @@ const CustomCarousel: React.FC<{
         </Slider>
 
         {/* MOBILE */}
-        <div className="my-2 flex w-full flex-col items-center justify-center gap-2 text-center md:hidden">
+        <div className="flex w-full flex-col items-center justify-center gap-2 text-center md:hidden">
           {renderButtons()}
           <SelectedSnapDisplay
             selectedSnap={selectedSnap}
