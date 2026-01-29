@@ -784,17 +784,17 @@ export const Global: React.FC = () => {
           <div className="flex flex-row flex-nowrap gap-3">
             <button
               type="button"
-              className="btn btn-success btn-xs min-w-0 flex-1 text-white"
-              onClick={() => handleRumConsentSubmit(true)}
-            >
-              Allow monitoring
-            </button>
-            <button
-              type="button"
               className="btn btn-outline btn-xs min-w-0 flex-1"
               onClick={() => handleRumConsentSubmit(false)}
             >
               Not now
+            </button>
+            <button
+              type="button"
+              className="btn btn-success btn-xs min-w-0 flex-1 text-white"
+              onClick={() => handleRumConsentSubmit(true)}
+            >
+              Allow monitoring
             </button>
           </div>
         </div>
