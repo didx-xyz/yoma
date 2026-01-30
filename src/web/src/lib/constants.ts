@@ -122,6 +122,7 @@ export const VIEWPORT_SIZE = {
 };
 
 export const COUNTRY_CODE_WW = "WW";
+export const COUNTRY_ID_WW = "0efb07e6-6634-46de-a98d-a85bf331c20e";
 export const COOKIE_KEYCLOAK_SESSION = "KEYCLOAK_SESSION";
 export const SLOW_NETWORK_MESSAGE_TIMEOUT = 10000; // 10 seconds
 export const SLOW_NETWORK_ABORT_TIMEOUT = 45000; // 45 seconds

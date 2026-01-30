@@ -2393,6 +2393,11 @@ const ReferralProgramForm: NextPageWithLayout<{
                       <AdminProgramPathwayEditComponent
                         control={controlStep5}
                         opportunityDataMap={opportunityDataMap}
+                        programCountries={
+                          Array.isArray(formData.countries)
+                            ? (formData.countries as string[])
+                            : null
+                        }
                       />
                     ) : (
                       <FormMessage messageType={FormMessageType.Info}>

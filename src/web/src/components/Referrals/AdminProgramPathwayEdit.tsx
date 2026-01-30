@@ -14,6 +14,7 @@ import {
   PathwayTaskEntityType,
 } from "~/api/models/referrals";
 import { searchCriteriaOpportunities } from "~/api/services/opportunities";
+import { COUNTRY_ID_WW } from "~/lib/constants";
 import { debounce } from "~/lib/utils";
 import FormError from "../Common/FormError";
 import FormField from "../Common/FormField";
@@ -25,11 +26,12 @@ const PAGE_SIZE_MEDIUM = 10;
 export interface ProgramPathwayEditProps {
   control: Control<any>;
   opportunityDataMap?: Record<string, Opportunity>;
+  programCountries?: string[] | null;
 }
 
 export const AdminProgramPathwayEditComponent: React.FC<
   ProgramPathwayEditProps
-> = ({ control, opportunityDataMap }) => {
+> = ({ control, opportunityDataMap, programCountries }) => {
   const { errors } = useFormState({ control });
 
   const {
@@ -254,6 +256,7 @@ export const AdminProgramPathwayEditComponent: React.FC<
                           displayIndex={displayIndex}
                           pathwayRule={pathwayRuleField.value}
                           pathwayOrderMode={pathwayOrderField.value}
+                          programCountries={programCountries}
                           onRemove={() => removeStep(displayIndex)}
                           onMoveUp={() => handleMoveStepUp(displayIndex)}
                           onMoveDown={() => handleMoveStepDown(displayIndex)}
@@ -304,6 +307,7 @@ interface StepEditComponentProps {
   displayIndex: number;
   pathwayRule: string | null;
   pathwayOrderMode: string | null;
+  programCountries?: string[] | null;
   onRemove: () => void;
   onMoveUp: () => void;
   onMoveDown: () => void;
@@ -320,6 +324,7 @@ const StepEditComponent: React.FC<StepEditComponentProps> = ({
   displayIndex,
   pathwayRule,
   pathwayOrderMode,
+  programCountries,
   onRemove,
   onMoveUp,
   onMoveDown,
@@ -329,6 +334,13 @@ const StepEditComponent: React.FC<StepEditComponentProps> = ({
   errors,
   opportunityDataMap,
 }) => {
+  const countriesFilter = useMemo(() => {
+    // Always include Worldwide (WW) when filtering by program countries.
+    // Also used to key the Async select to avoid stale cached options when countries change.
+    if (!programCountries || programCountries.length === 0) return null;
+    return Array.from(new Set([...programCountries, COUNTRY_ID_WW]));
+  }, [programCountries]);
+
   const {
     fields: taskFields,
     append: appendTask,
@@ -403,7 +415,7 @@ const StepEditComponent: React.FC<StepEditComponentProps> = ({
         searchCriteriaOpportunities({
           opportunities: [],
           organizations: null,
-          countries: null,
+          countries: countriesFilter,
           titleContains: (inputValue ?? []).length > 2 ? inputValue : null,
           published: null,
           verificationMethod: null,
@@ -426,8 +438,13 @@ const StepEditComponent: React.FC<StepEditComponentProps> = ({
         });
       }, 1000)();
     },
-    [dataOpportunities],
+    [dataOpportunities, countriesFilter],
   );
+
+  const programCountriesKey = useMemo(() => {
+    if (!countriesFilter || countriesFilter.length === 0) return "__all__";
+    return [...countriesFilter].sort().join(",");
+  }, [countriesFilter]);
 
   return (
     <div className="space-y-3">
@@ -725,6 +742,7 @@ const StepEditComponent: React.FC<StepEditComponentProps> = ({
                                       error={fieldState.error?.message}
                                     >
                                       <Async
+                                        key={`opportunity-${stepIndex}-${taskIndex}-${programCountriesKey}`}
                                         instanceId={`opportunity-${stepIndex}-${taskIndex}`}
                                         classNames={{
                                           control: () =>
