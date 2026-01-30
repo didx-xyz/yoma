@@ -709,6 +709,8 @@ const ReferralProgramForm: NextPageWithLayout<{
     reset: resetStep5,
     watch: watchStep5,
     trigger: triggerStep5,
+    setValue: setValueStep5,
+    getValues: getValuesStep5,
   } = useForm({
     resolver: zodResolver(schemaStep5),
     defaultValues: formData,
@@ -723,6 +725,10 @@ const ReferralProgramForm: NextPageWithLayout<{
 
   // Watch pathwayRequired from step 5 form for real-time updates
   const pathwayRequiredWatch = watchStep5("pathwayRequired");
+
+  // Watch pathway fields to keep dependent values in sync
+  const pathwayRuleWatch = watchStep5("pathway.rule");
+  const pathwayStepsWatch = watchStep5("pathway.steps");
 
   // Fetch all opportunities referenced in the pathway
   useEffect(() => {
@@ -995,6 +1001,66 @@ const ReferralProgramForm: NextPageWithLayout<{
       resetStep5(newData);
     }
   }, [pathwayRequiredWatch, resetStep5, triggerStep5, formData]);
+
+  // Keep pathway/step order modes consistent with selected rules.
+  // This prevents Zod validation from getting "stuck" when rule changes hide order mode selectors.
+  useEffect(() => {
+    if (!pathwayRequiredWatch) return;
+
+    const currentPathway = getValuesStep5("pathway") as any;
+    if (!currentPathway) return;
+
+    // If pathway rule is Any, Sequential is invalid (selector is hidden), so force AnyOrder.
+    if (
+      pathwayRuleWatch === PathwayCompletionRule.Any &&
+      currentPathway.orderMode === PathwayOrderMode.Sequential
+    ) {
+      setValueStep5("pathway.orderMode", PathwayOrderMode.AnyOrder, {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+    }
+
+    const steps: any[] = Array.isArray(currentPathway.steps)
+      ? currentPathway.steps
+      : [];
+    if (steps.length === 0) return;
+
+    steps.forEach((step, index) => {
+      const stepRule = step?.rule;
+      const stepOrderMode = step?.orderMode;
+
+      // If a step rule is Any, its order mode must be AnyOrder.
+      if (
+        stepRule === PathwayCompletionRule.Any &&
+        stepOrderMode !== PathwayOrderMode.AnyOrder
+      ) {
+        setValueStep5(
+          `pathway.steps.${index}.orderMode`,
+          PathwayOrderMode.AnyOrder,
+          { shouldDirty: true, shouldValidate: true },
+        );
+      }
+
+      // If a step order mode is Sequential, its rule must be All.
+      if (
+        stepOrderMode === PathwayOrderMode.Sequential &&
+        stepRule !== PathwayCompletionRule.All
+      ) {
+        setValueStep5(
+          `pathway.steps.${index}.rule`,
+          PathwayCompletionRule.All,
+          { shouldDirty: true, shouldValidate: true },
+        );
+      }
+    });
+  }, [
+    pathwayRequiredWatch,
+    pathwayRuleWatch,
+    pathwayStepsWatch,
+    getValuesStep5,
+    setValueStep5,
+  ]);
 
   // Watch Step 3 fields and trigger validation for cross-field errors
   useEffect(() => {
