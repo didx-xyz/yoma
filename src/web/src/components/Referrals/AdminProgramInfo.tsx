@@ -36,13 +36,33 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
   filterOptions = [
     ProgramInfoFilterOptions.PROGRAM_INFO,
     ProgramInfoFilterOptions.COMPLETION_REWARDS,
-    ProgramInfoFilterOptions.ZLTO_REWARDS,
     ProgramInfoFilterOptions.FEATURES,
     ProgramInfoFilterOptions.PATHWAY,
     ProgramInfoFilterOptions.AUDIT_INFO,
   ],
   opportunityDataMap,
 }) => {
+  const showCompletionAndRewards =
+    filterOptions?.includes(ProgramInfoFilterOptions.COMPLETION_REWARDS) ||
+    filterOptions?.includes(ProgramInfoFilterOptions.ZLTO_REWARDS);
+
+  const countriesLabel = useMemo(() => {
+    const countries = program?.countries;
+    if (!countries || !Array.isArray(countries) || countries.length === 0) {
+      return "N/A";
+    }
+
+    // Backend returns lookup objects; admin form may store IDs (string[]).
+    if (typeof countries[0] === "string") {
+      return (countries as string[]).join(", ");
+    }
+
+    return (countries as any[])
+      .map((c) => c?.name)
+      .filter(Boolean)
+      .join(", ");
+  }, [program?.countries]);
+
   // Map ProgramPathway to ProgramPathwayInfo for preview display
   const pathwayInfo = useMemo((): ProgramPathwayInfo | null => {
     if (!program.pathway) return null;
@@ -169,13 +189,22 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
                   )}
                 </div>
               </div>
+
+              <div className="flex md:col-span-2">
+                <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-sm font-medium text-gray-700">
+                  Countries
+                </div>
+                <div className="flex-1 border border-gray-200 px-4 py-2 text-sm hover:bg-gray-100">
+                  {countriesLabel}
+                </div>
+              </div>
             </div>
           </div>
         </section>
       )}
 
       {/* Completion & Rewards */}
-      {filterOptions?.includes(ProgramInfoFilterOptions.COMPLETION_REWARDS) && (
+      {showCompletionAndRewards && (
         <section>
           <h2 className="mb-2 flex items-center gap-2 text-lg font-semibold">
             ⚙️ Completion & Rewards
@@ -227,19 +256,7 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
                   </span>
                 </div>
               </div>
-            </div>
-          </div>
-        </section>
-      )}
 
-      {/* ZLTO Rewards */}
-      {filterOptions?.includes(ProgramInfoFilterOptions.ZLTO_REWARDS) && (
-        <section>
-          <h2 className="mb-2 flex items-center gap-2 text-lg font-semibold">
-            💰 ZLTO Rewards
-          </h2>
-          <div className="overflow-x-auto">
-            <div className="grid overflow-hidden rounded-lg border border-gray-200 md:grid-cols-2">
               <div className="flex">
                 <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-sm font-medium text-gray-700">
                   Referee Reward

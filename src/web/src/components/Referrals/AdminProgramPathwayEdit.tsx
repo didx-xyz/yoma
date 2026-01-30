@@ -14,7 +14,7 @@ import {
   PathwayTaskEntityType,
 } from "~/api/models/referrals";
 import { searchCriteriaOpportunities } from "~/api/services/opportunities";
-import { debounce } from "~/lib/utils";
+import { COUNTRY_ID_WW } from "~/lib/constants";
 import FormError from "../Common/FormError";
 import FormField from "../Common/FormField";
 import FormInput from "../Common/FormInput";
@@ -22,14 +22,45 @@ import PathwayTaskOpportunity from "./PathwayTaskOpportunity";
 
 const PAGE_SIZE_MEDIUM = 10;
 
+type OpportunitySelectOption = { value: string; label: string };
+
+// Simple shared cache to avoid duplicate requests when multiple Async selects
+// mount/open at the same time (e.g. multiple tasks across steps).
+const OPPORTUNITY_OPTIONS_CACHE_TTL_MS = 5 * 60 * 1000;
+const OPPORTUNITY_OPTIONS_CACHE_MAX = 100;
+const opportunityOptionsCache = new Map<
+  string,
+  { ts: number; options: OpportunitySelectOption[] }
+>();
+const opportunityOptionsInFlight = new Map<
+  string,
+  Promise<OpportunitySelectOption[]>
+>();
+
+const setOpportunityOptionsCache = (
+  key: string,
+  options: OpportunitySelectOption[],
+) => {
+  // basic cap to avoid unbounded growth
+  if (opportunityOptionsCache.size >= OPPORTUNITY_OPTIONS_CACHE_MAX) {
+    const firstKey = opportunityOptionsCache.keys().next().value as
+      | string
+      | undefined;
+    if (firstKey) opportunityOptionsCache.delete(firstKey);
+  }
+
+  opportunityOptionsCache.set(key, { ts: Date.now(), options });
+};
+
 export interface ProgramPathwayEditProps {
   control: Control<any>;
   opportunityDataMap?: Record<string, Opportunity>;
+  programCountries?: string[] | null;
 }
 
 export const AdminProgramPathwayEditComponent: React.FC<
   ProgramPathwayEditProps
-> = ({ control, opportunityDataMap }) => {
+> = ({ control, opportunityDataMap, programCountries }) => {
   const { errors } = useFormState({ control });
 
   const {
@@ -254,6 +285,7 @@ export const AdminProgramPathwayEditComponent: React.FC<
                           displayIndex={displayIndex}
                           pathwayRule={pathwayRuleField.value}
                           pathwayOrderMode={pathwayOrderField.value}
+                          programCountries={programCountries}
                           onRemove={() => removeStep(displayIndex)}
                           onMoveUp={() => handleMoveStepUp(displayIndex)}
                           onMoveDown={() => handleMoveStepDown(displayIndex)}
@@ -304,6 +336,7 @@ interface StepEditComponentProps {
   displayIndex: number;
   pathwayRule: string | null;
   pathwayOrderMode: string | null;
+  programCountries?: string[] | null;
   onRemove: () => void;
   onMoveUp: () => void;
   onMoveDown: () => void;
@@ -320,6 +353,7 @@ const StepEditComponent: React.FC<StepEditComponentProps> = ({
   displayIndex,
   pathwayRule,
   pathwayOrderMode,
+  programCountries,
   onRemove,
   onMoveUp,
   onMoveDown,
@@ -329,6 +363,13 @@ const StepEditComponent: React.FC<StepEditComponentProps> = ({
   errors,
   opportunityDataMap,
 }) => {
+  const countriesFilter = useMemo(() => {
+    // Always include Worldwide when filtering by program countries.
+    // Also used to key the Async select to avoid stale cached options when countries change.
+    if (!programCountries || programCountries.length === 0) return null;
+    return Array.from(new Set([...programCountries, COUNTRY_ID_WW]));
+  }, [programCountries]);
+
   const {
     fields: taskFields,
     append: appendTask,
@@ -396,124 +437,144 @@ const StepEditComponent: React.FC<StepEditComponentProps> = ({
     }
   };
 
-  // Load opportunities asynchronously
+  const programCountriesKey = useMemo(() => {
+    if (!countriesFilter || countriesFilter.length === 0) return "__all__";
+    return [...countriesFilter].sort().join(",");
+  }, [countriesFilter]);
+
   const loadOpportunities = useCallback(
-    (inputValue: string, callback: (options: any) => void) => {
-      debounce(() => {
-        searchCriteriaOpportunities({
-          opportunities: [],
-          organizations: null,
-          countries: null,
-          titleContains: (inputValue ?? []).length > 2 ? inputValue : null,
-          published: null,
-          verificationMethod: null,
-          verificationEnabled: null,
-          onlyCompletable: true,
-          pageNumber: 1,
-          pageSize: PAGE_SIZE_MEDIUM,
-        }).then((data) => {
-          const options = data.items.map((item) => ({
+    async (inputValue: string): Promise<OpportunitySelectOption[]> => {
+      const q = (inputValue ?? "").trim();
+
+      // defaultOptions=true triggers an empty query; allow it.
+      // For typed searches, require 3+ characters to reduce noisy requests.
+      if (q.length > 0 && q.length < 3) return [];
+
+      const normalizedQueryKey =
+        q.length === 0 ? "__default__" : q.toLowerCase();
+      const cacheKey = `${programCountriesKey}|${normalizedQueryKey}`;
+
+      const cached = opportunityOptionsCache.get(cacheKey);
+      if (cached && Date.now() - cached.ts < OPPORTUNITY_OPTIONS_CACHE_TTL_MS) {
+        return cached.options;
+      }
+
+      const inflight = opportunityOptionsInFlight.get(cacheKey);
+      if (inflight) return inflight;
+
+      const request = searchCriteriaOpportunities({
+        opportunities: [],
+        organizations: null,
+        countries: countriesFilter,
+        titleContains: q.length === 0 ? null : q,
+        published: null,
+        verificationMethod: null,
+        verificationEnabled: null,
+        onlyCompletable: true,
+        pageNumber: 1,
+        pageSize: PAGE_SIZE_MEDIUM,
+      })
+        .then((data) => {
+          const options: OpportunitySelectOption[] = data.items.map((item) => ({
             value: item.id,
             label: item.title,
           }));
-          callback(options);
-          // Add to cache
-          data.items.forEach((item) => {
-            if (!dataOpportunities.some((x) => x.id === item.id)) {
-              setDataOpportunities((prev) => [...prev, item]);
-            }
+
+          setDataOpportunities((prev) => {
+            const existing = new Set(prev.map((x) => x.id));
+            const toAdd = data.items.filter((item) => !existing.has(item.id));
+            return toAdd.length > 0 ? [...prev, ...toAdd] : prev;
           });
+
+          setOpportunityOptionsCache(cacheKey, options);
+          return options;
+        })
+        .catch(() => [])
+        .finally(() => {
+          opportunityOptionsInFlight.delete(cacheKey);
         });
-      }, 1000)();
+
+      opportunityOptionsInFlight.set(cacheKey, request);
+      return request;
     },
-    [dataOpportunities],
+    [countriesFilter, programCountriesKey],
   );
 
   return (
-    <div className="space-y-3">
-      {/* Step Header - Editable */}
-      <div className="flex items-start gap-4">
-        {/* Step Number Badge */}
-        <div className="mt-2 flex-shrink-0">
-          {pathwayRule !== PathwayCompletionRule.Any &&
-          pathwayOrderMode === PathwayOrderMode.Sequential ? (
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-500 font-bold text-white">
-              {displayIndex + 1}
-            </div>
-          ) : (
-            <div className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-blue-400 bg-white text-lg font-bold text-blue-600">
-              ?
-            </div>
-          )}
+    <div className="rounded-lg border border-gray-200 bg-white p-4">
+      <div className="flex gap-3">
+        <div className="mt-1 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border-2 border-blue-400 bg-white text-xs font-bold text-blue-600">
+          {displayIndex + 1}
         </div>
 
-        <div className="flex-1 space-y-3">
-          {/* Step Name */}
-          <Controller
-            name={`pathway.steps.${stepIndex}.name`}
-            control={control}
-            rules={{ required: "Step name is required" }}
-            render={({ field, fieldState }) => (
-              <FormField
-                showWarningIcon={!!fieldState.error}
-                showError={!!fieldState.isTouched && !!fieldState.error}
-                error={fieldState.error?.message}
-              >
-                <FormInput
-                  inputProps={{
-                    type: "text",
-                    placeholder: "Step name...",
-                    className: "input",
-                    ...field,
-                  }}
-                />
-              </FormField>
-            )}
-          />
-
-          {/* Step Description */}
-          <Controller
-            name={`pathway.steps.${stepIndex}.description`}
-            control={control}
-            render={({ field }) => (
-              <textarea
-                placeholder="Step description (optional)..."
-                className="textarea textarea-bordered w-full text-sm"
-                rows={2}
-                {...field}
-                value={field.value ?? ""}
+        <div className="min-w-0 flex-1">
+          <div className="flex items-start justify-between gap-4">
+            <div className="min-w-0 flex-1 space-y-2">
+              <Controller
+                name={`pathway.steps.${stepIndex}.name`}
+                control={control}
+                rules={{ required: "Step name is required" }}
+                render={({ field, fieldState }) => (
+                  <FormField
+                    showWarningIcon={!!fieldState.error}
+                    showError={!!fieldState.isTouched && !!fieldState.error}
+                    error={fieldState.error?.message}
+                  >
+                    <FormInput
+                      inputProps={{
+                        type: "text",
+                        placeholder: "Step name...",
+                        className: "input",
+                        ...field,
+                      }}
+                    />
+                  </FormField>
+                )}
               />
-            )}
-          />
 
-          {/* Step Action Buttons */}
-          <div className="justify-endx flex gap-2">
-            <button
-              type="button"
-              onClick={onMoveUp}
-              className="btn btn-xs tooltip"
-              data-tip="Move Step Up"
-              disabled={isFirst}
-            >
-              ↑
-            </button>
-            <button
-              type="button"
-              onClick={onMoveDown}
-              className="btn btn-xs tooltip"
-              data-tip="Move Step Down"
-              disabled={isLast}
-            >
-              ↓
-            </button>
-            <button
-              type="button"
-              onClick={onRemove}
-              className="btn btn-error btn-xs tooltip text-white"
-              data-tip="Remove Step"
-            >
-              <IoMdTrash className="h-4 w-4" />
-            </button>
+              <Controller
+                name={`pathway.steps.${stepIndex}.description`}
+                control={control}
+                render={({ field }) => (
+                  <textarea
+                    placeholder="Step description (optional)..."
+                    className="textarea textarea-bordered w-full text-sm"
+                    rows={2}
+                    {...field}
+                    value={field.value ?? ""}
+                  />
+                )}
+              />
+            </div>
+
+            <div className="justify-endx flex gap-2">
+              <button
+                type="button"
+                onClick={onMoveUp}
+                className="btn btn-xs tooltip"
+                data-tip="Move Step Up"
+                disabled={isFirst}
+              >
+                ↑
+              </button>
+              <button
+                type="button"
+                onClick={onMoveDown}
+                className="btn btn-xs tooltip"
+                data-tip="Move Step Down"
+                disabled={isLast}
+              >
+                ↓
+              </button>
+              <button
+                type="button"
+                onClick={onRemove}
+                className="btn btn-error btn-xs tooltip text-white"
+                data-tip="Remove Step"
+              >
+                <IoMdTrash className="h-4 w-4" />
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -725,6 +786,7 @@ const StepEditComponent: React.FC<StepEditComponentProps> = ({
                                       error={fieldState.error?.message}
                                     >
                                       <Async
+                                        key={`opportunity-${stepIndex}-${taskIndex}-${programCountriesKey}`}
                                         instanceId={`opportunity-${stepIndex}-${taskIndex}`}
                                         classNames={{
                                           control: () =>
@@ -733,7 +795,9 @@ const StepEditComponent: React.FC<StepEditComponentProps> = ({
                                         isMulti={false}
                                         defaultOptions={true}
                                         cacheOptions
-                                        loadOptions={loadOpportunities}
+                                        loadOptions={(inputValue) =>
+                                          loadOpportunities(inputValue)
+                                        }
                                         onChange={(val: any) => {
                                           onChange(val?.value ?? "");
                                         }}
