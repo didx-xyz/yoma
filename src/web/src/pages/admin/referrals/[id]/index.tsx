@@ -9,10 +9,8 @@ import axios, { type AxiosError } from "axios";
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
 import Head from "next/head";
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import iconZlto from "public/images/icon-zlto.svg";
 import { type ParsedUrlQuery } from "querystring";
 import {
   useCallback,
@@ -28,7 +26,6 @@ import {
   useForm,
   type FieldValues,
 } from "react-hook-form";
-import Select from "react-select";
 import { FaExclamationTriangle } from "react-icons/fa";
 import {
   IoIosCheckmarkCircle,
@@ -36,8 +33,11 @@ import {
   IoMdArrowRoundBack,
   IoMdClose,
 } from "react-icons/io";
+import Select from "react-select";
 import { toast } from "react-toastify";
 import z from "zod";
+import type { Country } from "~/api/models/lookups";
+import type { Opportunity } from "~/api/models/opportunity";
 import {
   PathwayCompletionRule,
   PathwayOrderMode,
@@ -46,51 +46,49 @@ import {
   type ProgramRequestCreate,
   type ProgramRequestUpdate,
 } from "~/api/models/referrals";
-import type { Opportunity } from "~/api/models/opportunity";
+import { getCountries } from "~/api/services/lookups";
+import { getOpportunityById } from "~/api/services/opportunities";
 import {
   createReferralProgram,
   getReferralProgramById,
   updateReferralProgram,
   updateReferralProgramImage,
 } from "~/api/services/referrals";
-import type { Country } from "~/api/models/lookups";
-import { getCountries } from "~/api/services/lookups";
-import { getOpportunityById } from "~/api/services/opportunities";
-import AvatarUpload from "~/components/Organisation/Upsert/AvatarUpload";
 import CustomModal from "~/components/Common/CustomModal";
 import FormField from "~/components/Common/FormField";
 import FormInput from "~/components/Common/FormInput";
+import FormMessage, { FormMessageType } from "~/components/Common/FormMessage";
 import FormRequiredFieldMessage from "~/components/Common/FormRequiredFieldMessage";
 import MainLayout from "~/components/Layout/Main";
+import AvatarUpload from "~/components/Organisation/Upsert/AvatarUpload";
 import { PageBackground } from "~/components/PageBackground";
 import {
   AdminProgramInfo,
   ProgramInfoFilterOptions,
 } from "~/components/Referrals/AdminProgramInfo";
 import { AdminProgramPathwayEditComponent } from "~/components/Referrals/AdminProgramPathwayEdit";
-import { ProgramStatusBadge } from "~/components/Referrals/ProgramStatusBadge";
 import {
   AdminReferralProgramActions,
   ReferralProgramActionOptions,
 } from "~/components/Referrals/AdminReferralProgramActions";
+import { ProgramImage } from "~/components/Referrals/ProgramImage";
+import { ProgramStatusBadge } from "~/components/Referrals/ProgramStatusBadge";
 import { ApiErrors } from "~/components/Status/ApiErrors";
 import { InternalServerError } from "~/components/Status/InternalServerError";
 import { Loading } from "~/components/Status/Loading";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
+import { COUNTRY_CODE_WW } from "~/lib/constants";
 import { config } from "~/lib/react-query-config";
 import {
+  dateInputToUTC,
+  dateInputToUTCEndOfDay,
   getSafeUrl,
   getThemeFromRole,
   utcToDateInput,
-  dateInputToUTC,
-  dateInputToUTCEndOfDay,
 } from "~/lib/utils";
-import { COUNTRY_CODE_WW } from "~/lib/constants";
 import type { NextPageWithLayout } from "~/pages/_app";
 import { authOptions, type User } from "~/server/auth";
-import FormMessage, { FormMessageType } from "~/components/Common/FormMessage";
-import { ProgramImage } from "~/components/Referrals/ProgramImage";
 
 type SelectOption = { value: string; label: string };
 
@@ -1212,9 +1210,30 @@ const ReferralProgramForm: NextPageWithLayout<{
   // For preview, just use formData directly (Program type)
   const programPreview = useMemo<Program | null>(() => {
     if (!formData) return null;
+
+    // Ensure countries are displayable in the preview:
+    // - Admin form stores selected IDs (string[])
+    // - AdminProgramInfo expects lookup objects for friendly display
+    if (
+      Array.isArray(formData.countries) &&
+      formData.countries.length > 0 &&
+      typeof formData.countries[0] === "string" &&
+      Array.isArray(countriesData)
+    ) {
+      const selectedIds = formData.countries as string[];
+      const selectedCountries = countriesData.filter((c) =>
+        selectedIds.includes(c.id),
+      );
+
+      return {
+        ...formData,
+        countries: selectedCountries,
+      };
+    }
+
     // formData is already a Program with opportunity objects attached
     return formData;
-  }, [formData]);
+  }, [formData, countriesData]);
 
   // Create preview URL for newly uploaded image
   const imagePreviewUrl = useMemo(() => {
@@ -2104,63 +2123,6 @@ const ReferralProgramForm: NextPageWithLayout<{
                       </div>
                     </div>
 
-                    {/* Show current stats for edit mode */}
-                    {program && (
-                      <div className="flex flex-col gap-4">
-                        <h6 className="font-semibold">Current Stats</h6>
-                        <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-                          <div
-                            className={`rounded-lg p-3 ${(program.completionTotal ?? 0) > 0 ? "bg-green-50" : "bg-gray-50"}`}
-                          >
-                            <p className="text-xs text-gray-600">
-                              Total Completions
-                            </p>
-                            <p className="text-lg font-semibold">
-                              {program.completionTotal ?? 0}
-                            </p>
-                          </div>
-                          <div
-                            className={`rounded-lg p-3 ${(program.zltoRewardCumulative ?? 0) > 0 ? "bg-blue-50" : "bg-gray-50"}`}
-                          >
-                            <p className="text-xs text-gray-600">
-                              ZLTO Cumulative
-                            </p>
-                            <div className="flex items-center gap-1">
-                              <Image
-                                src={iconZlto}
-                                alt="Zlto"
-                                width={20}
-                                height={20}
-                                className="h-auto"
-                              />
-                              <p className="text-lg font-semibold">
-                                {program.zltoRewardCumulative ?? 0}
-                              </p>
-                            </div>
-                          </div>
-                          <div
-                            className={`rounded-lg p-3 ${(program.zltoRewardBalance ?? 0) > 0 ? "bg-blue-50" : "bg-yellow-50"}`}
-                          >
-                            <p className="text-xs text-gray-600">
-                              ZLTO Balance
-                            </p>
-                            <div className="flex items-center gap-1">
-                              <Image
-                                src={iconZlto}
-                                alt="Zlto"
-                                width={20}
-                                height={20}
-                                className="h-auto"
-                              />
-                              <p className="text-lg font-semibold">
-                                {program.zltoRewardBalance ?? 0}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
                     {/* Form-level errors */}
                     {formStateStep3.errors.root && (
                       <div className="mt-4">
@@ -2466,7 +2428,6 @@ const ReferralProgramForm: NextPageWithLayout<{
                       filterOptions={[
                         ProgramInfoFilterOptions.PROGRAM_INFO,
                         ProgramInfoFilterOptions.COMPLETION_REWARDS,
-                        ProgramInfoFilterOptions.ZLTO_REWARDS,
                         ProgramInfoFilterOptions.FEATURES,
                         ProgramInfoFilterOptions.PATHWAY,
                       ]}
