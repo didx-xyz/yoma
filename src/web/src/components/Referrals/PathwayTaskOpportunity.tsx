@@ -12,6 +12,12 @@ import { LoadingSkeleton } from "../Status/LoadingSkeleton";
 interface PathwayTaskOpportunityProps {
   opportunityId: string;
   opportunity?: Opportunity | OpportunityInfo; // Optional: provide to avoid fetching
+  /**
+   * Optional overrides for pathway/task-specific completable flags.
+   * Some APIs return these on the pathway task rather than on the opportunity itself.
+   */
+  isCompletableOverride?: boolean;
+  nonCompletableReasonOverride?: string | null;
   isCompleted?: boolean;
   /** Set to true to fetch full Opportunity data (admin), false for OpportunityInfo (public) */
   isAdmin?: boolean;
@@ -27,6 +33,8 @@ interface PathwayTaskOpportunityProps {
 const PathwayTaskOpportunity: React.FC<PathwayTaskOpportunityProps> = ({
   opportunityId,
   opportunity,
+  isCompletableOverride,
+  nonCompletableReasonOverride,
   isCompleted = false,
   isAdmin = false,
   showBadges = true,
@@ -53,6 +61,15 @@ const PathwayTaskOpportunity: React.FC<PathwayTaskOpportunityProps> = ({
   // Use provided opportunity or fetched opportunity
   const displayOpportunity = opportunity || fetchedOpportunity;
 
+  const effectiveIsCompletable =
+    typeof isCompletableOverride === "boolean"
+      ? isCompletableOverride
+      : (displayOpportunity as any)?.isCompletable;
+  const effectiveNonCompletableReason =
+    nonCompletableReasonOverride !== undefined
+      ? nonCompletableReasonOverride
+      : (displayOpportunity as any)?.nonCompletableReason;
+
   // Handle loading and error states for fetched data only
   if (!opportunity) {
     // Admin: show full error details
@@ -77,11 +94,9 @@ const PathwayTaskOpportunity: React.FC<PathwayTaskOpportunityProps> = ({
               />
 
               {/* Non-Completable Warning */}
-              {displayOpportunity.isCompletable === false &&
-                displayOpportunity.nonCompletableReason && (
-                  <TaskWarning
-                    reason={displayOpportunity.nonCompletableReason}
-                  />
+              {effectiveIsCompletable === false &&
+                effectiveNonCompletableReason && (
+                  <TaskWarning reason={effectiveNonCompletableReason} />
                 )}
             </div>
           ) : (
@@ -121,10 +136,9 @@ const PathwayTaskOpportunity: React.FC<PathwayTaskOpportunityProps> = ({
       />
 
       {/* Non-Completable Warning */}
-      {displayOpportunity?.isCompletable === false &&
-        displayOpportunity?.nonCompletableReason && (
-          <TaskWarning reason={displayOpportunity.nonCompletableReason} />
-        )}
+      {effectiveIsCompletable === false && effectiveNonCompletableReason && (
+        <TaskWarning reason={effectiveNonCompletableReason} />
+      )}
     </div>
   );
 };

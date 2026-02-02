@@ -1437,10 +1437,45 @@ const ReferralProgramForm: NextPageWithLayout<{
   const onSubmitStep = useCallback(
     async (nextStep: number, data: FieldValues) => {
       // set form data
+      const getCountryIds = (countries: unknown): string[] => {
+        if (!Array.isArray(countries) || countries.length === 0) return [];
+        return typeof countries[0] === "string"
+          ? (countries as string[])
+          : (countries as Country[]).map((c) => c.id);
+      };
+
+      const countriesChanged = (() => {
+        if (!("countries" in (data as any))) return false;
+        const prev = getCountryIds((formData as any).countries);
+        const next = getCountryIds((data as any).countries);
+
+        if (prev.length !== next.length) return true;
+        const prevKey = [...prev].sort().join(",");
+        const nextKey = [...next].sort().join(",");
+        return prevKey !== nextKey;
+      })();
+
       const model = {
         ...formData,
         ...data,
       } as Program;
+
+      // When countries change, clear ALL selected opportunities in the pathway.
+      // Opportunities are country-filtered, so force the admin to re-select.
+      if (countriesChanged && model.pathway?.steps?.length) {
+        model.pathway = {
+          ...model.pathway,
+          steps: (model.pathway.steps ?? []).map((step) => ({
+            ...step,
+            tasks: (step.tasks ?? []).map((task) => {
+              const t: any = { ...task };
+              t.entityId = "";
+              t.opportunity = undefined;
+              return t;
+            }),
+          })),
+        };
+      }
 
       setFormData(model);
 

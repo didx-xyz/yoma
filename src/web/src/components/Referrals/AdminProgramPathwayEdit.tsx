@@ -413,6 +413,29 @@ const StepEditComponent: React.FC<StepEditComponentProps> = ({
     opportunitiesFromTasks,
   );
 
+  const rememberOpportunityOptions = useCallback(
+    (options: OpportunitySelectOption[]) => {
+      if (!options || options.length === 0) return;
+      setDataOpportunities((prev) => {
+        const existing = new Set(prev.map((x) => x.id));
+        const toAdd: OpportunityInfo[] = options
+          .filter((o) => !!o?.value && !existing.has(o.value))
+          .map((o) => ({ id: o.value, title: o.label }) as OpportunityInfo);
+
+        return toAdd.length > 0 ? [...prev, ...toAdd] : prev;
+      });
+    },
+    [],
+  );
+
+  const rememberOpportunityOption = useCallback(
+    (option: OpportunitySelectOption | null | undefined) => {
+      if (!option?.value) return;
+      rememberOpportunityOptions([option]);
+    },
+    [rememberOpportunityOptions],
+  );
+
   // Update cache when opportunitiesFromTasks changes
   useEffect(() => {
     if (opportunitiesFromTasks.length > 0) {
@@ -456,6 +479,8 @@ const StepEditComponent: React.FC<StepEditComponentProps> = ({
 
       const cached = opportunityOptionsCache.get(cacheKey);
       if (cached && Date.now() - cached.ts < OPPORTUNITY_OPTIONS_CACHE_TTL_MS) {
+        // Ensure we can render a friendly label for a selected cached option.
+        rememberOpportunityOptions(cached.options);
         return cached.options;
       }
 
@@ -497,7 +522,7 @@ const StepEditComponent: React.FC<StepEditComponentProps> = ({
       opportunityOptionsInFlight.set(cacheKey, request);
       return request;
     },
-    [countriesFilter, programCountriesKey],
+    [countriesFilter, programCountriesKey, rememberOpportunityOptions],
   );
 
   return (
@@ -771,7 +796,9 @@ const StepEditComponent: React.FC<StepEditComponentProps> = ({
 
                                   // Determine the actual ID to use
                                   const actualId =
-                                    value || task?.opportunity?.id;
+                                    typeof value === "string"
+                                      ? value
+                                      : task?.opportunity?.id;
 
                                   // Find the label from cache
                                   const opportunity = dataOpportunities.find(
@@ -780,8 +807,6 @@ const StepEditComponent: React.FC<StepEditComponentProps> = ({
 
                                   return (
                                     <FormField
-                                      //label="Select Opportunity"
-                                      //showWarningIcon={!!fieldState.error}
                                       showError={!!fieldState.error}
                                       error={fieldState.error?.message}
                                     >
@@ -799,6 +824,7 @@ const StepEditComponent: React.FC<StepEditComponentProps> = ({
                                           loadOpportunities(inputValue)
                                         }
                                         onChange={(val: any) => {
+                                          rememberOpportunityOption(val);
                                           onChange(val?.value ?? "");
                                         }}
                                         value={
