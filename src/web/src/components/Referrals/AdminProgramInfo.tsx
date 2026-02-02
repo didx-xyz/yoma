@@ -63,6 +63,44 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
       .join(", ");
   }, [program?.countries]);
 
+  // Ensure we always have a data map that includes the opportunity objects already
+  // embedded on the program pathway tasks (these carry isCompletable/nonCompletableReason).
+  const hydratedOpportunityDataMap = useMemo(() => {
+    const merged: Record<string, Opportunity> = {
+      ...(opportunityDataMap ?? {}),
+    };
+
+    const steps = program?.pathway?.steps ?? [];
+    for (const step of steps) {
+      const tasks = step?.tasks ?? [];
+      for (const task of tasks) {
+        const opp = task?.opportunity as Opportunity | null;
+        if (!opp?.id) continue;
+
+        const taskIsCompletable = (task as any)?.isCompletable;
+        const taskNonCompletableReason = (task as any)?.nonCompletableReason;
+
+        // The program payload already contains the authoritative opportunity flags
+        // (isCompletable/nonCompletableReason). Ensure those win over any cached map entry.
+        merged[opp.id] = {
+          ...(merged[opp.id] ?? ({} as Opportunity)),
+          ...opp,
+          ...(typeof taskIsCompletable === "boolean"
+            ? { isCompletable: taskIsCompletable }
+            : null),
+          ...(typeof taskNonCompletableReason === "string" &&
+          taskNonCompletableReason.length > 0
+            ? { nonCompletableReason: taskNonCompletableReason }
+            : taskNonCompletableReason === null
+              ? { nonCompletableReason: null }
+              : null),
+        };
+      }
+    }
+
+    return merged;
+  }, [opportunityDataMap, program?.pathway?.steps]);
+
   // Map ProgramPathway to ProgramPathwayInfo for preview display
   const pathwayInfo = useMemo((): ProgramPathwayInfo | null => {
     if (!program.pathway) return null;
@@ -72,24 +110,49 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
         const tasks =
           step.tasks?.map((task) => {
             const oppId = task.opportunity?.id || (task as any).entityId;
-            const oppData = oppId ? opportunityDataMap?.[oppId] : null;
+            const oppData = oppId ? hydratedOpportunityDataMap?.[oppId] : null;
+
+            const taskIsCompletable = (task as any)?.isCompletable;
+            const taskNonCompletableReason = (task as any)
+              ?.nonCompletableReason;
+
+            const isCompletable =
+              (typeof taskIsCompletable === "boolean"
+                ? taskIsCompletable
+                : undefined) ??
+              (task.opportunity as any)?.isCompletable ??
+              (oppData as any)?.isCompletable ??
+              true;
+            const nonCompletableReason =
+              taskNonCompletableReason ??
+              (task.opportunity as any)?.nonCompletableReason ??
+              (oppData as any)?.nonCompletableReason ??
+              null;
+
+            const opportunity = task.opportunity
+              ? ({
+                  ...(task.opportunity as any),
+                  isCompletable,
+                  nonCompletableReason,
+                } as any)
+              : oppId
+                ? ({
+                    id: oppId,
+                    title: oppData?.title || "Selected Opportunity",
+                    isCompletable,
+                    nonCompletableReason,
+                  } as any)
+                : null;
 
             return {
               id: task.id,
               entityType: task.entityType as PathwayTaskEntityType,
-              opportunity: task.opportunity
-                ? task.opportunity
-                : oppId
-                  ? {
-                      id: oppId,
-                      title: oppData?.title || "Selected Opportunity",
-                    }
-                  : null,
+              opportunity,
               order: task.order,
               orderDisplay: task.orderDisplay ?? 0,
               completed: null,
-              isCompletable: oppData?.isCompletable ?? true,
-              nonCompletableReason: oppData?.nonCompletableReason ?? null,
+              isCompletable,
+              nonCompletableReason,
             };
           }) ?? [];
 
@@ -122,7 +185,7 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
       isCompletable: pathwayIsCompletable,
       steps,
     };
-  }, [program.pathway, opportunityDataMap]);
+  }, [program.pathway, hydratedOpportunityDataMap]);
 
   return (
     <div className="space-y-6">
@@ -482,7 +545,7 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
               <ProgramPathwayView
                 pathway={pathwayInfo}
                 isAdmin={true}
-                opportunityDataMap={opportunityDataMap}
+                opportunityDataMap={hydratedOpportunityDataMap}
               />
             ) : (
               <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">

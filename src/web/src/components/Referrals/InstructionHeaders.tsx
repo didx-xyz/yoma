@@ -563,6 +563,23 @@ export const PathwayTaskDisplay: React.FC<PathwayTaskDisplayProps> = ({
     ? "min-w-0 flex-1"
     : "mb-4 min-w-0 flex-1";
 
+  const canUseProvidedOpportunity = (opportunity: unknown): boolean => {
+    if (!opportunity || typeof opportunity !== "object") return false;
+    const o = opportunity as any;
+
+    // OpportunityItem only has {id,title}. We need richer fields to render logo/description.
+    return (
+      typeof o.description === "string" ||
+      typeof o.summary === "string" ||
+      typeof o.organizationName === "string" ||
+      typeof o.organizationLogoURL === "string"
+    );
+  };
+
+  const providedOpportunity = canUseProvidedOpportunity(opportunityData)
+    ? opportunityData
+    : undefined;
+
   return (
     <div className={isCompact ? "flex gap-2" : "flex gap-3"}>
       {/* Task Number/Bullet */}
@@ -597,7 +614,9 @@ export const PathwayTaskDisplay: React.FC<PathwayTaskDisplayProps> = ({
           <>
             <PathwayTaskOpportunity
               opportunityId={task.opportunity.id}
-              opportunity={opportunityData}
+              opportunity={providedOpportunity as any}
+              isCompletableOverride={task.isCompletable}
+              nonCompletableReasonOverride={task.nonCompletableReason}
               isCompleted={task.completed ?? false}
               isAdmin={isAdmin}
               showBadges={showBadges}
