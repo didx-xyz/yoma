@@ -27,6 +27,7 @@ namespace Yoma.Core.Domain.Referral.Extensions
         //ZltoRewardBalance: calculated inline
         ProofOfPersonhoodRequired = value.ProofOfPersonhoodRequired,
         PathwayRequired = value.PathwayRequired,
+        MultipleLinksAllowed = value.MultipleLinksAllowed,
         Status = value.Status,
         IsDefault = value.IsDefault,
         DateStart = value.DateStart,
