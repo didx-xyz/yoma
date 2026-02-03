@@ -23,19 +23,23 @@ namespace Yoma.Core.Domain.Referral.Helpers
       return programCountries.Any(c => c.Id == worldwideCountryId);
     }
 
-    public static List<Guid> ResolveAvailableCountriesForProgramSearch(Guid worldwideCountryId, bool isAuthenticated, bool isAdmin, Guid? userCountryId, List<Guid>? requestedCountries)
+    public static List<Guid>? ResolveAvailableCountriesForProgramSearch(Guid worldwideCountryId, bool isAuthenticated, bool isAdmin, Guid? userCountryId, List<Guid>? requestedCountries)
     {
       requestedCountries = requestedCountries?.Distinct().ToList();
 
-      // Authenticated users (non-admin): force scope to [UserCountry, Worldwide] when user country available
+      // Authenticated non-admin users:
+      // When a user country is available, always constrain results to
+      // [UserCountry + Worldwide], regardless of what was requested.
       if (isAuthenticated && !isAdmin && userCountryId.HasValue)
         return [userCountryId.Value, worldwideCountryId];
 
-      // Otherwise: if none requested, default to Worldwide only
+      // No countries explicitly requested:
+      // - Admins: no country filtering
+      // - Everyone else: default to Worldwide-only
       if (requestedCountries == null || requestedCountries.Count == 0)
-        return [worldwideCountryId];
+        return isAdmin ? null : [worldwideCountryId];
 
-      // Otherwise: use caller-provided countries 
+      // Explicit country filter provided by the caller
       return requestedCountries;
     }
   }
