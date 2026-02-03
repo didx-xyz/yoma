@@ -603,7 +603,6 @@ const StepEditComponent: React.FC<StepEditComponentProps> = ({
           </div>
         </div>
       </div>
-
       {/* Tasks Section */}
       <div className="mt-6 ml-12 space-y-3">
         {/* Task Instruction Header */}
@@ -925,7 +924,6 @@ const StepEditComponent: React.FC<StepEditComponentProps> = ({
           />
         )}
       </div>
-
       {/* Divider between steps */}
       {showDivider && (
         <div className="my-4 flex items-center gap-3">

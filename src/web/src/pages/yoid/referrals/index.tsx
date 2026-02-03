@@ -10,7 +10,7 @@ import { getServerSession } from "next-auth";
 import Head from "next/head";
 import { useRouter } from "next/router";
 import { useCallback, useEffect, useState, type ReactElement } from "react";
-import { FaPlus } from "react-icons/fa";
+import { FaShareAlt } from "react-icons/fa";
 import { IoWarningOutline } from "react-icons/io5";
 import type {
   ProgramInfo,
@@ -27,6 +27,7 @@ import YoIDLayout from "~/components/Layout/YoID";
 import NoRowsMessage from "~/components/NoRowsMessage";
 import { ReferrerCreateLinkModal } from "~/components/Referrals/ReferrerCreateLinkModal";
 import { ReferrerLinksList } from "~/components/Referrals/ReferrerLinksList";
+import { ReferrerProgramsList } from "~/components/Referrals/ReferrerProgramsList";
 import { ReferrerStats } from "~/components/Referrals/ReferrerStats";
 import { LoadingInline } from "~/components/Status/LoadingInline";
 import { handleUserSignIn } from "~/lib/authUtils";
@@ -34,7 +35,6 @@ import { config } from "~/lib/react-query-config";
 import { currentLanguageAtom, userProfileAtom } from "~/lib/store";
 import { authOptions } from "~/server/auth";
 import { type NextPageWithLayout } from "../../_app";
-import { ReferrerProgramsList } from "~/components/Referrals/ReferrerProgramsList";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
@@ -269,47 +269,35 @@ const ReferralsDashboard: NextPageWithLayout<{
               />
             </div>
 
-            {/* MULTI-PROGRAM MODE (DEFAULT) */}
+            {/* LINKS */}
             {hasLinks ? (
-              <div className="flex flex-col gap-8">
-                {/* LEFT COLUMN - Stats & Leaderboard */}
-                <div className="min-w-0 space-y-4 md:space-y-6 lg:col-span-1">
-                  {/* STATS CARDS */}
-                  <div className="space-y-2">
-                    <div className="font-family-nunito text-sm font-semibold text-black md:text-base">
-                      Your Performance
+              <div className="flex flex-col gap-4">
+                <ReferrerStats linksCount={linksData?.totalCount || 0} />
+
+                {/* ROW - Links */}
+                <div className="space-y-2">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="font-family-nunito font-semibold text-black">
+                      Link List
                     </div>
-
-                    <ReferrerStats />
                   </div>
-                </div>
 
-                {/* RIGHT COLUMN - Links */}
-                <div className="min-w-0 space-y-4 md:space-y-6 lg:col-span-2">
-                  <div className="space-y-2">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <div className="font-family-nunito text-sm font-semibold text-black md:text-base">
-                        Your Links
-                      </div>
+                  <ReferrerLinksList
+                    programs={programsData?.items || []}
+                    initialPageSize={3}
+                  />
+
+                  {!!programsData?.totalCount && (
+                    <div className="flex justify-center pt-2">
+                      <button
+                        onClick={handleCreateLink}
+                        className="btn btn-outline border-orange btn-sm group hover:bg-orange text-black normal-case hover:text-white"
+                      >
+                        <FaShareAlt className="text-orange h-3 w-3 group-hover:text-white" />
+                        Create Another Link
+                      </button>
                     </div>
-
-                    <ReferrerLinksList
-                      programs={programsData?.items || []}
-                      initialPageSize={3}
-                    />
-
-                    {!!programsData?.totalCount && (
-                      <div className="flex justify-center pt-2">
-                        <button
-                          onClick={handleCreateLink}
-                          className="btn btn-sm border-orange gap-2 text-orange-700 hover:bg-orange-100 disabled:opacity-50"
-                        >
-                          <FaPlus className="h-3 w-3" />
-                          Create Another Link
-                        </button>
-                      </div>
-                    )}
-                  </div>
+                  )}
                 </div>
               </div>
             ) : (
