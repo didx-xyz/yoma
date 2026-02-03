@@ -53,7 +53,7 @@ namespace Yoma.Core.Api.Controllers
     #region Anonymous Actions
     [SwaggerOperation(Summary = "Check if any referral programs are available (Anonymous)",
       Description =
-        "Returns true if there are any referral programs available that are active and have started. " +
+        "Returns true if there are any referral programs available that are active and have started (thus published state Active). " +
         "Country filtering behavior: " +
         "Anonymous users default to world-wide programs when no countries are specified, otherwise results are filtered by the specified countries. " +
         "Authenticated users (non-admin) are automatically filtered by their user country when available (including word-wide), otherwise default to world-wide or the specified countries. " +
