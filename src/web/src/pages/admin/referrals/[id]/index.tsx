@@ -24,6 +24,7 @@ import {
   Controller,
   useFieldArray,
   useForm,
+  useWatch,
   type FieldValues,
 } from "react-hook-form";
 import { FaExclamationTriangle } from "react-icons/fa";
@@ -727,6 +728,7 @@ const ReferralProgramForm: NextPageWithLayout<{
   // Watch pathway fields to keep dependent values in sync
   const pathwayRuleWatch = watchStep5("pathway.rule");
   const pathwayStepsWatch = watchStep5("pathway.steps");
+  const pathwayWatch = useWatch({ control: controlStep5, name: "pathway" });
 
   // Fetch all opportunities referenced in the pathway
   useEffect(() => {
@@ -1005,8 +1007,10 @@ const ReferralProgramForm: NextPageWithLayout<{
   useEffect(() => {
     if (!pathwayRequiredWatch) return;
 
-    const currentPathway = getValuesStep5("pathway") as any;
+    const currentPathway = (pathwayWatch ?? getValuesStep5("pathway")) as any;
     if (!currentPathway) return;
+
+    let didUpdate = false;
 
     // If pathway rule is Any, Sequential is invalid (selector is hidden), so force AnyOrder.
     if (
@@ -1017,6 +1021,7 @@ const ReferralProgramForm: NextPageWithLayout<{
         shouldDirty: true,
         shouldValidate: true,
       });
+      didUpdate = true;
     }
 
     const steps: any[] = Array.isArray(currentPathway.steps)
@@ -1038,6 +1043,7 @@ const ReferralProgramForm: NextPageWithLayout<{
           PathwayOrderMode.AnyOrder,
           { shouldDirty: true, shouldValidate: true },
         );
+        didUpdate = true;
       }
 
       // If a step order mode is Sequential, its rule must be All.
@@ -1050,14 +1056,22 @@ const ReferralProgramForm: NextPageWithLayout<{
           PathwayCompletionRule.All,
           { shouldDirty: true, shouldValidate: true },
         );
+        didUpdate = true;
       }
     });
+
+    // Ensure resolver-level errors are recomputed after we auto-fix hidden-field combos.
+    if (didUpdate) {
+      void triggerStep5();
+    }
   }, [
     pathwayRequiredWatch,
     pathwayRuleWatch,
     pathwayStepsWatch,
+    pathwayWatch,
     getValuesStep5,
     setValueStep5,
+    triggerStep5,
   ]);
 
   // Watch Step 3 fields and trigger validation for cross-field errors
