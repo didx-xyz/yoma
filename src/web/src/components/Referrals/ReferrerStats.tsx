@@ -10,9 +10,13 @@ import { ReferralStatsSmall } from "./ReferralStatsSmall";
 
 interface ReferrerStatsProps {
   link?: ReferralLink;
+  linksCount?: number;
 }
 
-export const ReferrerStats: React.FC<ReferrerStatsProps> = ({ link }) => {
+export const ReferrerStats: React.FC<ReferrerStatsProps> = ({
+  link,
+  linksCount,
+}) => {
   const {
     data: analytics,
     isLoading: isLoading,
@@ -50,11 +54,11 @@ export const ReferrerStats: React.FC<ReferrerStatsProps> = ({ link }) => {
       }
     >
       <ReferralStatsSmall
+        linksCount={linksCount || 0}
         totalReferrals={stats.totalReferrals}
         completed={stats.completed}
         pending={stats.pending}
         zltoEarned={stats.zltoEarned}
-        showDescriptions
       />
     </Suspense>
   );
