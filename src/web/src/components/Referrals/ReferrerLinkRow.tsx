@@ -112,7 +112,7 @@ export const ReferrerLinkRow: React.FC<ReferrerLinkRowProps> = ({
             >
               <div className="flex w-full min-w-0 items-center gap-2">
                 <span className="text-base-content block min-w-0 flex-1 overflow-hidden text-sm font-semibold text-ellipsis whitespace-nowrap md:text-sm">
-                  {link?.name ?? program?.name ?? "N/A"}
+                  {program?.name ?? link?.name ?? "N/A"}
                 </span>
               </div>
 

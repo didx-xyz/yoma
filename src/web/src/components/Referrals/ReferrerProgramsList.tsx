@@ -112,7 +112,7 @@ export const ReferrerProgramsList: React.FC<ProgramsListProps> = ({
               <button
                 onClick={loadMore}
                 disabled={isFetching}
-                className="btn btn-sm border-orange gap-2 text-orange-700 hover:bg-orange-100 disabled:opacity-50"
+                className="btn btn-outline border-orange btn-sm group hover:bg-orange text-black normal-case hover:text-white"
               >
                 {isFetching ? (
                   <>
@@ -122,7 +122,7 @@ export const ReferrerProgramsList: React.FC<ProgramsListProps> = ({
                 ) : (
                   <>
                     See More Programs
-                    <IoChevronDown className="h-4 w-4" />
+                    <IoChevronDown d="text-orange h-3 w-3 group-hover:text-white" />
                   </>
                 )}
               </button>
