@@ -73,15 +73,20 @@ export const ReferralStatsSmall: React.FC<ReferralStatsSmallProps> = ({
           {/* Total */}
           <div className="flex flex-1 flex-col gap-1">
             <div className="text-base-content/70 text-sm">Total</div>
+            <div className="text-base-content flex">
+              <span className="text-md mt-2 mr-1">👏</span>
+              <span className="text-[26px] font-semibold">
+                {(totalReferrals || 0).toLocaleString("en-US")}
+              </span>
+            </div>
             <div className="text-base-content flex items-center gap-2 text-[26px] font-semibold">
-              <Image
+              {/* <Image
                 src="/images/icon-referral-stats-total.svg"
                 alt="Total"
                 width={12}
                 height={13}
                 className="shrink-0"
-              />
-              {(totalReferrals || 0).toLocaleString("en-US")}
+              /> */}
             </div>
           </div>
         </div>

@@ -72,13 +72,15 @@ export const ReferrerLinkRow: React.FC<ReferrerLinkRowProps> = ({
       label: "Total",
       value: linkStats.totalReferrals,
       icon: (
-        <Image
-          src="/images/icon-referral-stats-total.svg"
-          alt="Total"
-          width={12}
-          height={13}
-          className="shrink-0"
-        />
+        // <Image
+        //   src="/images/icon-referral-stats-total.svg"
+        //   alt="Total"
+        //   width={12}
+        //   height={13}
+        //   className="shrink-0"
+        // />
+
+        <span className="text-md">👏</span>
       ),
     },
     {
