@@ -397,21 +397,13 @@ namespace Yoma.Core.Domain.Opportunity.Services
       var predicate = PredicateBuilder.False<OpportunityCategory>();
       foreach (var state in publishedStates)
       {
-        switch (state)
+        predicate = state switch
         {
-          case PublishedState.NotStarted:
-            predicate = predicate.Or(o => o.OpportunityStatusId == statusActiveId && o.OpportunityDateStart > DateTimeOffset.UtcNow);
-
-            break;
-
-          case PublishedState.Active:
-            predicate = predicate.Or(o => o.OpportunityStatusId == statusActiveId && o.OpportunityDateStart <= DateTimeOffset.UtcNow);
-            break;
-
-          case PublishedState.Expired:
-            predicate = predicate.Or(o => o.OpportunityStatusId == statusExpiredId);
-            break;
-        }
+          PublishedState.NotStarted => predicate.Or(o => o.OpportunityStatusId == statusActiveId && o.OpportunityDateStart > DateTimeOffset.UtcNow),
+          PublishedState.Active => predicate.Or(o => o.OpportunityStatusId == statusActiveId && o.OpportunityDateStart <= DateTimeOffset.UtcNow),
+          PublishedState.Expired => predicate.Or(o => o.OpportunityStatusId == statusExpiredId),
+          _ => throw new InvalidOperationException($"Published state of '{state}' is not supported"),
+        };
       }
 
       query = query.Where(predicate);
@@ -478,20 +470,13 @@ namespace Yoma.Core.Domain.Opportunity.Services
       var predicate = PredicateBuilder.False<OpportunityCountry>();
       foreach (var state in publishedStates)
       {
-        switch (state)
+        predicate = state switch
         {
-          case PublishedState.NotStarted:
-            predicate = predicate.Or(o => o.OpportunityStatusId == statusActiveId && o.OpportunityDateStart > DateTimeOffset.UtcNow);
-            break;
-
-          case PublishedState.Active:
-            predicate = predicate.Or(o => o.OpportunityStatusId == statusActiveId && o.OpportunityDateStart <= DateTimeOffset.UtcNow);
-            break;
-
-          case PublishedState.Expired:
-            predicate = predicate.Or(o => o.OpportunityStatusId == statusExpiredId);
-            break;
-        }
+          PublishedState.NotStarted => predicate.Or(o => o.OpportunityStatusId == statusActiveId && o.OpportunityDateStart > DateTimeOffset.UtcNow),
+          PublishedState.Active => predicate.Or(o => o.OpportunityStatusId == statusActiveId && o.OpportunityDateStart <= DateTimeOffset.UtcNow),
+          PublishedState.Expired => predicate.Or(o => o.OpportunityStatusId == statusExpiredId),
+          _ => throw new InvalidOperationException($"Published state of '{state}' is not supported"),
+        };
       }
 
       query = query.Where(predicate);
@@ -548,21 +533,13 @@ namespace Yoma.Core.Domain.Opportunity.Services
       var predicate = PredicateBuilder.False<OpportunityLanguage>();
       foreach (var state in publishedStates)
       {
-        switch (state)
+        predicate = state switch
         {
-          case PublishedState.NotStarted:
-            predicate = predicate.Or(o => o.OpportunityStatusId == statusActiveId && o.OpportunityDateStart > DateTimeOffset.UtcNow);
-
-            break;
-
-          case PublishedState.Active:
-            predicate = predicate.Or(o => o.OpportunityStatusId == statusActiveId && o.OpportunityDateStart <= DateTimeOffset.UtcNow);
-            break;
-
-          case PublishedState.Expired:
-            predicate = predicate.Or(o => o.OpportunityStatusId == statusExpiredId);
-            break;
-        }
+          PublishedState.NotStarted => predicate.Or(o => o.OpportunityStatusId == statusActiveId && o.OpportunityDateStart > DateTimeOffset.UtcNow),
+          PublishedState.Active => predicate.Or(o => o.OpportunityStatusId == statusActiveId && o.OpportunityDateStart <= DateTimeOffset.UtcNow),
+          PublishedState.Expired => predicate.Or(o => o.OpportunityStatusId == statusExpiredId),
+          _ => throw new InvalidOperationException($"Published state of '{state}' is not supported"),
+        };
       }
 
       query = query.Where(predicate);
@@ -615,21 +592,13 @@ namespace Yoma.Core.Domain.Opportunity.Services
       var predicate = PredicateBuilder.False<Models.Opportunity>();
       foreach (var state in publishedStates)
       {
-        switch (state)
+        predicate = state switch
         {
-          case PublishedState.NotStarted:
-            predicate = predicate.Or(o => o.StatusId == statusActiveId && o.DateStart > DateTimeOffset.UtcNow);
-
-            break;
-
-          case PublishedState.Active:
-            predicate = predicate.Or(o => o.StatusId == statusActiveId && o.DateStart <= DateTimeOffset.UtcNow);
-            break;
-
-          case PublishedState.Expired:
-            predicate = predicate.Or(o => o.StatusId == statusExpiredId);
-            break;
-        }
+          PublishedState.NotStarted => predicate.Or(o => o.StatusId == statusActiveId && o.DateStart > DateTimeOffset.UtcNow),
+          PublishedState.Active => predicate.Or(o => o.StatusId == statusActiveId && o.DateStart <= DateTimeOffset.UtcNow),
+          PublishedState.Expired => predicate.Or(o => o.StatusId == statusExpiredId),
+          _ => throw new InvalidOperationException($"Published state of '{state}' is not supported"),
+        };
       }
 
       query = query.Where(predicate);
@@ -675,21 +644,13 @@ namespace Yoma.Core.Domain.Opportunity.Services
       var predicate = PredicateBuilder.False<Models.Opportunity>();
       foreach (var state in publishedStates)
       {
-        switch (state)
+        predicate = state switch
         {
-          case PublishedState.NotStarted:
-            predicate = predicate.Or(o => o.StatusId == statusActiveId && o.DateStart > DateTimeOffset.UtcNow);
-
-            break;
-
-          case PublishedState.Active:
-            predicate = predicate.Or(o => o.StatusId == statusActiveId && o.DateStart <= DateTimeOffset.UtcNow);
-            break;
-
-          case PublishedState.Expired:
-            predicate = predicate.Or(o => o.StatusId == statusExpiredId);
-            break;
-        }
+          PublishedState.NotStarted => predicate.Or(o => o.StatusId == statusActiveId && o.DateStart > DateTimeOffset.UtcNow),
+          PublishedState.Active => predicate.Or(o => o.StatusId == statusActiveId && o.DateStart <= DateTimeOffset.UtcNow),
+          PublishedState.Expired => predicate.Or(o => o.StatusId == statusExpiredId),
+          _ => throw new InvalidOperationException($"Published state of '{state}' is not supported"),
+        };
       }
 
       query = query.Where(predicate);
@@ -748,21 +709,13 @@ namespace Yoma.Core.Domain.Opportunity.Services
       var predicate = PredicateBuilder.False<Models.Opportunity>();
       foreach (var state in publishedStates)
       {
-        switch (state)
+        predicate = state switch
         {
-          case PublishedState.NotStarted:
-            predicate = predicate.Or(o => o.StatusId == statusActiveId && o.DateStart > DateTimeOffset.UtcNow);
-
-            break;
-
-          case PublishedState.Active:
-            predicate = predicate.Or(o => o.StatusId == statusActiveId && o.DateStart <= DateTimeOffset.UtcNow);
-            break;
-
-          case PublishedState.Expired:
-            predicate = predicate.Or(o => o.StatusId == statusExpiredId);
-            break;
-        }
+          PublishedState.NotStarted => predicate.Or(o => o.StatusId == statusActiveId && o.DateStart > DateTimeOffset.UtcNow),
+          PublishedState.Active => predicate.Or(o => o.StatusId == statusActiveId && o.DateStart <= DateTimeOffset.UtcNow),
+          PublishedState.Expired => predicate.Or(o => o.StatusId == statusExpiredId),
+          _ => throw new InvalidOperationException($"Published state of '{state}' is not supported"),
+        };
       }
 
       query = query.Where(predicate);
@@ -873,21 +826,13 @@ namespace Yoma.Core.Domain.Opportunity.Services
         var predicate = PredicateBuilder.False<Models.Opportunity>();
         foreach (var state in filter.PublishedStates)
         {
-          switch (state)
+          predicate = state switch
           {
-            case PublishedState.NotStarted:
-              predicate = predicate.Or(o => o.StatusId == statusActiveId && o.DateStart > DateTimeOffset.UtcNow);
-
-              break;
-
-            case PublishedState.Active:
-              predicate = predicate.Or(o => o.StatusId == statusActiveId && o.DateStart <= DateTimeOffset.UtcNow);
-              break;
-
-            case PublishedState.Expired:
-              predicate = predicate.Or(o => o.StatusId == statusExpiredId);
-              break;
-          }
+            PublishedState.NotStarted => predicate.Or(o => o.StatusId == statusActiveId && o.DateStart > DateTimeOffset.UtcNow),
+            PublishedState.Active => predicate.Or(o => o.StatusId == statusActiveId && o.DateStart <= DateTimeOffset.UtcNow),
+            PublishedState.Expired => predicate.Or(o => o.StatusId == statusExpiredId),
+            _ => throw new InvalidOperationException($"Published state of '{state}' is not supported"),
+          };
         }
 
         query = query.Where(predicate);

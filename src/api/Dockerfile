@@ -8,7 +8,7 @@ COPY ./src ./src
 COPY Yoma.Core.sln .
 
 RUN dotnet restore
-RUN dotnet publish --output /api/ --configuration Release
+RUN dotnet publish ./src/application/Yoma.Core.Api/Yoma.Core.Api.csproj -c Release -o /api --no-restore
 
 ###
 # Runner

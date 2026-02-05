@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Http;
+using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Referral.Models;
 
 namespace Yoma.Core.Domain.Referral.Interfaces
@@ -14,6 +15,8 @@ namespace Yoma.Core.Domain.Referral.Interfaces
     Program? GetDefaultOrNull(bool includeChildItems, bool includeComputed);
 
     Program GetByLinkId(Guid linkId, bool includeChildItems, bool includeComputed);
+
+    List<Domain.Lookups.Models.Country> ListSearchCriteriaCountries(List<PublishedState>? publishedStates);
 
     ProgramSearchResults Search(ProgramSearchFilterAdmin filter);
 

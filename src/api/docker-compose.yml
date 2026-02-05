@@ -289,7 +289,7 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Local
       ASPNETCORE_URLS: "http://+:5000"
-      ConnectionStrings__SQLConnection: "Host=postgres;Port=5432;Database=yoma-dev;Username=postgres;Password=P@ssword1;SslMode=Prefer;Trust Server Certificate=True;Include Error Detail=true;"
+      ConnectionStrings__SQLConnection: "Host=postgres;Port=5432;Database=yoma-dev;Username=postgres;Password=P@ssword1;SslMode=Prefer;Trust Server Certificate=True;Include Error Detail=true;GSS Encryption Mode=Disable;"
       ConnectionStrings__RedisConnection: "valkey:6379"
       Logging__LogLevel__Default: "Debug"
       Logging__LogLevel__Microsoft: "Debug"

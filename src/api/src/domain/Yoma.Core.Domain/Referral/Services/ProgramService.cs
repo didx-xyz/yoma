@@ -163,6 +163,66 @@ namespace Yoma.Core.Domain.Referral.Services
       return result;
     }
 
+    public List<Domain.Lookups.Models.Country> ListSearchCriteriaCountries(List<PublishedState>? publishedStates)
+    {
+      var worldwideCode = Country.Worldwide.ToDescription();
+      var countryIdWorldwide = _countryService.GetByCodeAlpha2(worldwideCode).Id;
+      var isAuthenticated = HttpContextAccessorHelper.UserContextAvailable(_httpContextAccessor);
+      var isAdmin = HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor);
+      var user = isAuthenticated ? _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false) : null;
+      var userCountryId = user?.CountryId;
+
+      // Anonymous users: only allow published state active (active + started), ignore input
+      // Authenticated users: if none specified, default to published state active; else use provided list
+      publishedStates = !isAuthenticated || publishedStates == null || publishedStates.Count == 0
+        ? [PublishedState.Active]
+        : publishedStates;
+
+      //non-admin users are restricted to user country + WW; anonymous/admin users remain unfiltered
+      var resolvedCountryIds = ProgramCountryPolicy.ResolveAvailableCountriesForProgramSearch(countryIdWorldwide, isAuthenticated, isAdmin, userCountryId, null, false);
+
+      var statusActiveId = _programStatusService.GetByName(ProgramStatus.Active.ToString()).Id;
+      var statusExpiredId = _programStatusService.GetByName(ProgramStatus.Expired.ToString()).Id;
+
+      var query = _programCountryRepository.Query();
+
+      if (resolvedCountryIds != null && resolvedCountryIds.Count != 0)
+        query = query.Where(o => resolvedCountryIds.Contains(o.CountryId));
+
+      var now = DateTimeOffset.UtcNow;
+      var predicate = PredicateBuilder.False<ProgramCountry>();
+      foreach (var state in publishedStates)
+      {
+        predicate = state switch
+        {
+          PublishedState.NotStarted => predicate.Or(o => o.ProgramStatusId == statusActiveId && o.ProgramDateStart > now),
+          PublishedState.Active => predicate.Or(o => o.ProgramStatusId == statusActiveId && o.ProgramDateStart <= now),
+          PublishedState.Expired => predicate.Or(o => o.ProgramStatusId == statusExpiredId),
+          _ => throw new ArgumentOutOfRangeException(nameof(publishedStates), $"Published state '{state}' is not supported"),
+        };
+      }
+
+      query = query.Where(predicate);
+
+      var countryPrograms = query
+       .GroupBy(o => o.CountryId)
+       .Select(g => new { CountryId = g.Key, ProgramCount = g.Count() })
+       .ToList();
+
+      var countries = _countryService.List()
+        .Where(o => countryPrograms.Select(co => co.CountryId).Contains(o.Id))
+        .ToList();
+
+      var results = countries
+        .OrderByDescending(c => c.CodeAlpha2 == worldwideCode) //ensure Worldwide appears first
+        .ThenByDescending(c => userCountryId != null && c.Id == userCountryId) //followed by the user's country if available and has one or more programs mapped
+        .ThenByDescending(c => countryPrograms.FirstOrDefault(co => co.CountryId == c.Id)?.ProgramCount ?? 0) //followed by the remaining countries with programs, ordered by program counts descending
+        .ThenBy(o => o.Name) //lastly alphabetically by name
+        .ToList();
+
+      return results;
+    }
+
     public ProgramSearchResults Search(ProgramSearchFilterAdmin filter)
     {
       ArgumentNullException.ThrowIfNull(filter, nameof(filter));
@@ -203,21 +263,13 @@ namespace Yoma.Core.Domain.Referral.Services
         var predicate = PredicateBuilder.False<Program>();
         foreach (var state in filter.PublishedStates)
         {
-          switch (state)
+          predicate = state switch
           {
-            case PublishedState.NotStarted:
-              predicate = predicate.Or(o => o.StatusId == statusActiveId && o.DateStart > DateTimeOffset.UtcNow);
-
-              break;
-
-            case PublishedState.Active:
-              predicate = predicate.Or(o => o.StatusId == statusActiveId && o.DateStart <= DateTimeOffset.UtcNow);
-              break;
-
-            case PublishedState.Expired:
-              predicate = predicate.Or(o => o.StatusId == statusExpiredId);
-              break;
-          }
+            PublishedState.NotStarted => predicate.Or(o => o.StatusId == statusActiveId && o.DateStart > DateTimeOffset.UtcNow),
+            PublishedState.Active => predicate.Or(o => o.StatusId == statusActiveId && o.DateStart <= DateTimeOffset.UtcNow),
+            PublishedState.Expired => predicate.Or(o => o.StatusId == statusExpiredId),
+            _ => throw new InvalidOperationException($"Published state '{state}' is not supported"),
+          };
         }
 
         query = query.Where(predicate);
