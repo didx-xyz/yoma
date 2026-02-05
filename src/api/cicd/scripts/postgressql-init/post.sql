@@ -744,6 +744,7 @@ DECLARE
   v_task_order_display smallint;
   v_task_order smallint;
   v_task_id uuid;
+  v_used_opp_ids uuid[];
 
   -- random name helpers
   v_arr text[];
@@ -1013,6 +1014,7 @@ BEGIN
         -- 1..3 tasks per step
         v_tasks_count := 1 + floor(random()*3)::int;
         v_task_order_display := 1;
+        v_used_opp_ids := ARRAY[]::uuid[];
 
         FOR t IN 1..v_tasks_count LOOP
           -- choose a valid opportunity (must overlap program countries)
@@ -1022,6 +1024,7 @@ BEGIN
           WHERE O."VerificationEnabled" = TRUE
             AND O."VerificationMethod" IS NOT NULL
             AND O."StatusId" = (SELECT "Id" FROM "Opportunity"."OpportunityStatus" WHERE "Name"='Active')
+            AND NOT (O."Id" = ANY(v_used_opp_ids))
             AND EXISTS (
               SELECT 1
               FROM "Opportunity"."OpportunityCountries" OC
@@ -1047,6 +1050,7 @@ BEGIN
             v_task_id, v_step_id, 'Opportunity', v_opp_id, v_task_order, v_task_order_display, v_now, v_now
           );
 
+          v_used_opp_ids := array_append(v_used_opp_ids, v_opp_id);
           v_task_order_display := v_task_order_display + 1;
         END LOOP;
 

@@ -25,6 +25,8 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
       {
         Id = entity.Id,
         ProgramId = entity.ProgramId,
+        ProgramStatusId = entity.Program.StatusId,
+        ProgramDateStart = entity.Program.DateStart,
         CountryId = entity.CountryId,
         CountryName = entity.Country.Name,
         DateCreated = entity.DateCreated

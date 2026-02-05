@@ -86,6 +86,26 @@ namespace Yoma.Core.Api.Controllers
       return Ok(result);
     }
 
+    [SwaggerOperation(Summary = "Return a list of countries associated with programs (Anonymous)",
+      Description =
+        "By default, results include programs that are active and have started (published state Active). Authenticated users may override the default behavior. " +
+        "Country resolution behavior: " +
+        "Anonymous and administrative users receive all countries linked to programs, including World-Wide where applicable. " +
+        "Authenticated users (non-admin) receive their user country when available, and World-Wide if programs are associated with it"
+    )]
+    [HttpGet("program/search/filter/country")]
+    [AllowAnonymous]
+    public ActionResult<List<Domain.Lookups.Models.Country>> ListProgramSearchCriteriaCountries([FromQuery] List<PublishedState>? publishedStates)
+    {
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(ListProgramSearchCriteriaCountries));
+
+      var result = _programService.ListSearchCriteriaCountries(publishedStates);
+
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(ListProgramSearchCriteriaCountries));
+
+      return Ok(result);
+    }
+
     [SwaggerOperation(Summary = "Search for referral programs (Anonymous)",
       Description =
         "By default, results include programs that are active and have started (thus published state Active). Authenticated users can override the default behavior. " +
