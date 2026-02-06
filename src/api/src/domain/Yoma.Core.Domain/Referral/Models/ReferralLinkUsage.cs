@@ -38,11 +38,9 @@ namespace Yoma.Core.Domain.Referral.Models
         if (!ProgramCompletionWindowInDays.HasValue && !ProgramDateEnd.HasValue) return null;
 
         var windowDateEnd = ProgramCompletionWindowInDays.HasValue ? DateClaimed.AddDays(ProgramCompletionWindowInDays.Value) : (DateTimeOffset?)null;
-
         var effectiveDateEnd = DateTimeHelper.Min(windowDateEnd, ProgramDateEnd)!;
 
         var remaining = effectiveDateEnd.Value - DateTimeOffset.UtcNow;
-
         return remaining <= TimeSpan.Zero ? 0 : (int)Math.Ceiling(remaining.TotalDays);
       }
     }
