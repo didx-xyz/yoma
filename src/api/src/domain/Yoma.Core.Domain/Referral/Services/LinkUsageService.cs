@@ -847,6 +847,7 @@ namespace Yoma.Core.Domain.Referral.Services
         ProgramCompletionWindowInDays = item.ProgramCompletionWindowInDays,
         ProgramDateEnd = item.ProgramDateEnd,
         TimeRemainingInDays = item.TimeRemainingInDays,
+        DateCompleteBy = item.DateCompleteBy,
         LinkId = item.LinkId,
         LinkName = item.LinkName,
         UserIdReferrer = item.UserIdReferrer,

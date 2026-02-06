@@ -1,4 +1,5 @@
 
+using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Helpers;
 
 namespace Yoma.Core.Domain.Referral.Models
@@ -45,6 +46,8 @@ namespace Yoma.Core.Domain.Referral.Models
         return remaining <= TimeSpan.Zero ? 0 : (int)Math.Ceiling(remaining.TotalDays);
       }
     }
+
+    public DateTimeOffset? DateCompleteBy => TimeRemainingInDays.HasValue ? DateClaimed.AddDays(TimeRemainingInDays.Value).ToEndOfDay() : null;
 
     public Guid LinkId { get; set; }
 

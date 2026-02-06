@@ -24,6 +24,8 @@ namespace Yoma.Core.Domain.Referral.Models
 
     public int? TimeRemainingInDays { get; set; }
 
+    public DateTimeOffset? DateCompleteBy { get; set; }
+
     public Guid LinkId { get; set; }
 
     public string LinkName { get; set; } = null!;

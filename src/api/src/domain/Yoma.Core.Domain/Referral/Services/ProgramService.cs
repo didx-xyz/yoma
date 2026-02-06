@@ -424,9 +424,9 @@ namespace Yoma.Core.Domain.Referral.Services
         && request.DateEnd.HasValue && request.CompletionWindowInDays.HasValue
         && request.DateStart.AddDays(request.CompletionWindowInDays.Value) > request.DateEnd.Value)
       {
-          throw new ValidationException(
-            "The completion window exceeds the program end date. Based on the selected start and end dates, the maximum allowed completion window is " +
-            $"{(request.DateEnd.Value - request.DateStart).Days} days");
+        throw new ValidationException(
+          "The completion window exceeds the program end date. Based on the selected start and end dates, the maximum allowed completion window is " +
+          $"{(request.DateEnd.Value - request.DateStart).Days} days");
       }
 
       // If DateEnd is in the past/now, immediately expire 
