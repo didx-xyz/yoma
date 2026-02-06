@@ -9,7 +9,7 @@ namespace Yoma.Core.Domain.Core.Helpers
       if (string.IsNullOrWhiteSpace(value)) return null;
       value = value.Trim();
 
-      if (!DateTimeOffset.TryParse(value, out var result) || result == default) return null;
+      if (!DateTimeOffset.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var result) || result == default) return null;
 
       return result;
     }

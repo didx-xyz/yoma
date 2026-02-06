@@ -80,9 +80,9 @@ namespace Yoma.Core.Domain.Referral.Services
         .Where(o => programIds.Contains(o.ProgramId) && statusLimitReachableIds.Contains(o.StatusId))
         .ToList();
 
-      if (items.Count == 0 && logger?.IsEnabled(LogLevel.Information) == true)
+      if (items.Count == 0)
       {
-        logger?.LogInformation("No links eligible to flip to limit reached for {ProgramCount} program(s)", programIds.Count);
+        if (logger?.IsEnabled(LogLevel.Information) == true) logger?.LogInformation("No links eligible to flip to limit reached for {ProgramCount} program(s)", programIds.Count);
         return;
       }
 
@@ -152,9 +152,9 @@ namespace Yoma.Core.Domain.Referral.Services
         .Where(o => programIds.Contains(o.ProgramId) && statusCancellableIds.Contains(o.StatusId))
         .ToList();
 
-      if (items.Count == 0 && logger?.IsEnabled(LogLevel.Information) == true)
+      if (items.Count == 0)
       {
-        logger?.LogInformation("No cancellable links found for {ProgramCount} program(s)", programIds.Count);
+        if (logger?.IsEnabled(LogLevel.Information) == true) logger?.LogInformation("No cancellable links found for {ProgramCount} program(s)", programIds.Count);
         return;
       }
 
@@ -186,9 +186,9 @@ namespace Yoma.Core.Domain.Referral.Services
         .Where(o => programIds.Contains(o.ProgramId) && statusExpirableIds.Contains(o.StatusId))
         .ToList();
 
-      if (items.Count == 0 && logger?.IsEnabled(LogLevel.Information) == true)
+      if (items.Count == 0)
       {
-        logger?.LogInformation("No expirable links found for {ProgramCount} program(s)", programIds.Count);
+        if (logger?.IsEnabled(LogLevel.Information) == true) logger?.LogInformation("No expirable links found for {ProgramCount} program(s)", programIds.Count);
         return;
       }
 
@@ -233,9 +233,9 @@ namespace Yoma.Core.Domain.Referral.Services
         .Where(o => linkIds.Contains(o.LinkId) && statusExpirableIds.Contains(o.StatusId))
         .ToList();
 
-      if (items.Count == 0 && logger?.IsEnabled(LogLevel.Information) == true)
+      if (items.Count == 0)
       {
-        logger?.LogInformation("No expirable link usages found for {LinkCount} link(s)", linkIds.Count);
+        if (logger?.IsEnabled(LogLevel.Information) == true) logger?.LogInformation("No expirable link usages found for {LinkCount} link(s)", linkIds.Count);
         return;
       }
 
