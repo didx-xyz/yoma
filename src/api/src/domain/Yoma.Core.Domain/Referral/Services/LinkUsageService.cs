@@ -308,11 +308,10 @@ namespace Yoma.Core.Domain.Referral.Services
         {
           case ReferralLinkUsageStatus.Pending:
             // Fallback guard in case program expiration job has’t run yet
-            var effectiveExpiry = program.CompletionWindowInDays.HasValue
-              ? usageExisting.DateClaimed.AddDays(program.CompletionWindowInDays.Value)
-              : program.DateEnd; // fallback to program end if defined
+            var windowExpiry = program.CompletionWindowInDays.HasValue ? usageExisting.DateClaimed.AddDays(program.CompletionWindowInDays.Value) : (DateTimeOffset?)null;
+            var effectiveExpiry = DateTimeHelper.Min(windowExpiry, program.DateEnd);
 
-            if (effectiveExpiry.HasValue && effectiveExpiry <= DateTimeOffset.UtcNow)
+            if (effectiveExpiry.HasValue && effectiveExpiry.Value <= DateTimeOffset.UtcNow)
               throw new ValidationException(
                 $"{msgUsageExisting}. Your previous claim for link '{existingLink.Name}' on '{usageExisting.DateClaimed:yyyy-MM-dd}' has expired on '{effectiveExpiry:yyyy-MM-dd}'");
 
@@ -660,7 +659,7 @@ namespace Yoma.Core.Domain.Referral.Services
                   else if ((rewardReferee ?? 0m) > 0m)
                     if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Referral progress: referee PARTIAL payout for usage {UsageId} => {Amount} (target {Target})", myUsage.Id, rewardReferee, refereeTarget);
                     else
-                    if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Referral progress: referee ZERO payout for usage {UsageId}", myUsage.Id);
+                      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Referral progress: referee ZERO payout for usage {UsageId}", myUsage.Id);
               }
               else
                 if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Referral progress: referee payout not configured (null) for usage {UsageId}", myUsage.Id);
@@ -672,7 +671,7 @@ namespace Yoma.Core.Domain.Referral.Services
                   else if ((rewardReferrer ?? 0m) > 0m)
                     if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Referral progress: referrer PARTIAL payout for usage {UsageId} => {Amount} (target {Target})", myUsage.Id, rewardReferrer, referrerTarget);
                     else
-                    if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Referral progress: referrer ZERO payout for usage {UsageId}", myUsage.Id);
+                      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Referral progress: referrer ZERO payout for usage {UsageId}", myUsage.Id);
               }
               else
                 if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Referral progress: referrer payout not configured (null) for usage {UsageId}", myUsage.Id);
@@ -845,6 +844,10 @@ namespace Yoma.Core.Domain.Referral.Services
         ProgramId = item.ProgramId,
         ProgramName = item.ProgramName,
         ProgramDescription = item.ProgramDescription,
+        ProgramCompletionWindowInDays = item.ProgramCompletionWindowInDays,
+        ProgramDateEnd = item.ProgramDateEnd,
+        TimeRemainingInDays = item.TimeRemainingInDays,
+        DateCompleteBy = item.DateCompleteBy,
         LinkId = item.LinkId,
         LinkName = item.LinkName,
         UserIdReferrer = item.UserIdReferrer,

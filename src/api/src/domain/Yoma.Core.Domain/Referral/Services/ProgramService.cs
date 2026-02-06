@@ -325,10 +325,18 @@ namespace Yoma.Core.Domain.Referral.Services
       await _programRequestValidatorCreate.ValidateAndThrowAsync(request);
 
       request.DateStart = request.DateStart.RemoveTime();
-      if (request.DateEnd.HasValue) request.DateEnd = request.DateEnd.Value.ToEndOfDay();
-
       if (request.DateStart < DateTimeOffset.UtcNow.RemoveTime())
         throw new ValidationException("The start date cannot be in the past, it can be today or later");
+
+      if (request.DateEnd.HasValue)
+      {
+        request.DateEnd = request.DateEnd.Value.ToEndOfDay();
+
+        if (request.CompletionWindowInDays.HasValue && request.DateStart.AddDays(request.CompletionWindowInDays.Value) > request.DateEnd.Value)
+          throw new ValidationException(
+            "The completion window exceeds the program end date. Based on the selected start and end dates, the maximum allowed completion window is " +
+            $"{(request.DateEnd.Value - request.DateStart).Days} days");
+      }
 
       var existingByName = GetByNameOrNull(request.Name, false, false);
       if (existingByName != null)
@@ -405,8 +413,21 @@ namespace Yoma.Core.Domain.Referral.Services
       if (existingByName != null && result.Id != existingByName.Id)
         throw new ValidationException($"{nameof(Program)} with the specified name '{request.Name}' already exists");
 
-      if (!result.DateStart.Equals(request.DateStart) && request.DateStart < now.RemoveTime())
+      var startDateUpdated = !result.DateStart.Equals(request.DateStart);
+      if (startDateUpdated && request.DateStart < now.RemoveTime())
         throw new ValidationException("The start date cannot be in the past. The start date has been updated and must be today or later");
+
+      var endDateUpdated = !Nullable.Equals(request.DateEnd, result.DateEnd);
+      var completionWindowUpdated = !Nullable.Equals(request.CompletionWindowInDays, result.CompletionWindowInDays);
+
+      if ((startDateUpdated || endDateUpdated || completionWindowUpdated)
+        && request.DateEnd.HasValue && request.CompletionWindowInDays.HasValue
+        && request.DateStart.AddDays(request.CompletionWindowInDays.Value) > request.DateEnd.Value)
+      {
+        throw new ValidationException(
+          "The completion window exceeds the program end date. Based on the selected start and end dates, the maximum allowed completion window is " +
+          $"{(request.DateEnd.Value - request.DateStart).Days} days");
+      }
 
       // If DateEnd is in the past/now, immediately expire 
       if (request.DateEnd.HasValue && request.DateEnd.Value <= now)

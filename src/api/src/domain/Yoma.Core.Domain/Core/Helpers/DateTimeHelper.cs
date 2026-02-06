@@ -1,3 +1,5 @@
+using System.Globalization;
+
 namespace Yoma.Core.Domain.Core.Helpers
 {
   public static class DateTimeHelper
@@ -7,26 +9,55 @@ namespace Yoma.Core.Domain.Core.Helpers
       if (string.IsNullOrWhiteSpace(value)) return null;
       value = value.Trim();
 
-      if (!DateTimeOffset.TryParse(value, out var result) || result == default) return null;
+      if (!DateTimeOffset.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var result) || result == default) return null;
 
       return result;
     }
 
-    public static DateTimeOffset? GetLatestValidDate(string dateOne, string dateTwo)
+    public static DateTimeOffset Min(DateTimeOffset value1, DateTimeOffset value2) => value1 <= value2 ? value1 : value2;
+
+    public static DateTimeOffset Max(DateTimeOffset value1, DateTimeOffset value2) => value1 >= value2 ? value1 : value2;
+
+    public static DateTimeOffset? Min(DateTimeOffset? value1, DateTimeOffset? value2)
     {
-      var isDateOneValid = DateTimeOffset.TryParse(dateOne, out DateTimeOffset dateOneParsed);
-      var isDateTwoValid = DateTimeOffset.TryParse(dateTwo, out DateTimeOffset dateTwoParsed);
+      if (value1 == null && value2 == null) return null;
+      if (value1 == null) return value2;
+      if (value2 == null) return value1;
 
-      if (!isDateOneValid && !isDateTwoValid)
-        return null;
+      return value1 <= value2 ? value1 : value2;
+    }
 
-      if (!isDateOneValid)
-        return dateTwoParsed;
+    public static DateTimeOffset? Max(DateTimeOffset? value1, DateTimeOffset? value2)
+    {
+      if (value1 == null && value2 == null) return null;
+      if (value1 == null) return value2;
+      if (value2 == null) return value1;
 
-      if (!isDateTwoValid)
-        return dateOneParsed;
+      return value1 >= value2 ? value1 : value2;
+    }
 
-      return dateOneParsed >= dateTwoParsed ? dateOneParsed : dateTwoParsed;
+    public static DateTimeOffset? Min(string value1, string value2)
+    {
+      var value1Valid = DateTimeOffset.TryParse(value1, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var value1Parsed);
+      var value2Valid = DateTimeOffset.TryParse(value2, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var value2Parsed);
+
+      if (!value1Valid && !value2Valid) return null;
+      if (!value1Valid) return value2Parsed;
+      if (!value2Valid) return value1Parsed;
+
+      return value1Parsed <= value2Parsed ? value1Parsed : value2Parsed;
+    }
+
+    public static DateTimeOffset? Max(string value1, string value2)
+    {
+      var value1Valid = DateTimeOffset.TryParse(value1, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var value1Parsed);
+      var value2Valid = DateTimeOffset.TryParse(value2, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var value2Parsed);
+
+      if (!value1Valid && !value2Valid) return null;
+      if (!value1Valid) return value2Parsed;
+      if (!value2Valid) return value1Parsed;
+
+      return value1Parsed >= value2Parsed ? value1Parsed : value2Parsed;
     }
 
     public static int CalculateAge(this DateTimeOffset dateOfBirth, DateTimeOffset? currentDate)

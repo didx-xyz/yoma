@@ -1,4 +1,7 @@
 
+using Yoma.Core.Domain.Core.Extensions;
+using Yoma.Core.Domain.Core.Helpers;
+
 namespace Yoma.Core.Domain.Referral.Models
 {
   /// <summary>
@@ -25,6 +28,24 @@ namespace Yoma.Core.Domain.Referral.Models
     public string? ProgramDescription { get; set; }
 
     public int? ProgramCompletionWindowInDays { get; set; }
+
+    public DateTimeOffset? ProgramDateEnd { get; set; }
+
+    public int? TimeRemainingInDays
+    {
+      get
+      {
+        if (!ProgramCompletionWindowInDays.HasValue && !ProgramDateEnd.HasValue) return null;
+
+        var windowDateEnd = ProgramCompletionWindowInDays.HasValue ? DateClaimed.AddDays(ProgramCompletionWindowInDays.Value) : (DateTimeOffset?)null;
+        var effectiveDateEnd = DateTimeHelper.Min(windowDateEnd, ProgramDateEnd)!;
+
+        var remaining = effectiveDateEnd.Value - DateTimeOffset.UtcNow;
+        return remaining <= TimeSpan.Zero ? 0 : (int)Math.Ceiling(remaining.TotalDays);
+      }
+    }
+
+    public DateTimeOffset? DateCompleteBy => TimeRemainingInDays.HasValue ? DateClaimed.AddDays(TimeRemainingInDays.Value).ToEndOfDay() : null;
 
     public Guid LinkId { get; set; }
 

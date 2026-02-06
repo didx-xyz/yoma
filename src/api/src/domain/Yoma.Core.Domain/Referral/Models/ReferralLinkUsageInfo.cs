@@ -18,6 +18,14 @@ namespace Yoma.Core.Domain.Referral.Models
 
     public string? ProgramDescription { get; set; }
 
+    public int? ProgramCompletionWindowInDays { get; set; }
+
+    public DateTimeOffset? ProgramDateEnd { get; set; }
+
+    public int? TimeRemainingInDays { get; set; }
+
+    public DateTimeOffset? DateCompleteBy { get; set; }
+
     public Guid LinkId { get; set; }
 
     public string LinkName { get; set; } = null!;
