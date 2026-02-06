@@ -164,7 +164,7 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
               ? parsedAmount
               : throw new InvalidOperationException($"{nameof(o.ZltoAmount)} of '{o.ZltoAmount}' couldn't be parsed to an integer"),
         Status = Enum.Parse<Domain.Reward.VoucherStatus>(o.VoucherState, true),
-        DateStamp = DateTimeHelper.GetLatestValidDate(o.DateCreated, o.LastUpdated)
+        DateStamp = DateTimeHelper.Max(o.DateCreated, o.LastUpdated)
       }).OrderBy(o => o.Name).ToList();
 
       return results;

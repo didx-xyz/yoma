@@ -80,7 +80,7 @@ namespace Yoma.Core.Domain.Referral.Services
         .Where(o => programIds.Contains(o.ProgramId) && statusLimitReachableIds.Contains(o.StatusId))
         .ToList();
 
-      if (items.Count == 0)
+      if (items.Count == 0 && logger?.IsEnabled(LogLevel.Information) == true)
       {
         logger?.LogInformation("No links eligible to flip to limit reached for {ProgramCount} program(s)", programIds.Count);
         return;
@@ -89,7 +89,7 @@ namespace Yoma.Core.Domain.Referral.Services
       items.ForEach(o => { o.StatusId = statusLimitReachedId; o.Status = ReferralLinkStatus.LimitReached; });
       await _linkRepository.Update(items);
 
-      if (logger == null) return;
+      if (logger == null || !logger.IsEnabled(LogLevel.Information)) return;
 
       var byProgram = items.GroupBy(x => x.ProgramId).Select(g => new { g.Key, Count = g.Count() });
       foreach (var g in byProgram)
@@ -152,7 +152,7 @@ namespace Yoma.Core.Domain.Referral.Services
         .Where(o => programIds.Contains(o.ProgramId) && statusCancellableIds.Contains(o.StatusId))
         .ToList();
 
-      if (items.Count == 0)
+      if (items.Count == 0 && logger?.IsEnabled(LogLevel.Information) == true)
       {
         logger?.LogInformation("No cancellable links found for {ProgramCount} program(s)", programIds.Count);
         return;
@@ -161,7 +161,7 @@ namespace Yoma.Core.Domain.Referral.Services
       items.ForEach(o => { o.StatusId = statusCancelledId; o.Status = ReferralLinkStatus.Cancelled; });
       await _linkRepository.Update(items);
 
-      if (logger == null) return;
+      if (logger == null || !logger.IsEnabled(LogLevel.Information)) return;
 
       var byProgram = items.GroupBy(x => x.ProgramId).Select(g => new { g.Key, Count = g.Count() });
       foreach (var g in byProgram)
@@ -186,7 +186,7 @@ namespace Yoma.Core.Domain.Referral.Services
         .Where(o => programIds.Contains(o.ProgramId) && statusExpirableIds.Contains(o.StatusId))
         .ToList();
 
-      if (items.Count == 0)
+      if (items.Count == 0 && logger?.IsEnabled(LogLevel.Information) == true)
       {
         logger?.LogInformation("No expirable links found for {ProgramCount} program(s)", programIds.Count);
         return;
@@ -206,7 +206,7 @@ namespace Yoma.Core.Domain.Referral.Services
         scope.Complete();
       });
 
-      if (logger == null) return;
+      if (logger == null || !logger.IsEnabled(LogLevel.Information)) return;
 
       var byProgram = items.GroupBy(x => x.ProgramId).Select(g => new { g.Key, Count = g.Count() });
       foreach (var g in byProgram)
@@ -233,7 +233,7 @@ namespace Yoma.Core.Domain.Referral.Services
         .Where(o => linkIds.Contains(o.LinkId) && statusExpirableIds.Contains(o.StatusId))
         .ToList();
 
-      if (items.Count == 0)
+      if (items.Count == 0 && logger?.IsEnabled(LogLevel.Information) == true)
       {
         logger?.LogInformation("No expirable link usages found for {LinkCount} link(s)", linkIds.Count);
         return;
@@ -242,7 +242,7 @@ namespace Yoma.Core.Domain.Referral.Services
       items.ForEach(o => { o.StatusId = statusExpiredId; o.Status = ReferralLinkUsageStatus.Expired; });
       await _linkUsageRepository.Update(items);
 
-      logger?.LogInformation("Expired {Count} link usage(s) across {LinkCount} link(s)", items.Count, linkIds.Count);
+      if (logger?.IsEnabled(LogLevel.Information) == true) logger?.LogInformation("Expired {Count} link usage(s) across {LinkCount} link(s)", items.Count, linkIds.Count);
     }
     #endregion
   }
