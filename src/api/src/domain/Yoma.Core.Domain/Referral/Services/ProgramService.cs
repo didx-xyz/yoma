@@ -168,7 +168,6 @@ namespace Yoma.Core.Domain.Referral.Services
       var worldwideCode = Country.Worldwide.ToDescription();
       var countryIdWorldwide = _countryService.GetByCodeAlpha2(worldwideCode).Id;
       var isAuthenticated = HttpContextAccessorHelper.UserContextAvailable(_httpContextAccessor);
-      var isAdmin = HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor);
       var user = isAuthenticated ? _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false) : null;
       var userCountryId = user?.CountryId;
 
@@ -178,8 +177,9 @@ namespace Yoma.Core.Domain.Referral.Services
         ? [PublishedState.Active]
         : publishedStates;
 
-      //non-admin users are restricted to user country + WW; anonymous/admin users remain unfiltered
-      var resolvedCountryIds = ProgramCountryPolicy.ResolveAvailableCountriesForProgramSearch(countryIdWorldwide, isAuthenticated, isAdmin, userCountryId, null, false);
+      // Authenticated users with a user country are restricted to [UserCountry + Worldwide]
+      // Authenticated users without a user country and anonymous users remain unconstrained (discovery behavior)
+      var resolvedCountryIds = ProgramCountryPolicy.ResolveAvailableCountriesForProgramSearch(countryIdWorldwide, isAuthenticated, userCountryId, null, false);
 
       var statusActiveId = _programStatusService.GetByName(ProgramStatus.Active.ToString()).Id;
       var statusExpiredId = _programStatusService.GetByName(ProgramStatus.Expired.ToString()).Id;
@@ -219,6 +219,30 @@ namespace Yoma.Core.Domain.Referral.Services
         .ThenByDescending(c => countryPrograms.FirstOrDefault(co => co.CountryId == c.Id)?.ProgramCount ?? 0) //followed by the remaining countries with programs, ordered by program counts descending
         .ThenBy(o => o.Name) //lastly alphabetically by name
         .ToList();
+
+      return results;
+    }
+
+    public List<Domain.Lookups.Models.Country> ListSearchCriteriaCountriesAdmin()
+    {
+      var worldwideCode = Country.Worldwide.ToDescription();
+
+      var query = _programCountryRepository.Query();
+
+      var countryPrograms = query
+       .GroupBy(o => o.CountryId)
+       .Select(g => new { CountryId = g.Key, ProgramCount = g.Count() })
+       .ToList();
+
+      var countries = _countryService.List()
+       .Where(o => countryPrograms.Select(co => co.CountryId).Contains(o.Id))
+       .ToList();
+
+      var results = countries
+      .OrderByDescending(c => c.CodeAlpha2 == worldwideCode) //ensure Worldwide appears first
+      .ThenByDescending(c => countryPrograms.FirstOrDefault(co => co.CountryId == c.Id)?.ProgramCount ?? 0) //followed by the remaining countries with programs, ordered by program counts descending
+      .ThenBy(o => o.Name) //lastly alphabetically by name
+      .ToList();
 
       return results;
     }

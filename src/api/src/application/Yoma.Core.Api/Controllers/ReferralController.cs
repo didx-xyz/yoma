@@ -55,9 +55,8 @@ namespace Yoma.Core.Api.Controllers
       Description =
         "Returns true if there are any referral programs available that are active and have started (thus published state Active). " +
         "Country filtering behavior: " +
-        "Anonymous users default to world-wide programs when no countries are specified, otherwise results are filtered by the specified countries. " +
-        "Authenticated users (non-admin) are automatically filtered by their user country when available (including word-wide), otherwise default to world-wide or the specified countries. " +
-        "Administrators may optionally filter by countries")]
+        "Anonymous users default to World-Wide programs when no countries are specified, otherwise results are filtered by the specified countries. " +
+        "Authenticated users are automatically filtered by their user country when available (including World-Wide), otherwise results default to World-Wide or the specified countries")]
     [HttpGet("program/available")]
     [AllowAnonymous]
     public ActionResult<bool> GetAvailable([FromQuery] List<Guid>? countries)
@@ -72,7 +71,7 @@ namespace Yoma.Core.Api.Controllers
     }
 
     [SwaggerOperation(Summary = "Get the default referral program (Anonymous)",
-      Description = "Retrieves the default referral program.  The default program must be active, have started, and is available world-wide")]
+      Description = "Retrieves the default referral program. The default program must be active, have started, and is available World-Wide")]
     [HttpGet("program/default/info")]
     [AllowAnonymous]
     public ActionResult<ProgramInfo> GetProgramInfoDefault()
@@ -87,12 +86,11 @@ namespace Yoma.Core.Api.Controllers
     }
 
     [SwaggerOperation(Summary = "Return a list of countries associated with programs (Anonymous)",
-      Description =
-        "By default, results include programs that are active and have started (published state Active). Authenticated users may override the default behavior. " +
-        "Country resolution behavior: " +
-        "Anonymous and administrative users receive all countries linked to programs, including World-Wide where applicable. " +
-        "Authenticated users (non-admin) receive their user country when available, and World-Wide if programs are associated with it"
-    )]
+     Description =
+       "By default, results include programs that are active and have started (published state Active). Authenticated users may override the published state filtering. " +
+       "Country resolution behavior: " +
+       "Anonymous users receive all countries linked to programs, including World-Wide if programs are associated with it. " +
+       "Authenticated users receive their user country together with World-Wide, if programs are associated with it, when a user country is available; when no user country is available, results include all countries linked to programs")]
     [HttpGet("program/search/filter/country")]
     [AllowAnonymous]
     public ActionResult<List<Domain.Lookups.Models.Country>> ListProgramSearchCriteriaCountries([FromQuery] List<PublishedState>? publishedStates)
@@ -108,11 +106,10 @@ namespace Yoma.Core.Api.Controllers
 
     [SwaggerOperation(Summary = "Search for referral programs (Anonymous)",
       Description =
-        "By default, results include programs that are active and have started (thus published state Active). Authenticated users can override the default behavior. " +
+        "By default, results include programs that are active and have started (published state Active). Authenticated users may override the published state filtering. " +
         "Country filtering behavior: " +
-        "Anonymous users default to world-wide programs when no countries are specified, otherwise results are filtered by the specified countries. " +
-        "Authenticated users (non-admin) are automatically filtered by their user country when available (including world-wide), otherwise default to world-wide or the specified countries. " +
-        "Administrators may optionally filter by countries")]
+        "Anonymous users default to World-Wide programs when no countries are specified, otherwise results are filtered by the specified countries. " +
+        "Authenticated users are automatically filtered by their user country when available (including World-Wide), otherwise results default to World-Wide or the specified countries")]
     [HttpPost("program/search")]
     [AllowAnonymous]
     public ActionResult<ProgramSearchResultsInfo> SearchProgram([FromBody] ProgramSearchFilter filter)
@@ -128,9 +125,9 @@ namespace Yoma.Core.Api.Controllers
 
     [SwaggerOperation(Summary = "Get the referral program by Id (Anonymous)",
       Description =
-        "By default, only programs that are active or uncompleted, and have started can be retrieved. " +
-        "Authenticated non-admin users are restricted to programs available in their country (or world-wide) when a country is set; otherwise they may retrieve any program. " +
-        "Administrators may retrieve any program")]
+        "By default, only programs that are active or uncompleted and have started can be retrieved. " +
+        "Authenticated users are restricted to programs available in their user country (or World-Wide) when a country is set; otherwise they may retrieve any program")]
+
     [HttpGet("program/{id}/info")]
     [AllowAnonymous]
     public ActionResult<ProgramInfo> GetProgramInfoById([FromRoute] Guid id)
@@ -146,9 +143,8 @@ namespace Yoma.Core.Api.Controllers
 
     [SwaggerOperation(Summary = "Get the referral program by link Id (Anonymous)",
       Description =
-        "By default, only programs that are active or uncompleted, and have started can be retrieved. " +
-        "Authenticated non-admin users are restricted to programs available in their country (or world-wide) when a country is set; otherwise they may retrieve any program. " +
-        "Administrators may retrieve any program")]
+        "By default, only programs that are active or uncompleted and have started can be retrieved. " +
+        "Authenticated users are restricted to programs available in their user country (or World-Wide) when a country is set; otherwise they may retrieve any program")]
     [HttpGet("program/by-link/{linkId}/info")]
     [AllowAnonymous]
     public ActionResult<ProgramInfo> GetProgramInfoByLinkId([FromRoute] Guid linkId)
@@ -396,6 +392,20 @@ namespace Yoma.Core.Api.Controllers
       return Ok(result);
     }
 
+    [SwaggerOperation(Summary = "Return a list of countries associated with programs (Admin role required)")]
+    [HttpGet("program/search/filter/country/admin")]
+    [Authorize(Roles = $"{Constants.Role_Admin}")]
+    public ActionResult<List<Domain.Lookups.Models.Country>> ListProgramSearchCriteriaCountriesAdmin()
+    {
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(ListProgramSearchCriteriaCountriesAdmin));
+
+      var result = _programService.ListSearchCriteriaCountriesAdmin();
+
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(ListProgramSearchCriteriaCountriesAdmin));
+
+      return Ok(result);
+    }
+
     [SwaggerOperation(Summary = "Search for referral programs based on the supplied filter (Admin role required)")]
     [HttpPost("program/search/admin")]
     [Authorize(Roles = $"{Constants.Role_Admin}")]
@@ -468,7 +478,7 @@ namespace Yoma.Core.Api.Controllers
     }
 
     [SwaggerOperation(Summary = "Set the specified referral program as the default (Admin role required)",
-      Description = "The program must be available world-wide (either with no country restrictions or explicitly including the 'Worldwide' country) in order to be set as default")]
+      Description = "The program must be available World-Wide (either with no country restrictions or explicitly including the 'Worldwide' country) in order to be set as default")]
     [HttpPatch("program/{id}/default")]
     [Authorize(Roles = $"{Constants.Role_Admin}")]
     public async Task<ActionResult<Domain.Referral.Models.Program>> SetProgramAsDefault([FromRoute] Guid id)
