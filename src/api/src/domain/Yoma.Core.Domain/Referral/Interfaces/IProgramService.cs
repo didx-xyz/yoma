@@ -18,6 +18,8 @@ namespace Yoma.Core.Domain.Referral.Interfaces
 
     List<Domain.Lookups.Models.Country> ListSearchCriteriaCountries(List<PublishedState>? publishedStates);
 
+    List<Domain.Lookups.Models.Country> ListSearchCriteriaCountriesAdmin();
+
     ProgramSearchResults Search(ProgramSearchFilterAdmin filter);
 
     Task<Program> Create(ProgramRequestCreate request);
