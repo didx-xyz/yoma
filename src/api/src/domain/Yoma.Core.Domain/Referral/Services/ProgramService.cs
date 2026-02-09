@@ -177,8 +177,8 @@ namespace Yoma.Core.Domain.Referral.Services
         ? [PublishedState.Active]
         : publishedStates;
 
-      // Authenticated users with a user country are restricted to [UserCountry + Worldwide]
-      // Authenticated users without a user country and anonymous users remain unconstrained (discovery behavior)
+      // Authenticated users with a user country are restricted to [UserCountry + Worldwide].
+      // Otherwise results remain unconstrained (discovery behavior).
       var resolvedCountryIds = ProgramCountryPolicy.ResolveAvailableCountriesForProgramSearch(countryIdWorldwide, isAuthenticated, userCountryId, null, false);
 
       var statusActiveId = _programStatusService.GetByName(ProgramStatus.Active.ToString()).Id;
