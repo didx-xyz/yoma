@@ -367,7 +367,7 @@ jobs:
         with:
           node-version: 20
           cache: yarn
-      - uses: cypress-io/github-action@v6
+      - uses: cypress-io/github-action@v7
         if: steps.should-run.outputs.run == 'true'
       - name: Upload Cypress Screenshots
         uses: actions/upload-artifact@v6
