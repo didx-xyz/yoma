@@ -115,7 +115,7 @@ const RefereeDashboard: NextPageWithLayout<{
     if (router.query.claimed === "true") {
       toast.success("Successfully claimed! Welcome to the program. 🎉");
       // Remove the query parameter
-      router.replace(`/yoid/referee/${programId}`, undefined, {
+      router.replace(`/referrals/progress/${programId}`, undefined, {
         shallow: true,
       });
     }
@@ -514,7 +514,7 @@ const RefereeDashboard: NextPageWithLayout<{
                 </div>
 
                 <Link
-                  href="/yoid/referrals"
+                  href="/referrals"
                   className="btn btn-sm gap-2 border-pink-300 bg-pink-50 text-pink-700 hover:bg-pink-100"
                 >
                   <IoShareSocial className="h-4 w-4" />
@@ -580,7 +580,7 @@ const RefereeDashboard: NextPageWithLayout<{
                 </div>
 
                 <Link
-                  href="/yoid/referrals"
+                  href="/referrals"
                   className="btn btn-sm gap-2 border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100"
                 >
                   <IoShareSocial className="h-4 w-4" />

@@ -2062,7 +2062,7 @@ const Opportunities: NextPageWithLayout<{
             <div className="px-2 md:px-4">
               {/* LOADING OVERLAY FOR LANDING CAROUSELS (does not affect layout height) */}
               {landingOverlayActive && (
-                <LoadingSkeleton rows={3} className="p-4" />
+                <LoadingSkeleton rows={1} className="p-4" />
               )}
 
               {/* CAROUSELS (kept mounted; hidden while overlay is active) */}

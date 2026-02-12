@@ -69,31 +69,40 @@ const getNavBarLinksUser = (
       selected: false,
       iconImage: "🛒",
     },
+    {
+      title: "Referrals",
+      description: "Referrals",
+      url: "/referrals",
+      badgeCount: null,
+      selected: false,
+      iconImage: "❤️",
+    },
   ];
 
+  //TODO: remove
   // Add referee progress link if user has pending referrals
-  if (hasPendingReferrals) {
-    if (pendingCount > 1 && onOpenRefereeProgress) {
-      links.push({
-        title: "My Referrals",
-        description: "Track your referral progress",
-        url: "#",
-        badgeCount: null,
-        selected: false,
-        iconImage: "🎁",
-        onClick: onOpenRefereeProgress,
-      });
-    } else if (firstProgramId) {
-      links.push({
-        title: "My Referral",
-        description: "Track your referral progress",
-        url: `/yoid/referee/${firstProgramId}`,
-        badgeCount: null,
-        selected: false,
-        iconImage: "🎁",
-      });
-    }
-  }
+  //   if (hasPendingReferrals) {
+  //     if (pendingCount > 1 && onOpenRefereeProgress) {
+  //       links.push({
+  //         title: "My Referrals",
+  //         description: "Track your referral progress",
+  //         url: "#",
+  //         badgeCount: null,
+  //         selected: false,
+  //         iconImage: "🎁",
+  //         onClick: onOpenRefereeProgress,
+  //       });
+  //     } else if (firstProgramId) {
+  //       links.push({
+  //         title: "My Referral",
+  //         description: "Track your referral progress",
+  //         url: `/referrals/progress/${firstProgramId}`,
+  //         badgeCount: null,
+  //         selected: false,
+  //         iconImage: "🎁",
+  //       });
+  //     }
+  //   }
 
   return links;
 };
@@ -369,7 +378,7 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
   return (
     <div className="fixed top-0 right-0 left-0 z-40">
       <div className={`bg-theme navbar z-40`}>
-        <div className="gap-2xxx flex w-full items-center">
+        <div className="flex w-full items-center">
           {/* HOVER MENU */}
           <div
             className="absolute top-1/5 left-0 h-[100vh] w-[2px] bg-transparent"
@@ -627,7 +636,7 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
           </div>
 
           {/* CENTER MENU (DESKTOP) */}
-          <div className="invisible min-w-0 flex-1 lg:visible">
+          <div className="hidden min-w-0 flex-1 lg:block">
             <ScrollableContainer
               className="flex h-full items-center overflow-x-auto overflow-y-visible"
               showShadows={true}
@@ -659,7 +668,7 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
           </div>
 
           {/* RIGHT MENU */}
-          <div className="flex flex-shrink-0 items-center justify-end md:mr-2 md:gap-4">
+          <div className="ml-auto flex flex-shrink-0 items-center justify-end md:mr-2 md:gap-4">
             <LanguageSwitcher
               className="bg-theme hover:brightness-95 md:px-3"
               classNameIcon=""

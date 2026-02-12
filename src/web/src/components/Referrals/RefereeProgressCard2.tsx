@@ -10,7 +10,7 @@ interface RefereeProgressCardProps {
   loading?: boolean;
 }
 
-export const RefereeProgressCard: React.FC<RefereeProgressCardProps> = ({
+export const RefereeProgressCard2: React.FC<RefereeProgressCardProps> = ({
   programs,
   onClick,
   totalCount = 0,
@@ -20,8 +20,10 @@ export const RefereeProgressCard: React.FC<RefereeProgressCardProps> = ({
   const hasMore = programs.length < totalCount;
 
   return (
-    <div className="flex flex-col gap-2 rounded-lg border-2 border-blue-300 bg-gradient-to-br from-blue-50 to-white p-4 shadow-md">
-      <div className="flex items-center justify-between">
+    <div
+    //className="flex flex-col gap-2 rounded-lg border-2 border-blue-300 bg-gradient-to-br from-blue-50 to-white p-4 shadow-md"
+    >
+      {/* <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span className="text-lg">🎯</span>
           <span className="font-bold text-blue-900">My Referrals</span>
@@ -29,7 +31,7 @@ export const RefereeProgressCard: React.FC<RefereeProgressCardProps> = ({
       </div>
       <p className="text-xs text-gray-600">
         You have {totalCount} pending referrals:
-      </p>
+      </p> */}
       <div className="flex flex-col gap-2">
         {programs.map((program) => (
           <Link

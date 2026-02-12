@@ -672,6 +672,7 @@ export interface PathwayTasksListProps {
   color?: "green" | "orange" | "white";
   isAdmin?: boolean;
   opportunityVariant?: "default" | "compact";
+  className?: string;
 }
 
 export const PathwayTasksList: React.FC<PathwayTasksListProps> = ({
@@ -686,6 +687,7 @@ export const PathwayTasksList: React.FC<PathwayTasksListProps> = ({
   color = "green",
   isAdmin = false,
   opportunityVariant = "default",
+  className,
 }) => {
   const isCompact = opportunityVariant === "compact";
 
@@ -704,7 +706,11 @@ export const PathwayTasksList: React.FC<PathwayTasksListProps> = ({
   const connectorTextColor = color === "white" ? "text-gray-600" : "text-white";
 
   return (
-    <div className={isCompact ? "space-y-2" : "space-y-0"}>
+    <div
+      className={
+        className ?? (isCompact ? "divide-base-200 divide-y" : "space-y-0")
+      }
+    >
       {tasks.map((task, taskIndex) => (
         <div key={task.id}>
           <PathwayTaskDisplay

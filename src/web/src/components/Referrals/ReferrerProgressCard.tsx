@@ -32,7 +32,7 @@ export const ReferrerProgressCard: React.FC<ReferrerProgressCardProps> = ({
 
       {/* Content */}
       <Link
-        href="/yoid/referrals"
+        href="/referrals"
         className="btn btn-sm btn-success w-full gap-2 rounded-lg text-white normal-case shadow-md transition-all hover:scale-105 hover:shadow-lg"
         onClick={onClick}
         tabIndex={tabIndex}

@@ -1,9 +1,15 @@
 import { useMemo } from "react";
-import { IoGift, IoTimeOutline } from "react-icons/io5";
+import {
+  IoCheckmarkCircle,
+  IoGift,
+  IoTimeOutline,
+  IoTrendingUp,
+} from "react-icons/io5";
 import type {
   ProgramInfo,
   ReferralLinkUsageInfo,
 } from "~/api/models/referrals";
+import NoRowsMessage from "../NoRowsMessage";
 
 interface RefereeStatusBannerProps {
   usage: ReferralLinkUsageInfo;
@@ -38,7 +44,8 @@ export const RefereeStatusBanner: React.FC<RefereeStatusBannerProps> = ({
     if (usage.status === "Completed") {
       return {
         title: "Program completed",
-        message: "Nice work — your progress is saved in your wallet.",
+        message:
+          "Nice work — your progress is saved in your wallet. You can still explore other opportunities.",
         icon: "🏆",
         tone: "success" as const,
       };
@@ -48,7 +55,7 @@ export const RefereeStatusBanner: React.FC<RefereeStatusBannerProps> = ({
       return {
         title: "Program expired",
         message:
-          "The completion window has closed. You can still explore other opportunities.",
+          "The completion window has ended, but you can still explore other opportunities.",
         icon: "⏰",
         tone: "warning" as const,
       };
@@ -103,107 +110,125 @@ export const RefereeStatusBanner: React.FC<RefereeStatusBannerProps> = ({
   }, [statusInfo.tone]);
 
   return (
-    <div className="border-base-300 bg-base-100 mb-6 rounded-xl border p-4 shadow-sm md:p-5">
-      <div className="flex items-start gap-3 md:gap-4">
-        <div
-          className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md md:h-12 md:w-12 ${toneStyles.iconBg}`}
-        >
-          <span className={`text-base md:text-lg ${toneStyles.iconText}`}>
-            {statusInfo.icon}
-          </span>
-        </div>
-
-        <div className="min-w-0">
-          <h2 className="font-family-nunito text-base-content text-xs font-semibold md:text-sm">
-            {statusInfo.title}
-          </h2>
-          <p className="text-base-content/60 text-[10px] md:text-xs">
-            {statusInfo.message}
-          </p>
-        </div>
+    <>
+      <div className="flex items-center justify-center">
+        <NoRowsMessage
+          title={statusInfo.title}
+          description={statusInfo.message}
+          icon={statusInfo.icon}
+          className="max-w-3xl !bg-transparent"
+        />
       </div>
 
-      <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-3">
-        {usage.status === "Pending" && (
-          <div className="bg-base-200 rounded-lg p-3">
-            <div className="mb-2 flex items-center justify-between">
-              <span className="text-base-content/70 text-[10px] font-semibold md:text-xs">
-                Progress
-              </span>
-              <span className="text-base-content text-xs font-bold md:text-sm">
-                {usage.percentComplete ?? 0}%
-              </span>
-            </div>
-            <div className="bg-base-100 h-2 w-full overflow-hidden rounded-full">
-              <div
-                className="h-full bg-blue-600 transition-all duration-700"
-                style={{ width: `${usage.percentComplete ?? 0}%` }}
-              />
-            </div>
-          </div>
-        )}
+      {usage.status != "Expired" && (
+        <div className="border-base-300 bg-base-100 mb-6 rounded-xl border p-4 shadow-sm md:p-5">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {/* PROGRESS */}
+            {usage.status === "Pending" && (
+              <div className="bg-base-200 flex-1 rounded-lg p-3">
+                <div className="flex items-start gap-2">
+                  <div className="bg-base-100 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md">
+                    <IoTrendingUp
+                      className={`h-4 w-4 ${(usage.percentComplete ?? 0) > 0 ? "text-blue-600" : "text-orange-600"}`}
+                    />
+                  </div>
+                  <div className="w-full min-w-0">
+                    <div className="mb-1 flex items-center justify-between">
+                      <span className="text-base-content text-[10px] font-semibold md:text-xs">
+                        Progress
+                      </span>
+                      <span className="text-base-content text-xs font-bold md:text-sm">
+                        {usage.percentComplete ?? 0}%
+                      </span>
+                    </div>
+                    <div className="bg-base-100 h-2 w-full overflow-hidden rounded-full">
+                      <div
+                        className={`h-full transition-all duration-700 ${(usage.percentComplete ?? 0) > 0 ? "bg-blue-600" : "bg-orange-600"}`}
+                        style={{ width: `${usage.percentComplete ?? 0}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
 
-        {usage.status === "Pending" && timeInfo && (
-          <div className="bg-base-200 rounded-lg p-3">
-            <div className="flex items-start gap-2">
-              <div className="bg-base-100 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md">
-                <IoTimeOutline
-                  className={`h-4 w-4 ${
-                    timeInfo.isExpired
-                      ? "text-red-600"
-                      : timeInfo.isUrgent
-                        ? "text-orange-600"
-                        : "text-blue-600"
-                  }`}
-                />
-              </div>
-              <div className="min-w-0">
-                <div className="text-base-content text-[10px] font-semibold md:text-xs">
-                  {timeInfo.isExpired ? "Expired" : "Time remaining"}
+            {/* TIME LEFT */}
+            {usage.status === "Pending" && !!timeInfo && (
+              <div className="bg-base-200 flex-1 rounded-lg p-3">
+                <div className="flex items-start gap-2">
+                  <div className="bg-base-100 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md">
+                    <IoTimeOutline
+                      className={`h-4 w-4 ${
+                        timeInfo.isExpired
+                          ? "text-red-600"
+                          : timeInfo.isUrgent
+                            ? "text-orange-600"
+                            : "text-blue-600"
+                      }`}
+                    />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-base-content text-[10px] font-semibold md:text-xs">
+                      {timeInfo.isExpired ? "Expired" : "Time remaining"}
+                    </div>
+                    <div className="text-base-content/70 text-[10px] md:text-xs">
+                      {timeInfo.isExpired
+                        ? "—"
+                        : `${timeInfo.days} day${timeInfo.days !== 1 ? "s" : ""} • complete by ${timeInfo.expiryDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`}
+                    </div>
+                  </div>
                 </div>
-                <div className="text-base-content/70 text-[10px] md:text-xs">
-                  {timeInfo.isExpired
-                    ? "—"
-                    : `${timeInfo.days} day${timeInfo.days !== 1 ? "s" : ""} • complete by ${timeInfo.expiryDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`}
-                </div>
               </div>
-            </div>
-          </div>
-        )}
+            )}
 
-        {usage.status === "Completed" && usage.dateCompleted && (
-          <div className="bg-base-200 rounded-lg p-3">
-            <div className="text-base-content text-[10px] font-semibold md:text-xs">
-              Completed
-            </div>
-            <div className="text-base-content/70 text-[10px] md:text-xs">
-              {new Date(usage.dateCompleted).toLocaleDateString("en-US", {
-                year: "numeric",
-                month: "short",
-                day: "numeric",
-              })}
-            </div>
-          </div>
-        )}
+            {/* DATE COMPLETED */}
+            {usage.status === "Completed" && usage.dateCompleted && (
+              <div className="bg-base-200 flex-1 rounded-lg p-3">
+                <div className="flex items-start gap-2">
+                  <div className="bg-base-100 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md">
+                    <IoCheckmarkCircle className="h-4 w-4 text-blue-600" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-base-content text-[10px] font-semibold md:text-xs">
+                      Completed
+                    </div>
+                    <div className="text-base-content/70 text-[10px] md:text-xs">
+                      {new Date(usage.dateCompleted).toLocaleDateString(
+                        "en-US",
+                        {
+                          year: "numeric",
+                          month: "short",
+                          day: "numeric",
+                        },
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
 
-        {program.zltoRewardReferee && (
-          <div className="bg-base-200 rounded-lg p-3">
-            <div className="flex items-start gap-2">
-              <div className="bg-base-100 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md">
-                <IoGift className="h-4 w-4 text-green-600" />
-              </div>
-              <div className="min-w-0">
-                <div className="text-base-content text-[10px] font-semibold md:text-xs">
-                  Reward
+            {/* REWARD */}
+            {(usage.status === "Pending" || usage.status === "Completed") &&
+              program.zltoRewardReferee && (
+                <div className="bg-base-200 flex-1 rounded-lg p-3">
+                  <div className="flex items-start gap-2">
+                    <div className="bg-base-100 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md">
+                      <IoGift className="h-4 w-4 text-blue-600" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-base-content text-[10px] font-semibold md:text-xs">
+                        Reward
+                      </div>
+                      <div className="text-base-content/70 text-[10px] md:text-xs">
+                        {program.zltoRewardReferee} ZLTO
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div className="text-base-content/70 text-[10px] md:text-xs">
-                  {program.zltoRewardReferee} ZLTO
-                </div>
-              </div>
-            </div>
+              )}
           </div>
-        )}
-      </div>
-    </div>
+        </div>
+      )}
+    </>
   );
 };

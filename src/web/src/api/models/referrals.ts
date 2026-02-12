@@ -392,6 +392,9 @@ export interface ReferralLinkUsage {
   programName: string;
   programDescription: string | null;
   programCompletionWindowInDays: number | null;
+  programDateEnd: string | null;
+  timeRemainingInDays: number | null;
+  dateCompleteBy: string | null;
   linkId: string;
   linkName: string;
   userIdReferrer: string;
@@ -410,9 +413,9 @@ export interface ReferralLinkUsage {
   userPhoneNumberConfirmed: boolean | null;
   userYoIDOnboarded: boolean | null;
   statusId: string;
-  status: ReferralLinkUsageStatus | string;
-  zltoRewardReferrer: number | null;
+  status: ReferralLinkUsageStatus;
   zltoRewardReferee: number | null;
+  zltoRewardReferrer: number | null;
   dateClaimed: string;
   dateCompleted: string | null;
   dateExpired: string | null;

@@ -145,8 +145,6 @@ const ReferralClaimPage: NextPageWithLayout<{
   userProfile: serverUserProfile,
 }) => {
   const router = useRouter();
-  const panelClassName =
-    "rounded-xl border border-base-300 bg-base-100 p-4 shadow-sm md:p-5";
   const [claiming, setClaiming] = useState(false);
   const [claimingAfterProfile, setClaimingAfterProfile] = useState(false);
   const [claimError, setClaimError] = useState<any>(null);
@@ -204,8 +202,8 @@ const ReferralClaimPage: NextPageWithLayout<{
       // Scroll to top before redirect
       window.scrollTo({ top: 0, behavior: "smooth" });
 
-      // Successfully claimed - redirect to referee dashboard
-      await router.push(`/yoid/referee/${programId}?claimed=true`);
+      // Successfully claimed - redirect to referee progress page
+      await router.push(`/referrals/progress/${programId}?claimed=true`);
     } catch (error: any) {
       // Scroll to top to show error
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -308,17 +306,13 @@ const ReferralClaimPage: NextPageWithLayout<{
 
     return (
       <div className="container mx-auto mt-20 flex max-w-5xl flex-col gap-8 px-4 py-8">
-        <div className="w-full">
-          <div className={`${panelClassName} w-full`}>
-            <NoRowsMessage
-              title="Referral Link Unavailable"
-              subTitle="This referral link is invalid, expired, or has been removed."
-              description={referralUnavailableDescription}
-              icon={<IoWarningOutline className="h-6 w-6 text-red-500" />}
-              className="w-full !bg-transparent"
-            />
-          </div>
-        </div>
+        <NoRowsMessage
+          title="Referral Link Unavailable"
+          subTitle="This referral link is invalid, expired, or has been removed."
+          description={referralUnavailableDescription}
+          icon={"⚠️"}
+          className="w-full !bg-transparent"
+        />
 
         <BecomeReferrerCTA />
 
@@ -337,19 +331,19 @@ const ReferralClaimPage: NextPageWithLayout<{
       "Failed to claim referral link. You may have already claimed it or are not eligible.";
     const safeErrorMessage = errorMessage || fallbackMessage;
 
-    // Check if user already claimed this link - redirect to dashboard
+    // Check if user already claimed this link - redirect to progress page
     const alreadyClaimed =
       customErrors.some((error) => /already claimed/i.test(error.message)) ||
       /already claimed/i.test(safeErrorMessage);
 
     if (alreadyClaimed) {
-      router.push(`/yoid/referee/${programId}`);
+      router.push(`/referrals/progress/${programId}`);
       return (
         <div className="flex min-h-screen items-center justify-center">
           <LoadingInline
             classNameSpinner="h-8 w-8 border-t-2 border-b-2 border-orange md:h-16 md:w-16 md:border-t-4 md:border-b-4"
             classNameLabel={"text-sm font-semibold md:text-lg"}
-            label="Redirecting to your dashboard..."
+            label="Redirecting to your progress page..."
           />
         </div>
       );
@@ -387,27 +381,23 @@ const ReferralClaimPage: NextPageWithLayout<{
 
     return (
       <div className="container mx-auto mt-18 flex max-w-3xl flex-col gap-4 px-4 py-8">
-        <div className="w-full">
-          <div className={`${panelClassName} w-full`}>
-            <NoRowsMessage
-              icon={<IoWarningOutline className="h-6 w-6 text-red-500" />}
-              title={
-                isCountryRestricted
-                  ? "Referral Not Available"
-                  : "Unable to Claim Referral Link"
-              }
-              subTitle={
-                !hasCustomErrors
-                  ? safeErrorMessage
-                  : isCountryRestricted
-                    ? "This referral link can’t be claimed from your country."
-                    : undefined
-              }
-              description={claimErrorDescription}
-              className="w-full !bg-transparent"
-            />
-          </div>
-        </div>
+        <NoRowsMessage
+          icon={"⚠️"}
+          title={
+            isCountryRestricted
+              ? "Referral Not Available"
+              : "Unable to Claim Referral Link"
+          }
+          subTitle={
+            !hasCustomErrors
+              ? safeErrorMessage
+              : isCountryRestricted
+                ? "This referral link can’t be claimed from your country."
+                : undefined
+          }
+          description={claimErrorDescription}
+          className="w-full !bg-transparent"
+        />
 
         <BecomeReferrerCTA />
 

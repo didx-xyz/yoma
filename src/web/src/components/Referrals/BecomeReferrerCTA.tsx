@@ -5,9 +5,10 @@ export const BecomeReferrerCTA: React.FC = () => {
   return (
     <div className="border-base-300 bg-base-100 rounded-xl border p-4 shadow-sm md:p-5">
       <div className="flex items-start gap-3 md:gap-4">
-        <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md bg-pink-50 md:h-12 md:w-12">
-          <IoGift className="h-5 w-5 text-pink-700 md:h-6 md:w-6" />
+        <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md bg-orange-50 text-lg md:h-12 md:w-12">
+          ❤️
         </div>
+
         <div className="min-w-0 flex-1">
           <h2 className="font-family-nunito text-base-content text-xs font-semibold md:text-sm">
             Become a referrer
@@ -22,18 +23,17 @@ export const BecomeReferrerCTA: React.FC = () => {
             <li>Track claims and completions</li>
             <li>Earn ZLTO when they finish</li>
           </ul>
-
-          <div className="mt-4">
-            <Link
-              href="/yoid/referrals"
-              className="btn btn-sm inline-flex items-center gap-2 border-pink-300 bg-pink-50 text-pink-700 hover:bg-pink-100"
-            >
-              <IoGift className="h-4 w-4" />
-              Start referring
-              <IoArrowForward className="h-4 w-4" />
-            </Link>
-          </div>
         </div>
+      </div>
+
+      <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+        <Link
+          href="/referrals"
+          className="btn btn-sm bg-orange w-full gap-2 text-white hover:brightness-110 md:w-auto md:min-w-[180px]"
+        >
+          <IoArrowForward className="h-4 w-4" />
+          Start referring
+        </Link>
       </div>
     </div>
   );

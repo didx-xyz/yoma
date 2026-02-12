@@ -243,7 +243,8 @@ export const Global: React.FC = () => {
       // Skip profile completion modals on claim page - handled inline there
       if (
         currentPath.includes("/referrals/claim/") ||
-        currentPath.includes("/yoid/referee/") ||
+        // currentPath.includes("/referrals/progress/") ||
+        currentPath.includes("/referrals/") ||
         currentPath.includes("/user/profile") ||
         currentPath.includes("/user/settings")
       ) {
@@ -263,17 +264,47 @@ export const Global: React.FC = () => {
         (refereeLinkUsages?.items?.length ?? 0) > 0 &&
         !refereeProgressDialogDismissed
       ) {
-        // show referee progress dialog if user has pending referrals
-        setRefereeProgressDialogVisible(true);
-      } else {
-        //toast.success("Welcome back!", { autoClose: false });
+        // show toast notification for pending referrals
+        const count = refereeLinkUsages?.items?.length ?? 0;
+        toast.info(
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-2">
+              <span className="text-lg">❤️</span>
+              <strong>
+                {count === 1
+                  ? "You Have a Pending Referral!"
+                  : "You Have Pending Referrals!"}
+              </strong>
+            </div>
+            <div className="text-sm">
+              {count === 1
+                ? "Track your progress and complete the requirements to earn your reward."
+                : "Track your progress and complete the requirements to earn your rewards."}
+            </div>
+            <button
+              onClick={() => {
+                router.push("/referrals");
+                setRefereeProgressDialogDismissed(true);
+              }}
+              className="btn btn-sm bg-orange mt-2 w-full text-white hover:brightness-110"
+            >
+              View My Referrals
+            </button>
+          </div>,
+          {
+            autoClose: false,
+            closeButton: true,
+            icon: false,
+            onClose: () => setRefereeProgressDialogDismissed(true),
+          },
+        );
       }
     },
     [
       setUpdateProfileDialogVisible,
       setSettingsDialogVisible,
       setPhotoUploadDialogVisible,
-      setRefereeProgressDialogVisible,
+      //setRefereeProgressDialogVisible,
       refereeLinkUsages,
       refereeProgressDialogDismissed,
     ],
@@ -1001,7 +1032,7 @@ export const Global: React.FC = () => {
       </CustomModal>
 
       {/* REFEREE PROGRESS DIALOG */}
-      <CustomModal
+      {/* <CustomModal
         isOpen={refereeProgressDialogVisible}
         shouldCloseOnOverlayClick={false}
         onRequestClose={() => {
@@ -1045,7 +1076,7 @@ export const Global: React.FC = () => {
               {refereeLinkUsages?.items.length === 1 ? (
                 <div className="flex w-full justify-center">
                   <Link
-                    href={`/yoid/referee/${refereeLinkUsages.items[0]?.programId}`}
+                    href={`/referrals/progress/${refereeLinkUsages.items[0]?.programId}`}
                     className="btn btn-warning w-full text-white md:w-auto"
                     onClick={() => {
                       setRefereeProgressDialogVisible(false);
@@ -1082,7 +1113,7 @@ export const Global: React.FC = () => {
             </div>
           </div>
         </div>
-      </CustomModal>
+      </CustomModal> */}
     </>
   );
 };

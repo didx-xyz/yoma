@@ -17,7 +17,7 @@ export const ReferralStatsSmall: React.FC<ReferralStatsSmallProps> = ({
   zltoEarned,
 }) => {
   return (
-    <div className="flex flex-col gap-4 md:flex-row">
+    <div className="flex flex-col gap-8 md:flex-row md:gap-4">
       {/* Links Card */}
       <div className="flex flex-1 flex-col space-y-2">
         <div className="font-family-nunito font-semibold text-black">Links</div>
