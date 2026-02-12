@@ -50,6 +50,7 @@ export const ProgramPathwayProgressComponent: React.FC<
                   total={pathway.stepsTotal ?? 0}
                   percentComplete={pathway.percentComplete ?? 0}
                   isCompleted={pathway.completed ?? false}
+                  isAdmin={false}
                 />
 
                 {pathway.steps?.map((step, stepIndex) => {
@@ -113,6 +114,7 @@ export const ProgramPathwayProgressComponent: React.FC<
                                 : step.completed
                             }
                             color="green"
+                            isAdmin={false}
                           />
 
                           {/* Tasks List */}

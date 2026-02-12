@@ -33,6 +33,7 @@ interface ReferralProgramActionsProps {
   program: Program | ProgramItem;
   returnUrl?: string;
   actionOptions?: ReferralProgramActionOptions[];
+  className?: string;
 }
 
 export const AdminReferralProgramActions: React.FC<
@@ -48,6 +49,7 @@ export const AdminReferralProgramActions: React.FC<
     ReferralProgramActionOptions.INACTIVATE,
     ReferralProgramActionOptions.DELETE,
   ],
+  className = "text-green hover:brightness-125",
 }) => {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -145,8 +147,9 @@ export const AdminReferralProgramActions: React.FC<
 
       <div className="dropdown dropdown-left">
         <button type="button" title="Actions" className="cursor-pointer">
-          <IoIosSettings className="text-green hover:text-blue size-5" />
+          <IoIosSettings className={`${className} size-5`} />
         </button>
+
         <ul className="menu dropdown-content rounded-box bg-base-100 z-50 w-52 gap-2 p-2 shadow">
           {/* VIEW */}
           {actionOptions.includes(ReferralProgramActionOptions.VIEW) && (

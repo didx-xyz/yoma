@@ -1,9 +1,10 @@
-import { QueryClient, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAtomValue } from "jotai";
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
 import { useSession } from "next-auth/react";
 import Head from "next/head";
+import Image from "next/image";
 import { useRouter } from "next/router";
 import React, {
   useCallback,
@@ -13,29 +14,44 @@ import React, {
   useState,
   type ReactElement,
 } from "react";
-import { FaShareAlt } from "react-icons/fa";
-import { IoAdd, IoWarningOutline } from "react-icons/io5";
+import { IoAdd } from "react-icons/io5";
+import {
+  Carousel,
+  Slide,
+  Slider,
+  type OnSlideProps,
+} from "react-scroll-snap-anime-slider";
 import Select from "react-select";
+import { Country } from "~/api/models/lookups";
 import {
   type ProgramInfo,
   type ProgramSearchResultsInfo,
   type ReferralLink,
 } from "~/api/models/referrals";
 import { ReferralParticipationRole, type UserProfile } from "~/api/models/user";
+import { getCountries } from "~/api/services/referrals";
 import {
   searchReferralLinks,
   searchReferralProgramsInfo,
 } from "~/api/services/referrals";
 import { getUserProfile } from "~/api/services/user";
+import { NavigationButtons } from "~/components/Carousel/NavigationButtons";
+import { SelectedSnapDisplay } from "~/components/Carousel/SelectedSnapDisplay";
+import Suspense from "~/components/Common/Suspense";
 import MainLayout from "~/components/Layout/Main";
 import NoRowsMessage from "~/components/NoRowsMessage";
+import { ProgramCard } from "~/components/Referrals/ProgramCard";
+import { RefereeUsagesList } from "~/components/Referrals/RefereeUsagesList";
 import { ReferralBlockedView } from "~/components/Referrals/ReferralBlockedView";
 import { ReferrerCreateLinkModal } from "~/components/Referrals/ReferrerCreateLinkModal";
-import { authOptions } from "~/server/auth";
 import { ReferrerLinksList2 } from "~/components/Referrals/ReferrerLinksList2";
 import { ReferrerStats } from "~/components/Referrals/ReferrerStats";
-import { RefereeUsagesList } from "~/components/Referrals/RefereeUsagesList";
+import { SignInButton } from "~/components/SignInButton";
+import { LoadingInline } from "~/components/Status/LoadingInline";
+import { LoadingSkeleton } from "~/components/Status/LoadingSkeleton";
+import { COUNTRY_ID_WW } from "~/lib/constants";
 import { screenWidthAtom, userProfileAtom } from "~/lib/store";
+import { authOptions } from "~/server/auth";
 import type { NextPageWithLayout } from "../_app";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
@@ -56,39 +72,18 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     },
   };
 }
-import { RefereeProgressCard2 } from "~/components/Referrals/RefereeProgressCard2";
-import {
-  Carousel,
-  type OnSlideProps,
-  Slide,
-  Slider,
-} from "react-scroll-snap-anime-slider";
-import { ProgramRow } from "~/components/Referrals/ProgramRow";
-import { NavigationButtons } from "~/components/Carousel/NavigationButtons";
-import { SelectedSnapDisplay } from "~/components/Carousel/SelectedSnapDisplay";
-import Image from "next/image";
-import Link from "next/link";
-import { LoadingSkeleton } from "~/components/Status/LoadingSkeleton";
-import Suspense from "~/components/Common/Suspense";
-import { COUNTRY_ID_WW } from "~/lib/constants";
-import { IoMdCalendar, IoMdPlay, IoMdWarning } from "react-icons/io";
-import { getCountries } from "~/api/services/lookups";
-import { Country } from "~/api/models/lookups";
-import { LoadingInline } from "~/components/Status/LoadingInline";
 
 const AnonymousView = () => (
-  <div className="bg-base-100 rounded-lg border p-8 text-center shadow-sm">
-    <h2 className="mb-4 text-2xl font-bold">Join our Referral Program</h2>
-    <p className="mb-6 text-lg">
-      Sign in to start earning rewards by referring friends or claiming offers.
-    </p>
-    <div className="alert alert-info inline-flex w-auto">
-      <span>Preview of available programs will appear here.</span>
-    </div>
+  <div className="flex flex-col items-center justify-center">
+    <NoRowsMessage
+      title="Join our Referral Program!"
+      description="Sign in to start earning rewards by referring friends or claiming offers."
+      icon={"❤️"}
+      className="max-w-3xl !bg-transparent"
+    />
+    <SignInButton className="!bg-orange mt-4" />
   </div>
 );
-
-// BlockedStateView removed - using ReferralBlockedView component
 
 const WelcomeSection = ({
   hasLinks,
@@ -99,7 +94,7 @@ const WelcomeSection = ({
 }) => (
   <div className="flex items-center justify-center">
     <NoRowsMessage
-      title={hasLinks ? "Refer a friend" : "Welcome to the Ambassador Program"}
+      title={hasLinks ? "Refer a friend" : "Welcome to the Program!"}
       description={
         hasLinks
           ? '<div class="space-y-2">' +
@@ -124,11 +119,9 @@ const WelcomeSection = ({
 const LinksSection = ({
   linksCount,
   programs,
-  //   onCreateLink,
 }: {
   linksCount: number;
   programs: ProgramInfo[];
-  //   onCreateLink: () => void;
 }) => (
   <div className="flex flex-col gap-8">
     <ReferrerStats linksCount={linksCount} />
@@ -156,80 +149,24 @@ const LinksSection = ({
   </div>
 );
 
-interface ProgramCardProps {
-  data: ProgramInfo;
-  onClick: () => void;
-  action?: React.ReactNode;
-}
-
-const ProgramCard: React.FC<ProgramCardProps> = ({ data, onClick }) => {
-  const renderContent = () => {
-    return (
-      <div className="flex h-full flex-col">
-        {/* Row 1: Title + ZLTO */}
-        <div className="flex w-full flex-row items-start justify-between">
-          <div className="line-clamp-2 pr-2 text-sm leading-tight text-black">
-            {data.name}
-          </div>
-          {(data.zltoRewardReferrer ?? 0) > 0 && (
-            <div className="badge badge-sm bg-orange-light text-orange flex-shrink-0 whitespace-nowrap">
-              🚀 {data.zltoRewardReferrer} ZLTO
-            </div>
-          )}
-        </div>
-
-        {/* Row 2: Description */}
-        <div className="mt-2 mb-4">
-          <p className="text-[rgba(84, 88, 89, 1)] line-clamp-3 text-xs font-light text-ellipsis">
-            {data.description}
-          </p>
-        </div>
-
-        {/* Row 3: Image (wide aspect) */}
-        <div className="bg-base-200 relative h-32 w-full overflow-hidden rounded-sm">
-          {data.imageURL ? (
-            <Image
-              src={data.imageURL}
-              alt={data.name}
-              fill
-              className="object-cover"
-            />
-          ) : (
-            <div className="bg-orange h-full w-full opacity-70"></div>
-          )}
-        </div>
-      </div>
-    );
-  };
-
-  return (
-    <div
-      onClick={onClick}
-      className="flex h-[15rem] w-64 cursor-grab flex-col overflow-hidden rounded-lg bg-white p-4 shadow transition-shadow hover:shadow-md"
-    >
-      {renderContent()}
-    </div>
-  );
-};
-
 const ProgramsSection = ({
-  onProgramClick,
   programs: initialPrograms,
   totalCount,
   countries,
   selectedCountryIds,
-  onCountryChange,
   isLoading,
   userCountry,
+  onCountryChange,
+  onProgramClick,
 }: {
-  onProgramClick: (program: ProgramInfo) => void;
   programs: ProgramInfo[];
   totalCount: number;
   countries: Country[] | undefined;
   selectedCountryIds: string[];
-  onCountryChange: (ids: string[]) => void;
   isLoading: boolean;
   userCountry?: Country | null;
+  onCountryChange: (ids: string[]) => void;
+  onProgramClick: (program: ProgramInfo) => void;
 }) => {
   const [programs, setPrograms] = useState(initialPrograms);
   const screenWidth = useAtomValue(screenWidthAtom);
@@ -247,7 +184,7 @@ const ProgramsSection = ({
 
       return `Showing programs for the chosen countries.`;
     }
-    return "Showing programs for all countries.";
+    return "Showing all programs world-wide.";
   }, [selectedCountryIds, countries, userCountry]);
 
   const [visibleSlides, setVisibleSlides] = useState(1);
@@ -397,19 +334,6 @@ const ProgramsSection = ({
                 {subTitle}
               </div>
             </div>
-
-            <div className="flex items-center gap-4">
-              <div className="flex items-center">
-                {/* PAGING (DESKTOP) */}
-                {/* <div className="hidden w-full gap-4 md:flex">
-                <SelectedSnapDisplay
-                  selectedSnap={selectedSnap}
-                  snapCount={effectiveTotalAll}
-                />
-                {renderButtons()}
-              </div> */}
-              </div>
-            </div>
           </div>
 
           {/* COUNTRY DROPDOWN */}
@@ -499,15 +423,6 @@ const ProgramsSection = ({
               </div>
             )}
           </Suspense>
-
-          {/* MOBILE */}
-          {/* <div className="flex w-full flex-col items-center justify-center gap-2 text-center md:hidden">
-          {renderButtons()}
-          <SelectedSnapDisplay
-            selectedSnap={selectedSnap}
-            snapCount={effectiveTotalAll}
-          />
-        </div> */}
         </div>
       </Carousel>
     </div>
@@ -648,6 +563,7 @@ const ReferralsPage: NextPageWithLayout<{
         valueContains: null,
         statuses: null,
       }),
+    enabled: isAuthenticated && !isBlocked,
   });
   const hasLinks = (linksData?.items?.length ?? 0) > 0;
   const hasPrograms = (programsData?.items?.length ?? 0) > 0;
@@ -667,15 +583,6 @@ const ReferralsPage: NextPageWithLayout<{
     setCreateLinkModalVisible(true);
   }, []);
 
-  if (isLoading) {
-    return (
-      <div className="container mx-auto animate-pulse px-4 py-8">
-        <div className="bg-base-300 mb-6 h-10 w-48 rounded"></div>
-        <div className="bg-base-200 h-64 rounded-lg"></div>
-      </div>
-    );
-  }
-
   return (
     <>
       <Head>
@@ -683,68 +590,71 @@ const ReferralsPage: NextPageWithLayout<{
         <meta name="description" content="Yoma Referral Programs" />
       </Head>
 
-      <div className="mx-auto mt-20 w-full px-4 lg:max-w-4xl">
-        {!isAuthenticated ? (
-          <AnonymousView />
-        ) : (
-          <div className="space-y-12">
-            {!userProfile ? (
-              <LoadingInline
-                classNameSpinner="md:h-32 md:w-32 h-16 w-16 border-orange"
-                className="h-52 flex-col"
+      <div className="container mx-auto mt-20 flex max-w-5xl flex-col gap-8 px-4 py-8">
+        <Suspense
+          isLoading={isLoading || linksLoading || programsLoading}
+          loader={
+            <LoadingInline
+              classNameSpinner="md:h-32 md:w-32 h-16 w-16 border-orange"
+              className="h-52 flex-col"
+            />
+          }
+        >
+          {!isAuthenticated ? (
+            <div className="space-y-12">
+              <AnonymousView />
+
+              <ProgramsSection
+                onProgramClick={() => {}}
+                programs={programs}
+                totalCount={programsData?.totalCount || 0}
+                countries={countriesWithWW}
+                selectedCountryIds={selectedCountryIds}
+                onCountryChange={setSelectedCountryIds}
+                isLoading={programsLoading}
+                userCountry={userCountry}
               />
-            ) : isBlocked ? (
-              <ReferralBlockedView userProfile={userProfile} />
-            ) : (
-              <div className="flex flex-col gap-8">
-                <Suspense
-                  isLoading={linksLoading || programsLoading}
-                  loader={
-                    <LoadingInline
-                      classNameSpinner="md:h-32 md:w-32 h-16 w-16 border-orange"
-                      className="h-52 flex-col"
-                    />
-                  }
-                >
+            </div>
+          ) : (
+            <div className="space-y-12">
+              {!userProfile ? (
+                <LoadingInline
+                  classNameSpinner="md:h-32 md:w-32 h-16 w-16 border-orange"
+                  className="h-52 flex-col"
+                />
+              ) : isBlocked ? (
+                <ReferralBlockedView userProfile={userProfile} />
+              ) : (
+                <div className="flex flex-col gap-8">
                   <WelcomeSection
                     hasLinks={hasLinks}
                     hasPrograms={hasPrograms}
                   />
-                </Suspense>
 
-                {isReferee && <RefereeSection />}
+                  {isReferee && <RefereeSection />}
 
-                {(isReferrer || hasLinks || linksLoading) && (
-                  <>
-                    <Suspense
-                      isLoading={linksLoading}
-                      loader={<LoadingSkeleton height="h-64" />}
-                    >
-                      {hasLinks && (
-                        <LinksSection
-                          linksCount={linksData?.totalCount || 0}
-                          programs={programs}
-                          //onCreateLink={handleCreateLink}
-                        />
-                      )}
-                    </Suspense>
-
-                    <ProgramsSection
-                      onProgramClick={handleCreateLinkForProgram}
+                  {hasLinks && (
+                    <LinksSection
+                      linksCount={linksData?.totalCount || 0}
                       programs={programs}
-                      totalCount={programsData?.totalCount || 0}
-                      countries={countriesWithWW}
-                      selectedCountryIds={selectedCountryIds}
-                      onCountryChange={setSelectedCountryIds}
-                      isLoading={programsLoading}
-                      userCountry={userCountry}
                     />
-                  </>
-                )}
-              </div>
-            )}
-          </div>
-        )}
+                  )}
+
+                  <ProgramsSection
+                    onProgramClick={handleCreateLinkForProgram}
+                    programs={programs}
+                    totalCount={programsData?.totalCount || 0}
+                    countries={countriesWithWW}
+                    selectedCountryIds={selectedCountryIds}
+                    onCountryChange={setSelectedCountryIds}
+                    isLoading={programsLoading}
+                    userCountry={userCountry}
+                  />
+                </div>
+              )}
+            </div>
+          )}
+        </Suspense>
       </div>
 
       <ReferrerCreateLinkModal

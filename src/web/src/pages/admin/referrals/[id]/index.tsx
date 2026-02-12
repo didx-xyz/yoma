@@ -72,6 +72,7 @@ import {
   AdminReferralProgramActions,
   ReferralProgramActionOptions,
 } from "~/components/Referrals/AdminReferralProgramActions";
+import { ProgramCard } from "~/components/Referrals/ProgramCard";
 import { ProgramImage } from "~/components/Referrals/ProgramImage";
 import { ProgramStatusBadge } from "~/components/Referrals/ProgramStatusBadge";
 import { ApiErrors } from "~/components/Status/ApiErrors";
@@ -1653,6 +1654,7 @@ const ReferralProgramForm: NextPageWithLayout<{
                   ReferralProgramActionOptions.VIEW_LINKS,
                   ReferralProgramActionOptions.DELETE,
                 ]}
+                className="text-white"
               />
             )}
           </div>
@@ -2468,19 +2470,39 @@ const ReferralProgramForm: NextPageWithLayout<{
                     </div>
                   </div>
 
-                  {/* Program Information Sections */}
+                  {/* Program Card Preview */}
                   {programPreview && (
-                    <AdminProgramInfo
-                      program={programPreview}
-                      imagePreviewUrl={imagePreviewUrl}
-                      opportunityDataMap={opportunityDataMap}
-                      filterOptions={[
-                        ProgramInfoFilterOptions.PROGRAM_INFO,
-                        ProgramInfoFilterOptions.COMPLETION_REWARDS,
-                        ProgramInfoFilterOptions.FEATURES,
-                        ProgramInfoFilterOptions.PATHWAY,
-                      ]}
-                    />
+                    <>
+                      <div>
+                        <h6 className="text-sm font-semibold">
+                          Program Card Preview
+                        </h6>
+                        <p className="text-xs text-gray-600">
+                          This is how your program will appear to users
+                        </p>
+                        <div className="flex justify-center py-4">
+                          <ProgramCard
+                            data={{
+                              ...programPreview,
+                              imageURL:
+                                imagePreviewUrl || programPreview.imageURL,
+                            }}
+                          />
+                        </div>
+                      </div>
+
+                      <AdminProgramInfo
+                        program={programPreview}
+                        imagePreviewUrl={imagePreviewUrl}
+                        opportunityDataMap={opportunityDataMap}
+                        filterOptions={[
+                          ProgramInfoFilterOptions.PROGRAM_INFO,
+                          ProgramInfoFilterOptions.COMPLETION_REWARDS,
+                          ProgramInfoFilterOptions.FEATURES,
+                          ProgramInfoFilterOptions.PATHWAY,
+                        ]}
+                      />
+                    </>
                   )}
 
                   {/* Action Buttons */}

@@ -244,7 +244,7 @@ export const Global: React.FC = () => {
       if (
         currentPath.includes("/referrals/claim/") ||
         // currentPath.includes("/referrals/progress/") ||
-        currentPath.includes("/referrals/") ||
+        // currentPath.includes("/referrals/") ||
         currentPath.includes("/user/profile") ||
         currentPath.includes("/user/settings")
       ) {
@@ -264,7 +264,14 @@ export const Global: React.FC = () => {
         (refereeLinkUsages?.items?.length ?? 0) > 0 &&
         !refereeProgressDialogDismissed
       ) {
-        // show toast notification for pending referrals
+        // skip toast if already on the referrals pages
+        if (currentPath.startsWith("/referrals")) {
+          // don't check again
+          setRefereeProgressDialogDismissed(true);
+          return;
+        }
+
+        // show toast for pending referrals
         const count = refereeLinkUsages?.items?.length ?? 0;
         toast.info(
           <div className="flex flex-col gap-2">
