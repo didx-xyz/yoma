@@ -84,9 +84,6 @@ export const ReferrerLinkDetails: React.FC<LinkDetailsProps> = ({
   return (
     <div className={className}>
       <div className="flex flex-col gap-6">
-        {/* TODO: debug */}
-        {/* {displayLink.url} */}
-
         {/* Short URL - Compact */}
         {showShortLinkProp && displayLink.shortURL && (
           <div className="min-w-0">

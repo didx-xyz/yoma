@@ -4,9 +4,8 @@ import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
 import { useSession } from "next-auth/react";
 import Head from "next/head";
-import Image from "next/image";
 import { useRouter } from "next/router";
-import React, {
+import {
   useCallback,
   useEffect,
   useMemo,
@@ -29,8 +28,8 @@ import {
   type ReferralLink,
 } from "~/api/models/referrals";
 import { ReferralParticipationRole, type UserProfile } from "~/api/models/user";
-import { getCountries } from "~/api/services/referrals";
 import {
+  getCountries,
   searchReferralLinks,
   searchReferralProgramsInfo,
 } from "~/api/services/referrals";
@@ -44,7 +43,7 @@ import { ProgramCard } from "~/components/Referrals/ProgramCard";
 import { RefereeUsagesList } from "~/components/Referrals/RefereeUsagesList";
 import { ReferralBlockedView } from "~/components/Referrals/ReferralBlockedView";
 import { ReferrerCreateLinkModal } from "~/components/Referrals/ReferrerCreateLinkModal";
-import { ReferrerLinksList2 } from "~/components/Referrals/ReferrerLinksList2";
+import { ReferrerLinksList } from "~/components/Referrals/ReferrerLinksList";
 import { ReferrerStats } from "~/components/Referrals/ReferrerStats";
 import { SignInButton } from "~/components/SignInButton";
 import { LoadingInline } from "~/components/Status/LoadingInline";
@@ -126,25 +125,12 @@ const LinksSection = ({
   <div className="flex flex-col gap-8">
     <ReferrerStats linksCount={linksCount} />
 
-    {/* ROW - Links */}
     <div className="space-y-2">
       <div className="font-family-nunito font-semibold text-black">
         Link List
       </div>
 
-      <ReferrerLinksList2 programs={programs} initialPageSize={3} />
-
-      {/* {!!programs.length && (
-        <div className="flex justify-center pt-2">
-          <button
-            onClick={onCreateLink}
-            className="btn btn-outline border-orange btn-sm group hover:bg-orange text-black normal-case hover:text-white"
-          >
-            <FaShareAlt className="text-orange h-3 w-3 group-hover:text-white" />
-            Create Another Link
-          </button>
-        </div>
-      )} */}
+      <ReferrerLinksList programs={programs} initialPageSize={3} />
     </div>
   </div>
 );
@@ -485,7 +471,6 @@ const ReferralsPage: NextPageWithLayout<{
     );
   };
 
-  const isReferrer = hasReferralRole(ReferralParticipationRole.Referrer);
   const isReferee = hasReferralRole(ReferralParticipationRole.Referee);
   const isBlocked = userProfile?.referral?.blocked ?? false;
 
@@ -493,7 +478,6 @@ const ReferralsPage: NextPageWithLayout<{
   const { data: lookups_countries } = useQuery<Country[]>({
     queryKey: ["countries"],
     queryFn: () => getCountries(),
-    //enabled: !error,
   });
 
   const countriesWithWW = useMemo(() => {
@@ -586,7 +570,7 @@ const ReferralsPage: NextPageWithLayout<{
   return (
     <>
       <Head>
-        <title>Yoma | Referrals</title>
+        <title>Yoma | ❤️ Referrals</title>
         <meta name="description" content="Yoma Referral Programs" />
       </Head>
 

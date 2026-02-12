@@ -814,7 +814,7 @@ const ReferralProgramForm: NextPageWithLayout<{
     { step: 2, label: "Availability", formState: formStateStep2 },
     { step: 3, label: "Completion & Rewards", formState: formStateStep3 },
     { step: 4, label: "Features", formState: formStateStep4 },
-    { step: 5, label: "Engagement Pathway", formState: formStateStep5 },
+    { step: 5, label: "Pathway", formState: formStateStep5 },
     {
       step: 6,
       label: "Preview",
@@ -2352,9 +2352,7 @@ const ReferralProgramForm: NextPageWithLayout<{
               {step === 5 && (
                 <>
                   <div className="mb-4 flex flex-col gap-2">
-                    <h5 className="font-bold tracking-wider">
-                      Engagement Pathway
-                    </h5>
+                    <h5 className="font-bold tracking-wider">Pathway</h5>
                     <p className="-mt-2 text-sm">
                       Configure the steps and tasks for referee completion
                     </p>
@@ -2386,7 +2384,7 @@ const ReferralProgramForm: NextPageWithLayout<{
                                 checked={value}
                               />
                               <div className="text-gray-dark ml-4 select-none">
-                                <div>Enable Engagement Pathway</div>
+                                <div>Enable Pathway</div>
                                 <p className="text-sm">
                                   When enabled, referees must complete the
                                   configured pathway checklist below
@@ -2415,8 +2413,7 @@ const ReferralProgramForm: NextPageWithLayout<{
                     ) : (
                       <FormMessage messageType={FormMessageType.Info}>
                         Pathway configuration is disabled. Enable &quot;Enable
-                        Engagement Pathway&quot; above to configure pathway
-                        requirements.
+                        Pathway&quot; above to configure pathway requirements.
                       </FormMessage>
                     )}
 
