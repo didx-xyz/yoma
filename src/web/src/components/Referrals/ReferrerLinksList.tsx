@@ -22,11 +22,8 @@ interface ReferrerLinkRowProps {
 
 const ReferrerLinkRow: React.FC<ReferrerLinkRowProps> = ({
   link,
-  programs,
   onOpenShareModal,
 }) => {
-  const program = programs.find((p) => p.id === link.programId);
-
   const hasStatus = !!link.status;
   const statusLabel = hasStatus
     ? link.status === "LimitReached"
@@ -42,7 +39,7 @@ const ReferrerLinkRow: React.FC<ReferrerLinkRowProps> = ({
             href={`/referrals/link/${link.id}`}
             className="font-family-nunito text-base-content block min-w-0 overflow-hidden text-xs font-semibold text-ellipsis whitespace-nowrap transition-opacity hover:opacity-75 md:text-sm"
           >
-            {program?.name ?? link?.name ?? "N/A"}
+            {link?.programName ?? link?.name ?? "N/A"}
           </Link>
         </div>
 

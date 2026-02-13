@@ -5,7 +5,7 @@ import { getServerSession } from "next-auth";
 import Head from "next/head";
 import { useRouter } from "next/router";
 import { useCallback, useEffect, useState, type ReactElement } from "react";
-import { IoGift, IoWarningOutline } from "react-icons/io5";
+import { IoGift } from "react-icons/io5";
 import type { ProgramInfo } from "~/api/models/referrals";
 import type { UserProfile } from "~/api/models/user";
 import {

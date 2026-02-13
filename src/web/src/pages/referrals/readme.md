@@ -1,19 +1,6 @@
 ## **Referral Program Functionality Summary**
 
-### **1. Referee Pages** (`/referrals/claim/[programId]`)
-**Purpose:** Landing page for users clicking on a referral link
-
-**Key Features:**
-- **Link Claiming:** Validates and claims referral links using `linkId`
-- **Authentication Flow:** Prompts unauthenticated users to sign in
-- **Profile Completion:** Checks if user profile is complete before allowing claim
-- **Auto-claim:** Automatically processes claim when user is authenticated and profile is complete
-- **Program Display:** Shows detailed program information (description, requirements, rewards)
-- **Error Handling:** Displays helpful messages for invalid/expired/cancelled/limit-reached links
-- **Alternative Actions:** Suggests becoming a referrer if link unavailable
-- **Analytics Tracking:** Tracks login button clicks and claim events
-
-### **2. Referrals Landing Page** (`/referrals`)
+### **1. Referrals Landing Page** (`/referrals`)
 **Purpose:** Main dashboard for both referrers and referees to manage and track their referral activities
 
 **Key Features:**
@@ -34,6 +21,19 @@
   - **Status Indicators:** Visual badges for pending/completed/expired states
 - **Blocked State:** Displays suspension notice if user's referral access is blocked
 - **Responsive Design:** Optimized layouts for mobile and desktop
+
+### **2. Referee Pages** (`/referrals/claim/[programId]`)
+**Purpose:** Landing page for users clicking on a referral link
+
+**Key Features:**
+- **Link Claiming:** Validates and claims referral links using `linkId`
+- **Authentication Flow:** Prompts unauthenticated users to sign in
+- **Profile Completion:** Checks if user profile is complete before allowing claim
+- **Auto-claim:** Automatically processes claim when user is authenticated and profile is complete
+- **Program Display:** Shows detailed program information (description, requirements, rewards)
+- **Error Handling:** Displays helpful messages for invalid/expired/cancelled/limit-reached links
+- **Alternative Actions:** Suggests becoming a referrer if link unavailable
+- **Analytics Tracking:** Tracks login button clicks and claim events
 
 ### **3. Link Detail Page** (`/referrals/link/[id]`)
 **Purpose:** View and manage a specific referral link with sharing functionality

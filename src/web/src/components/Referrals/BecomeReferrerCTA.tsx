@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { IoArrowForward, IoGift } from "react-icons/io5";
+import { IoArrowForward } from "react-icons/io5";
 
 export const BecomeReferrerCTA: React.FC = () => {
   return (

@@ -178,7 +178,10 @@ const ReferralProgramInfo: NextPageWithLayout<{
                   This is how your program appears to users
                 </p>
                 <div className="flex justify-center py-4">
-                  <ProgramCard data={program} />
+                  <ProgramCard
+                    data={program}
+                    zltoReward={program.zltoRewardReferrer}
+                  />
                 </div>
               </div>
 

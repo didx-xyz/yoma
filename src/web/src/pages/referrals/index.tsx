@@ -26,11 +26,13 @@ import {
   type ProgramInfo,
   type ProgramSearchResultsInfo,
   type ReferralLink,
+  ReferralLinkUsageStatus,
 } from "~/api/models/referrals";
 import { ReferralParticipationRole, type UserProfile } from "~/api/models/user";
 import {
   getCountries,
   searchReferralLinks,
+  searchReferralLinkUsagesAsReferee,
   searchReferralProgramsInfo,
 } from "~/api/services/referrals";
 import { getUserProfile } from "~/api/services/user";
@@ -275,10 +277,11 @@ const ProgramsSection = ({
     );
   }, [currentSlide, selectedSnap, effectiveTotalAll]);
 
-  const renderSlide = (program: ProgramInfo, index: number) => (
+  const renderSlide = (program: ProgramInfo) => (
     <div className="w-[85vw] min-[600px]:w-auto">
       <ProgramCard
         data={program}
+        zltoReward={program.zltoRewardReferrer}
         onClick={() => onProgramClick(program)}
         action={
           <button
@@ -372,7 +375,7 @@ const ProgramsSection = ({
                         className="flex justify-center select-none md:justify-start"
                         id={`referral-programs_${item.id}`}
                       >
-                        {renderSlide(item, index)}
+                        {renderSlide(item)}
                       </Slide>
                     );
                   })}
@@ -552,15 +555,28 @@ const ReferralsPage: NextPageWithLayout<{
   const hasLinks = (linksData?.items?.length ?? 0) > 0;
   const hasPrograms = (programsData?.items?.length ?? 0) > 0;
 
-  // Referee data is now handled by RefereeUsagesList component
+  const { data: refereeUsagesData } = useQuery({
+    queryKey: ["ReferralLinkUsagesReferee", 1, 5],
+    queryFn: () =>
+      searchReferralLinkUsagesAsReferee({
+        pageNumber: 1,
+        pageSize: 5,
+        programId: null,
+        linkId: null,
+        statuses: [
+          ReferralLinkUsageStatus.Pending,
+          ReferralLinkUsageStatus.Expired,
+        ],
+        dateStart: null,
+        dateEnd: null,
+      }),
+    enabled: isAuthenticated && !isBlocked && isReferee,
+  });
+  const hasRefereeUsages = (refereeUsagesData?.totalCount ?? 0) > 0;
+
   const programs = programsData?.items || [];
 
   // HANDLERS
-  const handleCreateLink = useCallback(() => {
-    setSelectedProgramForLink(null);
-    setCreateLinkModalVisible(true);
-  }, []);
-
   const handleCreateLinkForProgram = useCallback((program: ProgramInfo) => {
     setSelectedProgramForLink(program);
     setSelectedLinkForEdit(null);
@@ -615,7 +631,7 @@ const ReferralsPage: NextPageWithLayout<{
                     hasPrograms={hasPrograms}
                   />
 
-                  {isReferee && <RefereeSection />}
+                  {isReferee && hasRefereeUsages && <RefereeSection />}
 
                   {hasLinks && (
                     <LinksSection

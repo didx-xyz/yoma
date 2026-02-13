@@ -122,10 +122,9 @@ export const Global: React.FC = () => {
   );
 
   // Fetch referee programs if user is a referee
-  const [refereePageSize, setRefereePageSize] = useState(5);
   const { data: refereeLinkUsages, isFetching: refereeLinkUsagesFetching } =
     useRefereeReferrals({
-      pageSize: refereePageSize,
+      pageSize: 5,
       statuses: [ReferralLinkUsageStatus.Pending],
       enabled: session !== null && isReferee,
       keepPreviousData: true,
@@ -237,8 +236,6 @@ export const Global: React.FC = () => {
       // Skip profile completion modals on claim page - handled inline there
       if (
         currentPath.includes("/referrals/claim/") ||
-        // currentPath.includes("/referrals/progress/") ||
-        // currentPath.includes("/referrals/") ||
         currentPath.includes("/user/profile") ||
         currentPath.includes("/user/settings")
       ) {
@@ -302,11 +299,13 @@ export const Global: React.FC = () => {
       }
     },
     [
+      router,
+      refereeLinkUsages,
+      refereeProgressDialogDismissed,
       setUpdateProfileDialogVisible,
       setSettingsDialogVisible,
       setPhotoUploadDialogVisible,
-      refereeLinkUsages,
-      refereeProgressDialogDismissed,
+      setRefereeProgressDialogDismissed,
     ],
   );
   //#endregion Functions

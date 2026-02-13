@@ -42,10 +42,13 @@ export const RefereeStatusBanner: React.FC<RefereeStatusBannerProps> = ({
 
   const statusInfo = useMemo(() => {
     if (usage.status === "Completed") {
+      const zltoMessage = program.zltoRewardReferee
+        ? `your progress has been saved and <strong>${program.zltoRewardReferee} ZLTO</strong> has been added to your wallet`
+        : "your progress has been saved";
+
       return {
-        title: "Program completed",
-        message:
-          "Nice work — your progress is saved in your wallet. You can still explore other opportunities.",
+        title: "Program completed!",
+        message: `Nice work — ${zltoMessage}. <br/>Don't stop here, you can still explore other opportunities.`,
         icon: "🏆",
         tone: "success" as const,
       };
@@ -53,7 +56,7 @@ export const RefereeStatusBanner: React.FC<RefereeStatusBannerProps> = ({
 
     if (usage.status === "Expired") {
       return {
-        title: "Program expired",
+        title: "Program expired!",
         message:
           "The completion window has ended, but you can still explore other opportunities.",
         icon: "⏰",
@@ -65,7 +68,7 @@ export const RefereeStatusBanner: React.FC<RefereeStatusBannerProps> = ({
 
     if (percentComplete === 0) {
       return {
-        title: "You're ready to start",
+        title: "You're ready to start!",
         message: "Complete the next steps below to make progress.",
         icon: "🚀",
         tone: "info" as const,
@@ -74,7 +77,7 @@ export const RefereeStatusBanner: React.FC<RefereeStatusBannerProps> = ({
 
     if (percentComplete < 90) {
       return {
-        title: "You're making progress",
+        title: "You're making progress!",
         message: "Keep going — you're on track.",
         icon: "✨",
         tone: "info" as const,
@@ -82,32 +85,12 @@ export const RefereeStatusBanner: React.FC<RefereeStatusBannerProps> = ({
     }
 
     return {
-      title: "Almost there",
+      title: "Almost there!",
       message: "Just a little more to finish.",
       icon: "🏁",
       tone: "info" as const,
     };
-  }, [usage.status, usage.percentComplete]);
-
-  const toneStyles = useMemo(() => {
-    switch (statusInfo.tone) {
-      case "success":
-        return {
-          iconBg: "bg-green-50",
-          iconText: "text-green-700",
-        };
-      case "warning":
-        return {
-          iconBg: "bg-orange-50",
-          iconText: "text-orange-700",
-        };
-      default:
-        return {
-          iconBg: "bg-blue-50",
-          iconText: "text-blue-700",
-        };
-    }
-  }, [statusInfo.tone]);
+  }, [usage.status, usage.percentComplete, program.zltoRewardReferee]);
 
   return (
     <>

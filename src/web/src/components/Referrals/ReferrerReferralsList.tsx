@@ -1,13 +1,8 @@
-import { useCallback, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import Image from "next/image";
+import { useState } from "react";
+import Moment from "react-moment";
 import {
-  IoCheckmarkCircle,
-  IoHourglassOutline,
-  IoTimeOutline,
-  IoPerson,
-} from "react-icons/io5";
-import {
-  ReferralLinkUsageStatus,
   type ReferralLinkUsage,
   type ReferralLinkUsageSearchResults,
 } from "~/api/models/referrals";
@@ -16,8 +11,6 @@ import FormMessage, { FormMessageType } from "~/components/Common/FormMessage";
 import Suspense from "~/components/Common/Suspense";
 import { DATE_FORMAT_HUMAN, PAGE_SIZE } from "~/lib/constants";
 import { LoadingInline } from "../Status/LoadingInline";
-import Image from "next/image";
-import Moment from "react-moment";
 
 interface ReferralsListProps {
   linkId: string;
@@ -47,37 +40,6 @@ export const ReferrerReferralsList: React.FC<ReferralsListProps> = ({
       }),
     enabled: !!linkId,
   });
-
-  const getStatusBadge = useCallback(
-    (status: ReferralLinkUsageStatus | string) => {
-      switch (status) {
-        case "Completed":
-          return (
-            <span className="badge badge-sm bg-green-light text-green gap-1">
-              <IoCheckmarkCircle className="h-3 w-3" />
-              Completed
-            </span>
-          );
-        case "Pending":
-          return (
-            <span className="badge badge-sm gap-1 bg-blue-50 text-blue-700">
-              <IoHourglassOutline className="h-3 w-3" />
-              Pending
-            </span>
-          );
-        case "Expired":
-          return (
-            <span className="badge badge-sm bg-orange-light text-orange gap-1">
-              <IoTimeOutline className="h-3 w-3" />
-              Expired
-            </span>
-          );
-        default:
-          return <span className="badge badge-sm">{status}</span>;
-      }
-    },
-    [],
-  );
 
   const hasUsage = (usageData?.items?.length ?? 0) > 0;
   const totalCount = usageData?.totalCount ?? 0;

@@ -129,7 +129,7 @@ const ReferralLinkPage: NextPageWithLayout<{
             items={[
               { title: "❤️ Referrals", url: "/referrals" },
               {
-                title: link?.name ?? "",
+                title: link?.programName ?? link?.name ?? "N/A",
                 selected: true,
               },
             ]}

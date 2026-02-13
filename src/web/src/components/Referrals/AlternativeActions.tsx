@@ -1,12 +1,6 @@
 import { useSession } from "next-auth/react";
 import Link from "next/link";
-import {
-  IoArrowForward,
-  IoList,
-  IoRocket,
-  IoStorefront,
-  IoTrophy,
-} from "react-icons/io5";
+import { IoArrowForward } from "react-icons/io5";
 
 /**
  * AlternativeActions Component
@@ -39,13 +33,15 @@ export const AlternativeActions: React.FC = () => {
       </div>
 
       <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-        <Link
-          href="/opportunities"
-          className="btn btn-sm bg-orange w-full gap-2 text-white hover:brightness-110 md:w-auto md:min-w-[180px]"
-        >
-          <IoArrowForward className="h-4 w-4" />
-          Find more opportunities
-        </Link>
+        {isAuthenticated && (
+          <Link
+            href="/yoid/wallet"
+            className="btn btn-sm bg-orange w-full gap-2 text-white hover:brightness-110 md:w-auto md:min-w-[180px]"
+          >
+            <IoArrowForward className="h-4 w-4" />
+            See your wallet
+          </Link>
+        )}
 
         <Link
           href="/marketplace"
@@ -55,15 +51,13 @@ export const AlternativeActions: React.FC = () => {
           Browse marketplace
         </Link>
 
-        {isAuthenticated && (
-          <Link
-            href="/yoid/wallet"
-            className="btn btn-sm bg-orange w-full gap-2 text-white hover:brightness-110 md:w-auto md:min-w-[180px]"
-          >
-            <IoArrowForward className="h-4 w-4" />
-            See your achievements
-          </Link>
-        )}
+        <Link
+          href="/opportunities"
+          className="btn btn-sm bg-orange w-full gap-2 text-white hover:brightness-110 md:w-auto md:min-w-[180px]"
+        >
+          <IoArrowForward className="h-4 w-4" />
+          Find more opportunities
+        </Link>
       </div>
     </div>
   );

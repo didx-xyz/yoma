@@ -108,13 +108,23 @@ const schemaStep1 = z
       .max(150, "Name cannot exceed 150 characters"),
     description: z
       .string()
-      .max(500, "Description cannot exceed 500 characters"),
+      .nullable()
+      .transform((val) => val ?? "")
+      .pipe(z.string().max(500, "Description cannot exceed 500 characters")),
     image: z.any().optional(), // Store uploaded image file
+    imageURL: z.string().nullable().optional(), // Existing image URL
     //isDefault: z.boolean(),
   })
-  .refine(() => true, {
-    message: "Step 1 validation",
-  });
+  .refine(
+    (data) => {
+      // Image is required: either new upload (image) or existing (imageURL)
+      return data.image instanceof File || !!data.imageURL;
+    },
+    {
+      message: "Program image is required",
+      path: ["image"],
+    },
+  );
 
 const schemaStep2 = z
   .object({
@@ -171,46 +181,116 @@ const schemaStep3 = z
       .transform((val) => (val === 0 ? null : val)),
     zltoRewardReferrer: z
       .union([z.string(), z.number()])
-      .pipe(
-        z.coerce
-          .number()
-          .min(1, "Referrer reward must be greater than 0")
-          .max(2000, "Referrer reward may not exceed 2000")
-          .refine((val) => val % 1 === 0, {
-            message: "Referrer reward must be a whole number",
-          }),
-      )
+      .optional()
       .nullable()
-      .catch(null)
-      .transform((val) => (val === 0 ? null : val)),
+      .transform((val) => {
+        if (val === "" || val === null || val === undefined) return null;
+        const num = typeof val === "string" ? parseFloat(val) : val;
+        if (isNaN(num) || num === 0) return null;
+        return num;
+      }),
     zltoRewardReferee: z
       .union([z.string(), z.number()])
-      .pipe(
-        z.coerce
-          .number()
-          .min(1, "Referee reward must be greater than 0")
-          .max(2000, "Referee reward may not exceed 2000")
-          .refine((val) => val % 1 === 0, {
-            message: "Referee reward must be a whole number",
-          }),
-      )
+      .optional()
       .nullable()
-      .catch(null)
-      .transform((val) => (val === 0 ? null : val)),
+      .transform((val) => {
+        if (val === "" || val === null || val === undefined) return null;
+        const num = typeof val === "string" ? parseFloat(val) : val;
+        if (isNaN(num) || num === 0) return null;
+        return num;
+      }),
     zltoRewardPool: z
       .union([z.string(), z.number()])
-      .pipe(
-        z.coerce
-          .number()
-          .min(1, "Reward pool must be greater than 0")
-          .max(10000000, "Reward pool may not exceed 10 million")
-          .refine((val) => val % 1 === 0, {
-            message: "Reward pool must be a whole number",
-          }),
-      )
+      .optional()
       .nullable()
-      .catch(null)
-      .transform((val) => (val === 0 ? null : val)),
+      .transform((val) => {
+        if (val === "" || val === null || val === undefined) return null;
+        const num = typeof val === "string" ? parseFloat(val) : val;
+        if (isNaN(num) || num === 0) return null;
+        return num;
+      }),
+  })
+  .superRefine((data, ctx) => {
+    // Validate zltoRewardReferrer
+    if (
+      data.zltoRewardReferrer !== null &&
+      data.zltoRewardReferrer !== undefined
+    ) {
+      if (data.zltoRewardReferrer < 1) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Referrer reward must be greater than 0",
+          path: ["zltoRewardReferrer"],
+        });
+      }
+      if (data.zltoRewardReferrer > 2000) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Referrer reward may not exceed 2000",
+          path: ["zltoRewardReferrer"],
+        });
+      }
+      if (data.zltoRewardReferrer % 1 !== 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Referrer reward must be a whole number",
+          path: ["zltoRewardReferrer"],
+        });
+      }
+    }
+
+    // Validate zltoRewardReferee
+    if (
+      data.zltoRewardReferee !== null &&
+      data.zltoRewardReferee !== undefined
+    ) {
+      if (data.zltoRewardReferee < 1) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Referee reward must be greater than 0",
+          path: ["zltoRewardReferee"],
+        });
+      }
+      if (data.zltoRewardReferee > 2000) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Referee reward may not exceed 2000",
+          path: ["zltoRewardReferee"],
+        });
+      }
+      if (data.zltoRewardReferee % 1 !== 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Referee reward must be a whole number",
+          path: ["zltoRewardReferee"],
+        });
+      }
+    }
+
+    // Validate zltoRewardPool
+    if (data.zltoRewardPool !== null && data.zltoRewardPool !== undefined) {
+      if (data.zltoRewardPool < 1) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Reward pool must be greater than 0",
+          path: ["zltoRewardPool"],
+        });
+      }
+      if (data.zltoRewardPool > 10000000) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Reward pool may not exceed 10 million",
+          path: ["zltoRewardPool"],
+        });
+      }
+      if (data.zltoRewardPool % 1 !== 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Reward pool must be a whole number",
+          path: ["zltoRewardPool"],
+        });
+      }
+    }
   })
   .refine(
     (data) => {
@@ -1400,7 +1480,7 @@ const ReferralProgramForm: NextPageWithLayout<{
         if (imageFile) {
           try {
             await updateReferralProgramImage(programId, imageFile);
-            message += " (including image)";
+
             setImageFiles([]); // Clear after successful upload
             (setValueStep1 as any)("image", null); // Clear form value
           } catch (imageError) {
@@ -1767,17 +1847,42 @@ const ReferralProgramForm: NextPageWithLayout<{
                     </FormField>
 
                     {/* Image Upload */}
-                    <FormField label="Program Image">
+                    <FormField
+                      label="Program Image"
+                      showWarningIcon={
+                        !!(formStateStep1.errors as any).image?.message
+                      }
+                      showError={
+                        !!(formStateStep1.touchedFields as any).image ||
+                        formStateStep1.isSubmitted
+                      }
+                      error={(formStateStep1.errors as any).image?.message}
+                    >
+                      {/* Hidden field to track imageURL for validation */}
+                      <input
+                        type="hidden"
+                        {...registerStep1("imageURL" as any)}
+                      />
                       <AvatarUpload
                         onUploadComplete={(files) => {
                           const file =
                             files && files.length > 0 ? files[0] : null;
-                          (setValueStep1 as any)("image", file);
-                          setImageFiles(files); // Keep for backward compatibility
+                          (setValueStep1 as any)("image", file, {
+                            shouldValidate: true,
+                            shouldTouch: true,
+                          });
+                          setImageFiles(files);
                           triggerStep1();
                         }}
                         onRemoveImageExisting={() => {
-                          (setValueStep1 as any)("image", null);
+                          (setValueStep1 as any)("image", null, {
+                            shouldValidate: true,
+                            shouldTouch: true,
+                          });
+                          (setValueStep1 as any)("imageURL", null, {
+                            shouldValidate: true,
+                            shouldTouch: true,
+                          });
                           setImageFiles([]);
                           triggerStep1();
                         }}
@@ -2445,7 +2550,7 @@ const ReferralProgramForm: NextPageWithLayout<{
                     <div className="flex-shrink-0">
                       <ProgramImage
                         imageURL={programPreview?.imageURL}
-                        name={programPreview?.name ?? "Program"}
+                        name={programPreview?.name || "Program"}
                         size={60}
                         className="border-2 border-gray-200"
                       />
@@ -2454,14 +2559,14 @@ const ReferralProgramForm: NextPageWithLayout<{
                     <div className="min-w-0 flex-1">
                       <div className="flex min-w-0 items-center gap-2">
                         <h1 className="truncate text-base font-bold md:text-lg">
-                          {programPreview?.name ?? "N/A"}
+                          {programPreview?.name || "N/A"}
                         </h1>
                         {programPreview?.isDefault && (
                           <span className="badge badge-primary">Default</span>
                         )}
                       </div>
                       <p className="truncate text-xs text-gray-500 md:text-sm">
-                        {programPreview?.description ??
+                        {programPreview?.description ||
                           "No description provided"}
                       </p>
                     </div>
@@ -2481,9 +2586,14 @@ const ReferralProgramForm: NextPageWithLayout<{
                           <ProgramCard
                             data={{
                               ...programPreview,
+                              name: programPreview.name || "Program Name",
+                              description:
+                                programPreview.description ||
+                                "No description provided",
                               imageURL:
                                 imagePreviewUrl || programPreview.imageURL,
                             }}
+                            zltoReward={programPreview.zltoRewardReferrer}
                           />
                         </div>
                       </div>

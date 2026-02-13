@@ -5,13 +5,11 @@ import { searchReferralLinkUsagesAsReferee } from "~/api/services/referrals";
 import Suspense from "~/components/Common/Suspense";
 import NoRowsMessage from "~/components/NoRowsMessage";
 import { usePaginatedQuery } from "~/hooks/usePaginatedQuery";
-import { LoadingInline } from "../Status/LoadingInline";
 import Link from "next/link";
 import { FaChartBar } from "react-icons/fa";
 import Image from "next/image";
 import Moment from "react-moment";
 import { DATE_FORMAT_HUMAN } from "~/lib/constants";
-import { Josefin_Sans } from "next/font/google";
 
 interface RefereeUsagesListProps {
   initialPageSize?: number;
@@ -30,16 +28,6 @@ const RefereeUsageRow = ({ usage }: { usage: ReferralLinkUsage }) => {
           >
             {usage.programName}
           </Link>
-          {/* <div className="flex items-center gap-2">
-            <progress
-              className={`progress w-16 ${hasProgress ? "progress-success" : "progress-info"}`}
-              value={progress}
-              max="100"
-            ></progress>
-            <span className="text-base-content/70 text-xs font-bold">
-              {progress}%
-            </span>
-          </div> */}
         </div>
 
         {/* DATE & STATUS */}
@@ -81,6 +69,7 @@ const RefereeUsageRow = ({ usage }: { usage: ReferralLinkUsage }) => {
           </div>
         </div>
       </div>
+
       {/* BUTTON */}
       <Link
         href={`/referrals/progress/${usage.programId}`}
