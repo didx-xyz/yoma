@@ -20,6 +20,6 @@ namespace Yoma.Core.Domain.Notification.Interfaces
 
     string ReferralProgramItemURL(NotificationType notificationType, Guid programId);
 
-    string ReferralYoIDDashboardURL(NotificationType notificationType, Guid programId);
+    string ReferralDashboardURL(NotificationType notificationType, Guid programId);
   }
 }
