@@ -763,7 +763,7 @@ namespace Yoma.Core.Domain.Referral.Services
 
             var dataCompleted = new NotificationReferralLinkCompleted
             {
-              YoIDURL = _notificationURLFactory.ReferralYoIDDashboardURL(type, usage.UserIdReferrer),
+              YoIDURL = _notificationURLFactory.ReferralDashboardURL(type, usage.UserIdReferrer),
               Links =
               [
                 new NotificationReferralLinkCompletedItem
@@ -787,7 +787,7 @@ namespace Yoma.Core.Domain.Referral.Services
 
             var dataWelcome = new NotificationReferralUsageWelcome
             {
-              YoIDURL = _notificationURLFactory.ReferralYoIDDashboardURL(type, program.Id),
+              YoIDURL = _notificationURLFactory.ReferralDashboardURL(type, program.Id),
               LinkClaimURL = link.ClaimURL(_appSettings.AppBaseURL),
               DateClaimed = usage.DateClaimed,
               ProgramName = program.Name,
@@ -814,7 +814,7 @@ namespace Yoma.Core.Domain.Referral.Services
 
             var dataCompletion = new NotificationReferralUsageCompletion
             {
-              YoIDURL = _notificationURLFactory.ReferralYoIDDashboardURL(type, program.Id),
+              YoIDURL = _notificationURLFactory.ReferralDashboardURL(type, program.Id),
               DateCompleted = usage.DateCompleted.Value,
               DateClaimed = usage.DateClaimed,
               ProgramName = program.Name,
