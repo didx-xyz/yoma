@@ -3,12 +3,14 @@ import { ButtonBack, ButtonNext } from "react-scroll-snap-anime-slider";
 export const NavigationButtons: React.FC<{
   prevDisabled?: boolean;
   nextDisabled?: boolean;
-}> = ({ nextDisabled, prevDisabled }) => {
+  colorScheme?: "purple" | "orange";
+}> = ({ nextDisabled, prevDisabled, colorScheme = "purple" }) => {
+  const textColor = colorScheme === "orange" ? "text-orange" : "text-purple";
   return (
     <div className="flex justify-center gap-2">
       <ButtonBack className="btn btn-circle group" disabled={prevDisabled}>
         <svg
-          className="text-purple group-disabled:text-gray-light h-[45%] w-[45%]"
+          className={`${textColor} group-disabled:text-gray-light h-[45%] w-[45%]`}
           viewBox="0 0 532 532"
         >
           <path
@@ -21,7 +23,7 @@ export const NavigationButtons: React.FC<{
       </ButtonBack>
       <ButtonNext className="btn btn-circle group" disabled={nextDisabled}>
         <svg
-          className="text-purple group-disabled:text-gray-light h-[45%] w-[45%]"
+          className={`${textColor} group-disabled:text-gray-light h-[45%] w-[45%]`}
           viewBox="0 0 532 532"
         >
           <path

@@ -51,6 +51,7 @@ export const ProgramPathwayView: React.FC<ProgramPathwayViewProps> = ({
                   stepsLength={pathway.steps.length}
                   rule={pathway.rule}
                   orderMode={pathway.orderMode}
+                  isAdmin={isAdmin}
                 />
 
                 {pathway.steps?.map((step, stepIndex) => {
@@ -92,6 +93,7 @@ export const ProgramPathwayView: React.FC<ProgramPathwayViewProps> = ({
                             tasksLength={step.tasks.length}
                             rule={step.rule}
                             orderMode={step.orderMode}
+                            isAdmin={isAdmin}
                           />
 
                           {/* Tasks List */}

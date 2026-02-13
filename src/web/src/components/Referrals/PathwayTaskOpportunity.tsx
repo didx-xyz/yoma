@@ -114,6 +114,18 @@ const PathwayTaskOpportunity: React.FC<PathwayTaskOpportunityProps> = ({
 
     // Non-admin: show TaskWarning on error, loading skeleton while loading
     if (isLoading) {
+      if (opportunityVariant === "compact") {
+        return (
+          <div className="flex w-full items-center gap-3 py-4">
+            <div className="bg-base-200 h-10 w-10 shrink-0 animate-pulse rounded-lg"></div>
+            <div className="flex-1 space-y-2">
+              <div className="bg-base-200 h-4 w-3/4 animate-pulse rounded"></div>
+              <div className="bg-base-200 h-3 w-1/2 animate-pulse rounded"></div>
+            </div>
+            <div className="bg-base-200 h-8 w-20 shrink-0 animate-pulse rounded-lg"></div>
+          </div>
+        );
+      }
       return (
         <div className="h-[121.333px] items-center rounded-lg border border-gray-200 bg-white p-3">
           <LoadingSkeleton rows={1} columns={1} className="" height="" />

@@ -31,6 +31,7 @@ import {
   ReferralParticipationRole,
   UnblockRequest,
 } from "../models/referrals";
+import { Country } from "../models/lookups";
 
 // create/edit/info
 export const getReferralProgramById = async (
@@ -381,6 +382,16 @@ export const searchReferralAnalyticsAdmin = async (
   const { data } = await instance.post<ReferralAnalyticsSearchResults>(
     `/referral/analytics/search/admin`,
     filter,
+  );
+  return data;
+};
+
+export const getCountries = async (
+  context?: GetServerSidePropsContext | GetStaticPropsContext,
+): Promise<Country[]> => {
+  const instance = context ? ApiServer(context) : await ApiClient;
+  const { data } = await instance.get<Country[]>(
+    "/referral/program/search/filter/country",
   );
   return data;
 };

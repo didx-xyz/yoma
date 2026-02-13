@@ -206,7 +206,7 @@ export const ReferrerCreateLinkModal: React.FC<CreateLinkModalProps> = ({
             includeQRCode: data.includeQRCode || false,
           });
 
-          toast.success("Referral link created successfully!", {
+          toast.success("Referral link created!", {
             autoClose: 3000,
             toastId: `link-submit`,
           });

@@ -5,12 +5,18 @@ import { AvatarImage } from "../AvatarImage";
 import Moment from "react-moment";
 import { DATE_FORMAT_HUMAN } from "~/lib/constants";
 import { IoMdAlert } from "react-icons/io";
+import { useEffect, useState } from "react";
 
 const TransactionItemComponent: React.FC<{
   key: string;
   data: WalletVoucher;
   onClick: () => void;
 }> = ({ key, data, onClick }) => {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
   return (
     <button
       key={key}
@@ -20,7 +26,7 @@ const TransactionItemComponent: React.FC<{
       <div className="flex flex-row">
         <div className="flex flex-row">
           <div className="flex w-3/5 grow flex-col">
-            <h2 className="line-clamp-3 h-[70px] max-w-[210px] overflow-hidden text-start text-[18px] leading-tight font-semibold text-ellipsis">
+            <h2 className="line-clamp-2 h-[48px] max-w-[210px] overflow-hidden text-start text-[18px] leading-tight font-semibold text-ellipsis">
               {data.name}
             </h2>
           </div>
@@ -30,14 +36,20 @@ const TransactionItemComponent: React.FC<{
         </div>
       </div>
       <div className="flex max-w-[280px] grow flex-row">
-        <p
-          className="text-[rgba(84, 88, 89, 1)] line-clamp-4 text-start text-sm font-light"
-          dangerouslySetInnerHTML={{ __html: data.instructions }}
-        ></p>
+        {mounted ? (
+          <p
+            className="text-[rgba(84, 88, 89, 1)] line-clamp-4 text-start text-sm font-light"
+            dangerouslySetInnerHTML={{ __html: data.instructions }}
+          ></p>
+        ) : (
+          <p className="text-[rgba(84, 88, 89, 1)] line-clamp-4 text-start text-sm font-light">
+            {data.instructions?.replace(/<[^>]*>/g, "")}
+          </p>
+        )}
       </div>
 
       {/* DATES */}
-      <div className="text-gray-dark flex flex-col text-sm">
+      <div className="text-gray-dark flex flex-col items-start text-sm">
         <div>
           {data.dateStamp && (
             <>

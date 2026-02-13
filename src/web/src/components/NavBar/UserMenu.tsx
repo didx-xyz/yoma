@@ -14,7 +14,6 @@ import {
   IoMdClose,
 } from "react-icons/io";
 import { MdKeyboardArrowDown, MdKeyboardArrowUp } from "react-icons/md";
-import { ReferralParticipationRole } from "~/api/models/user";
 import { searchCredentials } from "~/api/services/credentials";
 import { searchMyOpportunitiesSummary } from "~/api/services/myOpportunities";
 import { getUserSkills } from "~/api/services/user";
@@ -31,14 +30,11 @@ import { AvatarImage } from "../AvatarImage";
 import { Header } from "../Common/Header";
 import Suspense from "../Common/Suspense";
 import NoRowsMessage from "../NoRowsMessage";
-import { ReferralBlockedCard } from "../Referrals/ReferralBlockedCard";
-import { ReferrerProgressCard } from "../Referrals/ReferrerProgressCard";
 import { SignOutButton } from "../SignOutButton";
 import { LoadingInline } from "../Status/LoadingInline";
 import { LineChart } from "../YoID/LineChart";
 import { OpportunitiesSummary } from "../YoID/OpportunitiesSummary";
 import { PassportCard } from "../YoID/PassportCard";
-import { ReferralCard } from "../YoID/ReferralCard";
 import { SkillsCard } from "../YoID/SkillsCard";
 import { WalletCard } from "../YoID/WalletCard";
 import { YoIdModal } from "../YoID/YoIdModal";
@@ -123,13 +119,6 @@ export const UserMenu: React.FC = () => {
       }),
     enabled: isDrawerOpen && !isCollapsedPassport && passport_enabled,
   });
-
-  // Check if user is a referrer (has created links)
-  const isReferrer =
-    userProfile?.referral?.roles?.some(
-      (role) =>
-        role === ReferralParticipationRole.Referrer || role === "Referrer",
-    ) ?? false;
 
   //#endregion
 
@@ -284,40 +273,6 @@ export const UserMenu: React.FC = () => {
                   </Link>
                 </div>
               </div>
-
-              {/* REFERRALS */}
-              <Suspense
-                isLoading={!userProfile}
-                loader={
-                  <LoadingInline
-                    className="flex-col p-0"
-                    classNameSpinner="h-12 border-orange w-12"
-                  />
-                }
-              >
-                <div className="flex w-full flex-col gap-2">
-                  {/* BLOCKED STATUS */}
-                  {userProfile?.referral?.blocked && (
-                    <ReferralBlockedCard
-                      blockedDate={
-                        userProfile?.referral?.blockedDate ?? undefined
-                      }
-                      onClick={() => setDrawerOpen(false)}
-                    />
-                  )}
-                  {/* REFERRER INVITE */}
-                  {!userProfile?.referral?.blocked && !isReferrer && (
-                    <ReferralCard onClick={() => setDrawerOpen(false)} />
-                  )}
-                  {/* REFERRER PROGRESS */}
-                  {!userProfile?.referral?.blocked && isReferrer && (
-                    <ReferrerProgressCard
-                      onClick={() => setDrawerOpen(false)}
-                      tabIndex={isDrawerOpen ? 0 : -1}
-                    />
-                  )}
-                </div>
-              </Suspense>
 
               <div className="divider !bg-gray my-2" />
 

@@ -19,7 +19,7 @@ export const ReferrerLinkDetails: React.FC<LinkDetailsProps> = ({
   showQRCode: showQRCodeProp = true,
   showShortLink: showShortLinkProp = true,
   showCopyButton: showCopyButtonProp = true,
-  className = "rounded-lg bg-gradient-to-br from-blue-50 to-white p-6 shadow-sm",
+  className = "rounded-lg bg-gradient-to-br from-blue-50 to-white p-4 shadow-sm md:p-6",
 }) => {
   const [showQRCode, setShowQRCode] = useState(!!link.qrCodeBase64);
   const [linkWithQR, setLinkWithQR] = useState<ReferralLink | null>(
@@ -84,9 +84,6 @@ export const ReferrerLinkDetails: React.FC<LinkDetailsProps> = ({
   return (
     <div className={className}>
       <div className="flex flex-col gap-6">
-        {/* TODO: debug */}
-        {/* {displayLink.url} */}
-
         {/* Short URL - Compact */}
         {showShortLinkProp && displayLink.shortURL && (
           <div className="min-w-0">
@@ -100,19 +97,21 @@ export const ReferrerLinkDetails: React.FC<LinkDetailsProps> = ({
               </p>
             </div>
 
-            <div className="flex min-w-0 items-center gap-1">
-              <input
-                type="text"
-                value={displayLink.shortURL}
-                readOnly
-                className="border-orange w-full truncate rounded border border-dashed bg-white px-2 py-1.5 font-mono text-[11px] font-semibold text-gray-900 md:max-w-[320px]"
-                onClick={(e) => e.currentTarget.select()}
-              />
+            <div className="flex w-full items-center gap-2">
+              <div className="relative min-w-0 flex-1">
+                <input
+                  type="text"
+                  value={displayLink.shortURL}
+                  readOnly
+                  className="border-orange w-full truncate rounded border border-dashed bg-white px-2 py-1.5 font-mono text-[11px] font-semibold text-gray-900 focus:outline-none"
+                  onClick={(e) => e.currentTarget.select()}
+                />
+              </div>
               {showCopyButtonProp && (
                 <button
                   type="button"
                   onClick={() => handleCopyLink(displayLink.shortURL)}
-                  className="btn btn-xs bg-orange gap-1 text-white hover:brightness-110"
+                  className="btn btn-xs bg-orange flex-shrink-0 gap-1 text-white hover:brightness-110"
                   title="Copy short link"
                 >
                   <IoMdCopy className="h-3 w-3" />
