@@ -16,17 +16,17 @@
   </ItemGroup>
 
   <ItemGroup>
-	<PackageReference Include="Hangfire.AspNetCore" Version="1.8.22" />
-	<PackageReference Include="Hangfire.Core" Version="1.8.22" />
+	<PackageReference Include="Hangfire.AspNetCore" Version="1.8.23" />
+	<PackageReference Include="Hangfire.Core" Version="1.8.23" />
 	<PackageReference Include="Hangfire.Dashboard.BasicAuthorization" Version="1.0.2" />
-	<PackageReference Include="Hangfire.PostgreSql" Version="1.20.13" />
-	<PackageReference Include="Microsoft.AspNetCore.DataProtection.StackExchangeRedis" Version="10.0.2" />
-	<PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.2" />
+	<PackageReference Include="Hangfire.PostgreSql" Version="1.21.1" />
+	<PackageReference Include="Microsoft.AspNetCore.DataProtection.StackExchangeRedis" Version="10.0.3" />
+	<PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.3" />
 	<PackageReference Include="Serilog.AspNetCore" Version="10.0.0" />
-	<PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.0" />
-	<PackageReference Include="Swashbuckle.AspNetCore.Annotations" Version="10.1.0" />
-	<PackageReference Include="Swashbuckle.AspNetCore.Newtonsoft" Version="10.1.0" />
-	<PackageReference Include="Swashbuckle.AspNetCore.ReDoc" Version="10.1.0" />
+	<PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.4" />
+	<PackageReference Include="Swashbuckle.AspNetCore.Annotations" Version="10.1.4" />
+	<PackageReference Include="Swashbuckle.AspNetCore.Newtonsoft" Version="10.1.4" />
+	<PackageReference Include="Swashbuckle.AspNetCore.ReDoc" Version="10.1.4" />
   </ItemGroup>
 
   <ItemGroup>

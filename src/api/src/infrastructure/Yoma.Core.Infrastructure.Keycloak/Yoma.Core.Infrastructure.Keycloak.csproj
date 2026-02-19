@@ -7,7 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Schick.Keycloak.RestApiClient" Version="26.4.2" />
+    <PackageReference Include="Schick.Keycloak.RestApiClient" Version="26.5.3" />
     <PackageReference Include="Keycloak.AuthServices.Authentication" Version="2.8.0" />
     <PackageReference Include="Keycloak.AuthServices.Authorization" Version="2.8.0" />
   </ItemGroup>
