@@ -7,7 +7,7 @@ namespace Yoma.Core.Test.Referral.Builders
     private Guid _id = Guid.NewGuid();
     private Guid _programId = Guid.NewGuid();
     private string _programName = "Test Referral Program";
-    private string? _programDescription = "A test referral program";
+    private readonly string? _programDescription = "A test referral program";
     private int? _programCompletionWindowInDays = 30;
     private DateTimeOffset? _programDateEnd;
     private Guid _linkId = Guid.NewGuid();
@@ -22,10 +22,10 @@ namespace Yoma.Core.Test.Referral.Builders
     private Guid _userId = Guid.NewGuid();
     private string _username = "referee@example.com";
     private string _userDisplayName = "Test Referee";
-    private string? _userEmail = "referee@example.com";
-    private bool? _userEmailConfirmed = true;
-    private string? _userPhoneNumber = "+27839876543";
-    private bool? _userPhoneNumberConfirmed = true;
+    private readonly string? _userEmail = "referee@example.com";
+    private readonly bool? _userEmailConfirmed = true;
+    private readonly string? _userPhoneNumber = "+27839876543";
+    private readonly bool? _userPhoneNumberConfirmed = true;
     private bool? _userYoIDOnboarded = true;
     private Guid _statusId = LookupBuilder.UsageStatusPendingId;
     private Domain.Referral.ReferralLinkUsageStatus _status = Domain.Referral.ReferralLinkUsageStatus.Pending;
@@ -33,7 +33,7 @@ namespace Yoma.Core.Test.Referral.Builders
     private decimal? _zltoRewardReferrer;
     private DateTimeOffset _dateClaimed = DateTimeOffset.UtcNow;
     private DateTimeOffset _dateCreated = DateTimeOffset.UtcNow;
-    private DateTimeOffset _dateModified = DateTimeOffset.UtcNow;
+    private readonly DateTimeOffset _dateModified = DateTimeOffset.UtcNow;
 
     public ReferralLinkUsageBuilder WithId(Guid id) { _id = id; return this; }
     public ReferralLinkUsageBuilder WithProgramId(Guid programId) { _programId = programId; return this; }

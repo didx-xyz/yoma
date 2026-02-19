@@ -7,15 +7,14 @@ namespace Yoma.Core.Test.Referral.Builders
     private Guid _id = Guid.NewGuid();
     private Guid _userId = Guid.NewGuid();
     private Guid _reasonId = LookupBuilder.BlockReasonOtherId;
-    private string _reason = "Other";
-    private string _reasonDescription = "Other reason";
+    private readonly string _reason = "Other";
+    private readonly string _reasonDescription = "Other reason";
     private string? _commentBlock = "Suspicious activity";
-    private string? _commentUnBlock;
     private bool _active = true;
-    private DateTimeOffset _dateCreated = DateTimeOffset.UtcNow;
-    private Guid _createdByUserId = Guid.NewGuid();
-    private DateTimeOffset _dateModified = DateTimeOffset.UtcNow;
-    private Guid _modifiedByUserId = Guid.NewGuid();
+    private readonly DateTimeOffset _dateCreated = DateTimeOffset.UtcNow;
+    private readonly Guid _createdByUserId = Guid.NewGuid();
+    private readonly DateTimeOffset _dateModified = DateTimeOffset.UtcNow;
+    private readonly Guid _modifiedByUserId = Guid.NewGuid();
 
     public BlockBuilder WithId(Guid id) { _id = id; return this; }
     public BlockBuilder WithUserId(Guid userId) { _userId = userId; return this; }
@@ -32,7 +31,6 @@ namespace Yoma.Core.Test.Referral.Builders
       Reason = _reason,
       ReasonDescription = _reasonDescription,
       CommentBlock = _commentBlock,
-      CommentUnBlock = _commentUnBlock,
       Active = _active,
       DateCreated = _dateCreated,
       CreatedByUserId = _createdByUserId,

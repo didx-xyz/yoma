@@ -468,7 +468,7 @@ namespace Yoma.Core.Test.Referral.Services
         .Returns(link);
     }
 
-    private static void SetupProgramService(LinkUsageServiceFixture fixture, Guid programId, Domain.Referral.Models.Program program)
+    private static void SetupProgramService(LinkUsageServiceFixture fixture, Guid programId, Program program)
     {
       fixture.ProgramService
         .Setup(x => x.GetById(programId, It.IsAny<bool>(), It.IsAny<bool>()))
@@ -478,7 +478,7 @@ namespace Yoma.Core.Test.Referral.Services
     private static void SetupCountryWorldwide(LinkUsageServiceFixture fixture)
     {
       var worldwideCountryId = Guid.Parse("e0000000-0000-0000-0000-000000000099");
-      var worldwideCountry = new Yoma.Core.Domain.Lookups.Models.Country
+      var worldwideCountry = new Domain.Lookups.Models.Country
       {
         Id = worldwideCountryId,
         Name = "Worldwide",

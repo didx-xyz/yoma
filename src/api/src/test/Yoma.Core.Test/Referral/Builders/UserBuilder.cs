@@ -7,9 +7,9 @@ namespace Yoma.Core.Test.Referral.Builders
     private Guid _id = Guid.NewGuid();
     private string _username = "testuser@example.com";
     private string? _email = "testuser@example.com";
-    private bool? _emailConfirmed = true;
-    private string? _firstName = "Test";
-    private string? _surname = "User";
+    private readonly bool? _emailConfirmed = true;
+    private readonly string? _firstName = "Test";
+    private readonly string? _surname = "User";
     private string? _displayName = "Test User";
     private string? _phoneNumber = "+27831234567";
     private bool? _phoneNumberConfirmed = true;
@@ -17,8 +17,8 @@ namespace Yoma.Core.Test.Referral.Builders
     private string? _country = "South Africa";
     private bool? _yoIDOnboarded = true;
     private DateTimeOffset? _dateYoIDOnboarded = DateTimeOffset.UtcNow.AddDays(-1);
-    private DateTimeOffset _dateCreated = DateTimeOffset.UtcNow.AddDays(-7);
-    private DateTimeOffset _dateModified = DateTimeOffset.UtcNow;
+    private readonly DateTimeOffset _dateCreated = DateTimeOffset.UtcNow.AddDays(-7);
+    private readonly DateTimeOffset _dateModified = DateTimeOffset.UtcNow;
 
     public UserBuilder WithId(Guid id) { _id = id; return this; }
     public UserBuilder WithUsername(string username) { _username = username; _email = username; return this; }

@@ -34,12 +34,12 @@ namespace Yoma.Core.Test.Referral.Builders
     public static readonly Guid ProgramStatusUnCompletableId = Guid.Parse("c0000000-0000-0000-0000-000000000005");
     public static readonly Guid ProgramStatusDeletedId = Guid.Parse("c0000000-0000-0000-0000-000000000006");
 
-    public static Domain.Referral.Models.Lookups.ProgramStatus ProgramStatusActive => new() { Id = ProgramStatusActiveId, Name = "Active" };
-    public static Domain.Referral.Models.Lookups.ProgramStatus ProgramStatusInactive => new() { Id = ProgramStatusInactiveId, Name = "Inactive" };
-    public static Domain.Referral.Models.Lookups.ProgramStatus ProgramStatusExpired => new() { Id = ProgramStatusExpiredId, Name = "Expired" };
-    public static Domain.Referral.Models.Lookups.ProgramStatus ProgramStatusLimitReached => new() { Id = ProgramStatusLimitReachedId, Name = "LimitReached" };
-    public static Domain.Referral.Models.Lookups.ProgramStatus ProgramStatusUnCompletable => new() { Id = ProgramStatusUnCompletableId, Name = "UnCompletable" };
-    public static Domain.Referral.Models.Lookups.ProgramStatus ProgramStatusDeleted => new() { Id = ProgramStatusDeletedId, Name = "Deleted" };
+    public static ProgramStatus ProgramStatusActive => new() { Id = ProgramStatusActiveId, Name = "Active" };
+    public static ProgramStatus ProgramStatusInactive => new() { Id = ProgramStatusInactiveId, Name = "Inactive" };
+    public static ProgramStatus ProgramStatusExpired => new() { Id = ProgramStatusExpiredId, Name = "Expired" };
+    public static ProgramStatus ProgramStatusLimitReached => new() { Id = ProgramStatusLimitReachedId, Name = "LimitReached" };
+    public static ProgramStatus ProgramStatusUnCompletable => new() { Id = ProgramStatusUnCompletableId, Name = "UnCompletable" };
+    public static ProgramStatus ProgramStatusDeleted => new() { Id = ProgramStatusDeletedId, Name = "Deleted" };
     #endregion
 
     #region Block Reason

@@ -84,7 +84,7 @@ namespace Yoma.Core.Test.Referral.Services
         .WithStatus(ProgramStatus.Active)
         .WithDateStart(DateTimeOffset.UtcNow.AddDays(-7))
         .WithDateEnd(null)
-        .WithCountries(new List<Country> { CreateUserCountry(), CreateWorldwideCountry() })
+        .WithCountries([CreateUserCountry(), CreateWorldwideCountry()])
         .WithMultipleLinksAllowed(false)
         .Build();
 
@@ -250,7 +250,7 @@ namespace Yoma.Core.Test.Referral.Services
       var programInfo = new ProgramInfoBuilder()
         .WithStatus(ProgramStatus.Active)
         .WithDateStart(DateTimeOffset.UtcNow.AddDays(-7))
-        .WithCountries(new List<Country> { otherCountry }) // No worldwide, no user country
+        .WithCountries([otherCountry]) // No worldwide, no user country
         .Build();
 
       var user = new UserBuilder()
@@ -292,7 +292,7 @@ namespace Yoma.Core.Test.Referral.Services
         .WithStatus(ProgramStatus.Active)
         .WithDateStart(DateTimeOffset.UtcNow.AddDays(-7))
         .WithMultipleLinksAllowed(false)
-        .WithCountries(new List<Country> { CreateWorldwideCountry() })
+        .WithCountries([CreateWorldwideCountry()])
         .Build();
 
       var user = new UserBuilder()
@@ -308,7 +308,7 @@ namespace Yoma.Core.Test.Referral.Services
         .WithName("Existing Link")
         .Build();
 
-      SetupCreateMocks(fixture, programInfo, user, new List<ReferralLink> { existingLink });
+      SetupCreateMocks(fixture, programInfo, user, [existingLink]);
 
       var service = fixture.Build();
       var request = new ReferralLinkRequestCreate
@@ -332,7 +332,7 @@ namespace Yoma.Core.Test.Referral.Services
         .WithStatus(ProgramStatus.Active)
         .WithDateStart(DateTimeOffset.UtcNow.AddDays(-7))
         .WithMultipleLinksAllowed(true)
-        .WithCountries(new List<Country> { CreateWorldwideCountry() })
+        .WithCountries([CreateWorldwideCountry()])
         .Build();
 
       var user = new UserBuilder()
@@ -348,7 +348,7 @@ namespace Yoma.Core.Test.Referral.Services
         .WithName("Existing Link")
         .Build();
 
-      SetupCreateMocks(fixture, programInfo, user, new List<ReferralLink> { existingLink });
+      SetupCreateMocks(fixture, programInfo, user, [existingLink]);
 
       var service = fixture.Build();
       var request = new ReferralLinkRequestCreate
@@ -377,7 +377,7 @@ namespace Yoma.Core.Test.Referral.Services
         .WithStatus(ProgramStatus.Active)
         .WithDateStart(DateTimeOffset.UtcNow.AddDays(-7))
         .WithMultipleLinksAllowed(true)
-        .WithCountries(new List<Country> { CreateWorldwideCountry() })
+        .WithCountries([CreateWorldwideCountry()])
         .Build();
 
       var user = new UserBuilder()
@@ -393,7 +393,7 @@ namespace Yoma.Core.Test.Referral.Services
         .WithName("Duplicate Name")
         .Build();
 
-      SetupCreateMocks(fixture, programInfo, user, new List<ReferralLink> { existingLink });
+      SetupCreateMocks(fixture, programInfo, user, [existingLink]);
 
       var service = fixture.Build();
       var request = new ReferralLinkRequestCreate

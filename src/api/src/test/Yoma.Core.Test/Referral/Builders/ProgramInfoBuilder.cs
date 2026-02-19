@@ -8,7 +8,6 @@ namespace Yoma.Core.Test.Referral.Builders
     private Guid _id = Guid.NewGuid();
     private string _name = "Test Referral Program";
     private string? _description = "A test referral program";
-    private string? _imageURL;
     private int? _completionWindowInDays = 30;
     private int? _completionLimitReferee;
     private int? _completionLimit;
@@ -24,7 +23,6 @@ namespace Yoma.Core.Test.Referral.Builders
     private bool _isDefault;
     private DateTimeOffset _dateStart = DateTimeOffset.UtcNow.AddDays(-1);
     private DateTimeOffset? _dateEnd;
-    private ProgramPathwayInfo? _pathway;
     private List<Country>? _countries;
 
     public ProgramInfoBuilder WithId(Guid id) { _id = id; return this; }
@@ -54,7 +52,7 @@ namespace Yoma.Core.Test.Referral.Builders
       return this;
     }
 
-    public ProgramInfoBuilder FromProgram(Domain.Referral.Models.Program program)
+    public ProgramInfoBuilder FromProgram(Program program)
     {
       _id = program.Id;
       _name = program.Name;
@@ -83,7 +81,6 @@ namespace Yoma.Core.Test.Referral.Builders
       Id = _id,
       Name = _name,
       Description = _description,
-      ImageURL = _imageURL,
       CompletionWindowInDays = _completionWindowInDays,
       CompletionLimitReferee = _completionLimitReferee,
       CompletionLimit = _completionLimit,
@@ -99,7 +96,6 @@ namespace Yoma.Core.Test.Referral.Builders
       IsDefault = _isDefault,
       DateStart = _dateStart,
       DateEnd = _dateEnd,
-      Pathway = _pathway,
       Countries = _countries
     };
   }

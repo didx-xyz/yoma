@@ -24,10 +24,10 @@ namespace Yoma.Core.Test.Referral.Builders
     private bool _isDefault;
     private DateTimeOffset _dateStart = DateTimeOffset.UtcNow.AddDays(-1);
     private DateTimeOffset? _dateEnd;
-    private DateTimeOffset _dateCreated = DateTimeOffset.UtcNow.AddDays(-1);
-    private Guid _createdByUserId = Guid.NewGuid();
-    private DateTimeOffset _dateModified = DateTimeOffset.UtcNow;
-    private Guid _modifiedByUserId = Guid.NewGuid();
+    private readonly DateTimeOffset _dateCreated = DateTimeOffset.UtcNow.AddDays(-1);
+    private readonly Guid _createdByUserId = Guid.NewGuid();
+    private readonly DateTimeOffset _dateModified = DateTimeOffset.UtcNow;
+    private readonly Guid _modifiedByUserId = Guid.NewGuid();
     private ProgramPathway? _pathway;
     private List<Country>? _countries;
 
@@ -76,7 +76,7 @@ namespace Yoma.Core.Test.Referral.Builders
       return this;
     }
 
-    public Domain.Referral.Models.Program Build() => new()
+    public Program Build() => new()
     {
       Id = _id,
       Name = _name,

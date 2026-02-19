@@ -25,7 +25,7 @@ namespace Yoma.Core.Test.Referral.Services
         .WithId(programId)
         .WithStatus(ProgramStatus.Active)
         .Build();
-      var programs = new List<Yoma.Core.Domain.Referral.Models.Program> { program }.AsQueryable();
+      var programs = new List<Program> { program }.AsQueryable();
       fixture.ProgramRepository.Setup(r => r.Query(It.IsAny<bool>())).Returns(programs);
 
       var service = fixture.Build();
@@ -68,7 +68,7 @@ namespace Yoma.Core.Test.Referral.Services
         .WithDateEnd(DateTimeOffset.UtcNow.AddDays(30))
         .Build();
 
-      var programs = new List<Yoma.Core.Domain.Referral.Models.Program> { program }.AsQueryable();
+      var programs = new List<Program> { program }.AsQueryable();
       fixture.ProgramRepository.Setup(r => r.Query(It.IsAny<bool>())).Returns(programs);
       fixture.ProgramRepository.Setup(r => r.Query(It.IsAny<bool>(), It.IsAny<LockMode>())).Returns(programs);
 
@@ -99,7 +99,7 @@ namespace Yoma.Core.Test.Referral.Services
         .WithStatus(ProgramStatus.Active)
         .Build();
 
-      var programs = new List<Yoma.Core.Domain.Referral.Models.Program> { program }.AsQueryable();
+      var programs = new List<Program> { program }.AsQueryable();
       fixture.ProgramRepository.Setup(r => r.Query(It.IsAny<bool>())).Returns(programs);
       fixture.ProgramRepository.Setup(r => r.Query(It.IsAny<bool>(), It.IsAny<LockMode>())).Returns(programs);
 
@@ -133,7 +133,7 @@ namespace Yoma.Core.Test.Referral.Services
         .WithStatus(ProgramStatus.Expired)
         .Build();
 
-      var programs = new List<Yoma.Core.Domain.Referral.Models.Program> { program }.AsQueryable();
+      var programs = new List<Program> { program }.AsQueryable();
       fixture.ProgramRepository.Setup(r => r.Query(It.IsAny<bool>())).Returns(programs);
       fixture.ProgramRepository.Setup(r => r.Query(It.IsAny<bool>(), It.IsAny<LockMode>())).Returns(programs);
 
@@ -163,7 +163,7 @@ namespace Yoma.Core.Test.Referral.Services
         .WithCompletionTotal(0)
         .Build();
 
-      var programs = new List<Yoma.Core.Domain.Referral.Models.Program> { program }.AsQueryable();
+      var programs = new List<Program> { program }.AsQueryable();
       fixture.ProgramRepository.Setup(r => r.Query(It.IsAny<LockMode>())).Returns(programs);
 
       var service = fixture.Build();
@@ -173,7 +173,7 @@ namespace Yoma.Core.Test.Referral.Services
 
       // Assert
       fixture.ProgramRepository.Verify(
-        r => r.Update(It.Is<Yoma.Core.Domain.Referral.Models.Program>(p => p.CompletionTotal == 1)),
+        r => r.Update(It.Is<Program>(p => p.CompletionTotal == 1)),
         Times.Once);
       Assert.Equal(ProgramStatus.Active, result.Status);
     }
@@ -192,7 +192,7 @@ namespace Yoma.Core.Test.Referral.Services
         .WithCompletionTotal(0)
         .Build();
 
-      var programs = new List<Yoma.Core.Domain.Referral.Models.Program> { program }.AsQueryable();
+      var programs = new List<Program> { program }.AsQueryable();
       fixture.ProgramRepository.Setup(r => r.Query(It.IsAny<LockMode>())).Returns(programs);
 
       var service = fixture.Build();
@@ -225,7 +225,7 @@ namespace Yoma.Core.Test.Referral.Services
         .WithCountries(null)
         .Build();
 
-      var programs = new List<Yoma.Core.Domain.Referral.Models.Program> { program }.AsQueryable();
+      var programs = new List<Program> { program }.AsQueryable();
       fixture.ProgramRepository.Setup(r => r.Query(It.IsAny<bool>())).Returns(programs);
       fixture.ProgramRepository.Setup(r => r.Query(It.IsAny<bool>(), It.IsAny<LockMode>())).Returns(programs);
 
@@ -234,7 +234,7 @@ namespace Yoma.Core.Test.Referral.Services
         .Returns(user);
 
       // CountryService.GetByCodeAlpha2("WW") needed by SetAsDefault internals
-      var worldwideCountry = new Yoma.Core.Domain.Lookups.Models.Country { Id = Guid.NewGuid(), Name = "Worldwide", CodeAlpha2 = "WW" };
+      var worldwideCountry = new Domain.Lookups.Models.Country { Id = Guid.NewGuid(), Name = "Worldwide", CodeAlpha2 = "WW" };
       fixture.CountryService
         .Setup(x => x.GetByCodeAlpha2("WW"))
         .Returns(worldwideCountry);
@@ -264,10 +264,10 @@ namespace Yoma.Core.Test.Referral.Services
       var program = new ProgramBuilder()
         .WithId(programId)
         .WithStatus(ProgramStatus.Active)
-        .WithCountries([new Yoma.Core.Domain.Lookups.Models.Country { Id = specificCountryId, Name = "South Africa", CodeAlpha2 = "ZA" }])
+        .WithCountries([new Domain.Lookups.Models.Country { Id = specificCountryId, Name = "South Africa", CodeAlpha2 = "ZA" }])
         .Build();
 
-      var programs = new List<Yoma.Core.Domain.Referral.Models.Program> { program }.AsQueryable();
+      var programs = new List<Program> { program }.AsQueryable();
       fixture.ProgramRepository.Setup(r => r.Query(It.IsAny<bool>())).Returns(programs);
       fixture.ProgramRepository.Setup(r => r.Query(It.IsAny<bool>(), It.IsAny<LockMode>())).Returns(programs);
 
@@ -275,7 +275,7 @@ namespace Yoma.Core.Test.Referral.Services
         .Setup(x => x.GetByUsername(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<bool>()))
         .Returns(user);
 
-      var worldwideCountry = new Yoma.Core.Domain.Lookups.Models.Country { Id = worldwideCountryId, Name = "Worldwide", CodeAlpha2 = "WW" };
+      var worldwideCountry = new Domain.Lookups.Models.Country { Id = worldwideCountryId, Name = "Worldwide", CodeAlpha2 = "WW" };
       fixture.CountryService
         .Setup(x => x.GetByCodeAlpha2("WW"))
         .Returns(worldwideCountry);

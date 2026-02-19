@@ -9,15 +9,15 @@ namespace Yoma.Core.Test.Referral.Builders
     private string? _description = "Test referral link";
     private Guid _programId = Guid.NewGuid();
     private string _programName = "Test Referral Program";
-    private string? _programDescription = "A test referral program";
+    private readonly string? _programDescription = "A test referral program";
     private int? _programCompletionLimitReferee;
     private Guid _userId = Guid.NewGuid();
     private string _userDisplayName = "Test Referrer";
     private string _username = "referrer@example.com";
-    private string? _userEmail = "referrer@example.com";
-    private bool? _userEmailConfirmed = true;
-    private string? _userPhoneNumber = "+27831234567";
-    private bool? _userPhoneNumberConfirmed = true;
+    private readonly string? _userEmail = "referrer@example.com";
+    private readonly bool? _userEmailConfirmed = true;
+    private readonly string? _userPhoneNumber = "+27831234567";
+    private readonly bool? _userPhoneNumberConfirmed = true;
     private bool _blocked;
     private DateTimeOffset? _blockedDate;
     private Guid _statusId = LookupBuilder.LinkStatusActiveId;
@@ -27,10 +27,8 @@ namespace Yoma.Core.Test.Referral.Builders
     private string? _qrCodeBase64;
     private int? _completionTotal;
     private decimal? _zltoRewardCumulative;
-    private decimal _zltoRewardReferrerTotal;
-    private decimal _zltoRewardRefereeTotal;
-    private DateTimeOffset _dateCreated = DateTimeOffset.UtcNow.AddDays(-1);
-    private DateTimeOffset _dateModified = DateTimeOffset.UtcNow;
+    private readonly DateTimeOffset _dateCreated = DateTimeOffset.UtcNow.AddDays(-1);
+    private readonly DateTimeOffset _dateModified = DateTimeOffset.UtcNow;
 
     public ReferralLinkBuilder WithId(Guid id) { _id = id; return this; }
     public ReferralLinkBuilder WithName(string name) { _name = name; return this; }
@@ -88,8 +86,6 @@ namespace Yoma.Core.Test.Referral.Builders
       QRCodeBase64 = _qrCodeBase64,
       CompletionTotal = _completionTotal,
       ZltoRewardCumulative = _zltoRewardCumulative,
-      ZltoRewardReferrerTotal = _zltoRewardReferrerTotal,
-      ZltoRewardRefereeTotal = _zltoRewardRefereeTotal,
       DateCreated = _dateCreated,
       DateModified = _dateModified
     };
