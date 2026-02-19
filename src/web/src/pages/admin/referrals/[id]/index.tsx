@@ -72,6 +72,7 @@ import {
   AdminReferralProgramActions,
   ReferralProgramActionOptions,
 } from "~/components/Referrals/AdminReferralProgramActions";
+import { ProgramCard } from "~/components/Referrals/ProgramCard";
 import { ProgramImage } from "~/components/Referrals/ProgramImage";
 import { ProgramStatusBadge } from "~/components/Referrals/ProgramStatusBadge";
 import { ApiErrors } from "~/components/Status/ApiErrors";
@@ -107,13 +108,23 @@ const schemaStep1 = z
       .max(150, "Name cannot exceed 150 characters"),
     description: z
       .string()
-      .max(500, "Description cannot exceed 500 characters"),
+      .nullable()
+      .transform((val) => val ?? "")
+      .pipe(z.string().max(500, "Description cannot exceed 500 characters")),
     image: z.any().optional(), // Store uploaded image file
+    imageURL: z.string().nullable().optional(), // Existing image URL
     //isDefault: z.boolean(),
   })
-  .refine(() => true, {
-    message: "Step 1 validation",
-  });
+  .refine(
+    (data) => {
+      // Image is required: either new upload (image) or existing (imageURL)
+      return data.image instanceof File || !!data.imageURL;
+    },
+    {
+      message: "Program image is required",
+      path: ["image"],
+    },
+  );
 
 const schemaStep2 = z
   .object({
@@ -170,46 +181,116 @@ const schemaStep3 = z
       .transform((val) => (val === 0 ? null : val)),
     zltoRewardReferrer: z
       .union([z.string(), z.number()])
-      .pipe(
-        z.coerce
-          .number()
-          .min(1, "Referrer reward must be greater than 0")
-          .max(2000, "Referrer reward may not exceed 2000")
-          .refine((val) => val % 1 === 0, {
-            message: "Referrer reward must be a whole number",
-          }),
-      )
+      .optional()
       .nullable()
-      .catch(null)
-      .transform((val) => (val === 0 ? null : val)),
+      .transform((val) => {
+        if (val === "" || val === null || val === undefined) return null;
+        const num = typeof val === "string" ? parseFloat(val) : val;
+        if (isNaN(num) || num === 0) return null;
+        return num;
+      }),
     zltoRewardReferee: z
       .union([z.string(), z.number()])
-      .pipe(
-        z.coerce
-          .number()
-          .min(1, "Referee reward must be greater than 0")
-          .max(2000, "Referee reward may not exceed 2000")
-          .refine((val) => val % 1 === 0, {
-            message: "Referee reward must be a whole number",
-          }),
-      )
+      .optional()
       .nullable()
-      .catch(null)
-      .transform((val) => (val === 0 ? null : val)),
+      .transform((val) => {
+        if (val === "" || val === null || val === undefined) return null;
+        const num = typeof val === "string" ? parseFloat(val) : val;
+        if (isNaN(num) || num === 0) return null;
+        return num;
+      }),
     zltoRewardPool: z
       .union([z.string(), z.number()])
-      .pipe(
-        z.coerce
-          .number()
-          .min(1, "Reward pool must be greater than 0")
-          .max(10000000, "Reward pool may not exceed 10 million")
-          .refine((val) => val % 1 === 0, {
-            message: "Reward pool must be a whole number",
-          }),
-      )
+      .optional()
       .nullable()
-      .catch(null)
-      .transform((val) => (val === 0 ? null : val)),
+      .transform((val) => {
+        if (val === "" || val === null || val === undefined) return null;
+        const num = typeof val === "string" ? parseFloat(val) : val;
+        if (isNaN(num) || num === 0) return null;
+        return num;
+      }),
+  })
+  .superRefine((data, ctx) => {
+    // Validate zltoRewardReferrer
+    if (
+      data.zltoRewardReferrer !== null &&
+      data.zltoRewardReferrer !== undefined
+    ) {
+      if (data.zltoRewardReferrer < 1) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Referrer reward must be greater than 0",
+          path: ["zltoRewardReferrer"],
+        });
+      }
+      if (data.zltoRewardReferrer > 2000) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Referrer reward may not exceed 2000",
+          path: ["zltoRewardReferrer"],
+        });
+      }
+      if (data.zltoRewardReferrer % 1 !== 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Referrer reward must be a whole number",
+          path: ["zltoRewardReferrer"],
+        });
+      }
+    }
+
+    // Validate zltoRewardReferee
+    if (
+      data.zltoRewardReferee !== null &&
+      data.zltoRewardReferee !== undefined
+    ) {
+      if (data.zltoRewardReferee < 1) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Referee reward must be greater than 0",
+          path: ["zltoRewardReferee"],
+        });
+      }
+      if (data.zltoRewardReferee > 2000) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Referee reward may not exceed 2000",
+          path: ["zltoRewardReferee"],
+        });
+      }
+      if (data.zltoRewardReferee % 1 !== 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Referee reward must be a whole number",
+          path: ["zltoRewardReferee"],
+        });
+      }
+    }
+
+    // Validate zltoRewardPool
+    if (data.zltoRewardPool !== null && data.zltoRewardPool !== undefined) {
+      if (data.zltoRewardPool < 1) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Reward pool must be greater than 0",
+          path: ["zltoRewardPool"],
+        });
+      }
+      if (data.zltoRewardPool > 10000000) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Reward pool may not exceed 10 million",
+          path: ["zltoRewardPool"],
+        });
+      }
+      if (data.zltoRewardPool % 1 !== 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Reward pool must be a whole number",
+          path: ["zltoRewardPool"],
+        });
+      }
+    }
   })
   .refine(
     (data) => {
@@ -813,7 +894,7 @@ const ReferralProgramForm: NextPageWithLayout<{
     { step: 2, label: "Availability", formState: formStateStep2 },
     { step: 3, label: "Completion & Rewards", formState: formStateStep3 },
     { step: 4, label: "Features", formState: formStateStep4 },
-    { step: 5, label: "Engagement Pathway", formState: formStateStep5 },
+    { step: 5, label: "Pathway", formState: formStateStep5 },
     {
       step: 6,
       label: "Preview",
@@ -1399,7 +1480,7 @@ const ReferralProgramForm: NextPageWithLayout<{
         if (imageFile) {
           try {
             await updateReferralProgramImage(programId, imageFile);
-            message += " (including image)";
+
             setImageFiles([]); // Clear after successful upload
             (setValueStep1 as any)("image", null); // Clear form value
           } catch (imageError) {
@@ -1653,6 +1734,7 @@ const ReferralProgramForm: NextPageWithLayout<{
                   ReferralProgramActionOptions.VIEW_LINKS,
                   ReferralProgramActionOptions.DELETE,
                 ]}
+                className="text-white"
               />
             )}
           </div>
@@ -1765,17 +1847,42 @@ const ReferralProgramForm: NextPageWithLayout<{
                     </FormField>
 
                     {/* Image Upload */}
-                    <FormField label="Program Image">
+                    <FormField
+                      label="Program Image"
+                      showWarningIcon={
+                        !!(formStateStep1.errors as any).image?.message
+                      }
+                      showError={
+                        !!(formStateStep1.touchedFields as any).image ||
+                        formStateStep1.isSubmitted
+                      }
+                      error={(formStateStep1.errors as any).image?.message}
+                    >
+                      {/* Hidden field to track imageURL for validation */}
+                      <input
+                        type="hidden"
+                        {...registerStep1("imageURL" as any)}
+                      />
                       <AvatarUpload
                         onUploadComplete={(files) => {
                           const file =
                             files && files.length > 0 ? files[0] : null;
-                          (setValueStep1 as any)("image", file);
-                          setImageFiles(files); // Keep for backward compatibility
+                          (setValueStep1 as any)("image", file, {
+                            shouldValidate: true,
+                            shouldTouch: true,
+                          });
+                          setImageFiles(files);
                           triggerStep1();
                         }}
                         onRemoveImageExisting={() => {
-                          (setValueStep1 as any)("image", null);
+                          (setValueStep1 as any)("image", null, {
+                            shouldValidate: true,
+                            shouldTouch: true,
+                          });
+                          (setValueStep1 as any)("imageURL", null, {
+                            shouldValidate: true,
+                            shouldTouch: true,
+                          });
                           setImageFiles([]);
                           triggerStep1();
                         }}
@@ -2350,9 +2457,7 @@ const ReferralProgramForm: NextPageWithLayout<{
               {step === 5 && (
                 <>
                   <div className="mb-4 flex flex-col gap-2">
-                    <h5 className="font-bold tracking-wider">
-                      Engagement Pathway
-                    </h5>
+                    <h5 className="font-bold tracking-wider">Pathway</h5>
                     <p className="-mt-2 text-sm">
                       Configure the steps and tasks for referee completion
                     </p>
@@ -2384,7 +2489,7 @@ const ReferralProgramForm: NextPageWithLayout<{
                                 checked={value}
                               />
                               <div className="text-gray-dark ml-4 select-none">
-                                <div>Enable Engagement Pathway</div>
+                                <div>Enable Pathway</div>
                                 <p className="text-sm">
                                   When enabled, referees must complete the
                                   configured pathway checklist below
@@ -2413,8 +2518,7 @@ const ReferralProgramForm: NextPageWithLayout<{
                     ) : (
                       <FormMessage messageType={FormMessageType.Info}>
                         Pathway configuration is disabled. Enable &quot;Enable
-                        Engagement Pathway&quot; above to configure pathway
-                        requirements.
+                        Pathway&quot; above to configure pathway requirements.
                       </FormMessage>
                     )}
 
@@ -2446,7 +2550,7 @@ const ReferralProgramForm: NextPageWithLayout<{
                     <div className="flex-shrink-0">
                       <ProgramImage
                         imageURL={programPreview?.imageURL}
-                        name={programPreview?.name ?? "Program"}
+                        name={programPreview?.name || "Program"}
                         size={60}
                         className="border-2 border-gray-200"
                       />
@@ -2455,32 +2559,57 @@ const ReferralProgramForm: NextPageWithLayout<{
                     <div className="min-w-0 flex-1">
                       <div className="flex min-w-0 items-center gap-2">
                         <h1 className="truncate text-base font-bold md:text-lg">
-                          {programPreview?.name ?? "N/A"}
+                          {programPreview?.name || "N/A"}
                         </h1>
                         {programPreview?.isDefault && (
                           <span className="badge badge-primary">Default</span>
                         )}
                       </div>
                       <p className="truncate text-xs text-gray-500 md:text-sm">
-                        {programPreview?.description ??
+                        {programPreview?.description ||
                           "No description provided"}
                       </p>
                     </div>
                   </div>
 
-                  {/* Program Information Sections */}
+                  {/* Program Card Preview */}
                   {programPreview && (
-                    <AdminProgramInfo
-                      program={programPreview}
-                      imagePreviewUrl={imagePreviewUrl}
-                      opportunityDataMap={opportunityDataMap}
-                      filterOptions={[
-                        ProgramInfoFilterOptions.PROGRAM_INFO,
-                        ProgramInfoFilterOptions.COMPLETION_REWARDS,
-                        ProgramInfoFilterOptions.FEATURES,
-                        ProgramInfoFilterOptions.PATHWAY,
-                      ]}
-                    />
+                    <>
+                      <div>
+                        <h6 className="text-sm font-semibold">
+                          Program Card Preview
+                        </h6>
+                        <p className="text-xs text-gray-600">
+                          This is how your program will appear to users
+                        </p>
+                        <div className="flex justify-center py-4">
+                          <ProgramCard
+                            data={{
+                              ...programPreview,
+                              name: programPreview.name || "Program Name",
+                              description:
+                                programPreview.description ||
+                                "No description provided",
+                              imageURL:
+                                imagePreviewUrl || programPreview.imageURL,
+                            }}
+                            zltoReward={programPreview.zltoRewardReferrer}
+                          />
+                        </div>
+                      </div>
+
+                      <AdminProgramInfo
+                        program={programPreview}
+                        imagePreviewUrl={imagePreviewUrl}
+                        opportunityDataMap={opportunityDataMap}
+                        filterOptions={[
+                          ProgramInfoFilterOptions.PROGRAM_INFO,
+                          ProgramInfoFilterOptions.COMPLETION_REWARDS,
+                          ProgramInfoFilterOptions.FEATURES,
+                          ProgramInfoFilterOptions.PATHWAY,
+                        ]}
+                      />
+                    </>
                   )}
 
                   {/* Action Buttons */}

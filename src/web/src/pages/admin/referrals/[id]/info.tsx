@@ -20,6 +20,7 @@ import {
   AdminReferralProgramActions,
   ReferralProgramActionOptions,
 } from "~/components/Referrals/AdminReferralProgramActions";
+import { ProgramCard } from "~/components/Referrals/ProgramCard";
 import { ProgramImage } from "~/components/Referrals/ProgramImage";
 import { InternalServerError } from "~/components/Status/InternalServerError";
 import { Loading } from "~/components/Status/Loading";
@@ -168,37 +169,52 @@ const ReferralProgramInfo: NextPageWithLayout<{
             )}
           </div>
 
-          {/* Program Information Sections */}
+          {/* Program Card Preview */}
           {program && (
-            <AdminProgramInfo
-              program={program}
-              filterOptions={[
-                ProgramInfoFilterOptions.PROGRAM_INFO,
-                ProgramInfoFilterOptions.COMPLETION_REWARDS,
-                ProgramInfoFilterOptions.ZLTO_REWARDS,
-                ProgramInfoFilterOptions.FEATURES,
-                ProgramInfoFilterOptions.PATHWAY,
-              ]}
-            />
+            <>
+              <div>
+                <h6 className="text-sm font-semibold">Program Card Preview</h6>
+                <p className="text-xs text-gray-600">
+                  This is how your program appears to users
+                </p>
+                <div className="flex justify-center py-4">
+                  <ProgramCard
+                    data={program}
+                    zltoReward={program.zltoRewardReferrer}
+                  />
+                </div>
+              </div>
+
+              <AdminProgramInfo
+                program={program}
+                filterOptions={[
+                  ProgramInfoFilterOptions.PROGRAM_INFO,
+                  ProgramInfoFilterOptions.COMPLETION_REWARDS,
+                  ProgramInfoFilterOptions.ZLTO_REWARDS,
+                  ProgramInfoFilterOptions.FEATURES,
+                  ProgramInfoFilterOptions.PATHWAY,
+                ]}
+              />
+            </>
           )}
 
           {/* Link Usage */}
           <div className="flex flex-col justify-center gap-4 pt-4 md:flex-row">
             <Link
               href={getSafeUrl(returnUrl?.toString(), `/admin/referrals`)}
-              className="btn btn-warning btn-md rounded-full px-8 normal-case"
+              className="btn btn-warning btn-sm rounded-full px-8 normal-case"
             >
               Back to List
             </Link>
             <Link
               href={`/admin/referrals/${id}${returnUrl ? `?returnUrl=${encodeURIComponent(getSafeUrl("", router.asPath))}` : ""}`}
-              className="btn btn-primary btn-md rounded-full px-8 normal-case"
+              className="btn btn-primary btn-sm rounded-full px-8 normal-case"
             >
               Edit Program
             </Link>
             <Link
               href={`/admin/referrals/${id}/links${returnUrl ? `?returnUrl=${encodeURIComponent(getSafeUrl("", router.asPath))}` : ""}`}
-              className="btn btn-secondary btn-md rounded-full px-8 normal-case"
+              className="btn btn-secondary btn-sm rounded-full px-8 normal-case"
             >
               View Referral Links
             </Link>

@@ -192,16 +192,15 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
       {/* Program Information */}
       {filterOptions?.includes(ProgramInfoFilterOptions.PROGRAM_INFO) && (
         <section>
-          <h2 className="mb-2 flex items-center gap-2 text-lg font-semibold">
-            📄 Program Information
-          </h2>
+          <h6 className="mb-2 text-sm font-semibold">Program Information</h6>
+
           <div className="overflow-x-auto">
             <div className="grid overflow-hidden rounded-lg border border-gray-200 md:grid-cols-2">
               <div className="flex">
-                <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-sm font-medium text-gray-700">
+                <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
                   Status
                 </div>
-                <div className="flex-1 border border-gray-200 px-4 py-2 text-sm hover:bg-gray-100">
+                <div className="flex-1 border border-gray-200 px-4 py-2 text-xs hover:bg-gray-100">
                   {program?.status ? (
                     <ProgramStatusBadge status={program.status} />
                   ) : (
@@ -211,10 +210,10 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
               </div>
 
               <div className="flex">
-                <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-sm font-medium text-gray-700">
+                <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
                   Default Program
                 </div>
-                <div className="flex-1 border border-gray-200 px-4 py-2 text-sm hover:bg-gray-100">
+                <div className="flex-1 border border-gray-200 px-4 py-2 text-xs hover:bg-gray-100">
                   {program?.isDefault ? (
                     <IoIosCheckmarkCircle className="text-green inline h-5 w-5" />
                   ) : (
@@ -224,10 +223,10 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
               </div>
 
               <div className="flex">
-                <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-sm font-medium text-gray-700">
+                <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
                   Start Date
                 </div>
-                <div className="flex-1 border border-gray-200 px-4 py-2 text-sm hover:bg-gray-100">
+                <div className="flex-1 border border-gray-200 px-4 py-2 text-xs hover:bg-gray-100">
                   {program?.dateStart ? (
                     <Moment format={DATE_FORMAT_HUMAN} utc={true}>
                       {program.dateStart}
@@ -239,10 +238,10 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
               </div>
 
               <div className="flex">
-                <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-sm font-medium text-gray-700">
+                <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
                   End Date
                 </div>
-                <div className="flex-1 border border-gray-200 px-4 py-2 text-sm hover:bg-gray-100">
+                <div className="flex-1 border border-gray-200 px-4 py-2 text-xs hover:bg-gray-100">
                   {program?.dateEnd ? (
                     <Moment format={DATE_FORMAT_HUMAN} utc={true}>
                       {program.dateEnd}
@@ -254,10 +253,10 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
               </div>
 
               <div className="flex md:col-span-2">
-                <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-sm font-medium text-gray-700">
+                <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
                   Countries
                 </div>
-                <div className="flex-1 border border-gray-200 px-4 py-2 text-sm hover:bg-gray-100">
+                <div className="flex-1 border border-gray-200 px-4 py-2 text-xs hover:bg-gray-100">
                   {countriesLabel}
                 </div>
               </div>
@@ -269,16 +268,15 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
       {/* Completion & Rewards */}
       {showCompletionAndRewards && (
         <section>
-          <h2 className="mb-2 flex items-center gap-2 text-lg font-semibold">
-            ⚙️ Completion & Rewards
-          </h2>
+          <h6 className="mb-2 text-sm font-semibold">Completion & Rewards</h6>
+
           <div className="overflow-x-auto">
             <div className="grid overflow-hidden rounded-lg border border-gray-200 md:grid-cols-2">
               <div className="flex">
-                <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-sm font-medium text-gray-700">
+                <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
                   Completion Window
                 </div>
-                <div className="flex-1 border border-gray-200 px-4 py-2 text-sm hover:bg-gray-100">
+                <div className="flex-1 border border-gray-200 px-4 py-2 text-xs hover:bg-gray-100">
                   {program?.completionWindowInDays
                     ? `${program.completionWindowInDays} days`
                     : "N/A"}
@@ -286,34 +284,34 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
               </div>
 
               <div className="flex">
-                <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-sm font-medium text-gray-700">
+                <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
                   Referrer Cap
                   <div className="text-xs font-normal text-gray-500">
                     (Per referrer limit)
                   </div>
                 </div>
-                <div className="flex-1 border border-gray-200 px-4 py-2 text-sm hover:bg-gray-100">
+                <div className="flex-1 border border-gray-200 px-4 py-2 text-xs hover:bg-gray-100">
                   {program?.completionLimitReferee ?? "No limit"}
                 </div>
               </div>
 
               <div className="flex">
-                <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-sm font-medium text-gray-700">
+                <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
                   Program Cap
                   <div className="text-xs font-normal text-gray-500">
                     (Total program limit)
                   </div>
                 </div>
-                <div className="flex-1 border border-gray-200 px-4 py-2 text-sm hover:bg-gray-100">
+                <div className="flex-1 border border-gray-200 px-4 py-2 text-xs hover:bg-gray-100">
                   {program?.completionLimit ?? "No limit"}
                 </div>
               </div>
 
               <div className="flex">
-                <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-sm font-medium text-gray-700">
+                <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
                   Total Completions
                 </div>
-                <div className="flex-1 border border-gray-200 px-4 py-2 text-sm hover:bg-gray-100">
+                <div className="flex-1 border border-gray-200 px-4 py-2 text-xs hover:bg-gray-100">
                   <span className="badge bg-green-light text-green font-semibold">
                     {program?.completionTotal ?? 0}
                   </span>
@@ -321,10 +319,10 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
               </div>
 
               <div className="flex">
-                <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-sm font-medium text-gray-700">
+                <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
                   Referee Reward
                 </div>
-                <div className="flex-1 border border-gray-200 px-4 py-2 text-sm hover:bg-gray-100">
+                <div className="flex-1 border border-gray-200 px-4 py-2 text-xs hover:bg-gray-100">
                   {program?.zltoRewardReferee ? (
                     <div className="flex items-center gap-1">
                       <Image
@@ -345,10 +343,10 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
               </div>
 
               <div className="flex">
-                <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-sm font-medium text-gray-700">
+                <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
                   Referrer Reward
                 </div>
-                <div className="flex-1 border border-gray-200 px-4 py-2 text-sm hover:bg-gray-100">
+                <div className="flex-1 border border-gray-200 px-4 py-2 text-xs hover:bg-gray-100">
                   {program?.zltoRewardReferrer ? (
                     <div className="flex items-center gap-1">
                       <Image
@@ -369,10 +367,10 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
               </div>
 
               <div className="flex">
-                <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-sm font-medium text-gray-700">
+                <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
                   ZLTO Pool
                 </div>
-                <div className="flex-1 border border-gray-200 px-4 py-2 text-sm hover:bg-gray-100">
+                <div className="flex-1 border border-gray-200 px-4 py-2 text-xs hover:bg-gray-100">
                   {program?.zltoRewardPool ? (
                     <div className="flex items-center gap-1">
                       <Image
@@ -393,10 +391,10 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
               </div>
 
               <div className="flex">
-                <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-sm font-medium text-gray-700">
+                <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
                   ZLTO Cumulative
                 </div>
-                <div className="flex-1 border border-gray-200 px-4 py-2 text-sm hover:bg-gray-100">
+                <div className="flex-1 border border-gray-200 px-4 py-2 text-xs hover:bg-gray-100">
                   {program?.zltoRewardCumulative !== null &&
                   program?.zltoRewardCumulative !== undefined ? (
                     <div className="flex items-center gap-1">
@@ -418,10 +416,10 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
               </div>
 
               <div className="flex md:col-span-2">
-                <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-sm font-medium text-gray-700">
+                <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
                   ZLTO Balance
                 </div>
-                <div className="flex-1 border border-gray-200 px-4 py-2 text-sm hover:bg-gray-100">
+                <div className="flex-1 border border-gray-200 px-4 py-2 text-xs hover:bg-gray-100">
                   {program?.zltoRewardBalance !== null &&
                   program?.zltoRewardBalance !== undefined ? (
                     <div className="flex items-center gap-1">
@@ -449,16 +447,15 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
       {/* Features */}
       {filterOptions?.includes(ProgramInfoFilterOptions.FEATURES) && (
         <section>
-          <h2 className="mb-2 flex items-center gap-2 text-lg font-semibold">
-            ✨ Features
-          </h2>
+          <h6 className="mb-2 text-sm font-semibold">Features</h6>
+
           <div className="overflow-x-auto">
             <div className="grid overflow-hidden rounded-lg border border-gray-200 md:grid-cols-2">
               <div className="flex">
-                <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-sm font-medium text-gray-700">
+                <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
                   Default Program
                 </div>
-                <div className="flex-1 border border-gray-200 px-4 py-2 text-sm hover:bg-gray-100">
+                <div className="flex-1 border border-gray-200 px-4 py-2 text-xs hover:bg-gray-100">
                   {program?.isDefault ? (
                     <div className="flex items-center gap-2">
                       <IoIosCheckmarkCircle className="text-green h-5 w-5" />
@@ -474,10 +471,10 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
               </div>
 
               <div className="flex">
-                <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-sm font-medium text-gray-700">
+                <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
                   Proof of Personhood
                 </div>
-                <div className="flex-1 border border-gray-200 px-4 py-2 text-sm hover:bg-gray-100">
+                <div className="flex-1 border border-gray-200 px-4 py-2 text-xs hover:bg-gray-100">
                   {program?.proofOfPersonhoodRequired ? (
                     <div className="flex items-center gap-2">
                       <IoIosCheckmarkCircle className="text-green h-5 w-5" />
@@ -493,10 +490,10 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
               </div>
 
               <div className="flex">
-                <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-sm font-medium text-gray-700">
+                <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
                   Multiple Links
                 </div>
-                <div className="flex-1 border border-gray-200 px-4 py-2 text-sm hover:bg-gray-100">
+                <div className="flex-1 border border-gray-200 px-4 py-2 text-xs hover:bg-gray-100">
                   {program?.multipleLinksAllowed ? (
                     <div className="flex items-center gap-2">
                       <IoIosCheckmarkCircle className="text-green h-5 w-5" />
@@ -512,10 +509,10 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
               </div>
 
               <div className="flex">
-                <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-sm font-medium text-gray-700">
-                  Engagement Pathway
+                <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
+                  Pathway
                 </div>
-                <div className="flex-1 border border-gray-200 px-4 py-2 text-sm hover:bg-gray-100">
+                <div className="flex-1 border border-gray-200 px-4 py-2 text-xs hover:bg-gray-100">
                   {program?.pathwayRequired ? (
                     <div className="flex items-center gap-2">
                       <IoIosCheckmarkCircle className="text-green h-5 w-5" />
@@ -534,12 +531,11 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
         </section>
       )}
 
-      {/* Engagement Pathway */}
+      {/* Pathway */}
       {filterOptions?.includes(ProgramInfoFilterOptions.PATHWAY) && (
         <section>
-          <h2 className="mb-2 flex items-center gap-2 text-lg font-semibold">
-            🛤️ Engagement Pathway
-          </h2>
+          <h6 className="mb-2 text-sm font-semibold">Pathway</h6>
+
           <div className="overflow-x-auto">
             {pathwayInfo ? (
               <ProgramPathwayView
@@ -549,7 +545,7 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
               />
             ) : (
               <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
-                <p className="text-sm text-gray-500">No pathway configured</p>
+                <p className="text-xs text-gray-700">No pathway configured</p>
               </div>
             )}
           </div>
@@ -565,10 +561,10 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
           <div className="overflow-x-auto">
             <div className="grid overflow-hidden rounded-lg border border-gray-200 md:grid-cols-2">
               <div className="flex">
-                <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-sm font-medium text-gray-700">
+                <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
                   Created
                 </div>
-                <div className="flex-1 border border-gray-200 px-4 py-2 text-sm hover:bg-gray-100">
+                <div className="flex-1 border border-gray-200 px-4 py-2 text-xs hover:bg-gray-100">
                   {program?.dateCreated ? (
                     <Moment format={DATE_FORMAT_HUMAN} utc={true}>
                       {program.dateCreated}
@@ -580,19 +576,19 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
               </div>
 
               <div className="flex">
-                <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-sm font-medium text-gray-700">
+                <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
                   Created By
                 </div>
-                <div className="flex-1 border border-gray-200 px-4 py-2 text-sm hover:bg-gray-100">
+                <div className="flex-1 border border-gray-200 px-4 py-2 text-xs hover:bg-gray-100">
                   {program?.createdByUserId ?? "N/A"}
                 </div>
               </div>
 
               <div className="flex">
-                <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-sm font-medium text-gray-700">
+                <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
                   Last Modified
                 </div>
-                <div className="flex-1 border border-gray-200 px-4 py-2 text-sm hover:bg-gray-100">
+                <div className="flex-1 border border-gray-200 px-4 py-2 text-xs hover:bg-gray-100">
                   {program?.dateModified ? (
                     <Moment format={DATE_FORMAT_HUMAN} utc={true}>
                       {program.dateModified}
@@ -604,10 +600,10 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
               </div>
 
               <div className="flex">
-                <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-sm font-medium text-gray-700">
+                <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
                   Modified By
                 </div>
-                <div className="flex-1 border border-gray-200 px-4 py-2 text-sm hover:bg-gray-100">
+                <div className="flex-1 border border-gray-200 px-4 py-2 text-xs hover:bg-gray-100">
                   {program?.modifiedByUserId ?? "N/A"}
                 </div>
               </div>

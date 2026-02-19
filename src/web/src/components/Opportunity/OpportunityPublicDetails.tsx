@@ -264,6 +264,14 @@ const OpportunityPublicDetails: React.FC<{
       toast.success("Your application has been canceled");
 
       setCancelOpportunityDialogVisible(false);
+    } catch (error) {
+      console.error(error);
+      toast.error(
+        "We're could not cancel your application at this time. Please try refreshing this page or try again later.",
+        {
+          autoClose: false,
+        },
+      );
     } finally {
       setIsLoading(false);
     }

@@ -1,16 +1,101 @@
 import { useMemo, useState } from "react";
-import { IoMdClose } from "react-icons/io";
 import { IoChevronDown } from "react-icons/io5";
 import type { ReferralLink, ProgramInfo } from "~/api/models/referrals";
 import { searchReferralLinks } from "~/api/services/referrals";
-import { ReferrerLinkRow } from "./ReferrerLinkRow";
-import { ReferrerLinkDetails } from "./ReferrerLinkDetails";
-import { ShareButtons } from "./ShareButtons";
-import CustomModal from "~/components/Common/CustomModal";
 import Suspense from "~/components/Common/Suspense";
 import NoRowsMessage from "~/components/NoRowsMessage";
 import { usePaginatedQuery } from "~/hooks/usePaginatedQuery";
 import { LoadingInline } from "../Status/LoadingInline";
+import { ReferralShareModal } from "./ReferralShareModal";
+import Image from "next/image";
+import Link from "next/link";
+import { FaShareAlt } from "react-icons/fa";
+import Moment from "react-moment";
+import { DATE_FORMAT_HUMAN } from "~/lib/constants";
+
+interface ReferrerLinkRowProps {
+  link: ReferralLink;
+  programs: ProgramInfo[];
+  isExpanded?: boolean;
+  onOpenShareModal?: (link: ReferralLink) => void;
+}
+
+const ReferrerLinkRow: React.FC<ReferrerLinkRowProps> = ({
+  link,
+  onOpenShareModal,
+}) => {
+  const hasStatus = !!link.status;
+  const statusLabel = hasStatus
+    ? link.status === "LimitReached"
+      ? "Limit Reached"
+      : link.status
+    : "—";
+
+  return (
+    <div className="flex w-full items-center justify-between gap-3 py-4 select-none">
+      <div className="flex max-w-full min-w-0 flex-1 flex-col items-start gap-3 md:flex-row md:items-center md:gap-6">
+        <div className="flex w-full min-w-0 flex-1 flex-col gap-1">
+          <Link
+            href={`/referrals/link/${link.id}`}
+            className="font-family-nunito text-base-content block min-w-0 overflow-hidden text-xs font-semibold text-ellipsis whitespace-nowrap transition-opacity hover:opacity-75 md:text-sm"
+          >
+            {link?.programName ?? link?.name ?? "N/A"}
+          </Link>
+        </div>
+
+        <div className="flex shrink-0 flex-row items-start gap-2 md:items-center md:justify-center md:px-4">
+          <span className="text-base-content/70 text-xs">
+            <Moment format={DATE_FORMAT_HUMAN} utc={true}>
+              {link.dateCreated}
+            </Moment>
+          </span>
+          <div className="flex items-center gap-2">
+            {link.status === "Active" ? (
+              <Image
+                src="/images/icon-referral-stats-completed.svg"
+                alt="Active"
+                width={14}
+                height={14}
+                className="shrink-0"
+              />
+            ) : link.status === "LimitReached" ? (
+              <Image
+                src="/images/icon-referral-stats-pending.svg"
+                alt="Limit Reached"
+                width={14}
+                height={14}
+                className="shrink-0"
+              />
+            ) : (
+              <Image
+                src="/images/icon-referral-stats-expired.svg"
+                alt="Status"
+                width={11}
+                height={11}
+                className="shrink-0"
+              />
+            )}
+            <span className="text-base-content/70 text-xs font-bold">
+              {statusLabel}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex gap-2">
+        <button
+          type="button"
+          onClick={() => onOpenShareModal?.(link)}
+          className="btn btn-sm bg-orange btn-circle shrink-0 gap-2 p-0 px-1 text-white hover:brightness-110 md:w-auto md:rounded-lg md:px-4"
+          disabled={link.status !== "Active"}
+        >
+          <FaShareAlt className="h-3 w-3" />
+          <span className="hidden md:block">Share</span>
+        </button>
+      </div>
+    </div>
+  );
+};
 
 interface LinksListProps {
   programs?: ProgramInfo[];
@@ -57,8 +142,6 @@ export const ReferrerLinksList: React.FC<LinksListProps> = ({
     return programs.find((p) => p.id === selectedLinkForUsage.programId);
   }, [programs, selectedLinkForUsage]);
 
-  // Reset expansion state on refresh (e.g., after creating a link) by forcing
-  // link rows to remount whenever the first page of results changes.
   const firstPageKey = links
     .slice(0, initialPageSize)
     .map((l) => l.id)
@@ -66,66 +149,12 @@ export const ReferrerLinksList: React.FC<LinksListProps> = ({
 
   return (
     <>
-      <CustomModal
+      <ReferralShareModal
         isOpen={!!selectedLinkForUsage}
-        onRequestClose={() => setSelectedLinkForUsage(null)}
-        className="md:max-h-[550px] md:w-[450px]"
-      >
-        {selectedLinkForUsage && (
-          <div className="flex flex-col">
-            <div className="bg-theme flex flex-row p-4 shadow-lg">
-              <div className="flex-1">
-                <h1 className="text-lg font-semibold text-white">
-                  Share Your Link
-                </h1>
-              </div>
-              <button
-                type="button"
-                className="btn btn-circle text-gray-dark hover:bg-gray btn-sm"
-                onClick={() => setSelectedLinkForUsage(null)}
-              >
-                <IoMdClose className="h-5 w-5" />
-              </button>
-            </div>
-
-            <div className="flex flex-col gap-4 p-4 md:p-6">
-              <ReferrerLinkDetails
-                link={selectedLinkForUsage}
-                className=""
-                showQRCode={true}
-                showShortLink={true}
-                showCopyButton={true}
-              />
-
-              <div className="gap-2x flex w-full min-w-0 flex-col md:flex-1 md:basis-1/2">
-                <div className="font-family-nunito font-semibold text-black">
-                  Share Link
-                </div>
-                <div className="text-base-content/60 mb-4 text-sm">
-                  Share your link on your preferred platform
-                </div>
-                <ShareButtons
-                  url={
-                    selectedLinkForUsage.shortURL ?? selectedLinkForUsage.url
-                  }
-                  size={30}
-                  rewardAmount={selectedProgram?.zltoRewardReferee}
-                />
-              </div>
-
-              <div className="mt-2 flex gap-3">
-                <button
-                  type="button"
-                  className="btn btn-outline border-orange btn-sm text-orange hover:bg-orange flex-1 normal-case hover:text-white"
-                  onClick={() => setSelectedLinkForUsage(null)}
-                >
-                  Back to List
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-      </CustomModal>
+        onClose={() => setSelectedLinkForUsage(null)}
+        link={selectedLinkForUsage}
+        rewardAmount={selectedProgram?.zltoRewardReferee}
+      />
 
       <Suspense
         isLoading={isLoading && !hasLinks}
@@ -160,7 +189,6 @@ export const ReferrerLinksList: React.FC<LinksListProps> = ({
                   key={`${firstPageKey}-${link.id}`}
                   link={link}
                   programs={programs}
-                  //isExpanded={index === 0}
                   isExpanded={true}
                   onOpenShareModal={setSelectedLinkForUsage}
                 />
@@ -173,7 +201,7 @@ export const ReferrerLinksList: React.FC<LinksListProps> = ({
                 <button
                   onClick={loadMore}
                   disabled={isFetching}
-                  className="btn btn-sm border-orange gap-2 text-orange-700 hover:bg-orange-100 disabled:opacity-50"
+                  className="btn btn-outline border-orange btn-sm text-orange hover:bg-orange disabled:!border-orange disabled:!text-orange flex-1 normal-case hover:text-white disabled:!bg-transparent disabled:!opacity-70 md:max-w-[200px]"
                 >
                   {isFetching ? (
                     <>

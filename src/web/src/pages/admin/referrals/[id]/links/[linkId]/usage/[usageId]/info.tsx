@@ -129,21 +129,42 @@ const ReferralLinkUsageInfo: NextPageWithLayout<{
         <div className="animate-fade-in mx-auto mt-5 space-y-6 rounded-2xl bg-white p-6 shadow-md">
           {/* Header */}
           <div className="flex flex-row items-start justify-between gap-4">
-            <div className="flex-1">
-              <h1 className="text-base font-bold md:text-xl">
-                Link Usage Details
-              </h1>
-              <p className="text-xs text-gray-500 md:text-sm">
-                Track the progress of this referral link usage
+            <div className="flex-shrink-0">
+              <div className="flex h-[60px] w-[60px] items-center justify-center rounded-lg border-2 border-gray-200 bg-gradient-to-br from-blue-50 to-purple-50 text-2xl">
+                👤
+              </div>
+            </div>
+
+            <div className="min-w-0 flex-1">
+              <div className="flex min-w-0 items-center gap-2">
+                <h1 className="truncate text-base font-bold md:text-lg">
+                  {usage?.userDisplayName ?? "N/A"}
+                </h1>
+                {usage?.status && (
+                  <span
+                    className={`badge badge-sm ${
+                      usage.status === "Completed"
+                        ? "bg-green-light text-green"
+                        : usage.status === "Pending"
+                          ? "bg-yellow-tint text-yellow"
+                          : usage.status === "Expired"
+                            ? "bg-orange-light text-orange"
+                            : "bg-gray-light text-gray-dark"
+                    }`}
+                  >
+                    {usage.status}
+                  </span>
+                )}
+              </div>
+              <p className="truncate text-xs text-gray-500 md:text-sm">
+                {usage?.programName ?? "No program"}
               </p>
             </div>
           </div>
 
           {/* Usage Information */}
           <section>
-            <h2 className="mb-2 flex items-center gap-2 text-lg font-semibold">
-              📋 Usage Information
-            </h2>
+            <h6 className="mb-2 text-sm font-semibold">Usage Information</h6>
             <div className="overflow-x-auto">
               <div className="grid overflow-hidden rounded-lg border border-gray-200 md:grid-cols-2">
                 <div className="flex">
@@ -221,12 +242,6 @@ const ReferralLinkUsageInfo: NextPageWithLayout<{
                     Referral Link
                   </div>
                   <div className="flex-1 border border-gray-200 px-4 py-2 text-sm hover:bg-gray-100">
-                    {/* <Link
-                      href={`/admin/referrals/${usage?.programId}/links/${usage?.linkId}${returnUrl ? `?returnUrl=${encodeURIComponent(returnUrl.toString())}` : ""}`}
-                      className="text-blue-600 hover:underline"
-                    >
-                      {usage?.linkName ?? "N/A"}
-                    </Link> */}
                     <div>{usage?.linkName ?? "N/A"}</div>
                   </div>
                 </div>
@@ -320,9 +335,7 @@ const ReferralLinkUsageInfo: NextPageWithLayout<{
 
           {/* Referee Information */}
           <section>
-            <h2 className="mb-2 flex items-center gap-2 text-lg font-semibold">
-              👤 Referee Information
-            </h2>
+            <h6 className="mb-2 text-sm font-semibold">Referee Information</h6>
             <div className="overflow-x-auto">
               <div className="grid overflow-hidden rounded-lg border border-gray-200 md:grid-cols-2">
                 <div className="flex">
@@ -330,12 +343,7 @@ const ReferralLinkUsageInfo: NextPageWithLayout<{
                     Name
                   </div>
                   <div className="flex-1 border border-gray-200 px-4 py-2 text-sm hover:bg-gray-100">
-                    <Link
-                      href={`/admin/users/${usage?.userId}${returnUrl ? `?returnUrl=${encodeURIComponent(returnUrl.toString())}` : ""}`}
-                      className="text-blue-600 hover:underline"
-                    >
-                      {usage?.userDisplayName ?? "N/A"}
-                    </Link>
+                    {usage?.userDisplayName ?? "N/A"}
                   </div>
                 </div>
 
@@ -362,26 +370,15 @@ const ReferralLinkUsageInfo: NextPageWithLayout<{
 
           {/* Referrer Information */}
           <section>
-            <h2 className="mb-2 flex items-center gap-2 text-lg font-semibold">
-              🔗 Referrer Information
-            </h2>
+            <h6 className="mb-2 text-sm font-semibold">Referrer Information</h6>
             <div className="overflow-x-auto">
               <div className="grid overflow-hidden rounded-lg border border-gray-200 md:grid-cols-2">
                 <div className="flex">
                   <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-sm font-medium text-gray-700">
                     Name
                   </div>
-                  <div className="flex-1 border border-gray-200 px-4 py-2 text-sm hover:bg-gray-100">
-                    {usage?.userIdReferrer ? (
-                      <Link
-                        href={`/admin/users/${usage.userIdReferrer}${returnUrl ? `?returnUrl=${encodeURIComponent(returnUrl.toString())}` : ""}`}
-                        className="text-blue-600 hover:underline"
-                      >
-                        {usage.userDisplayNameReferrer ?? "N/A"}
-                      </Link>
-                    ) : (
-                      (usage?.userDisplayNameReferrer ?? "N/A")
-                    )}
+                  <div className="fl`ex-1 border border-gray-200 px-4 py-2 text-sm hover:bg-gray-100">
+                    {usage?.userDisplayNameReferrer ?? "N/A"}
                   </div>
                 </div>
 
@@ -409,9 +406,7 @@ const ReferralLinkUsageInfo: NextPageWithLayout<{
           {/* Pathway Progress */}
           {usage?.pathway && (
             <section>
-              <h2 className="mb-2 flex items-center gap-2 text-lg font-semibold">
-                🛤️ Engagement Pathway Progress
-              </h2>
+              <h6 className="mb-2 text-sm font-semibold">Pathway Progress</h6>
               <div className="overflow-x-auto">
                 <ProgramPathwayProgressComponent pathway={usage.pathway} />
               </div>
@@ -419,15 +414,21 @@ const ReferralLinkUsageInfo: NextPageWithLayout<{
           )}
 
           {/* Actions */}
-          <div className="flex flex-row justify-center gap-4 pt-4">
+          <div className="flex flex-col justify-center gap-4 pt-4 md:flex-row">
             <Link
               href={getSafeUrl(
                 returnUrl?.toString(),
                 `/admin/referrals/${usage?.programId}/links/${usage?.linkId}/usage`,
               )}
-              className="btn btn-warning btn-md rounded-full px-8 normal-case"
+              className="btn btn-warning btn-sm rounded-full px-8 normal-case"
             >
-              Back to Link
+              Back to Usages
+            </Link>
+            <Link
+              href={`/admin/referrals/${usage?.programId}/info${returnUrl ? `?returnUrl=${encodeURIComponent(returnUrl.toString())}` : ""}`}
+              className="btn btn-primary btn-sm rounded-full px-8 normal-case"
+            >
+              View Program
             </Link>
           </div>
         </div>

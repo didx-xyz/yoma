@@ -72,14 +72,6 @@ const YoIDLayout: TabProps = ({ children }) => {
         selected: router.asPath.startsWith("/yoid/skills"),
         iconImage: iconTools,
       },
-      {
-        title: "❤️ Refer a friend",
-        description: "Share referral links, earn rewards and track earnings",
-        url: "/yoid/referrals",
-        badgeCount: null,
-        selected: router.asPath.startsWith("/yoid/referrals"),
-        iconImage: iconTools,
-      },
     ]);
   }, [router.asPath, setTabItems]);
 

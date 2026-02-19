@@ -1,20 +1,15 @@
-import { useCallback, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import Image from "next/image";
+import { useState } from "react";
+import Moment from "react-moment";
 import {
-  IoCheckmarkCircle,
-  IoHourglassOutline,
-  IoTimeOutline,
-  IoPerson,
-} from "react-icons/io5";
-import {
-  ReferralLinkUsageStatus,
   type ReferralLinkUsage,
   type ReferralLinkUsageSearchResults,
 } from "~/api/models/referrals";
 import { searchReferralLinkUsagesAsReferrer } from "~/api/services/referrals";
 import FormMessage, { FormMessageType } from "~/components/Common/FormMessage";
 import Suspense from "~/components/Common/Suspense";
-import { PAGE_SIZE } from "~/lib/constants";
+import { DATE_FORMAT_HUMAN, PAGE_SIZE } from "~/lib/constants";
 import { LoadingInline } from "../Status/LoadingInline";
 
 interface ReferralsListProps {
@@ -46,37 +41,6 @@ export const ReferrerReferralsList: React.FC<ReferralsListProps> = ({
     enabled: !!linkId,
   });
 
-  const getStatusBadge = useCallback(
-    (status: ReferralLinkUsageStatus | string) => {
-      switch (status) {
-        case "Completed":
-          return (
-            <span className="badge badge-sm bg-green-light text-green gap-1">
-              <IoCheckmarkCircle className="h-3 w-3" />
-              Completed
-            </span>
-          );
-        case "Pending":
-          return (
-            <span className="badge badge-sm gap-1 bg-blue-50 text-blue-700">
-              <IoHourglassOutline className="h-3 w-3" />
-              Pending
-            </span>
-          );
-        case "Expired":
-          return (
-            <span className="badge badge-sm bg-orange-light text-orange gap-1">
-              <IoTimeOutline className="h-3 w-3" />
-              Expired
-            </span>
-          );
-        default:
-          return <span className="badge badge-sm">{status}</span>;
-      }
-    },
-    [],
-  );
-
   const hasUsage = (usageData?.items?.length ?? 0) > 0;
   const totalCount = usageData?.totalCount ?? 0;
 
@@ -93,11 +57,7 @@ export const ReferrerReferralsList: React.FC<ReferralsListProps> = ({
     >
       <div>
         {!hasUsage && (
-          <FormMessage
-            messageType={FormMessageType.Info}
-            className="mb-2"
-            classNameLabel="text-base-content/60 text-[10px] leading-snug md:text-[11px]"
-          >
+          <FormMessage messageType={FormMessageType.Info}>
             No Referrals Yet - When someone uses your referral link, their
             progress will appear here.
           </FormMessage>
@@ -105,34 +65,66 @@ export const ReferrerReferralsList: React.FC<ReferralsListProps> = ({
         {hasUsage && (
           <>
             {/* Info Message */}
-            <FormMessage
-              messageType={FormMessageType.Info}
-              className="mb-2"
-              classNameLabel="text-base-content/60 text-[10px] leading-snug md:text-[11px]"
-            >
+            <FormMessage messageType={FormMessageType.Info}>
               This shows everyone who has used your referral link and their
               progress through the program.
             </FormMessage>
 
-            <div className="border-base-300 bg-base-100 space-y-2 overflow-visible rounded-lg border">
+            <div className="border-base-300 bg-base-100 mt-2 space-y-2 overflow-visible rounded-lg border">
               {usageData?.items?.map((usage: ReferralLinkUsage) => (
                 <div key={usage.id}>
                   <div className="flex min-w-0 items-center gap-2 p-4 hover:bg-gray-50">
                     <div className="font-family-nunito flex min-w-0 grow flex-col justify-center gap-0.5">
-                      <div className="flex items-center gap-2 text-xs font-semibold text-black md:text-sm">
-                        <IoPerson className="h-3 w-3 flex-shrink-0 text-blue-600" />
-                        <span className="truncate">
-                          {usage.userDisplayName || "Anonymous User"}
-                        </span>
+                      <div className="truncate text-xs font-semibold text-black md:text-sm">
+                        {usage.userDisplayName || "Anonymous User"}
                       </div>
                       {usage.userEmail && (
-                        <div className="truncate pl-5 text-[10px] text-gray-500">
+                        <div className="truncate text-[10px] text-gray-500">
                           {usage.userEmail}
                         </div>
                       )}
                     </div>
 
-                    <div className="text-gray hidden text-xs text-nowrap md:block md:text-sm">
+                    {/* DATE & STATUS */}
+                    <div className="flex shrink-0 flex-row items-start gap-2 md:items-center md:justify-center md:px-4">
+                      <span className="text-base-content/70 text-xs">
+                        <Moment format={DATE_FORMAT_HUMAN} utc={true}>
+                          {usage.dateClaimed}
+                        </Moment>
+                      </span>
+                      <div className="flex items-center gap-2">
+                        {usage.status === "Completed" ? (
+                          <Image
+                            src="/images/icon-referral-stats-completed.svg"
+                            alt="Active"
+                            width={14}
+                            height={14}
+                            className="shrink-0"
+                          />
+                        ) : usage.status === "Pending" ? (
+                          <Image
+                            src="/images/icon-referral-stats-pending.svg"
+                            alt="Limit Reached"
+                            width={14}
+                            height={14}
+                            className="shrink-0"
+                          />
+                        ) : (
+                          <Image
+                            src="/images/icon-referral-stats-expired.svg"
+                            alt="Status"
+                            width={11}
+                            height={11}
+                            className="shrink-0"
+                          />
+                        )}
+                        <span className="text-base-content/70 text-xs font-bold">
+                          {usage.status}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* <div className="text-gray hidden text-xs text-nowrap md:block md:text-sm">
                       {new Date(usage.dateClaimed).toLocaleDateString("en-US", {
                         month: "short",
                         day: "numeric",
@@ -142,7 +134,7 @@ export const ReferrerReferralsList: React.FC<ReferralsListProps> = ({
 
                     <div className="flex-shrink-0">
                       {getStatusBadge(usage.status)}
-                    </div>
+                    </div> */}
                   </div>
                 </div>
               ))}

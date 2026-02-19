@@ -1,4 +1,4 @@
-import { useAtomValue, useSetAtom } from "jotai";
+import { useAtomValue } from "jotai";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
@@ -6,36 +6,27 @@ import { useRouter } from "next/router";
 import logoPicDark from "public/images/logo-dark.webp";
 import logoPicLight from "public/images/logo-light.webp";
 import { useMemo, useState } from "react";
+import { FaChevronDown, FaChevronUp } from "react-icons/fa";
 import { IoMdClose, IoMdMenu, IoMdSettings } from "react-icons/io";
 import type { TabItem } from "~/api/models/common";
 import type { OrganizationInfo } from "~/api/models/user";
-import { ReferralParticipationRole } from "~/api/models/user";
+import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
+import { ROLE_ADMIN } from "~/lib/constants";
 import {
   RoleView,
   activeNavigationRoleViewAtom,
   currentOrganisationIdAtom,
   userProfileAtom,
-  refereeProgressDialogVisibleAtom,
 } from "~/lib/store";
 import { AvatarImage } from "../AvatarImage";
+import ScrollableContainer from "../Carousel/ScrollableContainer";
 import { Footer } from "../Footer/Footer";
 import { SignInButton } from "../SignInButton";
 import { SignOutButton } from "../SignOutButton";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { UserMenu } from "./UserMenu";
-import { ROLE_ADMIN } from "~/lib/constants";
-import { FaChevronUp, FaChevronDown } from "react-icons/fa";
-import ScrollableContainer from "../Carousel/ScrollableContainer";
-import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
-import { useRefereeReferrals } from "~/hooks/useRefereeReferrals";
-import { ReferralLinkUsageStatus } from "~/api/models/referrals";
 
-const getNavBarLinksUser = (
-  hasPendingReferrals: boolean,
-  firstProgramId?: string,
-  pendingCount: number = 0,
-  onOpenRefereeProgress?: () => void,
-): TabItem[] => {
+const getNavBarLinksUser = (): TabItem[] => {
   const links: TabItem[] = [
     {
       title: "Home",
@@ -69,31 +60,15 @@ const getNavBarLinksUser = (
       selected: false,
       iconImage: "🛒",
     },
+    {
+      title: "Referrals",
+      description: "Referrals",
+      url: "/referrals",
+      badgeCount: null,
+      selected: false,
+      iconImage: "❤️",
+    },
   ];
-
-  // Add referee progress link if user has pending referrals
-  if (hasPendingReferrals) {
-    if (pendingCount > 1 && onOpenRefereeProgress) {
-      links.push({
-        title: "My Referrals",
-        description: "Track your referral progress",
-        url: "#",
-        badgeCount: null,
-        selected: false,
-        iconImage: "🎁",
-        onClick: onOpenRefereeProgress,
-      });
-    } else if (firstProgramId) {
-      links.push({
-        title: "My Referral",
-        description: "Track your referral progress",
-        url: `/yoid/referee/${firstProgramId}`,
-        badgeCount: null,
-        selected: false,
-        iconImage: "🎁",
-      });
-    }
-  }
 
   return links;
 };
@@ -155,32 +130,9 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
   const currentOrganisationId = useAtomValue(currentOrganisationIdAtom);
   const { data: session } = useSession();
   const userProfile = useAtomValue(userProfileAtom);
-  const setRefereeProgressDialogVisible = useSetAtom(
-    refereeProgressDialogVisibleAtom,
-  );
   const [isDrawerOpen, setDrawerOpen] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const isAdmin = session?.user?.roles.includes(ROLE_ADMIN);
-
-  // Check if user is a referee (has claimed links)
-  const isReferee =
-    userProfile?.referral?.roles?.some(
-      (role) =>
-        role === ReferralParticipationRole.Referee || role === "Referee",
-    ) ?? false;
-
-  // Fetch referee programs if user is a referee
-  const { data: refereeLinkUsages } = useRefereeReferrals({
-    enabled: session !== null && isReferee,
-    statuses: [ReferralLinkUsageStatus.Pending],
-  });
-
-  // Get pending referral programs (as referee)
-  const pendingReferralPrograms = useMemo(
-    () => refereeLinkUsages?.items ?? [],
-    [refereeLinkUsages?.items],
-  );
-  const hasPendingReferrals = pendingReferralPrograms.length > 0;
 
   // 👇 prevent scrolling on the page when the menu is open
   useDisableBodyScroll(isDrawerOpen);
@@ -260,13 +212,7 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
       ];
     } else {
       // Get user links with conditional referee link
-      const firstPendingProgramId = pendingReferralPrograms[0]?.programId;
-      links = getNavBarLinksUser(
-        hasPendingReferrals,
-        firstPendingProgramId,
-        pendingReferralPrograms.length,
-        () => setRefereeProgressDialogVisible(true),
-      );
+      links = getNavBarLinksUser();
     }
 
     // Set selected property based on current route
@@ -276,14 +222,7 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
         router.pathname === link.url ||
         (link.url !== "/" && router.pathname.startsWith(link.url!)),
     }));
-  }, [
-    activeRoleView,
-    currentOrganisationId,
-    router.pathname,
-    hasPendingReferrals,
-    pendingReferralPrograms,
-    setRefereeProgressDialogVisible,
-  ]);
+  }, [activeRoleView, currentOrganisationId, router.pathname]);
 
   const renderOrganisationMenuItem = (organisation: OrganizationInfo) => {
     if (organisation.status == "Deleted") return null;
@@ -369,7 +308,7 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
   return (
     <div className="fixed top-0 right-0 left-0 z-40">
       <div className={`bg-theme navbar z-40`}>
-        <div className="gap-2xxx flex w-full items-center">
+        <div className="flex w-full items-center">
           {/* HOVER MENU */}
           <div
             className="absolute top-1/5 left-0 h-[100vh] w-[2px] bg-transparent"
@@ -627,7 +566,7 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
           </div>
 
           {/* CENTER MENU (DESKTOP) */}
-          <div className="invisible min-w-0 flex-1 lg:visible">
+          <div className="hidden min-w-0 flex-1 lg:block">
             <ScrollableContainer
               className="flex h-full items-center overflow-x-auto overflow-y-visible"
               showShadows={true}
@@ -659,7 +598,7 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
           </div>
 
           {/* RIGHT MENU */}
-          <div className="flex flex-shrink-0 items-center justify-end md:mr-2 md:gap-4">
+          <div className="ml-auto flex flex-shrink-0 items-center justify-end md:mr-2 md:gap-4">
             <LanguageSwitcher
               className="bg-theme hover:brightness-95 md:px-3"
               classNameIcon=""

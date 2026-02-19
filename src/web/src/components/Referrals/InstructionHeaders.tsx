@@ -165,7 +165,6 @@ export const StepNumberBadge: React.FC<StepNumberBadgeProps> = ({
     );
   }
 
-  // Show step number for sequential multi-step
   return (
     <div
       className={`flex h-6 w-6 items-center justify-center rounded-full border-2 ${colors.border} ${colors.bg} text-sm font-semibold ${colors.text}`}
@@ -175,7 +174,6 @@ export const StepNumberBadge: React.FC<StepNumberBadgeProps> = ({
   );
 };
 
-// Step Instruction Header Component
 export interface StepInstructionHeaderProps {
   stepsLength: number;
   rule: string;
@@ -184,6 +182,7 @@ export interface StepInstructionHeaderProps {
   total?: number;
   percentComplete?: number;
   isCompleted?: boolean;
+  isAdmin?: boolean;
 }
 
 export const StepInstructionHeader: React.FC<StepInstructionHeaderProps> = ({
@@ -194,6 +193,7 @@ export const StepInstructionHeader: React.FC<StepInstructionHeaderProps> = ({
   total,
   percentComplete,
   isCompleted,
+  isAdmin = false,
 }) => {
   // For single step, show simple message
   if (stepsLength === 1) {
@@ -208,14 +208,16 @@ export const StepInstructionHeader: React.FC<StepInstructionHeaderProps> = ({
             </span>
             {isCompleted ? (
               <p className="text-xs font-medium text-blue-900">
-                Well done! You completed this step
+                Well done! {isAdmin ? "Users completed" : "You completed"} this
+                step
               </p>
             ) : (
               <p className="text-xs font-medium text-blue-900">
-                Complete this step
+                {isAdmin ? "Users need to complete" : "Complete"} this step
               </p>
             )}
           </div>
+
           {/* Step Progress (optional) */}
           {completed !== undefined &&
             total !== undefined &&
@@ -234,7 +236,6 @@ export const StepInstructionHeader: React.FC<StepInstructionHeaderProps> = ({
     );
   }
 
-  // For multiple steps, show detailed instruction
   return (
     <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 p-3">
       <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
@@ -247,13 +248,13 @@ export const StepInstructionHeader: React.FC<StepInstructionHeaderProps> = ({
 
           {isCompleted ? (
             <p className="text-xs font-medium text-blue-900">
-              Well done! You completed{" "}
+              Well done! {isAdmin ? "Users completed" : "You completed"}{" "}
               <span className="font-bold">{completed ?? stepsLength}</span>{" "}
               {stepsLength === 1 ? "step" : "steps"}
             </p>
           ) : (
             <p className="text-xs font-medium text-blue-900">
-              Complete{" "}
+              {isAdmin ? "Users need to complete" : "Complete"}{" "}
               <span className="font-bold">
                 {rule === PathwayCompletionRule.All ? "ALL" : "ANY ONE"}
               </span>{" "}
@@ -269,7 +270,8 @@ export const StepInstructionHeader: React.FC<StepInstructionHeaderProps> = ({
                 orderMode === PathwayOrderMode.AnyOrder ? (
                 <>
                   {" "}
-                  in <span className="font-bold">ANY ORDER</span> you prefer
+                  in <span className="font-bold">ANY ORDER</span>{" "}
+                  {isAdmin ? "" : "you prefer"}
                 </>
               ) : (
                 ""
@@ -295,7 +297,6 @@ export const StepInstructionHeader: React.FC<StepInstructionHeaderProps> = ({
   );
 };
 
-// Task Instruction Header Component
 export interface TaskInstructionHeaderProps {
   tasksLength: number;
   rule: string;
@@ -307,6 +308,7 @@ export interface TaskInstructionHeaderProps {
   color?: "green" | "orange" | "blue" | "white";
   variant?: "default" | "compact";
   hideIcon?: boolean;
+  isAdmin?: boolean;
 }
 
 export const TaskInstructionHeader: React.FC<TaskInstructionHeaderProps> = ({
@@ -320,6 +322,7 @@ export const TaskInstructionHeader: React.FC<TaskInstructionHeaderProps> = ({
   color = "green",
   variant = "default",
   hideIcon = false,
+  isAdmin = false,
 }) => {
   const isCompact = variant === "compact";
 
@@ -416,7 +419,11 @@ export const TaskInstructionHeader: React.FC<TaskInstructionHeaderProps> = ({
               isCompact ? "text-[10px] md:text-xs" : "text-xs"
             } font-medium ${textClassName}`}
           >
-            {isCompleted ? "Task completed" : "Complete this task"}
+            {isCompleted
+              ? "Task completed"
+              : isAdmin
+                ? "Users need to complete this task"
+                : "Complete this task"}
           </p>
         </div>
       </div>
@@ -447,7 +454,7 @@ export const TaskInstructionHeader: React.FC<TaskInstructionHeaderProps> = ({
                 isCompact ? "text-[10px] md:text-xs" : "text-xs"
               } font-medium ${textClassName}`}
             >
-              You completed{" "}
+              {isAdmin ? "Users completed" : "You completed"}{" "}
               <span className="font-bold">{completed ?? tasksLength}</span>{" "}
               {tasksLength === 1 ? "task" : "tasks"}
             </p>
@@ -455,7 +462,7 @@ export const TaskInstructionHeader: React.FC<TaskInstructionHeaderProps> = ({
             <p
               className={`text-[10px] font-medium md:text-xs ${textClassName}`}
             >
-              Complete these tasks
+              {isAdmin ? "Users need to complete" : "Complete"} these tasks
               {rule === PathwayCompletionRule.Any
                 ? " (choose one)"
                 : hasSequentialTasks
@@ -465,7 +472,7 @@ export const TaskInstructionHeader: React.FC<TaskInstructionHeaderProps> = ({
             </p>
           ) : (
             <p className={`text-xs font-medium ${textClassName}`}>
-              Complete{" "}
+              {isAdmin ? "Users need to complete" : "Complete"}{" "}
               <span className="font-bold">
                 {rule === PathwayCompletionRule.Any ? "ANY ONE" : "ALL"}
               </span>{" "}
@@ -659,7 +666,6 @@ export const PathwayTaskDisplay: React.FC<PathwayTaskDisplayProps> = ({
   );
 };
 
-// Reusable Tasks List Component
 export interface PathwayTasksListProps {
   tasks: ProgramPathwayTaskProgress[];
   rule: string;
@@ -672,6 +678,7 @@ export interface PathwayTasksListProps {
   color?: "green" | "orange" | "white";
   isAdmin?: boolean;
   opportunityVariant?: "default" | "compact";
+  className?: string;
 }
 
 export const PathwayTasksList: React.FC<PathwayTasksListProps> = ({
@@ -686,6 +693,7 @@ export const PathwayTasksList: React.FC<PathwayTasksListProps> = ({
   color = "green",
   isAdmin = false,
   opportunityVariant = "default",
+  className,
 }) => {
   const isCompact = opportunityVariant === "compact";
 
@@ -704,7 +712,11 @@ export const PathwayTasksList: React.FC<PathwayTasksListProps> = ({
   const connectorTextColor = color === "white" ? "text-gray-600" : "text-white";
 
   return (
-    <div className={isCompact ? "space-y-2" : "space-y-0"}>
+    <div
+      className={
+        className ?? (isCompact ? "divide-base-200 divide-y" : "space-y-0")
+      }
+    >
       {tasks.map((task, taskIndex) => (
         <div key={task.id}>
           <PathwayTaskDisplay

@@ -31,7 +31,7 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({
             <div className="text-gray-dark max-w-[200px] truncate text-xs font-medium">
               {data.organizationName}
             </div>
-            <div className="mt-1 line-clamp-2 h-[38px] max-w-[200px] overflow-hidden text-sm leading-tight font-semibold text-ellipsis">
+            <div className="mt-1 line-clamp-2 h-[36px] max-w-[200px] overflow-hidden text-sm leading-tight font-semibold text-ellipsis">
               {data.title}
             </div>
           </div>

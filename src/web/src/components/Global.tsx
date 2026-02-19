@@ -1,12 +1,10 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { useSession } from "next-auth/react";
-import Link from "next/link";
 import { useRouter } from "next/router";
 import { parseCookies } from "nookies";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FcCamera, FcKey, FcSettings, FcViewDetails } from "react-icons/fc";
-import { IoMdClose } from "react-icons/io";
 import { toast } from "react-toastify";
 import type { SettingsRequest } from "~/api/models/common";
 import { ReferralLinkUsageStatus } from "~/api/models/referrals";
@@ -21,7 +19,6 @@ import {
 import { useRefereeReferrals } from "~/hooks/useRefereeReferrals";
 import analytics from "~/lib/analytics";
 import { handleUserSignIn } from "~/lib/authUtils";
-import { initializeDatadog, setRumSoftEnabled } from "~/lib/datadog";
 import {
   COOKIE_KEYCLOAK_SESSION,
   ROLE_ADMIN,
@@ -29,6 +26,7 @@ import {
   SETTING_USER_RUM_CONSENT,
   SETTING_USER_SETTINGS_CONFIGURED,
 } from "~/lib/constants";
+import { initializeDatadog, setRumSoftEnabled } from "~/lib/datadog";
 import {
   RoleView,
   activeNavigationRoleViewAtom,
@@ -37,7 +35,6 @@ import {
   currentOrganisationInactiveAtom,
   currentOrganisationLogoAtom,
   refereeProgressDialogDismissedAtom,
-  refereeProgressDialogVisibleAtom,
   rumConsentAtom,
   screenWidthAtom,
   userProfileAtom,
@@ -49,7 +46,6 @@ import {
 } from "~/lib/utils/profile";
 import CustomModal from "./Common/CustomModal";
 import Suspense from "./Common/Suspense";
-import { RefereeProgressCard } from "./Referrals/RefereeProgressCard";
 import SettingsForm from "./Settings/SettingsForm";
 import { SignInButton } from "./SignInButton";
 import {
@@ -85,8 +81,7 @@ export const Global: React.FC = () => {
   const [photoUploadDialogVisible, setPhotoUploadDialogVisible] =
     useState(false);
   const [rumConsentDialogVisible, setRumConsentDialogVisible] = useState(false);
-  const [refereeProgressDialogVisible, setRefereeProgressDialogVisible] =
-    useAtom(refereeProgressDialogVisibleAtom);
+
   const [refereeProgressDialogDismissed, setRefereeProgressDialogDismissed] =
     useAtom(refereeProgressDialogDismissedAtom);
 
@@ -104,8 +99,7 @@ export const Global: React.FC = () => {
     loginDialogVisible ||
     updateProfileDialogVisible ||
     settingsDialogVisible ||
-    photoUploadDialogVisible ||
-    refereeProgressDialogVisible;
+    photoUploadDialogVisible;
 
   const {
     data: settingsData,
@@ -128,10 +122,9 @@ export const Global: React.FC = () => {
   );
 
   // Fetch referee programs if user is a referee
-  const [refereePageSize, setRefereePageSize] = useState(5);
   const { data: refereeLinkUsages, isFetching: refereeLinkUsagesFetching } =
     useRefereeReferrals({
-      pageSize: refereePageSize,
+      pageSize: 5,
       statuses: [ReferralLinkUsageStatus.Pending],
       enabled: session !== null && isReferee,
       keepPreviousData: true,
@@ -243,7 +236,6 @@ export const Global: React.FC = () => {
       // Skip profile completion modals on claim page - handled inline there
       if (
         currentPath.includes("/referrals/claim/") ||
-        currentPath.includes("/yoid/referee/") ||
         currentPath.includes("/user/profile") ||
         currentPath.includes("/user/settings")
       ) {
@@ -263,19 +255,57 @@ export const Global: React.FC = () => {
         (refereeLinkUsages?.items?.length ?? 0) > 0 &&
         !refereeProgressDialogDismissed
       ) {
-        // show referee progress dialog if user has pending referrals
-        setRefereeProgressDialogVisible(true);
-      } else {
-        //toast.success("Welcome back!", { autoClose: false });
+        // skip toast if already on the referrals pages
+        if (currentPath.startsWith("/referrals")) {
+          // don't check again
+          setRefereeProgressDialogDismissed(true);
+          return;
+        }
+
+        // show toast for pending referrals
+        const count = refereeLinkUsages?.items?.length ?? 0;
+        toast.info(
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-2">
+              <span className="text-lg">❤️</span>
+              <strong>
+                {count === 1
+                  ? "You Have a Pending Referral!"
+                  : "You Have Pending Referrals!"}
+              </strong>
+            </div>
+            <div className="text-sm">
+              {count === 1
+                ? "Track your progress and complete the requirements to earn your reward."
+                : "Track your progress and complete the requirements to earn your rewards."}
+            </div>
+            <button
+              onClick={() => {
+                router.push("/referrals");
+                setRefereeProgressDialogDismissed(true);
+              }}
+              className="btn btn-sm bg-orange mt-2 w-full text-white hover:brightness-110"
+            >
+              View My Referrals
+            </button>
+          </div>,
+          {
+            autoClose: false,
+            closeButton: true,
+            icon: false,
+            onClose: () => setRefereeProgressDialogDismissed(true),
+          },
+        );
       }
     },
     [
+      router,
+      refereeLinkUsages,
+      refereeProgressDialogDismissed,
       setUpdateProfileDialogVisible,
       setSettingsDialogVisible,
       setPhotoUploadDialogVisible,
-      setRefereeProgressDialogVisible,
-      refereeLinkUsages,
-      refereeProgressDialogDismissed,
+      setRefereeProgressDialogDismissed,
     ],
   );
   //#endregion Functions
@@ -995,90 +1025,6 @@ export const Global: React.FC = () => {
 
             <div className="mt-8 flex grow gap-4">
               <SignInButton />
-            </div>
-          </div>
-        </div>
-      </CustomModal>
-
-      {/* REFEREE PROGRESS DIALOG */}
-      <CustomModal
-        isOpen={refereeProgressDialogVisible}
-        shouldCloseOnOverlayClick={false}
-        onRequestClose={() => {
-          setRefereeProgressDialogVisible(false);
-        }}
-        className="md:max-h-[600px] md:w-[600px]"
-      >
-        <div className="flex h-full flex-col gap-2 overflow-y-auto pb-8">
-          <div className="bg-theme flex flex-row p-4 shadow-lg">
-            <h1 className="grow"></h1>
-            <button
-              type="button"
-              className="btn btn-circle text-gray-dark hover:bg-gray"
-              onClick={() => {
-                setRefereeProgressDialogVisible(false);
-                setRefereeProgressDialogDismissed(true);
-              }}
-            >
-              <IoMdClose className="h-6 w-6"></IoMdClose>
-            </button>
-          </div>
-          <div className="flex flex-col items-center justify-center gap-4 px-6 pb-8 text-center md:px-12">
-            <div className="border-purple-dark -mt-10 flex items-center justify-center rounded-full bg-white p-2 shadow-lg">
-              <span className="text-2xl">❤️</span>
-            </div>
-
-            <div className="mt-5 flex flex-col gap-2 text-center">
-              <div className="text-base font-semibold tracking-wide md:text-lg">
-                {refereeLinkUsages?.items.length === 1
-                  ? "You Have a Pending Referral!"
-                  : "You Have Pending Referrals!"}
-              </div>
-              <div className="text-sm text-gray-700 md:text-base">
-                {refereeLinkUsages?.items.length === 1
-                  ? "Track your progress and complete the requirements to earn your reward."
-                  : "Track your progress and complete the requirements to earn your rewards."}
-              </div>
-            </div>
-
-            <div className="w-full text-left">
-              {refereeLinkUsages?.items.length === 1 ? (
-                <div className="flex w-full justify-center">
-                  <Link
-                    href={`/yoid/referee/${refereeLinkUsages.items[0]?.programId}`}
-                    className="btn btn-warning w-full text-white md:w-auto"
-                    onClick={() => {
-                      setRefereeProgressDialogVisible(false);
-                      setRefereeProgressDialogDismissed(true);
-                    }}
-                  >
-                    Track my progress
-                  </Link>
-                </div>
-              ) : (
-                <RefereeProgressCard
-                  programs={refereeLinkUsages?.items ?? []}
-                  onClick={() => {
-                    setRefereeProgressDialogVisible(false);
-                  }}
-                  totalCount={refereeLinkUsages?.totalCount ?? 0}
-                  onLoadMore={() => setRefereePageSize((prev) => prev + 5)}
-                  loading={refereeLinkUsagesFetching}
-                />
-              )}
-            </div>
-
-            <div className="mt-4 flex w-full flex-col gap-3">
-              <button
-                type="button"
-                className="hover:text-green text-sm text-black underline"
-                onClick={() => {
-                  setRefereeProgressDialogVisible(false);
-                  setRefereeProgressDialogDismissed(true);
-                }}
-              >
-                Skip for now
-              </button>
             </div>
           </div>
         </div>
