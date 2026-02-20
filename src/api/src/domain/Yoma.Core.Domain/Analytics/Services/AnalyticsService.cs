@@ -146,29 +146,21 @@ namespace Yoma.Core.Domain.Analytics.Services
 
     public PlatformMetrics GetPlatformMetrics()
     {
-      if (!_appSettings.CacheEnabledByCacheItemTypesAsEnum.HasFlag(CacheItemType.Analytics))
-        return GetPlatformMetrics();
-
-      var result = _memoryCache.GetOrCreate(CacheHelper.GenerateKey<PlatformMetrics>(), entry =>
-      {
-        entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(_appSettings.CacheAbsoluteExpirationRelativeToNowInHoursAnalytics);
-        return GetPlatformMetrics();
-      }) ?? throw new InvalidOperationException($"Failed to retrieve cached '{nameof(GetPlatformMetrics)}'");
-      return result;
+      // Use cached admin actuals to avoid recomputing expensive counts; rounding is inexpensive and not cached
+      return GetPlatformMetricsInternal(GetPlatformMetricsAdmin());
     }
 
     public PlatformMetricsAdmin GetPlatformMetricsAdmin()
     {
       if (!_appSettings.CacheEnabledByCacheItemTypesAsEnum.HasFlag(CacheItemType.Analytics))
-        return GetPlatformSummaryAdminInternal();
+        return GetPlatformMetricsAdminInternal();
 
       var result = _memoryCache.GetOrCreate(CacheHelper.GenerateKey<PlatformMetricsAdmin>(), entry =>
       {
-        entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(_appSettings.CacheAbsoluteExpirationRelativeToNowInHoursAnalytics);
-        return GetPlatformSummaryAdminInternal();
+        entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(_appSettings.CacheAbsoluteExpirationRelativeToNowInDaysPlatformMetrics);
+        return GetPlatformMetricsAdminInternal();
       }) ?? throw new InvalidOperationException($"Failed to retrieve cached '{nameof(GetPlatformMetricsAdmin)}'");
       return result;
-
     }
 
     public OrganizationSearchResultsEngagement SearchOrganizationEngagement(OrganizationSearchFilterEngagement filter) //ensureOrganizationAuthorization by default
@@ -257,19 +249,19 @@ namespace Yoma.Core.Domain.Analytics.Services
     #endregion
 
     #region Private Members
-    private static PlatformMetrics GetPlatformSummary(PlatformMetricsAdmin summaryAdmin)
+    private PlatformMetrics GetPlatformMetricsInternal(PlatformMetricsAdmin metricsAdmin)
     {
       return new PlatformMetrics
       {
-        UserCount = RoundingHelper.RoundDown(summaryAdmin.UserCount, 100000),
-        OrganizationCount = RoundingHelper.RoundDown(summaryAdmin.OrganizationCountActive, 10),
-        CountryCount = summaryAdmin.OrganizationCountryCountActive,
-        OpportunityCount = RoundingHelper.RoundDown(summaryAdmin.OpportunityCountPublished, 10),
-        CredentialSummary = [.. summaryAdmin.CredentialSummary.Select(c => new CredentialMetrics { Type = c.Type, Count = RoundingHelper.RoundDown(c.Count, 100000) })]
+        UserCount = RoundingHelper.RoundDown(metricsAdmin.UserCount, 100000),
+        OrganizationCount = RoundingHelper.RoundDown(metricsAdmin.OrganizationCountActive, 10),
+        CountryCount = metricsAdmin.OrganizationCountryCountActive,
+        OpportunityCount = RoundingHelper.RoundDown(metricsAdmin.OpportunityCountPublished, 10),
+        CredentialSummary = [.. metricsAdmin.CredentialSummary.Select(c => new CredentialMetrics { Type = c.Type, Count = RoundingHelper.RoundDown(c.Count, 100000) })]
       };
     }
 
-    private PlatformMetricsAdmin GetPlatformSummaryAdminInternal()
+    private PlatformMetricsAdmin GetPlatformMetricsAdminInternal()
     {
       // Users
       var userFilter = new UserSearchFilter { TotalCountOnly = true };
