@@ -3,7 +3,6 @@ using Moq;
 using Xunit;
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Entity.Models;
-using Yoma.Core.Domain.Lookups.Models;
 using Yoma.Core.Domain.Referral;
 using Yoma.Core.Domain.Referral.Models;
 using Yoma.Core.Test.Referral.Builders;

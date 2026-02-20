@@ -51,7 +51,8 @@ namespace Yoma.Core.Domain.Entity.Events
               filter.Statuses = [Status.Active];
 
               result = _opportunityService.Search(filter, false);
-              if (result.Items.Count == 0) return;
+
+              if (result.Items == null || result.Items.Count == 0) return;
 
               foreach (var item in result.Items)
                 await _mediator.Publish(new OpportunityEvent(EventType.Update, item), cancellationToken);
@@ -63,7 +64,7 @@ namespace Yoma.Core.Domain.Entity.Events
               filter.Statuses = [Status.Active, Status.Inactive, Status.Expired];
 
               result = _opportunityService.Search(filter, false);
-              if (result.Items.Count == 0) return;
+              if (result.Items == null || result.Items.Count == 0) return;
 
               foreach (var item in result.Items)
                 await _mediator.Publish(new OpportunityEvent(EventType.Delete, item), cancellationToken);

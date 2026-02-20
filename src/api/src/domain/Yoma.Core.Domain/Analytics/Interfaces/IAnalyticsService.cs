@@ -6,6 +6,10 @@ namespace Yoma.Core.Domain.Analytics.Interfaces
   {
     List<Lookups.Models.Country> ListSearchCriteriaCountriesEngaged(List<Guid>? organizations);
 
+    PlatformMetrics GetPlatformMetrics();
+
+    PlatformMetricsAdmin GetPlatformMetricsAdmin();
+
     OrganizationSearchResultsEngagement SearchOrganizationEngagement(OrganizationSearchFilterEngagement filter);
 
     OrganizationSearchResultsOpportunity SearchOrganizationOpportunities(OrganizationSearchFilterOpportunity filter);

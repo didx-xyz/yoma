@@ -27,6 +27,8 @@ namespace Yoma.Core.Domain.Core.Models
 
     public int CacheAbsoluteExpirationRelativeToNowInHoursAnalytics { get; set; }
 
+    public int CacheAbsoluteExpirationRelativeToNowInDaysPlatformSummary { get; set; }
+
     public string CacheEnabledByCacheItemTypes { get; set; } = null!;
 
     public CacheItemType CacheEnabledByCacheItemTypesAsEnum

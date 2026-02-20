@@ -254,6 +254,13 @@ namespace Yoma.Core.Domain.Entity.Services
         query = _organizationRepository.Contains(query, filter.ValueContains);
 
       var results = new OrganizationSearchResults();
+
+      if (filter.TotalCountOnly)
+      {
+        results.TotalCount = query.Count();
+        return results;
+      }
+
       query = query.OrderBy(o => o.Name).ThenBy(o => o.Id); //ensure deterministic sorting / consistent pagination results
 
       if (filter.PaginationEnabled)
