@@ -10,7 +10,7 @@ namespace Yoma.Core.Domain.Entity.Validators
     public UserSearchFilterValidator()
     {
       RuleFor(x => x.ValueContains).Length(3, 50).When(x => !string.IsNullOrEmpty(x.ValueContains));
-      RuleFor(x => x.PaginationEnabled).Equal(true).WithMessage("Pagination is required.");
+      RuleFor(x => x.PaginationEnabled).Equal(true).When(x => !x.TotalCountOnly).WithMessage("Pagination is required.");
     }
     #endregion
   }

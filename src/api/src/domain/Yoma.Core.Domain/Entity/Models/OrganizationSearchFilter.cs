@@ -13,5 +13,8 @@ namespace Yoma.Core.Domain.Entity.Models
 
     [JsonIgnore]
     internal bool InternalUse { get; set; }
+
+    [JsonIgnore]
+    internal bool TotalCountOnly { get; set; }
   }
 }

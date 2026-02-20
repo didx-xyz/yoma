@@ -4,6 +4,6 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
   {
     public int? TotalCount { get; set; }
 
-    public List<MyOpportunityInfo> Items { get; set; } = null!;
+    public List<MyOpportunityInfo>? Items { get; set; }
   }
 }

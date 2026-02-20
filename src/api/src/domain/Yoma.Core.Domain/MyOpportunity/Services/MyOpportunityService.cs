@@ -515,6 +515,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       };
 
       var searchResultVerification = Search(filterInternal, false);
+      if (searchResultVerification.Items == null) throw new InvalidOperationException("Search result items expected but null");
 
       var itemsCompleted = SummaryGroupByWeekItems([.. searchResultVerification.Items.Where(o => o.Action == Action.Verification && o.VerificationStatus == VerificationStatus.Completed)]);
       var resultsCompleted = new List<TimeValueEntry>();
@@ -531,6 +532,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       filterInternal.Action = Action.Saved;
       filterInternal.VerificationStatuses = null;
       var searchResultSaved = Search(filterInternal, false);
+      if (searchResultSaved.Items == null) throw new InvalidOperationException("Search result items expected but null");
 
       var itemSaved = SummaryGroupByWeekItems(searchResultSaved.Items);
       var resultsSaved = new List<TimeValueEntry>();
@@ -738,6 +740,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       ArgumentNullException.ThrowIfNull(filter, nameof(filter));
 
       var result = Search(filter, ensureOrganizationAuthorization);
+      if (result.Items == null) throw new InvalidOperationException("Search result items expected but null");
 
       foreach (var item in result.Items)
       {

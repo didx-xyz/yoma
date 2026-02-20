@@ -130,7 +130,8 @@ namespace Yoma.Core.Domain.Marketplace.Services
         InternalUse = true
       };
 
-      var organizations = _organizationService.Search(filter, false).Items;
+      var organizations = _organizationService.Search(filter, false).Items
+        ?? throw new InvalidOperationException("Search results expected but null");
 
       return [.. organizations.OrderBy(o => o.Name)];
     }

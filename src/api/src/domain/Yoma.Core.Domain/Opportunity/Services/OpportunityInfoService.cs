@@ -109,10 +109,11 @@ namespace Yoma.Core.Domain.Opportunity.Services
       var results = new OpportunitySearchResultsInfo
       {
         TotalCount = searchResult.TotalCount,
-        Items = [.. searchResult.Items.Select(o => o.ToOpportunityInfo(_appSettings.AppBaseURL))],
+        Items = searchResult.Items == null ? null : [.. searchResult.Items.Select(o => o.ToOpportunityInfo(_appSettings.AppBaseURL))],
       };
 
-      results.Items.ForEach(SetEngagementCounts);
+      results.Items?.ForEach(SetEngagementCounts);
+
       return results;
     }
 
@@ -181,10 +182,10 @@ namespace Yoma.Core.Domain.Opportunity.Services
       var results = new OpportunitySearchResultsInfo
       {
         TotalCount = searchResult.TotalCount,
-        Items = [.. searchResult.Items.Select(o => o.ToOpportunityInfo(_appSettings.AppBaseURL))],
+        Items = searchResult.Items == null ? null : [.. searchResult.Items.Select(o => o.ToOpportunityInfo(_appSettings.AppBaseURL))],
       };
 
-      results.Items.ForEach(SetEngagementCounts);
+      results.Items?.ForEach(SetEngagementCounts);
       return results;
     }
 
@@ -212,6 +213,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       ArgumentNullException.ThrowIfNull(filter, nameof(filter));
 
       var result = Search(filter, ensureOrganizationAuthorization);
+      if (result.Items == null) throw new InvalidOperationException("Search results expected but null");
 
       return FileHelper.CreateCsvFile(result.Items, "Opportunities", appendDateStamp);
     }
