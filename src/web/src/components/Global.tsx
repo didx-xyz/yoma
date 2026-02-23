@@ -5,6 +5,7 @@ import { useRouter } from "next/router";
 import { parseCookies } from "nookies";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FcCamera, FcKey, FcSettings, FcViewDetails } from "react-icons/fc";
+import { IoMdClose } from "react-icons/io";
 import { toast } from "react-toastify";
 import type { SettingsRequest } from "~/api/models/common";
 import { ReferralLinkUsageStatus } from "~/api/models/referrals";
@@ -794,38 +795,51 @@ export const Global: React.FC = () => {
         shouldCloseOnOverlayClick={false}
         onRequestClose={() => {}}
         animationStyle="slide-bottom"
-        className="modal-banner border-gray top-auto right-2 bottom-2 left-2 h-auto max-h-[36vh] w-auto rounded-3xl border shadow-xl md:right-auto md:bottom-2 md:left-1/2 md:w-[640px] md:-translate-x-1/2"
+        className="modal-banner border-grayx top-auto right-2 bottom-2 left-2 h-auto w-auto rounded-3xl border shadow-xl md:right-auto md:bottom-2 md:left-1/2 md:w-[640px] md:-translate-x-1/2"
       >
-        <div className="flex flex-col gap-2 overflow-y-auto px-4 py-2 md:px-10">
-          <div className="flex flex-col gap-2 text-center">
-            <h4 className="text-sm font-semibold tracking-wide md:text-lg">
-              😊 Help us improve Yoma!
-            </h4>
-          </div>
-
-          <div className="flex flex-col gap-3 text-xs text-gray-700">
-            We&apos;d like to monitor how the platform performs for you—things
-            like page load times, errors, and what works smoothly. This helps us
-            fix issues faster and build features that actually help you find
-            opportunities. Your choice is saved and you can change it anytime in
-            Settings.
-          </div>
-
-          <div className="flex flex-row flex-nowrap gap-3">
+        <div className="flex h-full flex-col">
+          <div className="bg-purple flex flex-row items-center justify-end p-4">
             <button
               type="button"
-              className="btn btn-outline btn-xs min-w-0 flex-1"
+              className="btn btn-circle btn-sm bg-purple-shade border-0 text-white shadow-none hover:opacity-80"
               onClick={() => handleRumConsentSubmit(false)}
             >
-              Not now
+              <IoMdClose className="h-5 w-5"></IoMdClose>
             </button>
-            <button
-              type="button"
-              className="btn btn-success btn-xs min-w-0 flex-1 text-white"
-              onClick={() => handleRumConsentSubmit(true)}
-            >
-              Allow monitoring
-            </button>
+          </div>
+          <div className="flex flex-col items-center justify-center gap-4 px-6 pt-4 pb-4 md:px-14">
+            <div className="-mt-12 flex items-center justify-center rounded-full bg-white p-3 shadow-lg">
+              <span className="text-lg">😊</span>
+            </div>
+
+            <div className="text-center text-lg font-semibold">
+              Help us improve Yoma!
+            </div>
+
+            <div className="text-center text-xs leading-relaxed text-gray-700">
+              We&apos;d like to monitor how the platform performs for you—things
+              like page load times, errors, and what works smoothly. This helps
+              us fix issues faster and build features that actually help you
+              find opportunities. Your choice is saved and you can change it
+              anytime in Settings.
+            </div>
+
+            <div className="flex w-full flex-row gap-3 md:gap-14">
+              <button
+                type="button"
+                className="btn btn-outline border-green text-green btn-sm flex-1"
+                onClick={() => handleRumConsentSubmit(false)}
+              >
+                Not Now
+              </button>
+              <button
+                type="button"
+                className="btn btn-success btn-sm flex-1 text-white normal-case"
+                onClick={() => handleRumConsentSubmit(true)}
+              >
+                Allow Monitoring
+              </button>
+            </div>
           </div>
         </div>
       </CustomModal>
