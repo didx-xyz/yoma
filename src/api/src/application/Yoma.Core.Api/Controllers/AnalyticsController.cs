@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
-using System.Net;
 using Yoma.Core.Domain.Analytics.Interfaces;
 using Yoma.Core.Domain.Analytics.Models;
 using Yoma.Core.Domain.Core;
@@ -65,9 +64,8 @@ namespace Yoma.Core.Api.Controllers
     [SwaggerOperation(Summary = "Return a list of countries associated with users that engaged with opportunities (viewed and / or completed)",
       Description = "Organization fitlering: optional for Admin role. Required for Organization Admin role")]
     [HttpGet("search/country")]
-    [ProducesResponseType(typeof(List<Domain.Lookups.Models.Country>), (int)HttpStatusCode.OK)]
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
-    public IActionResult ListSearchCriteriaCountriesEngaged([FromQuery, SwaggerParameter("Optional for Admin role. Required for Organization Admin role", Required = false)] List<Guid>? organizations)
+    public ActionResult<List<Domain.Lookups.Models.Country>> ListSearchCriteriaCountriesEngaged([FromQuery, SwaggerParameter("Optional for Admin role. Required for Organization Admin role", Required = false)] List<Guid>? organizations)
     {
       if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(ListSearchCriteriaCountriesEngaged));
 
@@ -75,15 +73,14 @@ namespace Yoma.Core.Api.Controllers
 
       if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(ListSearchCriteriaCountriesEngaged));
 
-      return StatusCode((int)HttpStatusCode.OK, result);
+      return Ok(result);
     }
 
     [SwaggerOperation(Summary = "Search for engagement analytics based on the supplied filter",
       Description = "Organization filtering: optional for Admin role. Required for Organization Admin role")]
     [HttpPost("search/engagement")]
-    [ProducesResponseType(typeof(SearchResultsEngagement), (int)HttpStatusCode.OK)]
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
-    public IActionResult SearchEngagement([FromBody] SearchFilterEngagement filter)
+    public ActionResult<SearchResultsEngagement> SearchEngagement([FromBody] SearchFilterEngagement filter)
     {
       if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(SearchEngagement));
 
@@ -91,15 +88,14 @@ namespace Yoma.Core.Api.Controllers
 
       if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(SearchEngagement));
 
-      return StatusCode((int)HttpStatusCode.OK, result);
+      return Ok(result);
     }
 
     [SwaggerOperation(Summary = "Search for opportunity analytics based on the supplied filter",
       Description = "Organization filtering: optional for Admin role. Required for Organization Admin role")]
     [HttpPost("search/opportunities")]
-    [ProducesResponseType(typeof(SearchResultsOpportunity), (int)HttpStatusCode.OK)]
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
-    public IActionResult SearchOpportunities([FromBody] SearchFilterOpportunity filter)
+    public ActionResult<SearchResultsOpportunity> SearchOpportunities([FromBody] SearchFilterOpportunity filter)
     {
       if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(SearchOpportunities));
 
@@ -107,15 +103,14 @@ namespace Yoma.Core.Api.Controllers
 
       if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(SearchOpportunities));
 
-      return StatusCode((int)HttpStatusCode.OK, result);
+      return Ok(result);
     }
 
     [SwaggerOperation(Summary = "Search for youth analytics based on the supplied filter",
       Description = "Organization filtering: optional for Admin role. Required for Organization Admin role")]
     [HttpPost("search/youth")]
-    [ProducesResponseType(typeof(SearchResultsYouth), (int)HttpStatusCode.OK)]
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
-    public IActionResult SearchYouth([FromBody] SearchFilterYouth filter)
+    public ActionResult<SearchResultsYouth> SearchYouth([FromBody] SearchFilterYouth filter)
     {
       if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(SearchYouth));
 
@@ -123,15 +118,14 @@ namespace Yoma.Core.Api.Controllers
 
       if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(SearchYouth));
 
-      return StatusCode((int)HttpStatusCode.OK, result);
+      return Ok(result);
     }
 
     [SwaggerOperation(Summary = "Search for SSO analytics based on the supplied filter",
       Description = "Organization filtering: optional for Admin role. Required for Organization Admin role. Non-partner based SSO metrics i.e. Google/Facebook are only included for admins")]
     [HttpPost("search/sso")]
-    [ProducesResponseType(typeof(SearchResultsSSO), (int)HttpStatusCode.OK)]
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
-    public IActionResult SearchSSO([FromBody] SearchFilterSSO filter)
+    public ActionResult<SearchResultsSSO> SearchSSO([FromBody] SearchFilterSSO filter)
     {
       if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(SearchSSO));
 
@@ -139,7 +133,7 @@ namespace Yoma.Core.Api.Controllers
 
       if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(SearchSSO));
 
-      return StatusCode((int)HttpStatusCode.OK, result);
+      return Ok(result);
     }
     #endregion Administrative Actions
     #endregion

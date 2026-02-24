@@ -113,7 +113,7 @@ namespace Yoma.Core.Domain.Analytics.Models
     /// <summary>
     /// Credential count (actual for admin; rounded-down source value for public)
     /// </summary>
-    public virtual int Count { get; set; }
+    public int Count { get; set; }
   }
 
   public sealed class CredentialMetrics : CredentialMetricsBase
