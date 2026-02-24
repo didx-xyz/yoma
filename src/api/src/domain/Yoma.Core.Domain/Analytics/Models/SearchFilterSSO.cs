@@ -2,7 +2,7 @@ using Yoma.Core.Domain.Core.Models;
 
 namespace Yoma.Core.Domain.Analytics.Models
 {
-  public class OrganizationSearchFilterSSO : PaginationFilter
+  public class SearchFilterSSO : PaginationFilter
   {
     public List<Guid>? Organizations { get; set; }
 

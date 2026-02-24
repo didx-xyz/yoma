@@ -10,12 +10,12 @@ namespace Yoma.Core.Domain.Analytics.Interfaces
 
     PlatformMetricsAdmin GetPlatformMetricsAdmin();
 
-    OrganizationSearchResultsEngagement SearchOrganizationEngagement(OrganizationSearchFilterEngagement filter);
+    SearchResultsEngagement SearchEngagement(SearchFilterEngagement filter);
 
-    OrganizationSearchResultsOpportunity SearchOrganizationOpportunities(OrganizationSearchFilterOpportunity filter);
+    SearchResultsOpportunity SearchOpportunities(SearchFilterOpportunity filter);
 
-    OrganizationSearchResultsYouth SearchOrganizationYouth(OrganizationSearchFilterYouth filter);
+    SearchResultsYouth SearchYouth(SearchFilterYouth filter);
 
-    OrganizationSearchResultsSSO SearchOrganizationSSO(OrganizationSearchFilterSSO filter);
+    SearchResultsSSO SearchSSO(SearchFilterSSO filter);
   }
 }

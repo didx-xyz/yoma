@@ -27,6 +27,7 @@ namespace Yoma.Core.Domain.Analytics.Services
   public class AnalyticsService : IAnalyticsService
   {
     #region Class Variables
+    private readonly IEnvironmentProvider _environmentProvider;
     private readonly AppSettings _appSettings;
     private readonly IMemoryCache _memoryCache;
     private readonly IHttpContextAccessor _httpContextAccessor;
@@ -60,10 +61,16 @@ namespace Yoma.Core.Domain.Analytics.Services
     private const string Country_Group_Default = "Unspecified";
     private const string AgeBracket_Group_Default = "Unspecified";
     private static readonly DateTime Navigated_ExternalLink_Introduction_Date = new(2024, 6, 14);
+
+    public const int RoundingFactor_PlatformMetrics_UserCount = 100_000;
+    internal const int RoundingFactor_PlatformMetrics_OrganizationCount = 10;
+    internal const int RoundingFactor_PlatformMetrics_OpportunityCount = 10;
+    public const int RoundingFactor_PlatformMetrics_CredentialCount = 1_000;
     #endregion
 
     #region Constructor
     public AnalyticsService(
+        IEnvironmentProvider environmentProvider,
         IOptions<AppSettings> appSettings,
         IMemoryCache memoryCache,
         IHttpContextAccessor httpContextAccessor,
@@ -91,6 +98,7 @@ namespace Yoma.Core.Domain.Analytics.Services
         IRepositoryBatchedValueContainsWithNavigation<Organization> organizationRepository,
         IRepository<SSICredentialIssuance> ssiCredentialIssuanceRepository)
     {
+      _environmentProvider = environmentProvider ?? throw new ArgumentNullException(nameof(environmentProvider));
       _appSettings = appSettings?.Value ?? throw new ArgumentNullException(nameof(appSettings));
       _memoryCache = memoryCache ?? throw new ArgumentNullException(nameof(memoryCache));
       _httpContextAccessor = httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
@@ -163,7 +171,7 @@ namespace Yoma.Core.Domain.Analytics.Services
       return result;
     }
 
-    public OrganizationSearchResultsEngagement SearchOrganizationEngagement(OrganizationSearchFilterEngagement filter) //ensureOrganizationAuthorization by default
+    public SearchResultsEngagement SearchEngagement(SearchFilterEngagement filter) //ensureOrganizationAuthorization by default
     {
       ArgumentNullException.ThrowIfNull(filter, nameof(filter));
 
@@ -176,15 +184,15 @@ namespace Yoma.Core.Domain.Analytics.Services
       if (!_appSettings.CacheEnabledByCacheItemTypesAsEnum.HasFlag(CacheItemType.Analytics))
         return SearchOrganizationEngagementInternal(filter);
 
-      var result = _memoryCache.GetOrCreate(CacheHelper.GenerateKey<OrganizationSearchResultsEngagement>(HashHelper.ComputeSHA256Hash(filter)), entry =>
+      var result = _memoryCache.GetOrCreate(CacheHelper.GenerateKey<SearchResultsEngagement>(HashHelper.ComputeSHA256Hash(filter)), entry =>
       {
         entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(_appSettings.CacheAbsoluteExpirationRelativeToNowInHoursAnalytics);
         return SearchOrganizationEngagementInternal(filter);
-      }) ?? throw new InvalidOperationException($"Failed to retrieve cached '{nameof(OrganizationSearchResultsEngagement)}'");
+      }) ?? throw new InvalidOperationException($"Failed to retrieve cached '{nameof(SearchResultsEngagement)}'");
       return result;
     }
 
-    public OrganizationSearchResultsOpportunity SearchOrganizationOpportunities(OrganizationSearchFilterOpportunity filter) //ensureOrganizationAuthorization by default
+    public SearchResultsOpportunity SearchOpportunities(SearchFilterOpportunity filter) //ensureOrganizationAuthorization by default
     {
       ArgumentNullException.ThrowIfNull(filter, nameof(filter));
 
@@ -197,15 +205,15 @@ namespace Yoma.Core.Domain.Analytics.Services
       if (!_appSettings.CacheEnabledByCacheItemTypesAsEnum.HasFlag(CacheItemType.Analytics))
         return SearchOrganizationOpportunitiesInternal(filter);
 
-      var result = _memoryCache.GetOrCreate(CacheHelper.GenerateKey<OrganizationSearchResultsOpportunity>(HashHelper.ComputeSHA256Hash(filter)), entry =>
+      var result = _memoryCache.GetOrCreate(CacheHelper.GenerateKey<SearchResultsOpportunity>(HashHelper.ComputeSHA256Hash(filter)), entry =>
       {
         entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(_appSettings.CacheAbsoluteExpirationRelativeToNowInHoursAnalytics);
         return SearchOrganizationOpportunitiesInternal(filter);
-      }) ?? throw new InvalidOperationException($"Failed to retrieve cached '{nameof(OrganizationSearchResultsOpportunity)}'");
+      }) ?? throw new InvalidOperationException($"Failed to retrieve cached '{nameof(SearchResultsOpportunity)}'");
       return result;
     }
 
-    public OrganizationSearchResultsYouth SearchOrganizationYouth(OrganizationSearchFilterYouth filter) //ensureOrganizationAuthorization by default
+    public SearchResultsYouth SearchYouth(SearchFilterYouth filter) //ensureOrganizationAuthorization by default
     {
       ArgumentNullException.ThrowIfNull(filter, nameof(filter));
 
@@ -218,15 +226,15 @@ namespace Yoma.Core.Domain.Analytics.Services
       if (!_appSettings.CacheEnabledByCacheItemTypesAsEnum.HasFlag(CacheItemType.Analytics))
         return SearchOrganizationYouthInternal(filter);
 
-      var result = _memoryCache.GetOrCreate(CacheHelper.GenerateKey<OrganizationSearchResultsYouth>(HashHelper.ComputeSHA256Hash(filter)), entry =>
+      var result = _memoryCache.GetOrCreate(CacheHelper.GenerateKey<SearchResultsYouth>(HashHelper.ComputeSHA256Hash(filter)), entry =>
       {
         entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(_appSettings.CacheAbsoluteExpirationRelativeToNowInHoursAnalytics);
         return SearchOrganizationYouthInternal(filter);
-      }) ?? throw new InvalidOperationException($"Failed to retrieve cached '{nameof(OrganizationSearchResultsYouth)}'");
+      }) ?? throw new InvalidOperationException($"Failed to retrieve cached '{nameof(SearchResultsYouth)}'");
       return result;
     }
 
-    public OrganizationSearchResultsSSO SearchOrganizationSSO(OrganizationSearchFilterSSO filter) //ensureOrganizationAuthorization by default
+    public SearchResultsSSO SearchSSO(SearchFilterSSO filter) //ensureOrganizationAuthorization by default
     {
       ArgumentNullException.ThrowIfNull(filter, nameof(filter));
 
@@ -239,11 +247,11 @@ namespace Yoma.Core.Domain.Analytics.Services
       if (!_appSettings.CacheEnabledByCacheItemTypesAsEnum.HasFlag(CacheItemType.Analytics))
         return SearchOrganizationSSOInternal(filter);
 
-      var result = _memoryCache.GetOrCreate(CacheHelper.GenerateKey<OrganizationSearchResultsSSO>(HashHelper.ComputeSHA256Hash(filter)), entry =>
+      var result = _memoryCache.GetOrCreate(CacheHelper.GenerateKey<SearchResultsSSO>(HashHelper.ComputeSHA256Hash(filter)), entry =>
       {
         entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(_appSettings.CacheAbsoluteExpirationRelativeToNowInHoursAnalytics);
         return SearchOrganizationSSOInternal(filter);
-      }) ?? throw new InvalidOperationException($"Failed to retrieve cached '{nameof(OrganizationSearchResultsSSO)}'");
+      }) ?? throw new InvalidOperationException($"Failed to retrieve cached '{nameof(SearchResultsSSO)}'");
       return result;
     }
     #endregion
@@ -253,11 +261,20 @@ namespace Yoma.Core.Domain.Analytics.Services
     {
       return new PlatformMetrics
       {
-        UserCount = RoundingHelper.RoundDown(metricsAdmin.UserCount, 100000),
-        OrganizationCount = RoundingHelper.RoundDown(metricsAdmin.OrganizationCountActive, 10),
+        // Public semantics (active/published)
+        UserCount = ApplyRounding(metricsAdmin.UserCount, RoundingFactor_PlatformMetrics_UserCount),
+        OrganizationCount = ApplyRounding(metricsAdmin.OrganizationCountActive, RoundingFactor_PlatformMetrics_OrganizationCount),
         CountryCount = metricsAdmin.OrganizationCountryCountActive,
-        OpportunityCount = RoundingHelper.RoundDown(metricsAdmin.OpportunityCountPublished, 10),
-        CredentialSummary = [.. metricsAdmin.CredentialSummary.Select(c => new CredentialMetrics { Type = c.Type, Count = RoundingHelper.RoundDown(c.Count, 100000) })]
+        OpportunityCount = ApplyRounding(metricsAdmin.OpportunityCountPublished, RoundingFactor_PlatformMetrics_OpportunityCount),
+        CredentialSummary = [.. metricsAdmin.CredentialSummary.Select(c => new CredentialMetrics { Type = c.Type, Count = ApplyRounding(c.Count, RoundingFactor_PlatformMetrics_CredentialCount) })]
+      };
+    }
+    private int ApplyRounding(int value, int factor)
+    {
+      return _environmentProvider.Environment switch
+      {
+        Core.Environment.Local or Core.Environment.Development => value,
+        _ => RoundingHelper.RoundDown(value, factor),
       };
     }
 
@@ -290,26 +307,30 @@ namespace Yoma.Core.Domain.Analytics.Services
 
       var result = new PlatformMetricsAdmin
       {
+        // Base counts (raw)
         UserCount = userCount,
-        UserCountActive = userCountActive,
         OrganizationCount = orgCount,
-        OrganizationCountActive = orgCountActive,
-        OrganizationCountryCount = orgCountryCount,
-        OrganizationCountryCountActive = orgCountryCountActive,
+        CountryCount = orgCountryCount,
         OpportunityCount = oppCount,
+
+        // Admin-only counts
+        UserCountActive = userCountActive,
+        OrganizationCountActive = orgCountActive,
+        OrganizationCountryCountActive = orgCountryCountActive,
         OpportunityCountPublished = oppCountPublished,
+
         CredentialSummary = []
       };
 
       // Credentials
       var credStatusIds = new[] { CredentialIssuanceStatus.Issued, CredentialIssuanceStatus.Pending }.Select(s => _ssiCredentialIssuanceStatusService.GetByName(s.ToString()).Id).ToArray();
 
-      foreach (var type in Enum.GetValues<SSI.SchemaType>())
+      foreach (var type in Enum.GetValues<SchemaType>())
       {
         var schemaTypeId = _ssiSchemaTypeService.GetByName(type.ToString()).Id;
         var count = _ssiCredentialIssuanceRepository.Query().Count(c => c.SchemaTypeId == schemaTypeId && credStatusIds.Contains(c.StatusId));
 
-        result.CredentialSummary.Add(new CredentialMetrics
+        result.CredentialSummary.Add(new CredentialMetricsAdmin
         {
           Type = type,
           Count = count
@@ -355,7 +376,7 @@ namespace Yoma.Core.Domain.Analytics.Services
                 .OrderBy(o => o.CodeAlpha2 != Country.Worldwide.ToDescription()).ThenBy(o => o.Name)]; //ensure Worldwide appears first
     }
 
-    private OrganizationSearchResultsEngagement SearchOrganizationEngagementInternal(OrganizationSearchFilterEngagement filter)
+    private SearchResultsEngagement SearchOrganizationEngagementInternal(SearchFilterEngagement filter)
     {
       var queryBase = MyOpportunityQueryBase(filter);
 
@@ -441,7 +462,7 @@ namespace Yoma.Core.Domain.Analytics.Services
           .ToList();
 
       //results
-      var result = new OrganizationSearchResultsEngagement { Opportunities = new OrganizationOpportunity() };
+      var result = new SearchResultsEngagement { Opportunities = new EngagementOpportunity() };
 
       //viewed tracking introduced on 2024-04-03 16:21:06.757 +0200
       //navigatedExternalLink tracking introduced on 2024-06-14 14:08:52.348 +0200
@@ -533,7 +554,7 @@ namespace Yoma.Core.Domain.Analytics.Services
 
       var resultsSkills = new List<TimeValueEntry>();
       itemSkills.ForEach(o => { resultsSkills.Add(new TimeValueEntry(o.WeekEnding, o.Count)); });
-      result.Skills = new OrganizationOpportunitySkill
+      result.Skills = new EngagementOpportunitySkill
       {
         TopCompleted = new OpportunitySkillTopCompleted
         {
@@ -553,7 +574,7 @@ namespace Yoma.Core.Domain.Analytics.Services
       //demographics
       var currentDate = DateTimeOffset.UtcNow;
 #pragma warning disable CA1862 // Use the 'StringComparison' method overloads to perform case-insensitive string comparisons
-      result.Demographics = new OrganizationDemographic
+      result.Demographics = new EngagementDemographic
       {
         //education
         Education = new Demographic
@@ -683,7 +704,7 @@ namespace Yoma.Core.Domain.Analytics.Services
       if (includeRestOfEcosystem)
         counts.Add(countsTotalPerOrganization.Where(kvp => !topOrganizations.Contains(kvp.Key)).Sum(kvp => kvp.Value));
 
-      result.Cumulative = new OrganizationCumulative
+      result.Cumulative = new EngagementCumulative
       {
         Completions = new TimeIntervalSummary
         {
@@ -697,13 +718,13 @@ namespace Yoma.Core.Domain.Analytics.Services
       return result;
     }
 
-    private OrganizationSearchResultsOpportunity SearchOrganizationOpportunitiesInternal(OrganizationSearchFilterOpportunity filter)
+    private SearchResultsOpportunity SearchOrganizationOpportunitiesInternal(SearchFilterOpportunity filter)
     {
       var query = SearchOrganizationOpportunitiesQueryBase(filter);
 
       query = query.OrderByDescending(o => o.ConversionRatioPercentage).ThenBy(o => o.Title).ThenBy(o => o.Id); //ensure deterministic sorting / consistent pagination results
 
-      var result = new OrganizationSearchResultsOpportunity();
+      var result = new SearchResultsOpportunity();
       //pagination
       if (filter.PaginationEnabled)
       {
@@ -718,7 +739,7 @@ namespace Yoma.Core.Domain.Analytics.Services
       return result;
     }
 
-    private OrganizationSearchResultsYouth SearchOrganizationYouthInternal(OrganizationSearchFilterYouth filter)
+    private SearchResultsYouth SearchOrganizationYouthInternal(SearchFilterYouth filter)
     {
       var query = MyOpportunityQueryCompleted(filter, MyOpportunityQueryBase(filter))
           .GroupBy(o => new { o.UserId, o.UserDisplayName, o.UserDateOfBirth, o.UserCountry })
@@ -745,7 +766,7 @@ namespace Yoma.Core.Domain.Analytics.Services
             })
           });
 
-      var result = new OrganizationSearchResultsYouth();
+      var result = new SearchResultsYouth();
 
       query = query.OrderByDescending(o => o.OpportunityCount)
         .ThenBy(o => o.UserDisplayName)
@@ -788,7 +809,7 @@ namespace Yoma.Core.Domain.Analytics.Services
       return result;
     }
 
-    private OrganizationSearchResultsSSO SearchOrganizationSSOInternal(OrganizationSearchFilterSSO filter)
+    private SearchResultsSSO SearchOrganizationSSOInternal(SearchFilterSSO filter)
     {
       var queryOrganization = _organizationRepository.Query();
 
@@ -797,7 +818,7 @@ namespace Yoma.Core.Domain.Analytics.Services
 
       queryOrganization = queryOrganization.OrderBy(o => o.Name).ThenBy(o => o.Id); //ensure deterministic sorting / consistent pagination results
 
-      var result = new OrganizationSearchResultsSSO();
+      var result = new SearchResultsSSO();
 
       if (filter.SSOEnabledOnly)
         queryOrganization = queryOrganization.Where(o => !string.IsNullOrEmpty(o.SSOClientIdOutbound) || !string.IsNullOrEmpty(o.SSOClientIdInbound));
@@ -812,19 +833,19 @@ namespace Yoma.Core.Domain.Analytics.Services
       var organizations = queryOrganization.ToList();
 
       result.Items = [.. organizations
-        .Select(o => new OrganizationSSOInfo
+        .Select(o => new SSOOrganizationInfo
         {
           Id = o.Id,
           Name = o.Name,
           LogoId = o.LogoId,
           LogoStorageType = o.LogoStorageType,
           LogoKey = o.LogoKey,
-          Outbound = new OrganizationSSO
+          Outbound = new SSOMetrics
           {
             Legend = "Outbound",
             ClientId = o.SSOClientIdOutbound
           },
-          Inbound = new OrganizationSSO
+          Inbound = new SSOMetrics
           {
             Legend = "Inbound",
             ClientId = o.SSOClientIdInbound
@@ -839,19 +860,19 @@ namespace Yoma.Core.Domain.Analytics.Services
         {
           foreach (var provider in Enum.GetValues<ExternalIdpProvider>())
           {
-            result.Items.Add(new OrganizationSSOInfo
+            result.Items.Add(new SSOOrganizationInfo
             {
               Id = organizationYoma.Id,
               Name = organizationYoma.Name,
               LogoId = organizationYoma.LogoId,
               LogoStorageType = organizationYoma.LogoStorageType,
               LogoKey = organizationYoma.LogoKey,
-              Outbound = new OrganizationSSO
+              Outbound = new SSOMetrics
               {
                 Legend = "Outbound",
                 ClientId = null
               },
-              Inbound = new OrganizationSSO
+              Inbound = new SSOMetrics
               {
                 Legend = "Inbound",
                 ClientId = provider.ToDescription()
@@ -967,7 +988,7 @@ namespace Yoma.Core.Domain.Analytics.Services
     }
 
 
-    private IQueryable<OpportunityInfoAnalytics> SearchOrganizationOpportunitiesQueryBase(OrganizationSearchFilterOpportunity filter)
+    private IQueryable<OpportunityInfoAnalytics> SearchOrganizationOpportunitiesQueryBase(SearchFilterOpportunity filter)
     {
       return OpportunityQueryBase(filter)
           .Select(opportunity => new
@@ -1042,7 +1063,7 @@ namespace Yoma.Core.Domain.Analytics.Services
       return query;
     }
 
-    private IQueryable<MyOpportunity.Models.MyOpportunity> MyOpportunityQueryViewed(OrganizationSearchFilterEngagement filter, IQueryable<MyOpportunity.Models.MyOpportunity> queryBase)
+    private IQueryable<MyOpportunity.Models.MyOpportunity> MyOpportunityQueryViewed(SearchFilterEngagement filter, IQueryable<MyOpportunity.Models.MyOpportunity> queryBase)
     {
       //historical/admin context; include all irrespective of related opportunity and organization status
       var actionId = _myOpportunityActionService.GetByName(MyOpportunity.Action.Viewed.ToString()).Id;
@@ -1065,7 +1086,7 @@ namespace Yoma.Core.Domain.Analytics.Services
       return query;
     }
 
-    private IQueryable<MyOpportunity.Models.MyOpportunity> MyOpportunityQueryNavigatedExternalLink(OrganizationSearchFilterEngagement filter, IQueryable<MyOpportunity.Models.MyOpportunity> queryBase)
+    private IQueryable<MyOpportunity.Models.MyOpportunity> MyOpportunityQueryNavigatedExternalLink(SearchFilterEngagement filter, IQueryable<MyOpportunity.Models.MyOpportunity> queryBase)
     {
       //historical/admin context; include all irrespective of related opportunity and organization status
       var actionId = _myOpportunityActionService.GetByName(MyOpportunity.Action.NavigatedExternalLink.ToString()).Id;
@@ -1114,7 +1135,7 @@ namespace Yoma.Core.Domain.Analytics.Services
       return query;
     }
 
-    private IQueryable<Opportunity.Models.Opportunity> OpportunityQueryBase(OrganizationSearchFilterOpportunity filter)
+    private IQueryable<Opportunity.Models.Opportunity> OpportunityQueryBase(SearchFilterOpportunity filter)
     {
       var query = _opportunityRepository.Query(true);
 

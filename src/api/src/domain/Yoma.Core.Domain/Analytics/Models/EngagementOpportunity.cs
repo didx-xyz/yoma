@@ -2,7 +2,7 @@ using Yoma.Core.Domain.Core.Models;
 
 namespace Yoma.Core.Domain.Analytics.Models
 {
-  public class OrganizationOpportunity
+  public class EngagementOpportunity
   {
     public TimeIntervalSummary Engagements { get; set; } = null!;
 

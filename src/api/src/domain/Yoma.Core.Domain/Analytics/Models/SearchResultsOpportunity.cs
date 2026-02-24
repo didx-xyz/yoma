@@ -1,8 +1,8 @@
 namespace Yoma.Core.Domain.Analytics.Models
 {
-  public class OrganizationSearchResultsYouth
+  public class SearchResultsOpportunity
   {
-    public List<YouthInfo> Items { get; set; } = null!;
+    public List<OpportunityInfoAnalytics> Items { get; set; } = null!;
 
     public int TotalCount { get; set; }
 

@@ -1,6 +1,6 @@
 namespace Yoma.Core.Domain.Analytics.Models
 {
-  public class OrganizationDemographic
+  public class EngagementDemographic
   {
     public Demographic Education { get; set; } = null!;
 
