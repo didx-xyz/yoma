@@ -572,7 +572,11 @@ namespace Yoma.Core.Domain.Opportunity.Services
         InternalUse = true
       };
 
-      return _organizationService.Search(filter, false).Items;
+      var result = _organizationService.Search(filter, false);
+
+      if (result.Items == null) throw new InvalidOperationException("Search results expected but null");
+
+      return result.Items;
     }
 
     public List<OrganizationInfo> ListOpportunitySearchCriteriaOrganizations(List<PublishedState>? publishedStates)
@@ -617,7 +621,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
         InternalUse = true
       };
 
-      var organizations = _organizationService.Search(filter, false).Items;
+      var organizations = _organizationService.Search(filter, false).Items
+        ?? throw new InvalidOperationException("Search results expected but null");
 
       var results = organizations
         .OrderByDescending(o => organizationOpportunities.FirstOrDefault(oo => oo.OrganizationId == o.Id)?.OpportunityCount ?? 0)

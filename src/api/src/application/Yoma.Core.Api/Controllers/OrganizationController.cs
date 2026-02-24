@@ -4,7 +4,6 @@ using Swashbuckle.AspNetCore.Annotations;
 using System.ComponentModel.DataAnnotations;
 using System.Net;
 using Yoma.Core.Domain.Analytics.Interfaces;
-using Yoma.Core.Domain.Analytics.Models;
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Entity;
 using Yoma.Core.Domain.Entity.Interfaces;
@@ -23,25 +22,21 @@ namespace Yoma.Core.Api.Controllers
     private readonly ILogger<OrganizationController> _logger;
     private readonly IOrganizationService _organizationService;
     private readonly IOrganizationProviderTypeService _providerTypeService;
-    private readonly IAnalyticsService _analyticsService;
     #endregion
 
     #region Constructor
     public OrganizationController(
         ILogger<OrganizationController> logger,
         IOrganizationService organizationService,
-        IOrganizationProviderTypeService providerTypeService,
-        IAnalyticsService analyticsService)
+        IOrganizationProviderTypeService providerTypeService)
     {
       _logger = logger;
       _organizationService = organizationService;
       _providerTypeService = providerTypeService;
-      _analyticsService = analyticsService;
     }
     #endregion
 
     #region Public Members
-
     #region Authenticated User Based Actions
     [SwaggerOperation(Summary = "Create a new organization (Authenticated User)")]
     [HttpPost()]
@@ -298,84 +293,6 @@ namespace Yoma.Core.Api.Controllers
       var result = _organizationService.ListAdminsOf(true);
 
       if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(ListAdminsOf));
-
-      return StatusCode((int)HttpStatusCode.OK, result);
-    }
-
-    [SwaggerOperation(Summary = "Return a list of countries associated with users that engaged with opportunities (viewed and / or completed) for the specified organization(s)")]
-    [HttpGet("search/analytics/country")]
-    [ProducesResponseType(typeof(List<Domain.Lookups.Models.Country>), (int)HttpStatusCode.OK)]
-    [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
-    public IActionResult ListSearchCriteriaCountriesEngaged([FromQuery, SwaggerParameter("Optional for Admin role. Required for Organization Admin role", Required = false)] List<Guid>? organizations)
-    {
-      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(ListSearchCriteriaCountriesEngaged));
-
-      var result = _analyticsService.ListSearchCriteriaCountriesEngaged(organizations);
-
-      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(ListSearchCriteriaCountriesEngaged));
-
-      return StatusCode((int)HttpStatusCode.OK, result);
-    }
-
-    [SwaggerOperation(Summary = "Search for engagement analytics based on the supplied filter",
-      Description = "Organizations: optional for Admin role. Required for Organization Admin role")]
-    [HttpPost("search/analytics/engagement")]
-    [ProducesResponseType(typeof(OrganizationSearchResultsEngagement), (int)HttpStatusCode.OK)]
-    [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
-    public IActionResult SearchOrganizationEngagement([FromBody] OrganizationSearchFilterEngagement filter)
-    {
-      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(SearchOrganizationEngagement));
-
-      var result = _analyticsService.SearchOrganizationEngagement(filter);
-
-      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(SearchOrganizationEngagement));
-
-      return StatusCode((int)HttpStatusCode.OK, result);
-    }
-
-    [SwaggerOperation(Summary = "Search for opportunity analytics based on the supplied filter",
-      Description = "Organizations: optional for Admin role. Required for Organization Admin role")]
-    [HttpPost("search/analytics/opportunities")]
-    [ProducesResponseType(typeof(OrganizationSearchResultsOpportunity), (int)HttpStatusCode.OK)]
-    [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
-    public IActionResult SearchOrganizationOpportunities([FromBody] OrganizationSearchFilterOpportunity filter)
-    {
-      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(SearchOrganizationOpportunities));
-
-      var result = _analyticsService.SearchOrganizationOpportunities(filter);
-
-      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(SearchOrganizationOpportunities));
-
-      return StatusCode((int)HttpStatusCode.OK, result);
-    }
-
-    [SwaggerOperation(Summary = "Search for youth analytics based on the supplied filter",
-      Description = "Organizations: optional for Admin role. Required for Organization Admin role")]
-    [HttpPost("search/analytics/youth")]
-    [ProducesResponseType(typeof(OrganizationSearchResultsYouth), (int)HttpStatusCode.OK)]
-    [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
-    public IActionResult SearchOrganizationYouth([FromBody] OrganizationSearchFilterYouth filter)
-    {
-      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(SearchOrganizationYouth));
-
-      var result = _analyticsService.SearchOrganizationYouth(filter);
-
-      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(SearchOrganizationYouth));
-
-      return StatusCode((int)HttpStatusCode.OK, result);
-    }
-
-    [SwaggerOperation(Summary = "Search for SSO analytics based on the supplied filter")]
-    [HttpPost("search/analytics/sso")]
-    [ProducesResponseType(typeof(OrganizationSearchResultsSSO), (int)HttpStatusCode.OK)]
-    [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
-    public IActionResult SearchOrganizationSSO([FromBody] OrganizationSearchFilterSSO filter)
-    {
-      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(SearchOrganizationSSO));
-
-      var result = _analyticsService.SearchOrganizationSSO(filter);
-
-      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(SearchOrganizationSSO));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }

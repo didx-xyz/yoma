@@ -284,7 +284,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
                 PageNumber = pageNumber,
                 PageSize = pageSize
               });
-          if (searchResult.Items.Count == 0) break;
+
+          if (searchResult.Items == null || searchResult.Items.Count == 0) break;
 
           var users = searchResult.Items
               .Where(o => !processedUserIds.Contains(o.Id))

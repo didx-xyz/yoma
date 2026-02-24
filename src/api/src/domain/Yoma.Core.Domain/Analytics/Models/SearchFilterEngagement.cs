@@ -2,7 +2,7 @@ using Yoma.Core.Domain.Analytics.Interfaces;
 
 namespace Yoma.Core.Domain.Analytics.Models
 {
-  public class OrganizationSearchFilterEngagement : IOrganizationSearchFilterEngagement
+  public class SearchFilterEngagement : IOrganizationSearchFilterEngagement
   {
     public List<Guid>? Organizations { get; set; }
 

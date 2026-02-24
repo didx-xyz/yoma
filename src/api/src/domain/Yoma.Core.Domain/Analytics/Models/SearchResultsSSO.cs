@@ -1,8 +1,8 @@
 namespace Yoma.Core.Domain.Analytics.Models
 {
-  public class OrganizationSearchResultsSSO
+  public class SearchResultsSSO
   {
-    public List<OrganizationSSOInfo> Items { get; set; } = null!;
+    public List<SSOOrganizationInfo> Items { get; set; } = null!;
 
     public int? OutboundLoginCount { get; set; }
 

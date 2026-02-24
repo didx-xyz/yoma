@@ -149,7 +149,7 @@ namespace Yoma.Core.Domain.Referral.Services
       var results = new ProgramSearchResultsInfo
       {
         TotalCount = searchResults.TotalCount,
-        Items = [.. searchResults.Items.Select(item => item.ToInfo())]
+        Items = searchResults.Items == null ? null : [.. searchResults.Items.Select(item => item.ToInfo())]
       };
 
       return results;

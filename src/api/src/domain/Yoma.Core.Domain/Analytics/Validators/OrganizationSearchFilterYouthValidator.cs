@@ -4,7 +4,7 @@ using Yoma.Core.Domain.Entity.Interfaces;
 
 namespace Yoma.Core.Domain.Analytics.Validators
 {
-  public class OrganizationSearchFilterYouthValidator : OrganizationSearchFilterValidatorBase<OrganizationSearchFilterYouth>
+  public class OrganizationSearchFilterYouthValidator : OrganizationSearchFilterValidatorBase<SearchFilterYouth>
   {
     #region Constructor
     public OrganizationSearchFilterYouthValidator(IOrganizationService organizationService) : base(organizationService)

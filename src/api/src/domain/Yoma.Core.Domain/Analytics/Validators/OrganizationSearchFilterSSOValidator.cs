@@ -4,7 +4,7 @@ using Yoma.Core.Domain.Entity.Interfaces;
 
 namespace Yoma.Core.Domain.Analytics.Validators
 {
-  public class OrganizationSearchFilterSSOValidator : AbstractValidator<OrganizationSearchFilterSSO>
+  public class OrganizationSearchFilterSSOValidator : AbstractValidator<SearchFilterSSO>
   {
     #region Class Variables
     private readonly IOrganizationService _organizationService;

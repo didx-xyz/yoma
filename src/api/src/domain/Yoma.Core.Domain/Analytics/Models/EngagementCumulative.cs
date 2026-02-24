@@ -2,7 +2,7 @@ using Yoma.Core.Domain.Core.Models;
 
 namespace Yoma.Core.Domain.Analytics.Models
 {
-  public class OrganizationCumulative
+  public class EngagementCumulative
   {
     public TimeIntervalSummary Completions { get; set; } = null!;
   }

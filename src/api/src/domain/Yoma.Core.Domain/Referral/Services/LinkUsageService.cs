@@ -155,7 +155,7 @@ namespace Yoma.Core.Domain.Referral.Services
         PageSize = filter.PageSize
       });
 
-      results.Items.ForEach(o => RedactInfo(o, ReferralParticipationRole.Referee));
+      results.Items?.ForEach(o => RedactInfo(o, ReferralParticipationRole.Referee));
 
       return results;
     }
@@ -178,7 +178,7 @@ namespace Yoma.Core.Domain.Referral.Services
         PageSize = filter.PageSize
       });
 
-      results.Items.ForEach(o => RedactInfo(o, ReferralParticipationRole.Referrer));
+      results.Items?.ForEach(o => RedactInfo(o, ReferralParticipationRole.Referrer));
       return results;
     }
 

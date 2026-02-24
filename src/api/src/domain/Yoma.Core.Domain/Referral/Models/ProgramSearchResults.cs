@@ -7,11 +7,11 @@ namespace Yoma.Core.Domain.Referral.Models
 
   public class ProgramSearchResults : ProgramSearchResultsBase
   {
-    public List<Program> Items { get; set; } = null!;
+    public List<Program>? Items { get; set; }
   }
 
   public class ProgramSearchResultsInfo : ProgramSearchResultsBase
   {
-    public List<ProgramInfo> Items { get; set; } = null!;
+    public List<ProgramInfo>? Items { get; set; }
   }
 }

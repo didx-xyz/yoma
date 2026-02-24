@@ -2,7 +2,7 @@ using Yoma.Core.Domain.Core.Models;
 
 namespace Yoma.Core.Domain.Analytics.Models
 {
-  public class OrganizationSSO
+  public class SSOMetrics
   {
     public string Legend { get; set; } = null!;
 
