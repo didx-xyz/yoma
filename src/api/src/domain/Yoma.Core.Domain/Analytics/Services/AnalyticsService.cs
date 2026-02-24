@@ -27,7 +27,6 @@ namespace Yoma.Core.Domain.Analytics.Services
   public class AnalyticsService : IAnalyticsService
   {
     #region Class Variables
-    private readonly IEnvironmentProvider _environmentProvider;
     private readonly AppSettings _appSettings;
     private readonly IMemoryCache _memoryCache;
     private readonly IHttpContextAccessor _httpContextAccessor;
@@ -70,7 +69,6 @@ namespace Yoma.Core.Domain.Analytics.Services
 
     #region Constructor
     public AnalyticsService(
-        IEnvironmentProvider environmentProvider,
         IOptions<AppSettings> appSettings,
         IMemoryCache memoryCache,
         IHttpContextAccessor httpContextAccessor,
@@ -98,7 +96,6 @@ namespace Yoma.Core.Domain.Analytics.Services
         IRepositoryBatchedValueContainsWithNavigation<Organization> organizationRepository,
         IRepository<SSICredentialIssuance> ssiCredentialIssuanceRepository)
     {
-      _environmentProvider = environmentProvider ?? throw new ArgumentNullException(nameof(environmentProvider));
       _appSettings = appSettings?.Value ?? throw new ArgumentNullException(nameof(appSettings));
       _memoryCache = memoryCache ?? throw new ArgumentNullException(nameof(memoryCache));
       _httpContextAccessor = httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
@@ -269,13 +266,12 @@ namespace Yoma.Core.Domain.Analytics.Services
         CredentialSummary = [.. metricsAdmin.CredentialSummary.Select(c => new CredentialMetrics { Type = c.Type, Count = ApplyRounding(c.Count, RoundingFactor_PlatformMetrics_CredentialCount) })]
       };
     }
-    private int ApplyRounding(int value, int factor)
+
+    private static int ApplyRounding(int value, int factor)
     {
-      return _environmentProvider.Environment switch
-      {
-        Core.Environment.Local or Core.Environment.Development => value,
-        _ => RoundingHelper.RoundDown(value, factor),
-      };
+      // Only round DOWN when value >= factor; preserve meaningful small counts
+      if (value <= 0) return 0;
+      return value < factor ? value : RoundingHelper.RoundDown(value, factor);
     }
 
     private PlatformMetricsAdmin GetPlatformMetricsAdminInternal()
