@@ -19,11 +19,13 @@ import imageStencilPurple from "public/images/home/stencil-purple.png";
 import imageStamp1 from "public/images/stamp-1.png";
 import imageStamp2 from "public/images/stamp-2.png";
 import { type ReactElement, useCallback } from "react";
+import type { PlatformMetrics } from "~/api/models/analytics";
 import {
   FeedType,
   NewsArticleSearchResults,
   NewsFeed,
 } from "~/api/models/newsfeed";
+import { getPlatformMetrics } from "~/api/services/analytics";
 import { listNewsFeeds, searchNewsArticles } from "~/api/services/newsfeed";
 import { ScrollableContainer } from "~/components/Carousel";
 import { HomeSearchInputLarge } from "~/components/Home/HomeSearchInputLarge";
@@ -45,6 +47,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
       props: {
         lookups_NewsArticles: null,
         lookup_NewsFeed: null,
+        platformMetrics: null,
       },
 
       // Next.js will attempt to re-generate the page:
@@ -70,10 +73,13 @@ export const getStaticProps: GetStaticProps = async (context) => {
     (feed) => feed.type === "Stories",
   );
 
+  const platformMetrics = await getPlatformMetrics(context);
+
   return {
     props: {
       lookups_NewsArticles,
       lookup_NewsFeed,
+      platformMetrics,
     },
 
     // Next.js will attempt to re-generate the page:
@@ -86,7 +92,8 @@ export const getStaticProps: GetStaticProps = async (context) => {
 const Home: NextPageWithLayout<{
   lookups_NewsArticles: NewsArticleSearchResults;
   lookup_NewsFeed: NewsFeed;
-}> = ({ lookups_NewsArticles, lookup_NewsFeed }) => {
+  platformMetrics: PlatformMetrics | null;
+}> = ({ lookups_NewsArticles, lookup_NewsFeed, platformMetrics }) => {
   const router = useRouter();
 
   // Fallback client-side data fetching for news articles
@@ -117,6 +124,13 @@ const Home: NextPageWithLayout<{
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
+  const { data: clientPlatformMetrics } = useQuery({
+    queryKey: ["platformMetrics", "home"],
+    queryFn: async () => await getPlatformMetrics(),
+    enabled: !platformMetrics,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+
   // Use SSG data if available, otherwise fallback to client-side data
   const newsArticles =
     lookups_NewsArticles?.items && lookups_NewsArticles.items.length > 0
@@ -124,6 +138,9 @@ const Home: NextPageWithLayout<{
       : clientNewsArticles;
 
   const newsFeed = lookup_NewsFeed ?? clientNewsFeed;
+  const metrics = platformMetrics ?? clientPlatformMetrics;
+  const credentialCountDisplay =
+    metrics?.credentialSummary?.[0]?.countDisplay ?? "0";
 
   const onSearchInputSubmit = useCallback(
     (query: string) => {
@@ -416,7 +433,7 @@ const Home: NextPageWithLayout<{
 
                   <p className="text-center font-sans md:text-sm">Active in</p>
                   <h1 className="font-nunito -mt-5 text-center text-base font-semibold tracking-normal">
-                    12 countries
+                    {metrics?.countryCountDisplay ?? "0"} countries
                   </h1>
                 </div>
 
@@ -431,7 +448,8 @@ const Home: NextPageWithLayout<{
                   />
 
                   <h1 className="font-nunito text-center text-base font-semibold tracking-normal">
-                    More than 400 opportunities offered,
+                    More than {metrics?.opportunityCountDisplay ?? "0"}{" "}
+                    opportunities offered,
                   </h1>
                   <p className="-mt-4 text-center font-sans md:text-sm">
                     including learning courses, impact challenges.
@@ -449,10 +467,10 @@ const Home: NextPageWithLayout<{
                   />
 
                   <h1 className="font-nunito text-center text-base font-semibold tracking-normal">
-                    More than 255K YoIDs created
+                    More than {credentialCountDisplay} credentials verified
                   </h1>
                   <p className="-mt-4 text-center font-sans md:text-sm">
-                    and 165k credentials verified.
+                    across trusted providers.
                   </p>
                 </div>
 
@@ -467,7 +485,7 @@ const Home: NextPageWithLayout<{
                   />
 
                   <h1 className="font-nunito text-center text-base font-semibold tracking-normal">
-                    70 global
+                    {metrics?.organizationCountDisplay ?? "0"} global
                   </h1>
                   <p className="-mt-4 text-center font-sans md:text-sm">
                     <strong>and local</strong> partners.
