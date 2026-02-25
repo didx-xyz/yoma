@@ -52,7 +52,7 @@ import {
   searchOrganizationOpportunities,
   searchOrganizationSso,
   searchOrganizationYouth,
-} from "~/api/services/organizationDashboard";
+} from "~/api/services/analytics";
 import { AvatarImage } from "~/components/AvatarImage";
 import CustomCarousel from "~/components/Carousel/CustomCarousel";
 import CustomSlider from "~/components/Carousel/CustomSlider";
