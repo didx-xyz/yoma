@@ -1,6 +1,0 @@
-dependencies:
-- name: common
-  repository: oci://ghcr.io/didx-xyz/bitnami-oss-charts
-  version: 2.31.4
-digest: sha256:8a396c4ad43162b0b71c9b42dc9b33801244b245106fe59914286fb9f4db634c
-generated: "2025-08-26T11:08:43.354448+02:00"

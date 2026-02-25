@@ -1,9 +1,0 @@
-# https://github.com/coding-yogi/bombardier/blob/develop/docs/configuration.md
-version: 1.0
-threadCount: 2
-# iterations: 5000
-threadDelay: 1
-executionTime: 30
-rampUpTime: 1
-continueOnError: true
-handleCookies: false

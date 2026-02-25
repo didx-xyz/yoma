@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Yoma | Down for Maintenance</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --color-white: #ffffff;
+        --color-white-shade: #f7f7f7;
+        --color-black: #020304;
+        --color-purple: #41204b;
+        --color-purple-soft: #c3a2cd;
+        --color-purple-tint: #e7d4ed;
+        --color-purple-shade: #54365d;
+        --color-gray-dark: #545859;
+        --color-gray-light: #f3f6fa;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Open Sans", Arial, sans-serif;
+        background: var(--color-gray-light);
+        color: var(--color-black);
+      }
+
+      .hero {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 220px;
+        background: linear-gradient(180deg, var(--color-purple) 0%, var(--color-purple-shade) 100%);
+      }
+
+      .container {
+        position: relative;
+        min-height: 100vh;
+        padding: 88px 16px 40px;
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+      }
+
+      .card {
+        position: relative;
+        z-index: 1;
+        max-width: 680px;
+        width: 100%;
+        background: var(--color-white);
+        border-radius: 16px;
+        padding: 32px 24px;
+        text-align: center;
+        box-shadow: 0 12px 36px rgba(0, 0, 0, 0.08);
+        border: 1px solid var(--color-purple-tint);
+      }
+
+      .icon {
+        width: 72px;
+        height: 72px;
+        margin: 0 auto 20px;
+        border-radius: 9999px;
+        display: grid;
+        place-items: center;
+        background: var(--color-white);
+        font-size: 36px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.14);
+      }
+
+      h1 {
+        margin: 0 0 16px;
+        font-size: 32px;
+        line-height: 1.15;
+      }
+
+      p {
+        margin: 0;
+        font-size: 18px;
+        line-height: 1.6;
+      }
+
+      p + p {
+        margin-top: 12px;
+      }
+
+      .meta {
+        margin-top: 28px;
+        display: inline-block;
+      }
+
+      .meta img {
+        display: block;
+        width: 104px;
+        height: auto;
+      }
+
+      @media (max-width: 640px) {
+        .container {
+          padding-top: 64px;
+        }
+
+        .card {
+          padding: 28px 18px;
+        }
+
+        h1 {
+          font-size: 26px;
+        }
+
+        p {
+          font-size: 16px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="hero" aria-hidden="true"></div>
+    <main class="container">
+      <section class="card" aria-labelledby="maintenance-title">
+        <div class="icon" aria-hidden="true">🛠️</div>
+        <h1 id="maintenance-title">Down for maintenance</h1>
+        <p>Yoma is currently undergoing scheduled maintenance.</p>
+        <p>We&apos;ll be back online shortly. Thank you for your patience.</p>
+        <p class="meta">
+          <img src="./yoma.webp" alt="Yoma" width="104" height="36" />
+        </p>
+      </section>
+    </main>
+  </body>
+</html>
