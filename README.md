@@ -1,6 +1,6 @@
 # Maintenance page (GitHub Pages)
 
-This folder contains a static maintenance page for emergency traffic switching.
+This branch contains a static maintenance page for emergency traffic switching.
 
 ## Files
 
@@ -20,4 +20,4 @@ cd /home/admin/work/didx/yoma
 python3 -m http.server 8080
 ```
 
-Open: `http://localhost:8080/docs/maintenance/`
+Open: `http://localhost:8080/`
