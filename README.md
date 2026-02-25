@@ -16,7 +16,7 @@ This branch contains a static maintenance page for emergency traffic switching.
 ## Local testing
 
 ```bash
-cd /home/admin/work/didx/yoma
+# run from the repository root
 python3 -m http.server 8080
 ```
 
