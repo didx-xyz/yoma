@@ -18,6 +18,7 @@ using Yoma.Core.Domain.Entity.Models;
 using Yoma.Core.Domain.Lookups.Interfaces;
 using Yoma.Core.Domain.MyOpportunity.Interfaces;
 using Yoma.Core.Domain.Opportunity.Interfaces.Lookups;
+using Yoma.Core.Domain.Opportunity.Models;
 using Yoma.Core.Domain.SSI;
 using Yoma.Core.Domain.SSI.Interfaces.Lookups;
 using Yoma.Core.Domain.SSI.Models;
@@ -49,10 +50,11 @@ namespace Yoma.Core.Domain.Analytics.Services
 
     private readonly IRepositoryBatchedValueContainsWithNavigation<Opportunity.Models.Opportunity> _opportunityRepository;
     private readonly IRepositoryBatchedWithNavigation<MyOpportunity.Models.MyOpportunity> _myOpportunityRepository;
-    private readonly IRepository<Opportunity.Models.OpportunityCategory> _opportunityCategoryRepository;
+    private readonly IRepository<OpportunityCategory> _opportunityCategoryRepository;
     private readonly IRepository<UserLoginHistory> _userLoginHistoryRepository;
     private readonly IRepositoryBatchedValueContainsWithNavigation<Organization> _organizationRepository;
     private readonly IRepository<SSICredentialIssuance> _ssiCredentialIssuanceRepository;
+    private readonly IRepository<OpportunityCountry> _opportunityCountryRepository;
 
     private const int Skill_Count = 10;
     private const string Education_Group_Default = "Unspecified";
@@ -91,10 +93,11 @@ namespace Yoma.Core.Domain.Analytics.Services
 
         IRepositoryBatchedValueContainsWithNavigation<Opportunity.Models.Opportunity> opportunityRepository,
         IRepositoryBatchedWithNavigation<MyOpportunity.Models.MyOpportunity> myOpportunityRepository,
-        IRepository<Opportunity.Models.OpportunityCategory> opportunityCategoryRepository,
+        IRepository<OpportunityCategory> opportunityCategoryRepository,
         IRepository<UserLoginHistory> userLoginHistoryRepository,
         IRepositoryBatchedValueContainsWithNavigation<Organization> organizationRepository,
-        IRepository<SSICredentialIssuance> ssiCredentialIssuanceRepository)
+        IRepository<SSICredentialIssuance> ssiCredentialIssuanceRepository,
+        IRepository<OpportunityCountry> opportunityCountryRepository)
     {
       _appSettings = appSettings?.Value ?? throw new ArgumentNullException(nameof(appSettings));
       _memoryCache = memoryCache ?? throw new ArgumentNullException(nameof(memoryCache));
@@ -124,6 +127,7 @@ namespace Yoma.Core.Domain.Analytics.Services
       _userLoginHistoryRepository = userLoginHistoryRepository ?? throw new ArgumentNullException(nameof(userLoginHistoryRepository));
       _organizationRepository = organizationRepository ?? throw new ArgumentNullException(nameof(organizationRepository));
       _ssiCredentialIssuanceRepository = ssiCredentialIssuanceRepository ?? throw new ArgumentNullException(nameof(ssiCredentialIssuanceRepository));
+      _opportunityCountryRepository = opportunityCountryRepository ?? throw new ArgumentNullException(nameof(opportunityCountryRepository));
     }
     #endregion
 
@@ -261,7 +265,7 @@ namespace Yoma.Core.Domain.Analytics.Services
         // Public semantics (active/published)
         UserCount = ApplyRounding(metricsAdmin.UserCount, RoundingFactor_PlatformMetrics_UserCount),
         OrganizationCount = ApplyRounding(metricsAdmin.OrganizationCountActive, RoundingFactor_PlatformMetrics_OrganizationCount),
-        CountryCount = metricsAdmin.OrganizationCountryCountActive,
+        CountryCount = metricsAdmin.CountryCountWithPublishedOpportunities,
         OpportunityCount = ApplyRounding(metricsAdmin.OpportunityCountPublished, RoundingFactor_PlatformMetrics_OpportunityCount),
         CredentialSummary = [.. metricsAdmin.CredentialSummary.Select(c => new CredentialMetrics { Type = c.Type, Count = ApplyRounding(c.Count, RoundingFactor_PlatformMetrics_CredentialCount) })]
       };
@@ -276,6 +280,10 @@ namespace Yoma.Core.Domain.Analytics.Services
 
     private PlatformMetricsAdmin GetPlatformMetricsAdminInternal()
     {
+      var orgStatusDeclinedId = _organizationStatusService.GetByName(OrganizationStatus.Declined.ToString()).Id;
+      var orgStatusActiveId = _organizationStatusService.GetByName(OrganizationStatus.Active.ToString()).Id;
+      var oppStatusActiveId = _opportunityStatusService.GetByName(Opportunity.Status.Active.ToString()).Id;
+
       // Users
       var userFilter = new UserSearchFilter { TotalCountOnly = true };
       var userCount = _userService.Search(userFilter).TotalCount ?? 0;
@@ -284,35 +292,31 @@ namespace Yoma.Core.Domain.Analytics.Services
       var userCountActive = _userService.Search(userFilter).TotalCount ?? 0;
 
       // Organizations (exclude declined)
-      var orgStatusDeclinedId = _organizationStatusService.GetByName(OrganizationStatus.Declined.ToString()).Id;
-      var orgStatusActiveId = _organizationStatusService.GetByName(OrganizationStatus.Active.ToString()).Id;
       var orgQuery = _organizationRepository.Query();
-
       var orgCount = orgQuery.Count(o => o.StatusId != orgStatusDeclinedId);
       var orgCountActive = orgQuery.Count(o => o.StatusId == orgStatusActiveId);
 
-      // Countries (represented by organizations; exclude declined; ignore null CountryId)
-      var orgCountryCount = orgQuery.Where(o => o.StatusId != orgStatusDeclinedId && o.CountryId != null).Select(o => o.CountryId).Distinct().Count();
-      var orgCountryCountActive = orgQuery.Where(o => o.StatusId == orgStatusActiveId && o.CountryId != null).Select(o => o.CountryId).Distinct().Count();
+      // Countries
+      var countryCount = _opportunityCountryRepository.Query().Where(o => o.OrganizationStatusId != orgStatusDeclinedId).Select(o => o.CountryId).Distinct().Count();
+      var countryCountWithPublishedOpportunities = _opportunityCountryRepository.Query().Where(
+        o => o.OpportunityStatusId == oppStatusActiveId && o.OrganizationStatusId == orgStatusActiveId && o.OpportunityHidden != true).Select(o => o.CountryId).Distinct().Count();
 
       // Opportunities
-      var oppStatusActiveId = _opportunityStatusService.GetByName(Opportunity.Status.Active.ToString()).Id;
-
-      var oppCount = _opportunityRepository.Query().Count();
-      var oppCountPublished = _opportunityRepository.Query().Count(opp => opp.StatusId == oppStatusActiveId && opp.OrganizationStatusId == orgStatusActiveId && opp.Hidden != true);
+      var oppCount = _opportunityRepository.Query().Count(o => o.OrganizationStatusId != orgStatusDeclinedId);
+      var oppCountPublished = _opportunityRepository.Query().Count(o => o.StatusId == oppStatusActiveId && o.OrganizationStatusId == orgStatusActiveId && o.Hidden != true);
 
       var result = new PlatformMetricsAdmin
       {
         // Base counts (raw)
         UserCount = userCount,
         OrganizationCount = orgCount,
-        CountryCount = orgCountryCount,
+        CountryCount = countryCount,
         OpportunityCount = oppCount,
 
         // Admin-only counts
         UserCountActive = userCountActive,
         OrganizationCountActive = orgCountActive,
-        OrganizationCountryCountActive = orgCountryCountActive,
+        CountryCountWithPublishedOpportunities = countryCountWithPublishedOpportunities,
         OpportunityCountPublished = oppCountPublished,
 
         CredentialSummary = []
