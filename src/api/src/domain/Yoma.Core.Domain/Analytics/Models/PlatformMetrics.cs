@@ -28,15 +28,15 @@ namespace Yoma.Core.Domain.Analytics.Models
 
     /// <summary>
     /// Raw country count
-    /// Public: countries with active organizations (not rounded)
-    /// Admin: raw total countries represented by organizations
+    /// Public: countries with published opportunities available to youth (active opportunities from active organizations, excluding hidden; not rounded)
+    /// Admin: raw total countries with opportunities (excluding those from declined organizations, including hidden opportunities)
     /// </summary>
     public virtual int CountryCount { get; set; }
 
     /// <summary>
     /// Raw opportunity count
-    /// Public: published opportunities available to youth (active opportunities from active organizations), rounded for display
-    /// Admin: raw total opportunities irrespective of status
+    /// Public: published opportunities available to youth (active opportunities from active organizations, excluding hidden), rounded for display
+    /// Admin: raw total opportunities irrespective of status (excluding those from declined organizations, including hidden opportunities)
     /// </summary>
     public virtual int OpportunityCount { get; set; }
 
@@ -91,9 +91,9 @@ namespace Yoma.Core.Domain.Analytics.Models
     public int OrganizationCountActive { get; set; }
 
     /// <summary>
-    /// Countries with active organizations
+    /// Countries with published opportunities
     /// </summary>
-    public int OrganizationCountryCountActive { get; set; }
+    public int CountryCountWithPublishedOpportunities { get; set; }
 
     /// <summary>
     /// Published opportunities available to youth (active opportunities from active organizations)

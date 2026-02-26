@@ -10,7 +10,7 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
     public DateTimeOffset OpportunityDateStart { get; set; }
 
-    public bool? OpporunityHidden { get; set; }
+    public bool? OpportunityHidden { get; set; }
 
     public Guid OrganizationId { get; set; }
 

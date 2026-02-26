@@ -455,7 +455,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       var query = _opportunityCountryRepository.Query().Where(o => o.OrganizationStatusId == organizationStatusActiveId);
 
       //exclude hidden
-      query = query.Where(o => !o.OpporunityHidden.HasValue || o.OpporunityHidden == false);
+      query = query.Where(o => !o.OpportunityHidden.HasValue || o.OpportunityHidden == false);
 
       var statusActiveId = _opportunityStatusService.GetByName(Status.Active.ToString()).Id;
       var statusExpiredId = _opportunityStatusService.GetByName(Status.Expired.ToString()).Id;
