@@ -63,7 +63,7 @@ namespace Yoma.Core.Domain.Analytics.Services
     private const string AgeBracket_Group_Default = "Unspecified";
     private static readonly DateTime Navigated_ExternalLink_Introduction_Date = new(2024, 6, 14);
 
-    public const int RoundingFactor_PlatformMetrics_UserCount = 100_000;
+    public const int RoundingFactor_PlatformMetrics_UserCount = 50_000;
     internal const int RoundingFactor_PlatformMetrics_OrganizationCount = 10;
     internal const int RoundingFactor_PlatformMetrics_OpportunityCount = 10;
     public const int RoundingFactor_PlatformMetrics_CredentialCount = 1_000;
