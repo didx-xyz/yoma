@@ -140,7 +140,11 @@ const Home: NextPageWithLayout<{
   const newsFeed = lookup_NewsFeed ?? clientNewsFeed;
   const metrics = platformMetrics ?? clientPlatformMetrics;
   const credentialCountDisplay =
-    metrics?.credentialSummary?.[0]?.countDisplay ?? "0";
+    metrics?.credentialSummary?.find((entry) => entry.type === "Opportunity")
+      ?.countDisplay ?? "0";
+  const yoidCountDisplay =
+    metrics?.credentialSummary?.find((entry) => entry.type === "YoID")
+      ?.countDisplay ?? "0";
 
   const onSearchInputSubmit = useCallback(
     (query: string) => {
@@ -467,10 +471,10 @@ const Home: NextPageWithLayout<{
                   />
 
                   <h1 className="font-nunito text-center text-base font-semibold tracking-normal">
-                    More than {credentialCountDisplay} credentials verified
+                    More than {yoidCountDisplay} YoIDs created
                   </h1>
                   <p className="-mt-4 text-center font-sans md:text-sm">
-                    across trusted providers.
+                    and {credentialCountDisplay} credentials verified.
                   </p>
                 </div>
 
