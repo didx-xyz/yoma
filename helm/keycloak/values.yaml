@@ -158,7 +158,7 @@ keycloak:
   replicas: 1
 
   image:
-    tag: 26.4.0
+    tag: 26.4.7
 
   ingressDomain: yoma.world
 
@@ -378,7 +378,7 @@ keycloak:
     admission.datadoghq.com/enabled: "false" # disabled by default (for now)
   podAnnotations:
     # gcr.io/datadoghq/dd-lib-java-init
-    admission.datadoghq.com/java-lib.version: v1.53.0
+    admission.datadoghq.com/java-lib.version: v1.56.0
     ad.datadoghq.com/keycloak.logs: '[{ "service": "keycloak", "source": "jboss_wildfly" }]'
 
   lifecycleHooks: |-
