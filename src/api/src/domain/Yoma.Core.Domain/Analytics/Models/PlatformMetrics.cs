@@ -52,7 +52,7 @@ namespace Yoma.Core.Domain.Analytics.Models
   {
     #region Public Members
     /// <summary>
-    /// Rounded DOWN to the nearest 100,000 and formatted with thousands separators and a "+" suffix (e.g., "900,000+")
+    /// Rounded DOWN to the nearest 50,000 and formatted with thousands separators and a "+" suffix (e.g., "950,000+")
     /// </summary>
     public string UserCountDisplay => UserCount < AnalyticsService.RoundingFactor_PlatformMetrics_UserCount ? $"{UserCount:N0}" : $"{UserCount:N0}+";
 

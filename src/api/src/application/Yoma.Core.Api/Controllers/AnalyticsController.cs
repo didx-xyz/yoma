@@ -31,7 +31,7 @@ namespace Yoma.Core.Api.Controllers
     #region Anonymous Actions
     [SwaggerOperation(Summary = "Get platform metrics (Anonymous)",
       Description = "Returns platform-wide metrics rounded down for public display")]
-    [HttpGet("platform/metrics")]
+    [HttpGet("platform/metrics/info")]
     [AllowAnonymous]
     public ActionResult<PlatformMetrics> GetPlatformMetrics()
     {
@@ -48,7 +48,7 @@ namespace Yoma.Core.Api.Controllers
     #region Administrative Actions
     [SwaggerOperation(Summary = "Get platform metrics",
       Description = "Returns platform metrics using actual values without rounding")]
-    [HttpGet("platform/metrics/admin")]
+    [HttpGet("platform/metrics")]
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
     public ActionResult<PlatformMetricsAdmin> GetPlatformMetricsAdmin()
     {

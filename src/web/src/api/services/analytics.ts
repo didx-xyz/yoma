@@ -22,7 +22,7 @@ export const getPlatformMetrics = async (
 ): Promise<PlatformMetrics> => {
   const instance = context ? ApiServer(context) : await ApiClient;
   const { data } = await instance.get<PlatformMetrics>(
-    "/analytics/platform/metrics",
+    "/analytics/platform/metrics/info",
   );
 
   return data;
@@ -33,7 +33,7 @@ export const getPlatformMetricsAdmin = async (
 ): Promise<PlatformMetricsAdmin> => {
   const instance = context ? ApiServer(context) : await ApiClient;
   const { data } = await instance.get<PlatformMetricsAdmin>(
-    "/analytics/platform/metrics/admin",
+    "/analytics/platform/metrics",
   );
 
   return data;
