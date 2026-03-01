@@ -21,7 +21,7 @@
     "@t3-oss/env-nextjs": "^0.13.8",
     "@tanstack/react-query": "^5.89.0",
     "@types/file-saver": "^2.0.7",
-    "axios": "^1.12.2",
+    "axios": "^1.13.5",
     "daisyui": "^5.1.13",
     "file-saver": "^2.0.5",
     "jotai": "^2.14.0",
