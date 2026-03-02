@@ -31,7 +31,7 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({
             <div className="text-gray-dark max-w-[200px] truncate text-xs font-medium">
               {data.organizationName}
             </div>
-            <div className="mt-1 line-clamp-2 h-[36px] max-w-[200px] overflow-hidden text-sm leading-tight font-semibold text-ellipsis">
+            <div className="mt-1 line-clamp-2 h-[40px] max-w-[200px] overflow-hidden text-base leading-tight font-semibold text-ellipsis">
               {data.title}
             </div>
           </div>
@@ -157,13 +157,13 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({
   };
 
   return preview ? (
-    <div className="m-2 flex h-[17.5rem] w-64 flex-col gap-1 overflow-hidden rounded-lg bg-white p-4 shadow">
+    <div className="flex h-[17.5rem] w-full max-w-64 flex-col gap-1 overflow-hidden rounded-lg bg-white p-4 shadow md:max-w-80">
       {renderContent()}
     </div>
   ) : (
     <Link
       href={`/opportunities/${data.id}`}
-      className="m-2 flex h-[17.5rem] w-64 flex-col gap-1 overflow-hidden rounded-lg bg-white p-4 shadow"
+      className="flex h-[17.5rem] w-full max-w-64 flex-col gap-1 overflow-hidden rounded-lg bg-white p-4 shadow md:max-w-80"
       target="_blank"
       rel="noopener noreferrer"
     >
