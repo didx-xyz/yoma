@@ -153,7 +153,7 @@ namespace Yoma.Core.Domain.Reward.Services
               }
               catch (Exception updateEx)
               {
-                _logger.LogCritical(updateEx,
+                if (_logger.IsEnabled(LogLevel.Critical)) _logger.LogCritical(updateEx,
                   "CRITICAL: Failed to persist Error status for wallet creation item '{id}' (user '{userId}', pendingStatus '{pendingStatus}'). Original error: {originalError}",
                   item.Id, item.UserId, pendingStatus, ex.Message);
               }
