@@ -275,7 +275,7 @@ namespace Yoma.Core.Domain.Reward.Services
       {
         using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
 
-        var item = new WalletCreation { UserId = userId.Value };
+        var item = new WalletCreation { UserId = userId.Value, Provider = Provider.ZLTO.ToString() };
         try
         {
           var (username, wallet) = await CreateWallet(userId.Value);
@@ -348,6 +348,7 @@ namespace Yoma.Core.Domain.Reward.Services
       //schedule creation for delayed execution
       var item = new WalletCreation
       {
+        Provider = Provider.ZLTO.ToString(),
         UserId = userId.Value,
         StatusId = _walletCreationStatusService.GetByName(WalletCreationStatus.Pending.ToString()).Id,
         Status = WalletCreationStatus.Pending

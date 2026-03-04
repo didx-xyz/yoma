@@ -4,6 +4,8 @@ namespace Yoma.Core.Domain.Reward.Models
   {
     public Guid Id { get; set; }
 
+    public string Provider { get; set; } = null!;
+
     public Guid StatusId { get; set; }
 
     public WalletCreationStatus Status { get; set; }

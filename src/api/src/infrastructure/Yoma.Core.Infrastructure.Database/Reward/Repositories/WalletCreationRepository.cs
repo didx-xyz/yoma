@@ -25,6 +25,7 @@ namespace Yoma.Core.Infrastructure.Database.Reward.Repositories
       return _context.WalletCreation.Select(entity => new WalletCreation
       {
         Id = entity.Id,
+        Provider = entity.Provider,
         StatusId = entity.StatusId,
         Status = Enum.Parse<WalletCreationStatus>(entity.Status.Name, true),
         UserId = entity.UserId,
@@ -46,6 +47,7 @@ namespace Yoma.Core.Infrastructure.Database.Reward.Repositories
       var entity = new Entities.WalletCreation
       {
         Id = item.Id,
+        Provider = item.Provider,
         StatusId = item.StatusId,
         UserId = item.UserId,
         Username = item.Username,

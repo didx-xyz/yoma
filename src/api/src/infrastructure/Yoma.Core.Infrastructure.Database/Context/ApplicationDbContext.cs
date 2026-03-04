@@ -206,6 +206,9 @@ namespace Yoma.Core.Infrastructure.Database.Context
     public DbSet<SSITenantCreation> SSITenantCreation { get; set; }
     #endregion SSI
 
+    #region Treasury
+    public DbSet<Treasury.Entities.Treasury> Treasury { get; set; }
+    #endregion Treasury
     #endregion
 
     #region Protected Members
@@ -337,10 +340,15 @@ namespace Yoma.Core.Infrastructure.Database.Context
       #endregion
 
       #region Reward
+      // Unique constraint for ZLTO reward issuance.
+      // Ensures a user cannot receive the same reward more than once for the same source entity.
+      // The filter restricts this uniqueness rule to Provider = ZLTO only.
+      // This allows multiple rows per user where MyOpportunityId and ReferralLinkUsageId are NULL
+      // for other providers (e.g. Chimoney cash-out payouts).
       builder.Entity<Reward.Entities.RewardTransaction>()
           .HasIndex(e => new { e.UserId, e.SourceEntityType, e.MyOpportunityId, e.ReferralLinkUsageId })
           .IsUnique()
-          .HasFilter(null);
+          .HasFilter($"\"Provider\" = '{Domain.Reward.Provider.ZLTO}'");
 
       builder.Entity<RewardTransactionStatus>()
           .HasKey(e => e.Id).HasName("PK_Reward_TransactionStatus");
