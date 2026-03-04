@@ -57,9 +57,9 @@ namespace Yoma.Core.Domain.Analytics.Models
     public string UserCountDisplay => UserCount < AnalyticsService.RoundingFactor_PlatformMetrics_UserCount ? $"{UserCount:N0}" : $"{UserCount:N0}+";
 
     /// <summary>
-    /// Rounded DOWN to the nearest 10 and formatted with thousands separators only (e.g., "70") — no "+" suffix
+    /// Rounded DOWN to the nearest 10 and formatted with thousands separators and a "+" suffix
     /// </summary>
-    public string OrganizationCountDisplay => $"{OrganizationCount:N0}";
+    public string OrganizationCountDisplay => OrganizationCount < AnalyticsService.RoundingFactor_PlatformMetrics_OrganizationCount ? $"{OrganizationCount:N0}" : $"{OrganizationCount:N0}+";
 
     /// <summary>
     /// Not rounded. Formatted with thousands separators only (e.g., "21") — no rounding and no "+" suffix

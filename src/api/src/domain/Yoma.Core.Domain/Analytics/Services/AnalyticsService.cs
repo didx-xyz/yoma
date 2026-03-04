@@ -258,7 +258,7 @@ namespace Yoma.Core.Domain.Analytics.Services
     #endregion
 
     #region Private Members
-    private PlatformMetrics GetPlatformMetricsInternal(PlatformMetricsAdmin metricsAdmin)
+    private static PlatformMetrics GetPlatformMetricsInternal(PlatformMetricsAdmin metricsAdmin)
     {
       return new PlatformMetrics
       {
