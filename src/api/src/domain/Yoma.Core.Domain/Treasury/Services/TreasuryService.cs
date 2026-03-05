@@ -1,11 +1,7 @@
 using FluentValidation;
-using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.Options;
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Exceptions;
-using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
-using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Treasury.Extensions;
 using Yoma.Core.Domain.Treasury.Interfaces;
 using Yoma.Core.Domain.Treasury.Models;
@@ -16,30 +12,42 @@ namespace Yoma.Core.Domain.Treasury.Services
   public sealed class TreasuryService : ITreasuryService
   {
     #region Class Variables
-    private readonly AppSettings _appSettings;
-    private readonly IMemoryCache _memoryCache;
     private readonly TreasuryRequestUpdateValidator _treasuryRequestUpdateValidator;
-
     private readonly IRepository<Models.Treasury> _treasuryRepository;
     #endregion
 
     #region Constructor
-    public TreasuryService(IOptions<AppSettings> appSettings,
-      IMemoryCache memoryCache,
+    public TreasuryService(
       TreasuryRequestUpdateValidator treasuryRequestUpdateValidator,
       IRepository<Models.Treasury> treasuryRepository)
     {
-      _appSettings = appSettings.Value ?? throw new ArgumentNullException(nameof(appSettings));
-      _memoryCache = memoryCache ?? throw new ArgumentNullException(nameof(memoryCache));
       _treasuryRequestUpdateValidator = treasuryRequestUpdateValidator ?? throw new ArgumentNullException(nameof(treasuryRequestUpdateValidator));
       _treasuryRepository = treasuryRepository ?? throw new ArgumentNullException(nameof(treasuryRepository));
     }
     #endregion
 
     #region Public Members
+
+    public Models.Treasury Get(LockMode? lockMode = null)
+    {
+      var query = lockMode != null ? _treasuryRepository.Query(lockMode.Value) : _treasuryRepository.Query();
+      var entity = query.SingleOrDefault();
+      return entity ?? throw new DataInconsistencyException($"Expected exactly one '{nameof(Models.Treasury)}' row but none was found.");
+    }
+
     public TreasuryInfo Get()
     {
-      return GetInternal().ToInfo();
+      return Get(null).ToInfo();
+    }
+
+    public List<TreasuryInfoOrganization> SearchOrganization(TreasuryInfoOrganizationSearchFilter filter)
+    {
+      throw new NotImplementedException();
+    }
+
+    public List<TreasuryInfoReferralProgram> SearchReferralProgram(TreasuryInfoReferralProgramSearchFilter filter)
+    {
+      throw new NotImplementedException();
     }
 
     public async Task<TreasuryInfo> Update(TreasuryRequestUpdate request)
@@ -48,7 +56,7 @@ namespace Yoma.Core.Domain.Treasury.Services
 
       await _treasuryRequestUpdateValidator.ValidateAndThrowAsync(request);
 
-      var result = GetInternal();
+      var result = Get(LockMode.Wait);
 
       if (request.ZltoRewardPool.HasValue && result.ZltoRewardCumulative.HasValue && request.ZltoRewardPool.Value < result.ZltoRewardCumulative.Value)
         throw new ValidationException($"The Zlto reward pool cannot be less than the cumulative Zlto rewards ({result.ZltoRewardCumulative.Value:F0}) already awarded across the system");
@@ -62,42 +70,37 @@ namespace Yoma.Core.Domain.Treasury.Services
 
       result = await _treasuryRepository.Update(result);
 
-      _memoryCache.Remove(CacheHelper.GenerateKey<Models.Treasury>());
-
       return result.ToInfo();
     }
 
-    public Task ChimoneyCashedOut(decimal amount)
+    public async Task ChimoneyCashedOut(Models.Treasury treasury, decimal amount)
     {
-      throw new NotImplementedException();
+      ArgumentNullException.ThrowIfNull(treasury, nameof(treasury));
+
+      if (amount < default(decimal))
+        throw new ValidationException("Chimoney cash-out amount cannot be less than 0");
+
+      if (amount == default) return; // 0 is valid but has no effect
+
+      treasury.ChimoneyCumulativeInUSD = (treasury.ChimoneyCumulativeInUSD ?? default) + amount;
+
+      await _treasuryRepository.Update(treasury);
     }
 
-    public Task ZltoRewardAwarded(decimal amount)
+    public async Task ZltoRewardAwarded(Models.Treasury treasury, decimal? amount)
     {
-      throw new NotImplementedException();
-    }
-    #endregion
+      ArgumentNullException.ThrowIfNull(treasury, nameof(treasury));
 
-    #region Private Members
-    public Models.Treasury GetInternal()
-    {
-      Models.Treasury QuerySingleOrThrow()
-      {
-        var entity = _treasuryRepository.Query().SingleOrDefault();
-        return entity ?? throw new DataInconsistencyException($"Expected exactly one '{nameof(Models.Treasury)}' row but none was found.");
-      }
+      if (!amount.HasValue) return; // ZLTO reward optional
 
-      if (!_appSettings.CacheEnabledByCacheItemTypesAsEnum.HasFlag(CacheItemType.Lookups))
-        return QuerySingleOrThrow();
+      if (amount.Value < default(decimal))
+        throw new ValidationException("Zlto reward amount cannot be less than 0");
 
-      var result = _memoryCache.GetOrCreate(CacheHelper.GenerateKey<Models.Treasury>(), entry =>
-      {
-        entry.SlidingExpiration = TimeSpan.FromHours(_appSettings.CacheSlidingExpirationInHours);
-        entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(_appSettings.CacheAbsoluteExpirationRelativeToNowInDays);
-        return QuerySingleOrThrow();
-      }) ?? throw new InvalidOperationException($"Failed to retrieve cached item of '{nameof(Models.Treasury)}'.");
+      if (amount.Value == default) return; // 0 valid but no effect
 
-      return result;
+      treasury.ZltoRewardCumulative = (treasury.ZltoRewardCumulative ?? default) + amount.Value;
+
+      await _treasuryRepository.Update(treasury);
     }
     #endregion
   }

@@ -31,6 +31,7 @@ using Yoma.Core.Domain.Notification;
 using Yoma.Core.Domain.Notification.Interfaces;
 using Yoma.Core.Domain.Notification.Models;
 using Yoma.Core.Domain.Opportunity;
+using Yoma.Core.Domain.Opportunity.Events;
 using Yoma.Core.Domain.Opportunity.Extensions;
 using Yoma.Core.Domain.Opportunity.Interfaces;
 using Yoma.Core.Domain.Opportunity.Interfaces.Lookups;
@@ -1423,6 +1424,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
             //with instant-verifications ensureOrganizationAuthorization not checked as finalized immediately by the user (youth)
             var result = await _opportunityService.AllocateRewards(opportunity.Id, !instantVerification);
+            opportunity = result.Opportunity;
             item.ZltoReward = result.ZltoReward;
             item.YomaReward = result.YomaReward;
             item.DateCompleted = dateCompleted ?? DateTimeOffset.UtcNow;
@@ -1478,7 +1480,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
       if (!publishEvents) return;
 
-      var myEvent = new ReferralProgressTriggerEvent(
+      var referralEvent = new ReferralProgressTriggerEvent(
         new Referral.Models.ReferralProgressTriggerMessage
         {
           Source = Referral.ReferralTriggerSource.OpportunityCompletion,
@@ -1489,10 +1491,18 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
           OpportunityTitle = opportunity.Title
         });
 
+      var opportunityEvent = new OpportunityEvent(EventType.Update, opportunity);
+
       if (enqueueOutcomes)
-        _delayedExecutionService.Enqueue(async () => await _mediator.Publish(myEvent), $"{nameof(ReferralProgressTriggerEvent)}", "Publish");
+      {
+        _delayedExecutionService.Enqueue(async () => await _mediator.Publish(referralEvent), $"{nameof(ReferralProgressTriggerEvent)}", "Publish");
+        _delayedExecutionService.Enqueue(async () => await _mediator.Publish(opportunityEvent), $"{nameof(OpportunityEvent)}", "Publish");
+      }
       else
-        await _mediator.Publish(myEvent);
+      {
+        await _mediator.Publish(referralEvent);
+        await _mediator.Publish(opportunityEvent);
+      }
     }
 
     private void EnsureNoEarlierPendingVerificationsForOtherStudents(User user, Opportunity.Models.Opportunity opportunity, Models.MyOpportunity currentItem, bool instantVerification)

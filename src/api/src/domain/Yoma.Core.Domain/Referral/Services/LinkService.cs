@@ -2,6 +2,7 @@ using FluentValidation;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Helpers;
@@ -89,20 +90,22 @@ namespace Yoma.Core.Domain.Referral.Services
     #endregion
 
     #region Public Members
-    public ReferralLink GetById(Guid id, bool includeChildItems, bool ensureOwnership, bool allowAdminOverride, bool? includeQRCode)
+    public ReferralLink GetById(Guid id, bool includeChildItems, bool ensureOwnership, bool allowAdminOverride, bool? includeQRCode, LockMode? lockMode = null)
     {
-      var result = GetByIdOrNull(id, includeChildItems, ensureOwnership, allowAdminOverride, includeQRCode)
+      var result = GetByIdOrNull(id, includeChildItems, ensureOwnership, allowAdminOverride, includeQRCode, lockMode)
         ?? throw new EntityNotFoundException($"{nameof(ReferralLink)} with id '{id}' does not exist");
 
       return result;
     }
 
-    public ReferralLink? GetByIdOrNull(Guid id, bool includeChildItems, bool ensureOwnership, bool allowAdminOverride, bool? includeQRCode)
+    public ReferralLink? GetByIdOrNull(Guid id, bool includeChildItems, bool ensureOwnership, bool allowAdminOverride, bool? includeQRCode, LockMode? lockMode = null)
     {
       if (id == Guid.Empty)
         throw new ArgumentNullException(nameof(id));
 
-      var result = _linkRepository.Query(includeChildItems).SingleOrDefault(o => o.Id == id);
+      var query = lockMode != null ? _linkRepository.Query(includeChildItems, lockMode.Value) : _linkRepository.Query(includeChildItems);
+
+      var result = query.SingleOrDefault(o => o.Id == id);
       if (result == null) return null;
 
       if (includeQRCode == true) result.QRCodeBase64 = QRCodeHelper.GenerateQRCodeBase64(result.URL);
@@ -344,17 +347,13 @@ namespace Yoma.Core.Domain.Referral.Services
     // at the call site (e.g. LinkUsageService.ProcessProgressByUserId).
     // This method relies on row-level locking via LockMode.Wait to ensure
     // atomic updates of completion counters and status transitions.
-    public async Task<ReferralLink> ProcessCompletion(Program program, Guid linkId, decimal? rewardAmount)
+    public async Task<ReferralLink> ProcessCompletion(Program program, ReferralLink link, decimal? rewardAmount)
     {
       ArgumentNullException.ThrowIfNull(program, nameof(program));
 
-      if (linkId == Guid.Empty)
-        throw new ArgumentNullException(nameof(linkId));
+      ArgumentNullException.ThrowIfNull(link, nameof(link));
 
       var statusLimitReached = _linkStatusService.GetByName(ReferralLinkStatus.LimitReached.ToString());
-
-      var link = _linkRepository.Query(Core.LockMode.Wait).SingleOrDefault(o => o.Id == linkId)
-        ?? throw new EntityNotFoundException($"Referral link with id '{linkId}' does not exist");
 
       // Increment total (always)
       link.CompletionTotal = (link.CompletionTotal ?? 0) + 1;

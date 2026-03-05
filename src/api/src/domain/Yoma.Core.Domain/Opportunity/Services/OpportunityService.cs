@@ -33,6 +33,7 @@ using Yoma.Core.Domain.PartnerSharing.Interfaces;
 using Yoma.Core.Domain.PartnerSharing.Services.Lookups;
 using Yoma.Core.Domain.SSI;
 using Yoma.Core.Domain.SSI.Helpers;
+using Yoma.Core.Domain.Treasury.Interfaces;
 
 namespace Yoma.Core.Domain.Opportunity.Services
 {
@@ -61,6 +62,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
     private readonly INotificationDeliveryService _notificationDeliveryService;
     private readonly IIdentityProviderClient _identityProviderClient;
     private readonly ISharingInfoService _sharingInfoService;
+    private readonly ITreasuryService _treasuryService;
 
     private readonly OpportunityRequestValidatorCreate _opportunityRequestValidatorCreate;
     private readonly OpportunityRequestValidatorUpdate _opportunityRequestValidatorUpdate;
@@ -108,6 +110,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         INotificationDeliveryService notificationDeliveryService,
         IIdentityProviderClientFactory identityProviderClientFactory,
         ISharingInfoService sharingInfoService,
+        ITreasuryService treasuryService,
         OpportunityRequestValidatorCreate opportunityRequestValidatorCreate,
         OpportunityRequestValidatorUpdate opportunityRequestValidatorUpdate,
         OpportunitySearchFilterValidator opportunitySearchFilterValidator,
@@ -121,43 +124,44 @@ namespace Yoma.Core.Domain.Opportunity.Services
         IRepository<OpportunityVerificationType> opportunityVerificationTypeRepository,
         IExecutionStrategyService executionStrategyService)
     {
-      _logger = logger;
-      _appSettings = appSettings.Value;
-      _httpContextAccessor = httpContextAccessor;
+      _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+      _appSettings = appSettings.Value ?? throw new ArgumentNullException(nameof(appSettings));
+      _httpContextAccessor = httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
 
-      _opportunityStatusService = opportunityStatusService;
-      _opportunityCategoryService = opportunityCategoryService;
-      _countryService = countryService;
-      _organizationService = organizationService;
-      _organizationStatusService = organizationStatusService;
-      _opportunityTypeService = opportunityTypeService;
-      _languageService = languageService;
-      _skillService = skillService;
-      _opportunityDifficultyService = opportunityDifficultyService;
-      _engagementTypeService = engagementTypeService;
-      _opportunityVerificationTypeService = opportunityVerificationTypeService;
-      _timeIntervalService = timeIntervalService;
-      _blobService = blobService;
-      _userService = userService;
-      _notificationURLFactory = notificationURLFactory;
-      _notificationDeliveryService = notificationDeliveryService;
-      _identityProviderClient = identityProviderClientFactory.CreateClient();
-      _sharingInfoService = sharingInfoService;
+      _opportunityStatusService = opportunityStatusService ?? throw new ArgumentNullException(nameof(opportunityStatusService));
+      _opportunityCategoryService = opportunityCategoryService ?? throw new ArgumentNullException(nameof(opportunityCategoryService));
+      _countryService = countryService ?? throw new ArgumentNullException(nameof(countryService));
+      _organizationService = organizationService ?? throw new ArgumentNullException(nameof(organizationService));
+      _organizationStatusService = organizationStatusService ?? throw new ArgumentNullException(nameof(organizationStatusService));
+      _opportunityTypeService = opportunityTypeService ?? throw new ArgumentNullException(nameof(opportunityTypeService));
+      _languageService = languageService ?? throw new ArgumentNullException(nameof(languageService));
+      _skillService = skillService ?? throw new ArgumentNullException(nameof(skillService));
+      _opportunityDifficultyService = opportunityDifficultyService ?? throw new ArgumentNullException(nameof(opportunityDifficultyService));
+      _engagementTypeService = engagementTypeService ?? throw new ArgumentNullException(nameof(engagementTypeService));
+      _opportunityVerificationTypeService = opportunityVerificationTypeService ?? throw new ArgumentNullException(nameof(opportunityVerificationTypeService));
+      _timeIntervalService = timeIntervalService ?? throw new ArgumentNullException(nameof(timeIntervalService));
+      _blobService = blobService ?? throw new ArgumentNullException(nameof(blobService));
+      _userService = userService ?? throw new ArgumentNullException(nameof(userService));
+      _notificationURLFactory = notificationURLFactory ?? throw new ArgumentNullException(nameof(notificationURLFactory));
+      _notificationDeliveryService = notificationDeliveryService ?? throw new ArgumentNullException(nameof(notificationDeliveryService));
+      _identityProviderClient = identityProviderClientFactory.CreateClient() ?? throw new ArgumentNullException(nameof(identityProviderClientFactory));
+      _sharingInfoService = sharingInfoService ?? throw new ArgumentNullException(nameof(sharingInfoService));
+      _treasuryService = treasuryService ?? throw new ArgumentNullException(nameof(treasuryService));
 
-      _opportunityRequestValidatorCreate = opportunityRequestValidatorCreate;
-      _opportunityRequestValidatorUpdate = opportunityRequestValidatorUpdate;
-      _opportunitySearchFilterValidator = opportunitySearchFilterValidator;
-      _opportunitySearchFilterCriteriaValidator = opportunitySearchFilterCriteriaValidator;
+      _opportunityRequestValidatorCreate = opportunityRequestValidatorCreate ?? throw new ArgumentNullException(nameof(opportunityRequestValidatorCreate));
+      _opportunityRequestValidatorUpdate = opportunityRequestValidatorUpdate ?? throw new ArgumentNullException(nameof(opportunityRequestValidatorUpdate));
+      _opportunitySearchFilterValidator = opportunitySearchFilterValidator ?? throw new ArgumentNullException(nameof(opportunitySearchFilterValidator));
+      _opportunitySearchFilterCriteriaValidator = opportunitySearchFilterCriteriaValidator ?? throw new ArgumentNullException(nameof(opportunitySearchFilterCriteriaValidator));
 
-      _mediator = mediator;
+      _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
 
-      _opportunityRepository = opportunityRepository;
-      _opportunityCategoryRepository = opportunityCategoryRepository;
-      _opportunityCountryRepository = opportunityCountryRepository;
-      _opportunityLanguageRepository = opportunityLanguageRepository;
-      _opportunitySkillRepository = opportunitySkillRepository;
-      _opportunityVerificationTypeRepository = opportunityVerificationTypeRepository;
-      _executionStrategyService = executionStrategyService;
+      _opportunityRepository = opportunityRepository ?? throw new ArgumentNullException(nameof(opportunityRepository));
+      _opportunityCategoryRepository = opportunityCategoryRepository ?? throw new ArgumentNullException(nameof(opportunityCategoryRepository));
+      _opportunityCountryRepository = opportunityCountryRepository ?? throw new ArgumentNullException(nameof(opportunityCountryRepository));
+      _opportunityLanguageRepository = opportunityLanguageRepository ?? throw new ArgumentNullException(nameof(opportunityLanguageRepository));
+      _opportunitySkillRepository = opportunitySkillRepository ?? throw new ArgumentNullException(nameof(opportunitySkillRepository));
+      _opportunityVerificationTypeRepository = opportunityVerificationTypeRepository ?? throw new ArgumentNullException(nameof(opportunityVerificationTypeRepository));
+      _executionStrategyService = executionStrategyService ?? throw new ArgumentNullException(nameof(executionStrategyService));
     }
     #endregion
 
@@ -1450,17 +1454,22 @@ namespace Yoma.Core.Domain.Opportunity.Services
           throw new ValidationException($"The number of participants cannot exceed the limit. The current count is '{opportunity.ParticipantCount ?? 0}', and the limit is '{opportunity.ParticipantLimit.Value}'. Please edit the opportunity to increase or remove the limit, or reject the verification request");
 
         organization = _organizationService.GetById(opportunity.OrganizationId, false, true, false, LockMode.Wait);
+        var treasury = _treasuryService.Get(LockMode.Wait);
         var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsernameSystem, false, false);
 
         result = new OpportunityAllocateRewardResponse
         {
+          Opportunity = opportunity,
           ZltoReward = opportunity.ZltoReward,
           YomaReward = opportunity.YomaReward
         };
 
         // zlto reward
         (result.ZltoReward, result.ZltoRewardReduced, result.ZltoRewardPoolDepleted) =
-          ProcessRewardAllocation(result.ZltoReward, organization.ZltoRewardPool, organization.ZltoRewardCumulative, null, null);
+          ProcessRewardAllocation(result.ZltoReward, treasury.ZltoRewardPool, treasury.ZltoRewardCumulative, null, null);
+
+        (result.ZltoReward, result.ZltoRewardReduced, result.ZltoRewardPoolDepleted) =
+          ProcessRewardAllocation(result.ZltoReward, organization.ZltoRewardPool, organization.ZltoRewardCumulative, result.ZltoRewardReduced, result.ZltoRewardPoolDepleted);
 
         (result.ZltoReward, result.ZltoRewardReduced, result.ZltoRewardPoolDepleted) =
          ProcessRewardAllocation(result.ZltoReward, opportunity.ZltoRewardPool, opportunity.ZltoRewardCumulative, result.ZltoRewardReduced, result.ZltoRewardPoolDepleted);
@@ -1476,6 +1485,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         opportunity.ModifiedByUserId = user.Id;
 
         // update rewardCumulative, treating null as 0 for the addition
+        await _treasuryService.ZltoRewardAwarded(treasury, result.ZltoReward);
         await _organizationService.AllocateRewards(organization, result.ZltoReward, result.YomaReward);
 
         if (result.ZltoReward.HasValue)
@@ -1493,8 +1503,6 @@ namespace Yoma.Core.Domain.Opportunity.Services
       opportunity.OrganizationYomaRewardBalance = organization.YomaRewardBalance;
       opportunity.ZltoRewardBalance = opportunity.ZltoRewardPool.HasValue ? opportunity.ZltoRewardPool - (opportunity.ZltoRewardCumulative ?? default) : null;
       opportunity.YomaRewardBalance = opportunity.YomaRewardPool.HasValue ? opportunity.YomaRewardPool - (opportunity.YomaRewardCumulative ?? default) : null;
-
-      await _mediator.Publish(new OpportunityEvent(EventType.Update, opportunity));
 
       return result;
     }

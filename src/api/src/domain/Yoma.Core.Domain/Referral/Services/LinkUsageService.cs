@@ -23,6 +23,7 @@ using Yoma.Core.Domain.Referral.Interfaces.Lookups;
 using Yoma.Core.Domain.Referral.Models;
 using Yoma.Core.Domain.Referral.Validators;
 using Yoma.Core.Domain.Reward.Interfaces;
+using Yoma.Core.Domain.Treasury.Interfaces;
 
 namespace Yoma.Core.Domain.Referral.Services
 {
@@ -44,6 +45,7 @@ namespace Yoma.Core.Domain.Referral.Services
     private readonly INotificationDeliveryService _notificationDeliveryService;
     private readonly INotificationURLFactory _notificationURLFactory;
     private readonly ICountryService _countryService;
+    private readonly ITreasuryService _treasuryService;
 
     private readonly ReferralLinkUsageSearchFilterValidator _referralLinkUsageSearchFilterValidator;
 
@@ -74,6 +76,7 @@ namespace Yoma.Core.Domain.Referral.Services
       INotificationDeliveryService notificationDeliveryService,
       INotificationURLFactory notificationURLFactory,
       ICountryService countryService,
+      ITreasuryService treasuryService,
 
       ReferralLinkUsageSearchFilterValidator referralLinkUsageSearchFilterValidator,
 
@@ -94,6 +97,7 @@ namespace Yoma.Core.Domain.Referral.Services
       _notificationDeliveryService = notificationDeliveryService ?? throw new ArgumentNullException(nameof(notificationDeliveryService));
       _notificationURLFactory = notificationURLFactory ?? throw new ArgumentNullException(nameof(notificationURLFactory));
       _countryService = countryService ?? throw new ArgumentNullException(nameof(countryService));
+      _treasuryService = treasuryService ?? throw new ArgumentNullException(nameof(treasuryService));
 
       _referralLinkUsageSearchFilterValidator = referralLinkUsageSearchFilterValidator ?? throw new ArgumentNullException(nameof(referralLinkUsageSearchFilterValidator));
 
@@ -433,8 +437,6 @@ namespace Yoma.Core.Domain.Referral.Services
 
         if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Referral progress: processing {Count} pending usages for user {UserId}", pendingUsageIds.Count, user.Id);
 
-        var programCache = new Dictionary<Guid, Program>();
-        var linkCache = new Dictionary<Guid, ReferralLink>();
         var now = DateTimeOffset.UtcNow;
 
         foreach (var usageId in pendingUsageIds)
@@ -448,6 +450,8 @@ namespace Yoma.Core.Domain.Referral.Services
             if (myUsage.Status != ReferralLinkUsageStatus.Pending) //state change between fetching the worklist and processing
             {
               if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Referral progress: skipping LinkUsage '{LinkUsageId}' with status '{Status}'", myUsage.Id, myUsage.Status);
+
+              scope.Complete();
               return;
             }
 
@@ -476,17 +480,9 @@ namespace Yoma.Core.Domain.Referral.Services
               return;
             }
 
-            if (!programCache.TryGetValue(myUsage.ProgramId, out var program))
-            {
-              program = _programService.GetById(myUsage.ProgramId, false, false);
-              programCache[program.Id] = program;
-            }
-
-            if (!linkCache.TryGetValue(myUsage.LinkId, out var link))
-            {
-              link = _linkService.GetById(myUsage.LinkId, false, false, false, false);
-              linkCache[link.Id] = link;
-            }
+            var program = _programService.GetById(myUsage.ProgramId, false, false, LockMode.Wait);
+            var link = _linkService.GetById(myUsage.LinkId, false, false, false, false, LockMode.Wait);
+            var treasury = _treasuryService.Get(LockMode.Wait);
 
             // Default: eligible for rewards unless a cap was reached (do not punish in-flight)
             var eligibleForRewards = true;
@@ -594,22 +590,24 @@ namespace Yoma.Core.Domain.Referral.Services
               myUsage.Id, eligibleForRewards);
 
             // Calculates and assigns completion rewards for a referral usage based on the program’s
-            // configured reward amounts and optional ZLTO reward pool.
+            // configured reward amounts and optional ZLTO reward pools.
             //
             // Reward modes:
-            // • Pooled mode (ZltoRewardPool.HasValue = true):
-            //     – Enforces pool cap using ZltoRewardBalance.
+            // • Pooled mode (any ZLTO pool configured):
+            //     – Pools are evaluated from the outside in: Treasury → Program.
+            //     – Each pool acts as a cap on the available balance.
             //     – Referee is funded first (up to target), then referrer (up to target from remainder).
-            //     – Partial payouts allowed; if the pool is empty, both receive 0 (completion still counts).
+            //     – Partial payouts allowed; if the available balance is 0, both receive 0 (completion still counts).
             //
-            // • No-pool mode (ZltoRewardPool is null):
+            // • No-pool mode (all pools are null):
             //     – No pool cap enforced.
             //     – Configured targets are paid directly (refereeTarget/referrerTarget).
             //     – Useful when rewards should always pay out and are not tied to a fixed pool.
             //
             // Null handling rules:
+            // • Null pool ⇒ pool not enforced.
             // • Null program targets ⇒ corresponding usage rewards remain null (no payout configured).
-            // • Non-null targets but insufficient pool (in pooled mode) ⇒ payout may be partial or 0 (never negative).
+            // • Non-null targets but insufficient available balance ⇒ payout may be partial or 0 (never negative).
             decimal? rewardReferee = null;
             decimal? rewardReferrer = null;
 
@@ -619,10 +617,25 @@ namespace Yoma.Core.Domain.Referral.Services
               var refereeTarget = program.ZltoRewardReferee;
               var referrerTarget = program.ZltoRewardReferrer;
 
+              // Determine available balance from optional pools (Treasury → Program)
+              decimal? available = null;
+
+              if (treasury.ZltoRewardPool.HasValue)
+              {
+                var treasuryBalance = Math.Max(treasury.ZltoRewardBalance ?? 0m, 0m);
+                available = treasuryBalance;
+              }
+
               if (program.ZltoRewardPool.HasValue)
               {
-                // POOLED MODE: enforce pool cap
-                var pool = Math.Max(program.ZltoRewardBalance ?? 0m, 0m);
+                var programBalance = Math.Max(program.ZltoRewardBalance ?? 0m, 0m);
+                available = available.HasValue ? Math.Min(available.Value, programBalance) : programBalance;
+              }
+
+              if (available.HasValue)
+              {
+                // POOLED MODE: enforce available balance
+                var pool = available.Value;
 
                 // Pay referee first (up to target if configured)
                 if (refereeTarget.HasValue)
@@ -645,10 +658,6 @@ namespace Yoma.Core.Domain.Referral.Services
                 // NO POOL CONFIGURED: pay configured targets directly
                 rewardReferee = refereeTarget;
                 rewardReferrer = referrerTarget;
-
-                if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation(
-                  "Referral progress: program {ProgramId} has no ZLTO pool configured → paying configured targets directly (referee {RefereeTarget}, referrer {ReferrerTarget}) for usage {UsageId}",
-                  program.Id, rewardReferee ?? 0m, rewardReferrer ?? 0m, myUsage.Id);
               }
 
               // Per-party logging (full/partial/zero)
@@ -696,19 +705,14 @@ namespace Yoma.Core.Domain.Referral.Services
             var programStatusCurrent = program.Status;
             var linkStatusCurrent = link.Status;
 
-            // Increment running totals (CompletionTotal and ZltoRewardCumulative); may flip Program to LIMIT_REACHED if ACTIVE, inclusive of all ACTIVE links (global completion cap hit)
-            program = await _programService.ProcessCompletion(program.Id, totalAwarded);
+            // Increment Treasury running total for ZLTO rewards awarded
+            await _treasuryService.ZltoRewardAwarded(treasury, totalAwarded);
 
-            // If the program flipped from ACTIVE → LIMIT_REACHED, all ACTIVE links will also be flipped to LIMIT_REACHED
-            if (programStatusCurrent == ProgramStatus.Active && program.Status == ProgramStatus.LimitReached && linkStatusCurrent == ReferralLinkStatus.Active)
-              // Re-read ensures we don't rely on a stale in-memory link
-              link = _linkService.GetById(myUsage.LinkId, false, false, false, false);
+            // Increment running totals (CompletionTotal and ZltoRewardCumulative); may flip Program to LIMIT_REACHED if ACTIVE, inclusive of all ACTIVE links (global completion cap hit)
+            program = await _programService.ProcessCompletion(program, totalAwarded);
 
             // Increment running totals (CompletionTotal and ZltoRewardCumulative); may flip to LIMIT_REACHED if ACTIVE (per-referrer completion cap hit)
-            link = await _linkService.ProcessCompletion(program, link.Id, totalAwarded);
-
-            linkCache[link.Id] = link;
-            programCache[program.Id] = program;
+            link = await _linkService.ProcessCompletion(program, link, totalAwarded);
 
             // NOTE: Local and Dev seed data use the same user (testuser@gmail.com) as both
             // referrer and referee for testing purposes.

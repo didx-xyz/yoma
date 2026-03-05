@@ -6,9 +6,9 @@ namespace Yoma.Core.Domain.Referral.Interfaces
 {
   public interface IProgramService
   {
-    Program GetById(Guid id, bool includeChildItems, bool includeComputed);
+    Program GetById(Guid id, bool includeChildItems, bool includeComputed, LockMode? lockMode = null);
 
-    Program? GetByIdOrNull(Guid id, bool includeChildItems, bool includeComputed);
+    Program? GetByIdOrNull(Guid id, bool includeChildItems, bool includeComputed, LockMode? lockMode = null);
 
     Program? GetByNameOrNull(string name, bool includeChildItems, bool includeComputed);
 
@@ -32,6 +32,6 @@ namespace Yoma.Core.Domain.Referral.Interfaces
 
     Task<Program> SetAsDefault(Guid id);
 
-    Task<Program> ProcessCompletion(Guid programId, decimal? rewardAmount);
+    Task<Program> ProcessCompletion(Program program, decimal? rewardAmount);
   }
 }

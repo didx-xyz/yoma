@@ -103,20 +103,22 @@ namespace Yoma.Core.Domain.Referral.Services
     #endregion
 
     #region Public Membmers
-    public Program GetById(Guid id, bool includeChildItems, bool includeComputed)
+    public Program GetById(Guid id, bool includeChildItems, bool includeComputed, LockMode? lockMode = null)
     {
-      var result = GetByIdOrNull(id, includeChildItems, includeComputed)
+      var result = GetByIdOrNull(id, includeChildItems, includeComputed, lockMode)
         ?? throw new EntityNotFoundException($"{nameof(Program)} with id '{id}' does not exist");
 
       return result;
     }
 
-    public Program? GetByIdOrNull(Guid id, bool includeChildItems, bool includeComputed)
+    public Program? GetByIdOrNull(Guid id, bool includeChildItems, bool includeComputed, LockMode? lockMode = null)
     {
       if (id == Guid.Empty)
         throw new ArgumentNullException(nameof(id));
 
-      var result = _programRepository.Query(includeChildItems).SingleOrDefault(o => o.Id == id);
+      var query = lockMode != null ? _programRepository.Query(includeChildItems, lockMode.Value) : _programRepository.Query(includeChildItems);
+
+      var result = query.SingleOrDefault(o => o.Id == id);
       if (result == null) return null;
 
       if (includeComputed)
@@ -692,20 +694,15 @@ namespace Yoma.Core.Domain.Referral.Services
       return result;
     }
 
-    public async Task<Program> ProcessCompletion(Guid programId, decimal? rewardAmount)
+    public async Task<Program> ProcessCompletion(Program program, decimal? rewardAmount)
     {
-      if (programId == Guid.Empty)
-        throw new ArgumentNullException(nameof(programId));
+      ArgumentNullException.ThrowIfNull(program, nameof(program));
 
       var statusLimitReached = _programStatusService.GetByName(ProgramStatus.LimitReached.ToString());
 
-      Program program = null!;
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
         using var scope = TransactionScopeHelper.CreateReadCommitted();
-
-        program = _programRepository.Query(LockMode.Wait).SingleOrDefault(p => p.Id == programId)
-          ?? throw new EntityNotFoundException($"{nameof(Program)} with id '{programId}' does not exist");
 
         // Increment global completion total (always)
         program.CompletionTotal = (program.CompletionTotal ?? 0) + 1;

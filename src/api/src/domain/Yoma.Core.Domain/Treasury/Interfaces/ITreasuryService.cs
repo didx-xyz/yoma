@@ -1,3 +1,4 @@
+using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Treasury.Models;
 
 namespace Yoma.Core.Domain.Treasury.Interfaces
@@ -6,10 +7,12 @@ namespace Yoma.Core.Domain.Treasury.Interfaces
   {
     TreasuryInfo Get();
 
+    Models.Treasury Get(LockMode? lockMode = null);
+
     Task<TreasuryInfo> Update(TreasuryRequestUpdate request);
 
-    Task ZltoRewardAwarded(decimal amount);
+    Task ZltoRewardAwarded(Models.Treasury treasury, decimal? amount);
 
-    Task ChimoneyCashedOut(decimal amount);
+    Task ChimoneyCashedOut(Models.Treasury treasury, decimal amount);
   }
 }
