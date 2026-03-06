@@ -153,7 +153,7 @@ namespace Yoma.Core.Api.Controllers
     #region Administrative Actions
     [SwaggerOperation(Summary = "Return a list of organizations associated with store access control rules (Admin role required)")]
     [HttpGet("store/rule/search/filter/organizations")]
-    [ProducesResponseType(typeof(List<Domain.Entity.Models.OrganizationInfo>), (int)HttpStatusCode.OK)]
+    [ProducesResponseType(typeof(List<Domain.Entity.Models.OrganizationInfoAdmin>), (int)HttpStatusCode.OK)]
     [Authorize(Roles = $"{Constants.Role_Admin}")]
     public IActionResult ListSearchCriteriaOrganizations()
     {

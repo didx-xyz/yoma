@@ -311,7 +311,7 @@ namespace Yoma.Core.Domain.Entity.Services
         ZltoOffline = balance.ZltoOffline
       };
 
-      result.AdminsOf = isOnBehalfOfUser ? [] : _organizationService.ListAdminsOf(true);
+      result.AdminsOf = isOnBehalfOfUser ? [] : [.. _organizationService.ListAdminsOf(true).Cast<OrganizationInfo>()];
 
       var filter = new MyOpportunitySearchFilter
       {

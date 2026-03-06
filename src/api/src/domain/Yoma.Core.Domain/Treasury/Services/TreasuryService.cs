@@ -40,16 +40,6 @@ namespace Yoma.Core.Domain.Treasury.Services
       return Get(null).ToInfo();
     }
 
-    public List<TreasuryInfoOrganization> SearchOrganization(TreasuryInfoOrganizationSearchFilter filter)
-    {
-      throw new NotImplementedException();
-    }
-
-    public List<TreasuryInfoReferralProgram> SearchReferralProgram(TreasuryInfoReferralProgramSearchFilter filter)
-    {
-      throw new NotImplementedException();
-    }
-
     public async Task<TreasuryInfo> Update(TreasuryRequestUpdate request)
     {
       ArgumentNullException.ThrowIfNull(request, nameof(request));

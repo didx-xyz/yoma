@@ -271,8 +271,10 @@ namespace Yoma.Core.Domain.Entity.Services
 
       var resultsInternal = query.ToList();
       resultsInternal.ForEach(o => o.LogoURL = GetBlobObjectURL(o.LogoStorageType, o.LogoKey));
+      resultsInternal.ForEach(o => o.ZltoRewardBalance = o.ZltoRewardPool.HasValue ? o.ZltoRewardPool - (o.ZltoRewardCumulative ?? default) : null);
+      resultsInternal.ForEach(o => o.YomaRewardBalance = o.YomaRewardPool.HasValue ? o.YomaRewardPool - (o.YomaRewardCumulative ?? default) : null);
 
-      results.Items = [.. resultsInternal.Select(o => o.ToInfo())];
+      results.Items = [.. resultsInternal.Select(o => o.ToInfoAdmin())];
       return results;
     }
 
@@ -1030,14 +1032,14 @@ namespace Yoma.Core.Domain.Entity.Services
       return org.Administrators ?? [];
     }
 
-    public List<OrganizationInfo> ListAdminsOf(bool includeComputed)
+    public List<OrganizationInfoAdmin> ListAdminsOf(bool includeComputed)
     {
       var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
       var orgIds = _organizationUserRepository.Query().Where(o => o.UserId == user.Id).Select(o => o.OrganizationId).ToList();
 
       var organizations = _organizationRepository.Query().Where(o => orgIds.Contains(o.Id)).ToList();
       if (includeComputed) organizations.ForEach(o => o.LogoURL = GetBlobObjectURL(o.LogoStorageType, o.LogoKey));
-      return [.. organizations.Select(o => o.ToInfo())];
+      return [.. organizations.Select(o => o.ToInfoAdmin())];
     }
     #endregion
 

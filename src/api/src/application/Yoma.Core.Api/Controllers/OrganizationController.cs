@@ -283,7 +283,7 @@ namespace Yoma.Core.Api.Controllers
 
     [SwaggerOperation(Summary = "Return a list of organizations the authenticated user administrates (Organization Admin role required)")]
     [HttpGet("admin")]
-    [ProducesResponseType(typeof(List<OrganizationInfo>), (int)HttpStatusCode.OK)]
+    [ProducesResponseType(typeof(List<OrganizationInfoAdmin>), (int)HttpStatusCode.OK)]
     [Authorize(Roles = Constants.Role_OrganizationAdmin)]
     public IActionResult ListAdminsOf()
     {

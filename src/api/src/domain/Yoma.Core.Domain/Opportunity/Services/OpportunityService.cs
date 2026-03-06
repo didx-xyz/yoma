@@ -566,7 +566,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       return results;
     }
 
-    public List<OrganizationInfo> ListOpportunitySearchCriteriaOrganizationsAdmin()
+    public List<OrganizationInfoAdmin> ListOpportunitySearchCriteriaOrganizationsAdmin()
     {
       var organizationIds = _opportunityRepository.Query().Select(o => o.OrganizationId).Distinct().ToList();
 
@@ -633,7 +633,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         .ThenBy(o => o.Name)
         .ToList();
 
-      return results;
+      return [.. results.Cast<OrganizationInfo>()];
     }
 
     public List<OpportunitySearchCriteriaCommitmentIntervalOption> ListOpportunitySearchCriteriaCommitmentIntervalOptions(List<PublishedState>? publishedStates)
@@ -1474,7 +1474,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
         (result.ZltoReward, result.ZltoRewardReduced, result.ZltoRewardPoolDepleted) =
          ProcessRewardAllocation(result.ZltoReward, opportunity.ZltoRewardPool, opportunity.ZltoRewardCumulative, result.ZltoRewardReduced, result.ZltoRewardPoolDepleted);
 
-        // yoma reward
+        // yoma Reward
+        // placeholder added at Organization and Opportunity level; never implemented across Referrals or Treasury
         (result.YomaReward, result.YomaRewardReduced, result.YomaRewardPoolDepleted) =
           ProcessRewardAllocation(result.YomaReward, organization.YomaRewardPool, organization.YomaRewardCumulative, null, null);
 
