@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
+using Yoma.Core.Domain.BlobProvider;
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Interfaces;
@@ -43,6 +44,9 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
         ProgramName = entity.Program.Name,
         ProgramDescription = entity.Program.Description,
         ProgramCompletionLimitReferee = entity.Program.CompletionLimitReferee,
+        ProgramImageId = entity.Program.ImageId,
+        ProgramImageStorageType = entity.Program.Image == null ? null : Enum.Parse<StorageType>(entity.Program.Image.StorageType, true),
+        ProgramImageLogoKey = entity.Program.Image == null ? null : entity.Program.Image.Key,
         UserId = entity.UserId,
         Username = entity.User.Email ?? entity.User.PhoneNumber ?? string.Empty,
         UserDisplayName = entity.User.DisplayName ?? entity.User.Email ?? entity.User.PhoneNumber ?? string.Empty,

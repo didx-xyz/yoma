@@ -59,7 +59,7 @@ namespace Yoma.Core.Test.Referral.Services
         .Returns(program);
 
       fixture.ProgramService
-        .Setup(x => x.ReferrerAdded(It.IsAny<Program>()))
+        .Setup(x => x.ReferrerLinkCreated(It.IsAny<Program>(), It.IsAny<bool>()))
         .ReturnsAsync((Program p) => p);
 
       fixture.UserService
@@ -121,7 +121,7 @@ namespace Yoma.Core.Test.Referral.Services
       Assert.Equal("https://short.link/abc", result.ShortURL);
       Assert.False(result.Blocked);
 
-      fixture.ProgramService.Verify(x => x.ReferrerAdded(It.Is<Program>(p => p.Id == program.Id)), Times.Once);
+      fixture.ProgramService.Verify(x => x.ReferrerLinkCreated(It.IsAny<Program>(), It.IsAny<bool>()), Times.Never);
     }
 
     [Fact]
@@ -347,7 +347,7 @@ namespace Yoma.Core.Test.Referral.Services
       var ex = await Assert.ThrowsAsync<ValidationException>(() => service.Create(request));
       Assert.Contains("Multiple active referral links are not allowed", ex.Message);
 
-      fixture.ProgramService.Verify(x => x.ReferrerAdded(It.IsAny<Program>()), Times.Never);
+      fixture.ProgramService.Verify(x => x.ReferrerLinkCreated(It.IsAny<Program>(), It.IsAny<bool>()), Times.Never);
     }
 
     [Fact]
@@ -393,7 +393,7 @@ namespace Yoma.Core.Test.Referral.Services
       Assert.Equal(ReferralLinkStatus.Active, result.Status);
       Assert.Equal("https://short.link/abc", result.ShortURL);
 
-      fixture.ProgramService.Verify(x => x.ReferrerAdded(It.IsAny<Program>()), Times.Never);
+      fixture.ProgramService.Verify(x => x.ReferrerLinkCreated(It.IsAny<Program>(), It.IsAny<bool>()), Times.Never);
     }
 
     [Fact]
@@ -434,7 +434,7 @@ namespace Yoma.Core.Test.Referral.Services
       var ex = await Assert.ThrowsAsync<ValidationException>(() => service.Create(request));
       Assert.Contains("already exists", ex.Message);
 
-      fixture.ProgramService.Verify(x => x.ReferrerAdded(It.IsAny<Program>()), Times.Never);
+      fixture.ProgramService.Verify(x => x.ReferrerLinkCreated(It.IsAny<Program>(), It.IsAny<bool>()), Times.Never);
     }
 
     #endregion
@@ -537,7 +537,7 @@ namespace Yoma.Core.Test.Referral.Services
       var service = fixture.Build();
 
       // Act
-      var result = service.GetById(link.Id, false, true, false, false);
+      var result = service.GetById(link.Id, false, false, true, false, false);
 
       // Assert
       Assert.NotNull(result);
@@ -557,7 +557,7 @@ namespace Yoma.Core.Test.Referral.Services
 
       // Act & Assert
       Assert.Throws<EntityNotFoundException>(() =>
-        service.GetById(nonExistentId, false, false, false, false));
+        service.GetById(nonExistentId, false, false, false, false, false));
     }
 
     #endregion

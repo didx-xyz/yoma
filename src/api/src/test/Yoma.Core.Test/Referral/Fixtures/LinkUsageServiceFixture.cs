@@ -37,8 +37,8 @@ namespace Yoma.Core.Test.Referral.Fixtures
     public Mock<INotificationDeliveryService> NotificationDeliveryService { get; }
     public Mock<INotificationURLFactory> NotificationURLFactory { get; }
     public Mock<ICountryService> CountryService { get; }
-
     public Mock<ITreasuryService> TreasuryService { get; }
+    public Mock<IBlobService> BlobService { get; }
     public Mock<ReferralLinkUsageSearchFilterValidator> ReferralLinkUsageSearchFilterValidator { get; }
     public Mock<IRepositoryBatched<ReferralLinkUsage>> LinkUsageRepository { get; }
     #endregion
@@ -84,6 +84,7 @@ namespace Yoma.Core.Test.Referral.Fixtures
       NotificationURLFactory = new Mock<INotificationURLFactory>();
       CountryService = new Mock<ICountryService>();
       TreasuryService = new Mock<ITreasuryService>();
+      BlobService = new Mock<IBlobService>();
 
       ReferralLinkUsageSearchFilterValidator = new Mock<ReferralLinkUsageSearchFilterValidator>() { CallBase = false };
 
@@ -111,6 +112,7 @@ namespace Yoma.Core.Test.Referral.Fixtures
         NotificationURLFactory.Object,
         CountryService.Object,
         TreasuryService.Object,
+        BlobService.Object,
         ReferralLinkUsageSearchFilterValidator.Object,
         LinkUsageRepository.Object);
     }

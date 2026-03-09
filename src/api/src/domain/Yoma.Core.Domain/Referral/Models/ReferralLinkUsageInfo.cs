@@ -22,6 +22,10 @@ namespace Yoma.Core.Domain.Referral.Models
 
     public DateTimeOffset? ProgramDateEnd { get; set; }
 
+    public Guid? ProgramImageId { get; set; }
+
+    public string? ProgramImageURL { get; set; }
+
     public int? TimeRemainingInDays { get; set; }
 
     public DateTimeOffset? DateCompleteBy { get; set; }

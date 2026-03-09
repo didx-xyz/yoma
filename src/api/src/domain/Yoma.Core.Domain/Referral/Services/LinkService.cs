@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.Transactions;
+using Yoma.Core.Domain.BlobProvider;
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.Core.Extensions;
@@ -37,6 +38,7 @@ namespace Yoma.Core.Domain.Referral.Services
     private readonly ILinkStatusService _linkStatusService;
     private readonly ILinkUsageStatusService _linkUsageStatusService;
     private readonly ICountryService _countryService;
+    private readonly IBlobService _blobService;
 
     private readonly IExecutionStrategyService _executionStrategyService;
 
@@ -65,6 +67,7 @@ namespace Yoma.Core.Domain.Referral.Services
       ILinkStatusService linkStatusService,
       ILinkUsageStatusService linkUsageStatusService,
       ICountryService countryService,
+      IBlobService blobService,
 
       IExecutionStrategyService executionStrategyService,
 
@@ -85,6 +88,7 @@ namespace Yoma.Core.Domain.Referral.Services
       _linkStatusService = linkStatusService ?? throw new ArgumentNullException(nameof(linkStatusService));
       _linkUsageStatusService = linkUsageStatusService ?? throw new ArgumentNullException(nameof(linkUsageStatusService));
       _countryService = countryService ?? throw new ArgumentNullException(nameof(countryService));
+      _blobService = blobService ?? throw new ArgumentNullException(nameof(blobService));
 
       _executionStrategyService = executionStrategyService ?? throw new ArgumentNullException(nameof(executionStrategyService));
 
@@ -97,15 +101,15 @@ namespace Yoma.Core.Domain.Referral.Services
     #endregion
 
     #region Public Members
-    public ReferralLink GetById(Guid id, bool includeChildItems, bool ensureOwnership, bool allowAdminOverride, bool? includeQRCode, LockMode? lockMode = null)
+    public ReferralLink GetById(Guid id, bool includeChildItems, bool includeComputed, bool ensureOwnership, bool allowAdminOverride, bool? includeQRCode, LockMode? lockMode = null)
     {
-      var result = GetByIdOrNull(id, includeChildItems, ensureOwnership, allowAdminOverride, includeQRCode, lockMode)
+      var result = GetByIdOrNull(id, includeChildItems, includeComputed, ensureOwnership, allowAdminOverride, includeQRCode, lockMode)
         ?? throw new EntityNotFoundException($"{nameof(ReferralLink)} with id '{id}' does not exist");
 
       return result;
     }
 
-    public ReferralLink? GetByIdOrNull(Guid id, bool includeChildItems, bool ensureOwnership, bool allowAdminOverride, bool? includeQRCode, LockMode? lockMode = null)
+    public ReferralLink? GetByIdOrNull(Guid id, bool includeChildItems, bool includeComputed, bool ensureOwnership, bool allowAdminOverride, bool? includeQRCode, LockMode? lockMode = null)
     {
       if (id == Guid.Empty)
         throw new ArgumentNullException(nameof(id));
@@ -116,7 +120,10 @@ namespace Yoma.Core.Domain.Referral.Services
       if (result == null) return null;
 
       if (includeQRCode == true) result.QRCodeBase64 = QRCodeHelper.GenerateQRCodeBase64(result.URL);
+
       SetUsageAggregates(result);
+
+      if (includeComputed) result.ProgramImageURL = GetBlobObjectURL(result.ProgramImageStorageType, result.ProgramImageLogoKey);
 
       if (!ensureOwnership) return result;
 
@@ -128,7 +135,7 @@ namespace Yoma.Core.Domain.Referral.Services
       return result;
     }
 
-    public ReferralLink? GetByNameOrNull(Guid userId, Guid programId, string name, bool includeChildItems, bool? includeQRCode)
+    public ReferralLink? GetByNameOrNull(Guid userId, Guid programId, string name, bool includeChildItems, bool includeComputed, bool? includeQRCode)
     {
       if (userId == Guid.Empty) throw new ArgumentNullException(nameof(userId));
 
@@ -141,7 +148,10 @@ namespace Yoma.Core.Domain.Referral.Services
       if (result == null) return null;
 
       if (includeQRCode == true) result.QRCodeBase64 = QRCodeHelper.GenerateQRCodeBase64(result.URL);
+
       SetUsageAggregates(result);
+
+      if (includeComputed) result.ProgramImageURL = GetBlobObjectURL(result.ProgramImageStorageType, result.ProgramImageLogoKey);
 
       return result;
     }
@@ -232,7 +242,12 @@ namespace Yoma.Core.Domain.Referral.Services
       }
 
       results.Items = [.. query];
-      results.Items.ForEach(SetUsageAggregates);
+
+      results.Items.ForEach(o =>
+      {
+        SetUsageAggregates(o);
+        o.ProgramImageURL = GetBlobObjectURL(o.ProgramImageStorageType, o.ProgramImageLogoKey);
+      });
 
       return results;
     }
@@ -292,6 +307,10 @@ namespace Yoma.Core.Domain.Referral.Services
           ProgramName = program.Name,
           ProgramDescription = program.Description,
           ProgramCompletionLimitReferee = program.CompletionLimitReferee,
+          ProgramImageId = program.ImageId,
+          ProgramImageStorageType = program.ImageStorageType,
+          ProgramImageLogoKey = program.ImageKey,
+          ProgramImageURL = program.ImageURL,
           UserId = user.Id,
           UserDisplayName = user.DisplayName ?? user.Username,
           Username = user.Username,
@@ -328,12 +347,12 @@ namespace Yoma.Core.Domain.Referral.Services
       await _referralLinkRequestUpdateValidator.ValidateAndThrowAsync(request);
 
       //link must belong to the current user
-      var result = GetById(request.Id, true, true, false, request.IncludeQRCode);
+      var result = GetById(request.Id, true, true, true, false, request.IncludeQRCode);
 
       if (!Statuses_Updatable.Contains(result.Status))
         throw new ValidationException($"Referral link can no longer be updated (current status '{result.Status.ToDescription()}'). Required state '{Statuses_Updatable.JoinNames()}'");
 
-      var existingByName = GetByNameOrNull(result.UserId, result.ProgramId, request.Name, false, false);
+      var existingByName = GetByNameOrNull(result.UserId, result.ProgramId, request.Name, false, false, false);
       if (existingByName != null && existingByName.Id != result.Id)
         throw new ValidationException($"A referral link with the name '{request.Name}' already exists for the current user");
 
@@ -342,16 +361,14 @@ namespace Yoma.Core.Domain.Referral.Services
 
       result = await _linkRepository.Update(result);
 
-      if (request.IncludeQRCode == true) result.QRCodeBase64 = QRCodeHelper.GenerateQRCodeBase64(result.URL);
-      SetUsageAggregates(result);
-
+      // GetById ensure QRCodeBase64 and SetUsageAggregates
       return result;
     }
 
     public async Task<ReferralLink> Cancel(Guid id)
     {
       //ensures the link belongs to the current user unless the caller has admin privileges
-      var result = GetById(id, true, true, true, false);
+      var result = GetById(id, true, true, true, true, false);
 
       if (result.Status == ReferralLinkStatus.Cancelled) return result;
 
@@ -439,6 +456,12 @@ namespace Yoma.Core.Domain.Referral.Services
     #endregion
 
     #region Private Members
+    private string? GetBlobObjectURL(StorageType? storageType, string? key)
+    {
+      if (!storageType.HasValue || string.IsNullOrEmpty(key)) return null;
+      return _blobService.GetURL(storageType.Value, key);
+    }
+
     private async Task<ReferralLink> GenerateShortLink(ReferralLink item)
     {
       var responseShortLink = await _shortLinkProviderClient.CreateShortLink(new ShortLinkRequest

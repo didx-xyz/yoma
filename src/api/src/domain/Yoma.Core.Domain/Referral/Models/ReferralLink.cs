@@ -1,4 +1,5 @@
 using Newtonsoft.Json;
+using Yoma.Core.Domain.BlobProvider;
 
 namespace Yoma.Core.Domain.Referral.Models
 {
@@ -31,6 +32,16 @@ namespace Yoma.Core.Domain.Referral.Models
     public string? ProgramDescription { get; set; }
 
     public int? ProgramCompletionLimitReferee { get; set; }
+
+    public Guid? ProgramImageId { get; set; }
+
+    [JsonIgnore]
+    public StorageType? ProgramImageStorageType { get; set; }
+
+    [JsonIgnore]
+    public string? ProgramImageLogoKey { get; set; }
+
+    public string? ProgramImageURL { get; set; }
 
     public Guid UserId { get; set; }
 

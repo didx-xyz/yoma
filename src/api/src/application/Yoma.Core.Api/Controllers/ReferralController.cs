@@ -168,7 +168,7 @@ namespace Yoma.Core.Api.Controllers
     {
       if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(GetLinkById));
 
-      var result = _linkService.GetById(id, true, true, true, includeQRCode);
+      var result = _linkService.GetById(id, true, true, true, true, includeQRCode);
 
       if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(GetLinkById));
 

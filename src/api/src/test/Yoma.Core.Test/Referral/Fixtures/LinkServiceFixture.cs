@@ -31,6 +31,7 @@ namespace Yoma.Core.Test.Referral.Fixtures
     public Mock<ILinkStatusService> LinkStatusService { get; }
     public Mock<ILinkUsageStatusService> LinkUsageStatusService { get; }
     public Mock<ICountryService> CountryService { get; }
+    public Mock<IBlobService> BlobService { get; }
     public Mock<IExecutionStrategyService> ExecutionStrategyService { get; }
     public Mock<ReferralLinkSearchFilterValidator> ReferralLinkSearchFilterValidator { get; }
     public Mock<ReferralLinkRequestCreateValidator> ReferralLinkRequestCreateValidator { get; }
@@ -69,6 +70,7 @@ namespace Yoma.Core.Test.Referral.Fixtures
       LinkUsageStatusService = MockLookupServices.CreateLinkUsageStatusService();
 
       CountryService = new Mock<ICountryService>();
+      BlobService = new Mock<IBlobService>();
 
       ExecutionStrategyService = new Mock<IExecutionStrategyService>();
       ExecutionStrategyService
@@ -100,6 +102,7 @@ namespace Yoma.Core.Test.Referral.Fixtures
         LinkStatusService.Object,
         LinkUsageStatusService.Object,
         CountryService.Object,
+        BlobService.Object,
         ExecutionStrategyService.Object,
         ReferralLinkSearchFilterValidator.Object,
         ReferralLinkRequestCreateValidator.Object,

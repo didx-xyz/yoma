@@ -5,11 +5,11 @@ namespace Yoma.Core.Domain.Referral.Interfaces
 {
   public interface ILinkService
   {
-    ReferralLink GetById(Guid id, bool includeChildItems, bool ensureOwnership, bool allowAdminOverride, bool? includeQRCode, LockMode? lockMode = null);
+    ReferralLink GetById(Guid id, bool includeChildItems, bool includeComputed, bool ensureOwnership, bool allowAdminOverride, bool? includeQRCode, LockMode? lockMode = null);
 
-    ReferralLink? GetByIdOrNull(Guid id, bool includeChildItems, bool ensureOwnership, bool allowAdminOverride, bool? includeQRCode, LockMode? lockMode = null);
+    ReferralLink? GetByIdOrNull(Guid id, bool includeChildItems, bool includeComputed, bool ensureOwnership, bool allowAdminOverride, bool? includeQRCode, LockMode? lockMode = null);
 
-    ReferralLink? GetByNameOrNull(Guid userId, Guid programId, string name, bool includeChildItems, bool? includeQRCode);
+    ReferralLink? GetByNameOrNull(Guid userId, Guid programId, string name, bool includeChildItems, bool includeComputed, bool? includeQRCode);
 
     ReferralLinkSearchResults Search(ReferralLinkSearchFilter filter);
 

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.Transactions;
+using Yoma.Core.Domain.BlobProvider;
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.Core.Extensions;
@@ -46,6 +47,7 @@ namespace Yoma.Core.Domain.Referral.Services
     private readonly INotificationURLFactory _notificationURLFactory;
     private readonly ICountryService _countryService;
     private readonly ITreasuryService _treasuryService;
+    private readonly IBlobService _blobService;
 
     private readonly ReferralLinkUsageSearchFilterValidator _referralLinkUsageSearchFilterValidator;
 
@@ -77,6 +79,7 @@ namespace Yoma.Core.Domain.Referral.Services
       INotificationURLFactory notificationURLFactory,
       ICountryService countryService,
       ITreasuryService treasuryService,
+      IBlobService blobService,
 
       ReferralLinkUsageSearchFilterValidator referralLinkUsageSearchFilterValidator,
 
@@ -98,6 +101,7 @@ namespace Yoma.Core.Domain.Referral.Services
       _notificationURLFactory = notificationURLFactory ?? throw new ArgumentNullException(nameof(notificationURLFactory));
       _countryService = countryService ?? throw new ArgumentNullException(nameof(countryService));
       _treasuryService = treasuryService ?? throw new ArgumentNullException(nameof(treasuryService));
+      _blobService = blobService ?? throw new ArgumentNullException(nameof(blobService));
 
       _referralLinkUsageSearchFilterValidator = referralLinkUsageSearchFilterValidator ?? throw new ArgumentNullException(nameof(referralLinkUsageSearchFilterValidator));
 
@@ -112,6 +116,8 @@ namespace Yoma.Core.Domain.Referral.Services
 
       var result = _linkUsageRepository.Query().SingleOrDefault(x => x.Id == id)
         ?? throw new EntityNotFoundException($"Referral link usage with Id '{id}' does not exist");
+
+      if (includeComputed) result.ProgramImageURL = GetBlobObjectURL(result.ProgramImageStorageType, result.ProgramImageLogoKey);
 
       if (!ensureOwnership) return ToInfoParseProgress(result, includeComputed);
 
@@ -137,6 +143,10 @@ namespace Yoma.Core.Domain.Referral.Services
 
       if (results.Count == 0)
         throw new EntityNotFoundException($"Referral link usage for program '{programId}' and the current user does not exist");
+
+      var result = results.Single();
+
+      if (includeComputed) result.ProgramImageURL = GetBlobObjectURL(result.ProgramImageStorageType, result.ProgramImageLogoKey);
 
       return ToInfoParseProgress(results.Single(), includeComputed, ReferralParticipationRole.Referee);
     }
@@ -252,13 +262,14 @@ namespace Yoma.Core.Domain.Referral.Services
       }
 
       results.Items = [.. query];
+      results.Items.ForEach(o => o.ProgramImageURL = GetBlobObjectURL(o.ProgramImageStorageType, o.ProgramImageLogoKey));
 
       return results;
     }
 
     public async Task ClaimAsReferee(Guid linkId)
     {
-      var link = _linkService.GetById(linkId, true, false, false, false);
+      var link = _linkService.GetById(linkId, true, false, false, false, false);
       var program = _programService.GetById(link.ProgramId, true, false);
       var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 
@@ -306,7 +317,7 @@ namespace Yoma.Core.Domain.Referral.Services
         // Use the existing link for accurate messaging; avoid re-fetch if it matches the incoming link
         var existingLink = usageExisting.LinkId == link.Id
           ? link
-          : _linkService.GetById(usageExisting.LinkId, true, false, false, false);
+          : _linkService.GetById(usageExisting.LinkId, true, false, false, false, false);
 
         var msgUsageExisting = $"You have already participated in program '{program.Name}' and cannot claim again";
 
@@ -483,7 +494,7 @@ namespace Yoma.Core.Domain.Referral.Services
             }
 
             var program = _programService.GetById(myUsage.ProgramId, false, false, LockMode.Wait);
-            var link = _linkService.GetById(myUsage.LinkId, false, false, false, false, LockMode.Wait);
+            var link = _linkService.GetById(myUsage.LinkId, false, false, false, false, false, LockMode.Wait);
             var treasury = _treasuryService.Get(LockMode.Wait);
 
             // Default: eligible for rewards unless a cap was reached (do not punish in-flight)
@@ -743,6 +754,12 @@ namespace Yoma.Core.Domain.Referral.Services
     #endregion
 
     #region Private Members
+    private string? GetBlobObjectURL(StorageType? storageType, string? key)
+    {
+      if (!storageType.HasValue || string.IsNullOrEmpty(key)) return null;
+      return _blobService.GetURL(storageType.Value, key);
+    }
+
     private async Task SendNotification(NotificationType type, Program program, ReferralLink link, ReferralLinkUsage usage)
     {
       try
@@ -852,6 +869,8 @@ namespace Yoma.Core.Domain.Referral.Services
         ProgramDescription = item.ProgramDescription,
         ProgramCompletionWindowInDays = item.ProgramCompletionWindowInDays,
         ProgramDateEnd = item.ProgramDateEnd,
+        ProgramImageId = item.ProgramImageId,
+        ProgramImageURL = item.ProgramImageURL,
         TimeRemainingInDays = item.TimeRemainingInDays,
         DateCompleteBy = item.DateCompleteBy,
         LinkId = item.LinkId,
