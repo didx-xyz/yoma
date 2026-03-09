@@ -67,8 +67,8 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
         FROM
         (
           SELECT
-            (SELECT SUM("ZltoRewardCumulative") FROM "Entity"."Organization") AS org_total,
-            (SELECT SUM("ZltoRewardCumulative") FROM "Referral"."Program") AS ref_total
+            COALESCE((SELECT SUM("ZltoRewardCumulative") FROM "Entity"."Organization"), 0) AS org_total,
+            COALESCE((SELECT SUM("ZltoRewardCumulative") FROM "Referral"."Program"), 0) AS ref_total
         ) totals
         WHERE NOT EXISTS (
           SELECT 1 FROM "Treasury"."Treasury"

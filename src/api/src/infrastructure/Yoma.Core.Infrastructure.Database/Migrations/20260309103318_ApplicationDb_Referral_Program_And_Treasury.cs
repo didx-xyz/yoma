@@ -180,7 +180,6 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           table: "Treasury",
           column: "ModifiedByUserId");
 
-
       Referral_Program_And_Treasury_Seeding.Seed(migrationBuilder);
     }
 
