@@ -311,7 +311,7 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
         entity.IsDefault = item.IsDefault;
         entity.Hidden = item.Hidden;
         entity.ReferrerLimit = item.ReferrerLimit;
-        entity.ReferrerTotal = item.ReferrerTotal;  
+        entity.ReferrerTotal = item.ReferrerTotal;
         entity.DateStart = item.DateStart;
         entity.DateEnd = item.DateEnd;
         entity.DateModified = item.DateModified;
