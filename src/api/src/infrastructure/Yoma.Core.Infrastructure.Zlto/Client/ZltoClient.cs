@@ -87,7 +87,7 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
       ArgumentException.ThrowIfNullOrWhiteSpace(username, nameof(username));
       username = username.Trim();
 
-      if (string.Equals(usernameCurrent, username, StringComparison.InvariantCultureIgnoreCase))
+      if (string.Equals(usernameCurrent, username, StringComparison.OrdinalIgnoreCase))
         return username;
 
       var request = new WalletRequestUpdateUsername
@@ -220,11 +220,11 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
       countryCodeAlpha2 = countryCodeAlpha2?.Trim();
 
       var results = _options.Store.Owners
-           .Where(o => string.IsNullOrEmpty(countryCodeAlpha2) || string.Equals(countryCodeAlpha2, o.CountryCodeAlpha2, StringComparison.InvariantCultureIgnoreCase))
+           .Where(o => string.IsNullOrEmpty(countryCodeAlpha2) || string.Equals(countryCodeAlpha2, o.CountryCodeAlpha2, StringComparison.OrdinalIgnoreCase))
            .Select(o => o.CountryCodeAlpha2)
            .ToList();
 
-      if (!results.Contains(Country.Worldwide.ToDescription(), StringComparer.InvariantCultureIgnoreCase))
+      if (!results.Contains(Country.Worldwide.ToDescription(), StringComparer.OrdinalIgnoreCase))
         throw new InvalidOperationException("Worldwide (WW) country code must be configured");
 
       return results;
@@ -258,7 +258,7 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
         Id = o.StoreId,
         Name = o.StoreName,
         Description = o.StoreDescription,
-        ImageURL = string.Equals(o.StoreLogo, Image_Default_Empty_Value, StringComparison.InvariantCultureIgnoreCase) ? null : o.StoreLogo
+        ImageURL = string.Equals(o.StoreLogo, Image_Default_Empty_Value, StringComparison.OrdinalIgnoreCase) ? null : o.StoreLogo
       }).OrderBy(o => o.Name)];
     }
 
@@ -291,7 +291,7 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
         Name = o.ItemCatName,
         Description = o.ItemCatDescription,
         Summary = o.ItemCatDetails,
-        ImageURL = string.Equals(o.ItemCatImage, Image_Default_Empty_Value, StringComparison.InvariantCultureIgnoreCase) ? null : o.ItemCatImage,
+        ImageURL = string.Equals(o.ItemCatImage, Image_Default_Empty_Value, StringComparison.OrdinalIgnoreCase) ? null : o.ItemCatImage,
         //o.StoreItemCount: internal count the does not reflect the available item count correctly
         Count = _options.CalculateStoreItemCategoryCount ? ListStoreItems(storeId, o.ItemCategoryId.ToString(), 100, 0).Result.Count : o.StoreItemCount, //ZLTO has an soft limit of 100; if you omit paging, they default to 10
         Amount = o.ItemCatZlto
@@ -336,8 +336,8 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
         Description = o.ItemDescription,
         Summary = o.ItemDetails,
         Code = o.ItemCode,
-        ImageURL = string.Equals(o.ItemLogo, Image_Default_Empty_Value, StringComparison.InvariantCultureIgnoreCase) ? o.StoreInfoSi.StoreLogo
-          : string.Equals(o.ItemLogo, Image_Default_Empty_Value, StringComparison.InvariantCultureIgnoreCase) ? null : o.ItemLogo,
+        ImageURL = string.Equals(o.ItemLogo, Image_Default_Empty_Value, StringComparison.OrdinalIgnoreCase) ? o.StoreInfoSi.StoreLogo
+          : string.Equals(o.ItemLogo, Image_Default_Empty_Value, StringComparison.OrdinalIgnoreCase) ? null : o.ItemLogo,
         Amount = o.ItemZlto
 
       }).OrderBy(o => o.Name)];
@@ -587,7 +587,7 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
                         Id = firstItem.Category.Id,
                         Name = firstItem.Category.CategoryName,
                         StoreImageURLs = items
-                          .Where(o => o.Category.Id == firstItem.Category.Id && o.StoreLogo != null && !string.Equals(o.StoreLogo, Image_Default_Empty_Value, StringComparison.InvariantCultureIgnoreCase))
+                          .Where(o => o.Category.Id == firstItem.Category.Id && o.StoreLogo != null && !string.Equals(o.StoreLogo, Image_Default_Empty_Value, StringComparison.OrdinalIgnoreCase))
                           .OrderBy(o => o.StoreName)
                           .Select(o => o.StoreLogo)
                           .Take(4)
@@ -623,9 +623,9 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
 
       // attempt to find the country owner for the specified country code (countryCodeAlpha2)
       // if the country is not explicitly configured, default to the owner configured for the Worldwide (WW) store
-      var countryOwner = _options.Store.Owners.SingleOrDefault(o => string.Equals(o.CountryCodeAlpha2, countryCodeAlpha2, StringComparison.InvariantCultureIgnoreCase));
+      var countryOwner = _options.Store.Owners.SingleOrDefault(o => string.Equals(o.CountryCodeAlpha2, countryCodeAlpha2, StringComparison.OrdinalIgnoreCase));
       var countryOwnerId = countryOwner?.Id ?? _options.Store.Owners
-          .Single(o => string.Equals(o.CountryCodeAlpha2, Country.Worldwide.ToDescription(), StringComparison.InvariantCultureIgnoreCase)).Id;
+          .Single(o => string.Equals(o.CountryCodeAlpha2, Country.Worldwide.ToDescription(), StringComparison.OrdinalIgnoreCase)).Id;
 
       if (string.IsNullOrWhiteSpace(countryOwnerId))
         throw new InvalidOperationException($"Failed to resolve the country owner id");
@@ -669,7 +669,7 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
       }
       while (responseSearch.Items.Count == Limit_Default);
 
-      resultSearch.Items = [.. resultSearch.Items.Where(o => string.Equals(o.Category.Id, categoryId, StringComparison.InvariantCultureIgnoreCase))
+      resultSearch.Items = [.. resultSearch.Items.Where(o => string.Equals(o.Category.Id, categoryId, StringComparison.OrdinalIgnoreCase))
           .Skip(offset ?? default).Take(effectiveLimit)];
 
       return resultSearch;

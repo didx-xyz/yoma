@@ -390,7 +390,7 @@ namespace Yoma.Core.Domain.Entity.Services
           result = resultDocuments.Organization;
           blobObjects.AddRange(resultDocuments.ItemsAdded);
 
-          var isProviderTypeEducation = result.ProviderTypes?.SingleOrDefault(o => string.Equals(o.Name, OrganizationProviderType.Education.ToString(), StringComparison.InvariantCultureIgnoreCase)) != null;
+          var isProviderTypeEducation = result.ProviderTypes?.SingleOrDefault(o => string.Equals(o.Name, OrganizationProviderType.Education.ToString(), StringComparison.OrdinalIgnoreCase)) != null;
           if (isProviderTypeEducation && (request.EducationProviderDocuments == null || request.EducationProviderDocuments.Count == 0))
             throw new ValidationException($"Education provider type documents are required");
 
@@ -401,7 +401,7 @@ namespace Yoma.Core.Domain.Entity.Services
             blobObjects.AddRange(resultDocuments.ItemsAdded);
           }
 
-          var isProviderTypeMarketplace = result.ProviderTypes?.SingleOrDefault(o => string.Equals(o.Name, OrganizationProviderType.Marketplace.ToString(), StringComparison.InvariantCultureIgnoreCase)) != null;
+          var isProviderTypeMarketplace = result.ProviderTypes?.SingleOrDefault(o => string.Equals(o.Name, OrganizationProviderType.Marketplace.ToString(), StringComparison.OrdinalIgnoreCase)) != null;
           if (isProviderTypeMarketplace && (request.BusinessDocuments == null || request.BusinessDocuments.Count == 0))
             throw new ValidationException($"Business documents are required");
 
@@ -452,7 +452,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
       var result = GetById(request.Id, true, true, ensureOrganizationAuthorization);
 
-      if (string.Equals(result.Name, _appSettings.YomaOrganizationName, StringComparison.InvariantCultureIgnoreCase)
+      if (string.Equals(result.Name, _appSettings.YomaOrganizationName, StringComparison.OrdinalIgnoreCase)
           && !string.Equals(result.Name, request.Name))
         throw new ValidationException($"{nameof(Organization)} '{result.Name}' is a system organization and its name cannot be changed");
 
@@ -468,8 +468,8 @@ namespace Yoma.Core.Domain.Entity.Services
       if (existingByNameHashValue != null && result.Id != existingByNameHashValue.Id)
         throw new ValidationException($"{nameof(Organization)} with the specified name '{request.Name}' was previously used. Please choose a different name");
 
-      var ssoClientUpdated = !string.Equals(result.SSOClientIdOutbound, request.SSOClientIdOutbound, StringComparison.InvariantCultureIgnoreCase);
-      if (!ssoClientUpdated) ssoClientUpdated = !string.Equals(result.SSOClientIdInbound, request.SSOClientIdInbound, StringComparison.InvariantCultureIgnoreCase);
+      var ssoClientUpdated = !string.Equals(result.SSOClientIdOutbound, request.SSOClientIdOutbound, StringComparison.OrdinalIgnoreCase);
+      if (!ssoClientUpdated) ssoClientUpdated = !string.Equals(result.SSOClientIdInbound, request.SSOClientIdInbound, StringComparison.OrdinalIgnoreCase);
       if (ssoClientUpdated && !HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor))
         throw new SecurityException("Unauthorized");
 
@@ -568,7 +568,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
           if (request.EducationProviderDocumentsDelete != null && request.EducationProviderDocumentsDelete.Count != 0)
           {
-            var isProviderTypeEducation = result.ProviderTypes?.SingleOrDefault(o => string.Equals(o.Name, OrganizationProviderType.Education.ToString(), StringComparison.InvariantCultureIgnoreCase)) != null;
+            var isProviderTypeEducation = result.ProviderTypes?.SingleOrDefault(o => string.Equals(o.Name, OrganizationProviderType.Education.ToString(), StringComparison.OrdinalIgnoreCase)) != null;
             if (isProviderTypeEducation && (result.Documents == null || result.Documents.Where(o => o.Type == OrganizationDocumentType.EducationProvider).All(o => request.EducationProviderDocumentsDelete.Contains(o.FileId))))
               throw new ValidationException("Education provider type documents are required. Update will result in no associated documents");
 
@@ -586,7 +586,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
           if (request.BusinessDocumentsDelete != null && request.BusinessDocumentsDelete.Count != 0)
           {
-            var isProviderTypeMarketplace = result.ProviderTypes?.SingleOrDefault(o => string.Equals(o.Name, OrganizationProviderType.Marketplace.ToString(), StringComparison.InvariantCultureIgnoreCase)) != null;
+            var isProviderTypeMarketplace = result.ProviderTypes?.SingleOrDefault(o => string.Equals(o.Name, OrganizationProviderType.Marketplace.ToString(), StringComparison.OrdinalIgnoreCase)) != null;
             if (isProviderTypeMarketplace && (result.Documents == null || result.Documents.Where(o => o.Type == OrganizationDocumentType.Business).All(o => request.BusinessDocumentsDelete.Contains(o.FileId))))
               throw new ValidationException($"Business documents are required. Update will result in no associated documents");
 
@@ -743,11 +743,11 @@ namespace Yoma.Core.Domain.Entity.Services
 
       ValidateUpdatable(result);
 
-      var isProviderTypeEducation = result.ProviderTypes?.SingleOrDefault(o => string.Equals(o.Name, OrganizationProviderType.Education.ToString(), StringComparison.InvariantCultureIgnoreCase)) != null;
+      var isProviderTypeEducation = result.ProviderTypes?.SingleOrDefault(o => string.Equals(o.Name, OrganizationProviderType.Education.ToString(), StringComparison.OrdinalIgnoreCase)) != null;
       if (isProviderTypeEducation && (result.Documents == null || !result.Documents.Where(o => o.Type == OrganizationDocumentType.EducationProvider).Any()))
         throw new ValidationException("Education provider type documents are required. Add the required documents before assigning the provider type");
 
-      var isProviderTypeMarketplace = result.ProviderTypes?.SingleOrDefault(o => string.Equals(o.Name, OrganizationProviderType.Marketplace.ToString(), StringComparison.InvariantCultureIgnoreCase)) != null;
+      var isProviderTypeMarketplace = result.ProviderTypes?.SingleOrDefault(o => string.Equals(o.Name, OrganizationProviderType.Marketplace.ToString(), StringComparison.OrdinalIgnoreCase)) != null;
       if (isProviderTypeMarketplace && (result.Documents == null || !result.Documents.Where(o => o.Type == OrganizationDocumentType.Business).Any()))
         throw new ValidationException($"Business documents are required. Add the required documents before assigning the provider type");
 
@@ -878,11 +878,11 @@ namespace Yoma.Core.Domain.Entity.Services
       if (result.Documents == null || result.Documents.Where(o => o.Type == OrganizationDocumentType.Registration).All(o => documentFileIds.Contains(o.FileId)))
         throw new ValidationException("Registration documents are required. Removal will result in no associated documents");
 
-      var isProviderTypeEducation = result.ProviderTypes?.SingleOrDefault(o => string.Equals(o.Name, OrganizationProviderType.Education.ToString(), StringComparison.InvariantCultureIgnoreCase)) != null;
+      var isProviderTypeEducation = result.ProviderTypes?.SingleOrDefault(o => string.Equals(o.Name, OrganizationProviderType.Education.ToString(), StringComparison.OrdinalIgnoreCase)) != null;
       if (isProviderTypeEducation && (result.Documents == null || result.Documents.Where(o => o.Type == OrganizationDocumentType.EducationProvider).All(o => documentFileIds.Contains(o.FileId))))
         throw new ValidationException("Education provider type documents are required. Removal will result in no associated documents");
 
-      var isProviderTypeMarketplace = result.ProviderTypes?.SingleOrDefault(o => string.Equals(o.Name, OrganizationProviderType.Marketplace.ToString(), StringComparison.InvariantCultureIgnoreCase)) != null;
+      var isProviderTypeMarketplace = result.ProviderTypes?.SingleOrDefault(o => string.Equals(o.Name, OrganizationProviderType.Marketplace.ToString(), StringComparison.OrdinalIgnoreCase)) != null;
       if (isProviderTypeMarketplace && (result.Documents == null || result.Documents.Where(o => o.Type == OrganizationDocumentType.Business).All(o => documentFileIds.Contains(o.FileId))))
         throw new ValidationException($"Business documents are required. Removal will result in no associated documents");
 

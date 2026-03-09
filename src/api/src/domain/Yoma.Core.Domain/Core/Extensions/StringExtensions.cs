@@ -7,6 +7,12 @@ namespace Yoma.Core.Domain.Core.Extensions
   public static partial class StringExtensions
   {
     #region Public Members
+
+    /// <summary>
+    /// Removes line breaks from a string so it is safe to log on a single line.
+    /// </summary>
+    /// <param name="input">The string to sanitize.</param>
+    /// <returns>The sanitized string.</returns>
     public static string SanitizeLogValue(this string input)
     {
       ArgumentNullException.ThrowIfNull(input, nameof(input));
@@ -15,62 +21,62 @@ namespace Yoma.Core.Domain.Core.Extensions
     }
 
     /// <summary>
-    ///  trim (remove leading/trailing spaces), remove double spaces
+    /// Normalizes a string, trims leading and trailing whitespace, and replaces
+    /// multiple consecutive spaces with a single space.
     /// </summary>
-    /// <param name="input"></param>
-    /// <returns></returns>
+    /// <param name="input">The string to normalize.</param>
+    /// <returns>The normalized string.</returns>
     public static string NormalizeTrim(this string input)
     {
       ArgumentNullException.ThrowIfNull(input, nameof(input));
 
-      var ret = input.Normalize().Trim();
-      //set more than one space to one space
-      ret = RegexDoubleSpacing().Replace(ret, " ");
-      return ret;
+      var result = input.Normalize().Trim();
+      return RegexDoubleSpacing().Replace(result, " ");
     }
 
     /// <summary>
-    /// remove all space characters
+    /// Removes all whitespace characters from a string.
     /// </summary>
-    /// <param name="e"></param>
-    /// <returns></returns>
+    /// <param name="input">The string to process.</param>
+    /// <returns>The string without whitespace characters.</returns>
     public static string RemoveWhiteSpaces(this string input)
     {
       ArgumentNullException.ThrowIfNull(input, nameof(input));
 
-      return new string([.. input.ToCharArray().Where(c => !char.IsWhiteSpace(c))]);
+      return new string([.. input.Where(c => !char.IsWhiteSpace(c))]);
     }
 
     /// <summary>
-    /// Equals (invariant case & culture)
+    /// Compares two strings for equality ignoring case using ordinal comparison.
+    /// Intended for identifiers, usernames, codes, and other system values.
     /// </summary>
-    /// <param name="input"></param>
-    /// <returns></returns>
-    public static bool EqualsInvariantCultureIgnoreCase(this string input, string compareTo)
+    /// <param name="input">The source string.</param>
+    /// <param name="compareTo">The string to compare with.</param>
+    /// <returns>True if the strings are equal ignoring case; otherwise false.</returns>
+    public static bool EqualsOrdinalIgnoreCase(this string input, string compareTo)
     {
       ArgumentNullException.ThrowIfNull(input, nameof(input));
-
       ArgumentNullException.ThrowIfNull(compareTo, nameof(compareTo));
 
-      return string.Equals(input, compareTo, StringComparison.InvariantCultureIgnoreCase);
+      return string.Equals(input, compareTo, StringComparison.OrdinalIgnoreCase);
     }
 
     /// <summary>
-    /// Values that equals the default value of the type, must revert to NULL. Will apply NormalizeTrim to valid values.
+    /// Returns null for null, empty, or whitespace input; otherwise returns the
+    /// normalized and trimmed string value.
     /// </summary>
-    /// <param name="e"></param>
-    /// <returns></returns>
+    /// <param name="input">The string to normalize.</param>
+    /// <returns>A normalized string, or null if no meaningful value exists.</returns>
     public static string? NormalizeNullableValue(this string input)
     {
-      if (string.IsNullOrWhiteSpace(input)) return null;
-      return string.IsNullOrEmpty(input) ? null : input.NormalizeTrim();
+      return string.IsNullOrWhiteSpace(input) ? null : input.NormalizeTrim();
     }
 
     /// <summary>
-    /// Converts string to TitleCase
+    /// Converts a string to title case after normalizing and trimming it.
     /// </summary>
-    /// <param name="input"></param>
-    /// <returns></returns>
+    /// <param name="input">The string to convert.</param>
+    /// <returns>The title-cased string.</returns>
     public static string TitleCase(this string input)
     {
       ArgumentNullException.ThrowIfNull(input, nameof(input));
@@ -79,80 +85,89 @@ namespace Yoma.Core.Domain.Core.Extensions
     }
 
     /// <summary>
-    /// Converts string to Initials
+    /// Converts a string to initials.
     /// </summary>
-    /// <returns></returns>
+    /// <param name="input">The string to convert.</param>
+    /// <returns>The initials derived from the string.</returns>
     public static string ToInitials(this string input)
     {
       ArgumentNullException.ThrowIfNull(input, nameof(input));
 
-      var initialsRegEx = RegexInitials();
       return CultureInfo.CurrentCulture.TextInfo.ToTitleCase(
-          initialsRegEx.Replace(input, "$1")
-              .NormalizeTrim()
-              .RemoveWhiteSpaces());
+        RegexInitials()
+          .Replace(input, "$1")
+          .NormalizeTrim()
+          .RemoveWhiteSpaces());
     }
 
+    /// <summary>
+    /// Removes diacritics and all non-alphanumeric characters from a string.
+    /// </summary>
+    /// <param name="input">The string to process.</param>
+    /// <returns>The cleaned string.</returns>
     public static string RemoveSpecialCharacters(this string input)
     {
       ArgumentNullException.ThrowIfNull(input, nameof(input));
 
-      // normalize the string to remove diacritics (accents)
-      string normalizedString = input.Normalize(NormalizationForm.FormD).Trim();
-      var stringBuilder = new StringBuilder();
+      var normalized = input.Normalize(NormalizationForm.FormD).Trim();
+      var builder = new StringBuilder();
 
-      foreach (var c in normalizedString)
+      foreach (var character in normalized)
       {
-        // keep the character only if it is a letter or a digit
-        if (CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark)
-        {
-          stringBuilder.Append(c);
-        }
+        if (CharUnicodeInfo.GetUnicodeCategory(character) != UnicodeCategory.NonSpacingMark)
+          builder.Append(character);
       }
 
-      // further strip any non-ASCII characters (optional, depending on requirements)
-      var asciiOnly = stringBuilder.ToString().Normalize(NormalizationForm.FormC);
-
-      // remove all non-alphanumeric characters
-      var result = NonAlphaNumeric().Replace(asciiOnly, string.Empty);
-      return result.Trim(); // remove leading and trailing spaces
+      var result = builder.ToString().Normalize(NormalizationForm.FormC);
+      return NonAlphaNumeric().Replace(result, string.Empty).Trim();
     }
 
+    /// <summary>
+    /// Normalizes and trims a string, then truncates it to the specified maximum length.
+    /// </summary>
+    /// <param name="input">The string to process.</param>
+    /// <param name="length">The maximum allowed length.</param>
+    /// <returns>The truncated string if necessary; otherwise the original normalized string.</returns>
     public static string TrimToLength(this string input, int length)
     {
       ArgumentNullException.ThrowIfNull(input, nameof(input));
 
-      input = input.NormalizeTrim();
-
       if (length < 1)
-        throw new ArgumentOutOfRangeException(nameof(length), "Must be at least 1 characters");
+        throw new ArgumentOutOfRangeException(nameof(length), "Must be at least 1 character.");
+
+      input = input.NormalizeTrim();
 
       return input.Length <= length ? input : input[..length];
     }
 
+    /// <summary>
+    /// Removes markdown asterisk characters from a string.
+    /// </summary>
+    /// <param name="input">The string to process.</param>
+    /// <returns>The string without markdown asterisks.</returns>
     public static string RemoveMarkdownAsterisks(this string input)
     {
-      if (string.IsNullOrEmpty(input))
-        throw new ArgumentNullException(nameof(input));
+      ArgumentNullException.ThrowIfNull(input, nameof(input));
 
-      // Replace all asterisks (*) used in Markdown formatting
       return MarkdownAsterisks().Replace(input, string.Empty);
     }
 
     #endregion
 
     #region Private Members
+
     [GeneratedRegex("[ ]{2,}", RegexOptions.None)]
     private static partial Regex RegexDoubleSpacing();
 
     [GeneratedRegex("(\\b[a-zA-Z])[a-zA-Z]*\\.* ?")]
     private static partial Regex RegexInitials();
 
-    [GeneratedRegex("[^a-zA-Z0-9 ]")] // include a space in the regex pattern
+    [GeneratedRegex("[^a-zA-Z0-9 ]")]
     private static partial Regex NonAlphaNumeric();
 
     [GeneratedRegex(@"\*")]
     private static partial Regex MarkdownAsterisks();
+
     #endregion
   }
 }

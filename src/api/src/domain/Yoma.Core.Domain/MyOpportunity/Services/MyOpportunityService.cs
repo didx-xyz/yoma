@@ -1151,7 +1151,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       var parsed = new List<(MyOpportunityInfoCsvImport Dto, int Row)>();
       int recordsTotal = 0;
 
-      var probedVerifications = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase);
+      var probedVerifications = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
       while (await csv.ReadAsync())
       {

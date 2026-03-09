@@ -36,6 +36,6 @@ namespace Yoma.Core.Domain.Referral.Interfaces
 
     Task<Program> ProcessCompletion(Program program, decimal? rewardAmount);
 
-    Task<Program> ReferrerAdded(Program program);
+    Task<Program> ReferrerLinkCreated(Program program, bool existingReferrer);
   }
 }

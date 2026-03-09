@@ -246,7 +246,7 @@ namespace Yoma.Core.Domain.Reward.Services
 
         var username = ParseWalletUsername(user);
 
-        if (string.Equals(existingItem.Username, username, StringComparison.InvariantCultureIgnoreCase))
+        if (string.Equals(existingItem.Username, username, StringComparison.OrdinalIgnoreCase))
         {
           if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Wallet username update skipped: Username is already up to date for user with id '{userId}'", userId.Value);
           return;
@@ -331,7 +331,7 @@ namespace Yoma.Core.Domain.Reward.Services
 
         var username = ParseWalletUsername(user);
 
-        if (string.Equals(existingItem.Username, username, StringComparison.InvariantCultureIgnoreCase))
+        if (string.Equals(existingItem.Username, username, StringComparison.OrdinalIgnoreCase))
         {
           if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Wallet username update skipped: Username is already up to date for user with id '{userId}'", userId.Value);
           return;
@@ -374,7 +374,7 @@ namespace Yoma.Core.Domain.Reward.Services
 
       var username = ParseWalletUsername(user);
 
-      if (string.Equals(existingItem.Username, username, StringComparison.InvariantCultureIgnoreCase))
+      if (string.Equals(existingItem.Username, username, StringComparison.OrdinalIgnoreCase))
         return username;
 
       await _rewardProviderClient.UpdateWalletUsername(existingItem.Username, username);

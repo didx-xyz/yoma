@@ -285,11 +285,11 @@ namespace Yoma.Core.Domain.Entity.Services
 
       var myItemsEducation = items.Where(
           o => o.ProviderTypes != null
-          && o.ProviderTypes.SingleOrDefault(o => string.Equals(o.Name, OrganizationProviderType.Education.ToString(), StringComparison.InvariantCultureIgnoreCase)) != null).ToList();
+          && o.ProviderTypes.SingleOrDefault(o => string.Equals(o.Name, OrganizationProviderType.Education.ToString(), StringComparison.OrdinalIgnoreCase)) != null).ToList();
 
       var myItemsMarketplace = items.Where(
           o => o.ProviderTypes != null
-          && o.ProviderTypes.SingleOrDefault(o => string.Equals(o.Name, OrganizationProviderType.Marketplace.ToString(), StringComparison.InvariantCultureIgnoreCase)) != null).ToList();
+          && o.ProviderTypes.SingleOrDefault(o => string.Equals(o.Name, OrganizationProviderType.Marketplace.ToString(), StringComparison.OrdinalIgnoreCase)) != null).ToList();
 
       var resourcePath = "Yoma.Core.Domain.Entity.SampleBlobs.sample.pdf";
       var assembly = Assembly.GetExecutingAssembly();

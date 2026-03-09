@@ -264,20 +264,23 @@ namespace Yoma.Core.Domain.Referral.Services
 
         var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 
-        var worldwideId = _countryService.GetByCodeAlpha2(Core.Country.Worldwide.ToDescription()).Id;
+        var worldwideId = _countryService.GetByCodeAlpha2(Country.Worldwide.ToDescription()).Id;
         if (!ProgramCountryPolicy.ProgramAccessibleToUser(worldwideId, user.CountryId, program.Countries))
           throw new ValidationException($"Referral program '{program.Name}' is not available in your country");
 
         var statusLinkActive = _linkStatusService.GetByName(ReferralLinkStatus.Active.ToString());
 
-        var existingLink = _linkRepository.Query()
-          .FirstOrDefault(o => o.ProgramId == program.Id && o.UserId == user.Id && o.StatusId == statusLinkActive.Id);
+        var userLinks = _linkRepository.Query().Where(o => o.ProgramId == program.Id && o.UserId == user.Id)
+          .Select(o => new { o.StatusId, o.Name }).ToList();
 
-        if (!program.MultipleLinksAllowed && existingLink != null)
+        var hasExistingLinks = userLinks.Count != 0;
+        var hasExistingActiveLink = userLinks.Any(o => o.StatusId == statusLinkActive.Id);
+        var existingByName = userLinks.Any(o => string.Equals(o.Name, request.Name, StringComparison.OrdinalIgnoreCase));
+
+        if (!program.MultipleLinksAllowed && hasExistingActiveLink)
           throw new ValidationException($"Multiple active referral links are not allowed for program '{program.Name}'");
 
-        var existingByName = GetByNameOrNull(user.Id, program.Id, request.Name, false, false);
-        if (existingByName != null)
+        if (existingByName)
           throw new ValidationException($"A referral link with the name '{request.Name}' already exists for the current user");
 
         result = new ReferralLink
@@ -302,12 +305,12 @@ namespace Yoma.Core.Domain.Referral.Services
         };
 
         result.URL = result.ClaimURL(_appSettings.AppBaseURL);
+
+        program = await _programService.ReferrerLinkCreated(program, hasExistingLinks);
+
         result = await GenerateShortLink(result);
 
         result = await _linkRepository.Create(result);
-
-        if (existingLink == null)
-          await _programService.ReferrerAdded(program);
 
         scope.Complete();
       });

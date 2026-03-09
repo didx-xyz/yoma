@@ -384,7 +384,7 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
 
       var roleRepresentationsExisting = await rolesMapperApi.GetUsersRoleMappingsByUserIdAsync(_keycloakAuthenticationOptions.Realm, id.ToString());
 
-      var roleRepresentations = roleRepresentationsExisting.RealmMappings.Where(o => roles.Contains(o.Name, StringComparer.InvariantCultureIgnoreCase)).ToList();
+      var roleRepresentations = roleRepresentationsExisting.RealmMappings.Where(o => roles.Contains(o.Name, StringComparer.OrdinalIgnoreCase)).ToList();
 
       await rolesMapperApi.PostUsersRoleMappingsRealmByUserIdAsync(_keycloakAuthenticationOptions.Realm, id.ToString(), roleRepresentations);
     }
@@ -394,7 +394,7 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
       if (string.IsNullOrWhiteSpace(role))
         throw new ArgumentNullException(nameof(role));
 
-      if (!Constants.Roles_Supported.Contains(role, StringComparer.InvariantCultureIgnoreCase))
+      if (!Constants.Roles_Supported.Contains(role, StringComparer.OrdinalIgnoreCase))
         throw new ArgumentOutOfRangeException(nameof(role), $"Role '{role}' is invalid");
 
       using var rolesApi = FS.Keycloak.RestApiClient.ClientFactory.ApiClientFactory.Create<RolesApi>(_httpClient);

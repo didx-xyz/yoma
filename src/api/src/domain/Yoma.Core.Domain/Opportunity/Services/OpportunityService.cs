@@ -1033,8 +1033,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
       var parsed = new List<(OpportunityInfoCsvImport Dto, int Row)>();
       int recordsTotal = 0;
 
-      var probedTitles = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase);
-      var probedExternalIds = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase);
+      var probedTitles = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+      var probedExternalIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
       while (await csv.ReadAsync())
       {
@@ -1989,14 +1989,14 @@ namespace Yoma.Core.Domain.Opportunity.Services
         reasons.Add("End date cannot be removed once it has been set");
 
       var countriesCodeAlpha2Required = PartnerService.RequiredCountries_AnyOf_All.Select(o => o.CodeAlpha2).ToList();
-      var countriesCodeAlpha2Current = opportunityCurrent.Countries?.Select(c => c.CodeAlpha2).Intersect(countriesCodeAlpha2Required, StringComparer.InvariantCultureIgnoreCase).ToList();
-      var countriesCodeAlpha2Request = request.Countries?.Select(c => _countryService.GetById(c).CodeAlpha2).Intersect(countriesCodeAlpha2Required, StringComparer.InvariantCultureIgnoreCase).ToList();
-      var countriesCodeAlpha2Removed = countriesCodeAlpha2Current?.Except(countriesCodeAlpha2Request ?? [], StringComparer.InvariantCultureIgnoreCase).ToList();
+      var countriesCodeAlpha2Current = opportunityCurrent.Countries?.Select(c => c.CodeAlpha2).Intersect(countriesCodeAlpha2Required, StringComparer.OrdinalIgnoreCase).ToList();
+      var countriesCodeAlpha2Request = request.Countries?.Select(c => _countryService.GetById(c).CodeAlpha2).Intersect(countriesCodeAlpha2Required, StringComparer.OrdinalIgnoreCase).ToList();
+      var countriesCodeAlpha2Removed = countriesCodeAlpha2Current?.Except(countriesCodeAlpha2Request ?? [], StringComparer.OrdinalIgnoreCase).ToList();
 
       if (countriesCodeAlpha2Removed?.Count > 0)
       {
         var countriesNameRemoved = PartnerService.RequiredCountries_AnyOf_All
-          .Where(rc => countriesCodeAlpha2Removed.Contains(rc.CodeAlpha2, StringComparer.InvariantCultureIgnoreCase)).Select(rc => rc.Country).ToList();
+          .Where(rc => countriesCodeAlpha2Removed.Contains(rc.CodeAlpha2, StringComparer.OrdinalIgnoreCase)).Select(rc => rc.Country).ToList();
 
         reasons.Add($"The following country(ies) cannot be removed: '{string.Join(", ", countriesNameRemoved)}'");
       }

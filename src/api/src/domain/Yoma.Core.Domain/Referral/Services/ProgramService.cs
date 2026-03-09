@@ -771,9 +771,16 @@ namespace Yoma.Core.Domain.Referral.Services
       return program;
     }
 
-    public async Task<Program> ReferrerAdded(Program program)
+    public async Task<Program> ReferrerLinkCreated(Program program, bool existingReferrer)
     {
       ArgumentNullException.ThrowIfNull(program, nameof(program));
+
+      // User already counted as a referrer for this program → nothing to update
+      if (existingReferrer) return program;
+
+      // Ensforce limit / cap if configured
+      if (program.ReferrerLimit.HasValue && (program.ReferrerBalance ?? 0) <= 0)
+        throw new ValidationException($"Referral program '{program.Name}' has reached its referrer limit");
 
       program.ReferrerTotal = (program.ReferrerTotal ?? 0) + 1;
 
