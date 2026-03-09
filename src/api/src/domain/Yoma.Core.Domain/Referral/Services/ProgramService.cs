@@ -775,10 +775,10 @@ namespace Yoma.Core.Domain.Referral.Services
     {
       ArgumentNullException.ThrowIfNull(program, nameof(program));
 
-      // User already counted as a referrer for this program → nothing to update
+      // User already counted as a referrer for this program — nothing to update
       if (existingReferrer) return program;
 
-      // Ensforce limit / cap if configured
+      // Enforce limit / cap if configured
       if (program.ReferrerLimit.HasValue && (program.ReferrerBalance ?? 0) <= 0)
         throw new ValidationException($"Referral program '{program.Name}' has reached its referrer limit");
 
