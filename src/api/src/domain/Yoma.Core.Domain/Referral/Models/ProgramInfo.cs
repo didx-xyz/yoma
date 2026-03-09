@@ -65,6 +65,13 @@ namespace Yoma.Core.Domain.Referral.Models
 
     public bool IsDefault { get; set; }
 
+    public int? ReferrerLimit { get; set; }
+
+    [JsonIgnore]
+    public int? ReferrerTotal { get; set; }
+
+    public int? ReferrerBalance => ReferrerLimit.HasValue ? ReferrerLimit - (ReferrerTotal ?? 0) : null;
+
     public DateTimeOffset DateStart { get; set; }
 
     public DateTimeOffset? DateEnd { get; set; }

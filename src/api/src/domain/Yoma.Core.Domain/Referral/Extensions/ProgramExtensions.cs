@@ -30,6 +30,9 @@ namespace Yoma.Core.Domain.Referral.Extensions
         MultipleLinksAllowed = value.MultipleLinksAllowed,
         Status = value.Status,
         IsDefault = value.IsDefault,
+        ReferrerLimit = value.ReferrerLimit,
+        ReferrerTotal = value.ReferrerTotal,
+        //ReferrerBalance: calculated inline
         DateStart = value.DateStart,
         DateEnd = value.DateEnd,
         Pathway = value.Pathway == null ? null : new ProgramPathwayInfo
