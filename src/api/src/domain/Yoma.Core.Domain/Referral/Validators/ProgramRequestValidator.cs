@@ -110,6 +110,11 @@ namespace Yoma.Core.Domain.Referral.Validators
         })
         .WithMessage("Default programs must enable Proof of Personhood or require a Pathway.");
 
+      // Default programs may not be hidden
+      RuleFor(x => x)
+        .Must(m => !m.IsDefault || m.Hidden != true)
+        .WithMessage("Default programs cannot be hidden.");
+
       RuleFor(x => x.ReferrerLimit)
         .GreaterThan(0)
         .When(x => x.ReferrerLimit.HasValue)

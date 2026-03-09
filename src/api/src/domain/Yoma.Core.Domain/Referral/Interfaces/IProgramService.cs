@@ -35,5 +35,7 @@ namespace Yoma.Core.Domain.Referral.Interfaces
     Task<Program> SetAsDefault(Guid id);
 
     Task<Program> ProcessCompletion(Program program, decimal? rewardAmount);
+
+    Task<Program> ReferrerAdded(Program program);
   }
 }

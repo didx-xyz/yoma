@@ -22,7 +22,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
         FROM (
           SELECT
             l."ProgramId",
-            COUNT(DISTINCT l."UserId") AS "ReferrerTotal"
+            NULLIF(COUNT(DISTINCT l."UserId"),0) AS "ReferrerTotal"
           FROM "Referral"."Link" l
           GROUP BY l."ProgramId"
         ) src
@@ -54,8 +54,8 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           3,
           1,
           NULL,
-          COALESCE(org_total,0) + COALESCE(ref_total,0),
-          COALESCE(org_total,0) + COALESCE(ref_total,0),
+          NULLIF((org_total + ref_total),0),
+          NULLIF((org_total + ref_total),0),
           NULL,
           NULL,
           NULL,

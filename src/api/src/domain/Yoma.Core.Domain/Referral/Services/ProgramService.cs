@@ -567,6 +567,9 @@ namespace Yoma.Core.Domain.Referral.Services
 
       AssertUpdatable(result);
 
+      if (hidden && result.IsDefault)
+        throw new ValidationException("The program is the current default program and cannot be hidden.");
+
       result.Hidden = hidden;
       result.ModifiedByUserId = user.Id;
 
@@ -764,6 +767,18 @@ namespace Yoma.Core.Domain.Referral.Services
 
         scope.Complete();
       });
+
+      return program;
+    }
+
+    public async Task<Program> ReferrerAdded(Program program)
+    {
+      ArgumentNullException.ThrowIfNull(program, nameof(program));
+
+      program.ReferrerTotal = (program.ReferrerTotal ?? 0) + 1;
+
+      program = await _programRepository.Update(program);
+
       return program;
     }
     #endregion

@@ -138,6 +138,8 @@ namespace Yoma.Core.Domain.Referral.Models
 
     public int? ReferrerTotal { get; set; }
 
+    public int? ReferrerBalance => ReferrerLimit.HasValue ? ReferrerLimit - (ReferrerTotal ?? 0) : null;
+
     public DateTimeOffset DateStart { get; set; }
 
     public DateTimeOffset? DateEnd { get; set; }

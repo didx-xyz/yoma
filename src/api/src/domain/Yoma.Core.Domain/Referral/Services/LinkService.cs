@@ -2,6 +2,7 @@ using FluentValidation;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using System.Transactions;
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.Core.Extensions;
@@ -32,10 +33,12 @@ namespace Yoma.Core.Domain.Referral.Services
     private readonly IShortLinkProviderClient _shortLinkProviderClient;
 
     private readonly IUserService _userService;
-    private readonly IProgramInfoService _programInfoService;
+    private readonly IProgramService _programService;
     private readonly ILinkStatusService _linkStatusService;
     private readonly ILinkUsageStatusService _linkUsageStatusService;
     private readonly ICountryService _countryService;
+
+    private readonly IExecutionStrategyService _executionStrategyService;
 
     private readonly ReferralLinkSearchFilterValidator _referralLinkSearchFilterValidator;
     private readonly ReferralLinkRequestCreateValidator _referralLinkRequestCreateValidator;
@@ -58,10 +61,12 @@ namespace Yoma.Core.Domain.Referral.Services
       IShortLinkProviderClientFactory shortLinkProviderClientFactory,
 
       IUserService userService,
-      IProgramInfoService programInfoService,
+      IProgramService programService,
       ILinkStatusService linkStatusService,
       ILinkUsageStatusService linkUsageStatusService,
       ICountryService countryService,
+
+      IExecutionStrategyService executionStrategyService,
 
       ReferralLinkSearchFilterValidator referralLinkSearchFilterValidator,
       ReferralLinkRequestCreateValidator referralLinkRequestCreateValidator,
@@ -76,10 +81,12 @@ namespace Yoma.Core.Domain.Referral.Services
       _shortLinkProviderClient = shortLinkProviderClientFactory.CreateClient() ?? throw new ArgumentNullException(nameof(shortLinkProviderClientFactory));
 
       _userService = userService ?? throw new ArgumentNullException(nameof(userService));
-      _programInfoService = programInfoService ?? throw new ArgumentNullException(nameof(programInfoService));
+      _programService = programService ?? throw new ArgumentNullException(nameof(programService));
       _linkStatusService = linkStatusService ?? throw new ArgumentNullException(nameof(linkStatusService));
       _linkUsageStatusService = linkUsageStatusService ?? throw new ArgumentNullException(nameof(linkUsageStatusService));
       _countryService = countryService ?? throw new ArgumentNullException(nameof(countryService));
+
+      _executionStrategyService = executionStrategyService ?? throw new ArgumentNullException(nameof(executionStrategyService));
 
       _referralLinkSearchFilterValidator = referralLinkSearchFilterValidator ?? throw new ArgumentNullException(nameof(referralLinkSearchFilterValidator));
       _referralLinkRequestCreateValidator = referralLinkRequestCreateValidator ?? throw new ArgumentNullException(nameof(referralLinkRequestCreateValidator));
@@ -236,62 +243,77 @@ namespace Yoma.Core.Domain.Referral.Services
 
       await _referralLinkRequestCreateValidator.ValidateAndThrowAsync(request);
 
-      var program = _programInfoService.GetById(request.ProgramId, false, false);
+      ReferralLink result = null!;
 
-      if (program.Status != ProgramStatus.Active || program.DateStart > DateTimeOffset.UtcNow)
-        throw new ValidationException($"Referral program '{program.Name}' is not active or has not started");
+      var now = DateTimeOffset.UtcNow;
 
-      if (program.DateEnd.HasValue && program.DateEnd <= DateTimeOffset.UtcNow) // Fallback guard in case program expiration job has’t run yet
-        throw new ValidationException($"Referral program '{program.Name}' expired on '{program.DateEnd:yyyy-MM-dd}'");
-
-      if (program.CompletionLimit.HasValue && (program.CompletionBalance ?? 0) <= 0)
-        throw new ValidationException($"Referral program '{program.Name}' has reached its completion limit");
-
-      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
-
-      // Country segregation: program must be accessible to the current user
-      var worldwideId = _countryService.GetByCodeAlpha2(Core.Country.Worldwide.ToDescription()).Id;
-      if (!ProgramCountryPolicy.ProgramAccessibleToUser(worldwideId, user.CountryId, program.Countries))
-        throw new ValidationException($"Referral program '{program.Name}' is not available in your country");
-
-      var statusLinkActive = _linkStatusService.GetByName(ReferralLinkStatus.Active.ToString());
-
-      var existingLink = _linkRepository.Query().FirstOrDefault(o => o.ProgramId == program.Id && o.UserId == user.Id && o.StatusId == statusLinkActive.Id);
-
-      if (!program.MultipleLinksAllowed && existingLink != null)
-        throw new ValidationException($"Multiple active referral links are not allowed for program '{program.Name}'");
-
-      var existingByName = GetByNameOrNull(user.Id, program.Id, request.Name, false, false);
-      if (existingByName != null)
-        throw new ValidationException($"A referral link with the name '{request.Name}' already exists for the current user");
-
-      var result = new ReferralLink
+      await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
-        Id = Guid.NewGuid(),
-        Name = request.Name,
-        Description = request.Description,
-        ProgramId = program.Id,
-        ProgramName = program.Name,
-        ProgramDescription = program.Description,
-        ProgramCompletionLimitReferee = program.CompletionLimitReferee,
-        UserId = user.Id,
-        UserDisplayName = user.DisplayName ?? user.Username,
-        Username = user.Username,
-        UserEmail = user.Email,
-        UserEmailConfirmed = user.EmailConfirmed,
-        UserPhoneNumber = user.PhoneNumber,
-        UserPhoneNumberConfirmed = user.PhoneNumberConfirmed,
-        Blocked = false,
-        StatusId = statusLinkActive.Id,
-        Status = ReferralLinkStatus.Active
-      };
+        using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
 
-      result.URL = result.ClaimURL(_appSettings.AppBaseURL);
-      result = await GenerateShortLink(result);
+        var program = _programService.GetById(request.ProgramId, true, true, LockMode.Wait);
 
-      result = await _linkRepository.Create(result);
+        if (program.Status != ProgramStatus.Active || program.DateStart > now)
+          throw new ValidationException($"Referral program '{program.Name}' is not active or has not started");
 
-      if (request.IncludeQRCode == true) result.QRCodeBase64 = QRCodeHelper.GenerateQRCodeBase64(result.URL);
+        if (program.DateEnd.HasValue && program.DateEnd <= now)
+          throw new ValidationException($"Referral program '{program.Name}' expired on '{program.DateEnd:yyyy-MM-dd}'");
+
+        if (program.CompletionLimit.HasValue && (program.CompletionBalance ?? 0) <= 0)
+          throw new ValidationException($"Referral program '{program.Name}' has reached its completion limit");
+
+        var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+
+        var worldwideId = _countryService.GetByCodeAlpha2(Core.Country.Worldwide.ToDescription()).Id;
+        if (!ProgramCountryPolicy.ProgramAccessibleToUser(worldwideId, user.CountryId, program.Countries))
+          throw new ValidationException($"Referral program '{program.Name}' is not available in your country");
+
+        var statusLinkActive = _linkStatusService.GetByName(ReferralLinkStatus.Active.ToString());
+
+        var existingLink = _linkRepository.Query()
+          .FirstOrDefault(o => o.ProgramId == program.Id && o.UserId == user.Id && o.StatusId == statusLinkActive.Id);
+
+        if (!program.MultipleLinksAllowed && existingLink != null)
+          throw new ValidationException($"Multiple active referral links are not allowed for program '{program.Name}'");
+
+        var existingByName = GetByNameOrNull(user.Id, program.Id, request.Name, false, false);
+        if (existingByName != null)
+          throw new ValidationException($"A referral link with the name '{request.Name}' already exists for the current user");
+
+        result = new ReferralLink
+        {
+          Id = Guid.NewGuid(),
+          Name = request.Name,
+          Description = request.Description,
+          ProgramId = program.Id,
+          ProgramName = program.Name,
+          ProgramDescription = program.Description,
+          ProgramCompletionLimitReferee = program.CompletionLimitReferee,
+          UserId = user.Id,
+          UserDisplayName = user.DisplayName ?? user.Username,
+          Username = user.Username,
+          UserEmail = user.Email,
+          UserEmailConfirmed = user.EmailConfirmed,
+          UserPhoneNumber = user.PhoneNumber,
+          UserPhoneNumberConfirmed = user.PhoneNumberConfirmed,
+          Blocked = false,
+          StatusId = statusLinkActive.Id,
+          Status = ReferralLinkStatus.Active
+        };
+
+        result.URL = result.ClaimURL(_appSettings.AppBaseURL);
+        result = await GenerateShortLink(result);
+
+        result = await _linkRepository.Create(result);
+
+        if (existingLink == null)
+          await _programService.ReferrerAdded(program);
+
+        scope.Complete();
+      });
+
+      if (request.IncludeQRCode == true)
+        result.QRCodeBase64 = QRCodeHelper.GenerateQRCodeBase64(result.URL);
 
       return result;
     }
