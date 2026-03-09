@@ -34,7 +34,7 @@ namespace Yoma.Core.Api.Controllers
       "including pools, cumulative amounts, and balances, must be queried via the existing admin search endpoints: " +
       "'organization/search', 'referral/program/search/admin', and 'opportunity/search/admin'")]
     [HttpGet]
-    [Authorize(Roles = Constants.Role_OrganizationAdmin)]
+    [Authorize(Roles = Constants.Role_Admin)]
     public ActionResult<TreasuryInfo> Get()
     {
       if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(Get));
@@ -49,6 +49,7 @@ namespace Yoma.Core.Api.Controllers
     [SwaggerOperation(Summary = "Update treasury info",
       Description = "Updates the treasury configuration")]
     [HttpPatch]
+    [Authorize(Roles = Constants.Role_Admin)]
     public async Task<ActionResult<TreasuryInfo>> Update(TreasuryRequestUpdate request)
     {
       if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(Update));

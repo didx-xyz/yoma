@@ -345,13 +345,38 @@ namespace Yoma.Core.Infrastructure.Database.Context
       // The filter restricts this uniqueness rule to Provider = ZLTO only.
       // This allows multiple rows per user where MyOpportunityId and ReferralLinkUsageId are NULL
       // for other providers (e.g. Chimoney cash-out payouts).
-      builder.Entity<Reward.Entities.RewardTransaction>()
-          .HasIndex(e => new { e.UserId, e.SourceEntityType, e.MyOpportunityId, e.ReferralLinkUsageId })
-          .IsUnique()
-          .HasFilter($"\"Provider\" = '{Domain.Reward.Provider.ZLTO}'");
+      builder.Entity<Reward.Entities.RewardTransaction>(entity =>
+      {
+        entity.Property(e => e.Provider)
+            .HasConversion<string>()
+            .HasDefaultValue(Domain.Reward.Provider.ZLTO.ToString());
+
+        entity.HasIndex(e => new { e.UserId, e.SourceEntityType, e.MyOpportunityId, e.ReferralLinkUsageId })
+            .IsUnique()
+            .HasFilter($"\"Provider\" = '{Domain.Reward.Provider.ZLTO}'");
+      });
 
       builder.Entity<RewardTransactionStatus>()
           .HasKey(e => e.Id).HasName("PK_Reward_TransactionStatus");
+
+      builder.Entity<Reward.Entities.WalletCreation>(entity =>
+      {
+        entity.Property(e => e.Provider)
+            .HasConversion<string>()
+            .HasDefaultValue(Domain.Reward.Provider.ZLTO.ToString());
+      });
+      #endregion Reward
+
+      #region SSI
+      builder.Entity<SSITenantCreation>()
+          .HasIndex(e => new { e.EntityType, e.UserId, e.OrganizationId })
+          .IsUnique()
+          .HasFilter(null);
+
+      builder.Entity<SSICredentialIssuance>()
+          .HasIndex(e => new { e.SchemaName, e.UserId, e.OrganizationId, e.MyOpportunityId })
+          .IsUnique()
+          .HasFilter(null);
       #endregion Reward
 
       #region SSI

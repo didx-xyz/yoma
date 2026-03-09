@@ -25,6 +25,11 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           schema: "Reward",
           table: "Transaction");
 
+      migrationBuilder.DropIndex(
+          name: "IX_Program_Description_StatusId_IsDefault_DateStart_DateEnd_Da~",
+          schema: "Referral",
+          table: "Program");
+
       migrationBuilder.EnsureSchema(
           name: "Treasury");
 
@@ -46,7 +51,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           table: "WalletCreation",
           type: "varchar(25)",
           nullable: false,
-          defaultValue: "");
+          defaultValue: "ZLTO");
 
       migrationBuilder.AddColumn<string>(
           name: "Provider",
@@ -54,7 +59,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           table: "Transaction",
           type: "varchar(25)",
           nullable: false,
-          defaultValue: "");
+          defaultValue: "ZLTO");
 
       migrationBuilder.AddColumn<bool>(
           name: "Hidden",
@@ -115,19 +120,17 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           {
             table.PrimaryKey("PK_Treasury", x => x.Id);
             table.ForeignKey(
-                name: "FK_Treasury_User_CreatedByUserId",
-                column: x => x.CreatedByUserId,
-                principalSchema: "Entity",
-                principalTable: "User",
-                principalColumn: "Id",
-                onDelete: ReferentialAction.NoAction);
+                      name: "FK_Treasury_User_CreatedByUserId",
+                      column: x => x.CreatedByUserId,
+                      principalSchema: "Entity",
+                      principalTable: "User",
+                      principalColumn: "Id");
             table.ForeignKey(
-                name: "FK_Treasury_User_ModifiedByUserId",
-                column: x => x.ModifiedByUserId,
-                principalSchema: "Entity",
-                principalTable: "User",
-                principalColumn: "Id",
-                onDelete: ReferentialAction.NoAction);
+                      name: "FK_Treasury_User_ModifiedByUserId",
+                      column: x => x.ModifiedByUserId,
+                      principalSchema: "Entity",
+                      principalTable: "User",
+                      principalColumn: "Id");
           });
 
       migrationBuilder.CreateIndex(
@@ -161,6 +164,12 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           columns: ["UserId", "SourceEntityType", "MyOpportunityId", "ReferralLinkUsageId"],
           unique: true,
           filter: "\"Provider\" = 'ZLTO'");
+
+      migrationBuilder.CreateIndex(
+          name: "IX_Program_Description_StatusId_IsDefault_Hidden_DateStart_Dat~",
+          schema: "Referral",
+          table: "Program",
+          columns: ["Description", "StatusId", "IsDefault", "Hidden", "DateStart", "DateEnd", "DateCreated", "DateModified"]);
 
       migrationBuilder.CreateIndex(
           name: "IX_Treasury_CreatedByUserId",
@@ -214,6 +223,11 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           name: "IX_Transaction_UserId_SourceEntityType_MyOpportunityId_Referra~",
           schema: "Reward",
           table: "Transaction");
+
+      migrationBuilder.DropIndex(
+          name: "IX_Program_Description_StatusId_IsDefault_Hidden_DateStart_Dat~",
+          schema: "Referral",
+          table: "Program");
 
       migrationBuilder.DropColumn(
           name: "Provider",
@@ -280,6 +294,12 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           table: "Transaction",
           columns: ["UserId", "SourceEntityType", "MyOpportunityId", "ReferralLinkUsageId"],
           unique: true);
+
+      migrationBuilder.CreateIndex(
+          name: "IX_Program_Description_StatusId_IsDefault_DateStart_DateEnd_Da~",
+          schema: "Referral",
+          table: "Program",
+          columns: ["Description", "StatusId", "IsDefault", "DateStart", "DateEnd", "DateCreated", "DateModified"]);
     }
   }
 }

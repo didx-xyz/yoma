@@ -9,7 +9,7 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Entities
 {
   [Table("Program", Schema = "Referral")]
   [Index(nameof(Name), IsUnique = true)]
-  [Index(nameof(Description), nameof(StatusId), nameof(IsDefault), nameof(DateStart), nameof(DateEnd),
+  [Index(nameof(Description), nameof(StatusId), nameof(IsDefault), nameof(Hidden), nameof(DateStart), nameof(DateEnd),
     nameof(DateCreated), nameof(DateModified))]
   public class Program : BaseEntity<Guid>
   {

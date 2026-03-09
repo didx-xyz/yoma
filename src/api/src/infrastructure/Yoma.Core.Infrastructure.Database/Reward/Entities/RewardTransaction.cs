@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Yoma.Core.Infrastructure.Database.Entity.Entities;
@@ -14,7 +13,7 @@ namespace Yoma.Core.Infrastructure.Database.Reward.Entities
   {
     [Required]
     [Column(TypeName = "varchar(25)")]
-    [DefaultValue(Domain.Reward.Provider.ZLTO)] // Default to ZLTO for historical data
+    // OnModelCreating: Default to ZLTO for historical data
     public string Provider { get; set; } = null!;
 
     [ForeignKey("UserId")]
