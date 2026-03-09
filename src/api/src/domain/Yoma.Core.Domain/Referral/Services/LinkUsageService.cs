@@ -282,6 +282,8 @@ namespace Yoma.Core.Domain.Referral.Services
       if (userUsages.Count == 0 && DateTimeOffset.UtcNow - user.DateYoIDOnboarded.Value > TimeSpan.FromHours(_appSettings.ReferralFirstClaimSinceYoIDOnboardedTimeoutInHours))
         throw new ValidationException("You are already registered. Registration with a referral link only applies to new registrations");
 
+      // See AppSettings.ReferralRestrictRefereeToSingleProgram summary
+      // When enabled, referees may only participate in a single referral program
       if (_appSettings.ReferralRestrictRefereeToSingleProgram)
       {
         // Usages by this user (other programs)
