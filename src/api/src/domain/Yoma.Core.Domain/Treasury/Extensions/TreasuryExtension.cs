@@ -1,4 +1,3 @@
-
 namespace Yoma.Core.Domain.Treasury.Extensions
 {
   public static class TreasuryExtension
@@ -9,10 +8,14 @@ namespace Yoma.Core.Domain.Treasury.Extensions
 
       return new Models.TreasuryInfo
       {
-        ZltoRewardPool = value.ZltoRewardPool,
+        FinancialYearStartMonth = value.FinancialYearStartMonth,
+        FinancialYearStartDay = value.FinancialYearStartDay,
+        ZltoRewardPoolCurrentFinancialYear = value.ZltoRewardPoolCurrentFinancialYear,
         ZltoRewardCumulative = value.ZltoRewardCumulative,
-        ChimoneyPoolInUSD = value.ChimoneyPoolInUSD,
+        ZltoRewardCumulativeCurrentFinancialYear = value.ZltoRewardCumulativeCurrentFinancialYear,
+        ChimoneyPoolCurrentFinancialYearInUSD = value.ChimoneyPoolCurrentFinancialYearInUSD,
         ChimoneyCumulativeInUSD = value.ChimoneyCumulativeInUSD,
+        ChimoneyCumulativeCurrentFinancialYearInUSD = value.ChimoneyCumulativeCurrentFinancialYearInUSD,
         ConversionRateZltoUsd = value.ConversionRateZltoUsd
       };
     }

@@ -617,12 +617,12 @@ namespace Yoma.Core.Domain.Referral.Services
               var refereeTarget = program.ZltoRewardReferee;
               var referrerTarget = program.ZltoRewardReferrer;
 
-              // Determine available balance from optional pools (Treasury → Program)
+              // Determine available balance from optional pools (Treasury current financial year -> Program)
               decimal? available = null;
 
-              if (treasury.ZltoRewardPool.HasValue)
+              if (treasury.ZltoRewardPoolCurrentFinancialYear.HasValue)
               {
-                var treasuryBalance = Math.Max(treasury.ZltoRewardBalance ?? 0m, 0m);
+                var treasuryBalance = Math.Max(treasury.ZltoRewardBalanceCurrentFinancialYear ?? 0m, 0m);
                 available = treasuryBalance;
               }
 

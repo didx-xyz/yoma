@@ -23,10 +23,14 @@ namespace Yoma.Core.Infrastructure.Database.Treasury.Repositories
       return _context.Treasury.Select(entity => new Domain.Treasury.Models.Treasury
       {
         Id = entity.Id,
-        ZltoRewardPool = entity.ZltoRewardPool,
+        FinancialYearStartMonth = entity.FinancialYearStartMonth,
+        FinancialYearStartDay = entity.FinancialYearStartDay,
+        ZltoRewardPoolCurrentFinancialYear = entity.ZltoRewardPoolCurrentFinancialYear,
         ZltoRewardCumulative = entity.ZltoRewardCumulative,
-        ChimoneyPoolInUSD = entity.ChimoneyPoolInUSD,
+        ZltoRewardCumulativeCurrentFinancialYear = entity.ZltoRewardCumulativeCurrentFinancialYear,
+        ChimoneyPoolCurrentFinancialYearInUSD = entity.ChimoneyPoolCurrentFinancialYearInUSD,
         ChimoneyCumulativeInUSD = entity.ChimoneyCumulativeInUSD,
+        ChimoneyCumulativeCurrentFinancialYearInUSD = entity.ChimoneyCumulativeCurrentFinancialYearInUSD,
         ConversionRateZltoUsd = entity.ConversionRateZltoUsd,
         CreatedByUserId = entity.CreatedByUserId,
         DateCreated = entity.DateCreated,
@@ -43,10 +47,14 @@ namespace Yoma.Core.Infrastructure.Database.Treasury.Repositories
       var entity = new Entities.Treasury
       {
         Id = item.Id,
-        ZltoRewardPool = item.ZltoRewardPool,
+        FinancialYearStartMonth = item.FinancialYearStartMonth,
+        FinancialYearStartDay = item.FinancialYearStartDay,
+        ZltoRewardPoolCurrentFinancialYear = item.ZltoRewardPoolCurrentFinancialYear,
         ZltoRewardCumulative = item.ZltoRewardCumulative,
-        ChimoneyPoolInUSD = item.ChimoneyPoolInUSD,
+        ZltoRewardCumulativeCurrentFinancialYear = item.ZltoRewardCumulativeCurrentFinancialYear,
+        ChimoneyPoolCurrentFinancialYearInUSD = item.ChimoneyPoolCurrentFinancialYearInUSD,
         ChimoneyCumulativeInUSD = item.ChimoneyCumulativeInUSD,
+        ChimoneyCumulativeCurrentFinancialYearInUSD = item.ChimoneyCumulativeCurrentFinancialYearInUSD,
         ConversionRateZltoUsd = item.ConversionRateZltoUsd,
         DateCreated = item.DateCreated,
         CreatedByUserId = item.CreatedByUserId,
@@ -68,10 +76,10 @@ namespace Yoma.Core.Infrastructure.Database.Treasury.Repositories
 
       item.DateModified = DateTimeOffset.UtcNow;
 
-      entity.ZltoRewardPool = item.ZltoRewardPool;
-      entity.ZltoRewardCumulative = item.ZltoRewardCumulative;
-      entity.ChimoneyPoolInUSD = item.ChimoneyPoolInUSD;
-      entity.ChimoneyCumulativeInUSD = item.ChimoneyCumulativeInUSD;
+      entity.FinancialYearStartMonth = item.FinancialYearStartMonth;
+      entity.FinancialYearStartDay = item.FinancialYearStartDay;
+      entity.ZltoRewardPoolCurrentFinancialYear = item.ZltoRewardPoolCurrentFinancialYear;
+      entity.ChimoneyPoolCurrentFinancialYearInUSD = item.ChimoneyPoolCurrentFinancialYearInUSD;
       entity.ConversionRateZltoUsd = item.ConversionRateZltoUsd;
       entity.DateModified = item.DateModified;
       entity.ModifiedByUserId = item.ModifiedByUserId;

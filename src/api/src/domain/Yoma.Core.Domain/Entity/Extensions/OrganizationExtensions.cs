@@ -29,12 +29,14 @@ namespace Yoma.Core.Domain.Entity.Extensions
         Tagline = value.Tagline,
         Status = value.Status,
         LogoURL = value.LogoURL,
-        ZltoRewardPool = value.ZltoRewardPool,
+        ZltoRewardPoolCurrentFinancialYear = value.ZltoRewardPoolCurrentFinancialYear,
         ZltoRewardCumulative = value.ZltoRewardCumulative,
-        ZltoRewardBalance = value.ZltoRewardBalance,
-        YomaRewardPool = value.YomaRewardPool,
+        ZltoRewardCumulativeCurrentFinancialYear = value.ZltoRewardCumulativeCurrentFinancialYear,
+        ZltoRewardBalanceCurrentFinancialYear = value.ZltoRewardBalanceCurrentFinancialYear,
+        YomaRewardPoolCurrentFinancialYear = value.YomaRewardPoolCurrentFinancialYear,
         YomaRewardCumulative = value.YomaRewardCumulative,
-        YomaRewardBalance = value.YomaRewardBalance
+        YomaRewardCumulativeCurrentFinancialYear = value.YomaRewardCumulativeCurrentFinancialYear,
+        YomaRewardBalanceCurrentFinancialYear = value.YomaRewardBalanceCurrentFinancialYear
       };
     }
 

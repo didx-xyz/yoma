@@ -16,7 +16,6 @@ using Yoma.Core.Domain.Referral.Services;
 using Yoma.Core.Domain.Referral.Validators;
 using Yoma.Core.Domain.Reward.Interfaces;
 using Yoma.Core.Domain.Treasury.Interfaces;
-using Yoma.Core.Domain.Treasury.Services;
 
 namespace Yoma.Core.Test.Referral.Fixtures
 {

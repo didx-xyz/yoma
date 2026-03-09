@@ -13,6 +13,7 @@ using Yoma.Core.Domain.MyOpportunity.Models;
 using Yoma.Core.Domain.Opportunity.Extensions;
 using Yoma.Core.Domain.Opportunity.Interfaces;
 using Yoma.Core.Domain.Opportunity.Models;
+using Yoma.Core.Domain.Treasury.Interfaces;
 
 namespace Yoma.Core.Domain.Opportunity.Services
 {
@@ -26,6 +27,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
     private readonly ILinkService _linkService;
     private readonly IUserService _userService;
     private readonly IDownloadService _downloadService;
+    private readonly ITreasuryService _treasuryService;
     #endregion
 
     #region Constructor
@@ -35,15 +37,17 @@ namespace Yoma.Core.Domain.Opportunity.Services
       IMyOpportunityService myOpportunityService,
       ILinkService linkService,
       IUserService userService,
-      IDownloadService downloadService)
+      IDownloadService downloadService,
+      ITreasuryService treasuryService)
     {
-      _appSettings = appSettings.Value;
-      _httpContextAccessor = httpContextAccessor;
-      _opportunityService = opportunityService;
-      _myOpportunityService = myOpportunityService;
-      _linkService = linkService;
-      _userService = userService;
-      _downloadService = downloadService;
+      _appSettings = appSettings.Value ?? throw new ArgumentNullException(nameof(appSettings));
+      _httpContextAccessor = httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
+      _opportunityService = opportunityService ?? throw new ArgumentNullException(nameof(opportunityService));
+      _myOpportunityService = myOpportunityService ?? throw new ArgumentNullException(nameof(myOpportunityService));
+      _linkService = linkService ?? throw new ArgumentNullException(nameof(linkService));
+      _userService = userService ?? throw new ArgumentNullException(nameof(userService));
+      _downloadService = downloadService ?? throw new ArgumentNullException(nameof(downloadService));
+      _treasuryService = treasuryService ?? throw new ArgumentNullException(nameof(treasuryService));
     }
     #endregion
 
@@ -51,8 +55,9 @@ namespace Yoma.Core.Domain.Opportunity.Services
     public OpportunityInfo GetById(Guid id, bool ensureOrganizationAuthorization)
     {
       var opportunity = _opportunityService.GetById(id, true, true, ensureOrganizationAuthorization);
+      var treasuryInfo = _treasuryService.Get();
 
-      var result = opportunity.ToOpportunityInfo(_appSettings.AppBaseURL);
+      var result = opportunity.ToOpportunityInfo(treasuryInfo.ZltoRewardBalanceCurrentFinancialYear, _appSettings.AppBaseURL);
       SetEngagementCounts(result);
       return result;
     }
@@ -65,6 +70,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       link.AssertLinkInstantVerify();
 
       var opportunity = _opportunityService.GetById(link.EntityId, true, true, false);
+      var treasuryInfo = _treasuryService.Get();
 
       var (publishedOrExpiredResult, message) = opportunity.PublishedOrExpired();
 
@@ -76,7 +82,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       //do not exclude hidden; instant verify links supports hidden opportunities
 
-      var result = opportunity.ToOpportunityInfo(_appSettings.AppBaseURL);
+      var result = opportunity.ToOpportunityInfo(treasuryInfo.ZltoRewardBalanceCurrentFinancialYear, _appSettings.AppBaseURL);
       SetEngagementCounts(result);
       return result;
     }
@@ -85,6 +91,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
     public OpportunityInfo GetPublishedOrExpiredById(Guid id)
     {
       var opportunity = _opportunityService.GetById(id, true, true, false);
+      var treasuryInfo = _treasuryService.Get();
 
       var (publishedOrExpiredResult, message) = opportunity.PublishedOrExpired();
 
@@ -97,7 +104,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       if (opportunity.Hidden == true)
         throw new EntityNotFoundException($"Opportunity with id '{opportunity.Id}' is hidden");
 
-      var result = opportunity.ToOpportunityInfo(_appSettings.AppBaseURL);
+      var result = opportunity.ToOpportunityInfo(treasuryInfo.ZltoRewardBalanceCurrentFinancialYear, _appSettings.AppBaseURL);
       SetEngagementCounts(result);
       return result;
     }
@@ -105,11 +112,12 @@ namespace Yoma.Core.Domain.Opportunity.Services
     public OpportunitySearchResultsInfo Search(OpportunitySearchFilterAdmin filter, bool ensureOrganizationAuthorization)
     {
       var searchResult = _opportunityService.Search(filter, ensureOrganizationAuthorization);
+      var treasuryInfo = _treasuryService.Get();
 
       var results = new OpportunitySearchResultsInfo
       {
         TotalCount = searchResult.TotalCount,
-        Items = searchResult.Items == null ? null : [.. searchResult.Items.Select(o => o.ToOpportunityInfo(_appSettings.AppBaseURL))],
+        Items = searchResult.Items == null ? null : [.. searchResult.Items.Select(o => o.ToOpportunityInfo(treasuryInfo.ZltoRewardBalanceCurrentFinancialYear, _appSettings.AppBaseURL))],
       };
 
       results.Items?.ForEach(SetEngagementCounts);
@@ -178,11 +186,12 @@ namespace Yoma.Core.Domain.Opportunity.Services
       }
 
       var searchResult = _opportunityService.Search(filterInternal, false);
+      var treasuryInfo = _treasuryService.Get();
 
       var results = new OpportunitySearchResultsInfo
       {
         TotalCount = searchResult.TotalCount,
-        Items = searchResult.Items == null ? null : [.. searchResult.Items.Select(o => o.ToOpportunityInfo(_appSettings.AppBaseURL))],
+        Items = searchResult.Items == null ? null : [.. searchResult.Items.Select(o => o.ToOpportunityInfo(treasuryInfo.ZltoRewardBalanceCurrentFinancialYear, _appSettings.AppBaseURL))],
       };
 
       results.Items?.ForEach(SetEngagementCounts);

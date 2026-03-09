@@ -2,9 +2,13 @@ namespace Yoma.Core.Domain.Treasury.Models
 {
   public sealed class TreasuryRequestUpdate
   {
-    public decimal? ZltoRewardPool { get; set; }
+    public byte FinancialYearStartMonth { get; set; }
 
-    public decimal? ChimoneyPoolInUSD { get; set; }
+    public byte FinancialYearStartDay { get; set; }
+
+    public decimal? ZltoRewardPoolCurrentFinancialYear { get; set; }
+
+    public decimal? ChimoneyPoolCurrentFinancialYearInUSD { get; set; }
 
     public decimal ConversionRateZltoUsd { get; set; }
   }

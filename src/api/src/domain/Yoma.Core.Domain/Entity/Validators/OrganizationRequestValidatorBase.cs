@@ -69,14 +69,14 @@ namespace Yoma.Core.Domain.Entity.Validators
         .WithMessage("Additional administrative username(s) must contain either a valid email address or phone number in international format (e.g. +27831234567).")
         .When(x => x.Admins != null && x.Admins.Count != 0);
 
-      RuleFor(x => x.ZltoRewardPool)
-          .GreaterThan(0).When(x => x.ZltoRewardPool.HasValue).WithMessage("'{PropertyName}' must be greater than 0.")
-          .LessThanOrEqualTo(10000000M).When(x => x.ZltoRewardPool.HasValue).WithMessage("'{PropertyName}' must not exceed 10 million.")
-          .Must(zltoRewardPool => zltoRewardPool % 1 == 0).When(x => x.ZltoRewardPool.HasValue).WithMessage("'{PropertyName}' does not support decimal points.");
+      RuleFor(x => x.ZltoRewardPoolCurrentFinancialYear)
+          .GreaterThan(0).When(x => x.ZltoRewardPoolCurrentFinancialYear.HasValue).WithMessage("'{PropertyName}' must be greater than 0.")
+          .LessThanOrEqualTo(10_000_000M).When(x => x.ZltoRewardPoolCurrentFinancialYear.HasValue).WithMessage("'{PropertyName}' must not exceed 10 million.")
+          .Must(pool => !pool.HasValue || pool.Value % 1 == 0).WithMessage("'{PropertyName}' does not support decimal points.");
 
-      RuleFor(x => x.YomaRewardPool)
-          .GreaterThan(0).When(x => x.YomaRewardPool.HasValue).WithMessage("'{PropertyName}' must be greater than 0.")
-          .LessThanOrEqualTo(10000000M).When(x => x.YomaRewardPool.HasValue).WithMessage("'{PropertyName}' must not exceed 10 million.");
+      RuleFor(x => x.YomaRewardPoolCurrentFinancialYear)
+          .GreaterThan(0).When(x => x.YomaRewardPoolCurrentFinancialYear.HasValue).WithMessage("'{PropertyName}' must be greater than 0.")
+          .LessThanOrEqualTo(10_000_000M).When(x => x.YomaRewardPoolCurrentFinancialYear.HasValue).WithMessage("'{PropertyName}' must not exceed 10 million.");
     }
     #endregion
 

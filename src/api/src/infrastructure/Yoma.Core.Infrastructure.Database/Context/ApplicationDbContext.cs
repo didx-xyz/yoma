@@ -365,6 +365,20 @@ namespace Yoma.Core.Infrastructure.Database.Context
           .IsUnique()
           .HasFilter(null);
       #endregion
+
+      #region Treasury
+      builder.Entity<Treasury.Entities.Treasury>()
+          .HasOne(o => o.CreatedByUser)
+          .WithMany()
+          .HasForeignKey(o => o.CreatedByUserId)
+          .OnDelete(DeleteBehavior.NoAction);
+
+      builder.Entity<Treasury.Entities.Treasury>()
+          .HasOne(o => o.ModifiedByUser)
+          .WithMany()
+          .HasForeignKey(o => o.ModifiedByUserId)
+          .OnDelete(DeleteBehavior.NoAction);
+      #endregion Treasury
     }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)

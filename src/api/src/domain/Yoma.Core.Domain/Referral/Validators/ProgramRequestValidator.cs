@@ -110,6 +110,11 @@ namespace Yoma.Core.Domain.Referral.Validators
         })
         .WithMessage("Default programs must enable Proof of Personhood or require a Pathway.");
 
+      RuleFor(x => x.ReferrerLimit)
+        .GreaterThan(0)
+        .When(x => x.ReferrerLimit.HasValue)
+        .WithMessage("Referrer limit must be greater than 0.");
+
       // If multiple links are allowed, require POP or a per-referrer cap (and optionally Pathway)
       RuleFor(x => x)
         .Must(m =>

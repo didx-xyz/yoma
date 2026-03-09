@@ -26,6 +26,8 @@ namespace Yoma.Core.Domain.Referral.Interfaces
 
     Task<Program> Update(ProgramRequestUpdate request);
 
+    Task<Program> UpdateHidden(Guid id, bool hidden);
+
     Task<Program> UpdateImage(Guid id, IFormFile file);
 
     Task<Program> UpdateStatus(Guid id, ProgramStatus status);

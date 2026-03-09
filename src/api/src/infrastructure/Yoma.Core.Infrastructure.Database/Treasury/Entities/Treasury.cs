@@ -9,17 +9,31 @@ namespace Yoma.Core.Infrastructure.Database.Treasury.Entities
   [Index(nameof(DateCreated), nameof(DateModified))]
   public sealed class Treasury : Shared.Entities.BaseEntity<Guid>
   {
+    [Required]
+    [Range(1, 12)]
+    public byte FinancialYearStartMonth { get; set; }
+
+    [Required]
+    [Range(1, 31)]
+    public byte FinancialYearStartDay { get; set; }
+
     [Column(TypeName = "decimal(12,2)")]
-    public decimal? ZltoRewardPool { get; set; }
+    public decimal? ZltoRewardPoolCurrentFinancialYear { get; set; }
 
     [Column(TypeName = "decimal(12,2)")]
     public decimal? ZltoRewardCumulative { get; set; }
 
     [Column(TypeName = "decimal(12,2)")]
-    public decimal? ChimoneyPoolInUSD { get; set; }
+    public decimal? ZltoRewardCumulativeCurrentFinancialYear { get; set; }
+
+    [Column(TypeName = "decimal(12,2)")]
+    public decimal? ChimoneyPoolCurrentFinancialYearInUSD { get; set; }
 
     [Column(TypeName = "decimal(12,2)")]
     public decimal? ChimoneyCumulativeInUSD { get; set; }
+
+    [Column(TypeName = "decimal(12,2)")]
+    public decimal? ChimoneyCumulativeCurrentFinancialYearInUSD { get; set; }
 
     [Required]
     [Column(TypeName = "decimal(10,4)")]

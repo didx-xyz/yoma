@@ -48,14 +48,20 @@ namespace Yoma.Core.Domain.Treasury.Services
 
       var result = Get(LockMode.Wait);
 
-      if (request.ZltoRewardPool.HasValue && result.ZltoRewardCumulative.HasValue && request.ZltoRewardPool.Value < result.ZltoRewardCumulative.Value)
-        throw new ValidationException($"The Zlto reward pool cannot be less than the cumulative Zlto rewards ({result.ZltoRewardCumulative.Value:F0}) already awarded across the system");
+      if (request.ZltoRewardPoolCurrentFinancialYear.HasValue &&
+          result.ZltoRewardCumulativeCurrentFinancialYear.HasValue &&
+          request.ZltoRewardPoolCurrentFinancialYear.Value < result.ZltoRewardCumulativeCurrentFinancialYear.Value)
+        throw new ValidationException($"The Zlto reward pool for the current financial year cannot be less than the cumulative Zlto rewards ({result.ZltoRewardCumulativeCurrentFinancialYear.Value:F0}) already awarded for the current financial year");
 
-      if (request.ChimoneyPoolInUSD.HasValue && result.ChimoneyCumulativeInUSD.HasValue && request.ChimoneyPoolInUSD.Value < result.ChimoneyCumulativeInUSD.Value)
-        throw new ValidationException($"The Chimoney pool cannot be less than the cumulative Chimoney payouts ({result.ChimoneyCumulativeInUSD.Value:F2}) already cashed out across the system");
+      if (request.ChimoneyPoolCurrentFinancialYearInUSD.HasValue &&
+          result.ChimoneyCumulativeCurrentFinancialYearInUSD.HasValue &&
+          request.ChimoneyPoolCurrentFinancialYearInUSD.Value < result.ChimoneyCumulativeCurrentFinancialYearInUSD.Value)
+        throw new ValidationException($"The Chimoney pool for the current financial year cannot be less than the cumulative Chimoney payouts ({result.ChimoneyCumulativeCurrentFinancialYearInUSD.Value:F2}) already cashed out for the current financial year");
 
-      result.ZltoRewardPool = request.ZltoRewardPool;
-      result.ChimoneyPoolInUSD = request.ChimoneyPoolInUSD;
+      result.FinancialYearStartMonth = request.FinancialYearStartMonth;
+      result.FinancialYearStartDay = request.FinancialYearStartDay;
+      result.ZltoRewardPoolCurrentFinancialYear = request.ZltoRewardPoolCurrentFinancialYear;
+      result.ChimoneyPoolCurrentFinancialYearInUSD = request.ChimoneyPoolCurrentFinancialYearInUSD;
       result.ConversionRateZltoUsd = request.ConversionRateZltoUsd;
 
       result = await _treasuryRepository.Update(result);
@@ -73,6 +79,7 @@ namespace Yoma.Core.Domain.Treasury.Services
       if (amount == default) return; // 0 is valid but has no effect
 
       treasury.ChimoneyCumulativeInUSD = (treasury.ChimoneyCumulativeInUSD ?? default) + amount;
+      treasury.ChimoneyCumulativeCurrentFinancialYearInUSD = (treasury.ChimoneyCumulativeCurrentFinancialYearInUSD ?? default) + amount;
 
       await _treasuryRepository.Update(treasury);
     }
@@ -89,6 +96,7 @@ namespace Yoma.Core.Domain.Treasury.Services
       if (amount.Value == default) return; // 0 valid but no effect
 
       treasury.ZltoRewardCumulative = (treasury.ZltoRewardCumulative ?? default) + amount.Value;
+      treasury.ZltoRewardCumulativeCurrentFinancialYear = (treasury.ZltoRewardCumulativeCurrentFinancialYear ?? default) + amount.Value;
 
       await _treasuryRepository.Update(treasury);
     }

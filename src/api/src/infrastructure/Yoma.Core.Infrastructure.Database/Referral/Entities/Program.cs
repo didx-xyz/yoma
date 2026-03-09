@@ -61,6 +61,12 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Entities
     [Required]
     public bool IsDefault { get; set; }
 
+    public bool? Hidden { get; set; }
+
+    public int? ReferrerLimit { get; set; }
+
+    public int? ReferrerTotal { get; set; }
+
     [Required]
     public DateTimeOffset DateStart { get; set; }
 

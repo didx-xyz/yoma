@@ -448,6 +448,20 @@ namespace Yoma.Core.Api.Controllers
       return Ok(result);
     }
 
+    [SwaggerOperation(Summary = "Update the specified referral program hidden state")]
+    [HttpPatch("program/{id}/hidden/{hidden}")]
+    [Authorize(Roles = $"{Constants.Role_Admin}")]
+    public async Task<ActionResult<Domain.Referral.Models.Program>> UpdateHidden([FromRoute] Guid id, [FromRoute] bool hidden)
+    {
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(UpdateHidden));
+
+      var result = await _programService.UpdateHidden(id, hidden);
+
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(UpdateHidden));
+
+      return Ok(result);
+    }
+
     [SwaggerOperation(Summary = "Update the referral program image (Admin role required)")]
     [HttpPatch("program/{id}/image")]
     [Authorize(Roles = $"{Constants.Role_Admin}")]

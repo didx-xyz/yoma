@@ -132,6 +132,12 @@ namespace Yoma.Core.Domain.Referral.Models
 
     public bool IsDefault { get; set; }
 
+    public bool? Hidden { get; set; }
+
+    public int? ReferrerLimit { get; set; }
+
+    public int? ReferrerTotal { get; set; }
+
     public DateTimeOffset DateStart { get; set; }
 
     public DateTimeOffset? DateEnd { get; set; }

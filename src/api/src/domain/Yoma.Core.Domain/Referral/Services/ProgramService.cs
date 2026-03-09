@@ -386,6 +386,8 @@ namespace Yoma.Core.Domain.Referral.Services
         StatusId = _programStatusService.GetByName(ProgramStatus.Active.ToString()).Id,
         Status = ProgramStatus.Active,
         IsDefault = false, //processed below if true
+        Hidden = request.Hidden,
+        ReferrerLimit = request.ReferrerLimit,
         DateStart = request.DateStart,
         DateEnd = request.DateEnd,
         CreatedByUserId = user.Id,
@@ -492,6 +494,9 @@ namespace Yoma.Core.Domain.Referral.Services
       if (request.CompletionLimit.HasValue && result.CompletionTotal.HasValue && request.CompletionLimit.Value < result.CompletionTotal.Value)
         throw new ValidationException($"The overall completion limit cannot be lower than the total completions already recorded ({result.CompletionTotal.Value:F0})");
 
+      if (request.ReferrerLimit.HasValue && result.ReferrerTotal.HasValue && request.ReferrerLimit.Value < result.ReferrerTotal.Value)
+        throw new ValidationException($"The referrer limit cannot be lower than the total referrers already recorded ({result.ReferrerTotal.Value:F0})");
+
       var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 
       result.Name = request.Name;
@@ -506,7 +511,10 @@ namespace Yoma.Core.Domain.Referral.Services
       result.PathwayRequired = request.PathwayRequired;
       result.MultipleLinksAllowed = request.MultipleLinksAllowed;
       //status processed above
-      if (!request.IsDefault) result.IsDefault = false; //processed below if true to avoid unique index constraint 
+      if (!request.IsDefault) result.IsDefault = false; //processed below if true to avoid unique index constraint
+      // Hidden is controlled via a dedicated UI action. If not supplied in the request, preserve the existing value
+      result.Hidden = request.Hidden.HasValue ? request.Hidden : result.Hidden;
+      result.ReferrerLimit = request.ReferrerLimit;
       result.DateStart = request.DateStart;
       result.DateEnd = request.DateEnd;
       result.ModifiedByUserId = user.Id;
@@ -547,6 +555,22 @@ namespace Yoma.Core.Domain.Referral.Services
       });
 
       if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Program {ProgramId} updated. FinalStatus={Status}", result.Id, result.Status);
+
+      return result;
+    }
+
+    public async Task<Program> UpdateHidden(Guid id, bool hidden)
+    {
+      var result = GetById(id, false, false);
+
+      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+
+      AssertUpdatable(result);
+
+      result.Hidden = hidden;
+      result.ModifiedByUserId = user.Id;
+
+      result = await _programRepository.Update(result);
 
       return result;
     }
