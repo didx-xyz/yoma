@@ -60,7 +60,7 @@ namespace Yoma.Core.Test.Referral.Services
 
       fixture.ProgramService
         .Setup(x => x.ReferrerLinkCreated(It.IsAny<Program>(), It.IsAny<bool>()))
-        .ReturnsAsync((Program p) => p);
+        .ReturnsAsync((Program p, bool incremented) => p);
 
       fixture.UserService
         .Setup(x => x.GetByUsername(DefaultUsername, It.IsAny<bool>(), It.IsAny<bool>()))
@@ -121,7 +121,7 @@ namespace Yoma.Core.Test.Referral.Services
       Assert.Equal("https://short.link/abc", result.ShortURL);
       Assert.False(result.Blocked);
 
-      fixture.ProgramService.Verify(x => x.ReferrerLinkCreated(It.IsAny<Program>(), It.IsAny<bool>()), Times.Never);
+      fixture.ProgramService.Verify(x => x.ReferrerLinkCreated(It.Is<Program>(p => p.Id == program.Id), false), Times.Once);
     }
 
     [Fact]
@@ -393,7 +393,7 @@ namespace Yoma.Core.Test.Referral.Services
       Assert.Equal(ReferralLinkStatus.Active, result.Status);
       Assert.Equal("https://short.link/abc", result.ShortURL);
 
-      fixture.ProgramService.Verify(x => x.ReferrerLinkCreated(It.IsAny<Program>(), It.IsAny<bool>()), Times.Never);
+      fixture.ProgramService.Verify(x => x.ReferrerLinkCreated(It.Is<Program>(p => p.Id == program.Id), true), Times.Once);
     }
 
     [Fact]
