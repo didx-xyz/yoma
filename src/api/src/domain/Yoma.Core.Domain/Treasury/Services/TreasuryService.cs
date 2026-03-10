@@ -3,6 +3,7 @@ using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Treasury.Extensions;
+using Yoma.Core.Domain.Treasury.Helpers;
 using Yoma.Core.Domain.Treasury.Interfaces;
 using Yoma.Core.Domain.Treasury.Models;
 using Yoma.Core.Domain.Treasury.Validators;
@@ -58,8 +59,14 @@ namespace Yoma.Core.Domain.Treasury.Services
           request.ChimoneyPoolCurrentFinancialYearInUSD.Value < result.ChimoneyCumulativeCurrentFinancialYearInUSD.Value)
         throw new ValidationException($"The Chimoney pool for the current financial year cannot be less than the cumulative Chimoney payouts ({result.ChimoneyCumulativeCurrentFinancialYearInUSD.Value:F2}) already cashed out for the current financial year");
 
-      result.FinancialYearStartMonth = request.FinancialYearStartMonth;
-      result.FinancialYearStartDay = request.FinancialYearStartDay;
+      var (financialYearStartDate, requiresRotation) = TreasuryHelper.EvaluateFinancialYear(result.FinancialYearStartMonth, result.FinancialYearStartDay, result.FinancialYearStartDate);
+
+      result.FinancialYearStartDate = financialYearStartDate;
+      if (requiresRotation)
+      {
+        result.ZltoRewardCumulativeCurrentFinancialYear = default;
+        result.ChimoneyCumulativeCurrentFinancialYearInUSD = default;
+      }
       result.ZltoRewardPoolCurrentFinancialYear = request.ZltoRewardPoolCurrentFinancialYear;
       result.ChimoneyPoolCurrentFinancialYearInUSD = request.ChimoneyPoolCurrentFinancialYearInUSD;
       result.ConversionRateZltoUsd = request.ConversionRateZltoUsd;

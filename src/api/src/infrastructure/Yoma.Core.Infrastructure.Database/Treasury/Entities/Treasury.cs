@@ -17,6 +17,10 @@ namespace Yoma.Core.Infrastructure.Database.Treasury.Entities
     [Range(1, 31)]
     public byte FinancialYearStartDay { get; set; }
 
+    [Required]
+    [Column(TypeName = "date")]
+    public DateOnly FinancialYearStartDate { get; set; }
+
     [Column(TypeName = "decimal(12,2)")]
     public decimal? ZltoRewardPoolCurrentFinancialYear { get; set; }
 

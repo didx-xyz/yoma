@@ -9,27 +9,15 @@ namespace Yoma.Core.Domain.Treasury.Validators
     public TreasuryRequestUpdateValidator()
     {
       RuleFor(x => x.FinancialYearStartMonth)
-        .InclusiveBetween((byte)1, (byte)12)
+        .InclusiveBetween((byte)DateTime.MinValue.Month, (byte)DateTime.MaxValue.Month)
         .WithMessage("Financial year start month must be between 1 and 12.");
 
       RuleFor(x => x.FinancialYearStartDay)
-        .InclusiveBetween((byte)1, (byte)31)
-        .WithMessage("Financial year start day must be between 1 and 31.");
-
-      RuleFor(x => x)
-        .Must(x =>
-        {
-          try
-          {
-            _ = new DateTime(2000, x.FinancialYearStartMonth, x.FinancialYearStartDay);
-            return true;
-          }
-          catch
-          {
-            return false;
-          }
-        })
-        .WithMessage("Financial year start month and day do not form a valid date.");
+        .Must((model, day) =>
+          day >= DateTime.MinValue.Day &&
+          day <= DateTime.DaysInMonth(2000, model.FinancialYearStartMonth))
+        .WithMessage(model =>
+          $"Financial year start day must be between 1 and {DateTime.DaysInMonth(2000, model.FinancialYearStartMonth)} for month {model.FinancialYearStartMonth}.");
 
       RuleFor(x => x.ZltoRewardPoolCurrentFinancialYear)
         .GreaterThan(0m)

@@ -37,6 +37,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           "Id",
           "FinancialYearStartMonth",
           "FinancialYearStartDay",
+          "FinancialYearStartDate",
           "ZltoRewardPoolCurrentFinancialYear",
           "ZltoRewardCumulative",
           "ZltoRewardCumulativeCurrentFinancialYear",
@@ -53,16 +54,21 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           '20F15B5E-92B5-4A5B-BC2E-90BAEBBE8047',
           3,
           1,
+          CASE
+            WHEN current_date < make_date(extract(year from current_date)::int, 3, 1)
+              THEN make_date(extract(year from current_date)::int - 1, 3, 1)
+            ELSE make_date(extract(year from current_date)::int, 3, 1)
+          END,
           NULL,
-          NULLIF((org_total + ref_total),0),
-          NULLIF((org_total + ref_total),0),
+          NULLIF((org_total + ref_total), 0),
+          NULLIF((org_total + ref_total), 0),
           NULL,
           NULL,
           NULL,
           0.01,
-          NOW(),
+          now(),
           '8929632E-2911-42FF-9A44-055DEF231B87',
-          NOW(),
+          now(),
           '8929632E-2911-42FF-9A44-055DEF231B87'
         FROM
         (

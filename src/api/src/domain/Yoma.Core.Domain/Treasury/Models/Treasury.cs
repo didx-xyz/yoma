@@ -8,17 +8,8 @@ namespace Yoma.Core.Domain.Treasury.Models
 
     public byte FinancialYearStartDay { get; set; }
 
-    public DateOnly FinancialYearStartDate
-    {
-      get
-      {
-        var today = DateOnly.FromDateTime(DateTime.UtcNow);
-        var yearStart = new DateOnly(today.Year, FinancialYearStartMonth, FinancialYearStartDay);
-
-        return today >= yearStart ? yearStart : yearStart.AddYears(-1);
-      }
-    }
-
+    public DateOnly FinancialYearStartDate { get; set; }
+    
     public decimal? ZltoRewardPoolCurrentFinancialYear { get; set; }
 
     public decimal? ZltoRewardCumulative { get; set; }

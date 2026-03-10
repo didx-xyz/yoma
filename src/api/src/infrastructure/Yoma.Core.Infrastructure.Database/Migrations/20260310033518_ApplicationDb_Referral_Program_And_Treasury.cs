@@ -104,6 +104,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             Id = table.Column<Guid>(type: "uuid", nullable: false),
             FinancialYearStartMonth = table.Column<byte>(type: "smallint", nullable: false),
             FinancialYearStartDay = table.Column<byte>(type: "smallint", nullable: false),
+            FinancialYearStartDate = table.Column<DateOnly>(type: "date", nullable: false),
             ZltoRewardPoolCurrentFinancialYear = table.Column<decimal>(type: "numeric(12,2)", nullable: true),
             ZltoRewardCumulative = table.Column<decimal>(type: "numeric(12,2)", nullable: true),
             ZltoRewardCumulativeCurrentFinancialYear = table.Column<decimal>(type: "numeric(12,2)", nullable: true),
