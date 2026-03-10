@@ -548,6 +548,22 @@ namespace Yoma.Core.Api.Controllers
 
       return Ok(result);
     }
+
+    [SwaggerOperation(Summary = "Get referral analytics for a program (Admin)",
+      Description = "Returns aggregate referral analytics for the specified program. " +
+      "Includes statistics for referrers, links, link usages / claims, and completion ratios.")]
+    [HttpGet("analytics/program/{programId}")]
+    [Authorize(Roles = Constants.Role_Admin)]
+    public ActionResult<ReferralAnalyticsProgram> GetProgramAnalytics([FromRoute] Guid programId)
+    {
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(GetProgramAnalytics));
+
+      var result = _analyticsService.ByProgram(programId);
+
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(GetProgramAnalytics));
+
+      return Ok(result);
+    }
     #endregion
     #endregion
   }
