@@ -2,30 +2,50 @@ namespace Yoma.Core.Domain.Treasury.Helpers
 {
   public static class TreasuryHelper
   {
-    public static (DateOnly financialYearStartDate, bool requiresRotation) EvaluateFinancialYear(
-      int startMonth,
-      int startDay,
+    /// <summary>
+    /// Determines the financial year start date based on the newly configured start month/day,
+    /// and decides whether the current financial year cumulatives must be reset (rotated).
+    ///
+    /// Reset (rotation) only occurs when:
+    ///   • the newly configured financial year start date moves forward compared to the previously stored one, and
+    ///   • the new start date is still in the future (after today)
+    ///
+    /// In all other cases the current financial year cumulatives are preserved.
+    /// </summary>
+    public static (DateOnly financialYearStartDate, bool requiresReset) EvaluateFinancialYear(
+      int newStartMonth,
+      int newStartDay,
       DateOnly currentFinancialYearStartDate)
     {
-      if (startMonth < DateTime.MinValue.Month || startMonth > DateTime.MaxValue.Month)
-        throw new ArgumentOutOfRangeException(nameof(startMonth));
+      if (newStartMonth < DateTime.MinValue.Month || newStartMonth > DateTime.MaxValue.Month)
+        throw new ArgumentOutOfRangeException(nameof(newStartMonth));
 
-      var maxDay = DateTime.DaysInMonth(DateTime.UtcNow.Year, startMonth);
+      // Use a fixed leap-safe reference year (2000) so February 29 remains a valid configuration value regardless of the current year.
+      var maxDay = DateTime.DaysInMonth(2000, newStartMonth);
 
-      if (startDay < DateTime.MinValue.Day || startDay > maxDay)
-        throw new ArgumentOutOfRangeException(nameof(startDay));
+      if (newStartDay < DateTime.MinValue.Day || newStartDay > maxDay)
+        throw new ArgumentOutOfRangeException(nameof(newStartDay));
 
       if (currentFinancialYearStartDate == default)
         throw new ArgumentException("Current financial year start date must be initialized.", nameof(currentFinancialYearStartDate));
 
       var today = DateOnly.FromDateTime(DateTime.UtcNow);
 
-      var expectedStart = new DateOnly(today.Year, startMonth, startDay);
+      // Adjust day safely for the current year (handles Feb 29 on non-leap years)
+      var safeDay = Math.Min(newStartDay, DateTime.DaysInMonth(today.Year, newStartMonth));
 
-      if (today < expectedStart)
-        expectedStart = expectedStart.AddYears(-1);
+      var candidate = new DateOnly(today.Year, newStartMonth, safeDay);
 
-      return (expectedStart, expectedStart != currentFinancialYearStartDate);
+      var newFinancialYearStart =
+        candidate >= today
+        ? candidate
+        : candidate.AddYears(-1);
+
+      var requiresReset =
+        newFinancialYearStart > currentFinancialYearStartDate &&
+        newFinancialYearStart > today;
+
+      return (newFinancialYearStart, requiresReset);
     }
   }
 }

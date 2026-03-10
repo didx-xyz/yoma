@@ -47,7 +47,10 @@ namespace Yoma.Core.Api.Controllers
     }
 
     [SwaggerOperation(Summary = "Update treasury info",
-      Description = "Updates the treasury configuration")]
+     Description = "Updates the treasury configuration. " +
+      "If the financial year start date changes, current financial year cumulative values may be reset. " +
+      "Reset only occurs when the new financial year start moves forward relative to the current financial year start " +
+      "and the new start date is still in the future. Financial year pools remain unchanged unless explicitly update")]
     [HttpPatch]
     [Authorize(Roles = Constants.Role_Admin)]
     public async Task<ActionResult<TreasuryInfo>> Update(TreasuryRequestUpdate request)
