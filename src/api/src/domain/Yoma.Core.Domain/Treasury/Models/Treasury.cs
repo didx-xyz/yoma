@@ -9,7 +9,7 @@ namespace Yoma.Core.Domain.Treasury.Models
     public byte FinancialYearStartDay { get; set; }
 
     public DateOnly FinancialYearStartDate { get; set; }
-    
+
     public decimal? ZltoRewardPoolCurrentFinancialYear { get; set; }
 
     public decimal? ZltoRewardCumulative { get; set; }
