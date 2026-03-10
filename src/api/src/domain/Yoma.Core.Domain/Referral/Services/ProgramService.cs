@@ -188,6 +188,8 @@ namespace Yoma.Core.Domain.Referral.Services
 
       var query = _programCountryRepository.Query();
 
+      query = query.Where(o => o.ProgramHidden != true); //exclude hidden
+
       if (resolvedCountryIds != null && resolvedCountryIds.Count != 0)
         query = query.Where(o => resolvedCountryIds.Contains(o.CountryId));
 
@@ -321,6 +323,10 @@ namespace Yoma.Core.Domain.Referral.Services
         var statusIds = filter.Statuses.Select(o => _programStatusService.GetByName(o.ToString()).Id).ToList();
         query = query.Where(o => statusIds.Contains(o.StatusId));
       }
+
+      //excludeHidden
+      if (filter.ExcludeHidden)
+        query = query.Where(o => o.Hidden != true);
 
       var results = new ProgramSearchResults();
 

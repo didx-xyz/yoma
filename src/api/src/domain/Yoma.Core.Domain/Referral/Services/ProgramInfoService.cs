@@ -49,7 +49,8 @@ namespace Yoma.Core.Domain.Referral.Services
       {
         Countries = countries,
         PublishedStates = [PublishedState.Active],
-        TotalCountOnly = true
+        TotalCountOnly = true,
+        ExcludeHidden = true, //exclude hidden
       });
 
       return searchResults.TotalCount > 0;
@@ -60,8 +61,8 @@ namespace Yoma.Core.Domain.Referral.Services
       var result = _programService.GetDefaultOrNull(true, true)
         ?? throw new EntityNotFoundException("Default program not found");
 
-      //active and started
-      if (result.Status != ProgramStatus.Active || result.DateStart > DateTimeOffset.UtcNow)
+      //not hidden, active and started
+      if (result.Hidden == true || result.Status != ProgramStatus.Active || result.DateStart > DateTimeOffset.UtcNow)
         throw new EntityNotFoundException($"Default program '{result.Name}' is currently unavailable");
 
       // Data integrity: default must always be world-wide (implicit null/empty or explicit Worldwide)
@@ -140,6 +141,7 @@ namespace Yoma.Core.Domain.Referral.Services
           ? [PublishedState.Active]
           : filter.PublishedStates,
         ValueContains = filter.ValueContains,
+        ExcludeHidden = true, //exclude hidden
         PageNumber = filter.PageNumber,
         PageSize = filter.PageSize
       };

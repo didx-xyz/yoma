@@ -53,7 +53,7 @@ namespace Yoma.Core.Api.Controllers
     #region Anonymous Actions
     [SwaggerOperation(Summary = "Check if any referral programs are available (Anonymous)",
       Description =
-        "Returns true if there are any referral programs available that are active and have started (thus published state Active). " +
+        "Returns true if there are any referral programs available that are not hidden and are active and have started (published state Active). " +
         "Country filtering behavior: " +
         "Anonymous users default to World-Wide programs when no countries are specified, otherwise results are filtered by the specified countries. " +
         "Authenticated users are automatically filtered by their user country when available (including World-Wide), otherwise results default to World-Wide or the specified countries")]
@@ -71,7 +71,7 @@ namespace Yoma.Core.Api.Controllers
     }
 
     [SwaggerOperation(Summary = "Get the default referral program (Anonymous)",
-      Description = "Retrieves the default referral program. The default program must be active, have started, and is available World-Wide")]
+      Description = "Retrieves the default referral program. The default program must not be hidden, must be active and have started (published state Active), and must be available World-Wide")]
     [HttpGet("program/default/info")]
     [AllowAnonymous]
     public ActionResult<ProgramInfo> GetProgramInfoDefault()
@@ -87,7 +87,7 @@ namespace Yoma.Core.Api.Controllers
 
     [SwaggerOperation(Summary = "Return a list of countries associated with programs (Anonymous)",
      Description =
-       "By default, results include programs that are active and have started (published state Active). Authenticated users may override the published state filtering. " +
+       "By default, results include programs that are not hidden and are active and have started (published state Active). Authenticated users may override the published state filtering. " +
        "Country resolution behavior: " +
        "Anonymous users receive all countries linked to programs, including World-Wide if programs are associated with it. " +
        "Authenticated users receive their user country together with World-Wide, if programs are associated with it, when a user country is available; when no user country is available, results include all countries linked to programs")]
@@ -106,7 +106,7 @@ namespace Yoma.Core.Api.Controllers
 
     [SwaggerOperation(Summary = "Search for referral programs (Anonymous)",
       Description =
-        "By default, results include programs that are active and have started (published state Active). Authenticated users may override the published state filtering. " +
+        "By default, results include programs that are not hidden and are active and have started (published state Active). Authenticated users may override the published state filtering. " +
         "Country filtering behavior: " +
         "Anonymous users default to World-Wide programs when no countries are specified, otherwise results are filtered by the specified countries. " +
         "Authenticated users are automatically filtered by their user country when available (including World-Wide), otherwise results default to World-Wide or the specified countries")]
@@ -125,7 +125,7 @@ namespace Yoma.Core.Api.Controllers
 
     [SwaggerOperation(Summary = "Get the referral program by Id (Anonymous)",
       Description =
-        "By default, only programs that are active or uncompleted and have started can be retrieved. " +
+        "By default, only programs that are active or uncompleted and have started can be retrieved, including hidden programs. " +
         "Authenticated users are restricted to programs available in their user country (or World-Wide) when a country is set; otherwise they may retrieve any program")]
 
     [HttpGet("program/{id}/info")]
@@ -143,7 +143,7 @@ namespace Yoma.Core.Api.Controllers
 
     [SwaggerOperation(Summary = "Get the referral program by link Id (Anonymous)",
       Description =
-        "By default, only programs that are active or uncompleted and have started can be retrieved. " +
+        "By default, only programs that are active or uncompleted and have started can be retrieved, including hidden programs. " +
         "Authenticated users are restricted to programs available in their user country (or World-Wide) when a country is set; otherwise they may retrieve any program")]
     [HttpGet("program/by-link/{linkId}/info")]
     [AllowAnonymous]
