@@ -14,5 +14,7 @@ namespace Yoma.Core.Domain.Treasury.Interfaces
     Task ZltoRewardAwarded(Models.Treasury treasury, decimal? amount);
 
     Task ChimoneyCashedOut(Models.Treasury treasury, decimal amount);
+
+    Task<decimal> ConvertZltoToUsd(decimal amount);
   }
 }

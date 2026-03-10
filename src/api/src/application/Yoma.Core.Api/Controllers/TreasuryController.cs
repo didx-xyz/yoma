@@ -28,6 +28,25 @@ namespace Yoma.Core.Api.Controllers
     #endregion
 
     #region Public Members
+    #region Authenticated User Based Actions
+    [SwaggerOperation(Summary = "Preview ZLTO to USD conversion (Authenticated User)",
+      Description = "Returns an indicative ZLTO to USD conversion based on the current treasury conversion rate. " +
+      "This is a preview only. The final conversion is determined at the time of transaction and may diffe")]
+    [HttpGet("conversion/zlto-usd")]
+    [Authorize(Roles = Constants.Role_User)]
+    public ActionResult<decimal> ConvertZltoToUsd([FromQuery] decimal amount)
+    {
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(ConvertZltoToUsd));
+
+      var result = _treasuryService.ConvertZltoToUsd(amount);
+
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(ConvertZltoToUsd));
+
+      return Ok(result);
+    }
+    #endregion Authenticated User Based Actions
+
+    #region Administrative Actions
     [SwaggerOperation(Summary = "Get treasury info",
       Description = "Returns the treasury configuration and top-level treasury information. " +
       "Detailed treasury data for organizations, opportunities and referral programs," +
@@ -63,6 +82,7 @@ namespace Yoma.Core.Api.Controllers
 
       return Ok(result);
     }
+    #endregion Administrative Actions
     #endregion Public Members 
   }
 }

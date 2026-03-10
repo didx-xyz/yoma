@@ -28,7 +28,6 @@ namespace Yoma.Core.Domain.Treasury.Services
     #endregion
 
     #region Public Members
-
     public Models.Treasury Get(LockMode? lockMode = null)
     {
       var query = lockMode != null ? _treasuryRepository.Query(lockMode.Value) : _treasuryRepository.Query();
@@ -85,7 +84,7 @@ namespace Yoma.Core.Domain.Treasury.Services
       ArgumentNullException.ThrowIfNull(treasury, nameof(treasury));
 
       if (amount < default(decimal))
-        throw new ValidationException("Chimoney cash-out amount cannot be less than 0");
+        throw new ValidationException("Amount cannot be less thanzero");
 
       if (amount == default) return; // 0 is valid but has no effect
 
@@ -102,14 +101,30 @@ namespace Yoma.Core.Domain.Treasury.Services
       if (!amount.HasValue) return; // ZLTO reward optional
 
       if (amount.Value < default(decimal))
-        throw new ValidationException("Zlto reward amount cannot be less than 0");
+        throw new ValidationException("Amount cannot be less than zero");
 
       if (amount.Value == default) return; // 0 valid but no effect
+
+      if (amount % 1 != 0)
+        throw new ValidationException("Amount must be a whole number");
 
       treasury.ZltoRewardCumulative = (treasury.ZltoRewardCumulative ?? default) + amount.Value;
       treasury.ZltoRewardCumulativeCurrentFinancialYear = (treasury.ZltoRewardCumulativeCurrentFinancialYear ?? default) + amount.Value;
 
       await _treasuryRepository.Update(treasury);
+    }
+
+    public async Task<decimal> ConvertZltoToUsd(decimal amount)
+    {
+      if (amount <= default(decimal))
+        throw new ValidationException("Amount must be greater than zero");
+
+      if (amount % 1 != 0)
+        throw new ValidationException("Amount must be a whole number");
+
+      var treasury = Get();
+
+      return amount * treasury.ConversionRateZltoUsd;
     }
     #endregion
   }
