@@ -1195,6 +1195,9 @@ namespace Yoma.Core.Domain.Referral.Services
         if (!ProgramCountryPolicy.DefaultProgramIsWorldwide(countryIdWorldwide, program.Countries))
           throw new ValidationException($"A default {nameof(Program)} must be available world-wide");
 
+        if (program.Hidden == true)
+          throw new ValidationException($"A hidden {nameof(Program)} cannot be made default");
+
         if (currentDefault != null)
         {
           currentDefault.IsDefault = false;

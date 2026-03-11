@@ -4,15 +4,15 @@ namespace Yoma.Core.Domain.Treasury.Helpers
   {
     /// <summary>
     /// Determines the financial year start date based on the newly configured start month/day,
-    /// and decides whether the current financial year cumulatives must be reset (rotated).
+    /// and decides whether the current financial year cumulatives must roll over.
     ///
-    /// Reset (rotation) only occurs when:
+    /// Rollover only occurs when:
     ///   • the newly configured financial year start date moves forward compared to the previously stored one, and
     ///   • the new start date is still in the future (after today)
     ///
     /// In all other cases the current financial year cumulatives are preserved.
     /// </summary>
-    public static (DateOnly financialYearStartDate, bool requiresReset) EvaluateFinancialYear(
+    public static (DateOnly financialYearStartDate, bool requiresRollover) EvaluateFinancialYear(
       int newStartMonth,
       int newStartDay,
       DateOnly currentFinancialYearStartDate)
@@ -41,11 +41,11 @@ namespace Yoma.Core.Domain.Treasury.Helpers
         ? candidate
         : candidate.AddYears(-1);
 
-      var requiresReset =
+      var requiresRollover =
         newFinancialYearStart > currentFinancialYearStartDate &&
         newFinancialYearStart > today;
 
-      return (newFinancialYearStart, requiresReset);
+      return (newFinancialYearStart, requiresRollover);
     }
   }
 }
