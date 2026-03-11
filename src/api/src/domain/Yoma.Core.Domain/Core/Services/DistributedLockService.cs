@@ -66,7 +66,7 @@ namespace Yoma.Core.Domain.Core.Services
       }
       catch (Exception ex)
       {
-        // Swallow to avoid masking upstream exceptions; log for observability.
+        // Swallow to avoid masking upstream exceptions; log for observability
         _logger.LogWarning(ex, "Failed to release lock '{lockKey}' by {hostName} at {timestamp} for process '{process}'. Proceeding",
           redisKey, System.Environment.MachineName, DateTimeOffset.UtcNow, processName);
       }
