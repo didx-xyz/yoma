@@ -78,6 +78,11 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
       {
         Id = value.Id,
         Title = value.Title.RemoveSpecialCharacters(),
+        OrganizationName = value.OrganizationName,
+        OrganizationLogoId = value.OrganizationLogoId,
+        OrganizationLogoStorageType = value.OrganizationLogoStorageType,
+        OrganizationLogoKey = value.OrganizationLogoKey,
+        OrganizationLogoURL = value.OrganizationLogoURL, // Map; Optional; resolved by the invoking member when required
         OrganizationStatus = value.OrganizationStatus,
         VerificationEnabled = value.VerificationEnabled,
         VerificationMethod = value.VerificationMethod,

@@ -63,6 +63,11 @@ namespace Yoma.Core.Domain.Referral.Extensions
               {
                 Id = task.Opportunity.Id,
                 Title = task.Opportunity.Title,
+                OrganizationName = task.Opportunity.OrganizationName,
+                OrganizationLogoId = task.Opportunity.OrganizationLogoId,
+                OrganizationLogoStorageType = task.Opportunity.OrganizationLogoStorageType,
+                OrganizationLogoKey = task.Opportunity.OrganizationLogoKey,
+                OrganizationLogoURL = task.Opportunity.OrganizationLogoURL, // Map; Optional; resolved by the invoking member when required
                 OrganizationStatus = task.Opportunity.OrganizationStatus,
                 VerificationEnabled = task.Opportunity.VerificationEnabled,
                 VerificationMethod = task.Opportunity.VerificationMethod,

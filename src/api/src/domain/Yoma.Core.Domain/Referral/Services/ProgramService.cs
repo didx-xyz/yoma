@@ -121,8 +121,7 @@ namespace Yoma.Core.Domain.Referral.Services
       var result = query.SingleOrDefault(o => o.Id == id);
       if (result == null) return null;
 
-      if (includeComputed)
-        result.ImageURL = GetBlobObjectURL(result.ImageStorageType, result.ImageKey);
+      if (includeComputed) result = ParseBlobObjectURL(result);
 
       return result;
     }
@@ -137,8 +136,7 @@ namespace Yoma.Core.Domain.Referral.Services
 #pragma warning restore CA1862 // Use the 'StringComparison' method overloads to perform case-insensitive string comparisons
       if (result == null) return null;
 
-      if (includeComputed)
-        result.ImageURL = GetBlobObjectURL(result.ImageStorageType, result.ImageKey);
+      if (includeComputed) result = ParseBlobObjectURL(result);
 
       return result;
     }
@@ -159,8 +157,7 @@ namespace Yoma.Core.Domain.Referral.Services
       var result = results.SingleOrDefault();
       if (result == null) return null;
 
-      if (includeComputed)
-        result.ImageURL = GetBlobObjectURL(result.ImageStorageType, result.ImageKey);
+      if (includeComputed) result = ParseBlobObjectURL(result);
 
       return result;
     }
@@ -345,8 +342,8 @@ namespace Yoma.Core.Domain.Referral.Services
       }
 
       results.Items = [.. query];
+      results.Items.ForEach(o => ParseBlobObjectURL(o));
 
-      results.Items.ForEach(o => o.ImageURL = GetBlobObjectURL(o.ImageStorageType, o.ImageKey));
       return results;
     }
 
@@ -435,7 +432,7 @@ namespace Yoma.Core.Domain.Referral.Services
       request.DateStart = request.DateStart.RemoveTime();
       if (request.DateEnd.HasValue) request.DateEnd = request.DateEnd.Value.ToEndOfDay();
 
-      var result = GetById(request.Id, true, false);
+      var result = GetById(request.Id, true, true);
       var now = DateTimeOffset.UtcNow;
 
       AssertUpdatable(result);
@@ -586,7 +583,7 @@ namespace Yoma.Core.Domain.Referral.Services
 
     public async Task<Program> UpdateImage(Guid id, IFormFile file)
     {
-      var result = GetById(id, false, false);
+      var result = GetById(id, false, true);
 
       AssertUpdatable(result);
 
@@ -891,10 +888,29 @@ namespace Yoma.Core.Domain.Referral.Services
         throw new ValidationException($"The {nameof(Program)} can no longer be updated (current status '{program.Status.ToDescription()}'). Required state '{Statuses_Updatable.JoinNames()}'");
     }
 
-    private string? GetBlobObjectURL(StorageType? storageType, string? key)
+    private Program ParseBlobObjectURL(Program program)
     {
-      if (!storageType.HasValue || string.IsNullOrEmpty(key)) return null;
-      return _blobService.GetURL(storageType.Value, key);
+      program.Pathway?.Steps?.ForEach(s => s.Tasks?.ForEach(t =>
+      {
+        switch (t.EntityType)
+        {
+          case PathwayTaskEntityType.Opportunity:
+            if (t.Opportunity == null) break;
+
+            if (!string.IsNullOrEmpty(t.Opportunity.OrganizationLogoURL)) break;
+
+            if (!t.Opportunity.OrganizationLogoStorageType.HasValue) break;
+            if (string.IsNullOrEmpty(t.Opportunity.OrganizationLogoKey)) break;
+
+            t.Opportunity.OrganizationLogoURL = _blobService.GetURL(t.Opportunity.OrganizationLogoStorageType.Value, t.Opportunity.OrganizationLogoKey);
+            break;
+
+          default:
+            throw new InvalidOperationException($"Entity type of '{t.EntityType}' is not supported");
+        }
+      }));
+
+      return program;
     }
 
     private async Task<Program> DeleteProgramPathway(Program program)
@@ -1110,12 +1126,17 @@ namespace Yoma.Core.Domain.Referral.Services
       switch (request.EntityType)
       {
         case PathwayTaskEntityType.Opportunity:
-          var opportunity = _opportunityService.GetById(request.EntityId, true, false, false);
+          var opportunity = _opportunityService.GetById(request.EntityId, true, true, false); // includeComputed → resolves OrganizationLogoURL
 
           task.Opportunity = new OpportunityItem
           {
             Id = opportunity.Id,
             Title = opportunity.Title,
+            OrganizationName = opportunity.OrganizationName,
+            OrganizationLogoId = opportunity.OrganizationLogoId,
+            OrganizationLogoStorageType = opportunity.OrganizationLogoStorageType,
+            OrganizationLogoKey = opportunity.OrganizationLogoKey,
+            OrganizationLogoURL = opportunity.OrganizationLogoURL, // Map; Resolved when retrieving the opportunity (see includeComputed above)
             OrganizationStatus = opportunity.OrganizationStatus,
             VerificationEnabled = opportunity.VerificationEnabled,
             VerificationMethod = opportunity.VerificationMethod,
@@ -1170,7 +1191,7 @@ namespace Yoma.Core.Domain.Referral.Services
       if (blobObject == null)
         throw new InvalidOperationException("Blob object expected");
 
-      program.ImageURL = GetBlobObjectURL(program.ImageStorageType, program.ImageKey);
+      program = ParseBlobObjectURL(program);
 
       return (program, blobObject);
     }
