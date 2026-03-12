@@ -242,8 +242,9 @@ namespace Yoma.Core.Domain.Entity.Services
 
       var query = _userRepository.Query();
 
-      //only includes users with associated external id's (implies linked to identity provider)
-      query = query.Where(o => o.ExternalId.HasValue);
+      // By default, only include users with an associated ExternalId (i.e., linked to an identity provider)
+      if (filter.ApplyExternalIdFilter)
+        query = query.Where(o => o.ExternalId.HasValue);
 
       //yoIDOnboarded
       if (filter.YoIDOnboarded == true)
