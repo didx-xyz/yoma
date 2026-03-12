@@ -1,4 +1,5 @@
 using FluentValidation;
+using Microsoft.AspNetCore.DataProtection.KeyManagement;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using System.Transactions;
@@ -890,6 +891,9 @@ namespace Yoma.Core.Domain.Referral.Services
 
     private Program ParseBlobObjectURL(Program program)
     {
+      if (program.ImageStorageType.HasValue && !string.IsNullOrEmpty(program.ImageKey))
+        program.ImageURL = _blobService.GetURL(program.ImageStorageType.Value, program.ImageKey);
+
       program.Pathway?.Steps?.ForEach(s => s.Tasks?.ForEach(t =>
       {
         switch (t.EntityType)
