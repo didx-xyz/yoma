@@ -32,6 +32,10 @@ namespace Yoma.Core.Domain.Treasury.Models
         ? ChimoneyPoolCurrentFinancialYearInUSD - (ChimoneyCumulativeCurrentFinancialYearInUSD ?? default)
         : null;
 
+    /// <summary>
+    /// Raw conversion rate representing the USD value of one ZLTO (e.g. 0.0222222 = 45 ZLTO = 1 USD).
+    /// Used internally for calculations.
+    /// </summary>
     public decimal ConversionRateZltoUsd { get; set; }
 
     public DateTimeOffset DateCreated { get; set; }

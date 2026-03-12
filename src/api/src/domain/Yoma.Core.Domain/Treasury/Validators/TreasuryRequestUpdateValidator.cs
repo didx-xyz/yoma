@@ -41,13 +41,13 @@ namespace Yoma.Core.Domain.Treasury.Validators
         .When(x => x.ChimoneyPoolCurrentFinancialYearInUSD.HasValue)
         .WithMessage("Chimoney pool for the current financial year (USD) may not have more than 2 decimal places.");
 
-      RuleFor(x => x.ConversionRateZltoUsd)
+      RuleFor(x => x.ConversionRateZltoPerUsd)
         .GreaterThan(0m)
-        .WithMessage("Conversion rate must be greater than 0.")
-        .LessThanOrEqualTo(1m)
-        .WithMessage("Conversion rate may not exceed 1.0000 (1 ZLTO = 1 USD).")
+        .WithMessage("Conversion rate (ZLTO per 1 USD) must be greater than 0.")
+        .LessThanOrEqualTo(1_000m)
+        .WithMessage("Conversion rate (ZLTO per 1 USD) may not exceed 1,000.")
         .Must(rate => decimal.Round(rate, 4) == rate)
-        .WithMessage("Conversion rate may not have more than 4 decimal places.");
+        .WithMessage("Conversion rate (ZLTO per 1 USD) may not have more than 4 decimal places.");
     }
     #endregion
   }

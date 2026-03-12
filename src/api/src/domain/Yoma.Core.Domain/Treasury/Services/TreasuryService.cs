@@ -72,7 +72,7 @@ namespace Yoma.Core.Domain.Treasury.Services
 
       result.ZltoRewardPoolCurrentFinancialYear = request.ZltoRewardPoolCurrentFinancialYear;
       result.ChimoneyPoolCurrentFinancialYearInUSD = request.ChimoneyPoolCurrentFinancialYearInUSD;
-      result.ConversionRateZltoUsd = request.ConversionRateZltoUsd;
+      result.ConversionRateZltoUsd = Math.Round(Constants.ConversionRateUsdAmount / request.ConversionRateZltoPerUsd, 10);
 
       result = await _treasuryRepository.Update(result);
 

@@ -40,7 +40,7 @@ namespace Yoma.Core.Infrastructure.Database.Treasury.Entities
     public decimal? ChimoneyCumulativeCurrentFinancialYearInUSD { get; set; }
 
     [Required]
-    [Column(TypeName = "decimal(10,4)")]
+    [Column(TypeName = "decimal(18,10)")]
     public decimal ConversionRateZltoUsd { get; set; }
 
     [Required]
