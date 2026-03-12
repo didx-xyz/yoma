@@ -18,11 +18,11 @@ using Yoma.Core.Infrastructure.Keycloak.Models;
 
 namespace Yoma.Core.Api.Controllers
 {
-  [Route($"api/{Common.Constants.Api_Version}/keycloak")]
   [ApiController]
+  [Route($"api/{Common.Constants.Api_Version}")]
   [AllowAnonymous]
   [ApiExplorerSettings(IgnoreApi = true)]
-  public class KeycloakController : ControllerBase
+  public class WebhookController : ControllerBase
   {
     #region Class Variables
     private readonly ILogger _logger;
@@ -40,7 +40,7 @@ namespace Yoma.Core.Api.Controllers
     #endregion
 
     #region Constructors
-    public KeycloakController(ILogger<KeycloakController> logger,
+    public WebhookController(ILogger<WebhookController> logger,
       IOptions<AppSettings> appSettings,
       IIdempotencyService idempotencyService,
       IDistributedLockService distributedLockService,
@@ -65,8 +65,8 @@ namespace Yoma.Core.Api.Controllers
     #endregion
 
     #region Public Members
-    [HttpPost("webhook")]
-    public IActionResult ReceiveKeyCloakEvent([FromBody] JObject request)
+    [HttpPost("webhook/keycloak")]
+    public IActionResult ReceiveKeycloakWebhook([FromBody] JObject request)
     {
       //only logged when logging level is set to debug
       if (_logger.IsEnabled(LogLevel.Debug)) _logger.LogDebug("Raw request: {request}", request == null ? "Empty" : request.ToString().SanitizeLogValue());
