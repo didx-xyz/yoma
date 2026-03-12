@@ -43,8 +43,8 @@ namespace Yoma.Core.Domain.Core.Services
         if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Lock '{lockKey}' acquired by {hostName} at {timestamp} for process '{process}'. Lock duration set to {durationMinutes} minutes",
             redisKey, System.Environment.MachineName, DateTimeOffset.UtcNow, processName, lockDuration.TotalMinutes);
         else
-        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Lock '{lockKey}' already held. Skipping execution attempt by {hostName} at {timestamp} for process '{process}'",
-            redisKey, System.Environment.MachineName, DateTimeOffset.UtcNow, processName);
+          if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Lock '{lockKey}' already held. Skipping execution attempt by {hostName} at {timestamp} for process '{process}'",
+              redisKey, System.Environment.MachineName, DateTimeOffset.UtcNow, processName);
 
       return acquired;
     }
