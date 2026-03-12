@@ -6,7 +6,7 @@ import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { type ParsedUrlQuery } from "querystring";
-import { type ReactElement } from "react";
+import { useMemo, type ReactElement } from "react";
 import { IoMdArrowRoundBack } from "react-icons/io";
 import Moment from "react-moment";
 import type { ReferralLinkUsageInfo } from "~/api/models/referrals";
@@ -22,7 +22,7 @@ import { DATE_FORMAT_HUMAN } from "~/lib/constants";
 import { getSafeUrl, getThemeFromRole } from "~/lib/utils";
 import type { NextPageWithLayout } from "~/pages/_app";
 import { authOptions, type User } from "~/server/auth";
-import { ProgramPathwayProgressComponent } from "~/components/Referrals/ProgramPathwayProgress";
+import { ReferralTasksCard } from "~/components/Referrals/new/ReferralTasksCard";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -89,6 +89,29 @@ const ReferralLinkUsageInfo: NextPageWithLayout<{
     queryFn: () => getReferralLinkUsageById(usageId),
     enabled: !error,
   });
+
+  const mockedPathwayProgress = useMemo(() => {
+    if (!usage?.pathway) return null;
+
+    return {
+      ...usage.pathway,
+      completed: false,
+      stepsCompleted: 1,
+      percentComplete: 50,
+      steps: usage.pathway.steps.map((step, stepIndex) => ({
+        ...step,
+        completed: stepIndex === 0,
+        dateCompleted: stepIndex === 0 ? new Date().toISOString() : null,
+        tasksCompleted: stepIndex === 0 ? step.tasksTotal : 0,
+        percentComplete: stepIndex === 0 ? 100 : 0,
+        tasks: step.tasks.map((task) => ({
+          ...task,
+          completed: stepIndex === 0,
+          dateCompleted: stepIndex === 0 ? new Date().toISOString() : null,
+        })),
+      })),
+    };
+  }, [usage?.pathway]);
 
   if (error) {
     if (error === 401) return <Unauthenticated />;
@@ -377,7 +400,7 @@ const ReferralLinkUsageInfo: NextPageWithLayout<{
                   <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-sm font-medium text-gray-700">
                     Name
                   </div>
-                  <div className="fl`ex-1 border border-gray-200 px-4 py-2 text-sm hover:bg-gray-100">
+                  <div className="flex-1 border border-gray-200 px-4 py-2 text-sm hover:bg-gray-100">
                     {usage?.userDisplayNameReferrer ?? "N/A"}
                   </div>
                 </div>
@@ -408,7 +431,15 @@ const ReferralLinkUsageInfo: NextPageWithLayout<{
             <section>
               <h6 className="mb-2 text-sm font-semibold">Pathway Progress</h6>
               <div className="overflow-x-auto">
-                <ProgramPathwayProgressComponent pathway={usage.pathway} />
+                {/* <ReferralTasksCard model={null} progressModel={usage.pathway} /> */}
+
+                <ReferralTasksCard
+                  model={null}
+                  progressModel={
+                    // TODO: hardcode mocked data here
+                    mockedPathwayProgress
+                  }
+                />
               </div>
             </section>
           )}

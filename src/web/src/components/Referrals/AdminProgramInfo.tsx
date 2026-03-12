@@ -13,6 +13,7 @@ import {
 import { DATE_FORMAT_HUMAN } from "~/lib/constants";
 import { ProgramPathwayView } from "./ProgramPathwayView";
 import { ProgramStatusBadge } from "./ProgramStatusBadge";
+import { ReferralTasksCard } from "./new/ReferralTasksCard";
 
 export enum ProgramInfoFilterOptions {
   PROGRAM_INFO = "programInfo",
@@ -538,11 +539,7 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
 
           <div className="overflow-x-auto">
             {pathwayInfo ? (
-              <ProgramPathwayView
-                pathway={pathwayInfo}
-                isAdmin={true}
-                opportunityDataMap={hydratedOpportunityDataMap}
-              />
+              <ReferralTasksCard model={pathwayInfo} />
             ) : (
               <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
                 <p className="text-xs text-gray-700">No pathway configured</p>

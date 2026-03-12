@@ -84,6 +84,9 @@ export const ReferrerLinkDetails: React.FC<LinkDetailsProps> = ({
   return (
     <div className={className}>
       <div className="flex flex-col gap-6">
+        {/* TODO: remove */}
+        {/* {displayLink.url} */}
+
         {/* Short URL - Compact */}
         {showShortLinkProp && displayLink.shortURL && (
           <div className="min-w-0">
@@ -103,7 +106,7 @@ export const ReferrerLinkDetails: React.FC<LinkDetailsProps> = ({
                   type="text"
                   value={displayLink.shortURL}
                   readOnly
-                  className="border-orange w-full truncate rounded border border-dashed bg-white px-2 py-1.5 font-mono text-[11px] font-semibold text-gray-900 focus:outline-none"
+                  className="border-green w-full truncate rounded border border-dashed bg-white px-2 py-1.5 font-mono text-[11px] font-semibold text-gray-900 focus:outline-none"
                   onClick={(e) => e.currentTarget.select()}
                 />
               </div>
@@ -111,7 +114,7 @@ export const ReferrerLinkDetails: React.FC<LinkDetailsProps> = ({
                 <button
                   type="button"
                   onClick={() => handleCopyLink(displayLink.shortURL)}
-                  className="btn btn-xs bg-orange flex-shrink-0 gap-1 text-white hover:brightness-110"
+                  className="btn btn-xs bg-green flex-shrink-0 gap-1 text-white hover:brightness-110"
                   title="Copy short link"
                 >
                   <IoMdCopy className="h-3 w-3" />
@@ -121,7 +124,6 @@ export const ReferrerLinkDetails: React.FC<LinkDetailsProps> = ({
             </div>
           </div>
         )}
-
         {/* QR Code - Compact */}
         {showQRCodeProp && (
           <div className="min-w-0">
@@ -154,7 +156,7 @@ export const ReferrerLinkDetails: React.FC<LinkDetailsProps> = ({
                         displayLink.name,
                       )
                     }
-                    className="btn btn-xs bg-orange gap-1 text-white hover:brightness-110"
+                    className="btn btn-xs bg-green gap-1 text-white hover:brightness-110"
                     title="Download QR code"
                   >
                     <IoMdDownload className="h-3 w-3" />
@@ -167,7 +169,7 @@ export const ReferrerLinkDetails: React.FC<LinkDetailsProps> = ({
                 type="button"
                 onClick={handleToggleQR}
                 disabled={loadingQR}
-                className="btn btn-xs bg-orange gap-1 text-white hover:brightness-110"
+                className="btn btn-xs bg-green gap-1 text-white hover:brightness-110"
               >
                 {loadingQR ? (
                   <>

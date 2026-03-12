@@ -1,14 +1,14 @@
 import {
-  IoCheckmarkCircle,
-  IoChevronDownOutline,
-  IoChevronUpOutline,
-  IoPeople,
-  IoTime,
+  IoAlertCircleOutline,
+  IoGitNetwork,
+  IoInformationCircleOutline,
+  IoPersonCircle,
+  IoTimeOutline,
   IoWalletOutline,
+  IoWarningOutline,
 } from "react-icons/io5";
-import React, { useMemo, useState } from "react";
-import type { ProgramInfo } from "~/api/models/referrals";
-import { ProgramPathwayView } from "./ProgramPathwayView";
+import React from "react";
+import { ProgramStatus, type ProgramInfo } from "~/api/models/referrals";
 
 interface ProgramBadgesProps {
   program: ProgramInfo | undefined;
@@ -16,6 +16,7 @@ interface ProgramBadgesProps {
   mode?: "compact" | "large";
   showPathway?: boolean;
   showBadges?: {
+    status?: boolean;
     requirements?: boolean;
     limit?: boolean;
     rewards?: boolean;
@@ -26,125 +27,35 @@ interface ProgramBadgesProps {
 
 const ProgramBadges: React.FC<ProgramBadgesProps> = ({
   program,
-  showToolTips = false,
   mode = "compact",
   showPathway = false,
   showBadges,
 }) => {
-  const [pathwayExpanded, setPathwayExpanded] = useState(false);
-
-  const {
-    taskCount,
-    completionWindowInDays,
-    completionLimitReferee,
-    hasPathwayTasks,
-    requirementsCompact,
-    requirementsLong,
-  } = useMemo(() => {
-    if (!program) {
-      return {
-        taskCount: 0,
-        completionWindowInDays: 0,
-        completionLimitReferee: 0,
-        hasPathwayTasks: false,
-        requirementsCompact: "No special requirements",
-        requirementsLong: null as React.ReactNode,
-      };
-    }
-
-    let computedTaskCount = 0;
-
-    if (program.pathwayRequired && program.pathway?.steps) {
-      computedTaskCount = program.pathway.steps.reduce((total, step) => {
-        return total + (step.tasks?.length || 0);
-      }, 0);
-    }
-
-    const days = program.completionWindowInDays || 0;
-    const limit = program.completionLimitReferee || 0;
-    const proofRequired = !!program.proofOfPersonhoodRequired;
-    const pathwayTasks = computedTaskCount > 0;
-
-    const compactParts: string[] = [];
-    if (days > 0) compactParts.push(`${days}d`);
-    if (proofRequired) compactParts.push("Personhood");
-    if (pathwayTasks) compactParts.push(`Pathway (${computedTaskCount} tasks)`);
-
-    const compact = compactParts.length
-      ? compactParts.join(" · ")
-      : "No special requirements";
-
-    // Long / readable sentence used for the large mode
-    let long: React.ReactNode = null;
-
-    if (days > 0 && (proofRequired || pathwayTasks)) {
-      const actions: React.ReactNode[] = [];
-      if (proofRequired) actions.push("verify their personhood");
-      if (pathwayTasks) {
-        actions.push(
-          <>
-            complete the opportunity pathway (
-            <span className="text-base-content font-semibold">
-              {computedTaskCount}
-            </span>{" "}
-            task{computedTaskCount === 1 ? "" : "s"})
-          </>,
-        );
-      }
-
-      const joinedActions = actions.reduce<React.ReactNode[]>(
-        (acc, node, idx) => {
-          if (idx === 0) return [node];
-          return [...acc, " and ", node];
-        },
-        [],
-      );
-
-      long = (
-        <>
-          People who use your link have{" "}
-          <span className="text-base-content font-semibold">{days}</span> day
-          {days === 1 ? "" : "s"} to {joinedActions}.
-        </>
-      );
-    } else if (pathwayTasks) {
-      long = (
-        <>
-          People who use your link must complete the opportunity pathway (
-          <span className="text-base-content font-semibold">
-            {computedTaskCount}
-          </span>{" "}
-          task{computedTaskCount === 1 ? "" : "s"}).
-        </>
-      );
-    } else if (proofRequired) {
-      long = <>People who use your link must verify their personhood.</>;
-    } else if (days > 0) {
-      long = (
-        <>
-          People who use your link have{" "}
-          <span className="text-base-content font-semibold">{days}</span> day
-          {days === 1 ? "" : "s"} to complete the program.
-        </>
-      );
-    }
-
-    return {
-      taskCount: computedTaskCount,
-      completionWindowInDays: days,
-      completionLimitReferee: limit,
-      hasPathwayTasks: pathwayTasks,
-      requirementsCompact: compact,
-      requirementsLong: long,
-    };
-  }, [program]);
-
   if (!program) return null;
 
   const referrerReward = program.zltoRewardReferrer || 0;
   const refereeReward = program.zltoRewardReferee || 0;
+  const pathwayRequired = !!program.pathwayRequired;
+  const proofRequired = !!program.proofOfPersonhoodRequired;
+
+  const statusName =
+    typeof program.status === "number"
+      ? ProgramStatus[program.status]
+      : `${program.status}`;
+
+  const normalizedStatus = (statusName || "").toLowerCase();
+  const showStatusBadge =
+    normalizedStatus.length > 0 && normalizedStatus !== "active";
+
+  const statusLabel =
+    statusName === "LimitReached"
+      ? "Limit reached"
+      : statusName === "UnCompletable"
+        ? "Uncompletable"
+        : statusName;
 
   const resolvedShowBadges = {
+    status: showBadges?.status ?? true,
     requirements: showBadges?.requirements ?? true,
     limit: showBadges?.limit ?? true,
     rewards: showBadges?.rewards ?? true,
@@ -152,207 +63,110 @@ const ProgramBadges: React.FC<ProgramBadgesProps> = ({
     rewardsReferee: showBadges?.rewardsReferee ?? true,
   };
 
-  const rewardsLabelLarge = (() => {
-    if (referrerReward === 0 && refereeReward === 0)
-      return "This program has no ZLTO rewards.";
+  void showPathway;
 
-    return (
-      <>
-        {referrerReward > 0 ? (
-          <>
-            You&apos;ll get{" "}
-            <span className="text-base-content font-semibold">
-              {referrerReward}
-            </span>{" "}
-            ZLTO
-          </>
-        ) : null}
+  const requirementBadgeClass =
+    mode === "large"
+      ? "badge badge-md bg-green/15 border border-green-200 text-green-800 gap-1"
+      : "badge badge-sm bg-green/15 border border-green-200 text-green-800 gap-1";
 
-        {referrerReward > 0 && refereeReward > 0 ? " & " : null}
+  const rewardBadgeClass =
+    mode === "large"
+      ? "badge badge-md bg-amber-100 border border-amber-200 text-amber-800 gap-1"
+      : "badge badge-sm bg-amber-100 border border-amber-200 text-amber-800 gap-1";
 
-        {refereeReward > 0 ? (
-          <>
-            they&apos;ll get{" "}
-            <span className="text-base-content font-semibold">
-              {refereeReward}
-            </span>{" "}
-            ZLTO
-          </>
-        ) : null}
+  const containerClass =
+    mode === "large"
+      ? "mt-3 mb-1 flex flex-wrap gap-2"
+      : "mt-3 mb-2 flex flex-wrap gap-1.5";
 
-        {" once they have completed the program requirements."}
-      </>
-    );
-  })();
+  const statusBadgeSizeClass =
+    mode === "large" ? "badge badge-md" : "badge badge-sm";
 
-  // Back-compat: we no longer show tooltips here.
-  void showToolTips;
+  const statusBadgeStyleClass =
+    normalizedStatus === "inactive" ||
+    normalizedStatus === "limitreached" ||
+    normalizedStatus === "uncompletable"
+      ? "border border-orange-200 bg-orange-100 text-orange-800"
+      : normalizedStatus === "expired" || normalizedStatus === "deleted"
+        ? "border border-red-200 bg-red-100 text-red-800"
+        : "border border-gray-300 bg-gray-100 text-gray-700";
 
-  if (mode === "large") {
-    const rowPadding = "rounded-lg px-4 py-3";
-    const iconSize = "h-5 w-5";
-    const textSize = "text-xs md:text-xs";
-    const rowTextClass = `text-base-content/60 min-w-0 flex-1 ${textSize} leading-snug`;
-
-    return (
-      <div className="space-y-2">
-        {/* Requirements (combined) */}
-        {resolvedShowBadges.requirements ? (
-          <div
-            className={`bg-base-200 text-base-content/80 flex items-center justify-between gap-2 ${rowPadding}`}
-          >
-            <div className="flex min-w-0 flex-1 items-center gap-2">
-              {completionWindowInDays > 0 || hasPathwayTasks ? (
-                <IoTime
-                  className={`text-warning ${iconSize} shrink-0 opacity-70`}
-                />
-              ) : (
-                <IoCheckmarkCircle
-                  className={`text-success ${iconSize} shrink-0 opacity-70`}
-                />
-              )}
-
-              <div className={rowTextClass}>
-                {requirementsLong
-                  ? requirementsLong
-                  : "No special requirements."}
-              </div>
-            </div>
-
-            {showPathway && program.pathway && taskCount > 0 ? (
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setPathwayExpanded((prev) => !prev);
-                }}
-                className="btn btn-sm gap-2 border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100"
-              >
-                {pathwayExpanded ? (
-                  <>
-                    Hide
-                    <IoChevronUpOutline className="h-5 w-5" />
-                  </>
-                ) : (
-                  <>
-                    See pathway
-                    <IoChevronDownOutline className="h-5 w-5" />
-                  </>
-                )}
-              </button>
-            ) : null}
-          </div>
-        ) : null}
-
-        {/* Limit (kept separate) */}
-        {resolvedShowBadges.limit && completionLimitReferee > 0 ? (
-          <div
-            className={`bg-base-200 text-base-content/80 flex items-center gap-2 ${rowPadding}`}
-          >
-            <IoPeople
-              className={`${iconSize} shrink-0 text-blue-600 opacity-70`}
-            />
-            <div className={rowTextClass}>
-              Up to{" "}
-              <span className="text-base-content font-semibold">
-                {completionLimitReferee}
-              </span>{" "}
-              referral{completionLimitReferee === 1 ? "" : "s"} can complete
-              this program.
-            </div>
-          </div>
-        ) : null}
-
-        {/* Rewards (combined) */}
-        {resolvedShowBadges.rewards ? (
-          <div
-            className={`bg-base-200 text-base-content/80 flex items-center gap-2 ${rowPadding}`}
-          >
-            <IoWalletOutline
-              className={`${iconSize} shrink-0 text-amber-600 opacity-70`}
-            />
-            <div className={rowTextClass}>{rewardsLabelLarge}</div>
-          </div>
-        ) : null}
-
-        {showPathway && pathwayExpanded && program.pathway ? (
-          <div className="border-base-300 bg-base-100 rounded-lg border p-3">
-            <ProgramPathwayView pathway={program.pathway} />
-          </div>
-        ) : null}
-      </div>
-    );
-  }
+  const StatusIcon =
+    normalizedStatus === "inactive"
+      ? IoInformationCircleOutline
+      : normalizedStatus === "limitreached"
+        ? IoWarningOutline
+        : normalizedStatus === "uncompletable"
+          ? IoAlertCircleOutline
+          : normalizedStatus === "expired"
+            ? IoTimeOutline
+            : normalizedStatus === "deleted"
+              ? IoAlertCircleOutline
+              : IoInformationCircleOutline;
 
   return (
-    <div className="mt-3 mb-2 space-y-1.5">
-      <div className="flex flex-row flex-wrap gap-1">
-        {/* Requirements (combined) */}
-        {resolvedShowBadges.requirements ? (
-          <div className="bg-base-200 text-base-content/80 flex min-w-0 items-center gap-1 rounded-md px-2 py-1 text-[11px]">
-            {completionWindowInDays > 0 || hasPathwayTasks ? (
-              <IoTime className="text-warning h-4 w-4 shrink-0 opacity-70" />
-            ) : (
-              <IoCheckmarkCircle className="text-success h-4 w-4 shrink-0 opacity-70" />
-            )}
-            <span className="text-base-content/60 text-[11px] leading-snug">
-              {requirementsCompact}
-            </span>
-          </div>
-        ) : null}
+    <div className={containerClass}>
+      {resolvedShowBadges.status && showStatusBadge ? (
+        <span
+          className={`${statusBadgeSizeClass} ${statusBadgeStyleClass} gap-1`}
+        >
+          <StatusIcon className="h-4 w-4" />
+          {statusLabel}
+        </span>
+      ) : null}
 
-        {/* Limit (kept separate) */}
-        {resolvedShowBadges.limit && completionLimitReferee > 0 ? (
-          <div className="bg-base-200 text-base-content/80 flex min-w-0 items-center gap-1 rounded-md px-2 py-1 text-[11px]">
-            <IoPeople className="h-4 w-4 shrink-0 text-blue-600 opacity-70" />
-            <span className="text-base-content/60 text-[11px] leading-snug">
-              Max {completionLimitReferee} referral
-              {completionLimitReferee === 1 ? "" : "s"}
-            </span>
-          </div>
-        ) : null}
+      {resolvedShowBadges.requirements && pathwayRequired ? (
+        <div
+          className="tooltipx tooltip-secondary cursor-helpx before:text-[0.6875rem]"
+          data-tip="Referees must complete pathway tasks to qualify for rewards."
+        >
+          <span className={requirementBadgeClass}>
+            <IoGitNetwork className="h-4 w-4" />
+            Pathway required
+          </span>
+        </div>
+      ) : null}
 
-        {/* Rewards (split in compact mode) */}
-        {resolvedShowBadges.rewards ? (
-          <>
-            {resolvedShowBadges.rewardsReferrer && referrerReward > 0 ? (
-              <div className="bg-base-200 text-base-content/80 flex min-w-0 items-center gap-1 rounded-md px-2 py-1 text-[11px]">
-                <IoWalletOutline className="h-4 w-4 shrink-0 text-amber-600 opacity-70" />
-                <span className="text-base-content/60 text-[11px] leading-snug">
-                  You get{" "}
-                  <span className="text-base-content font-semibold">
-                    {referrerReward}
-                  </span>{" "}
-                  ZLTO
-                </span>
-              </div>
-            ) : null}
+      {resolvedShowBadges.requirements && proofRequired ? (
+        <div
+          className="tooltipx tooltip-secondary cursor-helpx before:text-[0.6875rem]"
+          data-tip="Referees must verify proof of personhood before rewards can be earned."
+        >
+          <span className={requirementBadgeClass}>
+            <IoPersonCircle className="h-4 w-4" />
+            Proof of personhood required
+          </span>
+        </div>
+      ) : null}
 
-            {resolvedShowBadges.rewardsReferee && refereeReward > 0 ? (
-              <div className="bg-base-200 text-base-content/80 flex min-w-0 items-center gap-1 rounded-md px-2 py-1 text-[11px]">
-                <IoWalletOutline className="h-4 w-4 shrink-0 text-amber-600 opacity-70" />
-                <span className="text-base-content/60 text-[11px] leading-snug">
-                  They get{" "}
-                  <span className="text-base-content font-semibold">
-                    {refereeReward}
-                  </span>{" "}
-                  ZLTO
-                </span>
-              </div>
-            ) : null}
+      {resolvedShowBadges.rewards &&
+      resolvedShowBadges.rewardsReferrer &&
+      referrerReward > 0 ? (
+        <div
+          className="tooltipx tooltip-secondary cursor-helpx before:text-[0.6875rem]"
+          data-tip="You receive this ZLTO amount when your referral completes all requirements."
+        >
+          <span className={rewardBadgeClass}>
+            <IoWalletOutline className="h-4 w-4" />
+            {referrerReward} ZLTO
+          </span>
+        </div>
+      ) : null}
 
-            {referrerReward === 0 && refereeReward === 0 ? (
-              <div className="bg-base-200 text-base-content/80 flex min-w-0 items-center gap-1 rounded-md px-2 py-1 text-[11px]">
-                <IoWalletOutline className="h-4 w-4 shrink-0 text-amber-600 opacity-70" />
-                <span className="text-base-content/60 text-[11px] leading-snug">
-                  No ZLTO rewards
-                </span>
-              </div>
-            ) : null}
-          </>
-        ) : null}
-      </div>
+      {resolvedShowBadges.rewards &&
+      resolvedShowBadges.rewardsReferee &&
+      refereeReward > 0 ? (
+        <div
+          className="tooltipx tooltip-secondary cursor-help before:text-[0.6875rem]"
+          data-tip="You receive this ZLTO amount when you complete the programme requirements."
+        >
+          <span className={rewardBadgeClass}>
+            <IoWalletOutline className="h-4 w-4" />
+            {refereeReward} ZLTO
+          </span>
+        </div>
+      ) : null}
     </div>
   );
 };

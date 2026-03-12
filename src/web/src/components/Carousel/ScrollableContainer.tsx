@@ -5,6 +5,7 @@ interface ScrollableContainerProps {
   className?: string;
   scrollSpeed?: number;
   showShadows?: boolean;
+  scrollToEndOnChange?: boolean;
 }
 
 const ScrollableContainer: React.FC<ScrollableContainerProps> = ({
@@ -12,6 +13,7 @@ const ScrollableContainer: React.FC<ScrollableContainerProps> = ({
   className = "",
   scrollSpeed = 2,
   showShadows = false,
+  scrollToEndOnChange = false,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [showLeftShadow, setShowLeftShadow] = useState(false);
@@ -49,6 +51,19 @@ const ScrollableContainer: React.FC<ScrollableContainerProps> = ({
     const timeoutId = setTimeout(updateShadows, 100);
     return () => clearTimeout(timeoutId);
   }, [children, showShadows]);
+
+  // Optional behavior: keep the scroller pinned to the far right when content changes.
+  useEffect(() => {
+    if (!scrollToEndOnChange || !containerRef.current) return;
+
+    const timeoutId = setTimeout(() => {
+      if (!containerRef.current) return;
+      containerRef.current.scrollLeft = containerRef.current.scrollWidth;
+      updateShadows();
+    }, 0);
+
+    return () => clearTimeout(timeoutId);
+  }, [children, scrollToEndOnChange]);
 
   const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
     const slider = e.currentTarget;
@@ -155,7 +170,7 @@ const ScrollableContainer: React.FC<ScrollableContainerProps> = ({
   const combinedClasses = `${defaultClasses} ${className}`.trim();
 
   return (
-    <div className="relative">
+    <div className="relative h-full">
       {/* Left shadow */}
       {showShadows && showLeftShadow && (
         <div className="from-gray-light/5 backdrop-blur-smx pointer-events-none absolute top-0 bottom-0 left-0 z-10 w-12 bg-gradient-to-r to-transparent"></div>
@@ -168,7 +183,7 @@ const ScrollableContainer: React.FC<ScrollableContainerProps> = ({
 
       <div
         ref={containerRef}
-        className={combinedClasses}
+        className={`h-full ${combinedClasses}`}
         style={{
           scrollbarWidth: "none",
           msOverflowStyle: "none",

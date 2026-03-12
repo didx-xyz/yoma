@@ -129,7 +129,7 @@ export const UserMenu: React.FC = () => {
         onClose={() => setYoIdModalVisible(false)}
       />
 
-      <div className="drawer-end">
+      <div className="drawer drawer-end h-full">
         <input
           id="userMenu-drawer"
           type="checkbox"
@@ -138,10 +138,10 @@ export const UserMenu: React.FC = () => {
           onChange={onToggle}
           tabIndex={-1}
         />
-        <div className="drawer-content flex flex-col">
+        <div className="drawer-content flex h-full flex-col">
           <label
             htmlFor="userMenu-drawer"
-            className="rounded-md hover:cursor-pointer"
+            className="flex h-full items-center rounded-md hover:cursor-pointer"
             tabIndex={isDrawerOpen ? -1 : 0}
             onKeyDown={(e) => {
               if (e.key === "Enter") {
@@ -180,7 +180,7 @@ export const UserMenu: React.FC = () => {
           </label>
         </div>
 
-        <div className="drawer-side">
+        <div className="drawer-side z-50">
           <label htmlFor="userMenu-drawer" className="drawer-overlay"></label>
           {/* MENU ITEMS */}
           <div className="h-screen max-w-[20rem] overflow-y-auto rounded-tl-lg rounded-tr-none rounded-br-none rounded-bl-lg bg-[#FFF5E7]">
@@ -254,7 +254,7 @@ export const UserMenu: React.FC = () => {
                 <div className="z-10 mt-2 flex w-full flex-row items-center gap-2">
                   <Link
                     href="/user/profile"
-                    className="btn btn-warning btn-sm w-1/2 text-sm text-white"
+                    className="font-nunito btn btn-warning btn-sm w-1/2 text-white"
                     onClick={() => setDrawerOpen(false)}
                     tabIndex={isDrawerOpen ? 0 : -1}
                     title="Edit your profile"
@@ -264,7 +264,7 @@ export const UserMenu: React.FC = () => {
 
                   <Link
                     href="/user/settings"
-                    className="btn btn-warning btn-sm w-1/2 text-sm text-white"
+                    className="font-nunito btn btn-warning btn-sm w-1/2 text-white"
                     onClick={() => setDrawerOpen(false)}
                     tabIndex={isDrawerOpen ? 0 : -1}
                     title="Change your settings"
@@ -454,7 +454,7 @@ export const UserMenu: React.FC = () => {
 
                 <div className="flex w-full flex-col gap-2">
                   <div className="divider !bg-gray my-4" />
-                  <SignOutButton />
+                  <SignOutButton className="!btn-sm" />
                 </div>
               </div>
             </div>

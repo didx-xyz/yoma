@@ -61,8 +61,8 @@ import FormInput from "~/components/Common/FormInput";
 import FormMessage, { FormMessageType } from "~/components/Common/FormMessage";
 import FormRequiredFieldMessage from "~/components/Common/FormRequiredFieldMessage";
 import MainLayout from "~/components/Layout/Main";
-import AvatarUpload from "~/components/Organisation/Upsert/AvatarUpload";
 import { PageBackground } from "~/components/PageBackground";
+import ProgramImageUpload from "~/components/Referrals/ProgramImageUpload";
 import {
   AdminProgramInfo,
   ProgramInfoFilterOptions,
@@ -1863,7 +1863,7 @@ const ReferralProgramForm: NextPageWithLayout<{
                         type="hidden"
                         {...registerStep1("imageURL" as any)}
                       />
-                      <AvatarUpload
+                      <ProgramImageUpload
                         onUploadComplete={(files) => {
                           const file =
                             files && files.length > 0 ? files[0] : null;
@@ -1894,14 +1894,6 @@ const ReferralProgramForm: NextPageWithLayout<{
                         showExisting={!(getValuesStep1() as any).image}
                       />
                     </FormField>
-
-                    {/* <FormCheckbox
-                      id="isDefault"
-                      label="Set as Default Program"
-                      inputProps={{
-                        ...registerStep1("isDefault"),
-                      }}
-                    /> */}
 
                     <div className="flex flex-row items-center justify-center gap-2 md:justify-end md:gap-4">
                       <Link
@@ -2546,16 +2538,6 @@ const ReferralProgramForm: NextPageWithLayout<{
               {step === 6 && (
                 <div className="space-y-6">
                   <div className="flex flex-row items-start justify-between gap-4">
-                    {/* Program Image */}
-                    <div className="flex-shrink-0">
-                      <ProgramImage
-                        imageURL={programPreview?.imageURL}
-                        name={programPreview?.name || "Program"}
-                        size={60}
-                        className="border-2 border-gray-200"
-                      />
-                    </div>
-
                     <div className="min-w-0 flex-1">
                       <div className="flex min-w-0 items-center gap-2">
                         <h1 className="truncate text-base font-bold md:text-lg">
@@ -2571,6 +2553,9 @@ const ReferralProgramForm: NextPageWithLayout<{
                       </p>
                     </div>
                   </div>
+
+                  {/* DIVIDER */}
+                  <div className="divider"></div>
 
                   {/* Program Card Preview */}
                   {programPreview && (
@@ -2594,6 +2579,7 @@ const ReferralProgramForm: NextPageWithLayout<{
                                 imagePreviewUrl || programPreview.imageURL,
                             }}
                             zltoReward={programPreview.zltoRewardReferrer}
+                            variant="referral"
                           />
                         </div>
                       </div>

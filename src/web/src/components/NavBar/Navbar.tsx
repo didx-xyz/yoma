@@ -16,6 +16,7 @@ import {
   RoleView,
   activeNavigationRoleViewAtom,
   currentOrganisationIdAtom,
+  firstPendingRefereeReferralUrlAtom,
   userProfileAtom,
 } from "~/lib/store";
 import { AvatarImage } from "../AvatarImage";
@@ -26,7 +27,9 @@ import { SignOutButton } from "../SignOutButton";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { UserMenu } from "./UserMenu";
 
-const getNavBarLinksUser = (): TabItem[] => {
+const getNavBarLinksUser = (
+  firstPendingRefereeReferralUrl: string | null,
+): TabItem[] => {
   const links: TabItem[] = [
     {
       title: "Home",
@@ -34,7 +37,6 @@ const getNavBarLinksUser = (): TabItem[] => {
       url: "/",
       badgeCount: null,
       selected: false,
-      iconImage: "🏠",
     },
     {
       title: "About Us",
@@ -42,7 +44,6 @@ const getNavBarLinksUser = (): TabItem[] => {
       url: "/about",
       badgeCount: null,
       selected: false,
-      iconImage: "ℹ️",
     },
     {
       title: "Opportunities",
@@ -50,7 +51,6 @@ const getNavBarLinksUser = (): TabItem[] => {
       url: "/opportunities",
       badgeCount: null,
       selected: false,
-      iconImage: "🏆",
     },
     {
       title: "Marketplace",
@@ -58,10 +58,9 @@ const getNavBarLinksUser = (): TabItem[] => {
       url: "/marketplace",
       badgeCount: null,
       selected: false,
-      iconImage: "🛒",
     },
     {
-      title: "Referrals",
+      title: "Refer a friend",
       description: "Referrals",
       url: "/referrals",
       badgeCount: null,
@@ -69,6 +68,19 @@ const getNavBarLinksUser = (): TabItem[] => {
       iconImage: "❤️",
     },
   ];
+
+  if (firstPendingRefereeReferralUrl) {
+    links.push({
+      title: "New to Yoma?",
+      description: "New to Yoma",
+      url: firstPendingRefereeReferralUrl,
+      badgeCount: null,
+      selected: false,
+      iconImage: "⭐",
+      itemClassName: "!bg-purple !text-white hover:!bg-purple-dark",
+      orderSideBar: 1,
+    });
+  }
 
   return links;
 };
@@ -80,7 +92,6 @@ const navBarLinksAdmin: TabItem[] = [
     url: `/`,
     badgeCount: null,
     selected: false,
-    iconImage: "🏠",
   },
   {
     title: "Organisations",
@@ -88,7 +99,6 @@ const navBarLinksAdmin: TabItem[] = [
     url: "/organisations",
     badgeCount: null,
     selected: false,
-    iconImage: "🏢",
   },
   {
     title: "Opportunities",
@@ -96,7 +106,6 @@ const navBarLinksAdmin: TabItem[] = [
     url: "/admin/opportunities",
     badgeCount: null,
     selected: false,
-    iconImage: "🏆",
   },
   {
     title: "Links",
@@ -104,7 +113,6 @@ const navBarLinksAdmin: TabItem[] = [
     url: "/admin/links",
     badgeCount: null,
     selected: false,
-    iconImage: "🔗",
   },
   {
     title: "Marketplace Rules",
@@ -112,7 +120,6 @@ const navBarLinksAdmin: TabItem[] = [
     url: "/admin/stores",
     badgeCount: null,
     selected: false,
-    iconImage: "🛒",
   },
   {
     title: "Referrals",
@@ -120,7 +127,6 @@ const navBarLinksAdmin: TabItem[] = [
     url: "/admin/referrals",
     badgeCount: null,
     selected: false,
-    iconImage: "🎯",
   },
 ];
 
@@ -128,6 +134,9 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
   const router = useRouter();
   const activeRoleView = useAtomValue(activeNavigationRoleViewAtom);
   const currentOrganisationId = useAtomValue(currentOrganisationIdAtom);
+  const firstPendingRefereeReferralUrl = useAtomValue(
+    firstPendingRefereeReferralUrlAtom,
+  );
   const { data: session } = useSession();
   const userProfile = useAtomValue(userProfileAtom);
   const [isDrawerOpen, setDrawerOpen] = useState(false);
@@ -212,7 +221,7 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
       ];
     } else {
       // Get user links with conditional referee link
-      links = getNavBarLinksUser();
+      links = getNavBarLinksUser(firstPendingRefereeReferralUrl);
     }
 
     // Set selected property based on current route
@@ -222,7 +231,42 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
         router.pathname === link.url ||
         (link.url !== "/" && router.pathname.startsWith(link.url!)),
     }));
-  }, [activeRoleView, currentOrganisationId, router.pathname]);
+  }, [
+    activeRoleView,
+    currentOrganisationId,
+    firstPendingRefereeReferralUrl,
+    router.pathname,
+  ]);
+
+  const desktopNavbarLinks = useMemo<TabItem[]>(() => {
+    return currentNavbarLinks
+      .map((link, index) => ({ link, index }))
+      .sort((a, b) => {
+        const aOrder = a.link.orderDesktop;
+        const bOrder = b.link.orderDesktop;
+
+        if (aOrder == null && bOrder == null) return a.index - b.index;
+        if (aOrder == null) return 1;
+        if (bOrder == null) return -1;
+        return aOrder - bOrder;
+      })
+      .map((item) => item.link);
+  }, [currentNavbarLinks]);
+
+  const sideBarNavbarLinks = useMemo<TabItem[]>(() => {
+    return currentNavbarLinks
+      .map((link, index) => ({ link, index }))
+      .sort((a, b) => {
+        const aOrder = a.link.orderSideBar;
+        const bOrder = b.link.orderSideBar;
+
+        if (aOrder == null && bOrder == null) return a.index - b.index;
+        if (aOrder == null) return 1;
+        if (bOrder == null) return -1;
+        return aOrder - bOrder;
+      })
+      .map((item) => item.link);
+  }, [currentNavbarLinks]);
 
   const renderOrganisationMenuItem = (organisation: OrganizationInfo) => {
     if (organisation.status == "Deleted") return null;
@@ -306,9 +350,9 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
   };
 
   return (
-    <div className="fixed top-0 right-0 left-0 z-40">
-      <div className={`bg-theme navbar z-40`}>
-        <div className="flex w-full items-center">
+    <div className="fixed top-0 right-0 left-0 z-40 shadow-xs">
+      <div className={`bg-theme navbar z-40 h-20 min-h-0 !p-0`}>
+        <div className="flex h-full w-full items-stretch">
           {/* HOVER MENU */}
           <div
             className="absolute top-1/5 left-0 h-[100vh] w-[2px] bg-transparent"
@@ -317,7 +361,7 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
           ></div>
 
           {/* LEFT MENU */}
-          <div className="flex flex-shrink-0 items-center justify-start gap-1">
+          <div className="flex h-full flex-shrink-0 items-stretch justify-start gap-1">
             {/* LEFT DRAWER */}
             <div
               className={`drawer ${isHovered || isDrawerOpen ? "open" : ""}`}
@@ -333,7 +377,7 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
               <div className="drawer-content">
                 <label
                   htmlFor="nav-drawer"
-                  className="bg-theme btn drawer w-auto !rounded-md border-none px-1 text-white shadow-none duration-0 hover:brightness-95 md:px-3"
+                  className="bg-theme drawer flex h-full w-auto cursor-pointer items-center border-none px-4 text-white shadow-none duration-0 hover:brightness-95"
                   tabIndex={isDrawerOpen ? -1 : 0}
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
@@ -385,11 +429,11 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
 
                     <div className="divider !bg-gray my-2 grow-0" />
 
-                    <ul className="menu -m-2 w-full p-0">
-                      {currentNavbarLinks.map((link, index) => (
+                    <ul className="menu w-full p-0">
+                      {sideBarNavbarLinks.map((link, index) => (
                         <li
                           key={`lnkNavbarMenuModal_${index}`}
-                          className="btn btn-sm text-gray-dark items-start !rounded-md border-none bg-white text-sm shadow-none"
+                          className={`text-gray-dark font-family-nunito mt-1 flex flex-col gap-2 rounded-md text-sm font-semibold tracking-normal ${link.itemClassName ?? ""}`}
                         >
                           <Link
                             href={link.url!}
@@ -404,10 +448,12 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
                             tabIndex={isDrawerOpen ? 0 : -1}
                             className="w-full"
                           >
-                            <span className="font-nunito flex h-6 w-6 shrink-0 items-center justify-center">
-                              {link.iconImage}
-                            </span>
                             <span>{link.title}</span>
+                            {link.iconImage && (
+                              <span className="ml-1 inline-flex h-5 w-5 items-center justify-center rounded-full bg-white/20 p-4 text-sm shadow-md">
+                                {link.iconImage}
+                              </span>
+                            )}
                           </Link>
                         </li>
                       ))}
@@ -416,9 +462,9 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
                     <div className="divider !bg-gray my-2 grow-0" />
 
                     <LanguageSwitcher
-                      className="hover:bg-gray font-nunito ml-1 bg-transparent px-3 !py-1"
+                      className="hover:bg-gray font-family-nunito ml-1 bg-transparent px-3 !py-1"
                       classNameIcon="text-gray-dark !h-5 !w-5"
-                      classNameSelect="text-gray-dark text-sm"
+                      classNameSelect="text-gray-dark font-family-nunito text-sm font-semibold tracking-normal"
                       tabIndex={isDrawerOpen ? 0 : -1}
                     />
 
@@ -433,7 +479,7 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
                           <ul className="menu -m-2 w-full p-0">
                             <li
                               key="userMenu_orgs_all"
-                              className="btn btn-sm text-gray-dark items-start !rounded-md border-none bg-white text-sm shadow-none"
+                              className="btn btn-sm text-gray-dark font-family-nunito items-start !rounded-md border-none bg-white text-sm font-semibold tracking-normal shadow-none"
                             >
                               <Link
                                 href="/organisations"
@@ -463,7 +509,7 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
                         <ul className="menu -m-2 w-full p-0">
                           <li
                             key="userMenu_admin"
-                            className="btn btn-sm text-gray-dark items-start !rounded-md border-none bg-white text-sm shadow-none"
+                            className="btn btn-sm text-gray-dark font-family-nunito items-start !rounded-md border-none bg-white text-sm font-semibold tracking-normal shadow-none"
                           >
                             <button
                               onClick={toggleAdminMenu}
@@ -488,7 +534,7 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
                           {isAdminMenuOpen && (
                             <li
                               key="userMenu_admin_overview"
-                              className="btn btn-sm text-gray-dark items-start !rounded-md border-none bg-white text-sm shadow-none"
+                              className="btn btn-sm text-gray-dark font-family-nunito items-start !rounded-md border-none bg-white text-sm font-semibold tracking-normal shadow-none"
                             >
                               <Link
                                 href="/organisations/dashboard"
@@ -541,7 +587,7 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
             {/* LOGO */}
             <Link
               href="/"
-              className="bg-theme btn gap-2 !rounded-md border-none px-2 text-white shadow-none hover:brightness-95 md:px-2"
+              className="bg-theme btn flex h-full items-center gap-2 !rounded-none border-none px-2 text-white shadow-none hover:brightness-95 md:px-2"
               tabIndex={isDrawerOpen ? -1 : 0}
               title="Home"
             >
@@ -566,14 +612,18 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
           </div>
 
           {/* CENTER MENU (DESKTOP) */}
-          <div className="hidden min-w-0 flex-1 lg:block">
+          <div className="hidden h-full min-w-0 flex-1 sm:block">
             <ScrollableContainer
-              className="flex h-full items-center overflow-x-auto overflow-y-visible"
+              className="flex h-full items-stretch overflow-x-auto overflow-y-visible"
               showShadows={true}
+              scrollToEndOnChange={true}
             >
-              <ul className="mx-auto flex w-max items-center gap-2 object-contain lg:gap-4 xl:gap-8">
-                {currentNavbarLinks.map((link, index) => (
-                  <li key={index} className="relative flex-shrink-0">
+              <ul className="mx-auto flex h-full w-max items-stretch object-contain">
+                {desktopNavbarLinks.map((link, index) => (
+                  <li
+                    key={index}
+                    className="relative flex h-full flex-shrink-0 items-stretch"
+                  >
                     <Link
                       href={link.url!}
                       onClick={(e) => {
@@ -584,12 +634,19 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
                       }}
                       tabIndex={index}
                       id={`lnkNavbarMenu_${link.title}`}
-                      className="bg-theme group btn font-nunito flex-shrink-0 !rounded-md border-none p-2 px-4 text-base text-white shadow-none duration-0 hover:brightness-95"
+                      className={`bg-theme group font-nunito text-md flex h-full flex-shrink-0 items-center justify-center self-stretch !rounded-none border-none px-4 font-semibold text-white shadow-none duration-0 hover:brightness-95 ${link.itemClassName ?? ""}`}
                       draggable={false}
                     >
-                      <span className={link.selected ? "font-bold" : ""}>
+                      <span
+                      //className={link.selected ? "font-bold" : ""}
+                      >
                         {link.title}
                       </span>
+                      {link.iconImage && (
+                        <span className="ml-2 inline-flex h-6 w-6 items-center justify-center rounded-full bg-white/20 p-4 text-sm shadow-md">
+                          {link.iconImage}
+                        </span>
+                      )}
                     </Link>
                   </li>
                 ))}
@@ -598,15 +655,23 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
           </div>
 
           {/* RIGHT MENU */}
-          <div className="ml-auto flex flex-shrink-0 items-center justify-end md:mr-2 md:gap-4">
+          <div className="ml-auto flex h-full flex-shrink-0 items-stretch justify-end md:mr-2 md:gap-4">
             <LanguageSwitcher
-              className="bg-theme hover:brightness-95 md:px-3"
-              classNameIcon=""
-              classNameSelect="mobile-select"
+              className="bg-theme font-nunito rounded-none px-3 text-current hover:brightness-95"
+              classNameIcon="!h-5 !w-5 !text-current"
+              classNameSelect="text-md mobile-select !text-current"
               tabIndex={isDrawerOpen ? -1 : 0}
             />
-            {!session && <SignInButton tabIndex={isDrawerOpen ? -1 : 0} />}
-            {session && <UserMenu />}
+            {!session && (
+              <div className="bg-theme flex h-full items-center px-2 hover:bg-black/10 md:px-3">
+                <SignInButton tabIndex={isDrawerOpen ? -1 : 0} />
+              </div>
+            )}
+            {session && (
+              <div className="bg-theme flex h-full items-center px-2 hover:bg-black/10 md:px-3">
+                <UserMenu />
+              </div>
+            )}
           </div>
         </div>
       </div>

@@ -221,7 +221,27 @@ const Home: NextPageWithLayout<{
                 </div>
 
                 {/* RIGHT: WOMAN IMAGE */}
-                <div className="relativex z-20 mt-20 -mr-10 hidden lg:mb-[-80px] lg:flex">
+                <div className="relative z-20 mt-20 -mr-10 hidden lg:mb-[-80px] lg:flex">
+                  {/* FLOATING STAT */}
+                  {metrics?.userCountDisplay && (
+                    <div className="bg-beige/60 absolute top-10 right-8 z-30 inline-flex w-[160px] flex-col items-center gap-1 rounded-lg px-4 py-3 shadow-2xl backdrop-blur-lg">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-black shadow-2xl">
+                        <span className="text-lg" aria-hidden="true">
+                          🎉
+                        </span>
+                      </div>
+
+                      <div className="flex flex-col text-left leading-tight">
+                        <p className="text-center text-2xl font-bold text-black">
+                          {`${metrics?.userCountDisplay}+`}
+                        </p>
+                        <span className="text-sm font-bold text-black">
+                          people registered
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
                   <Image
                     src={imageWoman}
                     alt="Woman smiling"
@@ -423,7 +443,7 @@ const Home: NextPageWithLayout<{
                 </p>
               </div>
 
-              {/* ROW OF 4 CARDS */}
+              {/* ROW OF 4 CARDS: STATS */}
               <div className="my-10 grid grid-cols-2 gap-4 px-4 md:grid-cols-4">
                 {/* CARD 1 */}
                 <div className="flex flex-col items-center gap-5 rounded-xl py-4 text-white">

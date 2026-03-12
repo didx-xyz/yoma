@@ -29,7 +29,7 @@ export const ReferralBlockedView: React.FC<RequestBlockedViewProps> = ({
   `;
 
   return (
-    <div className="flex flex-col items-center justify-center">
+    <div className="my-10 flex flex-col items-center justify-center">
       <NoRowsMessage
         title="Referral Access Suspended"
         description={blockedDescription}

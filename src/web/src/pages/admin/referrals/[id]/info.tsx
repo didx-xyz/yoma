@@ -130,16 +130,6 @@ const ReferralProgramInfo: NextPageWithLayout<{
 
         <div className="animate-fade-in mx-auto mt-5 space-y-6 rounded-2xl bg-white p-6 shadow-md">
           <div className="flex flex-row items-start justify-between gap-4">
-            {/* Program Image */}
-            <div className="flex-shrink-0">
-              <ProgramImage
-                imageURL={program?.imageURL}
-                name={program?.name ?? "Program"}
-                size={60}
-                className="border-2 border-gray-200"
-              />
-            </div>
-
             <div className="min-w-0 flex-1">
               <div className="flex min-w-0 items-center gap-2">
                 <h1 className="truncate text-base font-bold md:text-lg">
@@ -169,6 +159,9 @@ const ReferralProgramInfo: NextPageWithLayout<{
             )}
           </div>
 
+          {/* DIVIDER */}
+          <div className="divider"></div>
+
           {/* Program Card Preview */}
           {program && (
             <>
@@ -181,6 +174,7 @@ const ReferralProgramInfo: NextPageWithLayout<{
                   <ProgramCard
                     data={program}
                     zltoReward={program.zltoRewardReferrer}
+                    variant="referral"
                   />
                 </div>
               </div>
