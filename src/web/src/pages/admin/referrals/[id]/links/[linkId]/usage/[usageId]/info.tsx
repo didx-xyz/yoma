@@ -90,6 +90,7 @@ const ReferralLinkUsageInfo: NextPageWithLayout<{
     enabled: !error,
   });
 
+  //TODO: remove
   const mockedPathwayProgress = useMemo(() => {
     if (!usage?.pathway) return null;
 
@@ -341,7 +342,8 @@ const ReferralLinkUsageInfo: NextPageWithLayout<{
                     All Requirements Met
                   </div>
                   <div className="flex-1 border border-gray-200 px-4 py-2 text-sm hover:bg-gray-100">
-                    {usage?.completed ? (
+                    {/* TODO: fix new fields */}
+                    {/* {usage?.completed ? (
                       <span className="badge badge-success badge-sm">
                         ✓ Yes
                       </span>
@@ -349,7 +351,7 @@ const ReferralLinkUsageInfo: NextPageWithLayout<{
                       <span className="text-gray-500">
                         No (Pending pathway completion or proof of personhood)
                       </span>
-                    )}
+                    )} */}
                   </div>
                 </div>
               </div>

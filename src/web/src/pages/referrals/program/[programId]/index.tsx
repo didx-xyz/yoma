@@ -11,7 +11,7 @@ import { getServerSession } from "next-auth";
 import Head from "next/head";
 import { useRouter } from "next/router";
 import { type ParsedUrlQuery } from "querystring";
-import { type ReactElement, useCallback, useMemo, useState } from "react";
+import { type ReactElement, useCallback, useState } from "react";
 import { IoLinkOutline, IoTimeOutline, IoTrophyOutline } from "react-icons/io5";
 import { ProgramStatus, type ProgramInfo } from "~/api/models/referrals";
 import { getReferralProgramInfoById } from "~/api/services/referrals";
@@ -36,6 +36,7 @@ interface IParams extends ParsedUrlQuery {
   programId: string;
 }
 
+//TODO: remove
 const parseMockProgramStatus = (
   value: string | string[] | undefined,
 ): ProgramStatus | null => {
@@ -234,7 +235,7 @@ const ReferralProgramDetails: NextPageWithLayout<{
                     </p>
                   </ReferralInfoCard>
 
-                  {(program?.pathway?.steps?.length ?? 0) > 0 && (
+                  {program?.pathwayRequired && (
                     <ReferralTasksCard model={program.pathway} />
                   )}
                 </>

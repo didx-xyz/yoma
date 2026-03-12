@@ -49,7 +49,7 @@ export const ReferralSlidesCarousel = <T,>({
   }, [screenWidth]);
 
   const slideKeys = useMemo(() => {
-    return items.map((item) => getSlideKey(item));
+    return items.map((item, index) => `${getSlideKey(item)}_${index}`);
   }, [items, getSlideKey]);
 
   const dataSignature = useMemo(() => slideKeys.join("|"), [slideKeys]);
@@ -117,7 +117,7 @@ export const ReferralSlidesCarousel = <T,>({
     >
       <Slider>
         {items.map((item, index) => {
-          const slideKey = slideKeys[index] || `${index}`;
+          const slideKey = slideKeys[index] || `slide_${index}`;
 
           return (
             <Slide

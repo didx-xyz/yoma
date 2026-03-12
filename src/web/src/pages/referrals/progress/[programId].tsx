@@ -123,6 +123,7 @@ const RefereeProofOfPersonhoodAction: React.FC<
   );
 };
 
+//TODO: remove
 const parseMockProgramStatus = (
   value: string | string[] | undefined,
 ): ProgramStatus | null => {
@@ -251,6 +252,7 @@ const RefereeDashboard: NextPageWithLayout<{
     enabled: !serverError,
   });
 
+  //TODO: remove
   const mockedPathwayProgress = useMemo(() => {
     if (!usage?.pathway) return null;
 

@@ -58,6 +58,7 @@ const getErrorSearchText = (error: any): string => {
   return "";
 };
 
+//TODO: remove
 const parseMockProgramStatus = (
   value: string | string[] | undefined,
 ): ProgramStatus | null => {

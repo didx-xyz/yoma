@@ -20,8 +20,7 @@ import {
   AdminReferralProgramActions,
   ReferralProgramActionOptions,
 } from "~/components/Referrals/AdminReferralProgramActions";
-import { ProgramCard } from "~/components/Referrals/ProgramCard";
-import { ProgramImage } from "~/components/Referrals/ProgramImage";
+import { ReferralProgramSlideCard } from "~/components/Referrals/new/ReferralProgramSlideCard";
 import { InternalServerError } from "~/components/Status/InternalServerError";
 import { Loading } from "~/components/Status/Loading";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
@@ -171,10 +170,12 @@ const ReferralProgramInfo: NextPageWithLayout<{
                   This is how your program appears to users
                 </p>
                 <div className="flex justify-center py-4">
-                  <ProgramCard
-                    data={program}
-                    zltoReward={program.zltoRewardReferrer}
-                    variant="referral"
+                  <ReferralProgramSlideCard
+                    title={program.name}
+                    description={program.description}
+                    imageURL={program.imageURL}
+                    reward={program.zltoRewardReferrer}
+                    timeDays={program.completionWindowInDays}
                   />
                 </div>
               </div>

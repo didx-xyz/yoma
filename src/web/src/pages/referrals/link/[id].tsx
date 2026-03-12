@@ -36,6 +36,7 @@ import { currentLanguageAtom, userProfileAtom } from "~/lib/store";
 import { authOptions } from "~/server/auth";
 import { type NextPageWithLayout } from "../../_app";
 
+//TODO: remove
 const parseMockProgramStatus = (
   value: string | string[] | undefined,
 ): ProgramStatus | null => {
