@@ -63,16 +63,12 @@ import FormRequiredFieldMessage from "~/components/Common/FormRequiredFieldMessa
 import MainLayout from "~/components/Layout/Main";
 import { PageBackground } from "~/components/PageBackground";
 import ProgramImageUpload from "~/components/Referrals/ProgramImageUpload";
-import {
-  AdminProgramInfo,
-  ProgramInfoFilterOptions,
-} from "~/components/Referrals/AdminProgramInfo";
+import { AdminProgramPreview } from "~/components/Referrals/AdminProgramPreview";
 import { AdminProgramPathwayEditComponent } from "~/components/Referrals/AdminProgramPathwayEdit";
 import {
   AdminReferralProgramActions,
   ReferralProgramActionOptions,
 } from "~/components/Referrals/AdminReferralProgramActions";
-import { ProgramCard } from "~/components/Referrals/ProgramCard";
 import { ProgramImage } from "~/components/Referrals/ProgramImage";
 import { ProgramStatusBadge } from "~/components/Referrals/ProgramStatusBadge";
 import { ApiErrors } from "~/components/Status/ApiErrors";
@@ -2537,65 +2533,19 @@ const ReferralProgramForm: NextPageWithLayout<{
               {/* STEP 6: Preview */}
               {step === 6 && (
                 <div className="space-y-6">
-                  <div className="flex flex-row items-start justify-between gap-4">
-                    <div className="min-w-0 flex-1">
-                      <div className="flex min-w-0 items-center gap-2">
-                        <h1 className="truncate text-base font-bold md:text-lg">
-                          {programPreview?.name || "N/A"}
-                        </h1>
-                        {programPreview?.isDefault && (
-                          <span className="badge badge-primary">Default</span>
-                        )}
-                      </div>
-                      <p className="truncate text-xs text-gray-500 md:text-sm">
-                        {programPreview?.description ||
-                          "No description provided"}
-                      </p>
-                    </div>
+                  <div className="mb-4 flex flex-col gap-2">
+                    <h5 className="font-bold tracking-wider">Preview</h5>
+                    <p className="-mt-2 text-sm">
+                      Preview your program before submitting.
+                    </p>
                   </div>
 
-                  {/* DIVIDER */}
-                  <div className="divider"></div>
-
-                  {/* Program Card Preview */}
                   {programPreview && (
-                    <>
-                      <div>
-                        <h6 className="text-sm font-semibold">
-                          Program Card Preview
-                        </h6>
-                        <p className="text-xs text-gray-600">
-                          This is how your program will appear to users
-                        </p>
-                        <div className="flex justify-center py-4">
-                          <ProgramCard
-                            data={{
-                              ...programPreview,
-                              name: programPreview.name || "Program Name",
-                              description:
-                                programPreview.description ||
-                                "No description provided",
-                              imageURL:
-                                imagePreviewUrl || programPreview.imageURL,
-                            }}
-                            zltoReward={programPreview.zltoRewardReferrer}
-                            variant="referral"
-                          />
-                        </div>
-                      </div>
-
-                      <AdminProgramInfo
-                        program={programPreview}
-                        imagePreviewUrl={imagePreviewUrl}
-                        opportunityDataMap={opportunityDataMap}
-                        filterOptions={[
-                          ProgramInfoFilterOptions.PROGRAM_INFO,
-                          ProgramInfoFilterOptions.COMPLETION_REWARDS,
-                          ProgramInfoFilterOptions.FEATURES,
-                          ProgramInfoFilterOptions.PATHWAY,
-                        ]}
-                      />
-                    </>
+                    <AdminProgramPreview
+                      program={programPreview}
+                      imagePreviewUrl={imagePreviewUrl}
+                      opportunityDataMap={opportunityDataMap}
+                    />
                   )}
 
                   {/* Action Buttons */}

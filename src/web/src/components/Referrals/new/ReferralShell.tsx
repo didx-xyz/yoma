@@ -13,6 +13,7 @@ interface ReferralShellProps {
   children: ReactNode;
   isLoading?: boolean;
   loader?: ReactNode;
+  preview?: boolean;
 }
 
 export const ReferralShell = ({
@@ -25,6 +26,7 @@ export const ReferralShell = ({
   children,
   isLoading = false,
   loader,
+  preview = false,
 }: ReferralShellProps) => {
   const defaultLoader = (
     <div className="relative z-10 mx-auto mt-16 box-border w-full max-w-7xl px-4 py-4 sm:px-6 md:mt-20 lg:px-8">
@@ -53,7 +55,9 @@ export const ReferralShell = ({
   const shellLoader = loader ?? defaultLoader;
 
   const shellBody = (
-    <div className="relative z-10 mx-auto mt-16 box-border w-full max-w-7xl px-4 py-4 sm:px-6 md:mt-20 lg:px-8">
+    <div
+      className={`relative z-10 mx-auto box-border w-full max-w-7xl px-4 py-4 sm:px-6 lg:px-8 ${preview ? "" : "mt-16 md:mt-20"}`}
+    >
       <div className="flex flex-col gap-2 py-6 sm:flex-row">
         <div className="min-w-0 grow overflow-hidden px-2 text-sm whitespace-nowrap">
           <ul className="flex w-full min-w-0 items-center text-xs font-semibold tracking-wide md:text-sm">
@@ -62,6 +66,7 @@ export const ReferralShell = ({
                 className="group inline-flex cursor-pointer items-center gap-4 text-white"
                 onClick={onBack}
                 aria-label="Back"
+                disabled={preview}
               >
                 <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white/15 transition-colors group-hover:bg-white/25 md:h-12 md:w-12">
                   <FiChevronLeft
@@ -91,7 +96,9 @@ export const ReferralShell = ({
   );
 
   return (
-    <div className="relative min-h-screen w-full bg-gray-100">
+    <div
+      className={`relative w-full bg-gray-100 ${preview ? "" : "min-h-screen"}`}
+    >
       <div className="absolute inset-x-0 top-0 h-[160px] md:h-[220px]">
         {headerBackgroundMode === "image" && programImageUrl ? (
           <Image

@@ -176,7 +176,6 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
           url: `/`,
           badgeCount: null,
           selected: false,
-          iconImage: "🏠",
         },
         {
           title: "Overview",
@@ -184,7 +183,6 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
           url: `/organisations/dashboard?organisations=${currentOrganisationId}`,
           badgeCount: null,
           selected: false,
-          iconImage: "📊",
         },
         {
           title: "Opportunities",
@@ -192,7 +190,6 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
           url: `/organisations/${currentOrganisationId}/opportunities`,
           badgeCount: null,
           selected: false,
-          iconImage: "🏆",
         },
         {
           title: "Submissions",
@@ -200,7 +197,6 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
           url: `/organisations/${currentOrganisationId}/verifications?verificationStatus=Pending`,
           badgeCount: null,
           selected: false,
-          iconImage: "✅",
         },
         {
           title: "Links",
@@ -208,7 +204,6 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
           url: `/organisations/${currentOrganisationId}/links`,
           badgeCount: null,
           selected: false,
-          iconImage: "🔗",
         },
         {
           title: "Settings",
@@ -216,7 +211,6 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
           url: `/organisations/${currentOrganisationId}/edit`,
           badgeCount: null,
           selected: false,
-          iconImage: "⚙️",
         },
       ];
     } else {

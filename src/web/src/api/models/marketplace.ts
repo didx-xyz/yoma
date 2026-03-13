@@ -1,4 +1,5 @@
 import type { PaginationFilter } from "./common";
+import { OpportunityItem } from "./opportunity";
 
 export interface StoreCategory {
   id: string;
@@ -149,10 +150,6 @@ export enum StoreAccessControlRuleStatus {
   Deleted,
 }
 
-export interface OpportunityItem {
-  id: string;
-  title: string;
-}
 export interface StoreAccessControlRuleSearchFilter extends PaginationFilter {
   nameContains: string | null;
   stores: string[] | null;

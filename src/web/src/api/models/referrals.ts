@@ -1,6 +1,6 @@
 import { PaginationFilter } from "./common";
 import type { Country } from "./lookups";
-import { OpportunityItem } from "./marketplace";
+import { OpportunityItem } from "./opportunity";
 
 // Enums
 export enum ProgramStatus {

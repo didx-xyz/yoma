@@ -8,12 +8,7 @@ import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useEffect, useMemo, type ReactElement } from "react";
-import {
-  IoOpenOutline,
-  IoTimeOutline,
-  IoTrophyOutline,
-  IoWarningOutline,
-} from "react-icons/io5";
+import { IoOpenOutline, IoWarningOutline } from "react-icons/io5";
 import { toast } from "react-toastify";
 import {
   ProgramStatus,
@@ -26,13 +21,8 @@ import {
 } from "~/api/services/referrals";
 import MainLayout from "~/components/Layout/Main";
 import NoRowsMessage from "~/components/NoRowsMessage";
-import { ReferralInfoCard } from "~/components/Referrals/new/ReferralInfoCard";
-import { ReferralMainColumns } from "~/components/Referrals/new/ReferralMainColumns";
 import { ReferralShell } from "~/components/Referrals/new/ReferralShell";
-import { ReferralProgressCard } from "~/components/Referrals/new/ReferralProgressCard";
-import { ReferralStatCard } from "~/components/Referrals/new/ReferralStatCard";
-import { ReferralTasksCard } from "~/components/Referrals/new/ReferralTasksCard";
-import { ReferralTopCard } from "~/components/Referrals/new/ReferralTopCard";
+import { ReferralProgramPagePreview } from "~/components/Referrals/new/ReferralProgramPagePreview";
 import { AlternativeActions } from "~/components/Referrals/AlternativeActions";
 import { BecomeReferrerCTA } from "~/components/Referrals/BecomeReferrerCTA";
 import { RefereeWelcomeModal } from "~/components/Referrals/RefereeWelcomeModal";
@@ -376,83 +366,24 @@ const RefereeDashboard: NextPageWithLayout<{
             <AlternativeActions />
           </div>
         ) : (
-          <>
-            <ReferralTopCard
-              program={program}
-              rewardsReferrer={false}
-              rewardsReferee={true}
-            />
-
-            <ReferralMainColumns
-              left={
-                <>
-                  <ReferralInfoCard>
-                    <p>
-                      Welcome to Yoma! You were referred by{" "}
-                      <strong>{usage.userDisplayNameReferrer}</strong>.
-                      {(program.zltoRewardReferee || 0) > 0 ? (
-                        <>
-                          {" "}
-                          Complete the below pathway and get the opportunity to
-                          win <strong>{program.zltoRewardReferee}</strong> Zlto.
-                        </>
-                      ) : (
-                        <>
-                          {" "}
-                          Complete the below pathway to complete this programme.
-                        </>
-                      )}
-                    </p>
-
-                    <p>{program.description}</p>
-                  </ReferralInfoCard>
-
-                  {/* NEXT ACTION (PENDING): proof-of-personhood */}
-                  {usage.status === "Pending" && (
-                    <RefereeProofOfPersonhoodAction
-                      usage={usage}
-                      program={program}
-                    />
-                  )}
-
-                  <ReferralTasksCard
-                    model={null}
-                    progressModel={
-                      // TODO: hardcode mocked data here
-                      mockedPathwayProgress
-                    }
-                  />
-                </>
-              }
-              right={
-                <div className="flex flex-col gap-2 rounded-xl bg-white p-4 shadow">
-                  <ReferralProgressCard
-                    percentComplete={usage.percentComplete ?? 0}
-                  />
-
-                  <ReferralStatCard
-                    icon={<IoTrophyOutline className="h-5 w-5" />}
-                    header="Reward"
-                    description={
-                      (program.zltoRewardReferee || 0) > 0
-                        ? `${program.zltoRewardReferee} Zlto`
-                        : "No reward"
-                    }
-                  />
-
-                  <ReferralStatCard
-                    icon={<IoTimeOutline className="h-5 w-5" />}
-                    header="Time remaining"
-                    description={
-                      timeInfo
-                        ? `${timeInfo.days} day${timeInfo.days === 1 ? "" : "s"} · Complete by ${timeInfo.expiryDate.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`
-                        : "No time limit"
-                    }
-                  />
-                </div>
-              }
-            />
-          </>
+          <ReferralProgramPagePreview
+            program={program}
+            referrerDisplayName={usage.userDisplayNameReferrer}
+            showProofOfPersonhoodAction={usage.status === "Pending"}
+            proofOfPersonhoodAction={
+              <RefereeProofOfPersonhoodAction usage={usage} program={program} />
+            }
+            progressModel={
+              // TODO: hardcode mocked data here
+              mockedPathwayProgress
+            }
+            percentComplete={usage.percentComplete ?? 0}
+            timeRemainingDescription={
+              timeInfo
+                ? `${timeInfo.days} day${timeInfo.days === 1 ? "" : "s"} · Complete by ${timeInfo.expiryDate.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`
+                : "No time limit"
+            }
+          />
         )}
       </ReferralShell>
 

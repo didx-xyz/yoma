@@ -12,16 +12,12 @@ import Head from "next/head";
 import { useRouter } from "next/router";
 import { type ParsedUrlQuery } from "querystring";
 import { type ReactElement, useCallback, useState } from "react";
-import { IoLinkOutline, IoTimeOutline, IoTrophyOutline } from "react-icons/io5";
+import { IoLinkOutline } from "react-icons/io5";
 import { ProgramStatus, type ProgramInfo } from "~/api/models/referrals";
 import { getReferralProgramInfoById } from "~/api/services/referrals";
 import MainLayout from "~/components/Layout/Main";
-import { ReferralInfoCard } from "~/components/Referrals/new/ReferralInfoCard";
-import { ReferralMainColumns } from "~/components/Referrals/new/ReferralMainColumns";
+import { ReferralProgramDetailsContent } from "~/components/Referrals/new/ReferralProgramDetailsContent";
 import { ReferralShell } from "~/components/Referrals/new/ReferralShell";
-import { ReferralStatCard } from "~/components/Referrals/new/ReferralStatCard";
-import { ReferralTasksCard } from "~/components/Referrals/new/ReferralTasksCard";
-import { ReferralTopCard } from "~/components/Referrals/new/ReferralTopCard";
 import { ReferrerCreateLinkModal } from "~/components/Referrals/ReferrerCreateLinkModal";
 import { LoadingInline } from "~/components/Status/LoadingInline";
 import analytics from "~/lib/analytics";
@@ -201,71 +197,27 @@ const ReferralProgramDetails: NextPageWithLayout<{
             </div>
           </div>
         ) : program ? (
-          <>
-            <ReferralTopCard
-              program={program}
-              rewardsReferrer={true}
-              rewardsReferee={false}
-              cta={
-                <button
-                  type="button"
-                  className="btn btn-sm bg-green hover:bg-green-dark disabled:!bg-green h-10 rounded-full border-0 px-5 text-white normal-case disabled:!pointer-events-auto disabled:!cursor-not-allowed disabled:!text-white disabled:opacity-80"
-                  onClick={handleCreateLink}
-                  disabled={isButtonLoading || isCreateLinkDisabledByStatus}
-                >
-                  {isButtonLoading ? (
-                    <LoadingInline
-                      classNameSpinner="h-4 w-4"
-                      classNameLabel="hidden"
-                    />
-                  ) : (
-                    <IoLinkOutline className="h-4 w-4" />
-                  )}
-                  Create link
-                </button>
-              }
-            />
-
-            <ReferralMainColumns
-              left={
-                <>
-                  <ReferralInfoCard>
-                    <p className="text-gray-dark text-sm md:text-base">
-                      {program.description || "Programme description goes here"}
-                    </p>
-                  </ReferralInfoCard>
-
-                  {program?.pathwayRequired && (
-                    <ReferralTasksCard model={program.pathway} />
-                  )}
-                </>
-              }
-              right={
-                <div className="flex flex-col gap-2 rounded-xl bg-white p-4 shadow">
-                  <ReferralStatCard
-                    icon={<IoTrophyOutline className="h-5 w-5" />}
-                    header="Reward"
-                    description={
-                      (program.zltoRewardReferrer || 0) > 0
-                        ? `${program.zltoRewardReferrer} Zlto`
-                        : "No reward"
-                    }
-                    className="bg-purple-dark [&_.referral-stat-card-description]:text-white [&_.referral-stat-card-header]:text-white [&_.referral-stat-card-icon-wrap]:bg-white/20 [&_.referral-stat-card-icon-wrap]:text-white"
+          <ReferralProgramDetailsContent
+            program={program}
+            cta={
+              <button
+                type="button"
+                className="btn btn-sm bg-green hover:bg-green-dark disabled:!bg-green h-10 rounded-full border-0 px-5 text-white normal-case disabled:!pointer-events-auto disabled:!cursor-not-allowed disabled:!text-white disabled:opacity-80"
+                onClick={handleCreateLink}
+                disabled={isButtonLoading || isCreateLinkDisabledByStatus}
+              >
+                {isButtonLoading ? (
+                  <LoadingInline
+                    classNameSpinner="h-4 w-4"
+                    classNameLabel="hidden"
                   />
-
-                  <ReferralStatCard
-                    icon={<IoTimeOutline className="h-5 w-5" />}
-                    header="Time requirement"
-                    description={
-                      program.completionWindowInDays
-                        ? `${program.completionWindowInDays} day${program.completionWindowInDays === 1 ? "" : "s"}`
-                        : "No time limit"
-                    }
-                  />
-                </div>
-              }
-            />
-          </>
+                ) : (
+                  <IoLinkOutline className="h-4 w-4" />
+                )}
+                Create link
+              </button>
+            }
+          />
         ) : null}
       </ReferralShell>
 

@@ -16,11 +16,11 @@ import {
   AdminProgramInfo,
   ProgramInfoFilterOptions,
 } from "~/components/Referrals/AdminProgramInfo";
+import { AdminProgramPreview } from "~/components/Referrals/AdminProgramPreview";
 import {
   AdminReferralProgramActions,
   ReferralProgramActionOptions,
 } from "~/components/Referrals/AdminReferralProgramActions";
-import { ReferralProgramSlideCard } from "~/components/Referrals/new/ReferralProgramSlideCard";
 import { InternalServerError } from "~/components/Status/InternalServerError";
 import { Loading } from "~/components/Status/Loading";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
@@ -158,39 +158,17 @@ const ReferralProgramInfo: NextPageWithLayout<{
             )}
           </div>
 
-          {/* DIVIDER */}
-          <div className="divider"></div>
-
-          {/* Program Card Preview */}
           {program && (
-            <>
-              <div>
-                <h6 className="text-sm font-semibold">Program Card Preview</h6>
-                <p className="text-xs text-gray-600">
-                  This is how your program appears to users
-                </p>
-                <div className="flex justify-center py-4">
-                  <ReferralProgramSlideCard
-                    title={program.name}
-                    description={program.description}
-                    imageURL={program.imageURL}
-                    reward={program.zltoRewardReferrer}
-                    timeDays={program.completionWindowInDays}
-                  />
-                </div>
-              </div>
-
-              <AdminProgramInfo
-                program={program}
-                filterOptions={[
-                  ProgramInfoFilterOptions.PROGRAM_INFO,
-                  ProgramInfoFilterOptions.COMPLETION_REWARDS,
-                  ProgramInfoFilterOptions.ZLTO_REWARDS,
-                  ProgramInfoFilterOptions.FEATURES,
-                  ProgramInfoFilterOptions.PATHWAY,
-                ]}
-              />
-            </>
+            <AdminProgramInfo
+              program={program}
+              filterOptions={[
+                ProgramInfoFilterOptions.PROGRAM_INFO,
+                ProgramInfoFilterOptions.COMPLETION_REWARDS,
+                ProgramInfoFilterOptions.ZLTO_REWARDS,
+                ProgramInfoFilterOptions.FEATURES,
+                ProgramInfoFilterOptions.PATHWAY,
+              ]}
+            />
           )}
 
           {/* Link Usage */}

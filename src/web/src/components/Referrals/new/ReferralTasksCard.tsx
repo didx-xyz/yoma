@@ -2,6 +2,7 @@ import Link from "next/link";
 import { useMemo } from "react";
 import { IoInformationCircleOutline, IoOpenOutline } from "react-icons/io5";
 import { IoIosCheckmarkCircle } from "react-icons/io";
+import { AvatarImage } from "~/components/AvatarImage";
 import {
   type ProgramPathwayInfo,
   type ProgramPathwayProgress,
@@ -10,26 +11,33 @@ import {
 interface ReferralTasksCardProps {
   model: ProgramPathwayInfo | null;
   progressModel?: ProgramPathwayProgress | null;
+  preview?: boolean;
 }
 
 export const ReferralTasksCard = ({
   model,
   progressModel,
+  preview = false,
 }: ReferralTasksCardProps) => {
   const stepGroups = useMemo(() => {
     if (progressModel?.steps?.length) {
       return [...progressModel.steps]
         .sort((a, b) => (a.orderDisplay ?? 0) - (b.orderDisplay ?? 0))
         .map((step) => {
-          const tasks = (step.tasks ?? []).map((task) => ({
-            id: task.id,
-            title: task.opportunity?.title || "Opportunity",
-            description: "Short description of opportunity",
-            opportunityId: task.opportunity?.id || null,
-            //opportunityTitle: task.opportunity?.title || null,
-            completed: Boolean(task.completed),
-            completedAt: task.dateCompleted ?? null,
-          }));
+          const tasks = (step.tasks ?? []).map((task) => {
+            const opportunity = task.opportunity as any;
+
+            return {
+              id: task.id,
+              title: task.opportunity?.title || "Opportunity",
+              description: "Short description of opportunity",
+              opportunityId: task.opportunity?.id || null,
+              organizationName: opportunity?.organizationName || null,
+              organizationLogoURL: opportunity?.organizationLogoURL || null,
+              completed: Boolean(task.completed),
+              completedAt: task.dateCompleted ?? null,
+            };
+          });
 
           return {
             stepId: step.id,
@@ -49,14 +57,20 @@ export const ReferralTasksCard = ({
     return [...sourceSteps]
       .sort((a, b) => (a.orderDisplay ?? 0) - (b.orderDisplay ?? 0))
       .map((step) => {
-        const tasks = (step.tasks ?? []).map((task) => ({
-          id: task.id,
-          title: task.opportunity?.title || "Opportunity",
-          description: "Short description of opportunity",
-          opportunityId: task.opportunity?.id || null,
-          completed: task.completed ?? false,
-          completedAt: null,
-        }));
+        const tasks = (step.tasks ?? []).map((task) => {
+          const opportunity = task.opportunity as any;
+
+          return {
+            id: task.id,
+            title: task.opportunity?.title || "Opportunity",
+            description: "Short description of opportunity",
+            opportunityId: task.opportunity?.id || null,
+            organizationName: opportunity?.organizationName || null,
+            organizationLogoURL: opportunity?.organizationLogoURL || null,
+            completed: task.completed ?? false,
+            completedAt: null,
+          };
+        });
 
         return {
           stepId: step.id,
@@ -157,21 +171,33 @@ export const ReferralTasksCard = ({
                   {step.tasks.map((task) => (
                     <div
                       key={task.id}
-                      className="flex flex-col gap-3 rounded-lg border border-gray-200 bg-white px-3 py-3 md:flex-row md:items-center"
+                      className="flex flex-col gap-4 rounded-lg border border-gray-200 bg-white px-3 py-3 md:flex-row md:items-center"
                     >
-                      {/* TODO: add org logo & title */}
-                      <div className="flex w-full min-w-0 flex-col pr-3">
-                        <p
-                          className={`truncate text-base font-semibold ${task.completed ? "text-gray-500 line-through" : "text-black"}`}
-                        >
-                          {task.title}
-                        </p>
-                        <p
-                          className={`truncate text-sm ${task.completed ? "text-gray-500 line-through" : "text-gray-dark"}`}
-                        >
-                          {task.description}
-                        </p>
+                      <div className="flex w-full min-w-0 flex-row gap-2 md:gap-4">
+                        <AvatarImage
+                          icon={task.organizationLogoURL}
+                          alt={`${task.organizationName ?? "Organisation"} logo`}
+                          size={40}
+                        />
+
+                        <div className="flex w-full min-w-0 flex-col pr-3">
+                          <p className="text-gray-dark truncate text-sm font-medium">
+                            {task.organizationName ?? "Organisation"}
+                          </p>
+
+                          <p
+                            className={`truncate text-base font-semibold ${task.completed ? "text-gray-500 line-through" : "text-black"}`}
+                          >
+                            {task.title}
+                          </p>
+                          <p
+                            className={`truncate text-sm ${task.completed ? "text-gray-500 line-through" : "text-gray-dark"}`}
+                          >
+                            {task.description}
+                          </p>
+                        </div>
                       </div>
+
                       <div className="flex items-center justify-center">
                         {task.completed ? (
                           <div className="text-green inline-flex w-[160px] items-center justify-start gap-2">
@@ -200,6 +226,8 @@ export const ReferralTasksCard = ({
                         ) : task.opportunityId ? (
                           <Link
                             href={`/opportunities/${task.opportunityId}`}
+                            target={preview ? "_blank" : undefined}
+                            rel={preview ? "noopener noreferrer" : undefined}
                             className="btn btn-sm bg-green hover:bg-green-dark h-9 w-[160px] rounded-full border-0 px-5 text-white normal-case"
                           >
                             <IoOpenOutline className="h-4 w-4" />
