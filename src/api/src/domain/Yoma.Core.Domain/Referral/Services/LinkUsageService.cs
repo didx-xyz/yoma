@@ -249,7 +249,12 @@ namespace Yoma.Core.Domain.Referral.Services
         return results;
       }
 
-      query = query.OrderByDescending(o => o.DateModified)
+      var statusPending = _linkUsageStatusService.GetByName(ReferralLinkUsageStatus.Pending.ToString()).Id;
+      var statusExpired = _linkUsageStatusService.GetByName(ReferralLinkUsageStatus.Expired.ToString()).Id;
+
+      query = query
+        .OrderBy(o => o.StatusId == statusPending ? default : o.StatusId == statusExpired ? 1 : 2)
+        .ThenByDescending(o => o.DateModified)
         .ThenBy(o => o.LinkName)
         .ThenBy(o => o.ProgramName)
         .ThenBy(o => o.UserDisplayName)
