@@ -10,7 +10,7 @@ interface ColoredSectionShellProps {
 export const ColoredSectionShell = ({
   backgroundClassName,
   sectionClassName = "relative z-10 w-full py-10",
-  containerClassName = "mx-auto w-full max-w-6xl px-4",
+  containerClassName = "mx-auto w-full md:max-w-6xl px-4  ",
   children,
 }: ColoredSectionShellProps) => {
   return (

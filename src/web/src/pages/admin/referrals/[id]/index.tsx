@@ -38,11 +38,12 @@ import Select from "react-select";
 import { toast } from "react-toastify";
 import z from "zod";
 import type { Country } from "~/api/models/lookups";
-import type { Opportunity } from "~/api/models/opportunity";
+import { Opportunity } from "~/api/models/opportunity";
 import {
   PathwayCompletionRule,
   PathwayOrderMode,
   PathwayTaskEntityType,
+  ProgramStatus,
   type Program,
   type ProgramRequestCreate,
   type ProgramRequestUpdate,
@@ -62,20 +63,20 @@ import FormMessage, { FormMessageType } from "~/components/Common/FormMessage";
 import FormRequiredFieldMessage from "~/components/Common/FormRequiredFieldMessage";
 import MainLayout from "~/components/Layout/Main";
 import { PageBackground } from "~/components/PageBackground";
-import ProgramImageUpload from "~/components/Referrals/ProgramImageUpload";
-import { AdminProgramPreview } from "~/components/Referrals/AdminProgramPreview";
 import { AdminProgramPathwayEditComponent } from "~/components/Referrals/AdminProgramPathwayEdit";
+import { AdminProgramPreview } from "~/components/Referrals/AdminProgramPreview";
 import {
   AdminReferralProgramActions,
   ReferralProgramActionOptions,
 } from "~/components/Referrals/AdminReferralProgramActions";
-import { ProgramImage } from "~/components/Referrals/ProgramImage";
+import ProgramImageUpload from "~/components/Referrals/ProgramImageUpload";
 import { ProgramStatusBadge } from "~/components/Referrals/ProgramStatusBadge";
 import { ApiErrors } from "~/components/Status/ApiErrors";
 import { InternalServerError } from "~/components/Status/InternalServerError";
 import { Loading } from "~/components/Status/Loading";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
+import analytics from "~/lib/analytics";
 import { COUNTRY_CODE_WW } from "~/lib/constants";
 import { config } from "~/lib/react-query-config";
 import {
@@ -86,6 +87,7 @@ import {
   utcToDateInput,
 } from "~/lib/utils";
 import type { NextPageWithLayout } from "~/pages/_app";
+import { useReferralProgramStatusMutation } from "~/hooks/useReferralProgramMutations";
 import { authOptions, type User } from "~/server/auth";
 
 type SelectOption = { value: string; label: string };
@@ -636,10 +638,13 @@ const ReferralProgramForm: NextPageWithLayout<{
     useState(false);
   const [lastStepBeforeSaveChangesDialog, setLastStepBeforeSaveChangesDialog] =
     useState<number | null>(null);
+  const [programExpiredModalVisible, setProgramExpiredModalVisible] =
+    useState(false);
   const [step, setStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const previouspathwayRequired = useRef<boolean | null>(null);
   const htmlRef = useRef<HTMLDivElement>(null);
+
   const [opportunityDataMap, setOpportunityDataMap] = useState<
     Record<string, Opportunity>
   >({});
@@ -656,6 +661,11 @@ const ReferralProgramForm: NextPageWithLayout<{
     queryKey: ["referralProgram", id],
     queryFn: () => getReferralProgramById(id),
     enabled: id !== "create" && !error,
+  });
+
+  const statusMutation = useReferralProgramStatusMutation({
+    programId: id,
+    programName: program?.name,
   });
 
   // Countries lookup
@@ -904,6 +914,13 @@ const ReferralProgramForm: NextPageWithLayout<{
       },
     },
   ];
+
+  useEffect(() => {
+    // show the expired modal if the program is expired
+    if ((program?.status as any) == "Expired") {
+      setProgramExpiredModalVisible(true);
+    }
+  }, [program?.status, setProgramExpiredModalVisible]);
 
   // Update form data when program loads
   useEffect(() => {
@@ -1415,6 +1432,14 @@ const ReferralProgramForm: NextPageWithLayout<{
             : undefined,
         };
 
+        // Determine image file to upload (if any)
+        const imageFile =
+          (data as any).image instanceof File
+            ? (data as any).image
+            : imageFiles && imageFiles.length > 0
+              ? imageFiles[0]
+              : null;
+
         let programId: string;
 
         if (id === "create") {
@@ -1433,7 +1458,45 @@ const ReferralProgramForm: NextPageWithLayout<{
           );
           programId = response.id;
           message = "Program created successfully";
+
+          // Upload image after creation
+          if (imageFile) {
+            try {
+              await updateReferralProgramImage(programId, imageFile);
+
+              setImageFiles([]); // Clear after successful upload
+              (setValueStep1 as any)("image", null); // Clear form value
+            } catch (imageError) {
+              toast(<ApiErrors error={imageError as AxiosError} />, {
+                type: "warning",
+                toastId: "program-image",
+                autoClose: false,
+                icon: false,
+              });
+            }
+          }
         } else {
+          programId = data.id;
+
+          // Upload image BEFORE updating the program.
+          // The image endpoint validates the current DB status. Uploading first ensures
+          // the status check passes before the program update recalculates it.
+          if (imageFile) {
+            try {
+              await updateReferralProgramImage(programId, imageFile);
+
+              setImageFiles([]); // Clear after successful upload
+              (setValueStep1 as any)("image", null); // Clear form value
+            } catch (imageError) {
+              toast(<ApiErrors error={imageError as AxiosError} />, {
+                type: "warning",
+                toastId: "program-image",
+                autoClose: false,
+                icon: false,
+              });
+            }
+          }
+
           // For update, include the program ID
           const updateRequest = {
             ...baseRequest,
@@ -1459,34 +1522,7 @@ const ReferralProgramForm: NextPageWithLayout<{
           }
 
           await updateReferralProgram(updateRequest as ProgramRequestUpdate);
-          programId = data.id;
           message = "Program updated successfully";
-        }
-
-        // Handle image upload if there's a new image.
-        // IMPORTANT: image upload should not block navigation, because the program may have
-        // already been created successfully.
-        const imageFile =
-          (data as any).image instanceof File
-            ? (data as any).image
-            : imageFiles && imageFiles.length > 0
-              ? imageFiles[0]
-              : null;
-
-        if (imageFile) {
-          try {
-            await updateReferralProgramImage(programId, imageFile);
-
-            setImageFiles([]); // Clear after successful upload
-            (setValueStep1 as any)("image", null); // Clear form value
-          } catch (imageError) {
-            toast(<ApiErrors error={imageError as AxiosError} />, {
-              type: "warning",
-              toastId: "program-image",
-              autoClose: false,
-              icon: false,
-            });
-          }
         }
 
         await queryClient.invalidateQueries({ queryKey: ["referralPrograms"] });
@@ -1608,6 +1644,7 @@ const ReferralProgramForm: NextPageWithLayout<{
       triggerValidation,
     ],
   );
+
   //#endregion Event Handlers
 
   if (error) {
@@ -1631,6 +1668,122 @@ const ReferralProgramForm: NextPageWithLayout<{
       <PageBackground />
 
       <div ref={htmlRef} />
+
+      {/* PROGRAM EXPIRED MODAL */}
+      <CustomModal
+        isOpen={programExpiredModalVisible}
+        shouldCloseOnOverlayClick={false}
+        onRequestClose={() => {
+          setProgramExpiredModalVisible(false);
+        }}
+        className={`md:max-h-[500px] md:w-[600px]`}
+      >
+        <div className="flex h-full flex-col gap-4 overflow-y-auto pb-8">
+          <div className="bg-green flex flex-row p-4 shadow-lg">
+            <h1 className="grow"></h1>
+            <button
+              type="button"
+              className="btn btn-circle text-gray-dark hover:bg-gray"
+              onClick={() => {
+                setProgramExpiredModalVisible(false);
+              }}
+            >
+              <IoMdClose className="h-6 w-6"></IoMdClose>
+            </button>
+          </div>
+          <div className="flex flex-col items-center justify-center gap-4">
+            <div className="border-green-dark -mt-11 flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-full bg-white shadow-lg">
+              <FaExclamationTriangle className="text-yellow h-8 w-8" />
+            </div>
+
+            <div className="font-semibold">Program expired!</div>
+
+            <div className="flex max-w-md flex-col gap-4 text-center text-base">
+              <p>Please inactivate your program before editing.</p>
+
+              <p>
+                Once you&apos;re happy with the program changes, you can set it
+                to active.
+              </p>
+              <p>
+                Please make sure to set the end date in the future, else it will
+                set your program to expired again.
+              </p>
+            </div>
+
+            <div className="mt-8 flex grow gap-4">
+              <button
+                type="button"
+                className="btn btn-primary btn-wide rounded-full normal-case"
+                onClick={() =>
+                  statusMutation.mutate(ProgramStatus.Inactive, {
+                    onSuccess: (updatedProgram) => {
+                      // Normalize the returned program exactly as the program-load useEffect does,
+                      // so formData reflects the server state before the user submits.
+                      const programCountryIds: string[] = Array.isArray(
+                        updatedProgram.countries,
+                      )
+                        ? updatedProgram.countries.length === 0
+                          ? []
+                          : typeof updatedProgram.countries[0] === "string"
+                            ? (updatedProgram.countries as string[])
+                            : (updatedProgram.countries as Country[]).map(
+                                (c) => c.id,
+                              )
+                        : [];
+
+                      const programWithDefaults = {
+                        ...updatedProgram,
+                        countries: programCountryIds,
+                        pathway: updatedProgram.pathway
+                          ? {
+                              ...updatedProgram.pathway,
+                              rule:
+                                updatedProgram.pathway.rule ??
+                                PathwayCompletionRule.All,
+                              orderMode:
+                                updatedProgram.pathway.orderMode ??
+                                PathwayOrderMode.Sequential,
+                              steps:
+                                updatedProgram.pathway.steps?.map((step) => ({
+                                  ...step,
+                                  tasks:
+                                    step.tasks?.map((task) => ({
+                                      ...task,
+                                      entityId:
+                                        task.opportunity?.id ??
+                                        (task as any).entityId ??
+                                        "",
+                                    })) ?? [],
+                                })) ?? [],
+                            }
+                          : null,
+                      };
+
+                      setFormData(programWithDefaults);
+                      resetStep1(programWithDefaults);
+                      resetStep2(programWithDefaults);
+                      resetStep3(programWithDefaults);
+                      resetStep4(programWithDefaults);
+                      resetStep5(programWithDefaults);
+                      setProgramExpiredModalVisible(false);
+                    },
+                  })
+                }
+                disabled={statusMutation.isPending}
+              >
+                {statusMutation.isPending ? (
+                  <>
+                    <span className="loading loading-spinner"></span>
+                  </>
+                ) : (
+                  <p className="text-white">Inactivate program</p>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      </CustomModal>
 
       {/* SAVE CHANGES DIALOG */}
       <CustomModal

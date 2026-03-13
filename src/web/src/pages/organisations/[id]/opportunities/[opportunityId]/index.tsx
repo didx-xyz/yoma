@@ -67,7 +67,6 @@ import {
   getTypes,
   getVerificationTypes,
   updateOpportunity,
-  updateOpportunityStatus,
 } from "~/api/services/opportunities";
 import { getOrganisationById } from "~/api/services/organisations";
 import { AvatarImage } from "~/components/AvatarImage";
@@ -108,6 +107,7 @@ import {
   dateInputToUTC,
   utcToDateInput,
 } from "~/lib/utils";
+import { useOpportunityStatusMutation } from "~/hooks/useOpportunityMutations";
 import type { NextPageWithLayout } from "~/pages/_app";
 import { authOptions, type User } from "~/server/auth";
 
@@ -193,7 +193,6 @@ const OpportunityAdminDetails: NextPageWithLayout<{
   const [lastStepBeforeSaveChangesDialog, setLastStepBeforeSaveChangesDialog] =
     useState<number | null>(null);
   const [oppExpiredModalVisible, setOppExpiredModalVisible] = useState(false);
-  const [loadingUpdateInactive, setLoadingUpdateInactive] = useState(false);
   const [step, setStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [cacheSkills, setCacheSkills] = useState<Skill[]>([]);
@@ -349,6 +348,12 @@ const OpportunityAdminDetails: NextPageWithLayout<{
     enabled: !error,
   });
   //#endregion Queries
+
+  const statusMutation = useOpportunityStatusMutation({
+    opportunityId,
+    organizationId: id,
+    title: opportunity?.title,
+  });
 
   //#region Form
   const formRef1 = useRef<HTMLFormElement>(null);
@@ -1367,44 +1372,6 @@ const OpportunityAdminDetails: NextPageWithLayout<{
     ],
   );
 
-  const updateStatus = useCallback(
-    async (status: Status) => {
-      setLoadingUpdateInactive(true);
-
-      try {
-        // call api
-        await updateOpportunityStatus(opportunityId, status);
-
-        // 📊 ANALYTICS: track opportunity status change
-        analytics.trackEvent("opportunity_status_changed", {
-          opportunityId: opportunityId,
-          status: status,
-          organizationId: id,
-        });
-
-        // invalidate queries
-        await queryClient.invalidateQueries({ queryKey: ["opportunities"] });
-        await queryClient.invalidateQueries({
-          queryKey: ["opportunity", opportunityId],
-        });
-
-        toast.success("Opportunity status updated");
-        setOppExpiredModalVisible(false);
-      } catch (error) {
-        toast(<ApiErrors error={error as AxiosError} />, {
-          type: "error",
-          toastId: "opportunity",
-          autoClose: false,
-          icon: false,
-        });
-      }
-      setLoadingUpdateInactive(false);
-
-      return;
-    },
-    [opportunityId, queryClient, id],
-  );
-
   // load data asynchronously for the skills dropdown
   // debounce is used to prevent the API from being called too frequently
   const loadSkills = debounce(
@@ -1496,10 +1463,78 @@ const OpportunityAdminDetails: NextPageWithLayout<{
               <button
                 type="button"
                 className="btn btn-primary btn-wide rounded-full normal-case"
-                onClick={() => updateStatus(Status.Inactive)}
-                disabled={loadingUpdateInactive}
+                onClick={() =>
+                  statusMutation.mutate(Status.Inactive, {
+                    onSuccess: (updatedOpportunity) => {
+                      // Map the returned Opportunity back to OpportunityRequestViewModel
+                      // so formData reflects the server state before the user submits.
+                      const mapped: OpportunityRequestViewModel = {
+                        id: updatedOpportunity.id ?? null,
+                        title: updatedOpportunity.title ?? "",
+                        summary: updatedOpportunity.summary ?? "",
+                        description: updatedOpportunity.description ?? "",
+                        typeId: updatedOpportunity.typeId ?? "",
+                        categories:
+                          updatedOpportunity.categories?.map((x) => x.id) ?? [],
+                        uRL: updatedOpportunity.url ?? "",
+                        languages:
+                          updatedOpportunity.languages?.map((x) => x.id) ?? [],
+                        countries:
+                          updatedOpportunity.countries?.map((x) => x.id) ?? [],
+                        difficultyId: updatedOpportunity.difficultyId ?? "",
+                        commitmentIntervalCount:
+                          updatedOpportunity.commitmentIntervalCount ?? null,
+                        commitmentIntervalId:
+                          updatedOpportunity.commitmentIntervalId ?? "",
+                        dateStart: updatedOpportunity.dateStart ?? null,
+                        dateEnd: updatedOpportunity.dateEnd ?? null,
+                        participantLimit:
+                          updatedOpportunity.participantLimit ?? null,
+                        zltoReward: updatedOpportunity.zltoReward ?? null,
+                        zltoRewardPool:
+                          updatedOpportunity.zltoRewardPool ?? null,
+                        yomaReward: updatedOpportunity.yomaReward ?? null,
+                        yomaRewardPool:
+                          updatedOpportunity.yomaRewardPool ?? null,
+                        skills:
+                          updatedOpportunity.skills?.map((x) => x.id) ?? [],
+                        keywords: updatedOpportunity.keywords ?? [],
+                        verificationEnabled:
+                          updatedOpportunity.verificationEnabled ?? null,
+                        verificationMethod:
+                          updatedOpportunity.verificationMethod
+                            ? VerificationMethod[
+                                updatedOpportunity.verificationMethod
+                              ]
+                            : null,
+                        verificationTypes:
+                          updatedOpportunity.verificationTypes ?? [],
+                        credentialIssuanceEnabled:
+                          updatedOpportunity.credentialIssuanceEnabled ?? false,
+                        ssiSchemaName: updatedOpportunity.ssiSchemaName ?? null,
+                        engagementTypeId:
+                          updatedOpportunity.engagementTypeId ?? null,
+                        organizationId: id,
+                        instructions: updatedOpportunity.instructions ?? "",
+                        postAsActive: updatedOpportunity.published ?? false,
+                        shareWithPartners:
+                          updatedOpportunity.shareWithPartners ?? false,
+                        hidden: updatedOpportunity.hidden ?? false,
+                        showZltoReward: !!(
+                          updatedOpportunity.zltoReward ?? false
+                        ),
+                        showZltoRewardPool: !!(
+                          updatedOpportunity.zltoRewardPool ?? false
+                        ),
+                      };
+                      setFormData(mapped);
+                      setOppExpiredModalVisible(false);
+                    },
+                  })
+                }
+                disabled={statusMutation.isPending}
               >
-                {loadingUpdateInactive ? (
+                {statusMutation.isPending ? (
                   <>
                     <span className="loading loading-spinner"></span>
                   </>
