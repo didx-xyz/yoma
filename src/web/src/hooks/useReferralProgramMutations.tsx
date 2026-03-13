@@ -55,6 +55,8 @@ export const REFERRAL_PROGRAM_QUERY_KEYS = {
   /** Tab count per status on the admin list page */
   listCount: (status: ProgramStatus | null) =>
     ["referralPrograms", "totalCount", status] as const,
+  /** Prefix key to invalidate ALL admin program status-tab counts */
+  listCountAll: () => ["referralPrograms", "totalCount"] as const,
   /** All admin link lists (prefix for targeted invalidation) */
   links: () => ["referralLinks"] as const,
   /** Tab count per status on the admin links page (scoped to a program) */
@@ -72,13 +74,10 @@ export const REFERRAL_PROGRAM_QUERY_KEYS = {
   /** Admin link usage detail */
   linkUsage: (usageId: string) => ["referralLinkUsage", usageId] as const,
   /** Admin link usage count per status tab (scoped to a link) */
-  linkUsagesCount: (
-    linkId: string,
-    status: ReferralLinkUsageStatus | null,
-  ) => ["referralLinkUsages", "totalCount", linkId, status] as const,
+  linkUsagesCount: (linkId: string, status: ReferralLinkUsageStatus | null) =>
+    ["referralLinkUsages", "totalCount", linkId, status] as const,
   /** User referee progress (usage fetched by program ID, refetched every 30 s) */
-  refereeProgress: (programId: string) =>
-    ["RefereeUsage", programId] as const,
+  refereeProgress: (programId: string) => ["RefereeUsage", programId] as const,
   /** User paginated program list */
   userPrograms: (
     pageNumber: number,
@@ -88,6 +87,8 @@ export const REFERRAL_PROGRAM_QUERY_KEYS = {
   /** User paginated referral link list */
   userLinks: (pageNumber: number, pageSize: number) =>
     ["ReferralLinks", pageNumber, pageSize] as const,
+  /** Prefix key used to invalidate ALL pages of user referral links */
+  userLinksAll: () => ["ReferralLinks"] as const,
   /** User referee link usages */
   refereeUsages: (pageNumber: number, pageSize: number) =>
     ["ReferralLinkUsagesReferee", pageNumber, pageSize] as const,
@@ -101,8 +102,7 @@ export const REFERRAL_PROGRAM_QUERY_KEYS = {
   adminProgramsList: (keyParts: string) =>
     ["referralPrograms", keyParts] as const,
   /** Admin paginated link search results */
-  adminLinksList: (keyParts: string) =>
-    ["referralLinks", keyParts] as const,
+  adminLinksList: (keyParts: string) => ["referralLinks", keyParts] as const,
   /** Admin paginated link usage search results */
   adminUsagesList: (keyParts: string) =>
     ["referralLinkUsages", keyParts] as const,
@@ -481,11 +481,12 @@ export function useReferralProgramStatusMutation({
 
       void queryClient.invalidateQueries({
         queryKey: REFERRAL_PROGRAM_QUERY_KEYS.list(),
-        exact: false,
+      });
+      void queryClient.invalidateQueries({
+        queryKey: REFERRAL_PROGRAM_QUERY_KEYS.listCountAll(),
       });
       void queryClient.invalidateQueries({
         queryKey: REFERRAL_PROGRAM_QUERY_KEYS.detail(programId),
-        exact: false,
       });
 
       if (showSuccessToast) toast.success("Program status updated");

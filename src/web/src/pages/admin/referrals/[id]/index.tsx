@@ -602,7 +602,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       const data = await getReferralProgramById(id, context);
 
       await queryClient.prefetchQuery({
-        queryKey: ["referralProgram", id],
+        queryKey: REFERRAL_PROGRAM_QUERY_KEYS.detail(id),
         queryFn: () => data,
       });
     }

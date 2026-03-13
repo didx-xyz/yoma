@@ -1,4 +1,3 @@
-import { useQuery } from "@tanstack/react-query";
 import { useAtomValue } from "jotai";
 import type { GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
@@ -16,23 +15,20 @@ import {
   type ReactElement,
 } from "react";
 import { IoMdPerson } from "react-icons/io";
-import type { Country, Language, SelectOption } from "~/api/models/lookups";
-import type {
-  OpportunityCategory,
-  OpportunitySearchFilterAdmin,
-  OpportunitySearchResultsInfo,
-  OpportunityType,
-} from "~/api/models/opportunity";
-import { OpportunityFilterOptions } from "~/api/models/opportunity";
-import type { OrganizationInfo } from "~/api/models/organisation";
+import type { SelectOption } from "~/api/models/lookups";
 import {
-  getCategoriesAdmin,
-  getCountriesAdmin,
-  getLanguagesAdmin,
-  getOpportunitiesAdmin,
-  getOpportunityTypes,
-  getOrganisationsAdmin,
-} from "~/api/services/opportunities";
+  type OpportunitySearchFilterAdmin,
+  type OpportunityType,
+  OpportunityFilterOptions,
+} from "~/api/models/opportunity";
+import { getOpportunityTypes } from "~/api/services/opportunities";
+import {
+  useAdminOpportunityCategoriesQuery,
+  useAdminOpportunityCountriesQuery,
+  useAdminOpportunityLanguagesQuery,
+  useAdminOpportunityOrganisationsQuery,
+  useAdminOpportunitiesSearchQuery,
+} from "~/hooks/useOpportunityMutations";
 import CustomModal from "~/components/Common/CustomModal";
 import MainLayout from "~/components/Layout/Main";
 import NoRowsMessage from "~/components/NoRowsMessage";
@@ -123,29 +119,21 @@ const OpportunitiesAdmin: NextPageWithLayout<{
     statuses,
   } = router.query;
 
-  const { data: lookups_categories } = useQuery<OpportunityCategory[]>({
-    queryKey: ["AdminOpportunitiesCategories"],
-    queryFn: () => getCategoriesAdmin(null),
+  const { data: lookups_categories } = useAdminOpportunityCategoriesQuery({
     enabled: !error,
   });
 
-  const { data: lookups_countries } = useQuery<Country[]>({
-    queryKey: ["AdminOpportunitiesCountries"],
-    queryFn: () => getCountriesAdmin(null),
+  const { data: lookups_countries } = useAdminOpportunityCountriesQuery({
     enabled: !error,
   });
 
-  const { data: lookups_languages } = useQuery<Language[]>({
-    queryKey: ["AdminOpportunitiesLanguages"],
-    queryFn: () => getLanguagesAdmin(null),
+  const { data: lookups_languages } = useAdminOpportunityLanguagesQuery({
     enabled: !error,
   });
 
-  const { data: lookups_organisations } = useQuery<OrganizationInfo[]>({
-    queryKey: ["AdminOpportunitiesOrganisations"],
-    queryFn: () => getOrganisationsAdmin(),
-    enabled: !error,
-  });
+  const { data: lookups_organisations } = useAdminOpportunityOrganisationsQuery(
+    { enabled: !error },
+  );
 
   // memo for isSearchPerformed based on filter parameters
   const isSearchPerformed = useMemo<boolean>(() => {
@@ -178,10 +166,110 @@ const OpportunitiesAdmin: NextPageWithLayout<{
 
   // QUERY: SEARCH RESULTS
   // the filter values from the querystring are mapped to it's corresponding id
+  const adminSearchFilter = useMemo<OpportunitySearchFilterAdmin>(
+    () => ({
+      pageNumber: page ? parseInt(page.toString()) : 1,
+      pageSize: PAGE_SIZE,
+      valueContains: query ? decodeURIComponent(query.toString()) : null,
+      featured: null,
+      types:
+        types != undefined
+          ? types
+              ?.toString()
+              .split("|")
+              .map((x) => {
+                const item = lookups_types.find((y) => y.name === x);
+                return item ? item?.id : "";
+              })
+              .filter((x) => x != "")
+          : null,
+      engagementTypes: null,
+      categories:
+        categories != undefined
+          ? categories
+              ?.toString()
+              .split("|")
+              .map((x) => {
+                const item = lookups_categories?.find((y) => y.name === x);
+                return item ? item?.id : "";
+              })
+              .filter((x) => x != "")
+          : null,
+      countries:
+        countries != undefined
+          ? countries
+              ?.toString()
+              .split("|")
+              .map((x) => {
+                const item = lookups_countries?.find((y) => y.name === x);
+                return item ? item?.id : "";
+              })
+              .filter((x) => x != "")
+          : null,
+      languages:
+        languages != undefined
+          ? languages
+              ?.toString()
+              .split("|") // use | delimiter as some languages contain ',' e.g (Catalan, Valencian)
+              .map((x) => {
+                const item = lookups_languages?.find((y) => y.name === x);
+                return item ? item?.id : "";
+              })
+              .filter((x) => x != "")
+          : null,
+      organizations:
+        organizations != undefined
+          ? organizations
+              ?.toString()
+              .split("|")
+              .map((x) => {
+                const item = lookups_organisations?.find((y) => y.name === x);
+                return item ? item?.id : "";
+              })
+              .filter((x) => x != "")
+          : null,
+      startDate: startDate != undefined ? startDate.toString() : null,
+      endDate: endDate != undefined ? endDate.toString() : null,
+      statuses:
+        statuses != undefined
+          ? statuses
+              ?.toString()
+              .split("|")
+              .map((x) => {
+                // Convert "Archived" display label to "Deleted" for API lookup
+                if (x === "Archived") {
+                  return "1"; // Value for Deleted status
+                }
+                const item = lookups_statuses.find((y) => y.label === x);
+                return item ? item?.value : "";
+              })
+              .filter((x) => x != "")
+          : null,
+    }),
+    [
+      query,
+      page,
+      categories,
+      countries,
+      languages,
+      types,
+      organizations,
+      startDate,
+      endDate,
+      statuses,
+      lookups_types,
+      lookups_categories,
+      lookups_countries,
+      lookups_languages,
+      lookups_organisations,
+      lookups_statuses,
+    ],
+  );
+
   const { data: searchResults, isLoading: isLoadingSearchResults } =
-    useQuery<OpportunitySearchResultsInfo>({
-      queryKey: [
-        "OpportunitiesSearch",
+    useAdminOpportunitiesSearchQuery(
+      adminSearchFilter,
+      [
         query,
         page,
         categories,
@@ -195,90 +283,8 @@ const OpportunitiesAdmin: NextPageWithLayout<{
         endDate,
         statuses,
       ],
-      queryFn: async () =>
-        await getOpportunitiesAdmin({
-          pageNumber: page ? parseInt(page.toString()) : 1,
-          pageSize: PAGE_SIZE,
-          valueContains: query ? decodeURIComponent(query.toString()) : null,
-          featured: null,
-          types:
-            types != undefined
-              ? types
-                  ?.toString()
-                  .split("|")
-                  .map((x) => {
-                    const item = lookups_types.find((y) => y.name === x);
-                    return item ? item?.id : "";
-                  })
-                  .filter((x) => x != "")
-              : null,
-          engagementTypes: null,
-          categories:
-            categories != undefined
-              ? categories
-                  ?.toString()
-                  .split("|")
-                  .map((x) => {
-                    const item = lookups_categories?.find((y) => y.name === x);
-                    return item ? item?.id : "";
-                  })
-                  .filter((x) => x != "")
-              : null,
-          countries:
-            countries != undefined
-              ? countries
-                  ?.toString()
-                  .split("|")
-                  .map((x) => {
-                    const item = lookups_countries?.find((y) => y.name === x);
-                    return item ? item?.id : "";
-                  })
-                  .filter((x) => x != "")
-              : null,
-          languages:
-            languages != undefined
-              ? languages
-                  ?.toString()
-                  .split("|") // use | delimiter as some languages contain ',' e.g (Catalan, Valencian)
-                  .map((x) => {
-                    const item = lookups_languages?.find((y) => y.name === x);
-                    return item ? item?.id : "";
-                  })
-                  .filter((x) => x != "")
-              : null,
-          organizations:
-            organizations != undefined
-              ? organizations
-                  ?.toString()
-                  .split("|")
-                  .map((x) => {
-                    const item = lookups_organisations?.find(
-                      (y) => y.name === x,
-                    );
-                    return item ? item?.id : "";
-                  })
-                  .filter((x) => x != "")
-              : null,
-          startDate: startDate != undefined ? startDate.toString() : null,
-          endDate: endDate != undefined ? endDate.toString() : null,
-          statuses:
-            statuses != undefined
-              ? statuses
-                  ?.toString()
-                  .split("|")
-                  .map((x) => {
-                    // Convert "Archived" display label to "Deleted" for API lookup
-                    if (x === "Archived") {
-                      return "1"; // Value for Deleted status
-                    }
-                    const item = lookups_statuses.find((y) => y.label === x);
-                    return item ? item?.value : "";
-                  })
-                  .filter((x) => x != "")
-              : null,
-        }),
-      enabled: !error,
-    });
+      { enabled: !error },
+    );
 
   // search filter state
   const [searchFilter, setOpportunitySearchFilter] =

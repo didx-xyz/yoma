@@ -1,9 +1,4 @@
-import {
-  QueryClient,
-  dehydrate,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { QueryClient, dehydrate, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { useAtomValue } from "jotai";
 import { type GetServerSidePropsContext } from "next";
@@ -20,9 +15,13 @@ import { IoIosAdd, IoIosWarning } from "react-icons/io";
 import {
   Status,
   type OpportunitySearchFilterAdmin,
-  type OpportunitySearchResults,
 } from "~/api/models/opportunity";
 import { getOpportunitiesAdmin } from "~/api/services/opportunities";
+import {
+  OPPORTUNITY_QUERY_KEYS,
+  useOrgOpportunitiesListQuery,
+  useOrgOpportunityCountQuery,
+} from "~/hooks/useOpportunityMutations";
 import CustomSlider from "~/components/Carousel/CustomSlider";
 import CustomModal from "~/components/Common/CustomModal";
 import MainLayout from "~/components/Layout/Main";
@@ -111,12 +110,9 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       context,
     );
 
+    const searchResultsKey = `${query?.toString()}_${page?.toString()}_${status?.toString()}`;
     await queryClient.prefetchQuery({
-      queryKey: [
-        "opportunities",
-        id,
-        `${query?.toString()}_${page?.toString()}_${status?.toString()}`,
-      ],
+      queryKey: OPPORTUNITY_QUERY_KEYS.orgList(id, searchResultsKey),
       queryFn: () => data,
     });
   } catch (error) {
@@ -185,127 +181,48 @@ const Opportunities: NextPageWithLayout<{
 
   // 👇 use prefetched queries from server
   // NB: these queries (with ['opportunities', id]) will be invalidated by create/edit operations on other pages
+  const countKeyParts = `${query?.toString()}_${page?.toString()}_${status?.toString()}`;
+
   const { data: searchResults, isLoading: isLoadingSearchResults } =
-    useQuery<OpportunitySearchResults>({
-      queryKey: [
-        "opportunities",
-        id,
-        `_${query?.toString()}_${page?.toString()}_${status?.toString()}`,
-      ],
-      queryFn: () => getOpportunitiesAdmin(searchFilter),
+    useOrgOpportunitiesListQuery(id, searchFilter, countKeyParts, {
       enabled: !error,
     });
 
-  const { data: totalCountAll } = useQuery<number>({
-    queryKey: [
-      "opportunities",
-      id,
-      "totalCount",
-      null,
-      `${query?.toString()}_${page?.toString()}_${status?.toString()}`,
-    ],
-    queryFn: () => {
-      const filter = JSON.parse(
-        JSON.stringify(searchFilter),
-      ) as OpportunitySearchFilterAdmin; // deep copy
-
-      filter.pageNumber = 1;
-      filter.pageSize = 1;
-      filter.statuses = [
-        Status.Active,
-        Status.Expired,
-        Status.Inactive,
-        Status.Deleted,
-      ];
-
-      return getOpportunitiesAdmin(filter).then((data) => data.totalCount ?? 0);
-    },
-    enabled: !error,
-  });
-  const { data: totalCountActive } = useQuery<number>({
-    queryKey: [
-      "opportunities",
-      id,
-      "totalCount",
-      Status.Active,
-      `${query?.toString()}_${page?.toString()}_${status?.toString()}`,
-    ],
-    queryFn: () => {
-      const filter = JSON.parse(
-        JSON.stringify(searchFilter),
-      ) as OpportunitySearchFilterAdmin; // deep copy
-
-      filter.pageNumber = 1;
-      filter.pageSize = 1;
-      filter.statuses = [Status.Active];
-
-      return getOpportunitiesAdmin(filter).then((data) => data.totalCount ?? 0);
-    },
-    enabled: !error,
-  });
-  const { data: totalCountInactive } = useQuery<number>({
-    queryKey: [
-      "opportunities",
-      id,
-      "totalCount",
-      Status.Inactive,
-      `${query?.toString()}_${page?.toString()}_${status?.toString()}`,
-    ],
-    queryFn: () => {
-      const filter = JSON.parse(
-        JSON.stringify(searchFilter),
-      ) as OpportunitySearchFilterAdmin; // deep copy
-
-      filter.pageNumber = 1;
-      filter.pageSize = 1;
-      filter.statuses = [Status.Inactive];
-
-      return getOpportunitiesAdmin(filter).then((data) => data.totalCount ?? 0);
-    },
-    enabled: !error,
-  });
-  const { data: totalCountExpired } = useQuery<number>({
-    queryKey: [
-      "opportunities",
-      id,
-      "totalCount",
-      Status.Expired,
-      `${query?.toString()}_${page?.toString()}_${status?.toString()}`,
-    ],
-    queryFn: () => {
-      const filter = JSON.parse(
-        JSON.stringify(searchFilter),
-      ) as OpportunitySearchFilterAdmin; // deep copy
-
-      filter.pageNumber = 1;
-      filter.pageSize = 1;
-      filter.statuses = [Status.Expired];
-
-      return getOpportunitiesAdmin(filter).then((data) => data.totalCount ?? 0);
-    },
-    enabled: !error,
-  });
-  const { data: totalCountDeleted } = useQuery<number>({
-    queryKey: [
-      "opportunities",
-      id,
-      "totalCount",
-      Status.Deleted,
-      `${query?.toString()}_${page?.toString()}_${status?.toString()}`,
-    ],
-    queryFn: () => {
-      const filter = JSON.parse(
-        JSON.stringify(searchFilter),
-      ) as OpportunitySearchFilterAdmin; // deep copy
-
-      filter.pageNumber = 1;
-      filter.pageSize = 1;
-      filter.statuses = [Status.Deleted];
-
-      return getOpportunitiesAdmin(filter).then((data) => data.totalCount ?? 0);
-    },
-    enabled: !error,
-  });
+  const { data: totalCountAll } = useOrgOpportunityCountQuery(
+    id,
+    searchFilter.valueContains ?? null,
+    null,
+    countKeyParts,
+    { enabled: !error },
+  );
+  const { data: totalCountActive } = useOrgOpportunityCountQuery(
+    id,
+    searchFilter.valueContains ?? null,
+    Status.Active,
+    countKeyParts,
+    { enabled: !error },
+  );
+  const { data: totalCountInactive } = useOrgOpportunityCountQuery(
+    id,
+    searchFilter.valueContains ?? null,
+    Status.Inactive,
+    countKeyParts,
+    { enabled: !error },
+  );
+  const { data: totalCountExpired } = useOrgOpportunityCountQuery(
+    id,
+    searchFilter.valueContains ?? null,
+    Status.Expired,
+    countKeyParts,
+    { enabled: !error },
+  );
+  const { data: totalCountDeleted } = useOrgOpportunityCountQuery(
+    id,
+    searchFilter.valueContains ?? null,
+    Status.Deleted,
+    countKeyParts,
+    { enabled: !error },
+  );
 
   // 🎈 FUNCTIONS
   const getSearchFilterAsQueryString = useCallback(
@@ -407,7 +324,10 @@ const Opportunities: NextPageWithLayout<{
             // invalidate queries
             //NB: this is the query on the opportunities page
             await queryClient.invalidateQueries({
-              queryKey: ["opportunities", id],
+              queryKey: OPPORTUNITY_QUERY_KEYS.list(id),
+            });
+            await queryClient.invalidateQueries({
+              queryKey: OPPORTUNITY_QUERY_KEYS.adminSearchAll(),
             });
           }}
         />

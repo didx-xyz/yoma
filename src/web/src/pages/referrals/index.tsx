@@ -49,6 +49,7 @@ import { SignInButton } from "~/components/SignInButton";
 import { LoadingInline } from "~/components/Status/LoadingInline";
 import { LoadingSkeleton } from "~/components/Status/LoadingSkeleton";
 import {
+  REFERRAL_PROGRAM_QUERY_KEYS,
   useMyReferralAnalyticsQuery,
   useReferralLinksQuery,
   useReferralLinkUsagesRefereeQuery,
@@ -1286,7 +1287,7 @@ const ReferralsPage: NextPageWithLayout<{
         }}
         onSuccess={async (link) => {
           await queryClient.invalidateQueries({
-            queryKey: ["ReferralLinks"],
+            queryKey: REFERRAL_PROGRAM_QUERY_KEYS.userLinksAll(),
           });
 
           router.push(`/referrals/link/${link.id}`);

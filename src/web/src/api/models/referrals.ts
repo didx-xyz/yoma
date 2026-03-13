@@ -338,9 +338,9 @@ export interface ReferralLink {
   blockedDate: string | null;
   statusId: string;
   status: ReferralLinkStatus;
-  uRL: string;
+  url: string;
   shortURL: string;
-  qRCodeBase64: string | null;
+  qrCodeBase64: string | null;
   completionTotal: number | null;
   completionBalance: number | null;
   pendingTotal: number | null;

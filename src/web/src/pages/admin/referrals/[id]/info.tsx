@@ -25,7 +25,10 @@ import { InternalServerError } from "~/components/Status/InternalServerError";
 import { Loading } from "~/components/Status/Loading";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
-import { useReferralProgramByIdQuery } from "~/hooks/useReferralProgramMutations";
+import {
+  REFERRAL_PROGRAM_QUERY_KEYS,
+  useReferralProgramByIdQuery,
+} from "~/hooks/useReferralProgramMutations";
 import { config } from "~/lib/react-query-config";
 import { getSafeUrl, getThemeFromRole } from "~/lib/utils";
 import type { NextPageWithLayout } from "~/pages/_app";
@@ -54,7 +57,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   try {
     const programData = await getReferralProgramById(id, context);
     await queryClient.prefetchQuery({
-      queryKey: ["referralProgram", id],
+      queryKey: REFERRAL_PROGRAM_QUERY_KEYS.detail(id),
       queryFn: () => programData,
     });
   } catch (error) {

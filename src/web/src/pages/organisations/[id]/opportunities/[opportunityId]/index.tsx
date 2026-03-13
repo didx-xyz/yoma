@@ -1,10 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  QueryClient,
-  dehydrate,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { QueryClient, dehydrate, useQueryClient } from "@tanstack/react-query";
 import axios, { type AxiosError } from "axios";
 import moment from "moment";
 import { type GetServerSidePropsContext } from "next";
@@ -40,35 +35,20 @@ import Async from "react-select/async";
 import CreatableSelect from "react-select/creatable";
 import { toast } from "react-toastify";
 import z from "zod";
-import { SchemaType } from "~/api/models/credential";
 import type { SelectOption, Skill } from "~/api/models/lookups";
 import {
   Status,
   VerificationMethod,
-  type Opportunity,
   type OpportunityInfo,
   type OpportunityRequestBase,
   type OpportunityVerificationType,
 } from "~/api/models/opportunity";
-import type { Organization } from "~/api/models/organisation";
-import { getSchemas } from "~/api/services/credentials";
-import {
-  getCountries,
-  getEngagementTypes,
-  getLanguages,
-  getSkills,
-  getTimeIntervals,
-} from "~/api/services/lookups";
+import { getSkills } from "~/api/services/lookups";
 import {
   createOpportunity,
-  getCategories,
-  getDifficulties,
   getOpportunityById,
-  getTypes,
-  getVerificationTypes,
   updateOpportunity,
 } from "~/api/services/opportunities";
-import { getOrganisationById } from "~/api/services/organisations";
 import { AvatarImage } from "~/components/AvatarImage";
 import CustomModal from "~/components/Common/CustomModal";
 import FormCheckbox from "~/components/Common/FormCheckbox";
@@ -107,7 +87,21 @@ import {
   dateInputToUTC,
   utcToDateInput,
 } from "~/lib/utils";
-import { useOpportunityStatusMutation } from "~/hooks/useOpportunityMutations";
+import {
+  OPPORTUNITY_QUERY_KEYS,
+  useOpportunityDetailQuery,
+  useOrganisationByIdQuery,
+  useOpportunityCategoriesQuery,
+  useOpportunityCountriesQuery,
+  useOpportunityLanguagesQuery,
+  useOpportunityTypesQuery,
+  useOpportunityVerificationTypesQuery,
+  useOpportunityDifficultiesQuery,
+  useOpportunityTimeIntervalsQuery,
+  useOpportunityEngagementTypesQuery,
+  useOpportunitySchemasQuery,
+  useOpportunityStatusMutation,
+} from "~/hooks/useOpportunityMutations";
 import type { NextPageWithLayout } from "~/pages/_app";
 import { authOptions, type User } from "~/server/auth";
 
@@ -147,7 +141,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       const data = await getOpportunityById(opportunityId, context);
 
       await queryClient.prefetchQuery({
-        queryKey: ["opportunity", opportunityId],
+        queryKey: OPPORTUNITY_QUERY_KEYS.detail(opportunityId),
         queryFn: () => data,
       });
     }
@@ -201,9 +195,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
   //#region Queries
 
   // Categories
-  const { data: categoriesData } = useQuery({
-    queryKey: ["categories"],
-    queryFn: async () => getCategories(),
+  const { data: categoriesData } = useOpportunityCategoriesQuery({
     enabled: !error,
   });
   const categoriesOptions = useMemo<SelectOption[]>(
@@ -216,9 +208,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
   );
 
   // Countries
-  const { data: countriesData } = useQuery({
-    queryKey: ["countries"],
-    queryFn: async () => getCountries(),
+  const { data: countriesData } = useOpportunityCountriesQuery({
     enabled: !error,
   });
   const countriesOptions = useMemo<SelectOption[]>(
@@ -231,9 +221,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
   );
 
   // Languages
-  const { data: languagesData } = useQuery({
-    queryKey: ["languages"],
-    queryFn: async () => getLanguages(),
+  const { data: languagesData } = useOpportunityLanguagesQuery({
     enabled: !error,
   });
   const languagesOptions = useMemo<SelectOption[]>(
@@ -246,9 +234,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
   );
 
   // Opportunity Types
-  const { data: opportunityTypesData } = useQuery({
-    queryKey: ["opportunityTypes"],
-    queryFn: async () => getTypes(),
+  const { data: opportunityTypesData } = useOpportunityTypesQuery({
     enabled: !error,
   });
   const opportunityTypesOptions = useMemo<SelectOption[]>(
@@ -261,9 +247,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
   );
 
   // Verification Types
-  const { data: verificationTypesData } = useQuery({
-    queryKey: ["verificationTypes"],
-    queryFn: async () => getVerificationTypes(),
+  const { data: verificationTypesData } = useOpportunityVerificationTypesQuery({
     enabled: !error,
   });
 
@@ -274,9 +258,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
   );
 
   // Difficulties
-  const { data: difficultiesData } = useQuery({
-    queryKey: ["difficulties"],
-    queryFn: async () => getDifficulties(),
+  const { data: difficultiesData } = useOpportunityDifficultiesQuery({
     enabled: !error,
   });
   const difficultiesOptions = useMemo<SelectOption[]>(
@@ -289,9 +271,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
   );
 
   // Time Intervals
-  const { data: timeIntervalsData } = useQuery({
-    queryKey: ["timeIntervals"],
-    queryFn: async () => getTimeIntervals(),
+  const { data: timeIntervalsData } = useOpportunityTimeIntervalsQuery({
     enabled: !error,
   });
   const timeIntervalsOptions = useMemo<SelectOption[]>(
@@ -304,9 +284,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
   );
 
   // Engagement Types
-  const { data: engagementTypesData } = useQuery({
-    queryKey: ["engagementTypes"],
-    queryFn: async () => getEngagementTypes(),
+  const { data: engagementTypesData } = useOpportunityEngagementTypesQuery({
     enabled: !error,
   });
   const engagementTypesOptions = useMemo<SelectOption[]>(
@@ -319,11 +297,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
   );
 
   // Schemas
-  const { data: schemas } = useQuery({
-    queryKey: ["schemas"],
-    queryFn: async () => getSchemas(SchemaType.Opportunity),
-    enabled: !error,
-  });
+  const { data: schemas } = useOpportunitySchemasQuery({ enabled: !error });
   const schemasOptions = useMemo<SelectOption[]>(
     () =>
       schemas?.map((c) => ({
@@ -335,16 +309,12 @@ const OpportunityAdminDetails: NextPageWithLayout<{
 
   // Opportunity
   // 👇 use prefetched query from server
-  const { data: opportunity } = useQuery<Opportunity>({
-    queryKey: ["opportunity", opportunityId],
-    queryFn: () => getOpportunityById(opportunityId),
-    enabled: opportunityId !== "create" && !error,
+  const { data: opportunity } = useOpportunityDetailQuery(opportunityId, {
+    enabled: !error,
   });
 
   // Organisation
-  const { data: organisation } = useQuery<Organization>({
-    queryKey: ["organisation", id],
-    queryFn: () => getOrganisationById(id),
+  const { data: organisation } = useOrganisationByIdQuery(id, {
     enabled: !error,
   });
   //#endregion Queries
@@ -1275,11 +1245,17 @@ const OpportunityAdminDetails: NextPageWithLayout<{
 
         // invalidate queries
         await queryClient.invalidateQueries({
-          queryKey: ["opportunity", opportunityId],
+          queryKey: OPPORTUNITY_QUERY_KEYS.detail(opportunityId),
+        });
+        await queryClient.invalidateQueries({
+          queryKey: OPPORTUNITY_QUERY_KEYS.info(opportunityId),
         });
         //NB: this is the query on the opportunities page
         await queryClient.invalidateQueries({
-          queryKey: ["opportunities", id],
+          queryKey: OPPORTUNITY_QUERY_KEYS.list(id),
+        });
+        await queryClient.invalidateQueries({
+          queryKey: OPPORTUNITY_QUERY_KEYS.adminSearchAll(),
         });
       } catch (error) {
         toast(<ApiErrors error={error as AxiosError} />, {

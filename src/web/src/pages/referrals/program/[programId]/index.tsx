@@ -230,7 +230,7 @@ const ReferralProgramDetails: NextPageWithLayout<{
           }}
           onSuccess={async (link) => {
             await queryClient.invalidateQueries({
-              queryKey: ["ReferralLinks"],
+              queryKey: REFERRAL_PROGRAM_QUERY_KEYS.userLinksAll(),
             });
 
             if (link?.id) {

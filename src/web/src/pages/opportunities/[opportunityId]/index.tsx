@@ -24,6 +24,7 @@ import { InternalServerError } from "~/components/Status/InternalServerError";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import { config } from "~/lib/react-query-config";
+import { OPPORTUNITY_QUERY_KEYS } from "~/hooks/useOpportunityMutations";
 import type { NextPageWithLayout } from "~/pages/_app";
 import { type User, authOptions } from "~/server/auth";
 
@@ -66,7 +67,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 
     await Promise.all([
       queryClient.prefetchQuery({
-        queryKey: ["verificationStatus", opportunityId],
+        queryKey: OPPORTUNITY_QUERY_KEYS.verificationStatus(opportunityId),
         queryFn: () => dataVerificationStatus ?? null,
       }),
     ]);
