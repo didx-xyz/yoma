@@ -62,7 +62,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           NULL,
           NULLIF((org_total + ref_total), 0),
           NULLIF((org_total + ref_total), 0),
-          NULL,
+          20000,
           NULL,
           NULL,
           1.0 / 45,
