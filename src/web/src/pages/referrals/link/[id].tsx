@@ -1,4 +1,4 @@
-import { QueryClient, dehydrate, useQuery } from "@tanstack/react-query";
+import { QueryClient, dehydrate } from "@tanstack/react-query";
 import axios from "axios";
 import { useAtomValue } from "jotai";
 import { type GetServerSidePropsContext } from "next";
@@ -8,11 +8,7 @@ import { useRouter } from "next/router";
 import { type ReactElement, useState } from "react";
 import { FaShareAlt } from "react-icons/fa";
 import { IoTimeOutline, IoTrophyOutline } from "react-icons/io5";
-import {
-  ProgramStatus,
-  type ProgramInfo,
-  type ReferralLink,
-} from "~/api/models/referrals";
+import { ProgramStatus, type ReferralLink } from "~/api/models/referrals";
 import type { UserProfile } from "~/api/models/user";
 import {
   getReferralLinkById,
@@ -30,6 +26,11 @@ import { ReferralStatsSmallLink } from "~/components/Referrals/ReferralStatsSmal
 import { ReferrerReferralsList } from "~/components/Referrals/ReferrerReferralsList";
 import { LoadingInline } from "~/components/Status/LoadingInline";
 import { handleUserSignIn } from "~/lib/authUtils";
+import {
+  REFERRAL_PROGRAM_QUERY_KEYS,
+  useReferralLinkByIdQuery,
+  useReferralProgramInfoByLinkQuery,
+} from "~/hooks/useReferralProgramMutations";
 import { THEME_WHITE } from "~/lib/constants";
 import { config } from "~/lib/react-query-config";
 import { currentLanguageAtom, userProfileAtom } from "~/lib/store";
@@ -88,18 +89,21 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 
   try {
     await queryClient.fetchQuery({
-      queryKey: ["ReferralLink", linkId],
+      queryKey: REFERRAL_PROGRAM_QUERY_KEYS.link(linkId),
       queryFn: () => getReferralLinkById(linkId, false, context),
     });
 
     const program = await queryClient.fetchQuery({
-      queryKey: ["ReferralProgramInfoByLink", linkId],
+      queryKey: REFERRAL_PROGRAM_QUERY_KEYS.infoByLink(linkId),
       queryFn: () => getReferralProgramInfoByLinkId(linkId, context),
     });
 
     if (program && mockStatus !== null) {
       program.status = mockStatus;
-      queryClient.setQueryData(["ReferralProgramInfoByLink", linkId], program);
+      queryClient.setQueryData(
+        REFERRAL_PROGRAM_QUERY_KEYS.infoByLink(linkId),
+        program,
+      );
     }
   } catch (error) {
     console.error("Failed to fetch referral link page data", error);
@@ -136,21 +140,13 @@ const ReferralLinkPage: NextPageWithLayout<{
     data: link,
     isLoading: linkLoading,
     error: linkError,
-  } = useQuery<ReferralLink>({
-    queryKey: ["ReferralLink", linkId],
-    queryFn: () => getReferralLinkById(linkId, false),
-    enabled: !!linkId && !error,
-  });
+  } = useReferralLinkByIdQuery(linkId, { enabled: !error });
 
   const {
     data: program,
     isLoading: programLoading,
     error: programError,
-  } = useQuery<ProgramInfo>({
-    queryKey: ["ReferralProgramInfoByLink", linkId],
-    queryFn: () => getReferralProgramInfoByLinkId(linkId),
-    enabled: !!linkId && !error,
-  });
+  } = useReferralProgramInfoByLinkQuery(linkId, { enabled: !error });
 
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 

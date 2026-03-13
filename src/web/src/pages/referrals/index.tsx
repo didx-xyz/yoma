@@ -20,9 +20,7 @@ import { type OnSlideProps } from "react-scroll-snap-anime-slider";
 import Select from "react-select";
 import { Country } from "~/api/models/lookups";
 import {
-  type ReferralAnalyticsUser,
   type ProgramInfo,
-  type ProgramSearchResultsInfo,
   type ReferralLink,
   type ReferralLinkUsage,
   ReferralLinkUsageStatus,
@@ -31,10 +29,8 @@ import {
 import { ReferralParticipationRole, type UserProfile } from "~/api/models/user";
 import {
   getCountries,
-  getMyReferralAnalytics,
   searchReferralLinks,
   searchReferralLinkUsagesAsReferrer,
-  searchReferralLinkUsagesAsReferee,
   searchReferralProgramsInfo,
 } from "~/api/services/referrals";
 import { getUserProfile } from "~/api/services/user";
@@ -52,6 +48,13 @@ import { ReferrerStats } from "~/components/Referrals/ReferrerStats";
 import { SignInButton } from "~/components/SignInButton";
 import { LoadingInline } from "~/components/Status/LoadingInline";
 import { LoadingSkeleton } from "~/components/Status/LoadingSkeleton";
+import {
+  useMyReferralAnalyticsQuery,
+  useReferralLinksQuery,
+  useReferralLinkUsagesRefereeQuery,
+  useReferralLinkUsagesReferrerQuery,
+  useReferralProgramsQuery,
+} from "~/hooks/useReferralProgramMutations";
 import { COUNTRY_ID_WW, PAGE_SIZE, THEME_WHITE } from "~/lib/constants";
 import { screenWidthAtom, userProfileAtom } from "~/lib/store";
 import { authOptions } from "~/server/auth";
@@ -646,53 +649,26 @@ const ReferralsPage: NextPageWithLayout<{
   }, [status, userProfile, selectedCountryIds.length]);
 
   const { data: programsData, isLoading: programsLoading } =
-    useQuery<ProgramSearchResultsInfo>({
-      queryKey: ["ReferralPrograms", 1, PAGE_SIZE, queryCountries],
-      queryFn: () =>
-        searchReferralProgramsInfo({
-          pageNumber: 1,
-          pageSize: PAGE_SIZE,
-          valueContains: null,
-          countries: queryCountries,
-          includeExpired: false,
-        }),
+    useReferralProgramsQuery(1, PAGE_SIZE, queryCountries, {
       enabled: shouldFetchPrograms,
     });
 
-  const { data: linksData, isLoading: linksLoading } = useQuery({
-    queryKey: ["ReferralLinks", 1, PAGE_SIZE],
-    queryFn: () =>
-      searchReferralLinks({
-        pageNumber: 1,
-        pageSize: PAGE_SIZE,
-        programId: null,
-        valueContains: null,
-        statuses: null,
-      }),
-    enabled: isAuthenticated && !isBlocked,
-  });
+  const { data: linksData, isLoading: linksLoading } = useReferralLinksQuery(
+    1,
+    PAGE_SIZE,
+    { enabled: isAuthenticated && !isBlocked },
+  );
   const hasLinks = (linksData?.items?.length ?? 0) > 0;
   //const hasPrograms = (programsData?.items?.length ?? 0) > 0;
 
-  const { data: refereeUsagesData, isLoading: refereeUsagesLoading } = useQuery(
-    {
-      queryKey: ["ReferralLinkUsagesReferee", 1, 5],
-      queryFn: () =>
-        searchReferralLinkUsagesAsReferee({
-          pageNumber: 1,
-          pageSize: 5,
-          programId: null,
-          linkId: null,
-          statuses: [
-            ReferralLinkUsageStatus.Pending,
-            ReferralLinkUsageStatus.Expired,
-          ],
-          dateStart: null,
-          dateEnd: null,
-        }),
+  const { data: refereeUsagesData, isLoading: refereeUsagesLoading } =
+    useReferralLinkUsagesRefereeQuery(1, 5, {
+      statuses: [
+        ReferralLinkUsageStatus.Pending,
+        ReferralLinkUsageStatus.Expired,
+      ],
       enabled: isAuthenticated && !isBlocked && isReferee,
-    },
-  );
+    });
   const hasRefereeUsages = (refereeUsagesData?.totalCount ?? 0) > 0;
   const showReferrerSections = hasLinks;
   const showRefereeSection = isReferee && hasRefereeUsages;
@@ -722,18 +698,7 @@ const ReferralsPage: NextPageWithLayout<{
   }, [screenWidth]);
 
   const { data: referrerUsagesData, isLoading: referrerUsagesLoading } =
-    useQuery({
-      queryKey: ["ReferralLinkUsagesReferrer", 1, PAGE_SIZE],
-      queryFn: () =>
-        searchReferralLinkUsagesAsReferrer({
-          pageNumber: 1,
-          pageSize: PAGE_SIZE,
-          programId: null,
-          linkId: null,
-          statuses: null,
-          dateStart: null,
-          dateEnd: null,
-        }),
+    useReferralLinkUsagesReferrerQuery(1, PAGE_SIZE, {
       enabled: isAuthenticated && !isBlocked && hasLinks,
     });
 
@@ -911,9 +876,7 @@ const ReferralsPage: NextPageWithLayout<{
     data: referrerAnalytics,
     isLoading: referrerAnalyticsLoading,
     error: referrerAnalyticsError,
-  } = useQuery<ReferralAnalyticsUser>({
-    queryKey: ["MyReferralAnalytics", ReferralAnalyticsRole.Referrer],
-    queryFn: () => getMyReferralAnalytics(ReferralAnalyticsRole.Referrer),
+  } = useMyReferralAnalyticsQuery(ReferralAnalyticsRole.Referrer, {
     enabled: isAuthenticated && !isBlocked,
   });
 
@@ -1267,8 +1230,9 @@ const ReferralsPage: NextPageWithLayout<{
                                   description={item.programDescription}
                                   imageURL={item.programImageURL}
                                   reward={item.zltoRewardReferrerTotal}
-                                  timeDays={null}
                                   href={`/referrals/link/${item.id}`}
+                                  showRewardBadge={false}
+                                  showTimeBadge={false}
                                 />
                               )}
                               emptyState={

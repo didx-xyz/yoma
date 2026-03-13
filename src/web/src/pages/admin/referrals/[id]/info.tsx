@@ -1,4 +1,4 @@
-import { QueryClient, dehydrate, useQuery } from "@tanstack/react-query";
+import { QueryClient, dehydrate } from "@tanstack/react-query";
 import axios from "axios";
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
@@ -25,6 +25,7 @@ import { InternalServerError } from "~/components/Status/InternalServerError";
 import { Loading } from "~/components/Status/Loading";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
+import { useReferralProgramByIdQuery } from "~/hooks/useReferralProgramMutations";
 import { config } from "~/lib/react-query-config";
 import { getSafeUrl, getThemeFromRole } from "~/lib/utils";
 import type { NextPageWithLayout } from "~/pages/_app";
@@ -88,9 +89,7 @@ const ReferralProgramInfo: NextPageWithLayout<{
   const router = useRouter();
   const { returnUrl } = router.query;
 
-  const { data: program, isLoading } = useQuery<Program>({
-    queryKey: ["referralProgram", id],
-    queryFn: () => getReferralProgramById(id),
+  const { data: program, isLoading } = useReferralProgramByIdQuery(id, {
     enabled: !error,
   });
 

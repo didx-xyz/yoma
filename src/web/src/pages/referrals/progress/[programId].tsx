@@ -1,4 +1,4 @@
-import { QueryClient, dehydrate, useQuery } from "@tanstack/react-query";
+import { QueryClient, dehydrate } from "@tanstack/react-query";
 import axios from "axios";
 import { useAtom } from "jotai";
 import { type GetServerSidePropsContext } from "next";
@@ -28,6 +28,11 @@ import { BecomeReferrerCTA } from "~/components/Referrals/BecomeReferrerCTA";
 import { RefereeWelcomeModal } from "~/components/Referrals/RefereeWelcomeModal";
 import { LoadingInline } from "~/components/Status/LoadingInline";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
+import {
+  REFERRAL_PROGRAM_QUERY_KEYS,
+  useReferralLinkUsageByProgramIdQuery,
+  useReferralProgramInfoQuery,
+} from "~/hooks/useReferralProgramMutations";
 import { config } from "~/lib/react-query-config";
 import { THEME_WHITE } from "~/lib/constants";
 import { handleUserSignOut } from "~/lib/authUtils";
@@ -163,19 +168,22 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 
   try {
     await queryClient.fetchQuery({
-      queryKey: ["RefereeUsage", programId],
+      queryKey: REFERRAL_PROGRAM_QUERY_KEYS.refereeProgress(programId),
       queryFn: () =>
         getReferralLinkUsageByProgramIdAsReferee(programId, context),
     });
 
     const program = await queryClient.fetchQuery({
-      queryKey: ["ReferralProgram", programId],
+      queryKey: REFERRAL_PROGRAM_QUERY_KEYS.info(programId),
       queryFn: () => getReferralProgramInfoById(programId, context),
     });
 
     if (program && mockStatus !== null) {
       program.status = mockStatus;
-      queryClient.setQueryData(["ReferralProgram", programId], program);
+      queryClient.setQueryData(
+        REFERRAL_PROGRAM_QUERY_KEYS.info(programId),
+        program,
+      );
     }
 
     return {
@@ -225,9 +233,7 @@ const RefereeDashboard: NextPageWithLayout<{
     data: usage,
     error: usageError,
     isLoading: usageLoading,
-  } = useQuery<ReferralLinkUsageInfo>({
-    queryKey: ["RefereeUsage", programId],
-    queryFn: () => getReferralLinkUsageByProgramIdAsReferee(programId),
+  } = useReferralLinkUsageByProgramIdQuery(programId, {
     enabled: !serverError,
     refetchInterval: 30000,
   });
@@ -236,11 +242,7 @@ const RefereeDashboard: NextPageWithLayout<{
     data: program,
     error: programError,
     isLoading: programLoading,
-  } = useQuery<ProgramInfo>({
-    queryKey: ["ReferralProgram", programId],
-    queryFn: () => getReferralProgramInfoById(programId),
-    enabled: !serverError,
-  });
+  } = useReferralProgramInfoQuery(programId, { enabled: !serverError });
 
   //TODO: remove
   const mockedPathwayProgress = useMemo(() => {

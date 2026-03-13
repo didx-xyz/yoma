@@ -13,7 +13,6 @@ import type { Country } from "~/api/models/lookups";
 import {
   ProgramStatus,
   type ProgramSearchFilterAdmin,
-  type ProgramSearchResults,
 } from "~/api/models/referrals";
 import { searchReferralPrograms } from "~/api/services/referrals";
 import { getCountries } from "~/api/services/lookups";
@@ -33,6 +32,11 @@ import { InternalServerError } from "~/components/Status/InternalServerError";
 import { LoadingSkeleton } from "~/components/Status/LoadingSkeleton";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
+import {
+  useReferralProgramCountQuery,
+  useReferralProgramsAdminQuery,
+  REFERRAL_PROGRAM_QUERY_KEYS,
+} from "~/hooks/useReferralProgramMutations";
 import { DATE_FORMAT_HUMAN, PAGE_SIZE, THEME_BLUE } from "~/lib/constants";
 import { config } from "~/lib/react-query-config";
 import { getSafeUrl, getThemeFromRole } from "~/lib/utils";
@@ -101,12 +105,10 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       dateEnd: dateEnd?.toString() ?? null,
     };
     const data = await searchReferralPrograms(searchFilter, context);
+    const searchResultsKey = `${query?.toString()}_${page?.toString()}_${status?.toString()}_${valueContains?.toString()}_${dateStart?.toString()}_${dateEnd?.toString()}_${countriesKeyPart ?? ""}`;
 
     await queryClient.prefetchQuery({
-      queryKey: [
-        "referralPrograms",
-        `${query?.toString()}_${page?.toString()}_${status?.toString()}_${valueContains?.toString()}_${dateStart?.toString()}_${dateEnd?.toString()}_${countriesKeyPart ?? ""}`,
-      ],
+      queryKey: REFERRAL_PROGRAM_QUERY_KEYS.adminProgramsList(searchResultsKey),
       queryFn: () => data,
     });
   } catch (error) {
@@ -185,149 +187,41 @@ const ReferralPrograms: NextPageWithLayout<{
   });
 
   // 👇 use prefetched queries from server
+  const searchResultsKey = `${query?.toString()}_${page?.toString()}_${status?.toString()}_${valueContains?.toString()}_${dateStart?.toString()}_${dateEnd?.toString()}_${countriesKeyPart ?? ""}`;
+
   const { data: searchResults, isLoading: isLoadingSearchResults } =
-    useQuery<ProgramSearchResults>({
-      queryKey: [
-        "referralPrograms",
-        `${query?.toString()}_${page?.toString()}_${status?.toString()}_${valueContains?.toString()}_${dateStart?.toString()}_${dateEnd?.toString()}_${countriesKeyPart ?? ""}`,
-      ],
-      queryFn: () => searchReferralPrograms(searchFilter),
+    useReferralProgramsAdminQuery(searchFilter, searchResultsKey, {
       enabled: !error,
     });
 
   // Get counts by status (without additional filters)
-  const { data: totalCountAll } = useQuery<number>({
-    queryKey: ["referralPrograms", "totalCount", null],
-    queryFn: () => {
-      const filter: ProgramSearchFilterAdmin = {
-        pageNumber: 1,
-        pageSize: PAGE_SIZE,
-        countries: null,
-        valueContains: null,
-        statuses: null,
-        dateStart: null,
-        dateEnd: null,
-      };
-      return searchReferralPrograms(filter).then(
-        (data) => data.totalCount ?? 0,
-      );
-    },
+  const { data: totalCountAll } = useReferralProgramCountQuery(null, {
     enabled: !error,
   });
-
-  const { data: totalCountActive } = useQuery<number>({
-    queryKey: ["referralPrograms", "totalCount", ProgramStatus.Active],
-    queryFn: () => {
-      const filter: ProgramSearchFilterAdmin = {
-        pageNumber: 1,
-        pageSize: PAGE_SIZE,
-        countries: null,
-        valueContains: null,
-        statuses: [ProgramStatus.Active],
-        dateStart: null,
-        dateEnd: null,
-      };
-      return searchReferralPrograms(filter).then(
-        (data) => data.totalCount ?? 0,
-      );
-    },
-    enabled: !error,
-  });
-
-  const { data: totalCountInactive } = useQuery<number>({
-    queryKey: ["referralPrograms", "totalCount", ProgramStatus.Inactive],
-    queryFn: () => {
-      const filter: ProgramSearchFilterAdmin = {
-        pageNumber: 1,
-        pageSize: PAGE_SIZE,
-        countries: null,
-        valueContains: null,
-        statuses: [ProgramStatus.Inactive],
-        dateStart: null,
-        dateEnd: null,
-      };
-      return searchReferralPrograms(filter).then(
-        (data) => data.totalCount ?? 0,
-      );
-    },
-    enabled: !error,
-  });
-
-  const { data: totalCountExpired } = useQuery<number>({
-    queryKey: ["referralPrograms", "totalCount", ProgramStatus.Expired],
-    queryFn: () => {
-      const filter: ProgramSearchFilterAdmin = {
-        pageNumber: 1,
-        pageSize: PAGE_SIZE,
-        countries: null,
-        valueContains: null,
-        statuses: [ProgramStatus.Expired],
-        dateStart: null,
-        dateEnd: null,
-      };
-      return searchReferralPrograms(filter).then(
-        (data) => data.totalCount ?? 0,
-      );
-    },
-    enabled: !error,
-  });
-
-  const { data: totalCountDeleted } = useQuery<number>({
-    queryKey: ["referralPrograms", "totalCount", ProgramStatus.Deleted],
-    queryFn: () => {
-      const filter: ProgramSearchFilterAdmin = {
-        pageNumber: 1,
-        pageSize: PAGE_SIZE,
-        countries: null,
-        valueContains: null,
-        statuses: [ProgramStatus.Deleted],
-        dateStart: null,
-        dateEnd: null,
-      };
-      return searchReferralPrograms(filter).then(
-        (data) => data.totalCount ?? 0,
-      );
-    },
-    enabled: !error,
-  });
-
-  const { data: totalCountLimitReached } = useQuery<number>({
-    queryKey: ["referralPrograms", "totalCount", ProgramStatus.LimitReached],
-    queryFn: () => {
-      const filter: ProgramSearchFilterAdmin = {
-        pageNumber: 1,
-        pageSize: PAGE_SIZE,
-        countries: null,
-        valueContains: null,
-        statuses: [ProgramStatus.LimitReached],
-        dateStart: null,
-        dateEnd: null,
-      };
-      return searchReferralPrograms(filter).then(
-        (data) => data.totalCount ?? 0,
-      );
-    },
-    enabled: !error,
-  });
-
-  const { data: totalCountUnCompletable } = useQuery<number>({
-    queryKey: ["referralPrograms", "totalCount", ProgramStatus.UnCompletable],
-    queryFn: () => {
-      const filter: ProgramSearchFilterAdmin = {
-        pageNumber: 1,
-        pageSize: PAGE_SIZE,
-        countries: null,
-        valueContains: null,
-        statuses: [ProgramStatus.UnCompletable],
-        dateStart: null,
-        dateEnd: null,
-      };
-      return searchReferralPrograms(filter).then(
-        (data) => data.totalCount ?? 0,
-      );
-    },
-    enabled: !error,
-  });
+  const { data: totalCountActive } = useReferralProgramCountQuery(
+    ProgramStatus.Active,
+    { enabled: !error },
+  );
+  const { data: totalCountInactive } = useReferralProgramCountQuery(
+    ProgramStatus.Inactive,
+    { enabled: !error },
+  );
+  const { data: totalCountExpired } = useReferralProgramCountQuery(
+    ProgramStatus.Expired,
+    { enabled: !error },
+  );
+  const { data: totalCountDeleted } = useReferralProgramCountQuery(
+    ProgramStatus.Deleted,
+    { enabled: !error },
+  );
+  const { data: totalCountLimitReached } = useReferralProgramCountQuery(
+    ProgramStatus.LimitReached,
+    { enabled: !error },
+  );
+  const { data: totalCountUnCompletable } = useReferralProgramCountQuery(
+    ProgramStatus.UnCompletable,
+    { enabled: !error },
+  );
 
   // 🎈 FUNCTIONS
   const getSearchFilterAsQueryString = useCallback(

@@ -1,4 +1,4 @@
-import { QueryClient, dehydrate, useQuery } from "@tanstack/react-query";
+import { QueryClient, dehydrate } from "@tanstack/react-query";
 import { useAtomValue, useSetAtom } from "jotai";
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
@@ -34,6 +34,10 @@ import { ProfileCompletionWizard } from "~/components/User/ProfileCompletionWiza
 import analytics from "~/lib/analytics";
 import { escapeHtml, parseApiError } from "~/lib/apiErrorUtils";
 import { handleUserSignIn } from "~/lib/authUtils";
+import {
+  REFERRAL_PROGRAM_QUERY_KEYS,
+  useReferralProgramInfoByLinkQuery,
+} from "~/hooks/useReferralProgramMutations";
 import { THEME_WHITE } from "~/lib/constants";
 import { config } from "~/lib/react-query-config";
 import { currentLanguageAtom, userProfileAtom } from "~/lib/store";
@@ -111,13 +115,16 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   try {
     // Prefetch program info using the new endpoint that accepts linkId
     const program = await queryClient.fetchQuery({
-      queryKey: ["ReferralProgramByLink", linkId],
+      queryKey: REFERRAL_PROGRAM_QUERY_KEYS.infoByLink(linkId),
       queryFn: () => getReferralProgramInfoByLinkId(linkId, context),
     });
 
     if (program && mockStatus !== null) {
       program.status = mockStatus;
-      queryClient.setQueryData(["ReferralProgramByLink", linkId], program);
+      queryClient.setQueryData(
+        REFERRAL_PROGRAM_QUERY_KEYS.infoByLink(linkId),
+        program,
+      );
     }
 
     // If user is authenticated, check profile completion status
@@ -225,11 +232,7 @@ const ReferralClaimPage: NextPageWithLayout<{
     data: program,
     error: programError,
     isLoading: programLoading,
-  } = useQuery<ProgramInfo>({
-    queryKey: ["ReferralProgramByLink", linkId],
-    queryFn: () => getReferralProgramInfoByLinkId(linkId),
-    enabled: !serverError && !!linkId,
-  });
+  } = useReferralProgramInfoByLinkQuery(linkId, { enabled: !serverError });
 
   const handleClaim = useCallback(async () => {
     setClaiming(true);

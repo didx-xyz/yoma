@@ -1,9 +1,4 @@
-import {
-  QueryClient,
-  dehydrate,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { QueryClient, dehydrate, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { useAtomValue } from "jotai";
 import { type GetServerSidePropsContext } from "next";
@@ -22,6 +17,10 @@ import { ReferrerCreateLinkModal } from "~/components/Referrals/ReferrerCreateLi
 import { LoadingInline } from "~/components/Status/LoadingInline";
 import analytics from "~/lib/analytics";
 import { handleUserSignIn } from "~/lib/authUtils";
+import {
+  REFERRAL_PROGRAM_QUERY_KEYS,
+  useReferralProgramInfoQuery,
+} from "~/hooks/useReferralProgramMutations";
 import { THEME_WHITE } from "~/lib/constants";
 import { config } from "~/lib/react-query-config";
 import { currentLanguageAtom } from "~/lib/store";
@@ -73,7 +72,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 
   try {
     dataProgramInfo = await queryClient.fetchQuery({
-      queryKey: ["ReferralProgramInfo", programId],
+      queryKey: REFERRAL_PROGRAM_QUERY_KEYS.info(programId),
       queryFn: () => getReferralProgramInfoById(programId, context),
     });
 
@@ -137,11 +136,9 @@ const ReferralProgramDetails: NextPageWithLayout<{
     data: program,
     isLoading,
     error: programError,
-  } = useQuery<ProgramInfo>({
-    queryKey: ["ReferralProgramInfo", programId],
-    queryFn: () => getReferralProgramInfoById(programId),
+  } = useReferralProgramInfoQuery(programId, {
     initialData: programInfo ?? undefined,
-    enabled: !!programId && !error,
+    enabled: !error,
   });
   const hasPageError = Boolean(error) || Boolean(programError);
 

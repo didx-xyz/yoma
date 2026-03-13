@@ -1,4 +1,4 @@
-import { QueryClient, dehydrate, useQuery } from "@tanstack/react-query";
+import { QueryClient, dehydrate } from "@tanstack/react-query";
 import axios from "axios";
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
@@ -9,8 +9,11 @@ import { type ParsedUrlQuery } from "querystring";
 import { useMemo, type ReactElement } from "react";
 import { IoMdArrowRoundBack } from "react-icons/io";
 import Moment from "react-moment";
-import type { ReferralLinkUsageInfo } from "~/api/models/referrals";
 import { getReferralLinkUsageById } from "~/api/services/referrals";
+import {
+  REFERRAL_PROGRAM_QUERY_KEYS,
+  useReferralLinkUsageByIdQuery,
+} from "~/hooks/useReferralProgramMutations";
 import MainLayout from "~/components/Layout/Main";
 import { PageBackground } from "~/components/PageBackground";
 import { InternalServerError } from "~/components/Status/InternalServerError";
@@ -49,7 +52,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   try {
     const usageData = await getReferralLinkUsageById(usageId, context);
     await queryClient.prefetchQuery({
-      queryKey: ["referralLinkUsage", usageId],
+      queryKey: REFERRAL_PROGRAM_QUERY_KEYS.linkUsage(usageId),
       queryFn: () => usageData,
     });
   } catch (error) {
@@ -84,9 +87,7 @@ const ReferralLinkUsageInfo: NextPageWithLayout<{
   const router = useRouter();
   const { returnUrl } = router.query;
 
-  const { data: usage, isLoading } = useQuery<ReferralLinkUsageInfo>({
-    queryKey: ["referralLinkUsage", usageId],
-    queryFn: () => getReferralLinkUsageById(usageId),
+  const { data: usage, isLoading } = useReferralLinkUsageByIdQuery(usageId, {
     enabled: !error,
   });
 

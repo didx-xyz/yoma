@@ -87,7 +87,11 @@ import {
   utcToDateInput,
 } from "~/lib/utils";
 import type { NextPageWithLayout } from "~/pages/_app";
-import { useReferralProgramStatusMutation } from "~/hooks/useReferralProgramMutations";
+import {
+  REFERRAL_PROGRAM_QUERY_KEYS,
+  useReferralProgramByIdQuery,
+  useReferralProgramStatusMutation,
+} from "~/hooks/useReferralProgramMutations";
 import { authOptions, type User } from "~/server/auth";
 
 type SelectOption = { value: string; label: string };
@@ -657,11 +661,8 @@ const ReferralProgramForm: NextPageWithLayout<{
   const formRef5 = useRef<HTMLFormElement>(null);
 
   // Fetch program data
-  const { data: program, isLoading: isLoadingProgram } = useQuery<Program>({
-    queryKey: ["referralProgram", id],
-    queryFn: () => getReferralProgramById(id),
-    enabled: id !== "create" && !error,
-  });
+  const { data: program, isLoading: isLoadingProgram } =
+    useReferralProgramByIdQuery(id, { enabled: !error });
 
   const statusMutation = useReferralProgramStatusMutation({
     programId: id,
@@ -1525,9 +1526,11 @@ const ReferralProgramForm: NextPageWithLayout<{
           message = "Program updated successfully";
         }
 
-        await queryClient.invalidateQueries({ queryKey: ["referralPrograms"] });
         await queryClient.invalidateQueries({
-          queryKey: ["referralProgram", id],
+          queryKey: REFERRAL_PROGRAM_QUERY_KEYS.list(),
+        });
+        await queryClient.invalidateQueries({
+          queryKey: REFERRAL_PROGRAM_QUERY_KEYS.detail(id),
         });
 
         toast.success(message);
