@@ -41,6 +41,7 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
       {
         Id = entity.Id,
         Name = entity.Name,
+        Summary = entity.Summary,
         Description = entity.Description,
         ImageId = entity.ImageId,
         ImageStorageType = entity.Image == null ? null : Enum.Parse<StorageType>(entity.Image.StorageType, true),
@@ -152,14 +153,16 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
     {
       //MS SQL: Contains
       return predicate.Or(o => EF.Functions.ILike(o.Name, $"%{value}%")
-          || (!string.IsNullOrEmpty(o.Description) && EF.Functions.ILike(o.Description, $"%{value}%")));
+          || (!string.IsNullOrEmpty(o.Summary) && EF.Functions.ILike(o.Summary, $"%{value}%"))
+          || (!string.IsNullOrEmpty(o.Description) && EF.Functions.ToTsVector("english", o.Description).Matches(value)));
     }
 
     public IQueryable<Program> Contains(IQueryable<Program> query, string value)
     {
       //MS SQL: Contains
       return query.Where(o => EF.Functions.ILike(o.Name, $"%{value}%")
-          || (!string.IsNullOrEmpty(o.Description) && EF.Functions.ILike(o.Description, $"%{value}%")));
+          || (!string.IsNullOrEmpty(o.Summary) && EF.Functions.ILike(o.Summary, $"%{value}%"))
+          || (!string.IsNullOrEmpty(o.Description) && EF.Functions.ToTsVector("english", o.Description).Matches(value)));
     }
 
     public async Task<Program> Create(Program item)
@@ -171,6 +174,7 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
       {
         Id = item.Id,
         Name = item.Name,
+        Summary = item.Summary,
         Description = item.Description,
         ImageId = item.ImageId,
         CompletionWindowInDays = item.CompletionWindowInDays,
@@ -211,6 +215,7 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
         {
           Id = item.Id,
           Name = item.Name,
+          Summary = item.Summary,
           Description = item.Description,
           ImageId = item.ImageId,
           CompletionWindowInDays = item.CompletionWindowInDays,
@@ -256,6 +261,7 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
       item.DateModified = DateTimeOffset.UtcNow;
 
       entity.Name = item.Name;
+      entity.Summary = item.Summary;
       entity.Description = item.Description;
       entity.ImageId = item.ImageId;
       entity.CompletionWindowInDays = item.CompletionWindowInDays;
@@ -299,6 +305,7 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
         item.DateModified = DateTimeOffset.UtcNow;
 
         entity.Name = item.Name;
+        entity.Summary = item.Summary;
         entity.Description = item.Description;
         entity.ImageId = item.ImageId;
         entity.CompletionWindowInDays = item.CompletionWindowInDays;

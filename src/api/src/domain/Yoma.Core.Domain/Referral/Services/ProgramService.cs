@@ -377,6 +377,7 @@ namespace Yoma.Core.Domain.Referral.Services
       var result = new Program
       {
         Name = request.Name,
+        Summary = request.Summary,
         Description = request.Description,
         CompletionWindowInDays = request.CompletionWindowInDays,
         CompletionLimitReferee = request.CompletionLimitReferee,
@@ -504,6 +505,7 @@ namespace Yoma.Core.Domain.Referral.Services
       var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 
       result.Name = request.Name;
+      result.Summary = request.Summary; 
       result.Description = request.Description;
       result.CompletionWindowInDays = request.CompletionWindowInDays;
       result.CompletionLimitReferee = request.CompletionLimitReferee;

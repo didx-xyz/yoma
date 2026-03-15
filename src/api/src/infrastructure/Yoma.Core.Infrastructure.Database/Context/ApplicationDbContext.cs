@@ -291,9 +291,6 @@ namespace Yoma.Core.Infrastructure.Database.Context
       #endregion Opportunity
 
       #region Referral
-      builder.Entity<Referral.Entities.Link>()
-          .HasKey(x => x.Id).HasName("PK_Referral_Link");
-
       builder.Entity<Block>()
           .HasOne(b => b.User)
           .WithMany(u => u.Blocks)
@@ -315,6 +312,14 @@ namespace Yoma.Core.Infrastructure.Database.Context
       builder.Entity<Block>().HasIndex(o => o.UserId)
           .IsUnique()
           .HasFilter($"\"{nameof(Block.Active)}\" = true");
+
+      builder.Entity<Referral.Entities.Link>()
+          .HasKey(x => x.Id).HasName("PK_Referral_Link");
+
+      builder.Entity<Program>()
+          .HasIndex(o => new { o.Description })
+          .HasMethod("GIN")
+          .IsTsVectorExpressionIndex("english");
 
       builder.Entity<Program>()
           .HasOne(o => o.CreatedByUser)

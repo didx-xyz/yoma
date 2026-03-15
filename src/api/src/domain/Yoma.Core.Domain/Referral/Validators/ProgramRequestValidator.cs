@@ -25,11 +25,12 @@ namespace Yoma.Core.Domain.Referral.Validators
           .Length(1, 150)
           .WithMessage("Please enter a program name (maximum 150 characters).");
 
-      RuleFor(x => x.Description)
-          .Cascade(CascadeMode.Stop)
-          .Length(1, 500)
-          .When(x => !string.IsNullOrWhiteSpace(x.Description))
-          .WithMessage("The description cannot be longer than 500 characters.");
+      RuleFor(x => x.Summary)
+          .NotEmpty()
+          .Length(1, 150)
+          .WithMessage("'{PropertyName}' is required and must be between 1 and 150 characters.");
+
+      RuleFor(x => x.Description).NotEmpty();
 
       RuleFor(x => x.CompletionWindowInDays)
           .GreaterThan(0)

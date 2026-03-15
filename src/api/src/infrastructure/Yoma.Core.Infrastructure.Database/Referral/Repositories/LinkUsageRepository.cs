@@ -27,6 +27,7 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
         Id = entity.Id,
         ProgramId = entity.ProgramId,
         ProgramName = entity.Program.Name,
+        ProgramSummary = entity.Program.Summary,
         ProgramDescription = entity.Program.Description,
         ProgramCompletionWindowInDays = entity.Program.CompletionWindowInDays,
         ProgramDateEnd = entity.Program.DateEnd,

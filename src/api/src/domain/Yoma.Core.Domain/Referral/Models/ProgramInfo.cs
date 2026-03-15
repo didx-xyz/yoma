@@ -9,6 +9,8 @@ namespace Yoma.Core.Domain.Referral.Models
 
     public string Name { get; set; } = null!;
 
+    public string? Summary { get; set; }
+
     public string? Description { get; set; }
 
     public string? ImageURL { get; set; }

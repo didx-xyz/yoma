@@ -704,7 +704,6 @@ DECLARE
 
   v_words                text := 'Youth,Referral,Learn,Apply,Round,Flow,Onboard,Capstone,Community,Engage,Pathway,Skills,Program,Launch,Venture,Starter,Pro,Advanced,Scholar,Track,Journey';
 
-  v_is_default_assigned  boolean := false;
   v_make_default_index   int := 1 + floor(random()*50)::int; -- random default among the 50
 
   v_i int := 0;
@@ -712,6 +711,7 @@ DECLARE
   -- program fields
   v_program_id uuid;
   v_program_name varchar(255);
+  v_program_summary varchar(150);
   v_program_desc varchar(500);
   v_status_id uuid;
   v_is_default boolean;
@@ -796,7 +796,8 @@ BEGIN
       left(trim(both ' ' from array_to_string(v_arr, ' ')), 70)
       || ' ' || (100 + floor(random()*900))::text; -- 100..999
 
-    v_program_desc := 'Seeded program for QA automation and manual testing';
+    v_program_summary := 'Seeded summary for QA automation and manual testing';
+    v_program_desc := 'Seeded description program for QA automation and manual testing';
 
     -- -------------------------
     -- Dates to match state
@@ -923,7 +924,7 @@ BEGIN
     v_program_id := gen_random_uuid();
 
     INSERT INTO "Referral"."Program"(
-      "Id","Name","Description","ImageId",
+      "Id","Name","Summary","Description","ImageId",
       "CompletionWindowInDays","CompletionLimitReferee","CompletionLimit",
       "CompletionTotal",
       "ZltoRewardReferrer","ZltoRewardReferee","ZltoRewardPool","ZltoRewardCumulative",
@@ -932,7 +933,7 @@ BEGIN
       "StatusId","IsDefault","DateStart","DateEnd",
       "DateCreated","CreatedByUserId","DateModified","ModifiedByUserId")
     VALUES(
-      v_program_id, v_program_name, v_program_desc, NULL,
+      v_program_id, v_program_name, v_program_summary, v_program_desc, NULL,
       v_comp_window, v_cap_per_ref, v_cap_program,
       NULL,
       v_z_referrer, v_z_referee, v_z_pool, NULL,

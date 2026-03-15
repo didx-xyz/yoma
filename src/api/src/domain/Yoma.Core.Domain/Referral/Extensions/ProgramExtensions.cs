@@ -13,6 +13,7 @@ namespace Yoma.Core.Domain.Referral.Extensions
       {
         Id = value.Id,
         Name = value.Name,
+        Summary = value.Summary,
         Description = value.Description,
         ImageURL = value.ImageURL,
         CompletionWindowInDays = value.CompletionWindowInDays,

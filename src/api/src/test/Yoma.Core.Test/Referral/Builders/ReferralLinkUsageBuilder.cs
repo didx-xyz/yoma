@@ -7,7 +7,8 @@ namespace Yoma.Core.Test.Referral.Builders
     private Guid _id = Guid.NewGuid();
     private Guid _programId = Guid.NewGuid();
     private string _programName = "Test Referral Program";
-    private readonly string? _programDescription = "A test referral program";
+    private readonly string? _programSummary = "A test referral program summary";
+    private readonly string? _programDescription = "A test referral program desciption";
     private int? _programCompletionWindowInDays = 30;
     private DateTimeOffset? _programDateEnd;
     private Guid _linkId = Guid.NewGuid();
@@ -88,6 +89,7 @@ namespace Yoma.Core.Test.Referral.Builders
       Id = _id,
       ProgramId = _programId,
       ProgramName = _programName,
+      ProgramSummary = _programSummary,
       ProgramDescription = _programDescription,
       ProgramCompletionWindowInDays = _programCompletionWindowInDays,
       ProgramDateEnd = _programDateEnd,
