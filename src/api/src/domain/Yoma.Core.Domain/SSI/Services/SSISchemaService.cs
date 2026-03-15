@@ -100,7 +100,7 @@ namespace Yoma.Core.Domain.SSI.Services
 
       var mismatchedEntities = _ssiSchemaEntityService.List(null)
         .Where(entity => !entity.Types?.Any(t => t?.Id == schemaExisting.TypeId) == true &&
-            entity.Properties?.Any(property => request.Attributes.Contains(property.AttributeName, StringComparer.InvariantCultureIgnoreCase)) == true
+            entity.Properties?.Any(property => request.Attributes.Contains(property.AttributeName, StringComparer.OrdinalIgnoreCase)) == true
         ).ToList();
       if (mismatchedEntities != null && mismatchedEntities.Count != 0)
         throw new ArgumentException($"Request contains attributes mapped to entities ('{string.Join(",", mismatchedEntities.Select(o => o.Name))}') that are not of the specified schema type", nameof(request));
@@ -109,7 +109,7 @@ namespace Yoma.Core.Domain.SSI.Services
       var systemProperties = _ssiSchemaEntityService.List(null)
           .Where(o => o.Types?.Any(t => t.Id == schemaExisting.TypeId) == true)
           .SelectMany(entity => entity.Properties?.Where(property => property.System) ?? [])
-          .Where(systemProperty => !request.Attributes.Contains(systemProperty.AttributeName, StringComparer.InvariantCultureIgnoreCase))
+          .Where(systemProperty => !request.Attributes.Contains(systemProperty.AttributeName, StringComparer.OrdinalIgnoreCase))
           .Select(systemProperty => systemProperty.AttributeName)
           .ToList();
       request.Attributes.InsertRange(0, systemProperties);
@@ -151,7 +151,7 @@ namespace Yoma.Core.Domain.SSI.Services
 
       var mismatchedEntities = _ssiSchemaEntityService.List(null)
        .Where(entity => !entity.Types?.Any(t => t?.Id == request.TypeId) == true &&
-           entity.Properties?.Any(property => request.Attributes.Contains(property.AttributeName, StringComparer.InvariantCultureIgnoreCase)) == true
+           entity.Properties?.Any(property => request.Attributes.Contains(property.AttributeName, StringComparer.OrdinalIgnoreCase)) == true
        ).ToList();
       if (mismatchedEntities != null && mismatchedEntities.Count != 0)
         throw new ArgumentException($"Request contains attributes mapped to entities ('{string.Join(",", mismatchedEntities.Select(o => o.Name))}') that are not of the specified schema type", nameof(request));
@@ -160,7 +160,7 @@ namespace Yoma.Core.Domain.SSI.Services
       var systemProperties = _ssiSchemaEntityService.List(null)
           .Where(o => o.Types?.Any(t => t.Id == request.TypeId) == true)
           .SelectMany(entity => entity.Properties?.Where(property => property.System) ?? [])
-          .Where(systemProperty => !request.Attributes.Contains(systemProperty.AttributeName, StringComparer.InvariantCultureIgnoreCase))
+          .Where(systemProperty => !request.Attributes.Contains(systemProperty.AttributeName, StringComparer.OrdinalIgnoreCase))
           .Select(systemProperty => systemProperty.AttributeName)
           .ToList();
       request.Attributes.InsertRange(0, systemProperties);
@@ -251,7 +251,7 @@ namespace Yoma.Core.Domain.SSI.Services
           .SelectMany(entity => schemas
           .Where(schema => schema.AttributeNames
               .Any(attributeName => entity.Properties?.Any(property =>
-                  string.Equals(property.AttributeName, attributeName, StringComparison.InvariantCultureIgnoreCase)
+                  string.Equals(property.AttributeName, attributeName, StringComparison.OrdinalIgnoreCase)
               ) == true
           ))
           .Select(schema => new
@@ -260,7 +260,7 @@ namespace Yoma.Core.Domain.SSI.Services
             Entity = entity,
             MatchedProperties = entity.Properties?
                   .Where(property => schema.AttributeNames
-                      .Contains(property.AttributeName, StringComparer.InvariantCultureIgnoreCase))
+                      .Contains(property.AttributeName, StringComparer.OrdinalIgnoreCase))
                   .ToList() ?? []
           })
           )
@@ -293,7 +293,7 @@ namespace Yoma.Core.Domain.SSI.Services
       var matchedEntities = _ssiSchemaEntityService.List(null)
        .Where(entity =>
            entity.Properties?.Any(property =>
-               schema.AttributeNames.Contains(property.AttributeName, StringComparer.InvariantCultureIgnoreCase)) == true
+               schema.AttributeNames.Contains(property.AttributeName, StringComparer.OrdinalIgnoreCase)) == true
        )
        .Select(entity => new SSISchemaEntity
        {
@@ -302,7 +302,7 @@ namespace Yoma.Core.Domain.SSI.Services
          TypeName = entity.TypeName,
          Properties = entity.Properties?
                .Where(property =>
-                   schema.AttributeNames.Contains(property.AttributeName, StringComparer.InvariantCultureIgnoreCase))
+                   schema.AttributeNames.Contains(property.AttributeName, StringComparer.OrdinalIgnoreCase))
                .ToList() ?? []
        })
        .ToList();

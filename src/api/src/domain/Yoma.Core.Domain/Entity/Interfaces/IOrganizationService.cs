@@ -52,6 +52,6 @@ namespace Yoma.Core.Domain.Entity.Interfaces
 
     List<UserInfo> ListAdmins(Guid id, bool includeComputed, bool ensureOrganizationAuthorization);
 
-    List<OrganizationInfo> ListAdminsOf(bool includeComputed);
+    List<OrganizationInfoAdmin> ListAdminsOf(bool includeComputed);
   }
 }

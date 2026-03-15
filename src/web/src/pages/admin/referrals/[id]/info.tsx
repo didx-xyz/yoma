@@ -1,4 +1,4 @@
-import { QueryClient, dehydrate, useQuery } from "@tanstack/react-query";
+import { QueryClient, dehydrate } from "@tanstack/react-query";
 import axios from "axios";
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
@@ -16,16 +16,19 @@ import {
   AdminProgramInfo,
   ProgramInfoFilterOptions,
 } from "~/components/Referrals/AdminProgramInfo";
+import { AdminProgramPreview } from "~/components/Referrals/AdminProgramPreview";
 import {
   AdminReferralProgramActions,
   ReferralProgramActionOptions,
 } from "~/components/Referrals/AdminReferralProgramActions";
-import { ProgramCard } from "~/components/Referrals/ProgramCard";
-import { ProgramImage } from "~/components/Referrals/ProgramImage";
 import { InternalServerError } from "~/components/Status/InternalServerError";
 import { Loading } from "~/components/Status/Loading";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
+import {
+  REFERRAL_PROGRAM_QUERY_KEYS,
+  useReferralProgramByIdQuery,
+} from "~/hooks/useReferralProgramMutations";
 import { config } from "~/lib/react-query-config";
 import { getSafeUrl, getThemeFromRole } from "~/lib/utils";
 import type { NextPageWithLayout } from "~/pages/_app";
@@ -54,7 +57,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   try {
     const programData = await getReferralProgramById(id, context);
     await queryClient.prefetchQuery({
-      queryKey: ["referralProgram", id],
+      queryKey: REFERRAL_PROGRAM_QUERY_KEYS.detail(id),
       queryFn: () => programData,
     });
   } catch (error) {
@@ -89,9 +92,7 @@ const ReferralProgramInfo: NextPageWithLayout<{
   const router = useRouter();
   const { returnUrl } = router.query;
 
-  const { data: program, isLoading } = useQuery<Program>({
-    queryKey: ["referralProgram", id],
-    queryFn: () => getReferralProgramById(id),
+  const { data: program, isLoading } = useReferralProgramByIdQuery(id, {
     enabled: !error,
   });
 
@@ -130,16 +131,6 @@ const ReferralProgramInfo: NextPageWithLayout<{
 
         <div className="animate-fade-in mx-auto mt-5 space-y-6 rounded-2xl bg-white p-6 shadow-md">
           <div className="flex flex-row items-start justify-between gap-4">
-            {/* Program Image */}
-            <div className="flex-shrink-0">
-              <ProgramImage
-                imageURL={program?.imageURL}
-                name={program?.name ?? "Program"}
-                size={60}
-                className="border-2 border-gray-200"
-              />
-            </div>
-
             <div className="min-w-0 flex-1">
               <div className="flex min-w-0 items-center gap-2">
                 <h1 className="truncate text-base font-bold md:text-lg">
@@ -169,33 +160,17 @@ const ReferralProgramInfo: NextPageWithLayout<{
             )}
           </div>
 
-          {/* Program Card Preview */}
           {program && (
-            <>
-              <div>
-                <h6 className="text-sm font-semibold">Program Card Preview</h6>
-                <p className="text-xs text-gray-600">
-                  This is how your program appears to users
-                </p>
-                <div className="flex justify-center py-4">
-                  <ProgramCard
-                    data={program}
-                    zltoReward={program.zltoRewardReferrer}
-                  />
-                </div>
-              </div>
-
-              <AdminProgramInfo
-                program={program}
-                filterOptions={[
-                  ProgramInfoFilterOptions.PROGRAM_INFO,
-                  ProgramInfoFilterOptions.COMPLETION_REWARDS,
-                  ProgramInfoFilterOptions.ZLTO_REWARDS,
-                  ProgramInfoFilterOptions.FEATURES,
-                  ProgramInfoFilterOptions.PATHWAY,
-                ]}
-              />
-            </>
+            <AdminProgramInfo
+              program={program}
+              filterOptions={[
+                ProgramInfoFilterOptions.PROGRAM_INFO,
+                ProgramInfoFilterOptions.COMPLETION_REWARDS,
+                ProgramInfoFilterOptions.ZLTO_REWARDS,
+                ProgramInfoFilterOptions.FEATURES,
+                ProgramInfoFilterOptions.PATHWAY,
+              ]}
+            />
           )}
 
           {/* Link Usage */}

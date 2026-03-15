@@ -17,7 +17,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
     {
 #pragma warning disable 612, 618
       modelBuilder
-          .HasAnnotation("ProductVersion", "10.0.1")
+          .HasAnnotation("ProductVersion", "10.0.3")
           .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
       NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -486,13 +486,19 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.Property<decimal?>("YomaRewardCumulative")
                       .HasColumnType("decimal(12,2)");
 
-            b.Property<decimal?>("YomaRewardPool")
+            b.Property<decimal?>("YomaRewardCumulativeCurrentFinancialYear")
+                      .HasColumnType("decimal(12,2)");
+
+            b.Property<decimal?>("YomaRewardPoolCurrentFinancialYear")
                       .HasColumnType("decimal(12,2)");
 
             b.Property<decimal?>("ZltoRewardCumulative")
                       .HasColumnType("decimal(12,2)");
 
-            b.Property<decimal?>("ZltoRewardPool")
+            b.Property<decimal?>("ZltoRewardCumulativeCurrentFinancialYear")
+                      .HasColumnType("decimal(12,2)");
+
+            b.Property<decimal?>("ZltoRewardPoolCurrentFinancialYear")
                       .HasColumnType("decimal(12,2)");
 
             b.HasKey("Id");
@@ -2045,7 +2051,10 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                       .HasColumnType("timestamp with time zone");
 
             b.Property<string>("Description")
-                      .HasColumnType("varchar(500)");
+                      .HasColumnType("text");
+
+            b.Property<bool?>("Hidden")
+                      .HasColumnType("boolean");
 
             b.Property<Guid?>("ImageId")
                       .HasColumnType("uuid");
@@ -2069,8 +2078,17 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.Property<bool>("ProofOfPersonhoodRequired")
                       .HasColumnType("boolean");
 
+            b.Property<int?>("ReferrerLimit")
+                      .HasColumnType("integer");
+
+            b.Property<int?>("ReferrerTotal")
+                      .HasColumnType("integer");
+
             b.Property<Guid>("StatusId")
                       .HasColumnType("uuid");
+
+            b.Property<string>("Summary")
+                      .HasColumnType("varchar(500)");
 
             b.Property<decimal?>("ZltoRewardCumulative")
                       .HasColumnType("decimal(12,2)");
@@ -2088,6 +2106,11 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
             b.HasIndex("CreatedByUserId");
 
+            b.HasIndex("Description")
+                      .HasAnnotation("Npgsql:TsVectorConfig", "english");
+
+            NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("Description"), "GIN");
+
             b.HasIndex("ImageId");
 
             b.HasIndex("IsDefault")
@@ -2101,7 +2124,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
             b.HasIndex("StatusId");
 
-            b.HasIndex("Description", "StatusId", "IsDefault", "DateStart", "DateEnd", "DateCreated", "DateModified");
+            b.HasIndex("Summary", "StatusId", "IsDefault", "Hidden", "DateStart", "DateEnd", "DateCreated", "DateModified");
 
             b.ToTable("Program", "Referral");
           });
@@ -2325,6 +2348,12 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.Property<Guid?>("MyOpportunityId")
                       .HasColumnType("uuid");
 
+            b.Property<string>("Provider")
+                      .IsRequired()
+                      .ValueGeneratedOnAdd()
+                      .HasColumnType("varchar(25)")
+                      .HasDefaultValue("ZLTO");
+
             b.Property<Guid?>("ReferralLinkUsageId")
                       .HasColumnType("uuid");
 
@@ -2350,10 +2379,13 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
             b.HasIndex("ReferralLinkUsageId");
 
-            b.HasIndex("StatusId", "DateCreated", "DateModified");
+            b.HasIndex("StatusId");
+
+            b.HasIndex("Provider", "StatusId", "DateCreated", "DateModified");
 
             b.HasIndex("UserId", "SourceEntityType", "MyOpportunityId", "ReferralLinkUsageId")
-                      .IsUnique();
+                      .IsUnique()
+                      .HasFilter("\"Provider\" = 'ZLTO'");
 
             b.ToTable("Transaction", "Reward");
           });
@@ -2376,6 +2408,12 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.Property<string>("ErrorReason")
                       .HasColumnType("text");
 
+            b.Property<string>("Provider")
+                      .IsRequired()
+                      .ValueGeneratedOnAdd()
+                      .HasColumnType("varchar(25)")
+                      .HasDefaultValue("ZLTO");
+
             b.Property<byte?>("RetryCount")
                       .HasColumnType("smallint");
 
@@ -2393,13 +2431,15 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
             b.HasKey("Id");
 
+            b.HasIndex("StatusId");
+
             b.HasIndex("UserId")
                       .IsUnique();
 
             b.HasIndex("Username")
                       .IsUnique();
 
-            b.HasIndex("StatusId", "DateCreated", "DateModified");
+            b.HasIndex("Provider", "StatusId", "DateCreated", "DateModified");
 
             b.ToTable("WalletCreation", "Reward");
           });
@@ -2673,6 +2713,65 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.HasIndex("StatusId", "DateCreated", "DateModified");
 
             b.ToTable("TenantCreation", "SSI");
+          });
+
+      modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Treasury.Entities.Treasury", b =>
+          {
+            b.Property<Guid>("Id")
+                      .ValueGeneratedOnAdd()
+                      .HasColumnType("uuid");
+
+            b.Property<decimal?>("ChimoneyCumulativeCurrentFinancialYearInUSD")
+                      .HasColumnType("decimal(12,2)");
+
+            b.Property<decimal?>("ChimoneyCumulativeInUSD")
+                      .HasColumnType("decimal(12,2)");
+
+            b.Property<decimal?>("ChimoneyPoolCurrentFinancialYearInUSD")
+                      .HasColumnType("decimal(12,2)");
+
+            b.Property<decimal>("ConversionRateZltoUsd")
+                      .HasColumnType("decimal(18,10)");
+
+            b.Property<Guid>("CreatedByUserId")
+                      .HasColumnType("uuid");
+
+            b.Property<DateTimeOffset>("DateCreated")
+                      .HasColumnType("timestamp with time zone");
+
+            b.Property<DateTimeOffset>("DateModified")
+                      .HasColumnType("timestamp with time zone");
+
+            b.Property<DateOnly>("FinancialYearStartDate")
+                      .HasColumnType("date");
+
+            b.Property<byte>("FinancialYearStartDay")
+                      .HasColumnType("smallint");
+
+            b.Property<byte>("FinancialYearStartMonth")
+                      .HasColumnType("smallint");
+
+            b.Property<Guid>("ModifiedByUserId")
+                      .HasColumnType("uuid");
+
+            b.Property<decimal?>("ZltoRewardCumulative")
+                      .HasColumnType("decimal(12,2)");
+
+            b.Property<decimal?>("ZltoRewardCumulativeCurrentFinancialYear")
+                      .HasColumnType("decimal(12,2)");
+
+            b.Property<decimal?>("ZltoRewardPoolCurrentFinancialYear")
+                      .HasColumnType("decimal(12,2)");
+
+            b.HasKey("Id");
+
+            b.HasIndex("CreatedByUserId");
+
+            b.HasIndex("ModifiedByUserId");
+
+            b.HasIndex("DateCreated", "DateModified");
+
+            b.ToTable("Treasury", "Treasury");
           });
 
       modelBuilder.Entity("Yoma.Core.Infrastructure.Database.ActionLink.Entities.Link", b =>
@@ -3579,6 +3678,25 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.Navigation("Status");
 
             b.Navigation("User");
+          });
+
+      modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Treasury.Entities.Treasury", b =>
+          {
+            b.HasOne("Yoma.Core.Infrastructure.Database.Entity.Entities.User", "CreatedByUser")
+                      .WithMany()
+                      .HasForeignKey("CreatedByUserId")
+                      .OnDelete(DeleteBehavior.NoAction)
+                      .IsRequired();
+
+            b.HasOne("Yoma.Core.Infrastructure.Database.Entity.Entities.User", "ModifiedByUser")
+                      .WithMany()
+                      .HasForeignKey("ModifiedByUserId")
+                      .OnDelete(DeleteBehavior.NoAction)
+                      .IsRequired();
+
+            b.Navigation("CreatedByUser");
+
+            b.Navigation("ModifiedByUser");
           });
 
       modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Entity.Entities.Organization", b =>

@@ -9,9 +9,14 @@ namespace Yoma.Core.Infrastructure.Database.Reward.Entities
   [Table("WalletCreation", Schema = "Reward")]
   [Index(nameof(UserId), IsUnique = true)]
   [Index(nameof(Username), IsUnique = true)]
-  [Index(nameof(StatusId), nameof(DateCreated), nameof(DateModified))]
+  [Index(nameof(Provider), nameof(StatusId), nameof(DateCreated), nameof(DateModified))]
   public class WalletCreation : Shared.Entities.BaseEntity<Guid>
   {
+    [Required]
+    [Column(TypeName = "varchar(25)")]
+    // OnModelCreating: Default to ZLTO for historical data
+    public string Provider { get; set; } = null!;
+
     [Required]
     [ForeignKey("StatusId")]
     public Guid StatusId { get; set; }

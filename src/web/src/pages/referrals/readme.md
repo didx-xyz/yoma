@@ -1,153 +1,112 @@
-## **Referral Program Functionality Summary**
+## Referral Pages: Current UAT Flow
 
-### **1. Referrals Landing Page** (`/referrals`)
-**Purpose:** Main dashboard for both referrers and referees to manage and track their referral activities
+This document reflects the current implemented flow for the new referral pages.
 
-**Key Features:**
-- **Anonymous View:** Sign-in prompt for unauthenticated users
-- **Welcome Section:** Context-aware messaging based on user's referral state
-- **My Links (Referrer View):**
-  - **Stats Dashboard:** Shows total links created, total earned ZLTO, active/completed/pending counts
-  - **Link List:** Paginated table of user's referral links with status, usage stats, and actions
-  - **Create Link:** Button to create new referral links
-- **Available Programs:**
-  - **Program Carousel:** Browse active programs with infinite scroll loading
-  - **Country Filter:** Filter programs by country (defaults to user's country + worldwide)
-  - **Program Cards:** Display program name, description, reward amounts, and status
-  - **Create Link Action:** Direct creation of referral links for specific programs
-- **My Referrals (Referee View):**
-  - **Referrals List:** Shows pending referrals the user has claimed
-  - **Progress Tracking:** Links to detailed progress pages for each referral
-  - **Status Indicators:** Visual badges for pending/completed/expired states
-- **Blocked State:** Displays suspension notice if user's referral access is blocked
-- **Responsive Design:** Optimized layouts for mobile and desktop
+## 1. Referrals Landing (`/referrals`)
 
-### **2. Referee Pages** (`/referrals/claim/[programId]`)
-**Purpose:** Landing page for users clicking on a referral link
+Purpose: Single entry point for anonymous users, referrers, and referees.
 
-**Key Features:**
-- **Link Claiming:** Validates and claims referral links using `linkId`
-- **Authentication Flow:** Prompts unauthenticated users to sign in
-- **Profile Completion:** Checks if user profile is complete before allowing claim
-- **Auto-claim:** Automatically processes claim when user is authenticated and profile is complete
-- **Program Display:** Shows detailed program information (description, requirements, rewards)
-- **Error Handling:** Displays helpful messages for invalid/expired/cancelled/limit-reached links
-- **Alternative Actions:** Suggests becoming a referrer if link unavailable
-- **Analytics Tracking:** Tracks login button clicks and claim events
+Current behavior:
+- Anonymous users see an intro/welcome experience with sign-in CTA.
+- Authenticated users see a context-aware welcome section.
+- User blocked for referrals sees a blocked-state panel.
+- Programs are shown in a carousel with country filtering.
+- Country defaults to user country + `Worldwide` when user country is available.
+- Program carousel supports incremental loading as user scrolls/slides.
+- "Create link" is available via modal where applicable.
+- Referrer stats are visible from the landing page.
+- "My referrals" and "My programmes" are rendered as card/carousel experiences.
 
-### **3. Link Detail Page** (`/referrals/link/[id]`)
-**Purpose:** View and manage a specific referral link with sharing functionality
+Main data sources:
+- `searchReferralProgramsInfo`
+- `searchReferralLinks`
+- `searchReferralLinkUsagesAsReferrer`
+- `searchReferralLinkUsagesAsReferee`
+- `getCountries`
 
-**Key Features:**
-- **Link Information:** Display link name, description, and associated program details
-- **Share Functionality:**
-  - **Share Modal:** Copy link URL, share via social media, WhatsApp, email
-  - **QR Code:** Generate QR code for easy mobile sharing
-  - **Reward Display:** Shows ZLTO reward amount for referees
-- **Link Stats:**
-  - **Usage Metrics:** Total referrals, pending, completed, expired counts
-  - **Earned ZLTO:** Shows total rewards earned from this link
-  - **Status Badge:** Active/Cancelled/Expired/Limit Reached indicators
-- **Referral List:**
-  - **Usage Table:** Shows all referrals made through this link
-  - **Referee Details:** Username, status, claim date, completion progress
-  - **Progress Tracking:** Visual indicators for each referee's completion status
-- **Breadcrumb Navigation:** Easy navigation back to referrals dashboard
-- **Blocked State Handling:** Displays appropriate messaging if user is blocked
+## 2. Program Details (`/referrals/program/[programId]`)
 
-### **4. Progress Tracking Page** (`/referrals/progress/[programId]`)
-**Purpose:** Detailed progress tracking for referees completing program requirements
+Purpose: Program-first page before link creation.
 
-**Key Features:**
-- **Status Banner:**
-  - **Progress Overview:** Visual display of completion status (Pending/Completed/Expired)
-  - **Reward Information:** ZLTO rewards to be earned upon completion
-  - **Time Remaining:** Countdown for completion window if applicable
-  - **Referrer Info:** Shows who referred the user
-- **Proof of Personhood Verification (if required):**
-  - **Two Verification Methods:**
-    - Phone verification: Link to profile to add phone number
-    - Social sign-in: Sign in with Google/Facebook
-  - **Clear Instructions:** Step-by-step guidance for both methods
-  - **Return URL Handling:** Maintains user's place after authentication
-- **Next Action Card (Pending Status):**
-  - **Step Information:** Current step name and description
-  - **Task Instructions:** Context-aware text (e.g., "Complete 2 of 3 tasks")
-  - **Task List:** Compact display of required opportunities with completion status
-  - **Action Guidance:** Clear instructions on how to complete tasks and upload proof
-  - **Non-completable Reasons:** Displays why tasks can't be completed if applicable
-- **Completed/Expired States:**
-  - **Become Referrer CTA:** Encourages completed referees to become referrers
-  - **Alternative Actions:** Suggests other opportunities or programs
-- **Error Handling:**
-  - **Not Found State:** Clear messaging when referral doesn't exist
-  - **Helpful Suggestions:** Lists possible reasons (not claimed, expired, etc.)
-  - **Alternative CTAs:** Provides options to become referrer or explore other opportunities
-- **Real-time Updates:** Refetches data every 30 seconds to show latest progress
-- **Breadcrumb Navigation:** Easy navigation back to referrals dashboard
-- **Authentication Checks:** Handles unauthenticated users with appropriate redirects
-- **Success Notifications:** Toast message when redirected after claiming a link
+Current behavior:
+- SSR prefetch of program details.
+- Top summary card with status-aware CTA.
+- CTA opens create-link modal for authenticated users.
+- Unauthenticated users are redirected through login flow before creating a link.
+- Program status disables create-link action for inactive/expired/limit reached/deleted states.
+- Program description, pathway tasks, time requirement, and reward card are shown.
+- On create-link success, user is routed to the created link page.
 
-### **5. Admin Pages** (`/admin/referrals/*`)
+## 3. Claim Page (`/referrals/claim/[programId]?linkId=...`)
 
-#### **5a. Programs List** (`/admin/referrals`)
-**Purpose:** Manage all referral programs
+Purpose: Referee entry point from shared link.
 
-**Key Features:**
-- **Program Search:** Filter by status, name, date range
-- **Status Tabs:** All, Active, Inactive, Expired, Deleted, LimitReached, UnCompletable
-- **Program Display:** Shows name, description, dates, rewards, status badges (responsive for mobile/desktop)
-- **Program Actions:** Create, edit, view details, view links, delete programs
-- **Badge Counts:** Shows total count for each status tab
-- **Pagination:** Browse through large program lists
+Current behavior:
+- Requires `linkId` query param.
+- Program is resolved via link-based endpoint.
+- Unauthenticated users get login CTA with analytics tracking.
+- If authenticated and profile incomplete, profile completion wizard is shown inline.
+- Claim is auto-attempted when profile is complete.
+- If already claimed, user is redirected to progress page.
+- Error states show detailed reasons with alternative actions.
+- Social metadata (Open Graph/Twitter) is populated from program details.
 
-#### **5b. Program Details/Edit** (`/admin/referrals/[id]`)
-**Purpose:** Create and edit referral program configurations
+## 4. Link Details (`/referrals/link/[id]`)
 
-**Key Features:**
-- **Multi-step Form:**
-  - **Step 1 (Basic Info):** Name, description, image upload
-  - **Step 2 (Schedule):** Start/end dates, active period
-  - **Step 3 (Limits & Rewards):** Completion window, per-referee limit, ZLTO rewards for referrer/referee
-  - **Step 4 (Pathway):** Define required tasks/opportunities, completion rules, ordering
-- **Pathway Builder:** Add opportunities as required tasks, set completion rules (All/AtLeastOne)
-- **Image Management:** Upload/update program images
-- **Validation:** Comprehensive form validation with error messages
-- **Status Management:** Activate, deactivate, delete programs
-- **Link Access:** Navigate to view program's referral links
+Purpose: Referrer page to manage and share a specific link.
 
-#### **5c. Links List** (`/admin/referrals/[id]/links`)
-**Purpose:** View all referral links for a specific program
+Current behavior:
+- SSR prefetch for link + program.
+- Unauthenticated access redirects to sign-in.
+- Blocked users see blocked-state panel.
+- Top card displays program context and share CTA.
+- Share CTA is status-aware and disabled for unavailable program states.
+- Share modal supports copy/share actions and reward context.
+- Link stats and referee usage list are displayed.
 
-**Key Features:**
-- **Link Search:** Filter by status, user, name/description
-- **Status Tabs:** All, Active, Cancelled, LimitReached, Expired
-- **Link Details:** Creator info, usage stats (pending/completed/expired), ZLTO rewards
-- **Copy Functionality:** Copy link URLs to clipboard
-- **Link Actions:** View usage details, manage link status
-- **Badge Counts:** Shows count per status tab
-- **Pagination:** Browse through links
+## 5. Referee Progress (`/referrals/progress/[programId]`)
 
-#### **5d. Usage List** (`/admin/referrals/[id]/links/[linkId]/usage`)
-**Purpose:** View all usage instances for a specific referral link
+Purpose: Track completion after claim.
 
-**Key Features:**
-- **Usage Search:** Filter by status, referee/referrer user, date range
-- **Status Tabs:** All, Pending, Completed, Expired
-- **User Details Display:**
-  - Username, email (with verified badge), phone (with verified badge)
-  - YoID onboarding status
-  - Display name and contact info
-- **Date Tracking:** Shows claimed, completed, and expired dates
-- **Usage Actions:** View detailed usage information
-- **Mobile/Desktop Views:** Responsive layouts for different screen sizes
-- **Badge Counts:** Shows count per status tab
+Current behavior:
+- SSR prefetch for referee usage + program.
+- Refetches usage every 30s for near-real-time progress.
+- Shows claim success toast after redirect from claim flow.
+- Displays progress card, pathway tasks, time remaining, and reward card.
+- Shows contextual content with referrer name.
+- Not-found/unavailable state includes alternative actions.
 
-**Common Features Across All Perspectives:**
-- Server-side rendering (SSR) with prefetched queries
-- React Query for data fetching and caching
-- Responsive design (mobile/desktop)
-- Authentication/authorization checks
-- Error handling (401, 403, 404, 500)
-- Breadcrumb navigation
-- Real-time analytics data integration
+## 6. Shared Architecture Notes
+
+- New pages consistently use `ReferralShell` and `new/*` referral UI components.
+- React Query is used for hydration, caching, and refetch behavior.
+- Error states are handled across 401/404/500 style responses.
+- Back navigation and breadcrumb labels are standardized.
+
+## 7. Component Cleanup Candidates (`src/components/Referrals`)
+
+Based on current import usage in `src/web/src/pages/referrals` and `src/web/src/pages/admin/referrals`, these files are not used by current page flows and are candidates for removal in a cleanup PR:
+
+- `src/components/Referrals/new/ReferralPageShell.tsx`
+- `src/components/Referrals/AdminReferrerBlockForm.tsx`
+- `src/components/Referrals/InstructionHeaders.tsx`
+- `src/components/Referrals/PathwayComponents.tsx`
+- `src/components/Referrals/PathwayTaskOpportunity.tsx`
+- `src/components/Referrals/ProgramPathwayView.tsx`
+- `src/components/Referrals/ProgramRow.tsx`
+- `src/components/Referrals/RefereeProgramDetails.tsx`
+- `src/components/Referrals/RefereeProgressTracker.tsx`
+- `src/components/Referrals/RefereeStatusBanner.tsx`
+- `src/components/Referrals/RefereeUsagesList.tsx`
+- `src/components/Referrals/ReferrerLinksList.tsx`
+- `src/components/Referrals/ReferrerProgramsList.tsx`
+- `src/components/Referrals/ShareButtons.tsx`
+
+Potentially removable with dependency check:
+- `src/components/Referrals/ReferrerLinkDetails.tsx` (currently used by `ReferralShareModal`; remove only if modal is refactored first)
+
+## 8. Recommended Next Steps Before UAT Sign-off
+
+- Remove the unused components listed above in a dedicated cleanup commit.
+- Run TypeScript, lint, and referral-page smoke tests after cleanup.
+- Keep admin changes isolated for the follow-up pass.

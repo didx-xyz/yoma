@@ -1,4 +1,4 @@
-import { QueryClient, dehydrate, useQuery } from "@tanstack/react-query";
+import { QueryClient, dehydrate } from "@tanstack/react-query";
 import axios from "axios";
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
@@ -6,11 +6,14 @@ import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { type ParsedUrlQuery } from "querystring";
-import { type ReactElement } from "react";
+import { useMemo, type ReactElement } from "react";
 import { IoMdArrowRoundBack } from "react-icons/io";
 import Moment from "react-moment";
-import type { ReferralLinkUsageInfo } from "~/api/models/referrals";
 import { getReferralLinkUsageById } from "~/api/services/referrals";
+import {
+  REFERRAL_PROGRAM_QUERY_KEYS,
+  useReferralLinkUsageByIdQuery,
+} from "~/hooks/useReferralProgramMutations";
 import MainLayout from "~/components/Layout/Main";
 import { PageBackground } from "~/components/PageBackground";
 import { InternalServerError } from "~/components/Status/InternalServerError";
@@ -22,7 +25,7 @@ import { DATE_FORMAT_HUMAN } from "~/lib/constants";
 import { getSafeUrl, getThemeFromRole } from "~/lib/utils";
 import type { NextPageWithLayout } from "~/pages/_app";
 import { authOptions, type User } from "~/server/auth";
-import { ProgramPathwayProgressComponent } from "~/components/Referrals/ProgramPathwayProgress";
+import { ReferralTasksCard } from "~/components/Referrals/new/ReferralTasksCard";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -49,7 +52,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   try {
     const usageData = await getReferralLinkUsageById(usageId, context);
     await queryClient.prefetchQuery({
-      queryKey: ["referralLinkUsage", usageId],
+      queryKey: REFERRAL_PROGRAM_QUERY_KEYS.linkUsage(usageId),
       queryFn: () => usageData,
     });
   } catch (error) {
@@ -84,11 +87,33 @@ const ReferralLinkUsageInfo: NextPageWithLayout<{
   const router = useRouter();
   const { returnUrl } = router.query;
 
-  const { data: usage, isLoading } = useQuery<ReferralLinkUsageInfo>({
-    queryKey: ["referralLinkUsage", usageId],
-    queryFn: () => getReferralLinkUsageById(usageId),
+  const { data: usage, isLoading } = useReferralLinkUsageByIdQuery(usageId, {
     enabled: !error,
   });
+
+  //TODO: remove
+  const mockedPathwayProgress = useMemo(() => {
+    if (!usage?.pathway) return null;
+
+    return {
+      ...usage.pathway,
+      completed: false,
+      stepsCompleted: 1,
+      percentComplete: 50,
+      steps: usage.pathway.steps.map((step, stepIndex) => ({
+        ...step,
+        completed: stepIndex === 0,
+        dateCompleted: stepIndex === 0 ? new Date().toISOString() : null,
+        tasksCompleted: stepIndex === 0 ? step.tasksTotal : 0,
+        percentComplete: stepIndex === 0 ? 100 : 0,
+        tasks: step.tasks.map((task) => ({
+          ...task,
+          completed: stepIndex === 0,
+          dateCompleted: stepIndex === 0 ? new Date().toISOString() : null,
+        })),
+      })),
+    };
+  }, [usage?.pathway]);
 
   if (error) {
     if (error === 401) return <Unauthenticated />;
@@ -318,7 +343,8 @@ const ReferralLinkUsageInfo: NextPageWithLayout<{
                     All Requirements Met
                   </div>
                   <div className="flex-1 border border-gray-200 px-4 py-2 text-sm hover:bg-gray-100">
-                    {usage?.completed ? (
+                    {/* TODO: fix new fields */}
+                    {/* {usage?.completed ? (
                       <span className="badge badge-success badge-sm">
                         ✓ Yes
                       </span>
@@ -326,7 +352,7 @@ const ReferralLinkUsageInfo: NextPageWithLayout<{
                       <span className="text-gray-500">
                         No (Pending pathway completion or proof of personhood)
                       </span>
-                    )}
+                    )} */}
                   </div>
                 </div>
               </div>
@@ -377,7 +403,7 @@ const ReferralLinkUsageInfo: NextPageWithLayout<{
                   <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-sm font-medium text-gray-700">
                     Name
                   </div>
-                  <div className="fl`ex-1 border border-gray-200 px-4 py-2 text-sm hover:bg-gray-100">
+                  <div className="flex-1 border border-gray-200 px-4 py-2 text-sm hover:bg-gray-100">
                     {usage?.userDisplayNameReferrer ?? "N/A"}
                   </div>
                 </div>
@@ -408,7 +434,15 @@ const ReferralLinkUsageInfo: NextPageWithLayout<{
             <section>
               <h6 className="mb-2 text-sm font-semibold">Pathway Progress</h6>
               <div className="overflow-x-auto">
-                <ProgramPathwayProgressComponent pathway={usage.pathway} />
+                {/* <ReferralTasksCard model={null} progressModel={usage.pathway} /> */}
+
+                <ReferralTasksCard
+                  model={null}
+                  progressModel={
+                    // TODO: hardcode mocked data here
+                    mockedPathwayProgress
+                  }
+                />
               </div>
             </section>
           )}

@@ -8,9 +8,14 @@ namespace Yoma.Core.Infrastructure.Database.Reward.Entities
 {
   [Table("Transaction", Schema = "Reward")]
   //unique index declared in OnModelCreating to cater for nullability constraints
-  [Index(nameof(StatusId), nameof(DateCreated), nameof(DateModified))]
+  [Index(nameof(Provider), nameof(StatusId), nameof(DateCreated), nameof(DateModified))]
   public class RewardTransaction : Shared.Entities.BaseEntity<Guid>
   {
+    [Required]
+    [Column(TypeName = "varchar(25)")]
+    // OnModelCreating: Default to ZLTO for historical data
+    public string Provider { get; set; } = null!;
+
     [ForeignKey("UserId")]
     public Guid UserId { get; set; }
     public User User { get; set; } = null!;

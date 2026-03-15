@@ -1,4 +1,5 @@
 using FluentValidation;
+using Microsoft.AspNetCore.DataProtection.KeyManagement;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using System.Transactions;
@@ -103,24 +104,25 @@ namespace Yoma.Core.Domain.Referral.Services
     #endregion
 
     #region Public Membmers
-    public Program GetById(Guid id, bool includeChildItems, bool includeComputed)
+    public Program GetById(Guid id, bool includeChildItems, bool includeComputed, LockMode? lockMode = null)
     {
-      var result = GetByIdOrNull(id, includeChildItems, includeComputed)
+      var result = GetByIdOrNull(id, includeChildItems, includeComputed, lockMode)
         ?? throw new EntityNotFoundException($"{nameof(Program)} with id '{id}' does not exist");
 
       return result;
     }
 
-    public Program? GetByIdOrNull(Guid id, bool includeChildItems, bool includeComputed)
+    public Program? GetByIdOrNull(Guid id, bool includeChildItems, bool includeComputed, LockMode? lockMode = null)
     {
       if (id == Guid.Empty)
         throw new ArgumentNullException(nameof(id));
 
-      var result = _programRepository.Query(includeChildItems).SingleOrDefault(o => o.Id == id);
+      var query = lockMode != null ? _programRepository.Query(includeChildItems, lockMode.Value) : _programRepository.Query(includeChildItems);
+
+      var result = query.SingleOrDefault(o => o.Id == id);
       if (result == null) return null;
 
-      if (includeComputed)
-        result.ImageURL = GetBlobObjectURL(result.ImageStorageType, result.ImageKey);
+      if (includeComputed) result = ParseBlobObjectURL(result);
 
       return result;
     }
@@ -135,8 +137,7 @@ namespace Yoma.Core.Domain.Referral.Services
 #pragma warning restore CA1862 // Use the 'StringComparison' method overloads to perform case-insensitive string comparisons
       if (result == null) return null;
 
-      if (includeComputed)
-        result.ImageURL = GetBlobObjectURL(result.ImageStorageType, result.ImageKey);
+      if (includeComputed) result = ParseBlobObjectURL(result);
 
       return result;
     }
@@ -157,8 +158,7 @@ namespace Yoma.Core.Domain.Referral.Services
       var result = results.SingleOrDefault();
       if (result == null) return null;
 
-      if (includeComputed)
-        result.ImageURL = GetBlobObjectURL(result.ImageStorageType, result.ImageKey);
+      if (includeComputed) result = ParseBlobObjectURL(result);
 
       return result;
     }
@@ -185,6 +185,8 @@ namespace Yoma.Core.Domain.Referral.Services
       var statusExpiredId = _programStatusService.GetByName(ProgramStatus.Expired.ToString()).Id;
 
       var query = _programCountryRepository.Query();
+
+      query = query.Where(o => o.ProgramHidden != true); //exclude hidden
 
       if (resolvedCountryIds != null && resolvedCountryIds.Count != 0)
         query = query.Where(o => resolvedCountryIds.Contains(o.CountryId));
@@ -320,6 +322,10 @@ namespace Yoma.Core.Domain.Referral.Services
         query = query.Where(o => statusIds.Contains(o.StatusId));
       }
 
+      //excludeHidden
+      if (filter.ExcludeHidden)
+        query = query.Where(o => o.Hidden != true);
+
       var results = new ProgramSearchResults();
 
       if (filter.TotalCountOnly)
@@ -337,8 +343,8 @@ namespace Yoma.Core.Domain.Referral.Services
       }
 
       results.Items = [.. query];
+      results.Items.ForEach(o => ParseBlobObjectURL(o));
 
-      results.Items.ForEach(o => o.ImageURL = GetBlobObjectURL(o.ImageStorageType, o.ImageKey));
       return results;
     }
 
@@ -371,6 +377,7 @@ namespace Yoma.Core.Domain.Referral.Services
       var result = new Program
       {
         Name = request.Name,
+        Summary = request.Summary,
         Description = request.Description,
         CompletionWindowInDays = request.CompletionWindowInDays,
         CompletionLimitReferee = request.CompletionLimitReferee,
@@ -384,6 +391,8 @@ namespace Yoma.Core.Domain.Referral.Services
         StatusId = _programStatusService.GetByName(ProgramStatus.Active.ToString()).Id,
         Status = ProgramStatus.Active,
         IsDefault = false, //processed below if true
+        Hidden = request.Hidden,
+        ReferrerLimit = request.ReferrerLimit,
         DateStart = request.DateStart,
         DateEnd = request.DateEnd,
         CreatedByUserId = user.Id,
@@ -425,7 +434,7 @@ namespace Yoma.Core.Domain.Referral.Services
       request.DateStart = request.DateStart.RemoveTime();
       if (request.DateEnd.HasValue) request.DateEnd = request.DateEnd.Value.ToEndOfDay();
 
-      var result = GetById(request.Id, true, false);
+      var result = GetById(request.Id, true, true);
       var now = DateTimeOffset.UtcNow;
 
       AssertUpdatable(result);
@@ -490,9 +499,13 @@ namespace Yoma.Core.Domain.Referral.Services
       if (request.CompletionLimit.HasValue && result.CompletionTotal.HasValue && request.CompletionLimit.Value < result.CompletionTotal.Value)
         throw new ValidationException($"The overall completion limit cannot be lower than the total completions already recorded ({result.CompletionTotal.Value:F0})");
 
+      if (request.ReferrerLimit.HasValue && result.ReferrerTotal.HasValue && request.ReferrerLimit.Value < result.ReferrerTotal.Value)
+        throw new ValidationException($"The referrer limit cannot be lower than the total referrers already recorded ({result.ReferrerTotal.Value:F0})");
+
       var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 
       result.Name = request.Name;
+      result.Summary = request.Summary;
       result.Description = request.Description;
       result.CompletionWindowInDays = request.CompletionWindowInDays;
       result.CompletionLimitReferee = request.CompletionLimitReferee;
@@ -504,7 +517,10 @@ namespace Yoma.Core.Domain.Referral.Services
       result.PathwayRequired = request.PathwayRequired;
       result.MultipleLinksAllowed = request.MultipleLinksAllowed;
       //status processed above
-      if (!request.IsDefault) result.IsDefault = false; //processed below if true to avoid unique index constraint 
+      if (!request.IsDefault) result.IsDefault = false; //processed below if true to avoid unique index constraint
+      // Hidden is controlled via a dedicated UI action. If not supplied in the request, preserve the existing value
+      result.Hidden = request.Hidden.HasValue ? request.Hidden : result.Hidden;
+      result.ReferrerLimit = request.ReferrerLimit;
       result.DateStart = request.DateStart;
       result.DateEnd = request.DateEnd;
       result.ModifiedByUserId = user.Id;
@@ -549,9 +565,28 @@ namespace Yoma.Core.Domain.Referral.Services
       return result;
     }
 
-    public async Task<Program> UpdateImage(Guid id, IFormFile file)
+    public async Task<Program> UpdateHidden(Guid id, bool hidden)
     {
       var result = GetById(id, false, false);
+
+      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+
+      AssertUpdatable(result);
+
+      if (hidden && result.IsDefault)
+        throw new ValidationException("The program is the current default program and cannot be hidden.");
+
+      result.Hidden = hidden;
+      result.ModifiedByUserId = user.Id;
+
+      result = await _programRepository.Update(result);
+
+      return result;
+    }
+
+    public async Task<Program> UpdateImage(Guid id, IFormFile file)
+    {
+      var result = GetById(id, false, true);
 
       AssertUpdatable(result);
 
@@ -692,20 +727,15 @@ namespace Yoma.Core.Domain.Referral.Services
       return result;
     }
 
-    public async Task<Program> ProcessCompletion(Guid programId, decimal? rewardAmount)
+    public async Task<Program> ProcessCompletion(Program program, decimal? rewardAmount)
     {
-      if (programId == Guid.Empty)
-        throw new ArgumentNullException(nameof(programId));
+      ArgumentNullException.ThrowIfNull(program, nameof(program));
 
       var statusLimitReached = _programStatusService.GetByName(ProgramStatus.LimitReached.ToString());
 
-      Program program = null!;
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
         using var scope = TransactionScopeHelper.CreateReadCommitted();
-
-        program = _programRepository.Query(LockMode.Wait).SingleOrDefault(p => p.Id == programId)
-          ?? throw new EntityNotFoundException($"{nameof(Program)} with id '{programId}' does not exist");
 
         // Increment global completion total (always)
         program.CompletionTotal = (program.CompletionTotal ?? 0) + 1;
@@ -743,6 +773,25 @@ namespace Yoma.Core.Domain.Referral.Services
 
         scope.Complete();
       });
+
+      return program;
+    }
+
+    public async Task<Program> ReferrerLinkCreated(Program program, bool existingReferrer)
+    {
+      ArgumentNullException.ThrowIfNull(program, nameof(program));
+
+      // User already counted as a referrer for this program — nothing to update
+      if (existingReferrer) return program;
+
+      // Enforce limit / cap if configured
+      if (program.ReferrerLimit.HasValue && (program.ReferrerBalance ?? 0) <= 0)
+        throw new ValidationException($"Referral program '{program.Name}' has reached its referrer limit");
+
+      program.ReferrerTotal = (program.ReferrerTotal ?? 0) + 1;
+
+      program = await _programRepository.Update(program);
+
       return program;
     }
     #endregion
@@ -842,10 +891,32 @@ namespace Yoma.Core.Domain.Referral.Services
         throw new ValidationException($"The {nameof(Program)} can no longer be updated (current status '{program.Status.ToDescription()}'). Required state '{Statuses_Updatable.JoinNames()}'");
     }
 
-    private string? GetBlobObjectURL(StorageType? storageType, string? key)
+    private Program ParseBlobObjectURL(Program program)
     {
-      if (!storageType.HasValue || string.IsNullOrEmpty(key)) return null;
-      return _blobService.GetURL(storageType.Value, key);
+      if (program.ImageStorageType.HasValue && !string.IsNullOrEmpty(program.ImageKey))
+        program.ImageURL = _blobService.GetURL(program.ImageStorageType.Value, program.ImageKey);
+
+      program.Pathway?.Steps?.ForEach(s => s.Tasks?.ForEach(t =>
+      {
+        switch (t.EntityType)
+        {
+          case PathwayTaskEntityType.Opportunity:
+            if (t.Opportunity == null) break;
+
+            if (!string.IsNullOrEmpty(t.Opportunity.OrganizationLogoURL)) break;
+
+            if (!t.Opportunity.OrganizationLogoStorageType.HasValue) break;
+            if (string.IsNullOrEmpty(t.Opportunity.OrganizationLogoKey)) break;
+
+            t.Opportunity.OrganizationLogoURL = _blobService.GetURL(t.Opportunity.OrganizationLogoStorageType.Value, t.Opportunity.OrganizationLogoKey);
+            break;
+
+          default:
+            throw new InvalidOperationException($"Entity type of '{t.EntityType}' is not supported");
+        }
+      }));
+
+      return program;
     }
 
     private async Task<Program> DeleteProgramPathway(Program program)
@@ -1061,12 +1132,17 @@ namespace Yoma.Core.Domain.Referral.Services
       switch (request.EntityType)
       {
         case PathwayTaskEntityType.Opportunity:
-          var opportunity = _opportunityService.GetById(request.EntityId, true, false, false);
+          var opportunity = _opportunityService.GetById(request.EntityId, true, true, false); // includeComputed → resolves OrganizationLogoURL
 
           task.Opportunity = new OpportunityItem
           {
             Id = opportunity.Id,
             Title = opportunity.Title,
+            OrganizationName = opportunity.OrganizationName,
+            OrganizationLogoId = opportunity.OrganizationLogoId,
+            OrganizationLogoStorageType = opportunity.OrganizationLogoStorageType,
+            OrganizationLogoKey = opportunity.OrganizationLogoKey,
+            OrganizationLogoURL = opportunity.OrganizationLogoURL, // Map; Resolved when retrieving the opportunity (see includeComputed above)
             OrganizationStatus = opportunity.OrganizationStatus,
             VerificationEnabled = opportunity.VerificationEnabled,
             VerificationMethod = opportunity.VerificationMethod,
@@ -1121,7 +1197,7 @@ namespace Yoma.Core.Domain.Referral.Services
       if (blobObject == null)
         throw new InvalidOperationException("Blob object expected");
 
-      program.ImageURL = GetBlobObjectURL(program.ImageStorageType, program.ImageKey);
+      program = ParseBlobObjectURL(program);
 
       return (program, blobObject);
     }
@@ -1145,6 +1221,9 @@ namespace Yoma.Core.Domain.Referral.Services
         var countryIdWorldwide = _countryService.GetByCodeAlpha2(Country.Worldwide.ToDescription()).Id;
         if (!ProgramCountryPolicy.DefaultProgramIsWorldwide(countryIdWorldwide, program.Countries))
           throw new ValidationException($"A default {nameof(Program)} must be available world-wide");
+
+        if (program.Hidden == true)
+          throw new ValidationException($"A hidden {nameof(Program)} cannot be made default");
 
         if (currentDefault != null)
         {

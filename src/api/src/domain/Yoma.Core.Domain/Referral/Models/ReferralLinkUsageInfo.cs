@@ -16,11 +16,17 @@ namespace Yoma.Core.Domain.Referral.Models
 
     public string ProgramName { get; set; } = null!;
 
+    public string? ProgramSummary { get; set; }
+
     public string? ProgramDescription { get; set; }
 
     public int? ProgramCompletionWindowInDays { get; set; }
 
     public DateTimeOffset? ProgramDateEnd { get; set; }
+
+    public Guid? ProgramImageId { get; set; }
+
+    public string? ProgramImageURL { get; set; }
 
     public int? TimeRemainingInDays { get; set; }
 

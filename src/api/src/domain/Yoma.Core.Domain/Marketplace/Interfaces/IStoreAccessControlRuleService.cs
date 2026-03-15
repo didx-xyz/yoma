@@ -10,7 +10,7 @@ namespace Yoma.Core.Domain.Marketplace.Interfaces
 
     StoreAccessControlRule? GetByIdOrNull(Guid id, bool includeChildItems);
 
-    List<OrganizationInfo> ListSearchCriteriaOrganizations();
+    List<OrganizationInfoAdmin> ListSearchCriteriaOrganizations();
 
     List<StoreInfo> ListSearchCriteriaStores(Guid? organizationId, bool ensureOrganizationAuthorization);
 

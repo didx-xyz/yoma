@@ -87,16 +87,22 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Entities
     public string? Settings { get; set; }
 
     [Column(TypeName = "decimal(12,2)")]
-    public decimal? ZltoRewardPool { get; set; }
+    public decimal? ZltoRewardPoolCurrentFinancialYear { get; set; }
 
     [Column(TypeName = "decimal(12,2)")]
     public decimal? ZltoRewardCumulative { get; set; }
 
     [Column(TypeName = "decimal(12,2)")]
-    public decimal? YomaRewardPool { get; set; }
+    public decimal? ZltoRewardCumulativeCurrentFinancialYear { get; set; }
+
+    [Column(TypeName = "decimal(12,2)")]
+    public decimal? YomaRewardPoolCurrentFinancialYear { get; set; }
 
     [Column(TypeName = "decimal(12,2)")]
     public decimal? YomaRewardCumulative { get; set; }
+
+    [Column(TypeName = "decimal(12,2)")]
+    public decimal? YomaRewardCumulativeCurrentFinancialYear { get; set; }
 
     [Required]
     public DateTimeOffset DateCreated { get; set; }

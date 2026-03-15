@@ -168,7 +168,7 @@ namespace Yoma.Core.Test.Referral.Services
       var service = fixture.Build();
 
       // Act
-      var result = await service.ProcessCompletion(programId, null);
+      var result = await service.ProcessCompletion(program, null);
 
       // Assert
       fixture.ProgramRepository.Verify(
@@ -197,7 +197,7 @@ namespace Yoma.Core.Test.Referral.Services
       var service = fixture.Build();
 
       // Act
-      var result = await service.ProcessCompletion(programId, null);
+      var result = await service.ProcessCompletion(program, null);
 
       // Assert
       Assert.Equal(ProgramStatus.LimitReached, result.Status);

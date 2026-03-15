@@ -1,31 +1,66 @@
-import { QueryClient, dehydrate, useQuery } from "@tanstack/react-query";
+import { QueryClient, dehydrate } from "@tanstack/react-query";
+import axios from "axios";
 import { useAtomValue } from "jotai";
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
 import Head from "next/head";
+import { useRouter } from "next/router";
 import { type ReactElement, useState } from "react";
 import { FaShareAlt } from "react-icons/fa";
-import type { ProgramInfo, ReferralLink } from "~/api/models/referrals";
+import { IoTimeOutline, IoTrophyOutline } from "react-icons/io5";
+import { ProgramStatus, type ReferralLink } from "~/api/models/referrals";
 import type { UserProfile } from "~/api/models/user";
 import {
   getReferralLinkById,
   getReferralProgramInfoByLinkId,
 } from "~/api/services/referrals";
 import { getUserProfile } from "~/api/services/user";
-import Breadcrumb from "~/components/Breadcrumb";
-import Suspense from "~/components/Common/Suspense";
 import MainLayout from "~/components/Layout/Main";
-import NoRowsMessage from "~/components/NoRowsMessage";
+import { ReferralMainColumns } from "~/components/Referrals/new/ReferralMainColumns";
+import { ReferralShell } from "~/components/Referrals/new/ReferralShell";
+import { ReferralStatCard } from "~/components/Referrals/new/ReferralStatCard";
+import { ReferralTopCard } from "~/components/Referrals/new/ReferralTopCard";
 import { ReferralBlockedView } from "~/components/Referrals/ReferralBlockedView";
 import { ReferralShareModal } from "~/components/Referrals/ReferralShareModal";
 import { ReferralStatsSmallLink } from "~/components/Referrals/ReferralStatsSmallLink";
 import { ReferrerReferralsList } from "~/components/Referrals/ReferrerReferralsList";
 import { LoadingInline } from "~/components/Status/LoadingInline";
 import { handleUserSignIn } from "~/lib/authUtils";
+import {
+  REFERRAL_PROGRAM_QUERY_KEYS,
+  useReferralLinkByIdQuery,
+  useReferralProgramInfoByLinkQuery,
+} from "~/hooks/useReferralProgramMutations";
+import { THEME_WHITE } from "~/lib/constants";
 import { config } from "~/lib/react-query-config";
 import { currentLanguageAtom, userProfileAtom } from "~/lib/store";
 import { authOptions } from "~/server/auth";
 import { type NextPageWithLayout } from "../../_app";
+
+//TODO: remove
+const parseMockProgramStatus = (
+  value: string | string[] | undefined,
+): ProgramStatus | null => {
+  if (!value) return null;
+
+  const raw = Array.isArray(value) ? value[0] : value;
+  if (!raw) return null;
+
+  const numeric = Number(raw);
+  if (!Number.isNaN(numeric) && ProgramStatus[numeric] !== undefined) {
+    return numeric as ProgramStatus;
+  }
+
+  const matchedKey = Object.keys(ProgramStatus).find(
+    (key) =>
+      Number.isNaN(Number(key)) && key.toLowerCase() === raw.toLowerCase(),
+  );
+
+  if (!matchedKey) return null;
+  return ProgramStatus[
+    matchedKey as keyof typeof ProgramStatus
+  ] as ProgramStatus;
+};
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
@@ -40,6 +75,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 
   const { id } = context.query;
   const linkId = id as string;
+  const mockStatus = parseMockProgramStatus(context.query.mockStatus);
 
   let userProfileServer: UserProfile | null = null;
   try {
@@ -49,16 +85,34 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   }
 
   const queryClient = new QueryClient(config);
+  let errorCode: number | null = null;
 
-  await queryClient.prefetchQuery({
-    queryKey: ["ReferralLink", linkId],
-    queryFn: () => getReferralLinkById(linkId, false, context),
-  });
+  try {
+    await queryClient.fetchQuery({
+      queryKey: REFERRAL_PROGRAM_QUERY_KEYS.link(linkId),
+      queryFn: () => getReferralLinkById(linkId, false, context),
+    });
 
-  await queryClient.prefetchQuery({
-    queryKey: ["ReferralProgramInfoByLink", linkId],
-    queryFn: () => getReferralProgramInfoByLinkId(linkId, context),
-  });
+    const program = await queryClient.fetchQuery({
+      queryKey: REFERRAL_PROGRAM_QUERY_KEYS.infoByLink(linkId),
+      queryFn: () => getReferralProgramInfoByLinkId(linkId, context),
+    });
+
+    if (program && mockStatus !== null) {
+      program.status = mockStatus;
+      queryClient.setQueryData(
+        REFERRAL_PROGRAM_QUERY_KEYS.infoByLink(linkId),
+        program,
+      );
+    }
+  } catch (error) {
+    console.error("Failed to fetch referral link page data", error);
+    if (axios.isAxiosError(error) && error.response?.status) {
+      errorCode = error.response.status;
+    } else {
+      errorCode = 500;
+    }
+  }
 
   return {
     props: {
@@ -66,6 +120,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       user: session?.user ?? null,
       linkId,
       userProfileServer,
+      error: errorCode,
     },
   };
 }
@@ -75,22 +130,23 @@ const ReferralLinkPage: NextPageWithLayout<{
   error?: number;
   userProfileServer?: UserProfile | null;
 }> = ({ linkId, error, userProfileServer }) => {
+  const router = useRouter();
   const currentLanguage = useAtomValue(currentLanguageAtom);
   const userProfileClient = useAtomValue(userProfileAtom);
   const userProfile = userProfileServer ?? userProfileClient;
   const isBlocked = userProfile?.referral?.blocked ?? false;
 
-  const { data: link, isLoading: linkLoading } = useQuery<ReferralLink>({
-    queryKey: ["ReferralLink", linkId],
-    queryFn: () => getReferralLinkById(linkId, false),
-    enabled: !!linkId && !error,
-  });
+  const {
+    data: link,
+    isLoading: linkLoading,
+    error: linkError,
+  } = useReferralLinkByIdQuery(linkId, { enabled: !error });
 
-  const { data: program, isLoading: programLoading } = useQuery<ProgramInfo>({
-    queryKey: ["ReferralProgramInfoByLink", linkId],
-    queryFn: () => getReferralProgramInfoByLinkId(linkId),
-    enabled: !!linkId && !error,
-  });
+  const {
+    data: program,
+    isLoading: programLoading,
+    error: programError,
+  } = useReferralProgramInfoByLinkQuery(linkId, { enabled: !error });
 
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
@@ -107,87 +163,144 @@ const ReferralLinkPage: NextPageWithLayout<{
     );
   }
 
+  const hasPageError =
+    Boolean(error) || Boolean(linkError) || Boolean(programError);
+
+  const programStatusName =
+    typeof program?.status === "number"
+      ? ProgramStatus[program.status]
+      : `${program?.status ?? ""}`;
+
+  const isShareDisabledByStatus = [
+    "inactive",
+    "expired",
+    "limitreached",
+    "deleted",
+  ].includes(programStatusName.toLowerCase());
+
   return (
     <>
       <Head>
-        <title>Yoma | 🔗 Referral Link</title>
+        <title>{`Yoma | Refer a friend ❤️ | ${program?.name ?? "Link Details"}`}</title>
       </Head>
 
-      <div className="mx-auto mt-18 mb-4 w-full px-4 lg:max-w-4xl">
-        <Suspense
-          isLoading={linkLoading || programLoading}
-          loader={
-            <LoadingInline
-              classNameSpinner="md:h-32 md:w-32 h-16 w-16 border-orange"
-              className="h-52 flex-col"
-            />
-          }
-        >
-          {/* BREADCRUMB */}
-          <Breadcrumb
-            className="text-base-content/70 mb-4 text-[10px] font-semibold tracking-wide md:text-xs"
-            items={[
-              { title: "❤️ Referrals", url: "/referrals" },
-              {
-                title: link?.programName ?? link?.name ?? "N/A",
-                selected: true,
-              },
-            ]}
-          />
-
-          {isBlocked ? (
-            <ReferralBlockedView userProfile={userProfile} />
-          ) : (
-            <div className="flex flex-col gap-6">
-              {/* Welcome: Refer a friend */}
-              <div className="flex flex-col items-center justify-center">
-                <NoRowsMessage
-                  title="Link details"
-                  subTitle="Good things are better when shared. Invite your friends to Yoma and help them start their journey."
-                  description={`When your friend signs up and completes the onboarding requirements, you both win rewards!${program?.completionWindowInDays && program.completionWindowInDays > 0 ? ` Just remember: your friend has ${program.completionWindowInDays} days to use your link before it expires.` : ""}`}
-                  icon={"🔗"}
-                  className="max-w-3xl !bg-transparent"
-                />
-
-                {/* BUTTON */}
-                {link?.status === "Active" && (
+      <ReferralShell
+        title={program?.name ?? link?.programName ?? "Link details"}
+        breadcrumbLabel="Referrals"
+        //programImageUrl={program?.imageURL || undefined}
+        headerBackgroundMode="color"
+        headerBackgroundColorClassName="bg-orange"
+        onBack={() => router.push("/referrals")}
+        isLoading={!hasPageError && (linkLoading || programLoading)}
+      >
+        {hasPageError ? (
+          <div className="flex min-h-[50vh] items-center justify-center px-2 pb-8">
+            <div className="flex w-full max-w-2xl flex-col items-center gap-4 rounded-xl bg-white p-6 text-center shadow md:p-10">
+              <h2 className="text-2xl font-bold text-black">Oops!</h2>
+              <p className="text-gray-dark">
+                We&apos;re experiencing some technical difficulties at the
+                moment. Our team has been notified and is working on it.
+              </p>
+              <p className="text-gray-dark">
+                Please check back in a few moments.
+              </p>
+              <button
+                type="button"
+                className="btn btn-success mt-2 rounded-3xl px-8 text-white"
+                onClick={() => router.back()}
+              >
+                Take me back
+              </button>
+            </div>
+          </div>
+        ) : isBlocked ? (
+          <ReferralBlockedView userProfile={userProfile} />
+        ) : (
+          <>
+            {program ? (
+              <ReferralTopCard
+                program={program}
+                rewardsReferrer={true}
+                rewardsReferee={false}
+                cta={
                   <button
                     type="button"
-                    className="btn btn-sm bg-orange gap-2 text-white hover:brightness-110 disabled:opacity-50"
+                    className="btn btn-sm bg-green hover:bg-green-dark disabled:!bg-green h-10 rounded-full border-0 px-5 text-white normal-case disabled:!pointer-events-auto disabled:!cursor-not-allowed disabled:!text-white disabled:opacity-80"
                     onClick={() => setIsShareModalOpen(true)}
+                    disabled={isShareDisabledByStatus}
                   >
                     <FaShareAlt className="h-4 w-4" />
                     Share your link
                   </button>
-                )}
-              </div>
-
-              {link && <ReferralStatsSmallLink link={link} />}
-
-              <ReferralShareModal
-                isOpen={isShareModalOpen}
-                onClose={() => setIsShareModalOpen(false)}
-                link={link || null}
-                rewardAmount={program?.zltoRewardReferee}
+                }
               />
+            ) : null}
 
-              <div className="flex flex-col gap-2">
-                <div className="font-family-nunito font-semibold text-black">
-                  Referral list
+            <ReferralMainColumns
+              left={
+                <>
+                  <div className="rounded-xl bg-white p-4 shadow md:p-5">
+                    {link ? (
+                      <div>
+                        <ReferralStatsSmallLink link={link} />
+                      </div>
+                    ) : null}
+                  </div>
+
+                  <div className="rounded-xl bg-white p-4 shadow md:p-5">
+                    <div className="text-lg font-semibold text-black">
+                      My referred friends
+                    </div>
+                    <div className="mt-3">
+                      <ReferrerReferralsList linkId={linkId} />
+                    </div>
+                  </div>
+                </>
+              }
+              right={
+                <div className="flex flex-col gap-2 rounded-xl bg-white p-4 shadow">
+                  <ReferralStatCard
+                    icon={<IoTrophyOutline className="h-5 w-5" />}
+                    header="Reward"
+                    description={
+                      (program?.zltoRewardReferrer || 0) > 0
+                        ? `${program?.zltoRewardReferrer} Zlto`
+                        : "No reward"
+                    }
+                    className="bg-purple-dark [&_.referral-stat-card-description]:text-white [&_.referral-stat-card-header]:text-white [&_.referral-stat-card-icon-wrap]:bg-white/20 [&_.referral-stat-card-icon-wrap]:text-white"
+                  />
+                  <ReferralStatCard
+                    icon={<IoTimeOutline className="h-5 w-5" />}
+                    header="Time remaining"
+                    description={
+                      program?.completionWindowInDays
+                        ? `${program.completionWindowInDays} day${program.completionWindowInDays === 1 ? "" : "s"}`
+                        : "No time limit"
+                    }
+                  />
                 </div>
+              }
+            />
+          </>
+        )}
 
-                <ReferrerReferralsList linkId={linkId} />
-              </div>
-            </div>
-          )}
-        </Suspense>
-      </div>
+        <ReferralShareModal
+          isOpen={isShareModalOpen}
+          onClose={() => setIsShareModalOpen(false)}
+          link={link || null}
+          rewardAmount={program?.zltoRewardReferee}
+        />
+      </ReferralShell>
     </>
   );
 };
 
 ReferralLinkPage.getLayout = function getLayout(page: ReactElement) {
   return <MainLayout>{page}</MainLayout>;
+};
+
+ReferralLinkPage.theme = function getTheme() {
+  return THEME_WHITE;
 };
 
 export default ReferralLinkPage;

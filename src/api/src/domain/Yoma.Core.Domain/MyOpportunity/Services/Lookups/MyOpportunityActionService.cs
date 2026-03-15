@@ -40,7 +40,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services.Lookups
         throw new ArgumentNullException(nameof(name));
       name = name.Trim();
 
-      return List().SingleOrDefault(o => string.Equals(o.Name, name, StringComparison.InvariantCultureIgnoreCase));
+      return List().SingleOrDefault(o => string.Equals(o.Name, name, StringComparison.OrdinalIgnoreCase));
     }
 
     public MyOpportunityAction GetById(Guid id)

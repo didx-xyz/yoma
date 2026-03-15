@@ -1,3 +1,4 @@
+using Yoma.Core.Domain.BlobProvider;
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Referral.Models;
@@ -26,9 +27,13 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
         Id = entity.Id,
         ProgramId = entity.ProgramId,
         ProgramName = entity.Program.Name,
+        ProgramSummary = entity.Program.Summary,
         ProgramDescription = entity.Program.Description,
         ProgramCompletionWindowInDays = entity.Program.CompletionWindowInDays,
         ProgramDateEnd = entity.Program.DateEnd,
+        ProgramImageId = entity.Program.ImageId,
+        ProgramImageStorageType = entity.Program.Image == null ? null : Enum.Parse<StorageType>(entity.Program.Image.StorageType, true),
+        ProgramImageLogoKey = entity.Program.Image == null ? null : entity.Program.Image.Key,
         LinkId = entity.LinkId,
         LinkName = entity.Link.Name,
         UserIdReferrer = entity.Link.UserId,

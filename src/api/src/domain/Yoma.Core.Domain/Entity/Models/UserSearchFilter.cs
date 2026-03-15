@@ -11,5 +11,12 @@ namespace Yoma.Core.Domain.Entity.Models
 
     [JsonIgnore]
     internal bool TotalCountOnly { get; set; }
+
+    /// <summary>
+    /// Applies a filter to include only users with an associated ExternalId
+    /// (i.e., users linked to an identity provider). Enabled by default.
+    /// </summary>
+    [JsonIgnore]
+    internal bool ApplyExternalIdFilter { get; set; } = true;
   }
 }

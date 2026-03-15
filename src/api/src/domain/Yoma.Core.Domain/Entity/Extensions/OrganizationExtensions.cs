@@ -18,6 +18,28 @@ namespace Yoma.Core.Domain.Entity.Extensions
       };
     }
 
+    public static OrganizationInfoAdmin ToInfoAdmin(this Organization value)
+    {
+      ArgumentNullException.ThrowIfNull(value, nameof(value));
+
+      return new OrganizationInfoAdmin
+      {
+        Id = value.Id,
+        Name = value.Name,
+        Tagline = value.Tagline,
+        Status = value.Status,
+        LogoURL = value.LogoURL,
+        ZltoRewardPoolCurrentFinancialYear = value.ZltoRewardPoolCurrentFinancialYear,
+        ZltoRewardCumulative = value.ZltoRewardCumulative,
+        ZltoRewardCumulativeCurrentFinancialYear = value.ZltoRewardCumulativeCurrentFinancialYear,
+        ZltoRewardBalanceCurrentFinancialYear = value.ZltoRewardBalanceCurrentFinancialYear,
+        YomaRewardPoolCurrentFinancialYear = value.YomaRewardPoolCurrentFinancialYear,
+        YomaRewardCumulative = value.YomaRewardCumulative,
+        YomaRewardCumulativeCurrentFinancialYear = value.YomaRewardCumulativeCurrentFinancialYear,
+        YomaRewardBalanceCurrentFinancialYear = value.YomaRewardBalanceCurrentFinancialYear
+      };
+    }
+
     public static bool ContactInfoSet(this Organization value)
     {
       ArgumentNullException.ThrowIfNull(value, nameof(value));

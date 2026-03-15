@@ -1,0 +1,88 @@
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Swashbuckle.AspNetCore.Annotations;
+using Yoma.Core.Domain.Core;
+using Yoma.Core.Domain.Treasury.Interfaces;
+using Yoma.Core.Domain.Treasury.Models;
+
+namespace Yoma.Core.Api.Controllers
+{
+  [Route($"api/{Common.Constants.Api_Version}/treasury")]
+  [ApiController]
+  [Authorize(Policy = Common.Constants.Authorization_Policy)]
+  [SwaggerTag("(by default, Admin role required)")]
+  public class TreasuryController : ControllerBase
+  {
+    #region Class Variables
+    private readonly ILogger<TreasuryController> _logger;
+    private readonly ITreasuryService _treasuryService;
+    #endregion
+
+    #region Constructor
+    public TreasuryController(ILogger<TreasuryController> logger,
+        ITreasuryService treasuryService)
+    {
+      _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+      _treasuryService = treasuryService ?? throw new ArgumentNullException(nameof(treasuryService));
+    }
+    #endregion
+
+    #region Public Members
+    #region Authenticated User Based Actions
+    [SwaggerOperation(Summary = "Preview ZLTO to USD conversion (Authenticated User)",
+      Description = "Returns an indicative ZLTO to USD conversion based on the current treasury conversion rate. " +
+      "This is a preview only. The final conversion is determined at the time of transaction and may diffe")]
+    [HttpGet("conversion/zlto-usd")]
+    [Authorize(Roles = Constants.Role_User)]
+    public ActionResult<decimal> ConvertZltoToUsd([FromQuery] decimal amount)
+    {
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(ConvertZltoToUsd));
+
+      var result = _treasuryService.ConvertZltoToUsd(amount);
+
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(ConvertZltoToUsd));
+
+      return Ok(result);
+    }
+    #endregion Authenticated User Based Actions
+
+    #region Administrative Actions
+    [SwaggerOperation(Summary = "Get treasury info",
+      Description = "Returns the treasury configuration and top-level treasury information. " +
+      "Detailed treasury data for organizations, opportunities and referral programs," +
+      "including pools, cumulative amounts, and balances, must be queried via the existing admin search endpoints: " +
+      "'organization/search', 'referral/program/search/admin', and 'opportunity/search/admin'")]
+    [HttpGet]
+    [Authorize(Roles = Constants.Role_Admin)]
+    public ActionResult<TreasuryInfo> Get()
+    {
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(Get));
+
+      var result = _treasuryService.Get();
+
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(Get));
+
+      return Ok(result);
+    }
+
+    [SwaggerOperation(Summary = "Update treasury info",
+     Description = "Updates the treasury configuration. " +
+      "If the financial year start date changes, current financial year cumulative values may be reset. " +
+      "Reset only occurs when the new financial year start moves forward relative to the current financial year start " +
+      "and the new start date is still in the future. Financial year pools remain unchanged unless explicitly update")]
+    [HttpPatch]
+    [Authorize(Roles = Constants.Role_Admin)]
+    public async Task<ActionResult<TreasuryInfo>> Update(TreasuryRequestUpdate request)
+    {
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(Update));
+
+      var result = await _treasuryService.Update(request);
+
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(Update));
+
+      return Ok(result);
+    }
+    #endregion Administrative Actions
+    #endregion Public Members 
+  }
+}

@@ -73,13 +73,18 @@ const rumConsentAtom = atomWithStorage<boolean | null>(
   removeOnNullStorage<boolean | null>(),
 );
 
-// referee progress dialog visibility atom
-const refereeProgressDialogVisibleAtom = atom(false);
+// first pending referee referral target URL (used by navbar to show quick-link)
+const firstPendingRefereeReferralUrlAtom = atom<string | null>(null);
 
-// referee progress dialog dismissed state
-// persisted across browser sessions
-const refereeProgressDialogDismissedAtom = atomWithStorage<boolean>(
-  "refereeProgressDialogDismissed",
+// tracks if pending-referral toast has already been shown in the current login lifecycle
+const hasShownRefereePendingToastAtom = atomWithStorage<boolean>(
+  "hasShownRefereePendingToast",
+  false,
+);
+
+// tracks whether referee welcome modal was dismissed for current browser login session
+const hasDismissedRefereeWelcomeModalAtom = atomWithStorage<boolean>(
+  "hasDismissedRefereeWelcomeModal",
   false,
 );
 
@@ -93,6 +98,7 @@ export {
   currentLanguageAtom,
   userCountrySelectionAtom,
   rumConsentAtom,
-  refereeProgressDialogVisibleAtom,
-  refereeProgressDialogDismissedAtom,
+  firstPendingRefereeReferralUrlAtom,
+  hasShownRefereePendingToastAtom,
+  hasDismissedRefereeWelcomeModalAtom,
 };

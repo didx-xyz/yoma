@@ -2,6 +2,9 @@ using FluentValidation;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using System.Transactions;
+using Yoma.Core.Domain.BlobProvider;
+using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Helpers;
@@ -31,10 +34,13 @@ namespace Yoma.Core.Domain.Referral.Services
     private readonly IShortLinkProviderClient _shortLinkProviderClient;
 
     private readonly IUserService _userService;
-    private readonly IProgramInfoService _programInfoService;
+    private readonly IProgramService _programService;
     private readonly ILinkStatusService _linkStatusService;
     private readonly ILinkUsageStatusService _linkUsageStatusService;
     private readonly ICountryService _countryService;
+    private readonly IBlobService _blobService;
+
+    private readonly IExecutionStrategyService _executionStrategyService;
 
     private readonly ReferralLinkSearchFilterValidator _referralLinkSearchFilterValidator;
     private readonly ReferralLinkRequestCreateValidator _referralLinkRequestCreateValidator;
@@ -57,10 +63,13 @@ namespace Yoma.Core.Domain.Referral.Services
       IShortLinkProviderClientFactory shortLinkProviderClientFactory,
 
       IUserService userService,
-      IProgramInfoService programInfoService,
+      IProgramService programService,
       ILinkStatusService linkStatusService,
       ILinkUsageStatusService linkUsageStatusService,
       ICountryService countryService,
+      IBlobService blobService,
+
+      IExecutionStrategyService executionStrategyService,
 
       ReferralLinkSearchFilterValidator referralLinkSearchFilterValidator,
       ReferralLinkRequestCreateValidator referralLinkRequestCreateValidator,
@@ -75,10 +84,13 @@ namespace Yoma.Core.Domain.Referral.Services
       _shortLinkProviderClient = shortLinkProviderClientFactory.CreateClient() ?? throw new ArgumentNullException(nameof(shortLinkProviderClientFactory));
 
       _userService = userService ?? throw new ArgumentNullException(nameof(userService));
-      _programInfoService = programInfoService ?? throw new ArgumentNullException(nameof(programInfoService));
+      _programService = programService ?? throw new ArgumentNullException(nameof(programService));
       _linkStatusService = linkStatusService ?? throw new ArgumentNullException(nameof(linkStatusService));
       _linkUsageStatusService = linkUsageStatusService ?? throw new ArgumentNullException(nameof(linkUsageStatusService));
       _countryService = countryService ?? throw new ArgumentNullException(nameof(countryService));
+      _blobService = blobService ?? throw new ArgumentNullException(nameof(blobService));
+
+      _executionStrategyService = executionStrategyService ?? throw new ArgumentNullException(nameof(executionStrategyService));
 
       _referralLinkSearchFilterValidator = referralLinkSearchFilterValidator ?? throw new ArgumentNullException(nameof(referralLinkSearchFilterValidator));
       _referralLinkRequestCreateValidator = referralLinkRequestCreateValidator ?? throw new ArgumentNullException(nameof(referralLinkRequestCreateValidator));
@@ -89,24 +101,29 @@ namespace Yoma.Core.Domain.Referral.Services
     #endregion
 
     #region Public Members
-    public ReferralLink GetById(Guid id, bool includeChildItems, bool ensureOwnership, bool allowAdminOverride, bool? includeQRCode)
+    public ReferralLink GetById(Guid id, bool includeChildItems, bool includeComputed, bool ensureOwnership, bool allowAdminOverride, bool? includeQRCode, LockMode? lockMode = null)
     {
-      var result = GetByIdOrNull(id, includeChildItems, ensureOwnership, allowAdminOverride, includeQRCode)
+      var result = GetByIdOrNull(id, includeChildItems, includeComputed, ensureOwnership, allowAdminOverride, includeQRCode, lockMode)
         ?? throw new EntityNotFoundException($"{nameof(ReferralLink)} with id '{id}' does not exist");
 
       return result;
     }
 
-    public ReferralLink? GetByIdOrNull(Guid id, bool includeChildItems, bool ensureOwnership, bool allowAdminOverride, bool? includeQRCode)
+    public ReferralLink? GetByIdOrNull(Guid id, bool includeChildItems, bool includeComputed, bool ensureOwnership, bool allowAdminOverride, bool? includeQRCode, LockMode? lockMode = null)
     {
       if (id == Guid.Empty)
         throw new ArgumentNullException(nameof(id));
 
-      var result = _linkRepository.Query(includeChildItems).SingleOrDefault(o => o.Id == id);
+      var query = lockMode != null ? _linkRepository.Query(includeChildItems, lockMode.Value) : _linkRepository.Query(includeChildItems);
+
+      var result = query.SingleOrDefault(o => o.Id == id);
       if (result == null) return null;
 
       if (includeQRCode == true) result.QRCodeBase64 = QRCodeHelper.GenerateQRCodeBase64(result.URL);
+
       SetUsageAggregates(result);
+
+      if (includeComputed) result.ProgramImageURL = GetBlobObjectURL(result.ProgramImageStorageType, result.ProgramImageLogoKey);
 
       if (!ensureOwnership) return result;
 
@@ -118,7 +135,7 @@ namespace Yoma.Core.Domain.Referral.Services
       return result;
     }
 
-    public ReferralLink? GetByNameOrNull(Guid userId, Guid programId, string name, bool includeChildItems, bool? includeQRCode)
+    public ReferralLink? GetByNameOrNull(Guid userId, Guid programId, string name, bool includeChildItems, bool includeComputed, bool? includeQRCode)
     {
       if (userId == Guid.Empty) throw new ArgumentNullException(nameof(userId));
 
@@ -131,7 +148,10 @@ namespace Yoma.Core.Domain.Referral.Services
       if (result == null) return null;
 
       if (includeQRCode == true) result.QRCodeBase64 = QRCodeHelper.GenerateQRCodeBase64(result.URL);
+
       SetUsageAggregates(result);
+
+      if (includeComputed) result.ProgramImageURL = GetBlobObjectURL(result.ProgramImageStorageType, result.ProgramImageLogoKey);
 
       return result;
     }
@@ -222,7 +242,12 @@ namespace Yoma.Core.Domain.Referral.Services
       }
 
       results.Items = [.. query];
-      results.Items.ForEach(SetUsageAggregates);
+
+      results.Items.ForEach(o =>
+      {
+        SetUsageAggregates(o);
+        o.ProgramImageURL = GetBlobObjectURL(o.ProgramImageStorageType, o.ProgramImageLogoKey);
+      });
 
       return results;
     }
@@ -233,62 +258,85 @@ namespace Yoma.Core.Domain.Referral.Services
 
       await _referralLinkRequestCreateValidator.ValidateAndThrowAsync(request);
 
-      var program = _programInfoService.GetById(request.ProgramId, false, false);
+      ReferralLink result = null!;
 
-      if (program.Status != ProgramStatus.Active || program.DateStart > DateTimeOffset.UtcNow)
-        throw new ValidationException($"Referral program '{program.Name}' is not active or has not started");
+      var now = DateTimeOffset.UtcNow;
 
-      if (program.DateEnd.HasValue && program.DateEnd <= DateTimeOffset.UtcNow) // Fallback guard in case program expiration job has’t run yet
-        throw new ValidationException($"Referral program '{program.Name}' expired on '{program.DateEnd:yyyy-MM-dd}'");
-
-      if (program.CompletionLimit.HasValue && (program.CompletionBalance ?? 0) <= 0)
-        throw new ValidationException($"Referral program '{program.Name}' has reached its completion limit");
-
-      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
-
-      // Country segregation: program must be accessible to the current user
-      var worldwideId = _countryService.GetByCodeAlpha2(Core.Country.Worldwide.ToDescription()).Id;
-      if (!ProgramCountryPolicy.ProgramAccessibleToUser(worldwideId, user.CountryId, program.Countries))
-        throw new ValidationException($"Referral program '{program.Name}' is not available in your country");
-
-      var statusLinkActive = _linkStatusService.GetByName(ReferralLinkStatus.Active.ToString());
-
-      var existingLink = _linkRepository.Query().FirstOrDefault(o => o.ProgramId == program.Id && o.UserId == user.Id && o.StatusId == statusLinkActive.Id);
-
-      if (!program.MultipleLinksAllowed && existingLink != null)
-        throw new ValidationException($"Multiple active referral links are not allowed for program '{program.Name}'");
-
-      var existingByName = GetByNameOrNull(user.Id, program.Id, request.Name, false, false);
-      if (existingByName != null)
-        throw new ValidationException($"A referral link with the name '{request.Name}' already exists for the current user");
-
-      var result = new ReferralLink
+      await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
-        Id = Guid.NewGuid(),
-        Name = request.Name,
-        Description = request.Description,
-        ProgramId = program.Id,
-        ProgramName = program.Name,
-        ProgramDescription = program.Description,
-        ProgramCompletionLimitReferee = program.CompletionLimitReferee,
-        UserId = user.Id,
-        UserDisplayName = user.DisplayName ?? user.Username,
-        Username = user.Username,
-        UserEmail = user.Email,
-        UserEmailConfirmed = user.EmailConfirmed,
-        UserPhoneNumber = user.PhoneNumber,
-        UserPhoneNumberConfirmed = user.PhoneNumberConfirmed,
-        Blocked = false,
-        StatusId = statusLinkActive.Id,
-        Status = ReferralLinkStatus.Active
-      };
+        using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
 
-      result.URL = result.ClaimURL(_appSettings.AppBaseURL);
-      result = await GenerateShortLink(result);
+        var program = _programService.GetById(request.ProgramId, true, true, LockMode.Wait);
 
-      result = await _linkRepository.Create(result);
+        if (program.Status != ProgramStatus.Active || program.DateStart > now)
+          throw new ValidationException($"Referral program '{program.Name}' is not active or has not started");
 
-      if (request.IncludeQRCode == true) result.QRCodeBase64 = QRCodeHelper.GenerateQRCodeBase64(result.URL);
+        if (program.DateEnd.HasValue && program.DateEnd <= now)
+          throw new ValidationException($"Referral program '{program.Name}' expired on '{program.DateEnd:yyyy-MM-dd}'");
+
+        if (program.CompletionLimit.HasValue && (program.CompletionBalance ?? 0) <= 0)
+          throw new ValidationException($"Referral program '{program.Name}' has reached its completion limit");
+
+        var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+
+        var worldwideId = _countryService.GetByCodeAlpha2(Country.Worldwide.ToDescription()).Id;
+        if (!ProgramCountryPolicy.ProgramAccessibleToUser(worldwideId, user.CountryId, program.Countries))
+          throw new ValidationException($"Referral program '{program.Name}' is not available in your country");
+
+        var statusLinkActive = _linkStatusService.GetByName(ReferralLinkStatus.Active.ToString());
+
+        var userLinks = _linkRepository.Query().Where(o => o.ProgramId == program.Id && o.UserId == user.Id)
+          .Select(o => new { o.StatusId, o.Name }).ToList();
+
+        var hasExistingLinks = userLinks.Count != 0;
+        var hasExistingActiveLink = userLinks.Any(o => o.StatusId == statusLinkActive.Id);
+        var existingByName = userLinks.Any(o => string.Equals(o.Name, request.Name, StringComparison.OrdinalIgnoreCase));
+
+        if (!program.MultipleLinksAllowed && hasExistingActiveLink)
+          throw new ValidationException($"Multiple active referral links are not allowed for program '{program.Name}'");
+
+        if (existingByName)
+          throw new ValidationException($"A referral link with the name '{request.Name}' already exists for the current user");
+
+        result = new ReferralLink
+        {
+          Id = Guid.NewGuid(),
+          Name = request.Name,
+          Description = request.Description,
+          ProgramId = program.Id,
+          ProgramName = program.Name,
+          ProgramSummary = program.Summary,
+          ProgramDescription = program.Description,
+          ProgramCompletionLimitReferee = program.CompletionLimitReferee,
+          ProgramImageId = program.ImageId,
+          ProgramImageStorageType = program.ImageStorageType,
+          ProgramImageLogoKey = program.ImageKey,
+          ProgramImageURL = program.ImageURL,
+          UserId = user.Id,
+          UserDisplayName = user.DisplayName ?? user.Username,
+          Username = user.Username,
+          UserEmail = user.Email,
+          UserEmailConfirmed = user.EmailConfirmed,
+          UserPhoneNumber = user.PhoneNumber,
+          UserPhoneNumberConfirmed = user.PhoneNumberConfirmed,
+          Blocked = false,
+          StatusId = statusLinkActive.Id,
+          Status = ReferralLinkStatus.Active
+        };
+
+        result.URL = result.ClaimURL(_appSettings.AppBaseURL);
+
+        program = await _programService.ReferrerLinkCreated(program, hasExistingLinks);
+
+        result = await GenerateShortLink(result);
+
+        result = await _linkRepository.Create(result);
+
+        scope.Complete();
+      });
+
+      if (request.IncludeQRCode == true)
+        result.QRCodeBase64 = QRCodeHelper.GenerateQRCodeBase64(result.URL);
 
       return result;
     }
@@ -300,12 +348,12 @@ namespace Yoma.Core.Domain.Referral.Services
       await _referralLinkRequestUpdateValidator.ValidateAndThrowAsync(request);
 
       //link must belong to the current user
-      var result = GetById(request.Id, true, true, false, request.IncludeQRCode);
+      var result = GetById(request.Id, true, true, true, false, request.IncludeQRCode);
 
       if (!Statuses_Updatable.Contains(result.Status))
         throw new ValidationException($"Referral link can no longer be updated (current status '{result.Status.ToDescription()}'). Required state '{Statuses_Updatable.JoinNames()}'");
 
-      var existingByName = GetByNameOrNull(result.UserId, result.ProgramId, request.Name, false, false);
+      var existingByName = GetByNameOrNull(result.UserId, result.ProgramId, request.Name, false, false, false);
       if (existingByName != null && existingByName.Id != result.Id)
         throw new ValidationException($"A referral link with the name '{request.Name}' already exists for the current user");
 
@@ -314,16 +362,14 @@ namespace Yoma.Core.Domain.Referral.Services
 
       result = await _linkRepository.Update(result);
 
-      if (request.IncludeQRCode == true) result.QRCodeBase64 = QRCodeHelper.GenerateQRCodeBase64(result.URL);
-      SetUsageAggregates(result);
-
+      // GetById ensure QRCodeBase64 and SetUsageAggregates
       return result;
     }
 
     public async Task<ReferralLink> Cancel(Guid id)
     {
       //ensures the link belongs to the current user unless the caller has admin privileges
-      var result = GetById(id, true, true, true, false);
+      var result = GetById(id, true, true, true, true, false);
 
       if (result.Status == ReferralLinkStatus.Cancelled) return result;
 
@@ -344,17 +390,13 @@ namespace Yoma.Core.Domain.Referral.Services
     // at the call site (e.g. LinkUsageService.ProcessProgressByUserId).
     // This method relies on row-level locking via LockMode.Wait to ensure
     // atomic updates of completion counters and status transitions.
-    public async Task<ReferralLink> ProcessCompletion(Program program, Guid linkId, decimal? rewardAmount)
+    public async Task<ReferralLink> ProcessCompletion(Program program, ReferralLink link, decimal? rewardAmount)
     {
       ArgumentNullException.ThrowIfNull(program, nameof(program));
 
-      if (linkId == Guid.Empty)
-        throw new ArgumentNullException(nameof(linkId));
+      ArgumentNullException.ThrowIfNull(link, nameof(link));
 
       var statusLimitReached = _linkStatusService.GetByName(ReferralLinkStatus.LimitReached.ToString());
-
-      var link = _linkRepository.Query(Core.LockMode.Wait).SingleOrDefault(o => o.Id == linkId)
-        ?? throw new EntityNotFoundException($"Referral link with id '{linkId}' does not exist");
 
       // Increment total (always)
       link.CompletionTotal = (link.CompletionTotal ?? 0) + 1;
@@ -415,6 +457,12 @@ namespace Yoma.Core.Domain.Referral.Services
     #endregion
 
     #region Private Members
+    private string? GetBlobObjectURL(StorageType? storageType, string? key)
+    {
+      if (!storageType.HasValue || string.IsNullOrEmpty(key)) return null;
+      return _blobService.GetURL(storageType.Value, key);
+    }
+
     private async Task<ReferralLink> GenerateShortLink(ReferralLink item)
     {
       var responseShortLink = await _shortLinkProviderClient.CreateShortLink(new ShortLinkRequest

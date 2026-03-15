@@ -52,8 +52,8 @@ namespace Yoma.Core.Domain.Core.Services
         if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Idempotency key created by {hostName} at {timestamp} for process {process}: {key} (ttl={ttlSeconds}s)",
           System.Environment.MachineName, DateTimeOffset.UtcNow, processName, redisKey, ttlSeconds);
         else
-        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Duplicate idempotency key detected by {hostName} at {timestamp} for process {process}: {key}",
-          System.Environment.MachineName, DateTimeOffset.UtcNow, processName, redisKey);
+          if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Duplicate idempotency key detected by {hostName} at {timestamp} for process {process}: {key}",
+            System.Environment.MachineName, DateTimeOffset.UtcNow, processName, redisKey);
 
       return created;
     }

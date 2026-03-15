@@ -547,7 +547,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
             //ensure connected (active)
             connectionIssuer = await clientIssuer.GetConnectionByIdAsync(result.SourceConnectionId);
 
-            if (connectionIssuer != null && string.Equals(connectionIssuer.State, ConnectionState.Completed.ToEnumMemberValue(), StringComparison.InvariantCultureIgnoreCase)) return result;
+            if (connectionIssuer != null && string.Equals(connectionIssuer.State, ConnectionState.Completed.ToEnumMemberValue(), StringComparison.OrdinalIgnoreCase)) return result;
 
             await _connectionRepository.Delete(result);
           }

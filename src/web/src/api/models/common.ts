@@ -33,6 +33,9 @@ export interface TabItem {
   url?: string;
   badgeCount?: number | null;
   selected?: boolean;
+  orderDesktop?: number;
+  orderSideBar?: number;
+  itemClassName?: string;
   iconImage?: any;
   iconElement?: React.ReactElement;
   onClick?: () => void;

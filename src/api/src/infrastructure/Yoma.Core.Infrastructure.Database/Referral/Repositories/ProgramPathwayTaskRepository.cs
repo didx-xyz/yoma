@@ -33,6 +33,11 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
         {
           Id = entity.Opportunity.Id,
           Title = entity.Opportunity.Title,
+          OrganizationName = entity.Opportunity.Organization.Name,
+          OrganizationLogoId = entity.Opportunity.Organization.LogoId,
+          OrganizationLogoStorageType = entity.Opportunity.Organization.Logo == null ? null : Enum.Parse<Yoma.Core.Domain.BlobProvider.StorageType>(entity.Opportunity.Organization.Logo.StorageType, true),
+          OrganizationLogoKey = entity.Opportunity.Organization.Logo == null ? null : entity.Opportunity.Organization.Logo.Key,
+          //OrganizationLogoURL: Optional; Resolved when needed
           OrganizationStatus = Enum.Parse<Domain.Entity.OrganizationStatus>(entity.Opportunity.Organization.Status.Name, true),
           VerificationEnabled = entity.Opportunity.VerificationEnabled,
           VerificationMethod = string.IsNullOrEmpty(entity.Opportunity.VerificationMethod) ? null : Enum.Parse<VerificationMethod>(entity.Opportunity.VerificationMethod, true),

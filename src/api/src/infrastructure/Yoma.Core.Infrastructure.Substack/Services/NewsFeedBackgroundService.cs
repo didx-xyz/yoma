@@ -258,7 +258,7 @@ namespace Yoma.Core.Infrastructure.Substack.Services
 
         var changed = false;
 
-        if (!string.Equals(itemExisting.Title, item.Title, StringComparison.InvariantCultureIgnoreCase))
+        if (!string.Equals(itemExisting.Title, item.Title, StringComparison.OrdinalIgnoreCase))
         { itemExisting.Title = item.Title; changed = true; }
 
         if (!string.Equals(itemExisting.Description, item.Description, StringComparison.Ordinal))

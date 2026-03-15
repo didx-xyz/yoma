@@ -226,7 +226,7 @@ namespace Yoma.Core.Domain.Entity.Services
       if (!string.IsNullOrEmpty(result.Email) && string.IsNullOrEmpty(request.Email))
         throw new ValidationException("An email address is already set and cannot be removed. Please provide a valid email.");
 
-      var emailUpdated = !(string.Equals(result.Email ?? string.Empty, request.Email ?? string.Empty, StringComparison.InvariantCultureIgnoreCase));
+      var emailUpdated = !(string.Equals(result.Email ?? string.Empty, request.Email ?? string.Empty, StringComparison.OrdinalIgnoreCase));
       if (emailUpdated)
       {
         if (_userService.GetByEmailOrNull(request.Email, false, false) != null)
@@ -311,7 +311,7 @@ namespace Yoma.Core.Domain.Entity.Services
         ZltoOffline = balance.ZltoOffline
       };
 
-      result.AdminsOf = isOnBehalfOfUser ? [] : _organizationService.ListAdminsOf(true);
+      result.AdminsOf = isOnBehalfOfUser ? [] : [.. _organizationService.ListAdminsOf(true).Cast<OrganizationInfo>()];
 
       var filter = new MyOpportunitySearchFilter
       {

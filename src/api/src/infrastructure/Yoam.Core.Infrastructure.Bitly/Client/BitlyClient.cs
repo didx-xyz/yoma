@@ -63,7 +63,7 @@ namespace Yoma.Core.Infrastructure.Bitly.Client
       tags.Add("Yoma");
       tags.Add(request.Type.ToString());
       tags.Add(request.Action.ToString());
-      tags = [.. tags.Distinct(StringComparer.InvariantCultureIgnoreCase)];
+      tags = [.. tags.Distinct(StringComparer.OrdinalIgnoreCase)];
 
       var requestCreate = new BitLinkRequestCreate
       {

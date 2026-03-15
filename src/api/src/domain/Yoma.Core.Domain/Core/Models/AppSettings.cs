@@ -166,6 +166,23 @@ namespace Yoma.Core.Domain.Core.Models
 
     public int DistributedLockReferralProgressDurationInSeconds { get; set; }
 
+    /// <summary>
+    /// Controls whether a referee is restricted to participating in only a single referral program.
+    ///
+    /// When enabled (default), a referee may only claim a referral link for one program.  
+    /// If the user has already participated in another referral program, any further claims are blocked.
+    ///
+    /// This reflects the current referral model where referrals are primarily used for **new user acquisition**,
+    /// ensuring that a single user cannot generate rewards across multiple programs.
+    ///
+    /// This setting is reserved for future flexibility. In certain scenarios it may be desirable to allow
+    /// referees to participate in multiple programs, for example:
+    /// - Affiliate-style campaigns
+    /// - Partner-specific referral initiatives
+    /// - Marketing campaigns where multiple programs may run concurrently
+    ///
+    /// In such cases this setting can be disabled to allow referees to claim links across different programs.
+    /// </summary>
     public bool ReferralRestrictRefereeToSingleProgram { get; set; }
 
     public int ReferralFirstClaimSinceYoIDOnboardedTimeoutInHours { get; set; }

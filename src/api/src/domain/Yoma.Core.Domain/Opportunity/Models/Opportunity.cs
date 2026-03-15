@@ -36,17 +36,17 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
     public OrganizationStatus OrganizationStatus { get; set; }
 
-    public decimal? OrganizationZltoRewardPool { get; set; }
+    public decimal? OrganizationZltoRewardPoolCurrentFinancialYear { get; set; }
 
-    public decimal? OrganizationZltoRewardCumulative { get; set; }
+    public decimal? OrganizationZltoRewardCumulativeCurrentFinancialYear { get; set; }
 
-    public decimal? OrganizationZltoRewardBalance { get; set; }
+    public decimal? OrganizationZltoRewardBalanceCurrentFinancialYear { get; set; }
 
-    public decimal? OrganizationYomaRewardPool { get; set; }
+    public decimal? OrganizationYomaRewardPoolCurrentFinancialYear { get; set; }
 
-    public decimal? OrganizationYomaRewardCumulative { get; set; }
+    public decimal? OrganizationYomaRewardCumulativeCurrentFinancialYear { get; set; }
 
-    public decimal? OrganizationYomaRewardBalance { get; set; }
+    public decimal? OrganizationYomaRewardBalanceCurrentFinancialYear { get; set; }
 
     public string? Summary { get; set; }
 

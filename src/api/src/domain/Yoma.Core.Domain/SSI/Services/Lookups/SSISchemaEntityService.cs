@@ -58,7 +58,7 @@ namespace Yoma.Core.Domain.SSI.Services.Lookups
         throw new ArgumentNullException(nameof(attributeName));
       attributeName = attributeName.Trim();
 
-      var result = List(null).SelectMany(o => o.Properties?.Where(p => string.Equals(p.AttributeName, attributeName, StringComparison.InvariantCultureIgnoreCase)) ?? []).ToList();
+      var result = List(null).SelectMany(o => o.Properties?.Where(p => string.Equals(p.AttributeName, attributeName, StringComparison.OrdinalIgnoreCase)) ?? []).ToList();
       if (result == null || result.Count == 0)
         throw new ArgumentException($"{nameof(SSISchemaEntityProperty)} not found with attribute name '{attributeName}'", nameof(attributeName));
 

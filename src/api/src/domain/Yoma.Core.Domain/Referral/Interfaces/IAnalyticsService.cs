@@ -11,6 +11,12 @@ namespace Yoma.Core.Domain.Referral.Interfaces
     ReferralAnalyticsUser ByUser(ReferralParticipationRole role);
 
     /// <summary>
+    /// Returns aggregate referral analytics for the specified program.
+    /// Includes statistics for referrers, links, link usages / claims and completion ratios.
+    /// </summary>
+    ReferralAnalyticsProgram ByProgram(Guid programId);
+
+    /// <summary>
     /// Searches system-wide referral analytics as the authenticated user.
     /// Returns obfuscated statistics per user for links (referrer role only),
     /// link usages / claims and rewards based on the specified role (leaderboards).

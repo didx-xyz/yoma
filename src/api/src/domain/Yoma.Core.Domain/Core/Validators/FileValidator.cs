@@ -29,7 +29,7 @@ namespace Yoma.Core.Domain.Core.Validators
         throw new ArgumentOutOfRangeException(nameof(type), $"Unsupported type of '{type}'");
 
       var ext = file.GetExtension();
-      if (!rule.Extensions.Contains(ext, StringComparer.InvariantCultureIgnoreCase))
+      if (!rule.Extensions.Contains(ext, StringComparer.OrdinalIgnoreCase))
         throw new BusinessException($"Only supports file formats '{string.Join(",", rule.Extensions)}'");
 
       if (file.Length > rule.MaxSizeBytes)
@@ -49,7 +49,7 @@ namespace Yoma.Core.Domain.Core.Validators
       ext = ext.Trim();
 
       var match = Rules.Values.FirstOrDefault(r =>
-        r.Extensions.Contains(ext, StringComparer.InvariantCultureIgnoreCase))
+        r.Extensions.Contains(ext, StringComparer.OrdinalIgnoreCase))
         ?? throw new BusinessException($"Only supports file formats '{string.Join(",", Rules.Values.SelectMany(r => r.Extensions).Distinct())}'");
 
       if (lengthBytes > match.MaxSizeBytes)

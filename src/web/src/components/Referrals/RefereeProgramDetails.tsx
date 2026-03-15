@@ -5,7 +5,14 @@ import { ProgramRow } from "./ProgramRow";
 
 export interface ProgramDetailsProps {
   program: ProgramInfo;
-  perspective: "referrer" | "referee";
+  showBadges?: {
+    status?: boolean;
+    requirements?: boolean;
+    limit?: boolean;
+    rewards?: boolean;
+    rewardsReferrer?: boolean;
+    rewardsReferee?: boolean;
+  };
   isExpanded?: boolean;
   showDetails?: boolean;
   onClick?: () => void;
@@ -17,6 +24,7 @@ export interface ProgramDetailsProps {
 
 export const RefereeProgramDetails: React.FC<ProgramDetailsProps> = ({
   program,
+  showBadges,
   showDetails: showDetailsOption = true,
   onClick,
   className = "",
@@ -27,10 +35,19 @@ export const RefereeProgramDetails: React.FC<ProgramDetailsProps> = ({
       {showDetailsOption ? (
         context === "preview" ? (
           <div className="mt-3 mb-2">
-            <ProgramBadges program={program} mode="large" showPathway={false} />
+            <ProgramBadges
+              program={program}
+              mode="large"
+              showPathway={false}
+              showBadges={showBadges}
+            />
           </div>
         ) : (
-          <ProgramBadges program={program} showToolTips={false} />
+          <ProgramBadges
+            program={program}
+            showToolTips={false}
+            showBadges={showBadges}
+          />
         )
       ) : null}
     </ProgramRow>

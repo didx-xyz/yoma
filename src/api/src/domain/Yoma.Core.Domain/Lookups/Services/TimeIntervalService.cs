@@ -41,7 +41,7 @@ namespace Yoma.Core.Domain.Lookups.Services
         throw new ArgumentNullException(nameof(name));
       name = name.Trim();
 
-      return List().SingleOrDefault(o => string.Equals(o.Name, name, StringComparison.InvariantCultureIgnoreCase));
+      return List().SingleOrDefault(o => string.Equals(o.Name, name, StringComparison.OrdinalIgnoreCase));
     }
 
     public TimeInterval GetById(Guid id)

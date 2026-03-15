@@ -1,6 +1,6 @@
 import { PaginationFilter } from "./common";
 import type { Country } from "./lookups";
-import { OpportunityItem } from "./marketplace";
+import { OpportunityItem } from "./opportunity";
 
 // Enums
 export enum ProgramStatus {
@@ -325,6 +325,8 @@ export interface ReferralLink {
   programName: string;
   programDescription: string | null;
   programCompletionLimitReferee: number | null;
+  programImageId: string | null;
+  programImageURL: string | null;
   userId: string;
   userDisplayName: string;
   username: string;
@@ -343,10 +345,10 @@ export interface ReferralLink {
   completionBalance: number | null;
   pendingTotal: number | null;
   expiredTotal: number | null;
-  usageTotal: number | null; //
+  usageTotal: number | null;
   zltoRewardCumulative: number | null;
-  zltoRewardReferrerTotal: number; //
-  zltoRewardRefereeTotal: number; //
+  zltoRewardReferrerTotal: number;
+  zltoRewardRefereeTotal: number;
   dateCreated: string;
   dateModified: string;
 }
@@ -393,6 +395,8 @@ export interface ReferralLinkUsage {
   programDescription: string | null;
   programCompletionWindowInDays: number | null;
   programDateEnd: string | null;
+  programImageId: string | null;
+  programImageURL: string | null;
   timeRemainingInDays: number | null;
   dateCompleteBy: string | null;
   linkId: string;
@@ -445,36 +449,39 @@ export interface ReferralLinkUsageSearchFilter extends PaginationFilter {
   dateStart: string | null;
   dateEnd: string | null;
 }
-
 export interface ReferralLinkUsageInfo {
   id: string;
   programId: string;
   programName: string;
   programDescription: string | null;
+  programCompletionWindowInDays: number | null;
+  programDateEnd: string | null;
+  programImageId: string | null;
+  programImageURL: string | null;
+  timeRemainingInDays: number | null;
+  dateCompleteBy: string | null;
   linkId: string;
   linkName: string;
-  // Referrer Info (from link)
   userIdReferrer: string;
-  userDisplayNameReferrer: string | null;
+  userDisplayNameReferrer: string;
   userEmailReferrer: string | null;
   userPhoneNumberReferrer: string | null;
-  // Referee Info (from usage)
   userId: string;
-  userDisplayName: string | null;
+  userDisplayName: string;
   userEmail: string | null;
   userPhoneNumber: string | null;
   statusId: string;
   status: ReferralLinkUsageStatus;
+  zltoRewardReferee: number | null;
+  zltoRewardReferrer: number | null;
   dateClaimed: string;
   dateCompleted: string | null;
   dateExpired: string | null;
   proofOfPersonhoodCompleted: boolean | null;
-  proofOfPersonhoodMethod: ProofOfPersonhoodMethod | null;
+  proofOfPersonhoodMethod: ProofOfPersonhoodMethod;
   pathwayCompleted: boolean | null;
   percentComplete: number | null;
   pathway: ProgramPathwayProgress | null;
-  // Computed property (matches C# model logic)
-  completed: boolean;
 }
 
 export interface ProgramPathwayProgress {

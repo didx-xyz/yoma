@@ -284,10 +284,12 @@ namespace Yoma.Core.Domain.Analytics.Services
       var orgStatusActiveId = _organizationStatusService.GetByName(OrganizationStatus.Active.ToString()).Id;
       var oppStatusActiveId = _opportunityStatusService.GetByName(Opportunity.Status.Active.ToString()).Id;
 
-      // Users
-      var userFilter = new UserSearchFilter { TotalCountOnly = true };
+      // Users: Total registered (include pre-Keycloak users without ExternalId)
+      var userFilter = new UserSearchFilter { TotalCountOnly = true, ApplyExternalIdFilter = false };
       var userCount = _userService.Search(userFilter).TotalCount ?? 0;
 
+      // Users: Active (Keycloak linked + YoID onboarded)
+      userFilter.ApplyExternalIdFilter = true;
       userFilter.YoIDOnboarded = true;
       var userCountActive = _userService.Search(userFilter).TotalCount ?? 0;
 
