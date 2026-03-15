@@ -16,7 +16,7 @@ namespace Yoma.Core.Domain.Referral.Models
 
     public string ProgramName { get; set; } = null!;
 
-    public string? ProgramSummary { get; set; } 
+    public string? ProgramSummary { get; set; }
 
     public string? ProgramDescription { get; set; }
 

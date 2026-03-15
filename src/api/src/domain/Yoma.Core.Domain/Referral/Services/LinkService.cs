@@ -305,7 +305,7 @@ namespace Yoma.Core.Domain.Referral.Services
           Description = request.Description,
           ProgramId = program.Id,
           ProgramName = program.Name,
-          ProgramSummary = program.Summary, 
+          ProgramSummary = program.Summary,
           ProgramDescription = program.Description,
           ProgramCompletionLimitReferee = program.CompletionLimitReferee,
           ProgramImageId = program.ImageId,

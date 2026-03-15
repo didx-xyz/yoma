@@ -871,7 +871,7 @@ namespace Yoma.Core.Domain.Referral.Services
         Id = item.Id,
         ProgramId = item.ProgramId,
         ProgramName = item.ProgramName,
-        ProgramSummary = item.ProgramSummary, 
+        ProgramSummary = item.ProgramSummary,
         ProgramDescription = item.ProgramDescription,
         ProgramCompletionWindowInDays = item.ProgramCompletionWindowInDays,
         ProgramDateEnd = item.ProgramDateEnd,
