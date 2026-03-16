@@ -243,30 +243,6 @@ const RefereeDashboard: NextPageWithLayout<{
     isLoading: programLoading,
   } = useReferralProgramInfoQuery(programId, { enabled: !serverError });
 
-  //TODO: remove
-  const mockedPathwayProgress = useMemo(() => {
-    if (!usage?.pathway) return null;
-
-    return {
-      ...usage.pathway,
-      completed: false,
-      stepsCompleted: 1,
-      percentComplete: 50,
-      steps: usage.pathway.steps.map((step, stepIndex) => ({
-        ...step,
-        completed: stepIndex === 0,
-        dateCompleted: stepIndex === 0 ? new Date().toISOString() : null,
-        tasksCompleted: stepIndex === 0 ? step.tasksTotal : 0,
-        percentComplete: stepIndex === 0 ? 100 : 0,
-        tasks: step.tasks.map((task) => ({
-          ...task,
-          completed: stepIndex === 0,
-          dateCompleted: stepIndex === 0 ? new Date().toISOString() : null,
-        })),
-      })),
-    };
-  }, [usage?.pathway]);
-
   const isRedirectingToKeycloak = router.query.signInAgain === "true";
 
   const timeInfo = useMemo(() => {
@@ -374,10 +350,7 @@ const RefereeDashboard: NextPageWithLayout<{
             proofOfPersonhoodAction={
               <RefereeProofOfPersonhoodAction usage={usage} program={program} />
             }
-            progressModel={
-              // TODO: hardcode mocked data here
-              mockedPathwayProgress
-            }
+            progressModel={usage.pathway}
             percentComplete={usage.percentComplete ?? 0}
             timeRemainingDescription={
               timeInfo

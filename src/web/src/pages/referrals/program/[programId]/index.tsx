@@ -31,34 +31,8 @@ interface IParams extends ParsedUrlQuery {
   programId: string;
 }
 
-//TODO: remove
-const parseMockProgramStatus = (
-  value: string | string[] | undefined,
-): ProgramStatus | null => {
-  if (!value) return null;
-
-  const raw = Array.isArray(value) ? value[0] : value;
-  if (!raw) return null;
-
-  const numeric = Number(raw);
-  if (!Number.isNaN(numeric) && ProgramStatus[numeric] !== undefined) {
-    return numeric as ProgramStatus;
-  }
-
-  const matchedKey = Object.keys(ProgramStatus).find(
-    (key) =>
-      Number.isNaN(Number(key)) && key.toLowerCase() === raw.toLowerCase(),
-  );
-
-  if (!matchedKey) return null;
-  return ProgramStatus[
-    matchedKey as keyof typeof ProgramStatus
-  ] as ProgramStatus;
-};
-
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { programId } = context.params as IParams;
-  const mockStatus = parseMockProgramStatus(context.query.mockStatus);
   const queryClient = new QueryClient(config);
   const session = await getServerSession(context.req, context.res, authOptions);
   let errorCode = null;
@@ -75,10 +49,6 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       queryKey: REFERRAL_PROGRAM_QUERY_KEYS.info(programId),
       queryFn: () => getReferralProgramInfoById(programId, context),
     });
-
-    if (dataProgramInfo && mockStatus !== null) {
-      dataProgramInfo.status = mockStatus;
-    }
   } catch (error) {
     console.error(
       "Error fetching referral program in getServerSideProps",

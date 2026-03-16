@@ -478,10 +478,6 @@ html:has(body.content-overflow-y) {
   background-color: var(--color-purple);
   color: var(--color-white);
 }
-/* TODO: add theme override here */
-/* [data-theme="purple"] .mobile-select {
-  fill: var(--color-white);
-} */
 
 /* Miscellaneous Styles */
 /* Hide the Google Translate toolbar */

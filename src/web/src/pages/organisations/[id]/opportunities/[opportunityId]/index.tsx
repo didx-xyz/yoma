@@ -3251,7 +3251,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                   </form>
                 </>
               )}
-              {/* TODO: use this structure for the "admin referrals" page */}
+
               {step === 8 && (
                 <>
                   <div className="mb-4 flex flex-col gap-2">

@@ -6,27 +6,26 @@ import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { type ParsedUrlQuery } from "querystring";
-import { useMemo, type ReactElement } from "react";
+import { type ReactElement } from "react";
 import { IoMdArrowRoundBack } from "react-icons/io";
 import Moment from "react-moment";
 import { getReferralLinkUsageById } from "~/api/services/referrals";
-import { ReferralLinkUsageStatus } from "~/api/models/referrals";
-import {
-  REFERRAL_PROGRAM_QUERY_KEYS,
-  useReferralLinkUsageByIdQuery,
-} from "~/hooks/useReferralProgramMutations";
 import MainLayout from "~/components/Layout/Main";
 import { PageBackground } from "~/components/PageBackground";
+import { ReferralTasksCard } from "~/components/Referrals/ReferralTasksCard";
 import { InternalServerError } from "~/components/Status/InternalServerError";
 import { Loading } from "~/components/Status/Loading";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
-import { config } from "~/lib/react-query-config";
+import {
+  REFERRAL_PROGRAM_QUERY_KEYS,
+  useReferralLinkUsageByIdQuery,
+} from "~/hooks/useReferralProgramMutations";
 import { DATE_FORMAT_HUMAN } from "~/lib/constants";
+import { config } from "~/lib/react-query-config";
 import { getSafeUrl, getThemeFromRole } from "~/lib/utils";
 import type { NextPageWithLayout } from "~/pages/_app";
 import { authOptions, type User } from "~/server/auth";
-import { ReferralTasksCard } from "~/components/Referrals/ReferralTasksCard";
 
 interface IParams extends ParsedUrlQuery {
   id: string;

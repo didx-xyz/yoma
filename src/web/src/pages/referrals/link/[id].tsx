@@ -37,31 +37,6 @@ import { currentLanguageAtom, userProfileAtom } from "~/lib/store";
 import { authOptions } from "~/server/auth";
 import { type NextPageWithLayout } from "../../_app";
 
-//TODO: remove
-const parseMockProgramStatus = (
-  value: string | string[] | undefined,
-): ProgramStatus | null => {
-  if (!value) return null;
-
-  const raw = Array.isArray(value) ? value[0] : value;
-  if (!raw) return null;
-
-  const numeric = Number(raw);
-  if (!Number.isNaN(numeric) && ProgramStatus[numeric] !== undefined) {
-    return numeric as ProgramStatus;
-  }
-
-  const matchedKey = Object.keys(ProgramStatus).find(
-    (key) =>
-      Number.isNaN(Number(key)) && key.toLowerCase() === raw.toLowerCase(),
-  );
-
-  if (!matchedKey) return null;
-  return ProgramStatus[
-    matchedKey as keyof typeof ProgramStatus
-  ] as ProgramStatus;
-};
-
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
 
@@ -75,7 +50,6 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 
   const { id } = context.query;
   const linkId = id as string;
-  const mockStatus = parseMockProgramStatus(context.query.mockStatus);
 
   let userProfileServer: UserProfile | null = null;
   try {
@@ -93,18 +67,10 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       queryFn: () => getReferralLinkById(linkId, false, context),
     });
 
-    const program = await queryClient.fetchQuery({
+    await queryClient.fetchQuery({
       queryKey: REFERRAL_PROGRAM_QUERY_KEYS.infoByLink(linkId),
       queryFn: () => getReferralProgramInfoByLinkId(linkId, context),
     });
-
-    if (program && mockStatus !== null) {
-      program.status = mockStatus;
-      queryClient.setQueryData(
-        REFERRAL_PROGRAM_QUERY_KEYS.infoByLink(linkId),
-        program,
-      );
-    }
   } catch (error) {
     console.error("Failed to fetch referral link page data", error);
     if (axios.isAxiosError(error) && error.response?.status) {
