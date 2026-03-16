@@ -603,3 +603,17 @@ export interface ReferralAnalyticsSearchResults
   zltoRewardTotal: number;
   items: ReferralAnalyticsUser[];
 }
+
+// Program-level analytics (GET /referral/analytics/program/{programId})
+export interface ProgramAnalytics {
+  referrerCount: number;
+  linkCount: number;
+  linkCountActive: number;
+  usageCountTotal: number;
+  usageCountCompleted: number;
+  usageCountPending: number;
+  usageCountExpired: number;
+  completionConversionRatio: number;
+  avgLinksPerReferrer: number;
+  avgCompletedReferralsPerReferrer: number;
+}

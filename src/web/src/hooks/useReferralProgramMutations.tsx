@@ -3,6 +3,7 @@ import { type AxiosError } from "axios";
 import { toast } from "react-toastify";
 import {
   type Program,
+  type ProgramAnalytics,
   type ProgramInfo,
   type ProgramSearchFilter,
   type ProgramSearchFilterAdmin,
@@ -28,6 +29,7 @@ import {
   getReferralLinkById,
   getReferralLinkUsageById,
   getReferralLinkUsageByProgramIdAsReferee,
+  getReferralProgramAnalytics,
   getReferralProgramById,
   getReferralProgramInfoById,
   getReferralProgramInfoByLinkId,
@@ -107,6 +109,8 @@ export const REFERRAL_PROGRAM_QUERY_KEYS = {
   /** Admin paginated link usage search results */
   adminUsagesList: (keyParts: string) =>
     ["referralLinkUsages", keyParts] as const,
+  /** Program-level analytics */
+  programAnalytics: (id: string) => ["referralProgramAnalytics", id] as const,
 } as const;
 
 // ─── Query Hooks ─────────────────────────────────────────────────────────────
@@ -500,6 +504,20 @@ export function useReferralProgramStatusMutation({
         icon: false,
       });
     },
+  });
+}
+
+/**
+ * Admin — fetches aggregate analytics for a single referral program.
+ */
+export function useReferralProgramAnalyticsQuery(
+  programId: string,
+  options?: { enabled?: boolean },
+) {
+  return useQuery<ProgramAnalytics>({
+    queryKey: REFERRAL_PROGRAM_QUERY_KEYS.programAnalytics(programId),
+    queryFn: () => getReferralProgramAnalytics(programId),
+    enabled: !!programId && (options?.enabled ?? true),
   });
 }
 

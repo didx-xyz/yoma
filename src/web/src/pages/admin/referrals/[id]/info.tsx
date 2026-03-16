@@ -169,6 +169,7 @@ const ReferralProgramInfo: NextPageWithLayout<{
                 ProgramInfoFilterOptions.ZLTO_REWARDS,
                 ProgramInfoFilterOptions.FEATURES,
                 ProgramInfoFilterOptions.PATHWAY,
+                ProgramInfoFilterOptions.ANALYTICS,
               ]}
             />
           )}

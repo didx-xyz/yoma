@@ -15,6 +15,7 @@ import {
   Program,
   ProgramPathwayInfo,
 } from "~/api/models/referrals";
+import { useReferralProgramAnalyticsQuery } from "~/hooks/useReferralProgramMutations";
 import { DATE_FORMAT_HUMAN } from "~/lib/constants";
 import { ProgramStatusBadge } from "./ProgramStatusBadge";
 import { ReferralTasksCard } from "./new/ReferralTasksCard";
@@ -29,6 +30,7 @@ export enum ProgramInfoFilterOptions {
   FEATURES = "features",
   PATHWAY = "pathway",
   AUDIT_INFO = "auditInfo",
+  ANALYTICS = "analytics",
 }
 
 interface AdminProgramInfoProps {
@@ -51,6 +53,14 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
   ],
   opportunityDataMap,
 }) => {
+  const { data: analytics } = useReferralProgramAnalyticsQuery(
+    program?.id ?? "",
+    {
+      enabled:
+        filterOptions?.includes(ProgramInfoFilterOptions.ANALYTICS) &&
+        !!program?.id,
+    },
+  );
   const countriesLabel = useMemo(() => {
     const countries = program?.countries;
     if (!countries || !Array.isArray(countries) || countries.length === 0) {
@@ -602,22 +612,115 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
           </div>
         </section>
       )}
-      {/* Pathway */}
-      {filterOptions?.includes(ProgramInfoFilterOptions.PATHWAY) && (
+
+      {/* Analytics */}
+      {filterOptions?.includes(ProgramInfoFilterOptions.ANALYTICS) && (
         <section>
-          <h6 className="mb-2 text-sm font-semibold">Pathway</h6>
+          <h6 className="mb-2 text-sm font-semibold">Analytics</h6>
 
           <div className="overflow-x-auto">
-            {pathwayInfo ? (
-              <ReferralTasksCard model={pathwayInfo} />
-            ) : (
-              <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
-                <p className="text-xs text-gray-700">No pathway configured</p>
+            <div className="grid grid-cols-1 overflow-hidden rounded-lg border border-gray-200 md:grid-cols-2">
+              <div className="flex">
+                <div className="w-52 border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
+                  Total Referrers
+                </div>
+                <div className="flex-1 border border-gray-200 px-4 py-2 text-xs hover:bg-gray-100">
+                  {analytics?.referrerCount?.toLocaleString("en-US") ?? "—"}
+                </div>
               </div>
-            )}
+
+              <div className="flex">
+                <div className="w-52 border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
+                  Total Links
+                </div>
+                <div className="flex-1 border border-gray-200 px-4 py-2 text-xs hover:bg-gray-100">
+                  {analytics?.linkCount?.toLocaleString("en-US") ?? "—"}
+                </div>
+              </div>
+
+              <div className="flex">
+                <div className="w-52 border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
+                  Active Links
+                </div>
+                <div className="flex-1 border border-gray-200 px-4 py-2 text-xs hover:bg-gray-100">
+                  {analytics?.linkCountActive?.toLocaleString("en-US") ?? "—"}
+                </div>
+              </div>
+
+              <div className="flex">
+                <div className="w-52 border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
+                  Total Claims
+                </div>
+                <div className="flex-1 border border-gray-200 px-4 py-2 text-xs hover:bg-gray-100">
+                  {analytics?.usageCountTotal?.toLocaleString("en-US") ?? "—"}
+                </div>
+              </div>
+
+              <div className="flex">
+                <div className="w-52 border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
+                  Completed Claims
+                </div>
+                <div className="flex-1 border border-gray-200 px-4 py-2 text-xs hover:bg-gray-100">
+                  {analytics?.usageCountCompleted?.toLocaleString("en-US") ??
+                    "—"}
+                </div>
+              </div>
+
+              <div className="flex">
+                <div className="w-52 border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
+                  Pending Claims
+                </div>
+                <div className="flex-1 border border-gray-200 px-4 py-2 text-xs hover:bg-gray-100">
+                  {analytics?.usageCountPending?.toLocaleString("en-US") ?? "—"}
+                </div>
+              </div>
+
+              <div className="flex">
+                <div className="w-52 border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
+                  Expired Claims
+                </div>
+                <div className="flex-1 border border-gray-200 px-4 py-2 text-xs hover:bg-gray-100">
+                  {analytics?.usageCountExpired?.toLocaleString("en-US") ?? "—"}
+                </div>
+              </div>
+
+              <div className="flex">
+                <div className="w-52 border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
+                  Conversion Ratio
+                </div>
+                <div className="flex-1 border border-gray-200 px-4 py-2 text-xs hover:bg-gray-100">
+                  {analytics?.completionConversionRatio != null
+                    ? `${(analytics.completionConversionRatio * 100).toFixed(1)}%`
+                    : "—"}
+                </div>
+              </div>
+
+              <div className="flex">
+                <div className="w-52 border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
+                  Avg Links / Referrer
+                </div>
+                <div className="flex-1 border border-gray-200 px-4 py-2 text-xs hover:bg-gray-100">
+                  {analytics?.avgLinksPerReferrer != null
+                    ? analytics.avgLinksPerReferrer.toFixed(2)
+                    : "—"}
+                </div>
+              </div>
+
+              <div className="flex">
+                <div className="w-52 border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
+                  Avg Completed / Referrer
+                </div>
+                <div className="flex-1 border border-gray-200 px-4 py-2 text-xs hover:bg-gray-100">
+                  {analytics?.avgCompletedReferralsPerReferrer != null
+                    ? analytics.avgCompletedReferralsPerReferrer.toFixed(2)
+                    : "—"}
+                </div>
+              </div>
+            </div>
           </div>
         </section>
       )}
+
       {/* Audit Information - Optional */}
       {filterOptions?.includes(ProgramInfoFilterOptions.AUDIT_INFO) && (
         <section>
@@ -674,6 +777,23 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
                 </div>
               </div>
             </div>
+          </div>
+        </section>
+      )}
+
+      {/* Pathway */}
+      {filterOptions?.includes(ProgramInfoFilterOptions.PATHWAY) && (
+        <section>
+          <h6 className="mb-2 text-sm font-semibold">Pathway</h6>
+
+          <div className="overflow-x-auto">
+            {pathwayInfo ? (
+              <ReferralTasksCard model={pathwayInfo} />
+            ) : (
+              <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+                <p className="text-xs text-gray-700">No pathway configured</p>
+              </div>
+            )}
           </div>
         </section>
       )}

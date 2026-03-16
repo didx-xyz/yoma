@@ -7,6 +7,7 @@ import {
   BlockReason,
   BlockRequest,
   Program,
+  ProgramAnalytics,
   ProgramInfo,
   ProgramRequestCreate,
   ProgramRequestUpdate,
@@ -394,6 +395,17 @@ export const searchReferralAnalyticsAdmin = async (
   const { data } = await instance.post<ReferralAnalyticsSearchResults>(
     `/referral/analytics/search/admin`,
     filter,
+  );
+  return data;
+};
+
+export const getReferralProgramAnalytics = async (
+  programId: string,
+  context?: GetServerSidePropsContext | GetStaticPropsContext,
+): Promise<ProgramAnalytics> => {
+  const instance = context ? ApiServer(context) : await ApiClient;
+  const { data } = await instance.get<ProgramAnalytics>(
+    `/referral/analytics/program/${programId}`,
   );
   return data;
 };
