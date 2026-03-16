@@ -76,7 +76,11 @@ import { InternalServerError } from "~/components/Status/InternalServerError";
 import { Loading } from "~/components/Status/Loading";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
-import analytics from "~/lib/analytics";
+import {
+  REFERRAL_PROGRAM_QUERY_KEYS,
+  useReferralProgramByIdQuery,
+  useReferralProgramStatusMutation,
+} from "~/hooks/useReferralProgramMutations";
 import { COUNTRY_CODE_WW } from "~/lib/constants";
 import { config } from "~/lib/react-query-config";
 import {
@@ -87,11 +91,6 @@ import {
   utcToDateInput,
 } from "~/lib/utils";
 import type { NextPageWithLayout } from "~/pages/_app";
-import {
-  REFERRAL_PROGRAM_QUERY_KEYS,
-  useReferralProgramByIdQuery,
-  useReferralProgramStatusMutation,
-} from "~/hooks/useReferralProgramMutations";
 import { authOptions, type User } from "~/server/auth";
 
 type SelectOption = { value: string; label: string };
@@ -178,6 +177,12 @@ const schemaStep3 = z
           .number()
           .min(1, "Program completion limit must be greater than 0"),
       )
+      .nullable()
+      .catch(null)
+      .transform((val) => (val === 0 ? null : val)),
+    referrerLimit: z
+      .union([z.string(), z.number()])
+      .pipe(z.coerce.number().min(1, "Referrer limit must be greater than 0"))
       .nullable()
       .catch(null)
       .transform((val) => (val === 0 ? null : val)),
@@ -349,6 +354,7 @@ const schemaStep4 = z
     pathwayRequired: z.boolean(),
     multipleLinksAllowed: z.boolean(),
     isDefault: z.boolean(),
+    hidden: z.boolean(),
     // Need these for cross-validation with Step 3
     zltoRewardReferrer: z.number().nullable().optional(),
     zltoRewardReferee: z.number().nullable().optional(),
@@ -715,6 +721,9 @@ const ReferralProgramForm: NextPageWithLayout<{
       pathwayRequired: false,
       multipleLinksAllowed: false,
       isDefault: false,
+      hidden: false,
+      referrerLimit: null,
+      referrerTotal: null,
       completionTotal: null,
       status: "Active",
       statusId: "1",
@@ -1390,6 +1399,7 @@ const ReferralProgramForm: NextPageWithLayout<{
           completionWindowInDays: data.completionWindowInDays,
           completionLimitReferee: data.completionLimitReferee,
           completionLimit: data.completionLimit,
+          referrerLimit: data.referrerLimit,
           zltoRewardReferrer: data.zltoRewardReferrer,
           zltoRewardReferee: data.zltoRewardReferee,
           zltoRewardPool: data.zltoRewardPool,
@@ -1397,6 +1407,7 @@ const ReferralProgramForm: NextPageWithLayout<{
           pathwayRequired: data.pathwayRequired,
           multipleLinksAllowed: data.multipleLinksAllowed,
           isDefault: data.isDefault,
+          hidden: data.hidden,
           dateStart: data.dateStart,
           dateEnd: data.dateEnd,
           pathway: data.pathway
@@ -2264,10 +2275,10 @@ const ReferralProgramForm: NextPageWithLayout<{
                     <div className="flex flex-col gap-4">
                       <h6 className="font-semibold">Completion Settings</h6>
 
-                      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                         <FormField
                           label="Completion Window (Days)"
-                          subLabel="Time allowed for referee"
+                          subLabel="Days a referee has to complete required steps after joining"
                           showWarningIcon={
                             !!formStateStep3.errors.completionWindowInDays
                               ?.message
@@ -2294,7 +2305,7 @@ const ReferralProgramForm: NextPageWithLayout<{
 
                         <FormField
                           label="Referrer Cap"
-                          subLabel="Max per referrer"
+                          subLabel="Max completions per referrer; blocks new claims once reached"
                           showWarningIcon={
                             !!formStateStep3.errors.completionLimitReferee
                               ?.message
@@ -2321,7 +2332,7 @@ const ReferralProgramForm: NextPageWithLayout<{
 
                         <FormField
                           label="Program Cap"
-                          subLabel="Max for entire program"
+                          subLabel="Max total completions across all referrers; blocks new claims once reached"
                           showWarningIcon={
                             !!formStateStep3.errors.completionLimit?.message
                           }
@@ -2340,6 +2351,28 @@ const ReferralProgramForm: NextPageWithLayout<{
                             }}
                           />
                         </FormField>
+
+                        <FormField
+                          label="Referrer Limit"
+                          subLabel="Max number of distinct referrers allowed in this program"
+                          showWarningIcon={
+                            !!formStateStep3.errors.referrerLimit?.message
+                          }
+                          showError={
+                            !!formStateStep3.touchedFields.referrerLimit ||
+                            formStateStep3.isSubmitted
+                          }
+                          error={formStateStep3.errors.referrerLimit?.message}
+                        >
+                          <FormInput
+                            inputProps={{
+                              type: "number",
+                              min: "0",
+                              placeholder: "e.g. 1000",
+                              ...registerStep3("referrerLimit"),
+                            }}
+                          />
+                        </FormField>
                       </div>
                     </div>
 
@@ -2347,10 +2380,10 @@ const ReferralProgramForm: NextPageWithLayout<{
                     <div className="flex flex-col gap-4">
                       <h6 className="font-semibold">ZLTO Rewards</h6>
 
-                      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                         <FormField
                           label="Referee Reward"
-                          subLabel="ZLTO for referee"
+                          subLabel="ZLTO awarded to the referee on completion"
                           showWarningIcon={
                             !!formStateStep3.errors.zltoRewardReferee?.message
                           }
@@ -2375,7 +2408,7 @@ const ReferralProgramForm: NextPageWithLayout<{
 
                         <FormField
                           label="Referrer Reward"
-                          subLabel="ZLTO for referrer"
+                          subLabel="ZLTO awarded to the referrer on completion"
                           showWarningIcon={
                             !!formStateStep3.errors.zltoRewardReferrer?.message
                           }
@@ -2400,7 +2433,7 @@ const ReferralProgramForm: NextPageWithLayout<{
 
                         <FormField
                           label="ZLTO Pool"
-                          subLabel="Total budget"
+                          subLabel="Total ZLTO budget for this program"
                           showWarningIcon={
                             !!formStateStep3.errors.zltoRewardPool?.message
                           }
@@ -2540,6 +2573,25 @@ const ReferralProgramForm: NextPageWithLayout<{
                           <p className="text-sm">
                             Allow referrers to have multiple active links
                             simultaneously
+                          </p>
+                        </div>
+                      </label>
+
+                      <label
+                        htmlFor="hidden"
+                        className="label cursor-pointer justify-normal p-0"
+                      >
+                        <input
+                          type="checkbox"
+                          id="hidden"
+                          className="checkbox-secondary checkbox disabled:border-gray"
+                          {...registerStep4("hidden")}
+                        />
+                        <div className="text-gray-dark ml-4 select-none">
+                          <div>Hidden</div>
+                          <p className="text-sm">
+                            Make this program hidden from public listings and
+                            search results
                           </p>
                         </div>
                       </label>

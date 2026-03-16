@@ -90,6 +90,9 @@ export interface Program {
   statusId: string;
   status: ProgramStatus | string;
   isDefault: boolean;
+  hidden: boolean;
+  referrerLimit: number | null;
+  referrerTotal: number | null;
   dateStart: string;
   dateEnd: string | null;
   dateCreated: string;
@@ -129,6 +132,8 @@ export interface ProgramItem {
   completionLimit: number | null;
   completionTotal: number | null;
   completionBalance: number | null;
+  referrerLimit: number | null;
+  referrerTotal: number | null;
   zltoRewardPool: number | null;
   zltoRewardCumulative: number | null;
   zltoRewardBalance: number | null;
@@ -136,6 +141,7 @@ export interface ProgramItem {
   pathwayRequired: boolean;
   status: ProgramStatus | string;
   isDefault: boolean;
+  hidden: boolean;
   dateStart: string;
   dateEnd: string | null;
 }
@@ -228,6 +234,8 @@ export interface ProgramRequestBase {
   pathwayRequired: boolean;
   multipleLinksAllowed: boolean;
   isDefault: boolean;
+  hidden: boolean;
+  referrerLimit: number | null;
   dateStart: string;
   dateEnd: string | null;
   pathway: ProgramPathwayRequestUpsert | null;

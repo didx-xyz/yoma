@@ -1,4 +1,3 @@
-import { useReferralProgramStatusMutation } from "~/hooks/useReferralProgramMutations";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useCallback } from "react";
@@ -10,10 +9,14 @@ import {
   FaTrash,
 } from "react-icons/fa";
 import { IoIosSettings, IoMdWarning } from "react-icons/io";
-import { toast } from "react-toastify";
+import { IoEyeOffOutline, IoEyeOutline } from "react-icons/io5";
 import { Program, ProgramItem, ProgramStatus } from "~/api/models/referrals";
 import { Loading } from "~/components/Status/Loading";
 import { useConfirmationModalContext } from "~/context/modalConfirmationContext";
+import {
+  useReferralProgramHiddenMutation,
+  useReferralProgramStatusMutation,
+} from "~/hooks/useReferralProgramMutations";
 import { getSafeUrl } from "~/lib/utils";
 
 export enum ReferralProgramActionOptions {
@@ -23,6 +26,7 @@ export enum ReferralProgramActionOptions {
   ACTIVATE = "activate",
   INACTIVATE = "inactivate",
   DELETE = "delete",
+  TOGGLE_HIDDEN = "toggleHidden",
 }
 
 interface ReferralProgramActionsProps {
@@ -44,6 +48,7 @@ export const AdminReferralProgramActions: React.FC<
     ReferralProgramActionOptions.ACTIVATE,
     ReferralProgramActionOptions.INACTIVATE,
     ReferralProgramActionOptions.DELETE,
+    ReferralProgramActionOptions.TOGGLE_HIDDEN,
   ],
   className = "text-green hover:brightness-125",
 }) => {
@@ -53,7 +58,11 @@ export const AdminReferralProgramActions: React.FC<
     programId: program.id,
     programName: program.name,
   });
-  const isLoading = statusMutation.isPending;
+  const hiddenMutation = useReferralProgramHiddenMutation({
+    programId: program.id,
+    programName: program.name,
+  });
+  const isLoading = statusMutation.isPending || hiddenMutation.isPending;
 
   const handleStatusUpdate = useCallback(
     async (status: ProgramStatus) => {
@@ -215,6 +224,30 @@ export const AdminReferralProgramActions: React.FC<
                 >
                   <FaTrash className="text-green size-4" />
                   Delete
+                </button>
+              </li>
+            )}
+
+          {/* TOGGLE HIDDEN */}
+          {actionOptions.includes(ReferralProgramActionOptions.TOGGLE_HIDDEN) &&
+            program.status !== "Deleted" && (
+              <li>
+                <button
+                  type="button"
+                  className="text-gray-dark flex flex-row items-center gap-2 hover:brightness-50"
+                  onClick={() => hiddenMutation.mutate(!program.hidden)}
+                >
+                  {program.hidden ? (
+                    <>
+                      <IoEyeOutline className="text-green size-4" />
+                      Unhide
+                    </>
+                  ) : (
+                    <>
+                      <IoEyeOffOutline className="text-green size-4" />
+                      Hide
+                    </>
+                  )}
                 </button>
               </li>
             )}

@@ -8,7 +8,6 @@ import { useRouter } from "next/router";
 import { type ParsedUrlQuery } from "querystring";
 import { type ReactElement } from "react";
 import { IoMdArrowRoundBack } from "react-icons/io";
-import { Program } from "~/api/models/referrals";
 import { getReferralProgramById } from "~/api/services/referrals";
 import MainLayout from "~/components/Layout/Main";
 import { PageBackground } from "~/components/PageBackground";
@@ -16,7 +15,6 @@ import {
   AdminProgramInfo,
   ProgramInfoFilterOptions,
 } from "~/components/Referrals/AdminProgramInfo";
-import { AdminProgramPreview } from "~/components/Referrals/AdminProgramPreview";
 import {
   AdminReferralProgramActions,
   ReferralProgramActionOptions,
@@ -155,6 +153,7 @@ const ReferralProgramInfo: NextPageWithLayout<{
                   ReferralProgramActionOptions.EDIT,
                   ReferralProgramActionOptions.VIEW_LINKS,
                   ReferralProgramActionOptions.DELETE,
+                  ReferralProgramActionOptions.TOGGLE_HIDDEN,
                 ]}
               />
             )}
@@ -164,6 +163,7 @@ const ReferralProgramInfo: NextPageWithLayout<{
             <AdminProgramInfo
               program={program}
               filterOptions={[
+                ProgramInfoFilterOptions.PREVIEW,
                 ProgramInfoFilterOptions.PROGRAM_INFO,
                 ProgramInfoFilterOptions.COMPLETION_REWARDS,
                 ProgramInfoFilterOptions.ZLTO_REWARDS,

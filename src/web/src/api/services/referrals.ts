@@ -91,6 +91,18 @@ export const updateReferralProgramStatus = async (
   return data;
 };
 
+export const updateReferralProgramHidden = async (
+  id: string,
+  hidden: boolean,
+  context?: GetServerSidePropsContext | GetStaticPropsContext,
+): Promise<Program> => {
+  const instance = context ? ApiServer(context) : await ApiClient;
+  const { data } = await instance.patch<Program>(
+    `/referral/program/${id}/hidden/${hidden}`,
+  );
+  return data;
+};
+
 export const setReferralProgramAsDefault = async (
   id: string,
   context?: GetServerSidePropsContext | GetStaticPropsContext,

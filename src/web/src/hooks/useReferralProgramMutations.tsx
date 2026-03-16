@@ -38,6 +38,7 @@ import {
   searchReferralLinkUsagesAsReferrer,
   searchReferralPrograms,
   searchReferralProgramsInfo,
+  updateReferralProgramHidden,
   updateReferralProgramStatus,
 } from "~/api/services/referrals";
 import { ApiErrors } from "~/components/Status/ApiErrors";
@@ -495,6 +496,45 @@ export function useReferralProgramStatusMutation({
       toast(<ApiErrors error={error} />, {
         type: "error",
         toastId: `error-${programId}`,
+        autoClose: false,
+        icon: false,
+      });
+    },
+  });
+}
+
+export function useReferralProgramHiddenMutation({
+  programId,
+  programName = "",
+}: {
+  programId: string;
+  programName?: string;
+}) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (hidden: boolean) =>
+      updateReferralProgramHidden(programId, hidden),
+    onSuccess: (_, hidden) => {
+      analytics.trackEvent("referral_program_hidden_updated", {
+        programId,
+        programName,
+        hidden,
+      });
+
+      void queryClient.invalidateQueries({
+        queryKey: REFERRAL_PROGRAM_QUERY_KEYS.list(),
+      });
+      void queryClient.invalidateQueries({
+        queryKey: REFERRAL_PROGRAM_QUERY_KEYS.detail(programId),
+      });
+
+      toast.success(`Program ${hidden ? "hidden" : "unhidden"}`);
+    },
+    onError: (error: AxiosError) => {
+      toast(<ApiErrors error={error} />, {
+        type: "error",
+        toastId: `error-hidden-${programId}`,
         autoClose: false,
         icon: false,
       });

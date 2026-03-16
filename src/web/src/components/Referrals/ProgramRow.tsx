@@ -31,17 +31,12 @@ export const ProgramRow: React.FC<ProgramRowProps> = ({
           }`}
         >
           <div className="flex-shrink-0">
-            <AvatarImage
-              icon={program.imageURL ?? null}
-              alt={program.name}
-              size={44}
+            <ProgramImage
+              imageURL={program.imageURL}
+              name={program.name}
+              size={48}
+              className="shrink-0 border border-gray-200 bg-white"
             />
-            {/* <ProgramImage
-                imageURL={program.imageURL}
-                name={program.name}
-                size={48}
-                className="border border-gray-200 bg-white rounded-full"
-              /> */}
           </div>
 
           <div className="min-w-0 flex-1">
