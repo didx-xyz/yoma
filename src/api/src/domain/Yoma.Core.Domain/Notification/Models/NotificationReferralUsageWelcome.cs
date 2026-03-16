@@ -4,8 +4,8 @@ namespace Yoma.Core.Domain.Notification.Models
 {
   public sealed class NotificationReferralUsageWelcome : NotificationBase
   {
-    [JsonProperty("yoIDURL")]
-    public string? YoIDURL { get; set; }
+    [JsonProperty("dashboardURL")]
+    public string? DashboardURL { get; set; }
 
     [JsonProperty("linkClaimURL")]
     public string? LinkClaimURL { get; set; }
@@ -63,10 +63,10 @@ namespace Yoma.Core.Domain.Notification.Models
       if (messageType is not MessageType.SMS and not MessageType.WhatsApp)
         throw new NotSupportedException($"Only '{MessageType.SMS}' or '{MessageType.WhatsApp}' are supported");
 
-      if (string.IsNullOrWhiteSpace(YoIDURL))
-        throw new InvalidOperationException("YoIDURL is not set");
+      if (string.IsNullOrWhiteSpace(DashboardURL))
+        throw new InvalidOperationException("DashboardURL is not set");
 
-      var url = new Uri(YoIDURL);
+      var url = new Uri(DashboardURL);
       var formattedUrl = messageType == MessageType.WhatsApp
         ? url.PathAndQuery.TrimStart('/')
         : url.ToString();
