@@ -84,20 +84,8 @@ namespace Yoma.Core.Domain.Referral.Services
       var isAuthenticated = HttpContextAccessorHelper.UserContextAvailable(_httpContextAccessor);
 
       // Anonymous: only allow active + started
-      if (!isAuthenticated)
-      {
-        if (!Statuses_AnonymousAllowed.Contains(result.Status) || result.DateStart > DateTimeOffset.UtcNow)
-          throw new EntityNotFoundException($"Program not found");
-      }
-      // Authenticated users: enforce country scope
-      else
-      {
-        var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
-        var countryIdWorldwide = _countryService.GetByCodeAlpha2(Country.Worldwide.ToDescription()).Id;
-
-        if (!ProgramCountryPolicy.ProgramAccessibleToUser(countryIdWorldwide, user?.CountryId, result.Countries))
-          throw new EntityNotFoundException("Program not found");
-      }
+      if (!isAuthenticated && (!Statuses_AnonymousAllowed.Contains(result.Status) || result.DateStart > DateTimeOffset.UtcNow))
+        throw new EntityNotFoundException("Program not found");
 
       return result.ToInfo();
     }
@@ -109,20 +97,8 @@ namespace Yoma.Core.Domain.Referral.Services
       var isAuthenticated = HttpContextAccessorHelper.UserContextAvailable(_httpContextAccessor);
 
       // Anonymous: only allow active + started
-      if (!isAuthenticated)
-      {
-        if (!Statuses_AnonymousAllowed.Contains(result.Status) || result.DateStart > DateTimeOffset.UtcNow)
-          throw new EntityNotFoundException($"Program not found");
-      }
-      // Authenticated: enforce country scope
-      else
-      {
-        var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
-        var countryIdWorldwide = _countryService.GetByCodeAlpha2(Country.Worldwide.ToDescription()).Id;
-
-        if (!ProgramCountryPolicy.ProgramAccessibleToUser(countryIdWorldwide, user?.CountryId, result.Countries))
-          throw new EntityNotFoundException("Program not found");
-      }
+      if (!isAuthenticated && (!Statuses_AnonymousAllowed.Contains(result.Status) || result.DateStart > DateTimeOffset.UtcNow))
+        throw new EntityNotFoundException("Program not found");
 
       return result.ToInfo();
     }

@@ -126,7 +126,7 @@ namespace Yoma.Core.Api.Controllers
     [SwaggerOperation(Summary = "Get the referral program by Id (Anonymous)",
       Description =
         "By default, only programs that are active or uncompleted and have started can be retrieved, including hidden programs and programs that have reached their referrer participation limit. " +
-        "Authenticated users are restricted to programs available in their user country (or World-Wide) when a country is set; otherwise they may retrieve any program")]
+        "Authenticated users may retrieve any program")]
     [HttpGet("program/{id}/info")]
     [AllowAnonymous]
     public ActionResult<ProgramInfo> GetProgramInfoById([FromRoute] Guid id)
@@ -143,7 +143,7 @@ namespace Yoma.Core.Api.Controllers
     [SwaggerOperation(Summary = "Get the referral program by link Id (Anonymous)",
       Description =
         "By default, only programs that are active or uncompleted and have started can be retrieved, including hidden programs and programs that have reached their referrer participation limit. " +
-        "Authenticated users are restricted to programs available in their user country (or World-Wide) when a country is set; otherwise they may retrieve any program")]
+        "Authenticated users may retrieve any program")]
     [HttpGet("program/by-link/{linkId}/info")]
     [AllowAnonymous]
     public ActionResult<ProgramInfo> GetProgramInfoByLinkId([FromRoute] Guid linkId)
