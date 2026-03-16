@@ -68,6 +68,7 @@ const toProgramInfo = (
 ): ProgramInfo => ({
   id: program.id,
   name: program.name,
+  summary: program.summary,
   description: program.description,
   imageURL: imagePreviewUrl || program.imageURL,
   completionWindowInDays: program.completionWindowInDays,
@@ -130,7 +131,7 @@ export const ReferralProgramPagePreview: React.FC<
                 )}
               </p>
 
-              <p>{displayProgram.description}</p>
+              <p>{displayProgram.summary}</p>
             </ReferralInfoCard>
 
             {showProofOfPersonhoodAction && proofOfPersonhoodAction}
