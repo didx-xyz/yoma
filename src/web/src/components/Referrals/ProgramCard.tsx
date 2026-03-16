@@ -47,7 +47,7 @@ export const ProgramCard: React.FC<ProgramCardProps> = ({
           </h3>
 
           <p className="text-gray-dark line-clamp-3 text-sm leading-relaxed">
-            {data.description}
+            {data.summary ?? data.description}
           </p>
 
           <div className="mt-auto flex items-center gap-2">

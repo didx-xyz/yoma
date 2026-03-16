@@ -29,6 +29,7 @@ export const AdminProgramPreview: React.FC<AdminProgramPreviewProps> = ({
             data={{
               ...program,
               name: program.name || "Program Name",
+              summary: program.summary || "No summary provided",
               description: program.description || "No description provided",
               imageURL: imagePreviewUrl || program.imageURL,
             }}
@@ -59,6 +60,8 @@ export const AdminProgramPreview: React.FC<AdminProgramPreviewProps> = ({
               program={{
                 ...program,
                 imageURL: imagePreviewUrl || program.imageURL,
+                summary: program.summary || "No summary provided",
+                description: program.description || "No description provided",
               }}
               preview={true}
             />

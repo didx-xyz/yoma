@@ -518,11 +518,9 @@ const ReferralPrograms: NextPageWithLayout<{
                             )}
                           </div>
 
-                          {program.description && (
-                            <p className="text-gray-dark mt-0.5 line-clamp-2 text-xs">
-                              {program.description}
-                            </p>
-                          )}
+                          <p className="text-gray-dark mt-0.5 line-clamp-2 text-xs">
+                            {program.summary ?? program.description}
+                          </p>
                         </div>
                         <AdminReferralProgramActions
                           program={program}
@@ -753,7 +751,7 @@ const ReferralPrograms: NextPageWithLayout<{
                               </Link>
 
                               <p className="line-clamp-1 max-w-56 truncate text-sm">
-                                {program.description}
+                                {program.summary ?? program.description}
                               </p>
 
                               <div className="text-gray-dark mt-2 flex flex-row items-center gap-4 text-xs">

@@ -66,6 +66,7 @@ export interface ProgramStatusLookup {
 export interface Program {
   id: string;
   name: string;
+  summary: string | null;
   description: string | null;
   /**
    * Country segregation: backend returns countries as lookup objects.
@@ -105,6 +106,7 @@ export interface Program {
 export interface ProgramInfo {
   id: string;
   name: string;
+  summary: string | null;
   description: string | null;
   imageURL: string | null;
   completionWindowInDays: number | null;
@@ -221,6 +223,7 @@ export interface ProgramPathwayTaskInfo {
 // Request Models
 export interface ProgramRequestBase {
   name: string;
+  summary: string | null;
   description: string | null;
   image: File | null;
   countries: string[] | null;

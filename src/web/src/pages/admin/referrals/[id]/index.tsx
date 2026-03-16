@@ -70,6 +70,7 @@ import {
   ReferralProgramActionOptions,
 } from "~/components/Referrals/AdminReferralProgramActions";
 import ProgramImageUpload from "~/components/Referrals/ProgramImageUpload";
+import { Editor } from "~/components/RichText/Editor";
 import { ProgramStatusBadge } from "~/components/Referrals/ProgramStatusBadge";
 import { ApiErrors } from "~/components/Status/ApiErrors";
 import { InternalServerError } from "~/components/Status/InternalServerError";
@@ -107,14 +108,13 @@ const schemaStep1 = z
       .string()
       .min(1, "Name is required")
       .max(150, "Name cannot exceed 150 characters"),
-    description: z
+    description: z.string().nullable().optional(),
+    summary: z
       .string()
-      .nullable()
-      .transform((val) => val ?? "")
-      .pipe(z.string().max(500, "Description cannot exceed 500 characters")),
+      .min(1, "Summary is required.")
+      .max(150, "Summary cannot exceed 150 characters."),
     image: z.any().optional(), // Store uploaded image file
     imageURL: z.string().nullable().optional(), // Existing image URL
-    //isDefault: z.boolean(),
   })
   .refine(
     (data) => {
@@ -704,6 +704,7 @@ const ReferralProgramForm: NextPageWithLayout<{
     return {
       id: "",
       name: "",
+      summary: null,
       description: null,
       countries: [],
       dateStart: todayUTC.toISOString(),
@@ -749,6 +750,7 @@ const ReferralProgramForm: NextPageWithLayout<{
     trigger: triggerStep1,
     setValue: setValueStep1,
     getValues: getValuesStep1,
+    control: controlStep1,
   } = useForm({
     resolver: zodResolver(schemaStep1),
     defaultValues: formData,
@@ -1393,7 +1395,8 @@ const ReferralProgramForm: NextPageWithLayout<{
         // Build request object - convert Program to request format
         const baseRequest: Partial<ProgramRequestCreate> = {
           name: data.name,
-          description: data.description,
+          summary: data.summary ?? null,
+          description: data.description ?? null,
           image: null, // Image handled separately
           countries: countryIds,
           completionWindowInDays: data.completionWindowInDays,
@@ -1991,7 +1994,27 @@ const ReferralProgramForm: NextPageWithLayout<{
                     </FormField>
 
                     <FormField
+                      label="Summary"
+                      subLabel="A short summary of the program (max 150 characters). This will be displayed on the search results."
+                      showWarningIcon={!!formStateStep1.errors.summary?.message}
+                      showError={
+                        !!formStateStep1.touchedFields.summary ||
+                        formStateStep1.isSubmitted
+                      }
+                      error={formStateStep1.errors.summary?.message}
+                    >
+                      {/* TODO: replace with FormTextArea component */}
+                      <textarea
+                        className="input textarea border-gray focus:border-gray h-16 w-full rounded-md text-[1rem] leading-tight focus:outline-none"
+                        placeholder="Enter summary..."
+                        maxLength={150}
+                        {...registerStep1("summary")}
+                      />
+                    </FormField>
+
+                    <FormField
                       label="Description"
+                      subLabel="A detailed description of the program. This will be displayed on the program page."
                       showWarningIcon={
                         !!formStateStep1.errors.description?.message
                       }
@@ -2001,11 +2024,23 @@ const ReferralProgramForm: NextPageWithLayout<{
                       }
                       error={formStateStep1.errors.description?.message}
                     >
-                      <textarea
-                        placeholder="Enter program description"
-                        className="textarea textarea-bordered w-full"
-                        rows={4}
-                        {...registerStep1("description")}
+                      <FormMessage messageType={FormMessageType.Info}>
+                        Ensure to add a space (&apos; &apos;) on your empty
+                        lines if you want to add a line break.
+                      </FormMessage>
+
+                      <Controller
+                        control={controlStep1}
+                        name="description"
+                        render={({ field: { onChange, value, onBlur } }) => (
+                          <Editor
+                            value={value ?? ""}
+                            readonly={false}
+                            onBlur={onBlur} // mark the field as touched
+                            onChange={onChange}
+                            placeholder="Enter description..."
+                          />
+                        )}
                       />
                     </FormField>
 

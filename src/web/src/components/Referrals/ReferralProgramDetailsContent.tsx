@@ -10,6 +10,7 @@ import { ReferralMainColumns } from "~/components/Referrals/ReferralMainColumns"
 import { ReferralStatCard } from "~/components/Referrals/ReferralStatCard";
 import { ReferralTasksCard } from "~/components/Referrals/ReferralTasksCard";
 import { ReferralTopCard } from "~/components/Referrals/ReferralTopCard";
+import { Editor } from "../RichText/Editor";
 
 interface ReferralProgramDetailsContentProps {
   program: Program | ProgramInfo;
@@ -58,6 +59,7 @@ const toPathwayInfo = (
 const toProgramInfo = (program: Program | ProgramInfo): ProgramInfo => ({
   id: program.id,
   name: program.name,
+  summary: program.summary,
   description: program.description,
   imageURL: program.imageURL,
   completionWindowInDays: program.completionWindowInDays,
@@ -95,10 +97,14 @@ export const ReferralProgramDetailsContent: React.FC<
         left={
           <>
             <ReferralInfoCard>
-              <p className="text-gray-dark text-sm md:text-base">
-                {displayProgram.description ||
-                  "Programme description goes here"}
-              </p>
+              <div className="-m-2 -mb-4 md:-mb-6">
+                <Editor
+                  value={
+                    displayProgram.description ?? displayProgram.summary ?? ""
+                  }
+                  readonly={true}
+                />
+              </div>
             </ReferralInfoCard>
 
             {displayProgram.pathwayRequired && (

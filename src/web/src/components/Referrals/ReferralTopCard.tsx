@@ -21,7 +21,7 @@ export const ReferralTopCard = ({
         {program.name}
       </p>
       <p className="text-gray-dark text-sm md:text-base">
-        {program.description || "Referral programme"}
+        {program.summary ?? program.description}
       </p>
 
       <ProgramBadges
