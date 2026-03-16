@@ -1,7 +1,6 @@
 import React from "react";
 import type { ProgramInfo } from "~/api/models/referrals";
 import { ProgramImage } from "./ProgramImage";
-import { AvatarImage } from "../AvatarImage";
 
 interface ProgramRowProps {
   program: ProgramInfo;

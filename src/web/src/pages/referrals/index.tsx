@@ -39,11 +39,11 @@ import { getUserProfile } from "~/api/services/user";
 import Suspense from "~/components/Common/Suspense";
 import MainLayout from "~/components/Layout/Main";
 import NoRowsMessage from "~/components/NoRowsMessage";
-import { ColoredSectionShell } from "~/components/Referrals/new/ColoredSectionShell";
-import { ReferralFriendSlideCard } from "~/components/Referrals/new/ReferralFriendSlideCard";
-import { ReferralProgramSlideCard } from "~/components/Referrals/new/ReferralProgramSlideCard";
-import { ReferralSlidesCarousel } from "~/components/Referrals/new/ReferralSlidesCarousel";
+import { ColoredSectionShell } from "~/components/Referrals/ColoredSectionShell";
 import { ReferralBlockedView } from "~/components/Referrals/ReferralBlockedView";
+import { ReferralFriendSlideCard } from "~/components/Referrals/ReferralFriendSlideCard";
+import { ReferralProgramSlideCard } from "~/components/Referrals/ReferralProgramSlideCard";
+import { ReferralSlidesCarousel } from "~/components/Referrals/ReferralSlidesCarousel";
 import { ReferrerCreateLinkModal } from "~/components/Referrals/ReferrerCreateLinkModal";
 import { ReferrerStats } from "~/components/Referrals/ReferrerStats";
 import { SignInButton } from "~/components/SignInButton";
@@ -145,7 +145,6 @@ const ProgramsSection = ({
   isLoading,
   userCountry,
   onCountryChange,
-  onProgramClick,
 }: {
   programs: ProgramInfo[];
   totalCount: number;
@@ -154,7 +153,6 @@ const ProgramsSection = ({
   isLoading: boolean;
   userCountry?: Country | null;
   onCountryChange: (ids: string[]) => void;
-  onProgramClick: (program: ProgramInfo) => void;
 }) => {
   const [programs, setPrograms] = useState(initialPrograms);
   const screenWidth = useAtomValue(screenWidthAtom);
@@ -317,7 +315,7 @@ const ProgramsSection = ({
         });
       }
     },
-    [visibleSlides, totalSlides, loadPrograms, PAGE_SIZE, effectiveTotalAll],
+    [visibleSlides, totalSlides, loadPrograms, effectiveTotalAll],
   );
 
   return (
@@ -653,22 +651,18 @@ const ReferralsPage: NextPageWithLayout<{
       enabled: shouldFetchPrograms,
     });
 
-  const { data: linksData, isLoading: linksLoading } = useReferralLinksQuery(
-    1,
-    PAGE_SIZE,
-    { enabled: isAuthenticated && !isBlocked },
-  );
+  const { data: linksData } = useReferralLinksQuery(1, PAGE_SIZE, {
+    enabled: isAuthenticated && !isBlocked,
+  });
   const hasLinks = (linksData?.items?.length ?? 0) > 0;
-  //const hasPrograms = (programsData?.items?.length ?? 0) > 0;
 
-  const { data: refereeUsagesData, isLoading: refereeUsagesLoading } =
-    useReferralLinkUsagesRefereeQuery(1, 5, {
-      statuses: [
-        ReferralLinkUsageStatus.Pending,
-        ReferralLinkUsageStatus.Expired,
-      ],
-      enabled: isAuthenticated && !isBlocked && isReferee,
-    });
+  const { data: refereeUsagesData } = useReferralLinkUsagesRefereeQuery(1, 5, {
+    statuses: [
+      ReferralLinkUsageStatus.Pending,
+      ReferralLinkUsageStatus.Expired,
+    ],
+    enabled: isAuthenticated && !isBlocked && isReferee,
+  });
   const hasRefereeUsages = (refereeUsagesData?.totalCount ?? 0) > 0;
   const showReferrerSections = hasLinks;
   const showRefereeSection = isReferee && hasRefereeUsages;
@@ -730,33 +724,27 @@ const ReferralsPage: NextPageWithLayout<{
     myReferredFriendsNextPageToLoadRef.current = 2;
   }, [referrerUsagesData?.items, referrerUsagesData?.totalCount]);
 
-  const loadMoreMyProgrammes = useCallback(
-    async (pageNumber: number) => {
-      return await searchReferralLinks({
-        pageNumber,
-        pageSize: PAGE_SIZE,
-        programId: null,
-        valueContains: null,
-        statuses: null,
-      });
-    },
-    [PAGE_SIZE],
-  );
+  const loadMoreMyProgrammes = useCallback(async (pageNumber: number) => {
+    return await searchReferralLinks({
+      pageNumber,
+      pageSize: PAGE_SIZE,
+      programId: null,
+      valueContains: null,
+      statuses: null,
+    });
+  }, []);
 
-  const loadMoreMyReferredFriends = useCallback(
-    async (pageNumber: number) => {
-      return await searchReferralLinkUsagesAsReferrer({
-        pageNumber,
-        pageSize: PAGE_SIZE,
-        programId: null,
-        linkId: null,
-        statuses: null,
-        dateStart: null,
-        dateEnd: null,
-      });
-    },
-    [PAGE_SIZE],
-  );
+  const loadMoreMyReferredFriends = useCallback(async (pageNumber: number) => {
+    return await searchReferralLinkUsagesAsReferrer({
+      pageNumber,
+      pageSize: PAGE_SIZE,
+      programId: null,
+      linkId: null,
+      statuses: null,
+      dateStart: null,
+      dateEnd: null,
+    });
+  }, []);
 
   const onMyProgrammesSlide = useCallback(
     (props: OnSlideProps) => {
@@ -810,7 +798,7 @@ const ReferralsPage: NextPageWithLayout<{
       carouselVisibleSlides,
       myProgrammeLinks.length,
       loadMoreMyProgrammes,
-      PAGE_SIZE,
+
       myProgrammesTotalCount,
     ],
   );
@@ -867,7 +855,6 @@ const ReferralsPage: NextPageWithLayout<{
       carouselVisibleSlides,
       myReferralUsages.length,
       loadMoreMyReferredFriends,
-      PAGE_SIZE,
       myReferredFriendsTotalCount,
     ],
   );
@@ -879,83 +866,6 @@ const ReferralsPage: NextPageWithLayout<{
   } = useMyReferralAnalyticsQuery(ReferralAnalyticsRole.Referrer, {
     enabled: isAuthenticated && !isBlocked,
   });
-
-  //const programs = programsData?.items || [];
-  //   const programById = useMemo(
-  //     () => new Map(programs.map((program) => [program.id, program])),
-  //     [programs],
-  //   );
-  //   const programSnapshotByIdRef = useRef<
-  //     Record<
-  //       string,
-  //       {
-  //         name: string;
-  //         description: string | null;
-  //         imageURL: string | null;
-  //         rewardReferrer: number | null;
-  //         rewardReferee: number | null;
-  //         timeDays: number | null;
-  //       }
-  //     >
-  //   >({});
-
-  //   useEffect(() => {
-  //     programs.forEach((program) => {
-  //       programSnapshotByIdRef.current[program.id] = {
-  //         name: program.name,
-  //         description: program.description,
-  //         imageURL: program.imageURL,
-  //         rewardReferrer: program.zltoRewardReferrer,
-  //         rewardReferee: program.zltoRewardReferee,
-  //         timeDays: program.completionWindowInDays,
-  //       };
-  //     });
-  //   }, [programs]);
-
-  //   const getProgramSnapshot = useCallback(
-  //     (programId: string) => {
-  //       const fromCurrentData = programById.get(programId);
-  //       if (fromCurrentData) {
-  //         return {
-  //           name: fromCurrentData.name,
-  //           description: fromCurrentData.description,
-  //           imageURL: fromCurrentData.imageURL,
-  //           rewardReferrer: fromCurrentData.zltoRewardReferrer,
-  //           rewardReferee: fromCurrentData.zltoRewardReferee,
-  //           timeDays: fromCurrentData.completionWindowInDays,
-  //         };
-  //       }
-
-  //       return programSnapshotByIdRef.current[programId];
-  //     },
-  //     [programById],
-  //   );
-
-  //   const myProgrammeSlides = useMemo(() => {
-  //     const linkItems = linksData?.items ?? [];
-
-  //     return linkItems
-  //       .map((link) => {
-  //         const program = getProgramSnapshot(link.programId);
-  //         return {
-  //           id: link.id,
-  //           programId: link.programId,
-  //           title: link.programName || program?.name || "Programme",
-  //           description:
-  //             link.programDescription ||
-  //             program?.description ||
-  //             "Share this programme with your network to earn rewards.",
-  //           imageURL: program?.imageURL,
-  //           reward: program?.rewardReferrer,
-  //           timeDays: program?.timeDays,
-  //         };
-  //       })
-  //       .filter(
-  //         (slide, index, all) =>
-  //           index ===
-  //           all.findIndex((other) => other.programId === slide.programId),
-  //       );
-  //   }, [getProgramSnapshot, linksData?.items]);
 
   const myReferralSlides = useMemo(() => {
     const usageItems = myReferralUsages;
@@ -974,23 +884,6 @@ const ReferralsPage: NextPageWithLayout<{
       timeDays: usage.timeRemainingInDays,
     }));
   }, [myReferralUsages]);
-
-  //   const myRefereeSlides = useMemo(() => {
-  //     const usageItems = (refereeUsagesData?.items ?? []) as ReferralLinkUsage[];
-
-  //     return usageItems.map((usage) => ({
-  //       id: usage.id,
-  //       programId: usage.programId,
-  //       title: usage.programName || "Programme",
-  //       description:
-  //         usage.programDescription ||
-  //         "Track your progress and complete the required actions.",
-  //       imageURL: getProgramSnapshot(usage.programId)?.imageURL,
-  //       status: usage.status,
-  //       reward: usage.zltoRewardReferee,
-  //       timeDays: usage.timeRemainingInDays,
-  //     }));
-  //   }, [getProgramSnapshot, refereeUsagesData?.items]);
 
   // Hero and stats values from centralized analytics query
   const isAuthStatusLoading = status === "loading";
@@ -1018,13 +911,6 @@ const ReferralsPage: NextPageWithLayout<{
   const heroStatsLoading =
     isAuthStatusLoading ||
     (isAuthenticated && !isBlocked && referrerAnalyticsLoading);
-
-  // HANDLERS
-  const handleCreateLinkForProgram = useCallback((program: ProgramInfo) => {
-    setSelectedProgramForLink(program);
-    setSelectedLinkForEdit(null);
-    setCreateLinkModalVisible(true);
-  }, []);
 
   return (
     <>
@@ -1100,7 +986,6 @@ const ReferralsPage: NextPageWithLayout<{
                 sectionClassName="relative z-10 w-full pt-8 pb-8"
               >
                 <ProgramsSection
-                  onProgramClick={() => {}}
                   programs={programsData?.items ?? []}
                   totalCount={programsData?.totalCount || 0}
                   countries={countriesWithWW}
@@ -1255,7 +1140,6 @@ const ReferralsPage: NextPageWithLayout<{
                     sectionClassName="relative z-10 w-full pt-10 pb-8"
                   >
                     <ProgramsSection
-                      onProgramClick={handleCreateLinkForProgram}
                       programs={programsData?.items ?? []}
                       totalCount={programsData?.totalCount || 0}
                       countries={countriesWithWW}

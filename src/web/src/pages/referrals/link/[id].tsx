@@ -8,7 +8,7 @@ import { useRouter } from "next/router";
 import { type ReactElement, useState } from "react";
 import { FaShareAlt } from "react-icons/fa";
 import { IoTimeOutline, IoTrophyOutline } from "react-icons/io5";
-import { ProgramStatus, type ReferralLink } from "~/api/models/referrals";
+import { ProgramStatus } from "~/api/models/referrals";
 import type { UserProfile } from "~/api/models/user";
 import {
   getReferralLinkById,
@@ -16,21 +16,21 @@ import {
 } from "~/api/services/referrals";
 import { getUserProfile } from "~/api/services/user";
 import MainLayout from "~/components/Layout/Main";
-import { ReferralMainColumns } from "~/components/Referrals/new/ReferralMainColumns";
-import { ReferralShell } from "~/components/Referrals/new/ReferralShell";
-import { ReferralStatCard } from "~/components/Referrals/new/ReferralStatCard";
-import { ReferralTopCard } from "~/components/Referrals/new/ReferralTopCard";
 import { ReferralBlockedView } from "~/components/Referrals/ReferralBlockedView";
+import { ReferralMainColumns } from "~/components/Referrals/ReferralMainColumns";
 import { ReferralShareModal } from "~/components/Referrals/ReferralShareModal";
+import { ReferralShell } from "~/components/Referrals/ReferralShell";
+import { ReferralStatCard } from "~/components/Referrals/ReferralStatCard";
 import { ReferralStatsSmallLink } from "~/components/Referrals/ReferralStatsSmallLink";
+import { ReferralTopCard } from "~/components/Referrals/ReferralTopCard";
 import { ReferrerReferralsList } from "~/components/Referrals/ReferrerReferralsList";
 import { LoadingInline } from "~/components/Status/LoadingInline";
-import { handleUserSignIn } from "~/lib/authUtils";
 import {
   REFERRAL_PROGRAM_QUERY_KEYS,
   useReferralLinkByIdQuery,
   useReferralProgramInfoByLinkQuery,
 } from "~/hooks/useReferralProgramMutations";
+import { handleUserSignIn } from "~/lib/authUtils";
 import { THEME_WHITE } from "~/lib/constants";
 import { config } from "~/lib/react-query-config";
 import { currentLanguageAtom, userProfileAtom } from "~/lib/store";

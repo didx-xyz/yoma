@@ -18,7 +18,7 @@ import {
 import { useReferralProgramAnalyticsQuery } from "~/hooks/useReferralProgramMutations";
 import { DATE_FORMAT_HUMAN } from "~/lib/constants";
 import { ProgramStatusBadge } from "./ProgramStatusBadge";
-import { ReferralTasksCard } from "./new/ReferralTasksCard";
+import { ReferralTasksCard } from "./ReferralTasksCard";
 import FormMessage, { FormMessageType } from "../Common/FormMessage";
 import { ProgramCard } from "./ProgramCard";
 

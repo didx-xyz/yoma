@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { FiBell, FiUser } from "react-icons/fi";
+import { FiUser } from "react-icons/fi";
 import { ReferralLinkUsageStatus } from "~/api/models/referrals";
 
 interface ReferralFriendSlideCardProps {

@@ -1,25 +1,31 @@
-import { type ReactNode, useMemo } from "react";
+import { useMemo, type ReactNode } from "react";
 import { IoTimeOutline, IoTrophyOutline } from "react-icons/io5";
 import type {
   Program,
   ProgramInfo,
   ProgramPathwayInfo,
+  ProgramPathwayProgress,
 } from "~/api/models/referrals";
-import { ReferralInfoCard } from "~/components/Referrals/new/ReferralInfoCard";
-import { ReferralMainColumns } from "~/components/Referrals/new/ReferralMainColumns";
-import { ReferralStatCard } from "~/components/Referrals/new/ReferralStatCard";
-import { ReferralTasksCard } from "~/components/Referrals/new/ReferralTasksCard";
-import { ReferralTopCard } from "~/components/Referrals/new/ReferralTopCard";
+import { ReferralInfoCard } from "~/components/Referrals/ReferralInfoCard";
+import { ReferralMainColumns } from "~/components/Referrals/ReferralMainColumns";
+import { ReferralProgressCard } from "~/components/Referrals/ReferralProgressCard";
+import { ReferralStatCard } from "~/components/Referrals/ReferralStatCard";
+import { ReferralTasksCard } from "~/components/Referrals/ReferralTasksCard";
+import { ReferralTopCard } from "~/components/Referrals/ReferralTopCard";
 
-interface ReferralProgramDetailsContentProps {
+interface ReferralProgramPagePreviewProps {
   program: Program | ProgramInfo;
-  cta?: ReactNode;
-  preview?: boolean;
+  imagePreviewUrl?: string | null;
+  referrerDisplayName?: string;
+  showProofOfPersonhoodAction?: boolean;
+  proofOfPersonhoodAction?: ReactNode;
+  progressModel?: ProgramPathwayProgress | null;
+  percentComplete?: number;
+  timeRemainingDescription?: string;
 }
 
 const toPathwayInfo = (
   pathway: Program["pathway"] | ProgramInfo["pathway"],
-  preview = false,
 ): ProgramPathwayInfo | null => {
   if (!pathway) return null;
 
@@ -56,11 +62,14 @@ const toPathwayInfo = (
   };
 };
 
-const toProgramInfo = (program: Program | ProgramInfo): ProgramInfo => ({
+const toProgramInfo = (
+  program: Program | ProgramInfo,
+  imagePreviewUrl?: string | null,
+): ProgramInfo => ({
   id: program.id,
   name: program.name,
   description: program.description,
-  imageURL: program.imageURL,
+  imageURL: imagePreviewUrl || program.imageURL,
   completionWindowInDays: program.completionWindowInDays,
   completionLimitReferee: program.completionLimitReferee,
   completionLimit: program.completionLimit,
@@ -78,59 +87,78 @@ const toProgramInfo = (program: Program | ProgramInfo): ProgramInfo => ({
   pathway: toPathwayInfo(program.pathway),
 });
 
-export const ReferralProgramDetailsContent: React.FC<
-  ReferralProgramDetailsContentProps
-> = ({ program, cta, preview = false }) => {
-  const displayProgram = useMemo(() => toProgramInfo(program), [program]);
+export const ReferralProgramPagePreview: React.FC<
+  ReferralProgramPagePreviewProps
+> = ({
+  program,
+  imagePreviewUrl,
+  referrerDisplayName = "Referrer",
+  showProofOfPersonhoodAction = false,
+  proofOfPersonhoodAction,
+  progressModel,
+  percentComplete = 0,
+  timeRemainingDescription = "No time limit",
+}) => {
+  const displayProgram = useMemo(
+    () => toProgramInfo(program, imagePreviewUrl),
+    [program, imagePreviewUrl],
+  );
 
   return (
     <>
       <ReferralTopCard
         program={displayProgram}
-        rewardsReferrer={true}
-        rewardsReferee={false}
-        cta={cta}
+        rewardsReferrer={false}
+        rewardsReferee={true}
       />
 
       <ReferralMainColumns
         left={
           <>
             <ReferralInfoCard>
-              <p className="text-gray-dark text-sm md:text-base">
-                {displayProgram.description ||
-                  "Programme description goes here"}
+              <p>
+                Welcome to Yoma! You were referred by{" "}
+                <strong>{referrerDisplayName}</strong>.
+                {(displayProgram.zltoRewardReferee || 0) > 0 ? (
+                  <>
+                    {" "}
+                    Complete the below pathway and get the opportunity to win{" "}
+                    <strong>{displayProgram.zltoRewardReferee}</strong> Zlto.
+                  </>
+                ) : (
+                  <> Complete the below pathway to complete this programme.</>
+                )}
               </p>
+
+              <p>{displayProgram.description}</p>
             </ReferralInfoCard>
 
-            {displayProgram.pathwayRequired && (
-              <ReferralTasksCard
-                model={displayProgram.pathway}
-                preview={preview}
-              />
-            )}
+            {showProofOfPersonhoodAction && proofOfPersonhoodAction}
+
+            <ReferralTasksCard
+              model={displayProgram.pathway}
+              progressModel={progressModel}
+            />
           </>
         }
         right={
           <div className="flex flex-col gap-2 rounded-xl bg-white p-4 shadow">
+            <ReferralProgressCard percentComplete={percentComplete} />
+
             <ReferralStatCard
               icon={<IoTrophyOutline className="h-5 w-5" />}
               header="Reward"
               description={
-                (displayProgram.zltoRewardReferrer || 0) > 0
-                  ? `${displayProgram.zltoRewardReferrer} Zlto`
+                (displayProgram.zltoRewardReferee || 0) > 0
+                  ? `${displayProgram.zltoRewardReferee} Zlto`
                   : "No reward"
               }
-              className="bg-purple-dark [&_.referral-stat-card-description]:text-white [&_.referral-stat-card-header]:text-white [&_.referral-stat-card-icon-wrap]:bg-white/20 [&_.referral-stat-card-icon-wrap]:text-white"
             />
 
             <ReferralStatCard
               icon={<IoTimeOutline className="h-5 w-5" />}
-              header="Time requirement"
-              description={
-                displayProgram.completionWindowInDays
-                  ? `${displayProgram.completionWindowInDays} day${displayProgram.completionWindowInDays === 1 ? "" : "s"}`
-                  : "No time limit"
-              }
+              header="Time remaining"
+              description={timeRemainingDescription}
             />
           </div>
         }

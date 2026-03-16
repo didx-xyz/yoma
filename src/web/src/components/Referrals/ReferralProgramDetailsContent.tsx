@@ -1,27 +1,20 @@
-import { useMemo, type ReactNode } from "react";
+import { type ReactNode, useMemo } from "react";
 import { IoTimeOutline, IoTrophyOutline } from "react-icons/io5";
 import type {
   Program,
   ProgramInfo,
   ProgramPathwayInfo,
-  ProgramPathwayProgress,
 } from "~/api/models/referrals";
-import { ReferralInfoCard } from "~/components/Referrals/new/ReferralInfoCard";
-import { ReferralMainColumns } from "~/components/Referrals/new/ReferralMainColumns";
-import { ReferralProgressCard } from "~/components/Referrals/new/ReferralProgressCard";
-import { ReferralStatCard } from "~/components/Referrals/new/ReferralStatCard";
-import { ReferralTasksCard } from "~/components/Referrals/new/ReferralTasksCard";
-import { ReferralTopCard } from "~/components/Referrals/new/ReferralTopCard";
+import { ReferralInfoCard } from "~/components/Referrals/ReferralInfoCard";
+import { ReferralMainColumns } from "~/components/Referrals/ReferralMainColumns";
+import { ReferralStatCard } from "~/components/Referrals/ReferralStatCard";
+import { ReferralTasksCard } from "~/components/Referrals/ReferralTasksCard";
+import { ReferralTopCard } from "~/components/Referrals/ReferralTopCard";
 
-interface ReferralProgramPagePreviewProps {
+interface ReferralProgramDetailsContentProps {
   program: Program | ProgramInfo;
-  imagePreviewUrl?: string | null;
-  referrerDisplayName?: string;
-  showProofOfPersonhoodAction?: boolean;
-  proofOfPersonhoodAction?: ReactNode;
-  progressModel?: ProgramPathwayProgress | null;
-  percentComplete?: number;
-  timeRemainingDescription?: string;
+  cta?: ReactNode;
+  preview?: boolean;
 }
 
 const toPathwayInfo = (
@@ -62,14 +55,11 @@ const toPathwayInfo = (
   };
 };
 
-const toProgramInfo = (
-  program: Program | ProgramInfo,
-  imagePreviewUrl?: string | null,
-): ProgramInfo => ({
+const toProgramInfo = (program: Program | ProgramInfo): ProgramInfo => ({
   id: program.id,
   name: program.name,
   description: program.description,
-  imageURL: imagePreviewUrl || program.imageURL,
+  imageURL: program.imageURL,
   completionWindowInDays: program.completionWindowInDays,
   completionLimitReferee: program.completionLimitReferee,
   completionLimit: program.completionLimit,
@@ -87,78 +77,59 @@ const toProgramInfo = (
   pathway: toPathwayInfo(program.pathway),
 });
 
-export const ReferralProgramPagePreview: React.FC<
-  ReferralProgramPagePreviewProps
-> = ({
-  program,
-  imagePreviewUrl,
-  referrerDisplayName = "Referrer",
-  showProofOfPersonhoodAction = false,
-  proofOfPersonhoodAction,
-  progressModel,
-  percentComplete = 0,
-  timeRemainingDescription = "No time limit",
-}) => {
-  const displayProgram = useMemo(
-    () => toProgramInfo(program, imagePreviewUrl),
-    [program, imagePreviewUrl],
-  );
+export const ReferralProgramDetailsContent: React.FC<
+  ReferralProgramDetailsContentProps
+> = ({ program, cta, preview = false }) => {
+  const displayProgram = useMemo(() => toProgramInfo(program), [program]);
 
   return (
     <>
       <ReferralTopCard
         program={displayProgram}
-        rewardsReferrer={false}
-        rewardsReferee={true}
+        rewardsReferrer={true}
+        rewardsReferee={false}
+        cta={cta}
       />
 
       <ReferralMainColumns
         left={
           <>
             <ReferralInfoCard>
-              <p>
-                Welcome to Yoma! You were referred by{" "}
-                <strong>{referrerDisplayName}</strong>.
-                {(displayProgram.zltoRewardReferee || 0) > 0 ? (
-                  <>
-                    {" "}
-                    Complete the below pathway and get the opportunity to win{" "}
-                    <strong>{displayProgram.zltoRewardReferee}</strong> Zlto.
-                  </>
-                ) : (
-                  <> Complete the below pathway to complete this programme.</>
-                )}
+              <p className="text-gray-dark text-sm md:text-base">
+                {displayProgram.description ||
+                  "Programme description goes here"}
               </p>
-
-              <p>{displayProgram.description}</p>
             </ReferralInfoCard>
 
-            {showProofOfPersonhoodAction && proofOfPersonhoodAction}
-
-            <ReferralTasksCard
-              model={displayProgram.pathway}
-              progressModel={progressModel}
-            />
+            {displayProgram.pathwayRequired && (
+              <ReferralTasksCard
+                model={displayProgram.pathway}
+                preview={preview}
+              />
+            )}
           </>
         }
         right={
           <div className="flex flex-col gap-2 rounded-xl bg-white p-4 shadow">
-            <ReferralProgressCard percentComplete={percentComplete} />
-
             <ReferralStatCard
               icon={<IoTrophyOutline className="h-5 w-5" />}
               header="Reward"
               description={
-                (displayProgram.zltoRewardReferee || 0) > 0
-                  ? `${displayProgram.zltoRewardReferee} Zlto`
+                (displayProgram.zltoRewardReferrer || 0) > 0
+                  ? `${displayProgram.zltoRewardReferrer} Zlto`
                   : "No reward"
               }
+              className="bg-purple-dark [&_.referral-stat-card-description]:text-white [&_.referral-stat-card-header]:text-white [&_.referral-stat-card-icon-wrap]:bg-white/20 [&_.referral-stat-card-icon-wrap]:text-white"
             />
 
             <ReferralStatCard
               icon={<IoTimeOutline className="h-5 w-5" />}
-              header="Time remaining"
-              description={timeRemainingDescription}
+              header="Time requirement"
+              description={
+                displayProgram.completionWindowInDays
+                  ? `${displayProgram.completionWindowInDays} day${displayProgram.completionWindowInDays === 1 ? "" : "s"}`
+                  : "No time limit"
+              }
             />
           </div>
         }

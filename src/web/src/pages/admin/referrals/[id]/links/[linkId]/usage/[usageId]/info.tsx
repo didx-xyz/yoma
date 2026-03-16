@@ -25,7 +25,7 @@ import { DATE_FORMAT_HUMAN } from "~/lib/constants";
 import { getSafeUrl, getThemeFromRole } from "~/lib/utils";
 import type { NextPageWithLayout } from "~/pages/_app";
 import { authOptions, type User } from "~/server/auth";
-import { ReferralTasksCard } from "~/components/Referrals/new/ReferralTasksCard";
+import { ReferralTasksCard } from "~/components/Referrals/ReferralTasksCard";
 
 interface IParams extends ParsedUrlQuery {
   id: string;

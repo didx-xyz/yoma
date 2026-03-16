@@ -1,6 +1,5 @@
 import React from "react";
 import { IoMdClose } from "react-icons/io";
-import { IoLinkOutline } from "react-icons/io5";
 import CustomModal from "~/components/Common/CustomModal";
 import { ReferrerLinkDetails } from "./ReferrerLinkDetails";
 import { ShareButtons } from "./ShareButtons";

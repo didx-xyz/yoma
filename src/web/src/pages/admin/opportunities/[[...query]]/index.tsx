@@ -96,12 +96,15 @@ const OpportunitiesAdmin: NextPageWithLayout<{
     { value: "2", label: "Expired" },
   ];
 
-  const lookups_statuses: SelectOption[] = [
-    { value: "0", label: "Active" },
-    { value: "1", label: "Archived" },
-    { value: "2", label: "Expired" },
-    { value: "3", label: "Inactive" },
-  ];
+  const lookups_statuses = useMemo<SelectOption[]>(
+    () => [
+      { value: "0", label: "Active" },
+      { value: "1", label: "Archived" },
+      { value: "2", label: "Expired" },
+      { value: "3", label: "Inactive" },
+    ],
+    [],
+  );
 
   // get filter parameters from route
   const {

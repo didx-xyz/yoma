@@ -16,7 +16,6 @@ import CustomModal from "~/components/Common/CustomModal";
 import { ApiErrors } from "../Status/ApiErrors";
 import { RefereeProgramDetails } from "./RefereeProgramDetails";
 import { ReferrerProgramsList } from "./ReferrerProgramsList";
-import FormLabel from "../Common/FormLabel";
 import { LoadingInline } from "../Status/LoadingInline";
 
 interface CreateLinkModalProps {

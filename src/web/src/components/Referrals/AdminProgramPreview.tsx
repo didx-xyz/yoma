@@ -2,8 +2,8 @@ import type { Opportunity } from "~/api/models/opportunity";
 import type { Program } from "~/api/models/referrals";
 import FormMessage, { FormMessageType } from "~/components/Common/FormMessage";
 import { ProgramCard } from "~/components/Referrals/ProgramCard";
-import { ReferralProgramDetailsContent } from "~/components/Referrals/new/ReferralProgramDetailsContent";
-import { ReferralShell } from "~/components/Referrals/new/ReferralShell";
+import { ReferralProgramDetailsContent } from "~/components/Referrals/ReferralProgramDetailsContent";
+import { ReferralShell } from "~/components/Referrals/ReferralShell";
 
 interface AdminProgramPreviewProps {
   program: Program;

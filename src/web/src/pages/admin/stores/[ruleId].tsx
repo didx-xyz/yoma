@@ -28,7 +28,6 @@ import { toast } from "react-toastify";
 import z from "zod";
 import type { SelectOption } from "~/api/models/lookups";
 import type {
-  OpportunityItem,
   StoreAccessControlRuleInfo,
   StoreAccessControlRulePreviewInfo,
   StoreAccessControlRuleRequestUpdate,
@@ -69,6 +68,7 @@ import { config } from "~/lib/react-query-config";
 import { debounce, getSafeUrl } from "~/lib/utils";
 import type { NextPageWithLayout } from "~/pages/_app";
 import { authOptions, type User } from "~/server/auth";
+import type { OpportunityItem } from "~/api/models/opportunity";
 
 interface IParams extends ParsedUrlQuery {
   ruleId: string;

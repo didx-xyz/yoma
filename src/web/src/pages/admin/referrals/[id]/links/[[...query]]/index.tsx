@@ -7,41 +7,41 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { useCallback, useState, type ReactElement } from "react";
 import { IoMdArrowRoundBack, IoMdCopy } from "react-icons/io";
+import Moment from "react-moment";
+import { toast } from "react-toastify";
 import {
   ReferralLinkStatus,
   type ReferralLinkSearchFilterAdmin,
 } from "~/api/models/referrals";
 import {
-  searchReferralLinksAdmin,
   getReferralProgramById,
+  searchReferralLinksAdmin,
 } from "~/api/services/referrals";
 import CustomSlider from "~/components/Carousel/CustomSlider";
 import MainLayout from "~/components/Layout/Main";
 import NoRowsMessage from "~/components/NoRowsMessage";
 import { PageBackground } from "~/components/PageBackground";
 import { PaginationButtons } from "~/components/PaginationButtons";
+import { AdminReferralLinkActions } from "~/components/Referrals/AdminReferralLinkActions";
 import {
   ReferralLinkFilterOptions,
   ReferralLinkSearchFilters,
 } from "~/components/Referrals/AdminReferralLinkSearchFilter";
-import { AdminReferralLinkActions } from "~/components/Referrals/AdminReferralLinkActions";
 import { InternalServerError } from "~/components/Status/InternalServerError";
 import { LoadingSkeleton } from "~/components/Status/LoadingSkeleton";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import {
+  REFERRAL_PROGRAM_QUERY_KEYS,
   useReferralLinkCountQuery,
   useReferralLinksAdminQuery,
   useReferralProgramByIdQuery,
-  REFERRAL_PROGRAM_QUERY_KEYS,
 } from "~/hooks/useReferralProgramMutations";
 import { DATE_FORMAT_HUMAN, PAGE_SIZE, THEME_BLUE } from "~/lib/constants";
 import { config } from "~/lib/react-query-config";
 import { getSafeUrl, getThemeFromRole } from "~/lib/utils";
 import { type NextPageWithLayout } from "~/pages/_app";
 import { authOptions } from "~/server/auth";
-import Moment from "react-moment";
-import { toast } from "react-toastify";
 
 // ⚠️ SSR
 export async function getServerSideProps(context: GetServerSidePropsContext) {
@@ -538,7 +538,7 @@ const ReferralLinks: NextPageWithLayout<{
                               <p className="text-sm tracking-wider">
                                 Remaining
                               </p>
-                              <span className="badge bg-blue-light text-blue text-xs">
+                              <span className="text-sm font-semibold">
                                 {link.completionBalance}
                               </span>
                             </div>
@@ -686,7 +686,7 @@ const ReferralLinks: NextPageWithLayout<{
                                   <span className="text-gray-dark w-20 font-bold">
                                     Remaining:
                                   </span>
-                                  <span className="badge bg-blue-light text-blue text-xs">
+                                  <span className="font-semibold">
                                     {link.completionBalance}
                                   </span>
                                 </div>

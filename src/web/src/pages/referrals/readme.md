@@ -87,7 +87,7 @@ Current behavior:
 
 Based on current import usage in `src/web/src/pages/referrals` and `src/web/src/pages/admin/referrals`, these files are not used by current page flows and are candidates for removal in a cleanup PR:
 
-- `src/components/Referrals/new/ReferralPageShell.tsx`
+- `src/components/Referrals/ReferralPageShell.tsx`
 - `src/components/Referrals/AdminReferrerBlockForm.tsx`
 - `src/components/Referrals/InstructionHeaders.tsx`
 - `src/components/Referrals/PathwayComponents.tsx`

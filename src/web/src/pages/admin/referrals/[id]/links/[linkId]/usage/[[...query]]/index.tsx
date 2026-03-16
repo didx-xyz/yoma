@@ -15,8 +15,6 @@ import { IoChevronForward } from "react-icons/io5";
 import Moment from "react-moment";
 import {
   ReferralLinkUsageStatus,
-  type Program,
-  type ReferralLink,
   type ReferralLinkUsageSearchFilterAdmin,
 } from "~/api/models/referrals";
 import {

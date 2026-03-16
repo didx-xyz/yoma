@@ -4,15 +4,9 @@ import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
 import Head from "next/head";
 import { useRouter } from "next/router";
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-  type ReactElement,
-} from "react";
+import { useCallback, useEffect, useState, type ReactElement } from "react";
 import { IoGift, IoTimeOutline, IoTrophyOutline } from "react-icons/io5";
-import { ProgramStatus, type ProgramInfo } from "~/api/models/referrals";
+import { ProgramStatus } from "~/api/models/referrals";
 import type { UserProfile } from "~/api/models/user";
 import {
   claimReferralLinkAsReferee,
@@ -21,23 +15,23 @@ import {
 import { getUserProfile } from "~/api/services/user";
 import MainLayout from "~/components/Layout/Main";
 import NoRowsMessage from "~/components/NoRowsMessage";
-import { ReferralInfoCard } from "~/components/Referrals/new/ReferralInfoCard";
-import { ReferralMainColumns } from "~/components/Referrals/new/ReferralMainColumns";
-import { ReferralShell } from "~/components/Referrals/new/ReferralShell";
-import { ReferralStatCard } from "~/components/Referrals/new/ReferralStatCard";
-import { ReferralTasksCard } from "~/components/Referrals/new/ReferralTasksCard";
-import { ReferralTopCard } from "~/components/Referrals/new/ReferralTopCard";
 import { AlternativeActions } from "~/components/Referrals/AlternativeActions";
 import { BecomeReferrerCTA } from "~/components/Referrals/BecomeReferrerCTA";
+import { ReferralInfoCard } from "~/components/Referrals/ReferralInfoCard";
+import { ReferralMainColumns } from "~/components/Referrals/ReferralMainColumns";
+import { ReferralShell } from "~/components/Referrals/ReferralShell";
+import { ReferralStatCard } from "~/components/Referrals/ReferralStatCard";
+import { ReferralTasksCard } from "~/components/Referrals/ReferralTasksCard";
+import { ReferralTopCard } from "~/components/Referrals/ReferralTopCard";
 import { LoadingInline } from "~/components/Status/LoadingInline";
 import { ProfileCompletionWizard } from "~/components/User/ProfileCompletionWizard";
-import analytics from "~/lib/analytics";
-import { escapeHtml, parseApiError } from "~/lib/apiErrorUtils";
-import { handleUserSignIn } from "~/lib/authUtils";
 import {
   REFERRAL_PROGRAM_QUERY_KEYS,
   useReferralProgramInfoByLinkQuery,
 } from "~/hooks/useReferralProgramMutations";
+import analytics from "~/lib/analytics";
+import { escapeHtml, parseApiError } from "~/lib/apiErrorUtils";
+import { handleUserSignIn } from "~/lib/authUtils";
 import { THEME_WHITE } from "~/lib/constants";
 import { config } from "~/lib/react-query-config";
 import { currentLanguageAtom, userProfileAtom } from "~/lib/store";

@@ -21,8 +21,8 @@ import {
 } from "~/api/services/referrals";
 import MainLayout from "~/components/Layout/Main";
 import NoRowsMessage from "~/components/NoRowsMessage";
-import { ReferralShell } from "~/components/Referrals/new/ReferralShell";
-import { ReferralProgramPagePreview } from "~/components/Referrals/new/ReferralProgramPagePreview";
+import { ReferralShell } from "~/components/Referrals/ReferralShell";
+import { ReferralProgramPagePreview } from "~/components/Referrals/ReferralProgramPagePreview";
 import { AlternativeActions } from "~/components/Referrals/AlternativeActions";
 import { BecomeReferrerCTA } from "~/components/Referrals/BecomeReferrerCTA";
 import { RefereeWelcomeModal } from "~/components/Referrals/RefereeWelcomeModal";
@@ -53,10 +53,9 @@ const RefereeProofOfPersonhoodAction: React.FC<
   const popRequired = program.proofOfPersonhoodRequired;
   const popCompleted = usage.proofOfPersonhoodCompleted ?? false;
 
-  //TODO: commented out for testing
-  //   if (!(popRequired && !popCompleted)) {
-  //     return null;
-  //   }
+  if (!(popRequired && !popCompleted)) {
+    return null;
+  }
 
   return (
     <div

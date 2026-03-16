@@ -7,7 +7,6 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { useCallback, useState, type ReactElement } from "react";
 import { FaPlusCircle } from "react-icons/fa";
-import { IoIosCheckmarkCircle, IoMdClose } from "react-icons/io";
 import {
   IoEyeOffOutline,
   IoGitNetwork,
@@ -20,8 +19,8 @@ import {
   ProgramStatus,
   type ProgramSearchFilterAdmin,
 } from "~/api/models/referrals";
-import { searchReferralPrograms } from "~/api/services/referrals";
 import { getCountries } from "~/api/services/lookups";
+import { searchReferralPrograms } from "~/api/services/referrals";
 import CustomSlider from "~/components/Carousel/CustomSlider";
 import MainLayout from "~/components/Layout/Main";
 import NoRowsMessage from "~/components/NoRowsMessage";
@@ -39,9 +38,9 @@ import { LoadingSkeleton } from "~/components/Status/LoadingSkeleton";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import {
+  REFERRAL_PROGRAM_QUERY_KEYS,
   useReferralProgramCountQuery,
   useReferralProgramsAdminQuery,
-  REFERRAL_PROGRAM_QUERY_KEYS,
 } from "~/hooks/useReferralProgramMutations";
 import { DATE_FORMAT_HUMAN, PAGE_SIZE, THEME_BLUE } from "~/lib/constants";
 import { config } from "~/lib/react-query-config";
