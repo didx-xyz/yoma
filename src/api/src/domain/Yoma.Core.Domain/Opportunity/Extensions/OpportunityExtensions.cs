@@ -78,6 +78,11 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
       {
         Id = value.Id,
         Title = value.Title.RemoveSpecialCharacters(),
+        OrganizationName = value.OrganizationName,
+        OrganizationLogoId = value.OrganizationLogoId,
+        OrganizationLogoStorageType = value.OrganizationLogoStorageType,
+        OrganizationLogoKey = value.OrganizationLogoKey,
+        OrganizationLogoURL = value.OrganizationLogoURL, // Map; Optional; resolved by the invoking member when required
         OrganizationStatus = value.OrganizationStatus,
         VerificationEnabled = value.VerificationEnabled,
         VerificationMethod = value.VerificationMethod,
@@ -115,7 +120,7 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
         throw new ValidationException($"Link is not an instant verify link");
     }
 
-    public static OpportunityInfo ToOpportunityInfo(this Models.Opportunity value, string appBaseURL)
+    public static OpportunityInfo ToOpportunityInfo(this Models.Opportunity value, decimal? treasuryZltoRewardBalanceCurrentFinancialYear, string appBaseURL)
     {
       ArgumentNullException.ThrowIfNull(value, nameof(value));
 
@@ -136,9 +141,9 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
         Summary = value.Summary,
         Instructions = value.Instructions,
         URL = value.URL,
-        ZltoReward = CalculateEstimatedReward(value.ZltoReward, value.OrganizationZltoRewardBalance, value.ZltoRewardBalance),
+        ZltoReward = CalculateEstimatedReward(value.ZltoReward, treasuryZltoRewardBalanceCurrentFinancialYear, value.OrganizationZltoRewardBalanceCurrentFinancialYear, value.ZltoRewardBalance),
         ZltoRewardCumulative = value.ZltoRewardCumulative,
-        YomaReward = CalculateEstimatedReward(value.YomaReward, value.OrganizationYomaRewardBalance, value.YomaRewardBalance),
+        YomaReward = CalculateEstimatedReward(value.YomaReward, null, value.OrganizationYomaRewardBalanceCurrentFinancialYear, value.YomaRewardBalance),
         YomaRewardCumulative = value.YomaRewardCumulative,
         VerificationEnabled = value.VerificationEnabled,
         VerificationMethod = value.VerificationMethod,
@@ -187,9 +192,15 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
     #endregion
 
     #region Private Members
-    private static decimal? CalculateEstimatedReward(decimal? reward, decimal? organizationBalance, decimal? opportunityBalance)
+    private static decimal? CalculateEstimatedReward(decimal? reward, decimal? treasuryBalance, decimal? organizationBalance, decimal? opportunityBalance)
     {
       if (!reward.HasValue) return null;
+
+      if (treasuryBalance.HasValue)
+      {
+        reward = Math.Max(Math.Min(reward.Value, treasuryBalance.Value), default);
+        if (reward == default) return default;
+      }
 
       if (organizationBalance.HasValue)
       {

@@ -61,7 +61,7 @@ namespace Yoma.Core.Domain.Marketplace.Validators
       var item = _genderService.GetByIdOrNull(id);
       if (item == null) return false;
 
-      return !string.Equals(item.Name, Gender.PreferNotToSay.ToDescription(), StringComparison.InvariantCultureIgnoreCase);
+      return !string.Equals(item.Name, Gender.PreferNotToSay.ToDescription(), StringComparison.OrdinalIgnoreCase);
     }
     #endregion
   }

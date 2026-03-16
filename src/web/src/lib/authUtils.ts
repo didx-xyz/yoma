@@ -44,11 +44,6 @@ export const handleUserSignOut = async (
   // 📊 ANALYTICS: track logout
   analytics.auth.logout();
 
-  // Clear persisted atoms
-  if (typeof window !== "undefined") {
-    localStorage.removeItem("refereeProgressDialogDismissed");
-  }
-
   // Construct the callbackUrl
   let callbackUrl = `${window.location.origin}/`;
 

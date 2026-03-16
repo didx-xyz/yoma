@@ -102,8 +102,7 @@ const LanguageSwitcher: React.FC<{
   return (
     <>
       <div
-        //id="languageSwitcher"
-        className={`notranslate font-nunito flex flex-row gap-2 rounded-md px-1 py-3 ${className}`}
+        className={`notranslate font-nunito flex flex-row items-center gap-2 rounded-md px-1 py-3 ${className}`}
       >
         <IoMdGlobe className={`h-6 w-6 ${classNameIcon}`} />
         <select

@@ -118,7 +118,7 @@ namespace Yoma.Core.Domain.Marketplace.Services
       return result;
     }
 
-    public List<OrganizationInfo> ListSearchCriteriaOrganizations()
+    public List<OrganizationInfoAdmin> ListSearchCriteriaOrganizations()
     {
       var query = _storeAccessControlRuleRepistory.Query(false);
 

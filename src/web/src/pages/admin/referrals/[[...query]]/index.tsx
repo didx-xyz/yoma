@@ -7,16 +7,20 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { useCallback, useState, type ReactElement } from "react";
 import { FaPlusCircle } from "react-icons/fa";
-import { IoIosCheckmarkCircle, IoMdClose } from "react-icons/io";
+import {
+  IoEyeOffOutline,
+  IoGitNetwork,
+  IoPersonCircle,
+  IoStarOutline,
+} from "react-icons/io5";
 import Moment from "react-moment";
 import type { Country } from "~/api/models/lookups";
 import {
   ProgramStatus,
   type ProgramSearchFilterAdmin,
-  type ProgramSearchResults,
 } from "~/api/models/referrals";
-import { searchReferralPrograms } from "~/api/services/referrals";
 import { getCountries } from "~/api/services/lookups";
+import { searchReferralPrograms } from "~/api/services/referrals";
 import CustomSlider from "~/components/Carousel/CustomSlider";
 import MainLayout from "~/components/Layout/Main";
 import NoRowsMessage from "~/components/NoRowsMessage";
@@ -33,6 +37,11 @@ import { InternalServerError } from "~/components/Status/InternalServerError";
 import { LoadingSkeleton } from "~/components/Status/LoadingSkeleton";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
+import {
+  REFERRAL_PROGRAM_QUERY_KEYS,
+  useReferralProgramCountQuery,
+  useReferralProgramsAdminQuery,
+} from "~/hooks/useReferralProgramMutations";
 import { DATE_FORMAT_HUMAN, PAGE_SIZE, THEME_BLUE } from "~/lib/constants";
 import { config } from "~/lib/react-query-config";
 import { getSafeUrl, getThemeFromRole } from "~/lib/utils";
@@ -101,12 +110,10 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       dateEnd: dateEnd?.toString() ?? null,
     };
     const data = await searchReferralPrograms(searchFilter, context);
+    const searchResultsKey = `${query?.toString()}_${page?.toString()}_${status?.toString()}_${valueContains?.toString()}_${dateStart?.toString()}_${dateEnd?.toString()}_${countriesKeyPart ?? ""}`;
 
     await queryClient.prefetchQuery({
-      queryKey: [
-        "referralPrograms",
-        `${query?.toString()}_${page?.toString()}_${status?.toString()}_${valueContains?.toString()}_${dateStart?.toString()}_${dateEnd?.toString()}_${countriesKeyPart ?? ""}`,
-      ],
+      queryKey: REFERRAL_PROGRAM_QUERY_KEYS.adminProgramsList(searchResultsKey),
       queryFn: () => data,
     });
   } catch (error) {
@@ -185,149 +192,41 @@ const ReferralPrograms: NextPageWithLayout<{
   });
 
   // 👇 use prefetched queries from server
+  const searchResultsKey = `${query?.toString()}_${page?.toString()}_${status?.toString()}_${valueContains?.toString()}_${dateStart?.toString()}_${dateEnd?.toString()}_${countriesKeyPart ?? ""}`;
+
   const { data: searchResults, isLoading: isLoadingSearchResults } =
-    useQuery<ProgramSearchResults>({
-      queryKey: [
-        "referralPrograms",
-        `${query?.toString()}_${page?.toString()}_${status?.toString()}_${valueContains?.toString()}_${dateStart?.toString()}_${dateEnd?.toString()}_${countriesKeyPart ?? ""}`,
-      ],
-      queryFn: () => searchReferralPrograms(searchFilter),
+    useReferralProgramsAdminQuery(searchFilter, searchResultsKey, {
       enabled: !error,
     });
 
   // Get counts by status (without additional filters)
-  const { data: totalCountAll } = useQuery<number>({
-    queryKey: ["referralPrograms", "totalCount", null],
-    queryFn: () => {
-      const filter: ProgramSearchFilterAdmin = {
-        pageNumber: 1,
-        pageSize: PAGE_SIZE,
-        countries: null,
-        valueContains: null,
-        statuses: null,
-        dateStart: null,
-        dateEnd: null,
-      };
-      return searchReferralPrograms(filter).then(
-        (data) => data.totalCount ?? 0,
-      );
-    },
+  const { data: totalCountAll } = useReferralProgramCountQuery(null, {
     enabled: !error,
   });
-
-  const { data: totalCountActive } = useQuery<number>({
-    queryKey: ["referralPrograms", "totalCount", ProgramStatus.Active],
-    queryFn: () => {
-      const filter: ProgramSearchFilterAdmin = {
-        pageNumber: 1,
-        pageSize: PAGE_SIZE,
-        countries: null,
-        valueContains: null,
-        statuses: [ProgramStatus.Active],
-        dateStart: null,
-        dateEnd: null,
-      };
-      return searchReferralPrograms(filter).then(
-        (data) => data.totalCount ?? 0,
-      );
-    },
-    enabled: !error,
-  });
-
-  const { data: totalCountInactive } = useQuery<number>({
-    queryKey: ["referralPrograms", "totalCount", ProgramStatus.Inactive],
-    queryFn: () => {
-      const filter: ProgramSearchFilterAdmin = {
-        pageNumber: 1,
-        pageSize: PAGE_SIZE,
-        countries: null,
-        valueContains: null,
-        statuses: [ProgramStatus.Inactive],
-        dateStart: null,
-        dateEnd: null,
-      };
-      return searchReferralPrograms(filter).then(
-        (data) => data.totalCount ?? 0,
-      );
-    },
-    enabled: !error,
-  });
-
-  const { data: totalCountExpired } = useQuery<number>({
-    queryKey: ["referralPrograms", "totalCount", ProgramStatus.Expired],
-    queryFn: () => {
-      const filter: ProgramSearchFilterAdmin = {
-        pageNumber: 1,
-        pageSize: PAGE_SIZE,
-        countries: null,
-        valueContains: null,
-        statuses: [ProgramStatus.Expired],
-        dateStart: null,
-        dateEnd: null,
-      };
-      return searchReferralPrograms(filter).then(
-        (data) => data.totalCount ?? 0,
-      );
-    },
-    enabled: !error,
-  });
-
-  const { data: totalCountDeleted } = useQuery<number>({
-    queryKey: ["referralPrograms", "totalCount", ProgramStatus.Deleted],
-    queryFn: () => {
-      const filter: ProgramSearchFilterAdmin = {
-        pageNumber: 1,
-        pageSize: PAGE_SIZE,
-        countries: null,
-        valueContains: null,
-        statuses: [ProgramStatus.Deleted],
-        dateStart: null,
-        dateEnd: null,
-      };
-      return searchReferralPrograms(filter).then(
-        (data) => data.totalCount ?? 0,
-      );
-    },
-    enabled: !error,
-  });
-
-  const { data: totalCountLimitReached } = useQuery<number>({
-    queryKey: ["referralPrograms", "totalCount", ProgramStatus.LimitReached],
-    queryFn: () => {
-      const filter: ProgramSearchFilterAdmin = {
-        pageNumber: 1,
-        pageSize: PAGE_SIZE,
-        countries: null,
-        valueContains: null,
-        statuses: [ProgramStatus.LimitReached],
-        dateStart: null,
-        dateEnd: null,
-      };
-      return searchReferralPrograms(filter).then(
-        (data) => data.totalCount ?? 0,
-      );
-    },
-    enabled: !error,
-  });
-
-  const { data: totalCountUnCompletable } = useQuery<number>({
-    queryKey: ["referralPrograms", "totalCount", ProgramStatus.UnCompletable],
-    queryFn: () => {
-      const filter: ProgramSearchFilterAdmin = {
-        pageNumber: 1,
-        pageSize: PAGE_SIZE,
-        countries: null,
-        valueContains: null,
-        statuses: [ProgramStatus.UnCompletable],
-        dateStart: null,
-        dateEnd: null,
-      };
-      return searchReferralPrograms(filter).then(
-        (data) => data.totalCount ?? 0,
-      );
-    },
-    enabled: !error,
-  });
+  const { data: totalCountActive } = useReferralProgramCountQuery(
+    ProgramStatus.Active,
+    { enabled: !error },
+  );
+  const { data: totalCountInactive } = useReferralProgramCountQuery(
+    ProgramStatus.Inactive,
+    { enabled: !error },
+  );
+  const { data: totalCountExpired } = useReferralProgramCountQuery(
+    ProgramStatus.Expired,
+    { enabled: !error },
+  );
+  const { data: totalCountDeleted } = useReferralProgramCountQuery(
+    ProgramStatus.Deleted,
+    { enabled: !error },
+  );
+  const { data: totalCountLimitReached } = useReferralProgramCountQuery(
+    ProgramStatus.LimitReached,
+    { enabled: !error },
+  );
+  const { data: totalCountUnCompletable } = useReferralProgramCountQuery(
+    ProgramStatus.UnCompletable,
+    { enabled: !error },
+  );
 
   // 🎈 FUNCTIONS
   const getSearchFilterAsQueryString = useCallback(
@@ -597,7 +496,7 @@ const ReferralPrograms: NextPageWithLayout<{
                           imageURL={program.imageURL}
                           name={program.name}
                           size={48}
-                          className="border border-gray-200 bg-white"
+                          className="shrink-0 border border-gray-200 bg-white"
                         />
                         <div className="flex min-w-0 flex-1 flex-col">
                           <div className="flex min-w-0 items-center gap-2">
@@ -619,11 +518,9 @@ const ReferralPrograms: NextPageWithLayout<{
                             )}
                           </div>
 
-                          {program.description && (
-                            <p className="text-gray-dark mt-0.5 line-clamp-2 text-xs">
-                              {program.description}
-                            </p>
-                          )}
+                          <p className="text-gray-dark mt-0.5 line-clamp-2 text-xs">
+                            {program.summary ?? program.description}
+                          </p>
                         </div>
                         <AdminReferralProgramActions
                           program={program}
@@ -638,95 +535,160 @@ const ReferralPrograms: NextPageWithLayout<{
                           <ProgramStatusBadge status={program.status} />
                         </div>
 
-                        {/* Program Cap */}
-                        <div className="flex justify-between">
-                          <p className="text-sm tracking-wider">Program Cap</p>
-                          <span className="text-xs text-gray-500">
-                            {program.completionLimit?.toLocaleString("en-US") ??
-                              "No limit"}
-                          </span>
-                        </div>
-
-                        {/* Completions */}
-                        <div className="flex justify-between">
-                          <p className="text-sm tracking-wider">Completions</p>
-                          <span className="text-xs text-gray-500">
-                            {program.completionTotal?.toLocaleString("en-US") ??
-                              0}
-                          </span>
-                        </div>
-
-                        {/* Completion Balance */}
-                        {program.completionBalance !== null && (
+                        {/* Caps & Completions */}
+                        <div className="border-gray-light flex flex-col gap-1 border-t pt-2">
+                          <p className="text-[10px] font-semibold tracking-wider text-gray-400 uppercase">
+                            Completions
+                          </p>
                           <div className="flex justify-between">
-                            <p className="text-sm tracking-wider">Remaining</p>
+                            <p className="text-sm tracking-wider">Limit</p>
                             <span className="text-xs text-gray-500">
-                              {program.completionBalance?.toLocaleString(
+                              {program.completionLimit?.toLocaleString(
                                 "en-US",
-                              )}
+                              ) ?? "No limit"}
                             </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <p className="text-sm tracking-wider">Completed</p>
+                            <span className="text-xs text-gray-500">
+                              {program.completionTotal?.toLocaleString(
+                                "en-US",
+                              ) ?? 0}
+                            </span>
+                          </div>
+                          {program.completionBalance !== null && (
+                            <div className="flex justify-between">
+                              <p className="text-sm tracking-wider">Left</p>
+                              <span className="text-xs text-gray-500">
+                                {program.completionBalance?.toLocaleString(
+                                  "en-US",
+                                )}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Referrers */}
+                        {(program.referrerLimit !== null ||
+                          (program.referrerTotal ?? 0) > 0) && (
+                          <div className="border-gray-light flex flex-col gap-1 border-t pt-2">
+                            <p className="text-[10px] font-semibold tracking-wider text-gray-400 uppercase">
+                              Referrers
+                            </p>
+                            {program.referrerLimit !== null && (
+                              <div className="flex justify-between">
+                                <p className="text-sm tracking-wider">Limit</p>
+                                <span className="text-xs text-gray-500">
+                                  {program.referrerLimit.toLocaleString(
+                                    "en-US",
+                                  )}
+                                </span>
+                              </div>
+                            )}
+                            <div className="flex justify-between">
+                              <p className="text-sm tracking-wider">Total</p>
+                              <span className="text-xs text-gray-500">
+                                {program.referrerTotal?.toLocaleString(
+                                  "en-US",
+                                ) ?? 0}
+                              </span>
+                            </div>
+                            {program.referrerLimit !== null && (
+                              <div className="flex justify-between">
+                                <p className="text-sm tracking-wider">Left</p>
+                                <span className="text-xs text-gray-500">
+                                  {(
+                                    program.referrerLimit -
+                                    (program.referrerTotal ?? 0)
+                                  ).toLocaleString("en-US")}
+                                </span>
+                              </div>
+                            )}
                           </div>
                         )}
 
-                        {/* ZLTO Pool */}
-                        <div className="flex justify-between">
-                          <p className="text-sm tracking-wider">ZLTO</p>
+                        {/* ZLTO Rewards */}
+                        <div className="border-gray-light flex flex-col gap-1 border-t pt-2">
+                          <p className="text-[10px] font-semibold tracking-wider text-gray-400 uppercase">
+                            ZLTO Rewards
+                          </p>
                           {program.zltoRewardPool ? (
-                            <div className="flex flex-col items-end gap-1">
-                              <div className="flex items-center gap-1.5">
+                            <>
+                              <div className="flex justify-between">
+                                <p className="text-sm tracking-wider">Pool</p>
                                 <span className="text-xs text-gray-500">
                                   {program.zltoRewardPool.toLocaleString(
                                     "en-US",
-                                  )}{" "}
-                                  pool
+                                  )}
                                 </span>
                               </div>
                               {program.zltoRewardBalance !== null && (
-                                <span className="text-xs text-gray-500">
-                                  {program.zltoRewardBalance.toLocaleString(
-                                    "en-US",
-                                  )}{" "}
-                                  left
-                                </span>
+                                <div className="flex justify-between">
+                                  <p className="text-sm tracking-wider">Left</p>
+                                  <span className="text-xs text-gray-500">
+                                    {program.zltoRewardBalance.toLocaleString(
+                                      "en-US",
+                                    )}
+                                  </span>
+                                </div>
                               )}
                               {program.zltoRewardCumulative !== null && (
-                                <span className="text-xs text-gray-500">
-                                  {program.zltoRewardCumulative.toLocaleString(
-                                    "en-US",
-                                  )}{" "}
-                                  used
-                                </span>
+                                <div className="flex justify-between">
+                                  <p className="text-sm tracking-wider">Used</p>
+                                  <span className="text-xs text-gray-500">
+                                    {program.zltoRewardCumulative.toLocaleString(
+                                      "en-US",
+                                    )}
+                                  </span>
+                                </div>
                               )}
-                            </div>
+                            </>
                           ) : (
-                            <span className="text-xs text-gray-500">
-                              Not set
-                            </span>
+                            <span className="text-xs text-gray-500">None</span>
                           )}
                         </div>
 
                         {/* Features */}
-                        <div className="flex justify-between">
-                          <p className="text-sm tracking-wider">
-                            Proof of Personhood
-                          </p>
-                          {program.proofOfPersonhoodRequired ? (
-                            <IoIosCheckmarkCircle className="text-green h-5 w-5" />
-                          ) : (
-                            <IoMdClose className="text-gray-dark h-5 w-5" />
-                          )}
-                        </div>
-
-                        <div className="flex justify-between">
-                          <p className="text-sm tracking-wider">
-                            Pathway Required
-                          </p>
-                          {program.pathwayRequired ? (
-                            <IoIosCheckmarkCircle className="text-green h-5 w-5" />
-                          ) : (
-                            <IoMdClose className="text-gray-dark h-5 w-5" />
-                          )}
-                        </div>
+                        {(program.proofOfPersonhoodRequired ||
+                          program.pathwayRequired ||
+                          program.isDefault ||
+                          program.hidden) && (
+                          <div className="border-gray-light flex flex-col gap-1 border-t pt-2">
+                            <p className="text-[10px] font-semibold tracking-wider text-gray-400 uppercase">
+                              Features
+                            </p>
+                            {program.proofOfPersonhoodRequired && (
+                              <div className="flex items-center gap-1">
+                                <IoPersonCircle className="text-green h-4 w-4 shrink-0" />
+                                <p className="text-sm tracking-wider">
+                                  Proof of Personhood
+                                </p>
+                              </div>
+                            )}
+                            {program.pathwayRequired && (
+                              <div className="flex items-center gap-1">
+                                <IoGitNetwork className="text-green h-4 w-4 shrink-0" />
+                                <p className="text-sm tracking-wider">
+                                  Pathway
+                                </p>
+                              </div>
+                            )}
+                            {program.isDefault && (
+                              <div className="flex items-center gap-1">
+                                <IoStarOutline className="text-green h-4 w-4 shrink-0" />
+                                <p className="text-sm tracking-wider">
+                                  Default
+                                </p>
+                              </div>
+                            )}
+                            {program.hidden && (
+                              <div className="flex items-center gap-1">
+                                <IoEyeOffOutline className="text-green h-4 w-4 shrink-0" />
+                                <p className="text-sm tracking-wider">Hidden</p>
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -739,14 +701,15 @@ const ReferralPrograms: NextPageWithLayout<{
                       <th className="border-gray-light border-b-2 !py-4">
                         Referral Program
                       </th>
-                      <th className="border-gray-light border-b-2">Status</th>
+                      <th className="border-gray-light border-b-2">Referees</th>
                       <th className="border-gray-light border-b-2">
-                        Caps & Completions
+                        Referrers
                       </th>
                       <th className="border-gray-light border-b-2">
                         ZLTO Rewards
                       </th>
                       <th className="border-gray-light border-b-2">Features</th>
+                      <th className="border-gray-light border-b-2">Status</th>
                       <th className="border-gray-light border-b-2 text-center">
                         Actions
                       </th>
@@ -775,7 +738,6 @@ const ReferralPrograms: NextPageWithLayout<{
                             </Link>
 
                             <div className="flex flex-col">
-                              {/* <div className="flex flex-row"> */}
                               <Link
                                 href={`/admin/referrals/${program.id}/info${`?returnUrl=${encodeURIComponent(
                                   getSafeUrl(
@@ -787,14 +749,9 @@ const ReferralPrograms: NextPageWithLayout<{
                               >
                                 {program.name}
                               </Link>
-                              {/* {program.isDefault && (
-                                  <span className="badge badge-sm bg-blue-light text-blue ml-2">
-                                    Default
-                                  </span>
-                                )} */}
-                              {/* </div> */}
+
                               <p className="line-clamp-1 max-w-56 truncate text-sm">
-                                {program.description}
+                                {program.summary ?? program.description}
                               </p>
 
                               <div className="text-gray-dark mt-2 flex flex-row items-center gap-4 text-xs">
@@ -817,41 +774,25 @@ const ReferralPrograms: NextPageWithLayout<{
                                     </span>
                                   </>
                                 )}
-
-                                {/* {program.isDefault && (
-                                  <span className="badge badge-sm bg-blue-light text-blue ml-2">
-                                    Default
-                                  </span>
-                                )} */}
                               </div>
                             </div>
-                          </div>
-                        </td>
-                        <td className="border-gray-light border-b-2 !align-top">
-                          <div className="flex flex-col gap-2">
-                            {program.isDefault && (
-                              <span className="badge badge-sm bg-blue-light text-blue">
-                                Default
-                              </span>
-                            )}
-                            <ProgramStatusBadge status={program.status} />
                           </div>
                         </td>
                         <td className="border-gray-light text-gray-dark border-b-2 !align-top">
                           <div className="flex flex-col gap-1 text-xs">
                             <div className="flex gap-2">
-                              <span className="text-gray-dark w-14 font-bold">
-                                Cap:
+                              <span className="text-gray-dark w-10 font-bold">
+                                Limit:
                               </span>
                               <span>
                                 {program.completionLimit?.toLocaleString(
                                   "en-US",
-                                ) ?? "N/A"}
+                                ) ?? "No limit"}
                               </span>
                             </div>
                             <div className="flex gap-2">
-                              <span className="text-gray-dark w-14 font-bold">
-                                Done:
+                              <span className="text-gray-dark w-16 font-bold">
+                                Completed:
                               </span>
                               <span>
                                 {program.completionTotal?.toLocaleString(
@@ -861,13 +802,52 @@ const ReferralPrograms: NextPageWithLayout<{
                             </div>
                             {program.completionBalance !== null && (
                               <div className="flex gap-2">
-                                <span className="text-gray-dark w-14 font-bold">
+                                <span className="text-gray-dark w-10 font-bold">
                                   Left:
                                 </span>
                                 <span>
                                   {program.completionBalance.toLocaleString(
                                     "en-US",
                                   )}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                        <td className="border-gray-light text-gray-dark border-b-2 !align-top">
+                          <div className="flex flex-col gap-1 text-xs">
+                            {program.referrerLimit !== null && (
+                              <div className="flex gap-2">
+                                <span className="text-gray-dark w-10 font-bold">
+                                  Limit:
+                                </span>
+                                <span>
+                                  {program.referrerLimit.toLocaleString(
+                                    "en-US",
+                                  )}
+                                </span>
+                              </div>
+                            )}
+                            <div className="flex gap-2">
+                              <span className="text-gray-dark w-10 font-bold">
+                                Total:
+                              </span>
+                              <span>
+                                {program.referrerTotal?.toLocaleString(
+                                  "en-US",
+                                ) ?? 0}
+                              </span>
+                            </div>
+                            {program.referrerLimit !== null && (
+                              <div className="flex gap-2">
+                                <span className="text-gray-dark w-10 font-bold">
+                                  Left:
+                                </span>
+                                <span>
+                                  {(
+                                    program.referrerLimit -
+                                    (program.referrerTotal ?? 0)
+                                  ).toLocaleString("en-US")}
                                 </span>
                               </div>
                             )}
@@ -913,35 +893,54 @@ const ReferralPrograms: NextPageWithLayout<{
                                 )}
                               </>
                             ) : (
-                              <span className="text-gray-400">
-                                No ZLTO rewards
-                              </span>
+                              <span className="text-gray-400">None</span>
                             )}
                           </div>
                         </td>
                         <td className="border-gray-light border-b-2 !align-top">
                           <div className="flex flex-col gap-1 text-xs">
-                            <div className="flex items-center gap-1">
-                              {program.proofOfPersonhoodRequired ? (
-                                <IoIosCheckmarkCircle className="text-green h-4 w-4" />
-                              ) : (
-                                <IoMdClose className="text-gray-dark h-4 w-4" />
+                            {program.proofOfPersonhoodRequired && (
+                              <div className="flex items-center gap-1">
+                                <IoPersonCircle className="text-green h-4 w-4 shrink-0" />
+                                <span className="text-gray-dark font-semibold">
+                                  Proof of Personhood
+                                </span>
+                              </div>
+                            )}
+                            {program.pathwayRequired && (
+                              <div className="flex items-center gap-1">
+                                <IoGitNetwork className="text-green h-4 w-4 shrink-0" />
+                                <span className="text-gray-dark font-semibold">
+                                  Pathway
+                                </span>
+                              </div>
+                            )}
+                            {program.isDefault && (
+                              <div className="flex items-center gap-1">
+                                <IoStarOutline className="text-green h-4 w-4 shrink-0" />
+                                <span className="text-gray-dark font-semibold">
+                                  Default
+                                </span>
+                              </div>
+                            )}
+                            {program.hidden && (
+                              <div className="flex items-center gap-1">
+                                <IoEyeOffOutline className="text-green h-4 w-4 shrink-0" />
+                                <span className="text-gray-dark font-semibold">
+                                  Hidden
+                                </span>
+                              </div>
+                            )}
+                            {!program.proofOfPersonhoodRequired &&
+                              !program.pathwayRequired &&
+                              !program.isDefault &&
+                              !program.hidden && (
+                                <span className="text-gray-400">None</span>
                               )}
-                              <span className="text-gray-dark font-semibold">
-                                Proof Of Personhood
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              {program.pathwayRequired ? (
-                                <IoIosCheckmarkCircle className="text-green h-4 w-4" />
-                              ) : (
-                                <IoMdClose className="text-gray-dark h-4 w-4" />
-                              )}
-                              <span className="text-gray-dark font-semibold">
-                                Pathway
-                              </span>
-                            </div>
                           </div>
+                        </td>
+                        <td className="border-gray-light border-b-2 !align-top">
+                          <ProgramStatusBadge status={program.status} />
                         </td>
                         <td className="border-gray-light border-b-2 text-center !align-top">
                           <AdminReferralProgramActions

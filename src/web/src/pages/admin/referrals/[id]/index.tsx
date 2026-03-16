@@ -38,11 +38,12 @@ import Select from "react-select";
 import { toast } from "react-toastify";
 import z from "zod";
 import type { Country } from "~/api/models/lookups";
-import type { Opportunity } from "~/api/models/opportunity";
+import { Opportunity } from "~/api/models/opportunity";
 import {
   PathwayCompletionRule,
   PathwayOrderMode,
   PathwayTaskEntityType,
+  ProgramStatus,
   type Program,
   type ProgramRequestCreate,
   type ProgramRequestUpdate,
@@ -61,25 +62,26 @@ import FormInput from "~/components/Common/FormInput";
 import FormMessage, { FormMessageType } from "~/components/Common/FormMessage";
 import FormRequiredFieldMessage from "~/components/Common/FormRequiredFieldMessage";
 import MainLayout from "~/components/Layout/Main";
-import AvatarUpload from "~/components/Organisation/Upsert/AvatarUpload";
 import { PageBackground } from "~/components/PageBackground";
-import {
-  AdminProgramInfo,
-  ProgramInfoFilterOptions,
-} from "~/components/Referrals/AdminProgramInfo";
 import { AdminProgramPathwayEditComponent } from "~/components/Referrals/AdminProgramPathwayEdit";
+import { AdminProgramPreview } from "~/components/Referrals/AdminProgramPreview";
 import {
   AdminReferralProgramActions,
   ReferralProgramActionOptions,
 } from "~/components/Referrals/AdminReferralProgramActions";
-import { ProgramCard } from "~/components/Referrals/ProgramCard";
-import { ProgramImage } from "~/components/Referrals/ProgramImage";
+import ProgramImageUpload from "~/components/Referrals/ProgramImageUpload";
+import { Editor } from "~/components/RichText/Editor";
 import { ProgramStatusBadge } from "~/components/Referrals/ProgramStatusBadge";
 import { ApiErrors } from "~/components/Status/ApiErrors";
 import { InternalServerError } from "~/components/Status/InternalServerError";
 import { Loading } from "~/components/Status/Loading";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
+import {
+  REFERRAL_PROGRAM_QUERY_KEYS,
+  useReferralProgramByIdQuery,
+  useReferralProgramStatusMutation,
+} from "~/hooks/useReferralProgramMutations";
 import { COUNTRY_CODE_WW } from "~/lib/constants";
 import { config } from "~/lib/react-query-config";
 import {
@@ -106,14 +108,13 @@ const schemaStep1 = z
       .string()
       .min(1, "Name is required")
       .max(150, "Name cannot exceed 150 characters"),
-    description: z
+    description: z.string().nullable().optional(),
+    summary: z
       .string()
-      .nullable()
-      .transform((val) => val ?? "")
-      .pipe(z.string().max(500, "Description cannot exceed 500 characters")),
+      .min(1, "Summary is required.")
+      .max(150, "Summary cannot exceed 150 characters."),
     image: z.any().optional(), // Store uploaded image file
     imageURL: z.string().nullable().optional(), // Existing image URL
-    //isDefault: z.boolean(),
   })
   .refine(
     (data) => {
@@ -176,6 +177,12 @@ const schemaStep3 = z
           .number()
           .min(1, "Program completion limit must be greater than 0"),
       )
+      .nullable()
+      .catch(null)
+      .transform((val) => (val === 0 ? null : val)),
+    referrerLimit: z
+      .union([z.string(), z.number()])
+      .pipe(z.coerce.number().min(1, "Referrer limit must be greater than 0"))
       .nullable()
       .catch(null)
       .transform((val) => (val === 0 ? null : val)),
@@ -347,6 +354,7 @@ const schemaStep4 = z
     pathwayRequired: z.boolean(),
     multipleLinksAllowed: z.boolean(),
     isDefault: z.boolean(),
+    hidden: z.boolean(),
     // Need these for cross-validation with Step 3
     zltoRewardReferrer: z.number().nullable().optional(),
     zltoRewardReferee: z.number().nullable().optional(),
@@ -600,7 +608,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       const data = await getReferralProgramById(id, context);
 
       await queryClient.prefetchQuery({
-        queryKey: ["referralProgram", id],
+        queryKey: REFERRAL_PROGRAM_QUERY_KEYS.detail(id),
         queryFn: () => data,
       });
     }
@@ -640,10 +648,13 @@ const ReferralProgramForm: NextPageWithLayout<{
     useState(false);
   const [lastStepBeforeSaveChangesDialog, setLastStepBeforeSaveChangesDialog] =
     useState<number | null>(null);
+  const [programExpiredModalVisible, setProgramExpiredModalVisible] =
+    useState(false);
   const [step, setStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const previouspathwayRequired = useRef<boolean | null>(null);
   const htmlRef = useRef<HTMLDivElement>(null);
+
   const [opportunityDataMap, setOpportunityDataMap] = useState<
     Record<string, Opportunity>
   >({});
@@ -656,10 +667,12 @@ const ReferralProgramForm: NextPageWithLayout<{
   const formRef5 = useRef<HTMLFormElement>(null);
 
   // Fetch program data
-  const { data: program, isLoading: isLoadingProgram } = useQuery<Program>({
-    queryKey: ["referralProgram", id],
-    queryFn: () => getReferralProgramById(id),
-    enabled: id !== "create" && !error,
+  const { data: program, isLoading: isLoadingProgram } =
+    useReferralProgramByIdQuery(id, { enabled: !error });
+
+  const statusMutation = useReferralProgramStatusMutation({
+    programId: id,
+    programName: program?.name,
   });
 
   // Countries lookup
@@ -691,6 +704,7 @@ const ReferralProgramForm: NextPageWithLayout<{
     return {
       id: "",
       name: "",
+      summary: null,
       description: null,
       countries: [],
       dateStart: todayUTC.toISOString(),
@@ -708,6 +722,9 @@ const ReferralProgramForm: NextPageWithLayout<{
       pathwayRequired: false,
       multipleLinksAllowed: false,
       isDefault: false,
+      hidden: false,
+      referrerLimit: null,
+      referrerTotal: null,
       completionTotal: null,
       status: "Active",
       statusId: "1",
@@ -733,6 +750,7 @@ const ReferralProgramForm: NextPageWithLayout<{
     trigger: triggerStep1,
     setValue: setValueStep1,
     getValues: getValuesStep1,
+    control: controlStep1,
   } = useForm({
     resolver: zodResolver(schemaStep1),
     defaultValues: formData,
@@ -908,6 +926,13 @@ const ReferralProgramForm: NextPageWithLayout<{
       },
     },
   ];
+
+  useEffect(() => {
+    // show the expired modal if the program is expired
+    if ((program?.status as any) == "Expired") {
+      setProgramExpiredModalVisible(true);
+    }
+  }, [program?.status, setProgramExpiredModalVisible]);
 
   // Update form data when program loads
   useEffect(() => {
@@ -1370,12 +1395,14 @@ const ReferralProgramForm: NextPageWithLayout<{
         // Build request object - convert Program to request format
         const baseRequest: Partial<ProgramRequestCreate> = {
           name: data.name,
-          description: data.description,
+          summary: data.summary ?? null,
+          description: data.description ?? null,
           image: null, // Image handled separately
           countries: countryIds,
           completionWindowInDays: data.completionWindowInDays,
           completionLimitReferee: data.completionLimitReferee,
           completionLimit: data.completionLimit,
+          referrerLimit: data.referrerLimit,
           zltoRewardReferrer: data.zltoRewardReferrer,
           zltoRewardReferee: data.zltoRewardReferee,
           zltoRewardPool: data.zltoRewardPool,
@@ -1383,6 +1410,7 @@ const ReferralProgramForm: NextPageWithLayout<{
           pathwayRequired: data.pathwayRequired,
           multipleLinksAllowed: data.multipleLinksAllowed,
           isDefault: data.isDefault,
+          hidden: data.hidden,
           dateStart: data.dateStart,
           dateEnd: data.dateEnd,
           pathway: data.pathway
@@ -1419,6 +1447,14 @@ const ReferralProgramForm: NextPageWithLayout<{
             : undefined,
         };
 
+        // Determine image file to upload (if any)
+        const imageFile =
+          (data as any).image instanceof File
+            ? (data as any).image
+            : imageFiles && imageFiles.length > 0
+              ? imageFiles[0]
+              : null;
+
         let programId: string;
 
         if (id === "create") {
@@ -1437,7 +1473,45 @@ const ReferralProgramForm: NextPageWithLayout<{
           );
           programId = response.id;
           message = "Program created successfully";
+
+          // Upload image after creation
+          if (imageFile) {
+            try {
+              await updateReferralProgramImage(programId, imageFile);
+
+              setImageFiles([]); // Clear after successful upload
+              (setValueStep1 as any)("image", null); // Clear form value
+            } catch (imageError) {
+              toast(<ApiErrors error={imageError as AxiosError} />, {
+                type: "warning",
+                toastId: "program-image",
+                autoClose: false,
+                icon: false,
+              });
+            }
+          }
         } else {
+          programId = data.id;
+
+          // Upload image BEFORE updating the program.
+          // The image endpoint validates the current DB status. Uploading first ensures
+          // the status check passes before the program update recalculates it.
+          if (imageFile) {
+            try {
+              await updateReferralProgramImage(programId, imageFile);
+
+              setImageFiles([]); // Clear after successful upload
+              (setValueStep1 as any)("image", null); // Clear form value
+            } catch (imageError) {
+              toast(<ApiErrors error={imageError as AxiosError} />, {
+                type: "warning",
+                toastId: "program-image",
+                autoClose: false,
+                icon: false,
+              });
+            }
+          }
+
           // For update, include the program ID
           const updateRequest = {
             ...baseRequest,
@@ -1463,39 +1537,14 @@ const ReferralProgramForm: NextPageWithLayout<{
           }
 
           await updateReferralProgram(updateRequest as ProgramRequestUpdate);
-          programId = data.id;
           message = "Program updated successfully";
         }
 
-        // Handle image upload if there's a new image.
-        // IMPORTANT: image upload should not block navigation, because the program may have
-        // already been created successfully.
-        const imageFile =
-          (data as any).image instanceof File
-            ? (data as any).image
-            : imageFiles && imageFiles.length > 0
-              ? imageFiles[0]
-              : null;
-
-        if (imageFile) {
-          try {
-            await updateReferralProgramImage(programId, imageFile);
-
-            setImageFiles([]); // Clear after successful upload
-            (setValueStep1 as any)("image", null); // Clear form value
-          } catch (imageError) {
-            toast(<ApiErrors error={imageError as AxiosError} />, {
-              type: "warning",
-              toastId: "program-image",
-              autoClose: false,
-              icon: false,
-            });
-          }
-        }
-
-        await queryClient.invalidateQueries({ queryKey: ["referralPrograms"] });
         await queryClient.invalidateQueries({
-          queryKey: ["referralProgram", id],
+          queryKey: REFERRAL_PROGRAM_QUERY_KEYS.list(),
+        });
+        await queryClient.invalidateQueries({
+          queryKey: REFERRAL_PROGRAM_QUERY_KEYS.detail(id),
         });
 
         toast.success(message);
@@ -1612,6 +1661,7 @@ const ReferralProgramForm: NextPageWithLayout<{
       triggerValidation,
     ],
   );
+
   //#endregion Event Handlers
 
   if (error) {
@@ -1635,6 +1685,122 @@ const ReferralProgramForm: NextPageWithLayout<{
       <PageBackground />
 
       <div ref={htmlRef} />
+
+      {/* PROGRAM EXPIRED MODAL */}
+      <CustomModal
+        isOpen={programExpiredModalVisible}
+        shouldCloseOnOverlayClick={false}
+        onRequestClose={() => {
+          setProgramExpiredModalVisible(false);
+        }}
+        className={`md:max-h-[500px] md:w-[600px]`}
+      >
+        <div className="flex h-full flex-col gap-4 overflow-y-auto pb-8">
+          <div className="bg-green flex flex-row p-4 shadow-lg">
+            <h1 className="grow"></h1>
+            <button
+              type="button"
+              className="btn btn-circle text-gray-dark hover:bg-gray"
+              onClick={() => {
+                setProgramExpiredModalVisible(false);
+              }}
+            >
+              <IoMdClose className="h-6 w-6"></IoMdClose>
+            </button>
+          </div>
+          <div className="flex flex-col items-center justify-center gap-4">
+            <div className="border-green-dark -mt-11 flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-full bg-white shadow-lg">
+              <FaExclamationTriangle className="text-yellow h-8 w-8" />
+            </div>
+
+            <div className="font-semibold">Program expired!</div>
+
+            <div className="flex max-w-md flex-col gap-4 text-center text-base">
+              <p>Please inactivate your program before editing.</p>
+
+              <p>
+                Once you&apos;re happy with the program changes, you can set it
+                to active.
+              </p>
+              <p>
+                Please make sure to set the end date in the future, else it will
+                set your program to expired again.
+              </p>
+            </div>
+
+            <div className="mt-8 flex grow gap-4">
+              <button
+                type="button"
+                className="btn btn-primary btn-wide rounded-full normal-case"
+                onClick={() =>
+                  statusMutation.mutate(ProgramStatus.Inactive, {
+                    onSuccess: (updatedProgram) => {
+                      // Normalize the returned program exactly as the program-load useEffect does,
+                      // so formData reflects the server state before the user submits.
+                      const programCountryIds: string[] = Array.isArray(
+                        updatedProgram.countries,
+                      )
+                        ? updatedProgram.countries.length === 0
+                          ? []
+                          : typeof updatedProgram.countries[0] === "string"
+                            ? (updatedProgram.countries as string[])
+                            : (updatedProgram.countries as Country[]).map(
+                                (c) => c.id,
+                              )
+                        : [];
+
+                      const programWithDefaults = {
+                        ...updatedProgram,
+                        countries: programCountryIds,
+                        pathway: updatedProgram.pathway
+                          ? {
+                              ...updatedProgram.pathway,
+                              rule:
+                                updatedProgram.pathway.rule ??
+                                PathwayCompletionRule.All,
+                              orderMode:
+                                updatedProgram.pathway.orderMode ??
+                                PathwayOrderMode.Sequential,
+                              steps:
+                                updatedProgram.pathway.steps?.map((step) => ({
+                                  ...step,
+                                  tasks:
+                                    step.tasks?.map((task) => ({
+                                      ...task,
+                                      entityId:
+                                        task.opportunity?.id ??
+                                        (task as any).entityId ??
+                                        "",
+                                    })) ?? [],
+                                })) ?? [],
+                            }
+                          : null,
+                      };
+
+                      setFormData(programWithDefaults);
+                      resetStep1(programWithDefaults);
+                      resetStep2(programWithDefaults);
+                      resetStep3(programWithDefaults);
+                      resetStep4(programWithDefaults);
+                      resetStep5(programWithDefaults);
+                      setProgramExpiredModalVisible(false);
+                    },
+                  })
+                }
+                disabled={statusMutation.isPending}
+              >
+                {statusMutation.isPending ? (
+                  <>
+                    <span className="loading loading-spinner"></span>
+                  </>
+                ) : (
+                  <p className="text-white">Inactivate program</p>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      </CustomModal>
 
       {/* SAVE CHANGES DIALOG */}
       <CustomModal
@@ -1828,7 +1994,27 @@ const ReferralProgramForm: NextPageWithLayout<{
                     </FormField>
 
                     <FormField
+                      label="Summary"
+                      subLabel="A short summary of the program (max 150 characters). This will be displayed on the search results."
+                      showWarningIcon={!!formStateStep1.errors.summary?.message}
+                      showError={
+                        !!formStateStep1.touchedFields.summary ||
+                        formStateStep1.isSubmitted
+                      }
+                      error={formStateStep1.errors.summary?.message}
+                    >
+                      {/* TODO: replace with FormTextArea component */}
+                      <textarea
+                        className="input textarea border-gray focus:border-gray h-16 w-full rounded-md text-[1rem] leading-tight focus:outline-none"
+                        placeholder="Enter summary..."
+                        maxLength={150}
+                        {...registerStep1("summary")}
+                      />
+                    </FormField>
+
+                    <FormField
                       label="Description"
+                      subLabel="A detailed description of the program. This will be displayed on the program page."
                       showWarningIcon={
                         !!formStateStep1.errors.description?.message
                       }
@@ -1838,11 +2024,23 @@ const ReferralProgramForm: NextPageWithLayout<{
                       }
                       error={formStateStep1.errors.description?.message}
                     >
-                      <textarea
-                        placeholder="Enter program description"
-                        className="textarea textarea-bordered w-full"
-                        rows={4}
-                        {...registerStep1("description")}
+                      <FormMessage messageType={FormMessageType.Info}>
+                        Ensure to add a space (&apos; &apos;) on your empty
+                        lines if you want to add a line break.
+                      </FormMessage>
+
+                      <Controller
+                        control={controlStep1}
+                        name="description"
+                        render={({ field: { onChange, value, onBlur } }) => (
+                          <Editor
+                            value={value ?? ""}
+                            readonly={false}
+                            onBlur={onBlur} // mark the field as touched
+                            onChange={onChange}
+                            placeholder="Enter description..."
+                          />
+                        )}
                       />
                     </FormField>
 
@@ -1863,7 +2061,7 @@ const ReferralProgramForm: NextPageWithLayout<{
                         type="hidden"
                         {...registerStep1("imageURL" as any)}
                       />
-                      <AvatarUpload
+                      <ProgramImageUpload
                         onUploadComplete={(files) => {
                           const file =
                             files && files.length > 0 ? files[0] : null;
@@ -1894,14 +2092,6 @@ const ReferralProgramForm: NextPageWithLayout<{
                         showExisting={!(getValuesStep1() as any).image}
                       />
                     </FormField>
-
-                    {/* <FormCheckbox
-                      id="isDefault"
-                      label="Set as Default Program"
-                      inputProps={{
-                        ...registerStep1("isDefault"),
-                      }}
-                    /> */}
 
                     <div className="flex flex-row items-center justify-center gap-2 md:justify-end md:gap-4">
                       <Link
@@ -2120,10 +2310,10 @@ const ReferralProgramForm: NextPageWithLayout<{
                     <div className="flex flex-col gap-4">
                       <h6 className="font-semibold">Completion Settings</h6>
 
-                      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                         <FormField
                           label="Completion Window (Days)"
-                          subLabel="Time allowed for referee"
+                          subLabel="Days a referee has to complete required steps after joining"
                           showWarningIcon={
                             !!formStateStep3.errors.completionWindowInDays
                               ?.message
@@ -2150,7 +2340,7 @@ const ReferralProgramForm: NextPageWithLayout<{
 
                         <FormField
                           label="Referrer Cap"
-                          subLabel="Max per referrer"
+                          subLabel="Max completions per referrer; blocks new claims once reached"
                           showWarningIcon={
                             !!formStateStep3.errors.completionLimitReferee
                               ?.message
@@ -2177,7 +2367,7 @@ const ReferralProgramForm: NextPageWithLayout<{
 
                         <FormField
                           label="Program Cap"
-                          subLabel="Max for entire program"
+                          subLabel="Max total completions across all referrers; blocks new claims once reached"
                           showWarningIcon={
                             !!formStateStep3.errors.completionLimit?.message
                           }
@@ -2196,6 +2386,28 @@ const ReferralProgramForm: NextPageWithLayout<{
                             }}
                           />
                         </FormField>
+
+                        <FormField
+                          label="Referrer Limit"
+                          subLabel="Max number of distinct referrers allowed in this program"
+                          showWarningIcon={
+                            !!formStateStep3.errors.referrerLimit?.message
+                          }
+                          showError={
+                            !!formStateStep3.touchedFields.referrerLimit ||
+                            formStateStep3.isSubmitted
+                          }
+                          error={formStateStep3.errors.referrerLimit?.message}
+                        >
+                          <FormInput
+                            inputProps={{
+                              type: "number",
+                              min: "0",
+                              placeholder: "e.g. 1000",
+                              ...registerStep3("referrerLimit"),
+                            }}
+                          />
+                        </FormField>
                       </div>
                     </div>
 
@@ -2203,10 +2415,10 @@ const ReferralProgramForm: NextPageWithLayout<{
                     <div className="flex flex-col gap-4">
                       <h6 className="font-semibold">ZLTO Rewards</h6>
 
-                      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                         <FormField
                           label="Referee Reward"
-                          subLabel="ZLTO for referee"
+                          subLabel="ZLTO awarded to the referee on completion"
                           showWarningIcon={
                             !!formStateStep3.errors.zltoRewardReferee?.message
                           }
@@ -2231,7 +2443,7 @@ const ReferralProgramForm: NextPageWithLayout<{
 
                         <FormField
                           label="Referrer Reward"
-                          subLabel="ZLTO for referrer"
+                          subLabel="ZLTO awarded to the referrer on completion"
                           showWarningIcon={
                             !!formStateStep3.errors.zltoRewardReferrer?.message
                           }
@@ -2256,7 +2468,7 @@ const ReferralProgramForm: NextPageWithLayout<{
 
                         <FormField
                           label="ZLTO Pool"
-                          subLabel="Total budget"
+                          subLabel="Total ZLTO budget for this program"
                           showWarningIcon={
                             !!formStateStep3.errors.zltoRewardPool?.message
                           }
@@ -2396,6 +2608,25 @@ const ReferralProgramForm: NextPageWithLayout<{
                           <p className="text-sm">
                             Allow referrers to have multiple active links
                             simultaneously
+                          </p>
+                        </div>
+                      </label>
+
+                      <label
+                        htmlFor="hidden"
+                        className="label cursor-pointer justify-normal p-0"
+                      >
+                        <input
+                          type="checkbox"
+                          id="hidden"
+                          className="checkbox-secondary checkbox disabled:border-gray"
+                          {...registerStep4("hidden")}
+                        />
+                        <div className="text-gray-dark ml-4 select-none">
+                          <div>Hidden</div>
+                          <p className="text-sm">
+                            Make this program hidden from public listings and
+                            search results
                           </p>
                         </div>
                       </label>
@@ -2545,71 +2776,19 @@ const ReferralProgramForm: NextPageWithLayout<{
               {/* STEP 6: Preview */}
               {step === 6 && (
                 <div className="space-y-6">
-                  <div className="flex flex-row items-start justify-between gap-4">
-                    {/* Program Image */}
-                    <div className="flex-shrink-0">
-                      <ProgramImage
-                        imageURL={programPreview?.imageURL}
-                        name={programPreview?.name || "Program"}
-                        size={60}
-                        className="border-2 border-gray-200"
-                      />
-                    </div>
-
-                    <div className="min-w-0 flex-1">
-                      <div className="flex min-w-0 items-center gap-2">
-                        <h1 className="truncate text-base font-bold md:text-lg">
-                          {programPreview?.name || "N/A"}
-                        </h1>
-                        {programPreview?.isDefault && (
-                          <span className="badge badge-primary">Default</span>
-                        )}
-                      </div>
-                      <p className="truncate text-xs text-gray-500 md:text-sm">
-                        {programPreview?.description ||
-                          "No description provided"}
-                      </p>
-                    </div>
+                  <div className="mb-4 flex flex-col gap-2">
+                    <h5 className="font-bold tracking-wider">Preview</h5>
+                    <p className="-mt-2 text-sm">
+                      Preview your program before submitting.
+                    </p>
                   </div>
 
-                  {/* Program Card Preview */}
                   {programPreview && (
-                    <>
-                      <div>
-                        <h6 className="text-sm font-semibold">
-                          Program Card Preview
-                        </h6>
-                        <p className="text-xs text-gray-600">
-                          This is how your program will appear to users
-                        </p>
-                        <div className="flex justify-center py-4">
-                          <ProgramCard
-                            data={{
-                              ...programPreview,
-                              name: programPreview.name || "Program Name",
-                              description:
-                                programPreview.description ||
-                                "No description provided",
-                              imageURL:
-                                imagePreviewUrl || programPreview.imageURL,
-                            }}
-                            zltoReward={programPreview.zltoRewardReferrer}
-                          />
-                        </div>
-                      </div>
-
-                      <AdminProgramInfo
-                        program={programPreview}
-                        imagePreviewUrl={imagePreviewUrl}
-                        opportunityDataMap={opportunityDataMap}
-                        filterOptions={[
-                          ProgramInfoFilterOptions.PROGRAM_INFO,
-                          ProgramInfoFilterOptions.COMPLETION_REWARDS,
-                          ProgramInfoFilterOptions.FEATURES,
-                          ProgramInfoFilterOptions.PATHWAY,
-                        ]}
-                      />
-                    </>
+                    <AdminProgramPreview
+                      program={programPreview}
+                      imagePreviewUrl={imagePreviewUrl}
+                      opportunityDataMap={opportunityDataMap}
+                    />
                   )}
 
                   {/* Action Buttons */}

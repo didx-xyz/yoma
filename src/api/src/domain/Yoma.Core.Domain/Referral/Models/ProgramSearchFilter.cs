@@ -19,6 +19,12 @@ namespace Yoma.Core.Domain.Referral.Models
 
     [JsonIgnore]
     internal bool TotalCountOnly { get; set; }
+
+    [JsonIgnore]
+    internal bool ExcludeHidden { get; set; }
+
+    [JsonIgnore]
+    internal bool ExcludeReferrerLimitReached { get; set; }
   }
 
   public class ProgramSearchFilter : ProgramSearchFilterBase

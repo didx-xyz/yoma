@@ -41,7 +41,7 @@ namespace Yoma.Core.Domain.Lookups.Services
         throw new ArgumentNullException(nameof(name));
       name = name.Trim();
 
-      return List().SingleOrDefault(o => string.Equals(o.Name, name, StringComparison.InvariantCultureIgnoreCase));
+      return List().SingleOrDefault(o => string.Equals(o.Name, name, StringComparison.OrdinalIgnoreCase));
     }
 
     public Models.Country GetByCodeAlpha2(string code)
@@ -56,7 +56,7 @@ namespace Yoma.Core.Domain.Lookups.Services
         throw new ArgumentNullException(nameof(code));
       code = code.Trim();
 
-      return List().SingleOrDefault(o => string.Equals(o.CodeAlpha2, code, StringComparison.InvariantCultureIgnoreCase));
+      return List().SingleOrDefault(o => string.Equals(o.CodeAlpha2, code, StringComparison.OrdinalIgnoreCase));
     }
 
     public Models.Country GetById(Guid id)

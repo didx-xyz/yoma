@@ -7,7 +7,8 @@ namespace Yoma.Core.Test.Referral.Builders
   {
     private Guid _id = Guid.NewGuid();
     private string _name = "Test Referral Program";
-    private string? _description = "A test referral program";
+    private string? _summary = "A test referral program summary";
+    private string? _description = "A test referral program desciption";
     private int? _completionWindowInDays = 30;
     private int? _completionLimitReferee;
     private int? _completionLimit;
@@ -34,6 +35,7 @@ namespace Yoma.Core.Test.Referral.Builders
     public ProgramBuilder WithId(Guid id) { _id = id; return this; }
     public ProgramBuilder WithName(string name) { _name = name; return this; }
     public ProgramBuilder WithDescription(string? description) { _description = description; return this; }
+    public ProgramBuilder WithSummary(string? summary) { _summary = summary; return this; }
     public ProgramBuilder WithCompletionWindowInDays(int? days) { _completionWindowInDays = days; return this; }
     public ProgramBuilder WithCompletionLimitReferee(int? limit) { _completionLimitReferee = limit; return this; }
     public ProgramBuilder WithCompletionLimit(int? limit) { _completionLimit = limit; return this; }
@@ -80,6 +82,7 @@ namespace Yoma.Core.Test.Referral.Builders
     {
       Id = _id,
       Name = _name,
+      Summary = _summary,
       Description = _description,
       CompletionWindowInDays = _completionWindowInDays,
       CompletionLimitReferee = _completionLimitReferee,

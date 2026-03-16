@@ -31,6 +31,7 @@ using Yoma.Core.Infrastructure.Database.Reward.Repositories;
 using Yoma.Core.Infrastructure.Database.Reward.Repositories.Lookup;
 using Yoma.Core.Infrastructure.Database.SSI.Repositories;
 using Yoma.Core.Infrastructure.Database.SSI.Repositories.Lookups;
+using Yoma.Core.Infrastructure.Database.Treasury.Repositories;
 using Yoma.Core.Infrastructure.Shared;
 using Yoma.Core.Infrastructure.Shared.Interceptors;
 
@@ -200,6 +201,10 @@ namespace Yoma.Core.Infrastructure.Database
       services.AddScoped<IRepository<SSICredentialIssuance>, SSICredentialIssuanceRepository>();
       services.AddScoped<IRepository<SSITenantCreation>, SSITenantCreationRepository>();
       #endregion SSI
+
+      #region Treasury
+      services.AddScoped<IRepository<Domain.Treasury.Models.Treasury>, TreasuryRepository>();
+      #endregion Treasury
     }
 
     public static void Configure_InfrastructureDatabase(this IServiceProvider serviceProvider)

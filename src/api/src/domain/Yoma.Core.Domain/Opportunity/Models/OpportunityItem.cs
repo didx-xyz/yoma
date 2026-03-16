@@ -1,4 +1,5 @@
 using Newtonsoft.Json;
+using Yoma.Core.Domain.BlobProvider;
 using Yoma.Core.Domain.Entity;
 using Yoma.Core.Domain.Lookups.Models;
 using Yoma.Core.Domain.Opportunity.Extensions;
@@ -10,6 +11,22 @@ namespace Yoma.Core.Domain.Opportunity.Models
     public Guid Id { get; set; }
 
     public string Title { get; set; } = null!;
+
+    public string OrganizationName { get; set; } = null!;
+
+    [JsonIgnore]
+    public Guid? OrganizationLogoId { get; set; }
+
+    [JsonIgnore]
+    public StorageType? OrganizationLogoStorageType { get; set; }
+
+    [JsonIgnore]
+    public string? OrganizationLogoKey { get; set; }
+
+    /// <summary>
+    /// Optional. Resolved when needed (expensive operation) 
+    /// </summary>
+    public string? OrganizationLogoURL { get; set; }
 
     [JsonIgnore]
     public OrganizationStatus OrganizationStatus { get; set; }

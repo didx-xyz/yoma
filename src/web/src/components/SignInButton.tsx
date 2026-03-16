@@ -9,7 +9,8 @@ import { LoadingInline } from "./Status/LoadingInline";
 export const SignInButton: React.FC<{
   className?: string;
   tabIndex?: number;
-}> = ({ className, tabIndex }) => {
+  hideIcon?: boolean;
+}> = ({ className, tabIndex, hideIcon }) => {
   const [isButtonLoading, setIsButtonLoading] = useState(false);
   const currentLanguage = useAtomValue(currentLanguageAtom);
 
@@ -37,10 +38,10 @@ export const SignInButton: React.FC<{
       title="Login"
     >
       {isButtonLoading && (
-        <LoadingInline classNameSpinner="  h-6 w-6" classNameLabel="hidden" />
+        <LoadingInline classNameSpinner="h-6 w-6" classNameLabel="hidden" />
       )}
-      {!isButtonLoading && <IoMdFingerPrint className="h-6 w-6" />}
-      <p className="hidden uppercase sm:block">Login</p>
+      {!isButtonLoading && !hideIcon && <IoMdFingerPrint className="h-6 w-6" />}
+      <p className={`${hideIcon ? "" : "hidden"} uppercase sm:block`}>Login</p>
     </button>
   );
 };

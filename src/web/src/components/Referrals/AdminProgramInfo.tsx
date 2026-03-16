@@ -1,7 +1,12 @@
 import Image from "next/image";
 import iconZlto from "public/images/icon-zlto.svg";
 import { useMemo } from "react";
-import { IoIosCheckmarkCircle, IoMdClose } from "react-icons/io";
+import {
+  IoEyeOffOutline,
+  IoGitNetwork,
+  IoPersonCircle,
+  IoStarOutline,
+} from "react-icons/io5";
 import Moment from "react-moment";
 import type { Opportunity } from "~/api/models/opportunity";
 import {
@@ -10,17 +15,22 @@ import {
   Program,
   ProgramPathwayInfo,
 } from "~/api/models/referrals";
+import { useReferralProgramAnalyticsQuery } from "~/hooks/useReferralProgramMutations";
 import { DATE_FORMAT_HUMAN } from "~/lib/constants";
-import { ProgramPathwayView } from "./ProgramPathwayView";
 import { ProgramStatusBadge } from "./ProgramStatusBadge";
+import { ReferralTasksCard } from "./ReferralTasksCard";
+import FormMessage, { FormMessageType } from "../Common/FormMessage";
+import { ProgramCard } from "./ProgramCard";
 
 export enum ProgramInfoFilterOptions {
+  PREVIEW = "preview",
   PROGRAM_INFO = "programInfo",
   COMPLETION_REWARDS = "completionRewards",
   ZLTO_REWARDS = "zltoRewards",
   FEATURES = "features",
   PATHWAY = "pathway",
   AUDIT_INFO = "auditInfo",
+  ANALYTICS = "analytics",
 }
 
 interface AdminProgramInfoProps {
@@ -34,6 +44,7 @@ interface AdminProgramInfoProps {
 export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
   program,
   filterOptions = [
+    ProgramInfoFilterOptions.PREVIEW,
     ProgramInfoFilterOptions.PROGRAM_INFO,
     ProgramInfoFilterOptions.COMPLETION_REWARDS,
     ProgramInfoFilterOptions.FEATURES,
@@ -42,10 +53,14 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
   ],
   opportunityDataMap,
 }) => {
-  const showCompletionAndRewards =
-    filterOptions?.includes(ProgramInfoFilterOptions.COMPLETION_REWARDS) ||
-    filterOptions?.includes(ProgramInfoFilterOptions.ZLTO_REWARDS);
-
+  const { data: analytics } = useReferralProgramAnalyticsQuery(
+    program?.id ?? "",
+    {
+      enabled:
+        filterOptions?.includes(ProgramInfoFilterOptions.ANALYTICS) &&
+        !!program?.id,
+    },
+  );
   const countriesLabel = useMemo(() => {
     const countries = program?.countries;
     if (!countries || !Array.isArray(countries) || countries.length === 0) {
@@ -189,13 +204,36 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
 
   return (
     <div className="space-y-6">
+      {/* Preview */}
+      {filterOptions?.includes(ProgramInfoFilterOptions.PROGRAM_INFO) && (
+        <div className="flex flex-col gap-2">
+          <h6 className="text-sm font-bold">Search Results</h6>
+
+          <FormMessage messageType={FormMessageType.Info}>
+            This is how your program will appear in search results.
+          </FormMessage>
+
+          <div className="mt-4 flex justify-center">
+            <ProgramCard
+              data={{
+                ...program,
+                name: program.name || "Program Name",
+                description: program.description || "No description provided",
+                imageURL: program.imageURL,
+              }}
+              zltoReward={program.zltoRewardReferrer}
+              variant="referral"
+            />
+          </div>
+        </div>
+      )}
       {/* Program Information */}
       {filterOptions?.includes(ProgramInfoFilterOptions.PROGRAM_INFO) && (
         <section>
           <h6 className="mb-2 text-sm font-semibold">Program Information</h6>
 
           <div className="overflow-x-auto">
-            <div className="grid overflow-hidden rounded-lg border border-gray-200 md:grid-cols-2">
+            <div className="grid grid-cols-1 overflow-hidden rounded-lg border border-gray-200 md:grid-cols-2">
               <div className="flex">
                 <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
                   Status
@@ -205,19 +243,6 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
                     <ProgramStatusBadge status={program.status} />
                   ) : (
                     "N/A"
-                  )}
-                </div>
-              </div>
-
-              <div className="flex">
-                <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
-                  Default Program
-                </div>
-                <div className="flex-1 border border-gray-200 px-4 py-2 text-xs hover:bg-gray-100">
-                  {program?.isDefault ? (
-                    <IoIosCheckmarkCircle className="text-green inline h-5 w-5" />
-                  ) : (
-                    <IoMdClose className="text-gray-dark inline h-5 w-5" />
                   )}
                 </div>
               </div>
@@ -252,7 +277,7 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
                 </div>
               </div>
 
-              <div className="flex md:col-span-2">
+              <div className="flex">
                 <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
                   Countries
                 </div>
@@ -264,14 +289,13 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
           </div>
         </section>
       )}
-
-      {/* Completion & Rewards */}
-      {showCompletionAndRewards && (
+      {/* Referees */}
+      {filterOptions?.includes(ProgramInfoFilterOptions.COMPLETION_REWARDS) && (
         <section>
-          <h6 className="mb-2 text-sm font-semibold">Completion & Rewards</h6>
+          <h6 className="mb-2 text-sm font-semibold">Referees</h6>
 
           <div className="overflow-x-auto">
-            <div className="grid overflow-hidden rounded-lg border border-gray-200 md:grid-cols-2">
+            <div className="grid grid-cols-1 overflow-hidden rounded-lg border border-gray-200 md:grid-cols-2">
               <div className="flex">
                 <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
                   Completion Window
@@ -285,22 +309,7 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
 
               <div className="flex">
                 <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
-                  Referrer Cap
-                  <div className="text-xs font-normal text-gray-500">
-                    (Per referrer limit)
-                  </div>
-                </div>
-                <div className="flex-1 border border-gray-200 px-4 py-2 text-xs hover:bg-gray-100">
-                  {program?.completionLimitReferee ?? "No limit"}
-                </div>
-              </div>
-
-              <div className="flex">
-                <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
-                  Program Cap
-                  <div className="text-xs font-normal text-gray-500">
-                    (Total program limit)
-                  </div>
+                  Limit
                 </div>
                 <div className="flex-1 border border-gray-200 px-4 py-2 text-xs hover:bg-gray-100">
                   {program?.completionLimit ?? "No limit"}
@@ -309,18 +318,28 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
 
               <div className="flex">
                 <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
-                  Total Completions
+                  Completed
                 </div>
                 <div className="flex-1 border border-gray-200 px-4 py-2 text-xs hover:bg-gray-100">
-                  <span className="badge bg-green-light text-green font-semibold">
-                    {program?.completionTotal ?? 0}
-                  </span>
+                  {program?.completionTotal ?? 0}
                 </div>
               </div>
 
+              {program?.completionBalance !== null &&
+                program?.completionBalance !== undefined && (
+                  <div className="flex">
+                    <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
+                      Left
+                    </div>
+                    <div className="flex-1 border border-gray-200 px-4 py-2 text-xs hover:bg-gray-100">
+                      {program.completionBalance.toLocaleString("en-US")}
+                    </div>
+                  </div>
+                )}
+
               <div className="flex">
                 <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
-                  Referee Reward
+                  ZLTO Reward
                 </div>
                 <div className="flex-1 border border-gray-200 px-4 py-2 text-xs hover:bg-gray-100">
                   {program?.zltoRewardReferee ? (
@@ -341,10 +360,62 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
                   )}
                 </div>
               </div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Referrers */}
+      {filterOptions?.includes(ProgramInfoFilterOptions.COMPLETION_REWARDS) && (
+        <section>
+          <h6 className="mb-2 text-sm font-semibold">Referrers</h6>
+
+          <div className="overflow-x-auto">
+            <div className="grid grid-cols-1 overflow-hidden rounded-lg border border-gray-200 md:grid-cols-2">
+              <div className="flex">
+                <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
+                  Per-Referrer Cap
+                </div>
+                <div className="flex-1 border border-gray-200 px-4 py-2 text-xs hover:bg-gray-100">
+                  {program?.completionLimitReferee ?? "No limit"}
+                </div>
+              </div>
 
               <div className="flex">
                 <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
-                  Referrer Reward
+                  Limit
+                </div>
+                <div className="flex-1 border border-gray-200 px-4 py-2 text-xs hover:bg-gray-100">
+                  {program?.referrerLimit ?? "No limit"}
+                </div>
+              </div>
+
+              <div className="flex">
+                <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
+                  Total
+                </div>
+                <div className="flex-1 border border-gray-200 px-4 py-2 text-xs hover:bg-gray-100">
+                  {program?.referrerTotal ?? 0}
+                </div>
+              </div>
+
+              {program?.referrerLimit !== null &&
+                program?.referrerLimit !== undefined && (
+                  <div className="flex">
+                    <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
+                      Left
+                    </div>
+                    <div className="flex-1 border border-gray-200 px-4 py-2 text-xs hover:bg-gray-100">
+                      {(
+                        program.referrerLimit - (program.referrerTotal ?? 0)
+                      ).toLocaleString("en-US")}
+                    </div>
+                  </div>
+                )}
+
+              <div className="flex">
+                <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
+                  ZLTO Reward
                 </div>
                 <div className="flex-1 border border-gray-200 px-4 py-2 text-xs hover:bg-gray-100">
                   {program?.zltoRewardReferrer ? (
@@ -365,10 +436,21 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
                   )}
                 </div>
               </div>
+            </div>
+          </div>
+        </section>
+      )}
 
+      {/* ZLTO Reward Pool */}
+      {filterOptions?.includes(ProgramInfoFilterOptions.ZLTO_REWARDS) && (
+        <section>
+          <h6 className="mb-2 text-sm font-semibold">ZLTO Reward Pool</h6>
+
+          <div className="overflow-x-auto">
+            <div className="grid grid-cols-1 overflow-hidden rounded-lg border border-gray-200 md:grid-cols-2">
               <div className="flex">
                 <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
-                  ZLTO Pool
+                  Pool
                 </div>
                 <div className="flex-1 border border-gray-200 px-4 py-2 text-xs hover:bg-gray-100">
                   {program?.zltoRewardPool ? (
@@ -392,7 +474,7 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
 
               <div className="flex">
                 <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
-                  ZLTO Cumulative
+                  Used
                 </div>
                 <div className="flex-1 border border-gray-200 px-4 py-2 text-xs hover:bg-gray-100">
                   {program?.zltoRewardCumulative !== null &&
@@ -415,9 +497,9 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
                 </div>
               </div>
 
-              <div className="flex md:col-span-2">
+              <div className="flex">
                 <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
-                  ZLTO Balance
+                  Left
                 </div>
                 <div className="flex-1 border border-gray-200 px-4 py-2 text-xs hover:bg-gray-100">
                   {program?.zltoRewardBalance !== null &&
@@ -443,29 +525,25 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
           </div>
         </section>
       )}
-
       {/* Features */}
       {filterOptions?.includes(ProgramInfoFilterOptions.FEATURES) && (
         <section>
           <h6 className="mb-2 text-sm font-semibold">Features</h6>
 
           <div className="overflow-x-auto">
-            <div className="grid overflow-hidden rounded-lg border border-gray-200 md:grid-cols-2">
+            <div className="grid grid-cols-1 overflow-hidden rounded-lg border border-gray-200 md:grid-cols-2">
               <div className="flex">
                 <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
-                  Default Program
+                  Default
                 </div>
                 <div className="flex-1 border border-gray-200 px-4 py-2 text-xs hover:bg-gray-100">
                   {program?.isDefault ? (
                     <div className="flex items-center gap-2">
-                      <IoIosCheckmarkCircle className="text-green h-5 w-5" />
+                      <IoStarOutline className="text-green h-4 w-4" />
                       <span>Default</span>
                     </div>
                   ) : (
-                    <div className="flex items-center gap-2">
-                      <IoMdClose className="text-gray-dark h-5 w-5" />
-                      <span>Not default</span>
-                    </div>
+                    <span className="text-gray-400">No</span>
                   )}
                 </div>
               </div>
@@ -477,14 +555,11 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
                 <div className="flex-1 border border-gray-200 px-4 py-2 text-xs hover:bg-gray-100">
                   {program?.proofOfPersonhoodRequired ? (
                     <div className="flex items-center gap-2">
-                      <IoIosCheckmarkCircle className="text-green h-5 w-5" />
+                      <IoPersonCircle className="text-green h-4 w-4" />
                       <span>Required</span>
                     </div>
                   ) : (
-                    <div className="flex items-center gap-2">
-                      <IoMdClose className="text-gray-dark h-5 w-5" />
-                      <span>Not required</span>
-                    </div>
+                    <span className="text-gray-400">No</span>
                   )}
                 </div>
               </div>
@@ -495,15 +570,9 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
                 </div>
                 <div className="flex-1 border border-gray-200 px-4 py-2 text-xs hover:bg-gray-100">
                   {program?.multipleLinksAllowed ? (
-                    <div className="flex items-center gap-2">
-                      <IoIosCheckmarkCircle className="text-green h-5 w-5" />
-                      <span>Allowed</span>
-                    </div>
+                    <span className="font-semibold">Allowed</span>
                   ) : (
-                    <div className="flex items-center gap-2">
-                      <IoMdClose className="text-gray-dark h-5 w-5" />
-                      <span>Not allowed</span>
-                    </div>
+                    <span className="text-gray-400">Not allowed</span>
                   )}
                 </div>
               </div>
@@ -515,14 +584,27 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
                 <div className="flex-1 border border-gray-200 px-4 py-2 text-xs hover:bg-gray-100">
                   {program?.pathwayRequired ? (
                     <div className="flex items-center gap-2">
-                      <IoIosCheckmarkCircle className="text-green h-5 w-5" />
+                      <IoGitNetwork className="text-green h-4 w-4" />
                       <span>Required</span>
                     </div>
                   ) : (
+                    <span className="text-gray-400">No</span>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex">
+                <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
+                  Hidden
+                </div>
+                <div className="flex-1 border border-gray-200 px-4 py-2 text-xs hover:bg-gray-100">
+                  {program?.hidden ? (
                     <div className="flex items-center gap-2">
-                      <IoMdClose className="text-gray-dark h-5 w-5" />
-                      <span>Not required</span>
+                      <IoEyeOffOutline className="text-green h-4 w-4" />
+                      <span>Hidden</span>
                     </div>
+                  ) : (
+                    <span className="text-gray-400">No</span>
                   )}
                 </div>
               </div>
@@ -531,23 +613,110 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
         </section>
       )}
 
-      {/* Pathway */}
-      {filterOptions?.includes(ProgramInfoFilterOptions.PATHWAY) && (
+      {/* Analytics */}
+      {filterOptions?.includes(ProgramInfoFilterOptions.ANALYTICS) && (
         <section>
-          <h6 className="mb-2 text-sm font-semibold">Pathway</h6>
+          <h6 className="mb-2 text-sm font-semibold">Analytics</h6>
 
           <div className="overflow-x-auto">
-            {pathwayInfo ? (
-              <ProgramPathwayView
-                pathway={pathwayInfo}
-                isAdmin={true}
-                opportunityDataMap={hydratedOpportunityDataMap}
-              />
-            ) : (
-              <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
-                <p className="text-xs text-gray-700">No pathway configured</p>
+            <div className="grid grid-cols-1 overflow-hidden rounded-lg border border-gray-200 md:grid-cols-2">
+              <div className="flex">
+                <div className="w-52 border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
+                  Total Referrers
+                </div>
+                <div className="flex-1 border border-gray-200 px-4 py-2 text-xs hover:bg-gray-100">
+                  {analytics?.referrerCount?.toLocaleString("en-US") ?? "—"}
+                </div>
               </div>
-            )}
+
+              <div className="flex">
+                <div className="w-52 border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
+                  Total Links
+                </div>
+                <div className="flex-1 border border-gray-200 px-4 py-2 text-xs hover:bg-gray-100">
+                  {analytics?.linkCount?.toLocaleString("en-US") ?? "—"}
+                </div>
+              </div>
+
+              <div className="flex">
+                <div className="w-52 border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
+                  Active Links
+                </div>
+                <div className="flex-1 border border-gray-200 px-4 py-2 text-xs hover:bg-gray-100">
+                  {analytics?.linkCountActive?.toLocaleString("en-US") ?? "—"}
+                </div>
+              </div>
+
+              <div className="flex">
+                <div className="w-52 border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
+                  Total Claims
+                </div>
+                <div className="flex-1 border border-gray-200 px-4 py-2 text-xs hover:bg-gray-100">
+                  {analytics?.usageCountTotal?.toLocaleString("en-US") ?? "—"}
+                </div>
+              </div>
+
+              <div className="flex">
+                <div className="w-52 border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
+                  Completed Claims
+                </div>
+                <div className="flex-1 border border-gray-200 px-4 py-2 text-xs hover:bg-gray-100">
+                  {analytics?.usageCountCompleted?.toLocaleString("en-US") ??
+                    "—"}
+                </div>
+              </div>
+
+              <div className="flex">
+                <div className="w-52 border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
+                  Pending Claims
+                </div>
+                <div className="flex-1 border border-gray-200 px-4 py-2 text-xs hover:bg-gray-100">
+                  {analytics?.usageCountPending?.toLocaleString("en-US") ?? "—"}
+                </div>
+              </div>
+
+              <div className="flex">
+                <div className="w-52 border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
+                  Expired Claims
+                </div>
+                <div className="flex-1 border border-gray-200 px-4 py-2 text-xs hover:bg-gray-100">
+                  {analytics?.usageCountExpired?.toLocaleString("en-US") ?? "—"}
+                </div>
+              </div>
+
+              <div className="flex">
+                <div className="w-52 border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
+                  Conversion Ratio
+                </div>
+                <div className="flex-1 border border-gray-200 px-4 py-2 text-xs hover:bg-gray-100">
+                  {analytics?.completionConversionRatio != null
+                    ? `${(analytics.completionConversionRatio * 100).toFixed(1)}%`
+                    : "—"}
+                </div>
+              </div>
+
+              <div className="flex">
+                <div className="w-52 border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
+                  Avg Links / Referrer
+                </div>
+                <div className="flex-1 border border-gray-200 px-4 py-2 text-xs hover:bg-gray-100">
+                  {analytics?.avgLinksPerReferrer != null
+                    ? analytics.avgLinksPerReferrer.toFixed(2)
+                    : "—"}
+                </div>
+              </div>
+
+              <div className="flex">
+                <div className="w-52 border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
+                  Avg Completed / Referrer
+                </div>
+                <div className="flex-1 border border-gray-200 px-4 py-2 text-xs hover:bg-gray-100">
+                  {analytics?.avgCompletedReferralsPerReferrer != null
+                    ? analytics.avgCompletedReferralsPerReferrer.toFixed(2)
+                    : "—"}
+                </div>
+              </div>
+            </div>
           </div>
         </section>
       )}
@@ -559,7 +728,7 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
             📋 Audit Information
           </h2>
           <div className="overflow-x-auto">
-            <div className="grid overflow-hidden rounded-lg border border-gray-200 md:grid-cols-2">
+            <div className="grid grid-cols-1 overflow-hidden rounded-lg border border-gray-200 md:grid-cols-2">
               <div className="flex">
                 <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
                   Created
@@ -608,6 +777,23 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
                 </div>
               </div>
             </div>
+          </div>
+        </section>
+      )}
+
+      {/* Pathway */}
+      {filterOptions?.includes(ProgramInfoFilterOptions.PATHWAY) && (
+        <section>
+          <h6 className="mb-2 text-sm font-semibold">Pathway</h6>
+
+          <div className="overflow-x-auto">
+            {pathwayInfo ? (
+              <ReferralTasksCard model={pathwayInfo} />
+            ) : (
+              <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+                <p className="text-xs text-gray-700">No pathway configured</p>
+              </div>
+            )}
           </div>
         </section>
       )}

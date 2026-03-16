@@ -72,6 +72,53 @@ namespace Yoma.Core.Domain.Referral.Services
       return result;
     }
 
+    public ReferralAnalyticsProgram ByProgram(Guid programId)
+    {
+      if (programId == Guid.Empty)
+        throw new ArgumentException("Program id is required", nameof(programId));
+
+      var linkStatusActiveId = _linkStatusService.GetByName(ReferralLinkStatus.Active.ToString()).Id;
+      var usageStatusCompletedId = _linkUsageStatusService.GetByName(ReferralLinkUsageStatus.Completed.ToString()).Id;
+      var usageStatusPendingId = _linkUsageStatusService.GetByName(ReferralLinkUsageStatus.Pending.ToString()).Id;
+      var usageStatusExpiredId = _linkUsageStatusService.GetByName(ReferralLinkUsageStatus.Expired.ToString()).Id;
+
+      var linkQuery = _linkRepository.Query()
+          .Where(o => o.ProgramId == programId);
+
+      var linkIds = linkQuery.Select(o => o.Id);
+
+      var linkAgg = linkQuery
+          .GroupBy(_ => 1)
+          .Select(g => new
+          {
+            ReferrerCount = g.Select(x => x.UserId).Distinct().Count(),
+            LinkCount = g.Count(),
+            LinkCountActive = g.Count(x => x.StatusId == linkStatusActiveId)
+          })
+          .SingleOrDefault();
+
+      var usageAgg = _linkUsageRepository.Query()
+          .Where(o => o.ProgramId == programId && linkIds.Contains(o.LinkId))
+          .GroupBy(_ => 1)
+          .Select(g => new
+          {
+            UsageCountCompleted = g.Count(x => x.StatusId == usageStatusCompletedId),
+            UsageCountPending = g.Count(x => x.StatusId == usageStatusPendingId),
+            UsageCountExpired = g.Count(x => x.StatusId == usageStatusExpiredId)
+          })
+          .SingleOrDefault();
+
+      return new ReferralAnalyticsProgram
+      {
+        ReferrerCount = linkAgg?.ReferrerCount ?? 0,
+        LinkCount = linkAgg?.LinkCount ?? 0,
+        LinkCountActive = linkAgg?.LinkCountActive ?? 0,
+        UsageCountCompleted = usageAgg?.UsageCountCompleted ?? 0,
+        UsageCountPending = usageAgg?.UsageCountPending ?? 0,
+        UsageCountExpired = usageAgg?.UsageCountExpired ?? 0
+      };
+    }
+
     public ReferralAnalyticsSearchResultsInfo<ReferralAnalyticsUserInfo> Search(ReferralAnalyticsSearchFilter filter)
     {
       ArgumentNullException.ThrowIfNull(filter, nameof(filter));

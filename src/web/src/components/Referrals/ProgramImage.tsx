@@ -21,6 +21,12 @@ export const ProgramImage: React.FC<ProgramImageProps> = ({
         width={size}
         height={size}
         className={`rounded-lg object-cover shadow-md ${className}`}
+        style={{
+          width: `${size}px`,
+          height: `${size}px`,
+          minWidth: `${size}px`,
+          minHeight: `${size}px`,
+        }}
       />
     );
   }

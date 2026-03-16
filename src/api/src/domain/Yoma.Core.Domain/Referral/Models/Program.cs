@@ -35,6 +35,8 @@ namespace Yoma.Core.Domain.Referral.Models
 
     public string Name { get; set; } = null!;
 
+    public string? Summary { get; set; }
+
     public string? Description { get; set; }
 
     public Guid? ImageId { get; set; }
@@ -131,6 +133,27 @@ namespace Yoma.Core.Domain.Referral.Models
     public ProgramStatus Status { get; set; }
 
     public bool IsDefault { get; set; }
+
+    /// <summary>
+    /// Indicates whether the referral program is hidden from youth (as referrer or referee).
+    /// Administrators can still view and manage it. Hidden programs remain fully functional
+    /// and can still be accessed via direct links, allowing youth to participate as
+    /// referrer or referee.
+    /// </summary>
+    public bool? Hidden { get; set; }
+
+    /// <summary>
+    /// Maximum number of distinct referrers allowed to participate in this program.
+    /// Once the limit is reached, no additional users can become referrers.
+    ///
+    /// A referrer may have multiple links (if enabled), but is counted only once toward
+    /// the referrer limit. All links are considered regardless of their status.
+    /// </summary>
+    public int? ReferrerLimit { get; set; }
+
+    public int? ReferrerTotal { get; set; }
+
+    public int? ReferrerBalance => ReferrerLimit.HasValue ? ReferrerLimit - (ReferrerTotal ?? 0) : null;
 
     public DateTimeOffset DateStart { get; set; }
 

@@ -49,6 +49,7 @@ import {
   SETTING_USER_POPUP_LEAVINGYOMA,
 } from "~/lib/constants";
 import analytics from "~/lib/analytics";
+import { OPPORTUNITY_QUERY_KEYS } from "~/hooks/useOpportunityMutations";
 import { userProfileAtom } from "~/lib/store";
 import { type User } from "~/server/auth";
 import CustomModal from "../Common/CustomModal";
@@ -87,7 +88,7 @@ const OpportunityPublicDetails: React.FC<{
 
   const { data: verificationStatus, isLoading: verificationStatusIsLoading } =
     useQuery<MyOpportunityResponseVerify | null>({
-      queryKey: ["verificationStatus", opportunityInfo.id],
+      queryKey: OPPORTUNITY_QUERY_KEYS.verificationStatus(opportunityInfo.id),
       queryFn: () => {
         if (
           !!user &&
@@ -238,7 +239,7 @@ const OpportunityPublicDetails: React.FC<{
 
     // invalidate queries
     await queryClient.invalidateQueries({
-      queryKey: ["verificationStatus", opportunityInfo.id],
+      queryKey: OPPORTUNITY_QUERY_KEYS.verificationStatus(opportunityInfo.id),
     });
   }, [opportunityInfo.id, opportunityInfo.title, queryClient]);
 
@@ -257,7 +258,7 @@ const OpportunityPublicDetails: React.FC<{
 
       // invalidate queries
       await queryClient.invalidateQueries({
-        queryKey: ["verificationStatus", opportunityInfo.id],
+        queryKey: OPPORTUNITY_QUERY_KEYS.verificationStatus(opportunityInfo.id),
       });
 
       // toast

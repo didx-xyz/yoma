@@ -55,6 +55,8 @@ using Yoma.Core.Domain.SSI.Interfaces;
 using Yoma.Core.Domain.SSI.Interfaces.Lookups;
 using Yoma.Core.Domain.SSI.Services;
 using Yoma.Core.Domain.SSI.Services.Lookups;
+using Yoma.Core.Domain.Treasury.Interfaces;
+using Yoma.Core.Domain.Treasury.Services;
 
 namespace Yoma.Core.Domain
 {
@@ -225,6 +227,10 @@ namespace Yoma.Core.Domain
       services.AddScoped<ISSITenantService, SSITenantService>();
       services.AddScoped<ISSIWalletService, SSIWalletService>();
       #endregion SSI
+
+      #region Treasury
+      services.AddScoped<ITreasuryService, TreasuryService>();
+      #endregion Treasury
     }
 
     public static void ConfigureServices_DomainServicesCompositionFactory(this IServiceCollection services, Func<IServiceProvider, IDictionary<Partner, ISharingProviderClientFactory>> factoriesResolver)

@@ -662,8 +662,8 @@ WITH rewardsums AS (
             WHEN COUNT(O."YomaRewardCumulative") = 0 THEN NULL
             ELSE SUM(O."YomaRewardCumulative")
         END AS "YomaRewardCumulative",
-        SUM(O."ZltoRewardPool") AS "TotalZltoRewardPool",
-        SUM(O."YomaRewardPool") AS "TotalYomaRewardPool"
+        SUM(O."ZltoRewardPool") AS "TotalZltoRewardPoolCurrentFinancialYear",
+        SUM(O."YomaRewardPool") AS "TotalYomaRewardPoolCurrentFinancialYear"
     FROM
         "Opportunity"."Opportunity" O
     GROUP BY
@@ -673,9 +673,13 @@ UPDATE
     "Entity"."Organization" org
 SET
     "ZltoRewardCumulative" = rewardsums."ZltoRewardCumulative",
+    "ZltoRewardCumulativeCurrentFinancialYear" = rewardsums."ZltoRewardCumulative",
+
     "YomaRewardCumulative" = rewardsums."YomaRewardCumulative",
-    "ZltoRewardPool" = rewardsums."TotalZltoRewardPool",
-    "YomaRewardPool" = rewardsums."TotalYomaRewardPool"
+    "YomaRewardCumulativeCurrentFinancialYear" = rewardsums."YomaRewardCumulative",
+
+    "ZltoRewardPoolCurrentFinancialYear" = rewardsums."TotalZltoRewardPoolCurrentFinancialYear",
+    "YomaRewardPoolCurrentFinancialYear" = rewardsums."TotalYomaRewardPoolCurrentFinancialYear"
 FROM
     rewardsums
 WHERE
@@ -700,7 +704,6 @@ DECLARE
 
   v_words                text := 'Youth,Referral,Learn,Apply,Round,Flow,Onboard,Capstone,Community,Engage,Pathway,Skills,Program,Launch,Venture,Starter,Pro,Advanced,Scholar,Track,Journey';
 
-  v_is_default_assigned  boolean := false;
   v_make_default_index   int := 1 + floor(random()*50)::int; -- random default among the 50
 
   v_i int := 0;
@@ -708,6 +711,7 @@ DECLARE
   -- program fields
   v_program_id uuid;
   v_program_name varchar(255);
+  v_program_summary varchar(150);
   v_program_desc varchar(500);
   v_status_id uuid;
   v_is_default boolean;
@@ -722,6 +726,8 @@ DECLARE
   v_cap_program int;
   v_date_start timestamptz;
   v_date_end   timestamptz;
+  v_hidden boolean;
+  v_referrer_limit int;
 
   -- pathway fields
   v_pathway_id uuid;
@@ -790,7 +796,8 @@ BEGIN
       left(trim(both ' ' from array_to_string(v_arr, ' ')), 70)
       || ' ' || (100 + floor(random()*900))::text; -- 100..999
 
-    v_program_desc := 'Seeded program for QA automation and manual testing';
+    v_program_summary := 'Seeded summary for QA automation and manual testing';
+    v_program_desc := 'Seeded description program for QA automation and manual testing';
 
     -- -------------------------
     -- Dates to match state
@@ -834,6 +841,11 @@ BEGIN
     v_pop              := (random() < 0.5);                  -- ProofOfPersonhoodRequired
     v_pathway_required := (random() < 0.5);                  -- allow some without pathway
     v_multiple_links   := (random() < 0.5);
+    v_hidden := (random() < 0.15); -- seed some hidden, most visible
+    v_referrer_limit := CASE
+      WHEN random() < 0.5 THEN NULL
+      ELSE 1 + floor(random()*25)::int
+    END;
 
     -- -------------------------
     -- Default program must always be Active
@@ -842,6 +854,7 @@ BEGIN
       v_status_id := v_status_active_id;
       v_date_start := date_trunc('day', v_now - interval '3 days');
       v_date_end := NULL;
+      v_hidden := FALSE;
     END IF;
 
     -- -------------------------
@@ -911,19 +924,21 @@ BEGIN
     v_program_id := gen_random_uuid();
 
     INSERT INTO "Referral"."Program"(
-      "Id","Name","Description","ImageId",
+      "Id","Name","Summary","Description","ImageId",
       "CompletionWindowInDays","CompletionLimitReferee","CompletionLimit",
       "CompletionTotal",
       "ZltoRewardReferrer","ZltoRewardReferee","ZltoRewardPool","ZltoRewardCumulative",
       "ProofOfPersonhoodRequired","PathwayRequired","MultipleLinksAllowed",
+      "Hidden","ReferrerLimit","ReferrerTotal",
       "StatusId","IsDefault","DateStart","DateEnd",
       "DateCreated","CreatedByUserId","DateModified","ModifiedByUserId")
     VALUES(
-      v_program_id, v_program_name, v_program_desc, NULL,
+      v_program_id, v_program_name, v_program_summary, v_program_desc, NULL,
       v_comp_window, v_cap_per_ref, v_cap_program,
       NULL,
       v_z_referrer, v_z_referee, v_z_pool, NULL,
       v_pop, v_pathway_required, v_multiple_links,
+      v_hidden, v_referrer_limit, NULL,
       v_status_id, v_is_default, v_date_start, v_date_end,
       v_now, v_admin_user_id, v_now, v_admin_user_id
     );
@@ -1373,9 +1388,16 @@ BEGIN
   END IF;
 
   -- ===========================================
-  -- PROGRAM: CompletionTotal & ZltoRewardCumulative
+  -- PROGRAM: ReferrerTotal, CompletionTotal & ZltoRewardCumulative
   -- ===========================================
-  WITH usage_completed AS (
+  WITH referrers AS (
+    SELECT
+      l."ProgramId",
+      COUNT(DISTINCT l."UserId")::int AS referrer_total
+    FROM "Referral"."Link" l
+    GROUP BY l."ProgramId"
+  ),
+  usage_completed AS (
     SELECT u."ProgramId", COUNT(*)::int AS completed_cnt
     FROM "Referral"."LinkUsage" u
     JOIN "Referral"."LinkUsageStatus" s ON s."Id" = u."StatusId" AND s."Name" = 'Completed'
@@ -1390,6 +1412,7 @@ BEGIN
   ),
   agg AS (
     SELECT r.program_id,
+           rf.referrer_total,
            COALESCE(uc.completed_cnt, 0) AS completed_cnt,
            r.reward_per_completion,
            r.pool,
@@ -1399,10 +1422,12 @@ BEGIN
              ELSE (r.reward_per_completion * COALESCE(uc.completed_cnt,0))
            END AS raw_cumulative
     FROM rewards r
+    LEFT JOIN referrers rf ON rf."ProgramId" = r.program_id
     LEFT JOIN usage_completed uc ON uc."ProgramId" = r.program_id
   ),
   capped AS (
     SELECT program_id,
+           referrer_total,
            completed_cnt,
            CASE
              WHEN raw_cumulative IS NULL THEN NULL
@@ -1412,9 +1437,10 @@ BEGIN
     FROM agg
   )
   UPDATE "Referral"."Program" p
-  SET "CompletionTotal"      = c.completed_cnt,
+  SET "ReferrerTotal"       = c.referrer_total,
+      "CompletionTotal"     = c.completed_cnt,
       "ZltoRewardCumulative" = c.zlto_cumulative,
-      "DateModified"         = v_now
+      "DateModified"        = v_now
   FROM capped c
   WHERE p."Id" = c.program_id;
 
@@ -1470,3 +1496,30 @@ BEGIN
     AND l."StatusId" = v_status_active_id;  -- only flip Active
 
 END $$ LANGUAGE plpgsql;
+
+-- ===========================================
+-- TREASURY: Running Totals
+-- ===========================================
+WITH totals AS (
+  SELECT
+    (
+      COALESCE((SELECT SUM("ZltoRewardCumulative") FROM "Entity"."Organization"), 0) +
+      COALESCE((SELECT SUM("ZltoRewardCumulative") FROM "Referral"."Program"), 0)
+    ) AS "ZltoRewardCumulative",
+    (
+      COALESCE((SELECT SUM("ZltoRewardCumulativeCurrentFinancialYear") FROM "Entity"."Organization"), 0) +
+      COALESCE((SELECT SUM("ZltoRewardCumulative") FROM "Referral"."Program"), 0)
+    ) AS "ZltoRewardCumulativeCurrentFinancialYear"
+)
+UPDATE "Treasury"."Treasury" t
+SET
+  "ZltoRewardCumulative" = CASE
+    WHEN totals."ZltoRewardCumulative" = 0 THEN NULL
+    ELSE totals."ZltoRewardCumulative"
+  END,
+  "ZltoRewardCumulativeCurrentFinancialYear" = CASE
+    WHEN totals."ZltoRewardCumulativeCurrentFinancialYear" = 0 THEN NULL
+    ELSE totals."ZltoRewardCumulativeCurrentFinancialYear"
+  END,
+  "DateModified" = (CURRENT_TIMESTAMP AT TIME ZONE 'UTC')
+FROM totals;

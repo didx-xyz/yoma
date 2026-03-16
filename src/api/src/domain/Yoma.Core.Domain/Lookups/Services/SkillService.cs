@@ -143,7 +143,7 @@ namespace Yoma.Core.Domain.Lookups.Services
             {
               var changed = false;
 
-              if (!string.Equals(existItem.Name, item.Name, StringComparison.InvariantCultureIgnoreCase))
+              if (!string.Equals(existItem.Name, item.Name, StringComparison.OrdinalIgnoreCase))
               { existItem.Name = item.Name; changed = true; }
 
               if (!string.Equals(existItem.InfoURL, item.InfoURL, StringComparison.Ordinal))

@@ -27,10 +27,12 @@ namespace Yoma.Core.Test.Referral.Fixtures
     public Mock<IShortLinkProviderClientFactory> ShortLinkProviderClientFactory { get; }
     public Mock<IShortLinkProviderClient> ShortLinkProviderClient { get; }
     public Mock<IUserService> UserService { get; }
-    public Mock<IProgramInfoService> ProgramInfoService { get; }
+    public Mock<IProgramService> ProgramService { get; }
     public Mock<ILinkStatusService> LinkStatusService { get; }
     public Mock<ILinkUsageStatusService> LinkUsageStatusService { get; }
     public Mock<ICountryService> CountryService { get; }
+    public Mock<IBlobService> BlobService { get; }
+    public Mock<IExecutionStrategyService> ExecutionStrategyService { get; }
     public Mock<ReferralLinkSearchFilterValidator> ReferralLinkSearchFilterValidator { get; }
     public Mock<ReferralLinkRequestCreateValidator> ReferralLinkRequestCreateValidator { get; }
     public Mock<ReferralLinkRequestUpdateValidator> ReferralLinkRequestUpdateValidator { get; }
@@ -62,12 +64,21 @@ namespace Yoma.Core.Test.Referral.Fixtures
         .Returns(ShortLinkProviderClient.Object);
 
       UserService = new Mock<IUserService>();
-      ProgramInfoService = new Mock<IProgramInfoService>();
+      ProgramService = new Mock<IProgramService>();
 
       LinkStatusService = MockLookupServices.CreateLinkStatusService();
       LinkUsageStatusService = MockLookupServices.CreateLinkUsageStatusService();
 
       CountryService = new Mock<ICountryService>();
+      BlobService = new Mock<IBlobService>();
+
+      ExecutionStrategyService = new Mock<IExecutionStrategyService>();
+      ExecutionStrategyService
+        .Setup(x => x.ExecuteInExecutionStrategyAsync(It.IsAny<Func<Task>>()))
+        .Returns<Func<Task>>(async action => await action());
+      ExecutionStrategyService
+        .Setup(x => x.ExecuteInExecutionStrategy(It.IsAny<Action>()))
+        .Callback<Action>(action => action());
 
       ReferralLinkSearchFilterValidator = new Mock<ReferralLinkSearchFilterValidator>() { CallBase = false };
       ReferralLinkRequestCreateValidator = new Mock<ReferralLinkRequestCreateValidator>() { CallBase = false };
@@ -87,10 +98,12 @@ namespace Yoma.Core.Test.Referral.Fixtures
         HttpContextAccessor.Object,
         ShortLinkProviderClientFactory.Object,
         UserService.Object,
-        ProgramInfoService.Object,
+        ProgramService.Object,
         LinkStatusService.Object,
         LinkUsageStatusService.Object,
         CountryService.Object,
+        BlobService.Object,
+        ExecutionStrategyService.Object,
         ReferralLinkSearchFilterValidator.Object,
         ReferralLinkRequestCreateValidator.Object,
         ReferralLinkRequestUpdateValidator.Object,

@@ -1,8 +1,6 @@
-import { useQueryClient } from "@tanstack/react-query";
-import { type AxiosError } from "axios";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { useCallback, useState } from "react";
+import { useCallback } from "react";
 import {
   FaEdit,
   FaEye,
@@ -11,13 +9,14 @@ import {
   FaTrash,
 } from "react-icons/fa";
 import { IoIosSettings, IoMdWarning } from "react-icons/io";
-import { toast } from "react-toastify";
+import { IoEyeOffOutline, IoEyeOutline } from "react-icons/io5";
 import { Program, ProgramItem, ProgramStatus } from "~/api/models/referrals";
-import { updateReferralProgramStatus } from "~/api/services/referrals";
-import { ApiErrors } from "~/components/Status/ApiErrors";
 import { Loading } from "~/components/Status/Loading";
 import { useConfirmationModalContext } from "~/context/modalConfirmationContext";
-import { analytics } from "~/lib/analytics";
+import {
+  useReferralProgramHiddenMutation,
+  useReferralProgramStatusMutation,
+} from "~/hooks/useReferralProgramMutations";
 import { getSafeUrl } from "~/lib/utils";
 
 export enum ReferralProgramActionOptions {
@@ -27,6 +26,7 @@ export enum ReferralProgramActionOptions {
   ACTIVATE = "activate",
   INACTIVATE = "inactivate",
   DELETE = "delete",
+  TOGGLE_HIDDEN = "toggleHidden",
 }
 
 interface ReferralProgramActionsProps {
@@ -48,16 +48,24 @@ export const AdminReferralProgramActions: React.FC<
     ReferralProgramActionOptions.ACTIVATE,
     ReferralProgramActionOptions.INACTIVATE,
     ReferralProgramActionOptions.DELETE,
+    ReferralProgramActionOptions.TOGGLE_HIDDEN,
   ],
   className = "text-green hover:brightness-125",
 }) => {
   const router = useRouter();
-  const queryClient = useQueryClient();
   const modalContext = useConfirmationModalContext();
-  const [isLoading, setIsLoading] = useState(false);
+  const statusMutation = useReferralProgramStatusMutation({
+    programId: program.id,
+    programName: program.name,
+  });
+  const hiddenMutation = useReferralProgramHiddenMutation({
+    programId: program.id,
+    programName: program.name,
+  });
+  const isLoading = statusMutation.isPending || hiddenMutation.isPending;
 
   const handleStatusUpdate = useCallback(
-    async (item: Program | ProgramItem, status: ProgramStatus) => {
+    async (status: ProgramStatus) => {
       // confirm dialog
       const result = await modalContext.showConfirmation(
         "",
@@ -95,50 +103,17 @@ export const AdminReferralProgramActions: React.FC<
       );
       if (!result) return;
 
-      setIsLoading(true);
-
-      try {
-        // call api
-        await updateReferralProgramStatus(item.id, status);
-
-        // 📊 ANALYTICS: track program status update
-        analytics.trackEvent("referral_program_status_updated", {
-          programId: item.id,
-          programName: item.name,
-          status: status,
-        });
-
-        // invalidate cache
-        await queryClient.invalidateQueries({
-          queryKey: ["referralPrograms"],
-          exact: false,
-        });
-        await queryClient.invalidateQueries({
-          queryKey: ["referralProgram", item.id],
-          exact: false,
-        });
-
-        toast.success("Program status updated");
-
-        // Redirect to returnUrl or list page when deleting/archiving a program
-        if (status === ProgramStatus.Deleted) {
-          void router.push(
-            getSafeUrl(returnUrl, "/admin/referrals?status=Deleted"),
-          );
-        }
-      } catch (error) {
-        toast(<ApiErrors error={error as AxiosError} />, {
-          type: "error",
-          toastId: `error-${item.id}`,
-          autoClose: false,
-          icon: false,
-        });
-      }
-      setIsLoading(false);
-
-      return;
+      statusMutation.mutate(status, {
+        onSuccess: () => {
+          if (status === ProgramStatus.Deleted) {
+            void router.push(
+              getSafeUrl(returnUrl, "/admin/referrals?status=Deleted"),
+            );
+          }
+        },
+      });
     },
-    [queryClient, modalContext, returnUrl, router],
+    [modalContext, statusMutation, returnUrl, router],
   );
 
   return (
@@ -212,9 +187,7 @@ export const AdminReferralProgramActions: React.FC<
                 <button
                   type="button"
                   className="text-gray-dark flex flex-row items-center gap-2 hover:brightness-50"
-                  onClick={() =>
-                    handleStatusUpdate(program, ProgramStatus.Active)
-                  }
+                  onClick={() => handleStatusUpdate(ProgramStatus.Active)}
                 >
                   <FaStar className="text-green size-4" />
                   Activate
@@ -229,9 +202,7 @@ export const AdminReferralProgramActions: React.FC<
                 <button
                   type="button"
                   className="text-gray-dark flex flex-row items-center gap-2 hover:brightness-50"
-                  onClick={() =>
-                    handleStatusUpdate(program, ProgramStatus.Inactive)
-                  }
+                  onClick={() => handleStatusUpdate(ProgramStatus.Inactive)}
                 >
                   <FaStar className="text-green size-4" />
                   Inactivate
@@ -249,12 +220,34 @@ export const AdminReferralProgramActions: React.FC<
                 <button
                   type="button"
                   className="text-gray-dark flex flex-row items-center hover:brightness-50"
-                  onClick={() =>
-                    handleStatusUpdate(program, ProgramStatus.Deleted)
-                  }
+                  onClick={() => handleStatusUpdate(ProgramStatus.Deleted)}
                 >
                   <FaTrash className="text-green size-4" />
                   Delete
+                </button>
+              </li>
+            )}
+
+          {/* TOGGLE HIDDEN */}
+          {actionOptions.includes(ReferralProgramActionOptions.TOGGLE_HIDDEN) &&
+            program.status !== "Deleted" && (
+              <li>
+                <button
+                  type="button"
+                  className="text-gray-dark flex flex-row items-center gap-2 hover:brightness-50"
+                  onClick={() => hiddenMutation.mutate(!program.hidden)}
+                >
+                  {program.hidden ? (
+                    <>
+                      <IoEyeOutline className="text-green size-4" />
+                      Unhide
+                    </>
+                  ) : (
+                    <>
+                      <IoEyeOffOutline className="text-green size-4" />
+                      Hide
+                    </>
+                  )}
                 </button>
               </li>
             )}

@@ -9,7 +9,7 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Entities
 {
   [Table("Program", Schema = "Referral")]
   [Index(nameof(Name), IsUnique = true)]
-  [Index(nameof(Description), nameof(StatusId), nameof(IsDefault), nameof(DateStart), nameof(DateEnd),
+  [Index(nameof(Summary), nameof(StatusId), nameof(IsDefault), nameof(Hidden), nameof(DateStart), nameof(DateEnd),
     nameof(DateCreated), nameof(DateModified))]
   public class Program : BaseEntity<Guid>
   {
@@ -17,7 +17,12 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Entities
     [Column(TypeName = "varchar(255)")] //MS SQL: nvarchar(255)
     public string Name { get; set; } = null!;
 
+    //support specials characters like emojis  
     [Column(TypeName = "varchar(500)")] //MS SQL: nvarchar(500)
+    public string? Summary { get; set; }
+
+    //support specials characters like emojis  
+    [Column(TypeName = "text")] //MS SQL: nvarchar(MAX)
     public string? Description { get; set; }
 
     [ForeignKey(nameof(ImageId))]
@@ -60,6 +65,12 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Entities
 
     [Required]
     public bool IsDefault { get; set; }
+
+    public bool? Hidden { get; set; }
+
+    public int? ReferrerLimit { get; set; }
+
+    public int? ReferrerTotal { get; set; }
 
     [Required]
     public DateTimeOffset DateStart { get; set; }

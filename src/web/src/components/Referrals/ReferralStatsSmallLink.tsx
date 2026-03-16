@@ -24,10 +24,10 @@ export const ReferralStatsSmallLink: React.FC<ReferralStatsSmallLinkProps> = ({
     <div className="flex flex-col gap-4 md:flex-row">
       {/* Invites Card */}
       <div className="flex flex-1 flex-col space-y-2">
-        <div className="font-family-nunito font-semibold text-black">
+        <div className="font-family-nunito line-clamp-1 font-semibold text-black">
           Referrals available
         </div>
-        <div className="flex flex-1 flex-col gap-1 rounded-md bg-white px-3 py-2 md:px-4 md:py-3">
+        <div className="bg-base-200 flex flex-1 flex-col gap-1 rounded-md px-3 py-2 shadow-md md:px-4 md:py-3">
           {link.status == "Active" ? (
             <>
               <div className="flex items-center gap-2">
@@ -35,22 +35,22 @@ export const ReferralStatsSmallLink: React.FC<ReferralStatsSmallLinkProps> = ({
                   Available codes left to refer
                 </div>
               </div>
-              <div className="text-base-content flex">
-                {!hasLimit && <span className="mt-2 mr-1 text-sm">♾️</span>}
-                {hasLimit && <span className="mt-2 mr-1 text-sm">❤️</span>}
+              <div className="text-base-content flex items-center">
+                {!hasLimit && <span className="mr-1">♾️</span>}
+                {hasLimit && <span className="mr-1">❤️</span>}
                 {hasLimit ? (
                   <div className="flex items-baseline">
-                    <span className="text-[26px] font-semibold">
+                    <span className="text-lg font-semibold">
                       {stats.balance?.toLocaleString("en-US")}
                     </span>
                     {stats.limit && (
-                      <span className="text-[26px] font-normal">
+                      <span className="text-lg font-normal">
                         /{stats.limit.toLocaleString("en-US")}
                       </span>
                     )}
                   </div>
                 ) : (
-                  <span className="text-[26px] font-semibold">Unlimited</span>
+                  <span className="text-lg font-semibold">Unlimited</span>
                 )}
               </div>
             </>
@@ -61,7 +61,7 @@ export const ReferralStatsSmallLink: React.FC<ReferralStatsSmallLinkProps> = ({
                   This link is no longer available
                 </div>
               </div>
-              <div className="text-base-content flex items-center gap-2 text-[26px] font-semibold">
+              <div className="text-base-content flex items-center gap-2 text-lg font-semibold">
                 <Image
                   src="/images/icon-referral-stats-expired.svg"
                   alt="Expired"
@@ -78,14 +78,14 @@ export const ReferralStatsSmallLink: React.FC<ReferralStatsSmallLinkProps> = ({
 
       {/* Performance Card */}
       <div className="flex flex-1 flex-col space-y-2">
-        <div className="font-family-nunito font-semibold text-black">
+        <div className="font-family-nunito line-clamp-1 font-semibold text-black">
           Overall Performance
         </div>
-        <div className="flex flex-1 gap-2 rounded-md bg-white p-4">
+        <div className="bg-base-200 flex flex-1 gap-2 rounded-md p-4 shadow-md">
           {/* Completed */}
           <div className="flex flex-1 flex-col gap-1">
             <div className="text-base-content/70 text-sm">Successful</div>
-            <div className="text-base-content flex items-center gap-2 text-[26px] font-semibold">
+            <div className="text-base-content flex items-center gap-2 text-lg font-semibold">
               <Image
                 src="/images/icon-referral-stats-completed.svg"
                 alt="Completed"
@@ -100,7 +100,7 @@ export const ReferralStatsSmallLink: React.FC<ReferralStatsSmallLinkProps> = ({
           {/* Pending */}
           <div className="flex flex-1 flex-col gap-1">
             <div className="text-base-content/70 text-sm">Pending</div>
-            <div className="text-base-content flex items-center gap-2 text-[26px] font-semibold">
+            <div className="text-base-content flex items-center gap-2 text-lg font-semibold">
               <Image
                 src="/images/icon-referral-stats-pending.svg"
                 alt="Pending"
@@ -115,7 +115,7 @@ export const ReferralStatsSmallLink: React.FC<ReferralStatsSmallLinkProps> = ({
           {/* Total */}
           <div className="flex flex-1 flex-col gap-1">
             <div className="text-base-content/70 text-sm">Expired</div>
-            <div className="text-base-content flex items-center gap-2 text-[26px] font-semibold">
+            <div className="text-base-content flex items-center gap-2 text-lg font-semibold">
               <Image
                 src="/images/icon-referral-stats-expired.svg"
                 alt="Expired"
@@ -131,16 +131,16 @@ export const ReferralStatsSmallLink: React.FC<ReferralStatsSmallLinkProps> = ({
 
       {/* Rewards Card */}
       <div className="flex flex-1 flex-col space-y-2">
-        <div className="font-family-nunito font-semibold text-black">
+        <div className="font-family-nunito line-clamp-1 font-semibold text-black">
           Rewards earned
         </div>
 
-        <div className="flex flex-1 flex-col gap-1 rounded-md bg-white px-3 py-2 md:px-4 md:py-3">
+        <div className="bg-base-200 flex flex-1 flex-col gap-1 rounded-md px-3 py-2 shadow-md md:px-4 md:py-3">
           <div className="flex items-center gap-2">
             <div className="text-base-content/70 text-sm">Total</div>
           </div>
 
-          <div className="text-base-content flex items-center gap-2 text-[26px] font-semibold">
+          <div className="text-base-content flex items-center gap-2 text-lg font-semibold">
             <Image
               src="/images/icon-zlto-rounded-color.webp"
               alt="ZLTO"

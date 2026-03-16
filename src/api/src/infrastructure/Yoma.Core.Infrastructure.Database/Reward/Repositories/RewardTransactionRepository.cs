@@ -25,6 +25,7 @@ namespace Yoma.Core.Infrastructure.Database.Reward.Repositories
       return _context.RewardTransaction.Select(entity => new RewardTransaction
       {
         Id = entity.Id,
+        Provider = entity.Provider,
         UserId = entity.UserId,
         StatusId = entity.StatusId,
         Status = Enum.Parse<RewardTransactionStatus>(entity.Status.Name, true),
@@ -48,6 +49,7 @@ namespace Yoma.Core.Infrastructure.Database.Reward.Repositories
       var entity = new Entities.RewardTransaction
       {
         Id = item.Id,
+        Provider = item.Provider,
         UserId = item.UserId,
         StatusId = item.StatusId,
         SourceEntityType = item.SourceEntityType,
@@ -77,6 +79,7 @@ namespace Yoma.Core.Infrastructure.Database.Reward.Repositories
          new Entities.RewardTransaction
          {
            Id = item.Id,
+           Provider = item.Provider,
            UserId = item.UserId,
            StatusId = item.StatusId,
            SourceEntityType = item.SourceEntityType,

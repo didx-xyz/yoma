@@ -1,12 +1,11 @@
-import { QueryClient, dehydrate, useQuery } from "@tanstack/react-query";
+import { QueryClient, dehydrate } from "@tanstack/react-query";
 import { useAtomValue, useSetAtom } from "jotai";
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
 import Head from "next/head";
 import { useRouter } from "next/router";
 import { useCallback, useEffect, useState, type ReactElement } from "react";
-import { IoGift } from "react-icons/io5";
-import type { ProgramInfo } from "~/api/models/referrals";
+import { IoGift, IoTimeOutline, IoTrophyOutline } from "react-icons/io5";
 import type { UserProfile } from "~/api/models/user";
 import {
   claimReferralLinkAsReferee,
@@ -17,17 +16,44 @@ import MainLayout from "~/components/Layout/Main";
 import NoRowsMessage from "~/components/NoRowsMessage";
 import { AlternativeActions } from "~/components/Referrals/AlternativeActions";
 import { BecomeReferrerCTA } from "~/components/Referrals/BecomeReferrerCTA";
+import { ReferralInfoCard } from "~/components/Referrals/ReferralInfoCard";
+import { ReferralMainColumns } from "~/components/Referrals/ReferralMainColumns";
+import { ReferralShell } from "~/components/Referrals/ReferralShell";
+import { ReferralStatCard } from "~/components/Referrals/ReferralStatCard";
+import { ReferralTasksCard } from "~/components/Referrals/ReferralTasksCard";
+import { ReferralTopCard } from "~/components/Referrals/ReferralTopCard";
 import { LoadingInline } from "~/components/Status/LoadingInline";
 import { ProfileCompletionWizard } from "~/components/User/ProfileCompletionWizard";
+import {
+  REFERRAL_PROGRAM_QUERY_KEYS,
+  useReferralProgramInfoByLinkQuery,
+} from "~/hooks/useReferralProgramMutations";
 import analytics from "~/lib/analytics";
 import { escapeHtml, parseApiError } from "~/lib/apiErrorUtils";
 import { handleUserSignIn } from "~/lib/authUtils";
+import { THEME_WHITE } from "~/lib/constants";
 import { config } from "~/lib/react-query-config";
 import { currentLanguageAtom, userProfileAtom } from "~/lib/store";
 import { cleanTextForMetaTag } from "~/lib/utils";
 import { getProfileCompletionStep } from "~/lib/utils/profile";
 import { authOptions } from "~/server/auth";
 import { type NextPageWithLayout } from "../../_app";
+
+const getErrorSearchText = (error: any): string => {
+  const data = error?.response?.data;
+
+  if (typeof data === "string") return data;
+
+  if (data && typeof data === "object") {
+    try {
+      return JSON.stringify(data);
+    } catch {
+      return "";
+    }
+  }
+
+  return "";
+};
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
@@ -55,8 +81,8 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 
   try {
     // Prefetch program info using the new endpoint that accepts linkId
-    await queryClient.prefetchQuery({
-      queryKey: ["ReferralProgramByLink", linkId],
+    await queryClient.fetchQuery({
+      queryKey: REFERRAL_PROGRAM_QUERY_KEYS.infoByLink(linkId),
       queryFn: () => getReferralProgramInfoByLinkId(linkId, context),
     });
 
@@ -165,11 +191,7 @@ const ReferralClaimPage: NextPageWithLayout<{
     data: program,
     error: programError,
     isLoading: programLoading,
-  } = useQuery<ProgramInfo>({
-    queryKey: ["ReferralProgramByLink", linkId],
-    queryFn: () => getReferralProgramInfoByLinkId(linkId),
-    enabled: !serverError && !!linkId,
-  });
+  } = useReferralProgramInfoByLinkQuery(linkId, { enabled: !serverError });
 
   const handleClaim = useCallback(async () => {
     setClaiming(true);
@@ -330,11 +352,13 @@ const ReferralClaimPage: NextPageWithLayout<{
     const fallbackMessage =
       "Failed to claim referral link. You may have already claimed it or are not eligible.";
     const safeErrorMessage = errorMessage || fallbackMessage;
+    const rawErrorText = getErrorSearchText(claimError);
 
     // Check if user already claimed this link - redirect to progress page
     const alreadyClaimed =
       customErrors.some((error) => /already claimed/i.test(error.message)) ||
-      /already claimed/i.test(safeErrorMessage);
+      /already claimed/i.test(safeErrorMessage) ||
+      /already claimed|you already claimed|still pending/i.test(rawErrorText);
 
     if (alreadyClaimed) {
       router.push(`/referrals/progress/${programId}`);
@@ -424,7 +448,7 @@ const ReferralClaimPage: NextPageWithLayout<{
   return (
     <>
       <Head>
-        <title>{safeTitle}</title>
+        <title>{`Yoma | Ambassador Referrals | ${program.name}`}</title>
         <meta name="description" content={safeDescription} />
 
         {/* Open Graph */}
@@ -440,64 +464,112 @@ const ReferralClaimPage: NextPageWithLayout<{
         {imageUrl && <meta name="twitter:image" content={imageUrl} />}
       </Head>
 
-      <div className="container mx-auto mt-20 flex max-w-5xl flex-col gap-8 px-4 py-8">
-        {/* Welcome: Referee */}
-        {!isAuthenticated && (
-          <div className="flex items-center justify-center">
-            <div className="flex flex-col">
-              <NoRowsMessage
-                title="You've been invited!"
-                description="Sign in to claim this referral and track your progress."
-                icon={"❤️"}
-                className="max-w-3xl !bg-transparent"
-              />
-
-              {program.proofOfPersonhoodRequired && (
-                <div className="text-gray-dark px-4 text-xs md:text-sm">
-                  Please login with Google/Facebook or scroll to the bottom of
-                  the page and register with a phone number.
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Profile Completion Wizard - Only show if user is authenticated but profile is incomplete */}
-        {isAuthenticated && needsProfileCompletion && (
-          <ProfileCompletionWizard
-            userProfile={userProfile || serverUserProfile || null}
-            onComplete={handleProfileComplete}
-            showHeader={false}
-          />
-        )}
-
-        {/* CTA Section */}
-        {!isAuthenticated && (
-          <div className="flex flex-col items-center">
+      <ReferralShell
+        title={program.name}
+        breadcrumbLabel="Referrals"
+        //programImageUrl={program?.imageURL || undefined}
+        headerBackgroundMode="color"
+        headerBackgroundColorClassName="bg-orange"
+        onBack={() => router.push("/referrals")}
+      >
+        <ReferralTopCard
+          program={program}
+          rewardsReferrer={false}
+          rewardsReferee={true}
+          cta={
             <button
               type="button"
-              onClick={handleClaim}
-              disabled={claiming}
-              className="btn btn-sm bg-orange gap-2 text-white hover:brightness-110 disabled:opacity-50"
+              onClick={!isAuthenticated ? handleClaim : undefined}
+              disabled={isAuthenticated || claiming}
+              className="btn btn-sm bg-green hover:bg-green-dark disabled:!bg-green h-10 rounded-full border-0 px-5 text-white normal-case disabled:!text-white disabled:opacity-100"
             >
-              {claiming && (
+              {claiming ? (
                 <LoadingInline
                   classNameSpinner="h-4 w-4"
                   classNameLabel="hidden"
                 />
+              ) : (
+                <IoGift className="h-4 w-4" />
               )}
-              {!claiming && <IoGift className="h-4 w-4" />}
-              <p className="text-xs font-semibold">Join Yoma</p>
+              {!isAuthenticated
+                ? "Login to claim"
+                : needsProfileCompletion
+                  ? "Complete profile to claim"
+                  : "Claiming referral..."}
             </button>
-          </div>
-        )}
-      </div>
+          }
+        />
+
+        <ReferralMainColumns
+          left={
+            <>
+              <ReferralInfoCard>
+                <p>
+                  Welcome to Yoma! You were invited to join{" "}
+                  <strong>{program.name}</strong>.
+                  {(program.zltoRewardReferee || 0) > 0 ? (
+                    <>
+                      {" "}
+                      Complete the below pathway and get the opportunity to win{" "}
+                      <strong>{program.zltoRewardReferee}</strong> Zlto.
+                    </>
+                  ) : (
+                    <> Complete the below pathway to complete this programme.</>
+                  )}
+                </p>
+
+                <p>{program.description}</p>
+              </ReferralInfoCard>
+
+              {isAuthenticated && needsProfileCompletion && (
+                <div className="rounded-xl bg-white p-4 shadow md:p-5">
+                  <ProfileCompletionWizard
+                    userProfile={userProfile || serverUserProfile || null}
+                    onComplete={handleProfileComplete}
+                    showHeader={false}
+                  />
+                </div>
+              )}
+
+              <ReferralTasksCard model={program.pathway} />
+            </>
+          }
+          right={
+            <>
+              <ReferralStatCard
+                icon={<IoTrophyOutline className="h-5 w-5" />}
+                header="Reward"
+                description={
+                  (program.zltoRewardReferee || 0) > 0
+                    ? `${program.zltoRewardReferee} Zlto`
+                    : "No reward"
+                }
+                className="bg-purple-dark text-white [&_.referral-stat-card-description]:text-white/90 [&_.referral-stat-card-header]:text-white [&_.referral-stat-card-icon-wrap]:bg-white/20 [&_.referral-stat-card-icon-wrap]:text-white"
+              />
+
+              <ReferralStatCard
+                icon={<IoTimeOutline className="h-5 w-5" />}
+                header="Time requirement"
+                description={
+                  program.completionWindowInDays
+                    ? `${program.completionWindowInDays} day${program.completionWindowInDays === 1 ? "" : "s"}`
+                    : "No time limit"
+                }
+              />
+            </>
+          }
+        />
+      </ReferralShell>
     </>
   );
 };
 
 ReferralClaimPage.getLayout = function getLayout(page: ReactElement) {
   return <MainLayout>{page}</MainLayout>;
+};
+
+ReferralClaimPage.theme = function getTheme() {
+  return THEME_WHITE;
 };
 
 export default ReferralClaimPage;

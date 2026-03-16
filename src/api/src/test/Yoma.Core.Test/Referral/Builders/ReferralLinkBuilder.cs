@@ -9,7 +9,8 @@ namespace Yoma.Core.Test.Referral.Builders
     private string? _description = "Test referral link";
     private Guid _programId = Guid.NewGuid();
     private string _programName = "Test Referral Program";
-    private readonly string? _programDescription = "A test referral program";
+    private readonly string? _programSummary = "A test referral program summary";
+    private readonly string? _programDescription = "A test referral program desciption";
     private int? _programCompletionLimitReferee;
     private Guid _userId = Guid.NewGuid();
     private string _userDisplayName = "Test Referrer";
@@ -68,6 +69,7 @@ namespace Yoma.Core.Test.Referral.Builders
       Description = _description,
       ProgramId = _programId,
       ProgramName = _programName,
+      ProgramSummary = _programSummary,
       ProgramDescription = _programDescription,
       ProgramCompletionLimitReferee = _programCompletionLimitReferee,
       UserId = _userId,

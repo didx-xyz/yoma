@@ -15,7 +15,7 @@ namespace Yoma.Core.Domain.Core.Helpers
       foreach (var name in Enum.GetNames(type))
       {
         var attr = type.GetRuntimeField(name)?.GetCustomAttribute<EnumMemberAttribute>(true);
-        if (attr != null && string.Equals(attr.Value, value, StringComparison.InvariantCultureIgnoreCase))
+        if (attr != null && string.Equals(attr.Value, value, StringComparison.OrdinalIgnoreCase))
           return (T)Enum.Parse(type, name, true);
       }
 
@@ -34,7 +34,7 @@ namespace Yoma.Core.Domain.Core.Helpers
         var attrDescription = attribute?.Description;
 
         if (!string.IsNullOrEmpty(attrDescription) &&
-            string.Equals(attrDescription, value, StringComparison.InvariantCultureIgnoreCase))
+            string.Equals(attrDescription, value, StringComparison.OrdinalIgnoreCase))
         {
           return (T)Enum.Parse(type, field.Name);
         }

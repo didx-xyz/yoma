@@ -278,7 +278,7 @@ namespace Yoma.Core.Api.Controllers
 
     [SwaggerOperation(Summary = "Return a list of active organizations associated with opportunities (Admin role required)")]
     [HttpGet("search/filter/organization/admin")]
-    [ProducesResponseType(typeof(List<Domain.Entity.Models.OrganizationInfo>), (int)HttpStatusCode.OK)]
+    [ProducesResponseType(typeof(List<Domain.Entity.Models.OrganizationInfoAdmin>), (int)HttpStatusCode.OK)]
     [Authorize(Roles = $"{Constants.Role_Admin}")]
     public IActionResult ListOpportunitySearchCriteriaOrganizationsAdmin()
     {

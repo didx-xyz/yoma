@@ -463,7 +463,7 @@ namespace Yoma.Core.Test.Referral.Services
     private static void SetupLinkService(LinkUsageServiceFixture fixture, Guid linkId, ReferralLink link)
     {
       fixture.LinkService
-        .Setup(x => x.GetById(linkId, It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<bool?>()))
+        .Setup(x => x.GetById(linkId, It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<bool?>()))
         .Returns(link);
     }
 

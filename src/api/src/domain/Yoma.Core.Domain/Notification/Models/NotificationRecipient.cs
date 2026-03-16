@@ -17,7 +17,7 @@ namespace Yoma.Core.Domain.Notification.Models
     public bool Equals(NotificationRecipient? other)
     {
       if (other is null) return false;
-      return Username.Equals(other.Username, StringComparison.InvariantCultureIgnoreCase);
+      return Username.Equals(other.Username, StringComparison.OrdinalIgnoreCase);
     }
 
     public override bool Equals(object? obj) => Equals(obj as NotificationRecipient);

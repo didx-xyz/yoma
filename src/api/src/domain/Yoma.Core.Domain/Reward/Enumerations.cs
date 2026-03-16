@@ -28,4 +28,10 @@ namespace Yoma.Core.Domain.Reward
     New,
     Viewed
   }
+
+  public enum Provider
+  {
+    ZLTO,
+    Chimoney
+  }
 }

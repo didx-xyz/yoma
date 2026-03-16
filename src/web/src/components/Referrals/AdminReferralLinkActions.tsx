@@ -16,6 +16,7 @@ import { ApiErrors } from "~/components/Status/ApiErrors";
 import { Loading } from "~/components/Status/Loading";
 import { useConfirmationModalContext } from "~/context/modalConfirmationContext";
 import { analytics } from "~/lib/analytics";
+import { REFERRAL_PROGRAM_QUERY_KEYS } from "~/hooks/useReferralProgramMutations";
 import { getSafeUrl } from "~/lib/utils";
 import CustomModal from "../Common/CustomModal";
 import {
@@ -97,12 +98,10 @@ export const AdminReferralLinkActions: React.FC<ReferralLinkActionsProps> = ({
 
         // invalidate cache
         await queryClient.invalidateQueries({
-          queryKey: ["referralLinks"],
-          exact: false,
+          queryKey: REFERRAL_PROGRAM_QUERY_KEYS.links(),
         });
         await queryClient.invalidateQueries({
-          queryKey: ["referralLink", link.id],
-          exact: false,
+          queryKey: REFERRAL_PROGRAM_QUERY_KEYS.adminLink(link.id),
         });
       } catch (error) {
         toast(<ApiErrors error={error as AxiosError} />, {
@@ -156,12 +155,10 @@ export const AdminReferralLinkActions: React.FC<ReferralLinkActionsProps> = ({
 
         // invalidate cache
         await queryClient.invalidateQueries({
-          queryKey: ["referralLinks"],
-          exact: false,
+          queryKey: REFERRAL_PROGRAM_QUERY_KEYS.links(),
         });
         await queryClient.invalidateQueries({
-          queryKey: ["referralLink", item.id],
-          exact: false,
+          queryKey: REFERRAL_PROGRAM_QUERY_KEYS.adminLink(item.id),
         });
 
         toast.success("Referral link cancelled");

@@ -25,11 +25,12 @@ namespace Yoma.Core.Domain.Referral.Validators
           .Length(1, 150)
           .WithMessage("Please enter a program name (maximum 150 characters).");
 
-      RuleFor(x => x.Description)
-          .Cascade(CascadeMode.Stop)
-          .Length(1, 500)
-          .When(x => !string.IsNullOrWhiteSpace(x.Description))
-          .WithMessage("The description cannot be longer than 500 characters.");
+      RuleFor(x => x.Summary)
+          .NotEmpty()
+          .Length(1, 150)
+          .WithMessage("'{PropertyName}' is required and must be between 1 and 150 characters.");
+
+      RuleFor(x => x.Description).NotEmpty();
 
       RuleFor(x => x.CompletionWindowInDays)
           .GreaterThan(0)
@@ -109,6 +110,16 @@ namespace Yoma.Core.Domain.Referral.Validators
           return m.ProofOfPersonhoodRequired || m.PathwayRequired;
         })
         .WithMessage("Default programs must enable Proof of Personhood or require a Pathway.");
+
+      // Default programs may not be hidden
+      RuleFor(x => x)
+        .Must(m => !m.IsDefault || m.Hidden != true)
+        .WithMessage("Default programs cannot be hidden.");
+
+      RuleFor(x => x.ReferrerLimit)
+        .GreaterThan(0)
+        .When(x => x.ReferrerLimit.HasValue)
+        .WithMessage("Referrer limit must be greater than 0.");
 
       // If multiple links are allowed, require POP or a per-referrer cap (and optionally Pathway)
       RuleFor(x => x)

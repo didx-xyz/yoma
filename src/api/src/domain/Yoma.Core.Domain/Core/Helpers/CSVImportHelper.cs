@@ -39,7 +39,7 @@ namespace Yoma.Core.Domain.Core.Helpers
           if (fieldName == null) return;
 
           var property = modelProps.FirstOrDefault(
-            p => string.Equals(GetPropertyName(p), fieldName, StringComparison.InvariantCultureIgnoreCase));
+            p => string.Equals(GetPropertyName(p), fieldName, StringComparison.OrdinalIgnoreCase));
 
           // Defensive no-op if header name doesn't map to a property.
           if (property == null) return;
@@ -78,7 +78,7 @@ namespace Yoma.Core.Domain.Core.Helpers
       ArgumentNullException.ThrowIfNull(errors, nameof(errors));
 
       var modelProps = _propsCache.GetOrAdd(typeof(TModel), t => t.GetProperties(BindingFlags.Public | BindingFlags.Instance));
-      var modelHeaders = modelProps.Select(GetPropertyName).ToHashSet(StringComparer.InvariantCultureIgnoreCase);
+      var modelHeaders = modelProps.Select(GetPropertyName).ToHashSet(StringComparer.OrdinalIgnoreCase);
 
       if (!csv.Read() || csv.Context?.Reader?.HeaderRecord?.Length == 0)
       {
@@ -101,11 +101,11 @@ namespace Yoma.Core.Domain.Core.Helpers
         return;
       }
 
-      var headerSet = header.ToHashSet(StringComparer.InvariantCultureIgnoreCase);
+      var headerSet = header.ToHashSet(StringComparer.OrdinalIgnoreCase);
 
       // Duplicate columns in header
       var duplicates = header
-          .GroupBy(h => h ?? string.Empty, StringComparer.InvariantCultureIgnoreCase)
+          .GroupBy(h => h ?? string.Empty, StringComparer.OrdinalIgnoreCase)
           .Where(g => g.Count() > 1)
           .Select(g => g.Key).ToList();
       duplicates.ForEach(o => AddError(errors, CSVImportErrorType.HeaderDuplicateColumn, "Duplicate column defined in the header", 1, o));

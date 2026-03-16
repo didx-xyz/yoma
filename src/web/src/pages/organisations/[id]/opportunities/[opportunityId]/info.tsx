@@ -1,4 +1,4 @@
-import { QueryClient, dehydrate, useQuery } from "@tanstack/react-query";
+import { QueryClient, dehydrate } from "@tanstack/react-query";
 import axios from "axios";
 import { useAtomValue } from "jotai";
 import { type GetServerSidePropsContext } from "next";
@@ -16,8 +16,11 @@ import { type ParsedUrlQuery } from "querystring";
 import { type ReactElement } from "react";
 import { IoMdArrowRoundBack, IoMdPerson } from "react-icons/io";
 import Moment from "react-moment";
-import { type OpportunityInfo } from "~/api/models/opportunity";
 import { getOpportunityInfoByIdAdminOrgAdminOrUser } from "~/api/services/opportunities";
+import {
+  OPPORTUNITY_QUERY_KEYS,
+  useOpportunityInfoQuery,
+} from "~/hooks/useOpportunityMutations";
 import { AvatarImage } from "~/components/AvatarImage";
 import MainLayout from "~/components/Layout/Main";
 import OrgAdminBadges from "~/components/Opportunity/Badges/OrgAdminBadges";
@@ -72,7 +75,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     );
 
     await queryClient.prefetchQuery({
-      queryKey: ["opportunityInfo", opportunityId],
+      queryKey: OPPORTUNITY_QUERY_KEYS.info(opportunityId),
       queryFn: () => dataOpportunityInfo,
     });
   } catch (error) {
@@ -115,9 +118,7 @@ const OpportunityDetails: NextPageWithLayout<{
   );
 
   // 👇 use prefetched queries from server
-  const { data: opportunity } = useQuery<OpportunityInfo>({
-    queryKey: ["opportunityInfo", opportunityId],
-    queryFn: () => getOpportunityInfoByIdAdminOrgAdminOrUser(opportunityId),
+  const { data: opportunity } = useOpportunityInfoQuery(opportunityId, {
     enabled: !error,
   });
 

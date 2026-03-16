@@ -116,7 +116,7 @@ services:
     container_name: keycloak
     environment:
       WEBHOOK_EVENTS_TAKEN: "LOGIN,REGISTER,UPDATE_PROFILE"
-      WEBHOOK_HTTP_BASE_PATH: "http://yoma-api:5000/api/v3/keycloak/webhook"
+      WEBHOOK_HTTP_BASE_PATH: "http://yoma-api:5000/api/v3/webhook/keycloak"
       WEBHOOK_HTTP_AUTH_USERNAME: whAdmin
       WEBHOOK_HTTP_AUTH_PASSWORD: password
       KC_DB_URL: jdbc:postgresql://keycloak-pg/keycloak

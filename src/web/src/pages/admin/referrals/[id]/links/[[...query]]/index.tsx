@@ -1,4 +1,4 @@
-import { QueryClient, dehydrate, useQuery } from "@tanstack/react-query";
+import { QueryClient, dehydrate } from "@tanstack/react-query";
 import axios from "axios";
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
@@ -7,37 +7,41 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { useCallback, useState, type ReactElement } from "react";
 import { IoMdArrowRoundBack, IoMdCopy } from "react-icons/io";
+import Moment from "react-moment";
+import { toast } from "react-toastify";
 import {
   ReferralLinkStatus,
   type ReferralLinkSearchFilterAdmin,
-  type ReferralLinkSearchResults,
-  type Program,
 } from "~/api/models/referrals";
 import {
-  searchReferralLinksAdmin,
   getReferralProgramById,
+  searchReferralLinksAdmin,
 } from "~/api/services/referrals";
 import CustomSlider from "~/components/Carousel/CustomSlider";
 import MainLayout from "~/components/Layout/Main";
 import NoRowsMessage from "~/components/NoRowsMessage";
 import { PageBackground } from "~/components/PageBackground";
 import { PaginationButtons } from "~/components/PaginationButtons";
+import { AdminReferralLinkActions } from "~/components/Referrals/AdminReferralLinkActions";
 import {
   ReferralLinkFilterOptions,
   ReferralLinkSearchFilters,
 } from "~/components/Referrals/AdminReferralLinkSearchFilter";
-import { AdminReferralLinkActions } from "~/components/Referrals/AdminReferralLinkActions";
 import { InternalServerError } from "~/components/Status/InternalServerError";
 import { LoadingSkeleton } from "~/components/Status/LoadingSkeleton";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
+import {
+  REFERRAL_PROGRAM_QUERY_KEYS,
+  useReferralLinkCountQuery,
+  useReferralLinksAdminQuery,
+  useReferralProgramByIdQuery,
+} from "~/hooks/useReferralProgramMutations";
 import { DATE_FORMAT_HUMAN, PAGE_SIZE, THEME_BLUE } from "~/lib/constants";
 import { config } from "~/lib/react-query-config";
 import { getSafeUrl, getThemeFromRole } from "~/lib/utils";
 import { type NextPageWithLayout } from "~/pages/_app";
 import { authOptions } from "~/server/auth";
-import Moment from "react-moment";
-import { toast } from "react-toastify";
 
 // ⚠️ SSR
 export async function getServerSideProps(context: GetServerSidePropsContext) {
@@ -82,17 +86,15 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       searchReferralLinksAdmin(searchFilter, context),
       getReferralProgramById(id.toString(), context),
     ]);
+    const searchResultsKey = `${id}_${query?.toString()}_${page?.toString()}_${status?.toString()}_${valueContains?.toString()}_${userId?.toString()}`;
 
     await queryClient.prefetchQuery({
-      queryKey: [
-        "referralLinks",
-        `${id}_${query?.toString()}_${page?.toString()}_${status?.toString()}_${valueContains?.toString()}_${userId?.toString()}`,
-      ],
+      queryKey: REFERRAL_PROGRAM_QUERY_KEYS.adminLinksList(searchResultsKey),
       queryFn: () => linksData,
     });
 
     await queryClient.prefetchQuery({
-      queryKey: ["referralProgram", id.toString()],
+      queryKey: REFERRAL_PROGRAM_QUERY_KEYS.detail(id.toString()),
       queryFn: () => programData,
     });
   } catch (error) {
@@ -147,117 +149,41 @@ const ReferralLinks: NextPageWithLayout<{
     });
 
   // 👇 use prefetched queries from server
-  const { data: program } = useQuery<Program>({
-    queryKey: ["referralProgram", id],
-    queryFn: () => getReferralProgramById(id),
+  const { data: program } = useReferralProgramByIdQuery(id, {
     enabled: !error,
   });
 
+  const searchResultsKey = `${id}_${query?.toString()}_${page?.toString()}_${status?.toString()}_${valueContains?.toString()}_${userId?.toString()}`;
+
   const { data: searchResults, isLoading: isLoadingSearchResults } =
-    useQuery<ReferralLinkSearchResults>({
-      queryKey: [
-        "referralLinks",
-        `${id}_${query?.toString()}_${page?.toString()}_${status?.toString()}_${valueContains?.toString()}_${userId?.toString()}`,
-      ],
-      queryFn: () => searchReferralLinksAdmin(searchFilter),
+    useReferralLinksAdminQuery(searchFilter, searchResultsKey, {
       enabled: !error,
     });
 
   // Get counts by status
-  const { data: totalCountAll } = useQuery<number>({
-    queryKey: ["referralLinks", "totalCount", id, null],
-    queryFn: () => {
-      const filter: ReferralLinkSearchFilterAdmin = {
-        pageNumber: 1,
-        pageSize: PAGE_SIZE,
-        programId: id,
-        userId: null,
-        statuses: null,
-        valueContains: null,
-      };
-      return searchReferralLinksAdmin(filter).then(
-        (data) => data.totalCount ?? 0,
-      );
-    },
+  const { data: totalCountAll } = useReferralLinkCountQuery(id, null, {
     enabled: !error,
   });
-
-  const { data: totalCountActive } = useQuery<number>({
-    queryKey: ["referralLinks", "totalCount", id, ReferralLinkStatus.Active],
-    queryFn: () => {
-      const filter: ReferralLinkSearchFilterAdmin = {
-        pageNumber: 1,
-        pageSize: PAGE_SIZE,
-        programId: id,
-        userId: null,
-        statuses: [ReferralLinkStatus.Active],
-        valueContains: null,
-      };
-      return searchReferralLinksAdmin(filter).then(
-        (data) => data.totalCount ?? 0,
-      );
-    },
-    enabled: !error,
-  });
-
-  const { data: totalCountCancelled } = useQuery<number>({
-    queryKey: ["referralLinks", "totalCount", id, ReferralLinkStatus.Cancelled],
-    queryFn: () => {
-      const filter: ReferralLinkSearchFilterAdmin = {
-        pageNumber: 1,
-        pageSize: PAGE_SIZE,
-        programId: id,
-        userId: null,
-        statuses: [ReferralLinkStatus.Cancelled],
-        valueContains: null,
-      };
-      return searchReferralLinksAdmin(filter).then(
-        (data) => data.totalCount ?? 0,
-      );
-    },
-    enabled: !error,
-  });
-
-  const { data: totalCountLimitReached } = useQuery<number>({
-    queryKey: [
-      "referralLinks",
-      "totalCount",
-      id,
-      ReferralLinkStatus.LimitReached,
-    ],
-    queryFn: () => {
-      const filter: ReferralLinkSearchFilterAdmin = {
-        pageNumber: 1,
-        pageSize: PAGE_SIZE,
-        programId: id,
-        userId: null,
-        statuses: [ReferralLinkStatus.LimitReached],
-        valueContains: null,
-      };
-      return searchReferralLinksAdmin(filter).then(
-        (data) => data.totalCount ?? 0,
-      );
-    },
-    enabled: !error,
-  });
-
-  const { data: totalCountExpired } = useQuery<number>({
-    queryKey: ["referralLinks", "totalCount", id, ReferralLinkStatus.Expired],
-    queryFn: () => {
-      const filter: ReferralLinkSearchFilterAdmin = {
-        pageNumber: 1,
-        pageSize: PAGE_SIZE,
-        programId: id,
-        userId: null,
-        statuses: [ReferralLinkStatus.Expired],
-        valueContains: null,
-      };
-      return searchReferralLinksAdmin(filter).then(
-        (data) => data.totalCount ?? 0,
-      );
-    },
-    enabled: !error,
-  });
+  const { data: totalCountActive } = useReferralLinkCountQuery(
+    id,
+    ReferralLinkStatus.Active,
+    { enabled: !error },
+  );
+  const { data: totalCountCancelled } = useReferralLinkCountQuery(
+    id,
+    ReferralLinkStatus.Cancelled,
+    { enabled: !error },
+  );
+  const { data: totalCountLimitReached } = useReferralLinkCountQuery(
+    id,
+    ReferralLinkStatus.LimitReached,
+    { enabled: !error },
+  );
+  const { data: totalCountExpired } = useReferralLinkCountQuery(
+    id,
+    ReferralLinkStatus.Expired,
+    { enabled: !error },
+  );
 
   // 🎈 FUNCTIONS
   const getSearchFilterAsQueryString = useCallback(
@@ -612,7 +538,7 @@ const ReferralLinks: NextPageWithLayout<{
                               <p className="text-sm tracking-wider">
                                 Remaining
                               </p>
-                              <span className="badge bg-blue-light text-blue text-xs">
+                              <span className="text-sm font-semibold">
                                 {link.completionBalance}
                               </span>
                             </div>
@@ -760,7 +686,7 @@ const ReferralLinks: NextPageWithLayout<{
                                   <span className="text-gray-dark w-20 font-bold">
                                     Remaining:
                                   </span>
-                                  <span className="badge bg-blue-light text-blue text-xs">
+                                  <span className="font-semibold">
                                     {link.completionBalance}
                                   </span>
                                 </div>

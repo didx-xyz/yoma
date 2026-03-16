@@ -44,7 +44,7 @@ namespace Yoma.Core.Domain.Reward.Services
       var statusPendingId = _rewardTransactionStatusService.GetByName(RewardTransactionStatus.Pending.ToString()).Id;
 
       RewardTransaction? existingItem = null;
-      var item = new RewardTransaction { UserId = userId, StatusId = statusPendingId, SourceEntityType = entityType.ToString(), Amount = amount };
+      var item = new RewardTransaction { UserId = userId, Provider = Provider.ZLTO.ToString(), StatusId = statusPendingId, SourceEntityType = entityType.ToString(), Amount = amount };
 
       switch (entityType)
       {

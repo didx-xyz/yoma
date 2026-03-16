@@ -56,7 +56,7 @@ namespace Yoma.Core.Domain.PartnerSharing.Services.Lookups
         throw new ArgumentNullException(nameof(name));
       name = name.Trim();
 
-      return List().SingleOrDefault(o => string.Equals(o.Name, name, StringComparison.InvariantCultureIgnoreCase));
+      return List().SingleOrDefault(o => string.Equals(o.Name, name, StringComparison.OrdinalIgnoreCase));
     }
 
     public Models.Lookups.Partner GetById(Guid id)
@@ -121,7 +121,7 @@ namespace Yoma.Core.Domain.PartnerSharing.Services.Lookups
               case Partner.SAYouth:
                 //only include opportunities of type learning, within countries World-Wide or South Africa and with an end date
                 //once shared, the type can not be changed
-                if (!string.Equals(opportunity.Type, Opportunity.Type.Learning.ToString(), StringComparison.InvariantCultureIgnoreCase))
+                if (!string.Equals(opportunity.Type, Opportunity.Type.Learning.ToString(), StringComparison.OrdinalIgnoreCase))
                 {
                   if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Partner sharing filtering: Entity '{entityType}' with id '{entityId}' for partner '{partner}' is not a learning type and will be skipped",
                     EntityType.Opportunity, entityId, partner);
@@ -138,7 +138,7 @@ namespace Yoma.Core.Domain.PartnerSharing.Services.Lookups
 
                 //once shared, required countries can not be removed but can be added
                 if (opportunity.Countries == null ||
-                  !opportunity.Countries.Any(c => RequiredCountries_AnyOf_SAYouth.Any(s => string.Equals(s.CodeAlpha2, c.CodeAlpha2, StringComparison.InvariantCultureIgnoreCase))))
+                  !opportunity.Countries.Any(c => RequiredCountries_AnyOf_SAYouth.Any(s => string.Equals(s.CodeAlpha2, c.CodeAlpha2, StringComparison.OrdinalIgnoreCase))))
                 {
                   if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation(
                     "Partner sharing filtering: Entity '{entityType}' with id '{entityId}' for partner '{partner}' is not associated with any of the required countries '{requiredCountries}' and will be skipped",

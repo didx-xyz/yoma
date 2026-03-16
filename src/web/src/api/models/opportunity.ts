@@ -366,3 +366,10 @@ export enum CSVImportErrorType {
   InvalidFieldValue,
   ProcessingError,
 }
+
+export interface OpportunityItem {
+  id: string;
+  title: string;
+  organizationName: string;
+  organizationLogoURL: string | null;
+}

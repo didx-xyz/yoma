@@ -798,7 +798,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
         if (distributionList == null || distributionList.Count == 0)
           throw new DataInconsistencyException("Link is locked to a distribution list but no distribution list is defined");
 
-        var isAuthorized = (!string.IsNullOrEmpty(user.Email) && distributionList.Contains(user.Email, StringComparer.InvariantCultureIgnoreCase)) ||
+        var isAuthorized = (!string.IsNullOrEmpty(user.Email) && distributionList.Contains(user.Email, StringComparer.OrdinalIgnoreCase)) ||
                        (!string.IsNullOrEmpty(user.PhoneNumber) && distributionList.Contains(user.PhoneNumber));
 
         if (!isAuthorized)

@@ -1,8 +1,11 @@
-import { useQueryClient } from "@tanstack/react-query";
-import { type AxiosError } from "axios";
+import {
+  useOpportunityFeaturedMutation,
+  useOpportunityHiddenMutation,
+  useOpportunityStatusMutation,
+} from "~/hooks/useOpportunityMutations";
 import moment from "moment";
 import { useRouter } from "next/router";
-import { useCallback, useState } from "react";
+import { useCallback } from "react";
 import {
   FaArchive,
   FaClock,
@@ -18,13 +21,7 @@ import {
 import { IoIosSettings, IoMdWarning } from "react-icons/io";
 import { toast } from "react-toastify";
 import { Status, type OpportunityInfo } from "~/api/models/opportunity";
-import {
-  updateFeatured,
-  updateOpportunityHidden,
-  updateOpportunityStatus,
-} from "~/api/services/opportunities";
 import { downloadVerificationFilesAdmin } from "~/api/services/myOpportunities";
-import { ApiErrors } from "~/components/Status/ApiErrors";
 import { Loading } from "~/components/Status/Loading";
 import { useConfirmationModalContext } from "~/context/modalConfirmationContext";
 import { ROLE_ADMIN } from "~/lib/constants";
@@ -84,10 +81,27 @@ export const OpportunityActions: React.FC<OpportunityActionsProps> = ({
   displayStyle = OpportunityActionDisplayStyle.ICON,
 }) => {
   const router = useRouter();
-  const queryClient = useQueryClient();
   const modalContext = useConfirmationModalContext();
-  const [isLoading, setIsLoading] = useState(false);
   const isAdmin = user?.roles.includes(ROLE_ADMIN);
+
+  const statusMutation = useOpportunityStatusMutation({
+    opportunityId: opportunity.id,
+    organizationId,
+    title: opportunity.title,
+  });
+  const hiddenMutation = useOpportunityHiddenMutation({
+    opportunityId: opportunity.id,
+    organizationId,
+    title: opportunity.title,
+  });
+  const featuredMutation = useOpportunityFeaturedMutation({
+    opportunityId: opportunity.id,
+    title: opportunity.title,
+  });
+  const isLoading =
+    statusMutation.isPending ||
+    hiddenMutation.isPending ||
+    featuredMutation.isPending;
 
   const defaultCopyToClipboard = useCallback(
     (url: string) => {
@@ -175,48 +189,9 @@ export const OpportunityActions: React.FC<OpportunityActionsProps> = ({
         </div>,
       );
       if (!result) return;
-
-      setIsLoading(true);
-
-      try {
-        // call api
-        await updateOpportunityStatus(opportunity.id, status);
-
-        // 📊 ANALYTICS: track opportunity status update
-        analytics.trackEvent("opportunity_status_updated", {
-          opportunityId: opportunity.id,
-          opportunityTitle: opportunity.title,
-          newStatus: status,
-        });
-
-        // invalidate cache
-        await queryClient.invalidateQueries({
-          queryKey: ["opportunityInfo", opportunity.id],
-        });
-        await queryClient.invalidateQueries({
-          queryKey: ["opportunities", organizationId],
-        });
-
-        toast.success("Opportunity status updated");
-      } catch (error) {
-        toast(<ApiErrors error={error as AxiosError} />, {
-          type: "error",
-          toastId: `opportunity-${opportunity.id}`,
-          autoClose: false,
-          icon: false,
-        });
-      }
-      setIsLoading(false);
-
-      return;
+      statusMutation.mutate(status);
     },
-    [
-      queryClient,
-      modalContext,
-      opportunity.id,
-      opportunity.title,
-      organizationId,
-    ],
+    [modalContext, statusMutation],
   );
 
   const handleHiddenUpdate = useCallback(
@@ -258,88 +233,16 @@ export const OpportunityActions: React.FC<OpportunityActionsProps> = ({
         </div>,
       );
       if (!result) return;
-
-      setIsLoading(true);
-
-      try {
-        // call api
-        await updateOpportunityHidden(opportunity.id, hidden);
-
-        // 📊 ANALYTICS: track opportunity visibility update
-        analytics.trackEvent("opportunity_visibility_updated", {
-          opportunityId: opportunity.id,
-          opportunityTitle: opportunity.title,
-          hidden: hidden,
-        });
-
-        // invalidate cache
-        await queryClient.invalidateQueries({
-          queryKey: ["opportunityInfo", opportunity.id],
-        });
-        await queryClient.invalidateQueries({
-          queryKey: ["opportunities", organizationId],
-        });
-
-        toast.success("Opportunity updated");
-      } catch (error) {
-        toast(<ApiErrors error={error as AxiosError} />, {
-          type: "error",
-          toastId: `opportunity-${opportunity.id}`,
-          autoClose: false,
-          icon: false,
-        });
-      }
-      setIsLoading(false);
-
-      return;
+      hiddenMutation.mutate(hidden);
     },
-    [
-      queryClient,
-      modalContext,
-      opportunity.id,
-      opportunity.title,
-      organizationId,
-    ],
+    [modalContext, hiddenMutation],
   );
 
   const handleFeaturedUpdate = useCallback(
-    async (featured: boolean) => {
-      setIsLoading(true);
-
-      try {
-        // call api
-        await updateFeatured(opportunity.id, featured);
-
-        // 📊 ANALYTICS: track opportunity featured update
-        analytics.trackEvent("opportunity_featured_updated", {
-          opportunityId: opportunity.id,
-          opportunityTitle: opportunity.title,
-          featured: featured,
-        });
-
-        // invalidate cache
-        await queryClient.invalidateQueries({
-          queryKey: ["opportunityInfo", opportunity.id],
-        });
-
-        toast.success(
-          featured
-            ? "Opportunity marked Featured"
-            : "Opportunity unmarked as Featured",
-        );
-      } catch (error) {
-        toast(<ApiErrors error={error as AxiosError} />, {
-          type: "error",
-          toastId: `opportunity-${opportunity.id}`,
-          autoClose: false,
-          icon: false,
-        });
-      }
-      setIsLoading(false);
-
-      return;
+    (featured: boolean) => {
+      featuredMutation.mutate(featured);
     },
-    [queryClient, opportunity.id, opportunity.title],
+    [featuredMutation],
   );
 
   const handleCopyToClipboard = defaultCopyToClipboard;

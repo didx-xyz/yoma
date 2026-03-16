@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 using System.ComponentModel.DataAnnotations;
 using System.Net;
-using Yoma.Core.Domain.Analytics.Interfaces;
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Entity;
 using Yoma.Core.Domain.Entity.Interfaces;
@@ -284,7 +283,7 @@ namespace Yoma.Core.Api.Controllers
 
     [SwaggerOperation(Summary = "Return a list of organizations the authenticated user administrates (Organization Admin role required)")]
     [HttpGet("admin")]
-    [ProducesResponseType(typeof(List<OrganizationInfo>), (int)HttpStatusCode.OK)]
+    [ProducesResponseType(typeof(List<OrganizationInfoAdmin>), (int)HttpStatusCode.OK)]
     [Authorize(Roles = Constants.Role_OrganizationAdmin)]
     public IActionResult ListAdminsOf()
     {

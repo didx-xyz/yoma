@@ -84,7 +84,7 @@ namespace Yoma.Core.Domain.Marketplace.Services
     {
       var countryCodesAlpha2Available = _marketplaceProviderClient.ListSupportedCountryCodesAlpha2(null);
 
-      var results = _countryService.List().Where(o => countryCodesAlpha2Available.Contains(o.CodeAlpha2, StringComparer.InvariantCultureIgnoreCase))
+      var results = _countryService.List().Where(o => countryCodesAlpha2Available.Contains(o.CodeAlpha2, StringComparer.OrdinalIgnoreCase))
           .OrderBy(o => o.CodeAlpha2 != Core.Country.Worldwide.ToDescription()).ThenBy(o => o.Name).ToList(); //ensure Worldwide appears first
 
       return results;

@@ -127,7 +127,7 @@ namespace Yoma.Core.Domain.SSI.Services
         Id = item.Id,
         ArtifactType = schema.ArtifactType,
         SchemaType = schema.Type,
-        DateIssued = DateTimeHelper.TryParse(item.Attributes.SingleOrDefault(o => string.Equals(o.Key, SSISchemaService.SchemaAttribute_Internal_DateIssued, StringComparison.InvariantCultureIgnoreCase)).Value),
+        DateIssued = DateTimeHelper.TryParse(item.Attributes.SingleOrDefault(o => string.Equals(o.Key, SSISchemaService.SchemaAttribute_Internal_DateIssued, StringComparison.OrdinalIgnoreCase)).Value),
       };
 
       var systemPropertiesSchema = schema.Entities.SelectMany(entity => entity.Properties ?? Enumerable.Empty<SSISchemaEntityProperty>())
@@ -145,7 +145,7 @@ namespace Yoma.Core.Domain.SSI.Services
 
       foreach (var property in systemProperties)
       {
-        var attribute = item.Attributes.SingleOrDefault(o => string.Equals(o.Key, property.AttributeName, StringComparison.InvariantCultureIgnoreCase));
+        var attribute = item.Attributes.SingleOrDefault(o => string.Equals(o.Key, property.AttributeName, StringComparison.OrdinalIgnoreCase));
 
         switch (property.SystemType)
         {
@@ -172,12 +172,12 @@ namespace Yoma.Core.Domain.SSI.Services
 
       var additionalProperties = schema.Entities.SelectMany(entity => entity.Properties ?? Enumerable.Empty<SSISchemaEntityProperty>())
           .Where(property => !property.System
-          && !SSISchemaService.SchemaAttributes_Internal.Any(i => string.Equals(i, property.AttributeName, StringComparison.InvariantCultureIgnoreCase))
+          && !SSISchemaService.SchemaAttributes_Internal.Any(i => string.Equals(i, property.AttributeName, StringComparison.OrdinalIgnoreCase))
           && item.Attributes.ContainsKey(property.AttributeName)).ToList();
 
       foreach (var property in additionalProperties)
       {
-        var attribute = item.Attributes.SingleOrDefault(o => string.Equals(o.Key, property.AttributeName, StringComparison.InvariantCultureIgnoreCase));
+        var attribute = item.Attributes.SingleOrDefault(o => string.Equals(o.Key, property.AttributeName, StringComparison.OrdinalIgnoreCase));
         result.Attributes.Add(new SSICredentialAttribute { Name = property.AttributeName, NameDisplay = property.NameDisplay, ValueDisplay = ParseCredentialAttributeValue(property, attribute) });
       }
 

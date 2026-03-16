@@ -10,6 +10,12 @@ namespace Yoma.Core.Domain.Referral.Models
 
     public DateTimeOffset ProgramDateStart { get; set; }
 
+    public bool? ProgramHidden { get; set; }
+
+    public int? ProgramReferrerLimit { get; set; }
+
+    public int? ProgramReferrerTotal { get; set; }
+
     public Guid CountryId { get; set; }
 
     public string CountryName { get; set; } = null!;

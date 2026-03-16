@@ -65,6 +65,11 @@ namespace Yoma.Core.Infrastructure.Database.Marketplace.Repositories
           {
             Id = o.OpportunityId,
             Title = o.Opportunity.Title,
+            OrganizationName = o.Opportunity.Organization.Name,
+            OrganizationLogoId = o.Opportunity.Organization.LogoId,
+            OrganizationLogoStorageType = o.Opportunity.Organization.Logo == null ? null : Enum.Parse<Yoma.Core.Domain.BlobProvider.StorageType>(o.Opportunity.Organization.Logo.StorageType, true),
+            OrganizationLogoKey = o.Opportunity.Organization.Logo == null ? null : o.Opportunity.Organization.Logo.Key,
+            //OrganizationLogoURL: Optional; Resolved when needed
             OrganizationStatus = Enum.Parse<Domain.Entity.OrganizationStatus>(o.Opportunity.Organization.Status.Name, true),
             VerificationEnabled = o.Opportunity.VerificationEnabled,
             VerificationMethod = string.IsNullOrEmpty(o.Opportunity.VerificationMethod) ? null : Enum.Parse<VerificationMethod>(o.Opportunity.VerificationMethod, true),

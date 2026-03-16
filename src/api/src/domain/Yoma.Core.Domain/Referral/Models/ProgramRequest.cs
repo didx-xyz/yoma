@@ -6,6 +6,8 @@ namespace Yoma.Core.Domain.Referral.Models
   {
     public string Name { get; set; } = null!;
 
+    public string? Summary { get; set; }
+
     public string? Description { get; set; }
 
     public int? CompletionWindowInDays { get; set; }
@@ -31,6 +33,10 @@ namespace Yoma.Core.Domain.Referral.Models
     /// Default programs must be available world-wide.
     /// </summary>
     public bool IsDefault { get; set; }
+
+    public bool? Hidden { get; set; }
+
+    public int? ReferrerLimit { get; set; }
 
     public DateTimeOffset DateStart { get; set; }
 

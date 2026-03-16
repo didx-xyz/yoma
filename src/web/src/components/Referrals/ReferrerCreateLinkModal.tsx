@@ -3,6 +3,7 @@ import { AxiosError } from "axios";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { IoMdClose } from "react-icons/io";
+import { IoLinkOutline } from "react-icons/io5";
 import { toast } from "react-toastify";
 import { z } from "zod";
 import type { ProgramInfo, ReferralLink } from "~/api/models/referrals";
@@ -12,11 +13,9 @@ import {
   updateReferralLink,
 } from "~/api/services/referrals";
 import CustomModal from "~/components/Common/CustomModal";
-import NoRowsMessage from "~/components/NoRowsMessage";
 import { ApiErrors } from "../Status/ApiErrors";
 import { RefereeProgramDetails } from "./RefereeProgramDetails";
 import { ReferrerProgramsList } from "./ReferrerProgramsList";
-import FormLabel from "../Common/FormLabel";
 import { LoadingInline } from "../Status/LoadingInline";
 
 interface CreateLinkModalProps {
@@ -313,42 +312,55 @@ export const ReferrerCreateLinkModal: React.FC<CreateLinkModalProps> = ({
     };
   }, [isEditMode]);
 
+  const currentStepMessage =
+    step === "select" ? selectStepMessage : createStepMessage;
+
   return (
     <CustomModal
       isOpen={isOpen}
       onRequestClose={handleClose}
       shouldCloseOnOverlayClick={!isLoading}
-      className="md:max-h-[700px] md:w-[800px]"
+      className="md:max-h-[600px] md:w-[700px]"
     >
       <div className="flex flex-col gap-2">
         {/* Header */}
-        <div className="bg-theme flex flex-row p-4 shadow-lg">
-          <h1 className="grow text-lg font-semibold text-white">
-            {step === "select" && "Select Program"}
-            {step === "create" &&
-              (isEditMode ? "Edit Link" : "Create Referral Link")}
-          </h1>
+        <div className="bg-purple flex flex-row p-4 shadow-lg">
+          <div className="grow"></div>
+
           <button
             type="button"
-            className="btn btn-circle text-gray-dark hover:bg-gray btn-sm"
+            className="btn btn-circle btn-sm bg-purple-shade border-0 text-white shadow-none hover:opacity-80"
             onClick={handleClose}
             disabled={isLoading}
           >
-            <IoMdClose className="h-5 w-5" />
+            <IoMdClose className="h-4 w-4" />
           </button>
         </div>
 
-        <div className="flex flex-col gap-4 overflow-y-auto p-6">
+        <div className="flex flex-col items-center justify-center gap-4">
+          <div className="border-green-dark -mt-11 mb-2 flex h-[4rem] w-[4rem] items-center justify-center rounded-full bg-white p-1 shadow-lg md:h-[4.5rem] md:w-[4.5rem]">
+            <span className="text-xl md:text-2xl" role="img" aria-label="Link">
+              🔗
+            </span>
+          </div>
+
+          <div className="px-6 text-center">
+            <h2 className="text-lg font-semibold text-black">
+              {currentStepMessage.title}
+            </h2>
+            <div
+              className="text-gray-dark mt-2 text-sm"
+              dangerouslySetInnerHTML={{
+                __html: currentStepMessage.description,
+              }}
+            />
+          </div>
+        </div>
+
+        <div className="overflow-y-autox flex flex-col gap-4 p-6">
           {/* STEP 1: SELECT PROGRAM */}
           {step === "select" && (
             <div className="space-y-4">
-              <NoRowsMessage
-                icon="🎁"
-                title={selectStepMessage.title}
-                description={selectStepMessage.description}
-                className="!bg-transparent"
-              />
-
               {programs.length > 0 && (
                 <>
                   <p className="mb-4 text-sm text-gray-600">
@@ -368,11 +380,11 @@ export const ReferrerCreateLinkModal: React.FC<CreateLinkModalProps> = ({
               <div className="mt-10 flex gap-3">
                 <button
                   type="button"
-                  className="btn btn-outline border-orange btn-sm text-orange hover:bg-orange flex-1 normal-case hover:text-white"
+                  className="btn btn-outline border-green btn-sm text-green hover:bg-green flex-1 normal-case hover:text-white"
                   onClick={onClose}
                   disabled={isLoading}
                 >
-                  Back to List
+                  Close
                 </button>
               </div>
             </div>
@@ -385,38 +397,32 @@ export const ReferrerCreateLinkModal: React.FC<CreateLinkModalProps> = ({
 
           {step === "create" && currentProgram && (
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-              <NoRowsMessage
-                icon="🔗"
-                title={createStepMessage.title}
-                description={createStepMessage.description}
-                className="!bg-transparent"
-              />
-
               {/* Program Preview */}
               {showProgramDetails && (
                 <div className="flex flex-col gap-8">
                   <div className="space-y-2">
-                    <FormLabel
-                      label="Selected Program"
-                      showWarningIcon={false}
+                    <RefereeProgramDetails
+                      program={currentProgram}
+                      context="preview"
+                      showBadges={{
+                        status: false,
+                        requirements: true,
+                        limit: true,
+                        rewards: true,
+                        rewardsReferrer: true,
+                        rewardsReferee: false,
+                      }}
                     />
-                    <div className="bg-white">
-                      <RefereeProgramDetails
-                        program={currentProgram}
-                        context="preview"
-                        perspective="referrer"
-                      />
-                    </div>
                   </div>
                 </div>
               )}
 
               {/* Action Buttons */}
-              <div className="mt-10 flex gap-3">
+              <div className="flex gap-3">
                 {!selectedProgram && !editLink ? (
                   <button
                     type="button"
-                    className="btn btn-outline border-orange btn-sm text-orange hover:bg-orange flex-1 normal-case hover:text-white"
+                    className="btn btn-outline border-green btn-sm text-green hover:bg-orange flex-1 normal-case hover:text-white"
                     onClick={() => setStep("select")}
                     disabled={isLoading}
                   >
@@ -425,18 +431,18 @@ export const ReferrerCreateLinkModal: React.FC<CreateLinkModalProps> = ({
                 ) : (
                   <button
                     type="button"
-                    className="btn btn-outline border-orange btn-sm text-orange hover:bg-orange flex-1 normal-case hover:text-white"
+                    className="btn btn-outline border-green btn-sm text-green hover:bg-green flex-1 normal-case hover:text-white"
                     onClick={onClose}
                     disabled={isLoading}
                   >
-                    Back to List
+                    Close
                   </button>
                 )}
 
                 {isEditMode ? (
                   <button
                     type="submit"
-                    className="btn btn-sm bg-orange flex-1 gap-2 text-white hover:brightness-110"
+                    className="btn btn-sm bg-green flex-1 gap-2 text-white hover:brightness-110"
                     disabled={isLoading}
                   >
                     {isLoading ? (
@@ -448,14 +454,17 @@ export const ReferrerCreateLinkModal: React.FC<CreateLinkModalProps> = ({
                 ) : (
                   <button
                     type="button"
-                    className="btn btn-sm bg-orange flex-1 gap-2 text-white hover:brightness-110"
+                    className="btn btn-sm bg-green flex-1 gap-2 text-white hover:brightness-110"
                     disabled={isLoading}
                     onClick={handleCreateClick}
                   >
                     {isLoading ? (
                       <span className="loading loading-spinner loading-sm" />
                     ) : (
-                      "Create Link"
+                      <>
+                        <IoLinkOutline className="h-4 w-4 text-white" />
+                        Create Link
+                      </>
                     )}
                   </button>
                 )}

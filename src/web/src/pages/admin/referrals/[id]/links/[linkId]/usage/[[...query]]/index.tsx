@@ -1,4 +1,4 @@
-import { QueryClient, dehydrate, useQuery } from "@tanstack/react-query";
+import { QueryClient, dehydrate } from "@tanstack/react-query";
 import axios from "axios";
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
@@ -15,10 +15,7 @@ import { IoChevronForward } from "react-icons/io5";
 import Moment from "react-moment";
 import {
   ReferralLinkUsageStatus,
-  type Program,
-  type ReferralLink,
   type ReferralLinkUsageSearchFilterAdmin,
-  type ReferralLinkUsageSearchResults,
 } from "~/api/models/referrals";
 import {
   getReferralLinkById,
@@ -39,6 +36,13 @@ import { InternalServerError } from "~/components/Status/InternalServerError";
 import { LoadingSkeleton } from "~/components/Status/LoadingSkeleton";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
+import {
+  useReferralAdminLinkByIdQuery,
+  useReferralLinkUsageCountQuery,
+  useReferralLinkUsagesAdminQuery,
+  useReferralProgramByIdQuery,
+  REFERRAL_PROGRAM_QUERY_KEYS,
+} from "~/hooks/useReferralProgramMutations";
 import { PAGE_SIZE, THEME_BLUE } from "~/lib/constants";
 import { config } from "~/lib/react-query-config";
 import { getSafeUrl, getThemeFromRole } from "~/lib/utils";
@@ -102,22 +106,20 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       getReferralProgramById(id.toString(), context),
       getReferralLinkById(linkId.toString(), false, context),
     ]);
+    const searchResultsKey = `${linkId}_${query?.toString()}_${page?.toString()}_${status?.toString()}_${userIdReferee?.toString()}_${userIdReferrer?.toString()}_${dateStart?.toString()}_${dateEnd?.toString()}`;
 
     await queryClient.prefetchQuery({
-      queryKey: [
-        "referralLinkUsages",
-        `${linkId}_${query?.toString()}_${page?.toString()}_${status?.toString()}_${userIdReferee?.toString()}_${userIdReferrer?.toString()}_${dateStart?.toString()}_${dateEnd?.toString()}`,
-      ],
+      queryKey: REFERRAL_PROGRAM_QUERY_KEYS.adminUsagesList(searchResultsKey),
       queryFn: () => usagesData,
     });
 
     await queryClient.prefetchQuery({
-      queryKey: ["referralProgram", id.toString()],
+      queryKey: REFERRAL_PROGRAM_QUERY_KEYS.detail(id.toString()),
       queryFn: () => programData,
     });
 
     await queryClient.prefetchQuery({
-      queryKey: ["referralLink", linkId.toString()],
+      queryKey: REFERRAL_PROGRAM_QUERY_KEYS.adminLink(linkId.toString()),
       queryFn: () => linkData,
     });
   } catch (error) {
@@ -193,127 +195,46 @@ const ReferralLinkUsage: NextPageWithLayout<{
     });
 
   // 👇 use prefetched queries from server
-  const { data: program } = useQuery<Program>({
-    queryKey: ["referralProgram", id],
-    queryFn: () => getReferralProgramById(id),
+  const { data: program } = useReferralProgramByIdQuery(id, {
     enabled: !error,
   });
 
-  const { data: link } = useQuery<ReferralLink>({
-    queryKey: ["referralLink", linkId],
-    queryFn: () => getReferralLinkById(linkId),
+  const { data: link } = useReferralAdminLinkByIdQuery(linkId, {
     enabled: !error,
   });
+
+  const searchResultsKey = `${linkId}_${query?.toString()}_${page?.toString()}_${status?.toString()}_${userIdReferee?.toString()}_${userIdReferrer?.toString()}_${dateStart?.toString()}_${dateEnd?.toString()}`;
 
   const { data: searchResults, isLoading: isLoadingSearchResults } =
-    useQuery<ReferralLinkUsageSearchResults>({
-      queryKey: [
-        "referralLinkUsages",
-        `${linkId}_${query?.toString()}_${page?.toString()}_${status?.toString()}_${userIdReferee?.toString()}_${userIdReferrer?.toString()}_${dateStart?.toString()}_${dateEnd?.toString()}`,
-      ],
-      queryFn: () => searchReferralLinkUsagesAdmin(searchFilter),
+    useReferralLinkUsagesAdminQuery(searchFilter, searchResultsKey, {
       enabled: !error,
     });
 
   // Get counts by status (preserving linkId context)
-  const { data: totalCountAll } = useQuery<number>({
-    queryKey: ["referralLinkUsages", "totalCount", linkId, null],
-    queryFn: () => {
-      const filter: ReferralLinkUsageSearchFilterAdmin = {
-        pageNumber: 1,
-        pageSize: PAGE_SIZE,
-        linkId: linkId,
-        programId: id,
-        statuses: null,
-        userIdReferee: null,
-        userIdReferrer: null,
-        dateStart: null,
-        dateEnd: null,
-      };
-      return searchReferralLinkUsagesAdmin(filter).then(
-        (data) => data.totalCount ?? 0,
-      );
-    },
-    enabled: !error,
-  });
-
-  const { data: totalCountPending } = useQuery<number>({
-    queryKey: [
-      "referralLinkUsages",
-      "totalCount",
-      linkId,
-      ReferralLinkUsageStatus.Pending,
-    ],
-    queryFn: () => {
-      const filter: ReferralLinkUsageSearchFilterAdmin = {
-        pageNumber: 1,
-        pageSize: PAGE_SIZE,
-        linkId: linkId,
-        programId: id,
-        statuses: [ReferralLinkUsageStatus.Pending],
-        userIdReferee: null,
-        userIdReferrer: null,
-        dateStart: null,
-        dateEnd: null,
-      };
-      return searchReferralLinkUsagesAdmin(filter).then(
-        (data) => data.totalCount ?? 0,
-      );
-    },
-    enabled: !error,
-  });
-
-  const { data: totalCountCompleted } = useQuery<number>({
-    queryKey: [
-      "referralLinkUsages",
-      "totalCount",
-      linkId,
-      ReferralLinkUsageStatus.Completed,
-    ],
-    queryFn: () => {
-      const filter: ReferralLinkUsageSearchFilterAdmin = {
-        pageNumber: 1,
-        pageSize: PAGE_SIZE,
-        linkId: linkId,
-        programId: id,
-        statuses: [ReferralLinkUsageStatus.Completed],
-        userIdReferee: null,
-        userIdReferrer: null,
-        dateStart: null,
-        dateEnd: null,
-      };
-      return searchReferralLinkUsagesAdmin(filter).then(
-        (data) => data.totalCount ?? 0,
-      );
-    },
-    enabled: !error,
-  });
-
-  const { data: totalCountExpired } = useQuery<number>({
-    queryKey: [
-      "referralLinkUsages",
-      "totalCount",
-      linkId,
-      ReferralLinkUsageStatus.Expired,
-    ],
-    queryFn: () => {
-      const filter: ReferralLinkUsageSearchFilterAdmin = {
-        pageNumber: 1,
-        pageSize: PAGE_SIZE,
-        linkId: linkId,
-        programId: id,
-        statuses: [ReferralLinkUsageStatus.Expired],
-        userIdReferee: null,
-        userIdReferrer: null,
-        dateStart: null,
-        dateEnd: null,
-      };
-      return searchReferralLinkUsagesAdmin(filter).then(
-        (data) => data.totalCount ?? 0,
-      );
-    },
-    enabled: !error,
-  });
+  const { data: totalCountAll } = useReferralLinkUsageCountQuery(
+    linkId,
+    id,
+    null,
+    { enabled: !error },
+  );
+  const { data: totalCountPending } = useReferralLinkUsageCountQuery(
+    linkId,
+    id,
+    ReferralLinkUsageStatus.Pending,
+    { enabled: !error },
+  );
+  const { data: totalCountCompleted } = useReferralLinkUsageCountQuery(
+    linkId,
+    id,
+    ReferralLinkUsageStatus.Completed,
+    { enabled: !error },
+  );
+  const { data: totalCountExpired } = useReferralLinkUsageCountQuery(
+    linkId,
+    id,
+    ReferralLinkUsageStatus.Expired,
+    { enabled: !error },
+  );
 
   // 🎈 FUNCTIONS
   const getSearchFilterAsQueryString = useCallback(

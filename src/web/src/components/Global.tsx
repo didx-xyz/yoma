@@ -35,7 +35,9 @@ import {
   currentOrganisationIdAtom,
   currentOrganisationInactiveAtom,
   currentOrganisationLogoAtom,
-  refereeProgressDialogDismissedAtom,
+  firstPendingRefereeReferralUrlAtom,
+  hasDismissedRefereeWelcomeModalAtom,
+  hasShownRefereePendingToastAtom,
   rumConsentAtom,
   screenWidthAtom,
   userProfileAtom,
@@ -73,6 +75,18 @@ export const Global: React.FC = () => {
   const setCurrentOrganisationInactiveAtom = useSetAtom(
     currentOrganisationInactiveAtom,
   );
+  const setFirstPendingRefereeReferralUrl = useSetAtom(
+    firstPendingRefereeReferralUrlAtom,
+  );
+  const firstPendingRefereeReferralUrl = useAtomValue(
+    firstPendingRefereeReferralUrlAtom,
+  );
+  const [hasShownRefereePendingToast, setHasShownRefereePendingToast] = useAtom(
+    hasShownRefereePendingToastAtom,
+  );
+  const [, setHasDismissedRefereeWelcomeModal] = useAtom(
+    hasDismissedRefereeWelcomeModalAtom,
+  );
   const setScreenWidthAtom = useSetAtom(screenWidthAtom);
 
   const [loginDialogVisible, setLoginDialogVisible] = useState(false);
@@ -82,9 +96,6 @@ export const Global: React.FC = () => {
   const [photoUploadDialogVisible, setPhotoUploadDialogVisible] =
     useState(false);
   const [rumConsentDialogVisible, setRumConsentDialogVisible] = useState(false);
-
-  const [refereeProgressDialogDismissed, setRefereeProgressDialogDismissed] =
-    useAtom(refereeProgressDialogDismissedAtom);
 
   const [rumConsent, setRumConsent] = useAtom(rumConsentAtom);
 
@@ -130,6 +141,16 @@ export const Global: React.FC = () => {
       enabled: session !== null && isReferee,
       keepPreviousData: true,
     });
+
+  // Keep a quick-link target for "New to Yoma?" in navbar.
+  useEffect(() => {
+    const firstPendingProgramId = refereeLinkUsages?.items?.[0]?.programId;
+    setFirstPendingRefereeReferralUrl(
+      firstPendingProgramId
+        ? `/referrals/progress/${firstPendingProgramId}`
+        : null,
+    );
+  }, [refereeLinkUsages?.items, setFirstPendingRefereeReferralUrl]);
 
   const dbRumConsent = useMemo((): boolean | null => {
     const items = userProfile?.settings?.items;
@@ -232,6 +253,12 @@ export const Global: React.FC = () => {
     (userProfile: UserProfile, skipSettings = false) => {
       if (!userProfile) return;
 
+      const hasShownRefereePendingToastInStorage =
+        typeof window !== "undefined" &&
+        window.localStorage.getItem("hasShownRefereePendingToast") === "true";
+      const hasShownRefereePendingToastEffective =
+        hasShownRefereePendingToast || hasShownRefereePendingToastInStorage;
+
       const currentPath = routePathRef.current;
 
       // Skip profile completion modals on claim page - handled inline there
@@ -254,47 +281,62 @@ export const Global: React.FC = () => {
         setPhotoUploadDialogVisible(true);
       } else if (
         (refereeLinkUsages?.items?.length ?? 0) > 0 &&
-        !refereeProgressDialogDismissed
+        !hasShownRefereePendingToastEffective
       ) {
-        // skip toast if already on the referrals pages
-        if (currentPath.startsWith("/referrals")) {
-          // don't check again
-          setRefereeProgressDialogDismissed(true);
+        // skip reminder if already on a specific progress page
+        if (currentPath.startsWith("/referrals/progress/")) {
+          return;
+        }
+
+        const progressUrl =
+          firstPendingRefereeReferralUrl ??
+          (refereeLinkUsages?.items?.[0]?.programId
+            ? `/referrals/progress/${refereeLinkUsages.items[0].programId}`
+            : null);
+
+        if (!progressUrl) {
           return;
         }
 
         // show toast for pending referrals
-        const count = refereeLinkUsages?.items?.length ?? 0;
         toast.info(
           <div className="flex flex-col gap-2">
             <div className="flex items-center gap-2">
-              <span className="text-lg">❤️</span>
-              <strong>
-                {count === 1
-                  ? "You Have a Pending Referral!"
-                  : "You Have Pending Referrals!"}
-              </strong>
+              <span className="text-lg">⭐</span>
+              <strong>New to Yoma?</strong>
             </div>
             <div className="text-sm">
-              {count === 1
-                ? "Track your progress and complete the requirements to earn your reward."
-                : "Track your progress and complete the requirements to earn your rewards."}
+              Continue your referral programme and complete the pathway to earn
+              your reward.
             </div>
             <button
               onClick={() => {
-                router.push("/referrals");
-                setRefereeProgressDialogDismissed(true);
+                router.push(progressUrl);
               }}
               className="btn btn-sm bg-orange mt-2 w-full text-white hover:brightness-110"
             >
-              View My Referrals
+              Open My Progress
             </button>
           </div>,
           {
             autoClose: false,
             closeButton: true,
             icon: false,
-            onClose: () => setRefereeProgressDialogDismissed(true),
+            toastId: "pending-referral-reminder",
+            onClose: () => {
+              setHasShownRefereePendingToast(true);
+              if (typeof window !== "undefined") {
+                window.localStorage.setItem(
+                  "hasShownRefereePendingToast",
+                  "true",
+                );
+              }
+            },
+            style: {
+              backgroundColor: "#41204b",
+              boxShadow:
+                "0 20px 45px rgba(0, 0, 0, 0.45), 0 8px 20px rgba(0, 0, 0, 0.3)",
+            },
           },
         );
       }
@@ -302,11 +344,12 @@ export const Global: React.FC = () => {
     [
       router,
       refereeLinkUsages,
-      refereeProgressDialogDismissed,
+      firstPendingRefereeReferralUrl,
+      hasShownRefereePendingToast,
+      setHasShownRefereePendingToast,
       setUpdateProfileDialogVisible,
       setSettingsDialogVisible,
       setPhotoUploadDialogVisible,
-      setRefereeProgressDialogDismissed,
     ],
   );
   //#endregion Functions
@@ -392,10 +435,21 @@ export const Global: React.FC = () => {
 
   // Reset one-time checks on logout
   useEffect(() => {
-    if (!session) {
+    if (sessionStatus === "unauthenticated") {
       postLoginChecksTriggeredRef.current = false;
+      setHasShownRefereePendingToast(false);
+      setHasDismissedRefereeWelcomeModal(false);
+      setFirstPendingRefereeReferralUrl(null);
+      if (typeof window !== "undefined") {
+        window.localStorage.removeItem("hasShownRefereePendingToast");
+      }
     }
-  }, [session]);
+  }, [
+    sessionStatus,
+    setHasShownRefereePendingToast,
+    setHasDismissedRefereeWelcomeModal,
+    setFirstPendingRefereeReferralUrl,
+  ]);
 
   // 🎯 ANALYTICS: Session Management
   // Update analytics user context when session changes
@@ -827,7 +881,7 @@ export const Global: React.FC = () => {
             <div className="flex w-full flex-row gap-3 md:gap-14">
               <button
                 type="button"
-                className="btn btn-outline border-green text-green btn-sm flex-1"
+                className="btn btn-outline border-green btn-sm text-green hover:bg-green flex-1 normal-case hover:text-white"
                 onClick={() => handleRumConsentSubmit(false)}
               >
                 Not Now

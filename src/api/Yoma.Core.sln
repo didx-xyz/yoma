@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.6.33829.357
+# Visual Studio Version 18
+VisualStudioVersion = 18.3.11520.95
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Application", "Application", "{8E98C2DF-E736-47CB-B6A0-A9E9BA46328C}"
 EndProject
@@ -56,6 +56,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Yoma.Core.Test", "src\test\Yoma.Core.Test\Yoma.Core.Test.csproj", "{CF364B3A-CC7A-F6FE-D213-ECB1B46B1AED}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Yoma.Core.Infrastructure.Substack", "src\infrastructure\Yoma.Core.Infrastructure.Substack\Yoma.Core.Infrastructure.Substack.csproj", "{6A2882BE-BD1E-0BE9-37D5-F070FCE0CF2E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Yoma.Core.Infrastructure.Chimoney", "src\infrastructure\Yoma.Core.Infrastructure.Chimoney\Yoma.Core.Infrastructure.Chimoney.csproj", "{DC8E0987-DBAE-3061-1851-AF1FFC7BCD23}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -123,6 +125,10 @@ Global
 		{6A2882BE-BD1E-0BE9-37D5-F070FCE0CF2E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6A2882BE-BD1E-0BE9-37D5-F070FCE0CF2E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6A2882BE-BD1E-0BE9-37D5-F070FCE0CF2E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DC8E0987-DBAE-3061-1851-AF1FFC7BCD23}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DC8E0987-DBAE-3061-1851-AF1FFC7BCD23}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DC8E0987-DBAE-3061-1851-AF1FFC7BCD23}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DC8E0987-DBAE-3061-1851-AF1FFC7BCD23}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -147,6 +153,7 @@ Global
 		{02EA681E-C7D8-13C7-8484-4AC65E1B71E8} = {D3900302-4735-4E6F-A5DE-4D346F0B89F8}
 		{CF364B3A-CC7A-F6FE-D213-ECB1B46B1AED} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 		{6A2882BE-BD1E-0BE9-37D5-F070FCE0CF2E} = {2129F035-3D60-4CC4-AE25-9BFEE9340D8D}
+		{DC8E0987-DBAE-3061-1851-AF1FFC7BCD23} = {2129F035-3D60-4CC4-AE25-9BFEE9340D8D}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {D658A68F-8A10-4EF2-B8C9-F1350399BF58}

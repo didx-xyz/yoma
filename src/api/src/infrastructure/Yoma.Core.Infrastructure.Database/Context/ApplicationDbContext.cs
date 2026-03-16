@@ -206,6 +206,9 @@ namespace Yoma.Core.Infrastructure.Database.Context
     public DbSet<SSITenantCreation> SSITenantCreation { get; set; }
     #endregion SSI
 
+    #region Treasury
+    public DbSet<Treasury.Entities.Treasury> Treasury { get; set; }
+    #endregion Treasury
     #endregion
 
     #region Protected Members
@@ -288,9 +291,6 @@ namespace Yoma.Core.Infrastructure.Database.Context
       #endregion Opportunity
 
       #region Referral
-      builder.Entity<Referral.Entities.Link>()
-          .HasKey(x => x.Id).HasName("PK_Referral_Link");
-
       builder.Entity<Block>()
           .HasOne(b => b.User)
           .WithMany(u => u.Blocks)
@@ -312,6 +312,14 @@ namespace Yoma.Core.Infrastructure.Database.Context
       builder.Entity<Block>().HasIndex(o => o.UserId)
           .IsUnique()
           .HasFilter($"\"{nameof(Block.Active)}\" = true");
+
+      builder.Entity<Referral.Entities.Link>()
+          .HasKey(x => x.Id).HasName("PK_Referral_Link");
+
+      builder.Entity<Program>()
+          .HasIndex(o => new { o.Description })
+          .HasMethod("GIN")
+          .IsTsVectorExpressionIndex("english");
 
       builder.Entity<Program>()
           .HasOne(o => o.CreatedByUser)
@@ -337,13 +345,43 @@ namespace Yoma.Core.Infrastructure.Database.Context
       #endregion
 
       #region Reward
-      builder.Entity<Reward.Entities.RewardTransaction>()
-          .HasIndex(e => new { e.UserId, e.SourceEntityType, e.MyOpportunityId, e.ReferralLinkUsageId })
-          .IsUnique()
-          .HasFilter(null);
+      // Unique constraint for ZLTO reward issuance.
+      // Ensures a user cannot receive the same reward more than once for the same source entity.
+      // The filter restricts this uniqueness rule to Provider = ZLTO only.
+      // This allows multiple rows per user where MyOpportunityId and ReferralLinkUsageId are NULL
+      // for other providers (e.g. Chimoney cash-out payouts).
+      builder.Entity<Reward.Entities.RewardTransaction>(entity =>
+      {
+        entity.Property(e => e.Provider)
+            .HasConversion<string>()
+            .HasDefaultValue(Domain.Reward.Provider.ZLTO.ToString());
+
+        entity.HasIndex(e => new { e.UserId, e.SourceEntityType, e.MyOpportunityId, e.ReferralLinkUsageId })
+            .IsUnique()
+            .HasFilter($"\"Provider\" = '{Domain.Reward.Provider.ZLTO}'");
+      });
 
       builder.Entity<RewardTransactionStatus>()
           .HasKey(e => e.Id).HasName("PK_Reward_TransactionStatus");
+
+      builder.Entity<Reward.Entities.WalletCreation>(entity =>
+      {
+        entity.Property(e => e.Provider)
+            .HasConversion<string>()
+            .HasDefaultValue(Domain.Reward.Provider.ZLTO.ToString());
+      });
+      #endregion Reward
+
+      #region SSI
+      builder.Entity<SSITenantCreation>()
+          .HasIndex(e => new { e.EntityType, e.UserId, e.OrganizationId })
+          .IsUnique()
+          .HasFilter(null);
+
+      builder.Entity<SSICredentialIssuance>()
+          .HasIndex(e => new { e.SchemaName, e.UserId, e.OrganizationId, e.MyOpportunityId })
+          .IsUnique()
+          .HasFilter(null);
       #endregion Reward
 
       #region SSI
@@ -357,6 +395,20 @@ namespace Yoma.Core.Infrastructure.Database.Context
           .IsUnique()
           .HasFilter(null);
       #endregion
+
+      #region Treasury
+      builder.Entity<Treasury.Entities.Treasury>()
+          .HasOne(o => o.CreatedByUser)
+          .WithMany()
+          .HasForeignKey(o => o.CreatedByUserId)
+          .OnDelete(DeleteBehavior.NoAction);
+
+      builder.Entity<Treasury.Entities.Treasury>()
+          .HasOne(o => o.ModifiedByUser)
+          .WithMany()
+          .HasForeignKey(o => o.ModifiedByUserId)
+          .OnDelete(DeleteBehavior.NoAction);
+      #endregion Treasury
     }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)

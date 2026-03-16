@@ -41,6 +41,7 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
       {
         Id = entity.Id,
         Name = entity.Name,
+        Summary = entity.Summary,
         Description = entity.Description,
         ImageId = entity.ImageId,
         ImageStorageType = entity.Image == null ? null : Enum.Parse<StorageType>(entity.Image.StorageType, true),
@@ -59,6 +60,9 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
         StatusId = entity.StatusId,
         Status = Enum.Parse<ProgramStatus>(entity.Status.Name, true),
         IsDefault = entity.IsDefault,
+        Hidden = entity.Hidden,
+        ReferrerLimit = entity.ReferrerLimit,
+        ReferrerTotal = entity.ReferrerTotal,
         DateStart = entity.DateStart,
         DateEnd = entity.DateEnd,
         DateCreated = entity.DateCreated,
@@ -96,6 +100,11 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
               {
                 Id = task.Opportunity.Id,
                 Title = task.Opportunity.Title,
+                OrganizationName = task.Opportunity.Organization.Name,
+                OrganizationLogoId = task.Opportunity.Organization.LogoId,
+                OrganizationLogoStorageType = task.Opportunity.Organization.Logo == null ? null : Enum.Parse<Yoma.Core.Domain.BlobProvider.StorageType>(task.Opportunity.Organization.Logo.StorageType, true),
+                OrganizationLogoKey = task.Opportunity.Organization.Logo == null ? null : task.Opportunity.Organization.Logo.Key,
+                //OrganizationLogoURL: Optional; Resolved when needed
                 OrganizationStatus = Enum.Parse<Domain.Entity.OrganizationStatus>(task.Opportunity.Organization.Status.Name, true),
                 VerificationEnabled = task.Opportunity.VerificationEnabled,
                 VerificationMethod = string.IsNullOrEmpty(task.Opportunity.VerificationMethod) ? null : Enum.Parse<VerificationMethod>(task.Opportunity.VerificationMethod, true),
@@ -144,14 +153,16 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
     {
       //MS SQL: Contains
       return predicate.Or(o => EF.Functions.ILike(o.Name, $"%{value}%")
-          || (!string.IsNullOrEmpty(o.Description) && EF.Functions.ILike(o.Description, $"%{value}%")));
+          || (!string.IsNullOrEmpty(o.Summary) && EF.Functions.ILike(o.Summary, $"%{value}%"))
+          || (!string.IsNullOrEmpty(o.Description) && EF.Functions.ToTsVector("english", o.Description).Matches(value)));
     }
 
     public IQueryable<Program> Contains(IQueryable<Program> query, string value)
     {
       //MS SQL: Contains
       return query.Where(o => EF.Functions.ILike(o.Name, $"%{value}%")
-          || (!string.IsNullOrEmpty(o.Description) && EF.Functions.ILike(o.Description, $"%{value}%")));
+          || (!string.IsNullOrEmpty(o.Summary) && EF.Functions.ILike(o.Summary, $"%{value}%"))
+          || (!string.IsNullOrEmpty(o.Description) && EF.Functions.ToTsVector("english", o.Description).Matches(value)));
     }
 
     public async Task<Program> Create(Program item)
@@ -163,21 +174,22 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
       {
         Id = item.Id,
         Name = item.Name,
+        Summary = item.Summary,
         Description = item.Description,
         ImageId = item.ImageId,
         CompletionWindowInDays = item.CompletionWindowInDays,
         CompletionLimitReferee = item.CompletionLimitReferee,
         CompletionLimit = item.CompletionLimit,
-        CompletionTotal = item.CompletionTotal,
         ZltoRewardReferrer = item.ZltoRewardReferrer,
         ZltoRewardReferee = item.ZltoRewardReferee,
         ZltoRewardPool = item.ZltoRewardPool,
-        ZltoRewardCumulative = item.ZltoRewardCumulative,
         ProofOfPersonhoodRequired = item.ProofOfPersonhoodRequired,
         PathwayRequired = item.PathwayRequired,
         MultipleLinksAllowed = item.MultipleLinksAllowed,
         StatusId = item.StatusId,
         IsDefault = item.IsDefault,
+        Hidden = item.Hidden,
+        ReferrerLimit = item.ReferrerLimit,
         DateStart = item.DateStart,
         DateEnd = item.DateEnd,
         DateCreated = item.DateCreated,
@@ -203,21 +215,22 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
         {
           Id = item.Id,
           Name = item.Name,
+          Summary = item.Summary,
           Description = item.Description,
           ImageId = item.ImageId,
           CompletionWindowInDays = item.CompletionWindowInDays,
           CompletionLimitReferee = item.CompletionLimitReferee,
           CompletionLimit = item.CompletionLimit,
-          CompletionTotal = item.CompletionTotal,
           ZltoRewardReferrer = item.ZltoRewardReferrer,
           ZltoRewardReferee = item.ZltoRewardReferee,
           ZltoRewardPool = item.ZltoRewardPool,
-          ZltoRewardCumulative = item.ZltoRewardCumulative,
           ProofOfPersonhoodRequired = item.ProofOfPersonhoodRequired,
           PathwayRequired = item.PathwayRequired,
           MultipleLinksAllowed = item.MultipleLinksAllowed,
           StatusId = item.StatusId,
           IsDefault = item.IsDefault,
+          Hidden = item.Hidden,
+          ReferrerLimit = item.ReferrerLimit,
           DateStart = item.DateStart,
           DateEnd = item.DateEnd,
           DateCreated = DateTimeOffset.UtcNow,
@@ -248,6 +261,7 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
       item.DateModified = DateTimeOffset.UtcNow;
 
       entity.Name = item.Name;
+      entity.Summary = item.Summary;
       entity.Description = item.Description;
       entity.ImageId = item.ImageId;
       entity.CompletionWindowInDays = item.CompletionWindowInDays;
@@ -263,6 +277,9 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
       entity.MultipleLinksAllowed = item.MultipleLinksAllowed;
       entity.StatusId = item.StatusId;
       entity.IsDefault = item.IsDefault;
+      entity.Hidden = item.Hidden;
+      entity.ReferrerLimit = item.ReferrerLimit;
+      entity.ReferrerTotal = item.ReferrerTotal;
       entity.DateStart = item.DateStart;
       entity.DateEnd = item.DateEnd;
       entity.DateModified = item.DateModified;
@@ -288,6 +305,7 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
         item.DateModified = DateTimeOffset.UtcNow;
 
         entity.Name = item.Name;
+        entity.Summary = item.Summary;
         entity.Description = item.Description;
         entity.ImageId = item.ImageId;
         entity.CompletionWindowInDays = item.CompletionWindowInDays;
@@ -303,6 +321,9 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
         entity.MultipleLinksAllowed = item.MultipleLinksAllowed;
         entity.StatusId = item.StatusId;
         entity.IsDefault = item.IsDefault;
+        entity.Hidden = item.Hidden;
+        entity.ReferrerLimit = item.ReferrerLimit;
+        entity.ReferrerTotal = item.ReferrerTotal;
         entity.DateStart = item.DateStart;
         entity.DateEnd = item.DateEnd;
         entity.DateModified = item.DateModified;

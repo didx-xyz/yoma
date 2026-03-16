@@ -13,6 +13,7 @@ namespace Yoma.Core.Domain.Referral.Extensions
       {
         Id = value.Id,
         Name = value.Name,
+        Summary = value.Summary,
         Description = value.Description,
         ImageURL = value.ImageURL,
         CompletionWindowInDays = value.CompletionWindowInDays,
@@ -30,6 +31,9 @@ namespace Yoma.Core.Domain.Referral.Extensions
         MultipleLinksAllowed = value.MultipleLinksAllowed,
         Status = value.Status,
         IsDefault = value.IsDefault,
+        ReferrerLimit = value.ReferrerLimit,
+        ReferrerTotal = value.ReferrerTotal,
+        //ReferrerBalance: calculated inline
         DateStart = value.DateStart,
         DateEnd = value.DateEnd,
         Pathway = value.Pathway == null ? null : new ProgramPathwayInfo
@@ -60,6 +64,11 @@ namespace Yoma.Core.Domain.Referral.Extensions
               {
                 Id = task.Opportunity.Id,
                 Title = task.Opportunity.Title,
+                OrganizationName = task.Opportunity.OrganizationName,
+                OrganizationLogoId = task.Opportunity.OrganizationLogoId,
+                OrganizationLogoStorageType = task.Opportunity.OrganizationLogoStorageType,
+                OrganizationLogoKey = task.Opportunity.OrganizationLogoKey,
+                OrganizationLogoURL = task.Opportunity.OrganizationLogoURL, // Map; Optional; resolved by the invoking member when required
                 OrganizationStatus = task.Opportunity.OrganizationStatus,
                 VerificationEnabled = task.Opportunity.VerificationEnabled,
                 VerificationMethod = task.Opportunity.VerificationMethod,
