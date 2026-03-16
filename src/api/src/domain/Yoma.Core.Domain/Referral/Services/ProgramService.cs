@@ -188,6 +188,8 @@ namespace Yoma.Core.Domain.Referral.Services
 
       query = query.Where(o => o.ProgramHidden != true); //exclude hidden
 
+      query = query.Where(o => !o.ProgramReferrerLimit.HasValue || (o.ProgramReferrerTotal ?? 0) < o.ProgramReferrerLimit); //exclude referrer limit reached
+
       if (resolvedCountryIds != null && resolvedCountryIds.Count != 0)
         query = query.Where(o => resolvedCountryIds.Contains(o.CountryId));
 
@@ -325,6 +327,10 @@ namespace Yoma.Core.Domain.Referral.Services
       //excludeHidden
       if (filter.ExcludeHidden)
         query = query.Where(o => o.Hidden != true);
+
+      //excludeReferrerLimitReached
+      if (filter.ExcludeReferrerLimitReached)
+        query = query.Where(o => o.ReferrerLimit == null || (o.ReferrerTotal ?? 0) < o.ReferrerLimit);
 
       var results = new ProgramSearchResults();
 

@@ -28,6 +28,8 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
         ProgramStatusId = entity.Program.StatusId,
         ProgramDateStart = entity.Program.DateStart,
         ProgramHidden = entity.Program.Hidden,
+        ProgramReferrerLimit = entity.Program.ReferrerLimit,
+        ProgramReferrerTotal = entity.Program.ReferrerTotal,
         CountryId = entity.CountryId,
         CountryName = entity.Country.Name,
         DateCreated = entity.DateCreated

@@ -51,6 +51,7 @@ namespace Yoma.Core.Domain.Referral.Services
         PublishedStates = [PublishedState.Active],
         TotalCountOnly = true,
         ExcludeHidden = true, //exclude hidden
+        ExcludeReferrerLimitReached = true, //exclude referrer limit reached
       });
 
       return searchResults.TotalCount > 0;
@@ -61,8 +62,11 @@ namespace Yoma.Core.Domain.Referral.Services
       var result = _programService.GetDefaultOrNull(true, true)
         ?? throw new EntityNotFoundException("Default program not found");
 
-      //not hidden, active and started
-      if (result.Hidden == true || result.Status != ProgramStatus.Active || result.DateStart > DateTimeOffset.UtcNow)
+      // not hidden, active, started and referrer cap not reached
+      if (result.Hidden == true
+          || result.Status != ProgramStatus.Active
+          || result.DateStart > DateTimeOffset.UtcNow
+          || (result.ReferrerLimit.HasValue && (result.ReferrerBalance ?? 0) <= 0))
         throw new EntityNotFoundException($"Default program '{result.Name}' is currently unavailable");
 
       // Data integrity: default must always be world-wide (implicit null/empty or explicit Worldwide)
@@ -142,6 +146,7 @@ namespace Yoma.Core.Domain.Referral.Services
           : filter.PublishedStates,
         ValueContains = filter.ValueContains,
         ExcludeHidden = true, //exclude hidden
+        ExcludeReferrerLimitReached = true, //exclude referrer limit reached
         PageNumber = filter.PageNumber,
         PageSize = filter.PageSize
       };
