@@ -3,10 +3,12 @@ import { useAtomValue } from "jotai";
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
 import { useSession } from "next-auth/react";
-import iconZlto from "public/images/icon-zlto.svg";
 import Head from "next/head";
-import { useRouter } from "next/router";
 import Image from "next/image";
+import { useRouter } from "next/router";
+import imageAmbassador from "public/images/home/bg-ambassador.png";
+import imageStencilPurple from "public/images/home/stencil-purple.png";
+import iconZlto from "public/images/icon-zlto.svg";
 import {
   useCallback,
   useEffect,
@@ -20,11 +22,11 @@ import { type OnSlideProps } from "react-scroll-snap-anime-slider";
 import Select from "react-select";
 import { Country } from "~/api/models/lookups";
 import {
+  ReferralParticipationRole as ReferralAnalyticsRole,
+  ReferralLinkUsageStatus,
   type ProgramInfo,
   type ReferralLink,
   type ReferralLinkUsage,
-  ReferralLinkUsageStatus,
-  ReferralParticipationRole as ReferralAnalyticsRole,
 } from "~/api/models/referrals";
 import { ReferralParticipationRole, type UserProfile } from "~/api/models/user";
 import {
@@ -37,7 +39,6 @@ import { getUserProfile } from "~/api/services/user";
 import Suspense from "~/components/Common/Suspense";
 import MainLayout from "~/components/Layout/Main";
 import NoRowsMessage from "~/components/NoRowsMessage";
-import ZltoRewardBadge from "~/components/Opportunity/Badges/ZltoRewardBadge";
 import { ColoredSectionShell } from "~/components/Referrals/new/ColoredSectionShell";
 import { ReferralFriendSlideCard } from "~/components/Referrals/new/ReferralFriendSlideCard";
 import { ReferralProgramSlideCard } from "~/components/Referrals/new/ReferralProgramSlideCard";
@@ -60,8 +61,6 @@ import { COUNTRY_ID_WW, PAGE_SIZE, THEME_WHITE } from "~/lib/constants";
 import { screenWidthAtom, userProfileAtom } from "~/lib/store";
 import { authOptions } from "~/server/auth";
 import type { NextPageWithLayout } from "../_app";
-import imageAmbassador from "public/images/home/bg-ambassador.png";
-import imageStencilPurple from "public/images/home/stencil-purple.png";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
