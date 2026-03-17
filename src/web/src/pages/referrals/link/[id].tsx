@@ -8,7 +8,7 @@ import { useRouter } from "next/router";
 import { type ReactElement, useState } from "react";
 import { FaShareAlt } from "react-icons/fa";
 import { IoTimeOutline, IoTrophyOutline } from "react-icons/io5";
-import { ProgramStatus } from "~/api/models/referrals";
+import { ProgramStatus, ReferralLinkStatus } from "~/api/models/referrals";
 import type { UserProfile } from "~/api/models/user";
 import {
   getReferralLinkById,
@@ -134,17 +134,13 @@ const ReferralLinkPage: NextPageWithLayout<{
   const hasPageError =
     Boolean(error) || Boolean(linkError) || Boolean(programError);
 
-  const programStatusName =
+  const isProgramActive =
     typeof program?.status === "number"
-      ? ProgramStatus[program.status]
-      : `${program?.status ?? ""}`;
+      ? program.status === ProgramStatus.Active
+      : `${program?.status ?? ""}`.toLowerCase() === "active";
 
-  const isShareDisabledByStatus = [
-    "inactive",
-    "expired",
-    "limitreached",
-    "deleted",
-  ].includes(programStatusName.toLowerCase());
+  const isShareEnabled =
+    isProgramActive && link?.status === ReferralLinkStatus.Active;
 
   const pageErrorMessage = (() => {
     if (linkError) {
@@ -213,7 +209,7 @@ const ReferralLinkPage: NextPageWithLayout<{
                     type="button"
                     className="btn btn-sm bg-green hover:bg-green-dark disabled:!bg-green h-10 rounded-full border-0 px-5 text-white normal-case disabled:!pointer-events-auto disabled:!cursor-not-allowed disabled:!text-white disabled:opacity-80"
                     onClick={() => setIsShareModalOpen(true)}
-                    disabled={isShareDisabledByStatus}
+                    disabled={!isShareEnabled}
                   >
                     <FaShareAlt className="h-4 w-4" />
                     Share your link

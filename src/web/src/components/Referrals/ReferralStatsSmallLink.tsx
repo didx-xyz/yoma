@@ -32,7 +32,7 @@ export const ReferralStatsSmallLink: React.FC<ReferralStatsSmallLinkProps> = ({
             <>
               <div className="flex items-center gap-2">
                 <div className="text-base-content/70 text-sm">
-                  Available codes left to refer
+                  Available slots left to refer
                 </div>
               </div>
               <div className="text-base-content flex items-center">
