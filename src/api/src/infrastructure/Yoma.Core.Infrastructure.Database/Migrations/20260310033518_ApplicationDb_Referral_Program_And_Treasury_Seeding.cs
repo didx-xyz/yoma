@@ -65,7 +65,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           20000,
           NULL,
           NULL,
-          1.0 / 45,
+          1::numeric / 45,
           now(),
           '8929632E-2911-42FF-9A44-055DEF231B87',
           now(),

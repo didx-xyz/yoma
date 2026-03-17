@@ -1500,18 +1500,8 @@ END $$ LANGUAGE plpgsql;
 -- ===========================================
 -- TREASURY: Running Totals
 -- ===========================================
-WITH totals AS (
-  SELECT
-    (
-      COALESCE((SELECT SUM("ZltoRewardCumulative") FROM "Entity"."Organization"), 0) +
-      COALESCE((SELECT SUM("ZltoRewardCumulative") FROM "Referral"."Program"), 0)
-    ) AS "ZltoRewardCumulative",
-    (
-      COALESCE((SELECT SUM("ZltoRewardCumulativeCurrentFinancialYear") FROM "Entity"."Organization"), 0) +
-      COALESCE((SELECT SUM("ZltoRewardCumulative") FROM "Referral"."Program"), 0)
-    ) AS "ZltoRewardCumulativeCurrentFinancialYear"
-)
-UPDATE "Treasury"."Treasury" t
+
+UPDATE "Treasury"."Treasury"
 SET
   "ZltoRewardCumulative" = CASE
     WHEN totals."ZltoRewardCumulative" = 0 THEN NULL
@@ -1522,4 +1512,15 @@ SET
     ELSE totals."ZltoRewardCumulativeCurrentFinancialYear"
   END,
   "DateModified" = (CURRENT_TIMESTAMP AT TIME ZONE 'UTC')
-FROM totals;
+FROM (
+  SELECT
+    (
+      COALESCE((SELECT SUM("ZltoRewardCumulative") FROM "Entity"."Organization"), 0) +
+      COALESCE((SELECT SUM("ZltoRewardCumulative") FROM "Referral"."Program"), 0)
+    ) AS "ZltoRewardCumulative",
+    (
+      COALESCE((SELECT SUM("ZltoRewardCumulativeCurrentFinancialYear") FROM "Entity"."Organization"), 0) +
+      COALESCE((SELECT SUM("ZltoRewardCumulative") FROM "Referral"."Program"), 0)
+    ) AS "ZltoRewardCumulativeCurrentFinancialYear"
+) totals
+WHERE TRUE;
