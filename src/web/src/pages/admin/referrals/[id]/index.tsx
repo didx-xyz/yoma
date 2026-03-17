@@ -388,6 +388,17 @@ const schemaStep4 = z
   )
   .refine(
     (data) => {
+      // Default programs cannot be hidden
+      if (!data.isDefault) return true;
+      return !data.hidden;
+    },
+    {
+      message: "Default programs cannot be hidden",
+      path: ["isDefault"],
+    },
+  )
+  .refine(
+    (data) => {
       // If multiple links are allowed, require POP or a per-referrer cap or Pathway
       if (!data.multipleLinksAllowed) return true;
       const hasPerReferrerCap = (data.completionLimitReferee ?? 0) > 0;
@@ -668,7 +679,7 @@ const ReferralProgramForm: NextPageWithLayout<{
 
   // Fetch program data
   const { data: program, isLoading: isLoadingProgram } =
-    useReferralProgramByIdQuery(id, { enabled: !error });
+    useReferralProgramByIdQuery(id, { enabled: !error && id !== "create" });
 
   const statusMutation = useReferralProgramStatusMutation({
     programId: id,
@@ -821,8 +832,8 @@ const ReferralProgramForm: NextPageWithLayout<{
     name: "pathway.steps",
   });
 
-  // Watch pathwayRequired from step 5 form for real-time updates
-  const pathwayRequiredWatch = watchStep5("pathwayRequired");
+  // Watch pathwayRequired from step 4 form for real-time updates
+  const pathwayRequiredWatch = watchStep4("pathwayRequired");
 
   // Watch pathway fields to keep dependent values in sync
   const pathwayRuleWatch = watchStep5("pathway.rule");
@@ -878,9 +889,9 @@ const ReferralProgramForm: NextPageWithLayout<{
   const proofOfPersonhoodRequiredWatch = watchStep4(
     "proofOfPersonhoodRequired",
   );
-  const pathwayRequiredStep4Watch = watchStep4("pathwayRequired");
   const multipleLinksAllowedWatch = watchStep4("multipleLinksAllowed");
   const isDefaultWatch = watchStep4("isDefault");
+  const hiddenWatch = watchStep4("hidden");
 
   // memo for dirty fields
   // because the "isDirty" property on useForm is not working as expected
@@ -928,11 +939,11 @@ const ReferralProgramForm: NextPageWithLayout<{
   ];
 
   useEffect(() => {
-    // show the expired modal if the program is expired
-    if ((program?.status as any) == "Expired") {
+    // show the expired modal if the program is expired (only relevant when editing)
+    if (id !== "create" && (program?.status as any) == "Expired") {
       setProgramExpiredModalVisible(true);
     }
-  }, [program?.status, setProgramExpiredModalVisible]);
+  }, [id, program?.status, setProgramExpiredModalVisible]);
 
   // Update form data when program loads
   useEffect(() => {
@@ -1203,9 +1214,10 @@ const ReferralProgramForm: NextPageWithLayout<{
     }
   }, [
     proofOfPersonhoodRequiredWatch,
-    pathwayRequiredStep4Watch,
+    pathwayRequiredWatch,
     multipleLinksAllowedWatch,
     isDefaultWatch,
+    hiddenWatch,
     zltoRewardReferrerWatch,
     zltoRewardRefereeWatch,
     completionLimitRefereeWatch,
@@ -1551,8 +1563,16 @@ const ReferralProgramForm: NextPageWithLayout<{
 
         // Redirect based on create vs edit
         if (id === "create") {
-          // For create: redirect to info page
-          await router.push(`/admin/referrals/${programId}/info`);
+          // For create: redirect to info page, passing returnUrl through so the info page can navigate back
+          const decodedReturnUrl = returnUrl
+            ? decodeURIComponent(returnUrl.toString())
+            : null;
+          const infoUrl = `/admin/referrals/${programId}/info${
+            decodedReturnUrl
+              ? `?returnUrl=${encodeURIComponent(decodedReturnUrl)}`
+              : ""
+          }`;
+          await router.push(infoUrl);
         } else {
           // For edit: go back to returnUrl or list
           await router.push(
@@ -2556,112 +2576,149 @@ const ReferralProgramForm: NextPageWithLayout<{
                       onSubmitStep(5, data),
                     )}
                   >
+                    {/* Default */}
                     <div className="flex flex-col gap-4">
-                      <label
-                        htmlFor="isDefault"
-                        className="label cursor-pointer justify-normal p-0"
-                      >
-                        <input
-                          type="checkbox"
-                          id="isDefault"
-                          className="checkbox-secondary checkbox disabled:border-gray"
-                          {...registerStep4("isDefault")}
-                        />
-                        <div className="text-gray-dark ml-4 select-none">
-                          <div>Default</div>
-                          <p className="text-sm">
-                            Make this program the default for new referral links
-                          </p>
-                        </div>
-                      </label>
+                      <div className="rounded-lg border border-gray-300 bg-white p-4">
+                        <label
+                          htmlFor="isDefault"
+                          className="label cursor-pointer justify-normal p-0"
+                        >
+                          <input
+                            type="checkbox"
+                            id="isDefault"
+                            className="checkbox-secondary checkbox disabled:border-gray"
+                            {...registerStep4("isDefault")}
+                          />
+                          <div className="text-gray-dark ml-4 select-none">
+                            <div>Default</div>
+                            <p className="text-sm">
+                              Make this program the default for new referral
+                              links
+                            </p>
+                          </div>
+                        </label>
+                      </div>
 
-                      <label
-                        htmlFor="proofOfPersonhoodRequired"
-                        className="label cursor-pointer justify-normal p-0"
-                      >
-                        <input
-                          type="checkbox"
-                          id="proofOfPersonhoodRequired"
-                          className="checkbox-secondary checkbox disabled:border-gray"
-                          {...registerStep4("proofOfPersonhoodRequired")}
-                        />
-                        <div className="text-gray-dark ml-4 select-none">
-                          <div>Proof of Personhood Required</div>
-                          <p className="text-sm">
-                            Referee must verify via phone OTP or social sign-in
-                          </p>
-                        </div>
-                      </label>
+                      {/* Hidden */}
+                      <div className="rounded-lg border border-gray-300 bg-white p-4">
+                        <label
+                          htmlFor="hidden"
+                          className="label cursor-pointer justify-normal p-0"
+                        >
+                          <input
+                            type="checkbox"
+                            id="hidden"
+                            className="checkbox-secondary checkbox disabled:border-gray"
+                            {...registerStep4("hidden")}
+                          />
+                          <div className="text-gray-dark ml-4 select-none">
+                            <div>Hidden</div>
+                            <p className="text-sm">
+                              Make this program hidden from public listings and
+                              search results
+                            </p>
+                          </div>
+                        </label>
+                      </div>
 
-                      <label
-                        htmlFor="multipleLinksAllowed"
-                        className="label cursor-pointer justify-normal p-0"
-                      >
-                        <input
-                          type="checkbox"
-                          id="multipleLinksAllowed"
-                          className="checkbox-secondary checkbox disabled:border-gray"
-                          {...registerStep4("multipleLinksAllowed")}
-                        />
-                        <div className="text-gray-dark ml-4 select-none">
-                          <div>Multiple Links Allowed</div>
-                          <p className="text-sm">
-                            Allow referrers to have multiple active links
-                            simultaneously
-                          </p>
-                        </div>
-                      </label>
+                      {/* Proof of Personhood Required */}
+                      <div className="rounded-lg border border-gray-300 bg-white p-4">
+                        <label
+                          htmlFor="proofOfPersonhoodRequired"
+                          className="label cursor-pointer justify-normal p-0"
+                        >
+                          <input
+                            type="checkbox"
+                            id="proofOfPersonhoodRequired"
+                            className="checkbox-secondary checkbox disabled:border-gray"
+                            {...registerStep4("proofOfPersonhoodRequired")}
+                          />
+                          <div className="text-gray-dark ml-4 select-none">
+                            <div>Proof of Personhood</div>
+                            <p className="text-sm">
+                              Referee must verify via phone OTP or social
+                              sign-in
+                            </p>
+                          </div>
+                        </label>
+                      </div>
 
-                      <label
-                        htmlFor="hidden"
-                        className="label cursor-pointer justify-normal p-0"
-                      >
-                        <input
-                          type="checkbox"
-                          id="hidden"
-                          className="checkbox-secondary checkbox disabled:border-gray"
-                          {...registerStep4("hidden")}
-                        />
-                        <div className="text-gray-dark ml-4 select-none">
-                          <div>Hidden</div>
-                          <p className="text-sm">
-                            Make this program hidden from public listings and
-                            search results
-                          </p>
-                        </div>
-                      </label>
+                      {/* Multiple Links Allowed */}
+                      <div className="rounded-lg border border-gray-300 bg-white p-4">
+                        <label
+                          htmlFor="multipleLinksAllowed"
+                          className="label cursor-pointer justify-normal p-0"
+                        >
+                          <input
+                            type="checkbox"
+                            id="multipleLinksAllowed"
+                            className="checkbox-secondary checkbox disabled:border-gray"
+                            {...registerStep4("multipleLinksAllowed")}
+                          />
+                          <div className="text-gray-dark ml-4 select-none">
+                            <div>Multiple Links</div>
+                            <p className="text-sm">
+                              Allow ambassadors to have multiple active links
+                              simultaneously
+                            </p>
+                          </div>
+                        </label>
+                      </div>
+
+                      {/* Pathway Required */}
+                      <div className="rounded-lg border border-gray-300 bg-white p-4">
+                        <label
+                          htmlFor="pathwayRequired"
+                          className="label cursor-pointer justify-normal p-0"
+                        >
+                          <input
+                            type="checkbox"
+                            id="pathwayRequired"
+                            className="checkbox-secondary checkbox disabled:border-gray"
+                            {...registerStep4("pathwayRequired")}
+                          />
+                          <div className="text-gray-dark ml-4 select-none">
+                            <div>Pathway</div>
+                            <p className="text-sm">
+                              When enabled, referees must complete the
+                              configured pathway checklist in the next step
+                            </p>
+                          </div>
+                        </label>
+                      </div>
                     </div>
 
                     {/* Form-level errors */}
                     {formStateStep4.errors.proofOfPersonhoodRequired &&
                       typeof formStateStep4.errors.proofOfPersonhoodRequired
                         .message === "string" && (
-                        <div className="mt-4">
-                          <FormMessage messageType={FormMessageType.Error}>
-                            {
-                              formStateStep4.errors.proofOfPersonhoodRequired
-                                .message
-                            }
-                          </FormMessage>
-                        </div>
+                        <FormMessage messageType={FormMessageType.Error}>
+                          {
+                            formStateStep4.errors.proofOfPersonhoodRequired
+                              .message
+                          }
+                        </FormMessage>
                       )}
                     {formStateStep4.errors.isDefault &&
                       typeof formStateStep4.errors.isDefault.message ===
                         "string" && (
-                        <div className="mt-4">
-                          <FormMessage messageType={FormMessageType.Error}>
-                            {formStateStep4.errors.isDefault.message}
-                          </FormMessage>
-                        </div>
+                        <FormMessage messageType={FormMessageType.Error}>
+                          {formStateStep4.errors.isDefault.message}
+                        </FormMessage>
                       )}
                     {formStateStep4.errors.multipleLinksAllowed &&
                       typeof formStateStep4.errors.multipleLinksAllowed
                         .message === "string" && (
-                        <div className="mt-4">
-                          <FormMessage messageType={FormMessageType.Error}>
-                            {formStateStep4.errors.multipleLinksAllowed.message}
-                          </FormMessage>
-                        </div>
+                        <FormMessage messageType={FormMessageType.Error}>
+                          {formStateStep4.errors.multipleLinksAllowed.message}
+                        </FormMessage>
+                      )}
+                    {(formStateStep4.errors as any).hidden &&
+                      typeof (formStateStep4.errors as any).hidden.message ===
+                        "string" && (
+                        <FormMessage messageType={FormMessageType.Error}>
+                          {(formStateStep4.errors as any).hidden.message}
+                        </FormMessage>
                       )}
 
                     <div className="flex flex-row items-center justify-center gap-2 md:justify-end md:gap-4">
@@ -2701,37 +2758,6 @@ const ReferralProgramForm: NextPageWithLayout<{
                       onSubmitStep(6, data),
                     )}
                   >
-                    {/* Pathway Required Toggle */}
-                    <div className="rounded-lg border border-gray-300 bg-white p-4">
-                      <Controller
-                        name="pathwayRequired"
-                        control={controlStep5}
-                        render={({ field: { value, ...field } }) => (
-                          <>
-                            <label
-                              htmlFor="pathwayRequired"
-                              className="label cursor-pointer justify-normal p-0"
-                            >
-                              <input
-                                type="checkbox"
-                                id="pathwayRequired"
-                                className="checkbox-secondary checkbox disabled:border-gray"
-                                {...field}
-                                checked={value}
-                              />
-                              <div className="text-gray-dark ml-4 select-none">
-                                <div>Enable Pathway</div>
-                                <p className="text-sm">
-                                  When enabled, referees must complete the
-                                  configured pathway checklist below
-                                </p>
-                              </div>
-                            </label>
-                          </>
-                        )}
-                      />
-                    </div>
-
                     {pathwayRequiredWatch && !formStateStep5.isValid && (
                       <FormRequiredFieldMessage />
                     )}
@@ -2749,7 +2775,8 @@ const ReferralProgramForm: NextPageWithLayout<{
                     ) : (
                       <FormMessage messageType={FormMessageType.Info}>
                         Pathway configuration is disabled. Enable &quot;Enable
-                        Pathway&quot; above to configure pathway requirements.
+                        Pathway&quot; in the Features step to configure pathway
+                        requirements.
                       </FormMessage>
                     )}
 

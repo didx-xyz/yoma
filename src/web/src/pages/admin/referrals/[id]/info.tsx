@@ -183,13 +183,13 @@ const ReferralProgramInfo: NextPageWithLayout<{
               Back to List
             </Link>
             <Link
-              href={`/admin/referrals/${id}${returnUrl ? `?returnUrl=${encodeURIComponent(getSafeUrl("", router.asPath))}` : ""}`}
+              href={`/admin/referrals/${id}?returnUrl=${encodeURIComponent(getSafeUrl("", router.asPath))}`}
               className="btn btn-primary btn-sm rounded-full px-8 normal-case"
             >
               Edit Program
             </Link>
             <Link
-              href={`/admin/referrals/${id}/links${returnUrl ? `?returnUrl=${encodeURIComponent(getSafeUrl("", router.asPath))}` : ""}`}
+              href={`/admin/referrals/${id}/links?returnUrl=${encodeURIComponent(getSafeUrl("", router.asPath))}`}
               className="btn btn-secondary btn-sm rounded-full px-8 normal-case"
             >
               View Referral Links
