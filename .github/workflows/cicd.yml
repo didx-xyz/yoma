@@ -75,7 +75,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v6
-      - uses: dorny/paths-filter@v3
+      - uses: dorny/paths-filter@v4
         id: filter
         with:
           base: master
@@ -143,7 +143,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v6
-      - uses: dorny/paths-filter@v3 # https://github.com/actions/runner/pull/2477
+      - uses: dorny/paths-filter@v4 # https://github.com/actions/runner/pull/2477
         id: filter
         with:
           base: master
@@ -214,7 +214,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v6
-      - uses: dorny/paths-filter@v3 # https://github.com/actions/runner/pull/2477
+      - uses: dorny/paths-filter@v4 # https://github.com/actions/runner/pull/2477
         id: filter
         with:
           base: master
@@ -291,7 +291,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v6
-      - uses: dorny/paths-filter@v3 # https://github.com/actions/runner/pull/2477
+      - uses: dorny/paths-filter@v4 # https://github.com/actions/runner/pull/2477
         id: filter
         with:
           base: master
@@ -430,7 +430,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v6
-      - uses: dorny/paths-filter@v3 # https://github.com/actions/runner/pull/2477
+      - uses: dorny/paths-filter@v4 # https://github.com/actions/runner/pull/2477
         id: filter
         with:
           base: master
