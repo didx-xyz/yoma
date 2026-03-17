@@ -233,7 +233,7 @@ const Home: NextPageWithLayout<{
 
                       <div className="flex flex-col text-left leading-tight">
                         <p className="text-center text-2xl font-bold text-black">
-                          {`${metrics?.userCountDisplay}+`}
+                          {`${metrics?.userCountDisplay}`}
                         </p>
                         <span className="text-sm font-bold text-black">
                           people registered
