@@ -78,6 +78,34 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
       .join(", ");
   }, [program?.countries]);
 
+  const formatCount = (value: number | null | undefined, fallback = "0") => {
+    if (value === null || value === undefined) return fallback;
+    return value.toLocaleString("en-US");
+  };
+
+  const renderZltoAmount = (
+    value: number | null | undefined,
+    fallback = "N/A",
+    valueClassName = "font-semibold",
+  ) => {
+    if (value === null || value === undefined) {
+      return fallback;
+    }
+
+    return (
+      <div className="flex items-center gap-1">
+        <Image
+          src={iconZlto}
+          alt="Zlto"
+          width={16}
+          height={16}
+          className="h-auto"
+        />
+        <span className={valueClassName}>{formatCount(value)}</span>
+      </div>
+    );
+  };
+
   // Ensure we always have a data map that includes the opportunity objects already
   // embedded on the program pathway tasks (these carry isCompletable/nonCompletableReason).
   const hydratedOpportunityDataMap = useMemo(() => {
@@ -289,151 +317,212 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
           </div>
         </section>
       )}
-      {/* Referees */}
+      {/* Completion & Rewards */}
       {filterOptions?.includes(ProgramInfoFilterOptions.COMPLETION_REWARDS) && (
         <section>
-          <h6 className="mb-2 text-sm font-semibold">Referees</h6>
+          <h6 className="mb-2 text-sm font-semibold">Completion & Rewards</h6>
 
-          <div className="overflow-x-auto">
-            <div className="grid grid-cols-1 overflow-hidden rounded-lg border border-gray-200 md:grid-cols-2">
-              <div className="flex">
-                <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
-                  Completion Window
-                </div>
-                <div className="flex-1 border border-gray-200 px-4 py-2 text-xs hover:bg-gray-100">
-                  {program?.completionWindowInDays
-                    ? `${program.completionWindowInDays} days`
-                    : "N/A"}
-                </div>
-              </div>
+          <div className="space-y-4">
+            <div>
+              <h6 className="mb-2 text-sm font-semibold text-gray-700">
+                Ambassadors
+              </h6>
 
-              <div className="flex">
-                <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
-                  Limit
-                </div>
-                <div className="flex-1 border border-gray-200 px-4 py-2 text-xs hover:bg-gray-100">
-                  {program?.completionLimit ?? "No limit"}
-                </div>
-              </div>
-
-              <div className="flex">
-                <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
-                  Completed
-                </div>
-                <div className="flex-1 border border-gray-200 px-4 py-2 text-xs hover:bg-gray-100">
-                  {program?.completionTotal ?? 0}
-                </div>
-              </div>
-
-              {program?.completionBalance !== null &&
-                program?.completionBalance !== undefined && (
-                  <div className="flex">
-                    <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
-                      Left
+              <div className="overflow-x-auto">
+                <div className="overflow-hidden rounded-lg border border-gray-200">
+                  <div className="border-b border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
+                    Max Ambassadors
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3">
+                    <div className="border-b border-gray-200 px-4 py-3 md:border-r md:border-b-0">
+                      <div className="text-xs font-medium text-gray-500">
+                        Cap
+                      </div>
+                      <div className="text-sm">
+                        {program?.referrerLimit ?? "No limit"}
+                      </div>
                     </div>
-                    <div className="flex-1 border border-gray-200 px-4 py-2 text-xs hover:bg-gray-100">
-                      {program.completionBalance.toLocaleString("en-US")}
+                    <div className="border-b border-gray-200 px-4 py-3 md:border-r md:border-b-0">
+                      <div className="text-xs font-medium text-gray-500">
+                        Active
+                      </div>
+                      <div className="text-sm">
+                        {formatCount(program?.referrerTotal)}
+                      </div>
+                    </div>
+                    <div className="px-4 py-3">
+                      <div className="text-xs font-medium text-gray-500">
+                        Remaining
+                      </div>
+                      <div className="text-sm">
+                        {program?.referrerLimit !== null &&
+                        program?.referrerLimit !== undefined
+                          ? formatCount(
+                              program.referrerLimit -
+                                (program.referrerTotal ?? 0),
+                            )
+                          : "No limit"}
+                      </div>
                     </div>
                   </div>
-                )}
-
-              <div className="flex">
-                <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
-                  ZLTO Reward
-                </div>
-                <div className="flex-1 border border-gray-200 px-4 py-2 text-xs hover:bg-gray-100">
-                  {program?.zltoRewardReferee ? (
-                    <div className="flex items-center gap-1">
-                      <Image
-                        src={iconZlto}
-                        alt="Zlto"
-                        width={16}
-                        height={16}
-                        className="h-auto"
-                      />
-                      <span className="font-semibold">
-                        {program.zltoRewardReferee}
-                      </span>
-                    </div>
-                  ) : (
-                    "N/A"
-                  )}
                 </div>
               </div>
             </div>
-          </div>
-        </section>
-      )}
 
-      {/* Referrers */}
-      {filterOptions?.includes(ProgramInfoFilterOptions.COMPLETION_REWARDS) && (
-        <section>
-          <h6 className="mb-2 text-sm font-semibold">Referrers</h6>
+            <div>
+              <h6 className="mb-2 text-sm font-semibold text-gray-700">
+                Referees (Completions)
+              </h6>
 
-          <div className="overflow-x-auto">
-            <div className="grid grid-cols-1 overflow-hidden rounded-lg border border-gray-200 md:grid-cols-2">
-              <div className="flex">
-                <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
-                  Per-Referrer Cap
-                </div>
-                <div className="flex-1 border border-gray-200 px-4 py-2 text-xs hover:bg-gray-100">
-                  {program?.completionLimitReferee ?? "No limit"}
-                </div>
-              </div>
-
-              <div className="flex">
-                <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
-                  Limit
-                </div>
-                <div className="flex-1 border border-gray-200 px-4 py-2 text-xs hover:bg-gray-100">
-                  {program?.referrerLimit ?? "No limit"}
-                </div>
-              </div>
-
-              <div className="flex">
-                <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
-                  Total
-                </div>
-                <div className="flex-1 border border-gray-200 px-4 py-2 text-xs hover:bg-gray-100">
-                  {program?.referrerTotal ?? 0}
-                </div>
-              </div>
-
-              {program?.referrerLimit !== null &&
-                program?.referrerLimit !== undefined && (
+              <div className="space-y-3 overflow-x-auto">
+                <div className="overflow-hidden rounded-lg border border-gray-200">
                   <div className="flex">
-                    <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
-                      Left
+                    <div className="w-52 border-r border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
+                      Completion Window (Days)
                     </div>
-                    <div className="flex-1 border border-gray-200 px-4 py-2 text-xs hover:bg-gray-100">
-                      {(
-                        program.referrerLimit - (program.referrerTotal ?? 0)
-                      ).toLocaleString("en-US")}
+                    <div className="flex-1 px-4 py-2 text-xs hover:bg-gray-100">
+                      {program?.completionWindowInDays
+                        ? `${program.completionWindowInDays} days`
+                        : "N/A"}
                     </div>
                   </div>
-                )}
-
-              <div className="flex">
-                <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
-                  ZLTO Reward
                 </div>
-                <div className="flex-1 border border-gray-200 px-4 py-2 text-xs hover:bg-gray-100">
-                  {program?.zltoRewardReferrer ? (
-                    <div className="flex items-center gap-1">
-                      <Image
-                        src={iconZlto}
-                        alt="Zlto"
-                        width={16}
-                        height={16}
-                        className="h-auto"
-                      />
-                      <span className="font-semibold">
-                        {program.zltoRewardReferrer}
-                      </span>
+
+                <div className="overflow-hidden rounded-lg border border-gray-200">
+                  <div className="border-b border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
+                    Per-Ambassador Completion Cap
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3">
+                    <div className="border-b border-gray-200 px-4 py-3 md:border-r md:border-b-0">
+                      <div className="text-xs font-medium text-gray-500">
+                        Cap
+                      </div>
+                      <div className="text-sm">
+                        {program?.completionLimitReferee ?? "No limit"}
+                      </div>
                     </div>
-                  ) : (
-                    "N/A"
-                  )}
+                    <div className="border-b border-gray-200 px-4 py-3 md:border-r md:border-b-0">
+                      <div className="text-xs font-medium text-gray-500">
+                        Completed
+                      </div>
+                      <div className="text-sm">
+                        {formatCount(program?.completionTotal)}
+                      </div>
+                    </div>
+                    <div className="px-4 py-3">
+                      <div className="text-xs font-medium text-gray-500">
+                        Remaining
+                      </div>
+                      <div className="text-sm">
+                        {program?.completionLimitReferee !== null &&
+                        program?.completionLimitReferee !== undefined
+                          ? formatCount(
+                              program.completionLimitReferee -
+                                (program?.completionTotal ?? 0),
+                            )
+                          : "No limit"}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="overflow-hidden rounded-lg border border-gray-200">
+                  <div className="border-b border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
+                    Per-Program Completion Cap
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3">
+                    <div className="border-b border-gray-200 px-4 py-3 md:border-r md:border-b-0">
+                      <div className="text-xs font-medium text-gray-500">
+                        Cap
+                      </div>
+                      <div className="text-sm">
+                        {program?.completionLimit ?? "No limit"}
+                      </div>
+                    </div>
+                    <div className="border-b border-gray-200 px-4 py-3 md:border-r md:border-b-0">
+                      <div className="text-xs font-medium text-gray-500">
+                        Completed
+                      </div>
+                      <div className="text-sm">
+                        {formatCount(program?.completionTotal)}
+                      </div>
+                    </div>
+                    <div className="px-4 py-3">
+                      <div className="text-xs font-medium text-gray-500">
+                        Remaining
+                      </div>
+                      <div className="text-sm">
+                        {program?.completionBalance !== null &&
+                        program?.completionBalance !== undefined
+                          ? formatCount(program.completionBalance)
+                          : "No limit"}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <h6 className="mb-2 text-sm font-semibold text-gray-700">
+                ZLTO Rewards
+              </h6>
+
+              <div className="space-y-3 overflow-x-auto">
+                <div className="grid grid-cols-1 overflow-hidden rounded-lg border border-gray-200 md:grid-cols-2">
+                  <div className="flex">
+                    <div className="w-52 border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
+                      Ambassador Reward
+                    </div>
+                    <div className="flex-1 border border-gray-200 px-4 py-2 text-xs hover:bg-gray-100">
+                      {renderZltoAmount(program?.zltoRewardReferrer)}
+                    </div>
+                  </div>
+
+                  <div className="flex">
+                    <div className="w-52 border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
+                      Referee Reward
+                    </div>
+                    <div className="flex-1 border border-gray-200 px-4 py-2 text-xs hover:bg-gray-100">
+                      {renderZltoAmount(program?.zltoRewardReferee)}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="overflow-hidden rounded-lg border border-gray-200">
+                  <div className="border-b border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
+                    Pool
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3">
+                    <div className="border-b border-gray-200 px-4 py-3 md:border-r md:border-b-0">
+                      <div className="text-xs font-medium text-gray-500">
+                        Total
+                      </div>
+                      <div className="text-sm">
+                        {renderZltoAmount(program?.zltoRewardPool)}
+                      </div>
+                    </div>
+                    <div className="border-b border-gray-200 px-4 py-3 md:border-r md:border-b-0">
+                      <div className="text-xs font-medium text-gray-500">
+                        Awarded
+                      </div>
+                      <div className="text-sm">
+                        {renderZltoAmount(program?.zltoRewardCumulative, "0")}
+                      </div>
+                    </div>
+                    <div className="px-4 py-3">
+                      <div className="text-xs font-medium text-gray-500">
+                        Remaining
+                      </div>
+                      <div className="text-sm">
+                        {renderZltoAmount(
+                          program?.zltoRewardBalance,
+                          "N/A",
+                          "font-semibold text-blue-600",
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -441,90 +530,6 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
         </section>
       )}
 
-      {/* ZLTO Reward Pool */}
-      {filterOptions?.includes(ProgramInfoFilterOptions.ZLTO_REWARDS) && (
-        <section>
-          <h6 className="mb-2 text-sm font-semibold">ZLTO Reward Pool</h6>
-
-          <div className="overflow-x-auto">
-            <div className="grid grid-cols-1 overflow-hidden rounded-lg border border-gray-200 md:grid-cols-2">
-              <div className="flex">
-                <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
-                  Pool
-                </div>
-                <div className="flex-1 border border-gray-200 px-4 py-2 text-xs hover:bg-gray-100">
-                  {program?.zltoRewardPool ? (
-                    <div className="flex items-center gap-1">
-                      <Image
-                        src={iconZlto}
-                        alt="Zlto"
-                        width={16}
-                        height={16}
-                        className="h-auto"
-                      />
-                      <span className="font-semibold">
-                        {program.zltoRewardPool}
-                      </span>
-                    </div>
-                  ) : (
-                    "N/A"
-                  )}
-                </div>
-              </div>
-
-              <div className="flex">
-                <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
-                  Used
-                </div>
-                <div className="flex-1 border border-gray-200 px-4 py-2 text-xs hover:bg-gray-100">
-                  {program?.zltoRewardCumulative !== null &&
-                  program?.zltoRewardCumulative !== undefined ? (
-                    <div className="flex items-center gap-1">
-                      <Image
-                        src={iconZlto}
-                        alt="Zlto"
-                        width={16}
-                        height={16}
-                        className="h-auto"
-                      />
-                      <span className="font-semibold">
-                        {program.zltoRewardCumulative}
-                      </span>
-                    </div>
-                  ) : (
-                    "0"
-                  )}
-                </div>
-              </div>
-
-              <div className="flex">
-                <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
-                  Left
-                </div>
-                <div className="flex-1 border border-gray-200 px-4 py-2 text-xs hover:bg-gray-100">
-                  {program?.zltoRewardBalance !== null &&
-                  program?.zltoRewardBalance !== undefined ? (
-                    <div className="flex items-center gap-1">
-                      <Image
-                        src={iconZlto}
-                        alt="Zlto"
-                        width={16}
-                        height={16}
-                        className="h-auto"
-                      />
-                      <span className="font-semibold text-blue-600">
-                        {program.zltoRewardBalance}
-                      </span>
-                    </div>
-                  ) : (
-                    "N/A"
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-      )}
       {/* Features */}
       {filterOptions?.includes(ProgramInfoFilterOptions.FEATURES) && (
         <section>
@@ -788,7 +793,7 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
 
           <div className="overflow-x-auto">
             {pathwayInfo ? (
-              <ReferralTasksCard model={pathwayInfo} />
+              <ReferralTasksCard model={pathwayInfo} preview={true} />
             ) : (
               <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
                 <p className="text-xs text-gray-700">No pathway configured</p>

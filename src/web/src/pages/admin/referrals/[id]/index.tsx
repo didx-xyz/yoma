@@ -165,7 +165,7 @@ const schemaStep3 = z
       .pipe(
         z.coerce
           .number()
-          .min(1, "Per-referrer completion limit must be greater than 0"),
+          .min(1, "Per-ambassador completion cap must be greater than 0"),
       )
       .nullable()
       .catch(null)
@@ -182,7 +182,7 @@ const schemaStep3 = z
       .transform((val) => (val === 0 ? null : val)),
     referrerLimit: z
       .union([z.string(), z.number()])
-      .pipe(z.coerce.number().min(1, "Referrer limit must be greater than 0"))
+      .pipe(z.coerce.number().min(1, "Max ambassadors must be greater than 0"))
       .nullable()
       .catch(null)
       .transform((val) => (val === 0 ? null : val)),
@@ -226,21 +226,21 @@ const schemaStep3 = z
       if (data.zltoRewardReferrer < 1) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: "Referrer reward must be greater than 0",
+          message: "Ambassador reward must be greater than 0",
           path: ["zltoRewardReferrer"],
         });
       }
       if (data.zltoRewardReferrer > 2000) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: "Referrer reward may not exceed 2000",
+          message: "Ambassador reward may not exceed 2000",
           path: ["zltoRewardReferrer"],
         });
       }
       if (data.zltoRewardReferrer % 1 !== 0) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: "Referrer reward must be a whole number",
+          message: "Ambassador reward must be a whole number",
           path: ["zltoRewardReferrer"],
         });
       }
@@ -326,13 +326,13 @@ const schemaStep3 = z
     },
     {
       message:
-        "Reward pool must be at least the total of the referrer + referee rewards",
+        "Reward pool must be at least the total of the ambassador + referee rewards",
       path: ["zltoRewardPool"],
     },
   )
   .refine(
     (data) => {
-      // When rewards are set, add at least one completion cap (per referrer or program-wide)
+      // When rewards are set, add at least one completion cap (per ambassador or program-wide)
       const rewardsConfigured =
         (data.zltoRewardReferrer ?? 0) + (data.zltoRewardReferee ?? 0) > 0;
       if (!rewardsConfigured) return true;
@@ -343,7 +343,7 @@ const schemaStep3 = z
     },
     {
       message:
-        "When rewards are set, add at least one completion cap (per referrer or program-wide)",
+        "When rewards are set, add at least one completion cap (per ambassador or program-wide)",
       path: ["completionLimitReferee"],
     },
   );
@@ -399,7 +399,7 @@ const schemaStep4 = z
   )
   .refine(
     (data) => {
-      // If multiple links are allowed, require POP or a per-referrer cap or Pathway
+      // If multiple links are allowed, require POP or a per-ambassador cap or Pathway
       if (!data.multipleLinksAllowed) return true;
       const hasPerReferrerCap = (data.completionLimitReferee ?? 0) > 0;
       return (
@@ -410,7 +410,7 @@ const schemaStep4 = z
     },
     {
       message:
-        "When multiple links are allowed, enable Proof of Personhood, set a per-referrer cap, or require a Pathway",
+        "When multiple links are allowed, enable Proof of Personhood, set a per-ambassador cap, or require a Pathway",
       path: ["multipleLinksAllowed"],
     },
   );
@@ -2314,8 +2314,8 @@ const ReferralProgramForm: NextPageWithLayout<{
 
                     <FormMessage messageType={FormMessageType.Info}>
                       <strong>Note:</strong> At least one of Completion Window,
-                      Referrer Cap, Program Cap, or ZLTO Rewards must be
-                      configured.
+                      Per-Ambassador Completion Cap, Per-Program Completion Cap,
+                      or ZLTO Rewards must be configured.
                     </FormMessage>
                   </div>
 
@@ -2326,9 +2326,36 @@ const ReferralProgramForm: NextPageWithLayout<{
                       onSubmitStep(4, data),
                     )}
                   >
-                    {/* Completion Settings */}
                     <div className="flex flex-col gap-4">
-                      <h6 className="font-semibold">Completion Settings</h6>
+                      <h6 className="font-semibold">Ambassadors</h6>
+
+                      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                        <FormField
+                          label="Max Ambassadors"
+                          subLabel="Max number of distinct ambassadors allowed in this program"
+                          showWarningIcon={
+                            !!formStateStep3.errors.referrerLimit?.message
+                          }
+                          showError={
+                            !!formStateStep3.touchedFields.referrerLimit ||
+                            formStateStep3.isSubmitted
+                          }
+                          error={formStateStep3.errors.referrerLimit?.message}
+                        >
+                          <FormInput
+                            inputProps={{
+                              type: "number",
+                              min: "0",
+                              placeholder: "e.g. 1000",
+                              ...registerStep3("referrerLimit"),
+                            }}
+                          />
+                        </FormField>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col gap-4">
+                      <h6 className="font-semibold">Referees (Completions)</h6>
 
                       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                         <FormField
@@ -2359,8 +2386,8 @@ const ReferralProgramForm: NextPageWithLayout<{
                         </FormField>
 
                         <FormField
-                          label="Referrer Cap"
-                          subLabel="Max completions per referrer; blocks new claims once reached"
+                          label="Per-Ambassador Completion Cap"
+                          subLabel="Max completions per ambassador; blocks new claims once reached"
                           showWarningIcon={
                             !!formStateStep3.errors.completionLimitReferee
                               ?.message
@@ -2386,8 +2413,8 @@ const ReferralProgramForm: NextPageWithLayout<{
                         </FormField>
 
                         <FormField
-                          label="Program Cap"
-                          subLabel="Max total completions across all referrers; blocks new claims once reached"
+                          label="Per-Program Completion Cap"
+                          subLabel="Max total completions across the program; blocks new claims once reached"
                           showWarningIcon={
                             !!formStateStep3.errors.completionLimit?.message
                           }
@@ -2406,28 +2433,6 @@ const ReferralProgramForm: NextPageWithLayout<{
                             }}
                           />
                         </FormField>
-
-                        <FormField
-                          label="Referrer Limit"
-                          subLabel="Max number of distinct referrers allowed in this program"
-                          showWarningIcon={
-                            !!formStateStep3.errors.referrerLimit?.message
-                          }
-                          showError={
-                            !!formStateStep3.touchedFields.referrerLimit ||
-                            formStateStep3.isSubmitted
-                          }
-                          error={formStateStep3.errors.referrerLimit?.message}
-                        >
-                          <FormInput
-                            inputProps={{
-                              type: "number",
-                              min: "0",
-                              placeholder: "e.g. 1000",
-                              ...registerStep3("referrerLimit"),
-                            }}
-                          />
-                        </FormField>
                       </div>
                     </div>
 
@@ -2436,6 +2441,31 @@ const ReferralProgramForm: NextPageWithLayout<{
                       <h6 className="font-semibold">ZLTO Rewards</h6>
 
                       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                        <FormField
+                          label="Ambassador Reward"
+                          subLabel="ZLTO awarded to the ambassador on completion"
+                          showWarningIcon={
+                            !!formStateStep3.errors.zltoRewardReferrer?.message
+                          }
+                          showError={
+                            !!formStateStep3.touchedFields.zltoRewardReferrer ||
+                            formStateStep3.isSubmitted
+                          }
+                          error={
+                            formStateStep3.errors.zltoRewardReferrer?.message
+                          }
+                        >
+                          <FormInput
+                            inputProps={{
+                              type: "number",
+                              min: "0",
+                              step: "0.01",
+                              placeholder: "e.g. 5.00",
+                              ...registerStep3("zltoRewardReferrer"),
+                            }}
+                          />
+                        </FormField>
+
                         <FormField
                           label="Referee Reward"
                           subLabel="ZLTO awarded to the referee on completion"
@@ -2462,32 +2492,7 @@ const ReferralProgramForm: NextPageWithLayout<{
                         </FormField>
 
                         <FormField
-                          label="Referrer Reward"
-                          subLabel="ZLTO awarded to the referrer on completion"
-                          showWarningIcon={
-                            !!formStateStep3.errors.zltoRewardReferrer?.message
-                          }
-                          showError={
-                            !!formStateStep3.touchedFields.zltoRewardReferrer ||
-                            formStateStep3.isSubmitted
-                          }
-                          error={
-                            formStateStep3.errors.zltoRewardReferrer?.message
-                          }
-                        >
-                          <FormInput
-                            inputProps={{
-                              type: "number",
-                              min: "0",
-                              step: "0.01",
-                              placeholder: "e.g. 5.00",
-                              ...registerStep3("zltoRewardReferrer"),
-                            }}
-                          />
-                        </FormField>
-
-                        <FormField
-                          label="ZLTO Pool"
+                          label="Pool"
                           subLabel="Total ZLTO budget for this program"
                           showWarningIcon={
                             !!formStateStep3.errors.zltoRewardPool?.message
@@ -2528,7 +2533,7 @@ const ReferralProgramForm: NextPageWithLayout<{
                     )}
                     {formStateStep3.errors.completionLimitReferee &&
                       formStateStep3.errors.completionLimitReferee.message !==
-                        "Per-referrer completion limit must be greater than 0" && (
+                        "Per-ambassador completion cap must be greater than 0" && (
                         <div className="mt-4">
                           <FormMessage messageType={FormMessageType.Error}>
                             {
