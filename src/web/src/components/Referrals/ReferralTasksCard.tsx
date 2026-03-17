@@ -151,7 +151,7 @@ export const ReferralTasksCard = ({
                     </p>
                   </div>
 
-                  {!step.completed && (
+                  {!preview && !step.completed && (
                     <div className="bg-base-200 mt-3 flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm">
                       <IoInformationCircleOutline className="text-green h-5 w-5 shrink-0" />
                       <span className="text-gray-dark">
@@ -198,51 +198,53 @@ export const ReferralTasksCard = ({
                         </div>
                       </div>
 
-                      <div className="flex items-center justify-center">
-                        {task.completed ? (
-                          <div className="text-green inline-flex w-[160px] items-center justify-start gap-2">
-                            <span className="bg-green/10 text-green inline-flex h-9 w-9 items-center justify-center rounded-full">
-                              <IoIosCheckmarkCircle className="h-6 w-6" />
-                            </span>
-                            <span className="text-xs leading-tight font-semibold">
-                              {task.completedAt ? (
-                                <>
-                                  <span className="block">Completed on</span>
-                                  <span className="block">
-                                    {new Date(
-                                      task.completedAt,
-                                    ).toLocaleDateString("en-US", {
-                                      month: "short",
-                                      day: "numeric",
-                                      year: "numeric",
-                                    })}
-                                  </span>
-                                </>
-                              ) : (
-                                "Completed"
-                              )}
-                            </span>
-                          </div>
-                        ) : task.opportunityId ? (
-                          <Link
-                            href={`/opportunities/${task.opportunityId}`}
-                            target={preview ? "_blank" : undefined}
-                            rel={preview ? "noopener noreferrer" : undefined}
-                            className="btn btn-sm bg-green hover:bg-green-dark h-9 w-[160px] rounded-full border-0 px-5 text-white normal-case"
-                          >
-                            <IoOpenOutline className="h-4 w-4" />
-                            Open
-                          </Link>
-                        ) : (
-                          <button
-                            type="button"
-                            disabled={true}
-                            className="btn btn-sm h-9 w-[160px] rounded-full border-0 px-5 text-white normal-case"
-                          >
-                            Open
-                          </button>
-                        )}
-                      </div>
+                      {!preview && (
+                        <div className="flex items-center justify-center">
+                          {task.completed ? (
+                            <div className="text-green inline-flex w-[160px] items-center justify-start gap-2">
+                              <span className="bg-green/10 text-green inline-flex h-9 w-9 items-center justify-center rounded-full">
+                                <IoIosCheckmarkCircle className="h-6 w-6" />
+                              </span>
+                              <span className="text-xs leading-tight font-semibold">
+                                {task.completedAt ? (
+                                  <>
+                                    <span className="block">Completed on</span>
+                                    <span className="block">
+                                      {new Date(
+                                        task.completedAt,
+                                      ).toLocaleDateString("en-US", {
+                                        month: "short",
+                                        day: "numeric",
+                                        year: "numeric",
+                                      })}
+                                    </span>
+                                  </>
+                                ) : (
+                                  "Completed"
+                                )}
+                              </span>
+                            </div>
+                          ) : task.opportunityId ? (
+                            <Link
+                              href={`/opportunities/${task.opportunityId}`}
+                              target={preview ? "_blank" : undefined}
+                              rel={preview ? "noopener noreferrer" : undefined}
+                              className="btn btn-sm bg-green hover:bg-green-dark h-9 w-[160px] rounded-full border-0 px-5 text-white normal-case"
+                            >
+                              <IoOpenOutline className="h-4 w-4" />
+                              Open
+                            </Link>
+                          ) : (
+                            <button
+                              type="button"
+                              disabled={true}
+                              className="btn btn-sm h-9 w-[160px] rounded-full border-0 px-5 text-white normal-case"
+                            >
+                              Open
+                            </button>
+                          )}
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>

@@ -97,7 +97,7 @@ export const ReferralProgramDetailsContent: React.FC<
         left={
           <>
             <ReferralInfoCard>
-              <div className="-m-2 -mb-4 md:-mb-6">
+              <div className="-mx-3 -my-5">
                 <Editor
                   value={
                     displayProgram.description ?? displayProgram.summary ?? ""

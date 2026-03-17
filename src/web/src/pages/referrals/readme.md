@@ -1,6 +1,6 @@
-## Referral Pages: Current UAT Flow
+## Referral Pages
 
-This document reflects the current implemented flow for the new referral pages and admin panel. It is intended for the testing department as a UAT reference.
+This document describes the features of the Yoma Ambassador referral program pages, including both end-user and admin experiences. Each section outlines the purpose of the page, its current behavior, and notable features to test for quality assurance.
 
 ---
 
@@ -22,13 +22,6 @@ Current behavior:
 - "Create link" is available via modal where applicable.
 - Referrer stats are visible from the landing page.
 - "My referrals" and "My programmes" are rendered as card/carousel experiences.
-
-Main data sources:
-- `searchReferralProgramsInfo`
-- `searchReferralLinks`
-- `searchReferralLinkUsagesAsReferrer`
-- `searchReferralLinkUsagesAsReferee`
-- `getCountries`
 
 Notable features to test:
 - Sign in as an anonymous user — verify welcome/intro experience with sign-in CTA is shown.
@@ -271,10 +264,3 @@ Notable features to test:
 - Verify Referee and Referrer information sections display name, email, and phone.
 - Click "View Program" — verify navigation to the correct programme info page.
 - Click "Back to Usages" — verify return to the usage list, respecting the `returnUrl` if present.
-
----
-
-## 12. Shared Architecture Notes
-- React Query is used for hydration, caching, and refetch behavior.
-- Error states are handled across 401/404/500 style responses.
-- Back navigation and breadcrumb labels are standardized.

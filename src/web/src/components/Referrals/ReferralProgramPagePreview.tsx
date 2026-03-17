@@ -130,8 +130,6 @@ export const ReferralProgramPagePreview: React.FC<
                   <> Complete the below pathway to complete this programme.</>
                 )}
               </p>
-
-              <p>{displayProgram.summary}</p>
             </ReferralInfoCard>
 
             {showProofOfPersonhoodAction && proofOfPersonhoodAction}

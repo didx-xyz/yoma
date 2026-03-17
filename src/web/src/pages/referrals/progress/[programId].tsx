@@ -8,7 +8,7 @@ import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useEffect, useMemo, type ReactElement } from "react";
-import { IoOpenOutline, IoWarningOutline } from "react-icons/io5";
+import { IoOpenOutline } from "react-icons/io5";
 import { toast } from "react-toastify";
 import {
   ProgramStatus,
@@ -23,8 +23,6 @@ import MainLayout from "~/components/Layout/Main";
 import NoRowsMessage from "~/components/NoRowsMessage";
 import { ReferralShell } from "~/components/Referrals/ReferralShell";
 import { ReferralProgramPagePreview } from "~/components/Referrals/ReferralProgramPagePreview";
-import { AlternativeActions } from "~/components/Referrals/AlternativeActions";
-import { BecomeReferrerCTA } from "~/components/Referrals/BecomeReferrerCTA";
 import { RefereeWelcomeModal } from "~/components/Referrals/RefereeWelcomeModal";
 import { LoadingInline } from "~/components/Status/LoadingInline";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
@@ -33,6 +31,7 @@ import {
   useReferralLinkUsageByProgramIdQuery,
   useReferralProgramInfoQuery,
 } from "~/hooks/useReferralProgramMutations";
+import { parseApiError } from "~/lib/apiErrorUtils";
 import { config } from "~/lib/react-query-config";
 import { THEME_WHITE } from "~/lib/constants";
 import { handleUserSignOut } from "~/lib/authUtils";
@@ -280,6 +279,32 @@ const RefereeDashboard: NextPageWithLayout<{
   const hasPageError =
     Boolean(serverError) || Boolean(usageError) || Boolean(programError);
 
+  const pageErrorMessage = (() => {
+    if (usageError) {
+      const { errors, message } = parseApiError(usageError);
+      return (
+        errors
+          .map((e) => e.message)
+          .filter(Boolean)
+          .join(" · ") ||
+        message ||
+        null
+      );
+    }
+    if (programError) {
+      const { errors, message } = parseApiError(programError);
+      return (
+        errors
+          .map((e) => e.message)
+          .filter(Boolean)
+          .join(" · ") ||
+        message ||
+        null
+      );
+    }
+    return null;
+  })();
+
   const welcomeUserName = usage?.userDisplayName?.trim() || "there";
 
   return (
@@ -298,49 +323,25 @@ const RefereeDashboard: NextPageWithLayout<{
         isLoading={!hasPageError && (usageLoading || programLoading)}
       >
         {hasPageError ? (
-          <div className="flex min-h-[50vh] items-center justify-center px-2 pb-8">
-            <div className="flex w-full max-w-2xl flex-col items-center gap-4 rounded-xl bg-white p-6 text-center shadow md:p-10">
-              <h2 className="text-2xl font-bold text-black">Oops!</h2>
-              <p className="text-gray-dark">
-                We&apos;re experiencing some technical difficulties at the
-                moment. Our team has been notified and is working on it.
-              </p>
-              <p className="text-gray-dark">
-                Please check back in a few moments.
-              </p>
-              <button
-                type="button"
-                className="btn btn-success mt-2 rounded-3xl px-8 text-white"
-                onClick={() => router.back()}
-              >
-                Take me back
-              </button>
-            </div>
+          <div className="mx-auto flex w-full max-w-2xl flex-col items-center gap-4 rounded-xl bg-white p-6 text-center shadow">
+            <NoRowsMessage
+              icon={"⚠️"}
+              title="Something went wrong"
+              description={
+                pageErrorMessage ??
+                "We're experiencing some technical difficulties. Please try again later."
+              }
+              className="w-full !bg-transparent"
+            />
           </div>
         ) : !usage || !program ? (
-          <div className="flex flex-col gap-8">
-            <div className="flex items-center justify-center">
-              <NoRowsMessage
-                title="Referral Not Found"
-                subTitle="You don't have an active referral for this program."
-                description={`
-                    <div class="text-center mt-10">
-                      <h3 class="text-xs md:text-sm font-bold text-gray-900 mb-2">What might have happened?</h3>
-                      <ul class="text-left text-xs md:text-sm ml-6 list-disc space-y-2 text-gray-700">
-                        <li>You may not have claimed a referral link for this program yet</li>
-                        <li>Your referral may have expired or been completed</li>
-                        <li>The program may no longer be active</li>
-                        <li>The program ID in the URL might be incorrect</li>
-                      </ul>
-                    </div>
-                  `}
-                icon={<IoWarningOutline className="h-6 w-6 text-red-500" />}
-                className="max-w-3xl !bg-transparent"
-              />
-            </div>
-
-            <BecomeReferrerCTA />
-            <AlternativeActions />
+          <div className="mx-auto flex w-full max-w-2xl flex-col items-center gap-4 rounded-xl bg-white p-6 text-center shadow">
+            <NoRowsMessage
+              icon={"⚠️"}
+              title="Referral Not Found"
+              description="You don't have an active referral for this program."
+              className="w-full !bg-transparent"
+            />
           </div>
         ) : (
           <ReferralProgramPagePreview
