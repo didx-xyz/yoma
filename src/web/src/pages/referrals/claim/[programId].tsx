@@ -14,6 +14,7 @@ import {
 import { getUserProfile } from "~/api/services/user";
 import MainLayout from "~/components/Layout/Main";
 import NoRowsMessage from "~/components/NoRowsMessage";
+
 import { AlternativeActions } from "~/components/Referrals/AlternativeActions";
 import { BecomeReferrerCTA } from "~/components/Referrals/BecomeReferrerCTA";
 import { ReferralInfoCard } from "~/components/Referrals/ReferralInfoCard";
@@ -29,7 +30,7 @@ import {
   useReferralProgramInfoByLinkQuery,
 } from "~/hooks/useReferralProgramMutations";
 import analytics from "~/lib/analytics";
-import { escapeHtml, parseApiError } from "~/lib/apiErrorUtils";
+import { parseApiError } from "~/lib/apiErrorUtils";
 import { handleUserSignIn } from "~/lib/authUtils";
 import { THEME_WHITE } from "~/lib/constants";
 import { config } from "~/lib/react-query-config";
@@ -38,22 +39,7 @@ import { cleanTextForMetaTag } from "~/lib/utils";
 import { getProfileCompletionStep } from "~/lib/utils/profile";
 import { authOptions } from "~/server/auth";
 import { type NextPageWithLayout } from "../../_app";
-
-const getErrorSearchText = (error: any): string => {
-  const data = error?.response?.data;
-
-  if (typeof data === "string") return data;
-
-  if (data && typeof data === "object") {
-    try {
-      return JSON.stringify(data);
-    } catch {
-      return "";
-    }
-  }
-
-  return "";
-};
+import { Editor } from "~/components/RichText/Editor";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
@@ -295,72 +281,52 @@ const ReferralClaimPage: NextPageWithLayout<{
     performClaim,
   ]);
 
-  // Loading state
-  if (programLoading || claimingAfterProfile) {
-    return (
-      <div className="mt-40 justify-center">
-        <LoadingInline
-          classNameSpinner="h-8 w-8 border-t-2 border-b-2 border-orange md:h-16 md:w-16 md:border-t-4 md:border-b-4"
-          classNameLabel={"text-sm font-semibold md:text-base"}
-          label={
-            claimingAfterProfile
-              ? "Claiming your referral..."
-              : "Please wait..."
-          }
-        />
-      </div>
-    );
-  }
+  const isPageLoading = programLoading || claimingAfterProfile;
+  const hasPageError = !!(serverError || programError || !program);
 
-  // Error states
-  if (serverError || programError || !program) {
-    const referralUnavailableDescription = `
-      <div class="text-center mt-8">
-        <h3 class="text-[10px] md:text-xs font-semibold text-gray-900 mb-2">What might have happened?</h3>
-        <ul class="text-left text-[10px] md:text-xs ml-6 list-disc space-y-1 text-gray-700">
-          <li>The link may have expired or reached its usage limit</li>
-          <li>The person who shared it may have cancelled it</li>
-          <li>The referral program may no longer be active</li>
-          <li>The link URL might be incorrect</li>
-        </ul>
-      </div>
-    `;
+  const pageErrorMessage = (() => {
+    if (serverError) return serverError;
+    if (programError) {
+      const { errors, message } = parseApiError(programError);
+      return (
+        errors
+          .map((e) => e.message)
+          .filter(Boolean)
+          .join(" · ") ||
+        message ||
+        null
+      );
+    }
+    return null;
+  })();
 
-    return (
-      <div className="container mx-auto mt-20 flex max-w-5xl flex-col gap-8 px-4 py-8">
-        <NoRowsMessage
-          title="Referral Link Unavailable"
-          subTitle="This referral link is invalid, expired, or has been removed."
-          description={referralUnavailableDescription}
-          icon={"⚠️"}
-          className="w-full !bg-transparent"
-        />
+  const pageErrorContent = hasPageError ? (
+    <div className="mx-auto flex w-full max-w-2xl flex-col items-center gap-4 rounded-xl bg-white p-6 text-center shadow md:p-6">
+      <NoRowsMessage
+        title="Referral Link Unavailable"
+        description={
+          pageErrorMessage ??
+          "This referral link is invalid, expired, or has been removed."
+        }
+        icon={"⚠️"}
+        className="w-full !bg-transparent"
+      />
+    </div>
+  ) : null;
 
-        <BecomeReferrerCTA />
-
-        <AlternativeActions />
-      </div>
-    );
-  }
-
-  // Claim error state - user is authenticated but claim failed
+  // Claim error state
+  let claimErrorContent: React.ReactNode = null;
   if (claimError && program) {
-    const { errors: customErrors, message: errorMessage } =
-      parseApiError(claimError);
+    const { errors, message } = parseApiError(claimError);
+    const errorMessage =
+      errors
+        .map((e) => e.message)
+        .filter(Boolean)
+        .join(" · ") ||
+      message ||
+      "Unable to claim this referral link.";
 
-    const hasCustomErrors = customErrors.length > 0;
-    const fallbackMessage =
-      "Failed to claim referral link. You may have already claimed it or are not eligible.";
-    const safeErrorMessage = errorMessage || fallbackMessage;
-    const rawErrorText = getErrorSearchText(claimError);
-
-    // Check if user already claimed this link - redirect to progress page
-    const alreadyClaimed =
-      customErrors.some((error) => /already claimed/i.test(error.message)) ||
-      /already claimed/i.test(safeErrorMessage) ||
-      /already claimed|you already claimed|still pending/i.test(rawErrorText);
-
-    if (alreadyClaimed) {
+    if (/already claimed|still pending/i.test(errorMessage)) {
       router.push(`/referrals/progress/${programId}`);
       return (
         <div className="flex min-h-screen items-center justify-center">
@@ -373,59 +339,14 @@ const ReferralClaimPage: NextPageWithLayout<{
       );
     }
 
-    const isCountryRestricted =
-      customErrors.some((error) => /country/i.test(error.message)) ||
-      /country/i.test(safeErrorMessage);
-
-    const claimErrorReasons = hasCustomErrors
-      ? customErrors.map((error) =>
-          escapeHtml(error.message || "Unknown reason"),
-        )
-      : [
-          "You&apos;ve already claimed this referral link",
-          "You don&apos;t meet the program requirements",
-          "The link has reached its maximum number of claims",
-          "The link has expired",
-          "You may have already claimed a different referral for this program",
-        ];
-
-    const claimErrorDescription = `
-      <div class="text-center mt-8">
-        <h3 class="text-[10px] md:text-xs font-semibold text-gray-900 mb-2">${
-          hasCustomErrors ? "" : "Common reasons this might happen:"
-        }</h3>
-        <ul class="text-left text-[10px] md:text-xs ml-6 list-disc space-y-1 text-gray-700">
-          ${claimErrorReasons
-            .slice(0, 6)
-            .map((reason) => `<li>${reason}</li>`)
-            .join("\n")}
-        </ul>
-      </div>
-    `;
-
-    return (
-      <div className="container mx-auto mt-18 flex max-w-3xl flex-col gap-4 px-4 py-8">
+    claimErrorContent = (
+      <div className="mx-auto flex w-full max-w-2xl flex-col items-center gap-4 rounded-xl bg-white p-6 text-center shadow md:p-6">
         <NoRowsMessage
           icon={"⚠️"}
-          title={
-            isCountryRestricted
-              ? "Referral Not Available"
-              : "Unable to Claim Referral Link"
-          }
-          subTitle={
-            !hasCustomErrors
-              ? safeErrorMessage
-              : isCountryRestricted
-                ? "This referral link can’t be claimed from your country."
-                : undefined
-          }
-          description={claimErrorDescription}
+          title="Unable to Claim Referral Link"
+          description={errorMessage}
           className="w-full !bg-transparent"
         />
-
-        <BecomeReferrerCTA />
-
-        <AlternativeActions />
       </div>
     );
   }
@@ -433,22 +354,22 @@ const ReferralClaimPage: NextPageWithLayout<{
   // Main claim page
   const rewardAmount = program?.zltoRewardReferee;
 
-  const title = rewardAmount
+  const pageTitle = rewardAmount
     ? `Join me on Yoma and earn ${rewardAmount} ZLTO!`
     : "Join me on Yoma!";
 
-  const description = rewardAmount
+  const pageDescription = rewardAmount
     ? `Join me on Yoma and earn ${rewardAmount} ZLTO! Sign up to build your digital CV and access opportunities.`
     : "Join me on Yoma! Sign up to build your digital CV and access opportunities.";
 
-  const safeTitle = cleanTextForMetaTag(title, 60);
-  const safeDescription = cleanTextForMetaTag(description, 160);
+  const safeTitle = cleanTextForMetaTag(pageTitle, 60);
+  const safeDescription = cleanTextForMetaTag(pageDescription, 160);
   const imageUrl = program?.imageURL || "";
 
   return (
     <>
       <Head>
-        <title>{`Yoma | Ambassador Referrals | ${program.name}`}</title>
+        <title>{`Yoma | Ambassador Referrals | ${program?.name ?? "Referral"}`}</title>
         <meta name="description" content={safeDescription} />
 
         {/* Open Graph */}
@@ -465,100 +386,119 @@ const ReferralClaimPage: NextPageWithLayout<{
       </Head>
 
       <ReferralShell
-        title={program.name}
+        title={program?.name ?? "Referral"}
         breadcrumbLabel="Referrals"
         //programImageUrl={program?.imageURL || undefined}
         headerBackgroundMode="color"
         headerBackgroundColorClassName="bg-orange"
         onBack={() => router.push("/referrals")}
+        isLoading={isPageLoading}
       >
-        <ReferralTopCard
-          program={program}
-          rewardsReferrer={false}
-          rewardsReferee={true}
-          cta={
-            <button
-              type="button"
-              onClick={!isAuthenticated ? handleClaim : undefined}
-              disabled={isAuthenticated || claiming}
-              className="btn btn-sm bg-green hover:bg-green-dark disabled:!bg-green h-10 rounded-full border-0 px-5 text-white normal-case disabled:!text-white disabled:opacity-100"
-            >
-              {claiming ? (
-                <LoadingInline
-                  classNameSpinner="h-4 w-4"
-                  classNameLabel="hidden"
-                />
-              ) : (
-                <IoGift className="h-4 w-4" />
-              )}
-              {!isAuthenticated
-                ? "Login to claim"
-                : needsProfileCompletion
-                  ? "Complete profile to claim"
-                  : "Claiming referral..."}
-            </button>
-          }
-        />
-
-        <ReferralMainColumns
-          left={
-            <>
-              <ReferralInfoCard>
-                <p>
-                  Welcome to Yoma! You were invited to join{" "}
-                  <strong>{program.name}</strong>.
-                  {(program.zltoRewardReferee || 0) > 0 ? (
-                    <>
-                      {" "}
-                      Complete the below pathway and get the opportunity to win{" "}
-                      <strong>{program.zltoRewardReferee}</strong> Zlto.
-                    </>
+        {pageErrorContent ? (
+          pageErrorContent
+        ) : claimErrorContent ? (
+          claimErrorContent
+        ) : program ? (
+          <>
+            <ReferralTopCard
+              program={program}
+              rewardsReferrer={false}
+              rewardsReferee={true}
+              cta={
+                <button
+                  type="button"
+                  onClick={!isAuthenticated ? handleClaim : undefined}
+                  disabled={isAuthenticated || claiming}
+                  className="btn btn-sm bg-green hover:bg-green-dark disabled:!bg-green h-10 rounded-full border-0 px-5 text-white normal-case disabled:!text-white disabled:opacity-100"
+                >
+                  {claiming ? (
+                    <LoadingInline
+                      classNameSpinner="h-4 w-4"
+                      classNameLabel="hidden"
+                    />
                   ) : (
-                    <> Complete the below pathway to complete this programme.</>
+                    <IoGift className="h-4 w-4" />
                   )}
-                </p>
+                  {!isAuthenticated
+                    ? "Login to claim"
+                    : needsProfileCompletion
+                      ? "Complete profile to claim"
+                      : "Claiming referral..."}
+                </button>
+              }
+            />
 
-                <p>{program.description}</p>
-              </ReferralInfoCard>
+            <ReferralMainColumns
+              left={
+                <>
+                  <ReferralInfoCard>
+                    <p>
+                      Welcome to Yoma! You were invited to join{" "}
+                      <strong>{program.name}</strong>.
+                      {(program.zltoRewardReferee || 0) > 0 ? (
+                        <>
+                          {" "}
+                          Complete the below pathway and get the opportunity to
+                          win <strong>{program.zltoRewardReferee}</strong> Zlto.
+                        </>
+                      ) : (
+                        <>
+                          {" "}
+                          Complete the below pathway to complete this programme.
+                        </>
+                      )}
+                    </p>
 
-              {isAuthenticated && needsProfileCompletion && (
-                <div className="rounded-xl bg-white p-4 shadow md:p-5">
-                  <ProfileCompletionWizard
-                    userProfile={userProfile || serverUserProfile || null}
-                    onComplete={handleProfileComplete}
-                    showHeader={false}
+                    <div className="-mx-3 -my-5">
+                      <Editor
+                        value={program.description ?? program.summary ?? ""}
+                        readonly={true}
+                      />
+                    </div>
+                  </ReferralInfoCard>
+
+                  {isAuthenticated && needsProfileCompletion && (
+                    <div className="rounded-xl bg-white p-4 shadow md:p-5">
+                      <ProfileCompletionWizard
+                        userProfile={userProfile || serverUserProfile || null}
+                        onComplete={handleProfileComplete}
+                        showHeader={false}
+                      />
+                    </div>
+                  )}
+
+                  {program.pathwayRequired && (
+                    <ReferralTasksCard model={program.pathway} />
+                  )}
+                </>
+              }
+              right={
+                <div className="flex flex-col gap-2 rounded-xl bg-white p-4 shadow">
+                  <ReferralStatCard
+                    icon={<IoTrophyOutline className="h-5 w-5" />}
+                    header="Reward"
+                    description={
+                      (program.zltoRewardReferee || 0) > 0
+                        ? `${program.zltoRewardReferee} Zlto`
+                        : "No reward"
+                    }
+                    className="bg-purple-dark text-white [&_.referral-stat-card-description]:text-white/90 [&_.referral-stat-card-header]:text-white [&_.referral-stat-card-icon-wrap]:bg-white/20 [&_.referral-stat-card-icon-wrap]:text-white"
+                  />
+
+                  <ReferralStatCard
+                    icon={<IoTimeOutline className="h-5 w-5" />}
+                    header="Time requirement"
+                    description={
+                      program.completionWindowInDays
+                        ? `${program.completionWindowInDays} day${program.completionWindowInDays === 1 ? "" : "s"}`
+                        : "No time limit"
+                    }
                   />
                 </div>
-              )}
-
-              <ReferralTasksCard model={program.pathway} />
-            </>
-          }
-          right={
-            <>
-              <ReferralStatCard
-                icon={<IoTrophyOutline className="h-5 w-5" />}
-                header="Reward"
-                description={
-                  (program.zltoRewardReferee || 0) > 0
-                    ? `${program.zltoRewardReferee} Zlto`
-                    : "No reward"
-                }
-                className="bg-purple-dark text-white [&_.referral-stat-card-description]:text-white/90 [&_.referral-stat-card-header]:text-white [&_.referral-stat-card-icon-wrap]:bg-white/20 [&_.referral-stat-card-icon-wrap]:text-white"
-              />
-
-              <ReferralStatCard
-                icon={<IoTimeOutline className="h-5 w-5" />}
-                header="Time requirement"
-                description={
-                  program.completionWindowInDays
-                    ? `${program.completionWindowInDays} day${program.completionWindowInDays === 1 ? "" : "s"}`
-                    : "No time limit"
-                }
-              />
-            </>
-          }
-        />
+              }
+            />
+          </>
+        ) : null}
       </ReferralShell>
     </>
   );

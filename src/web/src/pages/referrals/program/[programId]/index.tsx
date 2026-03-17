@@ -11,10 +11,12 @@ import { IoLinkOutline } from "react-icons/io5";
 import { ProgramStatus, type ProgramInfo } from "~/api/models/referrals";
 import { getReferralProgramInfoById } from "~/api/services/referrals";
 import MainLayout from "~/components/Layout/Main";
+import NoRowsMessage from "~/components/NoRowsMessage";
 import { ReferralProgramDetailsContent } from "~/components/Referrals/ReferralProgramDetailsContent";
 import { ReferralShell } from "~/components/Referrals/ReferralShell";
 import { ReferrerCreateLinkModal } from "~/components/Referrals/ReferrerCreateLinkModal";
 import { LoadingInline } from "~/components/Status/LoadingInline";
+import { parseApiError } from "~/lib/apiErrorUtils";
 import analytics from "~/lib/analytics";
 import { handleUserSignIn } from "~/lib/authUtils";
 import {
@@ -112,6 +114,21 @@ const ReferralProgramDetails: NextPageWithLayout<{
   });
   const hasPageError = Boolean(error) || Boolean(programError);
 
+  const pageErrorMessage = (() => {
+    if (programError) {
+      const { errors, message } = parseApiError(programError);
+      return (
+        errors
+          .map((e) => e.message)
+          .filter(Boolean)
+          .join(" · ") ||
+        message ||
+        null
+      );
+    }
+    return null;
+  })();
+
   const programStatusName =
     typeof program?.status === "number"
       ? ProgramStatus[program.status]
@@ -144,24 +161,16 @@ const ReferralProgramDetails: NextPageWithLayout<{
         isLoading={!hasPageError && (isLoading || !program)}
       >
         {hasPageError ? (
-          <div className="flex min-h-[50vh] items-center justify-center px-2 pb-8">
-            <div className="flex w-full max-w-2xl flex-col items-center gap-4 rounded-xl bg-white p-6 text-center shadow md:p-10">
-              <h2 className="text-2xl font-bold text-black">Oops!</h2>
-              <p className="text-gray-dark">
-                We&apos;re experiencing some technical difficulties at the
-                moment. Our team has been notified and is working on it.
-              </p>
-              <p className="text-gray-dark">
-                Please check back in a few moments.
-              </p>
-              <button
-                type="button"
-                className="btn btn-success mt-2 rounded-3xl px-8 text-white"
-                onClick={() => router.back()}
-              >
-                Take me back
-              </button>
-            </div>
+          <div className="mx-auto flex w-full max-w-2xl flex-col items-center gap-4 rounded-xl bg-white p-6 text-center shadow md:p-6">
+            <NoRowsMessage
+              icon={"⚠️"}
+              title="Something went wrong"
+              description={
+                pageErrorMessage ??
+                "We're experiencing some technical difficulties. Please try again later."
+              }
+              className="w-full !bg-transparent"
+            />
           </div>
         ) : program ? (
           <ReferralProgramDetailsContent

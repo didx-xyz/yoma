@@ -16,6 +16,7 @@ import {
 } from "~/api/services/referrals";
 import { getUserProfile } from "~/api/services/user";
 import MainLayout from "~/components/Layout/Main";
+import NoRowsMessage from "~/components/NoRowsMessage";
 import { ReferralBlockedView } from "~/components/Referrals/ReferralBlockedView";
 import { ReferralMainColumns } from "~/components/Referrals/ReferralMainColumns";
 import { ReferralShareModal } from "~/components/Referrals/ReferralShareModal";
@@ -30,6 +31,7 @@ import {
   useReferralLinkByIdQuery,
   useReferralProgramInfoByLinkQuery,
 } from "~/hooks/useReferralProgramMutations";
+import { parseApiError } from "~/lib/apiErrorUtils";
 import { handleUserSignIn } from "~/lib/authUtils";
 import { THEME_WHITE } from "~/lib/constants";
 import { config } from "~/lib/react-query-config";
@@ -144,6 +146,32 @@ const ReferralLinkPage: NextPageWithLayout<{
     "deleted",
   ].includes(programStatusName.toLowerCase());
 
+  const pageErrorMessage = (() => {
+    if (linkError) {
+      const { errors, message } = parseApiError(linkError);
+      return (
+        errors
+          .map((e) => e.message)
+          .filter(Boolean)
+          .join(" · ") ||
+        message ||
+        null
+      );
+    }
+    if (programError) {
+      const { errors, message } = parseApiError(programError);
+      return (
+        errors
+          .map((e) => e.message)
+          .filter(Boolean)
+          .join(" · ") ||
+        message ||
+        null
+      );
+    }
+    return null;
+  })();
+
   return (
     <>
       <Head>
@@ -160,24 +188,16 @@ const ReferralLinkPage: NextPageWithLayout<{
         isLoading={!hasPageError && (linkLoading || programLoading)}
       >
         {hasPageError ? (
-          <div className="flex min-h-[50vh] items-center justify-center px-2 pb-8">
-            <div className="flex w-full max-w-2xl flex-col items-center gap-4 rounded-xl bg-white p-6 text-center shadow md:p-10">
-              <h2 className="text-2xl font-bold text-black">Oops!</h2>
-              <p className="text-gray-dark">
-                We&apos;re experiencing some technical difficulties at the
-                moment. Our team has been notified and is working on it.
-              </p>
-              <p className="text-gray-dark">
-                Please check back in a few moments.
-              </p>
-              <button
-                type="button"
-                className="btn btn-success mt-2 rounded-3xl px-8 text-white"
-                onClick={() => router.back()}
-              >
-                Take me back
-              </button>
-            </div>
+          <div className="mx-auto flex w-full max-w-2xl flex-col items-center gap-4 rounded-xl bg-white p-6 text-center shadow md:p-6">
+            <NoRowsMessage
+              icon={"⚠️"}
+              title="Something went wrong"
+              description={
+                pageErrorMessage ??
+                "We're experiencing some technical difficulties. Please try again later."
+              }
+              className="w-full !bg-transparent"
+            />
           </div>
         ) : isBlocked ? (
           <ReferralBlockedView userProfile={userProfile} />
