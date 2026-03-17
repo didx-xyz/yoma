@@ -111,7 +111,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             ChimoneyPoolCurrentFinancialYearInUSD = table.Column<decimal>(type: "numeric(12,2)", nullable: true),
             ChimoneyCumulativeInUSD = table.Column<decimal>(type: "numeric(12,2)", nullable: true),
             ChimoneyCumulativeCurrentFinancialYearInUSD = table.Column<decimal>(type: "numeric(12,2)", nullable: true),
-            ConversionRateZltoUsd = table.Column<decimal>(type: "numeric(10,4)", nullable: false),
+            ConversionRateZltoUsd = table.Column<decimal>(type: "numeric(18,10)", nullable: false),
             DateCreated = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
             CreatedByUserId = table.Column<Guid>(type: "uuid", nullable: false),
             DateModified = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
