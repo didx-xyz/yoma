@@ -323,7 +323,7 @@ const RefereeDashboard: NextPageWithLayout<{
         isLoading={!hasPageError && (usageLoading || programLoading)}
       >
         {hasPageError ? (
-          <div className="mx-auto flex w-full max-w-2xl flex-col items-center gap-4 rounded-xl bg-white p-6 text-center shadow md:p-6">
+          <div className="mx-auto flex w-full max-w-2xl flex-col items-center gap-4 rounded-xl bg-white p-6 text-center shadow">
             <NoRowsMessage
               icon={"⚠️"}
               title="Something went wrong"
@@ -335,7 +335,7 @@ const RefereeDashboard: NextPageWithLayout<{
             />
           </div>
         ) : !usage || !program ? (
-          <div className="mx-auto flex w-full max-w-2xl flex-col items-center gap-4 rounded-xl bg-white p-6 text-center shadow md:p-6">
+          <div className="mx-auto flex w-full max-w-2xl flex-col items-center gap-4 rounded-xl bg-white p-6 text-center shadow">
             <NoRowsMessage
               icon={"⚠️"}
               title="Referral Not Found"

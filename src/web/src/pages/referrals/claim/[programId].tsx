@@ -301,7 +301,7 @@ const ReferralClaimPage: NextPageWithLayout<{
   })();
 
   const pageErrorContent = hasPageError ? (
-    <div className="mx-auto flex w-full max-w-2xl flex-col items-center gap-4 rounded-xl bg-white p-6 text-center shadow md:p-6">
+    <div className="mx-auto flex w-full max-w-2xl flex-col items-center gap-4 rounded-xl bg-white p-6 text-center shadow">
       <NoRowsMessage
         title="Referral Link Unavailable"
         description={
@@ -340,7 +340,7 @@ const ReferralClaimPage: NextPageWithLayout<{
     }
 
     claimErrorContent = (
-      <div className="mx-auto flex w-full max-w-2xl flex-col items-center gap-4 rounded-xl bg-white p-6 text-center shadow md:p-6">
+      <div className="mx-auto flex w-full max-w-2xl flex-col items-center gap-4 rounded-xl bg-white p-6 text-center shadow">
         <NoRowsMessage
           icon={"⚠️"}
           title="Unable to Claim Referral Link"
@@ -468,7 +468,7 @@ const ReferralClaimPage: NextPageWithLayout<{
                   )}
 
                   {program.pathwayRequired && (
-                    <ReferralTasksCard model={program.pathway} />
+                    <ReferralTasksCard model={program.pathway} preview={true} />
                   )}
                 </>
               }
