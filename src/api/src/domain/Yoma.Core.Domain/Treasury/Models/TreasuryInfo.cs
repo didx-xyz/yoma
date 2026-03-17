@@ -46,6 +46,6 @@ namespace Yoma.Core.Domain.Treasury.Models
     /// <summary>
     /// USD amount used for the normalized admin display/edit ratio.
     /// </summary>
-    public static decimal ConversionRateUsdAmount => Constants.ConversionRateUsdAmount;
+    public decimal ConversionRateUsdAmount { get; private set; } = Constants.ConversionRateUsdAmount;
   }
 }
