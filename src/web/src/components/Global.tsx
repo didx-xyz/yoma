@@ -263,7 +263,6 @@ export const Global: React.FC = () => {
 
       // Skip profile completion modals on claim page - handled inline there
       if (
-        currentPath.includes("/referrals/claim/") ||
         currentPath.includes("/user/profile") ||
         currentPath.includes("/user/settings")
       ) {

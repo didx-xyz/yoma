@@ -14,9 +14,6 @@ import {
 import { getUserProfile } from "~/api/services/user";
 import MainLayout from "~/components/Layout/Main";
 import NoRowsMessage from "~/components/NoRowsMessage";
-
-import { AlternativeActions } from "~/components/Referrals/AlternativeActions";
-import { BecomeReferrerCTA } from "~/components/Referrals/BecomeReferrerCTA";
 import { ReferralInfoCard } from "~/components/Referrals/ReferralInfoCard";
 import { ReferralMainColumns } from "~/components/Referrals/ReferralMainColumns";
 import { ReferralShell } from "~/components/Referrals/ReferralShell";
@@ -24,7 +21,6 @@ import { ReferralStatCard } from "~/components/Referrals/ReferralStatCard";
 import { ReferralTasksCard } from "~/components/Referrals/ReferralTasksCard";
 import { ReferralTopCard } from "~/components/Referrals/ReferralTopCard";
 import { LoadingInline } from "~/components/Status/LoadingInline";
-import { ProfileCompletionWizard } from "~/components/User/ProfileCompletionWizard";
 import {
   REFERRAL_PROGRAM_QUERY_KEYS,
   useReferralProgramInfoByLinkQuery,
@@ -254,11 +250,6 @@ const ReferralClaimPage: NextPageWithLayout<{
     performClaim,
   ]);
 
-  const handleProfileComplete = useCallback(() => {
-    // After profile completion, perform the claim
-    performClaim();
-  }, [performClaim]);
-
   // Auto-claim when authenticated and profile is complete
   useEffect(() => {
     if (
@@ -456,16 +447,6 @@ const ReferralClaimPage: NextPageWithLayout<{
                       />
                     </div>
                   </ReferralInfoCard>
-
-                  {isAuthenticated && needsProfileCompletion && (
-                    <div className="rounded-xl bg-white p-4 shadow md:p-5">
-                      <ProfileCompletionWizard
-                        userProfile={userProfile || serverUserProfile || null}
-                        onComplete={handleProfileComplete}
-                        showHeader={false}
-                      />
-                    </div>
-                  )}
 
                   {program.pathwayRequired && (
                     <ReferralTasksCard model={program.pathway} preview={true} />
