@@ -1004,7 +1004,9 @@ const ReferralsPage: NextPageWithLayout<{
                   className="h-52 flex-col"
                 />
               ) : isBlocked ? (
-                <ReferralBlockedView userProfile={userProfile} />
+                <div className="mx-auto my-14 flex w-full max-w-2xl flex-col items-center gap-4 rounded-xl bg-white p-6 text-center shadow">
+                  <ReferralBlockedView userProfile={userProfile} />
+                </div>
               ) : (
                 <div className="w-full">
                   {!hasLinks && (

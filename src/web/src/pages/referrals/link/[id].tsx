@@ -146,7 +146,9 @@ const ReferralLinkPage: NextPageWithLayout = () => {
             />
           </div>
         ) : isBlocked ? (
-          <ReferralBlockedView userProfile={userProfile} />
+          <div className="mx-auto flex w-full max-w-2xl flex-col items-center gap-4 rounded-xl bg-white p-6 text-center shadow">
+            <ReferralBlockedView userProfile={userProfile} />
+          </div>
         ) : (
           <>
             {program ? (
