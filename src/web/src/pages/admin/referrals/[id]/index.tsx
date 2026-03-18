@@ -1,17 +1,10 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  QueryClient,
-  dehydrate,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import axios, { type AxiosError } from "axios";
-import { type GetServerSidePropsContext } from "next";
-import { getServerSession } from "next-auth";
+import { useSession } from "next-auth/react";
 import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { type ParsedUrlQuery } from "querystring";
 import {
   useCallback,
   useEffect,
@@ -52,7 +45,6 @@ import { getCountries } from "~/api/services/lookups";
 import { getOpportunityById } from "~/api/services/opportunities";
 import {
   createReferralProgram,
-  getReferralProgramById,
   updateReferralProgram,
   updateReferralProgramImage,
 } from "~/api/services/referrals";
@@ -82,24 +74,16 @@ import {
   useReferralProgramByIdQuery,
   useReferralProgramStatusMutation,
 } from "~/hooks/useReferralProgramMutations";
-import { COUNTRY_CODE_WW } from "~/lib/constants";
-import { config } from "~/lib/react-query-config";
+import { COUNTRY_CODE_WW, THEME_BLUE } from "~/lib/constants";
 import {
   dateInputToUTC,
   dateInputToUTCEndOfDay,
   getSafeUrl,
-  getThemeFromRole,
   utcToDateInput,
 } from "~/lib/utils";
 import type { NextPageWithLayout } from "~/pages/_app";
-import { authOptions, type User } from "~/server/auth";
 
 type SelectOption = { value: string; label: string };
-
-interface IParams extends ParsedUrlQuery {
-  id: string;
-  returnUrl?: string;
-}
 
 // Validation schemas for each step
 const schemaStep1 = z
@@ -108,7 +92,7 @@ const schemaStep1 = z
       .string()
       .min(1, "Name is required")
       .max(150, "Name cannot exceed 150 characters"),
-    description: z.string().nullable().optional(),
+    description: z.string().min(1, "Description is required."),
     summary: z
       .string()
       .min(1, "Summary is required.")
@@ -597,64 +581,12 @@ const schemaStep5 = z
     });
   });
 
-// ⚠️ SSR
-export async function getServerSideProps(context: GetServerSidePropsContext) {
-  const { id } = context.params as IParams;
-  const session = await getServerSession(context.req, context.res, authOptions);
-  const queryClient = new QueryClient(config);
-  let errorCode = null;
-
-  if (!session) {
-    return {
-      props: {
-        error: 401,
-      },
-    };
-  }
-
-  const theme = getThemeFromRole(session);
-
-  try {
-    if (id !== "create") {
-      const data = await getReferralProgramById(id, context);
-
-      await queryClient.prefetchQuery({
-        queryKey: REFERRAL_PROGRAM_QUERY_KEYS.detail(id),
-        queryFn: () => data,
-      });
-    }
-  } catch (error) {
-    console.error("Error fetching referral program data:", error);
-    if (axios.isAxiosError(error) && error.response?.status) {
-      if (error.response.status === 404) {
-        return {
-          notFound: true,
-          props: { theme: theme },
-        };
-      } else errorCode = error.response.status;
-    } else errorCode = 500;
-  }
-
-  return {
-    props: {
-      dehydratedState: dehydrate(queryClient),
-      id: id,
-      theme: theme,
-      error: errorCode,
-      user: session?.user ?? null,
-    },
-  };
-}
-
-const ReferralProgramForm: NextPageWithLayout<{
-  id: string;
-  theme: string;
-  error?: number;
-  user: User;
-}> = ({ id, error }) => {
+const ReferralProgramForm: NextPageWithLayout = () => {
   const router = useRouter();
+  const { status: sessionStatus } = useSession();
   const { returnUrl } = router.query;
   const queryClient = useQueryClient();
+  const id = typeof router.query.id === "string" ? router.query.id : "";
   const [saveChangesDialogVisible, setSaveChangesDialogVisible] =
     useState(false);
   const [lastStepBeforeSaveChangesDialog, setLastStepBeforeSaveChangesDialog] =
@@ -678,8 +610,18 @@ const ReferralProgramForm: NextPageWithLayout<{
   const formRef5 = useRef<HTMLFormElement>(null);
 
   // Fetch program data
-  const { data: program, isLoading: isLoadingProgram } =
-    useReferralProgramByIdQuery(id, { enabled: !error && id !== "create" });
+  const {
+    data: program,
+    isLoading: isLoadingProgram,
+    error: programError,
+  } = useReferralProgramByIdQuery(id, {
+    enabled:
+      sessionStatus === "authenticated" && router.isReady && id !== "create",
+  });
+
+  const error = axios.isAxiosError(programError)
+    ? (programError.response?.status ?? 500)
+    : null;
 
   const statusMutation = useReferralProgramStatusMutation({
     programId: id,
@@ -690,7 +632,7 @@ const ReferralProgramForm: NextPageWithLayout<{
   const { data: countriesData } = useQuery<Country[]>({
     queryKey: ["countries"],
     queryFn: async () => getCountries(),
-    enabled: !error,
+    enabled: sessionStatus === "authenticated" && router.isReady,
   });
   const countriesOptions = useMemo<SelectOption[]>(
     () =>
@@ -1683,6 +1625,12 @@ const ReferralProgramForm: NextPageWithLayout<{
   );
 
   //#endregion Event Handlers
+
+  if (sessionStatus === "loading" || !router.isReady) return <Loading />;
+
+  if (sessionStatus === "unauthenticated") return <Unauthenticated />;
+
+  if (!id) return <InternalServerError />;
 
   if (error) {
     if (error === 401) return <Unauthenticated />;
@@ -2868,10 +2816,8 @@ ReferralProgramForm.getLayout = function getLayout(page: ReactElement) {
   return <MainLayout>{page}</MainLayout>;
 };
 
-ReferralProgramForm.theme = function getTheme(
-  page: ReactElement<{ theme: string }>,
-) {
-  return page.props.theme;
+ReferralProgramForm.theme = function getTheme() {
+  return THEME_BLUE;
 };
 
 export default ReferralProgramForm;

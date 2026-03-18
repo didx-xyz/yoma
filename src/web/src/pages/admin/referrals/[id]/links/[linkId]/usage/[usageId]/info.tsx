@@ -1,15 +1,11 @@
-import { QueryClient, dehydrate } from "@tanstack/react-query";
 import axios from "axios";
-import { type GetServerSidePropsContext } from "next";
-import { getServerSession } from "next-auth";
+import { useSession } from "next-auth/react";
 import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { type ParsedUrlQuery } from "querystring";
 import { type ReactElement } from "react";
 import { IoMdArrowRoundBack } from "react-icons/io";
 import Moment from "react-moment";
-import { getReferralLinkUsageById } from "~/api/services/referrals";
 import MainLayout from "~/components/Layout/Main";
 import { PageBackground } from "~/components/PageBackground";
 import { ReferralTasksCard } from "~/components/Referrals/ReferralTasksCard";
@@ -17,79 +13,33 @@ import { InternalServerError } from "~/components/Status/InternalServerError";
 import { Loading } from "~/components/Status/Loading";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
-import {
-  REFERRAL_PROGRAM_QUERY_KEYS,
-  useReferralLinkUsageByIdQuery,
-} from "~/hooks/useReferralProgramMutations";
+import { useReferralLinkUsageByIdQuery } from "~/hooks/useReferralProgramMutations";
 import { DATE_FORMAT_HUMAN } from "~/lib/constants";
-import { config } from "~/lib/react-query-config";
-import { getSafeUrl, getThemeFromRole } from "~/lib/utils";
+import { THEME_BLUE } from "~/lib/constants";
+import { getSafeUrl } from "~/lib/utils";
 import type { NextPageWithLayout } from "~/pages/_app";
-import { authOptions, type User } from "~/server/auth";
-
-interface IParams extends ParsedUrlQuery {
-  id: string;
-  linkId: string;
-  usageId: string;
-}
-
-export async function getServerSideProps(context: GetServerSidePropsContext) {
-  const { usageId } = context.params as IParams;
-  const session = await getServerSession(context.req, context.res, authOptions);
-  const queryClient = new QueryClient(config);
-  let errorCode = null;
-
-  if (!session) {
-    return {
-      props: {
-        error: 401,
-      },
-    };
-  }
-
-  const theme = getThemeFromRole(session);
-
-  try {
-    const usageData = await getReferralLinkUsageById(usageId, context);
-    await queryClient.prefetchQuery({
-      queryKey: REFERRAL_PROGRAM_QUERY_KEYS.linkUsage(usageId),
-      queryFn: () => usageData,
-    });
-  } catch (error) {
-    console.log("Error fetching referral link usage data:", error);
-    if (axios.isAxiosError(error) && error.response?.status) {
-      if (error.response.status === 404) {
-        return {
-          notFound: true,
-          props: { theme: theme },
-        };
-      } else errorCode = error.response.status;
-    } else errorCode = 500;
-  }
-
-  return {
-    props: {
-      dehydratedState: dehydrate(queryClient),
-      user: session?.user ?? null,
-      usageId: usageId ?? null,
-      theme,
-      error: errorCode,
-    },
-  };
-}
-
-const ReferralLinkUsageInfo: NextPageWithLayout<{
-  usageId: string;
-  user: User;
-  theme: string;
-  error?: number;
-}> = ({ usageId, error }) => {
+const ReferralLinkUsageInfo: NextPageWithLayout = () => {
   const router = useRouter();
+  const { status: sessionStatus } = useSession();
   const { returnUrl } = router.query;
+  const usageId =
+    typeof router.query.usageId === "string" ? router.query.usageId : "";
 
-  const { data: usage, isLoading } = useReferralLinkUsageByIdQuery(usageId, {
-    enabled: !error,
+  const {
+    data: usage,
+    isLoading,
+    error: usageError,
+  } = useReferralLinkUsageByIdQuery(usageId, {
+    enabled: sessionStatus === "authenticated" && router.isReady && !!usageId,
   });
+
+  const error = axios.isAxiosError(usageError)
+    ? (usageError.response?.status ?? 500)
+    : null;
+
+  if (sessionStatus === "loading" || !router.isReady) return <Loading />;
+
+  if (sessionStatus === "unauthenticated") return <Unauthenticated />;
 
   if (error) {
     if (error === 401) return <Unauthenticated />;
@@ -442,10 +392,8 @@ ReferralLinkUsageInfo.getLayout = function getLayout(page: ReactElement) {
   return <MainLayout>{page}</MainLayout>;
 };
 
-ReferralLinkUsageInfo.theme = function getTheme(
-  page: ReactElement<{ theme: string }>,
-) {
-  return page.props.theme;
+ReferralLinkUsageInfo.theme = function getTheme() {
+  return THEME_BLUE;
 };
 
 export default ReferralLinkUsageInfo;

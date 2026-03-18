@@ -1,11 +1,10 @@
-import { QueryClient, dehydrate, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
-import { type GetServerSidePropsContext } from "next";
-import { getServerSession } from "next-auth";
+import { useSession } from "next-auth/react";
 import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { useCallback, useState, type ReactElement } from "react";
+import { useCallback, useEffect, useState, type ReactElement } from "react";
 import { FaPlusCircle } from "react-icons/fa";
 import {
   IoEyeOffOutline,
@@ -20,7 +19,6 @@ import {
   type ProgramSearchFilterAdmin,
 } from "~/api/models/referrals";
 import { getCountries } from "~/api/services/lookups";
-import { searchReferralPrograms } from "~/api/services/referrals";
 import CustomSlider from "~/components/Carousel/CustomSlider";
 import MainLayout from "~/components/Layout/Main";
 import NoRowsMessage from "~/components/NoRowsMessage";
@@ -34,19 +32,17 @@ import {
 import { ProgramImage } from "~/components/Referrals/ProgramImage";
 import { ProgramStatusBadge } from "~/components/Referrals/ProgramStatusBadge";
 import { InternalServerError } from "~/components/Status/InternalServerError";
+import { Loading } from "~/components/Status/Loading";
 import { LoadingSkeleton } from "~/components/Status/LoadingSkeleton";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import {
-  REFERRAL_PROGRAM_QUERY_KEYS,
   useReferralProgramCountQuery,
   useReferralProgramsAdminQuery,
 } from "~/hooks/useReferralProgramMutations";
 import { DATE_FORMAT_HUMAN, PAGE_SIZE, THEME_BLUE } from "~/lib/constants";
-import { config } from "~/lib/react-query-config";
-import { getSafeUrl, getThemeFromRole } from "~/lib/utils";
+import { getSafeUrl } from "~/lib/utils";
 import { type NextPageWithLayout } from "~/pages/_app";
-import { authOptions } from "~/server/auth";
 
 const parseDelimitedQueryParam = (
   value: string | string[] | undefined,
@@ -65,109 +61,35 @@ const serializeDelimitedQueryParam = (
   return value.join("|");
 };
 
-// ⚠️ SSR
-export async function getServerSideProps(context: GetServerSidePropsContext) {
-  const {
-    query,
-    page,
-    status,
-    valueContains,
-    returnUrl,
-    dateStart,
-    dateEnd,
-    countries,
-  } = context.query;
-  const session = await getServerSession(context.req, context.res, authOptions);
-  const queryClient = new QueryClient(config);
-  let errorCode = null;
+const getErrorStatus = (error: unknown): number | null => {
+  if (!axios.isAxiosError(error)) return null;
+  return error.response?.status ?? null;
+};
 
-  // 👇 ensure authenticated
-  if (!session) {
-    return {
-      props: {
-        error: 401,
-      },
-    };
-  }
-
-  // 👇 set theme based on role
-  const theme = getThemeFromRole(session);
-
-  const parsedCountries = parseDelimitedQueryParam(
-    countries as string | string[] | undefined,
-  );
-  const countriesKeyPart = serializeDelimitedQueryParam(parsedCountries);
-
-  try {
-    // 👇 prefetch queries on server
-    const searchFilter: ProgramSearchFilterAdmin = {
-      pageNumber: page ? parseInt(page.toString()) : 1,
-      pageSize: PAGE_SIZE,
-      countries: parsedCountries,
-      valueContains: valueContains?.toString() ?? null,
-      statuses: status ? [status.toString()] : null,
-      dateStart: dateStart?.toString() ?? null,
-      dateEnd: dateEnd?.toString() ?? null,
-    };
-    const data = await searchReferralPrograms(searchFilter, context);
-    const searchResultsKey = `${query?.toString()}_${page?.toString()}_${status?.toString()}_${valueContains?.toString()}_${dateStart?.toString()}_${dateEnd?.toString()}_${countriesKeyPart ?? ""}`;
-
-    await queryClient.prefetchQuery({
-      queryKey: REFERRAL_PROGRAM_QUERY_KEYS.adminProgramsList(searchResultsKey),
-      queryFn: () => data,
-    });
-  } catch (error) {
-    if (axios.isAxiosError(error) && error.response?.status) {
-      if (error.response.status === 404) {
-        return {
-          notFound: true,
-          props: { theme: theme },
-        };
-      } else errorCode = error.response.status;
-    } else errorCode = 500;
-  }
-
-  return {
-    props: {
-      dehydratedState: dehydrate(queryClient),
-      query: query ?? null,
-      page: page ?? null,
-      status: status ?? null,
-      valueContains: valueContains ?? null,
-      countries: countries ?? null,
-      dateStart: dateStart ?? null,
-      dateEnd: dateEnd ?? null,
-      theme: theme,
-      error: errorCode,
-      returnUrl: returnUrl ?? null,
-    },
-  };
-}
-
-const ReferralPrograms: NextPageWithLayout<{
-  query?: string;
-  page?: string;
-  theme: string;
-  error?: number;
-  status?: string;
-  valueContains?: string;
-  countries?: string | string[];
-  opportunities?: string;
-  dateStart?: string;
-  dateEnd?: string;
-  returnUrl?: string;
-}> = ({
-  query,
-  page,
-  status,
-  valueContains,
-  countries,
-  dateStart,
-  dateEnd,
-  error,
-  returnUrl,
-}) => {
+const ReferralPrograms: NextPageWithLayout = () => {
   const router = useRouter();
+  const { status: sessionStatus } = useSession();
+  const query =
+    typeof router.query.query === "string" ? router.query.query : undefined;
+  const page =
+    typeof router.query.page === "string" ? router.query.page : undefined;
+  const status =
+    typeof router.query.status === "string" ? router.query.status : undefined;
+  const valueContains =
+    typeof router.query.valueContains === "string"
+      ? router.query.valueContains
+      : undefined;
+  const countries = router.query.countries as string | string[] | undefined;
+  const dateStart =
+    typeof router.query.dateStart === "string"
+      ? router.query.dateStart
+      : undefined;
+  const dateEnd =
+    typeof router.query.dateEnd === "string" ? router.query.dateEnd : undefined;
+  const returnUrl =
+    typeof router.query.returnUrl === "string"
+      ? router.query.returnUrl
+      : undefined;
 
   const parsedCountries = parseDelimitedQueryParam(
     countries as string | string[] | undefined,
@@ -177,7 +99,7 @@ const ReferralPrograms: NextPageWithLayout<{
   const { data: lookups_countries } = useQuery<Country[]>({
     queryKey: ["countries"],
     queryFn: () => getCountries(),
-    enabled: !error,
+    enabled: sessionStatus === "authenticated" && router.isReady,
   });
 
   // search filter state
@@ -191,42 +113,69 @@ const ReferralPrograms: NextPageWithLayout<{
     dateEnd: dateEnd ?? null,
   });
 
+  useEffect(() => {
+    if (!router.isReady) return;
+
+    setSearchFilter({
+      pageNumber: page ? parseInt(page.toString()) : 1,
+      pageSize: PAGE_SIZE,
+      countries: parsedCountries,
+      valueContains: valueContains ?? null,
+      statuses: status ? [status] : null,
+      dateStart: dateStart ?? null,
+      dateEnd: dateEnd ?? null,
+    });
+  }, [
+    router.isReady,
+    page,
+    parsedCountries,
+    valueContains,
+    status,
+    dateStart,
+    dateEnd,
+  ]);
+
   // 👇 use prefetched queries from server
   const searchResultsKey = `${query?.toString()}_${page?.toString()}_${status?.toString()}_${valueContains?.toString()}_${dateStart?.toString()}_${dateEnd?.toString()}_${countriesKeyPart ?? ""}`;
 
-  const { data: searchResults, isLoading: isLoadingSearchResults } =
-    useReferralProgramsAdminQuery(searchFilter, searchResultsKey, {
-      enabled: !error,
-    });
+  const {
+    data: searchResults,
+    isLoading: isLoadingSearchResults,
+    error: searchResultsError,
+  } = useReferralProgramsAdminQuery(searchFilter, searchResultsKey, {
+    enabled: sessionStatus === "authenticated" && router.isReady,
+  });
 
   // Get counts by status (without additional filters)
   const { data: totalCountAll } = useReferralProgramCountQuery(null, {
-    enabled: !error,
+    enabled: sessionStatus === "authenticated" && router.isReady,
   });
   const { data: totalCountActive } = useReferralProgramCountQuery(
     ProgramStatus.Active,
-    { enabled: !error },
+    { enabled: sessionStatus === "authenticated" && router.isReady },
   );
   const { data: totalCountInactive } = useReferralProgramCountQuery(
     ProgramStatus.Inactive,
-    { enabled: !error },
+    { enabled: sessionStatus === "authenticated" && router.isReady },
   );
   const { data: totalCountExpired } = useReferralProgramCountQuery(
     ProgramStatus.Expired,
-    { enabled: !error },
+    { enabled: sessionStatus === "authenticated" && router.isReady },
   );
   const { data: totalCountDeleted } = useReferralProgramCountQuery(
     ProgramStatus.Deleted,
-    { enabled: !error },
+    { enabled: sessionStatus === "authenticated" && router.isReady },
   );
   const { data: totalCountLimitReached } = useReferralProgramCountQuery(
     ProgramStatus.LimitReached,
-    { enabled: !error },
+    { enabled: sessionStatus === "authenticated" && router.isReady },
   );
   const { data: totalCountUnCompletable } = useReferralProgramCountQuery(
     ProgramStatus.UnCompletable,
-    { enabled: !error },
+    { enabled: sessionStatus === "authenticated" && router.isReady },
   );
+
+  const error = getErrorStatus(searchResultsError);
 
   // 🎈 FUNCTIONS
   const getSearchFilterAsQueryString = useCallback(
@@ -296,6 +245,14 @@ const ReferralPrograms: NextPageWithLayout<{
     [redirectWithSearchFilterParams],
   );
   //#endregion Event Handlers
+
+  if (sessionStatus === "loading" || !router.isReady) {
+    return <Loading />;
+  }
+
+  if (sessionStatus === "unauthenticated") {
+    return <Unauthenticated />;
+  }
 
   if (error) {
     if (error === 401) return <Unauthenticated />;
