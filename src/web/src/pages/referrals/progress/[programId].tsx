@@ -6,7 +6,10 @@ import { useRouter } from "next/router";
 import { useEffect, useMemo, type ReactElement } from "react";
 import { IoOpenOutline } from "react-icons/io5";
 import { toast } from "react-toastify";
-import { type ProgramInfo, type ReferralLinkUsageInfo } from "~/api/models/referrals";
+import {
+  type ProgramInfo,
+  type ReferralLinkUsageInfo,
+} from "~/api/models/referrals";
 import MainLayout from "~/components/Layout/Main";
 import NoRowsMessage from "~/components/NoRowsMessage";
 import { ReferralShell } from "~/components/Referrals/ReferralShell";
@@ -186,7 +189,9 @@ const RefereeDashboard: NextPageWithLayout = () => {
   }
 
   const hasPageError =
-    (router.isReady && !programId) || Boolean(usageError) || Boolean(programError);
+    (router.isReady && !programId) ||
+    Boolean(usageError) ||
+    Boolean(programError);
 
   const pageErrorMessage = (() => {
     if (router.isReady && !programId) {
