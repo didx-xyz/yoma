@@ -1,24 +1,12 @@
-import { QueryClient, dehydrate } from "@tanstack/react-query";
-import axios from "axios";
 import { useAtom } from "jotai";
-import { type GetServerSidePropsContext } from "next";
 import { useSession } from "next-auth/react";
-import { getServerSession } from "next-auth";
 import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useEffect, useMemo, type ReactElement } from "react";
 import { IoOpenOutline } from "react-icons/io5";
 import { toast } from "react-toastify";
-import {
-  ProgramStatus,
-  type ProgramInfo,
-  type ReferralLinkUsageInfo,
-} from "~/api/models/referrals";
-import {
-  getReferralLinkUsageByProgramIdAsReferee,
-  getReferralProgramInfoById,
-} from "~/api/services/referrals";
+import { type ProgramInfo, type ReferralLinkUsageInfo } from "~/api/models/referrals";
 import MainLayout from "~/components/Layout/Main";
 import NoRowsMessage from "~/components/NoRowsMessage";
 import { ReferralShell } from "~/components/Referrals/ReferralShell";
@@ -27,17 +15,14 @@ import { RefereeWelcomeModal } from "~/components/Referrals/RefereeWelcomeModal"
 import { LoadingInline } from "~/components/Status/LoadingInline";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import {
-  REFERRAL_PROGRAM_QUERY_KEYS,
   useReferralLinkUsageByProgramIdQuery,
   useReferralProgramInfoQuery,
 } from "~/hooks/useReferralProgramMutations";
 import { parseApiError } from "~/lib/apiErrorUtils";
-import { config } from "~/lib/react-query-config";
 import { THEME_WHITE } from "~/lib/constants";
 import { handleUserSignOut } from "~/lib/authUtils";
 import { hasDismissedRefereeWelcomeModalAtom } from "~/lib/store";
 import { getSafeUrl } from "~/lib/utils";
-import { authOptions } from "~/server/auth";
 import { type NextPageWithLayout } from "../../_app";
 
 interface RefereeProofOfPersonhoodActionProps {
@@ -116,107 +101,14 @@ const RefereeProofOfPersonhoodAction: React.FC<
   );
 };
 
-//TODO: remove
-const parseMockProgramStatus = (
-  value: string | string[] | undefined,
-): ProgramStatus | null => {
-  if (!value) return null;
-
-  const raw = Array.isArray(value) ? value[0] : value;
-  if (!raw) return null;
-
-  const numeric = Number(raw);
-  if (!Number.isNaN(numeric) && ProgramStatus[numeric] !== undefined) {
-    return numeric as ProgramStatus;
-  }
-
-  const matchedKey = Object.keys(ProgramStatus).find(
-    (key) =>
-      Number.isNaN(Number(key)) && key.toLowerCase() === raw.toLowerCase(),
-  );
-
-  if (!matchedKey) return null;
-  return ProgramStatus[
-    matchedKey as keyof typeof ProgramStatus
-  ] as ProgramStatus;
-};
-
-export async function getServerSideProps(context: GetServerSidePropsContext) {
-  const session = await getServerSession(context.req, context.res, authOptions);
-
-  if (!session) {
-    return {
-      props: {
-        error: 401,
-      },
-    };
-  }
-
-  const { programId } = context.params!;
-  const mockStatus = parseMockProgramStatus(context.query.mockStatus);
-
-  if (!programId || typeof programId !== "string") {
-    return {
-      notFound: true,
-    };
-  }
-
-  const queryClient = new QueryClient(config);
-  let errorCode: number | null = null;
-
-  try {
-    await queryClient.fetchQuery({
-      queryKey: REFERRAL_PROGRAM_QUERY_KEYS.refereeProgress(programId),
-      queryFn: () =>
-        getReferralLinkUsageByProgramIdAsReferee(programId, context),
-    });
-
-    const program = await queryClient.fetchQuery({
-      queryKey: REFERRAL_PROGRAM_QUERY_KEYS.info(programId),
-      queryFn: () => getReferralProgramInfoById(programId, context),
-    });
-
-    if (program && mockStatus !== null) {
-      program.status = mockStatus;
-      queryClient.setQueryData(
-        REFERRAL_PROGRAM_QUERY_KEYS.info(programId),
-        program,
-      );
-    }
-
-    return {
-      props: {
-        dehydratedState: dehydrate(queryClient),
-        programId,
-        user: session?.user ?? null,
-      },
-    };
-  } catch (error) {
-    console.error("Error fetching referee data:", error);
-    if (axios.isAxiosError(error) && error.response?.status) {
-      errorCode = error.response.status;
-    } else {
-      errorCode = 500;
-    }
-    return {
-      props: {
-        error: errorCode,
-        programId,
-        user: session?.user ?? null,
-      },
-    };
-  }
-}
-
-const RefereeDashboard: NextPageWithLayout<{
-  programId: string;
-  error?: number;
-}> = ({ programId, error: serverError }) => {
+const RefereeDashboard: NextPageWithLayout = () => {
   const router = useRouter();
   const { status: sessionStatus } = useSession();
   const [hasDismissedWelcomeModal, setHasDismissedWelcomeModal] = useAtom(
     hasDismissedRefereeWelcomeModalAtom,
   );
+  const programId =
+    typeof router.query.programId === "string" ? router.query.programId : "";
 
   useEffect(() => {
     if (router.query.claimed === "true") {
@@ -232,7 +124,7 @@ const RefereeDashboard: NextPageWithLayout<{
     error: usageError,
     isLoading: usageLoading,
   } = useReferralLinkUsageByProgramIdQuery(programId, {
-    enabled: !serverError,
+    enabled: sessionStatus === "authenticated" && router.isReady && !!programId,
     refetchInterval: 30000,
   });
 
@@ -240,7 +132,9 @@ const RefereeDashboard: NextPageWithLayout<{
     data: program,
     error: programError,
     isLoading: programLoading,
-  } = useReferralProgramInfoQuery(programId, { enabled: !serverError });
+  } = useReferralProgramInfoQuery(programId, {
+    enabled: sessionStatus === "authenticated" && router.isReady && !!programId,
+  });
 
   const isRedirectingToKeycloak = router.query.signInAgain === "true";
 
@@ -261,7 +155,22 @@ const RefereeDashboard: NextPageWithLayout<{
     };
   }, [usage?.dateClaimed, program?.completionWindowInDays]);
 
-  if (serverError === 401) {
+  if (sessionStatus === "loading") {
+    return (
+      <ReferralShell
+        title="Referral programme"
+        breadcrumbLabel="Referrals"
+        headerBackgroundMode="color"
+        headerBackgroundColorClassName="bg-orange"
+        onBack={() => router.push("/referrals")}
+        isLoading={true}
+      >
+        <></>
+      </ReferralShell>
+    );
+  }
+
+  if (sessionStatus === "unauthenticated") {
     if (isRedirectingToKeycloak) {
       return (
         <div className="container mx-auto mt-20 flex max-w-3xl flex-col gap-8 py-8">
@@ -277,9 +186,13 @@ const RefereeDashboard: NextPageWithLayout<{
   }
 
   const hasPageError =
-    Boolean(serverError) || Boolean(usageError) || Boolean(programError);
+    (router.isReady && !programId) || Boolean(usageError) || Boolean(programError);
 
   const pageErrorMessage = (() => {
+    if (router.isReady && !programId) {
+      return "Referral programme not found.";
+    }
+
     if (usageError) {
       const { errors, message } = parseApiError(usageError);
       return (
@@ -320,7 +233,9 @@ const RefereeDashboard: NextPageWithLayout<{
         headerBackgroundMode="color"
         headerBackgroundColorClassName="bg-orange"
         onBack={() => router.push("/referrals")}
-        isLoading={!hasPageError && (usageLoading || programLoading)}
+        isLoading={
+          !hasPageError && (!router.isReady || usageLoading || programLoading)
+        }
       >
         {hasPageError ? (
           <div className="mx-auto flex w-full max-w-2xl flex-col items-center gap-4 rounded-xl bg-white p-6 text-center shadow">

@@ -1,15 +1,11 @@
-import { QueryClient, dehydrate, useQueryClient } from "@tanstack/react-query";
-import axios from "axios";
+import { useQueryClient } from "@tanstack/react-query";
 import { useAtomValue } from "jotai";
-import { type GetServerSidePropsContext } from "next";
-import { getServerSession } from "next-auth";
+import { useSession } from "next-auth/react";
 import Head from "next/head";
 import { useRouter } from "next/router";
-import { type ParsedUrlQuery } from "querystring";
 import { type ReactElement, useCallback, useState } from "react";
 import { IoLinkOutline } from "react-icons/io5";
-import { ProgramStatus, type ProgramInfo } from "~/api/models/referrals";
-import { getReferralProgramInfoById } from "~/api/services/referrals";
+import { ProgramStatus } from "~/api/models/referrals";
 import MainLayout from "~/components/Layout/Main";
 import NoRowsMessage from "~/components/NoRowsMessage";
 import { ReferralProgramDetailsContent } from "~/components/Referrals/ReferralProgramDetailsContent";
@@ -24,72 +20,25 @@ import {
   useReferralProgramInfoQuery,
 } from "~/hooks/useReferralProgramMutations";
 import { THEME_WHITE } from "~/lib/constants";
-import { config } from "~/lib/react-query-config";
 import { currentLanguageAtom } from "~/lib/store";
 import type { NextPageWithLayout } from "~/pages/_app";
-import { type User, authOptions } from "~/server/auth";
-
-interface IParams extends ParsedUrlQuery {
-  programId: string;
-}
-
-export async function getServerSideProps(context: GetServerSidePropsContext) {
-  const { programId } = context.params as IParams;
-  const queryClient = new QueryClient(config);
-  const session = await getServerSession(context.req, context.res, authOptions);
-  let errorCode = null;
-  let dataProgramInfo: ProgramInfo | null = null;
-
-  if (!programId) {
-    return {
-      notFound: true,
-    };
-  }
-
-  try {
-    dataProgramInfo = await queryClient.fetchQuery({
-      queryKey: REFERRAL_PROGRAM_QUERY_KEYS.info(programId),
-      queryFn: () => getReferralProgramInfoById(programId, context),
-    });
-  } catch (error) {
-    console.error(
-      "Error fetching referral program in getServerSideProps",
-      error,
-    );
-    if (axios.isAxiosError(error) && error.response?.status) {
-      if (error.response.status === 404) {
-        return {
-          notFound: true,
-        };
-      } else errorCode = error.response.status;
-    } else errorCode = 500;
-  }
-
-  return {
-    props: {
-      dehydratedState: dehydrate(queryClient),
-      user: session?.user ?? null,
-      programInfo: dataProgramInfo,
-      programId,
-      error: errorCode,
-    },
-  };
-}
-
-const ReferralProgramDetails: NextPageWithLayout<{
-  user: User | null;
-  programInfo: ProgramInfo | null;
-  programId: string;
-  error?: number;
-}> = ({ user, programInfo, programId, error }) => {
+const ReferralProgramDetails: NextPageWithLayout = () => {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const { status: sessionStatus } = useSession();
   const [isButtonLoading, setIsButtonLoading] = useState(false);
   const [createLinkModalVisible, setCreateLinkModalVisible] = useState(false);
   const currentLanguage = useAtomValue(currentLanguageAtom);
+  const programId =
+    typeof router.query.programId === "string" ? router.query.programId : "";
+  const hasProgramId = router.isReady && programId.length > 0;
 
   const handleCreateLink = useCallback(async () => {
-    if (user) {
+    if (sessionStatus === "loading") {
+      return;
+    }
+
+    if (sessionStatus === "authenticated") {
       setCreateLinkModalVisible(true);
       return;
     }
@@ -102,19 +51,23 @@ const ReferralProgramDetails: NextPageWithLayout<{
     });
 
     await handleUserSignIn(currentLanguage);
-  }, [currentLanguage, user]);
+  }, [currentLanguage, sessionStatus]);
 
   const {
     data: program,
     isLoading,
     error: programError,
   } = useReferralProgramInfoQuery(programId, {
-    initialData: programInfo ?? undefined,
-    enabled: !error,
+    enabled: hasProgramId,
   });
-  const hasPageError = Boolean(error) || Boolean(programError);
+  const hasPageError =
+    (router.isReady && !programId) || Boolean(programError) || false;
 
   const pageErrorMessage = (() => {
+    if (router.isReady && !programId) {
+      return "Referral programme not found.";
+    }
+
     if (programError) {
       const { errors, message } = parseApiError(programError);
       return (
@@ -152,13 +105,17 @@ const ReferralProgramDetails: NextPageWithLayout<{
       </Head>
 
       <ReferralShell
-        title={program?.name ?? programInfo?.name ?? "Referral programme"}
+        title={program?.name ?? "Referral programme"}
         breadcrumbLabel="Referral Programmes"
         //programImageUrl={program?.imageURL || undefined}
         headerBackgroundMode="color"
         headerBackgroundColorClassName="bg-orange"
         onBack={() => router.back()}
-        isLoading={!hasPageError && (isLoading || !program)}
+        isLoading={
+          !hasPageError && (!router.isReady || isLoading || hasProgramId)
+            ? !program
+            : false
+        }
       >
         {hasPageError ? (
           <div className="mx-auto flex w-full max-w-2xl flex-col items-center gap-4 rounded-xl bg-white p-6 text-center shadow">
@@ -180,9 +137,13 @@ const ReferralProgramDetails: NextPageWithLayout<{
                 type="button"
                 className="btn btn-sm bg-green hover:bg-green-dark disabled:!bg-green h-10 rounded-full border-0 px-5 text-white normal-case disabled:!pointer-events-auto disabled:!cursor-not-allowed disabled:!text-white disabled:opacity-80"
                 onClick={handleCreateLink}
-                disabled={isButtonLoading || isCreateLinkDisabledByStatus}
+                disabled={
+                  isButtonLoading ||
+                  sessionStatus === "loading" ||
+                  isCreateLinkDisabledByStatus
+                }
               >
-                {isButtonLoading ? (
+                {isButtonLoading || sessionStatus === "loading" ? (
                   <LoadingInline
                     classNameSpinner="h-4 w-4"
                     classNameLabel="hidden"

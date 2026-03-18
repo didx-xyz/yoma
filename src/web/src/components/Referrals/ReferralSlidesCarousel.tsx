@@ -122,7 +122,7 @@ export const ReferralSlidesCarousel = <T,>({
           return (
             <Slide
               key={slideKey}
-              className="flex justify-center select-none md:justify-start"
+              className="flex touch-pan-y justify-center select-none md:justify-start"
               id={`${carouselId}_${slideKey}`}
             >
               <div className="w-full px-1 pb-1 md:px-1.5">

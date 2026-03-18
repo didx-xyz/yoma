@@ -1139,6 +1139,7 @@ const ReferralsPage: NextPageWithLayout<{
                     backgroundClassName="bg-white"
                     sectionClassName="relative z-10 w-full pt-10 pb-8"
                   >
+                    {/* TODO: may have trouble tapping/clicking the scrollable carousel slide (programs).   */}
                     <ProgramsSection
                       programs={programsData?.items ?? []}
                       totalCount={programsData?.totalCount || 0}
