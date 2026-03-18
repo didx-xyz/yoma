@@ -1,7 +1,7 @@
 import Image from "next/image";
-import Link from "next/link";
 import { FiUser } from "react-icons/fi";
 import { ReferralLinkUsageStatus } from "~/api/models/referrals";
+import { ReferralTapCard } from "~/components/Referrals/ReferralTapCard";
 
 interface ReferralFriendSlideCardProps {
   friendName: string;
@@ -52,7 +52,7 @@ export const ReferralFriendSlideCard = ({
       : "";
 
   const content = (
-    <div className="bg-base-200 mx-auto flex h-[13rem] w-full max-w-[18rem] flex-col justify-between rounded-3xl p-4">
+    <div className="bg-base-200 mx-auto flex h-[13rem] w-full max-w-[18rem] [touch-action:pan-y] flex-col justify-between rounded-3xl p-4 select-none [-webkit-user-drag:none] [user-drag:none]">
       <div className="flex flex-col gap-1">
         <div className="flex flex-row items-center gap-2">
           <div className="flex h-10 w-10 items-center justify-center rounded-full border border-white/90 bg-white text-gray-400 shadow-sm">
@@ -80,7 +80,8 @@ export const ReferralFriendSlideCard = ({
             alt={status}
             width={24}
             height={24}
-            className="h-4 w-4 shrink-0"
+            className="pointer-events-none h-4 w-4 shrink-0"
+            draggable={false}
           />
           <span className="truncate text-sm">
             {status}
@@ -95,5 +96,9 @@ export const ReferralFriendSlideCard = ({
     return content;
   }
 
-  return <Link href={href}>{content}</Link>;
+  return (
+    <ReferralTapCard href={href} className="block">
+      {content}
+    </ReferralTapCard>
+  );
 };

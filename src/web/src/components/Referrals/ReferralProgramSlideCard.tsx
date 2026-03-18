@@ -1,9 +1,9 @@
 import Image from "next/image";
-import Link from "next/link";
 import { type ReactNode } from "react";
 import { FiImage } from "react-icons/fi";
 import iconClock from "public/images/icon-clock.svg";
 import ZltoRewardBadge from "~/components/Opportunity/Badges/ZltoRewardBadge";
+import { ReferralTapCard } from "~/components/Referrals/ReferralTapCard";
 
 interface ReferralProgramSlideCardProps {
   title: string;
@@ -32,7 +32,7 @@ export const ReferralProgramSlideCard = ({
   customBadges,
   className,
 }: ReferralProgramSlideCardProps) => {
-  const cardClassName = `mx-auto flex h-[17rem] w-full max-w-[18rem] flex-col overflow-hidden rounded-2xl bg-white shadow transition-shadow hover:shadow-md ${onClick || href ? "cursor-pointer" : ""} ${className || ""}`;
+  const cardClassName = `mx-auto flex h-[17rem] w-full max-w-[18rem] flex-col overflow-hidden rounded-2xl bg-white shadow transition-shadow hover:shadow-md [touch-action:pan-y] select-none [-webkit-user-drag:none] [user-drag:none] ${onClick || href ? "cursor-pointer" : ""} ${className || ""}`;
 
   const defaultBadges = (
     <>
@@ -57,7 +57,13 @@ export const ReferralProgramSlideCard = ({
     <>
       <div className="relative h-56 w-full">
         {imageURL ? (
-          <Image src={imageURL} alt={title} fill className="object-cover" />
+          <Image
+            src={imageURL}
+            alt={title}
+            fill
+            className="pointer-events-none object-cover"
+            draggable={false}
+          />
         ) : (
           <div className="from-gray-light to-gray flex h-full w-full items-center justify-center bg-gradient-to-br">
             <span className="text-gray-dark inline-flex items-center gap-1.5 rounded-full border border-white/70 bg-white/80 px-3 py-1 text-xs font-semibold tracking-wide uppercase">
@@ -86,15 +92,15 @@ export const ReferralProgramSlideCard = ({
 
   if (href) {
     return (
-      <Link href={href} className={cardClassName}>
+      <ReferralTapCard href={href} className={cardClassName}>
         {cardContent}
-      </Link>
+      </ReferralTapCard>
     );
   }
 
   return (
-    <div onClick={onClick} className={cardClassName}>
+    <ReferralTapCard onClick={onClick} className={cardClassName}>
       {cardContent}
-    </div>
+    </ReferralTapCard>
   );
 };

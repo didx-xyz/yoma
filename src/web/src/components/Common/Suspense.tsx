@@ -17,18 +17,18 @@ const Suspense: React.FC<SuspenseProps> = ({
   loader = <LoadingSkeleton />,
 }) => {
   if (isLoading) {
-    return <div className={`animate-fade-in ${className}`}>{loader}</div>;
+    return <div className={className}>{loader}</div>;
   }
 
   if (error) {
     return (
-      <div className={`animate-fade-in ${className}`}>
+      <div className={className}>
         <ApiErrors error={error} />
       </div>
     );
   }
 
-  return <div className={`animate-fade-in ${className}`}>{children}</div>;
+  return <div className={className}>{children}</div>;
 };
 
 export default Suspense;

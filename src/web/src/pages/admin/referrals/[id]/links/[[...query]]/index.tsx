@@ -1,11 +1,9 @@
-import { QueryClient, dehydrate } from "@tanstack/react-query";
 import axios from "axios";
-import { type GetServerSidePropsContext } from "next";
-import { getServerSession } from "next-auth";
+import { useSession } from "next-auth/react";
 import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { useCallback, useState, type ReactElement } from "react";
+import { useCallback, useEffect, useState, type ReactElement } from "react";
 import { IoMdArrowRoundBack, IoMdCopy } from "react-icons/io";
 import Moment from "react-moment";
 import { toast } from "react-toastify";
@@ -13,10 +11,6 @@ import {
   ReferralLinkStatus,
   type ReferralLinkSearchFilterAdmin,
 } from "~/api/models/referrals";
-import {
-  getReferralProgramById,
-  searchReferralLinksAdmin,
-} from "~/api/services/referrals";
 import CustomSlider from "~/components/Carousel/CustomSlider";
 import MainLayout from "~/components/Layout/Main";
 import NoRowsMessage from "~/components/NoRowsMessage";
@@ -28,114 +22,43 @@ import {
   ReferralLinkSearchFilters,
 } from "~/components/Referrals/AdminReferralLinkSearchFilter";
 import { InternalServerError } from "~/components/Status/InternalServerError";
+import { Loading } from "~/components/Status/Loading";
 import { LoadingSkeleton } from "~/components/Status/LoadingSkeleton";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import {
-  REFERRAL_PROGRAM_QUERY_KEYS,
   useReferralLinkCountQuery,
   useReferralLinksAdminQuery,
   useReferralProgramByIdQuery,
 } from "~/hooks/useReferralProgramMutations";
 import { DATE_FORMAT_HUMAN, PAGE_SIZE, THEME_BLUE } from "~/lib/constants";
-import { config } from "~/lib/react-query-config";
-import { getSafeUrl, getThemeFromRole } from "~/lib/utils";
+import { getSafeUrl } from "~/lib/utils";
 import { type NextPageWithLayout } from "~/pages/_app";
-import { authOptions } from "~/server/auth";
+const getErrorStatus = (error: unknown): number | null => {
+  if (!axios.isAxiosError(error)) return null;
+  return error.response?.status ?? null;
+};
 
-// ⚠️ SSR
-export async function getServerSideProps(context: GetServerSidePropsContext) {
-  const { id, query, page, status, valueContains, userId, returnUrl } =
-    context.query;
-  const session = await getServerSession(context.req, context.res, authOptions);
-  const queryClient = new QueryClient(config);
-  let errorCode = null;
-
-  // 👇 ensure authenticated
-  if (!session) {
-    return {
-      props: {
-        error: 401,
-      },
-    };
-  }
-
-  // 👇 set theme based on role
-  const theme = getThemeFromRole(session);
-
-  // 👇 ensure id is provided
-  if (!id) {
-    return {
-      notFound: true,
-      props: { theme: theme },
-    };
-  }
-
-  try {
-    // 👇 prefetch queries on server
-    const searchFilter: ReferralLinkSearchFilterAdmin = {
-      pageNumber: page ? parseInt(page.toString()) : 1,
-      pageSize: PAGE_SIZE,
-      programId: id.toString(),
-      userId: userId?.toString() ?? null,
-      statuses: status ? [status.toString() as ReferralLinkStatus] : null,
-      valueContains: valueContains?.toString() ?? null,
-    };
-
-    const [linksData, programData] = await Promise.all([
-      searchReferralLinksAdmin(searchFilter, context),
-      getReferralProgramById(id.toString(), context),
-    ]);
-    const searchResultsKey = `${id}_${query?.toString()}_${page?.toString()}_${status?.toString()}_${valueContains?.toString()}_${userId?.toString()}`;
-
-    await queryClient.prefetchQuery({
-      queryKey: REFERRAL_PROGRAM_QUERY_KEYS.adminLinksList(searchResultsKey),
-      queryFn: () => linksData,
-    });
-
-    await queryClient.prefetchQuery({
-      queryKey: REFERRAL_PROGRAM_QUERY_KEYS.detail(id.toString()),
-      queryFn: () => programData,
-    });
-  } catch (error) {
-    if (axios.isAxiosError(error) && error.response?.status) {
-      if (error.response.status === 404) {
-        return {
-          notFound: true,
-          props: { theme: theme },
-        };
-      } else errorCode = error.response.status;
-    } else errorCode = 500;
-  }
-
-  return {
-    props: {
-      dehydratedState: dehydrate(queryClient),
-      id: id.toString(),
-      query: query ?? null,
-      page: page ?? null,
-      status: status ?? null,
-      valueContains: valueContains ?? null,
-      userId: userId ?? null,
-      theme: theme,
-      error: errorCode,
-      returnUrl: returnUrl ?? null,
-    },
-  };
-}
-
-const ReferralLinks: NextPageWithLayout<{
-  id: string;
-  query?: string;
-  page?: string;
-  theme: string;
-  error?: number;
-  status?: string;
-  valueContains?: string;
-  userId?: string;
-  returnUrl?: string;
-}> = ({ id, query, page, status, valueContains, userId, error, returnUrl }) => {
+const ReferralLinks: NextPageWithLayout = () => {
   const router = useRouter();
+  const { status: sessionStatus } = useSession();
+  const id = typeof router.query.id === "string" ? router.query.id : "";
+  const query =
+    typeof router.query.query === "string" ? router.query.query : undefined;
+  const page =
+    typeof router.query.page === "string" ? router.query.page : undefined;
+  const status =
+    typeof router.query.status === "string" ? router.query.status : undefined;
+  const valueContains =
+    typeof router.query.valueContains === "string"
+      ? router.query.valueContains
+      : undefined;
+  const userId =
+    typeof router.query.userId === "string" ? router.query.userId : undefined;
+  const returnUrl =
+    typeof router.query.returnUrl === "string"
+      ? router.query.returnUrl
+      : undefined;
 
   // search filter state
   const [searchFilter, setSearchFilter] =
@@ -148,42 +71,64 @@ const ReferralLinks: NextPageWithLayout<{
       valueContains: valueContains ?? null,
     });
 
+  useEffect(() => {
+    if (!router.isReady) return;
+
+    setSearchFilter({
+      pageNumber: page ? parseInt(page.toString()) : 1,
+      pageSize: PAGE_SIZE,
+      programId: id,
+      userId: userId ?? null,
+      statuses: status ? [status as ReferralLinkStatus] : null,
+      valueContains: valueContains ?? null,
+    });
+  }, [router.isReady, page, id, userId, status, valueContains]);
+
   // 👇 use prefetched queries from server
-  const { data: program } = useReferralProgramByIdQuery(id, {
-    enabled: !error,
-  });
+  const { data: program, error: programError } = useReferralProgramByIdQuery(
+    id,
+    {
+      enabled: sessionStatus === "authenticated" && router.isReady && !!id,
+    },
+  );
 
   const searchResultsKey = `${id}_${query?.toString()}_${page?.toString()}_${status?.toString()}_${valueContains?.toString()}_${userId?.toString()}`;
 
-  const { data: searchResults, isLoading: isLoadingSearchResults } =
-    useReferralLinksAdminQuery(searchFilter, searchResultsKey, {
-      enabled: !error,
-    });
+  const {
+    data: searchResults,
+    isLoading: isLoadingSearchResults,
+    error: searchResultsError,
+  } = useReferralLinksAdminQuery(searchFilter, searchResultsKey, {
+    enabled: sessionStatus === "authenticated" && router.isReady && !!id,
+  });
 
   // Get counts by status
   const { data: totalCountAll } = useReferralLinkCountQuery(id, null, {
-    enabled: !error,
+    enabled: sessionStatus === "authenticated" && router.isReady && !!id,
   });
   const { data: totalCountActive } = useReferralLinkCountQuery(
     id,
     ReferralLinkStatus.Active,
-    { enabled: !error },
+    { enabled: sessionStatus === "authenticated" && router.isReady && !!id },
   );
   const { data: totalCountCancelled } = useReferralLinkCountQuery(
     id,
     ReferralLinkStatus.Cancelled,
-    { enabled: !error },
+    { enabled: sessionStatus === "authenticated" && router.isReady && !!id },
   );
   const { data: totalCountLimitReached } = useReferralLinkCountQuery(
     id,
     ReferralLinkStatus.LimitReached,
-    { enabled: !error },
+    { enabled: sessionStatus === "authenticated" && router.isReady && !!id },
   );
   const { data: totalCountExpired } = useReferralLinkCountQuery(
     id,
     ReferralLinkStatus.Expired,
-    { enabled: !error },
+    { enabled: sessionStatus === "authenticated" && router.isReady && !!id },
   );
+
+  const error =
+    getErrorStatus(searchResultsError) ?? getErrorStatus(programError);
 
   // 🎈 FUNCTIONS
   const getSearchFilterAsQueryString = useCallback(
@@ -261,6 +206,14 @@ const ReferralLinks: NextPageWithLayout<{
     toast.success("URL copied to clipboard!", { autoClose: 2000 });
   }, []);
   //#endregion Event Handlers
+
+  if (sessionStatus === "loading" || !router.isReady) {
+    return <Loading />;
+  }
+
+  if (sessionStatus === "unauthenticated") {
+    return <Unauthenticated />;
+  }
 
   if (error) {
     if (error === 401) return <Unauthenticated />;

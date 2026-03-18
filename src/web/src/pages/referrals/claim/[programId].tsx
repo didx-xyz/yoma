@@ -1,16 +1,10 @@
-import { QueryClient, dehydrate } from "@tanstack/react-query";
 import { useAtomValue, useSetAtom } from "jotai";
-import { type GetServerSidePropsContext } from "next";
-import { getServerSession } from "next-auth";
+import { useSession } from "next-auth/react";
 import Head from "next/head";
 import { useRouter } from "next/router";
 import { useCallback, useEffect, useState, type ReactElement } from "react";
 import { IoGift, IoTimeOutline, IoTrophyOutline } from "react-icons/io5";
-import type { UserProfile } from "~/api/models/user";
-import {
-  claimReferralLinkAsReferee,
-  getReferralProgramInfoByLinkId,
-} from "~/api/services/referrals";
+import { claimReferralLinkAsReferee } from "~/api/services/referrals";
 import { getUserProfile } from "~/api/services/user";
 import MainLayout from "~/components/Layout/Main";
 import NoRowsMessage from "~/components/NoRowsMessage";
@@ -21,138 +15,19 @@ import { ReferralStatCard } from "~/components/Referrals/ReferralStatCard";
 import { ReferralTasksCard } from "~/components/Referrals/ReferralTasksCard";
 import { ReferralTopCard } from "~/components/Referrals/ReferralTopCard";
 import { LoadingInline } from "~/components/Status/LoadingInline";
-import {
-  REFERRAL_PROGRAM_QUERY_KEYS,
-  useReferralProgramInfoByLinkQuery,
-} from "~/hooks/useReferralProgramMutations";
+import { useReferralProgramInfoByLinkQuery } from "~/hooks/useReferralProgramMutations";
 import analytics from "~/lib/analytics";
 import { parseApiError } from "~/lib/apiErrorUtils";
 import { handleUserSignIn } from "~/lib/authUtils";
 import { THEME_WHITE } from "~/lib/constants";
-import { config } from "~/lib/react-query-config";
 import { currentLanguageAtom, userProfileAtom } from "~/lib/store";
 import { cleanTextForMetaTag } from "~/lib/utils";
 import { getProfileCompletionStep } from "~/lib/utils/profile";
-import { authOptions } from "~/server/auth";
 import { type NextPageWithLayout } from "../../_app";
 import { Editor } from "~/components/RichText/Editor";
-
-export async function getServerSideProps(context: GetServerSidePropsContext) {
-  const session = await getServerSession(context.req, context.res, authOptions);
-
-  const { programId } = context.params!;
-  const { linkId } = context.query;
-
-  if (!programId || typeof programId !== "string") {
-    return {
-      notFound: true,
-    };
-  }
-
-  if (!linkId || typeof linkId !== "string") {
-    return {
-      props: {
-        error: "Link ID is required",
-        programId,
-        isAuthenticated: !!session,
-      },
-    };
-  }
-
-  const queryClient = new QueryClient(config);
-
-  try {
-    // Prefetch program info using the new endpoint that accepts linkId
-    await queryClient.fetchQuery({
-      queryKey: REFERRAL_PROGRAM_QUERY_KEYS.infoByLink(linkId),
-      queryFn: () => getReferralProgramInfoByLinkId(linkId, context),
-    });
-
-    // If user is authenticated, check profile completion status
-    if (session) {
-      try {
-        // Get user profile to check completion status
-        const userProfile = await getUserProfile(context);
-        const completionStep = getProfileCompletionStep(userProfile);
-
-        // If profile is not complete, return props to show profile completion wizard
-        // Don't attempt claim server-side as settings and photo steps are optional
-        if (completionStep !== "complete") {
-          return {
-            props: {
-              dehydratedState: dehydrate(queryClient),
-              linkId,
-              programId,
-              isAuthenticated: true,
-              needsProfileCompletion: true,
-              userProfile,
-            },
-          };
-        }
-
-        // Profile is complete, but don't claim server-side
-        // Let client-side handle claim to show loading state
-        return {
-          props: {
-            dehydratedState: dehydrate(queryClient),
-            linkId,
-            programId,
-            isAuthenticated: true,
-            needsProfileCompletion: false,
-            userProfile,
-          },
-        };
-      } catch (error: any) {
-        console.error("Error checking user profile:", error);
-        // Return authenticated state, let client handle
-        return {
-          props: {
-            dehydratedState: dehydrate(queryClient),
-            linkId,
-            programId,
-            isAuthenticated: true,
-          },
-        };
-      }
-    }
-
-    return {
-      props: {
-        dehydratedState: dehydrate(queryClient),
-        linkId,
-        programId,
-        isAuthenticated: !!session,
-      },
-    };
-  } catch (error) {
-    console.error("Error fetching referral program:", error);
-    return {
-      props: {
-        error: "Program not found or unavailable",
-        linkId,
-        programId,
-        isAuthenticated: !!session,
-      },
-    };
-  }
-}
-
-const ReferralClaimPage: NextPageWithLayout<{
-  linkId: string;
-  programId: string;
-  isAuthenticated: boolean;
-  error?: string;
-  needsProfileCompletion?: boolean;
-  userProfile?: UserProfile;
-}> = ({
-  linkId,
-  programId,
-  isAuthenticated,
-  error: serverError,
-  needsProfileCompletion,
-  userProfile: serverUserProfile,
-}) => {
+const ReferralClaimPage: NextPageWithLayout = () => {
   const router = useRouter();
+  const { status: sessionStatus } = useSession();
   const [claiming, setClaiming] = useState(false);
   const [claimingAfterProfile, setClaimingAfterProfile] = useState(false);
   const [claimError, setClaimError] = useState<any>(null);
@@ -160,20 +35,24 @@ const ReferralClaimPage: NextPageWithLayout<{
   const currentLanguage = useAtomValue(currentLanguageAtom);
   const userProfile = useAtomValue(userProfileAtom);
   const setUserProfile = useSetAtom(userProfileAtom);
-
-  // Update atom with server-side user profile if available
-  useEffect(() => {
-    if (serverUserProfile && !userProfile) {
-      setUserProfile(serverUserProfile);
-    }
-  }, [serverUserProfile, userProfile, setUserProfile]);
+  const programId =
+    typeof router.query.programId === "string" ? router.query.programId : "";
+  const linkId =
+    typeof router.query.linkId === "string" ? router.query.linkId : "";
+  const isAuthenticated = sessionStatus === "authenticated";
+  const needsProfileCompletion =
+    isAuthenticated && userProfile
+      ? getProfileCompletionStep(userProfile) !== "complete"
+      : undefined;
 
   // Fetch program data
   const {
     data: program,
     error: programError,
     isLoading: programLoading,
-  } = useReferralProgramInfoByLinkQuery(linkId, { enabled: !serverError });
+  } = useReferralProgramInfoByLinkQuery(linkId, {
+    enabled: router.isReady && !!linkId,
+  });
 
   const handleClaim = useCallback(async () => {
     setClaiming(true);
@@ -273,10 +152,15 @@ const ReferralClaimPage: NextPageWithLayout<{
   ]);
 
   const isPageLoading = programLoading || claimingAfterProfile;
-  const hasPageError = !!(serverError || programError || !program);
+  const hasPageError =
+    (router.isReady && (!programId || !linkId)) ||
+    Boolean(programError) ||
+    (!isPageLoading && router.isReady && !program);
 
   const pageErrorMessage = (() => {
-    if (serverError) return serverError;
+    if (router.isReady && !linkId) return "Link ID is required";
+    if (router.isReady && !programId)
+      return "Referral programme not found or unavailable";
     if (programError) {
       const { errors, message } = parseApiError(programError);
       return (
@@ -383,7 +267,14 @@ const ReferralClaimPage: NextPageWithLayout<{
         headerBackgroundMode="color"
         headerBackgroundColorClassName="bg-orange"
         onBack={() => router.push("/referrals")}
-        isLoading={isPageLoading}
+        isLoading={
+          !hasPageError &&
+          (!router.isReady ||
+            sessionStatus === "loading" ||
+            programLoading ||
+            claimingAfterProfile ||
+            (isAuthenticated && !userProfile))
+        }
       >
         {pageErrorContent ? (
           pageErrorContent

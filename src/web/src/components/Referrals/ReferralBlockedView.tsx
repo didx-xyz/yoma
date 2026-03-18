@@ -19,17 +19,12 @@ export const ReferralBlockedView: React.FC<RequestBlockedViewProps> = ({
 
   const blockedDescription = `
     <div>
-      <p>Your access to the referral program has been temporarily suspended. If you believe this is an error, please contact support.</p>
-      ${
-        blockedDate
-          ? `<p class="text-sm text-gray-600">Suspended on: ${blockedDate}</p>`
-          : ""
-      }
+      <p>Your access to the program was temporarily suspended${blockedDate ? ` on ${blockedDate}` : ""}.</p><p>If you believe this is an error, please contact support.</p>
     </div>
   `;
 
   return (
-    <div className="my-10 flex flex-col items-center justify-center">
+    <div className="flex flex-col items-center justify-center">
       <NoRowsMessage
         title="Referral Access Suspended"
         description={blockedDescription}

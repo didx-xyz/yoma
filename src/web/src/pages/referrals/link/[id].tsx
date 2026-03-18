@@ -1,20 +1,11 @@
-import { QueryClient, dehydrate } from "@tanstack/react-query";
-import axios from "axios";
 import { useAtomValue } from "jotai";
-import { type GetServerSidePropsContext } from "next";
-import { getServerSession } from "next-auth";
+import { useSession } from "next-auth/react";
 import Head from "next/head";
 import { useRouter } from "next/router";
-import { type ReactElement, useState } from "react";
+import { type ReactElement, useEffect, useState } from "react";
 import { FaShareAlt } from "react-icons/fa";
 import { IoTimeOutline, IoTrophyOutline } from "react-icons/io5";
 import { ProgramStatus, ReferralLinkStatus } from "~/api/models/referrals";
-import type { UserProfile } from "~/api/models/user";
-import {
-  getReferralLinkById,
-  getReferralProgramInfoByLinkId,
-} from "~/api/services/referrals";
-import { getUserProfile } from "~/api/services/user";
 import MainLayout from "~/components/Layout/Main";
 import NoRowsMessage from "~/components/NoRowsMessage";
 import { ReferralBlockedView } from "~/components/Referrals/ReferralBlockedView";
@@ -27,99 +18,48 @@ import { ReferralTopCard } from "~/components/Referrals/ReferralTopCard";
 import { ReferrerReferralsList } from "~/components/Referrals/ReferrerReferralsList";
 import { LoadingInline } from "~/components/Status/LoadingInline";
 import {
-  REFERRAL_PROGRAM_QUERY_KEYS,
   useReferralLinkByIdQuery,
   useReferralProgramInfoByLinkQuery,
 } from "~/hooks/useReferralProgramMutations";
 import { parseApiError } from "~/lib/apiErrorUtils";
 import { handleUserSignIn } from "~/lib/authUtils";
 import { THEME_WHITE } from "~/lib/constants";
-import { config } from "~/lib/react-query-config";
 import { currentLanguageAtom, userProfileAtom } from "~/lib/store";
-import { authOptions } from "~/server/auth";
 import { type NextPageWithLayout } from "../../_app";
-
-export async function getServerSideProps(context: GetServerSidePropsContext) {
-  const session = await getServerSession(context.req, context.res, authOptions);
-
-  if (!session) {
-    return {
-      props: {
-        error: 401,
-      },
-    };
-  }
-
-  const { id } = context.query;
-  const linkId = id as string;
-
-  let userProfileServer: UserProfile | null = null;
-  try {
-    userProfileServer = await getUserProfile(context);
-  } catch (e) {
-    console.error("Failed to fetch user profile", e);
-  }
-
-  const queryClient = new QueryClient(config);
-  let errorCode: number | null = null;
-
-  try {
-    await queryClient.fetchQuery({
-      queryKey: REFERRAL_PROGRAM_QUERY_KEYS.link(linkId),
-      queryFn: () => getReferralLinkById(linkId, false, context),
-    });
-
-    await queryClient.fetchQuery({
-      queryKey: REFERRAL_PROGRAM_QUERY_KEYS.infoByLink(linkId),
-      queryFn: () => getReferralProgramInfoByLinkId(linkId, context),
-    });
-  } catch (error) {
-    console.error("Failed to fetch referral link page data", error);
-    if (axios.isAxiosError(error) && error.response?.status) {
-      errorCode = error.response.status;
-    } else {
-      errorCode = 500;
-    }
-  }
-
-  return {
-    props: {
-      dehydratedState: dehydrate(queryClient),
-      user: session?.user ?? null,
-      linkId,
-      userProfileServer,
-      error: errorCode,
-    },
-  };
-}
-
-const ReferralLinkPage: NextPageWithLayout<{
-  linkId: string;
-  error?: number;
-  userProfileServer?: UserProfile | null;
-}> = ({ linkId, error, userProfileServer }) => {
+const ReferralLinkPage: NextPageWithLayout = () => {
   const router = useRouter();
+  const { status: sessionStatus } = useSession();
   const currentLanguage = useAtomValue(currentLanguageAtom);
-  const userProfileClient = useAtomValue(userProfileAtom);
-  const userProfile = userProfileServer ?? userProfileClient;
+  const userProfile = useAtomValue(userProfileAtom);
   const isBlocked = userProfile?.referral?.blocked ?? false;
+  const linkId = typeof router.query.id === "string" ? router.query.id : "";
+  const hasLinkId = router.isReady && linkId.length > 0;
+
+  useEffect(() => {
+    if (router.isReady && sessionStatus === "unauthenticated") {
+      void handleUserSignIn(currentLanguage);
+    }
+  }, [currentLanguage, router.isReady, sessionStatus]);
 
   const {
     data: link,
     isLoading: linkLoading,
     error: linkError,
-  } = useReferralLinkByIdQuery(linkId, { enabled: !error });
+  } = useReferralLinkByIdQuery(linkId, {
+    enabled: sessionStatus === "authenticated" && hasLinkId,
+  });
 
   const {
     data: program,
     isLoading: programLoading,
     error: programError,
-  } = useReferralProgramInfoByLinkQuery(linkId, { enabled: !error });
+  } = useReferralProgramInfoByLinkQuery(linkId, {
+    enabled: sessionStatus === "authenticated" && hasLinkId,
+  });
 
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
-  if (error === 401) {
-    void handleUserSignIn(currentLanguage);
+  if (sessionStatus === "unauthenticated") {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <LoadingInline
@@ -132,7 +72,7 @@ const ReferralLinkPage: NextPageWithLayout<{
   }
 
   const hasPageError =
-    Boolean(error) || Boolean(linkError) || Boolean(programError);
+    (router.isReady && !linkId) || Boolean(linkError) || Boolean(programError);
 
   const isProgramActive =
     typeof program?.status === "number"
@@ -143,6 +83,10 @@ const ReferralLinkPage: NextPageWithLayout<{
     isProgramActive && link?.status === ReferralLinkStatus.Active;
 
   const pageErrorMessage = (() => {
+    if (router.isReady && !linkId) {
+      return "Referral link not found.";
+    }
+
     if (linkError) {
       const { errors, message } = parseApiError(linkError);
       return (
@@ -181,7 +125,13 @@ const ReferralLinkPage: NextPageWithLayout<{
         headerBackgroundMode="color"
         headerBackgroundColorClassName="bg-orange"
         onBack={() => router.push("/referrals")}
-        isLoading={!hasPageError && (linkLoading || programLoading)}
+        isLoading={
+          !hasPageError &&
+          (sessionStatus === "loading" ||
+            !router.isReady ||
+            linkLoading ||
+            programLoading)
+        }
       >
         {hasPageError ? (
           <div className="mx-auto flex w-full max-w-2xl flex-col items-center gap-4 rounded-xl bg-white p-6 text-center shadow">
@@ -196,7 +146,9 @@ const ReferralLinkPage: NextPageWithLayout<{
             />
           </div>
         ) : isBlocked ? (
-          <ReferralBlockedView userProfile={userProfile} />
+          <div className="mx-auto flex w-full max-w-2xl flex-col items-center gap-4 rounded-xl bg-white p-6 text-center shadow">
+            <ReferralBlockedView userProfile={userProfile} />
+          </div>
         ) : (
           <>
             {program ? (
