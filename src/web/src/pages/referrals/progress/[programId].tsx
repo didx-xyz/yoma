@@ -4,16 +4,17 @@ import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useEffect, useMemo, type ReactElement } from "react";
-import { IoOpenOutline } from "react-icons/io5";
+import { IoOpenOutline, IoTimeOutline, IoTrophyOutline } from "react-icons/io5";
 import { toast } from "react-toastify";
-import {
-  type ProgramInfo,
-  type ReferralLinkUsageInfo,
-} from "~/api/models/referrals";
 import MainLayout from "~/components/Layout/Main";
 import NoRowsMessage from "~/components/NoRowsMessage";
+import { ReferralInfoCard } from "~/components/Referrals/ReferralInfoCard";
+import { ReferralMainColumns } from "~/components/Referrals/ReferralMainColumns";
+import { ReferralProgressCard } from "~/components/Referrals/ReferralProgressCard";
 import { ReferralShell } from "~/components/Referrals/ReferralShell";
-import { ReferralProgramPagePreview } from "~/components/Referrals/ReferralProgramPagePreview";
+import { ReferralStatCard } from "~/components/Referrals/ReferralStatCard";
+import { ReferralTasksCard } from "~/components/Referrals/ReferralTasksCard";
+import { ReferralTopCard } from "~/components/Referrals/ReferralTopCard";
 import { RefereeWelcomeModal } from "~/components/Referrals/RefereeWelcomeModal";
 import { LoadingInline } from "~/components/Status/LoadingInline";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
@@ -27,82 +28,7 @@ import { handleUserSignOut } from "~/lib/authUtils";
 import { hasDismissedRefereeWelcomeModalAtom } from "~/lib/store";
 import { getSafeUrl } from "~/lib/utils";
 import { type NextPageWithLayout } from "../../_app";
-
-interface RefereeProofOfPersonhoodActionProps {
-  usage: ReferralLinkUsageInfo;
-  program: ProgramInfo;
-}
-
-const RefereeProofOfPersonhoodAction: React.FC<
-  RefereeProofOfPersonhoodActionProps
-> = ({ usage, program }) => {
-  const router = useRouter();
-  const popRequired = program.proofOfPersonhoodRequired;
-  const popCompleted = usage.proofOfPersonhoodCompleted ?? false;
-
-  if (!(popRequired && !popCompleted)) {
-    return null;
-  }
-
-  return (
-    <div
-      id="next-action-pop"
-      className="space-y-3 rounded-lg border border-gray-200 bg-white px-4 py-3"
-    >
-      <div>
-        <p className="text-lg font-semibold text-black">
-          Verify your personhood
-        </p>
-        <p className="text-gray-dark mt-1 text-sm">
-          Choose one option to verify your identity and continue with the
-          programme.
-        </p>
-      </div>
-
-      <div className="flex flex-col items-center gap-3 rounded-lg border border-gray-200 bg-white px-3 py-3 md:flex-row">
-        <div className="w-full min-w-0 pr-3">
-          <p className="truncate text-base font-semibold text-black">
-            Phone verification
-          </p>
-          <p className="text-gray-dark text-sm">
-            Add a phone number in your profile. You&apos;ll be asked to sign in
-            again.
-          </p>
-        </div>
-
-        <Link
-          href={`/user/profile?returnUrl=${encodeURIComponent(getSafeUrl(router.asPath, "/yoid"))}`}
-          className="btn btn-sm bg-green hover:bg-green-dark h-9 w-[160px] rounded-full border-0 px-5 text-white normal-case"
-        >
-          <IoOpenOutline className="h-4 w-4" />
-          Go to Profile
-        </Link>
-      </div>
-      <div className="flex flex-col items-center gap-3 rounded-lg border border-gray-200 bg-white px-3 py-3 md:flex-row">
-        <div className="w-full min-w-0 pr-3">
-          <p className="truncate text-base font-semibold text-black">
-            Social sign-in
-          </p>
-          <p className="text-gray-dark text-sm">
-            Sign in with Google or Facebook. Use the same email to keep your
-            progress.
-          </p>
-        </div>
-
-        <button
-          type="button"
-          onClick={() =>
-            handleUserSignOut(true, false, getSafeUrl(router.asPath, "/yoid"))
-          }
-          className="btn btn-sm bg-green hover:bg-green-dark h-9 w-[160px] rounded-full border-0 px-5 text-white normal-case"
-        >
-          <IoOpenOutline className="h-4 w-4" />
-          Continue
-        </button>
-      </div>
-    </div>
-  );
-};
+import { Editor } from "~/components/RichText/Editor";
 
 const RefereeDashboard: NextPageWithLayout = () => {
   const router = useRouter();
@@ -225,6 +151,40 @@ const RefereeDashboard: NextPageWithLayout = () => {
 
   const welcomeUserName = usage?.userDisplayName?.trim() || "there";
 
+  const requiresProofOfPersonhood =
+    Boolean(program?.proofOfPersonhoodRequired) &&
+    !(usage?.proofOfPersonhoodCompleted ?? false);
+
+  const subtitleActionParts = [
+    requiresProofOfPersonhood ? "verify your personhood" : null,
+    program?.pathwayRequired ? "complete the below pathway" : null,
+  ].filter((part): part is string => Boolean(part));
+
+  const subtitleActionText =
+    subtitleActionParts.length === 0
+      ? "complete this programme"
+      : subtitleActionParts.length === 1
+        ? subtitleActionParts[0]
+        : `${subtitleActionParts[0]} and ${subtitleActionParts[1]}`;
+
+  const subtitleOutcomeText =
+    (program?.zltoRewardReferee || 0) > 0
+      ? `get the opportunity to win ${program?.zltoRewardReferee} Zlto`
+      : "complete this programme";
+
+  const normalizedSubtitleActionText =
+    subtitleActionText ?? "complete this programme";
+
+  const completionWindowSuffix =
+    (program?.completionWindowInDays ?? 0) > 0
+      ? ` within ${program?.completionWindowInDays} days`
+      : "";
+
+  const subtitleNextStepText =
+    requiresProofOfPersonhood && program?.pathwayRequired
+      ? `Verify your personhood and complete the below pathway${completionWindowSuffix} to complete this programme.`
+      : `${normalizedSubtitleActionText.charAt(0).toUpperCase()}${normalizedSubtitleActionText.slice(1)}${completionWindowSuffix} to ${subtitleOutcomeText}.`;
+
   return (
     <>
       <Head>
@@ -264,21 +224,135 @@ const RefereeDashboard: NextPageWithLayout = () => {
             />
           </div>
         ) : (
-          <ReferralProgramPagePreview
-            program={program}
-            referrerDisplayName={usage.userDisplayNameReferrer}
-            showProofOfPersonhoodAction={usage.status === "Pending"}
-            proofOfPersonhoodAction={
-              <RefereeProofOfPersonhoodAction usage={usage} program={program} />
-            }
-            progressModel={usage.pathway}
-            percentComplete={usage.percentComplete ?? 0}
-            timeRemainingDescription={
-              timeInfo
-                ? `${timeInfo.days} day${timeInfo.days === 1 ? "" : "s"} · Complete by ${timeInfo.expiryDate.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`
-                : "No time limit"
-            }
-          />
+          <>
+            <ReferralTopCard
+              program={program}
+              title={`Welcome to ${program.name}!`}
+              subTitle={
+                <>
+                  Welcome to Yoma! You were referred by{" "}
+                  <strong>{usage.userDisplayNameReferrer}</strong>
+                  <br />
+                  {subtitleNextStepText}
+                </>
+              }
+              rewardsReferrer={false}
+              rewardsReferee={true}
+            />
+
+            <ReferralMainColumns
+              left={
+                <>
+                  <ReferralInfoCard>
+                    <div className="-mx-3 -my-5">
+                      <Editor
+                        value={program.description ?? program.summary ?? ""}
+                        readonly={true}
+                      />
+                    </div>
+                  </ReferralInfoCard>
+
+                  {usage.status === "Pending" &&
+                  program.proofOfPersonhoodRequired &&
+                  !(usage.proofOfPersonhoodCompleted ?? false) ? (
+                    <div
+                      id="next-action-pop"
+                      className="space-y-3 rounded-lg border border-gray-200 bg-white px-4 py-3"
+                    >
+                      <div>
+                        <p className="text-lg font-semibold text-black">
+                          Verify your personhood
+                        </p>
+                        <p className="text-gray-dark mt-1 text-sm">
+                          Choose one option to verify your identity and continue
+                          with the programme.
+                        </p>
+                      </div>
+
+                      <div className="flex flex-col items-center gap-3 rounded-lg border border-gray-200 bg-white px-3 py-3 md:flex-row">
+                        <div className="w-full min-w-0 pr-3">
+                          <p className="truncate text-base font-semibold text-black">
+                            Phone verification
+                          </p>
+                          <p className="text-gray-dark text-sm">
+                            Add a phone number in your profile. You&apos;ll be
+                            asked to sign in again.
+                          </p>
+                        </div>
+
+                        <Link
+                          href={`/user/profile?returnUrl=${encodeURIComponent(getSafeUrl(router.asPath, "/yoid"))}`}
+                          className="btn btn-sm bg-green hover:bg-green-dark h-9 w-[160px] rounded-full border-0 px-5 text-white normal-case"
+                        >
+                          <IoOpenOutline className="h-4 w-4" />
+                          Go to Profile
+                        </Link>
+                      </div>
+
+                      <div className="flex flex-col items-center gap-3 rounded-lg border border-gray-200 bg-white px-3 py-3 md:flex-row">
+                        <div className="w-full min-w-0 pr-3">
+                          <p className="truncate text-base font-semibold text-black">
+                            Social sign-in
+                          </p>
+                          <p className="text-gray-dark text-sm">
+                            Sign in with Google or Facebook. Use the same email
+                            to keep your progress.
+                          </p>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            handleUserSignOut(
+                              true,
+                              false,
+                              getSafeUrl(router.asPath, "/yoid"),
+                            )
+                          }
+                          className="btn btn-sm bg-green hover:bg-green-dark h-9 w-[160px] rounded-full border-0 px-5 text-white normal-case"
+                        >
+                          <IoOpenOutline className="h-4 w-4" />
+                          Continue
+                        </button>
+                      </div>
+                    </div>
+                  ) : null}
+
+                  <ReferralTasksCard
+                    model={program.pathway}
+                    progressModel={usage.pathway}
+                  />
+                </>
+              }
+              right={
+                <div className="flex flex-col gap-2 rounded-xl bg-white p-4 shadow">
+                  <ReferralProgressCard
+                    percentComplete={usage.percentComplete ?? 0}
+                  />
+
+                  <ReferralStatCard
+                    icon={<IoTrophyOutline className="h-5 w-5" />}
+                    header="Reward"
+                    description={
+                      (program.zltoRewardReferee || 0) > 0
+                        ? `${program.zltoRewardReferee} Zlto`
+                        : "No reward"
+                    }
+                  />
+
+                  <ReferralStatCard
+                    icon={<IoTimeOutline className="h-5 w-5" />}
+                    header="Time remaining"
+                    description={
+                      timeInfo
+                        ? `${timeInfo.days} day${timeInfo.days === 1 ? "" : "s"} · Complete by ${timeInfo.expiryDate.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`
+                        : "No time limit"
+                    }
+                  />
+                </div>
+              }
+            />
+          </>
         )}
       </ReferralShell>
 

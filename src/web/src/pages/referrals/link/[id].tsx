@@ -154,6 +154,8 @@ const ReferralLinkPage: NextPageWithLayout = () => {
             {program ? (
               <ReferralTopCard
                 program={program}
+                title={program.name}
+                subTitle={program.summary ?? program.description}
                 rewardsReferrer={true}
                 rewardsReferee={false}
                 cta={
