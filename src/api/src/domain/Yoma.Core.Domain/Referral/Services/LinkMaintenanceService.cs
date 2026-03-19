@@ -21,6 +21,9 @@ namespace Yoma.Core.Domain.Referral.Services
 
     private readonly IRepositoryBatchedValueContainsWithNavigation<ReferralLink> _linkRepository;
     private readonly IRepositoryBatched<ReferralLinkUsage> _linkUsageRepository;
+
+    private const int Processing_BatchSize = 1000;
+    private const int Processing_Parallelism = 10;
     #endregion
 
     #region Constructor
@@ -226,34 +229,53 @@ namespace Yoma.Core.Domain.Referral.Services
     /// </summary>
     public async Task ProcessUsageProgressByProgramId(Guid programId, ILogger? logger = null)
     {
-      if (programId == Guid.Empty)
-        throw new ArgumentNullException(nameof(programId));
+      if (programId == Guid.Empty) throw new ArgumentNullException(nameof(programId));
 
       var statusPendingId = _linkUsageStatusService.GetByName(ReferralLinkUsageStatus.Pending.ToString()).Id;
+      var totalProcessed = 0;
+      var page = 0;
 
-      var items = _linkUsageRepository.Query().Where(o => o.ProgramId == programId && o.StatusId == statusPendingId).ToList();
+      using var throttler = new SemaphoreSlim(Processing_Parallelism, Processing_Parallelism);
 
-      if (items.Count == 0)
+      while (true)
       {
-        if (logger?.IsEnabled(LogLevel.Information) == true)
-          logger.LogInformation("No pending link usages found for program {ProgramId}", programId);
-        return;
-      }
+        var items = _linkUsageRepository.Query()
+          .Where(o => o.ProgramId == programId && o.StatusId == statusPendingId)
+          .OrderBy(o => o.Id)
+          .Take(Processing_BatchSize)
+          .Select(o => new { o.UserId, o.Username, o.UserDisplayName })
+          .ToList();
 
-      foreach (var item in items)
-      {
-        await _mediator.Publish(new ReferralProgressTriggerEvent(
-          new ReferralProgressTriggerMessage
+        if (items.Count == 0) break;
+
+        var tasks = items.Select(async item =>
+        {
+          await throttler.WaitAsync();
+          try
           {
-            Source = ReferralTriggerSource.ProgramUpdated,
-            UserId = item.UserId,
-            Username = item.Username,
-            UserDisplayName = item.UserDisplayName
-          }));
+            await _mediator.Publish(new ReferralProgressTriggerEvent(new ReferralProgressTriggerMessage
+            {
+              Source = ReferralTriggerSource.ProgramUpdated,
+              UserId = item.UserId,
+              Username = item.Username,
+              UserDisplayName = item.UserDisplayName
+            }));
+          }
+          finally { throttler.Release(); }
+        });
+
+        await Task.WhenAll(tasks);
+
+        totalProcessed += items.Count;
+        page++;
       }
 
-      if (logger?.IsEnabled(LogLevel.Information) == true)
-        logger.LogInformation("Processed {Count} pending link usage(s) for program {ProgramId}", items.Count, programId);
+      if (logger == null || !logger.IsEnabled(LogLevel.Information)) return;
+
+      if (totalProcessed == 0)
+        logger.LogInformation("No pending link usages found for program {ProgramId}", programId);
+      else
+        logger.LogInformation("Processed {Count} pending link usage(s) for program {ProgramId}", totalProcessed, programId);
     }
     #endregion
 
@@ -265,25 +287,36 @@ namespace Yoma.Core.Domain.Referral.Services
     {
       if (linkIds == null || linkIds.Count == 0 || linkIds.Any(o => o == Guid.Empty))
         throw new ArgumentNullException(nameof(linkIds));
+
       linkIds = [.. linkIds.Distinct()];
 
       var statusExpiredId = _linkUsageStatusService.GetByName(ReferralLinkUsageStatus.Expired.ToString()).Id;
       var statusExpirableIds = LinkUsageBackgroundService.Statuses_Expirable.Select(o => _linkUsageStatusService.GetByName(o.ToString()).Id).ToList();
 
-      var items = _linkUsageRepository.Query()
-        .Where(o => linkIds.Contains(o.LinkId) && statusExpirableIds.Contains(o.StatusId))
-        .ToList();
+      var totalProcessed = 0;
 
-      if (items.Count == 0)
+      while (true)
       {
-        if (logger?.IsEnabled(LogLevel.Information) == true) logger.LogInformation("No expirable link usages found for {LinkCount} link(s)", linkIds.Count);
-        return;
+        var items = _linkUsageRepository.Query()
+          .Where(o => linkIds.Contains(o.LinkId) && statusExpirableIds.Contains(o.StatusId))
+          .OrderBy(o => o.Id)
+          .Take(Processing_BatchSize)
+          .ToList();
+
+        if (items.Count == 0) break;
+
+        items.ForEach(o => { o.StatusId = statusExpiredId; o.Status = ReferralLinkUsageStatus.Expired; });
+        await _linkUsageRepository.Update(items);
+
+        totalProcessed += items.Count;
       }
 
-      items.ForEach(o => { o.StatusId = statusExpiredId; o.Status = ReferralLinkUsageStatus.Expired; });
-      await _linkUsageRepository.Update(items);
+      if (logger == null || !logger.IsEnabled(LogLevel.Information)) return;
 
-      if (logger?.IsEnabled(LogLevel.Information) == true) logger.LogInformation("Expired {Count} link usage(s) across {LinkCount} link(s)", items.Count, linkIds.Count);
+      if (totalProcessed == 0)
+        logger.LogInformation("No expirable link usages found for {LinkCount} link(s)", linkIds.Count);
+      else
+        logger.LogInformation("Expired {Count} link usage(s) across {LinkCount} link(s)", totalProcessed, linkIds.Count);
     }
     #endregion
   }
