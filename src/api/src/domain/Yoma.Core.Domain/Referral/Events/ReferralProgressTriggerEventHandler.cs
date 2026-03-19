@@ -28,10 +28,13 @@ namespace Yoma.Core.Domain.Referral.Events
       {
         switch (notification.Entity.Source)
         {
+          case ReferralTriggerSource.ProgramUpdated:
           case ReferralTriggerSource.IdentityAction:
-            if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Referral progress: handling identity trigger for user {UserId} ({Username})",
-              notification.Entity.UserId,
-              notification.Entity.Username);
+            if (_logger.IsEnabled(LogLevel.Information))
+              _logger.LogInformation("Referral progress: handling {Source} trigger for user {UserId} ({Username})",
+                notification.Entity.Source,
+                notification.Entity.UserId,
+                notification.Entity.Username);
             break;
 
           case ReferralTriggerSource.OpportunityCompletion:
@@ -42,7 +45,8 @@ namespace Yoma.Core.Domain.Referral.Events
               throw new InvalidOperationException("OpportunityTitle must be provided for OpportunityCompletion source");
 
             if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation(
-              "Referral progress: handling Opportunity trigger for user {UserId} ({Username}) — opportunity {OpportunityId} '{OpportunityTitle}'",
+              "Referral progress: handling {Source} trigger for user {UserId} ({Username}) — opportunity {OpportunityId} '{OpportunityTitle}'",
+              notification.Entity.Source,
               notification.Entity.UserId,
               notification.Entity.Username,
               notification.Entity.OpportunityId,
@@ -59,7 +63,7 @@ namespace Yoma.Core.Domain.Referral.Events
       {
         if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex,
           "Referral progress: failed processing {Source} trigger for user {UserId} ({Username}) — error: {ErrorMessage}",
-          notification.Entity.Source.ToString(),
+          notification.Entity.Source,
           notification.Entity.UserId,
           notification.Entity.Username,
           ex.Message);
