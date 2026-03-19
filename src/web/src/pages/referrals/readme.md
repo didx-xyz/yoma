@@ -10,7 +10,7 @@ This document describes the features of the Yoma Ambassador referral program pag
 
 ## 1. Referrals Landing (`/referrals`)
 
-Purpose: Single entry point for anonymous users, referrers, and referees.
+Purpose: Single entry point for anonymous users, ambassadors and referees.
 
 Current behavior:
 - Anonymous users see an intro/welcome experience with sign-in CTA.
@@ -228,7 +228,7 @@ Notable features to test:
 - Click each status tab — verify list filters correctly.
 - Search by name (`valueContains`) — verify results narrow as expected.
 - For a programme with a per-referrer cap, verify the "Remaining" completion count column is shown; for programmes without a cap, verify it is hidden.
-- Verify "⚠️ Blocked on [date]" warning appears on links belonging to blocked referrers.
+- Verify "⚠️ Blocked on [date]" warning appears on links belonging to blocked ambassadors.
 - Click the copy-to-clipboard URL button — verify the link URL is copied and a success toast appears.
 - Click "Cancel" for a link via the actions dropdown — verify status updates to Cancelled.
 - Click a link name — verify navigation to the usage list for that link.

@@ -569,7 +569,8 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
                 </div>
               </div>
 
-              <div className="flex">
+              {/* NB: FEATURE HIDDEN ON UI, SUPPORTED IN BACK-END */}
+              {/* <div className="flex">
                 <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
                   Multiple Links
                 </div>
@@ -580,7 +581,7 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
                     <span className="text-gray-400">Not allowed</span>
                   )}
                 </div>
-              </div>
+              </div> */}
 
               <div className="flex">
                 <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
@@ -627,7 +628,7 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
             <div className="grid grid-cols-1 overflow-hidden rounded-lg border border-gray-200 md:grid-cols-2">
               <div className="flex">
                 <div className="w-52 border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
-                  Total Referrers
+                  Total Ambassadors
                 </div>
                 <div className="flex-1 border border-gray-200 px-4 py-2 text-xs hover:bg-gray-100">
                   {analytics?.referrerCount?.toLocaleString("en-US") ?? "—"}
