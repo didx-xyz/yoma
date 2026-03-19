@@ -251,7 +251,6 @@ const RefereeDashboard: NextPageWithLayout = () => {
                       />
                     </div>
                   </ReferralInfoCard>
-
                   {usage.status === "Pending" &&
                   program.proofOfPersonhoodRequired &&
                   !(usage.proofOfPersonhoodCompleted ?? false) ? (
@@ -317,7 +316,6 @@ const RefereeDashboard: NextPageWithLayout = () => {
                       </div>
                     </div>
                   ) : null}
-
                   <ReferralTasksCard
                     model={program.pathway}
                     progressModel={usage.pathway}
@@ -326,9 +324,7 @@ const RefereeDashboard: NextPageWithLayout = () => {
               }
               right={
                 <div className="flex flex-col gap-2 rounded-xl bg-white p-4 shadow">
-                  <ReferralProgressCard
-                    percentComplete={usage.percentComplete ?? 0}
-                  />
+                  <ReferralProgressCard usage={usage} />
 
                   <ReferralStatCard
                     icon={<IoTrophyOutline className="h-5 w-5" />}
