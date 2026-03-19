@@ -525,12 +525,12 @@ const ReferralPrograms: NextPageWithLayout = () => {
                           )}
                         </div>
 
-                        {/* Referrers */}
+                        {/* Ambassadors */}
                         {(program.referrerLimit !== null ||
                           (program.referrerTotal ?? 0) > 0) && (
                           <div className="border-gray-light flex flex-col gap-1 border-t pt-2">
                             <p className="text-[10px] font-semibold tracking-wider text-gray-400 uppercase">
-                              Referrers
+                              Ambassadors
                             </p>
                             {program.referrerLimit !== null && (
                               <div className="flex justify-between">
@@ -660,7 +660,7 @@ const ReferralPrograms: NextPageWithLayout = () => {
                       </th>
                       <th className="border-gray-light border-b-2">Referees</th>
                       <th className="border-gray-light border-b-2">
-                        Referrers
+                        Ambassadors
                       </th>
                       <th className="border-gray-light border-b-2">
                         ZLTO Rewards

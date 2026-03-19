@@ -22,6 +22,7 @@ import {
 import { THEME_WHITE } from "~/lib/constants";
 import { currentLanguageAtom } from "~/lib/store";
 import type { NextPageWithLayout } from "~/pages/_app";
+
 const ReferralProgramDetails: NextPageWithLayout = () => {
   const router = useRouter();
   const queryClient = useQueryClient();
