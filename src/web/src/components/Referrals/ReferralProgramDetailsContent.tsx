@@ -88,6 +88,8 @@ export const ReferralProgramDetailsContent: React.FC<
     <>
       <ReferralTopCard
         program={displayProgram}
+        title={program.name}
+        subTitle={program.summary ?? program.description}
         rewardsReferrer={true}
         rewardsReferee={false}
         cta={cta}

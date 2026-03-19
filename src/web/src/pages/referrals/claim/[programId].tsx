@@ -4,6 +4,7 @@ import Head from "next/head";
 import { useRouter } from "next/router";
 import { useCallback, useEffect, useState, type ReactElement } from "react";
 import { IoGift, IoTimeOutline, IoTrophyOutline } from "react-icons/io5";
+import { UserProfile } from "~/api/models/user";
 import { claimReferralLinkAsReferee } from "~/api/services/referrals";
 import { getUserProfile } from "~/api/services/user";
 import MainLayout from "~/components/Layout/Main";
@@ -14,7 +15,12 @@ import { ReferralShell } from "~/components/Referrals/ReferralShell";
 import { ReferralStatCard } from "~/components/Referrals/ReferralStatCard";
 import { ReferralTasksCard } from "~/components/Referrals/ReferralTasksCard";
 import { ReferralTopCard } from "~/components/Referrals/ReferralTopCard";
+import { Editor } from "~/components/RichText/Editor";
 import { LoadingInline } from "~/components/Status/LoadingInline";
+import {
+  UserProfileFilterOptions,
+  UserProfileForm,
+} from "~/components/User/UserProfileForm";
 import { useReferralProgramInfoByLinkQuery } from "~/hooks/useReferralProgramMutations";
 import analytics from "~/lib/analytics";
 import { parseApiError } from "~/lib/apiErrorUtils";
@@ -22,9 +28,9 @@ import { handleUserSignIn } from "~/lib/authUtils";
 import { THEME_WHITE } from "~/lib/constants";
 import { currentLanguageAtom, userProfileAtom } from "~/lib/store";
 import { cleanTextForMetaTag } from "~/lib/utils";
-import { getProfileCompletionStep } from "~/lib/utils/profile";
+import { isUserProfileCompleted } from "~/lib/utils/profile";
 import { type NextPageWithLayout } from "../../_app";
-import { Editor } from "~/components/RichText/Editor";
+
 const ReferralClaimPage: NextPageWithLayout = () => {
   const router = useRouter();
   const { status: sessionStatus } = useSession();
@@ -42,7 +48,7 @@ const ReferralClaimPage: NextPageWithLayout = () => {
   const isAuthenticated = sessionStatus === "authenticated";
   const needsProfileCompletion =
     isAuthenticated && userProfile
-      ? getProfileCompletionStep(userProfile) !== "complete"
+      ? !isUserProfileCompleted(userProfile)
       : undefined;
 
   // Fetch program data
@@ -98,8 +104,19 @@ const ReferralClaimPage: NextPageWithLayout = () => {
     }
   }, [linkId, programId, router, claimAttempted, setUserProfile]);
 
-  // Watch for profile updates (from global profile completion wizard)
-  // and retry claim when profile becomes complete
+  const handleProfileSubmit = useCallback(
+    (updatedUserProfile: UserProfile) => {
+      if (!isUserProfileCompleted(updatedUserProfile)) {
+        return;
+      }
+
+      void performClaim();
+    },
+    [performClaim],
+  );
+
+  // Watch for profile updates and retry claim once the required
+  // profile fields are complete.
   useEffect(() => {
     const checkProfileAndClaim = async () => {
       if (
@@ -110,8 +127,7 @@ const ReferralClaimPage: NextPageWithLayout = () => {
         program &&
         !claimError
       ) {
-        const completionStep = getProfileCompletionStep(userProfile);
-        if (completionStep === "complete") {
+        if (isUserProfileCompleted(userProfile)) {
           // Profile is now complete, attempt claim
           performClaim();
         }
@@ -284,29 +300,36 @@ const ReferralClaimPage: NextPageWithLayout = () => {
           <>
             <ReferralTopCard
               program={program}
+              title={program.name}
+              subTitle={
+                isAuthenticated && needsProfileCompletion
+                  ? "Complete your profile to join the programme."
+                  : (program.summary ?? program.description)
+              }
               rewardsReferrer={false}
               rewardsReferee={true}
+              hideBadges={isAuthenticated} // hide badges for unauthenticated users as they won't be able to understand them without the program detail
               cta={
-                <button
-                  type="button"
-                  onClick={!isAuthenticated ? handleClaim : undefined}
-                  disabled={isAuthenticated || claiming}
-                  className="btn btn-sm bg-green hover:bg-green-dark disabled:!bg-green h-10 rounded-full border-0 px-5 text-white normal-case disabled:!text-white disabled:opacity-100"
-                >
-                  {claiming ? (
-                    <LoadingInline
-                      classNameSpinner="h-4 w-4"
-                      classNameLabel="hidden"
-                    />
-                  ) : (
-                    <IoGift className="h-4 w-4" />
+                <>
+                  {!isAuthenticated && (
+                    <button
+                      type="button"
+                      onClick={!isAuthenticated ? handleClaim : undefined}
+                      disabled={isAuthenticated || claiming}
+                      className="btn btn-sm bg-green hover:bg-green-dark disabled:!bg-green h-10 rounded-full border-0 px-5 text-white normal-case disabled:!text-white disabled:opacity-100"
+                    >
+                      {claiming ? (
+                        <LoadingInline
+                          classNameSpinner="h-4 w-4"
+                          classNameLabel="hidden"
+                        />
+                      ) : (
+                        <IoGift className="h-4 w-4" />
+                      )}
+                      Login to claim
+                    </button>
                   )}
-                  {!isAuthenticated
-                    ? "Login to claim"
-                    : needsProfileCompletion
-                      ? "Complete profile to claim"
-                      : "Claiming referral..."}
-                </button>
+                </>
               }
             />
 
@@ -314,34 +337,43 @@ const ReferralClaimPage: NextPageWithLayout = () => {
               left={
                 <>
                   <ReferralInfoCard>
-                    <p>
-                      Welcome to Yoma! You were invited to join{" "}
-                      <strong>{program.name}</strong>.
-                      {(program.zltoRewardReferee || 0) > 0 ? (
-                        <>
-                          {" "}
-                          Complete the below pathway and get the opportunity to
-                          win <strong>{program.zltoRewardReferee}</strong> Zlto.
-                        </>
-                      ) : (
-                        <>
-                          {" "}
-                          Complete the below pathway to complete this programme.
-                        </>
-                      )}
-                    </p>
+                    <div className="space-y-4">
+                      {/* PROFILE COMPLETION (inline) */}
+                      {isAuthenticated && needsProfileCompletion ? (
+                        <UserProfileForm
+                          userProfile={userProfile}
+                          onSubmit={handleProfileSubmit}
+                          submitButtonText="Save profile and continue"
+                          filterOptions={[
+                            UserProfileFilterOptions.FIRSTNAME,
+                            UserProfileFilterOptions.SURNAME,
+                            UserProfileFilterOptions.COUNTRY,
+                            UserProfileFilterOptions.EDUCATION,
+                            UserProfileFilterOptions.GENDER,
+                            UserProfileFilterOptions.DATEOFBIRTH,
+                          ]}
+                        />
+                      ) : null}
 
-                    <div className="-mx-3 -my-5">
-                      <Editor
-                        value={program.description ?? program.summary ?? ""}
-                        readonly={true}
-                      />
+                      {/* PROGRAM DESCRIPTION */}
+                      {!isAuthenticated && (
+                        <div className="-mx-3 -my-5">
+                          <Editor
+                            value={program.description ?? program.summary ?? ""}
+                            readonly={true}
+                          />
+                        </div>
+                      )}
                     </div>
                   </ReferralInfoCard>
 
-                  {program.pathwayRequired && (
-                    <ReferralTasksCard model={program.pathway} preview={true} />
-                  )}
+                  {program.pathwayRequired &&
+                    !(isAuthenticated && needsProfileCompletion) && (
+                      <ReferralTasksCard
+                        model={program.pathway}
+                        preview={true}
+                      />
+                    )}
                 </>
               }
               right={

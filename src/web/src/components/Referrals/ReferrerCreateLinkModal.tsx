@@ -422,7 +422,7 @@ export const ReferrerCreateLinkModal: React.FC<CreateLinkModalProps> = ({
                 {!selectedProgram && !editLink ? (
                   <button
                     type="button"
-                    className="btn btn-outline border-green btn-sm text-green hover:bg-orange flex-1 normal-case hover:text-white"
+                    className="btn btn-outline border-green btn-sm text-green hover:bg-green flex-1 normal-case hover:text-white"
                     onClick={() => setStep("select")}
                     disabled={isLoading}
                   >
