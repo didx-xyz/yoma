@@ -23,7 +23,9 @@ namespace Yoma.Core.Domain.PartnerSharing.Services.Lookups
     private readonly IRepository<Models.Lookups.Partner> _partnerRepository;
 
     private static readonly (Country Country, string CodeAlpha2)[] RequiredCountries_AnyOf_SAYouth =
-      [(Country.SouthAfrica, Country.SouthAfrica.ToDescription()), (Country.Worldwide, Country.Worldwide.ToDescription())];
+    [
+      (Country.SouthAfrica, Country.SouthAfrica.ToDescription())
+    ];
 
     public static readonly (Country Country, string CodeAlpha2)[] RequiredCountries_AnyOf_All = RequiredCountries_AnyOf_SAYouth;
     #endregion
