@@ -164,6 +164,7 @@ namespace Yoma.Core.Domain.Referral
 
   public enum ReferralTriggerSource
   {
+    ProgramUpdated,
     IdentityAction,
     OpportunityCompletion
   }

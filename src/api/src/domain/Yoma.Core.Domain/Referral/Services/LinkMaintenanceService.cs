@@ -1,7 +1,9 @@
+using MediatR;
 using Microsoft.Extensions.Logging;
 using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
+using Yoma.Core.Domain.Referral.Events;
 using Yoma.Core.Domain.Referral.Interfaces;
 using Yoma.Core.Domain.Referral.Interfaces.Lookups;
 using Yoma.Core.Domain.Referral.Models;
@@ -14,6 +16,7 @@ namespace Yoma.Core.Domain.Referral.Services
     private readonly ILinkStatusService _linkStatusService;
     private readonly ILinkUsageStatusService _linkUsageStatusService;
 
+    private readonly IMediator _mediator;
     private readonly IExecutionStrategyService _executionStrategyService;
 
     private readonly IRepositoryBatchedValueContainsWithNavigation<ReferralLink> _linkRepository;
@@ -25,6 +28,7 @@ namespace Yoma.Core.Domain.Referral.Services
       ILinkStatusService linkStatusService,
       ILinkUsageStatusService linkUsageStatusService,
 
+      IMediator mediator,
       IExecutionStrategyService executionStrategyService,
 
       IRepositoryBatchedValueContainsWithNavigation<ReferralLink> linkRepository,
@@ -33,6 +37,7 @@ namespace Yoma.Core.Domain.Referral.Services
       _linkStatusService = linkStatusService ?? throw new ArgumentNullException(nameof(linkStatusService));
       _linkUsageStatusService = linkUsageStatusService ?? throw new ArgumentNullException(nameof(linkUsageStatusService));
 
+      _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
       _executionStrategyService = executionStrategyService ?? throw new ArgumentNullException(nameof(executionStrategyService));
 
       _linkRepository = linkRepository ?? throw new ArgumentNullException(nameof(linkRepository));
@@ -213,6 +218,42 @@ namespace Yoma.Core.Domain.Referral.Services
         logger.LogInformation("Expired {Count} link(s) for program {ProgramId}", g.Count, g.Key);
 
       logger.LogInformation("Expired {Total} link(s) across {ProgramCount} program(s)", items.Count, byProgram.Count);
+    }
+
+    /// <summary>
+    /// Trigger sweep: reprocesses all pending link usages for a program when completion requirements are reduced
+    /// (e.g. Proof of Personhood or Pathway removed), ensuring users are re-evaluated against updated rules.
+    /// </summary>
+    public async Task ProcessUsageProgressByProgramId(Guid programId, ILogger? logger = null)
+    {
+      if (programId == Guid.Empty)
+        throw new ArgumentNullException(nameof(programId));
+
+      var statusPendingId = _linkUsageStatusService.GetByName(ReferralLinkUsageStatus.Pending.ToString()).Id;
+
+      var items = _linkUsageRepository.Query().Where(o => o.ProgramId == programId && o.StatusId == statusPendingId).ToList();
+
+      if (items.Count == 0)
+      {
+        if (logger?.IsEnabled(LogLevel.Information) == true)
+          logger.LogInformation("No pending link usages found for program {ProgramId}", programId);
+        return;
+      }
+
+      foreach (var item in items)
+      {
+        await _mediator.Publish(new ReferralProgressTriggerEvent(
+          new ReferralProgressTriggerMessage
+          {
+            Source = ReferralTriggerSource.ProgramUpdated,
+            UserId = item.UserId,
+            Username = item.Username,
+            UserDisplayName = item.UserDisplayName
+          }));
+      }
+
+      if (logger?.IsEnabled(LogLevel.Information) == true)
+        logger.LogInformation("Processed {Count} pending link usage(s) for program {ProgramId}", items.Count, programId);
     }
     #endregion
 

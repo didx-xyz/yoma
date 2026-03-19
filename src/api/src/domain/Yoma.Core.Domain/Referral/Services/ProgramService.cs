@@ -510,6 +510,9 @@ namespace Yoma.Core.Domain.Referral.Services
 
       var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 
+      var pathwayRemoved = result.Pathway != null && request.Pathway == null;
+      var popRemoved = result.ProofOfPersonhoodRequired && !request.ProofOfPersonhoodRequired;
+
       result.Name = request.Name;
       result.Summary = request.Summary;
       result.Description = request.Description;
@@ -567,6 +570,11 @@ namespace Yoma.Core.Domain.Referral.Services
       });
 
       if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Program {ProgramId} updated. FinalStatus={Status}", result.Id, result.Status);
+
+      // Trigger sweep: reprocess pending usages when completion requirements are reduced (POP / Pathway removed)
+      if (result.Status == ProgramStatus.Active && (popRemoved || pathwayRemoved))
+        if (result.Status == ProgramStatus.Active && (popRemoved || pathwayRemoved))
+          await _linkMaintenanceService.ProcessUsageProgressByProgramId(result.Id, _logger);
 
       return result;
     }
