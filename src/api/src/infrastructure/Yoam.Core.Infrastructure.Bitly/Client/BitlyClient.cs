@@ -55,7 +55,7 @@ namespace Yoma.Core.Infrastructure.Bitly.Client
       if (!_appSettings.ShortLinkProviderAsSourceEnabledEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment))
       {
         if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Used dummy short link for environment '{environment}'", _environmentProvider.Environment);
-        return GenerateDummyShortLink();
+        return GenerateDummyShortLink(request.URL);
       }
 
       var tags = (request.ExtraTags ?? []).Where(tag => !string.IsNullOrWhiteSpace(tag)).Select(tag => tag.Trim()).ToList();
@@ -96,8 +96,22 @@ namespace Yoma.Core.Infrastructure.Bitly.Client
       return new KeyValuePair<string, string>(Header_Authorization, $"{Header_Authorization_Value_Prefix} {_options.ApiKey}");
     }
 
-    private ShortLinkResponse GenerateDummyShortLink()
+    /// <summary>
+    /// For non-supported environments (e.g. local), we do not create a Bitly short link.
+    /// Bitly does not support localhost / non-public URLs, so we return the original URL.
+    /// </summary>
+    private static ShortLinkResponse GenerateDummyShortLink(string url)
     {
+      return new ShortLinkResponse
+      {
+        Id = url,
+        Link = url
+      };
+
+      // Old dummy short link logic (no longer used)
+      // This created a fake short link using the custom domain,
+      // but could incorrectly resolve to prod (go.yoma.world → yoma.world)
+      /*
       var path = GenerateRandomPath(6);
       var urlRelative = $"{_options.CustomDomain}/{path}";
 
@@ -106,19 +120,20 @@ namespace Yoma.Core.Infrastructure.Bitly.Client
         Id = urlRelative,
         Link = $"https://{urlRelative}"
       };
+      */
     }
 
-    private static string GenerateRandomPath(int length)
-    {
-      var random = new Random();
+    //private static string GenerateRandomPath(int length)
+    //{
+    //  var random = new Random();
 
-      var chars = Enumerable.Range('0', '9' - '0' + 1).Select(i => (char)i)
-            .Concat(Enumerable.Range('A', 'Z' - 'A' + 1).Select(i => (char)i))
-            .Concat(Enumerable.Range('a', 'z' - 'a' + 1).Select(i => (char)i))
-            .ToArray();
+    //  var chars = Enumerable.Range('0', '9' - '0' + 1).Select(i => (char)i)
+    //        .Concat(Enumerable.Range('A', 'Z' - 'A' + 1).Select(i => (char)i))
+    //        .Concat(Enumerable.Range('a', 'z' - 'a' + 1).Select(i => (char)i))
+    //        .ToArray();
 
-      return new string([.. Enumerable.Repeat(chars, length).Select(s => s[random.Next(s.Length)])]);
-    }
+    //  return new string([.. Enumerable.Repeat(chars, length).Select(s => s[random.Next(s.Length)])]);
+    //}
     #endregion
   }
 }
