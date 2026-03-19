@@ -460,10 +460,12 @@ export interface ReferralLinkUsageSearchFilter extends PaginationFilter {
   dateStart: string | null;
   dateEnd: string | null;
 }
+
 export interface ReferralLinkUsageInfo {
   id: string;
   programId: string;
   programName: string;
+  programSummary: string | null;
   programDescription: string | null;
   programCompletionWindowInDays: number | null;
   programDateEnd: string | null;

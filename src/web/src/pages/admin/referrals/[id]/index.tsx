@@ -380,24 +380,25 @@ const schemaStep4 = z
       message: "Default programs cannot be hidden",
       path: ["isDefault"],
     },
-  )
-  .refine(
-    (data) => {
-      // If multiple links are allowed, require POP or a per-ambassador cap or Pathway
-      if (!data.multipleLinksAllowed) return true;
-      const hasPerReferrerCap = (data.completionLimitReferee ?? 0) > 0;
-      return (
-        data.proofOfPersonhoodRequired ||
-        hasPerReferrerCap ||
-        data.pathwayRequired
-      );
-    },
-    {
-      message:
-        "When multiple links are allowed, enable Proof of Personhood, set a per-ambassador cap, or require a Pathway",
-      path: ["multipleLinksAllowed"],
-    },
   );
+// NB: FEATURE HIDDEN ON UI, SUPPORTED IN BACK-END
+//   .refine(
+//     (data) => {
+//       // If multiple links are allowed, require POP or a per-ambassador cap or Pathway
+//       if (!data.multipleLinksAllowed) return true;
+//       const hasPerReferrerCap = (data.completionLimitReferee ?? 0) > 0;
+//       return (
+//         data.proofOfPersonhoodRequired ||
+//         hasPerReferrerCap ||
+//         data.pathwayRequired
+//       );
+//     },
+//     {
+//       message:
+//         "When multiple links are allowed, enable Proof of Personhood, set a per-ambassador cap, or require a Pathway",
+//       path: ["multipleLinksAllowed"],
+//     },
+//   )
 
 const schemaStep5 = z
   .object({
@@ -831,7 +832,7 @@ const ReferralProgramForm: NextPageWithLayout = () => {
   const proofOfPersonhoodRequiredWatch = watchStep4(
     "proofOfPersonhoodRequired",
   );
-  const multipleLinksAllowedWatch = watchStep4("multipleLinksAllowed");
+  // const multipleLinksAllowedWatch = watchStep4("multipleLinksAllowed"); // NB: FEATURE HIDDEN ON UI, SUPPORTED IN BACK-END
   const isDefaultWatch = watchStep4("isDefault");
   const hiddenWatch = watchStep4("hidden");
 
@@ -1157,7 +1158,7 @@ const ReferralProgramForm: NextPageWithLayout = () => {
   }, [
     proofOfPersonhoodRequiredWatch,
     pathwayRequiredWatch,
-    multipleLinksAllowedWatch,
+    //multipleLinksAllowedWatch, // NB: FEATURE HIDDEN ON UI, SUPPORTED IN BACK-END
     isDefaultWatch,
     hiddenWatch,
     zltoRewardReferrerWatch,
@@ -1362,7 +1363,7 @@ const ReferralProgramForm: NextPageWithLayout = () => {
           zltoRewardPool: data.zltoRewardPool,
           proofOfPersonhoodRequired: data.proofOfPersonhoodRequired,
           pathwayRequired: data.pathwayRequired,
-          multipleLinksAllowed: data.multipleLinksAllowed,
+          multipleLinksAllowed: false, // NB: FEATURE HIDDEN ON UI, SUPPORTED IN BACK-END
           isDefault: data.isDefault,
           hidden: data.hidden,
           dateStart: data.dateStart,
@@ -2596,8 +2597,9 @@ const ReferralProgramForm: NextPageWithLayout = () => {
                         </label>
                       </div>
 
+                      {/* NB: FEATURE HIDDEN ON UI, SUPPORTED IN BACK-END */}
                       {/* Multiple Links Allowed */}
-                      <div className="rounded-lg border border-gray-300 bg-white p-4">
+                      {/* <div className="rounded-lg border border-gray-300 bg-white p-4">
                         <label
                           htmlFor="multipleLinksAllowed"
                           className="label cursor-pointer justify-normal p-0"
@@ -2616,7 +2618,7 @@ const ReferralProgramForm: NextPageWithLayout = () => {
                             </p>
                           </div>
                         </label>
-                      </div>
+                      </div> */}
 
                       {/* Pathway Required */}
                       <div className="rounded-lg border border-gray-300 bg-white p-4">
@@ -2659,13 +2661,16 @@ const ReferralProgramForm: NextPageWithLayout = () => {
                           {formStateStep4.errors.isDefault.message}
                         </FormMessage>
                       )}
-                    {formStateStep4.errors.multipleLinksAllowed &&
+
+                    {/* NB: FEATURE HIDDEN ON UI, SUPPORTED IN BACK-END */}
+                    {/* {formStateStep4.errors.multipleLinksAllowed &&
                       typeof formStateStep4.errors.multipleLinksAllowed
                         .message === "string" && (
                         <FormMessage messageType={FormMessageType.Error}>
                           {formStateStep4.errors.multipleLinksAllowed.message}
                         </FormMessage>
-                      )}
+                      )} */}
+
                     {(formStateStep4.errors as any).hidden &&
                       typeof (formStateStep4.errors as any).hidden.message ===
                         "string" && (
