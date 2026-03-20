@@ -1,4 +1,4 @@
-import { useAtom } from "jotai";
+import { useAtom, useAtomValue } from "jotai";
 import { useSession } from "next-auth/react";
 import Head from "next/head";
 import Link from "next/link";
@@ -15,6 +15,7 @@ import { ReferralShell } from "~/components/Referrals/ReferralShell";
 import { ReferralStatCard } from "~/components/Referrals/ReferralStatCard";
 import { ReferralTasksCard } from "~/components/Referrals/ReferralTasksCard";
 import { ReferralTopCard } from "~/components/Referrals/ReferralTopCard";
+import { RefereeCongratulationsModal } from "~/components/Referrals/RefereeCongratulationsModal";
 import { RefereeWelcomeModal } from "~/components/Referrals/RefereeWelcomeModal";
 import { LoadingInline } from "~/components/Status/LoadingInline";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
@@ -25,14 +26,19 @@ import {
 import { parseApiError } from "~/lib/apiErrorUtils";
 import { THEME_WHITE } from "~/lib/constants";
 import { handleUserSignOut } from "~/lib/authUtils";
-import { hasDismissedRefereeWelcomeModalAtom } from "~/lib/store";
+import {
+  hasDismissedRefereeWelcomeModalAtom,
+  userProfileAtom,
+} from "~/lib/store";
 import { getSafeUrl } from "~/lib/utils";
 import { type NextPageWithLayout } from "../../_app";
 import { Editor } from "~/components/RichText/Editor";
+import { ReferralProgressSuccessCard } from "~/components/Referrals/ReferralProgressSuccessCard";
 
 const RefereeDashboard: NextPageWithLayout = () => {
   const router = useRouter();
   const { status: sessionStatus } = useSession();
+  const userProfile = useAtomValue(userProfileAtom);
   const [hasDismissedWelcomeModal, setHasDismissedWelcomeModal] = useAtom(
     hasDismissedRefereeWelcomeModalAtom,
   );
@@ -150,6 +156,18 @@ const RefereeDashboard: NextPageWithLayout = () => {
   })();
 
   const welcomeUserName = usage?.userDisplayName?.trim() || "there";
+  const completedUserName =
+    userProfile?.displayName?.trim() ||
+    usage?.userDisplayName?.trim() ||
+    "there";
+  const isProgramCompleted = usage?.status === "Completed";
+  const shouldShowRefereeModal = Boolean(
+    sessionStatus === "authenticated" &&
+      !hasDismissedWelcomeModal &&
+      usage &&
+      program &&
+      !hasPageError,
+  );
 
   const requiresProofOfPersonhood =
     Boolean(program?.proofOfPersonhoodRequired) &&
@@ -227,17 +245,26 @@ const RefereeDashboard: NextPageWithLayout = () => {
           <>
             <ReferralTopCard
               program={program}
-              title={`Welcome to ${program.name}!`}
+              title={
+                isProgramCompleted
+                  ? `${program.name}`
+                  : `Welcome to ${program.name}!`
+              }
               subTitle={
-                <>
-                  Welcome to Yoma! You were referred by{" "}
-                  <strong>{usage.userDisplayNameReferrer}</strong>
-                  <br />
-                  {subtitleNextStepText}
-                </>
+                isProgramCompleted ? (
+                  `${program.summary}`
+                ) : (
+                  <>
+                    Welcome to Yoma! You were referred by{" "}
+                    <strong>{usage.userDisplayNameReferrer}</strong>
+                    <br />
+                    {subtitleNextStepText}
+                  </>
+                )
               }
               rewardsReferrer={false}
               rewardsReferee={true}
+              hideBadges={isProgramCompleted}
             />
 
             <ReferralMainColumns
@@ -251,6 +278,7 @@ const RefereeDashboard: NextPageWithLayout = () => {
                       />
                     </div>
                   </ReferralInfoCard>
+
                   {usage.status === "Pending" &&
                   program.proofOfPersonhoodRequired &&
                   !(usage.proofOfPersonhoodCompleted ?? false) ? (
@@ -324,7 +352,13 @@ const RefereeDashboard: NextPageWithLayout = () => {
               }
               right={
                 <div className="flex flex-col gap-2 rounded-xl bg-white p-4 shadow">
-                  <ReferralProgressCard usage={usage} />
+                  {usage.percentComplete === 100 ? (
+                    <ReferralProgressSuccessCard
+                      rewardAmount={program.zltoRewardReferee || 0}
+                    />
+                  ) : (
+                    <ReferralProgressCard usage={usage} />
+                  )}
 
                   <ReferralStatCard
                     icon={<IoTrophyOutline className="h-5 w-5" />}
@@ -336,15 +370,17 @@ const RefereeDashboard: NextPageWithLayout = () => {
                     }
                   />
 
-                  <ReferralStatCard
-                    icon={<IoTimeOutline className="h-5 w-5" />}
-                    header="Time remaining"
-                    description={
-                      timeInfo
-                        ? `${timeInfo.days} day${timeInfo.days === 1 ? "" : "s"} · Complete by ${timeInfo.expiryDate.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`
-                        : "No time limit"
-                    }
-                  />
+                  {!isProgramCompleted && (
+                    <ReferralStatCard
+                      icon={<IoTimeOutline className="h-5 w-5" />}
+                      header="Time remaining"
+                      description={
+                        timeInfo
+                          ? `${timeInfo.days} day${timeInfo.days === 1 ? "" : "s"} · Complete by ${timeInfo.expiryDate.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`
+                          : "No time limit"
+                      }
+                    />
+                  )}
                 </div>
               }
             />
@@ -352,20 +388,27 @@ const RefereeDashboard: NextPageWithLayout = () => {
         )}
       </ReferralShell>
 
-      <RefereeWelcomeModal
-        isOpen={Boolean(
-          sessionStatus === "authenticated" &&
-            !hasDismissedWelcomeModal &&
-            usage &&
-            program &&
-            !hasPageError,
-        )}
-        onClose={() => {
-          setHasDismissedWelcomeModal(true);
-        }}
-        userName={welcomeUserName}
-        programName={program?.name ?? "this programme"}
-      />
+      {program && (
+        <>
+          <RefereeWelcomeModal
+            isOpen={shouldShowRefereeModal && !isProgramCompleted}
+            onClose={() => {
+              setHasDismissedWelcomeModal(true);
+            }}
+            userName={welcomeUserName}
+            program={program}
+          />
+
+          <RefereeCongratulationsModal
+            isOpen={shouldShowRefereeModal && isProgramCompleted}
+            onClose={() => {
+              setHasDismissedWelcomeModal(true);
+            }}
+            userName={completedUserName}
+            program={program}
+          />
+        </>
+      )}
     </>
   );
 };
