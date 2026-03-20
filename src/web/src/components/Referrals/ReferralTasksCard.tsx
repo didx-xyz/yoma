@@ -146,7 +146,7 @@ export const ReferralTasksCard = ({
         <div className="space-y-3">
           {stepGroups.map((step, stepIndex) => (
             <div key={step.stepId} className="space-y-3">
-              <div className="border-gray-200x space-y-3 rounded-lg border bg-white px-4 py-3">
+              <div className="space-y-3 rounded-lg border border-gray-200 bg-white px-4 py-3">
                 <div>
                   <p className="text-lg font-semibold text-black">
                     {(() => {
