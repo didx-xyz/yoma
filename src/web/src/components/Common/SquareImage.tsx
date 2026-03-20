@@ -1,18 +1,11 @@
 import Image from "next/image";
 
-interface ProgramImageProps {
+export const SquareImage: React.FC<{
   imageURL: string | null | undefined;
   name: string;
   size?: number;
   className?: string;
-}
-
-export const ProgramImage: React.FC<ProgramImageProps> = ({
-  imageURL,
-  name,
-  size = 50,
-  className = "",
-}) => {
+}> = ({ imageURL, name, size = 50, className = "" }) => {
   if (imageURL) {
     return (
       <Image

@@ -503,11 +503,11 @@ const OpportunityAdminDetails: NextPageWithLayout<{
       if (val.showZltoReward) {
         if (
           val.zltoReward != null &&
-          organisation?.zltoRewardBalance != null &&
-          val.zltoReward > organisation.zltoRewardBalance
+          organisation?.zltoRewardBalanceCurrentFinancialYear != null &&
+          val.zltoReward > organisation.zltoRewardBalanceCurrentFinancialYear
         ) {
           ctx.addIssue({
-            message: `Reward cannot exceed the available balance of ${organisation?.zltoRewardBalance}.`,
+            message: `Reward cannot exceed the current financial year available balance of ${organisation?.zltoRewardBalanceCurrentFinancialYear}.`,
             code: z.ZodIssueCode.custom,
             path: ["zltoReward"],
             fatal: true,
@@ -556,11 +556,12 @@ const OpportunityAdminDetails: NextPageWithLayout<{
         if (val.showZltoRewardPool) {
           if (
             val.zltoRewardPool != null &&
-            organisation?.zltoRewardBalance != null &&
-            val.zltoRewardPool > organisation.zltoRewardBalance
+            organisation?.zltoRewardBalanceCurrentFinancialYear != null &&
+            val.zltoRewardPool >
+              organisation.zltoRewardBalanceCurrentFinancialYear
           ) {
             ctx.addIssue({
-              message: `Reward pool cannot exceed the available balance of ${organisation?.zltoRewardBalance}.`,
+              message: `Reward pool cannot exceed the current financial year available balance of ${organisation?.zltoRewardBalanceCurrentFinancialYear}.`,
               code: z.ZodIssueCode.custom,
               path: ["zltoRewardPool"],
               fatal: true,
@@ -2354,19 +2355,20 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                       successfully completing the opportunity.
                     </p>
                     {/* show warning message if no reward pool on organisation-level */}
-                    {!organisation?.zltoRewardPool && (
+                    {!organisation?.zltoRewardPoolCurrentFinancialYear && (
                       <FormMessage messageType={FormMessageType.Warning}>
-                        Heads up! Your organisation does not have a ZLTO reward
-                        pool. Please contact support to set it up for your
-                        organisation.
+                        Heads up! Your organisation does not have a current
+                        financial year ZLTO reward pool. Please contact support
+                        to set it up for your organisation.
                       </FormMessage>
                     )}
                     {/* show available balance badge if reward pool is available on organisation-level */}
-                    {organisation?.zltoRewardPool && (
+                    {organisation?.zltoRewardPoolCurrentFinancialYear && (
                       <div className="badge bg-orange !rounded-full px-4 text-white">
-                        Available Balance:{" "}
+                        Current FY Available Balance:{" "}
                         {new Intl.NumberFormat().format(
-                          organisation?.zltoRewardBalance ?? 0,
+                          organisation?.zltoRewardBalanceCurrentFinancialYear ??
+                            0,
                         )}
                       </div>
                     )}
@@ -2382,7 +2384,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                   >
                     <>
                       {/* block the Org Admin from setting a limit if their Org pool is undefined. */}
-                      {organisation?.zltoRewardPool && (
+                      {organisation?.zltoRewardPoolCurrentFinancialYear && (
                         <>
                           <FormField
                             label="Individual Reward"
