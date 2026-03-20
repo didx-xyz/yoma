@@ -1,18 +1,19 @@
 import { IoMdClose } from "react-icons/io";
+import { ProgramInfo } from "~/api/models/referrals";
 import CustomModal from "~/components/Common/CustomModal";
 
 interface RefereeWelcomeModalProps {
   isOpen: boolean;
   onClose: () => void;
   userName: string;
-  programName: string;
+  program: ProgramInfo;
 }
 
 export const RefereeWelcomeModal: React.FC<RefereeWelcomeModalProps> = ({
   isOpen,
   onClose,
   userName,
-  programName,
+  program,
 }) => {
   return (
     <CustomModal
@@ -46,9 +47,9 @@ export const RefereeWelcomeModal: React.FC<RefereeWelcomeModalProps> = ({
           <h3 className="max-w-full truncate text-lg font-semibold text-black sm:text-xl md:text-2xl">
             Hi {userName}!
           </h3>
-          <h3 className="line-clamp-2 max-w-[95%] text-lg leading-tight font-semibold text-black sm:text-xl md:text-2xl">
-            Welcome to {programName}
-          </h3>
+          <p className="text-gray-dark max-w-[95%] text-sm leading-relaxed md:max-w-[90%] md:text-base">
+            Welcome to the <strong>{program.name}</strong> programme.
+          </p>
           <p className="text-gray-dark max-w-[95%] text-sm leading-relaxed md:max-w-[90%] md:text-base">
             Watch the short intro video below to understand how this programme
             works and how to complete your pathway tasks successfully.
