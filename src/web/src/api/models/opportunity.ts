@@ -35,9 +35,15 @@ export interface Opportunity {
   zltoRewardPool: number | null;
   zltoRewardBalance: number | null;
   zltoRewardCumulative: number | null;
+  organizationZltoRewardPoolCurrentFinancialYear?: number | null;
+  organizationZltoRewardCumulativeCurrentFinancialYear?: number | null;
+  organizationZltoRewardBalanceCurrentFinancialYear?: number | null;
   yomaReward: number | null;
   yomaRewardPool: number | null;
   yomaRewardCumulative: number | null;
+  organizationYomaRewardPoolCurrentFinancialYear?: number | null;
+  organizationYomaRewardCumulativeCurrentFinancialYear?: number | null;
+  organizationYomaRewardBalanceCurrentFinancialYear?: number | null;
   verificationEnabled: boolean;
   verificationMethod: VerificationMethod | null;
   difficultyId: string;
@@ -87,8 +93,14 @@ export interface OpportunityInfo {
   url: string | null;
   zltoReward: number | null;
   zltoRewardCumulative: number | null;
+  organizationZltoRewardPoolCurrentFinancialYear?: number | null;
+  organizationZltoRewardCumulativeCurrentFinancialYear?: number | null;
+  organizationZltoRewardBalanceCurrentFinancialYear?: number | null;
   yomaReward: number | null;
   yomaRewardCumulative: number | null;
+  organizationYomaRewardPoolCurrentFinancialYear?: number | null;
+  organizationYomaRewardCumulativeCurrentFinancialYear?: number | null;
+  organizationYomaRewardBalanceCurrentFinancialYear?: number | null;
   verificationEnabled: boolean;
   verificationMethod: VerificationMethod | null | string; //NB: comes back as string
   difficulty: string;

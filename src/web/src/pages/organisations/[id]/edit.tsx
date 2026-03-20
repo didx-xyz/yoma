@@ -26,16 +26,18 @@ import {
   getOrganisationProviderTypes,
   patchOrganisation,
   updateOrganisationLogo,
+  updateOrganisationSettings,
 } from "~/api/services/organisations";
 import { getUserProfile } from "~/api/services/user";
+import type { SettingsRequest } from "~/api/models/common";
 import FormField from "~/components/Common/FormField";
+import FormInput from "~/components/Common/FormInput";
 import FormMessage, { FormMessageType } from "~/components/Common/FormMessage";
 import MainLayout from "~/components/Layout/Main";
 import { LogoTitle } from "~/components/Organisation/LogoTitle";
 import { OrgAdminsEdit } from "~/components/Organisation/Upsert/OrgAdminsEdit";
 import { OrgContactEdit } from "~/components/Organisation/Upsert/OrgContactEdit";
 import { OrgInfoEdit } from "~/components/Organisation/Upsert/OrgInfoEdit";
-import { OrgRewardsEdit } from "~/components/Organisation/Upsert/OrgRewardsEdit";
 import { OrgRolesEdit } from "~/components/Organisation/Upsert/OrgRolesEdit";
 import { OrgSettingsEdit } from "~/components/Organisation/Upsert/OrgSettingsEdit";
 import { OrgSSOEdit } from "~/components/Organisation/Upsert/OrgSSOEdit";
@@ -187,8 +189,10 @@ const OrganisationUpdate: NextPageWithLayout<{
       businessDocumentsDelete: [],
       ssoClientIdInbound: organisation?.ssoClientIdInbound ?? "",
       ssoClientIdOutbound: organisation?.ssoClientIdOutbound ?? "",
-      zltoRewardPool: organisation?.zltoRewardPool ?? null,
-      yomaRewardPool: organisation?.yomaRewardPool ?? null,
+      zltoRewardPoolCurrentFinancialYear:
+        organisation?.zltoRewardPoolCurrentFinancialYear ?? null,
+      yomaRewardPoolCurrentFinancialYear:
+        organisation?.yomaRewardPoolCurrentFinancialYear ?? null,
       fileVersion: 0,
     });
 
@@ -263,8 +267,8 @@ const OrganisationUpdate: NextPageWithLayout<{
           registrationDocumentsDelete,
           ssoClientIdInbound,
           ssoClientIdOutbound,
-          zltoRewardPool,
-          yomaRewardPool,
+          zltoRewardPoolCurrentFinancialYear,
+          yomaRewardPoolCurrentFinancialYear,
         } = model;
 
         const modelWithoutLogo = {
@@ -295,8 +299,8 @@ const OrganisationUpdate: NextPageWithLayout<{
           registrationDocumentsDelete,
           ssoClientIdInbound,
           ssoClientIdOutbound,
-          zltoRewardPool,
-          yomaRewardPool,
+          zltoRewardPoolCurrentFinancialYear,
+          yomaRewardPoolCurrentFinancialYear,
           logo: null, // clear logo without changing model reference
         };
 
@@ -399,6 +403,47 @@ const OrganisationUpdate: NextPageWithLayout<{
       return;
     },
     [OrganizationRequestBase, onSubmit],
+  );
+
+  const onSubmitSettings = useCallback(
+    async (updatedSettings: SettingsRequest) => {
+      if (!organisation) return;
+      if (Object.keys(updatedSettings.settings).length === 0) return;
+
+      setIsLoading(true);
+
+      try {
+        toast.dismiss();
+
+        await updateOrganisationSettings(organisation.id, updatedSettings);
+
+        analytics.trackEvent("organisation_settings_updated", {
+          organisationId: organisation.id,
+          settingsKeys: Object.keys(updatedSettings.settings || {}),
+        });
+
+        queryClient.invalidateQueries({
+          queryKey: ["organisation", "settings", organisation.id],
+        });
+
+        toast("Your organisation settings have been updated", {
+          type: "success",
+          toastId: "organisationSettingsUpdated",
+        });
+      } catch (error) {
+        toast(<ApiErrors error={error} />, {
+          type: "error",
+          toastId: "organisationSettingsUpdatedError",
+          autoClose: false,
+          icon: false,
+        });
+
+        return;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [organisation, queryClient, setIsLoading],
   );
   //#endregion Event Handlers
 
@@ -600,7 +645,10 @@ const OrganisationUpdate: NextPageWithLayout<{
                     </div>
                     <div className="mt-4">
                       {activeTab === "orgSettings" && (
-                        <OrgSettingsEdit organisation={organisation!} />
+                        <OrgSettingsEdit
+                          organisation={organisation!}
+                          onSubmit={onSubmitSettings}
+                        />
                       )}
                       {activeTab === "ssoSettings" && (
                         <OrgSSOEdit
@@ -617,7 +665,10 @@ const OrganisationUpdate: NextPageWithLayout<{
                         Organisation settings
                       </h5>
                     </div>
-                    <OrgSettingsEdit organisation={organisation!} />
+                    <OrgSettingsEdit
+                      organisation={organisation!}
+                      onSubmit={onSubmitSettings}
+                    />
                   </>
                 )}
               </>
@@ -630,19 +681,18 @@ const OrganisationUpdate: NextPageWithLayout<{
 
                 <div className="flex flex-col gap-4">
                   <FormMessage messageType={FormMessageType.Info}>
-                    <strong>Organization-Level Pool:</strong> This new pool
-                    covers all opportunities within an organization. If
-                    depleted, no ZLTO can be awarded for any opportunity under
-                    that organization, even if individual opportunity pools
-                    still have ZLTO remaining.
+                    <strong>Organization-Level Pool:</strong> This current
+                    financial year pool covers all opportunities within an
+                    organization. If depleted, no ZLTO can be awarded for any
+                    opportunity under that organization, even if individual
+                    opportunity pools still have ZLTO remaining.
                   </FormMessage>
 
-                  {/* show the zltoRewardCumulative & zltoRewardBalance */}
-                  <div className="flex flex-row gap-4">
+                  <div className="grid gap-4 md:grid-cols-3">
                     <div className="w-full">
                       <FormField
-                        label="Zlto Reward Cumulative"
-                        tooltip="Represents the total amount of rewards that have already been distributed or allocated to participants. It is a running total that accumulates as rewards are awarded."
+                        label="Zlto Reward Cumulative (Lifetime)"
+                        tooltip="Represents the total ZLTO awarded by the organization across all time. This is the lifetime cumulative amount."
                       >
                         <label className="label-text">
                           {organisation?.zltoRewardCumulative ?? "N/A"}
@@ -651,20 +701,70 @@ const OrganisationUpdate: NextPageWithLayout<{
                     </div>
                     <div className="w-full">
                       <FormField
-                        label="Zlto Reward Balance"
-                        tooltip="Represents the remaining amount of rewards available to be distributed. It is calculated as the difference between the Pool and Cumulative values. If no pool is defined, the balance will be null."
+                        label="Zlto Reward Cumulative"
+                        tooltip="Represents the total amount of ZLTO awarded during the current financial year."
                       >
                         <label className="label-text">
-                          {organisation?.zltoRewardBalance ?? "N/A"}
+                          {organisation?.zltoRewardCumulativeCurrentFinancialYear ??
+                            "N/A"}
+                        </label>
+                      </FormField>
+                    </div>
+                    <div className="w-full">
+                      <FormField
+                        label="Zlto Reward Balance"
+                        tooltip="Represents the remaining ZLTO available for the current financial year. It is calculated from the current financial year pool minus the current financial year cumulative amount."
+                      >
+                        <label className="label-text">
+                          {organisation?.zltoRewardBalanceCurrentFinancialYear ??
+                            "N/A"}
                         </label>
                       </FormField>
                     </div>
                   </div>
 
-                  <OrgRewardsEdit
-                    organisation={OrganizationRequestBase}
-                    onSubmit={(data) => onSubmitStep(7, data)}
-                  />
+                  <div className="flex flex-col gap-4">
+                    <FormField
+                      label="Zlto Reward Pool"
+                      tooltip="Represents the total ZLTO allocated to the organization for the current financial year. Opportunities draw from this pool through the treasury to organization to opportunity hierarchy."
+                    >
+                      <FormInput
+                        inputProps={{
+                          type: "number",
+                          placeholder:
+                            "Your organisation's current financial year Zlto reward pool",
+                          "data-autocomplete": "zlto-reward-pool",
+                          step: "1",
+                          value:
+                            OrganizationRequestBase.zltoRewardPoolCurrentFinancialYear ??
+                            "",
+                          onChange: (e) => {
+                            const value = e.target.value;
+                            setOrganizationRequestBase((prev) => ({
+                              ...prev,
+                              zltoRewardPoolCurrentFinancialYear:
+                                value === "" ? null : Number(value),
+                            }));
+                          },
+                        }}
+                      />
+                    </FormField>
+
+                    <div className="mt-2 flex justify-end">
+                      <button
+                        type="button"
+                        className="btn btn-success w-full normal-case md:w-auto md:min-w-40"
+                        onClick={() => {
+                          void onSubmitStep(7, {
+                            zltoRewardPoolCurrentFinancialYear:
+                              OrganizationRequestBase.zltoRewardPoolCurrentFinancialYear,
+                          });
+                        }}
+                      >
+                        Save
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </>
             )}

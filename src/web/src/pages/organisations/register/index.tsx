@@ -127,8 +127,8 @@ const OrganisationCreate: NextPageWithLayout<{
       registrationDocumentsDelete: [],
       ssoClientIdInbound: "",
       ssoClientIdOutbound: "",
-      zltoRewardPool: null,
-      yomaRewardPool: null,
+      zltoRewardPoolCurrentFinancialYear: null,
+      yomaRewardPoolCurrentFinancialYear: null,
       fileVersion: 0,
     });
 
@@ -168,8 +168,8 @@ const OrganisationCreate: NextPageWithLayout<{
           registrationDocumentsDelete,
           ssoClientIdInbound,
           ssoClientIdOutbound,
-          zltoRewardPool,
-          yomaRewardPool,
+          zltoRewardPoolCurrentFinancialYear,
+          yomaRewardPoolCurrentFinancialYear,
         } = model;
 
         const modelWithoutLogo = {
@@ -200,8 +200,8 @@ const OrganisationCreate: NextPageWithLayout<{
           registrationDocumentsDelete,
           ssoClientIdInbound,
           ssoClientIdOutbound,
-          zltoRewardPool,
-          yomaRewardPool,
+          zltoRewardPoolCurrentFinancialYear,
+          yomaRewardPoolCurrentFinancialYear,
           logo: null, // clear logo without changing model reference
         };
 
