@@ -20,6 +20,7 @@ import {
 } from "~/api/models/referrals";
 import { getCountries } from "~/api/services/lookups";
 import CustomSlider from "~/components/Carousel/CustomSlider";
+import { SquareImage } from "~/components/Common/SquareImage";
 import MainLayout from "~/components/Layout/Main";
 import NoRowsMessage from "~/components/NoRowsMessage";
 import { PageBackground } from "~/components/PageBackground";
@@ -29,7 +30,6 @@ import {
   ReferralFilterOptions,
   ReferralProgramSearchFilters,
 } from "~/components/Referrals/AdminReferralProgramSearchFilter";
-import { ProgramImage } from "~/components/Referrals/ProgramImage";
 import { ProgramStatusBadge } from "~/components/Referrals/ProgramStatusBadge";
 import { InternalServerError } from "~/components/Status/InternalServerError";
 import { Loading } from "~/components/Status/Loading";
@@ -449,7 +449,7 @@ const ReferralPrograms: NextPageWithLayout = () => {
                     >
                       <div className="border-gray-light flex flex-row items-center gap-2 border-b-2 pb-2">
                         {/* Program Image */}
-                        <ProgramImage
+                        <SquareImage
                           imageURL={program.imageURL}
                           name={program.name}
                           size={48}
@@ -686,7 +686,7 @@ const ReferralPrograms: NextPageWithLayout = () => {
                               )}`}`}
                               className="flex justify-center"
                             >
-                              <ProgramImage
+                              <SquareImage
                                 imageURL={program.imageURL}
                                 name={program.name}
                                 size={60}
