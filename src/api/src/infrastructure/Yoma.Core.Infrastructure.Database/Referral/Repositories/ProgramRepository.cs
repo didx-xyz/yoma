@@ -63,6 +63,7 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
         Hidden = entity.Hidden,
         ReferrerLimit = entity.ReferrerLimit,
         ReferrerTotal = entity.ReferrerTotal,
+        ReferrerShortURL = entity.ReferrerShortURL,
         DateStart = entity.DateStart,
         DateEnd = entity.DateEnd,
         DateCreated = entity.DateCreated,
@@ -280,6 +281,7 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
       entity.Hidden = item.Hidden;
       entity.ReferrerLimit = item.ReferrerLimit;
       entity.ReferrerTotal = item.ReferrerTotal;
+      entity.ReferrerShortURL = item.ReferrerShortURL;
       entity.DateStart = item.DateStart;
       entity.DateEnd = item.DateEnd;
       entity.DateModified = item.DateModified;
@@ -324,6 +326,7 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
         entity.Hidden = item.Hidden;
         entity.ReferrerLimit = item.ReferrerLimit;
         entity.ReferrerTotal = item.ReferrerTotal;
+        entity.ReferrerShortURL = item.ReferrerShortURL;
         entity.DateStart = item.DateStart;
         entity.DateEnd = item.DateEnd;
         entity.DateModified = item.DateModified;

@@ -1,7 +1,7 @@
 using FluentValidation;
-using Microsoft.AspNetCore.DataProtection.KeyManagement;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using System.Transactions;
 using Yoma.Core.Domain.BlobProvider;
 using Yoma.Core.Domain.Core;
@@ -14,11 +14,15 @@ using Yoma.Core.Domain.Entity.Interfaces;
 using Yoma.Core.Domain.Lookups.Interfaces;
 using Yoma.Core.Domain.Opportunity.Interfaces;
 using Yoma.Core.Domain.Opportunity.Models;
+using Yoma.Core.Domain.Referral.Extensions;
 using Yoma.Core.Domain.Referral.Helpers;
 using Yoma.Core.Domain.Referral.Interfaces;
 using Yoma.Core.Domain.Referral.Interfaces.Lookups;
 using Yoma.Core.Domain.Referral.Models;
 using Yoma.Core.Domain.Referral.Validators;
+using Yoma.Core.Domain.ShortLinkProvider;
+using Yoma.Core.Domain.ShortLinkProvider.Interfaces;
+using Yoma.Core.Domain.ShortLinkProvider.Models;
 
 namespace Yoma.Core.Domain.Referral.Services
 {
@@ -26,6 +30,7 @@ namespace Yoma.Core.Domain.Referral.Services
   {
     #region Class Variables
     private readonly ILogger<ProgramService> _logger;
+    private readonly AppSettings _appSettings;
     private readonly IHttpContextAccessor _httpContextAccessor;
 
     private readonly IProgramStatusService _programStatusService;
@@ -37,6 +42,7 @@ namespace Yoma.Core.Domain.Referral.Services
     private readonly IRepository<ProgramCountry> _programCountryRepository;
 
     private readonly IExecutionStrategyService _executionStrategyService;
+    private readonly IShortLinkProviderClient _shortLinkProviderClient;
 
     private readonly ProgramSearchFilterValidator _programSearchFilterValidator;
     private readonly ProgramRequestValidatorCreate _programRequestValidatorCreate;
@@ -51,12 +57,12 @@ namespace Yoma.Core.Domain.Referral.Services
     private static readonly ProgramStatus[] Statuses_Activatable = [ProgramStatus.Inactive]; // Expired must go Inactive→fix→Active; LimitReached is locked
     private static readonly ProgramStatus[] Statuses_CanDelete = [ProgramStatus.Active, ProgramStatus.Inactive, ProgramStatus.UnCompletable];
     private static readonly ProgramStatus[] Statuses_DeActivatable = [ProgramStatus.Active, ProgramStatus.Expired]; // allow moving Expired→Inactive to edit
-
     #endregion
 
     #region Constrcutor
     public ProgramService(
       ILogger<ProgramService> logger,
+      IOptions<AppSettings> appSettings,
       IHttpContextAccessor httpContextAccessor,
 
       IProgramStatusService programStatusService,
@@ -68,6 +74,7 @@ namespace Yoma.Core.Domain.Referral.Services
       IRepository<ProgramCountry> programCountryRepository,
 
       IExecutionStrategyService executionStrategyService,
+      IShortLinkProviderClientFactory shortLinkProviderClientFactory,
 
       ProgramSearchFilterValidator programSearchFilterValidator,
       ProgramRequestValidatorCreate programRequestValidatorCreate,
@@ -80,6 +87,7 @@ namespace Yoma.Core.Domain.Referral.Services
     )
     {
       _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+      _appSettings = appSettings.Value ?? throw new ArgumentNullException(nameof(appSettings));
       _httpContextAccessor = httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
 
       _programStatusService = programStatusService ?? throw new ArgumentNullException(nameof(programStatusService));
@@ -91,6 +99,7 @@ namespace Yoma.Core.Domain.Referral.Services
       _programCountryRepository = programCountryRepository ?? throw new ArgumentNullException(nameof(programCountryRepository));
 
       _executionStrategyService = executionStrategyService ?? throw new ArgumentNullException(nameof(executionStrategyService));
+      _shortLinkProviderClient = shortLinkProviderClientFactory.CreateClient() ?? throw new ArgumentNullException(nameof(shortLinkProviderClientFactory));
 
       _programSearchFilterValidator = programSearchFilterValidator ?? throw new ArgumentNullException(nameof(programSearchFilterValidator));
       _programRequestValidatorCreate = programRequestValidatorCreate ?? throw new ArgumentNullException(nameof(programRequestValidatorCreate));
@@ -579,23 +588,21 @@ namespace Yoma.Core.Domain.Referral.Services
       return result;
     }
 
-    public async Task<Program> UpdateHidden(Guid id, bool hidden)
+    public async Task UpdateHidden(Guid id, bool hidden)
     {
-      var result = GetById(id, false, false);
+      var item = GetById(id, false, false);
 
       var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 
-      AssertUpdatable(result);
+      AssertUpdatable(item);
 
-      if (hidden && result.IsDefault)
+      if (hidden && item.IsDefault)
         throw new ValidationException("The program is the current default program and cannot be hidden.");
 
-      result.Hidden = hidden;
-      result.ModifiedByUserId = user.Id;
+      item.Hidden = hidden;
+      item.ModifiedByUserId = user.Id;
 
-      result = await _programRepository.Update(result);
-
-      return result;
+      await _programRepository.Update(item);
     }
 
     public async Task<Program> UpdateImage(Guid id, IFormFile file)
@@ -622,9 +629,9 @@ namespace Yoma.Core.Domain.Referral.Services
       return resultImage.Program;
     }
 
-    public async Task<Program> UpdateStatus(Guid id, ProgramStatus status)
+    public async Task UpdateStatus(Guid id, ProgramStatus status)
     {
-      var result = GetById(id, true, false);
+      var item = GetById(id, true, false);
       var now = DateTimeOffset.UtcNow;
 
       var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
@@ -632,29 +639,29 @@ namespace Yoma.Core.Domain.Referral.Services
       bool cancelReferralLinks = false;
       bool flipLinksToLimitReached = false;
 
-      var originalStatus = result.Status;
+      var originalStatus = item.Status;
       var finalStatus = status;
 
       if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("UpdateStatus requested for Program {ProgramId}. Requested={Requested} Current={Current} End={End} CompletionLimit={CompletionLimit} CompletionTotal={CompletionTotal}",
-        result.Id, status, result.Status, result.DateEnd?.ToString("yyyy-MM-dd") ?? "(null)", result.CompletionLimit, result.CompletionTotal);
+        item.Id, status, item.Status, item.DateEnd?.ToString("yyyy-MM-dd") ?? "(null)", item.CompletionLimit, item.CompletionTotal);
 
       switch (status)
       {
         case ProgramStatus.Active:
-          if (result.Status == ProgramStatus.Active) return result;
-          if (!Statuses_Activatable.Contains(result.Status))
-            throw new ValidationException($"The {nameof(Program)} cannot be activated (current status '{result.Status.ToDescription()}'). Required state '{Statuses_Activatable.JoinNames()}'");
+          if (item.Status == ProgramStatus.Active) return;
+          if (!Statuses_Activatable.Contains(item.Status))
+            throw new ValidationException($"The {nameof(Program)} cannot be activated (current status '{item.Status.ToDescription()}'). Required state '{Statuses_Activatable.JoinNames()}'");
 
           //ensure DateEnd was updated for re-activation of previously expired program
-          if (result.DateEnd.HasValue && result.DateEnd.Value <= now)
-            throw new ValidationException($"The {nameof(Program)} cannot be activated because its end date ('{result.DateEnd:yyyy-MM-dd}') is in the past. Please update the {nameof(Program).ToLower()} before proceeding with activation");
+          if (item.DateEnd.HasValue && item.DateEnd.Value <= now)
+            throw new ValidationException($"The {nameof(Program)} cannot be activated because its end date ('{item.DateEnd:yyyy-MM-dd}') is in the past. Please update the {nameof(Program).ToLower()} before proceeding with activation");
 
-          EnsurePathwayIsCompletableOrThrow(result.Pathway);
+          EnsurePathwayIsCompletableOrThrow(item.Pathway);
 
-          if (result.CompletionLimit.HasValue && (result.CompletionTotal ?? 0) >= result.CompletionLimit.Value)
+          if (item.CompletionLimit.HasValue && (item.CompletionTotal ?? 0) >= item.CompletionLimit.Value)
           {
             finalStatus = ProgramStatus.LimitReached;
-            if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Program {ProgramId} activation resolved to LimitReached (cap hit: {Total}/{Limit})", result.Id, result.CompletionTotal, result.CompletionLimit);
+            if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Program {ProgramId} activation resolved to LimitReached (cap hit: {Total}/{Limit})", item.Id, item.CompletionTotal, item.CompletionLimit);
 
             flipLinksToLimitReached = true;
           }
@@ -664,16 +671,16 @@ namespace Yoma.Core.Domain.Referral.Services
 
         case ProgramStatus.Inactive:
           // existing referral links remain usable and can still be completed, but new links cannot be created
-          if (result.Status == ProgramStatus.Inactive) return result;
-          if (!Statuses_DeActivatable.Contains(result.Status))
-            throw new ValidationException($"The {nameof(Program)} cannot be deactivated (current status '{result.Status.ToDescription()}'). Required state '{Statuses_DeActivatable.JoinNames()}'");
+          if (item.Status == ProgramStatus.Inactive) return;
+          if (!Statuses_DeActivatable.Contains(item.Status))
+            throw new ValidationException($"The {nameof(Program)} cannot be deactivated (current status '{item.Status.ToDescription()}'). Required state '{Statuses_DeActivatable.JoinNames()}'");
 
           break;
 
         case ProgramStatus.Deleted:
-          if (result.Status == ProgramStatus.Deleted) return result;
-          if (!Statuses_CanDelete.Contains(result.Status))
-            throw new ValidationException($"The {nameof(Program)} cannot be deleted (current status '{result.Status.ToDescription()}'). Required state '{Statuses_CanDelete.JoinNames()}'");
+          if (item.Status == ProgramStatus.Deleted) return;
+          if (!Statuses_CanDelete.Contains(item.Status))
+            throw new ValidationException($"The {nameof(Program)} cannot be deleted (current status '{item.Status.ToDescription()}'). Required state '{Statuses_CanDelete.JoinNames()}'");
 
           cancelReferralLinks = true;
 
@@ -683,7 +690,7 @@ namespace Yoma.Core.Domain.Referral.Services
           throw new ArgumentOutOfRangeException(nameof(status), $"{nameof(ProgramStatus)} of '{status.ToDescription()}' not supported");
       }
 
-      if (finalStatus == originalStatus && !cancelReferralLinks && !flipLinksToLimitReached) return result;
+      if (finalStatus == originalStatus && !cancelReferralLinks && !flipLinksToLimitReached) return;
 
       var statusId = _programStatusService.GetByName(finalStatus.ToString()).Id;
 
@@ -691,36 +698,34 @@ namespace Yoma.Core.Domain.Referral.Services
       {
         using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
 
-        result.StatusId = statusId;
-        result.Status = finalStatus;
-        result.ModifiedByUserId = user.Id;
+        item.StatusId = statusId;
+        item.Status = finalStatus;
+        item.ModifiedByUserId = user.Id;
 
-        result = await _programRepository.Update(result);
+        item = await _programRepository.Update(item);
 
         if (cancelReferralLinks)
         {
-          if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Cancelling all referral links for program {ProgramId}", result.Id);
-          await _linkMaintenanceService.CancelByProgramId(result.Id);
+          if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Cancelling all referral links for program {ProgramId}", item.Id);
+          await _linkMaintenanceService.CancelByProgramId(item.Id);
         }
         else if (flipLinksToLimitReached)
         {
-          if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Flipping links to limit-reached for program {ProgramId}", result.Id);
-          await _linkMaintenanceService.LimitReachedByProgramId(result.Id, _logger);
+          if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Flipping links to limit-reached for program {ProgramId}", item.Id);
+          await _linkMaintenanceService.LimitReachedByProgramId(item.Id, _logger);
         }
 
         scope.Complete();
       });
 
-      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Program {ProgramId} status updated. Requested={Requested} Final={Final}", result.Id, status, finalStatus);
-
-      return result;
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Program {ProgramId} status updated. Requested={Requested} Final={Final}", item.Id, status, finalStatus);
     }
 
-    public async Task<Program> SetAsDefault(Guid id)
+    public async Task SetAsDefault(Guid id)
     {
-      var result = GetById(id, false, false);
+      var item = GetById(id, false, false);
 
-      AssertUpdatable(result);
+      AssertUpdatable(item);
 
       var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 
@@ -728,17 +733,15 @@ namespace Yoma.Core.Domain.Referral.Services
       {
         using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
 
-        var outcome = await SetAsDefault(result);
+        var outcome = await SetAsDefault(item);
         if (!outcome.Updated) return;
 
-        result = outcome.Program;
-        result.ModifiedByUserId = user.Id;
-        result = await _programRepository.Update(result);
+        item = outcome.Program;
+        item.ModifiedByUserId = user.Id;
+        item = await _programRepository.Update(item);
 
         scope.Complete();
       });
-
-      return result;
     }
 
     public async Task<Program> ProcessCompletion(Program program, decimal? rewardAmount)
@@ -808,9 +811,56 @@ namespace Yoma.Core.Domain.Referral.Services
 
       return program;
     }
+
+    public async Task<ProgramLinkReferrer> GetOrCreateShortLinkReferrer(Guid Id, bool? includeQRCode)
+    {
+      var program = GetById(Id, false, false);
+
+      var url = program.ReferrerURL(_appSettings.AppBaseURL);
+
+      program = await GenerateShortLinkReferrer(program, url);
+
+      return new ProgramLinkReferrer
+      {
+        Id = Id,
+        URL = url,
+        ShortUrl = program.ReferrerShortURL!,
+        QRCodeBase64 = includeQRCode == true ? QRCodeHelper.GenerateQRCodeBase64(program.ReferrerShortURL!) : null
+      };
+    }
+
     #endregion
 
     #region Private Members
+    private async Task<Program> GenerateShortLinkReferrer(Program program, string? url)
+    {
+      // No locking applied here:
+      // - Admin-only, low-frequency operation
+      // - Duplicate short-link generation across instances is acceptable (last write wins)
+      // - Distributed locking would be overkill for this use case
+
+      if (!string.IsNullOrEmpty(program.ReferrerShortURL)) return program;
+
+      AssertUpdatable(program);
+
+      url = url?.Trim();
+      if (string.IsNullOrEmpty(url)) url = program.ReferrerURL(_appSettings.AppBaseURL);
+
+      var responseShortLink = await _shortLinkProviderClient.CreateShortLink(new ShortLinkRequest
+      {
+        Type = LinkType.ReferralProgram,
+        Action = LinkAction.Share,
+        Title = program.Name,
+        URL = url
+      });
+
+      program.ReferrerShortURL = responseShortLink.Link;
+
+      await _programRepository.Update(program);
+
+      return program;
+    }
+
     private async Task<Program> AssignCountries(Program program, List<Guid>? countryIds)
     {
       if (countryIds == null || countryIds.Count == 0)

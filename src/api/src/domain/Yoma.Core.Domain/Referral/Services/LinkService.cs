@@ -29,9 +29,7 @@ namespace Yoma.Core.Domain.Referral.Services
     #region Class Variables
     private readonly ILogger<LinkService> _logger;
     private readonly AppSettings _appSettings;
-
     private readonly IHttpContextAccessor _httpContextAccessor;
-    private readonly IShortLinkProviderClient _shortLinkProviderClient;
 
     private readonly IUserService _userService;
     private readonly IProgramService _programService;
@@ -41,6 +39,7 @@ namespace Yoma.Core.Domain.Referral.Services
     private readonly IBlobService _blobService;
 
     private readonly IExecutionStrategyService _executionStrategyService;
+    private readonly IShortLinkProviderClient _shortLinkProviderClient;
 
     private readonly ReferralLinkSearchFilterValidator _referralLinkSearchFilterValidator;
     private readonly ReferralLinkRequestCreateValidator _referralLinkRequestCreateValidator;
@@ -58,9 +57,7 @@ namespace Yoma.Core.Domain.Referral.Services
     public LinkService(
       ILogger<LinkService> logger,
       IOptions<AppSettings> appSettings,
-
       IHttpContextAccessor httpContextAccessor,
-      IShortLinkProviderClientFactory shortLinkProviderClientFactory,
 
       IUserService userService,
       IProgramService programService,
@@ -70,6 +67,7 @@ namespace Yoma.Core.Domain.Referral.Services
       IBlobService blobService,
 
       IExecutionStrategyService executionStrategyService,
+      IShortLinkProviderClientFactory shortLinkProviderClientFactory,
 
       ReferralLinkSearchFilterValidator referralLinkSearchFilterValidator,
       ReferralLinkRequestCreateValidator referralLinkRequestCreateValidator,
@@ -79,9 +77,7 @@ namespace Yoma.Core.Domain.Referral.Services
     {
       _logger = logger ?? throw new ArgumentNullException(nameof(logger));
       _appSettings = appSettings.Value ?? throw new ArgumentNullException(nameof(appSettings));
-
       _httpContextAccessor = httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
-      _shortLinkProviderClient = shortLinkProviderClientFactory.CreateClient() ?? throw new ArgumentNullException(nameof(shortLinkProviderClientFactory));
 
       _userService = userService ?? throw new ArgumentNullException(nameof(userService));
       _programService = programService ?? throw new ArgumentNullException(nameof(programService));
@@ -91,6 +87,7 @@ namespace Yoma.Core.Domain.Referral.Services
       _blobService = blobService ?? throw new ArgumentNullException(nameof(blobService));
 
       _executionStrategyService = executionStrategyService ?? throw new ArgumentNullException(nameof(executionStrategyService));
+      _shortLinkProviderClient = shortLinkProviderClientFactory.CreateClient() ?? throw new ArgumentNullException(nameof(shortLinkProviderClientFactory));
 
       _referralLinkSearchFilterValidator = referralLinkSearchFilterValidator ?? throw new ArgumentNullException(nameof(referralLinkSearchFilterValidator));
       _referralLinkRequestCreateValidator = referralLinkRequestCreateValidator ?? throw new ArgumentNullException(nameof(referralLinkRequestCreateValidator));
@@ -119,7 +116,7 @@ namespace Yoma.Core.Domain.Referral.Services
       var result = query.SingleOrDefault(o => o.Id == id);
       if (result == null) return null;
 
-      if (includeQRCode == true) result.QRCodeBase64 = QRCodeHelper.GenerateQRCodeBase64(result.URL);
+      if (includeQRCode == true) result.QRCodeBase64 = QRCodeHelper.GenerateQRCodeBase64(result.ShortURL);
 
       SetUsageAggregates(result);
 
@@ -147,7 +144,7 @@ namespace Yoma.Core.Domain.Referral.Services
 #pragma warning restore CA1862 // Use the 'StringComparison' method overloads to perform case-insensitive string comparisons
       if (result == null) return null;
 
-      if (includeQRCode == true) result.QRCodeBase64 = QRCodeHelper.GenerateQRCodeBase64(result.URL);
+      if (includeQRCode == true) result.QRCodeBase64 = QRCodeHelper.GenerateQRCodeBase64(result.ShortURL);
 
       SetUsageAggregates(result);
 
@@ -336,7 +333,7 @@ namespace Yoma.Core.Domain.Referral.Services
       });
 
       if (request.IncludeQRCode == true)
-        result.QRCodeBase64 = QRCodeHelper.GenerateQRCodeBase64(result.URL);
+        result.QRCodeBase64 = QRCodeHelper.GenerateQRCodeBase64(result.ShortURL);
 
       return result;
     }

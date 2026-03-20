@@ -72,6 +72,9 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Entities
 
     public int? ReferrerTotal { get; set; }
 
+    [Column(TypeName = "varchar(2048)")]
+    public string? ReferrerShortURL { get; set; }
+
     [Required]
     public DateTimeOffset DateStart { get; set; }
 

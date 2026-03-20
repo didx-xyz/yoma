@@ -48,6 +48,7 @@ namespace Yoma.Core.Test.Referral.Fixtures
       {
         AppBaseURL = "https://app.test.com"
       };
+
       AppSettingsOptions = new Mock<IOptions<AppSettings>>();
       AppSettingsOptions.Setup(x => x.Value).Returns(AppSettings);
 
@@ -96,7 +97,6 @@ namespace Yoma.Core.Test.Referral.Fixtures
         Logger.Object,
         AppSettingsOptions.Object,
         HttpContextAccessor.Object,
-        ShortLinkProviderClientFactory.Object,
         UserService.Object,
         ProgramService.Object,
         LinkStatusService.Object,
@@ -104,6 +104,7 @@ namespace Yoma.Core.Test.Referral.Fixtures
         CountryService.Object,
         BlobService.Object,
         ExecutionStrategyService.Object,
+        ShortLinkProviderClientFactory.Object,
         ReferralLinkSearchFilterValidator.Object,
         ReferralLinkRequestCreateValidator.Object,
         ReferralLinkRequestUpdateValidator.Object,
