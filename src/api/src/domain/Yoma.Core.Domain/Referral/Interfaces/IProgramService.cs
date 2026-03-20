@@ -26,15 +26,15 @@ namespace Yoma.Core.Domain.Referral.Interfaces
 
     Task<Program> Update(ProgramRequestUpdate request);
 
-    Task<Program> GetOrCreateShortLinkReferrer(Guid Id, bool? includeQRCode);
+    Task<ProgramLinkReferrer> GetOrCreateShortLinkReferrer(Guid Id, bool? includeQRCode);
 
-    Task<Program> UpdateHidden(Guid id, bool hidden);
+    Task UpdateHidden(Guid id, bool hidden);
 
     Task<Program> UpdateImage(Guid id, IFormFile file);
 
-    Task<Program> UpdateStatus(Guid id, ProgramStatus status);
+    Task UpdateStatus(Guid id, ProgramStatus status);
 
-    Task<Program> SetAsDefault(Guid id);
+    Task SetAsDefault(Guid id);
 
     Task<Program> ProcessCompletion(Program program, decimal? rewardAmount);
 

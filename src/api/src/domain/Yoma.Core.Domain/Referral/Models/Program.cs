@@ -157,8 +157,6 @@ namespace Yoma.Core.Domain.Referral.Models
 
     public string? ReferrerShortURL { get; set; }
 
-    public string? ReferrerQRCodeBase64 { get; set; }
-
     public DateTimeOffset DateStart { get; set; }
 
     public DateTimeOffset? DateEnd { get; set; }

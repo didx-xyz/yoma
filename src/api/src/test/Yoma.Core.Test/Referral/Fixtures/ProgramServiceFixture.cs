@@ -23,7 +23,6 @@ namespace Yoma.Core.Test.Referral.Fixtures
     public Mock<ILogger<ProgramService>> Logger { get; }
     public Mock<IOptions<AppSettings>> AppSettings { get; }
     public Mock<IHttpContextAccessor> HttpContextAccessor { get; }
-
     public Mock<IProgramStatusService> ProgramStatusService { get; }
     public Mock<IOpportunityService> OpportunityService { get; }
     public Mock<IBlobService> BlobService { get; }
@@ -31,14 +30,12 @@ namespace Yoma.Core.Test.Referral.Fixtures
     public Mock<ILinkMaintenanceService> LinkMaintenanceService { get; }
     public Mock<ICountryService> CountryService { get; }
     public Mock<IRepository<ProgramCountry>> ProgramCountryRepository { get; }
-
     public Mock<IExecutionStrategyService> ExecutionStrategyService { get; }
     public Mock<IShortLinkProviderClientFactory> ShortLinkProviderClientFactory { get; }
-
+    public Mock<IShortLinkProviderClient> ShortLinkProviderClient { get; }
     public Mock<ProgramSearchFilterValidator> ProgramSearchFilterValidator { get; }
     public Mock<ProgramRequestValidatorCreate> ProgramRequestValidatorCreate { get; }
     public Mock<ProgramRequestValidatorUpdate> ProgramRequestValidatorUpdate { get; }
-
     public Mock<IRepositoryBatchedValueContainsWithNavigation<Program>> ProgramRepository { get; }
     public Mock<IRepositoryWithNavigation<ProgramPathway>> ProgramPathwayRepository { get; }
     public Mock<IRepositoryWithNavigation<ProgramPathwayStep>> ProgramPathwayStepRepository { get; }
@@ -74,6 +71,8 @@ namespace Yoma.Core.Test.Referral.Fixtures
         .Callback<Action>(action => action());
 
       ShortLinkProviderClientFactory = new Mock<IShortLinkProviderClientFactory>();
+      ShortLinkProviderClient = new Mock<IShortLinkProviderClient>();
+      ShortLinkProviderClientFactory.Setup(x => x.CreateClient()).Returns(ShortLinkProviderClient.Object);
 
       ProgramSearchFilterValidator = new Mock<ProgramSearchFilterValidator>() { CallBase = false };
       ProgramRequestValidatorCreate = new Mock<ProgramRequestValidatorCreate>(CountryService.Object) { CallBase = false };

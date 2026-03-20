@@ -450,7 +450,7 @@ namespace Yoma.Core.Api.Controllers
     [SwaggerOperation(Summary = "Get or create referrer short URL for a program (Admin role required)")]
     [HttpPatch("program/{id}/link/referrer")]
     [Authorize(Roles = $"{Constants.Role_Admin}")]
-    public async Task<ActionResult<Domain.Referral.Models.Program>> GetOrCreateReferrerShortUrl([FromRoute] Guid id, [FromQuery] bool? includeQRCode)
+    public async Task<ActionResult<ProgramLinkReferrer>> GetOrCreateReferrerShortUrl([FromRoute] Guid id, [FromQuery] bool? includeQRCode)
     {
       if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(GetOrCreateReferrerShortUrl));
 
@@ -464,15 +464,15 @@ namespace Yoma.Core.Api.Controllers
     [SwaggerOperation(Summary = "Update the specified referral program hidden state")]
     [HttpPatch("program/{id}/hidden/{hidden}")]
     [Authorize(Roles = $"{Constants.Role_Admin}")]
-    public async Task<ActionResult<Domain.Referral.Models.Program>> UpdateHidden([FromRoute] Guid id, [FromRoute] bool hidden)
+    public async Task<ActionResult> UpdateHidden([FromRoute] Guid id, [FromRoute] bool hidden)
     {
       if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(UpdateHidden));
 
-      var result = await _programService.UpdateHidden(id, hidden);
+      await _programService.UpdateHidden(id, hidden);
 
       if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(UpdateHidden));
 
-      return Ok(result);
+      return Ok();
     }
 
     [SwaggerOperation(Summary = "Update the referral program image (Admin role required)")]
@@ -493,30 +493,30 @@ namespace Yoma.Core.Api.Controllers
       Description = "Support statuses active / inactive / deleted")]
     [HttpPatch("program/{id}/{status}")]
     [Authorize(Roles = $"{Constants.Role_Admin}")]
-    public async Task<ActionResult<Domain.Referral.Models.Program>> UpdateProgramStatus([FromRoute] Guid id, [FromRoute] Domain.Referral.ProgramStatus status)
+    public async Task<ActionResult> UpdateProgramStatus([FromRoute] Guid id, [FromRoute] Domain.Referral.ProgramStatus status)
     {
       if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(UpdateProgramStatus));
 
-      var result = await _programService.UpdateStatus(id, status);
+      await _programService.UpdateStatus(id, status);
 
       if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(UpdateProgramStatus));
 
-      return Ok(result);
+      return Ok();
     }
 
     [SwaggerOperation(Summary = "Set the specified referral program as the default (Admin role required)",
       Description = "The program must be available World-Wide (either with no country restrictions or explicitly including the 'Worldwide' country) in order to be set as default")]
     [HttpPatch("program/{id}/default")]
     [Authorize(Roles = $"{Constants.Role_Admin}")]
-    public async Task<ActionResult<Domain.Referral.Models.Program>> SetProgramAsDefault([FromRoute] Guid id)
+    public async Task<ActionResult> SetProgramAsDefault([FromRoute] Guid id)
     {
       if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(SetProgramAsDefault));
 
-      var result = await _programService.SetAsDefault(id);
+      await _programService.SetAsDefault(id);
 
       if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(SetProgramAsDefault));
 
-      return Ok(result);
+      return Ok();
     }
 
     [SwaggerOperation(Summary = "Search for referral links based on the supplied filter (Admin role required)")]

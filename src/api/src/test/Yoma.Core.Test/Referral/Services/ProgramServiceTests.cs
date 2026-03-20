@@ -78,10 +78,10 @@ namespace Yoma.Core.Test.Referral.Services
       var service = fixture.Build();
 
       // Act
-      var result = await service.UpdateStatus(programId, ProgramStatus.Active);
+      await service.UpdateStatus(programId, ProgramStatus.Active);
 
       // Assert
-      Assert.Equal(ProgramStatus.Active, result.Status);
+      Assert.Equal(ProgramStatus.Active, program.Status);
     }
 
     [Fact]
@@ -109,10 +109,11 @@ namespace Yoma.Core.Test.Referral.Services
       var service = fixture.Build();
 
       // Act
-      var result = await service.UpdateStatus(programId, ProgramStatus.Deleted);
+      await service.UpdateStatus(programId, ProgramStatus.Deleted);
 
       // Assert
-      Assert.Equal(ProgramStatus.Deleted, result.Status);
+      Assert.Equal(ProgramStatus.Deleted, program.Status);
+
       fixture.LinkMaintenanceService.Verify(
         x => x.CancelByProgramId(programId, null),
         Times.Once);
@@ -241,10 +242,10 @@ namespace Yoma.Core.Test.Referral.Services
       var service = fixture.Build();
 
       // Act
-      var result = await service.SetAsDefault(programId);
+      await service.SetAsDefault(programId);
 
       // Assert
-      Assert.True(result.IsDefault);
+      Assert.True(program.IsDefault);
     }
 
     [Fact]
