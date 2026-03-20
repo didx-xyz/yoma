@@ -447,6 +447,20 @@ namespace Yoma.Core.Api.Controllers
       return Ok(result);
     }
 
+    [SwaggerOperation(Summary = "Get or create referrer short URL for a program (Admin role required)")]
+    [HttpPatch("program/{id}/link/referrer")]
+    [Authorize(Roles = $"{Constants.Role_Admin}")]
+    public async Task<ActionResult<Domain.Referral.Models.Program>> GetOrCreateReferrerShortUrl([FromRoute] Guid id, [FromQuery] bool? includeQRCode)
+    {
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(GetOrCreateReferrerShortUrl));
+
+      var result = await _programService.GetOrCreateShortLinkReferrer(id, includeQRCode);
+
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(GetOrCreateReferrerShortUrl));
+
+      return Ok(result);
+    }
+
     [SwaggerOperation(Summary = "Update the specified referral program hidden state")]
     [HttpPatch("program/{id}/hidden/{hidden}")]
     [Authorize(Roles = $"{Constants.Role_Admin}")]

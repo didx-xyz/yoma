@@ -155,6 +155,10 @@ namespace Yoma.Core.Domain.Referral.Models
 
     public int? ReferrerBalance => ReferrerLimit.HasValue ? ReferrerLimit - (ReferrerTotal ?? 0) : null;
 
+    public string? ReferrerShortURL { get; set; }
+
+    public string? ReferrerQRCodeBase64 { get; set; }
+
     public DateTimeOffset DateStart { get; set; }
 
     public DateTimeOffset? DateEnd { get; set; }

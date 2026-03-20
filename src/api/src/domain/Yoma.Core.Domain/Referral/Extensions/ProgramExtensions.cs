@@ -1,3 +1,4 @@
+using Flurl;
 using Yoma.Core.Domain.Opportunity.Models;
 using Yoma.Core.Domain.Referral.Models;
 
@@ -5,6 +6,15 @@ namespace Yoma.Core.Domain.Referral.Extensions
 {
   public static class ProgramExtensions
   {
+    public static string ReferrerURL(this Program value, string appBaseURL)
+    {
+      ArgumentNullException.ThrowIfNull(value, nameof(value));
+
+      if (value.Id == Guid.Empty) throw new ArgumentException("Id cannot be empty", nameof(value));
+
+      return appBaseURL.AppendPathSegment("referrals").AppendPathSegment($"program").AppendPathSegment(value.Id.ToString());
+    }
+
     public static ProgramInfo ToInfo(this Program value)
     {
       ArgumentNullException.ThrowIfNull(value, nameof(value));

@@ -17,7 +17,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
     {
 #pragma warning disable 612, 618
       modelBuilder
-          .HasAnnotation("ProductVersion", "10.0.3")
+          .HasAnnotation("ProductVersion", "10.0.5")
           .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
       NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -2080,6 +2080,9 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
             b.Property<int?>("ReferrerLimit")
                       .HasColumnType("integer");
+
+            b.Property<string>("ReferrerShortURL")
+                      .HasColumnType("varchar(2048)");
 
             b.Property<int?>("ReferrerTotal")
                       .HasColumnType("integer");

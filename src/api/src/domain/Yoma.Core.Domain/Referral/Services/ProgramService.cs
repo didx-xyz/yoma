@@ -1,7 +1,7 @@
 using FluentValidation;
-using Microsoft.AspNetCore.DataProtection.KeyManagement;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using System.Transactions;
 using Yoma.Core.Domain.BlobProvider;
 using Yoma.Core.Domain.Core;
@@ -14,11 +14,15 @@ using Yoma.Core.Domain.Entity.Interfaces;
 using Yoma.Core.Domain.Lookups.Interfaces;
 using Yoma.Core.Domain.Opportunity.Interfaces;
 using Yoma.Core.Domain.Opportunity.Models;
+using Yoma.Core.Domain.Referral.Extensions;
 using Yoma.Core.Domain.Referral.Helpers;
 using Yoma.Core.Domain.Referral.Interfaces;
 using Yoma.Core.Domain.Referral.Interfaces.Lookups;
 using Yoma.Core.Domain.Referral.Models;
 using Yoma.Core.Domain.Referral.Validators;
+using Yoma.Core.Domain.ShortLinkProvider;
+using Yoma.Core.Domain.ShortLinkProvider.Interfaces;
+using Yoma.Core.Domain.ShortLinkProvider.Models;
 
 namespace Yoma.Core.Domain.Referral.Services
 {
@@ -26,6 +30,7 @@ namespace Yoma.Core.Domain.Referral.Services
   {
     #region Class Variables
     private readonly ILogger<ProgramService> _logger;
+    private readonly AppSettings _appSettings;
     private readonly IHttpContextAccessor _httpContextAccessor;
 
     private readonly IProgramStatusService _programStatusService;
@@ -37,6 +42,7 @@ namespace Yoma.Core.Domain.Referral.Services
     private readonly IRepository<ProgramCountry> _programCountryRepository;
 
     private readonly IExecutionStrategyService _executionStrategyService;
+    private readonly IShortLinkProviderClient _shortLinkProviderClient;
 
     private readonly ProgramSearchFilterValidator _programSearchFilterValidator;
     private readonly ProgramRequestValidatorCreate _programRequestValidatorCreate;
@@ -57,6 +63,7 @@ namespace Yoma.Core.Domain.Referral.Services
     #region Constrcutor
     public ProgramService(
       ILogger<ProgramService> logger,
+      IOptions<AppSettings> appSettings,
       IHttpContextAccessor httpContextAccessor,
 
       IProgramStatusService programStatusService,
@@ -68,6 +75,7 @@ namespace Yoma.Core.Domain.Referral.Services
       IRepository<ProgramCountry> programCountryRepository,
 
       IExecutionStrategyService executionStrategyService,
+      IShortLinkProviderClientFactory shortLinkProviderClientFactory,
 
       ProgramSearchFilterValidator programSearchFilterValidator,
       ProgramRequestValidatorCreate programRequestValidatorCreate,
@@ -80,6 +88,7 @@ namespace Yoma.Core.Domain.Referral.Services
     )
     {
       _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+      _appSettings = appSettings.Value ?? throw new ArgumentNullException(nameof(appSettings));
       _httpContextAccessor = httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
 
       _programStatusService = programStatusService ?? throw new ArgumentNullException(nameof(programStatusService));
@@ -91,6 +100,7 @@ namespace Yoma.Core.Domain.Referral.Services
       _programCountryRepository = programCountryRepository ?? throw new ArgumentNullException(nameof(programCountryRepository));
 
       _executionStrategyService = executionStrategyService ?? throw new ArgumentNullException(nameof(executionStrategyService));
+      _shortLinkProviderClient = shortLinkProviderClientFactory.CreateClient() ?? throw new ArgumentNullException(nameof(shortLinkProviderClientFactory));
 
       _programSearchFilterValidator = programSearchFilterValidator ?? throw new ArgumentNullException(nameof(programSearchFilterValidator));
       _programRequestValidatorCreate = programRequestValidatorCreate ?? throw new ArgumentNullException(nameof(programRequestValidatorCreate));
@@ -808,9 +818,47 @@ namespace Yoma.Core.Domain.Referral.Services
 
       return program;
     }
+
+    public async Task<Program> GetOrCreateShortLinkReferrer(Guid Id, bool? includeQRCode)
+    {
+      var program = GetById(Id, false, false);
+
+      program = await GenerateShortLinkReferrer(program);
+
+      if (includeQRCode == true)
+        program.ReferrerQRCodeBase64 = QRCodeHelper.GenerateQRCodeBase64(program.ReferrerShortURL!);
+
+      return program;
+    }
+
     #endregion
 
     #region Private Members
+    private async Task<Program> GenerateShortLinkReferrer(Program item)
+    {
+      // No locking applied here:
+      // - Admin-only, low-frequency operation
+      // - Duplicate short-link generation across instances is acceptable (last write wins)
+      // - Distributed locking would be overkill for this use case
+
+      if (!string.IsNullOrEmpty(item.ReferrerShortURL))
+        return item;
+
+      var responseShortLink = await _shortLinkProviderClient.CreateShortLink(new ShortLinkRequest
+      {
+        Type = LinkType.ReferralProgram,
+        Action = LinkAction.Share,
+        Title = item.Name,
+        URL = item.ReferrerURL(_appSettings.AppBaseURL)
+      });
+
+      item.ReferrerShortURL = responseShortLink.Link;
+
+      await _programRepository.Update(item);
+
+      return item;
+    }
+
     private async Task<Program> AssignCountries(Program program, List<Guid>? countryIds)
     {
       if (countryIds == null || countryIds.Count == 0)
