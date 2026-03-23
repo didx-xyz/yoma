@@ -1,25 +1,32 @@
 import Image from "next/image";
 import iconZlto from "public/images/icon-zlto.svg";
-import { useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
+import { IoMdCopy } from "react-icons/io";
 import {
   IoEyeOffOutline,
   IoGitNetwork,
   IoPersonCircle,
+  IoShareOutline,
   IoStarOutline,
 } from "react-icons/io5";
 import Moment from "react-moment";
+import { toast } from "react-toastify";
 import type { Opportunity } from "~/api/models/opportunity";
 import {
   PathwayCompletionRule,
   PathwayTaskEntityType,
   Program,
+  ProgramLinkReferrer,
   ProgramPathwayInfo,
 } from "~/api/models/referrals";
+import { getOrCreateReferralProgramReferrerLink } from "~/api/services/referrals";
 import { useReferralProgramAnalyticsQuery } from "~/hooks/useReferralProgramMutations";
 import { DATE_FORMAT_HUMAN } from "~/lib/constants";
 import { ProgramStatusBadge } from "./ProgramStatusBadge";
 import { ReferralTasksCard } from "./ReferralTasksCard";
 import FormMessage, { FormMessageType } from "../Common/FormMessage";
+import { LoadingInline } from "../Status/LoadingInline";
+import { AdminProgramShareModal } from "./AdminProgramShareModal";
 import { ProgramCard } from "./ProgramCard";
 
 export enum ProgramInfoFilterOptions {
@@ -53,6 +60,12 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
   ],
   opportunityDataMap,
 }) => {
+  const [programLink, setProgramLink] = useState<ProgramLinkReferrer | null>(
+    null,
+  );
+  const [isProgramLinkLoading, setIsProgramLinkLoading] = useState(false);
+  const [isProgramLinkModalOpen, setIsProgramLinkModalOpen] = useState(false);
+
   const { data: analytics } = useReferralProgramAnalyticsQuery(
     program?.id ?? "",
     {
@@ -230,6 +243,63 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
     };
   }, [program.pathway, hydratedOpportunityDataMap]);
 
+  const currentProgramLink = useMemo<ProgramLinkReferrer | null>(() => {
+    if (programLink?.shortUrl) {
+      return programLink;
+    }
+
+    if (!program?.referrerShortURL) {
+      return null;
+    }
+
+    return {
+      id: program.id,
+      url: "",
+      shortUrl: program.referrerShortURL,
+      qrCodeBase64: null,
+    };
+  }, [program.id, program.referrerShortURL, programLink]);
+
+  const loadProgramReferrerLink = useCallback(
+    async (includeQRCode = false) => {
+      setIsProgramLinkLoading(true);
+      try {
+        const link = await getOrCreateReferralProgramReferrerLink(
+          program.id,
+          includeQRCode,
+        );
+        setProgramLink(link);
+        return link;
+      } catch (error) {
+        console.error("Failed to load program referrer link:", error);
+        toast.error("Failed to load program referrer link");
+        return null;
+      } finally {
+        setIsProgramLinkLoading(false);
+      }
+    },
+    [program.id],
+  );
+
+  const handleOpenProgramLink = useCallback(async () => {
+    const link = currentProgramLink ?? (await loadProgramReferrerLink(false));
+    if (!link) return;
+    setProgramLink((previous) => previous ?? link);
+    setIsProgramLinkModalOpen(true);
+  }, [currentProgramLink, loadProgramReferrerLink]);
+
+  const handleCopyProgramLink = useCallback(async () => {
+    const link = currentProgramLink ?? (await loadProgramReferrerLink(false));
+    if (!link?.shortUrl) return;
+
+    try {
+      await navigator.clipboard.writeText(link.shortUrl);
+      toast.success("Link copied to clipboard!", { autoClose: 2000 });
+    } catch {
+      toast.error("Failed to copy link");
+    }
+  }, [currentProgramLink, loadProgramReferrerLink]);
+
   return (
     <div className="space-y-6">
       {/* Preview */}
@@ -311,6 +381,80 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
                 </div>
                 <div className="flex-1 border border-gray-200 px-4 py-2 text-xs hover:bg-gray-100">
                   {countriesLabel}
+                </div>
+              </div>
+
+              <div className="md:col-span-2">
+                <div className="flex flex-col border border-gray-200 md:flex-row">
+                  <div className="w-full border-b border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700 md:w-40 md:shrink-0 md:border-r md:border-b-0">
+                    Referrer Link
+                  </div>
+                  <div className="flex-1 px-4 py-3 text-xs">
+                    {isProgramLinkLoading ? (
+                      <LoadingInline
+                        className="justify-start"
+                        classNameSpinner="h-5 w-5 border-green"
+                        classNameLabel="text-xs text-gray-500"
+                        label="Preparing program referrer link..."
+                      />
+                    ) : (
+                      <>
+                        {currentProgramLink?.shortUrl ? (
+                          <div className="flex max-w-full flex-col gap-3 md:max-w-[32rem]">
+                            <div className="text-xs text-gray-500">
+                              Share this program with ambassadors:
+                            </div>
+
+                            <div className="flex min-w-0 flex-col gap-2">
+                              <div className="relative min-w-0 flex-1">
+                                <input
+                                  type="text"
+                                  value={currentProgramLink.shortUrl}
+                                  readOnly
+                                  className="border-green w-full truncate rounded border border-dashed bg-white px-2 py-1.5 font-mono text-[11px] font-semibold text-gray-900 focus:outline-none"
+                                  onClick={(e) => e.currentTarget.select()}
+                                />
+                              </div>
+                              <div className="flex w-full flex-col gap-2 sm:max-w-[14rem] sm:flex-row">
+                                <button
+                                  type="button"
+                                  onClick={handleCopyProgramLink}
+                                  className="btn btn-xs bg-green w-full justify-center border-0 text-white normal-case hover:brightness-110 sm:flex-1"
+                                  title="Copy short link"
+                                >
+                                  <IoMdCopy className="h-3 w-3" />
+                                  <span className="text-[10px]">Copy</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  className="btn btn-xs bg-green w-full justify-center border-0 text-white normal-case hover:brightness-110 sm:flex-1"
+                                  onClick={handleOpenProgramLink}
+                                  title="Share link"
+                                >
+                                  <IoShareOutline className="h-3 w-3" />
+                                  <span className="text-[10px]">Share</span>
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex max-w-full flex-col gap-3 md:max-w-[32rem]">
+                            <div className="text-xs text-gray-500">
+                              Generate a link to share this program with
+                              ambassadors:
+                            </div>
+                            <button
+                              type="button"
+                              className="btn btn-xs bg-green w-full justify-center border-0 text-white normal-case hover:brightness-110 sm:max-w-[14rem]"
+                              onClick={handleOpenProgramLink}
+                            >
+                              Generate Link
+                            </button>
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -803,6 +947,15 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
           </div>
         </section>
       )}
+
+      <AdminProgramShareModal
+        isOpen={isProgramLinkModalOpen}
+        onClose={() => setIsProgramLinkModalOpen(false)}
+        programId={program.id}
+        programName={program.name}
+        link={currentProgramLink}
+        rewardAmount={program.zltoRewardReferrer}
+      />
     </div>
   );
 };

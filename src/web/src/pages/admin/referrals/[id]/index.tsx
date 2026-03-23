@@ -689,6 +689,7 @@ const ReferralProgramForm: NextPageWithLayout = () => {
       modifiedByUserId: "",
       imageId: null,
       imageURL: null,
+      referrerShortURL: null,
     };
   });
 
