@@ -805,6 +805,60 @@ clients:
       - address
       - phone
       - microprofile-jwt
+  - id: 045a13ad-3d8e-4d2b-ac96-5a8d9567dadf
+    clientId: ixo
+    name: ixo
+    description: IXO SSO Partner (public client)
+    rootUrl: $(env:CLIENT_IXO_URL)
+    adminUrl: $(env:CLIENT_IXO_URL)
+    baseUrl: $(env:CLIENT_IXO_URL)
+    surrogateAuthRequired: false
+    enabled: $(env:CLIENT_IXO_ENABLED)
+    alwaysDisplayInConsole: false
+    clientAuthenticatorType: client-secret
+    redirectUris:
+      - /*
+      - $(env:CLIENT_IXO_URL_REDIRECT)
+      - $(env:CLIENT_IXO_URL_REDIRECT)/*
+    webOrigins:
+      - /*
+      - $(env:CLIENT_IXO_URL)
+      - $(env:CLIENT_IXO_URL)/*
+    notBefore: 0
+    bearerOnly: false
+    consentRequired: false
+    standardFlowEnabled: true
+    implicitFlowEnabled: false
+    directAccessGrantsEnabled: false
+    serviceAccountsEnabled: false
+    publicClient: true
+    frontchannelLogout: true
+    protocol: openid-connect
+    attributes:
+      post.logout.redirect.uris: $(env:CLIENT_IXO_URL)/*
+      oidc.ciba.grant.enabled: "false"
+      backchannel.logout.session.required: "true"
+      standard.token.exchange.enabled: "false"
+      oauth2.device.authorization.grant.enabled: "false"
+      backchannel.logout.revoke.offline.tokens: "false"
+      dpop.bound.access.tokens: "false"
+      use.refresh.tokens: "true"
+    authenticationFlowBindingOverrides: {}
+    fullScopeAllowed: true
+    nodeReRegistrationTimeout: -1
+    defaultClientScopes:
+      - web-origins
+      - acr
+      - roles
+      - offline_access
+      - profile
+      - yoma-api
+      - audience_scope
+      - email
+    optionalClientScopes:
+      - address
+      - phone
+      - microprofile-jwt
   - id: ff74b115-0fdb-4a94-9e05-7459601ae7ee
     clientId: maza-app
     name: maza-app
@@ -1159,7 +1213,7 @@ clientScopes:
           jsonType.label: long
   - id: 6079a599-eae4-4d92-8178-8904dcdc1ec2
     name: phone
-    description: 'OpenID Connect built-in scope: phone'
+    description: "OpenID Connect built-in scope: phone"
     protocol: openid-connect
     attributes:
       include.in.token.scope: "true"
@@ -1275,7 +1329,7 @@ clientScopes:
           userinfo.token.claim: "true"
   - id: 03ea262c-9037-43bf-9a7a-8acb003ba8be
     name: offline_access
-    description: 'OpenID Connect built-in scope: offline_access'
+    description: "OpenID Connect built-in scope: offline_access"
     protocol: openid-connect
     attributes:
       consent.screen.text: ${offlineAccessScopeConsentText}
@@ -1342,7 +1396,7 @@ clientScopes:
           access.token.claim: "true"
   - id: 0f08cea0-1ab2-45af-b5fe-dbd79f00a79a
     name: address
-    description: 'OpenID Connect built-in scope: address'
+    description: "OpenID Connect built-in scope: address"
     protocol: openid-connect
     attributes:
       include.in.token.scope: "true"
@@ -1410,7 +1464,7 @@ clientScopes:
           jsonType.label: String
   - id: 37ac273c-3e98-4e18-8f5c-a68843ffa16b
     name: email
-    description: 'OpenID Connect built-in scope: email'
+    description: "OpenID Connect built-in scope: email"
     protocol: openid-connect
     attributes:
       include.in.token.scope: "true"
@@ -1443,7 +1497,7 @@ clientScopes:
           userinfo.token.claim: "true"
   - id: c394b5bf-bf78-4bd6-905b-cf7fadca2cad
     name: profile
-    description: 'OpenID Connect built-in scope: profile'
+    description: "OpenID Connect built-in scope: profile"
     protocol: openid-connect
     attributes:
       include.in.token.scope: "true"
@@ -2338,12 +2392,10 @@ authenticationFlows:
         authenticatorFlow: false
         requirement: REQUIRED
         priority: 10
-        authenticatorFlow: false
         userSetupAllowed: false
       - authenticatorFlow: true
         requirement: CONDITIONAL
         priority: 20
-        authenticatorFlow: true
         flowAlias: First broker login - Conditional OTP
         userSetupAllowed: false
   - id: 1a8b8a2c-4b5e-4e9a-9b8d-0b7f0d5e9f01
