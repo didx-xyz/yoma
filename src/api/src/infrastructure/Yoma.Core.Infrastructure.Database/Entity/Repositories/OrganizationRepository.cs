@@ -176,6 +176,8 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
       if (items == null || items.Count == 0)
         throw new ArgumentNullException(nameof(items));
 
+      var now = DateTimeOffset.UtcNow;
+
       var entities = items.Select(item =>
          new Organization
          {
@@ -198,16 +200,16 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
            Biography = item.Biography,
            StatusId = item.StatusId,
            CommentApproval = item.CommentApproval,
-           DateStatusModified = DateTimeOffset.UtcNow,
+           DateStatusModified = now,
            LogoId = item.LogoId,
            SSOClientIdOutbound = item.SSOClientIdOutbound,
            SSOClientIdInbound = item.SSOClientIdInbound,
            Settings = item.SettingsRaw,
            ZltoRewardPoolCurrentFinancialYear = item.ZltoRewardPoolCurrentFinancialYear,
            YomaRewardPoolCurrentFinancialYear = item.YomaRewardPoolCurrentFinancialYear,
-           DateCreated = DateTimeOffset.UtcNow,
+           DateCreated = now,
            CreatedByUserId = item.CreatedByUserId,
-           DateModified = DateTimeOffset.UtcNow,
+           DateModified = now,
            ModifiedByUserId = item.ModifiedByUserId
          });
 
@@ -277,12 +279,14 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
       var itemIds = items.Select(o => o.Id).ToList();
       var entities = _context.Organization.Where(o => itemIds.Contains(o.Id));
 
+      var now = DateTimeOffset.UtcNow;
+
       foreach (var item in items)
       {
         var entity = entities.SingleOrDefault(o => o.Id == item.Id) ?? throw new InvalidOperationException($"{nameof(Organization)} with id '{item.Id}' does not exist");
 
-        if (item.StatusId != entity.StatusId) item.DateStatusModified = DateTimeOffset.UtcNow;
-        item.DateModified = DateTimeOffset.UtcNow;
+        if (item.StatusId != entity.StatusId) item.DateStatusModified = now;
+        item.DateModified = now;
 
         entity.Name = item.Name;
         entity.WebsiteURL = item.WebsiteURL;

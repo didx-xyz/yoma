@@ -479,13 +479,19 @@ namespace Yoma.Core.Domain.Referral.Services
     {
       if (item.UsageAggregate == null) return;
 
+      var statusInitiated = _linkUsageStatusService.GetByName(ReferralLinkUsageStatus.Initiated.ToString());
       var statusPending = _linkUsageStatusService.GetByName(ReferralLinkUsageStatus.Pending.ToString());
       var statusExpired = _linkUsageStatusService.GetByName(ReferralLinkUsageStatus.Expired.ToString());
+      var statusAbandoned = _linkUsageStatusService.GetByName(ReferralLinkUsageStatus.Abandoned.ToString());
 
       item.CompletionTotal ??= 0;
+      item.InitiatedTotal = item.UsageAggregate.UsageCountsByStatus.SingleOrDefault(o => o.StatusId == statusInitiated.Id)?.Count ?? 0;
       item.PendingTotal = item.UsageAggregate.UsageCountsByStatus.SingleOrDefault(o => o.StatusId == statusPending.Id)?.Count ?? 0;
       item.ExpiredTotal = item.UsageAggregate.UsageCountsByStatus.SingleOrDefault(o => o.StatusId == statusExpired.Id)?.Count ?? 0;
+      item.AbandonedTotal = item.UsageAggregate.UsageCountsByStatus.SingleOrDefault(o => o.StatusId == statusAbandoned.Id)?.Count ?? 0;
+
       item.UsageTotal = item.CompletionTotal + item.PendingTotal + item.ExpiredTotal;
+      item.UsageIntentTotal = item.InitiatedTotal + item.CompletionTotal + item.PendingTotal + item.ExpiredTotal + item.AbandonedTotal;
 
       item.ZltoRewardReferrerTotal = item.UsageAggregate.ZltoRewardReferrerTotal;
       item.ZltoRewardRefereeTotal = item.UsageAggregate.ZltoRewardRefereeTotal;

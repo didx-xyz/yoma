@@ -185,7 +185,31 @@ namespace Yoma.Core.Domain.Core.Models
     /// </summary>
     public bool ReferralRestrictRefereeToSingleProgram { get; set; }
 
+    /// <summary>
+    /// Defines the time window after YoID onboarding during which a user may make their **first referral claim**.
+    ///
+    /// This prevents retroactive referral claims by users who registered earlier without using a referral link.
+    /// If the user attempts to claim outside this window, the claim will be rejected.
+    ///
+    /// The timer starts when the user completes YoID onboarding (profile completion).
+    ///
+    /// Typical value: 24 hours.
+    /// </summary>
     public int ReferralFirstClaimSinceYoIDOnboardedTimeoutInHours { get; set; }
+
+    /// <summary>
+    /// Maximum time a referral usage may remain in the **Initiated** state before being automatically
+    /// transitioned to **Abandoned**.
+    ///
+    /// The Initiated state represents a referee who has authenticated and shown intent to claim a referral
+    /// link but has not yet completed onboarding or finalized the claim.
+    ///
+    /// This timeout ensures that stale intent records are cleaned up and do not remain indefinitely.
+    /// Abandoned usages do not block future claims and are ignored by claim eligibility checks.
+    ///
+    /// Typical value: 24 hours.
+    /// </summary>
+    public int ReferralClaimInitiatedTimeoutInHours { get; set; }
     #endregion
 
     #region Private Members

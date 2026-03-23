@@ -14,6 +14,8 @@ namespace Yoma.Core.Domain.Referral.Interfaces
 
     ReferralLinkUsageSearchResults SearchAsReferee(ReferralLinkUsageSearchFilter filter);
 
+    Task ClaimAsRefereeInitiate(Guid linkId);
+
     Task ClaimAsReferee(Guid linkId);
 
     Task ProcessProgressByUserId(Guid userId);

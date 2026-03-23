@@ -125,6 +125,8 @@ namespace Yoma.Core.Infrastructure.Database.ActionLink.Repositories
       if (items == null || items.Count == 0)
         throw new ArgumentNullException(nameof(items));
 
+      var now = DateTimeOffset.UtcNow;
+
       var entities = items.Select(item =>
          new Entities.Link
          {
@@ -142,9 +144,9 @@ namespace Yoma.Core.Infrastructure.Database.ActionLink.Repositories
            DateEnd = item.DateEnd,
            DistributionList = item.DistributionList,
            LockToDistributionList = item.LockToDistributionList,
-           DateCreated = DateTimeOffset.UtcNow,
+           DateCreated = now,
            CreatedByUserId = item.CreatedByUserId,
-           DateModified = DateTimeOffset.UtcNow,
+           DateModified = now,
            ModifiedByUserId = item.ModifiedByUserId
          });
 
@@ -187,11 +189,13 @@ namespace Yoma.Core.Infrastructure.Database.ActionLink.Repositories
       var itemIds = items.Select(o => o.Id).ToList();
       var entities = _context.Link.Where(o => itemIds.Contains(o.Id));
 
+      var now = DateTimeOffset.UtcNow;
+
       foreach (var item in items)
       {
         var entity = entities.SingleOrDefault(o => o.Id == item.Id) ?? throw new InvalidOperationException($"{nameof(Link)} with id '{item.Id}' does not exist");
 
-        item.DateModified = DateTimeOffset.UtcNow;
+        item.DateModified = now;
 
         entity.UsagesTotal = item.UsagesTotal;
         entity.StatusId = item.StatusId;

@@ -138,9 +138,19 @@ namespace Yoma.Core.Domain.Referral
   public enum ReferralLinkUsageStatus
   {
     /// <summary>
+    /// Initiated
+    /// - Referee intent captured after sign-in but before onboarding completion.
+    /// - Short-lived state used to track early claim intent.
+    /// - Can progress to Pending when the referee completes onboarding and claims.
+    /// - Automatically transitions to Abandoned if not progressed within the configured timeout.
+    /// </summary>
+    Initiated,
+
+    /// <summary>
     /// Pending
-    /// - Still within window and rules? Can progress to Completed.
-    /// - Program/Link expired? → Expired.
+    /// - Valid claim created after onboarding completion.
+    /// - Can progress to Completed while within the allowed completion window.
+    /// - Expires if completion window, default expiry window, or program end is reached.
     /// </summary>
     Pending,
 
@@ -152,9 +162,17 @@ namespace Yoma.Core.Domain.Referral
 
     /// <summary>
     /// Expired (terminal)
-    /// - Due to completion window elapsed, program/link expired.
+    /// - Claim expired after reaching Pending due to completion window elapsed or program/link expiration.
     /// </summary>
-    Expired
+    Expired,
+
+    /// <summary>
+    /// Abandoned (terminal)
+    /// - Initiated intent that never progressed to a valid claim.
+    /// - Occurs when an Initiated usage expires without transitioning to Pending.
+    /// - Does not block future claims.
+    /// </summary>
+    Abandoned
   }
 
   public enum ReferralBlockReason

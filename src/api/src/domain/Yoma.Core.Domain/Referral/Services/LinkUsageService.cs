@@ -2,6 +2,7 @@ using FluentValidation;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using System.Reflection.Metadata;
 using System.Transactions;
 using Yoma.Core.Domain.BlobProvider;
 using Yoma.Core.Domain.Core;
@@ -249,11 +250,18 @@ namespace Yoma.Core.Domain.Referral.Services
         return results;
       }
 
+      var statusInitiated = _linkUsageStatusService.GetByName(ReferralLinkUsageStatus.Initiated.ToString()).Id;
       var statusPending = _linkUsageStatusService.GetByName(ReferralLinkUsageStatus.Pending.ToString()).Id;
       var statusExpired = _linkUsageStatusService.GetByName(ReferralLinkUsageStatus.Expired.ToString()).Id;
+      var statusAbandoned = _linkUsageStatusService.GetByName(ReferralLinkUsageStatus.Abandoned.ToString()).Id;
 
       query = query
-        .OrderBy(o => o.StatusId == statusPending ? default : o.StatusId == statusExpired ? 1 : 2)
+        .OrderBy(o =>
+          o.StatusId == statusInitiated ? 0 :
+          o.StatusId == statusPending ? 1 :
+          o.StatusId == statusExpired ? 2 :
+          o.StatusId == statusAbandoned ? 3 :
+          4)
         .ThenByDescending(o => o.DateModified)
         .ThenBy(o => o.LinkName)
         .ThenBy(o => o.ProgramName)
@@ -272,11 +280,58 @@ namespace Yoma.Core.Domain.Referral.Services
       return results;
     }
 
+    public async Task ClaimAsRefereeInitiate(Guid linkId)
+    {
+      var link = _linkService.GetById(linkId, true, false, false, false, false);
+      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+      var now = DateTimeOffset.UtcNow;
+
+      // Self-referral guard; no-op.
+      // ClaimAsReferee will enforce and throw the validation error.
+      if (link.UserId == user.Id) return;
+
+      var usages = _linkUsageRepository.Query()
+        .Where(o => o.UserId == user.Id && o.ProgramId == link.ProgramId)
+        .ToList();
+
+      if (usages.Count > 1)
+        throw new DataInconsistencyException($"Data integrity violation: user '{user.Id}' has {usages.Count} usage records for program '{link.ProgramId}'. Expected at most one.");
+
+      var usage = usages.FirstOrDefault();
+      var isNew = usage == null;
+
+      if (usage != null)
+      {
+        // Existing usage belongs to a different link → no-op.
+        // ClaimAsReferee will evaluate and return the appropriate validation outcome.
+        if (usage.LinkId != link.Id) return;
+
+        // Only Abandoned intent may be reinitiated.
+        // All other states (Initiated, Pending, Completed, Expired) remain untouched here
+        // and are validated in ClaimAsReferee.
+        if (usage.Status != ReferralLinkUsageStatus.Abandoned) return;
+      }
+
+      usage ??= new ReferralLinkUsage();
+
+      usage.ProgramId = link.ProgramId;
+      usage.LinkId = link.Id;
+      usage.UserId = user.Id;
+      usage.StatusId = _linkUsageStatusService.GetByName(ReferralLinkUsageStatus.Initiated.ToString()).Id;
+      usage.DateInitiated = now;
+
+      if (isNew)
+        await _linkUsageRepository.Create(usage);
+      else
+        await _linkUsageRepository.Update(usage);
+    }
+
     public async Task ClaimAsReferee(Guid linkId)
     {
       var link = _linkService.GetById(linkId, true, false, false, false, false);
       var program = _programService.GetById(link.ProgramId, true, false);
       var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+      var now = DateTimeOffset.UtcNow;
 
       // Self-referral guard
       if (link.UserId == user.Id)
@@ -292,10 +347,12 @@ namespace Yoma.Core.Domain.Referral.Services
         throw new ValidationException($"Referral program '{program.Name}' is not available in your country");
 
       // All usages by this user (any program)
-      var userUsages = _linkUsageRepository.Query().Where(u => u.UserId == user.Id).ToList();
+      var statusIntentIds = new[] { ReferralLinkUsageStatus.Initiated, ReferralLinkUsageStatus.Abandoned }.Select(o => _linkUsageStatusService.GetByName(o.ToString()).Id).ToList();
+      var usages = _linkUsageRepository.Query().Where(u => u.UserId == user.Id).ToList();
+      var userUsagesClaimed = usages.Where(u => !statusIntentIds.Contains(u.StatusId)).ToList();
 
       // First claim only: prevents retroactive claims — only allowed within configured window after onboarding
-      if (userUsages.Count == 0 && DateTimeOffset.UtcNow - user.DateYoIDOnboarded.Value > TimeSpan.FromHours(_appSettings.ReferralFirstClaimSinceYoIDOnboardedTimeoutInHours))
+      if (userUsagesClaimed.Count == 0 && now - user.DateYoIDOnboarded.Value > TimeSpan.FromHours(_appSettings.ReferralFirstClaimSinceYoIDOnboardedTimeoutInHours))
         throw new ValidationException("You are already registered. Registration with a referral link only applies to new registrations");
 
       // See AppSettings.ReferralRestrictRefereeToSingleProgram summary
@@ -303,7 +360,7 @@ namespace Yoma.Core.Domain.Referral.Services
       if (_appSettings.ReferralRestrictRefereeToSingleProgram)
       {
         // Usages by this user (other programs)
-        var otherProgramsClaimed = userUsages.Where(u => u.ProgramId != program.Id).Select(o => o.ProgramName).Distinct().ToList();
+        var otherProgramsClaimed = userUsagesClaimed.Where(u => u.ProgramId != program.Id).Select(o => o.ProgramName).Distinct().ToList();
 
         // Block if user has participated in ANY OTHER program
         if (otherProgramsClaimed.Count > 0)
@@ -311,57 +368,67 @@ namespace Yoma.Core.Domain.Referral.Services
       }
 
       // For THIS program: a user can have at most one usage (unique on UserId, ProgramId)
-      var usagesForProgram = userUsages.Where(o => o.ProgramId == program.Id).ToList();
+      var usagesForProgram = usages.Where(o => o.ProgramId == program.Id).ToList();
 
       if (usagesForProgram.Count > 1)
         throw new DataInconsistencyException($"Data integrity violation: user '{user.Id}' has {usagesForProgram.Count} usage records for program '{program.Id}'. Expected at most one.");
 
-      var usageExisting = usagesForProgram.FirstOrDefault();
-      if (usageExisting is not null)
+      var usage = usagesForProgram.FirstOrDefault();
+      var isNew = usage == null;
+
+      if (usage != null)
       {
         // Use the existing link for accurate messaging; avoid re-fetch if it matches the incoming link
-        var existingLink = usageExisting.LinkId == link.Id
+        var existingLink = usage.LinkId == link.Id
           ? link
-          : _linkService.GetById(usageExisting.LinkId, true, false, false, false, false);
+          : _linkService.GetById(usage.LinkId, true, false, false, false, false);
 
         var msgUsageExisting = $"You have already participated in program '{program.Name}' and cannot claim again";
 
-        switch (usageExisting.Status)
+        switch (usage.Status)
         {
+          case ReferralLinkUsageStatus.Initiated:
+          case ReferralLinkUsageStatus.Abandoned:
+            // Allow fall-through; may progress to Pending
+            break;
+
           case ReferralLinkUsageStatus.Pending:
-            // Fallback guard in case program expiration job has’t run yet
-            var windowExpiry = program.CompletionWindowInDays.HasValue ? usageExisting.DateClaimed.AddDays(program.CompletionWindowInDays.Value) : (DateTimeOffset?)null;
+            if (!usage.DateClaimed.HasValue)
+              throw new DataInconsistencyException("Expected DateClaimed to have value but is null");
+
+            // Fallback guard in case program expiration job hasn’t run yet
+            var windowExpiry = program.CompletionWindowInDays.HasValue ? usage.DateClaimed.Value.AddDays(program.CompletionWindowInDays.Value) : (DateTimeOffset?)null;
             var effectiveExpiry = DateTimeHelper.Min(windowExpiry, program.DateEnd);
 
-            if (effectiveExpiry.HasValue && effectiveExpiry.Value <= DateTimeOffset.UtcNow)
+            if (effectiveExpiry.HasValue && effectiveExpiry.Value <= now)
               throw new ValidationException(
-                $"{msgUsageExisting}. Your previous claim for link '{existingLink.Name}' on '{usageExisting.DateClaimed:yyyy-MM-dd}' has expired on '{effectiveExpiry:yyyy-MM-dd}'");
+                $"{msgUsageExisting}. Your previous claim for link '{existingLink.Name}' on '{usage.DateClaimed:yyyy-MM-dd}' has expired on '{effectiveExpiry:yyyy-MM-dd}'");
 
-            if (usageExisting.LinkId == link.Id)
+            if (usage.LinkId == link.Id)
               throw new ValidationException(
-                $"You already claimed this link '{existingLink.Name}' on '{usageExisting.DateClaimed:yyyy-MM-dd}' and it is still pending");
+                $"You already claimed this link '{existingLink.Name}' on '{usage.DateClaimed:yyyy-MM-dd}' and it is still pending");
             else
               throw new ValidationException(
-                $"{msgUsageExisting}. You already claimed link '{existingLink.Name}' on '{usageExisting.DateClaimed:yyyy-MM-dd}' and it is still pending");
+                $"{msgUsageExisting}. You already claimed link '{existingLink.Name}' on '{usage.DateClaimed:yyyy-MM-dd}' and it is still pending");
 
           case ReferralLinkUsageStatus.Completed:
-            if (usageExisting.LinkId == link.Id)
+            if (usage.LinkId == link.Id)
               throw new ValidationException(
-                $"You already completed program '{program.Name}' using link '{existingLink.Name}' on '{usageExisting.DateCompleted:yyyy-MM-dd}'");
+                $"You already completed program '{program.Name}' using link '{existingLink.Name}' on '{usage.DateCompleted:yyyy-MM-dd}'");
             else
               throw new ValidationException(
-                $"{msgUsageExisting}. You already completed program '{program.Name}' using link '{existingLink.Name}' on '{usageExisting.DateCompleted:yyyy-MM-dd}'");
+                $"{msgUsageExisting}. You already completed program '{program.Name}' using link '{existingLink.Name}' on '{usage.DateCompleted:yyyy-MM-dd}'");
 
           case ReferralLinkUsageStatus.Expired:
-            if (usageExisting.LinkId == link.Id)
+            if (usage.LinkId == link.Id)
               throw new ValidationException(
-                $"Your claim for link '{existingLink.Name}' on '{usageExisting.DateClaimed:yyyy-MM-dd}' expired on '{usageExisting.DateExpired:yyyy-MM-dd}'");
+                $"Your claim for link '{existingLink.Name}' on '{usage.DateClaimed:yyyy-MM-dd}' expired on '{usage.DateExpired:yyyy-MM-dd}'");
             else
               throw new ValidationException(
-                $"{msgUsageExisting}. Your claim for link '{existingLink.Name}' on '{usageExisting.DateClaimed:yyyy-MM-dd}' expired on '{usageExisting.DateExpired:yyyy-MM-dd}'");
+                $"{msgUsageExisting}. Your claim for link '{existingLink.Name}' on '{usage.DateClaimed:yyyy-MM-dd}' expired on '{usage.DateExpired:yyyy-MM-dd}'");
 
           default:
-            throw new InvalidOperationException($"Unsupported referral link usage status: {usageExisting.Status}");
+            throw new InvalidOperationException($"Unsupported referral link usage status: {usage.Status}");
         }
       }
 
@@ -369,10 +436,10 @@ namespace Yoma.Core.Domain.Referral.Services
       if (program.Status != ProgramStatus.Active)
         throw new ValidationException($"Program '{program.Name}' status is '{program.Status}'");
 
-      if (program.DateStart > DateTimeOffset.UtcNow)
+      if (program.DateStart > now)
         throw new ValidationException($"Program '{program.Name}' only starts on '{program.DateStart:yyyy-MM-dd}'");
 
-      if (program.DateEnd.HasValue && program.DateEnd <= DateTimeOffset.UtcNow) // Fallback guard if expiration job hasn’t run yet
+      if (program.DateEnd.HasValue && program.DateEnd <= now) // Fallback guard if expiration job hasn’t run yet
         throw new ValidationException($"Program '{program.Name}' expired on '{program.DateEnd:yyyy-MM-dd}'");
 
       // Caps at claim time: program-wide + per-referrer
@@ -387,34 +454,34 @@ namespace Yoma.Core.Domain.Referral.Services
       if (link.Status != ReferralLinkStatus.Active)
         throw new ValidationException($"Referral link '{link.Name}' status is '{link.Status}'");
 
-      // Create first-time usage (DB unique index on (UserId, ProgramId) should enforce idempotency under race)
-      var usage = new ReferralLinkUsage
-      {
-        //persisted with create
-        ProgramId = program.Id,
-        LinkId = link.Id,
-        UserId = user.Id,
-        StatusId = _linkUsageStatusService.GetByName(ReferralLinkUsageStatus.Pending.ToString()).Id,
+      usage ??= new ReferralLinkUsage();
 
-        //meta-data for notifications
-        UserIdReferrer = link.UserId,
-        UsernameReferrer = link.Username,
-        UserDisplayNameReferrer = link.UserDisplayName,
-        UserEmailReferrer = link.UserEmail,
-        UserEmailConfirmedReferrer = link.UserEmailConfirmed,
-        UserPhoneNumberReferrer = link.UserPhoneNumber,
-        UserPhoneNumberConfirmedReferrer = link.UserPhoneNumberConfirmed,
-        Username = user.Username,
-        UserDisplayName = user.DisplayName ?? user.Username,
-        UserEmail = user.Email,
-        UserEmailConfirmed = user.EmailConfirmed,
-        UserPhoneNumber = user.PhoneNumber,
-        UserPhoneNumberConfirmed = user.PhoneNumberConfirmed,
-        Status = ReferralLinkUsageStatus.Pending,
-        //DateClaimed equals (set in repo upon create and querying)
-      };
+      usage.ProgramId = program.Id;
+      usage.LinkId = link.Id;
+      usage.UserId = user.Id;
+      usage.StatusId = _linkUsageStatusService.GetByName(ReferralLinkUsageStatus.Pending.ToString()).Id;
 
-      usage = await _linkUsageRepository.Create(usage);
+      //meta-data for notifications
+      usage.UserIdReferrer = link.UserId;
+      usage.UsernameReferrer = link.Username;
+      usage.UserDisplayNameReferrer = link.UserDisplayName;
+      usage.UserEmailReferrer = link.UserEmail;
+      usage.UserEmailConfirmedReferrer = link.UserEmailConfirmed;
+      usage.UserPhoneNumberReferrer = link.UserPhoneNumber;
+      usage.UserPhoneNumberConfirmedReferrer = link.UserPhoneNumberConfirmed;
+      usage.Username = user.Username;
+      usage.UserDisplayName = user.DisplayName ?? user.Username;
+      usage.UserEmail = user.Email;
+      usage.UserEmailConfirmed = user.EmailConfirmed;
+      usage.UserPhoneNumber = user.PhoneNumber;
+      usage.UserPhoneNumberConfirmed = user.PhoneNumberConfirmed;
+      usage.Status = ReferralLinkUsageStatus.Pending;
+      usage.DateClaimed = now;
+
+      if (isNew)
+        usage = await _linkUsageRepository.Create(usage);
+      else
+        usage = await _linkUsageRepository.Update(usage);
 
       await SendNotification(NotificationType.ReferralUsage_Welcome, program, link, usage);
 
@@ -810,6 +877,9 @@ namespace Yoma.Core.Domain.Referral.Services
             break;
 
           case NotificationType.ReferralUsage_Welcome: // sent to referee (youth)
+            if (!usage.DateClaimed.HasValue)
+              throw new DataInconsistencyException("Expected DateClaimed to have value but is null");
+
             recipients = [new() { Username = usage.Username, PhoneNumber = usage.UserPhoneNumber, PhoneNumberConfirmed = usage.UserPhoneNumberConfirmed,
                 Email = usage.UserEmail, EmailConfirmed = usage.UserEmailConfirmed, DisplayName = usage.UserDisplayName }];
 
@@ -817,7 +887,7 @@ namespace Yoma.Core.Domain.Referral.Services
             {
               DashboardURL = _notificationURLFactory.ReferralDashboardURL(type, program.Id),
               LinkClaimURL = link.ClaimURL(_appSettings.AppBaseURL),
-              DateClaimed = usage.DateClaimed,
+              DateClaimed = usage.DateClaimed.Value,
               ProgramName = program.Name,
               ProgramDateStart = program.DateStart,
               ProgramDateEnd = program.DateEnd,
@@ -831,6 +901,9 @@ namespace Yoma.Core.Domain.Referral.Services
             break;
 
           case NotificationType.ReferralUsage_Completion: // sent to referee (youth)
+            if (!usage.DateClaimed.HasValue)
+              throw new DataInconsistencyException("Expected DateClaimed to have value but is null");
+
             recipients = [new() { Username = usage.Username, PhoneNumber = usage.UserPhoneNumber, PhoneNumberConfirmed = usage.UserPhoneNumberConfirmed,
                 Email = usage.UserEmail, EmailConfirmed = usage.UserEmailConfirmed, DisplayName = usage.UserDisplayName }];
 
@@ -844,7 +917,7 @@ namespace Yoma.Core.Domain.Referral.Services
             {
               DashboardURL = _notificationURLFactory.ReferralDashboardURL(type, program.Id),
               DateCompleted = usage.DateCompleted.Value,
-              DateClaimed = usage.DateClaimed,
+              DateClaimed = usage.DateClaimed.Value,
               ProgramName = program.Name,
               ZltoReward = program.ZltoRewardReferee,
             };
@@ -891,9 +964,10 @@ namespace Yoma.Core.Domain.Referral.Services
         UserPhoneNumber = item.UserPhoneNumber,
         StatusId = item.StatusId,
         Status = item.Status,
-        DateClaimed = item.DateClaimed,
         ZltoRewardReferrer = item.ZltoRewardReferrer,
         ZltoRewardReferee = item.ZltoRewardReferee,
+        DateInitiated = item.DateInitiated,
+        DateClaimed = item.DateClaimed,
         DateCompleted = item.DateCompleted,
         DateExpired = item.DateExpired
       };

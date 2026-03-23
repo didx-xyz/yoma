@@ -152,6 +152,8 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
       if (items == null || items.Count == 0)
         throw new ArgumentNullException(nameof(items));
 
+      var now = DateTimeOffset.UtcNow;
+
       var entities = items.Select(item =>
         new Entities.Link
         {
@@ -165,8 +167,8 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
           ShortURL = item.ShortURL,
           CompletionTotal = item.CompletionTotal,
           ZltoRewardCumulative = item.ZltoRewardCumulative,
-          DateCreated = DateTimeOffset.UtcNow,
-          DateModified = DateTimeOffset.UtcNow
+          DateCreated = now,
+          DateModified = now
         });
 
       _context.ReferralLink.AddRange(entities);
@@ -210,11 +212,13 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
       var itemIds = items.Select(o => o.Id).ToList();
       var entities = _context.ReferralLink.Where(o => itemIds.Contains(o.Id));
 
+      var now = DateTimeOffset.UtcNow;
+
       foreach (var item in items)
       {
         var entity = entities.SingleOrDefault(o => o.Id == item.Id) ?? throw new InvalidOperationException($"{nameof(Entities.Link)} with id '{item.Id}' does not exist");
 
-        item.DateModified = DateTimeOffset.UtcNow;
+        item.DateModified = now;
 
         entity.Name = item.Name;
         entity.Description = item.Description;
