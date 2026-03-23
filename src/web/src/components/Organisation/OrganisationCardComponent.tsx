@@ -1,22 +1,22 @@
+import type { AxiosError } from "axios";
 import Link from "next/link";
+import { useRouter } from "next/router";
+import { useCallback, useState } from "react";
+import { FaClock, FaPencilAlt, FaTrash } from "react-icons/fa";
+import { IoIosSettings, IoMdWarning } from "react-icons/io";
+import { toast } from "react-toastify";
 import {
   type OrganizationInfo,
   OrganizationStatus,
 } from "~/api/models/organisation";
-import { ROLE_ADMIN } from "~/lib/constants";
-import { AvatarImage } from "../AvatarImage";
-import type { User } from "~/server/auth";
-import { IoIosSettings, IoMdWarning } from "react-icons/io";
-import type { AxiosError } from "axios";
-import { useState, useCallback } from "react";
-import { FaPencilAlt, FaClock, FaTrash } from "react-icons/fa";
-import { toast } from "react-toastify";
 import { patchOrganisationStatus } from "~/api/services/organisations";
-import analytics from "~/lib/analytics";
-import { ApiErrors } from "../Status/ApiErrors";
-import { useRouter } from "next/router";
-import { Loading } from "../Status/Loading";
 import { useConfirmationModalContext } from "~/context/modalConfirmationContext";
+import analytics from "~/lib/analytics";
+import { ROLE_ADMIN } from "~/lib/constants";
+import type { User } from "~/server/auth";
+import { SquareImage } from "../Common/SquareImage";
+import { ApiErrors } from "../Status/ApiErrors";
+import { Loading } from "../Status/Loading";
 
 export const OrganisationCardComponent: React.FC<{
   key: string;
@@ -121,14 +121,15 @@ export const OrganisationCardComponent: React.FC<{
     >
       {isLoading && <Loading />}
 
-      <Link href={link} className="flex w-1/4 items-center justify-center p-2">
-        <div className="flex h-28 w-28 items-center justify-center">
-          <AvatarImage
-            icon={item.logoURL ?? null}
-            alt={item.name ?? null}
-            size={60}
-          />
-        </div>
+      <Link
+        href={link}
+        className="items-centerx flex w-1/4 justify-center pt-4"
+      >
+        <SquareImage
+          imageURL={item.logoURL ?? null}
+          name={item.name ?? "Organisation logo"}
+          size={60}
+        />
       </Link>
 
       <div className="relative flex w-3/4 flex-col justify-start p-2 pr-4">

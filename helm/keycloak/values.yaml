@@ -414,8 +414,7 @@ keycloak:
     maxUnavailable: 1
     # minAvailable: 1
 
-  database:
-    {}
+  database: {}
     # existingSecret: keycloak-db
     # existingSecretKey: password
     # vendor: postgres
@@ -483,6 +482,7 @@ config-cli:
     CLIENT_ATINGI_ENABLED: "true"
     CLIENT_GOODWALL_ENABLED: "true"
     CLIENT_IIASA_ENABLED: "true"
+    CLIENT_IXO_ENABLED: "true"
     CLIENT_MAZA_APP_ENABLED: "true"
     CLIENT_UNICEF_KENYA_ENABLED: "true"
     CLIENT_MINI_SASS_ENABLED: "true"

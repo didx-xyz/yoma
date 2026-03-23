@@ -30,6 +30,8 @@ export interface OrganizationRequestBase {
   businessDocumentsDelete: string[] | null;
   ssoClientIdInbound: string | null;
   ssoClientIdOutbound: string | null;
+  zltoRewardPoolCurrentFinancialYear: number | null;
+  yomaRewardPoolCurrentFinancialYear: number | null;
 }
 
 export interface OrganizationProviderType {
@@ -65,12 +67,14 @@ export interface Organization {
   ssoClientIdOutbound: string | null;
   ssoClientIdInbound: string | null;
   settings: SettingsInfo | null;
-  zltoRewardPool: number | null;
+  zltoRewardPoolCurrentFinancialYear: number | null;
   zltoRewardCumulative: number | null;
-  zltoRewardBalance: number | null;
-  yomaRewardPool: number | null;
+  zltoRewardCumulativeCurrentFinancialYear: number | null;
+  zltoRewardBalanceCurrentFinancialYear: number | null;
+  yomaRewardPoolCurrentFinancialYear: number | null;
   yomaRewardCumulative: number | null;
-  yomaRewardBalance: number | null;
+  yomaRewardCumulativeCurrentFinancialYear: number | null;
+  yomaRewardBalanceCurrentFinancialYear: number | null;
   dateCreated: string;
   createdByUserId: string;
   dateModified: string;
@@ -120,6 +124,14 @@ export interface OrganizationInfo {
   tagline: string | null;
   status: OrganizationStatus | string; //NB
   logoURL: string | null;
+  zltoRewardPoolCurrentFinancialYear?: number | null;
+  zltoRewardCumulative?: number | null;
+  zltoRewardCumulativeCurrentFinancialYear?: number | null;
+  zltoRewardBalanceCurrentFinancialYear?: number | null;
+  yomaRewardPoolCurrentFinancialYear?: number | null;
+  yomaRewardCumulative?: number | null;
+  yomaRewardCumulativeCurrentFinancialYear?: number | null;
+  yomaRewardBalanceCurrentFinancialYear?: number | null;
 }
 
 export interface OrganizationRequestUpdateStatus {

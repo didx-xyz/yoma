@@ -1,6 +1,6 @@
 import React from "react";
 import type { ProgramInfo } from "~/api/models/referrals";
-import { ProgramImage } from "./ProgramImage";
+import { SquareImage } from "../Common/SquareImage";
 
 interface ProgramRowProps {
   program: ProgramInfo;
@@ -30,7 +30,7 @@ export const ProgramRow: React.FC<ProgramRowProps> = ({
           }`}
         >
           <div className="flex-shrink-0">
-            <ProgramImage
+            <SquareImage
               imageURL={program.imageURL}
               name={program.name}
               size={48}
