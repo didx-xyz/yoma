@@ -100,6 +100,7 @@ export interface Program {
   createdByUserId: string;
   dateModified: string;
   modifiedByUserId: string;
+  referrerShortURL: string | null;
   pathway: ProgramPathway | null;
 }
 
@@ -298,6 +299,13 @@ export interface ProgramSearchResults {
 export interface ProgramSearchResultsInfo {
   items: ProgramInfo[];
   totalCount: number;
+}
+
+export interface ProgramLinkReferrer {
+  id: string;
+  url: string;
+  shortUrl: string;
+  qrCodeBase64: string | null;
 }
 
 // Link Models

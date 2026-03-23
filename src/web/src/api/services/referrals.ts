@@ -9,6 +9,7 @@ import {
   Program,
   ProgramAnalytics,
   ProgramInfo,
+  ProgramLinkReferrer,
   ProgramRequestCreate,
   ProgramRequestUpdate,
   ProgramSearchFilter,
@@ -235,6 +236,21 @@ export const getReferralProgramInfoById = async (
   const instance = context ? ApiServer(context) : await ApiClient;
   const { data } = await instance.get<ProgramInfo>(
     `/referral/program/${id}/info`,
+  );
+  return data;
+};
+
+export const getOrCreateReferralProgramReferrerLink = async (
+  programId: string,
+  includeQRCode?: boolean,
+  context?: GetServerSidePropsContext | GetStaticPropsContext,
+): Promise<ProgramLinkReferrer> => {
+  const instance = context ? ApiServer(context) : await ApiClient;
+  const params = includeQRCode !== undefined ? { includeQRCode } : {};
+  const { data } = await instance.patch<ProgramLinkReferrer>(
+    `/referral/program/${programId}/link/referrer`,
+    undefined,
+    { params },
   );
   return data;
 };
