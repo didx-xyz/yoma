@@ -31,11 +31,15 @@ namespace Yoma.Core.Domain.Referral.Models
     /// </summary>
     public decimal? ZltoRewardReferrer { get; set; }
 
+    public decimal? ZltoRewardReferrerEstimate { get; set; }
+
     /// <summary>
     /// ZLTO amount for the referee, read at completion time (not at claim).
     /// null = no program override (system default or 0).
     /// </summary>
     public decimal? ZltoRewardReferee { get; set; }
+
+    public decimal? ZltoRewardRefereeEstimate { get; set; }
 
     [JsonIgnore]
     public decimal? ZltoRewardPool { get; set; }

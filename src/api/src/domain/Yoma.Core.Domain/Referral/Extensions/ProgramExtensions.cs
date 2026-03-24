@@ -32,7 +32,9 @@ namespace Yoma.Core.Domain.Referral.Extensions
         CompletionTotal = value.CompletionTotal,
         //CompletionBalance: calculated inline
         ZltoRewardReferrer = value.ZltoRewardReferrer,
+        ZltoRewardReferrerEstimate = value.ZltoRewardReferrerEstimate,
         ZltoRewardReferee = value.ZltoRewardReferee,
+        ZltoRewardRefereeEstimate = value.ZltoRewardRefereeEstimate,
         ZltoRewardPool = value.ZltoRewardPool,
         ZltoRewardCumulative = value.ZltoRewardCumulative,
         //ZltoRewardBalance: calculated inline
