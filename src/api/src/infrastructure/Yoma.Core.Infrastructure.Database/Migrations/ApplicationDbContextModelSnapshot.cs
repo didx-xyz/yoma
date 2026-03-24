@@ -1891,7 +1891,13 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                       .ValueGeneratedOnAdd()
                       .HasColumnType("uuid");
 
+            b.Property<DateTimeOffset?>("DateClaimed")
+                      .HasColumnType("timestamp with time zone");
+
             b.Property<DateTimeOffset>("DateCreated")
+                      .HasColumnType("timestamp with time zone");
+
+            b.Property<DateTimeOffset?>("DateInitiated")
                       .HasColumnType("timestamp with time zone");
 
             b.Property<DateTimeOffset>("DateModified")
@@ -1924,7 +1930,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.HasIndex("UserId", "ProgramId")
                       .IsUnique();
 
-            b.HasIndex("LinkId", "StatusId", "DateCreated", "DateModified");
+            b.HasIndex("LinkId", "StatusId", "DateInitiated", "DateClaimed", "DateCreated", "DateModified");
 
             b.ToTable("LinkUsage", "Referral");
           });

@@ -1217,9 +1217,11 @@ DECLARE
   v_now                    timestamptz := (CURRENT_TIMESTAMP AT TIME ZONE 'UTC');
 
   -- LinkUsage statuses
+  v_usage_initiated_id     uuid := (SELECT "Id" FROM "Referral"."LinkUsageStatus" WHERE "Name" = 'Initiated');
   v_usage_pending_id       uuid := (SELECT "Id" FROM "Referral"."LinkUsageStatus" WHERE "Name" = 'Pending');
   v_usage_completed_id     uuid := (SELECT "Id" FROM "Referral"."LinkUsageStatus" WHERE "Name" = 'Completed');
   v_usage_expired_id       uuid := (SELECT "Id" FROM "Referral"."LinkUsageStatus" WHERE "Name" = 'Expired');
+  v_usage_abandoned_id     uuid := (SELECT "Id" FROM "Referral"."LinkUsageStatus" WHERE "Name" = 'Abandoned');
 
   -- MyOpportunity enums
   v_mo_action_verif_id     uuid := (SELECT "Id" FROM "Opportunity"."MyOpportunityAction" WHERE "Name" = 'Verification');
@@ -1235,8 +1237,8 @@ BEGIN
   IF v_user_id IS NULL THEN
     RAISE EXCEPTION 'Seed referee user not found: %', 'testuser@gmail.com';
   END IF;
-  IF v_usage_pending_id IS NULL OR v_usage_completed_id IS NULL OR v_usage_expired_id IS NULL THEN
-    RAISE EXCEPTION 'LinkUsageStatus rows missing (Pending/Completed/Expired)';
+  IF v_usage_initiated_id IS NULL OR v_usage_pending_id IS NULL OR v_usage_completed_id IS NULL OR v_usage_expired_id IS NULL OR v_usage_abandoned_id IS NULL THEN
+    RAISE EXCEPTION 'LinkUsageStatus rows missing (Initiated/Pending/Completed/Expired/Abandoned)';
   END IF;
   IF v_mo_action_verif_id IS NULL OR v_mo_status_completed_id IS NULL THEN
     RAISE EXCEPTION 'MyOpportunity enums missing (Action=Verification or Status=Completed)';
@@ -1359,12 +1361,15 @@ BEGIN
     INSERT INTO "Referral"."LinkUsage"(
       "Id","ProgramId","LinkId","UserId","StatusId",
       "ZltoRewardReferrer","ZltoRewardReferee",
+      "DateInitiated","DateClaimed",
       "DateCreated","DateModified"
     )
     VALUES (
       gen_random_uuid(), rec.program_id, rec.link_id, v_user_id, v_status_id,
       CASE WHEN v_status_id = v_usage_completed_id THEN v_prog_reward_referrer ELSE NULL END,
       CASE WHEN v_status_id = v_usage_completed_id THEN v_prog_reward_referee  ELSE NULL END,
+      v_now,
+      CASE WHEN v_status_id IN (v_usage_pending_id, v_usage_completed_id, v_usage_expired_id) THEN v_now ELSE NULL END,
       v_now, v_now
     );
   END LOOP;
