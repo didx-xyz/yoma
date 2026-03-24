@@ -349,6 +349,10 @@ namespace Yoma.Core.Domain
         $"Referral Program Usage Expiration ({LinkUsageBackgroundService.Statuses_Expirable.JoinNames()} where completion window elapsed)",
         s => s.ProcessExpiration(), options.ReferralLinkUsageExpirationSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
 
+      RecurringJob.AddOrUpdate<ILinkUsageBackgroundService>(
+        $"Referral LinkUsage Abandonment ({LinkUsageBackgroundService.Statuses_Abandonable.JoinNames()} for more than {options.ReferralLinkUsageAbandonedIntervalInHours} hours)",
+        s => s.ProcessAbandoned(), options.ReferralLinkUsageAbandonedSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
+
       //seeding of test data
       if (!appSettings.TestDataSeedingEnvironmentsAsEnum.HasFlag(environment)) return;
 

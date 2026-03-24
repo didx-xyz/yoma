@@ -512,7 +512,12 @@ namespace Yoma.Core.Domain.Referral.Services
       await _distributedLockService.RunWithLockAsync(lockKey, lockDuration, async () =>
       {
         // snapshot of worklist
-        var pendingUsageIds = _linkUsageRepository.Query().Where(o => o.UserId == user.Id && o.StatusId == statusPendingId).OrderBy(o => o.DateClaimed).Select(o => o.Id).ToList();
+        var pendingUsageIds = _linkUsageRepository.Query()
+          .Where(o => o.UserId == user.Id && o.StatusId == statusPendingId)
+          .OrderBy(o => o.DateClaimed ?? DateTimeOffset.MaxValue)
+          .Select(o => o.Id)
+          .ToList();
+
         if (pendingUsageIds.Count == 0)
         {
           if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Referral progress: no pending usages for user {UserId}", user.Id);
@@ -531,6 +536,10 @@ namespace Yoma.Core.Domain.Referral.Services
             using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
 
             var myUsage = _linkUsageRepository.Query(LockMode.Wait).Single(o => o.Id == usageId);
+
+            if (!myUsage.DateClaimed.HasValue)
+              throw new DataInconsistencyException($"Expected DateClaimed to have value for pending LinkUsage '{myUsage.Id}' but it is null");
+
             if (myUsage.Status != ReferralLinkUsageStatus.Pending) //state change between fetching the worklist and processing
             {
               if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Referral progress: skipping LinkUsage '{LinkUsageId}' with status '{Status}'", myUsage.Id, myUsage.Status);
