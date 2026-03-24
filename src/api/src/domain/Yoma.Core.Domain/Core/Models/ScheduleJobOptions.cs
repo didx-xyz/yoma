@@ -153,5 +153,22 @@ namespace Yoma.Core.Domain.Core.Models
     /// sending Un-Completable warning notifications to admins.
     /// </summary>
     public int ReferralProgramHealthScheduleExpirationNotificationInDays { get; set; }
+
+    /// <summary>
+    /// Cron schedule for processing referral link usages stuck in Initiated state.
+    /// Moves them to Abandoned when the initiation timeout window has passed.
+    /// </summary>
+    public string ReferralLinkUsageAbandonedSchedule { get; set; } = null!;
+
+    /// <summary>
+    /// Maximum number of referral link usages processed per execution.
+    /// </summary>
+    public int ReferralLinkUsageAbandonedBatchSize { get; set; }
+
+    /// <summary>
+    /// Time window (in hours) allowed after initiation to complete onboarding
+    /// before the usage is marked as Abandoned.
+    /// </summary>
+    public int ReferralLinkUsageAbandonedIntervalInHours { get; set; }
   }
 }

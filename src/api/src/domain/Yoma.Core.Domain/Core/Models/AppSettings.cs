@@ -196,20 +196,6 @@ namespace Yoma.Core.Domain.Core.Models
     /// Typical value: 24 hours.
     /// </summary>
     public int ReferralFirstClaimSinceYoIDOnboardedTimeoutInHours { get; set; }
-
-    /// <summary>
-    /// Maximum time a referral usage may remain in the **Initiated** state before being automatically
-    /// transitioned to **Abandoned**.
-    ///
-    /// The Initiated state represents a referee who has authenticated and shown intent to claim a referral
-    /// link but has not yet completed onboarding or finalized the claim.
-    ///
-    /// This timeout ensures that stale intent records are cleaned up and do not remain indefinitely.
-    /// Abandoned usages do not block future claims and are ignored by claim eligibility checks.
-    ///
-    /// Typical value: 24 hours.
-    /// </summary>
-    public int ReferralClaimInitiatedTimeoutInHours { get; set; }
     #endregion
 
     #region Private Members
