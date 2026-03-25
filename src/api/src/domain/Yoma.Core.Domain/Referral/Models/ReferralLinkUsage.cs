@@ -61,9 +61,11 @@ namespace Yoma.Core.Domain.Referral.Models
     {
       get
       {
+        if (!DateClaimed.HasValue) return null;
+
         if (!ProgramCompletionWindowInDays.HasValue && !ProgramDateEnd.HasValue) return null;
 
-        var windowDateEnd = ProgramCompletionWindowInDays.HasValue ? DateClaimed.AddDays(ProgramCompletionWindowInDays.Value) : (DateTimeOffset?)null;
+        var windowDateEnd = ProgramCompletionWindowInDays.HasValue ? DateClaimed.Value.AddDays(ProgramCompletionWindowInDays.Value) : (DateTimeOffset?)null;
 
         var effectiveDateEnd = DateTimeHelper.Min(windowDateEnd, ProgramDateEnd);
         return effectiveDateEnd?.ToEndOfDay();
@@ -118,11 +120,15 @@ namespace Yoma.Core.Domain.Referral.Models
     /// <summary>Actual ZLTO amount paid to the referrer for this usage after all eligibility and payout rules.</summary>
     public decimal? ZltoRewardReferrer { get; set; }
 
-    public DateTimeOffset DateClaimed { get; set; }
+    public DateTimeOffset? DateInitiated { get; set; }
+
+    public DateTimeOffset? DateClaimed { get; set; }
 
     public DateTimeOffset? DateCompleted => Status == ReferralLinkUsageStatus.Completed ? DateModified : null;
 
     public DateTimeOffset? DateExpired => Status == ReferralLinkUsageStatus.Expired ? DateModified : null;
+
+    public DateTimeOffset? DateAbandoned => Status == ReferralLinkUsageStatus.Abandoned ? DateModified : null;
 
     public DateTimeOffset DateCreated { get; set; }
 

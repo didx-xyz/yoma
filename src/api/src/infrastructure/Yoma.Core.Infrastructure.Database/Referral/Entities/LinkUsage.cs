@@ -9,7 +9,7 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Entities
 {
   [Table("LinkUsage", Schema = "Referral")]
   [Index(nameof(UserId), nameof(ProgramId), IsUnique = true)]
-  [Index(nameof(LinkId), nameof(StatusId), nameof(DateCreated), nameof(DateModified))]
+  [Index(nameof(LinkId), nameof(StatusId), nameof(DateInitiated), nameof(DateClaimed), nameof(DateCreated), nameof(DateModified))]
   public class LinkUsage : BaseEntity<Guid>
   {
     [Required]
@@ -37,6 +37,10 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Entities
 
     [Column(TypeName = "decimal(8,2)")]
     public decimal? ZltoRewardReferee { get; set; }
+
+    public DateTimeOffset? DateInitiated { get; set; }
+
+    public DateTimeOffset? DateClaimed { get; set; }
 
     [Required]
     public DateTimeOffset DateCreated { get; set; }

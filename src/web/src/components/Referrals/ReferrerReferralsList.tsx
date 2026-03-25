@@ -87,11 +87,13 @@ export const ReferrerReferralsList: React.FC<ReferralsListProps> = ({
 
                     {/* DATE & STATUS */}
                     <div className="flex shrink-0 flex-row items-start gap-2 md:items-center md:justify-center md:px-4">
-                      <span className="text-base-content/70 text-xs">
-                        <Moment format={DATE_FORMAT_HUMAN} utc={true}>
-                          {usage.dateClaimed}
-                        </Moment>
-                      </span>
+                      {usage.dateClaimed && (
+                        <span className="text-base-content/70 text-xs">
+                          <Moment format={DATE_FORMAT_HUMAN} utc={true}>
+                            {usage.dateClaimed}
+                          </Moment>
+                        </span>
+                      )}
                       <div className="flex items-center gap-2">
                         {usage.status === "Completed" ? (
                           <Image

@@ -159,6 +159,8 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories
       if (items == null || items.Count == 0)
         throw new ArgumentNullException(nameof(items));
 
+      var now = DateTimeOffset.UtcNow;
+
       var entities = items.Select(item =>
         new Entities.MyOpportunity
         {
@@ -178,8 +180,8 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories
           Recommendable = item.Recommendable,
           StarRating = item.StarRating,
           Feedback = item.Feedback,
-          DateCreated = DateTimeOffset.UtcNow,
-          DateModified = DateTimeOffset.UtcNow,
+          DateCreated = now,
+          DateModified = now,
         });
 
       _context.MyOpportunity.AddRange(entities);
@@ -231,11 +233,13 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories
       var itemIds = items.Select(o => o.Id).ToList();
       var entities = _context.MyOpportunity.Where(o => itemIds.Contains(o.Id));
 
+      var now = DateTimeOffset.UtcNow;
+
       foreach (var item in items)
       {
         var entity = entities.SingleOrDefault(o => o.Id == item.Id) ?? throw new InvalidOperationException($"{nameof(Entities.MyOpportunity)} with id '{item.Id}' does not exist");
 
-        item.DateModified = DateTimeOffset.UtcNow;
+        item.DateModified = now;
 
         entity.ActionId = item.ActionId;
         entity.VerificationStatusId = item.VerificationStatusId;

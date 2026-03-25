@@ -95,7 +95,18 @@ namespace Yoma.Core.Domain.Referral.Services
       }
 
       items.ForEach(o => { o.StatusId = statusLimitReachedId; o.Status = ReferralLinkStatus.LimitReached; });
-      await _linkRepository.Update(items);
+
+      await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+      {
+        using var scope = TransactionScopeHelper.CreateReadCommitted();
+
+        var linkIds = items.Select(o => o.Id).Distinct().ToList();
+
+        await _linkRepository.Update(items);
+        await AbandonLinkUsagesByLinkId(linkIds, logger);
+
+        scope.Complete();
+      });
 
       if (logger == null || !logger.IsEnabled(LogLevel.Information)) return;
 
@@ -129,7 +140,17 @@ namespace Yoma.Core.Domain.Referral.Services
         o.Status = ReferralLinkStatus.Cancelled;
       });
 
-      await _linkRepository.Update(items);
+      await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+      {
+        using var scope = TransactionScopeHelper.CreateReadCommitted();
+
+        var linkIds = items.Select(o => o.Id).Distinct().ToList();
+
+        await _linkRepository.Update(items);
+        await AbandonLinkUsagesByLinkId(linkIds);
+
+        scope.Complete();
+      });
     }
 
     /// <summary>
@@ -167,7 +188,18 @@ namespace Yoma.Core.Domain.Referral.Services
       }
 
       items.ForEach(o => { o.StatusId = statusCancelledId; o.Status = ReferralLinkStatus.Cancelled; });
-      await _linkRepository.Update(items);
+
+      await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+      {
+        using var scope = TransactionScopeHelper.CreateReadCommitted();
+
+        var linkIds = items.Select(o => o.Id).Distinct().ToList();
+
+        await _linkRepository.Update(items);
+        await AbandonLinkUsagesByLinkId(linkIds, logger);
+
+        scope.Complete();
+      });
 
       if (logger == null || !logger.IsEnabled(LogLevel.Information)) return;
 
@@ -209,6 +241,7 @@ namespace Yoma.Core.Domain.Referral.Services
         var linkIds = items.Select(o => o.Id).Distinct().ToList();
 
         await _linkRepository.Update(items);
+        await AbandonLinkUsagesByLinkId(linkIds, logger);
         await ExpireLinkUsagesByLinkId(linkIds, logger);
 
         scope.Complete();
@@ -277,6 +310,56 @@ namespace Yoma.Core.Domain.Referral.Services
       else
         logger.LogInformation("Processed {Count} pending link usage(s) for program {ProgramId}", totalProcessed, programId);
     }
+
+    /// <summary>
+    /// Action upon terminal link / program state: abandon all initiated usages with the specified link
+    /// </summary>
+    public async Task AbandonLinkUsagesByLinkId(Guid linkId, ILogger? logger = null)
+    {
+      if (linkId == Guid.Empty)
+        throw new ArgumentNullException(nameof(linkId));
+
+      await AbandonLinkUsagesByLinkId([linkId], logger);
+    }
+
+    /// <summary>
+    /// Action upon terminal link / program state: abandon all initiated usages with the specified links
+    /// </summary>
+    public async Task AbandonLinkUsagesByLinkId(List<Guid> linkIds, ILogger? logger = null)
+    {
+      if (linkIds == null || linkIds.Count == 0 || linkIds.Any(o => o == Guid.Empty))
+        throw new ArgumentNullException(nameof(linkIds));
+
+      linkIds = [.. linkIds.Distinct()];
+
+      var statusInitiatedId = _linkUsageStatusService.GetByName(ReferralLinkUsageStatus.Initiated.ToString()).Id;
+      var statusAbandonedId = _linkUsageStatusService.GetByName(ReferralLinkUsageStatus.Abandoned.ToString()).Id;
+
+      var totalProcessed = 0;
+
+      while (true)
+      {
+        var items = _linkUsageRepository.Query()
+          .Where(o => linkIds.Contains(o.LinkId) && o.StatusId == statusInitiatedId)
+          .OrderBy(o => o.Id)
+          .Take(Processing_BatchSize)
+          .ToList();
+
+        if (items.Count == 0) break;
+
+        items.ForEach(o => { o.StatusId = statusAbandonedId; o.Status = ReferralLinkUsageStatus.Abandoned; });
+        await _linkUsageRepository.Update(items);
+
+        totalProcessed += items.Count;
+      }
+
+      if (logger == null || !logger.IsEnabled(LogLevel.Information)) return;
+
+      if (totalProcessed == 0)
+        logger.LogInformation("No initiated link usages found for {LinkCount} link(s)", linkIds.Count);
+      else
+        logger.LogInformation("Abandoned {Count} initiated link usage(s) across {LinkCount} link(s)", totalProcessed, linkIds.Count);
+    }
     #endregion
 
     #region Private Members
@@ -321,5 +404,3 @@ namespace Yoma.Core.Domain.Referral.Services
     #endregion
   }
 }
-
-

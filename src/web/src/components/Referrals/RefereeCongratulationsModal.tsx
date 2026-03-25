@@ -1,20 +1,18 @@
 import Link from "next/link";
 import { IoMdClose } from "react-icons/io";
 import { IoArrowForward } from "react-icons/io5";
-import { ProgramInfo } from "~/api/models/referrals";
+import Moment from "react-moment";
+import { ReferralLinkUsageInfo } from "~/api/models/referrals";
 import CustomModal from "~/components/Common/CustomModal";
+import { DATE_FORMAT_HUMAN } from "~/lib/constants";
 
-interface RefereeCongratulationsModalProps {
+export const RefereeCongratulationsModal: React.FC<{
   isOpen: boolean;
   onClose: () => void;
   userName: string;
-  program: ProgramInfo;
-}
-
-export const RefereeCongratulationsModal: React.FC<
-  RefereeCongratulationsModalProps
-> = ({ isOpen, onClose, userName, program }) => {
-  const normalizedValue = program?.zltoRewardReferee || 0;
+  usage: ReferralLinkUsageInfo;
+}> = ({ isOpen, onClose, userName, usage }) => {
+  const normalizedValue = usage?.zltoRewardReferee || 0;
 
   return (
     <CustomModal
@@ -49,12 +47,27 @@ export const RefereeCongratulationsModal: React.FC<
             Congratulations {userName}!
           </h3>
           <p className="text-gray-dark max-w-[95%] text-sm leading-relaxed md:max-w-[90%] md:text-base">
-            You have completed the <strong>{program.name}</strong> programme
+            You completed the <strong>{usage.programName}</strong> programme
+            {usage.dateCompleted && (
+              <>
+                {" "}
+                on{" "}
+                <Moment
+                  format={DATE_FORMAT_HUMAN}
+                  utc={true}
+                  className="font-bold"
+                >
+                  {usage.dateCompleted}
+                </Moment>
+              </>
+            )}
             {normalizedValue > 0 ? (
               <>
                 {" "}
                 and received <strong>{normalizedValue} Zlto</strong> in your
-                wallet. Check out our{" "}
+                wallet.
+                <br />
+                <br /> Check out our{" "}
                 <Link
                   href="/marketplace"
                   className="text-purple hover:text-purple-dark inline-flex items-center gap-1 font-semibold underline underline-offset-2"
@@ -62,7 +75,6 @@ export const RefereeCongratulationsModal: React.FC<
                   marketplace
                   <IoArrowForward className="h-4 w-4" />
                 </Link>
-                .
               </>
             ) : (
               <>

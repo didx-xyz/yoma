@@ -82,10 +82,56 @@ namespace Yoma.Core.Domain.Referral.Models
     public decimal? ZltoRewardReferrer { get; set; }
 
     /// <summary>
+    /// Estimated ZLTO payout for the referrer if a completion happens now.
+    /// Calculated after reserving the referee estimate first.
+    /// Uses program pool balance only (treasury, eligibility, caps, and other payout constraints are not considered).
+    /// null = no referrer reward configured.
+    /// </summary>
+    public decimal? ZltoRewardReferrerEstimate
+    {
+      get
+      {
+        if (!ZltoRewardReferrer.HasValue)
+          return null;
+
+        if (!ZltoRewardPool.HasValue)
+          return ZltoRewardReferrer.Value;
+
+        var pool = Math.Max(ZltoRewardBalance ?? 0m, 0m);
+
+        if (ZltoRewardReferee.HasValue)
+          pool -= Math.Min(pool, ZltoRewardReferee.Value);
+
+        return Math.Min(pool, ZltoRewardReferrer.Value);
+      }
+    }
+
+    /// <summary>
     /// ZLTO amount for the referee, read at completion time (not at claim).
     /// null = no program override (system default or 0).
     /// </summary>
     public decimal? ZltoRewardReferee { get; set; }
+
+    /// <summary>
+    /// Estimated ZLTO payout for the referee if a completion happens now.
+    /// Uses program pool balance only (treasury, eligibility, caps, and other payout constraints are not considered).
+    /// Referee has priority.
+    /// null = no referee reward configured.
+    /// </summary>
+    public decimal? ZltoRewardRefereeEstimate
+    {
+      get
+      {
+        if (!ZltoRewardReferee.HasValue)
+          return null;
+
+        if (!ZltoRewardPool.HasValue)
+          return ZltoRewardReferee.Value;
+
+        var pool = Math.Max(ZltoRewardBalance ?? 0m, 0m);
+        return Math.Min(pool, ZltoRewardReferee.Value);
+      }
+    }
 
     /// <summary>
     /// Program-level ZLTO pool for THIS program (covers both referee and referrer).

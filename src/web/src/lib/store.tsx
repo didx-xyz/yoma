@@ -73,19 +73,24 @@ const rumConsentAtom = atomWithStorage<boolean | null>(
   removeOnNullStorage<boolean | null>(),
 );
 
-// first pending referee referral target URL (used by navbar to show quick-link)
-const firstPendingRefereeReferralUrlAtom = atom<string | null>(null);
+// first actionable referee referral target URL (used by navbar/toasts to route
+// users either back into claim onboarding or onward to progress)
+const firstActionableRefereeReferralUrlAtom = atom<string | null>(null);
 
 // tracks if pending-referral toast has already been shown in the current login lifecycle
 const hasShownRefereePendingToastAtom = atomWithStorage<boolean>(
   "hasShownRefereePendingToast",
   false,
+  undefined,
+  { getOnInit: true },
 );
 
 // tracks whether referee welcome modal was dismissed for current browser login session
 const hasDismissedRefereeWelcomeModalAtom = atomWithStorage<boolean>(
   "hasDismissedRefereeWelcomeModal",
   false,
+  undefined,
+  { getOnInit: true },
 );
 
 export {
@@ -98,7 +103,7 @@ export {
   currentLanguageAtom,
   userCountrySelectionAtom,
   rumConsentAtom,
-  firstPendingRefereeReferralUrlAtom,
+  firstActionableRefereeReferralUrlAtom,
   hasShownRefereePendingToastAtom,
   hasDismissedRefereeWelcomeModalAtom,
 };

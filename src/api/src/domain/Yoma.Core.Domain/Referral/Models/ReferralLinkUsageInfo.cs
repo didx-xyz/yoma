@@ -66,7 +66,9 @@ namespace Yoma.Core.Domain.Referral.Models
     /// <summary>Actual ZLTO amount paid to the referrer for this usage after all eligibility and payout rules.</summary>
     public decimal? ZltoRewardReferrer { get; set; }
 
-    public DateTimeOffset DateClaimed { get; set; }
+    public DateTimeOffset? DateInitiated { get; set; }
+
+    public DateTimeOffset? DateClaimed { get; set; }
 
     public DateTimeOffset? DateCompleted { get; set; }
 

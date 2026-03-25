@@ -3,20 +3,21 @@ import { useSession } from "next-auth/react";
 import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { useEffect, useMemo, type ReactElement } from "react";
+import { useEffect, useMemo, useState, type ReactElement } from "react";
 import { IoOpenOutline, IoTimeOutline, IoTrophyOutline } from "react-icons/io5";
-import { toast } from "react-toastify";
 import MainLayout from "~/components/Layout/Main";
 import NoRowsMessage from "~/components/NoRowsMessage";
+import { RefereeCongratulationsModal } from "~/components/Referrals/RefereeCongratulationsModal";
+import { RefereeWelcomeModal } from "~/components/Referrals/RefereeWelcomeModal";
 import { ReferralInfoCard } from "~/components/Referrals/ReferralInfoCard";
 import { ReferralMainColumns } from "~/components/Referrals/ReferralMainColumns";
 import { ReferralProgressCard } from "~/components/Referrals/ReferralProgressCard";
+import { ReferralProgressSuccessCard } from "~/components/Referrals/ReferralProgressSuccessCard";
 import { ReferralShell } from "~/components/Referrals/ReferralShell";
 import { ReferralStatCard } from "~/components/Referrals/ReferralStatCard";
 import { ReferralTasksCard } from "~/components/Referrals/ReferralTasksCard";
 import { ReferralTopCard } from "~/components/Referrals/ReferralTopCard";
-import { RefereeCongratulationsModal } from "~/components/Referrals/RefereeCongratulationsModal";
-import { RefereeWelcomeModal } from "~/components/Referrals/RefereeWelcomeModal";
+import { Editor } from "~/components/RichText/Editor";
 import { LoadingInline } from "~/components/Status/LoadingInline";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import {
@@ -24,16 +25,14 @@ import {
   useReferralProgramInfoQuery,
 } from "~/hooks/useReferralProgramMutations";
 import { parseApiError } from "~/lib/apiErrorUtils";
-import { THEME_WHITE } from "~/lib/constants";
 import { handleUserSignOut } from "~/lib/authUtils";
+import { THEME_WHITE } from "~/lib/constants";
 import {
   hasDismissedRefereeWelcomeModalAtom,
   userProfileAtom,
 } from "~/lib/store";
 import { getSafeUrl } from "~/lib/utils";
 import { type NextPageWithLayout } from "../../_app";
-import { Editor } from "~/components/RichText/Editor";
-import { ReferralProgressSuccessCard } from "~/components/Referrals/ReferralProgressSuccessCard";
 
 const RefereeDashboard: NextPageWithLayout = () => {
   const router = useRouter();
@@ -42,17 +41,11 @@ const RefereeDashboard: NextPageWithLayout = () => {
   const [hasDismissedWelcomeModal, setHasDismissedWelcomeModal] = useAtom(
     hasDismissedRefereeWelcomeModalAtom,
   );
+  const [shouldShowCongratsModal, setShouldShowCongratsModal] = useState(false);
+  const [hasClosedWelcomeModalThisMount, setHasClosedWelcomeModalThisMount] =
+    useState(false);
   const programId =
     typeof router.query.programId === "string" ? router.query.programId : "";
-
-  useEffect(() => {
-    if (router.query.claimed === "true") {
-      toast.success("Successfully claimed! Welcome to the program. 🎉");
-      router.replace(`/referrals/progress/${programId}`, undefined, {
-        shallow: true,
-      });
-    }
-  }, [router, programId]);
 
   const {
     data: usage,
@@ -70,6 +63,7 @@ const RefereeDashboard: NextPageWithLayout = () => {
   } = useReferralProgramInfoQuery(programId, {
     enabled: sessionStatus === "authenticated" && router.isReady && !!programId,
   });
+  const usageStatus = usage?.status ?? null;
 
   const isRedirectingToKeycloak = router.query.signInAgain === "true";
 
@@ -89,6 +83,16 @@ const RefereeDashboard: NextPageWithLayout = () => {
       expiryDate,
     };
   }, [usage?.dateClaimed, program?.completionWindowInDays]);
+
+  const isProgramCompleted = usageStatus === "Completed";
+
+  useEffect(() => {
+    setShouldShowCongratsModal(isProgramCompleted);
+  }, [isProgramCompleted, setShouldShowCongratsModal]);
+
+  useEffect(() => {
+    setHasClosedWelcomeModalThisMount(false);
+  }, [programId]);
 
   if (sessionStatus === "loading") {
     return (
@@ -160,9 +164,9 @@ const RefereeDashboard: NextPageWithLayout = () => {
     userProfile?.displayName?.trim() ||
     usage?.userDisplayName?.trim() ||
     "there";
-  const isProgramCompleted = usage?.status === "Completed";
   const shouldShowRefereeModal = Boolean(
     sessionStatus === "authenticated" &&
+      !hasClosedWelcomeModalThisMount &&
       !hasDismissedWelcomeModal &&
       usage &&
       program &&
@@ -202,6 +206,10 @@ const RefereeDashboard: NextPageWithLayout = () => {
     requiresProofOfPersonhood && program?.pathwayRequired
       ? `Verify your personhood and complete the below pathway${completionWindowSuffix} to complete this programme.`
       : `${normalizedSubtitleActionText.charAt(0).toUpperCase()}${normalizedSubtitleActionText.slice(1)}${completionWindowSuffix} to ${subtitleOutcomeText}.`;
+
+  const rewardAmount = isProgramCompleted
+    ? (usage?.zltoRewardReferee ?? 0)
+    : (program?.zltoRewardReferee ?? 0);
 
   return (
     <>
@@ -245,21 +253,12 @@ const RefereeDashboard: NextPageWithLayout = () => {
           <>
             <ReferralTopCard
               program={program}
-              title={
-                isProgramCompleted
-                  ? `${program.name}`
-                  : `Welcome to ${program.name}!`
-              }
+              title={program.name}
               subTitle={
                 isProgramCompleted ? (
                   `${program.summary}`
                 ) : (
-                  <>
-                    Welcome to Yoma! You were referred by{" "}
-                    <strong>{usage.userDisplayNameReferrer}</strong>
-                    <br />
-                    {subtitleNextStepText}
-                  </>
+                  <>{subtitleNextStepText}</>
                 )
               }
               rewardsReferrer={false}
@@ -279,7 +278,7 @@ const RefereeDashboard: NextPageWithLayout = () => {
                     </div>
                   </ReferralInfoCard>
 
-                  {usage.status === "Pending" &&
+                  {usageStatus === "Pending" &&
                   program.proofOfPersonhoodRequired &&
                   !(usage.proofOfPersonhoodCompleted ?? false) ? (
                     <div
@@ -344,18 +343,19 @@ const RefereeDashboard: NextPageWithLayout = () => {
                       </div>
                     </div>
                   ) : null}
-                  <ReferralTasksCard
-                    model={program.pathway}
-                    progressModel={usage.pathway}
-                  />
+
+                  {usageStatus === "Pending" ? (
+                    <ReferralTasksCard
+                      model={program.pathway}
+                      progressModel={usage.pathway}
+                    />
+                  ) : null}
                 </>
               }
               right={
                 <div className="flex flex-col gap-2 rounded-xl bg-white p-4 shadow">
-                  {usage.percentComplete === 100 ? (
-                    <ReferralProgressSuccessCard
-                      rewardAmount={program.zltoRewardReferee || 0}
-                    />
+                  {isProgramCompleted ? (
+                    <ReferralProgressSuccessCard usage={usage} />
                   ) : (
                     <ReferralProgressCard usage={usage} />
                   )}
@@ -364,9 +364,7 @@ const RefereeDashboard: NextPageWithLayout = () => {
                     icon={<IoTrophyOutline className="h-5 w-5" />}
                     header="Reward"
                     description={
-                      (program.zltoRewardReferee || 0) > 0
-                        ? `${program.zltoRewardReferee} Zlto`
-                        : "No reward"
+                      rewardAmount > 0 ? `${rewardAmount} Zlto` : "No reward"
                     }
                   />
 
@@ -388,26 +386,30 @@ const RefereeDashboard: NextPageWithLayout = () => {
         )}
       </ReferralShell>
 
-      {program && (
+      {program && usage && (
         <>
           <RefereeWelcomeModal
             isOpen={shouldShowRefereeModal && !isProgramCompleted}
             onClose={() => {
+              setHasClosedWelcomeModalThisMount(true);
               setHasDismissedWelcomeModal(true);
             }}
             userName={welcomeUserName}
             program={program}
-          />
-
-          <RefereeCongratulationsModal
-            isOpen={shouldShowRefereeModal && isProgramCompleted}
-            onClose={() => {
-              setHasDismissedWelcomeModal(true);
-            }}
-            userName={completedUserName}
-            program={program}
+            usage={usage}
           />
         </>
+      )}
+
+      {usage && (
+        <RefereeCongratulationsModal
+          isOpen={Boolean(program && shouldShowCongratsModal)}
+          onClose={() => {
+            setShouldShowCongratsModal(false);
+          }}
+          userName={completedUserName}
+          usage={usage}
+        />
       )}
     </>
   );

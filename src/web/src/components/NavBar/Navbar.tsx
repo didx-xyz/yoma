@@ -16,7 +16,7 @@ import {
   RoleView,
   activeNavigationRoleViewAtom,
   currentOrganisationIdAtom,
-  firstPendingRefereeReferralUrlAtom,
+  firstActionableRefereeReferralUrlAtom,
   userProfileAtom,
 } from "~/lib/store";
 import { AvatarImage } from "../AvatarImage";
@@ -28,7 +28,7 @@ import { LanguageSwitcher } from "./LanguageSwitcher";
 import { UserMenu } from "./UserMenu";
 
 const getNavBarLinksUser = (
-  firstPendingRefereeReferralUrl: string | null,
+  firstActionableRefereeReferralUrl: string | null,
 ): TabItem[] => {
   const links: TabItem[] = [
     {
@@ -69,11 +69,11 @@ const getNavBarLinksUser = (
     },
   ];
 
-  if (firstPendingRefereeReferralUrl) {
+  if (firstActionableRefereeReferralUrl) {
     links.push({
       title: "New to Yoma?",
       description: "New to Yoma",
-      url: firstPendingRefereeReferralUrl,
+      url: firstActionableRefereeReferralUrl,
       badgeCount: null,
       selected: false,
       iconImage: "⭐",
@@ -134,8 +134,8 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
   const router = useRouter();
   const activeRoleView = useAtomValue(activeNavigationRoleViewAtom);
   const currentOrganisationId = useAtomValue(currentOrganisationIdAtom);
-  const firstPendingRefereeReferralUrl = useAtomValue(
-    firstPendingRefereeReferralUrlAtom,
+  const firstActionableRefereeReferralUrl = useAtomValue(
+    firstActionableRefereeReferralUrlAtom,
   );
   const { data: session } = useSession();
   const userProfile = useAtomValue(userProfileAtom);
@@ -215,7 +215,7 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
       ];
     } else {
       // Get user links with conditional referee link
-      links = getNavBarLinksUser(firstPendingRefereeReferralUrl);
+      links = getNavBarLinksUser(firstActionableRefereeReferralUrl);
     }
 
     // Set selected property based on current route
@@ -228,7 +228,7 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
   }, [
     activeRoleView,
     currentOrganisationId,
-    firstPendingRefereeReferralUrl,
+    firstActionableRefereeReferralUrl,
     router.pathname,
   ]);
 

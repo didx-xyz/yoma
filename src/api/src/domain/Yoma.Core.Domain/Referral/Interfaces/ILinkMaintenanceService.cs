@@ -20,5 +20,9 @@ namespace Yoma.Core.Domain.Referral.Interfaces
     Task ExpireByProgramId(List<Guid> programIds, ILogger? logger = null);
 
     Task ProcessUsageProgressByProgramId(Guid programId, ILogger? logger = null);
+
+    Task AbandonLinkUsagesByLinkId(Guid linkId, ILogger? logger = null);
+
+    Task AbandonLinkUsagesByLinkId(List<Guid> linkIds, ILogger? logger = null);
   }
 }

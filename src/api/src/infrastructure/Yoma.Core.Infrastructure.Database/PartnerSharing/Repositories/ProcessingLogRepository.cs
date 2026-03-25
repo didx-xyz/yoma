@@ -72,6 +72,8 @@ namespace Yoma.Core.Infrastructure.Database.PartnerSharing.Repositories
       if (items == null || items.Count == 0)
         throw new ArgumentNullException(nameof(items));
 
+      var now = DateTimeOffset.UtcNow;
+
       var entities = items.Select(item =>
          new Entities.ProcessingLog
          {
@@ -84,8 +86,8 @@ namespace Yoma.Core.Infrastructure.Database.PartnerSharing.Repositories
            EntityExternalId = item.EntityExternalId,
            ErrorReason = item.ErrorReason,
            RetryCount = item.RetryCount,
-           DateCreated = DateTimeOffset.UtcNow,
-           DateModified = DateTimeOffset.UtcNow
+           DateCreated = now,
+           DateModified = now
          });
 
       _context.PartnerSharingProcessingLog.AddRange(entities);
@@ -128,11 +130,13 @@ namespace Yoma.Core.Infrastructure.Database.PartnerSharing.Repositories
       var itemIds = items.Select(o => o.Id).ToList();
       var entities = _context.PartnerSharingProcessingLog.Where(o => itemIds.Contains(o.Id));
 
+      var now = DateTimeOffset.UtcNow;
+
       foreach (var item in items)
       {
         var entity = entities.SingleOrDefault(o => o.Id == item.Id) ?? throw new InvalidOperationException($"{nameof(ProcessingLog)} with id '{item.Id}' does not exist");
 
-        item.DateModified = DateTimeOffset.UtcNow;
+        item.DateModified = now;
 
         entity.StatusId = item.StatusId;
         entity.EntityExternalId = item.EntityExternalId;

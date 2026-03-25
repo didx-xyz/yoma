@@ -211,6 +211,8 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
       if (items == null || items.Count == 0)
         throw new ArgumentNullException(nameof(items));
 
+      var now = DateTimeOffset.UtcNow;
+
       var entities = items.Select(item =>
         new Entities.Program
         {
@@ -234,9 +236,9 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
           ReferrerLimit = item.ReferrerLimit,
           DateStart = item.DateStart,
           DateEnd = item.DateEnd,
-          DateCreated = DateTimeOffset.UtcNow,
+          DateCreated = now,
           CreatedByUserId = item.CreatedByUserId,
-          DateModified = DateTimeOffset.UtcNow,
+          DateModified = now,
           ModifiedByUserId = item.ModifiedByUserId
         });
 
@@ -300,11 +302,13 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
       var itemIds = items.Select(o => o.Id).ToList();
       var entities = _context.ReferralProgram.Where(o => itemIds.Contains(o.Id));
 
+      var now = DateTimeOffset.UtcNow;
+
       foreach (var item in items)
       {
         var entity = entities.SingleOrDefault(o => o.Id == item.Id) ?? throw new InvalidOperationException($"{nameof(Entities.Program)} with id '{item.Id}' does not exist");
 
-        item.DateModified = DateTimeOffset.UtcNow;
+        item.DateModified = now;
 
         entity.Name = item.Name;
         entity.Summary = item.Summary;

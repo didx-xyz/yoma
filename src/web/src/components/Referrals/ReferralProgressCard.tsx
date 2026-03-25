@@ -1,11 +1,9 @@
 import { FaSignal } from "react-icons/fa6";
 import { type ReferralLinkUsageInfo } from "~/api/models/referrals";
 
-interface ReferralProgressCardProps {
+export const ReferralProgressCard: React.FC<{
   usage: ReferralLinkUsageInfo;
-}
-
-export const ReferralProgressCard = ({ usage }: ReferralProgressCardProps) => {
+}> = ({ usage }) => {
   return (
     <div className="bg-purple-dark flex items-start gap-3 rounded-lg p-3 text-white">
       <div className="rounded-md bg-white/20 p-2 text-white">

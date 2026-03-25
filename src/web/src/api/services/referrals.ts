@@ -35,13 +35,26 @@ import {
 } from "../models/referrals";
 import { Country } from "../models/lookups";
 
+const sanitizePathSegment = (value: string | number | boolean): string => {
+  const normalizedValue = String(value).trim();
+
+  if (!normalizedValue) {
+    throw new Error("Invalid path segment");
+  }
+
+  return encodeURIComponent(normalizedValue);
+};
+
 // create/edit/info
 export const getReferralProgramById = async (
   id: string,
   context?: GetServerSidePropsContext | GetStaticPropsContext,
 ): Promise<Program> => {
   const instance = context ? ApiServer(context) : await ApiClient;
-  const { data } = await instance.get<Program>(`/referral/program/${id}/admin`);
+  const sanitizedId = sanitizePathSegment(id);
+  const { data } = await instance.get<Program>(
+    `/referral/program/${sanitizedId}/admin`,
+  );
   return data;
 };
 
@@ -87,8 +100,10 @@ export const updateReferralProgramStatus = async (
   context?: GetServerSidePropsContext | GetStaticPropsContext,
 ): Promise<Program> => {
   const instance = context ? ApiServer(context) : await ApiClient;
+  const sanitizedId = sanitizePathSegment(id);
+  const sanitizedStatus = sanitizePathSegment(status);
   const { data } = await instance.patch<Program>(
-    `/referral/program/${id}/${status}`,
+    `/referral/program/${sanitizedId}/${sanitizedStatus}`,
   );
   return data;
 };
@@ -99,8 +114,10 @@ export const updateReferralProgramHidden = async (
   context?: GetServerSidePropsContext | GetStaticPropsContext,
 ): Promise<Program> => {
   const instance = context ? ApiServer(context) : await ApiClient;
+  const sanitizedId = sanitizePathSegment(id);
+  const sanitizedHidden = sanitizePathSegment(hidden);
   const { data } = await instance.patch<Program>(
-    `/referral/program/${id}/hidden/${hidden}`,
+    `/referral/program/${sanitizedId}/hidden/${sanitizedHidden}`,
   );
   return data;
 };
@@ -110,8 +127,9 @@ export const setReferralProgramAsDefault = async (
   context?: GetServerSidePropsContext | GetStaticPropsContext,
 ): Promise<Program> => {
   const instance = context ? ApiServer(context) : await ApiClient;
+  const sanitizedId = sanitizePathSegment(id);
   const { data } = await instance.patch<Program>(
-    `/referral/program/${id}/default`,
+    `/referral/program/${sanitizedId}/default`,
   );
   return data;
 };
@@ -122,12 +140,13 @@ export const updateReferralProgramImage = async (
   context?: GetServerSidePropsContext | GetStaticPropsContext,
 ): Promise<Program> => {
   const instance = context ? ApiServer(context) : await ApiClient;
+  const sanitizedId = sanitizePathSegment(id);
 
   const formData = new FormData();
   formData.append("file", file);
 
   const { data } = await instance.patch<Program>(
-    `/referral/program/${id}/image`,
+    `/referral/program/${sanitizedId}/image`,
     formData,
     {
       headers: {
@@ -144,10 +163,14 @@ export const getReferralLinkById = async (
   context?: GetServerSidePropsContext | GetStaticPropsContext,
 ): Promise<ReferralLink> => {
   const instance = context ? ApiServer(context) : await ApiClient;
+  const sanitizedId = sanitizePathSegment(id);
   const params = includeQRCode !== undefined ? { includeQRCode } : {};
-  const { data } = await instance.get<ReferralLink>(`/referral/link/${id}`, {
-    params,
-  });
+  const { data } = await instance.get<ReferralLink>(
+    `/referral/link/${sanitizedId}`,
+    {
+      params,
+    },
+  );
   return data;
 };
 
@@ -192,8 +215,9 @@ export const cancelReferralLink = async (
   context?: GetServerSidePropsContext | GetStaticPropsContext,
 ): Promise<ReferralLink> => {
   const instance = context ? ApiServer(context) : await ApiClient;
+  const sanitizedId = sanitizePathSegment(id);
   const { data } = await instance.patch<ReferralLink>(
-    `/referral/link/${id}/cancel`,
+    `/referral/link/${sanitizedId}/cancel`,
   );
   return data;
 };
@@ -234,8 +258,9 @@ export const getReferralProgramInfoById = async (
   context?: GetServerSidePropsContext | GetStaticPropsContext,
 ): Promise<ProgramInfo> => {
   const instance = context ? ApiServer(context) : await ApiClient;
+  const sanitizedId = sanitizePathSegment(id);
   const { data } = await instance.get<ProgramInfo>(
-    `/referral/program/${id}/info`,
+    `/referral/program/${sanitizedId}/info`,
   );
   return data;
 };
@@ -246,9 +271,10 @@ export const getOrCreateReferralProgramReferrerLink = async (
   context?: GetServerSidePropsContext | GetStaticPropsContext,
 ): Promise<ProgramLinkReferrer> => {
   const instance = context ? ApiServer(context) : await ApiClient;
+  const sanitizedProgramId = sanitizePathSegment(programId);
   const params = includeQRCode !== undefined ? { includeQRCode } : {};
   const { data } = await instance.patch<ProgramLinkReferrer>(
-    `/referral/program/${programId}/link/referrer`,
+    `/referral/program/${sanitizedProgramId}/link/referrer`,
     undefined,
     { params },
   );
@@ -260,8 +286,9 @@ export const getReferralProgramInfoByLinkId = async (
   context?: GetServerSidePropsContext | GetStaticPropsContext,
 ): Promise<ProgramInfo> => {
   const instance = context ? ApiServer(context) : await ApiClient;
+  const sanitizedLinkId = sanitizePathSegment(linkId);
   const { data } = await instance.get<ProgramInfo>(
-    `/referral/program/by-link/${linkId}/info`,
+    `/referral/program/by-link/${sanitizedLinkId}/info`,
   );
   return data;
 };
@@ -271,8 +298,9 @@ export const getReferralLinkUsageById = async (
   context?: GetServerSidePropsContext | GetStaticPropsContext,
 ): Promise<ReferralLinkUsageInfo> => {
   const instance = context ? ApiServer(context) : await ApiClient;
+  const sanitizedId = sanitizePathSegment(id);
   const { data } = await instance.get<ReferralLinkUsageInfo>(
-    `/referral/link/usage/${id}`,
+    `/referral/link/usage/${sanitizedId}`,
   );
   return data;
 };
@@ -282,8 +310,9 @@ export const getReferralLinkUsageByIdAsReferee = async (
   context?: GetServerSidePropsContext | GetStaticPropsContext,
 ): Promise<ReferralLinkUsageInfo> => {
   const instance = context ? ApiServer(context) : await ApiClient;
+  const sanitizedId = sanitizePathSegment(id);
   const { data } = await instance.get<ReferralLinkUsageInfo>(
-    `/referral/link/${id}/usage`,
+    `/referral/link/${sanitizedId}/usage`,
   );
   return data;
 };
@@ -293,8 +322,9 @@ export const getReferralLinkUsageByProgramIdAsReferee = async (
   context?: GetServerSidePropsContext | GetStaticPropsContext,
 ): Promise<ReferralLinkUsageInfo> => {
   const instance = context ? ApiServer(context) : await ApiClient;
+  const sanitizedProgramId = sanitizePathSegment(programId);
   const { data } = await instance.get<ReferralLinkUsageInfo>(
-    `/referral/program/${programId}/link/usage/referee`,
+    `/referral/program/${sanitizedProgramId}/link/usage/referee`,
   );
 
   return data;
@@ -335,12 +365,22 @@ export const searchReferralLinkUsagesAdmin = async (
   return data;
 };
 
-export const claimReferralLinkAsReferee = async (
+export const claimAsRefereeInitiate = async (
   id: string,
   context?: GetServerSidePropsContext | GetStaticPropsContext,
 ): Promise<void> => {
   const instance = context ? ApiServer(context) : await ApiClient;
-  await instance.post(`/referral/link/${id}/claim`);
+  const sanitizedId = sanitizePathSegment(id);
+  await instance.post(`/referral/link/${sanitizedId}/claim/initiate`);
+};
+
+export const claimAsReferee = async (
+  id: string,
+  context?: GetServerSidePropsContext | GetStaticPropsContext,
+): Promise<void> => {
+  const instance = context ? ApiServer(context) : await ApiClient;
+  const sanitizedId = sanitizePathSegment(id);
+  await instance.post(`/referral/link/${sanitizedId}/claim`);
 };
 
 export const searchReferralLinksAdmin = async (
@@ -385,8 +425,9 @@ export const getMyReferralAnalytics = async (
   context?: GetServerSidePropsContext | GetStaticPropsContext,
 ): Promise<ReferralAnalyticsUser> => {
   const instance = context ? ApiServer(context) : await ApiClient;
+  const sanitizedRole = sanitizePathSegment(role);
   const { data } = await instance.get<ReferralAnalyticsUser>(
-    `/referral/analytics/${role}`,
+    `/referral/analytics/${sanitizedRole}`,
   );
   return data;
 };
@@ -420,8 +461,9 @@ export const getReferralProgramAnalytics = async (
   context?: GetServerSidePropsContext | GetStaticPropsContext,
 ): Promise<ProgramAnalytics> => {
   const instance = context ? ApiServer(context) : await ApiClient;
+  const sanitizedProgramId = sanitizePathSegment(programId);
   const { data } = await instance.get<ProgramAnalytics>(
-    `/referral/analytics/program/${programId}`,
+    `/referral/analytics/program/${sanitizedProgramId}`,
   );
   return data;
 };

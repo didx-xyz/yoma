@@ -137,6 +137,8 @@ namespace Yoma.Core.Infrastructure.Database.Marketplace.Repositories
       if (items == null || items.Count == 0)
         throw new ArgumentNullException(nameof(items));
 
+      var now = DateTimeOffset.UtcNow;
+
       var entities = items.Select(item =>
       new Entities.StoreAccessControlRule
       {
@@ -151,8 +153,8 @@ namespace Yoma.Core.Infrastructure.Database.Marketplace.Repositories
         GenderId = item.GenderId,
         OpportunityOption = item.OpportunityOption?.ToString(),
         StatusId = item.StatusId,
-        DateCreated = DateTimeOffset.UtcNow,
-        DateModified = DateTimeOffset.UtcNow
+        DateCreated = now,
+        DateModified = now
       });
 
       _context.StoreAccessControlRule.AddRange(entities);
@@ -202,11 +204,13 @@ namespace Yoma.Core.Infrastructure.Database.Marketplace.Repositories
       var itemIds = items.Select(o => o.Id).ToList();
       var entities = _context.StoreAccessControlRule.Where(o => itemIds.Contains(o.Id));
 
+      var now = DateTimeOffset.UtcNow;
+
       foreach (var item in items)
       {
         var entity = entities.SingleOrDefault(o => o.Id == item.Id) ?? throw new InvalidOperationException($"{nameof(StoreAccessControlRule)} with id '{item.Id}' does not exist");
 
-        item.DateModified = DateTimeOffset.UtcNow;
+        item.DateModified = now;
 
         entity.Name = item.Name;
         entity.Description = item.Description;

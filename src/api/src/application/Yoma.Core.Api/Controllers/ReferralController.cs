@@ -289,6 +289,20 @@ namespace Yoma.Core.Api.Controllers
       return Ok(result);
     }
 
+    [SwaggerOperation(Summary = "Initiate intent to claim a referral link (Authenticated User)")]
+    [HttpPost("link/{id}/claim/initiate")]
+    [Authorize(Roles = $"{Constants.Role_User}")]
+    public async Task<ActionResult> ClaimAsRefereeInitiate([FromRoute] Guid id)
+    {
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(ClaimAsRefereeInitiate));
+
+      await _linkUsageService.ClaimAsRefereeInitiate(id);
+
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(ClaimAsRefereeInitiate));
+
+      return Ok();
+    }
+
     [SwaggerOperation(Summary = "Claim a referral link (Authenticated User)")]
     [HttpPost("link/{id}/claim")]
     [Authorize(Roles = $"{Constants.Role_User}")]

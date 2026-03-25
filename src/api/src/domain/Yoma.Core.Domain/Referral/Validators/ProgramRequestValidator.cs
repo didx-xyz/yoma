@@ -140,6 +140,10 @@ namespace Yoma.Core.Domain.Referral.Validators
           .When(m => m.DateEnd.HasValue)
           .WithMessage("End Date cannot be earlier than the Start Date.");
 
+      RuleFor(x => x)
+        .Must(m => m.DateEnd.HasValue || m.CompletionWindowInDays.HasValue)
+        .WithMessage("Either End Date or Completion Window is required.");
+
       RuleFor(x => x.Countries)
           .Must(x => x == null || (x.Count > 0 && x.All(id => id != Guid.Empty && CountryExists(id))))
           .WithMessage("Countries must contain at least one valid country if provided.");

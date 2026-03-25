@@ -36,7 +36,7 @@ import {
   useReferralLinkUsagesAdminQuery,
   useReferralProgramByIdQuery,
 } from "~/hooks/useReferralProgramMutations";
-import { PAGE_SIZE, THEME_BLUE } from "~/lib/constants";
+import { DATE_FORMAT_HUMAN, PAGE_SIZE, THEME_BLUE } from "~/lib/constants";
 import { getSafeUrl } from "~/lib/utils";
 import { type NextPageWithLayout } from "~/pages/_app";
 const getErrorStatus = (error: unknown): number | null => {
@@ -516,9 +516,13 @@ const ReferralLinkUsage: NextPageWithLayout = () => {
                         <div className="flex justify-between">
                           <p className="text-sm tracking-wider">Claimed</p>
                           <span className="text-sm">
-                            <Moment format="DD MMM YYYY" utc={true}>
-                              {usage.dateClaimed}
-                            </Moment>
+                            {usage.dateClaimed ? (
+                              <Moment format="DD MMM YYYY" utc={true}>
+                                {usage.dateClaimed}
+                              </Moment>
+                            ) : (
+                              "N/A"
+                            )}
                           </span>
                         </div>
 
@@ -662,11 +666,15 @@ const ReferralLinkUsage: NextPageWithLayout = () => {
                               <span className="text-gray-dark w-20 font-bold">
                                 Claimed:
                               </span>
-                              <span>
-                                <Moment format="DD MMM YYYY" utc={true}>
-                                  {usage.dateClaimed}
-                                </Moment>
-                              </span>
+                              {usage.dateClaimed ? (
+                                <span>
+                                  <Moment format={DATE_FORMAT_HUMAN} utc={true}>
+                                    {usage.dateClaimed}
+                                  </Moment>
+                                </span>
+                              ) : (
+                                <span>N/A</span>
+                              )}
                             </div>
                             {usage.dateCompleted && (
                               <div className="flex gap-2">
@@ -674,7 +682,7 @@ const ReferralLinkUsage: NextPageWithLayout = () => {
                                   Completed:
                                 </span>
                                 <span className="font-semibold">
-                                  <Moment format="DD MMM YYYY" utc={true}>
+                                  <Moment format={DATE_FORMAT_HUMAN} utc={true}>
                                     {usage.dateCompleted}
                                   </Moment>
                                 </span>

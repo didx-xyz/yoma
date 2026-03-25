@@ -75,6 +75,8 @@ namespace Yoma.Core.Infrastructure.Database.Reward.Repositories
       if (items == null || items.Count == 0)
         throw new ArgumentNullException(nameof(items));
 
+      var now = DateTimeOffset.UtcNow;
+
       var entities = items.Select(item =>
          new Entities.RewardTransaction
          {
@@ -89,8 +91,8 @@ namespace Yoma.Core.Infrastructure.Database.Reward.Repositories
            Amount = item.Amount,
            ErrorReason = item.ErrorReason,
            RetryCount = item.RetryCount,
-           DateCreated = DateTimeOffset.UtcNow,
-           DateModified = DateTimeOffset.UtcNow
+           DateCreated = now,
+           DateModified = now
          });
 
       _context.RewardTransaction.AddRange(entities);
@@ -133,11 +135,13 @@ namespace Yoma.Core.Infrastructure.Database.Reward.Repositories
       var itemIds = items.Select(o => o.Id).ToList();
       var entities = _context.RewardTransaction.Where(o => itemIds.Contains(o.Id));
 
+      var now = DateTimeOffset.UtcNow;
+
       foreach (var item in items)
       {
         var entity = entities.SingleOrDefault(o => o.Id == item.Id) ?? throw new InvalidOperationException($"{nameof(Entities.RewardTransaction)} with id '{item.Id}' does not exist");
 
-        item.DateModified = DateTimeOffset.UtcNow;
+        item.DateModified = now;
 
         entity.TransactionId = item.TransactionId;
         entity.StatusId = item.StatusId;

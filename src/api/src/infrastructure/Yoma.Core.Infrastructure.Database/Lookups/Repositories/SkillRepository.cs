@@ -78,16 +78,18 @@ namespace Yoma.Core.Infrastructure.Database.Lookups.Repositories
       if (items == null || items.Count == 0)
         throw new ArgumentNullException(nameof(items));
 
+      var now = DateTimeOffset.UtcNow;
+
       var entities = items.Select(item =>
-      new Skill
-      {
-        Id = item.Id,
-        Name = item.Name,
-        ExternalId = item.ExternalId,
-        InfoURL = item.InfoURL,
-        DateCreated = DateTimeOffset.UtcNow,
-        DateModified = DateTimeOffset.UtcNow
-      });
+        new Skill
+        {
+          Id = item.Id,
+          Name = item.Name,
+          ExternalId = item.ExternalId,
+          InfoURL = item.InfoURL,
+          DateCreated = now,
+          DateModified = now
+        });
 
       _context.Skill.AddRange(entities);
       await _context.SaveChangesAsync();
@@ -126,11 +128,13 @@ namespace Yoma.Core.Infrastructure.Database.Lookups.Repositories
       var itemIds = items.Select(o => o.Id).ToList();
       var entities = _context.Skill.Where(o => itemIds.Contains(o.Id));
 
+      var now = DateTimeOffset.UtcNow;
+
       foreach (var item in items)
       {
         var entity = entities.SingleOrDefault(o => o.Id == item.Id) ?? throw new InvalidOperationException($"{nameof(Skill)} with id '{item.Id}' does not exist");
 
-        item.DateModified = DateTimeOffset.UtcNow;
+        item.DateModified = now;
 
         entity.Name = item.Name;
         entity.InfoURL = item.InfoURL;

@@ -53,9 +53,10 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
         UserYoIDOnboarded = entity.User.YoIDOnboarded,
         StatusId = entity.StatusId,
         Status = Enum.Parse<Domain.Referral.ReferralLinkUsageStatus>(entity.Status.Name, true),
-        DateClaimed = entity.DateCreated,
         ZltoRewardReferee = entity.ZltoRewardReferee,
         ZltoRewardReferrer = entity.ZltoRewardReferrer,
+        DateInitiated = entity.DateInitiated,
+        DateClaimed = entity.DateClaimed,
         DateCreated = entity.DateCreated,
         DateModified = entity.DateModified
       });
@@ -73,6 +74,8 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
         LinkId = item.LinkId,
         UserId = item.UserId,
         StatusId = item.StatusId,
+        DateInitiated = item.DateInitiated,
+        DateClaimed = item.DateClaimed,
         DateCreated = item.DateCreated,
         DateModified = item.DateModified
       };
@@ -80,7 +83,6 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
       _context.ReferralLinkUsage.Add(entity);
       await _context.SaveChangesAsync();
 
-      item.DateClaimed = item.DateCreated;
       item.Id = entity.Id;
       return item;
     }
@@ -90,6 +92,8 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
       if (items == null || items.Count == 0)
         throw new ArgumentNullException(nameof(items));
 
+      var now = DateTimeOffset.UtcNow;
+
       var entities = items.Select(item =>
         new Entities.LinkUsage
         {
@@ -98,8 +102,10 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
           LinkId = item.LinkId,
           UserId = item.UserId,
           StatusId = item.StatusId,
-          DateCreated = DateTimeOffset.UtcNow,
-          DateModified = DateTimeOffset.UtcNow
+          DateInitiated = item.DateInitiated,
+          DateClaimed = item.DateClaimed,
+          DateCreated = now,
+          DateModified = now
         });
 
       _context.ReferralLinkUsage.AddRange(entities);
@@ -108,7 +114,6 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
       items = [.. items.Zip(entities, (item, entity) =>
       {
         item.Id = entity.Id;
-        item.DateClaimed = entity.DateCreated;
         item.DateCreated = entity.DateCreated;
         item.DateModified = entity.DateModified;
         return item;
@@ -127,6 +132,8 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
       entity.StatusId = item.StatusId;
       entity.ZltoRewardReferrer = item.ZltoRewardReferrer;
       entity.ZltoRewardReferee = item.ZltoRewardReferee;
+      entity.DateInitiated = item.DateInitiated;
+      entity.DateClaimed = item.DateClaimed;
       entity.DateModified = item.DateModified;
 
       await _context.SaveChangesAsync();
@@ -142,15 +149,19 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
       var itemIds = items.Select(o => o.Id).ToList();
       var entities = _context.ReferralLinkUsage.Where(o => itemIds.Contains(o.Id));
 
+      var now = DateTimeOffset.UtcNow;
+
       foreach (var item in items)
       {
         var entity = entities.SingleOrDefault(o => o.Id == item.Id) ?? throw new InvalidOperationException($"{nameof(Entities.LinkUsage)} with id '{item.Id}' does not exist");
 
-        item.DateModified = DateTimeOffset.UtcNow;
+        item.DateModified = now;
 
         entity.StatusId = item.StatusId;
         entity.ZltoRewardReferrer = item.ZltoRewardReferrer;
         entity.ZltoRewardReferee = item.ZltoRewardReferee;
+        entity.DateInitiated = item.DateInitiated;
+        entity.DateClaimed = item.DateClaimed;
         entity.DateModified = item.DateModified;
       }
 

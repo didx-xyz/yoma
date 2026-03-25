@@ -46,9 +46,11 @@ export enum ReferralLinkStatus {
 }
 
 export enum ReferralLinkUsageStatus {
+  Initiated = "Initiated",
   Pending = "Pending",
   Completed = "Completed",
   Expired = "Expired",
+  Abandoned = "Abandoned",
 }
 
 export enum ReferralParticipationRole {
@@ -342,6 +344,7 @@ export interface ReferralLink {
   description: string | null;
   programId: string;
   programName: string;
+  programSummary: string | null;
   programDescription: string | null;
   programCompletionLimitReferee: number | null;
   programImageId: string | null;
@@ -362,9 +365,12 @@ export interface ReferralLink {
   qrCodeBase64: string | null;
   completionTotal: number | null;
   completionBalance: number | null;
+  initiatedTotal: number | null;
   pendingTotal: number | null;
   expiredTotal: number | null;
+  abandonedTotal: number | null;
   usageTotal: number | null;
+  usageIntentTotal: number | null;
   zltoRewardCumulative: number | null;
   zltoRewardReferrerTotal: number;
   zltoRewardRefereeTotal: number;
@@ -411,6 +417,7 @@ export interface ReferralLinkUsage {
   id: string;
   programId: string;
   programName: string;
+  programSummary: string | null;
   programDescription: string | null;
   programCompletionWindowInDays: number | null;
   programDateEnd: string | null;
@@ -439,9 +446,11 @@ export interface ReferralLinkUsage {
   status: ReferralLinkUsageStatus;
   zltoRewardReferee: number | null;
   zltoRewardReferrer: number | null;
-  dateClaimed: string;
+  dateInitiated: string | null;
+  dateClaimed: string | null;
   dateCompleted: string | null;
   dateExpired: string | null;
+  dateAbandoned: string | null;
   dateCreated: string;
   dateModified: string;
 }
@@ -495,7 +504,8 @@ export interface ReferralLinkUsageInfo {
   status: ReferralLinkUsageStatus;
   zltoRewardReferee: number | null;
   zltoRewardReferrer: number | null;
-  dateClaimed: string;
+  dateInitiated: string | null;
+  dateClaimed: string | null;
   dateCompleted: string | null;
   dateExpired: string | null;
   proofOfPersonhoodCompleted: boolean | null;

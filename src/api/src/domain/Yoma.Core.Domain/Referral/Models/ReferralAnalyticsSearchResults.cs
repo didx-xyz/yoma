@@ -19,6 +19,8 @@ namespace Yoma.Core.Domain.Referral.Models
     /// </summary>
     public List<TItem> Items { get; set; } = null!;
 
+    #region Referrer Link Metrics
+
     /// <summary>
     /// Total number of links created across all users (referrer role only).
     /// Sum of LinkCount for all items.
@@ -31,9 +33,15 @@ namespace Yoma.Core.Domain.Referral.Models
     /// </summary>
     public int? LinkCountActive => Items.Sum(i => i.LinkCountActive ?? 0);
 
+    #endregion
+
+    #region Claim Lifecycle
+
     /// <summary>
     /// Total usages / claims across all users in the current role context.
     /// Sum of UsageCountTotal for all items.
+    ///
+    /// Includes only actual claims that reached the Pending lifecycle.
     /// </summary>
     public int UsageCountTotal => Items.Sum(i => i.UsageCountTotal);
 
@@ -54,6 +62,30 @@ namespace Yoma.Core.Domain.Referral.Models
     /// Sum of UsageCountExpired for all items.
     /// </summary>
     public int UsageCountExpired => Items.Sum(i => i.UsageCountExpired);
+
+    #endregion
+
+    #region Intent Lifecycle
+
+    /// <summary>
+    /// Total referral intents captured across all users in the current role context.
+    /// Sum of UsageCountIntentTotal for all items.
+    /// </summary>
+    public int UsageCountIntentTotal => Items.Sum(i => i.UsageCountIntentTotal);
+
+    /// <summary>
+    /// Total initiated usages / claims across all users in the current role context.
+    /// Sum of UsageCountInitiated for all items.
+    /// </summary>
+    public int UsageCountInitiated => Items.Sum(i => i.UsageCountInitiated);
+
+    /// <summary>
+    /// Total abandoned usages / claims across all users in the current role context.
+    /// Sum of UsageCountAbandoned for all items.
+    /// </summary>
+    public int UsageCountAbandoned => Items.Sum(i => i.UsageCountAbandoned);
+
+    #endregion
 
     /// <summary>
     /// Total ZLTO reward accrued across all users in the current role context:

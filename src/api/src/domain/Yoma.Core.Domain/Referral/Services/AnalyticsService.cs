@@ -78,6 +78,8 @@ namespace Yoma.Core.Domain.Referral.Services
         throw new ArgumentException("Program id is required", nameof(programId));
 
       var linkStatusActiveId = _linkStatusService.GetByName(ReferralLinkStatus.Active.ToString()).Id;
+      var usageStatusInitiatedId = _linkUsageStatusService.GetByName(ReferralLinkUsageStatus.Initiated.ToString()).Id;
+      var usageStatusAbandonedId = _linkUsageStatusService.GetByName(ReferralLinkUsageStatus.Abandoned.ToString()).Id;
       var usageStatusCompletedId = _linkUsageStatusService.GetByName(ReferralLinkUsageStatus.Completed.ToString()).Id;
       var usageStatusPendingId = _linkUsageStatusService.GetByName(ReferralLinkUsageStatus.Pending.ToString()).Id;
       var usageStatusExpiredId = _linkUsageStatusService.GetByName(ReferralLinkUsageStatus.Expired.ToString()).Id;
@@ -102,6 +104,8 @@ namespace Yoma.Core.Domain.Referral.Services
           .GroupBy(_ => 1)
           .Select(g => new
           {
+            UsageCountInitiated = g.Count(x => x.StatusId == usageStatusInitiatedId),
+            UsageCountAbandoned = g.Count(x => x.StatusId == usageStatusAbandonedId),
             UsageCountCompleted = g.Count(x => x.StatusId == usageStatusCompletedId),
             UsageCountPending = g.Count(x => x.StatusId == usageStatusPendingId),
             UsageCountExpired = g.Count(x => x.StatusId == usageStatusExpiredId)
@@ -113,6 +117,8 @@ namespace Yoma.Core.Domain.Referral.Services
         ReferrerCount = linkAgg?.ReferrerCount ?? 0,
         LinkCount = linkAgg?.LinkCount ?? 0,
         LinkCountActive = linkAgg?.LinkCountActive ?? 0,
+        UsageCountInitiated = usageAgg?.UsageCountInitiated ?? 0,
+        UsageCountAbandoned = usageAgg?.UsageCountAbandoned ?? 0,
         UsageCountCompleted = usageAgg?.UsageCountCompleted ?? 0,
         UsageCountPending = usageAgg?.UsageCountPending ?? 0,
         UsageCountExpired = usageAgg?.UsageCountExpired ?? 0
@@ -146,6 +152,8 @@ namespace Yoma.Core.Domain.Referral.Services
           UserDisplayName = RedactorHelper.RedactDisplayName(user.UserDisplayName),
           LinkCount = user.LinkCount,
           LinkCountActive = user.LinkCountActive,
+          UsageCountInitiated = user.UsageCountInitiated,
+          UsageCountAbandoned = user.UsageCountAbandoned,
           UsageCountCompleted = user.UsageCountCompleted,
           UsageCountPending = user.UsageCountPending,
           UsageCountExpired = user.UsageCountExpired,
@@ -197,6 +205,8 @@ namespace Yoma.Core.Domain.Referral.Services
     {
       var linkUsageQuery = _linkUsageRepository.Query();
 
+      var statusInitiatedId = _linkUsageStatusService.GetByName(ReferralLinkUsageStatus.Initiated.ToString()).Id;
+      var statusAbandonedId = _linkUsageStatusService.GetByName(ReferralLinkUsageStatus.Abandoned.ToString()).Id;
       var statusCompletedId = _linkUsageStatusService.GetByName(ReferralLinkUsageStatus.Completed.ToString()).Id;
       var statusPendingId = _linkUsageStatusService.GetByName(ReferralLinkUsageStatus.Pending.ToString()).Id;
       var statusExpiredId = _linkUsageStatusService.GetByName(ReferralLinkUsageStatus.Expired.ToString()).Id;
@@ -228,6 +238,8 @@ namespace Yoma.Core.Domain.Referral.Services
             UserId = g.Key,
             UserDisplayName = g.Max(x => x.UserDisplayName) ?? string.Empty,
 
+            UsageCountInitiated = g.Count(x => x.StatusId == statusInitiatedId),
+            UsageCountAbandoned = g.Count(x => x.StatusId == statusAbandonedId),
             UsageCountCompleted = g.Count(x => x.StatusId == statusCompletedId),
             UsageCountPending = g.Count(x => x.StatusId == statusPendingId),
             UsageCountExpired = g.Count(x => x.StatusId == statusExpiredId),
@@ -241,8 +253,11 @@ namespace Yoma.Core.Domain.Referral.Services
     private IQueryable<ReferralAnalyticsUser> SearchQueryAsReferrer(ReferralAnalyticsSearchFilterAdmin filter)
     {
       var linkStatusActiveId = _linkStatusService.GetByName(ReferralLinkStatus.Active.ToString()).Id;
+
+      var usageStatusInitiatedId = _linkUsageStatusService.GetByName(ReferralLinkUsageStatus.Initiated.ToString()).Id;
       var usageStatusPendingId = _linkUsageStatusService.GetByName(ReferralLinkUsageStatus.Pending.ToString()).Id;
       var usageStatusExpiredId = _linkUsageStatusService.GetByName(ReferralLinkUsageStatus.Expired.ToString()).Id;
+      var usageStatusAbandonedId = _linkUsageStatusService.GetByName(ReferralLinkUsageStatus.Abandoned.ToString()).Id;
 
       var linkQuery = _linkRepository.Query();
 
@@ -267,8 +282,10 @@ namespace Yoma.Core.Domain.Referral.Services
           .Select(g => new
           {
             UserIdReferrer = g.Key,
+            UsageCountInitiated = (int?)g.Count(x => x.StatusId == usageStatusInitiatedId),
             UsageCountPending = (int?)g.Count(x => x.StatusId == usageStatusPendingId),
             UsageCountExpired = (int?)g.Count(x => x.StatusId == usageStatusExpiredId),
+            UsageCountAbandoned = (int?)g.Count(x => x.StatusId == usageStatusAbandonedId),
             ZltoRewardTotal = (decimal?)g.Sum(x => x.ZltoRewardReferrer ?? 0m)
           });
 
@@ -310,8 +327,10 @@ namespace Yoma.Core.Domain.Referral.Services
                 x.l.LinkCount,
                 x.l.LinkCountActive,
                 x.l.UsageCountCompleted,
+                UsageCountInitiated = u != null ? u.UsageCountInitiated : null,
                 UsageCountPending = u != null ? u.UsageCountPending : null,
                 UsageCountExpired = u != null ? u.UsageCountExpired : null,
+                UsageCountAbandoned = u != null ? u.UsageCountAbandoned : null,
                 ZltoRewardTotal = u != null ? u.ZltoRewardTotal : null
               })
           .Select(temp => new ReferralAnalyticsUser
@@ -320,9 +339,11 @@ namespace Yoma.Core.Domain.Referral.Services
             UserDisplayName = temp.UserDisplayName,
             LinkCount = temp.LinkCount,
             LinkCountActive = temp.LinkCountActive,
+            UsageCountInitiated = temp.UsageCountInitiated ?? 0,
             UsageCountCompleted = temp.UsageCountCompleted,
             UsageCountPending = temp.UsageCountPending ?? 0,
             UsageCountExpired = temp.UsageCountExpired ?? 0,
+            UsageCountAbandoned = temp.UsageCountAbandoned ?? 0,
             ZltoRewardTotal = temp.ZltoRewardTotal ?? 0
           });
 
