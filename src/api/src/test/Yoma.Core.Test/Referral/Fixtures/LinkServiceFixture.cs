@@ -33,6 +33,7 @@ namespace Yoma.Core.Test.Referral.Fixtures
     public Mock<ICountryService> CountryService { get; }
     public Mock<IBlobService> BlobService { get; }
     public Mock<IExecutionStrategyService> ExecutionStrategyService { get; }
+    public Mock<ILinkMaintenanceService> LinkMaintenanceService { get; }
     public Mock<ReferralLinkSearchFilterValidator> ReferralLinkSearchFilterValidator { get; }
     public Mock<ReferralLinkRequestCreateValidator> ReferralLinkRequestCreateValidator { get; }
     public Mock<ReferralLinkRequestUpdateValidator> ReferralLinkRequestUpdateValidator { get; }
@@ -81,6 +82,14 @@ namespace Yoma.Core.Test.Referral.Fixtures
         .Setup(x => x.ExecuteInExecutionStrategy(It.IsAny<Action>()))
         .Callback<Action>(action => action());
 
+      LinkMaintenanceService = new Mock<ILinkMaintenanceService>();
+      LinkMaintenanceService
+        .Setup(x => x.AbandonLinkUsagesByLinkId(It.IsAny<Guid>(), It.IsAny<ILogger?>()))
+        .Returns(Task.CompletedTask);
+      LinkMaintenanceService
+        .Setup(x => x.AbandonLinkUsagesByLinkId(It.IsAny<List<Guid>>(), It.IsAny<ILogger?>()))
+        .Returns(Task.CompletedTask);
+
       ReferralLinkSearchFilterValidator = new Mock<ReferralLinkSearchFilterValidator>() { CallBase = false };
       ReferralLinkRequestCreateValidator = new Mock<ReferralLinkRequestCreateValidator>() { CallBase = false };
       ReferralLinkRequestUpdateValidator = new Mock<ReferralLinkRequestUpdateValidator>() { CallBase = false };
@@ -103,6 +112,7 @@ namespace Yoma.Core.Test.Referral.Fixtures
         LinkUsageStatusService.Object,
         CountryService.Object,
         BlobService.Object,
+        LinkMaintenanceService.Object,
         ExecutionStrategyService.Object,
         ShortLinkProviderClientFactory.Object,
         ReferralLinkSearchFilterValidator.Object,

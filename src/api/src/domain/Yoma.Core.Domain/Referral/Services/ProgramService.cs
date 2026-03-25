@@ -582,7 +582,6 @@ namespace Yoma.Core.Domain.Referral.Services
 
       // Trigger sweep: reprocess pending usages when completion requirements are reduced (POP / Pathway removed)
       if (result.Status == ProgramStatus.Active && (popRemoved || pathwayRemoved))
-        if (result.Status == ProgramStatus.Active && (popRemoved || pathwayRemoved))
           await _linkMaintenanceService.ProcessUsageProgressByProgramId(result.Id, _logger);
 
       return result;
