@@ -450,7 +450,7 @@ namespace Yoma.Core.Domain.Referral.Services
       else
       {
         if (_logger.IsEnabled(LogLevel.Debug)) _logger.LogDebug(
-          "Referral link {LinkId}: totals updated (total {Total}, rewardΔ {RewardDelta}); status remains {Status} (per-ref cap {Cap}, programLimitReached={ProgCap}, active={IsActive})",
+          "Referral link {LinkId}: totals updated (total {Total}, reward delta {RewardDelta}); status remains {Status} (per-ref cap {Cap}, programLimitReached={ProgCap}, active={IsActive})",
           link.Id,
           link.CompletionTotal,
           rewardAmount ?? 0m,
