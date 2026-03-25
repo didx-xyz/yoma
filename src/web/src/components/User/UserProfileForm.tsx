@@ -751,7 +751,7 @@ export const UserProfileForm: React.FC<{
           {onCancel && (
             <button
               type="button"
-              className="btn btn-outline border-green btn-sm text-green hover:bg-green max-w-[200px] flex-1 normal-case hover:text-white"
+              className="btn btn-outline border-green text-green hover:bg-green w-full normal-case hover:text-white md:max-w-[220px]"
               onClick={onCancel}
             >
               {cancelButtonText}
@@ -760,7 +760,7 @@ export const UserProfileForm: React.FC<{
 
           <button
             type="submit"
-            className="btn btn-sm bg-green max-w-[200px] flex-1 gap-2 text-white hover:brightness-110"
+            className="btn bg-green w-full gap-2 text-white hover:brightness-110 md:max-w-[220px]"
           >
             {submitButtonText}
           </button>

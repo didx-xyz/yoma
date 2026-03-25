@@ -35,7 +35,7 @@ import {
   currentOrganisationIdAtom,
   currentOrganisationInactiveAtom,
   currentOrganisationLogoAtom,
-  firstPendingRefereeReferralUrlAtom,
+  firstActionableRefereeReferralUrlAtom,
   hasDismissedRefereeWelcomeModalAtom,
   hasShownRefereePendingToastAtom,
   rumConsentAtom,
@@ -75,16 +75,14 @@ export const Global: React.FC = () => {
   const setCurrentOrganisationInactiveAtom = useSetAtom(
     currentOrganisationInactiveAtom,
   );
-  const setFirstPendingRefereeReferralUrl = useSetAtom(
-    firstPendingRefereeReferralUrlAtom,
+  const setFirstActionableRefereeReferralUrl = useSetAtom(
+    firstActionableRefereeReferralUrlAtom,
   );
-  const firstPendingRefereeReferralUrl = useAtomValue(
-    firstPendingRefereeReferralUrlAtom,
-  );
+
   const [hasShownRefereePendingToast, setHasShownRefereePendingToast] = useAtom(
     hasShownRefereePendingToastAtom,
   );
-  const [, setHasDismissedRefereeWelcomeModal] = useAtom(
+  const setHasDismissedRefereeWelcomeModal = useSetAtom(
     hasDismissedRefereeWelcomeModalAtom,
   );
   const setScreenWidthAtom = useSetAtom(screenWidthAtom);
@@ -123,6 +121,7 @@ export const Global: React.FC = () => {
     enabled: settingsDialogVisible,
   });
 
+  // TODO: this query needs to refresh when the user profile is completed on /referrals/claim/[programId] page (inline)
   // Check if user is a referee (has claimed links)
   const isReferee = useMemo(
     () =>
@@ -137,20 +136,60 @@ export const Global: React.FC = () => {
   const { data: refereeLinkUsages, isFetching: refereeLinkUsagesFetching } =
     useRefereeReferrals({
       pageSize: 5,
-      statuses: [ReferralLinkUsageStatus.Pending],
+      statuses: [
+        ReferralLinkUsageStatus.Initiated,
+        ReferralLinkUsageStatus.Pending,
+      ],
       enabled: session !== null && isReferee,
       keepPreviousData: true,
     });
 
+  const actionableRefereeReferral = useMemo(() => {
+    const items = refereeLinkUsages?.items;
+    if (!items?.length) return null;
+
+    const statusPriority = {
+      Initiated: 0,
+      Pending: 1,
+    } as const;
+
+    console.debug("Referee referral link usages:", items);
+
+    const firstActionableItem = [...items]
+      .filter(
+        (item) =>
+          Boolean(item.programId) &&
+          Boolean(item.linkId) &&
+          (item.status === "Initiated" || item.status === "Pending"),
+      )
+      .sort(
+        (left, right) =>
+          statusPriority[left.status as keyof typeof statusPriority] -
+          statusPriority[right.status as keyof typeof statusPriority],
+      )[0];
+
+    console.debug("firstActionableItem:", firstActionableItem);
+
+    if (!firstActionableItem) return null;
+
+    return {
+      status: firstActionableItem.status,
+      url:
+        firstActionableItem.status === "Initiated"
+          ? `/referrals/claim/${firstActionableItem.programId}?linkId=${firstActionableItem.linkId}`
+          : `/referrals/progress/${firstActionableItem.programId}`,
+    };
+  }, [refereeLinkUsages?.items]);
+
   // Keep a quick-link target for "New to Yoma?" in navbar.
   useEffect(() => {
-    const firstPendingProgramId = refereeLinkUsages?.items?.[0]?.programId;
-    setFirstPendingRefereeReferralUrl(
-      firstPendingProgramId
-        ? `/referrals/progress/${firstPendingProgramId}`
-        : null,
-    );
-  }, [refereeLinkUsages?.items, setFirstPendingRefereeReferralUrl]);
+    if (actionableRefereeReferral?.url) {
+      setFirstActionableRefereeReferralUrl(actionableRefereeReferral.url);
+      return;
+    }
+
+    setFirstActionableRefereeReferralUrl(null);
+  }, [actionableRefereeReferral, setFirstActionableRefereeReferralUrl]);
 
   const dbRumConsent = useMemo((): boolean | null => {
     const items = userProfile?.settings?.items;
@@ -248,16 +287,69 @@ export const Global: React.FC = () => {
     routePathRef.current = router.asPath;
   }, [router.asPath]);
 
+  const showRefereeReferralReminder = useCallback(() => {
+    if (sessionStatus !== "authenticated") {
+      return;
+    }
+
+    if (!actionableRefereeReferral) {
+      return;
+    }
+
+    if (hasShownRefereePendingToast) {
+      return;
+    }
+
+    if (toast.isActive("referee-referral-reminder")) {
+      return;
+    }
+
+    setHasShownRefereePendingToast(true);
+
+    toast.info(
+      <div className="flex flex-col gap-2">
+        <div className="flex items-center gap-2">
+          <span className="text-lg">⭐</span>
+          <strong>New to Yoma?</strong>
+        </div>
+        <div className="text-sm">
+          Continue your referral programme to earn your reward.
+        </div>
+        <button
+          onClick={() => {
+            router.push(actionableRefereeReferral.url);
+          }}
+          className="btn btn-sm bg-orange mt-2 w-full text-white hover:brightness-110"
+        >
+          Open My Progress
+        </button>
+      </div>,
+      {
+        autoClose: false,
+        closeButton: true,
+        icon: false,
+        toastId: "referee-referral-reminder",
+        style: {
+          backgroundColor: "#41204b",
+          boxShadow:
+            "0 20px 45px rgba(0, 0, 0, 0.45), 0 8px 20px rgba(0, 0, 0, 0.3)",
+        },
+      },
+    );
+  }, [
+    actionableRefereeReferral,
+    hasShownRefereePendingToast,
+    router,
+    sessionStatus,
+    setHasShownRefereePendingToast,
+  ]);
+
   //#region Functions
+  //TODO: CAUTION! the purpose of this section is to perform necessary checks immediately after login to ensure the user has completed their profile.
+  // `/referrals/claim/[programId].tsx` handles profile completion inline as part of the INITIATED state
   const postLoginChecks = useCallback(
     (userProfile: UserProfile, skipSettings = false) => {
       if (!userProfile) return;
-
-      const hasShownRefereePendingToastInStorage =
-        typeof window !== "undefined" &&
-        window.localStorage.getItem("hasShownRefereePendingToast") === "true";
-      const hasShownRefereePendingToastEffective =
-        hasShownRefereePendingToast || hasShownRefereePendingToastInStorage;
 
       const currentPath = routePathRef.current;
 
@@ -265,7 +357,8 @@ export const Global: React.FC = () => {
       if (
         currentPath.includes("/user/profile") ||
         currentPath.includes("/user/settings") ||
-        currentPath.includes("/referrals")
+        currentPath.includes("/referrals/claim") ||
+        currentPath.includes("/referrals/progress")
       ) {
         return;
       }
@@ -279,74 +372,9 @@ export const Global: React.FC = () => {
       } else if (!hasUserPhoto(userProfile)) {
         // show photo upload dialog
         setPhotoUploadDialogVisible(true);
-      } else if (
-        (refereeLinkUsages?.items?.length ?? 0) > 0 &&
-        !hasShownRefereePendingToastEffective
-      ) {
-        // skip reminder if already on a specific progress page
-        if (currentPath.startsWith("/referrals/progress/")) {
-          return;
-        }
-
-        const progressUrl =
-          firstPendingRefereeReferralUrl ??
-          (refereeLinkUsages?.items?.[0]?.programId
-            ? `/referrals/progress/${refereeLinkUsages.items[0].programId}`
-            : null);
-
-        if (!progressUrl) {
-          return;
-        }
-
-        // show toast for pending referrals
-        toast.info(
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center gap-2">
-              <span className="text-lg">⭐</span>
-              <strong>New to Yoma?</strong>
-            </div>
-            <div className="text-sm">
-              Continue your referral programme and complete the pathway to earn
-              your reward.
-            </div>
-            <button
-              onClick={() => {
-                router.push(progressUrl);
-              }}
-              className="btn btn-sm bg-orange mt-2 w-full text-white hover:brightness-110"
-            >
-              Open My Progress
-            </button>
-          </div>,
-          {
-            autoClose: false,
-            closeButton: true,
-            icon: false,
-            toastId: "pending-referral-reminder",
-            onClose: () => {
-              setHasShownRefereePendingToast(true);
-              if (typeof window !== "undefined") {
-                window.localStorage.setItem(
-                  "hasShownRefereePendingToast",
-                  "true",
-                );
-              }
-            },
-            style: {
-              backgroundColor: "#41204b",
-              boxShadow:
-                "0 20px 45px rgba(0, 0, 0, 0.45), 0 8px 20px rgba(0, 0, 0, 0.3)",
-            },
-          },
-        );
       }
     },
     [
-      router,
-      refereeLinkUsages,
-      firstPendingRefereeReferralUrl,
-      hasShownRefereePendingToast,
-      setHasShownRefereePendingToast,
       setUpdateProfileDialogVisible,
       setSettingsDialogVisible,
       setPhotoUploadDialogVisible,
@@ -433,22 +461,61 @@ export const Global: React.FC = () => {
     }
   }, [userProfile, refereeLinkUsagesFetching, postLoginChecks]);
 
+  useEffect(() => {
+    if (
+      sessionStatus !== "authenticated" ||
+      !userProfile ||
+      refereeLinkUsagesFetching ||
+      anyBlockingModalOpen
+    ) {
+      return;
+    }
+
+    if (
+      !actionableRefereeReferral ||
+      hasShownRefereePendingToast ||
+      !isUserProfileCompleted(userProfile) ||
+      !isUserSettingsConfigured(userProfile) ||
+      !hasUserPhoto(userProfile)
+    ) {
+      return;
+    }
+
+    const currentPath = routePathRef.current;
+    if (
+      currentPath.includes("/user/profile") ||
+      currentPath.includes("/user/settings") ||
+      currentPath.includes("/referrals/claim") ||
+      currentPath.includes("/referrals/progress")
+    ) {
+      return;
+    }
+
+    showRefereeReferralReminder();
+  }, [
+    actionableRefereeReferral,
+    anyBlockingModalOpen,
+    hasShownRefereePendingToast,
+    refereeLinkUsagesFetching,
+    sessionStatus,
+    showRefereeReferralReminder,
+    userProfile,
+  ]);
+
   // Reset one-time checks on logout
   useEffect(() => {
     if (sessionStatus === "unauthenticated") {
+      toast.dismiss("referee-referral-reminder");
       postLoginChecksTriggeredRef.current = false;
       setHasShownRefereePendingToast(false);
       setHasDismissedRefereeWelcomeModal(false);
-      setFirstPendingRefereeReferralUrl(null);
-      if (typeof window !== "undefined") {
-        window.localStorage.removeItem("hasShownRefereePendingToast");
-      }
+      setFirstActionableRefereeReferralUrl(null);
     }
   }, [
     sessionStatus,
-    setHasShownRefereePendingToast,
     setHasDismissedRefereeWelcomeModal,
-    setFirstPendingRefereeReferralUrl,
+    setHasShownRefereePendingToast,
+    setFirstActionableRefereeReferralUrl,
   ]);
 
   // 🎯 ANALYTICS: Session Management

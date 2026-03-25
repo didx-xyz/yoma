@@ -335,7 +335,15 @@ export const searchReferralLinkUsagesAdmin = async (
   return data;
 };
 
-export const claimReferralLinkAsReferee = async (
+export const claimAsRefereeInitiate = async (
+  id: string,
+  context?: GetServerSidePropsContext | GetStaticPropsContext,
+): Promise<void> => {
+  const instance = context ? ApiServer(context) : await ApiClient;
+  await instance.post(`/referral/link/${id}/claim/initiate`);
+};
+
+export const claimAsReferee = async (
   id: string,
   context?: GetServerSidePropsContext | GetStaticPropsContext,
 ): Promise<void> => {

@@ -1,11 +1,22 @@
 import { useAtomValue, useSetAtom } from "jotai";
+import { useQueryClient } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
 import Head from "next/head";
 import { useRouter } from "next/router";
-import { useCallback, useEffect, useState, type ReactElement } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ReactElement,
+} from "react";
 import { IoGift, IoTimeOutline, IoTrophyOutline } from "react-icons/io5";
+import { toast } from "react-toastify";
 import { UserProfile } from "~/api/models/user";
-import { claimReferralLinkAsReferee } from "~/api/services/referrals";
+import {
+  claimAsReferee,
+  claimAsRefereeInitiate,
+} from "~/api/services/referrals";
 import { getUserProfile } from "~/api/services/user";
 import MainLayout from "~/components/Layout/Main";
 import NoRowsMessage from "~/components/NoRowsMessage";
@@ -29,18 +40,25 @@ import { THEME_WHITE } from "~/lib/constants";
 import { currentLanguageAtom, userProfileAtom } from "~/lib/store";
 import { cleanTextForMetaTag } from "~/lib/utils";
 import { isUserProfileCompleted } from "~/lib/utils/profile";
+import { REFERRAL_LINK_USAGES_REFEREE_QUERY_KEY } from "~/hooks/useRefereeReferrals";
 import { type NextPageWithLayout } from "../../_app";
 
 const ReferralClaimPage: NextPageWithLayout = () => {
+  const queryClient = useQueryClient();
   const router = useRouter();
   const { status: sessionStatus } = useSession();
   const [claiming, setClaiming] = useState(false);
   const [claimingAfterProfile, setClaimingAfterProfile] = useState(false);
   const [claimError, setClaimError] = useState<any>(null);
   const [claimAttempted, setClaimAttempted] = useState(false);
+  const [initiateCheckCompleted, setInitiateCheckCompleted] = useState(false);
+  const [initiateCheckLoading, setInitiateCheckLoading] = useState(false);
+  const [redirectingToProgress, setRedirectingToProgress] = useState(false);
   const currentLanguage = useAtomValue(currentLanguageAtom);
   const userProfile = useAtomValue(userProfileAtom);
   const setUserProfile = useSetAtom(userProfileAtom);
+  const hasShownClaimWelcomeToastRef = useRef(false);
+  const redirectInFlightRef = useRef(false);
   const programId =
     typeof router.query.programId === "string" ? router.query.programId : "";
   const linkId =
@@ -73,6 +91,15 @@ const ReferralClaimPage: NextPageWithLayout = () => {
     await handleUserSignIn(currentLanguage);
   }, [currentLanguage]);
 
+  const redirectToProgress = useCallback(async () => {
+    if (redirectInFlightRef.current) return;
+    redirectInFlightRef.current = true;
+    setRedirectingToProgress(true);
+
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    await router.push(`/referrals/progress/${programId}`);
+  }, [programId, router]);
+
   const performClaim = useCallback(async () => {
     // Prevent multiple claim attempts
     if (claimAttempted) return;
@@ -81,18 +108,18 @@ const ReferralClaimPage: NextPageWithLayout = () => {
     setClaimingAfterProfile(true);
     setClaimError(null);
     try {
-      await claimReferralLinkAsReferee(linkId);
+      await claimAsReferee(linkId);
 
       // Refresh user profile to include new referral data
       // This ensures UserMenu shows the referee dashboard link
       const updatedProfile = await getUserProfile();
       setUserProfile(updatedProfile);
-
-      // Scroll to top before redirect
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      await queryClient.invalidateQueries({
+        queryKey: [REFERRAL_LINK_USAGES_REFEREE_QUERY_KEY],
+      });
 
       // Successfully claimed - redirect to referee progress page
-      await router.push(`/referrals/progress/${programId}?claimed=true`);
+      await redirectToProgress();
     } catch (error: any) {
       // Scroll to top to show error
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -102,72 +129,148 @@ const ReferralClaimPage: NextPageWithLayout = () => {
 
       setClaimingAfterProfile(false);
     }
-  }, [linkId, programId, router, claimAttempted, setUserProfile]);
+  }, [linkId, claimAttempted, queryClient, redirectToProgress, setUserProfile]);
 
   const handleProfileSubmit = useCallback(
     (updatedUserProfile: UserProfile) => {
+      setUserProfile(updatedUserProfile);
+
       if (!isUserProfileCompleted(updatedUserProfile)) {
         return;
       }
 
-      void performClaim();
+      if (initiateCheckCompleted && !initiateCheckLoading) {
+        void performClaim();
+      }
     },
-    [performClaim],
+    [
+      initiateCheckCompleted,
+      initiateCheckLoading,
+      performClaim,
+      setUserProfile,
+    ],
   );
 
-  // Watch for profile updates and retry claim once the required
-  // profile fields are complete.
   useEffect(() => {
-    const checkProfileAndClaim = async () => {
-      if (
-        isAuthenticated &&
-        userProfile &&
-        !claimAttempted &&
-        !claimingAfterProfile &&
-        program &&
-        !claimError
-      ) {
-        if (isUserProfileCompleted(userProfile)) {
-          // Profile is now complete, attempt claim
-          performClaim();
+    setClaimError(null);
+    setClaimAttempted(false);
+    setClaimingAfterProfile(false);
+    setInitiateCheckCompleted(false);
+    setInitiateCheckLoading(false);
+    setRedirectingToProgress(false);
+    hasShownClaimWelcomeToastRef.current = false;
+    redirectInFlightRef.current = false;
+  }, [linkId, programId]);
+
+  useEffect(() => {
+    if (!isAuthenticated || !router.isReady || !linkId || !programId) {
+      return;
+    }
+
+    let cancelled = false;
+
+    const initiateClaim = async () => {
+      setInitiateCheckLoading(true);
+      try {
+        await claimAsRefereeInitiate(linkId);
+
+        if (!cancelled) {
+          const updatedProfile = await getUserProfile();
+          setUserProfile(updatedProfile);
+          await queryClient.invalidateQueries({
+            queryKey: [REFERRAL_LINK_USAGES_REFEREE_QUERY_KEY],
+          });
+        }
+
+        if (!cancelled && needsProfileCompletion === false) {
+          await performClaim();
+          return;
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setClaimError(error);
+        }
+      } finally {
+        if (!cancelled) {
+          setInitiateCheckLoading(false);
+          setInitiateCheckCompleted(true);
         }
       }
     };
 
-    checkProfileAndClaim();
-  }, [
-    userProfile,
-    isAuthenticated,
-    claimAttempted,
-    claimingAfterProfile,
-    program,
-    claimError,
-    performClaim,
-  ]);
+    void initiateClaim();
 
-  // Auto-claim when authenticated and profile is complete
-  useEffect(() => {
-    if (
-      isAuthenticated &&
-      needsProfileCompletion === false &&
-      !claimingAfterProfile &&
-      !claimAttempted &&
-      program &&
-      !claimError
-    ) {
-      performClaim();
-    }
+    return () => {
+      cancelled = true;
+    };
   }, [
     isAuthenticated,
+    router.isReady,
+    linkId,
+    programId,
     needsProfileCompletion,
-    claimingAfterProfile,
-    claimAttempted,
-    program,
-    claimError,
     performClaim,
+    queryClient,
+    setUserProfile,
   ]);
 
-  const isPageLoading = programLoading || claimingAfterProfile;
+  const shouldShowInlineProfile =
+    isAuthenticated && needsProfileCompletion === true;
+
+  useEffect(() => {
+    if (!shouldShowInlineProfile || hasShownClaimWelcomeToastRef.current) {
+      return;
+    }
+
+    hasShownClaimWelcomeToastRef.current = true;
+
+    toast.info(
+      <div className="flex flex-col gap-2">
+        <div className="flex items-center gap-2">
+          <span className="text-lg">⭐</span>
+          <strong>Welcome to Yoma!</strong>
+        </div>
+        <div className="text-sm">
+          Please complete your profile to join the programme.
+        </div>
+        <div className="flex flex-1 justify-center">
+          <button
+            onClick={() => toast.dismiss("claim-profile-completion-reminder")}
+            className="btn btn-sm bg-orange w-fullx mt-2 w-32 text-white hover:brightness-110"
+          >
+            Ok
+          </button>
+        </div>
+      </div>,
+      {
+        autoClose: false,
+        closeButton: true,
+        icon: false,
+        toastId: "claim-profile-completion-reminder",
+        onClose: () => {},
+        style: {
+          backgroundColor: "#41204b",
+          boxShadow:
+            "0 20px 45px rgba(0, 0, 0, 0.45), 0 8px 20px rgba(0, 0, 0, 0.3)",
+        },
+      },
+    );
+  }, [shouldShowInlineProfile]);
+
+  useEffect(() => {
+    if (shouldShowInlineProfile) {
+      return;
+    }
+
+    toast.dismiss("claim-profile-completion-reminder");
+  }, [shouldShowInlineProfile]);
+
+  const isPageLoading =
+    (!claimError && programLoading) ||
+    claimingAfterProfile ||
+    redirectingToProgress ||
+    (!shouldShowInlineProfile &&
+      (initiateCheckLoading || sessionStatus === "loading"));
   const hasPageError =
     (router.isReady && (!programId || !linkId)) ||
     Boolean(programError) ||
@@ -208,7 +311,7 @@ const ReferralClaimPage: NextPageWithLayout = () => {
   // Claim error state
   let claimErrorContent: React.ReactNode = null;
   if (claimError && program) {
-    const { errors, message } = parseApiError(claimError);
+    const { errors, message, status } = parseApiError(claimError);
     const errorMessage =
       errors
         .map((e) => e.message)
@@ -217,29 +320,81 @@ const ReferralClaimPage: NextPageWithLayout = () => {
       message ||
       "Unable to claim this referral link.";
 
-    if (/already claimed|still pending/i.test(errorMessage)) {
-      router.push(`/referrals/progress/${programId}`);
-      return (
-        <div className="flex min-h-screen items-center justify-center">
-          <LoadingInline
-            classNameSpinner="h-8 w-8 border-t-2 border-b-2 border-orange md:h-16 md:w-16 md:border-t-4 md:border-b-4"
-            classNameLabel={"text-sm font-semibold md:text-lg"}
-            label="Redirecting to your progress page..."
+    if (
+      /already claimed this link|already completed program/i.test(errorMessage)
+    ) {
+      claimErrorContent = (
+        <div className="mx-auto flex w-full max-w-2xl flex-col items-center gap-4 rounded-xl bg-white p-6 text-center shadow">
+          <NoRowsMessage
+            icon={"⚠️"}
+            title="Referral Link Unavailable"
+            description="You have already claimed this link."
+            className="w-full !bg-transparent"
+          />
+        </div>
+      );
+    } else if (
+      /already participated|already claimed link .*still pending|still pending/i.test(
+        errorMessage,
+      )
+    ) {
+      claimErrorContent = (
+        <div className="mx-auto flex w-full max-w-2xl flex-col items-center gap-4 rounded-xl bg-white p-6 text-center shadow">
+          <NoRowsMessage
+            icon={"⚠️"}
+            title="Referral Link Unavailable"
+            description="You have already claimed this programme using another referral link."
+            className="w-full !bg-transparent"
+          />
+        </div>
+      );
+    } else if (
+      /completion limit|reached its completion limit/i.test(errorMessage)
+    ) {
+      claimErrorContent = (
+        <div className="mx-auto flex w-full max-w-2xl flex-col items-center gap-4 rounded-xl bg-white p-6 text-center shadow">
+          <NoRowsMessage
+            icon={"⚠️"}
+            title="Programme Full"
+            description="This referral programme has reached its completion limit and can no longer be claimed."
+            className="w-full !bg-transparent"
+          />
+        </div>
+      );
+    } else if (/expired/i.test(errorMessage)) {
+      claimErrorContent = (
+        <div className="mx-auto flex w-full max-w-2xl flex-col items-center gap-4 rounded-xl bg-white p-6 text-center shadow">
+          <NoRowsMessage
+            icon={"⚠️"}
+            title="Referral Link Unavailable"
+            description="This referral link has expired and can no longer be claimed."
+            className="w-full !bg-transparent"
+          />
+        </div>
+      );
+    } else if (/abandoned/i.test(errorMessage)) {
+      claimErrorContent = (
+        <div className="mx-auto flex w-full max-w-2xl flex-col items-center gap-4 rounded-xl bg-white p-6 text-center shadow">
+          <NoRowsMessage
+            icon={"⚠️"}
+            title="Referral Link Unavailable"
+            description="This referral claim is no longer available. Please use a new referral link to try again."
+            className="w-full !bg-transparent"
+          />
+        </div>
+      );
+    } else if (status !== 404) {
+      claimErrorContent = (
+        <div className="mx-auto flex w-full max-w-2xl flex-col items-center gap-4 rounded-xl bg-white p-6 text-center shadow">
+          <NoRowsMessage
+            icon={"⚠️"}
+            title="Unable to Claim Referral Link"
+            description={errorMessage}
+            className="w-full !bg-transparent"
           />
         </div>
       );
     }
-
-    claimErrorContent = (
-      <div className="mx-auto flex w-full max-w-2xl flex-col items-center gap-4 rounded-xl bg-white p-6 text-center shadow">
-        <NoRowsMessage
-          icon={"⚠️"}
-          title="Unable to Claim Referral Link"
-          description={errorMessage}
-          className="w-full !bg-transparent"
-        />
-      </div>
-    );
   }
 
   // Main claim page
@@ -283,14 +438,7 @@ const ReferralClaimPage: NextPageWithLayout = () => {
         headerBackgroundMode="color"
         headerBackgroundColorClassName="bg-orange"
         onBack={() => router.push("/referrals")}
-        isLoading={
-          !hasPageError &&
-          (!router.isReady ||
-            sessionStatus === "loading" ||
-            programLoading ||
-            claimingAfterProfile ||
-            (isAuthenticated && !userProfile))
-        }
+        isLoading={!hasPageError && (!router.isReady || isPageLoading)}
       >
         {pageErrorContent ? (
           pageErrorContent

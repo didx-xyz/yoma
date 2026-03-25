@@ -1,20 +1,14 @@
 import { IoMdClose } from "react-icons/io";
-import { ProgramInfo } from "~/api/models/referrals";
+import { ProgramInfo, ReferralLinkUsageInfo } from "~/api/models/referrals";
 import CustomModal from "~/components/Common/CustomModal";
 
-interface RefereeWelcomeModalProps {
+export const RefereeWelcomeModal: React.FC<{
   isOpen: boolean;
   onClose: () => void;
   userName: string;
   program: ProgramInfo;
-}
-
-export const RefereeWelcomeModal: React.FC<RefereeWelcomeModalProps> = ({
-  isOpen,
-  onClose,
-  userName,
-  program,
-}) => {
+  usage: ReferralLinkUsageInfo;
+}> = ({ isOpen, onClose, userName, program, usage }) => {
   return (
     <CustomModal
       isOpen={isOpen}
@@ -43,18 +37,17 @@ export const RefereeWelcomeModal: React.FC<RefereeWelcomeModalProps> = ({
               🎉
             </span>
           </div>
-
           <h3 className="max-w-full truncate text-lg font-semibold text-black sm:text-xl md:text-2xl">
             Hi {userName}!
           </h3>
           <p className="text-gray-dark max-w-[95%] text-sm leading-relaxed md:max-w-[90%] md:text-base">
-            Welcome to the <strong>{program.name}</strong> programme.
+            Welcome to the <strong>{program.name}</strong> programme. You were
+            referred by <strong>{usage.userDisplayNameReferrer}</strong>
           </p>
           <p className="text-gray-dark max-w-[95%] text-sm leading-relaxed md:max-w-[90%] md:text-base">
             Watch the short intro video below to understand how this programme
             works and how to complete your pathway tasks successfully.
           </p>
-
           <div className="mt-1 flex w-full justify-center md:mt-2">
             <div className="relative aspect-video w-full max-w-[601px] overflow-hidden rounded-lg border border-white/20 shadow-md">
               <iframe
@@ -66,7 +59,6 @@ export const RefereeWelcomeModal: React.FC<RefereeWelcomeModalProps> = ({
               />
             </div>
           </div>
-
           <button
             type="button"
             className="btn hover:btn-outline hover:text-green bg-green border-green btn-sm mt-1 w-full max-w-[240px] text-white normal-case hover:bg-white md:w-1/2"

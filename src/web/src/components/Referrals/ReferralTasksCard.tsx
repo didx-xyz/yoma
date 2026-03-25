@@ -19,6 +19,9 @@ export const ReferralTasksCard = ({
   progressModel,
   preview = false,
 }: ReferralTasksCardProps) => {
+  const normalizeValue = (value: string | null | undefined) =>
+    (value ?? "").trim().toUpperCase();
+
   const stepGroups = useMemo(() => {
     if (progressModel?.steps?.length) {
       return [...progressModel.steps]
@@ -83,19 +86,35 @@ export const ReferralTasksCard = ({
       });
   }, [model?.steps, progressModel?.steps]);
 
+  const pathwayRule = progressModel?.rule ?? model?.rule ?? null;
+  const pathwayOrderMode = progressModel?.orderMode ?? model?.orderMode ?? null;
+
   const getStepInstruction = (
     stepIndex: number,
-    previousStepCompleted: boolean,
+    pathwayRule: string | null,
+    pathwayOrderMode: string | null,
     stepRule: string | null,
     stepOrderMode: string | null,
     taskCount: number,
     isCompleted: boolean,
   ) => {
-    if (stepIndex > 0 && previousStepCompleted && !isCompleted) {
-      return taskCount === 1
-        ? "Complete this task next"
-        : "Complete these tasks next";
-    }
+    const normalizedPathwayRule = normalizeValue(pathwayRule);
+    const normalizedPathwayOrderMode = normalizeValue(pathwayOrderMode);
+    const normalizedStepRule = normalizeValue(stepRule);
+    const normalizedStepOrderMode = normalizeValue(stepOrderMode);
+
+    const useOrPrefix =
+      stepIndex > 0 &&
+      (normalizedPathwayRule === "ANY" ||
+        normalizedPathwayOrderMode === "ANYORDER");
+
+    const applyPrefix = (instruction: string) => {
+      if (stepIndex === 0) {
+        return instruction.charAt(0).toUpperCase() + instruction.slice(1);
+      }
+
+      return `${useOrPrefix ? "Or" : "Then"} ${instruction}`;
+    };
 
     if (isCompleted) {
       return taskCount === 1
@@ -104,26 +123,17 @@ export const ReferralTasksCard = ({
     }
 
     if (taskCount === 1) {
-      return "Complete this task";
+      return applyPrefix("complete this task");
     }
 
-    const ruleText =
-      stepRule?.toLowerCase() === "any"
-        ? "Complete any task"
-        : "Complete these tasks";
+    if (normalizedStepRule === "ANY") {
+      return applyPrefix("complete any task");
+    }
 
     const orderText =
-      stepOrderMode?.toLowerCase() === "anyorder" ? "in any order" : "in order";
+      normalizedStepOrderMode === "ANYORDER" ? "in any order" : "in order";
 
-    const baseInstruction = `${ruleText} ${orderText}`;
-
-    if (stepIndex === 0) {
-      return baseInstruction;
-    }
-
-    return stepOrderMode?.toLowerCase() === "anyorder"
-      ? `Or ${baseInstruction.charAt(0).toLowerCase()}${baseInstruction.slice(1)}`
-      : `Then ${baseInstruction.charAt(0).toLowerCase()}${baseInstruction.slice(1)}`;
+    return applyPrefix(`complete these tasks ${orderText}`);
   };
 
   if (stepGroups.length === 0) {
@@ -152,9 +162,8 @@ export const ReferralTasksCard = ({
                     {(() => {
                       return getStepInstruction(
                         stepIndex,
-                        stepIndex > 0
-                          ? (stepGroups[stepIndex - 1]?.completed ?? false)
-                          : false,
+                        pathwayRule,
+                        pathwayOrderMode,
                         step.stepRule,
                         step.stepOrderMode,
                         step.tasks.length,

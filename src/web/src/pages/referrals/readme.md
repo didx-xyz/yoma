@@ -22,6 +22,9 @@ Current behavior:
 - "Create link" is available via modal where applicable.
 - Referrer stats are visible from the landing page.
 - "My referrals" and "My programmes" are rendered as card/carousel experiences.
+- Authenticated referees with confirmed actionable usage in `Initiated` or `Pending` state get a "New to Yoma?" top-nav shortcut.
+- Referees with confirmed actionable usage can receive a reminder toast after sign-in once all blocking profile/settings/photo popups are completed.
+- Reminder toast is shown once per signed-in session and is dismissed/reset on logout.
 
 Notable features to test:
 - Sign in as an anonymous user — verify welcome/intro experience with sign-in CTA is shown.
@@ -29,6 +32,10 @@ Notable features to test:
 - Sign in as a referrer with no links — verify empty state for "My referrals" and appropriate CTA.
 - Sign in as a referrer with links — verify stats card, "My referrals" list, and "My programmes" carousel populate correctly.
 - Sign in as a referee — verify "My programmes" shows claimed programmes with progress.
+- Sign in as a referee with a confirmed `Initiated` usage — verify the "New to Yoma?" top-nav links back to the claim page.
+- Sign in as a referee with a confirmed `Pending` usage — verify the "New to Yoma?" top-nav links to the progress page.
+- Complete profile/settings/photo popups for a referee with actionable usage — verify the reminder toast appears only once after the popup sequence completes.
+- Sign out and sign back in as the same referee — verify the reminder toast can appear again for the new signed-in session.
 - Apply a country filter — verify programme carousel updates to match selected country.
 - Set user country in profile — verify it is pre-selected in the country filter on page load.
 - Click "Create link" for a programme — verify modal opens and link is created successfully.
@@ -66,17 +73,24 @@ Current behavior:
 - Requires `linkId` query param.
 - Program is resolved via link-based endpoint.
 - Unauthenticated users get login CTA with analytics tracking.
-- If authenticated and profile incomplete, profile completion wizard is shown inline.
-- Claim is auto-attempted when profile is complete.
-- If already claimed, user is redirected to progress page.
+- Authenticated users first run the referral initiate step; this can create or confirm an `Initiated` usage before claim completes.
+- If authenticated and profile incomplete, profile completion wizard is shown inline after initiate.
+- A welcome toast is shown once on the claim page when inline profile completion is required.
+- Claim is auto-attempted after initiate when the authenticated profile is already complete, or immediately after inline profile completion is saved.
+- Successful initiate/claim refreshes the shared referee usage data used by global reminder/top-nav logic.
+- If already claimed / already pending / own-link / expired / abandoned / programme-full conditions are hit, the page shows a detailed error state instead of redirecting blindly.
 - Error states show detailed reasons with alternative actions.
 - Social metadata (Open Graph/Twitter) is populated from program details.
 
 Notable features to test:
 - Open the claim URL as an unauthenticated user — verify login CTA is shown (not a claim attempt).
-- Open the claim URL as a user with an incomplete profile — verify profile completion wizard appears before claim proceeds.
+- Open the claim URL as an authenticated user with an incomplete profile — verify initiate runs, the inline profile wizard appears, and the welcome toast is shown once.
 - Complete the profile wizard — verify claim is auto-attempted immediately after completion.
-- Open the claim URL as a user who has already claimed this programme — verify redirect to progress page.
+- Open the claim URL as an authenticated user with a complete profile — verify initiate runs and claim is auto-attempted without showing the inline profile wizard.
+- Open the claim URL as a user who has already claimed this programme — verify an error state is shown rather than redirecting silently.
+- Open the claim URL as a user who already has another pending claim for the programme — verify the specific alternative-link error state is shown.
+- Open the claim URL as the referrer/owner of the link — verify the own-link validation error state is shown and the "New to Yoma?" top-nav does not appear.
+- Open the claim URL where the programme completion limit has been reached — verify the "Programme Full" error state is shown.
 - Open the claim URL with a missing or invalid `linkId` — verify appropriate error state and alternative-action links.
 - Verify Open Graph/Twitter preview meta tags are populated from the programme name and description when sharing the URL.
 
@@ -112,20 +126,26 @@ Purpose: Track completion after claim.
 Current behavior:
 - SSR prefetch for referee usage + program.
 - Refetches usage every 30s for near-real-time progress.
-- Shows claim success toast after redirect from claim flow.
 - Displays progress card, pathway tasks, time remaining, and reward card.
 - Pathway task progress is sourced directly from `usage.pathway` (live API data).
 - Shows contextual content with referrer name.
+- Shows a welcome modal for active referee journeys and a congratulations modal for completed programmes.
+- Welcome modal dismissal is tracked for the current signed-in session and is reset on logout.
+- Local page state prevents the welcome modal from briefly reopening during sign-out transitions.
 - Not-found/unavailable state includes alternative actions.
 
 Notable features to test:
-- Land here from a successful claim — verify success toast is shown.
 - Verify progress bar and `percentComplete` value match the pathway completion state.
 - Complete a pathway task for the user and wait up to 30s — verify progress updates automatically without a manual refresh.
 - Check a programme with no pathway — verify the pathway section is not rendered.
 - Check a programme with a pathway — verify each step and task renders with correct completed/pending state.
 - Verify time remaining card shows correct day count or "No time limit".
 - Verify referrer name is displayed in the contextual section.
+- Open an in-progress programme for the first time in a signed-in session — verify the welcome modal appears.
+- Close the welcome modal and revisit/open another tab in the same signed-in session — verify it does not reopen.
+- Sign out from the progress page — verify the welcome modal does not briefly flash during sign-out.
+- Sign back in and revisit the same in-progress programme — verify the welcome modal can appear again in the new signed-in session.
+- Open a completed programme — verify the congratulations modal appears with completion date and actual reward data.
 
 ---
 
