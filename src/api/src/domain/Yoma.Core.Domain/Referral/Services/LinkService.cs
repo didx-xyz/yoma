@@ -37,6 +37,7 @@ namespace Yoma.Core.Domain.Referral.Services
     private readonly ILinkUsageStatusService _linkUsageStatusService;
     private readonly ICountryService _countryService;
     private readonly IBlobService _blobService;
+    private readonly ILinkMaintenanceService _linkMaintenanceService;
 
     private readonly IExecutionStrategyService _executionStrategyService;
     private readonly IShortLinkProviderClient _shortLinkProviderClient;
@@ -65,6 +66,7 @@ namespace Yoma.Core.Domain.Referral.Services
       ILinkUsageStatusService linkUsageStatusService,
       ICountryService countryService,
       IBlobService blobService,
+      ILinkMaintenanceService linkMaintenanceService,
 
       IExecutionStrategyService executionStrategyService,
       IShortLinkProviderClientFactory shortLinkProviderClientFactory,
@@ -85,6 +87,7 @@ namespace Yoma.Core.Domain.Referral.Services
       _linkUsageStatusService = linkUsageStatusService ?? throw new ArgumentNullException(nameof(linkUsageStatusService));
       _countryService = countryService ?? throw new ArgumentNullException(nameof(countryService));
       _blobService = blobService ?? throw new ArgumentNullException(nameof(blobService));
+      _linkMaintenanceService = linkMaintenanceService ?? throw new ArgumentNullException(nameof(linkMaintenanceService));
 
       _executionStrategyService = executionStrategyService ?? throw new ArgumentNullException(nameof(executionStrategyService));
       _shortLinkProviderClient = shortLinkProviderClientFactory.CreateClient() ?? throw new ArgumentNullException(nameof(shortLinkProviderClientFactory));
@@ -377,7 +380,15 @@ namespace Yoma.Core.Domain.Referral.Services
       result.StatusId = status.Id;
       result.Status = ReferralLinkStatus.Cancelled;
 
-      await _linkRepository.Update(result);
+      await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+      {
+        using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
+
+        await _linkRepository.Update(result);
+        await _linkMaintenanceService.AbandonLinkUsagesByLinkId(result.Id);
+
+        scope.Complete();
+      });
 
       return result;
     }
@@ -394,6 +405,7 @@ namespace Yoma.Core.Domain.Referral.Services
       ArgumentNullException.ThrowIfNull(link, nameof(link));
 
       var statusLimitReached = _linkStatusService.GetByName(ReferralLinkStatus.LimitReached.ToString());
+      var transitionedToLimitReached = false;
 
       // Increment total (always)
       link.CompletionTotal = (link.CompletionTotal ?? 0) + 1;
@@ -433,6 +445,7 @@ namespace Yoma.Core.Domain.Referral.Services
 
         link.Status = ReferralLinkStatus.LimitReached;
         link.StatusId = statusLimitReached.Id;
+        transitionedToLimitReached = true;
       }
       else
       {
@@ -447,7 +460,17 @@ namespace Yoma.Core.Domain.Referral.Services
           link.Status == ReferralLinkStatus.Active);
       }
 
-      link = await _linkRepository.Update(link);
+      await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+      {
+        using var scope = TransactionScopeHelper.CreateReadCommitted();
+
+        link = await _linkRepository.Update(link);
+
+        if (transitionedToLimitReached)
+          await _linkMaintenanceService.AbandonLinkUsagesByLinkId(link.Id);
+
+        scope.Complete();
+      });
 
       return link;
     }
