@@ -379,9 +379,10 @@ const ProgramsSection = ({
                     title={item.name}
                     description={item.description}
                     imageURL={item.imageURL}
-                    reward={item.zltoRewardReferrer}
+                    reward={item.zltoRewardReferrerEstimate}
                     timeDays={item.completionWindowInDays}
                     href={`/referrals/program/${item.id}`}
+                    openInNewTab={true}
                   />
                 )}
                 onSlide={onSlide}
@@ -1074,6 +1075,7 @@ const ReferralsPage: NextPageWithLayout<{
                                       status={item.status}
                                       daysLeft={item.timeDays}
                                       href={`/referrals/link/${item.linkId}`}
+                                      openInNewTab={true}
                                     />
                                   )}
                                 />
@@ -1104,10 +1106,11 @@ const ReferralsPage: NextPageWithLayout<{
                               renderSlide={(item) => (
                                 <ReferralProgramSlideCard
                                   title={item.programName}
-                                  description={item.programDescription}
+                                  description={item.programSummary}
                                   imageURL={item.programImageURL}
                                   reward={item.zltoRewardReferrerTotal}
                                   href={`/referrals/link/${item.id}`}
+                                  openInNewTab={true}
                                   showRewardBadge={false}
                                   showTimeBadge={false}
                                 />

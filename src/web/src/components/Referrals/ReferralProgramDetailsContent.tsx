@@ -68,7 +68,9 @@ const toProgramInfo = (program: Program | ProgramInfo): ProgramInfo => ({
   completionTotal: program.completionTotal,
   completionBalance: program.completionBalance,
   zltoRewardReferrer: program.zltoRewardReferrer,
+  zltoRewardReferrerEstimate: program.zltoRewardReferrerEstimate,
   zltoRewardReferee: program.zltoRewardReferee,
+  zltoRewardRefereeEstimate: program.zltoRewardRefereeEstimate,
   zltoRewardCumulative: program.zltoRewardCumulative,
   proofOfPersonhoodRequired: program.proofOfPersonhoodRequired,
   pathwayRequired: program.pathwayRequired,
@@ -123,8 +125,8 @@ export const ReferralProgramDetailsContent: React.FC<
               icon={<IoTrophyOutline className="h-5 w-5" />}
               header="Reward"
               description={
-                (displayProgram.zltoRewardReferrer || 0) > 0
-                  ? `${displayProgram.zltoRewardReferrer} Zlto`
+                (displayProgram.zltoRewardReferrerEstimate || 0) > 0
+                  ? `${displayProgram.zltoRewardReferrerEstimate} Zlto`
                   : "No reward"
               }
               className="bg-purple-dark [&_.referral-stat-card-description]:text-white [&_.referral-stat-card-header]:text-white [&_.referral-stat-card-icon-wrap]:bg-white/20 [&_.referral-stat-card-icon-wrap]:text-white"

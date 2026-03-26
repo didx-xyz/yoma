@@ -90,7 +90,7 @@ const ReferralProgramInfo: NextPageWithLayout = () => {
                 )}
               </div>
               <p className="truncate text-xs text-gray-500 md:text-sm">
-                {program?.description ?? "No description provided"}
+                {program?.summary ?? "No description provided"}
               </p>
             </div>
 

@@ -119,6 +119,96 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
     );
   };
 
+  const getRewardEstimateMeta = (
+    configured: number | null | undefined,
+    estimate: number | null | undefined,
+  ) => {
+    if (configured === null || configured === undefined) {
+      return {
+        label: "Not configured",
+        className: "bg-gray-100 text-gray-600",
+      };
+    }
+
+    if (estimate === null || estimate === undefined) {
+      return {
+        label: "Estimate unavailable",
+        className: "bg-gray-100 text-gray-600",
+      };
+    }
+
+    if (estimate <= 0) {
+      return {
+        label: "Pool exhausted",
+        className: "bg-red-50 text-red-700",
+      };
+    }
+
+    if (estimate < configured) {
+      return {
+        label: "Pool constrained",
+        className: "bg-amber-50 text-amber-700",
+      };
+    }
+
+    return {
+      label: "Fully payable",
+      className: "bg-emerald-50 text-emerald-700",
+    };
+  };
+
+  const renderRewardBreakdown = (
+    title: string,
+    configured: number | null | undefined,
+    estimate: number | null | undefined,
+    helperText: string,
+  ) => {
+    const estimateMeta = getRewardEstimateMeta(configured, estimate);
+
+    return (
+      <div className="flex h-full flex-col border border-gray-200">
+        <div className="border-b border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
+          {title}
+        </div>
+
+        <div className="flex flex-1 flex-col gap-3 px-4 py-3 text-xs">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="rounded-md border border-gray-200 bg-white px-3 py-2">
+              <div className="mb-1 text-[11px] font-medium tracking-wide text-gray-500 uppercase">
+                Configured
+              </div>
+              <div className="text-sm text-gray-900">
+                {renderZltoAmount(configured)}
+              </div>
+            </div>
+
+            <div className="rounded-md border border-blue-100 bg-blue-50/40 px-3 py-2">
+              <div className="mb-1 text-[11px] font-medium tracking-wide text-blue-700 uppercase">
+                Estimated Now
+              </div>
+              <div className="text-sm text-gray-900">
+                {renderZltoAmount(
+                  estimate,
+                  "N/A",
+                  "font-semibold text-blue-700",
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-[11px] text-gray-500">{helperText}</span>
+            <span
+              className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-medium ${estimateMeta.className}`}
+            >
+              {estimateMeta.label}
+            </span>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   // Ensure we always have a data map that includes the opportunity objects already
   // embedded on the program pathway tasks (these carry isCompletable/nonCompletableReason).
   const hydratedOpportunityDataMap = useMemo(() => {
@@ -319,7 +409,7 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
                 description: program.description || "No description provided",
                 imageURL: program.imageURL,
               }}
-              zltoReward={program.zltoRewardReferrer}
+              zltoReward={program.zltoRewardReferrerEstimate}
               variant="referral"
             />
           </div>
@@ -613,24 +703,20 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
               </h6>
 
               <div className="space-y-3 overflow-x-auto">
-                <div className="grid grid-cols-1 overflow-hidden rounded-lg border border-gray-200 md:grid-cols-2">
-                  <div className="flex">
-                    <div className="w-52 border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
-                      Ambassador Reward
-                    </div>
-                    <div className="flex-1 border border-gray-200 px-4 py-2 text-xs hover:bg-gray-100">
-                      {renderZltoAmount(program?.zltoRewardReferrer)}
-                    </div>
-                  </div>
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                  {renderRewardBreakdown(
+                    "Ambassador Reward",
+                    program?.zltoRewardReferrer,
+                    program?.zltoRewardReferrerEstimate,
+                    "Paid after the referee estimate is reserved from the current pool.",
+                  )}
 
-                  <div className="flex">
-                    <div className="w-52 border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
-                      Referee Reward
-                    </div>
-                    <div className="flex-1 border border-gray-200 px-4 py-2 text-xs hover:bg-gray-100">
-                      {renderZltoAmount(program?.zltoRewardReferee)}
-                    </div>
-                  </div>
+                  {renderRewardBreakdown(
+                    "Referee Reward",
+                    program?.zltoRewardReferee,
+                    program?.zltoRewardRefereeEstimate,
+                    "Referee reward has payout priority against the current pool.",
+                  )}
                 </div>
 
                 <div className="overflow-hidden rounded-lg border border-gray-200">
@@ -799,6 +885,17 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
 
               <div className="flex">
                 <div className="w-52 border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
+                  Avg Links / Ambassador
+                </div>
+                <div className="flex-1 border border-gray-200 px-4 py-2 text-xs hover:bg-gray-100">
+                  {analytics?.linkAveragePerReferrer != null
+                    ? analytics.linkAveragePerReferrer.toFixed(2)
+                    : "—"}
+                </div>
+              </div>
+
+              <div className="flex">
+                <div className="w-52 border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
                   Total Claims
                 </div>
                 <div className="flex-1 border border-gray-200 px-4 py-2 text-xs hover:bg-gray-100">
@@ -839,30 +936,19 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
                   Conversion Ratio
                 </div>
                 <div className="flex-1 border border-gray-200 px-4 py-2 text-xs hover:bg-gray-100">
-                  {analytics?.completionConversionRatio != null
-                    ? `${(analytics.completionConversionRatio * 100).toFixed(1)}%`
+                  {analytics?.conversionRatioCompletionPercentage != null
+                    ? `${analytics.conversionRatioCompletionPercentage.toFixed(1)}%`
                     : "—"}
                 </div>
               </div>
 
               <div className="flex">
                 <div className="w-52 border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
-                  Avg Links / Referrer
+                  Avg Completed / Ambassador
                 </div>
                 <div className="flex-1 border border-gray-200 px-4 py-2 text-xs hover:bg-gray-100">
-                  {analytics?.avgLinksPerReferrer != null
-                    ? analytics.avgLinksPerReferrer.toFixed(2)
-                    : "—"}
-                </div>
-              </div>
-
-              <div className="flex">
-                <div className="w-52 border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
-                  Avg Completed / Referrer
-                </div>
-                <div className="flex-1 border border-gray-200 px-4 py-2 text-xs hover:bg-gray-100">
-                  {analytics?.avgCompletedReferralsPerReferrer != null
-                    ? analytics.avgCompletedReferralsPerReferrer.toFixed(2)
+                  {analytics?.completedUsageAveragePerReferrer != null
+                    ? analytics.completedUsageAveragePerReferrer.toFixed(2)
                     : "—"}
                 </div>
               </div>
@@ -954,7 +1040,7 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
         programId={program.id}
         programName={program.name}
         link={currentProgramLink}
-        rewardAmount={program.zltoRewardReferrer}
+        rewardAmount={program.zltoRewardReferrerEstimate}
       />
     </div>
   );

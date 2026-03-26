@@ -10,6 +10,7 @@ interface ReferralFriendSlideCardProps {
   status: ReferralLinkUsageStatus | string;
   daysLeft?: number | null;
   href?: string;
+  openInNewTab?: boolean;
 }
 
 const formatDate = (value?: string | null) => {
@@ -44,6 +45,7 @@ export const ReferralFriendSlideCard = ({
   status,
   daysLeft,
   href,
+  openInNewTab = false,
 }: ReferralFriendSlideCardProps) => {
   const referredOnLabel = formatDate(referredOn);
   const daysLabel =
@@ -52,10 +54,10 @@ export const ReferralFriendSlideCard = ({
       : "";
 
   const content = (
-    <div className="bg-base-200 mx-auto flex h-[13rem] w-full max-w-[18rem] [touch-action:pan-y] flex-col justify-between rounded-3xl p-4 select-none [-webkit-user-drag:none] [user-drag:none]">
+    <div className="bg-base-200 mx-auto flex h-[13rem] w-[16rem] min-w-[16rem] shrink-0 [touch-action:pan-y] flex-col justify-between rounded-3xl p-4 select-none [-webkit-user-drag:none] [user-drag:none]">
       <div className="flex flex-col gap-1">
         <div className="flex flex-row items-center gap-2">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full border border-white/90 bg-white text-gray-400 shadow-sm">
+          <div className="bg-gray flex h-10 w-10 items-center justify-center rounded-full border border-white/90 text-white shadow-sm">
             <FiUser className="h-5 w-5" />
           </div>
 
@@ -97,7 +99,11 @@ export const ReferralFriendSlideCard = ({
   }
 
   return (
-    <ReferralTapCard href={href} className="block">
+    <ReferralTapCard
+      href={href}
+      openInNewTab={openInNewTab}
+      className="block w-[16rem] min-w-[16rem] shrink-0"
+    >
       {content}
     </ReferralTapCard>
   );

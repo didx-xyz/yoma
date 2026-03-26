@@ -83,7 +83,9 @@ export interface Program {
   completionTotal: number | null;
   completionBalance: number | null;
   zltoRewardReferrer: number | null;
+  zltoRewardReferrerEstimate: number | null;
   zltoRewardReferee: number | null;
+  zltoRewardRefereeEstimate: number | null;
   zltoRewardPool: number | null;
   zltoRewardCumulative: number | null;
   zltoRewardBalance: number | null;
@@ -118,7 +120,9 @@ export interface ProgramInfo {
   completionTotal: number | null;
   completionBalance: number | null;
   zltoRewardReferrer: number | null;
+  zltoRewardReferrerEstimate: number | null;
   zltoRewardReferee: number | null;
+  zltoRewardRefereeEstimate: number | null;
   zltoRewardCumulative: number | null;
   proofOfPersonhoodRequired: boolean;
   pathwayRequired: boolean;
@@ -627,8 +631,7 @@ export interface ReferralAnalyticsSearchResults
   items: ReferralAnalyticsUser[];
 }
 
-// Program-level analytics (GET /referral/analytics/program/{programId})
-export interface ProgramAnalytics {
+export interface ReferralAnalyticsProgram {
   referrerCount: number;
   linkCount: number;
   linkCountActive: number;
@@ -636,7 +639,12 @@ export interface ProgramAnalytics {
   usageCountCompleted: number;
   usageCountPending: number;
   usageCountExpired: number;
-  completionConversionRatio: number;
-  avgLinksPerReferrer: number;
-  avgCompletedReferralsPerReferrer: number;
+  conversionRatioCompletionPercentage: number;
+  usageCountIntentTotal: number;
+  usageCountInitiated: number;
+  usageCountAbandoned: number;
+  conversionRatioIntentToClaimPercentage: number;
+  conversionRatioIntentToCompletionPercentage: number;
+  linkAveragePerReferrer: number;
+  completedUsageAveragePerReferrer: number;
 }

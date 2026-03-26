@@ -7,7 +7,6 @@ import {
   BlockReason,
   BlockRequest,
   Program,
-  ProgramAnalytics,
   ProgramInfo,
   ProgramLinkReferrer,
   ProgramRequestCreate,
@@ -17,6 +16,7 @@ import {
   ProgramSearchResults,
   ProgramSearchResultsInfo,
   ProgramStatus,
+  ReferralAnalyticsProgram,
   ReferralAnalyticsSearchFilter,
   ReferralAnalyticsSearchFilterAdmin,
   ReferralAnalyticsSearchResults,
@@ -459,10 +459,10 @@ export const searchReferralAnalyticsAdmin = async (
 export const getReferralProgramAnalytics = async (
   programId: string,
   context?: GetServerSidePropsContext | GetStaticPropsContext,
-): Promise<ProgramAnalytics> => {
+): Promise<ReferralAnalyticsProgram> => {
   const instance = context ? ApiServer(context) : await ApiClient;
   const sanitizedProgramId = sanitizePathSegment(programId);
-  const { data } = await instance.get<ProgramAnalytics>(
+  const { data } = await instance.get<ReferralAnalyticsProgram>(
     `/referral/analytics/program/${sanitizedProgramId}`,
   );
   return data;

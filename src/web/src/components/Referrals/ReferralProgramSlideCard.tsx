@@ -10,6 +10,7 @@ interface ReferralProgramSlideCardProps {
   description?: string | null;
   imageURL?: string | null;
   href?: string;
+  openInNewTab?: boolean;
   onClick?: () => void;
   reward?: number | null;
   timeDays?: number | null;
@@ -24,6 +25,7 @@ export const ReferralProgramSlideCard = ({
   description,
   imageURL,
   href,
+  openInNewTab = false,
   onClick,
   reward,
   timeDays,
@@ -32,7 +34,7 @@ export const ReferralProgramSlideCard = ({
   customBadges,
   className,
 }: ReferralProgramSlideCardProps) => {
-  const cardClassName = `mx-auto flex h-[17rem] w-full max-w-[18rem] flex-col overflow-hidden rounded-2xl bg-white shadow transition-shadow hover:shadow-md [touch-action:pan-y] select-none [-webkit-user-drag:none] [user-drag:none] ${onClick || href ? "cursor-pointer" : ""} ${className || ""}`;
+  const cardClassName = `mx-auto flex h-[17rem] w-[16rem] min-w-[16rem] shrink-0 flex-col overflow-hidden rounded-2xl bg-white shadow transition-shadow hover:shadow-md [touch-action:pan-y] select-none [-webkit-user-drag:none] [user-drag:none] ${onClick || href ? "cursor-pointer" : ""} ${className || ""}`;
 
   const defaultBadges = (
     <>
@@ -92,7 +94,11 @@ export const ReferralProgramSlideCard = ({
 
   if (href) {
     return (
-      <ReferralTapCard href={href} className={cardClassName}>
+      <ReferralTapCard
+        href={href}
+        openInNewTab={openInNewTab}
+        className={cardClassName}
+      >
         {cardContent}
       </ReferralTapCard>
     );

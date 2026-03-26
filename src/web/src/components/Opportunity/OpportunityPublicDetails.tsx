@@ -631,214 +631,209 @@ const OpportunityPublicDetails: React.FC<{
         <div
           className={`flex flex-col gap-4 ${!preview && !user ? "blur-xs" : ""}`}
         >
-          <div className="relative flex grow flex-row gap-1 rounded-lg bg-white p-4 shadow-lg md:p-6">
-            <div className="flex grow flex-col gap-1">
-              <div className="flex grow flex-col">
-                <div className="relative flex justify-start">
-                  <h4 className="text-xl leading-7 font-semibold text-black md:max-w-[1125px] md:text-2xl md:leading-8">
-                    {opportunityInfo.title}
-                  </h4>
-                  <div className="absolute -top-2 -right-2 md:top-0 md:right-0">
-                    <AvatarImage
-                      icon={opportunityInfo.organizationLogoURL ?? null}
-                      alt="Company Logo"
-                      size={60}
-                    />
-                  </div>
-                </div>
-
-                <h6 className="text-gray-dark text-sm md:max-w-[1125px]">
+          <div className="relative flex grow flex-col rounded-lg bg-white p-4 shadow-lg md:p-6">
+            <div className="flex items-start gap-3">
+              <div className="min-w-0 flex-1">
+                <h4 className="line-clamp-4 text-xl font-semibold break-words text-black md:line-clamp-2 md:text-2xl">
+                  {opportunityInfo.title}
+                </h4>
+                <h6 className="text-gray-dark mt-1 text-sm">
                   By {opportunityInfo.organizationName}
                 </h6>
+              </div>
 
-                {/* BADGES */}
-                <PublicBadges
-                  opportunity={opportunityInfo}
-                  showToolTips={true}
+              <div className="shrink-0">
+                <AvatarImage
+                  icon={opportunityInfo.organizationLogoURL ?? null}
+                  alt="Company Logo"
+                  size={60}
                 />
+              </div>
+            </div>
 
-                {/* DATES */}
-                {opportunityInfo.status == "Active" && (
-                  <div className="text-gray-dark flex flex-col text-sm">
-                    <div>
-                      {opportunityInfo.dateStart && (
-                        <>
-                          <span className="mr-2 font-bold">Starts:</span>
-                          <span className="text-xs tracking-widest text-black">
-                            <Moment format={DATE_FORMAT_HUMAN} utc={true}>
-                              {opportunityInfo.dateStart}
-                            </Moment>
-                          </span>
-                        </>
-                      )}
-                    </div>
-                    <div>
-                      {opportunityInfo.dateEnd && (
-                        <>
-                          <span className="mr-2 font-bold">Ends:</span>
-                          <span className="text-xs tracking-widest text-black">
-                            <Moment format={DATE_FORMAT_HUMAN} utc={true}>
-                              {opportunityInfo.dateEnd}
-                            </Moment>
-                          </span>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                )}
+            {/* BADGES */}
+            <PublicBadges opportunity={opportunityInfo} showToolTips={true} />
 
-                {/* BUTTONS */}
-                <div className="mt-4 flex flex-col gap-4 md:flex-row">
-                  <div className="flex grow flex-col gap-4 md:flex-row">
-                    {opportunityInfo.url &&
-                      opportunityInfo.status !== "Expired" && (
-                        <button
-                          type="button"
-                          className="btn btn-sm bg-green hover:bg-green-dark disabled:bg-green h-10 w-full rounded-full text-sm text-white normal-case disabled:border-0 disabled:text-white md:w-[250px]"
-                          onClick={onGoToOpportunity}
-                          disabled={preview}
-                        >
-                          <Image
-                            src={iconOpen}
-                            alt="Icon Open"
-                            width={20}
-                            className="h-auto"
-                            sizes="100vw"
-                            priority={true}
-                          />
-
-                          <span className="ml-1">Go to opportunity</span>
-                        </button>
-                      )}
-
-                    {/* only show upload button if verification is enabled and method is manual */}
-                    {opportunityInfo.verificationEnabled &&
-                      opportunityInfo.verificationMethod == "Manual" && (
-                        <>
-                          {/* only show completion button if start date has been reached,
-                                   not yet completed or rejected */}
-                          {new Date(opportunityInfo.dateStart) < new Date() &&
-                            (verificationStatus == null ||
-                              verificationStatus == undefined ||
-                              verificationStatus.status == "None" ||
-                              verificationStatus.status == "Rejected") &&
-                            !opportunityInfo.participantLimitReached &&
-                            !verificationStatusIsLoading && (
-                              <button
-                                type="button"
-                                className="btn btn-sm border-green text-green hover:bg-green-dark h-10 w-full rounded-full bg-white text-sm normal-case hover:text-white md:w-[280px]"
-                                onClick={() => {
-                                  // 📊 ANALYTICS: track "Upload completion files" button click
-                                  analytics.trackEvent(
-                                    "opportunity_upload_files_clicked",
-                                    {
-                                      opportunityId: opportunityInfo.id,
-                                      opportunityTitle: opportunityInfo.title,
-                                    },
-                                  );
-
-                                  if (user) {
-                                    setCompleteOpportunityDialogVisible(true);
-                                  } else {
-                                    setLoginDialogVisible(true);
-                                  }
-                                }}
-                              >
-                                <Image
-                                  src={iconUpload}
-                                  alt="Icon Upload"
-                                  width={20}
-                                  className="h-auto"
-                                  sizes="100vw"
-                                  priority={true}
-                                />
-
-                                <span className="ml-1">
-                                  Upload your completion files
-                                </span>
-                              </button>
-                            )}
-
-                          {verificationStatus &&
-                            verificationStatus.status == "Pending" && (
-                              <button
-                                type="button"
-                                className="btn btn-sm bg-gray-light text-gray-dark hover:bg-green-dark h-10 w-full rounded-full border-0 text-sm normal-case hover:text-white md:w-[250px]"
-                                onClick={() => {
-                                  // 📊 ANALYTICS: track "Pending verification" button click
-                                  analytics.trackEvent(
-                                    "opportunity_pending_verification_clicked",
-                                    {
-                                      opportunityId: opportunityInfo.id,
-                                      opportunityTitle: opportunityInfo.title,
-                                    },
-                                  );
-
-                                  setCancelOpportunityDialogVisible(true);
-                                }}
-                              >
-                                Pending verification
-                                <IoMdClose className="text-gray-dark mt-[2px] ml-1 h-4 w-4" />
-                              </button>
-                            )}
-
-                          {verificationStatus &&
-                            verificationStatus.status == "Completed" && (
-                              <div className="md:text-md border-purple text-purple flex h-10 items-center justify-center rounded-full border bg-white px-4 text-center text-sm font-bold">
-                                Completed
-                                <IoMdCheckmark
-                                  strikethroughThickness={2}
-                                  overlineThickness={2}
-                                  underlineThickness={2}
-                                  className="text-green ml-1 h-4 w-4"
-                                />
-                              </div>
-                            )}
-                        </>
-                      )}
-                  </div>
-
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      className={
-                        "btn btn-sm border-gray-dark text-gray-dark disabled:text-gray-dark h-10 w-full shrink flex-nowrap rounded-full text-sm normal-case md:max-w-[120px] " +
-                        ` ${
-                          isOppSaved
-                            ? "border-yellow bg-yellow-light text-yellow"
-                            : "hover:bg-green-dark bg-white hover:text-white"
-                        }`
-                      }
-                      onClick={onUpdateSavedOpportunity}
-                      disabled={
-                        !(
-                          opportunityInfo.published &&
-                          opportunityInfo.status == "Active"
-                        ) || preview
-                      }
-                    >
-                      <IoMdBookmark className="mr-1 h-5 w-5" />
-
-                      {isOppSaved ? "Saved" : "Save"}
-                    </button>
-
-                    <button
-                      type="button"
-                      className="btn btn-sm border-gray-dark text-gray-dark hover:bg-green-dark disabled:text-gray-dark h-10 w-full shrink flex-nowrap rounded-full bg-white text-sm normal-case hover:text-white md:max-w-[120px]"
-                      onClick={onShareOpportunity}
-                      // ensure opportunity is published and active (user logged in check is done in function)
-                      disabled={
-                        !(
-                          opportunityInfo.published &&
-                          opportunityInfo.status == "Active"
-                        ) || preview
-                      }
-                    >
-                      <IoMdShare className="mr-1 h-5 w-5" />
-                      Share
-                    </button>
-                  </div>
+            {/* DATES */}
+            {opportunityInfo.status == "Active" && (
+              <div className="text-gray-dark flex flex-col text-sm">
+                <div>
+                  {opportunityInfo.dateStart && (
+                    <>
+                      <span className="mr-2 font-bold">Starts:</span>
+                      <span className="text-xs tracking-widest text-black">
+                        <Moment format={DATE_FORMAT_HUMAN} utc={true}>
+                          {opportunityInfo.dateStart}
+                        </Moment>
+                      </span>
+                    </>
+                  )}
                 </div>
+                <div>
+                  {opportunityInfo.dateEnd && (
+                    <>
+                      <span className="mr-2 font-bold">Ends:</span>
+                      <span className="text-xs tracking-widest text-black">
+                        <Moment format={DATE_FORMAT_HUMAN} utc={true}>
+                          {opportunityInfo.dateEnd}
+                        </Moment>
+                      </span>
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* BUTTONS */}
+            <div className="mt-2 flex flex-col gap-4 md:flex-row">
+              <div className="flex grow flex-col gap-4 md:flex-row">
+                {opportunityInfo.url &&
+                  opportunityInfo.status !== "Expired" && (
+                    <button
+                      type="button"
+                      className="btn btn-sm bg-green hover:bg-green-dark disabled:bg-green h-10 w-full rounded-full text-sm text-white normal-case disabled:border-0 disabled:text-white md:w-[250px]"
+                      onClick={onGoToOpportunity}
+                      disabled={preview}
+                    >
+                      <Image
+                        src={iconOpen}
+                        alt="Icon Open"
+                        width={20}
+                        className="h-auto"
+                        sizes="100vw"
+                        priority={true}
+                      />
+
+                      <span className="ml-1">Go to opportunity</span>
+                    </button>
+                  )}
+
+                {/* only show upload button if verification is enabled and method is manual */}
+                {opportunityInfo.verificationEnabled &&
+                  opportunityInfo.verificationMethod == "Manual" && (
+                    <>
+                      {/* only show completion button if start date has been reached,
+                                   not yet completed or rejected */}
+                      {new Date(opportunityInfo.dateStart) < new Date() &&
+                        (verificationStatus == null ||
+                          verificationStatus == undefined ||
+                          verificationStatus.status == "None" ||
+                          verificationStatus.status == "Rejected") &&
+                        !opportunityInfo.participantLimitReached &&
+                        !verificationStatusIsLoading && (
+                          <button
+                            type="button"
+                            className="btn btn-sm border-green text-green hover:bg-green-dark h-10 w-full rounded-full bg-white text-sm normal-case hover:text-white md:w-[280px]"
+                            onClick={() => {
+                              // 📊 ANALYTICS: track "Upload completion files" button click
+                              analytics.trackEvent(
+                                "opportunity_upload_files_clicked",
+                                {
+                                  opportunityId: opportunityInfo.id,
+                                  opportunityTitle: opportunityInfo.title,
+                                },
+                              );
+
+                              if (user) {
+                                setCompleteOpportunityDialogVisible(true);
+                              } else {
+                                setLoginDialogVisible(true);
+                              }
+                            }}
+                          >
+                            <Image
+                              src={iconUpload}
+                              alt="Icon Upload"
+                              width={20}
+                              className="h-auto"
+                              sizes="100vw"
+                              priority={true}
+                            />
+
+                            <span className="ml-1">
+                              Upload your completion files
+                            </span>
+                          </button>
+                        )}
+
+                      {verificationStatus &&
+                        verificationStatus.status == "Pending" && (
+                          <button
+                            type="button"
+                            className="btn btn-sm bg-gray-light text-gray-dark hover:bg-green-dark h-10 w-full rounded-full border-0 text-sm normal-case hover:text-white md:w-[250px]"
+                            onClick={() => {
+                              // 📊 ANALYTICS: track "Pending verification" button click
+                              analytics.trackEvent(
+                                "opportunity_pending_verification_clicked",
+                                {
+                                  opportunityId: opportunityInfo.id,
+                                  opportunityTitle: opportunityInfo.title,
+                                },
+                              );
+
+                              setCancelOpportunityDialogVisible(true);
+                            }}
+                          >
+                            Pending verification
+                            <IoMdClose className="text-gray-dark mt-[2px] ml-1 h-4 w-4" />
+                          </button>
+                        )}
+
+                      {verificationStatus &&
+                        verificationStatus.status == "Completed" && (
+                          <div className="md:text-md border-purple text-purple flex h-10 items-center justify-center rounded-full border bg-white px-4 text-center text-sm font-bold">
+                            Completed
+                            <IoMdCheckmark
+                              strikethroughThickness={2}
+                              overlineThickness={2}
+                              underlineThickness={2}
+                              className="text-green ml-1 h-4 w-4"
+                            />
+                          </div>
+                        )}
+                    </>
+                  )}
+              </div>
+
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  className={
+                    "btn btn-sm border-gray-dark text-gray-dark disabled:text-gray-dark h-10 w-full shrink flex-nowrap rounded-full text-sm normal-case md:max-w-[120px] " +
+                    ` ${
+                      isOppSaved
+                        ? "border-yellow bg-yellow-light text-yellow"
+                        : "hover:bg-green-dark bg-white hover:text-white"
+                    }`
+                  }
+                  onClick={onUpdateSavedOpportunity}
+                  disabled={
+                    !(
+                      opportunityInfo.published &&
+                      opportunityInfo.status == "Active"
+                    ) || preview
+                  }
+                >
+                  <IoMdBookmark className="mr-1 h-5 w-5" />
+
+                  {isOppSaved ? "Saved" : "Save"}
+                </button>
+
+                <button
+                  type="button"
+                  className="btn btn-sm border-gray-dark text-gray-dark hover:bg-green-dark disabled:text-gray-dark h-10 w-full shrink flex-nowrap rounded-full bg-white text-sm normal-case hover:text-white md:max-w-[120px]"
+                  onClick={onShareOpportunity}
+                  // ensure opportunity is published and active (user logged in check is done in function)
+                  disabled={
+                    !(
+                      opportunityInfo.published &&
+                      opportunityInfo.status == "Active"
+                    ) || preview
+                  }
+                >
+                  <IoMdShare className="mr-1 h-5 w-5" />
+                  Share
+                </button>
               </div>
             </div>
           </div>

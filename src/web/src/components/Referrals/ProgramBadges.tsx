@@ -33,8 +33,8 @@ const ProgramBadges: React.FC<ProgramBadgesProps> = ({
 }) => {
   if (!program) return null;
 
-  const referrerReward = program.zltoRewardReferrer || 0;
-  const refereeReward = program.zltoRewardReferee || 0;
+  const referrerReward = program.zltoRewardReferrerEstimate || 0;
+  const refereeReward = program.zltoRewardRefereeEstimate || 0;
   const pathwayRequired = !!program.pathwayRequired;
   const proofRequired = !!program.proofOfPersonhoodRequired;
 

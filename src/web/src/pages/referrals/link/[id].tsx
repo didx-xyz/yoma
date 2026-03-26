@@ -255,8 +255,8 @@ const ReferralLinkPage: NextPageWithLayout = () => {
                     icon={<IoTrophyOutline className="h-5 w-5" />}
                     header="Reward"
                     description={
-                      (program?.zltoRewardReferrer || 0) > 0
-                        ? `${program?.zltoRewardReferrer} Zlto`
+                      (program?.zltoRewardReferrerEstimate || 0) > 0
+                        ? `${program?.zltoRewardReferrerEstimate} Zlto`
                         : "No reward"
                     }
                     className="bg-purple-dark [&_.referral-stat-card-description]:text-white [&_.referral-stat-card-header]:text-white [&_.referral-stat-card-icon-wrap]:bg-white/20 [&_.referral-stat-card-icon-wrap]:text-white"
@@ -280,7 +280,7 @@ const ReferralLinkPage: NextPageWithLayout = () => {
           isOpen={isShareModalOpen}
           onClose={() => setIsShareModalOpen(false)}
           link={link || null}
-          rewardAmount={program?.zltoRewardReferee}
+          rewardAmount={program?.zltoRewardRefereeEstimate}
         />
       </ReferralShell>
     </>

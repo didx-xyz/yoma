@@ -33,7 +33,7 @@ export const AdminProgramPreview: React.FC<AdminProgramPreviewProps> = ({
               description: program.description || "No description provided",
               imageURL: imagePreviewUrl || program.imageURL,
             }}
-            zltoReward={program.zltoRewardReferrer}
+            zltoReward={program.zltoRewardReferrerEstimate}
             variant="referral"
           />
         </div>
