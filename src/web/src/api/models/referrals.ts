@@ -83,7 +83,9 @@ export interface Program {
   completionTotal: number | null;
   completionBalance: number | null;
   zltoRewardReferrer: number | null;
+  zltoRewardReferrerEstimate: number | null;
   zltoRewardReferee: number | null;
+  zltoRewardRefereeEstimate: number | null;
   zltoRewardPool: number | null;
   zltoRewardCumulative: number | null;
   zltoRewardBalance: number | null;
@@ -118,7 +120,9 @@ export interface ProgramInfo {
   completionTotal: number | null;
   completionBalance: number | null;
   zltoRewardReferrer: number | null;
+  zltoRewardReferrerEstimate: number | null;
   zltoRewardReferee: number | null;
+  zltoRewardRefereeEstimate: number | null;
   zltoRewardCumulative: number | null;
   proofOfPersonhoodRequired: boolean;
   pathwayRequired: boolean;

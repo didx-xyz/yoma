@@ -190,8 +190,8 @@ const RefereeDashboard: NextPageWithLayout = () => {
         : `${subtitleActionParts[0]} and ${subtitleActionParts[1]}`;
 
   const subtitleOutcomeText =
-    (program?.zltoRewardReferee || 0) > 0
-      ? `get the opportunity to win ${program?.zltoRewardReferee} Zlto`
+    (program?.zltoRewardRefereeEstimate || 0) > 0
+      ? `get the opportunity to win ${program?.zltoRewardRefereeEstimate} Zlto`
       : "complete this programme";
 
   const normalizedSubtitleActionText =
@@ -209,7 +209,7 @@ const RefereeDashboard: NextPageWithLayout = () => {
 
   const rewardAmount = isProgramCompleted
     ? (usage?.zltoRewardReferee ?? 0)
-    : (program?.zltoRewardReferee ?? 0);
+    : (program?.zltoRewardRefereeEstimate ?? 0);
 
   return (
     <>

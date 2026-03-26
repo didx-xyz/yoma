@@ -160,7 +160,7 @@ const ReferralProgramDetails: NextPageWithLayout = () => {
         <title>{`Yoma | Refer a friend ❤️ | ${program?.name ?? "Programme Details"}`}</title>
         <meta
           name="description"
-          content={program?.description ?? "Referral programme details"}
+          content={program?.summary ?? "Referral programme details"}
         />
       </Head>
 

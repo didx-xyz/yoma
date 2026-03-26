@@ -674,7 +674,9 @@ const ReferralProgramForm: NextPageWithLayout = () => {
       completionLimitReferee: null,
       completionLimit: null,
       zltoRewardReferrer: null,
+      zltoRewardReferrerEstimate: null,
       zltoRewardReferee: null,
+      zltoRewardRefereeEstimate: null,
       zltoRewardPool: null,
       zltoRewardCumulative: null,
       zltoRewardBalance: null,
@@ -1534,7 +1536,7 @@ const ReferralProgramForm: NextPageWithLayout = () => {
           }
 
           await updateReferralProgram(updateRequest as ProgramRequestUpdate);
-          message = "Program updated successfully";
+          message = "Program updated";
         }
 
         await queryClient.invalidateQueries({
