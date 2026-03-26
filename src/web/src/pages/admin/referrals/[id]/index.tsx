@@ -92,11 +92,17 @@ const schemaStep1 = z
       .string()
       .min(1, "Name is required")
       .max(150, "Name cannot exceed 150 characters"),
-    description: z.string().min(1, "Description is required."),
-    summary: z
-      .string()
-      .min(1, "Summary is required.")
-      .max(150, "Summary cannot exceed 150 characters."),
+    description: z.preprocess(
+      (value) => (typeof value === "string" ? value : ""),
+      z.string().min(1, "Description is required."),
+    ),
+    summary: z.preprocess(
+      (value) => (typeof value === "string" ? value : ""),
+      z
+        .string()
+        .min(1, "Summary is required.")
+        .max(150, "Summary cannot exceed 150 characters."),
+    ),
     image: z.any().optional(), // Store uploaded image file
     imageURL: z.string().nullable().optional(), // Existing image URL
   })
@@ -705,12 +711,18 @@ const ReferralProgramForm: NextPageWithLayout = () => {
     trigger: triggerStep1,
     setValue: setValueStep1,
     getValues: getValuesStep1,
+    watch: watchStep1,
     control: controlStep1,
   } = useForm({
     resolver: zodResolver(schemaStep1),
     defaultValues: formData,
     mode: "all",
   });
+
+  useEffect(() => {
+    registerStep1("image" as any);
+    void triggerStep1(["image", "imageURL"] as any);
+  }, [registerStep1, triggerStep1]);
 
   // Step 2 Form
   const {
@@ -829,6 +841,12 @@ const ReferralProgramForm: NextPageWithLayout = () => {
   const completionLimitWatch = watchStep3("completionLimit");
   const completionWindowInDaysWatch = watchStep3("completionWindowInDays");
 
+  const step1ImageWatch = watchStep1("image" as any) as any;
+  const step1ImageUrlWatch = watchStep1("imageURL" as any) as
+    | string
+    | null
+    | undefined;
+
   // Watch Step 4 fields for cross-field validation
   const proofOfPersonhoodRequiredWatch = watchStep4(
     "proofOfPersonhoodRequired",
@@ -859,6 +877,15 @@ const ReferralProgramForm: NextPageWithLayout = () => {
     () => Object.keys(formStateStep5.dirtyFields).length > 0,
     [formStateStep5],
   );
+
+  const step1ImageError =
+    ((formStateStep1.errors as any).image?.message as string | undefined) ??
+    ((formStateStep1.errors as any).imageURL?.message as string | undefined);
+  const step1ImageMissing =
+    !(step1ImageWatch instanceof File) && !step1ImageUrlWatch;
+  const step1ImageTouched =
+    !!(formStateStep1.touchedFields as any).image ||
+    !!(formStateStep1.touchedFields as any).imageURL;
   //#endregion Form
 
   //#region Form Behavior
@@ -981,6 +1008,15 @@ const ReferralProgramForm: NextPageWithLayout = () => {
     resetStep3(nextData);
     resetStep4(nextData);
     resetStep5(nextData);
+    // Re-run validation after reset clears initial resolver state.
+    setTimeout(() => {
+      triggerStep1();
+      triggerStep2();
+      triggerStep3();
+      triggerStep4();
+      triggerStep5();
+    }, 0);
+
     // Mark as touched/validated for warning icons
     setValueStep2("countries", [worldwideCountryId], { shouldValidate: true });
   }, [
@@ -992,6 +1028,11 @@ const ReferralProgramForm: NextPageWithLayout = () => {
     resetStep4,
     resetStep5,
     setValueStep2,
+    triggerStep1,
+    triggerStep2,
+    triggerStep3,
+    triggerStep4,
+    triggerStep5,
   ]);
 
   // Scroll to top on step change
@@ -1428,7 +1469,7 @@ const ReferralProgramForm: NextPageWithLayout = () => {
             baseRequest as ProgramRequestCreate,
           );
           programId = response.id;
-          message = "Program created successfully";
+          message = "Referral program created";
 
           // Upload image after creation
           if (imageFile) {
@@ -2014,17 +2055,19 @@ const ReferralProgramForm: NextPageWithLayout = () => {
                       />
                     </FormField>
 
-                    {/* Image Upload */}
+                    {/* TODO: Image Upload */}
                     <FormField
                       label="Program Image"
-                      showWarningIcon={
-                        !!(formStateStep1.errors as any).image?.message
-                      }
+                      showWarningIcon={step1ImageMissing || !!step1ImageError}
                       showError={
-                        !!(formStateStep1.touchedFields as any).image ||
-                        formStateStep1.isSubmitted
+                        step1ImageTouched || formStateStep1.isSubmitted
                       }
-                      error={(formStateStep1.errors as any).image?.message}
+                      error={
+                        step1ImageError ??
+                        (step1ImageMissing
+                          ? "Program image is required"
+                          : undefined)
+                      }
                     >
                       {/* Hidden field to track imageURL for validation */}
                       <input
