@@ -249,7 +249,7 @@ export const ReferralTasksCard = ({
                         ) : task.opportunityId ? (
                           <Link
                             href={`/opportunities/${task.opportunityId}`}
-                            target={preview ? "_blank" : undefined}
+                            target="_blank"
                             rel={preview ? "noopener noreferrer" : undefined}
                             className="btn btn-sm bg-green hover:bg-green-dark h-9 w-[160px] rounded-full border-0 px-5 text-white normal-case"
                           >
@@ -270,17 +270,6 @@ export const ReferralTasksCard = ({
                   </div>
                 ))}
               </div>
-
-              {/* NB: divider text removed due to confusion */}
-              {/* {stepIndex < stepGroups.length - 1 && (
-                  <div className="flex items-center gap-3 py-1">
-                    <div className="h-px flex-1 bg-gray-300" />
-                    <span className="text-lg font-semibold text-black">
-                      {step.completed ? "What's next?" : stepDividerLabel}
-                    </span>
-                    <div className="h-px flex-1 bg-gray-300" />
-                  </div>
-                )} */}
             </div>
           ))}
         </div>
