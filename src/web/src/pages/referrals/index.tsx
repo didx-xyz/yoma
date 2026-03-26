@@ -382,6 +382,7 @@ const ProgramsSection = ({
                     reward={item.zltoRewardReferrer}
                     timeDays={item.completionWindowInDays}
                     href={`/referrals/program/${item.id}`}
+                    openInNewTab={true}
                   />
                 )}
                 onSlide={onSlide}
@@ -1074,6 +1075,7 @@ const ReferralsPage: NextPageWithLayout<{
                                       status={item.status}
                                       daysLeft={item.timeDays}
                                       href={`/referrals/link/${item.linkId}`}
+                                      openInNewTab={true}
                                     />
                                   )}
                                 />
@@ -1108,6 +1110,7 @@ const ReferralsPage: NextPageWithLayout<{
                                   imageURL={item.programImageURL}
                                   reward={item.zltoRewardReferrerTotal}
                                   href={`/referrals/link/${item.id}`}
+                                  openInNewTab={true}
                                   showRewardBadge={false}
                                   showTimeBadge={false}
                                 />

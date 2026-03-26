@@ -11,6 +11,7 @@ import {
 interface ReferralTapCardProps {
   href?: string;
   onClick?: () => void;
+  openInNewTab?: boolean;
   className: string;
   children: ReactNode;
 }
@@ -22,6 +23,7 @@ const TAP_MOVEMENT_THRESHOLD_PX = 10;
 export const ReferralTapCard = ({
   href,
   onClick,
+  openInNewTab = false,
   className,
   children,
 }: ReferralTapCardProps) => {
@@ -35,12 +37,17 @@ export const ReferralTapCard = ({
 
   const activate = useCallback(() => {
     if (href) {
+      if (openInNewTab) {
+        window.open(href, "_blank", "noopener,noreferrer");
+        return;
+      }
+
       void router.push(href);
       return;
     }
 
     onClick?.();
-  }, [href, onClick, router]);
+  }, [href, onClick, openInNewTab, router]);
 
   const handlePointerDown = useCallback((event: PointerEvent<HTMLElement>) => {
     if (event.pointerType !== "touch") return;
@@ -95,6 +102,8 @@ export const ReferralTapCard = ({
     return (
       <Link
         href={href}
+        target={openInNewTab ? "_blank" : undefined}
+        rel={openInNewTab ? "noopener noreferrer" : undefined}
         className={className}
         onClick={handleLinkClick}
         onPointerDown={handlePointerDown}

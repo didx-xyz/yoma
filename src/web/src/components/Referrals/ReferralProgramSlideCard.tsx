@@ -10,6 +10,7 @@ interface ReferralProgramSlideCardProps {
   description?: string | null;
   imageURL?: string | null;
   href?: string;
+  openInNewTab?: boolean;
   onClick?: () => void;
   reward?: number | null;
   timeDays?: number | null;
@@ -24,6 +25,7 @@ export const ReferralProgramSlideCard = ({
   description,
   imageURL,
   href,
+  openInNewTab = false,
   onClick,
   reward,
   timeDays,
@@ -92,7 +94,11 @@ export const ReferralProgramSlideCard = ({
 
   if (href) {
     return (
-      <ReferralTapCard href={href} className={cardClassName}>
+      <ReferralTapCard
+        href={href}
+        openInNewTab={openInNewTab}
+        className={cardClassName}
+      >
         {cardContent}
       </ReferralTapCard>
     );

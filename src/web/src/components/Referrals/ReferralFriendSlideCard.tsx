@@ -10,6 +10,7 @@ interface ReferralFriendSlideCardProps {
   status: ReferralLinkUsageStatus | string;
   daysLeft?: number | null;
   href?: string;
+  openInNewTab?: boolean;
 }
 
 const formatDate = (value?: string | null) => {
@@ -44,6 +45,7 @@ export const ReferralFriendSlideCard = ({
   status,
   daysLeft,
   href,
+  openInNewTab = false,
 }: ReferralFriendSlideCardProps) => {
   const referredOnLabel = formatDate(referredOn);
   const daysLabel =
@@ -97,7 +99,7 @@ export const ReferralFriendSlideCard = ({
   }
 
   return (
-    <ReferralTapCard href={href} className="block">
+    <ReferralTapCard href={href} openInNewTab={openInNewTab} className="block">
       {content}
     </ReferralTapCard>
   );
