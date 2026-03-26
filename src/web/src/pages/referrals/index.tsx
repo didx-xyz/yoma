@@ -1106,7 +1106,7 @@ const ReferralsPage: NextPageWithLayout<{
                               renderSlide={(item) => (
                                 <ReferralProgramSlideCard
                                   title={item.programName}
-                                  description={item.programDescription}
+                                  description={item.programSummary}
                                   imageURL={item.programImageURL}
                                   reward={item.zltoRewardReferrerTotal}
                                   href={`/referrals/link/${item.id}`}
