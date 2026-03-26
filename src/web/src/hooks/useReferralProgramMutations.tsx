@@ -3,7 +3,7 @@ import { type AxiosError } from "axios";
 import { toast } from "react-toastify";
 import {
   type Program,
-  type ProgramAnalytics,
+  type ReferralAnalyticsProgram,
   type ProgramInfo,
   type ProgramSearchFilter,
   type ProgramSearchFilterAdmin,
@@ -514,7 +514,7 @@ export function useReferralProgramAnalyticsQuery(
   programId: string,
   options?: { enabled?: boolean },
 ) {
-  return useQuery<ProgramAnalytics>({
+  return useQuery<ReferralAnalyticsProgram>({
     queryKey: REFERRAL_PROGRAM_QUERY_KEYS.programAnalytics(programId),
     queryFn: () => getReferralProgramAnalytics(programId),
     enabled: !!programId && (options?.enabled ?? true),

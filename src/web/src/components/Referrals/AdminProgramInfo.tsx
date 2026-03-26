@@ -799,6 +799,17 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
 
               <div className="flex">
                 <div className="w-52 border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
+                  Avg Links / Ambassador
+                </div>
+                <div className="flex-1 border border-gray-200 px-4 py-2 text-xs hover:bg-gray-100">
+                  {analytics?.linkAveragePerReferrer != null
+                    ? analytics.linkAveragePerReferrer.toFixed(2)
+                    : "—"}
+                </div>
+              </div>
+
+              <div className="flex">
+                <div className="w-52 border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
                   Total Claims
                 </div>
                 <div className="flex-1 border border-gray-200 px-4 py-2 text-xs hover:bg-gray-100">
@@ -839,30 +850,19 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
                   Conversion Ratio
                 </div>
                 <div className="flex-1 border border-gray-200 px-4 py-2 text-xs hover:bg-gray-100">
-                  {analytics?.completionConversionRatio != null
-                    ? `${(analytics.completionConversionRatio * 100).toFixed(1)}%`
+                  {analytics?.conversionRatioCompletionPercentage != null
+                    ? `${analytics.conversionRatioCompletionPercentage.toFixed(1)}%`
                     : "—"}
                 </div>
               </div>
 
               <div className="flex">
                 <div className="w-52 border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
-                  Avg Links / Referrer
+                  Avg Completed / Ambassador
                 </div>
                 <div className="flex-1 border border-gray-200 px-4 py-2 text-xs hover:bg-gray-100">
-                  {analytics?.avgLinksPerReferrer != null
-                    ? analytics.avgLinksPerReferrer.toFixed(2)
-                    : "—"}
-                </div>
-              </div>
-
-              <div className="flex">
-                <div className="w-52 border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
-                  Avg Completed / Referrer
-                </div>
-                <div className="flex-1 border border-gray-200 px-4 py-2 text-xs hover:bg-gray-100">
-                  {analytics?.avgCompletedReferralsPerReferrer != null
-                    ? analytics.avgCompletedReferralsPerReferrer.toFixed(2)
+                  {analytics?.completedUsageAveragePerReferrer != null
+                    ? analytics.completedUsageAveragePerReferrer.toFixed(2)
                     : "—"}
                 </div>
               </div>
