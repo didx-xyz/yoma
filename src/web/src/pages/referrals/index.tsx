@@ -1,11 +1,10 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useAtomValue } from "jotai";
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
 import { useSession } from "next-auth/react";
 import Head from "next/head";
 import Image from "next/image";
-import { useRouter } from "next/router";
 import imageAmbassador from "public/images/home/bg-ambassador.png";
 import imageStencilPurple from "public/images/home/stencil-purple.png";
 import iconZlto from "public/images/icon-zlto.svg";
@@ -44,13 +43,11 @@ import { ReferralBlockedView } from "~/components/Referrals/ReferralBlockedView"
 import { ReferralFriendSlideCard } from "~/components/Referrals/ReferralFriendSlideCard";
 import { ReferralProgramSlideCard } from "~/components/Referrals/ReferralProgramSlideCard";
 import { ReferralSlidesCarousel } from "~/components/Referrals/ReferralSlidesCarousel";
-import { ReferrerCreateLinkModal } from "~/components/Referrals/ReferrerCreateLinkModal";
 import { ReferrerStats } from "~/components/Referrals/ReferrerStats";
 import { SignInButton } from "~/components/SignInButton";
 import { LoadingInline } from "~/components/Status/LoadingInline";
 import { LoadingSkeleton } from "~/components/Status/LoadingSkeleton";
 import {
-  REFERRAL_PROGRAM_QUERY_KEYS,
   useMyReferralAnalyticsQuery,
   useReferralLinksQuery,
   useReferralLinkUsagesRefereeQuery,
@@ -557,9 +554,7 @@ const ReferralHeroSection = ({
 const ReferralsPage: NextPageWithLayout<{
   userProfileServer?: UserProfile | null;
 }> = ({ userProfileServer }) => {
-  const router = useRouter();
   const { status } = useSession();
-  const queryClient = useQueryClient();
   const screenWidth = useAtomValue(screenWidthAtom);
   const userProfileClient = useAtomValue(userProfileAtom);
   const userProfile = userProfileServer ?? userProfileClient;
@@ -567,11 +562,6 @@ const ReferralsPage: NextPageWithLayout<{
   const isAuthenticated = status === "authenticated";
 
   // State
-  const [createLinkModalVisible, setCreateLinkModalVisible] = useState(false);
-  const [selectedProgramForLink, setSelectedProgramForLink] =
-    useState<ProgramInfo | null>(null);
-  const [selectedLinkForEdit, setSelectedLinkForEdit] =
-    useState<ReferralLink | null>(null);
   const [selectedCountryIds, setSelectedCountryIds] = useState<string[]>([]);
   const countryInitRef = useRef(false);
 
@@ -1158,27 +1148,6 @@ const ReferralsPage: NextPageWithLayout<{
           )}
         </Suspense>
       </div>
-
-      <ReferrerCreateLinkModal
-        programs={programsData?.items ?? []}
-        selectedProgram={selectedProgramForLink || undefined}
-        editLink={selectedLinkForEdit || undefined}
-        existingLinksCount={0}
-        showProgramDetails={true}
-        isOpen={createLinkModalVisible}
-        onClose={() => {
-          setCreateLinkModalVisible(false);
-          setSelectedLinkForEdit(null);
-          setSelectedProgramForLink(null);
-        }}
-        onSuccess={async (link) => {
-          await queryClient.invalidateQueries({
-            queryKey: REFERRAL_PROGRAM_QUERY_KEYS.userLinksAll(),
-          });
-
-          router.push(`/referrals/link/${link.id}`);
-        }}
-      />
     </>
   );
 };

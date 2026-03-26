@@ -46,6 +46,11 @@ const linkFormSchema = z.object({
 
 type LinkFormData = z.infer<typeof linkFormSchema>;
 
+/**
+ * @deprecated Program-details link creation now bypasses this modal and creates
+ * the link immediately. Keep this component for existing flows and possible
+ * future reuse.
+ */
 export const ReferrerCreateLinkModal: React.FC<CreateLinkModalProps> = ({
   programs,
   selectedProgram,

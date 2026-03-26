@@ -18,6 +18,7 @@ import { DATE_FORMAT_HUMAN } from "~/lib/constants";
 import { THEME_BLUE } from "~/lib/constants";
 import { getSafeUrl } from "~/lib/utils";
 import type { NextPageWithLayout } from "~/pages/_app";
+
 const ReferralLinkUsageInfo: NextPageWithLayout = () => {
   const router = useRouter();
   const { status: sessionStatus } = useSession();

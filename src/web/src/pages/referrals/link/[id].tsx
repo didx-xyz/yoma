@@ -5,6 +5,7 @@ import { useRouter } from "next/router";
 import { type ReactElement, useEffect, useState } from "react";
 import { FaShareAlt } from "react-icons/fa";
 import { IoTimeOutline, IoTrophyOutline } from "react-icons/io5";
+import { toast, type ToastContentProps } from "react-toastify";
 import { ProgramStatus, ReferralLinkStatus } from "~/api/models/referrals";
 import MainLayout from "~/components/Layout/Main";
 import NoRowsMessage from "~/components/NoRowsMessage";
@@ -59,6 +60,72 @@ const ReferralLinkPage: NextPageWithLayout = () => {
 
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
+  const hasPageError =
+    (router.isReady && !linkId) || Boolean(linkError) || Boolean(programError);
+
+  const isProgramActive =
+    typeof program?.status === "number"
+      ? program.status === ProgramStatus.Active
+      : `${program?.status ?? ""}`.toLowerCase() === "active";
+
+  const isShareEnabled =
+    isProgramActive && link?.status === ReferralLinkStatus.Active;
+
+  useEffect(() => {
+    if (!router.isReady || router.query.shareToast !== "1" || !link) {
+      return;
+    }
+
+    toast.info(
+      ({ closeToast }: ToastContentProps) => (
+        <div className="flex flex-col gap-2 text-black">
+          <div className="flex items-center gap-2">
+            <span className="text-lg">🔗</span>
+            <strong>Referral Link Created!</strong>
+          </div>
+          <div className="text-sm">
+            Your link is ready. Share it now to start inviting friends.
+          </div>
+          <div className="mt-2 flex items-center justify-center">
+            <button
+              type="button"
+              onClick={() => closeToast?.()}
+              className="btn btn-xs bg-green hover:bg-green-dark disabled:!bg-green h-8 flex-1 rounded-full border-0 px-5 text-white normal-case disabled:!pointer-events-auto disabled:!cursor-not-allowed disabled:!text-white disabled:opacity-80"
+            >
+              Got it!
+            </button>
+          </div>
+        </div>
+      ),
+      {
+        autoClose: false,
+        closeButton: true,
+        closeOnClick: false,
+        draggable: false,
+        icon: false,
+        toastId: "referral-link-share-reminder",
+        style: {
+          backgroundColor: "#ffffff",
+          color: "#111827",
+          boxShadow:
+            "0 20px 45px rgba(0, 0, 0, 0.45), 0 8px 20px rgba(0, 0, 0, 0.3)",
+        },
+      },
+    );
+
+    const nextQuery = { ...router.query };
+    delete nextQuery.shareToast;
+
+    void router.replace(
+      {
+        pathname: router.pathname,
+        query: nextQuery,
+      },
+      undefined,
+      { shallow: true },
+    );
+  }, [link, router]);
+
   if (sessionStatus === "unauthenticated") {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -70,17 +137,6 @@ const ReferralLinkPage: NextPageWithLayout = () => {
       </div>
     );
   }
-
-  const hasPageError =
-    (router.isReady && !linkId) || Boolean(linkError) || Boolean(programError);
-
-  const isProgramActive =
-    typeof program?.status === "number"
-      ? program.status === ProgramStatus.Active
-      : `${program?.status ?? ""}`.toLowerCase() === "active";
-
-  const isShareEnabled =
-    isProgramActive && link?.status === ReferralLinkStatus.Active;
 
   const pageErrorMessage = (() => {
     if (router.isReady && !linkId) {
