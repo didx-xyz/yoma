@@ -55,7 +55,7 @@ namespace Yoma.Core.Domain.Referral.Services
         throw new ArgumentNullException(nameof(id));
 
       var result = _linkRepository.Query().SingleOrDefault(o => o.Id == id)
-        ?? throw new EntityNotFoundException($"Referral link with id '{id}' not found");
+        ?? throw new EntityNotFoundException("This referral link could not be found");
 
       return result;
     }

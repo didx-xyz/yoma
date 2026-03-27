@@ -104,7 +104,7 @@ namespace Yoma.Core.Domain.Referral.Services
     public ReferralLink GetById(Guid id, bool includeChildItems, bool includeComputed, bool ensureOwnership, bool allowAdminOverride, bool? includeQRCode, LockMode? lockMode = null)
     {
       var result = GetByIdOrNull(id, includeChildItems, includeComputed, ensureOwnership, allowAdminOverride, includeQRCode, lockMode)
-        ?? throw new EntityNotFoundException($"{nameof(ReferralLink)} with id '{id}' does not exist");
+        ?? throw new EntityNotFoundException("This referral link could not be found");
 
       return result;
     }
@@ -269,19 +269,19 @@ namespace Yoma.Core.Domain.Referral.Services
         var program = _programService.GetById(request.ProgramId, true, true, LockMode.Wait);
 
         if (program.Status != ProgramStatus.Active || program.DateStart > now)
-          throw new ValidationException($"Referral program '{program.Name}' is not active or has not started");
+          throw new ValidationException("This referral programme is not available yet");
 
         if (program.DateEnd.HasValue && program.DateEnd <= now)
-          throw new ValidationException($"Referral program '{program.Name}' expired on '{program.DateEnd:yyyy-MM-dd}'");
+          throw new ValidationException("This referral programme is no longer available");
 
         if (program.CompletionLimit.HasValue && (program.CompletionBalance ?? 0) <= 0)
-          throw new ValidationException($"Referral program '{program.Name}' has reached its completion limit");
+          throw new ValidationException("This referral programme has reached its limit");
 
         var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 
         var worldwideId = _countryService.GetByCodeAlpha2(Country.Worldwide.ToDescription()).Id;
         if (!ProgramCountryPolicy.ProgramAccessibleToUser(worldwideId, user.CountryId, program.Countries))
-          throw new ValidationException($"Referral program '{program.Name}' is not available in your country");
+          throw new ValidationException("This referral programme is not available in your country");
 
         var statusLinkActive = _linkStatusService.GetByName(ReferralLinkStatus.Active.ToString());
 
@@ -293,10 +293,10 @@ namespace Yoma.Core.Domain.Referral.Services
         var existingByName = userLinks.Any(o => string.Equals(o.Name, request.Name, StringComparison.OrdinalIgnoreCase));
 
         if (!program.MultipleLinksAllowed && hasExistingActiveLink)
-          throw new ValidationException($"Multiple active referral links are not allowed for program '{program.Name}'");
+          throw new ValidationException("You already have an active referral link for this programme");
 
         if (existingByName)
-          throw new ValidationException($"A referral link with the name '{request.Name}' already exists for the current user");
+          throw new ValidationException("A referral link with this name already exists");
 
         result = new ReferralLink
         {
@@ -351,11 +351,11 @@ namespace Yoma.Core.Domain.Referral.Services
       var result = GetById(request.Id, true, true, true, false, request.IncludeQRCode);
 
       if (!Statuses_Updatable.Contains(result.Status))
-        throw new ValidationException($"Referral link can no longer be updated (current status '{result.Status.ToDescription()}'). Required state '{Statuses_Updatable.JoinNames()}'");
+        throw new ValidationException("This referral link can no longer be updated");
 
       var existingByName = GetByNameOrNull(result.UserId, result.ProgramId, request.Name, false, false, false);
       if (existingByName != null && existingByName.Id != result.Id)
-        throw new ValidationException($"A referral link with the name '{request.Name}' already exists for the current user");
+        throw new ValidationException("A referral link with this name already exists");
 
       result.Name = request.Name;
       result.Description = request.Description;
@@ -374,7 +374,7 @@ namespace Yoma.Core.Domain.Referral.Services
       if (result.Status == ReferralLinkStatus.Cancelled) return result;
 
       if (!Statuses_Cancellable.Contains(result.Status))
-        throw new ValidationException($"Referral link cannot be cancelled (current status '{result.Status.ToDescription()}'). Required state '{Statuses_Cancellable.JoinNames()}'");
+        throw new ValidationException("This referral link can no longer be cancelled");
 
       var status = _linkStatusService.GetByName(ReferralLinkStatus.Cancelled.ToString());
       result.StatusId = status.Id;

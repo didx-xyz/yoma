@@ -23,12 +23,12 @@ namespace Yoma.Core.Domain.Referral.Validators
           .Cascade(CascadeMode.Stop)
           .NotEmpty()
           .Length(1, 150)
-          .WithMessage("Please enter a program name (maximum 150 characters).");
+          .WithMessage("Please enter a programme name (maximum 150 characters).");
 
       RuleFor(x => x.Summary)
           .NotEmpty()
           .Length(1, 150)
-          .WithMessage("'{PropertyName}' is required and must be between 1 and 150 characters.");
+          .WithMessage("Please enter a summary (maximum 150 characters).");
 
       RuleFor(x => x.Description).NotEmpty();
 
@@ -45,7 +45,7 @@ namespace Yoma.Core.Domain.Referral.Validators
       RuleFor(x => x.CompletionLimit)
           .GreaterThan(0)
           .When(x => x.CompletionLimit.HasValue)
-          .WithMessage("Program completion limit must be greater than 0.");
+          .WithMessage("Programme completion limit must be greater than 0.");
 
       RuleFor(x => x.ZltoRewardReferrer)
           .GreaterThan(0)
@@ -75,7 +75,7 @@ namespace Yoma.Core.Domain.Referral.Validators
           .WithMessage("Reward pool must be greater than 0.")
           .Must((m, pool) => !pool.HasValue ||
                              pool.Value >= ((m.ZltoRewardReferrer ?? 0m) + (m.ZltoRewardReferee ?? 0m)))
-          .WithMessage("Reward pool must be at least the total of the referrer + referee rewards.")
+          .WithMessage("Reward pool must be at least the total of the referrer and referee rewards.")
           .LessThanOrEqualTo(10_000_000m)
           .When(x => x.ZltoRewardPool.HasValue)
           .WithMessage("Reward pool may not exceed 10 million.")
@@ -90,7 +90,7 @@ namespace Yoma.Core.Domain.Referral.Validators
             if (!rewardsConfigured) return true; // No rewards → no cap required
             return (m.CompletionLimitReferee ?? 0) > 0 || (m.CompletionLimit ?? 0) > 0;
           })
-          .WithMessage("When rewards are set, add at least one completion cap (per referrer or program-wide).");
+          .WithMessage("When rewards are set, add at least one completion cap (per referrer or programme-wide).");
 
       // If rewards exist, require at least one gate: POP or Pathway
       RuleFor(x => x)
@@ -100,7 +100,7 @@ namespace Yoma.Core.Domain.Referral.Validators
           if (!rewards) return true;
           return m.ProofOfPersonhoodRequired || m.PathwayRequired;
         })
-        .WithMessage("When rewards are set, enable Proof of Personhood or require a Pathway.");
+        .WithMessage("When rewards are set, enable Proof of Personhood or require a pathway.");
 
       // If program is marked as default, require POP or Pathway
       RuleFor(x => x)
@@ -109,12 +109,12 @@ namespace Yoma.Core.Domain.Referral.Validators
           if (!m.IsDefault) return true;
           return m.ProofOfPersonhoodRequired || m.PathwayRequired;
         })
-        .WithMessage("Default programs must enable Proof of Personhood or require a Pathway.");
+        .WithMessage("Default programmes must enable Proof of Personhood or require a pathway.");
 
       // Default programs may not be hidden
       RuleFor(x => x)
         .Must(m => !m.IsDefault || m.Hidden != true)
-        .WithMessage("Default programs cannot be hidden.");
+        .WithMessage("Default programmes cannot be hidden.");
 
       RuleFor(x => x.ReferrerLimit)
         .GreaterThan(0)
@@ -129,20 +129,20 @@ namespace Yoma.Core.Domain.Referral.Validators
           var hasPerReferrerCap = (m.CompletionLimitReferee ?? 0) > 0;
           return m.ProofOfPersonhoodRequired || hasPerReferrerCap || m.PathwayRequired;
         })
-        .WithMessage("When multiple links are allowed, enable Proof of Personhood, set a per-referrer cap, or require a Pathway.");
+        .WithMessage("When multiple links are allowed, enable Proof of Personhood, set a per-referrer cap, or require a pathway.");
 
       RuleFor(x => x.DateStart)
           .NotEmpty()
-          .WithMessage("Start Date is required.");
+          .WithMessage("Start date is required.");
 
       RuleFor(x => x.DateEnd)
           .GreaterThanOrEqualTo(m => m.DateStart)
           .When(m => m.DateEnd.HasValue)
-          .WithMessage("End Date cannot be earlier than the Start Date.");
+          .WithMessage("End date cannot be earlier than the start date.");
 
       RuleFor(x => x)
         .Must(m => m.DateEnd.HasValue || m.CompletionWindowInDays.HasValue)
-        .WithMessage("Either End Date or Completion Window is required.");
+        .WithMessage("Either an end date or a completion window is required.");
 
       RuleFor(x => x.Countries)
           .Must(x => x == null || (x.Count > 0 && x.All(id => id != Guid.Empty && CountryExists(id))))
@@ -158,13 +158,13 @@ namespace Yoma.Core.Domain.Referral.Validators
       RuleFor(x => x.Pathway)
           .Null()
           .When(x => !x.PathwayRequired)
-          .WithMessage("Remove the pathway — this program does not require one.");
+          .WithMessage("Remove the pathway — this programme does not require one.");
 
       // If PathwayRequired == true -> Pathway must be provided
       RuleFor(x => x.Pathway)
           .NotNull()
           .When(x => x.PathwayRequired)
-          .WithMessage("Please add a pathway — this program requires one.");
+          .WithMessage("Please add a pathway — this programme requires one.");
 
       // If a Pathway object is present, validate shared base fields
       When(x => x.Pathway != null, () =>
@@ -355,4 +355,3 @@ namespace Yoma.Core.Domain.Referral.Validators
     #endregion
   }
 }
-
