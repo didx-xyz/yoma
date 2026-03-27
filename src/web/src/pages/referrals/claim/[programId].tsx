@@ -34,7 +34,7 @@ import {
 } from "~/components/User/UserProfileForm";
 import { useReferralProgramInfoByLinkQuery } from "~/hooks/useReferralProgramMutations";
 import analytics from "~/lib/analytics";
-import { parseApiError } from "~/lib/apiErrorUtils";
+import { formatApiErrorMessage } from "~/lib/apiErrorUtils";
 import { handleUserSignIn } from "~/lib/authUtils";
 import { THEME_WHITE } from "~/lib/constants";
 import { currentLanguageAtom, userProfileAtom } from "~/lib/store";
@@ -281,14 +281,9 @@ const ReferralClaimPage: NextPageWithLayout = () => {
     if (router.isReady && !programId)
       return "Referral programme not found or unavailable";
     if (programError) {
-      const { errors, message } = parseApiError(programError);
-      return (
-        errors
-          .map((e) => e.message)
-          .filter(Boolean)
-          .join(" · ") ||
-        message ||
-        null
+      return formatApiErrorMessage(
+        programError,
+        "This referral link is invalid, expired, or has been removed.",
       );
     }
     return null;
@@ -298,10 +293,7 @@ const ReferralClaimPage: NextPageWithLayout = () => {
     <div className="mx-auto flex w-full max-w-2xl flex-col items-center gap-4 rounded-xl bg-white p-6 text-center shadow">
       <NoRowsMessage
         title="Referral Link Unavailable"
-        description={
-          pageErrorMessage ??
-          "This referral link is invalid, expired, or has been removed."
-        }
+        description={pageErrorMessage}
         icon={"⚠️"}
         className="w-full !bg-transparent"
       />
@@ -309,93 +301,19 @@ const ReferralClaimPage: NextPageWithLayout = () => {
   ) : null;
 
   // Claim error state
-  let claimErrorContent: React.ReactNode = null;
-  if (claimError && program) {
-    const { errors, message, status } = parseApiError(claimError);
-    const errorMessage =
-      errors
-        .map((e) => e.message)
-        .filter(Boolean)
-        .join(" · ") ||
-      message ||
-      "Unable to claim this referral link.";
-
-    if (
-      /already claimed this link|already completed program/i.test(errorMessage)
-    ) {
-      claimErrorContent = (
-        <div className="mx-auto flex w-full max-w-2xl flex-col items-center gap-4 rounded-xl bg-white p-6 text-center shadow">
-          <NoRowsMessage
-            icon={"⚠️"}
-            title="Referral Link Unavailable"
-            description="You have already claimed this link."
-            className="w-full !bg-transparent"
-          />
-        </div>
-      );
-    } else if (
-      /already participated|already claimed link .*still pending|still pending/i.test(
-        errorMessage,
-      )
-    ) {
-      claimErrorContent = (
-        <div className="mx-auto flex w-full max-w-2xl flex-col items-center gap-4 rounded-xl bg-white p-6 text-center shadow">
-          <NoRowsMessage
-            icon={"⚠️"}
-            title="Referral Link Unavailable"
-            description="You have already claimed this programme using another referral link."
-            className="w-full !bg-transparent"
-          />
-        </div>
-      );
-    } else if (
-      /completion limit|reached its completion limit/i.test(errorMessage)
-    ) {
-      claimErrorContent = (
-        <div className="mx-auto flex w-full max-w-2xl flex-col items-center gap-4 rounded-xl bg-white p-6 text-center shadow">
-          <NoRowsMessage
-            icon={"⚠️"}
-            title="Programme Full"
-            description="This referral programme has reached its completion limit and can no longer be claimed."
-            className="w-full !bg-transparent"
-          />
-        </div>
-      );
-    } else if (/expired/i.test(errorMessage)) {
-      claimErrorContent = (
-        <div className="mx-auto flex w-full max-w-2xl flex-col items-center gap-4 rounded-xl bg-white p-6 text-center shadow">
-          <NoRowsMessage
-            icon={"⚠️"}
-            title="Referral Link Unavailable"
-            description="This referral link has expired and can no longer be claimed."
-            className="w-full !bg-transparent"
-          />
-        </div>
-      );
-    } else if (/abandoned/i.test(errorMessage)) {
-      claimErrorContent = (
-        <div className="mx-auto flex w-full max-w-2xl flex-col items-center gap-4 rounded-xl bg-white p-6 text-center shadow">
-          <NoRowsMessage
-            icon={"⚠️"}
-            title="Referral Link Unavailable"
-            description="This referral claim is no longer available. Please use a new referral link to try again."
-            className="w-full !bg-transparent"
-          />
-        </div>
-      );
-    } else if (status !== 404) {
-      claimErrorContent = (
-        <div className="mx-auto flex w-full max-w-2xl flex-col items-center gap-4 rounded-xl bg-white p-6 text-center shadow">
-          <NoRowsMessage
-            icon={"⚠️"}
-            title="Unable to Claim Referral Link"
-            description={errorMessage}
-            className="w-full !bg-transparent"
-          />
-        </div>
-      );
-    }
-  }
+  const claimErrorMessage = claimError
+    ? formatApiErrorMessage(claimError, "Unable to claim this referral link.")
+    : null;
+  const claimErrorContent = claimError && program && claimErrorMessage && (
+    <div className="mx-auto flex w-full max-w-2xl flex-col items-center gap-4 rounded-xl bg-white p-6 text-center shadow">
+      <NoRowsMessage
+        icon={"⚠️"}
+        title="Unable to Claim Referral Link"
+        description={claimErrorMessage}
+        className="w-full !bg-transparent"
+      />
+    </div>
+  );
 
   // Main claim page
   const rewardAmount = program?.zltoRewardRefereeEstimate;

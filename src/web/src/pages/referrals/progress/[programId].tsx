@@ -24,7 +24,7 @@ import {
   useReferralLinkUsageByProgramIdQuery,
   useReferralProgramInfoQuery,
 } from "~/hooks/useReferralProgramMutations";
-import { parseApiError } from "~/lib/apiErrorUtils";
+import { formatApiErrorMessage } from "~/lib/apiErrorUtils";
 import { handleUserSignOut } from "~/lib/authUtils";
 import { THEME_WHITE } from "~/lib/constants";
 import {
@@ -135,25 +135,15 @@ const RefereeDashboard: NextPageWithLayout = () => {
     }
 
     if (usageError) {
-      const { errors, message } = parseApiError(usageError);
-      return (
-        errors
-          .map((e) => e.message)
-          .filter(Boolean)
-          .join(" · ") ||
-        message ||
-        null
+      return formatApiErrorMessage(
+        usageError,
+        "We're experiencing some technical difficulties. Please try again later.",
       );
     }
     if (programError) {
-      const { errors, message } = parseApiError(programError);
-      return (
-        errors
-          .map((e) => e.message)
-          .filter(Boolean)
-          .join(" · ") ||
-        message ||
-        null
+      return formatApiErrorMessage(
+        programError,
+        "We're experiencing some technical difficulties. Please try again later.",
       );
     }
     return null;
@@ -233,10 +223,7 @@ const RefereeDashboard: NextPageWithLayout = () => {
             <NoRowsMessage
               icon={"⚠️"}
               title="Something went wrong"
-              description={
-                pageErrorMessage ??
-                "We're experiencing some technical difficulties. Please try again later."
-              }
+              description={pageErrorMessage}
               className="w-full !bg-transparent"
             />
           </div>

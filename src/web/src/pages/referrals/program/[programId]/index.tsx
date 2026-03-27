@@ -13,16 +13,15 @@ import MainLayout from "~/components/Layout/Main";
 import NoRowsMessage from "~/components/NoRowsMessage";
 import { ReferralProgramDetailsContent } from "~/components/Referrals/ReferralProgramDetailsContent";
 import { ReferralShell } from "~/components/Referrals/ReferralShell";
-// import { ReferrerCreateLinkModal } from "~/components/Referrals/ReferrerCreateLinkModal";
 import { ApiErrors } from "~/components/Status/ApiErrors";
 import { LoadingInline } from "~/components/Status/LoadingInline";
-import { parseApiError } from "~/lib/apiErrorUtils";
-import analytics from "~/lib/analytics";
-import { handleUserSignIn } from "~/lib/authUtils";
 import {
   REFERRAL_PROGRAM_QUERY_KEYS,
   useReferralProgramInfoQuery,
 } from "~/hooks/useReferralProgramMutations";
+import analytics from "~/lib/analytics";
+import { formatApiErrorMessage } from "~/lib/apiErrorUtils";
+import { handleUserSignIn } from "~/lib/authUtils";
 import { THEME_WHITE } from "~/lib/constants";
 import { currentLanguageAtom } from "~/lib/store";
 import type { NextPageWithLayout } from "~/pages/_app";
@@ -69,14 +68,9 @@ const ReferralProgramDetails: NextPageWithLayout = () => {
     }
 
     if (programError) {
-      const { errors, message } = parseApiError(programError);
-      return (
-        errors
-          .map((e) => e.message)
-          .filter(Boolean)
-          .join(" · ") ||
-        message ||
-        null
+      return formatApiErrorMessage(
+        programError,
+        "We're experiencing some technical difficulties. Please try again later.",
       );
     }
     return null;
@@ -182,10 +176,7 @@ const ReferralProgramDetails: NextPageWithLayout = () => {
             <NoRowsMessage
               icon={"⚠️"}
               title="Something went wrong"
-              description={
-                pageErrorMessage ??
-                "We're experiencing some technical difficulties. Please try again later."
-              }
+              description={pageErrorMessage}
               className="w-full !bg-transparent"
             />
           </div>

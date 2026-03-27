@@ -71,6 +71,22 @@ export function parseApiError(error: any): {
   return { status, message, errors };
 }
 
+export function formatApiErrorMessage(
+  error: any,
+  fallbackMessage: string | null = null,
+): string | null {
+  const { errors, message } = parseApiError(error);
+
+  return (
+    errors
+      .map((errorItem) => errorItem.message)
+      .filter(Boolean)
+      .join(" · ") ||
+    message ||
+    fallbackMessage
+  );
+}
+
 export function escapeHtml(value: string): string {
   return value
     .replace(/&/g, "&amp;")
