@@ -1570,7 +1570,6 @@ const ReferralProgramForm: NextPageWithLayout = () => {
           );
         }
       } catch (error) {
-        //console.error("Error saving program:", error);
         toast(<ApiErrors error={error as AxiosError} />, {
           type: "error",
           toastId: "program",

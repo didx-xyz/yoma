@@ -22,11 +22,12 @@ import {
   useReferralLinkByIdQuery,
   useReferralProgramInfoByLinkQuery,
 } from "~/hooks/useReferralProgramMutations";
-import { parseApiError } from "~/lib/apiErrorUtils";
+import { formatApiErrorMessage } from "~/lib/apiErrorUtils";
 import { handleUserSignIn } from "~/lib/authUtils";
 import { THEME_WHITE } from "~/lib/constants";
 import { currentLanguageAtom, userProfileAtom } from "~/lib/store";
 import { type NextPageWithLayout } from "../../_app";
+
 const ReferralLinkPage: NextPageWithLayout = () => {
   const router = useRouter();
   const { status: sessionStatus } = useSession();
@@ -144,25 +145,15 @@ const ReferralLinkPage: NextPageWithLayout = () => {
     }
 
     if (linkError) {
-      const { errors, message } = parseApiError(linkError);
-      return (
-        errors
-          .map((e) => e.message)
-          .filter(Boolean)
-          .join(" · ") ||
-        message ||
-        null
+      return formatApiErrorMessage(
+        linkError,
+        "We're experiencing some technical difficulties. Please try again later.",
       );
     }
     if (programError) {
-      const { errors, message } = parseApiError(programError);
-      return (
-        errors
-          .map((e) => e.message)
-          .filter(Boolean)
-          .join(" · ") ||
-        message ||
-        null
+      return formatApiErrorMessage(
+        programError,
+        "We're experiencing some technical difficulties. Please try again later.",
       );
     }
     return null;
@@ -194,10 +185,7 @@ const ReferralLinkPage: NextPageWithLayout = () => {
             <NoRowsMessage
               icon={"⚠️"}
               title="Something went wrong"
-              description={
-                pageErrorMessage ??
-                "We're experiencing some technical difficulties. Please try again later."
-              }
+              description={pageErrorMessage}
               className="w-full !bg-transparent"
             />
           </div>
