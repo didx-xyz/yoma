@@ -116,7 +116,7 @@ namespace Yoma.Core.Domain.Referral.Services
     public Program GetById(Guid id, bool includeChildItems, bool includeComputed, LockMode? lockMode = null)
     {
       var result = GetByIdOrNull(id, includeChildItems, includeComputed, lockMode)
-        ?? throw new EntityNotFoundException($"{nameof(Program)} with id '{id}' does not exist");
+        ?? throw new EntityNotFoundException("This referral programme could not be found");
 
       return result;
     }
@@ -379,13 +379,13 @@ namespace Yoma.Core.Domain.Referral.Services
 
         if (request.CompletionWindowInDays.HasValue && request.DateStart.AddDays(request.CompletionWindowInDays.Value) > request.DateEnd.Value)
           throw new ValidationException(
-            "The completion window exceeds the program end date. Based on the selected start and end dates, the maximum allowed completion window is " +
+            "The completion window exceeds the programme end date. Based on the selected start and end dates, the maximum allowed completion window is " +
             $"{(request.DateEnd.Value - request.DateStart).Days} days");
       }
 
       var existingByName = GetByNameOrNull(request.Name, false, false);
       if (existingByName != null)
-        throw new ValidationException($"{nameof(Program)} with the specified name '{request.Name}' already exists");
+        throw new ValidationException("A referral programme with this name already exists");
 
       var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 
@@ -459,7 +459,7 @@ namespace Yoma.Core.Domain.Referral.Services
 
       var existingByName = GetByNameOrNull(request.Name, false, false);
       if (existingByName != null && result.Id != existingByName.Id)
-        throw new ValidationException($"{nameof(Program)} with the specified name '{request.Name}' already exists");
+        throw new ValidationException("A referral programme with this name already exists");
 
       var startDateUpdated = !result.DateStart.Equals(request.DateStart);
       if (startDateUpdated && request.DateStart < now.RemoveTime())
@@ -473,7 +473,7 @@ namespace Yoma.Core.Domain.Referral.Services
         && request.DateStart.AddDays(request.CompletionWindowInDays.Value) > request.DateEnd.Value)
       {
         throw new ValidationException(
-          "The completion window exceeds the program end date. Based on the selected start and end dates, the maximum allowed completion window is " +
+          "The completion window exceeds the programme end date. Based on the selected start and end dates, the maximum allowed completion window is " +
           $"{(request.DateEnd.Value - request.DateStart).Days} days");
       }
 
@@ -596,7 +596,7 @@ namespace Yoma.Core.Domain.Referral.Services
       AssertUpdatable(item);
 
       if (hidden && item.IsDefault)
-        throw new ValidationException("The program is the current default program and cannot be hidden.");
+        throw new ValidationException("The default referral programme cannot be hidden");
 
       item.Hidden = hidden;
       item.ModifiedByUserId = user.Id;
@@ -649,11 +649,11 @@ namespace Yoma.Core.Domain.Referral.Services
         case ProgramStatus.Active:
           if (item.Status == ProgramStatus.Active) return;
           if (!Statuses_Activatable.Contains(item.Status))
-            throw new ValidationException($"The {nameof(Program)} cannot be activated (current status '{item.Status.ToDescription()}'). Required state '{Statuses_Activatable.JoinNames()}'");
+            throw new ValidationException("This referral programme cannot be activated right now");
 
           //ensure DateEnd was updated for re-activation of previously expired program
           if (item.DateEnd.HasValue && item.DateEnd.Value <= now)
-            throw new ValidationException($"The {nameof(Program)} cannot be activated because its end date ('{item.DateEnd:yyyy-MM-dd}') is in the past. Please update the {nameof(Program).ToLower()} before proceeding with activation");
+            throw new ValidationException("This referral programme cannot be activated because its end date is in the past");
 
           EnsurePathwayIsCompletableOrThrow(item.Pathway);
 
@@ -672,14 +672,14 @@ namespace Yoma.Core.Domain.Referral.Services
           // existing referral links remain usable and can still be completed, but new links cannot be created
           if (item.Status == ProgramStatus.Inactive) return;
           if (!Statuses_DeActivatable.Contains(item.Status))
-            throw new ValidationException($"The {nameof(Program)} cannot be deactivated (current status '{item.Status.ToDescription()}'). Required state '{Statuses_DeActivatable.JoinNames()}'");
+            throw new ValidationException("This referral programme cannot be deactivated right now");
 
           break;
 
         case ProgramStatus.Deleted:
           if (item.Status == ProgramStatus.Deleted) return;
           if (!Statuses_CanDelete.Contains(item.Status))
-            throw new ValidationException($"The {nameof(Program)} cannot be deleted (current status '{item.Status.ToDescription()}'). Required state '{Statuses_CanDelete.JoinNames()}'");
+            throw new ValidationException("This referral programme cannot be deleted right now");
 
           cancelReferralLinks = true;
 
@@ -802,7 +802,7 @@ namespace Yoma.Core.Domain.Referral.Services
 
       // Enforce limit / cap if configured
       if (program.ReferrerLimit.HasValue && (program.ReferrerBalance ?? 0) <= 0)
-        throw new ValidationException($"Referral program '{program.Name}' has reached its referrer limit");
+        throw new ValidationException("This referral programme has reached its limit");
 
       program.ReferrerTotal = (program.ReferrerTotal ?? 0) + 1;
 
@@ -944,14 +944,14 @@ namespace Yoma.Core.Domain.Referral.Services
         stepMessages.Add($"step '{step.Name}' is not completable: {combinedReasons}");
       }
 
-      var message = $"Program pathway '{pathway.Name}' cannot be completed because {string.Join(", ", stepMessages)}.";
+      var message = $"This referral programme pathway cannot be completed because {string.Join(", ", stepMessages)}";
       throw new ValidationException(message);
     }
 
     private static void AssertUpdatable(Program program)
     {
       if (!Statuses_Updatable.Contains(program.Status))
-        throw new ValidationException($"The {nameof(Program)} can no longer be updated (current status '{program.Status.ToDescription()}'). Required state '{Statuses_Updatable.JoinNames()}'");
+        throw new ValidationException("This referral programme can no longer be updated");
     }
 
     private Program ParseBlobObjectURL(Program program)
@@ -1058,7 +1058,7 @@ namespace Yoma.Core.Domain.Referral.Services
       {
         //program has no pathway, but the request includes an existing pathway
         if (request.Id.HasValue)
-          throw new ValidationException($"This program does not have a pathway, but a pathway was specified to update");
+          throw new ValidationException("This referral programme does not have a pathway to update");
 
         resultPathway = new ProgramPathway
         {
@@ -1074,11 +1074,11 @@ namespace Yoma.Core.Domain.Referral.Services
       else
       {
         if (!request.Id.HasValue)
-          throw new ValidationException("The program has an existing pathway, but a new pathway was added");
+          throw new ValidationException("This referral programme already has a pathway");
 
         //program has an existing pathway, but the request references a different one
         if (resultPathway.Id != request.Id)
-          throw new ValidationException($"The specified pathway does not match the existing pathway for this program");
+          throw new ValidationException("The specified pathway does not match this referral programme");
 
         resultPathway.Name = request.Name;
         resultPathway.Description = request.Description;
@@ -1283,10 +1283,10 @@ namespace Yoma.Core.Domain.Referral.Services
         // default must be world-wide: implicit (null) or explicit (contains worldwide)
         var countryIdWorldwide = _countryService.GetByCodeAlpha2(Country.Worldwide.ToDescription()).Id;
         if (!ProgramCountryPolicy.DefaultProgramIsWorldwide(countryIdWorldwide, program.Countries))
-          throw new ValidationException($"A default {nameof(Program)} must be available world-wide");
+          throw new ValidationException("A default referral programme must be available world-wide");
 
         if (program.Hidden == true)
-          throw new ValidationException($"A hidden {nameof(Program)} cannot be made default");
+          throw new ValidationException("A hidden referral programme cannot be made default");
 
         if (currentDefault != null)
         {

@@ -60,14 +60,14 @@ namespace Yoma.Core.Domain.Referral.Services
     public ProgramInfo GetDefault()
     {
       var result = _programService.GetDefaultOrNull(true, true)
-        ?? throw new EntityNotFoundException("Default program not found");
+        ?? throw new EntityNotFoundException("This referral programme could not be found");
 
       // not hidden, active, started and referrer cap not reached
       if (result.Hidden == true
           || result.Status != ProgramStatus.Active
           || result.DateStart > DateTimeOffset.UtcNow
           || (result.ReferrerLimit.HasValue && (result.ReferrerBalance ?? 0) <= 0))
-        throw new EntityNotFoundException($"Default program '{result.Name}' is currently unavailable");
+        throw new EntityNotFoundException("This referral programme is no longer available");
 
       // Data integrity: default must always be world-wide (implicit null/empty or explicit Worldwide)
       var countryIdWorldwide = _countryService.GetByCodeAlpha2(Country.Worldwide.ToDescription()).Id;
@@ -85,7 +85,7 @@ namespace Yoma.Core.Domain.Referral.Services
 
       // Anonymous: only allow active + started
       if (!isAuthenticated && (!Statuses_AnonymousAllowed.Contains(result.Status) || result.DateStart > DateTimeOffset.UtcNow))
-        throw new EntityNotFoundException("Program not found");
+        throw new EntityNotFoundException("This referral programme could not be found");
 
       return result.ToInfo();
     }
@@ -98,7 +98,7 @@ namespace Yoma.Core.Domain.Referral.Services
 
       // Anonymous: only allow active + started
       if (!isAuthenticated && (!Statuses_AnonymousAllowed.Contains(result.Status) || result.DateStart > DateTimeOffset.UtcNow))
-        throw new EntityNotFoundException("Program not found");
+        throw new EntityNotFoundException("This referral programme could not be found");
 
       return result.ToInfo();
     }

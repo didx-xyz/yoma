@@ -13,7 +13,7 @@ namespace Yoma.Core.Domain.Referral.Validators
         .Cascade(CascadeMode.Stop)
         .NotEmpty()
         .Length(1, 150)
-        .WithMessage("Please enter a program name (maximum 150 characters).");
+        .WithMessage("Please specify a link name (maximum 150 characters).");
 
       RuleFor(x => x.Description)
         .Cascade(CascadeMode.Stop)
