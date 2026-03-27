@@ -196,10 +196,10 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
             </div>
           </div>
 
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex flex-col items-start gap-3 md:flex-row md:items-center md:justify-between">
             <span className="text-[11px] text-gray-500">{helperText}</span>
             <span
-              className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-medium ${estimateMeta.className}`}
+              className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-medium text-nowrap ${estimateMeta.className}`}
             >
               {estimateMeta.label}
             </span>
