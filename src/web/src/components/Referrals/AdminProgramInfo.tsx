@@ -126,35 +126,67 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
     if (configured === null || configured === undefined) {
       return {
         label: "Not configured",
-        className: "bg-gray-100 text-gray-600",
+        tone: "neutral" as const,
       };
     }
 
     if (estimate === null || estimate === undefined) {
       return {
         label: "Estimate unavailable",
-        className: "bg-gray-100 text-gray-600",
+        tone: "neutral" as const,
       };
     }
 
     if (estimate <= 0) {
       return {
         label: "Pool exhausted",
-        className: "bg-red-50 text-red-700",
+        tone: "danger" as const,
       };
     }
 
     if (estimate < configured) {
       return {
         label: "Pool constrained",
-        className: "bg-amber-50 text-amber-700",
+        tone: "warning" as const,
       };
     }
 
     return {
       label: "Fully payable",
-      className: "bg-emerald-50 text-emerald-700",
+      tone: "success" as const,
     };
+  };
+
+  const renderRewardEstimateBadge = (label: string, tone: string) => {
+    if (tone === "danger") {
+      return (
+        <span className="badge badge-sm gap-1 border border-red-200 bg-red-100 px-2.5 !text-[11px] font-medium whitespace-nowrap text-red-800">
+          {label}
+        </span>
+      );
+    }
+
+    if (tone === "warning") {
+      return (
+        <span className="badge badge-sm gap-1 border border-amber-200 bg-amber-100 px-2.5 !text-[11px] font-medium whitespace-nowrap text-amber-800">
+          {label}
+        </span>
+      );
+    }
+
+    if (tone === "success") {
+      return (
+        <span className="badge badge-sm bg-green/15 gap-1 border border-green-200 px-2.5 !text-[11px] font-medium whitespace-nowrap text-green-800">
+          {label}
+        </span>
+      );
+    }
+
+    return (
+      <span className="badge badge-sm gap-1 border border-gray-300 bg-gray-100 px-2.5 !text-[11px] font-medium whitespace-nowrap text-gray-700">
+        {label}
+      </span>
+    );
   };
 
   const renderRewardBreakdown = (
@@ -196,13 +228,9 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
             </div>
           </div>
 
-          <div className="flex flex-col items-start gap-3 md:flex-row md:items-center md:justify-between">
+          <div className="flex flex-col items-start gap-3">
             <span className="text-[11px] text-gray-500">{helperText}</span>
-            <span
-              className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-medium text-nowrap ${estimateMeta.className}`}
-            >
-              {estimateMeta.label}
-            </span>
+            {renderRewardEstimateBadge(estimateMeta.label, estimateMeta.tone)}
           </div>
         </div>
       </div>
