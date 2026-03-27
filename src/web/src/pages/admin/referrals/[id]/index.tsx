@@ -797,17 +797,18 @@ const ReferralProgramForm: NextPageWithLayout = () => {
   const pathwayRuleWatch = watchStep5("pathway.rule");
   const pathwayStepsWatch = watchStep5("pathway.steps");
   const pathwayWatch = useWatch({ control: controlStep5, name: "pathway" });
+  const previewPathway = pathwayWatch ?? formData.pathway;
 
   // Fetch all opportunities referenced in the pathway
   useEffect(() => {
     const fetchOpportunities = async () => {
-      if (!formData.pathway?.steps) {
+      if (!previewPathway?.steps) {
         setOpportunityDataMap({});
         return;
       }
 
       const opportunityIds = new Set<string>();
-      formData.pathway.steps.forEach((step) => {
+      previewPathway.steps.forEach((step) => {
         step.tasks?.forEach((task) => {
           const oppId = task.opportunity?.id || (task as any).entityId;
           if (oppId) opportunityIds.add(oppId);
@@ -832,8 +833,8 @@ const ReferralProgramForm: NextPageWithLayout = () => {
       setOpportunityDataMap(dataMap);
     };
 
-    fetchOpportunities();
-  }, [formData.pathway]);
+    void fetchOpportunities();
+  }, [previewPathway]);
 
   // Watch Step 3 fields for cross-field validation
   const zltoRewardReferrerWatch = watchStep3("zltoRewardReferrer");
