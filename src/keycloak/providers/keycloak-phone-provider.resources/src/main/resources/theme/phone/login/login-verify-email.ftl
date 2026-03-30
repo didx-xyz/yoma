@@ -17,7 +17,13 @@
             <a href="mailto:help@yoma.world" style="font-style: italic; font-weight: bold">${msg("doClickHere")}</a> ${msg("emailVerifyInstruction6")}
 			<br/>
             <br/>
-			<p><a href="/" style="display: block;">${kcSanitize(msg("backToApplication"))?no_esc}</a></p>
+            <#if pageRedirectUri?has_content>
+                <p><a id="backToApplication" href="${pageRedirectUri}" style="display: block;">${kcSanitize(msg("backToApplication"))?no_esc}</a></p>
+            <#elseif (client.baseUrl)?has_content>
+                <p><a id="backToApplication" href="${client.baseUrl?remove_ending("/")}/auth/return" style="display: block;">${kcSanitize(msg("backToApplication"))?no_esc}</a></p>
+            <#else>
+                <p><a id="backToApplication" href="/" style="display: block;">${kcSanitize(msg("backToApplication"))?no_esc}</a></p>
+            </#if>
 		</p>
     </#if>
 </@layout.registrationLayout>
