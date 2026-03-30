@@ -431,12 +431,7 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
 
           <div className="mt-4 flex justify-center">
             <ProgramCard
-              data={{
-                ...program,
-                name: program.name || "Program Name",
-                description: program.description || "No description provided",
-                imageURL: program.imageURL,
-              }}
+              data={program}
               zltoReward={program.zltoRewardReferrerEstimate}
               variant="referral"
             />
