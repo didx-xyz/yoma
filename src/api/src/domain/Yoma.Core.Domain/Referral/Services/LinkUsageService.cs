@@ -332,27 +332,38 @@ namespace Yoma.Core.Domain.Referral.Services
       var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
       var now = DateTimeOffset.UtcNow;
 
+      // All usages by this user (any program)
+      var statusIntentIds = new[] { ReferralLinkUsageStatus.Initiated, ReferralLinkUsageStatus.Abandoned }.Select(o => _linkUsageStatusService.GetByName(o.ToString()).Id).ToList();
+      var usages = _linkUsageRepository.Query().Where(u => u.UserId == user.Id).ToList();
+
+      // For THIS program: a user can have at most one usage (unique on UserId, ProgramId)
+      var usagesForProgram = usages.Where(o => o.ProgramId == program.Id).ToList();
+
+      if (usagesForProgram.Count > 1)
+        throw new DataInconsistencyException($"Data integrity violation: user '{user.Id}' has {usagesForProgram.Count} usage records for program '{program.Id}'. Expected at most one.");
+
+      var usage = usagesForProgram.FirstOrDefault();
+      var isNew = usage == null;
+
       // Self-referral guard
       if (link.UserId == user.Id)
-        throw new ValidationException("You cannot use your own referral link");
+        await ThrowValidationExceptionAndAbandonInitiatedIfRequired("You cannot use your own referral link", usage, true);
 
       // Ensure onboarded (profile updated during registration flow)
       if (!user.DateYoIDOnboarded.HasValue)
-        throw new ValidationException("You must complete your profile before using a referral link");
+        await ThrowValidationExceptionAndAbandonInitiatedIfRequired("You must complete your profile before using a referral link", usage);
 
       // Country segregation: program must be accessible to the current user
       var worldwideId = _countryService.GetByCodeAlpha2(Country.Worldwide.ToDescription()).Id;
       if (!ProgramCountryPolicy.ProgramAccessibleToUser(worldwideId, user.CountryId, program.Countries))
-        throw new ValidationException("This referral programme is not available in your country");
+        await ThrowValidationExceptionAndAbandonInitiatedIfRequired("This referral programme is not available in your country", usage);
 
       // All usages by this user (any program)
-      var statusIntentIds = new[] { ReferralLinkUsageStatus.Initiated, ReferralLinkUsageStatus.Abandoned }.Select(o => _linkUsageStatusService.GetByName(o.ToString()).Id).ToList();
-      var usages = _linkUsageRepository.Query().Where(u => u.UserId == user.Id).ToList();
       var userUsagesClaimed = usages.Where(u => !statusIntentIds.Contains(u.StatusId)).ToList();
 
       // First claim only: prevents retroactive claims — only allowed within configured window after onboarding
-      if (userUsagesClaimed.Count == 0 && now - user.DateYoIDOnboarded.Value > TimeSpan.FromHours(_appSettings.ReferralFirstClaimSinceYoIDOnboardedTimeoutInHours))
-        throw new ValidationException("This referral link can only be used during registration");
+      if (userUsagesClaimed.Count == 0 && now - user.DateYoIDOnboarded!.Value > TimeSpan.FromHours(_appSettings.ReferralFirstClaimSinceYoIDOnboardedTimeoutInHours))
+        await ThrowValidationExceptionAndAbandonInitiatedIfRequired("This referral link can only be used during registration", usage, true);
 
       // See AppSettings.ReferralRestrictRefereeToSingleProgram summary
       // When enabled, referees may only participate in a single referral program
@@ -363,17 +374,8 @@ namespace Yoma.Core.Domain.Referral.Services
 
         // Block if user has participated in ANY OTHER program
         if (otherProgramsClaimed.Count > 0)
-          throw new ValidationException("You have already joined another referral programme and cannot claim again");
+          await ThrowValidationExceptionAndAbandonInitiatedIfRequired("You have already joined another referral programme and cannot claim again", usage, true);
       }
-
-      // For THIS program: a user can have at most one usage (unique on UserId, ProgramId)
-      var usagesForProgram = usages.Where(o => o.ProgramId == program.Id).ToList();
-
-      if (usagesForProgram.Count > 1)
-        throw new DataInconsistencyException($"Data integrity violation: user '{user.Id}' has {usagesForProgram.Count} usage records for program '{program.Id}'. Expected at most one.");
-
-      var usage = usagesForProgram.FirstOrDefault();
-      var isNew = usage == null;
 
       if (usage != null)
       {
@@ -393,21 +395,25 @@ namespace Yoma.Core.Domain.Referral.Services
             var effectiveExpiry = DateTimeHelper.Min(windowExpiry, program.DateEnd);
 
             if (effectiveExpiry.HasValue && effectiveExpiry.Value <= now)
-              throw new ValidationException("Your previous referral link claim has expired");
+              await ThrowValidationExceptionAndAbandonInitiatedIfRequired("Your previous referral link claim has expired", usage, true);
 
             if (usage.LinkId == link.Id)
-              throw new ValidationException("You have already claimed this referral link");
+              await ThrowValidationExceptionAndAbandonInitiatedIfRequired("You have already claimed this referral link", usage, true);
             else
-              throw new ValidationException("You have already joined this programme using another referral link");
+              await ThrowValidationExceptionAndAbandonInitiatedIfRequired("You have already joined this programme using another referral link", usage, true);
+
+            break;
 
           case ReferralLinkUsageStatus.Completed:
-            throw new ValidationException("You have already completed this referral programme");
+            await ThrowValidationExceptionAndAbandonInitiatedIfRequired("You have already completed this referral programme", usage, true);
+            break;
 
           case ReferralLinkUsageStatus.Expired:
             if (usage.LinkId == link.Id)
-              throw new ValidationException("This referral link has expired");
+              await ThrowValidationExceptionAndAbandonInitiatedIfRequired("This referral link has expired", usage, true);
             else
-              throw new ValidationException("Your previous referral link claim has expired");
+              await ThrowValidationExceptionAndAbandonInitiatedIfRequired("Your previous referral link claim has expired", usage, true);
+            break;
 
           default:
             throw new InvalidOperationException($"Unsupported referral link usage status: {usage.Status}");
@@ -416,13 +422,13 @@ namespace Yoma.Core.Domain.Referral.Services
 
       // Program must be active, not before start, not after end
       if (program.Status != ProgramStatus.Active)
-        throw new ValidationException("This referral programme is no longer available");
+        await ThrowValidationExceptionAndAbandonInitiatedIfRequired("This referral programme is no longer available", usage, true);
 
       if (program.DateStart > now)
-        throw new ValidationException("This referral programme is not available yet");
+        await ThrowValidationExceptionAndAbandonInitiatedIfRequired("This referral programme is not available yet", usage);
 
       if (program.DateEnd.HasValue && program.DateEnd <= now) // Fallback guard if expiration job hasn’t run yet
-        throw new ValidationException("This referral programme is no longer available");
+        await ThrowValidationExceptionAndAbandonInitiatedIfRequired("This referral programme is no longer available", usage, true);
 
       // Caps at claim time: program-wide + per-referrer
       var programCapReached =
@@ -430,11 +436,11 @@ namespace Yoma.Core.Domain.Referral.Services
           (program.CompletionLimitReferee.HasValue && link.CompletionTotal >= program.CompletionLimitReferee);
 
       if (programCapReached)
-        throw new ValidationException("This referral programme has reached its limit");
+        await ThrowValidationExceptionAndAbandonInitiatedIfRequired("This referral programme has reached its limit", usage, true);
 
       // Link must be active (referrer blocks should already have cancelled links)
       if (link.Status != ReferralLinkStatus.Active)
-        throw new ValidationException("This referral link is no longer available");
+        await ThrowValidationExceptionAndAbandonInitiatedIfRequired("This referral link is no longer available", usage, true);
 
       usage ??= new ReferralLinkUsage();
 
@@ -817,6 +823,19 @@ namespace Yoma.Core.Domain.Referral.Services
     #endregion
 
     #region Private Members
+    private async Task ThrowValidationExceptionAndAbandonInitiatedIfRequired(string message, ReferralLinkUsage? usage, bool abandonInitiated = false)
+    {
+      if (abandonInitiated && usage?.Status == ReferralLinkUsageStatus.Initiated)
+      {
+        usage.StatusId = _linkUsageStatusService.GetByName(ReferralLinkUsageStatus.Abandoned.ToString()).Id;
+        usage.Status = ReferralLinkUsageStatus.Abandoned;
+
+        await _linkUsageRepository.Update(usage);
+      }
+
+      throw new ValidationException(message);
+    }
+
     private string? GetBlobObjectURL(StorageType? storageType, string? key)
     {
       if (!storageType.HasValue || string.IsNullOrEmpty(key)) return null;
