@@ -1,6 +1,7 @@
 import {
   AdmonitionDirectiveDescriptor,
   MDXEditor,
+  type MDXEditorMethods,
   directivesPlugin,
   headingsPlugin,
   linkDialogPlugin,
@@ -12,7 +13,7 @@ import {
   toolbarPlugin,
 } from "@mdxeditor/editor";
 import "@mdxeditor/editor/style.css";
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { Toolbar } from "./Toolbar";
 
 export const Editor: React.FC<{
@@ -22,9 +23,21 @@ export const Editor: React.FC<{
   onBlur?: () => void;
   onChange?: (value: string) => void;
 }> = ({ value, readonly, placeholder, onBlur, onChange }) => {
+  const editorRef = useRef<MDXEditorMethods | null>(null);
+
+  useEffect(() => {
+    const nextValue = value ?? "";
+    const currentValue = editorRef.current?.getMarkdown();
+
+    if (editorRef.current && currentValue !== nextValue) {
+      editorRef.current.setMarkdown(nextValue);
+    }
+  }, [value]);
+
   return (
     <div className={`editor ${readonly ? "readonly" : "editable"}`}>
       <MDXEditor
+        ref={editorRef}
         markdown={value}
         plugins={[
           toolbarPlugin({

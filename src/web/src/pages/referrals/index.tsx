@@ -377,7 +377,7 @@ const ProgramsSection = ({
                 renderSlide={(item) => (
                   <ReferralProgramSlideCard
                     title={item.name}
-                    description={item.description}
+                    summary={item.summary}
                     imageURL={item.imageURL}
                     reward={item.zltoRewardReferrerEstimate}
                     timeDays={item.completionWindowInDays}
@@ -1106,7 +1106,7 @@ const ReferralsPage: NextPageWithLayout<{
                               renderSlide={(item) => (
                                 <ReferralProgramSlideCard
                                   title={item.programName}
-                                  description={item.programSummary}
+                                  summary={item.programSummary}
                                   imageURL={item.programImageURL}
                                   reward={item.zltoRewardReferrerTotal}
                                   href={`/referrals/link/${item.id}`}

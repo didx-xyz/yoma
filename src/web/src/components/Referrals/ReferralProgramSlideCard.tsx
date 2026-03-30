@@ -5,9 +5,9 @@ import iconClock from "public/images/icon-clock.svg";
 import ZltoRewardBadge from "~/components/Opportunity/Badges/ZltoRewardBadge";
 import { ReferralTapCard } from "~/components/Referrals/ReferralTapCard";
 
-interface ReferralProgramSlideCardProps {
+export const ReferralProgramSlideCard: React.FC<{
   title: string;
-  description?: string | null;
+  summary?: string | null;
   imageURL?: string | null;
   href?: string;
   openInNewTab?: boolean;
@@ -18,11 +18,9 @@ interface ReferralProgramSlideCardProps {
   showTimeBadge?: boolean;
   customBadges?: ReactNode;
   className?: string;
-}
-
-export const ReferralProgramSlideCard = ({
+}> = ({
   title,
-  description,
+  summary,
   imageURL,
   href,
   openInNewTab = false,
@@ -33,7 +31,7 @@ export const ReferralProgramSlideCard = ({
   showTimeBadge = true,
   customBadges,
   className,
-}: ReferralProgramSlideCardProps) => {
+}) => {
   const cardClassName = `mx-auto flex h-[17rem] w-[16rem] min-w-[16rem] shrink-0 flex-col overflow-hidden rounded-2xl bg-white shadow transition-shadow hover:shadow-md [touch-action:pan-y] select-none [-webkit-user-drag:none] [user-drag:none] ${onClick || href ? "cursor-pointer" : ""} ${className || ""}`;
 
   const defaultBadges = (
@@ -82,7 +80,7 @@ export const ReferralProgramSlideCard = ({
         </h3>
 
         <p className="text-gray-dark line-clamp-3 text-sm leading-relaxed">
-          {description || "No details available"}
+          {summary || "No details available"}
         </p>
 
         <div className="mt-auto flex items-center gap-2">

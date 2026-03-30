@@ -1,7 +1,4 @@
-import {
-  type GetServerSidePropsContext,
-  type InferGetServerSidePropsType,
-} from "next";
+import { type GetServerSidePropsContext } from "next";
 
 // Keycloak does not know about /auth/return by default.
 // Our custom Keycloak theme builds a "Back to Yoma" link as:
@@ -66,8 +63,6 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   };
 }
 
-export default function AuthReturnPage(
-  _props: InferGetServerSidePropsType<typeof getServerSideProps>,
-) {
+export default function AuthReturnPage() {
   return null;
 }
