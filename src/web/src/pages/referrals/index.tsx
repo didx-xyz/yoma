@@ -1038,10 +1038,7 @@ const ReferralsPage: NextPageWithLayout<{
                                 </h3>
                                 <p className="text-sm text-white/80">
                                   {myReferralSlides.length > 0 ? (
-                                    <>
-                                      These friends haven&apos;t completed
-                                      onboarding yet.
-                                    </>
+                                    <>These friends have claimed your link.</>
                                   ) : (
                                     <>
                                       No referrals yet. When someone uses your
