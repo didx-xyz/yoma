@@ -47,6 +47,7 @@ import {
   isUserProfileCompleted,
   isUserSettingsConfigured,
 } from "~/lib/utils/profile";
+import { fetchClientEnv } from "~/lib/utils";
 import CustomModal from "./Common/CustomModal";
 import Suspense from "./Common/Suspense";
 import SettingsForm from "./Settings/SettingsForm";
@@ -94,6 +95,8 @@ export const Global: React.FC = () => {
   const [photoUploadDialogVisible, setPhotoUploadDialogVisible] =
     useState(false);
   const [rumConsentDialogVisible, setRumConsentDialogVisible] = useState(false);
+  const [referralsEnabled, setReferralsEnabled] = useState(false);
+  const [referralsFlagResolved, setReferralsFlagResolved] = useState(false);
 
   const [rumConsent, setRumConsent] = useAtom(rumConsentAtom);
 
@@ -111,6 +114,24 @@ export const Global: React.FC = () => {
     settingsDialogVisible ||
     photoUploadDialogVisible;
 
+  useEffect(() => {
+    let isMounted = true;
+
+    // Runtime client env lets the same image keep referrals enabled in stage and disabled in prod.
+    const loadReferralSetting = async () => {
+      const clientEnv = await fetchClientEnv();
+      if (!isMounted) return;
+      setReferralsEnabled(clientEnv.NEXT_PUBLIC_REFERRALS_ENABLED === "true");
+      setReferralsFlagResolved(true);
+    };
+
+    loadReferralSetting();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   const {
     data: settingsData,
     isLoading: settingsIsLoading,
@@ -125,14 +146,19 @@ export const Global: React.FC = () => {
   // Check if user is a referee (has claimed links)
   const isReferee = useMemo(
     () =>
-      userProfile?.referral?.roles?.some(
+      referralsEnabled &&
+      (userProfile?.referral?.roles?.some(
         (role) =>
           role === ReferralParticipationRole.Referee || role === "Referee",
-      ) ?? false,
-    [userProfile],
+      ) ??
+        false),
+    [referralsEnabled, userProfile],
   );
 
-  // Fetch referee programs if user is a referee
+  const shouldWaitForRefereeReferralData =
+    referralsFlagResolved && referralsEnabled && isReferee;
+
+  // Feature flag: disable the referee referral query when referrals are turned off.
   const { data: refereeLinkUsages, isFetching: refereeLinkUsagesFetching } =
     useRefereeReferrals({
       pageSize: 5,
@@ -140,11 +166,19 @@ export const Global: React.FC = () => {
         ReferralLinkUsageStatus.Initiated,
         ReferralLinkUsageStatus.Pending,
       ],
-      enabled: session !== null && isReferee,
+      enabled:
+        referralsFlagResolved &&
+        referralsEnabled &&
+        session !== null &&
+        isReferee,
       keepPreviousData: true,
     });
 
   const actionableRefereeReferral = useMemo(() => {
+    if (!referralsFlagResolved || !referralsEnabled) {
+      return null;
+    }
+
     const items = refereeLinkUsages?.items;
     if (!items?.length) return null;
 
@@ -179,17 +213,31 @@ export const Global: React.FC = () => {
           ? `/referrals/claim/${firstActionableItem.programId}?linkId=${firstActionableItem.linkId}`
           : `/referrals/progress/${firstActionableItem.programId}`,
     };
-  }, [refereeLinkUsages?.items]);
+  }, [referralsEnabled, referralsFlagResolved, refereeLinkUsages?.items]);
 
-  // Keep a quick-link target for "New to Yoma?" in navbar.
+  // Feature flag: clear the quick-link target completely when referrals are disabled.
   useEffect(() => {
+    if (!referralsFlagResolved) {
+      return;
+    }
+
+    if (!referralsEnabled) {
+      setFirstActionableRefereeReferralUrl(null);
+      return;
+    }
+
     if (actionableRefereeReferral?.url) {
       setFirstActionableRefereeReferralUrl(actionableRefereeReferral.url);
       return;
     }
 
     setFirstActionableRefereeReferralUrl(null);
-  }, [actionableRefereeReferral, setFirstActionableRefereeReferralUrl]);
+  }, [
+    actionableRefereeReferral,
+    referralsEnabled,
+    referralsFlagResolved,
+    setFirstActionableRefereeReferralUrl,
+  ]);
 
   const dbRumConsent = useMemo((): boolean | null => {
     const items = userProfile?.settings?.items;
@@ -348,8 +396,17 @@ export const Global: React.FC = () => {
   //TODO: CAUTION! the purpose of this section is to perform necessary checks immediately after login to ensure the user has completed their profile.
   // `/referrals/claim/[programId].tsx` handles profile completion inline as part of the INITIATED state
   const postLoginChecks = useCallback(
-    (userProfile: UserProfile, skipSettings = false) => {
+    (
+      userProfile: UserProfile,
+      options?: {
+        skipSettings?: boolean;
+        skipPhoto?: boolean;
+      },
+    ) => {
       if (!userProfile) return;
+
+      const skipSettings = options?.skipSettings ?? false;
+      const skipPhoto = options?.skipPhoto ?? false;
 
       const currentPath = routePathRef.current;
 
@@ -369,15 +426,32 @@ export const Global: React.FC = () => {
       } else if (!skipSettings && !isUserSettingsConfigured(userProfile)) {
         // show settings dialog
         setSettingsDialogVisible(true);
-      } else if (!hasUserPhoto(userProfile)) {
+      } else if (!skipPhoto && !hasUserPhoto(userProfile)) {
         // show photo upload dialog
         setPhotoUploadDialogVisible(true);
+      } else if (
+        referralsFlagResolved &&
+        referralsEnabled &&
+        sessionStatus === "authenticated" &&
+        actionableRefereeReferral &&
+        !hasShownRefereePendingToast
+      ) {
+        // Queue after state updates so the toast only appears once any blocking modal has been fully closed.
+        window.setTimeout(() => {
+          showRefereeReferralReminder();
+        }, 0);
       }
     },
     [
+      actionableRefereeReferral,
+      hasShownRefereePendingToast,
+      referralsEnabled,
+      referralsFlagResolved,
+      sessionStatus,
       setUpdateProfileDialogVisible,
       setSettingsDialogVisible,
       setPhotoUploadDialogVisible,
+      showRefereeReferralReminder,
     ],
   );
   //#endregion Functions
@@ -451,54 +525,23 @@ export const Global: React.FC = () => {
 
   // 🔔 REFEREE DATA LOADED CHECK
   useEffect(() => {
+    if (!referralsFlagResolved) {
+      return;
+    }
+
     if (
       userProfile &&
-      !refereeLinkUsagesFetching &&
+      !(shouldWaitForRefereeReferralData && refereeLinkUsagesFetching) &&
       !postLoginChecksTriggeredRef.current
     ) {
       postLoginChecksTriggeredRef.current = true;
       postLoginChecks(userProfile);
     }
-  }, [userProfile, refereeLinkUsagesFetching, postLoginChecks]);
-
-  useEffect(() => {
-    if (
-      sessionStatus !== "authenticated" ||
-      !userProfile ||
-      refereeLinkUsagesFetching ||
-      anyBlockingModalOpen
-    ) {
-      return;
-    }
-
-    if (
-      !actionableRefereeReferral ||
-      hasShownRefereePendingToast ||
-      !isUserProfileCompleted(userProfile) ||
-      !isUserSettingsConfigured(userProfile) ||
-      !hasUserPhoto(userProfile)
-    ) {
-      return;
-    }
-
-    const currentPath = routePathRef.current;
-    if (
-      currentPath.includes("/user/profile") ||
-      currentPath.includes("/user/settings") ||
-      currentPath.includes("/referrals/claim") ||
-      currentPath.includes("/referrals/progress")
-    ) {
-      return;
-    }
-
-    showRefereeReferralReminder();
   }, [
-    actionableRefereeReferral,
-    anyBlockingModalOpen,
-    hasShownRefereePendingToast,
+    postLoginChecks,
+    referralsFlagResolved,
     refereeLinkUsagesFetching,
-    sessionStatus,
-    showRefereeReferralReminder,
+    shouldWaitForRefereeReferralData,
     userProfile,
   ]);
 
@@ -885,7 +928,7 @@ export const Global: React.FC = () => {
         setSettingsDialogVisible(false);
 
         // perform login checks (again)
-        postLoginChecks(mergedProfile, true);
+        postLoginChecks(mergedProfile, { skipSettings: true });
       } catch (error) {
         // Track settings update error
         analytics.trackError(error as Error, {
@@ -1068,7 +1111,7 @@ export const Global: React.FC = () => {
               className="hover:text-green text-sm text-black underline"
               onClick={() => {
                 setSettingsDialogVisible(false);
-                postLoginChecks(userProfile!, true);
+                postLoginChecks(userProfile!, { skipSettings: true });
               }}
             >
               Skip for now
@@ -1116,6 +1159,12 @@ export const Global: React.FC = () => {
 
                   // hide popup
                   setPhotoUploadDialogVisible(false);
+
+                  // Photo flow is the last blocker; do not reopen it when continuing checks.
+                  postLoginChecks(updatedUserProfile, {
+                    skipSettings: true,
+                    skipPhoto: true,
+                  });
                 }}
                 filterOptions={[UserProfileFilterOptions.LOGO]}
               />
@@ -1127,6 +1176,10 @@ export const Global: React.FC = () => {
               className="hover:text-green text-sm text-black underline"
               onClick={() => {
                 setPhotoUploadDialogVisible(false);
+                postLoginChecks(userProfile!, {
+                  skipSettings: true,
+                  skipPhoto: true,
+                });
               }}
             >
               Skip for now
