@@ -321,7 +321,7 @@ const ProgramsSection = ({
         <div className="flex max-w-full flex-row md:max-w-6xl">
           <div className="flex min-w-0 grow flex-col">
             <div className="font-family-nunito text-lg font-semibold text-black md:text-xl">
-              Available referral programmes
+              Available ambassador programmes
             </div>
             <div className="text-gray-dark text-xs md:text-sm">{subTitle}</div>
           </div>
