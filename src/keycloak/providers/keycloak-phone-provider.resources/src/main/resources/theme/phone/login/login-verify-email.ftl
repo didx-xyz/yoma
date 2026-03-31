@@ -20,7 +20,7 @@
             <#if pageRedirectUri?has_content>
                 <p><a id="backToApplication" href="${pageRedirectUri}" style="display: block;">${kcSanitize(msg("backToApplication"))?no_esc}</a></p>
             <#elseif (client.baseUrl)?has_content>
-                <p><a id="backToApplication" href="${client.baseUrl?remove_ending("/")}/auth/return" style="display: block;">${kcSanitize(msg("backToApplication"))?no_esc}</a></p>
+                <p><a id="backToApplication" href="${client.baseUrl?remove_ending("/")}/login/return" style="display: block;">${kcSanitize(msg("backToApplication"))?no_esc}</a></p>
             <#else>
                 <p><a id="backToApplication" href="/" style="display: block;">${kcSanitize(msg("backToApplication"))?no_esc}</a></p>
             </#if>

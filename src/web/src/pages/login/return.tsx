@@ -1,8 +1,8 @@
 import { type GetServerSidePropsContext } from "next";
 
-// Keycloak does not know about /auth/return by default.
+// Keycloak does not know about /login/return by default.
 // Our custom Keycloak theme builds a "Back to Yoma" link as:
-//   ${client.baseUrl}/auth/return
+//   ${client.baseUrl}/login/return
 // This page runs on the web app domain, where NextAuth's callback cookie exists.
 const CALLBACK_URL_COOKIE_NAMES = [
   "__Secure-next-auth.callback-url",
@@ -63,6 +63,6 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   };
 }
 
-export default function AuthReturnPage() {
+export default function LoginReturnPage() {
   return null;
 }
