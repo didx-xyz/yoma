@@ -860,25 +860,25 @@ clients:
       - phone
       - microprofile-jwt
   - id: 7e6a6154-9978-4fdf-94b0-837bfeefdbcb
-    clientId: ixo-private
-    name: ixo-private
-    description: IXO SSO Partner (private client)
-    rootUrl: $(env:CLIENT_IXO_PRIATE_URL)
-    adminUrl: $(env:CLIENT_IXO_PRIATE_URL)
-    baseUrl: $(env:CLIENT_IXO_PRIATE_URL)
+    clientId: ixo-webos
+    name: ixo-webos
+    description: IXO WebOS SSO Partner (private client)
+    rootUrl: $(env:CLIENT_IXO_WEBOS_URL)
+    adminUrl: $(env:CLIENT_IXO_WEBOS_URL)
+    baseUrl: $(env:CLIENT_IXO_WEBOS_URL)
     surrogateAuthRequired: false
-    enabled: $(env:CLIENT_IXO_PRIVATE_ENABLED)
+    enabled: $(env:CLIENT_IXO_WEBOS_ENABLED)
     alwaysDisplayInConsole: false
     clientAuthenticatorType: client-secret
-    secret: $(env:CLIENT_IXO_PRIVATE_SECRET)
+    secret: $(env:CLIENT_IXO_WEBOS_SECRET)
     redirectUris:
       - /*
-      - $(env:CLIENT_IXO_PRIVATE_URL_REDIRECT)
-      - $(env:CLIENT_IXO_PRIVATE_URL_REDIRECT)/*
+      - $(env:CLIENT_IXO_WEBOS_URL_REDIRECT)
+      - $(env:CLIENT_IXO_WEBOS_URL_REDIRECT)/*
     webOrigins:
       - /*
-      - $(env:CLIENT_IXO_PRIVATE_URL)
-      - $(env:CLIENT_IXO_PRIVATE_URL)/*
+      - $(env:CLIENT_IXO_WEBOS_URL)
+      - $(env:CLIENT_IXO_WEBOS_URL)/*
     notBefore: 0
     bearerOnly: false
     consentRequired: false
@@ -890,7 +890,7 @@ clients:
     frontchannelLogout: true
     protocol: openid-connect
     attributes:
-      post.logout.redirect.uris: $(env:CLIENT_IXO_PRIVATE_URL)/*
+      post.logout.redirect.uris: $(env:CLIENT_IXO_WEBOS_URL)/*
       oidc.ciba.grant.enabled: "false"
       backchannel.logout.session.required: "true"
       standard.token.exchange.enabled: "false"

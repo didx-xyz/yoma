@@ -212,10 +212,10 @@ services:
       CLIENT_IXO_ENABLED: "true"
       CLIENT_IXO_URL: https://jambo.test.yoma.impacts.exchange
       CLIENT_IXO_URL_REDIRECT: https://jambo.test.yoma.impacts.exchange/auth/passkey
-      CLIENT_IXO_PRIVATE_ENABLED: "true"
-      CLIENT_IXO_PRIVATE_SECRET: superSecretIXOClientSecret
-      CLIENT_IXO_PRIVATE_URL: https://auth.workos.com
-      CLIENT_IXO_PRIVATE_URL_REDIRECT: https://auth.workos.com/sso/oidc/n3WhYIVxmfOSY4sQ2Unz7w3ee/callback
+      CLIENT_IXO_WEBOS_ENABLED: "true"
+      CLIENT_IXO_WEBOS_SECRET: superSecretIXOClientSecret
+      CLIENT_IXO_WEBOS_URL: https://auth.workos.com
+      CLIENT_IXO_WEBOS_URL_REDIRECT: https://auth.workos.com/sso/oidc/n3WhYIVxmfOSY4sQ2Unz7w3ee/callback
       CLIENT_MAZA_APP_ENABLED: "true"
       CLIENT_MAZA_APP_SECRET: superSecretMazaAppClientSecret
       CLIENT_UNICEF_KENYA_ENABLED: "true"
