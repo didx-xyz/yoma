@@ -101,8 +101,8 @@ config-cli:
     CLIENT_IIASA_URL: https://geoqauth.main.geo-wiki.org
     CLIENT_IIASA_URL_REDIRECT: https://geoqauth.main.geo-wiki.org/signin-yoma-oidc
     CLIENT_IXO_ENABLED: "false"
-    CLIENT_IXO_URL: https://jambo.yoma.impacts.exchange
-    CLIENT_IXO_URL_REDIRECT: https://jambo.yoma.impacts.exchange/auth/passkey
+    CLIENT_IXO_URL: https://auth.workos.com
+    CLIENT_IXO_URL_REDIRECT: https://auth.workos.com/sso/oidc/n3WhYIVxmfOSY4sQ2Unz7w3ee/callback
     CLIENT_UNICEF_KENYA_ENABLED: "false"
     CLIENT_MINI_SASS_URL: https://minisass.org
     CLIENT_MINI_SASS_URL_REDIRECT: https://minisass.org/authentication/api/yoma/callback

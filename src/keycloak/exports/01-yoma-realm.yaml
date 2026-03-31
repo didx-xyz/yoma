@@ -808,7 +808,7 @@ clients:
   - id: 045a13ad-3d8e-4d2b-ac96-5a8d9567dadf
     clientId: ixo
     name: ixo
-    description: IXO SSO Partner (public client)
+    description: IXO SSO Partner (private client)
     rootUrl: $(env:CLIENT_IXO_URL)
     adminUrl: $(env:CLIENT_IXO_URL)
     baseUrl: $(env:CLIENT_IXO_URL)
@@ -816,6 +816,7 @@ clients:
     enabled: $(env:CLIENT_IXO_ENABLED)
     alwaysDisplayInConsole: false
     clientAuthenticatorType: client-secret
+    secret: $(env:CLIENT_IXO_SECRET)
     redirectUris:
       - /*
       - $(env:CLIENT_IXO_URL_REDIRECT)
@@ -831,7 +832,7 @@ clients:
     implicitFlowEnabled: false
     directAccessGrantsEnabled: false
     serviceAccountsEnabled: false
-    publicClient: true
+    publicClient: false
     frontchannelLogout: true
     protocol: openid-connect
     attributes:
