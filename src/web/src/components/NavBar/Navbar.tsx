@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import logoPicDark from "public/images/logo-dark.webp";
 import logoPicLight from "public/images/logo-light.webp";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { FaChevronDown, FaChevronUp } from "react-icons/fa";
 import { IoMdClose, IoMdMenu, IoMdSettings } from "react-icons/io";
 import type { TabItem } from "~/api/models/common";
@@ -19,6 +19,7 @@ import {
   firstActionableRefereeReferralUrlAtom,
   userProfileAtom,
 } from "~/lib/store";
+import { fetchClientEnv } from "~/lib/utils";
 import { AvatarImage } from "../AvatarImage";
 import ScrollableContainer from "../Carousel/ScrollableContainer";
 import { Footer } from "../Footer/Footer";
@@ -28,6 +29,7 @@ import { LanguageSwitcher } from "./LanguageSwitcher";
 import { UserMenu } from "./UserMenu";
 
 const getNavBarLinksUser = (
+  referralsEnabled: boolean,
   firstActionableRefereeReferralUrl: string | null,
 ): TabItem[] => {
   const links: TabItem[] = [
@@ -59,17 +61,21 @@ const getNavBarLinksUser = (
       badgeCount: null,
       selected: false,
     },
-    {
+  ];
+
+  // Feature flag: keep referral pages deployed, but hide user entry points when disabled.
+  if (referralsEnabled) {
+    links.push({
       title: "Refer a friend",
       description: "Referrals",
       url: "/referrals",
       badgeCount: null,
       selected: false,
       iconImage: "❤️",
-    },
-  ];
+    });
+  }
 
-  if (firstActionableRefereeReferralUrl) {
+  if (referralsEnabled && firstActionableRefereeReferralUrl) {
     links.push({
       title: "New to Yoma?",
       description: "New to Yoma",
@@ -139,9 +145,27 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
   );
   const { data: session } = useSession();
   const userProfile = useAtomValue(userProfileAtom);
+  const [referralsEnabled, setReferralsEnabled] = useState(false);
   const [isDrawerOpen, setDrawerOpen] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const isAdmin = session?.user?.roles.includes(ROLE_ADMIN);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    // Runtime client env lets the same image behave differently in stage vs prod.
+    const loadReferralSetting = async () => {
+      const clientEnv = await fetchClientEnv();
+      if (!isMounted) return;
+      setReferralsEnabled(clientEnv.NEXT_PUBLIC_REFERRALS_ENABLED === "true");
+    };
+
+    loadReferralSetting();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // 👇 prevent scrolling on the page when the menu is open
   useDisableBodyScroll(isDrawerOpen);
@@ -167,6 +191,7 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
     let links: TabItem[] = [];
 
     if (activeRoleView == RoleView.Admin) {
+      // Admin referral management stays available even when the public referral experience is disabled.
       links = navBarLinksAdmin;
     } else if (activeRoleView == RoleView.OrgAdmin && currentOrganisationId) {
       links = [
@@ -215,7 +240,10 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
       ];
     } else {
       // Get user links with conditional referee link
-      links = getNavBarLinksUser(firstActionableRefereeReferralUrl);
+      links = getNavBarLinksUser(
+        referralsEnabled,
+        firstActionableRefereeReferralUrl,
+      );
     }
 
     // Set selected property based on current route
@@ -229,6 +257,7 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
     activeRoleView,
     currentOrganisationId,
     firstActionableRefereeReferralUrl,
+    referralsEnabled,
     router.pathname,
   ]);
 

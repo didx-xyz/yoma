@@ -286,7 +286,6 @@ const PartnerLogos: React.FC<PartnerLogosProps> = ({
                 className="pointer-events-none select-none"
                 style={{ width: `${logo.width}px`, height: `${logo.height}px` }}
                 draggable={false}
-                quality={100}
                 unoptimized={true}
               />
             );
