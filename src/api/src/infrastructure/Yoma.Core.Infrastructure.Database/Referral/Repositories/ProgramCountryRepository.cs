@@ -30,6 +30,7 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
         ProgramHidden = entity.Program.Hidden,
         ProgramReferrerLimit = entity.Program.ReferrerLimit,
         ProgramReferrerTotal = entity.Program.ReferrerTotal,
+        ProgramMultipleLinksAllowed = entity.Program.MultipleLinksAllowed,
         CountryId = entity.CountryId,
         CountryName = entity.Country.Name,
         DateCreated = entity.DateCreated

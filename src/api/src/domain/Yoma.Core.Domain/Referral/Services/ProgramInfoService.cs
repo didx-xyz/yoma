@@ -52,6 +52,7 @@ namespace Yoma.Core.Domain.Referral.Services
         TotalCountOnly = true,
         ExcludeHidden = true, //exclude hidden
         ExcludeReferrerLimitReached = true, //exclude referrer limit reached
+        UserIdReferrer = user?.Id
       });
 
       return searchResults.TotalCount > 0;
@@ -123,6 +124,7 @@ namespace Yoma.Core.Domain.Referral.Services
         ValueContains = filter.ValueContains,
         ExcludeHidden = true, //exclude hidden
         ExcludeReferrerLimitReached = true, //exclude referrer limit reached
+        UserIdReferrer = user?.Id,
         PageNumber = filter.PageNumber,
         PageSize = filter.PageSize
       };
