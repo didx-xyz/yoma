@@ -29,7 +29,9 @@ namespace Yoma.Core.Test.Referral.Fixtures
     public Mock<IUserService> UserService { get; }
     public Mock<ILinkMaintenanceService> LinkMaintenanceService { get; }
     public Mock<ICountryService> CountryService { get; }
+    public Mock<ILinkStatusService> LinkStatusService { get; }
     public Mock<IRepository<ProgramCountry>> ProgramCountryRepository { get; }
+    public Mock<IRepositoryBatchedValueContainsWithNavigation<ReferralLink>> LinkRepository { get; }
     public Mock<IExecutionStrategyService> ExecutionStrategyService { get; }
     public Mock<IShortLinkProviderClientFactory> ShortLinkProviderClientFactory { get; }
     public Mock<IShortLinkProviderClient> ShortLinkProviderClient { get; }
@@ -58,9 +60,13 @@ namespace Yoma.Core.Test.Referral.Fixtures
       UserService = new Mock<IUserService>();
       LinkMaintenanceService = new Mock<ILinkMaintenanceService>();
       CountryService = new Mock<ICountryService>();
+      LinkStatusService = new Mock<ILinkStatusService>();
 
       ProgramCountryRepository = new Mock<IRepository<ProgramCountry>>();
       SetupBaseRepository(ProgramCountryRepository);
+
+      LinkRepository = new Mock<IRepositoryBatchedValueContainsWithNavigation<ReferralLink>>();
+      SetupBatchedNavRepository(LinkRepository);
 
       ExecutionStrategyService = new Mock<IExecutionStrategyService>();
       ExecutionStrategyService
@@ -99,18 +105,24 @@ namespace Yoma.Core.Test.Referral.Fixtures
         Logger.Object,
         AppSettings.Object,
         HttpContextAccessor.Object,
+
         ProgramStatusService.Object,
         OpportunityService.Object,
         BlobService.Object,
         UserService.Object,
         LinkMaintenanceService.Object,
         CountryService.Object,
-        ProgramCountryRepository.Object,
+        LinkStatusService.Object,
+
         ExecutionStrategyService.Object,
         ShortLinkProviderClientFactory.Object,
+
         ProgramSearchFilterValidator.Object,
         ProgramRequestValidatorCreate.Object,
         ProgramRequestValidatorUpdate.Object,
+
+        ProgramCountryRepository.Object,
+        LinkRepository.Object,
         ProgramRepository.Object,
         ProgramPathwayRepository.Object,
         ProgramPathwayStepRepository.Object,

@@ -25,6 +25,13 @@ namespace Yoma.Core.Domain.Referral.Models
 
     [JsonIgnore]
     internal bool ExcludeReferrerLimitReached { get; set; }
+
+    /// <summary>
+    /// Optional referrer user ID used internally to exclude programs where the user already has an active link
+    /// when multiple links are not allowed.
+    /// </summary>
+    [JsonIgnore]
+    internal Guid? UserIdReferrer { get; set; }
   }
 
   public class ProgramSearchFilter : ProgramSearchFilterBase

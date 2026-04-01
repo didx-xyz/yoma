@@ -56,7 +56,7 @@ namespace Yoma.Core.Api.Controllers
         "Returns true if there are any referral programs available that are not hidden, are active and have started (published state Active), and have not reached their referrer participation limit. " +
         "Country filtering behavior: " +
         "Anonymous users default to World-Wide programs when no countries are specified, otherwise results are filtered by the specified countries. " +
-        "Authenticated users are automatically filtered by their user country when available (including World-Wide), otherwise results default to World-Wide or the specified countries")]
+        "Authenticated users are automatically filtered by their user country when available (including World-Wide), otherwise results default to World-Wide or the specified countries. When the authenticated user acts as a referrer, programs where the user already has an active referral link are excluded if the program does not allow multiple links")]
     [HttpGet("program/available")]
     [AllowAnonymous]
     public ActionResult<bool> GetAvailable([FromQuery] List<Guid>? countries)
@@ -90,7 +90,7 @@ namespace Yoma.Core.Api.Controllers
        "By default, results include programs that are not hidden, are active and have started (published state Active), and have not reached their referrer participation limit. Authenticated users may override the published state filtering. " +
        "Country resolution behavior: " +
        "Anonymous users receive all countries linked to programs, including World-Wide if programs are associated with it. " +
-       "Authenticated users receive their user country together with World-Wide, if programs are associated with it, when a user country is available; when no user country is available, results include all countries linked to programs")]
+       "Authenticated users receive their user country together with World-Wide, if programs are associated with it, when a user country is available; when no user country is available, results include all countries linked to programs. When the authenticated user acts as a referrer, programs where the user already has an active referral link are excluded if the program does not allow multiple links")]
     [HttpGet("program/search/filter/country")]
     [AllowAnonymous]
     public ActionResult<List<Domain.Lookups.Models.Country>> ListProgramSearchCriteriaCountries([FromQuery] List<PublishedState>? publishedStates)
@@ -109,7 +109,7 @@ namespace Yoma.Core.Api.Controllers
         "By default, results include programs that are not hidden, are active and have started (published state Active), and have not reached their referrer participation limit. Authenticated users may override the published state filtering. " +
         "Country filtering behavior: " +
         "Anonymous users default to World-Wide programs when no countries are specified, otherwise results are filtered by the specified countries. " +
-        "Authenticated users are automatically filtered by their user country when available (including World-Wide), otherwise results default to World-Wide or the specified countries")]
+        "Authenticated users are automatically filtered by their user country when available (including World-Wide), otherwise results default to World-Wide or the specified countries. When the authenticated user acts as a referrer, programs where the user already has an active referral link are excluded if the program does not allow multiple links")]
     [HttpPost("program/search")]
     [AllowAnonymous]
     public ActionResult<ProgramSearchResultsInfo> SearchProgram([FromBody] ProgramSearchFilter filter)

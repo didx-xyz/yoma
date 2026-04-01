@@ -39,7 +39,7 @@ namespace Yoma.Core.Domain.Referral.Services
     private readonly IUserService _userService;
     private readonly ILinkMaintenanceService _linkMaintenanceService;
     private readonly ICountryService _countryService;
-    private readonly IRepository<ProgramCountry> _programCountryRepository;
+    private readonly ILinkStatusService _linkStatusService;
 
     private readonly IExecutionStrategyService _executionStrategyService;
     private readonly IShortLinkProviderClient _shortLinkProviderClient;
@@ -48,6 +48,8 @@ namespace Yoma.Core.Domain.Referral.Services
     private readonly ProgramRequestValidatorCreate _programRequestValidatorCreate;
     private readonly ProgramRequestValidatorUpdate _programRequestValidatorUpdate;
 
+    private readonly IRepository<ProgramCountry> _programCountryRepository;
+    private readonly IRepositoryBatchedValueContainsWithNavigation<ReferralLink> _linkRepository;
     private readonly IRepositoryBatchedValueContainsWithNavigation<Program> _programRepository;
     private readonly IRepositoryWithNavigation<ProgramPathway> _programPathwayRepository;
     private readonly IRepositoryWithNavigation<ProgramPathwayStep> _programPathwayStepRepository;
@@ -60,6 +62,7 @@ namespace Yoma.Core.Domain.Referral.Services
     #endregion
 
     #region Constrcutor
+    #region Constrcutor
     public ProgramService(
       ILogger<ProgramService> logger,
       IOptions<AppSettings> appSettings,
@@ -71,7 +74,7 @@ namespace Yoma.Core.Domain.Referral.Services
       IUserService userService,
       ILinkMaintenanceService linkMaintenanceService,
       ICountryService countryService,
-      IRepository<ProgramCountry> programCountryRepository,
+      ILinkStatusService linkStatusService,
 
       IExecutionStrategyService executionStrategyService,
       IShortLinkProviderClientFactory shortLinkProviderClientFactory,
@@ -80,11 +83,12 @@ namespace Yoma.Core.Domain.Referral.Services
       ProgramRequestValidatorCreate programRequestValidatorCreate,
       ProgramRequestValidatorUpdate programRequestValidatorUpdate,
 
+      IRepository<ProgramCountry> programCountryRepository,
+      IRepositoryBatchedValueContainsWithNavigation<ReferralLink> linkRepository,
       IRepositoryBatchedValueContainsWithNavigation<Program> programRepository,
       IRepositoryWithNavigation<ProgramPathway> programPathwayRepository,
       IRepositoryWithNavigation<ProgramPathwayStep> programPathwayStepRepository,
-      IRepository<ProgramPathwayTask> programPathwayTaskRepository
-    )
+      IRepository<ProgramPathwayTask> programPathwayTaskRepository)
     {
       _logger = logger ?? throw new ArgumentNullException(nameof(logger));
       _appSettings = appSettings.Value ?? throw new ArgumentNullException(nameof(appSettings));
@@ -96,7 +100,7 @@ namespace Yoma.Core.Domain.Referral.Services
       _userService = userService ?? throw new ArgumentNullException(nameof(userService));
       _linkMaintenanceService = linkMaintenanceService ?? throw new ArgumentNullException(nameof(linkMaintenanceService));
       _countryService = countryService ?? throw new ArgumentNullException(nameof(countryService));
-      _programCountryRepository = programCountryRepository ?? throw new ArgumentNullException(nameof(programCountryRepository));
+      _linkStatusService = linkStatusService ?? throw new ArgumentNullException(nameof(linkStatusService));
 
       _executionStrategyService = executionStrategyService ?? throw new ArgumentNullException(nameof(executionStrategyService));
       _shortLinkProviderClient = shortLinkProviderClientFactory.CreateClient() ?? throw new ArgumentNullException(nameof(shortLinkProviderClientFactory));
@@ -105,11 +109,14 @@ namespace Yoma.Core.Domain.Referral.Services
       _programRequestValidatorCreate = programRequestValidatorCreate ?? throw new ArgumentNullException(nameof(programRequestValidatorCreate));
       _programRequestValidatorUpdate = programRequestValidatorUpdate ?? throw new ArgumentNullException(nameof(programRequestValidatorUpdate));
 
+      _programCountryRepository = programCountryRepository ?? throw new ArgumentNullException(nameof(programCountryRepository));
+      _linkRepository = linkRepository ?? throw new ArgumentNullException(nameof(linkRepository));
       _programRepository = programRepository ?? throw new ArgumentNullException(nameof(programRepository));
       _programPathwayRepository = programPathwayRepository ?? throw new ArgumentNullException(nameof(programPathwayRepository));
       _programPathwayStepRepository = programPathwayStepRepository ?? throw new ArgumentNullException(nameof(programPathwayStepRepository));
       _programPathwayTaskRepository = programPathwayTaskRepository ?? throw new ArgumentNullException(nameof(programPathwayTaskRepository));
     }
+    #endregion
     #endregion
 
     #region Public Membmers
@@ -198,6 +205,15 @@ namespace Yoma.Core.Domain.Referral.Services
       query = query.Where(o => o.ProgramHidden != true); //exclude hidden
 
       query = query.Where(o => !o.ProgramReferrerLimit.HasValue || (o.ProgramReferrerTotal ?? 0) < o.ProgramReferrerLimit); //exclude referrer limit reached
+
+      // Authenticated users: exclude programs where the authenticated user (as referrer) already has an active link when the program does not allow multiple links
+      if (user?.Id != null)
+      {
+        var queryLinks = _linkRepository.Query();
+        var linkStatusActiveId = _linkStatusService.GetByName(ReferralLinkStatus.Active.ToString()).Id;
+
+        query = query.Where(o => o.ProgramMultipleLinksAllowed || !queryLinks.Any(l => l.ProgramId == o.ProgramId && l.UserId == user.Id && l.StatusId == linkStatusActiveId));
+      }
 
       if (resolvedCountryIds != null && resolvedCountryIds.Count != 0)
         query = query.Where(o => resolvedCountryIds.Contains(o.CountryId));
@@ -297,13 +313,14 @@ namespace Yoma.Core.Domain.Referral.Services
         var statusActiveId = _programStatusService.GetByName(ProgramStatus.Active.ToString()).Id;
         var statusExpiredId = _programStatusService.GetByName(ProgramStatus.Expired.ToString()).Id;
 
+        var now = DateTimeOffset.UtcNow;
         var predicate = PredicateBuilder.False<Program>();
         foreach (var state in filter.PublishedStates)
         {
           predicate = state switch
           {
-            PublishedState.NotStarted => predicate.Or(o => o.StatusId == statusActiveId && o.DateStart > DateTimeOffset.UtcNow),
-            PublishedState.Active => predicate.Or(o => o.StatusId == statusActiveId && o.DateStart <= DateTimeOffset.UtcNow),
+            PublishedState.NotStarted => predicate.Or(o => o.StatusId == statusActiveId && o.DateStart > now),
+            PublishedState.Active => predicate.Or(o => o.StatusId == statusActiveId && o.DateStart <= now),
             PublishedState.Expired => predicate.Or(o => o.StatusId == statusExpiredId),
             _ => throw new InvalidOperationException($"Published state '{state}' is not supported"),
           };
@@ -340,6 +357,15 @@ namespace Yoma.Core.Domain.Referral.Services
       //excludeReferrerLimitReached
       if (filter.ExcludeReferrerLimitReached)
         query = query.Where(o => o.ReferrerLimit == null || (o.ReferrerTotal ?? 0) < o.ReferrerLimit);
+
+      //userIdReferrer: authenticated user acting as referrer; exclude programs where referrer already has an active link when multiple links are not allowed
+      if (filter.UserIdReferrer.HasValue)
+      {
+        var statusActiveId = _linkStatusService.GetByName(ReferralLinkStatus.Active.ToString()).Id;
+
+        var queryLinks = _linkRepository.Query();
+        query = query.Where(o => o.MultipleLinksAllowed || !queryLinks.Any(l => l.ProgramId == o.Id && l.UserId == filter.UserIdReferrer.Value && l.StatusId == statusActiveId));
+      }
 
       var results = new ProgramSearchResults();
 

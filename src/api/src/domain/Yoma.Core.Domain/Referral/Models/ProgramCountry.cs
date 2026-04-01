@@ -16,6 +16,8 @@ namespace Yoma.Core.Domain.Referral.Models
 
     public int? ProgramReferrerTotal { get; set; }
 
+    public bool ProgramMultipleLinksAllowed { get; set; }
+
     public Guid CountryId { get; set; }
 
     public string CountryName { get; set; } = null!;
