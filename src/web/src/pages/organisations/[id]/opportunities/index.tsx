@@ -9,6 +9,7 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import iconZlto from "public/images/icon-zlto.svg";
 import { type ParsedUrlQuery } from "querystring";
+import Select from "react-select";
 import { useCallback, useMemo, useState, type ReactElement } from "react";
 import { FaDownload, FaPlusCircle, FaRocket, FaUpload } from "react-icons/fa";
 import { IoIosAdd, IoIosWarning } from "react-icons/io";
@@ -16,11 +17,13 @@ import {
   Status,
   type OpportunitySearchFilterAdmin,
 } from "~/api/models/opportunity";
+import type { SelectOption } from "~/api/models/lookups";
 import { getOpportunitiesAdmin } from "~/api/services/opportunities";
 import {
   OPPORTUNITY_QUERY_KEYS,
   useOrgOpportunitiesListQuery,
   useOrgOpportunityCountQuery,
+  useOpportunityTypesQuery,
 } from "~/hooks/useOpportunityMutations";
 import CustomSlider from "~/components/Carousel/CustomSlider";
 import CustomModal from "~/components/Common/CustomModal";
@@ -53,12 +56,13 @@ interface IParams extends ParsedUrlQuery {
   query?: string;
   page?: string;
   status?: string;
+  typeId?: string;
 }
 
 // ⚠️ SSR
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { id } = context.params as IParams;
-  const { query, page, status, returnUrl } = context.query;
+  const { query, page, status, typeId, returnUrl } = context.query;
   const session = await getServerSession(context.req, context.res, authOptions);
   const queryClient = new QueryClient(config);
   let errorCode = null;
@@ -99,7 +103,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
                       Status.Inactive,
                       Status.Deleted,
                     ],
-        types: null,
+        types: typeId?.toString() ? [typeId.toString()] : null,
         categories: null,
         languages: null,
         countries: null,
@@ -110,7 +114,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       context,
     );
 
-    const searchResultsKey = `${query?.toString()}_${page?.toString()}_${status?.toString()}`;
+    const searchResultsKey = `${query?.toString()}_${page?.toString()}_${status?.toString()}_${typeId?.toString()}`;
     await queryClient.prefetchQuery({
       queryKey: OPPORTUNITY_QUERY_KEYS.orgList(id, searchResultsKey),
       queryFn: () => data,
@@ -133,6 +137,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       query: query ?? null,
       page: page ?? null,
       status: status ?? null,
+      typeId: typeId ?? null,
       theme: theme,
       error: errorCode,
       returnUrl: returnUrl ?? null,
@@ -147,8 +152,9 @@ const Opportunities: NextPageWithLayout<{
   theme: string;
   error?: number;
   status?: string;
+  typeId?: string;
   returnUrl?: string;
-}> = ({ id, query, page, status, error, returnUrl }) => {
+}> = ({ id, query, page, status, typeId, error, returnUrl }) => {
   const router = useRouter();
   const queryClient = useQueryClient();
   const currentOrganisationInactive = useAtomValue(
@@ -156,6 +162,23 @@ const Opportunities: NextPageWithLayout<{
   );
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
+  const { data: opportunityTypesData } = useOpportunityTypesQuery({
+    enabled: !error,
+  });
+
+  const typeOptions = useMemo<SelectOption[]>(
+    () =>
+      (opportunityTypesData ?? []).map((type) => ({
+        value: type.id,
+        label: type.name,
+      })),
+    [opportunityTypesData],
+  );
+
+  const selectedTypeOption = useMemo(
+    () => typeOptions.find((option) => option.value === typeId) ?? null,
+    [typeId, typeOptions],
+  );
 
   // search filter state
   const searchFilter = useMemo<OpportunitySearchFilterAdmin>(
@@ -168,7 +191,7 @@ const Opportunities: NextPageWithLayout<{
       statuses: status
         ? status.toString().split("|")
         : [Status.Active, Status.Expired, Status.Inactive, Status.Deleted],
-      types: null,
+      types: typeId ? [typeId.toString()] : null,
       categories: null,
       languages: null,
       countries: null,
@@ -176,12 +199,12 @@ const Opportunities: NextPageWithLayout<{
       featured: null,
       engagementTypes: null,
     }),
-    [id, page, query, status],
+    [id, page, query, status, typeId],
   );
 
   // 👇 use prefetched queries from server
   // NB: these queries (with ['opportunities', id]) will be invalidated by create/edit operations on other pages
-  const countKeyParts = `${query?.toString()}_${page?.toString()}_${status?.toString()}`;
+  const countKeyParts = `${query?.toString()}_${page?.toString()}_${status?.toString()}_${typeId?.toString()}`;
 
   const { data: searchResults, isLoading: isLoadingSearchResults } =
     useOrgOpportunitiesListQuery(id, searchFilter, countKeyParts, {
@@ -192,6 +215,7 @@ const Opportunities: NextPageWithLayout<{
     id,
     searchFilter.valueContains ?? null,
     null,
+    searchFilter.types,
     countKeyParts,
     { enabled: !error },
   );
@@ -199,6 +223,7 @@ const Opportunities: NextPageWithLayout<{
     id,
     searchFilter.valueContains ?? null,
     Status.Active,
+    searchFilter.types,
     countKeyParts,
     { enabled: !error },
   );
@@ -206,6 +231,7 @@ const Opportunities: NextPageWithLayout<{
     id,
     searchFilter.valueContains ?? null,
     Status.Inactive,
+    searchFilter.types,
     countKeyParts,
     { enabled: !error },
   );
@@ -213,6 +239,7 @@ const Opportunities: NextPageWithLayout<{
     id,
     searchFilter.valueContains ?? null,
     Status.Expired,
+    searchFilter.types,
     countKeyParts,
     { enabled: !error },
   );
@@ -220,6 +247,7 @@ const Opportunities: NextPageWithLayout<{
     id,
     searchFilter.valueContains ?? null,
     Status.Deleted,
+    searchFilter.types,
     countKeyParts,
     { enabled: !error },
   );
@@ -246,6 +274,14 @@ const Opportunities: NextPageWithLayout<{
         searchFilter?.statuses.length !== 4 // hack to prevent all" statuses from being added to the query string
       )
         params.append("status", searchFilter?.statuses.join("|"));
+
+      if (
+        searchFilter.types !== undefined &&
+        searchFilter.types !== null &&
+        searchFilter.types.length > 0
+      ) {
+        params.append("typeId", searchFilter.types[0]!);
+      }
 
       if (
         searchFilter.pageNumber !== null &&
@@ -286,6 +322,15 @@ const Opportunities: NextPageWithLayout<{
   const handlePagerChange = useCallback(
     (value: number) => {
       searchFilter.pageNumber = value;
+      redirectWithSearchFilterParams(searchFilter);
+    },
+    [searchFilter, redirectWithSearchFilterParams],
+  );
+
+  const onTypeChange = useCallback(
+    (option: SelectOption | null) => {
+      searchFilter.pageNumber = 1;
+      searchFilter.types = option ? [option.value] : null;
       redirectWithSearchFilterParams(searchFilter);
     },
     [searchFilter, redirectWithSearchFilterParams],
@@ -444,7 +489,31 @@ const Opportunities: NextPageWithLayout<{
           <div className="flex w-full grow flex-col items-center justify-between gap-4 sm:justify-end md:flex-row">
             <div className="flex w-full grow flex-row flex-wrap gap-2">
               <SearchInput defaultValue={query} onSearch={onSearch} />
+              <div className="w-full min-w-[220px] sm:w-72">
+                <Select
+                  instanceId="opportunityTypeFilter"
+                  isClearable={true}
+                  options={typeOptions}
+                  value={selectedTypeOption}
+                  onChange={(option) =>
+                    onTypeChange(option as SelectOption | null)
+                  }
+                  classNames={{
+                    control: () =>
+                      "input w-full !border-gray pr-0 pl-2 h-fit py-1 bg-white",
+                  }}
+                  styles={{
+                    placeholder: (base) => ({
+                      ...base,
+                      color: "#A3A6AF",
+                    }),
+                  }}
+                  placeholder="Filter by type..."
+                  inputId="input_opportunityTypeFilter"
+                />
+              </div>
             </div>
+
             {/* BUTTONS */}
             <div className="flex w-full flex-row flex-nowrap items-center justify-between gap-2 sm:justify-end md:w-auto">
               <Link
@@ -495,7 +564,8 @@ const Opportunities: NextPageWithLayout<{
             {searchResults &&
               searchResults.items?.length === 0 &&
               !query &&
-              !status && (
+              !status &&
+              !typeId && (
                 <div className="flex h-fit flex-col items-center rounded-lg bg-white pb-8 md:pb-16">
                   <NoRowsMessage
                     title={"Ready to share amazing opportunities?"}
@@ -524,7 +594,7 @@ const Opportunities: NextPageWithLayout<{
               )}
             {searchResults &&
               searchResults.items?.length === 0 &&
-              (query || status) && (
+              (query || status || typeId) && (
                 <div className="py-32x flex flex-col place-items-center">
                   <NoRowsMessage
                     title={"No opportunities found"}

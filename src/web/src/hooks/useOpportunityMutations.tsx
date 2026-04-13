@@ -242,6 +242,7 @@ export function useOrgOpportunityCountQuery(
   orgId: string,
   valueContains: string | null,
   status: Status | null,
+  types: string[] | null,
   keyParts: string,
   options?: { enabled?: boolean },
 ) {
@@ -257,7 +258,7 @@ export function useOrgOpportunityCountQuery(
           status !== null
             ? [status]
             : [Status.Active, Status.Expired, Status.Inactive, Status.Deleted],
-        types: null,
+        types,
         categories: null,
         languages: null,
         countries: null,
