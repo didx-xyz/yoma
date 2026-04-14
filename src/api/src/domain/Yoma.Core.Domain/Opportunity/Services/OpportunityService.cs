@@ -877,13 +877,26 @@ namespace Yoma.Core.Domain.Opportunity.Services
         //options
         if (filter.CommitmentInterval.OptionsParsed != null && filter.CommitmentInterval.OptionsParsed.Count != 0)
         {
-          var intervalIds = filter.CommitmentInterval.OptionsParsed.Select(item => item.Id).Distinct().ToList();
-          var intervalCounts = filter.CommitmentInterval.OptionsParsed.Select(item => item.Count).Distinct().ToList();
-          query = query.Where(o =>
-            o.CommitmentIntervalId.HasValue &&
-            o.CommitmentIntervalCount.HasValue &&
-            intervalIds.Contains(o.CommitmentIntervalId.Value) &&
-            intervalCounts.Contains(o.CommitmentIntervalCount.Value));
+          var distinctItems = filter.CommitmentInterval.OptionsParsed
+            .Select(item => new { item.Id, item.Count })
+            .Distinct()
+            .ToList();
+
+          var predicate = PredicateBuilder.False<Models.Opportunity>();
+
+          foreach (var item in distinctItems)
+          {
+            var intervalId = item.Id;
+            var intervalCount = item.Count;
+
+            predicate = predicate.Or(o =>
+              o.CommitmentIntervalId.HasValue &&
+              o.CommitmentIntervalCount.HasValue &&
+              o.CommitmentIntervalId.Value == intervalId &&
+              o.CommitmentIntervalCount.Value == intervalCount);
+          }
+
+          query = query.Where(predicate);
         }
 
         //Interval
