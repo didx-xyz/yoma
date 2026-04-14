@@ -46,6 +46,7 @@ import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import {
   DATE_FORMAT_HUMAN,
+  OPPORTUNITY_TYPE_JOB,
   SETTING_USER_POPUP_LEAVINGYOMA,
 } from "~/lib/constants";
 import analytics from "~/lib/analytics";
@@ -66,6 +67,7 @@ const OpportunityPublicDetails: React.FC<{
 }> = ({ user, opportunityInfo, error, preview }) => {
   const queryClient = useQueryClient();
   const hasTrackedView = useRef(false);
+  const isJobOpportunity = opportunityInfo.type === OPPORTUNITY_TYPE_JOB;
   const [loginDialogVisible, setLoginDialogVisible] = useState(false);
   const [gotoOpportunityDialogVisible, setGotoOpportunityDialogVisible] =
     useState(false);
@@ -867,37 +869,47 @@ const OpportunityPublicDetails: React.FC<{
                     ))}
                   </div>
                 </div>
-                <div className="divider mt-2" />
-                <div>
-                  <div className="flex flex-row items-center gap-1 text-sm font-bold">
-                    <Image
-                      src={iconClock}
-                      alt="Icon Clock"
-                      width={23}
-                      className="h-auto"
-                      sizes="100vw"
-                      priority={true}
-                    />
+                {!isJobOpportunity &&
+                  opportunityInfo.commitmentIntervalCount != null &&
+                  opportunityInfo.commitmentInterval && (
+                    <>
+                      <div className="divider mt-2" />
+                      <div>
+                        <div className="flex flex-row items-center gap-1 text-sm font-bold">
+                          <Image
+                            src={iconClock}
+                            alt="Icon Clock"
+                            width={23}
+                            className="h-auto"
+                            sizes="100vw"
+                            priority={true}
+                          />
 
-                    <span className="ml-1">How much time you will need</span>
-                  </div>
+                          <span className="ml-1">
+                            How much time you will need
+                          </span>
+                        </div>
 
-                  <div className="my-2 text-sm">
-                    {`This task should not take you more than ${
-                      opportunityInfo.commitmentIntervalCount
-                    } ${opportunityInfo.commitmentInterval}${
-                      opportunityInfo.commitmentIntervalCount > 1 ? "s. " : ". "
-                    }`}
-                    <br />
-                    <p className="mt-2">
-                      The estimated times provided are just a guideline. You
-                      have as much time as you need to complete the tasks at
-                      your own pace. Focus on engaging with the materials and
-                      doing your best without feeling rushed by the time
-                      estimates.
-                    </p>
-                  </div>
-                </div>
+                        <div className="my-2 text-sm">
+                          {`This task should not take you more than ${
+                            opportunityInfo.commitmentIntervalCount
+                          } ${opportunityInfo.commitmentInterval}${
+                            opportunityInfo.commitmentIntervalCount > 1
+                              ? "s. "
+                              : ". "
+                          }`}
+                          <br />
+                          <p className="mt-2">
+                            The estimated times provided are just a guideline.
+                            You have as much time as you need to complete the
+                            tasks at your own pace. Focus on engaging with the
+                            materials and doing your best without feeling rushed
+                            by the time estimates.
+                          </p>
+                        </div>
+                      </div>
+                    </>
+                  )}
                 <div className="divider mt-2" />
                 <div>
                   <div className="flex flex-row items-center gap-1 text-sm font-bold">

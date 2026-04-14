@@ -1,4 +1,5 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
+import axios from "axios";
 import { useAtomValue } from "jotai";
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
@@ -18,14 +19,13 @@ import {
 import { IoShareSocialOutline } from "react-icons/io5";
 import Moment from "react-moment";
 import {
-  LinkAction,
   ActionLinkEntityType,
   ActionLinkStatus,
+  LinkAction,
   type LinkInfo,
   type LinkSearchFilter,
-  type LinkSearchResult,
 } from "~/api/models/actionLinks";
-import { getLinkById, searchLinks } from "~/api/services/actionLinks";
+import { getLinkById } from "~/api/services/actionLinks";
 import CustomSlider from "~/components/Carousel/CustomSlider";
 import CustomModal from "~/components/Common/CustomModal";
 import MainLayout from "~/components/Layout/Main";
@@ -42,6 +42,11 @@ import LimitedFunctionalityBadge from "~/components/Status/LimitedFunctionalityB
 import { Loading } from "~/components/Status/Loading";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
+import {
+  ACTION_LINK_QUERY_KEYS,
+  useOrgLinkCountQuery,
+  useOrgLinksListQuery,
+} from "~/hooks/useActionLinkMutations";
 import { DATE_FORMAT_HUMAN, PAGE_SIZE } from "~/lib/constants";
 import { currentOrganisationInactiveAtom } from "~/lib/store";
 import { getSafeUrl, getThemeFromRole } from "~/lib/utils";
@@ -56,6 +61,11 @@ interface IParams extends ParsedUrlQuery {
   entities?: string;
   page?: string;
 }
+
+const getErrorStatus = (error: unknown): number | null => {
+  if (!axios.isAxiosError(error)) return null;
+  return error.response?.status ?? null;
+};
 
 // ⚠️ SSR
 export async function getServerSideProps(context: GetServerSidePropsContext) {
@@ -125,181 +135,85 @@ const Links: NextPageWithLayout<{
   >(null);
   const [isLoading] = useState(false);
 
-  // 👇 use prefetched queries from server
-  const { data: links } = useQuery<LinkSearchResult>({
-    queryKey: [
-      "Links",
-      id,
-      type ?? "",
-      action ?? "",
-      statuses ?? "",
-      entities ?? "",
-      valueContains ?? "",
-      page ?? "",
-    ],
-    queryFn: () =>
-      searchLinks({
-        pageNumber: page ? parseInt(page.toString()) : 1,
-        pageSize: PAGE_SIZE,
-        entityType: type ?? ActionLinkEntityType.Opportunity,
-        action: action ?? LinkAction.Verify,
-        entities: entities ? entities.toString().split("|") : null,
-        organizations: [id],
-        statuses: statuses ? statuses.toString().split("|") : null,
-        valueContains: valueContains ?? null,
-      }),
-    enabled: !error,
-  });
-  const { data: totalCountAll } = useQuery<number>({
-    queryKey: [
-      "Links_TotalCount",
-      id,
-      null,
-      type ?? "",
-      action ?? "",
-      entities ?? "",
-      valueContains ?? "",
-    ],
-    queryFn: () =>
-      searchLinks({
-        pageNumber: page ? parseInt(page.toString()) : 1,
-        pageSize: PAGE_SIZE,
-        entityType: type ?? ActionLinkEntityType.Opportunity,
-        action: action ?? LinkAction.Verify,
-        entities: entities ? entities.toString().split("|") : null,
-        organizations: [id],
-        statuses: null,
-        valueContains: valueContains ?? null,
-      }).then((data) => data.totalCount ?? 0),
-    enabled: !error,
-  });
-  const { data: totalCountActive } = useQuery<number>({
-    queryKey: [
-      "Links_TotalCount",
-      id,
-      ActionLinkStatus.Active,
-      type ?? "",
-      action ?? "",
-      entities ?? "",
-      valueContains ?? "",
-    ],
-    queryFn: () =>
-      searchLinks({
-        pageNumber: page ? parseInt(page.toString()) : 1,
-        pageSize: PAGE_SIZE,
-        entityType: type ?? ActionLinkEntityType.Opportunity,
-        action: action ?? LinkAction.Verify,
-        entities: entities ? entities.toString().split("|") : null,
-        organizations: [id],
-        statuses: [ActionLinkStatus.Active],
-        valueContains: valueContains ?? null,
-      }).then((data) => data.totalCount ?? 0),
-    enabled: !error,
-  });
-  const { data: totalCountInactive } = useQuery<number>({
-    queryKey: [
-      "Links_TotalCount",
-      id,
-      ActionLinkStatus.Inactive,
-      type ?? "",
-      action ?? "",
-      entities ?? "",
-      valueContains ?? "",
-    ],
-    queryFn: () =>
-      searchLinks({
-        pageNumber: page ? parseInt(page.toString()) : 1,
-        pageSize: PAGE_SIZE,
-        entityType: type ?? ActionLinkEntityType.Opportunity,
-        action: action ?? LinkAction.Verify,
-        entities: entities ? entities.toString().split("|") : null,
-        organizations: [id],
-        statuses: [ActionLinkStatus.Inactive],
-        valueContains: valueContains ?? null,
-      }).then((data) => data.totalCount ?? 0),
-    enabled: !error,
-  });
-  const { data: totalCountExpired } = useQuery<number>({
-    queryKey: [
-      "Links_TotalCount",
-      id,
-      ActionLinkStatus.Expired,
-      type ?? "",
-      action ?? "",
-      entities ?? "",
-      valueContains ?? "",
-    ],
-    queryFn: () =>
-      searchLinks({
-        pageNumber: page ? parseInt(page.toString()) : 1,
-        pageSize: PAGE_SIZE,
-        entityType: type ?? ActionLinkEntityType.Opportunity,
-        action: action ?? LinkAction.Verify,
-        entities: entities ? entities.toString().split("|") : null,
-        organizations: [id],
-        statuses: [ActionLinkStatus.Expired],
-        valueContains: valueContains ?? null,
-      }).then((data) => data.totalCount ?? 0),
-    enabled: !error,
-  });
-  const { data: totalCountLimitReached } = useQuery<number>({
-    queryKey: [
-      "Links_TotalCount",
-      id,
-      ActionLinkStatus.LimitReached,
-      type ?? "",
-      action ?? "",
-      entities ?? "",
-      valueContains ?? "",
-    ],
-    queryFn: () =>
-      searchLinks({
-        pageNumber: page ? parseInt(page.toString()) : 1,
-        pageSize: PAGE_SIZE,
-        entityType: type ?? ActionLinkEntityType.Opportunity,
-        action: action ?? LinkAction.Verify,
-        entities: entities ? entities.toString().split("|") : null,
-        organizations: [id],
-        statuses: [ActionLinkStatus.LimitReached],
-        valueContains: valueContains ?? null,
-      }).then((data) => data.totalCount ?? 0),
-    enabled: !error,
-  });
-  const { data: totalCountDeleted } = useQuery<number>({
-    queryKey: [
-      "Links_TotalCount",
-      id,
-      ActionLinkStatus.Deleted,
-      type ?? "",
-      action ?? "",
-      entities ?? "",
-      valueContains ?? "",
-    ],
-    queryFn: () =>
-      searchLinks({
-        pageNumber: page ? parseInt(page.toString()) : 1,
-        pageSize: PAGE_SIZE,
-        entityType: type ?? ActionLinkEntityType.Opportunity,
-        action: action ?? LinkAction.Verify,
-        entities: entities ? entities.toString().split("|") : null,
-        organizations: [id],
-        statuses: [ActionLinkStatus.Deleted],
-        valueContains: valueContains ?? null,
-      }).then((data) => data.totalCount ?? 0),
-    enabled: !error,
-  });
+  const searchFilter = useMemo<LinkSearchFilter>(
+    () => ({
+      pageNumber: page ? parseInt(page.toString()) : 1,
+      pageSize: PAGE_SIZE,
+      entityType: type ?? ActionLinkEntityType.Opportunity,
+      action: action ?? LinkAction.Verify,
+      entities: entities ? entities.toString().split("|") : null,
+      statuses: statuses ? statuses.toString().split("|") : null,
+      organizations: [id],
+      valueContains: valueContains ?? null,
+    }),
+    [action, entities, id, page, statuses, type, valueContains],
+  );
 
-  // search filter state
-  const [searchFilter] = useState<LinkSearchFilter>({
-    pageNumber: page ? parseInt(page.toString()) : 1,
-    pageSize: PAGE_SIZE,
-    entityType: type ?? ActionLinkEntityType.Opportunity,
-    action: action ?? LinkAction.Verify,
-    entities: entities ? entities.toString().split("|") : null,
-    statuses: statuses ? statuses.toString().split("|") : null,
-    organizations: [id],
-    valueContains: valueContains ?? null,
-  });
+  const countKeyParts = `${type ?? ""}_${action ?? ""}`;
+  const searchResultsKey = `${type ?? ""}_${action ?? ""}_${statuses ?? ""}_${entities ?? ""}_${valueContains ?? ""}_${page ?? ""}`;
+
+  const { data: links, error: linksError } = useOrgLinksListQuery(
+    id,
+    searchFilter,
+    searchResultsKey,
+    {
+      enabled: !error,
+    },
+  );
+  const resolvedError = error ?? getErrorStatus(linksError) ?? undefined;
+  const { data: totalCountAll } = useOrgLinkCountQuery(
+    id,
+    searchFilter.entityType,
+    searchFilter.action,
+    null,
+    countKeyParts,
+    { enabled: !error },
+  );
+  const { data: totalCountActive } = useOrgLinkCountQuery(
+    id,
+    searchFilter.entityType,
+    searchFilter.action,
+    ActionLinkStatus.Active,
+    countKeyParts,
+    { enabled: !error },
+  );
+  const { data: totalCountInactive } = useOrgLinkCountQuery(
+    id,
+    searchFilter.entityType,
+    searchFilter.action,
+    ActionLinkStatus.Inactive,
+    countKeyParts,
+    { enabled: !error },
+  );
+  const { data: totalCountExpired } = useOrgLinkCountQuery(
+    id,
+    searchFilter.entityType,
+    searchFilter.action,
+    ActionLinkStatus.Expired,
+    countKeyParts,
+    { enabled: !error },
+  );
+  const { data: totalCountLimitReached } = useOrgLinkCountQuery(
+    id,
+    searchFilter.entityType,
+    searchFilter.action,
+    ActionLinkStatus.LimitReached,
+    countKeyParts,
+    { enabled: !error },
+  );
+  const { data: totalCountDeleted } = useOrgLinkCountQuery(
+    id,
+    searchFilter.entityType,
+    searchFilter.action,
+    ActionLinkStatus.Deleted,
+    countKeyParts,
+    { enabled: !error },
+  );
+
+  const linkDetailKey = useCallback(
+    (linkId: string) => ACTION_LINK_QUERY_KEYS.detail(linkId, true),
+    [],
+  );
 
   // 🎈 FUNCTIONS
   const getSearchFilterAsQueryString = useCallback(
@@ -373,22 +287,21 @@ const Links: NextPageWithLayout<{
       // fetch the QR code
       queryClient
         .fetchQuery({
-          queryKey: ["OpportunityLink", item.id],
+          queryKey: linkDetailKey(item.id),
           queryFn: () => getLinkById(item.id, true),
         })
         .then(() => {
           // get the QR code from the cache
-          const qrCode = queryClient.getQueryData<LinkInfo | null>([
-            "OpportunityLink",
-            item.id,
-          ]);
+          const qrCode = queryClient.getQueryData<LinkInfo | null>(
+            linkDetailKey(item.id),
+          );
 
           // show the QR code
           setQRCodeImageData(qrCode?.qrCodeBase64);
           setShowQRCode(true);
         });
     },
-    [queryClient],
+    [linkDetailKey, queryClient],
   );
 
   const renderAddLinkButton = useCallback(() => {
@@ -425,9 +338,9 @@ const Links: NextPageWithLayout<{
     );
   }, [type, action, statuses, entities, valueContains]);
 
-  if (error) {
-    if (error === 401) return <Unauthenticated />;
-    else if (error === 403) return <Unauthorized />;
+  if (resolvedError) {
+    if (resolvedError === 401) return <Unauthenticated />;
+    else if (resolvedError === 403) return <Unauthorized />;
     else return <InternalServerError />;
   }
 

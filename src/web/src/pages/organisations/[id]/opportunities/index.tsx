@@ -1,4 +1,4 @@
-import { QueryClient, dehydrate, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { useAtomValue } from "jotai";
 import { type GetServerSidePropsContext } from "next";
@@ -9,32 +9,25 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import iconZlto from "public/images/icon-zlto.svg";
 import { type ParsedUrlQuery } from "querystring";
-import Select from "react-select";
 import { useCallback, useMemo, useState, type ReactElement } from "react";
 import { FaDownload, FaPlusCircle, FaRocket, FaUpload } from "react-icons/fa";
 import { IoIosAdd, IoIosWarning } from "react-icons/io";
+import Select from "react-select";
+import type { SelectOption } from "~/api/models/lookups";
 import {
   Status,
   type OpportunitySearchFilterAdmin,
 } from "~/api/models/opportunity";
-import type { SelectOption } from "~/api/models/lookups";
-import { getOpportunitiesAdmin } from "~/api/services/opportunities";
-import {
-  OPPORTUNITY_QUERY_KEYS,
-  useOrgOpportunitiesListQuery,
-  useOrgOpportunityCountQuery,
-  useOpportunityTypesQuery,
-} from "~/hooks/useOpportunityMutations";
 import CustomSlider from "~/components/Carousel/CustomSlider";
-import DropdownMenu from "~/components/Common/DropdownMenu";
 import CustomModal from "~/components/Common/CustomModal";
+import DropdownMenu from "~/components/Common/DropdownMenu";
 import MainLayout from "~/components/Layout/Main";
 import NoRowsMessage from "~/components/NoRowsMessage";
 import OpportunityExport from "~/components/Opportunity/Admin/OpportunityExport";
 import { OpportunityImport } from "~/components/Opportunity/Admin/OpportunityImport";
 import {
-  OpportunityActions,
   OpportunityActionOptions,
+  OpportunityActions,
 } from "~/components/Opportunity/OpportunityActions";
 import OpportunityStatus from "~/components/Opportunity/OpportunityStatus";
 import { PageBackground } from "~/components/PageBackground";
@@ -45,8 +38,13 @@ import LimitedFunctionalityBadge from "~/components/Status/LimitedFunctionalityB
 import { LoadingSkeleton } from "~/components/Status/LoadingSkeleton";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
+import {
+  OPPORTUNITY_QUERY_KEYS,
+  useOpportunityTypesQuery,
+  useOrgOpportunitiesListQuery,
+  useOrgOpportunityCountQuery,
+} from "~/hooks/useOpportunityMutations";
 import { PAGE_SIZE } from "~/lib/constants";
-import { config } from "~/lib/react-query-config";
 import { currentOrganisationInactiveAtom } from "~/lib/store";
 import { getSafeUrl, getThemeFromRole } from "~/lib/utils";
 import { type NextPageWithLayout } from "~/pages/_app";
@@ -60,13 +58,16 @@ interface IParams extends ParsedUrlQuery {
   typeId?: string;
 }
 
+const getErrorStatus = (error: unknown): number | null => {
+  if (!axios.isAxiosError(error)) return null;
+  return error.response?.status ?? null;
+};
+
 // ⚠️ SSR
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { id } = context.params as IParams;
   const { query, page, status, typeId, returnUrl } = context.query;
   const session = await getServerSession(context.req, context.res, authOptions);
-  const queryClient = new QueryClient(config);
-  let errorCode = null;
 
   // 👇 ensure authenticated
   if (!session) {
@@ -80,67 +81,15 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   // 👇 set theme based on role
   const theme = getThemeFromRole(session, id);
 
-  try {
-    // 👇 prefetch queries on server
-    const data = await getOpportunitiesAdmin(
-      {
-        organizations: [id],
-        pageNumber: page ? parseInt(page.toString()) : 1,
-        pageSize: PAGE_SIZE,
-        startDate: null,
-        endDate: null,
-        statuses:
-          status === "Active"
-            ? [Status.Active]
-            : status === "Inactive"
-              ? [Status.Inactive]
-              : status === "Expired"
-                ? [Status.Expired]
-                : status === "Deleted"
-                  ? [Status.Deleted]
-                  : [
-                      Status.Active,
-                      Status.Expired,
-                      Status.Inactive,
-                      Status.Deleted,
-                    ],
-        types: typeId?.toString() ? [typeId.toString()] : null,
-        categories: null,
-        languages: null,
-        countries: null,
-        valueContains: query?.toString() ?? null,
-        featured: null,
-        engagementTypes: null,
-      },
-      context,
-    );
-
-    const searchResultsKey = `${query?.toString()}_${page?.toString()}_${status?.toString()}_${typeId?.toString()}`;
-    await queryClient.prefetchQuery({
-      queryKey: OPPORTUNITY_QUERY_KEYS.orgList(id, searchResultsKey),
-      queryFn: () => data,
-    });
-  } catch (error) {
-    if (axios.isAxiosError(error) && error.response?.status) {
-      if (error.response.status === 404) {
-        return {
-          notFound: true,
-          props: { theme: theme },
-        };
-      } else errorCode = error.response.status;
-    } else errorCode = 500;
-  }
-
   return {
     props: {
-      dehydratedState: dehydrate(queryClient),
       id: id,
       query: query ?? null,
       page: page ?? null,
       status: status ?? null,
       typeId: typeId ?? null,
       theme: theme,
-      error: errorCode,
+      error: null,
       returnUrl: returnUrl ?? null,
     },
   };
@@ -207,10 +156,15 @@ const Opportunities: NextPageWithLayout<{
   // NB: these queries (with ['opportunities', id]) will be invalidated by create/edit operations on other pages
   const countKeyParts = `${query?.toString()}_${page?.toString()}_${status?.toString()}_${typeId?.toString()}`;
 
-  const { data: searchResults, isLoading: isLoadingSearchResults } =
-    useOrgOpportunitiesListQuery(id, searchFilter, countKeyParts, {
-      enabled: !error,
-    });
+  const {
+    data: searchResults,
+    isLoading: isLoadingSearchResults,
+    error: searchResultsError,
+  } = useOrgOpportunitiesListQuery(id, searchFilter, countKeyParts, {
+    enabled: !error,
+  });
+  const resolvedError =
+    error ?? getErrorStatus(searchResultsError) ?? undefined;
 
   const { data: totalCountAll } = useOrgOpportunityCountQuery(
     id,
@@ -338,9 +292,9 @@ const Opportunities: NextPageWithLayout<{
   );
   //#endregion Event Handlers
 
-  if (error) {
-    if (error === 401) return <Unauthenticated />;
-    else if (error === 403) return <Unauthorized />;
+  if (resolvedError) {
+    if (resolvedError === 401) return <Unauthenticated />;
+    else if (resolvedError === 403) return <Unauthorized />;
     else return <InternalServerError />;
   }
 

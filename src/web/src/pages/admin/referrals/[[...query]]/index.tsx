@@ -1,10 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
-import { useSession } from "next-auth/react";
+import { type GetServerSidePropsContext } from "next";
+import { getServerSession } from "next-auth";
 import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { useCallback, useEffect, useState, type ReactElement } from "react";
+import { useCallback, useMemo, type ReactElement } from "react";
 import { FaPlusCircle } from "react-icons/fa";
 import {
   IoEyeOffOutline,
@@ -32,7 +33,6 @@ import {
 } from "~/components/Referrals/AdminReferralProgramSearchFilter";
 import { ProgramStatusBadge } from "~/components/Referrals/ProgramStatusBadge";
 import { InternalServerError } from "~/components/Status/InternalServerError";
-import { Loading } from "~/components/Status/Loading";
 import { LoadingSkeleton } from "~/components/Status/LoadingSkeleton";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
@@ -43,80 +43,91 @@ import {
 import { DATE_FORMAT_HUMAN, PAGE_SIZE, THEME_BLUE } from "~/lib/constants";
 import { getSafeUrl } from "~/lib/utils";
 import { type NextPageWithLayout } from "~/pages/_app";
-
-const parseDelimitedQueryParam = (
-  value: string | string[] | undefined,
-): string[] | null => {
-  if (value == null) return null;
-
-  const rawParts = Array.isArray(value) ? value : value.split(/[|,]/);
-  const parts = rawParts.map((p) => p.trim()).filter(Boolean);
-  return parts.length > 0 ? parts : null;
-};
-
-const serializeDelimitedQueryParam = (
-  value: string[] | null | undefined,
-): string | null => {
-  if (!value || value.length === 0) return null;
-  return value.join("|");
-};
+import { authOptions } from "~/server/auth";
 
 const getErrorStatus = (error: unknown): number | null => {
   if (!axios.isAxiosError(error)) return null;
   return error.response?.status ?? null;
 };
 
-const ReferralPrograms: NextPageWithLayout = () => {
-  const router = useRouter();
-  const { status: sessionStatus } = useSession();
-  const query =
-    typeof router.query.query === "string" ? router.query.query : undefined;
-  const page =
-    typeof router.query.page === "string" ? router.query.page : undefined;
-  const status =
-    typeof router.query.status === "string" ? router.query.status : undefined;
-  const valueContains =
-    typeof router.query.valueContains === "string"
-      ? router.query.valueContains
-      : undefined;
-  const countries = router.query.countries as string | string[] | undefined;
-  const dateStart =
-    typeof router.query.dateStart === "string"
-      ? router.query.dateStart
-      : undefined;
-  const dateEnd =
-    typeof router.query.dateEnd === "string" ? router.query.dateEnd : undefined;
-  const returnUrl =
-    typeof router.query.returnUrl === "string"
-      ? router.query.returnUrl
-      : undefined;
+// SSR is used only to normalize query params and auth state.
+export async function getServerSideProps(context: GetServerSidePropsContext) {
+  const session = await getServerSession(context.req, context.res, authOptions);
+  const {
+    query,
+    page,
+    status,
+    valueContains,
+    countries,
+    dateStart,
+    dateEnd,
+    returnUrl,
+  } = context.query;
 
-  const parsedCountries = parseDelimitedQueryParam(
-    countries as string | string[] | undefined,
-  );
-  const countriesKeyPart = serializeDelimitedQueryParam(parsedCountries);
+  if (!session) {
+    return {
+      props: {
+        error: 401,
+      },
+    };
+  }
+
+  return {
+    props: {
+      query: query ?? null,
+      page: page ?? null,
+      status: status ?? null,
+      valueContains: valueContains ?? null,
+      countries: countries ?? null,
+      dateStart: dateStart ?? null,
+      dateEnd: dateEnd ?? null,
+      returnUrl: returnUrl ?? null,
+      error: null,
+    },
+  };
+}
+
+const ReferralPrograms: NextPageWithLayout<{
+  query?: string;
+  page?: string;
+  status?: string;
+  valueContains?: string;
+  countries?: string;
+  dateStart?: string;
+  dateEnd?: string;
+  returnUrl?: string;
+  error?: number | null;
+}> = ({
+  query,
+  page,
+  status,
+  valueContains,
+  countries,
+  dateStart,
+  dateEnd,
+  returnUrl,
+  error,
+}) => {
+  const router = useRouter();
+  const parsedCountries = useMemo(() => {
+    if (!countries) return null;
+
+    const parts = countries.split(/[|,]/);
+    const filteredParts = parts
+      .map((country) => country.trim())
+      .filter(Boolean);
+    return filteredParts.length > 0 ? filteredParts : null;
+  }, [countries]);
+  const countriesKeyPart = countries ?? null;
 
   const { data: lookups_countries } = useQuery<Country[]>({
     queryKey: ["countries"],
     queryFn: () => getCountries(),
-    enabled: sessionStatus === "authenticated" && router.isReady,
+    enabled: !error,
   });
 
-  // search filter state
-  const [searchFilter, setSearchFilter] = useState<ProgramSearchFilterAdmin>({
-    pageNumber: page ? parseInt(page.toString()) : 1,
-    pageSize: PAGE_SIZE,
-    countries: parsedCountries,
-    valueContains: valueContains ?? null,
-    statuses: status ? [status] : null,
-    dateStart: dateStart ?? null,
-    dateEnd: dateEnd ?? null,
-  });
-
-  useEffect(() => {
-    if (!router.isReady) return;
-
-    setSearchFilter({
+  const searchFilter = useMemo<ProgramSearchFilterAdmin>(
+    () => ({
       pageNumber: page ? parseInt(page.toString()) : 1,
       pageSize: PAGE_SIZE,
       countries: parsedCountries,
@@ -124,58 +135,52 @@ const ReferralPrograms: NextPageWithLayout = () => {
       statuses: status ? [status] : null,
       dateStart: dateStart ?? null,
       dateEnd: dateEnd ?? null,
-    });
-  }, [
-    router.isReady,
-    page,
-    parsedCountries,
-    valueContains,
-    status,
-    dateStart,
-    dateEnd,
-  ]);
+    }),
+    [page, parsedCountries, valueContains, status, dateStart, dateEnd],
+  );
 
-  // 👇 use prefetched queries from server
-  const searchResultsKey = `${query?.toString()}_${page?.toString()}_${status?.toString()}_${valueContains?.toString()}_${dateStart?.toString()}_${dateEnd?.toString()}_${countriesKeyPart ?? ""}`;
+  // 👇 use client-side queries
+  const searchResultsKey = `${query ?? ""}_${page ?? ""}_${status ?? ""}_${valueContains ?? ""}_${dateStart ?? ""}_${dateEnd ?? ""}_${countriesKeyPart ?? ""}`;
 
   const {
     data: searchResults,
     isLoading: isLoadingSearchResults,
     error: searchResultsError,
   } = useReferralProgramsAdminQuery(searchFilter, searchResultsKey, {
-    enabled: sessionStatus === "authenticated" && router.isReady,
+    enabled: !error,
   });
 
   // Get counts by status (without additional filters)
   const { data: totalCountAll } = useReferralProgramCountQuery(null, {
-    enabled: sessionStatus === "authenticated" && router.isReady,
+    enabled: !error,
   });
   const { data: totalCountActive } = useReferralProgramCountQuery(
     ProgramStatus.Active,
-    { enabled: sessionStatus === "authenticated" && router.isReady },
+    { enabled: !error },
   );
   const { data: totalCountInactive } = useReferralProgramCountQuery(
     ProgramStatus.Inactive,
-    { enabled: sessionStatus === "authenticated" && router.isReady },
+    { enabled: !error },
   );
   const { data: totalCountExpired } = useReferralProgramCountQuery(
     ProgramStatus.Expired,
-    { enabled: sessionStatus === "authenticated" && router.isReady },
+    { enabled: !error },
   );
   const { data: totalCountDeleted } = useReferralProgramCountQuery(
     ProgramStatus.Deleted,
-    { enabled: sessionStatus === "authenticated" && router.isReady },
+    { enabled: !error },
   );
   const { data: totalCountLimitReached } = useReferralProgramCountQuery(
     ProgramStatus.LimitReached,
-    { enabled: sessionStatus === "authenticated" && router.isReady },
+    { enabled: !error },
   );
   const { data: totalCountUnCompletable } = useReferralProgramCountQuery(
     ProgramStatus.UnCompletable,
-    { enabled: sessionStatus === "authenticated" && router.isReady },
+    { enabled: !error },
   );
 
-  const error = getErrorStatus(searchResultsError);
+  const resolvedError =
+    error ?? getErrorStatus(searchResultsError) ?? undefined;
 
   // 🎈 FUNCTIONS
   const getSearchFilterAsQueryString = useCallback(
@@ -230,7 +235,6 @@ const ReferralPrograms: NextPageWithLayout = () => {
   const handlePagerChange = useCallback(
     (value: number) => {
       const newFilter = { ...searchFilter, pageNumber: value };
-      setSearchFilter(newFilter);
       redirectWithSearchFilterParams(newFilter);
     },
     [searchFilter, redirectWithSearchFilterParams],
@@ -239,24 +243,15 @@ const ReferralPrograms: NextPageWithLayout = () => {
   const onSearchInputSubmit = useCallback(
     (filter: ProgramSearchFilterAdmin) => {
       const newFilter = { ...filter, pageNumber: 1 };
-      setSearchFilter(newFilter);
       redirectWithSearchFilterParams(newFilter);
     },
     [redirectWithSearchFilterParams],
   );
   //#endregion Event Handlers
 
-  if (sessionStatus === "loading" || !router.isReady) {
-    return <Loading />;
-  }
-
-  if (sessionStatus === "unauthenticated") {
-    return <Unauthenticated />;
-  }
-
-  if (error) {
-    if (error === 401) return <Unauthenticated />;
-    else if (error === 403) return <Unauthorized />;
+  if (resolvedError) {
+    if (resolvedError === 401) return <Unauthenticated />;
+    else if (resolvedError === 403) return <Unauthorized />;
     else return <InternalServerError />;
   }
 

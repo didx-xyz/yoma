@@ -9,6 +9,11 @@ import type {
   TimeInterval,
 } from "~/api/models/lookups";
 import {
+  Action,
+  VerificationStatus,
+  type MyOpportunitySearchFilterAdmin,
+} from "~/api/models/myOpportunity";
+import {
   Status,
   type Opportunity,
   type OpportunityCategory,
@@ -43,6 +48,7 @@ import {
   updateOpportunityHidden,
   updateOpportunityStatus,
 } from "~/api/services/opportunities";
+import { searchMyOpportunitiesAdmin } from "~/api/services/myOpportunities";
 import { getSchemas } from "~/api/services/credentials";
 import { getOrganisationById } from "~/api/services/organisations";
 import { ApiErrors } from "~/components/Status/ApiErrors";
@@ -67,6 +73,22 @@ export const OPPORTUNITY_QUERY_KEYS = {
   /** Org opportunities status-tab count */
   orgListCount: (orgId: string, status: Status | null, keyParts: string) =>
     ["opportunities", orgId, "totalCount", status, keyParts] as const,
+  /** Org verifications paginated search results */
+  verificationList: (orgId: string, keyParts: string) =>
+    ["Verifications", orgId, keyParts] as const,
+  /** Prefix key to invalidate all org verification queries */
+  verificationListAll: (orgId: string) => ["Verifications", orgId] as const,
+  /** Org verifications status-tab count */
+  verificationListCount: (orgId: string, status: VerificationStatus | null) =>
+    ["Verifications", orgId, "TotalCount", status] as const,
+  /** Org verification opportunity lookup */
+  opportunitiesForVerification: (
+    orgId: string,
+    verificationStatus: string | null,
+  ) => ["OpportunitiesForVerification", orgId, verificationStatus] as const,
+  /** Prefix key to invalidate all org verification opportunity lookups */
+  opportunitiesForVerificationAll: (orgId: string) =>
+    ["OpportunitiesForVerification", orgId] as const,
   /** Admin search results (large queryKey, uses array of URL params) */
   adminSearch: (keyParts: unknown[]) =>
     ["OpportunitiesSearch", ...keyParts] as unknown[],
@@ -268,6 +290,42 @@ export function useOrgOpportunityCountQuery(
         engagementTypes: null,
       };
       return getOpportunitiesAdmin(filter).then((d) => d.totalCount ?? 0);
+    },
+    enabled: !!orgId && (options?.enabled ?? true),
+  });
+}
+
+/**
+ * Org-admin verification status-tab count.
+ * Pass `null` as `status` for the “All” tab.
+ */
+export function useOrgVerificationCountQuery(
+  orgId: string,
+  status: VerificationStatus | null,
+  options?: { enabled?: boolean },
+) {
+  return useQuery<number>({
+    queryKey: OPPORTUNITY_QUERY_KEYS.verificationListCount(orgId, status),
+    queryFn: () => {
+      const filter: MyOpportunitySearchFilterAdmin = {
+        pageNumber: 1,
+        pageSize: 1,
+        organizations: [orgId],
+        opportunity: null,
+        userId: null,
+        valueContains: null,
+        action: Action.Verification,
+        verificationStatuses:
+          status !== null
+            ? [status]
+            : [
+                VerificationStatus.Pending,
+                VerificationStatus.Completed,
+                VerificationStatus.Rejected,
+              ],
+      };
+
+      return searchMyOpportunitiesAdmin(filter).then((d) => d.totalCount ?? 0);
     },
     enabled: !!orgId && (options?.enabled ?? true),
   });

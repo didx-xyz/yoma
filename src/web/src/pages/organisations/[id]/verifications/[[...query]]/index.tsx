@@ -1,9 +1,4 @@
-import {
-  QueryClient,
-  dehydrate,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
@@ -46,8 +41,8 @@ import {
   searchMyOpportunitiesAdmin,
 } from "~/api/services/myOpportunities";
 import CustomSlider from "~/components/Carousel/CustomSlider";
-import DropdownMenu from "~/components/Common/DropdownMenu";
 import CustomModal from "~/components/Common/CustomModal";
+import DropdownMenu from "~/components/Common/DropdownMenu";
 import FormMessage, { FormMessageType } from "~/components/Common/FormMessage";
 import MainLayout from "~/components/Layout/Main";
 import NoRowsMessage from "~/components/NoRowsMessage";
@@ -65,9 +60,12 @@ import { Loading } from "~/components/Status/Loading";
 import { LoadingSkeleton } from "~/components/Status/LoadingSkeleton";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
-import { DATE_FORMAT_HUMAN, PAGE_SIZE } from "~/lib/constants";
+import {
+  OPPORTUNITY_QUERY_KEYS,
+  useOrgVerificationCountQuery,
+} from "~/hooks/useOpportunityMutations";
 import { analytics } from "~/lib/analytics";
-import { config } from "~/lib/react-query-config";
+import { DATE_FORMAT_HUMAN, PAGE_SIZE } from "~/lib/constants";
 import { getSafeUrl, getThemeFromRole } from "~/lib/utils";
 import { type NextPageWithLayout } from "~/pages/_app";
 import { authOptions } from "~/server/auth";
@@ -81,13 +79,17 @@ interface IParams extends ParsedUrlQuery {
   returnUrl?: string;
 }
 
+const getErrorStatus = (error: unknown): number | null => {
+  if (!axios.isAxiosError(error)) return null;
+  return error.response?.status ?? null;
+};
+
 // ⚠️ SSR
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { id } = context.params as IParams;
-  const { query, opportunity, verificationStatus, page } = context.query;
-  const queryClient = new QueryClient(config);
+  const { query, opportunity, verificationStatus, page, returnUrl } =
+    context.query;
   const session = await getServerSession(context.req, context.res, authOptions);
-  let errorCode = null;
 
   // 👇 ensure authenticated
   if (!session) {
@@ -101,71 +103,16 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   // 👇 set theme based on role
   const theme = getThemeFromRole(session, id);
 
-  try {
-    // NB: disabled as we getting 502 bad gateway error on stage
-    // 👇 prefetch queries on server
-    // const dataVerifications = await searchMyOpportunitiesAdmin(
-    //   {
-    //     organizations: [id],
-    //     pageNumber: page ? parseInt(page.toString()) : 1,
-    //     pageSize: PAGE_SIZE,
-    //     opportunity: opportunity?.toString() ?? null,
-    //     userId: null,
-    //     valueContains: query?.toString() ?? null,
-    //     action: Action.Verification,
-    //     verificationStatuses: verificationStatus
-    //       ? [parseInt(verificationStatus.toString())]
-    //       : [
-    //           VerificationStatus.Pending,
-    //           VerificationStatus.Completed,
-    //           VerificationStatus.Rejected,
-    //         ],
-    //   },
-    //   context,
-    // );
-    // const dataOpportunitiesForVerification = (
-    //   await getOpportunitiesForVerification([id], undefined, context)
-    // ).map((x) => ({
-    //   value: x.id,
-    //   label: x.title,
-    // }));
-    // await Promise.all([
-    //   await queryClient.prefetchQuery({
-    //     queryKey: [
-    //       "Verifications",
-    //       id,
-    //       `${query?.toString()}_${opportunity?.toString()}_${verificationStatus}_${page?.toString()}`,
-    //     ],
-    //     queryFn: () => dataVerifications,
-    //   }),
-    //   await queryClient.prefetchQuery({
-    //     queryKey: ["OpportunitiesForVerification", id],
-    //     queryFn: () => dataOpportunitiesForVerification,
-    //   }),
-    // ]);
-  } catch (error) {
-    console.error(error);
-    if (axios.isAxiosError(error) && error.response?.status) {
-      if (error.response.status === 404) {
-        return {
-          notFound: true,
-          props: { theme: theme },
-        };
-      } else errorCode = error.response.status;
-    } else errorCode = 500;
-  }
-
   return {
     props: {
-      dehydratedState: dehydrate(queryClient),
-      user: session?.user ?? null,
       id: id ?? null,
       query: query ?? null,
       opportunity: opportunity ?? null,
       verificationStatus: verificationStatus ?? null,
-      page: page ?? "1",
+      page: page ?? null,
+      returnUrl: returnUrl ?? null,
       theme: theme,
-      error: errorCode,
+      error: null,
     },
   };
 }
@@ -179,11 +126,19 @@ const OpportunityVerifications: NextPageWithLayout<{
   opportunity?: string;
   verificationStatus?: string;
   page?: string;
+  returnUrl?: string;
   theme: string;
   error?: number;
-}> = ({ id, query, opportunity, verificationStatus, page, error }) => {
+}> = ({
+  id,
+  query,
+  opportunity,
+  verificationStatus,
+  page,
+  returnUrl,
+  error,
+}) => {
   const router = useRouter();
-  const { returnUrl } = router.query;
   const queryClient = useQueryClient();
 
   const [isLoading, setIsLoading] = useState(false);
@@ -227,19 +182,26 @@ const OpportunityVerifications: NextPageWithLayout<{
     [id, opportunity, page, query, verificationStatus],
   );
 
-  // 👇 use prefetched queries from server
-  const { data: searchResults, isLoading: isLoadingSearchResults } =
-    useQuery<MyOpportunitySearchResults>({
-      queryKey: [
-        "Verifications",
-        id,
-        `${query?.toString()}_${opportunity?.toString()}_${verificationStatus}_${page?.toString()}`,
-      ],
-      queryFn: () => searchMyOpportunitiesAdmin(searchFilter),
-      enabled: !error,
-    });
+  // 👇 use client-side queries
+  const {
+    data: searchResults,
+    isLoading: isLoadingSearchResults,
+    error: searchResultsError,
+  } = useQuery<MyOpportunitySearchResults>({
+    queryKey: OPPORTUNITY_QUERY_KEYS.verificationList(
+      id,
+      `${query?.toString()}_${opportunity?.toString()}_${verificationStatus}_${page?.toString()}`,
+    ),
+    queryFn: () => searchMyOpportunitiesAdmin(searchFilter),
+    enabled: !error,
+  });
+  const resolvedError =
+    error ?? getErrorStatus(searchResultsError) ?? undefined;
   const { data: dataOpportunitiesForVerification } = useQuery<SelectOption[]>({
-    queryKey: ["OpportunitiesForVerification", id, verificationStatus],
+    queryKey: OPPORTUNITY_QUERY_KEYS.opportunitiesForVerification(
+      id,
+      verificationStatus ?? null,
+    ),
     queryFn: async () =>
       (
         await getOpportunitiesForVerification(
@@ -252,104 +214,24 @@ const OpportunityVerifications: NextPageWithLayout<{
       })),
     enabled: !error,
   });
-  const { data: totalCountAll } = useQuery<number>({
-    queryKey: [
-      "Verifications",
-      id,
-      "TotalCount",
-      null,
-      `${query?.toString()}_${opportunity?.toString()}_${page?.toString()}`,
-    ],
-    queryFn: () => {
-      const filter = JSON.parse(
-        JSON.stringify(searchFilter),
-      ) as MyOpportunitySearchFilterAdmin; // deep copy
-
-      filter.pageNumber = 1;
-      filter.pageSize = 1;
-      filter.verificationStatuses = [
-        VerificationStatus.Pending,
-        VerificationStatus.Completed,
-        VerificationStatus.Rejected,
-      ];
-
-      return searchMyOpportunitiesAdmin(filter).then(
-        (data) => data.totalCount ?? 0,
-      );
-    },
+  const { data: totalCountAll } = useOrgVerificationCountQuery(id, null, {
     enabled: !error,
   });
-  const { data: totalCountPending } = useQuery<number>({
-    queryKey: [
-      "Verifications",
-      id,
-      "TotalCount",
-      VerificationStatus.Pending,
-      `${query?.toString()}_${opportunity?.toString()}_${page?.toString()}`,
-    ],
-    queryFn: () => {
-      const filter = JSON.parse(
-        JSON.stringify(searchFilter),
-      ) as MyOpportunitySearchFilterAdmin; // deep copy
-
-      filter.pageNumber = 1;
-      filter.pageSize = 1;
-      filter.verificationStatuses = [VerificationStatus.Pending];
-
-      return searchMyOpportunitiesAdmin(filter).then(
-        (data) => data.totalCount ?? 0,
-      );
-    },
-    enabled: !error,
-  });
-  const { data: totalCountCompleted } = useQuery<number>({
-    queryKey: [
-      "Verifications",
-      id,
-      "TotalCount",
-      VerificationStatus.Completed,
-      `${query?.toString()}_${opportunity?.toString()}_${page?.toString()}`,
-    ],
-    queryFn: () => {
-      const filter = JSON.parse(
-        JSON.stringify(searchFilter),
-      ) as MyOpportunitySearchFilterAdmin; // deep copy
-
-      filter.pageNumber = 1;
-      filter.pageSize = 1;
-      filter.verificationStatuses = [VerificationStatus.Completed];
-
-      return searchMyOpportunitiesAdmin(filter).then(
-        (data) => data.totalCount ?? 0,
-      );
-    },
-
-    enabled: !error,
-  });
-  const { data: totalCountRejected } = useQuery<number>({
-    queryKey: [
-      "Verifications",
-      id,
-      "TotalCount",
-      VerificationStatus.Rejected,
-      `${query?.toString()}_${opportunity?.toString()}_${page?.toString()}`,
-    ],
-
-    queryFn: () => {
-      const filter = JSON.parse(
-        JSON.stringify(searchFilter),
-      ) as MyOpportunitySearchFilterAdmin; // deep copy
-
-      filter.pageNumber = 1;
-      filter.pageSize = 1;
-      filter.verificationStatuses = [VerificationStatus.Rejected];
-
-      return searchMyOpportunitiesAdmin(filter).then(
-        (data) => data.totalCount ?? 0,
-      );
-    },
-    enabled: !error,
-  });
+  const { data: totalCountPending } = useOrgVerificationCountQuery(
+    id,
+    VerificationStatus.Pending,
+    { enabled: !error },
+  );
+  const { data: totalCountCompleted } = useOrgVerificationCountQuery(
+    id,
+    VerificationStatus.Completed,
+    { enabled: !error },
+  );
+  const { data: totalCountRejected } = useOrgVerificationCountQuery(
+    id,
+    VerificationStatus.Rejected,
+    { enabled: !error },
+  );
 
   // 🎈 FUNCTIONS
   const getSearchFilterAsQueryString = useCallback(
@@ -485,10 +367,10 @@ const OpportunityVerifications: NextPageWithLayout<{
 
         // invalidate queries
         await queryClient.invalidateQueries({
-          queryKey: ["Verifications", id],
+          queryKey: OPPORTUNITY_QUERY_KEYS.verificationListAll(id),
         });
         await queryClient.invalidateQueries({
-          queryKey: ["OpportunitiesForVerification", id],
+          queryKey: OPPORTUNITY_QUERY_KEYS.opportunitiesForVerificationAll(id),
         });
       } catch (error) {
         toast(<ApiErrors error={error} />, {
@@ -622,9 +504,9 @@ const OpportunityVerifications: NextPageWithLayout<{
     ],
   );
 
-  if (error) {
-    if (error === 401) return <Unauthenticated />;
-    else if (error === 403) return <Unauthorized />;
+  if (resolvedError) {
+    if (resolvedError === 401) return <Unauthenticated />;
+    else if (resolvedError === 403) return <Unauthorized />;
     else return <InternalServerError />;
   }
 
@@ -852,10 +734,11 @@ const OpportunityVerifications: NextPageWithLayout<{
             // invalidate queries
             //NB: this is the query on the opportunities page
             await queryClient.invalidateQueries({
-              queryKey: ["Verifications", id],
+              queryKey: OPPORTUNITY_QUERY_KEYS.verificationListAll(id),
             });
             await queryClient.invalidateQueries({
-              queryKey: ["OpportunitiesForVerification", id],
+              queryKey:
+                OPPORTUNITY_QUERY_KEYS.opportunitiesForVerificationAll(id),
             });
           }}
         />
@@ -1006,8 +889,27 @@ const OpportunityVerifications: NextPageWithLayout<{
 
             {/* RESULTS */}
             {searchResults && searchResults.items?.length > 0 && (
-              <div className="md:shadow-custom overflow-x-auto md:rounded-lg">
-                {/* DESKTOP */}
+              <>
+                {/* MOBILE */}
+                <div className="flex flex-col gap-4 md:hidden">
+                  {searchResults.items.map((item) => (
+                    <MobileCard
+                      key={`MobileCard_${item.id}`}
+                      item={item}
+                      handleRowSelect={handleRowSelect}
+                      selectedRows={selectedRows}
+                      returnUrl={returnUrl}
+                      id={id}
+                      onVerify={() => {
+                        setBulkActionApprove(null);
+                        setTempSelectedRows([item]);
+                        setModalVerifyVisible(true);
+                      }}
+                    />
+                  ))}
+                </div>
+
+                {/* DESKTOP: TODO styling */}
                 <table className="hidden bg-white md:table md:rounded-lg">
                   <thead className="text-sm">
                     <tr className="!border-gray bg-gray-light text-gray-dark">
@@ -1103,38 +1005,19 @@ const OpportunityVerifications: NextPageWithLayout<{
                   </tbody>
                 </table>
 
-                {/* MOBILE */}
-                <div className="my-4 space-y-4 md:hidden">
-                  {searchResults.items.map((item) => (
-                    <MobileCard
-                      key={`MobileCard_${item.id}`}
-                      item={item}
-                      handleRowSelect={handleRowSelect}
-                      selectedRows={selectedRows}
-                      returnUrl={returnUrl}
-                      id={id}
-                      onVerify={() => {
-                        setBulkActionApprove(null);
-                        setTempSelectedRows([item]);
-                        setModalVerifyVisible(true);
-                      }}
-                    />
-                  ))}
+                {/* PAGINATION */}
+                <div className="mt-2 grid place-items-center justify-center">
+                  <PaginationButtons
+                    currentPage={page ? parseInt(page) : 1}
+                    totalItems={searchResults?.totalCount ?? 0}
+                    pageSize={PAGE_SIZE}
+                    onClick={handlePagerChange}
+                    showPages={false}
+                    showInfo={true}
+                  />
                 </div>
-              </div>
+              </>
             )}
-
-            {/* PAGINATION */}
-            <div className="mt-2 grid place-items-center justify-center">
-              <PaginationButtons
-                currentPage={page ? parseInt(page) : 1}
-                totalItems={searchResults?.totalCount ?? 0}
-                pageSize={PAGE_SIZE}
-                onClick={handlePagerChange}
-                showPages={false}
-                showInfo={true}
-              />
-            </div>
           </>
         )}
       </div>
