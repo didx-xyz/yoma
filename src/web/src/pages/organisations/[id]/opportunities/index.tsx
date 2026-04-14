@@ -26,6 +26,7 @@ import {
   useOpportunityTypesQuery,
 } from "~/hooks/useOpportunityMutations";
 import CustomSlider from "~/components/Carousel/CustomSlider";
+import DropdownMenu from "~/components/Common/DropdownMenu";
 import CustomModal from "~/components/Common/CustomModal";
 import MainLayout from "~/components/Layout/Main";
 import NoRowsMessage from "~/components/NoRowsMessage";
@@ -489,7 +490,7 @@ const Opportunities: NextPageWithLayout<{
           <div className="flex w-full grow flex-col items-center justify-between gap-4 sm:justify-end md:flex-row">
             <div className="flex w-full grow flex-row flex-wrap gap-2">
               <SearchInput defaultValue={query} onSearch={onSearch} />
-              <div className="w-full min-w-[220px] sm:w-72">
+              <div className="w-full md:w-60">
                 <Select
                   instanceId="opportunityTypeFilter"
                   isClearable={true}
@@ -499,8 +500,7 @@ const Opportunities: NextPageWithLayout<{
                     onTypeChange(option as SelectOption | null)
                   }
                   classNames={{
-                    control: () =>
-                      "input w-full !border-gray pr-0 pl-2 h-fit py-1 bg-white",
+                    control: () => "input w-full",
                   }}
                   styles={{
                     placeholder: (base) => ({
@@ -514,40 +514,33 @@ const Opportunities: NextPageWithLayout<{
               </div>
             </div>
 
-            {/* BUTTONS */}
-            <div className="flex w-full flex-row flex-nowrap items-center justify-between gap-2 sm:justify-end md:w-auto">
-              <Link
-                href={`/organisations/${id}/opportunities/create${`?returnUrl=${encodeURIComponent(
-                  getSafeUrl(returnUrl?.toString(), router.asPath),
-                )}`}`}
-                className={`btn btn-sm md:btn-md border-green text-green hover:bg-green w-36 flex-nowrap bg-white hover:text-white ${
-                  currentOrganisationInactive ? "disabled" : ""
-                }`}
-                id="btnCreateOpportunity" // e2e
-              >
-                <FaPlusCircle className="h-4 w-4" /> Add
-              </Link>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setImportDialogOpen(true);
-                }}
-                className={`btn btn-sm md:btn-md border-green bg-green hover:text-green w-36 flex-nowrap text-white hover:bg-white ${
-                  currentOrganisationInactive ? "disabled" : ""
-                }`}
-              >
-                <FaUpload className="h-4 w-4" /> Import
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setExportDialogOpen(true)}
-                className="btn btn-sm md:btn-md border-green bg-green hover:text-green w-36 flex-nowrap text-white hover:bg-white"
-              >
-                <FaDownload className="h-4 w-4" /> Export
-              </button>
-            </div>
+            <DropdownMenu
+              label="Actions"
+              items={[
+                {
+                  label: "Create Opportunity",
+                  href: `/organisations/${id}/opportunities/create${`?returnUrl=${encodeURIComponent(
+                    getSafeUrl(returnUrl?.toString(), router.asPath),
+                  )}`}`,
+                  icon: <FaPlusCircle className="h-4 w-4" />,
+                  disabled: currentOrganisationInactive,
+                  id: "btnCreateOpportunity",
+                },
+                {
+                  label: "Import",
+                  onClick: () => {
+                    setImportDialogOpen(true);
+                  },
+                  icon: <FaUpload className="h-4 w-4" />,
+                  disabled: currentOrganisationInactive,
+                },
+                {
+                  label: "Export",
+                  onClick: () => setExportDialogOpen(true),
+                  icon: <FaDownload className="h-4 w-4" />,
+                },
+              ]}
+            />
           </div>
         </div>
 

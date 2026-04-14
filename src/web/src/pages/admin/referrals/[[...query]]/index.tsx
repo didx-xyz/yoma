@@ -899,11 +899,13 @@ const ReferralPrograms: NextPageWithLayout = () => {
                         <td className="border-gray-light border-b-2 !align-top">
                           <ProgramStatusBadge status={program.status} />
                         </td>
-                        <td className="border-gray-light border-b-2 text-center !align-top">
-                          <AdminReferralProgramActions
-                            program={program}
-                            returnUrl={router.asPath}
-                          />
+                        <td className="border-gray-light border-b-2 !align-top">
+                          <div className="flex flex-row items-center justify-center gap-2">
+                            <AdminReferralProgramActions
+                              program={program}
+                              returnUrl={router.asPath}
+                            />
+                          </div>
                         </td>
                       </tr>
                     ))}
