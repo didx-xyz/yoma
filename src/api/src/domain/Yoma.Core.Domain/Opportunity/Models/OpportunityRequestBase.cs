@@ -30,11 +30,11 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
     public VerificationMethod? VerificationMethod { get; set; }
 
-    public Guid DifficultyId { get; set; }
+    public Guid? DifficultyId { get; set; }
 
-    public Guid CommitmentIntervalId { get; set; }
+    public Guid? CommitmentIntervalId { get; set; }
 
-    public short CommitmentIntervalCount { get; set; }
+    public short? CommitmentIntervalCount { get; set; }
 
     public int? ParticipantLimit { get; set; }
 

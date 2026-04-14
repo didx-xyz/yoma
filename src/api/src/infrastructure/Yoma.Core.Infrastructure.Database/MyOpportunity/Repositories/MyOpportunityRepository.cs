@@ -1,3 +1,4 @@
+using Flurl.Util;
 using Microsoft.EntityFrameworkCore;
 using Yoma.Core.Domain.BlobProvider;
 using Yoma.Core.Domain.Core;
@@ -59,7 +60,9 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories
         OpportunityDescription = entity.Opportunity.Description,
         OpportunitySummary = entity.Opportunity.Summary,
         OpportunityType = entity.Opportunity.Type.Name,
-        OpportunityCommitmentIntervalDescription = $"{entity.Opportunity.CommitmentIntervalCount} {entity.Opportunity.CommitmentInterval.Name}{(entity.Opportunity.CommitmentIntervalCount > 1 ? "s" : string.Empty)}",
+        OpportunityCommitmentIntervalDescription = entity.Opportunity.CommitmentInterval == null || !entity.Opportunity.CommitmentIntervalCount.HasValue
+          ? null
+          : $"{entity.Opportunity.CommitmentIntervalCount.Value} {entity.Opportunity.CommitmentInterval.Name}{(entity.Opportunity.CommitmentIntervalCount.Value > 1 ? "s" : string.Empty)}",
         OpportunityParticipantCountTotal = entity.Opportunity.ParticipantCount ?? default,
         OpportunityStatusId = entity.Opportunity.StatusId,
         OpportunityStatus = Enum.Parse<Status>(entity.Opportunity.Status.Name, true),

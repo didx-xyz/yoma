@@ -11,37 +11,41 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
   public static class OpportunityExtensions
   {
     #region Public Members
-    public static int TimeIntervalToHours(this Models.Opportunity opportunity)
+    public static int? TimeIntervalToHours(this Models.Opportunity opportunity)
     {
       ArgumentNullException.ThrowIfNull(opportunity, nameof(opportunity));
 
-      var hours = 0;
-      hours = opportunity.CommitmentInterval switch
+      if (!opportunity.CommitmentInterval.HasValue || !opportunity.CommitmentIntervalCount.HasValue)
+        return null;
+
+      var hours = opportunity.CommitmentInterval.Value switch
       {
-        TimeIntervalOption.Minute => (int)Math.Ceiling(opportunity.CommitmentIntervalCount / 60m),
-        TimeIntervalOption.Hour => opportunity.CommitmentIntervalCount,
-        TimeIntervalOption.Day => opportunity.CommitmentIntervalCount * 24,
-        TimeIntervalOption.Week => opportunity.CommitmentIntervalCount * 24 * 7,
-        TimeIntervalOption.Month => opportunity.CommitmentIntervalCount * 24 * 30,
-        _ => throw new InvalidOperationException($"{nameof(TimeIntervalOption)} of '{opportunity.CommitmentInterval}' not supported"),
+        TimeIntervalOption.Minute => (int)Math.Ceiling(opportunity.CommitmentIntervalCount.Value / 60m),
+        TimeIntervalOption.Hour => opportunity.CommitmentIntervalCount.Value,
+        TimeIntervalOption.Day => opportunity.CommitmentIntervalCount.Value * 24,
+        TimeIntervalOption.Week => opportunity.CommitmentIntervalCount.Value * 24 * 7,
+        TimeIntervalOption.Month => opportunity.CommitmentIntervalCount.Value * 24 * 30,
+        _ => throw new InvalidOperationException($"{nameof(TimeIntervalOption)} of '{opportunity.CommitmentInterval.Value}' not supported"),
       };
 
       return hours;
     }
 
-    public static int TimeIntervalToDays(this Models.Opportunity opportunity)
+    public static int? TimeIntervalToDays(this Models.Opportunity opportunity)
     {
       ArgumentNullException.ThrowIfNull(opportunity, nameof(opportunity));
 
-      var days = 0;
-      days = opportunity.CommitmentInterval switch
+      if (!opportunity.CommitmentInterval.HasValue || !opportunity.CommitmentIntervalCount.HasValue)
+        return null;
+
+      var days = opportunity.CommitmentInterval.Value switch
       {
-        TimeIntervalOption.Minute => (int)Math.Ceiling(opportunity.CommitmentIntervalCount / (60m * 24)),
-        TimeIntervalOption.Hour => (int)Math.Ceiling((double)opportunity.CommitmentIntervalCount / 24),
-        TimeIntervalOption.Day => opportunity.CommitmentIntervalCount,
-        TimeIntervalOption.Week => opportunity.CommitmentIntervalCount * 7,
-        TimeIntervalOption.Month => opportunity.CommitmentIntervalCount * 30,
-        _ => throw new InvalidOperationException($"{nameof(TimeIntervalOption)} of '{opportunity.CommitmentInterval}' not supported"),
+        TimeIntervalOption.Minute => (int)Math.Ceiling(opportunity.CommitmentIntervalCount.Value / (60m * 24)),
+        TimeIntervalOption.Hour => (int)Math.Ceiling((double)opportunity.CommitmentIntervalCount.Value / 24),
+        TimeIntervalOption.Day => opportunity.CommitmentIntervalCount.Value,
+        TimeIntervalOption.Week => opportunity.CommitmentIntervalCount.Value * 7,
+        TimeIntervalOption.Month => opportunity.CommitmentIntervalCount.Value * 30,
+        _ => throw new InvalidOperationException($"{nameof(TimeIntervalOption)} of '{opportunity.CommitmentInterval.Value}' not supported"),
       };
 
       return days;

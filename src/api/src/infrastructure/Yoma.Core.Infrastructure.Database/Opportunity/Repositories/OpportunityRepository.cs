@@ -68,11 +68,13 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
         VerificationMethodValue = entity.VerificationMethod,
         VerificationMethod = string.IsNullOrEmpty(entity.VerificationMethod) ? null : Enum.Parse<VerificationMethod>(entity.VerificationMethod, true),
         DifficultyId = entity.DifficultyId,
-        Difficulty = entity.Difficulty.Name,
+        Difficulty = entity.Difficulty == null ? null : entity.Difficulty.Name,
         CommitmentIntervalId = entity.CommitmentIntervalId,
-        CommitmentInterval = Enum.Parse<TimeIntervalOption>(entity.CommitmentInterval.Name, true),
+        CommitmentInterval = entity.CommitmentInterval == null ? null : Enum.Parse<TimeIntervalOption>(entity.CommitmentInterval.Name, true),
         CommitmentIntervalCount = entity.CommitmentIntervalCount,
-        CommitmentIntervalDescription = $"{entity.CommitmentIntervalCount} {entity.CommitmentInterval.Name}{(entity.CommitmentIntervalCount > 1 ? "s" : string.Empty)}",
+        CommitmentIntervalDescription = entity.CommitmentInterval == null || !entity.CommitmentIntervalCount.HasValue
+          ? null
+          : $"{entity.CommitmentIntervalCount.Value} {entity.CommitmentInterval.Name}{(entity.CommitmentIntervalCount.Value > 1 ? "s" : string.Empty)}",
         ParticipantLimit = entity.ParticipantLimit,
         ParticipantCount = entity.ParticipantCount,
         StatusId = entity.StatusId,

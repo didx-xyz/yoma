@@ -56,7 +56,7 @@ namespace Yoma.Core.Infrastructure.Zlto.Models
     public int TaskPeopleImpacted { get; set; }
 
     [JsonProperty("task_time_invested_hours")]
-    public int TaskTimeInvestedHours { get; set; }
+    public int? TaskTimeInvestedHours { get; set; }
 
     [JsonProperty("task_external_url")]
     public string TaskExternalUrl { get; set; } = null!;

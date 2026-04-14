@@ -24,7 +24,7 @@ namespace Yoma.Core.Domain.Reward.Models.Provider
 
     public List<Language>? Languages { get; set; }
 
-    public int TimeInvestedInHours { get; set; }
+    public int? TimeInvestedInHours { get; set; }
 
     public string? ExternalURL { get; set; }
 

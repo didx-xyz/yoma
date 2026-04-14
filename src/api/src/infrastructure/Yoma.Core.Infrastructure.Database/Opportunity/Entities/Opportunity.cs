@@ -70,18 +70,15 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Entities
     [Column(TypeName = "varchar(20)")]
     public string? VerificationMethod { get; set; }
 
-    [Required]
     [ForeignKey("DifficultyId")]
-    public Guid DifficultyId { get; set; }
-    public OpportunityDifficulty Difficulty { get; set; } = null!;
+    public Guid? DifficultyId { get; set; }
+    public OpportunityDifficulty? Difficulty { get; set; } = null!;
 
-    [Required]
     [ForeignKey("CommitmentIntervalId")]
-    public Guid CommitmentIntervalId { get; set; }
-    public TimeInterval CommitmentInterval { get; set; } = null!;
+    public Guid? CommitmentIntervalId { get; set; }
+    public TimeInterval? CommitmentInterval { get; set; } = null!;
 
-    [Required]
-    public short CommitmentIntervalCount { get; set; }
+    public short? CommitmentIntervalCount { get; set; }
 
     public int? ParticipantLimit { get; set; }
 

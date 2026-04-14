@@ -1606,15 +1606,17 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         request.DateEnd = opportunity.DateEnd.HasValue && opportunity.DateEnd.Value <= now ? opportunity.DateEnd.Value : now;
       }
 
-      if (!request.DateStart.HasValue && request.CommitmentInterval == null)
+      if (request.DateStart.HasValue || request.CommitmentInterval != null) return;
+
+      if (!opportunity.CommitmentIntervalId.HasValue || !opportunity.CommitmentIntervalCount.HasValue || !opportunity.CommitmentInterval.HasValue)
+        return;
+
+      request.CommitmentInterval = new MyOpportunityRequestVerifyCommitmentInterval
       {
-        request.CommitmentInterval = new MyOpportunityRequestVerifyCommitmentInterval
-        {
-          Id = opportunity.CommitmentIntervalId,
-          Count = opportunity.CommitmentIntervalCount,
-          Option = opportunity.CommitmentInterval
-        };
-      }
+        Id = opportunity.CommitmentIntervalId.Value,
+        Count = opportunity.CommitmentIntervalCount.Value,
+        Option = opportunity.CommitmentInterval.Value
+      };
     }
 
     private void PerformActionSendForVerificationParseCommitment(MyOpportunityRequestVerify request, Opportunity.Models.Opportunity opportunity)

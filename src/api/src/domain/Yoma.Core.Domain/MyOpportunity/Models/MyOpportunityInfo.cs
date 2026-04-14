@@ -56,7 +56,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
     public string OpportunityType { get; set; } = null!;
 
     [Ignore]
-    public string OpportunityCommitmentIntervalDescription { get; set; } = null!;
+    public string? OpportunityCommitmentIntervalDescription { get; set; }
 
     #region Verification Counts
     [Ignore]

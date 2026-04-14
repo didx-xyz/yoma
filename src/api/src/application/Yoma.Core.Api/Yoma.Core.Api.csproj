@@ -23,10 +23,10 @@
 	<PackageReference Include="Microsoft.AspNetCore.DataProtection.StackExchangeRedis" Version="10.0.5" />
 	<PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.5" />
 	<PackageReference Include="Serilog.AspNetCore" Version="10.0.0" />
-	<PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.5" />
-	<PackageReference Include="Swashbuckle.AspNetCore.Annotations" Version="10.1.5" />
-	<PackageReference Include="Swashbuckle.AspNetCore.Newtonsoft" Version="10.1.5" />
-	<PackageReference Include="Swashbuckle.AspNetCore.ReDoc" Version="10.1.5" />
+	<PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.7" />
+	<PackageReference Include="Swashbuckle.AspNetCore.Annotations" Version="10.1.7" />
+	<PackageReference Include="Swashbuckle.AspNetCore.Newtonsoft" Version="10.1.7" />
+	<PackageReference Include="Swashbuckle.AspNetCore.ReDoc" Version="10.1.7" />
   </ItemGroup>
 
   <ItemGroup>

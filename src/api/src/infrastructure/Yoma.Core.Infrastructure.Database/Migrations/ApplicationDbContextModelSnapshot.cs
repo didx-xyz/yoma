@@ -1404,10 +1404,10 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                       .ValueGeneratedOnAdd()
                       .HasColumnType("uuid");
 
-            b.Property<short>("CommitmentIntervalCount")
+            b.Property<short?>("CommitmentIntervalCount")
                       .HasColumnType("smallint");
 
-            b.Property<Guid>("CommitmentIntervalId")
+            b.Property<Guid?>("CommitmentIntervalId")
                       .HasColumnType("uuid");
 
             b.Property<Guid>("CreatedByUserId")
@@ -1432,7 +1432,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                       .IsRequired()
                       .HasColumnType("text");
 
-            b.Property<Guid>("DifficultyId")
+            b.Property<Guid?>("DifficultyId")
                       .HasColumnType("uuid");
 
             b.Property<Guid?>("EngagementTypeId")
@@ -3180,9 +3180,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           {
             b.HasOne("Yoma.Core.Infrastructure.Database.Lookups.Entities.TimeInterval", "CommitmentInterval")
                       .WithMany()
-                      .HasForeignKey("CommitmentIntervalId")
-                      .OnDelete(DeleteBehavior.Cascade)
-                      .IsRequired();
+                      .HasForeignKey("CommitmentIntervalId");
 
             b.HasOne("Yoma.Core.Infrastructure.Database.Entity.Entities.User", "CreatedByUser")
                       .WithMany()
@@ -3192,9 +3190,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
             b.HasOne("Yoma.Core.Infrastructure.Database.Opportunity.Entities.Lookups.OpportunityDifficulty", "Difficulty")
                       .WithMany()
-                      .HasForeignKey("DifficultyId")
-                      .OnDelete(DeleteBehavior.Cascade)
-                      .IsRequired();
+                      .HasForeignKey("DifficultyId");
 
             b.HasOne("Yoma.Core.Infrastructure.Database.Lookups.Entities.EngagementType", "EngagementType")
                       .WithMany()
