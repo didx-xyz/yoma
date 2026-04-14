@@ -93,6 +93,7 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
         Status = value.Status,
         Hidden = value.Hidden,
         DateStart = value.DateStart,
+        Type = value.Type,
         Countries = value.Countries,
       };
     }
@@ -184,14 +185,14 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
     {
       ArgumentNullException.ThrowIfNull(item, nameof(item));
 
-      return EvaluateCompletable(item.Title, item.Status, item.Hidden, item.OrganizationStatus, item.VerificationEnabled, item.VerificationMethod, item.DateStart, out reason);
+      return EvaluateCompletable(item.Title, item.Status, item.Hidden, item.OrganizationStatus, item.VerificationEnabled, item.VerificationMethod, item.DateStart, item.Type, out reason);
     }
 
     public static bool Completable(this OpportunityItem item, out string? reason)
     {
       ArgumentNullException.ThrowIfNull(item, nameof(item));
 
-      return EvaluateCompletable(item.Title, item.Status, item.Hidden, item.OrganizationStatus, item.VerificationEnabled, item.VerificationMethod, item.DateStart, out reason);
+      return EvaluateCompletable(item.Title, item.Status, item.Hidden, item.OrganizationStatus, item.VerificationEnabled, item.VerificationMethod, item.DateStart, item.Type, out reason);
     }
     #endregion
 
@@ -231,23 +232,33 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
     /// • VerificationEnabled = true  
     /// • VerificationMethod = Manual  
     /// • Not Hidden (null / false)
+    /// • Opportunity Type is not Job
     /// </summary>
     private static bool EvaluateCompletable(
-        string title,
-        Status status,
-        bool? hidden,
-        Entity.OrganizationStatus organizationStatus,
-        bool verificationEnabled,
-        VerificationMethod? verificationMethod,
-        DateTimeOffset dateStart,
-        out string? reason)
+      string title,
+      Status status,
+      bool? hidden,
+      Entity.OrganizationStatus organizationStatus,
+      bool verificationEnabled,
+      VerificationMethod? verificationMethod,
+      DateTimeOffset dateStart,
+      string type,
+      out string? reason)
     {
       reason = null;
 
       var published = Published(status, organizationStatus);
 
       var canSendForVerification = status == Status.Expired || (published && dateStart <= DateTimeOffset.UtcNow);
-      var isCompletable = hidden != true && canSendForVerification && verificationEnabled && verificationMethod == VerificationMethod.Manual;
+
+      var isJob = string.Equals(type, Type.Job.ToString(), StringComparison.OrdinalIgnoreCase);
+
+      var isCompletable =
+        hidden != true &&
+        canSendForVerification &&
+        verificationEnabled &&
+        verificationMethod == VerificationMethod.Manual &&
+        !isJob;
 
       if (isCompletable)
         return true;
@@ -273,7 +284,10 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
       if (verificationMethod != VerificationMethod.Manual)
         reasons.Add($"'{VerificationMethod.Manual}' verification is required");
 
-      reason = $"Opportunity '{title}' can not be completed, because {string.Join(", ", reasons)}";
+      if (isJob)
+        reasons.Add("job opportunities cannot be used in referral pathways");
+
+      reason = $"Opportunity '{title}' cannot be completed because {string.Join(", ", reasons)}";
       return false;
     }
     #endregion

@@ -256,7 +256,7 @@ namespace Yoma.Core.Domain.Opportunity.Validators
       if (typeId == Guid.Empty) return false;
 
       var type = _opportunityTypeService.GetByIdOrNull(typeId);
-      return type != null && type.Name.Equals(Type.Job.ToString(), StringComparison.InvariantCultureIgnoreCase);
+      return type != null && type.Name.Equals(Type.Job.ToString(), StringComparison.OrdinalIgnoreCase);
     }
 
     private bool DifficultyExists(Guid? id)

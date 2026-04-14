@@ -44,6 +44,7 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
           Status = Enum.Parse<Status>(entity.Opportunity.Status.Name, true),
           Hidden = entity.Opportunity.Hidden,
           DateStart = entity.Opportunity.DateStart,
+          Type = entity.Opportunity.Type.Name,
           Countries = entity.Opportunity.Countries.Select(oc => new Domain.Lookups.Models.Country
           {
             Id = oc.Country.Id,

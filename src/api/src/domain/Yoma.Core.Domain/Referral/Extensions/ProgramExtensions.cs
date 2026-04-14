@@ -87,6 +87,7 @@ namespace Yoma.Core.Domain.Referral.Extensions
                 Status = task.Opportunity.Status,
                 Hidden = task.Opportunity.Hidden,
                 DateStart = task.Opportunity.DateStart,
+                Type = task.Opportunity.Type,
                 Countries = task.Opportunity.Countries,
               },
               ProgramCountries = task.ProgramCountries,
