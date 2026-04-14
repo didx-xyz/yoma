@@ -110,6 +110,8 @@ export interface OpportunityRequestViewModel extends OpportunityRequestBase {
   showZltoRewardPool: boolean;
 }
 
+const isJobOpportunityTypeValue = (typeId?: string | null) => typeId === "Job";
+
 interface IParams extends ParsedUrlQuery {
   id: string;
   opportunityId: string;
@@ -335,29 +337,27 @@ const OpportunityAdminDetails: NextPageWithLayout<{
   const formRef7 = useRef<HTMLFormElement>(null);
   const formRef8 = useRef<HTMLFormElement>(null);
 
-  const isJobOpportunityTypeValue = (typeId?: string | null) =>
-    typeId === "Job";
+  const sanitizeOpportunityFormData = useCallback(
+    (model: OpportunityRequestViewModel): OpportunityRequestViewModel => {
+      if (!isJobOpportunityTypeValue(model.typeId)) {
+        return model;
+      }
 
-  const sanitizeOpportunityFormData = (
-    model: OpportunityRequestViewModel,
-  ): OpportunityRequestViewModel => {
-    if (!isJobOpportunityTypeValue(model.typeId)) {
-      return model;
-    }
-
-    return {
-      ...model,
-      difficultyId: "",
-      commitmentIntervalCount: null,
-      commitmentIntervalId: "",
-      showZltoReward: false,
-      showZltoRewardPool: false,
-      zltoReward: null,
-      zltoRewardPool: null,
-      yomaReward: null,
-      yomaRewardPool: null,
-    };
-  };
+      return {
+        ...model,
+        difficultyId: "",
+        commitmentIntervalCount: null,
+        commitmentIntervalId: "",
+        showZltoReward: false,
+        showZltoRewardPool: false,
+        zltoReward: null,
+        zltoRewardPool: null,
+        yomaReward: null,
+        yomaRewardPool: null,
+      };
+    },
+    [],
+  );
 
   const [formData, setFormData] = useState<OpportunityRequestViewModel>(() =>
     sanitizeOpportunityFormData({
