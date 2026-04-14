@@ -90,13 +90,13 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
         startDate: null,
         endDate: null,
         statuses:
-          status === "active"
+          status === "Active"
             ? [Status.Active]
-            : status === "inactive"
+            : status === "Inactive"
               ? [Status.Inactive]
-              : status === "expired"
+              : status === "Expired"
                 ? [Status.Expired]
-                : status === "deleted"
+                : status === "Deleted"
                   ? [Status.Deleted]
                   : [
                       Status.Active,
@@ -552,7 +552,7 @@ const Opportunities: NextPageWithLayout<{
         )}
 
         {!isLoadingSearchResults && (
-          <div className="md:shadow-custom rounded-lg md:bg-white md:p-4">
+          <>
             {/* NO ROWS */}
             {searchResults &&
               searchResults.items?.length === 0 &&
@@ -606,7 +606,7 @@ const Opportunities: NextPageWithLayout<{
                       key={`sm_${opportunity.id}`}
                       className="shadow-custom flex flex-col justify-between gap-4 rounded-lg bg-white p-4"
                     >
-                      <div className="border-gray-light flex flex-row gap-2 border-b-2">
+                      <div className="flex flex-row gap-2">
                         <span title={opportunity.title} className="w-full">
                           <Link
                             href={`/organisations/${id}/opportunities/${opportunity.id}/info${`?returnUrl=${encodeURIComponent(
@@ -792,28 +792,24 @@ const Opportunities: NextPageWithLayout<{
                 </div>
 
                 {/* DESKTOP */}
-                <table className="border-gray-light hidden border-separate rounded-lg border-x-2 border-t-2 md:table md:table-auto">
+                <table className="border-gray-light hidden border-separate rounded-lg bg-white md:table md:table-auto">
                   <thead>
                     <tr className="border-gray text-gray-dark">
-                      <th className="border-gray-light border-b-2 !py-4">
-                        Title
-                      </th>
-                      <th className="border-gray-light border-b-2">ZLTO</th>
-                      <th className="border-gray-light border-b-2">Views</th>
-                      <th className="border-gray-light border-b-2">Clicks</th>
-                      <th className="border-gray-light border-b-2">
-                        Completions
-                      </th>
-                      <th className="border-gray-light border-b-2">Pending</th>
-                      <th className="border-gray-light border-b-2">Status</th>
-                      <th className="border-gray-light border-b-2">Visible</th>
-                      <th className="border-gray-light border-b-2">Actions</th>
+                      <th className="border-gray-light !py-4">Title</th>
+                      <th className="border-gray-light">ZLTO</th>
+                      <th className="border-gray-light">Views</th>
+                      <th className="border-gray-light">Clicks</th>
+                      <th className="border-gray-light">Completions</th>
+                      <th className="border-gray-light">Pending</th>
+                      <th className="border-gray-light">Status</th>
+                      <th className="border-gray-light">Visible</th>
+                      <th className="border-gray-light">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     {searchResults.items.map((opportunity) => (
                       <tr key={`md_${opportunity.id}`}>
-                        <td className="border-gray-light max-w-[200px] truncate border-b-2 !py-4">
+                        <td className="border-gray-light max-w-[200px] truncate border-t-2 !py-4">
                           <Link
                             title={opportunity.title}
                             href={`/organisations/${id}/opportunities/${opportunity.id}/info${`?returnUrl=${encodeURIComponent(
@@ -824,7 +820,7 @@ const Opportunities: NextPageWithLayout<{
                             {opportunity.title}
                           </Link>
                         </td>
-                        <td className="border-gray-light border-b-2">
+                        <td className="border-gray-light border-t-2">
                           {opportunity.zltoReward == null && (
                             <span
                               className={`badge bg-orange-light text-orange px-4`}
@@ -848,7 +844,7 @@ const Opportunities: NextPageWithLayout<{
                             </span>
                           )}
                         </td>
-                        <td className="border-gray-light border-b-2">
+                        <td className="border-gray-light border-t-2">
                           <span
                             className={`badge ${opportunity.countViewed > 0 ? "bg-green-light text-green" : "bg-gray-light text-gray-dark"}`}
                           >
@@ -857,21 +853,21 @@ const Opportunities: NextPageWithLayout<{
                             </span>
                           </span>
                         </td>
-                        <td className="border-gray-light border-b-2">
+                        <td className="border-gray-light border-t-2">
                           <span
                             className={`badge ${opportunity.countNavigatedExternalLink > 0 ? "bg-green-light text-green" : "bg-gray-light text-gray-dark"}`}
                           >
                             {opportunity.countNavigatedExternalLink}
                           </span>
                         </td>
-                        <td className="border-gray-light border-b-2">
+                        <td className="border-gray-light border-t-2">
                           <span
                             className={`badge ${opportunity.participantCountCompleted > 0 ? "bg-green-light text-green" : "bg-gray-light text-gray-dark"}`}
                           >
                             {opportunity.participantCountCompleted}
                           </span>
                         </td>
-                        <td className="border-gray-light border-b-2">
+                        <td className="border-gray-light border-t-2">
                           {opportunity.participantCountPending > 0 ? (
                             <Link
                               href={`/organisations/${id}/verifications?opportunity=${opportunity.id}&verificationStatus=Pending`}
@@ -890,12 +886,12 @@ const Opportunities: NextPageWithLayout<{
                             </span>
                           )}
                         </td>
-                        <td className="border-gray-light border-b-2">
+                        <td className="border-gray-light border-t-2">
                           <OpportunityStatus
                             status={opportunity?.status?.toString()}
                           />
                         </td>
-                        <td className="border-gray-light border-b-2">
+                        <td className="border-gray-light border-t-2">
                           {opportunity?.hidden ? (
                             <span className="badge bg-yellow-tint text-yellow w-20">
                               Hidden
@@ -906,7 +902,7 @@ const Opportunities: NextPageWithLayout<{
                             </span>
                           )}
                         </td>
-                        <td className="border-gray-light border-b-2 whitespace-nowrap">
+                        <td className="border-gray-light border-t-2 whitespace-nowrap">
                           <div className="flex flex-row items-center justify-center gap-2">
                             {/* ACTIONS */}
                             <OpportunityActions
@@ -951,7 +947,7 @@ const Opportunities: NextPageWithLayout<{
                 </div>
               </>
             )}
-          </div>
+          </>
         )}
       </div>
     </>

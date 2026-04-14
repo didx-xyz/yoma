@@ -46,6 +46,7 @@ import {
   searchMyOpportunitiesAdmin,
 } from "~/api/services/myOpportunities";
 import CustomSlider from "~/components/Carousel/CustomSlider";
+import DropdownMenu from "~/components/Common/DropdownMenu";
 import CustomModal from "~/components/Common/CustomModal";
 import FormMessage, { FormMessageType } from "~/components/Common/FormMessage";
 import MainLayout from "~/components/Layout/Main";
@@ -573,6 +574,54 @@ const OpportunityVerifications: NextPageWithLayout<{
   );
   //#endregion Event Handlers
 
+  const actionMenuItems = useMemo(
+    () => [
+      {
+        label: "Import",
+        onClick: () => {
+          setImportDialogOpen(true);
+        },
+        icon: <FaUpload className="h-4 w-4" />,
+      },
+      {
+        label: "Export",
+        onClick: () => {
+          setExportDialogOpen(true);
+        },
+        icon: <FaDownload className="h-4 w-4" />,
+      },
+      ...((!verificationStatus || verificationStatus === "Pending") &&
+      !isLoadingSearchResults &&
+      searchResults &&
+      searchResults.items?.length > 0
+        ? [
+            {
+              label: "Approve",
+              onClick: () => {
+                onChangeBulkAction(true);
+              },
+              icon: <FaThumbsUp className="h-4 w-4" />,
+            },
+            {
+              label: "Decline",
+              onClick: () => {
+                onChangeBulkAction(false);
+              },
+              icon: <FaThumbsDown className="h-4 w-4" />,
+            },
+          ]
+        : []),
+    ],
+    [
+      verificationStatus,
+      isLoadingSearchResults,
+      searchResults,
+      onChangeBulkAction,
+      setImportDialogOpen,
+      setExportDialogOpen,
+    ],
+  );
+
   if (error) {
     if (error === 401) return <Unauthenticated />;
     else if (error === 403) return <Unauthorized />;
@@ -905,69 +954,34 @@ const OpportunityVerifications: NextPageWithLayout<{
           </CustomSlider>
 
           {/* FILTERS */}
-          <div className="flex w-full grow flex-col items-center justify-between gap-4 sm:justify-end lg:flex-row">
-            <div className="flex w-full flex-col gap-4 md:flex-row">
-              <Select
-                instanceId={"opportunities"}
-                className="w-full md:max-w-72"
-                classNames={{
-                  control: () => "input input-xs w-full !border-0 !rounded-lg",
-                }}
-                options={dataOpportunitiesForVerification}
-                onChange={(val) => onFilterOpportunity(val?.value ?? "")}
-                value={dataOpportunitiesForVerification?.find(
-                  (c) => c.value === opportunity,
-                )}
-                placeholder="Opportunities"
-                isClearable={true}
-              />
-
+          <div className="flex w-full grow flex-col items-center justify-between gap-4 sm:justify-end md:flex-row">
+            <div className="flex w-full grow flex-row flex-wrap gap-2">
               <SearchInput defaultValue={query} onSearch={onSearch} />
+
+              <div className="w-full md:w-60">
+                <Select
+                  instanceId={"opportunities"}
+                  classNames={{
+                    control: () => "input w-full",
+                  }}
+                  options={dataOpportunitiesForVerification}
+                  onChange={(val) => onFilterOpportunity(val?.value ?? "")}
+                  value={dataOpportunitiesForVerification?.find(
+                    (c) => c.value === opportunity,
+                  )}
+                  placeholder="Opportunities"
+                  isClearable={true}
+                  styles={{
+                    placeholder: (base) => ({
+                      ...base,
+                      color: "#A3A6AF",
+                    }),
+                  }}
+                />
+              </div>
             </div>
 
-            {/* BUTTONS */}
-            <div className="flex w-full grow flex-wrap items-center gap-2 md:justify-end">
-              <button
-                type="button"
-                onClick={() => {
-                  setImportDialogOpen(true);
-                }}
-                className="btn btn-sm md:btn-md border-green bg-green hover:text-green w-36 flex-nowrap text-white hover:bg-white"
-              >
-                <FaUpload className="h-4 w-4" /> Import
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setExportDialogOpen(true)}
-                className="btn btn-sm md:btn-md border-green bg-green hover:text-green w-36 flex-nowrap text-white hover:bg-white"
-              >
-                <FaDownload className="h-4 w-4" /> Export
-              </button>
-
-              {/* show approve/reject buttons for 'all' & 'pending' tabs */}
-              {(!verificationStatus || verificationStatus === "Pending") &&
-                !isLoadingSearchResults &&
-                searchResults &&
-                searchResults.items?.length > 0 && (
-                  <>
-                    <button
-                      className="btn btn-sm md:btn-md border-green text-green hover:bg-green w-36 flex-nowrap bg-white hover:text-white"
-                      onClick={() => onChangeBulkAction(true)}
-                    >
-                      <FaThumbsUp className="h-4 w-4" />
-                      Approve
-                    </button>
-                    <button
-                      className="btn btn-sm md:btn-md w-36 flex-nowrap border-red-500 bg-white text-red-500 hover:bg-red-500 hover:text-white"
-                      onClick={() => onChangeBulkAction(false)}
-                    >
-                      <FaThumbsDown className="h-4 w-4" />
-                      Decline
-                    </button>
-                  </>
-                )}
-            </div>
+            <DropdownMenu label="Actions" items={actionMenuItems} />
           </div>
         </div>
 

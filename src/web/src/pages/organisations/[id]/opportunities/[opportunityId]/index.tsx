@@ -75,6 +75,8 @@ import {
   DATE_FORMAT_SYSTEM,
   MAX_FILE_SIZE_LABEL,
   MAX_FILE_VIDEO_SIZE_LABEL,
+  OPPORTUNITY_TYPE_JOB,
+  OPPORTUNITY_TYPE_JOB_ID,
   PAGE_SIZE_MEDIUM,
   REGEX_URL_VALIDATION,
 } from "~/lib/constants";
@@ -110,7 +112,8 @@ export interface OpportunityRequestViewModel extends OpportunityRequestBase {
   showZltoRewardPool: boolean;
 }
 
-const isJobOpportunityTypeValue = (typeId?: string | null) => typeId === "Job";
+const isJobOpportunityTypeValue = (typeId?: string | null) =>
+  typeId === OPPORTUNITY_TYPE_JOB_ID;
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -2440,7 +2443,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                     {isJobOpportunityType && (
                       <FormMessage messageType={FormMessageType.Warning}>
                         Rewards cannot be set for opportunities of type
-                        &apos;Job&apos;.
+                        {` '${OPPORTUNITY_TYPE_JOB}'.`}
                       </FormMessage>
                     )}
                     {!isJobOpportunityType &&

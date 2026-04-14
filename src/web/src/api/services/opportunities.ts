@@ -1,4 +1,5 @@
 import type { GetServerSidePropsContext, GetStaticPropsContext } from "next";
+import { OPPORTUNITY_TYPE_JOB, OPPORTUNITY_TYPE_JOB_ID } from "~/lib/constants";
 import ApiClient from "~/lib/axiosClient";
 import ApiServer from "~/lib/axiosServer";
 import type { Country, Language } from "../models/lookups";
@@ -128,6 +129,20 @@ export const getTypes = async (
 ): Promise<OpportunityType[]> => {
   const instance = context ? ApiServer(context) : await ApiClient;
   const { data } = await instance.get<OpportunityType[]>("/opportunity/type");
+
+  if (
+    !data.some(
+      (type) =>
+        type.id === OPPORTUNITY_TYPE_JOB_ID ||
+        type.name === OPPORTUNITY_TYPE_JOB,
+    )
+  ) {
+    data.push({
+      id: OPPORTUNITY_TYPE_JOB_ID,
+      name: OPPORTUNITY_TYPE_JOB,
+    }); // TODO: remove once job type is added in the backend
+  }
+
   return data;
 };
 

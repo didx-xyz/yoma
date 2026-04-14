@@ -65,7 +65,7 @@ export function DropdownMenu({
       ? `flex cursor-pointer items-center justify-center p-0 ${buttonClassName ?? ""}`.trim()
       : displayStyle === DropdownMenuDisplayStyle.BUTTON
         ? `bg-theme hover:bg-theme disabled:bg-gray-dark flex w-40 flex-row items-center justify-center rounded-full p-1 text-xs whitespace-nowrap text-white brightness-105 hover:cursor-pointer hover:brightness-110 disabled:cursor-not-allowed ${buttonClassName ?? ""}`.trim()
-        : `btn btn-sm border-green bg-green hover:text-green px-4 flex-nowrap rounded-full text-white hover:bg-white ${buttonClassName ?? ""}`.trim();
+        : `btn btn-sm border-green bg-white hover:text-white px-4 flex-nowrap rounded-full text-green hover:bg-green ${buttonClassName ?? ""}`.trim();
 
   return (
     <div className={className}>

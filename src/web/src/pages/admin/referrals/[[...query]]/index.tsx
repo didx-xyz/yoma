@@ -422,7 +422,7 @@ const ReferralPrograms: NextPageWithLayout = () => {
         )}
 
         {!isLoadingSearchResults && (
-          <div className="md:shadow-custom rounded-lg md:bg-white md:p-4">
+          <>
             {/* NO ROWS */}
             {searchResults && searchResults.items?.length === 0 && (
               <div className="flex h-fit flex-col items-center rounded-lg bg-white pb-8 md:pb-16">
@@ -447,7 +447,7 @@ const ReferralPrograms: NextPageWithLayout = () => {
                       key={`sm_${program.id}`}
                       className="shadow-custom flex flex-col justify-between gap-4 rounded-lg bg-white p-4"
                     >
-                      <div className="border-gray-light flex flex-row items-center gap-2 border-b-2 pb-2">
+                      <div className="flex flex-row items-center gap-2 pb-2">
                         {/* Program Image */}
                         <SquareImage
                           imageURL={program.imageURL}
@@ -652,30 +652,24 @@ const ReferralPrograms: NextPageWithLayout = () => {
                 </div>
 
                 {/* DESKTOP */}
-                <table className="border-gray-light hidden w-full border-separate rounded-lg border-x-2 border-t-2 md:table">
+                <table className="border-gray-light hidden w-full border-separate rounded-lg bg-white md:table">
                   <thead>
                     <tr className="border-gray text-gray-dark">
-                      <th className="border-gray-light border-b-2 !py-4">
+                      <th className="border-gray-light !py-4">
                         Referral Program
                       </th>
-                      <th className="border-gray-light border-b-2">Referees</th>
-                      <th className="border-gray-light border-b-2">
-                        Ambassadors
-                      </th>
-                      <th className="border-gray-light border-b-2">
-                        ZLTO Rewards
-                      </th>
-                      <th className="border-gray-light border-b-2">Features</th>
-                      <th className="border-gray-light border-b-2">Status</th>
-                      <th className="border-gray-light border-b-2 text-center">
-                        Actions
-                      </th>
+                      <th className="border-gray-light">Referees</th>
+                      <th className="border-gray-light">Ambassadors</th>
+                      <th className="border-gray-light">ZLTO Rewards</th>
+                      <th className="border-gray-light">Features</th>
+                      <th className="border-gray-light">Status</th>
+                      <th className="border-gray-light text-center">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     {searchResults.items.map((program) => (
                       <tr key={`md_${program.id}`}>
-                        <td className="border-gray-light border-b-2 !align-top">
+                        <td className="border-gray-light border-t-2 !align-top">
                           <div className="flex flex-row gap-4">
                             <Link
                               href={`/admin/referrals/${program.id}/info${`?returnUrl=${encodeURIComponent(
@@ -735,7 +729,7 @@ const ReferralPrograms: NextPageWithLayout = () => {
                             </div>
                           </div>
                         </td>
-                        <td className="border-gray-light text-gray-dark border-b-2 !align-top">
+                        <td className="border-gray-light text-gray-dark border-t-2 !align-top">
                           <div className="flex flex-col gap-1 text-xs">
                             <div className="flex gap-2">
                               <span className="text-gray-dark w-10 font-bold">
@@ -771,7 +765,7 @@ const ReferralPrograms: NextPageWithLayout = () => {
                             )}
                           </div>
                         </td>
-                        <td className="border-gray-light text-gray-dark border-b-2 !align-top">
+                        <td className="border-gray-light text-gray-dark border-t-2 !align-top">
                           <div className="flex flex-col gap-1 text-xs">
                             {program.referrerLimit !== null && (
                               <div className="flex gap-2">
@@ -810,7 +804,7 @@ const ReferralPrograms: NextPageWithLayout = () => {
                             )}
                           </div>
                         </td>
-                        <td className="border-gray-light text-gray-dark border-b-2 !align-top">
+                        <td className="border-gray-light text-gray-dark border-t-2 !align-top">
                           <div className="flex flex-col gap-1 text-xs">
                             {program.zltoRewardPool ? (
                               <>
@@ -854,7 +848,7 @@ const ReferralPrograms: NextPageWithLayout = () => {
                             )}
                           </div>
                         </td>
-                        <td className="border-gray-light border-b-2 !align-top">
+                        <td className="border-gray-light border-t-2 !align-top">
                           <div className="flex flex-col gap-1 text-xs">
                             {program.proofOfPersonhoodRequired && (
                               <div className="flex items-center gap-1">
@@ -896,10 +890,10 @@ const ReferralPrograms: NextPageWithLayout = () => {
                               )}
                           </div>
                         </td>
-                        <td className="border-gray-light border-b-2 !align-top">
+                        <td className="border-gray-light border-t-2 !align-top">
                           <ProgramStatusBadge status={program.status} />
                         </td>
-                        <td className="border-gray-light border-b-2 !align-top">
+                        <td className="border-gray-light border-t-2 !align-top">
                           <div className="flex flex-row items-center justify-center gap-2">
                             <AdminReferralProgramActions
                               program={program}
@@ -924,7 +918,7 @@ const ReferralPrograms: NextPageWithLayout = () => {
                 </div>
               </>
             )}
-          </div>
+          </>
         )}
       </div>
     </>

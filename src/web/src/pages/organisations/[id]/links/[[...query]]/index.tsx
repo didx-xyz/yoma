@@ -622,7 +622,7 @@ const Links: NextPageWithLayout<{
           </div>
         </div>
 
-        <div className="md:shadow-custom rounded-lg md:bg-white md:p-4">
+        <>
           {/* NO ROWS */}
           {links && links.items?.length === 0 && (
             <>
@@ -662,7 +662,7 @@ const Links: NextPageWithLayout<{
                     className="shadow-custom flex flex-col gap-2 rounded-lg bg-white p-4"
                   >
                     {/* Link & Actions */}
-                    <div className="border-gray-light flex flex-row gap-2 border-b-2 pb-2">
+                    <div className="flex flex-row gap-2">
                       <div className="flex w-full flex-col gap-1">
                         <Link
                           title={item.name}
@@ -805,26 +805,22 @@ const Links: NextPageWithLayout<{
               </div>
 
               {/* DEKSTOP */}
-              <table className="border-gray-light hidden border-separate rounded-lg border-x-2 border-t-2 md:table md:table-auto">
+              <table className="border-gray-light hidden border-separate rounded-lg bg-white md:table md:table-auto">
                 <thead>
                   <tr className="border-gray text-gray-dark">
-                    <th className="border-gray-light border-b-2 !py-4">Link</th>
-                    <th className="border-gray-light border-b-2 !py-4">
-                      Opportunity
-                    </th>
-                    <th className="border-gray-light border-b-2">Usage</th>
-                    <th className="border-gray-light border-b-2">Expires</th>
-                    <th className="border-gray-light border-b-2">Status</th>
-                    <th className="border-gray-light border-b-2 text-center">
-                      Actions
-                    </th>
+                    <th className="border-gray-light !py-4">Link</th>
+                    <th className="border-gray-light !py-4">Opportunity</th>
+                    <th className="border-gray-light">Usage</th>
+                    <th className="border-gray-light">Expires</th>
+                    <th className="border-gray-light">Status</th>
+                    <th className="border-gray-light text-center">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {links.items.map((item) => (
                     <tr key={`grid_md_${item.id}`} className="">
                       {/* Link */}
-                      <td className="border-gray-light w-[180px] max-w-[220px] border-b-2 !py-4 align-top">
+                      <td className="border-gray-light w-[180px] max-w-[220px] border-t-2 !py-4 align-top">
                         <div className="flex flex-col gap-1">
                           <Link
                             title={item.name}
@@ -849,7 +845,7 @@ const Links: NextPageWithLayout<{
                       </td>
 
                       {/* Opportunity */}
-                      <td className="border-gray-light w-[180px] max-w-[180px] border-b-2 !py-4 align-top">
+                      <td className="border-gray-light w-[180px] max-w-[180px] border-t-2 !py-4 align-top">
                         {item.entityType == "Opportunity" &&
                           item.entityOrganizationId && (
                             <Link
@@ -876,7 +872,7 @@ const Links: NextPageWithLayout<{
                         )}
                       </td>
 
-                      <td className="border-gray-light border-b-2">
+                      <td className="border-gray-light border-t-2">
                         {item.lockToDistributionList && (
                           <span className="badge bg-green-light text-yellow">
                             <IoMdLock className="h-4 w-4" />
@@ -898,7 +894,7 @@ const Links: NextPageWithLayout<{
                         )}
                       </td>
 
-                      <td className="border-gray-light border-b-2">
+                      <td className="border-gray-light border-t-2">
                         {item.dateEnd ? (
                           <span className="badge bg-yellow-light text-yellow">
                             <IoMdCalendar className="h-4 w-4" />
@@ -914,7 +910,7 @@ const Links: NextPageWithLayout<{
                       </td>
 
                       {/* STATUS */}
-                      <td className="border-gray-light border-b-2">
+                      <td className="border-gray-light border-t-2">
                         {item.status == "Active" && (
                           <span className="badge bg-blue-light text-blue">
                             Active
@@ -943,7 +939,7 @@ const Links: NextPageWithLayout<{
                       </td>
 
                       {/* BUTTONS */}
-                      <td className="border-gray-light border-b-2 whitespace-nowrap">
+                      <td className="border-gray-light border-t-2 whitespace-nowrap">
                         <div className="flex flex-row items-center justify-center gap-2">
                           {/* ACTIONS */}
                           <LinkActions
@@ -980,7 +976,7 @@ const Links: NextPageWithLayout<{
               </div>
             </>
           )}
-        </div>
+        </>
       </div>
     </>
   );

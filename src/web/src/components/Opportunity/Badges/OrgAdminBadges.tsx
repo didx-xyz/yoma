@@ -2,6 +2,7 @@ import Image from "next/image";
 import iconClock from "public/images/icon-clock.svg";
 import { IoMdPause, IoMdPerson, IoMdPlay } from "react-icons/io";
 import type { OpportunityInfo } from "~/api/models/opportunity";
+import { OPPORTUNITY_TYPE_JOB } from "~/lib/constants";
 import iconZlto from "public/images/icon-zlto.svg";
 
 interface BadgesProps {
@@ -10,22 +11,26 @@ interface BadgesProps {
 }
 
 const OrgAdminBadges: React.FC<BadgesProps> = ({ opportunity, isAdmin }) => {
+  const isJobOpportunity = opportunity?.type === OPPORTUNITY_TYPE_JOB;
+
   return (
     <div className="text-green-dark flex flex-row flex-wrap gap-2 border-none font-bold">
-      <div className="badge bg-green-light text-green rounded-md border-none text-xs">
-        <Image
-          src={iconClock}
-          alt="Icon Clock"
-          width={20}
-          className="h-auto"
-          sizes="100vw"
-          priority={true}
-        />
+      {!isJobOpportunity && (
+        <div className="badge bg-green-light text-green rounded-md border-none text-xs">
+          <Image
+            src={iconClock}
+            alt="Icon Clock"
+            width={20}
+            className="h-auto"
+            sizes="100vw"
+            priority={true}
+          />
 
-        <span className="ml-1 text-xs">{`${opportunity?.commitmentIntervalCount} ${opportunity?.commitmentInterval}${
-          (opportunity?.commitmentIntervalCount ?? 0 > 1) ? "s" : ""
-        }`}</span>
-      </div>
+          <span className="ml-1 text-xs">{`${opportunity?.commitmentIntervalCount} ${opportunity?.commitmentInterval}${
+            (opportunity?.commitmentIntervalCount ?? 0 > 1) ? "s" : ""
+          }`}</span>
+        </div>
+      )}
 
       <div className="badge bg-blue-light text-blue border-none text-xs">
         <IoMdPerson className="h-4 w-4" />
@@ -57,10 +62,15 @@ const OrgAdminBadges: React.FC<BadgesProps> = ({ opportunity, isAdmin }) => {
               💡 {opportunity.type}
             </div>
           )}
+          {opportunity?.type === OPPORTUNITY_TYPE_JOB && (
+            <div className="badge bg-blue-light text-blue">
+              💼 {opportunity.type}
+            </div>
+          )}
         </>
       )}
 
-      {(opportunity?.zltoReward ?? 0) > 0 && (
+      {!isJobOpportunity && (opportunity?.zltoReward ?? 0) > 0 && (
         <div className="badge bg-orange-light text-orange border-none whitespace-nowrap">
           <Image
             src={iconZlto}
