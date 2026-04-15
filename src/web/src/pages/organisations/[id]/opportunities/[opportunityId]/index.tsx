@@ -112,8 +112,18 @@ export interface OpportunityRequestViewModel extends OpportunityRequestBase {
   showZltoRewardPool: boolean;
 }
 
-const isJobOpportunityTypeValue = (typeId?: string | null) =>
-  typeId === OPPORTUNITY_TYPE_JOB_ID;
+const normalizeOpportunityTypeValue = (value?: string | null) =>
+  value?.trim().toLowerCase() ?? "";
+
+const isJobOpportunityTypeValue = (value?: string | null) => {
+  const normalizedValue = normalizeOpportunityTypeValue(value);
+
+  return (
+    normalizedValue ===
+      normalizeOpportunityTypeValue(OPPORTUNITY_TYPE_JOB_ID) ||
+    normalizedValue === normalizeOpportunityTypeValue(OPPORTUNITY_TYPE_JOB)
+  );
+};
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -169,7 +179,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       opportunityId: opportunityId,
       theme: theme,
       error: errorCode,
-    },
+},
   };
 }
 
@@ -340,69 +350,44 @@ const OpportunityAdminDetails: NextPageWithLayout<{
   const formRef7 = useRef<HTMLFormElement>(null);
   const formRef8 = useRef<HTMLFormElement>(null);
 
-  const sanitizeOpportunityFormData = useCallback(
-    (model: OpportunityRequestViewModel): OpportunityRequestViewModel => {
-      if (!isJobOpportunityTypeValue(model.typeId)) {
-        return model;
-      }
-
-      return {
-        ...model,
-        difficultyId: "",
-        commitmentIntervalCount: null,
-        commitmentIntervalId: "",
-        showZltoReward: false,
-        showZltoRewardPool: false,
-        zltoReward: null,
-        zltoRewardPool: null,
-        yomaReward: null,
-        yomaRewardPool: null,
-      };
-    },
-    [],
-  );
-
-  const [formData, setFormData] = useState<OpportunityRequestViewModel>(() =>
-    sanitizeOpportunityFormData({
-      id: opportunity?.id ?? null,
-      title: opportunity?.title ?? "",
-      summary: opportunity?.summary ?? "",
-      description: opportunity?.description ?? "",
-      typeId: opportunity?.typeId ?? "",
-      categories: opportunity?.categories?.map((x) => x.id) ?? [],
-      uRL: opportunity?.url ?? "",
-      languages: opportunity?.languages?.map((x) => x.id) ?? [],
-      countries: opportunity?.countries?.map((x) => x.id) ?? [],
-      difficultyId: opportunity?.difficultyId ?? "",
-      commitmentIntervalCount: opportunity?.commitmentIntervalCount ?? null,
-      commitmentIntervalId: opportunity?.commitmentIntervalId ?? "",
-      dateStart: opportunity?.dateStart ?? null,
-      dateEnd: opportunity?.dateEnd ?? null,
-      participantLimit: opportunity?.participantLimit ?? null,
-      zltoReward: opportunity?.zltoReward ?? null,
-      zltoRewardPool: opportunity?.zltoRewardPool ?? null,
-      yomaReward: opportunity?.yomaReward ?? null,
-      yomaRewardPool: opportunity?.yomaRewardPool ?? null,
-      skills: opportunity?.skills?.map((x) => x.id) ?? [],
-      keywords: opportunity?.keywords ?? [],
-      verificationEnabled: opportunity?.verificationEnabled ?? null,
-      verificationMethod: opportunity?.verificationMethod
-        ? VerificationMethod[opportunity.verificationMethod]
-        : null,
-      verificationTypes: opportunity?.verificationTypes ?? [],
-      credentialIssuanceEnabled:
-        opportunity?.credentialIssuanceEnabled ?? false,
-      ssiSchemaName: opportunity?.ssiSchemaName ?? null,
-      engagementTypeId: opportunity?.engagementTypeId ?? null,
-      organizationId: id,
-      instructions: opportunity?.instructions ?? "",
-      postAsActive: opportunity?.published ?? false,
-      shareWithPartners: opportunity?.shareWithPartners ?? false,
-      hidden: opportunity?.hidden ?? false,
-      showZltoReward: !!(opportunity?.zltoReward ?? false),
-      showZltoRewardPool: !!(opportunity?.zltoRewardPool ?? false),
-    }),
-  );
+  const [formData, setFormData] = useState<OpportunityRequestViewModel>({
+    id: opportunity?.id ?? null,
+    title: opportunity?.title ?? "",
+    summary: opportunity?.summary ?? "",
+    description: opportunity?.description ?? "",
+    typeId: opportunity?.typeId ?? "",
+    categories: opportunity?.categories?.map((x) => x.id) ?? [],
+    uRL: opportunity?.url ?? "",
+    languages: opportunity?.languages?.map((x) => x.id) ?? [],
+    countries: opportunity?.countries?.map((x) => x.id) ?? [],
+    difficultyId: opportunity?.difficultyId ?? "",
+    commitmentIntervalCount: opportunity?.commitmentIntervalCount ?? null,
+    commitmentIntervalId: opportunity?.commitmentIntervalId ?? "",
+    dateStart: opportunity?.dateStart ?? null,
+    dateEnd: opportunity?.dateEnd ?? null,
+    participantLimit: opportunity?.participantLimit ?? null,
+    zltoReward: opportunity?.zltoReward ?? null,
+    zltoRewardPool: opportunity?.zltoRewardPool ?? null,
+    yomaReward: opportunity?.yomaReward ?? null,
+    yomaRewardPool: opportunity?.yomaRewardPool ?? null,
+    skills: opportunity?.skills?.map((x) => x.id) ?? [],
+    keywords: opportunity?.keywords ?? [],
+    verificationEnabled: opportunity?.verificationEnabled ?? null,
+    verificationMethod: opportunity?.verificationMethod
+      ? VerificationMethod[opportunity.verificationMethod]
+      : null,
+    verificationTypes: opportunity?.verificationTypes ?? [],
+    credentialIssuanceEnabled: opportunity?.credentialIssuanceEnabled ?? false,
+    ssiSchemaName: opportunity?.ssiSchemaName ?? null,
+    engagementTypeId: opportunity?.engagementTypeId ?? null,
+    organizationId: id,
+    instructions: opportunity?.instructions ?? "",
+    postAsActive: opportunity?.published ?? false,
+    shareWithPartners: opportunity?.shareWithPartners ?? false,
+    hidden: opportunity?.hidden ?? false,
+    showZltoReward: !!(opportunity?.zltoReward ?? false),
+    showZltoRewardPool: !!(opportunity?.zltoRewardPool ?? false),
+  });
 
   const schemaStep1 = z.object({
     title: z
@@ -429,17 +414,38 @@ const OpportunityAdminDetails: NextPageWithLayout<{
       ),
   });
 
+  const {
+    register: registerStep1,
+    handleSubmit: handleSubmitStep1,
+    formState: formStateStep1,
+    control: controlStep1,
+    watch: watchStep1,
+    reset: resetStep1,
+    trigger: triggerStep1,
+  } = useForm({
+    resolver: zodResolver(schemaStep1),
+    defaultValues: formData,
+    mode: "all",
+  });
+
+  const watchTypeId = watchStep1("typeId");
+  const isJobOpportunity = isJobOpportunityTypeValue(
+    watchTypeId ?? formData.typeId,
+  );
+
   const schemaStep2 = z
     .object({
-      difficultyId: z.string(),
+      difficultyId: z.string().optional(),
       languages: z
         .array(z.string(), { required_error: "Language is required" })
         .min(1, "Language is required."),
       countries: z
         .array(z.string(), { required_error: "Country is required" })
         .min(1, "Country is required."),
-      commitmentIntervalCount: z.union([z.nan(), z.null(), z.number()]),
-      commitmentIntervalId: z.string(),
+      commitmentIntervalCount: z
+        .union([z.nan(), z.null(), z.number()])
+        .optional(),
+      commitmentIntervalId: z.string().optional(),
       dateStart: z
         .union([z.null(), z.string(), z.date()])
         .refine((val) => val !== null, {
@@ -497,49 +503,51 @@ const OpportunityAdminDetails: NextPageWithLayout<{
     .superRefine((val, ctx) => {
       if (val == null) return;
 
-      if (!isJobOpportunityTypeValue(formData.typeId)) {
-        if (!val.difficultyId) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: "Difficulty is required.",
-            path: ["difficultyId"],
-          });
-        }
+      if (!isJobOpportunity && !val.difficultyId) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Difficulty is required.",
+          path: ["difficultyId"],
+        });
+      }
 
-        if (
-          val.commitmentIntervalCount == null ||
-          isNaN(val.commitmentIntervalCount)
-        ) {
+      const commitmentIntervalCount = val.commitmentIntervalCount;
+      const hasCommitmentIntervalCount =
+        typeof commitmentIntervalCount === "number" &&
+        !isNaN(commitmentIntervalCount);
+
+      if (!isJobOpportunity && !hasCommitmentIntervalCount) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Number is required.",
+          path: ["commitmentIntervalCount"],
+        });
+      }
+
+      if (hasCommitmentIntervalCount) {
+        if (commitmentIntervalCount <= 0) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
-            message: "Number is required.",
+            message: "Number must be greater than 0.",
             path: ["commitmentIntervalCount"],
           });
-        } else {
-          if (val.commitmentIntervalCount <= 0) {
-            ctx.addIssue({
-              code: z.ZodIssueCode.custom,
-              message: "Number must be greater than 0.",
-              path: ["commitmentIntervalCount"],
-            });
-          }
-
-          if (val.commitmentIntervalCount > 32767) {
-            ctx.addIssue({
-              code: z.ZodIssueCode.custom,
-              message: "Number must be less than or equal to 32767.",
-              path: ["commitmentIntervalCount"],
-            });
-          }
         }
 
-        if (!val.commitmentIntervalId) {
+        if (commitmentIntervalCount > 32767) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
-            message: "Time frame is required.",
-            path: ["commitmentIntervalId"],
+            message: "Number must be less than or equal to 32767.",
+            path: ["commitmentIntervalCount"],
           });
         }
+      }
+
+      if (!isJobOpportunity && !val.commitmentIntervalId) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Time frame is required.",
+          path: ["commitmentIntervalId"],
+        });
       }
 
       // ensure dateEnd is not before dateStart
@@ -565,7 +573,6 @@ const OpportunityAdminDetails: NextPageWithLayout<{
     })
     .superRefine((val, ctx) => {
       if (val == null) return;
-      if (isJobOpportunityTypeValue(formData.typeId)) return;
 
       if (val.showZltoReward) {
         if (
@@ -574,7 +581,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
           val.zltoReward > organisation.zltoRewardBalanceCurrentFinancialYear
         ) {
           ctx.addIssue({
-            message: `Reward cannot exceed the current financial year available balance of ${organisation?.zltoRewardBalanceCurrentFinancialYear}.`,
+            message: `Reward cannot exceed the available balance of ${organisation?.zltoRewardBalanceCurrentFinancialYear}.`,
             code: z.ZodIssueCode.custom,
             path: ["zltoReward"],
             fatal: true,
@@ -628,7 +635,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
               organisation.zltoRewardBalanceCurrentFinancialYear
           ) {
             ctx.addIssue({
-              message: `Reward pool cannot exceed the current financial year available balance of ${organisation?.zltoRewardBalanceCurrentFinancialYear}.`,
+              message: `Reward pool cannot exceed the available balance of ${organisation?.zltoRewardBalanceCurrentFinancialYear}.`,
               code: z.ZodIssueCode.custom,
               path: ["zltoRewardPool"],
               fatal: true,
@@ -751,24 +758,6 @@ const OpportunityAdminDetails: NextPageWithLayout<{
     shareWithPartners: z.boolean().optional(),
     hidden: z.boolean().optional(),
   });
-
-  const {
-    register: registerStep1,
-    handleSubmit: handleSubmitStep1,
-    formState: formStateStep1,
-    control: controlStep1,
-    watch: watchStep1,
-    reset: resetStep1,
-    trigger: triggerStep1,
-  } = useForm({
-    resolver: zodResolver(schemaStep1),
-    defaultValues: formData,
-    mode: "all",
-  });
-  const watchTypeId = watchStep1("typeId");
-  const isJobOpportunityType = isJobOpportunityTypeValue(
-    watchTypeId || formData.typeId,
-  );
 
   const {
     register: registerStep2,
@@ -965,6 +954,11 @@ const OpportunityAdminDetails: NextPageWithLayout<{
       }));
     }
   }, [watchVerificationEnabled, setFormData]);
+
+  useEffect(() => {
+    void triggerStep1();
+    void triggerStep2();
+  }, [isJobOpportunity, triggerStep1, triggerStep2]);
 
   useEffect(() => {
     // trigger validation when watchVerificationEnabled & watchVerificationMethod changes (for required field indicators to refresh)
@@ -1243,8 +1237,6 @@ const OpportunityAdminDetails: NextPageWithLayout<{
       try {
         let message = "";
 
-        data = sanitizeOpportunityFormData(data);
-
         // convert dates to string in format "YYYY-MM-DD"
         data.dateStart = data.dateStart
           ? moment.utc(data.dateStart).format(DATE_FORMAT_SYSTEM)
@@ -1365,17 +1357,16 @@ const OpportunityAdminDetails: NextPageWithLayout<{
       queryClient,
       router,
       returnUrl,
-      sanitizeOpportunityFormData,
     ],
   );
 
   const onSubmitStep = useCallback(
     async (nextStep: number, data: FieldValues) => {
       // set form data
-      const model = sanitizeOpportunityFormData({
+      const model = {
         ...formData,
         ...(data as OpportunityRequestBase),
-      } as OpportunityRequestViewModel);
+      };
 
       setFormData(model);
 
@@ -1420,7 +1411,6 @@ const OpportunityAdminDetails: NextPageWithLayout<{
       resetStep6,
       resetStep7,
       resetStep8,
-      sanitizeOpportunityFormData,
       triggerValidation,
     ],
   );
@@ -1580,7 +1570,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                           updatedOpportunity.zltoRewardPool ?? false
                         ),
                       };
-                      setFormData(sanitizeOpportunityFormData(mapped));
+                      setFormData(mapped);
                       setOppExpiredModalVisible(false);
                     },
                   })
@@ -2148,134 +2138,125 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                       />
                     </FormField>
 
-                    {!isJobOpportunityType && (
-                      <>
+                    <FormField
+                      label="Difficulty"
+                      subLabel="The difficulty level of the opportunity. This will be displayed on the opportunity page."
+                      showWarningIcon={
+                        !!formStateStep2.errors.difficultyId?.message
+                      }
+                      showError={
+                        !!formStateStep2.touchedFields.difficultyId ||
+                        formStateStep2.isSubmitted
+                      }
+                      error={formStateStep2.errors.difficultyId?.message}
+                    >
+                      <Controller
+                        control={controlStep2}
+                        name="difficultyId"
+                        render={({ field: { onChange, value, onBlur } }) => (
+                          <Select
+                            instanceId="difficultyId"
+                            classNames={{
+                              control: () =>
+                                "input w-full !border-gray pr-0 pl-2",
+                            }}
+                            isMulti={false}
+                            isClearable={true}
+                            options={difficultiesOptions}
+                            onBlur={onBlur} // mark the field as touched
+                            onChange={(val) => onChange(val?.value)}
+                            value={difficultiesOptions?.find(
+                              (c) => c.value === value,
+                            )}
+                            // fix menu z-index issue
+                            menuPortalTarget={htmlRef.current}
+                            styles={{
+                              menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+                              placeholder: (base) => ({
+                                ...base,
+                                color: "#A3A6AF",
+                              }),
+                            }}
+                            inputId="input_difficultyId" // e2e
+                            placeholder="Select difficulty..."
+                          />
+                        )}
+                      />
+                    </FormField>
+
+                    <FormField
+                      label="Effort"
+                      subLabel="The effort required to complete the opportunity. This will be displayed on the opportunity page."
+                      showWarningIcon={
+                        !!formStateStep2.errors.commitmentIntervalCount
+                          ?.message ||
+                        !!formStateStep2.errors.commitmentIntervalId?.message
+                      }
+                    >
+                      <div className="grid gap-4 md:grid-cols-2">
                         <FormField
-                          label="Difficulty"
-                          subLabel="The difficulty level of the opportunity. This will be displayed on the opportunity page."
-                          showWarningIcon={
-                            !!formStateStep2.errors.difficultyId?.message
-                          }
                           showError={
-                            !!formStateStep2.touchedFields.difficultyId ||
+                            !!formStateStep2.touchedFields
+                              .commitmentIntervalCount ||
                             formStateStep2.isSubmitted
                           }
-                          error={formStateStep2.errors.difficultyId?.message}
+                          error={
+                            formStateStep2.errors.commitmentIntervalCount
+                              ?.message
+                          }
+                        >
+                          <input
+                            type="number"
+                            className="input border-gray focus:border-gray w-full rounded-md focus:outline-none"
+                            placeholder="Enter number..."
+                            {...registerStep2("commitmentIntervalCount", {
+                              valueAsNumber: true,
+                            })}
+                          />
+                        </FormField>
+
+                        <FormField
+                          showError={
+                            !!formStateStep2.touchedFields
+                              .commitmentIntervalId ||
+                            formStateStep2.isSubmitted
+                          }
+                          error={
+                            formStateStep2.errors.commitmentIntervalId?.message
+                          }
                         >
                           <Controller
                             control={controlStep2}
-                            name="difficultyId"
+                            name="commitmentIntervalId"
                             render={({
                               field: { onChange, value, onBlur },
                             }) => (
                               <Select
-                                instanceId="difficultyId"
+                                instanceId="commitmentIntervalId"
                                 classNames={{
                                   control: () =>
                                     "input w-full !border-gray pr-0 pl-2",
                                 }}
-                                isMulti={false}
-                                options={difficultiesOptions}
-                                onBlur={onBlur}
+                                options={timeIntervalsOptions}
+                                onBlur={onBlur} // mark the field as touched
                                 onChange={(val) => onChange(val?.value)}
-                                value={difficultiesOptions?.find(
+                                value={timeIntervalsOptions?.find(
                                   (c) => c.value === value,
                                 )}
-                                menuPortalTarget={htmlRef.current}
                                 styles={{
-                                  menuPortal: (base) => ({
-                                    ...base,
-                                    zIndex: 9999,
-                                  }),
                                   placeholder: (base) => ({
                                     ...base,
                                     color: "#A3A6AF",
                                   }),
                                 }}
-                                inputId="input_difficultyId"
-                                placeholder="Select difficulty..."
+                                inputId="input_commitmentIntervalId" // e2e
+                                placeholder="Select time frame..."
                               />
                             )}
                           />
                         </FormField>
-
-                        <FormField
-                          label="Effort"
-                          subLabel="The effort required to complete the opportunity. This will be displayed on the opportunity page."
-                          showWarningIcon={
-                            !!formStateStep2.errors.commitmentIntervalCount
-                              ?.message ||
-                            !!formStateStep2.errors.commitmentIntervalId
-                              ?.message
-                          }
-                        >
-                          <div className="grid gap-4 md:grid-cols-2">
-                            <FormField
-                              showError={
-                                !!formStateStep2.touchedFields
-                                  .commitmentIntervalCount ||
-                                formStateStep2.isSubmitted
-                              }
-                              error={
-                                formStateStep2.errors.commitmentIntervalCount
-                                  ?.message
-                              }
-                            >
-                              <input
-                                type="number"
-                                className="input border-gray focus:border-gray w-full rounded-md focus:outline-none"
-                                placeholder="Enter number..."
-                                {...registerStep2("commitmentIntervalCount", {
-                                  valueAsNumber: true,
-                                })}
-                              />
-                            </FormField>
-
-                            <FormField
-                              showError={
-                                !!formStateStep2.touchedFields
-                                  .commitmentIntervalId ||
-                                formStateStep2.isSubmitted
-                              }
-                              error={
-                                formStateStep2.errors.commitmentIntervalId
-                                  ?.message
-                              }
-                            >
-                              <Controller
-                                control={controlStep2}
-                                name="commitmentIntervalId"
-                                render={({
-                                  field: { onChange, value, onBlur },
-                                }) => (
-                                  <Select
-                                    instanceId="commitmentIntervalId"
-                                    classNames={{
-                                      control: () =>
-                                        "input w-full !border-gray pr-0 pl-2",
-                                    }}
-                                    options={timeIntervalsOptions}
-                                    onBlur={onBlur}
-                                    onChange={(val) => onChange(val?.value)}
-                                    value={timeIntervalsOptions?.find(
-                                      (c) => c.value === value,
-                                    )}
-                                    styles={{
-                                      placeholder: (base) => ({
-                                        ...base,
-                                        color: "#A3A6AF",
-                                      }),
-                                    }}
-                                    inputId="input_commitmentIntervalId"
-                                    placeholder="Select time frame..."
-                                  />
-                                )}
-                              />
-                            </FormField>
-                          </div>
-                        </FormField>
-                      </>
-                    )}
+                      </div>
+                    </FormField>
 
                     <FormField
                       label="Availability"
@@ -2440,13 +2421,13 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                       Choose the reward that participants will earn after
                       successfully completing the opportunity.
                     </p>
-                    {isJobOpportunityType && (
+                    {isJobOpportunity && (
                       <FormMessage messageType={FormMessageType.Warning}>
                         Rewards cannot be set for opportunities of type
                         {` '${OPPORTUNITY_TYPE_JOB}'.`}
                       </FormMessage>
                     )}
-                    {!isJobOpportunityType &&
+                    {!isJobOpportunity &&
                       !organisation?.zltoRewardPoolCurrentFinancialYear && (
                         <FormMessage messageType={FormMessageType.Warning}>
                           Heads up! Your organisation does not have a current
@@ -2454,7 +2435,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                           support to set it up for your organisation.
                         </FormMessage>
                       )}
-                    {!isJobOpportunityType &&
+                    {!isJobOpportunity &&
                       organisation?.zltoRewardPoolCurrentFinancialYear && (
                         <div className="badge bg-orange !rounded-full px-4 text-white">
                           Current FY Available Balance:{" "}
@@ -2464,7 +2445,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                           )}
                         </div>
                       )}
-                    {!isJobOpportunityType && !formStateStep3.isValid && (
+                    {!isJobOpportunity && !formStateStep3.isValid && (
                       <FormRequiredFieldMessage />
                     )}
                   </div>
@@ -2477,7 +2458,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                     )}
                   >
                     <>
-                      {!isJobOpportunityType &&
+                      {!isJobOpportunity &&
                         organisation?.zltoRewardPoolCurrentFinancialYear && (
                           <>
                             <FormField
@@ -3352,6 +3333,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                   </form>
                 </>
               )}
+
               {step === 8 && (
                 <>
                   <div className="mb-4 flex flex-col gap-2">
@@ -3415,14 +3397,12 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                             results.
                           </FormMessage>
 
-                          <div className="mt-4 flex justify-center">
-                            <OpportunityPublicDetails
-                              opportunityInfo={opportunityInfo}
-                              user={null}
-                              error={error}
-                              preview={true}
-                            />
-                          </div>
+                          <OpportunityPublicDetails
+                            opportunityInfo={opportunityInfo}
+                            user={null}
+                            error={error}
+                            preview={true}
+                          />
                         </div>
                       </div>
                     )}

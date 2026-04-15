@@ -67,7 +67,6 @@ const OpportunityPublicDetails: React.FC<{
 }> = ({ user, opportunityInfo, error, preview }) => {
   const queryClient = useQueryClient();
   const hasTrackedView = useRef(false);
-  const isJobOpportunity = opportunityInfo.type === OPPORTUNITY_TYPE_JOB;
   const [loginDialogVisible, setLoginDialogVisible] = useState(false);
   const [gotoOpportunityDialogVisible, setGotoOpportunityDialogVisible] =
     useState(false);
@@ -845,164 +844,166 @@ const OpportunityPublicDetails: React.FC<{
               <Editor value={opportunityInfo.description} readonly={true} />
             </div>
             <div className="flex flex-col gap-2 rounded-lg shadow-lg md:w-[33%]">
-              <div className="flex flex-col gap-1 rounded-lg bg-white p-4 md:p-6">
-                <div>
-                  <div className="mt-2 flex flex-row items-center gap-1 text-sm font-bold">
-                    <Image
-                      src={iconSkills}
-                      alt="Icon Skills"
-                      width={20}
-                      className="h-auto"
-                      sizes="100vw"
-                      priority={true}
-                    />
-                    <span className="ml-1">Skills you will learn</span>
+              <div className="divide-gray flex flex-col divide-y rounded-lg bg-white p-4 md:p-6">
+                {(opportunityInfo.skills?.length ?? 0) > 0 && (
+                  <div className="pb-4 first:pt-0 last:pb-0">
+                    <div className="mt-2 flex flex-row items-center gap-1 text-sm font-bold">
+                      <Image
+                        src={iconSkills}
+                        alt="Icon Skills"
+                        width={20}
+                        className="h-auto"
+                        sizes="100vw"
+                        priority={true}
+                      />
+                      <span className="ml-1">Skills you will learn</span>
+                    </div>
+                    <div className="my-2 flex flex-wrap gap-1">
+                      {opportunityInfo.skills?.map((item) => (
+                        <div
+                          key={item.id}
+                          className="badge bg-green px-2 py-1 text-white"
+                        >
+                          {item.name}
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                  <div className="my-2 flex flex-wrap gap-1">
-                    {opportunityInfo.skills?.map((item) => (
-                      <div
-                        key={item.id}
-                        className="badge bg-green px-2 py-1 text-white"
-                      >
-                        {item.name}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                {!isJobOpportunity &&
-                  opportunityInfo.commitmentIntervalCount != null &&
+                )}
+                {opportunityInfo.commitmentIntervalCount != null &&
                   opportunityInfo.commitmentInterval && (
-                    <>
-                      <div className="divider mt-2" />
-                      <div>
-                        <div className="flex flex-row items-center gap-1 text-sm font-bold">
-                          <Image
-                            src={iconClock}
-                            alt="Icon Clock"
-                            width={23}
-                            className="h-auto"
-                            sizes="100vw"
-                            priority={true}
-                          />
+                    <div className="py-4 first:pt-0 last:pb-0">
+                      <div className="flex flex-row items-center gap-1 text-sm font-bold">
+                        <Image
+                          src={iconClock}
+                          alt="Icon Clock"
+                          width={23}
+                          className="h-auto"
+                          sizes="100vw"
+                          priority={true}
+                        />
 
-                          <span className="ml-1">
-                            How much time you will need
-                          </span>
-                        </div>
-
-                        <div className="my-2 text-sm">
-                          {`This task should not take you more than ${
-                            opportunityInfo.commitmentIntervalCount
-                          } ${opportunityInfo.commitmentInterval}${
-                            opportunityInfo.commitmentIntervalCount > 1
-                              ? "s. "
-                              : ". "
-                          }`}
-                          <br />
-                          <p className="mt-2">
-                            The estimated times provided are just a guideline.
-                            You have as much time as you need to complete the
-                            tasks at your own pace. Focus on engaging with the
-                            materials and doing your best without feeling rushed
-                            by the time estimates.
-                          </p>
-                        </div>
+                        <span className="ml-1">
+                          How much time you will need
+                        </span>
                       </div>
-                    </>
+
+                      <div className="my-2 text-sm">
+                        {`This task should not take you more than ${
+                          opportunityInfo.commitmentIntervalCount
+                        } ${opportunityInfo.commitmentInterval}${
+                          opportunityInfo.commitmentIntervalCount > 1
+                            ? "s. "
+                            : ". "
+                        }`}
+                        <br />
+                        <p className="mt-2">
+                          The estimated times provided are just a guideline. You
+                          have as much time as you need to complete the tasks at
+                          your own pace. Focus on engaging with the materials
+                          and doing your best without feeling rushed by the time
+                          estimates.
+                        </p>
+                      </div>
+                    </div>
                   )}
-                <div className="divider mt-2" />
-                <div>
-                  <div className="flex flex-row items-center gap-1 text-sm font-bold">
-                    <Image
-                      src={iconTopics}
-                      alt="Icon Topics"
-                      width={20}
-                      className="h-auto"
-                      sizes="100vw"
-                      priority={true}
-                    />
+                {(opportunityInfo.categories?.length ?? 0) > 0 && (
+                  <div className="py-4 first:pt-0 last:pb-0">
+                    <div className="flex flex-row items-center gap-1 text-sm font-bold">
+                      <Image
+                        src={iconTopics}
+                        alt="Icon Topics"
+                        width={20}
+                        className="h-auto"
+                        sizes="100vw"
+                        priority={true}
+                      />
 
-                    <span className="ml-1">Topics</span>
+                      <span className="ml-1">Topics</span>
+                    </div>
+                    <div className="my-2 flex flex-wrap gap-1">
+                      {opportunityInfo.categories?.map((item) => (
+                        <div
+                          key={item.id}
+                          className="badge bg-green h-full min-h-6 rounded-md border-0 py-1 text-xs font-semibold text-white"
+                        >
+                          {item.name}
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                  <div className="my-2 flex flex-wrap gap-1">
-                    {opportunityInfo.categories?.map((item) => (
-                      <div
-                        key={item.id}
-                        className="badge bg-green h-full min-h-6 rounded-md border-0 py-1 text-xs font-semibold text-white"
-                      >
-                        {item.name}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                <div className="divider mt-2" />
-                <div>
-                  <div className="flex flex-row items-center gap-1 text-sm font-bold">
-                    <Image
-                      src={iconLanguage}
-                      alt="Icon Language"
-                      width={20}
-                      className="h-auto"
-                      sizes="100vw"
-                      priority={true}
-                    />
+                )}
+                {(opportunityInfo.languages?.length ?? 0) > 0 && (
+                  <div className="py-4 first:pt-0 last:pb-0">
+                    <div className="flex flex-row items-center gap-1 text-sm font-bold">
+                      <Image
+                        src={iconLanguage}
+                        alt="Icon Language"
+                        width={20}
+                        className="h-auto"
+                        sizes="100vw"
+                        priority={true}
+                      />
 
-                    <span className="ml-1">Languages</span>
+                      <span className="ml-1">Languages</span>
+                    </div>
+                    <div className="my-2 flex flex-wrap gap-1">
+                      {opportunityInfo.languages?.map((item) => (
+                        <div
+                          key={item.id}
+                          className="badge bg-green h-full min-h-6 rounded-md border-0 py-1 text-xs font-semibold text-white"
+                        >
+                          {item.name}
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                  <div className="my-2 flex flex-wrap gap-1">
-                    {opportunityInfo.languages?.map((item) => (
-                      <div
-                        key={item.id}
-                        className="badge bg-green h-full min-h-6 rounded-md border-0 py-1 text-xs font-semibold text-white"
-                      >
-                        {item.name}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                <div className="divider mt-2" />
-                <div>
-                  <div className="flex flex-row items-center gap-1 text-sm font-bold">
-                    <Image
-                      src={iconDifficulty}
-                      alt="Icon Difficulty"
-                      width={20}
-                      className="h-auto"
-                      sizes="100vw"
-                      priority={true}
-                    />
+                )}
+                {!!opportunityInfo.difficulty && (
+                  <div className="py-4 first:pt-0 last:pb-0">
+                    <div className="flex flex-row items-center gap-1 text-sm font-bold">
+                      <Image
+                        src={iconDifficulty}
+                        alt="Icon Difficulty"
+                        width={20}
+                        className="h-auto"
+                        sizes="100vw"
+                        priority={true}
+                      />
 
-                    <span className="ml-1">Course difficulty</span>
+                      <span className="ml-1">Course difficulty</span>
+                    </div>
+                    <div className="my-2 text-sm">
+                      {opportunityInfo.difficulty}
+                    </div>
                   </div>
-                  <div className="my-2 text-sm">
-                    {opportunityInfo.difficulty}
-                  </div>
-                </div>
-                <div className="divider mt-1" />
-                <div>
-                  <div className="flex flex-row items-center gap-1 text-sm font-bold">
-                    <Image
-                      src={iconLocation}
-                      alt="Icon Location"
-                      width={20}
-                      className="h-auto"
-                      sizes="100vw"
-                      priority={true}
-                    />
+                )}
+                {(opportunityInfo.countries?.length ?? 0) > 0 && (
+                  <div className="pt-4 first:pt-0">
+                    <div className="flex flex-row items-center gap-1 text-sm font-bold">
+                      <Image
+                        src={iconLocation}
+                        alt="Icon Location"
+                        width={20}
+                        className="h-auto"
+                        sizes="100vw"
+                        priority={true}
+                      />
 
-                    <span className="ml-1">Countries</span>
+                      <span className="ml-1">Countries</span>
+                    </div>
+                    <div className="my-2 flex flex-wrap gap-1">
+                      {opportunityInfo.countries?.map((country) => (
+                        <div
+                          key={country.id}
+                          className="badge bg-green h-full min-h-6 rounded-md border-0 py-1 text-xs font-semibold text-white"
+                        >
+                          {country.name}
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                  <div className="my-2 flex flex-wrap gap-1">
-                    {opportunityInfo.countries?.map((country) => (
-                      <div
-                        key={country.id}
-                        className="badge bg-green h-full min-h-6 rounded-md border-0 py-1 text-xs font-semibold text-white"
-                      >
-                        {country.name}
-                      </div>
-                    ))}
-                  </div>
-                </div>
+                )}
               </div>
             </div>
           </div>
