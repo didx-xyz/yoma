@@ -1,5 +1,4 @@
 import type { GetServerSidePropsContext, GetStaticPropsContext } from "next";
-import { OPPORTUNITY_TYPE_JOB, OPPORTUNITY_TYPE_JOB_ID } from "~/lib/constants";
 import ApiClient from "~/lib/axiosClient";
 import ApiServer from "~/lib/axiosServer";
 import type { Country, Language } from "../models/lookups";

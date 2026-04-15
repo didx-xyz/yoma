@@ -179,7 +179,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       opportunityId: opportunityId,
       theme: theme,
       error: errorCode,
-},
+    },
   };
 }
 

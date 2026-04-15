@@ -46,7 +46,6 @@ import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import {
   DATE_FORMAT_HUMAN,
-  OPPORTUNITY_TYPE_JOB,
   SETTING_USER_POPUP_LEAVINGYOMA,
 } from "~/lib/constants";
 import analytics from "~/lib/analytics";
