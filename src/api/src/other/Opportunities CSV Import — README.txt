@@ -300,7 +300,7 @@ File behaviour:
 Data cleaning rules:
 
 - Detect and exclude phantom rows
-- Any row with blank Title or completely empty is ignored
+- Any row with blank Title or empty is ignored
 - These rows are silently dropped
 
 Formatting enforcement:

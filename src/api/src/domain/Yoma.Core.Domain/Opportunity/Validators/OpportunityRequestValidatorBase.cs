@@ -131,7 +131,12 @@ namespace Yoma.Core.Domain.Opportunity.Validators
       // Difficulty is required except for Job opportunities If specified it must exist
       RuleFor(x => x.DifficultyId)
           .Cascade(CascadeMode.Stop)
-          .Must((model, difficultyId) => !TypeExists(model.TypeId) || TypeIsJob(model.TypeId) || difficultyId.HasValue)
+          .Must((model, difficultyId) =>
+          {
+            if (!TypeExists(model.TypeId)) return true;
+
+            return TypeIsJob(model.TypeId) || difficultyId.HasValue;
+          })
           .WithMessage("Difficulty is required.")
           .Must(difficultyId => DifficultyExists(difficultyId))
           .WithMessage("Specified difficulty is invalid or does not exist.");
@@ -174,7 +179,7 @@ namespace Yoma.Core.Domain.Opportunity.Validators
           .WithMessage("Participant limit is not supported when verification is not enabled. Please remove the specified value.");
 
       RuleFor(x => x.ParticipantLimit)
-          .Must(x => x.HasValue && x > 0)
+          .Must(x => x > 0)
           .When(x => x.ParticipantLimit.HasValue)
           .WithMessage("Participant limit must be greater than 0.");
 
@@ -219,7 +224,12 @@ namespace Yoma.Core.Domain.Opportunity.Validators
       // Engagement type is required except for Job opportunities. If specified it must exist.
       RuleFor(x => x.EngagementTypeId)
           .Cascade(CascadeMode.Stop)
-          .Must((model, engagementTypeId) => !TypeExists(model.TypeId) || TypeIsJob(model.TypeId) || engagementTypeId.HasValue)
+          .Must((model, engagementTypeId) =>
+          {
+            if (!TypeExists(model.TypeId)) return true;
+
+            return TypeIsJob(model.TypeId) || engagementTypeId.HasValue;
+          })
           .WithMessage("Engagement type is required.")
           .Must(EngagementTypeExists)
           .WithMessage("Specified engagement type is invalid or does not exist.");
