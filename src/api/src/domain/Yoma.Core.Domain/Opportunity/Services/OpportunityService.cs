@@ -1912,9 +1912,9 @@ namespace Yoma.Core.Domain.Opportunity.Services
        .Select(code => _countryService.GetByCodeAlpha2(code))
        .ToList() ?? [];
 
-      var difficulty = _opportunityDifficultyService.GetByName(item.Difficulty);
+      var difficulty = string.IsNullOrWhiteSpace(item.Difficulty) ? null : _opportunityDifficultyService.GetByName(item.Difficulty);
 
-      var commitmentInterval = _timeIntervalService.GetByName(item.CommitmentInterval);
+      var commitmentInterval = string.IsNullOrWhiteSpace(item.CommitmentInterval) ? null : _timeIntervalService.GetByName(item.CommitmentInterval);
 
       var skills = item.Skills?
         .Where(name => !string.IsNullOrWhiteSpace(name))
@@ -1966,9 +1966,9 @@ namespace Yoma.Core.Domain.Opportunity.Services
       request.Description = item.Description;
       request.Languages = [.. languages.Select(o => o.Id)];
       request.Countries = [.. countries.Select(o => o.Id)];
-      request.DifficultyId = difficulty.Id;
+      request.DifficultyId = difficulty?.Id;
       request.CommitmentIntervalCount = item.CommitmentIntervalCount;
-      request.CommitmentIntervalId = commitmentInterval.Id;
+      request.CommitmentIntervalId = commitmentInterval?.Id;
       request.DateStart = item.DateStart.ToDateTimeOffset();
       request.DateEnd = item.DateEnd?.ToDateTimeOffset();
       request.ParticipantLimit = item.ParticipantLimit;

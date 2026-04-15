@@ -47,16 +47,13 @@ namespace Yoma.Core.Domain.Opportunity.Models
     [Name("Location")]
     public List<string>? Countries { get; set; }
 
-    [Required]
-    public string Difficulty { get; set; } = null!;
+    public string? Difficulty { get; set; }
 
-    [Required]
     [Name("EffortCount")]
-    public short CommitmentIntervalCount { get; set; }
+    public short? CommitmentIntervalCount { get; set; }
 
-    [Required]
     [Name("EffortInterval")]
-    public string CommitmentInterval { get; set; } = null!;
+    public string? CommitmentInterval { get; set; }
 
     [Required]
     public DateOnly DateStart { get; set; }
@@ -112,14 +109,23 @@ namespace Yoma.Core.Domain.Opportunity.Models
       if (Countries == null || !Countries.Any(name => !string.IsNullOrWhiteSpace(name)))
         CSVImportHelper.AddError(errors, CSVImportErrorType.RequiredFieldMissing, "Missing required field", rowNumber, "Location");
 
-      if (string.IsNullOrEmpty(Difficulty))
-        CSVImportHelper.AddError(errors, CSVImportErrorType.RequiredFieldMissing, "Missing required field", rowNumber, nameof(Difficulty));
+      // Difficulty
+      // Optional for Opportunity Type: Job.
+      // For other opportunity types this field is required.
+      // Validation has been moved to the domain validators during Create/Update to keep CSV import aligned with API validation rules.
 
-      if (CommitmentIntervalCount <= 0)
-        CSVImportHelper.AddError(errors, CSVImportErrorType.InvalidFieldValue, "Must be greater than 0", rowNumber, "EffortCount", CommitmentIntervalCount.ToString());
+      // EffortCount (CommitmentIntervalCount)
+      // Optional for Opportunity Type: Job.
+      // For other opportunity types this field is required and must be greater than 0.
+      // Domain validators enforce this rule.
+      // CSV import only validates the numeric constraint when the field is supplied.
+      if (CommitmentIntervalCount.HasValue && CommitmentIntervalCount <= 0)
+        CSVImportHelper.AddError(errors, CSVImportErrorType.InvalidFieldValue, "Must be greater than 0", rowNumber, "EffortCount", CommitmentIntervalCount.Value.ToString());
 
-      if (string.IsNullOrEmpty(CommitmentInterval))
-        CSVImportHelper.AddError(errors, CSVImportErrorType.RequiredFieldMissing, "Missing required field", rowNumber, "EffortInterval");
+      // EffortInterval (CommitmentInterval)
+      // Optional for Opportunity Type: Job.
+      // For other opportunity types this field is required.
+      // Validation has been moved to the domain validators during Create/Update.
 
       if (DateStart == DateOnly.MinValue)
         CSVImportHelper.AddError(errors, CSVImportErrorType.RequiredFieldMissing, "Missing required field", rowNumber, nameof(DateStart));
