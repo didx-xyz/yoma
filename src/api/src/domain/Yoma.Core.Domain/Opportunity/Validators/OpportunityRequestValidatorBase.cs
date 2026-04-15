@@ -237,7 +237,9 @@ namespace Yoma.Core.Domain.Opportunity.Validators
           .Cascade(CascadeMode.Stop)
           .Must((model, skills) =>
           {
-            var isJob = TypeExists(model.TypeId) && TypeIsJob(model.TypeId);
+            if (!TypeExists(model.TypeId)) return true;
+
+            var isJob = TypeIsJob(model.TypeId);
             return isJob
               ? skills == null || skills.Count == 0 || skills.All(id => id != Guid.Empty && SkillExists(id))
               : skills != null && skills.Count != 0 && skills.All(id => id != Guid.Empty && SkillExists(id));
