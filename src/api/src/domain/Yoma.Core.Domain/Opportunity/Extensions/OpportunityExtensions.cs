@@ -232,7 +232,6 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
     /// • VerificationEnabled = true  
     /// • VerificationMethod = Manual  
     /// • Not Hidden (null / false)
-    /// • Opportunity Type is not Job
     /// </summary>
     private static bool EvaluateCompletable(
       string title,
