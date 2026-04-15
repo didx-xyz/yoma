@@ -28,8 +28,8 @@ For **Type = Job**, the following fields are optional:
 
 These fields may be left blank in the CSV.
 
-For **all other opportunity types**, these fields are required and must
-comply with the reference data lists.
+For **all other opportunity types**, Engagement and Skills remain optional.
+Difficulty and effort fields must still comply with the reference data lists.
 
 ------------------------------------------------------------------------
 
@@ -87,8 +87,8 @@ Additional rules depending on opportunity type:
 
 For all opportunity types **except Job**:
 
-- Engagement — required; must match opportunities_engagement.json (name)
-- Skills — required; one or more from opportunities_skills.json (name); `|`-delimited
+- Engagement — optional; must match opportunities_engagement.json if specified
+- Skills — optional; must match opportunities_skills.json if specified
 - Difficulty — required; must match opportunities_difficulty.json (name)
 - EffortCount — required; integer > 0
 - EffortInterval — required; must match opportunities_effortInterval.json (name)
@@ -182,7 +182,7 @@ Type-specific validation:
 
 For **all types except Job**:
 
-- Skills: required
+- Skills: optional (must exist if specified)
 - Difficulty: required
 - EffortCount: > 0
 - EffortInterval: must match opportunities_effortInterval.json

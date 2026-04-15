@@ -111,11 +111,8 @@ namespace Yoma.Core.Domain.Opportunity.Models
       var isJob = string.Equals(Type, Domain.Opportunity.Type.Job.ToString(), StringComparison.OrdinalIgnoreCase);
 
       // Engagement
-      // Optional for Opportunity Type: Job.
-      // For other opportunity types this field is required.
+      // Optional for all opportunity types.
       // Validation of the supplied value has been moved to the domain validators during Create/Update.
-      if (!isJob && string.IsNullOrWhiteSpace(Engagement))
-        CSVImportHelper.AddError(errors, CSVImportErrorType.RequiredFieldMissing, "Missing required field", rowNumber, nameof(Engagement));
 
       // Difficulty
       // Optional for Opportunity Type: Job.
@@ -138,12 +135,9 @@ namespace Yoma.Core.Domain.Opportunity.Models
       if (DateStart == DateOnly.MinValue)
         CSVImportHelper.AddError(errors, CSVImportErrorType.RequiredFieldMissing, "Missing required field", rowNumber, nameof(DateStart));
 
-      // Skills
-      // Optional for Opportunity Type: Job.
-      // For other opportunity types this field is required.
-      // Validation of supplied values has been moved to the domain validators during Create/Update.
-      if (!isJob && (Skills == null || !Skills.Any(name => !string.IsNullOrWhiteSpace(name))))
-        CSVImportHelper.AddError(errors, CSVImportErrorType.RequiredFieldMissing, "Missing required field", rowNumber, nameof(Skills));
+      // Skills are optional. If specified they must contain valid values.
+      if (Skills != null && Skills.Any(name => string.IsNullOrWhiteSpace(name)))
+        CSVImportHelper.AddError(errors, CSVImportErrorType.InvalidFieldValue, "Invalid value", rowNumber, nameof(Skills));
 
       if (Keywords == null || !Keywords.Any(name => !string.IsNullOrWhiteSpace(name)))
         CSVImportHelper.AddError(errors, CSVImportErrorType.RequiredFieldMissing, "Missing required field", rowNumber, nameof(Keywords));

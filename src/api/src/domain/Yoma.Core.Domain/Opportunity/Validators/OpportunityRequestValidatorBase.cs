@@ -221,18 +221,10 @@ namespace Yoma.Core.Domain.Opportunity.Validators
           .When(x => !string.IsNullOrEmpty(x.SSISchemaName))
           .WithMessage("SSI schema does not exist.");
 
-      // Engagement type is required except for Job opportunities. If specified it must exist.
+      // Engagement type is optional. If specified it must exist.
       RuleFor(x => x.EngagementTypeId)
-          .Cascade(CascadeMode.Stop)
-          .Must((model, engagementTypeId) =>
-          {
-            if (!TypeExists(model.TypeId)) return true;
-
-            return TypeIsJob(model.TypeId) || engagementTypeId.HasValue;
-          })
-          .WithMessage("Engagement type is required.")
-          .Must(EngagementTypeExists)
-          .WithMessage("Specified engagement type is invalid or does not exist.");
+        .Must(EngagementTypeExists)
+        .WithMessage("Specified engagement type is invalid or does not exist.");
 
       RuleFor(x => x.Categories)
           .Must(categories => categories != null && categories.Count != 0 && categories.All(id => id != Guid.Empty && CategoryExists(id)))
@@ -246,19 +238,11 @@ namespace Yoma.Core.Domain.Opportunity.Validators
           .Must(languages => languages != null && languages.Count != 0 && languages.All(id => id != Guid.Empty && LanguageExists(id)))
           .WithMessage("Languages are required and must exist.");
 
-      // Skills are required except for Job opportunities. If specified they must exist.
+      // Skills are optional. If specified they must exist.
       RuleFor(x => x.Skills)
-          .Cascade(CascadeMode.Stop)
-          .Must((model, skills) =>
-          {
-            if (!TypeExists(model.TypeId)) return true;
-
-            var isJob = TypeIsJob(model.TypeId);
-            return isJob
-              ? skills == null || skills.Count == 0 || skills.All(id => id != Guid.Empty && SkillExists(id))
-              : skills != null && skills.Count != 0 && skills.All(id => id != Guid.Empty && SkillExists(id));
-          })
-          .WithMessage("Skills are required and must exist.");
+          .Must(skills => skills != null && skills.All(id => id != Guid.Empty && SkillExists(id)))
+          .WithMessage("Skills are optional, but must exist if specified.")
+          .When(x => x.Skills != null && x.Skills.Count != 0);
 
       RuleFor(x => x.VerificationTypes)
           .Must(types => types != null && types.Count != 0)
