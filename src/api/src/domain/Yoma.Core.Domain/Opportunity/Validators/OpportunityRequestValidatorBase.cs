@@ -141,7 +141,9 @@ namespace Yoma.Core.Domain.Opportunity.Validators
           .Cascade(CascadeMode.Stop)
           .Must((model, intervalId) =>
           {
-            var isJob = TypeExists(model.TypeId) && TypeIsJob(model.TypeId);
+            if (!TypeExists(model.TypeId)) return true;
+
+            var isJob = TypeIsJob(model.TypeId);
             return isJob
               ? intervalId.HasValue == model.CommitmentIntervalCount.HasValue
               : intervalId.HasValue;
@@ -155,7 +157,9 @@ namespace Yoma.Core.Domain.Opportunity.Validators
           .Cascade(CascadeMode.Stop)
           .Must((model, count) =>
           {
-            var isJob = TypeExists(model.TypeId) && TypeIsJob(model.TypeId);
+            if (!TypeExists(model.TypeId)) return true;
+
+            var isJob = TypeIsJob(model.TypeId);
             return isJob
               ? count.HasValue == model.CommitmentIntervalId.HasValue
               : count.HasValue;
