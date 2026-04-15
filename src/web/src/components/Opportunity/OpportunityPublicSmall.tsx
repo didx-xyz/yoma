@@ -10,7 +10,7 @@ import {
 } from "react-icons/io";
 import Moment from "react-moment";
 import type { OpportunityInfo } from "~/api/models/opportunity";
-import { DATE_FORMAT_HUMAN } from "~/lib/constants";
+import { DATE_FORMAT_HUMAN, OPPORTUNITY_TYPE_JOB } from "~/lib/constants";
 import { AvatarImage } from "../AvatarImage";
 import ZltoRewardBadge from "./Badges/ZltoRewardBadge";
 interface InputProps {
@@ -23,6 +23,8 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({
   data,
   preview,
 }) => {
+  const isJobOpportunity = data.type === OPPORTUNITY_TYPE_JOB;
+
   const renderContent = () => {
     return (
       <>
@@ -63,19 +65,23 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({
 
         {/* BADGES */}
         <div className="flex flex-row flex-wrap gap-2 pt-2">
-          <div className="badge bg-green-light text-green">
-            <Image
-              src={iconClock}
-              alt="Icon Clock"
-              width={17}
-              className="h-auto"
-              sizes="100vw"
-              priority={true}
-            />
-            <span className="ml-1">{`${data.commitmentIntervalCount} ${
-              data.commitmentInterval
-            }${data.commitmentIntervalCount > 1 ? "s" : ""}`}</span>
-          </div>
+          {!isJobOpportunity &&
+            data.commitmentIntervalCount != null &&
+            data.commitmentInterval && (
+              <div className="badge bg-green-light text-green">
+                <Image
+                  src={iconClock}
+                  alt="Icon Clock"
+                  width={17}
+                  className="h-auto"
+                  sizes="100vw"
+                  priority={true}
+                />
+                <span className="ml-1">{`${data.commitmentIntervalCount} ${
+                  data.commitmentInterval
+                }${data.commitmentIntervalCount > 1 ? "s" : ""}`}</span>
+              </div>
+            )}
 
           {(data?.participantCountTotal ?? 0) > 0 && (
             <div className="badge bg-green-light text-green">

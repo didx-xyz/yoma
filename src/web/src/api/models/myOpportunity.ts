@@ -79,7 +79,7 @@ export interface MyOpportunityInfo {
   opportunityDescription: string;
   opportunitySummary: string | null;
   opportunityType: string;
-  opportunityCommitmentIntervalDescription: string;
+  opportunityCommitmentIntervalDescription: string | null;
   opportunityParticipantCountTotal: number;
   opportunityDateStart: string;
   opportunityDateEnd: string | null;

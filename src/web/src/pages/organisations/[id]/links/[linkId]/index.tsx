@@ -1,9 +1,4 @@
-import {
-  QueryClient,
-  dehydrate,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { QueryClient, dehydrate, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
@@ -20,7 +15,6 @@ import { toast } from "react-toastify";
 import {
   LinkInfo,
   LinkSearchFilterUsage,
-  LinkSearchResultsUsage,
   ActionLinkUsageStatus,
 } from "~/api/models/actionLinks";
 import { getLinkById, searchLinkUsage } from "~/api/services/actionLinks";
@@ -34,6 +28,10 @@ import { InternalServerError } from "~/components/Status/InternalServerError";
 import { Loading } from "~/components/Status/Loading";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
+import {
+  ACTION_LINK_QUERY_KEYS,
+  useActionLinkUsageQuery,
+} from "~/hooks/useActionLinkMutations";
 import { DATE_FORMAT_HUMAN, PAGE_SIZE } from "~/lib/constants";
 import { config } from "~/lib/react-query-config";
 import { getSafeUrl, getThemeFromRole } from "~/lib/utils";
@@ -129,24 +127,18 @@ const LinkOverview: NextPageWithLayout<{
   >(null);
 
   // 👇 fetch link details
-  const { data: link } = useQuery<LinkSearchResultsUsage>({
-    queryKey: [
-      "Link",
-      linkId,
-      usage ?? ActionLinkUsageStatus.All,
-      valueContains ?? "",
-      page ?? "",
-    ],
-    queryFn: () =>
-      searchLinkUsage({
-        id: linkId,
-        usage: usage ?? ActionLinkUsageStatus.All,
-        valueContains: valueContains?.toString() ?? null,
-        pageNumber: page ? parseInt(page.toString()) : 1,
-        pageSize: PAGE_SIZE,
-      }),
-    enabled: !error,
-  });
+  const { data: link } = useActionLinkUsageQuery(
+    linkId,
+    {
+      id: linkId,
+      usage: usage ?? ActionLinkUsageStatus.All,
+      valueContains: valueContains?.toString() ?? null,
+      pageNumber: page ? parseInt(page.toString()) : 1,
+      pageSize: PAGE_SIZE,
+    },
+    `${usage ?? ActionLinkUsageStatus.All}_${valueContains ?? ""}_${page ?? ""}`,
+    { enabled: !error },
+  );
 
   // search filter state
   const [searchFilter] = useState<LinkSearchFilterUsage>({
@@ -230,15 +222,14 @@ const LinkOverview: NextPageWithLayout<{
       // fetch the QR code
       queryClient
         .fetchQuery({
-          queryKey: ["OpportunityLink", item.id],
+          queryKey: ACTION_LINK_QUERY_KEYS.detail(item.id, true),
           queryFn: () => getLinkById(item.id, true),
         })
         .then(() => {
           // get the QR code from the cache
-          const qrCode = queryClient.getQueryData<LinkInfo | null>([
-            "OpportunityLink",
-            item.id,
-          ]);
+          const qrCode = queryClient.getQueryData<LinkInfo | null>(
+            ACTION_LINK_QUERY_KEYS.detail(item.id, true),
+          );
 
           // show the QR code
           setQRCodeImageData(qrCode?.qrCodeBase64);

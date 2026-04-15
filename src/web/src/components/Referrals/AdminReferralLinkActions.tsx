@@ -1,6 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { type AxiosError } from "axios";
-import Link from "next/link";
 import { useRouter } from "next/router";
 import { useCallback, useState } from "react";
 import { FaBan, FaEye, FaTrash, FaUnlock } from "react-icons/fa";
@@ -12,6 +11,10 @@ import {
   blockReferrer,
   unblockReferrer,
 } from "~/api/services/referrals";
+import {
+  DropdownMenu,
+  DropdownMenuDisplayStyle,
+} from "~/components/Common/DropdownMenu";
 import { ApiErrors } from "~/components/Status/ApiErrors";
 import { Loading } from "~/components/Status/Loading";
 import { useConfirmationModalContext } from "~/context/modalConfirmationContext";
@@ -177,6 +180,45 @@ export const AdminReferralLinkActions: React.FC<ReferralLinkActionsProps> = ({
     [queryClient, modalContext],
   );
 
+  const menuItems = [
+    ...(actionOptions.includes(ReferralLinkActionOptions.VIEW_USAGE)
+      ? [
+          {
+            label: "View Usage",
+            href: `/admin/referrals/${link.programId}/links/${link.id}/usage?userIdReferrer=${link.userId}${
+              returnUrl
+                ? `&returnUrl=${encodeURIComponent(getSafeUrl(returnUrl, router.asPath))}`
+                : ""
+            }`,
+            icon: <FaEye className="size-4" />,
+          },
+        ]
+      : []),
+    ...(actionOptions.includes(ReferralLinkActionOptions.BLOCK_UNBLOCK)
+      ? [
+          {
+            label: link.blocked ? "Unblock User" : "Block User",
+            onClick: () => setModalBlockUnblockVisible(true),
+            icon: link.blocked ? (
+              <FaUnlock className="size-4" />
+            ) : (
+              <FaBan className="size-4" />
+            ),
+          },
+        ]
+      : []),
+    ...(actionOptions.includes(ReferralLinkActionOptions.CANCEL) &&
+    getStatusEnum(link) === ReferralLinkStatus.Active
+      ? [
+          {
+            label: "Cancel Link",
+            onClick: () => handleCancelLink(link),
+            icon: <FaTrash className="size-4" />,
+          },
+        ]
+      : []),
+  ];
+
   return (
     <>
       {isLoading && <Loading />}
@@ -196,69 +238,15 @@ export const AdminReferralLinkActions: React.FC<ReferralLinkActionsProps> = ({
         />
       </CustomModal>
 
-      <div className="dropdown dropdown-left">
-        <button type="button" title="Actions" className="cursor-pointer">
+      <DropdownMenu
+        label="Actions"
+        items={menuItems}
+        displayStyle={DropdownMenuDisplayStyle.ICON}
+        triggerIcon={
           <IoIosSettings className="text-green hover:text-blue size-5" />
-        </button>
-        <ul className="menu dropdown-content rounded-box bg-base-100 z-50 w-52 gap-2 p-2 shadow">
-          {/* VIEW USAGE */}
-          {actionOptions.includes(ReferralLinkActionOptions.VIEW_USAGE) && (
-            <li>
-              <Link
-                href={`/admin/referrals/${link.programId}/links/${link.id}/usage?userIdReferrer=${link.userId}${
-                  returnUrl
-                    ? `&returnUrl=${encodeURIComponent(getSafeUrl(returnUrl, router.asPath))}`
-                    : ""
-                }`}
-                className="text-gray-dark flex flex-row items-center gap-2 hover:brightness-50"
-                title="View Link Usage"
-              >
-                <FaEye className="text-green size-4" />
-                View Usage
-              </Link>
-            </li>
-          )}
-
-          {/* BLOCK/UNBLOCK */}
-          {actionOptions.includes(ReferralLinkActionOptions.BLOCK_UNBLOCK) && (
-            <li>
-              <button
-                type="button"
-                className="text-gray-dark flex flex-row items-center gap-2 hover:brightness-50"
-                title={link.blocked ? "Unblock User" : "Block User"}
-                onClick={() => setModalBlockUnblockVisible(true)}
-              >
-                {link.blocked ? (
-                  <>
-                    <FaUnlock className="text-green size-4" />
-                    Unblock User
-                  </>
-                ) : (
-                  <>
-                    <FaBan className="text-green size-4" />
-                    Block User
-                  </>
-                )}
-              </button>
-            </li>
-          )}
-
-          {/* CANCEL */}
-          {actionOptions.includes(ReferralLinkActionOptions.CANCEL) &&
-            getStatusEnum(link) === ReferralLinkStatus.Active && (
-              <li>
-                <button
-                  type="button"
-                  className="text-gray-dark flex flex-row items-center hover:brightness-50"
-                  onClick={() => handleCancelLink(link)}
-                >
-                  <FaTrash className="text-green size-4" />
-                  Cancel Link
-                </button>
-              </li>
-            )}
-        </ul>
-      </div>
+        }
+        title="Actions"
+      />
     </>
   );
 };

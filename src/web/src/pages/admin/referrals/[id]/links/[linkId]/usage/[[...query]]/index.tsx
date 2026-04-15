@@ -1,9 +1,10 @@
 import axios from "axios";
-import { useSession } from "next-auth/react";
+import { type GetServerSidePropsContext } from "next";
+import { getServerSession } from "next-auth";
 import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { useCallback, useEffect, useState, type ReactElement } from "react";
+import { useCallback, useMemo, type ReactElement } from "react";
 import {
   IoIosCheckmarkCircle,
   IoMdArrowRoundBack,
@@ -26,7 +27,6 @@ import {
   ReferralLinkUsageSearchFilters,
 } from "~/components/Referrals/AdminReferralLinkUsageSearchFilter";
 import { InternalServerError } from "~/components/Status/InternalServerError";
-import { Loading } from "~/components/Status/Loading";
 import { LoadingSkeleton } from "~/components/Status/LoadingSkeleton";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
@@ -39,96 +39,113 @@ import {
 import { DATE_FORMAT_HUMAN, PAGE_SIZE, THEME_BLUE } from "~/lib/constants";
 import { getSafeUrl } from "~/lib/utils";
 import { type NextPageWithLayout } from "~/pages/_app";
+import { authOptions } from "~/server/auth";
+
 const getErrorStatus = (error: unknown): number | null => {
   if (!axios.isAxiosError(error)) return null;
   return error.response?.status ?? null;
 };
 
-const ReferralLinkUsage: NextPageWithLayout = () => {
-  const router = useRouter();
-  const { status: sessionStatus } = useSession();
-  const id = typeof router.query.id === "string" ? router.query.id : "";
-  const linkId =
-    typeof router.query.linkId === "string" ? router.query.linkId : "";
-  const query =
-    typeof router.query.query === "string" ? router.query.query : undefined;
-  const page =
-    typeof router.query.page === "string" ? router.query.page : undefined;
-  const status =
-    typeof router.query.status === "string" ? router.query.status : undefined;
-  const userIdReferee =
-    typeof router.query.userIdReferee === "string"
-      ? router.query.userIdReferee
-      : undefined;
-  const userIdReferrer =
-    typeof router.query.userIdReferrer === "string"
-      ? router.query.userIdReferrer
-      : undefined;
-  const dateStart =
-    typeof router.query.dateStart === "string"
-      ? router.query.dateStart
-      : undefined;
-  const dateEnd =
-    typeof router.query.dateEnd === "string" ? router.query.dateEnd : undefined;
-  const returnUrl =
-    typeof router.query.returnUrl === "string"
-      ? router.query.returnUrl
-      : undefined;
-
-  // search filter state
-  const [searchFilter, setSearchFilter] =
-    useState<ReferralLinkUsageSearchFilterAdmin>({
-      pageNumber: page ? parseInt(page.toString()) : 1,
-      pageSize: PAGE_SIZE,
-      linkId: linkId,
-      programId: id,
-      statuses: status ? [status as ReferralLinkUsageStatus] : null,
-      userIdReferee: userIdReferee ?? null,
-      userIdReferrer: userIdReferrer ?? null,
-      dateStart: dateStart ?? null,
-      dateEnd: dateEnd ?? null,
-    });
-
-  useEffect(() => {
-    if (!router.isReady) return;
-
-    setSearchFilter({
-      pageNumber: page ? parseInt(page.toString()) : 1,
-      pageSize: PAGE_SIZE,
-      linkId: linkId,
-      programId: id,
-      statuses: status ? [status as ReferralLinkUsageStatus] : null,
-      userIdReferee: userIdReferee ?? null,
-      userIdReferrer: userIdReferrer ?? null,
-      dateStart: dateStart ?? null,
-      dateEnd: dateEnd ?? null,
-    });
-  }, [
-    router.isReady,
+export async function getServerSideProps(context: GetServerSidePropsContext) {
+  const { id, linkId } = context.params as { id: string; linkId: string };
+  const {
+    query,
     page,
-    linkId,
-    id,
     status,
     userIdReferee,
     userIdReferrer,
     dateStart,
     dateEnd,
-  ]);
+    returnUrl,
+  } = context.query;
+  const session = await getServerSession(context.req, context.res, authOptions);
 
-  // 👇 use prefetched queries from server
+  if (!session) {
+    return {
+      props: {
+        error: 401,
+      },
+    };
+  }
+
+  return {
+    props: {
+      id: id ?? null,
+      linkId: linkId ?? null,
+      query: query ?? null,
+      page: page ?? null,
+      status: status ?? null,
+      userIdReferee: userIdReferee ?? null,
+      userIdReferrer: userIdReferrer ?? null,
+      dateStart: dateStart ?? null,
+      dateEnd: dateEnd ?? null,
+      returnUrl: returnUrl ?? null,
+      error: null,
+    },
+  };
+}
+
+const ReferralLinkUsage: NextPageWithLayout<{
+  id: string;
+  linkId: string;
+  query?: string;
+  page?: string;
+  status?: string;
+  userIdReferee?: string;
+  userIdReferrer?: string;
+  dateStart?: string;
+  dateEnd?: string;
+  returnUrl?: string;
+  error?: number | null;
+}> = ({
+  id,
+  linkId,
+  query,
+  page,
+  status,
+  userIdReferee,
+  userIdReferrer,
+  dateStart,
+  dateEnd,
+  returnUrl,
+  error,
+}) => {
+  const router = useRouter();
+  const searchFilter = useMemo<ReferralLinkUsageSearchFilterAdmin>(
+    () => ({
+      pageNumber: page ? parseInt(page.toString()) : 1,
+      pageSize: PAGE_SIZE,
+      linkId,
+      programId: id,
+      statuses: status ? [status as ReferralLinkUsageStatus] : null,
+      userIdReferee: userIdReferee ?? null,
+      userIdReferrer: userIdReferrer ?? null,
+      dateStart: dateStart ?? null,
+      dateEnd: dateEnd ?? null,
+    }),
+    [
+      dateEnd,
+      dateStart,
+      id,
+      linkId,
+      page,
+      status,
+      userIdReferee,
+      userIdReferrer,
+    ],
+  );
+
   const { data: program, error: programError } = useReferralProgramByIdQuery(
     id,
     {
-      enabled:
-        sessionStatus === "authenticated" && router.isReady && !!id && !!linkId,
+      enabled: !error && !!id && !!linkId,
     },
   );
 
   const { data: link, error: linkError } = useReferralAdminLinkByIdQuery(
     linkId,
     {
-      enabled:
-        sessionStatus === "authenticated" && router.isReady && !!id && !!linkId,
+      enabled: !error && !!id && !!linkId,
     },
   );
 
@@ -139,8 +156,7 @@ const ReferralLinkUsage: NextPageWithLayout = () => {
     isLoading: isLoadingSearchResults,
     error: searchResultsError,
   } = useReferralLinkUsagesAdminQuery(searchFilter, searchResultsKey, {
-    enabled:
-      sessionStatus === "authenticated" && router.isReady && !!id && !!linkId,
+    enabled: !error && !!id && !!linkId,
   });
 
   // Get counts by status (preserving linkId context)
@@ -149,8 +165,7 @@ const ReferralLinkUsage: NextPageWithLayout = () => {
     id,
     null,
     {
-      enabled:
-        sessionStatus === "authenticated" && router.isReady && !!id && !!linkId,
+      enabled: !error && !!id && !!linkId,
     },
   );
   const { data: totalCountPending } = useReferralLinkUsageCountQuery(
@@ -158,8 +173,7 @@ const ReferralLinkUsage: NextPageWithLayout = () => {
     id,
     ReferralLinkUsageStatus.Pending,
     {
-      enabled:
-        sessionStatus === "authenticated" && router.isReady && !!id && !!linkId,
+      enabled: !error && !!id && !!linkId,
     },
   );
   const { data: totalCountCompleted } = useReferralLinkUsageCountQuery(
@@ -167,8 +181,7 @@ const ReferralLinkUsage: NextPageWithLayout = () => {
     id,
     ReferralLinkUsageStatus.Completed,
     {
-      enabled:
-        sessionStatus === "authenticated" && router.isReady && !!id && !!linkId,
+      enabled: !error && !!id && !!linkId,
     },
   );
   const { data: totalCountExpired } = useReferralLinkUsageCountQuery(
@@ -176,15 +189,16 @@ const ReferralLinkUsage: NextPageWithLayout = () => {
     id,
     ReferralLinkUsageStatus.Expired,
     {
-      enabled:
-        sessionStatus === "authenticated" && router.isReady && !!id && !!linkId,
+      enabled: !error && !!id && !!linkId,
     },
   );
 
-  const error =
+  const resolvedError =
+    error ??
     getErrorStatus(searchResultsError) ??
     getErrorStatus(programError) ??
-    getErrorStatus(linkError);
+    getErrorStatus(linkError) ??
+    undefined;
 
   // 🎈 FUNCTIONS
   const getSearchFilterAsQueryString = useCallback(
@@ -244,7 +258,6 @@ const ReferralLinkUsage: NextPageWithLayout = () => {
   const handlePagerChange = useCallback(
     (value: number) => {
       const newFilter = { ...searchFilter, pageNumber: value };
-      setSearchFilter(newFilter);
       redirectWithSearchFilterParams(newFilter);
     },
     [searchFilter, redirectWithSearchFilterParams],
@@ -257,24 +270,15 @@ const ReferralLinkUsage: NextPageWithLayout = () => {
         ...val,
         pageNumber: 1, // reset to first page
       };
-      setSearchFilter(newFilter);
       redirectWithSearchFilterParams(newFilter);
     },
     [searchFilter, redirectWithSearchFilterParams],
   );
   //#endregion Event Handlers
 
-  if (sessionStatus === "loading" || !router.isReady) {
-    return <Loading />;
-  }
-
-  if (sessionStatus === "unauthenticated") {
-    return <Unauthenticated />;
-  }
-
-  if (error) {
-    if (error === 401) return <Unauthenticated />;
-    else if (error === 403) return <Unauthorized />;
+  if (resolvedError) {
+    if (resolvedError === 401) return <Unauthenticated />;
+    else if (resolvedError === 403) return <Unauthorized />;
     else return <InternalServerError />;
   }
 
@@ -395,7 +399,7 @@ const ReferralLinkUsage: NextPageWithLayout = () => {
         )}
 
         {!isLoadingSearchResults && (
-          <div className="md:shadow-custom rounded-lg md:bg-white md:p-4">
+          <>
             {/* NO ROWS */}
             {searchResults && searchResults.items?.length === 0 && (
               <div className="flex h-fit flex-col items-center rounded-lg bg-white pb-8 md:pb-16">
@@ -420,7 +424,7 @@ const ReferralLinkUsage: NextPageWithLayout = () => {
                       key={`sm_${usage.id}`}
                       className="shadow-custom flex flex-col justify-between gap-4 rounded-lg bg-white p-4"
                     >
-                      <div className="border-gray-light flex flex-row items-center gap-2 border-b-2 pb-2">
+                      <div className="flex flex-row items-center gap-2">
                         <div className="flex-grow">
                           <Link
                             href={`/admin/referrals/${usage.programId}/links/${usage.linkId}/usage/${usage.id}/info${
@@ -553,26 +557,20 @@ const ReferralLinkUsage: NextPageWithLayout = () => {
                 </div>
 
                 {/* DESKTOP */}
-                <table className="border-gray-light hidden w-full border-separate rounded-lg border-x-2 border-t-2 md:table">
+                <table className="border-gray-light hidden w-full border-separate rounded-lg bg-white md:table">
                   <thead>
                     <tr className="border-gray text-gray-dark">
-                      <th className="border-gray-light border-b-2 !py-4">
-                        User
-                      </th>
-                      <th className="border-gray-light border-b-2">Status</th>
-                      <th className="border-gray-light border-b-2">
-                        User Details
-                      </th>
-                      <th className="border-gray-light border-b-2">Dates</th>
-                      <th className="border-gray-light border-b-2 text-center">
-                        Actions
-                      </th>
+                      <th className="border-gray-light !py-4">User</th>
+                      <th className="border-gray-light">Status</th>
+                      <th className="border-gray-light">User Details</th>
+                      <th className="border-gray-light">Dates</th>
+                      <th className="border-gray-light text-center">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     {searchResults.items.map((usage) => (
                       <tr key={`md_${usage.id}`}>
-                        <td className="border-gray-light border-b-2 !align-top">
+                        <td className="border-gray-light border-t-2 !align-top">
                           <div className="flex flex-col">
                             <Link
                               href={`/admin/referrals/${usage.programId}/links/${usage.linkId}/usage/${usage.id}/info${
@@ -596,7 +594,7 @@ const ReferralLinkUsage: NextPageWithLayout = () => {
                             )}
                           </div>
                         </td>
-                        <td className="border-gray-light border-b-2 !align-top">
+                        <td className="border-gray-light border-t-2 !align-top">
                           <span
                             className={`badge ${
                               usage.status === ReferralLinkUsageStatus.Completed
@@ -610,7 +608,7 @@ const ReferralLinkUsage: NextPageWithLayout = () => {
                             {usage.status}
                           </span>
                         </td>
-                        <td className="border-gray-light border-b-2 !align-top">
+                        <td className="border-gray-light border-t-2 !align-top">
                           <div className="flex flex-col gap-1 text-xs">
                             {usage.username && (
                               <div className="flex gap-2">
@@ -660,7 +658,7 @@ const ReferralLinkUsage: NextPageWithLayout = () => {
                             )}
                           </div>
                         </td>
-                        <td className="border-gray-light border-b-2 !align-top">
+                        <td className="border-gray-light border-t-2 !align-top">
                           <div className="flex flex-col gap-1 text-xs">
                             <div className="flex gap-2">
                               <span className="text-gray-dark w-20 font-bold">
@@ -702,11 +700,13 @@ const ReferralLinkUsage: NextPageWithLayout = () => {
                             )}
                           </div>
                         </td>
-                        <td className="border-gray-light border-b-2 text-center !align-top">
-                          <AdminReferralLinkUsageActions
-                            usage={usage}
-                            returnUrl={getSafeUrl(router.asPath, "")}
-                          />
+                        <td className="border-gray-light border-t-2 !align-top whitespace-nowrap">
+                          <div className="flex flex-row items-center justify-center gap-2">
+                            <AdminReferralLinkUsageActions
+                              usage={usage}
+                              returnUrl={getSafeUrl(router.asPath, "")}
+                            />
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -724,7 +724,7 @@ const ReferralLinkUsage: NextPageWithLayout = () => {
                 </div>
               </>
             )}
-          </div>
+          </>
         )}
       </div>
     </>

@@ -21,6 +21,10 @@ import {
 import { IoIosSettings, IoMdWarning } from "react-icons/io";
 import { toast } from "react-toastify";
 import { Status, type OpportunityInfo } from "~/api/models/opportunity";
+import {
+  DropdownMenu,
+  DropdownMenuDisplayStyle,
+} from "~/components/Common/DropdownMenu";
 import { downloadVerificationFilesAdmin } from "~/api/services/myOpportunities";
 import { Loading } from "~/components/Status/Loading";
 import { useConfirmationModalContext } from "~/context/modalConfirmationContext";
@@ -248,236 +252,179 @@ export const OpportunityActions: React.FC<OpportunityActionsProps> = ({
   const handleCopyToClipboard = defaultCopyToClipboard;
   const handleDownloadCompletionFiles = defaultDownloadCompletionFiles;
 
+  const menuItems = [
+    ...(actionOptions.includes(OpportunityActionOptions.EDIT_DETAILS) &&
+    opportunity?.status != "Deleted"
+      ? [
+          {
+            label: "Edit Opportunity Details",
+            href: `/organisations/${opportunity.organizationId}/opportunities/${opportunity.id}?returnUrl=${encodeURIComponent(router.asPath)}`,
+            icon: <FaEdit className="size-4" />,
+          },
+        ]
+      : []),
+    ...(actionOptions.includes(
+      OpportunityActionOptions.DOWNLOAD_COMPLETION_FILES,
+    )
+      ? [
+          {
+            label: "Download Completion Files",
+            onClick: () => {
+              handleDownloadCompletionFiles(opportunity.id);
+            },
+            icon: <FaDownload className="size-4" />,
+          },
+        ]
+      : []),
+    ...(actionOptions.includes(OpportunityActionOptions.COPY_EXTERNAL_LINK) &&
+    opportunity?.url
+      ? [
+          {
+            label: "Copy External Link",
+            onClick: () => {
+              handleCopyToClipboard(opportunity.url!);
+            },
+            icon: <FaLink className="size-4" />,
+          },
+        ]
+      : []),
+    ...(actionOptions.includes(OpportunityActionOptions.VIEW_ATTENDANCE_LINKS)
+      ? [
+          {
+            label: "View Attendance Links",
+            href: `/organisations/${organizationId}/links?entities=${opportunity.id}`,
+            icon: <FaExternalLinkSquareAlt className="size-4" />,
+          },
+        ]
+      : []),
+    ...(actionOptions.includes(
+      OpportunityActionOptions.CREATE_ATTENDANCE_LINK,
+    ) && opportunity?.status != "Deleted"
+      ? [
+          {
+            label: "Create Attendance Link (Quick Link)",
+            href: `/organisations/${organizationId}/links/create?name=${encodeURIComponent(
+              `Attendance-${moment().format("DDMMMYYYY")}`,
+            )}&description=&entityType=0&entityId=${
+              opportunity.id
+            }&usagesLimit=&dateEnd=${encodeURIComponent(
+              moment().format("DDMMMYYYY"),
+            )}&distributionList=&includeQRCode=&lockToDistributionList=false${
+              returnUrl
+                ? `&returnUrl=${encodeURIComponent(
+                    getSafeUrl(returnUrl, router.asPath),
+                  )}`
+                : ""
+            }`,
+            icon: <FaExternalLinkAlt className="size-4" />,
+          },
+        ]
+      : []),
+    ...(actionOptions.includes(OpportunityActionOptions.MAKE_INACTIVE) &&
+    (opportunity?.status == "Active" ||
+      opportunity?.status == "Expired" ||
+      (isAdmin && opportunity?.status == "Deleted"))
+      ? [
+          {
+            label: "Make Inactive",
+            onClick: () => handleStatusUpdate(Status.Inactive),
+            icon: <FaClock className="size-4" />,
+          },
+        ]
+      : []),
+    ...(actionOptions.includes(OpportunityActionOptions.MAKE_ACTIVE) &&
+    opportunity?.status == "Inactive"
+      ? [
+          {
+            label: "Make Active",
+            onClick: () => handleStatusUpdate(Status.Active),
+            icon: <FaClock className="size-4" />,
+          },
+        ]
+      : []),
+    ...(actionOptions.includes(OpportunityActionOptions.MAKE_VISIBLE) &&
+    opportunity?.hidden
+      ? [
+          {
+            label: "Make Visible",
+            onClick: () => handleHiddenUpdate(false),
+            icon: <FaEye className="size-4" />,
+          },
+        ]
+      : []),
+    ...(actionOptions.includes(OpportunityActionOptions.MAKE_HIDDEN) &&
+    !opportunity?.hidden &&
+    opportunity.status !== "Deleted"
+      ? [
+          {
+            label: "Make Hidden",
+            onClick: () => handleHiddenUpdate(true),
+            icon: <FaEyeSlash className="size-4" />,
+          },
+        ]
+      : []),
+    ...(isAdmin &&
+    actionOptions.includes(OpportunityActionOptions.UNMARK_FEATURED) &&
+    opportunity?.featured
+      ? [
+          {
+            label: "Unmark as Featured",
+            onClick: () => handleFeaturedUpdate(false),
+            icon: <FaExclamation className="size-4" />,
+          },
+        ]
+      : []),
+    ...(isAdmin &&
+    actionOptions.includes(OpportunityActionOptions.MARK_FEATURED) &&
+    !opportunity?.featured
+      ? [
+          {
+            label: "Mark as Featured",
+            onClick: () => handleFeaturedUpdate(true),
+            icon: <FaExclamation className="size-4" />,
+          },
+        ]
+      : []),
+    ...(actionOptions.includes(OpportunityActionOptions.DELETE) &&
+    opportunity?.status != "Deleted"
+      ? [
+          {
+            label: "Archive",
+            onClick: () => handleStatusUpdate(Status.Deleted),
+            icon: <FaArchive className="size-4" />,
+          },
+        ]
+      : []),
+  ];
+
   return (
     <>
       {isLoading && <Loading />}
-      <div className="dropdown dropdown-left">
-        {displayStyle === OpportunityActionDisplayStyle.BUTTON ? (
-          <button
-            type="button"
-            className="bg-theme hover:bg-theme disabled:bg-gray-dark flex w-40 flex-row items-center justify-center rounded-full p-1 text-xs whitespace-nowrap text-white brightness-105 hover:cursor-pointer hover:brightness-110 disabled:cursor-not-allowed"
-            disabled={disabled}
-          >
-            <IoIosSettings className="mr-1 h-5 w-5" />
-            Manage opportunity
-          </button>
-        ) : (
-          <button
-            type="button"
-            title="Actions"
-            className="cursor-pointer"
-            disabled={disabled}
-          >
-            <IoIosSettings className="text-green hover:text-blue size-5" />
-          </button>
-        )}
-        <ul className="menu dropdown-content rounded-box bg-base-100 z-50 w-64 gap-2 p-2 shadow">
-          {actionOptions.includes(OpportunityActionOptions.EDIT_DETAILS) &&
-            opportunity?.status != "Deleted" && (
-              <li>
-                <a
-                  href={`/organisations/${opportunity.organizationId}/opportunities/${opportunity.id}?returnUrl=${encodeURIComponent(router.asPath)}`}
-                  className="text-gray-dark flex flex-row items-center gap-2 hover:brightness-50"
-                >
-                  <FaEdit className="text-green size-4" />
-                  Edit Opportunity Details
-                </a>
-              </li>
-            )}
-
-          {/* Download Completion Files */}
-          {actionOptions.includes(
-            OpportunityActionOptions.DOWNLOAD_COMPLETION_FILES,
-          ) && (
-            <li>
-              <button
-                type="button"
-                className="text-gray-dark flex flex-row items-center gap-2 hover:brightness-50"
-                title="Download completion files"
-                onClick={() => {
-                  handleDownloadCompletionFiles(opportunity.id);
-                }}
-              >
-                <FaDownload className="text-green size-4" />
-                Download Completion Files
-              </button>
-            </li>
-          )}
-
-          {/* Copy External Link */}
-          {actionOptions.includes(
-            OpportunityActionOptions.COPY_EXTERNAL_LINK,
-          ) &&
-            opportunity?.url && (
-              <li>
-                <button
-                  type="button"
-                  className="text-gray-dark flex flex-row items-center gap-2 hover:brightness-50"
-                  title="Copy URL to clipboard"
-                  onClick={() => {
-                    handleCopyToClipboard(opportunity.url!);
-                  }}
-                >
-                  <FaLink className="text-green size-4" />
-                  Copy External Link
-                </button>
-              </li>
-            )}
-
-          {/* View Attendance Links */}
-          {actionOptions.includes(
-            OpportunityActionOptions.VIEW_ATTENDANCE_LINKS,
-          ) && (
-            <li>
-              <a
-                href={`/organisations/${organizationId}/links?entities=${opportunity.id}`}
-                className="text-gray-dark flex flex-row items-center gap-2 hover:brightness-50"
-              >
-                <FaExternalLinkSquareAlt className="text-green size-4" />
-                View Attendance Links
-              </a>
-            </li>
-          )}
-
-          {/* Create Attendance Link */}
-          {actionOptions.includes(
-            OpportunityActionOptions.CREATE_ATTENDANCE_LINK,
-          ) &&
-            opportunity?.status != "Deleted" && (
-              <li>
-                <a
-                  href={`/organisations/${organizationId}/links/create?name=${encodeURIComponent(
-                    `Attendance-${moment().format("DDMMMYYYY")}`,
-                  )}&description=&entityType=0&entityId=${
-                    opportunity.id
-                  }&usagesLimit=&dateEnd=${encodeURIComponent(
-                    moment().format("DDMMMYYYY"),
-                  )}&distributionList=&includeQRCode=&lockToDistributionList=false${
-                    returnUrl
-                      ? `&returnUrl=${encodeURIComponent(
-                          getSafeUrl(returnUrl, router.asPath),
-                        )}`
-                      : ""
-                  }`}
-                  title="Create Attendance Link"
-                  className="text-gray-dark flex flex-row items-center gap-2 hover:brightness-50"
-                >
-                  <FaExternalLinkAlt className="text-green size-4" />
-                  Create Attendance Link
-                  <br />
-                  (Quick Link)
-                </a>
-              </li>
-            )}
-
-          {/* Status Actions */}
-          {actionOptions.includes(OpportunityActionOptions.MAKE_INACTIVE) &&
-            (opportunity?.status == "Active" ||
-              opportunity?.status == "Expired" ||
-              (isAdmin && opportunity?.status == "Deleted")) && (
-              <li>
-                <button
-                  type="button"
-                  className="text-gray-dark flex flex-row items-center gap-2 hover:brightness-50"
-                  onClick={() => handleStatusUpdate(Status.Inactive)}
-                >
-                  <FaClock className="text-green size-4" />
-                  Make Inactive
-                </button>
-              </li>
-            )}
-
-          {actionOptions.includes(OpportunityActionOptions.MAKE_ACTIVE) &&
-            opportunity?.status == "Inactive" && (
-              <li>
-                <button
-                  type="button"
-                  className="text-gray-dark flex flex-row items-center gap-2 hover:brightness-50"
-                  onClick={() => handleStatusUpdate(Status.Active)}
-                >
-                  <FaClock className="text-green size-4" />
-                  Make Active
-                </button>
-              </li>
-            )}
-
-          {/* Visibility Actions */}
-          {actionOptions.includes(OpportunityActionOptions.MAKE_VISIBLE) &&
-            opportunity?.hidden && (
-              <li>
-                <button
-                  type="button"
-                  className="text-gray-dark flex flex-row items-center gap-2 hover:brightness-50"
-                  onClick={() => handleHiddenUpdate(false)}
-                >
-                  <FaEye className="text-green size-4" />
-                  Make Visible
-                </button>
-              </li>
-            )}
-
-          {actionOptions.includes(OpportunityActionOptions.MAKE_HIDDEN) &&
-            !opportunity?.hidden &&
-            opportunity.status !== "Deleted" && (
-              <li>
-                <button
-                  type="button"
-                  className="text-gray-dark flex flex-row items-center gap-2 hover:brightness-50"
-                  onClick={() => handleHiddenUpdate(true)}
-                >
-                  <FaEyeSlash className="text-green size-4" />
-                  Make Hidden
-                </button>
-              </li>
-            )}
-
-          {/* Featured Actions (Admin only) */}
-          {isAdmin &&
-            actionOptions.includes(OpportunityActionOptions.UNMARK_FEATURED) &&
-            opportunity?.featured && (
-              <li>
-                <button
-                  type="button"
-                  className="text-gray-dark flex flex-row items-center gap-2 hover:brightness-50"
-                  onClick={() => handleFeaturedUpdate(false)}
-                >
-                  <FaExclamation className="text-green size-4" />
-                  Unmark as Featured
-                </button>
-              </li>
-            )}
-
-          {isAdmin &&
-            actionOptions.includes(OpportunityActionOptions.MARK_FEATURED) &&
-            !opportunity?.featured && (
-              <li>
-                <button
-                  type="button"
-                  className="text-gray-dark flex flex-row items-center gap-2 hover:brightness-50"
-                  onClick={() => handleFeaturedUpdate(true)}
-                >
-                  <FaExclamation className="text-green size-4" />
-                  Mark as Featured
-                </button>
-              </li>
-            )}
-
-          {/* Delete Action */}
-          {actionOptions.includes(OpportunityActionOptions.DELETE) &&
-            opportunity?.status != "Deleted" && (
-              <li>
-                <button
-                  type="button"
-                  className="text-gray-dark flex flex-row items-center gap-2 hover:brightness-50"
-                  onClick={() => handleStatusUpdate(Status.Deleted)}
-                >
-                  <FaArchive className="text-green size-4" />
-                  Archive
-                </button>
-              </li>
-            )}
-        </ul>
-      </div>
+      <DropdownMenu
+        label={
+          displayStyle === OpportunityActionDisplayStyle.BUTTON
+            ? "Manage opportunity"
+            : "Actions"
+        }
+        items={menuItems}
+        disabled={disabled}
+        displayStyle={
+          displayStyle === OpportunityActionDisplayStyle.BUTTON
+            ? DropdownMenuDisplayStyle.BUTTON
+            : DropdownMenuDisplayStyle.ICON
+        }
+        triggerIcon={
+          <IoIosSettings
+            className={
+              displayStyle === OpportunityActionDisplayStyle.BUTTON
+                ? "mr-1 h-5 w-5"
+                : "text-green hover:text-blue size-5"
+            }
+          />
+        }
+        title="Actions"
+        menuClassName="w-64"
+      />
     </>
   );
 };

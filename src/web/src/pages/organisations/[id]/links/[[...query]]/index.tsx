@@ -1,4 +1,5 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
+import axios from "axios";
 import { useAtomValue } from "jotai";
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
@@ -18,14 +19,13 @@ import {
 import { IoShareSocialOutline } from "react-icons/io5";
 import Moment from "react-moment";
 import {
-  LinkAction,
   ActionLinkEntityType,
   ActionLinkStatus,
+  LinkAction,
   type LinkInfo,
   type LinkSearchFilter,
-  type LinkSearchResult,
 } from "~/api/models/actionLinks";
-import { getLinkById, searchLinks } from "~/api/services/actionLinks";
+import { getLinkById } from "~/api/services/actionLinks";
 import CustomSlider from "~/components/Carousel/CustomSlider";
 import CustomModal from "~/components/Common/CustomModal";
 import MainLayout from "~/components/Layout/Main";
@@ -42,6 +42,11 @@ import LimitedFunctionalityBadge from "~/components/Status/LimitedFunctionalityB
 import { Loading } from "~/components/Status/Loading";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
+import {
+  ACTION_LINK_QUERY_KEYS,
+  useOrgLinkCountQuery,
+  useOrgLinksListQuery,
+} from "~/hooks/useActionLinkMutations";
 import { DATE_FORMAT_HUMAN, PAGE_SIZE } from "~/lib/constants";
 import { currentOrganisationInactiveAtom } from "~/lib/store";
 import { getSafeUrl, getThemeFromRole } from "~/lib/utils";
@@ -56,6 +61,11 @@ interface IParams extends ParsedUrlQuery {
   entities?: string;
   page?: string;
 }
+
+const getErrorStatus = (error: unknown): number | null => {
+  if (!axios.isAxiosError(error)) return null;
+  return error.response?.status ?? null;
+};
 
 // ⚠️ SSR
 export async function getServerSideProps(context: GetServerSidePropsContext) {
@@ -125,181 +135,85 @@ const Links: NextPageWithLayout<{
   >(null);
   const [isLoading] = useState(false);
 
-  // 👇 use prefetched queries from server
-  const { data: links } = useQuery<LinkSearchResult>({
-    queryKey: [
-      "Links",
-      id,
-      type ?? "",
-      action ?? "",
-      statuses ?? "",
-      entities ?? "",
-      valueContains ?? "",
-      page ?? "",
-    ],
-    queryFn: () =>
-      searchLinks({
-        pageNumber: page ? parseInt(page.toString()) : 1,
-        pageSize: PAGE_SIZE,
-        entityType: type ?? ActionLinkEntityType.Opportunity,
-        action: action ?? LinkAction.Verify,
-        entities: entities ? entities.toString().split("|") : null,
-        organizations: [id],
-        statuses: statuses ? statuses.toString().split("|") : null,
-        valueContains: valueContains ?? null,
-      }),
-    enabled: !error,
-  });
-  const { data: totalCountAll } = useQuery<number>({
-    queryKey: [
-      "Links_TotalCount",
-      id,
-      null,
-      type ?? "",
-      action ?? "",
-      entities ?? "",
-      valueContains ?? "",
-    ],
-    queryFn: () =>
-      searchLinks({
-        pageNumber: page ? parseInt(page.toString()) : 1,
-        pageSize: PAGE_SIZE,
-        entityType: type ?? ActionLinkEntityType.Opportunity,
-        action: action ?? LinkAction.Verify,
-        entities: entities ? entities.toString().split("|") : null,
-        organizations: [id],
-        statuses: null,
-        valueContains: valueContains ?? null,
-      }).then((data) => data.totalCount ?? 0),
-    enabled: !error,
-  });
-  const { data: totalCountActive } = useQuery<number>({
-    queryKey: [
-      "Links_TotalCount",
-      id,
-      ActionLinkStatus.Active,
-      type ?? "",
-      action ?? "",
-      entities ?? "",
-      valueContains ?? "",
-    ],
-    queryFn: () =>
-      searchLinks({
-        pageNumber: page ? parseInt(page.toString()) : 1,
-        pageSize: PAGE_SIZE,
-        entityType: type ?? ActionLinkEntityType.Opportunity,
-        action: action ?? LinkAction.Verify,
-        entities: entities ? entities.toString().split("|") : null,
-        organizations: [id],
-        statuses: [ActionLinkStatus.Active],
-        valueContains: valueContains ?? null,
-      }).then((data) => data.totalCount ?? 0),
-    enabled: !error,
-  });
-  const { data: totalCountInactive } = useQuery<number>({
-    queryKey: [
-      "Links_TotalCount",
-      id,
-      ActionLinkStatus.Inactive,
-      type ?? "",
-      action ?? "",
-      entities ?? "",
-      valueContains ?? "",
-    ],
-    queryFn: () =>
-      searchLinks({
-        pageNumber: page ? parseInt(page.toString()) : 1,
-        pageSize: PAGE_SIZE,
-        entityType: type ?? ActionLinkEntityType.Opportunity,
-        action: action ?? LinkAction.Verify,
-        entities: entities ? entities.toString().split("|") : null,
-        organizations: [id],
-        statuses: [ActionLinkStatus.Inactive],
-        valueContains: valueContains ?? null,
-      }).then((data) => data.totalCount ?? 0),
-    enabled: !error,
-  });
-  const { data: totalCountExpired } = useQuery<number>({
-    queryKey: [
-      "Links_TotalCount",
-      id,
-      ActionLinkStatus.Expired,
-      type ?? "",
-      action ?? "",
-      entities ?? "",
-      valueContains ?? "",
-    ],
-    queryFn: () =>
-      searchLinks({
-        pageNumber: page ? parseInt(page.toString()) : 1,
-        pageSize: PAGE_SIZE,
-        entityType: type ?? ActionLinkEntityType.Opportunity,
-        action: action ?? LinkAction.Verify,
-        entities: entities ? entities.toString().split("|") : null,
-        organizations: [id],
-        statuses: [ActionLinkStatus.Expired],
-        valueContains: valueContains ?? null,
-      }).then((data) => data.totalCount ?? 0),
-    enabled: !error,
-  });
-  const { data: totalCountLimitReached } = useQuery<number>({
-    queryKey: [
-      "Links_TotalCount",
-      id,
-      ActionLinkStatus.LimitReached,
-      type ?? "",
-      action ?? "",
-      entities ?? "",
-      valueContains ?? "",
-    ],
-    queryFn: () =>
-      searchLinks({
-        pageNumber: page ? parseInt(page.toString()) : 1,
-        pageSize: PAGE_SIZE,
-        entityType: type ?? ActionLinkEntityType.Opportunity,
-        action: action ?? LinkAction.Verify,
-        entities: entities ? entities.toString().split("|") : null,
-        organizations: [id],
-        statuses: [ActionLinkStatus.LimitReached],
-        valueContains: valueContains ?? null,
-      }).then((data) => data.totalCount ?? 0),
-    enabled: !error,
-  });
-  const { data: totalCountDeleted } = useQuery<number>({
-    queryKey: [
-      "Links_TotalCount",
-      id,
-      ActionLinkStatus.Deleted,
-      type ?? "",
-      action ?? "",
-      entities ?? "",
-      valueContains ?? "",
-    ],
-    queryFn: () =>
-      searchLinks({
-        pageNumber: page ? parseInt(page.toString()) : 1,
-        pageSize: PAGE_SIZE,
-        entityType: type ?? ActionLinkEntityType.Opportunity,
-        action: action ?? LinkAction.Verify,
-        entities: entities ? entities.toString().split("|") : null,
-        organizations: [id],
-        statuses: [ActionLinkStatus.Deleted],
-        valueContains: valueContains ?? null,
-      }).then((data) => data.totalCount ?? 0),
-    enabled: !error,
-  });
+  const searchFilter = useMemo<LinkSearchFilter>(
+    () => ({
+      pageNumber: page ? parseInt(page.toString()) : 1,
+      pageSize: PAGE_SIZE,
+      entityType: type ?? ActionLinkEntityType.Opportunity,
+      action: action ?? LinkAction.Verify,
+      entities: entities ? entities.toString().split("|") : null,
+      statuses: statuses ? statuses.toString().split("|") : null,
+      organizations: [id],
+      valueContains: valueContains ?? null,
+    }),
+    [action, entities, id, page, statuses, type, valueContains],
+  );
 
-  // search filter state
-  const [searchFilter] = useState<LinkSearchFilter>({
-    pageNumber: page ? parseInt(page.toString()) : 1,
-    pageSize: PAGE_SIZE,
-    entityType: type ?? ActionLinkEntityType.Opportunity,
-    action: action ?? LinkAction.Verify,
-    entities: entities ? entities.toString().split("|") : null,
-    statuses: statuses ? statuses.toString().split("|") : null,
-    organizations: [id],
-    valueContains: valueContains ?? null,
-  });
+  const countKeyParts = `${type ?? ""}_${action ?? ""}`;
+  const searchResultsKey = `${type ?? ""}_${action ?? ""}_${statuses ?? ""}_${entities ?? ""}_${valueContains ?? ""}_${page ?? ""}`;
+
+  const { data: links, error: linksError } = useOrgLinksListQuery(
+    id,
+    searchFilter,
+    searchResultsKey,
+    {
+      enabled: !error,
+    },
+  );
+  const resolvedError = error ?? getErrorStatus(linksError) ?? undefined;
+  const { data: totalCountAll } = useOrgLinkCountQuery(
+    id,
+    searchFilter.entityType,
+    searchFilter.action,
+    null,
+    countKeyParts,
+    { enabled: !error },
+  );
+  const { data: totalCountActive } = useOrgLinkCountQuery(
+    id,
+    searchFilter.entityType,
+    searchFilter.action,
+    ActionLinkStatus.Active,
+    countKeyParts,
+    { enabled: !error },
+  );
+  const { data: totalCountInactive } = useOrgLinkCountQuery(
+    id,
+    searchFilter.entityType,
+    searchFilter.action,
+    ActionLinkStatus.Inactive,
+    countKeyParts,
+    { enabled: !error },
+  );
+  const { data: totalCountExpired } = useOrgLinkCountQuery(
+    id,
+    searchFilter.entityType,
+    searchFilter.action,
+    ActionLinkStatus.Expired,
+    countKeyParts,
+    { enabled: !error },
+  );
+  const { data: totalCountLimitReached } = useOrgLinkCountQuery(
+    id,
+    searchFilter.entityType,
+    searchFilter.action,
+    ActionLinkStatus.LimitReached,
+    countKeyParts,
+    { enabled: !error },
+  );
+  const { data: totalCountDeleted } = useOrgLinkCountQuery(
+    id,
+    searchFilter.entityType,
+    searchFilter.action,
+    ActionLinkStatus.Deleted,
+    countKeyParts,
+    { enabled: !error },
+  );
+
+  const linkDetailKey = useCallback(
+    (linkId: string) => ACTION_LINK_QUERY_KEYS.detail(linkId, true),
+    [],
+  );
 
   // 🎈 FUNCTIONS
   const getSearchFilterAsQueryString = useCallback(
@@ -373,22 +287,21 @@ const Links: NextPageWithLayout<{
       // fetch the QR code
       queryClient
         .fetchQuery({
-          queryKey: ["OpportunityLink", item.id],
+          queryKey: linkDetailKey(item.id),
           queryFn: () => getLinkById(item.id, true),
         })
         .then(() => {
           // get the QR code from the cache
-          const qrCode = queryClient.getQueryData<LinkInfo | null>([
-            "OpportunityLink",
-            item.id,
-          ]);
+          const qrCode = queryClient.getQueryData<LinkInfo | null>(
+            linkDetailKey(item.id),
+          );
 
           // show the QR code
           setQRCodeImageData(qrCode?.qrCodeBase64);
           setShowQRCode(true);
         });
     },
-    [queryClient],
+    [linkDetailKey, queryClient],
   );
 
   const renderAddLinkButton = useCallback(() => {
@@ -425,9 +338,9 @@ const Links: NextPageWithLayout<{
     );
   }, [type, action, statuses, entities, valueContains]);
 
-  if (error) {
-    if (error === 401) return <Unauthenticated />;
-    else if (error === 403) return <Unauthorized />;
+  if (resolvedError) {
+    if (resolvedError === 401) return <Unauthenticated />;
+    else if (resolvedError === 403) return <Unauthorized />;
     else return <InternalServerError />;
   }
 
@@ -622,7 +535,7 @@ const Links: NextPageWithLayout<{
           </div>
         </div>
 
-        <div className="md:shadow-custom rounded-lg md:bg-white md:p-4">
+        <>
           {/* NO ROWS */}
           {links && links.items?.length === 0 && (
             <>
@@ -662,7 +575,7 @@ const Links: NextPageWithLayout<{
                     className="shadow-custom flex flex-col gap-2 rounded-lg bg-white p-4"
                   >
                     {/* Link & Actions */}
-                    <div className="border-gray-light flex flex-row gap-2 border-b-2 pb-2">
+                    <div className="flex flex-row gap-2">
                       <div className="flex w-full flex-col gap-1">
                         <Link
                           title={item.name}
@@ -805,26 +718,22 @@ const Links: NextPageWithLayout<{
               </div>
 
               {/* DEKSTOP */}
-              <table className="border-gray-light hidden border-separate rounded-lg border-x-2 border-t-2 md:table md:table-auto">
+              <table className="border-gray-light hidden border-separate rounded-lg bg-white md:table md:table-auto">
                 <thead>
                   <tr className="border-gray text-gray-dark">
-                    <th className="border-gray-light border-b-2 !py-4">Link</th>
-                    <th className="border-gray-light border-b-2 !py-4">
-                      Opportunity
-                    </th>
-                    <th className="border-gray-light border-b-2">Usage</th>
-                    <th className="border-gray-light border-b-2">Expires</th>
-                    <th className="border-gray-light border-b-2">Status</th>
-                    <th className="border-gray-light border-b-2 text-center">
-                      Actions
-                    </th>
+                    <th className="border-gray-light !py-4">Link</th>
+                    <th className="border-gray-light !py-4">Opportunity</th>
+                    <th className="border-gray-light">Usage</th>
+                    <th className="border-gray-light">Expires</th>
+                    <th className="border-gray-light">Status</th>
+                    <th className="border-gray-light text-center">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {links.items.map((item) => (
                     <tr key={`grid_md_${item.id}`} className="">
                       {/* Link */}
-                      <td className="border-gray-light w-[180px] max-w-[220px] border-b-2 !py-4 align-top">
+                      <td className="border-gray-light w-[180px] max-w-[220px] border-t-2 !py-4 align-top">
                         <div className="flex flex-col gap-1">
                           <Link
                             title={item.name}
@@ -849,7 +758,7 @@ const Links: NextPageWithLayout<{
                       </td>
 
                       {/* Opportunity */}
-                      <td className="border-gray-light w-[180px] max-w-[180px] border-b-2 !py-4 align-top">
+                      <td className="border-gray-light w-[180px] max-w-[180px] border-t-2 !py-4 align-top">
                         {item.entityType == "Opportunity" &&
                           item.entityOrganizationId && (
                             <Link
@@ -876,7 +785,7 @@ const Links: NextPageWithLayout<{
                         )}
                       </td>
 
-                      <td className="border-gray-light border-b-2">
+                      <td className="border-gray-light border-t-2">
                         {item.lockToDistributionList && (
                           <span className="badge bg-green-light text-yellow">
                             <IoMdLock className="h-4 w-4" />
@@ -898,7 +807,7 @@ const Links: NextPageWithLayout<{
                         )}
                       </td>
 
-                      <td className="border-gray-light border-b-2">
+                      <td className="border-gray-light border-t-2">
                         {item.dateEnd ? (
                           <span className="badge bg-yellow-light text-yellow">
                             <IoMdCalendar className="h-4 w-4" />
@@ -914,7 +823,7 @@ const Links: NextPageWithLayout<{
                       </td>
 
                       {/* STATUS */}
-                      <td className="border-gray-light border-b-2">
+                      <td className="border-gray-light border-t-2">
                         {item.status == "Active" && (
                           <span className="badge bg-blue-light text-blue">
                             Active
@@ -943,7 +852,7 @@ const Links: NextPageWithLayout<{
                       </td>
 
                       {/* BUTTONS */}
-                      <td className="border-gray-light border-b-2 whitespace-nowrap">
+                      <td className="border-gray-light border-t-2 whitespace-nowrap">
                         <div className="flex flex-row items-center justify-center gap-2">
                           {/* ACTIONS */}
                           <LinkActions
@@ -980,7 +889,7 @@ const Links: NextPageWithLayout<{
               </div>
             </>
           )}
-        </div>
+        </>
       </div>
     </>
   );

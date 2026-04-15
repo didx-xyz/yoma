@@ -35,7 +35,11 @@ import { InternalServerError } from "~/components/Status/InternalServerError";
 import LimitedFunctionalityBadge from "~/components/Status/LimitedFunctionalityBadge";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
-import { DATE_FORMAT_HUMAN, ROLE_ADMIN } from "~/lib/constants";
+import {
+  DATE_FORMAT_HUMAN,
+  OPPORTUNITY_TYPE_JOB,
+  ROLE_ADMIN,
+} from "~/lib/constants";
 import { config } from "~/lib/react-query-config";
 import { currentOrganisationInactiveAtom } from "~/lib/store";
 import { getSafeUrl, getThemeFromRole } from "~/lib/utils";
@@ -121,6 +125,7 @@ const OpportunityDetails: NextPageWithLayout<{
   const { data: opportunity } = useOpportunityInfoQuery(opportunityId, {
     enabled: !error,
   });
+  const isJobOpportunity = opportunity?.type === OPPORTUNITY_TYPE_JOB;
 
   if (error) {
     if (error === 401) return <Unauthenticated />;
@@ -309,34 +314,42 @@ const OpportunityDetails: NextPageWithLayout<{
                       ))}
                     </div>
                   </div>
-                  <div className="divider mt-1" />
-                  <div>
-                    <div className="flex flex-row items-center gap-1 text-sm font-bold">
-                      <Image
-                        src={iconClock}
-                        alt="Icon Clock"
-                        width={20}
-                        className="h-auto"
-                        sizes="100vw"
-                        priority={true}
-                      />
+                  {!isJobOpportunity && (
+                    <div>
+                      <div className="divider mt-1" />
+                      <div>
+                        <div className="flex flex-row items-center gap-1 text-sm font-bold">
+                          <Image
+                            src={iconClock}
+                            alt="Icon Clock"
+                            width={20}
+                            className="h-auto"
+                            sizes="100vw"
+                            priority={true}
+                          />
 
-                      <span className="ml-1">How much time you will need</span>
+                          <span className="ml-1">
+                            How much time you will need
+                          </span>
+                        </div>
+                        <div className="my-2">
+                          {`This task should not take you more than ${opportunity?.commitmentIntervalCount} ${opportunity?.commitmentInterval}${
+                            (opportunity?.commitmentIntervalCount ?? 0) > 1
+                              ? "s. "
+                              : ". "
+                          }`}
+                          <br />
+                          <p className="mt-2">
+                            The estimated times provided are just a guideline.
+                            You have as much time as you need to complete the
+                            tasks at your own pace. Focus on engaging with the
+                            materials and doing your best without feeling rushed
+                            by the time estimates.
+                          </p>
+                        </div>
+                      </div>
                     </div>
-                    <div className="my-2">
-                      {`This task should not take you more than ${opportunity?.commitmentIntervalCount} ${opportunity?.commitmentInterval}${
-                        opportunity?.commitmentIntervalCount > 1 ? "s. " : ". "
-                      }`}
-                      <br />
-                      <p className="mt-2">
-                        The estimated times provided are just a guideline. You
-                        have as much time as you need to complete the tasks at
-                        your own pace. Focus on engaging with the materials and
-                        doing your best without feeling rushed by the time
-                        estimates.
-                      </p>
-                    </div>
-                  </div>
+                  )}
                   <div className="divider mt-1" />
                   <div>
                     <div className="flex flex-row items-center gap-1 text-sm font-bold">
@@ -387,22 +400,26 @@ const OpportunityDetails: NextPageWithLayout<{
                       ))}
                     </div>
                   </div>
-                  <div className="divider mt-1" />
-                  <div>
-                    <div className="flex flex-row items-center gap-1 text-sm font-bold">
-                      <Image
-                        src={iconDifficulty}
-                        alt="Icon Difficulty"
-                        width={20}
-                        className="h-auto"
-                        sizes="100vw"
-                        priority={true}
-                      />
+                  {!isJobOpportunity && (
+                    <div>
+                      <div className="divider mt-1" />
+                      <div>
+                        <div className="flex flex-row items-center gap-1 text-sm font-bold">
+                          <Image
+                            src={iconDifficulty}
+                            alt="Icon Difficulty"
+                            width={20}
+                            className="h-auto"
+                            sizes="100vw"
+                            priority={true}
+                          />
 
-                      <span className="ml-1">Course difficulty</span>
+                          <span className="ml-1">Course difficulty</span>
+                        </div>
+                        <div className="my-2">{opportunity?.difficulty}</div>
+                      </div>
                     </div>
-                    <div className="my-2">{opportunity?.difficulty}</div>
-                  </div>
+                  )}
                   <div className="divider mt-1" />
                   <div>
                     <div className="flex flex-row items-center gap-1 text-sm font-bold">

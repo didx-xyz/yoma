@@ -2,7 +2,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { type AxiosError } from "axios";
 import Image from "next/image";
 import { useRouter } from "next/router";
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   FaBell,
   FaLink,
@@ -20,10 +20,15 @@ import {
   sendInstantVerifyReminders,
   updateActionLinkStatus,
 } from "~/api/services/actionLinks";
+import {
+  DropdownMenu,
+  DropdownMenuDisplayStyle,
+} from "~/components/Common/DropdownMenu";
 import { ApiErrors } from "~/components/Status/ApiErrors";
 import { Loading } from "~/components/Status/Loading";
 import { useConfirmationModalContext } from "~/context/modalConfirmationContext";
 import { analytics } from "~/lib/analytics";
+import { ACTION_LINK_QUERY_KEYS } from "~/hooks/useActionLinkMutations";
 import { getSafeUrl } from "~/lib/utils";
 import CustomModal from "../Common/CustomModal";
 
@@ -96,15 +101,14 @@ export const LinkActions: React.FC<LinkActionsProps> = ({
       // fetch the QR code
       queryClient
         .fetchQuery({
-          queryKey: ["OpportunityLink", item.id],
+          queryKey: ACTION_LINK_QUERY_KEYS.detail(item.id, true),
           queryFn: () => getLinkById(item.id, true),
         })
         .then(() => {
           // get the QR code from the cache
-          const qrCode = queryClient.getQueryData<LinkInfo | null>([
-            "OpportunityLink",
-            item.id,
-          ]);
+          const qrCode = queryClient.getQueryData<LinkInfo | null>(
+            ACTION_LINK_QUERY_KEYS.detail(item.id, true),
+          );
 
           // show the QR code
           setQRCodeImageData(qrCode?.qrCodeBase64);
@@ -168,16 +172,16 @@ export const LinkActions: React.FC<LinkActionsProps> = ({
         if (organizationId) {
           // Organization context
           await queryClient.invalidateQueries({
-            queryKey: ["Links", organizationId],
+            queryKey: ACTION_LINK_QUERY_KEYS.orgListAll(organizationId),
             exact: false,
           });
           await queryClient.invalidateQueries({
-            queryKey: ["Links_TotalCount", organizationId],
+            queryKey: ACTION_LINK_QUERY_KEYS.orgListCountAll(organizationId),
             exact: false,
           });
           // For link overview page
           await queryClient.invalidateQueries({
-            queryKey: ["Link", item.id],
+            queryKey: ACTION_LINK_QUERY_KEYS.usageListAll(item.id),
             exact: false,
           });
         } else {
@@ -260,6 +264,90 @@ export const LinkActions: React.FC<LinkActionsProps> = ({
   const handleCopyToClipboard = onCopyToClipboard || defaultCopyToClipboard;
   const handleGenerateQRCode = onGenerateQRCode || defaultGenerateQRCode;
 
+  const menuItems = useMemo(
+    () => [
+      ...(actionOptions.includes(LinkActionOptions.ACTIVATE) &&
+      link.status == "Inactive"
+        ? [
+            {
+              label: "Activate",
+              onClick: () => handleStatusUpdate(link, ActionLinkStatus.Active),
+              icon: <FaStar className="size-4" />,
+            },
+          ]
+        : []),
+      ...(actionOptions.includes(LinkActionOptions.REMIND_PARTICIPANTS) &&
+      link.status == "Active"
+        ? [
+            {
+              label: "Remind Participants",
+              onClick: () => handleRemindParticipants(link),
+              icon: <FaBell className="size-4" />,
+            },
+          ]
+        : []),
+      ...(actionOptions.includes(LinkActionOptions.GO_TO_OVERVIEW)
+        ? [
+            {
+              label: "Go to Link Overview",
+              onClick: () => {
+                void router.push(
+                  `/organisations/${link.entityOrganizationId}/links/${link.id}${
+                    returnUrl
+                      ? `?returnUrl=${encodeURIComponent(getSafeUrl(returnUrl, router.asPath))}`
+                      : ""
+                  }`,
+                );
+              },
+              icon: <FaSearch className="size-4" />,
+            },
+          ]
+        : []),
+      ...(actionOptions.includes(LinkActionOptions.COPY_LINK)
+        ? [
+            {
+              label: "Copy Link",
+              onClick: () => {
+                handleCopyToClipboard(link.url!);
+              },
+              icon: <FaLink className="size-4" />,
+            },
+          ]
+        : []),
+      ...(actionOptions.includes(LinkActionOptions.GENERATE_QR_CODE)
+        ? [
+            {
+              label: "Generate QR Code",
+              onClick: () => {
+                handleGenerateQRCode(link);
+              },
+              icon: <FaQrcode className="size-4" />,
+            },
+          ]
+        : []),
+      ...(actionOptions.includes(LinkActionOptions.DELETE) &&
+      (link.status == "Inactive" || link.status == "Active")
+        ? [
+            {
+              label: "Delete",
+              onClick: () => handleStatusUpdate(link, ActionLinkStatus.Deleted),
+              icon: <FaTrash className="size-4" />,
+            },
+          ]
+        : []),
+    ],
+    [
+      actionOptions,
+      handleCopyToClipboard,
+      handleGenerateQRCode,
+      handleRemindParticipants,
+      handleStatusUpdate,
+      link,
+      returnUrl,
+      router,
+    ],
+  );
+
   return (
     <>
       {isLoading && <Loading />}
@@ -319,112 +407,15 @@ export const LinkActions: React.FC<LinkActionsProps> = ({
         </div>
       </CustomModal>
 
-      <div className="dropdown dropdown-left">
-        <button type="button" title="Actions" className="cursor-pointer">
-          <IoIosSettings className="text-green hover:text-blue size-5" />
-        </button>
-        <ul className="menu dropdown-content rounded-box bg-base-100 z-50 w-64 gap-2 p-2 shadow">
-          {actionOptions.includes(LinkActionOptions.ACTIVATE) &&
-            link?.status == "Inactive" && (
-              <li>
-                <button
-                  type="button"
-                  className="text-gray-dark flex flex-row items-center gap-2 hover:brightness-50"
-                  onClick={() =>
-                    handleStatusUpdate(link, ActionLinkStatus.Active)
-                  }
-                >
-                  <FaStar className="text-green size-4" />
-                  Activate
-                </button>
-              </li>
-            )}
-
-          {actionOptions.includes(LinkActionOptions.REMIND_PARTICIPANTS) &&
-            link?.status == "Active" && (
-              <li>
-                <button
-                  type="button"
-                  className="text-gray-dark flex flex-row items-center gap-2 hover:brightness-50"
-                  onClick={() => handleRemindParticipants(link)}
-                >
-                  <FaBell className="text-green size-4" />
-                  Remind Participants
-                </button>
-              </li>
-            )}
-
-          {actionOptions.includes(LinkActionOptions.GO_TO_OVERVIEW) && (
-            <li>
-              <button
-                type="button"
-                className="text-gray-dark flex flex-row items-center gap-2 hover:brightness-50"
-                title="Go to Link Overview"
-                onClick={() => {
-                  void router.push(
-                    `/organisations/${link.entityOrganizationId}/links/${link.id}${
-                      returnUrl
-                        ? `?returnUrl=${encodeURIComponent(getSafeUrl(returnUrl, router.asPath))}`
-                        : ""
-                    }`,
-                  );
-                }}
-              >
-                <FaSearch className="text-green size-4" />
-                Go to Link Overview
-              </button>
-            </li>
-          )}
-
-          {actionOptions.includes(LinkActionOptions.COPY_LINK) && (
-            <li>
-              <button
-                type="button"
-                className="text-gray-dark flex flex-row items-center gap-2 hover:brightness-50"
-                title="Copy URL to clipboard"
-                onClick={() => {
-                  handleCopyToClipboard(link.url!);
-                }}
-              >
-                <FaLink className="text-green size-4" />
-                Copy Link
-              </button>
-            </li>
-          )}
-
-          {actionOptions.includes(LinkActionOptions.GENERATE_QR_CODE) && (
-            <li>
-              <button
-                type="button"
-                className="text-gray-dark flex flex-row items-center gap-2 hover:brightness-50"
-                title="Generate QR Code"
-                onClick={() => {
-                  handleGenerateQRCode(link);
-                }}
-              >
-                <FaQrcode className="text-green size-4" />
-                Generate QR Code
-              </button>
-            </li>
-          )}
-
-          {actionOptions.includes(LinkActionOptions.DELETE) &&
-            (link?.status == "Inactive" || link?.status == "Active") && (
-              <li>
-                <button
-                  type="button"
-                  className="text-gray-dark flex flex-row items-center hover:brightness-50"
-                  onClick={() =>
-                    handleStatusUpdate(link, ActionLinkStatus.Deleted)
-                  }
-                >
-                  <FaTrash className="text-green size-4" />
-                  Delete
-                </button>
-              </li>
-            )}
-        </ul>
-      </div>
+      <DropdownMenu
+        label="Actions"
+        items={menuItems}
+        displayStyle={DropdownMenuDisplayStyle.ICON}
+        triggerIcon={
+          <IoIosSettings className="text-green size-5 hover:brightness-125" />
+        }
+        title="Actions"
+      />
     </>
   );
 };

@@ -77,6 +77,9 @@ export const ROLE_ADMIN = "Admin";
 export const ROLE_ORG_ADMIN = "OrganisationAdmin";
 export const ROLE_USER = "User";
 
+export const OPPORTUNITY_TYPE_JOB = "Job";
+export const OPPORTUNITY_TYPE_JOB_ID = "0F4F8C9E-1D2A-4F0F-8B9A-5C2D7E6A1B3C";
+
 export const OPPORTUNITY_TYPES_LEARNING = [
   "25F5A835-C3F7-43CA-9840-D372A1D26694",
 ];
