@@ -1,0 +1,5 @@
+Title,Type,Engagement,Categories,Link,Summary,Description,Languages,Location,Difficulty,EffortCount,EffortInterval,DateStart,DateEnd,ParticipantLimit,ZltoReward,ZltoRewardPool,Skills,Keywords,Hidden,ExternalId
+Junior Software Developer,Job,,Technology and Digitization,https://example.com/job1,Entry level developer role,Assist the engineering team with development tasks and bug fixes.,EN,ZA,,,,2026/07/01,,,,,developer|software|junior|job,No,JOB_EXT_001
+Warehouse Assistant,Job,,Other|Tourism and Hospitality,https://example.com/job2,Warehouse support role,Support daily warehouse operations including packing and stock handling.,EN|AF,ZA,,,,2026/07/01,,,,,warehouse|assistant|logistics|job,No,JOB_EXT_002
+Retail Sales Assistant,Job,,Other,https://example.com/job3,Retail customer service role,Assist customers and maintain store presentation.,EN,ZA,,,,2026/07/01,,,,,retail|sales|assistant|job,No,JOB_EXT_003
+Delivery Driver,Job,,Other|Technology and Digitization,https://example.com/job4,Local delivery driver role,Deliver goods to customers within the local region.,EN|AF,ZA,,,,2026/07/01,,,,,driver|delivery|logistics|job,No,JOB_EXT_004

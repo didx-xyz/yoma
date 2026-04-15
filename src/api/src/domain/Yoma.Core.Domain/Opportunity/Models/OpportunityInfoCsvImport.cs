@@ -66,7 +66,6 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
     public decimal? ZltoRewardPool { get; set; }
 
-    [Required]
     [TypeConverter(typeof(CsvDelimitedStringConverter))]
     public List<string>? Skills { get; set; }
 
@@ -109,6 +108,15 @@ namespace Yoma.Core.Domain.Opportunity.Models
       if (Countries == null || !Countries.Any(name => !string.IsNullOrWhiteSpace(name)))
         CSVImportHelper.AddError(errors, CSVImportErrorType.RequiredFieldMissing, "Missing required field", rowNumber, "Location");
 
+      var isJob = string.Equals(Type, Domain.Opportunity.Type.Job.ToString(), StringComparison.OrdinalIgnoreCase);
+
+      // Engagement
+      // Optional for Opportunity Type: Job.
+      // For other opportunity types this field is required.
+      // Validation of the supplied value has been moved to the domain validators during Create/Update.
+      if (!isJob && string.IsNullOrWhiteSpace(Engagement))
+        CSVImportHelper.AddError(errors, CSVImportErrorType.RequiredFieldMissing, "Missing required field", rowNumber, nameof(Engagement));
+
       // Difficulty
       // Optional for Opportunity Type: Job.
       // For other opportunity types this field is required.
@@ -130,7 +138,11 @@ namespace Yoma.Core.Domain.Opportunity.Models
       if (DateStart == DateOnly.MinValue)
         CSVImportHelper.AddError(errors, CSVImportErrorType.RequiredFieldMissing, "Missing required field", rowNumber, nameof(DateStart));
 
-      if (Skills == null || !Skills.Any(name => !string.IsNullOrWhiteSpace(name)))
+      // Skills
+      // Optional for Opportunity Type: Job.
+      // For other opportunity types this field is required.
+      // Validation of supplied values has been moved to the domain validators during Create/Update.
+      if (!isJob && (Skills == null || !Skills.Any(name => !string.IsNullOrWhiteSpace(name))))
         CSVImportHelper.AddError(errors, CSVImportErrorType.RequiredFieldMissing, "Missing required field", rowNumber, nameof(Skills));
 
       if (Keywords == null || !Keywords.Any(name => !string.IsNullOrWhiteSpace(name)))

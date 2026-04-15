@@ -212,8 +212,11 @@ namespace Yoma.Core.Domain.Opportunity.Validators
           .When(x => !string.IsNullOrEmpty(x.SSISchemaName))
           .WithMessage("SSI schema does not exist.");
 
-      // Engagement type is optional For Job opportunities this is not required but if specified it must still reference a valid engagement type
+      // Engagement type is required except for Job opportunities. If specified it must exist.
       RuleFor(x => x.EngagementTypeId)
+          .Cascade(CascadeMode.Stop)
+          .Must((model, engagementTypeId) => !TypeExists(model.TypeId) || TypeIsJob(model.TypeId) || engagementTypeId.HasValue)
+          .WithMessage("Engagement type is required.")
           .Must(EngagementTypeExists)
           .WithMessage("Specified engagement type is invalid or does not exist.");
 
@@ -229,11 +232,17 @@ namespace Yoma.Core.Domain.Opportunity.Validators
           .Must(languages => languages != null && languages.Count != 0 && languages.All(id => id != Guid.Empty && LanguageExists(id)))
           .WithMessage("Languages are required and must exist.");
 
-      // Skills are optional For Job opportunities this is not required but if specified each skill must exist
+      // Skills are required except for Job opportunities. If specified they must exist.
       RuleFor(x => x.Skills)
-          .Must(skills => skills != null && skills.All(id => id != Guid.Empty && SkillExists(id)))
-          .WithMessage("Skills are optional, but must exist if specified.")
-          .When(x => x.Skills != null && x.Skills.Count != 0);
+          .Cascade(CascadeMode.Stop)
+          .Must((model, skills) =>
+          {
+            var isJob = TypeExists(model.TypeId) && TypeIsJob(model.TypeId);
+            return isJob
+              ? skills == null || skills.Count == 0 || skills.All(id => id != Guid.Empty && SkillExists(id))
+              : skills != null && skills.Count != 0 && skills.All(id => id != Guid.Empty && SkillExists(id));
+          })
+          .WithMessage("Skills are required and must exist.");
 
       RuleFor(x => x.VerificationTypes)
           .Must(types => types != null && types.Count != 0)
