@@ -290,6 +290,13 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       var query = _opportunityRepository.Query();
 
+      //types
+      if (filter.Types != null && filter.Types.Count != 0)
+      {
+        filter.Types = [.. filter.Types.Distinct()];
+        query = query.Where(o => filter.Types.Contains(o.TypeId));
+      }
+
       //organization
       if (filter.Organizations != null && filter.Organizations.Count != 0)
         query = query.Where(o => filter.Organizations.Contains(o.OrganizationId));
@@ -324,8 +331,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
           o => ((o.StatusId == statusActiveId && o.OrganizationStatusId == statusOrganizationActiveId && o.DateStart <= DateTimeOffset.UtcNow) || o.StatusId == statusExpiredId)
           && o.VerificationEnabled
           && o.VerificationMethodValue == VerificationMethod.Manual.ToString()
-          && o.Hidden != true
-          && !string.Equals(o.Type, Type.Job.ToString(), StringComparison.OrdinalIgnoreCase));
+          && o.Hidden != true);
       }
       else
       {

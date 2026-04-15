@@ -73,6 +73,14 @@ namespace Yoma.Core.Domain.Referral.Models
           if (Opportunity == null)
             throw new DataInconsistencyException("Pathway task entity type is 'Opportunity' but no opportunity is assigned");
 
+          var isJob = string.Equals(Opportunity.Type, Domain.Opportunity.Type.Job.ToString(), StringComparison.OrdinalIgnoreCase);
+
+          if (isJob)
+          {
+            reason = "Job opportunities cannot be used in referral pathways";
+            return false;
+          }
+
           if (!Opportunity.IsCompletable)
           {
             reason = Opportunity.NonCompletableReason;
@@ -93,7 +101,7 @@ namespace Yoma.Core.Domain.Referral.Models
           if (opportunityCountryCodes.Contains(countryCodeWorldwide) || programCountryCodes.Overlaps(opportunityCountryCodes))
             return true;
 
-          reason = $"Opportunity '{Opportunity.Title}' is not available in any of the countries assigned to the program";
+          reason = "Opportunity is not available in any of the countries assigned to the program";
           return false;
 
         default:

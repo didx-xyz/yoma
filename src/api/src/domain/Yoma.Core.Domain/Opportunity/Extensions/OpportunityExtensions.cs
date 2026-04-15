@@ -185,14 +185,14 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
     {
       ArgumentNullException.ThrowIfNull(item, nameof(item));
 
-      return EvaluateCompletable(item.Title, item.Status, item.Hidden, item.OrganizationStatus, item.VerificationEnabled, item.VerificationMethod, item.DateStart, item.Type, out reason);
+      return EvaluateCompletable(item.Title, item.Status, item.Hidden, item.OrganizationStatus, item.VerificationEnabled, item.VerificationMethod, item.DateStart, out reason);
     }
 
     public static bool Completable(this OpportunityItem item, out string? reason)
     {
       ArgumentNullException.ThrowIfNull(item, nameof(item));
 
-      return EvaluateCompletable(item.Title, item.Status, item.Hidden, item.OrganizationStatus, item.VerificationEnabled, item.VerificationMethod, item.DateStart, item.Type, out reason);
+      return EvaluateCompletable(item.Title, item.Status, item.Hidden, item.OrganizationStatus, item.VerificationEnabled, item.VerificationMethod, item.DateStart, out reason);
     }
     #endregion
 
@@ -242,7 +242,6 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
       bool verificationEnabled,
       VerificationMethod? verificationMethod,
       DateTimeOffset dateStart,
-      string type,
       out string? reason)
     {
       reason = null;
@@ -251,14 +250,11 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
 
       var canSendForVerification = status == Status.Expired || (published && dateStart <= DateTimeOffset.UtcNow);
 
-      var isJob = string.Equals(type, Type.Job.ToString(), StringComparison.OrdinalIgnoreCase);
-
       var isCompletable =
         hidden != true &&
         canSendForVerification &&
         verificationEnabled &&
-        verificationMethod == VerificationMethod.Manual &&
-        !isJob;
+        verificationMethod == VerificationMethod.Manual;
 
       if (isCompletable)
         return true;
@@ -283,9 +279,6 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
 
       if (verificationMethod != VerificationMethod.Manual)
         reasons.Add($"'{VerificationMethod.Manual}' verification is required");
-
-      if (isJob)
-        reasons.Add("job opportunities cannot be used in referral pathways");
 
       reason = $"Opportunity '{title}' cannot be completed because {string.Join(", ", reasons)}";
       return false;
