@@ -1447,7 +1447,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         result = await AssignLanguages(result, request.Languages);
 
         // skills (optional)
-        result = await RemoveSkills(result, result.Skills?.Where(o => !request.Skills.Contains(o.Id)).Select(o => o.Id).ToList());
+        result = await RemoveSkills(result, result.Skills?.Where(o => request.Skills == null || !request.Skills.Contains(o.Id)).Select(o => o.Id).ToList());
         result = await AssignSkills(result, request.Skills);
 
         // verification types (optional)
@@ -1925,7 +1925,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       var skills = item.Skills?
         .Where(name => !string.IsNullOrWhiteSpace(name))
         .Select(name => _skillService.GetByName(name))
-        .ToList() ?? [];
+        .ToList();
 
       var keywords = item.Keywords?.Where(o => !string.IsNullOrWhiteSpace(o)).Select(o => o.Trim()).ToList();
 
@@ -1980,7 +1980,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       request.ParticipantLimit = item.ParticipantLimit;
       request.ZltoReward = item.ZltoReward;
       request.ZltoRewardPool = item.ZltoRewardPool;
-      request.Skills = [.. skills.Select(o => o.Id)];
+      request.Skills = skills?.Select(o => o.Id).ToList();
       request.Keywords = keywords;
       request.Hidden = item.Hidden;
       request.ExternalId = item.ExternalId;

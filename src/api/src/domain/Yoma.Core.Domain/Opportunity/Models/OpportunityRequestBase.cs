@@ -63,7 +63,7 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
     public List<Guid> Languages { get; set; } = null!;
 
-    public List<Guid> Skills { get; set; } = null!;
+    public List<Guid>? Skills { get; set; }
 
     public List<OpportunityRequestVerificationType>? VerificationTypes { get; set; }
   }

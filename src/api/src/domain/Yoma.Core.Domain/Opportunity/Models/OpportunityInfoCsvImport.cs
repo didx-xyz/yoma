@@ -135,8 +135,8 @@ namespace Yoma.Core.Domain.Opportunity.Models
       if (DateStart == DateOnly.MinValue)
         CSVImportHelper.AddError(errors, CSVImportErrorType.RequiredFieldMissing, "Missing required field", rowNumber, nameof(DateStart));
 
-      // Skills are optional. If specified they must contain valid values.
-      if (Skills != null && Skills.Any(name => string.IsNullOrWhiteSpace(name)))
+      // Skills are optional. If specified, they must not contain empty values.
+      if (Skills != null && Skills.Any(string.IsNullOrWhiteSpace))
         CSVImportHelper.AddError(errors, CSVImportErrorType.InvalidFieldValue, "Invalid value", rowNumber, nameof(Skills));
 
       if (Keywords == null || !Keywords.Any(name => !string.IsNullOrWhiteSpace(name)))
