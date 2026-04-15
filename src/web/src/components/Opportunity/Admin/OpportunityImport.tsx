@@ -296,13 +296,21 @@ export const OpportunityImport: React.FC<InputProps> = ({
                 <div className="collapse-title font-semibold">Sample File</div>
                 <div className="collapse-content text-sm">
                   <p>
-                    Download a{" "}
+                    Download the{" "}
                     <a
                       href="/docs/OpportunityInfoCsvImport_Sample.csv"
                       target="_blank"
                       className="text-blue-600 underline"
                     >
-                      sample import file
+                      opportunities sample
+                    </a>{" "}
+                    or{" "}
+                    <a
+                      href="/docs/OpportunityInfoCsvImport_Sample_Jobs.csv"
+                      target="_blank"
+                      className="text-blue-600 underline"
+                    >
+                      jobs sample
                     </a>{" "}
                     for reference.
                   </p>
