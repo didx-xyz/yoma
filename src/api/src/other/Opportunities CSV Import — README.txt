@@ -87,6 +87,7 @@ Additional rules depending on opportunity type:
 
 For all opportunity types **except Job**:
 
+- Engagement — required; must match opportunities_engagement.json (name)
 - Skills — required; one or more from opportunities_skills.json (name); `|`-delimited
 - Difficulty — required; must match opportunities_difficulty.json (name)
 - EffortCount — required; integer > 0
@@ -94,10 +95,14 @@ For all opportunity types **except Job**:
 
 For **Type = Job**:
 
+- Engagement — optional
 - Skills — optional
 - Difficulty — optional
 - EffortCount — optional
 - EffortInterval — optional
+
+If **EffortCount** or **EffortInterval** is provided for a Job opportunity,
+**both fields must be provided together**.
 
 ------------------------------------------------------------------------
 
@@ -105,9 +110,8 @@ For **Type = Job**:
 
 Headers must exist but values may be empty.
 
-- Engagement — Online | Offline | Hybrid (from opportunities_engagement.json)
 - Link — valid URL (1–2048 chars)
-- DateEnd — optional date (≥ DateStart); formats: `YYYY-MM-DD` or `YYYY/MM/DD`
+- DateEnd — optional date (≥ DateStart); formats: YYYY-MM-DD or YYYY/MM/DD
 - ParticipantLimit — integer > 0 (not supported if verification disabled)
 - ZltoReward — integer > 0 ≤ 2000
 - ZltoRewardPool — integer ≥ ZltoReward, ≤ 10,000,000
