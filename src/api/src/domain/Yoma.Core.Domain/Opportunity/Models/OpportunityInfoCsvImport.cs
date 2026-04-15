@@ -108,8 +108,6 @@ namespace Yoma.Core.Domain.Opportunity.Models
       if (Countries == null || !Countries.Any(name => !string.IsNullOrWhiteSpace(name)))
         CSVImportHelper.AddError(errors, CSVImportErrorType.RequiredFieldMissing, "Missing required field", rowNumber, "Location");
 
-      var isJob = string.Equals(Type, Domain.Opportunity.Type.Job.ToString(), StringComparison.OrdinalIgnoreCase);
-
       // Engagement
       // Optional for all opportunity types.
       // Validation of the supplied value has been moved to the domain validators during Create/Update.
