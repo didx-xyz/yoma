@@ -190,7 +190,7 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
         TaskCountry = (request.Countries != null && request.Countries.Count != 0) ? string.Join(",", request.Countries.Select(o => o.Name)) : "n/a",
         TaskLanguage = (request.Languages != null && request.Languages.Count != 0) ? string.Join(",", request.Languages.Select(o => o.Name)) : "n/a",
         TaskPeopleImpacted = 1,
-        TaskTimeInvestedHours = request.TimeInvestedInHours,
+        TaskTimeInvestedHours = request.TimeInvestedInHours ?? 0,
         TaskExternalUrl = string.IsNullOrEmpty(request.ExternalURL) ? "n/a" : request.ExternalURL,
         TaskExternalProof = "n/a",
         TaskNeedsReview = 0,

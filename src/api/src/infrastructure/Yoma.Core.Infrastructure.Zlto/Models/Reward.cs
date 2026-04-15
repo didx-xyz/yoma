@@ -56,7 +56,7 @@ namespace Yoma.Core.Infrastructure.Zlto.Models
     public int TaskPeopleImpacted { get; set; }
 
     [JsonProperty("task_time_invested_hours")]
-    public int? TaskTimeInvestedHours { get; set; }
+    public int TaskTimeInvestedHours { get; set; }
 
     [JsonProperty("task_external_url")]
     public string TaskExternalUrl { get; set; } = null!;
@@ -71,10 +71,10 @@ namespace Yoma.Core.Infrastructure.Zlto.Models
     public int TaskStatus { get; set; }
 
     [JsonProperty("task_start_time")]
-    public string? TaskStartTime { get; set; }
+    public string TaskStartTime { get; set; } = null!;
 
     [JsonProperty("task_end_time")]
-    public string? TaskEndTime { get; set; }
+    public string TaskEndTime { get; set; } = null!;
   }
 
   public class RewardEarnResponse

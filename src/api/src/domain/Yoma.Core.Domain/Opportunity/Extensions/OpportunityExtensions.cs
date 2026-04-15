@@ -266,7 +266,7 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
       // collect reasons
       var reasons = new List<string>();
 
-      if (!published)
+      if (!published && status != Status.Expired)
         reasons.Add("it has not been published");
 
       if (status != Status.Active && status != Status.Expired)

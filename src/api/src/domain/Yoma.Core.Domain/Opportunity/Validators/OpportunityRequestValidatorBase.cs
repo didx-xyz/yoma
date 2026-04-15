@@ -139,15 +139,27 @@ namespace Yoma.Core.Domain.Opportunity.Validators
       // Commitment interval is required except for Job opportunities If specified it must exist
       RuleFor(x => x.CommitmentIntervalId)
           .Cascade(CascadeMode.Stop)
-          .Must((model, intervalId) => !TypeExists(model.TypeId) || TypeIsJob(model.TypeId) || intervalId.HasValue)
+          .Must((model, intervalId) =>
+          {
+            var isJob = TypeExists(model.TypeId) && TypeIsJob(model.TypeId);
+            return isJob
+              ? intervalId.HasValue == model.CommitmentIntervalCount.HasValue
+              : intervalId.HasValue;
+          })
           .WithMessage("Commitment interval is required.")
-          .Must(intervalId => TimeIntervalExists(intervalId))
+          .Must(intervalId => !intervalId.HasValue || TimeIntervalExists(intervalId))
           .WithMessage("Specified time interval is invalid or does not exist.");
 
       // Commitment interval count is required except for Job opportunities
       RuleFor(x => x.CommitmentIntervalCount)
           .Cascade(CascadeMode.Stop)
-          .Must((model, count) => !TypeExists(model.TypeId) || TypeIsJob(model.TypeId) || count.HasValue)
+          .Must((model, count) =>
+          {
+            var isJob = TypeExists(model.TypeId) && TypeIsJob(model.TypeId);
+            return isJob
+              ? count.HasValue == model.CommitmentIntervalId.HasValue
+              : count.HasValue;
+          })
           .WithMessage("Commitment interval count is required.")
           .Must(count => !count.HasValue || count > 0)
           .WithMessage("Commitment interval count must be greater than 0.");
