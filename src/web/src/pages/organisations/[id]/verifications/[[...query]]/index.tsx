@@ -909,11 +909,10 @@ const OpportunityVerifications: NextPageWithLayout<{
                   ))}
                 </div>
 
-                {/* DESKTOP: TODO styling */}
-                <table className="hidden bg-white md:table md:rounded-lg">
-                  <thead className="text-sm">
-                    <tr className="!border-gray bg-gray-light text-gray-dark">
-                      <th className="w-[35px] !py-6 pr-4">
+                <table className="border-gray-light hidden w-full border-separate rounded-lg bg-white md:table">
+                  <thead>
+                    <tr className="border-gray text-gray-dark">
+                      <th className="border-gray-light w-[35px] !py-4 pr-4">
                         <input
                           type="checkbox"
                           className="checkbox-primary checkbox checkbox-sm border-gray-dark rounded bg-white"
@@ -923,19 +922,18 @@ const OpportunityVerifications: NextPageWithLayout<{
                           onChange={handleAllSelect}
                         />
                       </th>
-                      <th className="pl-0">Student</th>
-                      <th>Opportunity</th>
-                      <th className="w-[195px]">Date connected</th>
-                      <th className="">Verified</th>
+                      <th className="border-gray-light pl-0">Student</th>
+                      <th className="border-gray-light">Opportunity</th>
+                      <th className="border-gray-light w-[195px]">
+                        Date connected
+                      </th>
+                      <th className="border-gray-light">Verified</th>
                     </tr>
                   </thead>
                   <tbody>
                     {searchResults.items.map((item) => (
-                      <tr
-                        key={item.id}
-                        className="!border-gray text-gray-dark !h-[70px] bg-white"
-                      >
-                        <td className="w-[35px] pt-4">
+                      <tr key={item.id}>
+                        <td className="border-gray-light text-gray-dark w-[35px] border-t-2 pt-4 !align-top">
                           <input
                             type="checkbox"
                             className="checkbox-primary checkbox checkbox-sm border-gray-dark rounded bg-white"
@@ -943,12 +941,12 @@ const OpportunityVerifications: NextPageWithLayout<{
                             onChange={(e) => handleRowSelect(e, item)}
                           />
                         </td>
-                        <td className="w-[200px] pl-0">
+                        <td className="border-gray-light text-gray-dark w-[200px] border-t-2 pl-0 !align-top">
                           {item.userDisplayName}
                         </td>
-                        <td className="w-[420px]">
+                        <td className="border-gray-light text-gray-dark w-[420px] border-t-2 !align-top">
                           <Link
-                            className="line-clamp-2"
+                            className="line-clamp-2 max-w-[420px] font-medium text-black underline"
                             href={`/organisations/${id}/opportunities/${
                               item.opportunityId
                             }/info${`?returnUrl=${encodeURIComponent(
@@ -958,14 +956,14 @@ const OpportunityVerifications: NextPageWithLayout<{
                             {item.opportunityTitle}
                           </Link>
                         </td>
-                        <td className="w-[185px]">
+                        <td className="border-gray-light text-gray-dark w-[185px] border-t-2 !align-top">
                           {item.dateModified && (
                             <Moment format={DATE_FORMAT_HUMAN} utc={true}>
                               {item.dateModified}
                             </Moment>
                           )}
                         </td>
-                        <td className="w-[120px]">
+                        <td className="border-gray-light text-gray-dark w-[140px] border-t-2 !align-top">
                           <div className="flex justify-start">
                             {item.verificationStatus &&
                               item.verificationStatus == "Pending" && (
