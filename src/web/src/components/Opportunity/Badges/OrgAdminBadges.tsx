@@ -2,7 +2,7 @@ import Image from "next/image";
 import iconClock from "public/images/icon-clock.svg";
 import { IoMdPause, IoMdPerson, IoMdPlay } from "react-icons/io";
 import type { OpportunityInfo } from "~/api/models/opportunity";
-import { OPPORTUNITY_TYPE_JOB } from "~/lib/constants";
+import { OPPORTUNITY_TYPE_NANE_JOB } from "~/lib/constants";
 import iconZlto from "public/images/icon-zlto.svg";
 
 interface BadgesProps {
@@ -11,7 +11,7 @@ interface BadgesProps {
 }
 
 const OrgAdminBadges: React.FC<BadgesProps> = ({ opportunity, isAdmin }) => {
-  const isJobOpportunity = opportunity?.type === OPPORTUNITY_TYPE_JOB;
+  const isJobOpportunity = opportunity?.type === OPPORTUNITY_TYPE_NANE_JOB;
 
   return (
     <div className="text-green-dark flex flex-row flex-wrap gap-2 border-none font-bold">
@@ -62,7 +62,7 @@ const OrgAdminBadges: React.FC<BadgesProps> = ({ opportunity, isAdmin }) => {
               💡 {opportunity.type}
             </div>
           )}
-          {opportunity?.type === OPPORTUNITY_TYPE_JOB && (
+          {opportunity?.type === OPPORTUNITY_TYPE_NANE_JOB && (
             <div className="badge bg-blue-light text-blue">
               💼 {opportunity.type}
             </div>

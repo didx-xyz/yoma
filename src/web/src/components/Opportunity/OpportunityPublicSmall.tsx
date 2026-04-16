@@ -10,7 +10,7 @@ import {
 } from "react-icons/io";
 import Moment from "react-moment";
 import type { OpportunityInfo } from "~/api/models/opportunity";
-import { DATE_FORMAT_HUMAN, OPPORTUNITY_TYPE_JOB } from "~/lib/constants";
+import { DATE_FORMAT_HUMAN, OPPORTUNITY_TYPE_NANE_JOB } from "~/lib/constants";
 import { AvatarImage } from "../AvatarImage";
 import ZltoRewardBadge from "./Badges/ZltoRewardBadge";
 interface InputProps {
@@ -23,7 +23,7 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({
   data,
   preview,
 }) => {
-  const isJobOpportunity = data.type === OPPORTUNITY_TYPE_JOB;
+  const isJobOpportunity = data.type === OPPORTUNITY_TYPE_NANE_JOB;
 
   const renderContent = () => {
     return (

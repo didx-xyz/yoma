@@ -75,8 +75,8 @@ import {
   DATE_FORMAT_SYSTEM,
   MAX_FILE_SIZE_LABEL,
   MAX_FILE_VIDEO_SIZE_LABEL,
-  OPPORTUNITY_TYPE_JOB,
-  OPPORTUNITY_TYPE_JOB_ID,
+  OPPORTUNITY_TYPE_NANE_JOB,
+  OPPORTUNITY_TYPE_ID_JOB,
   PAGE_SIZE_MEDIUM,
   REGEX_URL_VALIDATION,
 } from "~/lib/constants";
@@ -120,8 +120,8 @@ const isJobOpportunityTypeValue = (value?: string | null) => {
 
   return (
     normalizedValue ===
-      normalizeOpportunityTypeValue(OPPORTUNITY_TYPE_JOB_ID) ||
-    normalizedValue === normalizeOpportunityTypeValue(OPPORTUNITY_TYPE_JOB)
+      normalizeOpportunityTypeValue(OPPORTUNITY_TYPE_ID_JOB) ||
+    normalizedValue === normalizeOpportunityTypeValue(OPPORTUNITY_TYPE_NANE_JOB)
   );
 };
 
@@ -2424,7 +2424,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                     {isJobOpportunity && (
                       <FormMessage messageType={FormMessageType.Warning}>
                         Rewards cannot be set for opportunities of type
-                        {` '${OPPORTUNITY_TYPE_JOB}'.`}
+                        {` '${OPPORTUNITY_TYPE_NANE_JOB}'.`}
                       </FormMessage>
                     )}
                     {!isJobOpportunity &&

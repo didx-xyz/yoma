@@ -161,6 +161,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     if (!!searchFilter.opportunities) {
       lookups_selectedOpportunities = await searchCriteriaOpportunities(
         {
+          types: null,
           opportunities: searchFilter.opportunities,
           organizations: searchFilter.organizations,
           countries: null,

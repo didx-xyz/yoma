@@ -639,6 +639,7 @@ const ReferrerLinkDetails: NextPageWithLayout<{
       } else {
         // if not in cache, fetch data
         searchCriteriaOpportunities({
+          types: null,
           opportunities: [],
           organizations: [id],
           countries: null,

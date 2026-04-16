@@ -336,6 +336,7 @@ export interface OpportunitySearchCriteriaCommitmentIntervalOption {
 }
 
 export interface OpportunitySearchFilterCriteria extends PaginationFilter {
+  types: string[] | null;
   organizations: string[] | null;
   titleContains: string | null;
   opportunities: string[] | null;

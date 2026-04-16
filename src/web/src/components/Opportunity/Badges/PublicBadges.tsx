@@ -20,7 +20,7 @@ import {
 } from "react-icons/io5";
 import Moment from "react-moment";
 import type { OpportunityInfo } from "~/api/models/opportunity";
-import { DATE_FORMAT_HUMAN, OPPORTUNITY_TYPE_JOB } from "~/lib/constants";
+import { DATE_FORMAT_HUMAN, OPPORTUNITY_TYPE_NANE_JOB } from "~/lib/constants";
 import ZltoRewardBadge from "./ZltoRewardBadge";
 
 interface BadgesProps {
@@ -32,7 +32,7 @@ const PublicBadges: React.FC<BadgesProps> = ({
   opportunity,
   showToolTips = false,
 }) => {
-  const isJobOpportunity = opportunity?.type === OPPORTUNITY_TYPE_JOB;
+  const isJobOpportunity = opportunity?.type === OPPORTUNITY_TYPE_NANE_JOB;
 
   // memo for spots left i.e participantLimit - participantCountTotal
   const spotsLeft = useMemo(() => {
@@ -141,7 +141,7 @@ const PublicBadges: React.FC<BadgesProps> = ({
               </span>
             </div>
           )}
-          {opportunity?.type === OPPORTUNITY_TYPE_JOB && (
+          {opportunity?.type === OPPORTUNITY_TYPE_NANE_JOB && (
             <div
               className={`${showToolTips ? "tooltip tooltip-secondary cursor-help before:text-[0.6875rem]" : ""}`}
               {...(showToolTips && { "data-tip": "Job opportunity" })}

@@ -14,7 +14,13 @@ import {
   PathwayTaskEntityType,
 } from "~/api/models/referrals";
 import { searchCriteriaOpportunities } from "~/api/services/opportunities";
-import { COUNTRY_ID_WW } from "~/lib/constants";
+import {
+  COUNTRY_ID_WW,
+  OPPORTUNITY_TYPE_ID_EVENT,
+  OPPORTUNITY_TYPE_ID_LEARNING,
+  OPPORTUNITY_TYPE_ID_MICROTASK,
+  OPPORTUNITY_TYPE_ID_OTHER,
+} from "~/lib/constants";
 import FormError from "../Common/FormError";
 import FormField from "../Common/FormField";
 import FormInput from "../Common/FormInput";
@@ -488,6 +494,12 @@ const StepEditComponent: React.FC<StepEditComponentProps> = ({
       if (inflight) return inflight;
 
       const request = searchCriteriaOpportunities({
+        types: [
+          OPPORTUNITY_TYPE_ID_LEARNING,
+          OPPORTUNITY_TYPE_ID_EVENT,
+          OPPORTUNITY_TYPE_ID_MICROTASK,
+          OPPORTUNITY_TYPE_ID_OTHER,
+        ],
         opportunities: [],
         organizations: null,
         countries: countriesFilter,

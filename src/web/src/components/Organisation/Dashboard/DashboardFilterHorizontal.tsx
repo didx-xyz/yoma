@@ -177,6 +177,7 @@ export const DashboardFilterHorizontal: React.FC<{
       }
 
       searchCriteriaOpportunities({
+        types: null,
         opportunities: [],
         organizations: searchFilter?.organizations,
         countries: null,

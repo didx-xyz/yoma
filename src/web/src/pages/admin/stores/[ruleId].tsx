@@ -630,6 +630,7 @@ const StoreRuleDetails: NextPageWithLayout<{
     (inputValue: string, callback: (options: any) => void) => {
       debounce(() => {
         searchCriteriaOpportunities({
+          types: null,
           opportunities: [],
           organizations: watchOrganizationId ? [watchOrganizationId] : null,
           countries: watchCountry
