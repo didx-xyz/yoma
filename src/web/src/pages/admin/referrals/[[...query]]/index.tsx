@@ -1,10 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
-import { useSession } from "next-auth/react";
+import { type GetServerSidePropsContext } from "next";
+import { getServerSession } from "next-auth";
 import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { useCallback, useEffect, useState, type ReactElement } from "react";
+import { useCallback, useMemo, type ReactElement } from "react";
 import { FaPlusCircle } from "react-icons/fa";
 import {
   IoEyeOffOutline,
@@ -32,7 +33,6 @@ import {
 } from "~/components/Referrals/AdminReferralProgramSearchFilter";
 import { ProgramStatusBadge } from "~/components/Referrals/ProgramStatusBadge";
 import { InternalServerError } from "~/components/Status/InternalServerError";
-import { Loading } from "~/components/Status/Loading";
 import { LoadingSkeleton } from "~/components/Status/LoadingSkeleton";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
@@ -43,80 +43,91 @@ import {
 import { DATE_FORMAT_HUMAN, PAGE_SIZE, THEME_BLUE } from "~/lib/constants";
 import { getSafeUrl } from "~/lib/utils";
 import { type NextPageWithLayout } from "~/pages/_app";
-
-const parseDelimitedQueryParam = (
-  value: string | string[] | undefined,
-): string[] | null => {
-  if (value == null) return null;
-
-  const rawParts = Array.isArray(value) ? value : value.split(/[|,]/);
-  const parts = rawParts.map((p) => p.trim()).filter(Boolean);
-  return parts.length > 0 ? parts : null;
-};
-
-const serializeDelimitedQueryParam = (
-  value: string[] | null | undefined,
-): string | null => {
-  if (!value || value.length === 0) return null;
-  return value.join("|");
-};
+import { authOptions } from "~/server/auth";
 
 const getErrorStatus = (error: unknown): number | null => {
   if (!axios.isAxiosError(error)) return null;
   return error.response?.status ?? null;
 };
 
-const ReferralPrograms: NextPageWithLayout = () => {
-  const router = useRouter();
-  const { status: sessionStatus } = useSession();
-  const query =
-    typeof router.query.query === "string" ? router.query.query : undefined;
-  const page =
-    typeof router.query.page === "string" ? router.query.page : undefined;
-  const status =
-    typeof router.query.status === "string" ? router.query.status : undefined;
-  const valueContains =
-    typeof router.query.valueContains === "string"
-      ? router.query.valueContains
-      : undefined;
-  const countries = router.query.countries as string | string[] | undefined;
-  const dateStart =
-    typeof router.query.dateStart === "string"
-      ? router.query.dateStart
-      : undefined;
-  const dateEnd =
-    typeof router.query.dateEnd === "string" ? router.query.dateEnd : undefined;
-  const returnUrl =
-    typeof router.query.returnUrl === "string"
-      ? router.query.returnUrl
-      : undefined;
+// SSR is used only to normalize query params and auth state.
+export async function getServerSideProps(context: GetServerSidePropsContext) {
+  const session = await getServerSession(context.req, context.res, authOptions);
+  const {
+    query,
+    page,
+    status,
+    valueContains,
+    countries,
+    dateStart,
+    dateEnd,
+    returnUrl,
+  } = context.query;
 
-  const parsedCountries = parseDelimitedQueryParam(
-    countries as string | string[] | undefined,
-  );
-  const countriesKeyPart = serializeDelimitedQueryParam(parsedCountries);
+  if (!session) {
+    return {
+      props: {
+        error: 401,
+      },
+    };
+  }
+
+  return {
+    props: {
+      query: query ?? null,
+      page: page ?? null,
+      status: status ?? null,
+      valueContains: valueContains ?? null,
+      countries: countries ?? null,
+      dateStart: dateStart ?? null,
+      dateEnd: dateEnd ?? null,
+      returnUrl: returnUrl ?? null,
+      error: null,
+    },
+  };
+}
+
+const ReferralPrograms: NextPageWithLayout<{
+  query?: string;
+  page?: string;
+  status?: string;
+  valueContains?: string;
+  countries?: string;
+  dateStart?: string;
+  dateEnd?: string;
+  returnUrl?: string;
+  error?: number | null;
+}> = ({
+  query,
+  page,
+  status,
+  valueContains,
+  countries,
+  dateStart,
+  dateEnd,
+  returnUrl,
+  error,
+}) => {
+  const router = useRouter();
+  const parsedCountries = useMemo(() => {
+    if (!countries) return null;
+
+    const parts = countries.split(/[|,]/);
+    const filteredParts = parts
+      .map((country) => country.trim())
+      .filter(Boolean);
+    return filteredParts.length > 0 ? filteredParts : null;
+  }, [countries]);
+  const countriesKeyPart = countries ?? null;
 
   const { data: lookups_countries } = useQuery<Country[]>({
     queryKey: ["countries"],
     queryFn: () => getCountries(),
-    enabled: sessionStatus === "authenticated" && router.isReady,
+    enabled: !error,
   });
 
-  // search filter state
-  const [searchFilter, setSearchFilter] = useState<ProgramSearchFilterAdmin>({
-    pageNumber: page ? parseInt(page.toString()) : 1,
-    pageSize: PAGE_SIZE,
-    countries: parsedCountries,
-    valueContains: valueContains ?? null,
-    statuses: status ? [status] : null,
-    dateStart: dateStart ?? null,
-    dateEnd: dateEnd ?? null,
-  });
-
-  useEffect(() => {
-    if (!router.isReady) return;
-
-    setSearchFilter({
+  const searchFilter = useMemo<ProgramSearchFilterAdmin>(
+    () => ({
       pageNumber: page ? parseInt(page.toString()) : 1,
       pageSize: PAGE_SIZE,
       countries: parsedCountries,
@@ -124,58 +135,52 @@ const ReferralPrograms: NextPageWithLayout = () => {
       statuses: status ? [status] : null,
       dateStart: dateStart ?? null,
       dateEnd: dateEnd ?? null,
-    });
-  }, [
-    router.isReady,
-    page,
-    parsedCountries,
-    valueContains,
-    status,
-    dateStart,
-    dateEnd,
-  ]);
+    }),
+    [page, parsedCountries, valueContains, status, dateStart, dateEnd],
+  );
 
-  // 👇 use prefetched queries from server
-  const searchResultsKey = `${query?.toString()}_${page?.toString()}_${status?.toString()}_${valueContains?.toString()}_${dateStart?.toString()}_${dateEnd?.toString()}_${countriesKeyPart ?? ""}`;
+  // 👇 use client-side queries
+  const searchResultsKey = `${query ?? ""}_${page ?? ""}_${status ?? ""}_${valueContains ?? ""}_${dateStart ?? ""}_${dateEnd ?? ""}_${countriesKeyPart ?? ""}`;
 
   const {
     data: searchResults,
     isLoading: isLoadingSearchResults,
     error: searchResultsError,
   } = useReferralProgramsAdminQuery(searchFilter, searchResultsKey, {
-    enabled: sessionStatus === "authenticated" && router.isReady,
+    enabled: !error,
   });
 
   // Get counts by status (without additional filters)
   const { data: totalCountAll } = useReferralProgramCountQuery(null, {
-    enabled: sessionStatus === "authenticated" && router.isReady,
+    enabled: !error,
   });
   const { data: totalCountActive } = useReferralProgramCountQuery(
     ProgramStatus.Active,
-    { enabled: sessionStatus === "authenticated" && router.isReady },
+    { enabled: !error },
   );
   const { data: totalCountInactive } = useReferralProgramCountQuery(
     ProgramStatus.Inactive,
-    { enabled: sessionStatus === "authenticated" && router.isReady },
+    { enabled: !error },
   );
   const { data: totalCountExpired } = useReferralProgramCountQuery(
     ProgramStatus.Expired,
-    { enabled: sessionStatus === "authenticated" && router.isReady },
+    { enabled: !error },
   );
   const { data: totalCountDeleted } = useReferralProgramCountQuery(
     ProgramStatus.Deleted,
-    { enabled: sessionStatus === "authenticated" && router.isReady },
+    { enabled: !error },
   );
   const { data: totalCountLimitReached } = useReferralProgramCountQuery(
     ProgramStatus.LimitReached,
-    { enabled: sessionStatus === "authenticated" && router.isReady },
+    { enabled: !error },
   );
   const { data: totalCountUnCompletable } = useReferralProgramCountQuery(
     ProgramStatus.UnCompletable,
-    { enabled: sessionStatus === "authenticated" && router.isReady },
+    { enabled: !error },
   );
 
-  const error = getErrorStatus(searchResultsError);
+  const resolvedError =
+    error ?? getErrorStatus(searchResultsError) ?? undefined;
 
   // 🎈 FUNCTIONS
   const getSearchFilterAsQueryString = useCallback(
@@ -230,7 +235,6 @@ const ReferralPrograms: NextPageWithLayout = () => {
   const handlePagerChange = useCallback(
     (value: number) => {
       const newFilter = { ...searchFilter, pageNumber: value };
-      setSearchFilter(newFilter);
       redirectWithSearchFilterParams(newFilter);
     },
     [searchFilter, redirectWithSearchFilterParams],
@@ -239,24 +243,15 @@ const ReferralPrograms: NextPageWithLayout = () => {
   const onSearchInputSubmit = useCallback(
     (filter: ProgramSearchFilterAdmin) => {
       const newFilter = { ...filter, pageNumber: 1 };
-      setSearchFilter(newFilter);
       redirectWithSearchFilterParams(newFilter);
     },
     [redirectWithSearchFilterParams],
   );
   //#endregion Event Handlers
 
-  if (sessionStatus === "loading" || !router.isReady) {
-    return <Loading />;
-  }
-
-  if (sessionStatus === "unauthenticated") {
-    return <Unauthenticated />;
-  }
-
-  if (error) {
-    if (error === 401) return <Unauthenticated />;
-    else if (error === 403) return <Unauthorized />;
+  if (resolvedError) {
+    if (resolvedError === 401) return <Unauthenticated />;
+    else if (resolvedError === 403) return <Unauthorized />;
     else return <InternalServerError />;
   }
 
@@ -422,7 +417,7 @@ const ReferralPrograms: NextPageWithLayout = () => {
         )}
 
         {!isLoadingSearchResults && (
-          <div className="md:shadow-custom rounded-lg md:bg-white md:p-4">
+          <>
             {/* NO ROWS */}
             {searchResults && searchResults.items?.length === 0 && (
               <div className="flex h-fit flex-col items-center rounded-lg bg-white pb-8 md:pb-16">
@@ -447,7 +442,7 @@ const ReferralPrograms: NextPageWithLayout = () => {
                       key={`sm_${program.id}`}
                       className="shadow-custom flex flex-col justify-between gap-4 rounded-lg bg-white p-4"
                     >
-                      <div className="border-gray-light flex flex-row items-center gap-2 border-b-2 pb-2">
+                      <div className="flex flex-row items-center gap-2 pb-2">
                         {/* Program Image */}
                         <SquareImage
                           imageURL={program.imageURL}
@@ -652,30 +647,24 @@ const ReferralPrograms: NextPageWithLayout = () => {
                 </div>
 
                 {/* DESKTOP */}
-                <table className="border-gray-light hidden w-full border-separate rounded-lg border-x-2 border-t-2 md:table">
+                <table className="border-gray-light hidden w-full border-separate rounded-lg bg-white md:table">
                   <thead>
                     <tr className="border-gray text-gray-dark">
-                      <th className="border-gray-light border-b-2 !py-4">
+                      <th className="border-gray-light !py-4">
                         Referral Program
                       </th>
-                      <th className="border-gray-light border-b-2">Referees</th>
-                      <th className="border-gray-light border-b-2">
-                        Ambassadors
-                      </th>
-                      <th className="border-gray-light border-b-2">
-                        ZLTO Rewards
-                      </th>
-                      <th className="border-gray-light border-b-2">Features</th>
-                      <th className="border-gray-light border-b-2">Status</th>
-                      <th className="border-gray-light border-b-2 text-center">
-                        Actions
-                      </th>
+                      <th className="border-gray-light">Referees</th>
+                      <th className="border-gray-light">Ambassadors</th>
+                      <th className="border-gray-light">ZLTO Rewards</th>
+                      <th className="border-gray-light">Features</th>
+                      <th className="border-gray-light">Status</th>
+                      <th className="border-gray-light text-center">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     {searchResults.items.map((program) => (
                       <tr key={`md_${program.id}`}>
-                        <td className="border-gray-light border-b-2 !align-top">
+                        <td className="border-gray-light border-t-2 !align-top">
                           <div className="flex flex-row gap-4">
                             <Link
                               href={`/admin/referrals/${program.id}/info${`?returnUrl=${encodeURIComponent(
@@ -735,7 +724,7 @@ const ReferralPrograms: NextPageWithLayout = () => {
                             </div>
                           </div>
                         </td>
-                        <td className="border-gray-light text-gray-dark border-b-2 !align-top">
+                        <td className="border-gray-light text-gray-dark border-t-2 !align-top">
                           <div className="flex flex-col gap-1 text-xs">
                             <div className="flex gap-2">
                               <span className="text-gray-dark w-10 font-bold">
@@ -771,7 +760,7 @@ const ReferralPrograms: NextPageWithLayout = () => {
                             )}
                           </div>
                         </td>
-                        <td className="border-gray-light text-gray-dark border-b-2 !align-top">
+                        <td className="border-gray-light text-gray-dark border-t-2 !align-top">
                           <div className="flex flex-col gap-1 text-xs">
                             {program.referrerLimit !== null && (
                               <div className="flex gap-2">
@@ -810,7 +799,7 @@ const ReferralPrograms: NextPageWithLayout = () => {
                             )}
                           </div>
                         </td>
-                        <td className="border-gray-light text-gray-dark border-b-2 !align-top">
+                        <td className="border-gray-light text-gray-dark border-t-2 !align-top">
                           <div className="flex flex-col gap-1 text-xs">
                             {program.zltoRewardPool ? (
                               <>
@@ -854,7 +843,7 @@ const ReferralPrograms: NextPageWithLayout = () => {
                             )}
                           </div>
                         </td>
-                        <td className="border-gray-light border-b-2 !align-top">
+                        <td className="border-gray-light border-t-2 !align-top">
                           <div className="flex flex-col gap-1 text-xs">
                             {program.proofOfPersonhoodRequired && (
                               <div className="flex items-center gap-1">
@@ -896,14 +885,16 @@ const ReferralPrograms: NextPageWithLayout = () => {
                               )}
                           </div>
                         </td>
-                        <td className="border-gray-light border-b-2 !align-top">
+                        <td className="border-gray-light border-t-2 !align-top">
                           <ProgramStatusBadge status={program.status} />
                         </td>
-                        <td className="border-gray-light border-b-2 text-center !align-top">
-                          <AdminReferralProgramActions
-                            program={program}
-                            returnUrl={router.asPath}
-                          />
+                        <td className="border-gray-light border-t-2 !align-top">
+                          <div className="flex flex-row items-center justify-center gap-2">
+                            <AdminReferralProgramActions
+                              program={program}
+                              returnUrl={router.asPath}
+                            />
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -922,7 +913,7 @@ const ReferralPrograms: NextPageWithLayout = () => {
                 </div>
               </>
             )}
-          </div>
+          </>
         )}
       </div>
     </>

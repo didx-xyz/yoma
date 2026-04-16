@@ -1238,6 +1238,7 @@ namespace Yoma.Core.Domain.Referral.Services
             Status = opportunity.Status,
             Hidden = opportunity.Hidden,
             DateStart = opportunity.DateStart,
+            Type = opportunity.Type,
             Countries = opportunity.Countries
           };
 

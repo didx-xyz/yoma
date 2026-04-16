@@ -134,6 +134,7 @@ export const LinkSearchFilters: React.FC<{
   const loadOpportunities = debounce(
     (inputValue: string, callback: (options: any) => void) => {
       searchCriteriaOpportunities({
+        types: null,
         opportunities: [],
         organizations: searchFilter?.organizations ?? null,
         titleContains: (inputValue ?? []).length > 2 ? inputValue : null,

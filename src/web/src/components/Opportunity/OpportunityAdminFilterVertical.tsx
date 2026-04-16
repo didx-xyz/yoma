@@ -193,7 +193,7 @@ export const OpportunityAdminFilterVertical: React.FC<{
                     render={({ field: { onChange, value } }) => (
                       <Select
                         classNames={{
-                          control: () => "input h-fit py-1",
+                          control: () => "input",
                         }}
                         isMulti={true}
                         options={lookups_types.map((c) => ({
@@ -239,7 +239,7 @@ export const OpportunityAdminFilterVertical: React.FC<{
                     render={({ field: { onChange, value } }) => (
                       <Select
                         classNames={{
-                          control: () => "input h-fit py-1",
+                          control: () => "input",
                         }}
                         isMulti={true}
                         options={lookups_countries.map((c) => ({
@@ -286,7 +286,7 @@ export const OpportunityAdminFilterVertical: React.FC<{
                     render={({ field: { onChange, value } }) => (
                       <Select
                         classNames={{
-                          control: () => "input h-fit py-1",
+                          control: () => "input",
                         }}
                         isMulti={true}
                         options={lookups_languages.map((c) => ({
@@ -334,7 +334,7 @@ export const OpportunityAdminFilterVertical: React.FC<{
                     render={({ field: { onChange, value } }) => (
                       <Select
                         classNames={{
-                          control: () => "input h-fit py-1",
+                          control: () => "input",
                         }}
                         isMulti={true}
                         options={lookups_organisations.map((c) => ({
@@ -380,7 +380,7 @@ export const OpportunityAdminFilterVertical: React.FC<{
                       <Select
                         instanceId="publishedStates"
                         classNames={{
-                          control: () => "input h-fit py-1",
+                          control: () => "input",
                         }}
                         isMulti={true}
                         options={lookups_publishedStates}

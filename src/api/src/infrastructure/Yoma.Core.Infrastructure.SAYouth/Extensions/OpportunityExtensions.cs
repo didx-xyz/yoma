@@ -8,7 +8,8 @@ namespace Yoma.Core.Infrastructure.SAYouth.Extensions
   {
     public static Duration? ToDuration(this Opportunity opportunity)
     {
-      int totalDays = opportunity.TimeIntervalToDays();
+      var totalDays = opportunity.TimeIntervalToDays();
+      if (!totalDays.HasValue) return null;
 
       return totalDays switch
       {

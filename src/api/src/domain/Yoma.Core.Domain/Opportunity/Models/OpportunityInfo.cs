@@ -50,16 +50,16 @@ namespace Yoma.Core.Domain.Opportunity.Models
     [Name("Verification Method")]
     public VerificationMethod? VerificationMethod { get; set; }
 
-    public string Difficulty { get; set; } = null!;
+    public string? Difficulty { get; set; }
 
     [Ignore]
-    public Core.TimeIntervalOption CommitmentInterval { get; set; }
+    public Core.TimeIntervalOption? CommitmentInterval { get; set; }
 
     [Ignore]
-    public short CommitmentIntervalCount { get; set; }
+    public short? CommitmentIntervalCount { get; set; }
 
     [Name("Commitment Interval")]
-    public string CommitmentIntervalDescription { get; set; } = null!;
+    public string? CommitmentIntervalDescription { get; set; }
 
     #region Engagement
     #region Verification Limits and Counts

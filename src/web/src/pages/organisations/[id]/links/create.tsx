@@ -48,6 +48,7 @@ import { Loading } from "~/components/Status/Loading";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import { useConfirmationModalContext } from "~/context/modalConfirmationContext";
+import { ACTION_LINK_QUERY_KEYS } from "~/hooks/useActionLinkMutations";
 import {
   DATE_FORMAT_HUMAN,
   DATE_FORMAT_SYSTEM,
@@ -507,11 +508,11 @@ const ReferrerLinkDetails: NextPageWithLayout<{
         // invalidate cache
         // this will match all queries with the following prefixes ['Links', id] (list data) & ['Links_TotalCount', id] (tab counts)
         await queryClient.invalidateQueries({
-          queryKey: ["Links", id],
+          queryKey: ACTION_LINK_QUERY_KEYS.orgListAll(id),
           exact: false,
         });
         await queryClient.invalidateQueries({
-          queryKey: ["Links_TotalCount", id],
+          queryKey: ACTION_LINK_QUERY_KEYS.orgListCountAll(id),
           exact: false,
         });
 
@@ -638,6 +639,7 @@ const ReferrerLinkDetails: NextPageWithLayout<{
       } else {
         // if not in cache, fetch data
         searchCriteriaOpportunities({
+          types: null,
           opportunities: [],
           organizations: [id],
           countries: null,

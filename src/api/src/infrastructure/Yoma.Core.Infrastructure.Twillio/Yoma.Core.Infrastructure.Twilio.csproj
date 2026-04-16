@@ -8,8 +8,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="libphonenumber-csharp" Version="9.0.26" />
-    <PackageReference Include="Twilio" Version="7.14.3" />
+    <PackageReference Include="libphonenumber-csharp" Version="9.0.28" />
+    <PackageReference Include="Twilio" Version="7.14.7" />
   </ItemGroup>
 
   <ItemGroup>

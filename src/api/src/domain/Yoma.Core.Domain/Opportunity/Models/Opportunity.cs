@@ -77,17 +77,17 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
     public VerificationMethod? VerificationMethod { get; set; }
 
-    public Guid DifficultyId { get; set; }
+    public Guid? DifficultyId { get; set; }
 
-    public string Difficulty { get; set; } = null!;
+    public string? Difficulty { get; set; }
 
-    public Guid CommitmentIntervalId { get; set; }
+    public Guid? CommitmentIntervalId { get; set; }
 
-    public Core.TimeIntervalOption CommitmentInterval { get; set; }
+    public Core.TimeIntervalOption? CommitmentInterval { get; set; }
 
-    public short CommitmentIntervalCount { get; set; }
+    public short? CommitmentIntervalCount { get; set; }
 
-    public string CommitmentIntervalDescription { get; set; } = null!;
+    public string? CommitmentIntervalDescription { get; set; }
 
     #region Verification Limits and Counts
     public int? ParticipantLimit { get; set; }

@@ -290,6 +290,13 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       var query = _opportunityRepository.Query();
 
+      //types
+      if (filter.Types != null && filter.Types.Count != 0)
+      {
+        filter.Types = [.. filter.Types.Distinct()];
+        query = query.Where(o => filter.Types.Contains(o.TypeId));
+      }
+
       //organization
       if (filter.Organizations != null && filter.Organizations.Count != 0)
         query = query.Where(o => filter.Organizations.Contains(o.OrganizationId));
@@ -322,7 +329,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
       {
         query = query.Where(
           o => ((o.StatusId == statusActiveId && o.OrganizationStatusId == statusOrganizationActiveId && o.DateStart <= DateTimeOffset.UtcNow) || o.StatusId == statusExpiredId)
-          && o.VerificationEnabled && o.VerificationMethodValue == VerificationMethod.Manual.ToString()
+          && o.VerificationEnabled
+          && o.VerificationMethodValue == VerificationMethod.Manual.ToString()
           && o.Hidden != true);
       }
       else
@@ -664,12 +672,14 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       query = query.Where(predicate);
 
+      query = query.Where(o => o.CommitmentIntervalId.HasValue && o.CommitmentIntervalCount.HasValue);
+
       var queryResults = query
         .Select(item => new
         {
-          Id = item.CommitmentIntervalId,
-          Count = item.CommitmentIntervalCount,
-          Interval = item.CommitmentInterval
+          Id = item.CommitmentIntervalId!.Value,
+          Count = item.CommitmentIntervalCount!.Value,
+          Interval = item.CommitmentInterval!.Value
         })
         .GroupBy(item => new { item.Count, item.Id })
         .Select(group => group.First())
@@ -875,9 +885,26 @@ namespace Yoma.Core.Domain.Opportunity.Services
         //options
         if (filter.CommitmentInterval.OptionsParsed != null && filter.CommitmentInterval.OptionsParsed.Count != 0)
         {
-          var intervalIds = filter.CommitmentInterval.OptionsParsed.Select(item => item.Id).Distinct().ToList();
-          var intervalCounts = filter.CommitmentInterval.OptionsParsed.Select(item => item.Count).Distinct().ToList();
-          query = query.Where(o => intervalIds.Contains(o.CommitmentIntervalId) && intervalCounts.Contains(o.CommitmentIntervalCount));
+          var distinctItems = filter.CommitmentInterval.OptionsParsed
+            .Select(item => new { item.Id, item.Count })
+            .Distinct()
+            .ToList();
+
+          var predicate = PredicateBuilder.False<Models.Opportunity>();
+
+          foreach (var item in distinctItems)
+          {
+            var intervalId = item.Id;
+            var intervalCount = item.Count;
+
+            predicate = predicate.Or(o =>
+              o.CommitmentIntervalId.HasValue &&
+              o.CommitmentIntervalCount.HasValue &&
+              o.CommitmentIntervalId.Value == intervalId &&
+              o.CommitmentIntervalCount.Value == intervalCount);
+          }
+
+          query = query.Where(predicate);
         }
 
         //Interval
@@ -893,12 +920,15 @@ namespace Yoma.Core.Domain.Opportunity.Services
           var monthIntervalId = _timeIntervalService.GetByName(TimeIntervalOption.Month.ToString()).Id;
 
           query = query.Where(o =>
-              (o.CommitmentIntervalId == minuteIntervalId && o.CommitmentIntervalCount <= filterCountInMinutes) ||
-              (o.CommitmentIntervalId == hourIntervalId && (long)o.CommitmentIntervalCount * 60 <= filterCountInMinutes) ||
-              (o.CommitmentIntervalId == dayIntervalId && (long)o.CommitmentIntervalCount * 60 * 24 <= filterCountInMinutes) ||
-              (o.CommitmentIntervalId == weekIntervalId && (long)o.CommitmentIntervalCount * 60 * 24 * 7 <= filterCountInMinutes) ||
-              (o.CommitmentIntervalId == monthIntervalId && (long)o.CommitmentIntervalCount * 60 * 24 * 30 <= filterCountInMinutes)
-          );
+            o.CommitmentIntervalId.HasValue &&
+            o.CommitmentIntervalCount.HasValue &&
+            (
+              (o.CommitmentIntervalId.Value == minuteIntervalId && o.CommitmentIntervalCount.Value <= filterCountInMinutes) ||
+              (o.CommitmentIntervalId.Value == hourIntervalId && (long)o.CommitmentIntervalCount.Value * 60 <= filterCountInMinutes) ||
+              (o.CommitmentIntervalId.Value == dayIntervalId && (long)o.CommitmentIntervalCount.Value * 60 * 24 <= filterCountInMinutes) ||
+              (o.CommitmentIntervalId.Value == weekIntervalId && (long)o.CommitmentIntervalCount.Value * 60 * 24 * 7 <= filterCountInMinutes) ||
+              (o.CommitmentIntervalId.Value == monthIntervalId && (long)o.CommitmentIntervalCount.Value * 60 * 24 * 30 <= filterCountInMinutes)
+            ));
         }
       }
 
@@ -1200,11 +1230,18 @@ namespace Yoma.Core.Domain.Opportunity.Services
         VerificationMethodValue = request.VerificationMethod?.ToString(),
         VerificationMethod = request.VerificationMethod,
         DifficultyId = request.DifficultyId,
-        Difficulty = _opportunityDifficultyService.GetById(request.DifficultyId).Name,
+        Difficulty = request.DifficultyId.HasValue
+          ? _opportunityDifficultyService.GetById(request.DifficultyId.Value).Name
+          : null,
         CommitmentIntervalId = request.CommitmentIntervalId,
-        CommitmentInterval = Enum.Parse<TimeIntervalOption>(_timeIntervalService.GetById(request.CommitmentIntervalId).Name, true),
+        CommitmentInterval = request.CommitmentIntervalId.HasValue
+          ? Enum.Parse<TimeIntervalOption>(
+              _timeIntervalService.GetById(request.CommitmentIntervalId.Value).Name, true)
+          : null,
         CommitmentIntervalCount = request.CommitmentIntervalCount,
-        CommitmentIntervalDescription = $"{request.CommitmentIntervalCount} {_timeIntervalService.GetById(request.CommitmentIntervalId).Name}{(request.CommitmentIntervalCount > 1 ? "s" : string.Empty)}",
+        CommitmentIntervalDescription = request.CommitmentIntervalId.HasValue && request.CommitmentIntervalCount.HasValue
+          ? $"{request.CommitmentIntervalCount.Value} {_timeIntervalService.GetById(request.CommitmentIntervalId.Value).Name}{(request.CommitmentIntervalCount.Value > 1 ? "s" : string.Empty)}"
+          : null,
         ParticipantLimit = request.ParticipantLimit,
         KeywordsFlatten = request.Keywords == null ? null : string.Join(Keywords_Separator, request.Keywords),
         Keywords = request.Keywords,
@@ -1226,9 +1263,12 @@ namespace Yoma.Core.Domain.Opportunity.Services
       if (result.DateEnd.HasValue)
       {
         var commitmentIntervalInDays = result.TimeIntervalToDays();
-        var dateEndMin = result.DateStart.AddDays(commitmentIntervalInDays - 1); //count today as the 1st day
-        if (dateEndMin > result.DateEnd.Value)
-          throw new ValidationException($"The end date for the opportunity must be on or after {dateEndMin.Date}, based on the specified start date and commitment interval");
+        if (commitmentIntervalInDays.HasValue)
+        {
+          var dateEndMin = result.DateStart.AddDays(commitmentIntervalInDays.Value - 1); // count today as the 1st day
+          if (dateEndMin > result.DateEnd.Value)
+            throw new ValidationException($"The end date for the opportunity must be on or after {dateEndMin.Date}, based on the specified start date and commitment interval");
+        }
       }
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
@@ -1348,11 +1388,18 @@ namespace Yoma.Core.Domain.Opportunity.Services
       result.VerificationEnabled = request.VerificationEnabled;
       result.VerificationMethod = request.VerificationMethod;
       result.DifficultyId = request.DifficultyId;
-      result.Difficulty = _opportunityDifficultyService.GetById(request.DifficultyId).Name;
+      result.Difficulty = request.DifficultyId.HasValue
+        ? _opportunityDifficultyService.GetById(request.DifficultyId.Value).Name
+        : null;
       result.CommitmentIntervalId = request.CommitmentIntervalId;
-      result.CommitmentInterval = Enum.Parse<TimeIntervalOption>(_timeIntervalService.GetById(request.CommitmentIntervalId).Name, true);
+      result.CommitmentInterval = request.CommitmentIntervalId.HasValue
+        ? Enum.Parse<TimeIntervalOption>(
+            _timeIntervalService.GetById(request.CommitmentIntervalId.Value).Name, true)
+        : null;
       result.CommitmentIntervalCount = request.CommitmentIntervalCount;
-      result.CommitmentIntervalDescription = $"{request.CommitmentIntervalCount} {_timeIntervalService.GetById(request.CommitmentIntervalId).Name}{(request.CommitmentIntervalCount > 1 ? "s" : string.Empty)}";
+      result.CommitmentIntervalDescription = request.CommitmentIntervalId.HasValue && request.CommitmentIntervalCount.HasValue
+        ? $"{request.CommitmentIntervalCount.Value} {_timeIntervalService.GetById(request.CommitmentIntervalId.Value).Name}{(request.CommitmentIntervalCount.Value > 1 ? "s" : string.Empty)}"
+        : null;
       result.ParticipantLimit = request.ParticipantLimit;
       result.KeywordsFlatten = request.Keywords == null ? null : string.Join(Keywords_Separator, request.Keywords);
       result.Keywords = request.Keywords;
@@ -1372,9 +1419,12 @@ namespace Yoma.Core.Domain.Opportunity.Services
       if (result.DateEnd.HasValue)
       {
         var commitmentIntervalInDays = result.TimeIntervalToDays();
-        var dateEndMin = result.DateStart.AddDays(commitmentIntervalInDays - 1); //count today as the 1st day
-        if (dateEndMin > result.DateEnd.Value)
-          throw new ValidationException($"The end date for the opportunity must be on or after {dateEndMin.Date}, based on the specified start date and commitment interval");
+        if (commitmentIntervalInDays.HasValue)
+        {
+          var dateEndMin = result.DateStart.AddDays(commitmentIntervalInDays.Value - 1); // count today as the 1st day
+          if (dateEndMin > result.DateEnd.Value)
+            throw new ValidationException($"The end date for the opportunity must be on or after {dateEndMin.Date}, based on the specified start date and commitment interval");
+        }
       }
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
@@ -1397,7 +1447,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         result = await AssignLanguages(result, request.Languages);
 
         // skills (optional)
-        result = await RemoveSkills(result, result.Skills?.Where(o => !request.Skills.Contains(o.Id)).Select(o => o.Id).ToList());
+        result = await RemoveSkills(result, result.Skills?.Where(o => request.Skills == null || !request.Skills.Contains(o.Id)).Select(o => o.Id).ToList());
         result = await AssignSkills(result, request.Skills);
 
         // verification types (optional)
@@ -1868,14 +1918,14 @@ namespace Yoma.Core.Domain.Opportunity.Services
        .Select(code => _countryService.GetByCodeAlpha2(code))
        .ToList() ?? [];
 
-      var difficulty = _opportunityDifficultyService.GetByName(item.Difficulty);
+      var difficulty = string.IsNullOrWhiteSpace(item.Difficulty) ? null : _opportunityDifficultyService.GetByName(item.Difficulty);
 
-      var commitmentInterval = _timeIntervalService.GetByName(item.CommitmentInterval);
+      var commitmentInterval = string.IsNullOrWhiteSpace(item.CommitmentInterval) ? null : _timeIntervalService.GetByName(item.CommitmentInterval);
 
       var skills = item.Skills?
         .Where(name => !string.IsNullOrWhiteSpace(name))
         .Select(name => _skillService.GetByName(name))
-        .ToList() ?? [];
+        .ToList();
 
       var keywords = item.Keywords?.Where(o => !string.IsNullOrWhiteSpace(o)).Select(o => o.Trim()).ToList();
 
@@ -1922,15 +1972,15 @@ namespace Yoma.Core.Domain.Opportunity.Services
       request.Description = item.Description;
       request.Languages = [.. languages.Select(o => o.Id)];
       request.Countries = [.. countries.Select(o => o.Id)];
-      request.DifficultyId = difficulty.Id;
+      request.DifficultyId = difficulty?.Id;
       request.CommitmentIntervalCount = item.CommitmentIntervalCount;
-      request.CommitmentIntervalId = commitmentInterval.Id;
+      request.CommitmentIntervalId = commitmentInterval?.Id;
       request.DateStart = item.DateStart.ToDateTimeOffset();
       request.DateEnd = item.DateEnd?.ToDateTimeOffset();
       request.ParticipantLimit = item.ParticipantLimit;
       request.ZltoReward = item.ZltoReward;
       request.ZltoRewardPool = item.ZltoRewardPool;
-      request.Skills = [.. skills.Select(o => o.Id)];
+      request.Skills = skills?.Select(o => o.Id).ToList();
       request.Keywords = keywords;
       request.Hidden = item.Hidden;
       request.ExternalId = item.ExternalId;

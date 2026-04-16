@@ -4,6 +4,8 @@ namespace Yoma.Core.Domain.Opportunity.Models
 {
   public class OpportunitySearchFilterCriteria : PaginationFilter
   {
+    public List<Guid>? Types { get; set; }
+
     public List<Guid>? Organizations { get; set; }
 
     public string? TitleContains { get; set; }

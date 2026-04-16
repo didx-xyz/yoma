@@ -1,8 +1,8 @@
 import { QueryClient, dehydrate } from "@tanstack/react-query";
 import axios from "axios";
+import Link from "next/link";
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
-import { useRouter } from "next/router";
 import { type ParsedUrlQuery } from "querystring";
 import { type ReactElement } from "react";
 import { IoMdArrowRoundBack } from "react-icons/io";
@@ -101,8 +101,6 @@ const OpportunityDetails: NextPageWithLayout<{
   opportunityInfo: OpportunityInfo;
   error?: number;
 }> = ({ user, opportunityInfo, error }) => {
-  const router = useRouter();
-
   if (error) {
     if (error === 401) return <Unauthenticated />;
     else if (error === 403) return <Unauthorized />;
@@ -121,13 +119,13 @@ const OpportunityDetails: NextPageWithLayout<{
           <div className="grow overflow-hidden px-2 text-sm text-ellipsis md:whitespace-nowrap">
             <ul>
               <li className="inline">
-                <button
+                <Link
+                  href="/opportunities"
                   className="hover:text-gray inline text-white"
-                  onClick={() => router.back()}
                 >
                   <IoMdArrowRoundBack className="mr-1 mb-[2px] inline h-4 w-4" />
                   Opportunities
-                </button>
+                </Link>
               </li>
               <li className="inline">
                 <p className="mx-2 inline font-semibold text-white">|</p>

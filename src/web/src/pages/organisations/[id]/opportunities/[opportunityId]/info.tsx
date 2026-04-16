@@ -284,150 +284,163 @@ const OpportunityDetails: NextPageWithLayout<{
                     )}
                   </div>
                 </div>
-                <div className="flex flex-col gap-2 rounded-lg bg-white p-6">
-                  <div className="mb-2">
-                    <div className="flex flex-row items-center gap-1 text-sm font-bold">
-                      <Image
-                        src={iconSkills}
-                        alt="Icon Skills"
-                        width={20}
-                        className="h-auto"
-                        sizes="100vw"
-                        priority={true}
-                      />
+                <div className="divide-gray flex flex-col divide-y rounded-lg bg-white p-6">
+                  {(opportunity?.skills?.length ?? 0) > 0 && (
+                    <div className="pb-4">
+                      <div className="flex flex-row items-center gap-1 text-sm font-bold">
+                        <Image
+                          src={iconSkills}
+                          alt="Icon Skills"
+                          width={20}
+                          className="h-auto"
+                          sizes="100vw"
+                          priority={true}
+                        />
 
-                      <span className="ml-1">Skills you will learn</span>
+                        <span className="ml-1">Skills you will learn</span>
+                      </div>
+                      <div className="my-2 flex flex-wrap gap-2">
+                        {opportunity?.skills?.map((item) => (
+                          <div
+                            key={item.id}
+                            className="badge bg-green h-full min-h-6 rounded-md border-0 py-1 text-xs font-semibold text-white"
+                          >
+                            {item.name}
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                    <div className="my-2 flex flex-wrap gap-2">
-                      {opportunity?.skills?.map((item) => (
-                        <div
-                          key={item.id}
-                          className="badge bg-green h-full min-h-6 rounded-md border-0 py-1 text-xs font-semibold text-white"
-                        >
-                          {item.name}
+                  )}
+                  {typeof opportunity?.commitmentIntervalCount === "number" &&
+                    opportunity.commitmentIntervalCount > 0 &&
+                    !!opportunity?.commitmentInterval && (
+                      <div className="py-4 first:pt-0 last:pb-0">
+                        <div className="flex flex-row items-center gap-1 text-sm font-bold">
+                          <Image
+                            src={iconClock}
+                            alt="Icon Clock"
+                            width={20}
+                            className="h-auto"
+                            sizes="100vw"
+                            priority={true}
+                          />
+
+                          <span className="ml-1">
+                            How much time you will need
+                          </span>
                         </div>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="divider mt-1" />
-                  <div>
-                    <div className="flex flex-row items-center gap-1 text-sm font-bold">
-                      <Image
-                        src={iconClock}
-                        alt="Icon Clock"
-                        width={20}
-                        className="h-auto"
-                        sizes="100vw"
-                        priority={true}
-                      />
-
-                      <span className="ml-1">How much time you will need</span>
-                    </div>
-                    <div className="my-2">
-                      {`This task should not take you more than ${opportunity?.commitmentIntervalCount} ${opportunity?.commitmentInterval}${
-                        opportunity?.commitmentIntervalCount > 1 ? "s. " : ". "
-                      }`}
-                      <br />
-                      <p className="mt-2">
-                        The estimated times provided are just a guideline. You
-                        have as much time as you need to complete the tasks at
-                        your own pace. Focus on engaging with the materials and
-                        doing your best without feeling rushed by the time
-                        estimates.
-                      </p>
-                    </div>
-                  </div>
-                  <div className="divider mt-1" />
-                  <div>
-                    <div className="flex flex-row items-center gap-1 text-sm font-bold">
-                      <Image
-                        src={iconTopics}
-                        alt="Icon Topics"
-                        width={20}
-                        className="h-auto"
-                        sizes="100vw"
-                        priority={true}
-                      />
-
-                      <span className="ml-1">Topics</span>
-                    </div>
-                    <div className="my-2 flex flex-wrap gap-2">
-                      {opportunity?.categories?.map((item) => (
-                        <div
-                          key={item.id}
-                          className="badge bg-green h-full min-h-6 rounded-md border-0 py-1 text-xs font-semibold text-white"
-                        >
-                          {item.name}
+                        <div className="my-2">
+                          {`This task should not take you more than ${opportunity?.commitmentIntervalCount} ${opportunity?.commitmentInterval}${
+                            (opportunity?.commitmentIntervalCount ?? 0) > 1
+                              ? "s. "
+                              : ". "
+                          }`}
+                          <br />
+                          <p className="mt-2">
+                            The estimated times provided are just a guideline.
+                            You have as much time as you need to complete the
+                            tasks at your own pace. Focus on engaging with the
+                            materials and doing your best without feeling rushed
+                            by the time estimates.
+                          </p>
                         </div>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="divider mt-1" />
-                  <div className="mb-2">
-                    <div className="my-2 flex flex-row items-center gap-1 text-sm font-bold">
-                      <Image
-                        src={iconLanguage}
-                        alt="Icon Language"
-                        width={20}
-                        className="h-auto"
-                        sizes="100vw"
-                        priority={true}
-                      />
+                      </div>
+                    )}
+                  {(opportunity?.categories?.length ?? 0) > 0 && (
+                    <div className="py-4 first:pt-0 last:pb-0">
+                      <div className="flex flex-row items-center gap-1 text-sm font-bold">
+                        <Image
+                          src={iconTopics}
+                          alt="Icon Topics"
+                          width={20}
+                          className="h-auto"
+                          sizes="100vw"
+                          priority={true}
+                        />
 
-                      <span className="ml-1">Languages</span>
+                        <span className="ml-1">Topics</span>
+                      </div>
+                      <div className="my-2 flex flex-wrap gap-2">
+                        {opportunity?.categories?.map((item) => (
+                          <div
+                            key={item.id}
+                            className="badge bg-green h-full min-h-6 rounded-md border-0 py-1 text-xs font-semibold text-white"
+                          >
+                            {item.name}
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                    <div className="my-2 flex flex-wrap gap-2">
-                      {opportunity?.languages?.map((item) => (
-                        <div
-                          key={item.id}
-                          className="badge bg-green h-full min-h-6 rounded-md border-0 py-1 text-xs font-semibold text-white"
-                        >
-                          {item.name}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="divider mt-1" />
-                  <div>
-                    <div className="flex flex-row items-center gap-1 text-sm font-bold">
-                      <Image
-                        src={iconDifficulty}
-                        alt="Icon Difficulty"
-                        width={20}
-                        className="h-auto"
-                        sizes="100vw"
-                        priority={true}
-                      />
+                  )}
+                  {(opportunity?.languages?.length ?? 0) > 0 && (
+                    <div className="py-4 first:pt-0 last:pb-0">
+                      <div className="my-2 flex flex-row items-center gap-1 text-sm font-bold">
+                        <Image
+                          src={iconLanguage}
+                          alt="Icon Language"
+                          width={20}
+                          className="h-auto"
+                          sizes="100vw"
+                          priority={true}
+                        />
 
-                      <span className="ml-1">Course difficulty</span>
+                        <span className="ml-1">Languages</span>
+                      </div>
+                      <div className="my-2 flex flex-wrap gap-2">
+                        {opportunity?.languages?.map((item) => (
+                          <div
+                            key={item.id}
+                            className="badge bg-green h-full min-h-6 rounded-md border-0 py-1 text-xs font-semibold text-white"
+                          >
+                            {item.name}
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                    <div className="my-2">{opportunity?.difficulty}</div>
-                  </div>
-                  <div className="divider mt-1" />
-                  <div>
-                    <div className="flex flex-row items-center gap-1 text-sm font-bold">
-                      <Image
-                        src={iconLocation}
-                        alt="Icon Location"
-                        width={20}
-                        className="h-auto"
-                        sizes="100vw"
-                        priority={true}
-                      />
+                  )}
+                  {!!opportunity?.difficulty && (
+                    <div className="py-4 first:pt-0 last:pb-0">
+                      <div className="flex flex-row items-center gap-1 text-sm font-bold">
+                        <Image
+                          src={iconDifficulty}
+                          alt="Icon Difficulty"
+                          width={20}
+                          className="h-auto"
+                          sizes="100vw"
+                          priority={true}
+                        />
 
-                      <span className="ml-1">Countries</span>
+                        <span className="ml-1">Course difficulty</span>
+                      </div>
+                      <div className="my-2">{opportunity?.difficulty}</div>
                     </div>
-                    <div className="my-2 flex flex-wrap gap-2">
-                      {opportunity?.countries?.map((country) => (
-                        <div
-                          key={country.id}
-                          className="badge bg-green h-full min-h-6 rounded-md border-0 py-1 text-xs font-semibold text-white"
-                        >
-                          {country.name}
-                        </div>
-                      ))}
+                  )}
+                  {(opportunity?.countries?.length ?? 0) > 0 && (
+                    <div className="pt-4 first:pt-0">
+                      <div className="flex flex-row items-center gap-1 text-sm font-bold">
+                        <Image
+                          src={iconLocation}
+                          alt="Icon Location"
+                          width={20}
+                          className="h-auto"
+                          sizes="100vw"
+                          priority={true}
+                        />
+
+                        <span className="ml-1">Countries</span>
+                      </div>
+                      <div className="my-2 flex flex-wrap gap-2">
+                        {opportunity?.countries?.map((country) => (
+                          <div
+                            key={country.id}
+                            className="badge bg-green h-full min-h-6 rounded-md border-0 py-1 text-xs font-semibold text-white"
+                          >
+                            {country.name}
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               </div>
             </div>

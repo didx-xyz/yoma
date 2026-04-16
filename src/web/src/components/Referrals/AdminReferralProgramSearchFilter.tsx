@@ -126,7 +126,7 @@ export const ReferralProgramSearchFilters: React.FC<{
           {filterOptions?.includes(ReferralFilterOptions.COUNTRIES) &&
             lookups_countries &&
             lookups_countries.length > 0 && (
-              <span className="w-full md:w-72">
+              <span className="w-full md:w-60">
                 <Controller
                   name="countries"
                   control={form.control}
@@ -135,7 +135,7 @@ export const ReferralProgramSearchFilters: React.FC<{
                     <Select
                       instanceId="countries"
                       classNames={{
-                        control: () => "input h-fit py-1",
+                        control: () => "input w-full",
                       }}
                       isMulti={true}
                       options={lookups_countries.map((c) => ({

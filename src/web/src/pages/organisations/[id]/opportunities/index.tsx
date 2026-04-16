@@ -1,4 +1,4 @@
-import { QueryClient, dehydrate, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { useAtomValue } from "jotai";
 import { type GetServerSidePropsContext } from "next";
@@ -12,25 +12,22 @@ import { type ParsedUrlQuery } from "querystring";
 import { useCallback, useMemo, useState, type ReactElement } from "react";
 import { FaDownload, FaPlusCircle, FaRocket, FaUpload } from "react-icons/fa";
 import { IoIosAdd, IoIosWarning } from "react-icons/io";
+import Select from "react-select";
+import type { SelectOption } from "~/api/models/lookups";
 import {
   Status,
   type OpportunitySearchFilterAdmin,
 } from "~/api/models/opportunity";
-import { getOpportunitiesAdmin } from "~/api/services/opportunities";
-import {
-  OPPORTUNITY_QUERY_KEYS,
-  useOrgOpportunitiesListQuery,
-  useOrgOpportunityCountQuery,
-} from "~/hooks/useOpportunityMutations";
 import CustomSlider from "~/components/Carousel/CustomSlider";
 import CustomModal from "~/components/Common/CustomModal";
+import DropdownMenu from "~/components/Common/DropdownMenu";
 import MainLayout from "~/components/Layout/Main";
 import NoRowsMessage from "~/components/NoRowsMessage";
 import OpportunityExport from "~/components/Opportunity/Admin/OpportunityExport";
 import { OpportunityImport } from "~/components/Opportunity/Admin/OpportunityImport";
 import {
-  OpportunityActions,
   OpportunityActionOptions,
+  OpportunityActions,
 } from "~/components/Opportunity/OpportunityActions";
 import OpportunityStatus from "~/components/Opportunity/OpportunityStatus";
 import { PageBackground } from "~/components/PageBackground";
@@ -41,8 +38,13 @@ import LimitedFunctionalityBadge from "~/components/Status/LimitedFunctionalityB
 import { LoadingSkeleton } from "~/components/Status/LoadingSkeleton";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
+import {
+  OPPORTUNITY_QUERY_KEYS,
+  useOpportunityTypesQuery,
+  useOrgOpportunitiesListQuery,
+  useOrgOpportunityCountQuery,
+} from "~/hooks/useOpportunityMutations";
 import { PAGE_SIZE } from "~/lib/constants";
-import { config } from "~/lib/react-query-config";
 import { currentOrganisationInactiveAtom } from "~/lib/store";
 import { getSafeUrl, getThemeFromRole } from "~/lib/utils";
 import { type NextPageWithLayout } from "~/pages/_app";
@@ -53,15 +55,19 @@ interface IParams extends ParsedUrlQuery {
   query?: string;
   page?: string;
   status?: string;
+  typeId?: string;
 }
+
+const getErrorStatus = (error: unknown): number | null => {
+  if (!axios.isAxiosError(error)) return null;
+  return error.response?.status ?? null;
+};
 
 // ⚠️ SSR
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { id } = context.params as IParams;
-  const { query, page, status, returnUrl } = context.query;
+  const { query, page, status, typeId, returnUrl } = context.query;
   const session = await getServerSession(context.req, context.res, authOptions);
-  const queryClient = new QueryClient(config);
-  let errorCode = null;
 
   // 👇 ensure authenticated
   if (!session) {
@@ -75,66 +81,15 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   // 👇 set theme based on role
   const theme = getThemeFromRole(session, id);
 
-  try {
-    // 👇 prefetch queries on server
-    const data = await getOpportunitiesAdmin(
-      {
-        organizations: [id],
-        pageNumber: page ? parseInt(page.toString()) : 1,
-        pageSize: PAGE_SIZE,
-        startDate: null,
-        endDate: null,
-        statuses:
-          status === "active"
-            ? [Status.Active]
-            : status === "inactive"
-              ? [Status.Inactive]
-              : status === "expired"
-                ? [Status.Expired]
-                : status === "deleted"
-                  ? [Status.Deleted]
-                  : [
-                      Status.Active,
-                      Status.Expired,
-                      Status.Inactive,
-                      Status.Deleted,
-                    ],
-        types: null,
-        categories: null,
-        languages: null,
-        countries: null,
-        valueContains: query?.toString() ?? null,
-        featured: null,
-        engagementTypes: null,
-      },
-      context,
-    );
-
-    const searchResultsKey = `${query?.toString()}_${page?.toString()}_${status?.toString()}`;
-    await queryClient.prefetchQuery({
-      queryKey: OPPORTUNITY_QUERY_KEYS.orgList(id, searchResultsKey),
-      queryFn: () => data,
-    });
-  } catch (error) {
-    if (axios.isAxiosError(error) && error.response?.status) {
-      if (error.response.status === 404) {
-        return {
-          notFound: true,
-          props: { theme: theme },
-        };
-      } else errorCode = error.response.status;
-    } else errorCode = 500;
-  }
-
   return {
     props: {
-      dehydratedState: dehydrate(queryClient),
       id: id,
       query: query ?? null,
       page: page ?? null,
       status: status ?? null,
+      typeId: typeId ?? null,
       theme: theme,
-      error: errorCode,
+      error: null,
       returnUrl: returnUrl ?? null,
     },
   };
@@ -147,8 +102,9 @@ const Opportunities: NextPageWithLayout<{
   theme: string;
   error?: number;
   status?: string;
+  typeId?: string;
   returnUrl?: string;
-}> = ({ id, query, page, status, error, returnUrl }) => {
+}> = ({ id, query, page, status, typeId, error, returnUrl }) => {
   const router = useRouter();
   const queryClient = useQueryClient();
   const currentOrganisationInactive = useAtomValue(
@@ -156,6 +112,23 @@ const Opportunities: NextPageWithLayout<{
   );
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
+  const { data: opportunityTypesData } = useOpportunityTypesQuery({
+    enabled: !error,
+  });
+
+  const typeOptions = useMemo<SelectOption[]>(
+    () =>
+      (opportunityTypesData ?? []).map((type) => ({
+        value: type.id,
+        label: type.name,
+      })),
+    [opportunityTypesData],
+  );
+
+  const selectedTypeOption = useMemo(
+    () => typeOptions.find((option) => option.value === typeId) ?? null,
+    [typeId, typeOptions],
+  );
 
   // search filter state
   const searchFilter = useMemo<OpportunitySearchFilterAdmin>(
@@ -168,7 +141,7 @@ const Opportunities: NextPageWithLayout<{
       statuses: status
         ? status.toString().split("|")
         : [Status.Active, Status.Expired, Status.Inactive, Status.Deleted],
-      types: null,
+      types: typeId ? [typeId.toString()] : null,
       categories: null,
       languages: null,
       countries: null,
@@ -176,22 +149,28 @@ const Opportunities: NextPageWithLayout<{
       featured: null,
       engagementTypes: null,
     }),
-    [id, page, query, status],
+    [id, page, query, status, typeId],
   );
 
   // 👇 use prefetched queries from server
   // NB: these queries (with ['opportunities', id]) will be invalidated by create/edit operations on other pages
-  const countKeyParts = `${query?.toString()}_${page?.toString()}_${status?.toString()}`;
+  const countKeyParts = `${query?.toString()}_${page?.toString()}_${status?.toString()}_${typeId?.toString()}`;
 
-  const { data: searchResults, isLoading: isLoadingSearchResults } =
-    useOrgOpportunitiesListQuery(id, searchFilter, countKeyParts, {
-      enabled: !error,
-    });
+  const {
+    data: searchResults,
+    isLoading: isLoadingSearchResults,
+    error: searchResultsError,
+  } = useOrgOpportunitiesListQuery(id, searchFilter, countKeyParts, {
+    enabled: !error,
+  });
+  const resolvedError =
+    error ?? getErrorStatus(searchResultsError) ?? undefined;
 
   const { data: totalCountAll } = useOrgOpportunityCountQuery(
     id,
     searchFilter.valueContains ?? null,
     null,
+    searchFilter.types,
     countKeyParts,
     { enabled: !error },
   );
@@ -199,6 +178,7 @@ const Opportunities: NextPageWithLayout<{
     id,
     searchFilter.valueContains ?? null,
     Status.Active,
+    searchFilter.types,
     countKeyParts,
     { enabled: !error },
   );
@@ -206,6 +186,7 @@ const Opportunities: NextPageWithLayout<{
     id,
     searchFilter.valueContains ?? null,
     Status.Inactive,
+    searchFilter.types,
     countKeyParts,
     { enabled: !error },
   );
@@ -213,6 +194,7 @@ const Opportunities: NextPageWithLayout<{
     id,
     searchFilter.valueContains ?? null,
     Status.Expired,
+    searchFilter.types,
     countKeyParts,
     { enabled: !error },
   );
@@ -220,6 +202,7 @@ const Opportunities: NextPageWithLayout<{
     id,
     searchFilter.valueContains ?? null,
     Status.Deleted,
+    searchFilter.types,
     countKeyParts,
     { enabled: !error },
   );
@@ -246,6 +229,14 @@ const Opportunities: NextPageWithLayout<{
         searchFilter?.statuses.length !== 4 // hack to prevent all" statuses from being added to the query string
       )
         params.append("status", searchFilter?.statuses.join("|"));
+
+      if (
+        searchFilter.types !== undefined &&
+        searchFilter.types !== null &&
+        searchFilter.types.length > 0
+      ) {
+        params.append("typeId", searchFilter.types[0]!);
+      }
 
       if (
         searchFilter.pageNumber !== null &&
@@ -290,11 +281,20 @@ const Opportunities: NextPageWithLayout<{
     },
     [searchFilter, redirectWithSearchFilterParams],
   );
+
+  const onTypeChange = useCallback(
+    (option: SelectOption | null) => {
+      searchFilter.pageNumber = 1;
+      searchFilter.types = option ? [option.value] : null;
+      redirectWithSearchFilterParams(searchFilter);
+    },
+    [searchFilter, redirectWithSearchFilterParams],
+  );
   //#endregion Event Handlers
 
-  if (error) {
-    if (error === 401) return <Unauthenticated />;
-    else if (error === 403) return <Unauthorized />;
+  if (resolvedError) {
+    if (resolvedError === 401) return <Unauthenticated />;
+    else if (resolvedError === 403) return <Unauthorized />;
     else return <InternalServerError />;
   }
 
@@ -444,41 +444,57 @@ const Opportunities: NextPageWithLayout<{
           <div className="flex w-full grow flex-col items-center justify-between gap-4 sm:justify-end md:flex-row">
             <div className="flex w-full grow flex-row flex-wrap gap-2">
               <SearchInput defaultValue={query} onSearch={onSearch} />
+              <div className="w-full md:w-60">
+                <Select
+                  instanceId="opportunityTypeFilter"
+                  isClearable={true}
+                  options={typeOptions}
+                  value={selectedTypeOption}
+                  onChange={(option) =>
+                    onTypeChange(option as SelectOption | null)
+                  }
+                  classNames={{
+                    control: () => "input w-full",
+                  }}
+                  styles={{
+                    placeholder: (base) => ({
+                      ...base,
+                      color: "#A3A6AF",
+                    }),
+                  }}
+                  placeholder="Filter by type..."
+                  inputId="input_opportunityTypeFilter"
+                />
+              </div>
             </div>
-            {/* BUTTONS */}
-            <div className="flex w-full flex-row flex-nowrap items-center justify-between gap-2 sm:justify-end md:w-auto">
-              <Link
-                href={`/organisations/${id}/opportunities/create${`?returnUrl=${encodeURIComponent(
-                  getSafeUrl(returnUrl?.toString(), router.asPath),
-                )}`}`}
-                className={`btn btn-sm md:btn-md border-green text-green hover:bg-green w-36 flex-nowrap bg-white hover:text-white ${
-                  currentOrganisationInactive ? "disabled" : ""
-                }`}
-                id="btnCreateOpportunity" // e2e
-              >
-                <FaPlusCircle className="h-4 w-4" /> Add
-              </Link>
 
-              <button
-                type="button"
-                onClick={() => {
-                  setImportDialogOpen(true);
-                }}
-                className={`btn btn-sm md:btn-md border-green bg-green hover:text-green w-36 flex-nowrap text-white hover:bg-white ${
-                  currentOrganisationInactive ? "disabled" : ""
-                }`}
-              >
-                <FaUpload className="h-4 w-4" /> Import
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setExportDialogOpen(true)}
-                className="btn btn-sm md:btn-md border-green bg-green hover:text-green w-36 flex-nowrap text-white hover:bg-white"
-              >
-                <FaDownload className="h-4 w-4" /> Export
-              </button>
-            </div>
+            <DropdownMenu
+              label="Actions"
+              items={[
+                {
+                  label: "Create Opportunity",
+                  href: `/organisations/${id}/opportunities/create${`?returnUrl=${encodeURIComponent(
+                    getSafeUrl(returnUrl?.toString(), router.asPath),
+                  )}`}`,
+                  icon: <FaPlusCircle className="h-4 w-4" />,
+                  disabled: currentOrganisationInactive,
+                  id: "btnCreateOpportunity",
+                },
+                {
+                  label: "Import",
+                  onClick: () => {
+                    setImportDialogOpen(true);
+                  },
+                  icon: <FaUpload className="h-4 w-4" />,
+                  disabled: currentOrganisationInactive,
+                },
+                {
+                  label: "Export",
+                  onClick: () => setExportDialogOpen(true),
+                  icon: <FaDownload className="h-4 w-4" />,
+                },
+              ]}
+            />
           </div>
         </div>
 
@@ -490,12 +506,13 @@ const Opportunities: NextPageWithLayout<{
         )}
 
         {!isLoadingSearchResults && (
-          <div className="md:shadow-custom rounded-lg md:bg-white md:p-4">
+          <>
             {/* NO ROWS */}
             {searchResults &&
               searchResults.items?.length === 0 &&
               !query &&
-              !status && (
+              !status &&
+              !typeId && (
                 <div className="flex h-fit flex-col items-center rounded-lg bg-white pb-8 md:pb-16">
                   <NoRowsMessage
                     title={"Ready to share amazing opportunities?"}
@@ -524,7 +541,7 @@ const Opportunities: NextPageWithLayout<{
               )}
             {searchResults &&
               searchResults.items?.length === 0 &&
-              (query || status) && (
+              (query || status || typeId) && (
                 <div className="py-32x flex flex-col place-items-center">
                   <NoRowsMessage
                     title={"No opportunities found"}
@@ -543,7 +560,7 @@ const Opportunities: NextPageWithLayout<{
                       key={`sm_${opportunity.id}`}
                       className="shadow-custom flex flex-col justify-between gap-4 rounded-lg bg-white p-4"
                     >
-                      <div className="border-gray-light flex flex-row gap-2 border-b-2">
+                      <div className="flex flex-row gap-2">
                         <span title={opportunity.title} className="w-full">
                           <Link
                             href={`/organisations/${id}/opportunities/${opportunity.id}/info${`?returnUrl=${encodeURIComponent(
@@ -729,28 +746,24 @@ const Opportunities: NextPageWithLayout<{
                 </div>
 
                 {/* DESKTOP */}
-                <table className="border-gray-light hidden border-separate rounded-lg border-x-2 border-t-2 md:table md:table-auto">
+                <table className="border-gray-light hidden border-separate rounded-lg bg-white md:table md:table-auto">
                   <thead>
                     <tr className="border-gray text-gray-dark">
-                      <th className="border-gray-light border-b-2 !py-4">
-                        Title
-                      </th>
-                      <th className="border-gray-light border-b-2">ZLTO</th>
-                      <th className="border-gray-light border-b-2">Views</th>
-                      <th className="border-gray-light border-b-2">Clicks</th>
-                      <th className="border-gray-light border-b-2">
-                        Completions
-                      </th>
-                      <th className="border-gray-light border-b-2">Pending</th>
-                      <th className="border-gray-light border-b-2">Status</th>
-                      <th className="border-gray-light border-b-2">Visible</th>
-                      <th className="border-gray-light border-b-2">Actions</th>
+                      <th className="border-gray-light !py-4">Title</th>
+                      <th className="border-gray-light">ZLTO</th>
+                      <th className="border-gray-light">Views</th>
+                      <th className="border-gray-light">Clicks</th>
+                      <th className="border-gray-light">Completions</th>
+                      <th className="border-gray-light">Pending</th>
+                      <th className="border-gray-light">Status</th>
+                      <th className="border-gray-light">Visible</th>
+                      <th className="border-gray-light">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     {searchResults.items.map((opportunity) => (
                       <tr key={`md_${opportunity.id}`}>
-                        <td className="border-gray-light max-w-[200px] truncate border-b-2 !py-4">
+                        <td className="border-gray-light max-w-[200px] truncate border-t-2 !py-4">
                           <Link
                             title={opportunity.title}
                             href={`/organisations/${id}/opportunities/${opportunity.id}/info${`?returnUrl=${encodeURIComponent(
@@ -761,7 +774,7 @@ const Opportunities: NextPageWithLayout<{
                             {opportunity.title}
                           </Link>
                         </td>
-                        <td className="border-gray-light border-b-2">
+                        <td className="border-gray-light border-t-2">
                           {opportunity.zltoReward == null && (
                             <span
                               className={`badge bg-orange-light text-orange px-4`}
@@ -785,7 +798,7 @@ const Opportunities: NextPageWithLayout<{
                             </span>
                           )}
                         </td>
-                        <td className="border-gray-light border-b-2">
+                        <td className="border-gray-light border-t-2">
                           <span
                             className={`badge ${opportunity.countViewed > 0 ? "bg-green-light text-green" : "bg-gray-light text-gray-dark"}`}
                           >
@@ -794,21 +807,21 @@ const Opportunities: NextPageWithLayout<{
                             </span>
                           </span>
                         </td>
-                        <td className="border-gray-light border-b-2">
+                        <td className="border-gray-light border-t-2">
                           <span
                             className={`badge ${opportunity.countNavigatedExternalLink > 0 ? "bg-green-light text-green" : "bg-gray-light text-gray-dark"}`}
                           >
                             {opportunity.countNavigatedExternalLink}
                           </span>
                         </td>
-                        <td className="border-gray-light border-b-2">
+                        <td className="border-gray-light border-t-2">
                           <span
                             className={`badge ${opportunity.participantCountCompleted > 0 ? "bg-green-light text-green" : "bg-gray-light text-gray-dark"}`}
                           >
                             {opportunity.participantCountCompleted}
                           </span>
                         </td>
-                        <td className="border-gray-light border-b-2">
+                        <td className="border-gray-light border-t-2">
                           {opportunity.participantCountPending > 0 ? (
                             <Link
                               href={`/organisations/${id}/verifications?opportunity=${opportunity.id}&verificationStatus=Pending`}
@@ -827,12 +840,12 @@ const Opportunities: NextPageWithLayout<{
                             </span>
                           )}
                         </td>
-                        <td className="border-gray-light border-b-2">
+                        <td className="border-gray-light border-t-2">
                           <OpportunityStatus
                             status={opportunity?.status?.toString()}
                           />
                         </td>
-                        <td className="border-gray-light border-b-2">
+                        <td className="border-gray-light border-t-2">
                           {opportunity?.hidden ? (
                             <span className="badge bg-yellow-tint text-yellow w-20">
                               Hidden
@@ -843,7 +856,7 @@ const Opportunities: NextPageWithLayout<{
                             </span>
                           )}
                         </td>
-                        <td className="border-gray-light border-b-2 whitespace-nowrap">
+                        <td className="border-gray-light border-t-2 whitespace-nowrap">
                           <div className="flex flex-row items-center justify-center gap-2">
                             {/* ACTIONS */}
                             <OpportunityActions
@@ -888,7 +901,7 @@ const Opportunities: NextPageWithLayout<{
                 </div>
               </>
             )}
-          </div>
+          </>
         )}
       </div>
     </>

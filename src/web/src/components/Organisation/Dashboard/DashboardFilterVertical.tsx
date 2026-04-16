@@ -104,6 +104,7 @@ export const DashboardFilterVertical: React.FC<{
   const loadOpportunities = useCallback(
     debounce((inputValue: string, callback: (options: any) => void) => {
       searchCriteriaOpportunities({
+        types: null,
         opportunities: [],
         organizations: watchOrganisations,
         countries: null,

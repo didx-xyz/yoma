@@ -12,6 +12,7 @@ import {
   IoBookOutline,
   IoFlashOutline,
   IoCalendarOutline,
+  IoBriefcaseOutline,
   IoLaptopOutline,
   IoHomeOutline,
   IoGlobeOutline,
@@ -19,7 +20,7 @@ import {
 } from "react-icons/io5";
 import Moment from "react-moment";
 import type { OpportunityInfo } from "~/api/models/opportunity";
-import { DATE_FORMAT_HUMAN } from "~/lib/constants";
+import { DATE_FORMAT_HUMAN, OPPORTUNITY_TYPE_NANE_JOB } from "~/lib/constants";
 import ZltoRewardBadge from "./ZltoRewardBadge";
 
 interface BadgesProps {
@@ -31,6 +32,8 @@ const PublicBadges: React.FC<BadgesProps> = ({
   opportunity,
   showToolTips = false,
 }) => {
+  const isJobOpportunity = opportunity?.type === OPPORTUNITY_TYPE_NANE_JOB;
+
   // memo for spots left i.e participantLimit - participantCountTotal
   const spotsLeft = useMemo(() => {
     const participantLimit = opportunity?.participantLimit ?? 0;
@@ -41,7 +44,7 @@ const PublicBadges: React.FC<BadgesProps> = ({
 
   return (
     <div className="text-green-dark mt-4 mb-2 flex flex-row flex-wrap gap-1 text-xs font-bold md:my-2">
-      {opportunity?.commitmentIntervalCount && (
+      {!isJobOpportunity && opportunity?.commitmentIntervalCount && (
         <div
           className={`${showToolTips ? "tooltip tooltip-secondary cursor-help before:text-[0.6875rem]" : ""}`}
           {...(showToolTips && { "data-tip": "Time needed" })}
@@ -138,6 +141,17 @@ const PublicBadges: React.FC<BadgesProps> = ({
               </span>
             </div>
           )}
+          {opportunity?.type === OPPORTUNITY_TYPE_NANE_JOB && (
+            <div
+              className={`${showToolTips ? "tooltip tooltip-secondary cursor-help before:text-[0.6875rem]" : ""}`}
+              {...(showToolTips && { "data-tip": "Job opportunity" })}
+            >
+              <span className="badge badge-sm border border-sky-200 bg-sky-50 whitespace-nowrap text-sky-700">
+                <IoBriefcaseOutline className="h-4 w-4" />
+                <span className="ml-1">{opportunity.type}</span>
+              </span>
+            </div>
+          )}
         </>
       )}
 
@@ -179,7 +193,7 @@ const PublicBadges: React.FC<BadgesProps> = ({
         </>
       )}
 
-      {opportunity && (
+      {!isJobOpportunity && opportunity && (
         <ZltoRewardBadge
           amount={opportunity.zltoReward}
           showToolTips={showToolTips}

@@ -71,10 +71,10 @@ namespace Yoma.Core.Infrastructure.Zlto.Models
     public int TaskStatus { get; set; }
 
     [JsonProperty("task_start_time")]
-    public string? TaskStartTime { get; set; }
+    public string TaskStartTime { get; set; } = null!;
 
     [JsonProperty("task_end_time")]
-    public string? TaskEndTime { get; set; }
+    public string TaskEndTime { get; set; } = null!;
   }
 
   public class RewardEarnResponse

@@ -30,11 +30,11 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
     public VerificationMethod? VerificationMethod { get; set; }
 
-    public Guid DifficultyId { get; set; }
+    public Guid? DifficultyId { get; set; }
 
-    public Guid CommitmentIntervalId { get; set; }
+    public Guid? CommitmentIntervalId { get; set; }
 
-    public short CommitmentIntervalCount { get; set; }
+    public short? CommitmentIntervalCount { get; set; }
 
     public int? ParticipantLimit { get; set; }
 
@@ -63,7 +63,7 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
     public List<Guid> Languages { get; set; } = null!;
 
-    public List<Guid> Skills { get; set; } = null!;
+    public List<Guid>? Skills { get; set; }
 
     public List<OpportunityRequestVerificationType>? VerificationTypes { get; set; }
   }

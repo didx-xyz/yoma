@@ -46,12 +46,12 @@ export interface Opportunity {
   organizationYomaRewardBalanceCurrentFinancialYear?: number | null;
   verificationEnabled: boolean;
   verificationMethod: VerificationMethod | null;
-  difficultyId: string;
-  difficulty: string;
-  commitmentIntervalId: string;
-  commitmentInterval: string;
-  commitmentIntervalCount: number;
-  commitmentIntervalDescription: string;
+  difficultyId: string | null;
+  difficulty: string | null;
+  commitmentIntervalId: string | null;
+  commitmentInterval: string | null;
+  commitmentIntervalCount: number | null;
+  commitmentIntervalDescription: string | null;
   participantLimit: number | null;
   participantCount: number | null;
   statusId: string;
@@ -103,10 +103,10 @@ export interface OpportunityInfo {
   organizationYomaRewardBalanceCurrentFinancialYear?: number | null;
   verificationEnabled: boolean;
   verificationMethod: VerificationMethod | null | string; //NB: comes back as string
-  difficulty: string;
-  commitmentInterval: string;
-  commitmentIntervalCount: number;
-  commitmentIntervalDescription: string;
+  difficulty: string | null;
+  commitmentInterval: string | null;
+  commitmentIntervalCount: number | null;
+  commitmentIntervalDescription: string | null;
   participantLimit: number | null;
   participantCountCompleted: number;
   participantCountPending: number;
@@ -242,8 +242,8 @@ export interface OpportunityRequestBase {
   yomaRewardPool: number | null;
   verificationEnabled: boolean | null;
   verificationMethod: VerificationMethod | null | string;
-  difficultyId: string;
-  commitmentIntervalId: string;
+  difficultyId: string | null;
+  commitmentIntervalId: string | null;
   commitmentIntervalCount: number | null;
   participantLimit: number | null;
   keywords: string[] | null;
@@ -336,6 +336,7 @@ export interface OpportunitySearchCriteriaCommitmentIntervalOption {
 }
 
 export interface OpportunitySearchFilterCriteria extends PaginationFilter {
+  types: string[] | null;
   organizations: string[] | null;
   titleContains: string | null;
   opportunities: string[] | null;
