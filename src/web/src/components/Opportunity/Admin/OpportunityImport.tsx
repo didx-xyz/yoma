@@ -210,7 +210,7 @@ export const OpportunityImport: React.FC<InputProps> = ({
                     </p>
                     <ul className="ml-5 list-disc">
                       <li>Title</li>
-                      <li>Type (Learning, Event, Other, Micro-task)</li>
+                      <li>Type (Learning, Event, Other, Micro-task, Job)</li>
                       <li>
                         Categories (use | to separate multiple)
                         <ul className="mt-2 ml-8 list-disc text-gray-600">
@@ -222,6 +222,7 @@ export const OpportunityImport: React.FC<InputProps> = ({
                           <li>Tourism and Hospitality</li>
                           <li>AI, Data and Analytics</li>
                           <li>Creative Industry and Arts</li>
+                          <li>Health and Care</li>
                           <li>Other</li>
                         </ul>
                       </li>
@@ -232,30 +233,42 @@ export const OpportunityImport: React.FC<InputProps> = ({
                         and English)
                       </li>
                       <li>
-                        Location (Countries, use ISO CodeAlpha2, e.g., US|GB for
-                        United States and United Kingdom)
+                        Location (Countries, use ISO CodeAlpha2, e.g. ZA|US)
                       </li>
-                      <li>
-                        Difficulty (Beginner, Intermediate, Advanced, Any Level)
-                      </li>
-                      <li>EffortCount (numeric value)</li>
-                      <li>EffortInterval (Hour, Day, Week, Month, Minute)</li>
                       <li>DateStart</li>
-                      <li>
-                        Skills (
-                        <Link
-                          href="/admin/skills"
-                          className="text-blue-600 underline"
-                          target="_blank"
-                        >
-                          click here
-                        </Link>{" "}
-                        to search for skills)
-                      </li>
                       <li>Keywords</li>
                       <li>Hidden</li>
                       <li>ExternalId</li>
                     </ul>
+                  </div>
+
+                  <div>
+                    <p className="font-semibold">
+                      Required for standard opportunities only (Learning, Event,
+                      Other, Micro-task)
+                    </p>
+                    <ul className="ml-5 list-disc">
+                      <li>
+                        Difficulty (Beginner, Intermediate, Advanced, Any Level)
+                      </li>
+                      <li>EffortCount (numeric value, greater than 0)</li>
+                      <li>EffortInterval (Hour, Day, Week, Month, Minute)</li>
+                    </ul>
+                  </div>
+
+                  <div>
+                    <p className="font-semibold">
+                      For Job opportunities the following are optional:
+                    </p>
+                    <ul className="ml-5 list-disc">
+                      <li>Difficulty</li>
+                      <li>EffortCount</li>
+                      <li>EffortInterval</li>
+                    </ul>
+                    <p className="mt-3">
+                      If EffortCount is provided for a Job opportunity,
+                      EffortInterval must also be provided, and vice versa.
+                    </p>
                   </div>
 
                   <div>
@@ -270,14 +283,25 @@ export const OpportunityImport: React.FC<InputProps> = ({
                       <li>ParticipantLimit</li>
                       <li>ZltoReward</li>
                       <li>ZltoRewardPool</li>
+                      <li>
+                        Skills (
+                        <Link
+                          href="/admin/skills"
+                          className="text-blue-600 underline"
+                          target="_blank"
+                        >
+                          click here
+                        </Link>{" "}
+                        to search for skills)
+                      </li>
                     </ul>
                   </div>
 
                   <div>
                     <p className="font-semibold">Default Properties</p>
                     <p className="mb-3">
-                      The following properties default to the following and can
-                      not be explicitly set:
+                      The following properties default to the following and
+                      cannot be explicitly set:
                     </p>
                     <ul className="ml-5 list-disc">
                       <li>VerificationEnabled: Enabled</li>
