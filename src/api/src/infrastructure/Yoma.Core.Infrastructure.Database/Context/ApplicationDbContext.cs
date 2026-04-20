@@ -137,14 +137,14 @@ namespace Yoma.Core.Infrastructure.Database.Context
     public DbSet<OpportunityVerificationType> OpportunityVerificationTypes { get; set; }
     #endregion Opportunity
 
-    #region PartnerSharing
+    #region PartnerSync
     #region Lookups
-    public DbSet<PartnerSharing.Entities.Lookups.Partner> PartnerSharingPartner { get; set; }
-    public DbSet<PartnerSharing.Entities.Lookups.ProcessingStatus> PartnerSharingProcessingStatus { get; set; }
+    public DbSet<PartnerSync.Entities.Lookups.Partner> PartnerSyncPartner { get; set; }
+    public DbSet<PartnerSync.Entities.Lookups.ProcessingStatus> PartnerSyncProcessingStatus { get; set; }
     #endregion Lookups 
 
-    public DbSet<PartnerSharing.Entities.ProcessingLog> PartnerSharingProcessingLog { get; set; }
-    #endregion PartnerSharing
+    public DbSet<PartnerSync.Entities.ProcessingLog> PartnerSyncProcessingLog { get; set; }
+    #endregion PartnerSync
 
     #region Referral
     #region Lookups
@@ -289,6 +289,24 @@ namespace Yoma.Core.Infrastructure.Database.Context
           .HasForeignKey(o => o.ModifiedByUserId)
           .OnDelete(DeleteBehavior.NoAction);
       #endregion Opportunity
+
+      #region PartnerSync
+      // see partner_sync: existing rows default to Push:Opportunity
+      builder.Entity<PartnerSync.Entities.Lookups.Partner>(entity =>
+      {
+        entity.Property(e => e.SyncTypesEnabled)
+          .IsRequired()
+          .HasDefaultValue($"{{\"{Domain.PartnerSync.SyncType.Push}\":[\"{Domain.PartnerSync.EntityType.Opportunity}\"]}}");
+      });
+
+      // see partner_sync: existing logs default to Push
+      builder.Entity<PartnerSync.Entities.ProcessingLog>(entity =>
+      {
+        entity.Property(e => e.SyncType)
+          .IsRequired()
+          .HasDefaultValue(Domain.PartnerSync.SyncType.Push);
+      });
+      #endregion PartnerSync
 
       #region Referral
       builder.Entity<Block>()

@@ -1,5 +1,5 @@
-using CsvHelper.Configuration;
 using CsvHelper;
+using CsvHelper.Configuration;
 using Microsoft.AspNetCore.Http;
 using System.Globalization;
 using System.IO.Compression;

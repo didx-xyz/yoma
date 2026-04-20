@@ -1,5 +1,5 @@
-using Serilog.Configuration;
 using Serilog;
+using Serilog.Configuration;
 
 namespace Yoma.Core.Api.Middleware
 {

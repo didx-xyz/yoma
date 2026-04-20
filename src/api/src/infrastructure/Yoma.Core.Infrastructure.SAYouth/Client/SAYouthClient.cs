@@ -1,21 +1,21 @@
 using Flurl;
 using Flurl.Http;
 using Microsoft.Extensions.Logging;
-using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Entity.Extensions;
 using Yoma.Core.Domain.Opportunity.Extensions;
-using Yoma.Core.Domain.PartnerSharing.Interfaces.Provider;
-using Yoma.Core.Domain.PartnerSharing.Models;
+using Yoma.Core.Domain.Opportunity.Models;
+using Yoma.Core.Domain.PartnerSync.Interfaces.Provider;
+using Yoma.Core.Domain.PartnerSync.Models;
 using Yoma.Core.Infrastructure.SAYouth.Extensions;
 using Yoma.Core.Infrastructure.SAYouth.Models;
 
 namespace Yoma.Core.Infrastructure.SAYouth.Client
 {
-  public class SAYouthClient : ISharingProviderClient
+  public class SAYouthClient : ISyncProviderClientPush<Opportunity>
   {
     #region Class Variables
     private readonly ILogger<SAYouthClient> _logger;
@@ -26,7 +26,7 @@ namespace Yoma.Core.Infrastructure.SAYouth.Client
     private const string Header_Api_Version = "X-API-VERSION";
     private const string Header_Authorization = "X-API-KEY";
 
-    private static readonly EngagementTypeOption[] EngagementTypes_FaceToFace = [EngagementTypeOption.Offline];
+    //private static readonly EngagementTypeOption[] EngagementTypes_FaceToFace = [EngagementTypeOption.Offline];
     #endregion
 
     #region Constructor
@@ -43,12 +43,12 @@ namespace Yoma.Core.Infrastructure.SAYouth.Client
     #endregion
 
     #region Public Members
-    public async Task<string> CreateOpportunity(OpportunityRequestUpsert request)
+    public async Task<string> Create(SyncRequestItem<Opportunity> request)
     {
-      if (!_appSettings.PartnerSharingEnabledEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment))
+      if (!_appSettings.PartnerSyncEnabledEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment))
       {
         var mockId = $"MOCK_{Guid.NewGuid():N}";
-        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Partner sharing '{action}' skipped for environment '{environment}' and assuming success", nameof(CreateOpportunity), _environmentProvider.Environment);
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Partner sharing '{action}' skipped for environment '{environment}' and assuming success", nameof(Create), _environmentProvider.Environment);
         return mockId;
       }
 
@@ -66,11 +66,11 @@ namespace Yoma.Core.Infrastructure.SAYouth.Client
       return response.Details!.OpportunityId.ToString();
     }
 
-    public async Task UpdateOpportunity(OpportunityRequestUpsert request)
+    public async Task Update(SyncRequestItem<Opportunity> request)
     {
-      if (!_appSettings.PartnerSharingEnabledEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment))
+      if (!_appSettings.PartnerSyncEnabledEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment))
       {
-        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Partner sharing '{action}' skipped for environment '{environment}' and assuming success", nameof(UpdateOpportunity), _environmentProvider.Environment);
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Partner sharing '{action}' skipped for environment '{environment}' and assuming success", nameof(Update), _environmentProvider.Environment);
         return;
       }
 
@@ -79,8 +79,8 @@ namespace Yoma.Core.Infrastructure.SAYouth.Client
 
       // at time of execution, if the opportunity end date is in the past, we treat it as an inactivation.
       // this avoids triggering an update, as the external system does not allow closing dates in the past — we pause the opportunity instead.
-      var dateEndInThePast = request.Opportunity.DateEnd <= DateTime.UtcNow;
-      var opportunityStatus = request.Opportunity.Status;
+      var dateEndInThePast = request.Item.DateEnd <= DateTime.UtcNow;
+      var opportunityStatus = request.Item.Status;
       if (dateEndInThePast) opportunityStatus = Domain.Opportunity.Status.Inactive;
 
       if (!dateEndInThePast)
@@ -104,7 +104,7 @@ namespace Yoma.Core.Infrastructure.SAYouth.Client
         case Domain.Opportunity.Status.Active:
           // ensure not paused
           action = StatusAction.Resume;
-          requestAction.ClosingDate = request.Opportunity.DateEnd;
+          requestAction.ClosingDate = request.Item.DateEnd;
           requestAction.Reason = "Opportunity updated and activated by Yoma";
           break;
 
@@ -119,7 +119,7 @@ namespace Yoma.Core.Infrastructure.SAYouth.Client
           break;
 
         default:
-          throw new InvalidOperationException($"Invalid / unsupported opportunity status '{request.Opportunity.Status.ToDescription()}'");
+          throw new InvalidOperationException($"Invalid / unsupported opportunity status '{request.Item.Status.ToDescription()}'");
       }
 
       if (action == null) return;
@@ -141,11 +141,11 @@ namespace Yoma.Core.Infrastructure.SAYouth.Client
       }
     }
 
-    public async Task DeleteOpportunity(string externalId)
+    public async Task Delete(string externalId)
     {
-      if (!_appSettings.PartnerSharingEnabledEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment))
+      if (!_appSettings.PartnerSyncEnabledEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment))
       {
-        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Partner sharing '{action}' skipped for environment '{environment}' and assuming success", nameof(DeleteOpportunity), _environmentProvider.Environment);
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Partner sharing '{action}' skipped for environment '{environment}' and assuming success", nameof(Delete), _environmentProvider.Environment);
         return;
       }
 
@@ -176,11 +176,11 @@ namespace Yoma.Core.Infrastructure.SAYouth.Client
       };
     }
 
-    private OpportunitySkillingUpsertRequest ToRequestUpsert(OpportunityRequestUpsert request)
+    private OpportunitySkillingUpsertRequest ToRequestUpsert(SyncRequestItem<Opportunity> request)
     {
       ArgumentNullException.ThrowIfNull(request, nameof(request));
 
-      if (request.Opportunity == null)
+      if (request.Item == null)
         throw new ArgumentNullException(nameof(request), "Opportunity is required");
 
       if (request.Organization == null)
@@ -192,20 +192,20 @@ namespace Yoma.Core.Infrastructure.SAYouth.Client
       //nullable fields matched on SA Youth's request even though not nullable; rely on their error handling
       var requestCreate = new OpportunitySkillingUpsertRequest
       {
-        Holder = request.Opportunity.OrganizationName.RemoveSpecialCharacters().TrimToLength(200),
+        Holder = request.Item.OrganizationName.RemoveSpecialCharacters().TrimToLength(200),
         SponsoringPartner = request.OrganizationYoma.Name.RemoveSpecialCharacters().TrimToLength(200),
-        Title = request.Opportunity.Title.RemoveSpecialCharacters().TrimToLength(200),
-        Description = request.Opportunity.Description.RemoveMarkdownAsterisks(),
+        Title = request.Item.Title.RemoveSpecialCharacters().TrimToLength(200),
+        Description = request.Item.Description.RemoveMarkdownAsterisks(),
         // ensure 'HasCertification' of type 'NonAccreditedCertification' when 'VerificationEnabled'; Yoma's certification is not accredited 
-        HasCertification = request.Opportunity.VerificationEnabled ? YesNoOption.Yes : YesNoOption.No,
-        CertificationType = request.Opportunity.VerificationEnabled ? CertificateType.NonAccreditedCertification.ToString() : null,
-        CertificationDescription = request.Opportunity.VerificationEnabled ? request.Opportunity.Summary?.RemoveMarkdownAsterisks() : null,
-        CloseDate = request.Opportunity.DateEnd,
-        Duration = request.Opportunity.ToDuration(),
+        HasCertification = request.Item.VerificationEnabled ? YesNoOption.Yes : YesNoOption.No,
+        CertificationType = request.Item.VerificationEnabled ? CertificateType.NonAccreditedCertification.ToString() : null,
+        CertificationDescription = request.Item.VerificationEnabled ? request.Item.Summary?.RemoveMarkdownAsterisks() : null,
+        CloseDate = request.Item.DateEnd,
+        Duration = request.Item.ToDuration(),
         Requirements = "Instructions can be found in the description",
         // ensure 'FaceToFace' is set to 'No' so the YOMA link always shows on SA Youth; resulting in no address or contact info being posted; opportunity will always be listed as 'Online Opportunity'
         FaceToFace = YesNoOption.No, //request.Opportunity.EngagementType.HasValue ? EngagementTypes_FaceToFace.Contains(request.Opportunity.EngagementType.Value) ? YesNoOption.Yes : YesNoOption.No : YesNoOption.No,
-        Url = request.Opportunity.YomaInfoURL(_appSettings.AppBaseURL)
+        Url = request.Item.YomaInfoURL(_appSettings.AppBaseURL)
       };
 
       requestCreate = ToRequestUpsertAddressInfo(request, requestCreate);
@@ -214,7 +214,7 @@ namespace Yoma.Core.Infrastructure.SAYouth.Client
       return requestCreate;
     }
 
-    private static OpportunitySkillingUpsertRequest ToRequestUpsertAddressInfo(OpportunityRequestUpsert request, OpportunitySkillingUpsertRequest requestUpsert)
+    private static OpportunitySkillingUpsertRequest ToRequestUpsertAddressInfo(SyncRequestItem<Opportunity> request, OpportunitySkillingUpsertRequest requestUpsert)
     {
       if (requestUpsert.FaceToFace == YesNoOption.No) return requestUpsert;
 
@@ -241,7 +241,7 @@ namespace Yoma.Core.Infrastructure.SAYouth.Client
       return requestUpsert;
     }
 
-    private static OpportunitySkillingUpsertRequest ToRequestUpsertContactInfo(OpportunityRequestUpsert request, OpportunitySkillingUpsertRequest requestUpsert)
+    private static OpportunitySkillingUpsertRequest ToRequestUpsertContactInfo(SyncRequestItem<Opportunity> request, OpportunitySkillingUpsertRequest requestUpsert)
     {
       if (requestUpsert.FaceToFace == YesNoOption.No) return requestUpsert;
 

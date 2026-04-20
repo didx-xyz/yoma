@@ -1,7 +1,7 @@
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using System.Data;
 using System.Data.Common;
 using System.Text.RegularExpressions;
-using Microsoft.EntityFrameworkCore.Diagnostics;
 using Yoma.Core.Domain.Core;
 
 /**************************************************************************************************

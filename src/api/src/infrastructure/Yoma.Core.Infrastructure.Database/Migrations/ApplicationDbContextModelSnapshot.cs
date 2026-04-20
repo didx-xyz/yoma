@@ -17,7 +17,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
     {
 #pragma warning disable 612, 618
       modelBuilder
-          .HasAnnotation("ProductVersion", "10.0.5")
+          .HasAnnotation("ProductVersion", "10.0.6")
           .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
       NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -1672,7 +1672,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.ToTable("OpportunityVerificationTypes", "Opportunity");
           });
 
-      modelBuilder.Entity("Yoma.Core.Infrastructure.Database.PartnerSharing.Entities.Lookups.Partner", b =>
+      modelBuilder.Entity("Yoma.Core.Infrastructure.Database.PartnerSync.Entities.Lookups.Partner", b =>
           {
             b.Property<Guid>("Id")
                       .ValueGeneratedOnAdd()
@@ -1691,15 +1691,21 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                       .IsRequired()
                       .HasColumnType("varchar(20)");
 
+            b.Property<string>("SyncTypesEnabled")
+                      .IsRequired()
+                      .ValueGeneratedOnAdd()
+                      .HasColumnType("text")
+                      .HasDefaultValue("{\"Push\":[\"Opportunity\"]}");
+
             b.HasKey("Id");
 
             b.HasIndex("Name")
                       .IsUnique();
 
-            b.ToTable("Partner", "PartnerSharing");
+            b.ToTable("Partner", "PartnerSync");
           });
 
-      modelBuilder.Entity("Yoma.Core.Infrastructure.Database.PartnerSharing.Entities.Lookups.ProcessingStatus", b =>
+      modelBuilder.Entity("Yoma.Core.Infrastructure.Database.PartnerSync.Entities.Lookups.ProcessingStatus", b =>
           {
             b.Property<Guid>("Id")
                       .ValueGeneratedOnAdd()
@@ -1717,10 +1723,10 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.HasIndex("Name")
                       .IsUnique();
 
-            b.ToTable("ProcessingStatus", "PartnerSharing");
+            b.ToTable("ProcessingStatus", "PartnerSync");
           });
 
-      modelBuilder.Entity("Yoma.Core.Infrastructure.Database.PartnerSharing.Entities.ProcessingLog", b =>
+      modelBuilder.Entity("Yoma.Core.Infrastructure.Database.PartnerSync.Entities.ProcessingLog", b =>
           {
             b.Property<Guid>("Id")
                       .ValueGeneratedOnAdd()
@@ -1758,6 +1764,12 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.Property<Guid>("StatusId")
                       .HasColumnType("uuid");
 
+            b.Property<string>("SyncType")
+                      .IsRequired()
+                      .ValueGeneratedOnAdd()
+                      .HasColumnType("varchar(25)")
+                      .HasDefaultValue("Push");
+
             b.HasKey("Id");
 
             b.HasIndex("OpportunityId");
@@ -1766,9 +1778,9 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
             b.HasIndex("StatusId");
 
-            b.HasIndex("EntityType", "OpportunityId", "PartnerId", "Action", "StatusId", "EntityExternalId", "DateCreated", "DateModified");
+            b.HasIndex("EntityType", "OpportunityId", "PartnerId", "Action", "SyncType", "StatusId", "EntityExternalId", "DateCreated", "DateModified");
 
-            b.ToTable("ProcessingLog", "PartnerSharing");
+            b.ToTable("ProcessingLog", "PartnerSync");
           });
 
       modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Referral.Entities.Block", b =>
@@ -3332,19 +3344,19 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.Navigation("VerificationType");
           });
 
-      modelBuilder.Entity("Yoma.Core.Infrastructure.Database.PartnerSharing.Entities.ProcessingLog", b =>
+      modelBuilder.Entity("Yoma.Core.Infrastructure.Database.PartnerSync.Entities.ProcessingLog", b =>
           {
             b.HasOne("Yoma.Core.Infrastructure.Database.Opportunity.Entities.Opportunity", "Opportunity")
                       .WithMany()
                       .HasForeignKey("OpportunityId");
 
-            b.HasOne("Yoma.Core.Infrastructure.Database.PartnerSharing.Entities.Lookups.Partner", "Partner")
+            b.HasOne("Yoma.Core.Infrastructure.Database.PartnerSync.Entities.Lookups.Partner", "Partner")
                       .WithMany()
                       .HasForeignKey("PartnerId")
                       .OnDelete(DeleteBehavior.Cascade)
                       .IsRequired();
 
-            b.HasOne("Yoma.Core.Infrastructure.Database.PartnerSharing.Entities.Lookups.ProcessingStatus", "Status")
+            b.HasOne("Yoma.Core.Infrastructure.Database.PartnerSync.Entities.Lookups.ProcessingStatus", "Status")
                       .WithMany()
                       .HasForeignKey("StatusId")
                       .OnDelete(DeleteBehavior.Cascade)

@@ -1,0 +1,33 @@
+namespace Yoma.Core.Domain.PartnerSync.Models
+{
+  public class ProcessingLog
+  {
+    public Guid Id { get; set; }
+
+    public string EntityType { get; set; } = null!;
+
+    public Guid? OpportunityId { get; set; }
+
+    public Guid PartnerId { get; set; }
+
+    public Partner Partner { get; set; }
+
+    public string SyncType { get; set; } = null!;
+
+    public string Action { get; set; } = null!;
+
+    public Guid StatusId { get; set; }
+
+    public ProcessingStatus Status { get; set; }
+
+    public string? EntityExternalId { get; set; }
+
+    public string? ErrorReason { get; set; }
+
+    public byte? RetryCount { get; set; }
+
+    public DateTimeOffset DateCreated { get; set; }
+
+    public DateTimeOffset DateModified { get; set; }
+  }
+}

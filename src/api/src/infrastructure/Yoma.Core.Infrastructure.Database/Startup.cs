@@ -151,14 +151,14 @@ namespace Yoma.Core.Infrastructure.Database
       services.AddScoped<IRepository<OpportunityVerificationType>, OpportunityVerificationTypeRepository>();
       #endregion Opportunity
 
-      #region PartnerSharing
+      #region PartnerSync
       #region Lookups
-      services.AddScoped<IRepository<Domain.PartnerSharing.Models.Lookups.Partner>, PartnerSharing.Repositories.Lookups.PartnerRepository>();
-      services.AddScoped<IRepository<Domain.PartnerSharing.Models.Lookups.ProcessingStatus>, PartnerSharing.Repositories.Lookups.ProcessingStatusRepository>();
+      services.AddScoped<IRepository<Domain.PartnerSync.Models.Lookups.Partner>, PartnerSync.Repositories.Lookups.PartnerRepository>();
+      services.AddScoped<IRepository<Domain.PartnerSync.Models.Lookups.ProcessingStatus>, PartnerSync.Repositories.Lookups.ProcessingStatusRepository>();
       #endregion Lookups
 
-      services.AddScoped<IRepositoryBatched<Domain.PartnerSharing.Models.ProcessingLog>, PartnerSharing.Repositories.ProcessingLogRepository>();
-      #endregion PartnerSharing
+      services.AddScoped<IRepositoryBatched<Domain.PartnerSync.Models.ProcessingLog>, PartnerSync.Repositories.ProcessingLogRepository>();
+      #endregion PartnerSync
 
       #region Referral
       #region Lookups

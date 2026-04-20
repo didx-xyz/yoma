@@ -1,9 +1,9 @@
 using Microsoft.Extensions.Logging;
-using Yoma.Core.Domain.Notification.Interfaces;
-using Yoma.Core.Domain.Notification.Models;
 using Yoma.Core.Domain.Entity;
 using Yoma.Core.Domain.Entity.Helpers;
 using Yoma.Core.Domain.Entity.Interfaces;
+using Yoma.Core.Domain.Notification.Interfaces;
+using Yoma.Core.Domain.Notification.Models;
 
 namespace Yoma.Core.Domain.Notification.Services
 {

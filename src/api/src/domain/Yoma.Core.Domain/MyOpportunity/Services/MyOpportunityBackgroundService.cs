@@ -3,17 +3,17 @@ using Microsoft.Extensions.Options;
 using System.ComponentModel.DataAnnotations;
 using System.Reflection;
 using Yoma.Core.Domain.Core;
+using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
+using Yoma.Core.Domain.MyOpportunity.Interfaces;
+using Yoma.Core.Domain.MyOpportunity.Models;
 using Yoma.Core.Domain.Notification;
 using Yoma.Core.Domain.Notification.Interfaces;
 using Yoma.Core.Domain.Notification.Models;
-using Yoma.Core.Domain.MyOpportunity.Interfaces;
-using Yoma.Core.Domain.MyOpportunity.Models;
 using Yoma.Core.Domain.Opportunity;
 using Yoma.Core.Domain.Opportunity.Interfaces;
-using Yoma.Core.Domain.Core.Extensions;
 
 namespace Yoma.Core.Domain.MyOpportunity.Services
 {

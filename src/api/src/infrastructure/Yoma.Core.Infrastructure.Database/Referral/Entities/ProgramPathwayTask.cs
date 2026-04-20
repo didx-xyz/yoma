@@ -1,6 +1,6 @@
-using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using Yoma.Core.Infrastructure.Shared.Entities;
 
 namespace Yoma.Core.Infrastructure.Database.Referral.Entities

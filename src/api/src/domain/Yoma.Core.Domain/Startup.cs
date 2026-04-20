@@ -36,13 +36,13 @@ using Yoma.Core.Domain.Opportunity.Interfaces;
 using Yoma.Core.Domain.Opportunity.Interfaces.Lookups;
 using Yoma.Core.Domain.Opportunity.Services;
 using Yoma.Core.Domain.Opportunity.Services.Lookups;
-using Yoma.Core.Domain.PartnerSharing;
-using Yoma.Core.Domain.PartnerSharing.Interfaces;
-using Yoma.Core.Domain.PartnerSharing.Interfaces.Lookups;
-using Yoma.Core.Domain.PartnerSharing.Interfaces.Provider;
-using Yoma.Core.Domain.PartnerSharing.Services;
-using Yoma.Core.Domain.PartnerSharing.Services.Lookups;
-using Yoma.Core.Domain.PartnerSharing.Services.Provider;
+using Yoma.Core.Domain.PartnerSync;
+using Yoma.Core.Domain.PartnerSync.Interfaces;
+using Yoma.Core.Domain.PartnerSync.Interfaces.Lookups;
+using Yoma.Core.Domain.PartnerSync.Interfaces.Provider;
+using Yoma.Core.Domain.PartnerSync.Services;
+using Yoma.Core.Domain.PartnerSync.Services.Lookups;
+using Yoma.Core.Domain.PartnerSync.Services.Provider;
 using Yoma.Core.Domain.Referral.Interfaces;
 using Yoma.Core.Domain.Referral.Interfaces.Lookups;
 using Yoma.Core.Domain.Referral.Services;
@@ -171,17 +171,37 @@ namespace Yoma.Core.Domain
       services.AddScoped<IOpportunityInfoService, OpportunityInfoService>();
       #endregion Opportunity
 
-      #region Partner Sharing
+      #region Partner Sync
       #region Lookups
       services.AddScoped<IPartnerService, PartnerService>();
       services.AddScoped<IProcessingStatusService, ProcessingStatusService>();
       #endregion Lookups
 
+      #region Provider
+      services.AddScoped<ISyncProviderClientFactoryResolver>(sp =>
+        new ProviderClientFactoryResolver(
+          new Dictionary<(Partner Partner, System.Type Type), object>
+          {
+          {
+            (Partner.SAYouth, typeof(ISyncProviderClientPush<Opportunity.Models.Opportunity>)),
+            sp.GetRequiredService<ISyncProviderClientFactory<ISyncProviderClientPush<Opportunity.Models.Opportunity>>>()
+          },
+          {
+            (Partner.Jobberman, typeof(ISyncProviderClientPull<Opportunity.Models.Opportunity>)),
+            sp.GetRequiredService<ISyncProviderClientFactory<ISyncProviderClientPull<Opportunity.Models.Opportunity>>>()
+          },
+          {
+            (Partner.Alison, typeof(ISyncProviderClientPull<Opportunity.Models.Opportunity>)),
+            sp.GetRequiredService<ISyncProviderClientFactory<ISyncProviderClientPull<Opportunity.Models.Opportunity>>>()
+          }
+          }));
+      #endregion Provider
+
       services.AddScoped<IProcessingLogHelperService, ProcessingLogHelperService>();
-      services.AddScoped<ISharingBackgroundService, SharingBackgroundService>();
-      services.AddScoped<ISharingInfoService, SharingInfoService>();
-      services.AddScoped<ISharingService, SharingService>();
-      #endregion Partner Sharing
+      services.AddScoped<ISyncBackgroundService, SyncBackgroundService>();
+      services.AddScoped<ISyncInfoService, SyncInfoService>();
+      services.AddScoped<ISyncService, SyncService>();
+      #endregion Partner Sync
 
       #region Referral
       #region Lookups
@@ -233,11 +253,6 @@ namespace Yoma.Core.Domain
       #endregion Treasury
     }
 
-    public static void ConfigureServices_DomainServicesCompositionFactory(this IServiceCollection services, Func<IServiceProvider, IDictionary<Partner, ISharingProviderClientFactory>> factoriesResolver)
-    {
-      services.AddScoped<ISharingProviderClientFactoryPartner>(sp => new SharingProviderClientFactoryPartner(factoriesResolver(sp)));
-    }
-
     public static void Configure_RecurringJobs(this IConfiguration configuration, AppSettings appSettings, Core.Environment environment)
     {
       var options = configuration.GetSection(ScheduleJobOptions.Section).Get<ScheduleJobOptions>() ?? throw new InvalidOperationException($"Failed to retrieve configuration section '{ScheduleJobOptions.Section}'");
@@ -267,10 +282,13 @@ namespace Yoma.Core.Domain
         $"Opportunity Deletion [Archiving] ({OpportunityBackgroundService.Statuses_Deletion.JoinNames()} for more than {options.OpportunityDeletionIntervalInDays} days)",
         s => s.ProcessDeletion(), options.OpportunityDeletionSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
 
-      //partner sharing
-      RecurringJob.AddOrUpdate<ISharingBackgroundService>(
-        $"Partner Sharing Synchronization",
-        s => s.ProcessSharing(), options.PartnerSharingSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
+      //partner synchronization
+      RecurringJob.AddOrUpdate<ISyncBackgroundService>(
+        $"Partner Synchronization Push", s => s.ProcessSyncPush(), options.PartnerSyncPushSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
+
+      //partner synchronization
+      RecurringJob.AddOrUpdate<ISyncBackgroundService>(
+        $"Partner Synchronization Pull", s => s.ProcessSyncPull(), options.PartnerSyncPullSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
 
       //my opportunity
       RecurringJob.AddOrUpdate<IMyOpportunityBackgroundService>(

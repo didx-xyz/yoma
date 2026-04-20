@@ -1,9 +1,9 @@
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
+using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
-using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.SSI.Interfaces.Lookups;
 using Yoma.Core.Domain.SSI.Models.Lookups;
 

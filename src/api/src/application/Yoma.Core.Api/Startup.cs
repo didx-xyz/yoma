@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.OpenApi;
 using StackExchange.Redis;
 using System.Net.Mime;
 using tusdotnet.Helpers;
@@ -22,21 +23,19 @@ using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Core.Services;
 using Yoma.Core.Domain.IdentityProvider.Interfaces;
-using Yoma.Core.Domain.PartnerSharing;
-using Yoma.Core.Domain.PartnerSharing.Interfaces.Provider;
-using Yoma.Core.Infrastructure.Shared;
 using Yoma.Core.Infrastructure.AmazonS3;
 using Yoma.Core.Infrastructure.AriesCloud;
 using Yoma.Core.Infrastructure.Bitly;
+using Yoma.Core.Infrastructure.Chimoney;
 using Yoma.Core.Infrastructure.Database;
 using Yoma.Core.Infrastructure.Emsi;
 using Yoma.Core.Infrastructure.Keycloak;
 using Yoma.Core.Infrastructure.SAYouth;
 using Yoma.Core.Infrastructure.SendGrid;
+using Yoma.Core.Infrastructure.Shared;
 using Yoma.Core.Infrastructure.Substack;
 using Yoma.Core.Infrastructure.Twilio;
 using Yoma.Core.Infrastructure.Zlto;
-using Microsoft.OpenApi;
 
 namespace Yoma.Core.Api
 {
@@ -87,8 +86,9 @@ namespace Yoma.Core.Api
       services.ConfigureServices_EmailProvider(_configuration);
       services.ConfigureServices_MessageProvider(_configuration);
       services.ConfigureServices_RewardProvider(_configuration);
+      services.ConfigureServices_RewardCashoutProvider(_configuration);
       services.ConfigureServices_NewsFeedProvider(_configuration);
-      services.ConfigureServices_SharingProvider(_configuration);
+      ConfigureServices_SyncProviders(services, _configuration);
       #endregion Configuration
 
       #region System
@@ -134,24 +134,16 @@ namespace Yoma.Core.Api
       services.ConfigureServices_InfrastructureBlobProvider();
       services.AddResumableUploadStore(_environment);
       services.ConfigureServices_InfrastructureShortLinkProvider();
+      services.ConfigureServices_InfrastructureLaborMarketProvider();
       services.ConfigureServices_InfrastructureDatabase(_configuration, _appSettings);
       services.ConfigureServices_InfrastructureSSIProvider(_configuration, _appSettings);
-      services.ConfigureServices_InfrastructureNewsFeedProvider(_configuration, _appSettings);
-      services.ConfigureServices_InfrastructureLaborMarketProvider();
       services.ConfigureServices_InfrastructureIdentityProvider();
-      services.ConfigureServices_InfrastructureSharingProvider();
       services.ConfigureServices_InfrastructureEmailProvider(_configuration);
       services.ConfigureServices_InfrastructureMessageProvider(_configuration);
       services.ConfigureServices_InfrastructureRewardProvider();
-
-      services.ConfigureServices_DomainServicesCompositionFactory(sp =>
-      {
-        var factories = new Dictionary<Partner, ISharingProviderClientFactory>
-            {
-                { Partner.SAYouth, sp.GetRequiredService<ISharingProviderClientFactory>() }
-            };
-        return factories;
-      });
+      services.ConfigureServices_InfrastructureRewardCashoutProvider();
+      services.ConfigureServices_InfrastructureNewsFeedProvider(_configuration, _appSettings);
+      ConfigureServices_InfrastructureSyncProviders(services);
       #endregion Services & Infrastructure
 
       #region 3rd Party (post ConfigureServices_InfrastructureDatabase)
@@ -229,7 +221,7 @@ namespace Yoma.Core.Api
         }).AllowAnonymous();
 
         endpoints.MapRewardProviderHealthEndpoints(Constants.Api_Version);
-        endpoints.MapSharingProviderHealthEndpoints(Constants.Api_Version);
+        endpoints.MapSyncProviderHealthEndpoints(Constants.Api_Version);
         endpoints.MapNewsFeedProviderHealthEndpoints(Constants.Api_Version);
 
         endpoints.MapResumableUploadEndpoints(_configuration, Constants.Authorization_Policy);
@@ -250,6 +242,24 @@ namespace Yoma.Core.Api
     #endregion
 
     #region Private Members
+    private static void ConfigureServices_SyncProviders(IServiceCollection services, IConfiguration configuration)
+    {
+      Infrastructure.SAYouth.Startup.ConfigureServices_SyncProvider(services, configuration);
+
+      Infrastructure.Jobberman.Startup.ConfigureServices_SyncProvider(services, configuration);
+
+      Infrastructure.Alison.Startup.ConfigureServices_SyncProvider(services, configuration);
+    }
+
+    private static void ConfigureServices_InfrastructureSyncProviders(IServiceCollection services)
+    {
+      Infrastructure.SAYouth.Startup.ConfigureServices_InfrastructureSyncProvider(services);
+
+      Infrastructure.Jobberman.Startup.ConfigureServices_InfrastructureSyncProvider(services);
+
+      Infrastructure.Alison.Startup.ConfigureServices_InfrastructureSyncProvider(services);
+    }
+
     private static void ConfigureFlurl()
     {
       FlurlHttp.Clients.WithDefaults(builder => builder.Settings.JsonSerializer = new NewtonsoftJsonSerializer());

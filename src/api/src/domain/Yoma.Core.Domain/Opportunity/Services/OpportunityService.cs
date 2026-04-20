@@ -29,8 +29,8 @@ using Yoma.Core.Domain.Opportunity.Interfaces;
 using Yoma.Core.Domain.Opportunity.Interfaces.Lookups;
 using Yoma.Core.Domain.Opportunity.Models;
 using Yoma.Core.Domain.Opportunity.Validators;
-using Yoma.Core.Domain.PartnerSharing.Interfaces;
-using Yoma.Core.Domain.PartnerSharing.Services.Lookups;
+using Yoma.Core.Domain.PartnerSync.Interfaces;
+using Yoma.Core.Domain.PartnerSync.Services.Lookups;
 using Yoma.Core.Domain.SSI;
 using Yoma.Core.Domain.SSI.Helpers;
 using Yoma.Core.Domain.Treasury.Interfaces;
@@ -61,7 +61,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
     private readonly INotificationURLFactory _notificationURLFactory;
     private readonly INotificationDeliveryService _notificationDeliveryService;
     private readonly IIdentityProviderClient _identityProviderClient;
-    private readonly ISharingInfoService _sharingInfoService;
+    private readonly ISyncInfoService _syncInfoService;
     private readonly ITreasuryService _treasuryService;
 
     private readonly OpportunityRequestValidatorCreate _opportunityRequestValidatorCreate;
@@ -109,7 +109,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         INotificationURLFactory notificationURLFactory,
         INotificationDeliveryService notificationDeliveryService,
         IIdentityProviderClientFactory identityProviderClientFactory,
-        ISharingInfoService sharingInfoService,
+        ISyncInfoService syncInfoService,
         ITreasuryService treasuryService,
         OpportunityRequestValidatorCreate opportunityRequestValidatorCreate,
         OpportunityRequestValidatorUpdate opportunityRequestValidatorUpdate,
@@ -145,7 +145,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       _notificationURLFactory = notificationURLFactory ?? throw new ArgumentNullException(nameof(notificationURLFactory));
       _notificationDeliveryService = notificationDeliveryService ?? throw new ArgumentNullException(nameof(notificationDeliveryService));
       _identityProviderClient = identityProviderClientFactory.CreateClient() ?? throw new ArgumentNullException(nameof(identityProviderClientFactory));
-      _sharingInfoService = sharingInfoService ?? throw new ArgumentNullException(nameof(sharingInfoService));
+      _syncInfoService = syncInfoService ?? throw new ArgumentNullException(nameof(syncInfoService));
       _treasuryService = treasuryService ?? throw new ArgumentNullException(nameof(treasuryService));
 
       _opportunityRequestValidatorCreate = opportunityRequestValidatorCreate ?? throw new ArgumentNullException(nameof(opportunityRequestValidatorCreate));
@@ -1429,7 +1429,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
-        await AssertUpdatablePartnerSharing(request, resultCurrent); //check will abort sharing if possible and needs to be rolled back if the update fails
+        await AssertUpdatablePartnerSyncPush(request, resultCurrent); //check will abort synch if possible and needs to be rolled back if the update fails
 
         using var scope = TransactionScopeHelper.CreateReadCommitted();
         result = await _opportunityRepository.Update(result);
@@ -2025,7 +2025,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         throw new ValidationException($"The {nameof(Models.Opportunity)} can no longer be updated (current status '{opportunity.Status.ToDescription()}'). Required state '{Statuses_Updatable.JoinNames()}'");
     }
 
-    private async Task AssertUpdatablePartnerSharing(OpportunityRequestUpdate request, Models.Opportunity opportunityCurrent)
+    private async Task AssertUpdatablePartnerSyncPush(OpportunityRequestUpdate request, Models.Opportunity opportunityCurrent)
     {
       var reasons = new List<string>();
 
@@ -2053,7 +2053,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       if (reasons.Count == 0) return;
 
-      var shared = await _sharingInfoService.IsShared(PartnerSharing.EntityType.Opportunity, opportunityCurrent.Id, true);
+      var shared = await _syncInfoService.IsSynced(PartnerSync.SyncType.Push, PartnerSync.EntityType.Opportunity, opportunityCurrent.Id, true);
       if (!shared) return;
 
       var reasonText = string.Join("; ", reasons);

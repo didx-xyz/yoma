@@ -1,7 +1,7 @@
+using Amazon.S3;
 using System.Text;
 using tusdotnet.Interfaces;
 using tusdotnet.Models;
-using Amazon.S3;
 
 namespace Yoma.Core.Infrastructure.AmazonS3.Models
 {

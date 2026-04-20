@@ -82,11 +82,17 @@ namespace Yoma.Core.Domain.Core.Models
 
     public int ActionLinkDeletionScheduleIntervalInDays { get; set; }
 
-    public string PartnerSharingSchedule { get; set; } = null!;
+    public string PartnerSyncPushSchedule { get; set; } = null!;
 
-    public int PartnerSharingScheduleBatchSize { get; set; }
+    public int PartnerSyncPushScheduleBatchSize { get; set; }
 
-    public int PartnerSharingScheduleMaxIntervalInHours { get; set; }
+    public int PartnerSyncPushScheduleMaxIntervalInHours { get; set; }
+
+    public string PartnerSyncPullSchedule { get; set; } = null!;
+
+    public int PartnerSyncPullScheduleBatchSize { get; set; }
+
+    public int PartnerSyncPullScheduleMaxIntervalInHours { get; set; }
 
     public string OpportunityPublishedNotificationSchedule { get; set; } = null!;
 
