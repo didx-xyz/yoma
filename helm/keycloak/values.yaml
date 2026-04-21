@@ -8,7 +8,6 @@ ingress:
       nginx.ingress.kubernetes.io/proxy-busy-buffers-size: 128k
       nginx.ingress.kubernetes.io/proxy-buffering: "on"
       nginx.ingress.kubernetes.io/proxy-buffers-number: "8"
-      nginx.ingress.kubernetes.io/server-snippet: large_client_header_buffers 8 128k;
     className: nginx-internal
     rules:
       - host: example.com
@@ -22,7 +21,6 @@ ingress:
       nginx.ingress.kubernetes.io/proxy-busy-buffers-size: 128k
       nginx.ingress.kubernetes.io/proxy-buffering: "on"
       nginx.ingress.kubernetes.io/proxy-buffers-number: "8"
-      nginx.ingress.kubernetes.io/server-snippet: large_client_header_buffers 8 128k;
     className: nginx-internal
     rules:
       - host: auth.example.com
@@ -33,7 +31,6 @@ ingress:
       nginx.ingress.kubernetes.io/proxy-busy-buffers-size: 128k
       nginx.ingress.kubernetes.io/proxy-buffering: "on"
       nginx.ingress.kubernetes.io/proxy-buffers-number: "8"
-      nginx.ingress.kubernetes.io/server-snippet: large_client_header_buffers 8 128k;
     className: nginx-external
     rules:
       - host: "{{ .Values.keycloak.ingressDomain }}"
