@@ -21,11 +21,12 @@ namespace Yoma.Core.Domain.PartnerSync.Services
     #endregion
 
     #region Public Members
-    //TODO: Add latest-log lookup by sync type, partner, entity type and external id for pull processing
-    public ProcessingLog? GetByEntity(SyncType syncType, EntityType entityType, Guid entityId)
+    public ProcessingLog? GetByEntityLatest(SyncType syncType, EntityType entityType, Guid entityId)
     {
-      var statusAbortedId = _processingStatusService.GetByName(ProcessingStatus.Aborted.ToString()).Id;
-      var query = _processingLogRepository.Query().Where(o => o.SyncType == syncType.ToString() && o.EntityType == entityType.ToString() && o.StatusId != statusAbortedId); // Ignore status aborted
+      if (entityId == Guid.Empty)
+        throw new ArgumentNullException(nameof(entityId));
+
+      var query = Query(syncType, entityType);
 
       query = entityType switch
       {
@@ -33,8 +34,30 @@ namespace Yoma.Core.Domain.PartnerSync.Services
         _ => throw new InvalidOperationException($"Entity type of '{entityType}' not supported"),
       };
 
-      query = query.OrderByDescending(o => o.DateModified);
       return query.FirstOrDefault();
+    }
+
+    public ProcessingLog? GetByEntityLatest(SyncType syncType, Guid partnerId, EntityType entityType, string entityExternalId)
+    {
+      if (string.IsNullOrWhiteSpace(entityExternalId))
+        throw new ArgumentNullException(nameof(entityExternalId));
+      entityExternalId = entityExternalId.Trim();
+
+      var query = Query(syncType, entityType)
+        .Where(o => o.PartnerId == partnerId && o.EntityExternalId == entityExternalId);
+
+      return query.FirstOrDefault();
+    }
+    #endregion
+
+    #region Private Members
+    private IQueryable<ProcessingLog> Query(SyncType syncType, EntityType entityType)
+    {
+      var statusAbortedId = _processingStatusService.GetByName(ProcessingStatus.Aborted.ToString()).Id;
+
+      return _processingLogRepository.Query()
+        .Where(o => o.SyncType == syncType.ToString() && o.EntityType == entityType.ToString() && o.StatusId != statusAbortedId) // ignore aborted
+        .OrderByDescending(o => o.DateModified);
     }
     #endregion
   }

@@ -173,4 +173,11 @@ namespace Yoma.Core.Domain.Core
     /// </summary>
     Expired
   }
+
+  public enum SyncPartner
+  {
+    SAYouth,
+    Jobberman,
+    Alison
+  }
 }

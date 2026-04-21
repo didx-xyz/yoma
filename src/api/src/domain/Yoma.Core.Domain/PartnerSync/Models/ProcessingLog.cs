@@ -10,7 +10,7 @@ namespace Yoma.Core.Domain.PartnerSync.Models
 
     public Guid PartnerId { get; set; }
 
-    public Partner Partner { get; set; }
+    public Core.SyncPartner Partner { get; set; }
 
     public string SyncType { get; set; } = null!;
 

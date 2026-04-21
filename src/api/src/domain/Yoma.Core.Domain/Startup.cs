@@ -36,7 +36,6 @@ using Yoma.Core.Domain.Opportunity.Interfaces;
 using Yoma.Core.Domain.Opportunity.Interfaces.Lookups;
 using Yoma.Core.Domain.Opportunity.Services;
 using Yoma.Core.Domain.Opportunity.Services.Lookups;
-using Yoma.Core.Domain.PartnerSync;
 using Yoma.Core.Domain.PartnerSync.Interfaces;
 using Yoma.Core.Domain.PartnerSync.Interfaces.Lookups;
 using Yoma.Core.Domain.PartnerSync.Interfaces.Provider;
@@ -180,18 +179,18 @@ namespace Yoma.Core.Domain
       #region Provider
       services.AddScoped<ISyncProviderClientFactoryResolver>(sp =>
         new ProviderClientFactoryResolver(
-          new Dictionary<(Partner Partner, System.Type Type), object>
+          new Dictionary<(SyncPartner Partner, System.Type Type), object>
           {
           {
-            (Partner.SAYouth, typeof(ISyncProviderClientPush<Opportunity.Models.Opportunity>)),
+            (SyncPartner.SAYouth, typeof(ISyncProviderClientPush<Opportunity.Models.Opportunity>)),
             sp.GetRequiredService<ISyncProviderClientFactory<ISyncProviderClientPush<Opportunity.Models.Opportunity>>>()
           },
           {
-            (Partner.Jobberman, typeof(ISyncProviderClientPull<Opportunity.Models.Opportunity>)),
+            (SyncPartner.Jobberman, typeof(ISyncProviderClientPull<Opportunity.Models.Opportunity>)),
             sp.GetRequiredService<ISyncProviderClientFactory<ISyncProviderClientPull<Opportunity.Models.Opportunity>>>()
           },
           {
-            (Partner.Alison, typeof(ISyncProviderClientPull<Opportunity.Models.Opportunity>)),
+            (SyncPartner.Alison, typeof(ISyncProviderClientPull<Opportunity.Models.Opportunity>)),
             sp.GetRequiredService<ISyncProviderClientFactory<ISyncProviderClientPull<Opportunity.Models.Opportunity>>>()
           }
           }));

@@ -117,7 +117,7 @@ namespace Yoma.Core.Domain.Core.Models
     /// -1: Represents infinite retries. Never transitions to an error state.
     /// 0: Represents no retries. Immediately transitions to an error state.
     /// >0: Represents the maximum number of retries. Transitions to an error state when retries exceed the specified value.
-    public int PartnerSyncPushMaximumRetryAttempts { get; set; }
+    public int PartnerSyncMaximumRetryAttempts { get; set; }
 
     /// <summary>
     /// Determines the expiration behavior for item reservations

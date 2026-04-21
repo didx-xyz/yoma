@@ -5,9 +5,13 @@ using Yoma.Core.Infrastructure.Database.PartnerSync.Entities.Lookups;
 
 namespace Yoma.Core.Infrastructure.Database.PartnerSync.Entities
 {
+  //TODO: Regenerate migration 'ApplicationDb_Partner_Sync_Pull' due to index changes below
+
   [Table("ProcessingLog", Schema = "PartnerSync")]
   //entity per sync type and partner can be created or deleted once and updated multiple times; no unique index; handled by service
-  [Index(nameof(EntityType), nameof(OpportunityId), nameof(PartnerId), nameof(Action), nameof(SyncType), nameof(StatusId), nameof(EntityExternalId), nameof(DateCreated), nameof(DateModified))]
+  [Index(nameof(SyncType), nameof(EntityType), nameof(OpportunityId), nameof(StatusId), nameof(DateModified))]
+  [Index(nameof(SyncType), nameof(EntityType), nameof(PartnerId), nameof(EntityExternalId), nameof(StatusId), nameof(DateModified))]
+  [Index(nameof(SyncType), nameof(PartnerId), nameof(Action), nameof(StatusId), nameof(DateModified))]
   public class ProcessingLog : Shared.Entities.BaseEntity<Guid>
   {
     [Required]

@@ -2,13 +2,13 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
-using Yoma.Core.Domain.Opportunity.Models;
 using Yoma.Core.Domain.PartnerSync.Interfaces.Provider;
+using Yoma.Core.Domain.PartnerSync.Models;
 using Yoma.Core.Infrastructure.Alison.Models;
 
 namespace Yoma.Core.Infrastructure.Alison.Client
 {
-  public sealed class AlisonClientFactory : ISyncProviderClientFactory<ISyncProviderClientPull<Opportunity>>
+  public sealed class AlisonClientFactory : ISyncProviderClientFactory<ISyncProviderClientPull<SyncItemOpportunity>>
   {
     #region Class Variables
     private readonly ILogger<AlisonClient> _logger;
@@ -31,7 +31,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
     #endregion
 
     #region Public Members
-    public ISyncProviderClientPull<Opportunity> CreateClient()
+    public ISyncProviderClientPull<SyncItemOpportunity> CreateClient()
     {
       return new AlisonClient(_logger, _environmentProvider, _appSettings, _options);
     }

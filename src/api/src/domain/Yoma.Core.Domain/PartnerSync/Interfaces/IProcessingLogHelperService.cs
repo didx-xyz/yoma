@@ -4,6 +4,8 @@ namespace Yoma.Core.Domain.PartnerSync.Interfaces
 {
   public interface IProcessingLogHelperService
   {
-    ProcessingLog? GetByEntity(SyncType syncType, EntityType entityType, Guid entityId);
+    ProcessingLog? GetByEntityLatest(SyncType syncType, EntityType entityType, Guid entityId);
+
+    ProcessingLog? GetByEntityLatest(SyncType syncType, Guid partnerId, EntityType entityType, string entityExternalId);
   }
 }

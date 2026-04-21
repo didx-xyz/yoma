@@ -186,15 +186,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       if (ensureOrganizationAuthorization)
         _organizationService.IsAdmin(result.OrganizationId, true);
 
-      if (includeComputed)
-      {
-        result.SetPublished();
-        result.OrganizationLogoURL = GetBlobObjectURL(result.OrganizationLogoStorageType, result.OrganizationLogoKey);
-        result.OrganizationZltoRewardBalanceCurrentFinancialYear = result.OrganizationZltoRewardPoolCurrentFinancialYear.HasValue ? result.OrganizationZltoRewardPoolCurrentFinancialYear - (result.OrganizationZltoRewardCumulativeCurrentFinancialYear ?? default) : null;
-        result.OrganizationYomaRewardBalanceCurrentFinancialYear = result.OrganizationYomaRewardPoolCurrentFinancialYear.HasValue ? result.OrganizationYomaRewardPoolCurrentFinancialYear - (result.OrganizationYomaRewardCumulativeCurrentFinancialYear ?? default) : null;
-        result.ZltoRewardBalance = result.ZltoRewardPool.HasValue ? result.ZltoRewardPool - (result.ZltoRewardCumulative ?? default) : null;
-        result.YomaRewardBalance = result.YomaRewardPool.HasValue ? result.YomaRewardPool - (result.YomaRewardCumulative ?? default) : null;
-      }
+      if (includeComputed) ParseComputed(result);
 
       return result;
     }
@@ -210,15 +202,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 #pragma warning restore CA1862 // Use the 'StringComparison' method overloads to perform case-insensitive string comparisons
       if (result == null) return null;
 
-      if (includeComputed)
-      {
-        result.SetPublished();
-        result.OrganizationLogoURL = GetBlobObjectURL(result.OrganizationLogoStorageType, result.OrganizationLogoKey);
-        result.OrganizationZltoRewardBalanceCurrentFinancialYear = result.OrganizationZltoRewardPoolCurrentFinancialYear.HasValue ? result.OrganizationZltoRewardPoolCurrentFinancialYear - (result.OrganizationZltoRewardCumulativeCurrentFinancialYear ?? default) : null;
-        result.OrganizationYomaRewardBalanceCurrentFinancialYear = result.OrganizationYomaRewardPoolCurrentFinancialYear.HasValue ? result.OrganizationYomaRewardPoolCurrentFinancialYear - (result.OrganizationYomaRewardCumulativeCurrentFinancialYear ?? default) : null;
-        result.ZltoRewardBalance = result.ZltoRewardPool.HasValue ? result.ZltoRewardPool - (result.ZltoRewardCumulative ?? default) : null;
-        result.YomaRewardBalance = result.YomaRewardPool.HasValue ? result.YomaRewardPool - (result.YomaRewardCumulative ?? default) : null;
-      }
+      if (includeComputed) ParseComputed(result);
 
       return result;
     }
@@ -245,15 +229,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 #pragma warning restore CA1862 // Use the 'StringComparison' method overloads to perform case-insensitive string comparisons
       if (result == null) return null;
 
-      if (includeComputed)
-      {
-        result.SetPublished();
-        result.OrganizationLogoURL = GetBlobObjectURL(result.OrganizationLogoStorageType, result.OrganizationLogoKey);
-        result.OrganizationZltoRewardBalanceCurrentFinancialYear = result.OrganizationZltoRewardPoolCurrentFinancialYear.HasValue ? result.OrganizationZltoRewardPoolCurrentFinancialYear - (result.OrganizationZltoRewardCumulativeCurrentFinancialYear ?? default) : null;
-        result.OrganizationYomaRewardBalanceCurrentFinancialYear = result.OrganizationYomaRewardPoolCurrentFinancialYear.HasValue ? result.OrganizationYomaRewardPoolCurrentFinancialYear - (result.OrganizationYomaRewardCumulativeCurrentFinancialYear ?? default) : null;
-        result.ZltoRewardBalance = result.ZltoRewardPool.HasValue ? result.ZltoRewardPool - (result.ZltoRewardCumulative ?? default) : null;
-        result.YomaRewardBalance = result.YomaRewardPool.HasValue ? result.YomaRewardPool - (result.YomaRewardCumulative ?? default) : null;
-      }
+      if (includeComputed) ParseComputed(result);
 
       return result;
     }
@@ -266,16 +242,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       var results = _opportunityRepository.Contains(_opportunityRepository.Query(includeChildItems), value).ToList();
 
-      if (includeComputed)
-        results.ForEach(o =>
-        {
-          o.SetPublished();
-          o.OrganizationLogoURL = GetBlobObjectURL(o.OrganizationLogoStorageType, o.OrganizationLogoKey);
-          o.OrganizationZltoRewardBalanceCurrentFinancialYear = o.OrganizationZltoRewardPoolCurrentFinancialYear.HasValue ? o.OrganizationZltoRewardPoolCurrentFinancialYear - (o.OrganizationZltoRewardCumulativeCurrentFinancialYear ?? default) : null;
-          o.OrganizationYomaRewardBalanceCurrentFinancialYear = o.OrganizationYomaRewardPoolCurrentFinancialYear.HasValue ? o.OrganizationYomaRewardPoolCurrentFinancialYear - (o.OrganizationYomaRewardCumulativeCurrentFinancialYear ?? default) : null;
-          o.ZltoRewardBalance = o.ZltoRewardPool.HasValue ? o.ZltoRewardPool - (o.ZltoRewardCumulative ?? default) : null;
-          o.YomaRewardBalance = o.YomaRewardPool.HasValue ? o.YomaRewardPool - (o.YomaRewardCumulative ?? default) : null;
-        });
+      if (includeComputed) results.ForEach(o => ParseComputed(o));
 
       return results;
     }
@@ -1020,15 +987,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
       }
 
       result.Items = [.. query];
-      result.Items.ForEach(o =>
-      {
-        o.SetPublished();
-        if (!filter.UnrestrictedQuery) o.OrganizationLogoURL = GetBlobObjectURL(o.OrganizationLogoStorageType, o.OrganizationLogoKey);
-        o.OrganizationZltoRewardBalanceCurrentFinancialYear = o.OrganizationZltoRewardPoolCurrentFinancialYear.HasValue ? o.OrganizationZltoRewardPoolCurrentFinancialYear - (o.OrganizationZltoRewardCumulativeCurrentFinancialYear ?? default) : null;
-        o.OrganizationYomaRewardBalanceCurrentFinancialYear = o.OrganizationYomaRewardPoolCurrentFinancialYear.HasValue ? o.OrganizationYomaRewardPoolCurrentFinancialYear - (o.OrganizationYomaRewardCumulativeCurrentFinancialYear ?? default) : null;
-        o.ZltoRewardBalance = o.ZltoRewardPool.HasValue ? o.ZltoRewardPool - (o.ZltoRewardCumulative ?? default) : null;
-        o.YomaRewardBalance = o.YomaRewardPool.HasValue ? o.YomaRewardPool - (o.YomaRewardCumulative ?? default) : null;
-      });
+
+      result.Items.ForEach(o => ParseComputed(o));
 
       return result;
     }
@@ -1294,7 +1254,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         scope.Complete();
       });
 
-      result.SetPublished();
+      ParseComputed(result, true);
 
       //sent when created irrespective of the opportunity status; only trigger point; trigger point on status update has been removed (sent to admin)
       if (sendNotification)
@@ -1456,7 +1416,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
         scope.Complete();
       });
-      result.SetPublished();
+      ParseComputed(result, true);
 
       if (raiseEvent)
         await _mediator.Publish(new OpportunityEvent(EventType.Update, result));
@@ -1649,7 +1609,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       result = await _opportunityRepository.Update(result);
 
-      result.SetPublished();
+      ParseComputed(result, true);
 
       await _mediator.Publish(new OpportunityEvent(eventType.Value, result));
 
@@ -1893,6 +1853,34 @@ namespace Yoma.Core.Domain.Opportunity.Services
     #endregion
 
     #region Private Members
+    /// <summary>
+    /// Populates computed properties on the opportunity.
+    /// 
+    /// When <paramref name="baseOnly"/> is true, only essential computed fields are populated,
+    /// specifically the published state and pull-sync lock information. This is used in flows
+    /// where other computed values are already calculated (e.g., create/update operations or
+    /// direct retrieval scenarios such as status changes).
+    /// 
+    /// When <paramref name="baseOnly"/> is false, all computed properties are populated,
+    /// including reward balances and organization logo URL.
+    /// </summary>
+    private void ParseComputed(Models.Opportunity result, bool baseOnly = false)
+    {
+      result.SetPublished();
+
+      var (isSynced, partner) = _syncInfoService.IsSynced(PartnerSync.SyncType.Pull, PartnerSync.EntityType.Opportunity, result.Id);
+      result.SyncedLocked = isSynced;
+      result.SyncedLockedPartner = partner;
+
+      if (baseOnly) return;
+
+      result.OrganizationLogoURL = GetBlobObjectURL(result.OrganizationLogoStorageType, result.OrganizationLogoKey);
+      result.OrganizationZltoRewardBalanceCurrentFinancialYear = result.OrganizationZltoRewardPoolCurrentFinancialYear.HasValue ? result.OrganizationZltoRewardPoolCurrentFinancialYear - (result.OrganizationZltoRewardCumulativeCurrentFinancialYear ?? default) : null;
+      result.OrganizationYomaRewardBalanceCurrentFinancialYear = result.OrganizationYomaRewardPoolCurrentFinancialYear.HasValue ? result.OrganizationYomaRewardPoolCurrentFinancialYear - (result.OrganizationYomaRewardCumulativeCurrentFinancialYear ?? default) : null;
+      result.ZltoRewardBalance = result.ZltoRewardPool.HasValue ? result.ZltoRewardPool - (result.ZltoRewardCumulative ?? default) : null;
+      result.YomaRewardBalance = result.YomaRewardPool.HasValue ? result.YomaRewardPool - (result.YomaRewardCumulative ?? default) : null;
+    }
+
     private async Task<(Models.Opportunity Opporunity, EventType ActionTaken)> ProcessImportAndUpsertOpportunity(Guid organizationId, OpportunityInfoCsvImport item, bool probeOnly)
     {
       if (string.IsNullOrWhiteSpace(item.ExternalId))
@@ -2053,8 +2041,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       if (reasons.Count == 0) return;
 
-      var shared = await _syncInfoService.IsSynced(PartnerSync.SyncType.Push, PartnerSync.EntityType.Opportunity, opportunityCurrent.Id, true);
-      if (!shared) return;
+      var (isSynced, partner) = _syncInfoService.IsSynced(PartnerSync.SyncType.Push, PartnerSync.EntityType.Opportunity, opportunityCurrent.Id, true);
+      if (!isSynced) return;
 
       var reasonText = string.Join("; ", reasons);
 

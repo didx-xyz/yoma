@@ -13,9 +13,9 @@ namespace Yoma.Core.Domain.PartnerSync.Interfaces.Provider
   public interface ISyncProviderClientPush<TItem> : ISyncProviderClient
     where TItem : class, new()
   {
-    Task<string> Create(SyncRequestItem<TItem> request);
+    Task<string> Create(SyncRequestPush<TItem> request);
 
-    Task Update(SyncRequestItem<TItem> request);
+    Task Update(SyncRequestPush<TItem> request);
 
     Task Delete(string externalId);
   }

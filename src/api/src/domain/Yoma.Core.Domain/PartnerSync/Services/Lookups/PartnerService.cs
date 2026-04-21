@@ -111,7 +111,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services.Lookups
       //filter based on partner and entity type specific exclusions
       foreach (var item in partners)
       {
-        var partner = Enum.Parse<Partner>(item.Name, true);
+        var partner = Enum.Parse<SyncPartner>(item.Name, true);
         switch (entityType.Value)
         {
           case EntityType.Opportunity:
@@ -129,7 +129,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services.Lookups
 
             switch (partner)
             {
-              case Partner.SAYouth:
+              case SyncPartner.SAYouth:
                 //only include opportunities of type learning, within countries World-Wide or South Africa and with an end date
                 //once shared, the type can not be changed
                 if (!string.Equals(opportunity.Type, Opportunity.Type.Learning.ToString(), StringComparison.OrdinalIgnoreCase))

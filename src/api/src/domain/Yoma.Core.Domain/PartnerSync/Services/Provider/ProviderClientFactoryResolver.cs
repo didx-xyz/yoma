@@ -5,18 +5,18 @@ namespace Yoma.Core.Domain.PartnerSync.Services.Provider
   public class ProviderClientFactoryResolver : ISyncProviderClientFactoryResolver
   {
     #region Class Variables
-    private readonly IDictionary<(Partner Partner, Type ClientType), object> _factories;
+    private readonly IDictionary<(Core.SyncPartner Partner, Type ClientType), object> _factories;
     #endregion
 
     #region Constructor
-    public ProviderClientFactoryResolver(IDictionary<(Partner Partner, Type ClientType), object> factories)
+    public ProviderClientFactoryResolver(IDictionary<(Core.SyncPartner Partner, Type ClientType), object> factories)
     {
       _factories = factories;
     }
     #endregion
 
     #region Public Members
-    public TClient CreateClient<TClient>(Partner partner)
+    public TClient CreateClient<TClient>(Core.SyncPartner partner)
       where TClient : class, ISyncProviderClient
     {
       if (_factories.TryGetValue((partner, typeof(TClient)), out var factory))

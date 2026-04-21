@@ -43,7 +43,7 @@ namespace Yoma.Core.Infrastructure.SAYouth.Client
     #endregion
 
     #region Public Members
-    public async Task<string> Create(SyncRequestItem<Opportunity> request)
+    public async Task<string> Create(SyncRequestPush<Opportunity> request)
     {
       if (!_appSettings.PartnerSyncEnabledEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment))
       {
@@ -66,7 +66,7 @@ namespace Yoma.Core.Infrastructure.SAYouth.Client
       return response.Details!.OpportunityId.ToString();
     }
 
-    public async Task Update(SyncRequestItem<Opportunity> request)
+    public async Task Update(SyncRequestPush<Opportunity> request)
     {
       if (!_appSettings.PartnerSyncEnabledEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment))
       {
@@ -176,7 +176,7 @@ namespace Yoma.Core.Infrastructure.SAYouth.Client
       };
     }
 
-    private OpportunitySkillingUpsertRequest ToRequestUpsert(SyncRequestItem<Opportunity> request)
+    private OpportunitySkillingUpsertRequest ToRequestUpsert(SyncRequestPush<Opportunity> request)
     {
       ArgumentNullException.ThrowIfNull(request, nameof(request));
 
@@ -214,7 +214,7 @@ namespace Yoma.Core.Infrastructure.SAYouth.Client
       return requestCreate;
     }
 
-    private static OpportunitySkillingUpsertRequest ToRequestUpsertAddressInfo(SyncRequestItem<Opportunity> request, OpportunitySkillingUpsertRequest requestUpsert)
+    private static OpportunitySkillingUpsertRequest ToRequestUpsertAddressInfo(SyncRequestPush<Opportunity> request, OpportunitySkillingUpsertRequest requestUpsert)
     {
       if (requestUpsert.FaceToFace == YesNoOption.No) return requestUpsert;
 
@@ -241,7 +241,7 @@ namespace Yoma.Core.Infrastructure.SAYouth.Client
       return requestUpsert;
     }
 
-    private static OpportunitySkillingUpsertRequest ToRequestUpsertContactInfo(SyncRequestItem<Opportunity> request, OpportunitySkillingUpsertRequest requestUpsert)
+    private static OpportunitySkillingUpsertRequest ToRequestUpsertContactInfo(SyncRequestPush<Opportunity> request, OpportunitySkillingUpsertRequest requestUpsert)
     {
       if (requestUpsert.FaceToFace == YesNoOption.No) return requestUpsert;
 

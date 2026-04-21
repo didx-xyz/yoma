@@ -2,7 +2,7 @@ using Yoma.Core.Domain.Entity.Models;
 
 namespace Yoma.Core.Domain.PartnerSync.Models
 {
-  public sealed class SyncRequestItem<TEntity>
+  public sealed class SyncRequestPush<TEntity>
     where TEntity : class, new()
   {
     public string? ExternalId { get; set; }

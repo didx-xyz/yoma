@@ -198,9 +198,7 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
         // create the user in Keycloak (credentials will be ignored here)
         await usersApi.PostUsersAsync(_keycloakAuthenticationOptions.Realm, requestKeycloak);
 
-        result = await GetUserByUsername(request.Username);
-        if (result == null)
-          throw new InvalidOperationException($"User '{request.Username}' was not found after creation.");
+        result = await GetUserByUsername(request.Username) ?? throw new InvalidOperationException($"User '{request.Username}' was not found after creation.");
 
         // set the password via the official API call
         var credential = new CredentialRepresentation

@@ -1,3 +1,4 @@
+using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.PartnerSync.Interfaces;
 using Yoma.Core.Domain.PartnerSync.Interfaces.Lookups;
@@ -25,24 +26,42 @@ namespace Yoma.Core.Domain.PartnerSync.Services
     #endregion
 
     #region Public Members
-    public async Task<bool> IsSynced(SyncType syncType, EntityType entityType, Guid entityId, bool abortIfPossible)
+    public (bool IsSynced, SyncPartner? Partner) IsSynced(SyncType syncType, EntityType entityType, Guid entityId)
     {
-      var existingItem = _processingLogHelperService.GetByEntity(syncType, entityType, entityId);
-      if (existingItem == null) return false;
+      return IsSynced(syncType, entityType, entityId, null);
+    }
+
+    public (bool IsSynced, SyncPartner? Partner) IsSynced(SyncType syncType, EntityType entityType, Guid entityId, bool? abortIfPossible)
+    {
+      return IsSyncedAsync(syncType, entityType, entityId, abortIfPossible).GetAwaiter().GetResult();
+    }
+
+    public async Task<(bool IsSynced, Core.SyncPartner? Partner)> IsSyncedAsync(SyncType syncType, EntityType entityType, Guid entityId)
+    {
+      return await IsSyncedAsync(syncType, entityType, entityId, null);
+    }
+
+    public async Task<(bool IsSynced, Core.SyncPartner? Partner)> IsSyncedAsync(SyncType syncType, EntityType entityType, Guid entityId, bool? abortIfPossible)
+    {
+      if (syncType == SyncType.Pull && abortIfPossible.HasValue)
+        throw new InvalidOperationException("Abort is not applicable for pull sync");
+
+      var existingItem = _processingLogHelperService.GetByEntityLatest(syncType, entityType, entityId);
+      if (existingItem == null) return (false, null);
 
       var action = Enum.Parse<SyncAction>(existingItem.Action, true);
 
-      if (action != SyncAction.Create) return true;
-
-      if (existingItem.Status == ProcessingStatus.Processed) return true;
-
-      if (!abortIfPossible) return true;
+      if (action != SyncAction.Create) return (true, existingItem.Partner);
+      if (existingItem.Status == ProcessingStatus.Processed) return (true, existingItem.Partner);
+      if (syncType == SyncType.Pull) return (true, existingItem.Partner);
+      if (abortIfPossible != true) return (true, existingItem.Partner);
 
       existingItem.StatusId = _processingStatusService.GetByName(ProcessingStatus.Aborted.ToString()).Id;
       existingItem.Status = ProcessingStatus.Aborted;
+
       await _processingLogRepository.Update(existingItem);
 
-      return false;
+      return (false, existingItem.Partner);
     }
     #endregion
   }

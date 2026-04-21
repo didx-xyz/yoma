@@ -1,13 +1,18 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using System.Transactions;
 using Yoma.Core.Domain.Core.Extensions;
+using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Entity;
 using Yoma.Core.Domain.Entity.Helpers;
 using Yoma.Core.Domain.Entity.Interfaces;
+using Yoma.Core.Domain.Lookups.Interfaces;
 using Yoma.Core.Domain.Opportunity;
+using Yoma.Core.Domain.Opportunity.Extensions;
 using Yoma.Core.Domain.Opportunity.Interfaces;
+using Yoma.Core.Domain.PartnerSync.Extensions;
 using Yoma.Core.Domain.PartnerSync.Interfaces;
 using Yoma.Core.Domain.PartnerSync.Interfaces.Lookups;
 using Yoma.Core.Domain.PartnerSync.Interfaces.Provider;
@@ -21,34 +26,40 @@ namespace Yoma.Core.Domain.PartnerSync.Services
     private readonly ILogger<SyncBackgroundService> _logger;
     private readonly AppSettings _appSettings;
     private readonly ScheduleJobOptions _scheduleJobOptions;
+    private readonly ICountryService _countryService;
     private readonly ISyncService _syncService;
     private readonly IPartnerService _partnerService;
     private readonly IOpportunityService _opportunityService;
     private readonly IOrganizationService _organizationService;
     private readonly ISyncProviderClientFactoryResolver _providerClientFactoryResolver;
     private readonly IDistributedLockService _distributedLockService;
+    private readonly IExecutionStrategyService _executionStrategyService;
     #endregion
 
     #region Constructor
     public SyncBackgroundService(ILogger<SyncBackgroundService> logger,
         IOptions<AppSettings> appSettings,
         IOptions<ScheduleJobOptions> scheduleJobOptions,
+        ICountryService countryService,
         ISyncService syncService,
         IPartnerService partnerService,
         IOpportunityService opportunityService,
         IOrganizationService organizationService,
         ISyncProviderClientFactoryResolver providerClientFactoryResolver,
-        IDistributedLockService distributedLockService)
+        IDistributedLockService distributedLockService,
+        IExecutionStrategyService executionStrategyService)
     {
       _logger = logger;
-      _appSettings = appSettings.Value;
-      _scheduleJobOptions = scheduleJobOptions.Value;
-      _syncService = syncService;
-      _partnerService = partnerService;
-      _opportunityService = opportunityService;
-      _organizationService = organizationService;
-      _providerClientFactoryResolver = providerClientFactoryResolver;
-      _distributedLockService = distributedLockService;
+      _appSettings = appSettings.Value ?? throw new ArgumentNullException(nameof(appSettings));
+      _scheduleJobOptions = scheduleJobOptions.Value ?? throw new ArgumentNullException(nameof(scheduleJobOptions));
+      _countryService = countryService ?? throw new ArgumentNullException(nameof(countryService));
+      _syncService = syncService ?? throw new ArgumentNullException(nameof(syncService));
+      _partnerService = partnerService ?? throw new ArgumentNullException(nameof(partnerService));
+      _opportunityService = opportunityService ?? throw new ArgumentNullException(nameof(opportunityService));
+      _organizationService = organizationService ?? throw new ArgumentNullException(nameof(organizationService));
+      _providerClientFactoryResolver = providerClientFactoryResolver ?? throw new ArgumentNullException(nameof(providerClientFactoryResolver));
+      _distributedLockService = distributedLockService ?? throw new ArgumentNullException(nameof(distributedLockService));
+      _executionStrategyService = executionStrategyService ?? throw new ArgumentNullException(nameof(executionStrategyService));
     }
     #endregion
 
@@ -104,7 +115,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
                   var opportunity = _opportunityService.GetById(item.OpportunityId.Value, true, true, false);
                   var organization = _organizationService.GetById(opportunity.OrganizationId, false, true, false);
 
-                  var request = new SyncRequestItem<Opportunity.Models.Opportunity>
+                  var request = new SyncRequestPush<Opportunity.Models.Opportunity>
                   {
                     Item = opportunity,
                     Organization = organization,
@@ -272,117 +283,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
         {
           if (executeUntil <= DateTimeOffset.UtcNow) break;
 
-          try
-          {
-            var partner = Enum.Parse<Partner>(partnerModel.Name, true);
-
-            if (!partnerModel.SyncTypesEnabledParsed.TryGetValue(SyncType.Pull, out var entityTypes) || entityTypes.Count == 0)
-              continue;
-
-            foreach (var entityType in entityTypes.Distinct())
-            {
-              if (executeUntil <= DateTimeOffset.UtcNow) break;
-
-              switch (entityType)
-              {
-                case EntityType.Opportunity:
-                  var pullProviderClient = _providerClientFactoryResolver.CreateClient<ISyncProviderClientPull<Opportunity.Models.Opportunity>>(partner);
-
-                  var pageNumber = 1;
-                  var pageSize = _scheduleJobOptions.PartnerSyncPullScheduleBatchSize;
-                  SyncResultPull<Opportunity.Models.Opportunity>? result = null;
-
-                  while (executeUntil > DateTimeOffset.UtcNow)
-                  {
-                    if (result == null)
-                    {
-                      var filter = new SyncFilterPull
-                      {
-                        PageNumber = pageNumber,
-                        PageSize = pageSize
-                      };
-
-                      if (_logger.IsEnabled(LogLevel.Information))
-                        _logger.LogInformation("Processing sync pull for partner '{partner}', entity type '{entityType}', on page '{pageNumber}' with batch size '{batchSize}'", partner, entityType, filter.PageNumber, filter.PageSize);
-
-                      result = await pullProviderClient.List(filter);
-
-                      if (!result.TotalCount.HasValue)
-                        throw new InvalidOperationException("Paginated filter: Total count expected but is null");
-
-                      if (result.Items.Count == 0)
-                      {
-                        if (_logger.IsEnabled(LogLevel.Information))
-                          _logger.LogInformation("No sync pull items found to process for partner '{partner}', entity type '{entityType}', on page '{pageNumber}'", partner, entityType, filter.PageNumber);
-
-                        break;
-                      }
-                    }
-
-                    // If the provider ignores paging and returns the full result set, page it locally
-                    var pagedByProvider = result.Items.Count <= pageSize;
-                    var items = pagedByProvider
-                      ? result.Items
-                      : [.. result.Items.Skip((pageNumber - 1) * pageSize).Take(pageSize)];
-
-                    if (items.Count == 0) break;
-
-                    foreach (var item in items)
-                    {
-                      if (string.IsNullOrWhiteSpace(item.ExternalId))
-                        throw new InvalidOperationException("External id expected");
-
-                      var action = SyncAction.Create;
-                      try
-                      {
-                        var opportunity = item.Item;
-
-                        //TODO: Get latest pull processing log by sync type, partner, entity type and external id
-
-                        //TODO: Determine pull action from latest log, local DB state and provider payload
-
-                        //TODO: Skip item if partner does not support the determined action
-
-                        //TODO: Create provider-managed opportunity
-                        //TODO: Update provider-managed opportunity
-                        //TODO: Delete or deactivate provider-managed opportunity
-
-                        //TODO: Mark pull processing log as processed
-
-                        //TODO: Log pull failure, increment retry count and enforce permanent skip rules
-                      }
-                      catch (Exception ex)
-                      {
-                        if (_logger.IsEnabled(LogLevel.Error))
-                          _logger.LogError(ex, "Failed to process sync pull item for partner '{partner}' and entity type '{entityType}': {errorMessage}", partner, entityType, ex.Message);
-
-                        await _syncService.LogPull(partnerModel.Id, action, entityType, null, item.ExternalId, ex.Message);
-                      }
-
-                      if (executeUntil <= DateTimeOffset.UtcNow) break;
-                    }
-
-                    if (executeUntil <= DateTimeOffset.UtcNow) break;
-
-                    var totalCountReached = pageNumber * pageSize >= result.TotalCount!.Value;
-                    if (totalCountReached) break;
-
-                    if (pagedByProvider) result = null;
-
-                    pageNumber++;
-                  }
-                  break;
-
-                default:
-                  throw new InvalidOperationException($"Entity type '{entityType}' not supported");
-              }
-            }
-          }
-          catch (Exception ex)
-          {
-            if (_logger.IsEnabled(LogLevel.Error))
-              _logger.LogError(ex, "Failed to process sync pull for partner '{partnerName}': {errorMessage}", partnerModel.Name, ex.Message);
-          }
+          await ProcessSyncPullPartner(partnerModel, executeUntil);
         }
 
         if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processed partner sync pull");
@@ -395,6 +296,269 @@ namespace Yoma.Core.Domain.PartnerSync.Services
       finally
       {
         if (lockAcquired) await _distributedLockService.ReleaseLockAsync(lockIdentifier);
+      }
+    }
+    #endregion
+
+    #region Private Members
+    private async Task ProcessSyncPullPartner(Models.Lookups.Partner partnerModel, DateTimeOffset executeUntil)
+    {
+      try
+      {
+        await ProcessSyncPull(partnerModel, executeUntil);
+      }
+      catch (Exception ex)
+      {
+        if (_logger.IsEnabled(LogLevel.Error))
+          _logger.LogError(ex, "Failed to process sync pull for partner '{partnerName}': {errorMessage}", partnerModel.Name, ex.Message);
+      }
+    }
+
+    private async Task ProcessSyncPull(Models.Lookups.Partner partnerModel, DateTimeOffset executeUntil)
+    {
+      var partner = Enum.Parse<Core.SyncPartner>(partnerModel.Name, true);
+
+      if (!partnerModel.SyncTypesEnabledParsed.TryGetValue(SyncType.Pull, out var entityTypes) || entityTypes.Count == 0)
+        return;
+
+      foreach (var entityType in entityTypes.Distinct())
+      {
+        if (executeUntil <= DateTimeOffset.UtcNow) break;
+
+        await ProcessSyncPull(partnerModel, partner, entityType, executeUntil);
+      }
+    }
+
+    private async Task ProcessSyncPull(Models.Lookups.Partner partnerModel, Core.SyncPartner partner, EntityType entityType, DateTimeOffset executeUntil)
+    {
+      switch (entityType)
+      {
+        case EntityType.Opportunity:
+          await ProcessSyncPullOpportunity(partnerModel, partner, executeUntil);
+          break;
+
+        default:
+          throw new InvalidOperationException($"Entity type '{entityType}' not supported");
+      }
+    }
+
+    private async Task ProcessSyncPullOpportunity(Models.Lookups.Partner partnerModel, Core.SyncPartner partner, DateTimeOffset executeUntil)
+    {
+      var entityType = EntityType.Opportunity;
+      var pullProviderClient = _providerClientFactoryResolver.CreateClient<ISyncProviderClientPull<SyncItemOpportunity>>(partner);
+
+      var pageNumber = 1;
+      var pageSize = _scheduleJobOptions.PartnerSyncPullScheduleBatchSize;
+      SyncResultPull<SyncItemOpportunity>? result = null;
+
+      while (executeUntil > DateTimeOffset.UtcNow)
+      {
+        var (Result, Items, PagedByProvider) = await ListSyncPullItems(partner, entityType, pullProviderClient, pageNumber, pageSize, result);
+        result = Result;
+
+        if (Items.Count == 0) break;
+
+        foreach (var item in Items)
+        {
+          if (executeUntil <= DateTimeOffset.UtcNow) break;
+
+          await ProcessSyncPullOpportunityItem(partnerModel, partner, item);
+        }
+
+        if (executeUntil <= DateTimeOffset.UtcNow) break;
+        if (result.ReachedTotalCount(pageNumber, pageSize)) break;
+
+        if (PagedByProvider) result = null;
+
+        pageNumber++;
+      }
+    }
+
+    private async Task<(SyncResultPull<SyncItemOpportunity> Result, List<SyncItem<SyncItemOpportunity>> Items, bool PagedByProvider)> ListSyncPullItems(
+      Core.SyncPartner partner,
+      EntityType entityType,
+      ISyncProviderClientPull<SyncItemOpportunity> pullProviderClient,
+      int pageNumber,
+      int pageSize,
+      SyncResultPull<SyncItemOpportunity>? result)
+    {
+      if (result == null)
+      {
+        var filter = new SyncFilterPull
+        {
+          PageNumber = pageNumber,
+          PageSize = pageSize
+        };
+
+        if (_logger.IsEnabled(LogLevel.Information))
+          _logger.LogInformation("Processing sync pull for partner '{partner}', entity type '{entityType}', on page '{pageNumber}' with batch size '{batchSize}'", partner, entityType, filter.PageNumber, filter.PageSize);
+
+        result = await pullProviderClient.List(filter);
+
+        if (!result.TotalCount.HasValue)
+          throw new InvalidOperationException("Paginated filter: Total count expected but is null");
+
+        if (result.Items.Count == 0)
+        {
+          if (_logger.IsEnabled(LogLevel.Information))
+            _logger.LogInformation("No sync pull items found to process for partner '{partner}', entity type '{entityType}', on page '{pageNumber}'", partner, entityType, filter.PageNumber);
+
+          return (result, [], true);
+        }
+      }
+
+      // If the provider ignores paging and returns the full result set, page it locally
+      var pagedByProvider = result.Items.Count <= pageSize;
+      var items = pagedByProvider
+        ? result.Items
+        : [.. result.Items.Skip((pageNumber - 1) * pageSize).Take(pageSize)];
+
+      return (result, items, pagedByProvider);
+    }
+
+    private async Task ProcessSyncPullOpportunityItem(Models.Lookups.Partner partnerModel, Core.SyncPartner partner, SyncItem<SyncItemOpportunity> item)
+    {
+      if (string.IsNullOrWhiteSpace(item.ExternalId))
+        throw new InvalidOperationException("External id expected");
+
+      var entityType = EntityType.Opportunity;
+      var action = SyncAction.Create;
+      Guid? entityId = null;
+
+      try
+      {
+        var opportunityItem = item.Item;
+        var scheduleItemExisting = _syncService.GetSchedulePull(partnerModel.Id, entityType, item.ExternalId);
+
+        Opportunity.Models.Opportunity? opportunityExisting = null;
+        if (scheduleItemExisting?.OpportunityId.HasValue == true)
+        {
+          entityId = scheduleItemExisting.OpportunityId.Value;
+          opportunityExisting = _opportunityService.GetById(entityId.Value, false, false, false);
+        }
+
+        if (opportunityExisting?.Status == Status.Deleted)
+        {
+          if (_logger.IsEnabled(LogLevel.Information))
+            _logger.LogInformation("Processing of partner sync pull item skipped: Entity already deleted in Yoma for partner '{partner}', entity type '{entityType}', entity id '{entityId}'", partner, entityType, entityId);
+
+          return;
+        }
+
+        if (scheduleItemExisting != null && Enum.Parse<SyncAction>(scheduleItemExisting.Action, true) == SyncAction.Delete)
+        {
+          if (_logger.IsEnabled(LogLevel.Information))
+            _logger.LogInformation("Processing of partner sync pull item skipped: Entity already deleted via sync for partner '{partner}', entity type '{entityType}', entity external id '{entityExternalId}'", partner, entityType, item.ExternalId);
+
+          return;
+        }
+
+        action = opportunityItem.ResolveSyncAction(scheduleItemExisting);
+
+        if (!partnerModel.ActionEnabledParsed.Contains(action))
+        {
+          if (_logger.IsEnabled(LogLevel.Information))
+            _logger.LogInformation("Processing of partner sync pull item skipped: Action '{action}' not enabled for partner '{partner}', entity type '{entityType}', entity external id '{entityExternalId}'", action, partner, entityType, item.ExternalId);
+
+          return;
+        }
+
+        opportunityItem.MapCountries(code => _countryService.GetByCodeAlpha2(code).Id);
+
+        await ExecuteSyncPullOpportunityItem(partnerModel, partner, entityType, item, opportunityItem, action, entityId);
+      }
+      catch (Exception ex)
+      {
+        if (_logger.IsEnabled(LogLevel.Error))
+          _logger.LogError(ex, "Failed to process sync pull item for partner '{partner}' and entity type '{entityType}': {errorMessage}", partner, entityType, ex.Message);
+
+        if (action == SyncAction.Create) entityId = null;
+
+        await UpdateSyncPullOpportunityItemErrorState(partnerModel, partner, entityType, item, action, entityId, ex);
+      }
+    }
+
+    private async Task ExecuteSyncPullOpportunityItem(
+      Models.Lookups.Partner partnerModel,
+      Core.SyncPartner partner,
+      EntityType entityType,
+      SyncItem<SyncItemOpportunity> item,
+      SyncItemOpportunity opportunityItem,
+      SyncAction action,
+      Guid? entityId)
+    {
+      await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+      {
+        using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
+
+        switch (action)
+        {
+          case SyncAction.Create:
+            {
+              var request = opportunityItem.ToRequestCreate();
+              var opportunity = await _opportunityService.Create(request, false, false, false);
+              entityId = opportunity.Id;
+              break;
+            }
+
+          case SyncAction.Update:
+            {
+              if (!entityId.HasValue)
+                throw new InvalidOperationException($"Entity id expected for pull update: Partner '{partner}', entity type '{entityType}', entity external id '{item.ExternalId}'");
+
+              var request = opportunityItem.ToRequestUpdate(entityId.Value);
+              await _opportunityService.Update(request, false, false);
+              break;
+            }
+
+          case SyncAction.Delete:
+            {
+              if (!entityId.HasValue)
+                throw new InvalidOperationException($"Entity id expected for pull deletion: Partner '{partner}', entity type '{entityType}', entity external id '{item.ExternalId}'");
+
+              await _opportunityService.UpdateStatus(entityId.Value, Status.Deleted, false);
+              break;
+            }
+
+          default:
+            throw new InvalidOperationException($"Action of '{action}' not supported");
+        }
+
+        await _syncService.SchedulePull(action, partnerModel.Id, entityType, item.ExternalId, entityId);
+
+        scope.Complete();
+      });
+    }
+
+    private async Task UpdateSyncPullOpportunityItemErrorState(
+      Models.Lookups.Partner partnerModel,
+      Core.SyncPartner partner,
+      EntityType entityType,
+      SyncItem<SyncItemOpportunity> item,
+      SyncAction action,
+      Guid? entityId,
+      Exception ex)
+    {
+      try
+      {
+        await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+        {
+          using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
+
+          var scheduleItem = await _syncService.SchedulePull(action, partnerModel.Id, entityType, item.ExternalId, entityId);
+
+          scheduleItem.Status = ProcessingStatus.Error;
+          scheduleItem.ErrorReason = ex.Message;
+
+          await _syncService.UpdateSchedulePull(scheduleItem);
+
+          scope.Complete();
+        });
+      }
+      catch (Exception innerEx)
+      {
+        if (_logger.IsEnabled(LogLevel.Error))
+          _logger.LogError(innerEx, "Failed to update sync pull error state for partner '{partner}' and entity type '{entityType}': {errorMessage}", partner, entityType, innerEx.Message);
       }
     }
     #endregion

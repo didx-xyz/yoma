@@ -20,13 +20,6 @@ namespace Yoma.Core.Domain.PartnerSync
     Aborted
   }
 
-  public enum Partner
-  {
-    SAYouth,
-    Jobberman,
-    Alison
-  }
-
   public enum SyncType
   {
     Push,

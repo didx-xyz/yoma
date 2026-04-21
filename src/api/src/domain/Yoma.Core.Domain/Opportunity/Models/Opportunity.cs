@@ -118,10 +118,20 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
     public Core.EngagementTypeOption? EngagementType { get; set; }
 
+    /// <summary>
+    /// Indicates that the opportunity can be shared with external partners (push sync).
+    /// Yoma remains the source of truth and controls the opportunity.
+    /// Actual sharing depends on partner-specific sharing conditions.
+    /// </summary>
     public bool? ShareWithPartners { get; set; }
 
     public bool? Hidden { get; set; }
 
+    /// <summary>
+    /// Identifier assigned by an external partner for this opportunity when it is pushed from Yoma.
+    /// This value is stored to support subsequent synchronization operations such as updates or deletions
+    /// against the partner system. It represents the partner's reference to this Yoma opportunity.
+    /// </summary>
     [JsonIgnore]
     public string? ExternalId { get; set; }
 
@@ -146,6 +156,21 @@ namespace Yoma.Core.Domain.Opportunity.Models
     }
 
     public string? NonCompletableReason { get; private set; }
+
+    /// <summary>
+    /// Indicates that the opportunity originates from an external partner via pull synchronization
+    /// and is therefore locked for editing in Yoma. The external partner acts as the source of truth.
+    /// 
+    /// Note: Administrative deletion in Yoma is still permitted. A delete is treated as a terminal
+    /// override and prevents the opportunity from being recreated or updated again via synchronization.
+    /// </summary>
+    public bool? SyncedLocked { get; set; }
+
+    /// <summary>
+    /// Identifies the partner that manages the opportunity when <see cref="SyncedLocked"/> is true.
+    /// This partner acts as the source of truth for the opportunity.
+    /// </summary>
+    public Core.SyncPartner? SyncedLockedPartner { get; set; }
 
     public List<Lookups.OpportunityCategory>? Categories { get; set; }
 
