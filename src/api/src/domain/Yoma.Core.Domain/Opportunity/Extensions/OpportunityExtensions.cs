@@ -5,7 +5,6 @@ using Yoma.Core.Domain.ActionLink.Models;
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Opportunity.Models;
-using Yoma.Core.Domain.PartnerSync.Models;
 
 namespace Yoma.Core.Domain.Opportunity.Extensions
 {
@@ -174,8 +173,7 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
         YomaInfoURL = value.YomaInfoURL(appBaseURL),
         IsCompletable = value.IsCompletable,
         NonCompletableReason = value.NonCompletableReason,
-        SyncedLocked = value.SyncedLocked ?? false,
-        SyncedLockedPartner = value.SyncedLockedPartner,
+        SyncedInfo = value.SyncedInfo,
         Categories = value.Categories,
         Countries = value.Countries,
         Languages = value.Languages,
@@ -196,55 +194,6 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
       ArgumentNullException.ThrowIfNull(item, nameof(item));
 
       return EvaluateCompletable(item.Title, item.Status, item.Hidden, item.OrganizationStatus, item.VerificationEnabled, item.VerificationMethod, item.DateStart, out reason);
-    }
-
-    public static OpportunityRequestCreate ToRequestCreate(this SyncItemOpportunity item)
-    {
-      ArgumentNullException.ThrowIfNull(item, nameof(item));
-
-      if (!item.OrganizationId.HasValue || item.OrganizationId.Value == Guid.Empty)
-        throw new ArgumentNullException(nameof(item), "Organization Id is required");
-
-      if (item.Countries == null || item.Countries.Count == 0)
-        throw new ArgumentNullException(nameof(item), "One or more countries required");
-
-      return new OpportunityRequestCreate
-      {
-        Title = item.Title,
-        Description = item.Description,
-        OrganizationId = item.OrganizationId.Value,
-        Summary = item.Summary,
-        URL = item.URL,
-        ExternalId = item.ExternalId,
-        Countries = item.Countries,
-        PostAsActive = true
-      };
-    }
-
-    public static OpportunityRequestUpdate ToRequestUpdate(this SyncItemOpportunity item, Guid id)
-    {
-      ArgumentNullException.ThrowIfNull(item, nameof(item));
-
-      if (!item.OrganizationId.HasValue || item.OrganizationId.Value == Guid.Empty)
-        throw new ArgumentNullException(nameof(item), "Organization Id is required");
-
-      if (item.Countries == null || item.Countries.Count == 0)
-        throw new ArgumentNullException(nameof(item), "One or more countries required");
-
-      if (id == Guid.Empty)
-        throw new ArgumentNullException(nameof(id), "Id is required");
-
-      return new OpportunityRequestUpdate
-      {
-        Id = id,
-        Title = item.Title,
-        Description = item.Description,
-        OrganizationId = item.OrganizationId.Value,
-        Summary = item.Summary,
-        URL = item.URL,
-        ExternalId = item.ExternalId,
-        Countries = item.Countries
-      };
     }
     #endregion
 

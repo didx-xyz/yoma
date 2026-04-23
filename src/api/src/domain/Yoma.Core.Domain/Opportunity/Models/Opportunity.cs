@@ -3,6 +3,7 @@ using Yoma.Core.Domain.BlobProvider;
 using Yoma.Core.Domain.Entity;
 using Yoma.Core.Domain.Lookups.Models;
 using Yoma.Core.Domain.Opportunity.Extensions;
+using Yoma.Core.Domain.PartnerSync.Models;
 
 namespace Yoma.Core.Domain.Opportunity.Models
 {
@@ -158,19 +159,23 @@ namespace Yoma.Core.Domain.Opportunity.Models
     public string? NonCompletableReason { get; private set; }
 
     /// <summary>
-    /// Indicates that the opportunity originates from an external partner via pull synchronization
-    /// and is therefore locked for editing in Yoma. The external partner acts as the source of truth.
-    /// 
-    /// Note: Administrative deletion in Yoma is still permitted. A delete is treated as a terminal
-    /// override and prevents the opportunity from being recreated or updated again via synchronization.
+    /// Partner synchronization state for the opportunity.
+    ///
+    /// Pull-synchronized:
+    /// - The external partner is the source of truth
+    /// - The opportunity is locked for editing
+    /// - Status changes are not permitted
+    /// - Local presentation actions such as hiding and featuring are still permitted for organization admins and super admins
+    /// - Administrative deletion is only permitted for super admins; this is treated as a terminal override and prevents the opportunity from being recreated or updated again via synchronization
+    /// - A pull-synchronized opportunity cannot also be shared via push synchronization
+    ///
+    /// Push-synchronized:
+    /// - Yoma remains the source of truth
+    /// - The opportunity remains editable in Yoma
+    /// - Update restrictions may still apply once shared, based on partner-specific synchronization rules
+    /// - Synchronization state is included for visibility and rule evaluation
     /// </summary>
-    public bool? SyncedLocked { get; set; }
-
-    /// <summary>
-    /// Identifies the partner that manages the opportunity when <see cref="SyncedLocked"/> is true.
-    /// This partner acts as the source of truth for the opportunity.
-    /// </summary>
-    public Core.SyncPartner? SyncedLockedPartner { get; set; }
+    public SyncInfo? SyncedInfo { get; set; }
 
     public List<Lookups.OpportunityCategory>? Categories { get; set; }
 

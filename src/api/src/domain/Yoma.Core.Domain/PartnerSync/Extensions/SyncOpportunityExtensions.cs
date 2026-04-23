@@ -1,3 +1,4 @@
+using Yoma.Core.Domain.Opportunity.Models;
 using Yoma.Core.Domain.PartnerSync.Models;
 
 namespace Yoma.Core.Domain.PartnerSync.Extensions
@@ -5,16 +6,16 @@ namespace Yoma.Core.Domain.PartnerSync.Extensions
   public static class SyncOpportunityExtensions
   {
     #region Public Methods
-    public static SyncAction ResolveSyncAction(this SyncItemOpportunity opportunityItem, ProcessingLog? scheduleItemExisting)
+    public static SyncAction ResolveSyncAction<TItem>(this SyncItem<TItem> item, ProcessingLog? scheduleItemExisting)
+      where TItem : class, new()
     {
-      ArgumentNullException.ThrowIfNull(opportunityItem);
+      ArgumentNullException.ThrowIfNull(item);
 
-      return opportunityItem.Deleted == true
-        ? SyncAction.Delete
-        : scheduleItemExisting == null ? SyncAction.Create : SyncAction.Update;
+      return item.Deleted == true ? SyncAction.Delete : scheduleItemExisting == null ? SyncAction.Create : SyncAction.Update;
     }
 
-    public static bool ReachedTotalCount(this SyncResultPull<SyncItemOpportunity> result, int pageNumber, int pageSize)
+    public static bool ReachedTotalCount<TItem>(this SyncResultPull<TItem> result, int pageNumber, int pageSize)
+      where TItem : class, new()
     {
       ArgumentNullException.ThrowIfNull(result);
       ArgumentOutOfRangeException.ThrowIfNegativeOrZero(pageNumber);
@@ -23,14 +24,55 @@ namespace Yoma.Core.Domain.PartnerSync.Extensions
       return pageNumber * pageSize >= result.TotalCount!.Value;
     }
 
-    public static void MapCountries(this SyncItemOpportunity opportunityItem, Func<string, Guid> resolveCountryId)
+    //TODO: Update / complete mappings
+    public static OpportunityRequestCreate ToRequestCreate(this Opportunity.Models.Opportunity item)
     {
-      ArgumentNullException.ThrowIfNull(opportunityItem);
-      ArgumentNullException.ThrowIfNull(resolveCountryId);
+      ArgumentNullException.ThrowIfNull(item, nameof(item));
 
-      if (opportunityItem.CountriesCodeAlpha2 == null || opportunityItem.CountriesCodeAlpha2.Count == 0) return;
+      if (item.OrganizationId == Guid.Empty)
+        throw new ArgumentNullException(nameof(item), "Organization id is required");
 
-      opportunityItem.Countries = [.. opportunityItem.CountriesCodeAlpha2.Select(resolveCountryId)];
+      if (item.Countries == null || item.Countries.Count == 0)
+        throw new ArgumentNullException(nameof(item), "One or more countries required");
+
+      return new OpportunityRequestCreate
+      {
+        Title = item.Title,
+        Description = item.Description,
+        OrganizationId = item.OrganizationId,
+        Summary = item.Summary,
+        URL = item.URL,
+        ExternalId = item.ExternalId,
+        Countries = [.. item.Countries.Select(o => o.Id)],
+        PostAsActive = true
+      };
+    }
+
+    //TODO: Update / complete mappings
+    public static OpportunityRequestUpdate ToRequestUpdate(this Opportunity.Models.Opportunity item, Guid id)
+    {
+      ArgumentNullException.ThrowIfNull(item, nameof(item));
+
+      if (item.OrganizationId == Guid.Empty)
+        throw new ArgumentNullException(nameof(item), "Organization id is required");
+
+      if (item.Countries == null || item.Countries.Count == 0)
+        throw new ArgumentNullException(nameof(item), "One or more countries required");
+
+      if (id == Guid.Empty)
+        throw new ArgumentNullException(nameof(id), "Id is required");
+
+      return new OpportunityRequestUpdate
+      {
+        Id = id,
+        Title = item.Title,
+        Description = item.Description,
+        OrganizationId = item.OrganizationId,
+        Summary = item.Summary,
+        URL = item.URL,
+        ExternalId = item.ExternalId,
+        Countries = [.. item.Countries.Select(o => o.Id)]
+      };
     }
     #endregion
   }

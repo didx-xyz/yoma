@@ -19,10 +19,4 @@ namespace Yoma.Core.Domain.PartnerSync
     Error,
     Aborted
   }
-
-  public enum SyncType
-  {
-    Push,
-    Pull
-  }
 }

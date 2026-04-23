@@ -4,6 +4,8 @@ namespace Yoma.Core.Domain.PartnerSync.Models
   {
     public string ExternalId { get; set; } = null!;
 
+    public bool? Deleted { get; set; }
+
     public TItem Item { get; set; } = null!;
   }
 

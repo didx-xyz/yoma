@@ -1389,9 +1389,18 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
-        await AssertUpdatablePartnerSyncPush(request, resultCurrent); //check will abort synch if possible and needs to be rolled back if the update fails
-
         using var scope = TransactionScopeHelper.CreateReadCommitted();
+
+        //check will abort sync create if possible; rolled back if the update fails
+        await AssertUpdatablePartnerSync(UpdateAction.Complete, resultCurrent,
+          new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase)
+          {
+            [nameof(Models.Opportunity.ShareWithPartners)] = request.ShareWithPartners,
+            [nameof(Models.Opportunity.TypeId)] = request.TypeId,
+            [nameof(Models.Opportunity.DateEnd)] = request.DateEnd,
+            [nameof(Models.Opportunity.Countries)] = request.Countries
+          }, true);
+
         result = await _opportunityRepository.Update(result);
 
         // categories
@@ -1416,6 +1425,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
         scope.Complete();
       });
+
       ParseComputed(result, true);
 
       if (raiseEvent)
@@ -1529,6 +1539,12 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       AssertUpdatable(result);
 
+      await AssertUpdatablePartnerSync(UpdateAction.Featured, result,
+        new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase)
+        {
+          [nameof(Models.Opportunity.Featured)] = featured
+        });
+
       result.Featured = featured;
       result.ModifiedByUserId = user.Id;
 
@@ -1541,11 +1557,17 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
     public async Task<Models.Opportunity> UpdateHidden(Guid id, bool hidden, bool ensureOrganizationAuthorization)
     {
-      var result = GetById(id, true, true, false);
+      var result = GetById(id, true, true, ensureOrganizationAuthorization);
 
       var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
 
       AssertUpdatable(result);
+
+      await AssertUpdatablePartnerSync(UpdateAction.Hidden, result,
+        new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase)
+        {
+          [nameof(Models.Opportunity.Hidden)] = hidden
+        });
 
       if (result.ShareWithPartners == true && hidden)
         throw new ValidationException("An opportunity that is shared with partners cannot be made hidden.");
@@ -1601,6 +1623,12 @@ namespace Yoma.Core.Domain.Opportunity.Services
           throw new ArgumentOutOfRangeException(nameof(status), $"{nameof(Status)} of '{status.ToDescription()}' not supported");
       }
 
+      await AssertUpdatablePartnerSync(UpdateAction.Status, result,
+        new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase)
+        {
+          [nameof(Models.Opportunity.Status)] = status
+        });
+
       var statusId = _opportunityStatusService.GetByName(status.ToString()).Id;
 
       result.StatusId = statusId;
@@ -1621,6 +1649,12 @@ namespace Yoma.Core.Domain.Opportunity.Services
       var result = GetById(id, true, true, ensureOrganizationAuthorization);
 
       AssertUpdatable(result);
+
+      await AssertUpdatablePartnerSync(UpdateAction.Other, result,
+        new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase)
+        {
+          [nameof(Models.Opportunity.Categories)] = categoryIds
+        });
 
       var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
 
@@ -1646,6 +1680,12 @@ namespace Yoma.Core.Domain.Opportunity.Services
         throw new ArgumentNullException(nameof(categoryIds));
 
       AssertUpdatable(result);
+
+      await AssertUpdatablePartnerSync(UpdateAction.Other, result,
+        new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase)
+        {
+          [nameof(Models.Opportunity.Categories)] = categoryIds
+        });
 
       var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
 
@@ -1674,9 +1714,18 @@ namespace Yoma.Core.Domain.Opportunity.Services
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
         using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
+
         result = await AssignCountries(result, countryIds);
+
+        await AssertUpdatablePartnerSync(UpdateAction.Countries, result,
+         new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase)
+         {
+           [nameof(Models.Opportunity.Countries)] = result.Countries?.Select(o => o.Id).ToList()
+         });
+
         result.ModifiedByUserId = user.Id;
         result = await _opportunityRepository.Update(result);
+
         scope.Complete();
       });
 
@@ -1694,7 +1743,25 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       AssertUpdatable(result);
 
-      result = await RemoveCountries(result, countryIds);
+      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
+
+      await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+      {
+        using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
+
+        result = await RemoveCountries(result, countryIds);
+
+        await AssertUpdatablePartnerSync(UpdateAction.Countries, result,
+          new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase)
+          {
+            [nameof(Models.Opportunity.Countries)] = result.Countries?.Select(o => o.Id).ToList()
+          });
+
+        result.ModifiedByUserId = user.Id;
+        result = await _opportunityRepository.Update(result);
+
+        scope.Complete();
+      });
 
       await _mediator.Publish(new OpportunityEvent(EventType.Update, result));
 
@@ -1706,6 +1773,12 @@ namespace Yoma.Core.Domain.Opportunity.Services
       var result = GetById(id, true, true, ensureOrganizationAuthorization);
 
       AssertUpdatable(result);
+
+      await AssertUpdatablePartnerSync(UpdateAction.Other, result,
+        new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase)
+        {
+          [nameof(Models.Opportunity.Languages)] = languageIds
+        });
 
       var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
 
@@ -1732,6 +1805,12 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       AssertUpdatable(result);
 
+      await AssertUpdatablePartnerSync(UpdateAction.Other, result,
+        new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase)
+        {
+          [nameof(Models.Opportunity.Languages)] = languageIds
+        });
+
       var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
@@ -1756,6 +1835,12 @@ namespace Yoma.Core.Domain.Opportunity.Services
         throw new ArgumentNullException(nameof(skillIds));
 
       AssertUpdatable(result);
+
+      await AssertUpdatablePartnerSync(UpdateAction.Other, result,
+        new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase)
+        {
+          [nameof(Models.Opportunity.Skills)] = skillIds
+        });
 
       var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
 
@@ -1782,6 +1867,12 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       AssertUpdatable(result);
 
+      await AssertUpdatablePartnerSync(UpdateAction.Other, result,
+        new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase)
+        {
+          [nameof(Models.Opportunity.Skills)] = skillIds
+        });
+
       var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
@@ -1807,6 +1898,12 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       AssertUpdatable(result);
 
+      await AssertUpdatablePartnerSync(UpdateAction.Other, result,
+        new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase)
+        {
+          [nameof(Models.Opportunity.VerificationTypes)] = verificationTypes
+        });
+
       var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
@@ -1831,6 +1928,12 @@ namespace Yoma.Core.Domain.Opportunity.Services
         throw new ArgumentNullException(nameof(verificationTypes));
 
       AssertUpdatable(result);
+
+      await AssertUpdatablePartnerSync(UpdateAction.Other, result,
+        new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase)
+        {
+          [nameof(Models.Opportunity.VerificationTypes)] = verificationTypes
+        });
 
       if (result.VerificationEnabled && (result.VerificationTypes == null || result.VerificationTypes.All(o => verificationTypes.Contains(o.Type))))
         throw new ValidationException("One or more verification types are required when verification is supported. Removal will result in no associated verification types");
@@ -1867,10 +1970,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
     private void ParseComputed(Models.Opportunity result, bool baseOnly = false)
     {
       result.SetPublished();
-
-      var (isSynced, partner) = _syncInfoService.IsSynced(PartnerSync.SyncType.Pull, PartnerSync.EntityType.Opportunity, result.Id);
-      result.SyncedLocked = isSynced;
-      result.SyncedLockedPartner = partner;
+      result.SyncedInfo = _syncInfoService.ListSyncInfo(PartnerSync.EntityType.Opportunity, result.Id);
 
       if (baseOnly) return;
 
@@ -1978,7 +2078,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       // Events raised by invoking method upon transaction completion
       var result = isNew
         ? await Create((OpportunityRequestCreate)request, false, false, !probeOnly)
-        : await Update((OpportunityRequestUpdate)request, false, !probeOnly);
+        : await Update((OpportunityRequestUpdate)request, false, false);
 
       return (result, isNew ? EventType.Create : EventType.Update);
     }
@@ -2013,40 +2113,223 @@ namespace Yoma.Core.Domain.Opportunity.Services
         throw new ValidationException($"The {nameof(Models.Opportunity)} can no longer be updated (current status '{opportunity.Status.ToDescription()}'). Required state '{Statuses_Updatable.JoinNames()}'");
     }
 
-    private async Task AssertUpdatablePartnerSyncPush(OpportunityRequestUpdate request, Models.Opportunity opportunityCurrent)
+    /// <summary>
+    /// Validates whether an opportunity update is permitted when the opportunity
+    /// participates in partner synchronization.
+    ///
+    /// The validation evaluates the synchronization types configured for the
+    /// opportunity and delegates to the appropriate rule set:
+    /// - Pull synchronization: the external partner is the source of truth and
+    ///   the opportunity is largely locked for editing.
+    /// - Push synchronization: Yoma remains the source of truth but certain
+    ///   updates may be restricted once the opportunity has been shared.
+    ///
+    /// The <paramref name="updatesToEval"/> dictionary contains the requested
+    /// update values used to evaluate synchronization rules.
+    /// </summary>
+    private async Task AssertUpdatablePartnerSync(
+      UpdateAction action,
+      Models.Opportunity opportunityCurrent,
+      Dictionary<string, object?> updatesToEval,
+      bool abortSyncPushCreateIfPossible = false)
     {
-      var reasons = new List<string>();
+      ArgumentNullException.ThrowIfNull(opportunityCurrent);
+      ArgumentNullException.ThrowIfNull(updatesToEval);
 
-      if (opportunityCurrent.ShareWithPartners == true && request.ShareWithPartners != true)
-        reasons.Add("Option to share with partners cannot be disabled after it has been enabled");
+      if (updatesToEval.Count == 0)
+        throw new ArgumentException("At least one update must be supplied for evaluation", nameof(updatesToEval));
 
-      if (opportunityCurrent.TypeId != request.TypeId)
-        reasons.Add("Type cannot be changed");
+      var syncedTypes = opportunityCurrent.SyncedInfo?.Types?
+          .Where(o => o.Partners != null && o.Partners.Count > 0)
+          .ToList();
 
-      if (opportunityCurrent.DateEnd.HasValue && !request.DateEnd.HasValue)
-        reasons.Add("End date cannot be removed once it has been set");
+      if (syncedTypes == null || syncedTypes.Count == 0)
+        return;
 
-      var countriesCodeAlpha2Required = PartnerService.RequiredCountries_AnyOf_All.Select(o => o.CodeAlpha2).ToList();
-      var countriesCodeAlpha2Current = opportunityCurrent.Countries?.Select(c => c.CodeAlpha2).Intersect(countriesCodeAlpha2Required, StringComparer.OrdinalIgnoreCase).ToList();
-      var countriesCodeAlpha2Request = request.Countries?.Select(c => _countryService.GetById(c).CodeAlpha2).Intersect(countriesCodeAlpha2Required, StringComparer.OrdinalIgnoreCase).ToList();
-      var countriesCodeAlpha2Removed = countriesCodeAlpha2Current?.Except(countriesCodeAlpha2Request ?? [], StringComparer.OrdinalIgnoreCase).ToList();
+      var isPullSynced = syncedTypes.Any(o => o.SyncType == SyncType.Pull);
+      var isPushSynced = syncedTypes.Any(o => o.SyncType == SyncType.Push);
 
-      if (countriesCodeAlpha2Removed?.Count > 0)
+      if (isPullSynced && isPushSynced)
+        throw new DataInconsistencyException("A pull-synchronized opportunity cannot also be push-synchronized");
+
+      if (isPullSynced) AssertUpdatablePartnerSyncPull(action, updatesToEval);
+
+      if (isPushSynced) await AssertUpdatablePartnerSyncPush(action, opportunityCurrent, updatesToEval, abortSyncPushCreateIfPossible);
+    }
+
+    /// <summary>
+    /// Validates whether a pull-synchronized opportunity can be updated.
+    ///
+    /// Pull-synchronized opportunities are managed by an external partner and are
+    /// generally locked for editing. Only limited local administrative actions are
+    /// permitted:
+    /// - Hidden
+    /// - Featured
+    /// - Status change to Deleted by an authorized admin
+    ///
+    /// All other updates are rejected.
+    /// </summary>
+    private void AssertUpdatablePartnerSyncPull(
+      UpdateAction action,
+      Dictionary<string, object?> updatesToEval)
+    {
+      switch (action)
       {
-        var countriesNameRemoved = PartnerService.RequiredCountries_AnyOf_All
-          .Where(rc => countriesCodeAlpha2Removed.Contains(rc.CodeAlpha2, StringComparer.OrdinalIgnoreCase)).Select(rc => rc.Country).ToList();
+        case UpdateAction.Hidden:
+        case UpdateAction.Featured:
+          return;
 
-        reasons.Add($"The following country(ies) cannot be removed: '{string.Join(", ", countriesNameRemoved)}'");
+        case UpdateAction.Status:
+          var statusExpected = updatesToEval.Get<Status>(nameof(Models.Opportunity.Status));
+
+          if (statusExpected == Status.Deleted &&
+              HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor))
+            return;
+          break;
+
+        case UpdateAction.Complete:
+        case UpdateAction.Other:
+        case UpdateAction.Countries:
+          break;
+
+        default:
+          throw new InvalidOperationException($"Unsupported update action: {action}");
       }
 
-      if (reasons.Count == 0) return;
+      throw new ValidationException("This opportunity is managed by an external partner and cannot be updated");
+    }
 
-      var (isSynced, partner) = _syncInfoService.IsSynced(PartnerSync.SyncType.Push, PartnerSync.EntityType.Opportunity, opportunityCurrent.Id, true);
-      if (!isSynced) return;
 
-      var reasonText = string.Join("; ", reasons);
+    /// <summary>
+    /// Validates update restrictions for push-synchronized opportunities.
+    ///
+    /// In push synchronization Yoma remains the source of truth, however certain
+    /// fields cannot be modified once the opportunity has been shared with
+    /// external partners. The requested update values are evaluated against
+    /// partner-specific synchronization rules to determine whether the update
+    /// may proceed.
+    ///
+    /// If a rule violation is detected and synchronization creation is still
+    /// pending, the push synchronization may optionally be aborted instead
+    /// of rejecting the update.
+    /// </summary>
+    private async Task AssertUpdatablePartnerSyncPush(
+      UpdateAction action,
+      Models.Opportunity opportunityCurrent,
+      Dictionary<string, object?> updatesToEval,
+      bool abortSyncPushCreateIfPossible = false)
+    {
 
-      throw new ValidationException($"The {nameof(Models.Opportunity)} has already been shared and cannot be updated for the following reasons: {reasonText}");
+      bool? shareWithPartners = null;
+      Guid? typeId = null;
+      DateTimeOffset? dateEnd = null;
+      List<Guid>? countries = null;
+
+      switch (action)
+      {
+        case UpdateAction.Complete:
+          shareWithPartners = updatesToEval.Get<bool?>(nameof(Models.Opportunity.ShareWithPartners));
+          typeId = updatesToEval.Get<Guid>(nameof(Models.Opportunity.TypeId));
+          dateEnd = updatesToEval.Get<DateTimeOffset?>(nameof(Models.Opportunity.DateEnd));
+          countries = updatesToEval.Get<List<Guid>>(nameof(Models.Opportunity.Countries));
+          break;
+
+        case UpdateAction.Countries:
+          countries = updatesToEval.Get<List<Guid>>(nameof(Models.Opportunity.Countries));
+          break;
+
+        case UpdateAction.Hidden:
+        case UpdateAction.Featured:
+        case UpdateAction.Status:
+        case UpdateAction.Other:
+          return;
+
+        default:
+          throw new InvalidOperationException($"Unsupported update action: {action}");
+      }
+
+      var partners = opportunityCurrent.SyncedInfo?.Types?
+          .Where(o => o.SyncType == SyncType.Push)
+          .SelectMany(o => o.Partners)
+          .Distinct()
+          .ToList();
+
+      if (partners == null || partners.Count == 0)
+        return;
+
+      var reasons = new List<string>();
+
+      if (action == UpdateAction.Complete && opportunityCurrent.ShareWithPartners == true && shareWithPartners != true)
+        reasons.Add("Sharing with partners cannot be switched off once it has been enabled");
+
+      var requiredCountries = PartnerService.RequiredCountries_AnyOf_All
+        .Select(o => o.CodeAlpha2)
+        .ToList();
+
+      foreach (var partner in partners)
+      {
+        switch (partner)
+        {
+          case SyncPartner.SAYouth:
+            if (action == UpdateAction.Complete)
+            {
+              if (opportunityCurrent.TypeId != typeId)
+                reasons.Add("Type cannot be changed");
+
+              if (opportunityCurrent.DateEnd.HasValue && !dateEnd.HasValue)
+                reasons.Add("End date cannot be removed once it has been set");
+            }
+
+            if (countries == null) break;
+
+            var countriesCurrent = opportunityCurrent.Countries?
+                .Select(c => c.CodeAlpha2)
+                .Intersect(requiredCountries, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            var countriesRequest = countries
+                .Select(c => _countryService.GetById(c).CodeAlpha2)
+                .Intersect(requiredCountries, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            var countriesRemoved = countriesCurrent?
+                .Except(countriesRequest, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            if (countriesRemoved?.Count > 0)
+            {
+              var countryNamesRemoved = PartnerService.RequiredCountries_AnyOf_All
+                  .Where(rc => countriesRemoved.Contains(rc.CodeAlpha2, StringComparer.OrdinalIgnoreCase))
+                  .Select(rc => rc.Country)
+                  .ToList();
+
+              reasons.Add($"The following country or countries cannot be removed: '{string.Join(", ", countryNamesRemoved)}'");
+            }
+
+            break;
+
+          default:
+            throw new InvalidOperationException($"Partner '{partner}' not supported");
+        }
+      }
+
+      reasons = [.. reasons.Distinct()];
+
+      if (reasons.Count == 0)
+        return;
+
+      if (abortSyncPushCreateIfPossible)
+      {
+        var aborted = await _syncInfoService.AbortSyncPushCreateIfPossible(
+            PartnerSync.EntityType.Opportunity,
+            opportunityCurrent.Id);
+
+        if (aborted)
+          return;
+      }
+
+      throw new ValidationException(
+          $"This opportunity cannot be updated because: {string.Join("; ", reasons)}");
     }
 
     private async Task SendNotification(Models.Opportunity opportunity, NotificationType type)

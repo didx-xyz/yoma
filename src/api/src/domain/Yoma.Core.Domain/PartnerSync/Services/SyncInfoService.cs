@@ -26,42 +26,56 @@ namespace Yoma.Core.Domain.PartnerSync.Services
     #endregion
 
     #region Public Members
-    public (bool IsSynced, SyncPartner? Partner) IsSynced(SyncType syncType, EntityType entityType, Guid entityId)
+    public SyncInfo? ListSyncInfo(EntityType entityType, Guid entityId)
     {
-      return IsSynced(syncType, entityType, entityId, null);
+      var statusAbortedId = _processingStatusService.GetByName(ProcessingStatus.Aborted.ToString()).Id;
+
+      var query = _processingLogRepository.Query()
+        .Where(o => o.EntityType == entityType.ToString() && o.StatusId != statusAbortedId);
+
+      query = entityType switch
+      {
+        EntityType.Opportunity => query.Where(o => o.OpportunityId == entityId),
+        _ => throw new InvalidOperationException($"Entity type of '{entityType}' not supported"),
+      };
+
+      var items = query.OrderByDescending(o => o.DateModified).ToList()
+        .GroupBy(o => new { o.SyncType, o.PartnerId })
+        .Select(g => g.First())
+        .ToList();
+
+      if (items.Count == 0) return null;
+
+      return new SyncInfo
+      {
+        Types =
+        [
+          .. items
+        .GroupBy(o => o.SyncType)
+        .Select(g => new SyncInfoType
+        {
+          SyncType = Enum.Parse<Core.SyncType>(g.Key, true),
+          Partners = [.. g.Select(o => o.Partner).Distinct()]
+        })
+        ]
+      };
     }
 
-    public (bool IsSynced, SyncPartner? Partner) IsSynced(SyncType syncType, EntityType entityType, Guid entityId, bool? abortIfPossible)
+    public async Task<bool> AbortSyncPushCreateIfPossible(EntityType entityType, Guid entityId)
     {
-      return IsSyncedAsync(syncType, entityType, entityId, abortIfPossible).GetAwaiter().GetResult();
-    }
+      var item = _processingLogHelperService.GetByEntityLatest(SyncType.Push, entityType, entityId);
+      if (item == null) return false;
 
-    public async Task<(bool IsSynced, Core.SyncPartner? Partner)> IsSyncedAsync(SyncType syncType, EntityType entityType, Guid entityId)
-    {
-      return await IsSyncedAsync(syncType, entityType, entityId, null);
-    }
+      var action = Enum.Parse<SyncAction>(item.Action, true);
+      if (action != SyncAction.Create) return false;
+      if (item.Status == ProcessingStatus.Processed) return false;
 
-    public async Task<(bool IsSynced, Core.SyncPartner? Partner)> IsSyncedAsync(SyncType syncType, EntityType entityType, Guid entityId, bool? abortIfPossible)
-    {
-      if (syncType == SyncType.Pull && abortIfPossible.HasValue)
-        throw new InvalidOperationException("Abort is not applicable for pull sync");
+      item.StatusId = _processingStatusService.GetByName(ProcessingStatus.Aborted.ToString()).Id;
+      item.Status = ProcessingStatus.Aborted;
 
-      var existingItem = _processingLogHelperService.GetByEntityLatest(syncType, entityType, entityId);
-      if (existingItem == null) return (false, null);
+      await _processingLogRepository.Update(item);
 
-      var action = Enum.Parse<SyncAction>(existingItem.Action, true);
-
-      if (action != SyncAction.Create) return (true, existingItem.Partner);
-      if (existingItem.Status == ProcessingStatus.Processed) return (true, existingItem.Partner);
-      if (syncType == SyncType.Pull) return (true, existingItem.Partner);
-      if (abortIfPossible != true) return (true, existingItem.Partner);
-
-      existingItem.StatusId = _processingStatusService.GetByName(ProcessingStatus.Aborted.ToString()).Id;
-      existingItem.Status = ProcessingStatus.Aborted;
-
-      await _processingLogRepository.Update(existingItem);
-
-      return (false, existingItem.Partner);
+      return true;
     }
     #endregion
   }

@@ -115,12 +115,19 @@ namespace Yoma.Core.Domain.PartnerSync.Services.Lookups
         switch (entityType.Value)
         {
           case EntityType.Opportunity:
-            var opportunity = _opportunityService.GetById(entityId.Value, true, false, false);
+            var opportunity = _opportunityService.GetById(entityId.Value, true, true, false);
 
             //once shared, flag can not be disabled
             if (opportunity.ShareWithPartners != true)
             {
               if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Partner sync filtering: Entity '{entityType}' with id '{entityId}' not flagged for partner sync and will be skipped", EntityType.Opportunity, entityId);
+              continue;
+            }
+
+            //pull-synchronized opportunity: managed by an external partner; sharing via push-synchronization not allowed
+            if (opportunity.SyncedInfo?.Locked == true)
+            {
+              if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Partner sync filtering: {EntityType} '{EntityId}' is externally managed (pull-synced); skipping push sync", EntityType.Opportunity, entityId);
               continue;
             }
 

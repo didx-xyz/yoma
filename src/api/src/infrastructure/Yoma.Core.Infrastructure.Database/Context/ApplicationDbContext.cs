@@ -296,7 +296,7 @@ namespace Yoma.Core.Infrastructure.Database.Context
       {
         entity.Property(e => e.SyncTypesEnabled)
           .IsRequired()
-          .HasDefaultValue($"{{\"{Domain.PartnerSync.SyncType.Push}\":[\"{Domain.PartnerSync.EntityType.Opportunity}\"]}}");
+          .HasDefaultValue($"{{\"{Domain.Core.SyncType.Push}\":[\"{Domain.PartnerSync.EntityType.Opportunity}\"]}}");
       });
 
       // see partner_sync: existing logs default to Push
@@ -304,7 +304,7 @@ namespace Yoma.Core.Infrastructure.Database.Context
       {
         entity.Property(e => e.SyncType)
           .IsRequired()
-          .HasDefaultValue(Domain.PartnerSync.SyncType.Push);
+          .HasDefaultValue(Domain.Core.SyncType.Push);
       });
       #endregion PartnerSync
 

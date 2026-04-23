@@ -13,7 +13,7 @@ namespace Yoma.Core.Domain.PartnerSync.Models.Lookups
     [JsonIgnore]
     public string SyncTypesEnabled { get; set; } = null!; //required
 
-    public Dictionary<SyncType, List<EntityType>> SyncTypesEnabledParsed { get; set; } = null!;
+    public Dictionary<Core.SyncType, List<EntityType>> SyncTypesEnabledParsed { get; set; } = null!;
 
     [JsonIgnore]
     public string? ActionEnabled { get; set; }

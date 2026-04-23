@@ -8,9 +8,7 @@ using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Entity;
 using Yoma.Core.Domain.Entity.Helpers;
 using Yoma.Core.Domain.Entity.Interfaces;
-using Yoma.Core.Domain.Lookups.Interfaces;
 using Yoma.Core.Domain.Opportunity;
-using Yoma.Core.Domain.Opportunity.Extensions;
 using Yoma.Core.Domain.Opportunity.Interfaces;
 using Yoma.Core.Domain.PartnerSync.Extensions;
 using Yoma.Core.Domain.PartnerSync.Interfaces;
@@ -26,7 +24,6 @@ namespace Yoma.Core.Domain.PartnerSync.Services
     private readonly ILogger<SyncBackgroundService> _logger;
     private readonly AppSettings _appSettings;
     private readonly ScheduleJobOptions _scheduleJobOptions;
-    private readonly ICountryService _countryService;
     private readonly ISyncService _syncService;
     private readonly IPartnerService _partnerService;
     private readonly IOpportunityService _opportunityService;
@@ -40,7 +37,6 @@ namespace Yoma.Core.Domain.PartnerSync.Services
     public SyncBackgroundService(ILogger<SyncBackgroundService> logger,
         IOptions<AppSettings> appSettings,
         IOptions<ScheduleJobOptions> scheduleJobOptions,
-        ICountryService countryService,
         ISyncService syncService,
         IPartnerService partnerService,
         IOpportunityService opportunityService,
@@ -52,7 +48,6 @@ namespace Yoma.Core.Domain.PartnerSync.Services
       _logger = logger;
       _appSettings = appSettings.Value ?? throw new ArgumentNullException(nameof(appSettings));
       _scheduleJobOptions = scheduleJobOptions.Value ?? throw new ArgumentNullException(nameof(scheduleJobOptions));
-      _countryService = countryService ?? throw new ArgumentNullException(nameof(countryService));
       _syncService = syncService ?? throw new ArgumentNullException(nameof(syncService));
       _partnerService = partnerService ?? throw new ArgumentNullException(nameof(partnerService));
       _opportunityService = opportunityService ?? throw new ArgumentNullException(nameof(opportunityService));
@@ -318,7 +313,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
     {
       var partner = Enum.Parse<Core.SyncPartner>(partnerModel.Name, true);
 
-      if (!partnerModel.SyncTypesEnabledParsed.TryGetValue(SyncType.Pull, out var entityTypes) || entityTypes.Count == 0)
+      if (!partnerModel.SyncTypesEnabledParsed.TryGetValue(Core.SyncType.Pull, out var entityTypes) || entityTypes.Count == 0)
         return;
 
       foreach (var entityType in entityTypes.Distinct())
@@ -345,11 +340,11 @@ namespace Yoma.Core.Domain.PartnerSync.Services
     private async Task ProcessSyncPullOpportunity(Models.Lookups.Partner partnerModel, Core.SyncPartner partner, DateTimeOffset executeUntil)
     {
       var entityType = EntityType.Opportunity;
-      var pullProviderClient = _providerClientFactoryResolver.CreateClient<ISyncProviderClientPull<SyncItemOpportunity>>(partner);
+      var pullProviderClient = _providerClientFactoryResolver.CreateClient<ISyncProviderClientPull<Opportunity.Models.Opportunity>>(partner);
 
       var pageNumber = 1;
       var pageSize = _scheduleJobOptions.PartnerSyncPullScheduleBatchSize;
-      SyncResultPull<SyncItemOpportunity>? result = null;
+      SyncResultPull<Opportunity.Models.Opportunity>? result = null;
 
       while (executeUntil > DateTimeOffset.UtcNow)
       {
@@ -374,13 +369,14 @@ namespace Yoma.Core.Domain.PartnerSync.Services
       }
     }
 
-    private async Task<(SyncResultPull<SyncItemOpportunity> Result, List<SyncItem<SyncItemOpportunity>> Items, bool PagedByProvider)> ListSyncPullItems(
-      Core.SyncPartner partner,
-      EntityType entityType,
-      ISyncProviderClientPull<SyncItemOpportunity> pullProviderClient,
-      int pageNumber,
-      int pageSize,
-      SyncResultPull<SyncItemOpportunity>? result)
+
+    private async Task<(SyncResultPull<Opportunity.Models.Opportunity> Result, List<SyncItem<Opportunity.Models.Opportunity>> Items, bool PagedByProvider)> ListSyncPullItems(
+    Core.SyncPartner partner,
+    EntityType entityType,
+    ISyncProviderClientPull<Opportunity.Models.Opportunity> pullProviderClient,
+    int pageNumber,
+    int pageSize,
+    SyncResultPull<Opportunity.Models.Opportunity>? result)
     {
       if (result == null)
       {
@@ -416,7 +412,8 @@ namespace Yoma.Core.Domain.PartnerSync.Services
       return (result, items, pagedByProvider);
     }
 
-    private async Task ProcessSyncPullOpportunityItem(Models.Lookups.Partner partnerModel, Core.SyncPartner partner, SyncItem<SyncItemOpportunity> item)
+
+    private async Task ProcessSyncPullOpportunityItem(Models.Lookups.Partner partnerModel, Core.SyncPartner partner, SyncItem<Opportunity.Models.Opportunity> item)
     {
       if (string.IsNullOrWhiteSpace(item.ExternalId))
         throw new InvalidOperationException("External id expected");
@@ -453,7 +450,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
           return;
         }
 
-        action = opportunityItem.ResolveSyncAction(scheduleItemExisting);
+        action = item.Deleted == true ? SyncAction.Delete : scheduleItemExisting == null ? SyncAction.Create : SyncAction.Update;
 
         if (!partnerModel.ActionEnabledParsed.Contains(action))
         {
@@ -462,8 +459,6 @@ namespace Yoma.Core.Domain.PartnerSync.Services
 
           return;
         }
-
-        opportunityItem.MapCountries(code => _countryService.GetByCodeAlpha2(code).Id);
 
         await ExecuteSyncPullOpportunityItem(partnerModel, partner, entityType, item, opportunityItem, action, entityId);
       }
@@ -478,12 +473,13 @@ namespace Yoma.Core.Domain.PartnerSync.Services
       }
     }
 
+
     private async Task ExecuteSyncPullOpportunityItem(
       Models.Lookups.Partner partnerModel,
       Core.SyncPartner partner,
       EntityType entityType,
-      SyncItem<SyncItemOpportunity> item,
-      SyncItemOpportunity opportunityItem,
+      SyncItem<Opportunity.Models.Opportunity> item,
+      Opportunity.Models.Opportunity opportunityItem,
       SyncAction action,
       Guid? entityId)
     {
@@ -530,14 +526,15 @@ namespace Yoma.Core.Domain.PartnerSync.Services
       });
     }
 
+
     private async Task UpdateSyncPullOpportunityItemErrorState(
-      Models.Lookups.Partner partnerModel,
-      Core.SyncPartner partner,
-      EntityType entityType,
-      SyncItem<SyncItemOpportunity> item,
-      SyncAction action,
-      Guid? entityId,
-      Exception ex)
+     Models.Lookups.Partner partnerModel,
+     Core.SyncPartner partner,
+     EntityType entityType,
+     SyncItem<Opportunity.Models.Opportunity> item,
+     SyncAction action,
+     Guid? entityId,
+     Exception ex)
     {
       try
       {

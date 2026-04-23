@@ -174,6 +174,12 @@ namespace Yoma.Core.Domain.Core
     Expired
   }
 
+  public enum SyncType
+  {
+    Push,
+    Pull
+  }
+
   public enum SyncPartner
   {
     SAYouth,

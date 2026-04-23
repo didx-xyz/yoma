@@ -1,7 +1,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Yoma.Core.Domain.Opportunity.Models;
 using Yoma.Core.Domain.PartnerSync.Interfaces.Provider;
-using Yoma.Core.Domain.PartnerSync.Models;
 using Yoma.Core.Infrastructure.Jobberman.Client;
 using Yoma.Core.Infrastructure.Jobberman.Models;
 
@@ -16,7 +16,7 @@ namespace Yoma.Core.Infrastructure.Jobberman
 
     public static void ConfigureServices_InfrastructureSyncProvider(this IServiceCollection services)
     {
-      services.AddScoped<ISyncProviderClientFactory<ISyncProviderClientPull<SyncItemOpportunity>>, JobbermanClientFactory>();
+      services.AddScoped<ISyncProviderClientFactory<ISyncProviderClientPull<Opportunity>>, JobbermanClientFactory>();
     }
   }
 }

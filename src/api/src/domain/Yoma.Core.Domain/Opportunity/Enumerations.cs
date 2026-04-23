@@ -43,4 +43,14 @@ namespace Yoma.Core.Domain.Opportunity
   {
     Other
   }
+
+  internal enum UpdateAction
+  {
+    Complete,
+    Countries,
+    Hidden,
+    Featured,
+    Status,
+    Other
+  }
 }

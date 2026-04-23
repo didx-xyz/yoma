@@ -1,13 +1,14 @@
 using Microsoft.Extensions.Logging;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
+using Yoma.Core.Domain.Opportunity.Models;
 using Yoma.Core.Domain.PartnerSync.Interfaces.Provider;
 using Yoma.Core.Domain.PartnerSync.Models;
 using Yoma.Core.Infrastructure.Jobberman.Models;
 
 namespace Yoma.Core.Infrastructure.Jobberman.Client
 {
-  public sealed class JobbermanClient : ISyncProviderClientPull<SyncItemOpportunity>
+  public sealed class JobbermanClient : ISyncProviderClientPull<Opportunity>
   {
     #region Class Variables
     private readonly ILogger<JobbermanClient> _logger;
@@ -30,7 +31,7 @@ namespace Yoma.Core.Infrastructure.Jobberman.Client
     #endregion
 
     #region Public Members
-    public Task<SyncResultPull<SyncItemOpportunity>> List(SyncFilterPull filter)
+    public Task<SyncResultPull<Opportunity>> List(SyncFilterPull filter)
     {
       throw new NotImplementedException();
 

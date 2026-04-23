@@ -21,7 +21,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
     #endregion
 
     #region Public Members
-    public ProcessingLog? GetByEntityLatest(SyncType syncType, EntityType entityType, Guid entityId)
+    public ProcessingLog? GetByEntityLatest(Core.SyncType syncType, EntityType entityType, Guid entityId)
     {
       if (entityId == Guid.Empty)
         throw new ArgumentNullException(nameof(entityId));
@@ -37,7 +37,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
       return query.FirstOrDefault();
     }
 
-    public ProcessingLog? GetByEntityLatest(SyncType syncType, Guid partnerId, EntityType entityType, string entityExternalId)
+    public ProcessingLog? GetByEntityLatest(Core.SyncType syncType, Guid partnerId, EntityType entityType, string entityExternalId)
     {
       if (string.IsNullOrWhiteSpace(entityExternalId))
         throw new ArgumentNullException(nameof(entityExternalId));
@@ -51,7 +51,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
     #endregion
 
     #region Private Members
-    private IQueryable<ProcessingLog> Query(SyncType syncType, EntityType entityType)
+    private IQueryable<ProcessingLog> Query(Core.SyncType syncType, EntityType entityType)
     {
       var statusAbortedId = _processingStatusService.GetByName(ProcessingStatus.Aborted.ToString()).Id;
 
