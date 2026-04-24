@@ -2,7 +2,7 @@ using Yoma.Core.Domain.PartnerSync.Models;
 
 namespace Yoma.Core.Domain.PartnerSync.Interfaces
 {
-  public interface IProcessingLogHelperService
+  public interface IProcessingHelperService
   {
     ProcessingLog? GetByEntityLatest(Core.SyncType syncType, EntityType entityType, Guid entityId);
 

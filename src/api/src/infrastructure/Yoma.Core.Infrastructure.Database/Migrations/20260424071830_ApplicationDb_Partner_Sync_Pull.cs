@@ -53,10 +53,22 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           defaultValue: "{\"Push\":[\"Opportunity\"]}");
 
       migrationBuilder.CreateIndex(
-          name: "IX_ProcessingLog_EntityType_OpportunityId_PartnerId_Action_Syn~",
+          name: "IX_ProcessingLog_SyncType_EntityType_OpportunityId_StatusId_Da~",
           schema: "PartnerSync",
           table: "ProcessingLog",
-          columns: ["EntityType", "OpportunityId", "PartnerId", "Action", "SyncType", "StatusId", "EntityExternalId", "DateCreated", "DateModified"]);
+          columns: ["SyncType", "EntityType", "OpportunityId", "StatusId", "DateModified"]);
+
+      migrationBuilder.CreateIndex(
+          name: "IX_ProcessingLog_SyncType_EntityType_PartnerId_EntityExternalI~",
+          schema: "PartnerSync",
+          table: "ProcessingLog",
+          columns: ["SyncType", "EntityType", "PartnerId", "EntityExternalId", "StatusId", "DateModified"]);
+
+      migrationBuilder.CreateIndex(
+          name: "IX_ProcessingLog_SyncType_PartnerId_Action_StatusId_DateModifi~",
+          schema: "PartnerSync",
+          table: "ProcessingLog",
+          columns: ["SyncType", "PartnerId", "Action", "StatusId", "DateModified"]);
 
       migrationBuilder.DropSchema(
         name: "PartnerSharing");
@@ -68,7 +80,17 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
     protected override void Down(MigrationBuilder migrationBuilder)
     {
       migrationBuilder.DropIndex(
-          name: "IX_ProcessingLog_EntityType_OpportunityId_PartnerId_Action_Syn~",
+          name: "IX_ProcessingLog_SyncType_EntityType_OpportunityId_StatusId_Da~",
+          schema: "PartnerSync",
+          table: "ProcessingLog");
+
+      migrationBuilder.DropIndex(
+          name: "IX_ProcessingLog_SyncType_EntityType_PartnerId_EntityExternalI~",
+          schema: "PartnerSync",
+          table: "ProcessingLog");
+
+      migrationBuilder.DropIndex(
+          name: "IX_ProcessingLog_SyncType_PartnerId_Action_StatusId_DateModifi~",
           schema: "PartnerSync",
           table: "ProcessingLog");
 

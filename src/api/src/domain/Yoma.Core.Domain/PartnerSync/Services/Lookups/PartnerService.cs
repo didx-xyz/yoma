@@ -1,3 +1,4 @@
+using FluentValidation;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -8,6 +9,8 @@ using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
+using Yoma.Core.Domain.Lookups.Interfaces;
+using Yoma.Core.Domain.Opportunity;
 using Yoma.Core.Domain.Opportunity.Interfaces;
 using Yoma.Core.Domain.PartnerSync.Interfaces.Lookups;
 
@@ -20,6 +23,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services.Lookups
     private readonly AppSettings _appSettings;
     private readonly IMemoryCache _memoryCache;
     private readonly IOpportunityService _opportunityService;
+    private readonly ICountryService _countryService;
     private readonly IRepository<Models.Lookups.Partner> _partnerRepository;
 
     private static readonly (Country Country, string CodeAlpha2)[] RequiredCountries_AnyOf_SAYouth =
@@ -35,12 +39,14 @@ namespace Yoma.Core.Domain.PartnerSync.Services.Lookups
       IOptions<AppSettings> appSettings,
       IMemoryCache memoryCache,
       IOpportunityService opportunityService,
+      ICountryService countryService,
       IRepository<Models.Lookups.Partner> partnerRepository)
     {
       _logger = logger;
       _appSettings = appSettings.Value;
       _memoryCache = memoryCache;
       _opportunityService = opportunityService;
+      _countryService = countryService;
       _partnerRepository = partnerRepository;
     }
     #endregion
@@ -108,14 +114,14 @@ namespace Yoma.Core.Domain.PartnerSync.Services.Lookups
       if (!entityId.HasValue)
         throw new ArgumentNullException(nameof(entityId), $"'{nameof(entityId)}' is required when '{nameof(entityType)}' is provided");
 
-      //filter based on partner and entity type specific exclusions
-      foreach (var item in partners)
+      switch (entityType.Value)
       {
-        var partner = Enum.Parse<SyncPartner>(item.Name, true);
-        switch (entityType.Value)
-        {
-          case EntityType.Opportunity:
-            var opportunity = _opportunityService.GetById(entityId.Value, true, true, false);
+        case EntityType.Opportunity:
+          var opportunity = _opportunityService.GetById(entityId.Value, true, true, false);
+
+          foreach (var item in partners)
+          {
+            var partner = Enum.Parse<SyncPartner>(item.Name, true);
 
             //once shared, flag can not be disabled
             if (opportunity.ShareWithPartners != true)
@@ -137,7 +143,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services.Lookups
             switch (partner)
             {
               case SyncPartner.SAYouth:
-                //only include opportunities of type learning, within countries World-Wide or South Africa and with an end date
+                //only include opportunities of type learning, associated with South Africa and with an end date
                 //once shared, the type can not be changed
                 if (!string.Equals(opportunity.Type, Opportunity.Type.Learning.ToString(), StringComparison.OrdinalIgnoreCase))
                 {
@@ -164,21 +170,82 @@ namespace Yoma.Core.Domain.PartnerSync.Services.Lookups
                   continue;
                 }
 
+                results.Add(item);
                 break;
 
               default:
                 throw new InvalidOperationException($"Partner of '{partner}' not supported");
             }
-            break;
+          }
+          break;
 
-          default:
-            throw new InvalidOperationException($"Entity type of '{entityType}' not supported");
-        }
-
-        results.Add(item);
+        default:
+          throw new InvalidOperationException($"Entity type of '{entityType}' not supported");
       }
 
       return results;
+    }
+
+    /// <summary>
+    /// Validates partner-specific update restrictions for push-synchronized opportunities.
+    /// These rules apply after an opportunity has been shared with one or more partners.
+    /// </summary>
+    public List<string> ValidateUpdatablePush(
+      Opportunity.Models.Opportunity opportunityCurrent,
+      UpdateAction action,
+      Dictionary<string, object?> updatesToEval,
+      List<SyncPartner> partners)
+    {
+      ArgumentNullException.ThrowIfNull(opportunityCurrent);
+      ArgumentNullException.ThrowIfNull(updatesToEval);
+      ArgumentNullException.ThrowIfNull(partners);
+
+      var reasons = new List<string>();
+
+      if (partners.Count == 0) return reasons;
+
+      foreach (var partner in partners.Distinct())
+      {
+        switch (partner)
+        {
+          case SyncPartner.SAYouth:
+            switch (action)
+            {
+              case UpdateAction.Complete:
+                var typeId = updatesToEval.Get<Guid>(nameof(Opportunity.Models.Opportunity.TypeId));
+                var dateEnd = updatesToEval.Get<DateTimeOffset?>(nameof(Opportunity.Models.Opportunity.DateEnd));
+
+                if (opportunityCurrent.TypeId != typeId)
+                  reasons.Add("Type cannot be changed");
+
+                if (opportunityCurrent.DateEnd.HasValue && !dateEnd.HasValue)
+                  reasons.Add("End date cannot be removed once it has been set");
+
+                AssertRequiredCountriesNotRemoved(opportunityCurrent, updatesToEval, reasons);
+                break;
+
+              case UpdateAction.Countries:
+                AssertRequiredCountriesNotRemoved(opportunityCurrent, updatesToEval, reasons);
+                break;
+
+              case UpdateAction.Hidden:
+              case UpdateAction.Featured:
+              case UpdateAction.Status:
+              case UpdateAction.Other:
+                break;
+
+              default:
+                throw new InvalidOperationException($"Unsupported update action: {action}");
+            }
+
+            break;
+
+          default:
+            throw new InvalidOperationException($"Partner '{partner}' not supported");
+        }
+      }
+
+      return [.. reasons.Distinct()];
     }
     #endregion
 
@@ -254,6 +321,42 @@ namespace Yoma.Core.Domain.PartnerSync.Services.Lookups
       return results;
     }
 
+    private void AssertRequiredCountriesNotRemoved(
+      Opportunity.Models.Opportunity opportunityCurrent,
+      Dictionary<string, object?> updatesToEval,
+      List<string> reasons)
+    {
+      var countries = updatesToEval.Get<List<Guid>>(nameof(Opportunity.Models.Opportunity.Countries));
+      if (countries == null) return;
+
+      var requiredCountries = RequiredCountries_AnyOf_All
+        .Select(o => o.CodeAlpha2)
+        .ToList();
+
+      var countriesCurrent = opportunityCurrent.Countries?
+        .Select(c => c.CodeAlpha2)
+        .Intersect(requiredCountries, StringComparer.OrdinalIgnoreCase)
+        .ToList();
+
+      var countriesRequest = countries
+        .Select(c => _countryService.GetById(c).CodeAlpha2)
+        .Intersect(requiredCountries, StringComparer.OrdinalIgnoreCase)
+        .ToList();
+
+      var countriesRemoved = countriesCurrent?
+        .Except(countriesRequest, StringComparer.OrdinalIgnoreCase)
+        .ToList();
+
+      if (countriesRemoved?.Count > 0)
+      {
+        var countryNamesRemoved = RequiredCountries_AnyOf_All
+          .Where(rc => countriesRemoved.Contains(rc.CodeAlpha2, StringComparer.OrdinalIgnoreCase))
+          .Select(rc => rc.Country)
+          .ToList();
+
+        reasons.Add($"The following country or countries cannot be removed: '{string.Join(", ", countryNamesRemoved)}'");
+      }
+    }
     #endregion
   }
 }

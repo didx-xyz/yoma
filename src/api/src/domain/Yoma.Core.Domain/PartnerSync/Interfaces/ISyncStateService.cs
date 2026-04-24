@@ -2,7 +2,7 @@ using Yoma.Core.Domain.PartnerSync.Models;
 
 namespace Yoma.Core.Domain.PartnerSync.Interfaces
 {
-  public interface ISyncInfoService
+  public interface ISyncStateService
   {
     SyncInfo? ListSyncInfo(EntityType entityType, Guid entityId);
 

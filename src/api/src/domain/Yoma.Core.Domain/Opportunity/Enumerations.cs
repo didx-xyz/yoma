@@ -44,7 +44,7 @@ namespace Yoma.Core.Domain.Opportunity
     Other
   }
 
-  internal enum UpdateAction
+  public enum UpdateAction
   {
     Complete,
     Countries,

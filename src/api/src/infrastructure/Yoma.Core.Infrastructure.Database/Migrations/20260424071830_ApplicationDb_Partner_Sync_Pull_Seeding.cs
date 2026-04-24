@@ -19,7 +19,6 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
         });
       #endregion Lookups
       #endregion PartnerSync
-
     }
   }
 }

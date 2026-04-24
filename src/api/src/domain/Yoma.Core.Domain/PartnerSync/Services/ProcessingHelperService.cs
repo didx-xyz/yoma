@@ -5,7 +5,7 @@ using Yoma.Core.Domain.PartnerSync.Models;
 
 namespace Yoma.Core.Domain.PartnerSync.Services
 {
-  public class ProcessingLogHelperService : IProcessingLogHelperService
+  public class ProcessingHelperService : IProcessingHelperService
   {
     #region Class Variables
     private readonly IProcessingStatusService _processingStatusService;
@@ -13,7 +13,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
     #endregion
 
     #region Constructor
-    public ProcessingLogHelperService(IProcessingStatusService processingStatusService, IRepositoryBatched<ProcessingLog> processingLogRepository)
+    public ProcessingHelperService(IProcessingStatusService processingStatusService, IRepositoryBatched<ProcessingLog> processingLogRepository)
     {
       _processingStatusService = processingStatusService;
       _processingLogRepository = processingLogRepository;
@@ -39,6 +39,9 @@ namespace Yoma.Core.Domain.PartnerSync.Services
 
     public ProcessingLog? GetByEntityLatest(Core.SyncType syncType, Guid partnerId, EntityType entityType, string entityExternalId)
     {
+      if (partnerId == Guid.Empty)
+        throw new ArgumentNullException(nameof(partnerId));
+
       if (string.IsNullOrWhiteSpace(entityExternalId))
         throw new ArgumentNullException(nameof(entityExternalId));
       entityExternalId = entityExternalId.Trim();

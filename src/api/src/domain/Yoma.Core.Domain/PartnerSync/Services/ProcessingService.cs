@@ -1,6 +1,8 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using System.Transactions;
 using Yoma.Core.Domain.Core.Exceptions;
+using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Opportunity;
@@ -10,15 +12,16 @@ using Yoma.Core.Domain.PartnerSync.Models;
 
 namespace Yoma.Core.Domain.PartnerSync.Services
 {
-  public class SyncService : ISyncService
+  public class ProcessingService : IProcessingService
   {
     #region Class Variables
-    private readonly ILogger<SyncService> _logger;
+    private readonly ILogger<ProcessingService> _logger;
     private readonly AppSettings _appSettings;
     private readonly IPartnerService _partnerService;
     private readonly IProcessingStatusService _processingStatusService;
-    private readonly IProcessingLogHelperService _processingLogHelperService;
+    private readonly IProcessingHelperService _processingHelperService;
     private readonly IRepositoryBatched<ProcessingLog> _processingLogRepository;
+    private readonly IExecutionStrategyService _executionStrategyService;
 
     public static readonly Status[] Statuses_Opportunity_Creatable = [Status.Active]; //only active opportunities scheduled for creation
     public static readonly Status[] Statuses_Opportunity_Updatable = [Status.Active, Status.Inactive, Status.Expired]; //expired: might be updated with end date in the past
@@ -26,19 +29,21 @@ namespace Yoma.Core.Domain.PartnerSync.Services
     #endregion
 
     #region Constructor
-    public SyncService(ILogger<SyncService> logger,
+    public ProcessingService(ILogger<ProcessingService> logger,
        IOptions<AppSettings> appSettings,
        IPartnerService partnerService,
        IProcessingStatusService processingStatusService,
-       IProcessingLogHelperService processingLogHelperService,
-       IRepositoryBatched<ProcessingLog> processingLogRepository)
+       IProcessingHelperService processingHelperService,
+       IRepositoryBatched<ProcessingLog> processingLogRepository,
+       IExecutionStrategyService executionStrategyService)
     {
-      _logger = logger;
-      _appSettings = appSettings.Value;
-      _partnerService = partnerService;
-      _processingStatusService = processingStatusService;
-      _processingLogHelperService = processingLogHelperService;
-      _processingLogRepository = processingLogRepository;
+      _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+      _appSettings = appSettings.Value ?? throw new ArgumentNullException(nameof(appSettings));
+      _partnerService = partnerService ?? throw new ArgumentNullException(nameof(partnerService));
+      _processingStatusService = processingStatusService ?? throw new ArgumentNullException(nameof(processingStatusService));
+      _processingHelperService = processingHelperService ?? throw new ArgumentNullException(nameof(processingHelperService));
+      _processingLogRepository = processingLogRepository ?? throw new ArgumentNullException(nameof(processingLogRepository));
+      _executionStrategyService = executionStrategyService ?? throw new ArgumentNullException(nameof(executionStrategyService));
     }
     #endregion
 
@@ -46,21 +51,25 @@ namespace Yoma.Core.Domain.PartnerSync.Services
     /// <summary>
     /// Records a partner sync pull processing entry.
     /// Pull processing is logged as processed immediately after the corresponding create, update or delete
-    /// has been executed in the background job. If processing later fails, the existing entry is updated
-    /// to error state via UpdateSchedulePull.
-    /// If a create is requested for an entity already synchronized, it is recorded as an update.
-    /// If an update is requested for an entity not previously synchronized, it is recorded as a create.
+    /// has been executed in the background job. If processing later fails, the error is recorded
+    /// via RecordPullError.
+    /// If a create is recorded for an entity already synchronized, it is recorded as an update.
+    /// If an update is recorded for an entity not previously synchronized, it is recorded as a create.
     /// Delete requires a previously synchronized entity and remains terminal once deleted.
     /// </summary>
-    public async Task<ProcessingLog> SchedulePull(SyncAction action, Guid partnerId, EntityType entityType, string entityExternalId, Guid? entityId)
+    public async Task<ProcessingLog> RecordPull(SyncAction action, Guid partnerId, EntityType entityType, string entityExternalId, Guid? entityId)
     {
       if (string.IsNullOrWhiteSpace(entityExternalId))
         throw new ArgumentNullException(nameof(entityExternalId));
+
       entityExternalId = entityExternalId.Trim();
+
+      if (entityId.HasValue)
+        ValidateEntitySyncType(Core.SyncType.Pull, entityType, entityId.Value);
 
       var partner = _partnerService.GetById(partnerId);
 
-      var itemExisting = _processingLogHelperService.GetByEntityLatest(Core.SyncType.Pull, partnerId, entityType, entityExternalId);
+      var itemExisting = _processingHelperService.GetByEntityLatest(Core.SyncType.Pull, partnerId, entityType, entityExternalId);
 
       var entityIdInfo = entityId.HasValue ? $"entity id '{entityId}'" : $"entity external id '{entityExternalId}'";
 
@@ -68,7 +77,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
       if (itemExisting != null)
       {
         if (itemExisting.Status != ProcessingStatus.Processed && itemExisting.Status != ProcessingStatus.Error)
-          throw new DataInconsistencyException($"Existing pull schedule in unexpected status: Partner id '{partnerId}', entity type '{entityType}', {entityIdInfo}, action '{itemExisting.Action}', status '{itemExisting.Status}'");
+          throw new DataInconsistencyException($"Existing pull record in unexpected status: Partner id '{partnerId}', entity type '{entityType}', {entityIdInfo}, action '{itemExisting.Action}', status '{itemExisting.Status}'");
 
         actionExisting = Enum.Parse<SyncAction>(itemExisting.Action, true);
       }
@@ -80,8 +89,8 @@ namespace Yoma.Core.Domain.PartnerSync.Services
 
           action = actionExisting!.Value switch
           {
-            SyncAction.Create or SyncAction.Update => SyncAction.Update, //create already processed, schedule update to capture any changes during creation
-            SyncAction.Delete => throw new InvalidOperationException($"Scheduling of partner sync pull creation requested for entity already deleted: Partner id '{partnerId}', entity type '{entityType}', {entityIdInfo}"),
+            SyncAction.Create or SyncAction.Update => SyncAction.Update, //create already recorded, record update to capture any changes during creation
+            SyncAction.Delete => throw new InvalidOperationException($"Recording of partner sync pull creation requested for entity already deleted: Partner id '{partnerId}', entity type '{entityType}', {entityIdInfo}"),
             _ => throw new InvalidOperationException($"Action of '{actionExisting}' not supported"),
           };
 
@@ -93,14 +102,14 @@ namespace Yoma.Core.Domain.PartnerSync.Services
 
           if (itemExisting == null)
           {
-            action = SyncAction.Create; //if no existing schedule, schedule creation to ensure entity exists before update
+            action = SyncAction.Create; //if no existing record, record creation to ensure entity exists before update
             break;
           }
 
           action = actionExisting!.Value switch
           {
-            SyncAction.Create or SyncAction.Update => SyncAction.Update, //update already processed or scheduled, schedule another update to capture any changes
-            SyncAction.Delete => throw new InvalidOperationException($"Scheduling of partner sync pull update requested for entity already deleted: Partner id '{partnerId}', entity type '{entityType}', {entityIdInfo}"),
+            SyncAction.Create or SyncAction.Update => SyncAction.Update, //update already recorded, record another update to capture any changes
+            SyncAction.Delete => throw new InvalidOperationException($"Recording of partner sync pull update requested for entity already deleted: Partner id '{partnerId}', entity type '{entityType}', {entityIdInfo}"),
             _ => throw new InvalidOperationException($"Action of '{actionExisting}' not supported"),
           };
 
@@ -111,12 +120,12 @@ namespace Yoma.Core.Domain.PartnerSync.Services
             throw new ArgumentNullException(nameof(entityId));
 
           if (actionExisting == null)
-            throw new InvalidOperationException($"Scheduling of partner sync pull deletion requested for entity not previously synchronized: Partner id '{partnerId}', entity type '{entityType}', {entityIdInfo}");
+            throw new InvalidOperationException($"Recording of partner sync pull deletion requested for entity not previously synchronized: Partner id '{partnerId}', entity type '{entityType}', {entityIdInfo}");
 
           action = actionExisting!.Value switch
           {
             SyncAction.Create or SyncAction.Update => SyncAction.Delete, //if previously created or updated, can be deleted
-            SyncAction.Delete => throw new InvalidOperationException($"Scheduling of partner sync pull deletion requested for entity already deleted: Partner id '{partnerId}', entity type '{entityType}', {entityIdInfo}"),
+            SyncAction.Delete => throw new InvalidOperationException($"Recording of partner sync pull deletion requested for entity already deleted: Partner id '{partnerId}', entity type '{entityType}', {entityIdInfo}"),
             _ => throw new InvalidOperationException($"Action of '{actionExisting}' not supported"),
           };
 
@@ -154,49 +163,56 @@ namespace Yoma.Core.Domain.PartnerSync.Services
       return item;
     }
 
-    public ProcessingLog? GetSchedulePull(Guid partnerId, EntityType entityType, string entityExternalId)
+    /// <summary>
+    /// Returns the latest pull processing entry for the partner entity.
+    /// Pull synchronization is identified by the partner and the partner's external id.
+    /// </summary>
+    public ProcessingLog? GetPull(Guid partnerId, EntityType entityType, string entityExternalId)
     {
-      return _processingLogHelperService.GetByEntityLatest(Core.SyncType.Pull, partnerId, entityType, entityExternalId);
+      return _processingHelperService.GetByEntityLatest(Core.SyncType.Pull, partnerId, entityType, entityExternalId);
     }
 
-    public async Task UpdateSchedulePull(ProcessingLog item)
+    public async Task RecordPullError(
+     SyncAction action,
+     Guid partnerId,
+     EntityType entityType,
+     string entityExternalId,
+     Guid? entityId,
+     string errorReason)
     {
-      ArgumentNullException.ThrowIfNull(item, nameof(item));
+      if (string.IsNullOrWhiteSpace(entityExternalId))
+        throw new ArgumentNullException(nameof(entityExternalId));
 
-      if (item.SyncType != Core.SyncType.Pull.ToString())
-        throw new InvalidOperationException($"Only '{Core.SyncType.Pull}' sync type supported");
+      if (string.IsNullOrWhiteSpace(errorReason))
+        throw new ArgumentNullException(nameof(errorReason));
 
-      if (string.IsNullOrWhiteSpace(item.EntityExternalId))
-        throw new ArgumentNullException(nameof(item), "Entity external id required");
+      entityExternalId = entityExternalId.Trim();
 
-      item.EntityExternalId = item.EntityExternalId.Trim();
-
-      switch (item.Status)
+      await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
-        case ProcessingStatus.Error:
-          if (string.IsNullOrWhiteSpace(item.ErrorReason))
-            throw new ArgumentNullException(nameof(item), "Error reason required");
+        using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
 
-          item.ErrorReason = item.ErrorReason.Trim();
-          item.RetryCount = (byte?)(item.RetryCount + 1) ?? 0; //1st attempt not counted as a retry
+        var item = await RecordPull(action, partnerId, entityType, entityExternalId, entityId);
 
-          // retry attempts specified and exceeded (-1: infinite retries)
-          if (_appSettings.PartnerSyncMaximumRetryAttempts != 0 &&
-            !(_appSettings.PartnerSyncMaximumRetryAttempts > 0 && item.RetryCount > _appSettings.PartnerSyncMaximumRetryAttempts))
-          {
-            // remains in processed state until retries are exceeded; once in error state, entity is skipped and requires manual intervention
-            item.Status = ProcessingStatus.Processed;
-          }
+        item.Status = ProcessingStatus.Error;
+        item.ErrorReason = errorReason.Trim();
+        item.RetryCount = (byte?)(item.RetryCount + 1) ?? 0; // 1st attempt not counted as a retry
 
-          break;
+        // retry attempts specified and exceeded (-1: infinite retries)
+        if (_appSettings.PartnerSyncMaximumRetryAttempts != 0 &&
+            !(_appSettings.PartnerSyncMaximumRetryAttempts > 0 &&
+              item.RetryCount > _appSettings.PartnerSyncMaximumRetryAttempts))
+        {
+          // remains in processed state until retries are exceeded
+          item.Status = ProcessingStatus.Processed;
+        }
 
-        default:
-          throw new InvalidOperationException($"Status of '{item.Status}' not supported");
-      }
+        item.StatusId = _processingStatusService.GetByName(item.Status.ToString()).Id;
 
-      item.StatusId = _processingStatusService.GetByName(item.Status.ToString()).Id;
+        await _processingLogRepository.Update(item);
 
-      await _processingLogRepository.Update(item);
+        scope.Complete();
+      });
     }
 
     /// <summary>
@@ -208,7 +224,10 @@ namespace Yoma.Core.Domain.PartnerSync.Services
     /// </summary>
     public async Task ScheduleCreatePush(EntityType entityType, Guid entityId)
     {
-      var existingItem = _processingLogHelperService.GetByEntityLatest(Core.SyncType.Push, entityType, entityId);
+      var existingItem = _processingHelperService.GetByEntityLatest(Core.SyncType.Push, entityType, entityId);
+
+      ValidateEntitySyncType(Core.SyncType.Push, entityType, entityId);
+
       if (existingItem != null)
       {
         var action = Enum.Parse<SyncAction>(existingItem.Action, true);
@@ -245,7 +264,10 @@ namespace Yoma.Core.Domain.PartnerSync.Services
     public async Task ScheduleUpdatePush(EntityType entityType, Guid entityId, bool canCreate)
     {
       var actionSchedule = SyncAction.Update;
-      var existingItem = _processingLogHelperService.GetByEntityLatest(Core.SyncType.Push, entityType, entityId);
+      var existingItem = _processingHelperService.GetByEntityLatest(Core.SyncType.Push, entityType, entityId);
+
+      ValidateEntitySyncType(Core.SyncType.Push, entityType, entityId);
+
       if (existingItem != null)
       {
         var action = Enum.Parse<SyncAction>(existingItem.Action, true);
@@ -289,7 +311,10 @@ namespace Yoma.Core.Domain.PartnerSync.Services
     /// </summary>
     public async Task ScheduleDeletePush(EntityType entityType, Guid entityId)
     {
-      var existingItem = _processingLogHelperService.GetByEntityLatest(Core.SyncType.Push, entityType, entityId);
+      var existingItem = _processingHelperService.GetByEntityLatest(Core.SyncType.Push, entityType, entityId);
+
+      ValidateEntitySyncType(Core.SyncType.Push, entityType, entityId);
+
       if (existingItem != null)
       {
         var action = Enum.Parse<SyncAction>(existingItem.Action, true);
@@ -329,7 +354,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
       if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Scheduling of partner sync push deletion initiated: Entity type '{entityType}' and entity id '{entityId}'", entityType, entityId);
     }
 
-    public List<ProcessingLog> ListSchedulePendingPush(int batchSize, List<Guid> idsToSkip)
+    public List<ProcessingLog> ListPendingPush(int batchSize, List<Guid> idsToSkip)
     {
       ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(batchSize, default, nameof(batchSize));
 
@@ -345,7 +370,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
       return results;
     }
 
-    public async Task UpdateSchedulePush(ProcessingLog item)
+    public async Task UpdatePush(ProcessingLog item)
     {
       ArgumentNullException.ThrowIfNull(item, nameof(item));
 
@@ -426,6 +451,28 @@ namespace Yoma.Core.Domain.PartnerSync.Services
 
       if (items.Count != 0)
         await _processingLogRepository.Create(items);
+    }
+
+    private void ValidateEntitySyncType(Core.SyncType syncType, EntityType entityType, Guid entityId)
+    {
+      var statusAbortedId = _processingStatusService.GetByName(ProcessingStatus.Aborted.ToString()).Id;
+
+      var query = _processingLogRepository.Query()
+        .Where(o =>
+          o.EntityType == entityType.ToString() &&
+          o.StatusId != statusAbortedId &&
+          o.SyncType != syncType.ToString());
+
+      query = entityType switch
+      {
+        EntityType.Opportunity => query.Where(o => o.OpportunityId == entityId),
+        _ => throw new InvalidOperationException($"Entity type '{entityType}' not supported")
+      };
+
+      if (!query.Any()) return;
+
+      throw new DataInconsistencyException(
+        $"Entity '{entityId}' of type '{entityType}' already has processing logs for another synchronization type and cannot be recorded or scheduled as '{syncType}'");
     }
     #endregion
   }

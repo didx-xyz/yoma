@@ -196,10 +196,10 @@ namespace Yoma.Core.Domain
           }));
       #endregion Provider
 
-      services.AddScoped<IProcessingLogHelperService, ProcessingLogHelperService>();
+      services.AddScoped<IProcessingHelperService, ProcessingHelperService>();
       services.AddScoped<ISyncBackgroundService, SyncBackgroundService>();
-      services.AddScoped<ISyncInfoService, SyncInfoService>();
-      services.AddScoped<ISyncService, SyncService>();
+      services.AddScoped<ISyncStateService, SyncStateService>();
+      services.AddScoped<IProcessingService, ProcessingService>();
       #endregion Partner Sync
 
       #region Referral

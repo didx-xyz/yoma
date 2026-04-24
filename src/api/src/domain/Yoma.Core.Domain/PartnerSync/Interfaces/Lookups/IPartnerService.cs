@@ -1,3 +1,6 @@
+using Yoma.Core.Domain.Core;
+using Yoma.Core.Domain.Opportunity;
+
 namespace Yoma.Core.Domain.PartnerSync.Interfaces.Lookups
 {
   public interface IPartnerService
@@ -13,5 +16,7 @@ namespace Yoma.Core.Domain.PartnerSync.Interfaces.Lookups
     List<Models.Lookups.Partner> ListPull(SyncAction? action = null, EntityType? entityType = null);
 
     List<Models.Lookups.Partner> ListPush(SyncAction? action = null, EntityType? entityType = null, Guid? entityId = null);
+
+    List<string> ValidateUpdatablePush(Opportunity.Models.Opportunity opportunityCurrent, UpdateAction action, Dictionary<string, object?> updatesToEval, List<SyncPartner> partners);
   }
 }

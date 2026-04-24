@@ -159,21 +159,8 @@ namespace Yoma.Core.Domain.Opportunity.Models
     public string? NonCompletableReason { get; private set; }
 
     /// <summary>
-    /// Partner synchronization state for the opportunity.
-    ///
-    /// Pull-synchronized:
-    /// - The external partner is the source of truth
-    /// - The opportunity is locked for editing
-    /// - Status changes are not permitted
-    /// - Local presentation actions such as hiding and featuring are still permitted for organization admins and super admins
-    /// - Administrative deletion is only permitted for super admins; this is treated as a terminal override and prevents the opportunity from being recreated or updated again via synchronization
-    /// - A pull-synchronized opportunity cannot also be shared via push synchronization
-    ///
-    /// Push-synchronized:
-    /// - Yoma remains the source of truth
-    /// - The opportunity remains editable in Yoma
-    /// - Update restrictions may still apply once shared, based on partner-specific synchronization rules
-    /// - Synchronization state is included for visibility and rule evaluation
+    /// Current partner synchronization state for the opportunity, when applicable.
+    /// A null value indicates that the opportunity is not currently synchronized with any partner.
     /// </summary>
     public SyncInfo? SyncedInfo { get; set; }
 

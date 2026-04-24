@@ -13,14 +13,14 @@ namespace Yoma.Core.Domain.PartnerSync.Events
   {
     #region Class Variables
     private readonly ILogger<OpportunityEventHandler> _logger;
-    private readonly ISyncService _syncService;
+    private readonly IProcessingService _processingService;
     #endregion
 
     #region Constructor
-    public OpportunityEventHandler(ILogger<OpportunityEventHandler> logger, ISyncService syncService)
+    public OpportunityEventHandler(ILogger<OpportunityEventHandler> logger, IProcessingService processingService)
     {
-      _logger = logger;
-      _syncService = syncService;
+      _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+      _processingService = processingService ?? throw new ArgumentNullException(nameof(processingService));
     }
     #endregion
 
@@ -35,7 +35,7 @@ namespace Yoma.Core.Domain.PartnerSync.Events
         {
           case EventType.Create:
             //only scheduled for active opportunities
-            if (!SyncService.Statuses_Opportunity_Creatable.Contains(notification.Entity.Status))
+            if (!ProcessingService.Statuses_Opportunity_Creatable.Contains(notification.Entity.Status))
             {
               if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Scheduling of partner sync push creation skipped for opportunity with id {id} and status {status}", notification.Entity.Id, notification.Entity.Status.ToDescription());
               break;
@@ -48,24 +48,24 @@ namespace Yoma.Core.Domain.PartnerSync.Events
               break;
             }
 
-            await _syncService.ScheduleCreatePush(EntityType.Opportunity, notification.Entity.Id);
+            await _processingService.ScheduleCreatePush(EntityType.Opportunity, notification.Entity.Id);
 
             break;
 
           case EventType.Update:
-            if (!SyncService.Statuses_Opportunity_Updatable.Contains(notification.Entity.Status))
+            if (!ProcessingService.Statuses_Opportunity_Updatable.Contains(notification.Entity.Status))
             {
               if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Scheduling of partner sync push update skipped for opportunity with id {id} and status {status}", notification.Entity.Id, notification.Entity.Status.ToDescription());
               break;
             }
 
-            await _syncService.ScheduleUpdatePush(EntityType.Opportunity, notification.Entity.Id,
+            await _processingService.ScheduleUpdatePush(EntityType.Opportunity, notification.Entity.Id,
               notification.Entity.OrganizationStatus == Entity.OrganizationStatus.Active && notification.Entity.Status == Status.Active);
 
             break;
 
           case EventType.Delete:
-            if (!SyncService.Statuses_Opportunity_CanDelete.Contains(notification.Entity.Status))
+            if (!ProcessingService.Statuses_Opportunity_CanDelete.Contains(notification.Entity.Status))
             {
               if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Scheduling of partner sync push deletion skipped for opportunity with id {id} and status {status}", notification.Entity.Id, notification.Entity.Status.ToDescription());
               break;
@@ -87,7 +87,7 @@ namespace Yoma.Core.Domain.PartnerSync.Events
                 throw new InvalidOperationException($"{nameof(Status)} of '{notification.Entity.Status.ToDescription()}' not supported");
             }
 
-            await _syncService.ScheduleDeletePush(EntityType.Opportunity, notification.Entity.Id);
+            await _processingService.ScheduleDeletePush(EntityType.Opportunity, notification.Entity.Id);
 
             break;
 

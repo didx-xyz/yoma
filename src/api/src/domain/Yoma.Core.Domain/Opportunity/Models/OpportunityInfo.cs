@@ -150,11 +150,11 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
     [JsonIgnore]
     [Name("Externally Managed By")]
-    public string? SyncedPulled => SyncedInfo == null ? null : string.Join(", ", SyncedInfo.Types.Where(o => o.SyncType == Core.SyncType.Pull).SelectMany(o => o.Partners));
+    public string? SyncedPulled => SyncedInfo?.SyncType == Core.SyncType.Pull ? string.Join(", ", SyncedInfo.Partners) : null;
 
     [JsonIgnore]
     [Name("Shared With")]
-    public string? SyncedPushed => SyncedInfo == null ? null : string.Join(", ", SyncedInfo.Types.Where(o => o.SyncType == Core.SyncType.Push).SelectMany(o => o.Partners));
+    public string? SyncedPushed => SyncedInfo?.SyncType == Core.SyncType.Push ? string.Join(", ", SyncedInfo.Partners) : null;
 
     [Ignore]
     public List<Lookups.OpportunityCategory>? Categories { get; set; }

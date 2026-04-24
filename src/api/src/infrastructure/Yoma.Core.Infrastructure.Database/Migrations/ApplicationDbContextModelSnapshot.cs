@@ -17,7 +17,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
     {
 #pragma warning disable 612, 618
       modelBuilder
-          .HasAnnotation("ProductVersion", "10.0.6")
+          .HasAnnotation("ProductVersion", "10.0.7")
           .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
       NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -1778,7 +1778,11 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
             b.HasIndex("StatusId");
 
-            b.HasIndex("EntityType", "OpportunityId", "PartnerId", "Action", "SyncType", "StatusId", "EntityExternalId", "DateCreated", "DateModified");
+            b.HasIndex("SyncType", "EntityType", "OpportunityId", "StatusId", "DateModified");
+
+            b.HasIndex("SyncType", "PartnerId", "Action", "StatusId", "DateModified");
+
+            b.HasIndex("SyncType", "EntityType", "PartnerId", "EntityExternalId", "StatusId", "DateModified");
 
             b.ToTable("ProcessingLog", "PartnerSync");
           });
