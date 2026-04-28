@@ -3,15 +3,19 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Yoma.Core.Infrastructure.Shared.Entities;
 
-namespace Yoma.Core.Infrastructure.Substack.Entities
+namespace Yoma.Core.Infrastructure.Jobberman.Entities
 {
-  [Table("FeedSyncTracking", Schema = "Substack")]
-  [Index(nameof(FeedType), IsUnique = true)]
+  [Table("FeedSyncTracking", Schema = "Jobberman")]
+  [Index(nameof(CountryCodeAlpha2), IsUnique = true)]
   public sealed class FeedSyncTracking : BaseEntity<Guid>
   {
+    /// <summary>
+    /// Country feed identifier, e.g. NG or GH.
+    /// One Jobberman RSS feed is configured per country.
+    /// </summary>
     [Required]
-    [Column(TypeName = "varchar(50)")]
-    public string FeedType { get; set; } = null!;
+    [Column(TypeName = "varchar(2)")]
+    public string CountryCodeAlpha2 { get; set; } = null!;
 
     [Column(TypeName = "varchar(512)")]
     public string? ETag { get; set; }

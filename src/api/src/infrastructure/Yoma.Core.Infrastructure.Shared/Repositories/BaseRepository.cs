@@ -15,8 +15,8 @@ namespace Yoma.Core.Infrastructure.Shared.Repositories
     #region Constructors
     public BaseRepository(TContext context)
     {
-      _context = context;
-      _entitySet = context.Set<TEntity>();
+      _context = context ?? throw new ArgumentNullException(nameof(context));
+      _entitySet = context.Set<TEntity>() ?? throw new ArgumentNullException(nameof(context));
     }
     #endregion
   }

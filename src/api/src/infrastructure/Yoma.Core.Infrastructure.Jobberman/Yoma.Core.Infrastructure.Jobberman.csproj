@@ -7,7 +7,27 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="feed-GH.xml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="feed-GH.xml" />
+    <EmbeddedResource Include="feed-NG.xml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.7" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.7">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.7" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\domain\Yoma.Core.Domain\Yoma.Core.Domain.csproj" />
+    <ProjectReference Include="..\Yoma.Core.Infrastructure.Shared\Yoma.Core.Infrastructure.Shared.csproj" />
   </ItemGroup>
 
 </Project>
