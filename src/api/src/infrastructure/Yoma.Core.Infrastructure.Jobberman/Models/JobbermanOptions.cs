@@ -9,12 +9,13 @@ namespace Yoma.Core.Infrastructure.Jobberman.Models
     public List<JobbermanFeedOptions> Feeds { get; set; } = null!;
   }
 
-  //TODO: Country-specific Yoma organization mapping
   public sealed class JobbermanFeedOptions
   {
     public string CountryCodeAlpha2 { get; set; } = null!;
 
     public string UrlSuffix { get; set; } = null!;
+
+    public Guid OrganizationIdYoma { get; set; }
   }
 }
 

@@ -13,5 +13,7 @@ namespace Yoma.Core.Infrastructure.Alison.Models
     public string OrganizationId { get; set; } = null!;
 
     public string OrganizationKey { get; set; } = null!;
+
+    public Guid OrganizationIdYoma { get; set; }
   }
 }

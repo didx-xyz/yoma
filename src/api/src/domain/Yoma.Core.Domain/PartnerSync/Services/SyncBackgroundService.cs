@@ -424,6 +424,10 @@ namespace Yoma.Core.Domain.PartnerSync.Services
                     if (!entityId.HasValue)
                       throw new InvalidOperationException($"Entity id expected for pull deletion: Partner '{partner}', entity type '{entityType}', entity external id '{item.ExternalId}'");
 
+                    // TODO: Pull-sync deletions executed by background processing currently flow through UpdateStatus(...)
+                    // and are blocked by the admin-role check in AssertUpdatablePartnerSyncPull because no HTTP admin
+                    // context exists in the background worker. Rework this so provider-driven pull deletions are treated
+                    // as authorized source-of-truth updates without weakening the normal user/admin delete rules.
                     await _opportunityService.UpdateStatus(entityId.Value, Status.Deleted, false);
                     break;
                   }

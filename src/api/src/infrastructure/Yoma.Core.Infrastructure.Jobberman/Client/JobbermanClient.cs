@@ -33,6 +33,19 @@ namespace Yoma.Core.Infrastructure.Jobberman.Client
     #region Public Members
     public Task<SyncResultPull<Opportunity>> List(SyncFilterPull filter)
     {
+      if (!_appSettings.PartnerSyncEnabledEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment))
+      {
+        if (_logger.IsEnabled(LogLevel.Information))
+          _logger.LogInformation("Partner synchronization from external partners disabled for environment '{environment}'. Using local .NET embedded resources", _environmentProvider.Environment);
+
+        //TODO: Synchronize from local .NET embedded resources instead of external partner systems.
+        //The mock payload files should be added to the solution, marked as Embedded Resource,
+        //and compiled into the assembly so local/dev sync can run without calling partner APIs.
+        //This is typically used for local and dev with small embedded JSON/XML payloads.
+        //Stage should synchronize from the external partner test/stage environment if available,
+        //otherwise from the partner production environment.
+      }
+
       throw new NotImplementedException();
 
       //TODO: Read configured country feeds
