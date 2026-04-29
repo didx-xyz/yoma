@@ -29,6 +29,7 @@ using Yoma.Core.Infrastructure.Bitly;
 using Yoma.Core.Infrastructure.Chimoney;
 using Yoma.Core.Infrastructure.Database;
 using Yoma.Core.Infrastructure.Emsi;
+using Yoma.Core.Infrastructure.Jobberman;
 using Yoma.Core.Infrastructure.Keycloak;
 using Yoma.Core.Infrastructure.SAYouth;
 using Yoma.Core.Infrastructure.SendGrid;
@@ -143,7 +144,7 @@ namespace Yoma.Core.Api
       services.ConfigureServices_InfrastructureRewardProvider();
       services.ConfigureServices_InfrastructureRewardCashoutProvider();
       services.ConfigureServices_InfrastructureNewsFeedProvider(_configuration, _appSettings);
-      ConfigureServices_InfrastructureSyncProviders(services);
+      ConfigureServices_InfrastructureSyncProviders(services, _configuration, _appSettings);
       #endregion Services & Infrastructure
 
       #region 3rd Party (post ConfigureServices_InfrastructureDatabase)
@@ -237,6 +238,7 @@ namespace Yoma.Core.Api
       //migrations applied as part of ConfigureHangfire to ensure db exist prior to executing Hangfire migrations
       _configuration.Configure_RecurringJobs(_appSettings, _environment);
       _configuration.Configure_RecurringJobsNewsFeedProvider();
+      _configuration.Configure_RecurringJobsSyncProvider();
       #endregion 3rd Partry
     }
     #endregion
@@ -251,11 +253,11 @@ namespace Yoma.Core.Api
       Infrastructure.Alison.Startup.ConfigureServices_SyncProvider(services, configuration);
     }
 
-    private static void ConfigureServices_InfrastructureSyncProviders(IServiceCollection services)
+    private static void ConfigureServices_InfrastructureSyncProviders(IServiceCollection services, IConfiguration configuration, AppSettings appSettings)
     {
       Infrastructure.SAYouth.Startup.ConfigureServices_InfrastructureSyncProvider(services);
 
-      Infrastructure.Jobberman.Startup.ConfigureServices_InfrastructureSyncProvider(services);
+      Infrastructure.Jobberman.Startup.ConfigureServices_InfrastructureSyncProvider(services, configuration, appSettings);
 
       Infrastructure.Alison.Startup.ConfigureServices_InfrastructureSyncProvider(services);
     }
@@ -321,6 +323,7 @@ namespace Yoma.Core.Api
         serviceProvider.Configure_InfrastructureDatabase();
         serviceProvider.Configure_InfrastructureDatabaseSSIProvider();
         serviceProvider.Configure_InfrastructureDatabaseNewsFeedProvider();
+        serviceProvider.Configure_InfrastructureDatabaseSyncProvider();
         config.SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
              .UseActivator(new HangfireActivator(scopeFactory))
              .UseSimpleAssemblyNameTypeSerializer()

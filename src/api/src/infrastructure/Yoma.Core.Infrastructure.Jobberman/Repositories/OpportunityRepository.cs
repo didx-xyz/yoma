@@ -1,5 +1,6 @@
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Interfaces;
+using Yoma.Core.Domain.NewsFeedProvider.Models;
 using Yoma.Core.Infrastructure.Jobberman.Context;
 using Yoma.Core.Infrastructure.Jobberman.Models;
 using Yoma.Core.Infrastructure.Shared.Extensions;
@@ -178,14 +179,27 @@ namespace Yoma.Core.Infrastructure.Jobberman.Repositories
       return items;
     }
 
-    public Task Delete(Opportunity item)
+    public async Task Delete(Opportunity item)
     {
-      throw new NotImplementedException();
+      var entity = _context.Opportunity.Where(o => o.Id == item.Id).SingleOrDefault()
+       ?? throw new ArgumentOutOfRangeException(nameof(item), $"{nameof(NewsArticle)} with id '{item.Id}' does not exist");
+
+      _context.Remove(entity); //hard delete from cache based on retention period
+
+      await _context.SaveChangesAsync();
     }
 
-    public Task Delete(List<Opportunity> items)
+    public async Task Delete(List<Opportunity> items)
     {
-      throw new NotImplementedException();
+      var ids = items.Select(i => i.Id).ToList();
+      var entities = _context.Opportunity.Where(o => ids.Contains(o.Id)).ToList();
+
+      if (entities.Count != items.Count)
+        throw new ArgumentOutOfRangeException(nameof(items), $"{nameof(NewsArticle)}'s with id's {string.Join(", ", ids.Except(entities.Select(e => e.Id)))} do not exist");
+
+      _context.Opportunity.RemoveRange(entities);
+
+      await _context.SaveChangesAsync();
     }
     #endregion
   }

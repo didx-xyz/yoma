@@ -92,6 +92,12 @@ namespace Yoma.Core.Domain.Core
     PreferNotToSay
   }
 
+  public enum Language
+  {
+    [Description("EN")]
+    English
+  }
+
   /// <summary>
   /// Defines the CRUD-style operation represented by an event.
   /// This value is optional and should only be specified when the event

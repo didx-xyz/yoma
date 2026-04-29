@@ -23,9 +23,9 @@ namespace Yoma.Core.Infrastructure.Jobberman.Models
 
     public string Title { get; set; } = null!;
 
-    public string Description { get; set; } = null!;
+    public string? Description { get; set; }
 
-    public string URL { get; set; } = null!;
+    public string? URL { get; set; }
 
     public string? ImageURL { get; set; }
 
@@ -35,31 +35,26 @@ namespace Yoma.Core.Infrastructure.Jobberman.Models
 
     /// <summary>
     /// Partner-supplied start, published, created, or posted date.
-    /// The exact source field is pending confirmation from Jobberman.
     /// </summary>
-    public DateTimeOffset DateStart { get; set; }
+    public DateTimeOffset? DateStart { get; set; }
 
     /// <summary>
-    /// Partner-supplied end, expiry, closing, or removal date, if available.
-    /// The current RSS feed sample does not include this field.
+    /// Partner-supplied end, expiry, closing, or removal date.
     /// </summary>
     public DateTimeOffset? DateEnd { get; set; }
 
     /// <summary>
-    /// Partner-supplied category or job function value, if available.
-    /// The current RSS feed sample does not include this as a dedicated field.
+    /// Partner-supplied category or job function value.
     /// </summary>
     public string? Category { get; set; }
 
     /// <summary>
-    /// Partner-supplied language value, if available.
-    /// The current RSS feed sample does not include this field.
+    /// Partner-supplied language value.
     /// </summary>
     public string? Language { get; set; }
 
     /// <summary>
-    /// Partner-supplied deleted, removed, expired, or closed indicator, if available.
-    /// The current RSS feed sample does not include this field.
+    /// Partner-supplied deleted, removed, expired, or closed indicator.
     /// </summary>
     public bool? Deleted { get; set; }
 
