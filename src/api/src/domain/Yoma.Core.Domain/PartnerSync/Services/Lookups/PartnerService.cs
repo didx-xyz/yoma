@@ -22,7 +22,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services.Lookups
     private readonly ILogger<PartnerService> _logger;
     private readonly AppSettings _appSettings;
     private readonly IMemoryCache _memoryCache;
-    private readonly IOpportunityService _opportunityService;
+    private readonly IOpportunityInfoService _opportunityInfoService;
     private readonly ICountryService _countryService;
     private readonly IRepository<Models.Lookups.Partner> _partnerRepository;
 
@@ -38,14 +38,14 @@ namespace Yoma.Core.Domain.PartnerSync.Services.Lookups
     public PartnerService(ILogger<PartnerService> logger,
       IOptions<AppSettings> appSettings,
       IMemoryCache memoryCache,
-      IOpportunityService opportunityService,
+      IOpportunityInfoService opportunityInfoService,
       ICountryService countryService,
       IRepository<Models.Lookups.Partner> partnerRepository)
     {
       _logger = logger;
       _appSettings = appSettings.Value;
       _memoryCache = memoryCache;
-      _opportunityService = opportunityService;
+      _opportunityInfoService = opportunityInfoService;
       _countryService = countryService;
       _partnerRepository = partnerRepository;
     }
@@ -117,7 +117,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services.Lookups
       switch (entityType.Value)
       {
         case EntityType.Opportunity:
-          var opportunity = _opportunityService.GetById(entityId.Value, true, true, false);
+          var opportunity = _opportunityInfoService.GetById(entityId.Value, false);
 
           foreach (var item in partners)
           {
