@@ -4,6 +4,12 @@ namespace Yoma.Core.Infrastructure.Alison.Models
   {
     public const string Section = "Alison";
 
+    public string AccessTokenPath { get; set; } = "access-token";
+
+    public string RefreshTokenPath { get; set; } = "refresh-token";
+
+    public string CoursesPath { get; set; } = "courses";
+
     public string BaseUrl { get; set; } = null!;
 
     public string ClientId { get; set; } = null!;

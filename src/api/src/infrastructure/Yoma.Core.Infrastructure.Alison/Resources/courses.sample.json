@@ -1,0 +1,267 @@
+{
+  "page": 1,
+  "per_page": 10,
+  "total": 10,
+  "data": [
+    {
+      "id": 1001,
+      "name": "Digital Marketing Fundamentals",
+      "slug": "digital-marketing-fundamentals",
+      "type": "certificate",
+      "language": "en",
+      "categories": [
+        { "id": 10, "code": "BUS", "name": "Business" }
+      ],
+      "modules": [
+        { "id": 2001, "name": "Introduction to Digital Marketing", "description": "Core digital marketing concepts and channels." }
+      ],
+      "tags": [
+        { "id": 301, "name": "marketing" },
+        { "id": 302, "name": "digital" }
+      ],
+      "publishers": [
+        { "name": "Alison", "location": "Ireland" }
+      ],
+      "duration_avg": 3.5,
+      "rating_avg": 4.6,
+      "rating_count": 1400,
+      "published_at": "2025-01-10T08:00:00Z",
+      "created_at": "2024-12-20T10:00:00Z",
+      "updated_at": "2025-01-11T11:30:00Z"
+    },
+    {
+      "id": 1002,
+      "name": "Project Management Essentials",
+      "slug": "project-management-essentials",
+      "type": "certificate",
+      "language": "en",
+      "categories": [
+        { "id": 11, "code": "MGT", "name": "Management" }
+      ],
+      "modules": [
+        { "id": 2002, "name": "Project Lifecycle", "description": "Planning, execution and closure basics." }
+      ],
+      "tags": [
+        { "id": 303, "name": "project-management" },
+        { "id": 304, "name": "planning" }
+      ],
+      "publishers": [
+        { "name": "Alison", "location": "Ireland" }
+      ],
+      "duration_avg": 4.2,
+      "rating_avg": 4.7,
+      "rating_count": 1890,
+      "published_at": "2025-01-12T08:00:00Z",
+      "created_at": "2024-12-22T10:00:00Z",
+      "updated_at": "2025-01-13T12:00:00Z"
+    },
+    {
+      "id": 1003,
+      "name": "Introduction to Data Analytics",
+      "slug": "introduction-to-data-analytics",
+      "type": "certificate",
+      "language": "en",
+      "categories": [
+        { "id": 12, "code": "DAT", "name": "Data" }
+      ],
+      "modules": [
+        { "id": 2003, "name": "Working with Data", "description": "Understanding data collection and analysis." }
+      ],
+      "tags": [
+        { "id": 305, "name": "analytics" },
+        { "id": 306, "name": "data" }
+      ],
+      "publishers": [
+        { "name": "Alison", "location": "Ireland" }
+      ],
+      "duration_avg": 5.0,
+      "rating_avg": 4.5,
+      "rating_count": 980,
+      "published_at": "2025-01-14T08:00:00Z",
+      "created_at": "2024-12-24T10:00:00Z",
+      "updated_at": "2025-01-14T16:00:00Z"
+    },
+    {
+      "id": 1004,
+      "name": "Customer Service Foundations",
+      "slug": "customer-service-foundations",
+      "type": "certificate",
+      "language": "en",
+      "categories": [
+        { "id": 13, "code": "SRV", "name": "Service" }
+      ],
+      "modules": [
+        { "id": 2004, "name": "Customer Communication", "description": "Practical customer support techniques." }
+      ],
+      "tags": [
+        { "id": 307, "name": "customer-service" },
+        { "id": 308, "name": "communication" }
+      ],
+      "publishers": [
+        { "name": "Alison", "location": "Ireland" }
+      ],
+      "duration_avg": 2.8,
+      "rating_avg": 4.4,
+      "rating_count": 760,
+      "published_at": "2025-01-15T08:00:00Z",
+      "created_at": "2024-12-25T10:00:00Z",
+      "updated_at": "2025-01-15T14:30:00Z"
+    },
+    {
+      "id": 1005,
+      "name": "Introduction to Web Development",
+      "slug": "introduction-to-web-development",
+      "type": "certificate",
+      "language": "en",
+      "categories": [
+        { "id": 14, "code": "TEC", "name": "Technology" }
+      ],
+      "modules": [
+        { "id": 2005, "name": "HTML and CSS Basics", "description": "Build and style simple web pages." }
+      ],
+      "tags": [
+        { "id": 309, "name": "web" },
+        { "id": 310, "name": "development" }
+      ],
+      "publishers": [
+        { "name": "Alison", "location": "Ireland" }
+      ],
+      "duration_avg": 6.5,
+      "rating_avg": 4.8,
+      "rating_count": 2210,
+      "published_at": "2025-01-16T08:00:00Z",
+      "created_at": "2024-12-26T10:00:00Z",
+      "updated_at": "2025-01-16T18:00:00Z"
+    },
+    {
+      "id": 1006,
+      "name": "Financial Literacy for Beginners",
+      "slug": "financial-literacy-for-beginners",
+      "type": "certificate",
+      "language": "en",
+      "categories": [
+        { "id": 15, "code": "FIN", "name": "Finance" }
+      ],
+      "modules": [
+        { "id": 2006, "name": "Budgeting Basics", "description": "Personal budgeting and savings principles." }
+      ],
+      "tags": [
+        { "id": 311, "name": "finance" },
+        { "id": 312, "name": "budgeting" }
+      ],
+      "publishers": [
+        { "name": "Alison", "location": "Ireland" }
+      ],
+      "duration_avg": 3.1,
+      "rating_avg": 4.3,
+      "rating_count": 640,
+      "published_at": "2025-01-17T08:00:00Z",
+      "created_at": "2024-12-27T10:00:00Z",
+      "updated_at": "2025-01-17T13:15:00Z"
+    },
+    {
+      "id": 1007,
+      "name": "Workplace Health and Safety Basics",
+      "slug": "workplace-health-and-safety-basics",
+      "type": "certificate",
+      "language": "en",
+      "categories": [
+        { "id": 16, "code": "HSE", "name": "Health and Safety" }
+      ],
+      "modules": [
+        { "id": 2007, "name": "Safety Procedures", "description": "Fundamental workplace risk awareness." }
+      ],
+      "tags": [
+        { "id": 313, "name": "safety" },
+        { "id": 314, "name": "workplace" }
+      ],
+      "publishers": [
+        { "name": "Alison", "location": "Ireland" }
+      ],
+      "duration_avg": 2.4,
+      "rating_avg": 4.2,
+      "rating_count": 530,
+      "published_at": "2025-01-18T08:00:00Z",
+      "created_at": "2024-12-28T10:00:00Z",
+      "updated_at": "2025-01-18T12:45:00Z"
+    },
+    {
+      "id": 1008,
+      "name": "Graphic Design Principles",
+      "slug": "graphic-design-principles",
+      "type": "certificate",
+      "language": "en",
+      "categories": [
+        { "id": 17, "code": "DES", "name": "Design" }
+      ],
+      "modules": [
+        { "id": 2008, "name": "Visual Composition", "description": "Layout, contrast and typography basics." }
+      ],
+      "tags": [
+        { "id": 315, "name": "design" },
+        { "id": 316, "name": "graphics" }
+      ],
+      "publishers": [
+        { "name": "Alison", "location": "Ireland" }
+      ],
+      "duration_avg": 4.7,
+      "rating_avg": 4.7,
+      "rating_count": 1140,
+      "published_at": "2025-01-19T08:00:00Z",
+      "created_at": "2024-12-29T10:00:00Z",
+      "updated_at": "2025-01-19T15:10:00Z"
+    },
+    {
+      "id": 1009,
+      "name": "Entrepreneurship Basics",
+      "slug": "entrepreneurship-basics",
+      "type": "certificate",
+      "language": "en",
+      "categories": [
+        { "id": 18, "code": "ENT", "name": "Entrepreneurship" }
+      ],
+      "modules": [
+        { "id": 2009, "name": "Starting a Venture", "description": "Business idea validation and execution." }
+      ],
+      "tags": [
+        { "id": 317, "name": "entrepreneurship" },
+        { "id": 318, "name": "startup" }
+      ],
+      "publishers": [
+        { "name": "Alison", "location": "Ireland" }
+      ],
+      "duration_avg": 5.4,
+      "rating_avg": 4.6,
+      "rating_count": 870,
+      "published_at": "2025-01-20T08:00:00Z",
+      "created_at": "2024-12-30T10:00:00Z",
+      "updated_at": "2025-01-20T16:40:00Z"
+    },
+    {
+      "id": 1010,
+      "name": "Introduction to AI Concepts",
+      "slug": "introduction-to-ai-concepts",
+      "type": "diploma",
+      "language": "en",
+      "categories": [
+        { "id": 19, "code": "AI", "name": "Artificial Intelligence" }
+      ],
+      "modules": [
+        { "id": 2010, "name": "AI Foundations", "description": "Core AI terminology and practical use cases." }
+      ],
+      "tags": [
+        { "id": 319, "name": "ai" },
+        { "id": 320, "name": "technology" }
+      ],
+      "publishers": [
+        { "name": "Alison", "location": "Ireland" }
+      ],
+      "duration_avg": 7.2,
+      "rating_avg": 4.9,
+      "rating_count": 2575,
+      "published_at": "2025-01-21T08:00:00Z",
+      "created_at": "2024-12-31T10:00:00Z",
+      "updated_at": "2025-01-21T19:00:00Z"
+    }
+  ]
+}
