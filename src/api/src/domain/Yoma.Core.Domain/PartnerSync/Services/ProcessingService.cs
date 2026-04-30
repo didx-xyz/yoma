@@ -72,11 +72,11 @@ namespace Yoma.Core.Domain.PartnerSync.Services
       entityExternalId = entityExternalId.Trim();
 
       if (entityId.HasValue)
-        ValidateEntitySyncType(Core.SyncType.Pull, entityType, entityId.Value);
+        ValidateEntitySyncType(SyncType.Pull, entityType, entityId.Value);
 
       var partner = _partnerService.GetById(partnerId);
 
-      var itemExisting = _processingHelperService.GetByEntityLatest(Core.SyncType.Pull, partnerId, entityType, entityExternalId);
+      var itemExisting = _processingHelperService.GetByEntityLatest(SyncType.Pull, partnerId, entityType, entityExternalId);
 
       var entityIdInfo = entityId.HasValue ? $"entity id '{entityId}'" : $"entity external id '{entityExternalId}'";
 
@@ -145,15 +145,15 @@ namespace Yoma.Core.Domain.PartnerSync.Services
       if (!partner.ActionEnabledParsed.Contains(action))
         throw new InvalidOperationException($"Action of '{action}' not enabled for partner '{partner.Name}'");
 
-      partner.SyncTypesEnabledParsed.TryGetValue(Core.SyncType.Pull, out var entityTypes);
+      partner.SyncTypesEnabledParsed.TryGetValue(SyncType.Pull, out var entityTypes);
       if (entityTypes == null || !entityTypes.Contains(entityType))
-        throw new InvalidOperationException($"Entity type of '{entityType}' not enabled for partner '{partner.Name}' and sync type '{Core.SyncType.Pull}'");
+        throw new InvalidOperationException($"Entity type of '{entityType}' not enabled for partner '{partner.Name}' and sync type '{SyncType.Pull}'");
 
       var item = new ProcessingLog
       {
         EntityType = entityType.ToString(),
         PartnerId = partner.Id,
-        SyncType = Core.SyncType.Pull.ToString(),
+        SyncType = SyncType.Pull.ToString(),
         Action = action.ToString(),
         StatusId = _processingStatusService.GetByName(ProcessingStatus.Processed.ToString()).Id,
         Status = ProcessingStatus.Processed,
@@ -176,7 +176,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
     /// </summary>
     public ProcessingLog? GetPull(Guid partnerId, EntityType entityType, string entityExternalId)
     {
-      return _processingHelperService.GetByEntityLatest(Core.SyncType.Pull, partnerId, entityType, entityExternalId);
+      return _processingHelperService.GetByEntityLatest(SyncType.Pull, partnerId, entityType, entityExternalId);
     }
 
     public async Task RecordPullError(
@@ -231,9 +231,9 @@ namespace Yoma.Core.Domain.PartnerSync.Services
     /// </summary>
     public async Task ScheduleCreatePush(EntityType entityType, Guid entityId)
     {
-      var existingItem = _processingHelperService.GetByEntityLatest(Core.SyncType.Push, entityType, entityId);
+      var existingItem = _processingHelperService.GetByEntityLatest(SyncType.Push, entityType, entityId);
 
-      ValidateEntitySyncType(Core.SyncType.Push, entityType, entityId);
+      ValidateEntitySyncType(SyncType.Push, entityType, entityId);
 
       if (existingItem != null)
       {
@@ -271,9 +271,9 @@ namespace Yoma.Core.Domain.PartnerSync.Services
     public async Task ScheduleUpdatePush(EntityType entityType, Guid entityId, bool canCreate)
     {
       var actionSchedule = SyncAction.Update;
-      var existingItem = _processingHelperService.GetByEntityLatest(Core.SyncType.Push, entityType, entityId);
+      var existingItem = _processingHelperService.GetByEntityLatest(SyncType.Push, entityType, entityId);
 
-      ValidateEntitySyncType(Core.SyncType.Push, entityType, entityId);
+      ValidateEntitySyncType(SyncType.Push, entityType, entityId);
 
       if (existingItem != null)
       {
@@ -318,9 +318,9 @@ namespace Yoma.Core.Domain.PartnerSync.Services
     /// </summary>
     public async Task ScheduleDeletePush(EntityType entityType, Guid entityId)
     {
-      var existingItem = _processingHelperService.GetByEntityLatest(Core.SyncType.Push, entityType, entityId);
+      var existingItem = _processingHelperService.GetByEntityLatest(SyncType.Push, entityType, entityId);
 
-      ValidateEntitySyncType(Core.SyncType.Push, entityType, entityId);
+      ValidateEntitySyncType(SyncType.Push, entityType, entityId);
 
       if (existingItem != null)
       {
@@ -367,7 +367,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
 
       var statusPendingId = _processingStatusService.GetByName(ProcessingStatus.Pending.ToString()).Id;
 
-      var query = _processingLogRepository.Query().Where(o => o.SyncType == Core.SyncType.Push.ToString() && o.StatusId == statusPendingId);
+      var query = _processingLogRepository.Query().Where(o => o.SyncType == SyncType.Push.ToString() && o.StatusId == statusPendingId);
 
       if (idsToSkip != null && idsToSkip.Count != 0)
         query = query.Where(o => !idsToSkip.Contains(o.Id));
@@ -381,8 +381,8 @@ namespace Yoma.Core.Domain.PartnerSync.Services
     {
       ArgumentNullException.ThrowIfNull(item, nameof(item));
 
-      if (item.SyncType != Core.SyncType.Push.ToString())
-        throw new InvalidOperationException($"Only '{Core.SyncType.Push}' sync type supported");
+      if (item.SyncType != SyncType.Push.ToString())
+        throw new InvalidOperationException($"Only '{SyncType.Push}' sync type supported");
 
       item.EntityExternalId = item.EntityExternalId?.Trim();
 
@@ -444,7 +444,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
         {
           EntityType = entityType.ToString(),
           PartnerId = partner.Id,
-          SyncType = Core.SyncType.Push.ToString(),
+          SyncType = SyncType.Push.ToString(),
           Action = action.ToString(),
           StatusId = _processingStatusService.GetByName(ProcessingStatus.Pending.ToString()).Id,
           OpportunityId = entityType switch

@@ -260,7 +260,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       if (_logger.IsEnabled(LogLevel.Debug))
         _logger.LogDebug("Mapping Alison course '{courseId}' with slug '{slug}' to opportunity sync item", course.Id, course.Slug);
 
-      var opportunityType = _opportunityTypeService.GetByName(Yoma.Core.Domain.Opportunity.Type.Learning.ToString());
+      var opportunityType = _opportunityTypeService.GetByName(Domain.Opportunity.Type.Learning.ToString());
       var categories = GetCategories(course);
       var country = GetCountry(course);
       var language = GetLanguage(course);
@@ -321,7 +321,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
           OrganizationName = string.IsNullOrWhiteSpace(publisherName) ? "Alison" : publisherName,
           DateStart = course.PublishedAt ?? course.CreatedAt ?? DateTimeOffset.UtcNow,
           DateEnd = null,
-          Status = Yoma.Core.Domain.Opportunity.Status.Active,
+          Status = Domain.Opportunity.Status.Active,
           VerificationEnabled = false,
           Hidden = false,
           Featured = false,
@@ -332,7 +332,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
           Languages = [language],
           SyncedInfo = new SyncInfo
           {
-            SyncType = Yoma.Core.Domain.Core.SyncType.Pull,
+            SyncType = Domain.Core.SyncType.Pull,
             Partners = []
           }
         }
@@ -379,7 +379,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
         return categories;
 
       // Alison category names are an educated guess until live payloads can be inspected.
-      return [_opportunityCategoryService.GetByName(Yoma.Core.Domain.Opportunity.Category.Other.ToString())];
+      return [_opportunityCategoryService.GetByName(Domain.Opportunity.Category.Other.ToString())];
     }
 
     private Yoma.Core.Domain.Lookups.Models.Country GetCountry(AlisonCourse course)
@@ -388,7 +388,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
 
       // Alison course payloads currently appear to expose publisher location rather than learner availability.
       // Until live API payloads confirm a delivery country, default Alison learning opportunities to Worldwide.
-      return _countryService.GetByCodeAlpha2(Yoma.Core.Domain.Core.Country.Worldwide.ToDescription());
+      return _countryService.GetByCodeAlpha2(Domain.Core.Country.Worldwide.ToDescription());
     }
 
     private Yoma.Core.Domain.Lookups.Models.Language GetLanguage(AlisonCourse course)
@@ -405,7 +405,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       }
 
       // Alison language values are not yet confirmed against live API payloads.
-      return _languageService.GetByName(Yoma.Core.Domain.Core.Language.English.ToString());
+      return _languageService.GetByName(Domain.Core.Language.English.ToString());
     }
 
     private static bool TokenRefreshRequired(HttpStatusCode statusCode)

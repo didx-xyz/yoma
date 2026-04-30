@@ -64,7 +64,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
         .Distinct()
         .ToList();
 
-      if (syncType == Core.SyncType.Pull && partners.Count != 1)
+      if (syncType == SyncType.Pull && partners.Count != 1)
         throw new DataInconsistencyException($"Pull synchronization requires exactly one partner for entity '{entityId}' of type '{entityType}'");
 
       return new SyncInfo
