@@ -1,14 +1,18 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.Transactions;
+using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Opportunity;
+using Yoma.Core.Domain.Opportunity.Interfaces;
 using Yoma.Core.Domain.PartnerSync.Interfaces;
 using Yoma.Core.Domain.PartnerSync.Interfaces.Lookups;
 using Yoma.Core.Domain.PartnerSync.Models;
+using Yoma.Core.Domain.PartnerSync.Models.Lookups;
+using Yoma.Core.Domain.PartnerSync.Services.Lookups;
 
 namespace Yoma.Core.Domain.PartnerSync.Services
 {
@@ -20,6 +24,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
     private readonly IPartnerService _partnerService;
     private readonly IProcessingStatusService _processingStatusService;
     private readonly IProcessingHelperService _processingHelperService;
+    private readonly IOpportunityService _opportunityService;
     private readonly IRepositoryBatched<ProcessingLog> _processingLogRepository;
     private readonly IExecutionStrategyService _executionStrategyService;
 
@@ -34,6 +39,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
        IPartnerService partnerService,
        IProcessingStatusService processingStatusService,
        IProcessingHelperService processingHelperService,
+       IOpportunityService opportunityService,
        IRepositoryBatched<ProcessingLog> processingLogRepository,
        IExecutionStrategyService executionStrategyService)
     {
@@ -42,6 +48,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
       _partnerService = partnerService ?? throw new ArgumentNullException(nameof(partnerService));
       _processingStatusService = processingStatusService ?? throw new ArgumentNullException(nameof(processingStatusService));
       _processingHelperService = processingHelperService ?? throw new ArgumentNullException(nameof(processingHelperService));
+      _opportunityService = opportunityService ?? throw new ArgumentNullException(nameof(opportunityService));
       _processingLogRepository = processingLogRepository ?? throw new ArgumentNullException(nameof(processingLogRepository));
       _executionStrategyService = executionStrategyService ?? throw new ArgumentNullException(nameof(executionStrategyService));
     }
@@ -429,7 +436,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
     private async Task SchedulePush(SyncAction action, EntityType entityType, Guid entityId, string? entityExternalId)
     {
       var items = new List<ProcessingLog>();
-      var partners = _partnerService.ListPush(action, entityType, entityId);
+      var partners = ListPush(action, entityType, entityId);
 
       foreach (var partner in partners)
       {
@@ -451,6 +458,84 @@ namespace Yoma.Core.Domain.PartnerSync.Services
 
       if (items.Count != 0)
         await _processingLogRepository.Create(items);
+    }
+
+    private List<Partner> ListPush(SyncAction action, EntityType entityType, Guid entityId)
+    {
+      //active partners that support push for the specified entity type and action
+      var partners = _partnerService.ListPush(action, entityType);
+      var results = new List<Partner>();
+
+      switch (entityType)
+      {
+        case EntityType.Opportunity:
+          var opportunity = _opportunityService.GetById(entityId, true, true, false);
+
+          foreach (var item in partners)
+          {
+            var partner = Enum.Parse<SyncPartner>(item.Name, true);
+
+            //once shared, flag can not be disabled
+            if (opportunity.ShareWithPartners != true)
+            {
+              if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Partner sync filtering: Entity '{entityType}' with id '{entityId}' not flagged for partner sync and will be skipped", EntityType.Opportunity, entityId);
+              continue;
+            }
+
+            //pull-synchronized opportunity: managed by an external partner; sharing via push-synchronization not allowed
+            if (opportunity.SyncedInfo?.Locked == true)
+            {
+              if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Partner sync filtering: {EntityType} '{EntityId}' is externally managed (pull-synced); skipping push sync", EntityType.Opportunity, entityId);
+              continue;
+            }
+
+            if (opportunity.Hidden == true)
+              throw new InvalidOperationException($"Invalid state detected: Entity {EntityType.Opportunity} with id {entityId} is hidden but has partner sync enabled");
+
+            switch (partner)
+            {
+              case SyncPartner.SAYouth:
+                //only include opportunities of type learning, associated with South Africa and with an end date
+                //once shared, the type can not be changed
+                if (!string.Equals(opportunity.Type, Opportunity.Type.Learning.ToString(), StringComparison.OrdinalIgnoreCase))
+                {
+                  if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Partner sync filtering: Entity '{entityType}' with id '{entityId}' for partner '{partner}' is not a learning type and will be skipped",
+                    EntityType.Opportunity, entityId, partner);
+                  continue;
+                }
+
+                //once shared, end date can be changed but not removed
+                if (!opportunity.DateEnd.HasValue)
+                {
+                  if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Partner sync filtering: Entity '{entityType}' with id '{entityId}' for partner '{partner}' does not have an end date and will be skipped",
+                    EntityType.Opportunity, entityId, partner);
+                  continue;
+                }
+
+                //once shared, required countries can not be removed but can be added
+                if (opportunity.Countries == null ||
+                  !opportunity.Countries.Any(c => PartnerService.RequiredCountries_AnyOf_SAYouth.Any(s => string.Equals(s.CodeAlpha2, c.CodeAlpha2, StringComparison.OrdinalIgnoreCase))))
+                {
+                  if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation(
+                    "Partner sync filtering: Entity '{entityType}' with id '{entityId}' for partner '{partner}' is not associated with any of the required countries '{requiredCountries}' and will be skipped",
+                    EntityType.Opportunity, entityId, partner, string.Join(", ", PartnerService.RequiredCountries_AnyOf_SAYouth.Select(c => c.Country)));
+                  continue;
+                }
+
+                results.Add(item);
+                break;
+
+              default:
+                throw new InvalidOperationException($"Partner of '{partner}' not supported");
+            }
+          }
+          break;
+
+        default:
+          throw new InvalidOperationException($"Entity type of '{entityType}' not supported");
+      }
+
+      return results;
     }
 
     private void ValidateEntitySyncType(Core.SyncType syncType, EntityType entityType, Guid entityId)

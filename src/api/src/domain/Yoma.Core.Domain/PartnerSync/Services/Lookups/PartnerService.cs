@@ -11,7 +11,6 @@ using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Lookups.Interfaces;
 using Yoma.Core.Domain.Opportunity;
-using Yoma.Core.Domain.Opportunity.Interfaces;
 using Yoma.Core.Domain.PartnerSync.Interfaces.Lookups;
 
 namespace Yoma.Core.Domain.PartnerSync.Services.Lookups
@@ -22,11 +21,10 @@ namespace Yoma.Core.Domain.PartnerSync.Services.Lookups
     private readonly ILogger<PartnerService> _logger;
     private readonly AppSettings _appSettings;
     private readonly IMemoryCache _memoryCache;
-    private readonly IOpportunityInfoService _opportunityInfoService;
     private readonly ICountryService _countryService;
     private readonly IRepository<Models.Lookups.Partner> _partnerRepository;
 
-    private static readonly (Country Country, string CodeAlpha2)[] RequiredCountries_AnyOf_SAYouth =
+    public static readonly (Country Country, string CodeAlpha2)[] RequiredCountries_AnyOf_SAYouth =
     [
       (Country.SouthAfrica, Country.SouthAfrica.ToDescription())
     ];
@@ -38,14 +36,12 @@ namespace Yoma.Core.Domain.PartnerSync.Services.Lookups
     public PartnerService(ILogger<PartnerService> logger,
       IOptions<AppSettings> appSettings,
       IMemoryCache memoryCache,
-      IOpportunityInfoService opportunityInfoService,
       ICountryService countryService,
       IRepository<Models.Lookups.Partner> partnerRepository)
     {
       _logger = logger;
       _appSettings = appSettings.Value;
       _memoryCache = memoryCache;
-      _opportunityInfoService = opportunityInfoService;
       _countryService = countryService;
       _partnerRepository = partnerRepository;
     }
@@ -81,9 +77,12 @@ namespace Yoma.Core.Domain.PartnerSync.Services.Lookups
       return ListCached().SingleOrDefault(o => o.Id == id);
     }
 
+    /// <summary>
+    /// Lists active partners configured for pull synchronization for the specified action and entity type.
+    /// Additional entity-specific filtering is handled by the processing service where required.
+    /// </summary>
     public List<Models.Lookups.Partner> ListPull(SyncAction? action, EntityType? entityType)
     {
-      //active partners that support pull for the specified entity type and action
       var results = ListCached()
         .Where(o => o.Active
           && (!action.HasValue || o.ActionEnabledParsed.Contains(action.Value))
@@ -94,94 +93,19 @@ namespace Yoma.Core.Domain.PartnerSync.Services.Lookups
       return results;
     }
 
-    public List<Models.Lookups.Partner> ListPush(SyncAction? action, EntityType? entityType, Guid? entityId)
+    /// <summary>
+    /// Lists active partners configured for push synchronization for the specified action and entity type.
+    /// Additional entity-specific filtering may be handled by the processing service where required.
+    /// </summary>
+    public List<Models.Lookups.Partner> ListPush(SyncAction? action, EntityType? entityType)
     {
       //active partners that support push for the specified entity type and action
-      var partners = ListCached()
+      var results = ListCached()
         .Where(o => o.Active
           && (!action.HasValue || o.ActionEnabledParsed.Contains(action.Value))
           && o.SyncTypesEnabledParsed.TryGetValue(SyncType.Push, out var entityTypes)
           && (!entityType.HasValue || entityTypes.Contains(entityType.Value)))
         .ToList();
-
-      var results = new List<Models.Lookups.Partner>();
-
-      if (!entityType.HasValue && !entityId.HasValue) return partners;
-
-      if (!entityType.HasValue)
-        throw new ArgumentNullException(nameof(entityType), $"'{nameof(entityType)}' is required when '{nameof(entityId)}' is provided");
-
-      if (!entityId.HasValue)
-        throw new ArgumentNullException(nameof(entityId), $"'{nameof(entityId)}' is required when '{nameof(entityType)}' is provided");
-
-      switch (entityType.Value)
-      {
-        case EntityType.Opportunity:
-          var opportunity = _opportunityInfoService.GetById(entityId.Value, false);
-
-          foreach (var item in partners)
-          {
-            var partner = Enum.Parse<SyncPartner>(item.Name, true);
-
-            //once shared, flag can not be disabled
-            if (opportunity.ShareWithPartners != true)
-            {
-              if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Partner sync filtering: Entity '{entityType}' with id '{entityId}' not flagged for partner sync and will be skipped", EntityType.Opportunity, entityId);
-              continue;
-            }
-
-            //pull-synchronized opportunity: managed by an external partner; sharing via push-synchronization not allowed
-            if (opportunity.SyncedInfo?.Locked == true)
-            {
-              if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Partner sync filtering: {EntityType} '{EntityId}' is externally managed (pull-synced); skipping push sync", EntityType.Opportunity, entityId);
-              continue;
-            }
-
-            if (opportunity.Hidden == true)
-              throw new InvalidOperationException($"Invalid state detected: Entity {EntityType.Opportunity} with id {entityId} is hidden but has partner sync enabled");
-
-            switch (partner)
-            {
-              case SyncPartner.SAYouth:
-                //only include opportunities of type learning, associated with South Africa and with an end date
-                //once shared, the type can not be changed
-                if (!string.Equals(opportunity.Type, Opportunity.Type.Learning.ToString(), StringComparison.OrdinalIgnoreCase))
-                {
-                  if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Partner sync filtering: Entity '{entityType}' with id '{entityId}' for partner '{partner}' is not a learning type and will be skipped",
-                    EntityType.Opportunity, entityId, partner);
-                  continue;
-                }
-
-                //once shared, end date can be changed but not removed
-                if (!opportunity.DateEnd.HasValue)
-                {
-                  if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Partner sync filtering: Entity '{entityType}' with id '{entityId}' for partner '{partner}' does not have an end date and will be skipped",
-                    EntityType.Opportunity, entityId, partner);
-                  continue;
-                }
-
-                //once shared, required countries can not be removed but can be added
-                if (opportunity.Countries == null ||
-                  !opportunity.Countries.Any(c => RequiredCountries_AnyOf_SAYouth.Any(s => string.Equals(s.CodeAlpha2, c.CodeAlpha2, StringComparison.OrdinalIgnoreCase))))
-                {
-                  if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation(
-                    "Partner sync filtering: Entity '{entityType}' with id '{entityId}' for partner '{partner}' is not associated with any of the required countries '{requiredCountries}' and will be skipped",
-                    EntityType.Opportunity, entityId, partner, string.Join(", ", RequiredCountries_AnyOf_SAYouth.Select(c => c.Country)));
-                  continue;
-                }
-
-                results.Add(item);
-                break;
-
-              default:
-                throw new InvalidOperationException($"Partner of '{partner}' not supported");
-            }
-          }
-          break;
-
-        default:
-          throw new InvalidOperationException($"Entity type of '{entityType}' not supported");
-      }
 
       return results;
     }
