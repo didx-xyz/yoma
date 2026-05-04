@@ -1,5 +1,4 @@
 using System.Net;
-using System.Reflection;
 using System.Text.Json;
 using FluentValidation;
 using Flurl;
@@ -326,15 +325,10 @@ namespace Yoma.Core.Infrastructure.Alison.Client
           Hidden = false,
           Featured = false,
           Published = true,
-          Keywords = keywordSet.Count == 0 ? null : keywordSet.ToList(),
+          Keywords = keywordSet.Count == 0 ? null : [.. keywordSet],
           Categories = categories,
           Countries = [country],
-          Languages = [language],
-          SyncedInfo = new SyncInfo
-          {
-            SyncType = Domain.Core.SyncType.Pull,
-            Partners = []
-          }
+          Languages = [language]
         }
       };
     }
