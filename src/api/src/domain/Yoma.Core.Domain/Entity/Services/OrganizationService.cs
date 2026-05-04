@@ -266,6 +266,10 @@ namespace Yoma.Core.Domain.Entity.Services
       var resultsInternal = query.ToList();
       resultsInternal.ForEach(o => o.LogoURL = GetBlobObjectURL(o.LogoStorageType, o.LogoKey));
 
+      resultsInternal.ForEach(o => o.YomaRewardBalanceCurrentFinancialYear = o.YomaRewardPoolCurrentFinancialYear.HasValue ? o.YomaRewardPoolCurrentFinancialYear - (o.YomaRewardCumulativeCurrentFinancialYear ?? default) : null);
+
+      resultsInternal.ForEach(o => o.YomaRewardBalanceCurrentFinancialYear = o.YomaRewardPoolCurrentFinancialYear.HasValue ? o.YomaRewardPoolCurrentFinancialYear - (o.YomaRewardCumulativeCurrentFinancialYear ?? default) : null);
+
       results.Items = [.. resultsInternal.Select(o => o.ToInfoAdmin())];
       return results;
     }
@@ -486,10 +490,10 @@ namespace Yoma.Core.Domain.Entity.Services
       result.Tagline = request.Tagline;
       result.Biography = request.Biography;
       result.ModifiedByUserId = user.Id;
-      result.SSOClientIdOutbound = request.SSOClientIdOutbound;
-      result.SSOClientIdInbound = request.SSOClientIdInbound;
-      result.ZltoRewardPoolCurrentFinancialYear = request.ZltoRewardPoolCurrentFinancialYear;
+
       result.YomaRewardPoolCurrentFinancialYear = request.YomaRewardPoolCurrentFinancialYear;
+      result.ZltoRewardBalanceCurrentFinancialYear = result.ZltoRewardPoolCurrentFinancialYear.HasValue ? result.ZltoRewardPoolCurrentFinancialYear - (result.ZltoRewardCumulativeCurrentFinancialYear ?? default) : null;
+      result.YomaRewardBalanceCurrentFinancialYear = result.YomaRewardPoolCurrentFinancialYear.HasValue ? result.YomaRewardPoolCurrentFinancialYear - (result.YomaRewardCumulativeCurrentFinancialYear ?? default) : null;
 
       ValidateUpdatable(result);
 

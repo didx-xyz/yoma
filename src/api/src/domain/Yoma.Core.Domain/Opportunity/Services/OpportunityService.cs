@@ -1998,18 +1998,14 @@ namespace Yoma.Core.Domain.Opportunity.Services
     /// When <paramref name="baseOnly"/> is false, all computed properties are populated,
     /// including reward balances and organization logo URL.
     /// </summary>
-    private void ParseComputed(Models.Opportunity result, bool baseOnly = false)
+    private void ParseComputed(Models.Opportunity opportunity, bool baseOnly = false)
     {
-      result.SetPublished();
-      result.SyncedInfo = _syncStateService.ListSyncInfo(PartnerSync.EntityType.Opportunity, result.Id);
+      opportunity.SetPublished();
+      opportunity.SyncedInfo = _syncStateService.ListSyncInfo(PartnerSync.EntityType.Opportunity, opportunity.Id);
 
       if (baseOnly) return;
 
-      result.OrganizationLogoURL = GetBlobObjectURL(result.OrganizationLogoStorageType, result.OrganizationLogoKey);
-      result.OrganizationZltoRewardBalanceCurrentFinancialYear = result.OrganizationZltoRewardPoolCurrentFinancialYear.HasValue ? result.OrganizationZltoRewardPoolCurrentFinancialYear - (result.OrganizationZltoRewardCumulativeCurrentFinancialYear ?? default) : null;
-      result.OrganizationYomaRewardBalanceCurrentFinancialYear = result.OrganizationYomaRewardPoolCurrentFinancialYear.HasValue ? result.OrganizationYomaRewardPoolCurrentFinancialYear - (result.OrganizationYomaRewardCumulativeCurrentFinancialYear ?? default) : null;
-      result.ZltoRewardBalance = result.ZltoRewardPool.HasValue ? result.ZltoRewardPool - (result.ZltoRewardCumulative ?? default) : null;
-      result.YomaRewardBalance = result.YomaRewardPool.HasValue ? result.YomaRewardPool - (result.YomaRewardCumulative ?? default) : null;
+      opportunity.OrganizationLogoURL = GetBlobObjectURL(opportunity.OrganizationLogoStorageType, opportunity.OrganizationLogoKey);
     }
 
     private async Task<(Models.Opportunity Opporunity, EventType ActionTaken)> ProcessImportAndUpsertOpportunity(Guid organizationId, OpportunityInfoCsvImport item, bool probeOnly)
