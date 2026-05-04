@@ -39,14 +39,14 @@
     <PackageReference Include="Flurl.Http" Version="4.0.2" />
     <PackageReference Include="Flurl.Http.Newtonsoft" Version="0.9.1" />
     <PackageReference Include="Hangfire.Core" Version="1.8.23" />
-    <PackageReference Include="libphonenumber-csharp" Version="9.0.28" />
+    <PackageReference Include="libphonenumber-csharp" Version="9.0.29" />
     <PackageReference Include="MediatR" Version="14.1.0" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.6" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.6" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.7" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.7" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
-    <PackageReference Include="NSwag.Annotations" Version="14.7.0" />
+    <PackageReference Include="NSwag.Annotations" Version="14.7.1" />
     <PackageReference Include="QRCoder" Version="1.8.0" />
-    <PackageReference Include="Sentry.AspNetCore" Version="6.3.2" />
+    <PackageReference Include="Sentry.AspNetCore" Version="6.4.1" />
     <PackageReference Include="StackExchange.Redis" Version="2.12.14" />
   </ItemGroup>
 
