@@ -73,7 +73,7 @@ namespace Yoma.Core.Domain.Referral.Models
 
     public int? CompletionTotal { get; set; }
 
-    public int? CompletionBalance => CompletionLimit.HasValue ? CompletionLimit - (CompletionTotal ?? 0) : null;
+    public int? CompletionBalance => CompletionLimit.HasValue ? CompletionLimit - (CompletionTotal ?? default) : null;
 
     /// <summary>
     /// ZLTO amount for the referrer, read at completion time (not at claim).
@@ -82,56 +82,16 @@ namespace Yoma.Core.Domain.Referral.Models
     public decimal? ZltoRewardReferrer { get; set; }
 
     /// <summary>
-    /// Estimated ZLTO payout for the referrer if a completion happens now.
-    /// Calculated after reserving the referee estimate first.
-    /// Uses program pool balance only (treasury, eligibility, caps, and other payout constraints are not considered).
-    /// null = no referrer reward configured.
-    /// </summary>
-    public decimal? ZltoRewardReferrerEstimate
-    {
-      get
-      {
-        if (!ZltoRewardReferrer.HasValue)
-          return null;
-
-        if (!ZltoRewardPool.HasValue)
-          return ZltoRewardReferrer.Value;
-
-        var pool = Math.Max(ZltoRewardBalance ?? 0m, 0m);
-
-        if (ZltoRewardReferee.HasValue)
-          pool -= Math.Min(pool, ZltoRewardReferee.Value);
-
-        return Math.Min(pool, ZltoRewardReferrer.Value);
-      }
-    }
-
-    /// <summary>
     /// ZLTO amount for the referee, read at completion time (not at claim).
     /// null = no program override (system default or 0).
     /// </summary>
     public decimal? ZltoRewardReferee { get; set; }
 
     /// <summary>
-    /// Estimated ZLTO payout for the referee if a completion happens now.
-    /// Uses program pool balance only (treasury, eligibility, caps, and other payout constraints are not considered).
-    /// Referee has priority.
-    /// null = no referee reward configured.
+    /// Rich ZLTO reward estimate for the referral program, including program-level rewards and
+    /// referee pathway entity reward ranges (currently opportunity completion rewards).
     /// </summary>
-    public decimal? ZltoRewardRefereeEstimate
-    {
-      get
-      {
-        if (!ZltoRewardReferee.HasValue)
-          return null;
-
-        if (!ZltoRewardPool.HasValue)
-          return ZltoRewardReferee.Value;
-
-        var pool = Math.Max(ZltoRewardBalance ?? 0m, 0m);
-        return Math.Min(pool, ZltoRewardReferee.Value);
-      }
-    }
+    public ProgramRewardEstimate? ZltoRewardEstimate { get; set; }
 
     /// <summary>
     /// Program-level ZLTO pool for THIS program (covers both referee and referrer).
@@ -155,7 +115,7 @@ namespace Yoma.Core.Domain.Referral.Models
     /// </summary>
     public decimal? ZltoRewardCumulative { get; set; }
 
-    public decimal? ZltoRewardBalance => ZltoRewardPool.HasValue ? ZltoRewardPool - (ZltoRewardCumulative ?? 0) : null;
+    public decimal? ZltoRewardBalance => ZltoRewardPool.HasValue ? ZltoRewardPool - (ZltoRewardCumulative ?? default) : null;
 
     /// <summary>
     /// Toggle: proof of personhood required to qualify (phone OTP or social sign-in).

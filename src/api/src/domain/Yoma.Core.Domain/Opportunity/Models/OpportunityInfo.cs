@@ -33,11 +33,17 @@ namespace Yoma.Core.Domain.Opportunity.Models
     [Name("Zlto Reward")]
     public decimal? ZltoReward { get; set; }
 
+    [Ignore]
+    public decimal? ZltoRewardEstimate { get; set; }
+
     [Name("Zlto Reward Cumulative")]
     public decimal? ZltoRewardCumulative { get; set; }
 
     [Ignore] //reserved for future use
     public decimal? YomaReward { get; set; }
+
+    [Ignore] //reserved for future use
+    public decimal? YomaRewardEstimate { get; set; }
 
     [Ignore] //reserved for future use
     public decimal? YomaRewardCumulative { get; set; }

@@ -190,10 +190,6 @@ namespace Yoma.Core.Domain.Opportunity.Services
       {
         result.SetPublished();
         result.OrganizationLogoURL = GetBlobObjectURL(result.OrganizationLogoStorageType, result.OrganizationLogoKey);
-        result.OrganizationZltoRewardBalanceCurrentFinancialYear = result.OrganizationZltoRewardPoolCurrentFinancialYear.HasValue ? result.OrganizationZltoRewardPoolCurrentFinancialYear - (result.OrganizationZltoRewardCumulativeCurrentFinancialYear ?? default) : null;
-        result.OrganizationYomaRewardBalanceCurrentFinancialYear = result.OrganizationYomaRewardPoolCurrentFinancialYear.HasValue ? result.OrganizationYomaRewardPoolCurrentFinancialYear - (result.OrganizationYomaRewardCumulativeCurrentFinancialYear ?? default) : null;
-        result.ZltoRewardBalance = result.ZltoRewardPool.HasValue ? result.ZltoRewardPool - (result.ZltoRewardCumulative ?? default) : null;
-        result.YomaRewardBalance = result.YomaRewardPool.HasValue ? result.YomaRewardPool - (result.YomaRewardCumulative ?? default) : null;
       }
 
       return result;
@@ -214,10 +210,6 @@ namespace Yoma.Core.Domain.Opportunity.Services
       {
         result.SetPublished();
         result.OrganizationLogoURL = GetBlobObjectURL(result.OrganizationLogoStorageType, result.OrganizationLogoKey);
-        result.OrganizationZltoRewardBalanceCurrentFinancialYear = result.OrganizationZltoRewardPoolCurrentFinancialYear.HasValue ? result.OrganizationZltoRewardPoolCurrentFinancialYear - (result.OrganizationZltoRewardCumulativeCurrentFinancialYear ?? default) : null;
-        result.OrganizationYomaRewardBalanceCurrentFinancialYear = result.OrganizationYomaRewardPoolCurrentFinancialYear.HasValue ? result.OrganizationYomaRewardPoolCurrentFinancialYear - (result.OrganizationYomaRewardCumulativeCurrentFinancialYear ?? default) : null;
-        result.ZltoRewardBalance = result.ZltoRewardPool.HasValue ? result.ZltoRewardPool - (result.ZltoRewardCumulative ?? default) : null;
-        result.YomaRewardBalance = result.YomaRewardPool.HasValue ? result.YomaRewardPool - (result.YomaRewardCumulative ?? default) : null;
       }
 
       return result;
@@ -249,10 +241,6 @@ namespace Yoma.Core.Domain.Opportunity.Services
       {
         result.SetPublished();
         result.OrganizationLogoURL = GetBlobObjectURL(result.OrganizationLogoStorageType, result.OrganizationLogoKey);
-        result.OrganizationZltoRewardBalanceCurrentFinancialYear = result.OrganizationZltoRewardPoolCurrentFinancialYear.HasValue ? result.OrganizationZltoRewardPoolCurrentFinancialYear - (result.OrganizationZltoRewardCumulativeCurrentFinancialYear ?? default) : null;
-        result.OrganizationYomaRewardBalanceCurrentFinancialYear = result.OrganizationYomaRewardPoolCurrentFinancialYear.HasValue ? result.OrganizationYomaRewardPoolCurrentFinancialYear - (result.OrganizationYomaRewardCumulativeCurrentFinancialYear ?? default) : null;
-        result.ZltoRewardBalance = result.ZltoRewardPool.HasValue ? result.ZltoRewardPool - (result.ZltoRewardCumulative ?? default) : null;
-        result.YomaRewardBalance = result.YomaRewardPool.HasValue ? result.YomaRewardPool - (result.YomaRewardCumulative ?? default) : null;
       }
 
       return result;
@@ -271,10 +259,6 @@ namespace Yoma.Core.Domain.Opportunity.Services
         {
           o.SetPublished();
           o.OrganizationLogoURL = GetBlobObjectURL(o.OrganizationLogoStorageType, o.OrganizationLogoKey);
-          o.OrganizationZltoRewardBalanceCurrentFinancialYear = o.OrganizationZltoRewardPoolCurrentFinancialYear.HasValue ? o.OrganizationZltoRewardPoolCurrentFinancialYear - (o.OrganizationZltoRewardCumulativeCurrentFinancialYear ?? default) : null;
-          o.OrganizationYomaRewardBalanceCurrentFinancialYear = o.OrganizationYomaRewardPoolCurrentFinancialYear.HasValue ? o.OrganizationYomaRewardPoolCurrentFinancialYear - (o.OrganizationYomaRewardCumulativeCurrentFinancialYear ?? default) : null;
-          o.ZltoRewardBalance = o.ZltoRewardPool.HasValue ? o.ZltoRewardPool - (o.ZltoRewardCumulative ?? default) : null;
-          o.YomaRewardBalance = o.YomaRewardPool.HasValue ? o.YomaRewardPool - (o.YomaRewardCumulative ?? default) : null;
         });
 
       return results;
@@ -1024,10 +1008,6 @@ namespace Yoma.Core.Domain.Opportunity.Services
       {
         o.SetPublished();
         if (!filter.UnrestrictedQuery) o.OrganizationLogoURL = GetBlobObjectURL(o.OrganizationLogoStorageType, o.OrganizationLogoKey);
-        o.OrganizationZltoRewardBalanceCurrentFinancialYear = o.OrganizationZltoRewardPoolCurrentFinancialYear.HasValue ? o.OrganizationZltoRewardPoolCurrentFinancialYear - (o.OrganizationZltoRewardCumulativeCurrentFinancialYear ?? default) : null;
-        o.OrganizationYomaRewardBalanceCurrentFinancialYear = o.OrganizationYomaRewardPoolCurrentFinancialYear.HasValue ? o.OrganizationYomaRewardPoolCurrentFinancialYear - (o.OrganizationYomaRewardCumulativeCurrentFinancialYear ?? default) : null;
-        o.ZltoRewardBalance = o.ZltoRewardPool.HasValue ? o.ZltoRewardPool - (o.ZltoRewardCumulative ?? default) : null;
-        o.YomaRewardBalance = o.YomaRewardPool.HasValue ? o.YomaRewardPool - (o.YomaRewardCumulative ?? default) : null;
       });
 
       return result;
@@ -1215,8 +1195,10 @@ namespace Yoma.Core.Domain.Opportunity.Services
         OrganizationLogoURL = organization.LogoURL,
         OrganizationStatusId = organization.StatusId,
         OrganizationStatus = organization.Status,
-        OrganizationZltoRewardBalanceCurrentFinancialYear = organization.ZltoRewardBalanceCurrentFinancialYear,
-        OrganizationYomaRewardBalanceCurrentFinancialYear = organization.YomaRewardBalanceCurrentFinancialYear,
+        OrganizationZltoRewardPoolCurrentFinancialYear = organization.ZltoRewardPoolCurrentFinancialYear,
+        OrganizationZltoRewardCumulativeCurrentFinancialYear = organization.ZltoRewardCumulativeCurrentFinancialYear,
+        OrganizationYomaRewardPoolCurrentFinancialYear = organization.YomaRewardPoolCurrentFinancialYear,
+        OrganizationYomaRewardCumulativeCurrentFinancialYear = organization.YomaRewardCumulativeCurrentFinancialYear,
         Summary = request.Summary,
         Instructions = request.Instructions,
         URL = request.URL,
@@ -1224,8 +1206,6 @@ namespace Yoma.Core.Domain.Opportunity.Services
         YomaReward = request.YomaReward,
         ZltoRewardPool = request.ZltoRewardPool,
         YomaRewardPool = request.YomaRewardPool,
-        ZltoRewardBalance = request.ZltoRewardPool.HasValue ? request.ZltoRewardPool : null,
-        YomaRewardBalance = request.YomaRewardPool.HasValue ? request.YomaRewardPool : null,
         VerificationEnabled = request.VerificationEnabled,
         VerificationMethodValue = request.VerificationMethod?.ToString(),
         VerificationMethod = request.VerificationMethod,
@@ -1374,8 +1354,10 @@ namespace Yoma.Core.Domain.Opportunity.Services
       result.OrganizationName = organization.Name;
       result.OrganizationLogoId = organization.LogoId;
       result.OrganizationLogoURL = organization.LogoURL;
-      result.OrganizationZltoRewardBalanceCurrentFinancialYear = organization.ZltoRewardBalanceCurrentFinancialYear;
-      result.OrganizationYomaRewardBalanceCurrentFinancialYear = organization.YomaRewardBalanceCurrentFinancialYear;
+      result.OrganizationZltoRewardPoolCurrentFinancialYear = organization.ZltoRewardPoolCurrentFinancialYear;
+      result.OrganizationZltoRewardCumulativeCurrentFinancialYear = organization.ZltoRewardCumulativeCurrentFinancialYear;
+      result.OrganizationYomaRewardPoolCurrentFinancialYear = organization.YomaRewardPoolCurrentFinancialYear;
+      result.OrganizationYomaRewardCumulativeCurrentFinancialYear = organization.YomaRewardCumulativeCurrentFinancialYear;
       result.Summary = request.Summary;
       result.Instructions = request.Instructions;
       result.URL = request.URL;
@@ -1383,8 +1365,6 @@ namespace Yoma.Core.Domain.Opportunity.Services
       result.YomaReward = request.YomaReward;
       result.ZltoRewardPool = request.ZltoRewardPool;
       result.YomaRewardPool = request.YomaRewardPool;
-      result.ZltoRewardBalance = result.ZltoRewardPool.HasValue ? result.ZltoRewardPool - (result.ZltoRewardCumulative ?? default) : null;
-      result.YomaRewardBalance = result.YomaRewardPool.HasValue ? result.YomaRewardPool - (result.YomaRewardCumulative ?? default) : null;
       result.VerificationEnabled = request.VerificationEnabled;
       result.VerificationMethod = request.VerificationMethod;
       result.DifficultyId = request.DifficultyId;
@@ -1551,11 +1531,6 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
         scope.Complete();
       });
-
-      opportunity.OrganizationZltoRewardBalanceCurrentFinancialYear = organization.ZltoRewardBalanceCurrentFinancialYear;
-      opportunity.OrganizationYomaRewardBalanceCurrentFinancialYear = organization.YomaRewardBalanceCurrentFinancialYear;
-      opportunity.ZltoRewardBalance = opportunity.ZltoRewardPool.HasValue ? opportunity.ZltoRewardPool - (opportunity.ZltoRewardCumulative ?? default) : null;
-      opportunity.YomaRewardBalance = opportunity.YomaRewardPool.HasValue ? opportunity.YomaRewardPool - (opportunity.YomaRewardCumulative ?? default) : null;
 
       return result;
     }

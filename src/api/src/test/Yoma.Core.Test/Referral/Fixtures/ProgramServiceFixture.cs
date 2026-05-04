@@ -14,6 +14,8 @@ using Yoma.Core.Domain.Referral.Models;
 using Yoma.Core.Domain.Referral.Services;
 using Yoma.Core.Domain.Referral.Validators;
 using Yoma.Core.Domain.ShortLinkProvider.Interfaces;
+using Yoma.Core.Domain.Treasury.Interfaces;
+using Yoma.Core.Domain.Treasury.Models;
 
 namespace Yoma.Core.Test.Referral.Fixtures
 {
@@ -30,6 +32,7 @@ namespace Yoma.Core.Test.Referral.Fixtures
     public Mock<ILinkMaintenanceService> LinkMaintenanceService { get; }
     public Mock<ICountryService> CountryService { get; }
     public Mock<ILinkStatusService> LinkStatusService { get; }
+    public Mock<ITreasuryService> TreasuryService { get; }
     public Mock<IRepository<ProgramCountry>> ProgramCountryRepository { get; }
     public Mock<IRepositoryBatchedValueContainsWithNavigation<ReferralLink>> LinkRepository { get; }
     public Mock<IExecutionStrategyService> ExecutionStrategyService { get; }
@@ -61,6 +64,9 @@ namespace Yoma.Core.Test.Referral.Fixtures
       LinkMaintenanceService = new Mock<ILinkMaintenanceService>();
       CountryService = new Mock<ICountryService>();
       LinkStatusService = new Mock<ILinkStatusService>();
+
+      TreasuryService = new Mock<ITreasuryService>();
+      TreasuryService.Setup(x => x.Get()).Returns(new TreasuryInfo());
 
       ProgramCountryRepository = new Mock<IRepository<ProgramCountry>>();
       SetupBaseRepository(ProgramCountryRepository);
@@ -113,6 +119,7 @@ namespace Yoma.Core.Test.Referral.Fixtures
         LinkMaintenanceService.Object,
         CountryService.Object,
         LinkStatusService.Object,
+        TreasuryService.Object,
 
         ExecutionStrategyService.Object,
         ShortLinkProviderClientFactory.Object,

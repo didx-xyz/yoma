@@ -14,6 +14,7 @@ namespace Yoma.Core.Test.Referral.Builders
     private int? _completionTotal;
     private decimal? _zltoRewardReferrer;
     private decimal? _zltoRewardReferee;
+    private ProgramRewardEstimate? _zltoRewardEstimate;
     private decimal? _zltoRewardPool;
     private decimal? _zltoRewardCumulative;
     private bool _proofOfPersonhoodRequired;
@@ -49,6 +50,17 @@ namespace Yoma.Core.Test.Referral.Builders
       _zltoRewardReferrer = referrer;
       _zltoRewardReferee = referee;
       _zltoRewardPool = pool;
+      _zltoRewardEstimate = new ProgramRewardEstimate
+      {
+        Referrer = referrer,
+        Referee = referee
+      };
+      return this;
+    }
+
+    public ProgramInfoBuilder WithZltoRewardEstimate(ProgramRewardEstimate? estimate)
+    {
+      _zltoRewardEstimate = estimate;
       return this;
     }
 
@@ -63,6 +75,7 @@ namespace Yoma.Core.Test.Referral.Builders
       _completionTotal = program.CompletionTotal;
       _zltoRewardReferrer = program.ZltoRewardReferrer;
       _zltoRewardReferee = program.ZltoRewardReferee;
+      _zltoRewardEstimate = program.ZltoRewardEstimate;
       _zltoRewardPool = program.ZltoRewardPool;
       _zltoRewardCumulative = program.ZltoRewardCumulative;
       _proofOfPersonhoodRequired = program.ProofOfPersonhoodRequired;
@@ -86,9 +99,8 @@ namespace Yoma.Core.Test.Referral.Builders
       CompletionLimit = _completionLimit,
       CompletionTotal = _completionTotal,
       ZltoRewardReferrer = _zltoRewardReferrer,
-      ZltoRewardReferrerEstimate = _zltoRewardReferrer,
       ZltoRewardReferee = _zltoRewardReferee,
-      ZltoRewardRefereeEstimate = _zltoRewardReferee,
+      ZltoRewardEstimate = _zltoRewardEstimate,
       ZltoRewardPool = _zltoRewardPool,
       ZltoRewardCumulative = _zltoRewardCumulative,
       ProofOfPersonhoodRequired = _proofOfPersonhoodRequired,
