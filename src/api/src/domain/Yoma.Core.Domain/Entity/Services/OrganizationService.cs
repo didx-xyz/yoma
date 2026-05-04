@@ -144,7 +144,7 @@ namespace Yoma.Core.Domain.Entity.Services
         result.LogoURL = GetBlobObjectURL(result.LogoStorageType, result.LogoKey);
         result.Documents?.ForEach(o => o.Url = GetBlobObjectURL(o.FileStorageType, o.FileKey));
         result.Settings = SettingsHelper.ParseInfo(_settingsDefinitionService.ListByEntityType(EntityType.Organization), result.SettingsRaw);
-     }
+      }
 
       return result;
     }
@@ -265,7 +265,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
       var resultsInternal = query.ToList();
       resultsInternal.ForEach(o => o.LogoURL = GetBlobObjectURL(o.LogoStorageType, o.LogoKey));
-     
+
       results.Items = [.. resultsInternal.Select(o => o.ToInfoAdmin())];
       return results;
     }
@@ -490,7 +490,7 @@ namespace Yoma.Core.Domain.Entity.Services
       result.SSOClientIdInbound = request.SSOClientIdInbound;
       result.ZltoRewardPoolCurrentFinancialYear = request.ZltoRewardPoolCurrentFinancialYear;
       result.YomaRewardPoolCurrentFinancialYear = request.YomaRewardPoolCurrentFinancialYear;
-    
+
       ValidateUpdatable(result);
 
       var itemsAdded = new List<BlobObject>();

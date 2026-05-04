@@ -1,6 +1,6 @@
 namespace Yoma.Core.Domain.Referral.Models
 {
-  public sealed  class ProgramRewardEstimate
+  public sealed class ProgramRewardEstimate
   {
     /// <summary>
     /// Estimated program-level reward payable to the referrer if a referral completion happens now.
