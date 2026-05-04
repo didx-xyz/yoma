@@ -81,7 +81,6 @@ namespace Yoma.Core.Domain.Opportunity.Services
       }
 
       //do not exclude hidden; instant verify links supports hidden opportunities
-
       var result = opportunity.ToOpportunityInfo(treasuryInfo.ZltoRewardBalanceCurrentFinancialYear, _appSettings.AppBaseURL);
       SetEngagementCounts(result);
       return result;

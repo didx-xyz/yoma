@@ -71,12 +71,22 @@ namespace Yoma.Core.Infrastructure.Database.Marketplace.Repositories
             OrganizationLogoKey = o.Opportunity.Organization.Logo == null ? null : o.Opportunity.Organization.Logo.Key,
             //OrganizationLogoURL: Optional; Resolved when needed
             OrganizationStatus = Enum.Parse<Domain.Entity.OrganizationStatus>(o.Opportunity.Organization.Status.Name, true),
+            OrganizationZltoRewardPoolCurrentFinancialYear = o.Opportunity.Organization.ZltoRewardPoolCurrentFinancialYear,
+            OrganizationZltoRewardCumulativeCurrentFinancialYear = o.Opportunity.Organization.ZltoRewardCumulativeCurrentFinancialYear,
+            OrganizationYomaRewardPoolCurrentFinancialYear = o.Opportunity.Organization.YomaRewardPoolCurrentFinancialYear,
+            OrganizationYomaRewardCumulativeCurrentFinancialYear = o.Opportunity.Organization.YomaRewardCumulativeCurrentFinancialYear,
             VerificationEnabled = o.Opportunity.VerificationEnabled,
             VerificationMethod = string.IsNullOrEmpty(o.Opportunity.VerificationMethod) ? null : Enum.Parse<VerificationMethod>(o.Opportunity.VerificationMethod, true),
             Status = Enum.Parse<Status>(o.Opportunity.Status.Name, true),
             Hidden = o.Opportunity.Hidden,
             DateStart = o.Opportunity.DateStart,
             Type = o.Opportunity.Type.Name,
+            ZltoReward = o.Opportunity.ZltoReward,
+            ZltoRewardPool = o.Opportunity.ZltoRewardPool,
+            ZltoRewardCumulative = o.Opportunity.ZltoRewardCumulative,
+            YomaReward = o.Opportunity.YomaReward,
+            YomaRewardPool = o.Opportunity.YomaRewardPool,
+            YomaRewardCumulative = o.Opportunity.YomaRewardCumulative,
             Countries = o.Opportunity.Countries.Select(oc => new Domain.Lookups.Models.Country
             {
               Id = oc.Country.Id,

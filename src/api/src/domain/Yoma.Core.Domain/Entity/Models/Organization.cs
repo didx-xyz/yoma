@@ -80,7 +80,7 @@ namespace Yoma.Core.Domain.Entity.Models
 
     public decimal? ZltoRewardCumulativeCurrentFinancialYear { get; set; }
 
-    public decimal? ZltoRewardBalanceCurrentFinancialYear { get; set; }
+    public decimal? ZltoRewardBalanceCurrentFinancialYear => ZltoRewardPoolCurrentFinancialYear.HasValue ? ZltoRewardPoolCurrentFinancialYear - (ZltoRewardCumulativeCurrentFinancialYear ?? default) : null;
 
     public decimal? YomaRewardPoolCurrentFinancialYear { get; set; }
 
@@ -88,7 +88,7 @@ namespace Yoma.Core.Domain.Entity.Models
 
     public decimal? YomaRewardCumulativeCurrentFinancialYear { get; set; }
 
-    public decimal? YomaRewardBalanceCurrentFinancialYear { get; set; }
+    public decimal? YomaRewardBalanceCurrentFinancialYear => YomaRewardPoolCurrentFinancialYear.HasValue ? YomaRewardPoolCurrentFinancialYear - (YomaRewardCumulativeCurrentFinancialYear ?? default) : null;
 
     public DateTimeOffset DateCreated { get; set; }
 

@@ -76,7 +76,7 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
     {
       ArgumentNullException.ThrowIfNull(value, nameof(value));
 
-      // completable calculated inline on OpportunityItem (loaded directly from the repo in some cases and not always initialized via ToOpportunityItem)
+      // Completable calculated inline on OpportunityItem (loaded directly from the repo in some cases and not always initialized via ToOpportunityItem)
 
       return new OpportunityItem
       {
@@ -88,13 +88,23 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
         OrganizationLogoKey = value.OrganizationLogoKey,
         OrganizationLogoURL = value.OrganizationLogoURL, // Map; Optional; resolved by the invoking member when required
         OrganizationStatus = value.OrganizationStatus,
+        OrganizationZltoRewardPoolCurrentFinancialYear = value.OrganizationZltoRewardPoolCurrentFinancialYear,
+        OrganizationZltoRewardCumulativeCurrentFinancialYear = value.OrganizationZltoRewardCumulativeCurrentFinancialYear,
+        OrganizationYomaRewardPoolCurrentFinancialYear = value.OrganizationYomaRewardPoolCurrentFinancialYear,
+        OrganizationYomaRewardCumulativeCurrentFinancialYear = value.OrganizationYomaRewardCumulativeCurrentFinancialYear,
         VerificationEnabled = value.VerificationEnabled,
         VerificationMethod = value.VerificationMethod,
         Status = value.Status,
         Hidden = value.Hidden,
         DateStart = value.DateStart,
         Type = value.Type,
-        Countries = value.Countries,
+        ZltoReward = value.ZltoReward,
+        ZltoRewardPool = value.ZltoRewardPool,
+        ZltoRewardCumulative = value.ZltoRewardCumulative,
+        YomaReward = value.YomaReward,
+        YomaRewardPool = value.YomaRewardPool,
+        YomaRewardCumulative = value.YomaRewardCumulative,
+        Countries = value.Countries
       };
     }
 
@@ -146,9 +156,11 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
         Summary = value.Summary,
         Instructions = value.Instructions,
         URL = value.URL,
-        ZltoReward = CalculateEstimatedReward(value.ZltoReward, treasuryZltoRewardBalanceCurrentFinancialYear, value.OrganizationZltoRewardBalanceCurrentFinancialYear, value.ZltoRewardBalance),
+        ZltoReward = value.ZltoReward,
+        ZltoRewardEstimate = CalculateEstimatedReward(value.ZltoReward, treasuryZltoRewardBalanceCurrentFinancialYear, value.OrganizationZltoRewardBalanceCurrentFinancialYear, value.ZltoRewardBalance),
         ZltoRewardCumulative = value.ZltoRewardCumulative,
-        YomaReward = CalculateEstimatedReward(value.YomaReward, null, value.OrganizationYomaRewardBalanceCurrentFinancialYear, value.YomaRewardBalance),
+        YomaReward = value.YomaReward,
+        YomaRewardEstimate = CalculateEstimatedReward(value.YomaReward, null, value.OrganizationYomaRewardBalanceCurrentFinancialYear, value.YomaRewardBalance),
         YomaRewardCumulative = value.YomaRewardCumulative,
         VerificationEnabled = value.VerificationEnabled,
         VerificationMethod = value.VerificationMethod,
@@ -290,29 +302,33 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
     }
     #endregion
 
-    #region Private Members
-    private static decimal? CalculateEstimatedReward(decimal? reward, decimal? treasuryBalance, decimal? organizationBalance, decimal? opportunityBalance)
+    #region Internal Members
+    internal static decimal? CalculateEstimatedReward(decimal? reward, decimal? treasuryBalance, decimal? organizationBalance, decimal? opportunityBalance)
     {
       if (!reward.HasValue) return null;
 
+      var result = reward.Value;
+
       if (treasuryBalance.HasValue)
       {
-        reward = Math.Max(Math.Min(reward.Value, treasuryBalance.Value), default);
-        if (reward == default) return default;
+        result = Math.Max(Math.Min(result, treasuryBalance.Value), default);
+        if (result == default) return default;
       }
 
       if (organizationBalance.HasValue)
       {
-        reward = Math.Max(Math.Min(reward.Value, organizationBalance.Value), default);
-        if (reward == default) return default;
+        result = Math.Max(Math.Min(result, organizationBalance.Value), default);
+        if (result == default) return default;
       }
 
       if (opportunityBalance.HasValue)
-        reward = Math.Max(Math.Min(reward.Value, opportunityBalance.Value), default);
+        result = Math.Max(Math.Min(result, opportunityBalance.Value), default);
 
-      return reward;
+      return result;
     }
+    #endregion
 
+    #region Private Members
     private static bool Published(Status status, Entity.OrganizationStatus organizationStatus)
     {
       return status == Status.Active && organizationStatus == Entity.OrganizationStatus.Active;

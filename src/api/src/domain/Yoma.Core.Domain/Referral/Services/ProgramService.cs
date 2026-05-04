@@ -23,6 +23,7 @@ using Yoma.Core.Domain.Referral.Validators;
 using Yoma.Core.Domain.ShortLinkProvider;
 using Yoma.Core.Domain.ShortLinkProvider.Interfaces;
 using Yoma.Core.Domain.ShortLinkProvider.Models;
+using Yoma.Core.Domain.Treasury.Interfaces;
 
 namespace Yoma.Core.Domain.Referral.Services
 {
@@ -40,6 +41,7 @@ namespace Yoma.Core.Domain.Referral.Services
     private readonly ILinkMaintenanceService _linkMaintenanceService;
     private readonly ICountryService _countryService;
     private readonly ILinkStatusService _linkStatusService;
+    private readonly ITreasuryService _treasuryService;
 
     private readonly IExecutionStrategyService _executionStrategyService;
     private readonly IShortLinkProviderClient _shortLinkProviderClient;
@@ -75,6 +77,7 @@ namespace Yoma.Core.Domain.Referral.Services
       ILinkMaintenanceService linkMaintenanceService,
       ICountryService countryService,
       ILinkStatusService linkStatusService,
+      ITreasuryService treasuryService,
 
       IExecutionStrategyService executionStrategyService,
       IShortLinkProviderClientFactory shortLinkProviderClientFactory,
@@ -101,6 +104,7 @@ namespace Yoma.Core.Domain.Referral.Services
       _linkMaintenanceService = linkMaintenanceService ?? throw new ArgumentNullException(nameof(linkMaintenanceService));
       _countryService = countryService ?? throw new ArgumentNullException(nameof(countryService));
       _linkStatusService = linkStatusService ?? throw new ArgumentNullException(nameof(linkStatusService));
+      _treasuryService = treasuryService ?? throw new ArgumentNullException(nameof(treasuryService));
 
       _executionStrategyService = executionStrategyService ?? throw new ArgumentNullException(nameof(executionStrategyService));
       _shortLinkProviderClient = shortLinkProviderClientFactory.CreateClient() ?? throw new ArgumentNullException(nameof(shortLinkProviderClientFactory));
@@ -138,7 +142,7 @@ namespace Yoma.Core.Domain.Referral.Services
       var result = query.SingleOrDefault(o => o.Id == id);
       if (result == null) return null;
 
-      if (includeComputed) result = ParseBlobObjectURL(result);
+      if (includeComputed) ParseComputed(result);
 
       return result;
     }
@@ -153,7 +157,7 @@ namespace Yoma.Core.Domain.Referral.Services
 #pragma warning restore CA1862 // Use the 'StringComparison' method overloads to perform case-insensitive string comparisons
       if (result == null) return null;
 
-      if (includeComputed) result = ParseBlobObjectURL(result);
+      if (includeComputed) ParseComputed(result);
 
       return result;
     }
@@ -174,7 +178,7 @@ namespace Yoma.Core.Domain.Referral.Services
       var result = results.SingleOrDefault();
       if (result == null) return null;
 
-      if (includeComputed) result = ParseBlobObjectURL(result);
+      if (includeComputed) ParseComputed(result);
 
       return result;
     }
@@ -384,7 +388,7 @@ namespace Yoma.Core.Domain.Referral.Services
       }
 
       results.Items = [.. query];
-      results.Items.ForEach(o => ParseBlobObjectURL(o));
+      results.Items.ForEach(o => ParseComputed(o));
 
       return results;
     }
@@ -1233,12 +1237,22 @@ namespace Yoma.Core.Domain.Referral.Services
             OrganizationLogoKey = opportunity.OrganizationLogoKey,
             OrganizationLogoURL = opportunity.OrganizationLogoURL, // Map; Resolved when retrieving the opportunity (see includeComputed above)
             OrganizationStatus = opportunity.OrganizationStatus,
+            OrganizationZltoRewardPoolCurrentFinancialYear = opportunity.OrganizationZltoRewardPoolCurrentFinancialYear,
+            OrganizationZltoRewardCumulativeCurrentFinancialYear = opportunity.OrganizationZltoRewardCumulativeCurrentFinancialYear,
+            OrganizationYomaRewardPoolCurrentFinancialYear = opportunity.OrganizationYomaRewardPoolCurrentFinancialYear,
+            OrganizationYomaRewardCumulativeCurrentFinancialYear = opportunity.OrganizationYomaRewardCumulativeCurrentFinancialYear,
             VerificationEnabled = opportunity.VerificationEnabled,
             VerificationMethod = opportunity.VerificationMethod,
             Status = opportunity.Status,
             Hidden = opportunity.Hidden,
             DateStart = opportunity.DateStart,
             Type = opportunity.Type,
+            ZltoReward = opportunity.ZltoReward,
+            ZltoRewardPool = opportunity.ZltoRewardPool,
+            ZltoRewardCumulative = opportunity.ZltoRewardCumulative,
+            YomaReward = opportunity.YomaReward,
+            YomaRewardPool = opportunity.YomaRewardPool,
+            YomaRewardCumulative = opportunity.YomaRewardCumulative,
             Countries = opportunity.Countries
           };
 
@@ -1287,9 +1301,19 @@ namespace Yoma.Core.Domain.Referral.Services
       if (blobObject == null)
         throw new InvalidOperationException("Blob object expected");
 
-      program = ParseBlobObjectURL(program);
+      ParseComputed(program, false);
 
       return (program, blobObject);
+    }
+
+    private void ParseComputed(Program program, bool includeRewardEstimate = true)
+    {
+      ParseBlobObjectURL(program);
+
+      if (!includeRewardEstimate) return;
+
+      var treasuryInfo = _treasuryService.Get();
+      program.CalculateEstimatedReward(treasuryInfo.ZltoRewardBalanceCurrentFinancialYear);
     }
 
     private async Task<(Program Program, bool Updated)> SetAsDefault(Program program)

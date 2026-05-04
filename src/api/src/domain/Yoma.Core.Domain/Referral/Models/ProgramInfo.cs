@@ -23,7 +23,7 @@ namespace Yoma.Core.Domain.Referral.Models
 
     public int? CompletionTotal { get; set; }
 
-    public int? CompletionBalance => CompletionLimit.HasValue ? CompletionLimit - (CompletionTotal ?? default) : null;
+    public int? CompletionBalance { get; set; }
 
     /// <summary>
     /// ZLTO amount for the referrer, read at completion time (not at claim).
@@ -31,15 +31,17 @@ namespace Yoma.Core.Domain.Referral.Models
     /// </summary>
     public decimal? ZltoRewardReferrer { get; set; }
 
-    public decimal? ZltoRewardReferrerEstimate { get; set; }
-
     /// <summary>
     /// ZLTO amount for the referee, read at completion time (not at claim).
     /// null = no program override (system default or 0).
     /// </summary>
     public decimal? ZltoRewardReferee { get; set; }
 
-    public decimal? ZltoRewardRefereeEstimate { get; set; }
+    /// <summary>
+    /// Rich ZLTO reward estimate for the referral program, including program-level rewards and
+    /// referee pathway entity reward ranges (currently opportunity completion rewards).
+    /// </summary>
+    public ProgramRewardEstimate? ZltoRewardEstimate { get; set; }
 
     [JsonIgnore]
     public decimal? ZltoRewardPool { get; set; }
@@ -58,7 +60,7 @@ namespace Yoma.Core.Domain.Referral.Models
     public decimal? ZltoRewardCumulative { get; set; }
 
     [JsonIgnore]
-    public decimal? ZltoRewardBalance => ZltoRewardPool.HasValue ? ZltoRewardPool - (ZltoRewardCumulative ?? default) : null;
+    public decimal? ZltoRewardBalance { get; set; }
 
     public bool ProofOfPersonhoodRequired { get; set; }
 
@@ -76,7 +78,7 @@ namespace Yoma.Core.Domain.Referral.Models
     [JsonIgnore]
     public int? ReferrerTotal { get; set; }
 
-    public int? ReferrerBalance => ReferrerLimit.HasValue ? ReferrerLimit - (ReferrerTotal ?? 0) : null;
+    public int? ReferrerBalance { get; set; }
 
     public DateTimeOffset DateStart { get; set; }
 
