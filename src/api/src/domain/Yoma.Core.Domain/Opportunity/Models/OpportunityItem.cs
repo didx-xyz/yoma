@@ -32,6 +32,24 @@ namespace Yoma.Core.Domain.Opportunity.Models
     public OrganizationStatus OrganizationStatus { get; set; }
 
     [JsonIgnore]
+    public decimal? OrganizationZltoRewardPoolCurrentFinancialYear { get; set; }
+
+    [JsonIgnore]
+    public decimal? OrganizationZltoRewardCumulativeCurrentFinancialYear { get; set; }
+
+    [JsonIgnore]
+    public decimal? OrganizationZltoRewardBalanceCurrentFinancialYear => OrganizationZltoRewardPoolCurrentFinancialYear.HasValue ? OrganizationZltoRewardPoolCurrentFinancialYear - (OrganizationZltoRewardCumulativeCurrentFinancialYear ?? default) : null;
+
+    [JsonIgnore]
+    public decimal? OrganizationYomaRewardPoolCurrentFinancialYear { get; set; }
+
+    [JsonIgnore]
+    public decimal? OrganizationYomaRewardCumulativeCurrentFinancialYear { get; set; }
+
+    [JsonIgnore]
+    public decimal? OrganizationYomaRewardBalanceCurrentFinancialYear => OrganizationYomaRewardPoolCurrentFinancialYear.HasValue ? OrganizationYomaRewardPoolCurrentFinancialYear - (OrganizationYomaRewardCumulativeCurrentFinancialYear ?? default) : null;
+
+    [JsonIgnore]
     public bool VerificationEnabled { get; set; }
 
     [JsonIgnore]
@@ -48,6 +66,30 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
     [JsonIgnore]
     public string Type { get; set; } = null!;
+
+    [JsonIgnore]
+    public decimal? ZltoReward { get; set; }
+
+    [JsonIgnore]
+    public decimal? ZltoRewardPool { get; set; }
+
+    [JsonIgnore]
+    public decimal? ZltoRewardCumulative { get; set; }
+
+    [JsonIgnore]
+    public decimal? ZltoRewardBalance => ZltoRewardPool.HasValue ? ZltoRewardPool - (ZltoRewardCumulative ?? default) : null;
+
+    [JsonIgnore]
+    public decimal? YomaReward { get; set; }
+
+    [JsonIgnore]
+    public decimal? YomaRewardPool { get; set; }
+
+    [JsonIgnore]
+    public decimal? YomaRewardCumulative { get; set; }
+
+    [JsonIgnore]
+    public decimal? YomaRewardBalance => YomaRewardPool.HasValue ? YomaRewardPool - (YomaRewardCumulative ?? default) : null;
 
     [JsonIgnore]
     public bool IsCompletable

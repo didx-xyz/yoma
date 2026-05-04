@@ -40,13 +40,13 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
     public decimal? OrganizationZltoRewardCumulativeCurrentFinancialYear { get; set; }
 
-    public decimal? OrganizationZltoRewardBalanceCurrentFinancialYear { get; set; }
+    public decimal? OrganizationZltoRewardBalanceCurrentFinancialYear => OrganizationZltoRewardPoolCurrentFinancialYear.HasValue ? OrganizationZltoRewardPoolCurrentFinancialYear - (OrganizationZltoRewardCumulativeCurrentFinancialYear ?? default) : null;
 
     public decimal? OrganizationYomaRewardPoolCurrentFinancialYear { get; set; }
 
     public decimal? OrganizationYomaRewardCumulativeCurrentFinancialYear { get; set; }
 
-    public decimal? OrganizationYomaRewardBalanceCurrentFinancialYear { get; set; }
+    public decimal? OrganizationYomaRewardBalanceCurrentFinancialYear => OrganizationYomaRewardPoolCurrentFinancialYear.HasValue ? OrganizationYomaRewardPoolCurrentFinancialYear - (OrganizationYomaRewardCumulativeCurrentFinancialYear ?? default) : null;
 
     public string? Summary { get; set; }
 
@@ -60,7 +60,7 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
     public decimal? ZltoRewardCumulative { get; set; }
 
-    public decimal? ZltoRewardBalance { get; set; }
+    public decimal? ZltoRewardBalance => ZltoRewardPool.HasValue ? ZltoRewardPool - (ZltoRewardCumulative ?? default) : null;
 
     public decimal? YomaReward { get; set; }
 
@@ -68,7 +68,7 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
     public decimal? YomaRewardCumulative { get; set; }
 
-    public decimal? YomaRewardBalance { get; set; }
+    public decimal? YomaRewardBalance => YomaRewardPool.HasValue ? YomaRewardPool - (YomaRewardCumulative ?? default) : null;
 
     public bool VerificationEnabled { get; set; }
 
