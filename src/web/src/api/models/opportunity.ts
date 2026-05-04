@@ -1,4 +1,8 @@
-import type { PaginationFilter } from "./common";
+import type {
+  EngagementTypeOption,
+  PaginationFilter,
+  TimeIntervalOption,
+} from "./common";
 import type { Country, Language, Skill } from "./lookups";
 
 export interface OpportunitySearchFilterAdmin
@@ -78,7 +82,61 @@ export interface Opportunity {
   skills: Skill[] | null;
   verificationTypes: OpportunityVerificationType[] | null;
   hidden: boolean;
+  syncedInfo?: SyncInfo | null;
 }
+
+// export interface OpportunityInfo {
+//   id: string;
+//   title: string;
+//   description: string;
+//   type: string;
+//   organizationId: string;
+//   organizationName: string;
+//   organizationLogoURL: string | null;
+//   summary: string | null;
+//   instructions: string | null;
+//   url: string | null;
+//   zltoReward: number | null;
+//   zltoRewardCumulative: number | null;
+//   organizationZltoRewardPoolCurrentFinancialYear?: number | null;
+//   organizationZltoRewardCumulativeCurrentFinancialYear?: number | null;
+//   organizationZltoRewardBalanceCurrentFinancialYear?: number | null;
+//   yomaReward: number | null;
+//   yomaRewardCumulative: number | null;
+//   organizationYomaRewardPoolCurrentFinancialYear?: number | null;
+//   organizationYomaRewardCumulativeCurrentFinancialYear?: number | null;
+//   organizationYomaRewardBalanceCurrentFinancialYear?: number | null;
+//   verificationEnabled: boolean;
+//   verificationMethod: VerificationMethod | null | string; //NB: comes back as string
+//   difficulty: string | null;
+//   commitmentInterval: string | null;
+//   commitmentIntervalCount: number | null;
+//   commitmentIntervalDescription: string | null;
+//   participantLimit: number | null;
+//   participantCountCompleted: number;
+//   participantCountPending: number;
+//   participantCountTotal: number;
+//   participantLimitReached: boolean;
+//   countViewed: number;
+//   countNavigatedExternalLink: number;
+//   statusId: string;
+//   status: Status | string; // HACK: string
+//   keywords: string[] | null;
+//   dateStart: string;
+//   dateEnd: string | null;
+//   featured: boolean;
+//   engagementType: string | null;
+//   published: boolean;
+//   yomaInfoURL: string;
+//   isCompletable: boolean;
+//   nonCompletableReason: string | null;
+//   categories: OpportunityCategory[] | null;
+//   countries: Country[] | null;
+//   languages: Language[] | null;
+//   skills: Skill[] | null;
+//   verificationTypes: OpportunityVerificationType[] | null;
+//   hidden: boolean;
+// }
 
 export interface OpportunityInfo {
   id: string;
@@ -93,18 +151,12 @@ export interface OpportunityInfo {
   url: string | null;
   zltoReward: number | null;
   zltoRewardCumulative: number | null;
-  organizationZltoRewardPoolCurrentFinancialYear?: number | null;
-  organizationZltoRewardCumulativeCurrentFinancialYear?: number | null;
-  organizationZltoRewardBalanceCurrentFinancialYear?: number | null;
   yomaReward: number | null;
   yomaRewardCumulative: number | null;
-  organizationYomaRewardPoolCurrentFinancialYear?: number | null;
-  organizationYomaRewardCumulativeCurrentFinancialYear?: number | null;
-  organizationYomaRewardBalanceCurrentFinancialYear?: number | null;
   verificationEnabled: boolean;
-  verificationMethod: VerificationMethod | null | string; //NB: comes back as string
+  verificationMethod: VerificationMethod | null | string; // NB: string
   difficulty: string | null;
-  commitmentInterval: string | null;
+  commitmentInterval: TimeIntervalOption | null | string; // NB: string
   commitmentIntervalCount: number | null;
   commitmentIntervalDescription: string | null;
   participantLimit: number | null;
@@ -115,22 +167,24 @@ export interface OpportunityInfo {
   countViewed: number;
   countNavigatedExternalLink: number;
   statusId: string;
-  status: Status | string; // HACK: string
+  status: Status | string; // NB: string
   keywords: string[] | null;
   dateStart: string;
   dateEnd: string | null;
   featured: boolean;
-  engagementType: string | null;
+  engagementType: EngagementTypeOption | null | string; // NB: string
+  shareWithPartners: boolean;
+  hidden: boolean;
   published: boolean;
   yomaInfoURL: string;
   isCompletable: boolean;
   nonCompletableReason: string | null;
+  syncedInfo: SyncInfo | null | string; // NB: string
   categories: OpportunityCategory[] | null;
   countries: Country[] | null;
   languages: Language[] | null;
   skills: Skill[] | null;
   verificationTypes: OpportunityVerificationType[] | null;
-  hidden: boolean;
 }
 
 export interface OpportunitySearchFilter extends OpportunitySearchFilterBase {
@@ -202,6 +256,20 @@ export enum PublishedState {
   NotStarted,
   Active,
   Expired,
+}
+export interface SyncInfo {
+  syncType: SyncType | string; // TODO: check api returns string
+  partners: SyncPartner[] | string[]; // TODO: check api returns string
+  locked: boolean;
+}
+export enum SyncType {
+  Push,
+  Pull,
+}
+export enum SyncPartner {
+  SAYouth,
+  Jobberman,
+  Alison,
 }
 
 export interface OpportunityVerificationType {

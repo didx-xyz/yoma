@@ -37,6 +37,7 @@ import {
   OpportunityActions,
   OpportunityActionOptions,
 } from "~/components/Opportunity/OpportunityActions";
+import PullSyncBadge from "~/components/Opportunity/Badges/PullSyncBadge";
 import { OpportunityAdminFilterHorizontal } from "~/components/Opportunity/OpportunityAdminFilterHorizontal";
 import { OpportunityAdminFilterVertical } from "~/components/Opportunity/OpportunityAdminFilterVertical";
 import OpportunityStatus from "~/components/Opportunity/OpportunityStatus";
@@ -646,7 +647,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                         key={`sm_${opportunity.id}`}
                         className="shadow-custom flex flex-col justify-between gap-4 rounded-lg bg-white p-4"
                       >
-                        <div className="border-gray-light flex flex-row gap-2 border-b-2">
+                        <div className="border-gray-light flex flex-row gap-2 border-b-2 pb-2">
                           <span title={opportunity.title} className="w-full">
                             <Link
                               href={`/organisations/${opportunity.organizationId}/opportunities/${opportunity.id}/info?returnUrl=${encodeURIComponent(router.asPath)}`}
@@ -654,6 +655,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                             >
                               {opportunity.title}
                             </Link>
+                            <PullSyncBadge opportunity={opportunity} />
                           </span>
                           <OpportunityActions
                             opportunity={opportunity}
@@ -812,6 +814,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                                 {opportunity.title}
                               </Link>
                             </span>
+                            <PullSyncBadge opportunity={opportunity} />
                           </td>
                           <td className="border-gray-light w-28 border-b-2 text-center">
                             {opportunity.zltoReward == null && (

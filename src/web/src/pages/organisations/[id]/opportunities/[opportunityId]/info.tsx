@@ -41,6 +41,7 @@ import { currentOrganisationInactiveAtom } from "~/lib/store";
 import { getSafeUrl, getThemeFromRole } from "~/lib/utils";
 import type { NextPageWithLayout } from "~/pages/_app";
 import { authOptions, type User } from "~/server/auth";
+import PullSyncBadge from "~/components/Opportunity/Badges/PullSyncBadge";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -207,9 +208,10 @@ const OpportunityDetails: NextPageWithLayout<{
                   </span>
                 </div>
 
-                <h6 className="text-gray-dark line-clamp-2 text-sm">
+                <div className="text-gray-dark flex items-center gap-2 text-sm">
                   By {opportunity.organizationName}
-                </h6>
+                  <PullSyncBadge opportunity={opportunity} />
+                </div>
 
                 {/* BADGES */}
                 <OrgAdminBadges

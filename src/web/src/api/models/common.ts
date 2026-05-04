@@ -70,3 +70,17 @@ export enum SettingType {
 export interface SettingsRequest {
   settings: Record<string, any>;
 }
+
+export enum TimeIntervalOption {
+  Minute,
+  Hour,
+  Day,
+  Week,
+  Month,
+}
+
+export enum EngagementTypeOption {
+  Online,
+  Offline,
+  Hybrid,
+}

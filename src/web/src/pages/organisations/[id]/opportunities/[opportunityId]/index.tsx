@@ -22,7 +22,7 @@ import {
   useForm,
   type FieldValues,
 } from "react-hook-form";
-import { FaExclamationTriangle } from "react-icons/fa";
+import { FaExclamationTriangle, FaLock } from "react-icons/fa";
 import {
   IoIosCheckmarkCircle,
   IoMdAlert,
@@ -68,42 +68,43 @@ import { Loading } from "~/components/Status/Loading";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import {
+  OPPORTUNITY_QUERY_KEYS,
+  useOpportunityCategoriesQuery,
+  useOpportunityCountriesQuery,
+  useOpportunityDetailQuery,
+  useOpportunityDifficultiesQuery,
+  useOpportunityEngagementTypesQuery,
+  useOpportunityLanguagesQuery,
+  useOpportunitySchemasQuery,
+  useOpportunityStatusMutation,
+  useOpportunityTimeIntervalsQuery,
+  useOpportunityTypesQuery,
+  useOpportunityVerificationTypesQuery,
+  useOrganisationByIdQuery,
+} from "~/hooks/useOpportunityMutations";
+import { analytics } from "~/lib/analytics";
+import {
   ACCEPTED_AUDIO_TYPES_LABEL,
   ACCEPTED_DOC_TYPES_LABEL,
   ACCEPTED_IMAGE_TYPES_LABEL,
   ACCEPTED_VIDEO_TYPES_LABEL,
   DATE_FORMAT_SYSTEM,
+  DEV_MOCK_PULL_SYNC_OPPORTUNITY_ID,
   MAX_FILE_SIZE_LABEL,
   MAX_FILE_VIDEO_SIZE_LABEL,
-  OPPORTUNITY_TYPE_NANE_JOB,
   OPPORTUNITY_TYPE_ID_JOB,
+  OPPORTUNITY_TYPE_NANE_JOB,
   PAGE_SIZE_MEDIUM,
   REGEX_URL_VALIDATION,
 } from "~/lib/constants";
-import { analytics } from "~/lib/analytics";
 import { config } from "~/lib/react-query-config";
 import {
+  dateInputToUTC,
   debounce,
   getSafeUrl,
   getThemeFromRole,
-  dateInputToUTC,
   utcToDateInput,
 } from "~/lib/utils";
-import {
-  OPPORTUNITY_QUERY_KEYS,
-  useOpportunityDetailQuery,
-  useOrganisationByIdQuery,
-  useOpportunityCategoriesQuery,
-  useOpportunityCountriesQuery,
-  useOpportunityLanguagesQuery,
-  useOpportunityTypesQuery,
-  useOpportunityVerificationTypesQuery,
-  useOpportunityDifficultiesQuery,
-  useOpportunityTimeIntervalsQuery,
-  useOpportunityEngagementTypesQuery,
-  useOpportunitySchemasQuery,
-  useOpportunityStatusMutation,
-} from "~/hooks/useOpportunityMutations";
 import type { NextPageWithLayout } from "~/pages/_app";
 import { authOptions, type User } from "~/server/auth";
 
@@ -155,6 +156,23 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     if (opportunityId !== "create") {
       const data = await getOpportunityById(opportunityId, context);
 
+      // 👇 check if pull-synced (externally managed) — block editing
+      const pullSynced =
+        data.syncedInfo?.syncType === "Pull" ||
+        (!!DEV_MOCK_PULL_SYNC_OPPORTUNITY_ID &&
+          opportunityId === DEV_MOCK_PULL_SYNC_OPPORTUNITY_ID);
+
+      if (pullSynced) {
+        return {
+          props: {
+            id,
+            opportunityId,
+            theme,
+            pullSynced: true,
+          },
+        };
+      }
+
       await queryClient.prefetchQuery({
         queryKey: OPPORTUNITY_QUERY_KEYS.detail(opportunityId),
         queryFn: () => data,
@@ -193,7 +211,8 @@ const OpportunityAdminDetails: NextPageWithLayout<{
   user: User;
   theme: string;
   error?: number;
-}> = ({ id, opportunityId, error }) => {
+  pullSynced?: boolean;
+}> = ({ id, opportunityId, error, pullSynced }) => {
   const router = useRouter();
   const { returnUrl } = router.query;
   const queryClient = useQueryClient();
@@ -1073,6 +1092,8 @@ const OpportunityAdminDetails: NextPageWithLayout<{
       hidden: formData.hidden ?? false,
       isCompletable: true,
       nonCompletableReason: null,
+      shareWithPartners: formData.shareWithPartners ?? false,
+      syncedInfo: null,
     }),
     [
       formData,
@@ -1445,6 +1466,25 @@ const OpportunityAdminDetails: NextPageWithLayout<{
     if (error === 401) return <Unauthenticated />;
     else if (error === 403) return <Unauthorized />;
     else return <InternalServerError />;
+  }
+
+  if (pullSynced) {
+    return (
+      <div className="container mt-20 mb-10 flex flex-col items-center justify-start gap-12 px-4 md:mt-44">
+        <div className="bg-theme absolute top-0 z-2 h-[256px] w-full"></div>
+        <div className="z-10 flex h-full w-full max-w-md flex-col place-items-center justify-center gap-8 rounded-xl bg-white p-4 md:h-fit md:max-w-2xl md:p-16">
+          <div className="shadow-custom flex items-center justify-center rounded-full bg-white p-4">
+            <FaLock className="text-orange h-10 w-10" />
+          </div>
+
+          <h2 className="-mb-6 font-bold">Opportunity Locked</h2>
+
+          <p className="text-gray-dark text-center">
+            This opportunity is managed externally and cannot be updated here.
+          </p>
+        </div>
+      </div>
+    );
   }
 
   return (

@@ -3,6 +3,7 @@ import type {
   FormFile,
   Geometry,
   PaginationFilter,
+  TimeIntervalOption,
 } from "./common";
 import type { VerificationType } from "./opportunity";
 
@@ -104,14 +105,6 @@ export interface MyOpportunityInfo {
   dateModified: string;
   verifications: MyOpportunityInfoVerification[] | null;
   skills: Skill[] | null;
-}
-
-export enum TimeIntervalOption {
-  Minute,
-  Hour,
-  Day,
-  Week,
-  Month,
 }
 
 export interface Skill {

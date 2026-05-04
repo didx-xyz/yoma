@@ -113,15 +113,11 @@ const OrgAdminBadges: React.FC<BadgesProps> = ({ opportunity, isAdmin }) => {
         <div className="badge bg-green-light text-red-400">Archived</div>
       )}
 
-      <div className="flex justify-between">
-        <div className="flex w-20 justify-start gap-2">
-          {opportunity?.hidden ? (
-            <span className="badge bg-yellow-tint text-yellow">Hidden</span>
-          ) : (
-            <span className="badge bg-green-light text-green">Visible</span>
-          )}
-        </div>
-      </div>
+      {opportunity?.hidden ? (
+        <span className="badge bg-yellow-tint text-yellow">Hidden</span>
+      ) : (
+        <span className="badge bg-green-light text-green">Visible</span>
+      )}
 
       {/* ADMINS CAN SEE THE FEATURED FLAG */}
       {isAdmin && opportunity?.featured && (

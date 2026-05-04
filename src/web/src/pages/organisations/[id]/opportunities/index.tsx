@@ -29,6 +29,7 @@ import {
   OpportunityActionOptions,
   OpportunityActions,
 } from "~/components/Opportunity/OpportunityActions";
+import PullSyncBadge from "~/components/Opportunity/Badges/PullSyncBadge";
 import OpportunityStatus from "~/components/Opportunity/OpportunityStatus";
 import { PageBackground } from "~/components/PageBackground";
 import { PaginationButtons } from "~/components/PaginationButtons";
@@ -48,7 +49,7 @@ import { PAGE_SIZE } from "~/lib/constants";
 import { currentOrganisationInactiveAtom } from "~/lib/store";
 import { getSafeUrl, getThemeFromRole } from "~/lib/utils";
 import { type NextPageWithLayout } from "~/pages/_app";
-import { authOptions } from "~/server/auth";
+import { authOptions, type User } from "~/server/auth";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -91,6 +92,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       theme: theme,
       error: null,
       returnUrl: returnUrl ?? null,
+      user: session?.user ?? null,
     },
   };
 }
@@ -104,7 +106,8 @@ const Opportunities: NextPageWithLayout<{
   status?: string;
   typeId?: string;
   returnUrl?: string;
-}> = ({ id, query, page, status, typeId, error, returnUrl }) => {
+  user?: User | null;
+}> = ({ id, query, page, status, typeId, error, returnUrl, user }) => {
   const router = useRouter();
   const queryClient = useQueryClient();
   const currentOrganisationInactive = useAtomValue(
@@ -560,7 +563,7 @@ const Opportunities: NextPageWithLayout<{
                       key={`sm_${opportunity.id}`}
                       className="shadow-custom flex flex-col justify-between gap-4 rounded-lg bg-white p-4"
                     >
-                      <div className="flex flex-row gap-2">
+                      <div className="border-gray-light flex flex-row gap-2 border-b-2 pb-2">
                         <span title={opportunity.title} className="w-full">
                           <Link
                             href={`/organisations/${id}/opportunities/${opportunity.id}/info${`?returnUrl=${encodeURIComponent(
@@ -570,10 +573,12 @@ const Opportunities: NextPageWithLayout<{
                           >
                             {opportunity.title}
                           </Link>
+                          <PullSyncBadge opportunity={opportunity} />
                         </span>
 
                         <OpportunityActions
                           opportunity={opportunity}
+                          user={user ?? undefined}
                           organizationId={id}
                           returnUrl={getSafeUrl(
                             returnUrl?.toString(),
@@ -763,16 +768,17 @@ const Opportunities: NextPageWithLayout<{
                   <tbody>
                     {searchResults.items.map((opportunity) => (
                       <tr key={`md_${opportunity.id}`}>
-                        <td className="border-gray-light max-w-[200px] truncate border-t-2 !py-4">
+                        <td className="border-gray-light max-w-[200px] border-t-2 !py-4">
                           <Link
                             title={opportunity.title}
                             href={`/organisations/${id}/opportunities/${opportunity.id}/info${`?returnUrl=${encodeURIComponent(
                               getSafeUrl(returnUrl?.toString(), router.asPath),
                             )}`}`}
-                            className="text-gray-dark max-w-[80px] overflow-hidden text-sm text-ellipsis whitespace-nowrap underline"
+                            className="text-gray-dark block max-w-[180px] overflow-hidden text-sm text-ellipsis whitespace-nowrap underline"
                           >
                             {opportunity.title}
                           </Link>
+                          <PullSyncBadge opportunity={opportunity} />
                         </td>
                         <td className="border-gray-light border-t-2">
                           {opportunity.zltoReward == null && (
@@ -861,6 +867,7 @@ const Opportunities: NextPageWithLayout<{
                             {/* ACTIONS */}
                             <OpportunityActions
                               opportunity={opportunity}
+                              user={user ?? undefined}
                               organizationId={id}
                               returnUrl={getSafeUrl(
                                 returnUrl?.toString(),
