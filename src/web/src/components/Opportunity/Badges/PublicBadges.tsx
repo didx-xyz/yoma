@@ -195,7 +195,7 @@ const PublicBadges: React.FC<BadgesProps> = ({
 
       {!isJobOpportunity && opportunity && (
         <ZltoRewardBadge
-          amount={opportunity.zltoReward}
+          amount={opportunity.zltoRewardEstimate ?? null}
           showToolTips={showToolTips}
         />
       )}
