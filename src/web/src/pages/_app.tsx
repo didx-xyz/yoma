@@ -73,7 +73,7 @@ const MyApp = ({
   // between different users and requests
   const [queryClient] = useState(() => new QueryClient(config));
 
-  const component = <Component {...pageProps} key={router.asPath} />;
+  const component = <Component {...pageProps} key={router.pathname} />;
 
   // Use the layout defined at the page level, if available
   const getLayout = Component.getLayout ?? ((page) => page);

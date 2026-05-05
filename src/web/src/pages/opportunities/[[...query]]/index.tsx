@@ -1366,7 +1366,7 @@ const Opportunities: NextPageWithLayout<{
       if (urlParams.size > 0) url = `/opportunities?${urlParams.toString()}`;
 
       if (url != router.asPath)
-        void router.push(url, undefined, { scroll: false });
+        void router.replace(url, undefined, { shallow: true, scroll: false });
 
       // Always close the filter modal after applying.
       setFilterFullWindowVisible(false);
@@ -1417,7 +1417,10 @@ const Opportunities: NextPageWithLayout<{
   );
 
   const onClearFilter = useCallback(() => {
-    void router.push("/opportunities", undefined, { scroll: true });
+    void router.replace("/opportunities", undefined, {
+      shallow: true,
+      scroll: true,
+    });
   }, [router]);
 
   const onClickCategoryFilter = useCallback(
