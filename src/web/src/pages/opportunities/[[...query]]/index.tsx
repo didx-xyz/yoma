@@ -2315,6 +2315,17 @@ const Opportunities: NextPageWithLayout<{
               <div className="divider !bg-gray" />
 
               <div className="flex w-full flex-col gap-2">
+                {/* RESULTS HEADER */}
+                <div className="w-full">
+                  <div className="mx-auto flex w-full flex-col md:max-w-7xl">
+                    <div className="font-family-nunito max-w-full overflow-hidden text-base font-semibold text-ellipsis whitespace-nowrap text-black md:text-lg">
+                      {searchResults
+                        ? `Results (${searchResults.totalCount})`
+                        : "Results"}
+                    </div>
+                  </div>
+                </div>
+
                 {(isRouteTransitioning ||
                   sessionStatus === "loading" ||
                   isLoading ||
