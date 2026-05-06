@@ -1417,11 +1417,12 @@ const Opportunities: NextPageWithLayout<{
   );
 
   const onClearFilter = useCallback(() => {
+    setFilterFullWindowVisible(false);
     void router.replace("/opportunities", undefined, {
       shallow: true,
       scroll: true,
     });
-  }, [router]);
+  }, [router, setFilterFullWindowVisible]);
 
   const onClickCategoryFilter = useCallback(
     (cat: OpportunityCategory) => {
