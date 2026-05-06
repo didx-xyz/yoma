@@ -189,13 +189,43 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
     );
   };
 
+  const renderZltoRange = (
+    min: number | null | undefined,
+    max: number | null | undefined,
+  ) => {
+    if (min == null && max == null) return renderZltoAmount(null);
+    if (min === max || max == null)
+      return renderZltoAmount(min, "N/A", "font-semibold text-blue-700");
+    if (min == null)
+      return renderZltoAmount(max, "N/A", "font-semibold text-blue-700");
+    return (
+      <div className="flex items-center gap-1 font-semibold text-blue-700">
+        {renderZltoAmount(min, "N/A", "font-semibold text-blue-700")}
+        <span className="text-blue-400">–</span>
+        {renderZltoAmount(max, "N/A", "font-semibold text-blue-700")}
+      </div>
+    );
+  };
+
   const renderRewardBreakdown = (
     title: string,
     configured: number | null | undefined,
     estimate: number | null | undefined,
     helperText: string,
+    ranges?: {
+      pathwayMin?: number | null;
+      pathwayMax?: number | null;
+      totalMin?: number | null;
+      totalMax?: number | null;
+    },
   ) => {
     const estimateMeta = getRewardEstimateMeta(configured, estimate);
+    const showRanges =
+      ranges != null &&
+      (ranges.pathwayMin != null ||
+        ranges.pathwayMax != null ||
+        ranges.totalMin != null ||
+        ranges.totalMax != null);
 
     return (
       <div className="flex h-full flex-col border border-gray-200">
@@ -227,6 +257,28 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
               </div>
             </div>
           </div>
+
+          {showRanges && (
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div className="rounded-md border border-blue-100 bg-blue-50/40 px-3 py-2">
+                <div className="mb-1 text-[11px] font-medium tracking-wide text-blue-700 uppercase">
+                  Pathway Estimate
+                </div>
+                <div className="text-sm text-gray-900">
+                  {renderZltoRange(ranges!.pathwayMin, ranges!.pathwayMax)}
+                </div>
+              </div>
+
+              <div className="rounded-md border border-blue-100 bg-blue-50/40 px-3 py-2">
+                <div className="mb-1 text-[11px] font-medium tracking-wide text-blue-700 uppercase">
+                  Total Estimate
+                </div>
+                <div className="text-sm text-gray-900">
+                  {renderZltoRange(ranges!.totalMin, ranges!.totalMax)}
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="flex flex-col items-start gap-3">
             <span className="text-[11px] text-gray-500">{helperText}</span>
@@ -432,7 +484,7 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
           <div className="mt-4 flex justify-center">
             <ProgramCard
               data={program}
-              zltoReward={program.zltoRewardReferrerEstimate}
+              zltoReward={program.zltoRewardEstimate?.referrer ?? null}
               variant="referral"
             />
           </div>
@@ -730,15 +782,25 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
                   {renderRewardBreakdown(
                     "Ambassador Reward",
                     program?.zltoRewardReferrer,
-                    program?.zltoRewardReferrerEstimate,
+                    program?.zltoRewardEstimate?.referrer,
                     "Paid after the referee estimate is reserved from the current pool.",
                   )}
 
                   {renderRewardBreakdown(
                     "Referee Reward",
                     program?.zltoRewardReferee,
-                    program?.zltoRewardRefereeEstimate,
+                    program?.zltoRewardEstimate?.referee,
                     "Referee reward has payout priority against the current pool.",
+                    {
+                      pathwayMin:
+                        program?.zltoRewardEstimate?.refereePathwayMinimum,
+                      pathwayMax:
+                        program?.zltoRewardEstimate?.refereePathwayMaximum,
+                      totalMin:
+                        program?.zltoRewardEstimate?.refereeTotalMinimum,
+                      totalMax:
+                        program?.zltoRewardEstimate?.refereeTotalMaximum,
+                    },
                   )}
                 </div>
 
@@ -1063,7 +1125,7 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
         programId={program.id}
         programName={program.name}
         link={currentProgramLink}
-        rewardAmount={program.zltoRewardReferrerEstimate}
+        rewardAmount={program.zltoRewardEstimate?.referrer ?? null}
       />
     </div>
   );

@@ -33,8 +33,8 @@ const ProgramBadges: React.FC<ProgramBadgesProps> = ({
 }) => {
   if (!program) return null;
 
-  const referrerReward = program.zltoRewardReferrerEstimate || 0;
-  const refereeReward = program.zltoRewardRefereeEstimate || 0;
+  const referrerReward = program.zltoRewardEstimate?.referrer ?? null;
+  const refereeReward = program.zltoRewardEstimate?.referee ?? null;
   const pathwayRequired = !!program.pathwayRequired;
   const proofRequired = !!program.proofOfPersonhoodRequired;
 
@@ -142,7 +142,7 @@ const ProgramBadges: React.FC<ProgramBadgesProps> = ({
 
       {resolvedShowBadges.rewards &&
       resolvedShowBadges.rewardsReferrer &&
-      referrerReward > 0 ? (
+      (referrerReward ?? 0) > 0 ? (
         <div
           className="tooltipx tooltip-secondary cursor-helpx before:text-[0.6875rem]"
           data-tip="You receive this ZLTO amount when your referral completes all requirements."
@@ -156,7 +156,7 @@ const ProgramBadges: React.FC<ProgramBadgesProps> = ({
 
       {resolvedShowBadges.rewards &&
       resolvedShowBadges.rewardsReferee &&
-      refereeReward > 0 ? (
+      (refereeReward ?? 0) > 0 ? (
         <div
           className="tooltipx tooltip-secondary cursor-help before:text-[0.6875rem]"
           data-tip="You receive this ZLTO amount when you complete the programme requirements."
