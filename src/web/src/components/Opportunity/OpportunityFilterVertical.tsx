@@ -446,7 +446,7 @@ export const OpportunityFilterVertical: React.FC<{
                   toggleClassName="toggle-sm"
                   inputProps={{
                     checked: myCountryOnlyDraft,
-                    disabled: !userProfile?.countryId || !userCountryName,
+                    disabled: !userProfile?.countryId,
                     onChange: (e) => {
                       const checked = e.target.checked;
 
