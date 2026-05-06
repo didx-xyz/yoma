@@ -65,6 +65,15 @@ export interface ProgramStatusLookup {
 }
 
 // Models
+export interface ProgramRewardEstimate {
+  referrer: number | null;
+  referee: number | null;
+  refereePathwayMinimum: number | null;
+  refereePathwayMaximum: number | null;
+  refereeTotalMinimum: number | null;
+  refereeTotalMaximum: number | null;
+}
+
 export interface Program {
   id: string;
   name: string;
@@ -83,9 +92,8 @@ export interface Program {
   completionTotal: number | null;
   completionBalance: number | null;
   zltoRewardReferrer: number | null;
-  zltoRewardReferrerEstimate: number | null;
   zltoRewardReferee: number | null;
-  zltoRewardRefereeEstimate: number | null;
+  zltoRewardEstimate: ProgramRewardEstimate | null;
   zltoRewardPool: number | null;
   zltoRewardCumulative: number | null;
   zltoRewardBalance: number | null;
@@ -120,9 +128,8 @@ export interface ProgramInfo {
   completionTotal: number | null;
   completionBalance: number | null;
   zltoRewardReferrer: number | null;
-  zltoRewardReferrerEstimate: number | null;
   zltoRewardReferee: number | null;
-  zltoRewardRefereeEstimate: number | null;
+  zltoRewardEstimate: ProgramRewardEstimate | null;
   zltoRewardCumulative: number | null;
   proofOfPersonhoodRequired: boolean;
   pathwayRequired: boolean;

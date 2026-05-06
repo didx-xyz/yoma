@@ -67,7 +67,7 @@ export const AdminProgramPreview: React.FC<AdminProgramPreviewProps> = ({
               ...previewProgram,
               name: previewProgram.name || "Program Name",
             }}
-            zltoReward={previewProgram.zltoRewardReferrerEstimate}
+            zltoReward={previewProgram.zltoRewardEstimate?.referrer ?? null}
             variant="referral"
           />
         </div>

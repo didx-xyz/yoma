@@ -1039,7 +1039,13 @@ const Opportunities: NextPageWithLayout<{
     wantsMyScopeForSearch,
   ]);
 
-  const isSearchScopePending = wantsMyScopeForSearch && !userCountryInfo?.id;
+  // Only block the search while lookups/profile are genuinely still in-flight.
+  // If they have settled and the user's country simply isn't in the list,
+  // treat it as resolved (country = null → worldwide fallback).
+  const isSearchScopePending =
+    wantsMyScopeForSearch &&
+    !userCountryInfo?.id &&
+    (isLoading_lookups_countries || (!userProfile?.id && hasAuthCookie));
 
   // QUERY: SEARCH RESULTS
   // the filter values from the querystring are mapped to it's corresponding id
@@ -1099,16 +1105,18 @@ const Opportunities: NextPageWithLayout<{
               sessionStatus === "authenticated" &&
               landingMyCountryOnly));
 
-        const countriesFromScope =
-          shouldApplyMyScope && userCountryInfo?.id
-            ? Array.from(
-                new Set(
-                  [userCountryInfo.id, worldwideCountryInfo?.id].filter(
-                    (x): x is string => !!x,
-                  ),
-                ),
-              )
-            : null;
+        // When "my country" scope is active, include the user's country + worldwide.
+        // If the user's country is not found in lookups, fall back to worldwide only
+        // so at least WW-scoped opportunities are returned rather than no filter at all.
+        const countriesFromScope = shouldApplyMyScope
+          ? (() => {
+              const ids = [
+                userCountryInfo?.id,
+                worldwideCountryInfo?.id,
+              ].filter((x): x is string => !!x);
+              return ids.length > 0 ? Array.from(new Set(ids)) : null;
+            })()
+          : null;
 
         return await searchOpportunities({
           pageNumber: searchFilter.pageNumber,
@@ -1417,11 +1425,12 @@ const Opportunities: NextPageWithLayout<{
   );
 
   const onClearFilter = useCallback(() => {
+    setFilterFullWindowVisible(false);
     void router.replace("/opportunities", undefined, {
       shallow: true,
       scroll: true,
     });
-  }, [router]);
+  }, [router, setFilterFullWindowVisible]);
 
   const onClickCategoryFilter = useCallback(
     (cat: OpportunityCategory) => {
@@ -2306,6 +2315,17 @@ const Opportunities: NextPageWithLayout<{
               <div className="divider !bg-gray" />
 
               <div className="flex w-full flex-col gap-2">
+                {/* RESULTS HEADER */}
+                <div className="w-full">
+                  <div className="mx-auto flex w-full flex-col md:max-w-7xl">
+                    <div className="font-family-nunito max-w-full overflow-hidden text-base font-semibold text-ellipsis whitespace-nowrap text-black md:text-lg">
+                      {searchResults
+                        ? `Results (${searchResults.totalCount})`
+                        : "Results"}
+                    </div>
+                  </div>
+                </div>
+
                 {(isRouteTransitioning ||
                   sessionStatus === "loading" ||
                   isLoading ||

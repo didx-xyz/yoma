@@ -316,7 +316,7 @@ const ReferralClaimPage: NextPageWithLayout = () => {
   );
 
   // Main claim page
-  const rewardAmount = program?.zltoRewardRefereeEstimate;
+  const rewardAmount = program?.zltoRewardEstimate?.referee ?? null;
 
   const pageTitle = rewardAmount
     ? `Join me on Yoma and earn ${rewardAmount} ZLTO!`
@@ -448,8 +448,8 @@ const ReferralClaimPage: NextPageWithLayout = () => {
                     icon={<IoTrophyOutline className="h-5 w-5" />}
                     header="Reward"
                     description={
-                      (program.zltoRewardRefereeEstimate || 0) > 0
-                        ? `${program.zltoRewardRefereeEstimate} Zlto`
+                      (program.zltoRewardEstimate?.referee || 0) > 0
+                        ? `${program.zltoRewardEstimate?.referee} Zlto`
                         : "No reward"
                     }
                     className="bg-purple-dark text-white [&_.referral-stat-card-description]:text-white/90 [&_.referral-stat-card-header]:text-white [&_.referral-stat-card-icon-wrap]:bg-white/20 [&_.referral-stat-card-icon-wrap]:text-white"
