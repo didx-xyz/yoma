@@ -1070,7 +1070,6 @@ export const Global: React.FC = () => {
                   UserProfileFilterOptions.FIRSTNAME,
                   UserProfileFilterOptions.SURNAME,
                   UserProfileFilterOptions.COUNTRY,
-                  UserProfileFilterOptions.EDUCATION,
                   UserProfileFilterOptions.GENDER,
                   UserProfileFilterOptions.DATEOFBIRTH,
                 ]}
