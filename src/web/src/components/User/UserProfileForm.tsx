@@ -114,7 +114,7 @@ export const UserProfileForm: React.FC<{
     firstName: zod.string().min(1, "First name is required."),
     surname: zod.string().min(1, "Last name is required."),
     countryId: zod.string().min(1, "Country is required."),
-    educationId: zod.string().min(1, "Education is required."),
+    educationId: zod.string(),
     genderId: zod.string().min(1, "Gender is required."),
     dateOfBirthDay: zod.string().min(1, "Day is required."),
     dateOfBirthMonth: zod.string().min(1, "Month is required."),
