@@ -1027,8 +1027,10 @@ const OpportunityAdminDetails: NextPageWithLayout<{
       url: formData.uRL,
       zltoReward: formData.zltoReward,
       zltoRewardCumulative: 0,
+      zltoRewardEstimate: formData.zltoReward,
       yomaReward: formData.yomaReward,
       yomaRewardCumulative: 0,
+      yomaRewardEstimate: formData.yomaReward,
       verificationEnabled: formData.verificationEnabled ?? false,
       verificationMethod: formData.verificationMethod,
       difficulty:

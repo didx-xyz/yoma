@@ -150,8 +150,10 @@ export interface OpportunityInfo {
   instructions: string | null;
   url: string | null;
   zltoReward: number | null;
+  zltoRewardEstimate: number | null;
   zltoRewardCumulative: number | null;
   yomaReward: number | null;
+  yomaRewardEstimate: number | null;
   yomaRewardCumulative: number | null;
   verificationEnabled: boolean;
   verificationMethod: VerificationMethod | null | string; // NB: string

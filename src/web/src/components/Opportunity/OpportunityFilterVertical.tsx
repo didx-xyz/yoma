@@ -193,6 +193,9 @@ export const OpportunityFilterVertical: React.FC<{
     // The user can either use "My country only" scope OR select explicit countries.
     setValue("countries", searchFilter?.countries ?? null);
 
+    // sync categories so chip-selected categories are reflected when the modal opens
+    setValue("categories", searchFilter?.categories ?? null);
+
     // default to current language
     let languages = searchFilter?.languages;
     if ((languages?.length ?? 0) == 0 && currentLanguage) {
@@ -443,7 +446,7 @@ export const OpportunityFilterVertical: React.FC<{
                   toggleClassName="toggle-sm"
                   inputProps={{
                     checked: myCountryOnlyDraft,
-                    disabled: !userProfile?.countryId || !userCountryName,
+                    disabled: !userProfile?.countryId,
                     onChange: (e) => {
                       const checked = e.target.checked;
 

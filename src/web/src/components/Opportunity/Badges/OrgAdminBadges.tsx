@@ -84,6 +84,20 @@ const OrgAdminBadges: React.FC<BadgesProps> = ({ opportunity, isAdmin }) => {
         </div>
       )}
 
+      {!isJobOpportunity && opportunity?.zltoRewardEstimate === 0 && (
+        <div className="badge bg-orange-light text-orange border-none whitespace-nowrap">
+          <Image
+            src={iconZlto}
+            alt="Icon Zlto"
+            width={16}
+            className="h-auto"
+            sizes="100vw"
+            priority={true}
+          />
+          <span className="ml-1 text-xs">Depleted</span>
+        </div>
+      )}
+
       {/* STATUS BADGES */}
       {opportunity?.status == "Active" && (
         <>
