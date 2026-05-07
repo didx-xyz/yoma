@@ -158,13 +158,15 @@ export const UserMenu: React.FC = () => {
               activeRoleView == RoleView.Admin) && (
               <>
                 <div className="rounded-full outline outline-white hover:brightness-90">
-                  <UserInitialsAvatar
-                    firstName={userProfile?.firstName}
-                    surname={userProfile?.surname}
-                    photoURL={userProfile?.photoURL}
-                    size={44}
-                    alt="User Logo"
-                  />
+                  {userProfile && (
+                    <UserInitialsAvatar
+                      firstName={userProfile?.firstName}
+                      surname={userProfile?.surname}
+                      photoURL={userProfile?.photoURL}
+                      size={44}
+                      alt="User Logo"
+                    />
+                  )}
                 </div>
               </>
             )}
@@ -222,13 +224,15 @@ export const UserMenu: React.FC = () => {
                 />
 
                 <div className="relative z-10 mt-6 mr-2 overflow-hidden rounded-full shadow">
-                  <UserInitialsAvatar
-                    firstName={userProfile?.firstName}
-                    surname={userProfile?.surname}
-                    photoURL={userProfile?.photoURL}
-                    size={80}
-                    alt="User logo"
-                  />
+                  {userProfile && (
+                    <UserInitialsAvatar
+                      firstName={userProfile?.firstName}
+                      surname={userProfile?.surname}
+                      photoURL={userProfile?.photoURL}
+                      size={80}
+                      alt="User logo"
+                    />
+                  )}
                 </div>
                 <div className="w-[200px] truncate text-center text-sm font-semibold text-black md:text-base">
                   {session?.user?.name ?? "Settings"}

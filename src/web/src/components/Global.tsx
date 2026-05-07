@@ -43,12 +43,11 @@ import {
   screenWidthAtom,
   userProfileAtom,
 } from "~/lib/store";
+import { fetchClientEnv } from "~/lib/utils";
 import {
-  hasUserPhoto,
   isUserProfileCompleted,
   isUserSettingsConfigured,
 } from "~/lib/utils/profile";
-import { fetchClientEnv } from "~/lib/utils";
 import CustomModal from "./Common/CustomModal";
 import Suspense from "./Common/Suspense";
 import SettingsForm from "./Settings/SettingsForm";
@@ -408,7 +407,7 @@ export const Global: React.FC = () => {
       if (!userProfile) return;
 
       const skipSettings = options?.skipSettings ?? false;
-      const skipPhoto = options?.skipPhoto ?? false;
+      //const skipPhoto = options?.skipPhoto ?? false;
 
       const currentPath = routePathRef.current;
 
@@ -457,7 +456,7 @@ export const Global: React.FC = () => {
       sessionStatus,
       setUpdateProfileDialogVisible,
       setSettingsDialogVisible,
-      setPhotoUploadDialogVisible,
+      //setPhotoUploadDialogVisible,
       showRefereeReferralReminder,
     ],
   );
