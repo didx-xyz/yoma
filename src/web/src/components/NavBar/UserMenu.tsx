@@ -28,6 +28,8 @@ import {
 import { fetchClientEnv } from "~/lib/utils";
 import { AvatarImage } from "../AvatarImage";
 import { Header } from "../Common/Header";
+import { UserInitialsAvatar } from "../User/UserInitialsAvatar";
+
 import Suspense from "../Common/Suspense";
 import NoRowsMessage from "../NoRowsMessage";
 import { SignOutButton } from "../SignOutButton";
@@ -155,11 +157,13 @@ export const UserMenu: React.FC = () => {
             {(activeRoleView == RoleView.User ||
               activeRoleView == RoleView.Admin) && (
               <>
-                <div className="rounded-full hover:outline hover:outline-white">
-                  <AvatarImage
-                    icon={userProfile?.photoURL ?? null}
-                    alt="User Logo"
+                <div className="rounded-full outline outline-white hover:brightness-90">
+                  <UserInitialsAvatar
+                    firstName={userProfile?.firstName}
+                    surname={userProfile?.surname}
+                    photoURL={userProfile?.photoURL}
                     size={44}
+                    alt="User Logo"
                   />
                 </div>
               </>
@@ -218,10 +222,12 @@ export const UserMenu: React.FC = () => {
                 />
 
                 <div className="relative z-10 mt-6 mr-2 overflow-hidden rounded-full shadow">
-                  <AvatarImage
-                    icon={userProfile?.photoURL}
-                    alt="User logo"
+                  <UserInitialsAvatar
+                    firstName={userProfile?.firstName}
+                    surname={userProfile?.surname}
+                    photoURL={userProfile?.photoURL}
                     size={80}
+                    alt="User logo"
                   />
                 </div>
                 <div className="w-[200px] truncate text-center text-sm font-semibold text-black md:text-base">
