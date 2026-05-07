@@ -93,6 +93,15 @@ const hasDismissedRefereeWelcomeModalAtom = atomWithStorage<boolean>(
   { getOnInit: true },
 );
 
+// tracks whether the user has skipped the settings dialog in the current browser login session
+// reset on logout so the popup shows again on next login
+const hasSkippedSettingsDialogAtom = atomWithStorage<boolean>(
+  "hasSkippedSettingsDialog",
+  false,
+  undefined,
+  { getOnInit: true },
+);
+
 export {
   userProfileAtom,
   screenWidthAtom,
@@ -106,4 +115,5 @@ export {
   firstActionableRefereeReferralUrlAtom,
   hasShownRefereePendingToastAtom,
   hasDismissedRefereeWelcomeModalAtom,
+  hasSkippedSettingsDialogAtom,
 };

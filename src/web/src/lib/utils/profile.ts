@@ -9,17 +9,9 @@ export function isUserProfileCompleted(
 ): boolean | null {
   if (!userProfile) return null;
 
-  const { firstName, surname, countryId, educationId, genderId, dateOfBirth } =
-    userProfile;
+  const { firstName, surname, countryId, genderId, dateOfBirth } = userProfile;
 
-  if (
-    !firstName ||
-    !surname ||
-    !countryId ||
-    !educationId ||
-    !genderId ||
-    !dateOfBirth
-  ) {
+  if (!firstName || !surname || !countryId || !genderId || !dateOfBirth) {
     return false;
   }
 
