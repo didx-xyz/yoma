@@ -280,33 +280,28 @@ namespace Yoma.Core.Infrastructure.Jobberman.Services
 
       foreach (var x in items)
       {
-        var sourceId = x.Element("guid")?.Value?.Trim();
-        var title = x.Element("title")?.Value?.Trim();
+        var sourceId = x.GetElementText("guid");
+        var title = x.GetElementText("title");
 
-        // Skip malformed items: must have stable source id and title
+        // Skip malformed items: must have stable source id and title.
         if (string.IsNullOrEmpty(sourceId) || string.IsNullOrEmpty(title))
           continue;
 
-        var url = x.Element("link")?.Value?.Trim();
-        var description = x.Element("description")?.Value?.Trim();
-        var location = x.Element("location")?.Value?.Trim();
-        var workType = x.Element("work_type")?.Value?.Trim();
-        var imageUrl = x.Element(XNamespace_MediaNs + "content")?.Attribute("url")?.Value?.Trim();
+        // TODO: Confirm XML property name for posted/publish date using populated Jobberman RSS sample.
+        var dateStart = x.TryGetElementDate("pubDate", out var dateStartParsed)
+          ? dateStartParsed
+          : default(DateTimeOffset?);
 
-        //TODO: Confirm DateStart mapping with Jobberman. Current RSS sample does not include publish/created/posted date.
-        DateTimeOffset? dateStart = null;
+        // TODO: Confirm XML property name for closing/expiry date using populated Jobberman RSS sample.
+        var dateEnd = x.TryGetElementDate("closing_date", out var dateEndParsed)
+          ? dateEndParsed
+          : default(DateTimeOffset?);
 
-        //TODO: Confirm DateEnd/expiry/closing date mapping with Jobberman. Current RSS sample does not include this.
-        DateTimeOffset? dateEnd = null;
+        // TODO: Confirm XML property name and values for job function/category using populated Jobberman RSS sample.
+        var category = x.GetElementText("job_function");
 
-        //TODO: Confirm category/job function mapping with Jobberman. Current RSS sample does not include a dedicated category field.
-        string? category = null;
-
-        //TODO: Confirm language mapping with Jobberman. Current RSS sample does not include this.
-        string? language = null;
-
-        //TODO: Confirm deleted/removed/expired/closed handling with Jobberman. Current RSS sample does not include this.
-        bool? deleted = null;
+        // TODO: Confirm XML property name and values for language using populated Jobberman RSS sample.
+        var language = x.GetElementText("language");
 
         opportunities.Add(new Opportunity
         {
@@ -314,16 +309,19 @@ namespace Yoma.Core.Infrastructure.Jobberman.Services
           CountryCodeAlpha2 = countryCodeAlpha2,
           SourceId = sourceId,
           Title = title,
-          Description = description,
-          URL = url,
-          ImageURL = imageUrl,
-          Location = location,
-          WorkType = workType,
+          Description = x.GetElementText("description"),
+          URL = x.GetElementText("link"),
+          ImageURL = x.Element(XNamespace_MediaNs + "content").GetAttribute("url"),
+          Location = x.GetElementText("location"),
+          WorkType = x.GetElementText("work_type"),
           DateStart = dateStart,
           DateEnd = dateEnd,
           Category = category,
           Language = language,
-          Deleted = deleted
+
+          // Jobberman confirmed removal is derived from absence in the full snapshot.
+          // Items present in the latest successful feed are not deleted.
+          Deleted = false
         });
       }
 
@@ -348,7 +346,7 @@ namespace Yoma.Core.Infrastructure.Jobberman.Services
         return;
       }
 
-      // Deduplicate incoming by ExternalId
+      // Deduplicate incoming by ExternalId.
       var itemsNormalizedRaw = opportunities
         .GroupBy(o => o.ExternalId, StringComparer.Ordinal)
         .Select(g => g.First())
@@ -358,13 +356,12 @@ namespace Yoma.Core.Infrastructure.Jobberman.Services
         .Select(o => o.ExternalId)
         .ToHashSet(StringComparer.Ordinal);
 
-      // Load existing from DB for this country feed
+      // Load existing from DB for this country feed.
       var itemsExisting = _opportunityRepository.Query()
         .Where(o => o.CountryCodeAlpha2 == countryCodeAlpha2)
         .ToList()
         .ToDictionary(o => o.ExternalId, StringComparer.Ordinal);
 
-      // Build batched creates/updates
       var itemsToCreate = new List<Opportunity>();
       var itemsToUpdate = new List<Opportunity>();
       var itemsToMarkDeleted = new List<Opportunity>();
@@ -384,11 +381,17 @@ namespace Yoma.Core.Infrastructure.Jobberman.Services
             ImageURL = item.ImageURL,
             Location = item.Location,
             WorkType = item.WorkType,
-            DateStart = item.DateStart,
+
+            // Jobberman confirmed DateStart should use posted/publish date when supplied.
+            // Until the XML property name is confirmed, default once to the current sync/import time.
+            DateStart = item.DateStart ?? now,
+
             DateEnd = item.DateEnd,
             Category = item.Category,
             Language = item.Language,
-            Deleted = item.Deleted
+            Deleted = item.Deleted,
+            DateCreated = now,
+            DateModified = now
           });
 
           continue;
@@ -419,9 +422,12 @@ namespace Yoma.Core.Infrastructure.Jobberman.Services
         if (!string.Equals(itemExisting.WorkType, item.WorkType, StringComparison.Ordinal))
         { itemExisting.WorkType = item.WorkType; changed = true; }
 
-        if (itemExisting.DateStart != item.DateStart)
+        // Only update DateStart when Jobberman supplies a parsed posted/publish date.
+        // If omitted, keep the stable default captured when the row was first created.
+        if (item.DateStart.HasValue && itemExisting.DateStart != item.DateStart)
         { itemExisting.DateStart = item.DateStart; changed = true; }
 
+        // Omitted DateEnd means open-ended / no end date.
         if (itemExisting.DateEnd != item.DateEnd)
         { itemExisting.DateEnd = item.DateEnd; changed = true; }
 
@@ -431,13 +437,17 @@ namespace Yoma.Core.Infrastructure.Jobberman.Services
         if (!string.Equals(itemExisting.Language, item.Language, StringComparison.Ordinal))
         { itemExisting.Language = item.Language; changed = true; }
 
-        if (changed) itemsToUpdate.Add(itemExisting);
+        if (changed)
+        {
+          itemExisting.DateModified = now;
+          itemsToUpdate.Add(itemExisting);
+        }
       }
 
-      //TODO: Confirm with Jobberman that the RSS feed is a complete current snapshot.
-      //Current assumption: if a previously seen item is missing from the latest successful feed,
-      //it has been removed/closed/deleted on Jobberman's side and should be soft-deleted locally.
-      //Deleted is terminal and must not be reversed if the item later reappears.
+      // Jobberman confirmed the RSS feed is a complete current snapshot.
+      // If a previously seen item is missing from the latest successful non-empty feed,
+      // treat it as removed/expired locally.
+      // Deleted is terminal and must not be reversed if the item later reappears.
       var itemsMissingFromFeed = itemsExisting.Values
         .Where(o => !incomingExternalIds.Contains(o.ExternalId) && o.Deleted != true)
         .ToList();
@@ -445,10 +455,10 @@ namespace Yoma.Core.Infrastructure.Jobberman.Services
       foreach (var item in itemsMissingFromFeed)
       {
         item.Deleted = true;
+        item.DateModified = now;
         itemsToMarkDeleted.Add(item);
       }
 
-      // Batch persist
       if (itemsToCreate.Count > 0)
         await _opportunityRepository.Create(itemsToCreate);
 
@@ -459,7 +469,7 @@ namespace Yoma.Core.Infrastructure.Jobberman.Services
       if (itemsToPersistUpdate.Count > 0)
         await _opportunityRepository.Update(itemsToPersistUpdate);
 
-      // Retention: -1 means keep deleted rows indefinitely
+      // Retention: -1 means keep deleted rows indefinitely.
       var deletedCount = default(int);
       if (_options.RetentionDays >= default(int))
       {

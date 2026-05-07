@@ -1,5 +1,6 @@
 using System.Xml;
 using System.Xml.Linq;
+using Yoma.Core.Domain.Core.Extensions;
 
 namespace Yoma.Core.Domain.Core.Helpers
 {
@@ -77,33 +78,39 @@ namespace Yoma.Core.Domain.Core.Helpers
     #region Query Helpers
 
     /// <summary>
-    /// Gets trimmed inner text of the first element with the given name; returns empty if missing.
+    /// Gets normalized inner text of the first element with the given name; returns null if missing.
     /// </summary>
-    public static string GetElementText(this XContainer container, XName name, string @default = "")
+    public static string? GetElementText(this XContainer? container, XName name, string? @default = null)
     {
       if (container is null) return @default;
-      var value = container.Element(name)?.Value?.Trim();
-      return string.IsNullOrEmpty(value) ? @default : value!;
+
+      var value = container.Element(name)?.Value;
+      return value?.NormalizeNullableValue() ?? @default;
     }
 
     /// <summary>
-    /// Gets trimmed attribute value by name; returns empty if missing.
+    /// Gets normalized attribute value by name; returns null if missing.
     /// </summary>
-    public static string GetAttribute(this XElement? element, XName name, string @default = "")
+    public static string? GetAttribute(this XElement? element, XName name, string? @default = null)
     {
       if (element is null) return @default;
-      var value = element.Attribute(name)?.Value?.Trim();
-      return string.IsNullOrEmpty(value) ? @default : value!;
+
+      var value = element.Attribute(name)?.Value;
+      return value?.NormalizeNullableValue() ?? @default;
     }
 
     /// <summary>
-    /// Tries to parse a child element's text as DateTimeOffset (RFC1123/ISO-8601 etc).
+    /// Tries to parse a child element's text as DateTimeOffset.
     /// </summary>
-    public static bool TryGetElementDate(this XContainer container, XName name, out DateTimeOffset dto)
+    public static bool TryGetElementDate(this XContainer? container, XName name, out DateTimeOffset dto)
     {
       dto = default;
-      var text = container.GetElementText(name);
-      return !string.IsNullOrEmpty(text) && DateTimeOffset.TryParse(text, out dto);
+
+      var result = DateTimeHelper.TryParse(container.GetElementText(name));
+      if (!result.HasValue) return false;
+
+      dto = result.Value;
+      return true;
     }
 
     #endregion

@@ -1580,66 +1580,14 @@ namespace Yoma.Core.Domain.Opportunity.Services
       return result;
     }
 
-    public async Task<Models.Opportunity> UpdateStatus(Guid id, Status status, bool ensureOrganizationAuthorization)
+    public Task<Models.Opportunity> UpdateStatus(Guid id, Status status, bool ensureOrganizationAuthorization)
     {
-      var result = GetById(id, true, true, ensureOrganizationAuthorization);
+      return UpdateStatus(id, status, ensureOrganizationAuthorization, false);
+    }
 
-      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
-
-      EventType? eventType = null;
-      switch (status)
-      {
-        case Status.Active:
-          if (result.Status == Status.Active) return result;
-          if (!Statuses_Activatable.Contains(result.Status))
-            throw new ValidationException($"The {nameof(Models.Opportunity)} can not be activated (current status '{result.Status.ToDescription()}'). Required state '{Statuses_Activatable.JoinNames()}'");
-
-          //ensure DateEnd was updated for re-activation of previously expired opportunities
-          if (result.DateEnd.HasValue && result.DateEnd.Value <= DateTimeOffset.UtcNow)
-            throw new ValidationException($"The {nameof(Models.Opportunity)} cannot be activated because its end date ('{result.DateEnd:yyyy-MM-dd}') is in the past. Please update the {nameof(Models.Opportunity).ToLower()} before proceeding with activation");
-
-          eventType = EventType.Update;
-          break;
-
-        case Status.Inactive:
-          if (result.Status == Status.Inactive) return result;
-          if (!Statuses_DeActivatable.Contains(result.Status))
-            throw new ValidationException($"The {nameof(Models.Opportunity)} can not be deactivated (current status '{result.Status.ToDescription()}'). Required state '{Statuses_DeActivatable.JoinNames()}'");
-
-          eventType = EventType.Update;
-          break;
-
-        case Status.Deleted:
-          if (result.Status == Status.Deleted) return result;
-          if (!Statuses_CanDelete.Contains(result.Status))
-            throw new ValidationException($"The {nameof(Models.Opportunity)} can not be deleted (current status '{result.Status.ToDescription()}'). Required state '{Statuses_CanDelete.JoinNames()}'");
-
-          eventType = EventType.Delete;
-          break;
-
-        default:
-          throw new ArgumentOutOfRangeException(nameof(status), $"{nameof(Status)} of '{status.ToDescription()}' not supported");
-      }
-
-      await AssertUpdatablePartnerSync(UpdateAction.Status, result,
-        new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase)
-        {
-          [nameof(Models.Opportunity.Status)] = status
-        });
-
-      var statusId = _opportunityStatusService.GetByName(status.ToString()).Id;
-
-      result.StatusId = statusId;
-      result.Status = status;
-      result.ModifiedByUserId = user.Id;
-
-      result = await _opportunityRepository.Update(result);
-
-      ParseComputed(result, true);
-
-      await _mediator.Publish(new OpportunityEvent(eventType.Value, result));
-
-      return result;
+    public Task<Models.Opportunity> DeleteFromPartnerSyncPull(Guid id)
+    {
+      return UpdateStatus(id, Status.Deleted, false, true);
     }
 
     public async Task<Models.Opportunity> AssignCategories(Guid id, List<Guid> categoryIds, bool ensureOrganizationAuthorization)
@@ -2134,6 +2082,72 @@ namespace Yoma.Core.Domain.Opportunity.Services
       return (reward, rewardReduced, rewardPoolDepleted);
     }
 
+    private async Task<Models.Opportunity> UpdateStatus(
+      Guid id,
+      Status status,
+      bool ensureOrganizationAuthorization,
+      bool authorizedByPartnerSyncPull)
+    {
+      var result = GetById(id, true, true, ensureOrganizationAuthorization);
+
+      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
+
+      EventType? eventType = null;
+      switch (status)
+      {
+        case Status.Active:
+          if (result.Status == Status.Active) return result;
+          if (!Statuses_Activatable.Contains(result.Status))
+            throw new ValidationException($"The {nameof(Models.Opportunity)} can not be activated (current status '{result.Status.ToDescription()}'). Required state '{Statuses_Activatable.JoinNames()}'");
+
+          if (result.DateEnd.HasValue && result.DateEnd.Value <= DateTimeOffset.UtcNow)
+            throw new ValidationException($"The {nameof(Models.Opportunity)} cannot be activated because its end date ('{result.DateEnd:yyyy-MM-dd}') is in the past. Please update the {nameof(Models.Opportunity).ToLower()} before proceeding with activation");
+
+          eventType = EventType.Update;
+          break;
+
+        case Status.Inactive:
+          if (result.Status == Status.Inactive) return result;
+          if (!Statuses_DeActivatable.Contains(result.Status))
+            throw new ValidationException($"The {nameof(Models.Opportunity)} can not be deactivated (current status '{result.Status.ToDescription()}'). Required state '{Statuses_DeActivatable.JoinNames()}'");
+
+          eventType = EventType.Update;
+          break;
+
+        case Status.Deleted:
+          if (result.Status == Status.Deleted) return result;
+          if (!Statuses_CanDelete.Contains(result.Status))
+            throw new ValidationException($"The {nameof(Models.Opportunity)} can not be deleted (current status '{result.Status.ToDescription()}'). Required state '{Statuses_CanDelete.JoinNames()}'");
+
+          eventType = EventType.Delete;
+          break;
+
+        default:
+          throw new ArgumentOutOfRangeException(nameof(status), $"{nameof(Status)} of '{status.ToDescription()}' not supported");
+      }
+
+      await AssertUpdatablePartnerSync(UpdateAction.Status, result,
+        new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase)
+        {
+          [nameof(Models.Opportunity.Status)] = status
+        },
+        authorizedByPartnerSyncPull: authorizedByPartnerSyncPull);
+
+      var statusId = _opportunityStatusService.GetByName(status.ToString()).Id;
+
+      result.StatusId = statusId;
+      result.Status = status;
+      result.ModifiedByUserId = user.Id;
+
+      result = await _opportunityRepository.Update(result);
+
+      ParseComputed(result, true);
+
+      await _mediator.Publish(new OpportunityEvent(eventType.Value, result));
+
+      return result;
+    }
+
     private static void AssertUpdatable(Models.Opportunity opportunity)
     {
       if (!Statuses_Updatable.Contains(opportunity.Status))
@@ -2158,7 +2172,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
       UpdateAction action,
       Models.Opportunity opportunityCurrent,
       Dictionary<string, object?> updatesToEval,
-      bool abortSyncPushCreateIfPossible = false)
+      bool abortSyncPushCreateIfPossible = false,
+      bool authorizedByPartnerSyncPull = false)
     {
       ArgumentNullException.ThrowIfNull(opportunityCurrent);
       ArgumentNullException.ThrowIfNull(updatesToEval);
@@ -2173,7 +2188,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       switch (syncedInfo.SyncType)
       {
         case SyncType.Pull:
-          AssertUpdatablePartnerSyncPull(action, updatesToEval);
+          AssertUpdatablePartnerSyncPull(action, updatesToEval, authorizedByPartnerSyncPull);
           break;
 
         case SyncType.Push:
@@ -2199,7 +2214,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
     /// </summary>
     private void AssertUpdatablePartnerSyncPull(
       UpdateAction action,
-      Dictionary<string, object?> updatesToEval)
+      Dictionary<string, object?> updatesToEval,
+      bool authorizedByPartnerSyncPull = false)
     {
       switch (action)
       {
@@ -2211,8 +2227,9 @@ namespace Yoma.Core.Domain.Opportunity.Services
           var statusExpected = updatesToEval.Get<Status>(nameof(Models.Opportunity.Status));
 
           if (statusExpected == Status.Deleted &&
-              HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor))
+              (authorizedByPartnerSyncPull || HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor)))
             return;
+
           break;
 
         case UpdateAction.Complete:
@@ -2226,7 +2243,6 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       throw new ValidationException("This opportunity is managed by an external partner and cannot be updated");
     }
-
 
     /// <summary>
     /// Validates update restrictions for push-synchronized opportunities.

@@ -1,7 +1,7 @@
 using FluentValidation;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Yoma.Core.Domain.Core;
+using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Lookups.Interfaces;
 using Yoma.Core.Domain.Opportunity;
@@ -25,6 +25,38 @@ namespace Yoma.Core.Infrastructure.Jobberman.Client
     private readonly IRepositoryBatched<Opportunity> _opportunityRepository;
 
     private readonly SyncFilterPullValidator _syncFilterPullValidator;
+
+    // Jobberman-specific job function to Yoma opportunity category mapping.
+    // Keep in code for now because the mapping is small, partner-specific, and version-controlled.
+    // Unknown or omitted values default to Other.
+    private static readonly Dictionary<string, string> JobbermanCategoryMappings = new(StringComparer.OrdinalIgnoreCase)
+    {
+      { "Accounting, Auditing & Finance", "Business and Entrepreneurship" },
+      { "Admin & Office", "Career and Personal Development" },
+      { "Creative & Design", "Creative Industry and Arts" },
+      { "Building & Architecture", "Business and Entrepreneurship" },
+      { "Consulting & Strategy", "Business and Entrepreneurship" },
+      { "Customer Service & Support", "Career and Personal Development" },
+      { "Engineering & Technology", "Technology and Digitization" },
+      { "Farming & Agriculture", "Agriculture" },
+      { "Food Services & Catering", "Tourism and Hospitality" },
+      { "Hospitality & Leisure", "Tourism and Hospitality" },
+      { "Software & Data", "Technology and Digitization" },
+      { "Legal Services", "Business and Entrepreneurship" },
+      { "Marketing & Communications", "Creative Industry and Arts" },
+      { "Medical & Pharmaceutical", "Health and Care" },
+      { "Product & Project Management", "Business and Entrepreneurship" },
+      { "Estate Agents & Property Management", "Business and Entrepreneurship" },
+      { "Quality Control & Assurance", "Business and Entrepreneurship" },
+      { "Human Resources", "Career and Personal Development" },
+      { "Management & Business Development", "Business and Entrepreneurship" },
+      { "Community & Social Services", "Career and Personal Development" },
+      { "Sales", "Business and Entrepreneurship" },
+      { "Supply Chain & Procurement", "Business and Entrepreneurship" },
+      { "Research, Teaching & Training", "Career and Personal Development" },
+      { "Trades & Services", "Business and Entrepreneurship" },
+      { "Driver & Transport Services", "Business and Entrepreneurship" }
+    };
     #endregion
 
     #region Constructor
@@ -54,14 +86,7 @@ namespace Yoma.Core.Infrastructure.Jobberman.Client
     {
       ArgumentNullException.ThrowIfNull(filter, nameof(filter));
 
-      // Validates the pull sync pagination contract: pagination must be enabled,
-      // and page number / page size must be set correctly.
       _syncFilterPullValidator.ValidateAndThrow(filter);
-
-      // PartnerSyncEnabledEnvironmentsAsEnum is handled by the Jobberman feed background service.
-      // When external partner sync is disabled for the current environment, the background service
-      // syncs from local .NET embedded resources instead of the actual partner feeds.
-      // This client only pages and returns the locally cached Jobberman opportunities as requested.
 
       if (_logger.IsEnabled(LogLevel.Information))
         _logger.LogInformation(
@@ -92,44 +117,38 @@ namespace Yoma.Core.Infrastructure.Jobberman.Client
 
       var opportunityType = _opportunityTypeService.GetByName(Domain.Opportunity.Type.Job.ToString());
 
-      var categoryName = string.IsNullOrEmpty(item.Category) ? Category.Other.ToString() : item.Category.Trim();
-      var category = _opportunityCategoryService.GetByName(categoryName);
-
+      var category = ResolveCategory(item.Category);
       var country = _countryService.GetByCodeAlpha2(item.CountryCodeAlpha2);
-
-      //TODO: Confirm language mapping with Jobberman. Current RSS sample does not include this field.
-      //Defaulting to English for now.
-      var languageName = string.IsNullOrEmpty(item.Language) ? Language.English.ToString() : item.Language.Trim();
-      var language = _languageService.GetByName(languageName);
+      var language = ResolveLanguage(item.Language);
 
       var feed = _options.Feeds.SingleOrDefault(o => string.Equals(o.CountryCodeAlpha2, item.CountryCodeAlpha2, StringComparison.OrdinalIgnoreCase))
-        ?? throw new InvalidOperationException($"Jobberman feed configuration for country '{item.CountryCodeAlpha2}' not found");
+        ?? throw new InvalidOperationException($"Feed config for country '{item.CountryCodeAlpha2}': Not found");
+
+      var orgId = feed.OrganizationIdYoma ?? _options.OrganizationIdYoma;
+      if (!orgId.HasValue || orgId.Value == Guid.Empty)
+        throw new InvalidOperationException($"Feed config for country '{item.CountryCodeAlpha2}': Yoma organization Id not configured");
 
       var opportunity = new Domain.Opportunity.Models.Opportunity
       {
         Title = item.Title,
-        Description = string.IsNullOrEmpty(item.Description) ? item.Title : item.Description,
+        Description = string.IsNullOrWhiteSpace(item.Description) ? item.Title : item.Description,
         TypeId = opportunityType.Id,
         Type = opportunityType.Name,
-        OrganizationId = feed.OrganizationIdYoma,
+        OrganizationId = orgId.Value,
         Summary = item.Title,
         URL = item.URL,
         VerificationEnabled = false,
         Status = item.Deleted == true ? Status.Deleted : Status.Active,
-        Keywords = BuildKeywords(item, categoryName),
-
-        //TODO: Confirm DateStart mapping with Jobberman. Current RSS sample does not include publish/created/posted date.
-        //Defaulting to the cached row creation date for now because Yoma requires a non-null DateStart.
+        Keywords = BuildKeywords(item, category.Name),
         DateStart = item.DateStart ?? item.DateCreated,
         DateEnd = item.DateEnd,
-
         Featured = false,
         Hidden = false,
         Published = true,
         Categories = [category],
         Countries = [country],
         Languages = [language]
-        //ExternalId: Opportunity.ExternalId is used by CSV imports; pull synchronization must set the external identifier on the SyncItem
+        // ExternalId: Opportunity.ExternalId is used by CSV imports; pull synchronization must set the external identifier on the SyncItem.
       };
 
       return new SyncItem<Domain.Opportunity.Models.Opportunity>
@@ -138,6 +157,51 @@ namespace Yoma.Core.Infrastructure.Jobberman.Client
         Deleted = item.Deleted == true,
         Item = opportunity
       };
+    }
+
+    private Domain.Lookups.Models.Language ResolveLanguage(string? nameSource)
+    {
+      var resultDefault = _languageService.GetByName(Domain.Core.Language.English.ToString());
+
+      nameSource = nameSource?.NormalizeNullableValue();
+      if (string.IsNullOrEmpty(nameSource)) return resultDefault;
+
+      return _languageService.GetByNameOrNull(nameSource) ?? resultDefault;
+    }
+
+    private Domain.Opportunity.Models.Lookups.OpportunityCategory ResolveCategory(string? nameSource)
+    {
+      var resultDefault = _opportunityCategoryService.GetByName(Category.Other.ToString());
+
+      nameSource = nameSource?.NormalizeNullableValue();
+      if (string.IsNullOrEmpty(nameSource)) return resultDefault;
+
+      var result = _opportunityCategoryService.GetByNameOrNull(nameSource);
+      if (result is not null) return result;
+
+      var mappedName = MapCategoryName(nameSource);
+      if (string.IsNullOrEmpty(mappedName)) return resultDefault;
+
+      return _opportunityCategoryService.GetByNameOrNull(mappedName) ?? resultDefault;
+    }
+
+    private static string? MapCategoryName(string nameSource)
+    {
+      var key = NormalizeLookupKey(nameSource);
+      if (string.IsNullOrEmpty(key)) return null;
+
+      return JobbermanCategoryMappings.TryGetValue(key, out var result) ? result : null;
+    }
+
+    private static string? NormalizeLookupKey(string? value)
+    {
+      value = value?.NormalizeNullableValue();
+      if (string.IsNullOrEmpty(value)) return null;
+
+      return value
+        .RemoveSpecialCharacters()
+        .NormalizeTrim()
+        .ToUpperInvariant();
     }
 
     private static List<string>? BuildKeywords(Opportunity item, string category)

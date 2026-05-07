@@ -54,7 +54,8 @@ namespace Yoma.Core.Infrastructure.Jobberman.Models
     public string? Language { get; set; }
 
     /// <summary>
-    /// Partner-supplied deleted, removed, expired, or closed indicator.
+    /// Indicates whether the job was removed from the latest full Jobberman RSS snapshot.
+    /// Removed from feed means removed/expired on Yoma's side.
     /// </summary>
     public bool? Deleted { get; set; }
 

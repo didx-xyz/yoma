@@ -260,14 +260,14 @@ namespace Yoma.Core.Api.Controllers
 
             if (!string.IsNullOrEmpty(kcUser.Education))
             {
-              var country = _educationService.GetByNameOrNull(kcUser.Education);
+              var education = _educationService.GetByNameOrNull(kcUser.Education);
 
-              if (country == null)
+              if (education == null)
               {
                 if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError("Failed to parse Keycloak '{customAttributes}' with value '{education}'", CustomAttributes.Education, kcUser.Education);
               }
               else
-                userRequest.EducationId = country.Id;
+                userRequest.EducationId = education.Id;
             }
 
             if (!string.IsNullOrEmpty(kcUser.Gender))

@@ -369,6 +369,16 @@ namespace Yoma.Core.Domain.PartnerSync.Services
               opportunityExisting = _opportunityService.GetById(entityId.Value, false, false, false);
             }
 
+            if (item.Deleted == true && processingItemExisting == null)
+            {
+              if (_logger.IsEnabled(LogLevel.Information))
+                _logger.LogInformation(
+                  "Processing of partner sync pull item skipped: Entity is marked deleted by provider but has no existing Yoma mapping for partner '{partner}', entity type '{entityType}', entity external id '{entityExternalId}'",
+                  partner, entityType, item.ExternalId);
+
+              continue;
+            }
+
             if (opportunityExisting?.Status == Status.Deleted)
             {
               if (_logger.IsEnabled(LogLevel.Information))
@@ -424,11 +434,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
                     if (!entityId.HasValue)
                       throw new InvalidOperationException($"Entity id expected for pull deletion: Partner '{partner}', entity type '{entityType}', entity external id '{item.ExternalId}'");
 
-                    // TODO: Pull-sync deletions executed by background processing currently flow through UpdateStatus(...)
-                    // and are blocked by the admin-role check in AssertUpdatablePartnerSyncPull because no HTTP admin
-                    // context exists in the background worker. Rework this so provider-driven pull deletions are treated
-                    // as authorized source-of-truth updates without weakening the normal user/admin delete rules.
-                    await _opportunityService.UpdateStatus(entityId.Value, Status.Deleted, false);
+                    await _opportunityService.DeleteFromPartnerSyncPull(entityId.Value);
                     break;
                   }
 
