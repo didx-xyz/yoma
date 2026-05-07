@@ -38,6 +38,7 @@ import {
   firstActionableRefereeReferralUrlAtom,
   hasDismissedRefereeWelcomeModalAtom,
   hasShownRefereePendingToastAtom,
+  hasSkippedSettingsDialogAtom,
   rumConsentAtom,
   screenWidthAtom,
   userProfileAtom,
@@ -86,6 +87,9 @@ export const Global: React.FC = () => {
   const setHasDismissedRefereeWelcomeModal = useSetAtom(
     hasDismissedRefereeWelcomeModalAtom,
   );
+  const [hasSkippedSettingsDialog, setHasSkippedSettingsDialog] = useAtom(
+    hasSkippedSettingsDialogAtom,
+  );
   const setScreenWidthAtom = useSetAtom(screenWidthAtom);
 
   const [loginDialogVisible, setLoginDialogVisible] = useState(false);
@@ -109,10 +113,8 @@ export const Global: React.FC = () => {
   const currentLanguage = useAtomValue(currentLanguageAtom);
 
   const anyBlockingModalOpen =
-    loginDialogVisible ||
-    updateProfileDialogVisible ||
-    settingsDialogVisible ||
-    photoUploadDialogVisible;
+    loginDialogVisible || updateProfileDialogVisible || settingsDialogVisible;
+  // || photoUploadDialogVisible; // photo upload dialog disabled
 
   useEffect(() => {
     let isMounted = true;
@@ -423,12 +425,16 @@ export const Global: React.FC = () => {
       if (!isUserProfileCompleted(userProfile)) {
         // show update profile dialog
         setUpdateProfileDialogVisible(true);
-      } else if (!skipSettings && !isUserSettingsConfigured(userProfile)) {
+      } else if (
+        !skipSettings &&
+        !hasSkippedSettingsDialog &&
+        !isUserSettingsConfigured(userProfile)
+      ) {
         // show settings dialog
         setSettingsDialogVisible(true);
-      } else if (!skipPhoto && !hasUserPhoto(userProfile)) {
-        // show photo upload dialog
-        setPhotoUploadDialogVisible(true);
+        // } else if (!skipPhoto && !hasUserPhoto(userProfile)) {
+        //   // show photo upload dialog (disabled)
+        //   setPhotoUploadDialogVisible(true);
       } else if (
         referralsFlagResolved &&
         referralsEnabled &&
@@ -445,6 +451,7 @@ export const Global: React.FC = () => {
     [
       actionableRefereeReferral,
       hasShownRefereePendingToast,
+      hasSkippedSettingsDialog,
       referralsEnabled,
       referralsFlagResolved,
       sessionStatus,
@@ -552,12 +559,14 @@ export const Global: React.FC = () => {
       postLoginChecksTriggeredRef.current = false;
       setHasShownRefereePendingToast(false);
       setHasDismissedRefereeWelcomeModal(false);
+      setHasSkippedSettingsDialog(false);
       setFirstActionableRefereeReferralUrl(null);
     }
   }, [
     sessionStatus,
     setHasDismissedRefereeWelcomeModal,
     setHasShownRefereePendingToast,
+    setHasSkippedSettingsDialog,
     setFirstActionableRefereeReferralUrl,
   ]);
 
@@ -1110,6 +1119,7 @@ export const Global: React.FC = () => {
               type="button"
               className="hover:text-green text-sm text-black underline"
               onClick={() => {
+                setHasSkippedSettingsDialog(true);
                 setSettingsDialogVisible(false);
                 postLoginChecks(userProfile!, { skipSettings: true });
               }}
@@ -1120,73 +1130,75 @@ export const Global: React.FC = () => {
         </div>
       </CustomModal>
 
-      {/* UPLOAD PHOTO DIALOG */}
-      <CustomModal
-        isOpen={photoUploadDialogVisible}
-        shouldCloseOnOverlayClick={false}
-        onRequestClose={() => {
-          setPhotoUploadDialogVisible(false);
-        }}
-        className="md:max-h-[680px] md:w-[700px]"
-      >
-        <div className="flex h-full flex-col gap-2 overflow-y-auto">
-          <div className="bg-theme flex h-16 flex-row p-8 shadow-lg"></div>
-          <div className="flex flex-col items-center justify-center gap-4 px-6 pb-8 text-center md:px-12">
-            <div className="border-purple-dark -mt-8 flex items-center justify-center rounded-full bg-white p-2 shadow-lg">
-              <FcCamera className="size-8 md:size-10" />
-            </div>
+      {/* UPLOAD PHOTO DIALOG (disabled) */}
+      {false && (
+        <CustomModal
+          isOpen={photoUploadDialogVisible}
+          shouldCloseOnOverlayClick={false}
+          onRequestClose={() => {
+            setPhotoUploadDialogVisible(false);
+          }}
+          className="md:max-h-[680px] md:w-[700px]"
+        >
+          <div className="flex h-full flex-col gap-2 overflow-y-auto">
+            <div className="bg-theme flex h-16 flex-row p-8 shadow-lg"></div>
+            <div className="flex flex-col items-center justify-center gap-4 px-6 pb-8 text-center md:px-12">
+              <div className="border-purple-dark -mt-8 flex items-center justify-center rounded-full bg-white p-2 shadow-lg">
+                <FcCamera className="size-8 md:size-10" />
+              </div>
 
-            <div className="flex flex-col gap-2">
-              <h4 className="text-2xl font-semibold tracking-wide">
-                Picture time!
-              </h4>
-              <h5 className="text-sm font-semibold tracking-widest">
-                Choose a profile picture
-              </h5>
-            </div>
+              <div className="flex flex-col gap-2">
+                <h4 className="text-2xl font-semibold tracking-wide">
+                  Picture time!
+                </h4>
+                <h5 className="text-sm font-semibold tracking-widest">
+                  Choose a profile picture
+                </h5>
+              </div>
 
-            <div className="w-full">
-              <UserProfileForm
-                userProfile={userProfile}
-                onSubmit={async (updatedUserProfile) => {
-                  // update atom with new profile data (includes photo)
-                  setUserProfile(updatedUserProfile);
+              <div className="w-full">
+                <UserProfileForm
+                  userProfile={userProfile}
+                  onSubmit={async (updatedUserProfile) => {
+                    // update atom with new profile data (includes photo)
+                    setUserProfile(updatedUserProfile);
 
-                  // invalidate userProfile query to ensure all components get fresh data
-                  await queryClient.invalidateQueries({
-                    queryKey: ["userProfile"],
-                  });
+                    // invalidate userProfile query to ensure all components get fresh data
+                    await queryClient.invalidateQueries({
+                      queryKey: ["userProfile"],
+                    });
 
-                  // hide popup
+                    // hide popup
+                    setPhotoUploadDialogVisible(false);
+
+                    // Photo flow is the last blocker; do not reopen it when continuing checks.
+                    postLoginChecks(updatedUserProfile, {
+                      skipSettings: true,
+                      skipPhoto: true,
+                    });
+                  }}
+                  filterOptions={[UserProfileFilterOptions.LOGO]}
+                />
+              </div>
+
+              {/* skip for now link */}
+              <button
+                type="button"
+                className="hover:text-green text-sm text-black underline"
+                onClick={() => {
                   setPhotoUploadDialogVisible(false);
-
-                  // Photo flow is the last blocker; do not reopen it when continuing checks.
-                  postLoginChecks(updatedUserProfile, {
+                  postLoginChecks(userProfile!, {
                     skipSettings: true,
                     skipPhoto: true,
                   });
                 }}
-                filterOptions={[UserProfileFilterOptions.LOGO]}
-              />
+              >
+                Skip for now
+              </button>
             </div>
-
-            {/* skip for now link */}
-            <button
-              type="button"
-              className="hover:text-green text-sm text-black underline"
-              onClick={() => {
-                setPhotoUploadDialogVisible(false);
-                postLoginChecks(userProfile!, {
-                  skipSettings: true,
-                  skipPhoto: true,
-                });
-              }}
-            >
-              Skip for now
-            </button>
           </div>
-        </div>
-      </CustomModal>
+        </CustomModal>
+      )}
 
       {/* LOGIN AGAIN DIALOG */}
       <CustomModal
