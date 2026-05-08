@@ -13,6 +13,8 @@ namespace Yoma.Core.Domain.PartnerSync.Interfaces.Provider
   public interface ISyncProviderClientPush<TItem> : ISyncProviderClient
     where TItem : class, new()
   {
+    string ComputeUpdatePayloadHash(SyncRequestPush<TItem> request);
+
     Task<string> Create(SyncRequestPush<TItem> request);
 
     Task Update(SyncRequestPush<TItem> request);

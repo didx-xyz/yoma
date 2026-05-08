@@ -146,10 +146,11 @@ namespace Yoma.Core.Domain.PartnerSync.Services
                         continue;
                       }
 
-                      // TODO: Push payload hashing is provider-specific and should be based on the effective outbound payload sent to the provider.
-                      // Extend the provider client to return the effective create payload hash together with the external id.
+                      // Store the provider-computed update hash after create so future push updates compare against the same update-shaped payload.
+                      // The provider client computes the effective update payload hash because it owns the final outbound payload/action.
                       item.EntityExternalId = await pushProviderClient.Create(request);
-                      item.PayloadHash = null;
+                      request.ExternalId = item.EntityExternalId;
+                      item.PayloadHash = pushProviderClient.ComputeUpdatePayloadHash(request);
                       break;
 
                     case SyncAction.Update:
@@ -176,19 +177,20 @@ namespace Yoma.Core.Domain.PartnerSync.Services
                       if (!ProcessingService.Statuses_Opportunity_Updatable.Contains(opportunity.Status))
                         throw new InvalidOperationException($"Action '{action}': Opportunity status of '{ProcessingService.Statuses_Opportunity_Updatable.JoinNames()}' expected. Current status '{opportunity.Status.ToDescription()}'");
 
-                      // TODO: Push payload hashing is provider-specific and should be based on the effective outbound payload sent to the provider.
-                      // Extend the provider client to compute/return the effective update payload hash, then use it for comparison.
-                      string? payloadHash = null;
+                      request.ExternalId = item.EntityExternalId;
 
+                      // The provider client computes the effective update payload hash because it owns the final outbound payload/action.
+                      var payloadHash = pushProviderClient.ComputeUpdatePayloadHash(request);
+
+                      // If the effective payload hash has not changed, skip the update to avoid unnecessary provider calls and potential rate limiting.
                       if (!string.Equals(item.PayloadHash, payloadHash, StringComparison.Ordinal))
                       {
-                        request.ExternalId = item.EntityExternalId;
                         await pushProviderClient.Update(request);
                       }
                       else if (_logger.IsEnabled(LogLevel.Information))
                       {
                         _logger.LogInformation(
-                          "Skipping sync push provider update for '{entityType}' and item with id '{id}' because the effective payload hash has not changed",
+                          "Skipping sync push provider update for '{entityType}' and item with id '{id}' because the effective provider update payload hash has not changed",
                           item.EntityType, item.Id);
                       }
 
@@ -434,9 +436,12 @@ namespace Yoma.Core.Domain.PartnerSync.Services
                 case SyncAction.Create:
                   {
                     var request = opportunityItem.ToRequestCreate();
-                    payloadHash = HashHelper.ComputeSHA256Hash<Opportunity.Models.OpportunityRequestBase>(request);
                     var opportunity = await _opportunityService.Create(request, false, false, false);
                     entityId = opportunity.Id;
+
+                    // Hash the equivalent update payload so the created item can be compared consistently against future pull updates
+                    var requestUpdate = opportunityItem.ToRequestUpdate(entityId.Value);
+                    payloadHash = HashHelper.ComputeSHA256Hash(requestUpdate);
                     break;
                   }
 
@@ -449,7 +454,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
                       throw new InvalidOperationException($"Entity id expected for pull update: Partner '{partner}', entity type '{entityType}', entity external id '{item.ExternalId}'");
 
                     var request = opportunityItem.ToRequestUpdate(entityId.Value);
-                    payloadHash = HashHelper.ComputeSHA256Hash<Opportunity.Models.OpportunityRequestBase>(request);
+                    payloadHash = HashHelper.ComputeSHA256Hash(request);
 
                     // Existing pull items normally resolve to Update on each run.
                     // If the effective Yoma payload hash has not changed, skip the update because no domain change is required.

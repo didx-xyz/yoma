@@ -1,8 +1,10 @@
 using Flurl;
 using Flurl.Http;
 using Microsoft.Extensions.Logging;
+using System.Globalization;
 using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.Core.Extensions;
+using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Entity.Extensions;
@@ -43,11 +45,17 @@ namespace Yoma.Core.Infrastructure.SAYouth.Client
     #endregion
 
     #region Public Members
+    public string ComputeUpdatePayloadHash(SyncRequestPush<Opportunity> request)
+    {
+      return HashHelper.ComputeSHA256Hash(ToRequestUpdatePayload(request));
+    }
+
     public async Task<string> Create(SyncRequestPush<Opportunity> request)
     {
+      // TODO: Ensure no existing mmocked id's of type string on stage
       if (!_appSettings.PartnerSyncEnabledEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment))
       {
-        var mockId = $"MOCK_{Guid.NewGuid():N}";
+        var mockId = Random.Shared.Next(1, int.MaxValue).ToString(CultureInfo.InvariantCulture);
         if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Partner sharing '{action}' skipped for environment '{environment}' and assuming success", nameof(Create), _environmentProvider.Environment);
         return mockId;
       }
@@ -74,63 +82,40 @@ namespace Yoma.Core.Infrastructure.SAYouth.Client
         return;
       }
 
-      if (!int.TryParse(request.ExternalId, out var externalIdParsed))
-        throw new InvalidOperationException($"Invalid external id '{request.ExternalId}'. Integer expected");
+      var payload = ToRequestUpdatePayload(request);
 
-      // at time of execution, if the opportunity end date is in the past, we treat it as an inactivation.
-      // this avoids triggering an update, as the external system does not allow closing dates in the past — we pause the opportunity instead.
-      var dateEndInThePast = request.Item.DateEnd <= DateTime.UtcNow;
-      var opportunityStatus = request.Item.Status;
-      if (dateEndInThePast) opportunityStatus = Domain.Opportunity.Status.Inactive;
-
-      if (!dateEndInThePast)
+      if (payload.UpsertRequired)
       {
-        var requestUpsert = ToRequestUpsert(request);
+        if (payload.ExternalId <= default(int))
+          throw new InvalidOperationException($"External id expected but invalid");
+
+        if (payload.UpsertRequest == null)
+          throw new InvalidOperationException($"Upsert request expected but null");
 
         var response = await _options.BaseUrl
           .AppendPathSegment("Opportunity/Skilling")
-          .SetQueryParam("opportunityId", externalIdParsed)
+          .SetQueryParam("opportunityId", payload.ExternalId)
           .WithAuthHeaders(GetAuthHeaders())
-          .PutJsonAsync(requestUpsert)
+          .PutJsonAsync(payload.UpsertRequest)
           .EnsureSuccessStatusCodeAsync()
           .ReceiveJson<OpportunityUpsertResponse>();
       }
 
-      var requestAction = new OpportunityActionRequest { OpportunityId = externalIdParsed };
-      StatusAction? action = null;
-
-      switch (opportunityStatus)
-      {
-        case Domain.Opportunity.Status.Active:
-          // ensure not paused
-          action = StatusAction.Resume;
-          requestAction.ClosingDate = request.Item.DateEnd;
-          requestAction.Reason = "Opportunity updated and activated by Yoma";
-          break;
-
-        case Domain.Opportunity.Status.Inactive:
-          // ensure paused
-          action = StatusAction.Pause;
-          requestAction.Reason = "Opportunity updated, with end date in the past or explicitly inactivated by Yoma";
-          break;
-
-        case Domain.Opportunity.Status.Expired:
-          // no further action required
-          break;
-
-        default:
-          throw new InvalidOperationException($"Invalid / unsupported opportunity status '{request.Item.Status.ToDescription()}'");
-      }
-
-      if (action == null) return;
+      if (!payload.ActionRequired) return;
 
       try
       {
+        if (!payload.Action.HasValue)
+          throw new InvalidOperationException($"Action expected but null");
+
+        if (payload.ActionRequest == null)
+          throw new InvalidOperationException($"Action request expected but null");
+
         await _options.BaseUrl
             .AppendPathSegment("Opportunity")
-            .AppendPathSegment(action.ToString())
+            .AppendPathSegment(payload.Action.ToString())
             .WithAuthHeaders(GetAuthHeaders())
-            .PutJsonAsync(requestAction)
+            .PutJsonAsync(payload.ActionRequest)
             .EnsureSuccessStatusCodeAsync();
       }
       catch (HttpClientException ex)
@@ -176,6 +161,60 @@ namespace Yoma.Core.Infrastructure.SAYouth.Client
       };
     }
 
+    private OpportunityUpdatePayload ToRequestUpdatePayload(SyncRequestPush<Opportunity> request)
+    {
+      ArgumentNullException.ThrowIfNull(request, nameof(request));
+
+      if (request.Item == null)
+        throw new ArgumentNullException(nameof(request), "Opportunity is required");
+
+      if (string.IsNullOrWhiteSpace(request.ExternalId))
+        throw new InvalidOperationException("External id required");
+
+      if (!int.TryParse(request.ExternalId, out var externalIdParsed))
+        throw new InvalidOperationException($"Invalid external id '{request.ExternalId}'. Integer expected");
+
+      // At time of execution, if the opportunity end date is in the past, we treat it as an inactivation.
+      // This avoids triggering an upsert, as the external system does not allow closing dates in the past.
+      var dateEndInThePast = request.Item.DateEnd <= DateTime.UtcNow;
+      var opportunityStatus = request.Item.Status;
+      if (dateEndInThePast) opportunityStatus = Domain.Opportunity.Status.Inactive;
+
+      var requestAction = new OpportunityActionRequest { OpportunityId = externalIdParsed };
+      StatusAction? action = null;
+
+      switch (opportunityStatus)
+      {
+        case Domain.Opportunity.Status.Active:
+          // ensure not paused
+          action = StatusAction.Resume;
+          requestAction.ClosingDate = request.Item.DateEnd;
+          requestAction.Reason = "Opportunity updated and activated by Yoma";
+          break;
+
+        case Domain.Opportunity.Status.Inactive:
+          // ensure paused
+          action = StatusAction.Pause;
+          requestAction.Reason = "Opportunity updated, with end date in the past or explicitly inactivated by Yoma";
+          break;
+
+        case Domain.Opportunity.Status.Expired:
+          // No further action required.
+          break;
+
+        default:
+          throw new InvalidOperationException($"Invalid / unsupported opportunity status '{request.Item.Status.ToDescription()}'");
+      }
+
+      return new OpportunityUpdatePayload
+      {
+        ExternalId = externalIdParsed,
+        UpsertRequest = !dateEndInThePast ? ToRequestUpsert(request) : null,
+        Action = action,
+        ActionRequest = action != null ? requestAction : null
+      };
+    }
+
     private OpportunitySkillingUpsertRequest ToRequestUpsert(SyncRequestPush<Opportunity> request)
     {
       ArgumentNullException.ThrowIfNull(request, nameof(request));
@@ -190,7 +229,7 @@ namespace Yoma.Core.Infrastructure.SAYouth.Client
         throw new ArgumentNullException(nameof(request), "OrganizationYoma is required");
 
       //nullable fields matched on SA Youth's request even though not nullable; rely on their error handling
-      var requestCreate = new OpportunitySkillingUpsertRequest
+      var requestUpsert = new OpportunitySkillingUpsertRequest
       {
         Holder = request.Item.OrganizationName.RemoveSpecialCharacters().TrimToLength(200),
         SponsoringPartner = request.OrganizationYoma.Name.RemoveSpecialCharacters().TrimToLength(200),
@@ -208,10 +247,10 @@ namespace Yoma.Core.Infrastructure.SAYouth.Client
         Url = request.Item.YomaInfoURL(_appSettings.AppBaseURL)
       };
 
-      requestCreate = ToRequestUpsertAddressInfo(request, requestCreate);
-      requestCreate = ToRequestUpsertContactInfo(request, requestCreate);
+      requestUpsert = ToRequestUpsertAddressInfo(request, requestUpsert);
+      requestUpsert = ToRequestUpsertContactInfo(request, requestUpsert);
 
-      return requestCreate;
+      return requestUpsert;
     }
 
     private static OpportunitySkillingUpsertRequest ToRequestUpsertAddressInfo(SyncRequestPush<Opportunity> request, OpportunitySkillingUpsertRequest requestUpsert)
