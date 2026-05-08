@@ -16,7 +16,9 @@
   background-clip: padding-box;
   border: 1px solid #ced4da;
   border-radius: 0.25rem;
-  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+  transition:
+    border-color 0.15s ease-in-out,
+    box-shadow 0.15s ease-in-out;
 }
 
 .form-control:focus,
@@ -80,7 +82,9 @@
   border-radius: 5px;
   height: 48px;
   padding: 0 16px;
-  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+  transition:
+    border-color 0.15s ease-in-out,
+    box-shadow 0.15s ease-in-out;
 }
 
 .pf-c-form-control:focus {
@@ -102,7 +106,10 @@
   font-size: 16px;
   line-height: 1.5;
   border-radius: 8px;
-  transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out,
+  transition:
+    color 0.15s ease-in-out,
+    background-color 0.15s ease-in-out,
+    border-color 0.15s ease-in-out,
     box-shadow 0.15s ease-in-out;
   cursor: pointer;
   text-decoration: none;
@@ -709,6 +716,53 @@ button.link:focus .link-text {
   display: flex;
 }
 
+/* Login/Register tab navigation */
+.kc-tabs {
+  background-color: #e8e8e8;
+  border-radius: 25px 25px 0 0;
+  margin: -40px -40px 24px -40px;
+  list-style: none;
+  display: flex;
+  gap: 0;
+  overflow: hidden;
+}
+
+.kc-tabs > li {
+  flex: 1;
+}
+
+.kc-tabs > li > a {
+  display: block;
+  text-align: center;
+  padding: 14px 10px;
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+  color: #888;
+  transition:
+    background-color 0.15s,
+    color 0.15s;
+}
+
+.kc-tabs > li.active > a,
+.kc-tabs > li.active > a:focus,
+.kc-tabs > li.active > a:hover {
+  background-color: #1a1a1a;
+  color: #fff;
+}
+
+.kc-tabs > li:not(.active) > a:hover,
+.kc-tabs > li:not(.active) > a:focus {
+  color: #1a1a1a;
+}
+
+@media screen and (max-width: 767px) {
+  .kc-tabs {
+    margin: -45px -20px 16px -20px;
+    border-radius: 15px 15px 0 0;
+  }
+}
+
 .nav-pills > li {
   flex: 1;
 }
@@ -718,11 +772,6 @@ button.link:focus .link-text {
 .nav-pills > li.active > a:hover {
   background-color: #461d4d;
   color: white;
-  border-radius: 8px;
-}
-
-.nav-pills > li > a:hover {
-  border-radius: 8px;
 }
 
 .underline {
@@ -824,12 +873,18 @@ input#code {
   color: #461d4d;
   border: 2px solid #e6e8eb;
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(70, 29, 77, 0.08), 0 1.5px 4px rgba(0, 0, 0, 0.04);
+  box-shadow:
+    0 2px 8px rgba(70, 29, 77, 0.08),
+    0 1.5px 4px rgba(0, 0, 0, 0.04);
   font-size: 16px;
   font-weight: 500;
   padding: 12px 18px;
   margin: 8px 0;
-  transition: box-shadow 0.2s, border-color 0.2s, color 0.2s, background 0.2s;
+  transition:
+    box-shadow 0.2s,
+    border-color 0.2s,
+    color 0.2s,
+    background 0.2s;
   cursor: pointer;
   min-height: 48px;
   text-decoration: none;
@@ -841,7 +896,9 @@ input#code {
   background: #f7f7fa;
   color: #0099d3;
   border-color: #0099d3;
-  box-shadow: 0 4px 16px rgba(70, 29, 77, 0.16), 0 2px 8px rgba(0, 0, 0, 0.08);
+  box-shadow:
+    0 4px 16px rgba(70, 29, 77, 0.16),
+    0 2px 8px rgba(0, 0, 0, 0.08);
   text-decoration: none;
 }
 

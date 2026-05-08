@@ -3,6 +3,19 @@
     <#if section = "header">
         ${msg("loginAccountTitle")}
     <#elseif section = "form">
+        <style>#kc-page-title { display: none !important; margin: 0 !important; }</style>
+        <!-- Login/Register Tabs -->
+        <#if realm.registrationAllowed && !registrationDisabled??>
+        <ul class="nav-pills kc-tabs" role="tablist">
+          <li class="active">
+            <a href="${url.loginUrl}" role="tab">${msg("doLogin")}</a>
+          </li>
+          <li>
+            <a href="${url.registrationUrl}" role="tab">${msg("doRegisterBtn")}</a>
+          </li>
+        </ul>
+        </#if>
+
         <#if !usernameHidden?? && supportPhone??>
           <link rel="stylesheet" href="${url.resourcesPath}/css/intlTelInput.css">
           <script src="${url.resourcesPath}/js/vue.min.js"></script>
