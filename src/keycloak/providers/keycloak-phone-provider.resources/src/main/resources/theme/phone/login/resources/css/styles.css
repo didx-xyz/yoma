@@ -410,6 +410,14 @@ h1,
   max-width: 500px;
 }
 
+/* When tabs are present, make the card a positioning context and add
+   top padding to reserve space for the absolutely-positioned tab bar.
+   Using :has() means other pages (error, reset-password, etc.) are unaffected. */
+.login-pf-page .card-pf:has(.kc-tabs) {
+  position: relative;
+  padding-top: 70px;
+}
+
 .card-pf {
   display: flex;
   flex-direction: column;
@@ -718,9 +726,12 @@ button.link:focus .link-text {
 
 /* Login/Register tab navigation */
 .kc-tabs {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
   background-color: #e8e8e8;
   border-radius: 25px 25px 0 0;
-  margin: -40px -40px 24px -40px;
   list-style: none;
   display: flex;
   gap: 0;
@@ -757,8 +768,11 @@ button.link:focus .link-text {
 }
 
 @media screen and (max-width: 767px) {
+  .login-pf-page .card-pf:has(.kc-tabs) {
+    padding-top: 55px;
+  }
+
   .kc-tabs {
-    margin: -45px -20px 16px -20px;
     border-radius: 15px 15px 0 0;
   }
 }
@@ -841,6 +855,8 @@ input#code {
     max-width: none;
     width: calc(100% - 20px);
   }
+
+  /* padding-top for tab pages handled in the .kc-tabs mobile block above */
 
   #terms-prefix {
     margin-left: 0;

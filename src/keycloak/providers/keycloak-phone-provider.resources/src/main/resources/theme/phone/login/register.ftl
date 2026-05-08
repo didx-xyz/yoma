@@ -3,6 +3,8 @@
   <#if section="header">
     ${msg("registerTitle")}
   <#elseif section="form">
+    <style>#kc-page-title { display: none !important; margin: 0 !important; }</style>
+
     <link rel="stylesheet" href="${url.resourcesPath}/css/intlTelInput.css">
     <script src="${url.resourcesPath}/js/vue.min.js"></script>
     <script src="${url.resourcesPath}/js/axios.min.js"></script>
@@ -10,8 +12,6 @@
     <script src="${url.resourcesPath}/js/otp-input.directive.js"></script>
     <script src="${url.resourcesPath}/js/intlTelInput.min.js"></script>
     <script src="${url.resourcesPath}/js/intlTelInputDirective.js"></script>
-
-    <style>#kc-page-title { display: none !important; margin: 0 !important; }</style>
 
     <!-- Login/Register Tabs -->
     <ul class="nav-pills kc-tabs" role="tablist">
