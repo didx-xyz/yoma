@@ -34,6 +34,7 @@ namespace Yoma.Core.Infrastructure.Database.PartnerSync.Repositories
         StatusId = entity.StatusId,
         Status = Enum.Parse<ProcessingStatus>(entity.Status.Name, true),
         EntityExternalId = entity.EntityExternalId,
+        PayloadHash = entity.PayloadHash,
         ErrorReason = entity.ErrorReason,
         RetryCount = entity.RetryCount,
         DateCreated = entity.DateCreated,
@@ -56,6 +57,7 @@ namespace Yoma.Core.Infrastructure.Database.PartnerSync.Repositories
         Action = item.Action,
         StatusId = item.StatusId,
         EntityExternalId = item.EntityExternalId,
+        PayloadHash = item.PayloadHash,
         ErrorReason = item.ErrorReason,
         RetryCount = item.RetryCount,
         DateCreated = item.DateCreated,
@@ -87,6 +89,7 @@ namespace Yoma.Core.Infrastructure.Database.PartnerSync.Repositories
            Action = item.Action,
            StatusId = item.StatusId,
            EntityExternalId = item.EntityExternalId,
+           PayloadHash = item.PayloadHash,
            ErrorReason = item.ErrorReason,
            RetryCount = item.RetryCount,
            DateCreated = now,
@@ -116,6 +119,7 @@ namespace Yoma.Core.Infrastructure.Database.PartnerSync.Repositories
 
       entity.StatusId = item.StatusId;
       entity.EntityExternalId = item.EntityExternalId;
+      entity.PayloadHash = item.PayloadHash;
       entity.ErrorReason = item.ErrorReason;
       entity.RetryCount = item.RetryCount;
       entity.DateModified = item.DateModified;
@@ -143,6 +147,7 @@ namespace Yoma.Core.Infrastructure.Database.PartnerSync.Repositories
 
         entity.StatusId = item.StatusId;
         entity.EntityExternalId = item.EntityExternalId;
+        entity.PayloadHash = item.PayloadHash;
         entity.ErrorReason = item.ErrorReason;
         entity.RetryCount = item.RetryCount;
         entity.DateModified = item.DateModified;
@@ -163,7 +168,6 @@ namespace Yoma.Core.Infrastructure.Database.PartnerSync.Repositories
     {
       throw new NotImplementedException();
     }
-
     #endregion
   }
 }

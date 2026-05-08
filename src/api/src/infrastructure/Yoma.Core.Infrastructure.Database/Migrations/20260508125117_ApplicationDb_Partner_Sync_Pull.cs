@@ -37,6 +37,13 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           newSchema: "PartnerSync");
 
       migrationBuilder.AddColumn<string>(
+          name: "PayloadHash",
+          schema: "PartnerSync",
+          table: "ProcessingLog",
+          type: "varchar(64)",
+          nullable: true);
+
+      migrationBuilder.AddColumn<string>(
           name: "SyncType",
           schema: "PartnerSync",
           table: "ProcessingLog",
@@ -70,8 +77,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           table: "ProcessingLog",
           columns: ["SyncType", "PartnerId", "Action", "StatusId", "DateModified"]);
 
-      migrationBuilder.DropSchema(
-        name: "PartnerSharing");
+      migrationBuilder.DropSchema(name: "PartnerSharing");
 
       ApplicationDb_Partner_Sync_Pull_Seeding.Seed(migrationBuilder);
     }
@@ -91,6 +97,11 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
       migrationBuilder.DropIndex(
           name: "IX_ProcessingLog_SyncType_PartnerId_Action_StatusId_DateModifi~",
+          schema: "PartnerSync",
+          table: "ProcessingLog");
+
+      migrationBuilder.DropColumn(
+          name: "PayloadHash",
           schema: "PartnerSync",
           table: "ProcessingLog");
 
@@ -131,8 +142,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           table: "ProcessingLog",
           columns: ["EntityType", "OpportunityId", "PartnerId", "Action", "StatusId", "EntityExternalId", "DateCreated", "DateModified"]);
 
-      migrationBuilder.DropSchema(
-        name: "PartnerSync");
+      migrationBuilder.DropSchema(name: "PartnerSync");
     }
   }
 }

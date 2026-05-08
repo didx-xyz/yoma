@@ -22,6 +22,12 @@ namespace Yoma.Core.Domain.PartnerSync.Models
 
     public string? EntityExternalId { get; set; }
 
+    /// <summary>
+    /// SHA-256 hash of the effective sync payload processed for this log entry.
+    /// Stored for create/update actions and used to skip update processing when the effective payload has not changed.
+    /// </summary>
+    public string? PayloadHash { get; set; }
+
     public string? ErrorReason { get; set; }
 
     public byte? RetryCount { get; set; }

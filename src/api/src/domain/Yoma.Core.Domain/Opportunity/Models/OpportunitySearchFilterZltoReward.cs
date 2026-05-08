@@ -1,8 +1,9 @@
 using Newtonsoft.Json;
+using Yoma.Core.Domain.Core.Interfaces;
 
 namespace Yoma.Core.Domain.Opportunity.Models
 {
-  public class OpportunitySearchFilterZltoReward
+  public sealed class OpportunitySearchFilterZltoReward : IHashableObject
   {
     /// <summary>
     /// List of Ids representing Zlto reward range criteria available for selection (dropdown)
@@ -21,9 +22,22 @@ namespace Yoma.Core.Domain.Opportunity.Models
     /// Internal list of parsed Zlto reward ranges used during querying
     /// </summary>
     internal List<OpportunitySearchFilterZltoRewardRange>? RangesParsed { get; set; }
+
+    public void NormalizeForHashing()
+    {
+      SanitizeCollections();
+
+      Ranges = Ranges?.OrderBy(o => o, StringComparer.Ordinal).ToList();
+    }
+
+    public void SanitizeCollections()
+    {
+      Ranges = Ranges?.Distinct(StringComparer.Ordinal).ToList();
+      if (Ranges?.Count == 0) Ranges = null;
+    }
   }
 
-  public class OpportunitySearchFilterZltoRewardRange
+  public sealed class OpportunitySearchFilterZltoRewardRange
   {
     public decimal From { get; set; }
 

@@ -356,7 +356,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       return result;
     }
 
-    private List<Yoma.Core.Domain.Opportunity.Models.Lookups.OpportunityCategory> GetCategories(AlisonCourse course)
+    private List<Domain.Opportunity.Models.Lookups.OpportunityCategory> GetCategories(AlisonCourse course)
     {
       ArgumentNullException.ThrowIfNull(course);
 
@@ -376,7 +376,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       return [_opportunityCategoryService.GetByName(Domain.Opportunity.Category.Other.ToString())];
     }
 
-    private Yoma.Core.Domain.Lookups.Models.Country GetCountry(AlisonCourse course)
+    private Domain.Lookups.Models.Country GetCountry(AlisonCourse course)
     {
       ArgumentNullException.ThrowIfNull(course);
 
@@ -385,7 +385,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       return _countryService.GetByCodeAlpha2(Domain.Core.Country.Worldwide.ToDescription());
     }
 
-    private Yoma.Core.Domain.Lookups.Models.Language GetLanguage(AlisonCourse course)
+    private Domain.Lookups.Models.Language GetLanguage(AlisonCourse course)
     {
       ArgumentNullException.ThrowIfNull(course);
 

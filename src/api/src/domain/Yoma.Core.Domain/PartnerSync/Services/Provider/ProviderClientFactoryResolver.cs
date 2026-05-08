@@ -1,30 +1,28 @@
+using Microsoft.Extensions.DependencyInjection;
+using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.PartnerSync.Interfaces.Provider;
 
 namespace Yoma.Core.Domain.PartnerSync.Services.Provider
 {
   public class ProviderClientFactoryResolver : ISyncProviderClientFactoryResolver
   {
-    #region Class Variables
-    private readonly IDictionary<(Core.SyncPartner Partner, Type ClientType), object> _factories;
-    #endregion
+    private readonly IServiceProvider _serviceProvider;
 
-    #region Constructor
-    public ProviderClientFactoryResolver(IDictionary<(Core.SyncPartner Partner, Type ClientType), object> factories)
+    public ProviderClientFactoryResolver(IServiceProvider serviceProvider)
     {
-      _factories = factories;
+      _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
     }
-    #endregion
 
-    #region Public Members
-    public TClient CreateClient<TClient>(Core.SyncPartner partner)
+    public TClient CreateClient<TClient>(SyncPartner partner)
       where TClient : class, ISyncProviderClient
     {
-      if (_factories.TryGetValue((partner, typeof(TClient)), out var factory))
-        return ((ISyncProviderClientFactory<TClient>)factory).CreateClient();
+      var factory = _serviceProvider.GetKeyedService<ISyncProviderClientFactory<TClient>>(partner);
 
-      throw new InvalidOperationException($"Factory not registered for partner '{partner}' and client type '{typeof(TClient).Name}'");
+      if (factory == null)
+        throw new InvalidOperationException($"Factory not registered for partner '{partner}' and client type '{typeof(TClient).Name}'");
+
+      return factory.CreateClient();
     }
-    #endregion
   }
 }
 

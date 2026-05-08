@@ -3,7 +3,7 @@ using Yoma.Core.Domain.Core;
 
 namespace Yoma.Core.Domain.MyOpportunity.Models
 {
-  public class MyOpportunitySearchFilter : MyOpportunitySearchFilterBase
+  public sealed class MyOpportunitySearchFilter : MyOpportunitySearchFilterBase
   {
     [JsonIgnore]
     internal override FilterSortOrder SortOrder { get; set; } = FilterSortOrder.Descending;

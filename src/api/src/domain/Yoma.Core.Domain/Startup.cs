@@ -177,23 +177,7 @@ namespace Yoma.Core.Domain
       #endregion Lookups
 
       #region Provider
-      services.AddScoped<ISyncProviderClientFactoryResolver>(sp =>
-        new ProviderClientFactoryResolver(
-          new Dictionary<(SyncPartner Partner, System.Type Type), object>
-          {
-          {
-            (SyncPartner.SAYouth, typeof(ISyncProviderClientPush<Opportunity.Models.Opportunity>)),
-            sp.GetRequiredService<ISyncProviderClientFactory<ISyncProviderClientPush<Opportunity.Models.Opportunity>>>()
-          },
-          {
-            (SyncPartner.Jobberman, typeof(ISyncProviderClientPull<Opportunity.Models.Opportunity>)),
-            sp.GetRequiredService<ISyncProviderClientFactory<ISyncProviderClientPull<Opportunity.Models.Opportunity>>>()
-          },
-          {
-            (SyncPartner.Alison, typeof(ISyncProviderClientPull<Opportunity.Models.Opportunity>)),
-            sp.GetRequiredService<ISyncProviderClientFactory<ISyncProviderClientPull<Opportunity.Models.Opportunity>>>()
-          }
-          }));
+      services.AddScoped<ISyncProviderClientFactoryResolver, ProviderClientFactoryResolver>();
       #endregion Provider
 
       services.AddScoped<IProcessingHelperService, ProcessingHelperService>();

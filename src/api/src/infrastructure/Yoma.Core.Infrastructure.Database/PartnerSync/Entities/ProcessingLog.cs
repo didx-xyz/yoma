@@ -46,6 +46,9 @@ namespace Yoma.Core.Infrastructure.Database.PartnerSync.Entities
 
     public byte? RetryCount { get; set; }
 
+    [Column(TypeName = "varchar(64)")]
+    public string? PayloadHash { get; set; }
+
     [Required]
     public DateTimeOffset DateCreated { get; set; }
 

@@ -12,7 +12,7 @@ using Yoma.Core.Infrastructure.Database.Context;
 namespace Yoma.Core.Infrastructure.Database.Migrations
 {
   [DbContext(typeof(ApplicationDbContext))]
-  [Migration("20260424071830_ApplicationDb_Partner_Sync_Pull")]
+  [Migration("20260508125117_ApplicationDb_Partner_Sync_Pull")]
   partial class ApplicationDb_Partner_Sync_Pull
   {
     /// <inheritdoc />
@@ -1760,6 +1760,9 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
             b.Property<Guid>("PartnerId")
                       .HasColumnType("uuid");
+
+            b.Property<string>("PayloadHash")
+                      .HasColumnType("varchar(64)");
 
             b.Property<byte?>("RetryCount")
                       .HasColumnType("smallint");

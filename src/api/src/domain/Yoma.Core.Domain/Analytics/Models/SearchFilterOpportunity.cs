@@ -1,6 +1,6 @@
 namespace Yoma.Core.Domain.Analytics.Models
 {
-  public class SearchFilterOpportunity : SearchFilterBase
+  public sealed class SearchFilterOpportunity : SearchFilterBase
   {
   }
 }

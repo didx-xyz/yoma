@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Opportunity.Models;
 using Yoma.Core.Domain.PartnerSync.Interfaces.Provider;
 using Yoma.Core.Infrastructure.Alison.Client;
@@ -16,7 +17,7 @@ namespace Yoma.Core.Infrastructure.Alison
 
     public static void ConfigureServices_InfrastructureSyncProvider(this IServiceCollection services)
     {
-      services.AddScoped<ISyncProviderClientFactory<ISyncProviderClientPull<Opportunity>>, AlisonClientFactory>();
+      services.AddKeyedScoped<ISyncProviderClientFactory<ISyncProviderClientPull<Opportunity>>, AlisonClientFactory>(SyncPartner.Alison);
     }
   }
 }

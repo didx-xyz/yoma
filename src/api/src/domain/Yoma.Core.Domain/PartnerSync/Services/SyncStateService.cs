@@ -50,7 +50,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
       if (items.Count == 0) return null;
 
       var syncTypes = items
-        .Select(o => Enum.Parse<Core.SyncType>(o.SyncType, true))
+        .Select(o => Enum.Parse<SyncType>(o.SyncType, true))
         .Distinct()
         .ToList();
 

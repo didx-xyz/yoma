@@ -1758,6 +1758,9 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.Property<Guid>("PartnerId")
                       .HasColumnType("uuid");
 
+            b.Property<string>("PayloadHash")
+                      .HasColumnType("varchar(64)");
+
             b.Property<byte?>("RetryCount")
                       .HasColumnType("smallint");
 

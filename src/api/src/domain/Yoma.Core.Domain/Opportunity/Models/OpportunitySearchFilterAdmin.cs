@@ -2,7 +2,7 @@ using Newtonsoft.Json;
 
 namespace Yoma.Core.Domain.Opportunity.Models
 {
-  public class OpportunitySearchFilterAdmin : OpportunitySearchFilterBase
+  public sealed class OpportunitySearchFilterAdmin : OpportunitySearchFilterBase
   {
     public DateTimeOffset? StartDate { get; set; }
 
@@ -20,5 +20,20 @@ namespace Yoma.Core.Domain.Opportunity.Models
     /// </summary>
     [JsonIgnore]
     internal bool UnrestrictedQuery { get; set; } = false;
+
+    public override void NormalizeForHashing()
+    {
+      base.NormalizeForHashing();
+
+      Statuses = Statuses?.OrderBy(o => o).ToList();
+    }
+
+    public override void SanitizeCollections()
+    {
+      base.SanitizeCollections();
+
+      Statuses = Statuses?.Distinct().ToList();
+      if (Statuses?.Count == 0) Statuses = null;
+    }
   }
 }

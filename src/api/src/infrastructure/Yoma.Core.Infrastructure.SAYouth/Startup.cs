@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Opportunity.Models;
 using Yoma.Core.Domain.PartnerSync.Interfaces.Provider;
 using Yoma.Core.Infrastructure.SAYouth.Client;
@@ -30,7 +31,8 @@ namespace Yoma.Core.Infrastructure.SAYouth
 
     public static void ConfigureServices_InfrastructureSyncProvider(this IServiceCollection services)
     {
-      services.AddScoped<ISyncProviderClientFactory<ISyncProviderClientPush<Opportunity>>, SAYouthClientFactory>();
+      services.AddKeyedScoped<ISyncProviderClientFactory<ISyncProviderClientPush<Opportunity>>, SAYouthClientFactory>(SyncPartner.SAYouth);
+
       services.AddSingleton<HealthCheck>();
 
       services.AddHealthChecks().AddCheck<HealthCheck>(name: "SAYouth External", failureStatus: HealthStatus.Unhealthy, tags: ["sayouth"]);

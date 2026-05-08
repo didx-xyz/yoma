@@ -1,8 +1,9 @@
+using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
 
 namespace Yoma.Core.Domain.Analytics.Models
 {
-  public class SearchFilterSSO : PaginationFilter
+  public sealed class SearchFilterSSO : PaginationFilter, IHashableObject
   {
     public List<Guid>? Organizations { get; set; }
 
@@ -11,6 +12,13 @@ namespace Yoma.Core.Domain.Analytics.Models
     public DateTimeOffset? EndDate { get; set; }
 
     public bool SSOEnabledOnly { get; set; } = true;
+
+    public void NormalizeForHashing()
+    {
+      SanitizeCollections();
+
+      Organizations = Organizations?.OrderBy(o => o).ToList();
+    }
 
     public void SanitizeCollections()
     {

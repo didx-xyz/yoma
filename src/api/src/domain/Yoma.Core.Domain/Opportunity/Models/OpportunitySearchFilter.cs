@@ -2,7 +2,7 @@ using Yoma.Core.Domain.Core;
 
 namespace Yoma.Core.Domain.Opportunity.Models
 {
-  public class OpportunitySearchFilter : OpportunitySearchFilterBase
+  public sealed class OpportunitySearchFilter : OpportunitySearchFilterBase
   {
     /// <summary>
     /// Optionally filters opportunities by their published state. By default, results include opportunities that are published (both the opportunity and its organization are Active), 
@@ -35,5 +35,25 @@ namespace Yoma.Core.Domain.Opportunity.Models
     /// Filter results by the most completed opportunities
     /// </summary>
     public bool? MostCompleted { get; set; }
+
+    public override void NormalizeForHashing()
+    {
+      base.NormalizeForHashing();
+
+      PublishedStates = PublishedStates?.OrderBy(o => o).ToList();
+      CommitmentInterval?.NormalizeForHashing();
+      ZltoReward?.NormalizeForHashing();
+    }
+
+    public override void SanitizeCollections()
+    {
+      base.SanitizeCollections();
+
+      PublishedStates = PublishedStates?.Distinct().ToList();
+      if (PublishedStates?.Count == 0) PublishedStates = null;
+
+      CommitmentInterval?.SanitizeCollections();
+      ZltoReward?.SanitizeCollections();
+    }
   }
 }

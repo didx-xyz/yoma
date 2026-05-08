@@ -3,17 +3,18 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.PartnerSync.Interfaces.Provider;
 using Yoma.Core.Infrastructure.Jobberman.Client;
 using Yoma.Core.Infrastructure.Jobberman.Context;
+using Yoma.Core.Infrastructure.Jobberman.Interfaces;
 using Yoma.Core.Infrastructure.Jobberman.Models;
 using Yoma.Core.Infrastructure.Jobberman.Repositories;
 using Yoma.Core.Infrastructure.Jobberman.Services;
 using Yoma.Core.Infrastructure.Shared;
 using Yoma.Core.Infrastructure.Shared.Interceptors;
-using Yoma.Core.Infrastructure.Jobberman.Interfaces;
 
 namespace Yoma.Core.Infrastructure.Jobberman
 {
@@ -49,8 +50,8 @@ namespace Yoma.Core.Infrastructure.Jobberman
       services.AddScoped<IExecutionStrategyService, ExecutionStrategyService>();
       services.AddScoped<IOpportunityFeedBackgroundService, OpportunityFeedBackgroundService>();
 
-      // clinet
-      services.AddScoped<ISyncProviderClientFactory<ISyncProviderClientPull<Domain.Opportunity.Models.Opportunity>>, JobbermanClientFactory>();
+      // client
+      services.AddKeyedScoped<ISyncProviderClientFactory<ISyncProviderClientPull<Domain.Opportunity.Models.Opportunity>>, JobbermanClientFactory>(SyncPartner.Jobberman);
     }
 
     public static void Configure_InfrastructureDatabaseSyncProvider(this IServiceProvider serviceProvider)

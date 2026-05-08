@@ -32,7 +32,7 @@ namespace Yoma.Core.Domain.Core.Services
     #endregion
 
     #region Public Members
-    public async Task Schedule(Guid userId, DownloadScheduleType type, object filter)
+    public async Task Schedule<T>(Guid userId, DownloadScheduleType type, T filter) where T : class, IHashableObject
     {
       if (userId == Guid.Empty) //used internally by other services which validates the user id prior to invocation
         throw new ArgumentNullException(nameof(userId));

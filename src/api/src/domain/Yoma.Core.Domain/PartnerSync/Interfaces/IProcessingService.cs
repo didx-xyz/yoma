@@ -4,7 +4,7 @@ namespace Yoma.Core.Domain.PartnerSync.Interfaces
 {
   public interface IProcessingService
   {
-    Task<ProcessingLog> RecordPull(SyncAction action, Guid partnerId, EntityType entityType, string entityExternalId, Guid? entityId);
+    Task<ProcessingLog> RecordPull(SyncAction action, Guid partnerId, EntityType entityType, string entityExternalId, Guid? entityId, string? payloadHash);
 
     ProcessingLog? GetPull(Guid partnerId, EntityType entityType, string entityExternalId);
 
