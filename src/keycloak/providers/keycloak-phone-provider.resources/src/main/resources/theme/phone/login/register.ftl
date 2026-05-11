@@ -3,6 +3,8 @@
   <#if section="header">
     ${msg("registerTitle")}
   <#elseif section="form">
+    <style>#kc-page-title { display: none !important; margin: 0 !important; }</style>
+
     <link rel="stylesheet" href="${url.resourcesPath}/css/intlTelInput.css">
     <script src="${url.resourcesPath}/js/vue.min.js"></script>
     <script src="${url.resourcesPath}/js/axios.min.js"></script>
@@ -10,6 +12,16 @@
     <script src="${url.resourcesPath}/js/otp-input.directive.js"></script>
     <script src="${url.resourcesPath}/js/intlTelInput.min.js"></script>
     <script src="${url.resourcesPath}/js/intlTelInputDirective.js"></script>
+
+    <!-- Login/Register Tabs -->
+    <ul class="nav-pills kc-tabs" role="tablist">
+      <li>
+        <a href="${url.loginUrl}" role="tab">${msg("doLogin")}</a>
+      </li>
+      <li class="active">
+        <a href="${url.registrationUrl}" role="tab">${msg("doRegisterBtn")}</a>
+      </li>
+    </ul>
 
     <div id="vue-app">
       <form ref="form" @submit.prevent="[onConfirmCode, onSubmit]" id="kc-register-form" class="${properties.kcFormClass!}" action="${url.registrationAction}" method="post" @submit="onSubmit">
@@ -24,7 +36,7 @@
           <label for="email" class="${properties.kcLabelClass!}">${msg("enterEmail")}</label>
 
           <input type="text" id="email" class="${properties.kcInputClass!}" name="email" placeholder="example@email.com"
-            autocomplete="email" :aria-invalid="!!messageEmailError"
+            tabindex="0" autocomplete="email" autofocus :aria-invalid="!!messageEmailError"
             v-model="email" />
 
           <#-- LABEL: email error -->
@@ -48,7 +60,7 @@
 
             <!-- INPUT: phone number -->
             <input id="phoneNumber" class="${properties.kcInputClass!}" name="phoneNumber" type="tel"
-              aria-invalid="<#if messagesPerField.existsError('phoneNumber')>true</#if>" autocomplete="mobile tel"
+              tabindex="0" autocomplete="mobile tel" autofocus aria-invalid="<#if messagesPerField.existsError('phoneNumber')>true</#if>"
               v-model="phoneNumber" @input="resetPhoneVerification" v-intl-tel-input />
           </div>
 
