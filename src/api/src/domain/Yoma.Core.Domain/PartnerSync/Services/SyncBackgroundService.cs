@@ -494,7 +494,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
                       return;
                     }
 
-                    await _opportunityService.Update(request, false, false, true);
+                    await _opportunityService.Update(request, false, false, authorizedByPartnerSyncPull: true);
                     break;
                   }
 
