@@ -117,6 +117,8 @@ namespace Yoma.Core.Infrastructure.Database.PartnerSync.Repositories
 
       item.DateModified = DateTimeOffset.UtcNow;
 
+      entity.OpportunityId = item.OpportunityId;
+      entity.Action = item.Action;
       entity.StatusId = item.StatusId;
       entity.EntityExternalId = item.EntityExternalId;
       entity.PayloadHash = item.PayloadHash;
@@ -145,6 +147,8 @@ namespace Yoma.Core.Infrastructure.Database.PartnerSync.Repositories
 
         item.DateModified = now;
 
+        entity.OpportunityId = item.OpportunityId;
+        entity.Action = item.Action;
         entity.StatusId = item.StatusId;
         entity.EntityExternalId = item.EntityExternalId;
         entity.PayloadHash = item.PayloadHash;

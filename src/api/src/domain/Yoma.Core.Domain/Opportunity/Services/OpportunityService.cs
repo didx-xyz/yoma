@@ -1269,7 +1269,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       return result;
     }
 
-    public async Task<Models.Opportunity> Update(OpportunityRequestUpdate request, bool ensureOrganizationAuthorization, bool raiseEvent = true)
+    public async Task<Models.Opportunity> Update(OpportunityRequestUpdate request, bool ensureOrganizationAuthorization, bool raiseEvent = true, bool authorizedByPartnerSyncPull = false)
     {
       ArgumentNullException.ThrowIfNull(request, nameof(request));
 
@@ -1402,7 +1402,9 @@ namespace Yoma.Core.Domain.Opportunity.Services
             [nameof(Models.Opportunity.TypeId)] = request.TypeId,
             [nameof(Models.Opportunity.DateEnd)] = request.DateEnd,
             [nameof(Models.Opportunity.Countries)] = request.Countries
-          }, true);
+          },
+          abortSyncPushCreateIfPossible: true,
+          authorizedByPartnerSyncPull: authorizedByPartnerSyncPull);
 
         result = await _opportunityRepository.Update(result);
 
@@ -2233,6 +2235,9 @@ namespace Yoma.Core.Domain.Opportunity.Services
           break;
 
         case UpdateAction.Complete:
+          if (authorizedByPartnerSyncPull) return;
+          break;
+
         case UpdateAction.Other:
         case UpdateAction.Countries:
           break;

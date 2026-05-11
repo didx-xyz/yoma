@@ -5,12 +5,30 @@ namespace Yoma.Core.Domain.PartnerSync.Extensions
   public static class SyncExtensions
   {
     #region Public Methods
-    public static SyncAction ResolveSyncAction<TItem>(this SyncItem<TItem> item, ProcessingLog? processingItemExisting)
+    public static SyncAction ResolveSyncAction<TItem>(
+      this SyncItem<TItem> item,
+      EntityType entityType,
+      ProcessingLog? processingItemExisting)
       where TItem : class, new()
     {
       ArgumentNullException.ThrowIfNull(item);
 
-      return item.Deleted == true ? SyncAction.Delete : processingItemExisting == null ? SyncAction.Create : SyncAction.Update;
+      if (item.Deleted == true) return SyncAction.Delete;
+
+      return processingItemExisting.HasSynchronizedEntity(entityType)
+        ? SyncAction.Update
+        : SyncAction.Create;
+    }
+
+    public static bool HasSynchronizedEntity(this ProcessingLog? item, EntityType entityType)
+    {
+      if (item == null) return false;
+
+      return entityType switch
+      {
+        EntityType.Opportunity => item.OpportunityId.HasValue,
+        _ => throw new InvalidOperationException($"Entity type of '{entityType}' not supported")
+      };
     }
 
     public static bool ReachedTotalCount<TItem>(this SyncResultPull<TItem> result, int pageNumber, int pageSize)

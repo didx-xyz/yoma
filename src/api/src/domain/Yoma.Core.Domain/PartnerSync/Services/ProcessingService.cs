@@ -8,6 +8,7 @@ using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Opportunity;
 using Yoma.Core.Domain.Opportunity.Interfaces;
+using Yoma.Core.Domain.PartnerSync.Extensions;
 using Yoma.Core.Domain.PartnerSync.Interfaces;
 using Yoma.Core.Domain.PartnerSync.Interfaces.Lookups;
 using Yoma.Core.Domain.PartnerSync.Models;
@@ -95,12 +96,12 @@ namespace Yoma.Core.Domain.PartnerSync.Services
     }
 
     public async Task RecordPullError(
-     SyncAction action,
-     Guid partnerId,
-     EntityType entityType,
-     string entityExternalId,
-     Guid? entityId,
-     string errorReason)
+      SyncAction action,
+      Guid partnerId,
+      EntityType entityType,
+      string entityExternalId,
+      Guid? entityId,
+      string errorReason)
     {
       if (string.IsNullOrWhiteSpace(entityExternalId))
         throw new ArgumentNullException(nameof(entityExternalId));
@@ -114,18 +115,19 @@ namespace Yoma.Core.Domain.PartnerSync.Services
       {
         using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
 
-        var item = await RecordPullInternal(action, partnerId, entityType, entityExternalId, entityId, null);
+        // Reuse an existing retryable pull record where applicable so RetryCount can accumulate.
+        var item = await RecordPullInternal(action, partnerId, entityType, entityExternalId, entityId, null, false);
 
         item.Status = ProcessingStatus.Error;
         item.ErrorReason = errorReason.Trim();
         item.RetryCount = (byte?)(item.RetryCount + 1) ?? 0; // 1st attempt not counted as a retry
 
-        // retry attempts specified and exceeded (-1: infinite retries)
+        // Retry attempts specified and exceeded (-1: infinite retries)
         if (_appSettings.PartnerSyncMaximumRetryAttempts != 0 &&
             !(_appSettings.PartnerSyncMaximumRetryAttempts > 0 &&
               item.RetryCount > _appSettings.PartnerSyncMaximumRetryAttempts))
         {
-          // remains in processed state until retries are exceeded
+          // Remains in processed state until retries are exceeded.
           item.Status = ProcessingStatus.Processed;
         }
 
@@ -367,7 +369,14 @@ namespace Yoma.Core.Domain.PartnerSync.Services
     #endregion
 
     #region Private Members
-    private async Task<ProcessingLog> RecordPullInternal(SyncAction action, Guid partnerId, EntityType entityType, string entityExternalId, Guid? entityId, string? payloadHash)
+    private async Task<ProcessingLog> RecordPullInternal(
+      SyncAction action,
+      Guid partnerId,
+      EntityType entityType,
+      string entityExternalId,
+      Guid? entityId,
+      string? payloadHash,
+      bool clearErrorState = true)
     {
       if (string.IsNullOrWhiteSpace(entityExternalId))
         throw new ArgumentNullException(nameof(entityExternalId));
@@ -381,6 +390,8 @@ namespace Yoma.Core.Domain.PartnerSync.Services
       var partner = _partnerService.GetById(partnerId);
 
       var itemExisting = _processingHelperService.GetByEntityLatest(SyncType.Pull, partnerId, entityType, entityExternalId);
+      var itemExistingHasSynchronizedEntity = itemExisting.HasSynchronizedEntity(entityType);
+      var itemExistingIsRetryableError = itemExisting?.Status == ProcessingStatus.Processed && !string.IsNullOrWhiteSpace(itemExisting.ErrorReason);
 
       var entityIdInfo = entityId.HasValue ? $"entity id '{entityId}'" : $"entity external id '{entityExternalId}'";
 
@@ -396,11 +407,13 @@ namespace Yoma.Core.Domain.PartnerSync.Services
       switch (action)
       {
         case SyncAction.Create:
-          if (itemExisting == null) break;
+          // Existing pull log without an entity mapping means a previous create failed before the Yoma entity was created.
+          // Treat this as a create again, not an update.
+          if (!itemExistingHasSynchronizedEntity) break;
 
           action = actionExisting!.Value switch
           {
-            SyncAction.Create or SyncAction.Update => SyncAction.Update, //create already recorded, record update to capture any changes during creation
+            SyncAction.Create or SyncAction.Update => SyncAction.Update,
             SyncAction.Delete => throw new InvalidOperationException($"Recording of partner sync pull creation requested for entity already deleted: Partner id '{partnerId}', entity type '{entityType}', {entityIdInfo}"),
             _ => throw new InvalidOperationException($"Action of '{actionExisting}' not supported"),
           };
@@ -411,15 +424,17 @@ namespace Yoma.Core.Domain.PartnerSync.Services
           if (!entityId.HasValue)
             throw new ArgumentNullException(nameof(entityId));
 
-          if (itemExisting == null)
+          // If there is no previously synchronized entity, record this as a create.
+          // This protects retry paths where a previous create errored and only an error log exists.
+          if (!itemExistingHasSynchronizedEntity)
           {
-            action = SyncAction.Create; //if no existing record, record creation to ensure entity exists before update
+            action = SyncAction.Create;
             break;
           }
 
           action = actionExisting!.Value switch
           {
-            SyncAction.Create or SyncAction.Update => SyncAction.Update, //update already recorded, record another update to capture any changes
+            SyncAction.Create or SyncAction.Update => SyncAction.Update,
             SyncAction.Delete => throw new InvalidOperationException($"Recording of partner sync pull update requested for entity already deleted: Partner id '{partnerId}', entity type '{entityType}', {entityIdInfo}"),
             _ => throw new InvalidOperationException($"Action of '{actionExisting}' not supported"),
           };
@@ -430,12 +445,13 @@ namespace Yoma.Core.Domain.PartnerSync.Services
           if (!entityId.HasValue)
             throw new ArgumentNullException(nameof(entityId));
 
-          if (actionExisting == null)
+          if (!itemExistingHasSynchronizedEntity)
             throw new InvalidOperationException($"Recording of partner sync pull deletion requested for entity not previously synchronized: Partner id '{partnerId}', entity type '{entityType}', {entityIdInfo}");
 
           action = actionExisting!.Value switch
           {
-            SyncAction.Create or SyncAction.Update => SyncAction.Delete, //if previously created or updated, can be deleted
+            SyncAction.Create or SyncAction.Update => SyncAction.Delete,
+            SyncAction.Delete when itemExistingIsRetryableError => SyncAction.Delete,
             SyncAction.Delete => throw new InvalidOperationException($"Recording of partner sync pull deletion requested for entity already deleted: Partner id '{partnerId}', entity type '{entityType}', {entityIdInfo}"),
             _ => throw new InvalidOperationException($"Action of '{actionExisting}' not supported"),
           };
@@ -453,24 +469,38 @@ namespace Yoma.Core.Domain.PartnerSync.Services
       if (entityTypes == null || !entityTypes.Contains(entityType))
         throw new InvalidOperationException($"Entity type of '{entityType}' not enabled for partner '{partner.Name}' and sync type '{SyncType.Pull}'");
 
-      var item = new ProcessingLog
-      {
-        EntityType = entityType.ToString(),
-        PartnerId = partner.Id,
-        SyncType = SyncType.Pull.ToString(),
-        Action = action.ToString(),
-        StatusId = _processingStatusService.GetByName(ProcessingStatus.Processed.ToString()).Id,
-        Status = ProcessingStatus.Processed,
-        OpportunityId = entityType switch
-        {
-          EntityType.Opportunity => entityId,
-          _ => throw new InvalidOperationException($"Entity type of '{entityType}' not supported"),
-        },
-        EntityExternalId = entityExternalId,
-        PayloadHash = payloadHash
-      };
+      var reuseExistingItem = itemExisting != null && (!itemExistingHasSynchronizedEntity || itemExistingIsRetryableError);
 
-      await _processingLogRepository.Create(item);
+      var item = reuseExistingItem
+        ? itemExisting!
+        : new ProcessingLog
+        {
+          EntityType = entityType.ToString(),
+          PartnerId = partner.Id,
+          SyncType = SyncType.Pull.ToString(),
+          EntityExternalId = entityExternalId
+        };
+
+      item.Action = action.ToString();
+      item.StatusId = _processingStatusService.GetByName(ProcessingStatus.Processed.ToString()).Id;
+      item.Status = ProcessingStatus.Processed;
+      item.OpportunityId = entityType switch
+      {
+        EntityType.Opportunity => entityId,
+        _ => throw new InvalidOperationException($"Entity type of '{entityType}' not supported"),
+      };
+      item.PayloadHash = payloadHash;
+
+      if (clearErrorState)
+      {
+        item.ErrorReason = null;
+        item.RetryCount = null;
+      }
+
+      if (reuseExistingItem)
+        await _processingLogRepository.Update(item);
+      else
+        await _processingLogRepository.Create(item);
 
       return item;
     }

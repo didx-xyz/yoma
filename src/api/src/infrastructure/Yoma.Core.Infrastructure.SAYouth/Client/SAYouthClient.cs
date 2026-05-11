@@ -52,7 +52,6 @@ namespace Yoma.Core.Infrastructure.SAYouth.Client
 
     public async Task<string> Create(SyncRequestPush<Opportunity> request)
     {
-      // TODO: Ensure no existing mmocked id's of type string on stage
       if (!_appSettings.PartnerSyncEnabledEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment))
       {
         var mockId = Random.Shared.Next(1, int.MaxValue).ToString(CultureInfo.InvariantCulture);

@@ -139,7 +139,8 @@ namespace Yoma.Core.Domain.PartnerSync.Services
                           ? $"Associated organization is no longer '{OrganizationStatus.Active}'"
                           : $"Opportunity status of '{ProcessingService.Statuses_Opportunity_Creatable.JoinNames()}' expected. Current status '{opportunity.Status.ToDescription()}'";
 
-                        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Action '{action}': Aborting sync push for '{entityType}' and item with id '{id}'. {reason}", action, item.EntityType, item.Id, reason);
+                        if (_logger.IsEnabled(LogLevel.Information))
+                          _logger.LogInformation("Action '{action}': Aborting sync push for '{entityType}' and item with id '{id}'. {reason}", action, item.EntityType, item.Id, reason);
 
                         item.Status = ProcessingStatus.Aborted;
                         await _processingService.UpdatePush(item);
@@ -161,7 +162,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
                       //trigger points:
                       // - IOpportunityService: (explicit)
                       //    Update | AllocateRewards | UpdateFeatured | UpdateStatus | AssignCategories | RemoveCategories | AssignCountries | RemoveCountries
-                      //    AssignLanguages | RemoveLanguages | AssignSkills | RemoveSkills | AssignVerificationTypes | RemoveVerificationTypes
+                      //    AssignLanguages | RemoveLanguages | AssignSkills | AssignVerificationTypes | RemoveVerificationTypes
                       // - IOpportunityBackgroundService.ProcessExpiration (explicit)
                       // - IOrganizationService.UpdateStatus (implicit)
                       // - IOrganizationService.SendForReapproval (implicit)
@@ -182,8 +183,12 @@ namespace Yoma.Core.Domain.PartnerSync.Services
                       // The provider client computes the effective update payload hash because it owns the final outbound payload/action.
                       var payloadHash = pushProviderClient.ComputeUpdatePayloadHash(request);
 
-                      // If the effective payload hash has not changed, skip the update to avoid unnecessary provider calls and potential rate limiting.
-                      if (!string.Equals(item.PayloadHash, payloadHash, StringComparison.Ordinal))
+                      var retryingPreviousError = !string.IsNullOrWhiteSpace(item.ErrorReason);
+
+                      // Only skip when the previous provider update completed successfully and the effective payload is unchanged.
+                      // If the previous attempt failed, retry even when the hash matches.
+                      if (retryingPreviousError ||
+                          !string.Equals(item.PayloadHash, payloadHash, StringComparison.Ordinal))
                       {
                         await pushProviderClient.Update(request);
                       }
@@ -381,15 +386,26 @@ namespace Yoma.Core.Domain.PartnerSync.Services
 
             var opportunityItem = item.Item;
             var processingItemExisting = _processingService.GetPull(partnerModel.Id, entityType, item.ExternalId);
+            var processingItemExistingHasSynchronizedEntity = processingItemExisting.HasSynchronizedEntity(entityType);
+
+            if (processingItemExisting?.Status == ProcessingStatus.Error)
+            {
+              if (_logger.IsEnabled(LogLevel.Information))
+                _logger.LogInformation(
+                  "Processing of partner sync pull item skipped: Existing pull item is in permanent error state for partner '{partner}', entity type '{entityType}', entity external id '{entityExternalId}'. Retry count '{retryCount}'. Error: {errorReason}",
+                  partner, entityType, item.ExternalId, processingItemExisting.RetryCount, processingItemExisting.ErrorReason);
+
+              continue;
+            }
 
             Opportunity.Models.Opportunity? opportunityExisting = null;
-            if (processingItemExisting?.OpportunityId.HasValue == true)
+            if (processingItemExistingHasSynchronizedEntity)
             {
-              entityId = processingItemExisting.OpportunityId.Value;
+              entityId = processingItemExisting!.OpportunityId!.Value;
               opportunityExisting = _opportunityService.GetById(entityId.Value, false, false, false);
             }
 
-            if (item.Deleted == true && processingItemExisting == null)
+            if (item.Deleted == true && !processingItemExistingHasSynchronizedEntity)
             {
               if (_logger.IsEnabled(LogLevel.Information))
                 _logger.LogInformation(
@@ -407,7 +423,9 @@ namespace Yoma.Core.Domain.PartnerSync.Services
               continue;
             }
 
-            if (processingItemExisting != null && Enum.Parse<SyncAction>(processingItemExisting.Action, true) == SyncAction.Delete)
+            if (processingItemExistingHasSynchronizedEntity &&
+                Enum.Parse<SyncAction>(processingItemExisting!.Action, true) == SyncAction.Delete &&
+                string.IsNullOrWhiteSpace(processingItemExisting.ErrorReason))
             {
               if (_logger.IsEnabled(LogLevel.Information))
                 _logger.LogInformation("Processing of partner sync pull item skipped: Entity already deleted via sync for partner '{partner}', entity type '{entityType}', entity external id '{entityExternalId}'", partner, entityType, item.ExternalId);
@@ -415,7 +433,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
               continue;
             }
 
-            action = item.ResolveSyncAction(processingItemExisting);
+            action = item.ResolveSyncAction(entityType, processingItemExisting);
 
             if (!partnerModel.ActionEnabledParsed.Contains(action))
             {
@@ -427,6 +445,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
 
             string? payloadHash = null;
             var itemSkipped = false;
+
             await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
             {
               using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
@@ -439,9 +458,10 @@ namespace Yoma.Core.Domain.PartnerSync.Services
                     var opportunity = await _opportunityService.Create(request, false, false, false);
                     entityId = opportunity.Id;
 
-                    // Hash the equivalent update payload so the created item can be compared consistently against future pull updates
+                    // Hash the equivalent update payload so the created item can be compared consistently against future pull updates.
                     var requestUpdate = opportunityItem.ToRequestUpdate(entityId.Value);
                     payloadHash = HashHelper.ComputeSHA256Hash(requestUpdate);
+
                     break;
                   }
 
@@ -456,9 +476,12 @@ namespace Yoma.Core.Domain.PartnerSync.Services
                     var request = opportunityItem.ToRequestUpdate(entityId.Value);
                     payloadHash = HashHelper.ComputeSHA256Hash(request);
 
-                    // Existing pull items normally resolve to Update on each run.
-                    // If the effective Yoma payload hash has not changed, skip the update because no domain change is required.
-                    if (string.Equals(processingItemExisting.PayloadHash, payloadHash, StringComparison.Ordinal))
+                    var retryingPreviousError = !string.IsNullOrWhiteSpace(processingItemExisting.ErrorReason);
+
+                    // Only skip when the previous processing was successful and the effective payload is unchanged.
+                    // If the previous attempt failed, retry even when the hash matches.
+                    if (!retryingPreviousError &&
+                        string.Equals(processingItemExisting.PayloadHash, payloadHash, StringComparison.Ordinal))
                     {
                       if (_logger.IsEnabled(LogLevel.Information))
                         _logger.LogInformation(
@@ -471,7 +494,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
                       return;
                     }
 
-                    await _opportunityService.Update(request, false, false);
+                    await _opportunityService.Update(request, false, false, true);
                     break;
                   }
 
