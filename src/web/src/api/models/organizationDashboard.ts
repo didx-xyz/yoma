@@ -9,13 +9,11 @@ export interface OrganizationSearchFilterBase extends PaginationFilter {
   endDate: string | null;
 }
 
-export interface OrganizationSearchFilterYouth
-  extends OrganizationSearchFilterBase {
+export interface OrganizationSearchFilterYouth extends OrganizationSearchFilterBase {
   countries: string[] | null;
 }
 
-export interface OrganizationSearchFilterOpportunity
-  extends OrganizationSearchFilterBase {}
+export interface OrganizationSearchFilterOpportunity extends OrganizationSearchFilterBase {}
 
 export interface OrganizationSearchFilterEngagement {
   organizations: string[] | null;

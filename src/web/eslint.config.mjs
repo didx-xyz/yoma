@@ -2,8 +2,10 @@ import { defineConfig, globalIgnores } from "eslint/config";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import js from "@eslint/js";
-import { FlatCompat } from "@eslint/eslintrc";
+import { fixupConfigRules } from "@eslint/compat";
+import nextConfig from "eslint-config-next/core-web-vitals";
+import nextTypescript from "eslint-config-next/typescript";
+import prettierConfig from "eslint-config-prettier";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -17,23 +19,13 @@ const gitignoreContent = fs.existsSync(gitignorePath)
       .filter((line) => line && !line.startsWith("#"))
   : [];
 
-const compat = new FlatCompat({
-  baseDirectory: __dirname,
-  recommendedConfig: js.configs.recommended,
-  allConfig: js.configs.all,
-});
-
 export default defineConfig([
   // Apply global ignores from .gitignore
   globalIgnores(["public/**/*", "node_modules/**", ...gitignoreContent]),
+  ...fixupConfigRules(nextConfig),
+  ...fixupConfigRules(nextTypescript),
+  prettierConfig,
   {
-    extends: compat.extends(
-      "next",
-      "next/core-web-vitals",
-      "next/typescript",
-      "prettier",
-    ),
-
     languageOptions: {
       ecmaVersion: 2022,
       sourceType: "module",
@@ -49,6 +41,14 @@ export default defineConfig([
       "@typescript-eslint/no-non-null-asserted-optional-chain": "off",
       "prefer-spread": "off",
       "prefer-const": "off",
+      // React Compiler rules (react-hooks v5) — project does not use React Compiler
+      "react-hooks/set-state-in-effect": "off",
+      "react-hooks/set-state-in-render": "off",
+      "react-hooks/immutability": "off",
+      "react-hooks/incompatible-library": "off",
+      "react-hooks/preserve-manual-memoization": "off",
+      "react-hooks/static-components": "off",
+      "react-hooks/refs": "off",
     },
   },
 ]);

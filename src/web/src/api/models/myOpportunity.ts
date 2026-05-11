@@ -43,16 +43,14 @@ export enum Action {
   Verification,
 }
 
-export interface MyOpportunitySearchFilter
-  extends MyOpportunitySearchFilterBase {}
+export interface MyOpportunitySearchFilter extends MyOpportunitySearchFilterBase {}
 
 export interface MyOpportunitySearchFilterBase extends PaginationFilter {
   action: Action;
   verificationStatuses: VerificationStatus[] | null | string[]; //NB: string
 }
 
-export interface MyOpportunitySearchFilterAdmin
-  extends MyOpportunitySearchFilterBase {
+export interface MyOpportunitySearchFilterAdmin extends MyOpportunitySearchFilterBase {
   userId: string | null;
   opportunity: string | null;
   organizations: string[] | null;
