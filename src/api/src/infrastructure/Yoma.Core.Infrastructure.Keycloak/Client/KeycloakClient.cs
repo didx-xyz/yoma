@@ -10,15 +10,15 @@ using Microsoft.Extensions.Primitives;
 using System.Net.Http.Headers;
 using System.Text;
 using Yoma.Core.Domain.Core;
-using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Exceptions;
+using Yoma.Core.Domain.Core.Extensions;
+using Yoma.Core.Domain.Core.Helpers;
+using Yoma.Core.Domain.Core.Interfaces;
+using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.IdentityProvider.Interfaces;
 using Yoma.Core.Domain.IdentityProvider.Models;
 using Yoma.Core.Infrastructure.Keycloak.Extensions;
 using Yoma.Core.Infrastructure.Keycloak.Models;
-using Yoma.Core.Domain.Core.Helpers;
-using Yoma.Core.Domain.Core.Interfaces;
-using Yoma.Core.Domain.Core.Models;
 
 namespace Yoma.Core.Infrastructure.Keycloak.Client
 {
@@ -198,9 +198,7 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
         // create the user in Keycloak (credentials will be ignored here)
         await usersApi.PostUsersAsync(_keycloakAuthenticationOptions.Realm, requestKeycloak);
 
-        result = await GetUserByUsername(request.Username);
-        if (result == null)
-          throw new InvalidOperationException($"User '{request.Username}' was not found after creation.");
+        result = await GetUserByUsername(request.Username) ?? throw new InvalidOperationException($"User '{request.Username}' was not found after creation.");
 
         // set the password via the official API call
         var credential = new CredentialRepresentation

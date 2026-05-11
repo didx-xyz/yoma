@@ -7,7 +7,7 @@ namespace Yoma.Core.Infrastructure.Substack.Entities
 {
   [Table("FeedSyncTracking", Schema = "Substack")]
   [Index(nameof(FeedType), IsUnique = true)]
-  public class FeedSyncTracking : BaseEntity<Guid>
+  public sealed class FeedSyncTracking : BaseEntity<Guid>
   {
     [Required]
     [Column(TypeName = "varchar(50)")]

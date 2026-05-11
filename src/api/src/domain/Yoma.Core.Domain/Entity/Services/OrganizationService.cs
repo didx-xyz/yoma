@@ -12,9 +12,6 @@ using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
-using Yoma.Core.Domain.Notification;
-using Yoma.Core.Domain.Notification.Interfaces;
-using Yoma.Core.Domain.Notification.Models;
 using Yoma.Core.Domain.Entity.Events;
 using Yoma.Core.Domain.Entity.Extensions;
 using Yoma.Core.Domain.Entity.Helpers;
@@ -22,9 +19,12 @@ using Yoma.Core.Domain.Entity.Interfaces;
 using Yoma.Core.Domain.Entity.Interfaces.Lookups;
 using Yoma.Core.Domain.Entity.Models;
 using Yoma.Core.Domain.Entity.Validators;
-using Yoma.Core.Domain.IdentityProvider.Interfaces;
-using Yoma.Core.Domain.SSI.Interfaces;
 using Yoma.Core.Domain.IdentityProvider.Extensions;
+using Yoma.Core.Domain.IdentityProvider.Interfaces;
+using Yoma.Core.Domain.Notification;
+using Yoma.Core.Domain.Notification.Interfaces;
+using Yoma.Core.Domain.Notification.Models;
+using Yoma.Core.Domain.SSI.Interfaces;
 
 namespace Yoma.Core.Domain.Entity.Services
 {
@@ -486,8 +486,6 @@ namespace Yoma.Core.Domain.Entity.Services
       result.Tagline = request.Tagline;
       result.Biography = request.Biography;
       result.ModifiedByUserId = user.Id;
-      result.SSOClientIdOutbound = request.SSOClientIdOutbound;
-      result.SSOClientIdInbound = request.SSOClientIdInbound;
       result.ZltoRewardPoolCurrentFinancialYear = request.ZltoRewardPoolCurrentFinancialYear;
       result.YomaRewardPoolCurrentFinancialYear = request.YomaRewardPoolCurrentFinancialYear;
 

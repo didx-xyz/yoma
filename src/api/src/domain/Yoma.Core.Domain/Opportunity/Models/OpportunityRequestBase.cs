@@ -1,8 +1,9 @@
 using Newtonsoft.Json;
+using Yoma.Core.Domain.Core.Interfaces;
 
 namespace Yoma.Core.Domain.Opportunity.Models
 {
-  public abstract class OpportunityRequestBase
+  public abstract class OpportunityRequestBase : IHashableObject
   {
     public string Title { get; set; } = null!;
 
@@ -66,5 +67,33 @@ namespace Yoma.Core.Domain.Opportunity.Models
     public List<Guid>? Skills { get; set; }
 
     public List<OpportunityRequestVerificationType>? VerificationTypes { get; set; }
+
+    public virtual void NormalizeForHashing()
+    {
+      SanitizeCollections();
+
+      Keywords = Keywords?.OrderBy(o => o, StringComparer.Ordinal).ToList();
+      Categories = [.. Categories.OrderBy(o => o)];
+      Countries = [.. Countries.OrderBy(o => o)];
+      Languages = [.. Languages.OrderBy(o => o)];
+      Skills = Skills?.OrderBy(o => o).ToList();
+      VerificationTypes = VerificationTypes?.OrderBy(o => o.Type).ThenBy(o => o.Description, StringComparer.Ordinal).ToList();
+    }
+
+    public virtual void SanitizeCollections()
+    {
+      Keywords = Keywords?.Distinct(StringComparer.Ordinal).ToList();
+      if (Keywords?.Count == 0) Keywords = null;
+
+      Categories = [.. Categories.Distinct()];
+      Countries = [.. Countries.Distinct()];
+      Languages = [.. Languages.Distinct()];
+
+      Skills = Skills?.Distinct().ToList();
+      if (Skills?.Count == 0) Skills = null;
+
+      VerificationTypes = VerificationTypes?.DistinctBy(o => new { o.Type, o.Description }).ToList();
+      if (VerificationTypes?.Count == 0) VerificationTypes = null;
+    }
   }
 }

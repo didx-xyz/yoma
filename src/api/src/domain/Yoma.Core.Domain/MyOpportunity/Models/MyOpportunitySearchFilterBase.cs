@@ -1,10 +1,11 @@
 using Newtonsoft.Json;
 using Yoma.Core.Domain.Core;
+using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
 
 namespace Yoma.Core.Domain.MyOpportunity.Models
 {
-  public abstract class MyOpportunitySearchFilterBase : PaginationFilter
+  public abstract class MyOpportunitySearchFilterBase : PaginationFilter, IHashableObject
   {
     public Action Action { get; set; }
 
@@ -36,5 +37,18 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
 
     [JsonIgnore]
     internal abstract FilterSortOrder SortOrder { get; set; }
+
+    public virtual void NormalizeForHashing()
+    {
+      SanitizeCollections();
+
+      VerificationStatuses = VerificationStatuses?.OrderBy(o => o).ToList();
+    }
+
+    public virtual void SanitizeCollections()
+    {
+      VerificationStatuses = VerificationStatuses?.Distinct().ToList();
+      if (VerificationStatuses?.Count == 0) VerificationStatuses = null;
+    }
   }
 }

@@ -29,8 +29,8 @@ using Yoma.Core.Domain.Opportunity.Interfaces;
 using Yoma.Core.Domain.Opportunity.Interfaces.Lookups;
 using Yoma.Core.Domain.Opportunity.Models;
 using Yoma.Core.Domain.Opportunity.Validators;
-using Yoma.Core.Domain.PartnerSharing.Interfaces;
-using Yoma.Core.Domain.PartnerSharing.Services.Lookups;
+using Yoma.Core.Domain.PartnerSync.Interfaces;
+using Yoma.Core.Domain.PartnerSync.Interfaces.Lookups;
 using Yoma.Core.Domain.SSI;
 using Yoma.Core.Domain.SSI.Helpers;
 using Yoma.Core.Domain.Treasury.Interfaces;
@@ -61,8 +61,9 @@ namespace Yoma.Core.Domain.Opportunity.Services
     private readonly INotificationURLFactory _notificationURLFactory;
     private readonly INotificationDeliveryService _notificationDeliveryService;
     private readonly IIdentityProviderClient _identityProviderClient;
-    private readonly ISharingInfoService _sharingInfoService;
+    private readonly ISyncStateService _syncStateService;
     private readonly ITreasuryService _treasuryService;
+    private readonly IPartnerService _partnerService;
 
     private readonly OpportunityRequestValidatorCreate _opportunityRequestValidatorCreate;
     private readonly OpportunityRequestValidatorUpdate _opportunityRequestValidatorUpdate;
@@ -109,8 +110,9 @@ namespace Yoma.Core.Domain.Opportunity.Services
         INotificationURLFactory notificationURLFactory,
         INotificationDeliveryService notificationDeliveryService,
         IIdentityProviderClientFactory identityProviderClientFactory,
-        ISharingInfoService sharingInfoService,
+        ISyncStateService syncStateService,
         ITreasuryService treasuryService,
+        IPartnerService partnerService,
         OpportunityRequestValidatorCreate opportunityRequestValidatorCreate,
         OpportunityRequestValidatorUpdate opportunityRequestValidatorUpdate,
         OpportunitySearchFilterValidator opportunitySearchFilterValidator,
@@ -145,8 +147,9 @@ namespace Yoma.Core.Domain.Opportunity.Services
       _notificationURLFactory = notificationURLFactory ?? throw new ArgumentNullException(nameof(notificationURLFactory));
       _notificationDeliveryService = notificationDeliveryService ?? throw new ArgumentNullException(nameof(notificationDeliveryService));
       _identityProviderClient = identityProviderClientFactory.CreateClient() ?? throw new ArgumentNullException(nameof(identityProviderClientFactory));
-      _sharingInfoService = sharingInfoService ?? throw new ArgumentNullException(nameof(sharingInfoService));
+      _syncStateService = syncStateService ?? throw new ArgumentNullException(nameof(syncStateService));
       _treasuryService = treasuryService ?? throw new ArgumentNullException(nameof(treasuryService));
+      _partnerService = partnerService ?? throw new ArgumentNullException(nameof(partnerService));
 
       _opportunityRequestValidatorCreate = opportunityRequestValidatorCreate ?? throw new ArgumentNullException(nameof(opportunityRequestValidatorCreate));
       _opportunityRequestValidatorUpdate = opportunityRequestValidatorUpdate ?? throw new ArgumentNullException(nameof(opportunityRequestValidatorUpdate));
@@ -186,11 +189,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       if (ensureOrganizationAuthorization)
         _organizationService.IsAdmin(result.OrganizationId, true);
 
-      if (includeComputed)
-      {
-        result.SetPublished();
-        result.OrganizationLogoURL = GetBlobObjectURL(result.OrganizationLogoStorageType, result.OrganizationLogoKey);
-      }
+      if (includeComputed) ParseComputed(result);
 
       return result;
     }
@@ -206,11 +205,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 #pragma warning restore CA1862 // Use the 'StringComparison' method overloads to perform case-insensitive string comparisons
       if (result == null) return null;
 
-      if (includeComputed)
-      {
-        result.SetPublished();
-        result.OrganizationLogoURL = GetBlobObjectURL(result.OrganizationLogoStorageType, result.OrganizationLogoKey);
-      }
+      if (includeComputed) ParseComputed(result);
 
       return result;
     }
@@ -237,11 +232,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 #pragma warning restore CA1862 // Use the 'StringComparison' method overloads to perform case-insensitive string comparisons
       if (result == null) return null;
 
-      if (includeComputed)
-      {
-        result.SetPublished();
-        result.OrganizationLogoURL = GetBlobObjectURL(result.OrganizationLogoStorageType, result.OrganizationLogoKey);
-      }
+      if (includeComputed) ParseComputed(result);
 
       return result;
     }
@@ -254,12 +245,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       var results = _opportunityRepository.Contains(_opportunityRepository.Query(includeChildItems), value).ToList();
 
-      if (includeComputed)
-        results.ForEach(o =>
-        {
-          o.SetPublished();
-          o.OrganizationLogoURL = GetBlobObjectURL(o.OrganizationLogoStorageType, o.OrganizationLogoKey);
-        });
+      if (includeComputed) results.ForEach(o => ParseComputed(o));
 
       return results;
     }
@@ -1004,11 +990,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
       }
 
       result.Items = [.. query];
-      result.Items.ForEach(o =>
-      {
-        o.SetPublished();
-        if (!filter.UnrestrictedQuery) o.OrganizationLogoURL = GetBlobObjectURL(o.OrganizationLogoStorageType, o.OrganizationLogoKey);
-      });
+
+      result.Items.ForEach(o => ParseComputed(o));
 
       return result;
     }
@@ -1274,7 +1257,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         scope.Complete();
       });
 
-      result.SetPublished();
+      ParseComputed(result, true);
 
       //sent when created irrespective of the opportunity status; only trigger point; trigger point on status update has been removed (sent to admin)
       if (sendNotification)
@@ -1286,7 +1269,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       return result;
     }
 
-    public async Task<Models.Opportunity> Update(OpportunityRequestUpdate request, bool ensureOrganizationAuthorization, bool raiseEvent = true)
+    public async Task<Models.Opportunity> Update(OpportunityRequestUpdate request, bool ensureOrganizationAuthorization, bool raiseEvent = true, bool authorizedByPartnerSyncPull = false)
     {
       ArgumentNullException.ThrowIfNull(request, nameof(request));
 
@@ -1409,9 +1392,20 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
-        await AssertUpdatablePartnerSharing(request, resultCurrent); //check will abort sharing if possible and needs to be rolled back if the update fails
-
         using var scope = TransactionScopeHelper.CreateReadCommitted();
+
+        //check will abort sync create if possible; rolled back if the update fails
+        await AssertUpdatablePartnerSync(UpdateAction.Complete, resultCurrent,
+          new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase)
+          {
+            [nameof(Models.Opportunity.ShareWithPartners)] = request.ShareWithPartners,
+            [nameof(Models.Opportunity.TypeId)] = request.TypeId,
+            [nameof(Models.Opportunity.DateEnd)] = request.DateEnd,
+            [nameof(Models.Opportunity.Countries)] = request.Countries
+          },
+          abortSyncPushCreateIfPossible: true,
+          authorizedByPartnerSyncPull: authorizedByPartnerSyncPull);
+
         result = await _opportunityRepository.Update(result);
 
         // categories
@@ -1436,7 +1430,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
         scope.Complete();
       });
-      result.SetPublished();
+
+      ParseComputed(result, true);
 
       if (raiseEvent)
         await _mediator.Publish(new OpportunityEvent(EventType.Update, result));
@@ -1544,6 +1539,12 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       AssertUpdatable(result);
 
+      await AssertUpdatablePartnerSync(UpdateAction.Featured, result,
+        new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase)
+        {
+          [nameof(Models.Opportunity.Featured)] = featured
+        });
+
       result.Featured = featured;
       result.ModifiedByUserId = user.Id;
 
@@ -1556,11 +1557,17 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
     public async Task<Models.Opportunity> UpdateHidden(Guid id, bool hidden, bool ensureOrganizationAuthorization)
     {
-      var result = GetById(id, true, true, false);
+      var result = GetById(id, true, true, ensureOrganizationAuthorization);
 
       var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
 
       AssertUpdatable(result);
+
+      await AssertUpdatablePartnerSync(UpdateAction.Hidden, result,
+        new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase)
+        {
+          [nameof(Models.Opportunity.Hidden)] = hidden
+        });
 
       if (result.ShareWithPartners == true && hidden)
         throw new ValidationException("An opportunity that is shared with partners cannot be made hidden.");
@@ -1575,65 +1582,20 @@ namespace Yoma.Core.Domain.Opportunity.Services
       return result;
     }
 
-    public async Task<Models.Opportunity> UpdateStatus(Guid id, Status status, bool ensureOrganizationAuthorization)
+    public Task<Models.Opportunity> UpdateStatus(Guid id, Status status, bool ensureOrganizationAuthorization)
     {
-      var result = GetById(id, true, true, ensureOrganizationAuthorization);
+      return UpdateStatus(id, status, ensureOrganizationAuthorization, false);
+    }
 
-      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
-
-      EventType? eventType = null;
-      switch (status)
-      {
-        case Status.Active:
-          if (result.Status == Status.Active) return result;
-          if (!Statuses_Activatable.Contains(result.Status))
-            throw new ValidationException($"The {nameof(Models.Opportunity)} can not be activated (current status '{result.Status.ToDescription()}'). Required state '{Statuses_Activatable.JoinNames()}'");
-
-          //ensure DateEnd was updated for re-activation of previously expired opportunities
-          if (result.DateEnd.HasValue && result.DateEnd.Value <= DateTimeOffset.UtcNow)
-            throw new ValidationException($"The {nameof(Models.Opportunity)} cannot be activated because its end date ('{result.DateEnd:yyyy-MM-dd}') is in the past. Please update the {nameof(Models.Opportunity).ToLower()} before proceeding with activation");
-
-          eventType = EventType.Update;
-          break;
-
-        case Status.Inactive:
-          if (result.Status == Status.Inactive) return result;
-          if (!Statuses_DeActivatable.Contains(result.Status))
-            throw new ValidationException($"The {nameof(Models.Opportunity)} can not be deactivated (current status '{result.Status.ToDescription()}'). Required state '{Statuses_DeActivatable.JoinNames()}'");
-
-          eventType = EventType.Update;
-          break;
-
-        case Status.Deleted:
-          if (result.Status == Status.Deleted) return result;
-          if (!Statuses_CanDelete.Contains(result.Status))
-            throw new ValidationException($"The {nameof(Models.Opportunity)} can not be deleted (current status '{result.Status.ToDescription()}'). Required state '{Statuses_CanDelete.JoinNames()}'");
-
-          eventType = EventType.Delete;
-          break;
-
-        default:
-          throw new ArgumentOutOfRangeException(nameof(status), $"{nameof(Status)} of '{status.ToDescription()}' not supported");
-      }
-
-      var statusId = _opportunityStatusService.GetByName(status.ToString()).Id;
-
-      result.StatusId = statusId;
-      result.Status = status;
-      result.ModifiedByUserId = user.Id;
-
-      result = await _opportunityRepository.Update(result);
-
-      result.SetPublished();
-
-      await _mediator.Publish(new OpportunityEvent(eventType.Value, result));
-
-      return result;
+    public Task<Models.Opportunity> DeleteFromPartnerSyncPull(Guid id)
+    {
+      return UpdateStatus(id, Status.Deleted, false, true);
     }
 
     public async Task<Models.Opportunity> AssignCategories(Guid id, List<Guid> categoryIds, bool ensureOrganizationAuthorization)
     {
       var result = GetById(id, true, true, ensureOrganizationAuthorization);
+      var resultCurrent = ObjectHelper.DeepCopy(result);
 
       AssertUpdatable(result);
 
@@ -1642,9 +1604,18 @@ namespace Yoma.Core.Domain.Opportunity.Services
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
         using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
+
         result = await AssignCategories(result, categoryIds);
+
+        await AssertUpdatablePartnerSync(UpdateAction.Other, resultCurrent,
+          new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase)
+          {
+            [nameof(Models.Opportunity.Categories)] = result.Categories?.Select(o => o.Id).ToList()
+          });
+
         result.ModifiedByUserId = user.Id;
         result = await _opportunityRepository.Update(result);
+
         scope.Complete();
       });
 
@@ -1656,6 +1627,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
     public async Task<Models.Opportunity> RemoveCategories(Guid id, List<Guid> categoryIds, bool ensureOrganizationAuthorization)
     {
       var result = GetById(id, true, true, ensureOrganizationAuthorization);
+      var resultCurrent = ObjectHelper.DeepCopy(result);
 
       if (categoryIds == null || categoryIds.Count == 0)
         throw new ArgumentNullException(nameof(categoryIds));
@@ -1667,9 +1639,18 @@ namespace Yoma.Core.Domain.Opportunity.Services
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
         using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
+
         result = await RemoveCategories(result, categoryIds);
+
+        await AssertUpdatablePartnerSync(UpdateAction.Other, resultCurrent,
+          new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase)
+          {
+            [nameof(Models.Opportunity.Categories)] = result.Categories?.Select(o => o.Id).ToList()
+          });
+
         result.ModifiedByUserId = user.Id;
         result = await _opportunityRepository.Update(result);
+
         scope.Complete();
       });
 
@@ -1681,6 +1662,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
     public async Task<Models.Opportunity> AssignCountries(Guid id, List<Guid> countryIds, bool ensureOrganizationAuthorization)
     {
       var result = GetById(id, true, true, ensureOrganizationAuthorization);
+      var resultCurrent = ObjectHelper.DeepCopy(result);
 
       AssertUpdatable(result);
 
@@ -1689,9 +1671,18 @@ namespace Yoma.Core.Domain.Opportunity.Services
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
         using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
+
         result = await AssignCountries(result, countryIds);
+
+        await AssertUpdatablePartnerSync(UpdateAction.Countries, resultCurrent,
+         new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase)
+         {
+           [nameof(Models.Opportunity.Countries)] = result.Countries?.Select(o => o.Id).ToList()
+         });
+
         result.ModifiedByUserId = user.Id;
         result = await _opportunityRepository.Update(result);
+
         scope.Complete();
       });
 
@@ -1703,13 +1694,32 @@ namespace Yoma.Core.Domain.Opportunity.Services
     public async Task<Models.Opportunity> RemoveCountries(Guid id, List<Guid> countryIds, bool ensureOrganizationAuthorization)
     {
       var result = GetById(id, true, true, ensureOrganizationAuthorization);
+      var resultCurrent = ObjectHelper.DeepCopy(result);
 
       if (countryIds == null || countryIds.Count == 0)
         throw new ArgumentNullException(nameof(countryIds));
 
       AssertUpdatable(result);
 
-      result = await RemoveCountries(result, countryIds);
+      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
+
+      await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+      {
+        using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
+
+        result = await RemoveCountries(result, countryIds);
+
+        await AssertUpdatablePartnerSync(UpdateAction.Countries, resultCurrent,
+          new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase)
+          {
+            [nameof(Models.Opportunity.Countries)] = result.Countries?.Select(o => o.Id).ToList()
+          });
+
+        result.ModifiedByUserId = user.Id;
+        result = await _opportunityRepository.Update(result);
+
+        scope.Complete();
+      });
 
       await _mediator.Publish(new OpportunityEvent(EventType.Update, result));
 
@@ -1719,6 +1729,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
     public async Task<Models.Opportunity> AssignLanguages(Guid id, List<Guid> languageIds, bool ensureOrganizationAuthorization)
     {
       var result = GetById(id, true, true, ensureOrganizationAuthorization);
+      var resultCurrent = ObjectHelper.DeepCopy(result);
 
       AssertUpdatable(result);
 
@@ -1727,9 +1738,18 @@ namespace Yoma.Core.Domain.Opportunity.Services
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
         using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
+
         result = await AssignLanguages(result, languageIds);
+
+        await AssertUpdatablePartnerSync(UpdateAction.Other, resultCurrent,
+          new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase)
+          {
+            [nameof(Models.Opportunity.Languages)] = result.Languages?.Select(o => o.Id).ToList()
+          });
+
         result.ModifiedByUserId = user.Id;
         result = await _opportunityRepository.Update(result);
+
         scope.Complete();
       });
 
@@ -1741,6 +1761,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
     public async Task<Models.Opportunity> RemoveLanguages(Guid id, List<Guid> languageIds, bool ensureOrganizationAuthorization)
     {
       var result = GetById(id, true, true, ensureOrganizationAuthorization);
+      var resultCurrent = ObjectHelper.DeepCopy(result);
 
       if (languageIds == null || languageIds.Count == 0)
         throw new ArgumentNullException(nameof(languageIds));
@@ -1752,9 +1773,18 @@ namespace Yoma.Core.Domain.Opportunity.Services
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
         using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
+
         result = await RemoveLanguages(result, languageIds);
+
+        await AssertUpdatablePartnerSync(UpdateAction.Other, resultCurrent,
+          new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase)
+          {
+            [nameof(Models.Opportunity.Languages)] = result.Languages?.Select(o => o.Id).ToList()
+          });
+
         result.ModifiedByUserId = user.Id;
         result = await _opportunityRepository.Update(result);
+
         scope.Complete();
       });
 
@@ -1766,6 +1796,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
     public async Task<Models.Opportunity> AssignSkills(Guid id, List<Guid> skillIds, bool ensureOrganizationAuthorization)
     {
       var result = GetById(id, true, true, ensureOrganizationAuthorization);
+      var resultCurrent = ObjectHelper.DeepCopy(result);
 
       if (skillIds == null || skillIds.Count == 0)
         throw new ArgumentNullException(nameof(skillIds));
@@ -1777,9 +1808,18 @@ namespace Yoma.Core.Domain.Opportunity.Services
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
         using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
+
         result = await AssignSkills(result, skillIds);
+
+        await AssertUpdatablePartnerSync(UpdateAction.Other, resultCurrent,
+          new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase)
+          {
+            [nameof(Models.Opportunity.Skills)] = result.Skills?.Select(o => o.Id).ToList()
+          });
+
         result.ModifiedByUserId = user.Id;
         result = await _opportunityRepository.Update(result);
+
         scope.Complete();
       });
 
@@ -1791,6 +1831,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
     public async Task<Models.Opportunity> RemoveSkills(Guid id, List<Guid> skillIds, bool ensureOrganizationAuthorization)
     {
       var result = GetById(id, true, true, ensureOrganizationAuthorization);
+      var resultCurrent = ObjectHelper.DeepCopy(result);
 
       if (skillIds == null || skillIds.Count == 0)
         throw new ArgumentNullException(nameof(skillIds));
@@ -1803,8 +1844,16 @@ namespace Yoma.Core.Domain.Opportunity.Services
       {
         using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
         result = await RemoveSkills(result, skillIds);
+
+        await AssertUpdatablePartnerSync(UpdateAction.Other, resultCurrent,
+          new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase)
+          {
+            [nameof(Models.Opportunity.Skills)] = result.Skills?.Select(o => o.Id).ToList()
+          });
+
         result.ModifiedByUserId = user.Id;
         result = await _opportunityRepository.Update(result);
+
         scope.Complete();
       });
 
@@ -1816,6 +1865,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
     public async Task<Models.Opportunity> AssignVerificationTypes(Guid id, List<OpportunityRequestVerificationType> verificationTypes, bool ensureOrganizationAuthorization)
     {
       var result = GetById(id, true, true, ensureOrganizationAuthorization);
+      var resultCurrent = ObjectHelper.DeepCopy(result);
 
       if (verificationTypes == null || verificationTypes.Count == 0)
         throw new ArgumentNullException(nameof(verificationTypes));
@@ -1827,9 +1877,18 @@ namespace Yoma.Core.Domain.Opportunity.Services
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
         using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
+
         result = await AssignVerificationTypes(result, verificationTypes);
+
+        await AssertUpdatablePartnerSync(UpdateAction.Other, resultCurrent,
+          new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase)
+          {
+            [nameof(Models.Opportunity.VerificationTypes)] = result.VerificationTypes?.Select(o => o.Type).ToList()
+          });
+
         result.ModifiedByUserId = user.Id;
         result = await _opportunityRepository.Update(result);
+
         scope.Complete();
       });
 
@@ -1841,6 +1900,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
     public async Task<Models.Opportunity> RemoveVerificationTypes(Guid id, List<VerificationType> verificationTypes, bool ensureOrganizationAuthorization)
     {
       var result = GetById(id, true, true, ensureOrganizationAuthorization);
+      var resultCurrent = ObjectHelper.DeepCopy(result);
 
       if (verificationTypes == null || verificationTypes.Count == 0)
         throw new ArgumentNullException(nameof(verificationTypes));
@@ -1855,9 +1915,18 @@ namespace Yoma.Core.Domain.Opportunity.Services
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
         using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
+
         result = await RemoveVerificationTypes(result, verificationTypes);
+
+        await AssertUpdatablePartnerSync(UpdateAction.Other, resultCurrent,
+          new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase)
+          {
+            [nameof(Models.Opportunity.VerificationTypes)] = result.VerificationTypes?.Select(o => o.Type).ToList()
+          });
+
         result.ModifiedByUserId = user.Id;
         result = await _opportunityRepository.Update(result);
+
         scope.Complete();
       });
 
@@ -1868,6 +1937,27 @@ namespace Yoma.Core.Domain.Opportunity.Services
     #endregion
 
     #region Private Members
+    /// <summary>
+    /// Populates computed properties on the opportunity.
+    /// 
+    /// When <paramref name="baseOnly"/> is true, only essential computed fields are populated,
+    /// specifically the published state and pull-sync lock information. This is used in flows
+    /// where other computed values are already calculated (e.g., create/update operations or
+    /// direct retrieval scenarios such as status changes).
+    /// 
+    /// When <paramref name="baseOnly"/> is false, all computed properties are populated,
+    /// including reward balances and organization logo URL.
+    /// </summary>
+    private void ParseComputed(Models.Opportunity opportunity, bool baseOnly = false)
+    {
+      opportunity.SetPublished();
+      opportunity.SyncedInfo = _syncStateService.ListSyncInfo(PartnerSync.EntityType.Opportunity, opportunity.Id);
+
+      if (baseOnly) return;
+
+      opportunity.OrganizationLogoURL = GetBlobObjectURL(opportunity.OrganizationLogoStorageType, opportunity.OrganizationLogoKey);
+    }
+
     private async Task<(Models.Opportunity Opporunity, EventType ActionTaken)> ProcessImportAndUpsertOpportunity(Guid organizationId, OpportunityInfoCsvImport item, bool probeOnly)
     {
       if (string.IsNullOrWhiteSpace(item.ExternalId))
@@ -1965,7 +2055,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       // Events raised by invoking method upon transaction completion
       var result = isNew
         ? await Create((OpportunityRequestCreate)request, false, false, !probeOnly)
-        : await Update((OpportunityRequestUpdate)request, false, !probeOnly);
+        : await Update((OpportunityRequestUpdate)request, false, false);
 
       return (result, isNew ? EventType.Create : EventType.Update);
     }
@@ -1994,46 +2084,220 @@ namespace Yoma.Core.Domain.Opportunity.Services
       return (reward, rewardReduced, rewardPoolDepleted);
     }
 
+    private async Task<Models.Opportunity> UpdateStatus(
+      Guid id,
+      Status status,
+      bool ensureOrganizationAuthorization,
+      bool authorizedByPartnerSyncPull)
+    {
+      var result = GetById(id, true, true, ensureOrganizationAuthorization);
+
+      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
+
+      EventType? eventType = null;
+      switch (status)
+      {
+        case Status.Active:
+          if (result.Status == Status.Active) return result;
+          if (!Statuses_Activatable.Contains(result.Status))
+            throw new ValidationException($"The {nameof(Models.Opportunity)} can not be activated (current status '{result.Status.ToDescription()}'). Required state '{Statuses_Activatable.JoinNames()}'");
+
+          if (result.DateEnd.HasValue && result.DateEnd.Value <= DateTimeOffset.UtcNow)
+            throw new ValidationException($"The {nameof(Models.Opportunity)} cannot be activated because its end date ('{result.DateEnd:yyyy-MM-dd}') is in the past. Please update the {nameof(Models.Opportunity).ToLower()} before proceeding with activation");
+
+          eventType = EventType.Update;
+          break;
+
+        case Status.Inactive:
+          if (result.Status == Status.Inactive) return result;
+          if (!Statuses_DeActivatable.Contains(result.Status))
+            throw new ValidationException($"The {nameof(Models.Opportunity)} can not be deactivated (current status '{result.Status.ToDescription()}'). Required state '{Statuses_DeActivatable.JoinNames()}'");
+
+          eventType = EventType.Update;
+          break;
+
+        case Status.Deleted:
+          if (result.Status == Status.Deleted) return result;
+          if (!Statuses_CanDelete.Contains(result.Status))
+            throw new ValidationException($"The {nameof(Models.Opportunity)} can not be deleted (current status '{result.Status.ToDescription()}'). Required state '{Statuses_CanDelete.JoinNames()}'");
+
+          eventType = EventType.Delete;
+          break;
+
+        default:
+          throw new ArgumentOutOfRangeException(nameof(status), $"{nameof(Status)} of '{status.ToDescription()}' not supported");
+      }
+
+      await AssertUpdatablePartnerSync(UpdateAction.Status, result,
+        new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase)
+        {
+          [nameof(Models.Opportunity.Status)] = status
+        },
+        authorizedByPartnerSyncPull: authorizedByPartnerSyncPull);
+
+      var statusId = _opportunityStatusService.GetByName(status.ToString()).Id;
+
+      result.StatusId = statusId;
+      result.Status = status;
+      result.ModifiedByUserId = user.Id;
+
+      result = await _opportunityRepository.Update(result);
+
+      ParseComputed(result, true);
+
+      await _mediator.Publish(new OpportunityEvent(eventType.Value, result));
+
+      return result;
+    }
+
     private static void AssertUpdatable(Models.Opportunity opportunity)
     {
       if (!Statuses_Updatable.Contains(opportunity.Status))
         throw new ValidationException($"The {nameof(Models.Opportunity)} can no longer be updated (current status '{opportunity.Status.ToDescription()}'). Required state '{Statuses_Updatable.JoinNames()}'");
     }
 
-    private async Task AssertUpdatablePartnerSharing(OpportunityRequestUpdate request, Models.Opportunity opportunityCurrent)
+    /// <summary>
+    /// Validates whether an opportunity update is permitted when the opportunity
+    /// participates in partner synchronization.
+    ///
+    /// The validation evaluates the synchronization types configured for the
+    /// opportunity and delegates to the appropriate rule set:
+    /// - Pull synchronization: the external partner is the source of truth and
+    ///   the opportunity is largely locked for editing.
+    /// - Push synchronization: Yoma remains the source of truth but certain
+    ///   updates may be restricted once the opportunity has been shared.
+    ///
+    /// The <paramref name="updatesToEval"/> dictionary contains the requested
+    /// update values used to evaluate synchronization rules.
+    /// </summary>
+    private async Task AssertUpdatablePartnerSync(
+      UpdateAction action,
+      Models.Opportunity opportunityCurrent,
+      Dictionary<string, object?> updatesToEval,
+      bool abortSyncPushCreateIfPossible = false,
+      bool authorizedByPartnerSyncPull = false)
     {
+      ArgumentNullException.ThrowIfNull(opportunityCurrent);
+      ArgumentNullException.ThrowIfNull(updatesToEval);
+
+      if (updatesToEval.Count == 0)
+        throw new ArgumentException("At least one update must be supplied for evaluation", nameof(updatesToEval));
+
+      var syncedInfo = opportunityCurrent.SyncedInfo;
+      if (syncedInfo == null || syncedInfo.Partners.Count == 0)
+        return;
+
+      switch (syncedInfo.SyncType)
+      {
+        case SyncType.Pull:
+          AssertUpdatablePartnerSyncPull(action, updatesToEval, authorizedByPartnerSyncPull);
+          break;
+
+        case SyncType.Push:
+          await AssertUpdatablePartnerSyncPush(action, opportunityCurrent, updatesToEval, abortSyncPushCreateIfPossible);
+          break;
+
+        default:
+          throw new InvalidOperationException($"Unsupported sync type: {syncedInfo.SyncType}");
+      }
+    }
+
+    /// <summary>
+    /// Validates whether a pull-synchronized opportunity can be updated.
+    ///
+    /// Pull-synchronized opportunities are managed by an external partner and are
+    /// generally locked for editing. Only limited local administrative actions are
+    /// permitted:
+    /// - Hidden
+    /// - Featured
+    /// - Status change to Deleted by an authorized admin
+    ///
+    /// All other updates are rejected.
+    /// </summary>
+    private void AssertUpdatablePartnerSyncPull(
+      UpdateAction action,
+      Dictionary<string, object?> updatesToEval,
+      bool authorizedByPartnerSyncPull = false)
+    {
+      switch (action)
+      {
+        case UpdateAction.Hidden:
+        case UpdateAction.Featured:
+          return;
+
+        case UpdateAction.Status:
+          var statusExpected = updatesToEval.Get<Status>(nameof(Models.Opportunity.Status));
+
+          if (statusExpected == Status.Deleted &&
+              (authorizedByPartnerSyncPull || HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor)))
+            return;
+
+          break;
+
+        case UpdateAction.Complete:
+          if (authorizedByPartnerSyncPull) return;
+          break;
+
+        case UpdateAction.Other:
+        case UpdateAction.Countries:
+          break;
+
+        default:
+          throw new InvalidOperationException($"Unsupported update action: {action}");
+      }
+
+      throw new ValidationException("This opportunity is managed by an external partner and cannot be updated");
+    }
+
+    /// <summary>
+    /// Validates update restrictions for push-synchronized opportunities.
+    ///
+    /// Yoma remains the source of truth, but some updates are restricted once the
+    /// opportunity has been shared with external partners.
+    /// Opportunity-level rules are evaluated here, while partner-specific rules
+    /// are delegated to the partner service.
+    ///
+    /// If a rule violation is detected and synchronization creation is still
+    /// pending, the push synchronization may optionally be aborted instead of
+    /// rejecting the update.
+    /// </summary>
+    private async Task AssertUpdatablePartnerSyncPush(
+      UpdateAction action,
+      Models.Opportunity opportunityCurrent,
+      Dictionary<string, object?> updatesToEval,
+      bool abortSyncPushCreateIfPossible = false)
+    {
+      var partners = opportunityCurrent.SyncedInfo?.SyncType == SyncType.Push
+        ? opportunityCurrent.SyncedInfo.Partners.Distinct().ToList() : null;
+
+      if (partners == null || partners.Count == 0) return;
+
       var reasons = new List<string>();
 
-      if (opportunityCurrent.ShareWithPartners == true && request.ShareWithPartners != true)
-        reasons.Add("Option to share with partners cannot be disabled after it has been enabled");
-
-      if (opportunityCurrent.TypeId != request.TypeId)
-        reasons.Add("Type cannot be changed");
-
-      if (opportunityCurrent.DateEnd.HasValue && !request.DateEnd.HasValue)
-        reasons.Add("End date cannot be removed once it has been set");
-
-      var countriesCodeAlpha2Required = PartnerService.RequiredCountries_AnyOf_All.Select(o => o.CodeAlpha2).ToList();
-      var countriesCodeAlpha2Current = opportunityCurrent.Countries?.Select(c => c.CodeAlpha2).Intersect(countriesCodeAlpha2Required, StringComparer.OrdinalIgnoreCase).ToList();
-      var countriesCodeAlpha2Request = request.Countries?.Select(c => _countryService.GetById(c).CodeAlpha2).Intersect(countriesCodeAlpha2Required, StringComparer.OrdinalIgnoreCase).ToList();
-      var countriesCodeAlpha2Removed = countriesCodeAlpha2Current?.Except(countriesCodeAlpha2Request ?? [], StringComparer.OrdinalIgnoreCase).ToList();
-
-      if (countriesCodeAlpha2Removed?.Count > 0)
+      if (action == UpdateAction.Complete)
       {
-        var countriesNameRemoved = PartnerService.RequiredCountries_AnyOf_All
-          .Where(rc => countriesCodeAlpha2Removed.Contains(rc.CodeAlpha2, StringComparer.OrdinalIgnoreCase)).Select(rc => rc.Country).ToList();
+        var shareWithPartners = updatesToEval.Get<bool?>(nameof(Models.Opportunity.ShareWithPartners));
 
-        reasons.Add($"The following country(ies) cannot be removed: '{string.Join(", ", countriesNameRemoved)}'");
+        if (opportunityCurrent.ShareWithPartners == true && shareWithPartners != true)
+          reasons.Add("Sharing with partners cannot be switched off once it has been enabled");
       }
+
+      reasons.AddRange(_partnerService.ValidateUpdatablePush(opportunityCurrent, action, updatesToEval, partners));
+
+      reasons = [.. reasons.Distinct()];
 
       if (reasons.Count == 0) return;
 
-      var shared = await _sharingInfoService.IsShared(PartnerSharing.EntityType.Opportunity, opportunityCurrent.Id, true);
-      if (!shared) return;
+      if (abortSyncPushCreateIfPossible)
+      {
+        var aborted = await _syncStateService.AbortSyncPushCreateIfPossible(
+          PartnerSync.EntityType.Opportunity,
+          opportunityCurrent.Id);
 
-      var reasonText = string.Join("; ", reasons);
+        if (aborted) return;
+      }
 
-      throw new ValidationException($"The {nameof(Models.Opportunity)} has already been shared and cannot be updated for the following reasons: {reasonText}");
+      throw new ValidationException($"This opportunity cannot be updated because: {string.Join("; ", reasons)}");
     }
 
     private async Task SendNotification(Models.Opportunity opportunity, NotificationType type)

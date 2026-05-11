@@ -4,7 +4,7 @@ namespace Yoma.Core.Domain.Core.Interfaces
 {
   public interface IDownloadService
   {
-    Task Schedule(Guid userId, DownloadScheduleType type, object filter);
+    Task Schedule<T>(Guid userId, DownloadScheduleType type, T filter) where T : class, IHashableObject;
 
     List<DownloadSchedule> ListPendingSchedule(int batchSize, List<Guid> idsToSkip);
 

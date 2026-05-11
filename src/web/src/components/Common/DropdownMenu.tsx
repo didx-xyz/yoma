@@ -8,6 +8,7 @@ export interface DropdownMenuItem {
   onClick?: () => void;
   icon?: ReactNode;
   disabled?: boolean;
+  disabledTooltip?: string;
   id?: string;
 }
 
@@ -116,6 +117,7 @@ export function DropdownMenu({
                   closeMenu();
                 }}
                 disabled={item.disabled}
+                title={item.disabled ? item.disabledTooltip : undefined}
                 className="text-base-content hover:bg-base-200 flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-xs transition-colors disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {item.icon && (
@@ -126,7 +128,10 @@ export function DropdownMenu({
                 <span>{item.label}</span>
               </button>
             ) : (
-              <span className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium opacity-60">
+              <span
+                title={item.disabledTooltip}
+                className="text-base-content flex cursor-not-allowed items-center gap-3 rounded-xl px-3 py-2 text-xs opacity-50"
+              >
                 {item.icon && (
                   <span className="text-green flex h-5 w-5 items-center justify-center">
                     {item.icon}

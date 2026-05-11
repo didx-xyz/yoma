@@ -1,6 +1,7 @@
 using CsvHelper.Configuration.Attributes;
 using Newtonsoft.Json;
 using Yoma.Core.Domain.Lookups.Models;
+using Yoma.Core.Domain.PartnerSync.Models;
 
 namespace Yoma.Core.Domain.Opportunity.Models
 {
@@ -128,7 +129,7 @@ namespace Yoma.Core.Domain.Opportunity.Models
     public bool Hidden { get; set; }
 
     [JsonIgnore]
-    [Name("Partner External ID")]
+    [Name("Partner Opportunity (External) ID")]
     public string? ExternalId { get; set; }
 
     [BooleanFalseValues("No")]
@@ -143,6 +144,23 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
     [Ignore]
     public string? NonCompletableReason { get; set; }
+
+    [Ignore]
+    public SyncInfo? SyncedInfo { get; set; }
+
+    [JsonIgnore]
+    [Name("Externally Managed (Locked)")]
+    [BooleanFalseValues("No")]
+    [BooleanTrueValues("Yes")]
+    public bool SyncedLocked => SyncedInfo?.Locked == true;
+
+    [JsonIgnore]
+    [Name("Externally Managed By")]
+    public string? SyncedPulled => SyncedInfo?.SyncType == Core.SyncType.Pull ? string.Join(", ", SyncedInfo.Partners) : null;
+
+    [JsonIgnore]
+    [Name("Shared With")]
+    public string? SyncedPushed => SyncedInfo?.SyncType == Core.SyncType.Push ? string.Join(", ", SyncedInfo.Partners) : null;
 
     [Ignore]
     public List<Lookups.OpportunityCategory>? Categories { get; set; }

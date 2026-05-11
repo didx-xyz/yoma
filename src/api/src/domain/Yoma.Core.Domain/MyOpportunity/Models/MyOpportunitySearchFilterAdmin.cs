@@ -3,7 +3,7 @@ using Yoma.Core.Domain.Core;
 
 namespace Yoma.Core.Domain.MyOpportunity.Models
 {
-  public class MyOpportunitySearchFilterAdmin : MyOpportunitySearchFilterBase
+  public sealed class MyOpportunitySearchFilterAdmin : MyOpportunitySearchFilterBase
   {
     public Guid? UserId { get; set; }
 
@@ -15,5 +15,20 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
 
     [JsonIgnore]
     internal override FilterSortOrder SortOrder { get; set; } = FilterSortOrder.Ascending;
+
+    public override void NormalizeForHashing()
+    {
+      base.NormalizeForHashing();
+
+      Organizations = Organizations?.OrderBy(o => o).ToList();
+    }
+
+    public override void SanitizeCollections()
+    {
+      base.SanitizeCollections();
+
+      Organizations = Organizations?.Distinct().ToList();
+      if (Organizations?.Count == 0) Organizations = null;
+    }
   }
 }

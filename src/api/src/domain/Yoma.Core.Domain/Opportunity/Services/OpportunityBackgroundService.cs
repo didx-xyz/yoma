@@ -5,14 +5,14 @@ using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
-using Yoma.Core.Domain.Notification;
-using Yoma.Core.Domain.Notification.Interfaces;
-using Yoma.Core.Domain.Notification.Models;
 using Yoma.Core.Domain.Entity;
 using Yoma.Core.Domain.Entity.Interfaces;
 using Yoma.Core.Domain.Entity.Interfaces.Lookups;
 using Yoma.Core.Domain.Entity.Models;
 using Yoma.Core.Domain.Lookups.Interfaces;
+using Yoma.Core.Domain.Notification;
+using Yoma.Core.Domain.Notification.Interfaces;
+using Yoma.Core.Domain.Notification.Models;
 using Yoma.Core.Domain.Opportunity.Events;
 using Yoma.Core.Domain.Opportunity.Interfaces;
 using Yoma.Core.Domain.Opportunity.Interfaces.Lookups;
@@ -305,10 +305,11 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
             // filter opportunities based on the user's country or worldwide, defaulting to worldwide if no countries are set
             var countryOpportunities = items
-                .Where(opportunity => opportunity.Countries == null ||
-                                      opportunity.Countries.Any(c => c.Id == countryId) ||
-                                      opportunity.Countries.Any(c => c.Id == countryWorldwideId))
-                .ToList();
+              .Where(opportunity =>
+                opportunity.Countries == null ||
+                opportunity.Countries.Count == 0 ||
+                opportunity.Countries.Any(c => countryIds.Contains(c.Id)))
+              .ToList();
             if (countryOpportunities.Count == 0) continue;
 
             var data = new NotificationOpportunityPublished

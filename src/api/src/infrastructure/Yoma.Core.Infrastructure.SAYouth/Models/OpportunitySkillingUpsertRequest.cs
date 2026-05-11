@@ -4,7 +4,7 @@ using Yoma.Core.Domain.Core.Converters;
 
 namespace Yoma.Core.Infrastructure.SAYouth.Models
 {
-  internal class OpportunitySkillingUpsertRequest
+  public class OpportunitySkillingUpsertRequest
   {
     [JsonProperty("learning_opportunity_holder")]
     public string Holder { get; set; } = null!;

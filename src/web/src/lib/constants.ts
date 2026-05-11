@@ -86,6 +86,11 @@ export const OPPORTUNITY_TYPE_ID_OTHER = "5D67758F-3F06-47C6-8B62-420B33126665";
 export const OPPORTUNITY_TYPE_ID_JOB = "9C2D1A8E-3A4B-4F7A-9E2D-7F1C6B8A2D55";
 export const OPPORTUNITY_TYPE_NANE_JOB = "Job";
 
+// 🧪 DEV MOCK: Set to a real opportunity ID to simulate pull-sync (externally managed) behaviour.
+// Leave empty to disable the mock. Remove this constant when the API implements syncedInfo.
+export const DEV_MOCK_PULL_SYNC_OPPORTUNITY_ID =
+  "1796e2c1-d399-4571-b515-1561a17838f7";
+
 export const THEME_BLUE = "blue";
 export const THEME_GREEN = "green";
 export const THEME_PURPLE = "purple";

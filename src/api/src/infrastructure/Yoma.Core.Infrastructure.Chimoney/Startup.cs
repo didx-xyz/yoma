@@ -13,7 +13,7 @@ namespace Yoma.Core.Infrastructure.Chimoney
       services.Configure<ChimoneyOptions>(options => configuration.GetSection(ChimoneyOptions.Section).Bind(options));
     }
 
-    public static void ConfigureServices_InfrastructureLaborMarketProvider(this IServiceCollection services)
+    public static void ConfigureServices_InfrastructureRewardCashoutProvider(this IServiceCollection services)
     {
       services.AddScoped<IRewardCashOutProviderClientFactory, ChimoneyClientFactory>();
     }

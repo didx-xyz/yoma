@@ -7,14 +7,14 @@
 // Handles both small files (≤5MB) and large files (>5MB) with multipart uploads.
 // ---------------------------------------------------------------------------------------------
 
+using Amazon.S3;
+using Amazon.S3.Model;
 using Microsoft.Extensions.Logging;
 using System.Buffers;
 using System.Text;
 using tusdotnet.Interfaces;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
-using Amazon.S3;
-using Amazon.S3.Model;
 using Yoma.Core.Infrastructure.AmazonS3.Models;
 
 namespace Yoma.Core.Infrastructure.AmazonS3.Services

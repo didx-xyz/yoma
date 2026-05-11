@@ -48,7 +48,7 @@ namespace Yoma.Core.Domain.Opportunity.Interfaces
 
     Task<Models.Opportunity> Create(OpportunityRequestCreate request, bool ensureOrganizationAuthorization, bool raiseEvent = true, bool sendNotification = true);
 
-    Task<Models.Opportunity> Update(OpportunityRequestUpdate request, bool ensureOrganizationAuthorization, bool raiseEvent = true);
+    Task<Models.Opportunity> Update(OpportunityRequestUpdate request, bool ensureOrganizationAuthorization, bool raiseEvent = true, bool authorizedByPartnerSyncPull = false);
 
     Task<OpportunityAllocateRewardResponse> AllocateRewards(Guid id, bool ensureOrganizationAuthorization);
 
@@ -57,6 +57,8 @@ namespace Yoma.Core.Domain.Opportunity.Interfaces
     Task<Models.Opportunity> UpdateHidden(Guid id, bool hidden, bool ensureOrganizationAuthorization);
 
     Task<Models.Opportunity> UpdateStatus(Guid id, Status status, bool ensureOrganizationAuthorization);
+
+    Task<Models.Opportunity> DeleteFromPartnerSyncPull(Guid id);
 
     Task<Models.Opportunity> AssignCategories(Guid id, List<Guid> categoryIds, bool ensureOrganizationAuthorization);
 

@@ -20,7 +20,11 @@ import {
 } from "react-icons/fa";
 import { IoIosSettings, IoMdWarning } from "react-icons/io";
 import { toast } from "react-toastify";
-import { Status, type OpportunityInfo } from "~/api/models/opportunity";
+import {
+  Status,
+  type OpportunityInfo,
+  type SyncInfo,
+} from "~/api/models/opportunity";
 import {
   DropdownMenu,
   DropdownMenuDisplayStyle,
@@ -28,9 +32,44 @@ import {
 import { downloadVerificationFilesAdmin } from "~/api/services/myOpportunities";
 import { Loading } from "~/components/Status/Loading";
 import { useConfirmationModalContext } from "~/context/modalConfirmationContext";
-import { ROLE_ADMIN } from "~/lib/constants";
+import { DEV_MOCK_PULL_SYNC_OPPORTUNITY_ID, ROLE_ADMIN } from "~/lib/constants";
 import { analytics } from "~/lib/analytics";
 import { getSafeUrl } from "~/lib/utils";
+
+export const SYNC_PARTNER_LABELS: Record<string, string> = {
+  SAYouth: "SAYouth",
+  Jobberman: "Jobberman",
+  Alison: "Alison",
+};
+
+/**
+ * Returns the effective SyncInfo for an opportunity.
+ * Falls back to a dev mock when DEV_MOCK_PULL_SYNC_OPPORTUNITY_ID matches.
+ * Remove the mock branch once the API populates syncedInfo.
+ */
+export function getEffectiveSyncedInfo(
+  opportunity: OpportunityInfo,
+): SyncInfo | null {
+  const raw = opportunity.syncedInfo;
+  if (raw) {
+    return typeof raw === "string" ? (JSON.parse(raw) as SyncInfo) : raw;
+  }
+  // 🧪 DEV MOCK
+  if (
+    DEV_MOCK_PULL_SYNC_OPPORTUNITY_ID &&
+    opportunity.id === DEV_MOCK_PULL_SYNC_OPPORTUNITY_ID
+  ) {
+    return {
+      syncType: "Pull",
+      partners: ["SAYouth"],
+      locked: true,
+    };
+  }
+  return null;
+}
+
+const PULL_SYNC_TOOLTIP =
+  "This opportunity is managed externally by a sync provider and cannot be modified here.";
 
 export enum OpportunityActionOptions {
   EDIT_DETAILS = "editDetails",
@@ -87,6 +126,10 @@ export const OpportunityActions: React.FC<OpportunityActionsProps> = ({
   const router = useRouter();
   const modalContext = useConfirmationModalContext();
   const isAdmin = user?.roles.includes(ROLE_ADMIN);
+
+  // Pull-sync state
+  const syncedInfo = getEffectiveSyncedInfo(opportunity);
+  const isPullManaged = syncedInfo?.syncType === "Pull";
 
   const statusMutation = useOpportunityStatusMutation({
     opportunityId: opportunity.id,
@@ -258,7 +301,11 @@ export const OpportunityActions: React.FC<OpportunityActionsProps> = ({
       ? [
           {
             label: "Edit Opportunity Details",
-            href: `/organisations/${opportunity.organizationId}/opportunities/${opportunity.id}?returnUrl=${encodeURIComponent(router.asPath)}`,
+            href: isPullManaged
+              ? undefined
+              : `/organisations/${opportunity.organizationId}/opportunities/${opportunity.id}?returnUrl=${encodeURIComponent(router.asPath)}`,
+            disabled: isPullManaged,
+            disabledTooltip: isPullManaged ? PULL_SYNC_TOOLTIP : undefined,
             icon: <FaEdit className="size-4" />,
           },
         ]
@@ -328,6 +375,8 @@ export const OpportunityActions: React.FC<OpportunityActionsProps> = ({
           {
             label: "Make Inactive",
             onClick: () => handleStatusUpdate(Status.Inactive),
+            disabled: isPullManaged,
+            disabledTooltip: isPullManaged ? PULL_SYNC_TOOLTIP : undefined,
             icon: <FaClock className="size-4" />,
           },
         ]
@@ -338,6 +387,8 @@ export const OpportunityActions: React.FC<OpportunityActionsProps> = ({
           {
             label: "Make Active",
             onClick: () => handleStatusUpdate(Status.Active),
+            disabled: isPullManaged,
+            disabledTooltip: isPullManaged ? PULL_SYNC_TOOLTIP : undefined,
             icon: <FaClock className="size-4" />,
           },
         ]
@@ -391,6 +442,18 @@ export const OpportunityActions: React.FC<OpportunityActionsProps> = ({
           {
             label: "Archive",
             onClick: () => handleStatusUpdate(Status.Deleted),
+            disabled:
+              isPullManaged &&
+              !(
+                isAdmin &&
+                (opportunity.status === "Active" ||
+                  opportunity.status === "Expired")
+              ),
+            disabledTooltip: isPullManaged
+              ? isAdmin
+                ? "Externally-managed opportunities can only be archived when Active or Expired."
+                : "Only admins can archive externally-managed opportunities."
+              : undefined,
             icon: <FaArchive className="size-4" />,
           },
         ]

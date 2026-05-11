@@ -1,10 +1,11 @@
 using Newtonsoft.Json;
 using Yoma.Core.Domain.Core;
+using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
 
 namespace Yoma.Core.Domain.Opportunity.Models
 {
-  public abstract class OpportunitySearchFilterBase : PaginationFilter
+  public abstract class OpportunitySearchFilterBase : PaginationFilter, IHashableObject
   {
     public List<Guid>? Types { get; set; }
 
@@ -67,5 +68,38 @@ namespace Yoma.Core.Domain.Opportunity.Models
     [JsonIgnore]
     internal List<FilterOrdering<Opportunity>>? OrderInstructions { get; set; }
         = [new() { OrderBy = e => e.DateCreated, SortOrder = FilterSortOrder.Descending }, new() { OrderBy = e => e.Id, SortOrder = FilterSortOrder.Ascending }]; //ensure deterministic sorting / consistent pagination results
+
+    public virtual void NormalizeForHashing()
+    {
+      SanitizeCollections();
+
+      Types = Types?.OrderBy(o => o).ToList();
+      Categories = Categories?.OrderBy(o => o).ToList();
+      Languages = Languages?.OrderBy(o => o).ToList();
+      Countries = Countries?.OrderBy(o => o).ToList();
+      Organizations = Organizations?.OrderBy(o => o).ToList();
+      EngagementTypes = EngagementTypes?.OrderBy(o => o).ToList();
+    }
+
+    public virtual void SanitizeCollections()
+    {
+      Types = Types?.Distinct().ToList();
+      if (Types?.Count == 0) Types = null;
+
+      Categories = Categories?.Distinct().ToList();
+      if (Categories?.Count == 0) Categories = null;
+
+      Languages = Languages?.Distinct().ToList();
+      if (Languages?.Count == 0) Languages = null;
+
+      Countries = Countries?.Distinct().ToList();
+      if (Countries?.Count == 0) Countries = null;
+
+      Organizations = Organizations?.Distinct().ToList();
+      if (Organizations?.Count == 0) Organizations = null;
+
+      EngagementTypes = EngagementTypes?.Distinct().ToList();
+      if (EngagementTypes?.Count == 0) EngagementTypes = null;
+    }
   }
 }

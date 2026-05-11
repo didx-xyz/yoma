@@ -1,8 +1,9 @@
 using Newtonsoft.Json;
+using Yoma.Core.Domain.Core.Interfaces;
 
 namespace Yoma.Core.Domain.Opportunity.Models
 {
-  public class OpportunitySearchFilterCommitmentInterval
+  public sealed class OpportunitySearchFilterCommitmentInterval : IHashableObject
   {
     /// <summary>
     /// List of Id's representing commitment interval criteria available for selection (dropdown)
@@ -22,9 +23,22 @@ namespace Yoma.Core.Domain.Opportunity.Models
     /// Internal list of parsed commitment interval items used during querying for the selected options.
     /// </summary>
     internal List<OpportunitySearchFilterCommitmentIntervalItem>? OptionsParsed { get; set; }
+
+    public void NormalizeForHashing()
+    {
+      SanitizeCollections();
+
+      Options = Options?.OrderBy(o => o, StringComparer.Ordinal).ToList();
+    }
+
+    public void SanitizeCollections()
+    {
+      Options = Options?.Distinct(StringComparer.Ordinal).ToList();
+      if (Options?.Count == 0) Options = null;
+    }
   }
 
-  public class OpportunitySearchFilterCommitmentIntervalItem
+  public sealed class OpportunitySearchFilterCommitmentIntervalItem
   {
     public Guid Id { get; set; }
 

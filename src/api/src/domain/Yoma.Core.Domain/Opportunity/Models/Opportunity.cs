@@ -3,6 +3,7 @@ using Yoma.Core.Domain.BlobProvider;
 using Yoma.Core.Domain.Entity;
 using Yoma.Core.Domain.Lookups.Models;
 using Yoma.Core.Domain.Opportunity.Extensions;
+using Yoma.Core.Domain.PartnerSync.Models;
 
 namespace Yoma.Core.Domain.Opportunity.Models
 {
@@ -118,10 +119,20 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
     public Core.EngagementTypeOption? EngagementType { get; set; }
 
+    /// <summary>
+    /// Indicates that the opportunity can be shared with external partners (push sync).
+    /// Yoma remains the source of truth and controls the opportunity.
+    /// Actual sharing depends on partner-specific sharing conditions.
+    /// </summary>
     public bool? ShareWithPartners { get; set; }
 
     public bool? Hidden { get; set; }
 
+    /// <summary>
+    /// Identifier assigned by an external partner for this opportunity when it is pushed from Yoma.
+    /// This value is stored to support subsequent synchronization operations such as updates or deletions
+    /// against the partner system. It represents the partner's reference to this Yoma opportunity.
+    /// </summary>
     [JsonIgnore]
     public string? ExternalId { get; set; }
 
@@ -146,6 +157,12 @@ namespace Yoma.Core.Domain.Opportunity.Models
     }
 
     public string? NonCompletableReason { get; private set; }
+
+    /// <summary>
+    /// Current partner synchronization state for the opportunity, when applicable.
+    /// A null value indicates that the opportunity is not currently synchronized with any partner.
+    /// </summary>
+    public SyncInfo? SyncedInfo { get; set; }
 
     public List<Lookups.OpportunityCategory>? Categories { get; set; }
 

@@ -130,13 +130,29 @@ BEGIN
     END LOOP;
 END $$ LANGUAGE plpgsql;
 
---Yoma (Youth Agency Marketplace) organization
+--Yoma (Youth Agency Marketplace) organization; Applies to local and development environments only
 INSERT INTO "Entity"."Organization"("Id", "Name", "NameHashValue", "WebsiteURL", "PrimaryContactName", "PrimaryContactEmail", "PrimaryContactPhone", "VATIN", "TaxNumber", "RegistrationNumber",
            "City", "CountryId", "StreetAddress", "Province", "PostalCode", "Tagline", "Biography", "StatusId", "CommentApproval", "DateStatusModified", "LogoId", "DateCreated", "CreatedByUserId", "DateModified", "ModifiedByUserId")
 VALUES(gen_random_uuid(), 'Yoma (Youth Agency Marketplace)', ENCODE(DIGEST('Yoma (Youth Agency Marketplace)', 'SHA256'), 'hex'), 'https://www.yoma.world/', 'Primary Contact', 'primarycontact@gmail.com', '+27125555555', 'GB123456789', '0123456789', '12345/28/14',
 		'My City', (SELECT "Id" FROM "Lookup"."Country" WHERE "CodeAlpha2" = 'ZA'), 'My Street Address 1000', 'My Province', '12345-1234', 'Tag Line', 'Biography',
 		(SELECT "Id" FROM "Entity"."OrganizationStatus" WHERE "Name" = 'Active'), 'Approved', (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'), NULL,
     (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'), (SELECT "Id" FROM "Entity"."User" WHERE "Email" = 'testorgadminuser@gmail.com'), (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'), (SELECT "Id" FROM "Entity"."User" WHERE "Email" = 'testorgadminuser@gmail.com'));
+
+-- Partner sync organizations (pull); Applies to local and development environments only; For stage and production, these partner sync organizations are created/configured by Yoma administrators and added to the API config.
+WITH partner_orgs("Id", "Name", "WebsiteURL", "CountryCodeAlpha2") AS (
+  VALUES
+    ('019df6f6-9422-76bb-b382-0e2c65c9006e'::uuid, 'Jobberman - Nigeria', 'https://www.jobberman.com', 'NG'),
+    ('019df6ff-428e-73b1-9fe7-11ca6fdad88b'::uuid, 'Jobberman - Ghana', 'https://www.jobberman.com.gh', 'GH'),
+    ('019e01cd-8ee7-757e-9945-67fec6a73e81'::uuid, 'Alison', 'https://alison.com', 'IE')
+)
+INSERT INTO "Entity"."Organization"("Id", "Name", "NameHashValue", "WebsiteURL", "PrimaryContactName", "PrimaryContactEmail", "PrimaryContactPhone", "VATIN", "TaxNumber", "RegistrationNumber",
+           "City", "CountryId", "StreetAddress", "Province", "PostalCode", "Tagline", "Biography", "StatusId", "CommentApproval", "DateStatusModified", "LogoId", "DateCreated", "CreatedByUserId", "DateModified", "ModifiedByUserId")
+SELECT o."Id", o."Name", ENCODE(DIGEST(o."Name", 'SHA256'), 'hex'), o."WebsiteURL", 'Primary Contact', 'primarycontact@gmail.com', '+27125555555', 'GB123456789', '0123456789', '12345/28/14',
+       'My City', (SELECT "Id" FROM "Lookup"."Country" WHERE "CodeAlpha2" = o."CountryCodeAlpha2"), 'My Street Address 1000', 'My Province', '12345-1234', 'Tag Line', 'Biography',
+       (SELECT "Id" FROM "Entity"."OrganizationStatus" WHERE "Name" = 'Active'), 'Approved', (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'), NULL,
+       (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'), (SELECT "Id" FROM "Entity"."User" WHERE "Email" = 'testorgadminuser@gmail.com'), (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'), (SELECT "Id" FROM "Entity"."User" WHERE "Email" = 'testorgadminuser@gmail.com')
+FROM partner_orgs o
+WHERE NOT EXISTS (SELECT 1 FROM "Entity"."Organization" existing WHERE existing."Id" = o."Id" OR existing."NameHashValue" = ENCODE(DIGEST(o."Name", 'SHA256'), 'hex'));
 
 --organization admins
 INSERT INTO "Entity"."OrganizationUsers"("Id", "OrganizationId", "UserId", "DateCreated")
