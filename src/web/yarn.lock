@@ -1454,25 +1454,25 @@
     style-mod "^4.1.0"
     w3c-keyname "^2.2.4"
 
-"@datadog/browser-core@7.0.0":
-  version "7.0.0"
-  resolved "https://registry.yarnpkg.com/@datadog/browser-core/-/browser-core-7.0.0.tgz#07d537b4461f5cf6774aa82c520e162e05736eb0"
-  integrity sha512-msymElyeqNhpiWbQhSo7Dr9YJneZu7L60NOEclW1JCpvscM0Fyj940kz6/GcOU/5Azt7PAWv4ZCBhHwnmf0DcQ==
+"@datadog/browser-core@7.1.0":
+  version "7.1.0"
+  resolved "https://registry.yarnpkg.com/@datadog/browser-core/-/browser-core-7.1.0.tgz#d4a54fdc4b754c47eaa55ecaa7d9885af2a21151"
+  integrity sha512-loR/1/ZpqczABeGHFW6Az4hgGYmWwUaA2ame8gwOa3W16BtXnk+67suzo+pbaiG5gNjMpwDIFpUAYQjGYcoxUg==
 
-"@datadog/browser-rum-core@7.0.0":
-  version "7.0.0"
-  resolved "https://registry.yarnpkg.com/@datadog/browser-rum-core/-/browser-rum-core-7.0.0.tgz#a0fe376a41db023f19995039f10baa8d626ec832"
-  integrity sha512-+WMly+KBAts9vmBRY1sVMzuG2iTrkxplb4H6U0QBNHMmf3ZEkXy+hbl6DT4WF1ieMogLNaiLmidz1eUOWSH/zQ==
+"@datadog/browser-rum-core@7.1.0":
+  version "7.1.0"
+  resolved "https://registry.yarnpkg.com/@datadog/browser-rum-core/-/browser-rum-core-7.1.0.tgz#7ff233e360229cfeedb75ff04f7b4e522a834dc9"
+  integrity sha512-VHg8tpHAiWmuwUW7icBjeLcek/uM7EbTCoBc017Vp2RNzkLfqIiXfpmdm+vilWO1mYbW2adVR2AF2CTHQhVcgQ==
   dependencies:
-    "@datadog/browser-core" "7.0.0"
+    "@datadog/browser-core" "7.1.0"
 
-"@datadog/browser-rum@^7.0.0":
-  version "7.0.0"
-  resolved "https://registry.yarnpkg.com/@datadog/browser-rum/-/browser-rum-7.0.0.tgz#8e9153d339d7d76df176c515afe78d80a3704f5a"
-  integrity sha512-f+pckXe4L47Fic/NbRIfg1hEwhfenP2Y2iBhqodgwTD1MVSQK9bk7c/LRFTWRStqZcZ3S8zAh+U9ULyf13ZDwA==
+"@datadog/browser-rum@^7.1.0":
+  version "7.1.0"
+  resolved "https://registry.yarnpkg.com/@datadog/browser-rum/-/browser-rum-7.1.0.tgz#bca730a1c3d84a2f317e279a878e69890e5d89ad"
+  integrity sha512-JCtA7NWgH1XUvwBSKdsgU7qIeKFR68QtQVqPBoaNhyTx8Q5Ftec5Mz7cAKIYI/wvF0fSpwcqjp0JI1g1morWkw==
   dependencies:
-    "@datadog/browser-core" "7.0.0"
-    "@datadog/browser-rum-core" "7.0.0"
+    "@datadog/browser-core" "7.1.0"
+    "@datadog/browser-rum-core" "7.1.0"
 
 "@discoveryjs/json-ext@0.5.7":
   version "0.5.7"
@@ -3056,17 +3056,17 @@
     postcss "^8.5.10"
     tailwindcss "4.3.0"
 
-"@tanstack/query-core@5.100.9":
-  version "5.100.9"
-  resolved "https://registry.yarnpkg.com/@tanstack/query-core/-/query-core-5.100.9.tgz#dcf44ef25cf42a4da229bcab1d8d33e80a740a99"
-  integrity sha512-SJSFw1S8+kQ0+knv/XGfrbocWoAlT7vDKsSImtLx3ZPQmEcR46hkDjLSvynSy25N8Ms4tIEini1FuBd5k7IscQ==
+"@tanstack/query-core@5.100.10":
+  version "5.100.10"
+  resolved "https://registry.yarnpkg.com/@tanstack/query-core/-/query-core-5.100.10.tgz#aeb34d301fd4ff9762e67dfa018adc33b7a18be4"
+  integrity sha512-8UR0yJR+GiQ40m3lPhUr0xbfAupe6GSQiksSBSa9SM2NjezFyxXCIA69/lz8cSoNKZLrw1/PktIyQBJcVeMi3w==
 
-"@tanstack/react-query@^5.100.9":
-  version "5.100.9"
-  resolved "https://registry.yarnpkg.com/@tanstack/react-query/-/react-query-5.100.9.tgz#0c701bf56f38b484602255a92d4c9e452a04807d"
-  integrity sha512-Oa44XkaI3kCNN6ME0KByU3xT3SEUNOMfZpHxL6+wFoTm+OeUFYHKdeYVe0aOXlRDm/f15sgLwEt2HDorIdW8+A==
+"@tanstack/react-query@^5.100.10":
+  version "5.100.10"
+  resolved "https://registry.yarnpkg.com/@tanstack/react-query/-/react-query-5.100.10.tgz#3bf1844efd76f5f68f9f39da2917fc4c6023e726"
+  integrity sha512-FLaZf2RCrA/Zgp4aiu5tG3TyasTRO7aZ99skxQpr3Hg/zXOhu6yq5FZCYQ/tRaJtM9ylnoK8tFK7PolXQadv6Q==
   dependencies:
-    "@tanstack/query-core" "5.100.9"
+    "@tanstack/query-core" "5.100.10"
 
 "@tybys/wasm-util@^0.10.1":
   version "0.10.2"
@@ -4009,14 +4009,9 @@ callsites@^3.0.0:
   resolved "https://registry.npmjs.org/callsites/-/callsites-3.1.0.tgz"
   integrity sha512-P8BjAsXvZS+VIDUI11hHCQEv74YT67YUi5JJFNWIqL235sBmjX4+qx9Muvls5ivyNENctx46xQLQ3aTuE7ssaQ==
 
-caniuse-lite@^1.0.30001579, caniuse-lite@^1.0.30001741, caniuse-lite@^1.0.30001782:
+caniuse-lite@^1.0.30001579, caniuse-lite@^1.0.30001741, caniuse-lite@^1.0.30001782, caniuse-lite@^1.0.30001792:
   version "1.0.30001792"
   resolved "https://registry.npmjs.org/caniuse-lite/-/caniuse-lite-1.0.30001792.tgz"
-  integrity sha512-hVLMUZFgR4JJ6ACt1uEESvQN1/dBVqPAKY0hgrV70eN3391K6juAfTjKZLKvOMsx8PxA7gsY1/tLMMTcfFLLpw==
-
-caniuse-lite@^1.0.30001792:
-  version "1.0.30001792"
-  resolved "https://registry.yarnpkg.com/caniuse-lite/-/caniuse-lite-1.0.30001792.tgz#ca8bb9be244835a335e2018272ce7223691873c5"
   integrity sha512-hVLMUZFgR4JJ6ACt1uEESvQN1/dBVqPAKY0hgrV70eN3391K6juAfTjKZLKvOMsx8PxA7gsY1/tLMMTcfFLLpw==
 
 ccount@^2.0.0:
@@ -6201,10 +6196,10 @@ lib0@^0.2.99:
   dependencies:
     isomorphic.js "^0.2.4"
 
-libphonenumber-js@^1.13.0:
-  version "1.13.0"
-  resolved "https://registry.yarnpkg.com/libphonenumber-js/-/libphonenumber-js-1.13.0.tgz#4050da58553dea64f538bb5b832cfa56efde060c"
-  integrity sha512-N12qmdu0BM1wVNkMKYOoJR4fTOZDblrKNsOqGbKoUZrYsYLX2zx1O5X+vhK0WJPBU/+/kh9tCr8x0a7t1puGWg==
+libphonenumber-js@^1.13.1:
+  version "1.13.1"
+  resolved "https://registry.yarnpkg.com/libphonenumber-js/-/libphonenumber-js-1.13.1.tgz#607baae726e1ab5c6df1425bb886601cef44f500"
+  integrity sha512-GEw0GLL7YUUA6nv21IsCvVjtI5Ejn84sjbdfQ9KxdbqEVOk1PZh7xejn01EEiniKw+dBeCfim+8MGeuvVuE2BA==
 
 lightningcss-android-arm64@1.32.0:
   version "1.32.0"
@@ -8796,7 +8791,7 @@ webpack-sources@^3.3.4:
   resolved "https://registry.yarnpkg.com/webpack-sources/-/webpack-sources-3.4.1.tgz#009d110999ebd9fb3a6fa8d32eec6f84d940e65d"
   integrity sha512-eACpxRN02yaawnt+uUNIF7Qje6A9zArxBbcAJjK1PK3S9Ycg5jIuJ8pW4q8EMnwNZCEGltcjkRx1QzOxOkKD8A==
 
-webpack@^5.99.0:
+webpack@^5.106.2:
   version "5.106.2"
   resolved "https://registry.yarnpkg.com/webpack/-/webpack-5.106.2.tgz#ca8174b4fd80f055cc5a45fcc5577d6db76c8ac5"
   integrity sha512-wGN3qcrBQIFmQ/c0AiOAQBvrZ5lmY8vbbMv4Mxfgzqd/B6+9pXtLo73WuS1dSGXM5QYY3hZnIbvx+K1xxe6FyA==
