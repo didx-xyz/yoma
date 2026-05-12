@@ -384,42 +384,22 @@ namespace Yoma.Core.Domain.Entity.Services
 
       if (!result.PhotoId.HasValue) return result;
 
-      var currentPhotoId = result.PhotoId.Value;
-      IFormFile? fileExisting = null;
-      var photoDeleted = false;
-
-      try
+      await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
-        await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
-        {
-          using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
+        using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
 
-          fileExisting = await _blobService.Download(currentPhotoId);
+        result.PhotoId = null;
+        result.PhotoStorageType = null;
+        result.PhotoKey = null;
 
-          result.PhotoId = null;
-          result.PhotoStorageType = null;
-          result.PhotoKey = null;
+        result = await _userRepository.Update(result);
 
-          result = await _userRepository.Update(result);
-
-          await _blobService.Delete(currentPhotoId);
-          photoDeleted = true;
-
-          scope.Complete();
-        });
-      }
-      catch //roll back
-      {
-        if (photoDeleted)
-        {
-          if (fileExisting == null)
-            throw new InvalidOperationException("Photo file expected");
-
-          await _blobService.Create(currentPhotoId, fileExisting);
-        }
-
-        throw;
-      }
+        // Do not delete or archive the current photo.
+        // Archive links a previous blob to a replacement blob via ParentId, which only applies when replacing a photo.
+        // For delete there is no replacement blob, so we only remove the active user reference and leave the blob untouched.
+        // This preserves the blob in case it is referenced historically or by future credential-related flows.
+        scope.Complete();
+      });
 
       result.PhotoURL = null;
 
