@@ -36,6 +36,7 @@ import {
   useReferralLinkUsagesAdminQuery,
   useReferralProgramByIdQuery,
 } from "~/hooks/useReferralProgramMutations";
+import { UserInitialsAvatar } from "~/components/User/UserInitialsAvatar";
 import { DATE_FORMAT_HUMAN, PAGE_SIZE, THEME_BLUE } from "~/lib/constants";
 import { getSafeUrl } from "~/lib/utils";
 import { type NextPageWithLayout } from "~/pages/_app";
@@ -425,6 +426,11 @@ const ReferralLinkUsage: NextPageWithLayout<{
                       className="shadow-custom flex flex-col justify-between gap-4 rounded-lg bg-white p-4"
                     >
                       <div className="flex flex-row items-center gap-2">
+                        <UserInitialsAvatar
+                          displayName={usage.userDisplayName}
+                          size={32}
+                          alt={usage.userDisplayName}
+                        />
                         <div className="flex-grow">
                           <Link
                             href={`/admin/referrals/${usage.programId}/links/${usage.linkId}/usage/${usage.id}/info${
@@ -571,27 +577,34 @@ const ReferralLinkUsage: NextPageWithLayout<{
                     {searchResults.items.map((usage) => (
                       <tr key={`md_${usage.id}`}>
                         <td className="border-gray-light border-t-2 !align-top">
-                          <div className="flex flex-col">
-                            <Link
-                              href={`/admin/referrals/${usage.programId}/links/${usage.linkId}/usage/${usage.id}/info${
-                                returnUrl
-                                  ? `?returnUrl=${encodeURIComponent(getSafeUrl(router.asPath, ""))}`
-                                  : ""
-                              }`}
-                              className="block max-w-[200px] truncate font-semibold text-blue-600 hover:underline"
-                            >
-                              {usage.userDisplayName}
-                            </Link>
-                            {usage.userEmail && (
-                              <p className="text-gray-dark text-sm">
-                                {usage.userEmail}
-                              </p>
-                            )}
-                            {usage.userPhoneNumber && (
-                              <p className="text-gray-dark text-sm">
-                                {usage.userPhoneNumber}
-                              </p>
-                            )}
+                          <div className="flex items-start gap-2">
+                            <UserInitialsAvatar
+                              displayName={usage.userDisplayName}
+                              size={32}
+                              alt={usage.userDisplayName}
+                            />
+                            <div className="flex flex-col">
+                              <Link
+                                href={`/admin/referrals/${usage.programId}/links/${usage.linkId}/usage/${usage.id}/info${
+                                  returnUrl
+                                    ? `?returnUrl=${encodeURIComponent(getSafeUrl(router.asPath, ""))}`
+                                    : ""
+                                }`}
+                                className="block max-w-[200px] truncate font-semibold text-blue-600 hover:underline"
+                              >
+                                {usage.userDisplayName}
+                              </Link>
+                              {usage.userEmail && (
+                                <p className="text-gray-dark text-sm">
+                                  {usage.userEmail}
+                                </p>
+                              )}
+                              {usage.userPhoneNumber && (
+                                <p className="text-gray-dark text-sm">
+                                  {usage.userPhoneNumber}
+                                </p>
+                              )}
+                            </div>
                           </div>
                         </td>
                         <td className="border-gray-light border-t-2 !align-top">

@@ -143,7 +143,7 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
   const firstActionableRefereeReferralUrl = useAtomValue(
     firstActionableRefereeReferralUrlAtom,
   );
-  const { data: session } = useSession();
+  const { data: session, status: sessionStatus } = useSession();
   const userProfile = useAtomValue(userProfileAtom);
   const [referralsEnabled, setReferralsEnabled] = useState(false);
   const [isDrawerOpen, setDrawerOpen] = useState(false);
@@ -685,12 +685,17 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
               classNameSelect="text-md mobile-select !text-current"
               tabIndex={isDrawerOpen ? -1 : 0}
             />
-            {!session && (
+            {sessionStatus === "loading" && (
+              <div className="bg-theme flex h-full items-center px-2 md:px-3">
+                <div style={{ width: 44, height: 44 }} />
+              </div>
+            )}
+            {sessionStatus !== "loading" && !session && (
               <div className="bg-theme flex h-full items-center px-2 hover:bg-black/10 md:px-3">
                 <SignInButton tabIndex={isDrawerOpen ? -1 : 0} />
               </div>
             )}
-            {session && (
+            {sessionStatus !== "loading" && session && (
               <div className="bg-theme flex h-full items-center px-2 hover:bg-black/10 md:px-3">
                 <UserMenu />
               </div>
