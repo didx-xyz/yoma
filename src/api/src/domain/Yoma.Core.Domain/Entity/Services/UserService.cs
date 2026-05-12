@@ -378,6 +378,54 @@ namespace Yoma.Core.Domain.Entity.Services
       return result;
     }
 
+    public async Task<User> DeletePhoto(string username)
+    {
+      var result = GetByUsername(username, true, true);
+
+      if (!result.PhotoId.HasValue) return result;
+
+      var currentPhotoId = result.PhotoId.Value;
+      IFormFile? fileExisting = null;
+      var photoDeleted = false;
+
+      try
+      {
+        await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+        {
+          using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
+
+          fileExisting = await _blobService.Download(currentPhotoId);
+
+          result.PhotoId = null;
+          result.PhotoStorageType = null;
+          result.PhotoKey = null;
+
+          result = await _userRepository.Update(result);
+
+          await _blobService.Delete(currentPhotoId);
+          photoDeleted = true;
+
+          scope.Complete();
+        });
+      }
+      catch //roll back
+      {
+        if (photoDeleted)
+        {
+          if (fileExisting == null)
+            throw new InvalidOperationException("Photo file expected");
+
+          await _blobService.Create(currentPhotoId, fileExisting);
+        }
+
+        throw;
+      }
+
+      result.PhotoURL = null;
+
+      return result;
+    }
+
     public async Task<User> UpdateSettings(string username, List<string>? roles, SettingsRequest request)
     {
       ArgumentNullException.ThrowIfNull(request, nameof(request));

@@ -116,6 +116,13 @@ namespace Yoma.Core.Domain.Entity.Services
       return await ToProfile(user);
     }
 
+    public async Task<UserProfile> DeletePhoto()
+    {
+      var username = HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false);
+      var user = await _userService.DeletePhoto(username);
+      return await ToProfile(user);
+    }
+
     public async Task<UserProfile> UpdateSettings(SettingsRequest settings)
     {
       var username = HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false);
