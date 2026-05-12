@@ -156,11 +156,11 @@ const RefereeDashboard: NextPageWithLayout = () => {
     "there";
   const shouldShowRefereeModal = Boolean(
     sessionStatus === "authenticated" &&
-      !hasClosedWelcomeModalThisMount &&
-      !hasDismissedWelcomeModal &&
-      usage &&
-      program &&
-      !hasPageError,
+    !hasClosedWelcomeModalThisMount &&
+    !hasDismissedWelcomeModal &&
+    usage &&
+    program &&
+    !hasPageError,
   );
 
   const requiresProofOfPersonhood =

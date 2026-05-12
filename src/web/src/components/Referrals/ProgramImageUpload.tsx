@@ -1,6 +1,6 @@
 import Image from "next/image";
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import AvatarEditor from "react-avatar-editor";
+import AvatarEditor, { type AvatarEditorRef } from "react-avatar-editor";
 import { FaPencilAlt, FaTimes } from "react-icons/fa";
 import { FiImage } from "react-icons/fi";
 import { IoMdClose } from "react-icons/io";
@@ -27,7 +27,7 @@ const ProgramImageUpload: React.FC<ProgramImageUploadProps> = ({
   const [croppedImage, setCroppedImage] = useState<string | null>(null);
   const [computedImageUrl, setComputedImageUrl] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const editorRef = useRef<AvatarEditor>(null);
+  const editorRef = useRef<AvatarEditorRef>(null);
   const [cropModalVisible, setCropModalVisible] = useState(false);
 
   useEffect(() => {

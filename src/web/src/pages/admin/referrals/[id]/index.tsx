@@ -18,6 +18,7 @@ import {
   useFieldArray,
   useForm,
   useWatch,
+  type Control,
   type FieldValues,
 } from "react-hook-form";
 import { FaExclamationTriangle } from "react-icons/fa";
@@ -2767,7 +2768,7 @@ const ReferralProgramForm: NextPageWithLayout = () => {
 
                     {pathwayRequiredWatch ? (
                       <AdminProgramPathwayEditComponent
-                        control={controlStep5}
+                        control={controlStep5 as Control<any>}
                         opportunityDataMap={opportunityDataMap}
                         programCountries={
                           Array.isArray(formData.countries)

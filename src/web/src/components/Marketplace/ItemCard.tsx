@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { shimmer, toBase64 } from "src/lib/image";
+import { shimmer, toBase64 } from "~/lib/image";
 import iconZlto from "public/images/icon-zlto.svg";
 import Link from "next/link";
 import { useCallback } from "react";

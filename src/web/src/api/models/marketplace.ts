@@ -176,11 +176,9 @@ export interface StoreAccessControlRuleRequestBase {
   opportunityOption: StoreAccessControlRuleOpportunityCondition | null | string; //NB: string for API compatibility
 }
 
-export interface StoreAccessControlRuleRequestCreate
-  extends StoreAccessControlRuleRequestBase {}
+export interface StoreAccessControlRuleRequestCreate extends StoreAccessControlRuleRequestBase {}
 
-export interface StoreAccessControlRuleRequestUpdate
-  extends StoreAccessControlRuleRequestBase {
+export interface StoreAccessControlRuleRequestUpdate extends StoreAccessControlRuleRequestBase {
   id: string;
 }
 

@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import AvatarEditor from "react-avatar-editor";
+import AvatarEditor, { type AvatarEditorRef } from "react-avatar-editor";
 import { IoMdClose } from "react-icons/io";
 import { FaPencilAlt, FaTimes } from "react-icons/fa";
 import { AvatarImage } from "~/components/AvatarImage";
@@ -26,7 +26,7 @@ const AvatarUpload: React.FC<AvatarUploadProps> = ({
   const [croppedImage, setCroppedImage] = useState<string | null>(null);
   const [computedImageUrl, setComputedImageUrl] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const editorRef = useRef<AvatarEditor>(null);
+  const editorRef = useRef<AvatarEditorRef>(null);
   const [cropModalVisible, setCropModalVisible] = useState(false);
 
   // Compute display image URL based on croppedImage or existingImage:
