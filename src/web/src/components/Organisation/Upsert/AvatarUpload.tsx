@@ -1,16 +1,17 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import AvatarEditor, { type AvatarEditorRef } from "react-avatar-editor";
 import { IoMdClose } from "react-icons/io";
-import { FaPencilAlt, FaTimes } from "react-icons/fa";
-import { AvatarImage } from "~/components/AvatarImage";
+import { FaPencilAlt, FaTimes, FaUpload } from "react-icons/fa";
 import CustomModal from "~/components/Common/CustomModal";
-import styles from "./AvatarUpload.module.css";
+import { AvatarImage } from "~/components/AvatarImage";
+import { NoImage } from "~/components/Common/NoImage";
 
 const Editor = AvatarEditor as any;
 
 interface AvatarUploadProps {
   onUploadComplete?: (data: any[]) => void;
   onRemoveImageExisting?: () => void;
+  onRemovePicture?: () => void;
   showExisting: boolean;
   existingImage?: string | File | null;
 }
@@ -18,6 +19,7 @@ interface AvatarUploadProps {
 const AvatarUpload: React.FC<AvatarUploadProps> = ({
   onUploadComplete,
   onRemoveImageExisting,
+  onRemovePicture,
   showExisting,
   existingImage,
 }) => {
@@ -33,7 +35,7 @@ const AvatarUpload: React.FC<AvatarUploadProps> = ({
   useEffect(() => {
     if (croppedImage) {
       setComputedImageUrl(croppedImage);
-    } else if (existingImage) {
+    } else if (showExisting && existingImage) {
       if (typeof existingImage === "string") {
         setComputedImageUrl(existingImage);
       } else {
@@ -45,7 +47,7 @@ const AvatarUpload: React.FC<AvatarUploadProps> = ({
     } else {
       setComputedImageUrl(null);
     }
-  }, [croppedImage, existingImage]);
+  }, [croppedImage, existingImage, showExisting]);
 
   const handleImageUpload = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -54,6 +56,7 @@ const AvatarUpload: React.FC<AvatarUploadProps> = ({
         const reader = new FileReader();
         reader.onload = () => {
           setSelectedImage(reader.result as string);
+          setZoom(1);
         };
         reader.readAsDataURL(file);
         setCropModalVisible(true);
@@ -100,7 +103,7 @@ const AvatarUpload: React.FC<AvatarUploadProps> = ({
         onRequestClose={() => {
           setCropModalVisible(false);
         }}
-        className={`md:max-h-[680px] md:w-[700px]`}
+        className={`md:max-h-[580px] md:w-[480px]`}
       >
         <div className="flex h-full flex-col gap-2 overflow-y-auto">
           <div className="bg-theme flex flex-row items-center p-4 shadow-lg">
@@ -114,7 +117,7 @@ const AvatarUpload: React.FC<AvatarUploadProps> = ({
             </button>
           </div>
           {selectedImage && (
-            <div className="my-12 flex flex-col items-center gap-6">
+            <div className="my-4 flex flex-col items-center gap-2">
               <Editor
                 ref={editorRef}
                 image={selectedImage}
@@ -169,52 +172,82 @@ const AvatarUpload: React.FC<AvatarUploadProps> = ({
           accept="image/*"
           onChange={handleImageUpload}
           ref={inputRef}
-          className={styles.upload}
+          className="hidden"
         />
+        <button
+          type="button"
+          className="btn btn-sm btn-outline border-gray text-gray-dark hover:bg-gray-light max-w-40 normal-case"
+          onClick={() => inputRef.current?.click()}
+        >
+          <FaUpload className="h-3 w-3" />
+          Choose picture
+        </button>
       </div>
 
       {/* LOGO PREVIEW */}
       {showExisting ? (
-        <div className="mt-4 flex w-full justify-center rounded-lg bg-white py-8">
-          <AvatarImage
-            icon={computedImageUrl}
-            alt="Existing Avatar"
-            size={150}
-          />
+        <div className="mt-4 flex w-full flex-col items-center gap-3 rounded-lg bg-white py-8">
+          {computedImageUrl ? (
+            <AvatarImage
+              icon={computedImageUrl}
+              alt="Existing Avatar"
+              size={150}
+            />
+          ) : (
+            <div className="h-37.5 w-37.5 overflow-hidden rounded-full">
+              <NoImage />
+            </div>
+          )}
+          {computedImageUrl && onRemovePicture && (
+            <button
+              type="button"
+              className="btn btn-sm btn-outline border-gray text-gray-dark hover:bg-gray-light normal-case"
+              onClick={() => {
+                onRemovePicture();
+                setComputedImageUrl(null);
+                if (inputRef.current) inputRef.current.value = "";
+                setSelectedImage(null);
+                setCroppedImage(null);
+              }}
+            >
+              <FaTimes className="h-3 w-3" />
+              Remove
+            </button>
+          )}
         </div>
       ) : (
-        <div className="mt-4 flex w-full justify-center rounded-lg bg-white py-8">
-          <div className="indicator">
-            {croppedImage && (
-              <>
-                <button
-                  className="filepond--file-action-button filepond--action-revert-item-processing indicator-item bg-secondary tooltip tooltip-top !z-10 flex size-6 !cursor-pointer items-center justify-center rounded-full text-white"
-                  type="button"
-                  data-align="right"
-                  data-tip="Edit crop"
-                  style={{ right: "1.7rem" }}
-                  onClick={() => setCropModalVisible(true)}
-                >
-                  <FaPencilAlt className="h-3 w-3" />
-                </button>
-                <button
-                  className="filepond--file-action-button filepond--action-remove-item indicator-item bg-error tooltip tooltip-top !z-10 flex size-6 !cursor-pointer items-center justify-center rounded-full text-white"
-                  type="button"
-                  data-align="left"
-                  data-tip="Remove image"
-                  onClick={clearFile}
-                >
-                  <FaTimes className="h-4 w-4" />
-                </button>
-              </>
-            )}
-
+        <div className="mt-4 flex w-full flex-col items-center gap-3 rounded-lg bg-white py-8">
+          {computedImageUrl ? (
             <AvatarImage
               icon={computedImageUrl}
               alt="Cropped Avatar"
               size={150}
             />
-          </div>
+          ) : (
+            <div className="h-37.5 w-37.5 overflow-hidden rounded-full">
+              <NoImage />
+            </div>
+          )}
+          {croppedImage && (
+            <div className="flex gap-2">
+              <button
+                type="button"
+                className="btn btn-sm btn-outline border-gray text-gray-dark hover:bg-gray-light normal-case"
+                onClick={() => setCropModalVisible(true)}
+              >
+                <FaPencilAlt className="h-3 w-3" />
+                Edit
+              </button>
+              <button
+                type="button"
+                className="btn btn-sm btn-outline border-gray text-gray-dark hover:bg-gray-light normal-case"
+                onClick={clearFile}
+              >
+                <FaTimes className="h-3 w-3" />
+                Remove
+              </button>
+            </div>
+          )}
         </div>
       )}
     </fieldset>

@@ -4,6 +4,7 @@ import React from "react";
 import iconClock from "public/images/icon-clock.svg";
 import { type Program, type ProgramInfo } from "~/api/models/referrals";
 import ZltoRewardBadge from "../Opportunity/Badges/ZltoRewardBadge";
+import { NoImage } from "~/components/Common/NoImage";
 
 interface ProgramCardProps {
   data: ProgramInfo | Program;
@@ -37,7 +38,7 @@ export const ProgramCard: React.FC<ProgramCardProps> = ({
               className="object-cover"
             />
           ) : (
-            <div className="bg-orange h-full w-full opacity-60"></div>
+            <NoImage />
           )}
         </div>
 

@@ -3,6 +3,7 @@ import axios from "axios";
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
 import Head from "next/head";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useCallback, useMemo, type ReactElement } from "react";
@@ -21,7 +22,7 @@ import {
 } from "~/api/models/referrals";
 import { getCountries } from "~/api/services/lookups";
 import CustomSlider from "~/components/Carousel/CustomSlider";
-import { SquareImage } from "~/components/Common/SquareImage";
+import { NoImage } from "~/components/Common/NoImage";
 import MainLayout from "~/components/Layout/Main";
 import NoRowsMessage from "~/components/NoRowsMessage";
 import { PageBackground } from "~/components/PageBackground";
@@ -444,12 +445,29 @@ const ReferralPrograms: NextPageWithLayout<{
                     >
                       <div className="flex flex-row items-center gap-2 pb-2">
                         {/* Program Image */}
-                        <SquareImage
-                          imageURL={program.imageURL}
-                          name={program.name}
-                          size={48}
-                          className="shrink-0 border border-gray-200 bg-white"
-                        />
+                        {program.imageURL ? (
+                          <Image
+                            src={program.imageURL}
+                            alt={program.name}
+                            width={48}
+                            height={48}
+                            className="shrink-0 rounded-lg border border-gray-200 bg-white object-cover shadow-md"
+                            style={{
+                              width: "48px",
+                              height: "48px",
+                              minWidth: "48px",
+                              minHeight: "48px",
+                            }}
+                          />
+                        ) : (
+                          <div
+                            className="shrink-0 overflow-hidden rounded-lg border border-gray-200 shadow-md"
+                            style={{ width: "48px", height: "48px" }}
+                          >
+                            <NoImage iconOnly />
+                          </div>
+                        )}
+
                         <div className="flex min-w-0 flex-1 flex-col">
                           <div className="flex min-w-0 items-center gap-2">
                             <Link
@@ -675,12 +693,28 @@ const ReferralPrograms: NextPageWithLayout<{
                               )}`}`}
                               className="flex justify-center"
                             >
-                              <SquareImage
-                                imageURL={program.imageURL}
-                                name={program.name}
-                                size={60}
-                                className="bg-white"
-                              />
+                              {program.imageURL ? (
+                                <Image
+                                  src={program.imageURL}
+                                  alt={program.name}
+                                  width={60}
+                                  height={60}
+                                  className="rounded-lg bg-white object-cover shadow-md"
+                                  style={{
+                                    width: "60px",
+                                    height: "60px",
+                                    minWidth: "60px",
+                                    minHeight: "60px",
+                                  }}
+                                />
+                              ) : (
+                                <div
+                                  className="overflow-hidden rounded-lg bg-white shadow-md"
+                                  style={{ width: "60px", height: "60px" }}
+                                >
+                                  <NoImage iconOnly />
+                                </div>
+                              )}
                             </Link>
 
                             <div className="flex flex-col">

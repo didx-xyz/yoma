@@ -14,7 +14,7 @@ import Moment from "react-moment";
 import type { MyOpportunityInfo } from "~/api/models/myOpportunity";
 import { DATE_FORMAT_HUMAN } from "~/lib/constants";
 import { fetchClientEnv } from "~/lib/utils";
-import { AvatarImage } from "../AvatarImage";
+import { UserInitialsAvatar } from "../User/UserInitialsAvatar";
 
 interface InputProps {
   [id: string]: any;
@@ -119,8 +119,9 @@ export const OpportunityCompletionRead: React.FC<InputProps> = ({
           </p>
         </div>
         <div className="flex flex-col items-center justify-center gap-4">
-          <AvatarImage
-            icon={data?.userPhotoURL ?? null}
+          <UserInitialsAvatar
+            displayName={data?.userDisplayName}
+            photoURL={data?.userPhotoURL ?? null}
             alt="Icon User"
             size={60}
           />

@@ -1,9 +1,9 @@
 import Image from "next/image";
 import { type ReactNode } from "react";
-import { FiImage } from "react-icons/fi";
 import iconClock from "public/images/icon-clock.svg";
 import ZltoRewardBadge from "~/components/Opportunity/Badges/ZltoRewardBadge";
 import { ReferralTapCard } from "~/components/Referrals/ReferralTapCard";
+import { NoImage } from "~/components/Common/NoImage";
 
 export const ReferralProgramSlideCard: React.FC<{
   title: string;
@@ -65,12 +65,7 @@ export const ReferralProgramSlideCard: React.FC<{
             draggable={false}
           />
         ) : (
-          <div className="from-gray-light to-gray flex h-full w-full items-center justify-center bg-gradient-to-br">
-            <span className="text-gray-dark inline-flex items-center gap-1.5 rounded-full border border-white/70 bg-white/80 px-3 py-1 text-xs font-semibold tracking-wide uppercase">
-              <FiImage className="h-3.5 w-3.5" aria-hidden="true" />
-              No image
-            </span>
-          </div>
+          <NoImage />
         )}
       </div>
 

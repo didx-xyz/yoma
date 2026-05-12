@@ -37,6 +37,10 @@ export const patchPhoto = async (file: any): Promise<UserProfile> => {
   return data;
 };
 
+export const deletePhoto = async (): Promise<void> => {
+  await (await ApiClient).delete("/user/photo");
+};
+
 export const getSettings = async (
   context?: GetServerSidePropsContext,
 ): Promise<Settings> => {
