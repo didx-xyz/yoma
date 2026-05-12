@@ -1,16 +1,14 @@
-using System.Net;
 using System.Text.Json;
 using FluentValidation;
 using Flurl;
 using Flurl.Http;
 using Microsoft.Extensions.Logging;
-using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Lookups.Interfaces;
-using Yoma.Core.Domain.Opportunity.Models;
 using Yoma.Core.Domain.Opportunity.Interfaces.Lookups;
+using Yoma.Core.Domain.Opportunity.Models;
 using Yoma.Core.Domain.PartnerSync.Interfaces.Provider;
 using Yoma.Core.Domain.PartnerSync.Models;
 using Yoma.Core.Domain.PartnerSync.Validators;
@@ -40,7 +38,9 @@ namespace Yoma.Core.Infrastructure.Alison.Client
     private const string QueryParameter_Page = "page";
     private const string QueryParameter_PerPage = "per_page";
     private const string Header_Authorization = "Authorization";
-    private const string BearerScheme = "Bearer";
+    private const string Header_Authorization_Value_Prefix = "Bearer";
+
+    private static OAuthResponse _accessToken = null!;
 
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
     {
@@ -59,7 +59,8 @@ namespace Yoma.Core.Infrastructure.Alison.Client
     #endregion
 
     #region Constructor
-    public AlisonClient(ILogger<AlisonClient> logger,
+    public AlisonClient(
+      ILogger<AlisonClient> logger,
       IEnvironmentProvider environmentProvider,
       AppSettings appSettings,
       AlisonOptions options,
@@ -110,20 +111,17 @@ namespace Yoma.Core.Infrastructure.Alison.Client
         if (_logger.IsEnabled(LogLevel.Debug))
           _logger.LogDebug("Mapped Alison embedded sample payload to temporary sync result with '{count}' opportunities", items.Count);
 
-        var result = new SyncResultPull<Opportunity>
+        return new SyncResultPull<Opportunity>
         {
           TotalCount = response.Total,
           Items = items
         };
-
-        return result;
       }
 
       if (_logger.IsEnabled(LogLevel.Debug))
-        _logger.LogDebug("Alison live API path reached for environment '{environment}'. Acquiring access token and requesting courses", _environmentProvider.Environment);
+        _logger.LogDebug("Alison live API path reached for environment '{environment}'. Requesting courses", _environmentProvider.Environment);
 
-      var token = await GetAccessToken();
-      var responseLive = await GetCourses(filter, token);
+      var responseLive = await GetCourses(filter);
 
       if (_logger.IsEnabled(LogLevel.Debug))
         _logger.LogDebug("Loaded Alison live payload with page '{page}', perPage '{perPage}', total '{total}' and item count '{count}'", responseLive.Page, responseLive.PerPage, responseLive.Total, responseLive.Data.Count);
@@ -144,14 +142,26 @@ namespace Yoma.Core.Infrastructure.Alison.Client
     #endregion
 
     #region Private Members
-    private async Task<AlisonToken> GetAccessToken()
+    private async Task<KeyValuePair<string, string>> GetAuthHeader()
     {
-      var request = new AlisonAccessTokenRequest
+      if (_accessToken != null && _accessToken.DateExpire > DateTimeOffset.UtcNow)
+        return new KeyValuePair<string, string>(Header_Authorization, $"{Header_Authorization_Value_Prefix} {_accessToken.Access_token}");
+
+      _accessToken = await GetAccessToken();
+
+      return new KeyValuePair<string, string>(Header_Authorization, $"{Header_Authorization_Value_Prefix} {_accessToken.Access_token}");
+    }
+
+    private async Task<OAuthResponse> GetAccessToken()
+    {
+      ValidateAuthOptions();
+
+      var data = new Dictionary<string, string>
       {
-        ClientId = _options.ClientId,
-        ClientSecret = _options.ClientSecret,
-        OrganizationId = _options.OrganizationId,
-        OrganizationKey = _options.OrganizationKey
+        { "client_id", _options.ClientId },
+        { "client_secret", _options.ClientSecret },
+        { "organization_id", _options.OrganizationId },
+        { "organization_key", _options.OrganizationKey }
       };
 
       if (_logger.IsEnabled(LogLevel.Debug))
@@ -159,85 +169,38 @@ namespace Yoma.Core.Infrastructure.Alison.Client
 
       var response = await _options.BaseUrl
         .AppendPathSegment(_options.AccessTokenPath)
-        .PostJsonAsync(request)
+        .PostUrlEncodedAsync(data)
         .EnsureSuccessStatusCodeAsync()
-        .ReceiveJson<AlisonAccessTokenResponse>();
+        .ReceiveJson<OAuthResponse>();
 
-      if (string.IsNullOrWhiteSpace(response.AccessToken))
+      if (string.IsNullOrWhiteSpace(response.Access_token))
         throw new InvalidOperationException("Alison access token response did not contain an access token");
 
-      var token = AlisonToken.Create(response.AccessToken, response.RefreshToken, response.TokenType, response.ExpiresIn);
-
       if (_logger.IsEnabled(LogLevel.Debug))
-        _logger.LogDebug("Successfully acquired Alison access token with token type '{tokenType}' and refresh token available '{refreshTokenAvailable}'", token.TokenType, !string.IsNullOrWhiteSpace(token.RefreshToken));
+        _logger.LogDebug("Successfully acquired Alison access token with token type '{tokenType}'", response.Token_type);
 
-      return token;
+      return response;
     }
 
-    private async Task<AlisonPagedResponse<AlisonCourse>> GetCourses(SyncFilterPull filter, AlisonToken token)
+    private async Task<AlisonPagedResponse<AlisonCourse>> GetCourses(SyncFilterPull filter)
     {
-      ArgumentNullException.ThrowIfNull(token);
+      var request = await CreateCoursesRequest(filter);
 
-      var request = CreateCoursesRequest(filter, token.AccessToken);
-
-      try
-      {
-        return await request
-          .GetAsync()
-          .EnsureSuccessStatusCodeAsync()
-          .ReceiveJson<AlisonPagedResponse<AlisonCourse>>();
-      }
-      catch (HttpClientException ex) when (TokenRefreshRequired(ex.StatusCode) && !string.IsNullOrWhiteSpace(token.RefreshToken))
-      {
-        if (_logger.IsEnabled(LogLevel.Warning))
-          _logger.LogWarning("Alison course pull returned '{statusCode}'. Attempting refresh-token flow before retrying", ex.StatusCode);
-
-        var refreshedToken = await RefreshAccessToken(token.RefreshToken!);
-
-        return await CreateCoursesRequest(filter, refreshedToken.AccessToken)
-          .GetAsync()
-          .EnsureSuccessStatusCodeAsync()
-          .ReceiveJson<AlisonPagedResponse<AlisonCourse>>();
-      }
-    }
-
-    private async Task<AlisonToken> RefreshAccessToken(string refreshToken)
-    {
-      ArgumentException.ThrowIfNullOrWhiteSpace(refreshToken);
-
-      var request = new AlisonRefreshTokenRequest
-      {
-        ClientId = _options.ClientId,
-        ClientSecret = _options.ClientSecret,
-        OrganizationId = _options.OrganizationId,
-        OrganizationKey = _options.OrganizationKey,
-        RefreshToken = refreshToken
-      };
-
-      if (_logger.IsEnabled(LogLevel.Debug))
-        _logger.LogDebug("Refreshing Alison access token using organization '{organizationId}'", _options.OrganizationId);
-
-      var response = await _options.BaseUrl
-        .AppendPathSegment(_options.RefreshTokenPath)
-        .PostJsonAsync(request)
+      return await request
+        .GetAsync()
         .EnsureSuccessStatusCodeAsync()
-        .ReceiveJson<AlisonRefreshTokenResponse>();
-
-      if (string.IsNullOrWhiteSpace(response.AccessToken))
-        throw new InvalidOperationException("Alison refresh-token response did not contain an access token");
-
-      var token = AlisonToken.Create(response.AccessToken, response.RefreshToken ?? refreshToken, response.TokenType, response.ExpiresIn);
-
-      if (_logger.IsEnabled(LogLevel.Debug))
-        _logger.LogDebug("Successfully refreshed Alison access token with token type '{tokenType}' and refresh token available '{refreshTokenAvailable}'", token.TokenType, !string.IsNullOrWhiteSpace(token.RefreshToken));
-
-      return token;
+        .ReceiveJson<AlisonPagedResponse<AlisonCourse>>();
     }
 
-    private IFlurlRequest CreateCoursesRequest(SyncFilterPull filter, string accessToken)
+    private async Task<IFlurlRequest> CreateCoursesRequest(SyncFilterPull filter)
     {
       ArgumentNullException.ThrowIfNull(filter);
-      ArgumentException.ThrowIfNullOrWhiteSpace(accessToken);
+
+      if (string.IsNullOrWhiteSpace(_options.BaseUrl))
+        throw new InvalidOperationException("Alison base URL is required");
+
+      if (string.IsNullOrWhiteSpace(_options.CoursesPath))
+        throw new InvalidOperationException("Alison courses path is required");
 
       var pageNumber = filter.PageNumber!.Value;
       var pageSize = filter.PageSize!.Value;
@@ -249,7 +212,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
         .AppendPathSegment(_options.CoursesPath)
         .SetQueryParam(QueryParameter_Page, pageNumber)
         .SetQueryParam(QueryParameter_PerPage, pageSize)
-        .WithAuthHeader(new KeyValuePair<string, string>(Header_Authorization, $"{BearerScheme} {accessToken}"));
+        .WithAuthHeader(await GetAuthHeader());
     }
 
     private SyncItem<Opportunity> ToSyncItem(AlisonCourse course)
@@ -350,10 +313,8 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       using var reader = new StreamReader(stream);
       var json = reader.ReadToEnd();
 
-      var result = JsonSerializer.Deserialize<AlisonPagedResponse<AlisonCourse>>(json, JsonOptions)
+      return JsonSerializer.Deserialize<AlisonPagedResponse<AlisonCourse>>(json, JsonOptions)
         ?? throw new InvalidOperationException("Failed to deserialize embedded Alison sample courses JSON");
-
-      return result;
     }
 
     private List<Domain.Opportunity.Models.Lookups.OpportunityCategory> GetCategories(AlisonCourse course)
@@ -402,9 +363,25 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       return _languageService.GetByName(Domain.Core.Language.English.ToString());
     }
 
-    private static bool TokenRefreshRequired(HttpStatusCode statusCode)
+    private void ValidateAuthOptions()
     {
-      return statusCode == HttpStatusCode.Unauthorized || statusCode == HttpStatusCode.Forbidden;
+      if (string.IsNullOrWhiteSpace(_options.BaseUrl))
+        throw new InvalidOperationException("Alison base URL is required");
+
+      if (string.IsNullOrWhiteSpace(_options.AccessTokenPath))
+        throw new InvalidOperationException("Alison access token path is required");
+
+      if (string.IsNullOrWhiteSpace(_options.ClientId))
+        throw new InvalidOperationException("Alison client id is required");
+
+      if (string.IsNullOrWhiteSpace(_options.ClientSecret))
+        throw new InvalidOperationException("Alison client secret is required");
+
+      if (string.IsNullOrWhiteSpace(_options.OrganizationId))
+        throw new InvalidOperationException("Alison organization id is required");
+
+      if (string.IsNullOrWhiteSpace(_options.OrganizationKey))
+        throw new InvalidOperationException("Alison organization key is required");
     }
     #endregion
   }

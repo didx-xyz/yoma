@@ -20,11 +20,6 @@ namespace Yoma.Core.Infrastructure.Alison.Models
     public string AccessTokenPath { get; set; } = null!;
 
     /// <summary>
-    /// API path used to refresh an access token.
-    /// </summary>
-    public string RefreshTokenPath { get; set; } = null!;
-
-    /// <summary>
     /// API path used to retrieve Alison courses.
     /// </summary>
     public string CoursesPath { get; set; } = null!;

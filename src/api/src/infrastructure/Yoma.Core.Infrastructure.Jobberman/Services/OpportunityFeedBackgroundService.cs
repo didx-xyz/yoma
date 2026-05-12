@@ -287,21 +287,33 @@ namespace Yoma.Core.Infrastructure.Jobberman.Services
         if (string.IsNullOrEmpty(sourceId) || string.IsNullOrEmpty(title))
           continue;
 
-        // TODO: Confirm XML property name for posted/publish date using populated Jobberman RSS sample.
+        // Optional / not present in current Jobberman XML samples.
+        // Best-effort mapping if the field appears later; otherwise defaults to sync/import date.
         var dateStart = x.TryGetElementDate("pubDate", out var dateStartParsed)
           ? dateStartParsed
           : default(DateTimeOffset?);
 
-        // TODO: Confirm XML property name for closing/expiry date using populated Jobberman RSS sample.
+        // Optional / not present in current Jobberman XML samples.
+        // Best-effort mapping if the field appears later; otherwise treated as open-ended.
         var dateEnd = x.TryGetElementDate("closing_date", out var dateEndParsed)
           ? dateEndParsed
           : default(DateTimeOffset?);
 
-        // TODO: Confirm XML property name and values for job function/category using populated Jobberman RSS sample.
+        // Optional / not present in current Jobberman XML samples.
+        // Best-effort mapping if the field appears later; otherwise defaults to Other.
         var category = x.GetElementText("job_function");
 
-        // TODO: Confirm XML property name and values for language using populated Jobberman RSS sample.
+        // Optional / not present in current Jobberman XML samples.
+        // Best-effort mapping if the field appears later; otherwise defaults to English.
         var language = x.GetElementText("language");
+
+        // Optional / not present in current Jobberman XML samples.
+        // Best-effort mapping if the field appears later; otherwise no salary is appended.
+        var salary = x.GetElementText("salary");
+
+        var description = x.GetElementText("description");
+        if (!string.IsNullOrWhiteSpace(salary))
+          description = $"{description}{Environment.NewLine}{Environment.NewLine}Salary: {salary}";
 
         opportunities.Add(new Opportunity
         {
@@ -309,7 +321,7 @@ namespace Yoma.Core.Infrastructure.Jobberman.Services
           CountryCodeAlpha2 = countryCodeAlpha2,
           SourceId = sourceId,
           Title = title,
-          Description = x.GetElementText("description"),
+          Description = description,
           URL = x.GetElementText("link"),
           ImageURL = x.Element(XNamespace_MediaNs + "content").GetAttribute("url"),
           Location = x.GetElementText("location"),
