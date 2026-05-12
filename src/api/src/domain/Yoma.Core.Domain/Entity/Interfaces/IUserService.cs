@@ -35,6 +35,8 @@ namespace Yoma.Core.Domain.Entity.Interfaces
 
     Task<User> UpsertPhoto(string username, IFormFile file);
 
+    Task<User> DeletePhoto(string username);
+
     Task<User> UpdateSettings(string username, List<string> roles, SettingsRequest request);
 
     Task AssignSkills(User user, Opportunity.Models.Opportunity opportunity);

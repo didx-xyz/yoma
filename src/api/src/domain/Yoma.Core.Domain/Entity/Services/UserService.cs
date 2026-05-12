@@ -378,6 +378,34 @@ namespace Yoma.Core.Domain.Entity.Services
       return result;
     }
 
+    public async Task<User> DeletePhoto(string username)
+    {
+      var result = GetByUsername(username, true, true);
+
+      if (!result.PhotoId.HasValue) return result;
+
+      await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+      {
+        using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
+
+        result.PhotoId = null;
+        result.PhotoStorageType = null;
+        result.PhotoKey = null;
+
+        result = await _userRepository.Update(result);
+
+        // Do not delete or archive the current photo.
+        // Archive links a previous blob to a replacement blob via ParentId, which only applies when replacing a photo.
+        // For delete there is no replacement blob, so we only remove the active user reference and leave the blob untouched.
+        // This preserves the blob in case it is referenced historically or by future credential-related flows.
+        scope.Complete();
+      });
+
+      result.PhotoURL = null;
+
+      return result;
+    }
+
     public async Task<User> UpdateSettings(string username, List<string>? roles, SettingsRequest request)
     {
       ArgumentNullException.ThrowIfNull(request, nameof(request));
