@@ -327,25 +327,9 @@ export const ProfileCompletionWizard: React.FC<
           </div>
         )}
 
-        {/* Step Content */}
-        {/* <div className="border-blue-200x bg-whitex border-2x rounded-lg p-4 md:p-6"> */}
         {/* Step 1: Update Profile */}
         {currentStep === "profile" && (
           <div className="space-y-4">
-            {/* <div className="text-center">
-              <div className="mb-4 flex justify-center">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 md:h-16 md:w-16">
-                  <FcViewDetails className="h-8 w-8 md:h-10 md:w-10" />
-                </div>
-              </div>
-              <h4 className="mb-2 text-base font-bold text-gray-900 md:text-xl">
-                Complete Your Profile
-              </h4>
-              <p className="mb-4 text-xs text-gray-600 md:text-sm">
-                Your information will be used to issue credentials in your Yo-ID
-                wallet
-              </p>
-            </div> */}
             <NoRowsMessage
               title="Almost there!"
               description="Complete your profile to get started."
@@ -373,19 +357,6 @@ export const ProfileCompletionWizard: React.FC<
         {/* Step 2: Settings */}
         {currentStep === "settings" && (
           <div className="space-y-4">
-            {/* <div className="text-center">
-              <div className="mb-4 flex justify-center">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 md:h-16 md:w-16">
-                  <FcSettings className="h-8 w-8 md:h-10 md:w-10" />
-                </div>
-              </div>
-              <h4 className="mb-2 text-base font-bold text-gray-900 md:text-xl">
-                Choose Your Settings
-              </h4>
-              <p className="mb-4 text-xs text-gray-600 md:text-sm">
-                Configure your notification and privacy preferences
-              </p>
-            </div> */}
             <NoRowsMessage
               title="Choose Your Settings"
               description="Configure your notification and privacy preferences."
@@ -417,19 +388,6 @@ export const ProfileCompletionWizard: React.FC<
         {/* Step 3: Upload Photo */}
         {currentStep === "photo" && (
           <div className="space-y-4">
-            {/* <div className="text-center">
-              <div className="mb-4 flex justify-center">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 md:h-16 md:w-16">
-                  <FcCamera className="h-8 w-8 md:h-10 md:w-10" />
-                </div>
-              </div>
-              <h4 className="mb-2 text-base font-bold text-gray-900 md:text-xl">
-                Picture Time!
-              </h4>
-              <p className="mb-4 text-xs text-gray-600 md:text-sm">
-                Choose a profile picture to personalize your account
-              </p>
-            </div> */}
             <NoRowsMessage
               title="Picture Time!"
               description="Choose a profile picture to personalize your account."
@@ -457,7 +415,6 @@ export const ProfileCompletionWizard: React.FC<
           </div>
         )}
       </div>
-      {/* </div>{" "} */}
     </div>
   );
 };
