@@ -102,7 +102,11 @@ export const initializeDatadog = async () => {
           ? [
               {
                 match: `${env.NEXT_PUBLIC_API_BASE_URL}/`,
-                propagatorTypes: ["tracecontext"],
+                // Use "datadog" propagator (x-datadog-* headers) instead of "tracecontext"
+                // (traceparent/tracestate/baggage). The baggage header is blocked by the
+                // API's CORS policy. The backend team needs to add baggage, traceparent,
+                // tracestate to Access-Control-Allow-Headers for full W3C tracing support.
+                propagatorTypes: ["datadog"],
               },
             ]
           : [],
