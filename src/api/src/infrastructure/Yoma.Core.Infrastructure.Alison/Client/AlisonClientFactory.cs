@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using System.Runtime.CompilerServices;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Lookups.Interfaces;
@@ -22,6 +23,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
     private readonly IOpportunityCategoryService _opportunityCategoryService;
     private readonly ICountryService _countryService;
     private readonly ILanguageService _languageService;
+    private readonly ISkillService _skillService;
     private readonly SyncFilterPullValidator _syncFilterPullValidator;
     #endregion
 
@@ -34,6 +36,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       IOpportunityCategoryService opportunityCategoryService,
       ICountryService countryService,
       ILanguageService languageService,
+      ISkillService skillService,
       SyncFilterPullValidator syncFilterPullValidator)
     {
       _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -44,6 +47,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       _opportunityCategoryService = opportunityCategoryService ?? throw new ArgumentNullException(nameof(opportunityCategoryService));
       _countryService = countryService ?? throw new ArgumentNullException(nameof(countryService));
       _languageService = languageService ?? throw new ArgumentNullException(nameof(languageService));
+      _skillService = skillService ?? throw new ArgumentNullException(nameof(skillService));
       _syncFilterPullValidator = syncFilterPullValidator ?? throw new ArgumentNullException(nameof(syncFilterPullValidator));
     }
     #endregion
@@ -60,6 +64,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
         _opportunityCategoryService,
         _countryService,
         _languageService,
+        _skillService,
         _syncFilterPullValidator);
     }
     #endregion
