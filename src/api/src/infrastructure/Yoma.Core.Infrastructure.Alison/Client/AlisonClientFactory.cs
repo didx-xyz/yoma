@@ -1,6 +1,5 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using System.Runtime.CompilerServices;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Lookups.Interfaces;
@@ -24,11 +23,15 @@ namespace Yoma.Core.Infrastructure.Alison.Client
     private readonly ICountryService _countryService;
     private readonly ILanguageService _languageService;
     private readonly ISkillService _skillService;
+    private readonly IOpportunityDifficultyService _opportunityDifficultyService;
+    private readonly ITimeIntervalService _timeIntervalService;
+    private readonly IEngagementTypeService _engagementTypeService;
     private readonly SyncFilterPullValidator _syncFilterPullValidator;
     #endregion
 
     #region Constructor
-    public AlisonClientFactory(ILogger<AlisonClient> logger,
+    public AlisonClientFactory(
+      ILogger<AlisonClient> logger,
       IEnvironmentProvider environmentProvider,
       IOptions<AppSettings> appSettings,
       IOptions<AlisonOptions> options,
@@ -37,6 +40,9 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       ICountryService countryService,
       ILanguageService languageService,
       ISkillService skillService,
+      IOpportunityDifficultyService opportunityDifficultyService,
+      ITimeIntervalService timeIntervalService,
+      IEngagementTypeService engagementTypeService,
       SyncFilterPullValidator syncFilterPullValidator)
     {
       _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -48,6 +54,9 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       _countryService = countryService ?? throw new ArgumentNullException(nameof(countryService));
       _languageService = languageService ?? throw new ArgumentNullException(nameof(languageService));
       _skillService = skillService ?? throw new ArgumentNullException(nameof(skillService));
+      _opportunityDifficultyService = opportunityDifficultyService ?? throw new ArgumentNullException(nameof(opportunityDifficultyService));
+      _timeIntervalService = timeIntervalService ?? throw new ArgumentNullException(nameof(timeIntervalService));
+      _engagementTypeService = engagementTypeService ?? throw new ArgumentNullException(nameof(engagementTypeService));
       _syncFilterPullValidator = syncFilterPullValidator ?? throw new ArgumentNullException(nameof(syncFilterPullValidator));
     }
     #endregion
@@ -65,6 +74,9 @@ namespace Yoma.Core.Infrastructure.Alison.Client
         _countryService,
         _languageService,
         _skillService,
+        _opportunityDifficultyService,
+        _timeIntervalService,
+        _engagementTypeService,
         _syncFilterPullValidator);
     }
     #endregion

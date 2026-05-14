@@ -2,6 +2,8 @@ using FluentValidation;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using System.Net;
+using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
@@ -61,6 +63,23 @@ namespace Yoma.Core.Domain.Lookups.Services
       name = name.Trim();
 
       return List().SingleOrDefault(o => string.Equals(o.Name, name, StringComparison.OrdinalIgnoreCase));
+    }
+
+    public Skill? GetByNameNormalizedOrNull(string name)
+    {
+      if (string.IsNullOrWhiteSpace(name))
+        throw new ArgumentNullException(nameof(name));
+      name = name.Trim();
+
+      var lookup = GetLookupByNormalizedName();
+
+      foreach (var key in GetLookupKeys(name))
+      {
+        if (lookup.TryGetValue(key, out var result))
+          return result;
+      }
+
+      return null;
     }
 
     public Skill GetById(Guid id)
@@ -201,8 +220,11 @@ namespace Yoma.Core.Domain.Lookups.Services
       finally
       {
         if (cacheClearRequired &&
-            _appSettings.CacheEnabledByCacheItemTypesAsEnum.HasFlag(Core.CacheItemType.Lookups))
+          _appSettings.CacheEnabledByCacheItemTypesAsEnum.HasFlag(Core.CacheItemType.Lookups))
+        {
           _memoryCache.Remove(CacheHelper.GenerateKey<Skill>());
+          _memoryCache.Remove(CacheHelper.GenerateKey<Skill>("normalized"));
+        }
 
         if (lockAcquired) await _distributedLockService.ReleaseLockAsync(lockIdentifier);
       }
@@ -227,6 +249,146 @@ namespace Yoma.Core.Domain.Lookups.Services
       }) ?? throw new InvalidOperationException($"Failed to retrieve cached list of '{nameof(Skill)}s'");
 
       return result;
+    }
+
+    private Dictionary<string, Skill> GetLookupByNormalizedName()
+    {
+      if (!_appSettings.CacheEnabledByCacheItemTypesAsEnum.HasFlag(Core.CacheItemType.Lookups))
+        return BuildLookupByNormalizedName();
+
+      var result = _memoryCache.GetOrCreate(CacheHelper.GenerateKey<Skill>("normalized"), entry =>
+      {
+        entry.SlidingExpiration = TimeSpan.FromHours(_appSettings.CacheSlidingExpirationInHours);
+        entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(_appSettings.CacheAbsoluteExpirationRelativeToNowInDays);
+
+        return BuildLookupByNormalizedName();
+      }) ?? throw new InvalidOperationException($"Failed to retrieve cached normalized lookup of '{nameof(Skill)}s'");
+
+      return result;
+    }
+
+    private Dictionary<string, Skill> BuildLookupByNormalizedName()
+    {
+      var result = new Dictionary<string, Skill>(StringComparer.OrdinalIgnoreCase);
+
+      foreach (var skill in List())
+      {
+        foreach (var key in GetLookupKeys(skill.Name))
+          result.TryAdd(key, skill); //multiple normalized keys can point to the same skill
+      }
+
+      return result;
+    }
+
+    private static IEnumerable<string> GetLookupKeys(string? value)
+    {
+      var result = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+      foreach (var candidate in GetLookupCandidates(value))
+      {
+        var normalized = NormalizeLookupKey(candidate);
+        if (normalized == null) continue;
+
+        AddLookupKey(result, normalized);
+
+        var withoutConnectorWords = RemoveConnectorWords(normalized);
+        if (withoutConnectorWords != null)
+          AddLookupKey(result, withoutConnectorWords);
+
+        var withoutTrailingNumbers = RemoveTrailingNumericTokens(normalized);
+        if (withoutTrailingNumbers != null)
+          AddLookupKey(result, withoutTrailingNumbers);
+      }
+
+      foreach (var key in result)
+        yield return key;
+    }
+
+    private static IEnumerable<string> GetLookupCandidates(string? value)
+    {
+      value = value?.NormalizeNullableValue();
+      if (value == null) yield break;
+
+      yield return value;
+
+      var openIndex = value.IndexOf('(', StringComparison.Ordinal);
+      var closeIndex = value.IndexOf(')', StringComparison.Ordinal);
+
+      if (openIndex < 0 || closeIndex <= openIndex) yield break;
+
+      var withoutParentheses = $"{value[..openIndex]} {value[(closeIndex + 1)..]}".NormalizeNullableValue();
+      if (withoutParentheses != null)
+        yield return withoutParentheses;
+
+      var parentheticalValue = value.Substring(openIndex + 1, closeIndex - openIndex - 1).NormalizeNullableValue();
+      if (parentheticalValue != null)
+        yield return parentheticalValue;
+    }
+
+    private static void AddLookupKey(HashSet<string> result, string value)
+    {
+      value = value.NormalizeNullableValue()!;
+      result.Add(value);
+
+      var compact = value.RemoveWhiteSpaces();
+      if (!compact.EqualsOrdinalIgnoreCase(value))
+        result.Add(compact);
+    }
+
+    private static string? RemoveConnectorWords(string value)
+    {
+      var result = value
+        .Replace(" and ", " ", StringComparison.OrdinalIgnoreCase)
+        .NormalizeTrim()
+        .NormalizeNullableValue();
+
+      return result != null && !result.EqualsOrdinalIgnoreCase(value)
+        ? result
+        : null;
+    }
+
+    private static string? RemoveTrailingNumericTokens(string value)
+    {
+      var parts = value
+        .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+        .ToList();
+
+      if (parts.Count <= 1) return null;
+
+      var changed = false;
+
+      while (parts.Count > 1 && parts[^1].All(char.IsDigit))
+      {
+        parts.RemoveAt(parts.Count - 1);
+        changed = true;
+      }
+
+      if (!changed) return null;
+
+      return string.Join(' ', parts).NormalizeNullableValue();
+    }
+
+    private static string? NormalizeLookupKey(string? value)
+    {
+      if (string.IsNullOrWhiteSpace(value)) return null;
+
+      value = WebUtility.HtmlDecode(value).NormalizeTrim();
+
+      value = value
+        .Replace("&", " and ", StringComparison.Ordinal)
+        .Replace("+", " plus ", StringComparison.Ordinal)
+        .Replace("#", " sharp ", StringComparison.Ordinal)
+        .Replace("/", " ", StringComparison.Ordinal)
+        .Replace("\\", " ", StringComparison.Ordinal)
+        .Replace("-", " ", StringComparison.Ordinal)
+        .Replace("_", " ", StringComparison.Ordinal)
+        .Replace(".", " ", StringComparison.Ordinal)
+        .ToLowerInvariant();
+
+      value = value.RemoveSpecialCharacters();
+      value = value.NormalizeTrim();
+
+      return value.NormalizeNullableValue();
     }
     #endregion
   }

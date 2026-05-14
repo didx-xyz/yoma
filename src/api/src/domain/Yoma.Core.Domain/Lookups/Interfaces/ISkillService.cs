@@ -8,6 +8,8 @@ namespace Yoma.Core.Domain.Lookups.Interfaces
 
     Skill? GetByNameOrNull(string name);
 
+    Skill? GetByNameNormalizedOrNull(string name);
+
     Skill GetById(Guid id);
 
     Skill? GetByIdOrNull(Guid id);

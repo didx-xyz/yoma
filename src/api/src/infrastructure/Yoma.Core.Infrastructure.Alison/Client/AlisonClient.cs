@@ -16,6 +16,8 @@ using Yoma.Core.Domain.Opportunity.Services;
 using Yoma.Core.Domain.PartnerSync.Interfaces.Provider;
 using Yoma.Core.Domain.PartnerSync.Models;
 using Yoma.Core.Domain.PartnerSync.Validators;
+using Yoma.Core.Domain.SSI;
+using Yoma.Core.Domain.SSI.Helpers;
 using Yoma.Core.Infrastructure.Alison.Models;
 
 namespace Yoma.Core.Infrastructure.Alison.Client
@@ -37,28 +39,40 @@ namespace Yoma.Core.Infrastructure.Alison.Client
     private static AlisonAccessTokenResponse _accessToken = null!;
     private static AlisonResponse<AlisonCategory>? _categoriesPayload;
 
-    // Yoma category id -> Alison category codes.
+    // Yoma category name -> Alison category codes.
     // If unresolved, default to Other.
-    private static readonly Dictionary<Guid, string[]> Categories_Map = new()
+    private static readonly Dictionary<string, string[]> Categories_Map = new(StringComparer.OrdinalIgnoreCase)
     {
-      // Technology and Digitization
-      { new Guid("fa564c1c-591a-4a6d-8294-20165da8866b"), ["it", "network-and-security", "software-development", "software-tools", "it-management", "software-engineering", "it/administration", "it/aws", "it/ccna", "it/comptia", "it/computer-networking", "it/data-security", "it/devops", "it/microsoft", "it/security", "it/server"] },
-      // AI, Data and Analytics
-      { new Guid("1dc39a5d-e049-4cfe-b708-855fce97b86e"), ["data-science", "databases"] },
-      // Career and Personal Development
-      { new Guid("89f4ab46-0767-494f-a18c-3037f698133a"), ["language", "education", "personal-development"] },
-      // Health and Care
-      { new Guid("6e6a5f23-6d2e-4f45-8b4d-5d9c9a6b1e71"), ["health", "mental-health", "health-care", "nursing", "caregiving", "nutrition", "pharmacology", "personal-development/health", "personal-development/mental-health", "personal-development/depression", "personal-development/anxiety", "personal-development/diet", "fitness", "health-and-safety", "business/health-and-safety", "engineering/health-and-safety", "management/health-and-safety", "management/nursing"] },
-      // Business and Entrepreneurship
-      { new Guid("c76786fd-fca9-4633-85b3-11e53486d708"), ["business", "marketing", "engineering", "management", "entrepreneurship", "finance", "economics", "law", "accounting", "e-commerce", "sales", "digital-marketing", "marketing/social-media", "marketing/sales", "marketing/retail"] },
-      // Environment and Climate
-      { new Guid("d0d322ab-d1d7-44b6-94e8-7b85246aa42e"), ["education/climate-change", "engineering/renewable-energy"] },
-      // Tourism and Hospitality
-      { new Guid("f36051c9-9057-4765-bc2f-9dee82ef60d6"), ["tourism-and-hospitality", "language/travel"] },
-      // Creative Industry and Arts
-      { new Guid("7afb66ad-164e-46a3-933f-a0bac1ca1923"), ["media-and-journalism", "music", "photography", "literature", "education/music-theory"] },
-      // Agriculture
-      { new Guid("2ccbacf7-1ed9-4e20-bb7c-43edfdb3f950"), ["agriculture", "farming"] }
+      { "Technology and Digitization", ["it", "network-and-security", "software-development", "software-tools", "it-management", "software-engineering", "it/administration", "it/aws", "it/ccna", "it/comptia", "it/computer-networking", "it/data-security", "it/devops", "it/microsoft", "it/security", "it/server"] },
+      { "AI, Data and Analytics", ["data-science", "databases"] },
+      { "Career and Personal Development", ["language", "education", "personal-development"] },
+      { "Health and Care", ["health", "mental-health", "health-care", "nursing", "caregiving", "nutrition", "pharmacology", "personal-development/health", "personal-development/mental-health", "personal-development/depression", "personal-development/anxiety", "personal-development/diet", "fitness", "health-and-safety", "business/health-and-safety", "engineering/health-and-safety", "management/health-and-safety", "management/nursing"] },
+      { "Business and Entrepreneurship", ["business", "marketing", "engineering", "management", "entrepreneurship", "finance", "economics", "law", "accounting", "e-commerce", "sales", "digital-marketing", "marketing/social-media", "marketing/sales", "marketing/retail"] },
+      { "Environment and Climate", ["education/climate-change", "engineering/renewable-energy"] },
+      { "Tourism and Hospitality", ["tourism-and-hospitality", "language/travel"] },
+      { "Creative Industry and Arts", ["media-and-journalism", "music", "photography", "literature", "education/music-theory"] },
+      { "Agriculture", ["agriculture", "farming"] }
+    };
+
+    // Yoma difficulty name -> Alison course levels.
+    // Unknown or omitted values default to Any Level.
+    private static readonly Dictionary<string, string[]> Difficulty_Map = new(StringComparer.OrdinalIgnoreCase)
+    {
+      { "Beginner", ["Beginner", "Beginner Level"] },
+      { "Intermediate", ["Intermediate", "Intermediate Level"] },
+      { "Advanced", ["Advanced", "Advanced Level", "Expert", "Expert Level"] },
+      { "Any Level", ["Any Level", "Any Levels", "All Level", "All Levels", "All", "Any"] }
+    };
+
+    // Yoma time interval name -> Alison duration unit values.
+    // Unknown or omitted values default to Hour / 1.
+    private static readonly Dictionary<string, string[]> CommitmentInterval_Map = new(StringComparer.OrdinalIgnoreCase)
+    {
+      { TimeIntervalOption.Minute.ToString(), ["min", "mins", "minute", "minutes"] },
+      { TimeIntervalOption.Hour.ToString(), ["hr", "hrs", "hour", "hours"] },
+      { TimeIntervalOption.Day.ToString(), ["day", "days"] },
+      { TimeIntervalOption.Week.ToString(), ["week", "weeks"] },
+      { TimeIntervalOption.Month.ToString(), ["month", "months"] }
     };
 
     private readonly ILogger<AlisonClient> _logger;
@@ -70,6 +84,9 @@ namespace Yoma.Core.Infrastructure.Alison.Client
     private readonly ICountryService _countryService;
     private readonly ILanguageService _languageService;
     private readonly ISkillService _skillService;
+    private readonly IOpportunityDifficultyService _opportunityDifficultyService;
+    private readonly ITimeIntervalService _timeIntervalService;
+    private readonly IEngagementTypeService _engagementTypeService;
     private readonly SyncFilterPullValidator _syncFilterPullValidator;
     #endregion
 
@@ -84,6 +101,9 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       ICountryService countryService,
       ILanguageService languageService,
       ISkillService skillService,
+      IOpportunityDifficultyService opportunityDifficultyService,
+      ITimeIntervalService timeIntervalService,
+      IEngagementTypeService engagementTypeService,
       SyncFilterPullValidator syncFilterPullValidator)
     {
       _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -94,7 +114,10 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       _opportunityCategoryService = opportunityCategoryService ?? throw new ArgumentNullException(nameof(opportunityCategoryService));
       _countryService = countryService ?? throw new ArgumentNullException(nameof(countryService));
       _languageService = languageService ?? throw new ArgumentNullException(nameof(languageService));
-      _skillService = skillService ?? throw new ArgumentNullException(nameof(skillService));  
+      _skillService = skillService ?? throw new ArgumentNullException(nameof(skillService));
+      _opportunityDifficultyService = opportunityDifficultyService ?? throw new ArgumentNullException(nameof(opportunityDifficultyService));
+      _timeIntervalService = timeIntervalService ?? throw new ArgumentNullException(nameof(timeIntervalService));
+      _engagementTypeService = engagementTypeService ?? throw new ArgumentNullException(nameof(engagementTypeService));
       _syncFilterPullValidator = syncFilterPullValidator ?? throw new ArgumentNullException(nameof(syncFilterPullValidator));
     }
     #endregion
@@ -432,6 +455,21 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       // Unmatched tags are ignored.
       var skills = GetSkills(course);
 
+      // Difficulty:
+      // Alison course_level is mapped to Yoma difficulty.
+      // Unknown or omitted values default to Any Level to avoid incorrectly classifying the course as Beginner.
+      var difficulty = GetDifficulty(course);
+
+      // Commitment:
+      // Alison duration_avg is mapped to Yoma commitment interval/count.
+      // For ranges, use the upper bound rounded up, e.g. "1.5-3 hrs" -> Hour / 3.
+      // Unknown or omitted values default to Hour / 1 because Learning opportunities require commitment.
+      var (interval, count) = GetCommitment(course);
+
+      // Engagement type:
+      // Alison provides online courses only, so all synced Alison opportunities are mapped as Online.
+      var engagementType = _engagementTypeService.GetByName(EngagementTypeOption.Online.ToString());
+
       return new SyncItem<Opportunity>
       {
         ExternalId = course.Id.ToString(),
@@ -460,10 +498,10 @@ namespace Yoma.Core.Infrastructure.Alison.Client
 
           Status = Status.Active,
 
-          // Fixed for Alison:
-          // No verification, no participant limit, no rewards, no credential issuance.
-          VerificationEnabled = false,
-          VerificationMethod = null,
+          // Automatic verification, no participant limit, no rewards.
+          // Completion is imported from Alison and processed by Yoma.
+          VerificationEnabled = true,
+          VerificationMethod = VerificationMethod.Automatic,
           VerificationTypes = null,
           ParticipantLimit = null,
 
@@ -472,34 +510,15 @@ namespace Yoma.Core.Infrastructure.Alison.Client
           ZltoRewardPool = null,
           YomaRewardPool = null,
 
-          CredentialIssuanceEnabled = false,
-          SSISchemaName = null,
+          CredentialIssuanceEnabled = true,
+          SSISchemaName = SSISSchemaHelper.ToFullName(SchemaType.Opportunity, $"Default"),
 
-          // TODO: Difficulty:
-          // Required for Learning opportunities.
-          // Map Alison course_level:
-          // - Beginner -> Yoma beginner/easy
-          // - Intermediate -> Yoma intermediate/medium
-          // - Advanced -> Yoma advanced/hard
-          // - null/unknown -> safe default, likely Beginner, or fail fast if we prefer.
-          DifficultyId = null,
+          DifficultyId = difficulty.Id,
 
-          // TODO: Commitment:
-          // Required for Learning opportunities.
-          // Parse Alison duration_avg:
-          // - "1.5-3 hrs" -> Hours, 3
-          // - "3-4 hrs"   -> Hours, 4
-          // - "6-10 hrs"  -> Hours, 10
-          // Use upper bound rounded up.
-          // null/unknown -> safe fallback, likely Hours / 1, or fail fast if we prefer.
-          CommitmentIntervalId = null,
-          CommitmentIntervalCount = null,
+          CommitmentIntervalId = interval.Id,
+          CommitmentIntervalCount = count,
 
-          // TODO: EngagementType:
-          // Alison courses are online learning opportunities.
-          // Map to Yoma Online engagement type if we decide to populate it.
-          // Validator allows null, but if specified it must exist.
-          EngagementTypeId = null,
+          EngagementTypeId = engagementType.Id,
 
           Skills = skills,
 
@@ -555,32 +574,32 @@ namespace Yoma.Core.Infrastructure.Alison.Client
     {
       ArgumentNullException.ThrowIfNull(category);
 
-      if (TryResolveYomaCategoryId(category.Code, out var categoryId))
-        return _opportunityCategoryService.GetById(categoryId);
+      if (TryResolveYomaCategoryName(category.Code, out var categoryName))
+        return _opportunityCategoryService.GetByName(categoryName);
 
       return _opportunityCategoryService.GetByName(Category.Other.ToString());
     }
 
-    private static bool TryResolveYomaCategoryId(string? code, out Guid categoryId)
+    private static bool TryResolveYomaCategoryName(string? code, out string categoryName)
     {
-      categoryId = default;
+      categoryName = string.Empty;
 
       code = code?.NormalizeNullableValue();
       if (string.IsNullOrWhiteSpace(code)) return false;
 
-      if (TryResolveYomaCategoryIdExact(code, out categoryId))
+      if (TryResolveYomaCategoryNameExact(code, out categoryName))
         return true;
 
       var rootCode = code
         .Split('/', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
         .FirstOrDefault();
 
-      return TryResolveYomaCategoryIdExact(rootCode, out categoryId);
+      return TryResolveYomaCategoryNameExact(rootCode, out categoryName);
     }
 
-    private static bool TryResolveYomaCategoryIdExact(string? code, out Guid categoryId)
+    private static bool TryResolveYomaCategoryNameExact(string? code, out string categoryName)
     {
-      categoryId = default;
+      categoryName = string.Empty;
 
       if (string.IsNullOrWhiteSpace(code)) return false;
 
@@ -588,7 +607,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       {
         if (mapping.Value.Any(item => string.Equals(item, code, StringComparison.OrdinalIgnoreCase)))
         {
-          categoryId = mapping.Key;
+          categoryName = mapping.Key;
           return true;
         }
       }
@@ -729,13 +748,13 @@ namespace Yoma.Core.Infrastructure.Alison.Client
 
       var translation = GetPreferredTranslation(course);
 
-      var title = CleanText(translation?.Name)
-        ?? CleanText(course.Name);
+      var title = (translation?.Name).HtmlDecode()
+        ?? course.Name.HtmlDecode();
 
       if (string.IsNullOrWhiteSpace(title))
         throw new InvalidOperationException($"Alison course title/name expected for course id '{course.Id}'");
 
-      return Truncate(title, Title_MaxLength);
+      return title.TrimToLengthWithEllipsis(Title_MaxLength);
     }
 
     private static string GetSummary(AlisonCourse course, string title)
@@ -744,11 +763,11 @@ namespace Yoma.Core.Infrastructure.Alison.Client
 
       var translation = GetPreferredTranslation(course);
 
-      var summary = CleanText(translation?.Headline)
-        ?? CleanText(StripHtml(translation?.Summary))
-        ?? CleanText(title);
+      var summary = (translation?.Headline).HtmlDecode()
+        ?? (translation?.Summary).RemoveHtmlTags()?.HtmlDecode()
+        ?? title.HtmlDecode();
 
-      return Truncate(summary ?? title, Summary_MaxLength);
+      return (summary ?? title).TrimToLengthWithEllipsis(Summary_MaxLength);
     }
 
     private static string GetDescription(AlisonCourse course, string title, string? publisherName)
@@ -757,9 +776,9 @@ namespace Yoma.Core.Infrastructure.Alison.Client
 
       var translation = GetPreferredTranslation(course);
 
-      var description = translation?.Summary?.NormalizeNullableValue()
-        ?? translation?.Headline?.NormalizeNullableValue()
-        ?? course.Modules.FirstOrDefault(module => !string.IsNullOrWhiteSpace(module.Description))?.Description?.NormalizeNullableValue()
+      var description = (translation?.Summary).HtmlDecode()
+        ?? (translation?.Headline).HtmlDecode()
+        ?? course.Modules.FirstOrDefault(module => !string.IsNullOrWhiteSpace(module.Description))?.Description.HtmlDecode()
         ?? title;
 
       var metadata = new List<string>();
@@ -781,7 +800,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       ArgumentNullException.ThrowIfNull(course);
 
       return course.Publishers
-        .Select(item => item.Name?.NormalizeNullableValue())
+        .Select(item => item.Name.HtmlDecode())
         .FirstOrDefault(item => !string.IsNullOrWhiteSpace(item));
     }
 
@@ -816,7 +835,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
 
     private static void AddKeyword(List<string> keywords, string? value)
     {
-      value = CleanText(value);
+      value = value.HtmlDecode();
       if (string.IsNullOrWhiteSpace(value)) return;
 
       if (value.Contains(OpportunityService.Keywords_Separator, StringComparison.Ordinal))
@@ -861,9 +880,18 @@ namespace Yoma.Core.Infrastructure.Alison.Client
     {
       ArgumentNullException.ThrowIfNull(tag);
 
-      foreach (var candidate in GetSkillLookupCandidates(tag))
+      var name = tag.GetName();
+      if (!string.IsNullOrWhiteSpace(name))
       {
-        var skill = GetSkillByNameOrNull(candidate);
+        var skill = _skillService.GetByNameNormalizedOrNull(name);
+        if (skill != null)
+          return skill;
+      }
+
+      var slug = tag.GetSlug();
+      if (!string.IsNullOrWhiteSpace(slug))
+      {
+        var skill = _skillService.GetByNameNormalizedOrNull(slug);
         if (skill != null)
           return skill;
       }
@@ -871,90 +899,89 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       return null;
     }
 
-    private Domain.Lookups.Models.Skill? GetSkillByNameOrNull(string? value)
+    private Domain.Opportunity.Models.Lookups.OpportunityDifficulty GetDifficulty(AlisonCourse course)
     {
-      value = value?.NormalizeNullableValue();
-      if (string.IsNullOrWhiteSpace(value)) return null;
+      ArgumentNullException.ThrowIfNull(course);
 
-      return _skillService.GetByNameOrNull(value);
+      var difficultyName = ResolveDifficultyName(course.CourseLevel);
+
+      return _opportunityDifficultyService.GetByName(difficultyName);
     }
 
-    private static IEnumerable<string?> GetSkillLookupCandidates(AlisonTag tag)
+    private static string ResolveDifficultyName(string? courseLevel)
     {
-      var name = CleanText(tag.GetName());
-      var slug = CleanText(tag.GetSlug());
+      courseLevel = courseLevel?.NormalizeNullableValue();
 
-      foreach (var candidate in GetSkillLookupCandidates(name))
-        yield return candidate;
+      if (!string.IsNullOrWhiteSpace(courseLevel))
+      {
+        foreach (var mapping in Difficulty_Map)
+        {
+          if (mapping.Value.Any(item => string.Equals(item, courseLevel, StringComparison.OrdinalIgnoreCase)))
+            return mapping.Key;
+        }
+      }
 
-      foreach (var candidate in GetSkillLookupCandidates(slug?.Replace('-', ' ')))
-        yield return candidate;
+      return Difficulty.AnyLevel.ToDescription();
     }
 
-    private static IEnumerable<string?> GetSkillLookupCandidates(string? value)
+    private (Domain.Lookups.Models.TimeInterval Interval, short Count) GetCommitment(AlisonCourse course)
     {
-      value = CleanText(value);
-      if (string.IsNullOrWhiteSpace(value)) yield break;
+      ArgumentNullException.ThrowIfNull(course);
 
-      yield return value;
+      var intervalName = ResolveCommitmentIntervalName(course.DurationAvg);
+      var interval = _timeIntervalService.GetByName(intervalName);
+      var count = ResolveCommitmentIntervalCount(course.DurationAvg);
 
-      var normalized = NormalizeSkillLookupValue(value);
-      if (!string.Equals(normalized, value, StringComparison.OrdinalIgnoreCase))
-        yield return normalized;
+      return (interval, count);
     }
 
-    private static string? NormalizeSkillLookupValue(string? value)
+    private static string ResolveCommitmentIntervalName(string? duration)
     {
-      value = CleanText(value);
-      if (string.IsNullOrWhiteSpace(value)) return null;
+      duration = duration?.NormalizeNullableValue();
 
-      value = value
-        .Replace("&", " and ", StringComparison.Ordinal)
-        .Replace("+", " plus ", StringComparison.Ordinal)
-        .Replace("#", " sharp ", StringComparison.Ordinal)
-        .Replace("/", " ", StringComparison.Ordinal)
-        .Replace("-", " ", StringComparison.Ordinal)
-        .Replace("_", " ", StringComparison.Ordinal);
+      if (!string.IsNullOrWhiteSpace(duration))
+      {
+        foreach (var mapping in CommitmentInterval_Map)
+        {
+          if (mapping.Value.Any(unit => ContainsDurationUnit(duration, unit)))
+            return mapping.Key;
+        }
+      }
 
-      value = Regex_NormalizeSkillLookupValue().Replace(value, " ").Trim();
-
-      return string.IsNullOrWhiteSpace(value) ? null : value;
+      return TimeIntervalOption.Hour.ToString();
     }
 
-    private static string? CleanText(string? value)
+    private static short ResolveCommitmentIntervalCount(string? duration)
     {
-      value = value?.NormalizeNullableValue();
-      if (string.IsNullOrWhiteSpace(value)) return null;
+      duration = duration?.NormalizeNullableValue();
+      if (string.IsNullOrWhiteSpace(duration)) return 1;
 
-      return System.Net.WebUtility.HtmlDecode(value).NormalizeNullableValue();
+      var values = Regex_CommitmentIntervalCountValue().Matches(duration)
+        .Select(match => decimal.TryParse(match.Value, System.Globalization.NumberStyles.Number, System.Globalization.CultureInfo.InvariantCulture, out var value)
+          ? value
+          : default(decimal?))
+        .Where(value => value.HasValue)
+        .Select(value => value!.Value)
+        .ToList();
+
+      if (values.Count == 0) return 1;
+
+      var upperBound = values.Max();
+      var result = (short)Math.Ceiling(upperBound);
+
+      return result > 0 ? result : (short)1;
     }
 
-    private static string? StripHtml(string? value)
+    private static bool ContainsDurationUnit(string duration, string unit)
     {
-      value = value?.NormalizeNullableValue();
-      if (string.IsNullOrWhiteSpace(value)) return null;
-
-      return Regex_StripHtml().Replace(value, " ")
-        .NormalizeNullableValue();
+      return System.Text.RegularExpressions.Regex.IsMatch(
+        duration,
+        $@"(^|[^a-zA-Z]){System.Text.RegularExpressions.Regex.Escape(unit)}([^a-zA-Z]|$)",
+        System.Text.RegularExpressions.RegexOptions.IgnoreCase);
     }
 
-    private static string Truncate(string value, int maxLength)
-    {
-      value = value.NormalizeNullableValue() ?? string.Empty;
-
-      if (value.Length <= maxLength)
-        return value;
-
-      return maxLength <= 3
-        ? value[..maxLength]
-        : $"{value[..(maxLength - 3)]}...";
-    }
-
-    [System.Text.RegularExpressions.GeneratedRegex("<.*?>")]
-    private static partial System.Text.RegularExpressions.Regex Regex_StripHtml();
-
-    [System.Text.RegularExpressions.GeneratedRegex(@"\s+")]
-    private static partial System.Text.RegularExpressions.Regex Regex_NormalizeSkillLookupValue();
+    [System.Text.RegularExpressions.GeneratedRegex(@"\d+(\.\d+)?")]
+    private static partial System.Text.RegularExpressions.Regex Regex_CommitmentIntervalCountValue();
     #endregion
   }
 }
