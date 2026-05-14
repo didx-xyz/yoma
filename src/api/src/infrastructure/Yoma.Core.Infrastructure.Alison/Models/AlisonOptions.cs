@@ -28,6 +28,35 @@ namespace Yoma.Core.Infrastructure.Alison.Models
     public string CoursesPath { get; set; } = null!;
 
     /// <summary>
+    /// Cron expression used to schedule Alison course catalogue refreshes.
+    /// Should run before the PartnerSync pull schedule so the main pull uses the latest cached catalogue.
+    /// </summary>
+    public string PollSchedule { get; init; } = null!;
+
+    /// <summary>
+    /// Maximum expected interval, in hours, for a single Alison course catalogue refresh.
+    /// Used for the distributed lock duration.
+    /// </summary>
+    public int PollScheduleMaxIntervalInHours { get; init; }
+
+    /// <summary>
+    /// HTTP request timeout, in seconds, when retrieving Alison API data.
+    /// Alison responses can be slow, so keep this configurable.
+    /// </summary>
+    public int RequestTimeoutSeconds { get; init; }
+
+    /// <summary>
+    /// Number of days to retain locally soft-deleted Alison courses before physical deletion.
+    /// Use -1 to retain deleted rows indefinitely.
+    /// </summary>
+    public int RetentionDays { get; init; }
+
+    /// <summary>
+    /// Local .NET embedded resource name used when external partner synchronization is disabled.
+    /// </summary>
+    public string EmbeddedResourceName { get; set; } = null!;
+
+    /// <summary>
     /// Alison API client Id used for v2 authentication.
     /// </summary>
     public string ClientId { get; set; } = null!;

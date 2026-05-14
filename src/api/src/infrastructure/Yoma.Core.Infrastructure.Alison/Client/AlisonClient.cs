@@ -1,17 +1,13 @@
 using FluentValidation;
-using Flurl;
-using Flurl.Http;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
-using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Lookups.Interfaces;
 using Yoma.Core.Domain.Opportunity;
 using Yoma.Core.Domain.Opportunity.Interfaces.Lookups;
-using Yoma.Core.Domain.Opportunity.Models;
 using Yoma.Core.Domain.Opportunity.Services;
 using Yoma.Core.Domain.PartnerSync.Interfaces.Provider;
 using Yoma.Core.Domain.PartnerSync.Models;
@@ -22,22 +18,12 @@ using Yoma.Core.Infrastructure.Alison.Models;
 
 namespace Yoma.Core.Infrastructure.Alison.Client
 {
-  public sealed partial class AlisonClient : ISyncProviderClientPull<Opportunity>
+  public sealed partial class AlisonClient : ISyncProviderClientPull<Domain.Opportunity.Models.Opportunity>
   {
     #region Class Variables
-    private const string EmbeddedResourceSuffix_Courses = ".Resources.courses.sample.json";
-    private const string QueryParameter_Page = "page";
-    private const string QueryParameter_PerPage = "per_page";
-    private const string Header_Authorization = "Authorization";
-    private const string Header_Authorization_Value_Prefix = "Bearer";
-    private const string Path_Categories = "categories";
     private const string Alison_Web_BaseUrl = "https://alison.com";
-    private const int PageSize_Maximum = 100;
     private const int Title_MaxLength = 150;
     private const int Summary_MaxLength = 150;
-
-    private static AlisonAccessTokenResponse _accessToken = null!;
-    private static AlisonResponse<AlisonCategory>? _categoriesPayload;
 
     // Yoma category name -> Alison category codes.
     // If unresolved, default to Other.
@@ -77,8 +63,8 @@ namespace Yoma.Core.Infrastructure.Alison.Client
 
     private readonly ILogger<AlisonClient> _logger;
     private readonly IEnvironmentProvider _environmentProvider;
-    private readonly AppSettings _appSettings;
     private readonly AlisonOptions _options;
+    private readonly IRepositoryBatched<Models.Opportunity> _opportunityRepository;
     private readonly IOpportunityTypeService _opportunityTypeService;
     private readonly IOpportunityCategoryService _opportunityCategoryService;
     private readonly ICountryService _countryService;
@@ -94,8 +80,8 @@ namespace Yoma.Core.Infrastructure.Alison.Client
     public AlisonClient(
       ILogger<AlisonClient> logger,
       IEnvironmentProvider environmentProvider,
-      AppSettings appSettings,
       AlisonOptions options,
+      IRepositoryBatched<Models.Opportunity> opportunityRepository,
       IOpportunityTypeService opportunityTypeService,
       IOpportunityCategoryService opportunityCategoryService,
       ICountryService countryService,
@@ -108,8 +94,8 @@ namespace Yoma.Core.Infrastructure.Alison.Client
     {
       _logger = logger ?? throw new ArgumentNullException(nameof(logger));
       _environmentProvider = environmentProvider ?? throw new ArgumentNullException(nameof(environmentProvider));
-      _appSettings = appSettings ?? throw new ArgumentNullException(nameof(appSettings));
       _options = options ?? throw new ArgumentNullException(nameof(options));
+      _opportunityRepository = opportunityRepository ?? throw new ArgumentNullException(nameof(opportunityRepository));
       _opportunityTypeService = opportunityTypeService ?? throw new ArgumentNullException(nameof(opportunityTypeService));
       _opportunityCategoryService = opportunityCategoryService ?? throw new ArgumentNullException(nameof(opportunityCategoryService));
       _countryService = countryService ?? throw new ArgumentNullException(nameof(countryService));
@@ -123,7 +109,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
     #endregion
 
     #region Public Members
-    public async Task<SyncResultPull<Opportunity>> List(SyncFilterPull filter)
+    public Task<SyncResultPull<Domain.Opportunity.Models.Opportunity>> List(SyncFilterPull filter)
     {
       ArgumentNullException.ThrowIfNull(filter);
 
@@ -131,258 +117,54 @@ namespace Yoma.Core.Infrastructure.Alison.Client
 
       if (_logger.IsEnabled(LogLevel.Debug))
         _logger.LogDebug(
-          "Starting Alison opportunity pull for environment '{environment}' with pageNumber '{pageNumber}' and pageSize '{pageSize}'",
+          "Starting Alison opportunity pull from local catalogue cache for environment '{environment}' with pageNumber '{pageNumber}' and pageSize '{pageSize}'",
           _environmentProvider.Environment, filter.PageNumber, filter.PageSize);
 
-      return !_appSettings.PartnerSyncEnabledEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment)
-        ? ListFromEmbeddedResource()
-        : await ListFromApi(filter);
+      return Task.FromResult(ListFromStore(filter));
     }
     #endregion
 
     #region Private Members
-    private SyncResultPull<Opportunity> ListFromEmbeddedResource()
-    {
-      if (_logger.IsEnabled(LogLevel.Information))
-        _logger.LogInformation(
-          "Partner synchronization from external partners disabled for environment '{environment}'. Using local .NET embedded resources",
-          _environmentProvider.Environment);
-
-      var response = LoadEmbeddedCourses();
-
-      var items = response.Data
-        .Select(ToSyncItem)
-        .ToList();
-
-      if (_logger.IsEnabled(LogLevel.Debug))
-        _logger.LogDebug("Mapped Alison embedded sample payload to sync result with '{count}' opportunities", items.Count);
-
-      return new SyncResultPull<Opportunity>
-      {
-        TotalCount = items.Count,
-        Items = items
-      };
-    }
-
-    private async Task<SyncResultPull<Opportunity>> ListFromApi(SyncFilterPull filter)
-    {
-      if (_logger.IsEnabled(LogLevel.Debug))
-        _logger.LogDebug(
-          "Alison live API path reached for environment '{environment}'. Requesting courses",
-          _environmentProvider.Environment);
-
-      var response = await GetCourses(filter);
-
-      if (!response.Total.HasValue)
-        throw new InvalidOperationException("Alison course response did not contain pagination total");
-
-      if (_logger.IsEnabled(LogLevel.Debug))
-        _logger.LogDebug(
-          "Loaded Alison course payload with item count '{count}' and total '{total}'",
-          response.Data.Count, response.Total.Value);
-
-      var items = response.Data
-        .Select(ToSyncItem)
-        .ToList();
-
-      if (_logger.IsEnabled(LogLevel.Debug))
-        _logger.LogDebug("Mapped Alison live payload to sync result with '{count}' opportunities", items.Count);
-
-      return new SyncResultPull<Opportunity>
-      {
-        TotalCount = response.Total.Value,
-        Items = items
-      };
-    }
-
-    private async Task<KeyValuePair<string, string>> GetAuthHeader()
-    {
-      if (_accessToken != null && _accessToken.DateExpire > DateTimeOffset.UtcNow)
-        return new KeyValuePair<string, string>(Header_Authorization, $"{Header_Authorization_Value_Prefix} {_accessToken.AccessToken}");
-
-      _accessToken = await GetAccessToken();
-
-      return new KeyValuePair<string, string>(Header_Authorization, $"{Header_Authorization_Value_Prefix} {_accessToken.AccessToken}");
-    }
-
-    private async Task<AlisonAccessTokenResponse> GetAccessToken()
-    {
-      var request = new AlisonAccessTokenRequest
-      {
-        ClientId = _options.ClientId,
-        ClientSecret = _options.ClientSecret
-      };
-
-      if (_logger.IsEnabled(LogLevel.Debug))
-        _logger.LogDebug("Requesting Alison access token");
-
-      var response = await _options.BaseUrl
-        .AppendPathSegment(_options.AccessTokenPath)
-        .PostJsonAsync(request)
-        .EnsureSuccessStatusCodeAsync()
-        .ReceiveJson<AlisonAccessTokenResponse>();
-
-      if (string.IsNullOrWhiteSpace(response.AccessToken))
-        throw new InvalidOperationException("Alison access token response did not contain an access token");
-
-      if (_logger.IsEnabled(LogLevel.Debug))
-        _logger.LogDebug("Successfully acquired Alison access token with token type '{tokenType}'", response.TokenType);
-
-      return response;
-    }
-
-    private async Task<AlisonResponse<AlisonCategory>> GetCategories()
-    {
-      if (_categoriesPayload != null)
-        return _categoriesPayload;
-
-      if (_logger.IsEnabled(LogLevel.Debug))
-        _logger.LogDebug("Requesting Alison categories payload from '{path}'", Path_Categories);
-
-      var pageNumber = 1;
-      var categories = new List<AlisonCategory>();
-      int? total = null;
-
-      while (true)
-      {
-        var response = await _options.BaseUrl
-          .AppendPathSegment(Path_Categories)
-          .SetQueryParam(QueryParameter_Page, pageNumber)
-          .SetQueryParam(QueryParameter_PerPage, PageSize_Maximum)
-          .WithAuthHeader(await GetAuthHeader())
-          .GetAsync()
-          .EnsureSuccessStatusCodeAsync()
-          .ReceiveJson<AlisonResponse<AlisonCategory>>();
-
-        total ??= response.Total;
-
-        categories.AddRange(response.Data);
-
-        if (_logger.IsEnabled(LogLevel.Debug))
-          _logger.LogDebug(
-            "Loaded Alison categories page '{page}' with '{count}' items. Total loaded '{totalLoaded}'",
-            pageNumber, response.Data.Count, categories.Count);
-
-        if (response.Data.Count < PageSize_Maximum)
-          break;
-
-        if (total.HasValue && categories.Count >= total.Value)
-          break;
-
-        pageNumber++;
-      }
-
-      _categoriesPayload = new AlisonResponse<AlisonCategory>
-      {
-        Data = categories,
-        Meta = new AlisonPaginationMeta
-        {
-          CurrentPage = 1,
-          PerPage = PageSize_Maximum,
-          Total = total ?? categories.Count,
-          LastPage = total.HasValue
-            ? (int)Math.Ceiling(total.Value / (double)PageSize_Maximum)
-            : null
-        }
-      };
-
-      return _categoriesPayload;
-    }
-
-    private async Task<AlisonResponse<AlisonCourse>> GetCourses(SyncFilterPull filter)
+    private SyncResultPull<Domain.Opportunity.Models.Opportunity> ListFromStore(SyncFilterPull filter)
     {
       ArgumentNullException.ThrowIfNull(filter);
 
-      var requestedPageNumber = filter.PageNumber!.Value;
-      var requestedPageSize = filter.PageSize!.Value;
+      var query = _opportunityRepository.Query();
+      query = query.OrderBy(o => o.ExternalId);
 
-      var alisonPageSize = Math.Min(requestedPageSize, PageSize_Maximum);
-      var requestedStartIndex = (requestedPageNumber - 1) * requestedPageSize;
+      var result = new SyncResultPull<Domain.Opportunity.Models.Opportunity>();
 
-      var alisonPageNumber = requestedStartIndex / alisonPageSize + 1;
-      var alisonPageOffset = requestedStartIndex % alisonPageSize;
-
-      var courses = new List<AlisonCourse>();
-      int? total = null;
-
-      while (courses.Count < requestedPageSize)
+      if (filter.PaginationEnabled)
       {
-        var response = await GetCoursesPage(alisonPageNumber, alisonPageSize);
-
-        total ??= response.Total;
-
-        if (!total.HasValue)
-          throw new InvalidOperationException("Alison course response did not contain pagination total");
-
-        var pageItems = response.Data.AsEnumerable();
-
-        if (alisonPageOffset > 0)
-        {
-          pageItems = pageItems.Skip(alisonPageOffset);
-          alisonPageOffset = 0;
-        }
-
-        courses.AddRange(pageItems.Take(requestedPageSize - courses.Count));
-
-        if (_logger.IsEnabled(LogLevel.Debug))
-          _logger.LogDebug(
-            "Loaded Alison courses page '{page}' with pageSize '{pageSize}' and '{count}' items. Total collected for requested page '{totalCollected}'",
-            alisonPageNumber, alisonPageSize, response.Data.Count, courses.Count);
-
-        if (courses.Count >= requestedPageSize)
-          break;
-
-        if (response.Data.Count < alisonPageSize)
-          break;
-
-        if (alisonPageNumber * alisonPageSize >= total.Value)
-          break;
-
-        alisonPageNumber++;
+        result.TotalCount = query.Count();
+        query = query.Skip((filter.PageNumber!.Value - 1) * filter.PageSize!.Value).Take(filter.PageSize.Value);
       }
 
-      return new AlisonResponse<AlisonCourse>
-      {
-        Data = courses,
-        Meta = new AlisonPaginationMeta
-        {
-          CurrentPage = requestedPageNumber,
-          PerPage = requestedPageSize,
-          Total = total,
-          From = courses.Count == 0 ? null : requestedStartIndex + 1,
-          To = courses.Count == 0 ? null : requestedStartIndex + courses.Count,
-          LastPage = total.HasValue
-            ? (int)Math.Ceiling(total.Value / (double)requestedPageSize)
-            : null
-        }
-      };
-    }
+      result.Items = [.. query.ToList().Select(ToSyncItem)];
 
-    private async Task<AlisonResponse<AlisonCourse>> GetCoursesPage(int pageNumber, int pageSize)
-    {
-      var request = await CreateCoursesRequest(pageNumber, pageSize);
-
-      return await request
-        .GetAsync()
-        .EnsureSuccessStatusCodeAsync()
-        .ReceiveJson<AlisonResponse<AlisonCourse>>();
-    }
-
-    private async Task<IFlurlRequest> CreateCoursesRequest(int pageNumber, int pageSize)
-    {
       if (_logger.IsEnabled(LogLevel.Debug))
-        _logger.LogDebug(
-          "Requesting Alison courses from '{path}' with page '{page}' and perPage '{perPage}'",
-          _options.CoursesPath, pageNumber, pageSize);
+        _logger.LogDebug("Mapped Alison local catalogue cache to sync result with '{count}' opportunities", result.Items.Count);
 
-      return _options.BaseUrl
-        .AppendPathSegment(_options.CoursesPath)
-        .SetQueryParam(QueryParameter_Page, pageNumber)
-        .SetQueryParam(QueryParameter_PerPage, pageSize)
-        .WithAuthHeader(await GetAuthHeader());
+      return result;
     }
 
-    private SyncItem<Opportunity> ToSyncItem(AlisonCourse course)
+    private SyncItem<Domain.Opportunity.Models.Opportunity> ToSyncItem(Models.Opportunity item)
+    {
+      ArgumentNullException.ThrowIfNull(item);
+
+      if (string.IsNullOrWhiteSpace(item.PayloadJson))
+        throw new InvalidOperationException($"Alison opportunity cache item '{item.ExternalId}' has no payload JSON");
+
+      var course = JsonConvert.DeserializeObject<AlisonCourse>(item.PayloadJson)
+        ?? throw new InvalidOperationException($"Failed to deserialize Alison course payload for cache item '{item.ExternalId}'");
+
+      var result = ToSyncItem(course, item.Deleted == true);
+      result.ExternalId = item.ExternalId;
+
+      return result;
+    }
+
+    private SyncItem<Domain.Opportunity.Models.Opportunity> ToSyncItem(AlisonCourse course, bool deleted)
     {
       ArgumentNullException.ThrowIfNull(course);
 
@@ -470,18 +252,11 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       // Alison provides online courses only, so all synced Alison opportunities are mapped as Online.
       var engagementType = _engagementTypeService.GetByName(EngagementTypeOption.Online.ToString());
 
-      return new SyncItem<Opportunity>
+      return new SyncItem<Domain.Opportunity.Models.Opportunity>
       {
         ExternalId = course.Id.ToString(),
-
-        // TODO: Deletion:
-        // Keep false for now.
-        // Do not infer deletion from missing paged Alison results.
-        // If Alison confirms deletion/unpublish means "no longer present in /courses",
-        // we need an infra-based tracking table / last-seen sync state before we can safely delete.
-        Deleted = false,
-
-        Item = new Opportunity
+        Deleted = deleted,
+        Item = new Domain.Opportunity.Models.Opportunity
         {
           Title = title,
           Description = description,
@@ -496,7 +271,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
           DateStart = dateStart,
           DateEnd = null,
 
-          Status = Status.Active,
+          Status = deleted ? Status.Deleted : Status.Active,
 
           // Automatic verification, no participant limit, no rewards.
           // Completion is imported from Alison and processed by Yoma.
@@ -533,27 +308,6 @@ namespace Yoma.Core.Infrastructure.Alison.Client
           Languages = languages
         }
       };
-    }
-
-    private static AlisonResponse<AlisonCourse> LoadEmbeddedCourses()
-    {
-      var assembly = typeof(AlisonClient).Assembly;
-
-      var resourceName = assembly
-        .GetManifestResourceNames()
-        .SingleOrDefault(item => item.EndsWith(EmbeddedResourceSuffix_Courses, StringComparison.OrdinalIgnoreCase));
-
-      if (string.IsNullOrWhiteSpace(resourceName))
-        throw new InvalidOperationException($"Embedded Alison sample resource '{EmbeddedResourceSuffix_Courses}' not found");
-
-      using var stream = assembly.GetManifestResourceStream(resourceName)
-        ?? throw new InvalidOperationException($"Unable to open embedded Alison sample resource '{resourceName}'");
-
-      using var reader = new StreamReader(stream);
-      var json = reader.ReadToEnd();
-
-      return JsonConvert.DeserializeObject<AlisonResponse<AlisonCourse>>(json)
-        ?? throw new InvalidOperationException("Failed to deserialize embedded Alison sample courses JSON");
     }
 
     private List<Domain.Opportunity.Models.Lookups.OpportunityCategory> GetCategories(AlisonCourse course)
@@ -624,11 +378,6 @@ namespace Yoma.Core.Infrastructure.Alison.Client
         _countryService.GetByCodeAlpha2(Country.Worldwide.ToDescription())
       };
 
-      // Countries:
-      // Always include Worldwide because Alison courses appear globally accessible.
-      // If publisher.location contains a specific country, also include it as an additional country.
-      // Skip "Global" / "Worldwide" because that is already represented by WW.
-      // Ignore Alison publisher.country_id because it is Alison-specific and not mapped to Yoma/ISO country ids.
       foreach (var publisher in course.Publishers)
       {
         var countryName = ResolvePublisherCountryName(publisher.Location);
@@ -687,7 +436,6 @@ namespace Yoma.Core.Infrastructure.Alison.Client
         ? results
         : [_languageService.GetByName(Domain.Core.Language.English.ToString())];
     }
-
 
     private static IEnumerable<string> GetLanguageLocales(AlisonCourse course)
     {
