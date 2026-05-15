@@ -71,25 +71,43 @@ namespace Yoma.Core.Infrastructure.Substack.Services
         lockAcquired = await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration);
         if (!lockAcquired) return;
 
-        if (onStartupInitialRefresh && _newsArticleRepository.Query().Any())
+        var syncFromExternalProvider = _appSettings.NewsFeedProviderAsSourceEnabledEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment);
+
+        // Startup refresh is only intended to seed local embedded sample data.
+        // Do not trigger the live RSS pull on application startup.
+        if (onStartupInitialRefresh && syncFromExternalProvider)
         {
-          if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Refreshing (On Startup) of news feeds skipped");
+          if (_logger.IsEnabled(LogLevel.Information))
+            _logger.LogInformation("Refreshing (On Startup) of news feeds skipped because external news feed synchronization is enabled for environment '{environment}'", _environmentProvider.Environment);
+
           return;
         }
 
-        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processing news feed refresh");
+        if (onStartupInitialRefresh && _newsArticleRepository.Query().Any())
+        {
+          if (_logger.IsEnabled(LogLevel.Information))
+            _logger.LogInformation("Refreshing (On Startup) of news feeds skipped because local cache already contains data");
+
+          return;
+        }
+
+        if (_logger.IsEnabled(LogLevel.Information))
+          _logger.LogInformation("Processing news feed refresh");
 
         var now = DateTimeOffset.UtcNow;
-        if (_appSettings.NewsFeedProviderAsSourceEnabledEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment))
+
+        if (syncFromExternalProvider)
           await RefreshFromRSSFeedAsync(now);
         else
           await RefreshFromFileAsync(now);
 
-        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processed news feed refresh");
+        if (_logger.IsEnabled(LogLevel.Information))
+          _logger.LogInformation("Processed news feed refresh");
       }
       catch (Exception ex)
       {
-        if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(RefreshFeeds), ex.Message);
+        if (_logger.IsEnabled(LogLevel.Error))
+          _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(RefreshFeeds), ex.Message);
       }
       finally
       {

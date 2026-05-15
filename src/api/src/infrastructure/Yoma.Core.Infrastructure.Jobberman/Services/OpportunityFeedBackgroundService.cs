@@ -68,10 +68,22 @@ namespace Yoma.Core.Infrastructure.Jobberman.Services
         lockAcquired = await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration);
         if (!lockAcquired) return;
 
+        var syncFromExternalPartners = _appSettings.PartnerSyncEnabledEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment);
+
+        // Startup refresh is only intended to seed local embedded sample data.
+        // Do not trigger the live RSS pull on application startup.
+        if (onStartupInitialRefresh && syncFromExternalPartners)
+        {
+          if (_logger.IsEnabled(LogLevel.Information))
+            _logger.LogInformation("Refreshing (On Startup) of Jobberman opportunity feeds skipped because external partner synchronization is enabled for environment '{environment}'", _environmentProvider.Environment);
+
+          return;
+        }
+
         if (onStartupInitialRefresh && _opportunityRepository.Query().Any())
         {
           if (_logger.IsEnabled(LogLevel.Information))
-            _logger.LogInformation("Refreshing (On Startup) of Jobberman opportunity feeds skipped");
+            _logger.LogInformation("Refreshing (On Startup) of Jobberman opportunity feeds skipped because local cache already contains data");
 
           return;
         }
@@ -80,7 +92,6 @@ namespace Yoma.Core.Infrastructure.Jobberman.Services
           _logger.LogInformation("Processing Jobberman opportunity feed refresh");
 
         var now = DateTimeOffset.UtcNow;
-        var syncFromExternalPartners = _appSettings.PartnerSyncEnabledEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment);
 
         if (syncFromExternalPartners)
           await RefreshFromRSSFeedAsync(now);

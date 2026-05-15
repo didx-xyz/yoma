@@ -29,7 +29,6 @@ using Yoma.Core.Infrastructure.Bitly;
 using Yoma.Core.Infrastructure.Chimoney;
 using Yoma.Core.Infrastructure.Database;
 using Yoma.Core.Infrastructure.Emsi;
-using Yoma.Core.Infrastructure.Jobberman;
 using Yoma.Core.Infrastructure.Keycloak;
 using Yoma.Core.Infrastructure.SAYouth;
 using Yoma.Core.Infrastructure.SendGrid;
@@ -238,12 +237,19 @@ namespace Yoma.Core.Api
       //migrations applied as part of ConfigureHangfire to ensure db exist prior to executing Hangfire migrations
       _configuration.Configure_RecurringJobs(_appSettings, _environment);
       _configuration.Configure_RecurringJobsNewsFeedProvider();
-      _configuration.Configure_RecurringJobsSyncProvider();
+      Configure_RecurringJobsSyncProviders(_configuration);
       #endregion 3rd Partry
     }
     #endregion
 
     #region Private Members
+    private static void Configure_RecurringJobsSyncProviders(IConfiguration configuration)
+    {
+      Infrastructure.Jobberman.Startup.Configure_RecurringJobsSyncProvider(configuration);
+
+      Infrastructure.Alison.Startup.Configure_RecurringJobsSyncProvider(configuration);
+    }
+
     private static void ConfigureServices_SyncProviders(IServiceCollection services, IConfiguration configuration)
     {
       Infrastructure.SAYouth.Startup.ConfigureServices_SyncProvider(services, configuration);
@@ -259,7 +265,7 @@ namespace Yoma.Core.Api
 
       Infrastructure.Jobberman.Startup.ConfigureServices_InfrastructureSyncProvider(services, configuration, appSettings);
 
-      Infrastructure.Alison.Startup.ConfigureServices_InfrastructureSyncProvider(services);
+      Infrastructure.Alison.Startup.ConfigureServices_InfrastructureSyncProvider(services, configuration, appSettings);
     }
 
     private static void ConfigureFlurl()
@@ -323,7 +329,7 @@ namespace Yoma.Core.Api
         serviceProvider.Configure_InfrastructureDatabase();
         serviceProvider.Configure_InfrastructureDatabaseSSIProvider();
         serviceProvider.Configure_InfrastructureDatabaseNewsFeedProvider();
-        serviceProvider.Configure_InfrastructureDatabaseSyncProvider();
+        ConfigureServiceProvider_InfrastructureDatabaseSyncProviders(serviceProvider);
         config.SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
              .UseActivator(new HangfireActivator(scopeFactory))
              .UseSimpleAssemblyNameTypeSerializer()
@@ -340,7 +346,14 @@ namespace Yoma.Core.Api
       });
     }
 
-    public void ConfigureRedis(IServiceCollection services, IConfiguration configuration)
+    private static void ConfigureServiceProvider_InfrastructureDatabaseSyncProviders(IServiceProvider serviceProvider)
+    {
+      Infrastructure.Jobberman.Startup.Configure_InfrastructureDatabaseSyncProvider(serviceProvider);
+
+      Infrastructure.Alison.Startup.Configure_InfrastructureDatabaseSyncProvider(serviceProvider);
+    }
+
+    private void ConfigureRedis(IServiceCollection services, IConfiguration configuration)
     {
       const string RedisKey_DataProtection = "yoma.core.api:keys:data_protection";
 

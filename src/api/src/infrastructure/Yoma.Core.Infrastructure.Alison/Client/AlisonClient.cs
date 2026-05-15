@@ -535,7 +535,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
         metadata.Add($"<strong>Publisher:</strong> {System.Net.WebUtility.HtmlEncode(publisherName)}");
 
       if (!string.IsNullOrWhiteSpace(course.Type))
-        metadata.Add($"<strong>Course type:</strong> {System.Net.WebUtility.HtmlEncode(course.Type)}");
+        metadata.Add($"<strong>Course type:</strong> {System.Net.WebUtility.HtmlEncode(course.Type.TitleCase())}");
 
       if (metadata.Count > 0)
         description = $"{description}<br /><br />{string.Join("<br />", metadata)}";

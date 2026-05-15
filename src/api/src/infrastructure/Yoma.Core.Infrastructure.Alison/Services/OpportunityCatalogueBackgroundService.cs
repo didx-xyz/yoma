@@ -75,10 +75,22 @@ namespace Yoma.Core.Infrastructure.Alison.Services
         lockAcquired = await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration);
         if (!lockAcquired) return;
 
+        var syncFromExternalPartners = _appSettings.PartnerSyncEnabledEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment);
+
+        // Startup refresh is only intended to seed local embedded sample data.
+        // Do not trigger the live pull on application startup.
+        if (onStartupInitialRefresh && syncFromExternalPartners)
+        {
+          if (_logger.IsEnabled(LogLevel.Information))
+            _logger.LogInformation("Refreshing (On Startup) of Alison opportunity catalogue skipped because external partner synchronization is enabled for environment '{environment}'", _environmentProvider.Environment);
+
+          return;
+        }
+
         if (onStartupInitialRefresh && _opportunityRepository.Query().Any())
         {
           if (_logger.IsEnabled(LogLevel.Information))
-            _logger.LogInformation("Refreshing (On Startup) of Alison opportunity catalogue skipped");
+            _logger.LogInformation("Refreshing (On Startup) of Alison opportunity catalogue skipped because local cache already contains data");
 
           return;
         }
@@ -87,7 +99,6 @@ namespace Yoma.Core.Infrastructure.Alison.Services
           _logger.LogInformation("Processing Alison opportunity catalogue refresh");
 
         var now = DateTimeOffset.UtcNow;
-        var syncFromExternalPartners = _appSettings.PartnerSyncEnabledEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment);
 
         if (syncFromExternalPartners)
           await RefreshFromApiAsync(now);
@@ -383,7 +394,7 @@ namespace Yoma.Core.Infrastructure.Alison.Services
     {
       ArgumentNullException.ThrowIfNull(course, nameof(course));
 
-      var payloadJson = JsonConvert.SerializeObject(course, Formatting.None);
+      var payloadJson = HashHelper.SerializeForHashing(course);
 
       return new Opportunity
       {

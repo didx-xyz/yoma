@@ -60,6 +60,13 @@ namespace Yoma.Core.Domain.Core.Helpers
 
       return builder.ToString();
     }
+
+    public static string SerializeForHashing(object instance)
+    {
+      ArgumentNullException.ThrowIfNull(instance, nameof(instance));
+
+      return JsonConvert.SerializeObject(instance, _settings);
+    }
     #endregion
   }
 }
