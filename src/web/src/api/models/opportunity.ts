@@ -5,8 +5,7 @@ import type {
 } from "./common";
 import type { Country, Language, Skill } from "./lookups";
 
-export interface OpportunitySearchFilterAdmin
-  extends OpportunitySearchFilterBase {
+export interface OpportunitySearchFilterAdmin extends OpportunitySearchFilterBase {
   startDate: string | null;
   endDate: string | null;
   statuses: Status[] | null | string[]; //NB
@@ -208,8 +207,7 @@ export interface OpportunitySearchFilterBase extends PaginationFilter {
   valueContains: string | null;
 }
 
-export interface OpportunitySearchResultsInfo
-  extends OpportunitySearchResultsBase {
+export interface OpportunitySearchResultsInfo extends OpportunitySearchResultsBase {
   items: OpportunityInfo[];
 }
 

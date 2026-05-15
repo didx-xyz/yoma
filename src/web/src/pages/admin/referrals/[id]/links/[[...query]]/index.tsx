@@ -31,6 +31,7 @@ import {
   useReferralLinksAdminQuery,
   useReferralProgramByIdQuery,
 } from "~/hooks/useReferralProgramMutations";
+import { UserInitialsAvatar } from "~/components/User/UserInitialsAvatar";
 import { DATE_FORMAT_HUMAN, PAGE_SIZE, THEME_BLUE } from "~/lib/constants";
 import { getSafeUrl } from "~/lib/utils";
 import { type NextPageWithLayout } from "~/pages/_app";
@@ -439,11 +440,18 @@ const ReferralLinks: NextPageWithLayout<{
                         </div>
 
                         {/* Referrer */}
-                        <div className="flex flex-row items-center justify-between gap-1">
+                        <div className="flex flex-row justify-between gap-1">
                           <p className="text-sm tracking-wider">Referrer</p>
-                          <div className="text-end text-sm">
-                            <div className="font-semibold">
-                              {link.userDisplayName}
+                          <div className="flex flex-col gap-2 text-end text-sm">
+                            <div className="flex items-center gap-2">
+                              <UserInitialsAvatar
+                                displayName={link.userDisplayName}
+                                size={32}
+                                alt={link.userDisplayName}
+                              />
+                              <div className="font-semibold">
+                                {link.userDisplayName}
+                              </div>
                             </div>
                             {link.userEmail && (
                               <div className="text-gray-dark text-xs">
@@ -547,40 +555,47 @@ const ReferralLinks: NextPageWithLayout<{
                           </Link>
                         </td>
                         <td className="border-gray-light border-t-2 !align-top">
-                          <div className="flex flex-col gap-1 text-xs">
-                            <div className="font-semibold">
-                              {link.userDisplayName}
+                          <div className="flex items-start gap-2">
+                            <UserInitialsAvatar
+                              displayName={link.userDisplayName}
+                              size={32}
+                              alt={link.userDisplayName}
+                            />
+                            <div className="flex flex-col gap-1 text-xs">
+                              <div className="font-semibold">
+                                {link.userDisplayName}
+                              </div>
+                              {link.userEmail && (
+                                <div className="text-gray-dark">
+                                  {link.userEmail}
+                                </div>
+                              )}
+                              {link.userPhoneNumber && (
+                                <div className="text-gray-dark">
+                                  {link.userPhoneNumber}
+                                </div>
+                              )}
+                              {link.blocked && (
+                                <div className="text-red mt-1 flex items-center gap-1 font-semibold">
+                                  <span>⚠️</span>
+                                  <span>
+                                    Blocked on{" "}
+                                    {link.blockedDate ? (
+                                      <span className="text-xs whitespace-nowrap text-black">
+                                        <Moment
+                                          format={DATE_FORMAT_HUMAN}
+                                          utc={true}
+                                        >
+                                          {link.blockedDate}
+                                        </Moment>
+                                      </span>
+                                    ) : (
+                                      "N/A"
+                                    )}
+                                  </span>
+                                </div>
+                              )}
                             </div>
-                            {link.userEmail && (
-                              <div className="text-gray-dark">
-                                {link.userEmail}
-                              </div>
-                            )}
-                            {link.userPhoneNumber && (
-                              <div className="text-gray-dark">
-                                {link.userPhoneNumber}
-                              </div>
-                            )}
-                            {link.blocked && (
-                              <div className="text-red mt-1 flex items-center gap-1 font-semibold">
-                                <span>⚠️</span>
-                                <span>
-                                  Blocked on{" "}
-                                  {link.blockedDate ? (
-                                    <span className="text-xs whitespace-nowrap text-black">
-                                      <Moment
-                                        format={DATE_FORMAT_HUMAN}
-                                        utc={true}
-                                      >
-                                        {link.blockedDate}
-                                      </Moment>
-                                    </span>
-                                  ) : (
-                                    "N/A"
-                                  )}
-                                </span>
-                              </div>
-                            )}
                           </div>
                         </td>
                         <td className="border-gray-light border-t-2 !align-top">

@@ -1,4 +1,5 @@
 import type { AxiosError } from "axios";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useCallback, useState } from "react";
@@ -14,7 +15,7 @@ import { useConfirmationModalContext } from "~/context/modalConfirmationContext"
 import analytics from "~/lib/analytics";
 import { ROLE_ADMIN } from "~/lib/constants";
 import type { User } from "~/server/auth";
-import { SquareImage } from "../Common/SquareImage";
+import { NoImage } from "../Common/NoImage";
 import { ApiErrors } from "../Status/ApiErrors";
 import { Loading } from "../Status/Loading";
 
@@ -125,11 +126,28 @@ export const OrganisationCardComponent: React.FC<{
         href={link}
         className="items-centerx flex w-1/4 justify-center pt-4"
       >
-        <SquareImage
-          imageURL={item.logoURL ?? null}
-          name={item.name ?? "Organisation logo"}
-          size={60}
-        />
+        {item.logoURL ? (
+          <Image
+            src={item.logoURL}
+            alt={item.name ?? "Organisation logo"}
+            width={60}
+            height={60}
+            className="rounded-lg object-cover shadow-md"
+            style={{
+              width: "60px",
+              height: "60px",
+              minWidth: "60px",
+              minHeight: "60px",
+            }}
+          />
+        ) : (
+          <div
+            className="overflow-hidden rounded-lg shadow-md"
+            style={{ width: "60px", height: "60px" }}
+          >
+            <NoImage iconOnly />
+          </div>
+        )}
       </Link>
 
       <div className="relative flex w-3/4 flex-col justify-start p-2 pr-4">

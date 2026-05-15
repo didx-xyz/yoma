@@ -157,17 +157,21 @@ export const UserMenu: React.FC = () => {
             {(activeRoleView == RoleView.User ||
               activeRoleView == RoleView.Admin) && (
               <>
-                <div className="rounded-full outline outline-white hover:brightness-90">
-                  {userProfile && (
+                {userProfile && (
+                  <div className="rounded-full outline outline-white hover:brightness-90">
                     <UserInitialsAvatar
-                      firstName={userProfile?.firstName}
-                      surname={userProfile?.surname}
+                      displayName={
+                        userProfile?.displayName ??
+                        [userProfile?.firstName, userProfile?.surname]
+                          .filter(Boolean)
+                          .join(" ")
+                      }
                       photoURL={userProfile?.photoURL}
                       size={44}
                       alt="User Logo"
                     />
-                  )}
-                </div>
+                  </div>
+                )}
               </>
             )}
 
@@ -226,8 +230,12 @@ export const UserMenu: React.FC = () => {
                 <div className="relative z-10 mt-6 mr-2 overflow-hidden rounded-full shadow">
                   {userProfile && (
                     <UserInitialsAvatar
-                      firstName={userProfile?.firstName}
-                      surname={userProfile?.surname}
+                      displayName={
+                        userProfile?.displayName ??
+                        [userProfile?.firstName, userProfile?.surname]
+                          .filter(Boolean)
+                          .join(" ")
+                      }
                       photoURL={userProfile?.photoURL}
                       size={80}
                       alt="User logo"

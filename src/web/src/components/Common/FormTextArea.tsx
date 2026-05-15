@@ -4,12 +4,10 @@ import React from "react";
 type DataAttributes = Record<`data-${string}`, string | undefined>;
 
 interface CustomInputHTMLAttributes<T>
-  extends React.TextareaHTMLAttributes<T>,
-    DataAttributes {}
+  extends React.TextareaHTMLAttributes<T>, DataAttributes {}
 
 interface CustomInputHTMLAttributes<T>
-  extends React.TextareaHTMLAttributes<T>,
-    DataAttributes {}
+  extends React.TextareaHTMLAttributes<T>, DataAttributes {}
 
 const FormTextArea: React.FC<{
   inputProps?: CustomInputHTMLAttributes<HTMLTextAreaElement>;

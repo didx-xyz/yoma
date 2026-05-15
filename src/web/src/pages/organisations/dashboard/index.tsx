@@ -54,6 +54,7 @@ import {
   searchOrganizationYouth,
 } from "~/api/services/analytics";
 import { AvatarImage } from "~/components/AvatarImage";
+import { UserInitialsAvatar } from "~/components/User/UserInitialsAvatar";
 import CustomCarousel from "~/components/Carousel/CustomCarousel";
 import CustomSlider from "~/components/Carousel/CustomSlider";
 import CustomModal from "~/components/Common/CustomModal";
@@ -1663,9 +1664,12 @@ const OrganisationDashboard: NextPageWithLayout<{
                                       >
                                         <td>
                                           <div className="-ml-4 flex items-center gap-2">
-                                            <AvatarImage
+                                            <UserInitialsAvatar
+                                              displayName={
+                                                youthInfo.displayName
+                                              }
                                               alt="Student Image"
-                                              size={40}
+                                              size={32}
                                             />
                                             {youthInfo.displayName}
                                           </div>

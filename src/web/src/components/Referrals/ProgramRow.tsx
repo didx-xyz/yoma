@@ -1,6 +1,7 @@
+import Image from "next/image";
 import React from "react";
 import type { ProgramInfo } from "~/api/models/referrals";
-import { SquareImage } from "../Common/SquareImage";
+import { NoImage } from "../Common/NoImage";
 
 interface ProgramRowProps {
   program: ProgramInfo;
@@ -29,14 +30,28 @@ export const ProgramRow: React.FC<ProgramRowProps> = ({
             onClick ? "cursor-pointer" : "cursor-default"
           }`}
         >
-          <div className="flex-shrink-0">
-            <SquareImage
-              imageURL={program.imageURL}
-              name={program.name}
-              size={48}
-              className="shrink-0 border border-gray-200 bg-white"
+          {program.imageURL ? (
+            <Image
+              src={program.imageURL}
+              alt={program.name}
+              width={48}
+              height={48}
+              className="shrink-0 rounded-lg border border-gray-200 bg-white object-cover shadow-md"
+              style={{
+                width: "48px",
+                height: "48px",
+                minWidth: "48px",
+                minHeight: "48px",
+              }}
             />
-          </div>
+          ) : (
+            <div
+              className="shrink-0 overflow-hidden rounded-lg border border-gray-200 shadow-md"
+              style={{ width: "48px", height: "48px" }}
+            >
+              <NoImage iconOnly />
+            </div>
+          )}
 
           <div className="min-w-0 flex-1">
             <div className="font-family-nunito text-base-content block min-w-0 overflow-hidden text-sm font-semibold text-ellipsis whitespace-nowrap md:text-base">

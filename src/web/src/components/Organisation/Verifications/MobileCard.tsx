@@ -33,7 +33,7 @@ const MobileCard: React.FC<MobileCardProps> = ({
       <div className="mb-2 flex items-center">
         <input
           type="checkbox"
-          className="checkbox-primary checkbox border-gray-dark mr-2 h-6 w-6"
+          className="checkbox-primary checkbox mr-2"
           checked={selectedRows?.some((x) => x.id == item.id)}
           onChange={(e) => handleRowSelect(e, item)}
         />

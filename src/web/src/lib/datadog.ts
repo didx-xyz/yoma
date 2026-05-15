@@ -98,14 +98,11 @@ export const initializeDatadog = async () => {
         trackResources: true,
         trackLongTasks: true,
         defaultPrivacyLevel: "mask-user-input",
-        allowedTracingUrls: env.NEXT_PUBLIC_API_BASE_URL
-          ? [
-              {
-                match: `${env.NEXT_PUBLIC_API_BASE_URL}/`,
-                propagatorTypes: ["tracecontext"],
-              },
-            ]
-          : [],
+        // Distributed tracing disabled: the API's upstream infrastructure (ingress/proxy)
+        // does not allow W3C trace context headers (baggage, traceparent, tracestate) or
+        // Datadog propagation headers in CORS preflight responses, causing all API requests
+        // to fail with a CORS error. DD RUM is used here for error/session monitoring only.
+        allowedTracingUrls: [],
         // Advanced configuration for better error tracking
         beforeSend: () => {
           // Custom logic to modify or filter events before sending

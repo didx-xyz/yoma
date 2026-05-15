@@ -235,7 +235,7 @@ export const downloadVerificationFiles = async (
       throw new Error("Content-Disposition header is missing");
     }
 
-    const contentType = response.headers["content-type"];
+    const contentType = response.headers["content-type"] as string | undefined;
     if (!contentType) {
       throw new Error("Content-Type header is missing");
     }

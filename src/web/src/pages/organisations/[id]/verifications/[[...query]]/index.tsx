@@ -60,6 +60,7 @@ import { Loading } from "~/components/Status/Loading";
 import { LoadingSkeleton } from "~/components/Status/LoadingSkeleton";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
+import { UserInitialsAvatar } from "~/components/User/UserInitialsAvatar";
 import {
   OPPORTUNITY_QUERY_KEYS,
   useOrgVerificationCountQuery,
@@ -915,7 +916,7 @@ const OpportunityVerifications: NextPageWithLayout<{
                       <th className="border-gray-light w-[35px] !py-4 pr-4">
                         <input
                           type="checkbox"
-                          className="checkbox-primary checkbox checkbox-sm border-gray-dark rounded bg-white"
+                          className="checkbox-primary checkbox checkbox-sm"
                           checked={
                             selectedRows?.length === searchResults.items?.length
                           }
@@ -936,13 +937,21 @@ const OpportunityVerifications: NextPageWithLayout<{
                         <td className="border-gray-light text-gray-dark w-[35px] border-t-2 pt-4 !align-top">
                           <input
                             type="checkbox"
-                            className="checkbox-primary checkbox checkbox-sm border-gray-dark rounded bg-white"
+                            className="checkbox-primary checkbox checkbox-sm"
                             checked={selectedRows?.some((x) => x.id == item.id)}
                             onChange={(e) => handleRowSelect(e, item)}
                           />
                         </td>
                         <td className="border-gray-light text-gray-dark w-[200px] border-t-2 pl-0 !align-top">
-                          {item.userDisplayName}
+                          <div className="flex items-center gap-2 text-sm">
+                            <UserInitialsAvatar
+                              displayName={item?.userDisplayName}
+                              photoURL={item?.userPhotoURL ?? null}
+                              alt="Icon User"
+                              size={32}
+                            />
+                            <div>{item.userDisplayName}</div>
+                          </div>
                         </td>
                         <td className="border-gray-light text-gray-dark w-[420px] border-t-2 !align-top">
                           <Link

@@ -11,7 +11,7 @@ import {
 import type { AxiosError } from "axios";
 import { toast } from "react-toastify";
 import type { UserProfile, UserRequestProfile } from "~/api/models/user";
-import { patchPhoto, patchUser } from "~/api/services/user";
+import { deletePhoto, patchPhoto, patchUser } from "~/api/services/user";
 import analytics from "~/lib/analytics";
 import AvatarUpload from "../Organisation/Upsert/AvatarUpload";
 import { ApiErrors } from "../Status/ApiErrors";
@@ -59,6 +59,7 @@ export const UserProfileForm: React.FC<{
   const { data: session, update } = useSession();
   const [isLoading, setIsLoading] = useState(false);
   const [logoFiles, setLogoFiles] = useState<File[]>([]);
+  const [removePhoto, setRemovePhoto] = useState(false);
   const setUserProfileAtom = useSetAtom(userProfileAtom);
   const [formData] = useState<
     UserRequestProfile & {
@@ -281,11 +282,22 @@ export const UserProfileForm: React.FC<{
 
         // Track what's being updated
         const isPhotoUpdate = logoFiles && logoFiles.length > 0;
+        const isPhotoDeletion = removePhoto && !isPhotoUpdate;
         const isProfileUpdate = filterOptions.some(
           (option) => option !== UserProfileFilterOptions.LOGO,
         );
 
         let photoProfileResult: UserProfile | null = null;
+
+        // delete photo
+        if (isPhotoDeletion) {
+          await deletePhoto();
+
+          // 📊 ANALYTICS: track photo removal
+          analytics.trackEvent("profile_photo_removed", {
+            userId: userProfile?.id,
+          });
+        }
 
         // update photo
         if (isPhotoUpdate) {
@@ -326,6 +338,18 @@ export const UserProfileForm: React.FC<{
                 photoProfileResult.photoURL ?? userProfileResult.photoURL,
             };
           }
+        }
+
+        // If photo was deleted, clear the photo fields
+        if (isPhotoDeletion) {
+          if (!userProfileResult) {
+            throw new Error("User profile result is required");
+          }
+          userProfileResult = {
+            ...userProfileResult,
+            photoId: null,
+            photoURL: null,
+          };
         }
 
         // Ensure we have a valid userProfileResult
@@ -390,6 +414,7 @@ export const UserProfileForm: React.FC<{
       onSubmit,
       update,
       logoFiles,
+      removePhoto,
       session,
       setIsLoading,
       setUserProfileAtom,
@@ -732,15 +757,20 @@ export const UserProfileForm: React.FC<{
             <AvatarUpload
               onUploadComplete={(files) => {
                 setLogoFiles(files);
+                setRemovePhoto(false);
               }}
               onRemoveImageExisting={() => {
                 setLogoFiles([]);
               }}
+              onRemovePicture={() => {
+                setRemovePhoto(true);
+                setLogoFiles([]);
+              }}
               existingImage={userProfile?.photoURL ?? ""}
               showExisting={
-                userProfile?.photoURL && !(logoFiles && logoFiles.length > 0)
-                  ? true
-                  : false
+                !removePhoto &&
+                !!userProfile?.photoURL &&
+                !(logoFiles && logoFiles.length > 0)
               }
             />
           </FormField>

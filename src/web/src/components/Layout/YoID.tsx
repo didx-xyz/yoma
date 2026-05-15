@@ -10,7 +10,7 @@ import { IoIosInformationCircleOutline } from "react-icons/io";
 import type { TabItem } from "~/api/models/common";
 import { userProfileAtom } from "~/lib/store";
 import { getTimeOfDayAndEmoji } from "~/lib/utils";
-import { AvatarImage } from "../AvatarImage";
+import { UserInitialsAvatar } from "../User/UserInitialsAvatar";
 import { PageBackground } from "../PageBackground";
 import MainLayout from "./Main";
 import { YoIdModal } from "../YoID/YoIdModal";
@@ -93,8 +93,14 @@ const YoIDLayout: TabProps = ({ children }) => {
           {/* HEADER */}
           <div className="flex flex-row justify-center gap-4">
             <div className="hidden sm:flex sm:scale-75 md:scale-90">
-              <AvatarImage
-                icon={userProfile?.photoURL ?? null}
+              <UserInitialsAvatar
+                displayName={
+                  userProfile?.displayName ??
+                  [userProfile?.firstName, userProfile?.surname]
+                    .filter(Boolean)
+                    .join(" ")
+                }
+                photoURL={userProfile?.photoURL}
                 alt="User Logo"
                 size={85}
               />

@@ -13,6 +13,8 @@ namespace Yoma.Core.Domain.Entity.Interfaces
 
     Task<UserProfile> UpsertPhoto(IFormFile file);
 
+    Task<UserProfile> DeletePhoto();
+
     Task<UserProfile> UpdateSettings(SettingsRequest settings);
 
     Task<UserProfile> Create(UserRequestCreateProfile request);

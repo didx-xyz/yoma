@@ -143,6 +143,21 @@ namespace Yoma.Core.Api.Controllers
       return StatusCode((int)HttpStatusCode.OK, result);
     }
 
+    [SwaggerOperation(Summary = "Delete the user's profile photo (Authenticated User)")]
+    [HttpDelete("photo")]
+    [ProducesResponseType(typeof(UserProfile), (int)HttpStatusCode.OK)]
+    [Authorize(Roles = $"{Constants.Role_User}")]
+    public async Task<IActionResult> DeletePhoto()
+    {
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(DeletePhoto));
+
+      var result = await _userProfileService.DeletePhoto();
+
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(DeletePhoto));
+
+      return StatusCode((int)HttpStatusCode.OK, result);
+    }
+
     [SwaggerOperation(Summary = "Update the user's settings (Authenticated User)")]
     [HttpPatch("settings")]
     [ProducesResponseType(typeof(UserProfile), (int)HttpStatusCode.OK)]

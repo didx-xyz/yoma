@@ -16,6 +16,7 @@ import { Unauthorized } from "~/components/Status/Unauthorized";
 import { useReferralLinkUsageByIdQuery } from "~/hooks/useReferralProgramMutations";
 import { DATE_FORMAT_HUMAN } from "~/lib/constants";
 import { THEME_BLUE } from "~/lib/constants";
+import { UserInitialsAvatar } from "~/components/User/UserInitialsAvatar";
 import { getSafeUrl } from "~/lib/utils";
 import type { NextPageWithLayout } from "~/pages/_app";
 
@@ -82,9 +83,11 @@ const ReferralLinkUsageInfo: NextPageWithLayout = () => {
           {/* Header */}
           <div className="flex flex-row items-start justify-between gap-4">
             <div className="flex-shrink-0">
-              <div className="flex h-[60px] w-[60px] items-center justify-center rounded-lg border-2 border-gray-200 bg-gradient-to-br from-blue-50 to-purple-50 text-2xl">
-                👤
-              </div>
+              <UserInitialsAvatar
+                displayName={usage?.userDisplayName}
+                size={60}
+                alt={usage?.userDisplayName ?? "User"}
+              />
             </div>
 
             <div className="min-w-0 flex-1">

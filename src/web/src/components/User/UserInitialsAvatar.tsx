@@ -2,23 +2,28 @@ import React from "react";
 import { AvatarImage } from "../AvatarImage";
 
 export const UserInitialsAvatar: React.FC<{
-  firstName?: string | null;
-  surname?: string | null;
+  displayName?: string | null;
   photoURL?: string | null;
   size: number;
   alt?: string;
-}> = ({ firstName, surname, photoURL, size, alt = "User" }) => {
+}> = ({ displayName, photoURL, size, alt = "User" }) => {
   if (photoURL) {
     return <AvatarImage icon={photoURL} alt={alt} size={size} />;
   }
-  const initials = `${firstName ?? ""}${surname ?? ""}`;
+  let label: string;
   let hash = 0;
-  for (let i = 0; i < initials.length; i++) {
-    hash = initials.charCodeAt(i) + ((hash << 5) - hash);
+  if (displayName) {
+    const parts = displayName.trim().split(/\s+/);
+    const first = parts[0]?.[0] ?? "";
+    const last = parts.length > 1 ? (parts[parts.length - 1]?.[0] ?? "") : "";
+    label = `${first}${last}`.toUpperCase() || "?";
+    for (let i = 0; i < displayName.length; i++) {
+      hash = displayName.charCodeAt(i) + ((hash << 5) - hash);
+    }
+  } else {
+    label = "";
   }
   const hue = Math.abs(hash) % 360;
-  const label =
-    `${firstName?.[0] ?? ""}${surname?.[0] ?? ""}`.toUpperCase() || "?";
   return (
     <div
       className="flex items-center justify-center rounded-full font-semibold text-white select-none"
@@ -26,7 +31,7 @@ export const UserInitialsAvatar: React.FC<{
         width: size,
         height: size,
         fontSize: size * 0.35,
-        backgroundColor: `hsl(${hue}, 55%, 45%)`,
+        backgroundColor: displayName ? `hsl(${hue}, 55%, 45%)` : "transparent",
       }}
     >
       {label}

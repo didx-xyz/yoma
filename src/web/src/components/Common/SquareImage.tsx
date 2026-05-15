@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { NoImage } from "~/components/Common/NoImage";
 
 export const SquareImage: React.FC<{
   imageURL: string | null | undefined;
@@ -26,12 +27,15 @@ export const SquareImage: React.FC<{
 
   return (
     <div
-      className={`flex items-center justify-center rounded-lg shadow-md ${
-        className
-      }`}
-      style={{ width: `${size}px`, height: `${size}px` }}
+      className={`overflow-hidden rounded-lg shadow-md ${className}`}
+      style={{
+        width: `${size}px`,
+        height: `${size}px`,
+        minWidth: `${size}px`,
+        minHeight: `${size}px`,
+      }}
     >
-      <span className="text-3xl">🎯</span>
+      <NoImage />
     </div>
   );
 };

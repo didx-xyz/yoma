@@ -19,7 +19,7 @@ import {
 } from "~/api/services/user";
 import { useRefereeReferrals } from "~/hooks/useRefereeReferrals";
 import analytics from "~/lib/analytics";
-import { handleUserSignIn } from "~/lib/authUtils";
+import { handleUserSignIn, handleUserSignOut } from "~/lib/authUtils";
 import {
   COOKIE_KEYCLOAK_SESSION,
   ROLE_ADMIN,
@@ -1205,10 +1205,21 @@ export const Global: React.FC = () => {
         onRequestClose={() => {
           setLoginDialogVisible(false);
         }}
-        className="md:max-h-[350px] md:w-[600px]"
+        className="md:max-h-[360px] md:w-[600px]"
       >
         <div className="flex h-full flex-col gap-2 overflow-y-auto pb-8">
-          <div className="bg-theme flex h-16 flex-row p-4 shadow-lg"></div>
+          <div className="bg-theme flex flex-row items-center justify-end p-4 shadow-lg">
+            <button
+              type="button"
+              className="btn btn-circle btn-sm border bg-transparent text-white shadow-none hover:opacity-80"
+              onClick={() => {
+                setLoginDialogVisible(false);
+                handleUserSignOut(false, false);
+              }}
+            >
+              <IoMdClose className="h-4 w-4" />
+            </button>
+          </div>
           <div className="flex flex-col items-center justify-center gap-4 px-6 pb-8 text-center md:px-12">
             <div className="border-purple-dark -mt-8 flex items-center justify-center rounded-full bg-white p-2 shadow-lg">
               <FcKey className="size-8 md:size-10" />
@@ -1221,9 +1232,20 @@ export const Global: React.FC = () => {
               <div className="text-md">{loginMessage}</div>
             </div>
 
-            <div className="mt-8 flex grow gap-4">
+            <div className="mt-4 flex grow gap-4">
               <SignInButton />
             </div>
+
+            <button
+              type="button"
+              className="hover:text-green text-sm text-black underline"
+              onClick={() => {
+                setLoginDialogVisible(false);
+                handleUserSignOut(false, false);
+              }}
+            >
+              Stay logged out
+            </button>
           </div>
         </div>
       </CustomModal>

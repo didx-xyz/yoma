@@ -414,8 +414,7 @@ export interface AdminReferralLinkSearchFilter extends PaginationFilter {
   statuses: ReferralLinkStatus[] | null;
 }
 
-export interface ReferralLinkSearchFilterAdmin
-  extends AdminReferralLinkSearchFilter {
+export interface ReferralLinkSearchFilterAdmin extends AdminReferralLinkSearchFilter {
   userId: string | null;
 }
 
@@ -475,8 +474,7 @@ export interface AdminReferralLinkUsageSearchFilter extends PaginationFilter {
   dateEnd: string | null;
 }
 
-export interface ReferralLinkUsageSearchFilterAdmin
-  extends AdminReferralLinkUsageSearchFilter {
+export interface ReferralLinkUsageSearchFilterAdmin extends AdminReferralLinkUsageSearchFilter {
   userIdReferee: string | null;
   userIdReferrer: string | null;
 }
@@ -615,8 +613,7 @@ export interface ReferralAnalyticsSearchFilter extends PaginationFilter {
   role: ReferralParticipationRole | string;
 }
 
-export interface ReferralAnalyticsSearchFilterAdmin
-  extends ReferralAnalyticsSearchFilter {
+export interface ReferralAnalyticsSearchFilterAdmin extends ReferralAnalyticsSearchFilter {
   programId: string | null;
   startDate: string | null;
   endDate: string | null;
@@ -632,8 +629,7 @@ export interface ReferralAnalyticsSearchResultsInfo {
   items: ReferralAnalyticsUserInfo[];
 }
 
-export interface ReferralAnalyticsSearchResults
-  extends ReferralAnalyticsSearchResultsInfo {
+export interface ReferralAnalyticsSearchResults extends ReferralAnalyticsSearchResultsInfo {
   zltoRewardTotal: number;
   items: ReferralAnalyticsUser[];
 }

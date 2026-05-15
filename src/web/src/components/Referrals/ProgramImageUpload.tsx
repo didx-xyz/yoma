@@ -1,10 +1,10 @@
 import Image from "next/image";
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import AvatarEditor from "react-avatar-editor";
+import AvatarEditor, { type AvatarEditorRef } from "react-avatar-editor";
 import { FaPencilAlt, FaTimes } from "react-icons/fa";
-import { FiImage } from "react-icons/fi";
 import { IoMdClose } from "react-icons/io";
 import CustomModal from "~/components/Common/CustomModal";
+import { NoImage } from "~/components/Common/NoImage";
 
 const Editor = AvatarEditor as any;
 const DEFAULT_ZOOM = 1;
@@ -27,7 +27,7 @@ const ProgramImageUpload: React.FC<ProgramImageUploadProps> = ({
   const [croppedImage, setCroppedImage] = useState<string | null>(null);
   const [computedImageUrl, setComputedImageUrl] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const editorRef = useRef<AvatarEditor>(null);
+  const editorRef = useRef<AvatarEditorRef>(null);
   const [cropModalVisible, setCropModalVisible] = useState(false);
 
   useEffect(() => {
@@ -223,12 +223,7 @@ const ProgramImageUpload: React.FC<ProgramImageUploadProps> = ({
                 className="object-cover"
               />
             ) : (
-              <div className="from-gray-light to-gray flex h-full w-full items-center justify-center bg-gradient-to-br">
-                <span className="text-gray-dark inline-flex items-center gap-1.5 rounded-full border border-white/70 bg-white/80 px-3 py-1 text-xs font-semibold tracking-wide uppercase">
-                  <FiImage className="h-3.5 w-3.5" aria-hidden="true" />
-                  No image
-                </span>
-              </div>
+              <NoImage />
             )}
           </div>
 
