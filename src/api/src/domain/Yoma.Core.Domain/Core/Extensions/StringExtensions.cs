@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -152,6 +153,52 @@ namespace Yoma.Core.Domain.Core.Extensions
       return MarkdownAsterisks().Replace(input, string.Empty);
     }
 
+    /// <summary>
+    /// HTML-decodes a string, then normalizes and trims it.
+    /// </summary>
+    /// <param name="input">The string to process.</param>
+    /// <returns>The decoded and normalized string, or null if no meaningful value exists.</returns>
+    public static string? HtmlDecode(this string? input)
+    {
+      if (string.IsNullOrWhiteSpace(input)) return null;
+
+      return WebUtility.HtmlDecode(input).NormalizeNullableValue();
+    }
+
+    /// <summary>
+    /// Removes HTML tags from a string, then normalizes and trims it.
+    /// </summary>
+    /// <param name="input">The string to process.</param>
+    /// <returns>The string without HTML tags, or null if no meaningful value exists.</returns>
+    public static string? RemoveHtmlTags(this string? input)
+    {
+      if (string.IsNullOrWhiteSpace(input)) return null;
+
+      return HtmlTags().Replace(input, " ").NormalizeNullableValue();
+    }
+
+    /// <summary>
+    /// Normalizes and trims a string, then truncates it to the specified maximum length with an ellipsis.
+    /// </summary>
+    /// <param name="input">The string to process.</param>
+    /// <param name="length">The maximum allowed length.</param>
+    /// <returns>The truncated string with an ellipsis if necessary; otherwise the original normalized string.</returns>
+    public static string TrimToLengthWithEllipsis(this string input, int length)
+    {
+      ArgumentNullException.ThrowIfNull(input, nameof(input));
+
+      if (length < 1)
+        throw new ArgumentOutOfRangeException(nameof(length), "Must be at least 1 character.");
+
+      input = input.NormalizeTrim();
+
+      if (input.Length <= length)
+        return input;
+
+      return length <= 3
+        ? input[..length]
+        : $"{input[..(length - 3)]}...";
+    }
     #endregion
 
     #region Private Members
@@ -167,6 +214,9 @@ namespace Yoma.Core.Domain.Core.Extensions
 
     [GeneratedRegex(@"\*")]
     private static partial Regex MarkdownAsterisks();
+
+    [GeneratedRegex("<.*?>")]
+    private static partial Regex HtmlTags();
 
     #endregion
   }

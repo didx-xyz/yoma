@@ -26,36 +26,18 @@ namespace Yoma.Core.Infrastructure.Jobberman.Client
 
     private readonly SyncFilterPullValidator _syncFilterPullValidator;
 
-    // Jobberman-specific job function to Yoma opportunity category mapping.
+    // Yoma category name -> Jobberman job functions.
     // Keep in code for now because the mapping is small, partner-specific, and version-controlled.
     // Unknown or omitted values default to Other.
-    private static readonly Dictionary<string, string> JobbermanCategoryMappings = new(StringComparer.OrdinalIgnoreCase)
+    private static readonly Dictionary<string, string[]> JobbermanCategoryMappings = new(StringComparer.OrdinalIgnoreCase)
     {
-      { "Accounting, Auditing & Finance", "Business and Entrepreneurship" },
-      { "Admin & Office", "Career and Personal Development" },
-      { "Creative & Design", "Creative Industry and Arts" },
-      { "Building & Architecture", "Business and Entrepreneurship" },
-      { "Consulting & Strategy", "Business and Entrepreneurship" },
-      { "Customer Service & Support", "Career and Personal Development" },
-      { "Engineering & Technology", "Technology and Digitization" },
-      { "Farming & Agriculture", "Agriculture" },
-      { "Food Services & Catering", "Tourism and Hospitality" },
-      { "Hospitality & Leisure", "Tourism and Hospitality" },
-      { "Software & Data", "Technology and Digitization" },
-      { "Legal Services", "Business and Entrepreneurship" },
-      { "Marketing & Communications", "Creative Industry and Arts" },
-      { "Medical & Pharmaceutical", "Health and Care" },
-      { "Product & Project Management", "Business and Entrepreneurship" },
-      { "Estate Agents & Property Management", "Business and Entrepreneurship" },
-      { "Quality Control & Assurance", "Business and Entrepreneurship" },
-      { "Human Resources", "Career and Personal Development" },
-      { "Management & Business Development", "Business and Entrepreneurship" },
-      { "Community & Social Services", "Career and Personal Development" },
-      { "Sales", "Business and Entrepreneurship" },
-      { "Supply Chain & Procurement", "Business and Entrepreneurship" },
-      { "Research, Teaching & Training", "Career and Personal Development" },
-      { "Trades & Services", "Business and Entrepreneurship" },
-      { "Driver & Transport Services", "Business and Entrepreneurship" }
+      { "Business and Entrepreneurship", ["Accounting, Auditing & Finance", "Building & Architecture", "Consulting & Strategy", "Legal Services", "Product & Project Management", "Estate Agents & Property Management", "Quality Control & Assurance", "Management & Business Development", "Sales", "Supply Chain & Procurement", "Trades & Services", "Driver & Transport Services"] },
+      { "Career and Personal Development", ["Admin & Office", "Customer Service & Support", "Human Resources", "Community & Social Services", "Research, Teaching & Training"] },
+      { "Creative Industry and Arts", ["Creative & Design", "Marketing & Communications"] },
+      { "Technology and Digitization", ["Engineering & Technology", "Software & Data"] },
+      { "Agriculture", ["Farming & Agriculture"] },
+      { "Tourism and Hospitality", ["Food Services & Catering", "Hospitality & Leisure"] },
+      { "Health and Care", ["Medical & Pharmaceutical"] }
     };
     #endregion
 
@@ -179,18 +161,28 @@ namespace Yoma.Core.Infrastructure.Jobberman.Client
       var result = _opportunityCategoryService.GetByNameOrNull(nameSource);
       if (result is not null) return result;
 
-      var mappedName = MapCategoryName(nameSource);
-      if (string.IsNullOrEmpty(mappedName)) return resultDefault;
-
-      return _opportunityCategoryService.GetByNameOrNull(mappedName) ?? resultDefault;
+      return TryResolveJobbermanCategoryName(nameSource, out var categoryName)
+        ? _opportunityCategoryService.GetByName(categoryName)
+        : resultDefault;
     }
 
-    private static string? MapCategoryName(string nameSource)
+    private static bool TryResolveJobbermanCategoryName(string nameSource, out string categoryName)
     {
-      var key = NormalizeLookupKey(nameSource);
-      if (string.IsNullOrEmpty(key)) return null;
+      categoryName = string.Empty;
 
-      return JobbermanCategoryMappings.TryGetValue(key, out var result) ? result : null;
+      var key = NormalizeLookupKey(nameSource);
+      if (string.IsNullOrEmpty(key)) return false;
+
+      foreach (var mapping in JobbermanCategoryMappings)
+      {
+        if (mapping.Value.Any(item => string.Equals(NormalizeLookupKey(item), key, StringComparison.OrdinalIgnoreCase)))
+        {
+          categoryName = mapping.Key;
+          return true;
+        }
+      }
+
+      return false;
     }
 
     private static string? NormalizeLookupKey(string? value)
@@ -200,8 +192,7 @@ namespace Yoma.Core.Infrastructure.Jobberman.Client
 
       return value
         .RemoveSpecialCharacters()
-        .NormalizeTrim()
-        .ToUpperInvariant();
+        .NormalizeTrim();
     }
 
     private static List<string>? BuildKeywords(Opportunity item, string category)

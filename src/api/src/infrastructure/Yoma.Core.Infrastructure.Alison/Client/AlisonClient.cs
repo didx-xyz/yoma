@@ -1,359 +1,313 @@
-using System.Net;
-using System.Text.Json;
 using FluentValidation;
-using Flurl;
-using Flurl.Http;
 using Microsoft.Extensions.Logging;
-using Yoma.Core.Domain.Core.Exceptions;
+using Newtonsoft.Json;
+using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Extensions;
+using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
-using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Lookups.Interfaces;
-using Yoma.Core.Domain.Opportunity.Models;
+using Yoma.Core.Domain.Opportunity;
 using Yoma.Core.Domain.Opportunity.Interfaces.Lookups;
+using Yoma.Core.Domain.Opportunity.Services;
 using Yoma.Core.Domain.PartnerSync.Interfaces.Provider;
 using Yoma.Core.Domain.PartnerSync.Models;
 using Yoma.Core.Domain.PartnerSync.Validators;
+using Yoma.Core.Domain.SSI;
+using Yoma.Core.Domain.SSI.Helpers;
 using Yoma.Core.Infrastructure.Alison.Models;
 
 namespace Yoma.Core.Infrastructure.Alison.Client
 {
-  /*
-   * Reasonable Alison mapping assumptions until live API credentials and payloads are available:
-   * - Type: mapped to Learning.
-   * - Categories: tries exact lookup by Alison category name; falls back to Other when no Yoma lookup matches.
-   * - Country: defaults to Worldwide because the current modeled data suggests publisher location, not delivery geography.
-   * - Language: tries code lookup first, then name lookup, and falls back to English.
-   *
-   * Caveats / follow-up once live Alison access is available:
-   * 1. Category names may not line up with Yoma lookup names.
-   *    - Exact-name matching is safe for now.
-   *    - We may later need an explicit Alison-to-Yoma translation map.
-   * 2. Country is still an educated guess.
-   *    - Worldwide is the safest default for now.
-   *    - Do not infer course availability from publisher location unless the live API confirms that behavior.
-   */
-  public sealed class AlisonClient : ISyncProviderClientPull<Opportunity>
+  public sealed partial class AlisonClient : ISyncProviderClientPull<Domain.Opportunity.Models.Opportunity>
   {
     #region Class Variables
-    private const string EmbeddedResourceSuffix_Courses = ".Resources.courses.sample.json";
-    private const string QueryParameter_Page = "page";
-    private const string QueryParameter_PerPage = "per_page";
-    private const string Header_Authorization = "Authorization";
-    private const string BearerScheme = "Bearer";
+    private const string Alison_Web_BaseUrl = "https://alison.com";
+    private const int Title_MaxLength = 150;
+    private const int Summary_MaxLength = 150;
 
-    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
+    // Yoma category name -> Alison category codes.
+    // If unresolved, default to Other.
+    private static readonly Dictionary<string, string[]> Categories_Map = new(StringComparer.OrdinalIgnoreCase)
     {
-      PropertyNameCaseInsensitive = true
+      { "Technology and Digitization", ["it", "network-and-security", "software-development", "software-tools", "it-management", "software-engineering", "it/administration", "it/aws", "it/ccna", "it/comptia", "it/computer-networking", "it/data-security", "it/devops", "it/microsoft", "it/security", "it/server"] },
+      { "AI, Data and Analytics", ["data-science", "databases"] },
+      { "Career and Personal Development", ["language", "education", "personal-development"] },
+      { "Health and Care", ["health", "mental-health", "health-care", "nursing", "caregiving", "nutrition", "pharmacology", "personal-development/health", "personal-development/mental-health", "personal-development/depression", "personal-development/anxiety", "personal-development/diet", "fitness", "health-and-safety", "business/health-and-safety", "engineering/health-and-safety", "management/health-and-safety", "management/nursing"] },
+      { "Business and Entrepreneurship", ["business", "marketing", "engineering", "management", "entrepreneurship", "finance", "economics", "law", "accounting", "e-commerce", "sales", "digital-marketing", "marketing/social-media", "marketing/sales", "marketing/retail"] },
+      { "Environment and Climate", ["education/climate-change", "engineering/renewable-energy"] },
+      { "Tourism and Hospitality", ["tourism-and-hospitality", "language/travel"] },
+      { "Creative Industry and Arts", ["media-and-journalism", "music", "photography", "literature", "education/music-theory"] },
+      { "Agriculture", ["agriculture", "farming"] }
+    };
+
+    // Yoma difficulty name -> Alison course levels.
+    // Unknown or omitted values default to Any Level.
+    private static readonly Dictionary<string, string[]> Difficulty_Map = new(StringComparer.OrdinalIgnoreCase)
+    {
+      { "Beginner", ["Beginner", "Beginner Level"] },
+      { "Intermediate", ["Intermediate", "Intermediate Level"] },
+      { "Advanced", ["Advanced", "Advanced Level", "Expert", "Expert Level"] },
+      { "Any Level", ["Any Level", "Any Levels", "All Level", "All Levels", "All", "Any"] }
+    };
+
+    // Yoma time interval name -> Alison duration unit values.
+    // Unknown or omitted values default to Hour / 1.
+    private static readonly Dictionary<string, string[]> CommitmentInterval_Map = new(StringComparer.OrdinalIgnoreCase)
+    {
+      { TimeIntervalOption.Minute.ToString(), ["min", "mins", "minute", "minutes"] },
+      { TimeIntervalOption.Hour.ToString(), ["hr", "hrs", "hour", "hours"] },
+      { TimeIntervalOption.Day.ToString(), ["day", "days"] },
+      { TimeIntervalOption.Week.ToString(), ["week", "weeks"] },
+      { TimeIntervalOption.Month.ToString(), ["month", "months"] }
     };
 
     private readonly ILogger<AlisonClient> _logger;
     private readonly IEnvironmentProvider _environmentProvider;
-    private readonly AppSettings _appSettings;
     private readonly AlisonOptions _options;
+    private readonly IRepositoryBatched<Models.Opportunity> _opportunityRepository;
     private readonly IOpportunityTypeService _opportunityTypeService;
     private readonly IOpportunityCategoryService _opportunityCategoryService;
     private readonly ICountryService _countryService;
     private readonly ILanguageService _languageService;
+    private readonly ISkillService _skillService;
+    private readonly IOpportunityDifficultyService _opportunityDifficultyService;
+    private readonly ITimeIntervalService _timeIntervalService;
+    private readonly IEngagementTypeService _engagementTypeService;
     private readonly SyncFilterPullValidator _syncFilterPullValidator;
     #endregion
 
     #region Constructor
-    public AlisonClient(ILogger<AlisonClient> logger,
+    public AlisonClient(
+      ILogger<AlisonClient> logger,
       IEnvironmentProvider environmentProvider,
-      AppSettings appSettings,
       AlisonOptions options,
+      IRepositoryBatched<Models.Opportunity> opportunityRepository,
       IOpportunityTypeService opportunityTypeService,
       IOpportunityCategoryService opportunityCategoryService,
       ICountryService countryService,
       ILanguageService languageService,
+      ISkillService skillService,
+      IOpportunityDifficultyService opportunityDifficultyService,
+      ITimeIntervalService timeIntervalService,
+      IEngagementTypeService engagementTypeService,
       SyncFilterPullValidator syncFilterPullValidator)
     {
       _logger = logger ?? throw new ArgumentNullException(nameof(logger));
       _environmentProvider = environmentProvider ?? throw new ArgumentNullException(nameof(environmentProvider));
-      _appSettings = appSettings ?? throw new ArgumentNullException(nameof(appSettings));
       _options = options ?? throw new ArgumentNullException(nameof(options));
+      _opportunityRepository = opportunityRepository ?? throw new ArgumentNullException(nameof(opportunityRepository));
       _opportunityTypeService = opportunityTypeService ?? throw new ArgumentNullException(nameof(opportunityTypeService));
       _opportunityCategoryService = opportunityCategoryService ?? throw new ArgumentNullException(nameof(opportunityCategoryService));
       _countryService = countryService ?? throw new ArgumentNullException(nameof(countryService));
       _languageService = languageService ?? throw new ArgumentNullException(nameof(languageService));
+      _skillService = skillService ?? throw new ArgumentNullException(nameof(skillService));
+      _opportunityDifficultyService = opportunityDifficultyService ?? throw new ArgumentNullException(nameof(opportunityDifficultyService));
+      _timeIntervalService = timeIntervalService ?? throw new ArgumentNullException(nameof(timeIntervalService));
+      _engagementTypeService = engagementTypeService ?? throw new ArgumentNullException(nameof(engagementTypeService));
       _syncFilterPullValidator = syncFilterPullValidator ?? throw new ArgumentNullException(nameof(syncFilterPullValidator));
     }
     #endregion
 
     #region Public Members
-    public async Task<SyncResultPull<Opportunity>> List(SyncFilterPull filter)
+    public Task<SyncResultPull<Domain.Opportunity.Models.Opportunity>> List(SyncFilterPull filter)
     {
       ArgumentNullException.ThrowIfNull(filter);
 
       _syncFilterPullValidator.ValidateAndThrow(filter);
 
       if (_logger.IsEnabled(LogLevel.Debug))
-        _logger.LogDebug("Starting Alison opportunity pull for environment '{environment}' with pageNumber '{pageNumber}' and pageSize '{pageSize}'", _environmentProvider.Environment, filter.PageNumber, filter.PageSize);
+        _logger.LogDebug(
+          "Starting Alison opportunity pull from local catalogue cache for environment '{environment}' with pageNumber '{pageNumber}' and pageSize '{pageSize}'",
+          _environmentProvider.Environment, filter.PageNumber, filter.PageSize);
 
-      if (!_appSettings.PartnerSyncEnabledEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment))
-      {
-        if (_logger.IsEnabled(LogLevel.Information))
-          _logger.LogInformation("Partner synchronization from external partners disabled for environment '{environment}'. Using local .NET embedded resources", _environmentProvider.Environment);
-
-        var response = LoadEmbeddedCourses();
-
-        if (_logger.IsEnabled(LogLevel.Debug))
-          _logger.LogDebug("Loaded Alison embedded sample payload with page '{page}', perPage '{perPage}', total '{total}' and item count '{count}'", response.Page, response.PerPage, response.Total, response.Data.Count);
-
-        var items = response.Data
-          .Skip((filter.PageNumber!.Value - 1) * filter.PageSize!.Value)
-          .Take(filter.PageSize.Value)
-          .Select(ToSyncItem)
-          .ToList();
-
-        if (_logger.IsEnabled(LogLevel.Debug))
-          _logger.LogDebug("Mapped Alison embedded sample payload to temporary sync result with '{count}' opportunities", items.Count);
-
-        var result = new SyncResultPull<Opportunity>
-        {
-          TotalCount = response.Total,
-          Items = items
-        };
-
-        return result;
-      }
-
-      if (_logger.IsEnabled(LogLevel.Debug))
-        _logger.LogDebug("Alison live API path reached for environment '{environment}'. Acquiring access token and requesting courses", _environmentProvider.Environment);
-
-      var token = await GetAccessToken();
-      var responseLive = await GetCourses(filter, token);
-
-      if (_logger.IsEnabled(LogLevel.Debug))
-        _logger.LogDebug("Loaded Alison live payload with page '{page}', perPage '{perPage}', total '{total}' and item count '{count}'", responseLive.Page, responseLive.PerPage, responseLive.Total, responseLive.Data.Count);
-
-      var itemsLive = responseLive.Data
-        .Select(ToSyncItem)
-        .ToList();
-
-      if (_logger.IsEnabled(LogLevel.Debug))
-        _logger.LogDebug("Mapped Alison live payload to sync result with '{count}' opportunities", itemsLive.Count);
-
-      return new SyncResultPull<Opportunity>
-      {
-        TotalCount = responseLive.Total,
-        Items = itemsLive
-      };
+      return Task.FromResult(ListFromStore(filter));
     }
     #endregion
 
     #region Private Members
-    private async Task<AlisonToken> GetAccessToken()
-    {
-      var request = new AlisonAccessTokenRequest
-      {
-        ClientId = _options.ClientId,
-        ClientSecret = _options.ClientSecret,
-        OrganizationId = _options.OrganizationId,
-        OrganizationKey = _options.OrganizationKey
-      };
-
-      if (_logger.IsEnabled(LogLevel.Debug))
-        _logger.LogDebug("Requesting Alison access token using organization '{organizationId}'", _options.OrganizationId);
-
-      var response = await _options.BaseUrl
-        .AppendPathSegment(_options.AccessTokenPath)
-        .PostJsonAsync(request)
-        .EnsureSuccessStatusCodeAsync()
-        .ReceiveJson<AlisonAccessTokenResponse>();
-
-      if (string.IsNullOrWhiteSpace(response.AccessToken))
-        throw new InvalidOperationException("Alison access token response did not contain an access token");
-
-      var token = AlisonToken.Create(response.AccessToken, response.RefreshToken, response.TokenType, response.ExpiresIn);
-
-      if (_logger.IsEnabled(LogLevel.Debug))
-        _logger.LogDebug("Successfully acquired Alison access token with token type '{tokenType}' and refresh token available '{refreshTokenAvailable}'", token.TokenType, !string.IsNullOrWhiteSpace(token.RefreshToken));
-
-      return token;
-    }
-
-    private async Task<AlisonPagedResponse<AlisonCourse>> GetCourses(SyncFilterPull filter, AlisonToken token)
-    {
-      ArgumentNullException.ThrowIfNull(token);
-
-      var request = CreateCoursesRequest(filter, token.AccessToken);
-
-      try
-      {
-        return await request
-          .GetAsync()
-          .EnsureSuccessStatusCodeAsync()
-          .ReceiveJson<AlisonPagedResponse<AlisonCourse>>();
-      }
-      catch (HttpClientException ex) when (TokenRefreshRequired(ex.StatusCode) && !string.IsNullOrWhiteSpace(token.RefreshToken))
-      {
-        if (_logger.IsEnabled(LogLevel.Warning))
-          _logger.LogWarning("Alison course pull returned '{statusCode}'. Attempting refresh-token flow before retrying", ex.StatusCode);
-
-        var refreshedToken = await RefreshAccessToken(token.RefreshToken!);
-
-        return await CreateCoursesRequest(filter, refreshedToken.AccessToken)
-          .GetAsync()
-          .EnsureSuccessStatusCodeAsync()
-          .ReceiveJson<AlisonPagedResponse<AlisonCourse>>();
-      }
-    }
-
-    private async Task<AlisonToken> RefreshAccessToken(string refreshToken)
-    {
-      ArgumentException.ThrowIfNullOrWhiteSpace(refreshToken);
-
-      var request = new AlisonRefreshTokenRequest
-      {
-        ClientId = _options.ClientId,
-        ClientSecret = _options.ClientSecret,
-        OrganizationId = _options.OrganizationId,
-        OrganizationKey = _options.OrganizationKey,
-        RefreshToken = refreshToken
-      };
-
-      if (_logger.IsEnabled(LogLevel.Debug))
-        _logger.LogDebug("Refreshing Alison access token using organization '{organizationId}'", _options.OrganizationId);
-
-      var response = await _options.BaseUrl
-        .AppendPathSegment(_options.RefreshTokenPath)
-        .PostJsonAsync(request)
-        .EnsureSuccessStatusCodeAsync()
-        .ReceiveJson<AlisonRefreshTokenResponse>();
-
-      if (string.IsNullOrWhiteSpace(response.AccessToken))
-        throw new InvalidOperationException("Alison refresh-token response did not contain an access token");
-
-      var token = AlisonToken.Create(response.AccessToken, response.RefreshToken ?? refreshToken, response.TokenType, response.ExpiresIn);
-
-      if (_logger.IsEnabled(LogLevel.Debug))
-        _logger.LogDebug("Successfully refreshed Alison access token with token type '{tokenType}' and refresh token available '{refreshTokenAvailable}'", token.TokenType, !string.IsNullOrWhiteSpace(token.RefreshToken));
-
-      return token;
-    }
-
-    private IFlurlRequest CreateCoursesRequest(SyncFilterPull filter, string accessToken)
+    private SyncResultPull<Domain.Opportunity.Models.Opportunity> ListFromStore(SyncFilterPull filter)
     {
       ArgumentNullException.ThrowIfNull(filter);
-      ArgumentException.ThrowIfNullOrWhiteSpace(accessToken);
 
-      var pageNumber = filter.PageNumber!.Value;
-      var pageSize = filter.PageSize!.Value;
+      var query = _opportunityRepository.Query();
+      query = query.OrderBy(o => o.ExternalId);
+
+      var result = new SyncResultPull<Domain.Opportunity.Models.Opportunity>();
+
+      if (filter.PaginationEnabled)
+      {
+        result.TotalCount = query.Count();
+        query = query.Skip((filter.PageNumber!.Value - 1) * filter.PageSize!.Value).Take(filter.PageSize.Value);
+      }
+
+      result.Items = [.. query.ToList().Select(ToSyncItem)];
 
       if (_logger.IsEnabled(LogLevel.Debug))
-        _logger.LogDebug("Requesting Alison courses from '{path}' with page '{page}' and perPage '{perPage}'", _options.CoursesPath, pageNumber, pageSize);
+        _logger.LogDebug("Mapped Alison local catalogue cache to sync result with '{count}' opportunities", result.Items.Count);
 
-      return _options.BaseUrl
-        .AppendPathSegment(_options.CoursesPath)
-        .SetQueryParam(QueryParameter_Page, pageNumber)
-        .SetQueryParam(QueryParameter_PerPage, pageSize)
-        .WithAuthHeader(new KeyValuePair<string, string>(Header_Authorization, $"{BearerScheme} {accessToken}"));
+      return result;
     }
 
-    private SyncItem<Opportunity> ToSyncItem(AlisonCourse course)
+    private SyncItem<Domain.Opportunity.Models.Opportunity> ToSyncItem(Models.Opportunity item)
+    {
+      ArgumentNullException.ThrowIfNull(item);
+
+      if (string.IsNullOrWhiteSpace(item.PayloadJson))
+        throw new InvalidOperationException($"Alison opportunity cache item '{item.ExternalId}' has no payload JSON");
+
+      var course = JsonConvert.DeserializeObject<AlisonCourse>(item.PayloadJson)
+        ?? throw new InvalidOperationException($"Failed to deserialize Alison course payload for cache item '{item.ExternalId}'");
+
+      var result = ToSyncItem(course, item.Deleted == true);
+      result.ExternalId = item.ExternalId;
+
+      return result;
+    }
+
+    private SyncItem<Domain.Opportunity.Models.Opportunity> ToSyncItem(AlisonCourse course, bool deleted)
     {
       ArgumentNullException.ThrowIfNull(course);
 
       if (_logger.IsEnabled(LogLevel.Debug))
         _logger.LogDebug("Mapping Alison course '{courseId}' with slug '{slug}' to opportunity sync item", course.Id, course.Slug);
 
+      // Opportunity type:
+      // Alison provides courses only, so all synced Alison opportunities are mapped as Learning.
       var opportunityType = _opportunityTypeService.GetByName(Domain.Opportunity.Type.Learning.ToString());
+
+      // Categories:
+      // Map Alison category codes to Yoma categories using the static partner-specific mapping.
+      // Exact code matches are preferred; if unresolved, fall back to the root code before defaulting to Other.
+      // This keeps Alison-specific category logic deterministic and version-controlled.
       var categories = GetCategories(course);
-      var country = GetCountry(course);
-      var language = GetLanguage(course);
 
-      var summaryParts = course.Categories
-        .Select(item => item.Name)
-        .Where(item => !string.IsNullOrWhiteSpace(item))
-        .Distinct(StringComparer.OrdinalIgnoreCase)
-        .ToList();
+      // Countries:
+      // Always include Worldwide because Alison courses appear globally accessible.
+      // If publisher.location contains a specific resolvable country, also include it for publisher-country discoverability.
+      // Skip "Global" / "Worldwide" because those are already represented by WW.
+      // Ignore Alison publisher.country_id because it is Alison-specific and not mapped to Yoma/ISO country ids.
+      var countries = GetCountries(course);
 
-      if (!string.IsNullOrWhiteSpace(course.Type))
-        summaryParts.Add(course.Type);
+      // Languages:
+      // Store Alison opportunity content in English where available, but map all course-level supported languages.
+      // Source supported languages from course.Language and course.Translations[].Locale.
+      // Do not use category/tag translation locales, because those only describe translated lookup labels.
+      // Locale values are normalized before lookup, e.g. en-US/en-GB -> EN, pt-BR -> PT.
+      // If no supported language can be resolved, fallback to English.
+      var languages = GetLanguages(course);
 
-      if (!string.IsNullOrWhiteSpace(course.Language))
-        summaryParts.Add(course.Language);
+      // Title / summary / description:
+      // Use English course content where available; otherwise fallback to the first listed translation.
+      // Title and summary are shaped to satisfy Yoma validation limits.
+      // Summary is plain text only. Description supports HTML and keeps the richer Alison course body.
+      // Description also appends selected Alison metadata such as publisher and course type.
+      var publisherName = GetPublisherName(course);
+      var title = GetTitle(course);
+      var summary = GetSummary(course, title);
+      var description = GetDescription(course, title, publisherName);
 
-      var keywordSet = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+      // Dates:
+      // DateStart = published_at -> created_at -> UtcNow.
+      // DateEnd = null/open-ended unless Alison provides expiry/removal semantics.
+      var dateStart = DateTimeHelper.TryParse(course.PublishedAt)
+        ?? DateTimeHelper.TryParse(course.CreatedAt)
+        ?? DateTimeOffset.UtcNow;
 
-      foreach (var item in course.Tags.Select(item => item.Name))
-      {
-        if (!string.IsNullOrWhiteSpace(item))
-          keywordSet.Add(item);
-      }
+      // Keywords:
+      // Used as additional search terms beyond title, summary, description and mapped lookups.
+      // Keep keywords focused and deterministic.
+      // Source priority:
+      // - Publisher name
+      // - Course type, e.g. certificate/diploma
+      //
+      // Must:
+      // - remove blank values
+      // - remove values containing OpportunityService.Keywords_Separator / comma
+      // - distinct values
+      // - keep combined keyword length <= OpportunityService.Keywords_CombinedMaxLength
+      //
+      // Alison tags are excluded from keywords because they represent potential skill/topic mappings.
+      // Tags will be handled separately via Skills once we implement strict matching against Yoma skills.
+      var keywords = GetKeywords(course, publisherName);
 
-      foreach (var item in course.Categories.Select(item => item.Name))
-      {
-        if (!string.IsNullOrWhiteSpace(item))
-          keywordSet.Add(item);
-      }
+      // Skills:
+      // Alison tags are treated as candidate skill names.
+      // Resolve by strict best-effort name matching against Yoma skills via SkillService.
+      // Do not pass raw Alison tag values directly, because Yoma validates every skill id.
+      // Unmatched tags are ignored.
+      var skills = GetSkills(course);
 
-      if (!string.IsNullOrWhiteSpace(course.Language))
-        keywordSet.Add(course.Language);
+      // Difficulty:
+      // Alison course_level is mapped to Yoma difficulty.
+      // Unknown or omitted values default to Any Level to avoid incorrectly classifying the course as Beginner.
+      var difficulty = GetDifficulty(course);
 
-      if (!string.IsNullOrWhiteSpace(course.Type))
-        keywordSet.Add(course.Type);
+      // Commitment:
+      // Alison duration_avg is mapped to Yoma commitment interval/count.
+      // For ranges, use the upper bound rounded up, e.g. "1.5-3 hrs" -> Hour / 3.
+      // Unknown or omitted values default to Hour / 1 because Learning opportunities require commitment.
+      var (interval, count) = GetCommitment(course);
 
-      var description = course.Modules.FirstOrDefault()?.Description;
-      if (string.IsNullOrWhiteSpace(description))
-        description = course.Name;
+      // Engagement type:
+      // Alison provides online courses only, so all synced Alison opportunities are mapped as Online.
+      var engagementType = _engagementTypeService.GetByName(EngagementTypeOption.Online.ToString());
 
-      var publisherName = course.Publishers
-        .Select(item => item.Name)
-        .FirstOrDefault(item => !string.IsNullOrWhiteSpace(item));
-
-      return new SyncItem<Opportunity>
+      return new SyncItem<Domain.Opportunity.Models.Opportunity>
       {
         ExternalId = course.Id.ToString(),
-        Deleted = false,
-        Item = new Opportunity
+        Deleted = deleted,
+        Item = new Domain.Opportunity.Models.Opportunity
         {
-          Title = course.Name,
+          Title = title,
           Description = description,
           TypeId = opportunityType.Id,
           Type = opportunityType.Name,
-          Summary = summaryParts.Count == 0 ? null : string.Join(" | ", summaryParts.Distinct(StringComparer.OrdinalIgnoreCase)),
-          URL = string.IsNullOrWhiteSpace(course.Slug) ? $"{_options.BaseUrl.TrimEnd('/')}/courses/{course.Id}" : $"{_options.BaseUrl.TrimEnd('/')}/courses/{course.Slug}",
+          Summary = summary,
+          URL = ResolveCourseUrl(course),
+
           OrganizationId = _options.OrganizationIdYoma,
-          OrganizationName = string.IsNullOrWhiteSpace(publisherName) ? "Alison" : publisherName,
-          DateStart = course.PublishedAt ?? course.CreatedAt ?? DateTimeOffset.UtcNow,
+          OrganizationName = _options.OrganizationName,
+
+          DateStart = dateStart,
           DateEnd = null,
-          Status = Domain.Opportunity.Status.Active,
-          VerificationEnabled = false,
+
+          Status = deleted ? Status.Deleted : Status.Active,
+
+          // Automatic verification, no participant limit, no rewards.
+          // Completion is imported from Alison and processed by Yoma.
+          VerificationEnabled = true,
+          VerificationMethod = VerificationMethod.Automatic,
+          VerificationTypes = null,
+          ParticipantLimit = null,
+
+          ZltoReward = null,
+          YomaReward = null,
+          ZltoRewardPool = null,
+          YomaRewardPool = null,
+
+          CredentialIssuanceEnabled = true,
+          SSISchemaName = SSISSchemaHelper.ToFullName(SchemaType.Opportunity, $"Default"),
+
+          DifficultyId = difficulty.Id,
+
+          CommitmentIntervalId = interval.Id,
+          CommitmentIntervalCount = count,
+
+          EngagementTypeId = engagementType.Id,
+
+          Skills = skills,
+
+          ShareWithPartners = false,
           Hidden = false,
           Featured = false,
           Published = true,
-          Keywords = keywordSet.Count == 0 ? null : [.. keywordSet],
+
+          Keywords = keywords,
           Categories = categories,
-          Countries = [country],
-          Languages = [language]
+          Countries = countries,
+          Languages = languages
         }
       };
-    }
-
-    private static AlisonPagedResponse<AlisonCourse> LoadEmbeddedCourses()
-    {
-      var assembly = typeof(AlisonClient).Assembly;
-
-      var resourceName = assembly
-        .GetManifestResourceNames()
-        .SingleOrDefault(item => item.EndsWith(EmbeddedResourceSuffix_Courses, StringComparison.OrdinalIgnoreCase));
-
-      if (string.IsNullOrWhiteSpace(resourceName))
-        throw new InvalidOperationException($"Embedded Alison sample resource '{EmbeddedResourceSuffix_Courses}' not found");
-
-      using var stream = assembly.GetManifestResourceStream(resourceName)
-        ?? throw new InvalidOperationException($"Unable to open embedded Alison sample resource '{resourceName}'");
-
-      using var reader = new StreamReader(stream);
-      var json = reader.ReadToEnd();
-
-      var result = JsonSerializer.Deserialize<AlisonPagedResponse<AlisonCourse>>(json, JsonOptions)
-        ?? throw new InvalidOperationException("Failed to deserialize embedded Alison sample courses JSON");
-
-      return result;
     }
 
     private List<Domain.Opportunity.Models.Lookups.OpportunityCategory> GetCategories(AlisonCourse course)
@@ -361,51 +315,421 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       ArgumentNullException.ThrowIfNull(course);
 
       var categories = course.Categories
-        .Select(item => item.Name)
-        .Where(item => !string.IsNullOrWhiteSpace(item))
-        .Select(item => _opportunityCategoryService.GetByNameOrNull(item!))
-        .Where(item => item != null)
-        .DistinctBy(item => item!.Id)
-        .Select(item => item!)
+        .Select(ResolveYomaCategory)
+        .DistinctBy(item => item.Id)
         .ToList();
 
-      if (categories.Count > 0)
-        return categories;
-
-      // Alison category names are an educated guess until live payloads can be inspected.
-      return [_opportunityCategoryService.GetByName(Domain.Opportunity.Category.Other.ToString())];
+      return categories.Count > 0
+        ? categories
+        : [_opportunityCategoryService.GetByName(Category.Other.ToString())];
     }
 
-    private Domain.Lookups.Models.Country GetCountry(AlisonCourse course)
+    private Domain.Opportunity.Models.Lookups.OpportunityCategory ResolveYomaCategory(AlisonCategory category)
     {
-      ArgumentNullException.ThrowIfNull(course);
+      ArgumentNullException.ThrowIfNull(category);
 
-      // Alison course payloads currently appear to expose publisher location rather than learner availability.
-      // Until live API payloads confirm a delivery country, default Alison learning opportunities to Worldwide.
-      return _countryService.GetByCodeAlpha2(Domain.Core.Country.Worldwide.ToDescription());
+      if (TryResolveYomaCategoryName(category.Code, out var categoryName))
+        return _opportunityCategoryService.GetByName(categoryName);
+
+      return _opportunityCategoryService.GetByName(Category.Other.ToString());
     }
 
-    private Domain.Lookups.Models.Language GetLanguage(AlisonCourse course)
+    private static bool TryResolveYomaCategoryName(string? code, out string categoryName)
     {
-      ArgumentNullException.ThrowIfNull(course);
+      categoryName = string.Empty;
 
-      if (!string.IsNullOrWhiteSpace(course.Language))
+      code = code?.NormalizeNullableValue();
+      if (string.IsNullOrWhiteSpace(code)) return false;
+
+      if (TryResolveYomaCategoryNameExact(code, out categoryName))
+        return true;
+
+      var rootCode = code
+        .Split('/', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+        .FirstOrDefault();
+
+      return TryResolveYomaCategoryNameExact(rootCode, out categoryName);
+    }
+
+    private static bool TryResolveYomaCategoryNameExact(string? code, out string categoryName)
+    {
+      categoryName = string.Empty;
+
+      if (string.IsNullOrWhiteSpace(code)) return false;
+
+      foreach (var mapping in Categories_Map)
       {
-        var language = _languageService.GetByCodeAlpha2OrNull(course.Language)
-          ?? _languageService.GetByNameOrNull(course.Language);
-
-        if (language != null)
-          return language;
+        if (mapping.Value.Any(item => string.Equals(item, code, StringComparison.OrdinalIgnoreCase)))
+        {
+          categoryName = mapping.Key;
+          return true;
+        }
       }
 
-      // Alison language values are not yet confirmed against live API payloads.
-      return _languageService.GetByName(Domain.Core.Language.English.ToString());
+      return false;
     }
 
-    private static bool TokenRefreshRequired(HttpStatusCode statusCode)
+    private List<Domain.Lookups.Models.Country> GetCountries(AlisonCourse course)
     {
-      return statusCode == HttpStatusCode.Unauthorized || statusCode == HttpStatusCode.Forbidden;
+      ArgumentNullException.ThrowIfNull(course);
+
+      var result = new List<Domain.Lookups.Models.Country>
+      {
+        _countryService.GetByCodeAlpha2(Country.Worldwide.ToDescription())
+      };
+
+      foreach (var publisher in course.Publishers)
+      {
+        var countryName = ResolvePublisherCountryName(publisher.Location);
+        if (string.IsNullOrWhiteSpace(countryName)) continue;
+
+        var country = _countryService.GetByNameOrNull(countryName);
+        if (country == null) continue;
+
+        result.Add(country);
+      }
+
+      return [.. result.DistinctBy(item => item.Id)];
     }
+
+    private static string? ResolvePublisherCountryName(string? location)
+    {
+      location = location?.NormalizeNullableValue();
+      if (string.IsNullOrWhiteSpace(location)) return null;
+
+      if (location.Equals("Global", StringComparison.OrdinalIgnoreCase) ||
+          location.Equals(Country.Worldwide.ToString(), StringComparison.OrdinalIgnoreCase))
+        return null;
+
+      // Examples:
+      // "India" -> "India"
+      // "Cork, Ireland" -> "Ireland"
+      // "Galway, Ireland" -> "Ireland"
+      var parts = location.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+      var result = parts.LastOrDefault()?.NormalizeNullableValue();
+
+      if (string.IsNullOrWhiteSpace(result)) return null;
+
+      if (result.Equals("Global", StringComparison.OrdinalIgnoreCase) ||
+          result.Equals(Country.Worldwide.ToString(), StringComparison.OrdinalIgnoreCase))
+        return null;
+
+      return result;
+    }
+
+    private List<Domain.Lookups.Models.Language> GetLanguages(AlisonCourse course)
+    {
+      ArgumentNullException.ThrowIfNull(course);
+
+      var results = new List<Domain.Lookups.Models.Language>();
+
+      foreach (var locale in GetLanguageLocales(course))
+      {
+        var language = ResolveLanguage(locale);
+        if (language != null)
+          results.Add(language);
+      }
+
+      results = [.. results.DistinctBy(item => item.Id)];
+
+      return results.Count > 0
+        ? results
+        : [_languageService.GetByName(Domain.Core.Language.English.ToString())];
+    }
+
+    private static IEnumerable<string> GetLanguageLocales(AlisonCourse course)
+    {
+      if (!string.IsNullOrWhiteSpace(course.Language))
+        yield return course.Language;
+
+      foreach (var locale in course.Translations
+        .Select(item => item.Locale)
+        .Where(item => !string.IsNullOrWhiteSpace(item)))
+      {
+        yield return locale!;
+      }
+    }
+
+    private Domain.Lookups.Models.Language? ResolveLanguage(string? locale)
+    {
+      var codeAlpha2 = NormalizeLanguageCodeAlpha2(locale);
+      if (string.IsNullOrWhiteSpace(codeAlpha2)) return null;
+
+      return _languageService.GetByCodeAlpha2OrNull(codeAlpha2);
+    }
+
+    private static string? NormalizeLanguageCodeAlpha2(string? locale)
+    {
+      if (string.IsNullOrWhiteSpace(locale)) return null;
+
+      var value = locale.Trim();
+
+      // Examples:
+      // en    -> EN
+      // en-US -> EN
+      // en_GB -> EN
+      // pt-BR -> PT
+      var codeAlpha2 = value
+        .Split(['-', '_'], StringSplitOptions.RemoveEmptyEntries)
+        .FirstOrDefault();
+
+      return string.IsNullOrWhiteSpace(codeAlpha2)
+        ? null
+        : codeAlpha2.ToUpperInvariant();
+    }
+
+    private static string ResolveCourseUrl(AlisonCourse course)
+    {
+      ArgumentNullException.ThrowIfNull(course);
+
+      if (!string.IsNullOrWhiteSpace(course.Url))
+        return course.Url;
+
+      return !string.IsNullOrWhiteSpace(course.Slug)
+        ? $"{Alison_Web_BaseUrl}/course/{course.Slug}"
+        : $"{Alison_Web_BaseUrl}/courses/{course.Id}";
+    }
+
+    private static string GetTitle(AlisonCourse course)
+    {
+      ArgumentNullException.ThrowIfNull(course);
+
+      var translation = GetPreferredTranslation(course);
+
+      var title = (translation?.Name).HtmlDecode()
+        ?? course.Name.HtmlDecode();
+
+      if (string.IsNullOrWhiteSpace(title))
+        throw new InvalidOperationException($"Alison course title/name expected for course id '{course.Id}'");
+
+      return title.TrimToLengthWithEllipsis(Title_MaxLength);
+    }
+
+    private static string GetSummary(AlisonCourse course, string title)
+    {
+      ArgumentNullException.ThrowIfNull(course);
+
+      var translation = GetPreferredTranslation(course);
+
+      var summary = (translation?.Headline).HtmlDecode()
+        ?? (translation?.Summary).RemoveHtmlTags()?.HtmlDecode()
+        ?? title.HtmlDecode();
+
+      return (summary ?? title).TrimToLengthWithEllipsis(Summary_MaxLength);
+    }
+
+    private static string GetDescription(AlisonCourse course, string title, string? publisherName)
+    {
+      ArgumentNullException.ThrowIfNull(course);
+
+      var translation = GetPreferredTranslation(course);
+
+      var description = (translation?.Summary).HtmlDecode()
+        ?? (translation?.Headline).HtmlDecode()
+        ?? course.Modules.FirstOrDefault(module => !string.IsNullOrWhiteSpace(module.Description))?.Description.HtmlDecode()
+        ?? title;
+
+      var metadata = new List<string>();
+
+      if (!string.IsNullOrWhiteSpace(publisherName))
+        metadata.Add($"<strong>Publisher:</strong> {System.Net.WebUtility.HtmlEncode(publisherName)}");
+
+      if (!string.IsNullOrWhiteSpace(course.Type))
+        metadata.Add($"<strong>Course type:</strong> {System.Net.WebUtility.HtmlEncode(course.Type.TitleCase())}");
+
+      if (metadata.Count > 0)
+        description = $"{description}<br /><br />{string.Join("<br />", metadata)}";
+
+      return description;
+    }
+
+    private static string? GetPublisherName(AlisonCourse course)
+    {
+      ArgumentNullException.ThrowIfNull(course);
+
+      return course.Publishers
+        .Select(item => item.Name.HtmlDecode())
+        .FirstOrDefault(item => !string.IsNullOrWhiteSpace(item));
+    }
+
+    private static AlisonCourseTranslation? GetPreferredTranslation(AlisonCourse course)
+    {
+      ArgumentNullException.ThrowIfNull(course);
+
+      // Prefer English as the canonical Yoma opportunity content source.
+      // If English is not available, fallback to the first listed Alison translation.
+      return course.Translations.FirstOrDefault(item =>
+          string.Equals(NormalizeLanguageCodeAlpha2(item.Locale), "EN", StringComparison.OrdinalIgnoreCase))
+        ?? course.Translations.FirstOrDefault();
+    }
+
+    private static List<string>? GetKeywords(AlisonCourse course, string? publisherName)
+    {
+      ArgumentNullException.ThrowIfNull(course);
+
+      var result = new List<string>();
+
+      foreach (var keyword in GetKeywordCandidates(course, publisherName))
+        AddKeyword(result, keyword);
+
+      return result.Count == 0 ? null : result;
+    }
+
+    private static IEnumerable<string?> GetKeywordCandidates(AlisonCourse course, string? publisherName)
+    {
+      yield return publisherName;
+      yield return course.Type;
+    }
+
+    private static void AddKeyword(List<string> keywords, string? value)
+    {
+      value = value.HtmlDecode();
+      if (string.IsNullOrWhiteSpace(value)) return;
+
+      if (value.Contains(OpportunityService.Keywords_Separator, StringComparison.Ordinal))
+        return;
+
+      if (keywords.Any(item => string.Equals(item, value, StringComparison.OrdinalIgnoreCase)))
+        return;
+
+      var currentLength = keywords.Count == 0
+        ? 0
+        : string.Join(OpportunityService.Keywords_Separator, keywords).Length;
+
+      var projectedLength = currentLength + value.Length;
+      if (keywords.Count > 0)
+        projectedLength += OpportunityService.Keywords_Separator.Length;
+
+      if (projectedLength > OpportunityService.Keywords_CombinedMaxLength)
+        return;
+
+      keywords.Add(value);
+    }
+
+    private List<Domain.Lookups.Models.Skill>? GetSkills(AlisonCourse course)
+    {
+      ArgumentNullException.ThrowIfNull(course);
+
+      var result = new List<Domain.Lookups.Models.Skill>();
+
+      foreach (var tag in course.Tags)
+      {
+        var skill = ResolveSkill(tag);
+        if (skill != null)
+          result.Add(skill);
+      }
+
+      result = [.. result.DistinctBy(item => item.Id)];
+
+      return result.Count == 0 ? null : result;
+    }
+
+    private Domain.Lookups.Models.Skill? ResolveSkill(AlisonTag tag)
+    {
+      ArgumentNullException.ThrowIfNull(tag);
+
+      var name = tag.GetName();
+      if (!string.IsNullOrWhiteSpace(name))
+      {
+        var skill = _skillService.GetByNameNormalizedOrNull(name);
+        if (skill != null)
+          return skill;
+      }
+
+      var slug = tag.GetSlug();
+      if (!string.IsNullOrWhiteSpace(slug))
+      {
+        var skill = _skillService.GetByNameNormalizedOrNull(slug);
+        if (skill != null)
+          return skill;
+      }
+
+      return null;
+    }
+
+    private Domain.Opportunity.Models.Lookups.OpportunityDifficulty GetDifficulty(AlisonCourse course)
+    {
+      ArgumentNullException.ThrowIfNull(course);
+
+      var difficultyName = ResolveDifficultyName(course.CourseLevel);
+
+      return _opportunityDifficultyService.GetByName(difficultyName);
+    }
+
+    private static string ResolveDifficultyName(string? courseLevel)
+    {
+      courseLevel = courseLevel?.NormalizeNullableValue();
+
+      if (!string.IsNullOrWhiteSpace(courseLevel))
+      {
+        foreach (var mapping in Difficulty_Map)
+        {
+          if (mapping.Value.Any(item => string.Equals(item, courseLevel, StringComparison.OrdinalIgnoreCase)))
+            return mapping.Key;
+        }
+      }
+
+      return Difficulty.AnyLevel.ToDescription();
+    }
+
+    private (Domain.Lookups.Models.TimeInterval Interval, short Count) GetCommitment(AlisonCourse course)
+    {
+      ArgumentNullException.ThrowIfNull(course);
+
+      var intervalName = ResolveCommitmentIntervalName(course.DurationAvg);
+      var interval = _timeIntervalService.GetByName(intervalName);
+      var count = ResolveCommitmentIntervalCount(course.DurationAvg);
+
+      return (interval, count);
+    }
+
+    private static string ResolveCommitmentIntervalName(string? duration)
+    {
+      duration = duration?.NormalizeNullableValue();
+
+      if (!string.IsNullOrWhiteSpace(duration))
+      {
+        foreach (var mapping in CommitmentInterval_Map)
+        {
+          if (mapping.Value.Any(unit => ContainsDurationUnit(duration, unit)))
+            return mapping.Key;
+        }
+      }
+
+      return TimeIntervalOption.Hour.ToString();
+    }
+
+    private static short ResolveCommitmentIntervalCount(string? duration)
+    {
+      duration = duration?.NormalizeNullableValue();
+      if (string.IsNullOrWhiteSpace(duration)) return 1;
+
+      var values = Regex_CommitmentIntervalCountValue().Matches(duration)
+        .Select(match => decimal.TryParse(match.Value, System.Globalization.NumberStyles.Number, System.Globalization.CultureInfo.InvariantCulture, out var value)
+          ? value
+          : default(decimal?))
+        .Where(value => value.HasValue)
+        .Select(value => value!.Value)
+        .ToList();
+
+      if (values.Count == 0) return 1;
+
+      var upperBound = values.Max();
+      var result = (short)Math.Ceiling(upperBound);
+
+      return result > 0 ? result : (short)1;
+    }
+
+    private static bool ContainsDurationUnit(string duration, string unit)
+    {
+      return System.Text.RegularExpressions.Regex.IsMatch(
+        duration,
+        $@"(^|[^a-zA-Z]){System.Text.RegularExpressions.Regex.Escape(unit)}([^a-zA-Z]|$)",
+        System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+    }
+
+    [System.Text.RegularExpressions.GeneratedRegex(@"\d+(\.\d+)?")]
+    private static partial System.Text.RegularExpressions.Regex Regex_CommitmentIntervalCountValue();
     #endregion
   }
 }

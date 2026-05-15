@@ -53,4 +53,10 @@ namespace Yoma.Core.Domain.Opportunity
     Status,
     Other
   }
+
+  public enum Difficulty
+  {
+    [Description("Any Level")]
+    AnyLevel
+  }
 }

@@ -1,267 +1,3985 @@
 {
-  "page": 1,
-  "per_page": 10,
-  "total": 10,
   "data": [
     {
-      "id": 1001,
-      "name": "Digital Marketing Fundamentals",
-      "slug": "digital-marketing-fundamentals",
+      "id": 1201,
+      "name": "Japanese Language: Introduction to Japanese Scripts",
+      "slug": "japanese-language-introduction-to-japanese-scripts",
       "type": "certificate",
-      "language": "en",
+      "language": "en-GB",
+      "publishers": [
+        {
+          "name": "NPTEL",
+          "slug": "nptel",
+          "image": null,
+          "location": "Global",
+          "country_id": null
+        }
+      ],
       "categories": [
-        { "id": 10, "code": "BUS", "name": "Business" }
+        {
+          "id": 15,
+          "parent_id": null,
+          "code": "language",
+          "courses_count": 0,
+          "translations": [
+            {
+              "name": "Language",
+              "locale": "en"
+            }
+          ],
+          "subcategories": [],
+          "created_at": "2026-05-13 00:00:00",
+          "updated_at": "2026-05-13 00:00:00"
+        }
       ],
       "modules": [
-        { "id": 2001, "name": "Introduction to Digital Marketing", "description": "Core digital marketing concepts and channels." }
+        {
+          "id": 12010,
+          "name": "Course overview",
+          "description": "<p>There are three types of Japanese scripts, namely the Hiragana, the Katakana, and the Kanji. This course will introduce you to these Japanese scripts and discuss their evolution over time. You will first study the Japanese characters and learn how they are written. The course will also teach you Japanese vocabulary, the Japanese numbers 1 to 70, and greetings such as Ohayo Gozaimasu, Konnichiwa, and Konbanwa, including the appropriate time of the day to use them.<br /><br />Next, you will study Japanese introductions as well as learn how to start a conversation about where you are from. You will also be taught how to pronounce the Japanese vowels and consonants correctly as well as learn the correct usage of expressions in negative and positive form. Finally, you will practice having a Japanese conversation, this time with a focus on adding more words to your vocabulary.<br /><br />Learning to understand and speak the Japanese language will be very useful for business professionals who deal with Japanese firms, as well as anyone planning to visit the Land of the Rising Sun and immerse themselves in Japanese culture. It will also be a great plus for anyone who is an avid follower of the Japanese entertainment industry! This course is the first in a series of four courses on the Japanese language, so check it out now and keep your Japanese adventure moving forward!</p>",
+          "completed": false,
+          "scos": []
+        }
       ],
       "tags": [
-        { "id": 301, "name": "marketing" },
-        { "id": 302, "name": "digital" }
+        {
+          "id": 1,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 1,
+              "name": "Japanese Language",
+              "slug": "japanese-language",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-06-23T13:50:57+00:00",
+          "updated_at": "2017-06-23T13:50:57+00:00"
+        },
+        {
+          "id": 2,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 2,
+              "name": "Languages",
+              "slug": "languages",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-06-23T13:50:57+00:00",
+          "updated_at": "2017-06-23T13:50:57+00:00"
+        },
+        {
+          "id": 3,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 3,
+              "name": "Language",
+              "slug": "language",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-06-23T13:50:57+00:00",
+          "updated_at": "2017-06-23T13:50:57+00:00"
+        },
+        {
+          "id": 4,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 4,
+              "name": "Beginner",
+              "slug": "beginner",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-06-23T13:50:57+00:00",
+          "updated_at": "2017-06-23T13:50:57+00:00"
+        },
+        {
+          "id": 5,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 5,
+              "name": "en-GB",
+              "slug": "en-gb",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-06-23T13:50:57+00:00",
+          "updated_at": "2017-06-23T13:50:57+00:00"
+        },
+        {
+          "id": 6,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 6,
+              "name": "certificate",
+              "slug": "certificate",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-06-23T13:50:57+00:00",
+          "updated_at": "2017-06-23T13:50:57+00:00"
+        }
       ],
-      "publishers": [
-        { "name": "Alison", "location": "Ireland" }
+      "translations": [
+        {
+          "name": "Japanese Language: Introduction to Japanese Scripts",
+          "headline": "Japanese Language: Introduction to Japanese Scripts",
+          "summary": "<p>There are three types of Japanese scripts, namely the Hiragana, the Katakana, and the Kanji. This course will introduce you to these Japanese scripts and discuss their evolution over time. You will first study the Japanese characters and learn how they are written. The course will also teach you Japanese vocabulary, the Japanese numbers 1 to 70, and greetings such as Ohayo Gozaimasu, Konnichiwa, and Konbanwa, including the appropriate time of the day to use them.<br /><br />Next, you will study Japanese introductions as well as learn how to start a conversation about where you are from. You will also be taught how to pronounce the Japanese vowels and consonants correctly as well as learn the correct usage of expressions in negative and positive form. Finally, you will practice having a Japanese conversation, this time with a focus on adding more words to your vocabulary.<br /><br />Learning to understand and speak the Japanese language will be very useful for business professionals who deal with Japanese firms, as well as anyone planning to visit the Land of the Rising Sun and immerse themselves in Japanese culture. It will also be a great plus for anyone who is an avid follower of the Japanese entertainment industry! This course is the first in a series of four courses on the Japanese language, so check it out now and keep your Japanese adventure moving forward!</p>",
+          "locale": "en-GB"
+        }
       ],
-      "duration_avg": 3.5,
-      "rating_avg": 4.6,
-      "rating_count": 1400,
-      "published_at": "2025-01-10T08:00:00Z",
-      "created_at": "2024-12-20T10:00:00Z",
-      "updated_at": "2025-01-11T11:30:00Z"
+      "image": null,
+      "url": "https://alison.com/course/japanese-language-introduction-to-japanese-scripts",
+      "duration_avg": null,
+      "rating_avg": null,
+      "course_level": "Beginner",
+      "ratings_count": null,
+      "primary_cip_code": null,
+      "secondary_cip_code": null,
+      "published_at": "2017-06-23T13:50:57+00:00",
+      "created_at": "2017-06-23T13:50:57+00:00",
+      "updated_at": "2017-06-23T13:50:57+00:00"
     },
     {
-      "id": 1002,
-      "name": "Project Management Essentials",
-      "slug": "project-management-essentials",
+      "id": 1202,
+      "name": "Introduction to Advertising",
+      "slug": "introduction-to-advertising",
       "type": "certificate",
-      "language": "en",
+      "language": "en-US",
+      "publishers": [
+        {
+          "name": "Professional Academy",
+          "slug": "professional-academy",
+          "image": null,
+          "location": "Cork, Ireland",
+          "country_id": null
+        }
+      ],
       "categories": [
-        { "id": 11, "code": "MGT", "name": "Management" }
+        {
+          "id": 79,
+          "parent_id": null,
+          "code": "marketing",
+          "courses_count": 0,
+          "translations": [
+            {
+              "name": "Sales & Marketing",
+              "locale": "en"
+            }
+          ],
+          "subcategories": [],
+          "created_at": "2026-05-13 00:00:00",
+          "updated_at": "2026-05-13 00:00:00"
+        },
+        {
+          "id": 82,
+          "parent_id": 79,
+          "code": "digital-marketing",
+          "courses_count": 0,
+          "translations": [
+            {
+              "name": "Digital Marketing",
+              "locale": "en"
+            }
+          ],
+          "subcategories": [],
+          "created_at": "2026-05-13 00:00:00",
+          "updated_at": "2026-05-13 00:00:00"
+        },
+        {
+          "id": 109,
+          "parent_id": null,
+          "code": "management",
+          "courses_count": 0,
+          "translations": [
+            {
+              "name": "Management",
+              "locale": "en"
+            }
+          ],
+          "subcategories": [],
+          "created_at": "2026-05-13 00:00:00",
+          "updated_at": "2026-05-13 00:00:00"
+        }
       ],
       "modules": [
-        { "id": 2002, "name": "Project Lifecycle", "description": "Planning, execution and closure basics." }
+        {
+          "id": 12020,
+          "name": "Course overview",
+          "description": "<p>This course will introduce you to the world of advertising and the process undertaken by ad agencies when vying for a client's business. You will learn about the SS+K organization and how they assisted MSNBC in revamping their image. You will also study the pitch process, how to identify objectives for an ad campaign, and the methods that can be used to deploy an advertising message. You will then learn about the Four Ps: product, place, price, and promotion, and how to blend these together to create the desired impact.<br /><br />Next, you will study the main methods for managing media and how to use SWOT analysis and asymmetric communications briefs to solve problems. You will then be introduced to the concept of virtual worlds and how advertisers can infiltrate them to bring messages to consumers. You will learn about copy research and copy testing, relevance and resonance, the methods for marketing a product or service, and the benefits of radio and print ads. The course will also teach you how to measure readership and the benefits of customer relationship management.<br /><br />Gaining more customers and new clients with the help of an effective advertising campaign is a fantastic achievement that can really help get you recognised as a valuable member of the company. This free Introduction to Advertising online course will support you in becoming that person who drives the company forward towards achieving its advertising, marketing, and sales goals. So, check out the course today, and learn to advertise like a true professional.</p>",
+          "completed": false,
+          "scos": []
+        }
       ],
       "tags": [
-        { "id": 303, "name": "project-management" },
-        { "id": 304, "name": "planning" }
+        {
+          "id": 1,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 1,
+              "name": "Digital Marketing",
+              "slug": "digital-marketing",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-06-23T13:57:20+00:00",
+          "updated_at": "2017-06-23T13:57:20+00:00"
+        },
+        {
+          "id": 2,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 2,
+              "name": "Marketing",
+              "slug": "marketing",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-06-23T13:57:20+00:00",
+          "updated_at": "2017-06-23T13:57:20+00:00"
+        },
+        {
+          "id": 3,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 3,
+              "name": "Sales",
+              "slug": "sales",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-06-23T13:57:20+00:00",
+          "updated_at": "2017-06-23T13:57:20+00:00"
+        },
+        {
+          "id": 4,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 4,
+              "name": "Advertising",
+              "slug": "advertising",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-06-23T13:57:20+00:00",
+          "updated_at": "2017-06-23T13:57:20+00:00"
+        },
+        {
+          "id": 5,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 5,
+              "name": "Marketing Strategy",
+              "slug": "marketing-strategy",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-06-23T13:57:20+00:00",
+          "updated_at": "2017-06-23T13:57:20+00:00"
+        },
+        {
+          "id": 6,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 6,
+              "name": "Business",
+              "slug": "business",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-06-23T13:57:20+00:00",
+          "updated_at": "2017-06-23T13:57:20+00:00"
+        },
+        {
+          "id": 7,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 7,
+              "name": "Sales & Marketing",
+              "slug": "sales-marketing",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-06-23T13:57:20+00:00",
+          "updated_at": "2017-06-23T13:57:20+00:00"
+        },
+        {
+          "id": 8,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 8,
+              "name": "Management",
+              "slug": "management",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-06-23T13:57:20+00:00",
+          "updated_at": "2017-06-23T13:57:20+00:00"
+        },
+        {
+          "id": 9,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 9,
+              "name": "Beginner",
+              "slug": "beginner",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-06-23T13:57:20+00:00",
+          "updated_at": "2017-06-23T13:57:20+00:00"
+        },
+        {
+          "id": 10,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 10,
+              "name": "en-US",
+              "slug": "en-us",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-06-23T13:57:20+00:00",
+          "updated_at": "2017-06-23T13:57:20+00:00"
+        },
+        {
+          "id": 11,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 11,
+              "name": "certificate",
+              "slug": "certificate",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-06-23T13:57:20+00:00",
+          "updated_at": "2017-06-23T13:57:20+00:00"
+        }
       ],
-      "publishers": [
-        { "name": "Alison", "location": "Ireland" }
+      "translations": [
+        {
+          "name": "Introduction to Advertising",
+          "headline": "Introduction to Advertising",
+          "summary": "<p>This course will introduce you to the world of advertising and the process undertaken by ad agencies when vying for a client's business. You will learn about the SS+K organization and how they assisted MSNBC in revamping their image. You will also study the pitch process, how to identify objectives for an ad campaign, and the methods that can be used to deploy an advertising message. You will then learn about the Four Ps: product, place, price, and promotion, and how to blend these together to create the desired impact.<br /><br />Next, you will study the main methods for managing media and how to use SWOT analysis and asymmetric communications briefs to solve problems. You will then be introduced to the concept of virtual worlds and how advertisers can infiltrate them to bring messages to consumers. You will learn about copy research and copy testing, relevance and resonance, the methods for marketing a product or service, and the benefits of radio and print ads. The course will also teach you how to measure readership and the benefits of customer relationship management.<br /><br />Gaining more customers and new clients with the help of an effective advertising campaign is a fantastic achievement that can really help get you recognised as a valuable member of the company. This free Introduction to Advertising online course will support you in becoming that person who drives the company forward towards achieving its advertising, marketing, and sales goals. So, check out the course today, and learn to advertise like a true professional.</p>",
+          "locale": "en-US"
+        },
+        {
+          "name": "Introducción a la publicidad",
+          "headline": "Introducción a la publicidad",
+          "summary": "<p>Spanish metadata translation only for language mapping coverage.</p>",
+          "locale": "es"
+        }
       ],
-      "duration_avg": 4.2,
-      "rating_avg": 4.7,
-      "rating_count": 1890,
-      "published_at": "2025-01-12T08:00:00Z",
-      "created_at": "2024-12-22T10:00:00Z",
-      "updated_at": "2025-01-13T12:00:00Z"
+      "image": null,
+      "url": "https://alison.com/course/introduction-to-advertising",
+      "duration_avg": "1.5-3 hrs",
+      "rating_avg": null,
+      "course_level": "Intermediate",
+      "ratings_count": null,
+      "primary_cip_code": null,
+      "secondary_cip_code": null,
+      "published_at": "2017-06-23T13:57:20+00:00",
+      "created_at": "2017-06-23T13:57:20+00:00",
+      "updated_at": "2017-06-23T13:57:20+00:00"
     },
     {
-      "id": 1003,
-      "name": "Introduction to Data Analytics",
-      "slug": "introduction-to-data-analytics",
+      "id": 1204,
+      "name": "Protect Your PC against the NotPetya Cyber Attack",
+      "slug": "protect-your-pc-against-the-notpetya-cyber-attack",
       "type": "certificate",
       "language": "en",
+      "publishers": [
+        {
+          "name": "Advance Learning - IT",
+          "slug": "advance-learning-it",
+          "image": null,
+          "location": "India",
+          "country_id": 63
+        }
+      ],
       "categories": [
-        { "id": 12, "code": "DAT", "name": "Data" }
+        {
+          "id": 1,
+          "parent_id": null,
+          "code": "it",
+          "courses_count": 0,
+          "translations": [
+            {
+              "name": "Information Technology (IT)",
+              "locale": "en"
+            }
+          ],
+          "subcategories": [],
+          "created_at": "2026-05-13 00:00:00",
+          "updated_at": "2026-05-13 00:00:00"
+        }
       ],
       "modules": [
-        { "id": 2003, "name": "Working with Data", "description": "Understanding data collection and analysis." }
+        {
+          "id": 12040,
+          "name": "Course overview",
+          "description": "<p>First, you will be introduced to Petya malware. Petya is a family of encrypting ransomware that targets Microsoft Windows-based systems. It was first discovered in 2016 and infects the master boot record to execute a payload that encrypts a hard drive's file system table which prevents Windows from booting. You will then look at the NotPetya attack that took place on June 27th, 2017, which is said to be the most devastating cyber attack in history.<br /><br />Next, you will examine the EternalBlue exploit and its role in the creation of Wannacry, Petya, and NotPetya. You will learn who developed the EternalBlue exploit and look into the Shadow Brokers hacker group. Finally, the course will teach you how NotPetya gains access to your system, the effects that this will have on your computer system, and the preventative measures you can take to avoid a NotPetya attack. <br /><br />Individuals and companies big or small rely on the computer for their day to day business activities. A glitch in the computer system will not only disrupt workflows but may also result in serious financial losses. This makes it essential to learn to protect oneself from NotPetya and other ransomware and cyber attack malware. Don't wait for something as dire as the NotPetya cyber attack to hit you. Take this course now and learn how to protect your computer systems today.</p>",
+          "completed": false,
+          "scos": []
+        }
       ],
       "tags": [
-        { "id": 305, "name": "analytics" },
-        { "id": 306, "name": "data" }
+        {
+          "id": 1,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 1,
+              "name": "Cybersecurity",
+              "slug": "cybersecurity",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-06-29T16:33:45+00:00",
+          "updated_at": "2017-06-29T16:33:45+00:00"
+        },
+        {
+          "id": 2,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 2,
+              "name": "Information Security",
+              "slug": "information-security",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-06-29T16:33:45+00:00",
+          "updated_at": "2017-06-29T16:33:45+00:00"
+        },
+        {
+          "id": 3,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 3,
+              "name": "Data Security",
+              "slug": "data-security",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-06-29T16:33:45+00:00",
+          "updated_at": "2017-06-29T16:33:45+00:00"
+        },
+        {
+          "id": 4,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 4,
+              "name": "Technology",
+              "slug": "technology",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-06-29T16:33:45+00:00",
+          "updated_at": "2017-06-29T16:33:45+00:00"
+        },
+        {
+          "id": 5,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 5,
+              "name": "Information Technology (IT)",
+              "slug": "information-technology-it",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-06-29T16:33:45+00:00",
+          "updated_at": "2017-06-29T16:33:45+00:00"
+        },
+        {
+          "id": 6,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 6,
+              "name": "Beginner",
+              "slug": "beginner",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-06-29T16:33:45+00:00",
+          "updated_at": "2017-06-29T16:33:45+00:00"
+        },
+        {
+          "id": 7,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 7,
+              "name": "en",
+              "slug": "en",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-06-29T16:33:45+00:00",
+          "updated_at": "2017-06-29T16:33:45+00:00"
+        },
+        {
+          "id": 8,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 8,
+              "name": "certificate",
+              "slug": "certificate",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-06-29T16:33:45+00:00",
+          "updated_at": "2017-06-29T16:33:45+00:00"
+        }
       ],
-      "publishers": [
-        { "name": "Alison", "location": "Ireland" }
+      "translations": [
+        {
+          "name": "Protect Your PC against the NotPetya Cyber Attack",
+          "headline": "Protect Your PC against the NotPetya Cyber Attack",
+          "summary": "<p>First, you will be introduced to Petya malware. Petya is a family of encrypting ransomware that targets Microsoft Windows-based systems. It was first discovered in 2016 and infects the master boot record to execute a payload that encrypts a hard drive's file system table which prevents Windows from booting. You will then look at the NotPetya attack that took place on June 27th, 2017, which is said to be the most devastating cyber attack in history.<br /><br />Next, you will examine the EternalBlue exploit and its role in the creation of Wannacry, Petya, and NotPetya. You will learn who developed the EternalBlue exploit and look into the Shadow Brokers hacker group. Finally, the course will teach you how NotPetya gains access to your system, the effects that this will have on your computer system, and the preventative measures you can take to avoid a NotPetya attack. <br /><br />Individuals and companies big or small rely on the computer for their day to day business activities. A glitch in the computer system will not only disrupt workflows but may also result in serious financial losses. This makes it essential to learn to protect oneself from NotPetya and other ransomware and cyber attack malware. Don't wait for something as dire as the NotPetya cyber attack to hit you. Take this course now and learn how to protect your computer systems today.</p>",
+          "locale": "en"
+        }
       ],
-      "duration_avg": 5.0,
-      "rating_avg": 4.5,
-      "rating_count": 980,
-      "published_at": "2025-01-14T08:00:00Z",
-      "created_at": "2024-12-24T10:00:00Z",
-      "updated_at": "2025-01-14T16:00:00Z"
+      "image": null,
+      "url": "https://alison.com/course/protect-your-pc-against-the-notpetya-cyber-attack",
+      "duration_avg": "3-4 hrs",
+      "rating_avg": null,
+      "course_level": "Advanced",
+      "ratings_count": null,
+      "primary_cip_code": null,
+      "secondary_cip_code": null,
+      "published_at": "2017-06-29T16:33:45+00:00",
+      "created_at": "2017-06-29T16:33:45+00:00",
+      "updated_at": "2017-06-29T16:33:45+00:00"
     },
     {
-      "id": 1004,
-      "name": "Customer Service Foundations",
-      "slug": "customer-service-foundations",
+      "id": 1205,
+      "name": "Introduction to Digital Photography",
+      "slug": "introduction-to-digital-photography",
+      "type": "certificate",
+      "language": "en-GB",
+      "publishers": [
+        {
+          "name": "Advance Learning - Digital Photography",
+          "slug": "advance-learning-digital-photography",
+          "image": null,
+          "location": "South Africa",
+          "country_id": null
+        }
+      ],
+      "categories": [
+        {
+          "id": 102,
+          "parent_id": 45,
+          "code": "photography",
+          "courses_count": 0,
+          "translations": [
+            {
+              "name": "Photography",
+              "locale": "en"
+            }
+          ],
+          "subcategories": [],
+          "created_at": "2026-05-13 00:00:00",
+          "updated_at": "2026-05-13 00:00:00"
+        }
+      ],
+      "modules": [
+        {
+          "id": 12050,
+          "name": "Course overview",
+          "description": "<p>This course covers everything you need to know to unlock your camera’s full potential. We go over the basic features of digital cameras until you understand what all those buttons actually do. We compare ‘full frame’ and ‘crop sensors’ cameras and show you how digital photos are processed into file formats such as ‘.RAW’ and ‘jpeg’. We then identify the key parts of a digital single-lens reflex camera (DSLR) and explain how to customize its settings to suit your needs.</p>\n<p>The course guides you through different photographic styles and techniques, including landscape, street and wildlife photography to help you choose a style that interests you while you develop your own. We explore the works of key photographers and the history of the artform to enable you to sharpen your instincts and take your skills to the next level. We lay out the ‘Rule of Thirds’ and examine the essential equipment needed for a photoshoot before explaining the differences between various types of image files.</p>\n<p>Photography can be inspiring and lets you capture memorable moments forever. It can also drive messaging and enable you to build your personal brand. But just as importantly, taking a cool photo is both great fun and less complicated than you might think - as this course can show you in just three hours. You can use these skills for the rest of your life, for fun among friends and family or to start your career as a professional photographer. Sign up to move beyond the ‘automatic’ setting on your camera and learn how to use your phone to record life as it unfolds around you.</p>",
+          "completed": false,
+          "scos": []
+        }
+      ],
+      "tags": [
+        {
+          "id": 1,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 1,
+              "name": "Photography",
+              "slug": "photography",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-07-06T09:14:03+00:00",
+          "updated_at": "2017-07-06T09:14:03+00:00"
+        },
+        {
+          "id": 2,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 2,
+              "name": "Digital Photography",
+              "slug": "digital-photography",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-07-06T09:14:03+00:00",
+          "updated_at": "2017-07-06T09:14:03+00:00"
+        },
+        {
+          "id": 3,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 3,
+              "name": "DSLR",
+              "slug": "dslr",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-07-06T09:14:03+00:00",
+          "updated_at": "2017-07-06T09:14:03+00:00"
+        },
+        {
+          "id": 4,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 4,
+              "name": "Camera",
+              "slug": "camera",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-07-06T09:14:03+00:00",
+          "updated_at": "2017-07-06T09:14:03+00:00"
+        },
+        {
+          "id": 5,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 5,
+              "name": "Personal Development",
+              "slug": "personal-development",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-07-06T09:14:03+00:00",
+          "updated_at": "2017-07-06T09:14:03+00:00"
+        },
+        {
+          "id": 6,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 6,
+              "name": "Beginner",
+              "slug": "beginner",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-07-06T09:14:03+00:00",
+          "updated_at": "2017-07-06T09:14:03+00:00"
+        },
+        {
+          "id": 7,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 7,
+              "name": "en-GB",
+              "slug": "en-gb",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-07-06T09:14:03+00:00",
+          "updated_at": "2017-07-06T09:14:03+00:00"
+        },
+        {
+          "id": 8,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 8,
+              "name": "certificate",
+              "slug": "certificate",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-07-06T09:14:03+00:00",
+          "updated_at": "2017-07-06T09:14:03+00:00"
+        }
+      ],
+      "translations": [
+        {
+          "name": "Introduction to Digital Photography",
+          "headline": "Introduction to Digital Photography",
+          "summary": "<p>This course covers everything you need to know to unlock your camera’s full potential. We go over the basic features of digital cameras until you understand what all those buttons actually do. We compare ‘full frame’ and ‘crop sensors’ cameras and show you how digital photos are processed into file formats such as ‘.RAW’ and ‘jpeg’. We then identify the key parts of a digital single-lens reflex camera (DSLR) and explain how to customize its settings to suit your needs.</p>\n<p>The course guides you through different photographic styles and techniques, including landscape, street and wildlife photography to help you choose a style that interests you while you develop your own. We explore the works of key photographers and the history of the artform to enable you to sharpen your instincts and take your skills to the next level. We lay out the ‘Rule of Thirds’ and examine the essential equipment needed for a photoshoot before explaining the differences between various types of image files.</p>\n<p>Photography can be inspiring and lets you capture memorable moments forever. It can also drive messaging and enable you to build your personal brand. But just as importantly, taking a cool photo is both great fun and less complicated than you might think - as this course can show you in just three hours. You can use these skills for the rest of your life, for fun among friends and family or to start your career as a professional photographer. Sign up to move beyond the ‘automatic’ setting on your camera and learn how to use your phone to record life as it unfolds around you.</p>",
+          "locale": "en-GB"
+        }
+      ],
+      "image": null,
+      "url": "https://alison.com/course/introduction-to-digital-photography",
+      "duration_avg": "45 mins",
+      "rating_avg": null,
+      "course_level": "Expert",
+      "ratings_count": null,
+      "primary_cip_code": null,
+      "secondary_cip_code": null,
+      "published_at": "2017-07-06T09:14:03+00:00",
+      "created_at": "2017-07-06T09:14:03+00:00",
+      "updated_at": "2017-07-06T09:14:03+00:00"
+    },
+    {
+      "id": 1209,
+      "name": "Wind Energy – From Wind Turbines to Grid Integration",
+      "slug": "wind-energy-from-wind-turbines-to-grid-integration",
       "type": "certificate",
       "language": "en",
+      "publishers": [
+        {
+          "name": "Advance Learning - Environmental Education",
+          "slug": "advance-learning-environmental-education",
+          "image": null,
+          "location": "Global",
+          "country_id": null
+        }
+      ],
       "categories": [
-        { "id": 13, "code": "SRV", "name": "Service" }
+        {
+          "id": 127,
+          "parent_id": 99,
+          "code": "engineering/renewable-energy",
+          "courses_count": 0,
+          "translations": [
+            {
+              "name": "Renewable Energy",
+              "locale": "en"
+            }
+          ],
+          "subcategories": [],
+          "created_at": "2026-05-13 00:00:00",
+          "updated_at": "2026-05-13 00:00:00"
+        }
       ],
       "modules": [
-        { "id": 2004, "name": "Customer Communication", "description": "Practical customer support techniques." }
+        {
+          "id": 12090,
+          "name": "Course overview",
+          "description": "<p>First, you will learn about the different types of wind turbines that are commercially available in the market today. You will look into the physical basis of wind turbine construction and how they function. The course will also teach you about the technical design of wind turbines. You will learn why certain designs are better than others and gain an insight on how these designs can be improved in different situations.<br /><br />Next, you will learn how the energy produced by wind power is balanced with the power produced by thermal plants and the effect of integration on existing generators. You will also look into the common myths about grid integration. Lastly, you will learn what is unique about the integration of wind energy, how much of the world&rsquo;s power is generated by wind, the advantages and disadvantages of wind power, and how wind power is currently improving.<br /><br />With the need for renewable energy sources becoming bigger every year, people with the expertise in this field are becoming more and more valuable. With this course, you too can gain this expertise. The course is ideal for anyone working in the wind energy sector or interested in wind energy technology. So check out the course today, and start gaining a solid understanding of how wind power can be the future of the planet's energy needs.</p>",
+          "completed": false,
+          "scos": []
+        }
       ],
       "tags": [
-        { "id": 307, "name": "customer-service" },
-        { "id": 308, "name": "communication" }
+        {
+          "id": 1,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 1,
+              "name": "Renewable Energy",
+              "slug": "renewable-energy",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-07-13T14:56:27+00:00",
+          "updated_at": "2017-07-13T14:56:27+00:00"
+        },
+        {
+          "id": 2,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 2,
+              "name": "Environmental Management",
+              "slug": "environmental-management",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-07-13T14:56:27+00:00",
+          "updated_at": "2017-07-13T14:56:27+00:00"
+        },
+        {
+          "id": 3,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 3,
+              "name": "Climate Change",
+              "slug": "climate-change",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-07-13T14:56:27+00:00",
+          "updated_at": "2017-07-13T14:56:27+00:00"
+        },
+        {
+          "id": 4,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 4,
+              "name": "SDG 7 Affordable And Clean Energy",
+              "slug": "sdg-7-affordable-and-clean-energy",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-07-13T14:56:27+00:00",
+          "updated_at": "2017-07-13T14:56:27+00:00"
+        },
+        {
+          "id": 5,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 5,
+              "name": "SDG 13 Climate Action",
+              "slug": "sdg-13-climate-action",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-07-13T14:56:27+00:00",
+          "updated_at": "2017-07-13T14:56:27+00:00"
+        },
+        {
+          "id": 6,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 6,
+              "name": "Engineering & Construction",
+              "slug": "engineering-construction",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-07-13T14:56:27+00:00",
+          "updated_at": "2017-07-13T14:56:27+00:00"
+        },
+        {
+          "id": 7,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 7,
+              "name": "Beginner",
+              "slug": "beginner",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-07-13T14:56:27+00:00",
+          "updated_at": "2017-07-13T14:56:27+00:00"
+        },
+        {
+          "id": 8,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 8,
+              "name": "en",
+              "slug": "en",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-07-13T14:56:27+00:00",
+          "updated_at": "2017-07-13T14:56:27+00:00"
+        },
+        {
+          "id": 9,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 9,
+              "name": "certificate",
+              "slug": "certificate",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-07-13T14:56:27+00:00",
+          "updated_at": "2017-07-13T14:56:27+00:00"
+        }
       ],
-      "publishers": [
-        { "name": "Alison", "location": "Ireland" }
+      "translations": [
+        {
+          "name": "Wind Energy – From Wind Turbines to Grid Integration",
+          "headline": "Wind Energy – From Wind Turbines to Grid Integration",
+          "summary": "<p>First, you will learn about the different types of wind turbines that are commercially available in the market today. You will look into the physical basis of wind turbine construction and how they function. The course will also teach you about the technical design of wind turbines. You will learn why certain designs are better than others and gain an insight on how these designs can be improved in different situations.<br /><br />Next, you will learn how the energy produced by wind power is balanced with the power produced by thermal plants and the effect of integration on existing generators. You will also look into the common myths about grid integration. Lastly, you will learn what is unique about the integration of wind energy, how much of the world&rsquo;s power is generated by wind, the advantages and disadvantages of wind power, and how wind power is currently improving.<br /><br />With the need for renewable energy sources becoming bigger every year, people with the expertise in this field are becoming more and more valuable. With this course, you too can gain this expertise. The course is ideal for anyone working in the wind energy sector or interested in wind energy technology. So check out the course today, and start gaining a solid understanding of how wind power can be the future of the planet's energy needs.</p>",
+          "locale": "en"
+        }
       ],
-      "duration_avg": 2.8,
-      "rating_avg": 4.4,
-      "rating_count": 760,
-      "published_at": "2025-01-15T08:00:00Z",
-      "created_at": "2024-12-25T10:00:00Z",
-      "updated_at": "2025-01-15T14:30:00Z"
+      "image": null,
+      "url": "https://alison.com/course/wind-energy-from-wind-turbines-to-grid-integration",
+      "duration_avg": "6-10 hrs",
+      "rating_avg": null,
+      "course_level": "Any Level",
+      "ratings_count": null,
+      "primary_cip_code": null,
+      "secondary_cip_code": null,
+      "published_at": "2017-07-13T14:56:27+00:00",
+      "created_at": "2017-07-13T14:56:27+00:00",
+      "updated_at": "2017-07-13T14:56:27+00:00"
     },
     {
-      "id": 1005,
-      "name": "Introduction to Web Development",
-      "slug": "introduction-to-web-development",
+      "id": 1218,
+      "name": "3D Printing with Windows 10",
+      "slug": "3d-printing-with-windows-10",
       "type": "certificate",
       "language": "en",
+      "publishers": [
+        {
+          "name": "Channel 9",
+          "slug": "channel-9",
+          "image": null,
+          "location": "Global",
+          "country_id": null
+        }
+      ],
       "categories": [
-        { "id": 14, "code": "TEC", "name": "Technology" }
+        {
+          "id": 1,
+          "parent_id": null,
+          "code": "it",
+          "courses_count": 0,
+          "translations": [
+            {
+              "name": "Information Technology (IT)",
+              "locale": "en"
+            }
+          ],
+          "subcategories": [],
+          "created_at": "2026-05-13 00:00:00",
+          "updated_at": "2026-05-13 00:00:00"
+        },
+        {
+          "id": 99,
+          "parent_id": null,
+          "code": "engineering",
+          "courses_count": 0,
+          "translations": [
+            {
+              "name": "Engineering & Construction",
+              "locale": "en"
+            }
+          ],
+          "subcategories": [],
+          "created_at": "2026-05-13 00:00:00",
+          "updated_at": "2026-05-13 00:00:00"
+        }
       ],
       "modules": [
-        { "id": 2005, "name": "HTML and CSS Basics", "description": "Build and style simple web pages." }
+        {
+          "id": 12180,
+          "name": "Course overview",
+          "description": "<p>The course begins by explaining the tools in Windows 10 that are useful in 3D printing and how the 3MF consortium has helped to improve file formats that will be used in 3D printing. You will learn about the 3D print bureaus and their abilities as well as the variety of materials that can be used in 3D printing. You will also learn about 3MF design considerations and what the future holds for 3D design.<br /><br />You will then learn the difference between a 3MF file and an STL file, as well as the two classes of scenarios for adding 3D printing to any app. The course also shows you how the different features in a 3D builder operate. You will then learn how to load, view, and repair objects in a 3D builder so that they are ready to print. The course will then provide you with essential knowledge on what to do if an error message appears in your 3D printer.<br /><br />3D printing is one of the most interesting technologies developed in recent years, and is particularly useful in the areas of engineering, design, and manufacturing. By taking this course, you will learn everything you need to know about this incredible technology and gain an edge over your peers and colleagues. So why wait? Check out the course today, and get started with your next learning journey!</p>",
+          "completed": false,
+          "scos": []
+        }
       ],
       "tags": [
-        { "id": 309, "name": "web" },
-        { "id": 310, "name": "development" }
+        {
+          "id": 1,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 1,
+              "name": "Manufacturing",
+              "slug": "manufacturing",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-08-03T09:50:11+00:00",
+          "updated_at": "2017-08-03T09:50:11+00:00"
+        },
+        {
+          "id": 2,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 2,
+              "name": "3D Printing",
+              "slug": "3d-printing",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-08-03T09:50:11+00:00",
+          "updated_at": "2017-08-03T09:50:11+00:00"
+        },
+        {
+          "id": 3,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 3,
+              "name": "Windows 10",
+              "slug": "windows-10",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-08-03T09:50:11+00:00",
+          "updated_at": "2017-08-03T09:50:11+00:00"
+        },
+        {
+          "id": 4,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 4,
+              "name": "Transition Year Top Ups and Tasters",
+              "slug": "transition-year-top-ups-and-tasters",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-08-03T09:50:11+00:00",
+          "updated_at": "2017-08-03T09:50:11+00:00"
+        },
+        {
+          "id": 5,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 5,
+              "name": "Information Technology (IT)",
+              "slug": "information-technology-it",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-08-03T09:50:11+00:00",
+          "updated_at": "2017-08-03T09:50:11+00:00"
+        },
+        {
+          "id": 6,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 6,
+              "name": "Business",
+              "slug": "business",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-08-03T09:50:11+00:00",
+          "updated_at": "2017-08-03T09:50:11+00:00"
+        },
+        {
+          "id": 7,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 7,
+              "name": "Engineering & Construction",
+              "slug": "engineering-construction",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-08-03T09:50:11+00:00",
+          "updated_at": "2017-08-03T09:50:11+00:00"
+        },
+        {
+          "id": 8,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 8,
+              "name": "Beginner",
+              "slug": "beginner",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-08-03T09:50:11+00:00",
+          "updated_at": "2017-08-03T09:50:11+00:00"
+        },
+        {
+          "id": 9,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 9,
+              "name": "en",
+              "slug": "en",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-08-03T09:50:11+00:00",
+          "updated_at": "2017-08-03T09:50:11+00:00"
+        },
+        {
+          "id": 10,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 10,
+              "name": "certificate",
+              "slug": "certificate",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-08-03T09:50:11+00:00",
+          "updated_at": "2017-08-03T09:50:11+00:00"
+        }
       ],
-      "publishers": [
-        { "name": "Alison", "location": "Ireland" }
+      "translations": [
+        {
+          "name": "3D Printing with Windows 10",
+          "headline": "3D Printing with Windows 10",
+          "summary": "<p>The course begins by explaining the tools in Windows 10 that are useful in 3D printing and how the 3MF consortium has helped to improve file formats that will be used in 3D printing. You will learn about the 3D print bureaus and their abilities as well as the variety of materials that can be used in 3D printing. You will also learn about 3MF design considerations and what the future holds for 3D design.<br /><br />You will then learn the difference between a 3MF file and an STL file, as well as the two classes of scenarios for adding 3D printing to any app. The course also shows you how the different features in a 3D builder operate. You will then learn how to load, view, and repair objects in a 3D builder so that they are ready to print. The course will then provide you with essential knowledge on what to do if an error message appears in your 3D printer.<br /><br />3D printing is one of the most interesting technologies developed in recent years, and is particularly useful in the areas of engineering, design, and manufacturing. By taking this course, you will learn everything you need to know about this incredible technology and gain an edge over your peers and colleagues. So why wait? Check out the course today, and get started with your next learning journey!</p>",
+          "locale": "en"
+        }
       ],
-      "duration_avg": 6.5,
-      "rating_avg": 4.8,
-      "rating_count": 2210,
-      "published_at": "2025-01-16T08:00:00Z",
-      "created_at": "2024-12-26T10:00:00Z",
-      "updated_at": "2025-01-16T18:00:00Z"
+      "image": null,
+      "url": "https://alison.com/course/3d-printing-with-windows-10",
+      "duration_avg": "10-15 hrs",
+      "rating_avg": null,
+      "course_level": "All Levels",
+      "ratings_count": null,
+      "primary_cip_code": null,
+      "secondary_cip_code": null,
+      "published_at": "2017-08-03T09:50:11+00:00",
+      "created_at": "2017-08-03T09:50:11+00:00",
+      "updated_at": "2017-08-03T09:50:11+00:00"
     },
     {
-      "id": 1006,
-      "name": "Financial Literacy for Beginners",
-      "slug": "financial-literacy-for-beginners",
-      "type": "certificate",
-      "language": "en",
-      "categories": [
-        { "id": 15, "code": "FIN", "name": "Finance" }
-      ],
-      "modules": [
-        { "id": 2006, "name": "Budgeting Basics", "description": "Personal budgeting and savings principles." }
-      ],
-      "tags": [
-        { "id": 311, "name": "finance" },
-        { "id": 312, "name": "budgeting" }
-      ],
-      "publishers": [
-        { "name": "Alison", "location": "Ireland" }
-      ],
-      "duration_avg": 3.1,
-      "rating_avg": 4.3,
-      "rating_count": 640,
-      "published_at": "2025-01-17T08:00:00Z",
-      "created_at": "2024-12-27T10:00:00Z",
-      "updated_at": "2025-01-17T13:15:00Z"
-    },
-    {
-      "id": 1007,
-      "name": "Workplace Health and Safety Basics",
-      "slug": "workplace-health-and-safety-basics",
-      "type": "certificate",
-      "language": "en",
-      "categories": [
-        { "id": 16, "code": "HSE", "name": "Health and Safety" }
-      ],
-      "modules": [
-        { "id": 2007, "name": "Safety Procedures", "description": "Fundamental workplace risk awareness." }
-      ],
-      "tags": [
-        { "id": 313, "name": "safety" },
-        { "id": 314, "name": "workplace" }
-      ],
-      "publishers": [
-        { "name": "Alison", "location": "Ireland" }
-      ],
-      "duration_avg": 2.4,
-      "rating_avg": 4.2,
-      "rating_count": 530,
-      "published_at": "2025-01-18T08:00:00Z",
-      "created_at": "2024-12-28T10:00:00Z",
-      "updated_at": "2025-01-18T12:45:00Z"
-    },
-    {
-      "id": 1008,
-      "name": "Graphic Design Principles",
-      "slug": "graphic-design-principles",
-      "type": "certificate",
-      "language": "en",
-      "categories": [
-        { "id": 17, "code": "DES", "name": "Design" }
-      ],
-      "modules": [
-        { "id": 2008, "name": "Visual Composition", "description": "Layout, contrast and typography basics." }
-      ],
-      "tags": [
-        { "id": 315, "name": "design" },
-        { "id": 316, "name": "graphics" }
-      ],
-      "publishers": [
-        { "name": "Alison", "location": "Ireland" }
-      ],
-      "duration_avg": 4.7,
-      "rating_avg": 4.7,
-      "rating_count": 1140,
-      "published_at": "2025-01-19T08:00:00Z",
-      "created_at": "2024-12-29T10:00:00Z",
-      "updated_at": "2025-01-19T15:10:00Z"
-    },
-    {
-      "id": 1009,
-      "name": "Entrepreneurship Basics",
-      "slug": "entrepreneurship-basics",
-      "type": "certificate",
-      "language": "en",
-      "categories": [
-        { "id": 18, "code": "ENT", "name": "Entrepreneurship" }
-      ],
-      "modules": [
-        { "id": 2009, "name": "Starting a Venture", "description": "Business idea validation and execution." }
-      ],
-      "tags": [
-        { "id": 317, "name": "entrepreneurship" },
-        { "id": 318, "name": "startup" }
-      ],
-      "publishers": [
-        { "name": "Alison", "location": "Ireland" }
-      ],
-      "duration_avg": 5.4,
-      "rating_avg": 4.6,
-      "rating_count": 870,
-      "published_at": "2025-01-20T08:00:00Z",
-      "created_at": "2024-12-30T10:00:00Z",
-      "updated_at": "2025-01-20T16:40:00Z"
-    },
-    {
-      "id": 1010,
-      "name": "Introduction to AI Concepts",
-      "slug": "introduction-to-ai-concepts",
+      "id": 1240,
+      "name": "Diploma in Health Studies",
+      "slug": "diploma-in-health-studies-revised-2017",
       "type": "diploma",
       "language": "en",
+      "publishers": [
+        {
+          "name": "XSIQ",
+          "slug": "xsiq",
+          "image": null,
+          "location": "Global",
+          "country_id": null
+        }
+      ],
       "categories": [
-        { "id": 19, "code": "AI", "name": "Artificial Intelligence" }
+        {
+          "id": 31,
+          "parent_id": null,
+          "code": "health",
+          "courses_count": 0,
+          "translations": [
+            {
+              "name": "Health",
+              "locale": "en"
+            }
+          ],
+          "subcategories": [],
+          "created_at": "2026-05-13 00:00:00",
+          "updated_at": "2026-05-13 00:00:00"
+        }
       ],
       "modules": [
-        { "id": 2010, "name": "AI Foundations", "description": "Core AI terminology and practical use cases." }
+        {
+          "id": 12400,
+          "name": "Course overview",
+          "description": "<p>This health studies course will give you a clearer understanding of healthcare and global health practices. You will first learn about macronutrients such as carbohydrates, proteins, and fats as well as the various minerals that the body needs. Here, you gain a strong understanding of what these nutrients are and where they come from. You will also study the dietary needs of an individual and the recommended ratio of fats, carbohydrates, and proteins in a healthy diet.<br /><br />Next, you will learn about the process and stages of human development, the factors that affect it over a lifetime, and how it is measured. You will also study how family and community resources affect the development of an individual over their lifetime. The course will then discuss global health issues, including HIV and AIDS and the common misconceptions about these diseases.<br /><br />By taking this free health studies course, you will gain a much stronger understanding of the considerations you need to make when deciding what to eat. This simple course is ideal for students, health professionals and volunteers, those involved in community work, and for anyone with an interest in global health issues. They say that you are what you eat. Check out this course today, and learn how to improve your health in no time.</p>",
+          "completed": false,
+          "scos": []
+        }
       ],
       "tags": [
-        { "id": 319, "name": "ai" },
-        { "id": 320, "name": "technology" }
+        {
+          "id": 1,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 1,
+              "name": "Health and Fitness",
+              "slug": "health-and-fitness",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-09-15T10:58:22+00:00",
+          "updated_at": "2017-09-15T10:58:22+00:00"
+        },
+        {
+          "id": 2,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 2,
+              "name": "Nutrition",
+              "slug": "nutrition",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-09-15T10:58:22+00:00",
+          "updated_at": "2017-09-15T10:58:22+00:00"
+        },
+        {
+          "id": 3,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 3,
+              "name": "Health",
+              "slug": "health",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-09-15T10:58:22+00:00",
+          "updated_at": "2017-09-15T10:58:22+00:00"
+        },
+        {
+          "id": 4,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 4,
+              "name": "Public Health",
+              "slug": "public-health",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-09-15T10:58:22+00:00",
+          "updated_at": "2017-09-15T10:58:22+00:00"
+        },
+        {
+          "id": 5,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 5,
+              "name": "HIV",
+              "slug": "hiv",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-09-15T10:58:22+00:00",
+          "updated_at": "2017-09-15T10:58:22+00:00"
+        },
+        {
+          "id": 6,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 6,
+              "name": "Diet",
+              "slug": "diet",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-09-15T10:58:22+00:00",
+          "updated_at": "2017-09-15T10:58:22+00:00"
+        },
+        {
+          "id": 7,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 7,
+              "name": "Transition Year Local and Global Citizenship",
+              "slug": "transition-year-local-and-global-citizenship",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-09-15T10:58:22+00:00",
+          "updated_at": "2017-09-15T10:58:22+00:00"
+        },
+        {
+          "id": 8,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 8,
+              "name": "SDG 3 Good Health And Wellbeing",
+              "slug": "sdg-3-good-health-and-wellbeing",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-09-15T10:58:22+00:00",
+          "updated_at": "2017-09-15T10:58:22+00:00"
+        },
+        {
+          "id": 9,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 9,
+              "name": "Women's Health",
+              "slug": "women-s-health",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-09-15T10:58:22+00:00",
+          "updated_at": "2017-09-15T10:58:22+00:00"
+        },
+        {
+          "id": 10,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 10,
+              "name": "Beginner",
+              "slug": "beginner",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-09-15T10:58:22+00:00",
+          "updated_at": "2017-09-15T10:58:22+00:00"
+        },
+        {
+          "id": 11,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 11,
+              "name": "en",
+              "slug": "en",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-09-15T10:58:22+00:00",
+          "updated_at": "2017-09-15T10:58:22+00:00"
+        },
+        {
+          "id": 12,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 12,
+              "name": "diploma",
+              "slug": "diploma",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-09-15T10:58:22+00:00",
+          "updated_at": "2017-09-15T10:58:22+00:00"
+        }
       ],
+      "translations": [
+        {
+          "name": "Diploma in Health Studies",
+          "headline": "Diploma in Health Studies",
+          "summary": "<p>This health studies course will give you a clearer understanding of healthcare and global health practices. You will first learn about macronutrients such as carbohydrates, proteins, and fats as well as the various minerals that the body needs. Here, you gain a strong understanding of what these nutrients are and where they come from. You will also study the dietary needs of an individual and the recommended ratio of fats, carbohydrates, and proteins in a healthy diet.<br /><br />Next, you will learn about the process and stages of human development, the factors that affect it over a lifetime, and how it is measured. You will also study how family and community resources affect the development of an individual over their lifetime. The course will then discuss global health issues, including HIV and AIDS and the common misconceptions about these diseases.<br /><br />By taking this free health studies course, you will gain a much stronger understanding of the considerations you need to make when deciding what to eat. This simple course is ideal for students, health professionals and volunteers, those involved in community work, and for anyone with an interest in global health issues. They say that you are what you eat. Check out this course today, and learn how to improve your health in no time.</p>",
+          "locale": "en"
+        }
+      ],
+      "image": null,
+      "url": "https://alison.com/course/diploma-in-health-studies-revised-2017",
+      "duration_avg": "2 days",
+      "rating_avg": null,
+      "course_level": null,
+      "ratings_count": null,
+      "primary_cip_code": null,
+      "secondary_cip_code": null,
+      "published_at": "2017-09-15T10:58:22+00:00",
+      "created_at": "2017-09-15T10:58:22+00:00",
+      "updated_at": "2017-09-15T10:58:22+00:00"
+    },
+    {
+      "id": 1241,
+      "name": "Diploma in Educational Psychology",
+      "slug": "diploma-in-educational-psychology-revised-2017",
+      "type": "diploma",
+      "language": "en",
       "publishers": [
-        { "name": "Alison", "location": "Ireland" }
+        {
+          "name": "Global Text Project",
+          "slug": "global-text-project",
+          "image": null,
+          "location": "Global",
+          "country_id": null
+        }
       ],
-      "duration_avg": 7.2,
-      "rating_avg": 4.9,
-      "rating_count": 2575,
-      "published_at": "2025-01-21T08:00:00Z",
-      "created_at": "2024-12-31T10:00:00Z",
-      "updated_at": "2025-01-21T19:00:00Z"
+      "categories": [
+        {
+          "id": 41,
+          "parent_id": null,
+          "code": "education",
+          "courses_count": 0,
+          "translations": [
+            {
+              "name": "Teaching & Academics",
+              "locale": "en"
+            }
+          ],
+          "subcategories": [],
+          "created_at": "2026-05-13 00:00:00",
+          "updated_at": "2026-05-13 00:00:00"
+        }
+      ],
+      "modules": [
+        {
+          "id": 12410,
+          "name": "Course overview",
+          "description": "<p>Educational psychology addresses teaching and learning methods and studies cognitive development and aptitude assessment of learners. This diploma course compares teaching and learning and draws on behaviorism, a learning philosophy that focuses on operant conditioning and its important pedagogic implications. We then investigate psychological and social constructivism.</p>\n<p>The course then tackles the most common mental issues encountered in the classroom, including learning disabilities, attention deficit hyperactivity disorder (ADHD), intellectual disabilities, behavioural disorders, physical disabilities and sensory impairments. We lay out the specific skills and strategies required to work with students with these special educational needs. Finally, we examine student development and diversity and discuss its two core elements: gender and culture.</p>\n<p>Educators require the desire and guts to stand in front of a class and teach but they also need compassion and special skills to connect with different students. This course is of great benefit to education professionals who would like to improve their teaching. Understanding how learners think and feel can boost your ability to understand and meet their educational needs so sign up to earn a diploma that signals your ability to do so.</p>",
+          "completed": false,
+          "scos": []
+        }
+      ],
+      "tags": [
+        {
+          "id": 1,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 1,
+              "name": "Teaching",
+              "slug": "teaching",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-09-15T10:58:31+00:00",
+          "updated_at": "2017-09-15T10:58:31+00:00"
+        },
+        {
+          "id": 2,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 2,
+              "name": "Classroom Management",
+              "slug": "classroom-management",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-09-15T10:58:31+00:00",
+          "updated_at": "2017-09-15T10:58:31+00:00"
+        },
+        {
+          "id": 3,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 3,
+              "name": "Educational Psychology",
+              "slug": "educational-psychology",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-09-15T10:58:31+00:00",
+          "updated_at": "2017-09-15T10:58:31+00:00"
+        },
+        {
+          "id": 4,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 4,
+              "name": "Teaching & Academics",
+              "slug": "teaching-academics",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-09-15T10:58:31+00:00",
+          "updated_at": "2017-09-15T10:58:31+00:00"
+        },
+        {
+          "id": 5,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 5,
+              "name": "Beginner",
+              "slug": "beginner",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-09-15T10:58:31+00:00",
+          "updated_at": "2017-09-15T10:58:31+00:00"
+        },
+        {
+          "id": 6,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 6,
+              "name": "en",
+              "slug": "en",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-09-15T10:58:31+00:00",
+          "updated_at": "2017-09-15T10:58:31+00:00"
+        },
+        {
+          "id": 7,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 7,
+              "name": "diploma",
+              "slug": "diploma",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-09-15T10:58:31+00:00",
+          "updated_at": "2017-09-15T10:58:31+00:00"
+        }
+      ],
+      "translations": [
+        {
+          "name": "Diploma in Educational Psychology",
+          "headline": "Diploma in Educational Psychology",
+          "summary": "<p>Educational psychology addresses teaching and learning methods and studies cognitive development and aptitude assessment of learners. This diploma course compares teaching and learning and draws on behaviorism, a learning philosophy that focuses on operant conditioning and its important pedagogic implications. We then investigate psychological and social constructivism.</p>\n<p>The course then tackles the most common mental issues encountered in the classroom, including learning disabilities, attention deficit hyperactivity disorder (ADHD), intellectual disabilities, behavioural disorders, physical disabilities and sensory impairments. We lay out the specific skills and strategies required to work with students with these special educational needs. Finally, we examine student development and diversity and discuss its two core elements: gender and culture.</p>\n<p>Educators require the desire and guts to stand in front of a class and teach but they also need compassion and special skills to connect with different students. This course is of great benefit to education professionals who would like to improve their teaching. Understanding how learners think and feel can boost your ability to understand and meet their educational needs so sign up to earn a diploma that signals your ability to do so.</p>",
+          "locale": "en"
+        }
+      ],
+      "image": null,
+      "url": "https://alison.com/course/diploma-in-educational-psychology-revised-2017",
+      "duration_avg": "1 week",
+      "rating_avg": null,
+      "course_level": "Starter",
+      "ratings_count": null,
+      "primary_cip_code": null,
+      "secondary_cip_code": null,
+      "published_at": "2017-09-15T10:58:31+00:00",
+      "created_at": "2017-09-15T10:58:31+00:00",
+      "updated_at": "2017-09-15T10:58:31+00:00"
+    },
+    {
+      "id": 1252,
+      "name": "Music Theory: Instruments and Rhythm",
+      "slug": "music-theory-instruments-and-rhythm",
+      "type": "certificate",
+      "language": "en",
+      "publishers": [
+        {
+          "name": "Open Yale Courses",
+          "slug": "open-yale-courses",
+          "image": null,
+          "location": "Global",
+          "country_id": null
+        }
+      ],
+      "categories": [
+        {
+          "id": 88,
+          "parent_id": 45,
+          "code": "music",
+          "courses_count": 0,
+          "translations": [
+            {
+              "name": "Music",
+              "locale": "en"
+            }
+          ],
+          "subcategories": [],
+          "created_at": "2026-05-13 00:00:00",
+          "updated_at": "2026-05-13 00:00:00"
+        }
+      ],
+      "modules": [
+        {
+          "id": 12520,
+          "name": "Course overview",
+          "description": "<p>This free online music theory course will first introduce you to different musical instruments and playing techniques. You will then learn how aspects of classical music can be applied to other genres of music. You will also study the differences between motives and themes, the fundamentals of rhythm, musical notation, and the meaning of different musical notes. You will also learn how to identify meters in musical excerpts including counting measures and musical dictation.<br /><br />You will then learn how to identify rhythm in different genres of music such as jazz, pop, and classical music, as well as learn the most common types of format in pop music including intro, verse, chorus, and outro. The music theory course will cover rhythm and melody, major and minor chords, tremolo, pizzicato, and vibrato. Finally, you will study tempo and syncopation, polyphony, monophony, and homophony.<br /><br />Every great musician understands the importance of expanding one's musical knowledge and skills. This course will develop your listening skills and teach you everything you want to know about instruments and rhythm. It is perfect for professional and amateur musicians who are always on the lookout for new things to learn. So, check out the course today, and enhance your music listening skills in just a couple of hours!</p>",
+          "completed": false,
+          "scos": []
+        }
+      ],
+      "tags": [
+        {
+          "id": 1,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 1,
+              "name": "Music",
+              "slug": "music",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-09-28T09:42:18+00:00",
+          "updated_at": "2017-09-28T09:42:18+00:00"
+        },
+        {
+          "id": 2,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 2,
+              "name": "Music Theory",
+              "slug": "music-theory",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-09-28T09:42:18+00:00",
+          "updated_at": "2017-09-28T09:42:18+00:00"
+        },
+        {
+          "id": 3,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 3,
+              "name": "Transition Year Creativity",
+              "slug": "transition-year-creativity",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-09-28T09:42:18+00:00",
+          "updated_at": "2017-09-28T09:42:18+00:00"
+        },
+        {
+          "id": 4,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 4,
+              "name": "Teaching & Academics",
+              "slug": "teaching-academics",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-09-28T09:42:18+00:00",
+          "updated_at": "2017-09-28T09:42:18+00:00"
+        },
+        {
+          "id": 5,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 5,
+              "name": "Personal Development",
+              "slug": "personal-development",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-09-28T09:42:18+00:00",
+          "updated_at": "2017-09-28T09:42:18+00:00"
+        },
+        {
+          "id": 6,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 6,
+              "name": "Beginner",
+              "slug": "beginner",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-09-28T09:42:18+00:00",
+          "updated_at": "2017-09-28T09:42:18+00:00"
+        },
+        {
+          "id": 7,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 7,
+              "name": "en",
+              "slug": "en",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-09-28T09:42:18+00:00",
+          "updated_at": "2017-09-28T09:42:18+00:00"
+        },
+        {
+          "id": 8,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 8,
+              "name": "certificate",
+              "slug": "certificate",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-09-28T09:42:18+00:00",
+          "updated_at": "2017-09-28T09:42:18+00:00"
+        }
+      ],
+      "translations": [
+        {
+          "name": "Music Theory: Instruments and Rhythm",
+          "headline": "Music Theory: Instruments and Rhythm",
+          "summary": "<p>This free online music theory course will first introduce you to different musical instruments and playing techniques. You will then learn how aspects of classical music can be applied to other genres of music. You will also study the differences between motives and themes, the fundamentals of rhythm, musical notation, and the meaning of different musical notes. You will also learn how to identify meters in musical excerpts including counting measures and musical dictation.<br /><br />You will then learn how to identify rhythm in different genres of music such as jazz, pop, and classical music, as well as learn the most common types of format in pop music including intro, verse, chorus, and outro. The music theory course will cover rhythm and melody, major and minor chords, tremolo, pizzicato, and vibrato. Finally, you will study tempo and syncopation, polyphony, monophony, and homophony.<br /><br />Every great musician understands the importance of expanding one's musical knowledge and skills. This course will develop your listening skills and teach you everything you want to know about instruments and rhythm. It is perfect for professional and amateur musicians who are always on the lookout for new things to learn. So, check out the course today, and enhance your music listening skills in just a couple of hours!</p>",
+          "locale": "en"
+        }
+      ],
+      "image": null,
+      "url": "https://alison.com/course/music-theory-instruments-and-rhythm",
+      "duration_avg": "1 month",
+      "rating_avg": null,
+      "course_level": "Beginner",
+      "ratings_count": null,
+      "primary_cip_code": null,
+      "secondary_cip_code": null,
+      "published_at": "2017-09-28T09:42:18+00:00",
+      "created_at": "2017-09-28T09:42:18+00:00",
+      "updated_at": "2017-09-28T09:42:18+00:00"
+    },
+    {
+      "id": 1258,
+      "name": "Diploma in Nursing and Patient Care",
+      "slug": "diploma-in-nursing-and-patient-care-revised-2017",
+      "type": "diploma",
+      "language": "en",
+      "publishers": [
+        {
+          "name": "MEDCoE",
+          "slug": "medcoe",
+          "image": null,
+          "location": "Global",
+          "country_id": null
+        }
+      ],
+      "categories": [
+        {
+          "id": 34,
+          "parent_id": 31,
+          "code": "nursing",
+          "courses_count": 0,
+          "translations": [
+            {
+              "name": "Nursing",
+              "locale": "en"
+            }
+          ],
+          "subcategories": [],
+          "created_at": "2026-05-13 00:00:00",
+          "updated_at": "2026-05-13 00:00:00"
+        }
+      ],
+      "modules": [
+        {
+          "id": 12580,
+          "name": "Course overview",
+          "description": "<p>To help you learn how to properly care for elderly patients, you will first study the categories of human needs, the equipment used for patient care, and the guidelines for bed-making. You will then study the importance of patient personal hygiene, focusing on daily baths and proper oral care. You will also learn the importance of movement and exercise and how a back massage can help patient comfort. Next, you will study environmental health and safety awareness.\n\nThe nutritional needs and metabolism of elderly patients change as they age, which is why it is important that they get a carefully planned diet. This course will teach you the factors that influence diet, the reasons why there is a need for therapeutic diet therapy, and the standard hospital diet. You will then learn how to conduct a physical examination, collect a specimen, and measure vital signs.\n\nLearning the best nursing care practices will not only ensure the health and safety of an elderly patient, but that of a nursing practitioner too. This Diploma in Nursing and Patient Care will be of great interest to all health care professionals who want to further their understanding of this subject. Any student who is planning to pursue a career in the nursing field will also find this course of great help. So start the course today, and learn how to give better nursing care in just a few hours.</p>",
+          "completed": false,
+          "scos": []
+        }
+      ],
+      "tags": [
+        {
+          "id": 1,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 1,
+              "name": "Nutrition",
+              "slug": "nutrition",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-10-05T15:00:56+00:00",
+          "updated_at": "2017-10-05T15:00:56+00:00"
+        },
+        {
+          "id": 2,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 2,
+              "name": "Nursing",
+              "slug": "nursing",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-10-05T15:00:56+00:00",
+          "updated_at": "2017-10-05T15:00:56+00:00"
+        },
+        {
+          "id": 3,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 3,
+              "name": "Health",
+              "slug": "health",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-10-05T15:00:56+00:00",
+          "updated_at": "2017-10-05T15:00:56+00:00"
+        },
+        {
+          "id": 4,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 4,
+              "name": "Beginner",
+              "slug": "beginner",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-10-05T15:00:56+00:00",
+          "updated_at": "2017-10-05T15:00:56+00:00"
+        },
+        {
+          "id": 5,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 5,
+              "name": "en",
+              "slug": "en",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-10-05T15:00:56+00:00",
+          "updated_at": "2017-10-05T15:00:56+00:00"
+        },
+        {
+          "id": 6,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 6,
+              "name": "diploma",
+              "slug": "diploma",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-10-05T15:00:56+00:00",
+          "updated_at": "2017-10-05T15:00:56+00:00"
+        }
+      ],
+      "translations": [
+        {
+          "name": "Diploma in Nursing and Patient Care",
+          "headline": "Diploma in Nursing and Patient Care",
+          "summary": "<p>To help you learn how to properly care for elderly patients, you will first study the categories of human needs, the equipment used for patient care, and the guidelines for bed-making. You will then study the importance of patient personal hygiene, focusing on daily baths and proper oral care. You will also learn the importance of movement and exercise and how a back massage can help patient comfort. Next, you will study environmental health and safety awareness.\n\nThe nutritional needs and metabolism of elderly patients change as they age, which is why it is important that they get a carefully planned diet. This course will teach you the factors that influence diet, the reasons why there is a need for therapeutic diet therapy, and the standard hospital diet. You will then learn how to conduct a physical examination, collect a specimen, and measure vital signs.\n\nLearning the best nursing care practices will not only ensure the health and safety of an elderly patient, but that of a nursing practitioner too. This Diploma in Nursing and Patient Care will be of great interest to all health care professionals who want to further their understanding of this subject. Any student who is planning to pursue a career in the nursing field will also find this course of great help. So start the course today, and learn how to give better nursing care in just a few hours.</p>",
+          "locale": "en"
+        }
+      ],
+      "image": null,
+      "url": "https://alison.com/course/diploma-in-nursing-and-patient-care-revised-2017",
+      "duration_avg": "90 minutes",
+      "rating_avg": null,
+      "course_level": "Intermediate",
+      "ratings_count": null,
+      "primary_cip_code": null,
+      "secondary_cip_code": null,
+      "published_at": "2017-10-05T15:00:56+00:00",
+      "created_at": "2017-10-05T15:00:56+00:00",
+      "updated_at": "2017-10-05T15:00:56+00:00"
+    },
+    {
+      "id": 1259,
+      "name": "Diploma in Hospitality Management",
+      "slug": "diploma-in-hospitality-management-revised-2017",
+      "type": "diploma",
+      "language": "en",
+      "publishers": [
+        {
+          "name": "Openstax CNX",
+          "slug": "openstax-cnx",
+          "image": null,
+          "location": "Global",
+          "country_id": null
+        }
+      ],
+      "categories": [
+        {
+          "id": 87,
+          "parent_id": 51,
+          "code": "tourism-and-hospitality",
+          "courses_count": 0,
+          "translations": [
+            {
+              "name": "Hospitality",
+              "locale": "en"
+            }
+          ],
+          "subcategories": [],
+          "created_at": "2026-05-13 00:00:00",
+          "updated_at": "2026-05-13 00:00:00"
+        }
+      ],
+      "modules": [
+        {
+          "id": 12590,
+          "name": "Course overview",
+          "description": "<p>The hospitality sector generates hundreds of billions of dollars annually, and is a key revenue generator in all modern economies. This sector is continually growing and employs millions of professionals worldwide. The course Diploma in Hospitality Management teaches you about the key skills required to work in hospitality management, and you will learn about the functions of different hotel departments. The course begins by introducing you to the nature of hospitality, such as the relationship between the hospitality sector and tourism, the various types of accommodation and the different types of hotel guests and meeting their requests.</p>\n<p>Next, the course teaches you about hotel management and the organization of hotel departments, their functions and the roles involved. The course also covers food and beverage services and their relationship to other hotel departments. You will learn about restaurant operations planning, the organization of the kitchen, menu objectives and planning, table setting and restaurant design and layout. Finally, you will learn about the food handling process, including topics like food safety, food contamination, and personal hygiene for catering practitioners. You will learn how to respond to kitchen accidents and the procedures that must be in place to ensure staff safety when working with different types of equipment or in the case of fire.</p>\n<p>This course will be of great interest to hospitality professionals working in hotels, restaurants, or any other hospitality service operation. It will also be of great interest to any learner who would like to gain employment or progress their career in the hospitality sector.</p>",
+          "completed": false,
+          "scos": []
+        }
+      ],
+      "tags": [
+        {
+          "id": 1,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 1,
+              "name": "Hospitality Management",
+              "slug": "hospitality-management",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-10-05T15:08:43+00:00",
+          "updated_at": "2017-10-05T15:08:43+00:00"
+        },
+        {
+          "id": 2,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 2,
+              "name": "Hotel Management",
+              "slug": "hotel-management",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-10-05T15:08:43+00:00",
+          "updated_at": "2017-10-05T15:08:43+00:00"
+        },
+        {
+          "id": 3,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 3,
+              "name": "Restaurant Management",
+              "slug": "restaurant-management",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-10-05T15:08:43+00:00",
+          "updated_at": "2017-10-05T15:08:43+00:00"
+        },
+        {
+          "id": 4,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 4,
+              "name": "Food and Beverage",
+              "slug": "food-and-beverage",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-10-05T15:08:43+00:00",
+          "updated_at": "2017-10-05T15:08:43+00:00"
+        },
+        {
+          "id": 5,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 5,
+              "name": "Hospitality",
+              "slug": "hospitality",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-10-05T15:08:43+00:00",
+          "updated_at": "2017-10-05T15:08:43+00:00"
+        },
+        {
+          "id": 6,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 6,
+              "name": "Catering",
+              "slug": "catering",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-10-05T15:08:43+00:00",
+          "updated_at": "2017-10-05T15:08:43+00:00"
+        },
+        {
+          "id": 7,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 7,
+              "name": "Business",
+              "slug": "business",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-10-05T15:08:43+00:00",
+          "updated_at": "2017-10-05T15:08:43+00:00"
+        },
+        {
+          "id": 8,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 8,
+              "name": "Management",
+              "slug": "management",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-10-05T15:08:43+00:00",
+          "updated_at": "2017-10-05T15:08:43+00:00"
+        },
+        {
+          "id": 9,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 9,
+              "name": "Beginner",
+              "slug": "beginner",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-10-05T15:08:43+00:00",
+          "updated_at": "2017-10-05T15:08:43+00:00"
+        },
+        {
+          "id": 10,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 10,
+              "name": "en",
+              "slug": "en",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-10-05T15:08:43+00:00",
+          "updated_at": "2017-10-05T15:08:43+00:00"
+        },
+        {
+          "id": 11,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 11,
+              "name": "diploma",
+              "slug": "diploma",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-10-05T15:08:43+00:00",
+          "updated_at": "2017-10-05T15:08:43+00:00"
+        }
+      ],
+      "translations": [
+        {
+          "name": "Diploma in Hospitality Management",
+          "headline": "Diploma in Hospitality Management",
+          "summary": "<p>The hospitality sector generates hundreds of billions of dollars annually, and is a key revenue generator in all modern economies. This sector is continually growing and employs millions of professionals worldwide. The course Diploma in Hospitality Management teaches you about the key skills required to work in hospitality management, and you will learn about the functions of different hotel departments. The course begins by introducing you to the nature of hospitality, such as the relationship between the hospitality sector and tourism, the various types of accommodation and the different types of hotel guests and meeting their requests.</p>\n<p>Next, the course teaches you about hotel management and the organization of hotel departments, their functions and the roles involved. The course also covers food and beverage services and their relationship to other hotel departments. You will learn about restaurant operations planning, the organization of the kitchen, menu objectives and planning, table setting and restaurant design and layout. Finally, you will learn about the food handling process, including topics like food safety, food contamination, and personal hygiene for catering practitioners. You will learn how to respond to kitchen accidents and the procedures that must be in place to ensure staff safety when working with different types of equipment or in the case of fire.</p>\n<p>This course will be of great interest to hospitality professionals working in hotels, restaurants, or any other hospitality service operation. It will also be of great interest to any learner who would like to gain employment or progress their career in the hospitality sector.</p>",
+          "locale": "en"
+        }
+      ],
+      "image": null,
+      "url": "https://alison.com/course/diploma-in-hospitality-management-revised-2017",
+      "duration_avg": "2-3 weeks",
+      "rating_avg": null,
+      "course_level": "Advanced",
+      "ratings_count": null,
+      "primary_cip_code": null,
+      "secondary_cip_code": null,
+      "published_at": "2017-10-05T15:08:43+00:00",
+      "created_at": "2017-10-05T15:08:43+00:00",
+      "updated_at": "2017-10-05T15:08:43+00:00"
+    },
+    {
+      "id": 1267,
+      "name": "Diploma in Human Nutrition",
+      "slug": "diploma-in-human-nutrition-revised-2017",
+      "type": "diploma",
+      "language": "en",
+      "publishers": [
+        {
+          "name": "Brian Lindshield",
+          "slug": "brian-lindshield",
+          "image": null,
+          "location": "Global",
+          "country_id": null
+        }
+      ],
+      "categories": [
+        {
+          "id": 37,
+          "parent_id": 31,
+          "code": "nutrition",
+          "courses_count": 0,
+          "translations": [
+            {
+              "name": "Nutrition",
+              "locale": "en"
+            }
+          ],
+          "subcategories": [],
+          "created_at": "2026-05-13 00:00:00",
+          "updated_at": "2026-05-13 00:00:00"
+        }
+      ],
+      "modules": [
+        {
+          "id": 12670,
+          "name": "Course overview",
+          "description": "<p>There are three energy-yielding macronutrients that our bodies need to consume on a daily basis to maintain important functions such as growth and energy production. These are carbohydrates, proteins, and lipids. This human nutrition course online discusses these nutrients that provide the essential components for our bodies.<br /><br />The human digestive system plays a complex and wonderful bodily function which will be covered in this human nutrition online course. You will also learn the various groups of carbohydrates, lipids, and proteins including their metabolic pathways and functions. The lessons will also cover the three main types of amino acids, the roles and the eicosanoid compounds derived from fatty acids, the various vitamins and minerals, and the structure and functions of antioxidants.<br /><br />This Diploma course is rich with insights on human nutrition and the roles macronutrients and micronutrients play in maintaining good health. It will benefit health-conscious individuals and healthcare professionals who would like to learn more about how to live a healthier life. They say that you are what you eat, so take charge of your wellbeing today with this nutrition and human health online course.</p>",
+          "completed": false,
+          "scos": []
+        }
+      ],
+      "tags": [
+        {
+          "id": 1,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 1,
+              "name": "Health and Fitness",
+              "slug": "health-and-fitness",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-10-12T09:39:02+00:00",
+          "updated_at": "2017-10-12T09:39:02+00:00"
+        },
+        {
+          "id": 2,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 2,
+              "name": "Nutrition",
+              "slug": "nutrition",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-10-12T09:39:02+00:00",
+          "updated_at": "2017-10-12T09:39:02+00:00"
+        },
+        {
+          "id": 3,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 3,
+              "name": "Health",
+              "slug": "health",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-10-12T09:39:02+00:00",
+          "updated_at": "2017-10-12T09:39:02+00:00"
+        },
+        {
+          "id": 4,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 4,
+              "name": "Wellness",
+              "slug": "wellness",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-10-12T09:39:02+00:00",
+          "updated_at": "2017-10-12T09:39:02+00:00"
+        },
+        {
+          "id": 5,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 5,
+              "name": "SDG 2 Zero Hunger",
+              "slug": "sdg-2-zero-hunger",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-10-12T09:39:02+00:00",
+          "updated_at": "2017-10-12T09:39:02+00:00"
+        },
+        {
+          "id": 6,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 6,
+              "name": "Beginner",
+              "slug": "beginner",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-10-12T09:39:02+00:00",
+          "updated_at": "2017-10-12T09:39:02+00:00"
+        },
+        {
+          "id": 7,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 7,
+              "name": "en",
+              "slug": "en",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-10-12T09:39:02+00:00",
+          "updated_at": "2017-10-12T09:39:02+00:00"
+        },
+        {
+          "id": 8,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 8,
+              "name": "diploma",
+              "slug": "diploma",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-10-12T09:39:02+00:00",
+          "updated_at": "2017-10-12T09:39:02+00:00"
+        }
+      ],
+      "translations": [
+        {
+          "name": "Diploma in Human Nutrition",
+          "headline": "Diploma in Human Nutrition",
+          "summary": "<p>There are three energy-yielding macronutrients that our bodies need to consume on a daily basis to maintain important functions such as growth and energy production. These are carbohydrates, proteins, and lipids. This human nutrition course online discusses these nutrients that provide the essential components for our bodies.<br /><br />The human digestive system plays a complex and wonderful bodily function which will be covered in this human nutrition online course. You will also learn the various groups of carbohydrates, lipids, and proteins including their metabolic pathways and functions. The lessons will also cover the three main types of amino acids, the roles and the eicosanoid compounds derived from fatty acids, the various vitamins and minerals, and the structure and functions of antioxidants.<br /><br />This Diploma course is rich with insights on human nutrition and the roles macronutrients and micronutrients play in maintaining good health. It will benefit health-conscious individuals and healthcare professionals who would like to learn more about how to live a healthier life. They say that you are what you eat, so take charge of your wellbeing today with this nutrition and human health online course.</p>",
+          "locale": "en"
+        }
+      ],
+      "image": null,
+      "url": "https://alison.com/course/diploma-in-human-nutrition-revised-2017",
+      "duration_avg": "0.5-1 hr",
+      "rating_avg": null,
+      "course_level": "Beginner",
+      "ratings_count": null,
+      "primary_cip_code": null,
+      "secondary_cip_code": null,
+      "published_at": "2017-10-12T09:39:02+00:00",
+      "created_at": "2017-10-12T09:39:02+00:00",
+      "updated_at": "2017-10-12T09:39:02+00:00"
+    },
+    {
+      "id": 1268,
+      "name": "Microsoft Excel 2010",
+      "slug": "microsoft-excel-2010-revised-2017",
+      "type": "certificate",
+      "language": "en",
+      "publishers": [
+        {
+          "name": "Microsoft",
+          "slug": "microsoft",
+          "image": null,
+          "location": "Global",
+          "country_id": null
+        }
+      ],
+      "categories": [
+        {
+          "id": 150,
+          "parent_id": 1,
+          "code": "it/microsoft",
+          "courses_count": 0,
+          "translations": [
+            {
+              "name": "Microsoft",
+              "locale": "en"
+            }
+          ],
+          "subcategories": [],
+          "created_at": "2026-05-13 00:00:00",
+          "updated_at": "2026-05-13 00:00:00"
+        },
+        {
+          "id": 51,
+          "parent_id": null,
+          "code": "business",
+          "courses_count": 0,
+          "translations": [
+            {
+              "name": "Business",
+              "locale": "en"
+            }
+          ],
+          "subcategories": [],
+          "created_at": "2026-05-13 00:00:00",
+          "updated_at": "2026-05-13 00:00:00"
+        }
+      ],
+      "modules": [
+        {
+          "id": 12680,
+          "name": "Course overview",
+          "description": "<p>This course teaches you how to make full use of the revised 2010 version of Microsoft Excel. We explore the program’s menus and examine the different tasks it can perform. We present practical exercises and sample spreadsheets to show you how Excel handles basic math while we add and delete columns and rows and prepare the worksheet for printing. We demonstrate how to visually represent data to indicate trends, patterns and comparisons across charts, tables or other templates.</p>\n<p>Excel 2010 boasts many improvements and new features. It can automatically perform calculations once you add in the formula, which makes it a great tool for analyzing data in accounts, budgets, billings and many other areas. This course explains how to work with formulas and functions before covering the use of ‘VLOOKUP’ to search through a spreadsheet’s data. We also lay out the steps required to calculate dates using formulas and check conditions with the ‘IF’ function before we describe the ‘save’ and ‘run’ macros.</p>\n<p>You can use Microsoft Excel 2010 to keep track of almost any data, from work schedules to stocks and beyond. The program is a vital business budgeting tool and is employed worldwide by a range of industries. Every office has its ‘Excel experts’ who stand apart from their peers so sign up for this training course to become one of them.</p>",
+          "completed": false,
+          "scos": []
+        }
+      ],
+      "tags": [
+        {
+          "id": 1,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 1,
+              "name": "Microsoft",
+              "slug": "microsoft",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-10-12T09:39:26+00:00",
+          "updated_at": "2017-10-12T09:39:26+00:00"
+        },
+        {
+          "id": 2,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 2,
+              "name": "Excel",
+              "slug": "excel",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-10-12T09:39:26+00:00",
+          "updated_at": "2017-10-12T09:39:26+00:00"
+        },
+        {
+          "id": 3,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 3,
+              "name": "VLOOKUP",
+              "slug": "vlookup",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-10-12T09:39:26+00:00",
+          "updated_at": "2017-10-12T09:39:26+00:00"
+        },
+        {
+          "id": 4,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 4,
+              "name": "Office Productivity",
+              "slug": "office-productivity",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-10-12T09:39:26+00:00",
+          "updated_at": "2017-10-12T09:39:26+00:00"
+        },
+        {
+          "id": 5,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 5,
+              "name": "Information Technology (IT)",
+              "slug": "information-technology-it",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-10-12T09:39:26+00:00",
+          "updated_at": "2017-10-12T09:39:26+00:00"
+        },
+        {
+          "id": 6,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 6,
+              "name": "Business",
+              "slug": "business",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-10-12T09:39:26+00:00",
+          "updated_at": "2017-10-12T09:39:26+00:00"
+        },
+        {
+          "id": 7,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 7,
+              "name": "Beginner",
+              "slug": "beginner",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-10-12T09:39:26+00:00",
+          "updated_at": "2017-10-12T09:39:26+00:00"
+        },
+        {
+          "id": 8,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 8,
+              "name": "en",
+              "slug": "en",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-10-12T09:39:26+00:00",
+          "updated_at": "2017-10-12T09:39:26+00:00"
+        },
+        {
+          "id": 9,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 9,
+              "name": "certificate",
+              "slug": "certificate",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-10-12T09:39:26+00:00",
+          "updated_at": "2017-10-12T09:39:26+00:00"
+        }
+      ],
+      "translations": [
+        {
+          "name": "Microsoft Excel 2010",
+          "headline": "Microsoft Excel 2010",
+          "summary": "<p>This course teaches you how to make full use of the revised 2010 version of Microsoft Excel. We explore the program’s menus and examine the different tasks it can perform. We present practical exercises and sample spreadsheets to show you how Excel handles basic math while we add and delete columns and rows and prepare the worksheet for printing. We demonstrate how to visually represent data to indicate trends, patterns and comparisons across charts, tables or other templates.</p>\n<p>Excel 2010 boasts many improvements and new features. It can automatically perform calculations once you add in the formula, which makes it a great tool for analyzing data in accounts, budgets, billings and many other areas. This course explains how to work with formulas and functions before covering the use of ‘VLOOKUP’ to search through a spreadsheet’s data. We also lay out the steps required to calculate dates using formulas and check conditions with the ‘IF’ function before we describe the ‘save’ and ‘run’ macros.</p>\n<p>You can use Microsoft Excel 2010 to keep track of almost any data, from work schedules to stocks and beyond. The program is a vital business budgeting tool and is employed worldwide by a range of industries. Every office has its ‘Excel experts’ who stand apart from their peers so sign up for this training course to become one of them.</p>",
+          "locale": "en"
+        }
+      ],
+      "image": null,
+      "url": "https://alison.com/course/microsoft-excel-2010-revised-2017",
+      "duration_avg": "12 hours",
+      "rating_avg": null,
+      "course_level": "Intermediate",
+      "ratings_count": null,
+      "primary_cip_code": null,
+      "secondary_cip_code": null,
+      "published_at": "2017-10-12T09:39:26+00:00",
+      "created_at": "2017-10-12T09:39:26+00:00",
+      "updated_at": "2017-10-12T09:39:26+00:00"
+    },
+    {
+      "id": 1284,
+      "name": "Retail Management: Retail Technology and Security",
+      "slug": "retail-management-retail-technology-and-security",
+      "type": "certificate",
+      "language": "en",
+      "publishers": [
+        {
+          "name": "Advance Learning - Management, Leadership & Strategy",
+          "slug": "advance-learning-management-leadership-strategy",
+          "image": null,
+          "location": "Global",
+          "country_id": null
+        }
+      ],
+      "categories": [
+        {
+          "id": 9000,
+          "parent_id": 79,
+          "code": "marketing/unknown-retail",
+          "courses_count": 0,
+          "translations": [
+            {
+              "name": "Marketing Unknown Retail",
+              "locale": "en"
+            }
+          ],
+          "subcategories": [],
+          "created_at": "2026-05-13 00:00:00",
+          "updated_at": "2026-05-13 00:00:00"
+        }
+      ],
+      "modules": [
+        {
+          "id": 12840,
+          "name": "Course overview",
+          "description": "<p>This course will begin by introducing you to important advancements in retail technology. You will first learn about radio frequency identification (RFID) its uses. The course will also cover Customer Relationship Management systems and how they can be used to your company's advantage. You will also learn how modern shoppers use their mobile phones before purchasing anything, and will be guided through the advantages and disadvantages of technology in retail.<br /><br />You will then learn the information that employers should ask for on a job application form to make sure that you attract the right job applicants. The course will discuss the benefits of hiring security as well as teach you the practices and procedures that can help prevent retail crime. You will also study the measures that should be taken in the event of a crime. Finally, you will learn important techniques for coping with aggressive customers and customer complaints.<br /><br />Managing a retail store requires specialised knowledge and skills. This free retail management course is designed to teach you these skills in a clear and simple manner. By the end of this course you will have a much better understanding of how to prevent crime in your establishment and how to better manage your customer relations through technology. So, check out the course today and start maximising the potential of your retail store in just a few hours.</p>",
+          "completed": false,
+          "scos": []
+        }
+      ],
+      "tags": [
+        {
+          "id": 1,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 1,
+              "name": "Security",
+              "slug": "security",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-11-02T13:57:01+00:00",
+          "updated_at": "2017-11-02T13:57:01+00:00"
+        },
+        {
+          "id": 2,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 2,
+              "name": "Retail",
+              "slug": "retail",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-11-02T13:57:01+00:00",
+          "updated_at": "2017-11-02T13:57:01+00:00"
+        },
+        {
+          "id": 3,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 3,
+              "name": "Loss Prevention",
+              "slug": "loss-prevention",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-11-02T13:57:01+00:00",
+          "updated_at": "2017-11-02T13:57:01+00:00"
+        },
+        {
+          "id": 4,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 4,
+              "name": "Crime",
+              "slug": "crime",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-11-02T13:57:01+00:00",
+          "updated_at": "2017-11-02T13:57:01+00:00"
+        },
+        {
+          "id": 5,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 5,
+              "name": "Security Management",
+              "slug": "security-management",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-11-02T13:57:01+00:00",
+          "updated_at": "2017-11-02T13:57:01+00:00"
+        },
+        {
+          "id": 6,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 6,
+              "name": "Retail Management",
+              "slug": "retail-management",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-11-02T13:57:01+00:00",
+          "updated_at": "2017-11-02T13:57:01+00:00"
+        },
+        {
+          "id": 7,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 7,
+              "name": "Business",
+              "slug": "business",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-11-02T13:57:01+00:00",
+          "updated_at": "2017-11-02T13:57:01+00:00"
+        },
+        {
+          "id": 8,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 8,
+              "name": "Beginner",
+              "slug": "beginner",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-11-02T13:57:01+00:00",
+          "updated_at": "2017-11-02T13:57:01+00:00"
+        },
+        {
+          "id": 9,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 9,
+              "name": "en",
+              "slug": "en",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-11-02T13:57:01+00:00",
+          "updated_at": "2017-11-02T13:57:01+00:00"
+        },
+        {
+          "id": 10,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 10,
+              "name": "certificate",
+              "slug": "certificate",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-11-02T13:57:01+00:00",
+          "updated_at": "2017-11-02T13:57:01+00:00"
+        }
+      ],
+      "translations": [
+        {
+          "name": "Retail Management: Retail Technology and Security",
+          "headline": "Retail Management: Retail Technology and Security",
+          "summary": "<p>This course will begin by introducing you to important advancements in retail technology. You will first learn about radio frequency identification (RFID) its uses. The course will also cover Customer Relationship Management systems and how they can be used to your company's advantage. You will also learn how modern shoppers use their mobile phones before purchasing anything, and will be guided through the advantages and disadvantages of technology in retail.<br /><br />You will then learn the information that employers should ask for on a job application form to make sure that you attract the right job applicants. The course will discuss the benefits of hiring security as well as teach you the practices and procedures that can help prevent retail crime. You will also study the measures that should be taken in the event of a crime. Finally, you will learn important techniques for coping with aggressive customers and customer complaints.<br /><br />Managing a retail store requires specialised knowledge and skills. This free retail management course is designed to teach you these skills in a clear and simple manner. By the end of this course you will have a much better understanding of how to prevent crime in your establishment and how to better manage your customer relations through technology. So, check out the course today and start maximising the potential of your retail store in just a few hours.</p>",
+          "locale": "en"
+        }
+      ],
+      "image": null,
+      "url": "https://alison.com/course/retail-management-retail-technology-and-security",
+      "duration_avg": "3 hrs",
+      "rating_avg": null,
+      "course_level": "Beginner",
+      "ratings_count": null,
+      "primary_cip_code": null,
+      "secondary_cip_code": null,
+      "published_at": "2017-11-02T13:57:01+00:00",
+      "created_at": "2017-11-02T13:57:01+00:00",
+      "updated_at": "2017-11-02T13:57:01+00:00"
+    },
+    {
+      "id": 1285,
+      "name": "Diploma in Business Management and Entrepreneurship",
+      "slug": "diploma-in-business-management-and-entrepreneurship-revised-2017",
+      "type": "diploma",
+      "language": "en",
+      "publishers": [
+        {
+          "name": "XSIQ",
+          "slug": "xsiq",
+          "image": null,
+          "location": "Global",
+          "country_id": null
+        }
+      ],
+      "categories": [
+        {
+          "id": 65,
+          "parent_id": 79,
+          "code": "entrepreneurship",
+          "courses_count": 0,
+          "translations": [
+            {
+              "name": "Entrepreneurship",
+              "locale": "en"
+            }
+          ],
+          "subcategories": [],
+          "created_at": "2026-05-13 00:00:00",
+          "updated_at": "2026-05-13 00:00:00"
+        },
+        {
+          "id": 51,
+          "parent_id": null,
+          "code": "business",
+          "courses_count": 0,
+          "translations": [
+            {
+              "name": "Business",
+              "locale": "en"
+            }
+          ],
+          "subcategories": [],
+          "created_at": "2026-05-13 00:00:00",
+          "updated_at": "2026-05-13 00:00:00"
+        }
+      ],
+      "modules": [
+        {
+          "id": 12850,
+          "name": "Course overview",
+          "description": "<p>There are a lot of things going on behind the corporate, operations and human resources functions of a business. With this business management course update for 2026, you will learn business management fundamentals including the role of a human resources manager, the eight stages of the employment life cycle, and the stages of a project. You will also learn the purpose of cash flow, profit and loss, and balance sheet statements, as well as the phases of project management's life cycle.</p><p>To become a good entrepreneur, you must know how to efficiently handle the money and stocks that come in and out of your business. With this business entrepreneur course, you will learn to apply key accounting concepts and principles including the correct process for recording and depreciating stock.</p><p>You will also learn the ingredients of successful entrepreneurs, as well as identify personal characteristics of entrepreneurs. Then you will learn about establishing your entrepreneurial direction and starting your own business. So don't let this entrepreneurial study opportunity pass you by! Take this free online business course and make your business soar.</p><p></p>",
+          "completed": false,
+          "scos": []
+        }
+      ],
+      "tags": [
+        {
+          "id": 1,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 1,
+              "name": "Management",
+              "slug": "management",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-11-17T08:43:45+00:00",
+          "updated_at": "2017-11-17T08:43:45+00:00"
+        },
+        {
+          "id": 2,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 2,
+              "name": "Operations Management",
+              "slug": "operations-management",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-11-17T08:43:45+00:00",
+          "updated_at": "2017-11-17T08:43:45+00:00"
+        },
+        {
+          "id": 3,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 3,
+              "name": "Entrepreneurship",
+              "slug": "entrepreneurship",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-11-17T08:43:45+00:00",
+          "updated_at": "2017-11-17T08:43:45+00:00"
+        },
+        {
+          "id": 4,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 4,
+              "name": "Business Management",
+              "slug": "business-management",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-11-17T08:43:45+00:00",
+          "updated_at": "2017-11-17T08:43:45+00:00"
+        },
+        {
+          "id": 5,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 5,
+              "name": "Small Business",
+              "slug": "small-business",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-11-17T08:43:45+00:00",
+          "updated_at": "2017-11-17T08:43:45+00:00"
+        },
+        {
+          "id": 6,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 6,
+              "name": "Business",
+              "slug": "business",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-11-17T08:43:45+00:00",
+          "updated_at": "2017-11-17T08:43:45+00:00"
+        },
+        {
+          "id": 7,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 7,
+              "name": "Beginner",
+              "slug": "beginner",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-11-17T08:43:45+00:00",
+          "updated_at": "2017-11-17T08:43:45+00:00"
+        },
+        {
+          "id": 8,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 8,
+              "name": "en",
+              "slug": "en",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-11-17T08:43:45+00:00",
+          "updated_at": "2017-11-17T08:43:45+00:00"
+        },
+        {
+          "id": 9,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 9,
+              "name": "diploma",
+              "slug": "diploma",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2017-11-17T08:43:45+00:00",
+          "updated_at": "2017-11-17T08:43:45+00:00"
+        }
+      ],
+      "translations": [
+        {
+          "name": "Diploma in Business Management and Entrepreneurship",
+          "headline": "Diploma in Business Management and Entrepreneurship",
+          "summary": "<p>There are a lot of things going on behind the corporate, operations and human resources functions of a business. With this business management course update for 2026, you will learn business management fundamentals including the role of a human resources manager, the eight stages of the employment life cycle, and the stages of a project. You will also learn the purpose of cash flow, profit and loss, and balance sheet statements, as well as the phases of project management's life cycle.</p><p>To become a good entrepreneur, you must know how to efficiently handle the money and stocks that come in and out of your business. With this business entrepreneur course, you will learn to apply key accounting concepts and principles including the correct process for recording and depreciating stock.</p><p>You will also learn the ingredients of successful entrepreneurs, as well as identify personal characteristics of entrepreneurs. Then you will learn about establishing your entrepreneurial direction and starting your own business. So don't let this entrepreneurial study opportunity pass you by! Take this free online business course and make your business soar.</p><p></p>",
+          "locale": "en"
+        }
+      ],
+      "image": null,
+      "url": "https://alison.com/course/diploma-in-business-management-and-entrepreneurship-revised-2017",
+      "duration_avg": "3 months",
+      "rating_avg": null,
+      "course_level": "Advanced",
+      "ratings_count": null,
+      "primary_cip_code": null,
+      "secondary_cip_code": null,
+      "published_at": "2017-11-17T08:43:45+00:00",
+      "created_at": "2017-11-17T08:43:45+00:00",
+      "updated_at": "2017-11-17T08:43:45+00:00"
+    },
+    {
+      "id": 1329,
+      "name": "Pharmacotherapy: Cardio, Respiratory, Gastro & Endocrine Systems",
+      "slug": "pharmacotherapy-cardio-respiratory-gastro-and-endocrine-systems",
+      "type": "certificate",
+      "language": "en",
+      "publishers": [
+        {
+          "name": "SkillsCommons",
+          "slug": "skillscommons",
+          "image": null,
+          "location": "Global",
+          "country_id": null
+        }
+      ],
+      "categories": [
+        {
+          "id": 103,
+          "parent_id": 31,
+          "code": "pharmacology",
+          "courses_count": 0,
+          "translations": [
+            {
+              "name": "Pharmacology",
+              "locale": "en"
+            }
+          ],
+          "subcategories": [],
+          "created_at": "2026-05-13 00:00:00",
+          "updated_at": "2026-05-13 00:00:00"
+        },
+        {
+          "id": 41,
+          "parent_id": null,
+          "code": "education",
+          "courses_count": 0,
+          "translations": [
+            {
+              "name": "Teaching & Academics",
+              "locale": "en"
+            }
+          ],
+          "subcategories": [],
+          "created_at": "2026-05-13 00:00:00",
+          "updated_at": "2026-05-13 00:00:00"
+        }
+      ],
+      "modules": [
+        {
+          "id": 13290,
+          "name": "Course overview",
+          "description": "<p>This course will first introduce you to pharmacotherapy for the cardiovascular system and respiratory system. You will learn about human blood, what it is made up of, and drug therapy for disorders associated with it. You will look into lung diseases such as Chronic Obstructive Pulmonary Disease(COPD) and the treatments available for these diseases. You will then study allergy symptoms, antitussives, decongestants, and antihistamines. The course also covers smoking and the addictive component of tobacco.<br /><br />You will then study the gastrointestinal system and the endocrine system. You will learn about disorders associated with each of these systems such as nausea and vomiting as well as diabetes, which has been compared to an epidemic in scale. You will then study different drug therapy solutions for treating these disorders. This course will also teach you about nutrition and drugs for metabolism, including micronutrients, macronutrients, and various vitamins and their benefits.<br /><br />The human body is truly an amazing thing, and learning about its different systems such as the cardiovascular system, the respiratory system, the gastrointestinal system, and endocrine system will allow you to become the kind of person who can really help those in need. This course also contains valuable knowledge that will benefit everyone who wants to know more about how the body functions, so check it out today and learn something interesting and meaningful in just a few short hours.</p>",
+          "completed": false,
+          "scos": []
+        }
+      ],
+      "tags": [
+        {
+          "id": 1,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 1,
+              "name": "Nutrition",
+              "slug": "nutrition",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2018-03-15T10:11:03+00:00",
+          "updated_at": "2018-03-15T10:11:03+00:00"
+        },
+        {
+          "id": 2,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 2,
+              "name": "Pharmacology",
+              "slug": "pharmacology",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2018-03-15T10:11:03+00:00",
+          "updated_at": "2018-03-15T10:11:03+00:00"
+        },
+        {
+          "id": 3,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 3,
+              "name": "Cardiology",
+              "slug": "cardiology",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2018-03-15T10:11:03+00:00",
+          "updated_at": "2018-03-15T10:11:03+00:00"
+        },
+        {
+          "id": 4,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 4,
+              "name": "Healthcare Management",
+              "slug": "healthcare-management",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2018-03-15T10:11:03+00:00",
+          "updated_at": "2018-03-15T10:11:03+00:00"
+        },
+        {
+          "id": 5,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 5,
+              "name": "Therapy",
+              "slug": "therapy",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2018-03-15T10:11:03+00:00",
+          "updated_at": "2018-03-15T10:11:03+00:00"
+        },
+        {
+          "id": 6,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 6,
+              "name": "Drugs",
+              "slug": "drugs",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2018-03-15T10:11:03+00:00",
+          "updated_at": "2018-03-15T10:11:03+00:00"
+        },
+        {
+          "id": 7,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 7,
+              "name": "Health",
+              "slug": "health",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2018-03-15T10:11:03+00:00",
+          "updated_at": "2018-03-15T10:11:03+00:00"
+        },
+        {
+          "id": 8,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 8,
+              "name": "Teaching & Academics",
+              "slug": "teaching-academics",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2018-03-15T10:11:03+00:00",
+          "updated_at": "2018-03-15T10:11:03+00:00"
+        },
+        {
+          "id": 9,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 9,
+              "name": "Beginner",
+              "slug": "beginner",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2018-03-15T10:11:03+00:00",
+          "updated_at": "2018-03-15T10:11:03+00:00"
+        },
+        {
+          "id": 10,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 10,
+              "name": "en",
+              "slug": "en",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2018-03-15T10:11:03+00:00",
+          "updated_at": "2018-03-15T10:11:03+00:00"
+        },
+        {
+          "id": 11,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 11,
+              "name": "certificate",
+              "slug": "certificate",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2018-03-15T10:11:03+00:00",
+          "updated_at": "2018-03-15T10:11:03+00:00"
+        }
+      ],
+      "translations": [
+        {
+          "name": "Pharmacotherapy: Cardio, Respiratory, Gastro & Endocrine Systems",
+          "headline": "Pharmacotherapy: Cardio, Respiratory, Gastro & Endocrine Systems",
+          "summary": "<p>This course will first introduce you to pharmacotherapy for the cardiovascular system and respiratory system. You will learn about human blood, what it is made up of, and drug therapy for disorders associated with it. You will look into lung diseases such as Chronic Obstructive Pulmonary Disease(COPD) and the treatments available for these diseases. You will then study allergy symptoms, antitussives, decongestants, and antihistamines. The course also covers smoking and the addictive component of tobacco.<br /><br />You will then study the gastrointestinal system and the endocrine system. You will learn about disorders associated with each of these systems such as nausea and vomiting as well as diabetes, which has been compared to an epidemic in scale. You will then study different drug therapy solutions for treating these disorders. This course will also teach you about nutrition and drugs for metabolism, including micronutrients, macronutrients, and various vitamins and their benefits.<br /><br />The human body is truly an amazing thing, and learning about its different systems such as the cardiovascular system, the respiratory system, the gastrointestinal system, and endocrine system will allow you to become the kind of person who can really help those in need. This course also contains valuable knowledge that will benefit everyone who wants to know more about how the body functions, so check it out today and learn something interesting and meaningful in just a few short hours.</p>",
+          "locale": "en"
+        }
+      ],
+      "image": null,
+      "url": "https://alison.com/course/pharmacotherapy-cardio-respiratory-gastro-and-endocrine-systems",
+      "duration_avg": "2-4 weeks",
+      "rating_avg": null,
+      "course_level": "Intermediate",
+      "ratings_count": null,
+      "primary_cip_code": null,
+      "secondary_cip_code": null,
+      "published_at": "2018-03-15T10:11:03+00:00",
+      "created_at": "2018-03-15T10:11:03+00:00",
+      "updated_at": "2018-03-15T10:11:03+00:00"
+    },
+    {
+      "id": 1334,
+      "name": "Introduction to Pharmacy Practice",
+      "slug": "introduction-to-pharmacy-practice",
+      "type": "certificate",
+      "language": "en",
+      "publishers": [
+        {
+          "name": "SkillsCommons",
+          "slug": "skillscommons",
+          "image": null,
+          "location": "Global",
+          "country_id": null
+        }
+      ],
+      "categories": [
+        {
+          "id": 9000,
+          "parent_id": 31,
+          "code": "unknown-new-code",
+          "courses_count": 0,
+          "translations": [
+            {
+              "name": "Unknown New Code",
+              "locale": "en"
+            }
+          ],
+          "subcategories": [],
+          "created_at": "2026-05-13 00:00:00",
+          "updated_at": "2026-05-13 00:00:00"
+        }
+      ],
+      "modules": [
+        {
+          "id": 13340,
+          "name": "Course overview",
+          "description": "<p>Measuring and dispensing medication for patients is a delicate task that needs accuracy and proper education. With this pharmacy technician course online, you will learn how to do this correctly. The primary rule of retail merchandising and performance review will be discussed, and you will learn the difference between medical errors and medication errors. Further into the course, you will learn how to review prescriptions, enter a prescription into a computer, generate a prescription label, and fill a prescription.<br /><br />What else can you learn from this pharmacy technician online course? Aside from being able to differentiate between a suspension and an emulsion liquid dosage form, you will also be shown how to identify dosage formulations utilizing the transmucosal route of administration. The four systems of measurement commonly used in pharmacy, how to convert units from one system to another, and the meanings of the prefixes most commonly used in metric measurement will also be taught.<br /><br />If you want to have a career as a pharmacy technician, take advantage of this free online pharmacy course. Aside from learning the responsibilities of this healthcare profession, you will also be shown how to effectively communicate with the patients who come to you, as well as identify a variety of strategies for successful adaptation to the work environment. Check out the course now, and boost your career today!</p>",
+          "completed": false,
+          "scos": []
+        }
+      ],
+      "tags": [
+        {
+          "id": 1,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 1,
+              "name": "Pharmacy",
+              "slug": "pharmacy",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2018-03-15T10:07:40+00:00",
+          "updated_at": "2018-03-15T10:07:40+00:00"
+        },
+        {
+          "id": 2,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 2,
+              "name": "Healthcare",
+              "slug": "healthcare",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2018-03-15T10:07:40+00:00",
+          "updated_at": "2018-03-15T10:07:40+00:00"
+        },
+        {
+          "id": 3,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 3,
+              "name": "Insurance",
+              "slug": "insurance",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2018-03-15T10:07:40+00:00",
+          "updated_at": "2018-03-15T10:07:40+00:00"
+        },
+        {
+          "id": 4,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 4,
+              "name": "Health",
+              "slug": "health",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2018-03-15T10:07:40+00:00",
+          "updated_at": "2018-03-15T10:07:40+00:00"
+        },
+        {
+          "id": 5,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 5,
+              "name": "Teaching & Academics",
+              "slug": "teaching-academics",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2018-03-15T10:07:40+00:00",
+          "updated_at": "2018-03-15T10:07:40+00:00"
+        },
+        {
+          "id": 6,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 6,
+              "name": "Beginner",
+              "slug": "beginner",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2018-03-15T10:07:40+00:00",
+          "updated_at": "2018-03-15T10:07:40+00:00"
+        },
+        {
+          "id": 7,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 7,
+              "name": "en",
+              "slug": "en",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2018-03-15T10:07:40+00:00",
+          "updated_at": "2018-03-15T10:07:40+00:00"
+        },
+        {
+          "id": 8,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 8,
+              "name": "certificate",
+              "slug": "certificate",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2018-03-15T10:07:40+00:00",
+          "updated_at": "2018-03-15T10:07:40+00:00"
+        }
+      ],
+      "translations": [
+        {
+          "name": "Introduction to Pharmacy Practice",
+          "headline": "Introduction to Pharmacy Practice",
+          "summary": "<p>Measuring and dispensing medication for patients is a delicate task that needs accuracy and proper education. With this pharmacy technician course online, you will learn how to do this correctly. The primary rule of retail merchandising and performance review will be discussed, and you will learn the difference between medical errors and medication errors. Further into the course, you will learn how to review prescriptions, enter a prescription into a computer, generate a prescription label, and fill a prescription.<br /><br />What else can you learn from this pharmacy technician online course? Aside from being able to differentiate between a suspension and an emulsion liquid dosage form, you will also be shown how to identify dosage formulations utilizing the transmucosal route of administration. The four systems of measurement commonly used in pharmacy, how to convert units from one system to another, and the meanings of the prefixes most commonly used in metric measurement will also be taught.<br /><br />If you want to have a career as a pharmacy technician, take advantage of this free online pharmacy course. Aside from learning the responsibilities of this healthcare profession, you will also be shown how to effectively communicate with the patients who come to you, as well as identify a variety of strategies for successful adaptation to the work environment. Check out the course now, and boost your career today!</p>",
+          "locale": "en"
+        }
+      ],
+      "image": null,
+      "url": "https://alison.com/course/introduction-to-pharmacy-practice",
+      "duration_avg": "4 hrs",
+      "rating_avg": null,
+      "course_level": "Beginner",
+      "ratings_count": null,
+      "primary_cip_code": null,
+      "secondary_cip_code": null,
+      "published_at": "2018-03-15T10:07:40+00:00",
+      "created_at": "2018-03-15T10:07:40+00:00",
+      "updated_at": "2018-03-15T10:07:40+00:00"
+    },
+    {
+      "id": 1348,
+      "name": "Diploma in Journalism",
+      "slug": "diploma-in-journalism-revised-2018",
+      "type": "diploma",
+      "language": "en",
+      "publishers": [
+        {
+          "name": "Advance Learning - Journalism and Digitial Media",
+          "slug": "advance-learning-journalism-and-digitial-media",
+          "image": null,
+          "location": "Global",
+          "country_id": null
+        }
+      ],
+      "categories": [
+        {
+          "id": 49,
+          "parent_id": 41,
+          "code": "media-and-journalism",
+          "courses_count": 0,
+          "translations": [
+            {
+              "name": "Journalism",
+              "locale": "en"
+            }
+          ],
+          "subcategories": [],
+          "created_at": "2026-05-13 00:00:00",
+          "updated_at": "2026-05-13 00:00:00"
+        }
+      ],
+      "modules": [
+        {
+          "id": 13480,
+          "name": "Course overview",
+          "description": "<p>This journalism course will first teach you about the main types of journalists along with their roles and responsibilities in a newsroom. It will then discuss the main criteria for a news story and how to manage a journalistic workflows. The course will then go through the digital challenges journalists face and will describe digital security principles. It will also explain the use of data in journalism and the responsibilities of a free press in a free society.\n\nNext, you will learn about the rights that are essential in order for journalists to do their jobs well. You will also study the journalism code of ethics, and will be given a strong understanding of how journalism enhances civil society. You will then be shown how to produce investigative journalism to international standards. The history of newspapers and the development of magazines will also be covered, and you will also learn about the impact of the internet and citizen journalists on the news and public debate.\n\nThis free course aims to make it easy to learn how to write editorials and feature news stories using idea generation, objectivity, angles, key points, and structure. These lessons will be of great benefit to media professionals, and to any student who would like to learn more about the skills required for working as a professional journalist. So, check out the course today, and bring your journalistic skills to the next level.</p>",
+          "completed": false,
+          "scos": []
+        }
+      ],
+      "tags": [
+        {
+          "id": 1,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 1,
+              "name": "Journalism",
+              "slug": "journalism",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2018-03-21T08:12:54+00:00",
+          "updated_at": "2018-03-21T08:12:54+00:00"
+        },
+        {
+          "id": 2,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 2,
+              "name": "Ethics",
+              "slug": "ethics",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2018-03-21T08:12:54+00:00",
+          "updated_at": "2018-03-21T08:12:54+00:00"
+        },
+        {
+          "id": 3,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 3,
+              "name": "English Writing",
+              "slug": "english-writing",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2018-03-21T08:12:54+00:00",
+          "updated_at": "2018-03-21T08:12:54+00:00"
+        },
+        {
+          "id": 4,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 4,
+              "name": "Script Writing",
+              "slug": "script-writing",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2018-03-21T08:12:54+00:00",
+          "updated_at": "2018-03-21T08:12:54+00:00"
+        },
+        {
+          "id": 5,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 5,
+              "name": "Digital Media",
+              "slug": "digital-media",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2018-03-21T08:12:54+00:00",
+          "updated_at": "2018-03-21T08:12:54+00:00"
+        },
+        {
+          "id": 6,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 6,
+              "name": "Mobile Journalism (MoJo)",
+              "slug": "mobile-journalism-mojo",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2018-03-21T08:12:54+00:00",
+          "updated_at": "2018-03-21T08:12:54+00:00"
+        },
+        {
+          "id": 7,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 7,
+              "name": "Teaching & Academics",
+              "slug": "teaching-academics",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2018-03-21T08:12:54+00:00",
+          "updated_at": "2018-03-21T08:12:54+00:00"
+        },
+        {
+          "id": 8,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 8,
+              "name": "Beginner",
+              "slug": "beginner",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2018-03-21T08:12:54+00:00",
+          "updated_at": "2018-03-21T08:12:54+00:00"
+        },
+        {
+          "id": 9,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 9,
+              "name": "en",
+              "slug": "en",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2018-03-21T08:12:54+00:00",
+          "updated_at": "2018-03-21T08:12:54+00:00"
+        },
+        {
+          "id": 10,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 10,
+              "name": "diploma",
+              "slug": "diploma",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2018-03-21T08:12:54+00:00",
+          "updated_at": "2018-03-21T08:12:54+00:00"
+        }
+      ],
+      "translations": [
+        {
+          "name": "Diploma in Journalism",
+          "headline": "Diploma in Journalism",
+          "summary": "<p>This journalism course will first teach you about the main types of journalists along with their roles and responsibilities in a newsroom. It will then discuss the main criteria for a news story and how to manage a journalistic workflows. The course will then go through the digital challenges journalists face and will describe digital security principles. It will also explain the use of data in journalism and the responsibilities of a free press in a free society.\n\nNext, you will learn about the rights that are essential in order for journalists to do their jobs well. You will also study the journalism code of ethics, and will be given a strong understanding of how journalism enhances civil society. You will then be shown how to produce investigative journalism to international standards. The history of newspapers and the development of magazines will also be covered, and you will also learn about the impact of the internet and citizen journalists on the news and public debate.\n\nThis free course aims to make it easy to learn how to write editorials and feature news stories using idea generation, objectivity, angles, key points, and structure. These lessons will be of great benefit to media professionals, and to any student who would like to learn more about the skills required for working as a professional journalist. So, check out the course today, and bring your journalistic skills to the next level.</p>",
+          "locale": "en"
+        }
+      ],
+      "image": null,
+      "url": "https://alison.com/course/diploma-in-journalism-revised-2018",
+      "duration_avg": "6 hrs",
+      "rating_avg": null,
+      "course_level": "Advanced",
+      "ratings_count": null,
+      "primary_cip_code": null,
+      "secondary_cip_code": null,
+      "published_at": "2018-03-21T08:12:54+00:00",
+      "created_at": "2018-03-21T08:12:54+00:00",
+      "updated_at": "2018-03-21T08:12:54+00:00"
+    },
+    {
+      "id": 1416,
+      "name": "Introduction to Database Concepts",
+      "slug": "introduction-to-database-concepts-revised",
+      "type": "certificate",
+      "language": "fr-FR",
+      "publishers": [
+        {
+          "name": "Channel 9",
+          "slug": "channel-9",
+          "image": null,
+          "location": "Global",
+          "country_id": null
+        }
+      ],
+      "categories": [
+        {
+          "id": 13,
+          "parent_id": 1,
+          "code": "databases",
+          "courses_count": 0,
+          "translations": [
+            {
+              "name": "Databases",
+              "locale": "en"
+            }
+          ],
+          "subcategories": [],
+          "created_at": "2026-05-13 00:00:00",
+          "updated_at": "2026-05-13 00:00:00"
+        },
+        {
+          "id": 109,
+          "parent_id": null,
+          "code": "management",
+          "courses_count": 0,
+          "translations": [
+            {
+              "name": "Management",
+              "locale": "en"
+            }
+          ],
+          "subcategories": [],
+          "created_at": "2026-05-13 00:00:00",
+          "updated_at": "2026-05-13 00:00:00"
+        }
+      ],
+      "modules": [
+        {
+          "id": 14160,
+          "name": "Course overview",
+          "description": "<p>This Database Concept course will first introduce you to the fundamental concepts of database. You will learn its importance in storage, management, and retrieval of information. The course will discuss Structured Query Language(SQL), Database Management System(DBMS), and Relational Database Management System(RDMS). You will study the SQL Server Management Studio(SSMS) and how Graphical User Interface (GUI) can be used to manage an SQL Server, its databases, and the content contained within the databases.<br /><br />You will then look into the relational concepts of databases, study the process of organizing data in a database through Normalization, and see how the different normal forms impact the organization of data in a database. You will learn how referential integrity can ensure the consistency of data contained in the database. The course will also discuss constraints, datatype including categories, Unicode, implicit and explicit data types, database objects, and DDL statements.<br /><br />Every organization needs a database to store, manage, and retrieve important information. This Introduction to Database Concepts online course will give a solid introduction to the real-life uses of databases. This is a skill and knowledge set that will greatly enhance your r&eacute;sum&eacute; and your career path, and make you a highly valuable employee for a wider range of companies. So why wait? Start you next learning journey, today.</p>",
+          "completed": false,
+          "scos": []
+        }
+      ],
+      "tags": [
+        {
+          "id": 1,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 1,
+              "name": "Data Structures",
+              "slug": "data-structures",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2018-09-28T08:10:22+00:00",
+          "updated_at": "2018-09-28T08:10:22+00:00"
+        },
+        {
+          "id": 2,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 2,
+              "name": "SQL",
+              "slug": "sql",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2018-09-28T08:10:22+00:00",
+          "updated_at": "2018-09-28T08:10:22+00:00"
+        },
+        {
+          "id": 3,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 3,
+              "name": "Databases",
+              "slug": "databases",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2018-09-28T08:10:22+00:00",
+          "updated_at": "2018-09-28T08:10:22+00:00"
+        },
+        {
+          "id": 4,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 4,
+              "name": "Transition Year Top Ups and Tasters",
+              "slug": "transition-year-top-ups-and-tasters",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2018-09-28T08:10:22+00:00",
+          "updated_at": "2018-09-28T08:10:22+00:00"
+        },
+        {
+          "id": 5,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 5,
+              "name": "Pre-Apprenticeships",
+              "slug": "pre-apprenticeships",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2018-09-28T08:10:22+00:00",
+          "updated_at": "2018-09-28T08:10:22+00:00"
+        },
+        {
+          "id": 6,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 6,
+              "name": "Information Technology (IT)",
+              "slug": "information-technology-it",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2018-09-28T08:10:22+00:00",
+          "updated_at": "2018-09-28T08:10:22+00:00"
+        },
+        {
+          "id": 7,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 7,
+              "name": "Business",
+              "slug": "business",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2018-09-28T08:10:22+00:00",
+          "updated_at": "2018-09-28T08:10:22+00:00"
+        },
+        {
+          "id": 8,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 8,
+              "name": "Management",
+              "slug": "management",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2018-09-28T08:10:22+00:00",
+          "updated_at": "2018-09-28T08:10:22+00:00"
+        },
+        {
+          "id": 9,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 9,
+              "name": "Beginner",
+              "slug": "beginner",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2018-09-28T08:10:22+00:00",
+          "updated_at": "2018-09-28T08:10:22+00:00"
+        },
+        {
+          "id": 10,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 10,
+              "name": "en",
+              "slug": "en",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2018-09-28T08:10:22+00:00",
+          "updated_at": "2018-09-28T08:10:22+00:00"
+        },
+        {
+          "id": 11,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 11,
+              "name": "certificate",
+              "slug": "certificate",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2018-09-28T08:10:22+00:00",
+          "updated_at": "2018-09-28T08:10:22+00:00"
+        }
+      ],
+      "translations": [
+        {
+          "name": "Concepts de base de données",
+          "headline": "Concepts de base de données",
+          "summary": "<p>French-only sample translation to verify first-listed fallback when English is absent.</p>",
+          "locale": "fr-FR"
+        }
+      ],
+      "image": null,
+      "url": "https://alison.com/course/introduction-to-database-concepts-revised",
+      "duration_avg": "5 hrs",
+      "rating_avg": null,
+      "course_level": "Intermediate",
+      "ratings_count": null,
+      "primary_cip_code": null,
+      "secondary_cip_code": null,
+      "published_at": "2018-09-28T08:10:22+00:00",
+      "created_at": "2018-09-28T08:10:22+00:00",
+      "updated_at": "2018-09-28T08:10:22+00:00"
+    },
+    {
+      "id": 1631,
+      "name": "Data Analytics - Introduction to Machine Learning",
+      "slug": "data-analytics-introduction-to-machine-learning-revised",
+      "type": "certificate",
+      "language": "en",
+      "publishers": [
+        {
+          "name": "Channel 9",
+          "slug": "channel-9",
+          "image": null,
+          "location": "Global",
+          "country_id": null
+        }
+      ],
+      "categories": [
+        {
+          "id": 12,
+          "parent_id": 1,
+          "code": "data-science",
+          "courses_count": 0,
+          "translations": [
+            {
+              "name": "Data Science",
+              "locale": "en"
+            }
+          ],
+          "subcategories": [],
+          "created_at": "2026-05-13 00:00:00",
+          "updated_at": "2026-05-13 00:00:00"
+        },
+        {
+          "id": 51,
+          "parent_id": null,
+          "code": "business",
+          "courses_count": 0,
+          "translations": [
+            {
+              "name": "Business",
+              "locale": "en"
+            }
+          ],
+          "subcategories": [],
+          "created_at": "2026-05-13 00:00:00",
+          "updated_at": "2026-05-13 00:00:00"
+        }
+      ],
+      "modules": [
+        {
+          "id": 16310,
+          "name": "Course overview",
+          "description": "<p>This course combines both machine learning and data analytics. The two go hand in hand to help make data sets easier to gather and interpret. Topics included in this course are reinforced learning, correlation and linear regression. Reinforced learning is the training of machine learning models to make a sequence of decisions and linear regression is used when you want to predict the value of a variable based on the value of another variable. </p>\n<p>You will be taken through a step-by-step programme to show you the most important formulae involved in multiple regression in Excel. This video-based learning means that you can go over and back to different lessons to remind yourself of little bits of information you may have forgotten. Following on from this, you will be introduced to the concept of regularisation, subset selections and how to distinguish between R&amp;sup2 and adjustment R&amp;sup2.</p>\n<p>Data science and data analytics are diverse fields that have departments in many companies across the world. It is a field that is ever-expanding and evolving so if you want to have an indispensable skill that will get you hired in any company with a data analytics department, this course is for you. This course has not been updated with the use of Generative AI models, like ChatGPT.</p>",
+          "completed": false,
+          "scos": []
+        }
+      ],
+      "tags": [
+        {
+          "id": 1,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 1,
+              "name": "Data Analysis",
+              "slug": "data-analysis",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2019-06-18T12:52:53+00:00",
+          "updated_at": "2019-06-18T12:52:53+00:00"
+        },
+        {
+          "id": 2,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 2,
+              "name": "Data Science",
+              "slug": "data-science",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2019-06-18T12:52:53+00:00",
+          "updated_at": "2019-06-18T12:52:53+00:00"
+        },
+        {
+          "id": 3,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 3,
+              "name": "Excel",
+              "slug": "excel",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2019-06-18T12:52:53+00:00",
+          "updated_at": "2019-06-18T12:52:53+00:00"
+        },
+        {
+          "id": 4,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 4,
+              "name": "Machine Learning",
+              "slug": "machine-learning",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2019-06-18T12:52:53+00:00",
+          "updated_at": "2019-06-18T12:52:53+00:00"
+        },
+        {
+          "id": 5,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 5,
+              "name": "Computer Science",
+              "slug": "computer-science",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2019-06-18T12:52:53+00:00",
+          "updated_at": "2019-06-18T12:52:53+00:00"
+        },
+        {
+          "id": 6,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 6,
+              "name": "MATLAB",
+              "slug": "matlab",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2019-06-18T12:52:53+00:00",
+          "updated_at": "2019-06-18T12:52:53+00:00"
+        },
+        {
+          "id": 7,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 7,
+              "name": "Analytics",
+              "slug": "analytics",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2019-06-18T12:52:53+00:00",
+          "updated_at": "2019-06-18T12:52:53+00:00"
+        },
+        {
+          "id": 8,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 8,
+              "name": "Information Technology (IT)",
+              "slug": "information-technology-it",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2019-06-18T12:52:53+00:00",
+          "updated_at": "2019-06-18T12:52:53+00:00"
+        },
+        {
+          "id": 9,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 9,
+              "name": "Business",
+              "slug": "business",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2019-06-18T12:52:53+00:00",
+          "updated_at": "2019-06-18T12:52:53+00:00"
+        },
+        {
+          "id": 10,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 10,
+              "name": "Beginner",
+              "slug": "beginner",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2019-06-18T12:52:53+00:00",
+          "updated_at": "2019-06-18T12:52:53+00:00"
+        },
+        {
+          "id": 11,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 11,
+              "name": "en",
+              "slug": "en",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2019-06-18T12:52:53+00:00",
+          "updated_at": "2019-06-18T12:52:53+00:00"
+        },
+        {
+          "id": 12,
+          "courses_count": 0,
+          "translations": [
+            {
+              "id": 12,
+              "name": "certificate",
+              "slug": "certificate",
+              "locale": "en"
+            }
+          ],
+          "created_at": "2019-06-18T12:52:53+00:00",
+          "updated_at": "2019-06-18T12:52:53+00:00"
+        }
+      ],
+      "translations": [
+        {
+          "name": "Data Analytics - Introduction to Machine Learning",
+          "headline": "Data Analytics and Machine Learning Foundations for Career Readiness, Workplace Projects, Practical Decision-Making and Applied Business Insight",
+          "summary": "<p>This course combines both machine learning and data analytics. The two go hand in hand to help make data sets easier to gather and interpret. Topics included in this course are reinforced learning, correlation and linear regression. Reinforced learning is the training of machine learning models to make a sequence of decisions and linear regression is used when you want to predict the value of a variable based on the value of another variable. </p>\n<p>You will be taken through a step-by-step programme to show you the most important formulae involved in multiple regression in Excel. This video-based learning means that you can go over and back to different lessons to remind yourself of little bits of information you may have forgotten. Following on from this, you will be introduced to the concept of regularisation, subset selections and how to distinguish between R&amp;sup2 and adjustment R&amp;sup2.</p>\n<p>Data science and data analytics are diverse fields that have departments in many companies across the world. It is a field that is ever-expanding and evolving so if you want to have an indispensable skill that will get you hired in any company with a data analytics department, this course is for you. This course has not been updated with the use of Generative AI models, like ChatGPT.</p>",
+          "locale": "en"
+        }
+      ],
+      "image": null,
+      "url": "https://alison.com/course/data-analytics-introduction-to-machine-learning-revised",
+      "duration_avg": "20-25 hrs",
+      "rating_avg": null,
+      "course_level": "Expert",
+      "ratings_count": null,
+      "primary_cip_code": null,
+      "secondary_cip_code": null,
+      "published_at": "2019-06-18T12:52:53+00:00",
+      "created_at": "2019-06-18T12:52:53+00:00",
+      "updated_at": "2019-06-18T12:52:53+00:00"
     }
-  ]
+  ],
+  "total": 20,
+  "page": 1,
+  "per_page": 20,
+  "links": {
+    "first": null,
+    "last": null,
+    "prev": null,
+    "next": null
+  },
+  "meta": {
+    "current_page": 1,
+    "from": 1,
+    "last_page": 1,
+    "links": [],
+    "path": null,
+    "per_page": 20,
+    "to": 20,
+    "total": 20
+  }
 }

@@ -68,10 +68,22 @@ namespace Yoma.Core.Infrastructure.Jobberman.Services
         lockAcquired = await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration);
         if (!lockAcquired) return;
 
+        var syncFromExternalPartners = _appSettings.PartnerSyncEnabledEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment);
+
+        // Startup refresh is only intended to seed local embedded sample data.
+        // Do not trigger the live RSS pull on application startup.
+        if (onStartupInitialRefresh && syncFromExternalPartners)
+        {
+          if (_logger.IsEnabled(LogLevel.Information))
+            _logger.LogInformation("Refreshing (On Startup) of Jobberman opportunity feeds skipped because external partner synchronization is enabled for environment '{environment}'", _environmentProvider.Environment);
+
+          return;
+        }
+
         if (onStartupInitialRefresh && _opportunityRepository.Query().Any())
         {
           if (_logger.IsEnabled(LogLevel.Information))
-            _logger.LogInformation("Refreshing (On Startup) of Jobberman opportunity feeds skipped");
+            _logger.LogInformation("Refreshing (On Startup) of Jobberman opportunity feeds skipped because local cache already contains data");
 
           return;
         }
@@ -80,7 +92,6 @@ namespace Yoma.Core.Infrastructure.Jobberman.Services
           _logger.LogInformation("Processing Jobberman opportunity feed refresh");
 
         var now = DateTimeOffset.UtcNow;
-        var syncFromExternalPartners = _appSettings.PartnerSyncEnabledEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment);
 
         if (syncFromExternalPartners)
           await RefreshFromRSSFeedAsync(now);
@@ -287,21 +298,33 @@ namespace Yoma.Core.Infrastructure.Jobberman.Services
         if (string.IsNullOrEmpty(sourceId) || string.IsNullOrEmpty(title))
           continue;
 
-        // TODO: Confirm XML property name for posted/publish date using populated Jobberman RSS sample.
+        // Optional / not present in current Jobberman XML samples.
+        // Best-effort mapping if the field appears later; otherwise defaults to sync/import date.
         var dateStart = x.TryGetElementDate("pubDate", out var dateStartParsed)
           ? dateStartParsed
           : default(DateTimeOffset?);
 
-        // TODO: Confirm XML property name for closing/expiry date using populated Jobberman RSS sample.
+        // Optional / not present in current Jobberman XML samples.
+        // Best-effort mapping if the field appears later; otherwise treated as open-ended.
         var dateEnd = x.TryGetElementDate("closing_date", out var dateEndParsed)
           ? dateEndParsed
           : default(DateTimeOffset?);
 
-        // TODO: Confirm XML property name and values for job function/category using populated Jobberman RSS sample.
+        // Optional / not present in current Jobberman XML samples.
+        // Best-effort mapping if the field appears later; otherwise defaults to Other.
         var category = x.GetElementText("job_function");
 
-        // TODO: Confirm XML property name and values for language using populated Jobberman RSS sample.
+        // Optional / not present in current Jobberman XML samples.
+        // Best-effort mapping if the field appears later; otherwise defaults to English.
         var language = x.GetElementText("language");
+
+        // Optional / not present in current Jobberman XML samples.
+        // Best-effort mapping if the field appears later; otherwise no salary is appended.
+        var salary = x.GetElementText("salary");
+
+        var description = x.GetElementText("description");
+        if (!string.IsNullOrWhiteSpace(salary))
+          description = $"{description}{Environment.NewLine}{Environment.NewLine}Salary: {salary}";
 
         opportunities.Add(new Opportunity
         {
@@ -309,7 +332,7 @@ namespace Yoma.Core.Infrastructure.Jobberman.Services
           CountryCodeAlpha2 = countryCodeAlpha2,
           SourceId = sourceId,
           Title = title,
-          Description = x.GetElementText("description"),
+          Description = description,
           URL = x.GetElementText("link"),
           ImageURL = x.Element(XNamespace_MediaNs + "content").GetAttribute("url"),
           Location = x.GetElementText("location"),
