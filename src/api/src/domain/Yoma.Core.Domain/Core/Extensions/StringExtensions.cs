@@ -199,9 +199,90 @@ namespace Yoma.Core.Domain.Core.Extensions
         ? input[..length]
         : $"{input[..(length - 3)]}...";
     }
+
+    /// <summary>
+    /// Converts simple HTML markup to markdown-style text, then normalizes and trims it while preserving paragraph spacing.
+    /// </summary>
+    /// <param name="input">The HTML string to process.</param>
+    /// <returns>The converted markdown-style text, or null if no meaningful value exists.</returns>
+    public static string? HtmlToMarkdown(this string? input)
+    {
+      if (string.IsNullOrWhiteSpace(input)) return null;
+
+      var result = WebUtility.HtmlDecode(input);
+
+      result = HtmlLineBreaks().Replace(result, "\n");
+      result = HtmlBlockStart().Replace(result, "\n\n");
+      result = HtmlBlockEnd().Replace(result, "\n\n");
+
+      result = HtmlStrongStart().Replace(result, "**");
+      result = HtmlStrongEnd().Replace(result, "**");
+
+      result = HtmlEmphasisStart().Replace(result, "*");
+      result = HtmlEmphasisEnd().Replace(result, "*");
+
+      result = HtmlListItemStart().Replace(result, "- ");
+      result = HtmlListItemEnd().Replace(result, "\n");
+      result = HtmlListContainerTags().Replace(result, "\n");
+
+      result = HtmlTags().Replace(result, string.Empty);
+
+      return result.NormalizeTrimMultiline().NormalizeNullableValue();
+    }
+
+    /// <summary>
+    /// Normalizes and trims multiline text while preserving paragraph spacing.
+    /// </summary>
+    /// <param name="input">The string to normalize.</param>
+    /// <returns>The normalized multiline string.</returns>
+    public static string NormalizeTrimMultiline(this string input)
+    {
+      ArgumentNullException.ThrowIfNull(input, nameof(input));
+
+      var lines = input
+        .Replace("\r\n", "\n", StringComparison.Ordinal)
+        .Replace("\r", "\n", StringComparison.Ordinal)
+        .Split('\n')
+        .Select(line => RegexDoubleSpacing().Replace(line.Trim(), " "));
+
+      return RegexMultipleLineBreaks()
+        .Replace(string.Join("\n", lines).Trim(), "\n\n");
+    }
     #endregion
 
     #region Private Members
+    [GeneratedRegex(@"<br\s*/?>", RegexOptions.IgnoreCase)]
+    private static partial Regex HtmlLineBreaks();
+
+    [GeneratedRegex(@"<(p|div|section|article|h[1-6])[^>]*>", RegexOptions.IgnoreCase)]
+    private static partial Regex HtmlBlockStart();
+
+    [GeneratedRegex(@"</(p|div|section|article|h[1-6])\s*>", RegexOptions.IgnoreCase)]
+    private static partial Regex HtmlBlockEnd();
+
+    [GeneratedRegex(@"<(strong|b)[^>]*>", RegexOptions.IgnoreCase)]
+    private static partial Regex HtmlStrongStart();
+
+    [GeneratedRegex(@"</(strong|b)>", RegexOptions.IgnoreCase)]
+    private static partial Regex HtmlStrongEnd();
+
+    [GeneratedRegex(@"<(em|i)[^>]*>", RegexOptions.IgnoreCase)]
+    private static partial Regex HtmlEmphasisStart();
+
+    [GeneratedRegex(@"</(em|i)>", RegexOptions.IgnoreCase)]
+    private static partial Regex HtmlEmphasisEnd();
+
+    [GeneratedRegex(@"<li[^>]*>", RegexOptions.IgnoreCase)]
+    private static partial Regex HtmlListItemStart();
+
+    [GeneratedRegex(@"</li\s*>", RegexOptions.IgnoreCase)]
+    private static partial Regex HtmlListItemEnd();
+
+    [GeneratedRegex(@"</?(ul|ol)[^>]*>", RegexOptions.IgnoreCase)]
+    private static partial Regex HtmlListContainerTags();
+
+    [GeneratedRegex(@"\n{3,}")]
+    private static partial Regex RegexMultipleLineBreaks();
 
     [GeneratedRegex("[ ]{2,}", RegexOptions.None)]
     private static partial Regex RegexDoubleSpacing();
@@ -217,7 +298,6 @@ namespace Yoma.Core.Domain.Core.Extensions
 
     [GeneratedRegex("<.*?>")]
     private static partial Regex HtmlTags();
-
     #endregion
   }
 }
