@@ -1,6 +1,7 @@
 using MediatR;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
@@ -16,6 +17,9 @@ using Yoma.Core.Domain.Notification.Models;
 using Yoma.Core.Domain.Opportunity.Events;
 using Yoma.Core.Domain.Opportunity.Interfaces;
 using Yoma.Core.Domain.Opportunity.Interfaces.Lookups;
+using Yoma.Core.Domain.PartnerSync;
+using Yoma.Core.Domain.PartnerSync.Interfaces.Lookups;
+using Yoma.Core.Domain.PartnerSync.Models;
 
 namespace Yoma.Core.Domain.Opportunity.Services
 {
@@ -30,8 +34,10 @@ namespace Yoma.Core.Domain.Opportunity.Services
     private readonly INotificationDeliveryService _notificationDeliveryService;
     private readonly IUserService _userService;
     private readonly ICountryService _countryService;
+    private readonly IProcessingStatusService _processingStatusService;
     private readonly INotificationURLFactory _notificationURLFactory;
     private readonly IRepositoryBatchedValueContainsWithNavigation<Models.Opportunity> _opportunityRepository;
+    private readonly IRepositoryBatched<ProcessingLog> _processingLogRepository;
     private readonly IDistributedLockService _distributedLockService;
     private readonly IMediator _mediator;
 
@@ -49,23 +55,27 @@ namespace Yoma.Core.Domain.Opportunity.Services
         INotificationDeliveryService notificationDeliveryService,
         IUserService userService,
         ICountryService countryService,
+        IProcessingStatusService processingStatusService,
         INotificationURLFactory notificationURLFactory,
         IRepositoryBatchedValueContainsWithNavigation<Models.Opportunity> opportunityRepository,
+        IRepositoryBatched<ProcessingLog> processingLogRepository,
         IDistributedLockService distributedLockService,
         IMediator mediator)
     {
-      _logger = logger;
-      _scheduleJobOptions = scheduleJobOptions.Value;
-      _opportunityStatusService = opportunityStatusService;
-      _organizationService = organizationService;
-      _organizationStatusService = organizationStatusService;
-      _notificationDeliveryService = notificationDeliveryService;
-      _userService = userService;
-      _countryService = countryService;
-      _notificationURLFactory = notificationURLFactory;
-      _opportunityRepository = opportunityRepository;
-      _distributedLockService = distributedLockService;
-      _mediator = mediator;
+      _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+      _scheduleJobOptions = scheduleJobOptions?.Value ?? throw new ArgumentNullException(nameof(scheduleJobOptions));
+      _opportunityStatusService = opportunityStatusService ?? throw new ArgumentNullException(nameof(opportunityStatusService));
+      _organizationService = organizationService ?? throw new ArgumentNullException(nameof(organizationService));
+      _organizationStatusService = organizationStatusService ?? throw new ArgumentNullException(nameof(organizationStatusService));
+      _notificationDeliveryService = notificationDeliveryService ?? throw new ArgumentNullException(nameof(notificationDeliveryService));
+      _userService = userService ?? throw new ArgumentNullException(nameof(userService));
+      _countryService = countryService ?? throw new ArgumentNullException(nameof(countryService));
+      _processingStatusService = processingStatusService ?? throw new ArgumentNullException(nameof(processingStatusService));
+      _notificationURLFactory = notificationURLFactory ?? throw new ArgumentNullException(nameof(notificationURLFactory));
+      _opportunityRepository = opportunityRepository ?? throw new ArgumentNullException(nameof(opportunityRepository));
+      _processingLogRepository = processingLogRepository ?? throw new ArgumentNullException(nameof(processingLogRepository));
+      _distributedLockService = distributedLockService ?? throw new ArgumentNullException(nameof(distributedLockService));
+      _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
     }
     #endregion
 
@@ -91,9 +101,17 @@ namespace Yoma.Core.Domain.Opportunity.Services
         var statusActiveId = _opportunityStatusService.GetByName(Status.Active.ToString()).Id;
         var organizationStatusActiveId = _organizationStatusService.GetByName(OrganizationStatus.Active.ToString()).Id;
 
+        var pullSyncedOpportunityIds = QueryPullSyncedOpportunityIds();
+
         var items = _opportunityRepository.Query(true).Where(o => o.OrganizationStatusId == organizationStatusActiveId //include children / countries
-           && o.StatusId == statusActiveId && (!o.Hidden.HasValue || o.Hidden == false) && o.DateStart >= datetimeFrom && o.DateStart <= datetimeTo)
-          .OrderBy(o => o.DateStart).ThenBy(o => o.Title).ThenBy(o => o.Id).ToList();
+           && o.StatusId == statusActiveId
+           && (!o.Hidden.HasValue || o.Hidden == false)
+           && o.DateStart >= datetimeFrom
+           && o.DateStart <= datetimeTo
+           && !pullSyncedOpportunityIds.Contains(o.Id))
+          .OrderBy(o => o.DateStart).ThenBy(o => o.Title).ThenBy(o => o.Id)
+          .ToList();
+
         if (items.Count == 0) return;
 
         await SendNotificationPublished(items, executeUntil);
@@ -148,10 +166,21 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
           items = await _opportunityRepository.Update(items);
 
-          await SendNotificationExpiration(items, NotificationType.Opportunity_Expiration_Expired);
+          var itemIds = items.Select(o => o.Id).ToList();
+
+          var pullSyncedOpportunityIds = QueryPullSyncedOpportunityIds()
+            .Where(o => itemIds.Contains(o))
+            .ToHashSet();
+
+          var notificationItems = items
+            .Where(o => !pullSyncedOpportunityIds.Contains(o.Id))
+            .ToList();
+
+          if (notificationItems.Count != 0)
+            await SendNotificationExpiration(notificationItems, NotificationType.Opportunity_Expiration_Expired);
 
           foreach (var item in items)
-            await _mediator.Publish(new OpportunityEvent(Core.EventType.Update, item));
+            await _mediator.Publish(new OpportunityEvent(EventType.Update, item));
 
           if (executeUntil <= DateTimeOffset.UtcNow) break;
         }
@@ -185,9 +214,16 @@ namespace Yoma.Core.Domain.Opportunity.Services
         var datetimeTo = datetimeFrom.AddDays(_scheduleJobOptions.OpportunityExpirationNotificationIntervalInDays);
         var statusExpirableIds = Statuses_Expirable.Select(o => _opportunityStatusService.GetByName(o.ToString()).Id).ToList();
 
-        var items = _opportunityRepository.Query().Where(o => statusExpirableIds.Contains(o.StatusId) &&
-            o.DateEnd.HasValue && o.DateEnd.Value >= datetimeFrom && o.DateEnd.Value <= datetimeTo)
-            .OrderBy(o => o.DateEnd).Take(_scheduleJobOptions.OpportunityExpirationBatchSize).ToList();
+        var pullSyncedOpportunityIds = QueryPullSyncedOpportunityIds();
+
+        var items = _opportunityRepository.Query().Where(o => statusExpirableIds.Contains(o.StatusId)
+            && o.DateEnd.HasValue
+            && o.DateEnd.Value >= datetimeFrom
+            && o.DateEnd.Value <= datetimeTo
+            && !pullSyncedOpportunityIds.Contains(o.Id))
+          .OrderBy(o => o.DateEnd)
+          .Take(_scheduleJobOptions.OpportunityExpirationBatchSize)
+          .ToList();
         if (items.Count == 0) return;
 
         await SendNotificationExpiration(items, NotificationType.Opportunity_Expiration_WithinNextDays);
@@ -244,7 +280,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
           await _opportunityRepository.Update(items);
 
           foreach (var item in items)
-            await _mediator.Publish(new OpportunityEvent(Core.EventType.Delete, item));
+            await _mediator.Publish(new OpportunityEvent(EventType.Delete, item));
 
           if (executeUntil <= DateTimeOffset.UtcNow) break;
         }
@@ -266,7 +302,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
     private async Task SendNotificationPublished(List<Models.Opportunity> items, DateTimeOffset executeUntil)
     {
       var notificationType = NotificationType.Opportunity_Published;
-      var countryWorldwideId = _countryService.GetByCodeAlpha2(Core.Country.Worldwide.ToDescription()).Id;
+      var countryWorldwideId = _countryService.GetByCodeAlpha2(Country.Worldwide.ToDescription()).Id;
 
       try
       {
@@ -418,6 +454,22 @@ namespace Yoma.Core.Domain.Opportunity.Services
           if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to send notification: {errorMessage}", ex.Message);
         }
       }
+    }
+
+    /// <summary>
+    /// Returns pull-synced opportunity ids so externally managed partner catalogue items
+    /// can be excluded from youth/admin notifications without stopping lifecycle processing.
+    /// </summary>
+    private IQueryable<Guid> QueryPullSyncedOpportunityIds()
+    {
+      var processingStatusAbortedId = _processingStatusService.GetByName(ProcessingStatus.Aborted.ToString()).Id;
+
+      return _processingLogRepository.Query()
+        .Where(o => o.EntityType == PartnerSync.EntityType.Opportunity.ToString()
+          && o.SyncType == SyncType.Pull.ToString()
+          && o.StatusId != processingStatusAbortedId
+          && o.OpportunityId.HasValue)
+        .Select(o => o.OpportunityId!.Value);
     }
     #endregion
   }

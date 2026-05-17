@@ -199,7 +199,8 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       // Title / summary / description:
       // Use English course content where available; otherwise fallback to the first listed translation.
       // Title and summary are shaped to satisfy Yoma validation limits.
-      // Summary is plain text only. Description supports HTML and keeps the richer Alison course body.
+      // Summary is plain text only.
+      // Description is converted from Alison HTML to Yoma markdown-style formatting.
       // Description also appends selected Alison metadata such as publisher and course type.
       var publisherName = GetPublisherName(course);
       var title = GetTitle(course);
@@ -227,7 +228,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       // - keep combined keyword length <= OpportunityService.Keywords_CombinedMaxLength
       //
       // Alison tags are excluded from keywords because they represent potential skill/topic mappings.
-      // Tags will be handled separately via Skills once we implement strict matching against Yoma skills.
+      // Tags are handled separately via Skills using strict matching against Yoma skills.
       var keywords = GetKeywords(course, publisherName);
 
       // Skills:
@@ -434,7 +435,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
 
       return results.Count > 0
         ? results
-        : [_languageService.GetByName(Domain.Core.Language.English.ToString())];
+        : [_languageService.GetByName(Language.English.ToString())];
     }
 
     private static IEnumerable<string> GetLanguageLocales(AlisonCourse course)
@@ -496,8 +497,8 @@ namespace Yoma.Core.Infrastructure.Alison.Client
 
       var translation = GetPreferredTranslation(course);
 
-      var title = (translation?.Name).HtmlDecode()
-        ?? course.Name.HtmlDecode();
+      var title = (translation?.Name).HtmlDecode()?.RemoveHtmlTags()
+        ?? course.Name.HtmlDecode()?.RemoveHtmlTags();
 
       if (string.IsNullOrWhiteSpace(title))
         throw new InvalidOperationException($"Alison course title/name expected for course id '{course.Id}'");
@@ -511,9 +512,9 @@ namespace Yoma.Core.Infrastructure.Alison.Client
 
       var translation = GetPreferredTranslation(course);
 
-      var summary = (translation?.Headline).HtmlDecode()
-        ?? (translation?.Summary).RemoveHtmlTags()?.HtmlDecode()
-        ?? title.HtmlDecode();
+      var summary = (translation?.Headline).HtmlDecode()?.RemoveHtmlTags()
+        ?? (translation?.Summary).HtmlDecode()?.RemoveHtmlTags()
+        ?? title;
 
       return (summary ?? title).TrimToLengthWithEllipsis(Summary_MaxLength);
     }
@@ -524,23 +525,24 @@ namespace Yoma.Core.Infrastructure.Alison.Client
 
       var translation = GetPreferredTranslation(course);
 
-      var description = (translation?.Summary).HtmlDecode()
-        ?? (translation?.Headline).HtmlDecode()
-        ?? course.Modules.FirstOrDefault(module => !string.IsNullOrWhiteSpace(module.Description))?.Description.HtmlDecode()
+      var description = (translation?.Summary).HtmlToMarkdown()
+        ?? course.Modules.FirstOrDefault(module => !string.IsNullOrWhiteSpace(module.Description))?.Description.HtmlToMarkdown()
+        ?? (translation?.Headline).HtmlToMarkdown()
         ?? title;
 
       var metadata = new List<string>();
 
       if (!string.IsNullOrWhiteSpace(publisherName))
-        metadata.Add($"<strong>Publisher:</strong> {System.Net.WebUtility.HtmlEncode(publisherName)}");
+        metadata.Add($"**Publisher:** {publisherName}");
 
-      if (!string.IsNullOrWhiteSpace(course.Type))
-        metadata.Add($"<strong>Course type:</strong> {System.Net.WebUtility.HtmlEncode(course.Type.TitleCase())}");
+      var courseType = course.Type.HtmlDecode()?.RemoveHtmlTags();
+      if (!string.IsNullOrWhiteSpace(courseType))
+        metadata.Add($"**Course type:** {courseType.TitleCase()}");
 
       if (metadata.Count > 0)
-        description = $"{description}<br /><br />{string.Join("<br />", metadata)}";
+        description = $"{description}\n\n{string.Join("\n", metadata)}";
 
-      return description;
+      return description.NormalizeTrimMultiline();
     }
 
     private static string? GetPublisherName(AlisonCourse course)
@@ -548,7 +550,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       ArgumentNullException.ThrowIfNull(course);
 
       return course.Publishers
-        .Select(item => item.Name.HtmlDecode())
+        .Select(item => item.Name.HtmlDecode()?.RemoveHtmlTags())
         .FirstOrDefault(item => !string.IsNullOrWhiteSpace(item));
     }
 
@@ -583,7 +585,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
 
     private static void AddKeyword(List<string> keywords, string? value)
     {
-      value = value.HtmlDecode();
+      value = value.HtmlDecode()?.RemoveHtmlTags();
       if (string.IsNullOrWhiteSpace(value)) return;
 
       if (value.Contains(OpportunityService.Keywords_Separator, StringComparison.Ordinal))
@@ -715,6 +717,9 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       if (values.Count == 0) return 1;
 
       var upperBound = values.Max();
+      if (upperBound > short.MaxValue)
+        return short.MaxValue;
+
       var result = (short)Math.Ceiling(upperBound);
 
       return result > 0 ? result : (short)1;
