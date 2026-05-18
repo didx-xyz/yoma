@@ -253,7 +253,7 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
       };
     }
 
-    public static OpportunityRequestUpdate ToRequestUpdate(this Models.Opportunity item, Guid id)
+    public static OpportunityRequestUpdate ToRequestUpdate(this Models.Opportunity item, Guid id, bool applyHidden = true)
     {
       ArgumentNullException.ThrowIfNull(item, nameof(item));
 
@@ -287,7 +287,7 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
         SSISchemaName = item.SSISchemaName,
         EngagementTypeId = item.EngagementTypeId,
         ShareWithPartners = item.ShareWithPartners,
-        Hidden = item.Hidden,
+        Hidden = applyHidden ? item.Hidden : null,
         ExternalId = item.ExternalId,
         Categories = item.Categories?.Select(o => o.Id).ToList() ?? [],
         Countries = item.Countries?.Select(o => o.Id).ToList() ?? [],
