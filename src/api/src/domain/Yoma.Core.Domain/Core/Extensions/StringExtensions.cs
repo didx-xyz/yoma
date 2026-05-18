@@ -7,8 +7,11 @@ namespace Yoma.Core.Domain.Core.Extensions
 {
   public static partial class StringExtensions
   {
-    #region Public Members
+    #region Class Variables
+    public const string MarkdownParagraphBreak = "\n&#x20;\n";
+    #endregion
 
+    #region Public Members
     /// <summary>
     /// Removes line breaks from a string so it is safe to log on a single line.
     /// </summary>
@@ -227,7 +230,10 @@ namespace Yoma.Core.Domain.Core.Extensions
 
       result = HtmlTags().Replace(result, string.Empty);
 
-      return result.NormalizeTrimMultiline().NormalizeNullableValue();
+      result = result.NormalizeTrimMultiline().NormalizeNullableValue();
+      if (string.IsNullOrWhiteSpace(result)) return null;
+
+      return result.Replace("\n\n", MarkdownParagraphBreak, StringComparison.Ordinal);
     }
 
     /// <summary>
