@@ -29,7 +29,8 @@ export const login = (username: string, password: string) => {
   //   });
   // });
   cy.get('button[id="btnSignIn"]').should("exist").click();
-  cy.wait(6000);
+  // Something is causing Next -> Keycloak load time to be long
+  cy.wait(12000);
   cy.origin("http://keycloak:8080", { args: { username, password } }, ({ username, password }) => {
     cy.reload(); // Reload the page to get cookies to load
     // cy.getAllCookies().then((cookies) => {
