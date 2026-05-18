@@ -103,6 +103,13 @@ namespace Yoma.Core.Infrastructure.Jobberman.Client
       var country = _countryService.GetByCodeAlpha2(item.CountryCodeAlpha2);
       var language = ResolveLanguage(item.Language);
 
+      var title = item.Title.HtmlDecode()?.RemoveHtmlTags();
+      if (string.IsNullOrWhiteSpace(title))
+        throw new InvalidOperationException($"Jobberman opportunity title expected for external id '{item.ExternalId}'");
+
+      var description = item.Description.HtmlToMarkdown() ?? title;
+      var summary = title;
+
       var feed = _options.Feeds.SingleOrDefault(o => string.Equals(o.CountryCodeAlpha2, item.CountryCodeAlpha2, StringComparison.OrdinalIgnoreCase))
         ?? throw new InvalidOperationException($"Feed config for country '{item.CountryCodeAlpha2}': Not found");
 
@@ -112,12 +119,12 @@ namespace Yoma.Core.Infrastructure.Jobberman.Client
 
       var opportunity = new Domain.Opportunity.Models.Opportunity
       {
-        Title = item.Title,
-        Description = string.IsNullOrWhiteSpace(item.Description) ? item.Title : item.Description,
+        Title = title,
+        Description = description,
         TypeId = opportunityType.Id,
         Type = opportunityType.Name,
         OrganizationId = orgId.Value,
-        Summary = item.Title,
+        Summary = summary,
         URL = item.URL,
         VerificationEnabled = false,
         Status = item.Deleted == true ? Status.Deleted : Status.Active,
