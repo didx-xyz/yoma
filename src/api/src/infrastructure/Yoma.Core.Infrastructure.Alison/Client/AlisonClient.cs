@@ -25,29 +25,40 @@ namespace Yoma.Core.Infrastructure.Alison.Client
     private const int Title_MaxLength = 150;
     private const int Summary_MaxLength = 150;
 
-    // Yoma category name -> Alison category codes.
+    // Yoma category id -> Alison category codes.
     // If unresolved, default to Other.
-    private static readonly Dictionary<string, string[]> Categories_Map = new(StringComparer.OrdinalIgnoreCase)
+    private static readonly Dictionary<Guid, string[]> Categories_Map = new()
     {
-      { "Technology and Digitization", ["it", "network-and-security", "software-development", "software-tools", "it-management", "software-engineering", "it/administration", "it/aws", "it/ccna", "it/comptia", "it/computer-networking", "it/data-security", "it/devops", "it/microsoft", "it/security", "it/server"] },
-      { "AI, Data and Analytics", ["data-science", "databases"] },
-      { "Career and Personal Development", ["language", "education", "personal-development"] },
-      { "Health and Care", ["health", "mental-health", "health-care", "nursing", "caregiving", "nutrition", "pharmacology", "personal-development/health", "personal-development/mental-health", "personal-development/depression", "personal-development/anxiety", "personal-development/diet", "fitness", "health-and-safety", "business/health-and-safety", "engineering/health-and-safety", "management/health-and-safety", "management/nursing"] },
-      { "Business and Entrepreneurship", ["business", "marketing", "engineering", "management", "entrepreneurship", "finance", "economics", "law", "accounting", "e-commerce", "sales", "digital-marketing", "marketing/social-media", "marketing/sales", "marketing/retail"] },
-      { "Environment and Climate", ["education/climate-change", "engineering/renewable-energy"] },
-      { "Tourism and Hospitality", ["tourism-and-hospitality", "language/travel"] },
-      { "Creative Industry and Arts", ["media-and-journalism", "music", "photography", "literature", "education/music-theory"] },
-      { "Agriculture", ["agriculture", "farming"] }
+      // Agriculture
+      { new Guid("2ccbacf7-1ed9-4e20-bb7c-43edfdb3f950"), ["agriculture", "farming"] },
+      // Career and Personal Development
+      { new Guid("89f4ab46-0767-494f-a18c-3037f698133a"), ["language", "education", "personal-development"] },
+      // Business and Entrepreneurship
+      { new Guid("c76786fd-fca9-4633-85b3-11e53486d708"), ["business", "marketing", "engineering", "management", "entrepreneurship", "finance", "economics", "law", "accounting", "e-commerce", "sales", "digital-marketing", "marketing/social-media", "marketing/sales", "marketing/retail"] },
+      // Environment and Climate
+      { new Guid("d0d322ab-d1d7-44b6-94e8-7b85246aa42e"), ["education/climate-change", "engineering/renewable-energy"] },
+      // Technology and Digitization
+      { new Guid("fa564c1c-591a-4a6d-8294-20165da8866b"), ["it", "network-and-security", "software-development", "software-tools", "it-management", "software-engineering", "it/administration", "it/aws", "it/ccna", "it/comptia", "it/computer-networking", "it/data-security", "it/devops", "it/microsoft", "it/security", "it/server"] },
+      // Tourism and Hospitality
+      { new Guid("f36051c9-9057-4765-bc2f-9dee82ef60d6"), ["tourism-and-hospitality", "language/travel"] },
+      // AI, Data and Analytics
+      { new Guid("1dc39a5d-e049-4cfe-b708-855fce97b86e"), ["data-science", "databases"] },
+      // Creative Industry and Arts
+      { new Guid("7afb66ad-164e-46a3-933f-a0bac1ca1923"), ["media-and-journalism", "music", "photography", "literature", "education/music-theory"] },
+      // Health and Care
+      { new Guid("6e6a5f23-6d2e-4f45-8b4d-5d9c9a6b1e71"), ["health", "mental-health", "health-care", "nursing", "caregiving", "nutrition", "pharmacology", "personal-development/health", "personal-development/mental-health", "personal-development/depression", "personal-development/anxiety", "personal-development/diet", "fitness", "health-and-safety", "business/health-and-safety", "engineering/health-and-safety", "management/health-and-safety", "management/nursing"] }
     };
 
-    // Yoma difficulty name -> Alison course levels.
+    // Yoma difficulty id -> Alison course levels.
     // Unknown or omitted values default to Any Level.
-    private static readonly Dictionary<string, string[]> Difficulty_Map = new(StringComparer.OrdinalIgnoreCase)
+    private static readonly Dictionary<Guid, string[]> Difficulty_Map = new()
     {
-      { "Beginner", ["Beginner", "Beginner Level"] },
-      { "Intermediate", ["Intermediate", "Intermediate Level"] },
-      { "Advanced", ["Advanced", "Advanced Level", "Expert", "Expert Level"] },
-      { "Any Level", ["Any Level", "Any Levels", "All Level", "All Levels", "All", "Any"] }
+      // Beginner
+      { new Guid("e33ae372-c63f-459d-983f-4527355fd0c4"), ["Beginner", "Beginner Level"] },
+      // Intermediate
+      { new Guid("e84efa58-f0ff-41f4-a2db-12c33f5e306c"), ["Intermediate", "Intermediate Level"] },
+      // Advanced
+      { new Guid("833e1f02-31b9-455e-8f4f-ce6a6c4a9aa7"), ["Advanced", "Advanced Level", "Expert", "Expert Level"] }
     };
 
     // Yoma time interval name -> Alison duration unit values.
@@ -329,32 +340,32 @@ namespace Yoma.Core.Infrastructure.Alison.Client
     {
       ArgumentNullException.ThrowIfNull(category);
 
-      if (TryResolveYomaCategoryName(category.Code, out var categoryName))
-        return _opportunityCategoryService.GetByName(categoryName);
+      if (TryResolveYomaCategoryId(category.Code, out var categoryId))
+        return _opportunityCategoryService.GetById(categoryId);
 
       return _opportunityCategoryService.GetByName(Category.Other.ToString());
     }
 
-    private static bool TryResolveYomaCategoryName(string? code, out string categoryName)
+    private static bool TryResolveYomaCategoryId(string? code, out Guid categoryId)
     {
-      categoryName = string.Empty;
+      categoryId = default;
 
       code = code?.NormalizeNullableValue();
       if (string.IsNullOrWhiteSpace(code)) return false;
 
-      if (TryResolveYomaCategoryNameExact(code, out categoryName))
+      if (TryResolveYomaCategoryIdExact(code, out categoryId))
         return true;
 
       var rootCode = code
         .Split('/', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
         .FirstOrDefault();
 
-      return TryResolveYomaCategoryNameExact(rootCode, out categoryName);
+      return TryResolveYomaCategoryIdExact(rootCode, out categoryId);
     }
 
-    private static bool TryResolveYomaCategoryNameExact(string? code, out string categoryName)
+    private static bool TryResolveYomaCategoryIdExact(string? code, out Guid categoryId)
     {
-      categoryName = string.Empty;
+      categoryId = default;
 
       if (string.IsNullOrWhiteSpace(code)) return false;
 
@@ -362,7 +373,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       {
         if (mapping.Value.Any(item => string.Equals(item, code, StringComparison.OrdinalIgnoreCase)))
         {
-          categoryName = mapping.Key;
+          categoryId = mapping.Key;
           return true;
         }
       }
@@ -653,25 +664,27 @@ namespace Yoma.Core.Infrastructure.Alison.Client
     {
       ArgumentNullException.ThrowIfNull(course);
 
-      var difficultyName = ResolveDifficultyName(course.CourseLevel);
+      var difficultyId = ResolveDifficultyIdOrNull(course.CourseLevel);
 
-      return _opportunityDifficultyService.GetByName(difficultyName);
+      return difficultyId.HasValue
+        ? _opportunityDifficultyService.GetById(difficultyId.Value)
+        : _opportunityDifficultyService.GetByName(Difficulty.AnyLevel.ToDescription());
     }
 
-    private static string ResolveDifficultyName(string? courseLevel)
+    private static Guid? ResolveDifficultyIdOrNull(string? courseLevel)
     {
       courseLevel = courseLevel?.NormalizeNullableValue();
 
-      if (!string.IsNullOrWhiteSpace(courseLevel))
+      if (string.IsNullOrWhiteSpace(courseLevel))
+        return null;
+
+      foreach (var mapping in Difficulty_Map)
       {
-        foreach (var mapping in Difficulty_Map)
-        {
-          if (mapping.Value.Any(item => string.Equals(item, courseLevel, StringComparison.OrdinalIgnoreCase)))
-            return mapping.Key;
-        }
+        if (mapping.Value.Any(item => string.Equals(item, courseLevel, StringComparison.OrdinalIgnoreCase)))
+          return mapping.Key;
       }
 
-      return Difficulty.AnyLevel.ToDescription();
+      return null;
     }
 
     private (Domain.Lookups.Models.TimeInterval Interval, short Count) GetCommitment(AlisonCourse course)
