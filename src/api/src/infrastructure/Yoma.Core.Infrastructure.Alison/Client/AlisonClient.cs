@@ -3,7 +3,6 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Extensions;
-using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Lookups.Interfaces;
 using Yoma.Core.Domain.Opportunity;
@@ -75,7 +74,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
     private readonly ILogger<AlisonClient> _logger;
     private readonly IEnvironmentProvider _environmentProvider;
     private readonly AlisonOptions _options;
-    private readonly IRepositoryBatched<Models.Opportunity> _opportunityRepository;
+    private readonly IRepositoryBatched<Opportunity> _opportunityRepository;
     private readonly IOpportunityTypeService _opportunityTypeService;
     private readonly IOpportunityCategoryService _opportunityCategoryService;
     private readonly ICountryService _countryService;
@@ -92,7 +91,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       ILogger<AlisonClient> logger,
       IEnvironmentProvider environmentProvider,
       AlisonOptions options,
-      IRepositoryBatched<Models.Opportunity> opportunityRepository,
+      IRepositoryBatched<Opportunity> opportunityRepository,
       IOpportunityTypeService opportunityTypeService,
       IOpportunityCategoryService opportunityCategoryService,
       ICountryService countryService,
@@ -159,14 +158,14 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       return result;
     }
 
-    private SyncItem<Domain.Opportunity.Models.Opportunity> ToSyncItem(Models.Opportunity item)
+    private SyncItem<Domain.Opportunity.Models.Opportunity> ToSyncItem(Opportunity item)
     {
       ArgumentNullException.ThrowIfNull(item);
 
       if (string.IsNullOrWhiteSpace(item.PayloadJson))
         throw new InvalidOperationException($"Alison opportunity cache item '{item.ExternalId}' has no payload JSON");
 
-      var course = JsonConvert.DeserializeObject<AlisonCourse>(item.PayloadJson)
+      var course = JsonConvert.DeserializeObject<Course>(item.PayloadJson)
         ?? throw new InvalidOperationException($"Failed to deserialize Alison course payload for cache item '{item.ExternalId}'");
 
       var result = ToSyncItem(course, item.Deleted == true);
@@ -175,7 +174,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       return result;
     }
 
-    private SyncItem<Domain.Opportunity.Models.Opportunity> ToSyncItem(AlisonCourse course, bool deleted)
+    private SyncItem<Domain.Opportunity.Models.Opportunity> ToSyncItem(Course course, bool deleted)
     {
       ArgumentNullException.ThrowIfNull(course);
 
@@ -221,8 +220,8 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       // Dates:
       // DateStart = published_at -> created_at -> UtcNow.
       // DateEnd = null/open-ended unless Alison provides expiry/removal semantics.
-      var dateStart = DateTimeHelper.TryParse(course.PublishedAt)
-        ?? DateTimeHelper.TryParse(course.CreatedAt)
+      var dateStart = course.PublishedAt
+        ?? course.CreatedAt
         ?? DateTimeOffset.UtcNow;
 
       // Keywords:
@@ -322,7 +321,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       };
     }
 
-    private List<Domain.Opportunity.Models.Lookups.OpportunityCategory> GetCategories(AlisonCourse course)
+    private List<Domain.Opportunity.Models.Lookups.OpportunityCategory> GetCategories(Course course)
     {
       ArgumentNullException.ThrowIfNull(course);
 
@@ -333,17 +332,17 @@ namespace Yoma.Core.Infrastructure.Alison.Client
 
       return categories.Count > 0
         ? categories
-        : [_opportunityCategoryService.GetByName(Category.Other.ToString())];
+        : [_opportunityCategoryService.GetByName(Domain.Opportunity.Category.Other.ToString())];
     }
 
-    private Domain.Opportunity.Models.Lookups.OpportunityCategory ResolveYomaCategory(AlisonCategory category)
+    private Domain.Opportunity.Models.Lookups.OpportunityCategory ResolveYomaCategory(Models.Category category)
     {
       ArgumentNullException.ThrowIfNull(category);
 
       if (TryResolveYomaCategoryId(category.Code, out var categoryId))
         return _opportunityCategoryService.GetById(categoryId);
 
-      return _opportunityCategoryService.GetByName(Category.Other.ToString());
+      return _opportunityCategoryService.GetByName(Domain.Opportunity.Category.Other.ToString());
     }
 
     private static bool TryResolveYomaCategoryId(string? code, out Guid categoryId)
@@ -381,7 +380,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       return false;
     }
 
-    private List<Domain.Lookups.Models.Country> GetCountries(AlisonCourse course)
+    private List<Domain.Lookups.Models.Country> GetCountries(Course course)
     {
       ArgumentNullException.ThrowIfNull(course);
 
@@ -429,7 +428,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       return result;
     }
 
-    private List<Domain.Lookups.Models.Language> GetLanguages(AlisonCourse course)
+    private List<Domain.Lookups.Models.Language> GetLanguages(Course course)
     {
       ArgumentNullException.ThrowIfNull(course);
 
@@ -449,7 +448,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
         : [_languageService.GetByName(Language.English.ToString())];
     }
 
-    private static IEnumerable<string> GetLanguageLocales(AlisonCourse course)
+    private static IEnumerable<string> GetLanguageLocales(Course course)
     {
       if (!string.IsNullOrWhiteSpace(course.Language))
         yield return course.Language;
@@ -490,7 +489,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
         : codeAlpha2.ToUpperInvariant();
     }
 
-    private static string ResolveCourseUrl(AlisonCourse course)
+    private static string ResolveCourseUrl(Course course)
     {
       ArgumentNullException.ThrowIfNull(course);
 
@@ -502,7 +501,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
         : $"{Alison_Web_BaseUrl}/courses/{course.Id}";
     }
 
-    private static string GetTitle(AlisonCourse course)
+    private static string GetTitle(Course course)
     {
       ArgumentNullException.ThrowIfNull(course);
 
@@ -517,7 +516,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       return title.TrimToLengthWithEllipsis(Title_MaxLength);
     }
 
-    private static string GetSummary(AlisonCourse course, string title)
+    private static string GetSummary(Course course, string title)
     {
       ArgumentNullException.ThrowIfNull(course);
 
@@ -530,7 +529,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       return (summary ?? title).TrimToLengthWithEllipsis(Summary_MaxLength);
     }
 
-    private static string GetDescription(AlisonCourse course, string title, string? publisherName)
+    private static string GetDescription(Course course, string title, string? publisherName)
     {
       ArgumentNullException.ThrowIfNull(course);
 
@@ -556,7 +555,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       return description.NormalizeTrimMultiline();
     }
 
-    private static string? GetPublisherName(AlisonCourse course)
+    private static string? GetPublisherName(Course course)
     {
       ArgumentNullException.ThrowIfNull(course);
 
@@ -565,7 +564,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
         .FirstOrDefault(item => !string.IsNullOrWhiteSpace(item));
     }
 
-    private static AlisonCourseTranslation? GetPreferredTranslation(AlisonCourse course)
+    private static CourseTranslation? GetPreferredTranslation(Course course)
     {
       ArgumentNullException.ThrowIfNull(course);
 
@@ -576,7 +575,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
         ?? course.Translations.FirstOrDefault();
     }
 
-    private static List<string>? GetKeywords(AlisonCourse course, string? publisherName)
+    private static List<string>? GetKeywords(Course course, string? publisherName)
     {
       ArgumentNullException.ThrowIfNull(course);
 
@@ -588,7 +587,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       return result.Count == 0 ? null : result;
     }
 
-    private static IEnumerable<string?> GetKeywordCandidates(AlisonCourse course, string? publisherName)
+    private static IEnumerable<string?> GetKeywordCandidates(Course course, string? publisherName)
     {
       yield return publisherName;
       yield return course.Type;
@@ -619,7 +618,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       keywords.Add(value);
     }
 
-    private List<Domain.Lookups.Models.Skill>? GetSkills(AlisonCourse course)
+    private List<Domain.Lookups.Models.Skill>? GetSkills(Course course)
     {
       ArgumentNullException.ThrowIfNull(course);
 
@@ -637,7 +636,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       return result.Count == 0 ? null : result;
     }
 
-    private Domain.Lookups.Models.Skill? ResolveSkill(AlisonTag tag)
+    private Domain.Lookups.Models.Skill? ResolveSkill(Tag tag)
     {
       ArgumentNullException.ThrowIfNull(tag);
 
@@ -660,7 +659,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       return null;
     }
 
-    private Domain.Opportunity.Models.Lookups.OpportunityDifficulty GetDifficulty(AlisonCourse course)
+    private Domain.Opportunity.Models.Lookups.OpportunityDifficulty GetDifficulty(Course course)
     {
       ArgumentNullException.ThrowIfNull(course);
 
@@ -687,7 +686,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       return null;
     }
 
-    private (Domain.Lookups.Models.TimeInterval Interval, short Count) GetCommitment(AlisonCourse course)
+    private (Domain.Lookups.Models.TimeInterval Interval, short Count) GetCommitment(Course course)
     {
       ArgumentNullException.ThrowIfNull(course);
 

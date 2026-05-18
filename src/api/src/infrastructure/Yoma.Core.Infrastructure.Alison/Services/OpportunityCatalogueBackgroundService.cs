@@ -22,7 +22,7 @@ namespace Yoma.Core.Infrastructure.Alison.Services
     private const string Header_Authorization_Value_Prefix = "Bearer";
     private const int PageSize_Maximum = 100;
 
-    private static AlisonAccessTokenResponse _accessToken = null!;
+    private static AccessTokenResponse _accessToken = null!;
 
     private readonly ILogger<OpportunityCatalogueBackgroundService> _logger;
     private readonly IEnvironmentProvider _environmentProvider;
@@ -161,7 +161,7 @@ namespace Yoma.Core.Infrastructure.Alison.Services
         _logger.LogInformation("HTTP Alison opportunity catalogue refresh complete");
     }
 
-    private List<AlisonCourse> LoadEmbeddedCourses()
+    private List<Course> LoadEmbeddedCourses()
     {
       if (string.IsNullOrWhiteSpace(_options.EmbeddedResourceName))
         throw new InvalidOperationException("Alison embedded resource name is required");
@@ -177,16 +177,16 @@ namespace Yoma.Core.Infrastructure.Alison.Services
       using var reader = new StreamReader(resourceStream);
       var json = reader.ReadToEnd();
 
-      var response = JsonConvert.DeserializeObject<AlisonResponse<AlisonCourse>>(json)
+      var response = JsonConvert.DeserializeObject<Response<Course>>(json)
         ?? throw new InvalidOperationException("Failed to deserialize embedded Alison sample courses JSON");
 
       return response.Data;
     }
 
-    private async Task<List<AlisonCourse>> GetCourses()
+    private async Task<List<Course>> GetCourses()
     {
       var pageNumber = 1;
-      var courses = new List<AlisonCourse>();
+      var courses = new List<Course>();
       int? total = null;
 
       while (true)
@@ -217,7 +217,7 @@ namespace Yoma.Core.Infrastructure.Alison.Services
       return courses;
     }
 
-    private async Task<AlisonResponse<AlisonCourse>> GetCoursesPage(int pageNumber, int pageSize)
+    private async Task<Response<Course>> GetCoursesPage(int pageNumber, int pageSize)
     {
       if (_logger.IsEnabled(LogLevel.Debug))
         _logger.LogDebug(
@@ -232,7 +232,7 @@ namespace Yoma.Core.Infrastructure.Alison.Services
         .WithTimeout(TimeSpan.FromSeconds(_options.RequestTimeoutSeconds))
         .GetAsync()
         .EnsureSuccessStatusCodeAsync()
-        .ReceiveJson<AlisonResponse<AlisonCourse>>();
+        .ReceiveJson<Response<Course>>();
     }
 
     private async Task<KeyValuePair<string, string>> GetAuthHeader()
@@ -245,9 +245,9 @@ namespace Yoma.Core.Infrastructure.Alison.Services
       return new KeyValuePair<string, string>(Header_Authorization, $"{Header_Authorization_Value_Prefix} {_accessToken.AccessToken}");
     }
 
-    private async Task<AlisonAccessTokenResponse> GetAccessToken()
+    private async Task<AccessTokenResponse> GetAccessToken()
     {
-      var request = new AlisonAccessTokenRequest
+      var request = new AccessTokenRequest
       {
         ClientId = _options.ClientId,
         ClientSecret = _options.ClientSecret
@@ -261,7 +261,7 @@ namespace Yoma.Core.Infrastructure.Alison.Services
         .WithTimeout(TimeSpan.FromSeconds(_options.RequestTimeoutSeconds))
         .PostJsonAsync(request)
         .EnsureSuccessStatusCodeAsync()
-        .ReceiveJson<AlisonAccessTokenResponse>();
+        .ReceiveJson<AccessTokenResponse>();
 
       if (string.IsNullOrWhiteSpace(response.AccessToken))
         throw new InvalidOperationException("Alison access token response did not contain an access token");
@@ -272,7 +272,7 @@ namespace Yoma.Core.Infrastructure.Alison.Services
       return response;
     }
 
-    private async Task ProcessOpportunities(List<AlisonCourse> courses, DateTimeOffset now)
+    private async Task ProcessOpportunities(List<Course> courses, DateTimeOffset now)
     {
       ArgumentNullException.ThrowIfNull(courses, nameof(courses));
 
@@ -390,7 +390,7 @@ namespace Yoma.Core.Infrastructure.Alison.Services
           itemsToCreate.Count, itemsToUpdate.Count, itemsToMarkDeleted.Count, deletedCount);
     }
 
-    private static Opportunity ToOpportunity(AlisonCourse course)
+    private static Opportunity ToOpportunity(Course course)
     {
       ArgumentNullException.ThrowIfNull(course, nameof(course));
 
