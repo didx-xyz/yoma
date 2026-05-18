@@ -459,7 +459,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
                     entityId = opportunity.Id;
 
                     // Hash the equivalent update payload so the created item can be compared consistently against future pull updates.
-                    var requestUpdate = opportunityItem.ToRequestUpdate(entityId.Value);
+                    var requestUpdate = opportunityItem.ToRequestUpdate(entityId.Value, applyHidden: false);
                     payloadHash = HashHelper.ComputeSHA256Hash(requestUpdate);
 
                     break;
@@ -473,7 +473,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
                     if (!entityId.HasValue)
                       throw new InvalidOperationException($"Entity id expected for pull update: Partner '{partner}', entity type '{entityType}', entity external id '{item.ExternalId}'");
 
-                    var request = opportunityItem.ToRequestUpdate(entityId.Value);
+                    var request = opportunityItem.ToRequestUpdate(entityId.Value, applyHidden: false);
                     payloadHash = HashHelper.ComputeSHA256Hash(request);
 
                     var retryingPreviousError = !string.IsNullOrWhiteSpace(processingItemExisting.ErrorReason);
