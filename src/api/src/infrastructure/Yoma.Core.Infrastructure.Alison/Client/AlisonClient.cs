@@ -540,7 +540,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
         metadata.Add($"**Course type:** {courseType.TitleCase()}");
 
       if (metadata.Count > 0)
-        description = $"{description}{StringExtensions.MarkdownParagraphBreak}{string.Join(StringExtensions.MarkdownParagraphBreak, metadata)}";
+        description = $"{description}{StringExtensions.MarkdownParagraphBreak}{string.Join("\n", metadata)}";
 
       return description.NormalizeTrimMultiline();
     }
