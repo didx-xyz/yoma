@@ -1053,7 +1053,7 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                     <div className="mt-2">
                       <button
                         type="button"
-                        className="btn btn-sm btn-outline btn-secondary rounded-full normal-case"
+                        className="btn btn-outline btn-sm btn-secondary rounded-full normal-case"
                         onClick={() => setShowFeedback(!showFeedback)}
                       >
                         {showFeedback ? "Hide Feedback" : "Give Feedback"}
@@ -1084,7 +1084,7 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                                 key={x}
                                 type="radio"
                                 name="rating-2"
-                                className="mask mask-star-2 bg-orange"
+                                className="mask bg-orange mask-star-2"
                                 checked={value === x}
                                 onChange={() => onChange(x)}
                               />
@@ -1108,7 +1108,7 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                         render={({ field: { onChange, value } }) => (
                           <textarea
                             //className="textarea textarea-bordered w-full"
-                            className="blockx textarea textarea-bordered border-gray focus:border-gray w-full rounded-md focus:outline-none"
+                            className="blockx textarea-bordered textarea border-gray focus:border-gray w-full rounded-md focus:outline-none"
                             placeholder="Enter your feedback"
                             value={value || ""}
                             onChange={onChange}
@@ -1158,14 +1158,14 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
               <div className="mt-4 mb-10 flex grow gap-4">
                 <button
                   type="button"
-                  className="btn btn-outline btn-primary border-purple text-purple w-1/2 shrink rounded-full bg-white normal-case"
+                  className="btn border-purple text-purple btn-outline btn-primary w-1/2 shrink rounded-full bg-white normal-case"
                   onClick={onClose}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="btn btn-primary bg-purple w-1/2 shrink rounded-full text-white normal-case"
+                  className="btn bg-purple btn-primary w-1/2 shrink rounded-full text-white normal-case"
                 >
                   Submit
                 </button>

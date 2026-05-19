@@ -90,7 +90,7 @@ export function DropdownMenu({
         popover="auto"
         id={popoverId}
         style={popoverStyle}
-        className={`dropdown menu bg-base-100 rounded-box border-base-200 z-1 w-56 border p-2 shadow-lg ${menuClassName ?? ""}`.trim()}
+        className={`menu dropdown rounded-box border-base-200 bg-base-100 z-1 w-56 border p-2 shadow-lg ${menuClassName ?? ""}`.trim()}
       >
         {items.map((item) => (
           <li key={item.label}>

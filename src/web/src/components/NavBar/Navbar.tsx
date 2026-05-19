@@ -297,7 +297,7 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
     return (
       <li
         key={`userMenu_orgs_${organisation.id}`}
-        className="btn btn-sm text-gray-dark items-start !rounded-md border-none bg-white text-sm shadow-none"
+        className="btn text-gray-dark btn-sm items-start !rounded-md border-none bg-white text-sm shadow-none"
       >
         <Link
           href={
@@ -325,20 +325,20 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
               {organisation.status == "Active" && (
                 <>
                   <span
-                    className="tooltip tooltip-left tooltip-secondary bg-success mr-2 h-2 w-2 rounded-full"
+                    className="tooltip tooltip-left bg-success tooltip-secondary mr-2 h-2 w-2 rounded-full"
                     data-tip="Active"
                   ></span>
                 </>
               )}
               {organisation.status == "Inactive" && (
                 <span
-                  className="tooltip tooltip-left tooltip-secondary bg-warning mr-2 h-2 w-2 rounded-full"
+                  className="tooltip tooltip-left bg-warning tooltip-secondary mr-2 h-2 w-2 rounded-full"
                   data-tip="Pending"
                 ></span>
               )}
               {organisation.status == "Declined" && (
                 <span
-                  className="tooltip tooltip-left tooltip-secondary bg-error mr-2 h-2 w-2 rounded-full"
+                  className="tooltip tooltip-left bg-error tooltip-secondary mr-2 h-2 w-2 rounded-full"
                   data-tip="Declined"
                 ></span>
               )}
@@ -436,7 +436,7 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
                       </div>
                       <label
                         htmlFor="nav-drawer"
-                        className="drawer-close btn btn-sm btn-circle text-gray-dark hover:bg-gray !rounded-full border-none shadow-md"
+                        className="drawer-close btn btn-circle text-gray-dark btn-sm hover:bg-gray !rounded-full border-none shadow-md"
                         aria-label="close sidebar"
                         tabIndex={isDrawerOpen ? 0 : -1}
                         onKeyDown={(e) => {
@@ -456,7 +456,7 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
                       {sideBarNavbarLinks.map((link, index) => (
                         <li
                           key={`lnkNavbarMenuModal_${index}`}
-                          className={`text-gray-dark font-family-nunito mt-1 flex flex-col gap-2 rounded-md text-sm font-semibold tracking-normal ${link.itemClassName ?? ""}`}
+                          className={`font-family-nunito text-gray-dark mt-1 flex flex-col gap-2 rounded-md text-sm font-semibold tracking-normal ${link.itemClassName ?? ""}`}
                         >
                           <Link
                             href={link.url!}
@@ -485,7 +485,7 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
                     <div className="divider !bg-gray my-2 grow-0" />
 
                     <LanguageSwitcher
-                      className="hover:bg-gray font-family-nunito ml-1 bg-transparent px-3 !py-1"
+                      className="font-family-nunito hover:bg-gray ml-1 bg-transparent px-3 !py-1"
                       classNameIcon="text-gray-dark !h-5 !w-5"
                       classNameSelect="text-gray-dark font-family-nunito text-sm font-semibold tracking-normal"
                       tabIndex={isDrawerOpen ? 0 : -1}
@@ -502,7 +502,7 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
                           <ul className="menu -m-2 w-full p-0">
                             <li
                               key="userMenu_orgs_all"
-                              className="btn btn-sm text-gray-dark font-family-nunito items-start !rounded-md border-none bg-white text-sm font-semibold tracking-normal shadow-none"
+                              className="btn font-family-nunito text-gray-dark btn-sm items-start !rounded-md border-none bg-white text-sm font-semibold tracking-normal shadow-none"
                             >
                               <Link
                                 href="/organisations"
@@ -532,7 +532,7 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
                         <ul className="menu -m-2 w-full p-0">
                           <li
                             key="userMenu_admin"
-                            className="btn btn-sm text-gray-dark font-family-nunito items-start !rounded-md border-none bg-white text-sm font-semibold tracking-normal shadow-none"
+                            className="btn font-family-nunito text-gray-dark btn-sm items-start !rounded-md border-none bg-white text-sm font-semibold tracking-normal shadow-none"
                           >
                             <button
                               onClick={toggleAdminMenu}
@@ -557,7 +557,7 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
                           {isAdminMenuOpen && (
                             <li
                               key="userMenu_admin_overview"
-                              className="btn btn-sm text-gray-dark font-family-nunito items-start !rounded-md border-none bg-white text-sm font-semibold tracking-normal shadow-none"
+                              className="btn font-family-nunito text-gray-dark btn-sm items-start !rounded-md border-none bg-white text-sm font-semibold tracking-normal shadow-none"
                             >
                               <Link
                                 href="/organisations/dashboard"

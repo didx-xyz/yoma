@@ -281,7 +281,7 @@ export const FileUpload: React.FC<InputProps> = ({
           <div className="mt-4 flex flex-col gap-4">
             <button
               type="button"
-              className="md:mr-2x md:scale-100x btn btn-circle btn-sm border-green text-green hover:border-green w-[95px] scale-[1.15x] bg-transparent normal-case"
+              className="md:mr-2x md:scale-100x btn btn-circle border-green text-green btn-sm hover:border-green w-[95px] scale-[1.15x] bg-transparent normal-case"
               onClick={fileUpload}
             >
               <Image
@@ -327,7 +327,7 @@ export const FileUpload: React.FC<InputProps> = ({
                       </div>
                       <button
                         type="button"
-                        className="btn btn-sm text-gray-dark hover:bg-gray !rounded-full border-none shadow-md"
+                        className="btn text-gray-dark btn-sm hover:bg-gray !rounded-full border-none shadow-md"
                         onClick={() => {
                           // Cancel upload if in progress
                           if (

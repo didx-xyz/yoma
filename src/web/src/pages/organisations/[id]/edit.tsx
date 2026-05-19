@@ -501,7 +501,7 @@ const OrganisationUpdate: NextPageWithLayout<{
         {/* CONTENT */}
         <div className="flex flex-col justify-center gap-4 md:flex-row">
           {/* MENU */}
-          <ul className="menu-horizontal shadow-custom menu md:menu-vertical hidden h-max w-full items-center justify-center gap-4 rounded-lg bg-white p-4 font-semibold md:max-w-[265px]">
+          <ul className="menu menu-horizontal shadow-custom md:menu-vertical hidden h-max w-full items-center justify-center gap-4 rounded-lg bg-white p-4 font-semibold md:max-w-[265px]">
             {menuItems.map((item) => (
               <li
                 key={item.step}
@@ -618,14 +618,14 @@ const OrganisationUpdate: NextPageWithLayout<{
                   <div>
                     <div
                       role="tablist"
-                      className="tabs tabs-border gap-6 select-none"
+                      className="tabs-border tabs gap-6 select-none"
                     >
                       <a
                         role="tab"
                         className={`border-b-4 py-2 font-semibold whitespace-nowrap ${
                           activeTab === "orgSettings"
                             ? "border-orange text-gray-dark"
-                            : "hover:border-orange text-gray"
+                            : "text-gray hover:border-orange"
                         }`}
                         onClick={() => setActiveTab("orgSettings")}
                       >
@@ -636,7 +636,7 @@ const OrganisationUpdate: NextPageWithLayout<{
                         className={`border-b-4 py-2 font-semibold whitespace-nowrap ${
                           activeTab === "ssoSettings"
                             ? "border-orange text-gray-dark"
-                            : "hover:border-orange text-gray"
+                            : "text-gray hover:border-orange"
                         }`}
                         onClick={() => setActiveTab("ssoSettings")}
                       >

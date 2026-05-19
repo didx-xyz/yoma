@@ -118,7 +118,7 @@ const ProgramBadges: React.FC<ProgramBadgesProps> = ({
 
       {resolvedShowBadges.requirements && pathwayRequired ? (
         <div
-          className="tooltipx tooltip-secondary cursor-helpx before:text-[0.6875rem]"
+          className="tooltipx cursor-helpx tooltip-secondary before:text-[0.6875rem]"
           data-tip="Referees must complete pathway tasks to qualify for rewards."
         >
           <span className={requirementBadgeClass}>
@@ -130,7 +130,7 @@ const ProgramBadges: React.FC<ProgramBadgesProps> = ({
 
       {resolvedShowBadges.requirements && proofRequired ? (
         <div
-          className="tooltipx tooltip-secondary cursor-helpx before:text-[0.6875rem]"
+          className="tooltipx cursor-helpx tooltip-secondary before:text-[0.6875rem]"
           data-tip="Referees must verify proof of personhood before rewards can be earned."
         >
           <span className={requirementBadgeClass}>
@@ -144,7 +144,7 @@ const ProgramBadges: React.FC<ProgramBadgesProps> = ({
       resolvedShowBadges.rewardsReferrer &&
       (referrerReward ?? 0) > 0 ? (
         <div
-          className="tooltipx tooltip-secondary cursor-helpx before:text-[0.6875rem]"
+          className="tooltipx cursor-helpx tooltip-secondary before:text-[0.6875rem]"
           data-tip="You receive this ZLTO amount when your referral completes all requirements."
         >
           <span className={rewardBadgeClass}>

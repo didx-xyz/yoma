@@ -503,7 +503,7 @@ export const UserProfileForm: React.FC<{
                   {...register(`updatePhoneNumber`)}
                   type="checkbox"
                   id="updatePhoneNumber"
-                  className="checkbox-primary checkbox"
+                  className="checkbox checkbox-primary"
                 />
                 <span className="label-text ml-4">Update Phone Number</span>
               </label>
@@ -536,7 +536,7 @@ export const UserProfileForm: React.FC<{
                   {...register(`resetPassword`)}
                   type="checkbox"
                   id="resetPassword"
-                  className="checkbox-primary checkbox"
+                  className="checkbox checkbox-primary"
                 />
                 <span className="label-text ml-4">Reset Password</span>
               </label>
@@ -781,7 +781,7 @@ export const UserProfileForm: React.FC<{
           {onCancel && (
             <button
               type="button"
-              className="btn btn-outline border-green text-green hover:bg-green min-w-0 flex-1 normal-case hover:text-white md:max-w-[220px]"
+              className="btn border-green text-green btn-outline hover:bg-green min-w-0 flex-1 normal-case hover:text-white md:max-w-[220px]"
               onClick={onCancel}
             >
               {cancelButtonText}

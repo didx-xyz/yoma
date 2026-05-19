@@ -482,7 +482,7 @@ const ReferralPrograms: NextPageWithLayout<{
                               {program.name}
                             </Link>
                             {program.isDefault && (
-                              <span className="badge badge-sm bg-blue-light text-blue flex-shrink-0">
+                              <span className="badge bg-blue-light badge-sm text-blue flex-shrink-0">
                                 Default
                               </span>
                             )}

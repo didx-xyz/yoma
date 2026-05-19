@@ -20,7 +20,7 @@ export const RefereeWelcomeModal: React.FC<{
           <div className="grow"></div>
           <button
             type="button"
-            className="btn btn-circle btn-sm bg-purple-shade border-0 text-white shadow-none hover:opacity-80"
+            className="btn btn-circle bg-purple-shade btn-sm border-0 text-white shadow-none hover:opacity-80"
             onClick={onClose}
           >
             <IoMdClose className="h-4 w-4" />
@@ -61,7 +61,7 @@ export const RefereeWelcomeModal: React.FC<{
           </div>
           <button
             type="button"
-            className="btn hover:btn-outline hover:text-green bg-green border-green btn-sm mt-1 w-full max-w-[240px] text-white normal-case hover:bg-white md:w-1/2"
+            className="btn border-green bg-green btn-sm hover:text-green hover:btn-outline mt-1 w-full max-w-[240px] text-white normal-case hover:bg-white md:w-1/2"
             onClick={onClose}
           >
             Got it!

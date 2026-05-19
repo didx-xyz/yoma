@@ -192,7 +192,7 @@ export const OrganisationCardComponent: React.FC<{
           </div>
 
           {item?.status != "Deleted" && (
-            <div className="dropdown dropdown-end dropdown-left">
+            <div className="dropdown dropdown-left dropdown-end">
               <div
                 role="button"
                 aria-label="Settings"
@@ -202,7 +202,7 @@ export const OrganisationCardComponent: React.FC<{
                 <IoIosSettings className="h-7 w-7 md:h-5 md:w-5" />
               </div>
 
-              <ul className="menu dropdown-content rounded-box bg-base-100 z-50 w-52 p-2 shadow">
+              <ul className="dropdown-content menu rounded-box bg-base-100 z-50 w-52 p-2 shadow">
                 {item?.status != "Deleted" && (
                   <li>
                     <Link

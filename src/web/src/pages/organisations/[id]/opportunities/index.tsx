@@ -525,7 +525,7 @@ const Opportunities: NextPageWithLayout<{
                     icon={<FaRocket className="text-warning size-6" />}
                   />
                   {currentOrganisationInactive ? (
-                    <span className="btn btn-primary bg-purple rounded-3xl px-16 brightness-75">
+                    <span className="btn bg-purple btn-primary rounded-3xl px-16 brightness-75">
                       Add opportunity (disabled)
                     </span>
                   ) : (

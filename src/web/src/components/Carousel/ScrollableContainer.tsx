@@ -173,12 +173,12 @@ const ScrollableContainer: React.FC<ScrollableContainerProps> = ({
     <div className="relative h-full">
       {/* Left shadow */}
       {showShadows && showLeftShadow && (
-        <div className="from-gray-light/5 backdrop-blur-smx pointer-events-none absolute top-0 bottom-0 left-0 z-10 w-12 bg-gradient-to-r to-transparent"></div>
+        <div className="backdrop-blur-smx from-gray-light/5 pointer-events-none absolute top-0 bottom-0 left-0 z-10 w-12 bg-gradient-to-r to-transparent"></div>
       )}
 
       {/* Right shadow */}
       {showShadows && showRightShadow && (
-        <div className="from-gray-light/5 backdrop-blur-smx pointer-events-none absolute top-0 right-0 bottom-0 z-10 w-12 bg-gradient-to-l to-transparent"></div>
+        <div className="backdrop-blur-smx from-gray-light/5 pointer-events-none absolute top-0 right-0 bottom-0 z-10 w-12 bg-gradient-to-l to-transparent"></div>
       )}
 
       <div

@@ -568,7 +568,7 @@ const OpportunityVerifications: NextPageWithLayout<{
           {/* BUTTONS */}
           <div className="flex flex-col gap-2 px-6 py-4 pt-2 sm:flex-row sm:place-items-center sm:justify-center">
             <button
-              className="btn btn-outline border-green text-green hover:bg-green w-full shrink rounded-full bg-white normal-case hover:border-0 hover:text-white sm:w-48 md:w-64"
+              className="btn border-green text-green btn-outline hover:bg-green w-full shrink rounded-full bg-white normal-case hover:border-0 hover:text-white sm:w-48 md:w-64"
               onClick={onCloseVerificationModal}
             >
               <IoMdClose className="h-6 w-6" />
@@ -708,7 +708,7 @@ const OpportunityVerifications: NextPageWithLayout<{
           {/* BUTTON */}
           <div className="flex flex-row place-items-center justify-end px-6 py-4 pt-2">
             <button
-              className="btn btn-outline btn-sm text-green hover:border-green hover:bg-green flex-nowrap rounded-full px-10 py-5 hover:text-white"
+              className="btn text-green btn-outline btn-sm hover:border-green hover:bg-green flex-nowrap rounded-full px-10 py-5 hover:text-white"
               onClick={onCloseVerificationResultModal}
             >
               Close
@@ -916,7 +916,7 @@ const OpportunityVerifications: NextPageWithLayout<{
                       <th className="border-gray-light w-[35px] !py-4 pr-4">
                         <input
                           type="checkbox"
-                          className="checkbox-primary checkbox checkbox-sm"
+                          className="checkbox checkbox-sm checkbox-primary"
                           checked={
                             selectedRows?.length === searchResults.items?.length
                           }
@@ -937,7 +937,7 @@ const OpportunityVerifications: NextPageWithLayout<{
                         <td className="border-gray-light text-gray-dark w-[35px] border-t-2 pt-4 !align-top">
                           <input
                             type="checkbox"
-                            className="checkbox-primary checkbox checkbox-sm"
+                            className="checkbox checkbox-sm checkbox-primary"
                             checked={selectedRows?.some((x) => x.id == item.id)}
                             onChange={(e) => handleRowSelect(e, item)}
                           />
@@ -978,7 +978,7 @@ const OpportunityVerifications: NextPageWithLayout<{
                               item.verificationStatus == "Pending" && (
                                 <button
                                   type="button"
-                                  className="btn btn-sm border-gray text-gray-dark hover:bg-gray flex-nowrap bg-white hover:text-white"
+                                  className="btn border-gray text-gray-dark btn-sm hover:bg-gray flex-nowrap bg-white hover:text-white"
                                   onClick={() => {
                                     setBulkActionApprove(null);
                                     setTempSelectedRows([item]);

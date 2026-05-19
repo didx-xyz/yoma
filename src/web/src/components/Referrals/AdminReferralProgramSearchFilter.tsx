@@ -97,7 +97,7 @@ export const ReferralProgramSearchFilters: React.FC<{
                 control={form.control}
                 render={({ field: { onChange, value } }) => (
                   <select
-                    className="select select-bordered w-full md:w-72"
+                    className="select-bordered select w-full md:w-72"
                     onChange={(e) => {
                       const selectedValue = e.target.value;
                       onChange(selectedValue ? [selectedValue] : null);

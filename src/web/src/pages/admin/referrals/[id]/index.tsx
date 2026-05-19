@@ -1744,7 +1744,7 @@ const ReferralProgramForm: NextPageWithLayout = () => {
             <div className="mt-8 flex grow gap-4">
               <button
                 type="button"
-                className="btn btn-primary btn-wide rounded-full normal-case"
+                className="btn btn-wide btn-primary rounded-full normal-case"
                 onClick={() =>
                   statusMutation.mutate(ProgramStatus.Inactive, {
                     onSuccess: (updatedProgram) => {
@@ -1853,7 +1853,7 @@ const ReferralProgramForm: NextPageWithLayout = () => {
             <div className="mt-4 flex w-full justify-center gap-4 px-4">
               <button
                 type="button"
-                className="btn btn-warning btn-md flex-grow rounded-full px-8 normal-case md:flex-grow-0"
+                className="btn btn-md btn-warning flex-grow rounded-full px-8 normal-case md:flex-grow-0"
                 onClick={onClickContinueWithoutSaving}
               >
                 <span className="ml-1">Continue without saving</span>
@@ -1861,7 +1861,7 @@ const ReferralProgramForm: NextPageWithLayout = () => {
 
               <button
                 type="button"
-                className="btn btn-success btn-md flex-grow rounded-full px-8 text-white normal-case md:flex-grow-0"
+                className="btn btn-md btn-success flex-grow rounded-full px-8 text-white normal-case md:flex-grow-0"
                 onClick={onClickSaveAndContinue}
               >
                 <p className="text-white">Save and continue</p>
@@ -2114,14 +2114,14 @@ const ReferralProgramForm: NextPageWithLayout = () => {
                           returnUrl?.toString(),
                           "/admin/referrals",
                         )}
-                        className="btn btn-warning btn-md flex-grow rounded-full px-8 normal-case md:flex-grow-0"
+                        className="btn btn-md btn-warning flex-grow rounded-full px-8 normal-case md:flex-grow-0"
                       >
                         Cancel
                       </Link>
 
                       <button
                         type="submit"
-                        className="btn btn-success btn-md flex-grow rounded-full px-8 text-white normal-case md:flex-grow-0"
+                        className="btn btn-md btn-success flex-grow rounded-full px-8 text-white normal-case md:flex-grow-0"
                       >
                         Next
                       </button>
@@ -2279,14 +2279,14 @@ const ReferralProgramForm: NextPageWithLayout = () => {
                       <button
                         type="button"
                         onClick={() => onStep(1)}
-                        className="btn btn-warning btn-md flex-grow rounded-full px-8 normal-case md:flex-grow-0"
+                        className="btn btn-md btn-warning flex-grow rounded-full px-8 normal-case md:flex-grow-0"
                       >
                         Back
                       </button>
 
                       <button
                         type="submit"
-                        className="btn btn-success btn-md flex-grow rounded-full px-8 text-white normal-case md:flex-grow-0"
+                        className="btn btn-md btn-success flex-grow rounded-full px-8 text-white normal-case md:flex-grow-0"
                       >
                         Next
                       </button>
@@ -2543,14 +2543,14 @@ const ReferralProgramForm: NextPageWithLayout = () => {
                       <button
                         type="button"
                         onClick={() => onStep(2)}
-                        className="btn btn-warning btn-md flex-grow rounded-full px-8 normal-case md:flex-grow-0"
+                        className="btn btn-md btn-warning flex-grow rounded-full px-8 normal-case md:flex-grow-0"
                       >
                         Back
                       </button>
 
                       <button
                         type="submit"
-                        className="btn btn-success btn-md flex-grow rounded-full px-8 text-white normal-case md:flex-grow-0"
+                        className="btn btn-md btn-success flex-grow rounded-full px-8 text-white normal-case md:flex-grow-0"
                       >
                         Next
                       </button>
@@ -2586,7 +2586,7 @@ const ReferralProgramForm: NextPageWithLayout = () => {
                           <input
                             type="checkbox"
                             id="isDefault"
-                            className="checkbox-secondary checkbox disabled:border-gray"
+                            className="checkbox checkbox-secondary disabled:border-gray"
                             {...registerStep4("isDefault")}
                           />
                           <div className="text-gray-dark ml-4 select-none">
@@ -2608,7 +2608,7 @@ const ReferralProgramForm: NextPageWithLayout = () => {
                           <input
                             type="checkbox"
                             id="hidden"
-                            className="checkbox-secondary checkbox disabled:border-gray"
+                            className="checkbox checkbox-secondary disabled:border-gray"
                             {...registerStep4("hidden")}
                           />
                           <div className="text-gray-dark ml-4 select-none">
@@ -2630,7 +2630,7 @@ const ReferralProgramForm: NextPageWithLayout = () => {
                           <input
                             type="checkbox"
                             id="proofOfPersonhoodRequired"
-                            className="checkbox-secondary checkbox disabled:border-gray"
+                            className="checkbox checkbox-secondary disabled:border-gray"
                             {...registerStep4("proofOfPersonhoodRequired")}
                           />
                           <div className="text-gray-dark ml-4 select-none">
@@ -2675,7 +2675,7 @@ const ReferralProgramForm: NextPageWithLayout = () => {
                           <input
                             type="checkbox"
                             id="pathwayRequired"
-                            className="checkbox-secondary checkbox disabled:border-gray"
+                            className="checkbox checkbox-secondary disabled:border-gray"
                             {...registerStep4("pathwayRequired")}
                           />
                           <div className="text-gray-dark ml-4 select-none">
@@ -2729,14 +2729,14 @@ const ReferralProgramForm: NextPageWithLayout = () => {
                       <button
                         type="button"
                         onClick={() => onStep(3)}
-                        className="btn btn-warning btn-md flex-grow rounded-full px-8 normal-case md:flex-grow-0"
+                        className="btn btn-md btn-warning flex-grow rounded-full px-8 normal-case md:flex-grow-0"
                       >
                         Back
                       </button>
 
                       <button
                         type="submit"
-                        className="btn btn-success btn-md flex-grow rounded-full px-8 text-white normal-case md:flex-grow-0"
+                        className="btn btn-md btn-success flex-grow rounded-full px-8 text-white normal-case md:flex-grow-0"
                       >
                         Next
                       </button>
@@ -2788,14 +2788,14 @@ const ReferralProgramForm: NextPageWithLayout = () => {
                       <button
                         type="button"
                         onClick={() => onStep(4)}
-                        className="btn btn-warning btn-md flex-grow rounded-full px-8 normal-case md:flex-grow-0"
+                        className="btn btn-md btn-warning flex-grow rounded-full px-8 normal-case md:flex-grow-0"
                       >
                         Back
                       </button>
 
                       <button
                         type="submit"
-                        className="btn btn-success btn-md flex-grow rounded-full px-8 text-white normal-case md:flex-grow-0"
+                        className="btn btn-md btn-success flex-grow rounded-full px-8 text-white normal-case md:flex-grow-0"
                       >
                         Next
                       </button>
@@ -2827,14 +2827,14 @@ const ReferralProgramForm: NextPageWithLayout = () => {
                     <button
                       type="button"
                       onClick={() => onStep(5)}
-                      className="btn btn-warning btn-md flex-grow rounded-full px-8 normal-case md:flex-grow-0"
+                      className="btn btn-md btn-warning flex-grow rounded-full px-8 normal-case md:flex-grow-0"
                     >
                       Back
                     </button>
 
                     <button
                       type="button"
-                      className="btn btn-success btn-md flex-grow rounded-full px-8 text-white normal-case md:flex-grow-0"
+                      className="btn btn-md btn-success flex-grow rounded-full px-8 text-white normal-case md:flex-grow-0"
                       onClick={() => onSubmit(formData)}
                       disabled={
                         isLoading ||

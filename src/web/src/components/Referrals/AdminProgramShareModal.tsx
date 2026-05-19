@@ -34,7 +34,7 @@ export const AdminProgramShareModal: React.FC<AdminProgramShareModalProps> = ({
             <div className="grow"></div>
             <button
               type="button"
-              className="btn btn-circle btn-sm bg-purple-shade border-0 text-white shadow-none hover:opacity-80"
+              className="btn btn-circle bg-purple-shade btn-sm border-0 text-white shadow-none hover:opacity-80"
               onClick={onClose}
             >
               <IoMdClose className="h-4 w-4" />
@@ -92,7 +92,7 @@ export const AdminProgramShareModal: React.FC<AdminProgramShareModalProps> = ({
             <div className="mt-4 flex justify-center">
               <button
                 type="button"
-                className="btn btn-outline border-green btn-sm text-green hover:bg-green w-1/2 normal-case hover:text-white"
+                className="btn border-green text-green btn-outline btn-sm hover:bg-green w-1/2 normal-case hover:text-white"
                 onClick={onClose}
               >
                 OK

@@ -1,3 +1,18 @@
 * text=auto eol=lf
 
+# Force LF for config/script files regardless of OS
+*.yml text eol=lf
+*.yaml text eol=lf
+*.json text eol=lf
+*.sh text eol=lf
+
+# Binary — never apply line-ending conversion
+*.gz binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+
 secrets.yaml diff=sopsdiffer

@@ -1539,7 +1539,7 @@ const StoreRuleDetails: NextPageWithLayout<{
                               found based on the specified store info:
                             </FormMessage>
 
-                            <table className="table-xs border-gray-light table border-separate rounded-lg border-x-2 border-t-2">
+                            <table className="border-gray-light table-xs table border-separate rounded-lg border-x-2 border-t-2">
                               <thead>
                                 <tr className="border-gray">
                                   <th className="border-gray-light border-b-2 !py-4">

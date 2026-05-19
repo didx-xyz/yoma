@@ -169,7 +169,7 @@ export const SchemaAttributesEdit: React.FC<InputProps> = ({
             <div className="flex">
               <button
                 type="button"
-                className="btn btn-error btn-sm"
+                className="btn btn-sm btn-error"
                 onClick={() => remove(index)}
               >
                 <IoIosRemove className="h-4 w-4" />
@@ -182,7 +182,7 @@ export const SchemaAttributesEdit: React.FC<InputProps> = ({
       <div className="flex justify-center">
         <button
           type="button"
-          className="btn btn-primary btn-sm"
+          className="btn btn-sm btn-primary"
           onClick={() =>
             append({ dataSource: "", attribute: "", attributes: [] })
           }

@@ -36,7 +36,7 @@ export const AlternativeActions: React.FC = () => {
         {isAuthenticated && (
           <Link
             href="/yoid/wallet"
-            className="btn btn-sm bg-orange w-full gap-2 text-white hover:brightness-110 md:w-auto md:min-w-[180px]"
+            className="btn bg-orange btn-sm w-full gap-2 text-white hover:brightness-110 md:w-auto md:min-w-[180px]"
           >
             <IoArrowForward className="h-4 w-4" />
             See your wallet
@@ -45,7 +45,7 @@ export const AlternativeActions: React.FC = () => {
 
         <Link
           href="/marketplace"
-          className="btn btn-sm bg-orange w-full gap-2 text-white hover:brightness-110 md:w-auto md:min-w-[180px]"
+          className="btn bg-orange btn-sm w-full gap-2 text-white hover:brightness-110 md:w-auto md:min-w-[180px]"
         >
           <IoArrowForward className="h-4 w-4" />
           Browse marketplace
@@ -53,7 +53,7 @@ export const AlternativeActions: React.FC = () => {
 
         <Link
           href="/opportunities"
-          className="btn btn-sm bg-orange w-full gap-2 text-white hover:brightness-110 md:w-auto md:min-w-[180px]"
+          className="btn bg-orange btn-sm w-full gap-2 text-white hover:brightness-110 md:w-auto md:min-w-[180px]"
         >
           <IoArrowForward className="h-4 w-4" />
           Find more opportunities

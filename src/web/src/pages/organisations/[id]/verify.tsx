@@ -249,7 +249,7 @@ const OrganisationDetails: NextPageWithLayout<{
 
         <div className="mb-4 flex flex-row place-items-center justify-center px-6 py-4 pt-2">
           <button
-            className="btn btn-outline btn-sm text-green hover:border-green hover:bg-green flex-nowrap rounded-full px-10 py-5 hover:text-white"
+            className="btn text-green btn-outline btn-sm hover:border-green hover:bg-green flex-nowrap rounded-full px-10 py-5 hover:text-white"
             onClick={() => router.push("/organisations")}
           >
             View all organisations
@@ -272,7 +272,7 @@ const OrganisationDetails: NextPageWithLayout<{
 
         <div className="mb-4 flex flex-row place-items-center justify-center px-6 py-4 pt-2">
           <button
-            className="btn btn-outline btn-sm text-green hover:border-green hover:bg-green flex-nowrap rounded-full px-10 py-5 hover:text-white"
+            className="btn text-green btn-outline btn-sm hover:border-green hover:bg-green flex-nowrap rounded-full px-10 py-5 hover:text-white"
             onClick={() => router.push("/organisations")}
           >
             View all organisations
@@ -335,7 +335,7 @@ const OrganisationDetails: NextPageWithLayout<{
             </button>
             {verifyActionApprove && (
               <button
-                className="btn btn-success btn-sm flex-nowrap"
+                className="btn btn-sm btn-success flex-nowrap"
                 onClick={() => onSubmit()}
                 id="btnApproveModal"
               >
@@ -345,7 +345,7 @@ const OrganisationDetails: NextPageWithLayout<{
             )}
             {!verifyActionApprove && (
               <button
-                className="btn btn-warning btn-sm flex-nowrap"
+                className="btn btn-sm btn-warning flex-nowrap"
                 onClick={() => onSubmit()}
                 id="btnRejectModal"
               >

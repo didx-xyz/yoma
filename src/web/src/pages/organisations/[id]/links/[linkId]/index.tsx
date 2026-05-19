@@ -592,7 +592,7 @@ const LinkOverview: NextPageWithLayout<{
                 className={`cursor-pointer border-b-4 py-2 whitespace-nowrap text-black ${
                   !usage
                     ? "border-orange"
-                    : "hover:border-orange hover:text-gray text-gray"
+                    : "text-gray hover:border-orange hover:text-gray"
                 }`}
               >
                 All
@@ -603,7 +603,7 @@ const LinkOverview: NextPageWithLayout<{
                 className={`cursor-pointer border-b-4 py-2 whitespace-nowrap text-black ${
                   usage === "claimed"
                     ? "border-orange"
-                    : "hover:border-orange hover:text-gray text-gray"
+                    : "text-gray hover:border-orange hover:text-gray"
                 }`}
               >
                 Claimed
@@ -614,7 +614,7 @@ const LinkOverview: NextPageWithLayout<{
                 className={`cursor-pointer border-b-4 py-2 whitespace-nowrap text-black ${
                   usage === "unclaimed"
                     ? "border-orange"
-                    : "hover:border-orange hover:text-gray text-gray"
+                    : "text-gray hover:border-orange hover:text-gray"
                 }`}
               >
                 Unclaimed

@@ -295,7 +295,7 @@ const RefereeDashboard: NextPageWithLayout = () => {
 
                         <Link
                           href={`/user/profile?returnUrl=${encodeURIComponent(getSafeUrl(router.asPath, "/yoid"))}`}
-                          className="btn btn-sm bg-green hover:bg-green-dark h-9 w-[160px] rounded-full border-0 px-5 text-white normal-case"
+                          className="btn bg-green btn-sm hover:bg-green-dark h-9 w-[160px] rounded-full border-0 px-5 text-white normal-case"
                         >
                           <IoOpenOutline className="h-4 w-4" />
                           Go to Profile
@@ -322,7 +322,7 @@ const RefereeDashboard: NextPageWithLayout = () => {
                               getSafeUrl(router.asPath, "/yoid"),
                             )
                           }
-                          className="btn btn-sm bg-green hover:bg-green-dark h-9 w-[160px] rounded-full border-0 px-5 text-white normal-case"
+                          className="btn bg-green btn-sm hover:bg-green-dark h-9 w-[160px] rounded-full border-0 px-5 text-white normal-case"
                         >
                           <IoOpenOutline className="h-4 w-4" />
                           Continue

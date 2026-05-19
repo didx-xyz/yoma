@@ -254,7 +254,7 @@ const About: NextPageWithLayout<{
                         Fragmented Opportunities
                       </h1>
                     </div>
-                    <p className="text-gray-dark -mt-4x text-sm md:text-base">
+                    <p className="-mt-4x text-gray-dark text-sm md:text-base">
                       Youth expressed they feel lost in a fragmented system and
                       they struggle to identify meaningful opportunities that
                       will result in a job.
@@ -430,7 +430,7 @@ const About: NextPageWithLayout<{
                           href={newsFeed.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="btn btn-rounded bg-green hover:bg-green/90 mt-10 w-full max-w-[300px] text-sm text-white normal-case"
+                          className="btn-rounded btn bg-green hover:bg-green/90 mt-10 w-full max-w-[300px] text-sm text-white normal-case"
                         >
                           Read more{" "}
                           <span className="lowercase">{newsFeed.type}</span>

@@ -402,7 +402,7 @@ const ProgramsSection = ({
               />
               {selectedCountryIds.length > 0 && (
                 <button
-                  className="btn btn-sm bg-orange mt-4 gap-2 text-white hover:brightness-110 disabled:opacity-50"
+                  className="btn bg-orange btn-sm mt-4 gap-2 text-white hover:brightness-110 disabled:opacity-50"
                   onClick={() => onCountryChange([])}
                 >
                   Clear Filters
@@ -466,7 +466,7 @@ const ReferralHeroSection = ({
               )}
 
               {programmeSummary && (
-                <div className="bg-beige/60 w-fitx absolute bottom-16 left-6 z-30 inline-flex w-[250px] flex-col items-center gap-3 rounded-2xl px-4 py-3 shadow-2xl backdrop-blur-lg">
+                <div className="w-fitx bg-beige/60 absolute bottom-16 left-6 z-30 inline-flex w-[250px] flex-col items-center gap-3 rounded-2xl px-4 py-3 shadow-2xl backdrop-blur-lg">
                   <div className="flex flex-col gap-2 text-left leading-tight">
                     <p className="font-family-nunito text-lg font-bold text-black">
                       My Programmes
@@ -478,7 +478,7 @@ const ReferralHeroSection = ({
                     {/* BADGES */}
                     {totalZltoEarned > 0 && (
                       <div className="flex gap-2">
-                        <span className="badge badge-sm bg-orange whitespace-nowrap text-white">
+                        <span className="badge bg-orange badge-sm whitespace-nowrap text-white">
                           <Image
                             src={iconZlto}
                             alt="Icon Zlto"

@@ -1,7 +1,6 @@
 {
   "name": "yoma-web",
   "version": "3.0.0",
-  "private": false,
   "license": "GPL-3.0",
   "scripts": {
     "build": "next build --webpack",

@@ -364,7 +364,7 @@ const Stores: NextPageWithLayout<{
           <IoIosSettings className="h-4 w-4" />
         </button>
 
-        <ul className="menu dropdown-content rounded-box bg-base-100 z-50 w-52 p-2 shadow">
+        <ul className="dropdown-content menu rounded-box bg-base-100 z-50 w-52 p-2 shadow">
           {item?.status === "Active" && (
             <li>
               <button

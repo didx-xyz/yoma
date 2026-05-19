@@ -93,7 +93,7 @@ const OpportunityListItem: React.FC<{
           <div className="flex flex-row">
             <h4 className="line-clamp-4 text-sm font-thin">
               <button
-                className="btn btn-secondary btn-sm"
+                className="btn btn-sm btn-secondary"
                 onClick={downloadFiles}
               >
                 <FaDownload className="size-4" />
