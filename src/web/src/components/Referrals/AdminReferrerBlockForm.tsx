@@ -173,7 +173,7 @@ const UnblockFormComponent: React.FC<{
                 render={({ field }) => (
                   <textarea
                     {...field}
-                    className={`textarea textarea-bordered h-24 w-full ${
+                    className={`textarea-bordered textarea h-24 w-full ${
                       errors.comment ? "textarea-error" : ""
                     }`}
                     placeholder="Enter a comment..."
@@ -193,7 +193,7 @@ const UnblockFormComponent: React.FC<{
             <div className="mt-4 mb-10 flex w-full gap-4">
               <button
                 type="button"
-                className="btn btn-ghost border-gray w-full shrink"
+                className="btn border-gray btn-ghost w-full shrink"
                 onClick={onClose}
               >
                 Cancel
@@ -285,7 +285,7 @@ const BlockFormComponent: React.FC<{
                   render={({ field }) => (
                     <select
                       {...field}
-                      className={`select select-bordered w-full ${
+                      className={`select-bordered select w-full ${
                         errors.reasonId ? "select-error" : ""
                       }`}
                     >
@@ -318,7 +318,7 @@ const BlockFormComponent: React.FC<{
                   render={({ field }) => (
                     <textarea
                       {...field}
-                      className={`textarea textarea-bordered h-24 w-full ${
+                      className={`textarea-bordered textarea h-24 w-full ${
                         errors.comment ? "textarea-error" : ""
                       }`}
                       placeholder="Enter a comment..."
@@ -343,7 +343,7 @@ const BlockFormComponent: React.FC<{
                     render={({ field }) => (
                       <input
                         type="checkbox"
-                        className="checkbox-secondary checkbox disabled:border-gray"
+                        className="checkbox checkbox-secondary disabled:border-gray"
                         checked={field.value}
                         onChange={field.onChange}
                       />
@@ -360,7 +360,7 @@ const BlockFormComponent: React.FC<{
             <div className="mt-4 mb-10 flex w-full gap-4">
               <button
                 type="button"
-                className="btn btn-ghost border-gray w-full shrink"
+                className="btn border-gray btn-ghost w-full shrink"
                 onClick={onClose}
               >
                 Cancel

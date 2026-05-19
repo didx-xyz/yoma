@@ -100,7 +100,7 @@ const ProgressDisplay: React.FC<{
     <span className={`text-[10px] font-semibold text-${color}-700`}>
       {completed} / {total} ({percentComplete}%)
     </span>
-    {isCompleted && <span className="badge badge-success badge-xs">✓</span>}
+    {isCompleted && <span className="badge badge-xs badge-success">✓</span>}
   </div>
 );
 

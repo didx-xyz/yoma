@@ -235,7 +235,7 @@ const VerificationExport: React.FC<VerificationExportDialogProps> = ({
           <div className="my-4 flex w-full grow items-center justify-center gap-4">
             <button
               type="button"
-              className="btn btn-outline border-green text-green hover:bg-green w-64 shrink rounded-full bg-white normal-case hover:border-0 hover:text-white"
+              className="btn border-green text-green btn-outline hover:bg-green w-64 shrink rounded-full bg-white normal-case hover:border-0 hover:text-white"
               onClick={() => {
                 onClose();
                 setIsLoadingDownload(false);

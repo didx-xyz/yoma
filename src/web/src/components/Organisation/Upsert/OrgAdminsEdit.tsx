@@ -160,7 +160,7 @@ export const OrgAdminsEdit: React.FC<InputProps> = ({
             <span className="label-text">I will be the organisation admin</span>
             <input
               type="checkbox"
-              className="checkbox-secondary checkbox"
+              className="checkbox checkbox-secondary"
               {...register("addCurrentUserAsAdmin")}
             />
           </label>

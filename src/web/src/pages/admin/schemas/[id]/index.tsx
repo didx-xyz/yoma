@@ -612,7 +612,7 @@ const SchemaCreateEdit: NextPageWithLayout<{
                       {id === "create" && (
                         <button
                           type="button"
-                          className="btn btn-warning btn-sm grow"
+                          className="btn btn-sm btn-warning grow"
                           onClick={handleCancel}
                         >
                           Cancel
@@ -620,7 +620,7 @@ const SchemaCreateEdit: NextPageWithLayout<{
                       )}
                       <button
                         type="submit"
-                        className="btn btn-success btn-sm grow"
+                        className="btn btn-sm btn-success grow"
                       >
                         Next
                       </button>
@@ -670,7 +670,7 @@ const SchemaCreateEdit: NextPageWithLayout<{
                     <div className="my-4 flex items-center justify-center gap-2">
                       <button
                         type="button"
-                        className="btn btn-warning btn-sm grow"
+                        className="btn btn-sm btn-warning grow"
                         onClick={() => {
                           setStep(1);
                         }}
@@ -680,7 +680,7 @@ const SchemaCreateEdit: NextPageWithLayout<{
 
                       <button
                         type="submit"
-                        className="btn btn-success btn-sm grow"
+                        className="btn btn-sm btn-success grow"
                       >
                         {id === "create" ? "Next" : "Submit"}
                       </button>
@@ -843,7 +843,7 @@ const SchemaCreateEdit: NextPageWithLayout<{
                     <div className="my-4 flex items-center justify-center gap-2">
                       <button
                         type="button"
-                        className="btn btn-warning btn-sm grow"
+                        className="btn btn-sm btn-warning grow"
                         onClick={() => {
                           setStep(2);
                         }}
@@ -852,7 +852,7 @@ const SchemaCreateEdit: NextPageWithLayout<{
                       </button>
                       <button
                         type="submit"
-                        className="btn btn-success btn-sm grow"
+                        className="btn btn-sm btn-success grow"
                         disabled={
                           !(isValidStep1 && isValidStep2 && isValidStep3)
                         }

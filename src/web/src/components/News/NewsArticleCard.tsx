@@ -39,7 +39,7 @@ export const NewsArticleCard: React.FC<NewsArticleCardProps> = ({
           href={data.url || "#"}
           target="_blank"
           rel="noopener noreferrer"
-          className="hover:text-green font-nunito line-clamp-4 flex-1 text-[18px] font-bold transition-colors"
+          className="font-nunito hover:text-green line-clamp-4 flex-1 text-[18px] font-bold transition-colors"
         >
           {data.title}
         </Link>

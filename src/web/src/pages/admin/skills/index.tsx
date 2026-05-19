@@ -204,7 +204,7 @@ const Skills: NextPageWithLayout<{
               <button
                 type="button"
                 onClick={onClick_CopyAllSkillsToClipboard}
-                className="btn btn-sm border-green bg-gray tooltip tooltip-top"
+                className="tooltip btn tooltip-top border-green bg-gray btn-sm"
                 data-tip="Copy these skills to clipboard"
               >
                 <FaCopy className="text-gray-dark h-4 w-4" />

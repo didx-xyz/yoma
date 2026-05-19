@@ -129,7 +129,7 @@ export const AdminProgramPathwayEditComponent: React.FC<
             >
               <textarea
                 placeholder="Describe the pathway journey..."
-                className="textarea textarea-bordered w-full text-sm"
+                className="textarea-bordered textarea w-full text-sm"
                 rows={2}
                 {...field}
                 value={field.value ?? ""}
@@ -165,7 +165,7 @@ export const AdminProgramPathwayEditComponent: React.FC<
                 tasks: [],
               });
             }}
-            className="btn btn-xs tooltip bg-blue-500 text-white"
+            className="tooltip btn btn-xs bg-blue-500 text-white"
             data-tip="Add Step"
           >
             <IoMdAdd className="h-4 w-4" />
@@ -186,7 +186,7 @@ export const AdminProgramPathwayEditComponent: React.FC<
                   control={control}
                   render={({ field }) => (
                     <select
-                      className="select select-bordered select-sm w-[100px] bg-white font-bold text-blue-600"
+                      className="select-bordered select select-sm w-[100px] bg-white font-bold text-blue-600"
                       {...field}
                     >
                       <option value={PathwayCompletionRule.All}>ALL</option>
@@ -207,7 +207,7 @@ export const AdminProgramPathwayEditComponent: React.FC<
                           control={control}
                           render={({ field: orderField }) => (
                             <select
-                              className="select select-bordered select-sm w-[140px] bg-white font-bold text-blue-600"
+                              className="select-bordered select select-sm w-[140px] bg-white font-bold text-blue-600"
                               {...orderField}
                               value={orderField.value ?? ""}
                             >
@@ -238,7 +238,7 @@ export const AdminProgramPathwayEditComponent: React.FC<
                     tasks: [],
                   });
                 }}
-                className="btn btn-xs tooltip bg-blue-500 text-white"
+                className="tooltip btn btn-xs bg-blue-500 text-white"
                 data-tip="Add Step"
               >
                 <IoMdAdd className="h-4 w-4" />
@@ -263,7 +263,7 @@ export const AdminProgramPathwayEditComponent: React.FC<
                     tasks: [],
                   });
                 }}
-                className="btn btn-xs tooltip bg-blue-500 text-white"
+                className="tooltip btn btn-xs bg-blue-500 text-white"
                 data-tip="Add Step"
               >
                 <IoMdAdd className="h-4 w-4" />
@@ -575,7 +575,7 @@ const StepEditComponent: React.FC<StepEditComponentProps> = ({
                 render={({ field }) => (
                   <textarea
                     placeholder="Step description (optional)..."
-                    className="textarea textarea-bordered w-full text-sm"
+                    className="textarea-bordered textarea w-full text-sm"
                     rows={2}
                     {...field}
                     value={field.value ?? ""}
@@ -588,7 +588,7 @@ const StepEditComponent: React.FC<StepEditComponentProps> = ({
               <button
                 type="button"
                 onClick={onMoveUp}
-                className="btn btn-xs tooltip"
+                className="tooltip btn btn-xs"
                 data-tip="Move Step Up"
                 disabled={isFirst}
               >
@@ -597,7 +597,7 @@ const StepEditComponent: React.FC<StepEditComponentProps> = ({
               <button
                 type="button"
                 onClick={onMoveDown}
-                className="btn btn-xs tooltip"
+                className="tooltip btn btn-xs"
                 data-tip="Move Step Down"
                 disabled={isLast}
               >
@@ -606,7 +606,7 @@ const StepEditComponent: React.FC<StepEditComponentProps> = ({
               <button
                 type="button"
                 onClick={onRemove}
-                className="btn btn-error btn-xs tooltip text-white"
+                className="tooltip btn btn-xs btn-error text-white"
                 data-tip="Remove Step"
               >
                 <IoMdTrash className="h-4 w-4" />
@@ -635,7 +635,7 @@ const StepEditComponent: React.FC<StepEditComponentProps> = ({
                   order: null,
                 });
               }}
-              className="btn btn-success btn-xs tooltip text-white"
+              className="tooltip btn btn-xs btn-success text-white"
               data-tip="Add Task"
             >
               <IoMdAdd className="h-4 w-4" />
@@ -658,7 +658,7 @@ const StepEditComponent: React.FC<StepEditComponentProps> = ({
                   order: null,
                 });
               }}
-              className="btn btn-success btn-xs tooltip text-white"
+              className="tooltip btn btn-xs btn-success text-white"
               data-tip="Add Task"
             >
               <IoMdAdd className="h-4 w-4" />
@@ -677,7 +677,7 @@ const StepEditComponent: React.FC<StepEditComponentProps> = ({
                 control={control}
                 render={({ field }) => (
                   <select
-                    className="select select-bordered select-sm w-[100px] bg-white font-bold text-green-600"
+                    className="select-bordered select select-sm w-[100px] bg-white font-bold text-green-600"
                     {...field}
                   >
                     <option value={PathwayCompletionRule.All}>ALL</option>
@@ -698,7 +698,7 @@ const StepEditComponent: React.FC<StepEditComponentProps> = ({
                         control={control}
                         render={({ field: orderField }) => (
                           <select
-                            className="select select-bordered select-sm w-[120px] bg-white font-bold text-green-600"
+                            className="select-bordered select select-sm w-[120px] bg-white font-bold text-green-600"
                             {...orderField}
                             value={orderField.value ?? ""}
                           >
@@ -727,7 +727,7 @@ const StepEditComponent: React.FC<StepEditComponentProps> = ({
                   order: null,
                 });
               }}
-              className="btn btn-success btn-xs tooltip text-white"
+              className="tooltip btn btn-xs btn-success text-white"
               data-tip="Add Task"
             >
               <IoMdAdd className="h-4 w-4" />
@@ -885,7 +885,7 @@ const StepEditComponent: React.FC<StepEditComponentProps> = ({
                                 <button
                                   type="button"
                                   onClick={() => handleMoveTaskUp(taskIndex)}
-                                  className="btn btn-xs tooltip"
+                                  className="tooltip btn btn-xs"
                                   data-tip="Move Task Up"
                                   disabled={taskIndex === 0}
                                 >
@@ -894,7 +894,7 @@ const StepEditComponent: React.FC<StepEditComponentProps> = ({
                                 <button
                                   type="button"
                                   onClick={() => handleMoveTaskDown(taskIndex)}
-                                  className="btn btn-xs tooltip"
+                                  className="tooltip btn btn-xs"
                                   data-tip="Move Task Down"
                                   disabled={taskIndex === taskFields.length - 1}
                                 >
@@ -903,7 +903,7 @@ const StepEditComponent: React.FC<StepEditComponentProps> = ({
                                 <button
                                   type="button"
                                   onClick={() => removeTask(taskIndex)}
-                                  className="btn btn-error btn-xs tooltip text-white"
+                                  className="tooltip btn btn-xs btn-error text-white"
                                   data-tip="Remove Task"
                                 >
                                   <IoMdTrash className="h-4 w-4" />

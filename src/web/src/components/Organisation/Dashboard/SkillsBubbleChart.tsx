@@ -245,7 +245,7 @@ export const SkillsBubbleChart: React.FC<SkillsBubbleChartProps> = ({
           chartType="BubbleChart"
           loader={
             <div className="flex w-full items-center justify-center">
-              <span className="loading loading-spinner loading-lg text-green"></span>
+              <span className="loading loading-lg loading-spinner text-green"></span>
             </div>
           }
           data={localData}

@@ -13,7 +13,7 @@ const FormRadio: React.FC<{
       <input
         type="radio"
         id={id}
-        className="radio-primary radio"
+        className="radio radio-primary"
         {...inputProps}
       />
       <span className="label-text ml-4">{label}</span>

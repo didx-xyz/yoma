@@ -29,7 +29,7 @@ export const BecomeReferrerCTA: React.FC = () => {
       <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
         <Link
           href="/referrals"
-          className="btn btn-sm bg-orange w-full gap-2 text-white hover:brightness-110 md:w-auto md:min-w-[180px]"
+          className="btn bg-orange btn-sm w-full gap-2 text-white hover:brightness-110 md:w-auto md:min-w-[180px]"
         >
           <IoArrowForward className="h-4 w-4" />
           Start referring

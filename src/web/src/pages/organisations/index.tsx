@@ -476,7 +476,7 @@ const Organisations: NextPageWithLayout<{
               href={`/organisations/register${`?returnUrl=${encodeURIComponent(
                 getSafeUrl(returnUrl?.toString(), router.asPath),
               )}`}`}
-              className="bg-theme btn btn-circle btn-secondary btn-sm shadow-custom h-fit w-fit !border-none p-1 text-xs whitespace-nowrap text-white brightness-105 md:p-2 md:px-4"
+              className="bg-theme btn btn-circle shadow-custom btn-sm btn-secondary h-fit w-fit !border-none p-1 text-xs whitespace-nowrap text-white brightness-105 md:p-2 md:px-4"
               id="btnCreateOpportunity" // e2e
             >
               <IoIosAdd className="h-7 w-7 md:h-5 md:w-5" />

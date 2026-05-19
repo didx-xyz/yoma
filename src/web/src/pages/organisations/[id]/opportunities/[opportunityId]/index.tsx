@@ -1547,7 +1547,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
             <div className="mt-8 flex grow gap-4">
               <button
                 type="button"
-                className="btn btn-primary btn-wide rounded-full normal-case"
+                className="btn btn-wide btn-primary rounded-full normal-case"
                 onClick={() =>
                   statusMutation.mutate(Status.Inactive, {
                     onSuccess: (updatedOpportunity) => {

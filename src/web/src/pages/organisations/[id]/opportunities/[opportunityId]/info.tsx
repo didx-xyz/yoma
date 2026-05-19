@@ -275,7 +275,7 @@ const OpportunityDetails: NextPageWithLayout<{
                         }`}
                       >
                         <div className="bg-yellow-light flex flex-row items-center gap-2 rounded-lg p-1">
-                          <div className="badge badge-warning bg-yellow rounded-lg text-white">
+                          <div className="badge bg-yellow badge-warning rounded-lg text-white">
                             {opportunity?.participantCountPending}
                           </div>
                           <div className="text-yellow text-xs font-bold">

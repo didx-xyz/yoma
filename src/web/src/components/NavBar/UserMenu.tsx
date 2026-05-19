@@ -255,7 +255,7 @@ export const UserMenu: React.FC = () => {
                 {/* CLOSE BUTTON */}
                 <label
                   htmlFor="userMenu-drawer"
-                  className="drawer-close btn btn-sm btn-circle hover:bg-orange absolute top-2 right-2 border-none text-black"
+                  className="drawer-close btn btn-circle btn-sm hover:bg-orange absolute top-2 right-2 border-none text-black"
                   aria-label="close sidebar"
                   tabIndex={isDrawerOpen ? 0 : -1}
                   onKeyDown={(e) => {
@@ -272,7 +272,7 @@ export const UserMenu: React.FC = () => {
                 <div className="z-10 mt-2 flex w-full flex-row items-center gap-2">
                   <Link
                     href="/user/profile"
-                    className="font-nunito btn btn-warning btn-sm w-1/2 text-white"
+                    className="font-nunito btn btn-sm btn-warning w-1/2 text-white"
                     onClick={() => setDrawerOpen(false)}
                     tabIndex={isDrawerOpen ? 0 : -1}
                     title="Edit your profile"
@@ -282,7 +282,7 @@ export const UserMenu: React.FC = () => {
 
                   <Link
                     href="/user/settings"
-                    className="font-nunito btn btn-warning btn-sm w-1/2 text-white"
+                    className="font-nunito btn btn-sm btn-warning w-1/2 text-white"
                     onClick={() => setDrawerOpen(false)}
                     tabIndex={isDrawerOpen ? 0 : -1}
                     title="Change your settings"
@@ -460,7 +460,7 @@ export const UserMenu: React.FC = () => {
 
                   {/* open passport button */}
                   <Link
-                    className="btn btn-sm bg-orange hover:bg-orange gap-2 border-0 border-none px-4 text-white shadow-lg hover:brightness-95 disabled:!cursor-wait disabled:brightness-95"
+                    className="btn bg-orange btn-sm hover:bg-orange gap-2 border-0 border-none px-4 text-white shadow-lg hover:brightness-95 disabled:!cursor-wait disabled:brightness-95"
                     onClick={() => setDrawerOpen(false)}
                     href={`/yoid/passport`}
                     tabIndex={isDrawerOpen ? 0 : -1}

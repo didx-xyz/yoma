@@ -33,7 +33,7 @@ export const ReferralBlockedView: React.FC<RequestBlockedViewProps> = ({
       />
 
       <Link
-        className="btn btn-warning btn-sm text-white"
+        className="btn btn-sm btn-warning text-white"
         href="mailto:help@yoma.world"
       >
         Contact Support

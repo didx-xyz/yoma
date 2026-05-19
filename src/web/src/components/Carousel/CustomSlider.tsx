@@ -139,7 +139,7 @@ const CustomSlider = ({
             <button
               type="button"
               onClick={onScrollLeft}
-              className="group btn btn-circle btn-sm border-orange bg-orange hover:border-orange hover:bg-orange h-8 w-8 cursor-pointer border-[1.5px] px-2 text-black hover:brightness-90 disabled:!cursor-not-allowed md:h-10 md:w-10"
+              className="group btn btn-circle border-orange bg-orange btn-sm hover:border-orange hover:bg-orange h-8 w-8 cursor-pointer border-[1.5px] px-2 text-black hover:brightness-90 disabled:!cursor-not-allowed md:h-10 md:w-10"
             >
               <MdKeyboardArrowLeft className="text-lg md:text-3xl" />
             </button>
@@ -166,7 +166,7 @@ const CustomSlider = ({
             <button
               type="button"
               onClick={onScrollRight}
-              className="group btn btn-circle btn-sm border-orange bg-orange hover:border-orange hover:bg-orange h-8 w-8 cursor-pointer border-[1.5px] px-2 text-black delay-300 hover:brightness-90 disabled:!cursor-not-allowed md:h-10 md:w-10"
+              className="group btn btn-circle border-orange bg-orange btn-sm hover:border-orange hover:bg-orange h-8 w-8 cursor-pointer border-[1.5px] px-2 text-black delay-300 hover:brightness-90 disabled:!cursor-not-allowed md:h-10 md:w-10"
             >
               <MdKeyboardArrowRight className="text-lg md:text-3xl" />
             </button>

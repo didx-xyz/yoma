@@ -540,7 +540,7 @@ const Home: NextPageWithLayout<{
                       href={newsFeed.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="btn btn-rounded bg-green hover:bg-green/90 mt-10 w-full max-w-[300px] text-sm text-white normal-case"
+                      className="btn-rounded btn bg-green hover:bg-green/90 mt-10 w-full max-w-[300px] text-sm text-white normal-case"
                     >
                       Read more{" "}
                       <span className="lowercase">{newsFeed.type}</span>

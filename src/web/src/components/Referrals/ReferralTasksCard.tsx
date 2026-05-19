@@ -251,7 +251,7 @@ export const ReferralTasksCard = ({
                             href={`/opportunities/${task.opportunityId}`}
                             target="_blank"
                             rel={preview ? "noopener noreferrer" : undefined}
-                            className="btn btn-sm bg-green hover:bg-green-dark h-9 w-[160px] rounded-full border-0 px-5 text-white normal-case"
+                            className="btn bg-green btn-sm hover:bg-green-dark h-9 w-[160px] rounded-full border-0 px-5 text-white normal-case"
                           >
                             <IoOpenOutline className="h-4 w-4" />
                             Open

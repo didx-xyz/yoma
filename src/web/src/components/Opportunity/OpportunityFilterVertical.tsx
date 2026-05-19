@@ -353,7 +353,7 @@ export const OpportunityFilterVertical: React.FC<{
                   <div className="flex w-full flex-col justify-center text-center md:w-64">
                     <input
                       type="range"
-                      className="range range-success bg-whitex"
+                      className="bg-whitex range range-success"
                       min="0"
                       max={timeIntervalMax}
                       value={value}
