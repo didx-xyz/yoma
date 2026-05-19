@@ -83,6 +83,8 @@ jobs:
             changes:
               - '${{ matrix.dir }}/**'
 
+      - run: corepack enable
+        if: (steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch') && matrix.lang == 'js'
       - uses: actions/setup-node@v6
         if: (steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch') && matrix.lang == 'js'
         with:
@@ -94,8 +96,6 @@ jobs:
         with:
           path: ${{ matrix.dir }}/node_modules
           key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
-      - run: corepack enable
-        if: (steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch') && matrix.lang == 'js'
       - run: yarn install --immutable
         if: (steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch') && matrix.lang == 'js'
         working-directory: ${{ matrix.dir }}
@@ -364,13 +364,13 @@ jobs:
           API_TAG: ${{ steps.filter.outputs.api == 'true' && needs.docker-push.outputs.image_version || 'latest' }}
           YOUTH_TAG: ${{ steps.filter.outputs.web == 'true' && needs.docker-push.outputs.image_version || 'latest' }}
 
+      - run: corepack enable
+        if: steps.should-run.outputs.run == 'true'
       - uses: actions/setup-node@v6
         if: steps.should-run.outputs.run == 'true'
         with:
           node-version: 24
           cache: yarn
-      - run: corepack enable
-        if: steps.should-run.outputs.run == 'true'
       - uses: cypress-io/github-action@v7
         if: steps.should-run.outputs.run == 'true'
       - name: Upload Cypress Screenshots
