@@ -94,7 +94,9 @@ jobs:
         with:
           path: ${{ matrix.dir }}/node_modules
           key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
-      - run: yarn install --frozen-lockfile
+      - run: corepack enable
+        if: (steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch') && matrix.lang == 'js'
+      - run: yarn install --immutable
         if: (steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch') && matrix.lang == 'js'
         working-directory: ${{ matrix.dir }}
 
@@ -367,6 +369,8 @@ jobs:
         with:
           node-version: 24
           cache: yarn
+      - run: corepack enable
+        if: steps.should-run.outputs.run == 'true'
       - uses: cypress-io/github-action@v7
         if: steps.should-run.outputs.run == 'true'
       - name: Upload Cypress Screenshots
