@@ -8,7 +8,7 @@ using Yoma.Core.Infrastructure.SAYouth.Models;
 
 namespace Yoma.Core.Infrastructure.SAYouth.Client
 {
-  public class SAYouthClientFactory : ISyncProviderClientFactory<ISyncProviderClientPush<Opportunity>>
+  public class SAYouthClientFactory : ISyncProviderClientFactory<ISyncProviderClientPushEntity<Opportunity>>
   {
     #region Class Variables
     private readonly ILogger<SAYouthClient> _logger;
@@ -31,7 +31,7 @@ namespace Yoma.Core.Infrastructure.SAYouth.Client
     #endregion
 
     #region Public Members
-    public ISyncProviderClientPush<Opportunity> CreateClient()
+    public ISyncProviderClientPushEntity<Opportunity> CreateClient()
     {
       return new SAYouthClient(_logger, _environmentProvider, _appSettings, _options);
     }

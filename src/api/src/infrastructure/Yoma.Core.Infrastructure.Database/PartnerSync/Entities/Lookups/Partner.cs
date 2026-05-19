@@ -17,10 +17,10 @@ namespace Yoma.Core.Infrastructure.Database.PartnerSync.Entities.Lookups
 
     [Required]
     [Column(TypeName = "text")] //MS SQL: nvarchar(MAX)
-    public string SyncTypesEnabled { get; set; } = null!; //json key value pair of sync type:list of entity types
+    public string SyncCapabilities { get; set; } = null!; //json key value pair of sync type:entity type:list of sync scopes
 
     [Column(TypeName = "text")] //MS SQL: nvarchar(MAX)
-    public string? ActionEnabled { get; set; } //json list of enabled actions
+    public string? ActionsEnabled { get; set; } //json list of enabled actions
 
     [Required]
     public DateTimeOffset DateCreated { get; set; }

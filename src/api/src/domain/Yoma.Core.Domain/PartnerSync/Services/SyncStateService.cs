@@ -27,7 +27,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
     #endregion
 
     #region Public Members
-    public SyncInfo? ListSyncInfo(EntityType entityType, Guid entityId)
+    public SyncInfoEntity? ListSyncInfo(EntityType entityType, Guid entityId)
     {
       var statusAbortedId = _processingStatusService.GetByName(ProcessingStatus.Aborted.ToString()).Id;
 
@@ -67,7 +67,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
       if (syncType == SyncType.Pull && partners.Count != 1)
         throw new DataInconsistencyException($"Pull synchronization requires exactly one partner for entity '{entityId}' of type '{entityType}'");
 
-      return new SyncInfo
+      return new SyncInfoEntity
       {
         SyncType = syncType,
         Partners = partners

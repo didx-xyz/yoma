@@ -17,7 +17,9 @@ using Yoma.Core.Infrastructure.Alison.Models;
 
 namespace Yoma.Core.Infrastructure.Alison.Client
 {
-  public sealed partial class AlisonClient : ISyncProviderClientPull<Domain.Opportunity.Models.Opportunity>
+  public sealed partial class AlisonClient :
+    ISyncProviderClientPullEntity<Domain.Opportunity.Models.Opportunity>,
+    ISyncProviderClientPullVerification
   {
     #region Class Variables
     private const string Alison_Web_BaseUrl = "https://alison.com";
@@ -83,7 +85,8 @@ namespace Yoma.Core.Infrastructure.Alison.Client
     private readonly IOpportunityDifficultyService _opportunityDifficultyService;
     private readonly ITimeIntervalService _timeIntervalService;
     private readonly IEngagementTypeService _engagementTypeService;
-    private readonly SyncFilterPullValidator _syncFilterPullValidator;
+    private readonly SyncFilterPullEntityValidator _syncFilterPullEntityValidator;
+    private readonly SyncFilterPullVerificationValidator _syncFilterPullVerificationValidator;
     #endregion
 
     #region Constructor
@@ -100,7 +103,8 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       IOpportunityDifficultyService opportunityDifficultyService,
       ITimeIntervalService timeIntervalService,
       IEngagementTypeService engagementTypeService,
-      SyncFilterPullValidator syncFilterPullValidator)
+      SyncFilterPullEntityValidator syncFilterPullEntityValidator,
+      SyncFilterPullVerificationValidator syncFilterPullVerificationValidator)
     {
       _logger = logger ?? throw new ArgumentNullException(nameof(logger));
       _environmentProvider = environmentProvider ?? throw new ArgumentNullException(nameof(environmentProvider));
@@ -114,16 +118,17 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       _opportunityDifficultyService = opportunityDifficultyService ?? throw new ArgumentNullException(nameof(opportunityDifficultyService));
       _timeIntervalService = timeIntervalService ?? throw new ArgumentNullException(nameof(timeIntervalService));
       _engagementTypeService = engagementTypeService ?? throw new ArgumentNullException(nameof(engagementTypeService));
-      _syncFilterPullValidator = syncFilterPullValidator ?? throw new ArgumentNullException(nameof(syncFilterPullValidator));
+      _syncFilterPullEntityValidator = syncFilterPullEntityValidator ?? throw new ArgumentNullException(nameof(syncFilterPullEntityValidator));
+      _syncFilterPullVerificationValidator = syncFilterPullVerificationValidator ?? throw new ArgumentNullException(nameof(syncFilterPullVerificationValidator));
     }
     #endregion
 
     #region Public Members
-    public Task<SyncResultPull<Domain.Opportunity.Models.Opportunity>> List(SyncFilterPull filter)
+    public Task<SyncResultPullEntity<Domain.Opportunity.Models.Opportunity>> List(SyncFilterPullEntity filter)
     {
       ArgumentNullException.ThrowIfNull(filter);
 
-      _syncFilterPullValidator.ValidateAndThrow(filter);
+      _syncFilterPullEntityValidator.ValidateAndThrow(filter);
 
       if (_logger.IsEnabled(LogLevel.Debug))
         _logger.LogDebug(
@@ -132,17 +137,26 @@ namespace Yoma.Core.Infrastructure.Alison.Client
 
       return Task.FromResult(ListFromStore(filter));
     }
+
+    public Task<SyncResultPullVerification> List(SyncFilterPullVerification filter)
+    {
+      ArgumentNullException.ThrowIfNull(filter);
+
+      _syncFilterPullVerificationValidator.ValidateAndThrow(filter);
+
+      return Task.FromResult(new SyncResultPullVerification { TotalCount = 0 });
+    }
     #endregion
 
     #region Private Members
-    private SyncResultPull<Domain.Opportunity.Models.Opportunity> ListFromStore(SyncFilterPull filter)
+    private SyncResultPullEntity<Domain.Opportunity.Models.Opportunity> ListFromStore(SyncFilterPullEntity filter)
     {
       ArgumentNullException.ThrowIfNull(filter);
 
       var query = _opportunityRepository.Query();
       query = query.OrderBy(o => o.ExternalId);
 
-      var result = new SyncResultPull<Domain.Opportunity.Models.Opportunity>();
+      var result = new SyncResultPullEntity<Domain.Opportunity.Models.Opportunity>();
 
       if (filter.PaginationEnabled)
       {
@@ -158,7 +172,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       return result;
     }
 
-    private SyncItem<Domain.Opportunity.Models.Opportunity> ToSyncItem(Opportunity item)
+    private SyncItemEntity<Domain.Opportunity.Models.Opportunity> ToSyncItem(Opportunity item)
     {
       ArgumentNullException.ThrowIfNull(item);
 
@@ -174,7 +188,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       return result;
     }
 
-    private SyncItem<Domain.Opportunity.Models.Opportunity> ToSyncItem(Course course, bool deleted)
+    private SyncItemEntity<Domain.Opportunity.Models.Opportunity> ToSyncItem(Course course, bool deleted)
     {
       ArgumentNullException.ThrowIfNull(course);
 
@@ -263,7 +277,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       // Alison provides online courses only, so all synced Alison opportunities are mapped as Online.
       var engagementType = _engagementTypeService.GetByName(EngagementTypeOption.Online.ToString());
 
-      return new SyncItem<Domain.Opportunity.Models.Opportunity>
+      return new SyncItemEntity<Domain.Opportunity.Models.Opportunity>
       {
         ExternalId = course.Id.ToString(),
         Deleted = deleted,

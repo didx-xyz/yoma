@@ -162,7 +162,7 @@ namespace Yoma.Core.Domain.Opportunity.Models
     /// Current partner synchronization state for the opportunity, when applicable.
     /// A null value indicates that the opportunity is not currently synchronized with any partner.
     /// </summary>
-    public SyncInfo? SyncedInfo { get; set; }
+    public SyncInfoEntity? SyncedInfo { get; set; }
 
     public List<Lookups.OpportunityCategory>? Categories { get; set; }
 

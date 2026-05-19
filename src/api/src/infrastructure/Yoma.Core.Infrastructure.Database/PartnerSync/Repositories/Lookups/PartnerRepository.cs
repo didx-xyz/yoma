@@ -28,8 +28,8 @@ namespace Yoma.Core.Infrastructure.Database.PartnerSync.Repositories.Lookups
         Id = entity.Id,
         Name = entity.Name,
         Active = entity.Active,
-        SyncTypesEnabled = entity.SyncTypesEnabled,
-        ActionEnabled = entity.ActionEnabled
+        SyncCapabilities = entity.SyncCapabilities,
+        ActionsEnabled = entity.ActionsEnabled
       });
     }
 

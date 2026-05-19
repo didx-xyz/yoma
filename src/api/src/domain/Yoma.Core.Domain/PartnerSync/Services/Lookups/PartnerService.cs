@@ -78,33 +78,30 @@ namespace Yoma.Core.Domain.PartnerSync.Services.Lookups
     }
 
     /// <summary>
-    /// Lists active partners configured for pull synchronization for the specified action and entity type.
+    /// Lists active partners configured for pull synchronization for the specified action, entity type and sync scope.
     /// Additional entity-specific filtering is handled by the processing service where required.
     /// </summary>
-    public List<Models.Lookups.Partner> ListPull(SyncAction? action, EntityType? entityType)
+    public List<Models.Lookups.Partner> ListPull(SyncScope syncScope, SyncAction? action = null, EntityType? entityType = null)
     {
       var results = ListCached()
         .Where(o => o.Active
-          && (!action.HasValue || o.ActionEnabledParsed.Contains(action.Value))
-          && o.SyncTypesEnabledParsed.TryGetValue(SyncType.Pull, out var entityTypes)
-          && (!entityType.HasValue || entityTypes.Contains(entityType.Value)))
+          && (!action.HasValue || o.ActionsEnabledParsed.Contains(action.Value))
+          && SupportsSyncCapability(o, SyncType.Pull, syncScope, entityType))
         .ToList();
 
       return results;
     }
 
     /// <summary>
-    /// Lists active partners configured for push synchronization for the specified action and entity type.
+    /// Lists active partners configured for push synchronization for the specified action, entity type and sync scope.
     /// Additional entity-specific filtering may be handled by the processing service where required.
     /// </summary>
-    public List<Models.Lookups.Partner> ListPush(SyncAction? action, EntityType? entityType)
+    public List<Models.Lookups.Partner> ListPush(SyncScope syncScope, SyncAction? action = null, EntityType? entityType = null)
     {
-      //active partners that support push for the specified entity type and action
       var results = ListCached()
         .Where(o => o.Active
-          && (!action.HasValue || o.ActionEnabledParsed.Contains(action.Value))
-          && o.SyncTypesEnabledParsed.TryGetValue(SyncType.Push, out var entityTypes)
-          && (!entityType.HasValue || entityTypes.Contains(entityType.Value)))
+          && (!action.HasValue || o.ActionsEnabledParsed.Contains(action.Value))
+          && SupportsSyncCapability(o, SyncType.Push, syncScope, entityType))
         .ToList();
 
       return results;
@@ -195,13 +192,29 @@ namespace Yoma.Core.Domain.PartnerSync.Services.Lookups
       var results = _partnerRepository.Query().OrderBy(o => o.Name).ToList();
       results.ForEach(item =>
       {
-        item.ActionEnabledParsed = ParseActionEnabled(item.Id, item.ActionEnabled);
-        item.SyncTypesEnabledParsed = ParseSyncTypesEnabled(item.Id, item.SyncTypesEnabled);
+        item.ActionsEnabledParsed = ParseActionsEnabled(item.Id, item.ActionsEnabled);
+        item.SyncCapabilitiesParsed = ParseSyncCapabilities(item.Id, item.SyncCapabilities);
       });
       return results;
     }
 
-    private static List<SyncAction> ParseActionEnabled(Guid id, string? jsonValue)
+    private static bool SupportsSyncCapability(Models.Lookups.Partner partner, SyncType syncType, SyncScope syncScope, EntityType? entityType)
+    {
+      ArgumentNullException.ThrowIfNull(partner);
+
+      if (!partner.SyncCapabilitiesParsed.TryGetValue(syncType, out var entityCapabilities))
+        return false;
+
+      if (entityType.HasValue)
+      {
+        return entityCapabilities.TryGetValue(entityType.Value, out var syncScopes)
+          && syncScopes.Contains(syncScope);
+      }
+
+      return entityCapabilities.Values.Any(syncScopes => syncScopes.Contains(syncScope));
+    }
+
+    private static List<SyncAction> ParseActionsEnabled(Guid id, string? jsonValue)
     {
       jsonValue = jsonValue?.Trim();
 
@@ -212,8 +225,8 @@ namespace Yoma.Core.Domain.PartnerSync.Services.Lookups
         ?? throw new DataInconsistencyException($"Failed to parse enabled actions for partner with id '{id}'");
 
       var results = resultsSavedAsString
-        .Select(value => Enum.TryParse(typeof(SyncAction), value, true, out var action)
-          ? (SyncAction)action
+        .Select(value => Enum.TryParse<SyncAction>(value, true, out var action)
+          ? action
           : throw new DataInconsistencyException($"Unsupported / invalid processing action of '{value}' specified for partner with id '{id}'"))
         .Distinct()
         .ToList();
@@ -221,26 +234,40 @@ namespace Yoma.Core.Domain.PartnerSync.Services.Lookups
       return results;
     }
 
-    private static Dictionary<SyncType, List<EntityType>> ParseSyncTypesEnabled(Guid id, string jsonValue)
+    private static Dictionary<SyncType, Dictionary<EntityType, List<SyncScope>>> ParseSyncCapabilities(Guid id, string jsonValue)
     {
       if (string.IsNullOrWhiteSpace(jsonValue))
-        throw new DataInconsistencyException($"Sync types enabled configuration is required for partner with id '{id}'");
+        throw new DataInconsistencyException($"Sync capabilities configuration is required for partner with id '{id}'");
 
-      var resultsSavedAsString = JsonConvert.DeserializeObject<Dictionary<string, List<string>>>(jsonValue.Trim())
-        ?? throw new DataInconsistencyException($"Failed to parse sync types enabled configuration for partner with id '{id}'");
+      var resultsSavedAsString = JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, List<string>>>>(jsonValue.Trim())
+        ?? throw new DataInconsistencyException($"Failed to parse sync capabilities configuration for partner with id '{id}'");
 
       var results = resultsSavedAsString.ToDictionary(
-        kvp => Enum.TryParse(typeof(SyncType), kvp.Key, true, out var syncType)
-          ? (SyncType)syncType
-          : throw new DataInconsistencyException($"Unsupported / invalid sync type of '{kvp.Key}' specified for partner with id '{id}'"),
-        kvp => kvp.Value?.Select(value =>
-            Enum.TryParse(typeof(EntityType), value, true, out var entityType)
-              ? (EntityType)entityType
-              : throw new DataInconsistencyException($"Unsupported / invalid entity type of '{value}' specified for sync type '{kvp.Key}' and partner with id '{id}'"))
-          .Distinct()
-          .ToList()
-          ?? throw new DataInconsistencyException($"Entity types are required for sync type '{kvp.Key}' and partner with id '{id}'")
-      );
+        syncTypeConfig => Enum.TryParse<SyncType>(syncTypeConfig.Key, true, out var syncType)
+          ? syncType
+          : throw new DataInconsistencyException($"Unsupported / invalid sync type of '{syncTypeConfig.Key}' specified for partner with id '{id}'"),
+        syncTypeConfig =>
+        {
+          if (syncTypeConfig.Value == null || syncTypeConfig.Value.Count == 0)
+            throw new DataInconsistencyException($"Entity sync capabilities are required for sync type '{syncTypeConfig.Key}' and partner with id '{id}'");
+
+          return syncTypeConfig.Value.ToDictionary(
+            entityTypeConfig => Enum.TryParse<EntityType>(entityTypeConfig.Key, true, out var entityType)
+              ? entityType
+              : throw new DataInconsistencyException($"Unsupported / invalid entity type of '{entityTypeConfig.Key}' specified for sync type '{syncTypeConfig.Key}' and partner with id '{id}'"),
+            entityTypeConfig =>
+            {
+              if (entityTypeConfig.Value == null || entityTypeConfig.Value.Count == 0)
+                throw new DataInconsistencyException($"Sync scopes are required for entity type '{entityTypeConfig.Key}', sync type '{syncTypeConfig.Key}' and partner with id '{id}'");
+
+              return entityTypeConfig.Value
+                .Select(value => Enum.TryParse<SyncScope>(value, true, out var syncScope)
+                  ? syncScope
+                  : throw new DataInconsistencyException($"Unsupported / invalid sync scope of '{value}' specified for entity type '{entityTypeConfig.Key}', sync type '{syncTypeConfig.Key}' and partner with id '{id}'"))
+                .Distinct()
+                .ToList();
+            });
+        });
 
       return results;
     }

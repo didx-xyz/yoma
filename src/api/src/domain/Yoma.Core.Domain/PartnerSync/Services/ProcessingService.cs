@@ -462,12 +462,13 @@ namespace Yoma.Core.Domain.PartnerSync.Services
           throw new InvalidOperationException($"Action of '{action}' not supported");
       }
 
-      if (!partner.ActionEnabledParsed.Contains(action))
+      if (!partner.ActionsEnabledParsed.Contains(action))
         throw new InvalidOperationException($"Action of '{action}' not enabled for partner '{partner.Name}'");
 
-      partner.SyncTypesEnabledParsed.TryGetValue(SyncType.Pull, out var entityTypes);
-      if (entityTypes == null || !entityTypes.Contains(entityType))
-        throw new InvalidOperationException($"Entity type of '{entityType}' not enabled for partner '{partner.Name}' and sync type '{SyncType.Pull}'");
+      if (!partner.SyncCapabilitiesParsed.TryGetValue(SyncType.Pull, out var entityCapabilities)
+          || !entityCapabilities.TryGetValue(entityType, out var syncScopes)
+          || !syncScopes.Contains(SyncScope.Entity))
+        throw new InvalidOperationException($"Entity type of '{entityType}' and sync scope '{SyncScope.Entity}' not enabled for partner '{partner.Name}' and sync type '{SyncType.Pull}'");
 
       var reuseExistingItem = itemExisting != null && (!itemExistingHasSynchronizedEntity || itemExistingIsRetryableError);
 
@@ -536,7 +537,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
     private List<Partner> ListPush(SyncAction action, EntityType entityType, Guid entityId)
     {
       //active partners that support push for the specified entity type and action
-      var partners = _partnerService.ListPush(action, entityType);
+      var partners = _partnerService.ListPush(SyncScope.Entity, action, entityType);
       var results = new List<Partner>();
 
       switch (entityType)

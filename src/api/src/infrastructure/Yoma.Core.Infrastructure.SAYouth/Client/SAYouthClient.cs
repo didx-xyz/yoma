@@ -17,7 +17,7 @@ using Yoma.Core.Infrastructure.SAYouth.Models;
 
 namespace Yoma.Core.Infrastructure.SAYouth.Client
 {
-  public class SAYouthClient : ISyncProviderClientPush<Opportunity>
+  public class SAYouthClient : ISyncProviderClientPushEntity<Opportunity>
   {
     #region Class Variables
     private readonly ILogger<SAYouthClient> _logger;
@@ -45,12 +45,12 @@ namespace Yoma.Core.Infrastructure.SAYouth.Client
     #endregion
 
     #region Public Members
-    public string ComputeUpdatePayloadHash(SyncRequestPush<Opportunity> request)
+    public string ComputeUpdatePayloadHash(SyncRequestPushEntity<Opportunity> request)
     {
       return HashHelper.ComputeSHA256Hash(ToRequestUpdatePayload(request));
     }
 
-    public async Task<string> Create(SyncRequestPush<Opportunity> request)
+    public async Task<string> Create(SyncRequestPushEntity<Opportunity> request)
     {
       if (!_appSettings.PartnerSyncEnabledEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment))
       {
@@ -73,7 +73,7 @@ namespace Yoma.Core.Infrastructure.SAYouth.Client
       return response.Details!.OpportunityId.ToString();
     }
 
-    public async Task Update(SyncRequestPush<Opportunity> request)
+    public async Task Update(SyncRequestPushEntity<Opportunity> request)
     {
       if (!_appSettings.PartnerSyncEnabledEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment))
       {
@@ -160,7 +160,7 @@ namespace Yoma.Core.Infrastructure.SAYouth.Client
       };
     }
 
-    private OpportunityUpdatePayload ToRequestUpdatePayload(SyncRequestPush<Opportunity> request)
+    private OpportunityUpdatePayload ToRequestUpdatePayload(SyncRequestPushEntity<Opportunity> request)
     {
       ArgumentNullException.ThrowIfNull(request, nameof(request));
 
@@ -214,7 +214,7 @@ namespace Yoma.Core.Infrastructure.SAYouth.Client
       };
     }
 
-    private OpportunitySkillingUpsertRequest ToRequestUpsert(SyncRequestPush<Opportunity> request)
+    private OpportunitySkillingUpsertRequest ToRequestUpsert(SyncRequestPushEntity<Opportunity> request)
     {
       ArgumentNullException.ThrowIfNull(request, nameof(request));
 
@@ -252,7 +252,7 @@ namespace Yoma.Core.Infrastructure.SAYouth.Client
       return requestUpsert;
     }
 
-    private static OpportunitySkillingUpsertRequest ToRequestUpsertAddressInfo(SyncRequestPush<Opportunity> request, OpportunitySkillingUpsertRequest requestUpsert)
+    private static OpportunitySkillingUpsertRequest ToRequestUpsertAddressInfo(SyncRequestPushEntity<Opportunity> request, OpportunitySkillingUpsertRequest requestUpsert)
     {
       if (requestUpsert.FaceToFace == YesNoOption.No) return requestUpsert;
 
@@ -279,7 +279,7 @@ namespace Yoma.Core.Infrastructure.SAYouth.Client
       return requestUpsert;
     }
 
-    private static OpportunitySkillingUpsertRequest ToRequestUpsertContactInfo(SyncRequestPush<Opportunity> request, OpportunitySkillingUpsertRequest requestUpsert)
+    private static OpportunitySkillingUpsertRequest ToRequestUpsertContactInfo(SyncRequestPushEntity<Opportunity> request, OpportunitySkillingUpsertRequest requestUpsert)
     {
       if (requestUpsert.FaceToFace == YesNoOption.No) return requestUpsert;
 

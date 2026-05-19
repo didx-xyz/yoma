@@ -9,7 +9,7 @@ using Yoma.Core.Infrastructure.Jobberman.Models;
 
 namespace Yoma.Core.Infrastructure.Jobberman.Client
 {
-  public sealed class JobbermanClientFactory : ISyncProviderClientFactory<ISyncProviderClientPull<Domain.Opportunity.Models.Opportunity>>
+  public sealed class JobbermanClientFactory : ISyncProviderClientFactory<ISyncProviderClientPullEntity<Domain.Opportunity.Models.Opportunity>>
   {
     #region Class Variables
     private readonly ILogger<JobbermanClient> _logger;
@@ -20,7 +20,7 @@ namespace Yoma.Core.Infrastructure.Jobberman.Client
     private readonly ILanguageService _languageService;
     private readonly IRepositoryBatched<Opportunity> _opportunityRepository;
 
-    private readonly SyncFilterPullValidator _syncFilterPullValidator;
+    private readonly SyncFilterPullEntityValidator _syncFilterPullEntityValidator;
     #endregion
 
     #region Constructor
@@ -32,7 +32,7 @@ namespace Yoma.Core.Infrastructure.Jobberman.Client
       ICountryService countryService,
       ILanguageService languageService,
       IRepositoryBatched<Opportunity> opportunityRepository,
-      SyncFilterPullValidator syncFilterPullValidator)
+      SyncFilterPullEntityValidator syncFilterPullEntityValidator)
     {
       _logger = logger ?? throw new ArgumentNullException(nameof(logger));
       _options = options ?? throw new ArgumentNullException(nameof(options));
@@ -41,12 +41,12 @@ namespace Yoma.Core.Infrastructure.Jobberman.Client
       _countryService = countryService ?? throw new ArgumentNullException(nameof(countryService));
       _languageService = languageService ?? throw new ArgumentNullException(nameof(languageService));
       _opportunityRepository = opportunityRepository ?? throw new ArgumentNullException(nameof(opportunityRepository));
-      _syncFilterPullValidator = syncFilterPullValidator ?? throw new ArgumentNullException(nameof(syncFilterPullValidator));
+      _syncFilterPullEntityValidator = syncFilterPullEntityValidator ?? throw new ArgumentNullException(nameof(syncFilterPullEntityValidator));
     }
     #endregion
 
     #region Public Members
-    public ISyncProviderClientPull<Domain.Opportunity.Models.Opportunity> CreateClient()
+    public ISyncProviderClientPullEntity<Domain.Opportunity.Models.Opportunity> CreateClient()
     {
       return new JobbermanClient(
         _logger,
@@ -56,7 +56,7 @@ namespace Yoma.Core.Infrastructure.Jobberman.Client
         _countryService,
         _languageService,
         _opportunityRepository,
-        _syncFilterPullValidator);
+        _syncFilterPullEntityValidator);
     }
     #endregion
   }

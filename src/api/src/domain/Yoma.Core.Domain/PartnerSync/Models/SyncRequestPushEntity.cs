@@ -2,7 +2,13 @@ using Yoma.Core.Domain.Entity.Models;
 
 namespace Yoma.Core.Domain.PartnerSync.Models
 {
-  public sealed class SyncRequestPush<TEntity>
+  /// <summary>
+  /// Request used when pushing partner-managed entity records.
+  /// 
+  /// The entity type is supplied by the partner sync configuration / processing context
+  /// and is therefore not repeated on the request.
+  /// </summary>
+  public sealed class SyncRequestPushEntity<TEntity>
     where TEntity : class, new()
   {
     public string? ExternalId { get; set; }

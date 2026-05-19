@@ -18,10 +18,9 @@ namespace Yoma.Core.Domain.PartnerSync.Services.Provider
     {
       var factory = _serviceProvider.GetKeyedService<ISyncProviderClientFactory<TClient>>(partner);
 
-      if (factory == null)
-        throw new InvalidOperationException($"Factory not registered for partner '{partner}' and client type '{typeof(TClient).Name}'");
-
-      return factory.CreateClient();
+      return factory == null
+        ? throw new InvalidOperationException($"Factory not registered for partner '{partner}' and client type '{typeof(TClient).Name}'")
+        : factory.CreateClient();
     }
   }
 }

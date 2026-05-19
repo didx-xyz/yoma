@@ -1,6 +1,6 @@
 namespace Yoma.Core.Domain.PartnerSync.Models
 {
-  public sealed class SyncInfo
+  public sealed class SyncInfoEntity
   {
     /// <summary>
     /// The synchronization type currently applied to the opportunity.

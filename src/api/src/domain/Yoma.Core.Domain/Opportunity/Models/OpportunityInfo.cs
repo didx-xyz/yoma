@@ -146,7 +146,7 @@ namespace Yoma.Core.Domain.Opportunity.Models
     public string? NonCompletableReason { get; set; }
 
     [Ignore]
-    public SyncInfo? SyncedInfo { get; set; }
+    public SyncInfoEntity? SyncedInfo { get; set; }
 
     [JsonIgnore]
     [Name("Externally Managed (Locked)")]

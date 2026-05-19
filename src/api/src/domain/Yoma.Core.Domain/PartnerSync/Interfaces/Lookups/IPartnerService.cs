@@ -13,9 +13,9 @@ namespace Yoma.Core.Domain.PartnerSync.Interfaces.Lookups
 
     Models.Lookups.Partner? GetByIdOrNull(Guid id);
 
-    List<Models.Lookups.Partner> ListPull(SyncAction? action = null, EntityType? entityType = null);
+    List<Models.Lookups.Partner> ListPull(SyncScope syncScope, SyncAction? action = null, EntityType? entityType = null);
 
-    List<Models.Lookups.Partner> ListPush(SyncAction? action = null, EntityType? entityType = null);
+    List<Models.Lookups.Partner> ListPush(SyncScope syncScope, SyncAction? action= null, EntityType? entityType= null);
 
     List<string> ValidateUpdatablePush(Opportunity.Models.Opportunity opportunityCurrent, UpdateAction action, Dictionary<string, object?> updatesToEval, List<SyncPartner> partners);
   }

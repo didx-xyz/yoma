@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.Transactions;
+using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
@@ -106,12 +107,12 @@ namespace Yoma.Core.Domain.PartnerSync.Services
                   if (!item.OpportunityId.HasValue)
                     throw new InvalidOperationException($"Entity type '{entityType}': Opportunity id is null");
 
-                  var pushProviderClient = _providerClientFactoryResolver.CreateClient<ISyncProviderClientPush<Opportunity.Models.Opportunity>>(item.Partner);
+                  var pushProviderClient = _providerClientFactoryResolver.CreateClient<ISyncProviderClientPushEntity<Opportunity.Models.Opportunity>>(item.Partner);
 
                   var opportunity = _opportunityService.GetById(item.OpportunityId.Value, true, true, false);
                   var organization = _organizationService.GetById(opportunity.OrganizationId, false, true, false);
 
-                  var request = new SyncRequestPush<Opportunity.Models.Opportunity>
+                  var request = new SyncRequestPushEntity<Opportunity.Models.Opportunity>
                   {
                     Item = opportunity,
                     Organization = organization,
@@ -293,7 +294,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
 
         if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processing partner sync pull");
 
-        var partners = _partnerService.ListPull();
+        var partners = _partnerService.ListPull(SyncScope.Entity);
         if (partners.Count == 0)
         {
           if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("No sync pull partners found to process");
@@ -328,10 +329,19 @@ namespace Yoma.Core.Domain.PartnerSync.Services
       {
         var partner = Enum.Parse<Core.SyncPartner>(partnerModel.Name, true);
 
-        if (!partnerModel.SyncTypesEnabledParsed.TryGetValue(Core.SyncType.Pull, out var entityTypes) || entityTypes.Count == 0)
+        if (!partnerModel.SyncCapabilitiesParsed.TryGetValue(SyncType.Pull, out var entityCapabilities) || entityCapabilities.Count == 0)
           return;
 
-        foreach (var entityType in entityTypes.Distinct())
+        var entityTypes = entityCapabilities
+          .Where(o => o.Value.Contains(SyncScope.Entity))
+          .Select(o => o.Key)
+          .Distinct()
+          .ToList();
+
+        if (entityTypes.Count == 0)
+          return;
+
+        foreach (var entityType in entityTypes)
         {
           if (executeUntil <= DateTimeOffset.UtcNow) break;
 
@@ -356,11 +366,11 @@ namespace Yoma.Core.Domain.PartnerSync.Services
     private async Task ProcessSyncPullOpportunity(Models.Lookups.Partner partnerModel, Core.SyncPartner partner, DateTimeOffset executeUntil)
     {
       var entityType = EntityType.Opportunity;
-      var pullProviderClient = _providerClientFactoryResolver.CreateClient<ISyncProviderClientPull<Opportunity.Models.Opportunity>>(partner);
+      var pullProviderClient = _providerClientFactoryResolver.CreateClient<ISyncProviderClientPullEntity<Opportunity.Models.Opportunity>>(partner);
 
       var pageNumber = 1;
       var pageSize = _scheduleJobOptions.PartnerSyncPullScheduleBatchSize;
-      SyncResultPull<Opportunity.Models.Opportunity>? result = null;
+      SyncResultPullEntity<Opportunity.Models.Opportunity>? result = null;
 
       while (executeUntil > DateTimeOffset.UtcNow)
       {
@@ -435,7 +445,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
 
             action = item.ResolveSyncAction(entityType, processingItemExisting);
 
-            if (!partnerModel.ActionEnabledParsed.Contains(action))
+            if (!partnerModel.ActionsEnabledParsed.Contains(action))
             {
               if (_logger.IsEnabled(LogLevel.Information))
                 _logger.LogInformation("Processing of partner sync pull item skipped: Action '{action}' not enabled for partner '{partner}', entity type '{entityType}', entity external id '{entityExternalId}'", action, partner, entityType, item.ExternalId);
@@ -549,17 +559,17 @@ namespace Yoma.Core.Domain.PartnerSync.Services
       }
     }
 
-    private async Task<(SyncResultPull<Opportunity.Models.Opportunity> Result, List<SyncItem<Opportunity.Models.Opportunity>> Items, bool PagedByProvider)> ListSyncPullItems(
+    private async Task<(SyncResultPullEntity<Opportunity.Models.Opportunity> Result, List<SyncItemEntity<Opportunity.Models.Opportunity>> Items, bool PagedByProvider)> ListSyncPullItems(
       Core.SyncPartner partner,
       EntityType entityType,
-      ISyncProviderClientPull<Opportunity.Models.Opportunity> pullProviderClient,
+      ISyncProviderClientPullEntity<Opportunity.Models.Opportunity> pullProviderClient,
       int pageNumber,
       int pageSize,
-      SyncResultPull<Opportunity.Models.Opportunity>? result)
+      SyncResultPullEntity<Opportunity.Models.Opportunity>? result)
     {
       if (result == null)
       {
-        var filter = new SyncFilterPull
+        var filter = new SyncFilterPullEntity
         {
           PageNumber = pageNumber,
           PageSize = pageSize
