@@ -143,7 +143,7 @@ namespace Yoma.Core.Infrastructure.Database.Context
     public DbSet<PartnerSync.Entities.Lookups.ProcessingStatus> PartnerSyncProcessingStatus { get; set; }
     #endregion Lookups 
 
-    public DbSet<PartnerSync.Entities.PartnerSyncTracking> PartnerSyncTracking { get; set; }  
+    public DbSet<PartnerSync.Entities.PartnerSyncTracking> PartnerSyncTracking { get; set; }
     public DbSet<PartnerSync.Entities.ProcessingLog> PartnerSyncProcessingLog { get; set; }
     #endregion PartnerSync
 

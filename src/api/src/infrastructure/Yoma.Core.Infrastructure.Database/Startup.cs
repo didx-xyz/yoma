@@ -157,7 +157,7 @@ namespace Yoma.Core.Infrastructure.Database
       services.AddScoped<IRepository<Domain.PartnerSync.Models.Lookups.ProcessingStatus>, PartnerSync.Repositories.Lookups.ProcessingStatusRepository>();
       #endregion Lookups
 
-      services.AddScoped<IRepository<Domain.PartnerSync.Models.PartnerSyncTracking>, PartnerSync.Repositories.PartnerSyncTrackingRepository>(); 
+      services.AddScoped<IRepository<Domain.PartnerSync.Models.PartnerSyncTracking>, PartnerSync.Repositories.PartnerSyncTrackingRepository>();
       services.AddScoped<IRepositoryBatched<Domain.PartnerSync.Models.ProcessingLog>, PartnerSync.Repositories.ProcessingLogRepository>();
       #endregion PartnerSync
 

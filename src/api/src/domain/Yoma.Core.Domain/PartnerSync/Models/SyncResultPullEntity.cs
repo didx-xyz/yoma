@@ -10,7 +10,7 @@ namespace Yoma.Core.Domain.PartnerSync.Models
   {
     public int? TotalCount { get; set; }
 
-    public List<SyncItemEntity<TItem>> Items { get; set; } = null!;
+    public List<SyncItemEntity<TItem>> Items { get; set; } = [];
   }
 
   public sealed class SyncItemEntity<TItem> where TItem : class, new()

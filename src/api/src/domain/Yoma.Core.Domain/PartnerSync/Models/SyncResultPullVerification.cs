@@ -36,7 +36,7 @@ namespace Yoma.Core.Domain.PartnerSync.Models
 
     public string? UserEmail { get; set; }
 
-    public string? UserPhoneNumber { get; set; } 
+    public string? UserPhoneNumber { get; set; }
 
     public DateTimeOffset? DateStart { get; set; }
 
