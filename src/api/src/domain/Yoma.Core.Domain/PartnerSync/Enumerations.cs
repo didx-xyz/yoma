@@ -19,4 +19,11 @@ namespace Yoma.Core.Domain.PartnerSync
     Error,
     Aborted
   }
+
+  public enum TrackingStatus
+  {
+    Successful,
+    Partial,
+    Failed
+  }
 }

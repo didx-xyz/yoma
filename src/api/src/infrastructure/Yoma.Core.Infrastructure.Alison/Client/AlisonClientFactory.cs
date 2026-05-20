@@ -9,7 +9,9 @@ using Yoma.Core.Infrastructure.Alison.Models;
 
 namespace Yoma.Core.Infrastructure.Alison.Client
 {
-  public sealed class AlisonClientFactory : ISyncProviderClientFactory<ISyncProviderClientPull<Domain.Opportunity.Models.Opportunity>>
+  public sealed class AlisonClientFactory :
+    ISyncProviderClientFactory<ISyncProviderClientPullEntity<Domain.Opportunity.Models.Opportunity>>,
+    ISyncProviderClientFactory<ISyncProviderClientPullVerification>
   {
     #region Class Variables
     private readonly ILogger<AlisonClient> _logger;
@@ -24,7 +26,8 @@ namespace Yoma.Core.Infrastructure.Alison.Client
     private readonly IOpportunityDifficultyService _opportunityDifficultyService;
     private readonly ITimeIntervalService _timeIntervalService;
     private readonly IEngagementTypeService _engagementTypeService;
-    private readonly SyncFilterPullValidator _syncFilterPullValidator;
+    private readonly SyncFilterPullEntityValidator _syncFilterPullEntityValidator;
+    private readonly SyncFilterPullVerificationValidator _syncFilterPullVerificationValidator;
     #endregion
 
     #region Constructor
@@ -41,7 +44,8 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       IOpportunityDifficultyService opportunityDifficultyService,
       ITimeIntervalService timeIntervalService,
       IEngagementTypeService engagementTypeService,
-      SyncFilterPullValidator syncFilterPullValidator)
+      SyncFilterPullEntityValidator syncFilterPullEntityValidator,
+      SyncFilterPullVerificationValidator syncFilterPullVerificationValidator)
     {
       _logger = logger ?? throw new ArgumentNullException(nameof(logger));
       _environmentProvider = environmentProvider ?? throw new ArgumentNullException(nameof(environmentProvider));
@@ -55,12 +59,25 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       _opportunityDifficultyService = opportunityDifficultyService ?? throw new ArgumentNullException(nameof(opportunityDifficultyService));
       _timeIntervalService = timeIntervalService ?? throw new ArgumentNullException(nameof(timeIntervalService));
       _engagementTypeService = engagementTypeService ?? throw new ArgumentNullException(nameof(engagementTypeService));
-      _syncFilterPullValidator = syncFilterPullValidator ?? throw new ArgumentNullException(nameof(syncFilterPullValidator));
+      _syncFilterPullEntityValidator = syncFilterPullEntityValidator ?? throw new ArgumentNullException(nameof(syncFilterPullEntityValidator));
+      _syncFilterPullVerificationValidator = syncFilterPullVerificationValidator ?? throw new ArgumentNullException(nameof(syncFilterPullVerificationValidator));
     }
     #endregion
 
     #region Public Members
-    public ISyncProviderClientPull<Domain.Opportunity.Models.Opportunity> CreateClient()
+    ISyncProviderClientPullEntity<Domain.Opportunity.Models.Opportunity> ISyncProviderClientFactory<ISyncProviderClientPullEntity<Domain.Opportunity.Models.Opportunity>>.CreateClient()
+    {
+      return CreateClient();
+    }
+
+    ISyncProviderClientPullVerification ISyncProviderClientFactory<ISyncProviderClientPullVerification>.CreateClient()
+    {
+      return CreateClient();
+    }
+    #endregion
+
+    #region Private Members
+    private AlisonClient CreateClient()
     {
       return new AlisonClient(
         _logger,
@@ -75,7 +92,8 @@ namespace Yoma.Core.Infrastructure.Alison.Client
         _opportunityDifficultyService,
         _timeIntervalService,
         _engagementTypeService,
-        _syncFilterPullValidator);
+        _syncFilterPullEntityValidator,
+        _syncFilterPullVerificationValidator);
     }
     #endregion
   }

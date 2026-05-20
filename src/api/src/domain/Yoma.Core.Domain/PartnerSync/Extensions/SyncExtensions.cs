@@ -6,7 +6,7 @@ namespace Yoma.Core.Domain.PartnerSync.Extensions
   {
     #region Public Methods
     public static SyncAction ResolveSyncAction<TItem>(
-      this SyncItem<TItem> item,
+      this SyncItemEntity<TItem> item,
       EntityType entityType,
       ProcessingLog? processingItemExisting)
       where TItem : class, new()
@@ -31,7 +31,7 @@ namespace Yoma.Core.Domain.PartnerSync.Extensions
       };
     }
 
-    public static bool ReachedTotalCount<TItem>(this SyncResultPull<TItem> result, int pageNumber, int pageSize)
+    public static bool ReachedTotalCount<TItem>(this SyncResultPullEntity<TItem> result, int pageNumber, int pageSize)
       where TItem : class, new()
     {
       ArgumentNullException.ThrowIfNull(result);

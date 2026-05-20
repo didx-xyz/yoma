@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.Transactions;
+using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
@@ -68,6 +69,8 @@ namespace Yoma.Core.Domain.PartnerSync.Services
       var lockDuration = executeUntil - dateTimeNow + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
       var lockAcquired = false;
 
+      var tracking = new Dictionary<(Guid PartnerId, EntityType EntityType), (int ItemsProcessed, int ItemsSkipped, int ItemsFailed, string? FailedReason)>();
+
       try
       {
         lockAcquired = await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration);
@@ -85,184 +88,210 @@ namespace Yoma.Core.Domain.PartnerSync.Services
         var itemIdsToSkip = new List<Guid>();
         while (executeUntil > DateTimeOffset.UtcNow)
         {
-          var items = _processingService.ListPendingPush(_scheduleJobOptions.PartnerSyncPushScheduleBatchSize, itemIdsToSkip);
-          if (items.Count == 0)
+          List<(Guid PartnerId, EntityType EntityType, List<ProcessingLog> Items)> pendingGroups = _processingService.ListPendingPush(_scheduleJobOptions.PartnerSyncPushScheduleBatchSize, itemIdsToSkip);
+          if (pendingGroups.Count == 0)
           {
             if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("No sync push items found to process");
             break;
           }
 
-          foreach (var item in items)
+          foreach (var pendingGroup in pendingGroups)
           {
+            if (executeUntil <= DateTimeOffset.UtcNow) break;
+
+            var trackingKey = (pendingGroup.PartnerId, pendingGroup.EntityType);
+            tracking.TryAdd(trackingKey, (0, 0, 0, null));
+
             try
             {
-              if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processing sync push for '{entityType}' and item with id '{id}'", item.EntityType, item.Id);
-
-              var entityType = Enum.Parse<EntityType>(item.EntityType, true);
-
-              switch (entityType)
+              foreach (var item in pendingGroup.Items)
               {
-                case EntityType.Opportunity:
-                  if (!item.OpportunityId.HasValue)
-                    throw new InvalidOperationException($"Entity type '{entityType}': Opportunity id is null");
+                if (executeUntil <= DateTimeOffset.UtcNow) break;
 
-                  var pushProviderClient = _providerClientFactoryResolver.CreateClient<ISyncProviderClientPush<Opportunity.Models.Opportunity>>(item.Partner);
+                try
+                {
+                  if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processing sync push for '{entityType}' and item with id '{id}'", item.EntityType, item.Id);
 
-                  var opportunity = _opportunityService.GetById(item.OpportunityId.Value, true, true, false);
-                  var organization = _organizationService.GetById(opportunity.OrganizationId, false, true, false);
-
-                  var request = new SyncRequestPush<Opportunity.Models.Opportunity>
+                  switch (pendingGroup.EntityType)
                   {
-                    Item = opportunity,
-                    Organization = organization,
-                    OrganizationYoma = organizationYoma,
-                    ShareContactInfo = SettingsHelper.GetValue<bool>(organization.Settings, Setting.Organization_Share_Contact_Info_With_Partners.ToString()) == true,
-                    ShareAddressInfo = SettingsHelper.GetValue<bool>(organization.Settings, Setting.Organization_Share_Address_Details_With_Partners.ToString()) == true,
-                  };
+                    case EntityType.Opportunity:
+                      if (!item.OpportunityId.HasValue)
+                        throw new InvalidOperationException($"Entity type '{pendingGroup.EntityType}': Opportunity id is null");
 
-                  var action = Enum.Parse<SyncAction>(item.Action, true);
+                      var pushProviderClient = _providerClientFactoryResolver.CreateClient<ISyncProviderClientPushEntity<Opportunity.Models.Opportunity>>(item.Partner);
 
-                  switch (action)
-                  {
-                    case SyncAction.Create:
-                      //scheduled for execution upon explicit opportunity creation (active only)
-                      //organization must be active in order to create an opportunity
-                      //trigger points:
-                      // - IOpportunityService.Create (explicit)
+                      var opportunity = _opportunityService.GetById(item.OpportunityId.Value, true, true, false);
+                      var organization = _organizationService.GetById(opportunity.OrganizationId, false, true, false);
 
-                      //with ScheduleUpdate (where the opportunity isn't loaded and logic is kept lightweight), a pending create is left untouched
-                      //during processing, we re-evaluate whether the opportunity is still valid for creation
-                      //if it's no longer creatable (e.g., due to status or organization state), we abort the create here to prevent invalid partner data
-                      if (opportunity.OrganizationStatus != OrganizationStatus.Active || !ProcessingService.Statuses_Opportunity_Creatable.Contains(opportunity.Status))
+                      var request = new SyncRequestPushEntity<Opportunity.Models.Opportunity>
                       {
-                        var reason = opportunity.OrganizationStatus != OrganizationStatus.Active
-                          ? $"Associated organization is no longer '{OrganizationStatus.Active}'"
-                          : $"Opportunity status of '{ProcessingService.Statuses_Opportunity_Creatable.JoinNames()}' expected. Current status '{opportunity.Status.ToDescription()}'";
+                        Item = opportunity,
+                        Organization = organization,
+                        OrganizationYoma = organizationYoma,
+                        ShareContactInfo = SettingsHelper.GetValue<bool>(organization.Settings, Setting.Organization_Share_Contact_Info_With_Partners.ToString()) == true,
+                        ShareAddressInfo = SettingsHelper.GetValue<bool>(organization.Settings, Setting.Organization_Share_Address_Details_With_Partners.ToString()) == true,
+                      };
 
-                        if (_logger.IsEnabled(LogLevel.Information))
-                          _logger.LogInformation("Action '{action}': Aborting sync push for '{entityType}' and item with id '{id}'. {reason}", action, item.EntityType, item.Id, reason);
+                      var action = Enum.Parse<SyncAction>(item.Action, true);
 
-                        item.Status = ProcessingStatus.Aborted;
-                        await _processingService.UpdatePush(item);
-                        continue;
-                      }
-
-                      // Store the provider-computed update hash after create so future push updates compare against the same update-shaped payload.
-                      // The provider client computes the effective update payload hash because it owns the final outbound payload/action.
-                      item.EntityExternalId = await pushProviderClient.Create(request);
-                      request.ExternalId = item.EntityExternalId;
-                      item.PayloadHash = pushProviderClient.ComputeUpdatePayloadHash(request);
-                      break;
-
-                    case SyncAction.Update:
-                      if (string.IsNullOrEmpty(item.EntityExternalId))
-                        throw new ArgumentNullException(nameof(item), "External id required");
-
-                      //scheduled for execution upon opportunity update and explicit and implicit activation or deactivation
-                      //trigger points:
-                      // - IOpportunityService: (explicit)
-                      //    Update | AllocateRewards | UpdateFeatured | UpdateStatus | AssignCategories | RemoveCategories | AssignCountries | RemoveCountries
-                      //    AssignLanguages | RemoveLanguages | AssignSkills | AssignVerificationTypes | RemoveVerificationTypes
-                      // - IOpportunityBackgroundService.ProcessExpiration (explicit)
-                      // - IOrganizationService.UpdateStatus (implicit)
-                      // - IOrganizationService.SendForReapproval (implicit)
-                      // - IOrganizationBackgroundService.ProcessDeclination (implicit)
-
-                      //implicit alignment for sync push processing
-                      //if organization is activated, opportunity is activated provided current status of active
-                      //if organization is inactivated, opportunity is inactivated provided active
-                      if (opportunity.OrganizationStatus == OrganizationStatus.Inactive && opportunity.Status == Status.Active)
-                        opportunity.Status = Status.Inactive;
-
-                      //scheduling failsafe post implicit adjustment
-                      if (!ProcessingService.Statuses_Opportunity_Updatable.Contains(opportunity.Status))
-                        throw new InvalidOperationException($"Action '{action}': Opportunity status of '{ProcessingService.Statuses_Opportunity_Updatable.JoinNames()}' expected. Current status '{opportunity.Status.ToDescription()}'");
-
-                      request.ExternalId = item.EntityExternalId;
-
-                      // The provider client computes the effective update payload hash because it owns the final outbound payload/action.
-                      var payloadHash = pushProviderClient.ComputeUpdatePayloadHash(request);
-
-                      var retryingPreviousError = !string.IsNullOrWhiteSpace(item.ErrorReason);
-
-                      // Only skip when the previous provider update completed successfully and the effective payload is unchanged.
-                      // If the previous attempt failed, retry even when the hash matches.
-                      if (retryingPreviousError ||
-                          !string.Equals(item.PayloadHash, payloadHash, StringComparison.Ordinal))
+                      switch (action)
                       {
-                        await pushProviderClient.Update(request);
-                      }
-                      else if (_logger.IsEnabled(LogLevel.Information))
-                      {
-                        _logger.LogInformation(
-                          "Skipping sync push provider update for '{entityType}' and item with id '{id}' because the effective provider update payload hash has not changed",
-                          item.EntityType, item.Id);
-                      }
+                        case SyncAction.Create:
+                          //scheduled for execution upon explicit opportunity creation (active only)
+                          //organization must be active in order to create an opportunity
+                          //trigger points:
+                          // - IOpportunityService.Create (explicit)
 
-                      item.PayloadHash = payloadHash;
-                      break;
+                          //with ScheduleUpdate (where the opportunity isn't loaded and logic is kept lightweight), a pending create is left untouched
+                          //during processing, we re-evaluate whether the opportunity is still valid for creation
+                          //if it's no longer creatable (e.g., due to status or organization state), we abort the create here to prevent invalid partner data
+                          if (opportunity.OrganizationStatus != OrganizationStatus.Active || !ProcessingService.Statuses_Opportunity_Creatable.Contains(opportunity.Status))
+                          {
+                            var reason = opportunity.OrganizationStatus != OrganizationStatus.Active
+                              ? $"Associated organization is no longer '{OrganizationStatus.Active}'"
+                              : $"Opportunity status of '{ProcessingService.Statuses_Opportunity_Creatable.JoinNames()}' expected. Current status '{opportunity.Status.ToDescription()}'";
 
-                    case SyncAction.Delete:
-                      if (string.IsNullOrEmpty(item.EntityExternalId))
-                        throw new ArgumentNullException(nameof(item), "External id required");
+                            if (_logger.IsEnabled(LogLevel.Information))
+                              _logger.LogInformation("Action '{action}': Aborting sync push for '{entityType}' and item with id '{id}'. {reason}", action, item.EntityType, item.Id, reason);
 
-                      //scheduled for execution upon explicit and implicit opportunity deletion
-                      //once an opportunity or organization are deleted, it cannot be reinstated
-                      //trigger points:
-                      // - IOpportunityService.UpdateStatus (explicit)
-                      // - IOpportunityBackgroundService.ProcessDeletion (explicit)
-                      // - IOrganizationService.UpdateStatus (implicit)
-                      // - IOrganizationBackgroundService.ProcessDeletion (implicit)
+                            item.Status = ProcessingStatus.Aborted;
+                            await _processingService.UpdatePush(item);
 
-                      //scheduling failsafe
-                      if (!ProcessingService.Statuses_Opportunity_CanDelete.Contains(opportunity.Status))
-                        throw new InvalidOperationException($"Action '{action}': Opportunity status of '{ProcessingService.Statuses_Opportunity_CanDelete.JoinNames()}' expected. Current status '{opportunity.Status.ToDescription()}'");
+                            var trackingSkipped = tracking[trackingKey];
+                            tracking[trackingKey] = (trackingSkipped.ItemsProcessed + 1, trackingSkipped.ItemsSkipped + 1, trackingSkipped.ItemsFailed, trackingSkipped.FailedReason);
 
-                      switch (opportunity.Status)
-                      {
-                        case Status.Active:
-                        case Status.Inactive:
-                        case Status.Expired:
-                          if (opportunity.OrganizationStatus != OrganizationStatus.Deleted)
-                            throw new InvalidOperationException($"Processing action {action}: Opportunity with status {opportunity.Status.ToDescription()} must be associated with a deleted organization");
+                            continue;
+                          }
+
+                          // Store the provider-computed update hash after create so future push updates compare against the same update-shaped payload.
+                          // The provider client computes the effective update payload hash because it owns the final outbound payload/action.
+                          item.EntityExternalId = await pushProviderClient.Create(request);
+                          request.ExternalId = item.EntityExternalId;
+                          item.PayloadHash = pushProviderClient.ComputeUpdatePayloadHash(request);
                           break;
 
-                        case Status.Deleted:
+                        case SyncAction.Update:
+                          if (string.IsNullOrEmpty(item.EntityExternalId))
+                            throw new ArgumentNullException(nameof(item), "External id required");
+
+                          //scheduled for execution upon opportunity update and explicit and implicit activation or deactivation
+                          //trigger points:
+                          // - IOpportunityService: (explicit)
+                          //    Update | AllocateRewards | UpdateFeatured | UpdateStatus | AssignCategories | RemoveCategories | AssignCountries | RemoveCountries
+                          //    AssignLanguages | RemoveLanguages | AssignSkills | AssignVerificationTypes | RemoveVerificationTypes
+                          // - IOpportunityBackgroundService.ProcessExpiration (explicit)
+                          // - IOrganizationService.UpdateStatus (implicit)
+                          // - IOrganizationService.SendForReapproval (implicit)
+                          // - IOrganizationBackgroundService.ProcessDeclination (implicit)
+
+                          //implicit alignment for sync push processing
+                          //if organization is activated, opportunity is activated provided current status of active
+                          //if organization is inactivated, opportunity is inactivated provided active
+                          if (opportunity.OrganizationStatus == OrganizationStatus.Inactive && opportunity.Status == Status.Active)
+                            opportunity.Status = Status.Inactive;
+
+                          //scheduling failsafe post implicit adjustment
+                          if (!ProcessingService.Statuses_Opportunity_Updatable.Contains(opportunity.Status))
+                            throw new InvalidOperationException($"Action '{action}': Opportunity status of '{ProcessingService.Statuses_Opportunity_Updatable.JoinNames()}' expected. Current status '{opportunity.Status.ToDescription()}'");
+
+                          request.ExternalId = item.EntityExternalId;
+
+                          // The provider client computes the effective update payload hash because it owns the final outbound payload/action.
+                          var payloadHash = pushProviderClient.ComputeUpdatePayloadHash(request);
+
+                          var retryingPreviousError = !string.IsNullOrWhiteSpace(item.ErrorReason);
+
+                          // Only skip when the previous provider update completed successfully and the effective payload is unchanged.
+                          // If the previous attempt failed, retry even when the hash matches.
+                          if (retryingPreviousError || !string.Equals(item.PayloadHash, payloadHash, StringComparison.Ordinal))
+                          {
+                            await pushProviderClient.Update(request);
+                          }
+                          else if (_logger.IsEnabled(LogLevel.Information))
+                          {
+                            _logger.LogInformation("Skipping sync push provider update for '{entityType}' and item with id '{id}' because the effective provider update payload hash has not changed", item.EntityType, item.Id);
+                          }
+
+                          item.PayloadHash = payloadHash;
+                          break;
+
+                        case SyncAction.Delete:
+                          if (string.IsNullOrEmpty(item.EntityExternalId))
+                            throw new ArgumentNullException(nameof(item), "External id required");
+
+                          //scheduled for execution upon explicit and implicit opportunity deletion
+                          //once an opportunity or organization are deleted, it cannot be reinstated
+                          //trigger points:
+                          // - IOpportunityService.UpdateStatus (explicit)
+                          // - IOpportunityBackgroundService.ProcessDeletion (explicit)
+                          // - IOrganizationService.UpdateStatus (implicit)
+                          // - IOrganizationBackgroundService.ProcessDeletion (implicit)
+
+                          //scheduling failsafe
+                          if (!ProcessingService.Statuses_Opportunity_CanDelete.Contains(opportunity.Status))
+                            throw new InvalidOperationException($"Action '{action}': Opportunity status of '{ProcessingService.Statuses_Opportunity_CanDelete.JoinNames()}' expected. Current status '{opportunity.Status.ToDescription()}'");
+
+                          switch (opportunity.Status)
+                          {
+                            case Status.Active:
+                            case Status.Inactive:
+                            case Status.Expired:
+                              if (opportunity.OrganizationStatus != OrganizationStatus.Deleted)
+                                throw new InvalidOperationException($"Processing action {action}: Opportunity with status {opportunity.Status.ToDescription()} must be associated with a deleted organization");
+                              break;
+
+                            case Status.Deleted:
+                              break;
+
+                            default:
+                              throw new InvalidOperationException($"Opportunity status of '{opportunity.Status.ToDescription()}' not supported");
+                          }
+
+                          await pushProviderClient.Delete(item.EntityExternalId);
                           break;
 
                         default:
-                          throw new InvalidOperationException($"Opportunity status of '{opportunity.Status.ToDescription()}' not supported");
+                          throw new InvalidOperationException($"Processing action of '{action}' not supported");
                       }
-
-                      await pushProviderClient.Delete(item.EntityExternalId);
                       break;
 
                     default:
-                      throw new InvalidOperationException($"Processing action of '{action}' not supported");
+                      throw new InvalidOperationException($"Entity type of '{pendingGroup.EntityType}' not supported");
                   }
-                  break;
 
-                default:
-                  throw new InvalidOperationException($"Entity type of '{entityType}' not supported");
+                  item.Status = ProcessingStatus.Processed;
+                  await _processingService.UpdatePush(item);
+
+                  var (ItemsProcessed, ItemsSkipped, ItemsFailed, FailedReason) = tracking[trackingKey];
+                  tracking[trackingKey] = (ItemsProcessed + 1, ItemsSkipped, ItemsFailed, FailedReason);
+
+                  if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processed sync push for '{entityType}' and item with id '{id}'", item.EntityType, item.Id);
+                }
+                catch (Exception ex)
+                {
+                  if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to process sync push for '{entityType}' and item with id '{id}': {errorMessage}", item.EntityType, item.Id, ex.Message);
+
+                  item.Status = ProcessingStatus.Error;
+                  item.ErrorReason = ex.Message;
+                  await _processingService.UpdatePush(item);
+
+                  var (ItemsProcessed, ItemsSkipped, ItemsFailed, FailedReason) = tracking[trackingKey];
+                  tracking[trackingKey] = (ItemsProcessed + 1, ItemsSkipped, ItemsFailed + 1, FailedReason);
+
+                  itemIdsToSkip.Add(item.Id);
+                }
               }
-
-              item.Status = ProcessingStatus.Processed;
-              await _processingService.UpdatePush(item);
-
-              if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processed sync push for '{entityType}' and item with id '{id}'", item.EntityType, item.Id);
             }
             catch (Exception ex)
             {
-              if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to process sync push for '{entityType}' and item with id '{id}': {errorMessage}", item.EntityType, item.Id, ex.Message);
+              if (_logger.IsEnabled(LogLevel.Error))
+                _logger.LogError(ex, "Failed to process sync push for partner id '{partnerId}' and entity type '{entityType}': {errorMessage}", pendingGroup.PartnerId, pendingGroup.EntityType, ex.Message);
 
-              item.Status = ProcessingStatus.Error;
-              item.ErrorReason = ex.Message;
-              await _processingService.UpdatePush(item);
+              var (ItemsProcessed, ItemsSkipped, ItemsFailed, FailedReason) = tracking[trackingKey];
+              tracking[trackingKey] = (ItemsProcessed, ItemsSkipped, ItemsFailed, ex.Message);
 
-              itemIdsToSkip.Add(item.Id);
+              itemIdsToSkip.AddRange(pendingGroup.Items.Select(o => o.Id));
             }
-
-            if (executeUntil <= DateTimeOffset.UtcNow) break;
           }
         }
 
@@ -271,9 +300,36 @@ namespace Yoma.Core.Domain.PartnerSync.Services
       catch (Exception ex)
       {
         if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(ProcessSyncPush), ex.Message);
+
+        // Tracking represents the full push run, not individual pages or batches.
+        // If the run fails after one or more partner/entity groups started, mark those groups as failed
+        // so their tracking outcome does not incorrectly appear successful or partial.
+        foreach (var item in tracking)
+        {
+          var (itemsProcessed, itemsSkipped, itemsFailed, failedReason) = item.Value;
+
+          if (string.IsNullOrWhiteSpace(failedReason))
+            tracking[item.Key] = (itemsProcessed, itemsSkipped, itemsFailed, ex.Message);
+        }
       }
       finally
       {
+        foreach (var item in tracking)
+        {
+          var (itemsProcessed, itemsSkipped, itemsFailed, failedReason) = item.Value;
+
+          // Avoid recording a false run if tracking was initialized but no item was actually handled.
+          if (itemsProcessed == 0 && string.IsNullOrWhiteSpace(failedReason)) continue;
+
+          if (!string.IsNullOrWhiteSpace(failedReason))
+          {
+            await _processingService.RecordTracking(SyncType.Push, item.Key.PartnerId, item.Key.EntityType, SyncScope.Entity, dateTimeNow, failedReason);
+            continue;
+          }
+
+          await _processingService.RecordTracking(SyncType.Push, item.Key.PartnerId, item.Key.EntityType, SyncScope.Entity, dateTimeNow, itemsProcessed, itemsProcessed - itemsSkipped - itemsFailed, itemsSkipped, itemsFailed);
+        }
+
         if (lockAcquired) await _distributedLockService.ReleaseLockAsync(lockIdentifier);
       }
     }
@@ -293,7 +349,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
 
         if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processing partner sync pull");
 
-        var partners = _partnerService.ListPull();
+        var partners = _partnerService.ListPull(SyncScope.Entity);
         if (partners.Count == 0)
         {
           if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("No sync pull partners found to process");
@@ -326,12 +382,21 @@ namespace Yoma.Core.Domain.PartnerSync.Services
     {
       try
       {
-        var partner = Enum.Parse<Core.SyncPartner>(partnerModel.Name, true);
+        var partner = Enum.Parse<SyncPartner>(partnerModel.Name, true);
 
-        if (!partnerModel.SyncTypesEnabledParsed.TryGetValue(Core.SyncType.Pull, out var entityTypes) || entityTypes.Count == 0)
+        if (!partnerModel.SyncCapabilitiesParsed.TryGetValue(SyncType.Pull, out var entityCapabilities) || entityCapabilities.Count == 0)
           return;
 
-        foreach (var entityType in entityTypes.Distinct())
+        var entityTypes = entityCapabilities
+          .Where(o => o.Value.Contains(SyncScope.Entity))
+          .Select(o => o.Key)
+          .Distinct()
+          .ToList();
+
+        if (entityTypes.Count == 0)
+          return;
+
+        foreach (var entityType in entityTypes)
         {
           if (executeUntil <= DateTimeOffset.UtcNow) break;
 
@@ -356,210 +421,243 @@ namespace Yoma.Core.Domain.PartnerSync.Services
     private async Task ProcessSyncPullOpportunity(Models.Lookups.Partner partnerModel, Core.SyncPartner partner, DateTimeOffset executeUntil)
     {
       var entityType = EntityType.Opportunity;
-      var pullProviderClient = _providerClientFactoryResolver.CreateClient<ISyncProviderClientPull<Opportunity.Models.Opportunity>>(partner);
+      var dateStamp = DateTimeOffset.UtcNow;
+      var tracking = (ItemsProcessed: 0, ItemsSkipped: 0, ItemsFailed: 0, FailedReason: (string?)null);
 
-      var pageNumber = 1;
-      var pageSize = _scheduleJobOptions.PartnerSyncPullScheduleBatchSize;
-      SyncResultPull<Opportunity.Models.Opportunity>? result = null;
-
-      while (executeUntil > DateTimeOffset.UtcNow)
+      try
       {
-        var (Result, Items, PagedByProvider) = await ListSyncPullItems(partner, entityType, pullProviderClient, pageNumber, pageSize, result);
-        result = Result;
+        var pullProviderClient = _providerClientFactoryResolver.CreateClient<ISyncProviderClientPullEntity<Opportunity.Models.Opportunity>>(partner);
 
-        if (Items.Count == 0) break;
+        var pageNumber = 1;
+        var pageSize = _scheduleJobOptions.PartnerSyncPullScheduleBatchSize;
+        SyncResultPullEntity<Opportunity.Models.Opportunity>? result = null;
 
-        foreach (var item in Items)
+        while (executeUntil > DateTimeOffset.UtcNow)
         {
-          if (executeUntil <= DateTimeOffset.UtcNow) break;
+          var (Result, Items, PagedByProvider) = await ListSyncPullItems(partner, entityType, pullProviderClient, pageNumber, pageSize, result);
+          result = Result;
 
-          var action = SyncAction.Create;
-          Guid? entityId = null;
+          if (Items.Count == 0) break;
 
-          try
+          foreach (var item in Items)
           {
-            if (string.IsNullOrWhiteSpace(item.ExternalId))
-              throw new InvalidOperationException("External id expected");
+            if (executeUntil <= DateTimeOffset.UtcNow) break;
 
-            if (_logger.IsEnabled(LogLevel.Information))
-              _logger.LogInformation("Processing sync pull item for partner '{partner}', entity type '{entityType}', entity external id '{entityExternalId}'", partner, entityType, item.ExternalId);
-
-            var opportunityItem = item.Item;
-            var processingItemExisting = _processingService.GetPull(partnerModel.Id, entityType, item.ExternalId);
-            var processingItemExistingHasSynchronizedEntity = processingItemExisting.HasSynchronizedEntity(entityType);
-
-            if (processingItemExisting?.Status == ProcessingStatus.Error)
-            {
-              if (_logger.IsEnabled(LogLevel.Information))
-                _logger.LogInformation(
-                  "Processing of partner sync pull item skipped: Existing pull item is in permanent error state for partner '{partner}', entity type '{entityType}', entity external id '{entityExternalId}'. Retry count '{retryCount}'. Error: {errorReason}",
-                  partner, entityType, item.ExternalId, processingItemExisting.RetryCount, processingItemExisting.ErrorReason);
-
-              continue;
-            }
-
-            Opportunity.Models.Opportunity? opportunityExisting = null;
-            if (processingItemExistingHasSynchronizedEntity)
-            {
-              entityId = processingItemExisting!.OpportunityId!.Value;
-              opportunityExisting = _opportunityService.GetById(entityId.Value, false, false, false);
-            }
-
-            if (item.Deleted == true && !processingItemExistingHasSynchronizedEntity)
-            {
-              if (_logger.IsEnabled(LogLevel.Information))
-                _logger.LogInformation(
-                  "Processing of partner sync pull item skipped: Entity is marked deleted by provider but has no existing Yoma mapping for partner '{partner}', entity type '{entityType}', entity external id '{entityExternalId}'",
-                  partner, entityType, item.ExternalId);
-
-              continue;
-            }
-
-            if (opportunityExisting?.Status == Status.Deleted)
-            {
-              if (_logger.IsEnabled(LogLevel.Information))
-                _logger.LogInformation("Processing of partner sync pull item skipped: Entity already deleted in Yoma for partner '{partner}', entity type '{entityType}', entity id '{entityId}'", partner, entityType, entityId);
-
-              continue;
-            }
-
-            if (processingItemExistingHasSynchronizedEntity &&
-                Enum.Parse<SyncAction>(processingItemExisting!.Action, true) == SyncAction.Delete &&
-                string.IsNullOrWhiteSpace(processingItemExisting.ErrorReason))
-            {
-              if (_logger.IsEnabled(LogLevel.Information))
-                _logger.LogInformation("Processing of partner sync pull item skipped: Entity already deleted via sync for partner '{partner}', entity type '{entityType}', entity external id '{entityExternalId}'", partner, entityType, item.ExternalId);
-
-              continue;
-            }
-
-            action = item.ResolveSyncAction(entityType, processingItemExisting);
-
-            if (!partnerModel.ActionEnabledParsed.Contains(action))
-            {
-              if (_logger.IsEnabled(LogLevel.Information))
-                _logger.LogInformation("Processing of partner sync pull item skipped: Action '{action}' not enabled for partner '{partner}', entity type '{entityType}', entity external id '{entityExternalId}'", action, partner, entityType, item.ExternalId);
-
-              continue;
-            }
-
-            string? payloadHash = null;
-            var itemSkipped = false;
-
-            await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
-            {
-              using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
-
-              switch (action)
-              {
-                case SyncAction.Create:
-                  {
-                    var request = opportunityItem.ToRequestCreate();
-                    var opportunity = await _opportunityService.Create(request, false, false, false);
-                    entityId = opportunity.Id;
-
-                    // Hash the equivalent update payload so the created item can be compared consistently against future pull updates.
-                    var requestUpdate = opportunityItem.ToRequestUpdate(entityId.Value, applyHidden: false);
-                    payloadHash = HashHelper.ComputeSHA256Hash(requestUpdate);
-
-                    break;
-                  }
-
-                case SyncAction.Update:
-                  {
-                    if (processingItemExisting == null)
-                      throw new InvalidOperationException($"Existing processing item expected for update action: Partner '{partner}', entity type '{entityType}', entity external id '{item.ExternalId}'");
-
-                    if (!entityId.HasValue)
-                      throw new InvalidOperationException($"Entity id expected for pull update: Partner '{partner}', entity type '{entityType}', entity external id '{item.ExternalId}'");
-
-                    var request = opportunityItem.ToRequestUpdate(entityId.Value, applyHidden: false);
-                    payloadHash = HashHelper.ComputeSHA256Hash(request);
-
-                    var retryingPreviousError = !string.IsNullOrWhiteSpace(processingItemExisting.ErrorReason);
-
-                    // Only skip when the previous processing was successful and the effective payload is unchanged.
-                    // If the previous attempt failed, retry even when the hash matches.
-                    if (!retryingPreviousError &&
-                        string.Equals(processingItemExisting.PayloadHash, payloadHash, StringComparison.Ordinal))
-                    {
-                      if (_logger.IsEnabled(LogLevel.Information))
-                        _logger.LogInformation(
-                          "Processing of partner sync pull item skipped: Effective payload unchanged; no domain update required for partner '{partner}', entity type '{entityType}', entity external id '{entityExternalId}'",
-                          partner, entityType, item.ExternalId);
-
-                      itemSkipped = true;
-
-                      scope.Complete();
-                      return;
-                    }
-
-                    await _opportunityService.Update(request, false, false, authorizedByPartnerSyncPull: true);
-                    break;
-                  }
-
-                case SyncAction.Delete:
-                  {
-                    if (!entityId.HasValue)
-                      throw new InvalidOperationException($"Entity id expected for pull deletion: Partner '{partner}', entity type '{entityType}', entity external id '{item.ExternalId}'");
-
-                    await _opportunityService.DeleteFromPartnerSyncPull(entityId.Value);
-                    break;
-                  }
-
-                default:
-                  throw new InvalidOperationException($"Action of '{action}' not supported");
-              }
-
-              await _processingService.RecordPull(action, partnerModel.Id, entityType, item.ExternalId, entityId, payloadHash);
-
-              scope.Complete();
-            });
-
-            if (itemSkipped) continue;
-
-            if (_logger.IsEnabled(LogLevel.Information))
-              _logger.LogInformation("Processed sync pull item for partner '{partner}', entity type '{entityType}', entity external id '{entityExternalId}'", partner, entityType, item.ExternalId);
-          }
-          catch (Exception ex)
-          {
-            if (_logger.IsEnabled(LogLevel.Error))
-              _logger.LogError(ex, "Failed to process sync pull item for partner '{partner}' and entity type '{entityType}': {errorMessage}", partner, entityType, ex.Message);
-
-            if (action == SyncAction.Create) entityId = null;
+            var action = SyncAction.Create;
+            Guid? entityId = null;
 
             try
             {
-              await _processingService.RecordPullError(action, partnerModel.Id, entityType, item.ExternalId, entityId, ex.Message);
+              if (string.IsNullOrWhiteSpace(item.ExternalId))
+                throw new InvalidOperationException("External id expected");
+
+              if (_logger.IsEnabled(LogLevel.Information))
+                _logger.LogInformation("Processing sync pull item for partner '{partner}', entity type '{entityType}', entity external id '{entityExternalId}'", partner, entityType, item.ExternalId);
+
+              var opportunityItem = item.Item;
+              var processingItemExisting = _processingService.GetPull(partnerModel.Id, entityType, item.ExternalId);
+              var processingItemExistingHasSynchronizedEntity = processingItemExisting.HasSynchronizedEntity(entityType);
+
+              if (processingItemExisting?.Status == ProcessingStatus.Error)
+              {
+                if (_logger.IsEnabled(LogLevel.Information))
+                  _logger.LogInformation(
+                    "Processing of partner sync pull item skipped: Existing pull item is in permanent error state for partner '{partner}', entity type '{entityType}', entity external id '{entityExternalId}'. Retry count '{retryCount}'. Error: {errorReason}",
+                    partner, entityType, item.ExternalId, processingItemExisting.RetryCount, processingItemExisting.ErrorReason);
+
+                tracking = (tracking.ItemsProcessed + 1, tracking.ItemsSkipped + 1, tracking.ItemsFailed, tracking.FailedReason);
+                continue;
+              }
+
+              Opportunity.Models.Opportunity? opportunityExisting = null;
+              if (processingItemExistingHasSynchronizedEntity)
+              {
+                entityId = processingItemExisting!.OpportunityId!.Value;
+                opportunityExisting = _opportunityService.GetById(entityId.Value, false, false, false);
+              }
+
+              if (item.Deleted == true && !processingItemExistingHasSynchronizedEntity)
+              {
+                if (_logger.IsEnabled(LogLevel.Information))
+                  _logger.LogInformation(
+                    "Processing of partner sync pull item skipped: Entity is marked deleted by provider but has no existing Yoma mapping for partner '{partner}', entity type '{entityType}', entity external id '{entityExternalId}'",
+                    partner, entityType, item.ExternalId);
+
+                tracking = (tracking.ItemsProcessed + 1, tracking.ItemsSkipped + 1, tracking.ItemsFailed, tracking.FailedReason);
+                continue;
+              }
+
+              if (opportunityExisting?.Status == Status.Deleted)
+              {
+                if (_logger.IsEnabled(LogLevel.Information))
+                  _logger.LogInformation("Processing of partner sync pull item skipped: Entity already deleted in Yoma for partner '{partner}', entity type '{entityType}', entity id '{entityId}'", partner, entityType, entityId);
+
+                tracking = (tracking.ItemsProcessed + 1, tracking.ItemsSkipped + 1, tracking.ItemsFailed, tracking.FailedReason);
+                continue;
+              }
+
+              if (processingItemExistingHasSynchronizedEntity &&
+                  Enum.Parse<SyncAction>(processingItemExisting!.Action, true) == SyncAction.Delete &&
+                  string.IsNullOrWhiteSpace(processingItemExisting.ErrorReason))
+              {
+                if (_logger.IsEnabled(LogLevel.Information))
+                  _logger.LogInformation("Processing of partner sync pull item skipped: Entity already deleted via sync for partner '{partner}', entity type '{entityType}', entity external id '{entityExternalId}'", partner, entityType, item.ExternalId);
+
+                tracking = (tracking.ItemsProcessed + 1, tracking.ItemsSkipped + 1, tracking.ItemsFailed, tracking.FailedReason);
+                continue;
+              }
+
+              action = item.ResolveSyncAction(entityType, processingItemExisting);
+
+              if (!partnerModel.ActionsEnabledParsed.Contains(action))
+              {
+                if (_logger.IsEnabled(LogLevel.Information))
+                  _logger.LogInformation("Processing of partner sync pull item skipped: Action '{action}' not enabled for partner '{partner}', entity type '{entityType}', entity external id '{entityExternalId}'", action, partner, entityType, item.ExternalId);
+
+                tracking = (tracking.ItemsProcessed + 1, tracking.ItemsSkipped + 1, tracking.ItemsFailed, tracking.FailedReason);
+                continue;
+              }
+
+              string? payloadHash = null;
+              var itemSkipped = false;
+
+              await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+              {
+                using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
+
+                switch (action)
+                {
+                  case SyncAction.Create:
+                    {
+                      var request = opportunityItem.ToRequestCreate();
+                      var opportunity = await _opportunityService.Create(request, false, false, false);
+                      entityId = opportunity.Id;
+
+                      // Hash the equivalent update payload so the created item can be compared consistently against future pull updates.
+                      var requestUpdate = opportunityItem.ToRequestUpdate(entityId.Value, applyHidden: false);
+                      payloadHash = HashHelper.ComputeSHA256Hash(requestUpdate);
+
+                      break;
+                    }
+
+                  case SyncAction.Update:
+                    {
+                      if (processingItemExisting == null)
+                        throw new InvalidOperationException($"Existing processing item expected for update action: Partner '{partner}', entity type '{entityType}', entity external id '{item.ExternalId}'");
+
+                      if (!entityId.HasValue)
+                        throw new InvalidOperationException($"Entity id expected for pull update: Partner '{partner}', entity type '{entityType}', entity external id '{item.ExternalId}'");
+
+                      var request = opportunityItem.ToRequestUpdate(entityId.Value, applyHidden: false);
+                      payloadHash = HashHelper.ComputeSHA256Hash(request);
+
+                      var retryingPreviousError = !string.IsNullOrWhiteSpace(processingItemExisting.ErrorReason);
+
+                      // Only skip when the previous processing was successful and the effective payload is unchanged.
+                      // If the previous attempt failed, retry even when the hash matches.
+                      if (!retryingPreviousError &&
+                          string.Equals(processingItemExisting.PayloadHash, payloadHash, StringComparison.Ordinal))
+                      {
+                        if (_logger.IsEnabled(LogLevel.Information))
+                          _logger.LogInformation(
+                            "Processing of partner sync pull item skipped: Effective payload unchanged; no domain update required for partner '{partner}', entity type '{entityType}', entity external id '{entityExternalId}'",
+                            partner, entityType, item.ExternalId);
+
+                        itemSkipped = true;
+
+                        scope.Complete();
+                        return;
+                      }
+
+                      await _opportunityService.Update(request, false, false, authorizedByPartnerSyncPull: true);
+                      break;
+                    }
+
+                  case SyncAction.Delete:
+                    {
+                      if (!entityId.HasValue)
+                        throw new InvalidOperationException($"Entity id expected for pull deletion: Partner '{partner}', entity type '{entityType}', entity external id '{item.ExternalId}'");
+
+                      await _opportunityService.DeleteFromPartnerSyncPull(entityId.Value);
+                      break;
+                    }
+
+                  default:
+                    throw new InvalidOperationException($"Action of '{action}' not supported");
+                }
+
+                await _processingService.RecordPull(action, partnerModel.Id, entityType, item.ExternalId, entityId, payloadHash);
+
+                scope.Complete();
+              });
+
+              tracking = itemSkipped
+                ? (tracking.ItemsProcessed + 1, tracking.ItemsSkipped + 1, tracking.ItemsFailed, tracking.FailedReason)
+                : (tracking.ItemsProcessed + 1, tracking.ItemsSkipped, tracking.ItemsFailed, tracking.FailedReason);
+
+              if (itemSkipped) continue;
+
+              if (_logger.IsEnabled(LogLevel.Information))
+                _logger.LogInformation("Processed sync pull item for partner '{partner}', entity type '{entityType}', entity external id '{entityExternalId}'", partner, entityType, item.ExternalId);
             }
-            catch (Exception innerEx)
+            catch (Exception ex)
             {
+              // Item-level failures are counted against the completed pull run.
+              // The run will be recorded as partial, preventing checkpoint-based syncs from advancing.
+              tracking = (tracking.ItemsProcessed + 1, tracking.ItemsSkipped, tracking.ItemsFailed + 1, tracking.FailedReason);
+
               if (_logger.IsEnabled(LogLevel.Error))
-                _logger.LogError(innerEx, "Failed to record sync pull error state for partner '{partner}' and entity type '{entityType}': {errorMessage}", partner, entityType, innerEx.Message);
+                _logger.LogError(ex, "Failed to process sync pull item for partner '{partner}' and entity type '{entityType}': {errorMessage}", partner, entityType, ex.Message);
+
+              if (action == SyncAction.Create) entityId = null;
+
+              try
+              {
+                await _processingService.RecordPullError(action, partnerModel.Id, entityType, item.ExternalId, entityId, ex.Message);
+              }
+              catch (Exception innerEx)
+              {
+                if (_logger.IsEnabled(LogLevel.Error))
+                  _logger.LogError(innerEx, "Failed to record sync pull error state for partner '{partner}' and entity type '{entityType}': {errorMessage}", partner, entityType, innerEx.Message);
+              }
             }
           }
+
+          if (executeUntil <= DateTimeOffset.UtcNow) break;
+          if (result.ReachedTotalCount(pageNumber, pageSize)) break;
+
+          if (PagedByProvider) result = null;
+
+          pageNumber++;
         }
+      }
+      catch (Exception ex)
+      {
+        tracking = (tracking.ItemsProcessed, tracking.ItemsSkipped, tracking.ItemsFailed, ex.Message);
 
-        if (executeUntil <= DateTimeOffset.UtcNow) break;
-        if (result.ReachedTotalCount(pageNumber, pageSize)) break;
-
-        if (PagedByProvider) result = null;
-
-        pageNumber++;
+        if (_logger.IsEnabled(LogLevel.Error))
+          _logger.LogError(ex, "Failed to process sync pull for partner '{partner}' and entity type '{entityType}': {errorMessage}", partner, entityType, ex.Message);
+      }
+      finally
+      {
+        if (!string.IsNullOrWhiteSpace(tracking.FailedReason))
+          await _processingService.RecordTracking(SyncType.Pull, partnerModel.Id, entityType, SyncScope.Entity, dateStamp, tracking.FailedReason);
+        else
+          await _processingService.RecordTracking(SyncType.Pull, partnerModel.Id, entityType, SyncScope.Entity, dateStamp, tracking.ItemsProcessed, tracking.ItemsProcessed - tracking.ItemsSkipped - tracking.ItemsFailed, tracking.ItemsSkipped, tracking.ItemsFailed);
       }
     }
 
-    private async Task<(SyncResultPull<Opportunity.Models.Opportunity> Result, List<SyncItem<Opportunity.Models.Opportunity>> Items, bool PagedByProvider)> ListSyncPullItems(
-      Core.SyncPartner partner,
+    private async Task<(SyncResultPullEntity<Opportunity.Models.Opportunity> Result, List<SyncItemEntity<Opportunity.Models.Opportunity>> Items, bool PagedByProvider)> ListSyncPullItems(
+      SyncPartner partner,
       EntityType entityType,
-      ISyncProviderClientPull<Opportunity.Models.Opportunity> pullProviderClient,
+      ISyncProviderClientPullEntity<Opportunity.Models.Opportunity> pullProviderClient,
       int pageNumber,
       int pageSize,
-      SyncResultPull<Opportunity.Models.Opportunity>? result)
+      SyncResultPullEntity<Opportunity.Models.Opportunity>? result)
     {
       if (result == null)
       {
-        var filter = new SyncFilterPull
+        var filter = new SyncFilterPullEntity
         {
           PageNumber = pageNumber,
           PageSize = pageSize

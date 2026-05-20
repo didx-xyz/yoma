@@ -186,6 +186,12 @@ namespace Yoma.Core.Domain.Core
     Pull
   }
 
+  public enum SyncScope
+  {
+    Entity,
+    Verification
+  }
+
   public enum SyncPartner
   {
     SAYouth,

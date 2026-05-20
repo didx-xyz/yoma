@@ -13,7 +13,7 @@ using Yoma.Core.Infrastructure.Jobberman.Models;
 
 namespace Yoma.Core.Infrastructure.Jobberman.Client
 {
-  public sealed class JobbermanClient : ISyncProviderClientPull<Domain.Opportunity.Models.Opportunity>
+  public sealed class JobbermanClient : ISyncProviderClientPullEntity<Domain.Opportunity.Models.Opportunity>
   {
     #region Class Variables
     private readonly ILogger<JobbermanClient> _logger;
@@ -24,7 +24,7 @@ namespace Yoma.Core.Infrastructure.Jobberman.Client
     private readonly ILanguageService _languageService;
     private readonly IRepositoryBatched<Opportunity> _opportunityRepository;
 
-    private readonly SyncFilterPullValidator _syncFilterPullValidator;
+    private readonly SyncFilterPullEntityValidator _syncFilterPullEntityValidator;
 
     // Yoma category id -> Jobberman job functions.
     // Keep in code for now because the mapping is small, partner-specific, and version-controlled.
@@ -57,7 +57,7 @@ namespace Yoma.Core.Infrastructure.Jobberman.Client
       ICountryService countryService,
       ILanguageService languageService,
       IRepositoryBatched<Opportunity> opportunityRepository,
-      SyncFilterPullValidator syncFilterPullValidator)
+      SyncFilterPullEntityValidator syncFilterPullEntityValidator)
     {
       _logger = logger ?? throw new ArgumentNullException(nameof(logger));
       _options = options.Value ?? throw new ArgumentNullException(nameof(options));
@@ -66,16 +66,16 @@ namespace Yoma.Core.Infrastructure.Jobberman.Client
       _countryService = countryService ?? throw new ArgumentNullException(nameof(countryService));
       _languageService = languageService ?? throw new ArgumentNullException(nameof(languageService));
       _opportunityRepository = opportunityRepository ?? throw new ArgumentNullException(nameof(opportunityRepository));
-      _syncFilterPullValidator = syncFilterPullValidator ?? throw new ArgumentNullException(nameof(syncFilterPullValidator));
+      _syncFilterPullEntityValidator = syncFilterPullEntityValidator ?? throw new ArgumentNullException(nameof(syncFilterPullEntityValidator));
     }
     #endregion
 
     #region Public Members
-    public Task<SyncResultPull<Domain.Opportunity.Models.Opportunity>> List(SyncFilterPull filter)
+    public Task<SyncResultPullEntity<Domain.Opportunity.Models.Opportunity>> List(SyncFilterPullEntity filter)
     {
       ArgumentNullException.ThrowIfNull(filter, nameof(filter));
 
-      _syncFilterPullValidator.ValidateAndThrow(filter);
+      _syncFilterPullEntityValidator.ValidateAndThrow(filter);
 
       if (_logger.IsEnabled(LogLevel.Information))
         _logger.LogInformation(
@@ -85,7 +85,7 @@ namespace Yoma.Core.Infrastructure.Jobberman.Client
       var query = _opportunityRepository.Query();
       query = query.OrderBy(o => o.ExternalId);
 
-      var result = new SyncResultPull<Domain.Opportunity.Models.Opportunity>();
+      var result = new SyncResultPullEntity<Domain.Opportunity.Models.Opportunity>();
 
       if (filter.PaginationEnabled)
       {
@@ -100,7 +100,7 @@ namespace Yoma.Core.Infrastructure.Jobberman.Client
     #endregion
 
     #region Private Members
-    private SyncItem<Domain.Opportunity.Models.Opportunity> ToOpportunity(Opportunity item)
+    private SyncItemEntity<Domain.Opportunity.Models.Opportunity> ToOpportunity(Opportunity item)
     {
       ArgumentNullException.ThrowIfNull(item, nameof(item));
 
@@ -147,7 +147,7 @@ namespace Yoma.Core.Infrastructure.Jobberman.Client
         // ExternalId: Opportunity.ExternalId is used by CSV imports; pull synchronization must set the external identifier on the SyncItem.
       };
 
-      return new SyncItem<Domain.Opportunity.Models.Opportunity>
+      return new SyncItemEntity<Domain.Opportunity.Models.Opportunity>
       {
         ExternalId = item.ExternalId,
         Deleted = item.Deleted == true,

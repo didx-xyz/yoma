@@ -143,6 +143,7 @@ namespace Yoma.Core.Infrastructure.Database.Context
     public DbSet<PartnerSync.Entities.Lookups.ProcessingStatus> PartnerSyncProcessingStatus { get; set; }
     #endregion Lookups 
 
+    public DbSet<PartnerSync.Entities.PartnerSyncTracking> PartnerSyncTracking { get; set; }
     public DbSet<PartnerSync.Entities.ProcessingLog> PartnerSyncProcessingLog { get; set; }
     #endregion PartnerSync
 
@@ -294,9 +295,9 @@ namespace Yoma.Core.Infrastructure.Database.Context
       // see partner_sync: existing rows default to Push:Opportunity
       builder.Entity<PartnerSync.Entities.Lookups.Partner>(entity =>
       {
-        entity.Property(e => e.SyncTypesEnabled)
+        entity.Property(e => e.SyncCapabilities)
           .IsRequired()
-          .HasDefaultValue($"{{\"{Domain.Core.SyncType.Push}\":[\"{Domain.PartnerSync.EntityType.Opportunity}\"]}}");
+          .HasDefaultValue($"{{\"{Domain.Core.SyncType.Push}\":{{\"{Domain.PartnerSync.EntityType.Opportunity}\":[\"{Domain.Core.SyncScope.Entity}\"]}}}}");
       });
 
       // see partner_sync: existing logs default to Push

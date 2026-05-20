@@ -1,4 +1,5 @@
 using Newtonsoft.Json;
+using Yoma.Core.Domain.Core;
 
 namespace Yoma.Core.Domain.PartnerSync.Models.Lookups
 {
@@ -10,14 +11,19 @@ namespace Yoma.Core.Domain.PartnerSync.Models.Lookups
 
     public bool Active { get; set; }
 
+    /// <summary>
+    /// Defines the partner sync capabilities as sync type -> entity type -> supported sync scopes.
+    /// The entity type and sync scope are supplied by the partner sync configuration / processing context
+    /// and are therefore not repeated on filters, requests, or sync items.
+    /// </summary>
     [JsonIgnore]
-    public string SyncTypesEnabled { get; set; } = null!; //required
+    public string SyncCapabilities { get; set; } = null!;
 
-    public Dictionary<Core.SyncType, List<EntityType>> SyncTypesEnabledParsed { get; set; } = null!;
+    public Dictionary<SyncType, Dictionary<EntityType, List<SyncScope>>> SyncCapabilitiesParsed { get; set; } = null!;
 
     [JsonIgnore]
-    public string? ActionEnabled { get; set; }
+    public string? ActionsEnabled { get; set; }
 
-    public List<SyncAction> ActionEnabledParsed { get; set; } = null!; //defaults to true for all actions if not explicitly defined (see ActionEnabled)
+    public List<SyncAction> ActionsEnabledParsed { get; set; } = null!; //defaults to true for all actions if not explicitly defined (see ActionsEnabled)
   }
 }

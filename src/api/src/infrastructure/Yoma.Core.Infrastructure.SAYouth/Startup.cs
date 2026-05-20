@@ -31,7 +31,7 @@ namespace Yoma.Core.Infrastructure.SAYouth
 
     public static void ConfigureServices_InfrastructureSyncProvider(this IServiceCollection services)
     {
-      services.AddKeyedScoped<ISyncProviderClientFactory<ISyncProviderClientPush<Opportunity>>, SAYouthClientFactory>(SyncPartner.SAYouth);
+      services.AddKeyedScoped<ISyncProviderClientFactory<ISyncProviderClientPushEntity<Opportunity>>, SAYouthClientFactory>(SyncPartner.SAYouth);
 
       services.AddSingleton<HealthCheck>();
 

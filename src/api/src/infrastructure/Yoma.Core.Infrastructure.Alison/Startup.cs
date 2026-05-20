@@ -49,8 +49,9 @@ namespace Yoma.Core.Infrastructure.Alison
       services.AddScoped<IExecutionStrategyService, ExecutionStrategyService>();
       services.AddScoped<IOpportunityCatalogueBackgroundService, OpportunityCatalogueBackgroundService>();
 
-      // client
-      services.AddKeyedScoped<ISyncProviderClientFactory<ISyncProviderClientPull<Domain.Opportunity.Models.Opportunity>>, AlisonClientFactory>(SyncPartner.Alison);
+      // clients
+      services.AddKeyedScoped<ISyncProviderClientFactory<ISyncProviderClientPullEntity<Domain.Opportunity.Models.Opportunity>>, AlisonClientFactory>(SyncPartner.Alison);
+      services.AddKeyedScoped<ISyncProviderClientFactory<ISyncProviderClientPullVerification>, AlisonClientFactory>(SyncPartner.Alison);
     }
 
     public static void Configure_InfrastructureDatabaseSyncProvider(this IServiceProvider serviceProvider)
