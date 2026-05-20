@@ -132,7 +132,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
 
       if (_logger.IsEnabled(LogLevel.Debug))
         _logger.LogDebug(
-          "Starting Alison opportunity pull from local catalogue cache for environment '{environment}' with pageNumber '{pageNumber}' and pageSize '{pageSize}'",
+          "Listing Alison opportunity sync items from local catalogue cache: environment '{environment}', page number '{pageNumber}', page size '{pageSize}'",
           _environmentProvider.Environment, filter.PageNumber, filter.PageSize);
 
       return Task.FromResult(ListFromStore(filter));

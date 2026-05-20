@@ -28,6 +28,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
     private readonly IOpportunityService _opportunityService;
     private readonly IRepositoryBatched<ProcessingLog> _processingLogRepository;
     private readonly IExecutionStrategyService _executionStrategyService;
+    private readonly IRepository<PartnerSyncTracking> _partnerSyncTrackingRepository;
 
     public static readonly Status[] Statuses_Opportunity_Creatable = [Status.Active]; //only active opportunities scheduled for creation
     public static readonly Status[] Statuses_Opportunity_Updatable = [Status.Active, Status.Inactive, Status.Expired]; //expired: might be updated with end date in the past
@@ -42,6 +43,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
        IProcessingHelperService processingHelperService,
        IOpportunityService opportunityService,
        IRepositoryBatched<ProcessingLog> processingLogRepository,
+       IRepository<PartnerSyncTracking> partnerSyncTrackingRepository,
        IExecutionStrategyService executionStrategyService)
     {
       _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -51,6 +53,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
       _processingHelperService = processingHelperService ?? throw new ArgumentNullException(nameof(processingHelperService));
       _opportunityService = opportunityService ?? throw new ArgumentNullException(nameof(opportunityService));
       _processingLogRepository = processingLogRepository ?? throw new ArgumentNullException(nameof(processingLogRepository));
+      _partnerSyncTrackingRepository = partnerSyncTrackingRepository ?? throw new ArgumentNullException(nameof(partnerSyncTrackingRepository));
       _executionStrategyService = executionStrategyService ?? throw new ArgumentNullException(nameof(executionStrategyService));
     }
     #endregion
@@ -278,7 +281,12 @@ namespace Yoma.Core.Domain.PartnerSync.Services
       if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Scheduling of partner sync push deletion initiated: Entity type '{entityType}' and entity id '{entityId}'", entityType, entityId);
     }
 
-    public List<ProcessingLog> ListPendingPush(int batchSize, List<Guid> idsToSkip)
+    /// <summary>
+    /// Returns pending partner sync push items grouped by partner and entity type.
+    /// Items are selected globally by oldest modified date first, limited by the requested batch size,
+    /// and then grouped in memory so the background process can record one tracking outcome per partner/entity execution.
+    /// </summary>
+    public List<(Guid PartnerId, EntityType EntityType, List<ProcessingLog> Items)> ListPendingPush(int batchSize, List<Guid> idsToSkip)
     {
       ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(batchSize, default, nameof(batchSize));
 
@@ -289,9 +297,11 @@ namespace Yoma.Core.Domain.PartnerSync.Services
       if (idsToSkip != null && idsToSkip.Count != 0)
         query = query.Where(o => !idsToSkip.Contains(o.Id));
 
-      var results = query.OrderBy(o => o.DateModified).Take(batchSize).ToList();
+      var items = query.OrderBy(o => o.DateModified).Take(batchSize).ToList();
 
-      return results;
+      return [.. items
+        .GroupBy(o => new { o.PartnerId, o.EntityType })
+        .Select(o => (o.Key.PartnerId, Enum.Parse<EntityType>(o.Key.EntityType, true), o.ToList()))];
     }
 
     public async Task UpdatePush(ProcessingLog item)
@@ -366,17 +376,134 @@ namespace Yoma.Core.Domain.PartnerSync.Services
 
       await _processingLogRepository.Update(item);
     }
+
+    /// <summary>
+    /// Returns the latest successful partner sync tracking entry for the requested partner capability.
+    /// For checkpoint-based syncs, the returned DateStamp represents the last safely completed checkpoint.
+    /// Failed and partial tracking entries are intentionally excluded.
+    /// </summary>
+    public PartnerSyncTracking? GetTrackingLatest(
+      SyncType syncType,
+      Guid partnerId,
+      EntityType entityType,
+      SyncScope syncScope)
+    {
+      var partner = _partnerService.GetById(partnerId);
+
+      return _partnerSyncTrackingRepository.Query()
+        .Where(o =>
+          o.SyncType == syncType.ToString() &&
+          o.PartnerId == partner.Id &&
+          o.EntityType == entityType.ToString() &&
+          o.SyncScope == syncScope.ToString() &&
+          o.Status == TrackingStatus.Successful.ToString())
+        .OrderByDescending(o => o.DateStamp)
+        .FirstOrDefault();
+    }
+
+    /// <summary>
+    /// Records a completed partner sync run.
+    /// A completed run means the process reached normal item handling and produced item counts.
+    /// ItemsProcessed represents all handled items, including succeeded, skipped and failed items.
+    /// If no item failures occurred the run is recorded as successful, even when all items were skipped or no items were returned.
+    /// If one or more item failures occurred the run is recorded as partial.
+    /// Tracking is best-effort and will not fail the sync process if recording fails.
+    /// </summary>
+    public async Task RecordTracking(
+      SyncType syncType,
+      Guid partnerId,
+      EntityType entityType,
+      SyncScope syncScope,
+      DateTimeOffset dateStamp,
+      int itemsProcessed,
+      int itemsSucceeded,
+      int itemsSkipped,
+      int itemsFailed)
+    {
+      try
+      {
+        ArgumentOutOfRangeException.ThrowIfNegative(itemsProcessed, nameof(itemsProcessed));
+        ArgumentOutOfRangeException.ThrowIfNegative(itemsSucceeded, nameof(itemsSucceeded));
+        ArgumentOutOfRangeException.ThrowIfNegative(itemsSkipped, nameof(itemsSkipped));
+        ArgumentOutOfRangeException.ThrowIfNegative(itemsFailed, nameof(itemsFailed));
+
+        if (itemsProcessed != itemsSucceeded + itemsSkipped + itemsFailed)
+          throw new InvalidOperationException($"{nameof(itemsProcessed)} must equal the sum of {nameof(itemsSucceeded)}, {nameof(itemsSkipped)} and {nameof(itemsFailed)}");
+
+        var partner = _partnerService.GetById(partnerId);
+
+        var item = new PartnerSyncTracking
+        {
+          PartnerId = partner.Id,
+          SyncType = syncType.ToString(),
+          EntityType = entityType.ToString(),
+          SyncScope = syncScope.ToString(),
+          Status = itemsFailed == 0 ? TrackingStatus.Successful.ToString() : TrackingStatus.Partial.ToString(),
+          ItemsProcessed = itemsProcessed,
+          ItemsSucceeded = itemsSucceeded,
+          ItemsSkipped = itemsSkipped,
+          ItemsFailed = itemsFailed,
+          FailedReason = null,
+          DateStamp = dateStamp
+        };
+
+        await _partnerSyncTrackingRepository.Create(item);
+      }
+      catch (Exception ex)
+      {
+        if (_logger.IsEnabled(LogLevel.Error))
+          _logger.LogError(ex, "Failed to record partner sync tracking for sync type '{syncType}', partner id '{partnerId}', entity type '{entityType}', sync scope '{syncScope}': {errorMessage}", syncType, partnerId, entityType, syncScope, ex.Message);
+      }
+    }
+
+    /// <summary>
+    /// Records a failed partner sync run.
+    /// A failed run means the process failed before normal item processing could complete for the partner capability.
+    /// Item-level failures should use the counted tracking overload and result in a partial run instead.
+    /// Tracking is best-effort and will not fail the sync process if recording fails.
+    /// </summary>
+    public async Task RecordTracking(
+      SyncType syncType,
+      Guid partnerId,
+      EntityType entityType,
+      SyncScope syncScope,
+      DateTimeOffset dateStamp,
+      string failedReason)
+    {
+      try
+      {
+        if (string.IsNullOrWhiteSpace(failedReason))
+          throw new ArgumentNullException(nameof(failedReason));
+
+        var partner = _partnerService.GetById(partnerId);
+
+        var item = new PartnerSyncTracking
+        {
+          PartnerId = partner.Id,
+          SyncType = syncType.ToString(),
+          EntityType = entityType.ToString(),
+          SyncScope = syncScope.ToString(),
+          Status = TrackingStatus.Failed.ToString(),
+          ItemsProcessed = null,
+          ItemsSucceeded = null,
+          ItemsSkipped = null,
+          ItemsFailed = null,
+          FailedReason = failedReason.Trim(),
+          DateStamp = dateStamp
+        };
+
+        await _partnerSyncTrackingRepository.Create(item);
+      }
+      catch (Exception ex)
+      {
+        if (_logger.IsEnabled(LogLevel.Error))
+          _logger.LogError(ex, "Failed to record failed partner sync tracking for sync type '{syncType}', partner id '{partnerId}', entity type '{entityType}', sync scope '{syncScope}': {errorMessage}", syncType, partnerId, entityType, syncScope, ex.Message);
+      }
+    }
     #endregion
 
     #region Private Members
-    private async Task<ProcessingLog> RecordPullInternal(
-      SyncAction action,
-      Guid partnerId,
-      EntityType entityType,
-      string entityExternalId,
-      Guid? entityId,
-      string? payloadHash,
-      bool clearErrorState = true)
+    private async Task<ProcessingLog> RecordPullInternal(SyncAction action, Guid partnerId, EntityType entityType, string entityExternalId, Guid? entityId, string? payloadHash, bool clearErrorState = true)
     {
       if (string.IsNullOrWhiteSpace(entityExternalId))
         throw new ArgumentNullException(nameof(entityExternalId));
