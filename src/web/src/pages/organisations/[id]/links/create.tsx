@@ -1090,7 +1090,7 @@ const ReferrerLinkDetails: NextPageWithLayout<{
                           {...registerStep2(`lockToDistributionList`)}
                           type="checkbox"
                           id="lockToDistributionList"
-                          className="checkbox-secondary checkbox"
+                          className="checkbox checkbox-secondary"
                         />
                         <span className="label-text ml-4 whitespace-break-spaces">
                           Only email addresses (maximum 10,000) or phone numbers
@@ -1325,7 +1325,7 @@ const ReferrerLinkDetails: NextPageWithLayout<{
                       <div className="flex flex-col">
                         <div className="label-text font-bold">Type</div>
 
-                        <div className="label label-text pl-0 text-sm">
+                        <div className="label-text label pl-0 text-sm">
                           {
                             linkEntityTypes?.find(
                               (x) => x.value == formData.entityType,
@@ -1349,7 +1349,7 @@ const ReferrerLinkDetails: NextPageWithLayout<{
                         <div className="label-text font-bold">
                           Social Preview
                         </div>
-                        <div className="label label-text pl-0 text-sm">
+                        <div className="label-text label pl-0 text-sm">
                           This is how your link will look on social media:
                         </div>
                       </div>
@@ -1380,7 +1380,7 @@ const ReferrerLinkDetails: NextPageWithLayout<{
                         {!formData.lockToDistributionList && (
                           <>
                             {/* USAGES LIMIT */}
-                            <label className="label label-text pl-0 text-sm">
+                            <label className="label-text label pl-0 text-sm">
                               {formData.usagesLimit ? (
                                 <div className="flex flex-row gap-1">
                                   Limited to
@@ -1396,7 +1396,7 @@ const ReferrerLinkDetails: NextPageWithLayout<{
                             </label>
 
                             {/* EXPIRY DATE */}
-                            <label className="label label-text pl-0 text-sm">
+                            <label className="label-text label pl-0 text-sm">
                               {formData.dateEnd && (
                                 <div className="flex flex-row gap-1">
                                   Expires on
@@ -1416,7 +1416,7 @@ const ReferrerLinkDetails: NextPageWithLayout<{
                         {formData.lockToDistributionList && (
                           <div className="flex flex-col gap-2">
                             {/* LIMITED TO PARTICIPANTS */}
-                            <label className="label label-text pl-0 text-sm">
+                            <label className="label-text label pl-0 text-sm">
                               <div className="flex flex-row gap-1">
                                 Limited to the following
                                 {(formData.distributionList?.length ?? 0) >
@@ -1435,7 +1435,7 @@ const ReferrerLinkDetails: NextPageWithLayout<{
 
                             {/* PARTICIPANTS */}
                             {(formData.distributionList?.length ?? 0) > 0 && (
-                              <label className="label label-text pt-0 pl-0 text-xs">
+                              <label className="label-text label pt-0 pl-0 text-xs">
                                 <div className="flex flex-row flex-wrap gap-1">
                                   {formData.distributionList?.map(
                                     (item, index) => (

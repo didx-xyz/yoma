@@ -8,7 +8,7 @@ export const NavigationButtons: React.FC<{
   const textColor = colorScheme === "orange" ? "text-orange" : "text-purple";
   return (
     <div className="flex justify-center gap-2">
-      <ButtonBack className="btn btn-circle group" disabled={prevDisabled}>
+      <ButtonBack className="group btn btn-circle" disabled={prevDisabled}>
         <svg
           className={`${textColor} group-disabled:text-gray-light h-[45%] w-[45%]`}
           viewBox="0 0 532 532"
@@ -21,7 +21,7 @@ export const NavigationButtons: React.FC<{
           />
         </svg>
       </ButtonBack>
-      <ButtonNext className="btn btn-circle group" disabled={nextDisabled}>
+      <ButtonNext className="group btn btn-circle" disabled={nextDisabled}>
         <svg
           className={`${textColor} group-disabled:text-gray-light h-[45%] w-[45%]`}
           viewBox="0 0 532 532"

@@ -334,7 +334,7 @@ export const ReferrerCreateLinkModal: React.FC<CreateLinkModalProps> = ({
 
           <button
             type="button"
-            className="btn btn-circle btn-sm bg-purple-shade border-0 text-white shadow-none hover:opacity-80"
+            className="btn btn-circle bg-purple-shade btn-sm border-0 text-white shadow-none hover:opacity-80"
             onClick={handleClose}
             disabled={isLoading}
           >
@@ -385,7 +385,7 @@ export const ReferrerCreateLinkModal: React.FC<CreateLinkModalProps> = ({
               <div className="mt-10 flex gap-3">
                 <button
                   type="button"
-                  className="btn btn-outline border-green btn-sm text-green hover:bg-green flex-1 normal-case hover:text-white"
+                  className="btn border-green text-green btn-outline btn-sm hover:bg-green flex-1 normal-case hover:text-white"
                   onClick={onClose}
                   disabled={isLoading}
                 >
@@ -427,7 +427,7 @@ export const ReferrerCreateLinkModal: React.FC<CreateLinkModalProps> = ({
                 {!selectedProgram && !editLink ? (
                   <button
                     type="button"
-                    className="btn btn-outline border-green btn-sm text-green hover:bg-green flex-1 normal-case hover:text-white"
+                    className="btn border-green text-green btn-outline btn-sm hover:bg-green flex-1 normal-case hover:text-white"
                     onClick={() => setStep("select")}
                     disabled={isLoading}
                   >
@@ -436,7 +436,7 @@ export const ReferrerCreateLinkModal: React.FC<CreateLinkModalProps> = ({
                 ) : (
                   <button
                     type="button"
-                    className="btn btn-outline border-green btn-sm text-green hover:bg-green flex-1 normal-case hover:text-white"
+                    className="btn border-green text-green btn-outline btn-sm hover:bg-green flex-1 normal-case hover:text-white"
                     onClick={onClose}
                     disabled={isLoading}
                   >
@@ -447,11 +447,11 @@ export const ReferrerCreateLinkModal: React.FC<CreateLinkModalProps> = ({
                 {isEditMode ? (
                   <button
                     type="submit"
-                    className="btn btn-sm bg-green flex-1 gap-2 text-white hover:brightness-110"
+                    className="btn bg-green btn-sm flex-1 gap-2 text-white hover:brightness-110"
                     disabled={isLoading}
                   >
                     {isLoading ? (
-                      <span className="loading loading-spinner loading-sm" />
+                      <span className="loading loading-sm loading-spinner" />
                     ) : (
                       "Update Link"
                     )}
@@ -459,12 +459,12 @@ export const ReferrerCreateLinkModal: React.FC<CreateLinkModalProps> = ({
                 ) : (
                   <button
                     type="button"
-                    className="btn btn-sm bg-green flex-1 gap-2 text-white hover:brightness-110"
+                    className="btn bg-green btn-sm flex-1 gap-2 text-white hover:brightness-110"
                     disabled={isLoading}
                     onClick={handleCreateClick}
                   >
                     {isLoading ? (
-                      <span className="loading loading-spinner loading-sm" />
+                      <span className="loading loading-sm loading-spinner" />
                     ) : (
                       <>
                         <IoLinkOutline className="h-4 w-4 text-white" />

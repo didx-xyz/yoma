@@ -114,7 +114,7 @@ const ConfirmationModalContextProvider: React.FC<
               {(content.showCancelButton == null ||
                 content.showCancelButton == true) && (
                 <button
-                  className="btn btn-outline btn-primary btn-sm border-purple text-purple w-1/2 shrink rounded-full bg-white normal-case"
+                  className="btn border-purple text-purple btn-outline btn-sm btn-primary w-1/2 shrink rounded-full bg-white normal-case"
                   onClick={handleCancel}
                 >
                   Cancel
@@ -123,7 +123,7 @@ const ConfirmationModalContextProvider: React.FC<
               {(content.showOkButton == null ||
                 content.showOkButton == true) && (
                 <button
-                  className="btn btn-primary btn-sm bg-purple w-1/2 shrink rounded-full text-white normal-case"
+                  className="btn bg-purple btn-sm btn-primary w-1/2 shrink rounded-full text-white normal-case"
                   onClick={handleOk}
                 >
                   OK

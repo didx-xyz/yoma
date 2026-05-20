@@ -554,7 +554,7 @@ export const OpportunityAdminFilterHorizontal: React.FC<{
               <div className="mt-1 mb-auto flex gap-2">
                 <button
                   type="button"
-                  className="btn btn-sm border-green text-green my-auto border-2 px-6 text-xs font-semibold"
+                  className="btn border-green text-green btn-sm my-auto border-2 px-6 text-xs font-semibold"
                   onClick={onClear}
                 >
                   {clearButtonText}
@@ -565,7 +565,7 @@ export const OpportunityAdminFilterHorizontal: React.FC<{
                 ) && (
                   <button
                     type="button"
-                    className="btn btn-sm border-green text-green my-auto border-2 text-xs font-semibold"
+                    className="btn border-green text-green btn-sm my-auto border-2 text-xs font-semibold"
                     onClick={onOpenFilterFullWindow}
                   >
                     View All Filters
@@ -593,7 +593,7 @@ export const OpportunityAdminFilterHorizontal: React.FC<{
                 <button
                   type="button"
                   onClick={() => exportToCsv(true)}
-                  className="btn btn-sm border-blue text-blue hover:bg-blue w-36 flex-nowrap bg-white hover:text-white"
+                  className="btn border-blue text-blue btn-sm hover:bg-blue w-36 flex-nowrap bg-white hover:text-white"
                 >
                   <FaDownload className="h-4 w-4" /> Export
                 </button>

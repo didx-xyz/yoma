@@ -368,7 +368,7 @@ export const Global: React.FC = () => {
           onClick={() => {
             router.push(actionableRefereeReferral.url);
           }}
-          className="btn btn-sm bg-orange mt-2 w-full text-white hover:brightness-110"
+          className="btn bg-orange btn-sm mt-2 w-full text-white hover:brightness-110"
         >
           Open My Progress
         </button>
@@ -973,7 +973,7 @@ export const Global: React.FC = () => {
           <div className="bg-purple flex flex-row items-center justify-end p-4">
             <button
               type="button"
-              className="btn btn-circle btn-sm bg-purple-shade border-0 text-white shadow-none hover:opacity-80"
+              className="btn btn-circle bg-purple-shade btn-sm border-0 text-white shadow-none hover:opacity-80"
               onClick={() => handleRumConsentSubmit(false)}
             >
               <IoMdClose className="h-5 w-5"></IoMdClose>
@@ -999,14 +999,14 @@ export const Global: React.FC = () => {
             <div className="flex w-full flex-row gap-3 md:gap-14">
               <button
                 type="button"
-                className="btn btn-outline border-green btn-sm text-green hover:bg-green flex-1 normal-case hover:text-white"
+                className="btn border-green text-green btn-outline btn-sm hover:bg-green flex-1 normal-case hover:text-white"
                 onClick={() => handleRumConsentSubmit(false)}
               >
                 Not Now
               </button>
               <button
                 type="button"
-                className="btn btn-success btn-sm flex-1 text-white normal-case"
+                className="btn btn-sm btn-success flex-1 text-white normal-case"
                 onClick={() => handleRumConsentSubmit(true)}
               >
                 Allow Monitoring

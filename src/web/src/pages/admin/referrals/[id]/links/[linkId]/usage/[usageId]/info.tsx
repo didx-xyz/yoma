@@ -253,7 +253,7 @@ const ReferralLinkUsageInfo: NextPageWithLayout = () => {
                   <div className="flex-1 border border-gray-200 px-4 py-2 text-sm hover:bg-gray-100">
                     {usage?.proofOfPersonhoodCompleted ? (
                       <span className="flex items-center gap-2">
-                        <span className="badge badge-success badge-sm">
+                        <span className="badge badge-sm badge-success">
                           ✓ Completed
                         </span>
                         {usage.proofOfPersonhoodMethod && (
@@ -274,7 +274,7 @@ const ReferralLinkUsageInfo: NextPageWithLayout = () => {
                   </div>
                   <div className="flex-1 border border-gray-200 px-4 py-2 text-sm hover:bg-gray-100">
                     {usage?.status === "Completed" ? (
-                      <span className="badge badge-success badge-sm">
+                      <span className="badge badge-sm badge-success">
                         ✓ Yes
                       </span>
                     ) : (
@@ -375,13 +375,13 @@ const ReferralLinkUsageInfo: NextPageWithLayout = () => {
                 returnUrl?.toString(),
                 `/admin/referrals/${usage?.programId}/links/${usage?.linkId}/usage`,
               )}
-              className="btn btn-warning btn-sm rounded-full px-8 normal-case"
+              className="btn btn-sm btn-warning rounded-full px-8 normal-case"
             >
               Back to Usages
             </Link>
             <Link
               href={`/admin/referrals/${usage?.programId}/info${returnUrl ? `?returnUrl=${encodeURIComponent(returnUrl.toString())}` : ""}`}
-              className="btn btn-primary btn-sm rounded-full px-8 normal-case"
+              className="btn btn-sm btn-primary rounded-full px-8 normal-case"
             >
               View Program
             </Link>

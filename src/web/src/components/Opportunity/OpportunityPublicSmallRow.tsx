@@ -109,7 +109,7 @@ const OpportunityPublicSmallRow: React.FC<OpportunityPublicSmallRowProps> = ({
           href={`/opportunities/${opportunity.id}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="btn btn-sm bg-orange btn-circle shrink-0 gap-2 p-0 px-1 text-white hover:brightness-110 md:w-auto md:rounded-lg md:px-4"
+          className="btn btn-circle bg-orange btn-sm shrink-0 gap-2 p-0 px-1 text-white hover:brightness-110 md:w-auto md:rounded-lg md:px-4"
         >
           <IoArrowForward className="h-3 w-3" />
           <span className="hidden md:block">Open</span>

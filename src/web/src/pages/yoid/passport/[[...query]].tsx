@@ -260,7 +260,7 @@ const MyPassport: NextPageWithLayout<{
                   <div className="mt-4 flex grow items-center justify-center gap-4 pb-14">
                     <button
                       type="button"
-                      className="btn btn-outline btn-primary border-purple text-purple w-1/2 rounded-full bg-white normal-case md:w-[300px]"
+                      className="btn border-purple text-purple btn-outline btn-primary w-1/2 rounded-full bg-white normal-case md:w-[300px]"
                       onClick={() => {
                         setCredentialDialogVisible(false);
                       }}

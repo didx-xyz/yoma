@@ -92,7 +92,7 @@ export const PaginationButtons: React.FC<InputProps> = ({
         <div className="flex items-center gap-2">
           <span className="text-xs whitespace-nowrap">Page Size:</span>
           <select
-            className="select select-sm border-grayx rounded-mdx w-20 focus:outline-none"
+            className="border-grayx rounded-mdx select select-sm w-20 focus:outline-none"
             onChange={handlePageSizeChange}
             value={pageSize} // Ensure the correct pageSize is selected
           >
@@ -110,7 +110,7 @@ export const PaginationButtons: React.FC<InputProps> = ({
         <button
           key={`PaginationItem_Prev`}
           type="button"
-          className="join-item btn btn-secondary"
+          className="btn join-item btn-secondary"
           disabled={currentPage <= 1}
           onClick={() => handlePagerChange(currentPage - 1)}
         >
@@ -122,11 +122,11 @@ export const PaginationButtons: React.FC<InputProps> = ({
           totalPages != null &&
           currentPages.map((pageNumber, index) => {
             return (
-              <div key={`PaginationItem_${index}`} className="join-item join">
+              <div key={`PaginationItem_${index}`} className="join join-item">
                 {pageNumber === currentPage && (
                   <button
                     type="button"
-                    className="join-item btn-secondary btn btn-active"
+                    className="btn btn-active join-item btn-secondary"
                     disabled
                   >
                     {pageNumber}
@@ -136,7 +136,7 @@ export const PaginationButtons: React.FC<InputProps> = ({
                 {pageNumber !== currentPage && (
                   <button
                     type="button"
-                    className="join-item btn-secondary btn"
+                    className="btn join-item btn-secondary"
                     onClick={() => handlePagerChange(pageNumber)}
                   >
                     {pageNumber}
@@ -170,7 +170,7 @@ export const PaginationButtons: React.FC<InputProps> = ({
           key={`PaginationItem_Next`}
           type="button"
           //className="btn btn-square btn-sm bg-gray hover:bg-gray !rounded-md border-0 text-black disabled:invisible"
-          className="join-item btn-secondary btn"
+          className="btn join-item btn-secondary"
           disabled={totalPages != null && currentPage >= totalPages}
           onClick={() => handlePagerChange(currentPage + 1)}
         >

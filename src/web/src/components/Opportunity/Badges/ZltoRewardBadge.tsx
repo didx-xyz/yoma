@@ -17,7 +17,7 @@ const ZltoRewardBadge: React.FC<{
           className={`${showToolTips ? "tooltip tooltip-secondary cursor-help before:text-[0.6875rem]" : ""}`}
           {...(showToolTips && { "data-tip": "ZLTO reward depleted" })}
         >
-          <span className="badge badge-sm bg-orange-light text-orange whitespace-nowrap">
+          <span className="badge bg-orange-light badge-sm text-orange whitespace-nowrap">
             <Image
               src={iconZlto}
               alt="Icon Zlto"
@@ -35,7 +35,7 @@ const ZltoRewardBadge: React.FC<{
           className={`${showToolTips ? "tooltip tooltip-secondary cursor-help before:text-[0.6875rem]" : ""}`}
           {...(showToolTips && { "data-tip": "ZLTO reward amount" })}
         >
-          <span className="badge badge-sm bg-orange-light text-orange whitespace-nowrap">
+          <span className="badge bg-orange-light badge-sm text-orange whitespace-nowrap">
             <Image
               src={iconZlto}
               alt="Icon Zlto"

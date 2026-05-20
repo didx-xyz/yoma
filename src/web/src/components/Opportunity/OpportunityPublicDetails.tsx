@@ -46,6 +46,7 @@ import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import {
   DATE_FORMAT_HUMAN,
+  OPPORTUNITY_TYPE_NANE_JOB,
   SETTING_USER_POPUP_LEAVINGYOMA,
 } from "~/lib/constants";
 import analytics from "~/lib/analytics";
@@ -384,7 +385,7 @@ const OpportunityPublicDetails: React.FC<{
             }}
             className={`md:max-h-[500px] md:w-[600px]`}
           >
-            <div className="pb-10x flex h-full flex-col gap-2 overflow-y-auto">
+            <div className="flex h-full flex-col gap-2 overflow-y-auto">
               <div className="bg-green flex flex-row p-4 shadow-lg">
                 <h1 className="grow"></h1>
                 <button
@@ -402,41 +403,54 @@ const OpportunityPublicDetails: React.FC<{
                   <FaExclamationTriangle className="text-yellow h-8 w-8" />
                 </div>
 
-                <div className="font-semibold">You are now leaving Yoma!</div>
+                <div className="space-y-4 px-8 text-center">
+                  <div className="font-semibold">You are now leaving Yoma!</div>
 
-                <div className="bg-gray mt-4 rounded-lg p-4 text-center md:w-[450px]">
-                  Remember to{" "}
-                  <strong>upload your completion certificate</strong> on this
-                  page upon finishing to <strong>earn your ZLTO</strong>.
-                </div>
-
-                <div className="text-center md:w-[450px]">
-                  Be mindful of external sites&apos; privacy policy and keep
-                  your data private.
-                </div>
-
-                {user && (
-                  <div className="text-gray-dark italic">
-                    <FormCheckbox
-                      id="dontShowAgain"
-                      label="Do not show this message again"
-                      inputProps={{
-                        onChange: (e) => {
-                          onUpdateLeavingYomaSetting(e.target.checked).then(
-                            () => null,
-                          );
-                        },
-                      }}
-                    />
+                  <div className="bg-gray mt-4 rounded-lg p-4 text-center">
+                    Remember to{" "}
+                    <strong>upload your completion certificate</strong> on this
+                    page upon finishing to earn your achievement
+                    {opportunityInfo?.type !== OPPORTUNITY_TYPE_NANE_JOB &&
+                      (opportunityInfo.zltoRewardEstimate ?? 0) > 0 && (
+                        <>
+                          {" "}
+                          &amp;{" "}
+                          <strong>
+                            {opportunityInfo.zltoRewardEstimate} ZLTO
+                          </strong>
+                        </>
+                      )}
+                    .
                   </div>
-                )}
+
+                  <div className="text-center">
+                    Be mindful of external sites&apos; privacy policy and keep
+                    your data private.
+                  </div>
+
+                  {user && (
+                    <div className="text-gray-dark italic">
+                      <FormCheckbox
+                        id="dontShowAgain"
+                        label="Do not show this message again"
+                        inputProps={{
+                          onChange: (e) => {
+                            onUpdateLeavingYomaSetting(e.target.checked).then(
+                              () => null,
+                            );
+                          },
+                        }}
+                      />
+                    </div>
+                  )}
+                </div>
 
                 <div className="mt-6 flex w-full grow flex-col justify-center gap-4 md:flex-row">
                   {user && (
                     <button
                       type="button"
                       className={
-                        "btn btn-outline border-purple text-purple hover:text-purple rounded-full bg-white normal-case md:w-[250px]" +
+                        "btn border-purple text-purple btn-outline hover:text-purple rounded-full bg-white normal-case md:w-[250px]" +
                         `${
                           isOppSaved
                             ? " bg-yellow-light text-yellow hover:bg-yellow-light hover:text-yellow border-none"
@@ -691,7 +705,7 @@ const OpportunityPublicDetails: React.FC<{
                   opportunityInfo.status !== "Expired" && (
                     <button
                       type="button"
-                      className="btn btn-sm bg-green hover:bg-green-dark disabled:bg-green h-10 w-full rounded-full text-sm text-white normal-case disabled:border-0 disabled:text-white md:w-[250px]"
+                      className="btn bg-green btn-sm hover:bg-green-dark disabled:bg-green h-10 w-full rounded-full text-sm text-white normal-case disabled:border-0 disabled:text-white md:w-[250px]"
                       onClick={onGoToOpportunity}
                       disabled={preview}
                     >
@@ -723,7 +737,7 @@ const OpportunityPublicDetails: React.FC<{
                         !verificationStatusIsLoading && (
                           <button
                             type="button"
-                            className="btn btn-sm border-green text-green hover:bg-green-dark h-10 w-full rounded-full bg-white text-sm normal-case hover:text-white md:w-[280px]"
+                            className="btn border-green text-green btn-sm hover:bg-green-dark h-10 w-full rounded-full bg-white text-sm normal-case hover:text-white md:w-[280px]"
                             onClick={() => {
                               // 📊 ANALYTICS: track "Upload completion files" button click
                               analytics.trackEvent(
@@ -760,7 +774,7 @@ const OpportunityPublicDetails: React.FC<{
                         verificationStatus.status == "Pending" && (
                           <button
                             type="button"
-                            className="btn btn-sm bg-gray-light text-gray-dark hover:bg-green-dark h-10 w-full rounded-full border-0 text-sm normal-case hover:text-white md:w-[250px]"
+                            className="btn bg-gray-light text-gray-dark btn-sm hover:bg-green-dark h-10 w-full rounded-full border-0 text-sm normal-case hover:text-white md:w-[250px]"
                             onClick={() => {
                               // 📊 ANALYTICS: track "Pending verification" button click
                               analytics.trackEvent(
@@ -799,7 +813,7 @@ const OpportunityPublicDetails: React.FC<{
                 <button
                   type="button"
                   className={
-                    "btn btn-sm border-gray-dark text-gray-dark disabled:text-gray-dark h-10 w-full shrink flex-nowrap rounded-full text-sm normal-case md:max-w-[120px] " +
+                    "btn border-gray-dark text-gray-dark btn-sm disabled:text-gray-dark h-10 w-full shrink flex-nowrap rounded-full text-sm normal-case md:max-w-[120px] " +
                     ` ${
                       isOppSaved
                         ? "border-yellow bg-yellow-light text-yellow"
@@ -821,7 +835,7 @@ const OpportunityPublicDetails: React.FC<{
 
                 <button
                   type="button"
-                  className="btn btn-sm border-gray-dark text-gray-dark hover:bg-green-dark disabled:text-gray-dark h-10 w-full shrink flex-nowrap rounded-full bg-white text-sm normal-case hover:text-white md:max-w-[120px]"
+                  className="btn border-gray-dark text-gray-dark btn-sm hover:bg-green-dark disabled:text-gray-dark h-10 w-full shrink flex-nowrap rounded-full bg-white text-sm normal-case hover:text-white md:max-w-[120px]"
                   onClick={onShareOpportunity}
                   // ensure opportunity is published and active (user logged in check is done in function)
                   disabled={

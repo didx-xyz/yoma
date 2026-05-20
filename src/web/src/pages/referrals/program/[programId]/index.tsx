@@ -186,7 +186,7 @@ const ReferralProgramDetails: NextPageWithLayout = () => {
             cta={
               <button
                 type="button"
-                className="btn btn-sm bg-green hover:bg-green-dark disabled:!bg-green h-10 rounded-full border-0 px-5 text-white normal-case disabled:!pointer-events-auto disabled:!cursor-not-allowed disabled:!text-white disabled:opacity-80"
+                className="btn bg-green btn-sm hover:bg-green-dark disabled:!bg-green h-10 rounded-full border-0 px-5 text-white normal-case disabled:!pointer-events-auto disabled:!cursor-not-allowed disabled:!text-white disabled:opacity-80"
                 onClick={handleCreateLink}
                 disabled={
                   isButtonLoading ||

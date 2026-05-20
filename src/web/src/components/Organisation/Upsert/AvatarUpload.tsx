@@ -176,7 +176,7 @@ const AvatarUpload: React.FC<AvatarUploadProps> = ({
         />
         <button
           type="button"
-          className="btn btn-sm btn-outline border-gray text-gray-dark hover:bg-gray-light max-w-40 normal-case"
+          className="btn border-gray text-gray-dark btn-outline btn-sm hover:bg-gray-light max-w-40 normal-case"
           onClick={() => inputRef.current?.click()}
         >
           <FaUpload className="h-3 w-3" />
@@ -201,7 +201,7 @@ const AvatarUpload: React.FC<AvatarUploadProps> = ({
           {computedImageUrl && onRemovePicture && (
             <button
               type="button"
-              className="btn btn-sm btn-outline border-gray text-gray-dark hover:bg-gray-light normal-case"
+              className="btn border-gray text-gray-dark btn-outline btn-sm hover:bg-gray-light normal-case"
               onClick={() => {
                 onRemovePicture();
                 setComputedImageUrl(null);
@@ -232,7 +232,7 @@ const AvatarUpload: React.FC<AvatarUploadProps> = ({
             <div className="flex gap-2">
               <button
                 type="button"
-                className="btn btn-sm btn-outline border-gray text-gray-dark hover:bg-gray-light normal-case"
+                className="btn border-gray text-gray-dark btn-outline btn-sm hover:bg-gray-light normal-case"
                 onClick={() => setCropModalVisible(true)}
               >
                 <FaPencilAlt className="h-3 w-3" />
@@ -240,7 +240,7 @@ const AvatarUpload: React.FC<AvatarUploadProps> = ({
               </button>
               <button
                 type="button"
-                className="btn btn-sm btn-outline border-gray text-gray-dark hover:bg-gray-light normal-case"
+                className="btn border-gray text-gray-dark btn-outline btn-sm hover:bg-gray-light normal-case"
                 onClick={clearFile}
               >
                 <FaTimes className="h-3 w-3" />

@@ -38,6 +38,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# yarn local state (generated, not portable)
+.yarn/install-state.gz
+
 # typescript
 *.tsbuildinfo
 

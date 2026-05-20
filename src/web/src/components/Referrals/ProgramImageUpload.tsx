@@ -203,7 +203,7 @@ const ProgramImageUpload: React.FC<ProgramImageUploadProps> = ({
           {computedImageUrl && (
             <button
               type="button"
-              className="btn btn-sm btn-ghost rounded-full normal-case"
+              className="btn btn-ghost btn-sm rounded-full normal-case"
               onClick={clearFile}
             >
               Remove image
@@ -230,7 +230,7 @@ const ProgramImageUpload: React.FC<ProgramImageUploadProps> = ({
           {!showExisting && computedImageUrl && (
             <>
               <button
-                className="filepond--file-action-button filepond--action-revert-item-processing bg-secondary tooltip tooltip-top absolute top-2 right-10 z-10 flex size-6 cursor-pointer items-center justify-center rounded-full text-white"
+                className="filepond--file-action-button filepond--action-revert-item-processing tooltip tooltip-top bg-secondary absolute top-2 right-10 z-10 flex size-6 cursor-pointer items-center justify-center rounded-full text-white"
                 type="button"
                 data-tip="Edit crop"
                 onClick={openEditor}
@@ -238,7 +238,7 @@ const ProgramImageUpload: React.FC<ProgramImageUploadProps> = ({
                 <FaPencilAlt className="h-3 w-3" />
               </button>
               <button
-                className="filepond--file-action-button filepond--action-remove-item bg-error tooltip tooltip-top absolute top-2 right-2 z-10 flex size-6 cursor-pointer items-center justify-center rounded-full text-white"
+                className="filepond--file-action-button filepond--action-remove-item tooltip tooltip-top bg-error absolute top-2 right-2 z-10 flex size-6 cursor-pointer items-center justify-center rounded-full text-white"
                 type="button"
                 data-tip="Remove image"
                 onClick={clearFile}

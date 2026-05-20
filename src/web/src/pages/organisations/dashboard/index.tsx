@@ -861,7 +861,7 @@ const OrganisationDashboard: NextPageWithLayout<{
             >
               <button
                 type="button"
-                className="w-1/2z btn btn-warning btn-wide shrink normal-case"
+                className="w-1/2z btn btn-wide btn-warning shrink normal-case"
                 onClick={() => {
                   setGotoCompletedConversionRatioDialogVisible(false);
                 }}
@@ -982,7 +982,7 @@ const OrganisationDashboard: NextPageWithLayout<{
             >
               <button
                 type="button"
-                className="w-1/2z btn btn-warning btn-wide shrink normal-case"
+                className="w-1/2z btn btn-wide btn-warning shrink normal-case"
                 onClick={() => {
                   setCompletedYouthOpportunitiesDialogVisible(false);
                 }}
@@ -1293,7 +1293,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                               </div>
                             </div>
 
-                            <div className="card-xs card bg-gray flex grow flex-col shadow-xs">
+                            <div className="card bg-gray card-xs flex grow flex-col shadow-xs">
                               <div className="flex flex-col gap-2 px-4 py-2 text-sm tracking-tighter md:text-sm">
                                 <div className="flex flex-row items-center">
                                   <div>

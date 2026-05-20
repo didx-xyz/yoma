@@ -1,9 +1,11 @@
 {
   "recommendations": [
     "amazonwebservices.aws-toolkit-vscode",
+    "bradlc.vscode-tailwindcss",
     "editorconfig.editorconfig",
     "esbenp.prettier-vscode",
     "fill-labs.dependi",
+    "ms-vscode-remote.remote-wsl",
     "ms-dotnettools.csharp",
     "signageos.signageos-vscode-sops",
     "sonarsource.sonarlint-vscode",

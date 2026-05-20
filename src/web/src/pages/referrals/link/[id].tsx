@@ -91,7 +91,7 @@ const ReferralLinkPage: NextPageWithLayout = () => {
             <button
               type="button"
               onClick={() => closeToast?.()}
-              className="btn btn-xs bg-green hover:bg-green-dark disabled:!bg-green h-8 flex-1 rounded-full border-0 px-5 text-white normal-case disabled:!pointer-events-auto disabled:!cursor-not-allowed disabled:!text-white disabled:opacity-80"
+              className="btn bg-green btn-xs hover:bg-green-dark disabled:!bg-green h-8 flex-1 rounded-full border-0 px-5 text-white normal-case disabled:!pointer-events-auto disabled:!cursor-not-allowed disabled:!text-white disabled:opacity-80"
             >
               Got it!
             </button>
@@ -205,7 +205,7 @@ const ReferralLinkPage: NextPageWithLayout = () => {
                 cta={
                   <button
                     type="button"
-                    className="btn btn-sm bg-green hover:bg-green-dark disabled:!bg-green h-10 rounded-full border-0 px-5 text-white normal-case disabled:!pointer-events-auto disabled:!cursor-not-allowed disabled:!text-white disabled:opacity-80"
+                    className="btn bg-green btn-sm hover:bg-green-dark disabled:!bg-green h-10 rounded-full border-0 px-5 text-white normal-case disabled:!pointer-events-auto disabled:!cursor-not-allowed disabled:!text-white disabled:opacity-80"
                     onClick={() => setIsShareModalOpen(true)}
                     disabled={!isShareEnabled}
                   >

@@ -117,7 +117,7 @@ export const ProgramReferrerLinkDetails: React.FC<
                 <button
                   type="button"
                   onClick={() => handleCopyLink(displayLink.shortUrl)}
-                  className="btn btn-xs bg-green flex-shrink-0 gap-1 text-white hover:brightness-110"
+                  className="btn bg-green btn-xs flex-shrink-0 gap-1 text-white hover:brightness-110"
                   title="Copy short link"
                 >
                   <IoMdCopy className="h-3 w-3" />
@@ -155,7 +155,7 @@ export const ProgramReferrerLinkDetails: React.FC<
                   onClick={() =>
                     handleDownloadQR(displayLink.qrCodeBase64!, programName)
                   }
-                  className="btn btn-xs bg-green gap-1 text-white hover:brightness-110"
+                  className="btn bg-green btn-xs gap-1 text-white hover:brightness-110"
                   title="Download QR code"
                 >
                   <IoMdDownload className="h-3 w-3" />
@@ -167,11 +167,11 @@ export const ProgramReferrerLinkDetails: React.FC<
                 type="button"
                 onClick={handleToggleQR}
                 disabled={loadingQR}
-                className="btn btn-xs bg-green gap-1 text-white hover:brightness-110"
+                className="btn bg-green btn-xs gap-1 text-white hover:brightness-110"
               >
                 {loadingQR ? (
                   <>
-                    <span className="loading loading-spinner loading-xs"></span>
+                    <span className="loading loading-xs loading-spinner"></span>
                     <span className="text-[10px]">Loading QR Code...</span>
                   </>
                 ) : (

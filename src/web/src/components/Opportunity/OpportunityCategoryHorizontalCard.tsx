@@ -41,7 +41,7 @@ const OpportunityCategoryHorizontalCard: React.FC<InputProps> = ({
             {data.name}
           </h1>
 
-          <h6 className="text-gray-dark font-boldx text-center text-[10px]">
+          <h6 className="font-boldx text-gray-dark text-center text-[10px]">
             {data.count} available
           </h6>
         </div>

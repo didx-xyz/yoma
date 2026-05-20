@@ -128,19 +128,19 @@ const ReferralProgramInfo: NextPageWithLayout = () => {
           <div className="flex flex-col justify-center gap-4 pt-4 md:flex-row">
             <Link
               href={getSafeUrl(returnUrl?.toString(), `/admin/referrals`)}
-              className="btn btn-warning btn-sm rounded-full px-8 normal-case"
+              className="btn btn-sm btn-warning rounded-full px-8 normal-case"
             >
               Back to List
             </Link>
             <Link
               href={`/admin/referrals/${id}?returnUrl=${encodeURIComponent(getSafeUrl("", router.asPath))}`}
-              className="btn btn-primary btn-sm rounded-full px-8 normal-case"
+              className="btn btn-sm btn-primary rounded-full px-8 normal-case"
             >
               Edit Program
             </Link>
             <Link
               href={`/admin/referrals/${id}/links?returnUrl=${encodeURIComponent(getSafeUrl("", router.asPath))}`}
-              className="btn btn-secondary btn-sm rounded-full px-8 normal-case"
+              className="btn btn-sm btn-secondary rounded-full px-8 normal-case"
             >
               View Referral Links
             </Link>

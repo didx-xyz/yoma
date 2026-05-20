@@ -177,7 +177,7 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
 
     if (tone === "success") {
       return (
-        <span className="badge badge-sm bg-green/15 gap-1 border border-green-200 px-2.5 !text-[11px] font-medium whitespace-nowrap text-green-800">
+        <span className="badge bg-green/15 badge-sm gap-1 border border-green-200 px-2.5 !text-[11px] font-medium whitespace-nowrap text-green-800">
           {label}
         </span>
       );
@@ -503,7 +503,7 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
                                 <button
                                   type="button"
                                   onClick={handleCopyProgramLink}
-                                  className="btn btn-xs bg-green w-full justify-center border-0 text-white normal-case hover:brightness-110 sm:flex-1"
+                                  className="btn bg-green btn-xs w-full justify-center border-0 text-white normal-case hover:brightness-110 sm:flex-1"
                                   title="Copy short link"
                                 >
                                   <IoMdCopy className="h-3 w-3" />
@@ -511,7 +511,7 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
                                 </button>
                                 <button
                                   type="button"
-                                  className="btn btn-xs bg-green w-full justify-center border-0 text-white normal-case hover:brightness-110 sm:flex-1"
+                                  className="btn bg-green btn-xs w-full justify-center border-0 text-white normal-case hover:brightness-110 sm:flex-1"
                                   onClick={handleOpenProgramLink}
                                   title="Share link"
                                 >
@@ -529,7 +529,7 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
                             </div>
                             <button
                               type="button"
-                              className="btn btn-xs bg-green w-full justify-center border-0 text-white normal-case hover:brightness-110 sm:max-w-[14rem]"
+                              className="btn bg-green btn-xs w-full justify-center border-0 text-white normal-case hover:brightness-110 sm:max-w-[14rem]"
                               onClick={handleOpenProgramLink}
                             >
                               Generate Link

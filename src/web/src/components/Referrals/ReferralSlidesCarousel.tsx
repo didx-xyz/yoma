@@ -139,7 +139,7 @@ export const ReferralSlidesCarousel = <T,>({
         <ButtonBack
           disabled={prevDisabled}
           aria-label="Previous"
-          className="btn btn-circle btn-outline border-orange btn-sm text-orange hover:bg-orange disabled:!border-orange disabled:!text-orange h-8 min-h-0 w-8 p-0 hover:text-white disabled:!bg-transparent disabled:!opacity-70"
+          className="btn btn-circle border-orange text-orange btn-outline btn-sm hover:bg-orange disabled:!border-orange disabled:!text-orange h-8 min-h-0 w-8 p-0 hover:text-white disabled:!bg-transparent disabled:!opacity-70"
         >
           <FiChevronLeft className="h-5 w-5" aria-hidden="true" />
         </ButtonBack>
@@ -151,7 +151,7 @@ export const ReferralSlidesCarousel = <T,>({
         <ButtonNext
           disabled={nextDisabled}
           aria-label="Next"
-          className="btn btn-circle btn-outline border-orange btn-sm text-orange hover:bg-orange disabled:!border-orange disabled:!text-orange h-8 min-h-0 w-8 p-0 hover:text-white disabled:!bg-transparent disabled:!opacity-70"
+          className="btn btn-circle border-orange text-orange btn-outline btn-sm hover:bg-orange disabled:!border-orange disabled:!text-orange h-8 min-h-0 w-8 p-0 hover:text-white disabled:!bg-transparent disabled:!opacity-70"
         >
           <FiChevronRight className="h-5 w-5" aria-hidden="true" />
         </ButtonNext>

@@ -90,7 +90,7 @@ export const ReferrerProgramsList: React.FC<ProgramsListProps> = ({
                       onCreateLink?.(program);
                     }}
                     disabled={program.status !== "Active"}
-                    className="btn btn-sm bg-orange gap-2 text-white hover:brightness-110 disabled:opacity-50"
+                    className="btn bg-orange btn-sm gap-2 text-white hover:brightness-110 disabled:opacity-50"
                   >
                     <IoAdd className="h-4 w-4" />
                     {context === "select" ? "Select Program" : "Create Link"}
@@ -112,11 +112,11 @@ export const ReferrerProgramsList: React.FC<ProgramsListProps> = ({
               <button
                 onClick={loadMore}
                 disabled={isFetching}
-                className="btn btn-outline border-orange btn-sm group hover:bg-orange text-black normal-case hover:text-white"
+                className="group btn border-orange btn-outline btn-sm hover:bg-orange text-black normal-case hover:text-white"
               >
                 {isFetching ? (
                   <>
-                    <span className="loading loading-spinner loading-xs"></span>
+                    <span className="loading loading-xs loading-spinner"></span>
                     Loading...
                   </>
                 ) : (

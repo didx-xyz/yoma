@@ -236,7 +236,7 @@ const ReferralClaimPage: NextPageWithLayout = () => {
         <div className="flex flex-1 justify-center">
           <button
             onClick={() => toast.dismiss("claim-profile-completion-reminder")}
-            className="btn btn-sm bg-orange w-fullx mt-2 w-32 text-white hover:brightness-110"
+            className="w-fullx btn bg-orange btn-sm mt-2 w-32 text-white hover:brightness-110"
           >
             Ok
           </button>
@@ -382,7 +382,7 @@ const ReferralClaimPage: NextPageWithLayout = () => {
                       type="button"
                       onClick={!isAuthenticated ? handleClaim : undefined}
                       disabled={isAuthenticated || claiming}
-                      className="btn btn-sm bg-green hover:bg-green-dark disabled:!bg-green h-10 rounded-full border-0 px-5 text-white normal-case disabled:!text-white disabled:opacity-100"
+                      className="btn bg-green btn-sm hover:bg-green-dark disabled:!bg-green h-10 rounded-full border-0 px-5 text-white normal-case disabled:!text-white disabled:opacity-100"
                     >
                       {claiming ? (
                         <LoadingInline

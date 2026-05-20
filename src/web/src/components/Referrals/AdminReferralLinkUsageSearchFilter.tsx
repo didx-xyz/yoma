@@ -69,7 +69,7 @@ export const ReferralLinkUsageSearchFilters: React.FC<{
                 control={form.control}
                 render={({ field: { onChange, value } }) => (
                   <select
-                    className="select select-bordered w-full md:w-48"
+                    className="select-bordered select w-full md:w-48"
                     onChange={(e) => {
                       const selectedValue = e.target.value;
                       onChange(selectedValue ? [selectedValue] : null);
@@ -111,7 +111,7 @@ export const ReferralLinkUsageSearchFilters: React.FC<{
                 render={({ field: { onChange, value } }) => (
                   <input
                     type="text"
-                    className="input input-bordered w-full md:w-56"
+                    className="input-bordered input w-full md:w-56"
                     value={value ?? ""}
                     onChange={(e) => {
                       onChange(e.target.value || null);
@@ -142,7 +142,7 @@ export const ReferralLinkUsageSearchFilters: React.FC<{
                 render={({ field: { onChange, value } }) => (
                   <input
                     type="text"
-                    className="input input-bordered w-full md:w-56"
+                    className="input-bordered input w-full md:w-56"
                     value={value ?? ""}
                     onChange={(e) => {
                       onChange(e.target.value || null);

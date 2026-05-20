@@ -110,7 +110,7 @@ export const OpportunityAdminFilterVertical: React.FC<{
                 filterOptions?.includes(
                   OpportunityFilterOptions.VIEWALLFILTERSBUTTON,
                 )) && (
-                <div className="join-item collapse-arrow collapse">
+                <div className="collapse-arrow join-item collapse">
                   <input type="checkbox" name="my-accordion-1" />
                   <div className="collapse-title text-xl font-medium">
                     Topics
@@ -150,7 +150,7 @@ export const OpportunityAdminFilterVertical: React.FC<{
 
                             <input
                               type="checkbox"
-                              className="checkbox-primary checkbox"
+                              className="checkbox checkbox-primary"
                               id={`checkbox_${item.id}`}
                               {...register("categories")}
                               value={item.name}
@@ -180,7 +180,7 @@ export const OpportunityAdminFilterVertical: React.FC<{
 
             {/* TYPES */}
             {filterOptions?.includes(OpportunityFilterOptions.TYPES) && (
-              <div className="join-item collapse-arrow collapse">
+              <div className="collapse-arrow join-item collapse">
                 <input type="checkbox" name="my-accordion-2" />
                 <div className="collapse-title text-xl font-medium">
                   Opportunity type
@@ -226,7 +226,7 @@ export const OpportunityAdminFilterVertical: React.FC<{
 
             {/* COUNTRIES */}
             {filterOptions?.includes(OpportunityFilterOptions.COUNTRIES) && (
-              <div className="join-item collapse-arrow collapse">
+              <div className="collapse-arrow join-item collapse">
                 <input type="checkbox" name="my-accordion-3" />
                 <div className="collapse-title text-xl font-medium">
                   Location
@@ -273,7 +273,7 @@ export const OpportunityAdminFilterVertical: React.FC<{
 
             {/* LANGUAGES */}
             {filterOptions?.includes(OpportunityFilterOptions.LANGUAGES) && (
-              <div className="join-item collapse-arrow collapse">
+              <div className="collapse-arrow join-item collapse">
                 <input type="checkbox" name="my-accordion-4" />
                 <div className="collapse-title text-xl font-medium">
                   Language
@@ -321,7 +321,7 @@ export const OpportunityAdminFilterVertical: React.FC<{
             {filterOptions?.includes(
               OpportunityFilterOptions.ORGANIZATIONS,
             ) && (
-              <div className="join-item collapse-arrow collapse">
+              <div className="collapse-arrow join-item collapse">
                 <input type="checkbox" name="my-accordion-5" />
                 <div className="collapse-title text-xl font-medium">
                   Organisation
@@ -369,7 +369,7 @@ export const OpportunityAdminFilterVertical: React.FC<{
             {filterOptions?.includes(
               OpportunityFilterOptions.PUBLISHEDSTATES,
             ) && (
-              <div className="join-item collapse-arrow collapse">
+              <div className="collapse-arrow join-item collapse">
                 <input type="checkbox" name="my-accordion-7" />
                 <div className="collapse-title text-xl font-medium">Status</div>
                 <div className="collapse-content overflow-hidden">
@@ -411,7 +411,7 @@ export const OpportunityAdminFilterVertical: React.FC<{
 
             {/* STATUSES */}
             {filterOptions?.includes(OpportunityFilterOptions.STATUSES) && (
-              <div className="join-item collapse-arrow collapse">
+              <div className="collapse-arrow join-item collapse">
                 <input type="checkbox" name="my-accordion-8" />
                 <div className="collapse-title text-xl font-medium">Status</div>
                 <div className="collapse-content">

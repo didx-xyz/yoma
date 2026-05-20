@@ -38,7 +38,7 @@ export const ReferralProgramSlideCard: React.FC<{
     <>
       {showRewardBadge ? <ZltoRewardBadge amount={reward ?? null} /> : null}
       {showTimeBadge && (timeDays ?? 0) > 0 ? (
-        <span className="badge badge-sm bg-green/20 border border-green-200 whitespace-nowrap text-green-700">
+        <span className="badge bg-green/20 badge-sm border border-green-200 whitespace-nowrap text-green-700">
           <Image
             src={iconClock}
             alt="Clock"

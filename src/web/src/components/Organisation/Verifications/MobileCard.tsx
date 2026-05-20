@@ -33,7 +33,7 @@ const MobileCard: React.FC<MobileCardProps> = ({
       <div className="mb-2 flex items-center">
         <input
           type="checkbox"
-          className="checkbox-primary checkbox mr-2"
+          className="checkbox checkbox-primary mr-2"
           checked={selectedRows?.some((x) => x.id == item.id)}
           onChange={(e) => handleRowSelect(e, item)}
         />
@@ -68,7 +68,7 @@ const MobileCard: React.FC<MobileCardProps> = ({
               {item.verificationStatus == "Pending" && (
                 <button
                   type="button"
-                  className="btn btn-sm border-gray text-gray-dark hover:bg-gray flex-nowrap bg-white hover:text-white"
+                  className="btn border-gray text-gray-dark btn-sm hover:bg-gray flex-nowrap bg-white hover:text-white"
                   onClick={() => {
                     onVerify(item);
                   }}
