@@ -140,7 +140,7 @@ const SettingsForm: React.FC<SettingsFormProps> = ({
   const renderGroup = (
     group: SettingGroup,
     depth: number,
-  ): JSX.Element | null => {
+  ): React.ReactElement | null => {
     const visibleItems = group.items?.filter((item) => item.visible) || [];
 
     return (
