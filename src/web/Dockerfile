@@ -9,9 +9,12 @@ FROM base AS deps
 # Workspace files (build context is repo root)
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY src/web/package.json ./src/web/
+# The explicit install is required so the root `prepare` script (husky) runs
+# with husky already present. `pnpm deploy` alone re-runs the prepare hook in
+# the deploy dir, where husky has been filtered out, and fails.
 RUN pnpm install --filter yoma-web --frozen-lockfile
 
-# pnpm deploy materialises a self-contained directory containing only
+# `pnpm deploy` materialises a self-contained directory containing only
 # yoma-web and its dependencies (root devDeps like cypress/husky are excluded).
 RUN pnpm deploy --filter=yoma-web --legacy /deploy
 

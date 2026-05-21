@@ -13,7 +13,7 @@ Yoma Web is a modern, responsive frontend application built with NextJS 15 & Rea
 1. Install dependencies (from the repo root):
 
    ```bash
-   pnpm install
+   pnpm install --frozen-lockfile
    ```
 
 2. Start the development server:
