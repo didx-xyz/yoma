@@ -1,4 +1,3 @@
-using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -89,7 +88,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
       //
       // Existing capabilities are migrated to the Entity scope only.
       // Partner-specific scope additions, e.g. Alison Pull/Opportunity/Verification,
-      // should be handled by the follow-up seed/config migration.
+      // are handled by the seed below.
       migrationBuilder.Sql("""
         UPDATE "PartnerSync"."Partner" p
         SET "SyncCapabilities" = converted."SyncCapabilities"

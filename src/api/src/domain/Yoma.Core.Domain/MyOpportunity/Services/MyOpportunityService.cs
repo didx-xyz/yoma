@@ -1117,6 +1117,78 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       return queryGrouped.ToDictionary(o => o.OpportunityId, o => o.Count);
     }
 
+    public async Task<MyOpportunityResponseVerifyImportPartnerSync> PerformActionImportVerificationFromPartnerSync(MyOpportunityRequestVerifyImportPartnerSync request)
+    {
+      ArgumentNullException.ThrowIfNull(request, nameof(request));
+
+      request.UserEmail = request.UserEmail?.Trim();
+      if (string.IsNullOrEmpty(request.UserEmail)) request.UserEmail = null;
+
+      request.UserPhoneNumber = request.UserPhoneNumber?.Trim();
+      if (string.IsNullOrEmpty(request.UserPhoneNumber)) request.UserPhoneNumber = null;
+      request.UserPhoneNumber = request.UserPhoneNumber?.NormalizePhoneNumber(true);  
+
+      var opportunity = _opportunityService.GetById(request.OpportunityId, true, true, false);
+
+      var result = new MyOpportunityResponseVerifyImportPartnerSync
+      {
+        Processed = false,
+        Skipped = true
+      };
+
+      var user = _userService.GetByUsernameOrNull(request.Username, false, false);
+      if (user == null)
+      {
+        result.SkipReason = $"User '{request.Username}' does not exist";
+        return result;
+      }
+
+      var statusVerification = GetVerificationStatusInternal(opportunity.Id, user.Id);
+      if (statusVerification.Status == VerificationStatus.Completed)
+      {
+        result.SkipReason = $"Verification already completed for user '{user.Username}' and opportunity '{opportunity.Title}'";
+        return result;
+      }
+
+      try
+      {
+        await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+        {
+          _delayedExecutionService.Reset();
+
+          using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
+
+          var requestVerify = new MyOpportunityRequestVerify
+          {
+            InstantOrImportedVerification = true,
+            OverridePending = true,
+            DateStart = request.DateStart,
+            DateEnd = request.DateEnd,
+            CommitmentInterval = request.CommitmentInterval
+          };
+
+          await PerformActionSendForVerification(user, opportunity.Id, requestVerify, VerificationMethod.Automatic, true, true,
+            $"Verification import not supported for opportunity '{opportunity.Title}'. The verification method must be set to '{VerificationMethod.Automatic}'");
+
+          await FinalizeVerification(user, opportunity, VerificationStatus.Completed, true, request.DateCompleted, "Auto-verification: Partner Sync", false, true, true);
+
+          scope.Complete();
+        });
+
+        await _delayedExecutionService.FlushAsync();
+
+        result.Processed = true;
+        result.Skipped = false;
+        result.SkipReason = null;
+
+        return result;
+      }
+      finally
+      {
+        _delayedExecutionService.Reset();
+      }
+    }
+
     public async Task<CSVImportResult> PerformActionImportVerificationFromCSV(MyOpportunityRequestVerifyImportCsv request, bool ensureOrganizationAuthorization)
     {
       ArgumentNullException.ThrowIfNull(request, nameof(request));

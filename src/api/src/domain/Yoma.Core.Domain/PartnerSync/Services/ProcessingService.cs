@@ -402,11 +402,11 @@ namespace Yoma.Core.Domain.PartnerSync.Services
     }
 
     /// <summary>
-    /// Records a completed partner sync run.
-    /// A completed run means the process reached normal item handling and produced item counts.
+    /// Records a counted partner sync run.
     /// ItemsProcessed represents all handled items, including succeeded, skipped and failed items.
-    /// If no item failures occurred the run is recorded as successful, even when all items were skipped or no items were returned.
-    /// If one or more item failures occurred the run is recorded as partial.
+    /// If no item failures occurred and no partial reason is supplied, the run is recorded as successful,
+    /// even when all items were skipped or no items were returned.
+    /// If one or more item failures occurred, or a partial reason is supplied, the run is recorded as partial.
     /// Tracking is best-effort and will not fail the sync process if recording fails.
     /// </summary>
     public async Task RecordTracking(
@@ -418,7 +418,8 @@ namespace Yoma.Core.Domain.PartnerSync.Services
       int itemsProcessed,
       int itemsSucceeded,
       int itemsSkipped,
-      int itemsFailed)
+      int itemsFailed,
+      string? partialReason = null)
     {
       try
       {
@@ -430,6 +431,8 @@ namespace Yoma.Core.Domain.PartnerSync.Services
         if (itemsProcessed != itemsSucceeded + itemsSkipped + itemsFailed)
           throw new InvalidOperationException($"{nameof(itemsProcessed)} must equal the sum of {nameof(itemsSucceeded)}, {nameof(itemsSkipped)} and {nameof(itemsFailed)}");
 
+        partialReason = partialReason?.Trim();
+
         var partner = _partnerService.GetById(partnerId);
 
         var item = new PartnerSyncTracking
@@ -438,12 +441,12 @@ namespace Yoma.Core.Domain.PartnerSync.Services
           SyncType = syncType.ToString(),
           EntityType = entityType.ToString(),
           SyncScope = syncScope.ToString(),
-          Status = itemsFailed == 0 ? TrackingStatus.Successful.ToString() : TrackingStatus.Partial.ToString(),
+          Status = itemsFailed == 0 && string.IsNullOrEmpty(partialReason) ? TrackingStatus.Successful.ToString() : TrackingStatus.Partial.ToString(),
           ItemsProcessed = itemsProcessed,
           ItemsSucceeded = itemsSucceeded,
           ItemsSkipped = itemsSkipped,
           ItemsFailed = itemsFailed,
-          FailedReason = null,
+          FailedReason = partialReason,
           DateStamp = dateStamp
         };
 

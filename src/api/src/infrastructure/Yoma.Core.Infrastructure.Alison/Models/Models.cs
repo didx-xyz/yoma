@@ -359,6 +359,24 @@ namespace Yoma.Core.Infrastructure.Alison.Models
   {
     [JsonProperty("data")]
     public List<CompletedCourse> Data { get; set; } = [];
+
+    [JsonProperty("meta")]
+    public CompletedCoursesResponseMeta? Meta { get; set; }
+  }
+
+  public sealed class CompletedCoursesResponseMeta
+  {
+    [JsonProperty("current_page")]
+    public int CurrentPage { get; set; }
+
+    [JsonProperty("last_page")]
+    public int LastPage { get; set; }
+
+    [JsonProperty("per_page")]
+    public int PerPage { get; set; }
+
+    [JsonProperty("total")]
+    public int Total { get; set; }
   }
 
   public sealed class CompletedCourse

@@ -16,14 +16,6 @@ namespace Yoma.Core.Infrastructure.Alison.Services
   public sealed class OpportunityCatalogueBackgroundService : IOpportunityCatalogueBackgroundService
   {
     #region Class Variables
-    private const string QueryParameter_Page = "page";
-    private const string QueryParameter_PerPage = "per_page";
-    private const string Header_Authorization = "Authorization";
-    private const string Header_Authorization_Value_Prefix = "Bearer";
-    private const int PageSize_Maximum = 100;
-
-    private static AccessTokenResponse _accessToken = null!;
-
     private readonly ILogger<OpportunityCatalogueBackgroundService> _logger;
     private readonly IEnvironmentProvider _environmentProvider;
     private readonly AlisonOptions _options;
@@ -32,6 +24,7 @@ namespace Yoma.Core.Infrastructure.Alison.Services
     private readonly IRepositoryBatched<Opportunity> _opportunityRepository;
     private readonly IDistributedLockService _distributedLockService;
     private readonly IExecutionStrategyService _executionStrategyService;
+    private readonly IAlisonAuthService _alisonAuthService;
     #endregion
 
     #region Constructor
@@ -43,7 +36,8 @@ namespace Yoma.Core.Infrastructure.Alison.Services
       IOptions<ScheduleJobOptions> scheduleJobOptions,
       IRepositoryBatched<Opportunity> opportunityRepository,
       IDistributedLockService distributedLockService,
-      IExecutionStrategyService executionStrategyService)
+      IExecutionStrategyService executionStrategyService,
+      IAlisonAuthService alisonAuthService)
     {
       _logger = logger ?? throw new ArgumentNullException(nameof(logger));
       _environmentProvider = environmentProvider ?? throw new ArgumentNullException(nameof(environmentProvider));
@@ -53,6 +47,7 @@ namespace Yoma.Core.Infrastructure.Alison.Services
       _opportunityRepository = opportunityRepository ?? throw new ArgumentNullException(nameof(opportunityRepository));
       _distributedLockService = distributedLockService ?? throw new ArgumentNullException(nameof(distributedLockService));
       _executionStrategyService = executionStrategyService ?? throw new ArgumentNullException(nameof(executionStrategyService));
+      _alisonAuthService = alisonAuthService ?? throw new ArgumentNullException(nameof(alisonAuthService));
     }
     #endregion
 
@@ -163,13 +158,13 @@ namespace Yoma.Core.Infrastructure.Alison.Services
 
     private List<Course> LoadEmbeddedCourses()
     {
-      if (string.IsNullOrWhiteSpace(_options.EmbeddedResourceName))
+      if (string.IsNullOrWhiteSpace(_options.CourseCatalogueEmbeddedResourceName))
         throw new InvalidOperationException("Alison embedded resource name is required");
 
       var assembly = typeof(OpportunityCatalogueBackgroundService).Assembly;
       var assemblyName = assembly.GetName().Name;
 
-      var resourceName = $"{assemblyName}.{_options.EmbeddedResourceName.Trim()}";
+      var resourceName = $"{assemblyName}.{_options.CourseCatalogueEmbeddedResourceName.Trim()}";
 
       using var resourceStream = assembly.GetManifestResourceStream(resourceName)
         ?? throw new InvalidOperationException($"Embedded Alison sample resource '{resourceName}' not found. Ensure file is added to the project, marked as Embedded Resource, and compiled into the assembly");
@@ -191,7 +186,7 @@ namespace Yoma.Core.Infrastructure.Alison.Services
 
       while (true)
       {
-        var response = await GetCoursesPage(pageNumber, PageSize_Maximum);
+        var response = await GetCoursesPage(pageNumber, Constants.PageSize_Maximum);
 
         total ??= response.Total;
 
@@ -205,7 +200,7 @@ namespace Yoma.Core.Infrastructure.Alison.Services
             "Loaded Alison courses page '{page}' with '{count}' items. Total loaded '{totalLoaded}' of '{total}'",
             pageNumber, response.Data.Count, courses.Count, total.Value);
 
-        if (response.Data.Count < PageSize_Maximum)
+        if (response.Data.Count < Constants.PageSize_Maximum)
           break;
 
         if (courses.Count >= total.Value)
@@ -226,50 +221,13 @@ namespace Yoma.Core.Infrastructure.Alison.Services
 
       return await _options.BaseUrl
         .AppendPathSegment(_options.CoursesPath)
-        .SetQueryParam(QueryParameter_Page, pageNumber)
-        .SetQueryParam(QueryParameter_PerPage, pageSize)
-        .WithAuthHeader(await GetAuthHeader())
+        .SetQueryParam(Constants.QueryParameter_Page, pageNumber)
+        .SetQueryParam(Constants.QueryParameter_PerPage, pageSize)
+        .WithAuthHeader(await _alisonAuthService.GetAuthHeader())
         .WithTimeout(TimeSpan.FromSeconds(_options.RequestTimeoutSeconds))
         .GetAsync()
         .EnsureSuccessStatusCodeAsync()
         .ReceiveJson<Response<Course>>();
-    }
-
-    private async Task<KeyValuePair<string, string>> GetAuthHeader()
-    {
-      if (_accessToken != null && _accessToken.DateExpire > DateTimeOffset.UtcNow)
-        return new KeyValuePair<string, string>(Header_Authorization, $"{Header_Authorization_Value_Prefix} {_accessToken.AccessToken}");
-
-      _accessToken = await GetAccessToken();
-
-      return new KeyValuePair<string, string>(Header_Authorization, $"{Header_Authorization_Value_Prefix} {_accessToken.AccessToken}");
-    }
-
-    private async Task<AccessTokenResponse> GetAccessToken()
-    {
-      var request = new AccessTokenRequest
-      {
-        ClientId = _options.ClientId,
-        ClientSecret = _options.ClientSecret
-      };
-
-      if (_logger.IsEnabled(LogLevel.Debug))
-        _logger.LogDebug("Requesting Alison access token");
-
-      var response = await _options.BaseUrl
-        .AppendPathSegment(_options.AccessTokenPath)
-        .WithTimeout(TimeSpan.FromSeconds(_options.RequestTimeoutSeconds))
-        .PostJsonAsync(request)
-        .EnsureSuccessStatusCodeAsync()
-        .ReceiveJson<AccessTokenResponse>();
-
-      if (string.IsNullOrWhiteSpace(response.AccessToken))
-        throw new InvalidOperationException("Alison access token response did not contain an access token");
-
-      if (_logger.IsEnabled(LogLevel.Debug))
-        _logger.LogDebug("Successfully acquired Alison access token with token type '{tokenType}'", response.TokenType);
-
-      return response;
     }
 
     private async Task ProcessOpportunities(List<Course> courses, DateTimeOffset now)

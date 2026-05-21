@@ -46,6 +46,7 @@ namespace Yoma.Core.Infrastructure.Alison
       services.AddScoped<IRepositoryBatched<Opportunity>, OpportunityRepository>();
 
       // services
+      services.AddSingleton<IAlisonAuthService, AlisonAuthService>();
       services.AddScoped<IExecutionStrategyService, ExecutionStrategyService>();
       services.AddScoped<IOpportunityCatalogueBackgroundService, OpportunityCatalogueBackgroundService>();
 

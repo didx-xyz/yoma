@@ -94,6 +94,16 @@ namespace Yoma.Core.Domain.Core.Models
 
     public int PartnerSyncPullScheduleMaxIntervalInHours { get; set; }
 
+    public string PartnerSyncPullVerificationSchedule { get; set; } = null!;
+
+    public int PartnerSyncPullVerificationScheduleBatchSize { get; set; }
+
+    public int PartnerSyncPullVerificationScheduleMaxIntervalInHours { get; set; }
+
+    public int PartnerSyncPullVerificationInitialLookbackHours { get; set; }
+
+    public int PartnerSyncPullVerificationCheckpointOverlapMinutes { get; set; }
+
     public string OpportunityPublishedNotificationSchedule { get; set; } = null!;
 
     public int OpportunityPublishedNotificationIntervalInDays { get; set; }

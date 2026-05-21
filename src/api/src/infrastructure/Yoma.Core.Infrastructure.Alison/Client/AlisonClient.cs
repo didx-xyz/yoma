@@ -1,9 +1,12 @@
 using FluentValidation;
+using Flurl;
+using Flurl.Http;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Interfaces;
+using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Lookups.Interfaces;
 using Yoma.Core.Domain.Opportunity;
 using Yoma.Core.Domain.Opportunity.Interfaces.Lookups;
@@ -13,6 +16,7 @@ using Yoma.Core.Domain.PartnerSync.Models;
 using Yoma.Core.Domain.PartnerSync.Validators;
 using Yoma.Core.Domain.SSI;
 using Yoma.Core.Domain.SSI.Helpers;
+using Yoma.Core.Infrastructure.Alison.Interfaces;
 using Yoma.Core.Infrastructure.Alison.Models;
 
 namespace Yoma.Core.Infrastructure.Alison.Client
@@ -75,6 +79,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
 
     private readonly ILogger<AlisonClient> _logger;
     private readonly IEnvironmentProvider _environmentProvider;
+    private readonly AppSettings _appSettings;
     private readonly AlisonOptions _options;
     private readonly IRepositoryBatched<Opportunity> _opportunityRepository;
     private readonly IOpportunityTypeService _opportunityTypeService;
@@ -85,6 +90,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
     private readonly IOpportunityDifficultyService _opportunityDifficultyService;
     private readonly ITimeIntervalService _timeIntervalService;
     private readonly IEngagementTypeService _engagementTypeService;
+    private readonly IAlisonAuthService _alisonAuthService;
     private readonly SyncFilterPullEntityValidator _syncFilterPullEntityValidator;
     private readonly SyncFilterPullVerificationValidator _syncFilterPullVerificationValidator;
     #endregion
@@ -93,6 +99,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
     public AlisonClient(
       ILogger<AlisonClient> logger,
       IEnvironmentProvider environmentProvider,
+      AppSettings appSettings,
       AlisonOptions options,
       IRepositoryBatched<Opportunity> opportunityRepository,
       IOpportunityTypeService opportunityTypeService,
@@ -103,11 +110,13 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       IOpportunityDifficultyService opportunityDifficultyService,
       ITimeIntervalService timeIntervalService,
       IEngagementTypeService engagementTypeService,
+      IAlisonAuthService alisonAuthService,
       SyncFilterPullEntityValidator syncFilterPullEntityValidator,
       SyncFilterPullVerificationValidator syncFilterPullVerificationValidator)
     {
       _logger = logger ?? throw new ArgumentNullException(nameof(logger));
       _environmentProvider = environmentProvider ?? throw new ArgumentNullException(nameof(environmentProvider));
+      _appSettings = appSettings ?? throw new ArgumentNullException(nameof(appSettings));
       _options = options ?? throw new ArgumentNullException(nameof(options));
       _opportunityRepository = opportunityRepository ?? throw new ArgumentNullException(nameof(opportunityRepository));
       _opportunityTypeService = opportunityTypeService ?? throw new ArgumentNullException(nameof(opportunityTypeService));
@@ -118,6 +127,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       _opportunityDifficultyService = opportunityDifficultyService ?? throw new ArgumentNullException(nameof(opportunityDifficultyService));
       _timeIntervalService = timeIntervalService ?? throw new ArgumentNullException(nameof(timeIntervalService));
       _engagementTypeService = engagementTypeService ?? throw new ArgumentNullException(nameof(engagementTypeService));
+      _alisonAuthService = alisonAuthService ?? throw new ArgumentNullException(nameof(alisonAuthService));
       _syncFilterPullEntityValidator = syncFilterPullEntityValidator ?? throw new ArgumentNullException(nameof(syncFilterPullEntityValidator));
       _syncFilterPullVerificationValidator = syncFilterPullVerificationValidator ?? throw new ArgumentNullException(nameof(syncFilterPullVerificationValidator));
     }
@@ -138,13 +148,22 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       return Task.FromResult(ListFromStore(filter));
     }
 
-    public Task<SyncResultPullVerification> List(SyncFilterPullVerification filter)
+    public async Task<SyncResultPullVerification> List(SyncFilterPullVerification filter)
     {
       ArgumentNullException.ThrowIfNull(filter);
 
       _syncFilterPullVerificationValidator.ValidateAndThrow(filter);
 
-      return Task.FromResult(new SyncResultPullVerification { TotalCount = 0 });
+      if (_logger.IsEnabled(LogLevel.Debug))
+        _logger.LogDebug(
+          "Listing Alison completed course verification sync items for environment '{environment}' from '{dateStart}' to '{dateEnd}', page number '{pageNumber}', page size '{pageSize}'",
+          _environmentProvider.Environment, filter.DateStart, filter.DateEnd, filter.PageNumber, filter.PageSize);
+
+      var temp = await ListCompletedCoursesFromApi(filter);
+
+      return !_appSettings.PartnerSyncEnabledEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment)
+        ? ListCompletedCoursesFromEmbeddedResource(filter)
+        : await ListCompletedCoursesFromApi(filter);
     }
     #endregion
 
@@ -757,6 +776,147 @@ namespace Yoma.Core.Infrastructure.Alison.Client
         duration,
         $@"(^|[^a-zA-Z]){System.Text.RegularExpressions.Regex.Escape(unit)}([^a-zA-Z]|$)",
         System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+    }
+
+    private SyncResultPullVerification ListCompletedCoursesFromEmbeddedResource(SyncFilterPullVerification filter)
+    {
+      ArgumentNullException.ThrowIfNull(filter);
+
+      if (_logger.IsEnabled(LogLevel.Information))
+        _logger.LogInformation(
+          "Partner synchronization from external partners disabled for environment '{environment}'. Using local .NET embedded Alison completed courses resource",
+          _environmentProvider.Environment);
+
+      var completedCourses = LoadEmbeddedCompletedCourses();
+
+      var dateEnd = filter.DateEnd ?? DateTimeOffset.UtcNow;
+
+      var query = completedCourses
+        .Where(item => item.CompletedAt.HasValue)
+        .Where(item => item.CompletedAt!.Value >= filter.DateStart && item.CompletedAt.Value <= dateEnd)
+        .OrderBy(item => item.CompletedAt)
+        .ThenBy(item => item.UserId)
+        .ThenBy(item => item.CourseId)
+        .ToList();
+
+      var result = new SyncResultPullVerification
+      {
+        TotalCount = query.Count
+      };
+
+      if (filter.PaginationEnabled)
+        query = [.. query.Skip((filter.PageNumber!.Value - 1) * filter.PageSize!.Value).Take(filter.PageSize.Value)];
+
+      result.Items = [.. query.Select(ToSyncItem)];
+
+      if (_logger.IsEnabled(LogLevel.Debug))
+        _logger.LogDebug("Mapped Alison embedded completed courses payload to verification sync result with '{count}' items", result.Items.Count);
+
+      return result;
+    }
+
+    private async Task<SyncResultPullVerification> ListCompletedCoursesFromApi(SyncFilterPullVerification filter)
+    {
+      ArgumentNullException.ThrowIfNull(filter);
+
+      var pageNumber = filter.PageNumber!.Value;
+      var requestedPageSize = filter.PageSize!.Value;
+      var providerPageSize = Math.Min(requestedPageSize, Constants.PageSize_Maximum);
+      var hours = ResolveHours(filter.DateStart, filter.DateEnd);
+
+      if (_logger.IsEnabled(LogLevel.Debug))
+        _logger.LogDebug(
+          "Requesting Alison completed courses from '{path}' with page '{pageNumber}', perPage '{pageSize}', hours '{hours}'",
+          _options.CompletedDataPath, pageNumber, providerPageSize, hours);
+
+      var response = await GetCompletedCoursesPage(pageNumber, providerPageSize, hours);
+
+      var result = new SyncResultPullVerification
+      {
+        TotalCount = response.Meta?.Total,
+        Items = [.. response.Data.Select(ToSyncItem)]
+      };
+
+      if (!result.TotalCount.HasValue)
+        throw new InvalidOperationException("Alison completed courses response did not contain pagination total");
+
+      if (_logger.IsEnabled(LogLevel.Debug))
+        _logger.LogDebug("Mapped Alison completed courses API response to verification sync result with '{count}' items", result.Items.Count);
+
+      return result;
+    }
+
+    private List<CompletedCourse> LoadEmbeddedCompletedCourses()
+    {
+      if (string.IsNullOrWhiteSpace(_options.CompletedCoursesEmbeddedResourceName))
+        throw new InvalidOperationException("Alison completed courses embedded resource name is required");
+
+      var assembly = typeof(AlisonClient).Assembly;
+      var assemblyName = assembly.GetName().Name;
+
+      var resourceName = $"{assemblyName}.{_options.CompletedCoursesEmbeddedResourceName.Trim()}";
+
+      using var resourceStream = assembly.GetManifestResourceStream(resourceName)
+        ?? throw new InvalidOperationException($"Embedded Alison completed courses sample resource '{resourceName}' not found. Ensure file is added to the project, marked as Embedded Resource, and compiled into the assembly");
+
+      using var reader = new StreamReader(resourceStream);
+      var json = reader.ReadToEnd();
+
+      if (string.IsNullOrWhiteSpace(json))
+        return [];
+
+      var response = JsonConvert.DeserializeObject<CompletedCoursesResponse>(json)
+        ?? throw new InvalidOperationException("Failed to deserialize embedded Alison completed courses sample JSON");
+
+      return response.Data;
+    }
+
+    private async Task<CompletedCoursesResponse> GetCompletedCoursesPage(int pageNumber, int pageSize, int hours)
+    {
+      if (_logger.IsEnabled(LogLevel.Debug))
+        _logger.LogDebug(
+          "Requesting Alison completed courses from '{path}' with page '{page}' and perPage '{perPage}' and hours '{hours}'",
+          _options.CompletedDataPath, pageNumber, pageSize, hours);
+
+      return await _options.BaseUrl
+        .AppendPathSegment(_options.CompletedDataPath)
+        .SetQueryParam(Constants.QueryParameter_Page, pageNumber)
+        .SetQueryParam(Constants.QueryParameter_PerPage, pageSize)
+        .SetQueryParam(Constants.QueryParameter_Hours, hours)
+        .WithAuthHeader(await _alisonAuthService.GetAuthHeader())
+        .WithTimeout(TimeSpan.FromSeconds(_options.RequestTimeoutSeconds))
+        .GetAsync()
+        .EnsureSuccessStatusCodeAsync()
+        .ReceiveJson<CompletedCoursesResponse>();
+    }
+
+    private static SyncItemVerification ToSyncItem(CompletedCourse item)
+    {
+      ArgumentNullException.ThrowIfNull(item);
+
+      if (item.UserId <= 0)
+        throw new InvalidOperationException("Alison completed course user id expected");
+
+      if (item.CourseId <= 0)
+        throw new InvalidOperationException("Alison completed course id expected");
+
+      return new SyncItemVerification
+      {
+        UserExternalId = item.UserId.ToString(),
+        EntityExternalId = item.CourseId.ToString(),
+        UserEmail = item.Email,
+        DateStart = item.FirstAccess ?? item.EnrollmentDate ?? item.CreatedAt ?? item.CompletedAt,
+        DateEnd = item.CompletedAt ?? item.LastAccess ?? item.UpdatedAt,
+        DateCompleted = item.CompletedAt
+      };
+    }
+
+    private static int ResolveHours(DateTimeOffset dateStart, DateTimeOffset? dateEnd)
+    {
+      var resolvedDateEnd = dateEnd ?? DateTimeOffset.UtcNow;
+      var totalHours = (resolvedDateEnd - dateStart).TotalHours;
+
+      return Math.Max(1, (int)Math.Ceiling(totalHours));
     }
 
     [System.Text.RegularExpressions.GeneratedRegex(@"\d+(\.\d+)?")]
