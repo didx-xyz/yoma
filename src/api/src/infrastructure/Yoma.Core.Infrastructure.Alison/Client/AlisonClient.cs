@@ -159,8 +159,6 @@ namespace Yoma.Core.Infrastructure.Alison.Client
           "Listing Alison completed course verification sync items for environment '{environment}' from '{dateStart}' to '{dateEnd}', page number '{pageNumber}', page size '{pageSize}'",
           _environmentProvider.Environment, filter.DateStart, filter.DateEnd, filter.PageNumber, filter.PageSize);
 
-      var temp = await ListCompletedCoursesFromApi(filter);
-
       return !_appSettings.PartnerSyncEnabledEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment)
         ? ListCompletedCoursesFromEmbeddedResource(filter)
         : await ListCompletedCoursesFromApi(filter);
@@ -865,13 +863,13 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       if (string.IsNullOrWhiteSpace(json))
         return [];
 
-      var response = JsonConvert.DeserializeObject<CompletedCoursesResponse>(json)
+      var response = JsonConvert.DeserializeObject<Response<CompletedCourse>>(json)
         ?? throw new InvalidOperationException("Failed to deserialize embedded Alison completed courses sample JSON");
 
       return response.Data;
     }
 
-    private async Task<CompletedCoursesResponse> GetCompletedCoursesPage(int pageNumber, int pageSize, int hours)
+    private async Task<Response<CompletedCourse>> GetCompletedCoursesPage(int pageNumber, int pageSize, int hours)
     {
       if (_logger.IsEnabled(LogLevel.Debug))
         _logger.LogDebug(
@@ -887,7 +885,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
         .WithTimeout(TimeSpan.FromSeconds(_options.RequestTimeoutSeconds))
         .GetAsync()
         .EnsureSuccessStatusCodeAsync()
-        .ReceiveJson<CompletedCoursesResponse>();
+        .ReceiveJson<Response<CompletedCourse>>();
     }
 
     private static SyncItemVerification ToSyncItem(CompletedCourse item)

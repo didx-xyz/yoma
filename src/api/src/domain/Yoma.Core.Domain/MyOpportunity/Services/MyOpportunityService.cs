@@ -1126,7 +1126,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
       request.UserPhoneNumber = request.UserPhoneNumber?.Trim();
       if (string.IsNullOrEmpty(request.UserPhoneNumber)) request.UserPhoneNumber = null;
-      request.UserPhoneNumber = request.UserPhoneNumber?.NormalizePhoneNumber(true);  
+      request.UserPhoneNumber = request.UserPhoneNumber?.NormalizePhoneNumber(true);
 
       var opportunity = _opportunityService.GetById(request.OpportunityId, true, true, false);
 
