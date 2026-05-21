@@ -23,7 +23,7 @@ namespace Yoma.Core.Domain.PartnerSync.Interfaces
 
     PartnerSyncTracking? GetTrackingLatest(SyncType syncType, Guid partnerId, EntityType entityType, SyncScope syncScope);
 
-    Task RecordTracking(SyncType syncType, Guid partnerId, EntityType entityType, SyncScope syncScope, DateTimeOffset dateStamp, int itemsProcessed, int itemsSucceeded, int itemsSkipped, int itemsFailed);
+    Task RecordTracking(SyncType syncType, Guid partnerId, EntityType entityType, SyncScope syncScope, DateTimeOffset dateStamp, int itemsProcessed, int itemsSucceeded, int itemsSkipped, int itemsFailed, string? partialReason = null);
 
     Task RecordTracking(SyncType syncType, Guid partnerId, EntityType entityType, SyncScope syncScope, DateTimeOffset dateStamp, string failedReason);
   }

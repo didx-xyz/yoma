@@ -269,9 +269,11 @@ namespace Yoma.Core.Domain
       RecurringJob.AddOrUpdate<ISyncBackgroundService>(
         $"Partner Synchronization Push", s => s.ProcessSyncPush(), options.PartnerSyncPushSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
 
-      //partner synchronization
       RecurringJob.AddOrUpdate<ISyncBackgroundService>(
         $"Partner Synchronization Pull", s => s.ProcessSyncPull(), options.PartnerSyncPullSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
+
+      RecurringJob.AddOrUpdate<ISyncBackgroundService>(
+        $"Partner Synchronization Pull Verification", s => s.ProcessSyncPullVerification(), options.PartnerSyncPullVerificationSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
 
       //my opportunity
       RecurringJob.AddOrUpdate<IMyOpportunityBackgroundService>(

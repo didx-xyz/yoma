@@ -28,6 +28,11 @@ namespace Yoma.Core.Infrastructure.Alison.Models
     public string CoursesPath { get; set; } = null!;
 
     /// <summary>
+    /// API path used to retrieve completed Alison course data for verification synchronization.
+    /// </summary>
+    public string CompletedDataPath { get; set; } = null!;
+
+    /// <summary>
     /// Cron expression used to schedule Alison course catalogue refreshes.
     /// Should run before the PartnerSync pull schedule so the main pull uses the latest cached catalogue.
     /// </summary>
@@ -52,9 +57,14 @@ namespace Yoma.Core.Infrastructure.Alison.Models
     public int RetentionDays { get; init; }
 
     /// <summary>
-    /// Local .NET embedded resource name used when external partner synchronization is disabled.
+    /// Local .NET embedded resource name used for the Alison course catalogue when external partner synchronization is disabled.
     /// </summary>
-    public string EmbeddedResourceName { get; set; } = null!;
+    public string CourseCatalogueEmbeddedResourceName { get; set; } = null!;
+
+    /// <summary>
+    /// Local .NET embedded resource name used for completed Alison course data when external partner synchronization is disabled.
+    /// </summary>
+    public string CompletedCoursesEmbeddedResourceName { get; set; } = null!;
 
     /// <summary>
     /// Alison API client Id used for v2 authentication.

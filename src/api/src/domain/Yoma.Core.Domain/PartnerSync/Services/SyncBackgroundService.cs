@@ -9,6 +9,8 @@ using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Entity;
 using Yoma.Core.Domain.Entity.Helpers;
 using Yoma.Core.Domain.Entity.Interfaces;
+using Yoma.Core.Domain.MyOpportunity.Interfaces;
+using Yoma.Core.Domain.MyOpportunity.Models;
 using Yoma.Core.Domain.Opportunity;
 using Yoma.Core.Domain.Opportunity.Extensions;
 using Yoma.Core.Domain.Opportunity.Interfaces;
@@ -30,6 +32,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
     private readonly IPartnerService _partnerService;
     private readonly IOpportunityService _opportunityService;
     private readonly IOrganizationService _organizationService;
+    private readonly IMyOpportunityService _myOpportunityService;
     private readonly ISyncProviderClientFactoryResolver _providerClientFactoryResolver;
     private readonly IDistributedLockService _distributedLockService;
     private readonly IExecutionStrategyService _executionStrategyService;
@@ -43,6 +46,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
         IPartnerService partnerService,
         IOpportunityService opportunityService,
         IOrganizationService organizationService,
+        IMyOpportunityService myOpportunityService,
         ISyncProviderClientFactoryResolver providerClientFactoryResolver,
         IDistributedLockService distributedLockService,
         IExecutionStrategyService executionStrategyService)
@@ -54,6 +58,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
       _partnerService = partnerService ?? throw new ArgumentNullException(nameof(partnerService));
       _opportunityService = opportunityService ?? throw new ArgumentNullException(nameof(opportunityService));
       _organizationService = organizationService ?? throw new ArgumentNullException(nameof(organizationService));
+      _myOpportunityService = myOpportunityService ?? throw new ArgumentNullException(nameof(myOpportunityService));
       _providerClientFactoryResolver = providerClientFactoryResolver ?? throw new ArgumentNullException(nameof(providerClientFactoryResolver));
       _distributedLockService = distributedLockService ?? throw new ArgumentNullException(nameof(distributedLockService));
       _executionStrategyService = executionStrategyService ?? throw new ArgumentNullException(nameof(executionStrategyService));
@@ -375,6 +380,48 @@ namespace Yoma.Core.Domain.PartnerSync.Services
         if (lockAcquired) await _distributedLockService.ReleaseLockAsync(lockIdentifier);
       }
     }
+
+    public async Task ProcessSyncPullVerification()
+    {
+      const string lockIdentifier = "partner_sync_process_pull_verification";
+      var dateTimeNow = DateTimeOffset.UtcNow;
+      var executeUntil = dateTimeNow.AddHours(_scheduleJobOptions.PartnerSyncPullVerificationScheduleMaxIntervalInHours);
+      var lockDuration = executeUntil - dateTimeNow + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
+      var lockAcquired = false;
+
+      try
+      {
+        lockAcquired = await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration);
+        if (!lockAcquired) return;
+
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processing partner sync pull verification");
+
+        var partners = _partnerService.ListPull(SyncScope.Verification, entityType: EntityType.Opportunity);
+        if (partners.Count == 0)
+        {
+          if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("No sync pull verification partners found to process");
+          return;
+        }
+
+        foreach (var partnerModel in partners)
+        {
+          if (executeUntil <= DateTimeOffset.UtcNow) break;
+
+          await ProcessSyncPullVerificationPartner(partnerModel, executeUntil);
+        }
+
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processed partner sync pull verification");
+      }
+      catch (Exception ex)
+      {
+        if (_logger.IsEnabled(LogLevel.Error))
+          _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(ProcessSyncPullVerification), ex.Message);
+      }
+      finally
+      {
+        if (lockAcquired) await _distributedLockService.ReleaseLockAsync(lockIdentifier);
+      }
+    }
     #endregion
 
     #region Private Members
@@ -423,6 +470,8 @@ namespace Yoma.Core.Domain.PartnerSync.Services
       var entityType = EntityType.Opportunity;
       var dateStamp = DateTimeOffset.UtcNow;
       var tracking = (ItemsProcessed: 0, ItemsSkipped: 0, ItemsFailed: 0, FailedReason: (string?)null);
+      var completedPull = false;
+      var partialReason = (string?)null;
 
       try
       {
@@ -437,7 +486,11 @@ namespace Yoma.Core.Domain.PartnerSync.Services
           var (Result, Items, PagedByProvider) = await ListSyncPullItems(partner, entityType, pullProviderClient, pageNumber, pageSize, result);
           result = Result;
 
-          if (Items.Count == 0) break;
+          if (Items.Count == 0)
+          {
+            completedPull = true;
+            break;
+          }
 
           foreach (var item in Items)
           {
@@ -624,11 +677,24 @@ namespace Yoma.Core.Domain.PartnerSync.Services
           }
 
           if (executeUntil <= DateTimeOffset.UtcNow) break;
-          if (result.ReachedTotalCount(pageNumber, pageSize)) break;
+
+          if (result.ReachedTotalCount(pageNumber, pageSize))
+          {
+            completedPull = true;
+            break;
+          }
 
           if (PagedByProvider) result = null;
 
           pageNumber++;
+        }
+
+        if (!completedPull)
+        {
+          if (tracking.ItemsProcessed == 0)
+            tracking = (tracking.ItemsProcessed, tracking.ItemsSkipped, tracking.ItemsFailed, "Execution window elapsed before pull completed");
+          else
+            partialReason = "Execution window elapsed before pull completed";
         }
       }
       catch (Exception ex)
@@ -643,7 +709,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
         if (!string.IsNullOrWhiteSpace(tracking.FailedReason))
           await _processingService.RecordTracking(SyncType.Pull, partnerModel.Id, entityType, SyncScope.Entity, dateStamp, tracking.FailedReason);
         else
-          await _processingService.RecordTracking(SyncType.Pull, partnerModel.Id, entityType, SyncScope.Entity, dateStamp, tracking.ItemsProcessed, tracking.ItemsProcessed - tracking.ItemsSkipped - tracking.ItemsFailed, tracking.ItemsSkipped, tracking.ItemsFailed);
+          await _processingService.RecordTracking(SyncType.Pull, partnerModel.Id, entityType, SyncScope.Entity, dateStamp, tracking.ItemsProcessed, tracking.ItemsProcessed - tracking.ItemsSkipped - tracking.ItemsFailed, tracking.ItemsSkipped, tracking.ItemsFailed, partialReason);
       }
     }
 
@@ -675,6 +741,223 @@ namespace Yoma.Core.Domain.PartnerSync.Services
         {
           if (_logger.IsEnabled(LogLevel.Information))
             _logger.LogInformation("No sync pull items found to process for partner '{partner}', entity type '{entityType}', on page '{pageNumber}'", partner, entityType, filter.PageNumber);
+
+          return (result, [], true);
+        }
+      }
+
+      // If the provider ignores paging and returns the full result set, page it locally
+      var pagedByProvider = result.Items.Count <= pageSize;
+      var items = pagedByProvider
+        ? result.Items
+        : [.. result.Items.Skip((pageNumber - 1) * pageSize).Take(pageSize)];
+
+      return (result, items, pagedByProvider);
+    }
+
+    private async Task ProcessSyncPullVerificationPartner(Models.Lookups.Partner partnerModel, DateTimeOffset executeUntil)
+    {
+      try
+      {
+        var partner = Enum.Parse<SyncPartner>(partnerModel.Name, true);
+
+        if (!partnerModel.SyncCapabilitiesParsed.TryGetValue(SyncType.Pull, out var entityCapabilities) || entityCapabilities.Count == 0)
+          return;
+
+        var entityTypes = entityCapabilities
+          .Where(o => o.Value.Contains(SyncScope.Verification))
+          .Select(o => o.Key)
+          .Distinct()
+          .ToList();
+
+        if (entityTypes.Count == 0)
+          return;
+
+        foreach (var entityType in entityTypes)
+        {
+          if (executeUntil <= DateTimeOffset.UtcNow) break;
+
+          switch (entityType)
+          {
+            case EntityType.Opportunity:
+              await ProcessSyncPullVerificationOpportunity(partnerModel, partner, executeUntil);
+              break;
+
+            default:
+              throw new InvalidOperationException($"Entity type '{entityType}' not supported");
+          }
+        }
+      }
+      catch (Exception ex)
+      {
+        if (_logger.IsEnabled(LogLevel.Error))
+          _logger.LogError(ex, "Failed to process sync pull verification for partner '{partnerName}': {errorMessage}", partnerModel.Name, ex.Message);
+      }
+    }
+
+    private async Task ProcessSyncPullVerificationOpportunity(Models.Lookups.Partner partnerModel, SyncPartner partner, DateTimeOffset executeUntil)
+    {
+      var entityType = EntityType.Opportunity;
+      var dateEnd = DateTimeOffset.UtcNow;
+      var tracking = (ItemsProcessed: 0, ItemsSkipped: 0, ItemsFailed: 0, FailedReason: (string?)null);
+      var completedPull = false;
+      var partialReason = (string?)null;
+
+      try
+      {
+        var trackingLatest = _processingService.GetTrackingLatest(SyncType.Pull, partnerModel.Id, entityType, SyncScope.Verification);
+        var dateStart = trackingLatest?.DateStamp.AddMinutes(-_scheduleJobOptions.PartnerSyncPullVerificationCheckpointOverlapMinutes)
+          ?? dateEnd.AddHours(-_scheduleJobOptions.PartnerSyncPullVerificationInitialLookbackHours);
+
+        var pullProviderClient = _providerClientFactoryResolver.CreateClient<ISyncProviderClientPullVerification>(partner);
+
+        var pageNumber = 1;
+        var pageSize = _scheduleJobOptions.PartnerSyncPullVerificationScheduleBatchSize;
+        SyncResultPullVerification? result = null;
+
+        while (executeUntil > DateTimeOffset.UtcNow)
+        {
+          var (Result, Items, PagedByProvider) = await ListSyncPullVerificationItems(partner, entityType, pullProviderClient, pageNumber, pageSize, dateStart, dateEnd, result);
+          result = Result;
+
+          if (Items.Count == 0)
+          {
+            completedPull = true;
+            break;
+          }
+
+          foreach (var item in Items)
+          {
+            if (executeUntil <= DateTimeOffset.UtcNow) break;
+
+            try
+            {
+              if (string.IsNullOrWhiteSpace(item.EntityExternalId))
+                throw new InvalidOperationException("Entity external id expected");
+
+              if (string.IsNullOrWhiteSpace(item.Username))
+                throw new InvalidOperationException("Username expected");
+
+              if (_logger.IsEnabled(LogLevel.Information))
+                _logger.LogInformation("Processing sync pull verification item for partner '{partner}', entity type '{entityType}', entity external id '{entityExternalId}', user external id '{userExternalId}'",
+                  partner, entityType, item.EntityExternalId, item.UserExternalId);
+
+              var processingItemExisting = _processingService.GetPull(partnerModel.Id, entityType, item.EntityExternalId);
+              if (!processingItemExisting.HasSynchronizedEntity(entityType) || !processingItemExisting!.OpportunityId.HasValue)
+                throw new InvalidOperationException($"Synchronized opportunity mapping expected for partner '{partner}', entity type '{entityType}', entity external id '{item.EntityExternalId}'");
+
+              var request = new MyOpportunityRequestVerifyImportPartnerSync
+              {
+                OpportunityId = processingItemExisting.OpportunityId.Value,
+                UserEmail = item.UserEmail,
+                UserPhoneNumber = item.UserPhoneNumber,
+                DateStart = item.DateStart,
+                DateEnd = item.DateEnd,
+                CommitmentInterval = item.CommitmentInterval == null ? null : new MyOpportunityRequestVerifyCommitmentInterval
+                {
+                  Id = item.CommitmentInterval.Id,
+                  Count = item.CommitmentInterval.Count
+                },
+                DateCompleted = item.DateCompleted
+              };
+
+              var importResult = await _myOpportunityService.PerformActionImportVerificationFromPartnerSync(request);
+
+              if (importResult.Skipped)
+              {
+                if (_logger.IsEnabled(LogLevel.Information))
+                  _logger.LogInformation("Processing of partner sync pull verification item skipped: {skipReason}", importResult.SkipReason);
+
+                tracking = (tracking.ItemsProcessed + 1, tracking.ItemsSkipped + 1, tracking.ItemsFailed, tracking.FailedReason);
+                continue;
+              }
+
+              tracking = (tracking.ItemsProcessed + 1, tracking.ItemsSkipped, tracking.ItemsFailed, tracking.FailedReason);
+
+              if (_logger.IsEnabled(LogLevel.Information))
+                _logger.LogInformation("Processed sync pull verification item for partner '{partner}', entity type '{entityType}', entity external id '{entityExternalId}', user external id '{userExternalId}'",
+                  partner, entityType, item.EntityExternalId, item.UserExternalId);
+            }
+            catch (Exception ex)
+            {
+              tracking = (tracking.ItemsProcessed + 1, tracking.ItemsSkipped, tracking.ItemsFailed + 1, tracking.FailedReason);
+
+              if (_logger.IsEnabled(LogLevel.Error))
+                _logger.LogError(ex, "Failed to process sync pull verification item for partner '{partner}' and entity type '{entityType}': {errorMessage}", partner, entityType, ex.Message);
+            }
+          }
+
+          if (executeUntil <= DateTimeOffset.UtcNow) break;
+
+          if (result.ReachedTotalCount(pageNumber, pageSize))
+          {
+            completedPull = true;
+            break;
+          }
+
+          if (PagedByProvider) result = null;
+
+          pageNumber++;
+        }
+
+        if (!completedPull)
+        {
+          if (tracking.ItemsProcessed == 0)
+            tracking = (tracking.ItemsProcessed, tracking.ItemsSkipped, tracking.ItemsFailed, "Execution window elapsed before verification pull completed");
+          else
+            partialReason = "Execution window elapsed before verification pull completed";
+        }
+      }
+      catch (Exception ex)
+      {
+        tracking = (tracking.ItemsProcessed, tracking.ItemsSkipped, tracking.ItemsFailed, ex.Message);
+
+        if (_logger.IsEnabled(LogLevel.Error))
+          _logger.LogError(ex, "Failed to process sync pull verification for partner '{partner}' and entity type '{entityType}': {errorMessage}", partner, entityType, ex.Message);
+      }
+      finally
+      {
+        if (!string.IsNullOrWhiteSpace(tracking.FailedReason))
+          await _processingService.RecordTracking(SyncType.Pull, partnerModel.Id, entityType, SyncScope.Verification, dateEnd, tracking.FailedReason);
+        else
+          await _processingService.RecordTracking(SyncType.Pull, partnerModel.Id, entityType, SyncScope.Verification, dateEnd, tracking.ItemsProcessed, tracking.ItemsProcessed - tracking.ItemsSkipped - tracking.ItemsFailed, tracking.ItemsSkipped, tracking.ItemsFailed, partialReason);
+      }
+    }
+
+    private async Task<(SyncResultPullVerification Result, List<SyncItemVerification> Items, bool PagedByProvider)> ListSyncPullVerificationItems(
+      SyncPartner partner,
+      EntityType entityType,
+      ISyncProviderClientPullVerification pullProviderClient,
+      int pageNumber,
+      int pageSize,
+      DateTimeOffset dateStart,
+      DateTimeOffset dateEnd,
+      SyncResultPullVerification? result)
+    {
+      if (result == null)
+      {
+        var filter = new SyncFilterPullVerification
+        {
+          PageNumber = pageNumber,
+          PageSize = pageSize,
+          DateStart = dateStart,
+          DateEnd = dateEnd
+        };
+
+        if (_logger.IsEnabled(LogLevel.Information))
+          _logger.LogInformation("Processing sync pull verification for partner '{partner}', entity type '{entityType}', from '{dateStart}' to '{dateEnd}', on page '{pageNumber}' with batch size '{batchSize}'",
+            partner, entityType, filter.DateStart, filter.DateEnd, filter.PageNumber, filter.PageSize);
+
+        result = await pullProviderClient.List(filter);
+
+        if (!result.TotalCount.HasValue)
+          throw new InvalidOperationException("Paginated filter: Total count expected but is null");
+
+        if (result.Items.Count == 0)
+        {
+          if (_logger.IsEnabled(LogLevel.Information))
+            _logger.LogInformation("No sync pull verification items found to process for partner '{partner}', entity type '{entityType}', from '{dateStart}' to '{dateEnd}', on page '{pageNumber}'",
+              partner, entityType, filter.DateStart, filter.DateEnd, filter.PageNumber);
 
           return (result, [], true);
         }

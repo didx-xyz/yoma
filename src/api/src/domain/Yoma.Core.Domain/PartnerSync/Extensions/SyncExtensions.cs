@@ -35,10 +35,28 @@ namespace Yoma.Core.Domain.PartnerSync.Extensions
       where TItem : class, new()
     {
       ArgumentNullException.ThrowIfNull(result);
+
+      return ReachedTotalCount(result.TotalCount, pageNumber, pageSize);
+    }
+
+    public static bool ReachedTotalCount(this SyncResultPullVerification result, int pageNumber, int pageSize)
+    {
+      ArgumentNullException.ThrowIfNull(result);
+
+      return ReachedTotalCount(result.TotalCount, pageNumber, pageSize);
+    }
+    #endregion
+
+    #region Private Members
+    private static bool ReachedTotalCount(int? totalCount, int pageNumber, int pageSize)
+    {
       ArgumentOutOfRangeException.ThrowIfNegativeOrZero(pageNumber);
       ArgumentOutOfRangeException.ThrowIfNegativeOrZero(pageSize);
 
-      return pageNumber * pageSize >= result.TotalCount!.Value;
+      if (!totalCount.HasValue)
+        throw new InvalidOperationException("Paginated result: Total count expected but is null");
+
+      return pageNumber * pageSize >= totalCount.Value;
     }
     #endregion
   }

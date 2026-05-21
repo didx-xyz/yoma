@@ -5,5 +5,7 @@ namespace Yoma.Core.Domain.PartnerSync.Interfaces
     Task ProcessSyncPush();
 
     Task ProcessSyncPull();
+
+    Task ProcessSyncPullVerification();
   }
 }

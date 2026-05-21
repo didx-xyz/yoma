@@ -354,13 +354,9 @@ namespace Yoma.Core.Infrastructure.Alison.Models
     [JsonProperty("locale")]
     public string? Locale { get; set; }
   }
+  #endregion
 
-  public sealed class CompletedCoursesResponse
-  {
-    [JsonProperty("data")]
-    public List<CompletedCourse> Data { get; set; } = [];
-  }
-
+  #region Completed courses
   public sealed class CompletedCourse
   {
     [JsonProperty("user_id")]
