@@ -242,16 +242,6 @@
             </div>
           </#if>
 
-          <!-- Terms and Conditions -->
-          <div class="centered-div">
-            <div class="centered-checkbox">
-              <label for="terms_and_conditions" id="terms-label">
-			  	<span id="terms-prefix">${msg("termsText1")}</span>
-                <a href="https://yoma.world/terms" target="_blank" id="terms-text">${msg("termsText2")}</a>
-              </label>
-            </div>
-          </div>
-
           <!-- Recaptcha -->
           <#if recaptchaRequired??>
             <div class="${properties.kcFormGroupClass!}">
@@ -268,9 +258,9 @@
           </div>
         </div>
 
-        <div id="kc-form-options">
+        <#-- <div id="kc-form-options">
           <span><a href="${url.loginUrl}">${kcSanitize(msg("backToLoginBtn"))?no_esc}</a></span>
-        </div>
+        </div> -->
       </form>
     </div>
 
@@ -555,13 +545,6 @@
       });
     </script>
   <#elseif section = "info" >
-    <#if realm.password && !registrationDisabled??>
-      <div id="kc-login-container" style="margin-top: 20px;">
-        <a id="kc-login" href="${url.loginUrl}">
-          ${msg("alreadyHaveAccount")} ${msg("doLogin")}
-        </a>
-      </div>
-    </#if>
   <#elseif section = "socialProviders" >
     <#if realm.password && social.providers??>
       <div id="kc-social-providers" class="${properties.kcFormSocialAccountSectionClass!}">
@@ -586,6 +569,24 @@
                   </a>
               </#list>
           </ul>
+
+		      <!-- Terms and Conditions -->
+          <div class="centered-div">
+            <div class="centered-checkbox">
+              <label for="terms_and_conditions" id="terms-label">
+			  	      <span id="terms-prefix">${msg("termsText1")}</span>
+                <a href="https://yoma.world/terms" target="_blank" id="terms-text">${msg("termsText2")}</a>
+              </label>
+            </div>
+          </div>
+
+          <#if realm.password && !registrationDisabled??>
+            <div id="kc-registration-container" style="margin-top: 2.5rem;">
+              <a id="kc-registration" href="${url.loginUrl}">
+                ${kcSanitize(msg("backToLoginBtn"))?no_esc}
+              </a>
+            </div>
+          </#if>
       </div>
     </#if>
   </#if>
