@@ -549,7 +549,7 @@
               </ul>
           </div>
 
-		  <!-- Terms and Conditions -->
+		      <!-- Terms and Conditions -->
           <div class="centered-div">
             <div class="centered-checkbox">
               <label for="terms_and_conditions" id="terms-label">
