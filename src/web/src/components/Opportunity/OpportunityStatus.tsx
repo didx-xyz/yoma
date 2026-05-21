@@ -1,7 +1,7 @@
 import React from "react";
 
 const OpportunityStatus: React.FC<{ status: string }> = ({ status }) => {
-  function renderStatusBadge(status: string): JSX.Element | null {
+  function renderStatusBadge(status: string): React.ReactElement | null {
     switch (status) {
       case "Active":
         return (
