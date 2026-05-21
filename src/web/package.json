@@ -89,5 +89,8 @@
   },
   "engines": {
     "node": "24.x"
+  },
+  "resolutions": {
+    "@types/minimatch": "5.1.2"
   }
 }

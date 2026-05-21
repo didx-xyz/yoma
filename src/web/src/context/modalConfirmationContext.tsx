@@ -26,7 +26,7 @@ const useModalShow = (): UseModalShowReturnType => {
 interface ModalContextType {
   showConfirmation: (
     title: string,
-    message: string | JSX.Element,
+    message: string | React.ReactElement,
     showCancelButton?: boolean,
     showOkButton?: boolean,
   ) => Promise<boolean>;
@@ -46,7 +46,7 @@ const ConfirmationModalContextProvider: React.FC<
   const { setShow, show, onHide } = useModalShow();
   const [content, setContent] = useState<{
     title: string;
-    message: string | JSX.Element;
+    message: string | React.ReactElement;
     showCancelButton?: boolean;
     showOkButton?: boolean;
   } | null>();
@@ -56,7 +56,7 @@ const ConfirmationModalContextProvider: React.FC<
     () =>
       (
         title: string,
-        message: string | JSX.Element,
+        message: string | React.ReactElement,
         showCancelButton?: boolean,
         showOkButton?: boolean,
       ): Promise<boolean> => {
