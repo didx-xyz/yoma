@@ -1,0 +1,12 @@
+packages:
+  - "src/web"
+
+allowBuilds:
+  cypress: true
+  sharp: true
+  unrs-resolver: true
+
+nodeLinker: hoisted
+
+overrides:
+  "@types/minimatch": 5.1.2

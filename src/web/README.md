@@ -10,32 +10,29 @@ Yoma Web is a modern, responsive frontend application built with NextJS 15 & Rea
 
 ## 🚀 Quick Start
 
-1. Install dependencies:
+1. Install dependencies (from the repo root):
 
    ```bash
-   yarn install
+   pnpm install
    ```
 
 2. Start the development server:
 
    ```bash
-   yarn dev
+   pnpm dev
    ```
 
 3. 🎉 Open [http://localhost:3000](http://localhost:3000) in your browser to see the application!
 
 ## 📋 Available Scripts
 
-| Command          | Description                                        |
-| ---------------- | -------------------------------------------------- |
-| `yarn dev`       | Starts the development server                      |
-| `yarn build`     | Creates an optimized production build              |
-| `yarn start`     | Runs the built app in production mode              |
-| `yarn lint`      | Runs ESLint to catch code quality issues           |
-| `yarn test`      | Executes Jest tests                                |
-| `yarn analyze`   | Runs the bundle analyzer to visualize bundle sizes |
-| `yarn cypress`   | Opens Cypress for end-to-end testing               |
-| `yarn storybook` | Starts Storybook for component development         |
+| Command        | Description                                        |
+| -------------- | -------------------------------------------------- |
+| `pnpm dev`     | Starts the development server                      |
+| `pnpm build`   | Creates an optimized production build              |
+| `pnpm start`   | Runs the built app in production mode              |
+| `pnpm lint`    | Runs ESLint to catch code quality issues           |
+| `pnpm analyze` | Runs the bundle analyzer to visualize bundle sizes |
 
 ## 📁 Project Structure
 
@@ -54,19 +51,12 @@ src/
 
 ## 🧪 Testing
 
-This project uses:
-
-- Jest for unit and integration tests
-- Cypress for end-to-end testing
+This project uses [Jest](https://jestjs.io/) for unit and integration tests.
 
 Run tests with:
 
 ```bash
-# Unit and integration tests
-yarn test
-
-# End-to-end tests
-yarn cypress
+pnpm test
 ```
 
 ## 📚 Documentation
