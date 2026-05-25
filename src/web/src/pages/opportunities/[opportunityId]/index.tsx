@@ -1,8 +1,8 @@
 import { QueryClient, dehydrate } from "@tanstack/react-query";
 import axios from "axios";
-import Link from "next/link";
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
+import Link from "next/link";
 import { type ParsedUrlQuery } from "querystring";
 import { type ReactElement } from "react";
 import { IoMdArrowRoundBack } from "react-icons/io";
@@ -23,8 +23,8 @@ import { PageBackground } from "~/components/PageBackground";
 import { InternalServerError } from "~/components/Status/InternalServerError";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
-import { config } from "~/lib/react-query-config";
 import { OPPORTUNITY_QUERY_KEYS } from "~/hooks/useOpportunityMutations";
+import { config } from "~/lib/react-query-config";
 import type { NextPageWithLayout } from "~/pages/_app";
 import { type User, authOptions } from "~/server/auth";
 
@@ -65,12 +65,10 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
         context,
       );
 
-    await Promise.all([
-      queryClient.prefetchQuery({
-        queryKey: OPPORTUNITY_QUERY_KEYS.verificationStatus(opportunityId),
-        queryFn: () => dataVerificationStatus ?? null,
-      }),
-    ]);
+    await queryClient.prefetchQuery({
+      queryKey: OPPORTUNITY_QUERY_KEYS.verificationStatus(opportunityId),
+      queryFn: () => dataVerificationStatus ?? null,
+    });
 
     // 👇 perform viewed action (authenticated users only)
     if (session && dataOpportunityInfo.published)
@@ -123,7 +121,7 @@ const OpportunityDetails: NextPageWithLayout<{
                   href="/opportunities"
                   className="hover:text-gray inline text-white"
                 >
-                  <IoMdArrowRoundBack className="mr-1 mb-[2px] inline h-4 w-4" />
+                  <IoMdArrowRoundBack className="mr-1 mb-0.5 inline h-4 w-4" />
                   Opportunities
                 </Link>
               </li>
@@ -131,7 +129,7 @@ const OpportunityDetails: NextPageWithLayout<{
                 <p className="mx-2 inline font-semibold text-white">|</p>
               </li>
               <li className="inline">
-                <div className="inline max-w-[600px] text-white">
+                <div className="inline max-w-150 text-white">
                   {opportunityInfo.title}
                 </div>
               </li>
