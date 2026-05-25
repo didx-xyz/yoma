@@ -26,7 +26,7 @@ export const Footer: React.FC<{
             href="/terms"
             tabIndex={tabIndex}
           >
-            Terms and conditions
+            Terms of Service
           </Link>
           <Link
             className="notranslate text-green font-semibold hover:underline"

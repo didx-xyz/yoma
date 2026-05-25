@@ -1,327 +1,883 @@
 const TermsSection: React.FC = () => {
   return (
-    <div className="text-gray-dark flex flex-col gap-4 overflow-hidden">
-      <h1 className="mb-4 text-3xl font-bold text-black">Terms of Use</h1>
-      <p className="mb-4">
-        Thank you for your interest in Yoma, as hosted by RLabs. Yoma operates
-        the site located at https://yoma.africa/ and https://yoma.world/ (the
-        &quot;Website&quot;) and all related application programming interfaces
-        (APIs), mobile applications and any other products and services that you
-        may use to interact with us now or in the future (collectively, the
-        &quot;Services&quot;). When we talk about our &quot;Platform&quot; we
-        refer to all our websites, mobile sites, mobile apps, emails, or any
-        other technology or services we provide.
+    <div className="terms-content text-gray-dark flex flex-col gap-4 overflow-hidden">
+      <h1>Yoma Terms of Service</h1>
+      <p>
+        <strong className="text-black">Last Updated:</strong> October 2025
       </p>
-      <p className="mb-4">
-        The following Terms of Service are a legal contract between you and Yoma
-        regarding your use of the Platform and Services. Your registration
-        creates a contractual relationship between you and Yoma which enables
-        you to use the Yoma Marketplace and the related technology and services.
-        The technology and services include frameworks such as self-sovereign
-        identity (SSI) for data protection and ownership, as well as digital
-        tokens known as ZLTO, which are earned through challenges and used to
-        redeem rewards from the marketplace on Yoma. By registering, you accept
-        the following terms of use. This usage rights cannot be transferred to
-        another person. Users of the Services are referred to individually as
-        &quot;User&quot; and collectively as &quot;Users&quot;. Please read the
-        following terms of service carefully. By registering for, accessing,
-        browsing, or using the Platform, you acknowledge that you have read,
-        understood, and agree to be bound by the following terms and conditions,
-        including the Yoma Privacy Policy (collectively, the &quot;Terms&quot;).
+      <p>
+        Thank you for your interest in Yoma. These Terms of Service govern your
+        use of the Yoma platform, available at{" "}
+        <a
+          href="https://yoma.world/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-blue-600 underline"
+        >
+          https://yoma.world/
+        </a>{" "}
+        and{" "}
+        <a
+          href="https://yoma.africa/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-blue-600 underline"
+        >
+          https://yoma.africa/
+        </a>
+        , including all related APIs, mobile applications, and services
+        (collectively, the &quot;Platform&quot; or &quot;Services&quot;).
+      </p>
+      <p>
+        <strong className="text-black">
+          By registering for or using Yoma, you agree to these Terms.
+        </strong>{" "}
+        Please read them carefully.
       </p>
 
-      <h2 className="mb-2 text-lg font-bold text-black">Table of Contents:</h2>
-      <ol className="mb-4 list-inside list-decimal font-semibold">
-        <li>Subject of the Contract</li>
-        <li>Context</li>
-        <li>Target Groups and Eligibility</li>
-        <li>Costs</li>
-        <li>Access and Registration</li>
-        <li>Access to Opportunities</li>
-        <li>Use of the Information and Privacy</li>
-        <li>Roles and Permission</li>
-        <li>Platform Conduct and Responsibility</li>
-        <li>Update of terms &amp; conditions</li>
-        <li>Deletion of accounts and data</li>
+      <h2>Table of Contents</h2>
+      <ol className="list-inside list-decimal font-semibold">
+        <li>
+          <a href="#about-yoma" className="underline">
+            About Yoma
+          </a>
+        </li>
+        <li>
+          <a href="#who-can-use-yoma" className="underline">
+            Who Can Use Yoma
+          </a>
+        </li>
+        <li>
+          <a href="#registration-and-your-account" className="underline">
+            Registration and Your Account
+          </a>
+        </li>
+        <li>
+          <a href="#how-yoma-works" className="underline">
+            How Yoma Works
+          </a>
+        </li>
+        <li>
+          <a href="#your-rights-and-responsibilities" className="underline">
+            Your Rights and Responsibilities
+          </a>
+        </li>
+        <li>
+          <a href="#partner-roles-and-permissions" className="underline">
+            Partner Roles and Permissions
+          </a>
+        </li>
+        <li>
+          <a href="#privacy-and-data-protection" className="underline">
+            Privacy and Data Protection
+          </a>
+        </li>
+        <li>
+          <a
+            href="#platform-rules-and-prohibited-conduct"
+            className="underline"
+          >
+            Platform Rules and Prohibited Conduct
+          </a>
+        </li>
+        <li>
+          <a href="#intellectual-property" className="underline">
+            Intellectual Property
+          </a>
+        </li>
+        <li>
+          <a href="#disclaimers-and-limitations" className="underline">
+            Disclaimers and Limitations
+          </a>
+        </li>
+        <li>
+          <a href="#changes-to-these-terms" className="underline">
+            Changes to These Terms
+          </a>
+        </li>
+        <li>
+          <a href="#termination-and-account-deletion" className="underline">
+            Termination and Account Deletion
+          </a>
+        </li>
+        <li>
+          <a href="#contact-us" className="underline">
+            Contact Us
+          </a>
+        </li>
       </ol>
 
-      <h2 className="mb-2 text-lg font-bold text-black">
-        1. Subject of the Contract
-      </h2>
-      <p className="mb-4">
-        The subject of the contract is the access and use of the digital
-        platform &quot;Yoma&quot;. Access to its content is only possible for
-        registered users. The marketplace supports its users with on- and
-        offline opportunities for skills development, social impact and
-        employment. A digital CV is generated as users engage on the
-        marketplace. It also offers possibilities for exchange between
-        registered users in the Yoma community. Additionally, a user can gain
-        digital tokens, a quasi currency, which can be redeemed in selected
-        partner countries in real local marketplaces (e.g. for transport, data
-        bundles and airtime) and in the digital space to access other
-        opportunities (e.g. mentoring or more advanced and tutored courses with
-        limited intake).
+      {/* Section 1 */}
+      <h2 id="about-yoma">1. About Yoma</h2>
+      <p>
+        Yoma is a youth agency marketplace operated by RLabs, a non-profit
+        organization based in South Africa. We connect young people worldwide
+        with opportunities for skills development, impact work, and employment.
+      </p>
+      <p className="font-bold text-black">Our Mission:</p>
+      <p>
+        To create pathways from learning to earning by providing youth with
+        verified credentials (YoID), opportunity discovery, and digital rewards
+        (ZLTO tokens).
+      </p>
+      <p className="font-bold text-black">Our Partners:</p>
+      <p>
+        Yoma is supported by UNICEF, Generation Unlimited, and a global network
+        of opportunity providers, employers, training organizations, and impact
+        partners.
+      </p>
+      <p className="font-bold text-black">Our Commitment:</p>
+      <p>
+        Yoma is free to use for all youth and partners. We are funded by donors
+        and development partners to ensure no financial barriers prevent access
+        to opportunities.
       </p>
 
-      <h2 className="mb-2 text-lg font-bold text-black">2. Context</h2>
-      <p className="mb-4">
-        The platform Yoma is implemented by the non-governmental organisation
-        RLabs in South Africa. The platform is supported and sustained by a
-        broad partner network lead by UNICEF, Generation Unlimited, Goodwall and
-        the Deutsche Gesellschaft für Internationale Zusammenarbeit (GIZ) GmbH
-        on behalf of the Federal Ministry for Economic Cooperation and
-        Development (BMZ) and the European Commission (EC). Yoma is an open
-        ecosystem that thrives through its collaboration with both youth and
-        ecosystem partners. The opportunities provided on and via Yoma are
-        intended to support youth to build an alternative skills and trust
-        profile, which enhances employability and allows for more informed
-        matching with the labour market.
-      </p>
-
-      <h2 className="mb-2 text-lg font-bold text-black">
-        3. Target Groups and Eligibility
-      </h2>
-      <p className="mb-4">
-        The Yoma platform is open to everyone. It specifically addresses youth
-        (16+) across the world to build their futures by engaging in social
-        impact tasks and learning to earning opportunities. It also addresses
-        civil society, investors, employers and educational institutions who
-        wish to provide opportunities for youth via Yoma.
-      </p>
-      <p className="mb-4">
-        Please note: The platform is not available to persons under the age of
-        16 whose registration has not been approved by a legal parent or
-        guardian. By clicking the &quot;I Agree&quot; button or by otherwise
-        using or registering an account for the Services, you represent that
-      </p>
-      <ul className="mb-4 list-inside list-disc">
-        <li>you are at least 16years of age, or</li>
+      {/* Section 2 */}
+      <h2 id="who-can-use-yoma">2. Who Can Use Yoma</h2>
+      <p className="font-bold text-black">Age Requirements</p>
+      <p>Yoma is available to:</p>
+      <ul className="list-inside list-disc">
         <li>
-          are of legal age of consent to open an account and form legally
-          binding contracts under the laws of your country of residence, or
+          <strong className="text-black">Youth aged 16 and older</strong> who
+          can independently register and use the platform
         </li>
         <li>
-          your use of the Services has been approved by your parent or legal
-          guardian.
+          <strong className="text-black">Youth under 16</strong> with explicit
+          approval from a parent or legal guardian
+        </li>
+        <li>
+          <strong className="text-black">
+            Opportunity providers, employers, and organizations
+          </strong>{" "}
+          who wish to connect with youth
         </li>
       </ul>
-      <p className="mb-4">
-        If you are a parent or legal guardian of a user under the age of 18, you
-        agree to be fully responsible for the acts or omissions of such user in
-        connection with our Services. If you are a parent or guardian and you
-        discover that your child has created an unauthorised account on our
-        Services, please contact us at admin@yoma.africa and we will remove the
-        account.
+      <p className="font-bold text-black">Parental Consent</p>
+      <p>
+        If you are under 16, a parent or legal guardian must approve your
+        registration. By approving, your parent or guardian agrees to:
+      </p>
+      <ul className="list-inside list-disc">
+        <li>Be responsible for your activities on Yoma</li>
+        <li>Monitor your use of the platform</li>
+        <li>Accept these Terms on your behalf</li>
+      </ul>
+      <p>
+        If you are a parent or guardian and discover your child has created an
+        unauthorized account, please contact us at{" "}
+        <a href="mailto:admin@yoma.world" className="text-blue-600 underline">
+          admin@yoma.world
+        </a>{" "}
+        and we will remove it.
+      </p>
+      <p className="font-bold text-black">Regional Availability</p>
+      <p>
+        Yoma is accessible globally. Some opportunities may be restricted to
+        specific countries or regions based on partner requirements.
       </p>
 
-      <h2 className="mb-2 text-lg font-bold text-black">4. Costs</h2>
-      <p className="mb-4">This service of Yoma is provided free of charge.</p>
-
-      <h2 className="mb-2 text-lg font-bold text-black">
-        5. Access and Registration
+      {/* Section 3 */}
+      <h2 id="registration-and-your-account">
+        3. Registration and Your Account
       </h2>
-      <p className="mb-4">
-        To use the Yoma platform and to able to access opportunities on Yoma,
-        you must register for an account. The self-registration on the platform
-        will include your first name, last name, country of residence (where you
-        currently access Yoma from), country of birth, mobile number, date of
-        birth, gender and email address.
+      <p className="font-bold text-black">Creating Your Account</p>
+      <p>To use Yoma, you must register with:</p>
+      <ul className="list-inside list-disc">
+        <li>First and last name</li>
+        <li>Email address</li>
+        <li>Password</li>
+        <li>Country of residence</li>
+        <li>Country of birth</li>
+        <li>Date of birth</li>
+        <li>Gender</li>
+        <li>Mobile number (optional, for communications)</li>
+      </ul>
+      <p>All information must be accurate, current, and complete.</p>
+      <p className="font-bold text-black">Account Security</p>
+      <p>You are responsible for:</p>
+      <ul className="list-inside list-disc">
+        <li>Keeping your password confidential</li>
+        <li>All activities under your account</li>
+        <li>
+          Notifying us immediately at{" "}
+          <a href="mailto:admin@yoma.world" className="text-blue-600 underline">
+            admin@yoma.world
+          </a>{" "}
+          if you suspect unauthorized access
+        </li>
+      </ul>
+      <p className="font-bold text-black">Account Ownership</p>
+      <p>
+        Your Yoma account is personal and non-transferable. You cannot sell,
+        transfer, or share your account with others.
       </p>
-      <p className="mb-4">
-        You will also be asked to set up a password for your account. You are
-        responsible for maintaining your account and password confidential, and
-        you agree to accept responsibility for all activities that occur under
-        your account or password. You agree that the information you provide to
-        Yoma, whether at registration or at any other time, will be true,
-        accurate, current, and complete. You also agree that you will ensure
-        that this information is kept up-to-date at all times. If you have
-        reason to believe that your account is no longer secure (e.g., in the
-        event of a loss, theft, or unauthorised disclosure or use of your
-        account ID or password), then you agree to immediately notify
-        admin@yoma.africa.
-      </p>
-      <p className="mb-4">
-        By registering and accepting the corresponding checkbox, these Terms of
-        Use are accepted. The consent to the Terms of Use is necessary for the
-        completion of the self-registration and is also stored. Upon consent,
-        Yoma and all its functionalities and services can be accessed. While
-        specific offerings can be accessed outside of Yoma, the Digital CV and
-        the Digital Token are only accessible to registered users of Yoma.
-        Accounts without confirmation of the Terms of Use will be deleted.
+      <p className="font-bold text-black">Keeping Information Updated</p>
+      <p>
+        You must keep your profile information current. You can update your
+        details anytime through your account settings.
       </p>
 
-      <h2 className="mb-2 text-lg font-bold text-black">
-        6. Access to Opportunities
+      {/* Section 4 */}
+      <h2 id="how-yoma-works">4. How Yoma Works</h2>
+      <p className="font-bold text-black">Opportunities</p>
+      <p>
+        Yoma aggregates opportunities from partner organizations, including:
+      </p>
+      <ul className="list-inside list-disc">
+        <li>
+          <strong className="text-black">Learning opportunities:</strong>{" "}
+          Courses, training programs, certifications
+        </li>
+        <li>
+          <strong className="text-black">Impact opportunities:</strong>{" "}
+          Volunteer work, social projects, community tasks
+        </li>
+        <li>
+          <strong className="text-black">Employment opportunities:</strong>{" "}
+          Jobs, internships, apprenticeships, freelance work
+        </li>
+      </ul>
+      <p className="font-bold text-black">YoID (Your Verified Identity)</p>
+      <p>YoID is your digital credential wallet. It enables you to:</p>
+      <ul className="list-inside list-disc">
+        <li>Store verified credentials issued by partners</li>
+        <li>Prove your skills and achievements</li>
+        <li>Share your credentials with employers and organizations</li>
+        <li>Build a portable, verified portfolio</li>
+      </ul>
+      <p>
+        YoID is based on self-sovereign identity principles—you own and control
+        your credentials.
+      </p>
+      <p className="font-bold text-black">ZLTO (Digital Rewards)</p>
+      <p>ZLTO tokens are digital rewards you earn by:</p>
+      <ul className="list-inside list-disc">
+        <li>Completing opportunities</li>
+        <li>Finishing training programs</li>
+        <li>Participating in impact work</li>
+        <li>Engaging with the platform</li>
+      </ul>
+      <p>You can spend ZLTO on:</p>
+      <ul className="list-inside list-disc">
+        <li>Goods and services from marketplace vendors</li>
+        <li>Airtime and data bundles</li>
+        <li>Access to premium opportunities (where applicable)</li>
+      </ul>
+      <p>
+        ZLTO is sponsored by partners and funders—you never pay to earn ZLTO.
+      </p>
+      <p className="font-bold text-black">The Marketplace</p>
+      <p>
+        The Yoma marketplace connects you with vendors who accept ZLTO.
+        Available products and services vary by region.
+      </p>
+      <p className="font-bold text-black">Third-Party Platforms</p>
+      <p>
+        Many opportunities require additional steps on partner platforms. When
+        you apply for an opportunity:
+      </p>
+      <ol className="list-inside list-decimal">
+        <li>
+          Yoma pre-fills your application with verified YoID data (with your
+          permission)
+        </li>
+        <li>You may be redirected to the partner&apos;s platform</li>
+        <li>You complete the opportunity on the partner&apos;s platform</li>
+        <li>Upon completion, the partner issues a credential to your YoID</li>
+        <li>The credential appears in your Yoma portfolio</li>
+      </ol>
+      <p>
+        <strong className="text-black">Important:</strong> Each partner has
+        their own Terms of Service and Privacy Policy. You must review and
+        accept these before engaging with their opportunities.
+      </p>
+
+      {/* Section 5 */}
+      <h2 id="your-rights-and-responsibilities">
+        5. Your Rights and Responsibilities
       </h2>
-      <p className="mb-4">
-        There are different types of learning, earning and impact opportunities
-        provided on Yoma. These opportunities are generally offered by partner
-        institutions of Yoma via their own digital services. To access an
-        opportunity, an additional registration on the partner&apos;s platform
-        may be required. Consequently, the Yoma platform may include links to
-        third-party websites, plug-ins and applications. Clicking on those links
-        or enabling those connections may allow third parties to collect or
-        share data about you. We do not control these third-party websites and
-        are not responsible for their privacy statements. Please carefully read
-        the partners&apos; Privacy Policy and Terms of Conditions before
-        consenting and registering for an opportunity. When you leave our
-        website, we encourage you to read the privacy notice of every website
-        you visit. Yoma will not pass on any personal data without the express
-        consent of the users.
-      </p>
+      <p className="font-bold text-black">Your Rights</p>
+      <p>You have the right to:</p>
+      <ul className="list-inside list-disc">
+        <li>
+          <strong className="text-black">Own your data:</strong> Under
+          self-sovereign identity principles, you control your information
+        </li>
+        <li>
+          <strong className="text-black">Choose what to share:</strong> Decide
+          which credentials and data to share with partners
+        </li>
+        <li>
+          <strong className="text-black">Access your information:</strong> View
+          and download all your data at any time
+        </li>
+        <li>
+          <strong className="text-black">Delete your account:</strong> Request
+          deletion at any time (see Section 12)
+        </li>
+        <li>
+          <strong className="text-black">Portability:</strong> Export your
+          credentials for use on other platforms
+        </li>
+      </ul>
+      <p className="font-bold text-black">Your Responsibilities</p>
+      <p>You agree to:</p>
+      <ul className="list-inside list-disc">
+        <li>Provide accurate and truthful information</li>
+        <li>Use Yoma only for legitimate purposes</li>
+        <li>Respect other users and partners</li>
+        <li>Follow all applicable laws and regulations</li>
+        <li>Not misuse the platform or attempt to harm its operations</li>
+        <li>Keep your account secure</li>
+      </ul>
+      <p className="font-bold text-black">Data You Share</p>
+      <p>When you apply for an opportunity or connect with a partner:</p>
+      <ul className="list-inside list-disc">
+        <li>You choose which credentials to share</li>
+        <li>Partners receive only the information you authorize</li>
+        <li>
+          Your full profile is never visible to partners unless you consent
+        </li>
+        <li>You can revoke access to shared credentials at any time</li>
+      </ul>
 
-      <h2 className="mb-2 text-lg font-bold text-black">
-        7. Use of the Information and Privacy
+      {/* Section 6 */}
+      <h2 id="partner-roles-and-permissions">
+        6. Partner Roles and Permissions
       </h2>
-      <p className="mb-4">
-        Access to Yoma is only possible for registered users. To provide the
-        services of Yoma the user profile of atingi requires personal data.
-        Personal data will not be forwarded to third parties. As soon as users
-        start the registration process, all data provided or generated by virtue
-        of the registration process, is processed. Personal data is any
-        information that relates to an identified or identifiable living
-        individual (contrary to legal entities). Different pieces of
-        information, which collected together can lead to the identification of
-        a particular person, also constitute personal data. All personal data
-        fall under the strict provisions of the General Data Protection
-        Regulation. These provisions provide a strict framework for storing and
-        processing personal data and preventing the misuse, including
-        unauthorised access, unauthorised transfer of data to third parties or
-        any other unauthorised processing. For a detailed overview of which data
-        we are collecting and processing, the purposes for the collection and
-        ways in which we protect your personal data, please refer to our Privacy
-        Policy.
+      <p className="font-bold text-black">Youth (Primary Users)</p>
+      <p>As a youth user, you can:</p>
+      <ul className="list-inside list-disc">
+        <li>Browse and apply for opportunities</li>
+        <li>Earn and store verified credentials</li>
+        <li>Build and share your digital CV</li>
+        <li>Earn and spend ZLTO tokens</li>
+        <li>Connect with other youth (where enabled)</li>
+      </ul>
+      <p>
+        Partners cannot contact you unless you initiate engagement by applying
+        to their opportunities.
       </p>
-
-      <h2 className="mb-2 text-lg font-bold text-black">
-        8. Roles and Permission
-      </h2>
-      <p className="font-bold text-black">Yoma youth</p>
-      <p className="mb-4">
-        Yoma youth are the holders of their own data and are permitted to engage
-        across opportunities, challenges and impact tasks, as well as apply for
-        jobs found on Yoma. The Yoma Youth are able to build their own digital
-        CV, and share their CV with employers on the platform, in accordance
-        with self-determination. They are also able to earn and spend digital
-        currency on the marketplace.
+      <p className="font-bold text-black">Opportunity Providers</p>
+      <p>Opportunity providers can:</p>
+      <ul className="list-inside list-disc">
+        <li>List learning, impact, or employment opportunities</li>
+        <li>Review applications from youth who express interest</li>
+        <li>Issue verified credentials upon opportunity completion</li>
+        <li>
+          Access limited profile information (name, email) only after youth
+          apply
+        </li>
+      </ul>
+      <p>They cannot:</p>
+      <ul className="list-inside list-disc">
+        <li>Access youth data without consent</li>
+        <li>Initiate unsolicited contact with youth</li>
+        <li>View full profiles or credentials without authorization</li>
+      </ul>
+      <p className="font-bold text-black">Employers</p>
+      <p>Employers can:</p>
+      <ul className="list-inside list-disc">
+        <li>Post job and internship opportunities</li>
+        <li>Review applications from interested youth</li>
+        <li>Access shared credentials and CVs (with youth consent)</li>
+        <li>Connect with applicants through Yoma or their own systems</li>
+      </ul>
+      <p>They cannot:</p>
+      <ul className="list-inside list-disc">
+        <li>Contact youth who haven&apos;t applied</li>
+        <li>Access youth data without consent</li>
+        <li>
+          Require youth to leave the platform to apply (pre-filled applications
+          available)
+        </li>
+      </ul>
+      <p className="font-bold text-black">Marketplace Vendors</p>
+      <p>Vendors can:</p>
+      <ul className="list-inside list-disc">
+        <li>List products and services</li>
+        <li>Accept ZLTO as payment</li>
+        <li>Fulfill transactions with youth</li>
+      </ul>
+      <p>
+        They receive transaction information only as needed to complete
+        purchases.
       </p>
-
-      <p className="font-bold text-black">Opportunity Provider (OP)</p>
-      <p className="mb-4">
-        OPs provide challenges, courses, and tasks for Yoma Youth to engage
-        with. They are also responsible for issuing verified credentials to the
-        Yoma Youth on successful completion of the challenge, course, or task.
-        OPs are not able to initiate contact with Yoma Youth, however once a
-        Yoma Youth has applied to take part in a challenge, course or impact
-        opportunity, the OP is able to connect with them on their own
-        website/platform. OPs do not have access to any youth data unless the
-        youth actively initiate a connection with the OP in the form of taking
-        part in a challenge. At this point, the OP will be able to view the
-        youth member&apos;s name, surname, and email address.
-      </p>
-
-      <p className="font-bold text-black">Employment Provider (EP)</p>
-      <p className="mb-4">
-        Much like OPs, EPs are not able to initiate a connection with Yoma
-        Youth. Rather, the EP lists an employment opportunity for Yoma Youth to
-        browse, and only once the Yoma Youth has shown interest and would like
-        to form a connection to share their CV, is the EP able to communicate
-        with the Yoma Youth. Like the OPs, once the connection is formed between
-        the EP and Yoma Youth, the relationship will be managed off the Yoma
-        portal, and between the Yoma Youth and EP.
-      </p>
-
       <p className="font-bold text-black">Yoma Technical Team</p>
-      <p className="mb-4">
-        This is the design and development team responsible with building and
-        maintaining the platform. Only members of this team have access to the
-        various databases and user information that is not encrypted. Access to
-        the database is done strictly under the request of the Product Owner and
-        is limited to the fields specifically needed. This is often done when
-        there is a user that is unable to access certain elements or features of
-        Yoma, and the technical team is required to troubleshoot against a
-        specific username and criteria.
+      <p>Our development and support team can:</p>
+      <ul className="list-inside list-disc">
+        <li>Access databases for troubleshooting and platform maintenance</li>
+        <li>View user activity logs to resolve technical issues</li>
+        <li>Investigate reports of misuse or policy violations</li>
+      </ul>
+      <p>Access is strictly limited to:</p>
+      <ul className="list-inside list-disc">
+        <li>Authorized personnel only</li>
+        <li>Specific data fields required for the task</li>
+        <li>Logged and audited activities</li>
+        <li>Requests approved by the Product Owner</li>
+      </ul>
+
+      {/* Section 7 */}
+      <h2 id="privacy-and-data-protection">7. Privacy and Data Protection</h2>
+      <p className="font-bold text-black">Our Commitment</p>
+      <p>Yoma operates on three privacy principles:</p>
+      <ol className="list-inside list-decimal">
+        <li>
+          <strong className="text-black">Self-Sovereign Identity:</strong> You
+          own and control your data
+        </li>
+        <li>
+          <strong className="text-black">Data Portability:</strong> Your
+          credentials work beyond Yoma
+        </li>
+        <li>
+          <strong className="text-black">Data Minimization:</strong> We collect
+          only what&apos;s necessary
+        </li>
+      </ol>
+      <p className="font-bold text-black">What We Collect</p>
+      <p>
+        We collect information you provide during registration and platform use:
+      </p>
+      <ul className="list-inside list-disc">
+        <li>Profile information (name, email, location, demographics)</li>
+        <li>Opportunity applications and completions</li>
+        <li>Credentials and achievements</li>
+        <li>ZLTO transactions</li>
+        <li>Platform activity and interactions</li>
+        <li>Technical data (device type, IP address, browser information)</li>
+      </ul>
+      <p className="font-bold text-black">How We Use Your Data</p>
+      <p>We use your information to:</p>
+      <ul className="list-inside list-disc">
+        <li>Provide platform services</li>
+        <li>Match you with relevant opportunities</li>
+        <li>Issue and verify credentials</li>
+        <li>Process ZLTO transactions</li>
+        <li>Improve the platform</li>
+        <li>Communicate important updates</li>
+        <li>Generate anonymized analytics for partners and funders</li>
+      </ul>
+      <p className="font-bold text-black">Data Sharing</p>
+      <p>We share data only when necessary and with your consent:</p>
+      <ul className="list-inside list-disc">
+        <li>
+          <strong className="text-black">With partners:</strong> Only when you
+          apply to their opportunities, and only the information you authorize
+        </li>
+        <li>
+          <strong className="text-black">With funders:</strong> Anonymized,
+          aggregated data for impact reporting (no personal information)
+        </li>
+        <li>
+          <strong className="text-black">With vendors:</strong> Transaction
+          information for marketplace purchases
+        </li>
+        <li>
+          <strong className="text-black">With analytics providers:</strong>{" "}
+          Anonymized usage data to improve services
+        </li>
+        <li>
+          <strong className="text-black">As required by law:</strong> If legally
+          obligated to disclose information
+        </li>
+      </ul>
+      <p>We never sell your personal data to third parties.</p>
+      <p className="font-bold text-black">Data Storage</p>
+      <p>
+        Your data is stored securely on servers in the United Kingdom, compliant
+        with GDPR and UK data protection laws.
+      </p>
+      <p className="font-bold text-black">Data Retention</p>
+      <p>We retain your data for:</p>
+      <ul className="list-inside list-disc">
+        <li>
+          <strong className="text-black">Active accounts:</strong> Duration of
+          account existence plus 12 months after last activity
+        </li>
+        <li>
+          <strong className="text-black">Deleted accounts:</strong> 30 days for
+          recovery, then permanently deleted
+        </li>
+        <li>
+          <strong className="text-black">Legal requirements:</strong> Longer if
+          required by law
+        </li>
+      </ul>
+      <p className="font-bold text-black">Your Privacy Rights</p>
+      <p>
+        Under GDPR and applicable data protection laws, you have the right to:
+      </p>
+      <ul className="list-inside list-disc">
+        <li>Access your personal data</li>
+        <li>Correct inaccurate information</li>
+        <li>Delete your data (&quot;right to be forgotten&quot;)</li>
+        <li>Restrict processing</li>
+        <li>Data portability</li>
+        <li>Object to processing</li>
+        <li>Withdraw consent at any time</li>
+      </ul>
+      <p>
+        To exercise these rights, contact{" "}
+        <a href="mailto:admin@yoma.world" className="text-blue-600 underline">
+          admin@yoma.world
+        </a>
+        . For full details, see our Privacy Policy.
       </p>
 
-      <h2 className="mb-2 text-lg font-bold text-black">
-        9. Platform Conduct and Responsibility
+      {/* Section 8 */}
+      <h2 id="platform-rules-and-prohibited-conduct">
+        8. Platform Rules and Prohibited Conduct
       </h2>
-      <p className="mb-4">
-        It is prohibited to disclose, share or sell any personal data of other
-        users to third parties without explicit prior consent of the user. By
-        agreeing to this contract, users consent to keep the personal data of
-        other users confidential. Users also consent to follow all legal
-        provisions and especially the regulations for data protection.
+      <p className="font-bold text-black">Acceptable Use</p>
+      <p>Yoma must be used only for:</p>
+      <ul className="list-inside list-disc">
+        <li>Skills development</li>
+        <li>Employment seeking</li>
+        <li>Impact work</li>
+        <li>Legitimate educational purposes</li>
+      </ul>
+      <p className="font-bold text-black">Prohibited Activities</p>
+      <p>You may not:</p>
+      <p className="font-semibold text-black">General Prohibitions:</p>
+      <ul className="list-inside list-disc">
+        <li>
+          Use Yoma for commercial, political, or religious promotion unrelated
+          to opportunities
+        </li>
+        <li>Impersonate others or create fake accounts</li>
+        <li>Share false or misleading information</li>
+        <li>Harass, threaten, or abuse other users</li>
+        <li>Attempt to gain unauthorized access to systems or accounts</li>
+      </ul>
+      <p className="font-semibold text-black">Content Prohibitions:</p>
+      <ul className="list-inside list-disc">
+        <li>Post illegal, harmful, or offensive content</li>
+        <li>Share content that is racist, violent, abusive, or pornographic</li>
+        <li>Upload copyrighted material without permission</li>
+        <li>Distribute malware, viruses, or malicious code</li>
+        <li>Spam or send unsolicited messages</li>
+      </ul>
+      <p className="font-semibold text-black">Data Prohibitions:</p>
+      <ul className="list-inside list-disc">
+        <li>Share other users&apos; personal information without consent</li>
+        <li>Scrape or harvest data from the platform</li>
+        <li>Use automated systems (bots) without authorization</li>
+        <li>Attempt to reverse-engineer platform technology</li>
+      </ul>
+      <p className="font-semibold text-black">ZLTO Misuse:</p>
+      <ul className="list-inside list-disc">
+        <li>Fraud or manipulation of the rewards system</li>
+        <li>Selling or trading ZLTO outside authorized channels</li>
+        <li>Creating multiple accounts to exploit rewards</li>
+      </ul>
+      <p className="font-bold text-black">Reporting Violations</p>
+      <p>
+        If you encounter prohibited conduct, report it to{" "}
+        <a href="mailto:admin@yoma.world" className="text-blue-600 underline">
+          admin@yoma.world
+        </a>{" "}
+        or use the in-platform reporting tools.
       </p>
-      <p className="mb-4">
-        Yoma reserves the right to terminate, cancel or postpone an opportunity
-        offered via Yoma at any time as well as modifying the modality and
-        content of the opportunity. Additionally, Yoma reserves the right to
-        terminate the digital services of the Yoma platform given a prior
-        notification to the users of the platform.
+      <p className="font-bold text-black">Consequences</p>
+      <p>Violations may result in:</p>
+      <ul className="list-inside list-disc">
+        <li>Warning and required corrective action</li>
+        <li>Temporary suspension</li>
+        <li>Permanent account termination</li>
+        <li>Referral to law enforcement (for illegal activities)</li>
+        <li>Legal action for damages</li>
+      </ul>
+
+      {/* Section 9 */}
+      <h2 id="intellectual-property">9. Intellectual Property</h2>
+      <p className="font-bold text-black">Yoma Content</p>
+      <p>
+        All content on Yoma—including text, graphics, logos, software, and
+        design—is owned by RLabs or licensed to us. You may not:
       </p>
-      <p className="mb-4">
-        The Yoma platform as well as all offered services, opportunities and
-        content may only be used for skills development and employment purposes
-        without any commercial, private, religious or political use. Content
-        underlying the Creative Commons license is excluded from this provision.
-        It is prohibited to post any content, files or data that violate
-        legislations. This particularly applies to racist, violence-promoting,
-        abusive and pornographic content or any other content that violates
-        existing legislations.
+      <ul className="list-inside list-disc">
+        <li>Copy, modify, or distribute our content without permission</li>
+        <li>Use our trademarks or branding without authorization</li>
+        <li>Reverse-engineer our platform or technology</li>
+      </ul>
+      <p className="font-bold text-black">User Content</p>
+      <p>
+        When you post content on Yoma (such as profile information, comments, or
+        submissions), you:
       </p>
-      <p className="mb-4">
-        The use of the platform for the provision or exchange of copyrighted
-        content, such as images, audio or video material, is prohibited.
-        Furthermore, any links to external websites with illegal content are
-        prohibited. In principle, any use of published material protected by
-        copyright requires the permission of the respective copyright holder. If
-        a user disregards the rights of third parties within the scope of the
-        use of the Yoma platform, he must fulfil the injunctive relief or claims
-        for damages asserted by these third parties. Any user who uploads,
-        transfers or otherwise uses third party materials or materials on the
-        platform Yoma ensures that such material is either free of rights of
-        third parties or that the use is approved accordingly or otherwise
-        permissible.
+      <ul className="list-inside list-disc">
+        <li>Retain ownership of your content</li>
+        <li>
+          Grant Yoma a license to use, display, and distribute your content as
+          necessary to provide services
+        </li>
+        <li>Confirm you have the right to post the content</li>
+        <li>Agree your content complies with these Terms</li>
+      </ul>
+      <p className="font-bold text-black">Partner Content</p>
+      <p>
+        Opportunities and content from partners remain their property. Partners
+        grant Yoma permission to display their opportunities on the platform.
       </p>
-      <p className="mb-4">
-        Users undertake to be liable for damages caused by them, indemnify Yoma
-        against all claims arising from the infringement of the rights of third
-        parties and reimburse Yoma for all costs incurred in this context for
-        legal defense measures or due to sanctions imposed by state authorities.
-        As soon as users culpably breach legal obligations and provisions
-        enshrined in laws or in these terms of use, they shall be liable in
-        accordance with the generally applicable statutory provisions.
+      <p className="font-bold text-black">Credentials</p>
+      <p>
+        Credentials issued through YoID are cryptographically signed by the
+        issuing organization. Yoma provides the infrastructure but does not
+        claim ownership of credential content.
       </p>
-      <p className="mb-4">
-        Yoma reserves the right to exclude users from access to the platform in
-        the event of serious violations of the terms of use stated here. In this
-        case, the contract with users will be terminated and they will not be
-        able to conclude a new contract for a period of 5 years.
+      <p className="font-bold text-black">Open Source</p>
+      <p>
+        Some components of Yoma use open-source licenses. Those components are
+        governed by their respective licenses (e.g., Creative Commons, MIT,
+        Apache).
       </p>
 
-      <h2 className="mb-2 text-lg font-bold text-black">
-        10. Update of terms &amp; conditions
-      </h2>
-      <p className="mb-4">
-        The users will be informed about updates of the terms and conditions via
-        a notification in the Yoma platform.
+      {/* Section 10 */}
+      <h2 id="disclaimers-and-limitations">10. Disclaimers and Limitations</h2>
+      <p className="font-bold text-black">Service &quot;As Is&quot;</p>
+      <p>
+        Yoma is provided &quot;as is&quot; and &quot;as available.&quot; We do
+        not guarantee:
+      </p>
+      <ul className="list-inside list-disc">
+        <li>Uninterrupted or error-free service</li>
+        <li>Specific outcomes from using the platform</li>
+        <li>That all opportunities will lead to employment</li>
+        <li>Accuracy or reliability of third-party content</li>
+      </ul>
+      <p className="font-bold text-black">No Warranties</p>
+      <p>
+        To the fullest extent permitted by law, we disclaim all warranties,
+        express or implied, including:
+      </p>
+      <ul className="list-inside list-disc">
+        <li>Merchantability</li>
+        <li>Fitness for a particular purpose</li>
+        <li>Non-infringement</li>
+      </ul>
+      <p className="font-bold text-black">Partner Responsibility</p>
+      <p>
+        Yoma is a marketplace connecting youth and opportunity providers. We are
+        not responsible for:
+      </p>
+      <ul className="list-inside list-disc">
+        <li>The quality, accuracy, or legality of partner opportunities</li>
+        <li>Partner fulfillment of promises or commitments</li>
+        <li>Employment outcomes or credential recognition</li>
+        <li>Disputes between youth and partners</li>
+      </ul>
+      <p>
+        Always review partner terms and verify opportunity legitimacy before
+        engaging.
+      </p>
+      <p className="font-bold text-black">Limitation of Liability</p>
+      <p>To the maximum extent permitted by law:</p>
+      <ul className="list-inside list-disc">
+        <li>
+          Yoma and RLabs are not liable for any indirect, incidental,
+          consequential, or punitive damages
+        </li>
+        <li>
+          Our total liability to you for any claims will not exceed the amount
+          you paid to use Yoma (which is zero, as the platform is free)
+        </li>
+      </ul>
+      <p>
+        This limitation applies to claims based on contract, tort, negligence,
+        strict liability, or any other legal theory.
+      </p>
+      <p className="font-bold text-black">Indemnification</p>
+      <p>
+        You agree to indemnify and hold harmless Yoma, RLabs, and our partners
+        from any claims, damages, or expenses (including legal fees) arising
+        from:
+      </p>
+      <ul className="list-inside list-disc">
+        <li>Your use of the platform</li>
+        <li>Your violation of these Terms</li>
+        <li>Your infringement of others&apos; rights</li>
+        <li>Content you post or share</li>
+      </ul>
+
+      {/* Section 11 */}
+      <h2 id="changes-to-these-terms">11. Changes to These Terms</h2>
+      <p className="font-bold text-black">Updates</p>
+      <p>We may update these Terms to reflect:</p>
+      <ul className="list-inside list-disc">
+        <li>Changes in our services</li>
+        <li>New features or functionality</li>
+        <li>Legal or regulatory requirements</li>
+        <li>Platform policy updates</li>
+      </ul>
+      <p className="font-bold text-black">Notification</p>
+      <p>When we update these Terms, we will:</p>
+      <ul className="list-inside list-disc">
+        <li>Post the new version on the platform</li>
+        <li>Update the &quot;Last Updated&quot; date</li>
+        <li>
+          Notify you through email or in-platform notification (for material
+          changes)
+        </li>
+      </ul>
+      <p className="font-bold text-black">Continued Use</p>
+      <p>
+        Your continued use of Yoma after changes take effect means you accept
+        the updated Terms. If you disagree with changes, you must stop using the
+        platform and may delete your account.
       </p>
 
-      <h2 className="mb-2 text-lg font-bold text-black">
-        11. Deletion of accounts and data
+      {/* Section 12 */}
+      <h2 id="termination-and-account-deletion">
+        12. Termination and Account Deletion
       </h2>
-      <p className="mb-4">
-        Users can terminate their access to the platform at any time by sending
-        a deletion request to the administrator of Yoma. Upon account deletion,
-        the contract with Yoma also terminates. Furthermore, after 13 months of
-        inactivity, users will be sent a notification. If the users remain
-        inactive for an additional period of 6 months after the first
-        notification, the account and the contract will be terminated
-        automatically. By ending the contractual relationship, the account of
-        the user will be deleted and the user cannot access the Yoma platform
-        anymore.
+      <p className="font-bold text-black">Your Right to Leave</p>
+      <p>You can delete your account at any time by:</p>
+      <ul className="list-inside list-disc">
+        <li>Using the account deletion feature in your settings, or</li>
+        <li>
+          Emailing{" "}
+          <a href="mailto:admin@yoma.world" className="text-blue-600 underline">
+            admin@yoma.world
+          </a>{" "}
+          with your deletion request
+        </li>
+      </ul>
+      <p>Upon deletion:</p>
+      <ul className="list-inside list-disc">
+        <li>Your account access is immediately revoked</li>
+        <li>Your profile and personal data are deleted within 30 days</li>
+        <li>
+          Credentials stored in your YoID wallet remain under your control
+          (self-sovereign)
+        </li>
+        <li>Some data may be retained in anonymized form for analytics</li>
+        <li>ZLTO balances are forfeited (non-transferable)</li>
+      </ul>
+      <p className="font-bold text-black">Inactive Accounts</p>
+      <p>To maintain platform security and data minimization:</p>
+      <ul className="list-inside list-disc">
+        <li>
+          After <strong className="text-black">13 months of inactivity</strong>,
+          we send a notification
+        </li>
+        <li>
+          After <strong className="text-black">6 additional months</strong> (19
+          months total inactivity), your account is automatically deleted
+        </li>
+        <li>You can prevent deletion by logging in at any time</li>
+      </ul>
+      <p className="font-bold text-black">Termination by Yoma</p>
+      <p>We reserve the right to suspend or terminate accounts for:</p>
+      <ul className="list-inside list-disc">
+        <li>Serious violations of these Terms</li>
+        <li>Fraudulent or illegal activity</li>
+        <li>Harm to other users or the platform</li>
+        <li>Court orders or legal requirements</li>
+      </ul>
+      <p>If we terminate your account for violations:</p>
+      <ul className="list-inside list-disc">
+        <li>
+          You may not create a new account for{" "}
+          <strong className="text-black">5 years</strong>
+        </li>
+        <li>Your data will be deleted per our standard process</li>
+        <li>Outstanding ZLTO balances are forfeited</li>
+        <li>Legal action may be pursued if warranted</li>
+      </ul>
+
+      {/* Section 13 */}
+      <h2 id="contact-us">13. Contact Us</h2>
+      <p className="font-bold text-black">Questions or Concerns</p>
+      <p>
+        If you have questions about these Terms or the platform, contact us:
       </p>
+      <p>
+        <strong className="text-black">Email:</strong>{" "}
+        <a href="mailto:admin@yoma.world" className="text-blue-600 underline">
+          admin@yoma.world
+        </a>
+        <br />
+        <strong className="text-black">Support:</strong>{" "}
+        <a href="mailto:help@yoma.world" className="text-blue-600 underline">
+          help@yoma.world
+        </a>
+      </p>
+      <p>
+        <strong className="text-black">RLabs (Yoma Data Controller)</strong>
+        <br />
+        54 Kiewiet Road, Bridgetown
+        <br />
+        Athlone 7764, Cape Town
+        <br />
+        Western Cape, South Africa
+      </p>
+      <p>
+        <strong className="text-black">Privacy Compliance Officer:</strong>{" "}
+        Desme Jacobs (
+        {
+          <a href="mailto:admin@yoma.world" className="text-blue-600 underline">
+            admin@yoma.world
+          </a>
+        }
+        )
+      </p>
+      <p className="font-bold text-black">Complaints</p>
+      <p>If we cannot resolve your concern, you may file a complaint with:</p>
+      <p>
+        <strong className="text-black">
+          Information Commissioner&apos;s Office (ICO)
+        </strong>
+        <br />
+        Wycliffe House, Water Lane
+        <br />
+        Wilmslow, Cheshire, SK9 5AF
+        <br />
+        England, United Kingdom
+        <br />
+        <strong className="text-black">Tel:</strong> +44 303 123 1113
+        <br />
+        <strong className="text-black">Email:</strong>{" "}
+        <a
+          href="mailto:dataprotectionfee@ico.org.uk"
+          className="text-blue-600 underline"
+        >
+          dataprotectionfee@ico.org.uk
+        </a>
+        <br />
+        <strong className="text-black">Web:</strong>{" "}
+        <a
+          href="https://ico.org.uk/global/contact-us/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-blue-600 underline"
+        >
+          https://ico.org.uk/global/contact-us/
+        </a>
+      </p>
+
+      <h2>Governing Law</h2>
+      <p>
+        These Terms are governed by the laws of South Africa. Any disputes will
+        be resolved in the courts of South Africa, except where your local laws
+        provide you with additional protections.
+      </p>
+
+      <h2>Acknowledgment</h2>
+      <p>
+        By clicking &quot;I Agree,&quot; registering for, or using Yoma, you
+        acknowledge that you have read, understood, and agree to be bound by
+        these Terms of Service and our Privacy Policy.
+      </p>
+      <p>
+        <strong className="text-black">
+          Thank you for being part of the Yoma community. Together, we&apos;re
+          building pathways from learning to earning for youth worldwide.
+        </strong>
+      </p>
+      <p className="text-sm">&copy; 2025 Yoma. All Rights Reserved.</p>
     </div>
   );
 };
