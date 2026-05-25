@@ -12,7 +12,7 @@ import iconSuccess from "public/images/icon-success.png";
 import iconTopics from "public/images/icon-topics.svg";
 import iconUpload from "public/images/icon-upload.svg";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { FaExclamationTriangle } from "react-icons/fa";
+import { FaExclamationTriangle, FaInfoCircle } from "react-icons/fa";
 import { FcKey } from "react-icons/fc";
 import {
   IoMdBookmark,
@@ -44,13 +44,13 @@ import { InternalServerError } from "~/components/Status/InternalServerError";
 import { Loading } from "~/components/Status/Loading";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
+import { OPPORTUNITY_QUERY_KEYS } from "~/hooks/useOpportunityMutations";
+import analytics from "~/lib/analytics";
 import {
   DATE_FORMAT_HUMAN,
   OPPORTUNITY_TYPE_NANE_JOB,
   SETTING_USER_POPUP_LEAVINGYOMA,
 } from "~/lib/constants";
-import analytics from "~/lib/analytics";
-import { OPPORTUNITY_QUERY_KEYS } from "~/hooks/useOpportunityMutations";
 import { userProfileAtom } from "~/lib/store";
 import { type User } from "~/server/auth";
 import CustomModal from "../Common/CustomModal";
@@ -193,21 +193,42 @@ const OpportunityPublicDetails: React.FC<{
     }
   }, [opportunityInfo.id, opportunityInfo.title, user, isOppSaved]);
 
+  // URL resolution for "Proceed":
+  // - calls PUT navigateExternalLink; if the API returns a partner URL
+  //   (pull-synced opportunities, e.g. Jobberman/Alison), redirects there.
+  // - Otherwise (unauthenticated, API error, or non-synced): falls back to opportunityInfo.url.
   const onProceedToOpportunity = useCallback(async () => {
     if (!opportunityInfo.url) return;
 
-    window.open(opportunityInfo.url, "_blank");
+    // Open a blank tab immediately from the user-click handler to avoid popup blockers.
+    // The tab will be navigated to the resolved URL once the API responds.
+    const win = window.open("", "_blank");
 
-    // record action if user is logged in
+    let redirectUrl = opportunityInfo.url;
+
     if (user) {
-      await performActionNavigateExternalLink(opportunityInfo.id);
+      try {
+        const result = await performActionNavigateExternalLink(
+          opportunityInfo.id,
+        );
+        const partnerUrl = result?.syncedInfo?.partners?.[0]?.url;
+        if (partnerUrl) redirectUrl = partnerUrl;
+      } catch {
+        // fall back to opportunityInfo.url on error
+      }
+    }
+
+    if (win) {
+      win.location.href = redirectUrl;
+    } else {
+      window.open(redirectUrl, "_blank");
     }
 
     // 📊 ANALYTICS: track external link navigation
     analytics.opportunity.externalLinkClicked(
       opportunityInfo.id,
       opportunityInfo.title,
-      opportunityInfo.url,
+      redirectUrl,
     );
   }, [opportunityInfo.id, opportunityInfo.url, opportunityInfo.title, user]);
 
@@ -383,7 +404,7 @@ const OpportunityPublicDetails: React.FC<{
             onRequestClose={() => {
               setGotoOpportunityDialogVisible(false);
             }}
-            className={`md:max-h-[500px] md:w-[600px]`}
+            className={`md:max-h-[550px] md:w-[600px]`}
           >
             <div className="flex h-full flex-col gap-2 overflow-y-auto">
               <div className="bg-green flex flex-row p-4 shadow-lg">
@@ -399,77 +420,71 @@ const OpportunityPublicDetails: React.FC<{
                 </button>
               </div>
               <div className="flex flex-col items-center justify-center gap-4 p-4 md:p-0">
-                <div className="border-green-dark -mt-11 flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-full bg-white shadow-lg">
+                <div className="border-green-dark -mt-11 flex h-18 w-18 items-center justify-center rounded-full bg-white shadow-lg">
                   <FaExclamationTriangle className="text-yellow h-8 w-8" />
                 </div>
 
                 <div className="space-y-4 px-8 text-center">
                   <div className="font-semibold">You are now leaving Yoma!</div>
 
-                  <div className="bg-gray mt-4 rounded-lg p-4 text-center">
-                    Remember to{" "}
-                    <strong>upload your completion certificate</strong> on this
-                    page upon finishing to earn your achievement
-                    {opportunityInfo?.type !== OPPORTUNITY_TYPE_NANE_JOB &&
-                      (opportunityInfo.zltoRewardEstimate ?? 0) > 0 && (
-                        <>
-                          {" "}
-                          &amp;{" "}
-                          <strong>
-                            {opportunityInfo.zltoRewardEstimate} ZLTO
-                          </strong>
-                        </>
-                      )}
-                    .
+                  <div className="bg-gray mt-2 flex items-start gap-2 rounded-lg p-3 text-left text-sm">
+                    <FaInfoCircle className="text-blue mt-0.5 h-4 w-4 shrink-0" />
+                    <span>
+                      You&apos;ll be redirected to{" "}
+                      <strong>{opportunityInfo.organizationName}</strong> to
+                      continue this opportunity. Your enrolment and completion
+                      may happen on their platform, and Yoma will sync your
+                      completion where supported.
+                    </span>
                   </div>
 
-                  <div className="text-center">
-                    Be mindful of external sites&apos; privacy policy and keep
-                    your data private.
+                  <div className="mt-2 flex items-start gap-2 rounded-lg border border-yellow-200 bg-yellow-50 p-3 text-left text-sm">
+                    <FaExclamationTriangle className="text-yellow mt-0.5 h-4 w-4 shrink-0" />
+                    <span>
+                      Remember to{" "}
+                      <strong>upload your completion certificate</strong> on
+                      this page upon finishing to earn your achievement
+                      {opportunityInfo?.type !== OPPORTUNITY_TYPE_NANE_JOB &&
+                        (opportunityInfo.zltoRewardEstimate ?? 0) > 0 && (
+                          <>
+                            {" "}
+                            &amp;{" "}
+                            <strong>
+                              {opportunityInfo.zltoRewardEstimate} ZLTO
+                            </strong>
+                          </>
+                        )}
+                      .
+                    </span>
                   </div>
 
-                  {user && (
-                    <div className="text-gray-dark italic">
-                      <FormCheckbox
-                        id="dontShowAgain"
-                        label="Do not show this message again"
-                        inputProps={{
-                          onChange: (e) => {
-                            onUpdateLeavingYomaSetting(e.target.checked).then(
-                              () => null,
-                            );
-                          },
-                        }}
-                      />
-                    </div>
-                  )}
+                  <div className="mt-2 flex items-start gap-2 rounded-lg border border-yellow-200 bg-yellow-50 p-3 text-left text-sm">
+                    <FaExclamationTriangle className="text-yellow mt-0.5 h-4 w-4 shrink-0" />
+                    <span>
+                      Be mindful of external sites&apos; privacy policy and keep
+                      your data private.
+                    </span>
+                  </div>
+
+                  <div className="text-gray-dark italic">
+                    <FormCheckbox
+                      id="dontShowAgain"
+                      label="Do not show this message again"
+                      inputProps={{
+                        onChange: (e) => {
+                          onUpdateLeavingYomaSetting(e.target.checked).then(
+                            () => null,
+                          );
+                        },
+                      }}
+                    />
+                  </div>
                 </div>
 
-                <div className="mt-6 flex w-full grow flex-col justify-center gap-4 md:flex-row">
-                  {user && (
-                    <button
-                      type="button"
-                      className={
-                        "btn border-purple text-purple btn-outline hover:text-purple rounded-full bg-white normal-case md:w-[250px]" +
-                        `${
-                          isOppSaved
-                            ? " bg-yellow-light text-yellow hover:bg-yellow-light hover:text-yellow border-none"
-                            : ""
-                        }`
-                      }
-                      onClick={onUpdateSavedOpportunity}
-                    >
-                      <IoMdBookmark style={{ width: "20px", height: "20px" }} />
-
-                      <span className="ml-1">
-                        {isOppSaved ? "Opportunty saved" : "Save opportunity"}
-                      </span>
-                    </button>
-                  )}
-
+                <div className="my-3 flex w-full grow flex-col justify-center gap-4 px-4 md:flex-row">
                   <button
                     type="button"
-                    className="btn btn-primary text-white normal-case md:w-[250px]"
+                    className="btn btn-primary hover:bg-purple order-first text-white normal-case hover:brightness-110 md:order-last md:flex-1"
                     onClick={onProceedToOpportunity}
                     disabled={!opportunityInfo.url}
                   >
@@ -481,8 +496,35 @@ const OpportunityPublicDetails: React.FC<{
                       sizes="100vw"
                       priority={true}
                     />
-
                     <span className="ml-1">Proceed</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    className={
+                      "btn border-purple text-purple btn-outline hover:bg-purple rounded-full bg-white normal-case hover:border-transparent hover:text-white md:flex-1" +
+                      `${
+                        isOppSaved
+                          ? " bg-yellow-light text-yellow hover:bg-yellow-light hover:text-yellow border-none"
+                          : ""
+                      }`
+                    }
+                    onClick={onUpdateSavedOpportunity}
+                  >
+                    <IoMdBookmark size="20" />
+
+                    <span className="ml-1">
+                      {isOppSaved ? "Opportunty saved" : "Save opportunity"}
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    className="btn border-purple text-purple hover:bg-purple order-last rounded-full bg-white normal-case hover:border-transparent hover:text-white md:order-first md:flex-1"
+                    onClick={() => setGotoOpportunityDialogVisible(false)}
+                  >
+                    <IoMdClose size="20"></IoMdClose>
+                    Close
                   </button>
                 </div>
               </div>

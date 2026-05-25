@@ -11,6 +11,7 @@ import type {
   MyOpportunitySearchFilterAdmin,
   MyOpportunitySearchFilterVerificationFiles,
   MyOpportunitySearchResults,
+  NavigateExternalLinkResult,
   VerificationStatus,
 } from "../models/myOpportunity";
 import { objectToFormData } from "~/lib/utils";
@@ -206,11 +207,12 @@ export const getMyOpportunitiesExportToCSV = async (
 export const performActionNavigateExternalLink = async (
   opportunityId: string,
   context?: GetServerSidePropsContext,
-): Promise<any> => {
+): Promise<NavigateExternalLinkResult | null> => {
   const instance = context ? ApiServer(context) : await ApiClient;
-  await instance.put(
+  const { data } = await instance.put<NavigateExternalLinkResult>(
     `/myopportunity/action/${opportunityId}/navigateExternalLink`,
   );
+  return data ?? null;
 };
 
 export const downloadVerificationFiles = async (

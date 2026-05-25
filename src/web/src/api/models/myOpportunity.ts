@@ -170,3 +170,17 @@ export interface MyOpportunitySearchFilterVerificationFiles {
   opportunity: string;
   verificationTypes: VerificationType[] | null;
 }
+
+export interface NavigateExternalLinkResult {
+  syncedInfo?: NavigateExternalLinkSyncedInfo | null;
+}
+
+export interface NavigateExternalLinkSyncedInfo {
+  syncType: string;
+  partners?: NavigateExternalLinkPartner[] | null;
+}
+
+export interface NavigateExternalLinkPartner {
+  name: string;
+  url?: string | null;
+}
