@@ -35,6 +35,8 @@ using Yoma.Core.Domain.Opportunity.Events;
 using Yoma.Core.Domain.Opportunity.Extensions;
 using Yoma.Core.Domain.Opportunity.Interfaces;
 using Yoma.Core.Domain.Opportunity.Interfaces.Lookups;
+using Yoma.Core.Domain.PartnerSync.Interfaces;
+using Yoma.Core.Domain.PartnerSync.Models;
 using Yoma.Core.Domain.Referral.Events;
 using Yoma.Core.Domain.Reward.Interfaces;
 using Yoma.Core.Domain.SSI.Interfaces;
@@ -66,6 +68,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
     private readonly IDownloadService _downloadService;
     private readonly IOpportunityVerificationTypeService _opportunityVerificationTypeService;
     private readonly IDelayedExecutionService _delayedExecutionService;
+    private readonly ISyncUserAuthenticationService _syncUserAuthenticationService;
     private readonly MyOpportunitySearchFilterVerificationFilesAdminValidator _myOpportunitySearchFilterVerificationFilesAdminValidator;
     private readonly MyOpportunitySearchFilterAdminValidator _myOpportunitySearchFilterAdminValidator;
     private readonly MyOpportunityRequestValidatorVerify _myOpportunityRequestValidatorVerify;
@@ -107,6 +110,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         IDownloadService downloadService,
         IOpportunityVerificationTypeService opportunityVerificationTypeService,
         IDelayedExecutionService delayedExecutionService,
+        ISyncUserAuthenticationService syncUserAuthenticationService,
         MyOpportunitySearchFilterVerificationFilesAdminValidator myOpportunitySearchFilterVerificationFilesAdminValidator,
         MyOpportunitySearchFilterAdminValidator myOpportunitySearchFilterAdminValidator,
         MyOpportunityRequestValidatorVerify myOpportunityRequestValidatorVerify,
@@ -140,6 +144,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       _downloadService = downloadService ?? throw new ArgumentNullException(nameof(downloadService));
       _opportunityVerificationTypeService = opportunityVerificationTypeService ?? throw new ArgumentNullException(nameof(opportunityVerificationTypeService));
       _delayedExecutionService = delayedExecutionService ?? throw new ArgumentNullException(nameof(delayedExecutionService));
+      _syncUserAuthenticationService = syncUserAuthenticationService ?? throw new ArgumentNullException(nameof(syncUserAuthenticationService));
       _myOpportunitySearchFilterVerificationFilesAdminValidator = myOpportunitySearchFilterVerificationFilesAdminValidator ?? throw new ArgumentNullException(nameof(myOpportunitySearchFilterVerificationFilesAdminValidator));
       _myOpportunitySearchFilterAdminValidator = myOpportunitySearchFilterAdminValidator ?? throw new ArgumentNullException(nameof(myOpportunitySearchFilterAdminValidator));
       _myOpportunityRequestValidatorVerify = myOpportunityRequestValidatorVerify ?? throw new ArgumentNullException(nameof(myOpportunityRequestValidatorVerify));
@@ -779,7 +784,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         await _myOpportunityRepository.Update(myOpportunity); //update DateModified
     }
 
-    public async Task PerformActionNavigatedExternalLink(Guid opportunityId)
+    public async Task<SyncInfoEntity?> PerformActionNavigatedExternalLink(Guid opportunityId)
     {
       //published opportunities (irrespective of started)
       var opportunity = _opportunityService.GetById(opportunityId, false, true, false);
@@ -803,6 +808,11 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       }
       else
         await _myOpportunityRepository.Update(myOpportunity); //update DateModified
+
+      if (opportunity.SyncedInfo == null)
+        return null;
+
+      return await _syncUserAuthenticationService.Authenticate(user, opportunity.SyncedInfo);
     }
 
     public bool ActionedSaved(Guid opportunityId)

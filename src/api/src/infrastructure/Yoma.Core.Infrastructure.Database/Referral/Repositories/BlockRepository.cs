@@ -73,6 +73,8 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
 
       entity.CommentUnblock = item.CommentUnBlock;
       entity.Active = item.Active;
+      entity.DateModified = item.DateModified;
+      entity.ModifiedByUserId = item.ModifiedByUserId;
 
       await _context.SaveChangesAsync();
 

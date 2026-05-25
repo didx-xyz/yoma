@@ -3,6 +3,7 @@ using Flurl;
 using Flurl.Http;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using System.Net;
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Interfaces;
@@ -16,6 +17,7 @@ using Yoma.Core.Domain.PartnerSync.Models;
 using Yoma.Core.Domain.PartnerSync.Validators;
 using Yoma.Core.Domain.SSI;
 using Yoma.Core.Domain.SSI.Helpers;
+using Yoma.Core.Infrastructure.Alison.Extensions;
 using Yoma.Core.Infrastructure.Alison.Interfaces;
 using Yoma.Core.Infrastructure.Alison.Models;
 
@@ -23,10 +25,10 @@ namespace Yoma.Core.Infrastructure.Alison.Client
 {
   public sealed partial class AlisonClient :
     ISyncProviderClientPullEntity<Domain.Opportunity.Models.Opportunity>,
-    ISyncProviderClientPullVerification
+    ISyncProviderClientPullVerification,
+    ISyncProviderClientUserAuthentication
   {
     #region Class Variables
-    private const string Alison_Web_BaseUrl = "https://alison.com";
     private const int Title_MaxLength = 150;
     private const int Summary_MaxLength = 150;
 
@@ -134,6 +136,53 @@ namespace Yoma.Core.Infrastructure.Alison.Client
     #endregion
 
     #region Public Members
+    public async Task<SyncResultUserAuthentication> Authenticate(SyncRequestUserAuthentication request)
+    {
+      ArgumentNullException.ThrowIfNull(request);
+      ArgumentNullException.ThrowIfNull(request.EntitySyncInfo);
+
+      if (request.EntitySyncInfo.Partner != SyncPartner.Alison)
+        throw new InvalidOperationException($"Partner '{request.EntitySyncInfo.Partner}' not supported by Alison user authentication");
+
+      if (string.IsNullOrWhiteSpace(request.EntitySyncInfo.ExternalId))
+        throw new ArgumentNullException(nameof(request), $"'{nameof(request.EntitySyncInfo.ExternalId)}' cannot be null or empty");
+
+      request.EntitySyncInfo.ExternalId = request.EntitySyncInfo.ExternalId.Trim();
+
+      if (!_appSettings.PartnerSyncEnabledEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment))
+      {
+        if (_logger.IsEnabled(LogLevel.Information))
+          _logger.LogInformation(
+            "Partner synchronization from external partners disabled for environment '{environment}'. Returning mocked Alison user authentication result for Yoma user '{userId}'",
+            _environmentProvider.Environment, request.UserId);
+
+        var externalId = request.UserSyncInfo?.ExternalId?.Trim() ?? $"mock-alison-user-{request.UserId}";
+
+        return new SyncResultUserAuthentication
+        {
+          URL = _options.WebBaseUrl.ToAuthenticatedCourseUrl($"mock-alison-token-{request.UserId}", request.EntitySyncInfo.ExternalId),
+          UserSyncInfo = new SyncInfoUserPartner
+          {
+            Partner = SyncPartner.Alison,
+            ExternalId = externalId,
+            DateLastRedirect = DateTimeOffset.UtcNow
+          }
+        };
+      }
+
+      var result = await AuthenticateUser(request, UserAuthenticationRequestType.Register, [HttpStatusCode.UnprocessableEntity]);
+
+      if (result.StatusCode != HttpStatusCode.UnprocessableEntity)
+        return result.Authentication ?? throw new InvalidOperationException("Alison register authentication result expected");
+
+      if (_logger.IsEnabled(LogLevel.Information))
+        _logger.LogInformation("Alison user registration returned 422 for Yoma user '{userId}'. Attempting login", request.UserId);
+
+      result = await AuthenticateUser(request, UserAuthenticationRequestType.Login);
+
+      return result.Authentication ?? throw new InvalidOperationException("Alison login authentication result expected");
+    }
+
     public Task<SyncResultPullEntity<Domain.Opportunity.Models.Opportunity>> List(SyncFilterPullEntity filter)
     {
       ArgumentNullException.ThrowIfNull(filter);
@@ -159,6 +208,8 @@ namespace Yoma.Core.Infrastructure.Alison.Client
           "Listing Alison completed course verification sync items for environment '{environment}' from '{dateStart}' to '{dateEnd}', page number '{pageNumber}', page size '{pageSize}'",
           _environmentProvider.Environment, filter.DateStart, filter.DateEnd, filter.PageNumber, filter.PageSize);
 
+      var temp = await ListCompletedCoursesFromApi(filter);
+
       return !_appSettings.PartnerSyncEnabledEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment)
         ? ListCompletedCoursesFromEmbeddedResource(filter)
         : await ListCompletedCoursesFromApi(filter);
@@ -166,6 +217,62 @@ namespace Yoma.Core.Infrastructure.Alison.Client
     #endregion
 
     #region Private Members
+    private async Task<(HttpStatusCode StatusCode, SyncResultUserAuthentication? Authentication)> AuthenticateUser(
+      SyncRequestUserAuthentication request,
+      UserAuthenticationRequestType requestType,
+      List<HttpStatusCode>? additionalSuccessStatusCodes = null)
+    {
+      var path = requestType switch
+      {
+        UserAuthenticationRequestType.Register => _options.UserRegisterPath,
+        UserAuthenticationRequestType.Login => _options.UserLoginPath,
+        _ => throw new InvalidOperationException($"Unsupported Alison user authentication request type '{requestType}'")
+      };
+
+      path = path?.Trim() ?? string.Empty;
+      if (string.IsNullOrWhiteSpace(path))
+        throw new InvalidOperationException($"Alison user {requestType} path expected");
+
+      if (_logger.IsEnabled(LogLevel.Debug))
+        _logger.LogDebug("Executing Alison user '{requestType}' for Yoma user '{userId}'", requestType, request.UserId);
+
+      var response = await _options.BaseUrl
+        .AppendPathSegment(path)
+        .WithAuthHeader(await _alisonAuthService.GetAuthHeader())
+        .WithTimeout(TimeSpan.FromSeconds(_options.RequestTimeoutSeconds))
+        .PostJsonAsync(request.ToUserAuthenticationRequest())
+        .EnsureSuccessStatusCodeAsync(additionalSuccessStatusCodes);
+
+      var statusCode = (HttpStatusCode)response.StatusCode;
+
+      if (statusCode == HttpStatusCode.UnprocessableEntity)
+        return (statusCode, null);
+
+      var json = await response.GetStringAsync();
+
+      var responseParsed = JsonConvert.DeserializeObject<UserAuthenticationResponse>(json)
+        ?? throw new InvalidOperationException($"Failed to deserialize Alison user {requestType} response");
+
+      var token = responseParsed.ResolvedToken?.Trim();
+      if (string.IsNullOrWhiteSpace(token))
+        throw new InvalidOperationException($"Alison user {requestType} response did not contain a token");
+
+      var externalId = responseParsed.ResolvedExternalId?.Trim() ?? request.UserSyncInfo?.ExternalId?.Trim();
+      if (string.IsNullOrWhiteSpace(externalId))
+        throw new InvalidOperationException($"Alison user {requestType} response did not contain a user external id");
+
+      return (statusCode, new SyncResultUserAuthentication
+      {
+        URL = token.ToAuthenticatedCourseUrl(token, request.EntitySyncInfo.ExternalId),
+        UserSyncInfo = new SyncInfoUserPartner
+        {
+          Partner = SyncPartner.Alison,
+          ExternalId = externalId,
+          DateLastRedirect = DateTimeOffset.UtcNow
+        }
+      });
+    }
+
     private SyncResultPullEntity<Domain.Opportunity.Models.Opportunity> ListFromStore(SyncFilterPullEntity filter)
     {
       ArgumentNullException.ThrowIfNull(filter);
@@ -305,7 +412,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
           TypeId = opportunityType.Id,
           Type = opportunityType.Name,
           Summary = summary,
-          URL = ResolveCourseUrl(course),
+          URL = course.ToCourseUrl(_options.WebBaseUrl),
 
           OrganizationId = _options.OrganizationIdYoma,
           OrganizationName = _options.OrganizationName,
@@ -518,18 +625,6 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       return string.IsNullOrWhiteSpace(codeAlpha2)
         ? null
         : codeAlpha2.ToUpperInvariant();
-    }
-
-    private static string ResolveCourseUrl(Course course)
-    {
-      ArgumentNullException.ThrowIfNull(course);
-
-      if (!string.IsNullOrWhiteSpace(course.Url))
-        return course.Url;
-
-      return !string.IsNullOrWhiteSpace(course.Slug)
-        ? $"{Alison_Web_BaseUrl}/course/{course.Slug}"
-        : $"{Alison_Web_BaseUrl}/courses/{course.Id}";
     }
 
     private static string GetTitle(Course course)

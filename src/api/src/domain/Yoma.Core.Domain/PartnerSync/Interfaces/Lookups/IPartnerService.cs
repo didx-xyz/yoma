@@ -1,5 +1,6 @@
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Opportunity;
+using Yoma.Core.Domain.PartnerSync.Models;
 
 namespace Yoma.Core.Domain.PartnerSync.Interfaces.Lookups
 {
@@ -17,6 +18,7 @@ namespace Yoma.Core.Domain.PartnerSync.Interfaces.Lookups
 
     List<Models.Lookups.Partner> ListPush(SyncScope syncScope, SyncAction? action = null, EntityType? entityType = null);
 
-    List<string> ValidateUpdatablePush(Opportunity.Models.Opportunity opportunityCurrent, UpdateAction action, Dictionary<string, object?> updatesToEval, List<SyncPartner> partners);
+    List<string> ValidateUpdatablePush(Opportunity.Models.Opportunity opportunityCurrent, UpdateAction action,
+      Dictionary<string, object?> updatesToEval, List<SyncInfoEntityPartner> partners);
   }
 }

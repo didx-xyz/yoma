@@ -10,24 +10,31 @@ namespace Yoma.Core.Domain.PartnerSync.Services
   public class SyncStateService : ISyncStateService
   {
     #region Class Variables
+    private readonly IPartnerService _partnerService;
     private readonly IProcessingStatusService _processingStatusService;
     private readonly IProcessingHelperService _processingHelperService;
     private readonly IRepositoryBatched<ProcessingLog> _processingLogRepository;
+    private readonly IRepository<PartnerUser> _partnerUserRepository;
     #endregion
 
     #region Constructor
-    public SyncStateService(IProcessingStatusService processingStatusService,
+    public SyncStateService(
+      IProcessingStatusService processingStatusService,
       IProcessingHelperService processingHelperService,
-      IRepositoryBatched<ProcessingLog> processingLogRepository)
+      IRepositoryBatched<ProcessingLog> processingLogRepository,
+      IPartnerService partnerService,
+      IRepository<PartnerUser> partnerUserRepository)
     {
       _processingStatusService = processingStatusService;
       _processingHelperService = processingHelperService;
       _processingLogRepository = processingLogRepository;
+      _partnerService = partnerService;
+      _partnerUserRepository = partnerUserRepository;
     }
     #endregion
 
     #region Public Members
-    public SyncInfoEntity? ListSyncInfo(EntityType entityType, Guid entityId)
+    public SyncInfoEntity? ListSyncInfo(EntityType entityType, Guid entityId, string? url)
     {
       var statusAbortedId = _processingStatusService.GetByName(ProcessingStatus.Aborted.ToString()).Id;
 
@@ -60,8 +67,13 @@ namespace Yoma.Core.Domain.PartnerSync.Services
       var syncType = syncTypes.Single();
 
       var partners = items
-        .Select(o => o.Partner)
-        .Distinct()
+        .Select(o => new SyncInfoEntityPartner
+        {
+          Partner = o.Partner,
+          ExternalId = o.EntityExternalId, // Partner sync external ID from the processing log
+          URL = url // Static/default external URL from the entity, for example Opportunity.URL, when available
+        })
+        .DistinctBy(o => new { o.Partner, o.ExternalId })
         .ToList();
 
       if (syncType == SyncType.Pull && partners.Count != 1)
@@ -72,6 +84,88 @@ namespace Yoma.Core.Domain.PartnerSync.Services
         SyncType = syncType,
         Partners = partners
       };
+    }
+
+    public SyncInfoUser? ListUserSyncInfo(Guid userId)
+    {
+      if (userId == Guid.Empty)
+        throw new ArgumentNullException(nameof(userId));
+
+      var items = _partnerUserRepository.Query()
+        .Where(o => o.UserId == userId)
+        .ToList();
+
+      if (items.Count == 0) return null;
+
+      return new SyncInfoUser
+      {
+        Partners = [.. items.Select(ToSyncInfoUserPartner)]
+      };
+    }
+
+    public SyncInfoUserPartner? GetUserSyncInfo(Guid userId, SyncPartner partner)
+    {
+      if (userId == Guid.Empty)
+        throw new ArgumentNullException(nameof(userId));
+
+      var partnerModel = _partnerService.GetByName(partner.ToString());
+
+      var item = _partnerUserRepository.Query()
+        .SingleOrDefault(o => o.UserId == userId && o.PartnerId == partnerModel.Id);
+
+      return item == null ? null : ToSyncInfoUserPartner(item);
+    }
+
+    public async Task UpsertUserSyncInfo(
+      Guid userId,
+      string username,
+      string? email,
+      string? phoneNumber,
+      SyncInfoUserPartner syncInfo)
+    {
+      if (userId == Guid.Empty)
+        throw new ArgumentNullException(nameof(userId));
+
+      if (string.IsNullOrWhiteSpace(username))
+        throw new ArgumentNullException(nameof(username));
+
+      ArgumentNullException.ThrowIfNull(syncInfo);
+
+      username = username.Trim();
+      email = email?.Trim();
+      phoneNumber = phoneNumber?.Trim();
+      syncInfo.ExternalId = syncInfo.ExternalId?.Trim();
+
+      var partner = _partnerService.GetByName(syncInfo.Partner.ToString());
+
+      var item = _partnerUserRepository.Query()
+        .SingleOrDefault(o => o.UserId == userId && o.PartnerId == partner.Id);
+
+      if (item == null)
+      {
+        item = new PartnerUser
+        {
+          PartnerId = partner.Id,
+          Partner = syncInfo.Partner,
+          UserId = userId,
+          Username = username,
+          Email = email,
+          PhoneNumber = phoneNumber,
+          ExternalId = syncInfo.ExternalId,
+          DateLastRedirect = syncInfo.DateLastRedirect
+        };
+
+        await _partnerUserRepository.Create(item);
+        return;
+      }
+
+      item.Username = username;
+      item.Email = email;
+      item.PhoneNumber = phoneNumber;
+      item.ExternalId = syncInfo.ExternalId;
+      item.DateLastRedirect = syncInfo.DateLastRedirect;
+
+      await _partnerUserRepository.Update(item);
     }
 
     public async Task<bool> AbortSyncPushCreateIfPossible(EntityType entityType, Guid entityId)
@@ -89,6 +183,20 @@ namespace Yoma.Core.Domain.PartnerSync.Services
       await _processingLogRepository.Update(item);
 
       return true;
+    }
+    #endregion
+
+    #region Private Members
+    private static SyncInfoUserPartner ToSyncInfoUserPartner(PartnerUser item)
+    {
+      ArgumentNullException.ThrowIfNull(item);
+
+      return new SyncInfoUserPartner
+      {
+        Partner = item.Partner,
+        ExternalId = item.ExternalId,
+        DateLastRedirect = item.DateLastRedirect
+      };
     }
     #endregion
   }

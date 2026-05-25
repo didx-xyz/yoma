@@ -407,5 +407,76 @@ namespace Yoma.Core.Infrastructure.Alison.Models
     [JsonProperty("has_certificate")]
     public bool? HasCertificate { get; set; }
   }
+
+  public sealed class UserAuthenticationRequest
+  {
+    [JsonProperty("email")]
+    public string Email { get; set; } = null!;
+
+    [JsonProperty("first_name")]
+    public string? FirstName { get; set; }
+
+    [JsonProperty("last_name")]
+    public string? LastName { get; set; }
+  }
+
+  public sealed class UserAuthenticationResponse
+  {
+    [JsonProperty("data")]
+    public UserAuthenticationResponseData? Data { get; set; }
+
+    [JsonProperty("user")]
+    public UserAuthenticationResponseUser? User { get; set; }
+
+    [JsonProperty("jwt")]
+    public string? Jwt { get; set; }
+
+    [JsonProperty("token")]
+    public string? Token { get; set; }
+
+    [JsonProperty("access_token")]
+    public string? AccessToken { get; set; }
+
+    [JsonIgnore]
+    public string? ResolvedToken => Data?.ResolvedToken ?? Jwt ?? Token ?? AccessToken;
+
+    [JsonIgnore]
+    public string? ResolvedExternalId => Data?.ResolvedExternalId ?? User?.ResolvedExternalId;
+  }
+
+  public sealed class UserAuthenticationResponseData
+  {
+    [JsonProperty("user")]
+    public UserAuthenticationResponseUser? User { get; set; }
+
+    [JsonProperty("jwt")]
+    public string? Jwt { get; set; }
+
+    [JsonProperty("token")]
+    public string? Token { get; set; }
+
+    [JsonProperty("access_token")]
+    public string? AccessToken { get; set; }
+
+    [JsonIgnore]
+    public string? ResolvedToken => Jwt ?? Token ?? AccessToken;
+
+    [JsonIgnore]
+    public string? ResolvedExternalId => User?.ResolvedExternalId;
+  }
+
+  public sealed class UserAuthenticationResponseUser
+  {
+    [JsonProperty("id")]
+    public object? Id { get; set; }
+
+    [JsonProperty("user_id")]
+    public object? UserId { get; set; }
+
+    [JsonIgnore]
+    public string? ResolvedExternalId => Id?.ToString() ?? UserId?.ToString();
+  }
   #endregion
 }
+
+

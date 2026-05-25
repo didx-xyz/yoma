@@ -144,6 +144,7 @@ namespace Yoma.Core.Infrastructure.Database.Context
     #endregion Lookups 
 
     public DbSet<PartnerSync.Entities.PartnerSyncTracking> PartnerSyncTracking { get; set; }
+    public DbSet<PartnerSync.Entities.PartnerSyncUser> PartnerUser { get; set; }
     public DbSet<PartnerSync.Entities.ProcessingLog> PartnerSyncProcessingLog { get; set; }
     #endregion PartnerSync
 
@@ -210,6 +211,7 @@ namespace Yoma.Core.Infrastructure.Database.Context
     #region Treasury
     public DbSet<Treasury.Entities.Treasury> Treasury { get; set; }
     #endregion Treasury
+
     #endregion
 
     #region Protected Members
@@ -306,6 +308,24 @@ namespace Yoma.Core.Infrastructure.Database.Context
         entity.Property(e => e.SyncType)
           .IsRequired()
           .HasDefaultValue(Domain.Core.SyncType.Push);
+      });
+
+      builder.Entity<PartnerSync.Entities.PartnerSyncUser>(entity =>
+      {
+        entity.HasKey(e => e.Id)
+          .HasName("PK_PartnerSync_User");
+
+        entity.HasOne(e => e.Partner)
+          .WithMany()
+          .HasForeignKey(e => e.PartnerId)
+          .HasConstraintName("FK_PartnerSync_User_Partner_PartnerId")
+          .OnDelete(DeleteBehavior.NoAction);
+
+        entity.HasOne(e => e.User)
+          .WithMany()
+          .HasForeignKey(e => e.UserId)
+          .HasConstraintName("FK_PartnerSync_User_Entity_User_UserId")
+          .OnDelete(DeleteBehavior.NoAction);
       });
       #endregion PartnerSync
 

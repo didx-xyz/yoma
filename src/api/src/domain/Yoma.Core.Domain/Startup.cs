@@ -183,6 +183,7 @@ namespace Yoma.Core.Domain
       services.AddScoped<IProcessingHelperService, ProcessingHelperService>();
       services.AddScoped<ISyncBackgroundService, SyncBackgroundService>();
       services.AddScoped<ISyncStateService, SyncStateService>();
+      services.AddScoped<ISyncUserAuthenticationService, SyncUserAuthenticationService>();
       services.AddScoped<IProcessingService, ProcessingService>();
       #endregion Partner Sync
 
