@@ -210,7 +210,7 @@ export const performActionNavigateExternalLink = async (
 ): Promise<NavigateExternalLinkResult | null> => {
   const instance = context ? ApiServer(context) : await ApiClient;
   const { data } = await instance.put<NavigateExternalLinkResult>(
-    `/myopportunity/action/${opportunityId}/navigateExternalLink`,
+    `/myopportunity/action/${encodeURIComponent(opportunityId)}/navigateExternalLink`,
   );
   return data ?? null;
 };
