@@ -11,7 +11,7 @@ import { SessionProvider } from "next-auth/react";
 import { ThemeProvider } from "next-themes";
 import type { AppProps } from "next/app";
 import { Nunito, Open_Sans } from "next/font/google";
-import { useRouter } from "next/router";
+import { useRouter, Router } from "next/router";
 import type { ReactElement, ReactNode } from "react";
 import { useState } from "react";
 import { ToastContainer } from "react-toastify";
@@ -23,7 +23,6 @@ import "~/styles/globals.css";
 import "~/styles/FileUpload.css";
 import { THEME_PURPLE } from "~/lib/constants";
 import { GoogleAnalytics } from "~/components/GoogleAnalytics";
-import Router from "next/router";
 import NProgress from "nprogress";
 import "nprogress/nprogress.css";
 
