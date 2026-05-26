@@ -441,7 +441,7 @@ const OpportunityPublicDetails: React.FC<{
             onRequestClose={() => {
               setGotoOpportunityDialogVisible(false);
             }}
-            className={`md:max-h-[550px] md:w-[600px]`}
+            className={`md:max-h-[500px] md:w-[600px]`}
           >
             <div className="flex h-full flex-col gap-2 overflow-y-auto">
               <div className="bg-green flex flex-row p-4 shadow-lg">
@@ -473,11 +473,10 @@ const OpportunityPublicDetails: React.FC<{
                     <FaExclamationTriangle className="text-yellow h-8 w-8" />
                   </div>
 
-                  <div className="space-y-4 px-8 text-center">
+                  <div className="w-full space-y-4 px-8 text-center">
                     <div className="font-semibold">
                       You are now leaving Yoma!
                     </div>
-
                     <div className="bg-gray mt-2 flex items-start gap-2 rounded-lg p-3 text-left text-sm">
                       <FaInfoCircle className="text-blue mt-0.5 h-4 w-4 shrink-0" />
                       <span>
@@ -486,31 +485,39 @@ const OpportunityPublicDetails: React.FC<{
                           {navigateResult?.syncedInfo?.partners?.[0]?.name ??
                             opportunityInfo.organizationName}
                         </strong>{" "}
-                        to continue this opportunity. Your enrolment and
-                        completion may happen on their platform, and Yoma will
-                        sync your completion where supported.
+                        to continue this opportunity.{" "}
+                        {navigateResult?.syncedInfo?.syncType === "Pull" && (
+                          <>
+                            Your enrolment and completion may happen on their
+                            platform, and Yoma will sync your completion where
+                            supported.
+                          </>
+                        )}
                       </span>
                     </div>
-
-                    <div className="mt-2 flex items-start gap-2 rounded-lg border border-yellow-200 bg-yellow-50 p-3 text-left text-sm">
-                      <FaExclamationTriangle className="text-yellow mt-0.5 h-4 w-4 shrink-0" />
-                      <span>
-                        Remember to{" "}
-                        <strong>upload your completion certificate</strong> on
-                        this page upon finishing to earn your achievement
-                        {opportunityInfo?.type !== OPPORTUNITY_TYPE_NANE_JOB &&
-                          (opportunityInfo.zltoRewardEstimate ?? 0) > 0 && (
-                            <>
-                              {" "}
-                              &amp;{" "}
-                              <strong>
-                                {opportunityInfo.zltoRewardEstimate} ZLTO
-                              </strong>
-                            </>
-                          )}
-                        .
-                      </span>
-                    </div>
+                    {opportunityInfo.verificationEnabled &&
+                      opportunityInfo.verificationMethod == "Manual" && (
+                        <div className="mt-2 flex items-start gap-2 rounded-lg border border-yellow-200 bg-yellow-50 p-3 text-left text-sm">
+                          <FaExclamationTriangle className="text-yellow mt-0.5 h-4 w-4 shrink-0" />
+                          <span>
+                            Remember to{" "}
+                            <strong>upload your completion certificate</strong>{" "}
+                            on this page upon finishing to earn your achievement
+                            {opportunityInfo?.type !==
+                              OPPORTUNITY_TYPE_NANE_JOB &&
+                              (opportunityInfo.zltoRewardEstimate ?? 0) > 0 && (
+                                <>
+                                  {" "}
+                                  &amp;{" "}
+                                  <strong>
+                                    {opportunityInfo.zltoRewardEstimate} ZLTO
+                                  </strong>
+                                </>
+                              )}
+                            .
+                          </span>
+                        </div>
+                      )}
 
                     <div className="mt-2 flex items-start gap-2 rounded-lg border border-yellow-200 bg-yellow-50 p-3 text-left text-sm">
                       <FaExclamationTriangle className="text-yellow mt-0.5 h-4 w-4 shrink-0" />
@@ -519,7 +526,6 @@ const OpportunityPublicDetails: React.FC<{
                         keep your data private.
                       </span>
                     </div>
-
                     <div className="text-gray-dark italic">
                       <FormCheckbox
                         id="dontShowAgain"
