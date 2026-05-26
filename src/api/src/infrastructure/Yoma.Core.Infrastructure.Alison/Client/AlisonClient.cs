@@ -218,9 +218,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
 
     #region Private Members
     private async Task<(HttpStatusCode StatusCode, SyncResultUserAuthentication? Authentication)> AuthenticateUser(
-      SyncRequestUserAuthentication request,
-      UserAuthenticationRequestType requestType,
-      List<HttpStatusCode>? additionalSuccessStatusCodes = null)
+      SyncRequestUserAuthentication request, UserAuthenticationRequestType requestType, List<HttpStatusCode>? additionalSuccessStatusCodes = null)
     {
       var path = requestType switch
       {
@@ -240,7 +238,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
         .AppendPathSegment(path)
         .WithAuthHeader(await _alisonAuthService.GetAuthHeader())
         .WithTimeout(TimeSpan.FromSeconds(_options.RequestTimeoutSeconds))
-        .PostJsonAsync(request.ToUserAuthenticationRequest())
+        .PostJsonAsync(request.ToUserAuthenticationRequest(requestType))
         .EnsureSuccessStatusCodeAsync(additionalSuccessStatusCodes);
 
       var statusCode = (HttpStatusCode)response.StatusCode;
@@ -358,9 +356,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       // Dates:
       // DateStart = published_at -> created_at -> UtcNow.
       // DateEnd = null/open-ended unless Alison provides expiry/removal semantics.
-      var dateStart = course.PublishedAt
-        ?? course.CreatedAt
-        ?? DateTimeOffset.UtcNow;
+      var dateStart = course.PublishedAt ?? course.CreatedAt ?? DateTimeOffset.UtcNow;
 
       // Keywords:
       // Used as additional search terms beyond title, summary, description and mapped lookups.

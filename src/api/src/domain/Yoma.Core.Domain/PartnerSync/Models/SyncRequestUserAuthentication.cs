@@ -21,6 +21,8 @@ namespace Yoma.Core.Domain.PartnerSync.Models
 
     public string? Surname { get; set; }
 
+    public Domain.Lookups.Models.Country? Country { get; set; }
+
     public SyncInfoEntityPartner EntitySyncInfo { get; set; } = null!;
 
     public SyncInfoUserPartner? UserSyncInfo { get; set; }

@@ -13,7 +13,8 @@ namespace Yoma.Core.Infrastructure.Alison.Client
 {
   public sealed class AlisonClientFactory :
     ISyncProviderClientFactory<ISyncProviderClientPullEntity<Domain.Opportunity.Models.Opportunity>>,
-    ISyncProviderClientFactory<ISyncProviderClientPullVerification>
+    ISyncProviderClientFactory<ISyncProviderClientPullVerification>,
+    ISyncProviderClientFactory<ISyncProviderClientUserAuthentication>
   {
     #region Class Variables
     private readonly ILogger<AlisonClient> _logger;
@@ -79,6 +80,11 @@ namespace Yoma.Core.Infrastructure.Alison.Client
     }
 
     ISyncProviderClientPullVerification ISyncProviderClientFactory<ISyncProviderClientPullVerification>.CreateClient()
+    {
+      return CreateClient();
+    }
+
+    ISyncProviderClientUserAuthentication ISyncProviderClientFactory<ISyncProviderClientUserAuthentication>.CreateClient()
     {
       return CreateClient();
     }

@@ -53,6 +53,7 @@ namespace Yoma.Core.Infrastructure.Alison
       // clients
       services.AddKeyedScoped<ISyncProviderClientFactory<ISyncProviderClientPullEntity<Domain.Opportunity.Models.Opportunity>>, AlisonClientFactory>(SyncPartner.Alison);
       services.AddKeyedScoped<ISyncProviderClientFactory<ISyncProviderClientPullVerification>, AlisonClientFactory>(SyncPartner.Alison);
+      services.AddKeyedScoped<ISyncProviderClientFactory<ISyncProviderClientUserAuthentication>, AlisonClientFactory>(SyncPartner.Alison);
     }
 
     public static void Configure_InfrastructureDatabaseSyncProvider(this IServiceProvider serviceProvider)
