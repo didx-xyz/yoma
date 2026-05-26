@@ -1,5 +1,10 @@
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import withBundleAnalyzer from "@next/bundle-analyzer";
 import withPWA from "next-pwa";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const pwa = withPWA({
   dest: "public",
@@ -23,6 +28,7 @@ const bundleAnalyzer = withBundleAnalyzer({
 const config = {
   reactStrictMode: true,
   output: "standalone",
+  outputFileTracingRoot: path.join(__dirname, "../.."),
 
   /**NB: for docker-compose, this section is needed in order to pass the server environment variables
    * to nextjs (without using a .env file in the container)

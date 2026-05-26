@@ -1,22 +1,21 @@
 ##### DEPENDENCIES
 FROM node:24-alpine AS deps
 RUN apk add --no-cache libc6-compat openssl
-RUN corepack enable
+RUN npm install -g pnpm@11.0.0
 WORKDIR /app
 
 # Install dependencies based on the preferred package manager
-COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* .yarnrc.yml* ./
+COPY package.json pnpm-lock.yaml* pnpm-workspace.yaml* package-lock.json* ./
 
 RUN \
-  if [ -f yarn.lock ]; then yarn install --immutable; \
+  if [ -f pnpm-lock.yaml ]; then pnpm install --frozen-lockfile; \
   elif [ -f package-lock.json ]; then npm ci; \
-  elif [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm i; \
   else echo "Lockfile not found." && exit 1; \
   fi
 
 ##### BUILDER
 FROM node:24-alpine AS builder
-RUN corepack enable
+RUN npm install -g pnpm@11.0.0
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
@@ -33,11 +32,18 @@ ARG NEXT_PUBLIC_GA_MEASUREMENT_ID
 ENV NEXT_PUBLIC_GA_MEASUREMENT_ID=${NEXT_PUBLIC_GA_MEASUREMENT_ID}
 
 RUN \
-  if [ -f yarn.lock ]; then SKIP_ENV_VALIDATION=1 yarn build; \
+  if [ -f pnpm-lock.yaml ]; then SKIP_ENV_VALIDATION=1 pnpm run build; \
   elif [ -f package-lock.json ]; then SKIP_ENV_VALIDATION=1 npm run build; \
-  elif [ -f pnpm-lock.yaml ]; then corepack enable pnpm && SKIP_ENV_VALIDATION=1 pnpm run build; \
   else echo "Lockfile not found." && exit 1; \
   fi
+
+# Normalize the standalone app root because Next may nest it differently
+# depending on the tracing root and build context.
+RUN server_dir=$(find /app/.next/standalone -name server.js -exec dirname {} \; | head -n 1) \
+  && test -n "$server_dir" \
+  && mkdir -p /app/.next/standalone-root \
+  && cp -R "$server_dir"/. /app/.next/standalone-root/ \
+  && rm -f /app/.next/standalone-root/.env
 
 # Set read-only permissions for the build assets
 RUN chmod -R a-w /app/.next/standalone
@@ -59,14 +65,15 @@ COPY --from=builder /app/package.json ./package.json
 
 # Fix for https://sonarcloud.io/organizations/didx-xyz/rules?open=docker%3AS6504&rule_key=docker%3AS6504
 # Copy files without changing ownership to nextjs
-COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/standalone-root ./
 COPY --from=builder /app/.next/static ./.next/static
 
 # Next.js Image needs the .next/cache directory to be writable
 RUN mkdir -p ./.next/cache && chown nextjs:nodejs ./.next/cache
 
-# Next.js SSG requires the .next/server/pages directory to be writable
-RUN chmod -R 777 /app/.next/server/pages
+# Next.js standalone output does not always include .next/server/pages.
+# Only relax permissions when that directory is present.
+RUN if [ -d /app/.next/server/pages ]; then chmod -R 777 /app/.next/server/pages; fi
 
 USER nextjs
 EXPOSE 3000

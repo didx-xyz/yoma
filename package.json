@@ -1,4 +1,8 @@
 {
+  "packageManager": "pnpm@11.0.0",
+  "resolutions": {
+    "@types/minimatch": "5.1.2"
+  },
   "scripts": {
     "test:cypress": "cypress open",
     "prepare": "husky"

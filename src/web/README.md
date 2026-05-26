@@ -13,13 +13,13 @@ Yoma Web is a modern, responsive frontend application built with NextJS 15 & Rea
 1. Install dependencies:
 
    ```bash
-   yarn install
+   pnpm install
    ```
 
 2. Start the development server:
 
    ```bash
-   yarn dev
+   pnpm dev
    ```
 
 3. 🎉 Open [http://localhost:3000](http://localhost:3000) in your browser to see the application!
@@ -28,14 +28,14 @@ Yoma Web is a modern, responsive frontend application built with NextJS 15 & Rea
 
 | Command          | Description                                        |
 | ---------------- | -------------------------------------------------- |
-| `yarn dev`       | Starts the development server                      |
-| `yarn build`     | Creates an optimized production build              |
-| `yarn start`     | Runs the built app in production mode              |
-| `yarn lint`      | Runs ESLint to catch code quality issues           |
-| `yarn test`      | Executes Jest tests                                |
-| `yarn analyze`   | Runs the bundle analyzer to visualize bundle sizes |
-| `yarn cypress`   | Opens Cypress for end-to-end testing               |
-| `yarn storybook` | Starts Storybook for component development         |
+| `pnpm dev`       | Starts the development server                      |
+| `pnpm build`     | Creates an optimized production build              |
+| `pnpm start`     | Runs the built app in production mode              |
+| `pnpm lint`      | Runs ESLint to catch code quality issues           |
+| `pnpm test`      | Executes Jest tests                                |
+| `pnpm analyze`   | Runs the bundle analyzer to visualize bundle sizes |
+| `pnpm cypress`   | Opens Cypress for end-to-end testing               |
+| `pnpm storybook` | Starts Storybook for component development         |
 
 ## 📁 Project Structure
 
@@ -63,10 +63,10 @@ Run tests with:
 
 ```bash
 # Unit and integration tests
-yarn test
+pnpm test
 
 # End-to-end tests
-yarn cypress
+pnpm cypress
 ```
 
 ## 📚 Documentation

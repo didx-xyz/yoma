@@ -171,6 +171,24 @@ async function fetchMarketplaceData(
 // Subsequent client-side queries are executed and cached using the queryClient
 // whenever additional data is requested in the carousels (during paging).
 export const getStaticProps: GetStaticProps = async (context) => {
+  // disable build-time SSG in CI environment
+  if (env.CI) {
+    return {
+      props: {
+        country: null,
+        lookups_countries: null,
+        data_storeItems: null,
+        marketplace_enabled:
+          env.MARKETPLACE_ENABLED?.toLowerCase() == "true" ? true : false,
+      },
+
+      // Next.js will attempt to re-generate the page:
+      // - When a request comes in
+      // - At most once every 300 seconds
+      revalidate: 300,
+    };
+  }
+
   // check if marketplace is enabled
   const marketplace_enabled =
     env.MARKETPLACE_ENABLED?.toLowerCase() == "true" ? true : false;

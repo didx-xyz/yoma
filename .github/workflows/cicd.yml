@@ -89,14 +89,14 @@ jobs:
         if: (steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch') && matrix.lang == 'js'
         with:
           node-version: 24
-      - run: corepack enable
+      - run: npm install -g pnpm@11.0.0
         if: (steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch') && matrix.lang == 'js'
       - uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5 # zizmor: ignore[cache-poisoning] lint-only cache, no production impact
         if: (steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch') && matrix.lang == 'js'
         with:
           path: ${{ matrix.dir }}/node_modules
-          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
-      - run: yarn install --immutable
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
+      - run: pnpm install --frozen-lockfile
         if: (steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch') && matrix.lang == 'js'
         working-directory: ${{ matrix.dir }}
 
@@ -384,10 +384,12 @@ jobs:
         if: steps.should-run.outputs.run == 'true'
         with:
           node-version: 24
-      - run: corepack enable
+      - run: npm install -g pnpm@11.0.0
         if: steps.should-run.outputs.run == 'true'
       - uses: cypress-io/github-action@dace029018fcdf86e0df89a31bc3cfa5b32570d8 # v7.3.0
         if: steps.should-run.outputs.run == 'true'
+        with:
+          install-command: pnpm install --frozen-lockfile
       - name: Upload Cypress Screenshots
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()

@@ -69,7 +69,7 @@ To pull in the config (e.g: environment variables) set in `.mise.toml` file, you
 
 This project uses [husky](https://typicode.github.io/husky/#/) to manage git hooks.
 
-Once you've got `mise` and `yarn` installed (`npm install -g yarn`) run `yarn install --frozen-lockfile` in the root of the project.
+Once you've got `mise` and `pnpm` installed (`npm install -g pnpm@11.0.0`) run `pnpm install --frozen-lockfile` in the root of the project.
 
 This will bootstrap `husky` and install the configured git hooks.
 

@@ -14,8 +14,9 @@ public/_.map
 !.prettierignore
 !next.config.mjs
 !package.json
+!pnpm-lock.yaml
+!pnpm-workspace.yaml
 !postcss.config.cjs
 !prettier.config.cjs
 !tailwind.config.ts
 !tsconfig.json
-!yarn.lock
