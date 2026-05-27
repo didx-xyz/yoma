@@ -32,7 +32,7 @@ import {
 import { downloadVerificationFilesAdmin } from "~/api/services/myOpportunities";
 import { Loading } from "~/components/Status/Loading";
 import { useConfirmationModalContext } from "~/context/modalConfirmationContext";
-import { DEV_MOCK_PULL_SYNC_OPPORTUNITY_ID, ROLE_ADMIN } from "~/lib/constants";
+import { ROLE_ADMIN } from "~/lib/constants";
 import { analytics } from "~/lib/analytics";
 import { getSafeUrl } from "~/lib/utils";
 
@@ -54,17 +54,7 @@ export function getEffectiveSyncedInfo(
   if (raw) {
     return typeof raw === "string" ? (JSON.parse(raw) as SyncInfo) : raw;
   }
-  // 🧪 DEV MOCK
-  if (
-    DEV_MOCK_PULL_SYNC_OPPORTUNITY_ID &&
-    opportunity.id === DEV_MOCK_PULL_SYNC_OPPORTUNITY_ID
-  ) {
-    return {
-      syncType: "Pull",
-      partners: ["SAYouth"],
-      locked: true,
-    };
-  }
+
   return null;
 }
 
