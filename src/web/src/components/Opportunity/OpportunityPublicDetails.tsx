@@ -436,7 +436,7 @@ const OpportunityPublicDetails: React.FC<{
                     <span>
                       You&apos;ll be redirected to{" "}
                       <strong>
-                        {opportunityInfo?.syncedInfo?.partners?.[0] ??
+                        {opportunityInfo?.syncedInfo?.partners?.[0]?.partner ??
                           opportunityInfo.organizationName}
                       </strong>{" "}
                       to continue this opportunity.{" "}

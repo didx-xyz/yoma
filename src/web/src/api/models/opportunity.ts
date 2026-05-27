@@ -257,10 +257,16 @@ export enum PublishedState {
   Active,
   Expired,
 }
+
 export interface SyncInfo {
-  syncType: SyncType | string; // TODO: check api returns string
-  partners: SyncPartner[];
+  syncType: SyncType | string; // NB: string
+  partners: SyncInfoEntityPartner[];
   locked: boolean;
+}
+export interface SyncInfoEntityPartner {
+  partner: SyncPartner | string; // NB: string
+  externalId: string | null;
+  url: string | null;
 }
 export enum SyncType {
   Push,
