@@ -180,7 +180,7 @@ export interface OpportunityInfo {
   yomaInfoURL: string;
   isCompletable: boolean;
   nonCompletableReason: string | null;
-  syncedInfo: SyncInfo | null | string; // NB: string
+  syncedInfo: SyncInfo | null;
   categories: OpportunityCategory[] | null;
   countries: Country[] | null;
   languages: Language[] | null;
@@ -259,7 +259,7 @@ export enum PublishedState {
 }
 export interface SyncInfo {
   syncType: SyncType | string; // TODO: check api returns string
-  partners: SyncPartner[] | string[]; // TODO: check api returns string
+  partners: SyncPartner[];
   locked: boolean;
 }
 export enum SyncType {
