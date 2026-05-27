@@ -153,14 +153,18 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       {
         if (_logger.IsEnabled(LogLevel.Information))
           _logger.LogInformation(
-            "Partner synchronization from external partners disabled for environment '{environment}'. Returning mocked Alison user authentication result for Yoma user '{userId}'",
+            "Partner synchronization from external partners disabled for environment '{environment}'. Returning default Alison navigation URL for Yoma user '{userId}'",
             _environmentProvider.Environment, request.UserId);
 
         var externalId = request.UserSyncInfo?.ExternalId?.Trim() ?? $"mock-alison-user-{request.UserId}";
+        var url = request.EntitySyncInfo.URL?.Trim();
+
+        if (string.IsNullOrWhiteSpace(url))
+          throw new InvalidOperationException("Default Alison navigation URL is required when partner synchronization is disabled");
 
         return new SyncResultUserAuthentication
         {
-          URL = _options.WebBaseUrl.ToAuthenticatedCourseUrl($"mock-alison-token-{request.UserId}", request.EntitySyncInfo.ExternalId),
+          URL = url,
           UserSyncInfo = new SyncInfoUserPartner
           {
             Partner = SyncPartner.Alison,
@@ -170,17 +174,26 @@ namespace Yoma.Core.Infrastructure.Alison.Client
         };
       }
 
-      var result = await AuthenticateUser(request, UserAuthenticationRequestType.Register, [HttpStatusCode.UnprocessableEntity]);
+      if (!string.IsNullOrWhiteSpace(request.UserSyncInfo?.ExternalId))
+      {
+        if (_logger.IsEnabled(LogLevel.Information))
+          _logger.LogInformation("Existing Alison user sync info found for Yoma user '{userId}'. Attempting login", request.UserId);
+        var (_, Authentication) = await AuthenticateUser(request, UserAuthenticationRequestType.Login);
 
-      if (result.StatusCode != HttpStatusCode.UnprocessableEntity)
-        return result.Authentication ?? throw new InvalidOperationException("Alison register authentication result expected");
+        return Authentication ?? throw new InvalidOperationException("Alison login authentication result expected");
+      }
+
+      var registerResult = await AuthenticateUser(request, UserAuthenticationRequestType.Register, [HttpStatusCode.UnprocessableEntity]);
+
+      if (registerResult.StatusCode != HttpStatusCode.UnprocessableEntity)
+        return registerResult.Authentication ?? throw new InvalidOperationException("Alison register authentication result expected");
 
       if (_logger.IsEnabled(LogLevel.Information))
         _logger.LogInformation("Alison user registration returned 422 for Yoma user '{userId}'. Attempting login", request.UserId);
 
-      result = await AuthenticateUser(request, UserAuthenticationRequestType.Login);
+      var fallbackLoginResult = await AuthenticateUser(request, UserAuthenticationRequestType.Login);
 
-      return result.Authentication ?? throw new InvalidOperationException("Alison login authentication result expected");
+      return fallbackLoginResult.Authentication ?? throw new InvalidOperationException("Alison login authentication result expected");
     }
 
     public Task<SyncResultPullEntity<Domain.Opportunity.Models.Opportunity>> List(SyncFilterPullEntity filter)
@@ -207,8 +220,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
         _logger.LogDebug(
           "Listing Alison completed course verification sync items for environment '{environment}' from '{dateStart}' to '{dateEnd}', page number '{pageNumber}', page size '{pageSize}'",
           _environmentProvider.Environment, filter.DateStart, filter.DateEnd, filter.PageNumber, filter.PageSize);
-
-      var temp = await ListCompletedCoursesFromApi(filter);
+      _ = await ListCompletedCoursesFromApi(filter);
 
       return !_appSettings.PartnerSyncEnabledEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment)
         ? ListCompletedCoursesFromEmbeddedResource(filter)
@@ -261,7 +273,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
 
       return (statusCode, new SyncResultUserAuthentication
       {
-        URL = token.ToAuthenticatedCourseUrl(token, request.EntitySyncInfo.ExternalId),
+        URL = _options.WebBaseUrl.ToAuthenticatedCourseUrl(token, request.EntitySyncInfo.ExternalId),
         UserSyncInfo = new SyncInfoUserPartner
         {
           Partner = SyncPartner.Alison,
