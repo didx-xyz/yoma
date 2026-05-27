@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Http;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Entity.Models;
 using Yoma.Core.Domain.MyOpportunity.Models;
+using Yoma.Core.Domain.PartnerSync.Models;
 
 namespace Yoma.Core.Domain.MyOpportunity.Interfaces
 {
@@ -37,7 +38,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Interfaces
 
     Task PerformActionSaved(Guid opportunityId);
 
-    Task PerformActionNavigatedExternalLink(Guid opportunityId);
+    Task<SyncInfoEntity?> PerformActionNavigatedExternalLink(Guid opportunityId);
 
     bool ActionedSaved(Guid opportunityId);
 

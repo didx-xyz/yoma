@@ -7,6 +7,10 @@ namespace Yoma.Core.Domain.Core.Extensions
 {
   public static class FlurlExtensions
   {
+    #region Class Variables
+    private const string Error_ResponseEmpty = "Response is empty / null";
+    #endregion
+
     #region Public Members
     /// <summary>
     /// Creates a new FlurlRequest and sets the authorization header.
@@ -43,6 +47,11 @@ namespace Yoma.Core.Domain.Core.Extensions
     public static async Task<IFlurlResponse> EnsureSuccessStatusCodeAsync(this Task<IFlurlResponse> response, List<HttpStatusCode>? AdditionalSuccessStatusCodes = null)
     {
       IFlurlResponse resp;
+      HttpStatusCode statusCode;
+      string responseContent;
+
+      var successStatusCodes = AdditionalSuccessStatusCodes?.ToList() ?? [];
+      if (!successStatusCodes.Contains(HttpStatusCode.OK)) successStatusCodes.Add(HttpStatusCode.OK);
 
       try
       {
@@ -51,29 +60,42 @@ namespace Yoma.Core.Domain.Core.Extensions
       catch (FlurlHttpException ex)
       {
         if (ex.Call == null || ex.Call.Response == null)
-          throw new HttpClientException(HttpStatusCode.InternalServerError, $"Response is empty / null: {ex.Message}");
+          throw new HttpClientException(HttpStatusCode.InternalServerError, $"{Error_ResponseEmpty}: {ex.Message}");
 
         resp = ex.Call.Response;
-        var errorMessage = await resp.ResponseMessage.Content.ReadAsStringAsync();
-        if (string.IsNullOrEmpty(errorMessage)) errorMessage = resp.ResponseMessage.ReasonPhrase;
-        if (string.IsNullOrEmpty(errorMessage))
-          errorMessage = $"Response is empty / null: {ex.Message}";
+        statusCode = (HttpStatusCode)resp.StatusCode;
+        if (successStatusCodes.Contains(statusCode)) return resp;
 
-        throw new HttpClientException((HttpStatusCode)resp.StatusCode, errorMessage);
+        responseContent = await GetResponseContent(resp, ex.Message);
+        throw new HttpClientException(statusCode, responseContent);
       }
       catch (Exception ex)
       {
         throw new HttpClientException(HttpStatusCode.InternalServerError, ex.Message);
       }
 
-      var statusCode = (HttpStatusCode)resp.StatusCode;
-      var message = await resp.ResponseMessage.Content.ReadAsStringAsync();
-
-      var successStatusCodes = AdditionalSuccessStatusCodes ?? [];
-      if (!successStatusCodes.Contains(HttpStatusCode.OK)) successStatusCodes.Add(HttpStatusCode.OK);
+      statusCode = (HttpStatusCode)resp.StatusCode;
       if (successStatusCodes.Contains(statusCode)) return resp;
 
-      throw new HttpClientException(statusCode, message);
+      responseContent = await GetResponseContent(resp);
+      throw new HttpClientException(statusCode, responseContent);
+    }
+
+    private static async Task<string> GetResponseContent(IFlurlResponse response, string? fallbackMessage = null)
+    {
+      var responseContent = await response.ResponseMessage.Content.ReadAsStringAsync();
+
+      if (!string.IsNullOrWhiteSpace(responseContent))
+        return responseContent;
+
+      responseContent = response.ResponseMessage.ReasonPhrase;
+
+      if (!string.IsNullOrWhiteSpace(responseContent))
+        return responseContent;
+
+      fallbackMessage = fallbackMessage?.Trim();
+
+      return string.IsNullOrWhiteSpace(fallbackMessage) ? Error_ResponseEmpty : $"{Error_ResponseEmpty}: {fallbackMessage}";
     }
     #endregion
   }

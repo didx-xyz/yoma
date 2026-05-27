@@ -1939,19 +1939,22 @@ namespace Yoma.Core.Domain.Opportunity.Services
     #region Private Members
     /// <summary>
     /// Populates computed properties on the opportunity.
-    /// 
-    /// When <paramref name="baseOnly"/> is true, only essential computed fields are populated,
-    /// specifically the published state and pull-sync lock information. This is used in flows
-    /// where other computed values are already calculated (e.g., create/update operations or
-    /// direct retrieval scenarios such as status changes).
-    /// 
+    ///
+    /// When <paramref name="baseOnly"/> is true, only essential computed fields are populated:
+    /// the published state and partner synchronization information. Partner synchronization
+    /// information includes the sync type, lock state, partner external identifiers and the
+    /// opportunity's static/default external URL when available.
+    ///
+    /// This is used in flows where other computed values are already calculated, for example
+    /// create/update operations or direct retrieval scenarios such as status changes.
+    ///
     /// When <paramref name="baseOnly"/> is false, all computed properties are populated,
-    /// including reward balances and organization logo URL.
+    /// including organization logo URL.
     /// </summary>
     private void ParseComputed(Models.Opportunity opportunity, bool baseOnly = false)
     {
       opportunity.SetPublished();
-      opportunity.SyncedInfo = _syncStateService.ListSyncInfo(PartnerSync.EntityType.Opportunity, opportunity.Id);
+      opportunity.SyncedInfo = _syncStateService.ListSyncInfo(PartnerSync.EntityType.Opportunity, opportunity.Id, opportunity.URL);
 
       if (baseOnly) return;
 
@@ -2268,7 +2271,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
       bool abortSyncPushCreateIfPossible = false)
     {
       var partners = opportunityCurrent.SyncedInfo?.SyncType == SyncType.Push
-        ? opportunityCurrent.SyncedInfo.Partners.Distinct().ToList() : null;
+        ? opportunityCurrent.SyncedInfo.Partners
+        : null;
 
       if (partners == null || partners.Count == 0) return;
 

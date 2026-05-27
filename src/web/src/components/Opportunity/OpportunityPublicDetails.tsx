@@ -23,10 +23,7 @@ import {
 import Moment from "react-moment";
 import { toast } from "react-toastify";
 import { SettingType } from "~/api/models/common";
-import type {
-  MyOpportunityResponseVerify,
-  NavigateExternalLinkResult,
-} from "~/api/models/myOpportunity";
+import type { MyOpportunityResponseVerify } from "~/api/models/myOpportunity";
 import { type OpportunityInfo } from "~/api/models/opportunity";
 import {
   getVerificationStatus,
@@ -45,14 +42,12 @@ import { SignInButton } from "~/components/SignInButton";
 import { ApiErrors } from "~/components/Status/ApiErrors";
 import { InternalServerError } from "~/components/Status/InternalServerError";
 import { Loading } from "~/components/Status/Loading";
-import { LoadingInline } from "~/components/Status/LoadingInline";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import { OPPORTUNITY_QUERY_KEYS } from "~/hooks/useOpportunityMutations";
 import analytics from "~/lib/analytics";
 import {
   DATE_FORMAT_HUMAN,
-  OPPORTUNITY_TYPE_NANE_JOB,
   SETTING_USER_POPUP_LEAVINGYOMA,
 } from "~/lib/constants";
 import { userProfileAtom } from "~/lib/store";
@@ -88,11 +83,6 @@ const OpportunityPublicDetails: React.FC<{
     useState(false);
   const [isOppSaved, setIsOppSaved] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  // undefined = not yet fetched, null = fetched but no partner info
-  const [navigateResult, setNavigateResult] = useState<
-    NavigateExternalLinkResult | null | undefined
-  >(undefined);
-  const [navigateResultIsLoading, setNavigateResultIsLoading] = useState(false);
   const userProfile = useAtomValue(userProfileAtom);
   const setUserProfile = useSetAtom(userProfileAtom);
 
@@ -202,10 +192,6 @@ const OpportunityPublicDetails: React.FC<{
     }
   }, [opportunityInfo.id, opportunityInfo.title, user, isOppSaved]);
 
-  // URL resolution for "Proceed":
-  // - When dialog was shown: uses pre-fetched navigateResult (no extra API call).
-  // - When "Don't show again" is set (dialog skipped): calls API fresh on click.
-  // - Falls back to opportunityInfo.url on error or no partner URL.
   const onProceedToOpportunity = useCallback(async () => {
     if (!opportunityInfo.url) return;
 
@@ -215,14 +201,11 @@ const OpportunityPublicDetails: React.FC<{
 
     let redirectUrl = opportunityInfo.url;
 
-    if (user) {
+    if (user && opportunityInfo.syncedInfo?.syncType === "Pull") {
       try {
-        // Use pre-fetched result when available (navigateResult !== undefined),
-        // otherwise call the API directly (dontShowAgain path skips the dialog).
-        const result =
-          navigateResult === undefined
-            ? await performActionNavigateExternalLink(opportunityInfo.id)
-            : navigateResult;
+        const result = await performActionNavigateExternalLink(
+          opportunityInfo.id,
+        );
         const partnerUrl = result?.syncedInfo?.partners?.[0]?.url;
         if (partnerUrl) redirectUrl = partnerUrl;
       } catch {
@@ -246,8 +229,8 @@ const OpportunityPublicDetails: React.FC<{
     opportunityInfo.id,
     opportunityInfo.url,
     opportunityInfo.title,
+    opportunityInfo.syncedInfo,
     user,
-    navigateResult,
   ]);
 
   const onGoToOpportunity = useCallback(async () => {
@@ -264,29 +247,13 @@ const OpportunityPublicDetails: React.FC<{
     if (settingDontShowAgain) {
       await onProceedToOpportunity();
     } else {
-      // Reset result, open dialog, then fetch partner info in the background
-      setNavigateResult(undefined);
       setGotoOpportunityDialogVisible(true);
-      if (user) {
-        setNavigateResultIsLoading(true);
-        try {
-          const result = await performActionNavigateExternalLink(
-            opportunityInfo.id,
-          );
-          setNavigateResult(result);
-        } catch {
-          setNavigateResult(null);
-        } finally {
-          setNavigateResultIsLoading(false);
-        }
-      }
     }
   }, [
     userProfile,
     onProceedToOpportunity,
     opportunityInfo.id,
     opportunityInfo.title,
-    user,
   ]);
 
   const onOpportunityCompleted = useCallback(async () => {
@@ -457,138 +424,124 @@ const OpportunityPublicDetails: React.FC<{
                 </button>
               </div>
 
-              {/* LOADING */}
-              {navigateResultIsLoading && (
-                <div className="flex items-center justify-center">
-                  <div className="flex h-[300px] w-full flex-col items-center justify-center gap-1 bg-white">
-                    <LoadingInline />
-                  </div>
+              <div className="flex flex-col items-center justify-center gap-4">
+                <div className="border-green-dark -mt-11 flex h-18 w-18 items-center justify-center rounded-full bg-white shadow-lg">
+                  <FaExclamationTriangle className="text-yellow h-8 w-8" />
                 </div>
-              )}
 
-              {/* CONTENT */}
-              {!navigateResultIsLoading && (
-                <div className="flex flex-col items-center justify-center gap-4 p-4 md:p-0">
-                  <div className="border-green-dark -mt-11 flex h-18 w-18 items-center justify-center rounded-full bg-white shadow-lg">
-                    <FaExclamationTriangle className="text-yellow h-8 w-8" />
-                  </div>
-
-                  <div className="w-full space-y-4 px-8 text-center">
-                    <div className="font-semibold">
-                      You are now leaving Yoma!
-                    </div>
-                    <div className="bg-gray mt-2 flex items-start gap-2 rounded-lg p-3 text-left text-sm">
-                      <FaInfoCircle className="text-blue mt-0.5 h-4 w-4 shrink-0" />
-                      <span>
-                        You&apos;ll be redirected to{" "}
-                        <strong>
-                          {navigateResult?.syncedInfo?.partners?.[0]?.name ??
-                            opportunityInfo.organizationName}
-                        </strong>{" "}
-                        to continue this opportunity.{" "}
-                        {navigateResult?.syncedInfo?.syncType === "Pull" && (
-                          <>
-                            Your enrolment and completion may happen on their
-                            platform, and Yoma will sync your completion where
-                            supported.
-                          </>
-                        )}
-                      </span>
-                    </div>
-                    {opportunityInfo.verificationEnabled &&
-                      opportunityInfo.verificationMethod == "Manual" && (
-                        <div className="mt-2 flex items-start gap-2 rounded-lg border border-yellow-200 bg-yellow-50 p-3 text-left text-sm">
-                          <FaExclamationTriangle className="text-yellow mt-0.5 h-4 w-4 shrink-0" />
-                          <span>
-                            Remember to{" "}
-                            <strong>upload your completion certificate</strong>{" "}
-                            on this page upon finishing to earn your achievement
-                            {opportunityInfo?.type !==
-                              OPPORTUNITY_TYPE_NANE_JOB &&
-                              (opportunityInfo.zltoRewardEstimate ?? 0) > 0 && (
-                                <>
-                                  {" "}
-                                  &amp;{" "}
-                                  <strong>
-                                    {opportunityInfo.zltoRewardEstimate} ZLTO
-                                  </strong>
-                                </>
-                              )}
-                            .
-                          </span>
-                        </div>
+                <div className="w-full space-y-4 px-4 text-center">
+                  <div className="font-semibold">You are now leaving Yoma!</div>
+                  <div className="bg-gray mt-2 flex items-start gap-2 rounded-lg p-3 text-left text-sm">
+                    <FaInfoCircle className="text-blue mt-0.5 h-4 w-4 shrink-0" />
+                    <span>
+                      You&apos;ll be redirected to{" "}
+                      <strong>
+                        {opportunityInfo?.syncedInfo?.partners?.[0] ??
+                          opportunityInfo.organizationName}
+                      </strong>{" "}
+                      to continue this opportunity.{" "}
+                      {opportunityInfo.syncedInfo?.syncType === "Pull" && (
+                        <>
+                          Your enrolment and completion may happen on their
+                          platform, and Yoma will sync your completion where
+                          supported.
+                        </>
                       )}
-
-                    <div className="mt-2 flex items-start gap-2 rounded-lg border border-yellow-200 bg-yellow-50 p-3 text-left text-sm">
-                      <FaExclamationTriangle className="text-yellow mt-0.5 h-4 w-4 shrink-0" />
-                      <span>
-                        Be mindful of external sites&apos; privacy policy and
-                        keep your data private.
-                      </span>
-                    </div>
-                    <div className="text-gray-dark italic">
-                      <FormCheckbox
-                        id="dontShowAgain"
-                        label="Do not show this message again"
-                        inputProps={{
-                          onChange: (e) => {
-                            onUpdateLeavingYomaSetting(e.target.checked).then(
-                              () => null,
-                            );
-                          },
-                        }}
-                      />
-                    </div>
+                    </span>
                   </div>
 
-                  <div className="my-3 flex w-full grow flex-col justify-center gap-4 px-4 md:flex-row">
-                    <button
-                      type="button"
-                      className="btn btn-primary hover:bg-purple order-first text-white normal-case hover:brightness-110 md:order-last md:flex-1"
-                      onClick={onProceedToOpportunity}
-                      disabled={!opportunityInfo.url}
-                    >
-                      <Image
-                        src={iconOpen}
-                        alt="Icon Open"
-                        width={20}
-                        className="h-auto"
-                        sizes="100vw"
-                        priority={true}
-                      />
-                      <span className="ml-1">Proceed</span>
-                    </button>
+                  {opportunityInfo.verificationEnabled &&
+                    opportunityInfo.verificationMethod == "Manual" && (
+                      <div className="mt-2 flex items-start gap-2 rounded-lg border border-yellow-200 bg-yellow-50 p-3 text-left text-sm">
+                        <FaExclamationTriangle className="text-yellow mt-0.5 h-4 w-4 shrink-0" />
+                        <span>
+                          Remember to{" "}
+                          <strong>upload your completion certificate</strong> on
+                          this page upon finishing to earn your achievement
+                          {(opportunityInfo.zltoRewardEstimate ?? 0) > 0 && (
+                            <>
+                              {" "}
+                              &amp;{" "}
+                              <strong>
+                                {opportunityInfo.zltoRewardEstimate} ZLTO
+                              </strong>
+                            </>
+                          )}
+                          .
+                        </span>
+                      </div>
+                    )}
 
-                    <button
-                      type="button"
-                      className={
-                        "btn border-purple text-purple btn-outline hover:bg-purple rounded-full bg-white normal-case hover:border-transparent hover:text-white md:flex-1" +
-                        `${
-                          isOppSaved
-                            ? " bg-yellow-light text-yellow hover:bg-yellow-light hover:text-yellow border-none"
-                            : ""
-                        }`
-                      }
-                      onClick={onUpdateSavedOpportunity}
-                    >
-                      <IoMdBookmark size="20" />
+                  <div className="mt-2 flex items-start gap-2 rounded-lg border border-yellow-200 bg-yellow-50 p-3 text-left text-sm">
+                    <FaExclamationTriangle className="text-yellow mt-0.5 h-4 w-4 shrink-0" />
+                    <span>
+                      Be mindful of external sites&apos; privacy policy and keep
+                      your data private.
+                    </span>
+                  </div>
 
-                      <span className="ml-1">
-                        {isOppSaved ? "Opportunty saved" : "Save opportunity"}
-                      </span>
-                    </button>
-
-                    <button
-                      type="button"
-                      className="btn border-purple text-purple hover:bg-purple order-last rounded-full bg-white normal-case hover:border-transparent hover:text-white md:order-first md:flex-1"
-                      onClick={() => setGotoOpportunityDialogVisible(false)}
-                    >
-                      <IoMdClose size="20"></IoMdClose>
-                      Close
-                    </button>
+                  <div className="text-gray-dark text-sm italic md:text-base">
+                    <FormCheckbox
+                      id="dontShowAgain"
+                      label="Do not show this message again"
+                      inputProps={{
+                        onChange: (e) => {
+                          onUpdateLeavingYomaSetting(e.target.checked).then(
+                            () => null,
+                          );
+                        },
+                      }}
+                    />
                   </div>
                 </div>
-              )}
+
+                <div className="my-3 flex w-full grow flex-col justify-center gap-4 px-4 md:flex-row">
+                  <button
+                    type="button"
+                    className="btn btn-primary hover:bg-purple order-first text-white normal-case hover:brightness-110 md:order-last md:flex-1"
+                    onClick={onProceedToOpportunity}
+                    disabled={!opportunityInfo.url}
+                  >
+                    <Image
+                      src={iconOpen}
+                      alt="Icon Open"
+                      width={20}
+                      className="h-auto"
+                      sizes="100vw"
+                      priority={true}
+                    />
+                    <span className="ml-1">Proceed</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    className={
+                      "btn border-purple text-purple btn-outline hover:bg-purple rounded-full bg-white normal-case hover:border-transparent hover:text-white md:flex-1" +
+                      `${
+                        isOppSaved
+                          ? " bg-yellow-light text-yellow hover:bg-yellow-light hover:text-yellow border-none"
+                          : ""
+                      }`
+                    }
+                    onClick={onUpdateSavedOpportunity}
+                  >
+                    <IoMdBookmark size="20" />
+
+                    <span className="ml-1">
+                      {isOppSaved ? "Opportunty saved" : "Save opportunity"}
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    className="btn border-purple text-purple hover:bg-purple order-last rounded-full bg-white normal-case hover:border-transparent hover:text-white md:order-first md:flex-1"
+                    onClick={() => setGotoOpportunityDialogVisible(false)}
+                  >
+                    <IoMdClose size="20"></IoMdClose>
+                    Close
+                  </button>
+                </div>
+              </div>
             </div>
           </CustomModal>
 

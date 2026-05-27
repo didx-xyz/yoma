@@ -12,6 +12,7 @@ using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Lookups.Interfaces;
 using Yoma.Core.Domain.Opportunity;
 using Yoma.Core.Domain.PartnerSync.Interfaces.Lookups;
+using Yoma.Core.Domain.PartnerSync.Models;
 
 namespace Yoma.Core.Domain.PartnerSync.Services.Lookups
 {
@@ -115,7 +116,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services.Lookups
       Opportunity.Models.Opportunity opportunityCurrent,
       UpdateAction action,
       Dictionary<string, object?> updatesToEval,
-      List<SyncPartner> partners)
+      List<SyncInfoEntityPartner> partners)
     {
       ArgumentNullException.ThrowIfNull(opportunityCurrent);
       ArgumentNullException.ThrowIfNull(updatesToEval);
@@ -125,7 +126,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services.Lookups
 
       if (partners.Count == 0) return reasons;
 
-      foreach (var partner in partners.Distinct())
+      foreach (var partner in partners.Select(o => o.Partner).Distinct())
       {
         switch (partner)
         {

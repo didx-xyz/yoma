@@ -20,11 +20,7 @@ import {
 } from "react-icons/fa";
 import { IoIosSettings, IoMdWarning } from "react-icons/io";
 import { toast } from "react-toastify";
-import {
-  Status,
-  type OpportunityInfo,
-  type SyncInfo,
-} from "~/api/models/opportunity";
+import { Status, type OpportunityInfo } from "~/api/models/opportunity";
 import {
   DropdownMenu,
   DropdownMenuDisplayStyle,
@@ -32,7 +28,7 @@ import {
 import { downloadVerificationFilesAdmin } from "~/api/services/myOpportunities";
 import { Loading } from "~/components/Status/Loading";
 import { useConfirmationModalContext } from "~/context/modalConfirmationContext";
-import { DEV_MOCK_PULL_SYNC_OPPORTUNITY_ID, ROLE_ADMIN } from "~/lib/constants";
+import { ROLE_ADMIN } from "~/lib/constants";
 import { analytics } from "~/lib/analytics";
 import { getSafeUrl } from "~/lib/utils";
 
@@ -41,32 +37,6 @@ export const SYNC_PARTNER_LABELS: Record<string, string> = {
   Jobberman: "Jobberman",
   Alison: "Alison",
 };
-
-/**
- * Returns the effective SyncInfo for an opportunity.
- * Falls back to a dev mock when DEV_MOCK_PULL_SYNC_OPPORTUNITY_ID matches.
- * Remove the mock branch once the API populates syncedInfo.
- */
-export function getEffectiveSyncedInfo(
-  opportunity: OpportunityInfo,
-): SyncInfo | null {
-  const raw = opportunity.syncedInfo;
-  if (raw) {
-    return typeof raw === "string" ? (JSON.parse(raw) as SyncInfo) : raw;
-  }
-  // 🧪 DEV MOCK
-  if (
-    DEV_MOCK_PULL_SYNC_OPPORTUNITY_ID &&
-    opportunity.id === DEV_MOCK_PULL_SYNC_OPPORTUNITY_ID
-  ) {
-    return {
-      syncType: "Pull",
-      partners: ["SAYouth"],
-      locked: true,
-    };
-  }
-  return null;
-}
 
 const PULL_SYNC_TOOLTIP =
   "This opportunity is managed externally by a sync provider and cannot be modified here.";
@@ -128,8 +98,7 @@ export const OpportunityActions: React.FC<OpportunityActionsProps> = ({
   const isAdmin = user?.roles.includes(ROLE_ADMIN);
 
   // Pull-sync state
-  const syncedInfo = getEffectiveSyncedInfo(opportunity);
-  const isPullManaged = syncedInfo?.syncType === "Pull";
+  const isPullManaged = opportunity.syncedInfo?.syncType === "Pull";
 
   const statusMutation = useOpportunityStatusMutation({
     opportunityId: opportunity.id,

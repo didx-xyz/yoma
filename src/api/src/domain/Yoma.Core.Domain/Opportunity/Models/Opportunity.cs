@@ -129,9 +129,13 @@ namespace Yoma.Core.Domain.Opportunity.Models
     public bool? Hidden { get; set; }
 
     /// <summary>
-    /// Identifier assigned by an external partner for this opportunity when it is pushed from Yoma.
-    /// This value is stored to support subsequent synchronization operations such as updates or deletions
-    /// against the partner system. It represents the partner's reference to this Yoma opportunity.
+    /// External import identifier for this opportunity, when available.
+    ///
+    /// This value is used to track opportunities created or updated through import-based
+    /// processes, such as CSV imports. It is not the partner synchronization identifier.
+    ///
+    /// Partner synchronization identifiers are stored separately in the partner sync
+    /// processing state.
     /// </summary>
     [JsonIgnore]
     public string? ExternalId { get; set; }

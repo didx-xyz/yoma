@@ -89,7 +89,6 @@ import {
   ACCEPTED_IMAGE_TYPES_LABEL,
   ACCEPTED_VIDEO_TYPES_LABEL,
   DATE_FORMAT_SYSTEM,
-  DEV_MOCK_PULL_SYNC_OPPORTUNITY_ID,
   MAX_FILE_SIZE_LABEL,
   MAX_FILE_VIDEO_SIZE_LABEL,
   OPPORTUNITY_TYPE_ID_JOB,
@@ -157,10 +156,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       const data = await getOpportunityById(opportunityId, context);
 
       // 👇 check if pull-synced (externally managed) — block editing
-      const pullSynced =
-        data.syncedInfo?.syncType === "Pull" ||
-        (!!DEV_MOCK_PULL_SYNC_OPPORTUNITY_ID &&
-          opportunityId === DEV_MOCK_PULL_SYNC_OPPORTUNITY_ID);
+      const pullSynced = data.syncedInfo?.syncType === "Pull";
 
       if (pullSynced) {
         return {

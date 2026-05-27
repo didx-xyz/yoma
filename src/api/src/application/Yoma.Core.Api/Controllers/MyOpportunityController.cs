@@ -8,6 +8,7 @@ using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.MyOpportunity;
 using Yoma.Core.Domain.MyOpportunity.Interfaces;
 using Yoma.Core.Domain.MyOpportunity.Models;
+using Yoma.Core.Domain.PartnerSync.Models;
 
 namespace Yoma.Core.Api.Controllers
 {
@@ -260,17 +261,17 @@ namespace Yoma.Core.Api.Controllers
 
     [SwaggerOperation(Summary = "Track navigating to the external link of an opportunity (Authenticated User)")]
     [HttpPut("action/{opportunityId}/navigateExternalLink")]
-    [ProducesResponseType((int)HttpStatusCode.OK)]
+    [ProducesResponseType(typeof(SyncInfoEntity), (int)HttpStatusCode.OK)]
     [Authorize(Roles = $"{Constants.Role_User}")]
     public async Task<IActionResult> PerformActionNavigatedExternalLink([FromRoute] Guid opportunityId)
     {
       if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(PerformActionNavigatedExternalLink));
 
-      await _myOpportunityService.PerformActionNavigatedExternalLink(opportunityId);
+      var result = await _myOpportunityService.PerformActionNavigatedExternalLink(opportunityId);
 
       if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(PerformActionNavigatedExternalLink));
 
-      return StatusCode((int)HttpStatusCode.OK);
+      return StatusCode((int)HttpStatusCode.OK, result);
     }
 
     [SwaggerOperation(Summary = "Check if an opportunity is saved (Authenticated User)")]

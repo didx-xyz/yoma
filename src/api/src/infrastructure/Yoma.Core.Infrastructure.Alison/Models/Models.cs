@@ -29,6 +29,72 @@ namespace Yoma.Core.Infrastructure.Alison.Models
     [JsonIgnore]
     public DateTimeOffset DateExpire => Date.AddSeconds(Math.Max(ExpiresIn - 5, 0));
   }
+
+  public sealed class UserRegisterRequest
+  {
+    [JsonProperty("email")]
+    public string Email { get; set; } = null!;
+
+    [JsonProperty("firstname")]
+    public string FirstName { get; set; } = null!;
+
+    [JsonProperty("lastname")]
+    public string LastName { get; set; } = null!;
+
+    [JsonProperty("city")]
+    public string City { get; set; } = null!;
+
+    [JsonProperty("country")]
+    public string Country { get; set; } = null!;
+  }
+
+  public sealed class UserLoginRequest
+  {
+    [JsonProperty("email")]
+    public string Email { get; set; } = null!;
+  }
+
+  public sealed class UserAuthenticationResponse
+  {
+    [JsonProperty("data")]
+    public UserAuthenticationResponseData Data { get; set; } = null!;
+
+    [JsonIgnore]
+    public string? ResolvedToken => Data?.Token;
+
+    [JsonIgnore]
+    public string? ResolvedExternalId => Data?.User?.Id?.ToString();
+  }
+
+  public sealed class UserAuthenticationResponseData
+  {
+    [JsonProperty("token")]
+    public string Token { get; set; } = null!;
+
+    [JsonProperty("token_type")]
+    public string? TokenType { get; set; }
+
+    [JsonProperty("expires_in")]
+    public int? ExpiresIn { get; set; }
+
+    [JsonProperty("user")]
+    public UserAuthenticationResponseUser User { get; set; } = null!;
+  }
+
+  public sealed class UserAuthenticationResponseUser
+  {
+    [JsonProperty("id")]
+    public object Id { get; set; } = null!;
+
+    [JsonProperty("email")]
+    public string? Email { get; set; }
+
+    [JsonProperty("firstname")]
+    public string? FirstName { get; set; }
+
+    [JsonProperty("lastname")]
+    public string? LastName { get; set; }
+  }
   #endregion
 
   #region Shared responses / pagination
@@ -409,3 +475,5 @@ namespace Yoma.Core.Infrastructure.Alison.Models
   }
   #endregion
 }
+
+

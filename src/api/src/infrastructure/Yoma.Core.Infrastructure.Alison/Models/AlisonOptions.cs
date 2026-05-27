@@ -17,6 +17,8 @@ namespace Yoma.Core.Infrastructure.Alison.Models
     /// </summary>
     public string BaseUrl { get; set; } = null!;
 
+    public string WebBaseUrl { get; set; } = null!;
+
     /// <summary>
     /// API path used to request an access token.
     /// </summary>
@@ -31,6 +33,16 @@ namespace Yoma.Core.Infrastructure.Alison.Models
     /// API path used to retrieve completed Alison course data for verification synchronization.
     /// </summary>
     public string CompletedDataPath { get; set; } = null!;
+
+    /// <summary>
+    /// API path used to register/link a user for partner-authenticated flows.
+    /// </summary>
+    public string UserRegisterPath { get; set; } = null!;
+
+    /// <summary>
+    /// API path used to authenticate an already linked user for partner-authenticated flows.
+    /// </summary>
+    public string UserLoginPath { get; set; } = null!;
 
     /// <summary>
     /// Cron expression used to schedule Alison course catalogue refreshes.

@@ -8,6 +8,17 @@ namespace Yoma.Core.Domain.PartnerSync.Interfaces.Provider
   public interface ISyncProviderClient { }
 
   /// <summary>
+  /// Provides partner-specific user authentication or linking support for external partner flows.
+  /// </summary>
+  public interface ISyncProviderClientUserAuthentication : ISyncProviderClient
+  {
+    /// <summary>
+    /// Authenticates or links the supplied Yoma user with the external partner.
+    /// </summary>
+    Task<SyncResultUserAuthentication> Authenticate(SyncRequestUserAuthentication request);
+  }
+
+  /// <summary>
   /// Provider capability for pulling partner-managed entity records.
   /// 
   /// The entity type is supplied by the partner sync configuration / processing context

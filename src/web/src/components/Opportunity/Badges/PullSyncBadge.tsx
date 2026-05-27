@@ -1,16 +1,14 @@
 import { type OpportunityInfo } from "~/api/models/opportunity";
-import { getEffectiveSyncedInfo } from "~/components/Opportunity/OpportunityActions";
 
 interface PullSyncBadgeProps {
   opportunity: OpportunityInfo;
 }
 
 const PullSyncBadge: React.FC<PullSyncBadgeProps> = ({ opportunity }) => {
-  const si = getEffectiveSyncedInfo(opportunity);
-  if (!si || si.syncType !== "Pull") return null;
+  if (!opportunity || opportunity.syncedInfo?.syncType !== "Pull") return null;
 
-  const tip = si.partners?.length
-    ? `Managed by ${si.partners.join(", ")}`
+  const tip = opportunity.syncedInfo?.partners?.length
+    ? `Managed by ${opportunity.syncedInfo.partners.join(", ")}`
     : "Externally managed";
 
   return (
