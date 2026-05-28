@@ -8,7 +8,7 @@ const PullSyncBadge: React.FC<PullSyncBadgeProps> = ({ opportunity }) => {
   if (!opportunity || opportunity.syncedInfo?.syncType !== "Pull") return null;
 
   const tip = opportunity.syncedInfo?.partners?.length
-    ? `Managed by ${opportunity.syncedInfo.partners.join(", ")}`
+    ? `Managed by ${opportunity.syncedInfo.partners.map((p) => p.partner).join(", ")}`
     : "Externally managed";
 
   return (
