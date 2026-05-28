@@ -3,6 +3,7 @@ using Flurl;
 using Flurl.Http;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using System.Globalization;
 using System.Net;
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Extensions;
@@ -220,7 +221,6 @@ namespace Yoma.Core.Infrastructure.Alison.Client
         _logger.LogDebug(
           "Listing Alison completed course verification sync items for environment '{environment}' from '{dateStart}' to '{dateEnd}', page number '{pageNumber}', page size '{pageSize}'",
           _environmentProvider.Environment, filter.DateStart, filter.DateEnd, filter.PageNumber, filter.PageSize);
-      _ = await ListCompletedCoursesFromApi(filter);
 
       return !_appSettings.PartnerSyncEnabledEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment)
         ? ListCompletedCoursesFromEmbeddedResource(filter)
@@ -824,9 +824,14 @@ namespace Yoma.Core.Infrastructure.Alison.Client
     {
       ArgumentNullException.ThrowIfNull(course);
 
-      var intervalName = ResolveCommitmentIntervalName(course.DurationAvg);
+      return GetCommitment(course.DurationAvg);
+    }
+
+    private (Domain.Lookups.Models.TimeInterval Interval, short Count) GetCommitment(string? durationAvg)
+    {
+      var intervalName = ResolveCommitmentIntervalName(durationAvg);
       var interval = _timeIntervalService.GetByName(intervalName);
-      var count = ResolveCommitmentIntervalCount(course.DurationAvg);
+      var count = ResolveCommitmentIntervalCount(durationAvg);
 
       return (interval, count);
     }
@@ -892,9 +897,11 @@ namespace Yoma.Core.Infrastructure.Alison.Client
 
       var dateEnd = filter.DateEnd ?? DateTimeOffset.UtcNow;
 
+      // Embedded completed-course data is only used when partner sync is disabled.
+      // Always return the embedded completed records so local/dev validation does not depend
+      // on deployment time, scheduler timing, or checkpoint windows.
       var query = completedCourses
         .Where(item => item.CompletedAt.HasValue)
-        .Where(item => item.CompletedAt!.Value >= filter.DateStart && item.CompletedAt.Value <= dateEnd)
         .OrderBy(item => item.CompletedAt)
         .ThenBy(item => item.UserId)
         .ThenBy(item => item.CourseId)
@@ -991,7 +998,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
         .ReceiveJson<Response<CompletedCourse>>();
     }
 
-    private static SyncItemVerification ToSyncItem(CompletedCourse item)
+    private SyncItemVerification ToSyncItem(CompletedCourse item)
     {
       ArgumentNullException.ThrowIfNull(item);
 
@@ -1001,14 +1008,65 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       if (item.CourseId <= 0)
         throw new InvalidOperationException("Alison completed course id expected");
 
+      var commitmentInterval = GetVerificationCommitmentInterval(item);
+      var dateEnd = item.CompletedAt ?? item.LastAccess ?? item.UpdatedAt;
+
       return new SyncItemVerification
       {
         UserExternalId = item.UserId.ToString(),
         EntityExternalId = item.CourseId.ToString(),
         UserEmail = item.Email,
-        DateStart = item.FirstAccess ?? item.EnrollmentDate ?? item.CreatedAt ?? item.CompletedAt,
-        DateEnd = item.CompletedAt ?? item.LastAccess ?? item.UpdatedAt,
-        DateCompleted = item.CompletedAt
+        UserPhoneNumber = null,
+
+        // Commitment is resolved in this order:
+        // 1. duration_avg: preferred, aligns verification with the imported opportunity commitment.
+        // 2. total_time_spent: fallback only, as Alison can return values that exceed the course estimate.
+        // 3. first_access/enrollment/created dates: final fallback only when no commitment can be resolved.
+        CommitmentInterval = commitmentInterval,
+        DateStart = commitmentInterval == null ? item.FirstAccess ?? item.EnrollmentDate ?? item.CreatedAt : null,
+        DateEnd = dateEnd,
+        DateCompleted = item.CompletedAt ?? dateEnd
+      };
+    }
+
+    private SyncItemVerificationCommitmentInterval? GetVerificationCommitmentInterval(CompletedCourse item)
+    {
+      ArgumentNullException.ThrowIfNull(item);
+
+      if (!string.IsNullOrWhiteSpace(item.DurationAvg))
+      {
+        var (interval, count) = GetCommitment(item.DurationAvg);
+
+        return new SyncItemVerificationCommitmentInterval
+        {
+          Id = interval.Id,
+          Count = count
+        };
+      }
+
+      return GetVerificationCommitmentIntervalFromTotalTimeSpent(item.TotalTimeSpent);
+    }
+
+    private SyncItemVerificationCommitmentInterval? GetVerificationCommitmentIntervalFromTotalTimeSpent(string? totalTimeSpent)
+    {
+      totalTimeSpent = totalTimeSpent?.Trim();
+
+      if (string.IsNullOrWhiteSpace(totalTimeSpent))
+        return null;
+
+      if (!TimeSpan.TryParse(totalTimeSpent, CultureInfo.InvariantCulture, out var value))
+        return null;
+
+      if (value <= TimeSpan.Zero)
+        return null;
+
+      var interval = _timeIntervalService.GetByName(TimeIntervalOption.Hour.ToString());
+      var count = (short)Math.Clamp((int)Math.Ceiling(value.TotalHours), 1, short.MaxValue);
+
+      return new SyncItemVerificationCommitmentInterval
+      {
+        Id = interval.Id,
+        Count = count
       };
     }
 

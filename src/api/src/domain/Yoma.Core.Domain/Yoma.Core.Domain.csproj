@@ -47,7 +47,7 @@
     <PackageReference Include="NSwag.Annotations" Version="14.7.1" />
     <PackageReference Include="QRCoder" Version="1.8.0" />
     <PackageReference Include="Sentry.AspNetCore" Version="6.5.0" />
-    <PackageReference Include="StackExchange.Redis" Version="2.13.1" />
+    <PackageReference Include="StackExchange.Redis" Version="2.13.17" />
   </ItemGroup>
 
 </Project>

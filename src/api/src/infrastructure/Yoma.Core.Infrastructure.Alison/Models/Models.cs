@@ -1,4 +1,5 @@
 using Newtonsoft.Json;
+using Yoma.Core.Domain.Core.Converters;
 
 namespace Yoma.Core.Infrastructure.Alison.Models
 {
@@ -235,12 +236,15 @@ namespace Yoma.Core.Infrastructure.Alison.Models
     public string? SecondaryCipCode { get; set; }
 
     [JsonProperty("published_at")]
+    [JsonConverter(typeof(UtcDateTimeOffsetConverter))]
     public DateTimeOffset? PublishedAt { get; set; }
 
     [JsonProperty("created_at")]
+    [JsonConverter(typeof(UtcDateTimeOffsetConverter))]
     public DateTimeOffset? CreatedAt { get; set; }
 
     [JsonProperty("updated_at")]
+    [JsonConverter(typeof(UtcDateTimeOffsetConverter))]
     public DateTimeOffset? UpdatedAt { get; set; }
 
     public string? GetName(string preferredLocale = "en")
@@ -307,9 +311,11 @@ namespace Yoma.Core.Infrastructure.Alison.Models
     public List<Category> Subcategories { get; set; } = [];
 
     [JsonProperty("created_at")]
+    [JsonConverter(typeof(UtcDateTimeOffsetConverter))]
     public DateTimeOffset? CreatedAt { get; set; }
 
     [JsonProperty("updated_at")]
+    [JsonConverter(typeof(UtcDateTimeOffsetConverter))]
     public DateTimeOffset? UpdatedAt { get; set; }
 
     public string? GetName(string preferredLocale = "en")
@@ -371,9 +377,11 @@ namespace Yoma.Core.Infrastructure.Alison.Models
     public List<TagTranslation> Translations { get; set; } = [];
 
     [JsonProperty("created_at")]
+    [JsonConverter(typeof(UtcDateTimeOffsetConverter))]
     public DateTimeOffset? CreatedAt { get; set; }
 
     [JsonProperty("updated_at")]
+    [JsonConverter(typeof(UtcDateTimeOffsetConverter))]
     public DateTimeOffset? UpdatedAt { get; set; }
 
     public string? GetName(string preferredLocale = "en")
@@ -438,12 +446,15 @@ namespace Yoma.Core.Infrastructure.Alison.Models
     public string? DurationAvg { get; set; }
 
     [JsonProperty("first_access")]
+    [JsonConverter(typeof(UtcDateTimeOffsetConverter))]
     public DateTimeOffset? FirstAccess { get; set; }
 
     [JsonProperty("enrollment_date")]
+    [JsonConverter(typeof(UtcDateTimeOffsetConverter))]
     public DateTimeOffset? EnrollmentDate { get; set; }
 
     [JsonProperty("last_access")]
+    [JsonConverter(typeof(UtcDateTimeOffsetConverter))]
     public DateTimeOffset? LastAccess { get; set; }
 
     [JsonProperty("total_time_spent")]
@@ -459,15 +470,19 @@ namespace Yoma.Core.Infrastructure.Alison.Models
     public string? Scores { get; set; }
 
     [JsonProperty("published_at")]
+    [JsonConverter(typeof(UtcDateTimeOffsetConverter))]
     public DateTimeOffset? PublishedAt { get; set; }
 
     [JsonProperty("completed_at")]
+    [JsonConverter(typeof(UtcDateTimeOffsetConverter))]
     public DateTimeOffset? CompletedAt { get; set; }
 
     [JsonProperty("created_at")]
+    [JsonConverter(typeof(UtcDateTimeOffsetConverter))]
     public DateTimeOffset? CreatedAt { get; set; }
 
     [JsonProperty("updated_at")]
+    [JsonConverter(typeof(UtcDateTimeOffsetConverter))]
     public DateTimeOffset? UpdatedAt { get; set; }
 
     [JsonProperty("has_certificate")]
