@@ -5,8 +5,8 @@ services:
     image: ${REGISTRY:-local}/yoma-web:${YOUTH_TAG:-latest}
     container_name: yoma-web
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ../..
+      dockerfile: src/web/Dockerfile
       args:
         # CLIENT VARIABLES
         - NEXT_PUBLIC_ENVIRONMENT=local

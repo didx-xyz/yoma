@@ -1,0 +1,19 @@
+# Ignore everything
+**
+
+# Except the following
+!package.json
+!pnpm-lock.yaml
+!pnpm-workspace.yaml
+!src/
+!src/web/
+!src/web/**
+
+# Re-exclude noise inside src/web
+src/web/node_modules
+src/web/.next
+src/web/yarn.lock
+src/web/.yarnrc.yml
+src/web/.env
+src/web/.env.local
+src/web/.env.*.local

@@ -1,25 +1,32 @@
-##### DEPENDENCIES
-FROM node:24-alpine AS deps
+##### BASE — shared setup for all stages
+FROM docker.io/node:24-alpine AS base
 RUN apk add --no-cache libc6-compat openssl
 RUN corepack enable
 WORKDIR /app
 
-# Install dependencies based on the preferred package manager
-COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* .yarnrc.yml* ./
+##### DEPENDENCIES — install full workspace, then deploy yoma-web in isolation
+FROM base AS deps
+# Workspace files (build context is repo root)
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY src/web/package.json ./src/web/
+# The explicit install is required so the root `prepare` script (husky) runs
+# with husky already present. `pnpm deploy` alone re-runs the prepare hook in
+# the deploy dir, where husky has been filtered out, and fails.
+RUN pnpm install --filter yoma-web --frozen-lockfile
 
-RUN \
-  if [ -f yarn.lock ]; then yarn install --immutable; \
-  elif [ -f package-lock.json ]; then npm ci; \
-  elif [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm i; \
-  else echo "Lockfile not found." && exit 1; \
-  fi
+# `pnpm deploy` materialises a self-contained directory containing only
+# yoma-web and its dependencies (root devDeps like cypress/husky are excluded).
+RUN pnpm deploy --filter=yoma-web --legacy /deploy
 
 ##### BUILDER
-FROM node:24-alpine AS builder
-RUN corepack enable
-WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
-COPY . .
+FROM base AS builder
+# Bring in the isolated, yoma-web-only node_modules
+COPY --from=deps /deploy/node_modules ./src/web/node_modules
+COPY --from=deps /deploy/package.json ./src/web/package.json
+# Source files
+COPY src/web ./src/web
+
+WORKDIR /app/src/web
 
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV CI=true
@@ -32,35 +39,27 @@ ENV NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=${NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}
 ARG NEXT_PUBLIC_GA_MEASUREMENT_ID
 ENV NEXT_PUBLIC_GA_MEASUREMENT_ID=${NEXT_PUBLIC_GA_MEASUREMENT_ID}
 
-RUN \
-  if [ -f yarn.lock ]; then SKIP_ENV_VALIDATION=1 yarn build; \
-  elif [ -f package-lock.json ]; then SKIP_ENV_VALIDATION=1 npm run build; \
-  elif [ -f pnpm-lock.yaml ]; then corepack enable pnpm && SKIP_ENV_VALIDATION=1 pnpm run build; \
-  else echo "Lockfile not found." && exit 1; \
-  fi
+RUN SKIP_ENV_VALIDATION=1 node_modules/.bin/next build --webpack
 
 # Set read-only permissions for the build assets
-RUN chmod -R a-w /app/.next/standalone
-RUN chmod -R a-w /app/.next/static
+RUN chmod -R a-w .next/standalone
+RUN chmod -R a-w .next/static
 
 ##### RUNNER
-FROM node:24-alpine AS runner
-WORKDIR /app
+FROM base AS runner
 
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
+RUN addgroup --system --gid 1001 nodejs \
+  && adduser --system --uid 1001 nextjs
 
-COPY --from=builder /app/next.config.mjs ./
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/package.json ./package.json
-
-# Fix for https://sonarcloud.io/organizations/didx-xyz/rules?open=docker%3AS6504&rule_key=docker%3AS6504
-# Copy files without changing ownership to nextjs
-COPY --from=builder /app/.next/standalone ./
-COPY --from=builder /app/.next/static ./.next/static
+# Without a workspace at build time, Next.js standalone output is rooted at the
+# package directory: server.js, .next/, node_modules/ all sit at the root of
+# /app/src/web/.next/standalone.
+COPY --from=builder /app/src/web/.next/standalone ./
+COPY --from=builder /app/src/web/public ./public
+COPY --from=builder /app/src/web/.next/static ./.next/static
 
 # Next.js Image needs the .next/cache directory to be writable
 RUN mkdir -p ./.next/cache && chown nextjs:nodejs ./.next/cache

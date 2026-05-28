@@ -85,20 +85,24 @@ jobs:
             changes:
               - '${{ matrix.dir }}/**'
 
-      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0 # zizmor: ignore[cache-poisoning] no cache: input so no caching
+      - uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151 # v4.0.1
         if: (steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch') && matrix.lang == 'js'
         with:
-          node-version: 24
-      - run: corepack enable
+          install: true
+          cache: true
+      - name: Resolve pnpm store path
+        id: pnpm-store
         if: (steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch') && matrix.lang == 'js'
+        run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
       - uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5 # zizmor: ignore[cache-poisoning] lint-only cache, no production impact
         if: (steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch') && matrix.lang == 'js'
         with:
-          path: ${{ matrix.dir }}/node_modules
-          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
-      - run: yarn install --immutable
+          path: |
+            node_modules
+            ${{ steps.pnpm-store.outputs.path }}
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
+      - run: pnpm install --frozen-lockfile
         if: (steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch') && matrix.lang == 'js'
-        working-directory: ${{ matrix.dir }}
 
       - uses: actions/setup-dotnet@c2fa09f4bde5ebb9d1777cf28262a3eb3db3ced7 # v5.2.0
         if: (steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch') && matrix.lang == 'cs'
@@ -137,7 +141,7 @@ jobs:
             file: ./src/api/Dockerfile
             buildArgs: ""
           - image: yoma-web
-            context: ./src/web
+            context: .
             helm: ./helm/yoma-web
             file: ./src/web/Dockerfile
             buildArgs: |-
@@ -212,7 +216,7 @@ jobs:
             file: ./src/api/Dockerfile
             buildArgs: ""
           - image: yoma-web
-            context: ./src/web
+            context: .
             helm: ./helm/yoma-web
             file: ./src/web/Dockerfile
             buildArgs: |-
@@ -380,12 +384,11 @@ jobs:
           API_TAG: ${{ steps.filter.outputs.api == 'true' && needs.docker-push.outputs.image_version || 'latest' }}
           YOUTH_TAG: ${{ steps.filter.outputs.web == 'true' && needs.docker-push.outputs.image_version || 'latest' }}
 
-      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0 # zizmor: ignore[cache-poisoning] no cache: input so no caching
+      - uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151 # v4.0.1
         if: steps.should-run.outputs.run == 'true'
         with:
-          node-version: 24
-      - run: corepack enable
-        if: steps.should-run.outputs.run == 'true'
+          install: true
+          cache: true
       - uses: cypress-io/github-action@dace029018fcdf86e0df89a31bc3cfa5b32570d8 # v7.3.0
         if: steps.should-run.outputs.run == 'true'
       - name: Upload Cypress Screenshots
@@ -429,8 +432,8 @@ jobs:
 
     env:
       TAILSCALE_VERSION: latest
-      HELMFILE_VERSION: v1.2.3
-      HELM_VERSION: v3.19.4
+      HELMFILE_VERSION: v1.5.1
+      HELM_VERSION: v4.2.0
       TAG: ${{ needs.docker-push.outputs.image_version }}
 
     concurrency:

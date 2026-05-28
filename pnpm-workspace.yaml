@@ -1,0 +1,14 @@
+packages:
+  - "src/web"
+
+allowBuilds:
+  cypress: true
+  sharp: true
+  unrs-resolver: true
+
+nodeLinker: hoisted
+
+# `@types/minimatch` pinned to 5.1.2 to avoid the type-error regression seen
+# in PR #1805 (`fix(web): resolve JSX.Element type errors and pin @types/minimatch`).
+overrides:
+  "@types/minimatch": 5.1.2
