@@ -1,8 +1,7 @@
 packages:
-  - "src/web"
+  - src/web
 
 allowBuilds:
-  cypress: true
   sharp: true
   unrs-resolver: true
 
