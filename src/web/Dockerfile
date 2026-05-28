@@ -15,7 +15,7 @@ COPY src/web/package.json ./src/web/
 RUN pnpm install --filter yoma-web --frozen-lockfile
 
 # `pnpm deploy` materialises a self-contained directory containing only
-# yoma-web and its dependencies (root devDeps like cypress/husky are excluded).
+# yoma-web and its dependencies (root devDeps like husky are excluded).
 RUN pnpm deploy --filter=yoma-web --legacy /deploy
 
 ##### BUILDER
