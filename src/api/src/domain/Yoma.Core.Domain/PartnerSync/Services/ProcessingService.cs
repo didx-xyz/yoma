@@ -153,7 +153,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
     {
       var existingItem = _processingHelperService.GetByEntityLatest(SyncType.Push, entityType, entityId);
 
-      ValidateEntitySyncType(SyncType.Push, entityType, entityId);
+      if (!ValidateOrSkipEntitySyncType(SyncType.Push, entityType, entityId, false)) return;
 
       if (existingItem != null)
       {
@@ -193,7 +193,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
       var actionSchedule = SyncAction.Update;
       var existingItem = _processingHelperService.GetByEntityLatest(SyncType.Push, entityType, entityId);
 
-      ValidateEntitySyncType(SyncType.Push, entityType, entityId);
+      if (!ValidateOrSkipEntitySyncType(SyncType.Push, entityType, entityId, false)) return;
 
       if (existingItem != null)
       {
@@ -240,7 +240,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
     {
       var existingItem = _processingHelperService.GetByEntityLatest(SyncType.Push, entityType, entityId);
 
-      ValidateEntitySyncType(SyncType.Push, entityType, entityId);
+      if (!ValidateOrSkipEntitySyncType(SyncType.Push, entityType, entityId, false)) return;
 
       if (existingItem != null)
       {
@@ -515,7 +515,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
       payloadHash = payloadHash?.Trim();
 
       if (entityId.HasValue)
-        ValidateEntitySyncType(SyncType.Pull, entityType, entityId.Value);
+        ValidateOrSkipEntitySyncType(SyncType.Pull, entityType, entityId.Value, true);
 
       var partner = _partnerService.GetById(partnerId);
 
@@ -742,7 +742,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
       return results;
     }
 
-    private void ValidateEntitySyncType(SyncType syncType, EntityType entityType, Guid entityId)
+    private bool ValidateOrSkipEntitySyncType(SyncType syncType, EntityType entityType, Guid entityId, bool throwOnInvalid)
     {
       var statusAbortedId = _processingStatusService.GetByName(ProcessingStatus.Aborted.ToString()).Id;
 
@@ -758,10 +758,17 @@ namespace Yoma.Core.Domain.PartnerSync.Services
         _ => throw new InvalidOperationException($"Entity type '{entityType}' not supported")
       };
 
-      if (!query.Any()) return;
+      if (!query.Any()) return true;
 
-      throw new DataInconsistencyException(
-        $"Entity '{entityId}' of type '{entityType}' already has processing logs for another synchronization type and cannot be recorded or scheduled as '{syncType}'");
+      var message = $"Entity '{entityId}' of type '{entityType}' already has processing logs for another synchronization type and cannot be recorded or scheduled as '{syncType}'";
+
+      if (throwOnInvalid)
+        throw new DataInconsistencyException(message);
+
+      if (_logger.IsEnabled(LogLevel.Information))
+        _logger.LogInformation("Partner sync processing skipped: {message}", message);
+
+      return false;
     }
     #endregion
   }
