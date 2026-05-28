@@ -118,6 +118,7 @@ jobs:
     name: Build Docker Images
     permissions:
       contents: read
+      packages: write
     runs-on: ${{ matrix.runs-on }}
 
     concurrency:
@@ -177,13 +178,20 @@ jobs:
         with:
           cache-binary: false
           version: latest
+      - uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
+        if: steps.should-run.outputs.run == 'true'
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ github.token }}
       - uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f # v7.1.0
         if: steps.should-run.outputs.run == 'true'
         with:
           platforms: linux/${{ matrix.arch }}
           context: ${{ matrix.context }}
           file: ${{ matrix.file }}
-          push: false
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ matrix.image }}:sha-${{ github.sha }}-${{ matrix.arch }}
           cache-from: |
             type=gha,scope=build-${{ matrix.image }}-${{ matrix.arch }}
             type=registry,ref=${{ env.REGISTRY }}/${{ matrix.image }}:latest
@@ -213,14 +221,9 @@ jobs:
           - image: yoma-api
             context: ./src/api
             helm: ./helm/yoma-api
-            file: ./src/api/Dockerfile
-            buildArgs: ""
           - image: yoma-web
             context: .
             helm: ./helm/yoma-web
-            file: ./src/web/Dockerfile
-            buildArgs: |-
-              NEXT_PUBLIC_ENVIRONMENT=production
 
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -270,20 +273,24 @@ jobs:
             type=ref,event=pr
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
-      - uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f # v7.1.0
+      - name: Create and push multi-arch manifest
         if: steps.should-run.outputs.run == 'true'
-        with:
-          platforms: linux/amd64,linux/arm64
-          context: ${{ matrix.context }}
-          file: ${{ matrix.file }}
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: |
-            type=gha,scope=build-${{ matrix.image }}-arm64
-            type=gha,scope=build-${{ matrix.image }}-amd64
-            type=registry,ref=${{ env.REGISTRY }}/${{ matrix.image }}:latest
-          build-args: ${{ matrix.buildArgs }}
+        env:
+          TAGS: ${{ steps.meta.outputs.tags }}
+          REGISTRY: ${{ env.REGISTRY }}
+          IMAGE: ${{ matrix.image }}
+          SHA: ${{ github.sha }}
+        run: |-
+          # Combine the per-arch images pushed by docker-build into one manifest list per tag
+          echo "$TAGS" | while IFS= read -r tag; do
+            if [ -n "$tag" ]; then
+              echo "Creating manifest for: $tag"
+              docker buildx imagetools create \
+                --tag "$tag" \
+                "${REGISTRY}/${IMAGE}:sha-${SHA}-amd64" \
+                "${REGISTRY}/${IMAGE}:sha-${SHA}-arm64"
+            fi
+          done
 
   test-e2e:
     name: Test (e2e)
