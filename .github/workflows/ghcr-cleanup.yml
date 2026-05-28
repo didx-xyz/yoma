@@ -1,7 +1,8 @@
 name: GHCR Cleanup
 
 # Prune sha-*, pr-*, and untagged images older than 14 days.
-# latest, branch (<branch>, <branch>-<sha>), and semver/release tags are intentionally preserved.
+# For master-* tags, keep the 50 most recent.
+# latest and semver/release tags are intentionally preserved.
 
 on:
   schedule:
@@ -29,12 +30,24 @@ jobs:
       packages: write
 
     steps:
-      - uses: dataaxiom/ghcr-cleanup-action@f092b48ba3b604b2a83690dc4b2bbb3392e1045f # v1.2.1
+      - name: Prune sha-*, pr-*, and untagged images older than 14 days
+        uses: dataaxiom/ghcr-cleanup-action@f092b48ba3b604b2a83690dc4b2bbb3392e1045f # v1.2.1
         with:
           owner: ${{ github.repository_owner }}
           packages: yoma-api,yoma-web
           older-than: 14 days
           delete-tags: sha-*,pr-*
           delete-untagged: true
+          keep-n-tagged: 50
+          validate: true
+          dry-run: ${{ github.event.inputs.dry-run || 'false' }}
+
+      - name: Prune master-* tags (keep 50 most recent)
+        uses: dataaxiom/ghcr-cleanup-action@f092b48ba3b604b2a83690dc4b2bbb3392e1045f # v1.2.1
+        with:
+          owner: ${{ github.repository_owner }}
+          packages: yoma-api,yoma-web
+          delete-tags: master-*
+          keep-n-tagged: 50
           validate: true
           dry-run: ${{ github.event.inputs.dry-run || 'false' }}
