@@ -171,16 +171,4 @@ export interface MyOpportunitySearchFilterVerificationFiles {
   verificationTypes: VerificationType[] | null;
 }
 
-export interface NavigateExternalLinkResult {
-  syncedInfo?: NavigateExternalLinkSyncedInfo | null;
-}
-
-export interface NavigateExternalLinkSyncedInfo {
-  syncType: string;
-  partners?: NavigateExternalLinkPartner[] | null;
-}
-
-export interface NavigateExternalLinkPartner {
-  name: string;
-  url?: string | null;
-}
+export type { SyncInfoEntity as NavigateExternalLinkResult } from "./opportunity";

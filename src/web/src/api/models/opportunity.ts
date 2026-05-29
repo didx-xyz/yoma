@@ -81,61 +81,8 @@ export interface Opportunity {
   skills: Skill[] | null;
   verificationTypes: OpportunityVerificationType[] | null;
   hidden: boolean;
-  syncedInfo?: SyncInfo | null;
+  syncedInfo?: SyncInfoEntity | null;
 }
-
-// export interface OpportunityInfo {
-//   id: string;
-//   title: string;
-//   description: string;
-//   type: string;
-//   organizationId: string;
-//   organizationName: string;
-//   organizationLogoURL: string | null;
-//   summary: string | null;
-//   instructions: string | null;
-//   url: string | null;
-//   zltoReward: number | null;
-//   zltoRewardCumulative: number | null;
-//   organizationZltoRewardPoolCurrentFinancialYear?: number | null;
-//   organizationZltoRewardCumulativeCurrentFinancialYear?: number | null;
-//   organizationZltoRewardBalanceCurrentFinancialYear?: number | null;
-//   yomaReward: number | null;
-//   yomaRewardCumulative: number | null;
-//   organizationYomaRewardPoolCurrentFinancialYear?: number | null;
-//   organizationYomaRewardCumulativeCurrentFinancialYear?: number | null;
-//   organizationYomaRewardBalanceCurrentFinancialYear?: number | null;
-//   verificationEnabled: boolean;
-//   verificationMethod: VerificationMethod | null | string; //NB: comes back as string
-//   difficulty: string | null;
-//   commitmentInterval: string | null;
-//   commitmentIntervalCount: number | null;
-//   commitmentIntervalDescription: string | null;
-//   participantLimit: number | null;
-//   participantCountCompleted: number;
-//   participantCountPending: number;
-//   participantCountTotal: number;
-//   participantLimitReached: boolean;
-//   countViewed: number;
-//   countNavigatedExternalLink: number;
-//   statusId: string;
-//   status: Status | string; // HACK: string
-//   keywords: string[] | null;
-//   dateStart: string;
-//   dateEnd: string | null;
-//   featured: boolean;
-//   engagementType: string | null;
-//   published: boolean;
-//   yomaInfoURL: string;
-//   isCompletable: boolean;
-//   nonCompletableReason: string | null;
-//   categories: OpportunityCategory[] | null;
-//   countries: Country[] | null;
-//   languages: Language[] | null;
-//   skills: Skill[] | null;
-//   verificationTypes: OpportunityVerificationType[] | null;
-//   hidden: boolean;
-// }
 
 export interface OpportunityInfo {
   id: string;
@@ -180,7 +127,7 @@ export interface OpportunityInfo {
   yomaInfoURL: string;
   isCompletable: boolean;
   nonCompletableReason: string | null;
-  syncedInfo: SyncInfo | null;
+  syncedInfo: SyncInfoEntity | null;
   categories: OpportunityCategory[] | null;
   countries: Country[] | null;
   languages: Language[] | null;
@@ -258,7 +205,7 @@ export enum PublishedState {
   Expired,
 }
 
-export interface SyncInfo {
+export interface SyncInfoEntity {
   syncType: SyncType | string; // NB: string
   partners: SyncInfoEntityPartner[];
   locked: boolean;

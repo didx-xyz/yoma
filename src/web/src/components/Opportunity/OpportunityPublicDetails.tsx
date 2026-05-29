@@ -206,8 +206,7 @@ const OpportunityPublicDetails: React.FC<{
         const result = await performActionNavigateExternalLink(
           opportunityInfo.id,
         );
-        const partnerUrl = result?.syncedInfo?.partners?.[0]?.url;
-        if (partnerUrl) redirectUrl = partnerUrl;
+        if (result?.url) redirectUrl = result.url;
       } catch {
         // fall back to opportunityInfo.url on error
       }
