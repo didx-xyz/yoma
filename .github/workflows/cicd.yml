@@ -85,20 +85,24 @@ jobs:
             changes:
               - '${{ matrix.dir }}/**'
 
-      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0 # zizmor: ignore[cache-poisoning] no cache: input so no caching
+      - uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151 # v4.0.1
         if: (steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch') && matrix.lang == 'js'
         with:
-          node-version: 24
-      - run: corepack enable
+          install: true
+          cache: true
+      - name: Resolve pnpm store path
+        id: pnpm-store
         if: (steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch') && matrix.lang == 'js'
+        run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
       - uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5 # zizmor: ignore[cache-poisoning] lint-only cache, no production impact
         if: (steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch') && matrix.lang == 'js'
         with:
-          path: ${{ matrix.dir }}/node_modules
-          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
-      - run: yarn install --immutable
+          path: |
+            node_modules
+            ${{ steps.pnpm-store.outputs.path }}
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
+      - run: pnpm install --frozen-lockfile
         if: (steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch') && matrix.lang == 'js'
-        working-directory: ${{ matrix.dir }}
 
       - uses: actions/setup-dotnet@c2fa09f4bde5ebb9d1777cf28262a3eb3db3ced7 # v5.2.0
         if: (steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch') && matrix.lang == 'cs'
@@ -114,6 +118,7 @@ jobs:
     name: Build Docker Images
     permissions:
       contents: read
+      packages: write
     runs-on: ${{ matrix.runs-on }}
 
     concurrency:
@@ -137,7 +142,7 @@ jobs:
             file: ./src/api/Dockerfile
             buildArgs: ""
           - image: yoma-web
-            context: ./src/web
+            context: .
             helm: ./helm/yoma-web
             file: ./src/web/Dockerfile
             buildArgs: |-
@@ -168,18 +173,25 @@ jobs:
           else
             echo run=false >> $GITHUB_OUTPUT
           fi
-      - uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4.0.0
+      - uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5 # v4.1.0
         if: steps.should-run.outputs.run == 'true'
         with:
           cache-binary: false
           version: latest
-      - uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f # v7.1.0
+      - uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
+        if: steps.should-run.outputs.run == 'true'
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ github.token }}
+      - uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf # v7.2.0
         if: steps.should-run.outputs.run == 'true'
         with:
           platforms: linux/${{ matrix.arch }}
           context: ${{ matrix.context }}
           file: ${{ matrix.file }}
-          push: false
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ matrix.image }}:sha-${{ github.sha }}-${{ matrix.arch }}
           cache-from: |
             type=gha,scope=build-${{ matrix.image }}-${{ matrix.arch }}
             type=registry,ref=${{ env.REGISTRY }}/${{ matrix.image }}:latest
@@ -209,14 +221,9 @@ jobs:
           - image: yoma-api
             context: ./src/api
             helm: ./helm/yoma-api
-            file: ./src/api/Dockerfile
-            buildArgs: ""
           - image: yoma-web
-            context: ./src/web
+            context: .
             helm: ./helm/yoma-web
-            file: ./src/web/Dockerfile
-            buildArgs: |-
-              NEXT_PUBLIC_ENVIRONMENT=production
 
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -243,18 +250,18 @@ jobs:
           else
             echo run=false >> $GITHUB_OUTPUT
           fi
-      - uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4.0.0
+      - uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5 # v4.1.0
         if: steps.should-run.outputs.run == 'true'
         with:
           cache-binary: false
           version: latest
-      - uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
+      - uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4.2.0
         if: steps.should-run.outputs.run == 'true'
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ github.token }}
-      - uses: docker/metadata-action@030e881283bb7a6894de51c315a6bfe6a94e05cf # v6.0.0
+      - uses: docker/metadata-action@80c7e94dd9b9319bd5eb7a0e0fe9291e23a2a2e9 # v6.1.0
         id: meta
         with:
           images: ${{ env.REGISTRY }}/${{ matrix.image }}
@@ -266,20 +273,24 @@ jobs:
             type=ref,event=pr
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
-      - uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f # v7.1.0
+      - name: Create and push multi-arch manifest
         if: steps.should-run.outputs.run == 'true'
-        with:
-          platforms: linux/amd64,linux/arm64
-          context: ${{ matrix.context }}
-          file: ${{ matrix.file }}
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: |
-            type=gha,scope=build-${{ matrix.image }}-arm64
-            type=gha,scope=build-${{ matrix.image }}-amd64
-            type=registry,ref=${{ env.REGISTRY }}/${{ matrix.image }}:latest
-          build-args: ${{ matrix.buildArgs }}
+        env:
+          TAGS: ${{ steps.meta.outputs.tags }}
+          REGISTRY: ${{ env.REGISTRY }}
+          IMAGE: ${{ matrix.image }}
+          SHA: ${{ github.sha }}
+        run: |-
+          # Combine the per-arch images pushed by docker-build into one manifest list per tag
+          echo "$TAGS" | while IFS= read -r tag; do
+            if [ -n "$tag" ]; then
+              echo "Creating manifest for: $tag"
+              docker buildx imagetools create \
+                --tag "$tag" \
+                "${REGISTRY}/${IMAGE}:sha-${SHA}-amd64" \
+                "${REGISTRY}/${IMAGE}:sha-${SHA}-arm64"
+            fi
+          done
 
   test-e2e:
     name: Test (e2e)
@@ -315,27 +326,23 @@ jobs:
               - './src/web/**'
             keycloak:
               - './src/keycloak/**'
-            cypress:
-              - './cypress/**'
       - name: Should e2e run?
         id: should-run
         env:
           API: ${{ steps.filter.outputs.api }}
           WEB: ${{ steps.filter.outputs.web }}
           KEYCLOAK: ${{ steps.filter.outputs.keycloak }}
-          CYPRESS: ${{ steps.filter.outputs.cypress }}
         run: |-
           if [ "${{ github.event_name }}" = "release" ] || \
               [ "$API" = "true" ] || \
               [ "$WEB" = "true" ] || \
               [ "$KEYCLOAK" = "true" ] || \
-              [ "$CYPRESS" = "true" ] || \
               [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
              echo run=true >> $GITHUB_OUTPUT
           else
             echo run=false >> $GITHUB_OUTPUT
           fi
-      - uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
+      - uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4.2.0
         if: steps.should-run.outputs.run == 'true'
         with:
           registry: ghcr.io
@@ -380,28 +387,11 @@ jobs:
           API_TAG: ${{ steps.filter.outputs.api == 'true' && needs.docker-push.outputs.image_version || 'latest' }}
           YOUTH_TAG: ${{ steps.filter.outputs.web == 'true' && needs.docker-push.outputs.image_version || 'latest' }}
 
-      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0 # zizmor: ignore[cache-poisoning] no cache: input so no caching
+      - uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151 # v4.0.1
         if: steps.should-run.outputs.run == 'true'
         with:
-          node-version: 24
-      - run: corepack enable
-        if: steps.should-run.outputs.run == 'true'
-      - uses: cypress-io/github-action@dace029018fcdf86e0df89a31bc3cfa5b32570d8 # v7.3.0
-        if: steps.should-run.outputs.run == 'true'
-      - name: Upload Cypress Screenshots
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        if: always()
-        with:
-          name: cypress-screenshots
-          path: cypress/screenshots
-          if-no-files-found: ignore
-      - name: Upload Cypress Recording
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        if: always()
-        with:
-          name: cypress-videos
-          path: cypress/videos
-          if-no-files-found: ignore
+          install: true
+          cache: true
 
       - name: Keycloak Config logs
         if: always() && steps.should-run.outputs.run == 'true'
@@ -429,8 +419,8 @@ jobs:
 
     env:
       TAILSCALE_VERSION: latest
-      HELMFILE_VERSION: v1.2.3
-      HELM_VERSION: v3.19.4
+      HELMFILE_VERSION: v1.5.1
+      HELM_VERSION: v4.2.0
       TAG: ${{ needs.docker-push.outputs.image_version }}
 
     concurrency:

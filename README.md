@@ -32,7 +32,7 @@ Recommended tools:
   - [Dotnet](https://dotnet.microsoft.com/)
   - [Tilt](https://tilt.dev/)
   - [Node](https://nodejs.org/en/)
-    - [Yarn](https://yarnpkg.com/)
+    - [pnpm](https://pnpm.io/)
 
 ### 📦 Recommended method to install tooling
 
@@ -69,7 +69,7 @@ To pull in the config (e.g: environment variables) set in `.mise.toml` file, you
 
 This project uses [husky](https://typicode.github.io/husky/#/) to manage git hooks.
 
-Once you've got `mise` and `yarn` installed (`npm install -g yarn`) run `yarn install --frozen-lockfile` in the root of the project.
+Once you've got `mise` installed, run `pnpm install --frozen-lockfile` in the root of the project (`mise` will provision `pnpm@11` automatically).
 
 This will bootstrap `husky` and install the configured git hooks.
 

@@ -31,7 +31,7 @@ run_command_for_changes() {
 run_command_for_changes "src/api" "dotnet format --verify-no-changes"
 
 # Check for changes in src/web and run `lint` and `prettier`
-run_command_for_changes "src/web" "yarn lint"
+run_command_for_changes "src/web" "pnpm lint"
 
 # Exit with success
 exit 0
