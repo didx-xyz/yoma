@@ -261,7 +261,7 @@ namespace Yoma.Core.Api.Controllers
 
     [SwaggerOperation(Summary = "Track navigating to the external link of an opportunity (Authenticated User)")]
     [HttpPut("action/{opportunityId}/navigateExternalLink")]
-    [ProducesResponseType(typeof(SyncInfoEntity), (int)HttpStatusCode.OK)]
+    [ProducesResponseType(typeof(SyncInfoEntityPartner), (int)HttpStatusCode.OK)]
     [Authorize(Roles = $"{Constants.Role_User}")]
     public async Task<IActionResult> PerformActionNavigatedExternalLink([FromRoute] Guid opportunityId)
     {

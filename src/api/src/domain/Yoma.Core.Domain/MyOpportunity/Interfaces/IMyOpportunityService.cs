@@ -38,7 +38,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Interfaces
 
     Task PerformActionSaved(Guid opportunityId);
 
-    Task<SyncInfoEntity?> PerformActionNavigatedExternalLink(Guid opportunityId);
+    Task<SyncInfoEntityPartner?> PerformActionNavigatedExternalLink(Guid opportunityId);
 
     bool ActionedSaved(Guid opportunityId);
 

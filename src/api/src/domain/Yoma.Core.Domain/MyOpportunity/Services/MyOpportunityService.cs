@@ -784,7 +784,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         await _myOpportunityRepository.Update(myOpportunity); //update DateModified
     }
 
-    public async Task<SyncInfoEntity?> PerformActionNavigatedExternalLink(Guid opportunityId)
+    public async Task<SyncInfoEntityPartner?> PerformActionNavigatedExternalLink(Guid opportunityId)
     {
       //published opportunities (irrespective of started)
       var opportunity = _opportunityService.GetById(opportunityId, false, true, false);
@@ -809,10 +809,17 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       else
         await _myOpportunityRepository.Update(myOpportunity); //update DateModified
 
-      if (opportunity.SyncedInfo == null)
+      // Push-synced opportunities were shared out to a partner, but the opportunity URL remains the Yoma/source URL.
+      // Only pull-synced opportunities have an external partner URL that should be returned/enhanced.
+      if (opportunity.SyncedInfo?.SyncType != SyncType.Pull)
         return null;
 
-      return await _syncUserAuthenticationService.Authenticate(user, opportunity.SyncedInfo);
+      if (opportunity.SyncedInfo.Partners == null || opportunity.SyncedInfo.Partners.Count != 1)
+        throw new DataInconsistencyException($"Pull-synced opportunity '{opportunity.Id}' must have exactly one synchronized partner");
+
+      var partner = opportunity.SyncedInfo.Partners.Single();
+
+      return await _syncUserAuthenticationService.Authenticate(user, partner);
     }
 
     public bool ActionedSaved(Guid opportunityId)
