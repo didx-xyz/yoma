@@ -38,6 +38,7 @@ namespace Yoma.Core.Infrastructure.Jobberman.Repositories
         Category = entity.Category,
         Language = entity.Language,
         Deleted = entity.Deleted,
+        Duplicate = entity.Duplicate,
         DateCreated = entity.DateCreated,
         DateModified = entity.DateModified
       });
@@ -65,6 +66,7 @@ namespace Yoma.Core.Infrastructure.Jobberman.Repositories
         Category = item.Category,
         Language = item.Language,
         Deleted = item.Deleted,
+        Duplicate = item.Duplicate,
         DateCreated = item.DateCreated,
         DateModified = item.DateModified
       };
@@ -101,6 +103,7 @@ namespace Yoma.Core.Infrastructure.Jobberman.Repositories
           Category = item.Category,
           Language = item.Language,
           Deleted = item.Deleted,
+          Duplicate = item.Duplicate,
           DateCreated = now,
           DateModified = now
         }).ToList();
@@ -137,6 +140,7 @@ namespace Yoma.Core.Infrastructure.Jobberman.Repositories
       entity.Category = item.Category;
       entity.Language = item.Language;
       entity.Deleted = item.Deleted;
+      entity.Duplicate = item.Duplicate;
       entity.DateModified = item.DateModified;
 
       await _context.SaveChangesAsync();
@@ -170,6 +174,7 @@ namespace Yoma.Core.Infrastructure.Jobberman.Repositories
         entity.Category = item.Category;
         entity.Language = item.Language;
         entity.Deleted = item.Deleted;
+        entity.Duplicate = item.Duplicate;
         entity.DateModified = item.DateModified;
       }
 

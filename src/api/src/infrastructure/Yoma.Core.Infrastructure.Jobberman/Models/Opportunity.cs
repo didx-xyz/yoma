@@ -59,6 +59,12 @@ namespace Yoma.Core.Infrastructure.Jobberman.Models
     /// </summary>
     public bool? Deleted { get; set; }
 
+    /// <summary>
+    /// Indicates whether the job is a duplicate within the latest full Jobberman RSS snapshot.
+    /// Duplicate jobs are kept in the Jobberman sync table for tracking/audit purposes, but are excluded from Yoma domain synchronization.
+    /// </summary>
+    public bool? Duplicate { get; set; }
+
     public DateTimeOffset DateCreated { get; set; }
 
     public DateTimeOffset DateModified { get; set; }

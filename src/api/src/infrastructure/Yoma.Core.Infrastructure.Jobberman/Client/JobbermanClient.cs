@@ -82,7 +82,7 @@ namespace Yoma.Core.Infrastructure.Jobberman.Client
           "Listing Jobberman opportunities for pull sync: PaginationEnabled={PaginationEnabled}, PageNumber={PageNumber}, PageSize={PageSize}",
           filter.PaginationEnabled, filter.PageNumber, filter.PageSize);
 
-      var query = _opportunityRepository.Query();
+      var query = _opportunityRepository.Query().Where(o => o.Duplicate != true);
       query = query.OrderBy(o => o.ExternalId);
 
       var result = new SyncResultPullEntity<Domain.Opportunity.Models.Opportunity>();
