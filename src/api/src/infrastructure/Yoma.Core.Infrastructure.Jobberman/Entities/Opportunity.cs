@@ -9,6 +9,8 @@ namespace Yoma.Core.Infrastructure.Jobberman.Entities
   [Index(nameof(ExternalId), IsUnique = true)]
   [Index(nameof(CountryCodeAlpha2), nameof(SourceId), IsUnique = true)]
   [Index(nameof(ExternalId), nameof(DateCreated), nameof(DateModified))]
+  [Index(nameof(CountryCodeAlpha2), nameof(Title))]
+  [Index(nameof(Duplicate), nameof(Deleted), nameof(DateCreated), nameof(DateModified))]
   public sealed class Opportunity : BaseEntity<Guid>
   {
     [Required]
@@ -53,6 +55,8 @@ namespace Yoma.Core.Infrastructure.Jobberman.Entities
     public string? Language { get; set; }
 
     public bool? Deleted { get; set; }
+
+    public bool? Duplicate { get; set; }
 
     [Required]
     public DateTimeOffset DateCreated { get; set; }

@@ -3,6 +3,7 @@ using Microsoft.Extensions.Options;
 using System.Net.Http.Headers;
 using System.Transactions;
 using System.Xml.Linq;
+using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
@@ -375,6 +376,29 @@ namespace Yoma.Core.Infrastructure.Jobberman.Services
         .Select(g => g.First())
         .ToList();
 
+      // Normalize and cap titles before duplicate detection so duplicate checks use the same
+      // title value that is stored and later sent to the Yoma domain sync.
+      itemsNormalizedRaw = [.. itemsNormalizedRaw.Where(o => !string.IsNullOrWhiteSpace(o.Title))];
+      itemsNormalizedRaw.ForEach(o => o.Title = o.Title.TrimToLengthWithEllipsis(150));
+
+      if (itemsNormalizedRaw.Count == 0)
+      {
+        if (_logger.IsEnabled(LogLevel.Warning))
+          _logger.LogWarning("Jobberman feed '{CountryCodeAlpha2}' returned no valid opportunities after title normalization. Skipping processing to avoid marking existing items as deleted", countryCodeAlpha2);
+
+        return;
+      }
+
+      // Match the domain sync listing order so the first item that would have been imported
+      // remains the canonical item when duplicate titles are detected.
+      itemsNormalizedRaw = [.. itemsNormalizedRaw.OrderBy(o => o.ExternalId)];
+
+      // Mark duplicate Jobberman jobs by title within the current country feed.
+      // First occurrence wins because it is the one most likely already imported into Yoma.
+      // Duplicate rows are kept in the Jobberman table for tracking/audit, but excluded from domain sync.
+      var titlesSeen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+      itemsNormalizedRaw.ForEach(o => o.Duplicate = !titlesSeen.Add(o.Title));
+
       var incomingExternalIds = itemsNormalizedRaw
         .Select(o => o.ExternalId)
         .ToHashSet(StringComparer.Ordinal);
@@ -413,6 +437,7 @@ namespace Yoma.Core.Infrastructure.Jobberman.Services
             Category = item.Category,
             Language = item.Language,
             Deleted = item.Deleted,
+            Duplicate = item.Duplicate,
             DateCreated = now,
             DateModified = now
           });
@@ -459,6 +484,9 @@ namespace Yoma.Core.Infrastructure.Jobberman.Services
 
         if (!string.Equals(itemExisting.Language, item.Language, StringComparison.Ordinal))
         { itemExisting.Language = item.Language; changed = true; }
+
+        if (itemExisting.Duplicate != item.Duplicate)
+        { itemExisting.Duplicate = item.Duplicate; changed = true; }
 
         if (changed)
         {
