@@ -1,5 +1,5 @@
 import ApiClient from "~/lib/axiosClient";
-import type { Opportunity } from "../models/opportunity";
+import type { Opportunity, SyncInfoEntityPartner } from "../models/opportunity";
 import type {
   MyOpportunityRequestVerify,
   MyOpportunityRequestVerifyFinalizeBatch,
@@ -11,7 +11,6 @@ import type {
   MyOpportunitySearchFilterAdmin,
   MyOpportunitySearchFilterVerificationFiles,
   MyOpportunitySearchResults,
-  NavigateExternalLinkResult,
   VerificationStatus,
 } from "../models/myOpportunity";
 import { objectToFormData } from "~/lib/utils";
@@ -207,9 +206,9 @@ export const getMyOpportunitiesExportToCSV = async (
 export const performActionNavigateExternalLink = async (
   opportunityId: string,
   context?: GetServerSidePropsContext,
-): Promise<NavigateExternalLinkResult | null> => {
+): Promise<SyncInfoEntityPartner | null> => {
   const instance = context ? ApiServer(context) : await ApiClient;
-  const { data } = await instance.put<NavigateExternalLinkResult>(
+  const { data } = await instance.put<SyncInfoEntityPartner>(
     `/myopportunity/action/${encodeURIComponent(opportunityId)}/navigateExternalLink`,
   );
   return data ?? null;
