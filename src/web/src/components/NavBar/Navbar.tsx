@@ -600,6 +600,7 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
                         tabIndex={isDrawerOpen ? 0 : -1}
                         size="small"
                         showSocialMediaLinks={true}
+                        onClose={() => setDrawerOpen(false)}
                       />
                     </div>
                   </div>
@@ -660,11 +661,7 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
                       className={`bg-theme group font-nunito text-md flex h-full flex-shrink-0 items-center justify-center self-stretch !rounded-none border-none px-4 font-semibold text-white shadow-none duration-0 hover:brightness-95 ${link.itemClassName ?? ""}`}
                       draggable={false}
                     >
-                      <span
-                      //className={link.selected ? "font-bold" : ""}
-                      >
-                        {link.title}
-                      </span>
+                      <span>{link.title}</span>
                       {link.iconImage && (
                         <span className="ml-2 inline-flex h-6 w-6 items-center justify-center rounded-full bg-white/20 p-4 text-sm shadow-md">
                           {link.iconImage}
