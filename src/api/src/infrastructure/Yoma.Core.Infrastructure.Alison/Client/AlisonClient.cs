@@ -30,9 +30,6 @@ namespace Yoma.Core.Infrastructure.Alison.Client
     ISyncProviderClientUserAuthentication
   {
     #region Class Variables
-    private const int Title_MaxLength = 150;
-    private const int Summary_MaxLength = 150;
-
     // Yoma category id -> Alison category codes.
     // If unresolved, default to Other.
     private static readonly Dictionary<Guid, string[]> Categories_Map = new()
@@ -140,15 +137,8 @@ namespace Yoma.Core.Infrastructure.Alison.Client
     public async Task<SyncResultUserAuthentication> Authenticate(SyncRequestUserAuthentication request)
     {
       ArgumentNullException.ThrowIfNull(request);
-      ArgumentNullException.ThrowIfNull(request.EntitySyncInfo);
 
-      if (request.EntitySyncInfo.Partner != SyncPartner.Alison)
-        throw new InvalidOperationException($"Partner '{request.EntitySyncInfo.Partner}' not supported by Alison user authentication");
-
-      if (string.IsNullOrWhiteSpace(request.EntitySyncInfo.ExternalId))
-        throw new ArgumentNullException(nameof(request), $"'{nameof(request.EntitySyncInfo.ExternalId)}' cannot be null or empty");
-
-      request.EntitySyncInfo.ExternalId = request.EntitySyncInfo.ExternalId.Trim();
+      var entityExternalId = ValidateAndResolveUserAuthenticationRequest(request);
 
       if (!_appSettings.PartnerSyncEnabledEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment))
       {
@@ -157,44 +147,12 @@ namespace Yoma.Core.Infrastructure.Alison.Client
             "Partner synchronization from external partners disabled for environment '{environment}'. Returning default Alison navigation URL for Yoma user '{userId}'",
             _environmentProvider.Environment, request.UserId);
 
-        var externalId = request.UserSyncInfo?.ExternalId?.Trim() ?? $"mock-alison-user-{request.UserId}";
-        var url = request.EntitySyncInfo.URL?.Trim();
-
-        if (string.IsNullOrWhiteSpace(url))
-          throw new InvalidOperationException("Default Alison navigation URL is required when partner synchronization is disabled");
-
-        return new SyncResultUserAuthentication
-        {
-          URL = url,
-          UserSyncInfo = new SyncInfoUserPartner
-          {
-            Partner = SyncPartner.Alison,
-            ExternalId = externalId,
-            DateLastRedirect = DateTimeOffset.UtcNow
-          }
-        };
+        return AuthenticationMock(request);
       }
 
-      if (!string.IsNullOrWhiteSpace(request.UserSyncInfo?.ExternalId))
-      {
-        if (_logger.IsEnabled(LogLevel.Information))
-          _logger.LogInformation("Existing Alison user sync info found for Yoma user '{userId}'. Attempting login", request.UserId);
-        var (_, Authentication) = await AuthenticateUser(request, UserAuthenticationRequestType.Login);
-
-        return Authentication ?? throw new InvalidOperationException("Alison login authentication result expected");
-      }
-
-      var registerResult = await AuthenticateUser(request, UserAuthenticationRequestType.Register, [HttpStatusCode.UnprocessableEntity]);
-
-      if (registerResult.StatusCode != HttpStatusCode.UnprocessableEntity)
-        return registerResult.Authentication ?? throw new InvalidOperationException("Alison register authentication result expected");
-
-      if (_logger.IsEnabled(LogLevel.Information))
-        _logger.LogInformation("Alison user registration returned 422 for Yoma user '{userId}'. Attempting login", request.UserId);
-
-      var fallbackLoginResult = await AuthenticateUser(request, UserAuthenticationRequestType.Login);
-
-      return fallbackLoginResult.Authentication ?? throw new InvalidOperationException("Alison login authentication result expected");
+      return !string.IsNullOrWhiteSpace(request.UserSyncInfo?.ExternalId)
+        ? await LoginExistingUser(request, entityExternalId)
+        : await RegisterOrLoginUser(request, entityExternalId);
     }
 
     public Task<SyncResultPullEntity<Domain.Opportunity.Models.Opportunity>> List(SyncFilterPullEntity filter)
@@ -229,19 +187,120 @@ namespace Yoma.Core.Infrastructure.Alison.Client
     #endregion
 
     #region Private Members
-    private async Task<(HttpStatusCode StatusCode, SyncResultUserAuthentication? Authentication)> AuthenticateUser(
-      SyncRequestUserAuthentication request, UserAuthenticationRequestType requestType, List<HttpStatusCode>? additionalSuccessStatusCodes = null)
+    /// <summary>
+    /// Validates that the user-authentication request belongs to Alison and contains the
+    /// partner entity context required to build an authenticated Alison course URL.
+    /// </summary>
+    private static string ValidateAndResolveUserAuthenticationRequest(SyncRequestUserAuthentication request)
     {
-      var path = requestType switch
-      {
-        UserAuthenticationRequestType.Register => _options.UserRegisterPath,
-        UserAuthenticationRequestType.Login => _options.UserLoginPath,
-        _ => throw new InvalidOperationException($"Unsupported Alison user authentication request type '{requestType}'")
-      };
+      ArgumentNullException.ThrowIfNull(request);
+      ArgumentNullException.ThrowIfNull(request.EntitySyncInfo);
 
-      path = path?.Trim() ?? string.Empty;
-      if (string.IsNullOrWhiteSpace(path))
-        throw new InvalidOperationException($"Alison user {requestType} path expected");
+      if (request.EntitySyncInfo.Partner != SyncPartner.Alison)
+        throw new InvalidOperationException($"Partner '{request.EntitySyncInfo.Partner}' not supported by Alison user authentication");
+
+      var entityExternalId = request.EntitySyncInfo.ExternalId?.Trim();
+      if (string.IsNullOrWhiteSpace(entityExternalId))
+        throw new InvalidOperationException("Alison course external id is required for user authentication");
+
+      return entityExternalId;
+    }
+
+    /// <summary>
+    /// Returns a local/dev-safe authentication result without calling Alison.
+    ///
+    /// This is used when partner synchronization from external providers is disabled for the
+    /// current environment. The default Alison course URL is preserved, while mock user sync
+    /// info is returned so the domain redirect/update flow can still be exercised locally.
+    /// </summary>
+    private static SyncResultUserAuthentication AuthenticationMock(SyncRequestUserAuthentication request)
+    {
+      var url = request.EntitySyncInfo!.URL?.Trim();
+      if (string.IsNullOrWhiteSpace(url))
+        throw new InvalidOperationException("Default Alison navigation URL is required when partner synchronization is disabled");
+
+      var externalId = request.UserSyncInfo?.ExternalId?.Trim() ?? $"mock-alison-user-{request.UserId}";
+
+      return new SyncResultUserAuthentication
+      {
+        URL = url,
+        UserSyncInfo = new SyncInfoUserPartner
+        {
+          Partner = SyncPartner.Alison,
+          ExternalId = externalId,
+          DateLastRedirect = DateTimeOffset.UtcNow
+        }
+      };
+    }
+
+    /// <summary>
+    /// Logs in an already-linked Alison user and returns an authenticated Alison course URL.
+    /// </summary>
+    private async Task<SyncResultUserAuthentication> LoginExistingUser(
+      SyncRequestUserAuthentication request,
+      string entityExternalId)
+    {
+      if (_logger.IsEnabled(LogLevel.Information))
+        _logger.LogInformation(
+          "Existing Alison user sync info found for Yoma user '{userId}'. Attempting Alison login",
+          request.UserId);
+
+      var (_, Authentication) = await Authenticate(
+        request,
+        entityExternalId,
+        UserAuthenticationRequestType.Login);
+
+      return Authentication ?? throw new InvalidOperationException("Alison login authentication result expected");
+    }
+
+    /// <summary>
+    /// Registers a Yoma user with Alison and returns an authenticated Alison course URL.
+    ///
+    /// Alison can return 422 when the user already exists on their side but Yoma does not yet
+    /// have stored Alison user sync info. In that case, fallback to login and persist the
+    /// returned Alison user id through the normal domain user-sync-info update flow.
+    /// </summary>
+    private async Task<SyncResultUserAuthentication> RegisterOrLoginUser(
+      SyncRequestUserAuthentication request,
+      string entityExternalId)
+    {
+      var (StatusCode, Authentication) = await Authenticate(
+        request,
+        entityExternalId,
+        UserAuthenticationRequestType.Register,
+        [HttpStatusCode.UnprocessableEntity]);
+
+      if (StatusCode != HttpStatusCode.UnprocessableEntity)
+        return Authentication ?? throw new InvalidOperationException("Alison register authentication result expected");
+
+      if (_logger.IsEnabled(LogLevel.Information))
+        _logger.LogInformation(
+          "Alison user registration returned 422 for Yoma user '{userId}'. Attempting Alison login",
+          request.UserId);
+
+      var loginResult = await Authenticate(
+        request,
+        entityExternalId,
+        UserAuthenticationRequestType.Login);
+
+      return loginResult.Authentication ?? throw new InvalidOperationException("Alison login authentication result expected");
+    }
+
+    /// <summary>
+    /// Executes the Alison user register/login request and maps a successful response to
+    /// Yoma's provider user-authentication result.
+    ///
+    /// A 422 response is only allowed when explicitly supplied as an additional success status.
+    /// This lets the registration flow treat "already exists" as a controlled login fallback
+    /// without weakening normal login error handling.
+    /// </summary>
+    private async Task<(HttpStatusCode StatusCode, SyncResultUserAuthentication? Authentication)> Authenticate(
+      SyncRequestUserAuthentication request,
+      string entityExternalId,
+      UserAuthenticationRequestType requestType,
+      List<HttpStatusCode>? additionalSuccessStatusCodes = null)
+    {
+      var path = ResolveUserAuthenticationPath(requestType);
 
       if (_logger.IsEnabled(LogLevel.Debug))
         _logger.LogDebug("Executing Alison user '{requestType}' for Yoma user '{userId}'", requestType, request.UserId);
@@ -263,24 +322,28 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       var responseParsed = JsonConvert.DeserializeObject<UserAuthenticationResponse>(json)
         ?? throw new InvalidOperationException($"Failed to deserialize Alison user {requestType} response");
 
-      var token = responseParsed.ResolvedToken?.Trim();
-      if (string.IsNullOrWhiteSpace(token))
-        throw new InvalidOperationException($"Alison user {requestType} response did not contain a token");
+      return (statusCode, responseParsed.ToSyncResultUserAuthentication(
+        _options,
+        request,
+        entityExternalId,
+        requestType));
+    }
 
-      var externalId = responseParsed.ResolvedExternalId?.Trim() ?? request.UserSyncInfo?.ExternalId?.Trim();
-      if (string.IsNullOrWhiteSpace(externalId))
-        throw new InvalidOperationException($"Alison user {requestType} response did not contain a user external id");
-
-      return (statusCode, new SyncResultUserAuthentication
+    private string ResolveUserAuthenticationPath(UserAuthenticationRequestType requestType)
+    {
+      var path = requestType switch
       {
-        URL = _options.WebBaseUrl.ToAuthenticatedCourseUrl(token, request.EntitySyncInfo.ExternalId),
-        UserSyncInfo = new SyncInfoUserPartner
-        {
-          Partner = SyncPartner.Alison,
-          ExternalId = externalId,
-          DateLastRedirect = DateTimeOffset.UtcNow
-        }
-      });
+        UserAuthenticationRequestType.Register => _options.UserRegisterPath,
+        UserAuthenticationRequestType.Login => _options.UserLoginPath,
+        _ => throw new InvalidOperationException($"Unsupported Alison user authentication request type '{requestType}'")
+      };
+
+      path = path?.Trim();
+
+      if (string.IsNullOrWhiteSpace(path))
+        throw new InvalidOperationException($"Alison user {requestType} path expected");
+
+      return path;
     }
 
     private SyncResultPullEntity<Domain.Opportunity.Models.Opportunity> ListFromStore(SyncFilterPullEntity filter)
@@ -647,7 +710,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       if (string.IsNullOrWhiteSpace(title))
         throw new InvalidOperationException($"Alison course title/name expected for course id '{course.Id}'");
 
-      return title.TrimToLengthWithEllipsis(Title_MaxLength);
+      return title.TrimToLengthWithEllipsis(OpportunityService.Title_MaxLength);
     }
 
     private static string GetSummary(Course course, string title)
@@ -660,7 +723,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
         ?? (translation?.Summary).HtmlDecode()?.RemoveHtmlTags()
         ?? title;
 
-      return (summary ?? title).TrimToLengthWithEllipsis(Summary_MaxLength);
+      return (summary ?? title).TrimToLengthWithEllipsis(OpportunityService.Summary_MaxLength);
     }
 
     private static string GetDescription(Course course, string title, string? publisherName)

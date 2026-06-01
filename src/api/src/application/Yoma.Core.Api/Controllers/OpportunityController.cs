@@ -427,7 +427,12 @@ namespace Yoma.Core.Api.Controllers
     {
       if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(Create));
 
-      var result = await _opportunityService.Create(request, true);
+      var result = await _opportunityService.Create(request, new OpportunityUpsertOptions
+      {
+        EnsureOrganizationAuthorization = true,
+        RaiseEvents = true,
+        SendNotifications = true
+      });
 
       if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(Create));
 
@@ -442,7 +447,12 @@ namespace Yoma.Core.Api.Controllers
     {
       if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(Update));
 
-      var result = await _opportunityService.Update(request, true);
+      var result = await _opportunityService.Update(request, new OpportunityUpsertOptions
+      {
+        EnsureOrganizationAuthorization = true,
+        RaiseEvents = true,
+        SendNotifications = false
+      });
 
       if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(Update));
 

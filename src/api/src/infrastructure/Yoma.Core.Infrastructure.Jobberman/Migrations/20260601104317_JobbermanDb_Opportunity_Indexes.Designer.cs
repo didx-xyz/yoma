@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Yoma.Core.Infrastructure.Jobberman.Context;
@@ -11,9 +12,11 @@ using Yoma.Core.Infrastructure.Jobberman.Context;
 namespace Yoma.Core.Infrastructure.Jobberman.Migrations
 {
   [DbContext(typeof(JobbermanDbContext))]
-  partial class JobbermanDbContextModelSnapshot : ModelSnapshot
+  [Migration("20260601104317_JobbermanDb_Opportunity_Indexes")]
+  partial class JobbermanDb_Opportunity_Indexes
   {
-    protected override void BuildModel(ModelBuilder modelBuilder)
+    /// <inheritdoc />
+    protected override void BuildTargetModel(ModelBuilder modelBuilder)
     {
 #pragma warning disable 612, 618
       modelBuilder

@@ -46,6 +46,8 @@ namespace Yoma.Core.Domain.PartnerSync.Models
   {
     public SyncPartner Partner { get; set; }
 
+    public EntityType EntityType { get; set; }
+
     /// <summary>
     /// Partner synchronization identifier for the entity, when available.
     ///

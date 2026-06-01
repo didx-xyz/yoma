@@ -14,6 +14,7 @@ using Yoma.Core.Domain.MyOpportunity.Models;
 using Yoma.Core.Domain.Opportunity;
 using Yoma.Core.Domain.Opportunity.Extensions;
 using Yoma.Core.Domain.Opportunity.Interfaces;
+using Yoma.Core.Domain.Opportunity.Models;
 using Yoma.Core.Domain.PartnerSync.Extensions;
 using Yoma.Core.Domain.PartnerSync.Interfaces;
 using Yoma.Core.Domain.PartnerSync.Interfaces.Lookups;
@@ -465,7 +466,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
       }
     }
 
-    private async Task ProcessSyncPullOpportunity(Models.Lookups.Partner partnerModel, Core.SyncPartner partner, DateTimeOffset executeUntil)
+    private async Task ProcessSyncPullOpportunity(Models.Lookups.Partner partnerModel, SyncPartner partner, DateTimeOffset executeUntil)
     {
       var entityType = EntityType.Opportunity;
       var dateStamp = DateTimeOffset.UtcNow;
@@ -583,7 +584,15 @@ namespace Yoma.Core.Domain.PartnerSync.Services
                   case SyncAction.Create:
                     {
                       var request = opportunityItem.ToRequestCreate();
-                      var opportunity = await _opportunityService.Create(request, false, false, false);
+
+                      var opportunity = await _opportunityService.Create(request, new OpportunityUpsertOptions
+                      {
+                        EnsureOrganizationAuthorization = false,
+                        RaiseEvents = false,
+                        SendNotifications = false,
+                        SyncTypeActionedBy = SyncType.Pull,
+                        SyncExternalId = opportunityItem.ExternalId
+                      });
                       entityId = opportunity.Id;
 
                       // Hash the equivalent update payload so the created item can be compared consistently against future pull updates.
@@ -622,7 +631,14 @@ namespace Yoma.Core.Domain.PartnerSync.Services
                         return;
                       }
 
-                      await _opportunityService.Update(request, false, false, authorizedByPartnerSyncPull: true);
+                      await _opportunityService.Update(request, new OpportunityUpsertOptions
+                      {
+                        EnsureOrganizationAuthorization = false,
+                        RaiseEvents = false,
+                        SendNotifications = false,
+                        SyncTypeActionedBy = SyncType.Pull,
+                        SyncExternalId = opportunityItem.ExternalId
+                      });
                       break;
                     }
 
