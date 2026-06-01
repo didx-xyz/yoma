@@ -591,7 +591,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
                         RaiseEvents = false,
                         SendNotifications = false,
                         SyncTypeActionedBy = SyncType.Pull,
-                        SyncExternalId = opportunityItem.ExternalId
+                        SyncExternalId = item.ExternalId
                       });
                       entityId = opportunity.Id;
 
@@ -637,7 +637,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
                         RaiseEvents = false,
                         SendNotifications = false,
                         SyncTypeActionedBy = SyncType.Pull,
-                        SyncExternalId = opportunityItem.ExternalId
+                        SyncExternalId = item.ExternalId
                       });
                       break;
                     }
