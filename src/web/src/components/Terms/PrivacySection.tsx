@@ -265,7 +265,7 @@ const PrivacySection = () => {
           <li>Withdrawing consent for optional processing.</li>
         </ul>
         <p className="text-gray-dark text-sm md:text-base">
-          <strong>Note on Deletion:</strong> Currently, there is no automatic
+          <strong>Note on Deletion: </strong> Currently, there is no automatic
           &quot;delete button&quot; in the settings. To request account
           deletion, please contact us at the email below.
         </p>
