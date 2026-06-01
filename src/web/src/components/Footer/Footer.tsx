@@ -7,7 +7,8 @@ export const Footer: React.FC<{
   showSocialMediaLinks?: boolean;
   tabIndex?: number;
   size?: "small" | "large";
-}> = ({ showSocialMediaLinks, tabIndex, size = "large" }) => {
+  onClose?: () => void;
+}> = ({ showSocialMediaLinks, tabIndex, size = "large", onClose }) => {
   const forceSmall = size === "small";
 
   return (
@@ -27,6 +28,7 @@ export const Footer: React.FC<{
             className="text-green font-semibold hover:underline"
             href="/terms"
             tabIndex={tabIndex}
+            onClick={onClose}
           >
             Terms of Service
           </Link>
@@ -34,6 +36,7 @@ export const Footer: React.FC<{
             className="text-green font-semibold hover:underline"
             href="/terms?tab=privacy"
             tabIndex={tabIndex}
+            onClick={onClose}
           >
             Privacy Policy
           </Link>
