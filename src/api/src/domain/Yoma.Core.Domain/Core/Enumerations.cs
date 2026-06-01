@@ -189,7 +189,8 @@ namespace Yoma.Core.Domain.Core
   public enum SyncScope
   {
     Entity,
-    Verification
+    Verification,
+    UserAuthentication
   }
 
   public enum SyncPartner

@@ -46,9 +46,9 @@ namespace Yoma.Core.Domain.Opportunity.Interfaces
 
     Task<CSVImportResult> ImportFromCSV(IFormFile file, Guid organizationId, bool ensureOrganizationAuthorization, bool? validateOnly = null);
 
-    Task<Models.Opportunity> Create(OpportunityRequestCreate request, bool ensureOrganizationAuthorization, bool raiseEvent = true, bool sendNotification = true);
+    Task<Models.Opportunity> Create(OpportunityRequestCreate request, OpportunityUpsertOptions options);
 
-    Task<Models.Opportunity> Update(OpportunityRequestUpdate request, bool ensureOrganizationAuthorization, bool raiseEvent = true, bool authorizedByPartnerSyncPull = false);
+    Task<Models.Opportunity> Update(OpportunityRequestUpdate request, OpportunityUpsertOptions options);
 
     Task<OpportunityAllocateRewardResponse> AllocateRewards(Guid id, bool ensureOrganizationAuthorization);
 

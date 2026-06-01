@@ -52,8 +52,8 @@ namespace Yoma.Core.Domain.Opportunity.Validators
 
       RuleFor(x => x.Title)
           .NotEmpty()
-          .Length(1, 150)
-          .WithMessage("Title is required and must be between 1 and 150 characters long.");
+          .Length(1, OpportunityService.Title_MaxLength)
+          .WithMessage($"Title is required and must be between 1 and {OpportunityService.Title_MaxLength} characters long.");
 
       RuleFor(x => x.Description)
           .NotEmpty();
@@ -70,8 +70,8 @@ namespace Yoma.Core.Domain.Opportunity.Validators
 
       RuleFor(x => x.Summary)
           .NotEmpty()
-          .Length(1, 150)
-          .WithMessage("Summary is required and must be between 1 and 150 characters.");
+          .Length(1, OpportunityService.Summary_MaxLength)
+          .WithMessage($"Summary is required and must be between 1 and {OpportunityService.Summary_MaxLength} characters.");
 
       // Instructions are auto trimmed
 

@@ -8,8 +8,8 @@ namespace Yoma.Core.Infrastructure.Jobberman.Entities
   [Table("Opportunity", Schema = "Jobberman")]
   [Index(nameof(ExternalId), IsUnique = true)]
   [Index(nameof(CountryCodeAlpha2), nameof(SourceId), IsUnique = true)]
-  [Index(nameof(ExternalId), nameof(DateCreated), nameof(DateModified))]
   [Index(nameof(CountryCodeAlpha2), nameof(Title))]
+  [Index(nameof(CountryCodeAlpha2), nameof(Deleted), nameof(DateModified))]
   [Index(nameof(Duplicate), nameof(Deleted), nameof(DateCreated), nameof(DateModified))]
   public sealed class Opportunity : BaseEntity<Guid>
   {

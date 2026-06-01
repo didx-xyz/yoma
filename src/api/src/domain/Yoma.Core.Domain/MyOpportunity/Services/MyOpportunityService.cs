@@ -793,33 +793,23 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
       var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 
-      var actionViewedId = _myOpportunityActionService.GetByName(Action.NavigatedExternalLink.ToString()).Id;
+      var actionNavigatedExternalLinkId = _myOpportunityActionService.GetByName(Action.NavigatedExternalLink.ToString()).Id;
 
-      var myOpportunity = _myOpportunityRepository.Query(false).SingleOrDefault(o => o.UserId == user.Id && o.OpportunityId == opportunity.Id && o.ActionId == actionViewedId);
+      var myOpportunity = _myOpportunityRepository.Query(false).SingleOrDefault(o => o.UserId == user.Id && o.OpportunityId == opportunity.Id && o.ActionId == actionNavigatedExternalLinkId);
       if (myOpportunity == null)
       {
         myOpportunity = new Models.MyOpportunity
         {
           UserId = user.Id,
           OpportunityId = opportunity.Id,
-          ActionId = actionViewedId
+          ActionId = actionNavigatedExternalLinkId
         };
         await _myOpportunityRepository.Create(myOpportunity);
       }
       else
         await _myOpportunityRepository.Update(myOpportunity); //update DateModified
 
-      // Push-synced opportunities were shared out to a partner, but the opportunity URL remains the Yoma/source URL.
-      // Only pull-synced opportunities have an external partner URL that should be returned/enhanced.
-      if (opportunity.SyncedInfo?.SyncType != SyncType.Pull)
-        return null;
-
-      if (opportunity.SyncedInfo.Partners == null || opportunity.SyncedInfo.Partners.Count != 1)
-        throw new DataInconsistencyException($"Pull-synced opportunity '{opportunity.Id}' must have exactly one synchronized partner");
-
-      var partner = opportunity.SyncedInfo.Partners.Single();
-
-      return await _syncUserAuthenticationService.Authenticate(user, partner);
+      return await _syncUserAuthenticationService.Authenticate(user, opportunity.SyncedInfo);
     }
 
     public bool ActionedSaved(Guid opportunityId)

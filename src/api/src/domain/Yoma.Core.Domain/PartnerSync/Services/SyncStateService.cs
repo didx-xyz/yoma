@@ -70,6 +70,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
         .Select(o => new SyncInfoEntityPartner
         {
           Partner = o.Partner,
+          EntityType = Enum.Parse<EntityType>(o.EntityType, true),
           ExternalId = o.EntityExternalId, // Partner sync external ID from the processing log
           URL = url // Static/default external URL from the entity, for example Opportunity.URL, when available
         })

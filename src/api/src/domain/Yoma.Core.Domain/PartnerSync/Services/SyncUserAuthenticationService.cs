@@ -1,10 +1,12 @@
 using Microsoft.Extensions.Logging;
 using Yoma.Core.Domain.Core;
+using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.Lookups.Interfaces;
 using Yoma.Core.Domain.PartnerSync.Interfaces;
 using Yoma.Core.Domain.PartnerSync.Interfaces.Lookups;
 using Yoma.Core.Domain.PartnerSync.Interfaces.Provider;
 using Yoma.Core.Domain.PartnerSync.Models;
+using Yoma.Core.Domain.PartnerSync.Models.Lookups;
 
 namespace Yoma.Core.Domain.PartnerSync.Services
 {
@@ -35,59 +37,69 @@ namespace Yoma.Core.Domain.PartnerSync.Services
 
     #region Public Members
     /// <summary>
-    /// Attempts to authenticate/link the user with the synchronized partner for the entity.
+    /// Attempts to authenticate/link the user with the synchronized partner for the supplied entity sync information.
     ///
-    /// This is best-effort only. If partner authentication is not supported or fails,
+    /// This method owns the sync eligibility rules for partner user authentication:
+    /// - Push-synced entities are Yoma/source-owned for navigation purposes, so there is no partner URL to enhance.
+    /// - Pull-synced entities are partner-owned and may return an external partner URL.
+    /// - Partner user authentication only runs when the partner is explicitly configured with SyncScope.UserAuthentication.
+    /// </summary>
+    public async Task<SyncInfoEntityPartner?> Authenticate(Entity.Models.User user, SyncInfoEntity? syncInfo)
+    {
+      ArgumentNullException.ThrowIfNull(user);
+
+      if (syncInfo == null) return null;
+
+      // Push sync means Yoma shared the entity out to a partner.
+      // The entity remains Yoma/source-owned from a navigation point of view,
+      // so user-authentication / auto-login URL enhancement does not apply.
+      if (syncInfo.SyncType != SyncType.Pull) return null;
+
+      // Pull sync means the entity came from an external partner.
+      // For a pull-synced entity we expect exactly one source partner, because that partner owns
+      // the external URL and any optional authentication/redirect enhancement for this entity.
+      if (syncInfo.Partners == null || syncInfo.Partners.Count != 1)
+        throw new DataInconsistencyException($"Pull-synced entity must have exactly one synchronized partner. Sync type: '{syncInfo.SyncType}'");
+
+      return await Authenticate(user, syncInfo.Partners.Single());
+    }
+    #endregion
+
+    #region Private Members
+    /// <summary>
+    /// Attempts to authenticate/link the user with the configured synchronized partner.
+    ///
+    /// This is best-effort only. If partner authentication is not configured, supported, or fails,
     /// the existing default partner URL remains unchanged so the user can still navigate
     /// to the external opportunity manually.
     /// </summary>
-    public async Task<SyncInfoEntityPartner> Authenticate(Entity.Models.User user, SyncInfoEntityPartner partnerSyncInfo)
+    private async Task<SyncInfoEntityPartner> Authenticate(Entity.Models.User user, SyncInfoEntityPartner partnerSyncInfo)
     {
       ArgumentNullException.ThrowIfNull(user);
       ArgumentNullException.ThrowIfNull(partnerSyncInfo);
+
+      var partner = _partnerService.GetByName(partnerSyncInfo.Partner.ToString());
+
+      if (!IsUserAuthenticationEnabled(partner, partnerSyncInfo))
+      {
+        if (_logger.IsEnabled(LogLevel.Debug))
+          _logger.LogDebug(
+            "Partner user authentication skipped for partner '{partner}', entity type '{entityType}' and user '{userId}' because SyncScope.UserAuthentication is not configured",
+            partnerSyncInfo.Partner, partnerSyncInfo.EntityType, user.Id);
+
+        return partnerSyncInfo;
+      }
 
       try
       {
         if (string.IsNullOrWhiteSpace(partnerSyncInfo.ExternalId))
           throw new InvalidOperationException("Partner external id is required");
 
-        var partner = _partnerService.GetByName(partnerSyncInfo.Partner.ToString());
-
-        var pullOpportunityEnabled = partner.SyncCapabilitiesParsed.TryGetValue(SyncType.Pull, out var entityCapabilities) &&
-          entityCapabilities.TryGetValue(EntityType.Opportunity, out var scopes) &&
-          scopes.Contains(SyncScope.Entity);
-
-        if (!pullOpportunityEnabled)
-          throw new InvalidOperationException(
-            $"Partner '{partner.Name}' is not configured for pull opportunity synchronization and cannot be used for partner user authentication");
-
-        // TODO: Replace this hardcoded user-authentication support switch with a dedicated
-        // partner capability, e.g. SyncScope.UserAuthentication, once supported in Partner.SyncCapabilities.
-        // Pull opportunity capability is already validated above; this switch only decides whether
-        // the pull partner can enhance the default partner URL with user authentication / auto-login.
-        // Jobberman is pull-enabled, but does not support user authentication, so it keeps the default URL.
-        switch (partnerSyncInfo.Partner)
-        {
-          case SyncPartner.Jobberman:
-            if (_logger.IsEnabled(LogLevel.Debug))
-              _logger.LogDebug(
-                "Partner user authentication skipped for partner '{partner}' and user '{userId}' because user authentication is not supported",
-                partnerSyncInfo.Partner, user.Id);
-
-            return partnerSyncInfo;
-
-          case SyncPartner.Alison:
-            // Alison supports user authentication / auto-login navigation.
-            break;
-
-          default:
-            throw new InvalidOperationException($"Unsupported sync partner '{partnerSyncInfo.Partner}'");
-        }
-
         var userSyncInfo = _syncStateService.ListUserSyncInfo(user.Id);
         var country = user.CountryId.HasValue ? _countryService.GetByIdOrNull(user.CountryId.Value) : null;
 
-        var providerClient = _providerClientFactoryResolver.CreateClient<ISyncProviderClientUserAuthentication>(partnerSyncInfo.Partner);
+        var providerClient = _providerClientFactoryResolver.CreateClient<ISyncProviderClientUserAuthentication>(
+          partnerSyncInfo.Partner);
 
         var result = await providerClient.Authenticate(new SyncRequestUserAuthentication
         {
@@ -126,11 +138,28 @@ namespace Yoma.Core.Domain.PartnerSync.Services
       {
         if (_logger.IsEnabled(LogLevel.Warning))
           _logger.LogWarning(ex,
-            "Partner user authentication failed for partner '{partner}' and user '{userId}'. Keeping default navigation URL",
-            partnerSyncInfo.Partner, user.Id);
+            "Partner user authentication failed for partner '{partner}', entity type '{entityType}' and user '{userId}'. Keeping default navigation URL",
+            partnerSyncInfo.Partner, partnerSyncInfo.EntityType, user.Id);
       }
 
       return partnerSyncInfo;
+    }
+
+    /// <summary>
+    /// Returns whether the partner is configured to support user authentication for the entity type.
+    ///
+    /// UserAuthentication is checked independently from Entity synchronization. Some partners may support
+    /// authentication/redirect enhancement for an entity type without necessarily syncing that entity itself.
+    /// </summary>
+    private static bool IsUserAuthenticationEnabled(Partner partner, SyncInfoEntityPartner partnerSyncInfo)
+    {
+      if (!partner.SyncCapabilitiesParsed.TryGetValue(SyncType.Pull, out var entityCapabilities))
+        return false;
+
+      if (!entityCapabilities.TryGetValue(partnerSyncInfo.EntityType, out var scopes))
+        return false;
+
+      return scopes.Contains(SyncScope.UserAuthentication);
     }
     #endregion
   }

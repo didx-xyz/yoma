@@ -81,6 +81,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
     private readonly IExecutionStrategyService _executionStrategyService;
 
+    public const int Title_MaxLength = 150;
+    public const int Summary_MaxLength = 150;
     public const string Keywords_Separator = ",";
     public const int Keywords_CombinedMaxLength = 500;
     private static readonly Status[] Statuses_Updatable = [Status.Active, Status.Inactive];
@@ -1113,9 +1115,10 @@ namespace Yoma.Core.Domain.Opportunity.Services
       return result;
     }
 
-    public async Task<Models.Opportunity> Create(OpportunityRequestCreate request, bool ensureOrganizationAuthorization, bool raiseEvent = true, bool sendNotification = true)
+    public async Task<Models.Opportunity> Create(OpportunityRequestCreate request, OpportunityUpsertOptions options)
     {
       ArgumentNullException.ThrowIfNull(request, nameof(request));
+      ArgumentNullException.ThrowIfNull(options, nameof(options));
 
       request.URL = request.URL?.EnsureHttpsScheme();
 
@@ -1124,21 +1127,19 @@ namespace Yoma.Core.Domain.Opportunity.Services
       request.DateStart = request.DateStart.RemoveTime();
       if (request.DateEnd.HasValue) request.DateEnd = request.DateEnd.Value.ToEndOfDay();
 
-      if (ensureOrganizationAuthorization)
+      if (options.EnsureOrganizationAuthorization)
         _organizationService.IsAdmin(request.OrganizationId, true);
 
       //[2024.11.25] backdated opportunities now allowed
       //if (request.DateStart < DateTimeOffset.UtcNow.RemoveTime())
       //  throw new ValidationException("The start date cannot be in the past, it can be today or later");
 
-      var existingByTitle = GetByTitleOrNull(request.Title, false, false);
-      if (existingByTitle != null)
-        throw new ValidationException($"{nameof(Models.Opportunity)} with the specified name '{request.Title}' already exists");
+      request.Title = ResolveTitle(request.Title, null, options);
 
       if (!string.IsNullOrEmpty(request.ExternalId))
       {
         var existingByExternalId = GetByExternalIdOrNull(request.OrganizationId, request.ExternalId, false, false);
-        if (existingByTitle != null)
+        if (existingByExternalId != null)
           throw new ValidationException($"{nameof(Models.Opportunity)} with the specified external id '{request.ExternalId}' already exists for the specified organization");
       }
 
@@ -1151,7 +1152,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         //allow an expired opportunity to be flagged as hidden during creation; expired opportunities cannot be updated
       }
 
-      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
+      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !options.EnsureOrganizationAuthorization), false, false);
 
       var organization = _organizationService.GetById(request.OrganizationId, false, true, false);
 
@@ -1260,18 +1261,19 @@ namespace Yoma.Core.Domain.Opportunity.Services
       ParseComputed(result, true);
 
       //sent when created irrespective of the opportunity status; only trigger point; trigger point on status update has been removed (sent to admin)
-      if (sendNotification)
+      if (options.SendNotifications)
         await SendNotification(result, NotificationType.Opportunity_Posted_Admin);
 
-      if (raiseEvent)
+      if (options.RaiseEvents)
         await _mediator.Publish(new OpportunityEvent(EventType.Create, result));
 
       return result;
     }
 
-    public async Task<Models.Opportunity> Update(OpportunityRequestUpdate request, bool ensureOrganizationAuthorization, bool raiseEvent = true, bool authorizedByPartnerSyncPull = false)
+    public async Task<Models.Opportunity> Update(OpportunityRequestUpdate request, OpportunityUpsertOptions options)
     {
       ArgumentNullException.ThrowIfNull(request, nameof(request));
+      ArgumentNullException.ThrowIfNull(options, nameof(options));
 
       request.URL = request.URL?.EnsureHttpsScheme();
 
@@ -1280,7 +1282,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       request.DateStart = request.DateStart.RemoveTime();
       if (request.DateEnd.HasValue) request.DateEnd = request.DateEnd.Value.ToEndOfDay();
 
-      if (ensureOrganizationAuthorization)
+      if (options.EnsureOrganizationAuthorization)
         _organizationService.IsAdmin(request.OrganizationId, true);
 
       var result = GetById(request.Id, true, true, false);
@@ -1292,9 +1294,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       //if (!result.DateStart.Equals(request.DateStart) && request.DateStart < DateTimeOffset.UtcNow.RemoveTime())
       //  throw new ValidationException("The start date cannot be in the past. The start date has been updated and must be today or later");
 
-      var existingByTitle = GetByTitleOrNull(request.Title, false, false);
-      if (existingByTitle != null && result.Id != existingByTitle.Id)
-        throw new ValidationException($"{nameof(Models.Opportunity)} with the specified name '{request.Title}' already exists");
+      request.Title = ResolveTitle(request.Title, result.Id, options);
 
       if (!string.IsNullOrEmpty(request.ExternalId))
       {
@@ -1303,7 +1303,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
           throw new ValidationException($"{nameof(Models.Opportunity)} with the specified external id '{request.ExternalId}' already exists for the specified organization");
       }
 
-      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
+      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !options.EnsureOrganizationAuthorization), false, false);
 
       var organization = _organizationService.GetById(request.OrganizationId, false, true, false);
 
@@ -1404,7 +1404,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
             [nameof(Models.Opportunity.Countries)] = request.Countries
           },
           abortSyncPushCreateIfPossible: true,
-          authorizedByPartnerSyncPull: authorizedByPartnerSyncPull);
+          options.SyncTypeActionedBy == SyncType.Pull);
 
         result = await _opportunityRepository.Update(result);
 
@@ -1433,7 +1433,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       ParseComputed(result, true);
 
-      if (raiseEvent)
+      if (options.RaiseEvents)
         await _mediator.Publish(new OpportunityEvent(EventType.Update, result));
 
       return result;
@@ -2057,10 +2057,55 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       // Events raised by invoking method upon transaction completion
       var result = isNew
-        ? await Create((OpportunityRequestCreate)request, false, false, !probeOnly)
-        : await Update((OpportunityRequestUpdate)request, false, false);
+        ? await Create((OpportunityRequestCreate)request, new OpportunityUpsertOptions
+        {
+          EnsureOrganizationAuthorization = false,
+          RaiseEvents = false,
+          SendNotifications = !probeOnly
+        })
+        : await Update((OpportunityRequestUpdate)request, new OpportunityUpsertOptions
+        {
+          EnsureOrganizationAuthorization = false,
+          RaiseEvents = false,
+          SendNotifications = false
+        });
 
       return (result, isNew ? EventType.Create : EventType.Update);
+    }
+
+    private string ResolveTitle(string title, Guid? currentOpportunityId, OpportunityUpsertOptions options)
+    {
+      ArgumentNullException.ThrowIfNull(options, nameof(options));
+
+      title = title.NormalizeTrim();
+
+      var existingByTitle = GetByTitleOrNull(title, false, false);
+
+      if (existingByTitle == null)
+        return title;
+
+      if (currentOpportunityId.HasValue && existingByTitle.Id == currentOpportunityId.Value)
+        return title;
+
+      if (options.SyncTypeActionedBy != SyncType.Pull)
+        throw new ValidationException($"{nameof(Models.Opportunity)} with the specified name '{title}' already exists");
+
+      var syncExternalId = options.SyncExternalId?.Trim();
+      if (string.IsNullOrWhiteSpace(syncExternalId))
+        throw new InvalidOperationException("Sync external id is required to resolve a duplicate synced opportunity title");
+
+      var suffix = $" [{syncExternalId}]";
+
+      if (suffix.Length >= Title_MaxLength)
+        throw new InvalidOperationException($"Sync external id suffix '{suffix}' exceeds the maximum title length");
+
+      var resolvedTitle = $"{title.TrimToLengthWithEllipsis(Title_MaxLength - suffix.Length)}{suffix}";
+
+      existingByTitle = GetByTitleOrNull(resolvedTitle, false, false);
+      if (existingByTitle != null && (!currentOpportunityId.HasValue || existingByTitle.Id != currentOpportunityId.Value))
+        throw new ValidationException($"{nameof(Models.Opportunity)} with the specified name '{resolvedTitle}' already exists");
+
+      return resolvedTitle;
     }
 
     private static (decimal? Reward, bool? RewardReduced, bool? RewardPoolDepleted) ProcessRewardAllocation(decimal? reward, decimal? rewardPool, decimal? rewardCumulative, bool? rewardReduced, bool? rewardPoolDepleted)
@@ -2091,7 +2136,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       Guid id,
       Status status,
       bool ensureOrganizationAuthorization,
-      bool authorizedByPartnerSyncPull)
+      bool actionedByPartnerSyncPull)
     {
       var result = GetById(id, true, true, ensureOrganizationAuthorization);
 
@@ -2136,7 +2181,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         {
           [nameof(Models.Opportunity.Status)] = status
         },
-        authorizedByPartnerSyncPull: authorizedByPartnerSyncPull);
+        actionedByPartnerSyncPull);
 
       var statusId = _opportunityStatusService.GetByName(status.ToString()).Id;
 
@@ -2178,7 +2223,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       Models.Opportunity opportunityCurrent,
       Dictionary<string, object?> updatesToEval,
       bool abortSyncPushCreateIfPossible = false,
-      bool authorizedByPartnerSyncPull = false)
+      bool actionedByPartnerSyncPull = false)
     {
       ArgumentNullException.ThrowIfNull(opportunityCurrent);
       ArgumentNullException.ThrowIfNull(updatesToEval);
@@ -2193,7 +2238,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       switch (syncedInfo.SyncType)
       {
         case SyncType.Pull:
-          AssertUpdatablePartnerSyncPull(action, updatesToEval, authorizedByPartnerSyncPull);
+          AssertUpdatablePartnerSyncPull(action, updatesToEval, actionedByPartnerSyncPull);
           break;
 
         case SyncType.Push:
@@ -2220,7 +2265,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
     private void AssertUpdatablePartnerSyncPull(
       UpdateAction action,
       Dictionary<string, object?> updatesToEval,
-      bool authorizedByPartnerSyncPull = false)
+      bool actionedByPartnerSyncPull = false)
     {
       switch (action)
       {
@@ -2232,13 +2277,13 @@ namespace Yoma.Core.Domain.Opportunity.Services
           var statusExpected = updatesToEval.Get<Status>(nameof(Models.Opportunity.Status));
 
           if (statusExpected == Status.Deleted &&
-              (authorizedByPartnerSyncPull || HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor)))
+              (actionedByPartnerSyncPull || HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor)))
             return;
 
           break;
 
         case UpdateAction.Complete:
-          if (authorizedByPartnerSyncPull) return;
+          if (actionedByPartnerSyncPull) return;
           break;
 
         case UpdateAction.Other:

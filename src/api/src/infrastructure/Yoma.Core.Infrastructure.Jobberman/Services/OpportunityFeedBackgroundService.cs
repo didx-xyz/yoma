@@ -7,6 +7,7 @@ using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
+using Yoma.Core.Domain.Opportunity.Services;
 using Yoma.Core.Infrastructure.Jobberman.Interfaces;
 using Yoma.Core.Infrastructure.Jobberman.Models;
 
@@ -370,7 +371,8 @@ namespace Yoma.Core.Infrastructure.Jobberman.Services
         return;
       }
 
-      // Deduplicate incoming by ExternalId.
+      // Deduplicate incoming rows by ExternalId first.
+      // ExternalId is the stable provider identity used by the Jobberman cache table.
       var itemsNormalizedRaw = opportunities
         .GroupBy(o => o.ExternalId, StringComparer.Ordinal)
         .Select(g => g.First())
@@ -378,8 +380,8 @@ namespace Yoma.Core.Infrastructure.Jobberman.Services
 
       // Normalize and cap titles before duplicate detection so duplicate checks use the same
       // title value that is stored and later sent to the Yoma domain sync.
+      itemsNormalizedRaw.ForEach(o => o.Title = NormalizeTitle(o.Title));
       itemsNormalizedRaw = [.. itemsNormalizedRaw.Where(o => !string.IsNullOrWhiteSpace(o.Title))];
-      itemsNormalizedRaw.ForEach(o => o.Title = o.Title.TrimToLengthWithEllipsis(150));
 
       if (itemsNormalizedRaw.Count == 0)
       {
@@ -389,25 +391,22 @@ namespace Yoma.Core.Infrastructure.Jobberman.Services
         return;
       }
 
-      // Match the domain sync listing order so the first item that would have been imported
-      // remains the canonical item when duplicate titles are detected.
+      // Match the domain sync listing order for deterministic processing.
       itemsNormalizedRaw = [.. itemsNormalizedRaw.OrderBy(o => o.ExternalId)];
-
-      // Mark duplicate Jobberman jobs by title within the current country feed.
-      // First occurrence wins because it is the one most likely already imported into Yoma.
-      // Duplicate rows are kept in the Jobberman table for tracking/audit, but excluded from domain sync.
-      var titlesSeen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-      itemsNormalizedRaw.ForEach(o => o.Duplicate = !titlesSeen.Add(o.Title));
 
       var incomingExternalIds = itemsNormalizedRaw
         .Select(o => o.ExternalId)
         .ToHashSet(StringComparer.Ordinal);
 
-      // Load existing from DB for this country feed.
+      // Load existing rows before duplicate detection.
+      // This lets us keep the same active non-duplicate row as canonical when duplicate titles
+      // remain present across sync runs, avoiding unnecessary duplicate flipping and downstream churn.
       var itemsExisting = _opportunityRepository.Query()
         .Where(o => o.CountryCodeAlpha2 == countryCodeAlpha2)
         .ToList()
         .ToDictionary(o => o.ExternalId, StringComparer.Ordinal);
+
+      ApplyActiveFeedTitleDuplicates(itemsNormalizedRaw, itemsExisting.Values);
 
       var itemsToCreate = new List<Opportunity>();
       var itemsToUpdate = new List<Opportunity>();
@@ -539,10 +538,66 @@ namespace Yoma.Core.Infrastructure.Jobberman.Services
         }
       }
 
+      var duplicateCount = itemsNormalizedRaw.Count(o => o.Duplicate == true);
+
       if (_logger.IsEnabled(LogLevel.Information))
         _logger.LogInformation(
-          "Jobberman feed {CountryCodeAlpha2} sync summary: Created={Created}, Updated={Updated}, MarkedDeleted={MarkedDeleted}, Purged={Purged}",
-          countryCodeAlpha2, itemsToCreate.Count, itemsToUpdate.Count, itemsToMarkDeleted.Count, deletedCount);
+          "Jobberman feed {CountryCodeAlpha2} sync summary: Created={Created}, Updated={Updated}, MarkedDeleted={MarkedDeleted}, Duplicates={Duplicates}, Purged={Purged}",
+          countryCodeAlpha2, itemsToCreate.Count, itemsToUpdate.Count, itemsToMarkDeleted.Count, duplicateCount, deletedCount);
+    }
+
+    private static string NormalizeTitle(string? title)
+    {
+      title = title?.NormalizeTrimMultiline();
+
+      return string.IsNullOrWhiteSpace(title)
+        ? string.Empty
+        : title.TrimToLengthWithEllipsis(OpportunityService.Title_MaxLength);
+    }
+
+    /// <summary>
+    /// Marks duplicate Jobberman jobs by normalized title within the latest active feed snapshot.
+    ///
+    /// Duplicate detection is intentionally limited to the current feed. Retention may later purge
+    /// old deleted rows, so old history is not required to decide the current active set.
+    /// If the same title appears again across sync runs, the existing active non-duplicate row is
+    /// kept as canonical when it is still present in the feed. This avoids unnecessary duplicate
+    /// flipping and downstream sync churn.
+    /// </summary>
+    private static void ApplyActiveFeedTitleDuplicates(List<Opportunity> items, IEnumerable<Opportunity> itemsExisting)
+    {
+      ArgumentNullException.ThrowIfNull(items);
+      ArgumentNullException.ThrowIfNull(itemsExisting);
+
+      var existingCanonicalByTitle = itemsExisting
+        .Where(o => o.Deleted != true && o.Duplicate != true && !string.IsNullOrWhiteSpace(o.Title))
+        .GroupBy(o => ToTitleDedupeKey(o.Title), StringComparer.OrdinalIgnoreCase)
+        .ToDictionary(
+          g => g.Key,
+          g => g.OrderBy(o => o.DateCreated).ThenBy(o => o.ExternalId).First().ExternalId,
+          StringComparer.OrdinalIgnoreCase);
+
+      foreach (var group in items.GroupBy(o => ToTitleDedupeKey(o.Title), StringComparer.OrdinalIgnoreCase))
+      {
+        var groupItems = group.OrderBy(o => o.ExternalId).ToList();
+
+        var canonicalExternalId = existingCanonicalByTitle.TryGetValue(group.Key, out var existingExternalId) &&
+            groupItems.Any(o => string.Equals(o.ExternalId, existingExternalId, StringComparison.Ordinal))
+          ? existingExternalId
+          : groupItems.First().ExternalId;
+
+        foreach (var item in groupItems)
+          item.Duplicate = !string.Equals(item.ExternalId, canonicalExternalId, StringComparison.Ordinal);
+      }
+    }
+
+    private static string ToTitleDedupeKey(string? title)
+    {
+      title = title?.NormalizeTrimMultiline();
+
+      return string.IsNullOrWhiteSpace(title)
+        ? string.Empty
+        : title;
     }
     #endregion
   }
