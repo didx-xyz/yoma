@@ -1404,7 +1404,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
             [nameof(Models.Opportunity.Countries)] = request.Countries
           },
           abortSyncPushCreateIfPossible: true,
-          options.SyncTypeActionedBy == SyncType.Pull);
+          actionedByPartnerSyncPull: options.SyncTypeActionedBy == SyncType.Pull);
 
         result = await _opportunityRepository.Update(result);
 
@@ -2181,7 +2181,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
         {
           [nameof(Models.Opportunity.Status)] = status
         },
-        actionedByPartnerSyncPull);
+        abortSyncPushCreateIfPossible: false,
+        actionedByPartnerSyncPull: actionedByPartnerSyncPull);
 
       var statusId = _opportunityStatusService.GetByName(status.ToString()).Id;
 
