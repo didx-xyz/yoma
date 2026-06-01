@@ -26,7 +26,7 @@ export const Footer: React.FC<{
         >
           <Link
             className="text-green font-semibold hover:underline"
-            href="/terms"
+            href="/terms?tab=terms"
             tabIndex={tabIndex}
             onClick={onClose}
           >
