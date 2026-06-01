@@ -7,7 +7,8 @@ export const Footer: React.FC<{
   showSocialMediaLinks?: boolean;
   tabIndex?: number;
   size?: "small" | "large";
-}> = ({ showSocialMediaLinks, tabIndex, size = "large" }) => {
+  onClose?: () => void;
+}> = ({ showSocialMediaLinks, tabIndex, size = "large", onClose }) => {
   const forceSmall = size === "small";
 
   return (
@@ -15,18 +16,29 @@ export const Footer: React.FC<{
       className={`flex w-full flex-col gap-4 overflow-x-hidden p-4 ${forceSmall ? "" : "md:flex-row md:items-center md:gap-8 md:p-2 md:px-4"}`}
     >
       {/* LINKS */}
-      <div className="flex flex-col gap-2 text-xs md:text-sm">
+      <div className="text-gray-dark flex flex-col gap-2 text-xs md:text-sm">
         <div className="flex flex-wrap gap-1">
           <span className="notranslate">© 2026 Yoma.</span>
           <span>All Rights Reserved</span>
         </div>
-        <div className={`flex flex-row gap-2 ${forceSmall ? "" : "md:gap-6"}`}>
+        <div
+          className={`flex gap-2 ${forceSmall ? "flex-col" : "flex-row md:gap-6"}`}
+        >
           <Link
             className="text-green font-semibold hover:underline"
             href="/terms"
             tabIndex={tabIndex}
+            onClick={onClose}
           >
             Terms of Service
+          </Link>
+          <Link
+            className="text-green font-semibold hover:underline"
+            href="/terms?tab=privacy"
+            tabIndex={tabIndex}
+            onClick={onClose}
+          >
+            Privacy Policy
           </Link>
           <Link
             className="notranslate text-green font-semibold hover:underline"
