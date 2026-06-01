@@ -1118,7 +1118,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
     public async Task<Models.Opportunity> Create(OpportunityRequestCreate request, OpportunityUpsertOptions options)
     {
       ArgumentNullException.ThrowIfNull(request, nameof(request));
-      ArgumentNullException.ThrowIfNull(options, nameof(options));  
+      ArgumentNullException.ThrowIfNull(options, nameof(options));
 
       request.URL = request.URL?.EnsureHttpsScheme();
 
