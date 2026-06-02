@@ -4,6 +4,7 @@ using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Converters;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Models;
+using Yoma.Core.Domain.Opportunity.Services;
 
 namespace Yoma.Core.Domain.Opportunity.Models
 {
@@ -143,8 +144,8 @@ namespace Yoma.Core.Domain.Opportunity.Models
       if (string.IsNullOrEmpty(ExternalId))
         CSVImportHelper.AddError(errors, CSVImportErrorType.RequiredFieldMissing, "Missing required field", rowNumber, nameof(ExternalId));
 
-      if (ExternalId.Length > 50)
-        CSVImportHelper.AddError(errors, CSVImportErrorType.InvalidFieldValue, "Must be between 1 and 50 characters", rowNumber, nameof(ExternalId), ExternalId);
+      if (ExternalId.Length > OpportunityService.ExternalId_MaxLength)
+        CSVImportHelper.AddError(errors, CSVImportErrorType.InvalidFieldValue, $"Must be between 1 and {OpportunityService.ExternalId_MaxLength} characters", rowNumber, nameof(ExternalId), ExternalId);
     }
     #endregion
   }

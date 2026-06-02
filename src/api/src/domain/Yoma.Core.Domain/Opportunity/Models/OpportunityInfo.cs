@@ -129,7 +129,7 @@ namespace Yoma.Core.Domain.Opportunity.Models
     public bool Hidden { get; set; }
 
     [JsonIgnore]
-    [Name("Partner Opportunity (External) ID")]
+    [Name("External Reference / ID")]
     public string? ExternalId { get; set; }
 
     [BooleanFalseValues("No")]
