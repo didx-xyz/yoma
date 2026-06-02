@@ -402,6 +402,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
     hidden: opportunity?.hidden ?? false,
     showZltoReward: !!(opportunity?.zltoReward ?? false),
     showZltoRewardPool: !!(opportunity?.zltoRewardPool ?? false),
+    externalId: opportunity?.externalId ?? null,
   });
 
   const schemaStep1 = z.object({
@@ -772,6 +773,10 @@ const OpportunityAdminDetails: NextPageWithLayout<{
     postAsActive: z.boolean().optional(),
     shareWithPartners: z.boolean().optional(),
     hidden: z.boolean().optional(),
+    externalId: z
+      .string()
+      .max(50, "External ID cannot exceed 50 characters.")
+      .optional(),
   });
 
   const {
@@ -1092,6 +1097,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
       nonCompletableReason: null,
       shareWithPartners: formData.shareWithPartners ?? false,
       syncedInfo: null,
+      externalId: formData.externalId ?? null,
     }),
     [
       formData,
@@ -1607,6 +1613,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                         showZltoRewardPool: !!(
                           updatedOpportunity.zltoRewardPool ?? false
                         ),
+                        externalId: updatedOpportunity.externalId ?? null,
                       };
                       setFormData(mapped);
                       setOppExpiredModalVisible(false);
@@ -3520,6 +3527,28 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                           Hidden opportunities cannot be shared with partners.
                         </FormMessage>
                       )}
+                    </FormField>
+
+                    {/* EXTERNAL ID */}
+                    <FormField
+                      label="External ID"
+                      subLabel="An optional external identifier for this opportunity (max 50 characters)."
+                      showWarningIcon={
+                        !!formStateStep8.errors.externalId?.message
+                      }
+                      showError={
+                        !!formStateStep8.touchedFields.externalId ||
+                        formStateStep8.isSubmitted
+                      }
+                      error={formStateStep8.errors.externalId?.message}
+                    >
+                      <input
+                        type="text"
+                        className="input border-gray focus:border-gray rounded-md focus:outline-none"
+                        placeholder="Enter external ID..."
+                        maxLength={50}
+                        {...registerStep8("externalId")}
+                      />
                     </FormField>
 
                     {/* BUTTONS */}
