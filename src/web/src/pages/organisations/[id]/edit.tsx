@@ -501,7 +501,7 @@ const OrganisationUpdate: NextPageWithLayout<{
         {/* CONTENT */}
         <div className="flex flex-col justify-center gap-4 md:flex-row">
           {/* MENU */}
-          <ul className="menu menu-horizontal shadow-custom md:menu-vertical hidden h-max w-full items-center justify-center gap-4 rounded-lg bg-white p-4 font-semibold md:max-w-[265px]">
+          <ul className="menu menu-horizontal shadow-custom md:menu-vertical hidden h-max w-full items-center justify-center gap-4 rounded-lg bg-white p-4 font-semibold md:flex md:max-w-[265px]">
             {menuItems.map((item) => (
               <li
                 key={item.step}
