@@ -1,4 +1,3 @@
-using Newtonsoft.Json;
 using Yoma.Core.Domain.Core.Interfaces;
 
 namespace Yoma.Core.Domain.Opportunity.Models
@@ -55,8 +54,7 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
     public bool? Hidden { get; set; }
 
-    [JsonIgnore]
-    internal string? ExternalId { get; set; }
+    public string? ExternalId { get; set; }
 
     public List<Guid> Categories { get; set; } = null!;
 
