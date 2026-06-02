@@ -513,7 +513,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
               opportunityItem.ExternalId = opportunityItem.ExternalId?.Trim();
               if (!string.IsNullOrEmpty(opportunityItem.ExternalId))
                 throw new InvalidOperationException(
-                   $"Pull-synced opportunity item must not set '{nameof(Opportunity.Models.Opportunity.ExternalId)}'. Use '{nameof(SyncItemEntity<>.ExternalId)}' / processing '{nameof(ProcessingLog.EntityExternalId)}' for partner sync identity");
+                  $"Pull-synced opportunity item must not set '{nameof(Opportunity.Models.Opportunity.ExternalId)}'. Use '{nameof(SyncItemEntity<>.ExternalId)}' / processing '{nameof(ProcessingLog.EntityExternalId)}' for partner sync identity");
 
               var processingItemExisting = _processingService.GetPull(partnerModel.Id, entityType, item.ExternalId);
               var processingItemExistingHasSynchronizedEntity = processingItemExisting.HasSynchronizedEntity(entityType);
