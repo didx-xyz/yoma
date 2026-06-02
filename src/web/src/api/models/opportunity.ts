@@ -82,6 +82,7 @@ export interface Opportunity {
   verificationTypes: OpportunityVerificationType[] | null;
   hidden: boolean;
   syncedInfo?: SyncInfoEntity | null;
+  externalId: string | null;
 }
 
 export interface OpportunityInfo {
@@ -133,6 +134,7 @@ export interface OpportunityInfo {
   languages: Language[] | null;
   skills: Skill[] | null;
   verificationTypes: OpportunityVerificationType[] | null;
+  externalId: string | null;
 }
 
 export interface OpportunitySearchFilter extends OpportunitySearchFilterBase {
@@ -281,6 +283,7 @@ export interface OpportunityRequestBase {
   postAsActive: boolean;
   shareWithPartners: boolean;
   hidden: boolean | null;
+  externalId: string | null;
 }
 
 export interface OpportunityRequestVerificationType {
