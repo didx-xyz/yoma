@@ -585,6 +585,9 @@ namespace Yoma.Core.Domain.PartnerSync.Services
                     {
                       var request = opportunityItem.ToRequestCreate();
 
+                      // Stamp pulled opportunities with a stable human-readable CSV reference; partner sync still uses EntityExternalId.
+                      request.ExternalId = $"{partner.ToString().ToUpperInvariant()}_{item.ExternalId.Trim()}";
+
                       var opportunity = await _opportunityService.Create(request, new OpportunityUpsertOptions
                       {
                         EnsureOrganizationAuthorization = false,

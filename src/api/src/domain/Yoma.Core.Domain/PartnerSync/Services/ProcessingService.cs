@@ -716,13 +716,30 @@ namespace Yoma.Core.Domain.PartnerSync.Services
                   continue;
                 }
 
-                //once shared, required countries can not be removed but can be added
-                if (opportunity.Countries == null ||
-                  !opportunity.Countries.Any(c => PartnerService.RequiredCountries_AnyOf_SAYouth.Any(s => string.Equals(s.CodeAlpha2, c.CodeAlpha2, StringComparison.OrdinalIgnoreCase))))
+                // SAYouth creates must be South Africa-only.
+                // Once shared, required countries cannot be removed but can be added, allowing legacy records to update/delete.
+                var requiredCountry = PartnerService.RequiredCountry_SAYouth;
+
+                var opportunityCountryCodes = opportunity.Countries?
+                  .Select(c => c.CodeAlpha2)
+                  .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+                var containsRequiredCountry = opportunityCountryCodes?.Contains(requiredCountry.CodeAlpha2) == true;
+
+                var countryMappingValid = action switch
                 {
-                  if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation(
-                    "Partner sync filtering: Entity '{entityType}' with id '{entityId}' for partner '{partner}' is not associated with any of the required countries '{requiredCountries}' and will be skipped",
-                    EntityType.Opportunity, entityId, partner, string.Join(", ", PartnerService.RequiredCountries_AnyOf_SAYouth.Select(c => c.Country)));
+                  SyncAction.Create => opportunityCountryCodes is { Count: 1 } && containsRequiredCountry,
+                  SyncAction.Update or SyncAction.Delete => containsRequiredCountry,
+                  _ => throw new InvalidOperationException($"Action of '{action}' not supported")
+                };
+
+                if (!countryMappingValid)
+                {
+                  if (_logger.IsEnabled(LogLevel.Information))
+                    _logger.LogInformation(
+                      "Partner sync filtering: Entity '{entityType}' with id '{entityId}' for partner '{partner}' does not satisfy the required country rule '{requiredCountry}' for action '{action}' and will be skipped",
+                      EntityType.Opportunity, entityId, partner, requiredCountry.Country, action);
+
                   continue;
                 }
 

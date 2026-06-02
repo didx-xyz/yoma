@@ -12,7 +12,7 @@
 
   <ItemGroup>
 	<PackageReference Include="AWSSDK.Extensions.NETCore.Setup" Version="4.0.4.2" />
-	<PackageReference Include="AWSSDK.S3" Version="4.0.23.5" />
+	<PackageReference Include="AWSSDK.S3" Version="4.0.23.6" />
 	<PackageReference Include="tusdotnet" Version="2.11.1" />
   </ItemGroup>
 </Project>

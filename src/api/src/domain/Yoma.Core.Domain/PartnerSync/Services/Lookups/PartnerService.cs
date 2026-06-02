@@ -19,28 +19,25 @@ namespace Yoma.Core.Domain.PartnerSync.Services.Lookups
   public class PartnerService : IPartnerService
   {
     #region Class Variables
-    private readonly ILogger<PartnerService> _logger;
     private readonly AppSettings _appSettings;
     private readonly IMemoryCache _memoryCache;
     private readonly ICountryService _countryService;
     private readonly IRepository<Models.Lookups.Partner> _partnerRepository;
 
-    public static readonly (Country Country, string CodeAlpha2)[] RequiredCountries_AnyOf_SAYouth =
-    [
-      (Country.SouthAfrica, Country.SouthAfrica.ToDescription())
-    ];
+    public static readonly (Country Country, string CodeAlpha2) RequiredCountry_SAYouth = (Country.SouthAfrica, Country.SouthAfrica.ToDescription());
 
-    public static readonly (Country Country, string CodeAlpha2)[] RequiredCountries_AnyOf_All = RequiredCountries_AnyOf_SAYouth;
+    public static readonly (Country Country, string CodeAlpha2)[] RequiredCountries_All =
+    [
+      RequiredCountry_SAYouth
+    ];
     #endregion
 
     #region Constructor
-    public PartnerService(ILogger<PartnerService> logger,
-      IOptions<AppSettings> appSettings,
+    public PartnerService(IOptions<AppSettings> appSettings,
       IMemoryCache memoryCache,
       ICountryService countryService,
       IRepository<Models.Lookups.Partner> partnerRepository)
     {
-      _logger = logger;
       _appSettings = appSettings.Value;
       _memoryCache = memoryCache;
       _countryService = countryService;
@@ -281,7 +278,9 @@ namespace Yoma.Core.Domain.PartnerSync.Services.Lookups
       var countries = updatesToEval.Get<List<Guid>>(nameof(Opportunity.Models.Opportunity.Countries));
       if (countries == null) return;
 
-      var requiredCountries = RequiredCountries_AnyOf_All
+      // Protect already-shared partner requirements only.
+      // Create eligibility is handled separately by partner-specific push filtering.
+      var requiredCountries = RequiredCountries_All
         .Select(o => o.CodeAlpha2)
         .ToList();
 
@@ -301,7 +300,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services.Lookups
 
       if (countriesRemoved?.Count > 0)
       {
-        var countryNamesRemoved = RequiredCountries_AnyOf_All
+        var countryNamesRemoved = RequiredCountries_All
           .Where(rc => countriesRemoved.Contains(rc.CodeAlpha2, StringComparer.OrdinalIgnoreCase))
           .Select(rc => rc.Country)
           .ToList();
