@@ -257,6 +257,11 @@ namespace Yoma.Core.Domain.Opportunity.Validators
           .Must((opportunity, hidden) => hidden != true || opportunity.ShareWithPartners != true)
           .WithMessage("An opportunity shared with partners cannot be flagged as hidden.");
 
+      RuleFor(x => x.ExternalId)
+        .MaximumLength(OpportunityService.ExternalId_MaxLength)
+        .When(x => !string.IsNullOrEmpty(x.ExternalId))
+        .WithMessage($"External ID must not exceed {OpportunityService.ExternalId_MaxLength} characters.");
+
       // Hidden opportunities cannot be shared with partners
       RuleFor(opportunity => opportunity.ShareWithPartners)
           .Must((opportunity, shareWithPartners) => shareWithPartners != true || opportunity.Hidden != true)

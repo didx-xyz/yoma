@@ -83,6 +83,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
     public const int Title_MaxLength = 150;
     public const int Summary_MaxLength = 150;
+    public const int ExternalId_MaxLength = 50;
     public const string Keywords_Separator = ",";
     public const int Keywords_CombinedMaxLength = 500;
     private static readonly Status[] Statuses_Updatable = [Status.Active, Status.Inactive];

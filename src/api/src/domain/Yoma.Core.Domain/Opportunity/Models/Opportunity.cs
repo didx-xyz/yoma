@@ -137,7 +137,6 @@ namespace Yoma.Core.Domain.Opportunity.Models
     /// Partner synchronization identifiers are stored separately in the partner sync
     /// processing state.
     /// </summary>
-    [JsonIgnore]
     public string? ExternalId { get; set; }
 
     public DateTimeOffset DateCreated { get; set; }
