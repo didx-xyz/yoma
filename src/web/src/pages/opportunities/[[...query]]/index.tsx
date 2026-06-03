@@ -57,6 +57,7 @@ import {
   OPPORTUNITY_TYPE_ID_MICROTASK,
   PAGE_SIZE,
   PAGE_SIZE_MINIMUM,
+  OPPORTUNITY_TYPE_ID_JOB,
 } from "~/lib/constants";
 import { currentLanguageAtom, userProfileAtom } from "~/lib/store";
 import { type NextPageWithLayout } from "~/pages/_app";
@@ -214,6 +215,27 @@ export const getStaticProps: GetStaticProps = async (context) => {
     context,
   );
 
+  const opportunities_jobs = await searchOpportunities(
+    {
+      pageNumber: 1,
+      pageSize: PAGE_SIZE_MINIMUM,
+      categories: null,
+      countries: null,
+      languages: null,
+      types: [OPPORTUNITY_TYPE_ID_JOB],
+      engagementTypes: null,
+      valueContains: null,
+      commitmentInterval: null,
+      mostViewed: null,
+      mostCompleted: false,
+      organizations: null,
+      zltoReward: null,
+      publishedStates: [PublishedState.Active, PublishedState.NotStarted],
+      featured: null,
+    },
+    context,
+  );
+
   const opportunities_allOpportunities = await searchOpportunities(
     {
       pageNumber: 1,
@@ -256,6 +278,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
       opportunities_tasks,
       opportunities_events,
       opportunities_other,
+      opportunities_jobs,
       opportunities_allOpportunities,
       lookups_categories,
       lookups_organisations,
@@ -286,6 +309,7 @@ const Opportunities: NextPageWithLayout<{
   opportunities_tasks: OpportunitySearchResultsInfo;
   opportunities_events: OpportunitySearchResultsInfo;
   opportunities_other: OpportunitySearchResultsInfo;
+  opportunities_jobs: OpportunitySearchResultsInfo;
   opportunities_allOpportunities: OpportunitySearchResultsInfo;
   lookups_categories: OpportunityCategory[];
   lookups_organisations: OrganizationInfo[];
@@ -300,6 +324,7 @@ const Opportunities: NextPageWithLayout<{
   opportunities_tasks,
   opportunities_events,
   opportunities_other,
+  opportunities_jobs,
   opportunities_allOpportunities,
   lookups_categories,
   lookups_organisations,
@@ -782,6 +807,30 @@ const Opportunities: NextPageWithLayout<{
       enabled: landingCountryEnabled,
     });
 
+  const { data: opportunities_jobs_country, isLoading: isLoading_jobs } =
+    useQuery<OpportunitySearchResultsInfo>({
+      queryKey: ["opportunities", "landing", "jobs", landingCacheKey],
+      queryFn: async () =>
+        await searchOpportunities({
+          pageNumber: 1,
+          pageSize: PAGE_SIZE_MINIMUM,
+          categories: null,
+          countries: landingCountryIds,
+          languages: null,
+          types: [OPPORTUNITY_TYPE_ID_JOB],
+          engagementTypes: null,
+          valueContains: null,
+          commitmentInterval: null,
+          mostViewed: null,
+          mostCompleted: null,
+          featured: null,
+          organizations: null,
+          zltoReward: null,
+          publishedStates: [PublishedState.Active, PublishedState.NotStarted],
+        }),
+      enabled: landingCountryEnabled,
+    });
+
   const landingCountryLoading =
     landingCountryEnabled &&
     (isLoading_opportunities_user_country ||
@@ -792,7 +841,8 @@ const Opportunities: NextPageWithLayout<{
       isLoading_learning ||
       isLoading_tasks ||
       isLoading_events ||
-      isLoading_other);
+      isLoading_other ||
+      isLoading_jobs);
 
   const landingPersonalizationPending =
     sessionStatus === "authenticated" &&
@@ -1489,6 +1539,10 @@ const Opportunities: NextPageWithLayout<{
     ? (opportunities_other_country ?? EMPTY_RESULTS)
     : opportunities_other;
 
+  const opportunities_jobs_landing = landingCountryEnabled
+    ? (opportunities_jobs_country ?? EMPTY_RESULTS)
+    : opportunities_jobs;
+
   // During personalization we intentionally hide the carousels behind a loader overlay.
   // To prevent layout shift, render the SSG landing datasets (invisible) so the
   // page height stays stable until personalized queries resolve.
@@ -1523,6 +1577,10 @@ const Opportunities: NextPageWithLayout<{
   const opportunities_other_render = landingOverlayActive
     ? opportunities_other
     : opportunities_other_landing;
+
+  const opportunities_jobs_render = landingOverlayActive
+    ? opportunities_jobs
+    : opportunities_jobs_landing;
 
   const appendLandingCountryToUrl = useCallback(
     (url: string) => {
@@ -1754,6 +1812,46 @@ const Opportunities: NextPageWithLayout<{
       landingCacheKey,
       landingCountryIds,
       opportunities_other_landing,
+    ],
+  );
+
+  const loadDataJobs = useCallback(
+    async (startRow: number) => {
+      if (startRow > (opportunities_jobs_landing?.totalCount ?? 0)) {
+        return {
+          items: [],
+          totalCount: 0,
+        };
+      }
+
+      const pageNumber = Math.ceil(startRow / PAGE_SIZE_MINIMUM);
+
+      return fetchDataAndUpdateCache(
+        ["jobs", landingCacheKey, pageNumber.toString()],
+        {
+          pageNumber: pageNumber,
+          pageSize: PAGE_SIZE_MINIMUM,
+          categories: null,
+          countries: landingCountryIds,
+          languages: null,
+          types: [OPPORTUNITY_TYPE_ID_JOB],
+          engagementTypes: null,
+          valueContains: null,
+          commitmentInterval: null,
+          mostViewed: null,
+          mostCompleted: null,
+          featured: null,
+          organizations: null,
+          zltoReward: null,
+          publishedStates: [PublishedState.Active, PublishedState.NotStarted],
+        },
+      );
+    },
+    [
+      fetchDataAndUpdateCache,
+      landingCacheKey,
+      landingCountryIds,
+      opportunities_jobs_landing,
     ],
   );
 
@@ -2080,6 +2178,30 @@ const Opportunities: NextPageWithLayout<{
               {/* CAROUSELS (kept mounted; hidden while overlay is active) */}
               <div className={landingOverlayActive ? "invisible" : ""}>
                 <div className="flex flex-col gap-2">
+                  {/* JOBS */}
+                  {(opportunities_jobs_render?.totalCount ?? 0) > 0 && (
+                    <>
+                      <div className="divider !bg-gray" />
+                      <CustomCarousel
+                        id={`opportunities_jobs`}
+                        title="Jobs 💼"
+                        description="Explore exciting job opportunities."
+                        viewAllUrl={appendLandingCountryToUrl(
+                          "/opportunities?types=Job",
+                        )}
+                        data={opportunities_jobs_render.items}
+                        loadData={loadDataJobs}
+                        totalAll={opportunities_jobs_render.totalCount!}
+                        renderSlide={(item, index) => (
+                          <OpportunityPublicSmallComponent
+                            key={`opportunities_jobs_${item.id}_${index}`}
+                            data={item}
+                          />
+                        )}
+                      />
+                    </>
+                  )}
+
                   {/* OPPORTUNITIES FOR USER'S COUNTRY - ONLY FOR LOGGED-IN USERS */}
                   {sessionStatus === "authenticated" &&
                     landingMyCountryOnly &&
