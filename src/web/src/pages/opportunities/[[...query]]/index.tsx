@@ -548,7 +548,6 @@ const Opportunities: NextPageWithLayout<{
     return null;
   }, [router.query.countryScope]);
 
-  // fetch results for user's country (carousel) - for all logged-in users regardless of country
   const {
     data: opportunities_user_country,
     isLoading: isLoading_opportunities_user_country,
@@ -1543,9 +1542,6 @@ const Opportunities: NextPageWithLayout<{
     ? (opportunities_jobs_country ?? EMPTY_RESULTS)
     : opportunities_jobs;
 
-  // During personalization we intentionally hide the carousels behind a loader overlay.
-  // To prevent layout shift, render the SSG landing datasets (invisible) so the
-  // page height stays stable until personalized queries resolve.
   const opportunities_featured_render = landingOverlayActive
     ? opportunities_featured
     : opportunities_featured_landing;
@@ -2179,27 +2175,40 @@ const Opportunities: NextPageWithLayout<{
               <div className={landingOverlayActive ? "invisible" : ""}>
                 <div className="flex flex-col gap-2">
                   {/* JOBS */}
-                  {(opportunities_jobs_render?.totalCount ?? 0) > 0 && (
-                    <>
-                      <div className="divider !bg-gray" />
-                      <CustomCarousel
-                        id={`opportunities_jobs`}
-                        title="Jobs 💼"
-                        description="Explore exciting job opportunities."
-                        viewAllUrl={appendLandingCountryToUrl(
-                          "/opportunities?types=Job",
-                        )}
-                        data={opportunities_jobs_render.items}
-                        loadData={loadDataJobs}
-                        totalAll={opportunities_jobs_render.totalCount!}
-                        renderSlide={(item, index) => (
-                          <OpportunityPublicSmallComponent
-                            key={`opportunities_jobs_${item.id}_${index}`}
-                            data={item}
-                          />
-                        )}
-                      />
-                    </>
+                  <div className="divider !bg-gray" />
+                  {(opportunities_jobs_render?.totalCount ?? 0) > 0 ? (
+                    <CustomCarousel
+                      id={`opportunities_jobs`}
+                      title={
+                        sessionStatus === "authenticated" &&
+                        landingMyCountryOnly &&
+                        userCountryInfo
+                          ? `Jobs in ${userCountryInfo.name} & Worldwide 💼`
+                          : "Jobs 💼"
+                      }
+                      description="Explore exciting job opportunities."
+                      viewAllUrl={appendLandingCountryToUrl(
+                        "/opportunities?types=Job",
+                      )}
+                      data={opportunities_jobs_render.items}
+                      loadData={loadDataJobs}
+                      totalAll={opportunities_jobs_render.totalCount!}
+                      renderSlide={(item, index) => (
+                        <OpportunityPublicSmallComponent
+                          key={`opportunities_jobs_${item.id}_${index}`}
+                          data={item}
+                        />
+                      )}
+                    />
+                  ) : (
+                    <div className="flex flex-col items-center justify-center gap-2 rounded-lg bg-white p-8 text-center">
+                      <p className="text-gray-dark font-semibold">
+                        New jobs coming soon... 💼
+                      </p>
+                      <p className="text-gray-dark text-sm">
+                        Check back later for exciting job opportunities.
+                      </p>
+                    </div>
                   )}
 
                   {/* OPPORTUNITIES FOR USER'S COUNTRY - ONLY FOR LOGGED-IN USERS */}
