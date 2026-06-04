@@ -9,7 +9,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
     public DateTimeOffset? DateCompleted { get; init; }
     public string? Comment { get; init; }
 
-    public bool OverridePending { get; set; }
+    public bool OverridePending { get; init; }
     public bool PartnerSyncedVerification { get; init; }
     public bool InstantVerification { get; init; }
     public bool ImportedVerification { get; init; }
