@@ -1739,8 +1739,11 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                       .IsRequired()
                       .HasColumnType("varchar(25)");
 
-            b.Property<string>("FailedReason")
-                      .HasColumnType("text");
+            b.Property<int?>("ItemsCreated")
+                      .HasColumnType("integer");
+
+            b.Property<int?>("ItemsDeleted")
+                      .HasColumnType("integer");
 
             b.Property<int?>("ItemsFailed")
                       .HasColumnType("integer");
@@ -1754,8 +1757,14 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.Property<int?>("ItemsSucceeded")
                       .HasColumnType("integer");
 
+            b.Property<int?>("ItemsUpdated")
+                      .HasColumnType("integer");
+
             b.Property<Guid>("PartnerId")
                       .HasColumnType("uuid");
+
+            b.Property<string>("RunFailureReason")
+                      .HasColumnType("text");
 
             b.Property<string>("Status")
                       .IsRequired()

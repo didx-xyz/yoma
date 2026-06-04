@@ -33,7 +33,10 @@ namespace Yoma.Core.Infrastructure.Database.PartnerSync.Repositories
         ItemsSucceeded = entity.ItemsSucceeded,
         ItemsSkipped = entity.ItemsSkipped,
         ItemsFailed = entity.ItemsFailed,
-        FailedReason = entity.FailedReason,
+        ItemsCreated = entity.ItemsCreated,
+        ItemsUpdated = entity.ItemsUpdated,
+        ItemsDeleted = entity.ItemsDeleted,
+        RunFailureReason = entity.RunFailureReason,
         DateStamp = entity.DateStamp
       });
     }
@@ -54,7 +57,10 @@ namespace Yoma.Core.Infrastructure.Database.PartnerSync.Repositories
         ItemsSucceeded = item.ItemsSucceeded,
         ItemsSkipped = item.ItemsSkipped,
         ItemsFailed = item.ItemsFailed,
-        FailedReason = item.FailedReason,
+        ItemsCreated = item.ItemsCreated,
+        ItemsUpdated = item.ItemsUpdated,
+        ItemsDeleted = item.ItemsDeleted,
+        RunFailureReason = item.RunFailureReason,
         DateStamp = item.DateStamp
       };
 

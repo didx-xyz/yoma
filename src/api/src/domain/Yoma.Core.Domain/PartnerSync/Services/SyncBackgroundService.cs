@@ -75,7 +75,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
       var lockDuration = executeUntil - dateTimeNow + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
       var lockAcquired = false;
 
-      var tracking = new Dictionary<(Guid PartnerId, EntityType EntityType), (int ItemsProcessed, int ItemsSkipped, int ItemsFailed, string? FailedReason)>();
+      var tracking = new Dictionary<(Guid PartnerId, EntityType EntityType), PartnerSyncTrackingRequest>();
 
       try
       {
@@ -106,7 +106,23 @@ namespace Yoma.Core.Domain.PartnerSync.Services
             if (executeUntil <= DateTimeOffset.UtcNow) break;
 
             var trackingKey = (pendingGroup.PartnerId, pendingGroup.EntityType);
-            tracking.TryAdd(trackingKey, (0, 0, 0, null));
+            tracking.TryAdd(trackingKey, new PartnerSyncTrackingRequest
+            {
+              PartnerId = pendingGroup.PartnerId,
+              SyncType = SyncType.Push,
+              EntityType = pendingGroup.EntityType,
+              SyncScope = SyncScope.Entity,
+              DateStamp = dateTimeNow,
+              ItemsProcessed = 0,
+              ItemsSucceeded = 0,
+              ItemsSkipped = 0,
+              ItemsFailed = 0,
+              ItemsCreated = 0,
+              ItemsUpdated = 0,
+              ItemsDeleted = 0
+            });
+
+            var trackingItem = tracking[trackingKey];
 
             try
             {
@@ -117,6 +133,8 @@ namespace Yoma.Core.Domain.PartnerSync.Services
                 try
                 {
                   if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processing sync push for '{entityType}' and item with id '{id}'", item.EntityType, item.Id);
+
+                  SyncAction? actionSucceeded = null;
 
                   switch (pendingGroup.EntityType)
                   {
@@ -163,8 +181,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
                             item.Status = ProcessingStatus.Aborted;
                             await _processingService.UpdatePush(item);
 
-                            var trackingSkipped = tracking[trackingKey];
-                            tracking[trackingKey] = (trackingSkipped.ItemsProcessed + 1, trackingSkipped.ItemsSkipped + 1, trackingSkipped.ItemsFailed, trackingSkipped.FailedReason);
+                            IncrementTrackingSkipped(trackingItem);
 
                             continue;
                           }
@@ -259,17 +276,21 @@ namespace Yoma.Core.Domain.PartnerSync.Services
                         default:
                           throw new InvalidOperationException($"Processing action of '{action}' not supported");
                       }
+
+                      actionSucceeded = action;
                       break;
 
                     default:
                       throw new InvalidOperationException($"Entity type of '{pendingGroup.EntityType}' not supported");
                   }
 
+                  if (!actionSucceeded.HasValue)
+                    throw new InvalidOperationException("Successful sync push action expected");
+
                   item.Status = ProcessingStatus.Processed;
                   await _processingService.UpdatePush(item);
 
-                  var (ItemsProcessed, ItemsSkipped, ItemsFailed, FailedReason) = tracking[trackingKey];
-                  tracking[trackingKey] = (ItemsProcessed + 1, ItemsSkipped, ItemsFailed, FailedReason);
+                  IncrementTrackingSucceeded(trackingItem, actionSucceeded.Value);
 
                   if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processed sync push for '{entityType}' and item with id '{id}'", item.EntityType, item.Id);
                 }
@@ -281,8 +302,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
                   item.ErrorReason = ex.Message;
                   await _processingService.UpdatePush(item);
 
-                  var (ItemsProcessed, ItemsSkipped, ItemsFailed, FailedReason) = tracking[trackingKey];
-                  tracking[trackingKey] = (ItemsProcessed + 1, ItemsSkipped, ItemsFailed + 1, FailedReason);
+                  IncrementTrackingFailed(trackingItem);
 
                   itemIdsToSkip.Add(item.Id);
                 }
@@ -293,8 +313,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
               if (_logger.IsEnabled(LogLevel.Error))
                 _logger.LogError(ex, "Failed to process sync push for partner id '{partnerId}' and entity type '{entityType}': {errorMessage}", pendingGroup.PartnerId, pendingGroup.EntityType, ex.Message);
 
-              var (ItemsProcessed, ItemsSkipped, ItemsFailed, FailedReason) = tracking[trackingKey];
-              tracking[trackingKey] = (ItemsProcessed, ItemsSkipped, ItemsFailed, ex.Message);
+              trackingItem.RunFailureReason = ex.Message;
 
               itemIdsToSkip.AddRange(pendingGroup.Items.Select(o => o.Id));
             }
@@ -310,30 +329,37 @@ namespace Yoma.Core.Domain.PartnerSync.Services
         // Tracking represents the full push run, not individual pages or batches.
         // If the run fails after one or more partner/entity groups started, mark those groups as failed
         // so their tracking outcome does not incorrectly appear successful or partial.
-        foreach (var item in tracking)
+        foreach (var item in tracking.Values)
         {
-          var (itemsProcessed, itemsSkipped, itemsFailed, failedReason) = item.Value;
-
-          if (string.IsNullOrWhiteSpace(failedReason))
-            tracking[item.Key] = (itemsProcessed, itemsSkipped, itemsFailed, ex.Message);
+          if (string.IsNullOrWhiteSpace(item.RunFailureReason))
+            item.RunFailureReason = ex.Message;
         }
       }
       finally
       {
-        foreach (var item in tracking)
+        foreach (var item in tracking.Values)
         {
-          var (itemsProcessed, itemsSkipped, itemsFailed, failedReason) = item.Value;
+          var itemsProcessed = item.ItemsProcessed ?? 0;
 
           // Avoid recording a false run if tracking was initialized but no item was actually handled.
-          if (itemsProcessed == 0 && string.IsNullOrWhiteSpace(failedReason)) continue;
+          if (itemsProcessed == 0 && string.IsNullOrWhiteSpace(item.RunFailureReason)) continue;
 
-          if (!string.IsNullOrWhiteSpace(failedReason))
+          if (itemsProcessed == 0 && !string.IsNullOrWhiteSpace(item.RunFailureReason))
           {
-            await _processingService.RecordTracking(SyncType.Push, item.Key.PartnerId, item.Key.EntityType, SyncScope.Entity, dateTimeNow, failedReason);
+            await _processingService.RecordTracking(new PartnerSyncTrackingRequest
+            {
+              PartnerId = item.PartnerId,
+              SyncType = item.SyncType,
+              EntityType = item.EntityType,
+              SyncScope = item.SyncScope,
+              DateStamp = item.DateStamp,
+              RunFailureReason = item.RunFailureReason
+            });
+
             continue;
           }
 
-          await _processingService.RecordTracking(SyncType.Push, item.Key.PartnerId, item.Key.EntityType, SyncScope.Entity, dateTimeNow, itemsProcessed, itemsProcessed - itemsSkipped - itemsFailed, itemsSkipped, itemsFailed);
+          await _processingService.RecordTracking(item);
         }
 
         if (lockAcquired) await _distributedLockService.ReleaseLockAsync(lockIdentifier);
@@ -470,9 +496,22 @@ namespace Yoma.Core.Domain.PartnerSync.Services
     {
       var entityType = EntityType.Opportunity;
       var dateStamp = DateTimeOffset.UtcNow;
-      var tracking = (ItemsProcessed: 0, ItemsSkipped: 0, ItemsFailed: 0, FailedReason: (string?)null);
+      var tracking = new PartnerSyncTrackingRequest
+      {
+        PartnerId = partnerModel.Id,
+        SyncType = SyncType.Pull,
+        EntityType = entityType,
+        SyncScope = SyncScope.Entity,
+        DateStamp = dateStamp,
+        ItemsProcessed = 0,
+        ItemsSucceeded = 0,
+        ItemsSkipped = 0,
+        ItemsFailed = 0,
+        ItemsCreated = 0,
+        ItemsUpdated = 0,
+        ItemsDeleted = 0
+      };
       var completedPull = false;
-      var partialReason = (string?)null;
 
       try
       {
@@ -525,7 +564,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
                     "Processing of partner sync pull item skipped: Existing pull item is in permanent error state for partner '{partner}', entity type '{entityType}', entity external id '{entityExternalId}'. Retry count '{retryCount}'. Error: {errorReason}",
                     partner, entityType, item.ExternalId, processingItemExisting.RetryCount, processingItemExisting.ErrorReason);
 
-                tracking = (tracking.ItemsProcessed + 1, tracking.ItemsSkipped + 1, tracking.ItemsFailed, tracking.FailedReason);
+                IncrementTrackingSkipped(tracking);
                 continue;
               }
 
@@ -543,7 +582,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
                     "Processing of partner sync pull item skipped: Entity is marked deleted by provider but has no existing Yoma mapping for partner '{partner}', entity type '{entityType}', entity external id '{entityExternalId}'",
                     partner, entityType, item.ExternalId);
 
-                tracking = (tracking.ItemsProcessed + 1, tracking.ItemsSkipped + 1, tracking.ItemsFailed, tracking.FailedReason);
+                IncrementTrackingSkipped(tracking);
                 continue;
               }
 
@@ -552,7 +591,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
                 if (_logger.IsEnabled(LogLevel.Information))
                   _logger.LogInformation("Processing of partner sync pull item skipped: Entity already deleted in Yoma for partner '{partner}', entity type '{entityType}', entity id '{entityId}'", partner, entityType, entityId);
 
-                tracking = (tracking.ItemsProcessed + 1, tracking.ItemsSkipped + 1, tracking.ItemsFailed, tracking.FailedReason);
+                IncrementTrackingSkipped(tracking);
                 continue;
               }
 
@@ -563,7 +602,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
                 if (_logger.IsEnabled(LogLevel.Information))
                   _logger.LogInformation("Processing of partner sync pull item skipped: Entity already deleted via sync for partner '{partner}', entity type '{entityType}', entity external id '{entityExternalId}'", partner, entityType, item.ExternalId);
 
-                tracking = (tracking.ItemsProcessed + 1, tracking.ItemsSkipped + 1, tracking.ItemsFailed, tracking.FailedReason);
+                IncrementTrackingSkipped(tracking);
                 continue;
               }
 
@@ -574,7 +613,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
                 if (_logger.IsEnabled(LogLevel.Information))
                   _logger.LogInformation("Processing of partner sync pull item skipped: Action '{action}' not enabled for partner '{partner}', entity type '{entityType}', entity external id '{entityExternalId}'", action, partner, entityType, item.ExternalId);
 
-                tracking = (tracking.ItemsProcessed + 1, tracking.ItemsSkipped + 1, tracking.ItemsFailed, tracking.FailedReason);
+                IncrementTrackingSkipped(tracking);
                 continue;
               }
 
@@ -669,11 +708,13 @@ namespace Yoma.Core.Domain.PartnerSync.Services
                 scope.Complete();
               });
 
-              tracking = itemSkipped
-                ? (tracking.ItemsProcessed + 1, tracking.ItemsSkipped + 1, tracking.ItemsFailed, tracking.FailedReason)
-                : (tracking.ItemsProcessed + 1, tracking.ItemsSkipped, tracking.ItemsFailed, tracking.FailedReason);
+              if (itemSkipped)
+              {
+                IncrementTrackingSkipped(tracking);
+                continue;
+              }
 
-              if (itemSkipped) continue;
+              IncrementTrackingSucceeded(tracking, action);
 
               if (_logger.IsEnabled(LogLevel.Information))
                 _logger.LogInformation("Processed sync pull item for partner '{partner}', entity type '{entityType}', entity external id '{entityExternalId}'", partner, entityType, item.ExternalId);
@@ -682,7 +723,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
             {
               // Item-level failures are counted against the completed pull run.
               // The run will be recorded as partial, preventing checkpoint-based syncs from advancing.
-              tracking = (tracking.ItemsProcessed + 1, tracking.ItemsSkipped, tracking.ItemsFailed + 1, tracking.FailedReason);
+              IncrementTrackingFailed(tracking);
 
               if (_logger.IsEnabled(LogLevel.Error))
                 _logger.LogError(ex, "Failed to process sync pull item for partner '{partner}' and entity type '{entityType}': {errorMessage}", partner, entityType, ex.Message);
@@ -715,26 +756,33 @@ namespace Yoma.Core.Domain.PartnerSync.Services
         }
 
         if (!completedPull)
-        {
-          if (tracking.ItemsProcessed == 0)
-            tracking = (tracking.ItemsProcessed, tracking.ItemsSkipped, tracking.ItemsFailed, "Execution window elapsed before pull completed");
-          else
-            partialReason = "Execution window elapsed before pull completed";
-        }
+          tracking.RunFailureReason = "Execution window elapsed before pull completed";
       }
       catch (Exception ex)
       {
-        tracking = (tracking.ItemsProcessed, tracking.ItemsSkipped, tracking.ItemsFailed, ex.Message);
+        tracking.RunFailureReason = ex.Message;
 
         if (_logger.IsEnabled(LogLevel.Error))
           _logger.LogError(ex, "Failed to process sync pull for partner '{partner}' and entity type '{entityType}': {errorMessage}", partner, entityType, ex.Message);
       }
       finally
       {
-        if (!string.IsNullOrWhiteSpace(tracking.FailedReason))
-          await _processingService.RecordTracking(SyncType.Pull, partnerModel.Id, entityType, SyncScope.Entity, dateStamp, tracking.FailedReason);
+        if (tracking.ItemsProcessed == 0 && !string.IsNullOrWhiteSpace(tracking.RunFailureReason))
+        {
+          await _processingService.RecordTracking(new PartnerSyncTrackingRequest
+          {
+            PartnerId = tracking.PartnerId,
+            SyncType = tracking.SyncType,
+            EntityType = tracking.EntityType,
+            SyncScope = tracking.SyncScope,
+            DateStamp = tracking.DateStamp,
+            RunFailureReason = tracking.RunFailureReason
+          });
+        }
         else
-          await _processingService.RecordTracking(SyncType.Pull, partnerModel.Id, entityType, SyncScope.Entity, dateStamp, tracking.ItemsProcessed, tracking.ItemsProcessed - tracking.ItemsSkipped - tracking.ItemsFailed, tracking.ItemsSkipped, tracking.ItemsFailed, partialReason);
+        {
+          await _processingService.RecordTracking(tracking);
+        }
       }
     }
 
@@ -824,9 +872,19 @@ namespace Yoma.Core.Domain.PartnerSync.Services
     {
       var entityType = EntityType.Opportunity;
       var dateEnd = DateTimeOffset.UtcNow;
-      var tracking = (ItemsProcessed: 0, ItemsSkipped: 0, ItemsFailed: 0, FailedReason: (string?)null);
+      var tracking = new PartnerSyncTrackingRequest
+      {
+        PartnerId = partnerModel.Id,
+        SyncType = SyncType.Pull,
+        EntityType = entityType,
+        SyncScope = SyncScope.Verification,
+        DateStamp = dateEnd,
+        ItemsProcessed = 0,
+        ItemsSucceeded = 0,
+        ItemsSkipped = 0,
+        ItemsFailed = 0
+      };
       var completedPull = false;
-      var partialReason = (string?)null;
 
       try
       {
@@ -893,11 +951,11 @@ namespace Yoma.Core.Domain.PartnerSync.Services
                 if (_logger.IsEnabled(LogLevel.Information))
                   _logger.LogInformation("Processing of partner sync pull verification item skipped: {skipReason}", importResult.SkipReason);
 
-                tracking = (tracking.ItemsProcessed + 1, tracking.ItemsSkipped + 1, tracking.ItemsFailed, tracking.FailedReason);
+                IncrementTrackingSkipped(tracking);
                 continue;
               }
 
-              tracking = (tracking.ItemsProcessed + 1, tracking.ItemsSkipped, tracking.ItemsFailed, tracking.FailedReason);
+              IncrementTrackingSucceeded(tracking);
 
               if (_logger.IsEnabled(LogLevel.Information))
                 _logger.LogInformation("Processed sync pull verification item for partner '{partner}', entity type '{entityType}', entity external id '{entityExternalId}', user external id '{userExternalId}'",
@@ -905,7 +963,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
             }
             catch (Exception ex)
             {
-              tracking = (tracking.ItemsProcessed + 1, tracking.ItemsSkipped, tracking.ItemsFailed + 1, tracking.FailedReason);
+              IncrementTrackingFailed(tracking);
 
               if (_logger.IsEnabled(LogLevel.Error))
                 _logger.LogError(ex, "Failed to process sync pull verification item for partner '{partner}' and entity type '{entityType}': {errorMessage}", partner, entityType, ex.Message);
@@ -926,26 +984,33 @@ namespace Yoma.Core.Domain.PartnerSync.Services
         }
 
         if (!completedPull)
-        {
-          if (tracking.ItemsProcessed == 0)
-            tracking = (tracking.ItemsProcessed, tracking.ItemsSkipped, tracking.ItemsFailed, "Execution window elapsed before verification pull completed");
-          else
-            partialReason = "Execution window elapsed before verification pull completed";
-        }
+          tracking.RunFailureReason = "Execution window elapsed before verification pull completed";
       }
       catch (Exception ex)
       {
-        tracking = (tracking.ItemsProcessed, tracking.ItemsSkipped, tracking.ItemsFailed, ex.Message);
+        tracking.RunFailureReason = ex.Message;
 
         if (_logger.IsEnabled(LogLevel.Error))
           _logger.LogError(ex, "Failed to process sync pull verification for partner '{partner}' and entity type '{entityType}': {errorMessage}", partner, entityType, ex.Message);
       }
       finally
       {
-        if (!string.IsNullOrWhiteSpace(tracking.FailedReason))
-          await _processingService.RecordTracking(SyncType.Pull, partnerModel.Id, entityType, SyncScope.Verification, dateEnd, tracking.FailedReason);
+        if (tracking.ItemsProcessed == 0 && !string.IsNullOrWhiteSpace(tracking.RunFailureReason))
+        {
+          await _processingService.RecordTracking(new PartnerSyncTrackingRequest
+          {
+            PartnerId = tracking.PartnerId,
+            SyncType = tracking.SyncType,
+            EntityType = tracking.EntityType,
+            SyncScope = tracking.SyncScope,
+            DateStamp = tracking.DateStamp,
+            RunFailureReason = tracking.RunFailureReason
+          });
+        }
         else
-          await _processingService.RecordTracking(SyncType.Pull, partnerModel.Id, entityType, SyncScope.Verification, dateEnd, tracking.ItemsProcessed, tracking.ItemsProcessed - tracking.ItemsSkipped - tracking.ItemsFailed, tracking.ItemsSkipped, tracking.ItemsFailed, partialReason);
+        {
+          await _processingService.RecordTracking(tracking);
+        }
       }
     }
 
@@ -995,6 +1060,50 @@ namespace Yoma.Core.Domain.PartnerSync.Services
         : [.. result.Items.Skip((pageNumber - 1) * pageSize).Take(pageSize)];
 
       return (result, items, pagedByProvider);
+    }
+
+    private static void IncrementTrackingSucceeded(PartnerSyncTrackingRequest tracking, SyncAction? action = null)
+    {
+      ArgumentNullException.ThrowIfNull(tracking, nameof(tracking));
+
+      tracking.ItemsProcessed = tracking.ItemsProcessed.GetValueOrDefault() + 1;
+      tracking.ItemsSucceeded = tracking.ItemsSucceeded.GetValueOrDefault() + 1;
+
+      if (!action.HasValue) return;
+
+      switch (action.Value)
+      {
+        case SyncAction.Create:
+          tracking.ItemsCreated = tracking.ItemsCreated.GetValueOrDefault() + 1;
+          break;
+
+        case SyncAction.Update:
+          tracking.ItemsUpdated = tracking.ItemsUpdated.GetValueOrDefault() + 1;
+          break;
+
+        case SyncAction.Delete:
+          tracking.ItemsDeleted = tracking.ItemsDeleted.GetValueOrDefault() + 1;
+          break;
+
+        default:
+          throw new InvalidOperationException($"Sync action '{action}' not supported for tracking");
+      }
+    }
+
+    private static void IncrementTrackingSkipped(PartnerSyncTrackingRequest tracking)
+    {
+      ArgumentNullException.ThrowIfNull(tracking, nameof(tracking));
+
+      tracking.ItemsProcessed = tracking.ItemsProcessed.GetValueOrDefault() + 1;
+      tracking.ItemsSkipped = tracking.ItemsSkipped.GetValueOrDefault() + 1;
+    }
+
+    private static void IncrementTrackingFailed(PartnerSyncTrackingRequest tracking)
+    {
+      ArgumentNullException.ThrowIfNull(tracking, nameof(tracking));
+
+      tracking.ItemsProcessed = tracking.ItemsProcessed.GetValueOrDefault() + 1;
+      tracking.ItemsFailed = tracking.ItemsFailed.GetValueOrDefault() + 1;
     }
     #endregion
   }
