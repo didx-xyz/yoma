@@ -874,16 +874,27 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
     {
       var user = _userService.GetById(userId, false, false);
 
-      request.OverridePending = overridePending;
+      var options = new MyOpportunityVerificationOptions
+      {
+        RequiredVerificationMethod = VerificationMethod.Manual,
+        OverridePending = overridePending,
+        MutateBlobStorage = true
+      };
 
-      await PerformActionSendForVerification(user, opportunityId, request, VerificationMethod.Manual, false, true);
+      await PerformActionSendForVerification(user, opportunityId, request, options);
     }
 
     public async Task PerformActionSendForVerificationManual(Guid opportunityId, MyOpportunityRequestVerify request)
     {
       var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 
-      await PerformActionSendForVerification(user, opportunityId, request, VerificationMethod.Manual, false, true);
+      var options = new MyOpportunityVerificationOptions
+      {
+        RequiredVerificationMethod = VerificationMethod.Manual,
+        MutateBlobStorage = true
+      };
+
+      await PerformActionSendForVerification(user, opportunityId, request, options);
     }
 
     public async Task PerformActionInstantVerification(Guid linkId)
@@ -911,10 +922,20 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
           await _linkService.LogUsage(link.Id);
 
-          var request = new MyOpportunityRequestVerify { InstantOrImportedVerification = true, OverridePending = true };
-          await PerformActionSendForVerification(user, link.EntityId, request, null, true, true); //any verification method
+          var options = new MyOpportunityVerificationOptions
+          {
+            OverridePending = true,
+            InstantVerification = true,
+            EnqueueOutcomes = true,
+            MutateBlobStorage = true,
+            Comment = "Auto-verification",
+            SendNotification = true,
+            PublishEvents = true
+          };
 
-          await FinalizeVerification(user, opportunity, VerificationStatus.Completed, true, null, "Auto-verification", true, true, true);
+          await PerformActionSendForVerification(user, link.EntityId, new MyOpportunityRequestVerify(), options); //any verification method
+
+          await FinalizeVerification(user, opportunity, VerificationStatus.Completed, options);
 
           scope.Complete();
         });
@@ -1011,7 +1032,14 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
           user = _userService.GetById(item.UserId, false, false);
           opportunity = _opportunityService.GetById(item.OpportunityId, true, true, false);
 
-          await FinalizeVerification(user, opportunity, request.Status, false, null, request.Comment, true, false, true);
+          var options = new MyOpportunityVerificationOptions
+          {
+            Comment = request.Comment,
+            SendNotification = true,
+            PublishEvents = true
+          };
+
+          await FinalizeVerification(user, opportunity, request.Status, options);
 
           var successItem = new MyOpportunityResponseVerifyFinalizeBatchItem
           {
@@ -1059,7 +1087,14 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       var user = _userService.GetById(request.UserId, false, false);
       var opportunity = _opportunityService.GetById(request.OpportunityId, true, true, false);
 
-      await FinalizeVerification(user, opportunity, request.Status, false, null, request.Comment, true, false, true);
+      var options = new MyOpportunityVerificationOptions
+      {
+        Comment = request.Comment,
+        SendNotification = true,
+        PublishEvents = true
+      };
+
+      await FinalizeVerification(user, opportunity, request.Status, options);
     }
 
     public Dictionary<Guid, int>? ListAggregatedOpportunityByViewed(bool includeExpired)
@@ -1165,19 +1200,29 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
           using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
 
+          var options = new MyOpportunityVerificationOptions
+          {
+            RequiredVerificationMethod = VerificationMethod.Automatic,
+            RequiredVerificationMethodMessageOverride = $"Verification import not supported for opportunity '{opportunity.Title}'. The verification method must be set to '{VerificationMethod.Automatic}'",
+            DateCompleted = request.DateCompleted,
+            Comment = "Auto-verification: Partner Sync",
+            OverridePending = true,
+            PartnerSyncedVerification = true,
+            EnqueueOutcomes = true,
+            MutateBlobStorage = true,
+            PublishEvents = true
+          };
+
           var requestVerify = new MyOpportunityRequestVerify
           {
-            InstantOrImportedVerification = true,
-            OverridePending = true,
             DateStart = request.DateStart,
             DateEnd = request.DateEnd,
             CommitmentInterval = request.CommitmentInterval
           };
 
-          await PerformActionSendForVerification(user, opportunity.Id, requestVerify, VerificationMethod.Automatic, true, true,
-            $"Verification import not supported for opportunity '{opportunity.Title}'. The verification method must be set to '{VerificationMethod.Automatic}'");
+          await PerformActionSendForVerification(user, opportunity.Id, requestVerify, options);
 
-          await FinalizeVerification(user, opportunity, VerificationStatus.Completed, true, request.DateCompleted, "Auto-verification: Partner Sync", false, true, true);
+          await FinalizeVerification(user, opportunity, VerificationStatus.Completed, options);
 
           scope.Complete();
         });
@@ -1415,11 +1460,23 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         user = await _userService.Upsert(request, true, !probeOnly);
       }
 
-      var requestVerify = new MyOpportunityRequestVerify { InstantOrImportedVerification = true }; //with instant or imported verifications, pending notifications are not sent
-      await PerformActionSendForVerification(user, opportunity.Id, requestVerify, VerificationMethod.Automatic, true, !probeOnly,
-        $"Verification import not supported for opporunity '{opportunity.Title}'. The verification method must be set to '{VerificationMethod.Automatic}'"); //verification method automatic
+      var options = new MyOpportunityVerificationOptions
+      {
+        RequiredVerificationMethod = VerificationMethod.Automatic,
+        RequiredVerificationMethodMessageOverride = $"Verification import not supported for opportunity '{opportunity.Title}'. The verification method must be set to '{VerificationMethod.Automatic}'",
+        DateCompleted = item.DateCompleted?.ToDateTimeOffset().ToEndOfDay(),
+        Comment = requestImport.Comment,
+        ImportedVerification = true,
+        EnqueueOutcomes = true,
+        MutateBlobStorage = !probeOnly,
+        SendNotification = !probeOnly,
+        PublishEvents = !probeOnly
+      };
 
-      await FinalizeVerification(user, opportunity, VerificationStatus.Completed, true, item.DateCompleted?.ToDateTimeOffset().ToEndOfDay(), requestImport.Comment, !probeOnly, true, !probeOnly);
+      // Verification method must be automatic; imported verifications are auto-finalized, so pending notifications are not sent.
+      await PerformActionSendForVerification(user, opportunity.Id, new MyOpportunityRequestVerify(), options);
+
+      await FinalizeVerification(user, opportunity, VerificationStatus.Completed, options);
     }
 
     private static List<(DateTime WeekEnding, int Count)> SummaryGroupByWeekItems(List<MyOpportunityInfo> items)
@@ -1443,16 +1500,19 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
     private async Task FinalizeVerification(User user,
       Opportunity.Models.Opportunity opportunity,
       VerificationStatus status,
-      bool instantVerification,
-      DateTimeOffset? dateCompleted,
-      string? comment,
-      bool sendNotification,
-      bool enqueueOutcomes,
-      bool publishEvents)
+      MyOpportunityVerificationOptions options)
     {
-      //can complete, provided opportunity is published (and started) or expired (actioned prior to expiration)
+      ArgumentNullException.ThrowIfNull(user, nameof(user));
+      ArgumentNullException.ThrowIfNull(opportunity, nameof(opportunity));
+      ArgumentNullException.ThrowIfNull(options, nameof(options));
+
+      // Can finalize when the opportunity is published and started, or expired.
+      // Imported / partner-synced completions may also arrive after a pull-synced opportunity was deleted.
       var canFinalize = opportunity.Status == Status.Expired;
-      if (!canFinalize) canFinalize = opportunity.Published && opportunity.DateStart <= DateTimeOffset.UtcNow;
+      if (!canFinalize) canFinalize =
+          opportunity.Published && opportunity.DateStart <= DateTimeOffset.UtcNow;
+      if (!canFinalize) canFinalize =
+          options.ImportedOrPartnerSyncedVerification && opportunity.Status == Status.Deleted && opportunity.SyncedInfo?.SyncType == SyncType.Pull;
       if (!canFinalize)
         throw new ValidationException(PerformActionNotPossibleValidationMessage(opportunity, "verification cannot be finalized", true));
 
@@ -1481,7 +1541,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         }
 
         item.VerificationStatusId = statusId;
-        item.CommentVerification = comment;
+        item.CommentVerification = options.Comment;
 
         switch (status)
         {
@@ -1493,20 +1553,20 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             if (item.DateEnd.HasValue && item.DateEnd.Value > DateTimeOffset.UtcNow.ToEndOfDay())
               throw new ValidationException($"Verification can not be completed as the end date for opportunity '{opportunity.Title}' has not been reached (end date '{item.DateEnd:yyyy-MM-dd}')");
 
-            if (!instantVerification && dateCompleted.HasValue)
-              throw new InvalidOperationException($"Date completed only supported by an instant verification");
+            if (!options.AutoFinalizedVerification && options.DateCompleted.HasValue)
+              throw new InvalidOperationException($"Date completed only supported by an auto-finalized verification");
 
-            if (dateCompleted.HasValue && dateCompleted.Value < opportunity.DateStart)
-              throw new ValidationException($"Date completed '{dateCompleted:yyyy-MM-dd}' can not be earlier than the opportunity start date '{opportunity.DateStart:yyyy-MM-dd}'");
+            if (options.DateCompleted.HasValue && options.DateCompleted.Value < opportunity.DateStart)
+              throw new ValidationException($"Date completed '{options.DateCompleted:yyyy-MM-dd}' can not be earlier than the opportunity start date '{opportunity.DateStart:yyyy-MM-dd}'");
 
-            EnsureNoEarlierPendingVerificationsForOtherStudents(user, opportunity, item, instantVerification);
+            EnsureNoEarlierPendingVerificationsForOtherStudents(user, opportunity, item, options.AutoFinalizedVerification);
 
-            //with instant-verifications ensureOrganizationAuthorization not checked as finalized immediately by the user (youth)
-            var result = await _opportunityService.AllocateRewards(opportunity.Id, !instantVerification);
+            // Auto-finalized verifications are finalized by trusted system/import/sync flows.
+            var result = await _opportunityService.AllocateRewards(opportunity.Id, !options.AutoFinalizedVerification, options.ImportedOrPartnerSyncedVerification);
             opportunity = result.Opportunity;
             item.ZltoReward = result.ZltoReward;
             item.YomaReward = result.YomaReward;
-            item.DateCompleted = dateCompleted ?? DateTimeOffset.UtcNow;
+            item.DateCompleted = options.DateCompleted ?? DateTimeOffset.UtcNow;
 
             await _userService.AssignSkills(user, opportunity);
 
@@ -1548,16 +1608,16 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       if (!notificationType.HasValue)
         throw new InvalidOperationException($"Notification type expected");
 
-      if (sendNotification)
+      if (options.SendNotification)
       {
-        if (enqueueOutcomes)
+        if (options.EnqueueOutcomes)
           _delayedExecutionService.Enqueue(async () => await SendNotification(item, notificationType.Value),
             nameof(SendNotification), $"{nameof(Models.MyOpportunity)}.{nameof(FinalizeVerification)}");
         else
           await SendNotification(item, notificationType.Value);
       }
 
-      if (!publishEvents) return;
+      if (!options.PublishEvents) return;
 
       var referralEvent = new ReferralProgressTriggerEvent(
         new Referral.Models.ReferralProgressTriggerMessage
@@ -1572,7 +1632,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
       var opportunityEvent = new OpportunityEvent(EventType.Update, opportunity);
 
-      if (enqueueOutcomes)
+      if (options.EnqueueOutcomes)
       {
         _delayedExecutionService.Enqueue(async () => await _mediator.Publish(referralEvent), $"{nameof(ReferralProgressTriggerEvent)}", "Publish");
         _delayedExecutionService.Enqueue(async () => await _mediator.Publish(opportunityEvent), $"{nameof(OpportunityEvent)}", "Publish");
@@ -1584,11 +1644,11 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       }
     }
 
-    private void EnsureNoEarlierPendingVerificationsForOtherStudents(User user, Opportunity.Models.Opportunity opportunity, Models.MyOpportunity currentItem, bool instantVerification)
+    private void EnsureNoEarlierPendingVerificationsForOtherStudents(User user, Opportunity.Models.Opportunity opportunity, Models.MyOpportunity currentItem, bool autoFinalizedVerification)
     {
-      //ensure no pending verifications for other students who applied earlier
-
-      if (instantVerification) return;
+      // Keep manual finalization fair by enforcing earlier pending verifications first.
+      // Auto-finalized system/import/sync flows bypass this ordering check.
+      if (autoFinalizedVerification) return;
 
       var proceed = opportunity.ParticipantLimit.HasValue;
       if (!proceed) proceed = opportunity.ZltoRewardPool.HasValue;
@@ -1675,9 +1735,9 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
           $"Opportunity '{opportunity.Title}' can not be completed as it is not available in your country");
     }
 
-    private static void PerformActionSendForVerificationApplyDefaults(MyOpportunityRequestVerify request, Opportunity.Models.Opportunity opportunity)
+    private static void PerformActionSendForVerificationApplyDefaults(MyOpportunityRequestVerify request, Opportunity.Models.Opportunity opportunity, MyOpportunityVerificationOptions options)
     {
-      if (request.InstantOrImportedVerification) return;
+      if (options.AutoFinalizedVerification) return;
 
       if (!request.DateEnd.HasValue)
       {
@@ -1754,22 +1814,27 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
     private async Task PerformActionSendForVerification(User user,
       Guid opportunityId,
       MyOpportunityRequestVerify request,
-      VerificationMethod? requiredVerificationMethod,
-      bool enqueueOutcomes,
-      bool mutateBlobStorage,
-      string? requiredVerificationMethodMessageOverride = null)
+      MyOpportunityVerificationOptions options)
     {
       ArgumentNullException.ThrowIfNull(request, nameof(request));
+      ArgumentNullException.ThrowIfNull(options, nameof(options));
 
       var opportunity = _opportunityService.GetById(opportunityId, true, true, false);
 
-      PerformActionSendForVerificationApplyDefaults(request, opportunity);
+      PerformActionSendForVerificationApplyDefaults(request, opportunity, options);
 
-      await _myOpportunityRequestValidatorVerify.ValidateAndThrowAsync(request);
+      var validationContext = new ValidationContext<MyOpportunityRequestVerify>(request);
+      validationContext.RootContextData[nameof(MyOpportunityVerificationOptions.AutoFinalizedVerification)] = options.AutoFinalizedVerification;
+      var validationResult = await _myOpportunityRequestValidatorVerify.ValidateAsync(validationContext);
+      if (!validationResult.IsValid) throw new ValidationException(validationResult.Errors);
 
-      //provided opportunity is published (and started) or expired
+      // Can send for verification when the opportunity is published and started, or expired.
+      // Imported / partner-synced completions may also arrive after a pull-synced opportunity was deleted.
       var canSendForVerification = opportunity.Status == Status.Expired;
-      if (!canSendForVerification) canSendForVerification = opportunity.Published && opportunity.DateStart <= DateTimeOffset.UtcNow;
+      if (!canSendForVerification) canSendForVerification =
+          opportunity.Published && opportunity.DateStart <= DateTimeOffset.UtcNow;
+      if (!canSendForVerification) canSendForVerification =
+          options.ImportedOrPartnerSyncedVerification && opportunity.Status == Status.Deleted && opportunity.SyncedInfo?.SyncType == SyncType.Pull;
       if (!canSendForVerification)
         throw new ValidationException(PerformActionNotPossibleValidationMessage(opportunity, "cannot be sent for verification", true));
 
@@ -1784,11 +1849,14 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       if (opportunity.VerificationMethod == VerificationMethod.Manual && (opportunity.VerificationTypes == null || opportunity.VerificationTypes.Count == 0))
         throw new DataInconsistencyException("Manual verification enabled but opportunity has no mapped verification types");
 
-      if (requiredVerificationMethod.HasValue && opportunity.VerificationMethod != requiredVerificationMethod.Value)
-        throw new ValidationException(requiredVerificationMethodMessageOverride
-          ?? $"Opportunity '{opportunity.Title}' cannot be completed / requires verification method '{requiredVerificationMethod.Value}'");
+      if (options.RequiredVerificationMethod.HasValue && opportunity.VerificationMethod != options.RequiredVerificationMethod.Value)
+        throw new ValidationException(options.RequiredVerificationMethodMessageOverride
+          ?? $"Opportunity '{opportunity.Title}' cannot be completed / requires verification method '{options.RequiredVerificationMethod.Value}'");
 
-      PerformActionSendForVerificationValidateCountrySegregation(user, opportunity);
+      // Partner-synced completions are sourced from the external provider.
+      // Country segregation is a Yoma user-facing availability guard and should not block provider-confirmed completions.
+      if (!options.PartnerSyncedVerification)
+        PerformActionSendForVerificationValidateCountrySegregation(user, opportunity);
 
       var actionVerificationId = _myOpportunityActionService.GetByName(Action.Verification.ToString()).Id;
       var verificationStatusPendingId = _myOpportunityVerificationStatusService.GetByName(VerificationStatus.Pending.ToString()).Id;
@@ -1811,7 +1879,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             throw new DataInconsistencyException($"{nameof(myOpportunity.VerificationStatus)} expected with action '{Action.Verification}'");
 
           case VerificationStatus.Pending:
-            if (request.OverridePending) break;
+            if (options.OverridePending) break;
             throw new ValidationException($"Verification is already {myOpportunity.VerificationStatus?.ToDescription().ToLower()} for opportunity '{opportunity.Title}'. Please check your YoID for more information.");
 
           case VerificationStatus.Completed:
@@ -1835,7 +1903,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       myOpportunity.StarRating = request.StarRating;
       myOpportunity.Feedback = request.Feedback;
 
-      await PerformActionSendForVerificationProcessVerificationTypes(request, opportunity, myOpportunity, isNew, mutateBlobStorage);
+      await PerformActionSendForVerificationProcessVerificationTypes(request, opportunity, myOpportunity, options, isNew);
 
       //used by notifications
       myOpportunity.Username = user.Username;
@@ -1849,17 +1917,17 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       myOpportunity.ZltoReward = opportunity.ZltoReward;
       myOpportunity.YomaReward = opportunity.YomaReward;
 
-      if (request.InstantOrImportedVerification) return; //with instant or imported verifications, pending notifications are not sent
+      if (options.AutoFinalizedVerification) return; //with instant, imported or synced verifications, pending notifications are not sent
 
       //sent to youth
-      if (enqueueOutcomes)
+      if (options.EnqueueOutcomes)
         _delayedExecutionService.Enqueue(async () => await SendNotification(myOpportunity, NotificationType.Opportunity_Verification_Pending),
             nameof(SendNotification), $"{nameof(Models.MyOpportunity)}.{nameof(PerformActionSendForVerification)}");
       else
         await SendNotification(myOpportunity, NotificationType.Opportunity_Verification_Pending);
 
       //sent to organization admins
-      if (enqueueOutcomes)
+      if (options.EnqueueOutcomes)
         _delayedExecutionService.Enqueue(async () => await SendNotification(myOpportunity, NotificationType.Opportunity_Verification_Pending_Admin),
             nameof(SendNotification), $"{nameof(Models.MyOpportunity)}.{nameof(PerformActionSendForVerification)}");
       else
@@ -1919,8 +1987,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
     private async Task PerformActionSendForVerificationProcessVerificationTypes(MyOpportunityRequestVerify request,
       Opportunity.Models.Opportunity opportunity,
       Models.MyOpportunity myOpportunity,
-      bool isNew,
-      bool mutateBlobStorage)
+      MyOpportunityVerificationOptions options,
+      bool isNew)
     {
       var itemsExisting = new List<MyOpportunityVerification>();
       var itemsExistingDeleted = new List<MyOpportunityVerification>();
@@ -1936,7 +2004,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             myOpportunity = await _myOpportunityRepository.Create(myOpportunity);
           else
           {
-            if (mutateBlobStorage)
+            if (options.MutateBlobStorage)
             {
               //delete (db) and track existing (blobs to be deleted)
               if (myOpportunity.Verifications != null)
@@ -1956,7 +2024,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
           }
 
           //new items
-          if (mutateBlobStorage) await PerformActionSendForVerificationProcessVerificationTypes(request, opportunity, myOpportunity, itemsNewBlobs);
+          if (options.MutateBlobStorage) await PerformActionSendForVerificationProcessVerificationTypes(request, opportunity, myOpportunity, itemsNewBlobs, options.AutoFinalizedVerification);
 
           //delete existing items in blob storage (deleted in db above)
           foreach (var item in itemsExisting)
@@ -1991,9 +2059,10 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
     private async Task PerformActionSendForVerificationProcessVerificationTypes(MyOpportunityRequestVerify request,
       Opportunity.Models.Opportunity opportunity,
       Models.MyOpportunity myOpportunity,
-      List<BlobObject> itemsNewBlobs)
+      List<BlobObject> itemsNewBlobs,
+      bool autoFinalizedVerification)
     {
-      if (request.InstantOrImportedVerification) return; //with instant or imported verifications bypass any verification type requirements
+      if (autoFinalizedVerification) return; //with auto-finalized verifications, bypass any verification type requirements
       if (opportunity.VerificationTypes == null) return;
 
       foreach (var verificationType in opportunity.VerificationTypes)

@@ -28,36 +28,37 @@ namespace Yoma.Core.Domain.MyOpportunity.Validators
           .WithMessage("3 or more coordinate points expected per coordinate set i.e. Point: X-coordinate (longitude -180 to +180), Y-coordinate (latitude -90 to +90), Z-elevation.")
           .When(x => x.Geometry != null && x.Geometry.Type != Core.SpatialType.None);
 
-      //with instant-verifications start or end date not captured
+      // Auto-finalized verifications are completed by instant, imported or partner-synced flows.
+      // These flows do not require the user-facing start/end date and commitment interval inputs.
       RuleFor(x => x)
-        .Must(x => x.InstantOrImportedVerification || !(x.DateStart.HasValue && x.CommitmentInterval != null))
+        .Must((_, model, context) => AutoFinalizedVerification(context) || !(model.DateStart.HasValue && model.CommitmentInterval != null))
         .WithMessage("Either start date or commitment interval (time to complete) must be specified, but not both.");
 
       RuleFor(x => x.DateStart)
         .NotEmpty()
-        .When(x => x.CommitmentInterval == null && !x.InstantOrImportedVerification)
+        .When((model, context) => model.CommitmentInterval == null && !AutoFinalizedVerification(context))
         .WithMessage("Start date is required when the commitment interval (time to complete) is not specified.");
 
       RuleFor(x => x.CommitmentInterval)
         .NotNull()
-        .When(x => !x.DateStart.HasValue && !x.InstantOrImportedVerification)
+        .When((model, context) => !model.DateStart.HasValue && !AutoFinalizedVerification(context))
         .WithMessage("Commitment interval (time to complete) is required when start date is not specified.")
         .DependentRules(() =>
         {
           RuleFor(x => x.CommitmentInterval!.Id)
-          .Must(id => id != Guid.Empty && CommitmentIntervalExists(id))
-          .WithMessage("Commitment interval is empty or does not exist.")
-          .When(x => x.CommitmentInterval != null);
+            .Must(id => id != Guid.Empty && CommitmentIntervalExists(id))
+            .WithMessage("Commitment interval is empty or does not exist.")
+            .When(x => x.CommitmentInterval != null);
 
           RuleFor(x => x.CommitmentInterval!.Count)
-          .GreaterThanOrEqualTo((short)1)
-          .WithMessage("Commitment interval count must be greater than or equal to 1.")
-          .When(x => x.CommitmentInterval != null);
+            .GreaterThanOrEqualTo((short)1)
+            .WithMessage("Commitment interval count must be greater than or equal to 1.")
+            .When(x => x.CommitmentInterval != null);
         });
 
       RuleFor(x => x.DateEnd)
         .NotEmpty()
-        .When(x => !x.InstantOrImportedVerification)
+        .When((_, context) => !AutoFinalizedVerification(context))
         .WithMessage("End date (when did you finish) is required")
         .GreaterThanOrEqualTo(x => x.DateStart)
         .When(x => x.DateStart.HasValue)
@@ -73,6 +74,12 @@ namespace Yoma.Core.Domain.MyOpportunity.Validators
     #endregion
 
     #region Private Members
+    private static bool AutoFinalizedVerification(ValidationContext<MyOpportunityRequestVerify> context)
+    {
+      return context.RootContextData.TryGetValue(nameof(MyOpportunityVerificationOptions.AutoFinalizedVerification), out var value) &&
+        value is true;
+    }
+
     private bool CommitmentIntervalExists(Guid id)
     {
       if (id == Guid.Empty) return false;
