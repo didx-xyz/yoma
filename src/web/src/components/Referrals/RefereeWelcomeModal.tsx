@@ -50,9 +50,10 @@ export const RefereeWelcomeModal: React.FC<{
           </p>
           <div className="mt-1 flex w-full justify-center md:mt-2">
             <div className="relative aspect-video w-full max-w-[601px] overflow-hidden rounded-lg border border-white/20 shadow-md">
+              {/* New User Tutorial Video */}
               <iframe
-                className="h-full w-full"
-                src="https://www.youtube.com/embed/77vgI4VE8HY?rel=0&modestbranding=1"
+                className="h-full w-full rounded-lg"
+                src="https://www.youtube.com/embed/5YaSZggdbxs?rel=0&modestbranding=1"
                 title="YouTube Video"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen

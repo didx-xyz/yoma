@@ -479,11 +479,7 @@ const OrganisationUpdate: NextPageWithLayout<{
 
             <Link
               className="hover:text-gray flex max-w-[300px] items-center justify-center overflow-hidden font-bold text-ellipsis whitespace-nowrap md:max-w-[400px] lg:max-w-[800px]"
-              href={`/organisations/dashboard?organisations=${id}${
-                returnUrl
-                  ? `?returnUrl=${encodeURIComponent(returnUrl.toString())}`
-                  : ""
-              }`}
+              href={`/organisations/dashboard?organisations=${id}`}
             >
               {organisation?.name}
             </Link>
@@ -501,7 +497,7 @@ const OrganisationUpdate: NextPageWithLayout<{
         {/* CONTENT */}
         <div className="flex flex-col justify-center gap-4 md:flex-row">
           {/* MENU */}
-          <ul className="menu menu-horizontal shadow-custom md:menu-vertical hidden h-max w-full items-center justify-center gap-4 rounded-lg bg-white p-4 font-semibold md:max-w-[265px]">
+          <ul className="menu menu-horizontal shadow-custom md:menu-vertical hidden h-max w-full items-center justify-center gap-4 rounded-lg bg-white p-4 font-semibold md:flex md:max-w-[265px]">
             {menuItems.map((item) => (
               <li
                 key={item.step}
