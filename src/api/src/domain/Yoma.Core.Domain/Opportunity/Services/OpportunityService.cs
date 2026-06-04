@@ -1440,7 +1440,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       return result;
     }
 
-    public async Task<OpportunityAllocateRewardResponse> AllocateRewards(Guid id, bool ensureOrganizationAuthorization)
+    public async Task<OpportunityAllocateRewardResponse> AllocateRewards(Guid id, bool ensureOrganizationAuthorization, bool importedOrPartnerSyncedVerification = false)
     {
       if (id == Guid.Empty)
         throw new ArgumentNullException(nameof(id));
@@ -1455,9 +1455,12 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
         opportunity = GetById(id, false, true, ensureOrganizationAuthorization, LockMode.Wait);
 
-        //can complete, provided published (and started) or expired (action prior to expiration)
+        // Can allocate rewards when the opportunity is published and started, or expired.
+        // Imported / partner-synced completions may also arrive after a pull-synced opportunity was deleted.
         var canComplete = opportunity.Published && opportunity.DateStart <= DateTimeOffset.UtcNow;
         if (!canComplete) canComplete = opportunity.Status == Status.Expired;
+        if (!canComplete) canComplete =
+          importedOrPartnerSyncedVerification && opportunity.Status == Status.Deleted && opportunity.SyncedInfo?.SyncType == SyncType.Pull;
 
         if (!canComplete)
         {
