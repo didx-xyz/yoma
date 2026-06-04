@@ -113,9 +113,10 @@ const ReferralWelcomeIntro = ({
     >
       <div className="flex w-full justify-center">
         <div className="relative aspect-video w-full max-w-[601px]">
+          {/* Ambassador Tutorial Video */}
           <iframe
-            className="h-full w-full rounded-lg"
-            src="https://www.youtube.com/embed/77vgI4VE8HY?rel=0&modestbranding=1"
+            className="h-full w-full"
+            src="https://www.youtube.com/embed/ctbNTfeV_hU?rel=0&modestbranding=1"
             title="YouTube Video"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
@@ -951,9 +952,10 @@ const ReferralsPage: NextPageWithLayout<{
                 >
                   <div className="flex w-full justify-center">
                     <div className="relative aspect-video w-full max-w-[601px]">
+                      {/* General Ambassador Programme Introduction */}
                       <iframe
                         className="h-full w-full rounded-lg"
-                        src="https://www.youtube.com/embed/77vgI4VE8HY?rel=0&modestbranding=1"
+                        src="https://www.youtube.com/embed/1fLxvmgO7Cs?rel=0&modestbranding=1"
                         title="YouTube Video"
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                         allowFullScreen
