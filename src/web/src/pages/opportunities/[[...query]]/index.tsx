@@ -35,6 +35,7 @@ import {
   searchOpportunities,
 } from "~/api/services/opportunities";
 import CustomCarousel from "~/components/Carousel/CustomCarousel";
+import CustomCarouselV3 from "~/components/Carousel/CustomCarouselV3";
 import CustomModal from "~/components/Common/CustomModal";
 import FilterBadges from "~/components/FilterBadges";
 import MainLayout from "~/components/Layout/Main";
@@ -45,6 +46,7 @@ import { OpportunitiesGrid } from "~/components/Opportunity/OpportunitiesGrid";
 import OpportunityCategoriesHorizontalFilter from "~/components/Opportunity/OpportunityCategoriesHorizontalFilter";
 import { OpportunityFilterVertical } from "~/components/Opportunity/OpportunityFilterVertical";
 import { OpportunityPublicSmallComponent } from "~/components/Opportunity/OpportunityPublicSmall";
+import { OpportunityPublicSmallComponentV2 } from "~/components/Opportunity/OpportunityPublicSmallV2";
 import { OppSearchInputLarge } from "~/components/Opportunity/OppSearchInputLarge";
 import { PageBackground } from "~/components/PageBackground";
 import { PaginationButtons } from "~/components/PaginationButtons";
@@ -1021,7 +1023,7 @@ const Opportunities: NextPageWithLayout<{
 
   const filtersPanelTitle = useMemo(() => {
     if (appliedFilterBadgeCount > 0)
-      return `Current filters (${appliedFilterBadgeCount})`;
+      return `Filters (${appliedFilterBadgeCount})`;
 
     return sessionStatus === "authenticated"
       ? "Filters & country 🌍"
@@ -2177,16 +2179,16 @@ const Opportunities: NextPageWithLayout<{
                   {/* JOBS */}
                   <div className="divider !bg-gray" />
                   {(opportunities_jobs_render?.totalCount ?? 0) > 0 ? (
-                    <CustomCarousel
+                    <CustomCarouselV3
                       id={`opportunities_jobs`}
-                      title={
+                      title="Jobs in your area"
+                      subtitle={
                         sessionStatus === "authenticated" &&
                         landingMyCountryOnly &&
                         userCountryInfo
-                          ? `Jobs in ${userCountryInfo.name} & Worldwide 💼`
-                          : "Jobs 💼"
+                          ? `${userCountryInfo.name} & Worldwide`
+                          : "Worldwide"
                       }
-                      description="Explore exciting job opportunities."
                       viewAllUrl={appendLandingCountryToUrl(
                         "/opportunities?types=Job",
                       )}
@@ -2194,7 +2196,7 @@ const Opportunities: NextPageWithLayout<{
                       loadData={loadDataJobs}
                       totalAll={opportunities_jobs_render.totalCount!}
                       renderSlide={(item, index) => (
-                        <OpportunityPublicSmallComponent
+                        <OpportunityPublicSmallComponentV2
                           key={`opportunities_jobs_${item.id}_${index}`}
                           data={item}
                         />
