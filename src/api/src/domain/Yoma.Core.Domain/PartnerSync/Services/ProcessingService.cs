@@ -402,52 +402,105 @@ namespace Yoma.Core.Domain.PartnerSync.Services
     }
 
     /// <summary>
-    /// Records a counted partner sync run.
+    /// Records a partner sync run.
+    /// Counts are optional to support hard run failures where normal item processing did not complete.
     /// ItemsProcessed represents all handled items, including succeeded, skipped and failed items.
-    /// If no item failures occurred and no partial reason is supplied, the run is recorded as successful,
+    /// ItemsCreated, ItemsUpdated and ItemsDeleted represent successful item-level actions only.
+    /// If no item failures occurred and no run failure reason is supplied, the run is recorded as successful,
     /// even when all items were skipped or no items were returned.
-    /// If one or more item failures occurred, or a partial reason is supplied, the run is recorded as partial.
+    /// If one or more item-level failures occurred, the run is recorded as partial.
+    /// If a run failure reason is supplied, the run is recorded as failed because the run itself did not complete successfully.
     /// Tracking is best-effort and will not fail the sync process if recording fails.
     /// </summary>
-    public async Task RecordTracking(
-      SyncType syncType,
-      Guid partnerId,
-      EntityType entityType,
-      SyncScope syncScope,
-      DateTimeOffset dateStamp,
-      int itemsProcessed,
-      int itemsSucceeded,
-      int itemsSkipped,
-      int itemsFailed,
-      string? partialReason = null)
+    public async Task RecordTracking(PartnerSyncTrackingRequest request)
     {
       try
       {
-        ArgumentOutOfRangeException.ThrowIfNegative(itemsProcessed, nameof(itemsProcessed));
-        ArgumentOutOfRangeException.ThrowIfNegative(itemsSucceeded, nameof(itemsSucceeded));
-        ArgumentOutOfRangeException.ThrowIfNegative(itemsSkipped, nameof(itemsSkipped));
-        ArgumentOutOfRangeException.ThrowIfNegative(itemsFailed, nameof(itemsFailed));
+        ArgumentNullException.ThrowIfNull(request, nameof(request));
 
-        if (itemsProcessed != itemsSucceeded + itemsSkipped + itemsFailed)
-          throw new InvalidOperationException($"{nameof(itemsProcessed)} must equal the sum of {nameof(itemsSucceeded)}, {nameof(itemsSkipped)} and {nameof(itemsFailed)}");
+        if (request.PartnerId == Guid.Empty)
+          throw new ArgumentNullException(nameof(request), "PartnerId cannot be empty");
 
-        partialReason = partialReason?.Trim();
+        if (request.DateStamp == default)
+          throw new ArgumentNullException(nameof(request), "DateStamp cannot be default");
 
-        var partner = _partnerService.GetById(partnerId);
+        request.RunFailureReason = request.RunFailureReason?.Trim();
+        if (string.IsNullOrEmpty(request.RunFailureReason)) request.RunFailureReason = null;
+
+        if (request.ItemsProcessed.HasValue) ArgumentOutOfRangeException.ThrowIfNegative(request.ItemsProcessed.Value, nameof(request.ItemsProcessed));
+        if (request.ItemsSucceeded.HasValue) ArgumentOutOfRangeException.ThrowIfNegative(request.ItemsSucceeded.Value, nameof(request.ItemsSucceeded));
+        if (request.ItemsSkipped.HasValue) ArgumentOutOfRangeException.ThrowIfNegative(request.ItemsSkipped.Value, nameof(request.ItemsSkipped));
+        if (request.ItemsFailed.HasValue) ArgumentOutOfRangeException.ThrowIfNegative(request.ItemsFailed.Value, nameof(request.ItemsFailed));
+
+        if (request.ItemsCreated.HasValue) ArgumentOutOfRangeException.ThrowIfNegative(request.ItemsCreated.Value, nameof(request.ItemsCreated));
+        if (request.ItemsUpdated.HasValue) ArgumentOutOfRangeException.ThrowIfNegative(request.ItemsUpdated.Value, nameof(request.ItemsUpdated));
+        if (request.ItemsDeleted.HasValue) ArgumentOutOfRangeException.ThrowIfNegative(request.ItemsDeleted.Value, nameof(request.ItemsDeleted));
+
+        var hasAnyItemCounts =
+          request.ItemsProcessed.HasValue ||
+          request.ItemsSucceeded.HasValue ||
+          request.ItemsSkipped.HasValue ||
+          request.ItemsFailed.HasValue;
+
+        var hasAllItemCounts =
+          request.ItemsProcessed.HasValue &&
+          request.ItemsSucceeded.HasValue &&
+          request.ItemsSkipped.HasValue &&
+          request.ItemsFailed.HasValue;
+
+        if (hasAnyItemCounts && !hasAllItemCounts)
+          throw new InvalidOperationException("Either all item counts must be supplied, or none of them must be supplied");
+
+        if (!hasAnyItemCounts && string.IsNullOrEmpty(request.RunFailureReason))
+          throw new InvalidOperationException($"{nameof(request.RunFailureReason)} is required when item counts are not supplied");
+
+        if (hasAllItemCounts &&
+            request.ItemsProcessed!.Value != request.ItemsSucceeded!.Value + request.ItemsSkipped!.Value + request.ItemsFailed!.Value)
+          throw new InvalidOperationException($"{nameof(request.ItemsProcessed)} must equal the sum of {nameof(request.ItemsSucceeded)}, {nameof(request.ItemsSkipped)} and {nameof(request.ItemsFailed)}");
+
+        var actionCountsProvided =
+          request.ItemsCreated.HasValue ||
+          request.ItemsUpdated.HasValue ||
+          request.ItemsDeleted.HasValue;
+
+        if (actionCountsProvided && !request.ItemsSucceeded.HasValue)
+          throw new InvalidOperationException($"Action counts can only be supplied when {nameof(request.ItemsSucceeded)} is supplied");
+
+        if (actionCountsProvided)
+        {
+          var itemsSucceededByAction =
+            (request.ItemsCreated ?? 0) +
+            (request.ItemsUpdated ?? 0) +
+            (request.ItemsDeleted ?? 0);
+
+          if (itemsSucceededByAction > request.ItemsSucceeded!.Value)
+            throw new InvalidOperationException($"The sum of {nameof(request.ItemsCreated)}, {nameof(request.ItemsUpdated)} and {nameof(request.ItemsDeleted)} cannot exceed {nameof(request.ItemsSucceeded)}");
+        }
+
+        var partner = _partnerService.GetById(request.PartnerId);
+
+        var status = TrackingStatus.Successful;
+        if (!string.IsNullOrEmpty(request.RunFailureReason))
+          status = TrackingStatus.Failed;
+        else if ((request.ItemsFailed ?? 0) > 0)
+          status = TrackingStatus.Partial;
 
         var item = new PartnerSyncTracking
         {
           PartnerId = partner.Id,
-          SyncType = syncType.ToString(),
-          EntityType = entityType.ToString(),
-          SyncScope = syncScope.ToString(),
-          Status = itemsFailed == 0 && string.IsNullOrEmpty(partialReason) ? TrackingStatus.Successful.ToString() : TrackingStatus.Partial.ToString(),
-          ItemsProcessed = itemsProcessed,
-          ItemsSucceeded = itemsSucceeded,
-          ItemsSkipped = itemsSkipped,
-          ItemsFailed = itemsFailed,
-          FailedReason = partialReason,
-          DateStamp = dateStamp
+          SyncType = request.SyncType.ToString(),
+          EntityType = request.EntityType.ToString(),
+          SyncScope = request.SyncScope.ToString(),
+          Status = status.ToString(),
+          ItemsProcessed = request.ItemsProcessed,
+          ItemsSucceeded = request.ItemsSucceeded,
+          ItemsSkipped = request.ItemsSkipped,
+          ItemsFailed = request.ItemsFailed,
+          ItemsCreated = request.ItemsCreated,
+          ItemsUpdated = request.ItemsUpdated,
+          ItemsDeleted = request.ItemsDeleted,
+          RunFailureReason = request.RunFailureReason,
+          DateStamp = request.DateStamp
         };
 
         await _partnerSyncTrackingRepository.Create(item);
@@ -455,52 +508,9 @@ namespace Yoma.Core.Domain.PartnerSync.Services
       catch (Exception ex)
       {
         if (_logger.IsEnabled(LogLevel.Error))
-          _logger.LogError(ex, "Failed to record partner sync tracking for sync type '{syncType}', partner id '{partnerId}', entity type '{entityType}', sync scope '{syncScope}': {errorMessage}", syncType, partnerId, entityType, syncScope, ex.Message);
-      }
-    }
-
-    /// <summary>
-    /// Records a failed partner sync run.
-    /// A failed run means the process failed before normal item processing could complete for the partner capability.
-    /// Item-level failures should use the counted tracking overload and result in a partial run instead.
-    /// Tracking is best-effort and will not fail the sync process if recording fails.
-    /// </summary>
-    public async Task RecordTracking(
-      SyncType syncType,
-      Guid partnerId,
-      EntityType entityType,
-      SyncScope syncScope,
-      DateTimeOffset dateStamp,
-      string failedReason)
-    {
-      try
-      {
-        if (string.IsNullOrWhiteSpace(failedReason))
-          throw new ArgumentNullException(nameof(failedReason));
-
-        var partner = _partnerService.GetById(partnerId);
-
-        var item = new PartnerSyncTracking
-        {
-          PartnerId = partner.Id,
-          SyncType = syncType.ToString(),
-          EntityType = entityType.ToString(),
-          SyncScope = syncScope.ToString(),
-          Status = TrackingStatus.Failed.ToString(),
-          ItemsProcessed = null,
-          ItemsSucceeded = null,
-          ItemsSkipped = null,
-          ItemsFailed = null,
-          FailedReason = failedReason.Trim(),
-          DateStamp = dateStamp
-        };
-
-        await _partnerSyncTrackingRepository.Create(item);
-      }
-      catch (Exception ex)
-      {
-        if (_logger.IsEnabled(LogLevel.Error))
-          _logger.LogError(ex, "Failed to record failed partner sync tracking for sync type '{syncType}', partner id '{partnerId}', entity type '{entityType}', sync scope '{syncScope}': {errorMessage}", syncType, partnerId, entityType, syncScope, ex.Message);
+          _logger.LogError(ex,
+            "Failed to record partner sync tracking for sync type '{syncType}', partner id '{partnerId}', entity type '{entityType}', sync scope '{syncScope}': {errorMessage}",
+            request?.SyncType, request?.PartnerId, request?.EntityType, request?.SyncScope, ex.Message);
       }
     }
     #endregion

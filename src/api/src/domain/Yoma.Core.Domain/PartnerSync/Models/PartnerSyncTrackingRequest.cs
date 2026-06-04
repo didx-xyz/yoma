@@ -1,21 +1,22 @@
+using Yoma.Core.Domain.Core;
+
 namespace Yoma.Core.Domain.PartnerSync.Models
 {
-  public class PartnerSyncTracking
+  public sealed class PartnerSyncTrackingRequest
   {
-    public Guid Id { get; set; }
+    public Guid PartnerId { get; init; }
 
-    public Guid PartnerId { get; set; }
+    public SyncType SyncType { get; init; }
 
-    public string SyncType { get; set; } = null!;
+    public EntityType EntityType { get; init; }
 
-    public string EntityType { get; set; } = null!;
+    public SyncScope SyncScope { get; init; }
 
-    public string SyncScope { get; set; } = null!;
-
-    public string Status { get; set; } = null!;
+    public DateTimeOffset DateStamp { get; init; }
 
     /// <summary>
     /// Total number of items processed by the sync run, including succeeded, skipped and failed items.
+    /// Null means the run failed before normal item processing completed or counts were not captured.
     /// </summary>
     public int? ItemsProcessed { get; set; }
 
@@ -57,7 +58,5 @@ namespace Yoma.Core.Domain.PartnerSync.Models
     /// Item-level failures are counted by ItemsFailed and logged separately.
     /// </summary>
     public string? RunFailureReason { get; set; }
-
-    public DateTimeOffset DateStamp { get; set; }
   }
 }

@@ -41,8 +41,14 @@ namespace Yoma.Core.Infrastructure.Database.PartnerSync.Entities
 
     public int? ItemsFailed { get; set; }
 
+    public int? ItemsCreated { get; set; }
+
+    public int? ItemsUpdated { get; set; }
+
+    public int? ItemsDeleted { get; set; }
+
     [Column(TypeName = "text")] //MS SQL: varchar(MAX)
-    public string? FailedReason { get; set; }
+    public string? RunFailureReason { get; set; }
 
     [Required]
     public DateTimeOffset DateStamp { get; set; }
