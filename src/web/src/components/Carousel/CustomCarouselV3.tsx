@@ -149,10 +149,7 @@ const CustomCarouselV3: React.FC<{
               · {subtitle}
             </span>
           )}
-          {/* <span className="text-purple truncate text-sm font-semibold md:text-base">
-            · {effectiveTotal} {effectiveTotal === 1 ? "job" : "jobs"} available
-            · Apply now!
-          </span> */}
+
           <span className="text-purple truncate text-sm font-semibold md:text-base">
             <span className="hidden md:inline">·</span> {effectiveTotal}{" "}
             {effectiveTotal === 1 ? "job" : "jobs"} available
@@ -162,8 +159,9 @@ const CustomCarouselV3: React.FC<{
             <Link
               href={viewAllUrl}
               className="text-purple hover:border-purple ml-auto flex border-b-2 border-transparent text-sm font-semibold tracking-wide whitespace-nowrap duration-300 select-none"
+              title="See all our job opportunities"
             >
-              View All
+              See All →
             </Link>
           )}
         </div>
@@ -172,7 +170,7 @@ const CustomCarouselV3: React.FC<{
       {/* SCROLLABLE CONTAINER */}
       <div ref={wrapperRef} id={`${id}-v3`}>
         <ScrollableContainer
-          className="flex gap-3 pb-2"
+          className="pb-2xx flex gap-3"
           scrollSpeed={1.5}
           showShadows={true}
         >
@@ -195,6 +193,7 @@ const CustomCarouselV3: React.FC<{
           overflow-x: auto !important;
           scrollbar-width: thin !important;
           scrollbar-color: #41204b transparent !important;
+          padding-bottom: 12px !important;
         }
         #${id}-v3 > div > div::-webkit-scrollbar { height: 8px; }
         #${id}-v3 > div > div::-webkit-scrollbar-track { background: transparent; }
