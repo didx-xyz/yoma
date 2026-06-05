@@ -167,23 +167,29 @@ namespace Yoma.Core.Api.Controllers
     #region Private Members
     private async Task UpdateUserProfile(IdentityActionType type, KeycloakWebhookRequest payload)
     {
-      var userId = Guid.Parse(payload.UserId);
+      if (!Guid.TryParse(payload.UserId, out var userId) || userId == Guid.Empty)
+      {
+        if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError("Webhook payload contains no valid Keycloak user id");
+        return;
+      }
+
       var lockKey = $"{Key_Prefix}:{userId}";
       var lockDuration = TimeSpan.FromSeconds(_appSettings.DistributedLockKeycloakEventDurationInSeconds);
 
       await _distributedLockService.RunWithLockAsync(lockKey, lockDuration, async () =>
       {
-        if (string.IsNullOrEmpty(payload.Details?.Username))
-        {
-          if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError("Webhook payload contains no associated Keycloak username");
-          return;
-        }
-
         if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Trying to find the Keycloak user with id '{userId}'", userId);
+
         var kcUser = await _identityProviderClient.GetUserById(userId);
         if (kcUser == null)
         {
           if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError("Failed to retrieve the Keycloak user with id '{userId}'", userId);
+          return;
+        }
+
+        if (string.IsNullOrWhiteSpace(kcUser.Username))
+        {
+          if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError("Keycloak user with id '{userId}' has no username", userId);
           return;
         }
 
@@ -282,26 +288,35 @@ namespace Yoma.Core.Api.Controllers
                 userRequest.GenderId = gender.Id;
             }
 
-
             if (!string.IsNullOrEmpty(kcUser.DateOfBirth))
             {
               if (!DateTime.TryParse(kcUser.DateOfBirth, out var dateOfBirth))
-                if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError("Failed to parse Keycloak '{customAttributes}' with value '{dateOfBirth}'", CustomAttributes.DateOfBirth, kcUser.DateOfBirth);
-                else
-                  userRequest.DateOfBirth = dateOfBirth;
+              {
+                if (_logger.IsEnabled(LogLevel.Error))
+                  _logger.LogError("Failed to parse Keycloak '{customAttributes}' with value '{dateOfBirth}'", CustomAttributes.DateOfBirth, kcUser.DateOfBirth);
+              }
+              else
+              {
+                userRequest.DateOfBirth = dateOfBirth;
+              }
             }
 
-            if (type == IdentityActionType.UpdateProfile) break;
+            if (type == IdentityActionType.Register)
+            {
+              try
+              {
+                //add newly registered user to the default "User" role
+                await _identityProviderClient.EnsureRoles(kcUser.Id, [Domain.Core.Constants.Role_User]);
+              }
+              catch (Exception ex)
+              {
+                if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "{type} - Failed to assign the default 'User' role to the newly registered user with username '{username}': {errorMessage};", type, userRequest.Username, ex.Message);
+              }
+            }
 
-            try
-            {
-              //add newly registered user to the default "User" role
-              await _identityProviderClient.EnsureRoles(kcUser.Id, [Domain.Core.Constants.Role_User]);
-            }
-            catch (Exception ex)
-            {
-              if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "{type} - Failed to assign the default 'User' role to the newly register user with username '{username}': {errorMessage};", type, userRequest.Username, ex.Message);
-            }
+            userRequest.ExternalId = kcUser.Id;
+            await _userService.Upsert(userRequest, false, true);
+
             break;
 
           case IdentityActionType.Login:
@@ -333,8 +348,11 @@ namespace Yoma.Core.Api.Controllers
               if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to remove the 'VERIFY_EMAIL' action for the newly registered user with username '{username}' when no email is provided: {errorMessage}", userRequest.Username, ex.Message);
             }
 
-            await ScheduleWalletCreation(userRequest);
-            await TrackLogin(payload, userRequest);
+            userRequest.ExternalId = kcUser.Id;
+            var user = await _userService.Upsert(userRequest, false, true);
+
+            await ScheduleWalletCreation(user);
+            await TrackLogin(payload, user);
 
             break;
 
@@ -342,21 +360,19 @@ namespace Yoma.Core.Api.Controllers
             if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError("{type}: Event not supported", type);
             return;
         }
-
-        userRequest.ExternalId = kcUser.Id;
-
-        await _userService.Upsert(userRequest, false, true);
       });
     }
 
-    private async Task TrackLogin(KeycloakWebhookRequest payload, UserRequest userRequest)
+    private async Task TrackLogin(KeycloakWebhookRequest payload, User user)
     {
       try
       {
-        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Tracking login for user with username '{username}'", userRequest.Username);
+        if (_logger.IsEnabled(LogLevel.Information))
+          _logger.LogInformation("Tracking login for user with username '{username}'", user.Username);
+
         await _userService.TrackLogin(new UserRequestLoginEvent
         {
-          UserId = userRequest.Id,
+          UserId = user.Id,
           ClientId = payload.ClientId,
           IpAddress = payload.IpAddress,
           AuthMethod = payload.Details?.Auth_method,
@@ -364,28 +380,33 @@ namespace Yoma.Core.Api.Controllers
           IdentityProvider = payload.Details?.Identity_provider,
         });
 
-        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Tracked login for user with username '{username}'", userRequest.Username);
+        if (_logger.IsEnabled(LogLevel.Information))
+          _logger.LogInformation("Tracked login for user with username '{username}'", user.Username);
       }
       catch (Exception ex)
       {
-        if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to track login for user with username '{username}': {errorMessage}", userRequest.Username, ex.Message);
+        if (_logger.IsEnabled(LogLevel.Error))
+          _logger.LogError(ex, "Failed to track login for user with username '{username}': {errorMessage}", user.Username, ex.Message);
       }
     }
 
     // [2025.09] Immediate wallet creation removed due to ongoing ZLTO API latency and reliability issues. Wallet creation is now deferred
-    private async Task ScheduleWalletCreation(UserRequest userRequest)
+    private async Task ScheduleWalletCreation(User user)
     {
       try
       {
-        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Scheduling rewards wallet creation (or username update) for user '{username}'", userRequest.Username);
+        if (_logger.IsEnabled(LogLevel.Information))
+          _logger.LogInformation("Scheduling rewards wallet creation (or username update) for user '{username}'", user.Username);
 
-        await _walletService.ScheduleWalletCreation(userRequest.Id);
+        await _walletService.ScheduleWalletCreation(user.Id);
 
-        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Rewards wallet creation scheduled (or username update) for user '{username}'", userRequest.Username);
+        if (_logger.IsEnabled(LogLevel.Information))
+          _logger.LogInformation("Rewards wallet creation scheduled (or username update) for user '{username}'", user.Username);
       }
       catch (Exception ex)
       {
-        if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to schedule rewards wallet creation (or username update) for user '{username}': {errorMessage}", userRequest.Username, ex.Message);
+        if (_logger.IsEnabled(LogLevel.Error))
+          _logger.LogError(ex, "Failed to schedule rewards wallet creation (or username update) for user '{username}': {errorMessage}", user.Username, ex.Message);
       }
     }
   }

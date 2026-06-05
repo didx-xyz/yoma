@@ -143,7 +143,8 @@ namespace Yoma.Core.Domain.Reward.Services
                   break;
 
                 case WalletCreationStatus.PendingUsernameUpdate:
-                  item.Username = null;
+                  // Keep Username as-is. It represents the current known ZLTO username
+                  // and must remain reserved until the provider username update succeeds.
                   break;
               }
 
