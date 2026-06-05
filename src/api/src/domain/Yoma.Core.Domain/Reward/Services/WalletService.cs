@@ -384,22 +384,30 @@ namespace Yoma.Core.Domain.Reward.Services
       return username;
     }
 
+    /// <summary>
+    /// Lists pending wallet work, prioritising username updates before wallet creation.
+    /// Username updates can release reserved usernames, allowing dependent wallet creations
+    /// to succeed in the same processing run.
+    /// </summary>
     public List<WalletCreation> ListPendingCreationSchedule(int batchSize, List<Guid> idsToSkip)
     {
       ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(batchSize, default, nameof(batchSize));
 
-      var statusPendingIds = new List<Guid>
-      {
-        _walletCreationStatusService.GetByName(WalletCreationStatus.Pending.ToString()).Id,
-        _walletCreationStatusService.GetByName(WalletCreationStatus.PendingUsernameUpdate.ToString()).Id
-      };
+      var statusPendingId = _walletCreationStatusService.GetByName(WalletCreationStatus.Pending.ToString()).Id;
+      var statusPendingUsernameUpdateId = _walletCreationStatusService.GetByName(WalletCreationStatus.PendingUsernameUpdate.ToString()).Id;
+
+      var statusPendingIds = new[] { statusPendingId, statusPendingUsernameUpdateId };
 
       var query = _walletCreationRepository.Query().Where(o => statusPendingIds.Contains(o.StatusId));
 
       if (idsToSkip != null && idsToSkip.Count != 0)
         query = query.Where(o => !idsToSkip.Contains(o.Id));
 
-      var results = query.OrderBy(o => o.DateModified).Take(batchSize).ToList();
+      var results = query
+        .OrderBy(o => o.StatusId == statusPendingUsernameUpdateId ? 0 : 1)
+        .ThenBy(o => o.DateModified)
+        .Take(batchSize)
+        .ToList();
 
       return results;
     }
