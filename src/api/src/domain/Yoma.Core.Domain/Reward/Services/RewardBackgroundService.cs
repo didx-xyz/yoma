@@ -58,6 +58,17 @@ namespace Yoma.Core.Domain.Reward.Services
     #endregion
 
     #region Public Members
+    /// <summary>
+    /// Processes pending wallet creation and username update work.
+    /// Username updates are processed before wallet creations so released usernames
+    /// can be reused by dependent pending creations in the same run.
+    /// </summary>
+    /// <remarks>
+    /// TODO: Future enhancement - add cleanup/auto-resolution for cases where a user changes
+    /// their email, never confirms it, then re-registers with the original email.
+    /// In that case, the pending creation for the new confirmed user can remain blocked
+    /// by the existing wallet's reserved username until the wallet is manually reassigned.
+    /// </remarks>
     public async Task ProcessWalletCreation()
     {
       const string lockIdentifier = "reward_process_wallet_creation";
