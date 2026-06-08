@@ -3468,7 +3468,7 @@ const Opportunities: NextPageWithLayout<{
                   <FilterBadges
                     searchFilter={searchFilter}
                     excludeKeys={filterBadgeExcludeKeys}
-                    className="mt-2 -ml-2 md:mt-4"
+                    className="-ml-2"
                     resolveValue={(key, value) => {
                       if (key === "commitmentInterval") {
                         const lookup = lookups_timeIntervals.find(
@@ -3502,7 +3502,7 @@ const Opportunities: NextPageWithLayout<{
             <div className="px-2 md:px-4">
               {/* LOADING OVERLAY FOR LANDING CAROUSELS (does not affect layout height) */}
               {landingOverlayActive && (
-                <LoadingSkeleton rows={1} className="p-4" />
+                <LoadingSkeleton rows={4} columns={3} className="p-4" />
               )}
 
               {/* CAROUSELS (kept mounted; hidden while overlay is active) */}
@@ -3831,7 +3831,7 @@ const Opportunities: NextPageWithLayout<{
                   sessionStatus === "loading" ||
                   isLoading ||
                   isSearchScopePending) && (
-                  <LoadingSkeleton rows={3} className="p-4" />
+                  <LoadingSkeleton rows={4} columns={3} className="p-4" />
                 )}
 
                 {!isRouteTransitioning &&
@@ -3855,7 +3855,6 @@ const Opportunities: NextPageWithLayout<{
                         <OpportunitiesGrid
                           id="opportunities_search"
                           data={searchResults}
-                          loadData={loadDataTrending}
                         />
                       )}
 

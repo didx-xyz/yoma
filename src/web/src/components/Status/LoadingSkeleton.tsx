@@ -17,7 +17,10 @@ export const LoadingSkeleton: React.FC<{
   return (
     <div className={`flex flex-col gap-8 ${className}`}>
       {rowsArray.map((_, rowIndex) => (
-        <div key={`row-${rowIndex}`} className="flex flex-row gap-8">
+        <div
+          key={`row-${rowIndex}`}
+          className="flex flex-col gap-8 sm:flex-row"
+        >
           {columnsArray.map((_, colIndex) => (
             <div key={`col-${colIndex}`} className="flex w-full flex-col gap-4">
               <div className="flex items-center gap-4">

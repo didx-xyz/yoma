@@ -22,9 +22,9 @@ const fmtDate = (dateStr: string) =>
     timeZone: "UTC",
   });
 
-const OpportunityMetaTextRow: React.FC<{ data: OpportunityInfo }> = ({
-  data,
-}) => {
+const OpportunityMetaTextRow: React.FC<{
+  data: OpportunityInfo;
+}> = ({ data }) => {
   const items: string[] = [];
   // Effort
   if (data.commitmentIntervalCount && data.commitmentInterval) {
@@ -82,7 +82,7 @@ const OpportunityOrgCountriesRow: React.FC<{ data: OpportunityInfo }> = ({
   return (
     <div className="text-gray-dark min-w-0 truncate text-sm">
       <span
-        className="inline-block max-w-[70%] truncate align-bottom font-semibold text-black"
+        className="inline-block max-w-[60%] truncate align-bottom font-semibold text-black"
         title={data.organizationName}
       >
         {data.organizationName}
@@ -156,15 +156,56 @@ const OpportunityTypeBadge: React.FC<{
 
   return (
     <span
-      className={`font-family-nunito flex h-5 items-center rounded-md px-2 text-xs font-bold tracking-wide uppercase ${className}`}
+      className={`font-family-nunito flex h-5 min-w-0 items-center rounded-md px-2 text-xs font-bold tracking-wide uppercase ${className}`}
     >
-      {label}
-      {engagementType ? ` · ${engagementType}` : ""}
+      <span className="truncate">
+        {label}
+        {engagementType ? ` · ${engagementType}` : ""}
+      </span>
     </span>
   );
 };
 
-const JobCard: React.FC<{ data: OpportunityInfo }> = ({ data }) => {
+// Call-to-action button. In preview mode it renders an inert element (not a
+// link) so it can't be clicked and is not a nested interactive <a>.
+const CardCta: React.FC<{
+  href: string;
+  text: string;
+  title: string;
+  className: string;
+  preview?: boolean;
+}> = ({ href, text, title, className, preview }) => {
+  const base = `mt-auto flex h-10 w-full shrink-0 flex-row items-center justify-center gap-2 rounded-lg text-sm font-semibold duration-300 ${className}`;
+
+  if (preview) {
+    return (
+      <div
+        className={`${base} pointer-events-none`}
+        title={title}
+        aria-disabled="true"
+      >
+        <span>{text}</span>
+      </div>
+    );
+  }
+
+  return (
+    <Link
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className={base}
+      title={title}
+    >
+      <span>{text}</span>
+    </Link>
+  );
+};
+
+const JobCard: React.FC<{ data: OpportunityInfo; preview?: boolean }> = ({
+  data,
+  preview,
+}) => {
   return (
     <div className="flex h-70 w-80 flex-col rounded-2xl bg-white p-4 max-[370px]:w-64 max-[370px]:p-3">
       <div className="items-between flex h-full flex-col gap-2">
@@ -208,15 +249,13 @@ const JobCard: React.FC<{ data: OpportunityInfo }> = ({ data }) => {
         <OpportunitySkillsRow data={data} />
 
         {/* APPLY BUTTON */}
-        <Link
+        <CardCta
           href={`/opportunities/${data.id}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="bg-purple hover:bg-purple-shade mt-auto flex h-10 w-full shrink-0 flex-row items-center justify-center gap-2 rounded-lg text-sm font-semibold text-white duration-300"
+          text="Apply now →"
           title="Apply for this job opportunity"
-        >
-          <span>Apply now →</span>
-        </Link>
+          className="bg-purple hover:bg-purple-shade text-white"
+          preview={preview}
+        />
       </div>
     </div>
   );
@@ -292,7 +331,10 @@ const getTypeConfig = (type: string | undefined): TypeConfig => {
   };
 };
 
-const DefaultCard: React.FC<{ data: OpportunityInfo }> = ({ data }) => {
+const DefaultCard: React.FC<{ data: OpportunityInfo; preview?: boolean }> = ({
+  data,
+  preview,
+}) => {
   const config = getTypeConfig(data.type);
 
   return (
@@ -368,15 +410,13 @@ const DefaultCard: React.FC<{ data: OpportunityInfo }> = ({ data }) => {
         <OpportunitySkillsRow data={data} />
 
         {/* CTA BUTTON */}
-        <Link
+        <CardCta
           href={`/opportunities/${data.id}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className={`mt-auto flex h-10 w-full shrink-0 flex-row items-center justify-center gap-2 rounded-lg text-sm font-semibold duration-300 ${config.ctaClassName}`}
+          text={config.ctaText}
           title={config.ctaTitle}
-        >
-          <span>{config.ctaText}</span>
-        </Link>
+          className={config.ctaClassName}
+          preview={preview}
+        />
       </div>
     </div>
   );
@@ -389,9 +429,10 @@ const DefaultCard: React.FC<{ data: OpportunityInfo }> = ({ data }) => {
 const OpportunityPublicSmallComponentV2: React.FC<InputProps> = ({
   data,
   variant = "default",
+  preview,
 }) => {
-  if (variant === "job") return <JobCard data={data} />;
-  return <DefaultCard data={data} />;
+  if (variant === "job") return <JobCard data={data} preview={preview} />;
+  return <DefaultCard data={data} preview={preview} />;
 };
 
 export { OpportunityPublicSmallComponentV2 };
