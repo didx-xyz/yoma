@@ -1,29 +1,45 @@
 import Link from "next/link";
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { IoBriefcase } from "react-icons/io5";
 import ScrollableContainer from "~/components/Carousel/ScrollableContainer";
 
 const CustomCarouselV3: React.FC<{
   [id: string]: any;
   title?: string;
   subtitle?: string;
+  description?: string;
+  /** Override for the outer container (e.g. purple gradient/border). Defaults to a plain container. */
+  className?: string;
+  /** Optional section badge text (e.g. "Jobs · New"). Omit for a plain header. */
+  badgeText?: string;
+  /** Optional icon rendered inside the section badge. */
+  badgeIcon?: React.ReactNode;
+  /** Override for the section badge colour. Defaults to solid purple. */
+  badgeClassName?: string;
+  /** Sub-text shown after the title (e.g. "123 jobs available"). Omit to hide. */
+  subTextAvailable?: string;
   viewAllUrl?: string;
+  /** Text for the "view all" link. Defaults to "See All →". */
+  viewAllText?: string;
   data: any[];
   renderSlide: (item: any, index: number) => React.ReactElement;
-  totalAll?: number;
   loadData?: (startRow: number) => Promise<any>;
 }> = ({
   id,
   title,
   subtitle,
+  description,
+  className = "",
+  badgeText,
+  badgeIcon,
+  badgeClassName = "bg-purple text-white",
+  subTextAvailable,
   viewAllUrl,
+  viewAllText = "See All →",
   data,
   renderSlide,
-  totalAll,
   loadData,
 }) => {
   const [slides, setSlides] = useState(data);
-  const effectiveTotal = totalAll ?? data.length;
   const wrapperRef = useRef<HTMLDivElement>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
   const loadingRef = useRef(false);
@@ -130,47 +146,77 @@ const CustomCarouselV3: React.FC<{
       document.removeEventListener("mouseup", onEnd);
       document.removeEventListener("touchend", onEnd);
     };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
+
+  const subtitleText = subtitle ?? description;
 
   return (
-    <div className="border-purple from-purple-tint to-purple-tint/40 rounded-2xl border-2 bg-gradient-to-br p-4 md:p-6">
+    <div className={className}>
       {/* HEADER */}
-      <div className="mb-4 flex flex-row flex-wrap items-center gap-x-3 gap-y-2">
-        <span className="bg-purple font-family-nunito flex h-6 items-center gap-1 rounded-md px-3 text-xs font-bold tracking-wide text-white uppercase">
-          <IoBriefcase className="mr-2 size-3" /> Jobs · New
-        </span>
-
-        <div className="flex min-w-0 grow flex-row flex-wrap items-baseline gap-x-2 overflow-hidden">
-          <span className="font-family-nunito text-base font-bold text-black md:text-xl">
-            {title}
+      {/* Mobile: 3 rows (badge / title+subtitle / subtext+see-all). Desktop: 1 row. */}
+      <div className="mb-4 flex flex-col gap-x-3 sm:flex-row sm:items-center">
+        {/* BADGE — own row on mobile (w-fit prevents full-width stretch) */}
+        {badgeText && (
+          <span
+            className={`font-family-nunito flex h-6 w-fit shrink-0 items-center gap-1 rounded-md px-3 text-xs font-bold tracking-wide uppercase ${badgeClassName}`}
+          >
+            {badgeIcon}
+            {badgeText}
           </span>
-          {subtitle && (
-            <span className="text-gray-dark text-sm md:text-base">
-              · {subtitle}
+        )}
+
+        <div className="flex min-w-0 grow flex-col gap-x-2 sm:flex-row sm:items-center">
+          {/* LEFT CLUSTER: title + subtitle + (desktop) subtext (subtitle truncates) */}
+          {/* Desktop (sm+) always grows so "See All" floats right. On mobile it only
+              grows when there's subtext; otherwise "See All" stays left. */}
+          <div
+            className={`flex min-w-0 flex-row items-center gap-x-2 overflow-hidden sm:grow ${
+              subTextAvailable ? "grow" : ""
+            }`}
+          >
+            <span className="font-family-nunito shrink-0 text-base font-bold whitespace-nowrap text-black md:text-xl">
+              {title}
             </span>
-          )}
+            {subtitleText && (
+              <span className="text-gray-dark truncate text-sm md:text-base">
+                · {subtitleText}
+              </span>
+            )}
+            {/* subtext — inline on desktop only */}
+            {subTextAvailable && (
+              <span className="text-purple hidden shrink-0 text-sm font-semibold whitespace-nowrap sm:flex md:text-base">
+                · {subTextAvailable}
+              </span>
+            )}
+          </div>
 
-          <span className="text-purple truncate text-sm font-semibold md:text-base">
-            <span className="hidden md:inline">·</span> {effectiveTotal}{" "}
-            {effectiveTotal === 1 ? "job" : "jobs"} available
-          </span>
-
-          {viewAllUrl && (
-            <Link
-              href={viewAllUrl}
-              className="text-purple hover:border-purple ml-auto flex border-b-2 border-transparent text-sm font-semibold tracking-wide whitespace-nowrap duration-300 select-none"
-              title="See all our job opportunities"
-            >
-              See All →
-            </Link>
-          )}
+          {/* SEE ALL ROW — own row on mobile (with subtext), floats right on desktop */}
+          <div className="flex shrink-0 items-center gap-x-2">
+            {/* subtext — shares the See All row on mobile only */}
+            {subTextAvailable && (
+              <span className="text-purple text-sm font-semibold whitespace-nowrap sm:hidden md:text-base">
+                {subTextAvailable}
+              </span>
+            )}
+            {viewAllUrl && (
+              <Link
+                href={viewAllUrl}
+                className={`text-purple hover:border-purple flex border-b-2 border-transparent text-sm font-semibold tracking-wide whitespace-nowrap duration-300 select-none ${
+                  subTextAvailable ? "ml-auto" : ""
+                }`}
+                title="See all"
+              >
+                {viewAllText}
+              </Link>
+            )}
+          </div>
         </div>
       </div>
 
       {/* SCROLLABLE CONTAINER */}
       <div ref={wrapperRef} id={`${id}-v3`}>
         <ScrollableContainer
-          className="pb-2xx flex gap-3"
+          className="flex gap-3"
           scrollSpeed={1.5}
           showShadows={true}
         >

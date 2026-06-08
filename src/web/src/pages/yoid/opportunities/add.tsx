@@ -11,7 +11,7 @@ import {
 } from "~/api/models/myOpportunity";
 import { searchMyOpportunities } from "~/api/services/myOpportunities";
 import Breadcrumb from "~/components/Breadcrumb";
-import CustomCarousel from "~/components/Carousel/CustomCarousel";
+import CustomCarouselV3 from "~/components/Carousel/CustomCarouselV3";
 import FormMessage, { FormMessageType } from "~/components/Common/FormMessage";
 import Suspense from "~/components/Common/Suspense";
 import YoIDLayout from "~/components/Layout/YoID";
@@ -184,13 +184,12 @@ const MyOpportunitiesAdd: NextPageWithLayout<{
         <div className="p-4x flex flex-col gap-4">
           {/* VIEWED */}
           <Suspense isLoading={viewedIsLoading} error={viewedError}>
-            <CustomCarousel
+            <CustomCarouselV3
               id={`myopportunities_viewed`}
-              title="👀 Recently viewed"
+              title="Recently viewed"
               description="Opportunities that you have viewed recently."
               data={viewedData?.items ?? []}
               loadData={viewedLoadData}
-              totalAll={viewedData?.totalCount ?? 0}
               renderSlide={(item, index) => (
                 <OpportunityCard
                   key={`myopportunities_viewed_${item.id}_${index}`}
