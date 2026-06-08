@@ -486,7 +486,9 @@ jobs:
       - uses: tailscale/github-action@306e68a486fd2350f2bfc3b19fcd143891a4a2d8 # v4.1.2
         if: steps.should-run.outputs.run == 'true'
         with:
-          authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
+          oauth-client-id: ${{ secrets.TAILSCALE_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TAILSCALE_OAUTH_SECRET }}
+          tags: ${{ secrets.TAILSCALE_TAGS }}
           version: ${{ env.TAILSCALE_VERSION }}
       - name: Helmfile Destroy
         if: github.event.inputs.reset-deployments == 'true'
@@ -496,9 +498,9 @@ jobs:
             destroy \
               --environment dev
           helm-plugins: >-
-            https://github.com/databus23/helm-diff,
-            https://github.com/jkroepke/helm-secrets,
-            https://github.com/aslafy-z/helm-git
+            https://github.com/databus23/helm-diff@v3.15.7,
+            https://github.com/jkroepke/helm-secrets@v4.7.6,
+            https://github.com/aslafy-z/helm-git@v1.5.2
           helmfile-version: ${{ env.HELMFILE_VERSION }}
           helm-version: ${{ env.HELM_VERSION }}
       - name: Delete Pods and PVCs
@@ -517,9 +519,9 @@ jobs:
           helmfile-version: ${{ env.HELMFILE_VERSION }}
           helm-version: ${{ env.HELM_VERSION }}
           helm-plugins: >-
-            https://github.com/databus23/helm-diff,
-            https://github.com/jkroepke/helm-secrets,
-            https://github.com/aslafy-z/helm-git
+            https://github.com/databus23/helm-diff@v3.15.7,
+            https://github.com/jkroepke/helm-secrets@v4.7.6,
+            https://github.com/aslafy-z/helm-git@v1.5.2
       # Diff on PR draft, otherwise Apply
       - name: Helmfile Apply/Diff Keycloak
         if: (
@@ -539,9 +541,9 @@ jobs:
           helmfile-version: ${{ env.HELMFILE_VERSION }}
           helm-version: ${{ env.HELM_VERSION }}
           helm-plugins: >-
-            https://github.com/databus23/helm-diff,
-            https://github.com/jkroepke/helm-secrets,
-            https://github.com/aslafy-z/helm-git
+            https://github.com/databus23/helm-diff@v3.15.7,
+            https://github.com/jkroepke/helm-secrets@v4.7.6,
+            https://github.com/aslafy-z/helm-git@v1.5.2
       # On fresh deployment we want single replica due to DB migrations
       - name: Helmfile Apply Fresh API
         if: github.event.inputs.reset-deployments == 'true'
@@ -556,9 +558,9 @@ jobs:
           helmfile-version: ${{ env.HELMFILE_VERSION }}
           helm-version: ${{ env.HELM_VERSION }}
           helm-plugins: >-
-            https://github.com/databus23/helm-diff,
-            https://github.com/jkroepke/helm-secrets,
-            https://github.com/aslafy-z/helm-git
+            https://github.com/databus23/helm-diff@v3.15.7,
+            https://github.com/jkroepke/helm-secrets@v4.7.6,
+            https://github.com/aslafy-z/helm-git@v1.5.2
       - name: Helmfile Apply/Diff API
         if: (
           github.event_name == 'release' ||
@@ -575,9 +577,9 @@ jobs:
           helmfile-version: ${{ env.HELMFILE_VERSION }}
           helm-version: ${{ env.HELM_VERSION }}
           helm-plugins: >-
-            https://github.com/databus23/helm-diff,
-            https://github.com/jkroepke/helm-secrets,
-            https://github.com/aslafy-z/helm-git
+            https://github.com/databus23/helm-diff@v3.15.7,
+            https://github.com/jkroepke/helm-secrets@v4.7.6,
+            https://github.com/aslafy-z/helm-git@v1.5.2
       - name: Trigger Vercel Production Deployment
         if: github.event_name == 'release'
         env:
@@ -601,6 +603,6 @@ jobs:
           helmfile-version: ${{ env.HELMFILE_VERSION }}
           helm-version: ${{ env.HELM_VERSION }}
           helm-plugins: >-
-            https://github.com/databus23/helm-diff,
-            https://github.com/jkroepke/helm-secrets,
-            https://github.com/aslafy-z/helm-git
+            https://github.com/databus23/helm-diff@v3.15.7,
+            https://github.com/jkroepke/helm-secrets@v4.7.6,
+            https://github.com/aslafy-z/helm-git@v1.5.2
