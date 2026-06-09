@@ -61,7 +61,7 @@ namespace Yoma.Core.Infrastructure.Database
       services.AddHealthChecks().AddNpgSql(
         connectionString: configuration.Configuration_ConnectionString(),
         name: "Database Connectivity Check",
-        tags: ["live"]);
+        tags: ["ready"]);
 
       //<PackageReference Include="EntityFrameworkProfiler.Appender" Version="6.0.6040" />
       //if (environment == Domain.Core.Environment.Local)

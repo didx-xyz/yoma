@@ -116,7 +116,7 @@ namespace Yoma.Core.Api
 
       services.AddHttpContextAccessor();
       services.AddMemoryCache();
-      services.AddHealthChecks().AddCheck("API Ready Check", () => HealthCheckResult.Healthy("API is up"), tags: ["ready"]);
+      services.AddHealthChecks().AddCheck("API Ready Check", () => HealthCheckResult.Healthy("API is up"), tags: ["live"]);
       #endregion
 
       #region 3rd Party
