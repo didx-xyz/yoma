@@ -64,9 +64,6 @@ export const OpportunityCompletionRead: React.FC<InputProps> = ({
         // placeholder). Real Google Maps keys start with "AIza"; anything else
         // makes Google throw an opaque InvalidKeyMapError at runtime.
         if (!apiKey?.startsWith("AIza")) {
-          console.warn(
-            "Google Maps API key not configured — skipping map (set NEXT_PUBLIC_GOOGLE_MAPS_API_KEY).",
-          );
           setMapKeyMissing(true);
           return;
         }
