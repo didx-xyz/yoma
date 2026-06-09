@@ -1,4 +1,3 @@
-import { importLibrary, setOptions } from "@googlemaps/js-api-loader";
 import { GoogleMap, MarkerF } from "@react-google-maps/api";
 import React, { useEffect, useState, type ReactElement } from "react";
 import { FcGlobe } from "react-icons/fc";
@@ -28,14 +27,32 @@ const LocationPicker: React.FC<InputProps> = ({
   const [googleInstanceLoaded, setGoogleInstanceLoaded] = useState(false);
   const [googleInstanceLoading, setGoogleInstanceLoading] = useState(false);
   const [googleInstanceError, setGoogleInstanceError] = useState(false);
+  const [mapKeyMissing, setMapKeyMissing] = useState(false);
   useEffect(() => {
     const loadGoogleInstance = async () => {
       try {
         // get api key
         const env = await fetchClientEnv();
+        const apiKey = env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 
-        // configure and load the maps API
-        setOptions({ key: env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY });
+        // Skip the map when no valid key is configured (e.g. the dev
+        // placeholder). Real Google Maps keys start with "AIza"; anything else
+        // makes Google throw an opaque InvalidKeyMapError at runtime.
+        if (!apiKey?.startsWith("AIza")) {
+          console.warn(
+            "Google Maps API key not configured — skipping map (set NEXT_PUBLIC_GOOGLE_MAPS_API_KEY).",
+          );
+          setMapKeyMissing(true);
+          return;
+        }
+
+        // configure and load the maps API.
+        // Imported dynamically (client-only) so this browser-only library is
+        // never evaluated server-side during the build's page-data collection
+        // (it reads `window` at module load → "window is not defined").
+        const { importLibrary, setOptions } =
+          await import("@googlemaps/js-api-loader");
+        setOptions({ key: apiKey });
         await importLibrary("places");
 
         setGoogleInstanceLoaded(true);
@@ -89,8 +106,14 @@ const LocationPicker: React.FC<InputProps> = ({
     "M 12 2 C 8.1 2 5 5.1 5 9 c 0 5.3 7 13 7 13 s 7 -7.8 7 -13 c 0 -3.9 -3.1 -7 -7 -7 z M 7 9 c 0 -2.8 2.2 -5 5 -5 s 5 2.2 5 5 c 0 2.9 -2.9 7.2 -5 9.9 C 9.9 16.2 7 11.8 7 9 z M 10 9 C 10 8 11 7 12 7 C 13 7 14 8 14 9 C 14 10 13 11 12 11 C 11 11 10 10 10 9 M 12 7";
 
   //* Google Maps
-  if (googleInstanceError || !googleInstanceLoaded) return "Error loading maps";
   if (googleInstanceLoading) return "Loading Maps";
+  if (mapKeyMissing)
+    return (
+      <div className="bg-gray-light text-gray-dark w-full rounded-lg p-4 text-sm italic">
+        Map preview unavailable — no Google Maps key configured.
+      </div>
+    );
+  if (googleInstanceError || !googleInstanceLoaded) return "Error loading maps";
 
   const onClick_UseCurrentLocation = () => {
     if (navigator.geolocation) {

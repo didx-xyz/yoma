@@ -1,4 +1,3 @@
-import { importLibrary, setOptions } from "@googlemaps/js-api-loader";
 import { GoogleMap, MarkerF } from "@react-google-maps/api";
 import Link from "next/link";
 import React, { useEffect, useMemo, useState } from "react";
@@ -53,14 +52,32 @@ export const OpportunityCompletionRead: React.FC<InputProps> = ({
   const [googleInstanceLoaded, setGoogleInstanceLoaded] = useState(false);
   const [googleInstanceLoading, setGoogleInstanceLoading] = useState(false);
   const [googleInstanceError, setGoogleInstanceError] = useState(false);
+  const [mapKeyMissing, setMapKeyMissing] = useState(false);
   useEffect(() => {
     const loadGoogleInstance = async () => {
       try {
         // get api key
         const env = await fetchClientEnv();
+        const apiKey = env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 
-        // configure and load the maps API
-        setOptions({ key: env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY });
+        // Skip the map when no valid key is configured (e.g. the dev
+        // placeholder). Real Google Maps keys start with "AIza"; anything else
+        // makes Google throw an opaque InvalidKeyMapError at runtime.
+        if (!apiKey?.startsWith("AIza")) {
+          console.warn(
+            "Google Maps API key not configured — skipping map (set NEXT_PUBLIC_GOOGLE_MAPS_API_KEY).",
+          );
+          setMapKeyMissing(true);
+          return;
+        }
+
+        // configure and load the maps API.
+        // Imported dynamically (client-only) so this browser-only library is
+        // never evaluated server-side during the build's page-data collection
+        // (it reads `window` at module load → "window is not defined").
+        const { importLibrary, setOptions } =
+          await import("@googlemaps/js-api-loader");
+        setOptions({ key: apiKey });
         await importLibrary("places");
 
         setGoogleInstanceLoaded(true);
@@ -178,9 +195,16 @@ export const OpportunityCompletionRead: React.FC<InputProps> = ({
               {showLocation && (
                 <div className="mt-2">
                   {googleInstanceLoading && <div>Loading...</div>}
-                  {(googleInstanceError || !googleInstanceLoaded) && (
-                    <div>Error loading maps</div>
+                  {mapKeyMissing && (
+                    <div className="text-gray-dark text-sm italic">
+                      Map preview unavailable — no Google Maps key configured.
+                    </div>
                   )}
+                  {!mapKeyMissing &&
+                    !googleInstanceLoading &&
+                    (googleInstanceError || !googleInstanceLoaded) && (
+                      <div>Error loading maps</div>
+                    )}
                   {googleInstanceLoaded && markerPosition != null && (
                     <>
                       <div className="text-gray-dark flex flex-row gap-2">
