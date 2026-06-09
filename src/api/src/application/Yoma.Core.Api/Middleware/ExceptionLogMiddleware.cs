@@ -50,6 +50,7 @@ namespace Yoma.Core.Api.Middleware
     {
       FluentValidation.ValidationException or ValidationException => (LogLevel.Information, HttpStatusCode.BadRequest),
       EntityNotFoundException => (LogLevel.Information, HttpStatusCode.NotFound),
+      OperationCanceledException => (LogLevel.Information, (HttpStatusCode)499),
       SecurityException or System.Security.SecurityException => (LogLevel.Warning, HttpStatusCode.Unauthorized),
       HttpClientException http => http.StatusCode switch
       {
