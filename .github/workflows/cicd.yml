@@ -110,7 +110,7 @@ jobs:
           dotnet-version: 10.x
 
       - uses: wearerequired/lint-action@548d8a7c4b04d3553d32ed5b6e91eb171e10e7bb # v2.3.0
-        if: steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch'
+        if: github.event_name != 'release' && (steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch')
         with: ${{ matrix.config }} # zizmor: ignore[obfuscation] matrix.config is statically defined in the matrix include block
         env: ${{ matrix.env }}
 
