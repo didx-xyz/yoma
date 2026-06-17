@@ -140,6 +140,8 @@ export const OpportunityTypeBadge: React.FC<{
   )?.label;
   const badgeText = joinWithDelimiter([type, engagementType]);
 
+  if (!badgeText) return null;
+
   return (
     <span
       className={`font-family-nunito flex h-5 min-w-0 items-center rounded-md px-2 text-xs font-bold tracking-wide uppercase ${className}`}
