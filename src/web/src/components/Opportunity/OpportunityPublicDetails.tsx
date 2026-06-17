@@ -20,7 +20,6 @@ import {
   IoMdClose,
   IoMdShare,
 } from "react-icons/io";
-import Moment from "react-moment";
 import { toast } from "react-toastify";
 import { SettingType } from "~/api/models/common";
 import type { MyOpportunityResponseVerify } from "~/api/models/myOpportunity";
@@ -36,6 +35,13 @@ import {
 import { updateSettings } from "~/api/services/user";
 import { AvatarImage } from "~/components/AvatarImage";
 import PublicBadges from "~/components/Opportunity/Badges/PublicBadges";
+import ZltoRewardBadge from "~/components/Opportunity/Badges/ZltoRewardBadge";
+import {
+  getTypeConfig,
+  OpportunityMetaTextRow,
+  OpportunityOrgCountriesRow,
+  OpportunityTypeBadge,
+} from "~/components/Opportunity/opportunityTypeTheme";
 import { OpportunityCompletionEdit } from "~/components/Opportunity/OpportunityCompletionEdit";
 import Share from "~/components/Opportunity/Share";
 import { SignInButton } from "~/components/SignInButton";
@@ -47,7 +53,7 @@ import { Unauthorized } from "~/components/Status/Unauthorized";
 import { OPPORTUNITY_QUERY_KEYS } from "~/hooks/useOpportunityMutations";
 import analytics from "~/lib/analytics";
 import {
-  DATE_FORMAT_HUMAN,
+  OPPORTUNITY_DETAILS_DESIGN_V2,
   SETTING_USER_POPUP_LEAVINGYOMA,
 } from "~/lib/constants";
 import { userProfileAtom } from "~/lib/store";
@@ -66,6 +72,8 @@ const OpportunityPublicDetails: React.FC<{
 }> = ({ user, opportunityInfo, error, preview }) => {
   const queryClient = useQueryClient();
   const hasTrackedView = useRef(false);
+  // Per-type theming for the new (V2) details design (badge, CTA, accent).
+  const typeConfig = getTypeConfig(opportunityInfo?.type);
   const [loginDialogVisible, setLoginDialogVisible] = useState(false);
   const [gotoOpportunityDialogVisible, setGotoOpportunityDialogVisible] =
     useState(false);
@@ -497,7 +505,7 @@ const OpportunityPublicDetails: React.FC<{
                 <div className="my-3 flex w-full grow flex-col justify-center gap-4 px-4 md:flex-row">
                   <button
                     type="button"
-                    className="btn btn-primary hover:bg-purple order-first text-white normal-case hover:brightness-110 md:order-last md:flex-1"
+                    className="btn bg-green hover:bg-green-dark order-first text-white normal-case md:order-last md:flex-1"
                     onClick={onProceedToOpportunity}
                     disabled={!opportunityInfo.url}
                   >
@@ -515,7 +523,7 @@ const OpportunityPublicDetails: React.FC<{
                   <button
                     type="button"
                     className={
-                      "btn border-purple text-purple btn-outline hover:bg-purple rounded-full bg-white normal-case hover:border-transparent hover:text-white md:flex-1" +
+                      "btn border-green text-green hover:bg-green-dark rounded-full bg-white normal-case hover:border-transparent hover:text-white md:flex-1" +
                       `${
                         isOppSaved
                           ? " bg-yellow-light text-yellow hover:bg-yellow-light hover:text-yellow border-none"
@@ -533,7 +541,7 @@ const OpportunityPublicDetails: React.FC<{
 
                   <button
                     type="button"
-                    className="btn border-purple text-purple hover:bg-purple order-last rounded-full bg-white normal-case hover:border-transparent hover:text-white md:order-first md:flex-1"
+                    className="btn border-green text-green hover:bg-green-dark order-last rounded-full bg-white normal-case hover:border-transparent hover:text-white md:order-first md:flex-1"
                     onClick={() => setGotoOpportunityDialogVisible(false)}
                   >
                     <IoMdClose size="20"></IoMdClose>
@@ -611,7 +619,7 @@ const OpportunityPublicDetails: React.FC<{
                 <div className="mt-4 flex grow gap-4">
                   <button
                     type="button"
-                    className="btn border-purple text-purple rounded-full bg-white normal-case md:w-[200px]"
+                    className="btn border-green text-green hover:bg-green-dark rounded-full bg-white normal-case hover:text-white md:w-[200px]"
                     onClick={() =>
                       setCompleteOpportunitySuccessDialogVisible(false)
                     }
@@ -666,7 +674,7 @@ const OpportunityPublicDetails: React.FC<{
                 <div className="mt-4 flex grow gap-4">
                   <button
                     type="button"
-                    className="btn border-purple text-purple rounded-full bg-white normal-case md:w-[200px]"
+                    className="btn border-green text-green hover:bg-green-dark rounded-full bg-white normal-case hover:text-white md:w-[200px]"
                     onClick={onOpportunityCancel}
                     disabled={isLoading}
                   >
@@ -700,15 +708,29 @@ const OpportunityPublicDetails: React.FC<{
         <div
           className={`flex flex-col gap-4 ${!preview && !user ? "blur-xs" : ""}`}
         >
-          <div className="relative flex grow flex-col rounded-lg bg-white p-4 shadow-lg md:p-6">
+          <div
+            className={`relative flex grow flex-col rounded-lg bg-white p-4 shadow-lg md:p-6`}
+            // className={`relative flex grow flex-col rounded-lg bg-white p-4 shadow-lg md:p-6 ${
+            //   OPPORTUNITY_DETAILS_DESIGN_V2
+            //     ? `border-t-4 ${typeConfig.accentClassName}`
+            //     : ""
+            // }`}
+          >
             <div className="flex items-start gap-3">
               <div className="min-w-0 flex-1">
-                <h4 className="line-clamp-4 text-xl font-semibold break-words text-black md:line-clamp-2 md:text-2xl">
+                <h4 className="font-family-nunito line-clamp-2 text-xl font-bold text-black md:text-2xl">
                   {opportunityInfo.title}
                 </h4>
-                <h6 className="text-gray-dark mt-1 text-sm">
-                  By {opportunityInfo.organizationName}
-                </h6>
+
+                {OPPORTUNITY_DETAILS_DESIGN_V2 ? (
+                  <div className="mt-1">
+                    <OpportunityOrgCountriesRow data={opportunityInfo} />
+                  </div>
+                ) : (
+                  <h6 className="text-gray-dark mt-1 text-sm">
+                    By {opportunityInfo.organizationName}
+                  </h6>
+                )}
               </div>
 
               <div className="shrink-0">
@@ -721,36 +743,24 @@ const OpportunityPublicDetails: React.FC<{
             </div>
 
             {/* BADGES */}
-            <PublicBadges opportunity={opportunityInfo} showToolTips={true} />
-
-            {/* DATES */}
-            {opportunityInfo.status == "Active" && (
-              <div className="text-gray-dark flex flex-col text-sm">
-                <div>
-                  {opportunityInfo.dateStart && (
-                    <>
-                      <span className="mr-2 font-bold">Starts:</span>
-                      <span className="text-xs tracking-widest text-black">
-                        <Moment format={DATE_FORMAT_HUMAN} utc={true}>
-                          {opportunityInfo.dateStart}
-                        </Moment>
-                      </span>
-                    </>
+            {OPPORTUNITY_DETAILS_DESIGN_V2 ? (
+              <div className="mt-4 mb-2 flex flex-col gap-2 md:my-2">
+                <div className="flex flex-row flex-wrap items-center gap-2">
+                  <OpportunityTypeBadge
+                    data={opportunityInfo}
+                    className={typeConfig.badgeClassName}
+                  />
+                  {opportunityInfo.zltoRewardEstimate != null && (
+                    <ZltoRewardBadge
+                      amount={opportunityInfo.zltoRewardEstimate}
+                      showToolTips={true}
+                    />
                   )}
                 </div>
-                <div>
-                  {opportunityInfo.dateEnd && (
-                    <>
-                      <span className="mr-2 font-bold">Ends:</span>
-                      <span className="text-xs tracking-widest text-black">
-                        <Moment format={DATE_FORMAT_HUMAN} utc={true}>
-                          {opportunityInfo.dateEnd}
-                        </Moment>
-                      </span>
-                    </>
-                  )}
-                </div>
+                <OpportunityMetaTextRow data={opportunityInfo} />
               </div>
+            ) : (
+              <PublicBadges opportunity={opportunityInfo} showToolTips={true} />
             )}
 
             {/* BUTTONS */}
@@ -760,7 +770,13 @@ const OpportunityPublicDetails: React.FC<{
                   opportunityInfo.status !== "Expired" && (
                     <button
                       type="button"
-                      className="btn bg-green btn-sm hover:bg-green-dark disabled:bg-green h-10 w-full rounded-full text-sm text-white normal-case disabled:border-0 disabled:text-white md:w-[250px]"
+                      className={`btn btn-sm bg-green hover:bg-green-dark disabled:bg-green h-10 w-full rounded-full text-sm text-white normal-case md:w-[250px]`}
+                      title="Clicking this button will take you to an external site to continue this opportunity. Remember to return to this page to upload your completion certificate and earn your achievement!"
+                      // className={`btn btn-sm h-10 w-full rounded-full text-sm normal-case md:w-[250px] ${
+                      //   OPPORTUNITY_DETAILS_DESIGN_V2
+                      //     ? typeConfig.ctaClassName
+                      //     : "bg-green hover:bg-green-dark disabled:bg-green text-white disabled:border-0 disabled:text-white"
+                      // }`}
                       onClick={onGoToOpportunity}
                       disabled={preview}
                     >
@@ -773,7 +789,11 @@ const OpportunityPublicDetails: React.FC<{
                         priority={true}
                       />
 
-                      <span className="ml-1">Go to opportunity</span>
+                      <span className="ml-1">
+                        {OPPORTUNITY_DETAILS_DESIGN_V2
+                          ? typeConfig.gotoExternalLinkButtonText
+                          : "Go to opportunity"}
+                      </span>
                     </button>
                   )}
 
@@ -782,7 +802,7 @@ const OpportunityPublicDetails: React.FC<{
                   opportunityInfo.verificationMethod == "Manual" && (
                     <>
                       {/* only show completion button if start date has been reached,
-                                   not yet completed or rejected */}
+                      not yet completed or rejected */}
                       {new Date(opportunityInfo.dateStart) < new Date() &&
                         (verificationStatus == null ||
                           verificationStatus == undefined ||
@@ -793,6 +813,7 @@ const OpportunityPublicDetails: React.FC<{
                           <button
                             type="button"
                             className="btn border-green text-green btn-sm hover:bg-green-dark h-10 w-full rounded-full bg-white text-sm normal-case hover:text-white md:w-[280px]"
+                            title="Upload your completion files to earn your achievement and have this opportunity added to your CV."
                             onClick={() => {
                               // 📊 ANALYTICS: track "Upload completion files" button click
                               analytics.trackEvent(
@@ -829,7 +850,8 @@ const OpportunityPublicDetails: React.FC<{
                         verificationStatus.status == "Pending" && (
                           <button
                             type="button"
-                            className="btn bg-gray-light text-gray-dark btn-sm hover:bg-green-dark h-10 w-full rounded-full border-0 text-sm normal-case hover:text-white md:w-[250px]"
+                            className="btn border-green text-green btn-sm hover:bg-green-dark h-10 w-full rounded-full bg-white text-sm normal-case hover:text-white md:w-[250px]"
+                            title="Your submission is currently under review. If you would like to cancel your application and delete all uploaded files, click the button to see cancellation options."
                             onClick={() => {
                               // 📊 ANALYTICS: track "Pending verification" button click
                               analytics.trackEvent(
@@ -844,19 +866,22 @@ const OpportunityPublicDetails: React.FC<{
                             }}
                           >
                             Pending verification
-                            <IoMdClose className="text-gray-dark mt-[2px] ml-1 h-4 w-4" />
+                            <IoMdClose className="mt-[2px] ml-1 h-4 w-4" />
                           </button>
                         )}
 
                       {verificationStatus &&
                         verificationStatus.status == "Completed" && (
-                          <div className="md:text-md border-purple text-purple flex h-10 items-center justify-center rounded-full border bg-white px-4 text-center text-sm font-bold">
+                          <div
+                            className="md:text-md border-green text-green flex h-10 items-center justify-center rounded-full border bg-white px-4 text-center text-sm font-bold"
+                            title="You have completed this opportunity!"
+                          >
                             Completed
                             <IoMdCheckmark
                               strikethroughThickness={2}
                               overlineThickness={2}
                               underlineThickness={2}
-                              className="text-green ml-1 h-4 w-4"
+                              className="ml-1 h-4 w-4"
                             />
                           </div>
                         )}
@@ -867,14 +892,12 @@ const OpportunityPublicDetails: React.FC<{
               <div className="flex gap-2">
                 <button
                   type="button"
-                  className={
-                    "btn border-gray-dark text-gray-dark btn-sm disabled:text-gray-dark h-10 w-full shrink flex-nowrap rounded-full text-sm normal-case md:max-w-[120px] " +
-                    ` ${
-                      isOppSaved
-                        ? "border-yellow bg-yellow-light text-yellow"
-                        : "hover:bg-green-dark bg-white hover:text-white"
-                    }`
-                  }
+                  className={`btn btn-sm h-10 w-full shrink flex-nowrap rounded-full text-sm normal-case md:max-w-[120px] ${
+                    isOppSaved
+                      ? "border-yellow bg-yellow-light text-yellow"
+                      : "border-green text-green hover:bg-green-dark bg-white hover:text-white"
+                  }`}
+                  title="Save this opportunity to easily find it later from your profile page."
                   onClick={onUpdateSavedOpportunity}
                   disabled={
                     !(
@@ -890,7 +913,8 @@ const OpportunityPublicDetails: React.FC<{
 
                 <button
                   type="button"
-                  className="btn border-gray-dark text-gray-dark btn-sm hover:bg-green-dark disabled:text-gray-dark h-10 w-full shrink flex-nowrap rounded-full bg-white text-sm normal-case hover:text-white md:max-w-[120px]"
+                  className="btn border-green text-green btn-sm hover:bg-green-dark h-10 w-full shrink flex-nowrap rounded-full bg-white text-sm normal-case hover:text-white md:max-w-[120px]"
+                  title="Share this opportunity with your friends and network to help more people discover it!"
                   onClick={onShareOpportunity}
                   // ensure opportunity is published and active (user logged in check is done in function)
                   disabled={

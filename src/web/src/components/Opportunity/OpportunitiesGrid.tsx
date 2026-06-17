@@ -1,6 +1,8 @@
+import { OpportunityPublicSmallComponent } from "./OpportunityPublicSmall";
 import { OpportunityPublicSmallComponentV2 } from "./OpportunityPublicSmallV2";
 import type { OpportunitySearchResultsInfo } from "~/api/models/opportunity";
 import Link from "next/link";
+import { OPPORTUNITY_SEARCH_DESIGN_V2 } from "~/lib/constants";
 
 interface InputProps {
   [id: string]: any;
@@ -35,15 +37,29 @@ export const OpportunitiesGrid: React.FC<InputProps> = ({
             )}
           </div>
 
-          {/* Fixed-size cards that wrap to fit as many per row as the screen allows */}
-          <div className="flex w-full flex-row flex-wrap justify-center gap-4">
-            {data.items.map((item: any) => (
-              <OpportunityPublicSmallComponentV2
-                key={`${id}_${item.id}`}
-                data={item}
-              />
-            ))}
-          </div>
+          {OPPORTUNITY_SEARCH_DESIGN_V2 ? (
+            // NEW: fixed-size cards that wrap to fit as many per row as the screen allows
+            <div className="flex w-full flex-row flex-wrap justify-center gap-4">
+              {data.items.map((item: any) => (
+                <OpportunityPublicSmallComponentV2
+                  key={`${id}_${item.id}`}
+                  data={item}
+                />
+              ))}
+            </div>
+          ) : (
+            // OLD: original responsive grid
+            <div className="grid w-full place-items-center">
+              <div className="xs:grid-cols-1 grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {data.items.map((item: any) => (
+                  <OpportunityPublicSmallComponent
+                    key={`${id}_${item.id}`}
+                    data={item}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

@@ -16,6 +16,10 @@ import {
 } from "~/api/models/opportunity";
 import type { OrganizationInfo } from "~/api/models/organisation";
 import SelectButtons from "../Common/SelectButtons";
+import {
+  getEngagementConfig,
+  getTypeConfig,
+} from "~/components/Opportunity/opportunityTypeTheme";
 import FormToggle from "~/components/Common/FormToggle";
 import { useAtomValue } from "jotai";
 import { currentLanguageAtom } from "~/lib/store";
@@ -232,319 +236,173 @@ export const OpportunityFilterVertical: React.FC<{
   }, [myCountryOnlyDraft, setValue, watchCountries]);
 
   return (
-    <>
-      <form
-        onSubmit={handleSubmit(onSubmitHandler)}
-        className="flex h-full flex-col overflow-y-auto"
-      >
-        <div className="flex flex-row px-8 py-4">
-          <h1 className="my-auto grow text-2xl font-bold">Filter</h1>
-          <button
-            type="button"
-            className="btn btn-circle btn-primary"
-            onClick={onCancel}
-          >
-            <IoMdClose className="h-6 w-6"></IoMdClose>
-          </button>
-        </div>
-        <div className="bg-gray-light flex flex-col gap-4 px-8 py-4">
-          {/* VALUECONTAINS: hidden input */}
-          <input
-            type="hidden"
-            {...form.register("valueContains")}
-            value={searchFilter?.valueContains ?? ""}
+    <form
+      onSubmit={handleSubmit(onSubmitHandler)}
+      className="flex h-full flex-col overflow-y-auto"
+    >
+      <div className="flex flex-row px-8 py-4">
+        <h1 className="my-auto grow text-2xl font-bold">Filter</h1>
+        <button
+          type="button"
+          className="btn btn-circle btn-primary"
+          onClick={onCancel}
+        >
+          <IoMdClose className="h-6 w-6"></IoMdClose>
+        </button>
+      </div>
+      <div className="bg-gray-light flex flex-col gap-4 px-8 py-4">
+        {/* VALUECONTAINS: hidden input */}
+        <input
+          type="hidden"
+          {...form.register("valueContains")}
+          value={searchFilter?.valueContains ?? ""}
+        />
+
+        {/* TYPES */}
+        <fieldset className="fieldset gap-1">
+          <label className="label">
+            <span className="label-text font-semibold">
+              What type of opportunity are you looking for?
+            </span>
+          </label>
+
+          <Controller
+            name="types"
+            control={form.control}
+            defaultValue={searchFilter?.types ?? []}
+            render={({ field: { onChange, value } }) => (
+              <SelectButtons
+                id="selectButtons_types"
+                isMulti={true}
+                buttons={lookups_types.map((x) => ({
+                  id: x.id,
+                  // display the themed label; the stored value stays x.name
+                  title: getTypeConfig(x.name).label,
+                  selected: value?.includes(x.name) ?? false,
+                }))}
+                onChange={(val) => {
+                  // map selected button ids back to the raw type name (the value)
+                  const selectedNames = val
+                    .filter((btn) => btn.selected)
+                    .map(
+                      (btn) => lookups_types.find((t) => t.id === btn.id)?.name,
+                    )
+                    .filter((n): n is string => !!n);
+                  onChange(selectedNames);
+                }}
+              />
+            )}
           />
 
-          {/* TYPES */}
-          <fieldset className="fieldset gap-1">
-            <label className="label">
-              <span className="label-text font-semibold">
-                What type of opportunity are you looking for?
+          {formState.errors.types && (
+            <label className="label font-bold">
+              <span className="label-text-alt text-red-500 italic">
+                {`${formState.errors.types.message}`}
               </span>
             </label>
+          )}
+        </fieldset>
 
-            <Controller
-              name="types"
-              control={form.control}
-              defaultValue={searchFilter?.types ?? []}
-              render={({ field: { onChange, value } }) => (
-                <SelectButtons
-                  id="selectButtons_types"
-                  isMulti={true}
-                  buttons={lookups_types.map((x) => ({
+        {/* ENGAGEMENT TYPES */}
+        <fieldset className="fieldset gap-1">
+          <label className="label">
+            <span className="label-text font-semibold">
+              What type of engagement are you looking for?
+            </span>
+          </label>
+
+          <Controller
+            name="engagementTypes"
+            control={form.control}
+            defaultValue={searchFilter?.engagementTypes ?? []}
+            render={({ field: { onChange, value } }) => (
+              <SelectButtons
+                id="selectButtons_engagementTypes"
+                isMulti={true}
+                buttons={lookups_engagementTypes
+                  .filter((x) => x.name !== "Hybrid")
+                  .map((x) => ({
                     id: x.id,
-                    title: x.name,
+                    // display the themed label; the stored value stays x.name
+                    title: getEngagementConfig(x.name)?.label ?? x.name,
                     selected: value?.includes(x.name) ?? false,
                   }))}
-                  onChange={(val) => {
-                    const selectedButtons = val.filter((btn) => btn.selected);
-                    onChange(selectedButtons.map((c) => c.title));
-                  }}
-                />
-              )}
-            />
-
-            {formState.errors.types && (
-              <label className="label font-bold">
-                <span className="label-text-alt text-red-500 italic">
-                  {`${formState.errors.types.message}`}
-                </span>
-              </label>
-            )}
-          </fieldset>
-
-          {/* ENGAGEMENT TYPES */}
-          <fieldset className="fieldset gap-1">
-            <label className="label">
-              <span className="label-text font-semibold">
-                What type of engagement are you looking for?
-              </span>
-            </label>
-
-            <Controller
-              name="engagementTypes"
-              control={form.control}
-              defaultValue={searchFilter?.engagementTypes ?? []}
-              render={({ field: { onChange, value } }) => (
-                <SelectButtons
-                  id="selectButtons_engagementTypes"
-                  isMulti={true}
-                  buttons={lookups_engagementTypes.map((x) => ({
-                    id: x.id,
-                    title: x.name,
-                    selected: value?.includes(x.name) ?? false,
-                  }))}
-                  onChange={(val) => {
-                    const selectedButtons = val.filter((btn) => btn.selected);
-                    onChange(selectedButtons.map((c) => c.title));
-                  }}
-                />
-              )}
-            />
-
-            {formState.errors.engagementTypes && (
-              <label className="label font-bold">
-                <span className="label-text-alt text-red-500 italic">
-                  {`${formState.errors.engagementTypes.message}`}
-                </span>
-              </label>
-            )}
-          </fieldset>
-
-          {/* COMMITMENT INTERVALS */}
-          <fieldset className="fieldset gap-1">
-            <label className="label">
-              <span className="label-text font-semibold">
-                How much time would you like to invest?
-              </span>
-            </label>
-            <div className="flex w-full flex-row justify-start gap-4">
-              <span className="text-gray-dark mt-1 text-xs font-semibold">
-                0
-              </span>
-
-              <Controller
-                name="commitmentInterval.interval.count"
-                control={form.control}
-                defaultValue={
-                  searchFilter?.commitmentInterval?.interval?.count ?? 0
-                }
-                render={({ field: { onChange, value } }) => (
-                  <div className="flex w-full flex-col justify-center text-center md:w-64">
-                    <input
-                      type="range"
-                      className="bg-whitex range range-success"
-                      min="0"
-                      max={timeIntervalMax}
-                      value={value}
-                      onChange={(val) => onChange(val)}
-                    />
-                    <span className="text-gray-dark mt-2 -mb-3 h-8 text-xs font-semibold">
-                      {value > 0 && watchIntervalId != null && (
-                        <>
-                          {`${value} ${
-                            value > 1 ? `${watchIntervalId}s` : watchIntervalId
-                          }`}
-                        </>
-                      )}
-                    </span>
-                  </div>
-                )}
+                onChange={(val) => {
+                  // map selected button ids back to the raw engagement name (the value)
+                  const selectedNames = val
+                    .filter((btn) => btn.selected)
+                    .map(
+                      (btn) =>
+                        lookups_engagementTypes.find((t) => t.id === btn.id)
+                          ?.name,
+                    )
+                    .filter((n): n is string => !!n);
+                  onChange(selectedNames);
+                }}
               />
+            )}
+          />
 
-              <span className="text-gray-dark mt-1 text-xs font-semibold">
-                {timeIntervalMax}
+          {formState.errors.engagementTypes && (
+            <label className="label font-bold">
+              <span className="label-text-alt text-red-500 italic">
+                {`${formState.errors.engagementTypes.message}`}
               </span>
-            </div>
-            <div className="flex w-full flex-row justify-start gap-4">
-              <Controller
-                name="commitmentInterval.interval.id"
-                control={form.control}
-                render={({ field: { onChange, value } }) => (
-                  <SelectButtons
-                    id="selectButtons_commitmentIntervals"
-                    buttons={lookups_timeIntervals.map((x) => ({
-                      id: x.id,
-                      title: x.name,
-                      selected: value?.includes(x.name) ?? false,
-                    }))}
-                    onChange={(val) => {
-                      const selectedButtons = val.filter((btn) => btn.selected);
-                      onChange(selectedButtons.map((c) => c.title));
-                    }}
-                  />
-                )}
-              />
-            </div>
-          </fieldset>
-
-          {/* ZLTO REWARD RANGES */}
-          <fieldset className="fieldset -mb-3 flex flex-row items-center gap-4">
-            <label className="label">
-              <span className="label-text font-semibold">ZLTO Reward</span>
             </label>
-            <Controller
-              name="zltoReward.hasReward"
-              control={form.control}
-              defaultValue={searchFilter?.zltoReward?.hasReward ?? false}
-              render={({ field: { onChange, value } }) => (
-                <input
-                  type="checkbox"
-                  className="toggle toggle-success"
-                  checked={value}
-                  onChange={(val) => onChange(val)}
-                />
-              )}
-            />
+          )}
+        </fieldset>
 
-            {formState.errors.zltoRewardRanges && (
-              <label className="label font-bold">
-                <span className="label-text-alt text-red-500 italic">
-                  {`${formState.errors.zltoRewardRanges.message}`}
-                </span>
-              </label>
-            )}
-          </fieldset>
-
-          {/* COUNTRIES */}
-          <fieldset className="fieldset gap-1">
-            <label className="label">
-              <span className="label-text font-semibold">Country</span>
-            </label>
-
-            {userProfile && (
-              <div className="mb-2 flex flex-col gap-1">
-                <FormToggle
-                  id="opportunities_filter_my_country_only"
-                  label={
-                    userCountryName
-                      ? `My country only (${userCountryName})`
-                      : "My country only"
-                  }
-                  className="gap-2"
-                  labelClassName="text-xs font-semibold"
-                  toggleClassName="toggle-sm"
-                  inputProps={{
-                    checked: myCountryOnlyDraft,
-                    disabled: !userProfile?.countryId,
-                    onChange: (e) => {
-                      const checked = e.target.checked;
-
-                      if (checked) {
-                        const current = (watchCountries ?? null) as
-                          | string[]
-                          | null;
-                        if ((current?.length ?? 0) > 0) {
-                          setCountriesBeforeMyCountryOnly(current);
-                        }
-                        setValue("countries", null);
-                      } else {
-                        if ((watchCountries?.length ?? 0) === 0) {
-                          if ((countriesBeforeMyCountryOnly?.length ?? 0) > 0)
-                            setValue("countries", countriesBeforeMyCountryOnly);
-                        }
-                      }
-
-                      setMyCountryOnlyDraft(checked);
-                    },
-                  }}
-                />
-
-                {!userProfile?.countryId && (
-                  <div className="text-gray-dark text-[10px] leading-tight">
-                    Add your country in your profile to enable this.
-                  </div>
-                )}
-
-                {myCountryOnlyDraft && (
-                  <div className="text-gray-dark text-[10px] leading-tight">
-                    Turn this off to select specific countries.
-                  </div>
-                )}
-              </div>
-            )}
+        {/* COMMITMENT INTERVALS */}
+        <fieldset className="fieldset gap-1">
+          <label className="label">
+            <span className="label-text font-semibold">
+              How much time would you like to invest?
+            </span>
+          </label>
+          <div className="flex w-full flex-row justify-start gap-4">
+            <span className="text-gray-dark mt-1 text-xs font-semibold">0</span>
 
             <Controller
-              name="countries"
+              name="commitmentInterval.interval.count"
               control={form.control}
+              defaultValue={
+                searchFilter?.commitmentInterval?.interval?.count ?? 0
+              }
               render={({ field: { onChange, value } }) => (
-                <div
-                  className={
-                    userProfile && myCountryOnlyDraft
-                      ? "pointer-events-none opacity-50"
-                      : ""
-                  }
-                >
-                  <SelectButtons
-                    id="selectButtons_countries"
-                    isMulti={true}
-                    maxRows={8}
-                    buttons={lookups_countries.map((x) => ({
-                      id: x.id,
-                      title: x.name,
-                      selected: value?.includes(x.name) ?? false,
-                    }))}
-                    onChange={(val) => {
-                      const selectedButtons = val.filter((btn) => btn.selected);
-                      const selectedCountries = selectedButtons.map(
-                        (c) => c.title,
-                      );
-
-                      if (selectedCountries.length > 0 && myCountryOnlyDraft) {
-                        setMyCountryOnlyDraft(false);
-                      }
-
-                      onChange(selectedCountries);
-                    }}
+                <div className="flex w-full flex-col justify-center text-center md:w-64">
+                  <input
+                    type="range"
+                    className="bg-whitex range range-success"
+                    min="0"
+                    max={timeIntervalMax}
+                    value={value}
+                    onChange={(val) => onChange(val)}
                   />
+                  <span className="text-gray-dark mt-2 -mb-3 h-8 text-xs font-semibold">
+                    {value > 0 && watchIntervalId != null && (
+                      <>
+                        {`${value} ${
+                          value > 1 ? `${watchIntervalId}s` : watchIntervalId
+                        }`}
+                      </>
+                    )}
+                  </span>
                 </div>
               )}
             />
 
-            {formState.errors.countries && (
-              <label className="label font-bold">
-                <span className="label-text-alt text-red-500 italic">
-                  {`${formState.errors.countries.message}`}
-                </span>
-              </label>
-            )}
-          </fieldset>
-
-          {/* LANGUAGES */}
-          <fieldset className="fieldset gap-1">
-            <label className="label">
-              <span className="label-text font-semibold">Languages</span>
-            </label>
-
+            <span className="text-gray-dark mt-1 text-xs font-semibold">
+              {timeIntervalMax}
+            </span>
+          </div>
+          <div className="flex w-full flex-row justify-start gap-4">
             <Controller
-              name="languages"
+              name="commitmentInterval.interval.id"
               control={form.control}
               render={({ field: { onChange, value } }) => (
                 <SelectButtons
-                  id="selectButtons_languages"
-                  isMulti={true}
-                  maxRows={8}
-                  buttons={lookups_languages.map((x) => ({
+                  id="selectButtons_commitmentIntervals"
+                  buttons={lookups_timeIntervals.map((x) => ({
                     id: x.id,
                     title: x.name,
                     selected: value?.includes(x.name) ?? false,
@@ -556,112 +414,272 @@ export const OpportunityFilterVertical: React.FC<{
                 />
               )}
             />
+          </div>
+        </fieldset>
 
-            {formState.errors.languages && (
-              <label className="label font-bold">
-                <span className="label-text-alt text-red-500 italic">
-                  {`${formState.errors.languages.message}`}
-                </span>
-              </label>
+        {/* ZLTO REWARD RANGES */}
+        <fieldset className="fieldset -mb-3 flex flex-row items-center gap-4">
+          <label className="label">
+            <span className="label-text font-semibold">ZLTO Reward</span>
+          </label>
+          <Controller
+            name="zltoReward.hasReward"
+            control={form.control}
+            defaultValue={searchFilter?.zltoReward?.hasReward ?? false}
+            render={({ field: { onChange, value } }) => (
+              <input
+                type="checkbox"
+                className="toggle toggle-success"
+                checked={value}
+                onChange={(val) => onChange(val)}
+              />
             )}
-          </fieldset>
+          />
 
-          {/* ORGANIZATIONS */}
-          <fieldset className="fieldset gap-1">
-            <label className="label">
-              <span className="label-text font-semibold">Providers</span>
-            </label>
-
-            <Controller
-              name="organizations"
-              control={form.control}
-              defaultValue={searchFilter?.organizations ?? []}
-              render={({ field: { onChange, value } }) => (
-                <SelectButtons
-                  id="selectButtons_organizations"
-                  isMulti={true}
-                  maxRows={4}
-                  buttons={lookups_organisations.map((x) => ({
-                    id: x.id,
-                    title: x.name,
-                    selected: value?.includes(x.name) ?? false,
-                  }))}
-                  onChange={(val) => {
-                    const selectedButtons = val.filter((btn) => btn.selected);
-                    onChange(selectedButtons.map((c) => c.title));
-                  }}
-                />
-              )}
-            />
-
-            {formState.errors.organizations && (
-              <label className="label font-bold">
-                <span className="label-text-alt text-red-500 italic">
-                  {`${formState.errors.organizations.message}`}
-                </span>
-              </label>
-            )}
-          </fieldset>
-
-          {/* PUBLISHED STATES */}
-          <fieldset className="fieldset gap-1">
-            <label className="label">
-              <span className="label-text font-semibold">
-                What status would you like to see?
+          {formState.errors.zltoRewardRanges && (
+            <label className="label font-bold">
+              <span className="label-text-alt text-red-500 italic">
+                {`${formState.errors.zltoRewardRanges.message}`}
               </span>
             </label>
-            <Controller
-              name="publishedStates"
-              control={form.control}
-              defaultValue={searchFilter?.publishedStates ?? []}
-              render={({ field: { onChange, value } }) => (
+          )}
+        </fieldset>
+
+        {/* COUNTRIES */}
+        <fieldset className="fieldset gap-1">
+          <label className="label">
+            <span className="label-text font-semibold">Country</span>
+          </label>
+
+          {userProfile && (
+            <div className="mb-2 flex flex-col gap-1">
+              <FormToggle
+                id="opportunities_filter_my_country_only"
+                label={
+                  userCountryName
+                    ? `My country only (${userCountryName})`
+                    : "My country only"
+                }
+                className="gap-2"
+                labelClassName="text-xs font-semibold"
+                toggleClassName="toggle-sm"
+                inputProps={{
+                  checked: myCountryOnlyDraft,
+                  disabled: !userProfile?.countryId,
+                  onChange: (e) => {
+                    const checked = e.target.checked;
+
+                    if (checked) {
+                      const current = (watchCountries ?? null) as
+                        | string[]
+                        | null;
+                      if ((current?.length ?? 0) > 0) {
+                        setCountriesBeforeMyCountryOnly(current);
+                      }
+                      setValue("countries", null);
+                    } else {
+                      if ((watchCountries?.length ?? 0) === 0) {
+                        if ((countriesBeforeMyCountryOnly?.length ?? 0) > 0)
+                          setValue("countries", countriesBeforeMyCountryOnly);
+                      }
+                    }
+
+                    setMyCountryOnlyDraft(checked);
+                  },
+                }}
+              />
+
+              {!userProfile?.countryId && (
+                <div className="text-gray-dark text-[10px] leading-tight">
+                  Add your country in your profile to enable this.
+                </div>
+              )}
+
+              {myCountryOnlyDraft && (
+                <div className="text-gray-dark text-[10px] leading-tight">
+                  Turn this off to select specific countries.
+                </div>
+              )}
+            </div>
+          )}
+
+          <Controller
+            name="countries"
+            control={form.control}
+            render={({ field: { onChange, value } }) => (
+              <div
+                className={
+                  userProfile && myCountryOnlyDraft
+                    ? "pointer-events-none opacity-50"
+                    : ""
+                }
+              >
                 <SelectButtons
-                  id="selectButtons_publishedStates"
+                  id="selectButtons_countries"
                   isMulti={true}
-                  buttons={lookups_publishedStates.map((x) => ({
-                    id: x.value,
-                    title: x.label,
-                    selected: value?.includes(x.label as never) ?? false,
+                  maxRows={8}
+                  buttons={lookups_countries.map((x) => ({
+                    id: x.id,
+                    title: x.name,
+                    selected: value?.includes(x.name) ?? false,
                   }))}
                   onChange={(val) => {
                     const selectedButtons = val.filter((btn) => btn.selected);
-                    onChange(selectedButtons.map((c) => c.title));
+                    const selectedCountries = selectedButtons.map(
+                      (c) => c.title,
+                    );
+
+                    if (selectedCountries.length > 0 && myCountryOnlyDraft) {
+                      setMyCountryOnlyDraft(false);
+                    }
+
+                    onChange(selectedCountries);
                   }}
                 />
-              )}
-            />
-
-            {formState.errors.publishedStates && (
-              <label className="label font-bold">
-                <span className="label-text-alt text-red-500 italic">
-                  {`${formState.errors.publishedStates.message}`}
-                </span>
-              </label>
+              </div>
             )}
-          </fieldset>
-        </div>
+          />
 
-        {/* BUTTONS */}
-        <div className="mx-4 my-8 flex flex-col items-center justify-center gap-6 md:flex-row">
-          {onClear && (
-            <button
-              type="button"
-              className="btn btn-warning w-full grow rounded-full md:w-40"
-              onClick={onClear}
-            >
-              {clearButtonText}
-            </button>
+          {formState.errors.countries && (
+            <label className="label font-bold">
+              <span className="label-text-alt text-red-500 italic">
+                {`${formState.errors.countries.message}`}
+              </span>
+            </label>
           )}
-          {onSubmit && (
-            <button
-              type="submit"
-              className="btn btn-primary w-full grow rounded-full md:w-40"
-            >
-              {submitButtonText}
-            </button>
+        </fieldset>
+
+        {/* LANGUAGES */}
+        <fieldset className="fieldset gap-1">
+          <label className="label">
+            <span className="label-text font-semibold">Languages</span>
+          </label>
+
+          <Controller
+            name="languages"
+            control={form.control}
+            render={({ field: { onChange, value } }) => (
+              <SelectButtons
+                id="selectButtons_languages"
+                isMulti={true}
+                maxRows={8}
+                buttons={lookups_languages.map((x) => ({
+                  id: x.id,
+                  title: x.name,
+                  selected: value?.includes(x.name) ?? false,
+                }))}
+                onChange={(val) => {
+                  const selectedButtons = val.filter((btn) => btn.selected);
+                  onChange(selectedButtons.map((c) => c.title));
+                }}
+              />
+            )}
+          />
+
+          {formState.errors.languages && (
+            <label className="label font-bold">
+              <span className="label-text-alt text-red-500 italic">
+                {`${formState.errors.languages.message}`}
+              </span>
+            </label>
           )}
-        </div>
-      </form>
-    </>
+        </fieldset>
+
+        {/* ORGANIZATIONS */}
+        <fieldset className="fieldset gap-1">
+          <label className="label">
+            <span className="label-text font-semibold">Providers</span>
+          </label>
+
+          <Controller
+            name="organizations"
+            control={form.control}
+            defaultValue={searchFilter?.organizations ?? []}
+            render={({ field: { onChange, value } }) => (
+              <SelectButtons
+                id="selectButtons_organizations"
+                isMulti={true}
+                maxRows={4}
+                buttons={lookups_organisations.map((x) => ({
+                  id: x.id,
+                  title: x.name,
+                  selected: value?.includes(x.name) ?? false,
+                }))}
+                onChange={(val) => {
+                  const selectedButtons = val.filter((btn) => btn.selected);
+                  onChange(selectedButtons.map((c) => c.title));
+                }}
+              />
+            )}
+          />
+
+          {formState.errors.organizations && (
+            <label className="label font-bold">
+              <span className="label-text-alt text-red-500 italic">
+                {`${formState.errors.organizations.message}`}
+              </span>
+            </label>
+          )}
+        </fieldset>
+
+        {/* PUBLISHED STATES */}
+        <fieldset className="fieldset gap-1">
+          <label className="label">
+            <span className="label-text font-semibold">
+              What status would you like to see?
+            </span>
+          </label>
+          <Controller
+            name="publishedStates"
+            control={form.control}
+            defaultValue={searchFilter?.publishedStates ?? []}
+            render={({ field: { onChange, value } }) => (
+              <SelectButtons
+                id="selectButtons_publishedStates"
+                isMulti={true}
+                buttons={lookups_publishedStates.map((x) => ({
+                  id: x.value,
+                  title: x.label,
+                  selected: value?.includes(x.label as never) ?? false,
+                }))}
+                onChange={(val) => {
+                  const selectedButtons = val.filter((btn) => btn.selected);
+                  onChange(selectedButtons.map((c) => c.title));
+                }}
+              />
+            )}
+          />
+
+          {formState.errors.publishedStates && (
+            <label className="label font-bold">
+              <span className="label-text-alt text-red-500 italic">
+                {`${formState.errors.publishedStates.message}`}
+              </span>
+            </label>
+          )}
+        </fieldset>
+      </div>
+
+      {/* BUTTONS */}
+      <div className="mx-4 my-8 flex flex-col items-center justify-center gap-6 md:flex-row">
+        {onClear && (
+          <button
+            type="button"
+            className="btn btn-warning w-full grow rounded-full md:w-40"
+            onClick={onClear}
+          >
+            {clearButtonText}
+          </button>
+        )}
+        {onSubmit && (
+          <button
+            type="submit"
+            className="btn btn-primary w-full grow rounded-full md:w-40"
+          >
+            {submitButtonText}
+          </button>
+        )}
+      </div>
+    </form>
   );
 };
