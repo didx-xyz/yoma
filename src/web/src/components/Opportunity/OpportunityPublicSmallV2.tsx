@@ -2,6 +2,12 @@ import Link from "next/link";
 import type { OpportunityInfo } from "~/api/models/opportunity";
 import { AvatarImage } from "../AvatarImage";
 import ZltoRewardBadge from "./Badges/ZltoRewardBadge";
+import {
+  getTypeConfig,
+  OpportunityMetaTextRow,
+  OpportunityOrgCountriesRow,
+  OpportunityTypeBadge,
+} from "./opportunityTypeTheme";
 
 interface InputProps {
   data: OpportunityInfo;
@@ -14,83 +20,6 @@ interface InputProps {
   variant?: "default" | "job";
   [key: string]: any;
 }
-
-const fmtDate = (dateStr: string) =>
-  new Date(dateStr).toLocaleDateString("en-GB", {
-    day: "numeric",
-    month: "short",
-    timeZone: "UTC",
-  });
-
-const OpportunityMetaTextRow: React.FC<{
-  data: OpportunityInfo;
-}> = ({ data }) => {
-  const items: string[] = [];
-  // Effort
-  if (data.commitmentIntervalCount && data.commitmentInterval) {
-    const s = data.commitmentIntervalCount > 1 ? "s" : "";
-    items.push(
-      `${data.commitmentIntervalCount} ${data.commitmentInterval}${s} effort`,
-    );
-  }
-  // Status + relevant date
-  if (data.status === "Active") {
-    if (new Date(data.dateStart) > new Date()) {
-      items.push(`Starts ${fmtDate(data.dateStart)}`); // Upcoming
-    } else {
-      items.push(
-        data.dateEnd ? `Ends ${fmtDate(data.dateEnd)}` : "Ongoing", // Ongoing
-      );
-    }
-  }
-
-  // Spots left
-  if (data.participantLimit != null && !data.participantLimitReached) {
-    const left = Math.max(
-      data.participantLimit - (data.participantCountCompleted ?? 0),
-      0,
-    );
-    items.push(`${left} spot${left === 1 ? "" : "s"} left`);
-  }
-
-  if (items.length === 0) return null;
-
-  // Single-line, full-width, truncates with an ellipsis (matches the other rows).
-  return (
-    <div className="text-gray-dark min-w-0 truncate text-xs font-semibold">
-      {items.map((item, i) => (
-        <span key={i} className="whitespace-nowrap">
-          {i > 0 && <span className="mx-1 opacity-40">/</span>}
-          {item}
-        </span>
-      ))}
-    </div>
-  );
-};
-
-// Organisation name + (optional) countries row.
-// Single-line, full-width, truncates with an ellipsis (matches the other rows).
-const OpportunityOrgCountriesRow: React.FC<{ data: OpportunityInfo }> = ({
-  data,
-}) => {
-  const countries =
-    data.countries
-      ?.map((c) => c.name)
-      .filter(Boolean)
-      .join(", ") ?? null;
-
-  return (
-    <div className="text-gray-dark min-w-0 truncate text-sm">
-      <span
-        className="inline-block max-w-[60%] truncate align-bottom font-semibold text-black"
-        title={data.organizationName}
-      >
-        {data.organizationName}
-      </span>
-      {countries && <span title={countries}> · {countries}</span>}
-    </div>
-  );
-};
 
 // Skill badges row. Shows up to `maxSkills` badges (the 3rd only from `sm` up)
 // followed by a "+N" overflow badge. Renders nothing when there are no skills.
@@ -144,28 +73,6 @@ const OpportunityDescriptionRow: React.FC<{ data: OpportunityInfo }> = ({
   );
 };
 
-// Type/engagement badge (e.g. "Job · Full-time"). The engagement type is
-// appended when present. Colour is supplied by the caller via className.
-const OpportunityTypeBadge: React.FC<{
-  data: OpportunityInfo;
-  label: string;
-  className?: string;
-}> = ({ data, label, className = "" }) => {
-  const engagementType =
-    typeof data.engagementType === "string" ? data.engagementType : null;
-
-  return (
-    <span
-      className={`font-family-nunito flex h-5 min-w-0 items-center rounded-md px-2 text-xs font-bold tracking-wide uppercase ${className}`}
-    >
-      <span className="truncate">
-        {label}
-        {engagementType ? ` · ${engagementType}` : ""}
-      </span>
-    </span>
-  );
-};
-
 // Call-to-action button. In preview mode it renders an inert element (not a
 // link) so it can't be clicked and is not a nested interactive <a>.
 const CardCta: React.FC<{
@@ -213,10 +120,10 @@ const JobCard: React.FC<{ data: OpportunityInfo; preview?: boolean }> = ({
         <div className="flex flex-row items-start gap-2">
           <div className="flex min-w-0 flex-1 flex-col gap-2">
             {/* ENGAGEMENT TYPE BADGE */}
-            <div className="justify-betweenxxx flex flex-row items-center gap-2">
+            <div className="flex flex-row items-center gap-2">
               <OpportunityTypeBadge
                 data={data}
-                label="Job"
+                //label="Job"
                 className="bg-purple text-white"
               />
 
@@ -263,74 +170,8 @@ const JobCard: React.FC<{ data: OpportunityInfo; preview?: boolean }> = ({
 
 // ---------------------------------------------------------------------------
 // NON-JOB CARDS — per-type rendering modes (logo bubble + badge + title +
-// meta + CTA). Each type has its own colour theme.
+// meta + CTA). Each type has its own colour theme (see opportunityTypeTheme).
 // ---------------------------------------------------------------------------
-interface TypeConfig {
-  label: string; // badge label
-  badgeClassName: string; // tinted badge background/text
-  bubbleClassName: string; // gradient behind the org logo
-  ctaText: string; // call-to-action label
-  ctaTitle: string; // call-to-action title attr
-  ctaClassName: string; // call-to-action background/hover
-}
-
-const TYPE_CONFIG: Record<string, TypeConfig> = {
-  Job: {
-    label: "Job",
-    badgeClassName: "bg-purple text-white",
-    bubbleClassName: "bg-gradient-to-br from-purple-tint to-purple-light/40",
-    ctaText: "Apply now →",
-    ctaTitle: "Apply for this job opportunity",
-    ctaClassName: "bg-purple hover:bg-purple-shade text-white",
-  },
-  Learning: {
-    label: "Learning",
-    badgeClassName: "bg-green text-white",
-    bubbleClassName: "bg-gradient-to-br from-green-light to-green-dark/30",
-    ctaText: "Start learning →",
-    ctaTitle: "Start this learning opportunity",
-    ctaClassName: "bg-green hover:bg-green-dark text-white",
-  },
-  Event: {
-    label: "Event",
-    badgeClassName: "bg-blue text-white",
-    bubbleClassName: "bg-gradient-to-br from-blue-light to-blue/30",
-    ctaText: "View event →",
-    ctaTitle: "View this event",
-    ctaClassName: "bg-blue hover:bg-blue-dark text-white",
-  },
-
-  "Micro-task": {
-    label: "Task",
-    badgeClassName: "bg-yellow text-white",
-    bubbleClassName: "bg-gradient-to-br from-yellow-light to-yellow/30",
-    ctaText: "View task →",
-    ctaTitle: "View this micro-task",
-    ctaClassName: "bg-yellow/90 hover:bg-yellow/60 text-white",
-  },
-  Other: {
-    label: "Other",
-    badgeClassName: "bg-gray-dark text-white",
-    bubbleClassName: "bg-gradient-to-br from-gray-light to-gray/60",
-    ctaText: "View →",
-    ctaTitle: "View this opportunity",
-    ctaClassName: "bg-gray-dark hover:bg-black text-white",
-  },
-};
-
-const getTypeConfig = (type: string | undefined): TypeConfig => {
-  if (type && TYPE_CONFIG[type]) return TYPE_CONFIG[type]!;
-  // Fallback for unknown types: behave like a generic opportunity.
-  return {
-    label: type ?? "Opportunity",
-    badgeClassName: "bg-purple-tint text-purple",
-    bubbleClassName: "bg-gradient-to-br from-purple-tint to-purple-light/40",
-    ctaText: "View →",
-    ctaTitle: "View this opportunity",
-    ctaClassName: "bg-purple hover:bg-purple-shade text-white",
-  };
-};
-
 const DefaultCard: React.FC<{ data: OpportunityInfo; preview?: boolean }> = ({
   data,
   preview,
@@ -385,7 +226,7 @@ const DefaultCard: React.FC<{ data: OpportunityInfo; preview?: boolean }> = ({
         <div className="flex flex-row items-center justify-between">
           <OpportunityTypeBadge
             data={data}
-            label={config.label}
+            //label={config.label}
             className={config.badgeClassName}
           />
 

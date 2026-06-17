@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useAtomValue } from "jotai";
 import { type GetServerSidePropsContext } from "next";
+import Link from "next/link";
 import { getServerSession } from "next-auth";
 import { useSession } from "next-auth/react";
 import Head from "next/head";
@@ -133,6 +134,98 @@ const ReferralWelcomeIntro = ({
       </div>
     </ColoredSectionShell>
   </>
+);
+
+const AmbassadorCampaignsComingSoon = () => (
+  <div className="border-orange/80 relative isolate overflow-hidden rounded-4xl border-2 border-dashed bg-[radial-gradient(circle_at_top_right,rgba(255,197,94,0.28),transparent_28%),radial-gradient(circle_at_bottom_left,rgba(255,197,94,0.18),transparent_24%),linear-gradient(135deg,rgba(255,250,240,0.98),rgba(255,244,221,0.95)_50%,rgba(255,250,240,0.98))] px-6 py-10 text-center shadow-[0_24px_64px_rgba(238,175,86,0.18)] sm:px-8 sm:py-12 md:px-12 md:py-14">
+    <div className="absolute inset-x-0 top-0 h-24 bg-[radial-gradient(circle,rgba(255,208,112,0.28),transparent_60%)] blur-3xl" />
+
+    <div className="relative z-10 mx-auto flex max-w-4xl flex-col items-center gap-8">
+      <div className="flex flex-col items-center gap-5 sm:flex-row sm:gap-7">
+        <div className="ring-orange/15 relative flex h-32 w-32 items-center justify-center rounded-full bg-white/85 shadow-[0_14px_36px_rgba(238,175,86,0.22)] ring-1 md:h-36 md:w-36">
+          <span className="motion-safe:animate-bounce-right text-5xl drop-shadow-sm md:text-6xl">
+            🚀
+          </span>
+          <span
+            className="text-orange motion-safe:animate-pulse-rotate-right absolute top-0 -left-2 text-xl"
+            style={{ animationDelay: "120ms", animationDuration: "1.55s" }}
+          >
+            ✦
+          </span>
+          <span
+            className="text-orange motion-safe:animate-pulse-rotate-right absolute -top-4 right-6 text-xl"
+            style={{ animationDelay: "280ms", animationDuration: "1.5s" }}
+          >
+            ⭐
+          </span>
+          <span
+            className="text-orange motion-safe:animate-pulse-rotate-right absolute top-3 -right-4 text-lg"
+            style={{ animationDelay: "420ms", animationDuration: "1.45s" }}
+          >
+            ✨
+          </span>
+          <span
+            className="text-orange motion-safe:animate-pulse-rotate-right absolute bottom-5 -left-4 text-xl"
+            style={{ animationDelay: "560ms", animationDuration: "1.6s" }}
+          >
+            ✦
+          </span>
+        </div>
+
+        <div className="bg-purple inline-flex items-center gap-3 rounded-full px-5 py-3 text-xs font-extrabold tracking-[0.28em] text-white shadow-lg">
+          <span className="bg-orange h-2.5 w-2.5 rounded-full motion-safe:animate-pulse" />
+          <span>STAY IN THE LOOP</span>
+        </div>
+      </div>
+
+      <div className="max-w-3xl space-y-4">
+        <h3 className="text-lg font-bold tracking-tight text-black md:text-2xl">
+          Exciting YOMA ambassador <br className="hidden md:inline" />
+          campaigns <span className="text-orange">coming soon!</span>
+        </h3>
+        {/* <p className="text-gray-dark text-sm leading-8 md:text-base">
+          We&apos;ll let you know the moment new ambassador campaigns launch in
+          your area.{" "}
+          <strong className="font-bold text-black">
+            Enable email notifications
+          </strong>{" "}
+          in your profile settings to be among the first to hear and the first
+          to start earning.
+        </p> */}
+        <p className="text-gray-dark text-sm leading-8 md:text-base">
+          Watch this space for exciting YOMA ambassador campaigns coming soon in
+          your area.
+        </p>
+      </div>
+
+      <div className="flex w-full max-w-3xl flex-col items-center justify-center gap-4 sm:flex-row">
+        {/* <Link
+          href="/user/settings"
+          className="btn bg-orange hover:bg-orange focus-visible:outline-orange inline-flex min-h-14 w-full max-w-90 items-center justify-center gap-3 overflow-hidden rounded-full border-0 px-8 text-xs font-bold text-nowrap text-white shadow-[0_18px_36px_rgba(245,158,11,0.28)] transition duration-200 hover:-translate-y-0.5 hover:brightness-105 focus-visible:outline-2 focus-visible:outline-offset-2 md:text-sm"
+        >
+          <span className="text-lg">✉️</span>
+          <span className="text-black">Enable email notifications</span>
+        </Link> */}
+
+        <Link
+          href="/opportunities"
+          className="border-purple/15 text-purple hover:border-purple/25 inline-flex min-h-14 w-full max-w-90 items-center justify-center overflow-hidden rounded-full border px-8 text-xs font-bold text-nowrap shadow-sm transition duration-200 hover:-translate-y-0.5 hover:bg-white md:text-sm"
+        >
+          Browse other opportunities →
+        </Link>
+      </div>
+
+      {/* <p className="text-gray-dark text-xs md:text-sm">
+        Already enabled? You&apos;re all set —{" "}
+        <Link
+          href="/user/settings"
+          className="text-purple decoration-purple/30 hover:decoration-purple font-bold underline underline-offset-4 transition"
+        >
+          manage your preferences.
+        </Link>
+      </p> */}
+    </div>
+  </div>
 );
 
 const ProgramsSection = ({
@@ -369,29 +462,28 @@ const ProgramsSection = ({
           }
         >
           {programs.length > 0 ? (
-            <>
-              <ReferralSlidesCarousel
-                carouselId={`referral-programs-carousel-${countryFilterKey || "all"}`}
-                items={programs}
-                totalSlides={effectiveTotalAll}
-                getSlideKey={(item) => item.id}
-                renderSlide={(item) => (
-                  <ReferralProgramSlideCard
-                    title={item.name}
-                    summary={item.summary}
-                    imageURL={item.imageURL}
-                    reward={item.zltoRewardEstimate?.referrer ?? null}
-                    timeDays={item.completionWindowInDays}
-                    href={`/referrals/program/${item.id}`}
-                    openInNewTab={true}
-                  />
-                )}
-                onSlide={onSlide}
-              />
-            </>
+            <ReferralSlidesCarousel
+              carouselId={`referral-programs-carousel-${countryFilterKey || "all"}`}
+              items={programs}
+              totalSlides={effectiveTotalAll}
+              getSlideKey={(item) => item.id}
+              renderSlide={(item) => (
+                <ReferralProgramSlideCard
+                  title={item.name}
+                  summary={item.summary}
+                  imageURL={item.imageURL}
+                  reward={item.zltoRewardEstimate?.referrer ?? null}
+                  timeDays={item.completionWindowInDays}
+                  href={`/referrals/program/${item.id}`}
+                  openInNewTab={true}
+                />
+              )}
+              onSlide={onSlide}
+            />
           ) : (
             <div className="flex flex-col items-center justify-center pb-8">
-              <NoRowsMessage
+              <AmbassadorCampaignsComingSoon />
+              {/* <NoRowsMessage
                 title="No programs found"
                 description={
                   selectedCountryIds.length > 0
@@ -408,7 +500,7 @@ const ProgramsSection = ({
                 >
                   Clear Filters
                 </button>
-              )}
+              )} */}
             </div>
           )}
         </Suspense>

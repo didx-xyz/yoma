@@ -1053,7 +1053,7 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                     <div className="mt-2">
                       <button
                         type="button"
-                        className="btn btn-outline btn-sm btn-secondary hover:bg-green-dark rounded-full normal-case hover:border-transparent hover:text-white"
+                        className="btn btn-sm border-green text-green hover:bg-green-dark rounded-full bg-white normal-case hover:border-transparent hover:text-white"
                         onClick={() => setShowFeedback(!showFeedback)}
                       >
                         {showFeedback ? "Hide Feedback" : "Give Feedback"}
@@ -1158,14 +1158,14 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
               <div className="mt-4 mb-10 flex grow gap-4">
                 <button
                   type="button"
-                  className="btn border-purple text-purple btn-outline btn-primary hover:bg-purple w-1/2 shrink rounded-full bg-white normal-case hover:border-transparent hover:text-white"
+                  className="btn border-green text-green hover:bg-green-dark w-1/2 shrink rounded-full bg-white normal-case hover:border-transparent hover:text-white"
                   onClick={onClose}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="btn bg-purple btn-primary w-1/2 shrink rounded-full text-white normal-case hover:brightness-110"
+                  className="btn bg-green hover:bg-green-dark w-1/2 shrink rounded-full text-white normal-case"
                 >
                   Submit
                 </button>

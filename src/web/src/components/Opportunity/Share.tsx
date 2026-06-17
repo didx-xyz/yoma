@@ -207,22 +207,29 @@ const SharePopup: React.FC<SharePopupProps> = ({ opportunity, onClose }) => {
           <div className="mt-10 mb-2 grid w-full grid-cols-1 gap-4 md:mb-6 md:grid-cols-2">
             <button
               onClick={onClick_CopyToClipboard}
-              className="btn btn-outline btn-primary"
+              className="btn border-green text-green hover:bg-green-dark bg-white hover:text-white"
             >
               <IoCopy className="mr-2 h-6 w-6" />
               Copy Link
             </button>
             <button
               onClick={onClick_GenerateQRCode}
-              className="btn btn-outline btn-primary"
+              className="btn border-green text-green hover:bg-green-dark bg-white hover:text-white"
             >
               <IoQrCode className="mr-2 h-6 w-6" />
               Generate QR Code
             </button>
-
+            <button
+              type="button"
+              onClick={onClose}
+              className="btn border-green text-green hover:bg-green-dark bg-white hover:text-white"
+            >
+              <IoMdClose className="mr-2 h-6 w-6" />
+              Close
+            </button>
             <button
               onClick={onClick_MoreOptions}
-              className="btn btn-outline btn-primary md:hidden"
+              className="btn border-green text-green hover:bg-green-dark bg-white hover:text-white"
             >
               <IoEllipsisHorizontalOutline className="mr-2 h-6 w-6" />
               More options
@@ -248,7 +255,7 @@ const SharePopup: React.FC<SharePopupProps> = ({ opportunity, onClose }) => {
           {showQRCode && (
             <button
               type="button"
-              className="btn btn-primary w-full md:w-[168px]"
+              className="btn bg-green hover:bg-green-dark w-full text-white md:w-[168px]"
               onClick={onClose}
               ref={cancelButtonRef}
             >

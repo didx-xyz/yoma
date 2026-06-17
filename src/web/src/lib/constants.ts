@@ -86,6 +86,11 @@ export const OPPORTUNITY_TYPE_ID_OTHER = "5D67758F-3F06-47C6-8B62-420B33126665";
 export const OPPORTUNITY_TYPE_ID_JOB = "9C2D1A8E-3A4B-4F7A-9E2D-7F1C6B8A2D55";
 export const OPPORTUNITY_TYPE_NANE_JOB = "Job";
 
+// Design kill-switches (true = new design from #1855+, false = original pre-#1855 look).
+// Flip to false to revert that surface to the original design without a code revert.
+export const OPPORTUNITY_SEARCH_DESIGN_V2 = true; // carousels + cards on /opportunities
+export const OPPORTUNITY_DETAILS_DESIGN_V2 = true; // /opportunities/[opportunityId] details
+
 export const THEME_BLUE = "blue";
 export const THEME_GREEN = "green";
 export const THEME_PURPLE = "purple";
