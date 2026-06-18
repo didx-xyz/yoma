@@ -319,14 +319,12 @@ export const OpportunityFilterVertical: React.FC<{
               <SelectButtons
                 id="selectButtons_engagementTypes"
                 isMulti={true}
-                buttons={lookups_engagementTypes
-                  .filter((x) => x.name !== "Hybrid")
-                  .map((x) => ({
-                    id: x.id,
-                    // display the themed label; the stored value stays x.name
-                    title: getEngagementConfig(x.name)?.label ?? x.name,
-                    selected: value?.includes(x.name) ?? false,
-                  }))}
+                buttons={lookups_engagementTypes.map((x) => ({
+                  id: x.id,
+                  // display the themed label; the stored value stays x.name
+                  title: getEngagementConfig(x.name)?.label ?? x.name,
+                  selected: value?.includes(x.name) ?? false,
+                }))}
                 onChange={(val) => {
                   // map selected button ids back to the raw engagement name (the value)
                   const selectedNames = val

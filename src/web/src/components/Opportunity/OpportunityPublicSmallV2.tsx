@@ -224,11 +224,7 @@ const DefaultCard: React.FC<{ data: OpportunityInfo; preview?: boolean }> = ({
       <div className="flex flex-1 flex-col gap-2 pt-3">
         {/* TYPE BADGE */}
         <div className="flex flex-row items-center justify-between">
-          <OpportunityTypeBadge
-            data={data}
-            //label={config.label}
-            className={config.badgeClassName}
-          />
+          <OpportunityTypeBadge data={data} className={config.badgeClassName} />
 
           {data?.zltoRewardEstimate != null && (
             <ZltoRewardBadge amount={data.zltoRewardEstimate} />
