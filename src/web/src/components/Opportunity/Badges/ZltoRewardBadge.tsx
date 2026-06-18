@@ -10,43 +10,49 @@ const ZltoRewardBadge: React.FC<{
     return null;
   }
 
+  const badgeClassName =
+    "badge badge-sm inline-flex items-center gap-1 whitespace-nowrap bg-orange-light text-orange leading-none";
+  const wrapperClassName = showToolTips
+    ? "tooltip tooltip-secondary inline-flex cursor-help before:text-[0.6875rem]"
+    : "inline-flex";
+
   return (
     <>
       {amount === 0 && (
-        <div
-          className={`${showToolTips ? "tooltip tooltip-secondary cursor-help before:text-[0.6875rem]" : ""}`}
+        <span
+          className={wrapperClassName}
           {...(showToolTips && { "data-tip": "ZLTO reward depleted" })}
         >
-          <span className="badge bg-orange-light badge-sm text-orange whitespace-nowrap">
+          <span className={badgeClassName}>
             <Image
               src={iconZlto}
               alt="Icon Zlto"
               width={16}
-              className="h-auto"
+              className="h-4 w-4 shrink-0"
               sizes="100vw"
               priority={true}
             />
-            <span className="ml-1">Depleted</span>
+            <span>Depleted</span>
           </span>
-        </div>
+        </span>
       )}
       {amount > 0 && (
-        <div
-          className={`${showToolTips ? "tooltip tooltip-secondary cursor-help before:text-[0.6875rem]" : ""}`}
+        <span
+          className={wrapperClassName}
           {...(showToolTips && { "data-tip": "ZLTO reward amount" })}
         >
-          <span className="badge bg-orange-light badge-sm text-orange whitespace-nowrap">
+          <span className={badgeClassName}>
             <Image
               src={iconZlto}
               alt="Icon Zlto"
               width={16}
-              className="h-auto"
+              className="h-4 w-4 shrink-0"
               sizes="100vw"
               priority={true}
             />
-            <span className="ml-1">{amount}</span>
+            <span>{amount}</span>
           </span>
-        </div>
+        </span>
       )}
     </>
   );

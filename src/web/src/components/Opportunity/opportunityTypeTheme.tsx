@@ -65,7 +65,7 @@ export const TYPE_CONFIG: Record<string, TypeConfig> = {
   },
   Other: {
     label: "Other",
-    badgeLabel: "",
+    badgeLabel: "Opportunity",
     badgeClassName: "bg-gray-dark text-white",
     bubbleClassName: "bg-gradient-to-br from-gray-light to-gray/60",
     accentClassName: "border-gray-dark",
@@ -99,9 +99,9 @@ export interface EngagementConfig {
 }
 
 export const ENGAGEMENT_CONFIG: Record<string, EngagementConfig> = {
-  Hybrid: { label: "Online / In-person" },
+  Hybrid: { label: "Online / Offline" },
   Online: { label: "Online" },
-  Offline: { label: "In-person" },
+  Offline: { label: "Offline" },
 };
 
 // Returns the display config for an engagement type, or null when there isn't
@@ -127,26 +127,38 @@ export const joinWithDelimiter = (
   delimiter = " · ",
 ): string => parts.filter(Boolean).join(delimiter);
 
-// Type/engagement badge (e.g. "Job · Full-time"). The engagement type is
-// appended when present. Colour is supplied by the caller via className.
 export const OpportunityTypeBadge: React.FC<{
   data: OpportunityInfo;
-  // label: string;
   className?: string;
-}> = ({ data, /*label,*/ className = "" }) => {
+}> = ({ data, className = "" }) => {
   const type = getTypeConfig(data.type).badgeLabel;
-  const engagementType = getEngagementConfig(
-    typeof data.engagementType === "string" ? data.engagementType : null,
-  )?.label;
-  const badgeText = joinWithDelimiter([type, engagementType]);
 
-  if (!badgeText) return null;
+  if (!type) return null;
 
   return (
     <span
-      className={`font-family-nunito flex h-5 min-w-0 items-center rounded-md px-2 text-xs font-bold tracking-wide uppercase ${className}`}
+      className={`badge badge-sm font-family-nunito text-xs font-bold tracking-wide uppercase ${className}`}
     >
-      <span className="truncate">{badgeText}</span>
+      <span className="truncate">{type}</span>
+    </span>
+  );
+};
+
+export const OpportunityEngagementTypeBadge: React.FC<{
+  data: OpportunityInfo;
+  className?: string;
+}> = ({ data, className = "" }) => {
+  const engagementType = getEngagementConfig(
+    typeof data.engagementType === "string" ? data.engagementType : null,
+  )?.label;
+
+  if (!engagementType) return null;
+
+  return (
+    <span
+      className={`badge badge-sm font-family-nunito text-xs font-bold tracking-wide uppercase ${className}`}
+    >
+      <span className="truncate">{engagementType}</span>
     </span>
   );
 };

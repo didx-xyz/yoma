@@ -38,6 +38,7 @@ import PublicBadges from "~/components/Opportunity/Badges/PublicBadges";
 import ZltoRewardBadge from "~/components/Opportunity/Badges/ZltoRewardBadge";
 import {
   getTypeConfig,
+  OpportunityEngagementTypeBadge,
   OpportunityMetaTextRow,
   OpportunityOrgCountriesRow,
   OpportunityTypeBadge,
@@ -539,14 +540,14 @@ const OpportunityPublicDetails: React.FC<{
                     </span>
                   </button>
 
-                  <button
+                  {/* <button
                     type="button"
                     className="btn border-green text-green hover:bg-green-dark order-last rounded-full bg-white normal-case hover:border-transparent hover:text-white md:order-first md:flex-1"
                     onClick={() => setGotoOpportunityDialogVisible(false)}
                   >
                     <IoMdClose size="20"></IoMdClose>
                     Close
-                  </button>
+                  </button> */}
                 </div>
               </div>
             </div>
@@ -749,6 +750,10 @@ const OpportunityPublicDetails: React.FC<{
                   <OpportunityTypeBadge
                     data={opportunityInfo}
                     className={typeConfig.badgeClassName}
+                  />
+                  <OpportunityEngagementTypeBadge
+                    data={opportunityInfo}
+                    className={"bg-gray-light text-gray-dark"}
                   />
                   {opportunityInfo.zltoRewardEstimate != null && (
                     <ZltoRewardBadge

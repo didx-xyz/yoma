@@ -113,28 +113,19 @@ const OpportunityDetails: NextPageWithLayout<{
 
       <div className="z-10 container mt-16 max-w-7xl overflow-hidden px-2 py-4 md:mt-20">
         {/* BREADCRUMB */}
-        <div className="flex flex-col gap-2 py-6 sm:flex-row">
-          <div className="grow overflow-hidden px-2 text-sm text-ellipsis md:whitespace-nowrap">
-            <ul>
-              <li className="inline">
-                <Link
-                  href="/opportunities"
-                  className="hover:text-gray inline text-white"
-                >
-                  <IoMdArrowRoundBack className="mr-1 mb-0.5 inline h-4 w-4" />
-                  Opportunities
-                </Link>
-              </li>
-              <li className="inline">
-                <p className="mx-2 inline font-semibold text-white">|</p>
-              </li>
-              <li className="inline">
-                <div className="inline max-w-150 text-white">
-                  {opportunityInfo.title}
-                </div>
-              </li>
-            </ul>
-          </div>
+        <div className="flex flex-row items-center gap-2 py-6 text-xs text-white">
+          <Link
+            className="hover:text-gray flex max-w-[200px] min-w-0 items-center font-bold"
+            href="/opportunities"
+          >
+            <IoMdArrowRoundBack className="mr-2 inline-block h-4 w-4 shrink-0" />
+            <span className="truncate">Opportunities</span>
+          </Link>
+
+          <div className="font-bold">|</div>
+          <span className="max-w-[200px] min-w-0 truncate">
+            {opportunityInfo.title}
+          </span>
         </div>
 
         <OpportunityPublicDetails
