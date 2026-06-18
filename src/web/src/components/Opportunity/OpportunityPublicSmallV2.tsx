@@ -6,6 +6,7 @@ import {
   getTypeConfig,
   OpportunityMetaTextRow,
   OpportunityOrgCountriesRow,
+  OpportunityTitleRow,
   OpportunityTypeBadge,
 } from "./opportunityTypeTheme";
 
@@ -231,12 +232,7 @@ const DefaultCard: React.FC<{ data: OpportunityInfo; preview?: boolean }> = ({
           )}
         </div>
 
-        {/* TITLE*/}
-        <div className="font-family-nunito text-base leading-tight font-bold text-black">
-          <span className="line-clamp-1 text-ellipsis" title={data.title}>
-            {data.title}
-          </span>
-        </div>
+        <OpportunityTitleRow data={data} />
 
         <OpportunityOrgCountriesRow data={data} />
 
