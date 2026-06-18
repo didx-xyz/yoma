@@ -11,13 +11,21 @@ import { AvatarImage } from "../AvatarImage";
 import PublicBadges from "~/components/Opportunity/Badges/PublicBadges";
 import Image from "next/image";
 import type { OpportunityInfo } from "~/api/models/opportunity";
-import { DATE_FORMAT_HUMAN } from "~/lib/constants";
-import Moment from "react-moment";
+import { OPPORTUNITY_DETAILS_DESIGN_V2 } from "~/lib/constants";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { LoadingInline } from "../Status/LoadingInline";
 import { createLinkSharing } from "~/api/services/actionLinks";
 import type { LinkInfo } from "~/api/models/actionLinks";
 import analytics from "~/lib/analytics";
+import ZltoRewardBadge from "./Badges/ZltoRewardBadge";
+import {
+  OpportunityTypeBadge,
+  OpportunityEngagementTypeBadge,
+  OpportunityMetaTextRow,
+  getTypeConfig,
+  OpportunityOrgCountriesRow,
+  OpportunityTitleRow,
+} from "./opportunityTypeTheme";
 
 interface SharePopupProps {
   opportunity: OpportunityInfo;
@@ -30,7 +38,8 @@ const SharePopup: React.FC<SharePopupProps> = ({ opportunity, onClose }) => {
   const [qrCodeImageData, setQRCodeImageData] = useState<
     string | null | undefined
   >(null);
-  const cancelButtonRef = useRef<HTMLButtonElement>(null);
+  const cancelButtonRef = useRef<HTMLButtonElement>(null); // Per-type theming for the new (V2) details design (badge, CTA, accent).
+  const typeConfig = getTypeConfig(opportunity?.type);
 
   const { data: linkInfo, isLoading: linkInfoIsLoading } =
     useQuery<LinkInfo | null>({
@@ -160,47 +169,81 @@ const SharePopup: React.FC<SharePopupProps> = ({ opportunity, onClose }) => {
                 />
               </div>
               <div className="flex flex-col gap-1 md:max-w-[420px]">
-                <h4 className="line-clamp-2 max-w-[170px] overflow-hidden text-[18px] leading-tight font-semibold text-ellipsis md:max-w-[420px]">
+                {/* <h4 className="line-clamp-2 max-w-[170px] overflow-hidden text-[18px] leading-tight font-semibold text-ellipsis md:max-w-[420px]">
                   {opportunity?.title}
-                </h4>
-                <h6 className="text-gray-dark line-clamp-2 max-w-[180px] overflow-hidden text-xs font-medium text-ellipsis md:max-w-[420px]">
-                  By {opportunity?.organizationName}
-                </h6>
+                </h4> */}
+
+                {OPPORTUNITY_DETAILS_DESIGN_V2 ? (
+                  <>
+                    <OpportunityTitleRow data={opportunity} />
+                    <OpportunityOrgCountriesRow data={opportunity} />
+                  </>
+                ) : (
+                  <>
+                    <h4 className="line-clamp-2 max-w-[170px] overflow-hidden text-[18px] leading-tight font-semibold text-ellipsis md:max-w-[420px]">
+                      {opportunity?.title}
+                    </h4>
+                    <h6 className="text-gray-dark line-clamp-2 max-w-[180px] overflow-hidden text-xs font-medium text-ellipsis md:max-w-[420px]">
+                      By {opportunity?.organizationName}
+                    </h6>
+                  </>
+                )}
               </div>
             </div>
 
             {/* BADGES */}
-            <PublicBadges opportunity={opportunity} />
-
-            {/* DATES */}
-            {opportunity?.status == "Active" && (
-              <div className="text-gray-dark flex flex-col text-sm">
-                <div>
-                  {opportunity.dateStart && (
-                    <>
-                      <span className="mr-2 font-bold">Starts:</span>
-                      <span className="text-xs tracking-widest text-black">
-                        <Moment format={DATE_FORMAT_HUMAN} utc={true}>
-                          {opportunity.dateStart}
-                        </Moment>
-                      </span>
-                    </>
+            {OPPORTUNITY_DETAILS_DESIGN_V2 ? (
+              <div className="mt-4 mb-2 flex flex-col gap-2 md:my-2">
+                <div className="flex flex-row flex-wrap items-center gap-2">
+                  <OpportunityTypeBadge
+                    data={opportunity}
+                    className={typeConfig.badgeClassName}
+                  />
+                  <OpportunityEngagementTypeBadge
+                    data={opportunity}
+                    className={"bg-gray-light text-gray-dark"}
+                  />
+                  {opportunity.zltoRewardEstimate != null && (
+                    <ZltoRewardBadge amount={opportunity.zltoRewardEstimate} />
                   )}
                 </div>
-                <div>
-                  {opportunity.dateEnd && (
-                    <>
-                      <span className="mr-2 font-bold">Ends:</span>
-                      <span className="text-xs tracking-widest text-black">
-                        <Moment format={DATE_FORMAT_HUMAN} utc={true}>
-                          {opportunity.dateEnd}
-                        </Moment>
-                      </span>
-                    </>
-                  )}
-                </div>
+                <OpportunityMetaTextRow data={opportunity} />
               </div>
+            ) : (
+              <PublicBadges opportunity={opportunity} />
+
+              // DATES
+              // {opportunity?.status == "Active" && (
+              //   <div className="text-gray-dark flex flex-col text-sm">
+              //     <div>
+              //       {opportunity.dateStart && (
+              //         <>
+              //           <span className="mr-2 font-bold">Starts:</span>
+              //           <span className="text-xs tracking-widest text-black">
+              //             <Moment format={DATE_FORMAT_HUMAN} utc={true}>
+              //               {opportunity.dateStart}
+              //             </Moment>
+              //           </span>
+              //         </>
+              //       )}
+              //     </div>
+              //     <div>
+              //       {opportunity.dateEnd && (
+              //         <>
+              //           <span className="mr-2 font-bold">Ends:</span>
+              //           <span className="text-xs tracking-widest text-black">
+              //             <Moment format={DATE_FORMAT_HUMAN} utc={true}>
+              //               {opportunity.dateEnd}
+              //             </Moment>
+              //           </span>
+              //         </>
+              //       )}
+              //     </div>
+              //   </div>
+              // )}
             )}
+
+            {/* <PublicBadges opportunity={opportunity} /> */}
           </div>
 
           {/* BUTTONS */}

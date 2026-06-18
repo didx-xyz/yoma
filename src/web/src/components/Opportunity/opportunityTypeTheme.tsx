@@ -163,6 +163,18 @@ export const OpportunityEngagementTypeBadge: React.FC<{
   );
 };
 
+export const OpportunityTitleRow: React.FC<{
+  data: OpportunityInfo;
+}> = ({ data }) => {
+  return (
+    <div className="font-family-nunito text-base leading-tight font-bold text-black">
+      <span className="line-clamp-1 text-ellipsis" title={data.title}>
+        {data.title}
+      </span>
+    </div>
+  );
+};
+
 // Organisation name + (optional) countries row.
 // Single-line, full-width, truncates with an ellipsis.
 export const OpportunityOrgCountriesRow: React.FC<{
