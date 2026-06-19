@@ -388,6 +388,7 @@ const ReferrerLinkDetails: NextPageWithLayout<{
     () => Object.keys(formStateStep3.dirtyFields).length > 0,
     [formStateStep3],
   );
+  const isReadyToPublish = formStateStep1.isValid && formStateStep2.isValid;
 
   //* SAVE CHANGE DIALOG
   const onClick_Menu = useCallback(
@@ -837,11 +838,7 @@ const ReferrerLinkDetails: NextPageWithLayout<{
               >
                 <span
                   className={`bg-gray-dark mr-2 rounded-full px-1.5 py-0.5 text-xs font-medium text-white ${
-                    formStateStep1.isValid &&
-                    formStateStep2.isValid &&
-                    formStateStep3.isValid
-                      ? "bg-green"
-                      : "bg-gray-dark"
+                    isReadyToPublish ? "bg-green" : "bg-gray-dark"
                   }`}
                 >
                   3
@@ -1469,13 +1466,7 @@ const ReferrerLinkDetails: NextPageWithLayout<{
                       <button
                         type="submit"
                         className="btn btn-success disabled:bg-gray-light grow md:w-1/3 md:grow-0"
-                        disabled={
-                          !(
-                            formStateStep1.isValid &&
-                            formStateStep2.isValid &&
-                            formStateStep3.isValid
-                          )
-                        }
+                        disabled={!isReadyToPublish}
                       >
                         Publish
                       </button>
