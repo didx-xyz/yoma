@@ -45,6 +45,8 @@ namespace Yoma.Core.Domain.PartnerSync.Models
     public SyncItemVerificationCommitmentInterval? CommitmentInterval { get; set; }
 
     public DateTimeOffset? DateCompleted { get; set; }
+
+    public bool Completed { get; set; }
   }
 
   public sealed class SyncItemVerificationCommitmentInterval

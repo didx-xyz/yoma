@@ -921,6 +921,16 @@ namespace Yoma.Core.Domain.PartnerSync.Services
               if (string.IsNullOrWhiteSpace(item.Username))
                 throw new InvalidOperationException("Username expected");
 
+              if (!item.Completed)
+              {
+                if (_logger.IsEnabled(LogLevel.Information))
+                  _logger.LogInformation("Skipping sync pull verification item because partner item is not completed for partner '{partner}', entity type '{entityType}', entity external id '{entityExternalId}', user external id '{userExternalId}'",
+                    partner, entityType, item.EntityExternalId, item.UserExternalId);
+
+                IncrementTrackingSkipped(tracking);
+                continue;
+              }
+
               if (_logger.IsEnabled(LogLevel.Information))
                 _logger.LogInformation("Processing sync pull verification item for partner '{partner}', entity type '{entityType}', entity external id '{entityExternalId}', user external id '{userExternalId}'",
                   partner, entityType, item.EntityExternalId, item.UserExternalId);

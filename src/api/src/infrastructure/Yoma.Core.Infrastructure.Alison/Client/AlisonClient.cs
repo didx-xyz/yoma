@@ -1073,6 +1073,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
 
       var commitmentInterval = GetVerificationCommitmentInterval(item);
       var dateEnd = item.CompletedAt ?? item.LastAccess ?? item.UpdatedAt;
+      var completed = string.Equals(item.CourseStatus?.Trim(), "Completed", StringComparison.OrdinalIgnoreCase);
 
       return new SyncItemVerification
       {
@@ -1088,7 +1089,8 @@ namespace Yoma.Core.Infrastructure.Alison.Client
         CommitmentInterval = commitmentInterval,
         DateStart = commitmentInterval == null ? item.FirstAccess ?? item.EnrollmentDate ?? item.CreatedAt : null,
         DateEnd = dateEnd,
-        DateCompleted = item.CompletedAt ?? dateEnd
+        DateCompleted = completed ? item.CompletedAt ?? dateEnd : null,
+        Completed = completed
       };
     }
 
