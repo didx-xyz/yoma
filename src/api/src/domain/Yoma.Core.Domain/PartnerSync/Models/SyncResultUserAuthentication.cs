@@ -10,9 +10,9 @@ namespace Yoma.Core.Domain.PartnerSync.Models
     /// </summary>
     public string URL { get; set; } = null!;
 
-    /// <summary>
-    /// Updated partner-specific user link produced by the authentication/linking flow.
+    /// Optional updated partner-specific user link produced by the authentication/linking flow.
+    /// Null when authentication is skipped or no partner-side user link was created or updated.
     /// </summary>
-    public SyncInfoUserPartner UserSyncInfo { get; set; } = null!;
+    public SyncInfoUserPartner? UserSyncInfo { get; set; }
   }
 }
