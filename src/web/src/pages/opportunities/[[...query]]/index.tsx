@@ -61,7 +61,7 @@ import {
   OPPORTUNITY_SEARCH_DESIGN_V2,
   OPPORTUNITY_TYPE_ID_EVENT,
   OPPORTUNITY_TYPE_ID_LEARNING,
-  OPPORTUNITY_TYPE_ID_OTHER,
+  //OPPORTUNITY_TYPE_ID_OTHER,
   OPPORTUNITY_TYPE_ID_MICROTASK,
   PAGE_SIZE,
   PAGE_SIZE_MINIMUM,
@@ -97,26 +97,26 @@ export const getStaticProps: GetStaticProps = async (context) => {
     context,
   );
 
-  const opportunities_trending = await searchOpportunities(
-    {
-      pageNumber: 1,
-      pageSize: PAGE_SIZE_MINIMUM,
-      categories: null,
-      countries: null,
-      languages: null,
-      types: null,
-      engagementTypes: null,
-      valueContains: null,
-      commitmentInterval: null,
-      mostViewed: true,
-      mostCompleted: false,
-      organizations: null,
-      zltoReward: null,
-      publishedStates: [PublishedState.Active, PublishedState.NotStarted],
-      featured: null,
-    },
-    context,
-  );
+  // const opportunities_trending = await searchOpportunities(
+  //   {
+  //     pageNumber: 1,
+  //     pageSize: PAGE_SIZE_MINIMUM,
+  //     categories: null,
+  //     countries: null,
+  //     languages: null,
+  //     types: null,
+  //     engagementTypes: null,
+  //     valueContains: null,
+  //     commitmentInterval: null,
+  //     mostViewed: true,
+  //     mostCompleted: false,
+  //     organizations: null,
+  //     zltoReward: null,
+  //     publishedStates: [PublishedState.Active, PublishedState.NotStarted],
+  //     featured: null,
+  //   },
+  //   context,
+  // );
 
   const opportunities_mostCompleted = await searchOpportunities(
     {
@@ -202,26 +202,26 @@ export const getStaticProps: GetStaticProps = async (context) => {
     context,
   );
 
-  const opportunities_other = await searchOpportunities(
-    {
-      pageNumber: 1,
-      pageSize: PAGE_SIZE_MINIMUM,
-      categories: null,
-      countries: null,
-      languages: null,
-      types: [OPPORTUNITY_TYPE_ID_OTHER],
-      engagementTypes: null,
-      valueContains: null,
-      commitmentInterval: null,
-      mostViewed: null,
-      mostCompleted: false,
-      organizations: null,
-      zltoReward: null,
-      publishedStates: [PublishedState.Active, PublishedState.NotStarted],
-      featured: null,
-    },
-    context,
-  );
+  // const opportunities_other = await searchOpportunities(
+  //   {
+  //     pageNumber: 1,
+  //     pageSize: PAGE_SIZE_MINIMUM,
+  //     categories: null,
+  //     countries: null,
+  //     languages: null,
+  //     types: [OPPORTUNITY_TYPE_ID_OTHER],
+  //     engagementTypes: null,
+  //     valueContains: null,
+  //     commitmentInterval: null,
+  //     mostViewed: null,
+  //     mostCompleted: false,
+  //     organizations: null,
+  //     zltoReward: null,
+  //     publishedStates: [PublishedState.Active, PublishedState.NotStarted],
+  //     featured: null,
+  //   },
+  //   context,
+  // );
 
   const opportunities_jobs = await searchOpportunities(
     {
@@ -280,12 +280,12 @@ export const getStaticProps: GetStaticProps = async (context) => {
   return {
     props: {
       opportunities_featured,
-      opportunities_trending,
+      //opportunities_trending,
       opportunities_mostCompleted,
       opportunities_learning,
       opportunities_tasks,
       opportunities_events,
-      opportunities_other,
+      //opportunities_other,
       opportunities_jobs,
       opportunities_allOpportunities,
       lookups_categories,
@@ -311,12 +311,12 @@ export const getStaticPaths: GetStaticPaths = () => {
 
 const Opportunities: NextPageWithLayout<{
   opportunities_featured: OpportunitySearchResultsInfo;
-  opportunities_trending: OpportunitySearchResultsInfo;
+  //opportunities_trending: OpportunitySearchResultsInfo;
   opportunities_mostCompleted: OpportunitySearchResultsInfo;
   opportunities_learning: OpportunitySearchResultsInfo;
   opportunities_tasks: OpportunitySearchResultsInfo;
   opportunities_events: OpportunitySearchResultsInfo;
-  opportunities_other: OpportunitySearchResultsInfo;
+  //opportunities_other: OpportunitySearchResultsInfo;
   opportunities_jobs: OpportunitySearchResultsInfo;
   opportunities_allOpportunities: OpportunitySearchResultsInfo;
   lookups_categories: OpportunityCategory[];
@@ -326,12 +326,12 @@ const Opportunities: NextPageWithLayout<{
   lookups_timeIntervals: TimeInterval[];
 }> = ({
   opportunities_featured,
-  opportunities_trending,
+  //opportunities_trending,
   opportunities_mostCompleted,
   opportunities_learning,
   opportunities_tasks,
   opportunities_events,
-  opportunities_other,
+  //opportunities_other,
   opportunities_jobs,
   opportunities_allOpportunities,
   lookups_categories,
@@ -664,31 +664,31 @@ const Opportunities: NextPageWithLayout<{
     enabled: landingCountryEnabled,
   });
 
-  const {
-    data: opportunities_trending_country,
-    isLoading: isLoading_trending,
-  } = useQuery<OpportunitySearchResultsInfo>({
-    queryKey: ["opportunities", "landing", "trending", landingCacheKey],
-    queryFn: async () =>
-      await searchOpportunities({
-        pageNumber: 1,
-        pageSize: PAGE_SIZE_MINIMUM,
-        categories: null,
-        countries: landingCountryIds,
-        languages: null,
-        types: null,
-        engagementTypes: null,
-        valueContains: null,
-        commitmentInterval: null,
-        mostViewed: true,
-        mostCompleted: false,
-        featured: null,
-        organizations: null,
-        zltoReward: null,
-        publishedStates: [PublishedState.Active, PublishedState.NotStarted],
-      }),
-    enabled: landingCountryEnabled,
-  });
+  // const {
+  //   data: opportunities_trending_country,
+  //   isLoading: isLoading_trending,
+  // } = useQuery<OpportunitySearchResultsInfo>({
+  //   queryKey: ["opportunities", "landing", "trending", landingCacheKey],
+  //   queryFn: async () =>
+  //     await searchOpportunities({
+  //       pageNumber: 1,
+  //       pageSize: PAGE_SIZE_MINIMUM,
+  //       categories: null,
+  //       countries: landingCountryIds,
+  //       languages: null,
+  //       types: null,
+  //       engagementTypes: null,
+  //       valueContains: null,
+  //       commitmentInterval: null,
+  //       mostViewed: true,
+  //       mostCompleted: false,
+  //       featured: null,
+  //       organizations: null,
+  //       zltoReward: null,
+  //       publishedStates: [PublishedState.Active, PublishedState.NotStarted],
+  //     }),
+  //   enabled: landingCountryEnabled,
+  // });
 
   const {
     data: opportunities_mostCompleted_country,
@@ -790,29 +790,29 @@ const Opportunities: NextPageWithLayout<{
       enabled: landingCountryEnabled,
     });
 
-  const { data: opportunities_other_country, isLoading: isLoading_other } =
-    useQuery<OpportunitySearchResultsInfo>({
-      queryKey: ["opportunities", "landing", "other", landingCacheKey],
-      queryFn: async () =>
-        await searchOpportunities({
-          pageNumber: 1,
-          pageSize: PAGE_SIZE_MINIMUM,
-          categories: null,
-          countries: landingCountryIds,
-          languages: null,
-          types: [OPPORTUNITY_TYPE_ID_OTHER],
-          engagementTypes: null,
-          valueContains: null,
-          commitmentInterval: null,
-          mostViewed: null,
-          mostCompleted: null,
-          featured: null,
-          organizations: null,
-          zltoReward: null,
-          publishedStates: [PublishedState.Active, PublishedState.NotStarted],
-        }),
-      enabled: landingCountryEnabled,
-    });
+  // const { data: opportunities_other_country, isLoading: isLoading_other } =
+  //   useQuery<OpportunitySearchResultsInfo>({
+  //     queryKey: ["opportunities", "landing", "other", landingCacheKey],
+  //     queryFn: async () =>
+  //       await searchOpportunities({
+  //         pageNumber: 1,
+  //         pageSize: PAGE_SIZE_MINIMUM,
+  //         categories: null,
+  //         countries: landingCountryIds,
+  //         languages: null,
+  //         types: [OPPORTUNITY_TYPE_ID_OTHER],
+  //         engagementTypes: null,
+  //         valueContains: null,
+  //         commitmentInterval: null,
+  //         mostViewed: null,
+  //         mostCompleted: null,
+  //         featured: null,
+  //         organizations: null,
+  //         zltoReward: null,
+  //         publishedStates: [PublishedState.Active, PublishedState.NotStarted],
+  //       }),
+  //     enabled: landingCountryEnabled,
+  //   });
 
   const { data: opportunities_jobs_country, isLoading: isLoading_jobs } =
     useQuery<OpportunitySearchResultsInfo>({
@@ -843,12 +843,12 @@ const Opportunities: NextPageWithLayout<{
     (isLoading_opportunities_user_country ||
       isLoading_featured ||
       isLoading_allOpportunities ||
-      isLoading_trending ||
+      //isLoading_trending ||
       isLoading_mostCompleted ||
       isLoading_learning ||
       isLoading_tasks ||
       isLoading_events ||
-      isLoading_other ||
+      //isLoading_other ||
       isLoading_jobs);
 
   const landingPersonalizationPending =
@@ -1523,9 +1523,9 @@ const Opportunities: NextPageWithLayout<{
     ? (opportunities_allOpportunities_country ?? EMPTY_RESULTS)
     : opportunities_allOpportunities;
 
-  const opportunities_trending_landing = landingCountryEnabled
-    ? (opportunities_trending_country ?? EMPTY_RESULTS)
-    : opportunities_trending;
+  // const opportunities_trending_landing = landingCountryEnabled
+  //   ? (opportunities_trending_country ?? EMPTY_RESULTS)
+  //   : opportunities_trending;
 
   const opportunities_mostCompleted_landing = landingCountryEnabled
     ? (opportunities_mostCompleted_country ?? EMPTY_RESULTS)
@@ -1543,9 +1543,9 @@ const Opportunities: NextPageWithLayout<{
     ? (opportunities_events_country ?? EMPTY_RESULTS)
     : opportunities_events;
 
-  const opportunities_other_landing = landingCountryEnabled
-    ? (opportunities_other_country ?? EMPTY_RESULTS)
-    : opportunities_other;
+  // const opportunities_other_landing = landingCountryEnabled
+  //   ? (opportunities_other_country ?? EMPTY_RESULTS)
+  //   : opportunities_other;
 
   const opportunities_jobs_landing = landingCountryEnabled
     ? (opportunities_jobs_country ?? EMPTY_RESULTS)
@@ -1559,9 +1559,9 @@ const Opportunities: NextPageWithLayout<{
     ? opportunities_allOpportunities
     : opportunities_allOpportunities_landing;
 
-  const opportunities_trending_render = landingOverlayActive
-    ? opportunities_trending
-    : opportunities_trending_landing;
+  // const opportunities_trending_render = landingOverlayActive
+  //   ? opportunities_trending
+  //   : opportunities_trending_landing;
 
   const opportunities_mostCompleted_render = landingOverlayActive
     ? opportunities_mostCompleted
@@ -1579,9 +1579,9 @@ const Opportunities: NextPageWithLayout<{
     ? opportunities_events
     : opportunities_events_landing;
 
-  const opportunities_other_render = landingOverlayActive
-    ? opportunities_other
-    : opportunities_other_landing;
+  // const opportunities_other_render = landingOverlayActive
+  //   ? opportunities_other
+  //   : opportunities_other_landing;
 
   const opportunities_jobs_render = landingOverlayActive
     ? opportunities_jobs
@@ -2953,45 +2953,45 @@ const Opportunities: NextPageWithLayout<{
     [queryClient],
   );
 
-  const loadDataTrending = useCallback(
-    async (startRow: number) => {
-      if (startRow > (opportunities_trending_landing?.totalCount ?? 0)) {
-        return {
-          items: [],
-          totalCount: 0,
-        };
-      }
+  // const loadDataTrending = useCallback(
+  //   async (startRow: number) => {
+  //     if (startRow > (opportunities_trending_landing?.totalCount ?? 0)) {
+  //       return {
+  //         items: [],
+  //         totalCount: 0,
+  //       };
+  //     }
 
-      const pageNumber = Math.ceil(startRow / PAGE_SIZE_MINIMUM);
+  //     const pageNumber = Math.ceil(startRow / PAGE_SIZE_MINIMUM);
 
-      return fetchDataAndUpdateCache(
-        ["trending", landingCacheKey, pageNumber.toString()],
-        {
-          pageNumber: pageNumber,
-          pageSize: PAGE_SIZE_MINIMUM,
-          categories: null,
-          countries: landingCountryIds,
-          languages: null,
-          types: null,
-          engagementTypes: null,
-          valueContains: null,
-          commitmentInterval: null,
-          mostViewed: true,
-          mostCompleted: null,
-          featured: null,
-          organizations: null,
-          zltoReward: null,
-          publishedStates: [PublishedState.Active, PublishedState.NotStarted],
-        },
-      );
-    },
-    [
-      fetchDataAndUpdateCache,
-      landingCacheKey,
-      landingCountryIds,
-      opportunities_trending_landing,
-    ],
-  );
+  //     return fetchDataAndUpdateCache(
+  //       ["trending", landingCacheKey, pageNumber.toString()],
+  //       {
+  //         pageNumber: pageNumber,
+  //         pageSize: PAGE_SIZE_MINIMUM,
+  //         categories: null,
+  //         countries: landingCountryIds,
+  //         languages: null,
+  //         types: null,
+  //         engagementTypes: null,
+  //         valueContains: null,
+  //         commitmentInterval: null,
+  //         mostViewed: true,
+  //         mostCompleted: null,
+  //         featured: null,
+  //         organizations: null,
+  //         zltoReward: null,
+  //         publishedStates: [PublishedState.Active, PublishedState.NotStarted],
+  //       },
+  //     );
+  //   },
+  //   [
+  //     fetchDataAndUpdateCache,
+  //     landingCacheKey,
+  //     landingCountryIds,
+  //     opportunities_trending_landing,
+  //   ],
+  // );
 
   const loadDataLearning = useCallback(
     async (startRow: number) => {
@@ -3113,45 +3113,45 @@ const Opportunities: NextPageWithLayout<{
     ],
   );
 
-  const loadDataOther = useCallback(
-    async (startRow: number) => {
-      if (startRow > (opportunities_other_landing?.totalCount ?? 0)) {
-        return {
-          items: [],
-          totalCount: 0,
-        };
-      }
+  // const loadDataOther = useCallback(
+  //   async (startRow: number) => {
+  //     if (startRow > (opportunities_other_landing?.totalCount ?? 0)) {
+  //       return {
+  //         items: [],
+  //         totalCount: 0,
+  //       };
+  //     }
 
-      const pageNumber = Math.ceil(startRow / PAGE_SIZE_MINIMUM);
+  //     const pageNumber = Math.ceil(startRow / PAGE_SIZE_MINIMUM);
 
-      return fetchDataAndUpdateCache(
-        ["other", landingCacheKey, pageNumber.toString()],
-        {
-          pageNumber: pageNumber,
-          pageSize: PAGE_SIZE_MINIMUM,
-          categories: null,
-          countries: landingCountryIds,
-          languages: null,
-          types: [OPPORTUNITY_TYPE_ID_OTHER],
-          engagementTypes: null,
-          valueContains: null,
-          commitmentInterval: null,
-          mostViewed: null,
-          mostCompleted: null,
-          featured: null,
-          organizations: null,
-          zltoReward: null,
-          publishedStates: [PublishedState.Active, PublishedState.NotStarted],
-        },
-      );
-    },
-    [
-      fetchDataAndUpdateCache,
-      landingCacheKey,
-      landingCountryIds,
-      opportunities_other_landing,
-    ],
-  );
+  //     return fetchDataAndUpdateCache(
+  //       ["other", landingCacheKey, pageNumber.toString()],
+  //       {
+  //         pageNumber: pageNumber,
+  //         pageSize: PAGE_SIZE_MINIMUM,
+  //         categories: null,
+  //         countries: landingCountryIds,
+  //         languages: null,
+  //         types: [OPPORTUNITY_TYPE_ID_OTHER],
+  //         engagementTypes: null,
+  //         valueContains: null,
+  //         commitmentInterval: null,
+  //         mostViewed: null,
+  //         mostCompleted: null,
+  //         featured: null,
+  //         organizations: null,
+  //         zltoReward: null,
+  //         publishedStates: [PublishedState.Active, PublishedState.NotStarted],
+  //       },
+  //     );
+  //   },
+  //   [
+  //     fetchDataAndUpdateCache,
+  //     landingCacheKey,
+  //     landingCountryIds,
+  //     opportunities_other_landing,
+  //   ],
+  // );
 
   const loadDataJobs = useCallback(
     async (startRow: number) => {
@@ -3656,7 +3656,7 @@ const Opportunities: NextPageWithLayout<{
                       )}
 
                       {/* TRENDING */}
-                      {(opportunities_trending_render?.totalCount ?? 0) > 0 && (
+                      {/* {(opportunities_trending_render?.totalCount ?? 0) > 0 && (
                         <>
                           <div className="divider !bg-gray" />
                           <CustomCarouselV3
@@ -3680,7 +3680,7 @@ const Opportunities: NextPageWithLayout<{
                             )}
                           />
                         </>
-                      )}
+                      )} */}
 
                       {/* MOST COMPLETED */}
                       {(opportunities_mostCompleted_render?.totalCount ?? 0) >
@@ -3691,7 +3691,7 @@ const Opportunities: NextPageWithLayout<{
                             id={`opportunities_mostCompleted`}
                             // badgeText="Popular"
                             // badgeClassName="bg-purple text-white"
-                            title="Popular"
+                            title="Trending & Popular"
                             description="The most completed opportunities"
                             viewAllUrl={appendLandingCountryToUrl(
                               "/opportunities?mostCompleted=true",
@@ -3794,7 +3794,7 @@ const Opportunities: NextPageWithLayout<{
                       )}
 
                       {/* OTHER */}
-                      {(opportunities_other_render?.totalCount ?? 0) > 0 && (
+                      {/* {(opportunities_other_render?.totalCount ?? 0) > 0 && (
                         <>
                           <div className="divider !bg-gray" />
                           <CustomCarouselV3
@@ -3818,7 +3818,7 @@ const Opportunities: NextPageWithLayout<{
                             )}
                           />
                         </>
-                      )}
+                      )} */}
                     </>
                   ) : (
                     <>
@@ -3899,7 +3899,7 @@ const Opportunities: NextPageWithLayout<{
                         </>
                       )}
 
-                      {(opportunities_trending_render?.totalCount ?? 0) > 0 && (
+                      {/* {(opportunities_trending_render?.totalCount ?? 0) > 0 && (
                         <>
                           <div className="divider !bg-gray" />
                           <CustomCarousel
@@ -3920,7 +3920,7 @@ const Opportunities: NextPageWithLayout<{
                             )}
                           />
                         </>
-                      )}
+                      )} */}
 
                       {(opportunities_mostCompleted_render?.totalCount ?? 0) >
                         0 && (
@@ -4017,7 +4017,7 @@ const Opportunities: NextPageWithLayout<{
                         </>
                       )}
 
-                      {(opportunities_other_render?.totalCount ?? 0) > 0 && (
+                      {/* {(opportunities_other_render?.totalCount ?? 0) > 0 && (
                         <>
                           <div className="divider !bg-gray" />
                           <CustomCarousel
@@ -4038,7 +4038,7 @@ const Opportunities: NextPageWithLayout<{
                             )}
                           />
                         </>
-                      )}
+                      )} */}
                     </>
                   )}
                 </div>

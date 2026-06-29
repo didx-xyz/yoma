@@ -269,10 +269,14 @@ const OpportunityAdminDetails: NextPageWithLayout<{
   });
   const opportunityTypesOptions = useMemo<SelectOption[]>(
     () =>
-      opportunityTypesData?.map((c) => ({
-        value: c.id,
-        label: c.name,
-      })) ?? [],
+      opportunityTypesData
+        ?.filter((c) => {
+          return c.name !== "Other"; // filter out "Other" from the options
+        })
+        .map((c) => ({
+          value: c.id,
+          label: c.name,
+        })) ?? [],
     [opportunityTypesData],
   );
 
