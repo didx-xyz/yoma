@@ -799,10 +799,10 @@ const Opportunities: NextPageWithLayout<{
       enabled: sessionStatus === "authenticated",
     });
 
-  const hasSavedOpportunities = (savedOpportunities?.items?.length ?? 0) > 0;
-  const shouldRenderSavedOpportunities =
-    sessionStatus === "authenticated" &&
-    (isLoadingSavedOpportunities || hasSavedOpportunities);
+  const savedOpportunitiesItemCount = savedOpportunities?.items?.length ?? 0;
+  const savedOpportunitiesCount =
+    savedOpportunities?.totalCount ?? savedOpportunitiesItemCount;
+  const shouldRenderSavedOpportunities = sessionStatus === "authenticated";
   //#endregion QUERIES
 
   //#region FILTERS
@@ -1953,7 +1953,7 @@ const Opportunities: NextPageWithLayout<{
                         <h6 className="font-boldx text-gray-dark text-center text-[10px]">
                           {isLoadingSavedOpportunities
                             ? "? opportunities"
-                            : `${savedOpportunities?.totalCount ?? 0} ${(savedOpportunities?.totalCount ?? 0) === 1 ? "opportunity" : "opportunities"}`}
+                            : `${savedOpportunitiesCount} ${savedOpportunitiesCount === 1 ? "opportunity" : "opportunities"}`}
                         </h6>
                       </div>
                     </div>
