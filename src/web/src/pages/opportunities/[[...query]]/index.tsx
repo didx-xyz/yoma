@@ -802,8 +802,7 @@ const Opportunities: NextPageWithLayout<{
   const savedOpportunitiesItemCount = savedOpportunities?.items?.length ?? 0;
   const savedOpportunitiesCount =
     savedOpportunities?.totalCount ?? savedOpportunitiesItemCount;
-  const shouldRenderSavedOpportunities =
-    sessionStatus === "authenticated";
+  const shouldRenderSavedOpportunities = sessionStatus === "authenticated";
   //#endregion QUERIES
 
   //#region FILTERS
