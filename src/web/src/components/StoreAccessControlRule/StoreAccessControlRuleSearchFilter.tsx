@@ -1,4 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
+import type { ComponentType, ReactNode } from "react";
 import { useCallback, useEffect } from "react";
 import { Controller, useForm, type FieldValues } from "react-hook-form";
 import { components, type ValueContainerProps } from "react-select";
@@ -19,7 +20,7 @@ export enum StoreAccessControlRuleSearchFilterOptions {
 const ValueContainer = ({
   children,
   ...props
-}: ValueContainerProps<SelectOption>) => {
+}: ValueContainerProps<SelectOption, true>): ReactNode => {
   let [values, input] = children as any[];
   if (Array.isArray(values)) {
     if (
@@ -42,13 +43,21 @@ const ValueContainer = ({
       values = `${values.length} ${pluralize(placeholder, values.length)}`;
     }
   }
-  return (
-    <components.ValueContainer {...props}>
-      {values}
-      {input}
-    </components.ValueContainer>
-  );
+
+  return components.ValueContainer({
+    ...props,
+    children: (
+      <>
+        {values}
+        {input}
+      </>
+    ),
+  }) as ReactNode;
 };
+
+const SelectValueContainer = ValueContainer as ComponentType<
+  ValueContainerProps<SelectOption, true>
+>;
 
 export const StoreAccessControlRuleSearchFilters: React.FC<{
   searchFilter: StoreAccessControlRuleSearchFilter | null;
@@ -173,7 +182,7 @@ export const StoreAccessControlRuleSearchFilters: React.FC<{
                     }
                     placeholder="Organisation"
                     components={{
-                      ValueContainer,
+                      ValueContainer: SelectValueContainer,
                     }}
                   />
                 )}
@@ -219,7 +228,7 @@ export const StoreAccessControlRuleSearchFilters: React.FC<{
                     }
                     placeholder="Store"
                     components={{
-                      ValueContainer,
+                      ValueContainer: SelectValueContainer,
                     }}
                     isDisabled={
                       !searchFilter?.organizations?.[0] ||

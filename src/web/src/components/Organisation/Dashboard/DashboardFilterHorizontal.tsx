@@ -1,4 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
+import type { ComponentType, ReactNode } from "react";
 import { useCallback, useEffect, useState } from "react";
 import { Controller, useForm, type FieldValues } from "react-hook-form";
 import Select, { components, type ValueContainerProps } from "react-select";
@@ -26,7 +27,7 @@ import type { User } from "~/server/auth";
 const ValueContainer = ({
   children,
   ...props
-}: ValueContainerProps<SelectOption>) => {
+}: ValueContainerProps<SelectOption, true>): ReactNode => {
   const [values, input] = children as any[];
   let displayValues = values;
 
@@ -52,13 +53,21 @@ const ValueContainer = ({
       displayValues = `${values.length} ${pluralize(placeholder, values.length)}`;
     }
   }
-  return (
-    <components.ValueContainer {...props}>
-      {displayValues}
-      {input}
-    </components.ValueContainer>
-  );
+
+  return components.ValueContainer({
+    ...props,
+    children: (
+      <>
+        {displayValues}
+        {input}
+      </>
+    ),
+  }) as ReactNode;
 };
+
+const SelectValueContainer = ValueContainer as ComponentType<
+  ValueContainerProps<SelectOption, true>
+>;
 
 export const DashboardFilterHorizontal: React.FC<{
   htmlRef: HTMLDivElement;
@@ -250,7 +259,7 @@ export const DashboardFilterHorizontal: React.FC<{
                       value={defaultOrganisationOptions}
                       placeholder="Organisation"
                       components={{
-                        ValueContainer,
+                        ValueContainer: SelectValueContainer,
                       }}
                     />
                   )}
@@ -363,7 +372,7 @@ export const DashboardFilterHorizontal: React.FC<{
                     value={defaultOpportunityOptions}
                     placeholder="Opportunity"
                     components={{
-                      ValueContainer,
+                      ValueContainer: SelectValueContainer,
                     }}
                   />
                 )}
@@ -420,7 +429,7 @@ export const DashboardFilterHorizontal: React.FC<{
                     }
                     placeholder="Category"
                     components={{
-                      ValueContainer,
+                      ValueContainer: SelectValueContainer,
                     }}
                   />
                 )}

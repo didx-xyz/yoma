@@ -717,9 +717,12 @@ const OrganisationDashboard: NextPageWithLayout<{
           : 1,
         pageSSO: searchFilter.pageSSO ? searchFilter.pageSSO : 1,
       });
+
+      setFilterFullWindowVisible(false);
     },
     [
       redirectWithSearchFilterParams,
+      setFilterFullWindowVisible,
       searchFilter.pageSelectedOpportunities,
       searchFilter.pageCompletedYouth,
       searchFilter.pageSSO,

@@ -1,4 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
+import type { ComponentType, ReactNode } from "react";
 import { useCallback, useEffect } from "react";
 import { type FieldValues, Controller, useForm } from "react-hook-form";
 import zod from "zod";
@@ -10,7 +11,7 @@ import type { OrganizationSearchFilterSummaryViewModel } from "~/pages/organisat
 const ValueContainer = ({
   children,
   ...props
-}: ValueContainerProps<SelectOption>) => {
+}: ValueContainerProps<SelectOption, true>): ReactNode => {
   let [values, input] = children as any[];
   if (Array.isArray(values)) {
     if (
@@ -32,13 +33,21 @@ const ValueContainer = ({
       values = `${values.length} ${pluralize(placeholder, values.length)}`;
     }
   }
-  return (
-    <components.ValueContainer {...props}>
-      {values}
-      {input}
-    </components.ValueContainer>
-  );
+
+  return components.ValueContainer({
+    ...props,
+    children: (
+      <>
+        {values}
+        {input}
+      </>
+    ),
+  }) as ReactNode;
 };
+
+const SelectValueContainer = ValueContainer as ComponentType<
+  ValueContainerProps<SelectOption, true>
+>;
 
 export const EngagementRowFilter: React.FC<{
   htmlRef: HTMLDivElement;
@@ -127,7 +136,7 @@ export const EngagementRowFilter: React.FC<{
                       .map((c) => ({ value: c.name, label: c.name }))}
                     placeholder="Country"
                     components={{
-                      ValueContainer,
+                      ValueContainer: SelectValueContainer,
                     }}
                   />
                 )}
