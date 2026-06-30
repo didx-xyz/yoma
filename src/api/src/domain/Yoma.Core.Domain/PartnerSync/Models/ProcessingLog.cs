@@ -8,6 +8,8 @@ namespace Yoma.Core.Domain.PartnerSync.Models
 
     public Guid? OpportunityId { get; set; }
 
+    public Guid? MyOpportunityId { get; set; }
+
     public Guid PartnerId { get; set; }
 
     public Core.SyncPartner Partner { get; set; }

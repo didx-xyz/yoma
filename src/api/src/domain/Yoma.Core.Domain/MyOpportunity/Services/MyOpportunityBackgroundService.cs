@@ -91,6 +91,12 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         {
           var now = DateTimeOffset.UtcNow;
 
+          // TODO: Review partner-synced opportunity verification rejection.
+          // This cleanup was designed for admin-managed pending verifications, where pending too long
+          // means no admin action was taken. For pull-synced opportunities, pending may represent
+          // legitimate external progress and the opportunity commitment may exceed the rejection interval.
+          // Consider excluding partner-synced MyOpportunity records, or deriving the rejection window
+          // from the opportunity commitment / partner sync state.
           var items = _myOpportunityRepository.Query().Where(o => o.VerificationStatusId.HasValue && statusRejectableIds.Contains(o.VerificationStatusId.Value) &&
             o.DateModified <= now.AddDays(-_scheduleJobOptions.MyOpportunityRejectionIntervalInDays))
             .OrderBy(o => o.DateModified).Take(_scheduleJobOptions.OpportunityDeletionBatchSize).ToList();

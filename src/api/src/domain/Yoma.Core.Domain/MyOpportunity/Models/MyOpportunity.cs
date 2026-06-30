@@ -114,6 +114,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
 
     public DateTimeOffset? DateEnd { get; set; }
 
+    public decimal? PercentComplete { get; set; }
+
     public DateTimeOffset? DateCompleted { get; set; }
 
     public decimal? ZltoReward { get; set; }

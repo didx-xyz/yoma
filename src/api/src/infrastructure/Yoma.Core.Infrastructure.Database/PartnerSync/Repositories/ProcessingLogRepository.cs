@@ -27,6 +27,7 @@ namespace Yoma.Core.Infrastructure.Database.PartnerSync.Repositories
         Id = entity.Id,
         EntityType = entity.EntityType,
         OpportunityId = entity.OpportunityId,
+        MyOpportunityId = entity.MyOpportunityId,
         PartnerId = entity.PartnerId,
         Partner = Enum.Parse<SyncPartner>(entity.Partner.Name, true),
         SyncType = entity.SyncType,
@@ -52,6 +53,7 @@ namespace Yoma.Core.Infrastructure.Database.PartnerSync.Repositories
         Id = item.Id,
         EntityType = item.EntityType,
         OpportunityId = item.OpportunityId,
+        MyOpportunityId = item.MyOpportunityId,
         PartnerId = item.PartnerId,
         SyncType = item.SyncType,
         Action = item.Action,
@@ -84,6 +86,7 @@ namespace Yoma.Core.Infrastructure.Database.PartnerSync.Repositories
            Id = item.Id,
            EntityType = item.EntityType,
            OpportunityId = item.OpportunityId,
+           MyOpportunityId = item.MyOpportunityId,
            PartnerId = item.PartnerId,
            SyncType = item.SyncType,
            Action = item.Action,
@@ -118,6 +121,7 @@ namespace Yoma.Core.Infrastructure.Database.PartnerSync.Repositories
       item.DateModified = DateTimeOffset.UtcNow;
 
       entity.OpportunityId = item.OpportunityId;
+      entity.MyOpportunityId = item.MyOpportunityId;
       entity.Action = item.Action;
       entity.StatusId = item.StatusId;
       entity.EntityExternalId = item.EntityExternalId;
@@ -148,6 +152,7 @@ namespace Yoma.Core.Infrastructure.Database.PartnerSync.Repositories
         item.DateModified = now;
 
         entity.OpportunityId = item.OpportunityId;
+        entity.MyOpportunityId = item.MyOpportunityId;
         entity.Action = item.Action;
         entity.StatusId = item.StatusId;
         entity.EntityExternalId = item.EntityExternalId;

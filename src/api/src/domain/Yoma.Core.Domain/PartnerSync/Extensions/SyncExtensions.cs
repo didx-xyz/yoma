@@ -27,6 +27,7 @@ namespace Yoma.Core.Domain.PartnerSync.Extensions
       return entityType switch
       {
         EntityType.Opportunity => item.OpportunityId.HasValue,
+        EntityType.MyOpportunity => item.MyOpportunityId.HasValue,
         _ => throw new InvalidOperationException($"Entity type of '{entityType}' not supported")
       };
     }

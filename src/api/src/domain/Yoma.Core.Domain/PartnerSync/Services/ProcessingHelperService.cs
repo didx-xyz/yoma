@@ -31,6 +31,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
       query = entityType switch
       {
         EntityType.Opportunity => query.Where(o => o.OpportunityId == entityId),
+        EntityType.MyOpportunity => query.Where(o => o.MyOpportunityId == entityId),
         _ => throw new InvalidOperationException($"Entity type of '{entityType}' not supported"),
       };
 

@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Http;
+using Newtonsoft.Json;
 using Yoma.Core.Domain.Core.Models;
 
 namespace Yoma.Core.Domain.MyOpportunity.Models
@@ -28,6 +29,9 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
     public DateTimeOffset? DateEnd { get; set; }
 
     public MyOpportunityRequestVerifyCommitmentInterval? CommitmentInterval { get; set; }
+
+    [JsonIgnore]
+    internal decimal? PercentComplete { get; set; }
 
     public bool? Recommendable { get; set; }
 

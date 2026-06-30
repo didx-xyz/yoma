@@ -16,6 +16,10 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
 
     public MyOpportunityRequestVerifyCommitmentInterval? CommitmentInterval { get; set; }
 
+    public bool Completed { get; set; }
+
+    public decimal PercentComplete { get; set; }
+
     public DateTimeOffset? DateCompleted { get; set; }
   }
 }

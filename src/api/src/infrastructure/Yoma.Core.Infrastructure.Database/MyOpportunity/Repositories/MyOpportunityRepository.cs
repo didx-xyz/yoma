@@ -87,6 +87,7 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories
         CommitmentIntervalCount = entity.CommitmentIntervalCount,
         DateStart = entity.DateStart,
         DateEnd = entity.DateEnd,
+        PercentComplete = entity.PercentComplete,
         DateCompleted = entity.DateCompleted,
         ZltoReward = entity.ZltoReward,
         YomaReward = entity.YomaReward,
@@ -139,6 +140,7 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories
         CommitmentIntervalCount = item.CommitmentIntervalCount,
         DateStart = item.DateStart,
         DateEnd = item.DateEnd,
+        PercentComplete = item.PercentComplete,
         DateCompleted = item.DateCompleted,
         ZltoReward = item.ZltoReward,
         YomaReward = item.YomaReward,
@@ -176,6 +178,7 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories
           CommitmentIntervalCount = item.CommitmentIntervalCount,
           DateStart = item.DateStart,
           DateEnd = item.DateEnd,
+          PercentComplete = item.PercentComplete,
           DateCompleted = item.DateCompleted,
           ZltoReward = item.ZltoReward,
           YomaReward = item.YomaReward,
@@ -214,6 +217,7 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories
       entity.CommitmentIntervalCount = item.CommitmentIntervalCount;
       entity.DateStart = item.DateStart;
       entity.DateEnd = item.DateEnd;
+      entity.PercentComplete = item.PercentComplete;
       entity.DateCompleted = item.DateCompleted;
       entity.ZltoReward = item.ZltoReward;
       entity.YomaReward = item.YomaReward;
@@ -250,6 +254,7 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories
         entity.CommitmentIntervalCount = item.CommitmentIntervalCount;
         entity.DateStart = item.DateStart;
         entity.DateEnd = item.DateEnd;
+        entity.PercentComplete = item.PercentComplete;
         entity.DateCompleted = item.DateCompleted;
         entity.ZltoReward = item.ZltoReward;
         entity.YomaReward = item.YomaReward;

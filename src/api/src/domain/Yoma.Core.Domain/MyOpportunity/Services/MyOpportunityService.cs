@@ -1185,11 +1185,18 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         return result;
       }
 
-      var statusVerification = GetVerificationStatusInternal(opportunity.Id, user.Id);
-      if (statusVerification.Status == VerificationStatus.Completed)
+      var actionVerificationId = _myOpportunityActionService.GetByName(Action.Verification.ToString()).Id;
+      var myOpportunityExisting = _myOpportunityRepository.Query(false)
+        .SingleOrDefault(o => o.UserId == user.Id && o.OpportunityId == opportunity.Id && o.ActionId == actionVerificationId);
+
+      result.MyOpportunityId = myOpportunityExisting?.Id;
+
+      switch (myOpportunityExisting?.VerificationStatus)
       {
-        result.SkipReason = $"Verification already completed for user '{user.Username}' and opportunity '{opportunity.Title}'";
-        return result;
+        case VerificationStatus.Completed:
+        case VerificationStatus.Rejected:
+          result.SkipReason = $"Verification already {myOpportunityExisting.VerificationStatus.Value.ToDescription().ToLower()} for user '{user.Username}' and opportunity '{opportunity.Title}'";
+          return result;
       }
 
       try
@@ -1217,12 +1224,15 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
           {
             DateStart = request.DateStart,
             DateEnd = request.DateEnd,
-            CommitmentInterval = request.CommitmentInterval
+            CommitmentInterval = request.CommitmentInterval,
+            PercentComplete = request.PercentComplete
           };
 
-          await PerformActionSendForVerification(user, opportunity.Id, requestVerify, options);
+          var myOpportunity = await PerformActionSendForVerification(user, opportunity.Id, requestVerify, options);
+          result.MyOpportunityId = myOpportunity.Id;
 
-          await FinalizeVerification(user, opportunity, VerificationStatus.Completed, options);
+          if (request.Completed)
+            await FinalizeVerification(user, opportunity, VerificationStatus.Completed, options);
 
           scope.Complete();
         });
@@ -1811,7 +1821,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       };
     }
 
-    private async Task PerformActionSendForVerification(User user,
+    private async Task<Models.MyOpportunity> PerformActionSendForVerification(User user,
       Guid opportunityId,
       MyOpportunityRequestVerify request,
       MyOpportunityVerificationOptions options)
@@ -1899,11 +1909,12 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       myOpportunity.CommitmentInterval = request.CommitmentInterval?.Option;
       myOpportunity.DateStart = request.DateStart;
       myOpportunity.DateEnd = request.DateEnd;
+      myOpportunity.PercentComplete = request.PercentComplete;
       myOpportunity.Recommendable = request.Recommendable;
       myOpportunity.StarRating = request.StarRating;
       myOpportunity.Feedback = request.Feedback;
 
-      await PerformActionSendForVerificationProcessVerificationTypes(request, opportunity, myOpportunity, options, isNew);
+      myOpportunity = await PerformActionSendForVerificationProcessVerificationTypes(request, opportunity, myOpportunity, options, isNew);
 
       //used by notifications
       myOpportunity.Username = user.Username;
@@ -1917,7 +1928,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       myOpportunity.ZltoReward = opportunity.ZltoReward;
       myOpportunity.YomaReward = opportunity.YomaReward;
 
-      if (options.AutoFinalizedVerification) return; //with instant, imported or synced verifications, pending notifications are not sent
+      if (options.AutoFinalizedVerification) return myOpportunity; //with instant, imported or synced verifications, pending notifications are not sent
 
       //sent to youth
       if (options.EnqueueOutcomes)
@@ -1932,6 +1943,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             nameof(SendNotification), $"{nameof(Models.MyOpportunity)}.{nameof(PerformActionSendForVerification)}");
       else
         await SendNotification(myOpportunity, NotificationType.Opportunity_Verification_Pending_Admin);
+
+      return myOpportunity;
     }
 
     private async Task SendNotification(Models.MyOpportunity myOpportunity, NotificationType type)
@@ -1984,7 +1997,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       }
     }
 
-    private async Task PerformActionSendForVerificationProcessVerificationTypes(MyOpportunityRequestVerify request,
+    private async Task<Models.MyOpportunity> PerformActionSendForVerificationProcessVerificationTypes(MyOpportunityRequestVerify request,
       Opportunity.Models.Opportunity opportunity,
       Models.MyOpportunity myOpportunity,
       MyOpportunityVerificationOptions options,
@@ -2036,6 +2049,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
           scope.Complete();
         });
+
+        return myOpportunity;
       }
       catch //roll back
       {

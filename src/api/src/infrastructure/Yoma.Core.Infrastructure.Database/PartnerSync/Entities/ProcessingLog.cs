@@ -8,6 +8,7 @@ namespace Yoma.Core.Infrastructure.Database.PartnerSync.Entities
   [Table("ProcessingLog", Schema = "PartnerSync")]
   //entity per sync type and partner can be created or deleted once and updated multiple times; no unique index; handled by service
   [Index(nameof(SyncType), nameof(EntityType), nameof(OpportunityId), nameof(StatusId), nameof(DateModified))]
+  [Index(nameof(SyncType), nameof(EntityType), nameof(MyOpportunityId), nameof(StatusId), nameof(DateModified))]
   [Index(nameof(SyncType), nameof(EntityType), nameof(PartnerId), nameof(EntityExternalId), nameof(StatusId), nameof(DateModified))]
   [Index(nameof(SyncType), nameof(PartnerId), nameof(Action), nameof(StatusId), nameof(DateModified))]
   public class ProcessingLog : Shared.Entities.BaseEntity<Guid>
@@ -19,6 +20,10 @@ namespace Yoma.Core.Infrastructure.Database.PartnerSync.Entities
     [ForeignKey("OpportunityId")]
     public Guid? OpportunityId { get; set; }
     public Opportunity.Entities.Opportunity? Opportunity { get; set; }
+
+    [ForeignKey("MyOpportunityId")]
+    public Guid? MyOpportunityId { get; set; }
+    public MyOpportunity.Entities.MyOpportunity? MyOpportunity { get; set; }
 
     [Required]
     [ForeignKey("PartnerId")]

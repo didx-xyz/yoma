@@ -44,6 +44,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Extensions
         CommitmentIntervalCount = value.CommitmentIntervalCount,
         DateStart = value.DateStart,
         DateEnd = value.DateEnd,
+        PercentComplete = value.PercentComplete,
         DateCompleted = value.DateCompleted,
         ZltoReward = value.ZltoReward,
         YomaReward = value.YomaReward,

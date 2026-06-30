@@ -45,6 +45,9 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Entities
 
     public DateTimeOffset? DateEnd { get; set; }
 
+    [Column(TypeName = "decimal(5,2)")]
+    public decimal? PercentComplete { get; set; }
+
     public DateTimeOffset? DateCompleted { get; set; }
 
     [Column(TypeName = "decimal(8,2)")]

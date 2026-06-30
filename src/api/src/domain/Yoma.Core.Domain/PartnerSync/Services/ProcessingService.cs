@@ -516,7 +516,13 @@ namespace Yoma.Core.Domain.PartnerSync.Services
     #endregion
 
     #region Private Members
-    private async Task<ProcessingLog> RecordPullInternal(SyncAction action, Guid partnerId, EntityType entityType, string entityExternalId, Guid? entityId, string? payloadHash, bool clearErrorState = true)
+    private async Task<ProcessingLog> RecordPullInternal(SyncAction action,
+      Guid partnerId,
+      EntityType entityType,
+      string entityExternalId,
+      Guid? entityId,
+      string? payloadHash,
+      bool clearErrorState = true)
     {
       if (string.IsNullOrWhiteSpace(entityExternalId))
         throw new ArgumentNullException(nameof(entityExternalId));
@@ -605,10 +611,18 @@ namespace Yoma.Core.Domain.PartnerSync.Services
       if (!partner.ActionsEnabledParsed.Contains(action))
         throw new InvalidOperationException($"Action of '{action}' not enabled for partner '{partner.Name}'");
 
+      // MyOpportunity pull records are internal tracking records for partner-provided
+      // opportunity verification/progress submissions. The partner capability remains
+      // configured as Opportunity + Verification because the provider payload is scoped
+      // to a synced opportunity; MyOpportunity only identifies the resulting Yoma
+      // completion submission in ProcessingLog.
+      var syncScope = entityType == EntityType.MyOpportunity ? SyncScope.Verification : SyncScope.Entity;
+      var capabilityEntityType = entityType == EntityType.MyOpportunity ? EntityType.Opportunity : entityType;
+
       if (!partner.SyncCapabilitiesParsed.TryGetValue(SyncType.Pull, out var entityCapabilities)
-          || !entityCapabilities.TryGetValue(entityType, out var syncScopes)
-          || !syncScopes.Contains(SyncScope.Entity))
-        throw new InvalidOperationException($"Entity type of '{entityType}' and sync scope '{SyncScope.Entity}' not enabled for partner '{partner.Name}' and sync type '{SyncType.Pull}'");
+          || !entityCapabilities.TryGetValue(capabilityEntityType, out var syncScopes)
+          || !syncScopes.Contains(syncScope))
+        throw new InvalidOperationException($"Entity type of '{capabilityEntityType}' and sync scope '{syncScope}' not enabled for partner '{partner.Name}' and sync type '{SyncType.Pull}'");
 
       var reuseExistingItem = itemExisting != null && (!itemExistingHasSynchronizedEntity || itemExistingIsRetryableError);
 
@@ -625,11 +639,8 @@ namespace Yoma.Core.Domain.PartnerSync.Services
       item.Action = action.ToString();
       item.StatusId = _processingStatusService.GetByName(ProcessingStatus.Processed.ToString()).Id;
       item.Status = ProcessingStatus.Processed;
-      item.OpportunityId = entityType switch
-      {
-        EntityType.Opportunity => entityId,
-        _ => throw new InvalidOperationException($"Entity type of '{entityType}' not supported"),
-      };
+      item.OpportunityId = entityType == EntityType.Opportunity ? entityId : null;
+      item.MyOpportunityId = entityType == EntityType.MyOpportunity ? entityId : null;
       item.PayloadHash = payloadHash;
 
       if (clearErrorState)
@@ -782,6 +793,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
       query = entityType switch
       {
         EntityType.Opportunity => query.Where(o => o.OpportunityId == entityId),
+        EntityType.MyOpportunity => query.Where(o => o.MyOpportunityId == entityId),
         _ => throw new InvalidOperationException($"Entity type '{entityType}' not supported")
       };
 

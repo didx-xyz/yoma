@@ -7,5 +7,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
     public bool Skipped { get; set; }
 
     public string? SkipReason { get; set; }
+
+    public Guid? MyOpportunityId { get; set; }
   }
 }

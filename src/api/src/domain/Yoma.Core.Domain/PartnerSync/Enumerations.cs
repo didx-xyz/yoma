@@ -1,8 +1,11 @@
+using System.ComponentModel;
+
 namespace Yoma.Core.Domain.PartnerSync
 {
   public enum EntityType
   {
-    Opportunity
+    Opportunity,
+    MyOpportunity
   }
 
   public enum SyncAction

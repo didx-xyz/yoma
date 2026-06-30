@@ -7,6 +7,7 @@ using System.Globalization;
 using System.Net;
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Extensions;
+using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Lookups.Interfaces;
@@ -970,8 +971,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       // Always return the embedded completed records so local/dev validation does not depend
       // on deployment time, scheduler timing, or checkpoint windows.
       var query = completedCourses
-        .Where(item => item.CompletedAt.HasValue)
-        .OrderBy(item => item.CompletedAt)
+        .OrderBy(item => item.CompletedAt ?? item.LastAccess ?? item.UpdatedAt ?? item.EnrollmentDate ?? item.CreatedAt ?? DateTimeOffset.MinValue)
         .ThenBy(item => item.UserId)
         .ThenBy(item => item.CourseId)
         .ToList();
@@ -1077,9 +1077,10 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       if (item.CourseId <= 0)
         throw new InvalidOperationException("Alison completed course id expected");
 
-      var commitmentInterval = GetVerificationCommitmentInterval(item);
+      var commitmentInterval = ResolveVerificationCommitmentInterval(item);
       var dateEnd = item.CompletedAt ?? item.LastAccess ?? item.UpdatedAt;
-      var completed = string.Equals(item.CourseStatus?.Trim(), "Completed", StringComparison.OrdinalIgnoreCase);
+      var status = ResolveVerificationStatus(item.CourseStatus);
+      var percentComplete = ResolvePercentComplete(item.CourseState, status);
 
       return new SyncItemVerification
       {
@@ -1087,20 +1088,21 @@ namespace Yoma.Core.Infrastructure.Alison.Client
         EntityExternalId = item.CourseId.ToString(),
         UserEmail = item.Email,
         UserPhoneNumber = null,
+        DateStart = commitmentInterval == null ? item.FirstAccess ?? item.EnrollmentDate ?? item.CreatedAt : null,
+        DateEnd = dateEnd,
 
         // Commitment is resolved in this order:
         // 1. duration_avg: preferred, aligns verification with the imported opportunity commitment.
         // 2. total_time_spent: fallback only, as Alison can return values that exceed the course estimate.
         // 3. first_access/enrollment/created dates: final fallback only when no commitment can be resolved.
         CommitmentInterval = commitmentInterval,
-        DateStart = commitmentInterval == null ? item.FirstAccess ?? item.EnrollmentDate ?? item.CreatedAt : null,
-        DateEnd = dateEnd,
-        DateCompleted = completed ? item.CompletedAt ?? dateEnd : null,
-        Completed = completed
+        Completed = status == VerificationCourseStatus.Completed,
+        PercentComplete = percentComplete,
+        DateCompleted = status == VerificationCourseStatus.Completed ? item.CompletedAt ?? dateEnd : null
       };
     }
 
-    private SyncItemVerificationCommitmentInterval? GetVerificationCommitmentInterval(CompletedCourse item)
+    private SyncItemVerificationCommitmentInterval? ResolveVerificationCommitmentInterval(CompletedCourse item)
     {
       ArgumentNullException.ThrowIfNull(item);
 
@@ -1115,10 +1117,10 @@ namespace Yoma.Core.Infrastructure.Alison.Client
         };
       }
 
-      return GetVerificationCommitmentIntervalFromTotalTimeSpent(item.TotalTimeSpent);
+      return ResolveVerificationCommitmentIntervalFromTotalTimeSpent(item.TotalTimeSpent);
     }
 
-    private SyncItemVerificationCommitmentInterval? GetVerificationCommitmentIntervalFromTotalTimeSpent(string? totalTimeSpent)
+    private SyncItemVerificationCommitmentInterval? ResolveVerificationCommitmentIntervalFromTotalTimeSpent(string? totalTimeSpent)
     {
       totalTimeSpent = totalTimeSpent?.Trim();
 
@@ -1149,8 +1151,53 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       return Math.Max(1, (int)Math.Ceiling(totalHours));
     }
 
+    private static VerificationCourseStatus ResolveVerificationStatus(string? courseStatus)
+    {
+      if (string.IsNullOrWhiteSpace(courseStatus))
+        throw new InvalidOperationException("Alison course status expected");
+
+      return EnumHelper.GetValueFromDescription<VerificationCourseStatus>(courseStatus)
+        ?? throw new InvalidOperationException($"Alison course status '{courseStatus}' is not supported");
+    }
+
+    private static decimal ResolvePercentComplete(string? courseState, VerificationCourseStatus status)
+    {
+      switch (status)
+      {
+        case VerificationCourseStatus.NotStarted:
+          return 0m;
+
+        case VerificationCourseStatus.Completed:
+          return 100m;
+
+        case VerificationCourseStatus.InProgress:
+          break;
+
+        default:
+          throw new InvalidOperationException($"Sync item verification status '{status}' is not supported");
+      }
+
+      if (string.IsNullOrWhiteSpace(courseState))
+        throw new InvalidOperationException("Alison course state expected for in-progress course");
+
+      var percentIndex = courseState.IndexOf('%');
+      var candidate = percentIndex >= 0 ? courseState[..percentIndex] : courseState;
+
+      var match = Regex_PercentCompleteValue().Match(candidate);
+      if (!match.Success)
+        throw new InvalidOperationException($"Alison course state '{courseState}' does not contain a valid percent complete value");
+
+      if (!decimal.TryParse(match.Value, NumberStyles.Number, CultureInfo.InvariantCulture, out var value))
+        throw new InvalidOperationException($"Alison course state '{courseState}' contains an invalid percent complete value");
+
+      return Math.Clamp(value, 0m, 100m);
+    }
+
     [System.Text.RegularExpressions.GeneratedRegex(@"\d+(\.\d+)?")]
     private static partial System.Text.RegularExpressions.Regex Regex_CommitmentIntervalCountValue();
+
+    [System.Text.RegularExpressions.GeneratedRegex(@"\d+(\.\d+)?")]
+    private static partial System.Text.RegularExpressions.Regex Regex_PercentCompleteValue();
     #endregion
   }
 }
