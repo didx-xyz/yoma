@@ -1950,7 +1950,7 @@ const Opportunities: NextPageWithLayout<{
 
                       <div className="flex grow flex-col gap-1">
                         <h1 className="min-h-8x line-clamp-2 w-28 text-center text-xs leading-tight font-semibold whitespace-normal text-black">
-                          My Saved
+                          My Saved Opportunities
                         </h1>
 
                         <h6 className="font-boldx text-gray-dark text-center text-[10px]">
