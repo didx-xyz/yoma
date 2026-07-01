@@ -940,6 +940,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
                 throw new InvalidOperationException($"Synchronized opportunity mapping expected for partner '{partner}', entity type '{entityType}', entity external id '{item.EntityExternalId}'");
 
               var processingItemExistingMyOpportunity = _processingService.GetPull(partnerModel.Id, myOpportunityEntityType, item.ExternalId);
+              myOpportunityId = processingItemExistingMyOpportunity?.MyOpportunityId;
 
               if (processingItemExistingMyOpportunity?.Status == ProcessingStatus.Error)
               {
