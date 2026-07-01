@@ -5,7 +5,7 @@ import type {
   PaginationFilter,
   TimeIntervalOption,
 } from "./common";
-import type { VerificationType } from "./opportunity";
+import type { SyncInfoEntity, VerificationType } from "./opportunity";
 
 export interface MyOpportunityRequestVerify {
   certificate?: FormFile | null;
@@ -94,6 +94,7 @@ export interface MyOpportunityInfo {
   commitmentIntervalCount: number | null;
   dateStart: string | null;
   dateEnd: string | null;
+  percentComplete: number | null;
   dateCompleted: string | null;
   zltoReward: number | null;
   yomaReward: number | null;
@@ -101,6 +102,7 @@ export interface MyOpportunityInfo {
   starRating: number | null;
   feedback: string | null;
   dateModified: string;
+  syncedInfo: SyncInfoEntity | null;
   verifications: MyOpportunityInfoVerification[] | null;
   skills: Skill[] | null;
 }
