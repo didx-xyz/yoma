@@ -7,6 +7,8 @@ namespace Yoma.Core.Domain.PartnerSync.Interfaces
   {
     SyncInfoEntity? ListSyncInfo(EntityType entityType, Guid entityId, string? url);
 
+    SyncInfoMyOpportunity? ListSyncInfoMyOpportunity(Guid myOpportunityId);
+
     SyncInfoUser? ListUserSyncInfo(Guid userId);
 
     SyncInfoUserPartner? GetUserSyncInfo(Guid userId, SyncPartner partner);

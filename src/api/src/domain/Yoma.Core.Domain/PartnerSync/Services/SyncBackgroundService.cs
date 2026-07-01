@@ -1006,9 +1006,6 @@ namespace Yoma.Core.Domain.PartnerSync.Services
                 if (_logger.IsEnabled(LogLevel.Information))
                   _logger.LogInformation("Processing of partner sync pull verification item skipped: {skipReason}", importResult.SkipReason);
 
-                if (myOpportunityId.HasValue)
-                  await _processingService.RecordPull(action, partnerModel.Id, myOpportunityEntityType, item.ExternalId, myOpportunityId.Value, payloadHash);
-
                 IncrementTrackingSkipped(tracking);
                 continue;
               }

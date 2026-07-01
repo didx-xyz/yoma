@@ -11,6 +11,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
 
     public bool OverridePending { get; init; }
     public bool PartnerSyncedVerification { get; init; }
+    public bool AllowUpdateOfSyncedVerification { get; init; }
     public bool InstantVerification { get; init; }
     public bool ImportedVerification { get; init; }
 

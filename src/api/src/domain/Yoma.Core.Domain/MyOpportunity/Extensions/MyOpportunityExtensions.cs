@@ -52,6 +52,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Extensions
         StarRating = value.StarRating,
         Feedback = value.Feedback,
         DateModified = value.DateModified,
+        SyncedInfo = value.SyncedInfo,
         Verifications = value.Verifications?.Select(o =>
             new MyOpportunityInfoVerification
             {
