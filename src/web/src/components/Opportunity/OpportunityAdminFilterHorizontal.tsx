@@ -1,4 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
+import type { ComponentType, ReactNode } from "react";
 import { useCallback, useEffect } from "react";
 import { Controller, useForm, type FieldValues } from "react-hook-form";
 import Select, { components, type ValueContainerProps } from "react-select";
@@ -18,7 +19,7 @@ import { FaDownload } from "react-icons/fa";
 const ValueContainer = ({
   children,
   ...props
-}: ValueContainerProps<SelectOption>) => {
+}: ValueContainerProps<SelectOption, true>): ReactNode => {
   let [values, input] = children as any[];
   if (Array.isArray(values)) {
     const plural = values.length === 1 ? "" : "s";
@@ -43,13 +44,21 @@ const ValueContainer = ({
       }
     }
   }
-  return (
-    <components.ValueContainer {...props}>
-      {values}
-      {input}
-    </components.ValueContainer>
-  );
+
+  return components.ValueContainer({
+    ...props,
+    children: (
+      <>
+        {values}
+        {input}
+      </>
+    ),
+  }) as ReactNode;
 };
+
+const SelectValueContainer = ValueContainer as ComponentType<
+  ValueContainerProps<SelectOption, true>
+>;
 
 export const OpportunityAdminFilterHorizontal: React.FC<{
   htmlRef: HTMLDivElement;
@@ -224,7 +233,7 @@ export const OpportunityAdminFilterHorizontal: React.FC<{
                             .map((c) => ({ value: c.name, label: c.name }))}
                           placeholder="Type"
                           components={{
-                            ValueContainer,
+                            ValueContainer: SelectValueContainer,
                           }}
                         />
                       )}
@@ -274,7 +283,7 @@ export const OpportunityAdminFilterHorizontal: React.FC<{
                             .map((c) => ({ value: c.name, label: c.name }))}
                           placeholder="Country"
                           components={{
-                            ValueContainer,
+                            ValueContainer: SelectValueContainer,
                           }}
                         />
                       )}
@@ -323,7 +332,7 @@ export const OpportunityAdminFilterHorizontal: React.FC<{
                             .map((c) => ({ value: c.name, label: c.name }))}
                           placeholder="Language"
                           components={{
-                            ValueContainer,
+                            ValueContainer: SelectValueContainer,
                           }}
                         />
                       )}
@@ -373,7 +382,7 @@ export const OpportunityAdminFilterHorizontal: React.FC<{
                             .map((c) => ({ value: c.name, label: c.name }))}
                           placeholder="Organisation"
                           components={{
-                            ValueContainer,
+                            ValueContainer: SelectValueContainer,
                           }}
                         />
                       )}
@@ -419,7 +428,7 @@ export const OpportunityAdminFilterHorizontal: React.FC<{
                           )}
                           placeholder="Status"
                           components={{
-                            ValueContainer,
+                            ValueContainer: SelectValueContainer,
                           }}
                         />
                       )}
@@ -463,7 +472,7 @@ export const OpportunityAdminFilterHorizontal: React.FC<{
                           )}
                           placeholder="Status"
                           components={{
-                            ValueContainer,
+                            ValueContainer: SelectValueContainer,
                           }}
                         />
                       )}

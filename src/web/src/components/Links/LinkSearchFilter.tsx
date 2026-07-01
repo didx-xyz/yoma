@@ -1,4 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
+import type { ReactNode } from "react";
 import { useCallback, useEffect, useState } from "react";
 import { Controller, useForm, type FieldValues } from "react-hook-form";
 import zod from "zod";
@@ -18,7 +19,9 @@ export enum LinkFilterOptions {
   ENTITIES = "entities",
 }
 
-const ValueContainer = (props: ValueContainerProps<SelectOption, boolean>) => {
+const ValueContainer = (
+  props: ValueContainerProps<SelectOption, true>,
+): ReactNode => {
   const { children } = props;
   let [values, input] = children as any[];
   if (Array.isArray(values)) {
@@ -43,13 +46,15 @@ const ValueContainer = (props: ValueContainerProps<SelectOption, boolean>) => {
     }
   }
 
-  const OriginalValueContainer = components.ValueContainer;
-  return (
-    <OriginalValueContainer {...props}>
-      {values}
-      {input}
-    </OriginalValueContainer>
-  );
+  return components.ValueContainer({
+    ...props,
+    children: (
+      <>
+        {values}
+        {input}
+      </>
+    ),
+  }) as ReactNode;
 };
 
 export const LinkSearchFilters: React.FC<{
