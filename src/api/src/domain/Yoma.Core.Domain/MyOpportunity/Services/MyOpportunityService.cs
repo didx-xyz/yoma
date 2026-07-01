@@ -1210,7 +1210,6 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             Comment = "Auto-verification: Partner Sync",
             OverridePending = true,
             PartnerSyncedVerification = true,
-            AllowUpdateOfSyncedVerification = true,
             EnqueueOutcomes = true,
             MutateBlobStorage = true,
             PublishEvents = true
@@ -1555,7 +1554,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         if (item.VerificationStatus != VerificationStatus.Pending)
           throw new ValidationException($"Verification is not {VerificationStatus.Pending.ToDescription().ToLower()} for opportunity '{opportunity.Title}'");
 
-        if (!options.AllowUpdateOfSyncedVerification && _syncStateService.ListSyncInfoMyOpportunity(item.Id)?.Locked == true)
+        if (!options.PartnerSyncedVerification && _syncStateService.ListSyncInfoMyOpportunity(item.Id)?.Locked == true)
           throw new ValidationException($"Verification for opportunity '{opportunity.Title}' is externally managed and cannot be manually finalized");
 
         // Idempotent no-op: already at requested status
@@ -1899,9 +1898,6 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         };
       else
       {
-        if (!options.AllowUpdateOfSyncedVerification && _syncStateService.ListSyncInfoMyOpportunity(myOpportunity.Id)?.Locked == true)
-          throw new ValidationException($"Verification for opportunity '{opportunity.Title}' is externally managed and cannot be updated manually");
-
         switch (myOpportunity.VerificationStatus)
         {
           case null:
