@@ -195,7 +195,7 @@ const OpportunityListItem: React.FC<{
         )}
 
         {showProgressBar && (
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-2 md:max-w-1/2">
             <div className="flex items-center justify-between gap-2 text-sm">
               <span className="font-bold text-black">Progress</span>
               <span className="text-gray-dark">
@@ -204,7 +204,7 @@ const OpportunityListItem: React.FC<{
             </div>
             <div className="h-2 w-full overflow-hidden rounded-full bg-gray-200">
               <div
-                className="bg-green h-full rounded-full transition-all"
+                className="bg-blue h-full rounded-full transition-all"
                 style={{
                   width: `${Math.min(Math.max(data.percentComplete ?? 0, 0), 100)}%`,
                 }}
