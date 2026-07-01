@@ -883,7 +883,10 @@ namespace Yoma.Core.Domain.PartnerSync.Services
         ItemsProcessed = 0,
         ItemsSucceeded = 0,
         ItemsSkipped = 0,
-        ItemsFailed = 0
+        ItemsFailed = 0,
+        ItemsCreated = 0,
+        ItemsUpdated = 0,
+        ItemsDeleted = 0
       };
       var completedPull = false;
 

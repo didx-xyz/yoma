@@ -1409,8 +1409,10 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       return new MyOpportunityResponseVerifyStatus
       {
         Status = myOpportunity.VerificationStatus.Value,
+        PercentComplete = myOpportunity.PercentComplete,
         Comment = myOpportunity.CommentVerification,
-        DateCompleted = myOpportunity.DateCompleted
+        DateCompleted = myOpportunity.DateCompleted,
+        SyncedInfo = _syncStateService.ListSyncInfoMyOpportunity(myOpportunity.Id)
       };
     }
 
