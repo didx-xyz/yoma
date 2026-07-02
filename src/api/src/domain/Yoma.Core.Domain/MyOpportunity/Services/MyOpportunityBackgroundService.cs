@@ -14,6 +14,9 @@ using Yoma.Core.Domain.Notification.Interfaces;
 using Yoma.Core.Domain.Notification.Models;
 using Yoma.Core.Domain.Opportunity;
 using Yoma.Core.Domain.Opportunity.Interfaces;
+using Yoma.Core.Domain.PartnerSync;
+using Yoma.Core.Domain.PartnerSync.Interfaces.Lookups;
+using Yoma.Core.Domain.PartnerSync.Models;
 
 namespace Yoma.Core.Domain.MyOpportunity.Services
 {
@@ -28,11 +31,13 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
     private readonly IMyOpportunityVerificationStatusService _myOpportunityVerificationStatusService;
     private readonly IMyOpportunityActionService _myOpportunityActionService;
     private readonly IOpportunityService _opportunityService;
+    private readonly IProcessingStatusService _processingStatusService;
     private readonly INotificationURLFactory _notificationURLFactory;
     private readonly INotificationDeliveryService _notificationDeliveryService;
+    private readonly IDistributedLockService _distributedLockService;
     private readonly IRepositoryBatchedWithNavigation<Models.MyOpportunity> _myOpportunityRepository;
     private readonly IRepository<MyOpportunityVerification> _myOpportunityVerificationRepository;
-    private readonly IDistributedLockService _distributedLockService;
+    private readonly IRepositoryBatched<ProcessingLog> _processingLogRepository;
 
     internal static readonly VerificationStatus[] Statuses_Rejectable = [VerificationStatus.Pending];
     #endregion
@@ -46,11 +51,13 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         IMyOpportunityVerificationStatusService myOpportunityVerificationStatusService,
         IMyOpportunityActionService myOpportunityActionService,
         IOpportunityService opportunityService,
+        IProcessingStatusService processingStatusService,
         INotificationURLFactory notificationURLFactory,
         INotificationDeliveryService notificationDeliveryService,
+        IDistributedLockService distributedLockService,
         IRepositoryBatchedWithNavigation<Models.MyOpportunity> myOpportunityRepository,
         IRepository<MyOpportunityVerification> myOpportunityVerificationRepository,
-        IDistributedLockService distributedLockService)
+        IRepositoryBatched<ProcessingLog> processingLogRepository)
     {
       _logger = logger;
       _appSettings = appSettings.Value;
@@ -60,11 +67,13 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       _myOpportunityVerificationStatusService = myOpportunityVerificationStatusService;
       _myOpportunityActionService = myOpportunityActionService;
       _opportunityService = opportunityService;
+      _processingStatusService = processingStatusService;
       _notificationURLFactory = notificationURLFactory;
       _notificationDeliveryService = notificationDeliveryService;
+      _distributedLockService = distributedLockService;
       _myOpportunityRepository = myOpportunityRepository;
       _myOpportunityVerificationRepository = myOpportunityVerificationRepository;
-      _distributedLockService = distributedLockService;
+      _processingLogRepository = processingLogRepository;
     }
     #endregion
 
@@ -86,14 +95,25 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
         var statusRejectedId = _myOpportunityVerificationStatusService.GetByName(VerificationStatus.Rejected.ToString()).Id;
         var statusRejectableIds = Statuses_Rejectable.Select(o => _myOpportunityVerificationStatusService.GetByName(o.ToString()).Id).ToList();
+        var statusSyncAbortedId = _processingStatusService.GetByName(PartnerSync.ProcessingStatus.Aborted.ToString()).Id;
 
         while (executeUntil > DateTimeOffset.UtcNow)
         {
           var now = DateTimeOffset.UtcNow;
 
-          var items = _myOpportunityRepository.Query().Where(o => o.VerificationStatusId.HasValue && statusRejectableIds.Contains(o.VerificationStatusId.Value) &&
-            o.DateModified <= now.AddDays(-_scheduleJobOptions.MyOpportunityRejectionIntervalInDays))
-            .OrderBy(o => o.DateModified).Take(_scheduleJobOptions.OpportunityDeletionBatchSize).ToList();
+          // Partner-synced verification submissions are externally managed. Pending means
+          // the partner has not yet reported completion, so Yoma must not auto-decline them.
+          var items = _myOpportunityRepository.Query()
+            .Where(o => o.VerificationStatusId.HasValue
+              && statusRejectableIds.Contains(o.VerificationStatusId.Value)
+              && o.DateModified <= now.AddDays(-_scheduleJobOptions.MyOpportunityRejectionIntervalInDays)
+              && !_processingLogRepository.Query().Any(log => log.EntityType == EntityType.MyOpportunity.ToString()
+                && log.MyOpportunityId == o.Id
+                && log.StatusId != statusSyncAbortedId))
+            .OrderBy(o => o.DateModified)
+            .Take(_scheduleJobOptions.OpportunityDeletionBatchSize)
+            .ToList();
+
           if (items.Count == 0) break;
 
           foreach (var item in items)

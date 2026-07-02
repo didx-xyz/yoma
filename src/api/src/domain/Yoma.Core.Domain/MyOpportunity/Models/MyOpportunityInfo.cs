@@ -1,6 +1,7 @@
 using CsvHelper.Configuration.Attributes;
 using Newtonsoft.Json;
 using Yoma.Core.Domain.Lookups.Models;
+using Yoma.Core.Domain.PartnerSync.Models;
 
 namespace Yoma.Core.Domain.MyOpportunity.Models
 {
@@ -105,6 +106,9 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
     [Name("Date End")]
     public DateTimeOffset? DateEnd { get; set; }
 
+    [Name("Percent Complete")]
+    public decimal? PercentComplete { get; set; }
+
     [Name("Date Completed")]
     public DateTimeOffset? DateCompleted { get; set; }
 
@@ -125,6 +129,19 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
 
     [Name("Date Connected")]
     public DateTimeOffset DateModified { get; set; }
+
+    [Ignore]
+    public SyncInfoMyOpportunity? SyncedInfo { get; set; }
+
+    [JsonIgnore]
+    [Name("Externally Managed (Locked)")]
+    [BooleanFalseValues("No")]
+    [BooleanTrueValues("Yes")]
+    public bool SyncedLocked => SyncedInfo?.Locked == true;
+
+    [JsonIgnore]
+    [Name("Externally Managed By")]
+    public string? SyncedPulled => SyncedInfo?.SyncType == Core.SyncType.Pull ? string.Join(", ", SyncedInfo.Partners) : null;
 
     [Ignore]
     public List<MyOpportunityInfoVerification>? Verifications { get; set; }

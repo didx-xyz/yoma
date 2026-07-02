@@ -64,6 +64,11 @@ namespace Yoma.Core.Domain.MyOpportunity.Validators
         .When(x => x.DateStart.HasValue)
         .WithMessage("End date (when did you finish) is earlier than the start date");
 
+      RuleFor(x => x.PercentComplete)
+        .InclusiveBetween(0m, 100m)
+        .When(x => x.PercentComplete.HasValue)
+        .WithMessage("Percent complete must be between 0 and 100 if specified.");
+
       RuleFor(x => x.StarRating)
         .InclusiveBetween((byte)1, (byte)5)
         .When(x => x.StarRating.HasValue)

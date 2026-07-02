@@ -37,6 +37,7 @@ using Yoma.Core.Domain.Opportunity.Interfaces;
 using Yoma.Core.Domain.Opportunity.Interfaces.Lookups;
 using Yoma.Core.Domain.PartnerSync.Interfaces;
 using Yoma.Core.Domain.PartnerSync.Models;
+using Yoma.Core.Domain.PartnerSync.Services;
 using Yoma.Core.Domain.Referral.Events;
 using Yoma.Core.Domain.Reward.Interfaces;
 using Yoma.Core.Domain.SSI.Interfaces;
@@ -69,6 +70,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
     private readonly IOpportunityVerificationTypeService _opportunityVerificationTypeService;
     private readonly IDelayedExecutionService _delayedExecutionService;
     private readonly ISyncUserAuthenticationService _syncUserAuthenticationService;
+    private readonly ISyncStateService _syncStateService;
     private readonly MyOpportunitySearchFilterVerificationFilesAdminValidator _myOpportunitySearchFilterVerificationFilesAdminValidator;
     private readonly MyOpportunitySearchFilterAdminValidator _myOpportunitySearchFilterAdminValidator;
     private readonly MyOpportunityRequestValidatorVerify _myOpportunityRequestValidatorVerify;
@@ -111,6 +113,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         IOpportunityVerificationTypeService opportunityVerificationTypeService,
         IDelayedExecutionService delayedExecutionService,
         ISyncUserAuthenticationService syncUserAuthenticationService,
+        ISyncStateService syncStateService,
         MyOpportunitySearchFilterVerificationFilesAdminValidator myOpportunitySearchFilterVerificationFilesAdminValidator,
         MyOpportunitySearchFilterAdminValidator myOpportunitySearchFilterAdminValidator,
         MyOpportunityRequestValidatorVerify myOpportunityRequestValidatorVerify,
@@ -145,6 +148,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       _opportunityVerificationTypeService = opportunityVerificationTypeService ?? throw new ArgumentNullException(nameof(opportunityVerificationTypeService));
       _delayedExecutionService = delayedExecutionService ?? throw new ArgumentNullException(nameof(delayedExecutionService));
       _syncUserAuthenticationService = syncUserAuthenticationService ?? throw new ArgumentNullException(nameof(syncUserAuthenticationService));
+      _syncStateService = syncStateService ?? throw new ArgumentNullException(nameof(syncStateService));
       _myOpportunitySearchFilterVerificationFilesAdminValidator = myOpportunitySearchFilterVerificationFilesAdminValidator ?? throw new ArgumentNullException(nameof(myOpportunitySearchFilterVerificationFilesAdminValidator));
       _myOpportunitySearchFilterAdminValidator = myOpportunitySearchFilterAdminValidator ?? throw new ArgumentNullException(nameof(myOpportunitySearchFilterAdminValidator));
       _myOpportunityRequestValidatorVerify = myOpportunityRequestValidatorVerify ?? throw new ArgumentNullException(nameof(myOpportunityRequestValidatorVerify));
@@ -170,12 +174,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       if (ensureOrganizationAuthorization)
         _organizationService.IsAdmin(result.OrganizationId, true);
 
-      if (includeComputed)
-      {
-        result.UserPhotoURL = GetBlobObjectURL(result.UserPhotoStorageType, result.UserPhotoKey);
-        result.OrganizationLogoURL = GetBlobObjectURL(result.OrganizationLogoStorageType, result.OrganizationLogoKey);
-        result.Verifications?.ForEach(v => v.FileURL = GetBlobObjectURL(v.FileStorageType, v.FileKey));
-      }
+      if (includeComputed) ParseComputed(result);
 
       return result;
     }
@@ -708,15 +707,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
       var items = query.ToList();
 
-      if (!filter.UnrestrictedQuery)
-      {
-        items.ForEach(o =>
-        {
-          o.UserPhotoURL = GetBlobObjectURL(o.UserPhotoStorageType, o.UserPhotoKey);
-          o.OrganizationLogoURL = GetBlobObjectURL(o.OrganizationLogoStorageType, o.OrganizationLogoKey);
-          o.Verifications?.ForEach(v => v.FileURL = GetBlobObjectURL(v.FileStorageType, v.FileKey));
-        });
-      }
+      if (!filter.UnrestrictedQuery) items.ForEach(ParseComputed);
+
       result.Items = [.. items.Select(o => o.ToInfo())];
       if (filter.UnrestrictedQuery) return result;
 
@@ -960,6 +952,9 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       var myOpportunity = _myOpportunityRepository.Query(true).SingleOrDefault(o => o.UserId == user.Id && o.OpportunityId == opportunity.Id && o.ActionId == actionVerificationId)
           ?? throw new ValidationException($"Opportunity '{opportunity.Title}' has not been sent for verification for user '{user.Username}'");
 
+      if (_syncStateService.ListSyncInfoMyOpportunity(myOpportunity.Id)?.Locked == true)
+        throw new ValidationException($"Verification for opportunity '{opportunity.Title}' is externally managed and cannot be deleted");
+
       if (myOpportunity.VerificationStatus != VerificationStatus.Pending)
         throw new ValidationException($"Verification is not {VerificationStatus.Pending.ToDescription().ToLower()} for opportunity '{opportunity.Title}'");
 
@@ -1185,11 +1180,18 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         return result;
       }
 
-      var statusVerification = GetVerificationStatusInternal(opportunity.Id, user.Id);
-      if (statusVerification.Status == VerificationStatus.Completed)
+      var actionVerificationId = _myOpportunityActionService.GetByName(Action.Verification.ToString()).Id;
+      var myOpportunityExisting = _myOpportunityRepository.Query(false)
+        .SingleOrDefault(o => o.UserId == user.Id && o.OpportunityId == opportunity.Id && o.ActionId == actionVerificationId);
+
+      result.MyOpportunityId = myOpportunityExisting?.Id;
+
+      switch (myOpportunityExisting?.VerificationStatus)
       {
-        result.SkipReason = $"Verification already completed for user '{user.Username}' and opportunity '{opportunity.Title}'";
-        return result;
+        case VerificationStatus.Completed:
+        case VerificationStatus.Rejected:
+          result.SkipReason = $"Verification already {myOpportunityExisting.VerificationStatus.Value.ToDescription().ToLower()} for user '{user.Username}' and opportunity '{opportunity.Title}'";
+          return result;
       }
 
       try
@@ -1217,12 +1219,15 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
           {
             DateStart = request.DateStart,
             DateEnd = request.DateEnd,
-            CommitmentInterval = request.CommitmentInterval
+            CommitmentInterval = request.CommitmentInterval,
+            PercentComplete = request.PercentComplete
           };
 
-          await PerformActionSendForVerification(user, opportunity.Id, requestVerify, options);
+          var myOpportunity = await PerformActionSendForVerification(user, opportunity.Id, requestVerify, options);
+          result.MyOpportunityId = myOpportunity.Id;
 
-          await FinalizeVerification(user, opportunity, VerificationStatus.Completed, options);
+          if (request.Completed)
+            await FinalizeVerification(user, opportunity, VerificationStatus.Completed, options);
 
           scope.Complete();
         });
@@ -1363,6 +1368,23 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
     #endregion
 
     #region Private Members
+    /// <summary>
+    /// Populates computed properties on the MyOpportunity item.
+    ///
+    /// Partner synchronization information only applies to verification submissions.
+    /// When present, it indicates that the completion submission is partner-managed
+    /// and should be treated as locked for normal Yoma status changes.
+    /// </summary>
+    private void ParseComputed(Models.MyOpportunity myOpportunity)
+    {
+      myOpportunity.UserPhotoURL = GetBlobObjectURL(myOpportunity.UserPhotoStorageType, myOpportunity.UserPhotoKey);
+      myOpportunity.OrganizationLogoURL = GetBlobObjectURL(myOpportunity.OrganizationLogoStorageType, myOpportunity.OrganizationLogoKey);
+      myOpportunity.Verifications?.ForEach(v => v.FileURL = GetBlobObjectURL(v.FileStorageType, v.FileKey));
+
+      if (myOpportunity.Action == Action.Verification)
+        myOpportunity.SyncedInfo = _syncStateService.ListSyncInfoMyOpportunity(myOpportunity.Id);
+    }
+
     private MyOpportunityResponseVerifyStatus GetVerificationStatusInternal(Guid opportunityId, Guid userId)
     {
       var opportunity = _opportunityService.GetById(opportunityId, false, false, false);
@@ -1387,8 +1409,10 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       return new MyOpportunityResponseVerifyStatus
       {
         Status = myOpportunity.VerificationStatus.Value,
+        PercentComplete = myOpportunity.PercentComplete,
         Comment = myOpportunity.CommentVerification,
-        DateCompleted = myOpportunity.DateCompleted
+        DateCompleted = myOpportunity.DateCompleted,
+        SyncedInfo = _syncStateService.ListSyncInfoMyOpportunity(myOpportunity.Id)
       };
     }
 
@@ -1531,6 +1555,9 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
         if (item.VerificationStatus != VerificationStatus.Pending)
           throw new ValidationException($"Verification is not {VerificationStatus.Pending.ToDescription().ToLower()} for opportunity '{opportunity.Title}'");
+
+        if (!options.PartnerSyncedVerification && _syncStateService.ListSyncInfoMyOpportunity(item.Id)?.Locked == true)
+          throw new ValidationException($"Verification for opportunity '{opportunity.Title}' is externally managed and cannot be manually finalized");
 
         // Idempotent no-op: already at requested status
         if (item.VerificationStatus == status)
@@ -1811,7 +1838,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       };
     }
 
-    private async Task PerformActionSendForVerification(User user,
+    private async Task<Models.MyOpportunity> PerformActionSendForVerification(User user,
       Guid opportunityId,
       MyOpportunityRequestVerify request,
       MyOpportunityVerificationOptions options)
@@ -1899,11 +1926,12 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       myOpportunity.CommitmentInterval = request.CommitmentInterval?.Option;
       myOpportunity.DateStart = request.DateStart;
       myOpportunity.DateEnd = request.DateEnd;
+      myOpportunity.PercentComplete = request.PercentComplete;
       myOpportunity.Recommendable = request.Recommendable;
       myOpportunity.StarRating = request.StarRating;
       myOpportunity.Feedback = request.Feedback;
 
-      await PerformActionSendForVerificationProcessVerificationTypes(request, opportunity, myOpportunity, options, isNew);
+      myOpportunity = await PerformActionSendForVerificationProcessVerificationTypes(request, opportunity, myOpportunity, options, isNew);
 
       //used by notifications
       myOpportunity.Username = user.Username;
@@ -1917,7 +1945,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       myOpportunity.ZltoReward = opportunity.ZltoReward;
       myOpportunity.YomaReward = opportunity.YomaReward;
 
-      if (options.AutoFinalizedVerification) return; //with instant, imported or synced verifications, pending notifications are not sent
+      if (options.AutoFinalizedVerification) return myOpportunity; //with instant, imported or synced verifications, pending notifications are not sent
 
       //sent to youth
       if (options.EnqueueOutcomes)
@@ -1932,6 +1960,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             nameof(SendNotification), $"{nameof(Models.MyOpportunity)}.{nameof(PerformActionSendForVerification)}");
       else
         await SendNotification(myOpportunity, NotificationType.Opportunity_Verification_Pending_Admin);
+
+      return myOpportunity;
     }
 
     private async Task SendNotification(Models.MyOpportunity myOpportunity, NotificationType type)
@@ -1984,7 +2014,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       }
     }
 
-    private async Task PerformActionSendForVerificationProcessVerificationTypes(MyOpportunityRequestVerify request,
+    private async Task<Models.MyOpportunity> PerformActionSendForVerificationProcessVerificationTypes(MyOpportunityRequestVerify request,
       Opportunity.Models.Opportunity opportunity,
       Models.MyOpportunity myOpportunity,
       MyOpportunityVerificationOptions options,
@@ -2036,6 +2066,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
           scope.Complete();
         });
+
+        return myOpportunity;
       }
       catch //roll back
       {

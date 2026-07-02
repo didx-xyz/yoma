@@ -871,6 +871,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
     private async Task ProcessSyncPullVerificationOpportunity(Models.Lookups.Partner partnerModel, SyncPartner partner, DateTimeOffset executeUntil)
     {
       var entityType = EntityType.Opportunity;
+      var myOpportunityEntityType = EntityType.MyOpportunity;
       var dateEnd = DateTimeOffset.UtcNow;
       var tracking = new PartnerSyncTrackingRequest
       {
@@ -882,7 +883,10 @@ namespace Yoma.Core.Domain.PartnerSync.Services
         ItemsProcessed = 0,
         ItemsSucceeded = 0,
         ItemsSkipped = 0,
-        ItemsFailed = 0
+        ItemsFailed = 0,
+        ItemsCreated = 0,
+        ItemsUpdated = 0,
+        ItemsDeleted = 0
       };
       var completedPull = false;
 
@@ -913,35 +917,62 @@ namespace Yoma.Core.Domain.PartnerSync.Services
           {
             if (executeUntil <= DateTimeOffset.UtcNow) break;
 
+            var action = SyncAction.Create;
+            Guid? myOpportunityId = null;
+
             try
             {
               if (string.IsNullOrWhiteSpace(item.EntityExternalId))
                 throw new InvalidOperationException("Entity external id expected");
 
+              if (string.IsNullOrWhiteSpace(item.UserExternalId))
+                throw new InvalidOperationException("User external id expected");
+
+              if (string.IsNullOrWhiteSpace(item.ExternalId))
+                throw new InvalidOperationException("Verification external id expected");
+
               if (string.IsNullOrWhiteSpace(item.Username))
                 throw new InvalidOperationException("Username expected");
-
-              if (!item.Completed)
-              {
-                if (_logger.IsEnabled(LogLevel.Information))
-                  _logger.LogInformation("Skipping sync pull verification item because partner item is not completed for partner '{partner}', entity type '{entityType}', entity external id '{entityExternalId}', user external id '{userExternalId}'",
-                    partner, entityType, item.EntityExternalId, item.UserExternalId);
-
-                IncrementTrackingSkipped(tracking);
-                continue;
-              }
 
               if (_logger.IsEnabled(LogLevel.Information))
                 _logger.LogInformation("Processing sync pull verification item for partner '{partner}', entity type '{entityType}', entity external id '{entityExternalId}', user external id '{userExternalId}'",
                   partner, entityType, item.EntityExternalId, item.UserExternalId);
 
-              var processingItemExisting = _processingService.GetPull(partnerModel.Id, entityType, item.EntityExternalId);
-              if (!processingItemExisting.HasSynchronizedEntity(entityType) || !processingItemExisting!.OpportunityId.HasValue)
+              var processingItemExistingOpportunity = _processingService.GetPull(partnerModel.Id, entityType, item.EntityExternalId);
+              if (!processingItemExistingOpportunity.HasSynchronizedEntity(entityType) || !processingItemExistingOpportunity!.OpportunityId.HasValue)
                 throw new InvalidOperationException($"Synchronized opportunity mapping expected for partner '{partner}', entity type '{entityType}', entity external id '{item.EntityExternalId}'");
+
+              var processingItemExistingMyOpportunity = _processingService.GetPull(partnerModel.Id, myOpportunityEntityType, item.ExternalId);
+              myOpportunityId = processingItemExistingMyOpportunity?.MyOpportunityId;
+
+              if (processingItemExistingMyOpportunity?.Status == ProcessingStatus.Error)
+              {
+                if (_logger.IsEnabled(LogLevel.Information))
+                  _logger.LogInformation(
+                    "Processing of partner sync pull verification item skipped: Existing pull item is in permanent error state for partner '{partner}', entity type '{entityType}', entity external id '{entityExternalId}'. Retry count '{retryCount}'. Error: {errorReason}",
+                    partner, myOpportunityEntityType, item.ExternalId, processingItemExistingMyOpportunity.RetryCount, processingItemExistingMyOpportunity.ErrorReason);
+
+                IncrementTrackingSkipped(tracking);
+                continue;
+              }
+
+              action = processingItemExistingMyOpportunity.HasSynchronizedEntity(myOpportunityEntityType)
+                ? SyncAction.Update
+                : SyncAction.Create;
+
+              if (!partnerModel.ActionsEnabledParsed.Contains(action))
+              {
+                if (_logger.IsEnabled(LogLevel.Information))
+                  _logger.LogInformation("Processing of partner sync pull verification item skipped: Action '{action}' not enabled for partner '{partner}', entity type '{entityType}', entity external id '{entityExternalId}'",
+                    action, partner, myOpportunityEntityType, item.ExternalId);
+
+                IncrementTrackingSkipped(tracking);
+                continue;
+              }
 
               var request = new MyOpportunityRequestVerifyImportPartnerSync
               {
-                OpportunityId = processingItemExisting.OpportunityId.Value,
+                OpportunityId = processingItemExistingOpportunity.OpportunityId.Value,
                 UserEmail = item.UserEmail,
                 UserPhoneNumber = item.UserPhoneNumber,
                 DateStart = item.DateStart,
@@ -951,10 +982,28 @@ namespace Yoma.Core.Domain.PartnerSync.Services
                   Id = item.CommitmentInterval.Id,
                   Count = item.CommitmentInterval.Count
                 },
+                Completed = item.Completed,
+                PercentComplete = item.PercentComplete,
                 DateCompleted = item.DateCompleted
               };
 
+              var payloadHash = HashHelper.ComputeSHA256Hash(HashHelper.SerializeForHashing(request));
+              var retryingPreviousError = !string.IsNullOrWhiteSpace(processingItemExistingMyOpportunity?.ErrorReason);
+
+              if (!retryingPreviousError &&
+                  string.Equals(processingItemExistingMyOpportunity?.PayloadHash, payloadHash, StringComparison.Ordinal))
+              {
+                if (_logger.IsEnabled(LogLevel.Information))
+                  _logger.LogInformation(
+                    "Processing of partner sync pull verification item skipped: Effective payload unchanged; no domain update required for partner '{partner}', entity type '{entityType}', entity external id '{entityExternalId}'",
+                    partner, myOpportunityEntityType, item.ExternalId);
+
+                IncrementTrackingSkipped(tracking);
+                continue;
+              }
+
               var importResult = await _myOpportunityService.PerformActionImportVerificationFromPartnerSync(request);
+              myOpportunityId = importResult.MyOpportunityId;
 
               if (importResult.Skipped)
               {
@@ -965,7 +1014,12 @@ namespace Yoma.Core.Domain.PartnerSync.Services
                 continue;
               }
 
-              IncrementTrackingSucceeded(tracking);
+              if (!myOpportunityId.HasValue)
+                throw new InvalidOperationException($"MyOpportunity id expected after partner sync verification import for partner '{partner}', entity type '{myOpportunityEntityType}', entity external id '{item.ExternalId}'");
+
+              await _processingService.RecordPull(action, partnerModel.Id, myOpportunityEntityType, item.ExternalId, myOpportunityId.Value, payloadHash);
+
+              IncrementTrackingSucceeded(tracking, action);
 
               if (_logger.IsEnabled(LogLevel.Information))
                 _logger.LogInformation("Processed sync pull verification item for partner '{partner}', entity type '{entityType}', entity external id '{entityExternalId}', user external id '{userExternalId}'",
@@ -977,6 +1031,19 @@ namespace Yoma.Core.Domain.PartnerSync.Services
 
               if (_logger.IsEnabled(LogLevel.Error))
                 _logger.LogError(ex, "Failed to process sync pull verification item for partner '{partner}' and entity type '{entityType}': {errorMessage}", partner, entityType, ex.Message);
+
+              if (action == SyncAction.Create) myOpportunityId = null;
+
+              try
+              {
+                if (!string.IsNullOrWhiteSpace(item.ExternalId))
+                  await _processingService.RecordPullError(action, partnerModel.Id, myOpportunityEntityType, item.ExternalId, myOpportunityId, ex.Message);
+              }
+              catch (Exception innerEx)
+              {
+                if (_logger.IsEnabled(LogLevel.Error))
+                  _logger.LogError(innerEx, "Failed to record sync pull verification error state for partner '{partner}' and entity type '{entityType}': {errorMessage}", partner, myOpportunityEntityType, innerEx.Message);
+              }
             }
           }
 

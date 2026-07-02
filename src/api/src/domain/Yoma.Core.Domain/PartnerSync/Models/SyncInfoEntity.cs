@@ -3,25 +3,16 @@ using Yoma.Core.Domain.Core;
 namespace Yoma.Core.Domain.PartnerSync.Models
 {
   /// <summary>
-  /// Current partner synchronization state for an entity, when applicable.
+  /// Shared synchronization state for an entity, when applicable.
   ///
-  /// If no value is returned for this model, the entity is not currently synchronized with any partner.
+  /// If no synchronization info is returned for an entity, the entity is not currently
+  /// synchronized with any partner.
   /// </summary>
-  public sealed class SyncInfoEntity
+  public abstract class SyncInfoEntityBase
   {
     /// <summary>
     /// The synchronization type currently applied to the entity.
     /// Only one synchronization type may apply to an entity.
-    ///
-    /// Pull:
-    /// - The external partner is the source of truth
-    /// - The entity is locked for editing and status changes
-    /// - The entity cannot be shared with other partners through push synchronization
-    ///
-    /// Push:
-    /// - Yoma remains the entity owner and source of truth
-    /// - The entity remains editable in Yoma
-    /// - Update restrictions may still apply after sharing, depending on partner-specific synchronization rules
     /// </summary>
     public SyncType SyncType { get; set; }
 
@@ -32,20 +23,21 @@ namespace Yoma.Core.Domain.PartnerSync.Models
     /// for normal Yoma editing/status changes.
     /// </summary>
     public bool Locked => SyncType == SyncType.Pull;
-
-    /// <summary>
-    /// Partner-specific synchronization records for the entity.
-    /// </summary>
-    public List<SyncInfoEntityPartner> Partners { get; set; } = [];
   }
 
   /// <summary>
-  /// Partner-specific synchronization information for an entity.
+  /// Shared partner-specific synchronization information for an entity.
   /// </summary>
-  public sealed class SyncInfoEntityPartner
+  public abstract class SyncInfoEntityPartnerBase
   {
+    /// <summary>
+    /// The partner associated with the synchronization record.
+    /// </summary>
     public SyncPartner Partner { get; set; }
 
+    /// <summary>
+    /// The Yoma entity type represented by the synchronization record.
+    /// </summary>
     public EntityType EntityType { get; set; }
 
     /// <summary>
@@ -63,23 +55,76 @@ namespace Yoma.Core.Domain.PartnerSync.Models
     /// Partner-specific flows that require this value must validate it before use.
     /// </summary>
     public string? ExternalId { get; set; }
+  }
 
+  /// <summary>
+  /// Current partner synchronization state for an opportunity, when applicable.
+  ///
+  /// Opportunities support pull and push synchronization:
+  /// - Pull: the external partner is the source of truth and the opportunity is locked.
+  /// - Push: Yoma remains the source of truth and the opportunity may be shared with one
+  ///   or more partners.
+  /// </summary>
+  public sealed class SyncInfoEntity : SyncInfoEntityBase
+  {
     /// <summary>
-    /// Navigation URL for the synchronized entity, when available.
+    /// Partner-specific synchronization records for the opportunity.
     ///
-    /// For normal sync metadata this is the static/default external URL owned by the entity,
-    /// for example Opportunity.URL.
+    /// Pull-synced opportunities must have exactly one partner.
+    /// Push-synced opportunities may have multiple partner records.
+    /// </summary>
+    public List<SyncInfoEntityPartner> Partners { get; set; } = [];
+  }
+
+  /// <summary>
+  /// Partner-specific synchronization information for an opportunity.
+  /// </summary>
+  public sealed class SyncInfoEntityPartner : SyncInfoEntityPartnerBase
+  {
+    /// <summary>
+    /// Navigation URL for the synchronized opportunity, when available.
+    ///
+    /// For normal sync metadata this is the static/default external URL owned by the
+    /// opportunity, for example Opportunity.URL.
     ///
     /// The sync state service does not own entity URL resolution, so this value is supplied
-    /// by the caller when the entity has an external URL available.
+    /// by the caller when the opportunity has an external URL available.
     ///
     /// Authenticated navigation flows may replace or enrich this value with a final
     /// partner-specific URL for the current user, for example when a partner requires
     /// registration, authentication, token handling, or redirect wrapping at navigation time.
     ///
-    /// A null value means this synchronized partner item does not currently have a navigation URL.
-    /// Non-synchronized entities have no SyncInfoEntity value.
+    /// A null value means this synchronized partner item does not currently have a
+    /// navigation URL.
     /// </summary>
     public string? URL { get; set; }
+  }
+
+  /// <summary>
+  /// Current partner synchronization state for a MyOpportunity completion submission,
+  /// when applicable.
+  ///
+  /// MyOpportunity synchronization is used for partner-provided opportunity
+  /// verification/progress submissions. It is pull-only: the partner is the source of
+  /// truth for the submission state, and Yoma records the resulting MyOpportunity item
+  /// in ProcessingLog for tracking, payload hashing, retry handling, and UI locking.
+  /// </summary>
+  public sealed class SyncInfoMyOpportunity : SyncInfoEntityBase
+  {
+    /// <summary>
+    /// Partner-specific synchronization records for the MyOpportunity completion submission.
+    ///
+    /// MyOpportunity synchronization is pull-only and must have exactly one partner.
+    /// The list shape is retained for consistency with opportunity sync info, but the
+    /// sync state service enforces the single-partner rule.
+    /// </summary>
+    public List<SyncInfoMyOpportunityPartner> Partners { get; set; } = [];
+  }
+
+  /// <summary>
+  /// Partner-specific synchronization information for a MyOpportunity completion submission.
+  /// </summary>
+  public sealed class SyncInfoMyOpportunityPartner : SyncInfoEntityPartnerBase
+  {
   }
 }

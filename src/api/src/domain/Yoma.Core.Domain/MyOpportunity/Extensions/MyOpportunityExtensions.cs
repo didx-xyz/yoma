@@ -44,6 +44,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Extensions
         CommitmentIntervalCount = value.CommitmentIntervalCount,
         DateStart = value.DateStart,
         DateEnd = value.DateEnd,
+        PercentComplete = value.PercentComplete,
         DateCompleted = value.DateCompleted,
         ZltoReward = value.ZltoReward,
         YomaReward = value.YomaReward,
@@ -51,6 +52,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Extensions
         StarRating = value.StarRating,
         Feedback = value.Feedback,
         DateModified = value.DateModified,
+        SyncedInfo = value.SyncedInfo,
         Verifications = value.Verifications?.Select(o =>
             new MyOpportunityInfoVerification
             {
