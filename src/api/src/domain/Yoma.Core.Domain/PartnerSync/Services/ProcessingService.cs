@@ -642,6 +642,9 @@ namespace Yoma.Core.Domain.PartnerSync.Services
       item.StatusId = _processingStatusService.GetByName(ProcessingStatus.Processed.ToString()).Id;
       item.Status = ProcessingStatus.Processed;
       item.OpportunityId = entityType == EntityType.Opportunity ? entityId : null;
+      // MyOpportunity pull logs keep their external id as the durable partner key.
+      // If the MyOpportunity is later hard-deleted by partner cancellation/pending purge,
+      // the FK is set null by the database while the log row remains for audit
       item.MyOpportunityId = entityType == EntityType.MyOpportunity ? entityId : null;
       item.PayloadHash = payloadHash;
 
