@@ -943,6 +943,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
                 throw new InvalidOperationException($"Synchronized opportunity mapping expected for partner '{partner}', entity type '{entityType}', entity external id '{item.EntityExternalId}'");
 
               var processingItemExistingMyOpportunity = _processingService.GetPull(partnerModel.Id, myOpportunityEntityType, item.ExternalId);
+              var processingItemExistingMyOpportunityAction = processingItemExistingMyOpportunity == null ? default(SyncAction?) : Enum.Parse<SyncAction>(processingItemExistingMyOpportunity.Action, true);
               myOpportunityId = processingItemExistingMyOpportunity?.MyOpportunityId;
 
               if (processingItemExistingMyOpportunity?.Status == ProcessingStatus.Error)
@@ -956,9 +957,12 @@ namespace Yoma.Core.Domain.PartnerSync.Services
                 continue;
               }
 
-              action = processingItemExistingMyOpportunity.HasSynchronizedEntity(myOpportunityEntityType)
-                ? SyncAction.Update
-                : SyncAction.Create;
+              action = item.Status switch
+              {
+                SyncItemVerificationStatus.Cancelled => SyncAction.Delete,
+                _ => processingItemExistingMyOpportunity.HasSynchronizedEntity(myOpportunityEntityType) && processingItemExistingMyOpportunityAction != SyncAction.Delete
+                  ? SyncAction.Update : SyncAction.Create
+              };
 
               if (!partnerModel.ActionsEnabledParsed.Contains(action))
               {
@@ -967,6 +971,23 @@ namespace Yoma.Core.Domain.PartnerSync.Services
                     action, partner, myOpportunityEntityType, item.ExternalId);
 
                 IncrementTrackingSkipped(tracking);
+                continue;
+              }
+
+              if (item.Status == SyncItemVerificationStatus.Cancelled)
+              {
+                if (!processingItemExistingMyOpportunity.HasSynchronizedEntity(myOpportunityEntityType) ||
+                    !processingItemExistingMyOpportunity!.MyOpportunityId.HasValue ||
+                    processingItemExistingMyOpportunityAction == SyncAction.Delete)
+                {
+                  IncrementTrackingSkipped(tracking);
+                  continue;
+                }
+
+                // Delete action records its own successful pull state; error state is handled by this sync flow.
+                await _myOpportunityService.PerformActionDeleteVerificationFromPartnerSyncPull(processingItemExistingMyOpportunity.MyOpportunityId.Value, false);
+
+                IncrementTrackingSucceeded(tracking, SyncAction.Delete);
                 continue;
               }
 
@@ -982,7 +1003,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
                   Id = item.CommitmentInterval.Id,
                   Count = item.CommitmentInterval.Count
                 },
-                Completed = item.Completed,
+                Completed = item.Status == SyncItemVerificationStatus.Completed,
                 PercentComplete = item.PercentComplete,
                 DateCompleted = item.DateCompleted
               };
@@ -990,7 +1011,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
               var payloadHash = HashHelper.ComputeSHA256Hash(HashHelper.SerializeForHashing(request));
               var retryingPreviousError = !string.IsNullOrWhiteSpace(processingItemExistingMyOpportunity?.ErrorReason);
 
-              if (!retryingPreviousError &&
+              if (processingItemExistingMyOpportunityAction != SyncAction.Delete && !retryingPreviousError &&
                   string.Equals(processingItemExistingMyOpportunity?.PayloadHash, payloadHash, StringComparison.Ordinal))
               {
                 if (_logger.IsEnabled(LogLevel.Information))

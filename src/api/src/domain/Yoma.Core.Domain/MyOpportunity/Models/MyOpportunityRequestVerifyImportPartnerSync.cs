@@ -18,7 +18,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
 
     public bool Completed { get; set; }
 
-    public decimal PercentComplete { get; set; }
+    public decimal? PercentComplete { get; set; }
 
     public DateTimeOffset? DateCompleted { get; set; }
   }

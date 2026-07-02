@@ -1,3 +1,4 @@
+using Newtonsoft.Json;
 using Yoma.Core.Domain.Core;
 
 namespace Yoma.Core.Domain.PartnerSync.Models
@@ -30,6 +31,9 @@ namespace Yoma.Core.Domain.PartnerSync.Models
   /// </summary>
   public abstract class SyncInfoEntityPartnerBase
   {
+    [JsonIgnore]
+    internal Guid PartnerId { get; set; }
+
     /// <summary>
     /// The partner associated with the synchronization record.
     /// </summary>

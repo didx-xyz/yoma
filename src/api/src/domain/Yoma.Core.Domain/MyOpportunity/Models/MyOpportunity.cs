@@ -61,7 +61,14 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
 
     public Opportunity.Status OpportunityStatus { get; set; }
 
-    public string? OpportunityCommitmentIntervalDescription { get; set; }
+    public Guid? OpportunityCommitmentIntervalId { get; set; }
+
+    public Core.TimeIntervalOption? OpportunityCommitmentInterval { get; set; }
+
+    public short? OpportunityCommitmentIntervalCount { get; set; }
+
+    public string? OpportunityCommitmentIntervalDescription => !OpportunityCommitmentInterval.HasValue || !OpportunityCommitmentIntervalCount.HasValue
+      ? null : $"{OpportunityCommitmentIntervalCount.Value} {OpportunityCommitmentInterval.Value}{(OpportunityCommitmentIntervalCount.Value > 1 ? "s" : string.Empty)}";
 
     #region Verification Counts
     public int OpportunityParticipantCountTotal { get; set; }

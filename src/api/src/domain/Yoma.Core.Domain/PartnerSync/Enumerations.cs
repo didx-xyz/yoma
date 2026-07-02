@@ -1,5 +1,3 @@
-using System.ComponentModel;
-
 namespace Yoma.Core.Domain.PartnerSync
 {
   public enum EntityType
@@ -28,5 +26,12 @@ namespace Yoma.Core.Domain.PartnerSync
     Successful,
     Partial,
     Failed
+  }
+
+  public enum SyncItemVerificationStatus
+  {
+    InProgress,
+    Completed,
+    Cancelled
   }
 }

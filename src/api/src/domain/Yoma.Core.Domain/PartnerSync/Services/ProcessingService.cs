@@ -560,6 +560,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
           action = actionExisting!.Value switch
           {
             SyncAction.Create or SyncAction.Update => SyncAction.Update,
+            SyncAction.Delete when entityType == EntityType.MyOpportunity => SyncAction.Create,
             SyncAction.Delete => throw new InvalidOperationException($"Recording of partner sync pull creation requested for entity already deleted: Partner id '{partnerId}', entity type '{entityType}', {entityIdInfo}"),
             _ => throw new InvalidOperationException($"Action of '{actionExisting}' not supported"),
           };
@@ -581,6 +582,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
           action = actionExisting!.Value switch
           {
             SyncAction.Create or SyncAction.Update => SyncAction.Update,
+            SyncAction.Delete when entityType == EntityType.MyOpportunity => SyncAction.Create,
             SyncAction.Delete => throw new InvalidOperationException($"Recording of partner sync pull update requested for entity already deleted: Partner id '{partnerId}', entity type '{entityType}', {entityIdInfo}"),
             _ => throw new InvalidOperationException($"Action of '{actionExisting}' not supported"),
           };
@@ -624,7 +626,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
           || !syncScopes.Contains(syncScope))
         throw new InvalidOperationException($"Entity type of '{capabilityEntityType}' and sync scope '{syncScope}' not enabled for partner '{partner.Name}' and sync type '{SyncType.Pull}'");
 
-      var reuseExistingItem = itemExisting != null && (!itemExistingHasSynchronizedEntity || itemExistingIsRetryableError);
+      var reuseExistingItem = itemExisting != null && actionExisting != SyncAction.Delete && (!itemExistingHasSynchronizedEntity || itemExistingIsRetryableError);
 
       var item = reuseExistingItem
         ? itemExisting!

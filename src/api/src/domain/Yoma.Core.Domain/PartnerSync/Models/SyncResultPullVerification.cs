@@ -56,12 +56,15 @@ namespace Yoma.Core.Domain.PartnerSync.Models
 
     public SyncItemVerificationCommitmentInterval? CommitmentInterval { get; set; }
 
-    public bool Completed { get; set; }
+    /// <summary>
+    /// Partner-provided status for this verification/completion
+    /// </summary>
+    public SyncItemVerificationStatus Status { get; set; }
 
     /// <summary>
-    /// Partner-provided completion progress as a percentage from 0 to 100.
+    /// Partner-provided verification/completion progress as a percentage from 0 to 100
     /// </summary>
-    public decimal PercentComplete { get; set; }
+    public decimal? PercentComplete { get; set; }
 
     public DateTimeOffset? DateCompleted { get; set; }
   }

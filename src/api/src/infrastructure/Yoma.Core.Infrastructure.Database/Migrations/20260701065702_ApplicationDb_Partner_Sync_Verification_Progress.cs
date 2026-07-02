@@ -1,4 +1,3 @@
-using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -44,7 +43,8 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           column: "MyOpportunityId",
           principalSchema: "Opportunity",
           principalTable: "MyOpportunity",
-          principalColumn: "Id");
+          principalColumn: "Id",
+          onDelete: ReferentialAction.SetNull);
     }
 
     /// <inheritdoc />

@@ -308,6 +308,11 @@ namespace Yoma.Core.Infrastructure.Database.Context
         entity.Property(e => e.SyncType)
           .IsRequired()
           .HasDefaultValue(Domain.Core.SyncType.Push);
+
+        entity.HasOne(e => e.MyOpportunity)
+          .WithMany()
+          .HasForeignKey(e => e.MyOpportunityId)
+          .OnDelete(DeleteBehavior.SetNull);
       });
 
       builder.Entity<PartnerSync.Entities.PartnerSyncUser>(entity =>

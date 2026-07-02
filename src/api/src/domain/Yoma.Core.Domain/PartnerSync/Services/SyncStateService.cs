@@ -235,6 +235,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
 
       return new SyncInfoEntityPartner
       {
+        PartnerId = item.PartnerId,
         Partner = item.Partner,
         EntityType = Enum.Parse<EntityType>(item.EntityType, true),
         ExternalId = item.EntityExternalId,
@@ -248,6 +249,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
 
       return new SyncInfoMyOpportunityPartner
       {
+        PartnerId = item.PartnerId,
         Partner = item.Partner,
         EntityType = Enum.Parse<EntityType>(item.EntityType, true),
         ExternalId = item.EntityExternalId
