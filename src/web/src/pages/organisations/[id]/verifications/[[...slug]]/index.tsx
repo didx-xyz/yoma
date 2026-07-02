@@ -5,7 +5,7 @@ import { getServerSession } from "next-auth";
 import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { type ParsedUrlQuery } from "querystring";
+import { type ParsedUrlQuery } from "node:querystring";
 import React, {
   useCallback,
   useMemo,
@@ -79,6 +79,13 @@ interface IParams extends ParsedUrlQuery {
   page?: string;
   returnUrl?: string;
 }
+
+const isPartnerManagedSubmission = (item: MyOpportunityInfo) =>
+  item.syncedInfo?.syncType === "Pull" || item.syncedInfo?.locked === true;
+
+const getPartnerSourceLabel = (item: MyOpportunityInfo) =>
+  item.syncedInfo?.partners?.map((partner) => partner.partner).join(", ") ||
+  null;
 
 const getErrorStatus = (error: unknown): number | null => {
   if (!axios.isAxiosError(error)) return null;
@@ -165,7 +172,7 @@ const OpportunityVerifications: NextPageWithLayout<{
   // search filter state
   const searchFilter = useMemo<MyOpportunitySearchFilterAdmin>(
     () => ({
-      pageNumber: page ? parseInt(page.toString()) : 1,
+      pageNumber: page ? Number.parseInt(page.toString()) : 1,
       pageSize: PAGE_SIZE,
       valueContains: query?.toString() ?? null,
       organizations: [id],
@@ -198,6 +205,22 @@ const OpportunityVerifications: NextPageWithLayout<{
   });
   const resolvedError =
     error ?? getErrorStatus(searchResultsError) ?? undefined;
+  const selectableItems = useMemo(
+    () =>
+      (searchResults?.items ?? []).filter(
+        (item) => !isPartnerManagedSubmission(item),
+      ),
+    [searchResults?.items],
+  );
+  const hasActionablePendingRows = useMemo(
+    () =>
+      (searchResults?.items ?? []).some(
+        (item) =>
+          item.verificationStatus?.toString() === "Pending" &&
+          !isPartnerManagedSubmission(item),
+      ),
+    [searchResults?.items],
+  );
   const { data: dataOpportunitiesForVerification } = useQuery<SelectOption[]>({
     queryKey: OPPORTUNITY_QUERY_KEYS.opportunitiesForVerification(
       id,
@@ -297,7 +320,11 @@ const OpportunityVerifications: NextPageWithLayout<{
     (approve: boolean) => {
       setVerifyComments("");
 
-      if (selectedRows == null || selectedRows.length === 0) {
+      const actionableSelectedRows = (selectedRows ?? []).filter(
+        (row) => !isPartnerManagedSubmission(row),
+      );
+
+      if (actionableSelectedRows.length === 0) {
         toast("Please select at least one row to continue", {
           type: "error",
           toastId: "verifyCredentialError",
@@ -307,7 +334,7 @@ const OpportunityVerifications: NextPageWithLayout<{
       }
 
       setBulkActionApprove(approve);
-      setTempSelectedRows(selectedRows);
+      setTempSelectedRows(actionableSelectedRows);
       setModalVerifyVisible(true);
     },
     [
@@ -338,6 +365,13 @@ const OpportunityVerifications: NextPageWithLayout<{
 
   const onVerify = useCallback(
     async (approved: boolean) => {
+      if (tempSelectedRows?.some(isPartnerManagedSubmission)) {
+        toast.error(
+          "Partner-managed submissions cannot be approved or declined manually.",
+        );
+        return;
+      }
+
       const model: MyOpportunityRequestVerifyFinalizeBatch = {
         status: approved
           ? VerificationStatus.Completed
@@ -405,6 +439,8 @@ const OpportunityVerifications: NextPageWithLayout<{
 
   const handleRowSelect = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>, row: MyOpportunityInfo) => {
+      if (isPartnerManagedSubmission(row)) return;
+
       if (e.target.checked) {
         setSelectedRows((prev: MyOpportunityInfo[] | undefined) => [
           ...(prev ?? []),
@@ -422,12 +458,12 @@ const OpportunityVerifications: NextPageWithLayout<{
   const handleAllSelect = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       if (e.target.checked) {
-        setSelectedRows(searchResults?.items ?? []);
+        setSelectedRows(selectableItems);
       } else {
         setSelectedRows([]);
       }
     },
-    [searchResults, setSelectedRows],
+    [selectableItems, setSelectedRows],
   );
 
   const onSearch = useCallback(
@@ -475,8 +511,7 @@ const OpportunityVerifications: NextPageWithLayout<{
       },
       ...((!verificationStatus || verificationStatus === "Pending") &&
       !isLoadingSearchResults &&
-      searchResults &&
-      searchResults.items?.length > 0
+      hasActionablePendingRows
         ? [
             {
               label: "Approve",
@@ -498,7 +533,7 @@ const OpportunityVerifications: NextPageWithLayout<{
     [
       verificationStatus,
       isLoadingSearchResults,
-      searchResults,
+      hasActionablePendingRows,
       onChangeBulkAction,
       setImportDialogOpen,
       setExportDialogOpen,
@@ -902,6 +937,7 @@ const OpportunityVerifications: NextPageWithLayout<{
                       returnUrl={returnUrl}
                       id={id}
                       onVerify={() => {
+                        if (isPartnerManagedSubmission(item)) return;
                         setBulkActionApprove(null);
                         setTempSelectedRows([item]);
                         setModalVerifyVisible(true);
@@ -918,7 +954,8 @@ const OpportunityVerifications: NextPageWithLayout<{
                           type="checkbox"
                           className="checkbox checkbox-sm checkbox-primary"
                           checked={
-                            selectedRows?.length === searchResults.items?.length
+                            selectableItems.length > 0 &&
+                            selectedRows?.length === selectableItems.length
                           }
                           onChange={handleAllSelect}
                         />
@@ -928,7 +965,7 @@ const OpportunityVerifications: NextPageWithLayout<{
                       <th className="border-gray-light w-[195px]">
                         Date connected
                       </th>
-                      <th className="border-gray-light">Verified</th>
+                      <th className="border-gray-light">Status</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -939,6 +976,12 @@ const OpportunityVerifications: NextPageWithLayout<{
                             type="checkbox"
                             className="checkbox checkbox-sm checkbox-primary"
                             checked={selectedRows?.some((x) => x.id == item.id)}
+                            disabled={isPartnerManagedSubmission(item)}
+                            title={
+                              isPartnerManagedSubmission(item)
+                                ? "Partner-managed submissions cannot be approved or declined manually"
+                                : undefined
+                            }
                             onChange={(e) => handleRowSelect(e, item)}
                           />
                         </td>
@@ -954,16 +997,20 @@ const OpportunityVerifications: NextPageWithLayout<{
                           </div>
                         </td>
                         <td className="border-gray-light text-gray-dark w-[420px] border-t-2 !align-top">
-                          <Link
-                            className="line-clamp-2 max-w-[420px] font-medium text-black underline"
-                            href={`/organisations/${id}/opportunities/${
-                              item.opportunityId
-                            }/info${`?returnUrl=${encodeURIComponent(
+                          {(() => {
+                            const detailsHref = `/organisations/${id}/opportunities/${item.opportunityId}/info?returnUrl=${encodeURIComponent(
                               getSafeUrl(returnUrl?.toString(), router.asPath),
-                            )}`}`}
-                          >
-                            {item.opportunityTitle}
-                          </Link>
+                            )}`;
+
+                            return (
+                              <Link
+                                className="line-clamp-2 max-w-[420px] font-medium text-black underline"
+                                href={detailsHref}
+                              >
+                                {item.opportunityTitle}
+                              </Link>
+                            );
+                          })()}
                         </td>
                         <td className="border-gray-light text-gray-dark w-[185px] border-t-2 !align-top">
                           {item.dateModified && (
@@ -974,35 +1021,72 @@ const OpportunityVerifications: NextPageWithLayout<{
                         </td>
                         <td className="border-gray-light text-gray-dark w-[140px] border-t-2 !align-top">
                           <div className="flex justify-start">
+                            {/* Pending Button or Pending Progress (externally managed) */}
                             {item.verificationStatus &&
                               item.verificationStatus == "Pending" && (
-                                <button
-                                  type="button"
-                                  className="btn border-gray text-gray-dark btn-sm hover:bg-gray flex-nowrap bg-white hover:text-white"
-                                  onClick={() => {
-                                    setBulkActionApprove(null);
-                                    setTempSelectedRows([item]);
-                                    setModalVerifyVisible(true);
-                                  }}
-                                >
-                                  <IoMdAlert className="text-yellow mr-2 h-6 w-6" />
-                                  Pending
-                                </button>
+                                <div className="flex flex-col gap-2">
+                                  {!isPartnerManagedSubmission(item) && (
+                                    <button
+                                      type="button"
+                                      className="btn border-gray text-gray-dark btn-sm hover:bg-gray flex-nowrap bg-white hover:text-white"
+                                      onClick={() => {
+                                        setBulkActionApprove(null);
+                                        setTempSelectedRows([item]);
+                                        setModalVerifyVisible(true);
+                                      }}
+                                    >
+                                      <IoMdAlert className="text-yellow mr-2 h-6 w-6" />
+                                      Pending
+                                    </button>
+                                  )}
+
+                                  {isPartnerManagedSubmission(item) &&
+                                    item.percentComplete !== null &&
+                                    item.percentComplete !== undefined && (
+                                      <div className="flex w-full max-w-[130px] flex-col gap-1 text-xs">
+                                        <span className="text-gray-dark">
+                                          {item.percentComplete}% complete
+                                          <span
+                                            title={`Managed by ${getPartnerSourceLabel(item)}`}
+                                          >
+                                            <IoInformationCircleOutline className="text-blue ml-1 inline-block size-5" />
+                                          </span>
+                                        </span>
+                                        <div className="h-1.5 w-full overflow-hidden rounded-full bg-gray-200">
+                                          <div
+                                            className="bg-green h-full rounded-full"
+                                            style={{
+                                              width: `${Math.min(Math.max(item.percentComplete ?? 0, 0), 100)}%`,
+                                            }}
+                                          />
+                                        </div>
+                                      </div>
+                                    )}
+                                </div>
                               )}
 
                             {/* Status Badges */}
                             {item.verificationStatus &&
                               item.verificationStatus == "Completed" && (
-                                <div className="flex flex-row">
-                                  <IoMdCheckmark className="text-green mr-2 h-6 w-6" />
-                                  Completed
+                                <div title="Submission has been completed.">
+                                  <span
+                                    className={`badge bg-green-light text-green border-green/10 gap-1 border border-none text-[10px] font-semibold select-none`}
+                                  >
+                                    <IoMdCheckmark className="h-3.5 w-3.5" />
+                                    Completed
+                                  </span>
                                 </div>
                               )}
+
                             {item.verificationStatus &&
                               item.verificationStatus == "Rejected" && (
-                                <div className="flex flex-row">
-                                  <IoMdClose className="mr-2 h-6 w-6 text-red-400" />
-                                  Declined
+                                <div title="Submission was declined.">
+                                  <span
+                                    className={`badge gap-1 border border-none border-red-100 bg-red-50 text-[10px] font-semibold text-red-500 select-none`}
+                                  >
+                                    <IoMdClose className="h-3.5 w-3.5" />
+                                    Declined
+                                  </span>
                                 </div>
                               )}
                           </div>
@@ -1015,7 +1099,7 @@ const OpportunityVerifications: NextPageWithLayout<{
                 {/* PAGINATION */}
                 <div className="mt-2 grid place-items-center justify-center">
                   <PaginationButtons
-                    currentPage={page ? parseInt(page) : 1}
+                    currentPage={page ? Number.parseInt(page) : 1}
                     totalItems={searchResults?.totalCount ?? 0}
                     pageSize={PAGE_SIZE}
                     onClick={handlePagerChange}

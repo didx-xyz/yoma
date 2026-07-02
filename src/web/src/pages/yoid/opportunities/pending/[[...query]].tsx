@@ -140,21 +140,6 @@ const MyOpportunitiesPending: NextPageWithLayout<{
                 <OpportunityListItem
                   key={item.id}
                   data={item}
-                  // data={{
-                  //   ...item,
-                  //   percentComplete: item.percentComplete ?? 42,
-                  //   syncedInfo: item.syncedInfo ?? {
-                  //     syncType: "Pull",
-                  //     locked: true,
-                  //     partners: [
-                  //       {
-                  //         partner: "Sample Partner",
-                  //         externalId: "test-external-id",
-                  //         url: null,
-                  //       },
-                  //     ],
-                  //   },
-                  // }}
                   displayDate={item.dateModified ?? ""}
                   config={{
                     displayDateLabel: "Submitted",
