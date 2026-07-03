@@ -1403,7 +1403,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
     #endregion
 
     #region Private Members
-    private async Task PerformActionDeleteVerification(Models.MyOpportunity myOpportunity, Func<Task>? beforeCommit = null)
+    private async Task PerformActionDeleteVerification(Models.MyOpportunity myOpportunity, Func<Task>? beforeDelete = null)
     {
       ArgumentNullException.ThrowIfNull(myOpportunity);
 
@@ -1443,9 +1443,9 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             itemsExistingDeleted.Add(item);
           }
 
-          await _myOpportunityRepository.Delete(myOpportunity);
+          if (beforeDelete != null) await beforeDelete();
 
-          if (beforeCommit != null) await beforeCommit();
+          await _myOpportunityRepository.Delete(myOpportunity);
 
           scope.Complete();
         });

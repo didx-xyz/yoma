@@ -626,7 +626,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
           || !syncScopes.Contains(syncScope))
         throw new InvalidOperationException($"Entity type of '{capabilityEntityType}' and sync scope '{syncScope}' not enabled for partner '{partner.Name}' and sync type '{SyncType.Pull}'");
 
-      var reuseExistingItem = itemExisting != null && actionExisting != SyncAction.Delete && (!itemExistingHasSynchronizedEntity || itemExistingIsRetryableError);
+      var reuseExistingItem = itemExisting != null && (itemExistingIsRetryableError || (actionExisting != SyncAction.Delete && !itemExistingHasSynchronizedEntity));
 
       var item = reuseExistingItem
         ? itemExisting!
