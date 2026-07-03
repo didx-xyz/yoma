@@ -3522,7 +3522,8 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           {
             b.HasOne("Yoma.Core.Infrastructure.Database.MyOpportunity.Entities.MyOpportunity", "MyOpportunity")
                       .WithMany()
-                      .HasForeignKey("MyOpportunityId");
+                      .HasForeignKey("MyOpportunityId")
+                      .OnDelete(DeleteBehavior.SetNull);
 
             b.HasOne("Yoma.Core.Infrastructure.Database.Opportunity.Entities.Opportunity", "Opportunity")
                       .WithMany()

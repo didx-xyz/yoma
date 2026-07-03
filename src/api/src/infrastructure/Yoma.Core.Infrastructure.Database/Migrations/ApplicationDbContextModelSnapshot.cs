@@ -38,8 +38,8 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
             b.ToTable("UnnestedValueDummy", null, t =>
                       {
-                    t.ExcludeFromMigrations();
-                  });
+                        t.ExcludeFromMigrations();
+                      });
 
             b.ToView("unnested_values", (string)null);
           });
@@ -3519,7 +3519,8 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           {
             b.HasOne("Yoma.Core.Infrastructure.Database.MyOpportunity.Entities.MyOpportunity", "MyOpportunity")
                       .WithMany()
-                      .HasForeignKey("MyOpportunityId");
+                      .HasForeignKey("MyOpportunityId")
+                      .OnDelete(DeleteBehavior.SetNull);
 
             b.HasOne("Yoma.Core.Infrastructure.Database.Opportunity.Entities.Opportunity", "Opportunity")
                       .WithMany()

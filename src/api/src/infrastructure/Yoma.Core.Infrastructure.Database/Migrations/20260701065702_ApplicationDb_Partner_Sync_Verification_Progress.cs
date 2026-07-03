@@ -45,6 +45,8 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           principalTable: "MyOpportunity",
           principalColumn: "Id",
           onDelete: ReferentialAction.SetNull);
+
+      ApplicationDb_Partner_Sync_Verification_Progress_Seeding.SeedUp(migrationBuilder);
     }
 
     /// <inheritdoc />
@@ -74,6 +76,8 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           name: "PercentComplete",
           schema: "Opportunity",
           table: "MyOpportunity");
+
+      ApplicationDb_Partner_Sync_Verification_Progress_Seeding.SeedDown(migrationBuilder);
     }
   }
 }
