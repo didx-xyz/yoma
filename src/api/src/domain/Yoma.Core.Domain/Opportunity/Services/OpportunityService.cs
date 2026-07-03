@@ -1208,7 +1208,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
           ? $"{request.CommitmentIntervalCount.Value} {_timeIntervalService.GetById(request.CommitmentIntervalId.Value).Name}{(request.CommitmentIntervalCount.Value > 1 ? "s" : string.Empty)}"
           : null,
         ParticipantLimit = request.ParticipantLimit,
-        KeywordsFlatten = request.Keywords == null ? null : string.Join(Keywords_Separator, request.Keywords),
+        KeywordsFlattened = request.Keywords == null ? null : string.Join(Keywords_Separator, request.Keywords),
         Keywords = request.Keywords,
         DateStart = request.DateStart,
         DateEnd = request.DateEnd,
@@ -1365,7 +1365,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         ? $"{request.CommitmentIntervalCount.Value} {_timeIntervalService.GetById(request.CommitmentIntervalId.Value).Name}{(request.CommitmentIntervalCount.Value > 1 ? "s" : string.Empty)}"
         : null;
       result.ParticipantLimit = request.ParticipantLimit;
-      result.KeywordsFlatten = request.Keywords == null ? null : string.Join(Keywords_Separator, request.Keywords);
+      result.KeywordsFlattened = request.Keywords == null ? null : string.Join(Keywords_Separator, request.Keywords);
       result.Keywords = request.Keywords;
       result.DateStart = request.DateStart;
       result.DateEnd = request.DateEnd;

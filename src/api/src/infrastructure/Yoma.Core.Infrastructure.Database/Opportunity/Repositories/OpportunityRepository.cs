@@ -79,7 +79,7 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
         ParticipantCount = entity.ParticipantCount,
         StatusId = entity.StatusId,
         Status = Enum.Parse<Status>(entity.Status.Name, true),
-        KeywordsFlatten = entity.Keywords,
+        KeywordsFlattened = entity.Keywords,
         Keywords = string.IsNullOrEmpty(entity.Keywords) ? null : entity.Keywords.Split(OpportunityService.Keywords_Separator, StringSplitOptions.None).ToList(),
         DateStart = entity.DateStart,
         DateEnd = entity.DateEnd,
@@ -144,7 +144,7 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
       //MS SQL: Contains
       return predicate.Or(o => EF.Functions.ILike(o.Title, $"%{value}%")
           || (!string.IsNullOrEmpty(o.Summary) && EF.Functions.ILike(o.Summary, $"%{value}%"))
-          || (!string.IsNullOrEmpty(o.KeywordsFlatten) && EF.Functions.ILike(o.KeywordsFlatten, $"%{value}%"))
+          || (!string.IsNullOrEmpty(o.KeywordsFlattened) && EF.Functions.ILike(o.KeywordsFlattened, $"%{value}%"))
           || EF.Functions.ToTsVector("english", o.Description).Matches(value));
     }
 
@@ -153,7 +153,7 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
       //MS SQL: Contains
       return query.Where(o => EF.Functions.ILike(o.Title, $"%{value}%")
           || (!string.IsNullOrEmpty(o.Summary) && EF.Functions.ILike(o.Summary, $"%{value}%"))
-          || (!string.IsNullOrEmpty(o.KeywordsFlatten) && EF.Functions.ILike(o.KeywordsFlatten, $"%{value}%"))
+          || (!string.IsNullOrEmpty(o.KeywordsFlattened) && EF.Functions.ILike(o.KeywordsFlattened, $"%{value}%"))
           || EF.Functions.ToTsVector("english", o.Description).Matches(value));
     }
 
@@ -184,7 +184,7 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
         ParticipantLimit = item.ParticipantLimit,
         ParticipantCount = item.ParticipantCount,
         StatusId = item.StatusId,
-        Keywords = item.KeywordsFlatten,
+        Keywords = item.KeywordsFlattened,
         DateStart = item.DateStart,
         DateEnd = item.DateEnd,
         CredentialIssuanceEnabled = item.CredentialIssuanceEnabled,
@@ -239,7 +239,7 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
           ParticipantLimit = item.ParticipantLimit,
           ParticipantCount = item.ParticipantCount,
           StatusId = item.StatusId,
-          Keywords = item.KeywordsFlatten,
+          Keywords = item.KeywordsFlattened,
           DateStart = item.DateStart,
           DateEnd = item.DateEnd,
           CredentialIssuanceEnabled = item.CredentialIssuanceEnabled,
@@ -297,7 +297,7 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
       entity.ParticipantLimit = item.ParticipantLimit;
       entity.ParticipantCount = item.ParticipantCount;
       entity.StatusId = item.StatusId;
-      entity.Keywords = item.KeywordsFlatten;
+      entity.Keywords = item.KeywordsFlattened;
       entity.DateStart = item.DateStart;
       entity.DateEnd = item.DateEnd;
       entity.CredentialIssuanceEnabled = item.CredentialIssuanceEnabled;
@@ -352,7 +352,7 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
         entity.ParticipantLimit = item.ParticipantLimit;
         entity.ParticipantCount = item.ParticipantCount;
         entity.StatusId = item.StatusId;
-        entity.Keywords = item.KeywordsFlatten;
+        entity.Keywords = item.KeywordsFlattened;
         entity.DateStart = item.DateStart;
         entity.DateEnd = item.DateEnd;
         entity.CredentialIssuanceEnabled = item.CredentialIssuanceEnabled;
