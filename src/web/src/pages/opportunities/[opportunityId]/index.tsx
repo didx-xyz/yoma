@@ -7,7 +7,10 @@ import { type ParsedUrlQuery } from "querystring";
 import { type ReactElement } from "react";
 import { IoMdArrowRoundBack } from "react-icons/io";
 import type { MyOpportunityResponseVerify } from "~/api/models/myOpportunity";
-import { type OpportunityInfo } from "~/api/models/opportunity";
+import {
+  type OpportunityInfo,
+  type SyncInfoEntity,
+} from "~/api/models/opportunity";
 import {
   getVerificationStatus,
   performActionViewed,
@@ -32,6 +35,23 @@ interface IParams extends ParsedUrlQuery {
   id: string;
   opportunityId: string;
 }
+
+// const DEV_PARTNER_MANAGED_SYNC_INFO: SyncInfoEntity = {
+//   syncType: "Pull",
+//   locked: true,
+//   partners: [
+//     {
+//       partner: "Sample Partner",
+//       externalId: "test-external-id",
+//       url: null,
+//     },
+//   ],
+// };
+
+const DEV_PENDING_VERIFICATION_STATUS: MyOpportunityResponseVerify = {
+  status: "Pending",
+  comment: null,
+};
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { opportunityId } = context.params as IParams;
@@ -64,6 +84,22 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
         opportunityId,
         context,
       );
+
+    // TODO: remove before commit. Force partner-managed pending state for dev testing.
+    // if (
+    //   process.env.NODE_ENV !== "production" &&
+    //   session &&
+    //   dataOpportunityInfo &&
+    //   dataOpportunityInfo.verificationEnabled &&
+    //   dataOpportunityInfo.verificationMethod == "Manual"
+    // ) {
+    //   dataOpportunityInfo = {
+    //     ...dataOpportunityInfo,
+    //     syncedInfo:
+    //       dataOpportunityInfo.syncedInfo ?? DEV_PARTNER_MANAGED_SYNC_INFO,
+    //   };
+    //   dataVerificationStatus = DEV_PENDING_VERIFICATION_STATUS;
+    // }
 
     await queryClient.prefetchQuery({
       queryKey: OPPORTUNITY_QUERY_KEYS.verificationStatus(opportunityId),
