@@ -68,6 +68,9 @@ namespace Yoma.Core.Domain.Opportunity.Models
     [Name("Commitment Interval")]
     public string? CommitmentIntervalDescription { get; set; }
 
+    [Ignore]
+    public int? CommitmentIntervalTotalHours { get; set; }
+
     #region Engagement
     #region Verification Limits and Counts
     [Name("Participant Limit")]

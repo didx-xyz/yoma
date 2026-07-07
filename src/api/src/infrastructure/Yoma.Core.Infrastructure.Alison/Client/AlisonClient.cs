@@ -7,12 +7,14 @@ using System.Globalization;
 using System.Net;
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Extensions;
+using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Lookups.Interfaces;
 using Yoma.Core.Domain.Opportunity;
 using Yoma.Core.Domain.Opportunity.Interfaces.Lookups;
 using Yoma.Core.Domain.Opportunity.Services;
+using Yoma.Core.Domain.PartnerSync;
 using Yoma.Core.Domain.PartnerSync.Interfaces.Provider;
 using Yoma.Core.Domain.PartnerSync.Models;
 using Yoma.Core.Domain.PartnerSync.Validators;
@@ -345,8 +347,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       };
 
       path = path?.Trim();
-
-      if (string.IsNullOrWhiteSpace(path))
+      if (string.IsNullOrEmpty(path))
         throw new InvalidOperationException($"Alison user {requestType} path expected");
 
       return path;
@@ -565,7 +566,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       categoryId = default;
 
       code = code?.NormalizeNullableValue();
-      if (string.IsNullOrWhiteSpace(code)) return false;
+      if (string.IsNullOrEmpty(code)) return false;
 
       if (TryResolveYomaCategoryIdExact(code, out categoryId))
         return true;
@@ -581,7 +582,8 @@ namespace Yoma.Core.Infrastructure.Alison.Client
     {
       categoryId = default;
 
-      if (string.IsNullOrWhiteSpace(code)) return false;
+      code = code?.Trim();
+      if (string.IsNullOrEmpty(code)) return false;
 
       foreach (var mapping in Categories_Map)
       {
@@ -607,7 +609,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       foreach (var publisher in course.Publishers)
       {
         var countryName = ResolvePublisherCountryName(publisher.Location);
-        if (string.IsNullOrWhiteSpace(countryName)) continue;
+        if (string.IsNullOrEmpty(countryName)) continue;
 
         var country = _countryService.GetByNameOrNull(countryName);
         if (country == null) continue;
@@ -621,7 +623,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
     private static string? ResolvePublisherCountryName(string? location)
     {
       location = location?.NormalizeNullableValue();
-      if (string.IsNullOrWhiteSpace(location)) return null;
+      if (string.IsNullOrEmpty(location)) return null;
 
       if (location.Equals("Global", StringComparison.OrdinalIgnoreCase) ||
           location.Equals(Country.Worldwide.ToString(), StringComparison.OrdinalIgnoreCase))
@@ -634,7 +636,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       var parts = location.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
       var result = parts.LastOrDefault()?.NormalizeNullableValue();
 
-      if (string.IsNullOrWhiteSpace(result)) return null;
+      if (string.IsNullOrEmpty(result)) return null;
 
       if (result.Equals("Global", StringComparison.OrdinalIgnoreCase) ||
           result.Equals(Country.Worldwide.ToString(), StringComparison.OrdinalIgnoreCase))
@@ -665,12 +667,14 @@ namespace Yoma.Core.Infrastructure.Alison.Client
 
     private static IEnumerable<string> GetLanguageLocales(Course course)
     {
-      if (!string.IsNullOrWhiteSpace(course.Language))
-        yield return course.Language;
+      var language = course.Language?.Trim();
+
+      if (!string.IsNullOrEmpty(language))
+        yield return language;
 
       foreach (var locale in course.Translations
-        .Select(item => item.Locale)
-        .Where(item => !string.IsNullOrWhiteSpace(item)))
+        .Select(item => item.Locale?.Trim())
+        .Where(item => !string.IsNullOrEmpty(item)))
       {
         yield return locale!;
       }
@@ -679,27 +683,26 @@ namespace Yoma.Core.Infrastructure.Alison.Client
     private Domain.Lookups.Models.Language? ResolveLanguage(string? locale)
     {
       var codeAlpha2 = NormalizeLanguageCodeAlpha2(locale);
-      if (string.IsNullOrWhiteSpace(codeAlpha2)) return null;
+      if (string.IsNullOrEmpty(codeAlpha2)) return null;
 
       return _languageService.GetByCodeAlpha2OrNull(codeAlpha2);
     }
 
     private static string? NormalizeLanguageCodeAlpha2(string? locale)
     {
-      if (string.IsNullOrWhiteSpace(locale)) return null;
-
-      var value = locale.Trim();
+      locale = locale?.Trim();
+      if (string.IsNullOrEmpty(locale)) return null;
 
       // Examples:
       // en    -> EN
       // en-US -> EN
       // en_GB -> EN
       // pt-BR -> PT
-      var codeAlpha2 = value
+      var codeAlpha2 = locale
         .Split(['-', '_'], StringSplitOptions.RemoveEmptyEntries)
         .FirstOrDefault();
 
-      return string.IsNullOrWhiteSpace(codeAlpha2)
+      return string.IsNullOrEmpty(codeAlpha2)
         ? null
         : codeAlpha2.ToUpperInvariant();
     }
@@ -713,7 +716,9 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       var title = (translation?.Name).HtmlDecode()?.RemoveHtmlTags()
         ?? course.Name.HtmlDecode()?.RemoveHtmlTags();
 
-      if (string.IsNullOrWhiteSpace(title))
+      title = title?.Trim();
+
+      if (string.IsNullOrEmpty(title))
         throw new InvalidOperationException($"Alison course title/name expected for course id '{course.Id}'");
 
       return title.TrimToLengthWithEllipsis(OpportunityService.Title_MaxLength);
@@ -745,11 +750,12 @@ namespace Yoma.Core.Infrastructure.Alison.Client
 
       var metadata = new List<string>();
 
-      if (!string.IsNullOrWhiteSpace(publisherName))
+      publisherName = publisherName?.Trim();
+      if (!string.IsNullOrEmpty(publisherName))
         metadata.Add($"**Publisher:** {publisherName}");
 
-      var courseType = course.Type.HtmlDecode()?.RemoveHtmlTags();
-      if (!string.IsNullOrWhiteSpace(courseType))
+      var courseType = course.Type?.Trim().HtmlDecode().RemoveHtmlTags();
+      if (!string.IsNullOrEmpty(courseType))
         metadata.Add($"**Course type:** {courseType.TitleCase()}");
 
       if (metadata.Count > 0)
@@ -798,8 +804,8 @@ namespace Yoma.Core.Infrastructure.Alison.Client
 
     private static void AddKeyword(List<string> keywords, string? value)
     {
-      value = value.HtmlDecode()?.RemoveHtmlTags();
-      if (string.IsNullOrWhiteSpace(value)) return;
+      value = value?.Trim().HtmlDecode().RemoveHtmlTags();
+      if (string.IsNullOrEmpty(value)) return;
 
       if (value.Contains(OpportunityService.Keywords_Separator, StringComparison.Ordinal))
         return;
@@ -843,16 +849,16 @@ namespace Yoma.Core.Infrastructure.Alison.Client
     {
       ArgumentNullException.ThrowIfNull(tag);
 
-      var name = tag.GetName();
-      if (!string.IsNullOrWhiteSpace(name))
+      var name = tag.GetName()?.Trim();
+      if (!string.IsNullOrEmpty(name))
       {
         var skill = _skillService.GetByNameNormalizedOrNull(name);
         if (skill != null)
           return skill;
       }
 
-      var slug = tag.GetSlug();
-      if (!string.IsNullOrWhiteSpace(slug))
+      var slug = tag.GetSlug()?.Trim();
+      if (!string.IsNullOrEmpty(slug))
       {
         var skill = _skillService.GetByNameNormalizedOrNull(slug);
         if (skill != null)
@@ -877,7 +883,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
     {
       courseLevel = courseLevel?.NormalizeNullableValue();
 
-      if (string.IsNullOrWhiteSpace(courseLevel))
+      if (string.IsNullOrEmpty(courseLevel))
         return null;
 
       foreach (var mapping in Difficulty_Map)
@@ -909,7 +915,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
     {
       duration = duration?.NormalizeNullableValue();
 
-      if (!string.IsNullOrWhiteSpace(duration))
+      if (!string.IsNullOrEmpty(duration))
       {
         foreach (var mapping in CommitmentInterval_Map)
         {
@@ -924,7 +930,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
     private static short ResolveCommitmentIntervalCount(string? duration)
     {
       duration = duration?.NormalizeNullableValue();
-      if (string.IsNullOrWhiteSpace(duration)) return 1;
+      if (string.IsNullOrEmpty(duration)) return 1;
 
       var values = Regex_CommitmentIntervalCountValue().Matches(duration)
         .Select(match => decimal.TryParse(match.Value, System.Globalization.NumberStyles.Number, System.Globalization.CultureInfo.InvariantCulture, out var value)
@@ -970,8 +976,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       // Always return the embedded completed records so local/dev validation does not depend
       // on deployment time, scheduler timing, or checkpoint windows.
       var query = completedCourses
-        .Where(item => item.CompletedAt.HasValue)
-        .OrderBy(item => item.CompletedAt)
+        .OrderBy(item => item.CompletedAt ?? item.LastAccess ?? item.UpdatedAt ?? item.EnrollmentDate ?? item.CreatedAt ?? DateTimeOffset.MinValue)
         .ThenBy(item => item.UserId)
         .ThenBy(item => item.CourseId)
         .ToList();
@@ -1025,13 +1030,14 @@ namespace Yoma.Core.Infrastructure.Alison.Client
 
     private List<CompletedCourse> LoadEmbeddedCompletedCourses()
     {
-      if (string.IsNullOrWhiteSpace(_options.CompletedCoursesEmbeddedResourceName))
+      var completedCoursesEmbeddedResourceName = _options.CompletedCoursesEmbeddedResourceName?.Trim();
+      if (string.IsNullOrEmpty(completedCoursesEmbeddedResourceName))
         throw new InvalidOperationException("Alison completed courses embedded resource name is required");
 
       var assembly = typeof(AlisonClient).Assembly;
       var assemblyName = assembly.GetName().Name;
 
-      var resourceName = $"{assemblyName}.{_options.CompletedCoursesEmbeddedResourceName.Trim()}";
+      var resourceName = $"{assemblyName}.{completedCoursesEmbeddedResourceName}";
 
       using var resourceStream = assembly.GetManifestResourceStream(resourceName)
         ?? throw new InvalidOperationException($"Embedded Alison completed courses sample resource '{resourceName}' not found. Ensure file is added to the project, marked as Embedded Resource, and compiled into the assembly");
@@ -1077,9 +1083,10 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       if (item.CourseId <= 0)
         throw new InvalidOperationException("Alison completed course id expected");
 
-      var commitmentInterval = GetVerificationCommitmentInterval(item);
+      var commitmentInterval = ResolveVerificationCommitmentInterval(item);
       var dateEnd = item.CompletedAt ?? item.LastAccess ?? item.UpdatedAt;
-      var completed = string.Equals(item.CourseStatus?.Trim(), "Completed", StringComparison.OrdinalIgnoreCase);
+      var status = ResolveVerificationStatus(item.CourseStatus);
+      var percentComplete = ResolvePercentComplete(status, item.CourseState);
 
       return new SyncItemVerification
       {
@@ -1087,26 +1094,28 @@ namespace Yoma.Core.Infrastructure.Alison.Client
         EntityExternalId = item.CourseId.ToString(),
         UserEmail = item.Email,
         UserPhoneNumber = null,
+        DateStart = commitmentInterval == null ? item.FirstAccess ?? item.EnrollmentDate ?? item.CreatedAt : null,
+        DateEnd = dateEnd,
 
         // Commitment is resolved in this order:
         // 1. duration_avg: preferred, aligns verification with the imported opportunity commitment.
         // 2. total_time_spent: fallback only, as Alison can return values that exceed the course estimate.
         // 3. first_access/enrollment/created dates: final fallback only when no commitment can be resolved.
         CommitmentInterval = commitmentInterval,
-        DateStart = commitmentInterval == null ? item.FirstAccess ?? item.EnrollmentDate ?? item.CreatedAt : null,
-        DateEnd = dateEnd,
-        DateCompleted = completed ? item.CompletedAt ?? dateEnd : null,
-        Completed = completed
+        Status = status,
+        PercentComplete = percentComplete,
+        DateCompleted = status == SyncItemVerificationStatus.Completed ? item.CompletedAt ?? dateEnd : null
       };
     }
 
-    private SyncItemVerificationCommitmentInterval? GetVerificationCommitmentInterval(CompletedCourse item)
+    private SyncItemVerificationCommitmentInterval? ResolveVerificationCommitmentInterval(CompletedCourse item)
     {
       ArgumentNullException.ThrowIfNull(item);
 
-      if (!string.IsNullOrWhiteSpace(item.DurationAvg))
+      var durationAvg = item.DurationAvg?.Trim();
+      if (!string.IsNullOrEmpty(durationAvg))
       {
-        var (interval, count) = GetCommitment(item.DurationAvg);
+        var (interval, count) = GetCommitment(durationAvg);
 
         return new SyncItemVerificationCommitmentInterval
         {
@@ -1115,14 +1124,14 @@ namespace Yoma.Core.Infrastructure.Alison.Client
         };
       }
 
-      return GetVerificationCommitmentIntervalFromTotalTimeSpent(item.TotalTimeSpent);
+      return ResolveVerificationCommitmentIntervalFromTotalTimeSpent(item.TotalTimeSpent);
     }
 
-    private SyncItemVerificationCommitmentInterval? GetVerificationCommitmentIntervalFromTotalTimeSpent(string? totalTimeSpent)
+    private SyncItemVerificationCommitmentInterval? ResolveVerificationCommitmentIntervalFromTotalTimeSpent(string? totalTimeSpent)
     {
       totalTimeSpent = totalTimeSpent?.Trim();
 
-      if (string.IsNullOrWhiteSpace(totalTimeSpent))
+      if (string.IsNullOrEmpty(totalTimeSpent))
         return null;
 
       if (!TimeSpan.TryParse(totalTimeSpent, CultureInfo.InvariantCulture, out var value))
@@ -1149,8 +1158,62 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       return Math.Max(1, (int)Math.Ceiling(totalHours));
     }
 
+    private static SyncItemVerificationStatus ResolveVerificationStatus(string? courseStatus)
+    {
+      courseStatus = courseStatus?.Trim();
+      if (string.IsNullOrEmpty(courseStatus))
+        throw new InvalidOperationException("Alison course status expected");
+
+      var status = EnumHelper.GetValueFromDescription<VerificationCourseStatus>(courseStatus)
+        ?? throw new InvalidOperationException($"Alison course status '{courseStatus}' not supported");
+
+      return status switch
+      {
+        VerificationCourseStatus.Completed => SyncItemVerificationStatus.Completed,
+        VerificationCourseStatus.InProgress => SyncItemVerificationStatus.InProgress,
+        VerificationCourseStatus.NotStarted => SyncItemVerificationStatus.InProgress,
+        _ => throw new InvalidOperationException($"Unsupported Alison course status '{status}'") //implicit Cancelled not supported by Alison
+      };
+    }
+
+    private static decimal? ResolvePercentComplete(SyncItemVerificationStatus status, string? courseState)
+    {
+      switch (status)
+      {
+        case SyncItemVerificationStatus.Cancelled:
+          return null;
+
+        case SyncItemVerificationStatus.Completed:
+          return 100m;
+
+        case SyncItemVerificationStatus.InProgress:
+          break;
+
+        default:
+          throw new InvalidOperationException($"Unsupported verification status '{status}'");
+      }
+
+      var candidate = courseState?.Trim();
+      if (string.IsNullOrEmpty(candidate))
+        return 0m;
+
+      var match = Regex_PercentCompleteValue().Match(candidate);
+      if (!match.Success) return 0m;
+
+      if (!decimal.TryParse(match.Value, NumberStyles.Number, CultureInfo.InvariantCulture, out var result))
+        return 0m;
+
+      if (result < 0m || result > 100m)
+        throw new InvalidOperationException($"Alison course state '{courseState}' percent complete must be between 0 and 100");
+
+      return result;
+    }
+
     [System.Text.RegularExpressions.GeneratedRegex(@"\d+(\.\d+)?")]
     private static partial System.Text.RegularExpressions.Regex Regex_CommitmentIntervalCountValue();
+
+    [System.Text.RegularExpressions.GeneratedRegex(@"\d+(\.\d+)?")]
+    private static partial System.Text.RegularExpressions.Regex Regex_PercentCompleteValue();
     #endregion
   }
 }

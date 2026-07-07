@@ -1251,6 +1251,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                       {engagementData?.cumulative?.completions && (
                         <LineChartCumulativeCompletions
                           key="lineChartCumulativeCompletions"
+                          chartKey="lineChartCumulativeCompletions"
                           data={engagementData.cumulative.completions}
                         />
                       )}
@@ -1446,6 +1447,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                         {engagementData?.opportunities?.engagements && (
                           <LineChartOverview
                             key="lineChartOverview"
+                            chartKey="lineChartOverview"
                             data={engagementData.opportunities.engagements}
                           />
                         )}

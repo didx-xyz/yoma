@@ -20,12 +20,11 @@ import { ApiErrors } from "../Status/ApiErrors";
 import { Loading } from "../Status/Loading";
 
 export const OrganisationCardComponent: React.FC<{
-  key: string;
   item: OrganizationInfo;
   user: User;
   returnUrl?: string;
   onUpdateStatus: () => void;
-}> = ({ key, item, user, returnUrl, onUpdateStatus }) => {
+}> = ({ item, user, returnUrl, onUpdateStatus }) => {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const modalContext = useConfirmationModalContext();
@@ -116,10 +115,7 @@ export const OrganisationCardComponent: React.FC<{
   );
 
   return (
-    <div
-      key={`orgCard_${key}`}
-      className="shadow-custom flex flex-row rounded-xl bg-white transition duration-300"
-    >
+    <div className="shadow-custom flex flex-row rounded-xl bg-white transition duration-300">
       {isLoading && <Loading />}
 
       <Link

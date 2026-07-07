@@ -24,9 +24,13 @@ namespace Yoma.Core.Domain.PartnerSync.Extensions
     {
       if (item == null) return false;
 
+      // For MyOpportunity pull logs, the FK can be set null after partner cancellation/pending purge
+      // hard-deletes the MyOpportunity. In that case the log remains as audit history, but no longer
+      // points to a live synchronized entity.
       return entityType switch
       {
         EntityType.Opportunity => item.OpportunityId.HasValue,
+        EntityType.MyOpportunity => item.MyOpportunityId.HasValue,
         _ => throw new InvalidOperationException($"Entity type of '{entityType}' not supported")
       };
     }

@@ -278,8 +278,8 @@ namespace Yoma.Core.Domain
 
       //my opportunity
       RecurringJob.AddOrUpdate<IMyOpportunityBackgroundService>(
-        $"'My' Opportunity Verification Rejection ({MyOpportunityBackgroundService.Statuses_Rejectable.JoinNames()} for more than {options.MyOpportunityRejectionIntervalInDays} days)",
-        s => s.ProcessVerificationRejection(), options.MyOpportunityRejectionSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
+        $"'My' Opportunity Verification Pending Purge (admin auto-rejection / synced cancellation)",
+        s => s.ProcessVerificationPendingPurge(), options.MyOpportunityVerificationPendingPurgeSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
 
       //organization
       RecurringJob.AddOrUpdate<IOrganizationBackgroundService>(

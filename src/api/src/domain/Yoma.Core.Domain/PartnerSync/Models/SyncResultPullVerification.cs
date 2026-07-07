@@ -14,13 +14,24 @@ namespace Yoma.Core.Domain.PartnerSync.Models
   }
 
   /// <summary>
-  /// Represents a partner verification record for the configured entity type.
-  /// 
+  /// Represents a partner verification/progress record for the configured entity type.
+  ///
   /// The entity type is supplied by the partner sync configuration / processing context.
-  /// For opportunity verification sync, <see cref="EntityExternalId"/> refers to the partner-side opportunity identifier.
+  /// <see cref="EntityExternalId"/> identifies the partner-side entity being verified
+  /// (for example, a partner course/opportunity id).
+  /// <see cref="UserExternalId"/> identifies the partner-side user.
+  /// <see cref="ExternalId"/> is a derived verification/progress record key used by Yoma
+  /// for sync tracking when the partner does not provide a native submission id.
   /// </summary>
   public class SyncItemVerification
   {
+    /// <summary>
+    /// Stable partner-side verification/completion submission key.
+    /// Some partners do not provide a native submission id, so this is derived from
+    /// the partner entity id and partner user id.
+    /// </summary>
+    public string ExternalId => $"{EntityExternalId}:{UserExternalId}";
+
     /// <summary>
     /// Partner-side user identifier.
     /// </summary>
@@ -31,6 +42,7 @@ namespace Yoma.Core.Domain.PartnerSync.Models
     /// The entity type is implied by the sync context.
     /// </summary>
     public string EntityExternalId { get; set; } = null!;
+
 
     public string? Username => UserEmail ?? UserPhoneNumber;
 
@@ -44,9 +56,17 @@ namespace Yoma.Core.Domain.PartnerSync.Models
 
     public SyncItemVerificationCommitmentInterval? CommitmentInterval { get; set; }
 
-    public DateTimeOffset? DateCompleted { get; set; }
+    /// <summary>
+    /// Partner-provided status for this verification/completion
+    /// </summary>
+    public SyncItemVerificationStatus Status { get; set; }
 
-    public bool Completed { get; set; }
+    /// <summary>
+    /// Partner-provided verification/completion progress as a percentage from 0 to 100
+    /// </summary>
+    public decimal? PercentComplete { get; set; }
+
+    public DateTimeOffset? DateCompleted { get; set; }
   }
 
   public sealed class SyncItemVerificationCommitmentInterval

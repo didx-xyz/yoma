@@ -2,6 +2,7 @@ using Newtonsoft.Json;
 using Yoma.Core.Domain.BlobProvider;
 using Yoma.Core.Domain.Entity;
 using Yoma.Core.Domain.Lookups.Models;
+using Yoma.Core.Domain.PartnerSync.Models;
 
 namespace Yoma.Core.Domain.MyOpportunity.Models
 {
@@ -60,7 +61,14 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
 
     public Opportunity.Status OpportunityStatus { get; set; }
 
-    public string? OpportunityCommitmentIntervalDescription { get; set; }
+    public Guid? OpportunityCommitmentIntervalId { get; set; }
+
+    public Core.TimeIntervalOption? OpportunityCommitmentInterval { get; set; }
+
+    public short? OpportunityCommitmentIntervalCount { get; set; }
+
+    public string? OpportunityCommitmentIntervalDescription => !OpportunityCommitmentInterval.HasValue || !OpportunityCommitmentIntervalCount.HasValue
+      ? null : $"{OpportunityCommitmentIntervalCount.Value} {OpportunityCommitmentInterval.Value}{(OpportunityCommitmentIntervalCount.Value > 1 ? "s" : string.Empty)}";
 
     #region Verification Counts
     public int OpportunityParticipantCountTotal { get; set; }
@@ -114,6 +122,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
 
     public DateTimeOffset? DateEnd { get; set; }
 
+    public decimal? PercentComplete { get; set; }
+
     public DateTimeOffset? DateCompleted { get; set; }
 
     public decimal? ZltoReward { get; set; }
@@ -129,6 +139,12 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
     public DateTimeOffset DateCreated { get; set; }
 
     public DateTimeOffset DateModified { get; set; }
+
+    /// <summary>
+    /// Current partner synchronization state for the MyOpportunity completion submission, when applicable.
+    /// A null value indicates that the submission is not currently synchronized with any partner.
+    /// </summary>
+    public SyncInfoMyOpportunity? SyncedInfo { get; set; }
 
     public List<MyOpportunityVerification>? Verifications { get; set; }
 

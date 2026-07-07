@@ -7,6 +7,7 @@ using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
+using Yoma.Core.Domain.MyOpportunity.Extensions;
 using Yoma.Core.Domain.MyOpportunity.Interfaces;
 using Yoma.Core.Domain.MyOpportunity.Models;
 using Yoma.Core.Domain.Notification;
@@ -30,9 +31,9 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
     private readonly IOpportunityService _opportunityService;
     private readonly INotificationURLFactory _notificationURLFactory;
     private readonly INotificationDeliveryService _notificationDeliveryService;
+    private readonly IDistributedLockService _distributedLockService;
     private readonly IRepositoryBatchedWithNavigation<Models.MyOpportunity> _myOpportunityRepository;
     private readonly IRepository<MyOpportunityVerification> _myOpportunityVerificationRepository;
-    private readonly IDistributedLockService _distributedLockService;
 
     internal static readonly VerificationStatus[] Statuses_Rejectable = [VerificationStatus.Pending];
     #endregion
@@ -48,9 +49,9 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         IOpportunityService opportunityService,
         INotificationURLFactory notificationURLFactory,
         INotificationDeliveryService notificationDeliveryService,
+        IDistributedLockService distributedLockService,
         IRepositoryBatchedWithNavigation<Models.MyOpportunity> myOpportunityRepository,
-        IRepository<MyOpportunityVerification> myOpportunityVerificationRepository,
-        IDistributedLockService distributedLockService)
+        IRepository<MyOpportunityVerification> myOpportunityVerificationRepository)
     {
       _logger = logger;
       _appSettings = appSettings.Value;
@@ -62,16 +63,16 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       _opportunityService = opportunityService;
       _notificationURLFactory = notificationURLFactory;
       _notificationDeliveryService = notificationDeliveryService;
+      _distributedLockService = distributedLockService;
       _myOpportunityRepository = myOpportunityRepository;
       _myOpportunityVerificationRepository = myOpportunityVerificationRepository;
-      _distributedLockService = distributedLockService;
     }
     #endregion
 
     #region Public Members
-    public async Task ProcessVerificationRejection()
+    public async Task ProcessVerificationPendingPurge()
     {
-      const string lockIdentifier = "myopportunity_process_verification_rejection";
+      const string lockIdentifier = "myopportunity_process_verification_pending_purge";
       var dateTimeNow = DateTimeOffset.UtcNow;
       var executeUntil = dateTimeNow.AddHours(_scheduleJobOptions.DefaultScheduleMaxIntervalInHours);
       var lockDuration = executeUntil - dateTimeNow + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
@@ -82,81 +83,144 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         lockAcquired = await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration);
         if (!lockAcquired) return;
 
-        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processing 'my' opportunity verification rejection");
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processing 'my' opportunity verification pending purge");
 
         var statusRejectedId = _myOpportunityVerificationStatusService.GetByName(VerificationStatus.Rejected.ToString()).Id;
-        var statusRejectableIds = Statuses_Rejectable.Select(o => _myOpportunityVerificationStatusService.GetByName(o.ToString()).Id).ToList();
+        var minAgeInDays = Math.Min(_scheduleJobOptions.MyOpportunityVerificationPendingAutoRejectIntervalInDays,
+          _scheduleJobOptions.MyOpportunityVerificationPendingSyncedCancelMinIntervalInDays);
+        var itemIdsToSkip = new List<Guid>();
 
         while (executeUntil > DateTimeOffset.UtcNow)
         {
           var now = DateTimeOffset.UtcNow;
+          var items = _myOpportunityService.ListVerificationPending(_scheduleJobOptions.MyOpportunityVerificationPendingPurgeBatchSize,
+            minAgeInDays, itemIdsToSkip);
 
-          var items = _myOpportunityRepository.Query().Where(o => o.VerificationStatusId.HasValue && statusRejectableIds.Contains(o.VerificationStatusId.Value) &&
-            o.DateModified <= now.AddDays(-_scheduleJobOptions.MyOpportunityRejectionIntervalInDays))
-            .OrderBy(o => o.DateModified).Take(_scheduleJobOptions.OpportunityDeletionBatchSize).ToList();
           if (items.Count == 0) break;
+
+          var itemsToReject = new List<Models.MyOpportunity>();
+          var itemsToCancel = new List<Models.MyOpportunity>();
 
           foreach (var item in items)
           {
-            item.CommentVerification = $"Auto-Declined due to being {Statuses_Rejectable.JoinNames().ToLower()} for more than {_scheduleJobOptions.MyOpportunityRejectionIntervalInDays} days";
-            item.VerificationStatusId = statusRejectedId;
-            if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("'My' opportunity with id '{id}' flagged for verification rejection", item.Id);
+            if (item.SyncedInfo?.Locked == true)
+            {
+              var opportunityEstimateInDays = item.TimeIntervalToDays();
+
+              var cancelIntervalInDays = opportunityEstimateInDays.HasValue
+                ? Math.Max(opportunityEstimateInDays.Value * _scheduleJobOptions.MyOpportunityVerificationPendingSyncedCancelCommitmentIntervalMultiplier,
+                    _scheduleJobOptions.MyOpportunityVerificationPendingSyncedCancelMinIntervalInDays)
+                : Math.Max(_scheduleJobOptions.MyOpportunityVerificationPendingSyncedCancelDefaultIntervalInDays,
+                    _scheduleJobOptions.MyOpportunityVerificationPendingSyncedCancelMinIntervalInDays);
+
+              if (item.DateModified <= now.AddDays(-cancelIntervalInDays))
+                itemsToCancel.Add(item);
+              else
+                itemIdsToSkip.Add(item.Id);
+
+              continue;
+            }
+
+            if (item.DateModified <= now.AddDays(-_scheduleJobOptions.MyOpportunityVerificationPendingAutoRejectIntervalInDays))
+              itemsToReject.Add(item);
+            else
+              itemIdsToSkip.Add(item.Id);
           }
 
-          items = await _myOpportunityRepository.Update(items);
-
-          var groupedMyOpportunities = items.GroupBy(item => new
-          { item.Username, item.UserEmail, item.UserEmailConfirmed, item.UserPhoneNumber, item.UserPhoneNumberConfirmed, item.UserDisplayName });
-
-          var notificationType = NotificationType.Opportunity_Verification_Rejected;
-          foreach (var group in groupedMyOpportunities)
+          if (itemsToReject.Count != 0)
           {
             try
             {
-              var recipients = new List<NotificationRecipient>
-                {
-                  new() { Username = group.Key.Username, PhoneNumber = group.Key.UserPhoneNumber, PhoneNumberConfirmed = group.Key.UserPhoneNumberConfirmed,
-                    Email = group.Key.UserEmail, EmailConfirmed = group.Key.UserEmailConfirmed, DisplayName = group.Key.UserDisplayName }
-                };
-
-              var data = new NotificationOpportunityVerification
+              foreach (var item in itemsToReject)
               {
-                YoIDURL = _notificationURLFactory.OpportunityYoIDDashboardURL(notificationType),
-                Opportunities = []
-              };
-
-              foreach (var myOp in group)
-              {
-                data.Opportunities.Add(new NotificationOpportunityVerificationItem
-                {
-                  Title = myOp.OpportunityTitle,
-                  DateStart = myOp.DateStart,
-                  DateEnd = myOp.DateEnd,
-                  Comment = myOp.CommentVerification,
-                  URL = _notificationURLFactory.OpportunityVerificationItemURL(notificationType, myOp.OpportunityId, null),
-                  ZltoReward = myOp.ZltoReward,
-                  YomaReward = myOp.YomaReward
-                });
+                item.CommentVerification = $"Auto-Declined due to being {Statuses_Rejectable.JoinNames().ToLower()} for more than {_scheduleJobOptions.MyOpportunityVerificationPendingAutoRejectIntervalInDays} days";
+                item.VerificationStatusId = statusRejectedId;
+                if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("'My' opportunity with id '{id}' flagged for verification rejection", item.Id);
               }
 
-              await _notificationDeliveryService.Send(notificationType, recipients, data);
+              itemsToReject = await _myOpportunityRepository.Update(itemsToReject);
 
-              if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Successfully sent notification");
+              var groupedMyOpportunities = itemsToReject.GroupBy(item => new
+              { item.Username, item.UserEmail, item.UserEmailConfirmed, item.UserPhoneNumber, item.UserPhoneNumberConfirmed, item.UserDisplayName });
+
+              var notificationType = NotificationType.Opportunity_Verification_Rejected;
+              foreach (var group in groupedMyOpportunities)
+              {
+                try
+                {
+                  var recipients = new List<NotificationRecipient>
+                  {
+                    new() { Username = group.Key.Username, PhoneNumber = group.Key.UserPhoneNumber, PhoneNumberConfirmed = group.Key.UserPhoneNumberConfirmed,
+                      Email = group.Key.UserEmail, EmailConfirmed = group.Key.UserEmailConfirmed, DisplayName = group.Key.UserDisplayName }
+                  };
+
+                  var data = new NotificationOpportunityVerification
+                  {
+                    YoIDURL = _notificationURLFactory.OpportunityYoIDDashboardURL(notificationType),
+                    Opportunities = []
+                  };
+
+                  foreach (var myOp in group)
+                  {
+                    data.Opportunities.Add(new NotificationOpportunityVerificationItem
+                    {
+                      Title = myOp.OpportunityTitle,
+                      DateStart = myOp.DateStart,
+                      DateEnd = myOp.DateEnd,
+                      Comment = myOp.CommentVerification,
+                      URL = _notificationURLFactory.OpportunityVerificationItemURL(notificationType, myOp.OpportunityId, null),
+                      ZltoReward = myOp.ZltoReward,
+                      YomaReward = myOp.YomaReward
+                    });
+                  }
+
+                  await _notificationDeliveryService.Send(notificationType, recipients, data);
+
+                  if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Successfully sent notification");
+                }
+                catch (Exception ex)
+                {
+                  if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to send notification: {errorMessage}", ex.Message);
+                }
+              }
             }
             catch (Exception ex)
             {
-              if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to send notification: {errorMessage}", ex.Message);
+              itemIdsToSkip.AddRange(itemsToReject.Select(item => item.Id));
+
+              if (_logger.IsEnabled(LogLevel.Error))
+                _logger.LogError(ex, "Failed to auto-reject pending verifications: {errorMessage}", ex.Message);
+            }
+          }
+
+          foreach (var item in itemsToCancel)
+          {
+            if (executeUntil <= DateTimeOffset.UtcNow) break;
+
+            try
+            {
+              await _myOpportunityService.PerformActionDeleteVerificationFromPartnerSyncPull(item.Id);
+
+              if (_logger.IsEnabled(LogLevel.Information))
+                _logger.LogInformation("'My' opportunity with id '{id}' cancelled due to stale partner-synced pending verification", item.Id);
+            }
+            catch (Exception ex)
+            {
+              itemIdsToSkip.Add(item.Id);
+
+              if (_logger.IsEnabled(LogLevel.Error))
+                _logger.LogError(ex, "Failed to cancel stale partner-synced pending verification for 'My' opportunity with id '{id}': {errorMessage}", item.Id, ex.Message);
             }
           }
 
           if (executeUntil <= DateTimeOffset.UtcNow) break;
         }
 
-        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processed 'my' opportunity verification rejection");
+        if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processed 'my' opportunity verification pending purge");
       }
       catch (Exception ex)
       {
-        if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(ProcessVerificationRejection), ex.Message);
+        if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(ProcessVerificationPendingPurge), ex.Message);
       }
       finally
       {

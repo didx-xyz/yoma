@@ -35,6 +35,7 @@ using Yoma.Core.Domain.Opportunity.Events;
 using Yoma.Core.Domain.Opportunity.Extensions;
 using Yoma.Core.Domain.Opportunity.Interfaces;
 using Yoma.Core.Domain.Opportunity.Interfaces.Lookups;
+using Yoma.Core.Domain.PartnerSync;
 using Yoma.Core.Domain.PartnerSync.Interfaces;
 using Yoma.Core.Domain.PartnerSync.Models;
 using Yoma.Core.Domain.Referral.Events;
@@ -69,12 +70,15 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
     private readonly IOpportunityVerificationTypeService _opportunityVerificationTypeService;
     private readonly IDelayedExecutionService _delayedExecutionService;
     private readonly ISyncUserAuthenticationService _syncUserAuthenticationService;
+    private readonly ISyncStateService _syncStateService;
+    private readonly IProcessingService _syncProcessingService;
     private readonly MyOpportunitySearchFilterVerificationFilesAdminValidator _myOpportunitySearchFilterVerificationFilesAdminValidator;
     private readonly MyOpportunitySearchFilterAdminValidator _myOpportunitySearchFilterAdminValidator;
     private readonly MyOpportunityRequestValidatorVerify _myOpportunityRequestValidatorVerify;
     private readonly MyOpportunityRequestValidatorVerifyFinalize _myOpportunityRequestValidatorVerifyFinalize;
     private readonly MyOpportunityRequestValidatorVerifyFinalizeBatch _myOpportunityRequestValidatorVerifyFinalizeBatch;
     private readonly MyOpportunityRequestValidatorVerifyImportCsv _myOpportunityRequestValidatorVerifyImportCsv;
+    private readonly MyOpportunityRequestValidatorVerifyImportPartnerSync _myOpportunityRequestValidatorVerifyImportPartnerSync;
     private readonly IMediator _mediator;
     private readonly IRepositoryBatchedWithNavigation<Models.MyOpportunity> _myOpportunityRepository;
     private readonly IRepository<MyOpportunityVerification> _myOpportunityVerificationRepository;
@@ -111,12 +115,15 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         IOpportunityVerificationTypeService opportunityVerificationTypeService,
         IDelayedExecutionService delayedExecutionService,
         ISyncUserAuthenticationService syncUserAuthenticationService,
+        ISyncStateService syncStateService,
+        IProcessingService syncProcessingService,
         MyOpportunitySearchFilterVerificationFilesAdminValidator myOpportunitySearchFilterVerificationFilesAdminValidator,
         MyOpportunitySearchFilterAdminValidator myOpportunitySearchFilterAdminValidator,
         MyOpportunityRequestValidatorVerify myOpportunityRequestValidatorVerify,
         MyOpportunityRequestValidatorVerifyFinalize myOpportunityRequestValidatorVerifyFinalize,
         MyOpportunityRequestValidatorVerifyFinalizeBatch myOpportunityRequestValidatorVerifyFinalizeBatch,
         MyOpportunityRequestValidatorVerifyImportCsv myOpportunityRequestValidatorVerifyImportCsv,
+        MyOpportunityRequestValidatorVerifyImportPartnerSync myOpportunityRequestValidatorVerifyImportPartnerSync,
         IMediator mediator,
         IRepositoryBatchedWithNavigation<Models.MyOpportunity> myOpportunityRepository,
         IRepository<MyOpportunityVerification> myOpportunityVerificationRepository,
@@ -145,12 +152,15 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       _opportunityVerificationTypeService = opportunityVerificationTypeService ?? throw new ArgumentNullException(nameof(opportunityVerificationTypeService));
       _delayedExecutionService = delayedExecutionService ?? throw new ArgumentNullException(nameof(delayedExecutionService));
       _syncUserAuthenticationService = syncUserAuthenticationService ?? throw new ArgumentNullException(nameof(syncUserAuthenticationService));
+      _syncStateService = syncStateService ?? throw new ArgumentNullException(nameof(syncStateService));
+      _syncProcessingService = syncProcessingService ?? throw new ArgumentNullException(nameof(syncProcessingService));
       _myOpportunitySearchFilterVerificationFilesAdminValidator = myOpportunitySearchFilterVerificationFilesAdminValidator ?? throw new ArgumentNullException(nameof(myOpportunitySearchFilterVerificationFilesAdminValidator));
       _myOpportunitySearchFilterAdminValidator = myOpportunitySearchFilterAdminValidator ?? throw new ArgumentNullException(nameof(myOpportunitySearchFilterAdminValidator));
       _myOpportunityRequestValidatorVerify = myOpportunityRequestValidatorVerify ?? throw new ArgumentNullException(nameof(myOpportunityRequestValidatorVerify));
       _myOpportunityRequestValidatorVerifyFinalize = myOpportunityRequestValidatorVerifyFinalize ?? throw new ArgumentNullException(nameof(myOpportunityRequestValidatorVerifyFinalize));
       _myOpportunityRequestValidatorVerifyFinalizeBatch = myOpportunityRequestValidatorVerifyFinalizeBatch ?? throw new ArgumentNullException(nameof(myOpportunityRequestValidatorVerifyFinalizeBatch));
       _myOpportunityRequestValidatorVerifyImportCsv = myOpportunityRequestValidatorVerifyImportCsv ?? throw new ArgumentNullException(nameof(myOpportunityRequestValidatorVerifyImportCsv));
+      _myOpportunityRequestValidatorVerifyImportPartnerSync = myOpportunityRequestValidatorVerifyImportPartnerSync ?? throw new ArgumentNullException(nameof(myOpportunityRequestValidatorVerifyImportPartnerSync));
       _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
       _myOpportunityRepository = myOpportunityRepository ?? throw new ArgumentNullException(nameof(myOpportunityRepository));
       _myOpportunityVerificationRepository = myOpportunityVerificationRepository ?? throw new ArgumentNullException(nameof(myOpportunityVerificationRepository));
@@ -170,17 +180,12 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       if (ensureOrganizationAuthorization)
         _organizationService.IsAdmin(result.OrganizationId, true);
 
-      if (includeComputed)
-      {
-        result.UserPhotoURL = GetBlobObjectURL(result.UserPhotoStorageType, result.UserPhotoKey);
-        result.OrganizationLogoURL = GetBlobObjectURL(result.OrganizationLogoStorageType, result.OrganizationLogoKey);
-        result.Verifications?.ForEach(v => v.FileURL = GetBlobObjectURL(v.FileStorageType, v.FileKey));
-      }
+      if (includeComputed) ParseComputed(result);
 
       return result;
     }
 
-    public List<MyOpportunitySearchCriteriaOpportunity> ListMyOpportunityVerificationSearchCriteriaOpportunity(List<Guid>? organizations,
+    public List<MyOpportunitySearchCriteriaOpportunity> ListVerificationSearchCriteriaOpportunity(List<Guid>? organizations,
        List<VerificationStatus>? verificationStatuses,
        bool ensureOrganizationAuthorization)
     {
@@ -708,15 +713,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
       var items = query.ToList();
 
-      if (!filter.UnrestrictedQuery)
-      {
-        items.ForEach(o =>
-        {
-          o.UserPhotoURL = GetBlobObjectURL(o.UserPhotoStorageType, o.UserPhotoKey);
-          o.OrganizationLogoURL = GetBlobObjectURL(o.OrganizationLogoStorageType, o.OrganizationLogoKey);
-          o.Verifications?.ForEach(v => v.FileURL = GetBlobObjectURL(v.FileStorageType, v.FileKey));
-        });
-      }
+      if (!filter.UnrestrictedQuery) items.ForEach(ParseComputed);
+
       result.Items = [.. items.Select(o => o.ToInfo())];
       if (filter.UnrestrictedQuery) return result;
 
@@ -948,66 +946,66 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       }
     }
 
-    public async Task PerformActionSendForVerificationManualDelete(Guid opportunityId)
+    public async Task PerformActionDeleteVerificationManual(Guid opportunityId)
     {
       var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 
-      //opportunity can be updated whilst active, and can result in disabling support for verification; allow deletion provided verification is pending even if no longer supported
-      //similar logic provided sent for verification prior to update that resulted in disabling support for verification i.e. enabled, method, types, 'published' status etc.
+      // Opportunity can be updated whilst active, and can result in disabling support for verification.
+      // Allow deletion provided verification is pending even if no longer supported.
       var opportunity = _opportunityService.GetById(opportunityId, true, true, false);
 
       var actionVerificationId = _myOpportunityActionService.GetByName(Action.Verification.ToString()).Id;
-      var myOpportunity = _myOpportunityRepository.Query(true).SingleOrDefault(o => o.UserId == user.Id && o.OpportunityId == opportunity.Id && o.ActionId == actionVerificationId)
+      var myOpportunity = _myOpportunityRepository.Query(true)
+        .SingleOrDefault(o => o.UserId == user.Id && o.OpportunityId == opportunity.Id && o.ActionId == actionVerificationId)
           ?? throw new ValidationException($"Opportunity '{opportunity.Title}' has not been sent for verification for user '{user.Username}'");
 
-      if (myOpportunity.VerificationStatus != VerificationStatus.Pending)
-        throw new ValidationException($"Verification is not {VerificationStatus.Pending.ToDescription().ToLower()} for opportunity '{opportunity.Title}'");
+      if (_syncStateService.ListSyncInfoMyOpportunity(myOpportunity.Id)?.Locked == true)
+        throw new ValidationException($"Verification for opportunity '{opportunity.Title}' is externally managed and cannot be deleted");
 
-      var itemsExisting = new List<MyOpportunityVerification>();
-      var itemsExistingDeleted = new List<MyOpportunityVerification>();
+      await PerformActionDeleteVerification(myOpportunity);
+    }
+
+    public async Task PerformActionDeleteVerificationFromPartnerSyncPull(Guid id, bool recordError = true)
+    {
+      if (id == Guid.Empty)
+        throw new ArgumentNullException(nameof(id));
+
+      var myOpportunity = GetById(id, true, true, false);
+
+      if (myOpportunity.Action != Action.Verification)
+        throw new InvalidOperationException($"{nameof(Models.MyOpportunity)} not actioned for verification");
+
+      var syncInfo = myOpportunity.SyncedInfo;
+
+      if (syncInfo?.Locked != true)
+        throw new ValidationException($"{nameof(Models.MyOpportunity)} is not partner managed and cannot be deleted by partner sync");
+
+      // MyOpportunity sync is pull-only and the sync state service enforces a single partner record
+      var syncPartner = syncInfo.Partners.Single();
+
+      if (string.IsNullOrEmpty(syncPartner.ExternalId))
+        throw new InvalidOperationException($"{nameof(Models.MyOpportunity)} partner sync external id expected");
+
       try
       {
-        await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+        await PerformActionDeleteVerification(myOpportunity, async () =>
         {
-          using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
-
-          var items = myOpportunity.Verifications?.Where(o => o.FileId.HasValue).ToList();
-          if (items != null)
-          {
-            itemsExisting.AddRange(items);
-            foreach (var item in itemsExisting)
-            {
-              if (!item.FileId.HasValue)
-                throw new InvalidOperationException("File id expected");
-              item.File = await _blobService.Download(item.FileId.Value);
-            }
-          }
-
-          //delete existing items in blob storage and db
-          foreach (var item in itemsExisting)
-          {
-            if (!item.FileId.HasValue)
-              throw new InvalidOperationException("File expected");
-
-            await _myOpportunityVerificationRepository.Delete(item);
-            await _blobService.Delete(item.FileId.Value);
-            itemsExistingDeleted.Add(item);
-          }
-
-          await _myOpportunityRepository.Delete(myOpportunity);
-
-          scope.Complete();
+          await _syncProcessingService.RecordPull(SyncAction.Delete, syncPartner.PartnerId, PartnerSync.EntityType.MyOpportunity, syncPartner.ExternalId, myOpportunity.Id, null);
         });
       }
-      catch //roll back
+      catch (Exception ex)
       {
-        //re-upload existing items to blob storage
-        foreach (var item in itemsExistingDeleted)
-        {
-          if (!item.FileId.HasValue || item.File == null)
-            throw new InvalidOperationException("File expected");
+        if (!recordError) throw;
 
-          await _blobService.Create(item.FileId.Value, item.File);
+        try
+        {
+          await _syncProcessingService.RecordPullError(SyncAction.Delete, syncPartner.PartnerId, PartnerSync.EntityType.MyOpportunity, syncPartner.ExternalId, myOpportunity.Id, ex.Message);
+        }
+        catch (Exception innerEx)
+        {
+          if (_logger.IsEnabled(LogLevel.Error))
+            _logger.LogError(innerEx, "Failed to record sync pull error state for partner '{partner}' and entity type '{entityType}': {errorMessage}", syncPartner.Partner,
+              PartnerSync.EntityType.MyOpportunity, innerEx.Message);
         }
 
         throw;
@@ -1163,6 +1161,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
     {
       ArgumentNullException.ThrowIfNull(request, nameof(request));
 
+      await _myOpportunityRequestValidatorVerifyImportPartnerSync.ValidateAndThrowAsync(request);
+
       request.UserEmail = request.UserEmail?.Trim();
       if (string.IsNullOrEmpty(request.UserEmail)) request.UserEmail = null;
 
@@ -1185,11 +1185,18 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         return result;
       }
 
-      var statusVerification = GetVerificationStatusInternal(opportunity.Id, user.Id);
-      if (statusVerification.Status == VerificationStatus.Completed)
+      var actionVerificationId = _myOpportunityActionService.GetByName(Action.Verification.ToString()).Id;
+      var myOpportunityExisting = _myOpportunityRepository.Query(false)
+        .SingleOrDefault(o => o.UserId == user.Id && o.OpportunityId == opportunity.Id && o.ActionId == actionVerificationId);
+
+      result.MyOpportunityId = myOpportunityExisting?.Id;
+
+      switch (myOpportunityExisting?.VerificationStatus)
       {
-        result.SkipReason = $"Verification already completed for user '{user.Username}' and opportunity '{opportunity.Title}'";
-        return result;
+        case VerificationStatus.Completed:
+        case VerificationStatus.Rejected:
+          result.SkipReason = $"Verification already {myOpportunityExisting.VerificationStatus.Value.ToDescription().ToLower()} for user '{user.Username}' and opportunity '{opportunity.Title}'";
+          return result;
       }
 
       try
@@ -1217,12 +1224,15 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
           {
             DateStart = request.DateStart,
             DateEnd = request.DateEnd,
-            CommitmentInterval = request.CommitmentInterval
+            CommitmentInterval = request.CommitmentInterval,
+            PercentComplete = request.PercentComplete
           };
 
-          await PerformActionSendForVerification(user, opportunity.Id, requestVerify, options);
+          var myOpportunity = await PerformActionSendForVerification(user, opportunity.Id, requestVerify, options);
+          result.MyOpportunityId = myOpportunity.Id;
 
-          await FinalizeVerification(user, opportunity, VerificationStatus.Completed, options);
+          if (request.Completed)
+            await FinalizeVerification(user, opportunity, VerificationStatus.Completed, options);
 
           scope.Complete();
         });
@@ -1360,9 +1370,118 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
       return result;
     }
+
+    public List<Models.MyOpportunity> ListVerificationPending(int batchSize, int minAgeInDays, List<Guid> idsToSkip)
+    {
+      if (batchSize <= 0)
+        throw new ArgumentOutOfRangeException(nameof(batchSize), "Batch size must be greater than zero");
+
+      if (minAgeInDays < 0)
+        throw new ArgumentOutOfRangeException(nameof(minAgeInDays), "Minimum age must be greater than or equal to zero");
+
+      var actionVerificationId = _myOpportunityActionService.GetByName(Action.Verification.ToString()).Id;
+      var verificationStatusPendingId = _myOpportunityVerificationStatusService.GetByName(VerificationStatus.Pending.ToString()).Id;
+      var cutoffDate = DateTimeOffset.UtcNow.AddDays(-minAgeInDays);
+
+      var query = _myOpportunityRepository.Query(true)
+        .Where(o => o.ActionId == actionVerificationId
+          && o.VerificationStatusId == verificationStatusPendingId
+          && o.DateModified <= cutoffDate);
+
+      if (idsToSkip != null && idsToSkip.Count != 0)
+        query = query.Where(o => !idsToSkip.Contains(o.Id));
+
+      var items = query
+        .OrderBy(o => o.DateModified)
+        .Take(batchSize)
+        .ToList();
+
+      items.ForEach(ParseComputed);
+
+      return items;
+    }
     #endregion
 
     #region Private Members
+    private async Task PerformActionDeleteVerification(Models.MyOpportunity myOpportunity, Func<Task>? beforeDelete = null)
+    {
+      ArgumentNullException.ThrowIfNull(myOpportunity);
+
+      if (myOpportunity.VerificationStatus != VerificationStatus.Pending)
+        throw new ValidationException($"Verification is not {VerificationStatus.Pending.ToDescription().ToLower()} for opportunity '{myOpportunity.OpportunityTitle}'");
+
+      var itemsExisting = new List<MyOpportunityVerification>();
+      var itemsExistingDeleted = new List<MyOpportunityVerification>();
+
+      try
+      {
+        await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+        {
+          using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
+
+          var items = myOpportunity.Verifications?.Where(o => o.FileId.HasValue).ToList();
+          if (items != null)
+          {
+            itemsExisting.AddRange(items);
+            foreach (var item in itemsExisting)
+            {
+              if (!item.FileId.HasValue)
+                throw new InvalidOperationException("File id expected");
+
+              item.File = await _blobService.Download(item.FileId.Value);
+            }
+          }
+
+          //delete existing items in blob storage and db
+          foreach (var item in itemsExisting)
+          {
+            if (!item.FileId.HasValue)
+              throw new InvalidOperationException("File expected");
+
+            await _myOpportunityVerificationRepository.Delete(item);
+            await _blobService.Delete(item.FileId.Value);
+            itemsExistingDeleted.Add(item);
+          }
+
+          if (beforeDelete != null) await beforeDelete();
+
+          await _myOpportunityRepository.Delete(myOpportunity);
+
+          scope.Complete();
+        });
+      }
+      catch //roll back
+      {
+        //re-upload existing items to blob storage
+        foreach (var item in itemsExistingDeleted)
+        {
+          if (!item.FileId.HasValue || item.File == null)
+            throw new InvalidOperationException("File expected");
+
+          await _blobService.Create(item.FileId.Value, item.File);
+        }
+
+        throw;
+      }
+    }
+
+    /// <summary>
+    /// Populates computed properties on the MyOpportunity item.
+    ///
+    /// Partner synchronization information only applies to verification submissions.
+    /// When present, it indicates that the completion submission is partner-managed
+    /// and should be treated as locked for normal Yoma status changes.
+    /// </summary>
+    private void ParseComputed(Models.MyOpportunity myOpportunity)
+    {
+      myOpportunity.UserPhotoURL = GetBlobObjectURL(myOpportunity.UserPhotoStorageType, myOpportunity.UserPhotoKey);
+      myOpportunity.OrganizationLogoURL = GetBlobObjectURL(myOpportunity.OrganizationLogoStorageType, myOpportunity.OrganizationLogoKey);
+      myOpportunity.Verifications?.ForEach(v => v.FileURL = GetBlobObjectURL(v.FileStorageType, v.FileKey));
+
+      if (myOpportunity.Action == Action.Verification)
+        myOpportunity.SyncedInfo = _syncStateService.ListSyncInfoMyOpportunity(myOpportunity.Id);
+    }
+
     private MyOpportunityResponseVerifyStatus GetVerificationStatusInternal(Guid opportunityId, Guid userId)
     {
       var opportunity = _opportunityService.GetById(opportunityId, false, false, false);
@@ -1387,8 +1506,10 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       return new MyOpportunityResponseVerifyStatus
       {
         Status = myOpportunity.VerificationStatus.Value,
+        PercentComplete = myOpportunity.PercentComplete,
         Comment = myOpportunity.CommentVerification,
-        DateCompleted = myOpportunity.DateCompleted
+        DateCompleted = myOpportunity.DateCompleted,
+        SyncedInfo = _syncStateService.ListSyncInfoMyOpportunity(myOpportunity.Id)
       };
     }
 
@@ -1531,6 +1652,9 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
         if (item.VerificationStatus != VerificationStatus.Pending)
           throw new ValidationException($"Verification is not {VerificationStatus.Pending.ToDescription().ToLower()} for opportunity '{opportunity.Title}'");
+
+        if (!options.PartnerSyncedVerification && _syncStateService.ListSyncInfoMyOpportunity(item.Id)?.Locked == true)
+          throw new ValidationException($"Verification for opportunity '{opportunity.Title}' is externally managed and cannot be manually finalized");
 
         // Idempotent no-op: already at requested status
         if (item.VerificationStatus == status)
@@ -1811,7 +1935,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       };
     }
 
-    private async Task PerformActionSendForVerification(User user,
+    private async Task<Models.MyOpportunity> PerformActionSendForVerification(User user,
       Guid opportunityId,
       MyOpportunityRequestVerify request,
       MyOpportunityVerificationOptions options)
@@ -1899,11 +2023,12 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       myOpportunity.CommitmentInterval = request.CommitmentInterval?.Option;
       myOpportunity.DateStart = request.DateStart;
       myOpportunity.DateEnd = request.DateEnd;
+      myOpportunity.PercentComplete = request.PercentComplete;
       myOpportunity.Recommendable = request.Recommendable;
       myOpportunity.StarRating = request.StarRating;
       myOpportunity.Feedback = request.Feedback;
 
-      await PerformActionSendForVerificationProcessVerificationTypes(request, opportunity, myOpportunity, options, isNew);
+      myOpportunity = await PerformActionSendForVerificationProcessVerificationTypes(request, opportunity, myOpportunity, options, isNew);
 
       //used by notifications
       myOpportunity.Username = user.Username;
@@ -1917,7 +2042,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       myOpportunity.ZltoReward = opportunity.ZltoReward;
       myOpportunity.YomaReward = opportunity.YomaReward;
 
-      if (options.AutoFinalizedVerification) return; //with instant, imported or synced verifications, pending notifications are not sent
+      if (options.AutoFinalizedVerification) return myOpportunity; //with instant, imported or synced verifications, pending notifications are not sent
 
       //sent to youth
       if (options.EnqueueOutcomes)
@@ -1932,6 +2057,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             nameof(SendNotification), $"{nameof(Models.MyOpportunity)}.{nameof(PerformActionSendForVerification)}");
       else
         await SendNotification(myOpportunity, NotificationType.Opportunity_Verification_Pending_Admin);
+
+      return myOpportunity;
     }
 
     private async Task SendNotification(Models.MyOpportunity myOpportunity, NotificationType type)
@@ -1984,7 +2111,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       }
     }
 
-    private async Task PerformActionSendForVerificationProcessVerificationTypes(MyOpportunityRequestVerify request,
+    private async Task<Models.MyOpportunity> PerformActionSendForVerificationProcessVerificationTypes(MyOpportunityRequestVerify request,
       Opportunity.Models.Opportunity opportunity,
       Models.MyOpportunity myOpportunity,
       MyOpportunityVerificationOptions options,
@@ -2036,6 +2163,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
           scope.Complete();
         });
+
+        return myOpportunity;
       }
       catch //roll back
       {

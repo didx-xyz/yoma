@@ -110,6 +110,16 @@ const OpportunityPublicDetails: React.FC<{
       },
       enabled: !error && !preview,
     });
+  const submissionSyncInfo =
+    verificationStatus?.syncedInfo ?? opportunityInfo.syncedInfo ?? null;
+  const partnerSourceLabel =
+    submissionSyncInfo?.partners
+      ?.map((partner) => partner.partner)
+      .join(", ") || "an external partner";
+  const isPartnerManagedPendingSubmission =
+    verificationStatus?.status == "Pending" &&
+    (submissionSyncInfo?.syncType === "Pull" ||
+      submissionSyncInfo?.locked === true);
 
   useEffect(() => {
     if (!user) return;
@@ -278,6 +288,13 @@ const OpportunityPublicDetails: React.FC<{
   }, [opportunityInfo.id, opportunityInfo.title, queryClient]);
 
   const onOpportunityCancel = useCallback(async () => {
+    if (isPartnerManagedPendingSubmission) {
+      toast.info(
+        `This submission is managed by ${partnerSourceLabel} and cannot be cancelled or deleted in Yoma.`,
+      );
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -310,7 +327,13 @@ const OpportunityPublicDetails: React.FC<{
     } finally {
       setIsLoading(false);
     }
-  }, [opportunityInfo.id, opportunityInfo.title, queryClient]);
+  }, [
+    isPartnerManagedPendingSubmission,
+    opportunityInfo.id,
+    opportunityInfo.title,
+    partnerSourceLabel,
+    queryClient,
+  ]);
 
   const onShareOpportunity = useCallback(() => {
     setShareOpportunityDialogVisible(true);
@@ -666,22 +689,56 @@ const OpportunityPublicDetails: React.FC<{
                 </div>
 
                 <div className="rounded-lg p-4 text-center md:w-[450px]">
-                  <strong>{opportunityInfo.organizationName}</strong> is busy
-                  reviewing your submission. Once approved, the opportunity will
-                  be automatically added to your CV. If you would like to cancel
-                  your application and delete all uploaded files, click the
-                  button below.
+                  {isPartnerManagedPendingSubmission ? (
+                    <>
+                      <strong>{partnerSourceLabel}</strong> manages this
+                      submission externally. Your submission is read-only in
+                      Yoma while it is pending, so cancellation and file
+                      deletion are not available here.
+                      {verificationStatus?.percentComplete != null && (
+                        <>
+                          {" "}
+                          Current partner-reported progress:{" "}
+                          {verificationStatus.percentComplete}%.
+                        </>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <strong>{opportunityInfo.organizationName}</strong> is
+                      busy reviewing your submission. Once approved, the
+                      opportunity will be automatically added to your CV. If you
+                      would like to cancel your application and delete all
+                      uploaded files, click the button below.
+                    </>
+                  )}
                 </div>
                 <div className="mt-4 flex grow gap-4">
-                  <button
-                    type="button"
-                    className="btn border-green text-green hover:bg-green-dark rounded-full bg-white normal-case hover:text-white md:w-[200px]"
-                    onClick={onOpportunityCancel}
-                    disabled={isLoading}
-                  >
-                    Cancel submission & Delete all files
-                  </button>
+                  {isPartnerManagedPendingSubmission ? (
+                    <button
+                      type="button"
+                      className="btn border-green text-green hover:bg-green-dark rounded-full bg-white normal-case hover:text-white md:w-[200px]"
+                      onClick={() => setCancelOpportunityDialogVisible(false)}
+                    >
+                      Close
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      className="btn border-green text-green hover:bg-green-dark rounded-full bg-white normal-case hover:text-white md:w-[200px]"
+                      onClick={onOpportunityCancel}
+                      disabled={isLoading}
+                    >
+                      Cancel submission
+                    </button>
+                  )}
                 </div>
+                {!isPartnerManagedPendingSubmission && (
+                  <div className="text-gray-dark px-4 text-center text-xs md:w-[450px]">
+                    * This will cancel your submission and delete all uploaded
+                    files.
+                  </div>
+                )}
               </div>
             </div>
           </CustomModal>
@@ -709,14 +766,7 @@ const OpportunityPublicDetails: React.FC<{
         <div
           className={`flex flex-col gap-4 ${!preview && !user ? "blur-xs" : ""}`}
         >
-          <div
-            className={`relative flex grow flex-col rounded-lg bg-white p-4 shadow-lg md:p-6`}
-            // className={`relative flex grow flex-col rounded-lg bg-white p-4 shadow-lg md:p-6 ${
-            //   OPPORTUNITY_DETAILS_DESIGN_V2
-            //     ? `border-t-4 ${typeConfig.accentClassName}`
-            //     : ""
-            // }`}
-          >
+          <div className="relative flex grow flex-col rounded-lg bg-white p-4 shadow-lg md:p-6">
             <div className="flex items-start gap-3">
               <div className="min-w-0 flex-1">
                 <h4 className="font-family-nunito line-clamp-2 text-xl font-bold text-black md:text-2xl">
@@ -852,7 +902,31 @@ const OpportunityPublicDetails: React.FC<{
                         )}
 
                       {verificationStatus &&
-                        verificationStatus.status == "Pending" && (
+                        verificationStatus.status == "Pending" &&
+                        (isPartnerManagedPendingSubmission ? (
+                          <button
+                            type="button"
+                            className="btn border-green text-green btn-sm hover:bg-green-dark h-10 w-full rounded-full bg-white text-sm normal-case hover:text-white md:w-[250px]"
+                            title={`This submission is read-only while pending${verificationStatus?.percentComplete != null ? ` and is ${verificationStatus.percentComplete}% complete` : ""}, so Yoma does not offer cancel or delete actions here.`}
+                            onClick={() => {
+                              // 📊 ANALYTICS: track "Pending verification" button click
+                              analytics.trackEvent(
+                                "opportunity_pending_verification_clicked",
+                                {
+                                  opportunityId: opportunityInfo.id,
+                                  opportunityTitle: opportunityInfo.title,
+                                },
+                              );
+
+                              setCancelOpportunityDialogVisible(true);
+                            }}
+                          >
+                            <FaInfoCircle className="h-4 w-4 shrink-0" />
+                            {verificationStatus?.percentComplete != null
+                              ? `Pending verification (${verificationStatus.percentComplete}%)`
+                              : "Pending verification"}
+                          </button>
+                        ) : (
                           <button
                             type="button"
                             className="btn border-green text-green btn-sm hover:bg-green-dark h-10 w-full rounded-full bg-white text-sm normal-case hover:text-white md:w-[250px]"
@@ -873,7 +947,7 @@ const OpportunityPublicDetails: React.FC<{
                             Pending verification
                             <IoMdClose className="mt-[2px] ml-1 h-4 w-4" />
                           </button>
-                        )}
+                        ))}
 
                       {verificationStatus &&
                         verificationStatus.status == "Completed" && (

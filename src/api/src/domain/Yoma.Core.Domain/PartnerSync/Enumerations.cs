@@ -2,7 +2,8 @@ namespace Yoma.Core.Domain.PartnerSync
 {
   public enum EntityType
   {
-    Opportunity
+    Opportunity,
+    MyOpportunity
   }
 
   public enum SyncAction
@@ -25,5 +26,12 @@ namespace Yoma.Core.Domain.PartnerSync
     Successful,
     Partial,
     Failed
+  }
+
+  public enum SyncItemVerificationStatus
+  {
+    InProgress,
+    Completed,
+    Cancelled
   }
 }

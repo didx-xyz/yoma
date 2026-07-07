@@ -3,8 +3,9 @@ import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
 import Head from "next/head";
 import router from "next/router";
-import { type ParsedUrlQuery } from "querystring";
+import { type ParsedUrlQuery } from "node:querystring";
 import { useCallback, type ReactElement } from "react";
+import { IoMdHeart } from "react-icons/io";
 import { Action } from "~/api/models/myOpportunity";
 import { searchMyOpportunities } from "~/api/services/myOpportunities";
 import Suspense from "~/components/Common/Suspense";
@@ -39,7 +40,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   const queryClient = new QueryClient(config);
   const { id } = context.params as IParams;
   const { query, page } = context.query;
-  const pageNumber = page ? parseInt(page.toString()) : 1;
+  const pageNumber = page ? Number.parseInt(page.toString()) : 1;
 
   // 👇 prefetch queries on server
   await queryClient.prefetchQuery({
@@ -74,7 +75,7 @@ const MyOpportunitiesSaved: NextPageWithLayout<{
 }> = ({ query, pageNumber, error }) => {
   // 👇 use prefetched queries from server
   const {
-    data: data,
+    data,
     error: dataError,
     isLoading: dataIsLoading,
   } = useQuery({
@@ -136,11 +137,29 @@ const MyOpportunitiesSaved: NextPageWithLayout<{
 
             {/* GRID */}
             <div className="flex flex-col gap-4">
-              {data.items.map((item, index) => (
+              {data.items.map((item) => (
                 <OpportunityListItem
-                  key={index}
+                  key={item.id}
                   data={item}
                   displayDate={item.dateModified ?? ""}
+                  config={{
+                    displayDateLabel: "Saved",
+                    showStatusBadge: false,
+                    showPullSyncBadge: true,
+                    showProgress: false,
+                    showDates: false,
+                    showDownloadFiles: false,
+                    showComment: false,
+                    showSkills: false,
+                    pageContextBadge: {
+                      label: "Saved",
+                      tooltip:
+                        "You saved this opportunity for quick access later.",
+                      className:
+                        "bg-yellow-50 text-yellow border border-yellow-200",
+                      icon: <IoMdHeart className="h-3.5 w-3.5" />,
+                    },
+                  }}
                 />
               ))}
             </div>

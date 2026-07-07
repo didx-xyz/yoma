@@ -59,7 +59,7 @@ namespace Yoma.Core.Api.Controllers
     {
       if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(ListMyOpportunityVerificationSearchCriteriaOpportunity));
 
-      var result = _myOpportunityService.ListMyOpportunityVerificationSearchCriteriaOpportunity(organizations, verificationStatuses, true);
+      var result = _myOpportunityService.ListVerificationSearchCriteriaOpportunity(organizations, verificationStatuses, true);
 
       if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(ListMyOpportunityVerificationSearchCriteriaOpportunity));
 
@@ -342,7 +342,7 @@ namespace Yoma.Core.Api.Controllers
     {
       if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(PerformActionSendForVerificationManualDelete));
 
-      await _myOpportunityService.PerformActionSendForVerificationManualDelete(opportunityId);
+      await _myOpportunityService.PerformActionDeleteVerificationManual(opportunityId);
 
       if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(PerformActionSendForVerificationManualDelete));
 

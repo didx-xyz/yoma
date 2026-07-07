@@ -3,7 +3,7 @@ import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
 import Head from "next/head";
 import router from "next/router";
-import { type ParsedUrlQuery } from "querystring";
+import { type ParsedUrlQuery } from "node:querystring";
 import { useCallback, type ReactElement } from "react";
 import { Action, VerificationStatus } from "~/api/models/myOpportunity";
 import { searchMyOpportunities } from "~/api/services/myOpportunities";
@@ -24,6 +24,18 @@ interface IParams extends ParsedUrlQuery {
   page?: string;
 }
 
+// const DEV_PENDING_PARTNER_SYNC_INFO = {
+//   syncType: "Pull",
+//   locked: true,
+//   partners: [
+//     {
+//       partner: "Sample Partner",
+//       externalId: "test-external-id",
+//       url: null,
+//     },
+//   ],
+// } as const;
+
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
 
@@ -39,7 +51,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   const queryClient = new QueryClient(config);
   const { id } = context.params as IParams;
   const { query, page } = context.query;
-  const pageNumber = page ? parseInt(page.toString()) : 1;
+  const pageNumber = page ? Number.parseInt(page.toString()) : 1;
 
   // 👇 prefetch queries on server
   await queryClient.prefetchQuery({
@@ -74,7 +86,7 @@ const MyOpportunitiesPending: NextPageWithLayout<{
 }> = ({ query, pageNumber, error }) => {
   // 👇 use prefetched queries from server
   const {
-    data: data,
+    data,
     error: dataError,
     isLoading: dataIsLoading,
   } = useQuery({
@@ -136,11 +148,33 @@ const MyOpportunitiesPending: NextPageWithLayout<{
 
             {/* GRID */}
             <div className="flex flex-col gap-4">
-              {data.items.map((item, index) => (
+              {data.items.map((item) => (
                 <OpportunityListItem
-                  key={index}
+                  key={item.id}
                   data={item}
+                  // TODO: remove before commit. Force partner-managed pending state for dev testing.
+
+                  // data={
+                  //   process.env.NODE_ENV !== "production"
+                  //     ? {
+                  //         ...item,
+                  //         percentComplete: item.percentComplete ?? 100,
+                  //         syncedInfo:
+                  //           item.syncedInfo ?? DEV_PENDING_PARTNER_SYNC_INFO,
+                  //       }
+                  //     : item
+                  // }
                   displayDate={item.dateModified ?? ""}
+                  config={{
+                    displayDateLabel: "Submitted",
+                    showStatusBadge: true,
+                    showPullSyncBadge: true,
+                    showProgress: true,
+                    showDates: true,
+                    showDownloadFiles: true,
+                    showComment: true,
+                    showSkills: false,
+                  }}
                 />
               ))}
             </div>

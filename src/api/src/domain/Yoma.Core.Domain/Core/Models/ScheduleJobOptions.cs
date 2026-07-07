@@ -42,11 +42,26 @@ namespace Yoma.Core.Domain.Core.Models
 
     public int OrganizationDeletionIntervalInDays { get; set; }
 
-    public string MyOpportunityRejectionSchedule { get; set; } = null!;
+    public string MyOpportunityVerificationPendingPurgeSchedule { get; set; } = null!;
 
-    public int MyOpportunityRejectionBatchSize { get; set; }
+    public int MyOpportunityVerificationPendingPurgeBatchSize { get; set; }
 
-    public int MyOpportunityRejectionIntervalInDays { get; set; }
+    public int MyOpportunityVerificationPendingAutoRejectIntervalInDays { get; set; }
+
+    /// <summary>
+    /// Multiplies the stored commitment interval to determine when synced pending verifications become stale
+    /// </summary>
+    public int MyOpportunityVerificationPendingSyncedCancelCommitmentIntervalMultiplier { get; set; }
+
+    /// <summary>
+    /// Minimum age before a synced pending verification can be cancelled
+    /// </summary>
+    public int MyOpportunityVerificationPendingSyncedCancelMinIntervalInDays { get; set; }
+
+    /// <summary>
+    /// Fallback age for synced pending verifications without a commitment interval
+    /// </summary>
+    public int MyOpportunityVerificationPendingSyncedCancelDefaultIntervalInDays { get; set; }
 
     public string SSITenantCreationSchedule { get; set; } = null!;
 

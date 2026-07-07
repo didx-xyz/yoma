@@ -8,10 +8,9 @@ import { IoMdAlert } from "react-icons/io";
 import { useEffect, useState } from "react";
 
 const TransactionItemComponent: React.FC<{
-  key: string;
   data: WalletVoucher;
   onClick: () => void;
-}> = ({ key, data, onClick }) => {
+}> = ({ data, onClick }) => {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -19,7 +18,6 @@ const TransactionItemComponent: React.FC<{
   }, []);
   return (
     <button
-      key={key}
       className="relative flex aspect-square h-64 w-full flex-col gap-1 rounded-lg bg-white p-5 shadow-xs sm:max-w-[300px]"
       onClick={onClick}
     >

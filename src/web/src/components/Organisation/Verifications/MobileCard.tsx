@@ -1,5 +1,6 @@
 import Moment from "react-moment";
 import Link from "next/link";
+import { IoInformationCircleOutline } from "react-icons/io5";
 import { IoMdAlert, IoMdCheckmark, IoMdClose } from "react-icons/io";
 import { type MyOpportunityInfo } from "~/api/models/myOpportunity";
 import { DATE_FORMAT_HUMAN } from "~/lib/constants";
@@ -27,70 +28,119 @@ const MobileCard: React.FC<MobileCardProps> = ({
   onVerify,
 }) => {
   const router = useRouter();
+  const isPartnerManaged =
+    item.syncedInfo?.syncType === "Pull" || item.syncedInfo?.locked === true;
+  const partnerSourceLabel =
+    item.syncedInfo?.partners?.map((partner) => partner.partner).join(", ") ||
+    null;
+  const detailsHref = `/organisations/${id}/opportunities/${item.opportunityId}/info?returnUrl=${encodeURIComponent(
+    getSafeUrl(returnUrl?.toString(), router.asPath),
+  )}`;
 
   return (
-    <div className="text-gray-dark shadow-custom rounded-lg bg-white p-4">
-      <div className="mb-2 flex items-center">
-        <input
-          type="checkbox"
-          className="checkbox checkbox-primary mr-2"
-          checked={selectedRows?.some((x) => x.id == item.id)}
-          onChange={(e) => handleRowSelect(e, item)}
-        />
-        <h3 className="text-base font-semibold">{item.userDisplayName}</h3>
-      </div>
-      <div>
-        <div className="mb-1 text-sm">
-          <strong>Opportunity:</strong>{" "}
+    <div className="shadow-custom flex flex-col justify-between gap-4 rounded-lg bg-white p-4">
+      <div className="border-gray-light flex flex-row gap-2 border-b-2 pb-2">
+        <span title={item.opportunityTitle ?? undefined} className="w-full">
           <Link
-            className="line-clamp-2"
-            href={`/organisations/${id}/opportunities/${
-              item.opportunityId
-            }/info${`?returnUrl=${encodeURIComponent(
-              getSafeUrl(returnUrl?.toString(), router.asPath),
-            )}`}`}
+            className="line-clamp-1 text-start font-semibold"
+            href={detailsHref}
           >
             {item.opportunityTitle}
           </Link>
+        </span>
+
+        <input
+          type="checkbox"
+          className="checkbox checkbox-primary mt-0.5 shrink-0"
+          checked={selectedRows?.some((x) => x.id == item.id)}
+          disabled={isPartnerManaged}
+          title={
+            isPartnerManaged
+              ? "Partner-managed submissions cannot be approved or declined manually"
+              : undefined
+          }
+          onChange={(e) => handleRowSelect(e, item)}
+        />
+      </div>
+
+      <div className="text-gray-dark flex flex-col gap-2">
+        <div className="flex justify-between gap-4">
+          <p className="text-sm tracking-wider">Student</p>
+          <span className="text-right text-sm">{item.userDisplayName}</span>
         </div>
-        <div className="mb-1 text-sm">
-          <strong>Date connected:</strong>{" "}
-          {item.dateModified && (
-            <Moment format={DATE_FORMAT_HUMAN} utc={true}>
-              {item.dateModified}
-            </Moment>
-          )}
+
+        <div className="flex justify-between gap-4">
+          <p className="text-sm tracking-wider">Date connected</p>
+          <div className="text-right text-sm">
+            {item.dateModified && (
+              <Moment format={DATE_FORMAT_HUMAN} utc={true}>
+                {item.dateModified}
+              </Moment>
+            )}
+          </div>
         </div>
-        <div className="flex flex-row items-center text-sm">
-          <div className="mr-2 font-bold">Verified:</div>
-          {item.verificationStatus && (
-            <>
-              {item.verificationStatus == "Pending" && (
-                <button
-                  type="button"
-                  className="btn border-gray text-gray-dark btn-sm hover:bg-gray flex-nowrap bg-white hover:text-white"
-                  onClick={() => {
-                    onVerify(item);
-                  }}
-                >
-                  <IoMdAlert className="text-yellow mr-2 inline-block h-6 w-6" />
-                  Pending
-                </button>
-              )}
-              {item.verificationStatus == "Completed" && (
-                <div className="flex flex-row items-center gap-2">
-                  <IoMdCheckmark className="text-green h-6 w-6" />
-                  Completed
-                </div>
-              )}
-              {item.verificationStatus == "Rejected" && (
-                <div className="flex flex-row items-center gap-2">
-                  <IoMdClose className="h-6 w-6 text-red-400" />
-                  Declined
-                </div>
-              )}
-            </>
-          )}
+
+        <div className="flex justify-between gap-4">
+          <p className="text-sm tracking-wider">Status</p>
+          <div className="flex justify-start gap-2 text-sm">
+            {item.verificationStatus && (
+              <>
+                {item.verificationStatus == "Pending" && (
+                  <div className="flex flex-col gap-2">
+                    {!isPartnerManaged && (
+                      <button
+                        type="button"
+                        className="btn border-gray text-gray-dark btn-sm hover:bg-gray flex-nowrap bg-white hover:text-white"
+                        onClick={() => {
+                          onVerify(item);
+                        }}
+                      >
+                        <IoMdAlert className="text-yellow mr-2 inline-block h-6 w-6" />
+                        Pending
+                      </button>
+                    )}
+
+                    {isPartnerManaged &&
+                      item.percentComplete !== null &&
+                      item.percentComplete !== undefined && (
+                        <div className="flex w-full max-w-[130px] flex-col gap-1 text-xs">
+                          <span className="text-gray-dark text-right">
+                            {item.percentComplete}% complete
+                            <span title={`Managed by ${partnerSourceLabel}`}>
+                              <IoInformationCircleOutline className="text-blue ml-1 inline-block size-5" />
+                            </span>
+                          </span>
+                          <div className="h-1.5 w-full overflow-hidden rounded-full bg-gray-200">
+                            <div
+                              className="bg-green h-full rounded-full"
+                              style={{
+                                width: `${Math.min(Math.max(item.percentComplete ?? 0, 0), 100)}%`,
+                              }}
+                            />
+                          </div>
+                        </div>
+                      )}
+                  </div>
+                )}
+                {item.verificationStatus == "Completed" && (
+                  <div title="Submission has been completed.">
+                    <span className="badge bg-green-light text-green border-green/10 gap-1 border border-none text-[10px] font-semibold select-none">
+                      <IoMdCheckmark className="h-3.5 w-3.5" />
+                      Completed
+                    </span>
+                  </div>
+                )}
+                {item.verificationStatus == "Rejected" && (
+                  <div title="Submission was declined.">
+                    <span className="badge gap-1 border border-none border-red-100 bg-red-50 text-[10px] font-semibold text-red-500 select-none">
+                      <IoMdClose className="h-3.5 w-3.5" />
+                      Declined
+                    </span>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
         </div>
       </div>
     </div>

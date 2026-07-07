@@ -88,6 +88,8 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
     public short? CommitmentIntervalCount { get; set; }
 
+    public int? CommitmentIntervalTotalHours => this.TimeIntervalToHours();
+
     public string? CommitmentIntervalDescription { get; set; }
 
     #region Verification Limits and Counts
@@ -101,7 +103,7 @@ namespace Yoma.Core.Domain.Opportunity.Models
     public Status Status { get; set; }
 
     [JsonIgnore]
-    public string? KeywordsFlatten { get; set; }
+    public string? KeywordsFlattened { get; set; }
 
     public List<string>? Keywords { get; set; }
 

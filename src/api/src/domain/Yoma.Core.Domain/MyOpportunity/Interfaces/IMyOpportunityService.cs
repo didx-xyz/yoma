@@ -22,7 +22,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Interfaces
 
     Task<MyOpportunitySearchResultsVerificationFilesAdmin> DownloadVerificationFiles(MyOpportunitySearchFilterVerificationFilesAdmin filter, bool ensureOrganizationAuthorization);
 
-    List<MyOpportunitySearchCriteriaOpportunity> ListMyOpportunityVerificationSearchCriteriaOpportunity(List<Guid>? organizations, List<VerificationStatus>? verificationStatuses, bool ensureOrganizationAuthorization);
+    List<MyOpportunitySearchCriteriaOpportunity> ListVerificationSearchCriteriaOpportunity(List<Guid>? organizations, List<VerificationStatus>? verificationStatuses, bool ensureOrganizationAuthorization);
 
     MyOpportunitySearchResults Search(MyOpportunitySearchFilter filter, User? user);
 
@@ -48,7 +48,9 @@ namespace Yoma.Core.Domain.MyOpportunity.Interfaces
 
     Task PerformActionSendForVerificationManual(Guid userId, Guid opportunityId, MyOpportunityRequestVerify request, bool overridePending);
 
-    Task PerformActionSendForVerificationManualDelete(Guid opportunityId);
+    Task PerformActionDeleteVerificationManual(Guid opportunityId);
+
+    Task PerformActionDeleteVerificationFromPartnerSyncPull(Guid id, bool recordError = true);
 
     Task<MyOpportunityResponseVerifyFinalizeBatch> FinalizeVerificationManual(MyOpportunityRequestVerifyFinalizeBatch request);
 
@@ -63,5 +65,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Interfaces
     Task<CSVImportResult> PerformActionImportVerificationFromCSV(MyOpportunityRequestVerifyImportCsv request, bool ensureOrganizationAuthorization);
 
     Task<MyOpportunityResponseVerifyImportPartnerSync> PerformActionImportVerificationFromPartnerSync(MyOpportunityRequestVerifyImportPartnerSync request);
+
+    List<Models.MyOpportunity> ListVerificationPending(int batchSize, int minAgeInDays, List<Guid> idsToSkip);
   }
 }
