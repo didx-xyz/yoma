@@ -75,10 +75,6 @@ const OpportunityPublicDetails: React.FC<{
   const hasTrackedView = useRef(false);
   // Per-type theming for the new (V2) details design (badge, CTA, accent).
   const typeConfig = getTypeConfig(opportunityInfo?.type);
-  const partnerSourceLabel =
-    opportunityInfo.syncedInfo?.partners
-      ?.map((partner) => partner.partner)
-      .join(", ") || "an external partner";
   const [loginDialogVisible, setLoginDialogVisible] = useState(false);
   const [gotoOpportunityDialogVisible, setGotoOpportunityDialogVisible] =
     useState(false);
@@ -114,10 +110,16 @@ const OpportunityPublicDetails: React.FC<{
       },
       enabled: !error && !preview,
     });
+  const submissionSyncInfo =
+    verificationStatus?.syncedInfo ?? opportunityInfo.syncedInfo ?? null;
+  const partnerSourceLabel =
+    submissionSyncInfo?.partners
+      ?.map((partner) => partner.partner)
+      .join(", ") || "an external partner";
   const isPartnerManagedPendingSubmission =
     verificationStatus?.status == "Pending" &&
-    (opportunityInfo.syncedInfo?.syncType === "Pull" ||
-      opportunityInfo.syncedInfo?.locked === true);
+    (submissionSyncInfo?.syncType === "Pull" ||
+      submissionSyncInfo?.locked === true);
 
   useEffect(() => {
     if (!user) return;
@@ -693,6 +695,13 @@ const OpportunityPublicDetails: React.FC<{
                       submission externally. Your submission is read-only in
                       Yoma while it is pending, so cancellation and file
                       deletion are not available here.
+                      {verificationStatus?.percentComplete != null && (
+                        <>
+                          {" "}
+                          Current partner-reported progress:{" "}
+                          {verificationStatus.percentComplete}%.
+                        </>
+                      )}
                     </>
                   ) : (
                     <>
@@ -898,7 +907,7 @@ const OpportunityPublicDetails: React.FC<{
                           <button
                             type="button"
                             className="btn border-green text-green btn-sm hover:bg-green-dark h-10 w-full rounded-full bg-white text-sm normal-case hover:text-white md:w-[250px]"
-                            title="This submission is read-only while pending, so Yoma does not offer cancel or delete actions here."
+                            title={`This submission is read-only while pending${verificationStatus?.percentComplete != null ? ` and is ${verificationStatus.percentComplete}% complete` : ""}, so Yoma does not offer cancel or delete actions here.`}
                             onClick={() => {
                               // 📊 ANALYTICS: track "Pending verification" button click
                               analytics.trackEvent(
@@ -913,7 +922,9 @@ const OpportunityPublicDetails: React.FC<{
                             }}
                           >
                             <FaInfoCircle className="h-4 w-4 shrink-0" />
-                            Pending verification
+                            {verificationStatus?.percentComplete != null
+                              ? `Pending verification (${verificationStatus.percentComplete}%)`
+                              : "Pending verification"}
                           </button>
                         ) : (
                           <button

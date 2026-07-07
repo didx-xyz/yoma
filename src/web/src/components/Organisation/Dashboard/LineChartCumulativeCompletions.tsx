@@ -8,9 +8,9 @@ import { CHART_COLORS, LINE_DASH_STYLES } from "~/lib/constants";
 import CustomSlider from "~/components/Carousel/CustomSlider";
 
 export const LineChartCumulativeCompletions: React.FC<{
-  key: string;
+  chartKey: string;
   data: TimeIntervalSummary | undefined;
-}> = ({ key, data }) => {
+}> = ({ chartKey, data }) => {
   const [showChart, setShowChart] = useState<boolean>(true);
   const [selectedLegendIndex, setSelectedLegendIndex] = useState<number | null>(
     null,
@@ -49,11 +49,11 @@ export const LineChartCumulativeCompletions: React.FC<{
 
   // chart responsiveness
   // changing the key forces a redraw of the chart when the screen width changes
-  const [keyState, setkey] = useState(key);
+  const [keyState, setKeyState] = useState(chartKey);
   const screenWidth = useAtomValue(screenWidthAtom);
   useEffect(() => {
-    setkey(`${key}-${screenWidth}`);
-  }, [key, screenWidth]);
+    setKeyState(`${chartKey}-${screenWidth}`);
+  }, [chartKey, screenWidth]);
 
   const Legend = () => (
     <>

@@ -7,10 +7,7 @@ import { type ParsedUrlQuery } from "querystring";
 import { type ReactElement } from "react";
 import { IoMdArrowRoundBack } from "react-icons/io";
 import type { MyOpportunityResponseVerify } from "~/api/models/myOpportunity";
-import {
-  type OpportunityInfo,
-  type SyncInfoEntity,
-} from "~/api/models/opportunity";
+import { type OpportunityInfo } from "~/api/models/opportunity";
 import {
   getVerificationStatus,
   performActionViewed,
@@ -36,22 +33,14 @@ interface IParams extends ParsedUrlQuery {
   opportunityId: string;
 }
 
-// const DEV_PARTNER_MANAGED_SYNC_INFO: SyncInfoEntity = {
-//   syncType: "Pull",
-//   locked: true,
-//   partners: [
-//     {
-//       partner: "Sample Partner",
-//       externalId: "test-external-id",
-//       url: null,
-//     },
-//   ],
+// TODO: remove before commit. Force partner-managed pending state for dev testing.
+// const DEV_PENDING_VERIFICATION_STATUS: MyOpportunityResponseVerify = {
+//   status: "Pending",
+//   percentComplete: 42,
+//   comment: null,
+//   dateCompleted: null,
+//   syncedInfo: DEV_PARTNER_MANAGED_SYNC_INFO,
 // };
-
-const DEV_PENDING_VERIFICATION_STATUS: MyOpportunityResponseVerify = {
-  status: "Pending",
-  comment: null,
-};
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { opportunityId } = context.params as IParams;
@@ -93,12 +82,14 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     //   dataOpportunityInfo.verificationEnabled &&
     //   dataOpportunityInfo.verificationMethod == "Manual"
     // ) {
-    //   dataOpportunityInfo = {
-    //     ...dataOpportunityInfo,
+    //   dataVerificationStatus = {
+    //     ...DEV_PENDING_VERIFICATION_STATUS,
     //     syncedInfo:
-    //       dataOpportunityInfo.syncedInfo ?? DEV_PARTNER_MANAGED_SYNC_INFO,
+    //       dataVerificationStatus?.syncedInfo ?? DEV_PARTNER_MANAGED_SYNC_INFO,
+    //     percentComplete: dataVerificationStatus?.percentComplete ?? 42,
+    //     dateCompleted: dataVerificationStatus?.dateCompleted ?? null,
+    //     comment: dataVerificationStatus?.comment ?? null,
     //   };
-    //   dataVerificationStatus = DEV_PENDING_VERIFICATION_STATUS;
     // }
 
     await queryClient.prefetchQuery({

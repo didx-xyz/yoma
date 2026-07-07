@@ -8,10 +8,10 @@ import { CHART_COLORS, LINE_DASH_STYLES } from "~/lib/constants";
 import { screenWidthAtom } from "~/lib/store";
 
 export const LineChartOverview: React.FC<{
-  key: string;
+  chartKey: string;
   data: TimeIntervalSummary | undefined;
   opportunityCount?: number;
-}> = ({ key, data }) => {
+}> = ({ chartKey, data }) => {
   const [showChart, setShowLabels] = useState<boolean>(true);
   const [selectedLegendIndex, setSelectedLegendIndex] = useState<number | null>(
     null,
@@ -43,7 +43,7 @@ export const LineChartOverview: React.FC<{
 
   // chart responsiveness
   // changing the key forces a redraw of the chart when the screen width changes
-  const [keyState, setKeyState] = useState(key);
+  const [keyState, setKeyState] = useState(chartKey);
   const screenWidth = useAtomValue(screenWidthAtom);
 
   const chartHeight = useMemo(() => {
@@ -55,14 +55,14 @@ export const LineChartOverview: React.FC<{
   }, [screenWidth]);
 
   useEffect(() => {
-    setKeyState(`${key}-${screenWidth}`);
-  }, [screenWidth, key]);
+    setKeyState(`${chartKey}-${screenWidth}`);
+  }, [chartKey, screenWidth]);
 
   const Legend = () => (
     <>
       {data?.legend.map((name, index) => (
         <div
-          key={`${key}-${index}`}
+          key={`${chartKey}-${index}`}
           className={`flex cursor-pointer flex-col gap-1 ${
             selectedLegendIndex === index ? "selected" : ""
           }`}

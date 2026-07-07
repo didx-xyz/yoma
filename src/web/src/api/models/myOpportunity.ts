@@ -153,7 +153,10 @@ export interface MyOpportunityResponseVerifyFinalizeBatchItem {
 
 export interface MyOpportunityResponseVerify {
   status: VerificationStatus | string; //NB
+  percentComplete: number | null;
   comment: string | null;
+  dateCompleted: string | null;
+  syncedInfo: SyncInfoEntity | null;
 }
 
 export interface MyOpportunitySearchCriteriaOpportunity {
