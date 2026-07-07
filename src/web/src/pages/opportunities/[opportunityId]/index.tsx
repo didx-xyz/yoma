@@ -33,15 +33,6 @@ interface IParams extends ParsedUrlQuery {
   opportunityId: string;
 }
 
-// TODO: remove before commit. Force partner-managed pending state for dev testing.
-// const DEV_PENDING_VERIFICATION_STATUS: MyOpportunityResponseVerify = {
-//   status: "Pending",
-//   percentComplete: 42,
-//   comment: null,
-//   dateCompleted: null,
-//   syncedInfo: DEV_PARTNER_MANAGED_SYNC_INFO,
-// };
-
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { opportunityId } = context.params as IParams;
   const queryClient = new QueryClient(config);
@@ -73,24 +64,6 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
         opportunityId,
         context,
       );
-
-    // TODO: remove before commit. Force partner-managed pending state for dev testing.
-    // if (
-    //   process.env.NODE_ENV !== "production" &&
-    //   session &&
-    //   dataOpportunityInfo &&
-    //   dataOpportunityInfo.verificationEnabled &&
-    //   dataOpportunityInfo.verificationMethod == "Manual"
-    // ) {
-    //   dataVerificationStatus = {
-    //     ...DEV_PENDING_VERIFICATION_STATUS,
-    //     syncedInfo:
-    //       dataVerificationStatus?.syncedInfo ?? DEV_PARTNER_MANAGED_SYNC_INFO,
-    //     percentComplete: dataVerificationStatus?.percentComplete ?? 42,
-    //     dateCompleted: dataVerificationStatus?.dateCompleted ?? null,
-    //     comment: dataVerificationStatus?.comment ?? null,
-    //   };
-    // }
 
     await queryClient.prefetchQuery({
       queryKey: OPPORTUNITY_QUERY_KEYS.verificationStatus(opportunityId),
