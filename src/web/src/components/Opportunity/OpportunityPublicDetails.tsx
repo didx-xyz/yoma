@@ -699,7 +699,8 @@ const OpportunityPublicDetails: React.FC<{
                         <>
                           {" "}
                           Current partner-reported progress:{" "}
-                          {verificationStatus.percentComplete}%.
+                          <strong>{verificationStatus.percentComplete}%</strong>
+                          .
                         </>
                       )}
                     </>
@@ -852,120 +853,119 @@ const OpportunityPublicDetails: React.FC<{
                     </button>
                   )}
 
-                {/* only show upload button if verification is enabled and method is manual */}
-                {opportunityInfo.verificationEnabled &&
-                  opportunityInfo.verificationMethod == "Manual" && (
-                    <>
-                      {/* only show completion button if start date has been reached,
-                      not yet completed or rejected */}
-                      {new Date(opportunityInfo.dateStart) < new Date() &&
-                        (verificationStatus == null ||
-                          verificationStatus == undefined ||
-                          verificationStatus.status == "None" ||
-                          verificationStatus.status == "Rejected") &&
-                        !opportunityInfo.participantLimitReached &&
-                        !verificationStatusIsLoading && (
-                          <button
-                            type="button"
-                            className="btn border-green text-green btn-sm hover:bg-green-dark h-10 w-full rounded-full bg-white text-sm normal-case hover:text-white md:w-[280px]"
-                            title="Upload your completion files to earn your achievement and have this opportunity added to your CV."
-                            onClick={() => {
-                              // 📊 ANALYTICS: track "Upload completion files" button click
-                              analytics.trackEvent(
-                                "opportunity_upload_files_clicked",
-                                {
-                                  opportunityId: opportunityInfo.id,
-                                  opportunityTitle: opportunityInfo.title,
-                                },
-                              );
+                {opportunityInfo.verificationEnabled && (
+                  <>
+                    {/* only show completion button if verification is manual, start date has been reached,
+                    and the opportunity is not yet completed or rejected */}
+                    {opportunityInfo.verificationMethod == "Manual" &&
+                      new Date(opportunityInfo.dateStart) < new Date() &&
+                      (verificationStatus == null ||
+                        verificationStatus == undefined ||
+                        verificationStatus.status == "None" ||
+                        verificationStatus.status == "Rejected") &&
+                      !opportunityInfo.participantLimitReached &&
+                      !verificationStatusIsLoading && (
+                        <button
+                          type="button"
+                          className="btn border-green text-green btn-sm hover:bg-green-dark h-10 w-full rounded-full bg-white text-sm normal-case hover:text-white md:w-[280px]"
+                          title="Upload your completion files to earn your achievement and have this opportunity added to your CV."
+                          onClick={() => {
+                            // 📊 ANALYTICS: track "Upload completion files" button click
+                            analytics.trackEvent(
+                              "opportunity_upload_files_clicked",
+                              {
+                                opportunityId: opportunityInfo.id,
+                                opportunityTitle: opportunityInfo.title,
+                              },
+                            );
 
-                              if (user) {
-                                setCompleteOpportunityDialogVisible(true);
-                              } else {
-                                setLoginDialogVisible(true);
-                              }
-                            }}
-                          >
-                            <Image
-                              src={iconUpload}
-                              alt="Icon Upload"
-                              width={20}
-                              className="h-auto"
-                              sizes="100vw"
-                              priority={true}
-                            />
+                            if (user) {
+                              setCompleteOpportunityDialogVisible(true);
+                            } else {
+                              setLoginDialogVisible(true);
+                            }
+                          }}
+                        >
+                          <Image
+                            src={iconUpload}
+                            alt="Icon Upload"
+                            width={20}
+                            className="h-auto"
+                            sizes="100vw"
+                            priority={true}
+                          />
 
-                            <span className="ml-1">
-                              Upload your completion files
-                            </span>
-                          </button>
-                        )}
+                          <span className="ml-1">
+                            Upload your completion files
+                          </span>
+                        </button>
+                      )}
 
-                      {verificationStatus &&
-                        verificationStatus.status == "Pending" &&
-                        (isPartnerManagedPendingSubmission ? (
-                          <button
-                            type="button"
-                            className="btn border-green text-green btn-sm hover:bg-green-dark h-10 w-full rounded-full bg-white text-sm normal-case hover:text-white md:w-[250px]"
-                            title={`This submission is read-only while pending${verificationStatus?.percentComplete != null ? ` and is ${verificationStatus.percentComplete}% complete` : ""}, so Yoma does not offer cancel or delete actions here.`}
-                            onClick={() => {
-                              // 📊 ANALYTICS: track "Pending verification" button click
-                              analytics.trackEvent(
-                                "opportunity_pending_verification_clicked",
-                                {
-                                  opportunityId: opportunityInfo.id,
-                                  opportunityTitle: opportunityInfo.title,
-                                },
-                              );
+                    {verificationStatus &&
+                      verificationStatus.status == "Pending" &&
+                      (isPartnerManagedPendingSubmission ? (
+                        <button
+                          type="button"
+                          className="btn border-green text-green btn-sm hover:bg-green-dark h-10 w-full rounded-full bg-white text-sm normal-case hover:text-white md:w-[250px]"
+                          title={`This submission is read-only while pending${verificationStatus?.percentComplete != null ? ` and is ${verificationStatus.percentComplete}% complete` : ""}, so Yoma does not offer cancel or delete actions here.`}
+                          onClick={() => {
+                            // 📊 ANALYTICS: track "Pending verification" button click
+                            analytics.trackEvent(
+                              "opportunity_pending_verification_clicked",
+                              {
+                                opportunityId: opportunityInfo.id,
+                                opportunityTitle: opportunityInfo.title,
+                              },
+                            );
 
-                              setCancelOpportunityDialogVisible(true);
-                            }}
-                          >
-                            <FaInfoCircle className="h-4 w-4 shrink-0" />
-                            {verificationStatus?.percentComplete != null
-                              ? `Pending verification (${verificationStatus.percentComplete}%)`
-                              : "Pending verification"}
-                          </button>
-                        ) : (
-                          <button
-                            type="button"
-                            className="btn border-green text-green btn-sm hover:bg-green-dark h-10 w-full rounded-full bg-white text-sm normal-case hover:text-white md:w-[250px]"
-                            title="Your submission is currently under review. If you would like to cancel your application and delete all uploaded files, click the button to see cancellation options."
-                            onClick={() => {
-                              // 📊 ANALYTICS: track "Pending verification" button click
-                              analytics.trackEvent(
-                                "opportunity_pending_verification_clicked",
-                                {
-                                  opportunityId: opportunityInfo.id,
-                                  opportunityTitle: opportunityInfo.title,
-                                },
-                              );
+                            setCancelOpportunityDialogVisible(true);
+                          }}
+                        >
+                          <FaInfoCircle className="h-4 w-4 shrink-0" />
+                          {verificationStatus?.percentComplete != null
+                            ? `Pending verification (${verificationStatus.percentComplete}%)`
+                            : "Pending verification"}
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          className="btn border-green text-green btn-sm hover:bg-green-dark h-10 w-full rounded-full bg-white text-sm normal-case hover:text-white md:w-[250px]"
+                          title="Your submission is currently under review. If you would like to cancel your application and delete all uploaded files, click the button to see cancellation options."
+                          onClick={() => {
+                            // 📊 ANALYTICS: track "Pending verification" button click
+                            analytics.trackEvent(
+                              "opportunity_pending_verification_clicked",
+                              {
+                                opportunityId: opportunityInfo.id,
+                                opportunityTitle: opportunityInfo.title,
+                              },
+                            );
 
-                              setCancelOpportunityDialogVisible(true);
-                            }}
-                          >
-                            Pending verification
-                            <IoMdClose className="mt-[2px] ml-1 h-4 w-4" />
-                          </button>
-                        ))}
+                            setCancelOpportunityDialogVisible(true);
+                          }}
+                        >
+                          Pending verification
+                          <IoMdClose className="mt-[2px] ml-1 h-4 w-4" />
+                        </button>
+                      ))}
 
-                      {verificationStatus &&
-                        verificationStatus.status == "Completed" && (
-                          <div
-                            className="md:text-md border-green text-green flex h-10 items-center justify-center rounded-full border bg-white px-4 text-center text-sm font-bold"
-                            title="You have completed this opportunity!"
-                          >
-                            Completed
-                            <IoMdCheckmark
-                              strikethroughThickness={2}
-                              overlineThickness={2}
-                              underlineThickness={2}
-                              className="ml-1 h-4 w-4"
-                            />
-                          </div>
-                        )}
-                    </>
-                  )}
+                    {verificationStatus &&
+                      verificationStatus.status == "Completed" && (
+                        <div
+                          className="md:text-md border-green text-green flex h-10 items-center justify-center rounded-full border bg-white px-4 text-center text-sm font-bold"
+                          title="You have completed this opportunity!"
+                        >
+                          Completed
+                          <IoMdCheckmark
+                            strikethroughThickness={2}
+                            overlineThickness={2}
+                            underlineThickness={2}
+                            className="ml-1 h-4 w-4"
+                          />
+                        </div>
+                      )}
+                  </>
+                )}
               </div>
 
               <div className="flex gap-2">
