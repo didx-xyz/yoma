@@ -24,6 +24,18 @@ interface IParams extends ParsedUrlQuery {
   page?: string;
 }
 
+// const DEV_PENDING_PARTNER_SYNC_INFO = {
+//   syncType: "Pull",
+//   locked: true,
+//   partners: [
+//     {
+//       partner: "Sample Partner",
+//       externalId: "test-external-id",
+//       url: null,
+//     },
+//   ],
+// } as const;
+
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
 
@@ -140,6 +152,18 @@ const MyOpportunitiesPending: NextPageWithLayout<{
                 <OpportunityListItem
                   key={item.id}
                   data={item}
+                  // TODO: remove before commit. Force partner-managed pending state for dev testing.
+
+                  // data={
+                  //   process.env.NODE_ENV !== "production"
+                  //     ? {
+                  //         ...item,
+                  //         percentComplete: item.percentComplete ?? 100,
+                  //         syncedInfo:
+                  //           item.syncedInfo ?? DEV_PENDING_PARTNER_SYNC_INFO,
+                  //       }
+                  //     : item
+                  // }
                   displayDate={item.dateModified ?? ""}
                   config={{
                     displayDateLabel: "Submitted",

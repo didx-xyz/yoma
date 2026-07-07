@@ -93,7 +93,6 @@ const OpportunityListItem: React.FC<{
     !!displayDate;
   const showProgressBar =
     resolvedConfig.showProgress &&
-    verificationStatus === "Pending" &&
     data.percentComplete !== null &&
     data.percentComplete !== undefined;
   const hasDownloadableFiles = !!data.verifications?.some((x) => x.fileURL);
