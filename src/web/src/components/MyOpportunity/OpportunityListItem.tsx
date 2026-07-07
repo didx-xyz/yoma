@@ -3,11 +3,16 @@ import Moment from "react-moment";
 import { DATE_FORMAT_HUMAN } from "~/lib/constants";
 import { AvatarImage } from "../AvatarImage";
 import { useRouter } from "next/router";
+import { useQuery } from "@tanstack/react-query";
 import FileSaver from "file-saver";
-import { downloadVerificationFiles } from "~/api/services/myOpportunities";
+import {
+  downloadVerificationFiles,
+  getVerificationStatus,
+} from "~/api/services/myOpportunities";
 import { FaDownload, FaExternalLinkAlt } from "react-icons/fa";
 import { IoMdAlert, IoMdCheckmark, IoMdClose } from "react-icons/io";
 import PullSyncBadge from "../Opportunity/Badges/PullSyncBadge";
+import { OPPORTUNITY_QUERY_KEYS } from "~/hooks/useOpportunityMutations";
 
 export interface OpportunityListItemBadgeConfig {
   label: string;
@@ -21,6 +26,7 @@ export interface OpportunityListItemConfig {
   showStatusBadge?: boolean;
   showPullSyncBadge?: boolean;
   showProgress?: boolean;
+  fetchVerificationStatus?: boolean;
   showDates?: boolean;
   showDownloadFiles?: boolean;
   showComment?: boolean;
@@ -72,6 +78,7 @@ const OpportunityListItem: React.FC<{
     showStatusBadge: true,
     showPullSyncBadge: true,
     showProgress: true,
+    fetchVerificationStatus: false,
     showDates: true,
     showDownloadFiles: true,
     showComment: true,
@@ -79,7 +86,29 @@ const OpportunityListItem: React.FC<{
     ...config,
   };
 
-  const verificationStatus = data.verificationStatus?.toString() ?? null;
+  const { data: fetchedVerificationStatus } = useQuery({
+    queryKey: OPPORTUNITY_QUERY_KEYS.verificationStatus(data.opportunityId),
+    queryFn: () => getVerificationStatus(data.opportunityId),
+    enabled: resolvedConfig.fetchVerificationStatus,
+  });
+
+  const resolvedData = fetchedVerificationStatus
+    ? {
+        ...data,
+        verificationStatus:
+          fetchedVerificationStatus.status ?? data.verificationStatus,
+        percentComplete:
+          fetchedVerificationStatus.percentComplete ?? data.percentComplete,
+        dateCompleted:
+          fetchedVerificationStatus.dateCompleted ?? data.dateCompleted,
+        commentVerification:
+          fetchedVerificationStatus.comment ?? data.commentVerification,
+        syncedInfo: fetchedVerificationStatus.syncedInfo ?? data.syncedInfo,
+      }
+    : data;
+
+  const verificationStatus =
+    resolvedData.verificationStatus?.toString() ?? null;
   const verificationBadge = verificationStatus
     ? verificationStatusDisplay[verificationStatus]
     : null;
@@ -88,19 +117,22 @@ const OpportunityListItem: React.FC<{
     !!pageContextBadge ||
     !!(resolvedConfig.showStatusBadge && verificationBadge) ||
     !!(
-      resolvedConfig.showPullSyncBadge && data.syncedInfo?.syncType === "Pull"
+      resolvedConfig.showPullSyncBadge &&
+      resolvedData.syncedInfo?.syncType === "Pull"
     ) ||
     !!displayDate;
   const showProgressBar =
     resolvedConfig.showProgress &&
-    data.percentComplete !== null &&
-    data.percentComplete !== undefined;
-  const hasDownloadableFiles = !!data.verifications?.some((x) => x.fileURL);
+    resolvedData.percentComplete !== null &&
+    resolvedData.percentComplete !== undefined;
+  const hasDownloadableFiles = !!resolvedData.verifications?.some(
+    (x) => x.fileURL,
+  );
 
   const downloadFiles = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     const file = await downloadVerificationFiles({
-      opportunity: data.opportunityId,
+      opportunity: resolvedData.opportunityId,
       verificationTypes: null,
     });
     if (!file) return;
@@ -111,7 +143,7 @@ const OpportunityListItem: React.FC<{
   const openOpportunity = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     window.open(
-      `/opportunities/${data.opportunityId}`,
+      `/opportunities/${resolvedData.opportunityId}`,
       "_blank",
       "noopener,noreferrer",
     );
@@ -121,24 +153,28 @@ const OpportunityListItem: React.FC<{
     <div className="border-gray shadow-custom flex flex-col gap-3 rounded-lg border-none bg-white p-4">
       <div className="flex flex-row gap-2">
         <AvatarImage
-          icon={data.organizationLogoURL ? data.organizationLogoURL : null}
+          icon={
+            resolvedData.organizationLogoURL
+              ? resolvedData.organizationLogoURL
+              : null
+          }
           alt="Organization Logo"
           size={60}
         />
 
         <div className="flex min-w-0 flex-1 flex-col justify-center gap-1 text-ellipsis">
           <h1 className="text-gray-dark line-clamp-1 text-xs font-medium">
-            {data.organizationName}
+            {resolvedData.organizationName}
           </h1>
           <h2 className="line-clamp-2 text-[18px] leading-tight font-semibold md:line-clamp-1">
-            {data.opportunityTitle}
+            {resolvedData.opportunityTitle}
           </h2>
         </div>
       </div>
 
       <div className="flex h-full max-h-15 flex-row">
         <p className="text-[rgba(84, 88, 89, 1)] line-clamp-4 text-sm font-light">
-          {data.opportunitySummary}
+          {resolvedData.opportunitySummary}
         </p>
       </div>
 
@@ -175,7 +211,7 @@ const OpportunityListItem: React.FC<{
               )}
 
               {resolvedConfig.showPullSyncBadge && (
-                <PullSyncBadge syncInfo={data.syncedInfo} />
+                <PullSyncBadge syncInfo={resolvedData.syncedInfo} />
               )}
             </div>
 
@@ -198,14 +234,14 @@ const OpportunityListItem: React.FC<{
             <div className="flex items-center justify-between gap-2 text-sm">
               <span className="font-bold text-black">Progress</span>
               <span className="text-gray-dark">
-                {data.percentComplete}% complete
+                {resolvedData.percentComplete}% complete
               </span>
             </div>
             <div className="h-2 w-full overflow-hidden rounded-full bg-gray-200">
               <div
                 className="bg-blue h-full rounded-full transition-all"
                 style={{
-                  width: `${Math.min(Math.max(data.percentComplete ?? 0, 0), 100)}%`,
+                  width: `${Math.min(Math.max(resolvedData.percentComplete ?? 0, 0), 100)}%`,
                 }}
               />
             </div>
@@ -213,17 +249,17 @@ const OpportunityListItem: React.FC<{
         )}
 
         {/* COMMENT */}
-        {resolvedConfig.showComment && data.commentVerification && (
+        {resolvedConfig.showComment && resolvedData.commentVerification && (
           <div className="flex flex-row flex-wrap gap-1">
             <h4 className="line-clamp-4 text-sm font-bold">Comment: </h4>
             <h4 className="line-clamp-4 text-sm font-thin">
-              {data.commentVerification}
+              {resolvedData.commentVerification}
             </h4>
           </div>
         )}
 
         {/* SKILLS */}
-        {resolvedConfig.showSkills && !!data.skills?.length && (
+        {resolvedConfig.showSkills && !!resolvedData.skills?.length && (
           <>
             <div className="flex flex-row">
               <h4 className="line-clamp-4 text-sm font-bold">
@@ -231,7 +267,7 @@ const OpportunityListItem: React.FC<{
               </h4>
             </div>
             <div className="flex flex-row flex-wrap gap-2">
-              {data.skills?.map((skill) => (
+              {resolvedData.skills?.map((skill) => (
                 <div
                   className="badge bg-green-light text-green truncate rounded-md text-[12px] font-semibold whitespace-nowrap"
                   key={skill.id}
@@ -261,8 +297,8 @@ const OpportunityListItem: React.FC<{
               type="button"
             >
               <FaDownload className="size-4" />
-              Download your completion files ({data.verifications?.length}{" "}
-              total)
+              Download your completion files (
+              {resolvedData.verifications?.length} total)
             </button>
           )}
         </div>

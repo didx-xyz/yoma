@@ -6,8 +6,15 @@ import router from "next/router";
 import { type ParsedUrlQuery } from "node:querystring";
 import { useCallback, type ReactElement } from "react";
 import { IoMdHeart } from "react-icons/io";
-import { Action } from "~/api/models/myOpportunity";
-import { searchMyOpportunities } from "~/api/services/myOpportunities";
+import {
+  Action,
+  VerificationStatus,
+  type MyOpportunitySearchResults,
+} from "~/api/models/myOpportunity";
+import {
+  getVerificationStatus,
+  searchMyOpportunities,
+} from "~/api/services/myOpportunities";
 import Suspense from "~/components/Common/Suspense";
 import YoIDOpportunities from "~/components/Layout/YoIDOpportunities";
 import { OpportunityListItem } from "~/components/MyOpportunity/OpportunityListItem";
@@ -24,6 +31,57 @@ interface IParams extends ParsedUrlQuery {
   query?: string;
   page?: string;
 }
+
+const searchSavedOpportunitiesWithProgress = async (
+  pageNumber: number,
+  context?: GetServerSidePropsContext,
+): Promise<MyOpportunitySearchResults> => {
+  const savedOpportunities = await searchMyOpportunities(
+    {
+      action: Action.Saved,
+      verificationStatuses: null,
+      pageNumber,
+      pageSize: PAGE_SIZE,
+    },
+    context,
+  );
+
+  const items = await Promise.all(
+    (savedOpportunities.items ?? []).map(async (item) => {
+      const verificationStatus = await getVerificationStatus(
+        item.opportunityId,
+        context,
+      );
+
+      const hasVerificationState =
+        verificationStatus.status !== VerificationStatus.None &&
+        verificationStatus.status !== "None";
+      const hasProgress = verificationStatus.percentComplete != null;
+      const hasSyncInfo = verificationStatus.syncedInfo != null;
+
+      if (!hasVerificationState && !hasProgress && !hasSyncInfo) {
+        return item;
+      }
+
+      return {
+        ...item,
+        verificationStatus:
+          verificationStatus.status ?? item.verificationStatus,
+        percentComplete:
+          verificationStatus.percentComplete ?? item.percentComplete,
+        dateCompleted: verificationStatus.dateCompleted ?? item.dateCompleted,
+        commentVerification:
+          verificationStatus.comment ?? item.commentVerification,
+        syncedInfo: verificationStatus.syncedInfo ?? item.syncedInfo,
+      };
+    }),
+  );
+
+  return {
+    ...savedOpportunities,
+    items,
+  };
+};
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
@@ -45,16 +103,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   // 👇 prefetch queries on server
   await queryClient.prefetchQuery({
     queryKey: ["MyOpportunities_Saved", pageNumber],
-    queryFn: () =>
-      searchMyOpportunities(
-        {
-          action: Action.Saved,
-          verificationStatuses: null,
-          pageNumber: pageNumber,
-          pageSize: PAGE_SIZE,
-        },
-        context,
-      ),
+    queryFn: () => searchSavedOpportunitiesWithProgress(pageNumber, context),
   });
 
   return {
@@ -80,13 +129,7 @@ const MyOpportunitiesSaved: NextPageWithLayout<{
     isLoading: dataIsLoading,
   } = useQuery({
     queryKey: ["MyOpportunities_Saved", pageNumber],
-    queryFn: () =>
-      searchMyOpportunities({
-        action: Action.Saved,
-        verificationStatuses: null,
-        pageNumber: pageNumber,
-        pageSize: PAGE_SIZE,
-      }),
+    queryFn: () => searchSavedOpportunitiesWithProgress(pageNumber),
     enabled: !error,
   });
 
@@ -145,8 +188,8 @@ const MyOpportunitiesSaved: NextPageWithLayout<{
                   config={{
                     displayDateLabel: "Saved",
                     showStatusBadge: false,
-                    showPullSyncBadge: true,
-                    showProgress: false,
+                    showPullSyncBadge: false,
+                    showProgress: true,
                     showDates: false,
                     showDownloadFiles: false,
                     showComment: false,

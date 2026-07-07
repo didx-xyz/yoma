@@ -144,7 +144,7 @@ const MyOpportunitiesCompleted: NextPageWithLayout<{
                   config={{
                     displayDateLabel: "Completed",
                     showStatusBadge: true,
-                    showPullSyncBadge: true,
+                    showPullSyncBadge: false,
                     showProgress: false,
                     showDates: true,
                     showDownloadFiles: true,
