@@ -37,6 +37,7 @@ import { AvatarImage } from "~/components/AvatarImage";
 import PublicBadges from "~/components/Opportunity/Badges/PublicBadges";
 import ZltoRewardBadge from "~/components/Opportunity/Badges/ZltoRewardBadge";
 import {
+  getCommitmentDisplay,
   getTypeConfig,
   OpportunityEngagementTypeBadge,
   OpportunityMetaTextRow,
@@ -112,6 +113,15 @@ const OpportunityPublicDetails: React.FC<{
     });
   const submissionSyncInfo =
     verificationStatus?.syncedInfo ?? opportunityInfo.syncedInfo ?? null;
+  const commitmentDisplay = getCommitmentDisplay(opportunityInfo);
+  let commitmentSummary = "";
+  if (commitmentDisplay?.totalHours != null) {
+    const commitmentHoursPluralSuffix =
+      commitmentDisplay.totalHours === 1 ? "" : "s";
+    commitmentSummary = `${commitmentDisplay.totalHours} total hour${commitmentHoursPluralSuffix}`;
+  } else if (commitmentDisplay?.label) {
+    commitmentSummary = commitmentDisplay.label;
+  }
   const partnerSourceLabel =
     submissionSyncInfo?.partners
       ?.map((partner) => partner.partner)
@@ -1041,43 +1051,34 @@ const OpportunityPublicDetails: React.FC<{
                     </div>
                   </div>
                 )}
-                {opportunityInfo.commitmentIntervalCount != null &&
-                  opportunityInfo.commitmentInterval && (
-                    <div className="py-4 first:pt-0 last:pb-0">
-                      <div className="flex flex-row items-center gap-1 text-sm font-bold">
-                        <Image
-                          src={iconClock}
-                          alt="Icon Clock"
-                          width={23}
-                          className="h-auto"
-                          sizes="100vw"
-                          priority={true}
-                        />
+                {commitmentSummary && (
+                  <div className="py-4 first:pt-0 last:pb-0">
+                    <div className="flex flex-row items-center gap-1 text-sm font-bold">
+                      <Image
+                        src={iconClock}
+                        alt="Icon Clock"
+                        width={23}
+                        className="h-auto"
+                        sizes="100vw"
+                        priority={true}
+                      />
 
-                        <span className="ml-1">
-                          How much time you will need
-                        </span>
-                      </div>
-
-                      <div className="my-2 text-sm">
-                        {`This task should not take you more than ${
-                          opportunityInfo.commitmentIntervalCount
-                        } ${opportunityInfo.commitmentInterval}${
-                          opportunityInfo.commitmentIntervalCount > 1
-                            ? "s. "
-                            : ". "
-                        }`}
-                        <br />
-                        <p className="mt-2">
-                          The estimated times provided are just a guideline. You
-                          have as much time as you need to complete the tasks at
-                          your own pace. Focus on engaging with the materials
-                          and doing your best without feeling rushed by the time
-                          estimates.
-                        </p>
-                      </div>
+                      <span className="ml-1">How much time you will need</span>
                     </div>
-                  )}
+
+                    <div className="my-2 text-sm">
+                      {`This task should not take you more than ${commitmentSummary}.`}
+                      <br />
+                      <p className="mt-2">
+                        The estimated times provided are just a guideline. You
+                        have as much time as you need to complete the tasks at
+                        your own pace. Focus on engaging with the materials and
+                        doing your best without feeling rushed by the time
+                        estimates.
+                      </p>
+                    </div>
+                  </div>
+                )}
                 {(opportunityInfo.categories?.length ?? 0) > 0 && (
                   <div className="py-4 first:pt-0 last:pb-0">
                     <div className="flex flex-row items-center gap-1 text-sm font-bold">

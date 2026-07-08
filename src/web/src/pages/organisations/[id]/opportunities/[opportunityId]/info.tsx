@@ -24,6 +24,7 @@ import {
 import { AvatarImage } from "~/components/AvatarImage";
 import MainLayout from "~/components/Layout/Main";
 import OrgAdminBadges from "~/components/Opportunity/Badges/OrgAdminBadges";
+import { getCommitmentDisplay } from "~/components/Opportunity/opportunityTypeTheme";
 import {
   OpportunityActions,
   OpportunityActionOptions,
@@ -127,6 +128,16 @@ const OpportunityDetails: NextPageWithLayout<{
     if (error === 401) return <Unauthenticated />;
     else if (error === 403) return <Unauthorized />;
     else return <InternalServerError />;
+  }
+  const commitmentDisplay = opportunity
+    ? getCommitmentDisplay(opportunity)
+    : null;
+  let commitmentSummary = "";
+  if (commitmentDisplay?.totalHours != null) {
+    const hourLabel = commitmentDisplay.totalHours === 1 ? "" : "s";
+    commitmentSummary = `${commitmentDisplay.totalHours} total hour${hourLabel}`;
+  } else if (commitmentDisplay?.label) {
+    commitmentSummary = commitmentDisplay.label;
   }
 
   return (
@@ -315,7 +326,7 @@ const OpportunityDetails: NextPageWithLayout<{
                   )}
                   {typeof opportunity?.commitmentIntervalCount === "number" &&
                     opportunity.commitmentIntervalCount > 0 &&
-                    !!opportunity?.commitmentInterval && (
+                    !!commitmentSummary && (
                       <div className="py-4 first:pt-0 last:pb-0">
                         <div className="flex flex-row items-center gap-1 text-sm font-bold">
                           <Image
@@ -332,11 +343,7 @@ const OpportunityDetails: NextPageWithLayout<{
                           </span>
                         </div>
                         <div className="my-2">
-                          {`This task should not take you more than ${opportunity?.commitmentIntervalCount} ${opportunity?.commitmentInterval}${
-                            (opportunity?.commitmentIntervalCount ?? 0) > 1
-                              ? "s. "
-                              : ". "
-                          }`}
+                          {`This task should not take you more than ${commitmentSummary}. `}
                           <br />
                           <p className="mt-2">
                             The estimated times provided are just a guideline.

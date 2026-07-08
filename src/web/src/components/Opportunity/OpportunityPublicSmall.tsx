@@ -12,6 +12,7 @@ import Moment from "react-moment";
 import type { OpportunityInfo } from "~/api/models/opportunity";
 import { DATE_FORMAT_HUMAN, OPPORTUNITY_TYPE_NANE_JOB } from "~/lib/constants";
 import { AvatarImage } from "../AvatarImage";
+import { getCommitmentDisplay } from "./opportunityTypeTheme";
 import ZltoRewardBadge from "./Badges/ZltoRewardBadge";
 interface InputProps {
   data: OpportunityInfo;
@@ -24,6 +25,14 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({
   preview,
 }) => {
   const isJobOpportunity = data.type === OPPORTUNITY_TYPE_NANE_JOB;
+  const commitmentDisplay = getCommitmentDisplay(data);
+  let commitmentBadgeLabel = "";
+  if (commitmentDisplay?.totalHours != null) {
+    const hourLabel = commitmentDisplay.totalHours === 1 ? "hour" : "hours";
+    commitmentBadgeLabel = `${commitmentDisplay.totalHours} ${hourLabel}`;
+  } else if (commitmentDisplay?.label) {
+    commitmentBadgeLabel = commitmentDisplay.label;
+  }
 
   const renderContent = () => {
     return (
@@ -65,23 +74,19 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({
 
         {/* BADGES */}
         <div className="flex flex-row flex-wrap gap-2 pt-2">
-          {!isJobOpportunity &&
-            data.commitmentIntervalCount != null &&
-            data.commitmentInterval && (
-              <div className="badge bg-green-light text-green">
-                <Image
-                  src={iconClock}
-                  alt="Icon Clock"
-                  width={17}
-                  className="h-auto"
-                  sizes="100vw"
-                  priority={true}
-                />
-                <span className="ml-1">{`${data.commitmentIntervalCount} ${
-                  data.commitmentInterval
-                }${data.commitmentIntervalCount > 1 ? "s" : ""}`}</span>
-              </div>
-            )}
+          {!isJobOpportunity && commitmentBadgeLabel && (
+            <div className="badge bg-green-light text-green">
+              <Image
+                src={iconClock}
+                alt="Icon Clock"
+                width={17}
+                className="h-auto"
+                sizes="100vw"
+                priority={true}
+              />
+              <span className="ml-1">{commitmentBadgeLabel}</span>
+            </div>
+          )}
 
           {(data?.participantCountTotal ?? 0) > 0 && (
             <div className="badge bg-green-light text-green">
