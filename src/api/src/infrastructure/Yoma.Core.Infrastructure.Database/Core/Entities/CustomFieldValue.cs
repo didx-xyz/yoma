@@ -1,0 +1,31 @@
+using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace Yoma.Core.Infrastructure.Database.Core.Entities
+{
+  [Table("CustomFieldValue", Schema = "Core")]
+  [Index(nameof(CustomFieldDefinitionId), nameof(OpportunityId))]
+  [Index(nameof(CustomFieldDefinitionId), nameof(MyOpportunityId))]
+  [Index(nameof(CustomFieldDefinitionId), nameof(Value))]
+  [Index(nameof(OpportunityId))]
+  [Index(nameof(MyOpportunityId))]
+  public sealed class CustomFieldValue : Shared.Entities.BaseEntity<Guid>
+  {
+    [Required]
+    public Guid CustomFieldDefinitionId { get; set; }
+
+    public Guid? OpportunityId { get; set; }
+
+    public Guid? MyOpportunityId { get; set; }
+
+    [Column(TypeName = "text")]
+    public string? Value { get; set; }
+
+    [Required]
+    public DateTimeOffset DateCreated { get; set; }
+
+    [Required]
+    public DateTimeOffset DateModified { get; set; }
+  }
+}

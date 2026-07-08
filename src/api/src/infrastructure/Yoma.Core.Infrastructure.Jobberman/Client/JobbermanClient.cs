@@ -129,7 +129,7 @@ namespace Yoma.Core.Infrastructure.Jobberman.Client
         Title = title,
         Description = description,
         TypeId = opportunityType.Id,
-        Type = opportunityType.Name,
+        Type = Enum.Parse<Domain.Opportunity.Type>(opportunityType.Name, true),
         OrganizationId = orgId.Value,
         Summary = summary,
         URL = item.URL,

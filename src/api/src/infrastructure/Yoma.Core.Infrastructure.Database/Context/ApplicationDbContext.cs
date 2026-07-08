@@ -39,6 +39,12 @@ namespace Yoma.Core.Infrastructure.Database.Context
 
     public DbSet<BlobObject> BlobObject { get; set; }
 
+    public DbSet<CustomFieldDefinition> CustomFieldDefinition { get; set; }
+
+    public DbSet<CustomFieldOption> CustomFieldOption { get; set; }
+
+    public DbSet<CustomFieldValue> CustomFieldValue { get; set; }
+
     public DbSet<DownloadSchedule> DownloadSchedule { get; set; }
     #endregion Core
 
@@ -217,6 +223,8 @@ namespace Yoma.Core.Infrastructure.Database.Context
     #region Protected Members
     protected override void OnModelCreating(ModelBuilder builder)
     {
+      builder.HasPostgresExtension("pg_trgm");
+
       builder.Entity<Domain.Core.Models.UnnestedValue>(eb =>
       {
         eb.HasKey(x => x.Id); // keep the key for joins and EF tracking
@@ -254,6 +262,65 @@ namespace Yoma.Core.Infrastructure.Database.Context
           .HasForeignKey(o => o.ModifiedByUserId)
           .OnDelete(DeleteBehavior.NoAction);
       #endregion
+
+      #region Core
+      builder.Entity<CustomFieldDefinition>(entity =>
+      {
+        entity.HasIndex(e => new { e.EntityType, e.Key })
+          .IsUnique()
+          .HasFilter($"\"{nameof(Core.Entities.CustomFieldDefinition.EntityContext)}\" IS NULL");
+
+        entity.HasIndex(e => new { e.EntityType, e.EntityContext, e.Key })
+          .IsUnique()
+          .HasFilter($"\"{nameof(Core.Entities.CustomFieldDefinition.EntityContext)}\" IS NOT NULL");
+      });
+
+      builder.Entity<CustomFieldOption>(entity =>
+      {
+        entity.HasOne<CustomFieldDefinition>()
+          .WithMany(e => e.Options)
+          .HasForeignKey(e => e.CustomFieldDefinitionId)
+          .OnDelete(DeleteBehavior.NoAction);
+      });
+
+      builder.Entity<CustomFieldValue>(entity =>
+      {
+        entity.ToTable("CustomFieldValue", "Core", table =>
+        {
+          table.HasCheckConstraint(
+            "CK_CustomFieldValue_Entity",
+            $"(\"{nameof(Core.Entities.CustomFieldValue.OpportunityId)}\" IS NOT NULL AND \"{nameof(Core.Entities.CustomFieldValue.MyOpportunityId)}\" IS NULL) OR (\"{nameof(Core.Entities.CustomFieldValue.OpportunityId)}\" IS NULL AND \"{nameof(Core.Entities.CustomFieldValue.MyOpportunityId)}\" IS NOT NULL)");
+        });
+
+        entity.HasIndex(o => o.Value)
+          .HasMethod("GIN")
+          .HasOperators("gin_trgm_ops")
+          .HasDatabaseName("IX_CustomFieldValue_Value_GIN_Trgm");
+
+        entity.HasIndex(e => new { e.OpportunityId, e.CustomFieldDefinitionId })
+          .IsUnique()
+          .HasFilter($"\"{nameof(Core.Entities.CustomFieldValue.OpportunityId)}\" IS NOT NULL");
+
+        entity.HasIndex(e => new { e.MyOpportunityId, e.CustomFieldDefinitionId })
+          .IsUnique()
+          .HasFilter($"\"{nameof(Core.Entities.CustomFieldValue.MyOpportunityId)}\" IS NOT NULL");
+
+        entity.HasOne<CustomFieldDefinition>()
+          .WithMany()
+          .HasForeignKey(e => e.CustomFieldDefinitionId)
+          .OnDelete(DeleteBehavior.NoAction);
+
+        entity.HasOne<Opportunity.Entities.Opportunity>()
+          .WithMany()
+          .HasForeignKey(e => e.OpportunityId)
+          .OnDelete(DeleteBehavior.NoAction);
+
+        entity.HasOne<MyOpportunity.Entities.MyOpportunity>()
+          .WithMany()
+          .HasForeignKey(e => e.MyOpportunityId)
+          .OnDelete(DeleteBehavior.NoAction);
+      });
+      #endregion Core
 
       #region Entity
       builder.Entity<Organization>()

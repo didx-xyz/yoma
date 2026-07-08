@@ -54,7 +54,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
     public string? OpportunitySummary { get; set; }
 
     [Ignore]
-    public string OpportunityType { get; set; } = null!;
+    public Opportunity.Type OpportunityType { get; set; }
 
     [Ignore]
     public string? OpportunityCommitmentIntervalDescription { get; set; }

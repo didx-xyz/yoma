@@ -199,4 +199,20 @@ namespace Yoma.Core.Domain.Core
     Jobberman,
     Alison
   }
+
+  public enum CustomFieldEntityType
+  {
+    Opportunity,
+    MyOpportunity
+  }
+
+  public enum CustomFieldDataType
+  {
+    String,
+    Integer,
+    Decimal,
+    Boolean,
+    DateTime,
+    Option
+  }
 }

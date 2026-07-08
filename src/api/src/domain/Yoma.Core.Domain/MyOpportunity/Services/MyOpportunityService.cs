@@ -72,6 +72,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
     private readonly ISyncUserAuthenticationService _syncUserAuthenticationService;
     private readonly ISyncStateService _syncStateService;
     private readonly IProcessingService _syncProcessingService;
+    private readonly ICustomFieldDefinitionService _customFieldDefinitionService;
     private readonly MyOpportunitySearchFilterVerificationFilesAdminValidator _myOpportunitySearchFilterVerificationFilesAdminValidator;
     private readonly MyOpportunitySearchFilterAdminValidator _myOpportunitySearchFilterAdminValidator;
     private readonly MyOpportunityRequestValidatorVerify _myOpportunityRequestValidatorVerify;
@@ -117,6 +118,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         ISyncUserAuthenticationService syncUserAuthenticationService,
         ISyncStateService syncStateService,
         IProcessingService syncProcessingService,
+        ICustomFieldDefinitionService customFieldDefinitionService,
         MyOpportunitySearchFilterVerificationFilesAdminValidator myOpportunitySearchFilterVerificationFilesAdminValidator,
         MyOpportunitySearchFilterAdminValidator myOpportunitySearchFilterAdminValidator,
         MyOpportunityRequestValidatorVerify myOpportunityRequestValidatorVerify,
@@ -154,6 +156,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       _syncUserAuthenticationService = syncUserAuthenticationService ?? throw new ArgumentNullException(nameof(syncUserAuthenticationService));
       _syncStateService = syncStateService ?? throw new ArgumentNullException(nameof(syncStateService));
       _syncProcessingService = syncProcessingService ?? throw new ArgumentNullException(nameof(syncProcessingService));
+      _customFieldDefinitionService = customFieldDefinitionService ?? throw new ArgumentNullException(nameof(customFieldDefinitionService));
       _myOpportunitySearchFilterVerificationFilesAdminValidator = myOpportunitySearchFilterVerificationFilesAdminValidator ?? throw new ArgumentNullException(nameof(myOpportunitySearchFilterVerificationFilesAdminValidator));
       _myOpportunitySearchFilterAdminValidator = myOpportunitySearchFilterAdminValidator ?? throw new ArgumentNullException(nameof(myOpportunitySearchFilterAdminValidator));
       _myOpportunityRequestValidatorVerify = myOpportunityRequestValidatorVerify ?? throw new ArgumentNullException(nameof(myOpportunityRequestValidatorVerify));
@@ -1399,6 +1402,13 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       items.ForEach(ParseComputed);
 
       return items;
+    }
+
+    public List<CustomFieldDefinition> ListCustomFieldDefinitions(Guid opportunityId)
+    {
+      var opportunity = _opportunityService.GetById(opportunityId, false, false, false);
+
+      return _customFieldDefinitionService.List(CustomFieldEntityType.MyOpportunity, opportunity.Type.ToString(), true, true);
     }
     #endregion
 

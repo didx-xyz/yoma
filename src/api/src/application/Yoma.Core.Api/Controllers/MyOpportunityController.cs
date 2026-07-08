@@ -28,8 +28,8 @@ namespace Yoma.Core.Api.Controllers
         ILogger<UserController> logger,
         IMyOpportunityService myOpportunityService)
     {
-      _logger = logger;
-      _myOpportunityService = myOpportunityService;
+      _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+      _myOpportunityService = myOpportunityService ?? throw new ArgumentNullException(nameof(myOpportunityService));
     }
     #endregion
 
@@ -347,6 +347,21 @@ namespace Yoma.Core.Api.Controllers
       if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(PerformActionSendForVerificationManualDelete));
 
       return StatusCode((int)HttpStatusCode.OK);
+    }
+
+    [SwaggerOperation(Summary = "Return active custom field definitions for 'my' opportunity")]
+    [HttpGet("{opportunityId}/custom/field/definition")]
+    [ProducesResponseType(typeof(List<CustomFieldDefinition>), (int)HttpStatusCode.OK)]
+    [Authorize(Roles = $"{Constants.Role_User}")]
+    public IActionResult ListCustomFieldDefinitions([FromRoute] Guid opportunityId)
+    {
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(ListCustomFieldDefinitions));
+
+      var result = _myOpportunityService.ListCustomFieldDefinitions(opportunityId);
+
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(ListCustomFieldDefinitions));
+
+      return StatusCode((int)HttpStatusCode.OK, result);
     }
     #endregion Authenticated User Based Actions
     #endregion Public Members

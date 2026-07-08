@@ -1,4 +1,5 @@
 using Yoma.Core.Domain.Core.Interfaces;
+using Yoma.Core.Domain.Core.Models;
 
 namespace Yoma.Core.Domain.Opportunity.Models
 {
@@ -65,6 +66,8 @@ namespace Yoma.Core.Domain.Opportunity.Models
     public List<Guid>? Skills { get; set; }
 
     public List<OpportunityRequestVerificationType>? VerificationTypes { get; set; }
+
+    public List<CustomFieldValueRequest>? CustomFields { get; set; }
 
     public virtual void NormalizeForHashing()
     {

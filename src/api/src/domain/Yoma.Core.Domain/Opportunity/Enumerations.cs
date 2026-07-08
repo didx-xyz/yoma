@@ -36,7 +36,9 @@ namespace Yoma.Core.Domain.Opportunity
   {
     Other,
     Learning,
-    Job
+    Event,
+    Job,
+    Task
   }
 
   public enum Category

@@ -64,6 +64,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
     private readonly ISyncStateService _syncStateService;
     private readonly ITreasuryService _treasuryService;
     private readonly IPartnerService _partnerService;
+    private readonly ICustomFieldDefinitionService _customFieldDefinitionService;
 
     private readonly OpportunityRequestValidatorCreate _opportunityRequestValidatorCreate;
     private readonly OpportunityRequestValidatorUpdate _opportunityRequestValidatorUpdate;
@@ -116,6 +117,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         ISyncStateService syncStateService,
         ITreasuryService treasuryService,
         IPartnerService partnerService,
+        ICustomFieldDefinitionService customFieldDefinitionService,
         OpportunityRequestValidatorCreate opportunityRequestValidatorCreate,
         OpportunityRequestValidatorUpdate opportunityRequestValidatorUpdate,
         OpportunitySearchFilterValidator opportunitySearchFilterValidator,
@@ -153,6 +155,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       _syncStateService = syncStateService ?? throw new ArgumentNullException(nameof(syncStateService));
       _treasuryService = treasuryService ?? throw new ArgumentNullException(nameof(treasuryService));
       _partnerService = partnerService ?? throw new ArgumentNullException(nameof(partnerService));
+      _customFieldDefinitionService = customFieldDefinitionService ?? throw new ArgumentNullException(nameof(customFieldDefinitionService));
 
       _opportunityRequestValidatorCreate = opportunityRequestValidatorCreate ?? throw new ArgumentNullException(nameof(opportunityRequestValidatorCreate));
       _opportunityRequestValidatorUpdate = opportunityRequestValidatorUpdate ?? throw new ArgumentNullException(nameof(opportunityRequestValidatorUpdate));
@@ -1171,7 +1174,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         Title = request.Title.NormalizeTrim(),
         Description = request.Description,
         TypeId = request.TypeId,
-        Type = _opportunityTypeService.GetById(request.TypeId).Name,
+        Type = Enum.Parse<Type>(_opportunityTypeService.GetById(request.TypeId).Name, true),
         OrganizationId = request.OrganizationId,
         OrganizationName = organization.Name,
         OrganizationLogoId = organization.LogoId,
@@ -1333,7 +1336,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       result.Title = request.Title.NormalizeTrim();
       result.Description = request.Description;
       result.TypeId = request.TypeId;
-      result.Type = _opportunityTypeService.GetById(request.TypeId).Name;
+      result.Type = Enum.Parse<Type>(_opportunityTypeService.GetById(request.TypeId).Name, true);
       result.OrganizationId = request.OrganizationId;
       result.OrganizationName = organization.Name;
       result.OrganizationLogoId = organization.LogoId;
@@ -1937,6 +1940,18 @@ namespace Yoma.Core.Domain.Opportunity.Services
       await _mediator.Publish(new OpportunityEvent(EventType.Update, result));
 
       return result;
+    }
+
+    public List<CustomFieldDefinition> ListCustomFieldDefinitions(Type type)
+    {
+      return _customFieldDefinitionService.List(CustomFieldEntityType.Opportunity, type.ToString(), true, true);
+    }
+
+    public List<CustomFieldDefinition> ListCustomFieldDefinitions(Guid id)
+    {
+      var opportunity = GetById(id, false, false, true);
+
+      return _customFieldDefinitionService.List(CustomFieldEntityType.Opportunity, opportunity.Type.ToString(), true, true);
     }
     #endregion
 

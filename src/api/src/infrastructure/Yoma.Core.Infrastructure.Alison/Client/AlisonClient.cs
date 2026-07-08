@@ -488,7 +488,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
           Title = title,
           Description = description,
           TypeId = opportunityType.Id,
-          Type = opportunityType.Name,
+          Type = Enum.Parse<Domain.Opportunity.Type>(opportunityType.Name, true),
           Summary = summary,
           URL = course.ToCourseUrl(_options.WebBaseUrl),
 

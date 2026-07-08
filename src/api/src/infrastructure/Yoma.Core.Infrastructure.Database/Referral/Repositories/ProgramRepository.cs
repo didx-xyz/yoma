@@ -116,7 +116,7 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
                 Status = Enum.Parse<Status>(task.Opportunity.Status.Name, true),
                 Hidden = task.Opportunity.Hidden,
                 DateStart = task.Opportunity.DateStart,
-                Type = task.Opportunity.Type.Name,
+                Type = Enum.Parse<Domain.Opportunity.Type>(task.Opportunity.Type.Name, true),
                 ZltoReward = task.Opportunity.ZltoReward,
                 ZltoRewardPool = task.Opportunity.ZltoRewardPool,
                 ZltoRewardCumulative = task.Opportunity.ZltoRewardCumulative,

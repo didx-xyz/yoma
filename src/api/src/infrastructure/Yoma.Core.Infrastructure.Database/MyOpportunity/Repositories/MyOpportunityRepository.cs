@@ -58,7 +58,7 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories
         OpportunityTitle = entity.Opportunity.Title,
         OpportunityDescription = entity.Opportunity.Description,
         OpportunitySummary = entity.Opportunity.Summary,
-        OpportunityType = entity.Opportunity.Type.Name,
+        OpportunityType = Enum.Parse<Domain.Opportunity.Type>(entity.Opportunity.Type.Name, true),
         OpportunityCommitmentIntervalId = entity.Opportunity.CommitmentIntervalId,
         OpportunityCommitmentInterval = entity.Opportunity.CommitmentInterval != null ? Enum.Parse<TimeIntervalOption>(entity.Opportunity.CommitmentInterval.Name, true) : null,
         OpportunityCommitmentIntervalCount = entity.Opportunity.CommitmentIntervalCount,

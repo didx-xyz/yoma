@@ -65,7 +65,7 @@ namespace Yoma.Core.Domain.Opportunity.Models
     public DateTimeOffset DateStart { get; set; }
 
     [JsonIgnore]
-    public string Type { get; set; } = null!;
+    public Type Type { get; set; }
 
     [JsonIgnore]
     public decimal? ZltoReward { get; set; }

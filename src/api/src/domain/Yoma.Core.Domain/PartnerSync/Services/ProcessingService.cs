@@ -727,7 +727,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
               case SyncPartner.SAYouth:
                 //only include opportunities of type learning, associated with South Africa and with an end date
                 //once shared, the type can not be changed
-                if (!string.Equals(opportunity.Type, Opportunity.Type.Learning.ToString(), StringComparison.OrdinalIgnoreCase))
+                if (opportunity.Type != Opportunity.Type.Learning)
                 {
                   if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Partner sync filtering: Entity '{entityType}' with id '{entityId}' for partner '{partner}' is not a learning type and will be skipped",
                     EntityType.Opportunity, entityId, partner);

@@ -17,7 +17,7 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
     public Guid TypeId { get; set; }
 
-    public string Type { get; set; } = null!;
+    public Type Type { get; set; }
 
     public Guid OrganizationId { get; set; }
 

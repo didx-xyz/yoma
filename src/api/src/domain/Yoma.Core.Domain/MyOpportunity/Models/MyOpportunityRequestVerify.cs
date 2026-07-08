@@ -38,5 +38,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
     public byte? StarRating { get; set; }
 
     public string? Feedback { get; set; }
+
+    public List<CustomFieldValueRequest>? CustomFields { get; set; }
   }
 }

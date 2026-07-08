@@ -43,7 +43,7 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
         Title = entity.Title,
         Description = entity.Description,
         TypeId = entity.TypeId,
-        Type = entity.Type.Name,
+        Type = Enum.Parse<Domain.Opportunity.Type>(entity.Type.Name, true),
         OrganizationId = entity.OrganizationId,
         OrganizationName = entity.Organization.Name,
         OrganizationLogoId = entity.Organization.LogoId,

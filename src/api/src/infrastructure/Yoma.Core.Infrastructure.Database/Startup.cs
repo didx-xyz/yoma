@@ -82,8 +82,11 @@ namespace Yoma.Core.Infrastructure.Database
       services.AddScoped<IRepository<DownloadScheduleStatus>, DownloadScheduleStatusRepository>();
       #endregion
 
-      services.AddScoped<IRepositoryBatched<DownloadSchedule>, DownloadScheduleRepository>();
       services.AddScoped<IRepository<BlobObject>, BlobObjectRepository>();
+      services.AddScoped<IRepositoryWithNavigation<CustomFieldDefinition>, CustomFieldDefinitionRepository>();
+      services.AddScoped<IRepository<CustomFieldOption>, CustomFieldOptionRepository>();
+      services.AddScoped<IRepository<CustomFieldValue>, CustomFieldValueRepository>();
+      services.AddScoped<IRepositoryBatched<DownloadSchedule>, DownloadScheduleRepository>();
       services.AddScoped<IExecutionStrategyService, ExecutionStrategyService>();
       #endregion Core
 
@@ -212,10 +215,10 @@ namespace Yoma.Core.Infrastructure.Database
     public static void Configure_InfrastructureDatabase(this IServiceProvider serviceProvider)
     {
       using var scope = serviceProvider.CreateScope();
-      var logger = scope.ServiceProvider.GetService<ILogger<ApplicationDbContext>>() ?? throw new InvalidOperationException($"Failed to get an instance of the service '{nameof(ILogger<ApplicationDbContext>)}'");
+      var logger = scope.ServiceProvider.GetService<ILogger<ApplicationDbContext>>() ?? throw new InvalidOperationException($"Failed to get an instance of the service '{nameof(ILogger<>)}'");
       logger.LogDebug("Applying database migrations...");
 
-      var context = scope.ServiceProvider.GetService<ApplicationDbContext>() ?? throw new InvalidOperationException($"Failed to get an instance of the service '{nameof(ILogger<ApplicationDbContext>)}'");
+      var context = scope.ServiceProvider.GetService<ApplicationDbContext>() ?? throw new InvalidOperationException($"Failed to get an instance of the service '{nameof(ILogger<>)}'");
 
       // migrate db
       context.Database.Migrate();

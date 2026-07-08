@@ -67,5 +67,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Interfaces
     Task<MyOpportunityResponseVerifyImportPartnerSync> PerformActionImportVerificationFromPartnerSync(MyOpportunityRequestVerifyImportPartnerSync request);
 
     List<Models.MyOpportunity> ListVerificationPending(int batchSize, int minAgeInDays, List<Guid> idsToSkip);
+
+    List<CustomFieldDefinition> ListCustomFieldDefinitions(Guid opportunityId);
   }
 }

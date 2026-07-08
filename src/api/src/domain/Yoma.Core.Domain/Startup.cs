@@ -92,6 +92,7 @@ namespace Yoma.Core.Domain
       services.AddScoped<IDownloadScheduleStatusService, DownloadScheduleStatusService>();
       #endregion
       services.AddScoped<IBlobService, BlobService>();
+      services.AddScoped<ICustomFieldDefinitionService, CustomFieldDefinitionService>();
       services.AddSingleton<IDistributedCacheService, DistributedCacheService>();
       services.AddSingleton<IDistributedLockService, DistributedLockService>();
       services.AddSingleton<IIdempotencyService, IdempotencyService>();
