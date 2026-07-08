@@ -34,9 +34,9 @@ import {
 } from "~/api/services/myOpportunities";
 import { updateSettings } from "~/api/services/user";
 import { AvatarImage } from "~/components/AvatarImage";
-import PublicBadges from "~/components/Opportunity/Badges/PublicBadges";
 import ZltoRewardBadge from "~/components/Opportunity/Badges/ZltoRewardBadge";
 import {
+  getCommitmentDisplay,
   getTypeConfig,
   OpportunityEngagementTypeBadge,
   OpportunityMetaTextRow,
@@ -53,10 +53,7 @@ import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import { OPPORTUNITY_QUERY_KEYS } from "~/hooks/useOpportunityMutations";
 import analytics from "~/lib/analytics";
-import {
-  OPPORTUNITY_DETAILS_DESIGN_V2,
-  SETTING_USER_POPUP_LEAVINGYOMA,
-} from "~/lib/constants";
+import { SETTING_USER_POPUP_LEAVINGYOMA } from "~/lib/constants";
 import { userProfileAtom } from "~/lib/store";
 import { type User } from "~/server/auth";
 import CustomModal from "../Common/CustomModal";
@@ -112,6 +109,15 @@ const OpportunityPublicDetails: React.FC<{
     });
   const submissionSyncInfo =
     verificationStatus?.syncedInfo ?? opportunityInfo.syncedInfo ?? null;
+  const commitmentDisplay = getCommitmentDisplay(opportunityInfo);
+  let commitmentSummary = "";
+  if (commitmentDisplay?.totalHours != null) {
+    const commitmentHoursPluralSuffix =
+      commitmentDisplay.totalHours === 1 ? "" : "s";
+    commitmentSummary = `${commitmentDisplay.totalHours} total hour${commitmentHoursPluralSuffix}`;
+  } else if (commitmentDisplay?.label) {
+    commitmentSummary = commitmentDisplay.label;
+  }
   const partnerSourceLabel =
     submissionSyncInfo?.partners
       ?.map((partner) => partner.partner)
@@ -120,6 +126,12 @@ const OpportunityPublicDetails: React.FC<{
     verificationStatus?.status == "Pending" &&
     (submissionSyncInfo?.syncType === "Pull" ||
       submissionSyncInfo?.locked === true);
+  const externalLinkButtonText =
+    opportunityInfo.type === "Learning" &&
+    isPartnerManagedPendingSubmission &&
+    verificationStatus?.percentComplete != null
+      ? "Continue learning"
+      : typeConfig.gotoExternalLinkButtonText;
 
   useEffect(() => {
     if (!user) return;
@@ -774,15 +786,9 @@ const OpportunityPublicDetails: React.FC<{
                   {opportunityInfo.title}
                 </h4>
 
-                {OPPORTUNITY_DETAILS_DESIGN_V2 ? (
-                  <div className="mt-1">
-                    <OpportunityOrgCountriesRow data={opportunityInfo} />
-                  </div>
-                ) : (
-                  <h6 className="text-gray-dark mt-1 text-sm">
-                    By {opportunityInfo.organizationName}
-                  </h6>
-                )}
+                <div className="mt-1">
+                  <OpportunityOrgCountriesRow data={opportunityInfo} />
+                </div>
               </div>
 
               <div className="shrink-0">
@@ -795,29 +801,25 @@ const OpportunityPublicDetails: React.FC<{
             </div>
 
             {/* BADGES */}
-            {OPPORTUNITY_DETAILS_DESIGN_V2 ? (
-              <div className="mt-4 mb-2 flex flex-col gap-2 md:my-2">
-                <div className="flex flex-row flex-wrap items-center gap-2">
-                  <OpportunityTypeBadge
-                    data={opportunityInfo}
-                    className={typeConfig.badgeClassName}
+            <div className="mt-4 mb-2 flex flex-col gap-2 md:my-2">
+              <div className="flex flex-row flex-wrap items-center gap-2">
+                <OpportunityTypeBadge
+                  data={opportunityInfo}
+                  className={typeConfig.badgeClassName}
+                />
+                <OpportunityEngagementTypeBadge
+                  data={opportunityInfo}
+                  className={"bg-gray-light text-gray-dark"}
+                />
+                {opportunityInfo.zltoRewardEstimate != null && (
+                  <ZltoRewardBadge
+                    amount={opportunityInfo.zltoRewardEstimate}
+                    showToolTips={true}
                   />
-                  <OpportunityEngagementTypeBadge
-                    data={opportunityInfo}
-                    className={"bg-gray-light text-gray-dark"}
-                  />
-                  {opportunityInfo.zltoRewardEstimate != null && (
-                    <ZltoRewardBadge
-                      amount={opportunityInfo.zltoRewardEstimate}
-                      showToolTips={true}
-                    />
-                  )}
-                </div>
-                <OpportunityMetaTextRow data={opportunityInfo} />
+                )}
               </div>
-            ) : (
-              <PublicBadges opportunity={opportunityInfo} showToolTips={true} />
-            )}
+              <OpportunityMetaTextRow data={opportunityInfo} />
+            </div>
 
             {/* BUTTONS */}
             <div className="mt-2 flex flex-col gap-4 md:flex-row">
@@ -828,11 +830,6 @@ const OpportunityPublicDetails: React.FC<{
                       type="button"
                       className={`btn btn-sm bg-green hover:bg-green-dark disabled:bg-green h-10 w-full rounded-full text-sm text-white normal-case md:w-[250px]`}
                       title="Clicking this button will take you to an external site to continue this opportunity. Remember to return to this page to upload your completion certificate and earn your achievement!"
-                      // className={`btn btn-sm h-10 w-full rounded-full text-sm normal-case md:w-[250px] ${
-                      //   OPPORTUNITY_DETAILS_DESIGN_V2
-                      //     ? typeConfig.ctaClassName
-                      //     : "bg-green hover:bg-green-dark disabled:bg-green text-white disabled:border-0 disabled:text-white"
-                      // }`}
                       onClick={onGoToOpportunity}
                       disabled={preview}
                     >
@@ -845,11 +842,7 @@ const OpportunityPublicDetails: React.FC<{
                         priority={true}
                       />
 
-                      <span className="ml-1">
-                        {OPPORTUNITY_DETAILS_DESIGN_V2
-                          ? typeConfig.gotoExternalLinkButtonText
-                          : "Go to opportunity"}
-                      </span>
+                      <span className="ml-1">{externalLinkButtonText}</span>
                     </button>
                   )}
 
@@ -1041,43 +1034,34 @@ const OpportunityPublicDetails: React.FC<{
                     </div>
                   </div>
                 )}
-                {opportunityInfo.commitmentIntervalCount != null &&
-                  opportunityInfo.commitmentInterval && (
-                    <div className="py-4 first:pt-0 last:pb-0">
-                      <div className="flex flex-row items-center gap-1 text-sm font-bold">
-                        <Image
-                          src={iconClock}
-                          alt="Icon Clock"
-                          width={23}
-                          className="h-auto"
-                          sizes="100vw"
-                          priority={true}
-                        />
+                {commitmentSummary && (
+                  <div className="py-4 first:pt-0 last:pb-0">
+                    <div className="flex flex-row items-center gap-1 text-sm font-bold">
+                      <Image
+                        src={iconClock}
+                        alt="Icon Clock"
+                        width={23}
+                        className="h-auto"
+                        sizes="100vw"
+                        priority={true}
+                      />
 
-                        <span className="ml-1">
-                          How much time you will need
-                        </span>
-                      </div>
-
-                      <div className="my-2 text-sm">
-                        {`This task should not take you more than ${
-                          opportunityInfo.commitmentIntervalCount
-                        } ${opportunityInfo.commitmentInterval}${
-                          opportunityInfo.commitmentIntervalCount > 1
-                            ? "s. "
-                            : ". "
-                        }`}
-                        <br />
-                        <p className="mt-2">
-                          The estimated times provided are just a guideline. You
-                          have as much time as you need to complete the tasks at
-                          your own pace. Focus on engaging with the materials
-                          and doing your best without feeling rushed by the time
-                          estimates.
-                        </p>
-                      </div>
+                      <span className="ml-1">How much time you will need</span>
                     </div>
-                  )}
+
+                    <div className="my-2 text-sm">
+                      {`This task should not take you more than ${commitmentSummary}.`}
+                      <br />
+                      <p className="mt-2">
+                        The estimated times provided are just a guideline. You
+                        have as much time as you need to complete the tasks at
+                        your own pace. Focus on engaging with the materials and
+                        doing your best without feeling rushed by the time
+                        estimates.
+                      </p>
+                    </div>
+                  </div>
+                )}
                 {(opportunityInfo.categories?.length ?? 0) > 0 && (
                   <div className="py-4 first:pt-0 last:pb-0">
                     <div className="flex flex-row items-center gap-1 text-sm font-bold">

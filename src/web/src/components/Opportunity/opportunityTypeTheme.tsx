@@ -1,8 +1,9 @@
+import { TimeIntervalOption } from "~/api/models/common";
 import type { OpportunityInfo } from "~/api/models/opportunity";
 
 // ---------------------------------------------------------------------------
 // Shared per-opportunity-type theming + small presentational pieces.
-// Used by the opportunity cards (OpportunityPublicSmallV2) and the opportunity
+// Used by the opportunity cards (OpportunityPublicSmall) and the opportunity
 // details page (OpportunityPublicDetails) so they share one source of truth.
 // ---------------------------------------------------------------------------
 
@@ -113,12 +114,86 @@ export const getEngagementConfig = (
   return ENGAGEMENT_CONFIG[engagementType] ?? { label: engagementType };
 };
 
+export interface CommitmentDisplayData {
+  commitmentInterval: TimeIntervalOption | null | string;
+  commitmentIntervalCount: number | null;
+  commitmentIntervalDescription?: string | null;
+  opportunityCommitmentIntervalDescription?: string | null;
+  commitmentIntervalTotalHours?: number | null;
+}
+
 const fmtDate = (dateStr: string) =>
   new Date(dateStr).toLocaleDateString("en-GB", {
     day: "numeric",
     month: "short",
     timeZone: "UTC",
   });
+
+const getCommitmentIntervalLabel = (
+  commitmentInterval: CommitmentDisplayData["commitmentInterval"],
+): string | null => {
+  if (typeof commitmentInterval === "string") return commitmentInterval;
+  if (typeof commitmentInterval === "number") {
+    return TimeIntervalOption[commitmentInterval] ?? null;
+  }
+
+  return null;
+};
+
+const deriveCommitmentTotalHours = (
+  commitmentIntervalCount: number,
+  commitmentIntervalLabel: string,
+): number | null => {
+  switch (commitmentIntervalLabel.toLowerCase()) {
+    case "minute":
+      return Math.ceil(commitmentIntervalCount / 60);
+    case "hour":
+      return commitmentIntervalCount;
+    case "day":
+      return commitmentIntervalCount * 24;
+    case "week":
+      return commitmentIntervalCount * 24 * 7;
+    case "month":
+      return commitmentIntervalCount * 24 * 30;
+    default:
+      return null;
+  }
+};
+
+export const getCommitmentDisplay = (
+  data: CommitmentDisplayData,
+): {
+  label: string;
+  totalHours: number | null;
+} | null => {
+  const commitmentIntervalLabel = getCommitmentIntervalLabel(
+    data.commitmentInterval,
+  );
+  let fallbackLabel: string | null = null;
+  if (data.commitmentIntervalCount != null && commitmentIntervalLabel) {
+    const pluralSuffix = data.commitmentIntervalCount === 1 ? "" : "s";
+    fallbackLabel = `${data.commitmentIntervalCount} ${commitmentIntervalLabel}${pluralSuffix}`;
+  }
+  const label =
+    fallbackLabel ??
+    data.commitmentIntervalDescription ??
+    data.opportunityCommitmentIntervalDescription ??
+    null;
+
+  if (!label) return null;
+
+  return {
+    label,
+    totalHours:
+      data.commitmentIntervalTotalHours ??
+      (data.commitmentIntervalCount != null && commitmentIntervalLabel
+        ? deriveCommitmentTotalHours(
+            data.commitmentIntervalCount,
+            commitmentIntervalLabel,
+          )
+        : null),
+  };
+};
 
 // Join parts with a delimiter, skipping empty/falsy values (so the delimiter
 // only appears between values that are actually present).
@@ -205,11 +280,10 @@ export const OpportunityMetaTextRow: React.FC<{
 }> = ({ data }) => {
   const items: string[] = [];
   // Effort
-  if (data.commitmentIntervalCount && data.commitmentInterval) {
-    const s = data.commitmentIntervalCount > 1 ? "s" : "";
-    items.push(
-      `${data.commitmentIntervalCount} ${data.commitmentInterval}${s} effort`,
-    );
+  const commitmentDisplay = getCommitmentDisplay(data);
+  if (commitmentDisplay?.totalHours != null) {
+    const hourLabel = commitmentDisplay.totalHours === 1 ? "hour" : "hours";
+    items.push(`${commitmentDisplay.totalHours} ${hourLabel} effort`);
   }
   // Status + relevant date
   if (data.status === "Active") {

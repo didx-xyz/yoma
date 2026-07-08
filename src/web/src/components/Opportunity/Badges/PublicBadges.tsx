@@ -21,6 +21,7 @@ import {
 import Moment from "react-moment";
 import type { OpportunityInfo } from "~/api/models/opportunity";
 import { DATE_FORMAT_HUMAN, OPPORTUNITY_TYPE_NANE_JOB } from "~/lib/constants";
+import { getCommitmentDisplay } from "~/components/Opportunity/opportunityTypeTheme";
 import ZltoRewardBadge from "./ZltoRewardBadge";
 
 interface BadgesProps {
@@ -33,6 +34,9 @@ const PublicBadges: React.FC<BadgesProps> = ({
   showToolTips = false,
 }) => {
   const isJobOpportunity = opportunity?.type === OPPORTUNITY_TYPE_NANE_JOB;
+  const commitmentDisplay = opportunity
+    ? getCommitmentDisplay(opportunity)
+    : null;
 
   // memo for spots left i.e participantLimit - participantCountTotal
   const spotsLeft = useMemo(() => {
@@ -44,7 +48,7 @@ const PublicBadges: React.FC<BadgesProps> = ({
 
   return (
     <div className="text-green-dark mt-4 mb-2 flex flex-row flex-wrap gap-1 text-xs font-bold md:my-2">
-      {!isJobOpportunity && opportunity?.commitmentIntervalCount && (
+      {!isJobOpportunity && commitmentDisplay && (
         <div
           className={`${showToolTips ? "tooltip tooltip-secondary cursor-help before:text-[0.6875rem]" : ""}`}
           {...(showToolTips && { "data-tip": "Time needed" })}
@@ -58,11 +62,11 @@ const PublicBadges: React.FC<BadgesProps> = ({
               sizes="100vw"
               priority={true}
             />
-            <span className="ml-1">{`${
-              opportunity.commitmentIntervalCount
-            } ${opportunity.commitmentInterval}${
-              opportunity.commitmentIntervalCount > 1 ? "s" : ""
-            }`}</span>
+            <span className="ml-1">
+              {commitmentDisplay.totalHours != null
+                ? `${commitmentDisplay.totalHours} ${commitmentDisplay.totalHours === 1 ? "hour" : "hours"}`
+                : commitmentDisplay.label}
+            </span>
           </span>
         </div>
       )}

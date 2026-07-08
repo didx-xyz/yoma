@@ -54,6 +54,7 @@ export interface Opportunity {
   commitmentIntervalId: string | null;
   commitmentInterval: string | null;
   commitmentIntervalCount: number | null;
+  commitmentIntervalTotalHours: number | null;
   commitmentIntervalDescription: string | null;
   participantLimit: number | null;
   participantCount: number | null;
@@ -107,6 +108,7 @@ export interface OpportunityInfo {
   difficulty: string | null;
   commitmentInterval: TimeIntervalOption | null | string; // NB: string
   commitmentIntervalCount: number | null;
+  commitmentIntervalTotalHours: number | null;
   commitmentIntervalDescription: string | null;
   participantLimit: number | null;
   participantCountCompleted: number;

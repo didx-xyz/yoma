@@ -8,10 +8,8 @@ import {
 } from "react-icons/io5";
 import { toast } from "react-toastify";
 import { AvatarImage } from "../AvatarImage";
-import PublicBadges from "~/components/Opportunity/Badges/PublicBadges";
 import Image from "next/image";
 import type { OpportunityInfo } from "~/api/models/opportunity";
-import { OPPORTUNITY_DETAILS_DESIGN_V2 } from "~/lib/constants";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { LoadingInline } from "../Status/LoadingInline";
 import { createLinkSharing } from "~/api/services/actionLinks";
@@ -173,77 +171,30 @@ const SharePopup: React.FC<SharePopupProps> = ({ opportunity, onClose }) => {
                   {opportunity?.title}
                 </h4> */}
 
-                {OPPORTUNITY_DETAILS_DESIGN_V2 ? (
-                  <>
-                    <OpportunityTitleRow data={opportunity} />
-                    <OpportunityOrgCountriesRow data={opportunity} />
-                  </>
-                ) : (
-                  <>
-                    <h4 className="line-clamp-2 max-w-[170px] overflow-hidden text-[18px] leading-tight font-semibold text-ellipsis md:max-w-[420px]">
-                      {opportunity?.title}
-                    </h4>
-                    <h6 className="text-gray-dark line-clamp-2 max-w-[180px] overflow-hidden text-xs font-medium text-ellipsis md:max-w-[420px]">
-                      By {opportunity?.organizationName}
-                    </h6>
-                  </>
-                )}
+                <>
+                  <OpportunityTitleRow data={opportunity} />
+                  <OpportunityOrgCountriesRow data={opportunity} />
+                </>
               </div>
             </div>
 
             {/* BADGES */}
-            {OPPORTUNITY_DETAILS_DESIGN_V2 ? (
-              <div className="mt-4 mb-2 flex flex-col gap-2 md:my-2">
-                <div className="flex flex-row flex-wrap items-center gap-2">
-                  <OpportunityTypeBadge
-                    data={opportunity}
-                    className={typeConfig.badgeClassName}
-                  />
-                  <OpportunityEngagementTypeBadge
-                    data={opportunity}
-                    className={"bg-gray-light text-gray-dark"}
-                  />
-                  {opportunity.zltoRewardEstimate != null && (
-                    <ZltoRewardBadge amount={opportunity.zltoRewardEstimate} />
-                  )}
-                </div>
-                <OpportunityMetaTextRow data={opportunity} />
+            <div className="mt-4 mb-2 flex flex-col gap-2 md:my-2">
+              <div className="flex flex-row flex-wrap items-center gap-2">
+                <OpportunityTypeBadge
+                  data={opportunity}
+                  className={typeConfig.badgeClassName}
+                />
+                <OpportunityEngagementTypeBadge
+                  data={opportunity}
+                  className={"bg-gray-light text-gray-dark"}
+                />
+                {opportunity.zltoRewardEstimate != null && (
+                  <ZltoRewardBadge amount={opportunity.zltoRewardEstimate} />
+                )}
               </div>
-            ) : (
-              <PublicBadges opportunity={opportunity} />
-
-              // DATES
-              // {opportunity?.status == "Active" && (
-              //   <div className="text-gray-dark flex flex-col text-sm">
-              //     <div>
-              //       {opportunity.dateStart && (
-              //         <>
-              //           <span className="mr-2 font-bold">Starts:</span>
-              //           <span className="text-xs tracking-widest text-black">
-              //             <Moment format={DATE_FORMAT_HUMAN} utc={true}>
-              //               {opportunity.dateStart}
-              //             </Moment>
-              //           </span>
-              //         </>
-              //       )}
-              //     </div>
-              //     <div>
-              //       {opportunity.dateEnd && (
-              //         <>
-              //           <span className="mr-2 font-bold">Ends:</span>
-              //           <span className="text-xs tracking-widest text-black">
-              //             <Moment format={DATE_FORMAT_HUMAN} utc={true}>
-              //               {opportunity.dateEnd}
-              //             </Moment>
-              //           </span>
-              //         </>
-              //       )}
-              //     </div>
-              //   </div>
-              // )}
-            )}
-
-            {/* <PublicBadges opportunity={opportunity} /> */}
+              <OpportunityMetaTextRow data={opportunity} />
+            </div>
           </div>
 
           {/* BUTTONS */}

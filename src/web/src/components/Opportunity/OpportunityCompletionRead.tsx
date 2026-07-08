@@ -13,6 +13,7 @@ import Moment from "react-moment";
 import type { MyOpportunityInfo } from "~/api/models/myOpportunity";
 import { DATE_FORMAT_HUMAN } from "~/lib/constants";
 import { fetchClientEnv } from "~/lib/utils";
+import { getCommitmentDisplay } from "./opportunityTypeTheme";
 import { UserInitialsAvatar } from "../User/UserInitialsAvatar";
 
 interface InputProps {
@@ -25,6 +26,7 @@ export const OpportunityCompletionRead: React.FC<InputProps> = ({
   data,
 }) => {
   const [showLocation, setShowLocation] = useState(false);
+  const commitmentDisplay = getCommitmentDisplay(data);
 
   function renderVerificationFile(
     icon: any,
@@ -260,12 +262,19 @@ export const OpportunityCompletionRead: React.FC<InputProps> = ({
           </div>
         </div>
       )}
-      {data?.commitmentInterval && (data?.commitmentIntervalCount ?? 0) > 0 && (
+      {commitmentDisplay?.totalHours != null && (
         <div className="text-gray-dark flex flex-row gap-2 text-sm">
           <div>Time to complete: </div>
           <div className="font-bold">
-            {data.commitmentIntervalCount} {data.commitmentInterval}(s)
+            {commitmentDisplay.totalHours}{" "}
+            {commitmentDisplay.totalHours === 1 ? "hour" : "hours"}
           </div>
+        </div>
+      )}
+      {commitmentDisplay?.totalHours == null && commitmentDisplay?.label && (
+        <div className="text-gray-dark flex flex-row gap-2 text-sm">
+          <div>Time to complete: </div>
+          <div className="font-bold">{commitmentDisplay.label}</div>
         </div>
       )}
     </div>
