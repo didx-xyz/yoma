@@ -34,7 +34,6 @@ import {
 } from "~/api/services/myOpportunities";
 import { updateSettings } from "~/api/services/user";
 import { AvatarImage } from "~/components/AvatarImage";
-import PublicBadges from "~/components/Opportunity/Badges/PublicBadges";
 import ZltoRewardBadge from "~/components/Opportunity/Badges/ZltoRewardBadge";
 import {
   getCommitmentDisplay,
@@ -54,10 +53,7 @@ import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import { OPPORTUNITY_QUERY_KEYS } from "~/hooks/useOpportunityMutations";
 import analytics from "~/lib/analytics";
-import {
-  OPPORTUNITY_DETAILS_DESIGN_V2,
-  SETTING_USER_POPUP_LEAVINGYOMA,
-} from "~/lib/constants";
+import { SETTING_USER_POPUP_LEAVINGYOMA } from "~/lib/constants";
 import { userProfileAtom } from "~/lib/store";
 import { type User } from "~/server/auth";
 import CustomModal from "../Common/CustomModal";
@@ -790,15 +786,9 @@ const OpportunityPublicDetails: React.FC<{
                   {opportunityInfo.title}
                 </h4>
 
-                {OPPORTUNITY_DETAILS_DESIGN_V2 ? (
-                  <div className="mt-1">
-                    <OpportunityOrgCountriesRow data={opportunityInfo} />
-                  </div>
-                ) : (
-                  <h6 className="text-gray-dark mt-1 text-sm">
-                    By {opportunityInfo.organizationName}
-                  </h6>
-                )}
+                <div className="mt-1">
+                  <OpportunityOrgCountriesRow data={opportunityInfo} />
+                </div>
               </div>
 
               <div className="shrink-0">
@@ -811,29 +801,25 @@ const OpportunityPublicDetails: React.FC<{
             </div>
 
             {/* BADGES */}
-            {OPPORTUNITY_DETAILS_DESIGN_V2 ? (
-              <div className="mt-4 mb-2 flex flex-col gap-2 md:my-2">
-                <div className="flex flex-row flex-wrap items-center gap-2">
-                  <OpportunityTypeBadge
-                    data={opportunityInfo}
-                    className={typeConfig.badgeClassName}
+            <div className="mt-4 mb-2 flex flex-col gap-2 md:my-2">
+              <div className="flex flex-row flex-wrap items-center gap-2">
+                <OpportunityTypeBadge
+                  data={opportunityInfo}
+                  className={typeConfig.badgeClassName}
+                />
+                <OpportunityEngagementTypeBadge
+                  data={opportunityInfo}
+                  className={"bg-gray-light text-gray-dark"}
+                />
+                {opportunityInfo.zltoRewardEstimate != null && (
+                  <ZltoRewardBadge
+                    amount={opportunityInfo.zltoRewardEstimate}
+                    showToolTips={true}
                   />
-                  <OpportunityEngagementTypeBadge
-                    data={opportunityInfo}
-                    className={"bg-gray-light text-gray-dark"}
-                  />
-                  {opportunityInfo.zltoRewardEstimate != null && (
-                    <ZltoRewardBadge
-                      amount={opportunityInfo.zltoRewardEstimate}
-                      showToolTips={true}
-                    />
-                  )}
-                </div>
-                <OpportunityMetaTextRow data={opportunityInfo} />
+                )}
               </div>
-            ) : (
-              <PublicBadges opportunity={opportunityInfo} showToolTips={true} />
-            )}
+              <OpportunityMetaTextRow data={opportunityInfo} />
+            </div>
 
             {/* BUTTONS */}
             <div className="mt-2 flex flex-col gap-4 md:flex-row">
@@ -844,11 +830,6 @@ const OpportunityPublicDetails: React.FC<{
                       type="button"
                       className={`btn btn-sm bg-green hover:bg-green-dark disabled:bg-green h-10 w-full rounded-full text-sm text-white normal-case md:w-[250px]`}
                       title="Clicking this button will take you to an external site to continue this opportunity. Remember to return to this page to upload your completion certificate and earn your achievement!"
-                      // className={`btn btn-sm h-10 w-full rounded-full text-sm normal-case md:w-[250px] ${
-                      //   OPPORTUNITY_DETAILS_DESIGN_V2
-                      //     ? typeConfig.ctaClassName
-                      //     : "bg-green hover:bg-green-dark disabled:bg-green text-white disabled:border-0 disabled:text-white"
-                      // }`}
                       onClick={onGoToOpportunity}
                       disabled={preview}
                     >
@@ -861,11 +842,7 @@ const OpportunityPublicDetails: React.FC<{
                         priority={true}
                       />
 
-                      <span className="ml-1">
-                        {OPPORTUNITY_DETAILS_DESIGN_V2
-                          ? externalLinkButtonText
-                          : "Go to opportunity"}
-                      </span>
+                      <span className="ml-1">{externalLinkButtonText}</span>
                     </button>
                   )}
 

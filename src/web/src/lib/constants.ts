@@ -89,7 +89,6 @@ export const OPPORTUNITY_TYPE_NANE_JOB = "Job";
 // Design kill-switches (true = new design from #1855+, false = original pre-#1855 look).
 // Flip to false to revert that surface to the original design without a code revert.
 export const OPPORTUNITY_SEARCH_DESIGN_V2 = true; // carousels + cards on /opportunities
-export const OPPORTUNITY_DETAILS_DESIGN_V2 = true; // /opportunities/[opportunityId] details
 
 export const THEME_BLUE = "blue";
 export const THEME_GREEN = "green";

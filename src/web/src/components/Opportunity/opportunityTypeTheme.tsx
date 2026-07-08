@@ -3,7 +3,7 @@ import type { OpportunityInfo } from "~/api/models/opportunity";
 
 // ---------------------------------------------------------------------------
 // Shared per-opportunity-type theming + small presentational pieces.
-// Used by the opportunity cards (OpportunityPublicSmallV2) and the opportunity
+// Used by the opportunity cards (OpportunityPublicSmall) and the opportunity
 // details page (OpportunityPublicDetails) so they share one source of truth.
 // ---------------------------------------------------------------------------
 
