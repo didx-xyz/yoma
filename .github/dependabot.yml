@@ -5,6 +5,10 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    groups:
+      github-actions:
+        patterns:
+          - "*"
   # Maintain NPM dependencies for `/`
   - package-ecosystem: npm
     directory: /
