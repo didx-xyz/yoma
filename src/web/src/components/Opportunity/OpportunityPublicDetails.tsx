@@ -130,6 +130,12 @@ const OpportunityPublicDetails: React.FC<{
     verificationStatus?.status == "Pending" &&
     (submissionSyncInfo?.syncType === "Pull" ||
       submissionSyncInfo?.locked === true);
+  const externalLinkButtonText =
+    opportunityInfo.type === "Learning" &&
+    isPartnerManagedPendingSubmission &&
+    verificationStatus?.percentComplete != null
+      ? "Continue learning"
+      : typeConfig.gotoExternalLinkButtonText;
 
   useEffect(() => {
     if (!user) return;
@@ -857,7 +863,7 @@ const OpportunityPublicDetails: React.FC<{
 
                       <span className="ml-1">
                         {OPPORTUNITY_DETAILS_DESIGN_V2
-                          ? typeConfig.gotoExternalLinkButtonText
+                          ? externalLinkButtonText
                           : "Go to opportunity"}
                       </span>
                     </button>
