@@ -1,4 +1,5 @@
 using FluentValidation;
+using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Lookups.Interfaces;
 using Yoma.Core.Domain.MyOpportunity.Models;
 
@@ -75,6 +76,29 @@ namespace Yoma.Core.Domain.MyOpportunity.Validators
         .WithMessage("Star rating must be between 1 and 5 if specified.");
 
       RuleFor(x => x.Feedback).Length(1, 500).When(x => !string.IsNullOrEmpty(x.Feedback)).WithMessage("Feedback must be between 1 and 500 characters.");
+
+      RuleFor(x => x.CustomFields)
+        .Must(CustomFieldKeysUnique)
+        .WithMessage("Custom field keys must be unique.");
+
+      RuleForEach(x => x.CustomFields).ChildRules(field =>
+      {
+        field.RuleFor(x => x.Key)
+          .NotEmpty()
+          .WithMessage("Custom field key is required.");
+
+        field.RuleFor(x => x)
+          .Must(CustomFieldValueSpecified)
+          .WithMessage("Custom field must specify either value or values.");
+
+        field.RuleFor(x => x.Value)
+          .Must(value => string.IsNullOrWhiteSpace(value) || !value.Contains(CustomFieldValue.Value_Delimiter))
+          .WithMessage("Custom field value contains an invalid delimiter character.");
+
+        field.RuleFor(x => x.Values)
+          .Must(values => values == null || values.All(value => !string.IsNullOrWhiteSpace(value) && !value.Contains(CustomFieldValue.Value_Delimiter)))
+          .WithMessage("Custom field values contain empty values or invalid delimiter characters.");
+      });
     }
     #endregion
 
@@ -89,6 +113,26 @@ namespace Yoma.Core.Domain.MyOpportunity.Validators
     {
       if (id == Guid.Empty) return false;
       return _timeIntervalService.GetByIdOrNull(id) != null;
+    }
+
+    private static bool CustomFieldKeysUnique(List<CustomFieldValueRequest>? customFields)
+    {
+      if (customFields == null) return true;
+
+      var keys = customFields
+        .Where(o => !string.IsNullOrWhiteSpace(o.Key))
+        .Select(o => o.Key.Trim())
+        .ToList();
+
+      return keys.Count == keys.Distinct(StringComparer.OrdinalIgnoreCase).Count();
+    }
+
+    private static bool CustomFieldValueSpecified(CustomFieldValueRequest customField)
+    {
+      var hasValue = !string.IsNullOrWhiteSpace(customField.Value);
+      var hasValues = customField.Values != null;
+
+      return hasValue != hasValues && (!hasValues || customField.Values!.Count != 0);
     }
     #endregion
   }

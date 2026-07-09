@@ -305,13 +305,13 @@ namespace Yoma.Core.Infrastructure.Database.Context
           .IsUnique()
           .HasFilter($"\"{nameof(Core.Entities.CustomFieldValue.MyOpportunityId)}\" IS NOT NULL");
 
-        entity.HasOne<CustomFieldDefinition>()
+        entity.HasOne(e => e.CustomFieldDefinition)
           .WithMany()
           .HasForeignKey(e => e.CustomFieldDefinitionId)
           .OnDelete(DeleteBehavior.NoAction);
 
         entity.HasOne<Opportunity.Entities.Opportunity>()
-          .WithMany()
+          .WithMany(o => o.CustomFieldValues)
           .HasForeignKey(e => e.OpportunityId)
           .OnDelete(DeleteBehavior.NoAction);
 

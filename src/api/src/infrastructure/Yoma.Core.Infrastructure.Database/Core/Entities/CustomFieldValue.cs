@@ -27,5 +27,7 @@ namespace Yoma.Core.Infrastructure.Database.Core.Entities
 
     [Required]
     public DateTimeOffset DateModified { get; set; }
+
+    public CustomFieldDefinition CustomFieldDefinition { get; set; } = null!;
   }
 }

@@ -132,7 +132,20 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
                 Type = Enum.Parse<VerificationType>(o.VerificationType.Name, true),
                 DisplayName = o.VerificationType.DisplayName,
                 Description = o.Description ?? o.VerificationType.Description
-              }).OrderBy(o => o.DisplayName).ToList() : null
+              }).OrderBy(o => o.DisplayName).ToList() : null,
+        CustomFields = entity.CustomFieldValues == null ? null : includeChildItems ?
+              entity.CustomFieldValues
+              .Where(o => o.CustomFieldDefinition.IsActive)
+              .OrderBy(o => o.CustomFieldDefinition.Group)
+              .ThenBy(o => o.CustomFieldDefinition.SubGroup)
+              .ThenBy(o => o.CustomFieldDefinition.SortOrder)
+              .ThenBy(o => o.CustomFieldDefinition.Title)
+              .Select(o => new Domain.Core.Models.CustomFieldValueItem
+              {
+                Key = o.CustomFieldDefinition.Key,
+                DataType = Enum.Parse<CustomFieldDataType>(o.CustomFieldDefinition.DataType, true),
+                ValueRaw = o.Value
+              }).ToList() : null
       });
 
       if (includeChildItems) query = query.AsSplitQuery();

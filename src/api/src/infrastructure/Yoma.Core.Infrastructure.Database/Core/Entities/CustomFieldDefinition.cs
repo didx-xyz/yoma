@@ -39,9 +39,6 @@ namespace Yoma.Core.Infrastructure.Database.Core.Entities
     [Column(TypeName = "varchar(50)")]
     public string DataType { get; set; } = null!; // String, Integer, Decimal, Boolean, DateTime, Option
 
-    [Column(TypeName = "text")]
-    public string? DefaultValue { get; set; }
-
     [Column(TypeName = "varchar(500)")]
     public string? ValidationRegex { get; set; }
 

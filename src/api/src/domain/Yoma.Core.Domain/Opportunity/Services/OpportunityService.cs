@@ -65,6 +65,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
     private readonly ITreasuryService _treasuryService;
     private readonly IPartnerService _partnerService;
     private readonly ICustomFieldDefinitionService _customFieldDefinitionService;
+    private readonly ICustomFieldValueService _customFieldValueService;
 
     private readonly OpportunityRequestValidatorCreate _opportunityRequestValidatorCreate;
     private readonly OpportunityRequestValidatorUpdate _opportunityRequestValidatorUpdate;
@@ -118,6 +119,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         ITreasuryService treasuryService,
         IPartnerService partnerService,
         ICustomFieldDefinitionService customFieldDefinitionService,
+        ICustomFieldValueService customFieldValueService,
         OpportunityRequestValidatorCreate opportunityRequestValidatorCreate,
         OpportunityRequestValidatorUpdate opportunityRequestValidatorUpdate,
         OpportunitySearchFilterValidator opportunitySearchFilterValidator,
@@ -156,6 +158,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       _treasuryService = treasuryService ?? throw new ArgumentNullException(nameof(treasuryService));
       _partnerService = partnerService ?? throw new ArgumentNullException(nameof(partnerService));
       _customFieldDefinitionService = customFieldDefinitionService ?? throw new ArgumentNullException(nameof(customFieldDefinitionService));
+      _customFieldValueService = customFieldValueService ?? throw new ArgumentNullException(nameof(customFieldValueService));
 
       _opportunityRequestValidatorCreate = opportunityRequestValidatorCreate ?? throw new ArgumentNullException(nameof(opportunityRequestValidatorCreate));
       _opportunityRequestValidatorUpdate = opportunityRequestValidatorUpdate ?? throw new ArgumentNullException(nameof(opportunityRequestValidatorUpdate));
@@ -1259,6 +1262,10 @@ namespace Yoma.Core.Domain.Opportunity.Services
         // verification types (optional)
         result = await AssignVerificationTypes(result, request.VerificationTypes);
 
+        // custom fields (optional)
+        if (options.UpsertCustomFields)
+          result.CustomFields = await _customFieldValueService.Upsert(CustomFieldEntityType.Opportunity, result.Type.ToString(), result.Id, null, request.CustomFields);
+
         scope.Complete();
       });
 
@@ -1431,6 +1438,10 @@ namespace Yoma.Core.Domain.Opportunity.Services
         // verification types (optional)
         result = await RemoveVerificationTypes(result, result.VerificationTypes?.Select(o => o.Type).Except(request.VerificationTypes?.Select(o => o.Type) ?? []).ToList());
         result = await AssignVerificationTypes(result, request.VerificationTypes);
+
+        // custom fields (optional)
+        if (options.UpsertCustomFields)
+          result.CustomFields = await _customFieldValueService.Upsert(CustomFieldEntityType.Opportunity, result.Type.ToString(), result.Id, null, request.CustomFields);
 
         scope.Complete();
       });
@@ -2074,6 +2085,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       //Instructions
       //ShareWithPartners
 
+      // TODO: Support custom field values for CSV-imported opportunities when import column mapping is defined.
       // Events raised by invoking method upon transaction completion
       var result = isNew
         ? await Create((OpportunityRequestCreate)request, new OpportunityUpsertOptions

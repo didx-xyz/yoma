@@ -191,7 +191,8 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
         Countries = value.Countries,
         Languages = value.Languages,
         Skills = value.Skills,
-        VerificationTypes = value.VerificationTypes
+        VerificationTypes = value.VerificationTypes,
+        CustomFields = value.CustomFields,
       };
     }
 

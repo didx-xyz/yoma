@@ -431,7 +431,8 @@ namespace Yoma.Core.Api.Controllers
       {
         EnsureOrganizationAuthorization = true,
         RaiseEvents = true,
-        SendNotifications = true
+        SendNotifications = true,
+        UpsertCustomFields = true
       });
 
       if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(Create));
@@ -451,7 +452,8 @@ namespace Yoma.Core.Api.Controllers
       {
         EnsureOrganizationAuthorization = true,
         RaiseEvents = true,
-        SendNotifications = false
+        SendNotifications = false,
+        UpsertCustomFields = true
       });
 
       if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(Update));

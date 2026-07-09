@@ -93,6 +93,7 @@ namespace Yoma.Core.Domain
       #endregion
       services.AddScoped<IBlobService, BlobService>();
       services.AddScoped<ICustomFieldDefinitionService, CustomFieldDefinitionService>();
+      services.AddScoped<ICustomFieldValueService, CustomFieldValueService>();  
       services.AddSingleton<IDistributedCacheService, DistributedCacheService>();
       services.AddSingleton<IDistributedLockService, DistributedLockService>();
       services.AddSingleton<IIdempotencyService, IdempotencyService>();

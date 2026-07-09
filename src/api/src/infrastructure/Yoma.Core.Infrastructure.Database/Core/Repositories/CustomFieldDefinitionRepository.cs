@@ -43,7 +43,6 @@ namespace Yoma.Core.Infrastructure.Database.Core.Repositories
         Group = entity.Group,
         SubGroup = entity.SubGroup,
         DataType = Enum.Parse<CustomFieldDataType>(entity.DataType, true),
-        DefaultValue = entity.DefaultValue,
         ValidationRegex = entity.ValidationRegex,
         ValidationErrorMessage = entity.ValidationErrorMessage,
         IsRequired = entity.IsRequired,
@@ -90,7 +89,6 @@ namespace Yoma.Core.Infrastructure.Database.Core.Repositories
         Group = item.Group,
         SubGroup = item.SubGroup,
         DataType = item.DataType.ToString(),
-        DefaultValue = item.DefaultValue,
         ValidationRegex = item.ValidationRegex,
         ValidationErrorMessage = item.ValidationErrorMessage,
         IsRequired = item.IsRequired,
@@ -125,7 +123,6 @@ namespace Yoma.Core.Infrastructure.Database.Core.Repositories
       entity.Group = item.Group;
       entity.SubGroup = item.SubGroup;
       entity.DataType = item.DataType.ToString();
-      entity.DefaultValue = item.DefaultValue;
       entity.ValidationRegex = item.ValidationRegex;
       entity.ValidationErrorMessage = item.ValidationErrorMessage;
       entity.IsRequired = item.IsRequired;

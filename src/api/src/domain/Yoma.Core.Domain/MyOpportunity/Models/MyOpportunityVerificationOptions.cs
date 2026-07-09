@@ -13,6 +13,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
     public bool PartnerSyncedVerification { get; init; }
     public bool InstantVerification { get; init; }
     public bool ImportedVerification { get; init; }
+    public bool UpsertCustomFields { get; init; }
 
     // These flows are sent for verification and finalized in the same process.
     public bool AutoFinalizedVerification => PartnerSyncedVerification || InstantVerification || ImportedVerification;

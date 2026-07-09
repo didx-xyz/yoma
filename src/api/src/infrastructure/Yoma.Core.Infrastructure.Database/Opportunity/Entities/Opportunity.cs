@@ -141,5 +141,7 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Entities
     public ICollection<OpportunitySkill>? Skills { get; set; }
 
     public ICollection<OpportunityVerificationType>? VerificationTypes { get; set; }
+
+    public ICollection<Core.Entities.CustomFieldValue>? CustomFieldValues { get; set; }
   }
 }

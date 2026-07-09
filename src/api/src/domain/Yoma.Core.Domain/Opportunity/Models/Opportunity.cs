@@ -1,5 +1,6 @@
 using Newtonsoft.Json;
 using Yoma.Core.Domain.BlobProvider;
+using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Entity;
 using Yoma.Core.Domain.Lookups.Models;
 using Yoma.Core.Domain.Opportunity.Extensions;
@@ -178,5 +179,7 @@ namespace Yoma.Core.Domain.Opportunity.Models
     public List<Skill>? Skills { get; set; }
 
     public List<Lookups.OpportunityVerificationType>? VerificationTypes { get; set; }
+
+    public List<CustomFieldValueItem>? CustomFields { get; set; }
   }
 }

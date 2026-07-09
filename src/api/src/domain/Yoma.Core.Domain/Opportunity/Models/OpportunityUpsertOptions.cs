@@ -13,5 +13,8 @@ namespace Yoma.Core.Domain.Opportunity.Models
     public SyncType? SyncTypeActionedBy { get; set; }
 
     public string? SyncExternalId { get; set; }
+
+    // TODO: Remove this flag once all opportunity upsert entry points support custom field value mapping.
+    public bool UpsertCustomFields { get; set; }
   }
 }

@@ -29,11 +29,6 @@ namespace Yoma.Core.Domain.Core.Models
 
     public CustomFieldDataType DataType { get; set; }
 
-    /// <summary>
-    /// Stored using the same text format as submitted values for the selected data type.
-    /// </summary>
-    public string? DefaultValue { get; set; }
-
     public string? ValidationRegex { get; set; }
 
     public string? ValidationErrorMessage { get; set; }
