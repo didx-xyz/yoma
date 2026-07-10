@@ -48,8 +48,8 @@ namespace Yoma.Core.Domain.Analytics.Services
     private readonly OrganizationSearchFilterYouthValidator _organizationSearchFilterYouthValidator;
     private readonly OrganizationSearchFilterSSOValidator _organizationSearchFilterSSOValidator;
 
-    private readonly IRepositoryBatchedValueContainsWithNavigation<Opportunity.Models.Opportunity> _opportunityRepository;
-    private readonly IRepositoryBatchedWithNavigation<MyOpportunity.Models.MyOpportunity> _myOpportunityRepository;
+    private readonly IRepositoryBatchedValueContainsWithNavigationAndCustomFieldFilter<Opportunity.Models.Opportunity> _opportunityRepository;
+    private readonly IRepositoryBatchedWithNavigationAndCustomFieldFilter<MyOpportunity.Models.MyOpportunity> _myOpportunityRepository;
     private readonly IRepository<OpportunityCategory> _opportunityCategoryRepository;
     private readonly IRepository<UserLoginHistory> _userLoginHistoryRepository;
     private readonly IRepositoryBatchedValueContainsWithNavigation<Organization> _organizationRepository;
@@ -91,8 +91,8 @@ namespace Yoma.Core.Domain.Analytics.Services
         OrganizationSearchFilterYouthValidator organizationSearchFilterYouthValidator,
         OrganizationSearchFilterSSOValidator organizationSearchFilterSSOValidator,
 
-        IRepositoryBatchedValueContainsWithNavigation<Opportunity.Models.Opportunity> opportunityRepository,
-        IRepositoryBatchedWithNavigation<MyOpportunity.Models.MyOpportunity> myOpportunityRepository,
+        IRepositoryBatchedValueContainsWithNavigationAndCustomFieldFilter<Opportunity.Models.Opportunity> opportunityRepository,
+        IRepositoryBatchedWithNavigationAndCustomFieldFilter<MyOpportunity.Models.MyOpportunity> myOpportunityRepository,
         IRepository<OpportunityCategory> opportunityCategoryRepository,
         IRepository<UserLoginHistory> userLoginHistoryRepository,
         IRepositoryBatchedValueContainsWithNavigation<Organization> organizationRepository,

@@ -71,5 +71,7 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Entities
     public DateTimeOffset DateModified { get; set; }
 
     public ICollection<MyOpportunityVerification>? Verifications { get; set; }
+
+    public ICollection<Core.Entities.CustomFieldValue>? CustomFieldValues { get; set; }
   }
 }

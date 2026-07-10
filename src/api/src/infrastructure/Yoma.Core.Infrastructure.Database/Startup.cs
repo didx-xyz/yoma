@@ -133,7 +133,7 @@ namespace Yoma.Core.Infrastructure.Database
       services.AddScoped<IRepository<Domain.MyOpportunity.Models.Lookups.MyOpportunityVerificationStatus>, MyOpportunity.Repositories.Lookups.MyOpportunityVerificationStatusRepository>();
       #endregion Lookups
 
-      services.AddScoped<IRepositoryBatchedWithNavigation<Domain.MyOpportunity.Models.MyOpportunity>, MyOpportunityRepository>();
+      services.AddScoped<IRepositoryBatchedWithNavigationAndCustomFieldFilter<Domain.MyOpportunity.Models.MyOpportunity>, MyOpportunityRepository>();
       services.AddScoped<IRepository<Domain.MyOpportunity.Models.MyOpportunityVerification>, MyOpportunityVerificationRepository>();
       #endregion MyOpportunity
 
@@ -146,7 +146,7 @@ namespace Yoma.Core.Infrastructure.Database
       services.AddScoped<IRepository<Domain.Opportunity.Models.Lookups.OpportunityVerificationType>, Opportunity.Repositories.Lookups.OpportunityVerificationTypeRepository>();
       #endregion Lookups
 
-      services.AddScoped<IRepositoryBatchedValueContainsWithNavigation<Domain.Opportunity.Models.Opportunity>, OpportunityRepository>();
+      services.AddScoped<IRepositoryBatchedValueContainsWithNavigationAndCustomFieldFilter<Domain.Opportunity.Models.Opportunity>, OpportunityRepository>();
       services.AddScoped<IRepository<OpportunityCategory>, OpportunityCategoryRepository>();
       services.AddScoped<IRepository<OpportunityCountry>, OpportunityCountryRepository>();
       services.AddScoped<IRepository<OpportunityLanguage>, OpportunityLanguageRepository>();

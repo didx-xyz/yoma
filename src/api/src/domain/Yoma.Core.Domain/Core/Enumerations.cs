@@ -215,4 +215,13 @@ namespace Yoma.Core.Domain.Core
     DateTime,
     Option
   }
+
+  public enum CustomFieldFilterOperator
+  {
+    Equals,
+    Contains,
+    AnyOf,
+    AllOf,
+    Exists
+  }
 }

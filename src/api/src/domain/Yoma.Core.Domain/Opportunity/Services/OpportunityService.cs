@@ -74,7 +74,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
     private readonly IMediator _mediator;
 
-    private readonly IRepositoryBatchedValueContainsWithNavigation<Models.Opportunity> _opportunityRepository;
+    private readonly IRepositoryBatchedValueContainsWithNavigationAndCustomFieldFilter<Models.Opportunity> _opportunityRepository;
     private readonly IRepository<OpportunityCategory> _opportunityCategoryRepository;
     private readonly IRepository<OpportunityCountry> _opportunityCountryRepository;
     private readonly IRepository<OpportunityLanguage> _opportunityLanguageRepository;
@@ -125,7 +125,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         OpportunitySearchFilterValidator opportunitySearchFilterValidator,
         OpportunitySearchFilterCriteriaValidator opportunitySearchFilterCriteriaValidator,
         IMediator mediator,
-        IRepositoryBatchedValueContainsWithNavigation<Models.Opportunity> opportunityRepository,
+        IRepositoryBatchedValueContainsWithNavigationAndCustomFieldFilter<Models.Opportunity> opportunityRepository,
         IRepository<OpportunityCategory> opportunityCategoryRepository,
         IRepository<OpportunityCountry> opportunityCountryRepository,
         IRepository<OpportunityLanguage> opportunityLanguageRepository,

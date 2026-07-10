@@ -316,7 +316,7 @@ namespace Yoma.Core.Infrastructure.Database.Context
           .OnDelete(DeleteBehavior.NoAction);
 
         entity.HasOne<MyOpportunity.Entities.MyOpportunity>()
-          .WithMany()
+          .WithMany(e => e.CustomFieldValues)
           .HasForeignKey(e => e.MyOpportunityId)
           .OnDelete(DeleteBehavior.NoAction);
       });

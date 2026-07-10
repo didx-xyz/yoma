@@ -1,5 +1,6 @@
 using CsvHelper.Configuration.Attributes;
 using Newtonsoft.Json;
+using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Lookups.Models;
 using Yoma.Core.Domain.PartnerSync.Models;
 
@@ -152,5 +153,14 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
     [JsonIgnore]
     [Name("Skills")]
     public string? SkillsFlattened => Skills == null || Skills.Count == 0 ? null : string.Join(", ", Skills.Select(o => o.Name));
+
+    [Ignore]
+    public List<CustomFieldValueItem>? CustomFields { get; set; }
+
+    [JsonIgnore]
+    [Name("Custom Fields")]
+    public string? CustomFieldsFlattened => CustomFields == null || CustomFields.Count == 0
+      ? null
+      : string.Join("; ", CustomFields.Select(o => o.DataType == Core.CustomFieldDataType.Option ? $"{o.Key}: {string.Join(", ", o.Values ?? [])}" : $"{o.Key}: {o.Value}"));
   }
 }

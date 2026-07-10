@@ -2,16 +2,18 @@ using Microsoft.EntityFrameworkCore;
 using Yoma.Core.Domain.BlobProvider;
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Interfaces;
+using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Entity;
 using Yoma.Core.Domain.MyOpportunity;
 using Yoma.Core.Domain.Opportunity;
 using Yoma.Core.Infrastructure.Database.Context;
+using Yoma.Core.Infrastructure.Database.Core.Extensions;
 using Yoma.Core.Infrastructure.Database.Core.Repositories;
 using Yoma.Core.Infrastructure.Shared.Extensions;
 
 namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories
 {
-  public class MyOpportunityRepository : BaseRepository<Entities.MyOpportunity, Guid>, IRepositoryBatchedWithNavigation<Domain.MyOpportunity.Models.MyOpportunity>
+  public class MyOpportunityRepository : BaseRepository<Entities.MyOpportunity, Guid>, IRepositoryBatchedWithNavigationAndCustomFieldFilter<Domain.MyOpportunity.Models.MyOpportunity>
   {
     #region Constructor
     public MyOpportunityRepository(ApplicationDbContext context) : base(context) { }
@@ -116,10 +118,36 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories
                 Id = o.SkillId,
                 Name = o.Skill.Name,
                 InfoURL = o.Skill.InfoURL
-              }).OrderBy(o => o.Name).ToList() : null
+              }).OrderBy(o => o.Name).ToList() : null,
+        CustomFields = entity.CustomFieldValues == null ? null : includeChildItems ?
+              entity.CustomFieldValues
+                .Where(o => o.CustomFieldDefinition.IsActive)
+                .OrderBy(o => o.CustomFieldDefinition.Group)
+                .ThenBy(o => o.CustomFieldDefinition.SubGroup)
+                .ThenBy(o => o.CustomFieldDefinition.SortOrder)
+                .ThenBy(o => o.CustomFieldDefinition.Title)
+                .Select(o => new CustomFieldValueItem
+                {
+                  Key = o.CustomFieldDefinition.Key,
+                  DataType = Enum.Parse<CustomFieldDataType>(o.CustomFieldDefinition.DataType, true),
+                  ValueRaw = o.Value
+                }).ToList() : null,
       });
 
       if (includeChildItems) query = query.AsSplitQuery();
+      return query;
+    }
+
+    public IQueryable<Domain.MyOpportunity.Models.MyOpportunity> WhereCustomFields(IQueryable<Domain.MyOpportunity.Models.MyOpportunity> query, List<CustomFieldFilter>? filters)
+    {
+      if (filters == null || filters.Count == 0) return query;
+
+      foreach (var filter in filters)
+      {
+        var ids = _context.CustomFieldValue.MatchingEntityIds(CustomFieldEntityType.MyOpportunity, filter);
+        query = query.Where(o => ids.Contains(o.Id));
+      }
+
       return query;
     }
 

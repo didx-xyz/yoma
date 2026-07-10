@@ -294,7 +294,7 @@ namespace Yoma.Core.Domain.Core.Services
 
       var definitionsById = definitions.ToDictionary(o => o.Id);
 
-      return values
+      return [.. values
         .Select(o =>
         {
           var definition = definitionsById[o.CustomFieldDefinitionId];
@@ -305,8 +305,7 @@ namespace Yoma.Core.Domain.Core.Services
             DataType = definition.DataType,
             ValueRaw = o.Value
           };
-        })
-        .ToList();
+        })];
     }
     #endregion
   }

@@ -84,7 +84,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
     private readonly MyOpportunityRequestValidatorVerifyImportPartnerSync _myOpportunityRequestValidatorVerifyImportPartnerSync;
     private readonly IMediator _mediator;
 
-    private readonly IRepositoryBatchedWithNavigation<Models.MyOpportunity> _myOpportunityRepository;
+    private readonly IRepositoryBatchedWithNavigationAndCustomFieldFilter<Models.MyOpportunity> _myOpportunityRepository;
     private readonly IRepository<MyOpportunityVerification> _myOpportunityVerificationRepository;
     private readonly IExecutionStrategyService _executionStrategyService;
 
@@ -131,7 +131,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         MyOpportunityRequestValidatorVerifyImportCsv myOpportunityRequestValidatorVerifyImportCsv,
         MyOpportunityRequestValidatorVerifyImportPartnerSync myOpportunityRequestValidatorVerifyImportPartnerSync,
         IMediator mediator,
-        IRepositoryBatchedWithNavigation<Models.MyOpportunity> myOpportunityRepository,
+        IRepositoryBatchedWithNavigationAndCustomFieldFilter<Models.MyOpportunity> myOpportunityRepository,
         IRepository<MyOpportunityVerification> myOpportunityVerificationRepository,
         IExecutionStrategyService executionStrategyService)
     {
@@ -2050,7 +2050,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       myOpportunity = await PerformActionSendForVerificationProcessVerificationTypes(request, opportunity, myOpportunity, options, isNew);
 
       if (options.UpsertCustomFields)
-        await _customFieldValueService.Upsert(CustomFieldEntityType.MyOpportunity, opportunity.Type.ToString(), null, myOpportunity.Id, request.CustomFields);
+        myOpportunity.CustomFields = await _customFieldValueService.Upsert(CustomFieldEntityType.MyOpportunity, opportunity.Type.ToString(), null, myOpportunity.Id, request.CustomFields);
 
       //used by notifications
       myOpportunity.Username = user.Username;

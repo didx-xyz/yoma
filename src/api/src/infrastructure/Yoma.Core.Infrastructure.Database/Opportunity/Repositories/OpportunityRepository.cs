@@ -4,16 +4,18 @@ using Yoma.Core.Domain.BlobProvider;
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Interfaces;
+using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Entity;
 using Yoma.Core.Domain.Opportunity;
 using Yoma.Core.Domain.Opportunity.Services;
 using Yoma.Core.Infrastructure.Database.Context;
+using Yoma.Core.Infrastructure.Database.Core.Extensions;
 using Yoma.Core.Infrastructure.Database.Core.Repositories;
 using Yoma.Core.Infrastructure.Shared.Extensions;
 
 namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
 {
-  public class OpportunityRepository : BaseRepository<Entities.Opportunity, Guid>, IRepositoryBatchedValueContainsWithNavigation<Domain.Opportunity.Models.Opportunity>
+  public class OpportunityRepository : BaseRepository<Entities.Opportunity, Guid>, IRepositoryBatchedValueContainsWithNavigationAndCustomFieldFilter<Domain.Opportunity.Models.Opportunity>
   {
     #region Constructor
     public OpportunityRepository(ApplicationDbContext context) : base(context) { }
@@ -168,6 +170,19 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
           || (!string.IsNullOrEmpty(o.Summary) && EF.Functions.ILike(o.Summary, $"%{value}%"))
           || (!string.IsNullOrEmpty(o.KeywordsFlattened) && EF.Functions.ILike(o.KeywordsFlattened, $"%{value}%"))
           || EF.Functions.ToTsVector("english", o.Description).Matches(value));
+    }
+
+    public IQueryable<Domain.Opportunity.Models.Opportunity> WhereCustomFields(IQueryable<Domain.Opportunity.Models.Opportunity> query, List<CustomFieldFilter>? filters)
+    {
+      if (filters == null || filters.Count == 0) return query;
+
+      foreach (var filter in filters)
+      {
+        var ids = _context.CustomFieldValue.MatchingEntityIds(CustomFieldEntityType.Opportunity, filter);
+        query = query.Where(o => ids.Contains(o.Id));
+      }
+
+      return query;
     }
 
     public async Task<Domain.Opportunity.Models.Opportunity> Create(Domain.Opportunity.Models.Opportunity item)

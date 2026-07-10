@@ -32,7 +32,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
     private readonly INotificationURLFactory _notificationURLFactory;
     private readonly INotificationDeliveryService _notificationDeliveryService;
     private readonly IDistributedLockService _distributedLockService;
-    private readonly IRepositoryBatchedWithNavigation<Models.MyOpportunity> _myOpportunityRepository;
+    private readonly IRepositoryBatchedWithNavigationAndCustomFieldFilter<Models.MyOpportunity> _myOpportunityRepository;
     private readonly IRepository<MyOpportunityVerification> _myOpportunityVerificationRepository;
 
     internal static readonly VerificationStatus[] Statuses_Rejectable = [VerificationStatus.Pending];
@@ -50,7 +50,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         INotificationURLFactory notificationURLFactory,
         INotificationDeliveryService notificationDeliveryService,
         IDistributedLockService distributedLockService,
-        IRepositoryBatchedWithNavigation<Models.MyOpportunity> myOpportunityRepository,
+        IRepositoryBatchedWithNavigationAndCustomFieldFilter<Models.MyOpportunity> myOpportunityRepository,
         IRepository<MyOpportunityVerification> myOpportunityVerificationRepository)
     {
       _logger = logger;

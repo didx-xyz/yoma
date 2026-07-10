@@ -82,7 +82,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Extensions
               FileURL = o.FileURL,
               Geometry = string.IsNullOrEmpty(o.GeometryProperties) ? null : JsonConvert.DeserializeObject<Geometry>(o.GeometryProperties)
             }).ToList(),
-        Skills = value.Skills
+        Skills = value.Skills,
+        CustomFields = value.CustomFields,
       };
 
       return result;
