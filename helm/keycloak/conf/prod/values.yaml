@@ -89,7 +89,7 @@ config-cli:
   env:
     KEYCLOAK_URL: https://yoma.world/auth
     IMPORT_FILES_LOCATIONS: "/init/*.yaml"
-    # KEYCLOAK_USER: xxx
+    KEYCLOAK_USER: null
     # REALM_YOMA_ADMIN_CLI_SECRET: xxx
     # SMTP_PASSWORD: SG.xxx
     CLIENT_YOMA_API_URL: https://api.yoma.world
