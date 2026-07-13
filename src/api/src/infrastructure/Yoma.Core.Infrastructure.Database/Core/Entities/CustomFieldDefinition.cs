@@ -5,7 +5,6 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace Yoma.Core.Infrastructure.Database.Core.Entities
 {
   [Table("CustomFieldDefinition", Schema = "Core")]
-  [Index(nameof(EntityType), nameof(EntityContext), nameof(Key))]
   [Index(nameof(EntityType), nameof(EntityContext), nameof(IsActive), nameof(Group), nameof(SubGroup), nameof(SortOrder))]
   [Index(nameof(EntityType), nameof(EntityContext), nameof(DataType), nameof(IsRequired), nameof(IsSystem))]
   public sealed class CustomFieldDefinition : Shared.Entities.BaseEntity<Guid>

@@ -33,6 +33,22 @@ namespace Yoma.Core.Domain.Core.Services
       ValidateAndNormalize(entityType, entityContext, customFields);
     }
 
+    public void ValidateAndHydrateFilters(CustomFieldEntityType entityType, List<CustomFieldFilter>? filters)
+    {
+      if (filters == null || filters.Count == 0) return;
+
+      foreach (var filter in filters)
+      {
+        var definition = _customFieldDefinitionService.GetByKey(entityType, filter.Key, true, true);
+
+        filter.Key = definition.Key;
+        filter.DataType = definition.DataType;
+
+        ValidateFilterOperator(definition, filter);
+        NormalizeFilterValues(definition, filter);
+      }
+    }
+
     public async Task<List<CustomFieldValueItem>?> Upsert(CustomFieldEntityType entityType, string? entityContext, Guid? opportunityId, Guid? myOpportunityId, List<CustomFieldValueRequest>? customFields)
     {
       var entityId = ResolveEntityId(entityType, opportunityId, myOpportunityId);
@@ -255,8 +271,6 @@ namespace Yoma.Core.Domain.Core.Services
 
     private static string NormalizeOption(CustomFieldDefinition definition, CustomFieldValueRequest request)
     {
-      var options = definition.Options?.Where(o => o.IsActive).ToDictionary(o => o.Key, StringComparer.OrdinalIgnoreCase) ?? [];
-
       if (definition.SupportsMultiple == true)
       {
         if (request.Values == null || request.Values.Count == 0)
@@ -264,28 +278,33 @@ namespace Yoma.Core.Domain.Core.Services
 
         var values = request.Values.Select(o => o.Trim()).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
 
-        if (values.Any(o => o.Contains(CustomFieldValue.Value_Delimiter)))
-          throw new ValidationException($"Custom field '{definition.Title}' contains an invalid option value");
-
-        var invalid = values.Where(o => !options.ContainsKey(o)).ToList();
-        if (invalid.Count != 0)
-          throw new ValidationException($"Custom field '{definition.Title}' contains invalid option value(s): {string.Join(", ", invalid)}");
-
-        return new CustomFieldValue { Values = values }.Value!;
+        return new CustomFieldValue
+        {
+          Values = [.. values.Select(o => NormalizeOptionValue(definition, o))]
+        }.Value!;
       }
 
       if (request.Values != null)
         throw new ValidationException($"Custom field '{definition.Title}' expects a single value");
 
-      var value = request.Value!.Trim();
+      return NormalizeOptionValue(definition, request.Value!);
+    }
+
+    private static string NormalizeOptionValue(CustomFieldDefinition definition, string value)
+    {
+      value = value.Trim();
 
       if (value.Contains(CustomFieldValue.Value_Delimiter))
         throw new ValidationException($"Custom field '{definition.Title}' contains an invalid option value");
 
-      if (!options.ContainsKey(value))
-        throw new ValidationException($"Custom field '{definition.Title}' contains an invalid option value: {value}");
+      var option = definition.Options?
+        .SingleOrDefault(o =>
+          o.IsActive &&
+          string.Equals(o.Key, value, StringComparison.OrdinalIgnoreCase));
 
-      return value;
+      return option == null
+        ? throw new ValidationException($"Custom field '{definition.Title}' contains an invalid option value: {value}")
+        : option.Key;
     }
 
     private static List<CustomFieldValueItem>? ToCustomFieldValueItems(List<CustomFieldDefinition> definitions, List<CustomFieldValue> values)
@@ -307,6 +326,115 @@ namespace Yoma.Core.Domain.Core.Services
           };
         })];
     }
+
+    private static void ValidateFilterOperator(CustomFieldDefinition definition, CustomFieldFilter filter)
+    {
+      var supported = definition.DataType switch
+      {
+        CustomFieldDataType.String =>
+          filter.Operator is
+            CustomFieldFilterOperator.Equals or
+            CustomFieldFilterOperator.Contains or
+            CustomFieldFilterOperator.AnyOf or
+            CustomFieldFilterOperator.Exists,
+
+        CustomFieldDataType.Integer or
+        CustomFieldDataType.Decimal or
+        CustomFieldDataType.Boolean or
+        CustomFieldDataType.DateTime =>
+          filter.Operator is
+            CustomFieldFilterOperator.Equals or
+            CustomFieldFilterOperator.AnyOf or
+            CustomFieldFilterOperator.Exists,
+
+        CustomFieldDataType.Option =>
+          filter.Operator is
+            CustomFieldFilterOperator.Equals or
+            CustomFieldFilterOperator.AnyOf or
+            CustomFieldFilterOperator.AllOf or
+            CustomFieldFilterOperator.Exists,
+
+        _ => false
+      };
+
+      if (!supported)
+        throw new ValidationException(
+          $"Custom field '{definition.Title}' does not support filter operator '{filter.Operator}'");
+
+      if (filter.Operator == CustomFieldFilterOperator.AllOf &&
+          definition.SupportsMultiple != true)
+      {
+        throw new ValidationException(
+          $"Custom field '{definition.Title}' does not support multiple values");
+      }
+    }
+
+    private static void NormalizeFilterValues(CustomFieldDefinition definition, CustomFieldFilter filter)
+    {
+      switch (filter.Operator)
+      {
+        case CustomFieldFilterOperator.Exists:
+          return;
+
+        case CustomFieldFilterOperator.Contains:
+          filter.Value = filter.Value!.Trim();
+          return;
+
+        case CustomFieldFilterOperator.Equals:
+          filter.Value = NormalizeFilterValue(definition, filter.Value!);
+          return;
+
+        case CustomFieldFilterOperator.AnyOf:
+        case CustomFieldFilterOperator.AllOf:
+          filter.Values =
+          [
+            .. filter.Values!
+          .Select(o => NormalizeFilterValue(definition, o))
+          .Distinct(StringComparer.Ordinal)
+          ];
+          return;
+
+        default:
+          throw new ArgumentOutOfRangeException(
+            nameof(filter),
+            $"Custom field filter operator '{filter.Operator}' is not supported");
+      }
+    }
+
+    private static string NormalizeFilterValue(CustomFieldDefinition definition, string value)
+    {
+      var request = new CustomFieldValueRequest
+      {
+        Value = value
+      };
+
+      return definition.DataType switch
+      {
+        CustomFieldDataType.String =>
+          NormalizeString(definition, request),
+
+        CustomFieldDataType.Integer =>
+          NormalizeInteger(definition, request),
+
+        CustomFieldDataType.Decimal =>
+          NormalizeDecimal(definition, request),
+
+        CustomFieldDataType.Boolean =>
+          NormalizeBoolean(definition, request),
+
+        CustomFieldDataType.DateTime =>
+          NormalizeDateTime(definition, request),
+
+        CustomFieldDataType.Option =>
+          NormalizeOptionValue(definition, value),
+
+        _ => throw new ArgumentOutOfRangeException(
+          nameof(definition),
+          $"Custom field data type '{definition.DataType}' is not supported")
+      };
+    }
+
+
     #endregion
   }
 }

@@ -17,7 +17,9 @@ namespace Yoma.Core.Infrastructure.Database.Core.Extensions
       var key = filter.Key.Trim();
 
       var baseQuery = query
-        .Where(o => o.CustomFieldDefinition.IsActive && o.CustomFieldDefinition.Key == key);
+        .Where(o => o.CustomFieldDefinition.IsActive
+        && o.CustomFieldDefinition.EntityType == entityType.ToString()
+        && o.CustomFieldDefinition.Key == key);
 
       baseQuery = entityType switch
       {
@@ -58,7 +60,7 @@ namespace Yoma.Core.Infrastructure.Database.Core.Extensions
       var value = filter.Value.Trim();
 
       return SelectEntityIds(
-        query.Where(o => o.Value != null && EF.Functions.ILike(o.Value, $"%{value}%")),
+        query.Where(o => EF.Functions.ILike(o.Value, $"%{value}%")),
         entityType);
     }
 
@@ -108,7 +110,7 @@ namespace Yoma.Core.Infrastructure.Database.Core.Extensions
 
       var token = ToOptionToken(value);
 
-      return query.Where(o => o.Value == value || (o.Value != null && o.Value.Contains(token)));
+      return query.Where(o => o.Value == value || o.Value.Contains(token));
     }
 
     private static IQueryable<Guid> SelectEntityIds(IQueryable<CustomFieldValueEntity> query, CustomFieldEntityType entityType)

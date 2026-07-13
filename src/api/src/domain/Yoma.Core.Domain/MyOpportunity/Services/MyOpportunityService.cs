@@ -511,6 +511,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         UserId = user.Id,
         Action = filter.Action,
         VerificationStatuses = filter.VerificationStatuses,
+        CustomFields = filter.CustomFields,
         TotalCountOnly = filter.TotalCountOnly,
         PageNumber = filter.PageNumber,
         PageSize = filter.PageSize,
@@ -587,6 +588,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
       _myOpportunitySearchFilterAdminValidator.ValidateAndThrow(filter);
 
+      _customFieldValueService.ValidateAndHydrateFilters(CustomFieldEntityType.MyOpportunity, filter.CustomFields);
+
       var actionId = _myOpportunityActionService.GetByName(filter.Action.ToString()).Id;
       var opportunityStatusActiveId = _opportunityStatusService.GetByName(Status.Active.ToString()).Id;
       var opportunityStatusExpiredId = _opportunityStatusService.GetByName(Status.Expired.ToString()).Id;
@@ -635,6 +638,9 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
         query = query.Where(predicate);
       }
+
+      //custom fields
+      query = _myOpportunityRepository.WhereCustomFields(query, filter.CustomFields);
 
       var orderInstructions = new List<FilterOrdering<Models.MyOpportunity>>();
       switch (filter.Action)

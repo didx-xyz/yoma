@@ -1,4 +1,5 @@
 using FluentValidation;
+using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Core.Validators;
 using Yoma.Core.Domain.Opportunity.Models;
 
@@ -51,6 +52,27 @@ namespace Yoma.Core.Domain.Opportunity.Validators
       RuleFor(x => x.OrderInstructions)
           .NotNull().WithMessage("{PropertyName} is required")
           .Must(x => x != null && x.Count > 0).WithMessage("{PropertyName} must contain at least one item.");
+
+      RuleFor(x => x.CustomFields)
+        .Must(HaveUniqueCustomFieldKeys)
+        .WithMessage("{PropertyName} contains duplicate field keys.");
+
+      RuleForEach(x => x.CustomFields)
+        .SetValidator(new CustomFieldFilterValidator());
+    }
+    #endregion
+
+    #region Private Members
+    private static bool HaveUniqueCustomFieldKeys(List<CustomFieldFilter>? fields)
+    {
+      if (fields == null || fields.Count == 0) return true;
+
+      var keys = fields
+        .Where(o => !string.IsNullOrWhiteSpace(o.Key))
+        .Select(o => o.Key.Trim())
+        .ToList();
+
+      return keys.Distinct(StringComparer.OrdinalIgnoreCase).Count() == keys.Count;
     }
     #endregion
   }

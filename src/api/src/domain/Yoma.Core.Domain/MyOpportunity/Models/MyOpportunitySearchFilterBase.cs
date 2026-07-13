@@ -11,6 +11,11 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
 
     public List<VerificationStatus>? VerificationStatuses { get; set; }
 
+    /// <summary>
+    /// Filters MyOpportunity records using configured custom field values.
+    /// </summary>
+    public List<CustomFieldFilter>? CustomFields { get; set; }
+
     [JsonIgnore]
     internal bool TotalCountOnly { get; set; }
 
@@ -43,12 +48,30 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
       SanitizeCollections();
 
       VerificationStatuses = VerificationStatuses?.OrderBy(o => o).ToList();
+
+      if (CustomFields == null) return;
+
+      foreach (var customField in CustomFields)
+      {
+        customField.Values = customField.Values?
+          .OrderBy(o => o, StringComparer.OrdinalIgnoreCase)
+          .ToList();
+      }
+
+      CustomFields = [.. CustomFields
+        .OrderBy(o => o.Key, StringComparer.OrdinalIgnoreCase)
+        .ThenBy(o => o.Operator)
+        .ThenBy(o => o.Value, StringComparer.Ordinal)
+        .ThenBy(o => string.Join(CustomFieldValue.Value_Delimiter, o.Values ?? []), StringComparer.Ordinal)];
     }
 
     public virtual void SanitizeCollections()
     {
       VerificationStatuses = VerificationStatuses?.Distinct().ToList();
       if (VerificationStatuses?.Count == 0) VerificationStatuses = null;
+
+      // Preserve duplicate keys so validation can reject the ambiguous filters instead of silently discarding values.
+      if (CustomFields?.Count == 0) CustomFields = null;
     }
   }
 }

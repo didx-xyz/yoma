@@ -29,6 +29,11 @@ namespace Yoma.Core.Domain.Opportunity.Models
     public string? ValueContains { get; set; }
 
     /// <summary>
+    /// Filters opportunities using configured custom field values.
+    /// </summary>
+    public List<CustomFieldFilter>? CustomFields { get; set; }
+
+    /// <summary>
     /// Optionally filters opportunities by their published state. By default, results include opportunities that are published (both the opportunity and its organization are Active), 
     /// regardless of whether they have started (thus published states NotStarted and Active). This default behavior can be overridden
     /// </summary>
@@ -79,6 +84,20 @@ namespace Yoma.Core.Domain.Opportunity.Models
       Countries = Countries?.OrderBy(o => o).ToList();
       Organizations = Organizations?.OrderBy(o => o).ToList();
       EngagementTypes = EngagementTypes?.OrderBy(o => o).ToList();
+
+      if (CustomFields == null) return;
+      foreach (var customField in CustomFields)
+      {
+        customField.Values = customField.Values?
+          .OrderBy(o => o, StringComparer.OrdinalIgnoreCase)
+          .ToList();
+      }
+
+      CustomFields = [.. CustomFields
+        .OrderBy(o => o.Key, StringComparer.OrdinalIgnoreCase)
+        .ThenBy(o => o.Operator)
+        .ThenBy(o => o.Value, StringComparer.Ordinal)
+        .ThenBy(o => string.Join(CustomFieldValue.Value_Delimiter, o.Values ?? []), StringComparer.Ordinal)];
     }
 
     public virtual void SanitizeCollections()
@@ -100,6 +119,9 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
       EngagementTypes = EngagementTypes?.Distinct().ToList();
       if (EngagementTypes?.Count == 0) EngagementTypes = null;
+
+      // Preserve duplicate keys so validation can reject the ambiguous filters instead of silently discarding values.
+      if (CustomFields?.Count == 0) CustomFields = null;
     }
   }
 }

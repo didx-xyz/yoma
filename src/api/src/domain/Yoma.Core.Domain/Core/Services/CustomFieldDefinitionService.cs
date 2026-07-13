@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
+using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
@@ -27,6 +28,26 @@ namespace Yoma.Core.Domain.Core.Services
     #endregion
 
     #region Public Members
+    public CustomFieldDefinition GetByKey(CustomFieldEntityType entityType, string key, bool includeChildItems, bool activeOnly)
+    {
+      var myKey = key?.Trim();
+      if (string.IsNullOrEmpty(myKey))
+        throw new ArgumentNullException(nameof(key));
+
+      var query = ListCached()
+        .Where(o =>
+          o.EntityType == entityType.ToString() &&
+          string.Equals(o.Key, myKey, StringComparison.OrdinalIgnoreCase));
+
+      if (activeOnly)
+        query = query.Where(o => o.IsActive);
+
+      var result = query.SingleOrDefault()
+        ?? throw new EntityNotFoundException($"Active custom field definition with key '{myKey}' for entity type '{entityType}' does not exist");
+
+      return ToResult(result, includeChildItems, activeOnly);
+    }
+
     public List<CustomFieldDefinition> List(CustomFieldEntityType entityType, string? entityContext, bool includeChildItems, bool activeOnly)
     {
       var query = ListCached()

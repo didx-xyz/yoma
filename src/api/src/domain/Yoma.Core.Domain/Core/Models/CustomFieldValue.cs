@@ -15,7 +15,7 @@ namespace Yoma.Core.Domain.Core.Models
     /// <summary>
     /// Canonical text value for the field data type. Option fields store the option key.
     /// </summary>
-    public string? Value { get; set; }
+    public string Value { get; set; } = null!;
 
     /// <summary>
     /// Helper for multi-select option values. Values are stored in <see cref="Value"/> as pipe-delimited option keys
@@ -29,7 +29,7 @@ namespace Yoma.Core.Domain.Core.Models
         : [.. Value.Split(Value_Delimiter, StringSplitOptions.RemoveEmptyEntries).Select(o => o.Trim())];
 
       set => Value = value == null || value.Count == 0
-        ? null
+        ? null!
         : $"{Value_Delimiter}{string.Join(Value_Delimiter, value.Select(o => o.Trim()).Distinct())}{Value_Delimiter}";
     }
 

@@ -80,7 +80,7 @@ namespace Yoma.Core.Infrastructure.Database.Marketplace.Repositories
             Status = Enum.Parse<Status>(o.Opportunity.Status.Name, true),
             Hidden = o.Opportunity.Hidden,
             DateStart = o.Opportunity.DateStart,
-            Type = Enum.Parse<Domain.Opportunity.Type>(o.Opportunity.Type.Name, true) ,
+            Type = Enum.Parse<Domain.Opportunity.Type>(o.Opportunity.Type.Name, true),
             ZltoReward = o.Opportunity.ZltoReward,
             ZltoRewardPool = o.Opportunity.ZltoRewardPool,
             ZltoRewardCumulative = o.Opportunity.ZltoRewardCumulative,

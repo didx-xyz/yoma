@@ -7,9 +7,6 @@ namespace Yoma.Core.Infrastructure.Database.Core.Entities
   [Table("CustomFieldValue", Schema = "Core")]
   [Index(nameof(CustomFieldDefinitionId), nameof(OpportunityId))]
   [Index(nameof(CustomFieldDefinitionId), nameof(MyOpportunityId))]
-  [Index(nameof(CustomFieldDefinitionId), nameof(Value))]
-  [Index(nameof(OpportunityId))]
-  [Index(nameof(MyOpportunityId))]
   public sealed class CustomFieldValue : Shared.Entities.BaseEntity<Guid>
   {
     [Required]
@@ -19,8 +16,9 @@ namespace Yoma.Core.Infrastructure.Database.Core.Entities
 
     public Guid? MyOpportunityId { get; set; }
 
+    [Required]
     [Column(TypeName = "text")]
-    public string? Value { get; set; }
+    public string Value { get; set; } = null!;
 
     [Required]
     public DateTimeOffset DateCreated { get; set; }

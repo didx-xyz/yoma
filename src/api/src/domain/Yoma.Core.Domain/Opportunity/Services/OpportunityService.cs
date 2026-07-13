@@ -752,6 +752,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       _opportunitySearchFilterValidator.ValidateAndThrow(filter);
 
+      _customFieldValueService.ValidateAndHydrateFilters(CustomFieldEntityType.Opportunity, filter.CustomFields);
+
       var query = _opportunityRepository.Query(true);
 
       //date range
@@ -976,6 +978,9 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
         query = query.Where(predicate);
       }
+
+      //custom fields
+      query = _opportunityRepository.WhereCustomFields(query, filter.CustomFields);
 
       var result = new OpportunitySearchResults();
 

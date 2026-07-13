@@ -268,11 +268,7 @@ namespace Yoma.Core.Infrastructure.Database.Context
       {
         entity.HasIndex(e => new { e.EntityType, e.Key })
           .IsUnique()
-          .HasFilter($"\"{nameof(Core.Entities.CustomFieldDefinition.EntityContext)}\" IS NULL");
-
-        entity.HasIndex(e => new { e.EntityType, e.EntityContext, e.Key })
-          .IsUnique()
-          .HasFilter($"\"{nameof(Core.Entities.CustomFieldDefinition.EntityContext)}\" IS NOT NULL");
+          .HasDatabaseName("UX_CustomFieldDefinition_EntityType_Key");
       });
 
       builder.Entity<CustomFieldOption>(entity =>
