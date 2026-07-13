@@ -275,6 +275,7 @@ roles:
     iiasa: []
     maza-app: []
     unicef-kenya: []
+    p2e-global: []
     admin-cli: []
     yoma-api: []
     account:
@@ -1088,6 +1089,48 @@ clients:
     optionalClientScopes:
       - address
       - phone
+      - microprofile-jwt
+  - id: 0c2180cf-5b44-4683-83bb-4f9b5b60f67f
+    clientId: p2e-global
+    name: p2e-global
+    description: Passport to Earning (P2E) SSO Partner (private client)
+    surrogateAuthRequired: false
+    enabled: $(env:CLIENT_P2E_GLOBAL_ENABLED)
+    alwaysDisplayInConsole: false
+    clientAuthenticatorType: client-secret
+    secret: $(env:CLIENT_P2E_GLOBAL_SECRET)
+    redirectUris:
+      - $(env:CLIENT_P2E_GLOBAL_URL_REDIRECT)
+    webOrigins: []
+    notBefore: 0
+    bearerOnly: false
+    consentRequired: false
+    standardFlowEnabled: true
+    implicitFlowEnabled: false
+    directAccessGrantsEnabled: false
+    serviceAccountsEnabled: false
+    publicClient: false
+    frontchannelLogout: true
+    protocol: openid-connect
+    attributes:
+      oidc.ciba.grant.enabled: "false"
+      oauth2.device.authorization.grant.enabled: "false"
+      backchannel.logout.session.required: "true"
+      backchannel.logout.revoke.offline.tokens: "false"
+      use.refresh.tokens: "true"
+    authenticationFlowBindingOverrides: {}
+    fullScopeAllowed: false
+    nodeReRegistrationTimeout: -1
+    defaultClientScopes:
+      - web-origins
+      - acr
+      - profile
+      - roles
+      - email
+    optionalClientScopes:
+      - address
+      - phone
+      - offline_access
       - microprofile-jwt
   - id: f2a624c1-c416-4cc9-9bed-73801eb56eb8
     clientId: yoma-api

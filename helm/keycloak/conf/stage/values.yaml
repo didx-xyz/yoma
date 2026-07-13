@@ -102,6 +102,7 @@ config-cli:
     CLIENT_IXO_WEBOS_URL_REDIRECT: https://auth.workos.com/sso/oidc/n3WhYIVxmfOSY4sQ2Unz7w3ee/callback
     CLIENT_MINI_SASS_URL: https://minisass.sta.do.kartoza.com
     CLIENT_MINI_SASS_URL_REDIRECT: https://minisass.sta.do.kartoza.com/authentication/api/yoma/callback
+    CLIENT_P2E_GLOBAL_URL_REDIRECT: https://learningpassport.b2clogin.com/learningpassport.onmicrosoft.com/oauth2/authresp
     GOOGLE_CLIENT_ID: 1088325631106-bujeaidsr9a94fqq92qkpcnn1aa73phv.apps.googleusercontent.com
     FACEBOOK_CLIENT_ID: "1062131229443108"
 
