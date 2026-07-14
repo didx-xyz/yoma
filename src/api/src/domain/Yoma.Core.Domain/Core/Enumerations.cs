@@ -247,17 +247,31 @@ namespace Yoma.Core.Domain.Core
   {
     /// <summary>
     /// Do not validate or modify custom-field values.
+    /// Used by flows that do not support custom fields.
     /// </summary>
     None,
 
     /// <summary>
-    /// Process custom fields and require all required definitions to be supplied.
+    /// Apply PUT-style replacement semantics: treat the supplied collection as the complete authoritative custom-field state.
+    /// - Required fields must be supplied.
+    /// - Supplied fields and values are validated and persisted.
+    /// - Existing values for omitted fields are permanently deleted.
+    /// - Each supplied field must have a specified value. Key-only items are not allowed.
+    ///
+    /// Used by standard API create and update flows, matching the PUT replacement semantics
+    /// generally applied to other domain model properties and collections.
     /// </summary>
-    ProcessEnforceRequired,
+    PutEnforceRequired,
 
     /// <summary>
-    /// Process and validate supplied custom fields while allowing required definitions to be omitted.
+    /// Apply PATCH-style semantics: treat the supplied collection as a partial custom-field update.
+    /// - Required fields may be omitted.
+    /// - Supplied fields and values are validated and persisted.
+    /// - Existing values for omitted fields are preserved.
+    /// - A key-only field causes its existing value to be permanently deleted.
+    ///
+    /// Used by trusted partner synchronization and CSV import flows.
     /// </summary>
-    ProcessAllowMissingRequired
+    PatchAllowMissingRequired
   }
 }

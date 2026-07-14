@@ -1,5 +1,6 @@
 using CsvHelper.Configuration.Attributes;
 using Newtonsoft.Json;
+using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Lookups.Models;
 using Yoma.Core.Domain.PartnerSync.Models;
@@ -51,8 +52,8 @@ namespace Yoma.Core.Domain.Opportunity.Models
     public decimal? YomaRewardCumulative { get; set; }
 
     [Name("Verification Enabled")]
-    [BooleanFalseValues("No")]
-    [BooleanTrueValues("Yes")]
+    [BooleanFalseValues(CSVImportHelper.Boolean_Value_False)]
+    [BooleanTrueValues(CSVImportHelper.Boolean_Value_True)]
     public bool VerificationEnabled { get; set; }
 
     [Name("Verification Method")]
@@ -87,8 +88,8 @@ namespace Yoma.Core.Domain.Opportunity.Models
     public int ParticipantCountTotal { get; set; }
 
     [Name("Participant Limit Reached")]
-    [BooleanFalseValues("No")]
-    [BooleanTrueValues("Yes")]
+    [BooleanFalseValues(CSVImportHelper.Boolean_Value_False)]
+    [BooleanTrueValues(CSVImportHelper.Boolean_Value_True)]
     public bool ParticipantLimitReached { get; set; }
     #endregion Verification Limits and Counts
 
@@ -117,27 +118,27 @@ namespace Yoma.Core.Domain.Opportunity.Models
     [Name("End Date")]
     public DateTimeOffset? DateEnd { get; set; }
 
-    [BooleanFalseValues("No")]
-    [BooleanTrueValues("Yes")]
+    [BooleanFalseValues(CSVImportHelper.Boolean_Value_False)]
+    [BooleanTrueValues(CSVImportHelper.Boolean_Value_True)]
     public bool Featured { get; set; }
 
     [Name("Engagement Type")]
     public Core.EngagementTypeOption? EngagementType { get; set; }
 
-    [BooleanFalseValues("No")]
-    [BooleanTrueValues("Yes")]
+    [BooleanFalseValues(CSVImportHelper.Boolean_Value_False)]
+    [BooleanTrueValues(CSVImportHelper.Boolean_Value_True)]
     public bool ShareWithPartners { get; set; }
 
-    [BooleanFalseValues("No")]
-    [BooleanTrueValues("Yes")]
+    [BooleanFalseValues(CSVImportHelper.Boolean_Value_False)]
+    [BooleanTrueValues(CSVImportHelper.Boolean_Value_True)]
     public bool Hidden { get; set; }
 
     [JsonIgnore]
     [Name("External Reference / ID")]
     public string? ExternalId { get; set; }
 
-    [BooleanFalseValues("No")]
-    [BooleanTrueValues("Yes")]
+    [BooleanFalseValues(CSVImportHelper.Boolean_Value_False)]
+    [BooleanTrueValues(CSVImportHelper.Boolean_Value_True)]
     public bool Published { get; set; }
 
     [Ignore]
@@ -154,8 +155,8 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
     [JsonIgnore]
     [Name("Externally Managed (Locked)")]
-    [BooleanFalseValues("No")]
-    [BooleanTrueValues("Yes")]
+    [BooleanFalseValues(CSVImportHelper.Boolean_Value_False)]
+    [BooleanTrueValues(CSVImportHelper.Boolean_Value_True)]
     public bool SyncedLocked => SyncedInfo?.Locked == true;
 
     [JsonIgnore]

@@ -47,7 +47,9 @@ namespace Yoma.Core.Infrastructure.Alison
 
       // services
       services.AddSingleton<IAlisonAuthService, AlisonAuthService>();
-      services.AddScoped<IExecutionStrategyService, ExecutionStrategyService>();
+      // Register concretely so this provider cannot override the application database
+      // IExecutionStrategyService registration.
+      services.AddScoped<ExecutionStrategyService>();
       services.AddScoped<IOpportunityCatalogueBackgroundService, OpportunityCatalogueBackgroundService>();
 
       // clients

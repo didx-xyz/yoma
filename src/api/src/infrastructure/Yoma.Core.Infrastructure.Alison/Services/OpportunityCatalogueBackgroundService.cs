@@ -23,7 +23,7 @@ namespace Yoma.Core.Infrastructure.Alison.Services
     private readonly ScheduleJobOptions _scheduleJobOptions;
     private readonly IRepositoryBatched<Opportunity> _opportunityRepository;
     private readonly IDistributedLockService _distributedLockService;
-    private readonly IExecutionStrategyService _executionStrategyService;
+    private readonly ExecutionStrategyService _executionStrategyService;
     private readonly IAlisonAuthService _alisonAuthService;
     #endregion
 
@@ -36,7 +36,7 @@ namespace Yoma.Core.Infrastructure.Alison.Services
       IOptions<ScheduleJobOptions> scheduleJobOptions,
       IRepositoryBatched<Opportunity> opportunityRepository,
       IDistributedLockService distributedLockService,
-      IExecutionStrategyService executionStrategyService,
+      ExecutionStrategyService executionStrategyService,
       IAlisonAuthService alisonAuthService)
     {
       _logger = logger ?? throw new ArgumentNullException(nameof(logger));

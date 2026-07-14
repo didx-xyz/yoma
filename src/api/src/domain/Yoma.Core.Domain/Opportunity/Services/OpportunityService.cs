@@ -1029,7 +1029,13 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       // Validate header before reading data rows
       // Stop if errors — prevents invalid column-to-property mapping
-      CSVImportHelper.ValidateHeader<OpportunityInfoCsvImport>(csv, errors);
+      var customFieldHeaders = CSVImportHelper.ValidateHeader<OpportunityInfoCsvImport>(csv, errors, true);
+      if (CSVImportHelper.ContainsHeaderErrors(errors)) return CSVImportHelper.GetResults(errors);
+      var customFieldColumns = CSVImportHelper.ResolveCustomFieldHeaders(
+        CustomFieldEntityType.Opportunity,
+        customFieldHeaders,
+        _customFieldDefinitionService,
+        errors);
       if (CSVImportHelper.ContainsHeaderErrors(errors)) return CSVImportHelper.GetResults(errors);
 
       // PASS A — probe: parse + invoke domain logic per row in its own scope, but never Complete().
@@ -1059,6 +1065,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
           }
 
           dto = csv.GetRecord<OpportunityInfoCsvImport>();
+          dto.CustomFieldValues = CSVImportHelper.ReadCustomFieldValues(csv, customFieldColumns);
           dto.Validate(errors, rowNumber);
 
           if (!string.IsNullOrEmpty(dto.Title) && probedTitles.Contains(dto.Title))
@@ -1085,8 +1092,9 @@ namespace Yoma.Core.Domain.Opportunity.Services
             await ProcessImportAndUpsertOpportunity(organizationId, dto, true); //probe only; notifications not send
             probedTitles.Add(dto.Title); //required; validated during processing
             probedExternalIds.Add(dto.ExternalId); //required; validated during processing
-            //probe only, do not commit the scope; disposed as aborted
-          });
+            // Probe only: do not commit the scope. Clear EF tracking after rollback so
+            // accepted in-memory state cannot leak into the commit pass.
+          }, true);
         }
         catch (Exception ex)
         {
@@ -1131,6 +1139,9 @@ namespace Yoma.Core.Domain.Opportunity.Services
     {
       ArgumentNullException.ThrowIfNull(request, nameof(request));
       ArgumentNullException.ThrowIfNull(options, nameof(options));
+
+      if (options.CustomFieldUpsertMode == CustomFieldUpsertMode.PatchAllowMissingRequired)
+        request.CustomFields.NormalizeForPatch();
 
       request.URL = request.URL?.EnsureHttpsScheme();
 
@@ -1276,7 +1287,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
             result.Id,
             null,
             request.CustomFields,
-            options.CustomFieldUpsertMode.EnforceRequired());
+            options.CustomFieldUpsertMode);
 
         scope.Complete();
       });
@@ -1297,6 +1308,9 @@ namespace Yoma.Core.Domain.Opportunity.Services
     {
       ArgumentNullException.ThrowIfNull(request, nameof(request));
       ArgumentNullException.ThrowIfNull(options, nameof(options));
+
+      if (options.CustomFieldUpsertMode == CustomFieldUpsertMode.PatchAllowMissingRequired)
+        request.CustomFields.NormalizeForPatch();
 
       request.URL = request.URL?.EnsureHttpsScheme();
 
@@ -1460,7 +1474,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
             result.Id,
             null,
             request.CustomFields,
-            options.CustomFieldUpsertMode.EnforceRequired());
+            options.CustomFieldUpsertMode);
 
         scope.Complete();
       });
@@ -2017,6 +2031,10 @@ namespace Yoma.Core.Domain.Opportunity.Services
       item.ExternalId = item.ExternalId.Trim();
 
       var type = _opportunityTypeService.GetByName(item.Type);
+      var customFields = _customFieldValueService.ParseCSVValues(
+        CustomFieldEntityType.Opportunity,
+        type.Name,
+        item.CustomFieldValues);
 
       var engagementType = string.IsNullOrWhiteSpace(item.Engagement) ? null : _engagementTypeService.GetByName(item.Engagement);
 
@@ -2104,20 +2122,25 @@ namespace Yoma.Core.Domain.Opportunity.Services
       //Instructions
       //ShareWithPartners
 
-      // TODO: Support custom field values for CSV-imported opportunities when import column mapping is defined.
+      request.CustomFields = customFields;
+
+      // CSV imports are PATCH operations: omitted CF columns preserve existing values,
+      // blank cells delete values, and populated cells are validated and upserted.
       // Events raised by invoking method upon transaction completion
       var result = isNew
         ? await Create((OpportunityRequestCreate)request, new OpportunityUpsertOptions
         {
           EnsureOrganizationAuthorization = false,
           RaiseEvents = false,
-          SendNotifications = !probeOnly
+          SendNotifications = !probeOnly,
+          CustomFieldUpsertMode = CustomFieldUpsertMode.PatchAllowMissingRequired
         })
         : await Update((OpportunityRequestUpdate)request, new OpportunityUpsertOptions
         {
           EnsureOrganizationAuthorization = false,
           RaiseEvents = false,
-          SendNotifications = false
+          SendNotifications = false,
+          CustomFieldUpsertMode = CustomFieldUpsertMode.PatchAllowMissingRequired
         });
 
       return (result, isNew ? EventType.Create : EventType.Update);

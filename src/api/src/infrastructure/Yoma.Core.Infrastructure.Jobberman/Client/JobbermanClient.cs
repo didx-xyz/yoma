@@ -142,7 +142,8 @@ namespace Yoma.Core.Infrastructure.Jobberman.Client
         Countries = [country.Id],
         Languages = [language.Id],
 
-        // Populate Jobberman opportunity custom fields here when required.
+        // Populate when available. Partner sync uses PatchAllowMissingRequired:
+        // omitted fields are preserved and key-only fields delete existing values.
         CustomFields = null
 
         // ExternalId: Opportunity.ExternalId is used by CSV imports; pull synchronization must set the external identifier on the SyncItem.

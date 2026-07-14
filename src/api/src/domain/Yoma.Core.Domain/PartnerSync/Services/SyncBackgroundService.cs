@@ -640,7 +640,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
                         SendNotifications = false,
                         SyncTypeActionedBy = SyncType.Pull,
                         SyncExternalId = item.ExternalId,
-                        CustomFieldUpsertMode = CustomFieldUpsertMode.ProcessAllowMissingRequired
+                        CustomFieldUpsertMode = CustomFieldUpsertMode.PatchAllowMissingRequired
                       });
                       entityId = opportunity.Id;
 
@@ -687,7 +687,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
                         SendNotifications = false,
                         SyncTypeActionedBy = SyncType.Pull,
                         SyncExternalId = item.ExternalId,
-                        CustomFieldUpsertMode = CustomFieldUpsertMode.ProcessAllowMissingRequired
+                        CustomFieldUpsertMode = CustomFieldUpsertMode.PatchAllowMissingRequired
                       });
                       break;
                     }

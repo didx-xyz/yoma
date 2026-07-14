@@ -1,3 +1,5 @@
+using Newtonsoft.Json;
+
 namespace Yoma.Core.Domain.Core.Models
 {
   public sealed class CustomFieldValueRequest
@@ -14,5 +16,11 @@ namespace Yoma.Core.Domain.Core.Models
     /// multi-select options require one or more items. Must be null for non-option fields.
     /// </summary>
     public List<string>? Values { get; set; }
+
+    /// <summary>
+    /// Internal patch marker indicating that the existing value must be permanently deleted.
+    /// </summary>
+    [JsonIgnore]
+    internal bool Delete { get; set; }
   }
 }

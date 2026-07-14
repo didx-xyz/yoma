@@ -10,8 +10,8 @@ namespace Yoma.Core.Domain.Core.Extensions
       return mode switch
       {
         CustomFieldUpsertMode.None => false,
-        CustomFieldUpsertMode.ProcessEnforceRequired => true,
-        CustomFieldUpsertMode.ProcessAllowMissingRequired => true,
+        CustomFieldUpsertMode.PutEnforceRequired => true,
+        CustomFieldUpsertMode.PatchAllowMissingRequired => true,
         _ => throw new InvalidOperationException($"Custom field upsert mode '{mode}' is not supported")
       };
     }
@@ -21,10 +21,53 @@ namespace Yoma.Core.Domain.Core.Extensions
       return mode switch
       {
         CustomFieldUpsertMode.None => false,
-        CustomFieldUpsertMode.ProcessEnforceRequired => true,
-        CustomFieldUpsertMode.ProcessAllowMissingRequired => false,
+        CustomFieldUpsertMode.PutEnforceRequired => true,
+        CustomFieldUpsertMode.PatchAllowMissingRequired => false,
         _ => throw new InvalidOperationException($"Custom field upsert mode '{mode}' is not supported")
       };
+    }
+
+    public static bool DeleteOmitted(this CustomFieldUpsertMode mode)
+    {
+      return mode switch
+      {
+        CustomFieldUpsertMode.None => false,
+        CustomFieldUpsertMode.PutEnforceRequired => true,
+        CustomFieldUpsertMode.PatchAllowMissingRequired => false,
+        _ => throw new InvalidOperationException($"Custom field upsert mode '{mode}' is not supported")
+      };
+    }
+
+    public static bool DeleteNullOrEmptyValues(this CustomFieldUpsertMode mode)
+    {
+      return mode switch
+      {
+        CustomFieldUpsertMode.None => false,
+        CustomFieldUpsertMode.PutEnforceRequired => false,
+        CustomFieldUpsertMode.PatchAllowMissingRequired => true,
+        _ => throw new InvalidOperationException($"Custom field upsert mode '{mode}' is not supported")
+      };
+    }
+
+    public static void NormalizeForPatch(this List<CustomFieldValueRequest>? items)
+    {
+      if (items == null) return;
+
+      foreach (var item in items)
+      {
+        item.Key = item.Key?.Trim()!;
+
+        item.Value = item.Value?.Trim();
+        if (string.IsNullOrEmpty(item.Value)) item.Value = null;
+
+        if (item.Values != null)
+          item.Values = [.. item.Values.Select(o => o?.Trim()!)];
+
+        // In PATCH flows, supplying only a key means delete that field. Keep this as
+        // internal state so the public request contract remains key/value based.
+        item.Delete = string.IsNullOrEmpty(item.Value) &&
+          (item.Values == null || item.Values.Count == 0);
+      }
     }
 
     public static void NormalizeForHashing(this List<CustomFieldValueRequest>? items)

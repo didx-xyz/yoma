@@ -904,7 +904,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       {
         RequiredVerificationMethod = VerificationMethod.Manual,
         MutateBlobStorage = true,
-        CustomFieldUpsertMode = CustomFieldUpsertMode.ProcessEnforceRequired
+        CustomFieldUpsertMode = CustomFieldUpsertMode.PutEnforceRequired
       };
 
       await PerformActionSendForVerification(user, opportunityId, request, options);
@@ -1233,7 +1233,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             EnqueueOutcomes = true,
             MutateBlobStorage = true,
             PublishEvents = true,
-            CustomFieldUpsertMode = CustomFieldUpsertMode.ProcessAllowMissingRequired
+            CustomFieldUpsertMode = CustomFieldUpsertMode.PatchAllowMissingRequired
           };
 
           var requestVerify = new MyOpportunityRequestVerify
@@ -1291,7 +1291,13 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
       // Validate header before reading data rows
       // Stop if errors — prevents invalid column-to-property mapping
-      CSVImportHelper.ValidateHeader<MyOpportunityInfoCsvImport>(csv, errors);
+      var customFieldHeaders = CSVImportHelper.ValidateHeader<MyOpportunityInfoCsvImport>(csv, errors, true);
+      if (CSVImportHelper.ContainsHeaderErrors(errors)) return CSVImportHelper.GetResults(errors);
+      var customFieldColumns = CSVImportHelper.ResolveCustomFieldHeaders(
+        CustomFieldEntityType.MyOpportunity,
+        customFieldHeaders,
+        _customFieldDefinitionService,
+        errors);
       if (CSVImportHelper.ContainsHeaderErrors(errors)) return CSVImportHelper.GetResults(errors);
 
       // PASS A — probe: parse + invoke domain logic per row in its own scope, but never Complete().
@@ -1321,6 +1327,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
           }
 
           dto = csv.GetRecord<MyOpportunityInfoCsvImport>();
+          dto.CustomFieldValues = CSVImportHelper.ReadCustomFieldValues(csv, customFieldColumns);
           dto.PhoneNumber = dto.PhoneNumber?.NormalizePhoneNumber(true);
 
           dto.Validate(errors, rowNumber);
@@ -1341,8 +1348,9 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
             await ProcessImportVerification(request, dto, true); //probe only; notifications not send, events not raised and blobs no blobl storage mutation
             if (!string.IsNullOrEmpty(dto.VerificationEntry)) probedVerifications.Add(dto.VerificationEntry);
-            //probe only, do not commit the scope; disposed as aborted
-          });
+            // Probe only: do not commit the scope. Clear EF tracking after rollback so
+            // accepted in-memory state cannot leak into the commit pass.
+          }, true);
         }
         catch (Exception ex)
         {
@@ -1580,6 +1588,10 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         throw new ValidationException("Opportunity external id required");
 
       var opportunity = _opportunityService.GetByExternalId(requestImport.OrganizationId, item.OpportunityExternalId, true, true);
+      var customFields = _customFieldValueService.ParseCSVValues(
+        CustomFieldEntityType.MyOpportunity,
+        opportunity.Type.ToString(),
+        item.CustomFieldValues);
 
       var user = _userService.GetByUsernameOrNull(item.Username, false, false);
 
@@ -1617,12 +1629,17 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         EnqueueOutcomes = true,
         MutateBlobStorage = !probeOnly,
         SendNotification = !probeOnly,
-        PublishEvents = !probeOnly
+        PublishEvents = !probeOnly,
+        CustomFieldUpsertMode = CustomFieldUpsertMode.PatchAllowMissingRequired
       };
 
-      // TODO: Support custom field values for CSV-imported completions when import column mapping is defined.
+      // CSV imports are PATCH operations: omitted CF columns preserve existing values,
+      // blank cells delete values, and populated cells are validated and upserted.
       // Verification method must be automatic; imported verifications are auto-finalized, so pending notifications are not sent.
-      await PerformActionSendForVerification(user, opportunity.Id, new MyOpportunityRequestVerify(), options);
+      await PerformActionSendForVerification(user, opportunity.Id, new MyOpportunityRequestVerify
+      {
+        CustomFields = customFields
+      }, options);
 
       await FinalizeVerification(user, opportunity, VerificationStatus.Completed, options);
     }
@@ -1970,6 +1987,9 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       ArgumentNullException.ThrowIfNull(request, nameof(request));
       ArgumentNullException.ThrowIfNull(options, nameof(options));
 
+      if (options.CustomFieldUpsertMode == CustomFieldUpsertMode.PatchAllowMissingRequired)
+        request.CustomFields.NormalizeForPatch();
+
       var opportunity = _opportunityService.GetById(opportunityId, true, true, false);
 
       PerformActionSendForVerificationApplyDefaults(request, opportunity, options);
@@ -2059,7 +2079,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       // its custom field values can be inserted. Upsert validates and normalizes again
       // intentionally so it remains safe as a standalone operation.
       if (options.CustomFieldUpsertMode.Process())
-        _customFieldValueService.Validate(CustomFieldEntityType.MyOpportunity, opportunity.Type.ToString(), request.CustomFields, options.CustomFieldUpsertMode.EnforceRequired());
+        _customFieldValueService.Validate(CustomFieldEntityType.MyOpportunity, opportunity.Type.ToString(), request.CustomFields, options.CustomFieldUpsertMode);
 
       myOpportunity = await PerformActionSendForVerificationProcessVerificationTypes(request, opportunity, myOpportunity, options, isNew);
 
@@ -2071,7 +2091,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
           null,
           myOpportunity.Id,
           request.CustomFields,
-          options.CustomFieldUpsertMode.EnforceRequired());
+          options.CustomFieldUpsertMode);
 
       //used by notifications
       myOpportunity.Username = user.Username;

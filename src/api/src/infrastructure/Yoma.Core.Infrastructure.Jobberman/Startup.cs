@@ -47,7 +47,9 @@ namespace Yoma.Core.Infrastructure.Jobberman
       services.AddScoped<IRepository<FeedSyncTracking>, FeedSyncTrackingRepository>();
 
       // services
-      services.AddScoped<IExecutionStrategyService, ExecutionStrategyService>();
+      // Register concretely so this provider cannot override the application database
+      // IExecutionStrategyService registration.
+      services.AddScoped<ExecutionStrategyService>();
       services.AddScoped<IOpportunityFeedBackgroundService, OpportunityFeedBackgroundService>();
 
       // client

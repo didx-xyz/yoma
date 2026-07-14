@@ -1,5 +1,6 @@
 using CsvHelper.Configuration.Attributes;
 using Newtonsoft.Json;
+using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Lookups.Models;
 using Yoma.Core.Domain.PartnerSync.Models;
@@ -136,8 +137,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
 
     [JsonIgnore]
     [Name("Externally Managed (Locked)")]
-    [BooleanFalseValues("No")]
-    [BooleanTrueValues("Yes")]
+    [BooleanFalseValues(CSVImportHelper.Boolean_Value_False)]
+    [BooleanTrueValues(CSVImportHelper.Boolean_Value_True)]
     public bool SyncedLocked => SyncedInfo?.Locked == true;
 
     [JsonIgnore]

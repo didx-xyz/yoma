@@ -132,6 +132,13 @@ namespace Yoma.Core.Domain.MyOpportunity.Validators
       var hasValue = !string.IsNullOrWhiteSpace(customField.Value);
       var hasValues = customField.Values != null;
 
+      // PATCH normalizes a key-only item into an explicit deletion. It is valid only
+      // when neither scalar nor option values were supplied with the deletion request.
+      if (customField.Delete)
+        return !hasValue && (!hasValues || customField.Values!.Count == 0);
+
+      // A normal item must use exactly one value representation: Value for scalar
+      // fields or a non-empty Values collection for option fields.
       return hasValue != hasValues && (!hasValues || customField.Values!.Count != 0);
     }
     #endregion

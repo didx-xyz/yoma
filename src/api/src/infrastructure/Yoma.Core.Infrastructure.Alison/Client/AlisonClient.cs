@@ -532,7 +532,8 @@ namespace Yoma.Core.Infrastructure.Alison.Client
           Countries = countries.Select(o => o.Id).ToList(),
           Languages = languages.Select(o => o.Id).ToList(),
 
-          // Populate Alison opportunity custom fields here when required.
+          // Populate when available. Partner sync uses PatchAllowMissingRequired:
+          // omitted fields are preserved and key-only fields delete existing values.
           CustomFields = null
         }
       };
@@ -1107,7 +1108,8 @@ namespace Yoma.Core.Infrastructure.Alison.Client
         PercentComplete = percentComplete,
         DateCompleted = status == SyncItemVerificationStatus.Completed ? item.CompletedAt ?? dateEnd : null,
 
-        // Populate Alison completion custom fields here when required.
+        // Populate when available. Partner sync uses PatchAllowMissingRequired:
+        // omitted fields are preserved and key-only fields delete existing values.
         CustomFields = null
       };
     }

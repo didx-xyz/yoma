@@ -2,6 +2,7 @@ using FluentValidation;
 using System.Globalization;
 using System.Text.RegularExpressions;
 using System.Transactions;
+using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
@@ -38,9 +39,66 @@ namespace Yoma.Core.Domain.Core.Services
     #endregion
 
     #region Public Members
-    public void Validate(CustomFieldEntityType entityType, string? entityContext, List<CustomFieldValueRequest>? customFields, bool enforceRequired = true)
+    public void Validate(CustomFieldEntityType entityType, string? entityContext, List<CustomFieldValueRequest>? customFields, CustomFieldUpsertMode mode)
     {
-      ValidateAndNormalize(entityType, entityContext, customFields, enforceRequired);
+      ValidateUpsertMode(mode);
+      ValidateAndNormalize(entityType, entityContext, customFields, mode);
+    }
+
+    public List<CustomFieldValueRequest>? ParseCSVValues(
+      CustomFieldEntityType entityType,
+      string? entityContext,
+      IReadOnlyDictionary<string, string?>? values)
+    {
+      if (values == null || values.Count == 0) return null;
+
+      var definitions = _customFieldDefinitionService.List(entityType, entityContext, true, true);
+      var definitionsByKey = definitions.ToDictionary(o => o.Key, StringComparer.OrdinalIgnoreCase);
+      var result = new List<CustomFieldValueRequest>();
+
+      foreach (var item in values)
+      {
+        if (!definitionsByKey.TryGetValue(item.Key, out var definition))
+        {
+          // A shared CSV template may contain columns for several opportunity types.
+          // Blank non-applicable cells are ignored; populated cells are rejected.
+          if (string.IsNullOrEmpty(item.Value)) continue;
+
+          throw new ValidationException(
+            $"Custom field '{item.Key}' does not apply to entity context '{entityContext}'");
+        }
+
+        var request = new CustomFieldValueRequest { Key = definition.Key };
+        if (string.IsNullOrEmpty(item.Value))
+        {
+          // Key-only PATCH items are normalized into explicit deletions by the
+          // Opportunity or MyOpportunity domain entry point.
+          result.Add(request);
+          continue;
+        }
+
+        if (definition.DataType == CustomFieldDataType.Option)
+        {
+          var optionValues = item.Value
+            .Split(CSVImportHelper.Value_Delimiter)
+            .Select(o => o.Trim())
+            .ToList();
+
+          if (optionValues.Any(string.IsNullOrEmpty))
+            throw new ValidationException(
+              $"Custom field '{definition.Title}' contains an empty option value");
+
+          request.Values = [.. optionValues.Select(o => NormalizeCSVOptionValue(definition, o))];
+        }
+        else
+        {
+          request.Value = NormalizeCSVScalarValue(definition, item.Value);
+        }
+
+        result.Add(request);
+      }
+
+      return result.Count == 0 ? null : result;
     }
 
     public void ValidateAndHydrateFilters(CustomFieldEntityType entityType, List<CustomFieldFilter>? filters)
@@ -66,10 +124,12 @@ namespace Yoma.Core.Domain.Core.Services
       Guid? opportunityId,
       Guid? myOpportunityId,
       List<CustomFieldValueRequest>? customFields,
-      bool enforceRequired = true)
+      CustomFieldUpsertMode mode)
     {
+      ValidateUpsertMode(mode);
+
       var entityId = ResolveEntityId(entityType, opportunityId, myOpportunityId);
-      var (definitions, values) = ValidateAndNormalize(entityType, entityContext, customFields, enforceRequired);
+      var (definitions, values, definitionIdsToDelete) = ValidateAndNormalize(entityType, entityContext, customFields, mode);
 
       var definitionsAffected = definitions;
 
@@ -87,12 +147,26 @@ namespace Yoma.Core.Domain.Core.Services
         definitionsAffected =
         [
           .. definitions
-        .Concat(definitionsPrevious)
-        .DistinctBy(o => o.Id)
+          .Concat(definitionsPrevious)
+          .DistinctBy(o => o.Id)
         ];
       }
 
       if (definitionsAffected.Count == 0) return null;
+
+      var currentDefinitionIds = definitions.Select(o => o.Id).ToHashSet();
+
+      // definitionsAffected contains definitions for both the current and previous
+      // contexts after a context/type change. Anything absent from currentDefinitionIds
+      // belonged only to the previous context and is no longer valid for the entity.
+      // Delete those values in both PUT and PATCH modes: PATCH preserves omitted values
+      // only while their definitions remain applicable to the current context.
+      var previousContextOnlyDefinitionIds = definitionsAffected
+        .Where(o => !currentDefinitionIds.Contains(o.Id))
+        .Select(o => o.Id)
+        .ToHashSet();
+
+      var definitionIdsExplicitlyDeleted = definitionIdsToDelete.ToHashSet();
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
@@ -107,7 +181,16 @@ namespace Yoma.Core.Domain.Core.Services
 
         foreach (var existingValue in existingValues.Where(
                    o => !valuesByDefinition.ContainsKey(o.CustomFieldDefinitionId)))
-          await _customFieldValueRepository.Delete(existingValue);
+        {
+          // PUT deletes every omitted value. PATCH preserves omissions and deletes only
+          // explicit key-only requests or values invalidated by a context/type change.
+          var delete = mode.DeleteOmitted() ||
+            definitionIdsExplicitlyDeleted.Contains(existingValue.CustomFieldDefinitionId) ||
+            previousContextOnlyDefinitionIds.Contains(existingValue.CustomFieldDefinitionId);
+
+          if (delete)
+            await _customFieldValueRepository.Delete(existingValue);
+        }
 
         foreach (var value in values)
         {
@@ -127,6 +210,18 @@ namespace Yoma.Core.Domain.Core.Services
 
         scope.Complete();
       });
+
+      if (mode == CustomFieldUpsertMode.PatchAllowMissingRequired)
+      {
+        // PATCH returns the complete current state, including values preserved because
+        // they were omitted from this partial request.
+        var definitionIds = definitions.Select(o => o.Id).ToList();
+        var valuesCurrent = Query(entityType, entityId)
+          .Where(o => definitionIds.Contains(o.CustomFieldDefinitionId))
+          .ToList();
+
+        return ToCustomFieldValueItems(definitions, valuesCurrent);
+      }
 
       return ToCustomFieldValueItems(definitions, values);
     }
@@ -148,17 +243,17 @@ namespace Yoma.Core.Domain.Core.Services
     #endregion
 
     #region Private Members
-    private (List<CustomFieldDefinition> Definitions, List<CustomFieldValue> Values) ValidateAndNormalize(
+    private (List<CustomFieldDefinition> Definitions, List<CustomFieldValue> Values, List<Guid> DefinitionIdsToDelete) ValidateAndNormalize(
       CustomFieldEntityType entityType,
       string? entityContext,
       List<CustomFieldValueRequest>? customFields,
-      bool enforceRequired)
+      CustomFieldUpsertMode mode)
     {
       var definitions = _customFieldDefinitionService.List(entityType, entityContext, true, true);
       var requests = customFields ?? [];
 
       if (requests.Count == 0 && definitions.Count == 0)
-        return (definitions, []);
+        return (definitions, [], []);
 
       var duplicateKeys = requests
         .Where(o => !string.IsNullOrWhiteSpace(o.Key))
@@ -180,7 +275,9 @@ namespace Yoma.Core.Domain.Core.Services
       if (unknownKeys.Count != 0)
         throw new ValidationException($"Unknown custom field key(s): {string.Join(", ", unknownKeys)}");
 
+      var enforceRequired = mode.EnforceRequired();
       var values = new List<CustomFieldValue>();
+      var definitionIdsToDelete = new List<Guid>();
 
       foreach (var definition in definitions)
       {
@@ -191,6 +288,20 @@ namespace Yoma.Core.Domain.Core.Services
           if (enforceRequired && definition.IsRequired)
             throw new ValidationException($"Custom field '{definition.Title}' is required");
 
+          continue;
+        }
+
+        if (request.Delete)
+        {
+          // Explicit deletion is a PATCH-only instruction produced by NormalizeForPatch.
+          // PUT requests must represent the complete desired state through omission.
+          if (!mode.DeleteNullOrEmptyValues())
+            throw new ValidationException($"Custom field '{definition.Title}' cannot be explicitly deleted");
+
+          if (!string.IsNullOrWhiteSpace(request.Value) || request.Values?.Count > 0)
+            throw new ValidationException($"Custom field '{definition.Title}' cannot specify a value when being deleted");
+
+          definitionIdsToDelete.Add(definition.Id);
           continue;
         }
 
@@ -210,7 +321,13 @@ namespace Yoma.Core.Domain.Core.Services
         });
       }
 
-      return (definitions, values);
+      return (definitions, values, definitionIdsToDelete);
+    }
+
+    private static void ValidateUpsertMode(CustomFieldUpsertMode mode)
+    {
+      if (!mode.Process())
+        throw new InvalidOperationException($"Custom field upsert mode '{mode}' does not process custom fields");
     }
 
     private IQueryable<CustomFieldValue> Query(CustomFieldEntityType entityType, Guid entityId)
@@ -356,6 +473,55 @@ namespace Yoma.Core.Domain.Core.Services
       {
         Values = values
       }.Value!;
+    }
+
+    private static string NormalizeCSVScalarValue(CustomFieldDefinition definition, string value)
+    {
+      value = value.Trim();
+
+      if (definition.DataType != CustomFieldDataType.Boolean)
+        return value;
+
+      // Accept the same user-friendly boolean values used elsewhere in CSV imports,
+      // while retaining true/false support for generated files.
+      if (string.Equals(value, CSVImportHelper.Boolean_Value_True, StringComparison.OrdinalIgnoreCase)) return bool.TrueString;
+      if (string.Equals(value, CSVImportHelper.Boolean_Value_False, StringComparison.OrdinalIgnoreCase)) return bool.FalseString;
+
+      return value;
+    }
+
+    private string NormalizeCSVOptionValue(CustomFieldDefinition definition, string value)
+    {
+      value = value.Trim();
+
+      if (definition.LookupType.HasValue)
+      {
+        // Match the established CSV lookup conventions: country and language use
+        // alpha-2 codes, while skills use their full display names.
+        var id = definition.LookupType.Value switch
+        {
+          CustomFieldLookupType.Country => _countryService.GetByCodeAlpha2OrNull(value)?.Id,
+          CustomFieldLookupType.Language => _languageService.GetByCodeAlpha2OrNull(value)?.Id,
+          CustomFieldLookupType.Skill => _skillService.GetByNameOrNull(value)?.Id,
+          _ => throw new ArgumentOutOfRangeException(
+            nameof(definition),
+            $"Custom field lookup type '{definition.LookupType}' is not supported")
+        };
+
+        return id?.ToString() ?? throw new ValidationException(
+          $"Custom field '{definition.Title}' contains an invalid lookup value: {value}");
+      }
+
+      var option = definition.Options?
+        .SingleOrDefault(o =>
+          o.IsActive &&
+          (string.Equals(o.Name, value, StringComparison.OrdinalIgnoreCase) ||
+           string.Equals(o.Key, value, StringComparison.OrdinalIgnoreCase)));
+
+      return option == null
+        ? throw new ValidationException(
+          $"Custom field '{definition.Title}' contains an invalid option value: {value}")
+        : option.Key;
     }
 
     private string NormalizeOptionValue(CustomFieldDefinition definition, string value)
@@ -538,7 +704,6 @@ namespace Yoma.Core.Domain.Core.Services
           $"Custom field lookup type '{lookupType}' is not supported")
       };
     }
-
     #endregion
   }
 }
