@@ -9,7 +9,7 @@ using Yoma.Core.Infrastructure.Jobberman.Models;
 
 namespace Yoma.Core.Infrastructure.Jobberman.Client
 {
-  public sealed class JobbermanClientFactory : ISyncProviderClientFactory<ISyncProviderClientPullEntity<Domain.Opportunity.Models.Opportunity>>
+  public sealed class JobbermanClientFactory : ISyncProviderClientFactory<ISyncProviderClientPullEntity<Domain.Opportunity.Models.OpportunityRequestCreate>>
   {
     #region Class Variables
     private readonly ILogger<JobbermanClient> _logger;
@@ -46,7 +46,7 @@ namespace Yoma.Core.Infrastructure.Jobberman.Client
     #endregion
 
     #region Public Members
-    public ISyncProviderClientPullEntity<Domain.Opportunity.Models.Opportunity> CreateClient()
+    public ISyncProviderClientPullEntity<Domain.Opportunity.Models.OpportunityRequestCreate> CreateClient()
     {
       return new JobbermanClient(
         _logger,

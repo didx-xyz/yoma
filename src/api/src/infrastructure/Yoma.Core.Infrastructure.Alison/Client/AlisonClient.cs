@@ -13,6 +13,7 @@ using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Lookups.Interfaces;
 using Yoma.Core.Domain.Opportunity;
 using Yoma.Core.Domain.Opportunity.Interfaces.Lookups;
+using Yoma.Core.Domain.Opportunity.Models;
 using Yoma.Core.Domain.Opportunity.Services;
 using Yoma.Core.Domain.PartnerSync;
 using Yoma.Core.Domain.PartnerSync.Interfaces.Provider;
@@ -23,11 +24,12 @@ using Yoma.Core.Domain.SSI.Helpers;
 using Yoma.Core.Infrastructure.Alison.Extensions;
 using Yoma.Core.Infrastructure.Alison.Interfaces;
 using Yoma.Core.Infrastructure.Alison.Models;
+using AlisonOpportunity = Yoma.Core.Infrastructure.Alison.Models.Opportunity;
 
 namespace Yoma.Core.Infrastructure.Alison.Client
 {
   public sealed partial class AlisonClient :
-    ISyncProviderClientPullEntity<Domain.Opportunity.Models.Opportunity>,
+    ISyncProviderClientPullEntity<OpportunityRequestCreate>,
     ISyncProviderClientPullVerification,
     ISyncProviderClientUserAuthentication
   {
@@ -83,7 +85,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
     private readonly IEnvironmentProvider _environmentProvider;
     private readonly AppSettings _appSettings;
     private readonly AlisonOptions _options;
-    private readonly IRepositoryBatched<Opportunity> _opportunityRepository;
+    private readonly IRepositoryBatched<AlisonOpportunity> _opportunityRepository;
     private readonly IOpportunityTypeService _opportunityTypeService;
     private readonly IOpportunityCategoryService _opportunityCategoryService;
     private readonly ICountryService _countryService;
@@ -103,7 +105,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       IEnvironmentProvider environmentProvider,
       AppSettings appSettings,
       AlisonOptions options,
-      IRepositoryBatched<Opportunity> opportunityRepository,
+      IRepositoryBatched<AlisonOpportunity> opportunityRepository,
       IOpportunityTypeService opportunityTypeService,
       IOpportunityCategoryService opportunityCategoryService,
       ICountryService countryService,
@@ -167,7 +169,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       return !string.IsNullOrEmpty(request.UserSyncInfo?.ExternalId) ? await LoginExistingUser(request) : await RegisterOrLoginUser(request);
     }
 
-    public Task<SyncResultPullEntity<Domain.Opportunity.Models.Opportunity>> List(SyncFilterPullEntity filter)
+    public Task<SyncResultPullEntity<OpportunityRequestCreate>> List(SyncFilterPullEntity filter)
     {
       ArgumentNullException.ThrowIfNull(filter);
 
@@ -353,14 +355,14 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       return path;
     }
 
-    private SyncResultPullEntity<Domain.Opportunity.Models.Opportunity> ListFromStore(SyncFilterPullEntity filter)
+    private SyncResultPullEntity<OpportunityRequestCreate> ListFromStore(SyncFilterPullEntity filter)
     {
       ArgumentNullException.ThrowIfNull(filter);
 
       var query = _opportunityRepository.Query();
       query = query.OrderBy(o => o.ExternalId);
 
-      var result = new SyncResultPullEntity<Domain.Opportunity.Models.Opportunity>();
+      var result = new SyncResultPullEntity<OpportunityRequestCreate>();
 
       if (filter.PaginationEnabled)
       {
@@ -376,7 +378,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       return result;
     }
 
-    private SyncItemEntity<Domain.Opportunity.Models.Opportunity> ToSyncItem(Opportunity item)
+    private SyncItemEntity<OpportunityRequestCreate> ToSyncItem(AlisonOpportunity item)
     {
       ArgumentNullException.ThrowIfNull(item);
 
@@ -392,7 +394,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       return result;
     }
 
-    private SyncItemEntity<Domain.Opportunity.Models.Opportunity> ToSyncItem(Course course, bool deleted)
+    private SyncItemEntity<OpportunityRequestCreate> ToSyncItem(Course course, bool deleted)
     {
       ArgumentNullException.ThrowIfNull(course);
 
@@ -479,26 +481,24 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       // Alison provides online courses only, so all synced Alison opportunities are mapped as Online.
       var engagementType = _engagementTypeService.GetByName(EngagementTypeOption.Online.ToString());
 
-      return new SyncItemEntity<Domain.Opportunity.Models.Opportunity>
+      return new SyncItemEntity<OpportunityRequestCreate>
       {
         ExternalId = course.Id.ToString(),
         Deleted = deleted,
-        Item = new Domain.Opportunity.Models.Opportunity
+        Item = new OpportunityRequestCreate
         {
           Title = title,
           Description = description,
           TypeId = opportunityType.Id,
-          Type = Enum.Parse<Domain.Opportunity.Type>(opportunityType.Name, true),
           Summary = summary,
           URL = course.ToCourseUrl(_options.WebBaseUrl),
 
           OrganizationId = _options.OrganizationIdYoma,
-          OrganizationName = _options.OrganizationName,
 
           DateStart = dateStart,
           DateEnd = null,
 
-          Status = deleted ? Status.Deleted : Status.Active,
+          PostAsActive = !deleted,
 
           // Automatic verification, no participant limit, no rewards.
           // Completion is imported from Alison and processed by Yoma.
@@ -522,17 +522,18 @@ namespace Yoma.Core.Infrastructure.Alison.Client
 
           EngagementTypeId = engagementType.Id,
 
-          Skills = skills,
+          Skills = skills?.Select(o => o.Id).ToList(),
 
           ShareWithPartners = false,
           Hidden = false,
-          Featured = false,
-          Published = true,
 
           Keywords = keywords,
-          Categories = categories,
-          Countries = countries,
-          Languages = languages
+          Categories = categories.Select(o => o.Id).ToList(),
+          Countries = countries.Select(o => o.Id).ToList(),
+          Languages = languages.Select(o => o.Id).ToList(),
+
+          // Populate Alison opportunity custom fields here when required.
+          CustomFields = null
         }
       };
     }
@@ -1104,7 +1105,10 @@ namespace Yoma.Core.Infrastructure.Alison.Client
         CommitmentInterval = commitmentInterval,
         Status = status,
         PercentComplete = percentComplete,
-        DateCompleted = status == SyncItemVerificationStatus.Completed ? item.CompletedAt ?? dateEnd : null
+        DateCompleted = status == SyncItemVerificationStatus.Completed ? item.CompletedAt ?? dateEnd : null,
+
+        // Populate Alison completion custom fields here when required.
+        CustomFields = null
       };
     }
 

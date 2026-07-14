@@ -1,3 +1,4 @@
+using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
 
@@ -79,6 +80,7 @@ namespace Yoma.Core.Domain.Opportunity.Models
       Languages = [.. Languages.OrderBy(o => o)];
       Skills = Skills?.OrderBy(o => o).ToList();
       VerificationTypes = VerificationTypes?.OrderBy(o => o.Type).ThenBy(o => o.Description, StringComparer.Ordinal).ToList();
+      CustomFields.NormalizeForHashing();
     }
 
     public virtual void SanitizeCollections()
@@ -95,6 +97,9 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
       VerificationTypes = VerificationTypes?.DistinctBy(o => new { o.Type, o.Description }).ToList();
       if (VerificationTypes?.Count == 0) VerificationTypes = null;
+
+      // Preserve duplicate keys so validation can reject ambiguous values.
+      if (CustomFields?.Count == 0) CustomFields = null;
     }
   }
 }

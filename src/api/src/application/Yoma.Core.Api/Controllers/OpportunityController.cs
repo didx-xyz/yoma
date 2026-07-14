@@ -432,7 +432,7 @@ namespace Yoma.Core.Api.Controllers
         EnsureOrganizationAuthorization = true,
         RaiseEvents = true,
         SendNotifications = true,
-        UpsertCustomFields = true
+        CustomFieldUpsertMode = CustomFieldUpsertMode.ProcessEnforceRequired
       });
 
       if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(Create));
@@ -453,7 +453,7 @@ namespace Yoma.Core.Api.Controllers
         EnsureOrganizationAuthorization = true,
         RaiseEvents = true,
         SendNotifications = false,
-        UpsertCustomFields = true
+        CustomFieldUpsertMode = CustomFieldUpsertMode.ProcessEnforceRequired
       });
 
       if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(Update));

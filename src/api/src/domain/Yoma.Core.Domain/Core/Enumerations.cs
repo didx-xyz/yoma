@@ -242,4 +242,22 @@ namespace Yoma.Core.Domain.Core
     /// </summary>
     Skill
   }
+
+  public enum CustomFieldUpsertMode
+  {
+    /// <summary>
+    /// Do not validate or modify custom-field values.
+    /// </summary>
+    None,
+
+    /// <summary>
+    /// Process custom fields and require all required definitions to be supplied.
+    /// </summary>
+    ProcessEnforceRequired,
+
+    /// <summary>
+    /// Process and validate supplied custom fields while allowing required definitions to be omitted.
+    /// </summary>
+    ProcessAllowMissingRequired
+  }
 }

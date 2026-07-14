@@ -142,7 +142,7 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
               .ThenBy(o => o.CustomFieldDefinition.SubGroup)
               .ThenBy(o => o.CustomFieldDefinition.SortOrder)
               .ThenBy(o => o.CustomFieldDefinition.Title)
-              .Select(o => new Domain.Core.Models.CustomFieldValueItem
+              .Select(o => new CustomFieldValueItem
               {
                 Key = o.CustomFieldDefinition.Key,
                 DataType = Enum.Parse<CustomFieldDataType>(o.CustomFieldDefinition.DataType, true),

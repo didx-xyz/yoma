@@ -890,8 +890,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       {
         RequiredVerificationMethod = VerificationMethod.Manual,
         OverridePending = overridePending,
-        MutateBlobStorage = true,
-        UpsertCustomFields = false,
+        MutateBlobStorage = true
       };
 
       await PerformActionSendForVerification(user, opportunityId, request, options);
@@ -905,7 +904,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       {
         RequiredVerificationMethod = VerificationMethod.Manual,
         MutateBlobStorage = true,
-        UpsertCustomFields = true,
+        CustomFieldUpsertMode = CustomFieldUpsertMode.ProcessEnforceRequired
       };
 
       await PerformActionSendForVerification(user, opportunityId, request, options);
@@ -1233,16 +1232,17 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             PartnerSyncedVerification = true,
             EnqueueOutcomes = true,
             MutateBlobStorage = true,
-            PublishEvents = true
+            PublishEvents = true,
+            CustomFieldUpsertMode = CustomFieldUpsertMode.ProcessAllowMissingRequired
           };
 
-          // TODO: Support custom field values for partner-synced completions when partner sync mapping is defined.
           var requestVerify = new MyOpportunityRequestVerify
           {
             DateStart = request.DateStart,
             DateEnd = request.DateEnd,
             CommitmentInterval = request.CommitmentInterval,
-            PercentComplete = request.PercentComplete
+            PercentComplete = request.PercentComplete,
+            CustomFields = request.CustomFields
           };
 
           var myOpportunity = await PerformActionSendForVerification(user, opportunity.Id, requestVerify, options);
@@ -2058,13 +2058,20 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       // Validate before processing because a new MyOpportunity must be persisted before
       // its custom field values can be inserted. Upsert validates and normalizes again
       // intentionally so it remains safe as a standalone operation.
-      if (options.UpsertCustomFields)
-        _customFieldValueService.Validate(CustomFieldEntityType.MyOpportunity, opportunity.Type.ToString(), request.CustomFields);
+      if (options.CustomFieldUpsertMode.Process())
+        _customFieldValueService.Validate(CustomFieldEntityType.MyOpportunity, opportunity.Type.ToString(), request.CustomFields, options.CustomFieldUpsertMode.EnforceRequired());
 
       myOpportunity = await PerformActionSendForVerificationProcessVerificationTypes(request, opportunity, myOpportunity, options, isNew);
 
-      if (options.UpsertCustomFields)
-        myOpportunity.CustomFields = await _customFieldValueService.Upsert(CustomFieldEntityType.MyOpportunity, opportunity.Type.ToString(), null, null, myOpportunity.Id, request.CustomFields);
+      if (options.CustomFieldUpsertMode.Process())
+        myOpportunity.CustomFields = await _customFieldValueService.Upsert(
+          CustomFieldEntityType.MyOpportunity,
+          opportunity.Type.ToString(),
+          null,
+          null,
+          myOpportunity.Id,
+          request.CustomFields,
+          options.CustomFieldUpsertMode.EnforceRequired());
 
       //used by notifications
       myOpportunity.Username = user.Username;

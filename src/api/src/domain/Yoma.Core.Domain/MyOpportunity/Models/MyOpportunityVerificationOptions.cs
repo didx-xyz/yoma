@@ -1,3 +1,4 @@
+using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Opportunity;
 
 namespace Yoma.Core.Domain.MyOpportunity.Models
@@ -13,7 +14,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
     public bool PartnerSyncedVerification { get; init; }
     public bool InstantVerification { get; init; }
     public bool ImportedVerification { get; init; }
-    public bool UpsertCustomFields { get; init; }
+    public CustomFieldUpsertMode CustomFieldUpsertMode { get; init; } = CustomFieldUpsertMode.None;
 
     // These flows are sent for verification and finalized in the same process.
     public bool AutoFinalizedVerification => PartnerSyncedVerification || InstantVerification || ImportedVerification;

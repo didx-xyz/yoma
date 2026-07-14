@@ -1,5 +1,6 @@
 using Newtonsoft.Json;
 using Yoma.Core.Domain.Core;
+using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
 
@@ -85,19 +86,7 @@ namespace Yoma.Core.Domain.Opportunity.Models
       Organizations = Organizations?.OrderBy(o => o).ToList();
       EngagementTypes = EngagementTypes?.OrderBy(o => o).ToList();
 
-      if (CustomFields == null) return;
-      foreach (var customField in CustomFields)
-      {
-        customField.Values = customField.Values?
-          .OrderBy(o => o, StringComparer.OrdinalIgnoreCase)
-          .ToList();
-      }
-
-      CustomFields = [.. CustomFields
-        .OrderBy(o => o.Key, StringComparer.OrdinalIgnoreCase)
-        .ThenBy(o => o.Operator)
-        .ThenBy(o => o.Value, StringComparer.Ordinal)
-        .ThenBy(o => string.Join(CustomFieldValue.Value_Delimiter, o.Values ?? []), StringComparer.Ordinal)];
+      CustomFields = CustomFields.NormalizeForHashing();
     }
 
     public virtual void SanitizeCollections()

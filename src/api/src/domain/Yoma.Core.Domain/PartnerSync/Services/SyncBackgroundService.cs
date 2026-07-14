@@ -515,11 +515,11 @@ namespace Yoma.Core.Domain.PartnerSync.Services
 
       try
       {
-        var pullProviderClient = _providerClientFactoryResolver.CreateClient<ISyncProviderClientPullEntity<Opportunity.Models.Opportunity>>(partner);
+        var pullProviderClient = _providerClientFactoryResolver.CreateClient<ISyncProviderClientPullEntity<OpportunityRequestCreate>>(partner);
 
         var pageNumber = 1;
         var pageSize = _scheduleJobOptions.PartnerSyncPullScheduleBatchSize;
-        SyncResultPullEntity<Opportunity.Models.Opportunity>? result = null;
+        SyncResultPullEntity<OpportunityRequestCreate>? result = null;
 
         while (executeUntil > DateTimeOffset.UtcNow)
         {
@@ -547,12 +547,12 @@ namespace Yoma.Core.Domain.PartnerSync.Services
               if (_logger.IsEnabled(LogLevel.Information))
                 _logger.LogInformation("Processing sync pull item for partner '{partner}', entity type '{entityType}', entity external id '{entityExternalId}'", partner, entityType, item.ExternalId);
 
-              var opportunityItem = item.Item;
+              var opportunityRequest = item.Item;
 
-              opportunityItem.ExternalId = opportunityItem.ExternalId?.Trim();
-              if (!string.IsNullOrEmpty(opportunityItem.ExternalId))
+              opportunityRequest.ExternalId = opportunityRequest.ExternalId?.Trim();
+              if (!string.IsNullOrEmpty(opportunityRequest.ExternalId))
                 throw new InvalidOperationException(
-                  $"Pull-synced opportunity item must not set '{nameof(Opportunity.Models.Opportunity.ExternalId)}'. Use '{nameof(SyncItemEntity<>.ExternalId)}' / processing '{nameof(ProcessingLog.EntityExternalId)}' for partner sync identity");
+                  $"Pull-synced opportunity item must not set '{nameof(OpportunityRequestBase.ExternalId)}'. Use '{nameof(SyncItemEntity<>.ExternalId)}' / processing '{nameof(ProcessingLog.EntityExternalId)}' for partner sync identity");
 
               var processingItemExisting = _processingService.GetPull(partnerModel.Id, entityType, item.ExternalId);
               var processingItemExistingHasSynchronizedEntity = processingItemExisting.HasSynchronizedEntity(entityType);
@@ -628,24 +628,24 @@ namespace Yoma.Core.Domain.PartnerSync.Services
                 {
                   case SyncAction.Create:
                     {
-                      var request = opportunityItem.ToRequestCreate();
+                      var request = ObjectHelper.DeepCopy(opportunityRequest);
 
                       // Stamp pulled opportunities with a stable human-readable CSV reference; partner sync still uses EntityExternalId.
                       request.ExternalId = $"{partner.ToString().ToUpperInvariant()}_{item.ExternalId.Trim()}";
 
-                      // TODO: Support custom field values for partner-synced opportunities when partner sync mapping is defined.
                       var opportunity = await _opportunityService.Create(request, new OpportunityUpsertOptions
                       {
                         EnsureOrganizationAuthorization = false,
                         RaiseEvents = false,
                         SendNotifications = false,
                         SyncTypeActionedBy = SyncType.Pull,
-                        SyncExternalId = item.ExternalId
+                        SyncExternalId = item.ExternalId,
+                        CustomFieldUpsertMode = CustomFieldUpsertMode.ProcessAllowMissingRequired
                       });
                       entityId = opportunity.Id;
 
                       // Hash the equivalent update payload so the created item can be compared consistently against future pull updates.
-                      var requestUpdate = opportunityItem.ToRequestUpdate(entityId.Value, applyHidden: false);
+                      var requestUpdate = opportunityRequest.ToRequestUpdate(entityId.Value, applyHidden: false);
                       payloadHash = HashHelper.ComputeSHA256Hash(requestUpdate);
 
                       break;
@@ -659,7 +659,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
                       if (!entityId.HasValue)
                         throw new InvalidOperationException($"Entity id expected for pull update: Partner '{partner}', entity type '{entityType}', entity external id '{item.ExternalId}'");
 
-                      var request = opportunityItem.ToRequestUpdate(entityId.Value, applyHidden: false);
+                      var request = opportunityRequest.ToRequestUpdate(entityId.Value, applyHidden: false);
                       payloadHash = HashHelper.ComputeSHA256Hash(request);
 
                       var retryingPreviousError = !string.IsNullOrWhiteSpace(processingItemExisting.ErrorReason);
@@ -680,14 +680,14 @@ namespace Yoma.Core.Domain.PartnerSync.Services
                         return;
                       }
 
-                      // TODO: Support custom field values for partner-synced opportunities when partner sync mapping is defined.
                       await _opportunityService.Update(request, new OpportunityUpsertOptions
                       {
                         EnsureOrganizationAuthorization = false,
                         RaiseEvents = false,
                         SendNotifications = false,
                         SyncTypeActionedBy = SyncType.Pull,
-                        SyncExternalId = item.ExternalId
+                        SyncExternalId = item.ExternalId,
+                        CustomFieldUpsertMode = CustomFieldUpsertMode.ProcessAllowMissingRequired
                       });
                       break;
                     }
@@ -788,13 +788,13 @@ namespace Yoma.Core.Domain.PartnerSync.Services
       }
     }
 
-    private async Task<(SyncResultPullEntity<Opportunity.Models.Opportunity> Result, List<SyncItemEntity<Opportunity.Models.Opportunity>> Items, bool PagedByProvider)> ListSyncPullItems(
+    private async Task<(SyncResultPullEntity<OpportunityRequestCreate> Result, List<SyncItemEntity<OpportunityRequestCreate>> Items, bool PagedByProvider)> ListSyncPullItems(
       SyncPartner partner,
       EntityType entityType,
-      ISyncProviderClientPullEntity<Opportunity.Models.Opportunity> pullProviderClient,
+      ISyncProviderClientPullEntity<OpportunityRequestCreate> pullProviderClient,
       int pageNumber,
       int pageSize,
-      SyncResultPullEntity<Opportunity.Models.Opportunity>? result)
+      SyncResultPullEntity<OpportunityRequestCreate>? result)
     {
       if (result == null)
       {
@@ -1007,10 +1007,11 @@ namespace Yoma.Core.Domain.PartnerSync.Services
                 },
                 Completed = item.Status == SyncItemVerificationStatus.Completed,
                 PercentComplete = item.PercentComplete,
-                DateCompleted = item.DateCompleted
+                DateCompleted = item.DateCompleted,
+                CustomFields = item.CustomFields
               };
 
-              var payloadHash = HashHelper.ComputeSHA256Hash(HashHelper.SerializeForHashing(request));
+              var payloadHash = HashHelper.ComputeSHA256Hash(request);
               var retryingPreviousError = !string.IsNullOrWhiteSpace(processingItemExistingMyOpportunity?.ErrorReason);
 
               if (processingItemExistingMyOpportunityAction != SyncAction.Delete && !retryingPreviousError &&
@@ -1030,6 +1031,11 @@ namespace Yoma.Core.Domain.PartnerSync.Services
 
               if (importResult.Skipped)
               {
+                // A skipped result with an id is an existing terminal verification. Record the accepted payload hash
+                // even though no domain mutation is required; missing-user retries return without an id.
+                if (importResult.MyOpportunityId.HasValue)
+                  await _processingService.RecordPull(action, partnerModel.Id, myOpportunityEntityType, item.ExternalId, importResult.MyOpportunityId.Value, payloadHash);
+
                 if (_logger.IsEnabled(LogLevel.Information))
                   _logger.LogInformation("Processing of partner sync pull verification item skipped: {skipReason}", importResult.SkipReason);
 

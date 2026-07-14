@@ -38,9 +38,9 @@ namespace Yoma.Core.Domain.Core.Services
     #endregion
 
     #region Public Members
-    public void Validate(CustomFieldEntityType entityType, string? entityContext, List<CustomFieldValueRequest>? customFields)
+    public void Validate(CustomFieldEntityType entityType, string? entityContext, List<CustomFieldValueRequest>? customFields, bool enforceRequired = true)
     {
-      ValidateAndNormalize(entityType, entityContext, customFields);
+      ValidateAndNormalize(entityType, entityContext, customFields, enforceRequired);
     }
 
     public void ValidateAndHydrateFilters(CustomFieldEntityType entityType, List<CustomFieldFilter>? filters)
@@ -65,10 +65,11 @@ namespace Yoma.Core.Domain.Core.Services
       string? entityContextPrevious,
       Guid? opportunityId,
       Guid? myOpportunityId,
-      List<CustomFieldValueRequest>? customFields)
+      List<CustomFieldValueRequest>? customFields,
+      bool enforceRequired = true)
     {
       var entityId = ResolveEntityId(entityType, opportunityId, myOpportunityId);
-      var (definitions, values) = ValidateAndNormalize(entityType, entityContext, customFields);
+      var (definitions, values) = ValidateAndNormalize(entityType, entityContext, customFields, enforceRequired);
 
       var definitionsAffected = definitions;
 
@@ -147,7 +148,11 @@ namespace Yoma.Core.Domain.Core.Services
     #endregion
 
     #region Private Members
-    private (List<CustomFieldDefinition> Definitions, List<CustomFieldValue> Values) ValidateAndNormalize(CustomFieldEntityType entityType, string? entityContext, List<CustomFieldValueRequest>? customFields)
+    private (List<CustomFieldDefinition> Definitions, List<CustomFieldValue> Values) ValidateAndNormalize(
+      CustomFieldEntityType entityType,
+      string? entityContext,
+      List<CustomFieldValueRequest>? customFields,
+      bool enforceRequired)
     {
       var definitions = _customFieldDefinitionService.List(entityType, entityContext, true, true);
       var requests = customFields ?? [];
@@ -183,7 +188,7 @@ namespace Yoma.Core.Domain.Core.Services
 
         if (request == null)
         {
-          if (definition.IsRequired)
+          if (enforceRequired && definition.IsRequired)
             throw new ValidationException($"Custom field '{definition.Title}' is required");
 
           continue;

@@ -1268,8 +1268,15 @@ namespace Yoma.Core.Domain.Opportunity.Services
         result = await AssignVerificationTypes(result, request.VerificationTypes);
 
         // custom fields (optional)
-        if (options.UpsertCustomFields)
-          result.CustomFields = await _customFieldValueService.Upsert(CustomFieldEntityType.Opportunity, result.Type.ToString(), null, result.Id, null, request.CustomFields);
+        if (options.CustomFieldUpsertMode.Process())
+          result.CustomFields = await _customFieldValueService.Upsert(
+            CustomFieldEntityType.Opportunity,
+            result.Type.ToString(),
+            null,
+            result.Id,
+            null,
+            request.CustomFields,
+            options.CustomFieldUpsertMode.EnforceRequired());
 
         scope.Complete();
       });
@@ -1445,8 +1452,15 @@ namespace Yoma.Core.Domain.Opportunity.Services
         result = await AssignVerificationTypes(result, request.VerificationTypes);
 
         // custom fields (optional)
-        if (options.UpsertCustomFields)
-          result.CustomFields = await _customFieldValueService.Upsert(CustomFieldEntityType.Opportunity, result.Type.ToString(), resultCurrent.Type.ToString(), result.Id, null, request.CustomFields);
+        if (options.CustomFieldUpsertMode.Process())
+          result.CustomFields = await _customFieldValueService.Upsert(
+            CustomFieldEntityType.Opportunity,
+            result.Type.ToString(),
+            resultCurrent.Type.ToString(),
+            result.Id,
+            null,
+            request.CustomFields,
+            options.CustomFieldUpsertMode.EnforceRequired());
 
         scope.Complete();
       });

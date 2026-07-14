@@ -4,6 +4,7 @@ using Yoma.Core.Domain.ActionLink;
 using Yoma.Core.Domain.ActionLink.Models;
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Extensions;
+using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Opportunity.Models;
 
 namespace Yoma.Core.Domain.Opportunity.Extensions
@@ -210,52 +211,7 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
       return EvaluateCompletable(item.Title, item.Status, item.Hidden, item.OrganizationStatus, item.VerificationEnabled, item.VerificationMethod, item.DateStart, out reason);
     }
 
-    public static OpportunityRequestCreate ToRequestCreate(this Models.Opportunity item)
-    {
-      ArgumentNullException.ThrowIfNull(item, nameof(item));
-
-      return new OpportunityRequestCreate
-      {
-        Title = item.Title,
-        Description = item.Description,
-        TypeId = item.TypeId,
-        OrganizationId = item.OrganizationId,
-        Summary = item.Summary,
-        Instructions = item.Instructions,
-        URL = item.URL,
-        ZltoReward = item.ZltoReward,
-        YomaReward = item.YomaReward,
-        ZltoRewardPool = item.ZltoRewardPool,
-        YomaRewardPool = item.YomaRewardPool,
-        VerificationEnabled = item.VerificationEnabled,
-        VerificationMethod = item.VerificationMethod,
-        DifficultyId = item.DifficultyId,
-        CommitmentIntervalId = item.CommitmentIntervalId,
-        CommitmentIntervalCount = item.CommitmentIntervalCount,
-        ParticipantLimit = item.ParticipantLimit,
-        Keywords = item.Keywords,
-        DateStart = item.DateStart,
-        DateEnd = item.DateEnd,
-        CredentialIssuanceEnabled = item.CredentialIssuanceEnabled,
-        SSISchemaName = item.SSISchemaName,
-        EngagementTypeId = item.EngagementTypeId,
-        ShareWithPartners = item.ShareWithPartners,
-        Hidden = item.Hidden,
-        ExternalId = item.ExternalId,
-        Categories = item.Categories?.Select(o => o.Id).ToList() ?? [],
-        Countries = item.Countries?.Select(o => o.Id).ToList() ?? [],
-        Languages = item.Languages?.Select(o => o.Id).ToList() ?? [],
-        Skills = item.Skills?.Select(o => o.Id).ToList(),
-        VerificationTypes = item.VerificationTypes?.Select(o => new OpportunityRequestVerificationType
-        {
-          Type = o.Type,
-          Description = o.Description
-        }).ToList(),
-        PostAsActive = item.Status == Status.Active
-      };
-    }
-
-    public static OpportunityRequestUpdate ToRequestUpdate(this Models.Opportunity item, Guid id, bool applyHidden = true)
+    public static OpportunityRequestUpdate ToRequestUpdate(this OpportunityRequestCreate item, Guid id, bool applyHidden = true)
     {
       ArgumentNullException.ThrowIfNull(item, nameof(item));
 
@@ -282,7 +238,7 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
         CommitmentIntervalId = item.CommitmentIntervalId,
         CommitmentIntervalCount = item.CommitmentIntervalCount,
         ParticipantLimit = item.ParticipantLimit,
-        Keywords = item.Keywords,
+        Keywords = item.Keywords?.ToList(),
         DateStart = item.DateStart,
         DateEnd = item.DateEnd,
         CredentialIssuanceEnabled = item.CredentialIssuanceEnabled,
@@ -291,14 +247,20 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
         ShareWithPartners = item.ShareWithPartners,
         Hidden = applyHidden ? item.Hidden : null,
         ExternalId = item.ExternalId,
-        Categories = item.Categories?.Select(o => o.Id).ToList() ?? [],
-        Countries = item.Countries?.Select(o => o.Id).ToList() ?? [],
-        Languages = item.Languages?.Select(o => o.Id).ToList() ?? [],
-        Skills = item.Skills?.Select(o => o.Id).ToList(),
+        Categories = item.Categories.ToList(),
+        Countries = item.Countries.ToList(),
+        Languages = item.Languages.ToList(),
+        Skills = item.Skills?.ToList(),
         VerificationTypes = item.VerificationTypes?.Select(o => new OpportunityRequestVerificationType
         {
           Type = o.Type,
           Description = o.Description
+        }).ToList(),
+        CustomFields = item.CustomFields?.Select(o => new CustomFieldValueRequest
+        {
+          Key = o.Key,
+          Value = o.Value,
+          Values = o.Values?.ToList()
         }).ToList()
       };
     }
