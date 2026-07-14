@@ -9,6 +9,20 @@ namespace Yoma.Core.Domain.Core.Services
 {
   public sealed class CustomFieldDefinitionService : ICustomFieldDefinitionService
   {
+    // TODO(YOM-1244): Complete the following once BA-approved requirements are available:
+    // - Replace temporary Opportunity and MyOpportunity definitions and options.
+    // - Confirm required and optional behaviour for the approved definitions.
+    // - Implement approved User Presets directly on the core User model.
+    // - Map approved User Presets to Opportunity filter criteria.
+    // - Update the Opportunity Category lookup to the approved taxonomy and migrate existing mappings.
+    // - Complete applicable Alison custom-field mappings.
+    // - Complete applicable Jobberman custom-field mappings.
+    // - Produce the final Opportunity CSV sample using approved fields.
+    // - Produce the final MyOpportunity completion CSV sample using approved fields.
+    // - Expose applicable custom fields to SSI credential schema source-field discovery.
+    // - Confirm definition discovery for public Opportunity filters and MyOpportunity filters spanning types.
+    // - Test CSV exports using custom-field filters.
+    // - Complete final authorization-boundary and regression testing.
     #region Class Variables
     private readonly IRepositoryWithNavigation<CustomFieldDefinition> _customFieldDefinitionRepository;
     private readonly IMemoryCache _memoryCache;
