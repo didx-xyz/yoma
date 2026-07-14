@@ -1469,6 +1469,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
           if (beforeDelete != null) await beforeDelete();
 
+          await _customFieldValueService.Delete(CustomFieldEntityType.MyOpportunity, myOpportunity.Id);
+
           await _myOpportunityRepository.Delete(myOpportunity);
 
           scope.Complete();

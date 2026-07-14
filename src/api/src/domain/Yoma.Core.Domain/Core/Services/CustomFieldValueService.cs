@@ -129,6 +129,21 @@ namespace Yoma.Core.Domain.Core.Services
 
       return ToCustomFieldValueItems(definitions, values);
     }
+
+    public async Task Delete(CustomFieldEntityType entityType, Guid entityId)
+    {
+      await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+      {
+        using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.Required);
+
+        var values = Query(entityType, entityId).ToList();
+
+        foreach (var value in values)
+          await _customFieldValueRepository.Delete(value);
+
+        scope.Complete();
+      });
+    }
     #endregion
 
     #region Private Members
