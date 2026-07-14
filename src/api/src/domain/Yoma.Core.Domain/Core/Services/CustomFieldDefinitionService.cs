@@ -9,7 +9,11 @@ namespace Yoma.Core.Domain.Core.Services
 {
   public sealed class CustomFieldDefinitionService : ICustomFieldDefinitionService
   {
-    // TODO(YOM-1244): Complete the following once BA-approved requirements are available:
+    // TODO(YOM-1244):
+    //
+    // * Phase 1 Timeline: Started 08 Jul; Estimated Completion 29 Jul – 05 Aug (3-4 weeks estimated effort) *
+    //
+    // Complete the following once BA-approved requirements are available:
     // - Replace temporary Opportunity and MyOpportunity definitions and options.
     // - Confirm required and optional behaviour for the approved definitions.
     // - Implement approved User Presets directly on the core User model.
