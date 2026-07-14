@@ -1269,7 +1269,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
         // custom fields (optional)
         if (options.UpsertCustomFields)
-          result.CustomFields = await _customFieldValueService.Upsert(CustomFieldEntityType.Opportunity, result.Type.ToString(), result.Id, null, request.CustomFields);
+          result.CustomFields = await _customFieldValueService.Upsert(CustomFieldEntityType.Opportunity, result.Type.ToString(), null, result.Id, null, request.CustomFields);
 
         scope.Complete();
       });
@@ -1446,7 +1446,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
         // custom fields (optional)
         if (options.UpsertCustomFields)
-          result.CustomFields = await _customFieldValueService.Upsert(CustomFieldEntityType.Opportunity, result.Type.ToString(), result.Id, null, request.CustomFields);
+          result.CustomFields = await _customFieldValueService.Upsert(CustomFieldEntityType.Opportunity, result.Type.ToString(), resultCurrent.Type.ToString(), result.Id, null, request.CustomFields);
 
         scope.Complete();
       });

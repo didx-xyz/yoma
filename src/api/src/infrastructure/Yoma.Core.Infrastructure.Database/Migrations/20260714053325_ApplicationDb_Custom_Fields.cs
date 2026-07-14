@@ -32,6 +32,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             Group = table.Column<string>(type: "varchar(100)", nullable: false),
             SubGroup = table.Column<string>(type: "varchar(100)", nullable: true),
             DataType = table.Column<string>(type: "varchar(50)", nullable: false),
+            LookupType = table.Column<string>(type: "varchar(50)", nullable: true),
             ValidationRegex = table.Column<string>(type: "varchar(500)", nullable: true),
             ValidationErrorMessage = table.Column<string>(type: "varchar(500)", nullable: true),
             IsRequired = table.Column<bool>(type: "boolean", nullable: false),

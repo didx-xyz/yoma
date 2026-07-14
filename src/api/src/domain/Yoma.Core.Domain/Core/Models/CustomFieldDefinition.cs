@@ -29,6 +29,13 @@ namespace Yoma.Core.Domain.Core.Models
 
     public CustomFieldDataType DataType { get; set; }
 
+    /// <summary>
+    /// Existing Yoma lookup used to supply and validate option values.
+    /// When specified, clients must submit the selected lookup record IDs (GUIDs) through value or values.
+    /// Null indicates that values come from the definition's custom options.
+    /// </summary>
+    public CustomFieldLookupType? LookupType { get; set; }
+
     public string? ValidationRegex { get; set; }
 
     public string? ValidationErrorMessage { get; set; }

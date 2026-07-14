@@ -5,6 +5,7 @@ using System.Transactions;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
+using Yoma.Core.Domain.Lookups.Interfaces;
 
 namespace Yoma.Core.Domain.Core.Services
 {
@@ -12,16 +13,25 @@ namespace Yoma.Core.Domain.Core.Services
   {
     #region Class Variables
     private readonly ICustomFieldDefinitionService _customFieldDefinitionService;
+    private readonly ICountryService _countryService;
+    private readonly ILanguageService _languageService;
+    private readonly ISkillService _skillService;
     private readonly IRepository<CustomFieldValue> _customFieldValueRepository;
     private readonly IExecutionStrategyService _executionStrategyService;
     #endregion
 
     #region Constructor
     public CustomFieldValueService(ICustomFieldDefinitionService customFieldDefinitionService,
-        IRepository<CustomFieldValue> customFieldValueRepository,
-        IExecutionStrategyService executionStrategyService)
+      ICountryService countryService,
+      ILanguageService languageService,
+      ISkillService skillService,
+      IRepository<CustomFieldValue> customFieldValueRepository,
+      IExecutionStrategyService executionStrategyService)
     {
       _customFieldDefinitionService = customFieldDefinitionService ?? throw new ArgumentNullException(nameof(customFieldDefinitionService));
+      _countryService = countryService ?? throw new ArgumentNullException(nameof(countryService));
+      _languageService = languageService ?? throw new ArgumentNullException(nameof(languageService));
+      _skillService = skillService ?? throw new ArgumentNullException(nameof(skillService));
       _customFieldValueRepository = customFieldValueRepository ?? throw new ArgumentNullException(nameof(customFieldValueRepository));
       _executionStrategyService = executionStrategyService ?? throw new ArgumentNullException(nameof(executionStrategyService));
     }
@@ -49,30 +59,60 @@ namespace Yoma.Core.Domain.Core.Services
       }
     }
 
-    public async Task<List<CustomFieldValueItem>?> Upsert(CustomFieldEntityType entityType, string? entityContext, Guid? opportunityId, Guid? myOpportunityId, List<CustomFieldValueRequest>? customFields)
+    public async Task<List<CustomFieldValueItem>?> Upsert(
+      CustomFieldEntityType entityType,
+      string? entityContext,
+      string? entityContextPrevious,
+      Guid? opportunityId,
+      Guid? myOpportunityId,
+      List<CustomFieldValueRequest>? customFields)
     {
       var entityId = ResolveEntityId(entityType, opportunityId, myOpportunityId);
       var (definitions, values) = ValidateAndNormalize(entityType, entityContext, customFields);
 
-      if (definitions.Count == 0) return null;
+      var definitionsAffected = definitions;
+
+      // When the entity context changes, include active definitions from the previous
+      // context so values that no longer apply are removed during the same upsert.
+      if (!string.IsNullOrEmpty(entityContextPrevious) &&
+          !string.Equals(entityContextPrevious, entityContext, StringComparison.OrdinalIgnoreCase))
+      {
+        var definitionsPrevious = _customFieldDefinitionService.List(
+          entityType,
+          entityContextPrevious,
+          false,
+          true);
+
+        definitionsAffected =
+        [
+          .. definitions
+        .Concat(definitionsPrevious)
+        .DistinctBy(o => o.Id)
+        ];
+      }
+
+      if (definitionsAffected.Count == 0) return null;
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
         using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.Required);
 
-        var definitionIds = definitions.Select(o => o.Id).ToList();
+        var definitionIds = definitionsAffected.Select(o => o.Id).ToList();
         var existingValues = Query(entityType, entityId)
           .Where(o => definitionIds.Contains(o.CustomFieldDefinitionId))
           .ToList();
 
         var valuesByDefinition = values.ToDictionary(o => o.CustomFieldDefinitionId);
 
-        foreach (var existingValue in existingValues.Where(o => !valuesByDefinition.ContainsKey(o.CustomFieldDefinitionId)))
+        foreach (var existingValue in existingValues.Where(
+                   o => !valuesByDefinition.ContainsKey(o.CustomFieldDefinitionId)))
           await _customFieldValueRepository.Delete(existingValue);
 
         foreach (var value in values)
         {
-          var existingValue = existingValues.SingleOrDefault(o => o.CustomFieldDefinitionId == value.CustomFieldDefinitionId);
+          var existingValue = existingValues.SingleOrDefault(
+            o => o.CustomFieldDefinitionId == value.CustomFieldDefinitionId);
+
           if (existingValue == null)
           {
             SetEntityId(entityType, entityId, value);
@@ -190,7 +230,7 @@ namespace Yoma.Core.Domain.Core.Services
       }
     }
 
-    private static string? Normalize(CustomFieldDefinition definition, CustomFieldValueRequest request)
+    private string? Normalize(CustomFieldDefinition definition, CustomFieldValueRequest request)
     {
       var hasValue = !string.IsNullOrWhiteSpace(request.Value);
       var hasValues = request.Values?.Count > 0;
@@ -198,7 +238,11 @@ namespace Yoma.Core.Domain.Core.Services
       if (hasValue && hasValues)
         throw new ValidationException($"Custom field '{definition.Title}' must specify either value or values, not both");
 
-      if (!hasValue && !hasValues) return null;
+      if (!hasValue && !hasValues)
+      {
+        var propertyName = definition.DataType == CustomFieldDataType.Option ? "values" : "value";
+        throw new ValidationException($"Custom field '{definition.Title}' must specify {propertyName}");
+      }
 
       var value = definition.DataType switch
       {
@@ -220,7 +264,7 @@ namespace Yoma.Core.Domain.Core.Services
     private static string NormalizeString(CustomFieldDefinition definition, CustomFieldValueRequest request)
     {
       if (request.Values != null)
-        throw new ValidationException($"Custom field '{definition.Title}' expects a single value");
+        throw new ValidationException($"Custom field '{definition.Title}' must specify value; values is only supported for option fields");
 
       return request.Value!.Trim();
     }
@@ -228,7 +272,7 @@ namespace Yoma.Core.Domain.Core.Services
     private static string NormalizeInteger(CustomFieldDefinition definition, CustomFieldValueRequest request)
     {
       if (request.Values != null)
-        throw new ValidationException($"Custom field '{definition.Title}' expects a single value");
+        throw new ValidationException($"Custom field '{definition.Title}' must specify value; values is only supported for option fields");
 
       if (!int.TryParse(request.Value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var value))
         throw new ValidationException($"Custom field '{definition.Title}' must be a valid integer");
@@ -239,7 +283,7 @@ namespace Yoma.Core.Domain.Core.Services
     private static string NormalizeDecimal(CustomFieldDefinition definition, CustomFieldValueRequest request)
     {
       if (request.Values != null)
-        throw new ValidationException($"Custom field '{definition.Title}' expects a single value");
+        throw new ValidationException($"Custom field '{definition.Title}' must specify value; values is only supported for option fields");
 
       if (!decimal.TryParse(request.Value, NumberStyles.Number, CultureInfo.InvariantCulture, out var value))
         throw new ValidationException($"Custom field '{definition.Title}' must be a valid decimal");
@@ -250,7 +294,7 @@ namespace Yoma.Core.Domain.Core.Services
     private static string NormalizeBoolean(CustomFieldDefinition definition, CustomFieldValueRequest request)
     {
       if (request.Values != null)
-        throw new ValidationException($"Custom field '{definition.Title}' expects a single value");
+        throw new ValidationException($"Custom field '{definition.Title}' must specify value; values is only supported for option fields");
 
       if (!bool.TryParse(request.Value, out var value))
         throw new ValidationException($"Custom field '{definition.Title}' must be true or false");
@@ -261,7 +305,7 @@ namespace Yoma.Core.Domain.Core.Services
     private static string NormalizeDateTime(CustomFieldDefinition definition, CustomFieldValueRequest request)
     {
       if (request.Values != null)
-        throw new ValidationException($"Custom field '{definition.Title}' expects a single value");
+        throw new ValidationException($"Custom field '{definition.Title}' must specify value; values is only supported for option fields");
 
       if (!DateTimeOffset.TryParse(request.Value, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var value))
         throw new ValidationException($"Custom field '{definition.Title}' must be a valid date/time");
@@ -269,33 +313,48 @@ namespace Yoma.Core.Domain.Core.Services
       return value.ToUniversalTime().ToString("O", CultureInfo.InvariantCulture);
     }
 
-    private static string NormalizeOption(CustomFieldDefinition definition, CustomFieldValueRequest request)
+    private string NormalizeOption(CustomFieldDefinition definition, CustomFieldValueRequest request)
     {
-      if (definition.SupportsMultiple == true)
+      if (request.Values == null || request.Values.Count == 0)
+        throw new ValidationException($"Custom field '{definition.Title}' must specify values; value is not supported for option fields");
+
+      if (request.Values.Any(string.IsNullOrWhiteSpace))
+        throw new ValidationException($"Custom field '{definition.Title}' contains an empty option value");
+
+      if (definition.SupportsMultiple != true && request.Values.Count != 1)
+        throw new ValidationException($"Custom field '{definition.Title}' is single-select and must specify exactly one item in values");
+
+      var values = request.Values
+        .Select(o => NormalizeOptionValue(definition, o))
+        .Distinct(StringComparer.OrdinalIgnoreCase)
+        .ToList();
+
+      if (definition.SupportsMultiple != true)
+        return values.Single();
+
+      return new CustomFieldValue
       {
-        if (request.Values == null || request.Values.Count == 0)
-          throw new ValidationException($"Custom field '{definition.Title}' expects one or more values");
-
-        var values = request.Values.Select(o => o.Trim()).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
-
-        return new CustomFieldValue
-        {
-          Values = [.. values.Select(o => NormalizeOptionValue(definition, o))]
-        }.Value!;
-      }
-
-      if (request.Values != null)
-        throw new ValidationException($"Custom field '{definition.Title}' expects a single value");
-
-      return NormalizeOptionValue(definition, request.Value!);
+        Values = values
+      }.Value!;
     }
 
-    private static string NormalizeOptionValue(CustomFieldDefinition definition, string value)
+    private string NormalizeOptionValue(CustomFieldDefinition definition, string value)
     {
       value = value.Trim();
 
       if (value.Contains(CustomFieldValue.Value_Delimiter))
-        throw new ValidationException($"Custom field '{definition.Title}' contains an invalid option value");
+        throw new ValidationException(
+          $"Custom field '{definition.Title}' contains an invalid option value");
+
+      if (definition.LookupType.HasValue)
+      {
+        var normalized = NormalizeLookupValue(
+          definition.LookupType.Value,
+          value);
+
+        return normalized ?? throw new ValidationException(
+          $"Custom field '{definition.Title}' contains an invalid lookup value: {value}");
+      }
 
       var option = definition.Options?
         .SingleOrDefault(o =>
@@ -303,7 +362,8 @@ namespace Yoma.Core.Domain.Core.Services
           string.Equals(o.Key, value, StringComparison.OrdinalIgnoreCase));
 
       return option == null
-        ? throw new ValidationException($"Custom field '{definition.Title}' contains an invalid option value: {value}")
+        ? throw new ValidationException(
+          $"Custom field '{definition.Title}' contains an invalid option value: {value}")
         : option.Key;
     }
 
@@ -369,7 +429,7 @@ namespace Yoma.Core.Domain.Core.Services
       }
     }
 
-    private static void NormalizeFilterValues(CustomFieldDefinition definition, CustomFieldFilter filter)
+    private void NormalizeFilterValues(CustomFieldDefinition definition, CustomFieldFilter filter)
     {
       switch (filter.Operator)
       {
@@ -401,7 +461,7 @@ namespace Yoma.Core.Domain.Core.Services
       }
     }
 
-    private static string NormalizeFilterValue(CustomFieldDefinition definition, string value)
+    private string NormalizeFilterValue(CustomFieldDefinition definition, string value)
     {
       var request = new CustomFieldValueRequest
       {
@@ -434,6 +494,30 @@ namespace Yoma.Core.Domain.Core.Services
       };
     }
 
+    private string? NormalizeLookupValue(CustomFieldLookupType lookupType, string value)
+    {
+      value = value.Trim();
+      if (string.IsNullOrEmpty(value)) return null;
+
+      if (!Guid.TryParse(value, out var id) || id == Guid.Empty)
+        return null;
+
+      return lookupType switch
+      {
+        CustomFieldLookupType.Country =>
+          _countryService.GetByIdOrNull(id)?.Id.ToString(),
+
+        CustomFieldLookupType.Language =>
+          _languageService.GetByIdOrNull(id)?.Id.ToString(),
+
+        CustomFieldLookupType.Skill =>
+          _skillService.GetByIdOrNull(id)?.Id.ToString(),
+
+        _ => throw new ArgumentOutOfRangeException(
+          nameof(lookupType),
+          $"Custom field lookup type '{lookupType}' is not supported")
+      };
+    }
 
     #endregion
   }

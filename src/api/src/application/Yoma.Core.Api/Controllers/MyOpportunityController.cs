@@ -304,7 +304,9 @@ namespace Yoma.Core.Api.Controllers
       return StatusCode((int)HttpStatusCode.OK);
     }
 
-    [SwaggerOperation(Summary = "Complete an opportunity by applying for verification (Authenticated User)")]
+    [SwaggerOperation(
+      Summary = "Complete an opportunity by applying for verification (Authenticated User)",
+      Description = "Expects multipart/form-data. Custom fields must be supplied as a JSON-serialized array in the 'customFields' form field. Verification evidence files are supplied as regular multipart file parts.")]
     [HttpPut("action/{opportunityId}/verify")]
     [ProducesResponseType((int)HttpStatusCode.OK)]
     [Authorize(Roles = $"{Constants.Role_User}")]

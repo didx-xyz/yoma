@@ -84,6 +84,23 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
         });
 
       migrationBuilder.InsertData(
+        table: "CustomFieldDefinition",
+        schema: "Core",
+        columns:
+        [
+          "Id", "EntityType", "EntityContext", "Key", "Title", "Description", "Group", "SubGroup", "DataType", "LookupType",
+          "ValidationRegex", "ValidationErrorMessage", "IsRequired", "SupportsMultiple", "SortOrder", "IsActive", "IsSystem",
+          "DateCreated", "DateModified"
+        ],
+        values: new object?[,]
+        {
+          // Existing lookup values are loaded through the public lookup endpoints and submitted using their GUID IDs.
+          { "A1000000-0000-4000-8000-000000000020", "Opportunity", null, "sampleReferenceCountry", "[Sample] Reference Country", TemporaryDescription, "[Sample] Lookup References", "Location", "Option", "Country", null, null, false, false, 10, true, false, dateCreated, dateCreated },
+          { "A1000000-0000-4000-8000-000000000021", "Opportunity", null, "sampleReferenceLanguages", "[Sample] Reference Languages", TemporaryDescription, "[Sample] Lookup References", "Communication", "Option", "Language", null, null, false, true, 20, true, false, dateCreated, dateCreated },
+          { "B1000000-0000-4000-8000-000000000018", "MyOpportunity", null, "sampleReferenceSkills", "[Sample] Reference Skills", TemporaryDescription, "[Sample] Lookup References", "Skills", "Option", "Skill", null, null, false, true, 10, true, false, dateCreated, dateCreated }
+        });
+
+      migrationBuilder.InsertData(
         table: "CustomFieldOption",
         schema: "Core",
         columns: ["Id", "CustomFieldDefinitionId", "Key", "Name", "SortOrder", "IsActive", "DateCreated", "DateModified"],

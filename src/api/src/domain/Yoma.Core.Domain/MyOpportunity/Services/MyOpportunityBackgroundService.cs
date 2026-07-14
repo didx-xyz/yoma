@@ -395,7 +395,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             }
           }
 
-          await _myOpportunityService.PerformActionSendForVerificationManual(item.UserId, item.OpportunityId, request, true);
+          await _myOpportunityService.PerformActionSendForVerificationManualSeed(item.UserId, item.OpportunityId, request, true);
 
         }
         catch (FluentValidation.ValidationException ex)

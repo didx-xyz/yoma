@@ -882,7 +882,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       await _myOpportunityRepository.Delete(myOpportunity);
     }
 
-    public async Task PerformActionSendForVerificationManual(Guid userId, Guid opportunityId, MyOpportunityRequestVerify request, bool overridePending)
+    public async Task PerformActionSendForVerificationManualSeed(Guid userId, Guid opportunityId, MyOpportunityRequestVerify request, bool overridePending)
     {
       var user = _userService.GetById(userId, false, false);
 
@@ -891,7 +891,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         RequiredVerificationMethod = VerificationMethod.Manual,
         OverridePending = overridePending,
         MutateBlobStorage = true,
-        UpsertCustomFields = true,
+        UpsertCustomFields = false,
       };
 
       await PerformActionSendForVerification(user, opportunityId, request, options);
@@ -2053,10 +2053,16 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       myOpportunity.StarRating = request.StarRating;
       myOpportunity.Feedback = request.Feedback;
 
+      // Validate before processing because a new MyOpportunity must be persisted before
+      // its custom field values can be inserted. Upsert validates and normalizes again
+      // intentionally so it remains safe as a standalone operation.
+      if (options.UpsertCustomFields)
+        _customFieldValueService.Validate(CustomFieldEntityType.MyOpportunity, opportunity.Type.ToString(), request.CustomFields);
+
       myOpportunity = await PerformActionSendForVerificationProcessVerificationTypes(request, opportunity, myOpportunity, options, isNew);
 
       if (options.UpsertCustomFields)
-        myOpportunity.CustomFields = await _customFieldValueService.Upsert(CustomFieldEntityType.MyOpportunity, opportunity.Type.ToString(), null, myOpportunity.Id, request.CustomFields);
+        myOpportunity.CustomFields = await _customFieldValueService.Upsert(CustomFieldEntityType.MyOpportunity, opportunity.Type.ToString(), null, null, myOpportunity.Id, request.CustomFields);
 
       //used by notifications
       myOpportunity.Username = user.Username;

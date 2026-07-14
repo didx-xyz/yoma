@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
+using Yoma.Core.Domain.Core.Binders;
 using Yoma.Core.Domain.Core.Models;
 
 namespace Yoma.Core.Domain.MyOpportunity.Models
@@ -39,6 +41,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
 
     public string? Feedback { get; set; }
 
+    [JsonFormData]
     public List<CustomFieldValueRequest>? CustomFields { get; set; }
   }
 }

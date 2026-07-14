@@ -224,4 +224,22 @@ namespace Yoma.Core.Domain.Core
     AllOf,
     Exists
   }
+
+  public enum CustomFieldLookupType
+  {
+    /// <summary>
+    /// Country lookup values are available from the public relative route <c>api/v3/lookup/country</c>.
+    /// </summary>
+    Country,
+
+    /// <summary>
+    /// Language lookup values are available from the public relative route <c>api/v3/lookup/language</c>.
+    /// </summary>
+    Language,
+
+    /// <summary>
+    /// Skill lookup values are available from the public relative route <c>api/v3/lookup/skill</c>.
+    /// </summary>
+    Skill
+  }
 }

@@ -12,7 +12,7 @@ using Yoma.Core.Infrastructure.Database.Context;
 namespace Yoma.Core.Infrastructure.Database.Migrations
 {
   [DbContext(typeof(ApplicationDbContext))]
-  [Migration("20260713091435_ApplicationDb_Custom_Fields")]
+  [Migration("20260714053325_ApplicationDb_Custom_Fields")]
   partial class ApplicationDb_Custom_Fields
   {
     /// <inheritdoc />
@@ -269,6 +269,9 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.Property<string>("Key")
                       .IsRequired()
                       .HasColumnType("varchar(100)");
+
+            b.Property<string>("LookupType")
+                      .HasColumnType("varchar(50)");
 
             b.Property<int>("SortOrder")
                       .HasColumnType("integer");

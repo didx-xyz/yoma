@@ -67,10 +67,6 @@ namespace Yoma.Core.Domain.Core.Services
     #endregion
 
     #region Private Members
-    // TODO: If phase 1 custom fields need options from existing reference lists
-    // (e.g. countries, languages, skills, categories), extend definitions with an
-    // option source and resolve/cache those options through the relevant lookup services.
-    // For now, custom field options are sourced from CustomFieldOption only.
     private List<CustomFieldDefinition> ListCached()
     {
       if (!_appSettings.CacheEnabledByCacheItemTypesAsEnum.HasFlag(CacheItemType.Lookups))
@@ -100,6 +96,8 @@ namespace Yoma.Core.Domain.Core.Services
 
     private static CustomFieldDefinition ToResult(CustomFieldDefinition definition, bool includeChildItems, bool activeOnly)
     {
+      if (activeOnly) ValidateConfiguration(definition);
+
       return new CustomFieldDefinition
       {
         Id = definition.Id,
@@ -109,6 +107,7 @@ namespace Yoma.Core.Domain.Core.Services
         Title = definition.Title,
         Description = definition.Description,
         DataType = definition.DataType,
+        LookupType = definition.LookupType,
         IsRequired = definition.IsRequired,
         SupportsMultiple = definition.SupportsMultiple,
         Group = definition.Group,
@@ -117,14 +116,42 @@ namespace Yoma.Core.Domain.Core.Services
         ValidationRegex = definition.ValidationRegex,
         ValidationErrorMessage = definition.ValidationErrorMessage,
         IsActive = definition.IsActive,
+        IsSystem = definition.IsSystem,
         DateCreated = definition.DateCreated,
         DateModified = definition.DateModified,
-        Options = !includeChildItems || definition.Options == null
-          ? null
-          : activeOnly
-            ? [.. definition.Options.Where(o => o.IsActive)]
-            : [.. definition.Options]
+        Options = ToOptions(definition, includeChildItems, activeOnly)
       };
+    }
+
+    private static List<CustomFieldOption>? ToOptions(CustomFieldDefinition definition, bool includeChildItems, bool activeOnly)
+    {
+      if (!includeChildItems || definition.Options == null)
+        return null;
+
+      if (activeOnly && definition.LookupType.HasValue)
+        return null;
+
+      var options = definition.Options.AsEnumerable();
+
+      if (activeOnly)
+        options = options.Where(o => o.IsActive);
+
+      return [.. options];
+    }
+
+    private static void ValidateConfiguration(CustomFieldDefinition definition)
+    {
+      if (!definition.LookupType.HasValue) return;
+
+      if (definition.DataType != CustomFieldDataType.Option)
+        throw new InvalidOperationException(
+          $"Custom field definition '{definition.Key}' references lookup " +
+          $"'{definition.LookupType}' but is not an option field");
+
+      if (definition.Options?.Any(o => o.IsActive) == true)
+        throw new InvalidOperationException(
+          $"Custom field definition '{definition.Key}' references lookup " +
+          $"'{definition.LookupType}' and contains active custom options");
     }
     #endregion
   }

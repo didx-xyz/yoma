@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.OpenApi;
+using Newtonsoft.Json;
 using StackExchange.Redis;
 using System.Net.Mime;
 using tusdotnet.Helpers;
@@ -100,12 +101,17 @@ namespace Yoma.Core.Api
       })
       .AddNewtonsoftJson(options =>
       {
+        // Prevent date-like JSON strings from being parsed before the destination type is known.
+        // DateTime and DateTimeOffset properties are still parsed according to their declared types.
+        options.SerializerSettings.DateParseHandling = DateParseHandling.None;
+
         options.SerializerSettings.Converters.Add(new StrictStringEnumConverter //extends Newtonsoft.Json StringEnumConverter
         {
           AllowIntegerValues = true,
           RejectUndefinedValues = true,
           // no NamingStrategy set → default (PascalCase) output
         });
+
         options.SerializerSettings.Converters.Add(new StringTrimmingConverter());
       });
 
@@ -405,6 +411,7 @@ namespace Yoma.Core.Api
         });
 
         c.OperationFilter<ProducesResponseTypesErrorFilter>();
+        c.OperationFilter<JsonFormDataOperationFilter>();
 
         c.AddSecurityDefinition(Constants.AuthenticationScheme_ClientCredentials, new OpenApiSecurityScheme
         {

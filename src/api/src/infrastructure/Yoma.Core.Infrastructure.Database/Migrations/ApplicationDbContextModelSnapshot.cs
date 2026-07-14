@@ -267,6 +267,9 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                       .IsRequired()
                       .HasColumnType("varchar(100)");
 
+            b.Property<string>("LookupType")
+                      .HasColumnType("varchar(50)");
+
             b.Property<int>("SortOrder")
                       .HasColumnType("integer");
 

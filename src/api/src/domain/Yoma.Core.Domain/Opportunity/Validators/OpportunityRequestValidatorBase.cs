@@ -280,7 +280,7 @@ namespace Yoma.Core.Domain.Opportunity.Validators
 
         field.RuleFor(x => x)
           .Must(CustomFieldValueSpecified)
-          .WithMessage("Custom field must specify either value or values.");
+          .WithMessage("Custom field must specify exactly one of value or values; values must contain at least one item.");
 
         field.RuleFor(x => x.Value)
           .Must(value => string.IsNullOrWhiteSpace(value) || !value.Contains(CustomFieldValue.Value_Delimiter))
