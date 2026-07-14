@@ -80,7 +80,7 @@ namespace Yoma.Core.Domain.Opportunity.Interfaces
 
     Task<Models.Opportunity> RemoveVerificationTypes(Guid id, List<VerificationType> verificationTypes, bool ensureOrganizationAuthorization);
 
-    List<CustomFieldDefinition> ListCustomFieldDefinitions(Type type);
+    List<CustomFieldDefinition> ListCustomFieldDefinitions(List<Type>? types);
 
     List<CustomFieldDefinition> ListCustomFieldDefinitions(Guid id);
   }

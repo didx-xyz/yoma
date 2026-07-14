@@ -208,6 +208,22 @@ namespace Yoma.Core.Api.Controllers
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
+
+    [SwaggerOperation(Summary = "Return active custom field definitions for the supplied opportunity types (Anonymous)",
+      Description = "When no types are supplied, only definitions applicable to all opportunity types are returned")]
+    [HttpGet("custom/field/definition")]
+    [ProducesResponseType(typeof(List<CustomFieldDefinition>), (int)HttpStatusCode.OK)]
+    [AllowAnonymous]
+    public IActionResult ListCustomFieldDefinitions([FromQuery] List<Domain.Opportunity.Type>? types)
+    {
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(ListCustomFieldDefinitions));
+
+      var result = _opportunityService.ListCustomFieldDefinitions(types);
+
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(ListCustomFieldDefinitions));
+
+      return StatusCode((int)HttpStatusCode.OK, result);
+    }
     #endregion
 
     #region Authenticated User Based Actions
@@ -654,21 +670,6 @@ namespace Yoma.Core.Api.Controllers
       if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(RemoveVerificationTypes));
 
       return StatusCode((int)HttpStatusCode.OK);
-    }
-
-    [SwaggerOperation(Summary = "Return active custom field definitions for an opportunity type")]
-    [HttpGet("custom/field/definition")]
-    [ProducesResponseType(typeof(List<CustomFieldDefinition>), (int)HttpStatusCode.OK)]
-    [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
-    public IActionResult ListCustomFieldDefinitions([FromQuery] Domain.Opportunity.Type type)
-    {
-      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(ListCustomFieldDefinitions));
-
-      var result = _opportunityService.ListCustomFieldDefinitions(type);
-
-      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(ListCustomFieldDefinitions));
-
-      return StatusCode((int)HttpStatusCode.OK, result);
     }
 
     [SwaggerOperation(Summary = "Return active custom field definitions for an opportunity")]

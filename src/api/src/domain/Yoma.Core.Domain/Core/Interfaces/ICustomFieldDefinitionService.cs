@@ -7,5 +7,7 @@ namespace Yoma.Core.Domain.Core.Interfaces
     CustomFieldDefinition GetByKey(CustomFieldEntityType entityType, string key, bool includeChildItems, bool activeOnly);
 
     List<CustomFieldDefinition> List(CustomFieldEntityType entityType, string? entityContext, bool includeChildItems, bool activeOnly);
+
+    List<CustomFieldDefinition> List(CustomFieldEntityType entityType, List<string>? entityContexts, bool includeChildItems, bool activeOnly);
   }
 }

@@ -1986,9 +1986,14 @@ namespace Yoma.Core.Domain.Opportunity.Services
       return result;
     }
 
-    public List<CustomFieldDefinition> ListCustomFieldDefinitions(Type type)
+    public List<CustomFieldDefinition> ListCustomFieldDefinitions(List<Type>? types)
     {
-      return _customFieldDefinitionService.List(CustomFieldEntityType.Opportunity, type.ToString(), true, true);
+      var contexts = types?
+        .Distinct()
+        .Select(o => o.ToString())
+        .ToList();
+
+      return _customFieldDefinitionService.List(CustomFieldEntityType.Opportunity, contexts, true, true);
     }
 
     public List<CustomFieldDefinition> ListCustomFieldDefinitions(Guid id)

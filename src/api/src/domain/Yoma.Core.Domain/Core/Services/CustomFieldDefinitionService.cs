@@ -24,7 +24,6 @@ namespace Yoma.Core.Domain.Core.Services
     // - Produce the final Opportunity CSV sample using approved fields.
     // - Produce the final MyOpportunity completion CSV sample using approved fields.
     // - Expose applicable custom fields to SSI credential schema source-field discovery.
-    // - Confirm definition discovery for public Opportunity filters and MyOpportunity filters spanning types.
     // - Test CSV exports using custom-field filters.
     // - Complete final authorization-boundary and regression testing.
     #region Class Variables
@@ -68,9 +67,21 @@ namespace Yoma.Core.Domain.Core.Services
 
     public List<CustomFieldDefinition> List(CustomFieldEntityType entityType, string? entityContext, bool includeChildItems, bool activeOnly)
     {
+      return List(entityType, string.IsNullOrEmpty(entityContext) ? null : [entityContext], includeChildItems, activeOnly);
+    }
+
+    public List<CustomFieldDefinition> List(CustomFieldEntityType entityType, List<string>? entityContexts, bool includeChildItems, bool activeOnly)
+    {
+      var contexts = entityContexts?
+        .Select(o => o.Trim())
+        .Where(o => !string.IsNullOrEmpty(o))
+        .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+      if (contexts?.Count == 0) contexts = null;
+
       var query = ListCached()
         .Where(o => o.EntityType == entityType.ToString()
-          && (o.EntityContext == null || o.EntityContext == entityContext));
+          && (o.EntityContext == null || (contexts != null && contexts.Contains(o.EntityContext))));
 
       if (activeOnly)
         query = query.Where(o => o.IsActive);
