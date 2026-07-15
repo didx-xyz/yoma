@@ -362,6 +362,7 @@ namespace Yoma.Core.Api
     private void ConfigureRedis(IServiceCollection services, IConfiguration configuration)
     {
       const string RedisKey_DataProtection = "yoma.core.api:keys:data_protection";
+      const string ApplicationName_DataProtection = "yoma.core.api";
 
       var connectionString = configuration.GetConnectionString(ConnectionStrings_RedisConnection);
       if (string.IsNullOrWhiteSpace(connectionString))
@@ -377,7 +378,9 @@ namespace Yoma.Core.Api
 
       var connectionMultiplexer = ConnectionMultiplexer.Connect(options);
       services.AddSingleton<IConnectionMultiplexer>(connectionMultiplexer);
-      services.AddDataProtection().PersistKeysToStackExchangeRedis(connectionMultiplexer, RedisKey_DataProtection);
+      services.AddDataProtection()
+        .SetApplicationName(ApplicationName_DataProtection)
+        .PersistKeysToStackExchangeRedis(connectionMultiplexer, RedisKey_DataProtection);
     }
 
     private void ConfigureSwagger(IServiceCollection services)
