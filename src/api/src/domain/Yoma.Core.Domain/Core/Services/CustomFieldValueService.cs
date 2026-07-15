@@ -110,6 +110,7 @@ namespace Yoma.Core.Domain.Core.Services
         var definition = _customFieldDefinitionService.GetByKey(entityType, filter.Key, true, true);
 
         filter.Key = definition.Key;
+        filter.CustomFieldDefinitionId = definition.Id;
         filter.DataType = definition.DataType;
 
         ValidateFilterOperator(definition, filter);
@@ -205,6 +206,8 @@ namespace Yoma.Core.Domain.Core.Services
           }
 
           existingValue.Value = value.Value;
+          existingValue.ValueNumeric = value.ValueNumeric;
+          existingValue.ValueDateTime = value.ValueDateTime;
           await _customFieldValueRepository.Update(existingValue);
         }
 
@@ -314,11 +317,14 @@ namespace Yoma.Core.Domain.Core.Services
           continue;
         }
 
-        values.Add(new CustomFieldValue
+        var customFieldValue = new CustomFieldValue
         {
           CustomFieldDefinitionId = definition.Id,
           Value = value
-        });
+        };
+
+        SetTypedValues(definition, customFieldValue);
+        values.Add(customFieldValue);
       }
 
       return (definitions, values, definitionIdsToDelete);
@@ -365,6 +371,24 @@ namespace Yoma.Core.Domain.Core.Services
         default:
           throw new ArgumentOutOfRangeException(nameof(entityType), $"Entity type '{entityType}' is not supported");
       }
+    }
+
+    private static void SetTypedValues(CustomFieldDefinition definition, CustomFieldValue value)
+    {
+      value.ValueNumeric = definition.DataType switch
+      {
+        CustomFieldDataType.Integer or CustomFieldDataType.Decimal =>
+          decimal.Parse(value.Value, NumberStyles.Number, CultureInfo.InvariantCulture),
+
+        _ => null
+      };
+
+      value.ValueDateTime = definition.DataType == CustomFieldDataType.DateTime
+        ? DateTimeOffset.Parse(
+          value.Value,
+          CultureInfo.InvariantCulture,
+          DateTimeStyles.RoundtripKind)
+        : null;
     }
 
     private string? Normalize(CustomFieldDefinition definition, CustomFieldValueRequest request)
@@ -586,8 +610,18 @@ namespace Yoma.Core.Domain.Core.Services
 
         CustomFieldDataType.Integer or
         CustomFieldDataType.Decimal or
-        CustomFieldDataType.Boolean or
         CustomFieldDataType.DateTime =>
+          filter.Operator is
+            CustomFieldFilterOperator.Equals or
+            CustomFieldFilterOperator.AnyOf or
+            CustomFieldFilterOperator.Exists or
+            CustomFieldFilterOperator.GreaterThan or
+            CustomFieldFilterOperator.GreaterThanOrEqual or
+            CustomFieldFilterOperator.LessThan or
+            CustomFieldFilterOperator.LessThanOrEqual or
+            CustomFieldFilterOperator.Between,
+
+        CustomFieldDataType.Boolean =>
           filter.Operator is
             CustomFieldFilterOperator.Equals or
             CustomFieldFilterOperator.AnyOf or
@@ -627,7 +661,17 @@ namespace Yoma.Core.Domain.Core.Services
           return;
 
         case CustomFieldFilterOperator.Equals:
+        case CustomFieldFilterOperator.GreaterThan:
+        case CustomFieldFilterOperator.GreaterThanOrEqual:
+        case CustomFieldFilterOperator.LessThan:
+        case CustomFieldFilterOperator.LessThanOrEqual:
           filter.Value = NormalizeFilterValue(definition, filter.Value!);
+          return;
+
+        case CustomFieldFilterOperator.Between:
+          filter.Value = NormalizeFilterValue(definition, filter.Value!);
+          filter.ValueTo = NormalizeFilterValue(definition, filter.ValueTo!);
+          ValidateFilterRange(definition, filter);
           return;
 
         case CustomFieldFilterOperator.AnyOf:
@@ -645,6 +689,27 @@ namespace Yoma.Core.Domain.Core.Services
             nameof(filter),
             $"Custom field filter operator '{filter.Operator}' is not supported");
       }
+    }
+
+    private static void ValidateFilterRange(CustomFieldDefinition definition, CustomFieldFilter filter)
+    {
+      var valid = definition.DataType switch
+      {
+        CustomFieldDataType.Integer or CustomFieldDataType.Decimal =>
+          decimal.Parse(filter.Value!, NumberStyles.Number, CultureInfo.InvariantCulture) <=
+          decimal.Parse(filter.ValueTo!, NumberStyles.Number, CultureInfo.InvariantCulture),
+
+        CustomFieldDataType.DateTime =>
+          DateTimeOffset.Parse(filter.Value!, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind) <=
+          DateTimeOffset.Parse(filter.ValueTo!, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind),
+
+        _ => throw new InvalidOperationException(
+          $"Custom field data type '{definition.DataType}' does not support range filtering")
+      };
+
+      if (!valid)
+        throw new ValidationException(
+          $"Custom field '{definition.Title}' range lower bound must be less than or equal to its upper bound");
     }
 
     private string NormalizeFilterValue(CustomFieldDefinition definition, string value)

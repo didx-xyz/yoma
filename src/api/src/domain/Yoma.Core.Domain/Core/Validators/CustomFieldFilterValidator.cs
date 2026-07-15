@@ -20,6 +20,10 @@ namespace Yoma.Core.Domain.Core.Validators
         .Must(o => o == null || !o.Contains(CustomFieldValue.Value_Delimiter))
         .WithMessage("{PropertyName} contains an invalid delimiter.");
 
+      RuleFor(o => o.ValueTo)
+        .Must(o => o == null || !o.Contains(CustomFieldValue.Value_Delimiter))
+        .WithMessage("{PropertyName} contains an invalid delimiter.");
+
       RuleFor(o => o.Values)
         .Must(values => values == null ||
           values.All(o =>
@@ -42,20 +46,28 @@ namespace Yoma.Core.Domain.Core.Validators
     private static bool HasValidValueShape(CustomFieldFilter filter)
     {
       var hasValue = !string.IsNullOrWhiteSpace(filter.Value);
+      var hasValueTo = !string.IsNullOrWhiteSpace(filter.ValueTo);
       var hasValues = filter.Values?.Count > 0;
 
       return filter.Operator switch
       {
         CustomFieldFilterOperator.Exists =>
-          !hasValue && !hasValues,
+          !hasValue && !hasValueTo && !hasValues,
 
         CustomFieldFilterOperator.Equals or
-        CustomFieldFilterOperator.Contains =>
-          hasValue && !hasValues,
+        CustomFieldFilterOperator.Contains or
+        CustomFieldFilterOperator.GreaterThan or
+        CustomFieldFilterOperator.GreaterThanOrEqual or
+        CustomFieldFilterOperator.LessThan or
+        CustomFieldFilterOperator.LessThanOrEqual =>
+          hasValue && !hasValueTo && !hasValues,
 
         CustomFieldFilterOperator.AnyOf or
         CustomFieldFilterOperator.AllOf =>
-          !hasValue && hasValues,
+          !hasValue && !hasValueTo && hasValues,
+
+        CustomFieldFilterOperator.Between =>
+          hasValue && hasValueTo && !hasValues,
 
         _ => false
       };

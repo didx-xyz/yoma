@@ -1,12 +1,9 @@
-using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Yoma.Core.Infrastructure.Database.Core.Entities
 {
   [Table("CustomFieldValue", Schema = "Core")]
-  [Index(nameof(CustomFieldDefinitionId), nameof(OpportunityId))]
-  [Index(nameof(CustomFieldDefinitionId), nameof(MyOpportunityId))]
   public sealed class CustomFieldValue : Shared.Entities.BaseEntity<Guid>
   {
     [Required]
@@ -19,6 +16,10 @@ namespace Yoma.Core.Infrastructure.Database.Core.Entities
     [Required]
     [Column(TypeName = "text")]
     public string Value { get; set; } = null!;
+
+    public decimal? ValueNumeric { get; set; }
+
+    public DateTimeOffset? ValueDateTime { get; set; }
 
     [Required]
     public DateTimeOffset DateCreated { get; set; }

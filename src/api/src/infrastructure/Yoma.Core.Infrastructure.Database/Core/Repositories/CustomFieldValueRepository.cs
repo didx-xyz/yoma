@@ -28,6 +28,8 @@ namespace Yoma.Core.Infrastructure.Database.Core.Repositories
         OpportunityId = entity.OpportunityId,
         MyOpportunityId = entity.MyOpportunityId,
         Value = entity.Value,
+        ValueNumeric = entity.ValueNumeric,
+        ValueDateTime = entity.ValueDateTime,
         DateCreated = entity.DateCreated,
         DateModified = entity.DateModified
       });
@@ -45,6 +47,8 @@ namespace Yoma.Core.Infrastructure.Database.Core.Repositories
         OpportunityId = item.OpportunityId,
         MyOpportunityId = item.MyOpportunityId,
         Value = item.Value,
+        ValueNumeric = item.ValueNumeric,
+        ValueDateTime = item.ValueDateTime,
         DateCreated = item.DateCreated,
         DateModified = item.DateModified
       };
@@ -68,6 +72,8 @@ namespace Yoma.Core.Infrastructure.Database.Core.Repositories
       entity.OpportunityId = item.OpportunityId;
       entity.MyOpportunityId = item.MyOpportunityId;
       entity.Value = item.Value;
+      entity.ValueNumeric = item.ValueNumeric;
+      entity.ValueDateTime = item.ValueDateTime;
       entity.DateModified = item.DateModified;
 
       await _context.SaveChangesAsync();

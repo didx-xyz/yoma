@@ -293,6 +293,20 @@ namespace Yoma.Core.Infrastructure.Database.Context
           .HasOperators("gin_trgm_ops")
           .HasDatabaseName("IX_CustomFieldValue_Value_GIN_Trgm");
 
+        entity.HasIndex(o => o.CustomFieldDefinitionId)
+          .IncludeProperties(o => new { o.OpportunityId, o.MyOpportunityId })
+          .HasDatabaseName("IX_CustomFieldValue_Definition");
+
+        entity.HasIndex(o => new { o.CustomFieldDefinitionId, o.ValueNumeric })
+          .IncludeProperties(o => new { o.OpportunityId, o.MyOpportunityId })
+          .HasFilter($"\"{nameof(Core.Entities.CustomFieldValue.ValueNumeric)}\" IS NOT NULL")
+          .HasDatabaseName("IX_CustomFieldValue_Definition_ValueNumeric");
+
+        entity.HasIndex(o => new { o.CustomFieldDefinitionId, o.ValueDateTime })
+          .IncludeProperties(o => new { o.OpportunityId, o.MyOpportunityId })
+          .HasFilter($"\"{nameof(Core.Entities.CustomFieldValue.ValueDateTime)}\" IS NOT NULL")
+          .HasDatabaseName("IX_CustomFieldValue_Definition_ValueDateTime");
+
         entity.HasIndex(e => new { e.OpportunityId, e.CustomFieldDefinitionId })
           .IsUnique()
           .HasFilter($"\"{nameof(Core.Entities.CustomFieldValue.OpportunityId)}\" IS NOT NULL");
@@ -516,6 +530,16 @@ namespace Yoma.Core.Infrastructure.Database.Context
           .HasForeignKey(o => o.ModifiedByUserId)
           .OnDelete(DeleteBehavior.NoAction);
       #endregion Treasury
+
+      // Entity deletion is orchestrated explicitly by domain services.
+      // Prevent required relationships from inheriting EF's cascade-delete convention.
+      foreach (var foreignKey in builder.Model
+        .GetEntityTypes()
+        .SelectMany(o => o.GetForeignKeys())
+        .Where(o => o.DeleteBehavior == DeleteBehavior.Cascade))
+      {
+        foreignKey.DeleteBehavior = DeleteBehavior.NoAction;
+      }
     }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)

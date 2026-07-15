@@ -12,7 +12,7 @@ using Yoma.Core.Infrastructure.Database.Context;
 namespace Yoma.Core.Infrastructure.Database.Migrations
 {
   [DbContext(typeof(ApplicationDbContext))]
-  [Migration("20260714053325_ApplicationDb_Custom_Fields")]
+  [Migration("20260715053013_ApplicationDb_Custom_Fields")]
   partial class ApplicationDb_Custom_Fields
   {
     /// <inheritdoc />
@@ -369,7 +369,18 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                       .IsRequired()
                       .HasColumnType("text");
 
+            b.Property<DateTimeOffset?>("ValueDateTime")
+                      .HasColumnType("timestamp with time zone");
+
+            b.Property<decimal?>("ValueNumeric")
+                      .HasColumnType("numeric");
+
             b.HasKey("Id");
+
+            b.HasIndex("CustomFieldDefinitionId")
+                      .HasDatabaseName("IX_CustomFieldValue_Definition");
+
+            NpgsqlIndexBuilderExtensions.IncludeProperties(b.HasIndex("CustomFieldDefinitionId"), new[] { "OpportunityId", "MyOpportunityId" });
 
             b.HasIndex("Value")
                       .HasDatabaseName("IX_CustomFieldValue_Value_GIN_Trgm");
@@ -377,9 +388,17 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("Value"), "GIN");
             NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex("Value"), new[] { "gin_trgm_ops" });
 
-            b.HasIndex("CustomFieldDefinitionId", "MyOpportunityId");
+            b.HasIndex("CustomFieldDefinitionId", "ValueDateTime")
+                      .HasDatabaseName("IX_CustomFieldValue_Definition_ValueDateTime")
+                      .HasFilter("\"ValueDateTime\" IS NOT NULL");
 
-            b.HasIndex("CustomFieldDefinitionId", "OpportunityId");
+            NpgsqlIndexBuilderExtensions.IncludeProperties(b.HasIndex("CustomFieldDefinitionId", "ValueDateTime"), new[] { "OpportunityId", "MyOpportunityId" });
+
+            b.HasIndex("CustomFieldDefinitionId", "ValueNumeric")
+                      .HasDatabaseName("IX_CustomFieldValue_Definition_ValueNumeric")
+                      .HasFilter("\"ValueNumeric\" IS NOT NULL");
+
+            NpgsqlIndexBuilderExtensions.IncludeProperties(b.HasIndex("CustomFieldDefinitionId", "ValueNumeric"), new[] { "OpportunityId", "MyOpportunityId" });
 
             b.HasIndex("MyOpportunityId", "CustomFieldDefinitionId")
                       .IsUnique()
@@ -3127,7 +3146,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.HasOne("Yoma.Core.Infrastructure.Database.ActionLink.Entities.Lookups.LinkStatus", "Status")
                       .WithMany()
                       .HasForeignKey("StatusId")
-                      .OnDelete(DeleteBehavior.Cascade)
+                      .OnDelete(DeleteBehavior.NoAction)
                       .IsRequired();
 
             b.Navigation("CreatedByUser");
@@ -3144,13 +3163,13 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.HasOne("Yoma.Core.Infrastructure.Database.ActionLink.Entities.Link", "Link")
                       .WithMany()
                       .HasForeignKey("LinkId")
-                      .OnDelete(DeleteBehavior.Cascade)
+                      .OnDelete(DeleteBehavior.NoAction)
                       .IsRequired();
 
             b.HasOne("Yoma.Core.Infrastructure.Database.Entity.Entities.User", "User")
                       .WithMany()
                       .HasForeignKey("UserId")
-                      .OnDelete(DeleteBehavior.Cascade)
+                      .OnDelete(DeleteBehavior.NoAction)
                       .IsRequired();
 
             b.Navigation("Link");
@@ -3206,13 +3225,13 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.HasOne("Yoma.Core.Infrastructure.Database.Core.Entities.Lookups.DownloadScheduleStatus", "Status")
                       .WithMany()
                       .HasForeignKey("StatusId")
-                      .OnDelete(DeleteBehavior.Cascade)
+                      .OnDelete(DeleteBehavior.NoAction)
                       .IsRequired();
 
             b.HasOne("Yoma.Core.Infrastructure.Database.Entity.Entities.User", "User")
                       .WithMany()
                       .HasForeignKey("UserId")
-                      .OnDelete(DeleteBehavior.Cascade)
+                      .OnDelete(DeleteBehavior.NoAction)
                       .IsRequired();
 
             b.Navigation("File");
@@ -3247,7 +3266,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.HasOne("Yoma.Core.Infrastructure.Database.Entity.Entities.Lookups.OrganizationStatus", "Status")
                       .WithMany()
                       .HasForeignKey("StatusId")
-                      .OnDelete(DeleteBehavior.Cascade)
+                      .OnDelete(DeleteBehavior.NoAction)
                       .IsRequired();
 
             b.Navigation("Country");
@@ -3266,13 +3285,13 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.HasOne("Yoma.Core.Infrastructure.Database.Core.Entities.BlobObject", "File")
                       .WithMany()
                       .HasForeignKey("FileId")
-                      .OnDelete(DeleteBehavior.Cascade)
+                      .OnDelete(DeleteBehavior.NoAction)
                       .IsRequired();
 
             b.HasOne("Yoma.Core.Infrastructure.Database.Entity.Entities.Organization", "Organization")
                       .WithMany("Documents")
                       .HasForeignKey("OrganizationId")
-                      .OnDelete(DeleteBehavior.Cascade)
+                      .OnDelete(DeleteBehavior.NoAction)
                       .IsRequired();
 
             b.Navigation("File");
@@ -3285,13 +3304,13 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.HasOne("Yoma.Core.Infrastructure.Database.Entity.Entities.Organization", "Organization")
                       .WithMany("ProviderTypes")
                       .HasForeignKey("OrganizationId")
-                      .OnDelete(DeleteBehavior.Cascade)
+                      .OnDelete(DeleteBehavior.NoAction)
                       .IsRequired();
 
             b.HasOne("Yoma.Core.Infrastructure.Database.Entity.Entities.Lookups.OrganizationProviderType", "ProviderType")
                       .WithMany()
                       .HasForeignKey("ProviderTypeId")
-                      .OnDelete(DeleteBehavior.Cascade)
+                      .OnDelete(DeleteBehavior.NoAction)
                       .IsRequired();
 
             b.Navigation("Organization");
@@ -3304,13 +3323,13 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.HasOne("Yoma.Core.Infrastructure.Database.Entity.Entities.Organization", "Organization")
                       .WithMany("Administrators")
                       .HasForeignKey("OrganizationId")
-                      .OnDelete(DeleteBehavior.Cascade)
+                      .OnDelete(DeleteBehavior.NoAction)
                       .IsRequired();
 
             b.HasOne("Yoma.Core.Infrastructure.Database.Entity.Entities.User", "User")
                       .WithMany()
                       .HasForeignKey("UserId")
-                      .OnDelete(DeleteBehavior.Cascade)
+                      .OnDelete(DeleteBehavior.NoAction)
                       .IsRequired();
 
             b.Navigation("Organization");
@@ -3350,7 +3369,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.HasOne("Yoma.Core.Infrastructure.Database.Entity.Entities.User", "User")
                       .WithMany()
                       .HasForeignKey("UserId")
-                      .OnDelete(DeleteBehavior.Cascade)
+                      .OnDelete(DeleteBehavior.NoAction)
                       .IsRequired();
 
             b.Navigation("User");
@@ -3361,13 +3380,13 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.HasOne("Yoma.Core.Infrastructure.Database.Lookups.Entities.Skill", "Skill")
                       .WithMany()
                       .HasForeignKey("SkillId")
-                      .OnDelete(DeleteBehavior.Cascade)
+                      .OnDelete(DeleteBehavior.NoAction)
                       .IsRequired();
 
             b.HasOne("Yoma.Core.Infrastructure.Database.Entity.Entities.User", "User")
                       .WithMany("Skills")
                       .HasForeignKey("UserId")
-                      .OnDelete(DeleteBehavior.Cascade)
+                      .OnDelete(DeleteBehavior.NoAction)
                       .IsRequired();
 
             b.Navigation("Skill");
@@ -3380,13 +3399,13 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.HasOne("Yoma.Core.Infrastructure.Database.Entity.Entities.Organization", "Organization")
                       .WithMany()
                       .HasForeignKey("OrganizationId")
-                      .OnDelete(DeleteBehavior.Cascade)
+                      .OnDelete(DeleteBehavior.NoAction)
                       .IsRequired();
 
             b.HasOne("Yoma.Core.Infrastructure.Database.Entity.Entities.UserSkill", "UserSkill")
                       .WithMany("Organizations")
                       .HasForeignKey("UserSkillId")
-                      .OnDelete(DeleteBehavior.Cascade)
+                      .OnDelete(DeleteBehavior.NoAction)
                       .IsRequired();
 
             b.Navigation("Organization");
@@ -3403,19 +3422,19 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.HasOne("Yoma.Core.Infrastructure.Database.Entity.Entities.Organization", "Organization")
                       .WithMany()
                       .HasForeignKey("OrganizationId")
-                      .OnDelete(DeleteBehavior.Cascade)
+                      .OnDelete(DeleteBehavior.NoAction)
                       .IsRequired();
 
             b.HasOne("Yoma.Core.Infrastructure.Database.Marketplace.Entities.Lookups.StoreAccessControlRuleStatus", "Status")
                       .WithMany()
                       .HasForeignKey("StatusId")
-                      .OnDelete(DeleteBehavior.Cascade)
+                      .OnDelete(DeleteBehavior.NoAction)
                       .IsRequired();
 
             b.HasOne("Yoma.Core.Infrastructure.Database.Lookups.Entities.Country", "StoreCountry")
                       .WithMany()
                       .HasForeignKey("StoreCountryId")
-                      .OnDelete(DeleteBehavior.Cascade)
+                      .OnDelete(DeleteBehavior.NoAction)
                       .IsRequired();
 
             b.Navigation("Gender");
@@ -3432,13 +3451,13 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.HasOne("Yoma.Core.Infrastructure.Database.Opportunity.Entities.Opportunity", "Opportunity")
                       .WithMany()
                       .HasForeignKey("OpportunityId")
-                      .OnDelete(DeleteBehavior.Cascade)
+                      .OnDelete(DeleteBehavior.NoAction)
                       .IsRequired();
 
             b.HasOne("Yoma.Core.Infrastructure.Database.Marketplace.Entities.StoreAccessControlRule", "StoreAccessControlRule")
                       .WithMany("Opportunities")
                       .HasForeignKey("StoreAccessControlRuleId")
-                      .OnDelete(DeleteBehavior.Cascade)
+                      .OnDelete(DeleteBehavior.NoAction)
                       .IsRequired();
 
             b.Navigation("Opportunity");
@@ -3451,13 +3470,13 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.HasOne("Yoma.Core.Infrastructure.Database.Marketplace.Entities.Lookups.TransactionStatus", "Status")
                       .WithMany()
                       .HasForeignKey("StatusId")
-                      .OnDelete(DeleteBehavior.Cascade)
+                      .OnDelete(DeleteBehavior.NoAction)
                       .IsRequired();
 
             b.HasOne("Yoma.Core.Infrastructure.Database.Entity.Entities.User", "User")
                       .WithMany()
                       .HasForeignKey("UserId")
-                      .OnDelete(DeleteBehavior.Cascade)
+                      .OnDelete(DeleteBehavior.NoAction)
                       .IsRequired();
 
             b.Navigation("Status");
@@ -3470,7 +3489,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.HasOne("Yoma.Core.Infrastructure.Database.MyOpportunity.Entities.Lookups.MyOpportunityAction", "Action")
                       .WithMany()
                       .HasForeignKey("ActionId")
-                      .OnDelete(DeleteBehavior.Cascade)
+                      .OnDelete(DeleteBehavior.NoAction)
                       .IsRequired();
 
             b.HasOne("Yoma.Core.Infrastructure.Database.Lookups.Entities.TimeInterval", "CommitmentInterval")
@@ -3480,13 +3499,13 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.HasOne("Yoma.Core.Infrastructure.Database.Opportunity.Entities.Opportunity", "Opportunity")
                       .WithMany()
                       .HasForeignKey("OpportunityId")
-                      .OnDelete(DeleteBehavior.Cascade)
+                      .OnDelete(DeleteBehavior.NoAction)
                       .IsRequired();
 
             b.HasOne("Yoma.Core.Infrastructure.Database.Entity.Entities.User", "User")
                       .WithMany()
                       .HasForeignKey("UserId")
-                      .OnDelete(DeleteBehavior.Cascade)
+                      .OnDelete(DeleteBehavior.NoAction)
                       .IsRequired();
 
             b.HasOne("Yoma.Core.Infrastructure.Database.MyOpportunity.Entities.Lookups.MyOpportunityVerificationStatus", "VerificationStatus")
@@ -3513,13 +3532,13 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.HasOne("Yoma.Core.Infrastructure.Database.MyOpportunity.Entities.MyOpportunity", "MyOpportunity")
                       .WithMany("Verifications")
                       .HasForeignKey("MyOpportunityId")
-                      .OnDelete(DeleteBehavior.Cascade)
+                      .OnDelete(DeleteBehavior.NoAction)
                       .IsRequired();
 
             b.HasOne("Yoma.Core.Infrastructure.Database.Opportunity.Entities.Lookups.OpportunityVerificationType", "VerificationType")
                       .WithMany()
                       .HasForeignKey("VerificationTypeId")
-                      .OnDelete(DeleteBehavior.Cascade)
+                      .OnDelete(DeleteBehavior.NoAction)
                       .IsRequired();
 
             b.Navigation("File");
@@ -3558,19 +3577,19 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.HasOne("Yoma.Core.Infrastructure.Database.Entity.Entities.Organization", "Organization")
                       .WithMany()
                       .HasForeignKey("OrganizationId")
-                      .OnDelete(DeleteBehavior.Cascade)
+                      .OnDelete(DeleteBehavior.NoAction)
                       .IsRequired();
 
             b.HasOne("Yoma.Core.Infrastructure.Database.Opportunity.Entities.Lookups.OpportunityStatus", "Status")
                       .WithMany()
                       .HasForeignKey("StatusId")
-                      .OnDelete(DeleteBehavior.Cascade)
+                      .OnDelete(DeleteBehavior.NoAction)
                       .IsRequired();
 
             b.HasOne("Yoma.Core.Infrastructure.Database.Opportunity.Entities.Lookups.OpportunityType", "Type")
                       .WithMany()
                       .HasForeignKey("TypeId")
-                      .OnDelete(DeleteBehavior.Cascade)
+                      .OnDelete(DeleteBehavior.NoAction)
                       .IsRequired();
 
             b.Navigation("CommitmentInterval");
@@ -3595,13 +3614,13 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.HasOne("Yoma.Core.Infrastructure.Database.Opportunity.Entities.Lookups.OpportunityCategory", "Category")
                       .WithMany()
                       .HasForeignKey("CategoryId")
-                      .OnDelete(DeleteBehavior.Cascade)
+                      .OnDelete(DeleteBehavior.NoAction)
                       .IsRequired();
 
             b.HasOne("Yoma.Core.Infrastructure.Database.Opportunity.Entities.Opportunity", "Opportunity")
                       .WithMany("Categories")
                       .HasForeignKey("OpportunityId")
-                      .OnDelete(DeleteBehavior.Cascade)
+                      .OnDelete(DeleteBehavior.NoAction)
                       .IsRequired();
 
             b.Navigation("Category");
@@ -3614,13 +3633,13 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.HasOne("Yoma.Core.Infrastructure.Database.Lookups.Entities.Country", "Country")
                       .WithMany()
                       .HasForeignKey("CountryId")
-                      .OnDelete(DeleteBehavior.Cascade)
+                      .OnDelete(DeleteBehavior.NoAction)
                       .IsRequired();
 
             b.HasOne("Yoma.Core.Infrastructure.Database.Opportunity.Entities.Opportunity", "Opportunity")
                       .WithMany("Countries")
                       .HasForeignKey("OpportunityId")
-                      .OnDelete(DeleteBehavior.Cascade)
+                      .OnDelete(DeleteBehavior.NoAction)
                       .IsRequired();
 
             b.Navigation("Country");
@@ -3633,13 +3652,13 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.HasOne("Yoma.Core.Infrastructure.Database.Lookups.Entities.Language", "Language")
                       .WithMany()
                       .HasForeignKey("LanguageId")
-                      .OnDelete(DeleteBehavior.Cascade)
+                      .OnDelete(DeleteBehavior.NoAction)
                       .IsRequired();
 
             b.HasOne("Yoma.Core.Infrastructure.Database.Opportunity.Entities.Opportunity", "Opportunity")
                       .WithMany("Languages")
                       .HasForeignKey("OpportunityId")
-                      .OnDelete(DeleteBehavior.Cascade)
+                      .OnDelete(DeleteBehavior.NoAction)
                       .IsRequired();
 
             b.Navigation("Language");
@@ -3652,13 +3671,13 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.HasOne("Yoma.Core.Infrastructure.Database.Opportunity.Entities.Opportunity", "Opportunity")
                       .WithMany("Skills")
                       .HasForeignKey("OpportunityId")
-                      .OnDelete(DeleteBehavior.Cascade)
+                      .OnDelete(DeleteBehavior.NoAction)
                       .IsRequired();
 
             b.HasOne("Yoma.Core.Infrastructure.Database.Lookups.Entities.Skill", "Skill")
                       .WithMany()
                       .HasForeignKey("SkillId")
-                      .OnDelete(DeleteBehavior.Cascade)
+                      .OnDelete(DeleteBehavior.NoAction)
                       .IsRequired();
 
             b.Navigation("Opportunity");
@@ -3671,13 +3690,13 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.HasOne("Yoma.Core.Infrastructure.Database.Opportunity.Entities.Opportunity", "Opportunity")
                       .WithMany("VerificationTypes")
                       .HasForeignKey("OpportunityId")
-                      .OnDelete(DeleteBehavior.Cascade)
+                      .OnDelete(DeleteBehavior.NoAction)
                       .IsRequired();
 
             b.HasOne("Yoma.Core.Infrastructure.Database.Opportunity.Entities.Lookups.OpportunityVerificationType", "VerificationType")
                       .WithMany()
                       .HasForeignKey("VerificationTypeId")
-                      .OnDelete(DeleteBehavior.Cascade)
+                      .OnDelete(DeleteBehavior.NoAction)
                       .IsRequired();
 
             b.Navigation("Opportunity");
@@ -3690,7 +3709,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.HasOne("Yoma.Core.Infrastructure.Database.PartnerSync.Entities.Lookups.Partner", "Partner")
                       .WithMany()
                       .HasForeignKey("PartnerId")
-                      .OnDelete(DeleteBehavior.Cascade)
+                      .OnDelete(DeleteBehavior.NoAction)
                       .IsRequired();
 
             b.Navigation("Partner");
@@ -3731,13 +3750,13 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.HasOne("Yoma.Core.Infrastructure.Database.PartnerSync.Entities.Lookups.Partner", "Partner")
                       .WithMany()
                       .HasForeignKey("PartnerId")
-                      .OnDelete(DeleteBehavior.Cascade)
+                      .OnDelete(DeleteBehavior.NoAction)
                       .IsRequired();
 
             b.HasOne("Yoma.Core.Infrastructure.Database.PartnerSync.Entities.Lookups.ProcessingStatus", "Status")
                       .WithMany()
                       .HasForeignKey("StatusId")
-                      .OnDelete(DeleteBehavior.Cascade)
+                      .OnDelete(DeleteBehavior.NoAction)
                       .IsRequired();
 
             b.Navigation("MyOpportunity");
@@ -3766,7 +3785,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.HasOne("Yoma.Core.Infrastructure.Database.Referral.Entities.Lookups.BlockReason", "Reason")
                       .WithMany()
                       .HasForeignKey("ReasonId")
-                      .OnDelete(DeleteBehavior.Cascade)
+                      .OnDelete(DeleteBehavior.NoAction)
                       .IsRequired();
 
             b.HasOne("Yoma.Core.Infrastructure.Database.Entity.Entities.User", "User")
@@ -3789,19 +3808,19 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.HasOne("Yoma.Core.Infrastructure.Database.Referral.Entities.Program", "Program")
                       .WithMany()
                       .HasForeignKey("ProgramId")
-                      .OnDelete(DeleteBehavior.Cascade)
+                      .OnDelete(DeleteBehavior.NoAction)
                       .IsRequired();
 
             b.HasOne("Yoma.Core.Infrastructure.Database.Referral.Entities.Lookups.LinkStatus", "Status")
                       .WithMany()
                       .HasForeignKey("StatusId")
-                      .OnDelete(DeleteBehavior.Cascade)
+                      .OnDelete(DeleteBehavior.NoAction)
                       .IsRequired();
 
             b.HasOne("Yoma.Core.Infrastructure.Database.Entity.Entities.User", "User")
                       .WithMany()
                       .HasForeignKey("UserId")
-                      .OnDelete(DeleteBehavior.Cascade)
+                      .OnDelete(DeleteBehavior.NoAction)
                       .IsRequired();
 
             b.Navigation("Program");
@@ -3816,25 +3835,25 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.HasOne("Yoma.Core.Infrastructure.Database.Referral.Entities.Link", "Link")
                       .WithMany("Usages")
                       .HasForeignKey("LinkId")
-                      .OnDelete(DeleteBehavior.Cascade)
+                      .OnDelete(DeleteBehavior.NoAction)
                       .IsRequired();
 
             b.HasOne("Yoma.Core.Infrastructure.Database.Referral.Entities.Program", "Program")
                       .WithMany()
                       .HasForeignKey("ProgramId")
-                      .OnDelete(DeleteBehavior.Cascade)
+                      .OnDelete(DeleteBehavior.NoAction)
                       .IsRequired();
 
             b.HasOne("Yoma.Core.Infrastructure.Database.Referral.Entities.Lookups.LinkUsageStatus", "Status")
                       .WithMany()
                       .HasForeignKey("StatusId")
-                      .OnDelete(DeleteBehavior.Cascade)
+                      .OnDelete(DeleteBehavior.NoAction)
                       .IsRequired();
 
             b.HasOne("Yoma.Core.Infrastructure.Database.Entity.Entities.User", "User")
                       .WithMany()
                       .HasForeignKey("UserId")
-                      .OnDelete(DeleteBehavior.Cascade)
+                      .OnDelete(DeleteBehavior.NoAction)
                       .IsRequired();
 
             b.Navigation("Link");
@@ -3867,7 +3886,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.HasOne("Yoma.Core.Infrastructure.Database.Referral.Entities.Lookups.ProgramStatus", "Status")
                       .WithMany()
                       .HasForeignKey("StatusId")
-                      .OnDelete(DeleteBehavior.Cascade)
+                      .OnDelete(DeleteBehavior.NoAction)
                       .IsRequired();
 
             b.Navigation("CreatedByUser");
@@ -3884,13 +3903,13 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.HasOne("Yoma.Core.Infrastructure.Database.Lookups.Entities.Country", "Country")
                       .WithMany()
                       .HasForeignKey("CountryId")
-                      .OnDelete(DeleteBehavior.Cascade)
+                      .OnDelete(DeleteBehavior.NoAction)
                       .IsRequired();
 
             b.HasOne("Yoma.Core.Infrastructure.Database.Referral.Entities.Program", "Program")
                       .WithMany("Countries")
                       .HasForeignKey("ProgramId")
-                      .OnDelete(DeleteBehavior.Cascade)
+                      .OnDelete(DeleteBehavior.NoAction)
                       .IsRequired();
 
             b.Navigation("Country");
@@ -3903,7 +3922,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.HasOne("Yoma.Core.Infrastructure.Database.Referral.Entities.Program", "Program")
                       .WithOne("Pathway")
                       .HasForeignKey("Yoma.Core.Infrastructure.Database.Referral.Entities.ProgramPathway", "ProgramId")
-                      .OnDelete(DeleteBehavior.Cascade)
+                      .OnDelete(DeleteBehavior.NoAction)
                       .IsRequired();
 
             b.Navigation("Program");
@@ -3914,7 +3933,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.HasOne("Yoma.Core.Infrastructure.Database.Referral.Entities.ProgramPathway", "Pathway")
                       .WithMany("Steps")
                       .HasForeignKey("PathwayId")
-                      .OnDelete(DeleteBehavior.Cascade)
+                      .OnDelete(DeleteBehavior.NoAction)
                       .IsRequired();
 
             b.Navigation("Pathway");
@@ -3929,7 +3948,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.HasOne("Yoma.Core.Infrastructure.Database.Referral.Entities.ProgramPathwayStep", "Step")
                       .WithMany("Tasks")
                       .HasForeignKey("StepId")
-                      .OnDelete(DeleteBehavior.Cascade)
+                      .OnDelete(DeleteBehavior.NoAction)
                       .IsRequired();
 
             b.Navigation("Opportunity");
@@ -3950,13 +3969,13 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.HasOne("Yoma.Core.Infrastructure.Database.Reward.Entities.Lookups.RewardTransactionStatus", "Status")
                       .WithMany()
                       .HasForeignKey("StatusId")
-                      .OnDelete(DeleteBehavior.Cascade)
+                      .OnDelete(DeleteBehavior.NoAction)
                       .IsRequired();
 
             b.HasOne("Yoma.Core.Infrastructure.Database.Entity.Entities.User", "User")
                       .WithMany()
                       .HasForeignKey("UserId")
-                      .OnDelete(DeleteBehavior.Cascade)
+                      .OnDelete(DeleteBehavior.NoAction)
                       .IsRequired();
 
             b.Navigation("MyOpportunity");
@@ -3973,13 +3992,13 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.HasOne("Yoma.Core.Infrastructure.Database.Reward.Entities.Lookups.WalletCreationStatus", "Status")
                       .WithMany()
                       .HasForeignKey("StatusId")
-                      .OnDelete(DeleteBehavior.Cascade)
+                      .OnDelete(DeleteBehavior.NoAction)
                       .IsRequired();
 
             b.HasOne("Yoma.Core.Infrastructure.Database.Entity.Entities.User", "User")
                       .WithMany()
                       .HasForeignKey("UserId")
-                      .OnDelete(DeleteBehavior.Cascade)
+                      .OnDelete(DeleteBehavior.NoAction)
                       .IsRequired();
 
             b.Navigation("Status");
@@ -3992,7 +4011,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.HasOne("Yoma.Core.Infrastructure.Database.SSI.Entities.Lookups.SSISchemaEntity", "SSISchemaEntity")
                       .WithMany("Properties")
                       .HasForeignKey("SSISchemaEntityId")
-                      .OnDelete(DeleteBehavior.Cascade)
+                      .OnDelete(DeleteBehavior.NoAction)
                       .IsRequired();
 
             b.Navigation("SSISchemaEntity");
@@ -4003,13 +4022,13 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.HasOne("Yoma.Core.Infrastructure.Database.SSI.Entities.Lookups.SSISchemaEntity", "SSISchemaEntity")
                       .WithMany("Types")
                       .HasForeignKey("SSISchemaEntityId")
-                      .OnDelete(DeleteBehavior.Cascade)
+                      .OnDelete(DeleteBehavior.NoAction)
                       .IsRequired();
 
             b.HasOne("Yoma.Core.Infrastructure.Database.SSI.Entities.Lookups.SSISchemaType", "SSISchemaType")
                       .WithMany()
                       .HasForeignKey("SSISchemaTypeId")
-                      .OnDelete(DeleteBehavior.Cascade)
+                      .OnDelete(DeleteBehavior.NoAction)
                       .IsRequired();
 
             b.Navigation("SSISchemaEntity");
@@ -4030,13 +4049,13 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.HasOne("Yoma.Core.Infrastructure.Database.SSI.Entities.Lookups.SSISchemaType", "SchemaType")
                       .WithMany()
                       .HasForeignKey("SchemaTypeId")
-                      .OnDelete(DeleteBehavior.Cascade)
+                      .OnDelete(DeleteBehavior.NoAction)
                       .IsRequired();
 
             b.HasOne("Yoma.Core.Infrastructure.Database.SSI.Entities.Lookups.SSICredentialIssuanceStatus", "Status")
                       .WithMany()
                       .HasForeignKey("StatusId")
-                      .OnDelete(DeleteBehavior.Cascade)
+                      .OnDelete(DeleteBehavior.NoAction)
                       .IsRequired();
 
             b.HasOne("Yoma.Core.Infrastructure.Database.Entity.Entities.User", "User")
@@ -4063,7 +4082,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.HasOne("Yoma.Core.Infrastructure.Database.SSI.Entities.Lookups.SSITenantCreationStatus", "Status")
                       .WithMany()
                       .HasForeignKey("StatusId")
-                      .OnDelete(DeleteBehavior.Cascade)
+                      .OnDelete(DeleteBehavior.NoAction)
                       .IsRequired();
 
             b.HasOne("Yoma.Core.Infrastructure.Database.Entity.Entities.User", "User")

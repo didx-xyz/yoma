@@ -18,6 +18,16 @@ namespace Yoma.Core.Domain.Core.Models
     public string Value { get; set; } = null!;
 
     /// <summary>
+    /// Indexed numeric projection populated for Integer and Decimal fields.
+    /// </summary>
+    public decimal? ValueNumeric { get; set; }
+
+    /// <summary>
+    /// Indexed date/time projection populated for DateTime fields.
+    /// </summary>
+    public DateTimeOffset? ValueDateTime { get; set; }
+
+    /// <summary>
     /// Helper for multi-select option values. Values are stored in <see cref="Value"/> as pipe-delimited option keys
     /// with leading and trailing delimiters, e.g. "|Remote|Hybrid|", so exact option filtering can use Contains("|Hybrid|").
     /// Empty entries are removed when splitting because the leading and trailing delimiters intentionally create empty segments.

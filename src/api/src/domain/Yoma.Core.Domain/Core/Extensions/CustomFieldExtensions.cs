@@ -88,6 +88,7 @@ namespace Yoma.Core.Domain.Core.Extensions
         .OrderBy(o => o.Key, StringComparer.OrdinalIgnoreCase)
         .ThenBy(o => o.Operator)
         .ThenBy(o => o.Value, StringComparer.Ordinal)
+        .ThenBy(o => o.ValueTo, StringComparer.Ordinal)
         .ThenBy(o => string.Join(CustomFieldValue.Value_Delimiter, o.Values ?? []), StringComparer.Ordinal)];
     }
     #endregion

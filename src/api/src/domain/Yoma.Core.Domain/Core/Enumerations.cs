@@ -222,7 +222,12 @@ namespace Yoma.Core.Domain.Core
     Contains,
     AnyOf,
     AllOf,
-    Exists
+    Exists,
+    GreaterThan,
+    GreaterThanOrEqual,
+    LessThan,
+    LessThanOrEqual,
+    Between
   }
 
   public enum CustomFieldLookupType
