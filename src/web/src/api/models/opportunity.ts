@@ -83,6 +83,7 @@ export interface Opportunity {
   hidden: boolean;
   syncedInfo?: SyncInfoEntity | null;
   externalId: string | null;
+  customFields?: CustomFieldValueItem[] | null;
 }
 
 export interface OpportunityInfo {
@@ -135,6 +136,7 @@ export interface OpportunityInfo {
   skills: Skill[] | null;
   verificationTypes: OpportunityVerificationType[] | null;
   externalId: string | null;
+  customFields?: CustomFieldValueItem[] | null;
 }
 
 export interface OpportunitySearchFilter extends OpportunitySearchFilterBase {
@@ -284,6 +286,9 @@ export interface OpportunityRequestBase {
   shareWithPartners: boolean;
   hidden: boolean | null;
   externalId: string | null;
+  // Definition-driven custom fields. Replacement semantics on the API:
+  // the full collection must be resubmitted on every save (omitted keys are cleared).
+  customFields?: CustomFieldValueRequest[] | null;
 }
 
 export interface OpportunityRequestVerificationType {
@@ -410,3 +415,73 @@ export interface OpportunityItem {
   organizationName: string;
   organizationLogoURL: string | null;
 }
+
+//#region Custom Fields (YOM-1244 / YOM-1255)
+// Definition-driven custom fields. The UI must render, validate and submit
+// purely from these definitions — no hardcoded field keys or types.
+// Mirrors the API domain model returned by GET /opportunity/custom/field/definition
+// (Yoma.Core.Domain.Core.Models.CustomFieldDefinition).
+export enum CustomFieldDataType {
+  String = "String",
+  Integer = "Integer",
+  Decimal = "Decimal",
+  Boolean = "Boolean",
+  DateTime = "DateTime",
+  Option = "Option",
+}
+
+export interface CustomFieldOption {
+  id: string;
+  customFieldDefinitionId: string;
+  key: string;
+  name: string;
+  sortOrder: number;
+  isActive: boolean;
+  dateCreated: string;
+  dateModified: string;
+}
+
+export interface CustomFieldDefinition {
+  id: string;
+  /** Opportunity | MyOpportunity */
+  entityType: string;
+  /** Optional fall-through context (Opportunity type name). Null applies to all types. */
+  entityContext: string | null;
+  /** Stable technical key used to join definitions with values. */
+  key: string;
+  title: string;
+  description: string | null;
+  /** Primary UI grouping (wizard step / grouped section). */
+  group: string;
+  /** Optional secondary grouping within the primary group. */
+  subGroup: string | null;
+  dataType: CustomFieldDataType | string; // NB: string from API
+  defaultValue: string | null;
+  validationRegex: string | null;
+  validationErrorMessage: string | null;
+  isRequired: boolean;
+  /** Applies to Option fields only; null for non-option fields. */
+  supportsMultiple: boolean | null;
+  sortOrder: number;
+  isActive: boolean;
+  isSystem: boolean;
+  dateCreated: string;
+  dateModified: string;
+  options: CustomFieldOption[] | null;
+}
+
+// Submitted on opportunity create/update. Non-option fields use `value`;
+// all Option fields (single- and multi-select) use `values`.
+export interface CustomFieldValueRequest {
+  key: string;
+  value?: string | null;
+  values?: string[] | null;
+}
+
+// Hydrated value returned on opportunity/completion projections.
+export interface CustomFieldValueItem {
+  key: string;
+  value?: string | null;
+  values?: string[] | null;
+}
+//#endregion Custom Fields

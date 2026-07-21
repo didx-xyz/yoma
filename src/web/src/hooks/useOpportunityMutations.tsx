@@ -15,6 +15,7 @@ import {
 } from "~/api/models/myOpportunity";
 import {
   Status,
+  type CustomFieldDefinition,
   type Opportunity,
   type OpportunityCategory,
   type OpportunityDifficulty,
@@ -40,6 +41,7 @@ import {
   getLanguagesAdmin,
   getOpportunitiesAdmin,
   getOpportunityById,
+  getOpportunityCustomFieldDefinitions,
   getOpportunityInfoByIdAdminOrgAdminOrUser,
   getOrganisationsAdmin,
   getTypes,
@@ -113,6 +115,11 @@ export const OPPORTUNITY_QUERY_KEYS = {
   engagementTypes: () => ["engagementTypes"] as const,
   schemas: () => ["schemas"] as const,
   organisation: (id: string) => ["organisation", id] as const,
+  /** Definition-driven custom field definitions, scoped by opportunity type name(s) */
+  customFieldDefinitions: (types?: string[] | null): unknown[] => [
+    "opportunityCustomFieldDefinitions",
+    ...(types ?? []),
+  ],
 } as const;
 
 // ─── Query Hooks ──────────────────────────────────────────────────────────────────
@@ -185,6 +192,22 @@ export function useOpportunityTypesQuery(options?: { enabled?: boolean }) {
   return useQuery<OpportunityType[]>({
     queryKey: OPPORTUNITY_QUERY_KEYS.opportunityTypes(),
     queryFn: () => getTypes(),
+    enabled: options?.enabled ?? true,
+  });
+}
+
+/**
+ * Definition-driven custom field definitions (create/edit page).
+ * Keyed on the selected opportunity type name(s), so the query re-runs whenever the
+ * watched opportunity type changes. `types` are enum names: Other | Learning | Event | Job | Task.
+ */
+export function useOpportunityCustomFieldDefinitionsQuery(
+  types: string[] | null,
+  options?: { enabled?: boolean },
+) {
+  return useQuery<CustomFieldDefinition[]>({
+    queryKey: OPPORTUNITY_QUERY_KEYS.customFieldDefinitions(types),
+    queryFn: () => getOpportunityCustomFieldDefinitions(types),
     enabled: options?.enabled ?? true,
   });
 }

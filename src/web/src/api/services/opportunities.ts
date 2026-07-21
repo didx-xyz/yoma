@@ -3,6 +3,7 @@ import ApiClient from "~/lib/axiosClient";
 import ApiServer from "~/lib/axiosServer";
 import type { Country, Language } from "../models/lookups";
 import type {
+  CustomFieldDefinition,
   Opportunity,
   OpportunityCategory,
   OpportunityDifficulty,
@@ -170,6 +171,43 @@ export const getOpportunityById = async (
   data.dateStart = data.dateStart?.split("T")[0] ?? "";
   data.dateEnd = data.dateEnd?.split("T")[0] ?? "";
 
+  return data;
+};
+
+// Definition-driven custom fields (YOM-1244 / YOM-1255).
+// Returns active custom field definitions applicable to the supplied opportunity type(s).
+// When no types are supplied, only definitions applicable to all opportunity types are returned.
+// `types` values are the opportunity type names (enum names): Other | Learning | Event | Job | Task.
+export const getOpportunityCustomFieldDefinitions = async (
+  types?: string[] | null,
+  context?: GetServerSidePropsContext | GetStaticPropsContext,
+): Promise<CustomFieldDefinition[]> => {
+  const instance = context ? ApiServer(context) : await ApiClient;
+
+  const params = new URLSearchParams();
+  types?.forEach((type) => {
+    if (type) params.append("types", type);
+  });
+  const query = params.toString();
+  const suffix = query ? `?${query}` : "";
+
+  const { data } = await instance.get<CustomFieldDefinition[]>(
+    `/opportunity/custom/field/definition${suffix}`,
+  );
+  return data;
+};
+
+// Returns active custom field definitions for an existing opportunity (type resolved server-side).
+// Admin / Organization Admin only.
+export const getOpportunityCustomFieldDefinitionsById = async (
+  id: string,
+  context?: GetServerSidePropsContext | GetStaticPropsContext,
+): Promise<CustomFieldDefinition[]> => {
+  const instance = context ? ApiServer(context) : await ApiClient;
+
+  const { data } = await instance.get<CustomFieldDefinition[]>(
+    `/opportunity/${id}/custom/field/definition`,
+  );
   return data;
 };
 

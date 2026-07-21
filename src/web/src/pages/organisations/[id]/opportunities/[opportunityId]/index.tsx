@@ -58,6 +58,7 @@ import FormMessage, { FormMessageType } from "~/components/Common/FormMessage";
 import FormRadio from "~/components/Common/FormRadio";
 import FormRequiredFieldMessage from "~/components/Common/FormRequiredFieldMessage";
 import MainLayout from "~/components/Layout/Main";
+import { OpportunityCustomFields } from "~/components/Opportunity/OpportunityCustomFields";
 import OpportunityPublicDetails from "~/components/Opportunity/OpportunityPublicDetails";
 import { OpportunityPublicSmallComponentV2 } from "~/components/Opportunity/OpportunityPublicSmallV2";
 import { PageBackground } from "~/components/PageBackground";
@@ -75,6 +76,7 @@ import {
   useOpportunityDifficultiesQuery,
   useOpportunityEngagementTypesQuery,
   useOpportunityLanguagesQuery,
+  useOpportunityCustomFieldDefinitionsQuery,
   useOpportunitySchemasQuery,
   useOpportunityStatusMutation,
   useOpportunityTimeIntervalsQuery,
@@ -451,6 +453,24 @@ const OpportunityAdminDetails: NextPageWithLayout<{
   const watchTypeId = watchStep1("typeId");
   const isJobOpportunity = isJobOpportunityTypeValue(
     watchTypeId ?? formData.typeId,
+  );
+
+  // 👇 Custom Fields (YOM-1244 / YOM-1255 — Task 1)
+  // Resolve the selected opportunity type name (enum name) from the watched typeId.
+  // The definitions query is keyed on this name, so it re-fetches whenever the type changes.
+  const selectedTypeName = useMemo(
+    () =>
+      opportunityTypesData?.find(
+        (t) => t.id === (watchTypeId ?? formData.typeId),
+      )?.name ?? null,
+    [opportunityTypesData, watchTypeId, formData.typeId],
+  );
+  const {
+    data: customFieldDefinitions,
+    isLoading: customFieldDefinitionsIsLoading,
+  } = useOpportunityCustomFieldDefinitionsQuery(
+    selectedTypeName ? [selectedTypeName] : null,
+    { enabled: !error && !!selectedTypeName },
   );
 
   const schemaStep2 = z
@@ -2440,6 +2460,22 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                       />
                     </FormField>
 
+                    <div className="mb-4 flex flex-col gap-2">
+                      <h5 className="font-bold tracking-wider">
+                        Additional details
+                      </h5>
+                      <p className="-mt-2 text-sm">
+                        Extra structured fields for this opportunity type,
+                        defined centrally and rendered here automatically.
+                      </p>
+                    </div>
+
+                    {/* CUSTOM FIELDS (definition-driven, YOM-1244 / YOM-1255) */}
+                    <OpportunityCustomFields
+                      definitions={customFieldDefinitions}
+                      isLoading={customFieldDefinitionsIsLoading}
+                    />
+
                     {/* BUTTONS */}
                     <div className="flex items-center justify-center gap-2 md:justify-end md:gap-4">
                       <button
@@ -3382,7 +3418,6 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                   </form>
                 </>
               )}
-
               {step === 8 && (
                 <>
                   <div className="mb-4 flex flex-col gap-2">
