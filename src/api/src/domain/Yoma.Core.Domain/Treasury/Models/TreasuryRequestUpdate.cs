@@ -8,7 +8,7 @@ namespace Yoma.Core.Domain.Treasury.Models
 
     public decimal? ZltoRewardPoolCurrentFinancialYear { get; set; }
 
-    public decimal? ChimoneyPoolCurrentFinancialYearInUSD { get; set; }
+    public decimal? CashOutPoolCurrentFinancialYearInUsd { get; set; }
 
     /// <summary>
     /// Number of ZLTO equivalent to 1 USD (e.g. 45 = 45 ZLTO = 1 USD).

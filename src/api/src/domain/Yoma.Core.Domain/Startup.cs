@@ -236,6 +236,7 @@ namespace Yoma.Core.Domain
 
       #region Treasury
       services.AddScoped<ITreasuryService, TreasuryService>();
+      services.AddScoped<ITreasuryBackgroundService, TreasuryBackgroundService>();
       #endregion Treasury
     }
 
@@ -298,6 +299,11 @@ namespace Yoma.Core.Domain
       RecurringJob.AddOrUpdate<IRewardBackgroundService>(
         $"Rewards Transaction Processing (awarding rewards)",
         s => s.ProcessRewardTransactions(), options.RewardTransactionSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
+
+      //treasury
+      RecurringJob.AddOrUpdate<ITreasuryBackgroundService>(
+        "Treasury Financial-Year Rollover",
+        s => s.ProcessFinancialYearRollover(), options.TreasuryFinancialYearRolloverSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
 
       //ssi
       BackgroundJob.Enqueue<ISSIBackgroundService>(s => s.SeedSchemas()); //execute on startup; seed default schemas

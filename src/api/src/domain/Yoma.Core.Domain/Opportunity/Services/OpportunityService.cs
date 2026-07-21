@@ -1531,8 +1531,9 @@ namespace Yoma.Core.Domain.Opportunity.Services
         if (opportunity.ParticipantLimit.HasValue && count > opportunity.ParticipantLimit.Value)
           throw new ValidationException($"The number of participants cannot exceed the limit. The current count is '{opportunity.ParticipantCount ?? 0}', and the limit is '{opportunity.ParticipantLimit.Value}'. Please edit the opportunity to increase or remove the limit, or reject the verification request");
 
-        organization = _organizationService.GetById(opportunity.OrganizationId, false, true, false, LockMode.Wait);
         var treasury = _treasuryService.Get(LockMode.Wait);
+        await _treasuryService.EnsureCurrentFinancialYear(treasury);
+        organization = _organizationService.GetById(opportunity.OrganizationId, false, true, false, LockMode.Wait);
         var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsernameSystem, false, false);
 
         result = new OpportunityAllocateRewardResponse

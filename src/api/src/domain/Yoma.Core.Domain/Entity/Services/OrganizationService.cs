@@ -958,6 +958,26 @@ namespace Yoma.Core.Domain.Entity.Services
       return result;
     }
 
+    public async Task ResetRewardCumulativesCurrentFinancialYear(bool actionedBySystem)
+    {
+      var organizations = _organizationRepository.Query(LockMode.Wait).ToList();
+      if (organizations.Count == 0) return;
+
+      var username = actionedBySystem
+        ? HttpContextAccessorHelper.GetUsernameSystem
+        : HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false);
+      var user = _userService.GetByUsername(username, false, false);
+
+      foreach (var organization in organizations)
+      {
+        organization.ZltoRewardCumulativeCurrentFinancialYear = 0m;
+        organization.YomaRewardCumulativeCurrentFinancialYear = 0m;
+        organization.ModifiedByUserId = user.Id;
+      }
+
+      await _organizationRepository.Update(organizations);
+    }
+
     public async Task AllocateRewards(Organization organization, decimal? zltoReward, decimal? yomaReward)
     {
       ArgumentNullException.ThrowIfNull(organization, nameof(organization));

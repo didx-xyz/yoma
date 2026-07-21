@@ -31,14 +31,14 @@ namespace Yoma.Core.Api.Controllers
     #region Authenticated User Based Actions
     [SwaggerOperation(Summary = "Preview ZLTO to USD conversion (Authenticated User)",
       Description = "Returns an indicative ZLTO to USD conversion based on the current treasury conversion rate. " +
-      "This is a preview only. The final conversion is determined at the time of transaction and may diffe")]
+      "This is a preview only. The final conversion is determined at the time of transaction and may differ")]
     [HttpGet("conversion/zlto-usd")]
     [Authorize(Roles = Constants.Role_User)]
-    public ActionResult<decimal> ConvertZltoToUsd([FromQuery] decimal amount)
+    public async Task<ActionResult<decimal>> ConvertZltoToUsd([FromQuery] decimal amount)
     {
       if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(ConvertZltoToUsd));
 
-      var result = _treasuryService.ConvertZltoToUsd(amount);
+      var result = await _treasuryService.ConvertZltoToUsd(amount);
 
       if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(ConvertZltoToUsd));
 
@@ -67,9 +67,9 @@ namespace Yoma.Core.Api.Controllers
 
     [SwaggerOperation(Summary = "Update treasury info",
      Description = "Updates the treasury configuration. " +
-      "If the financial year start date changes, current financial year cumulative values may be reset. " +
-      "Reset only occurs when the new financial year start moves forward relative to the current financial year start " +
-      "and the new start date is still in the future. Financial year pools remain unchanged unless explicitly update")]
+      "If the financial-year configuration moves the current financial year forward, Treasury and organization " +
+      "current-financial-year cumulatives are reset. Lifetime cumulatives are preserved, and financial-year pools " +
+      "remain unchanged unless explicitly updated.")]
     [HttpPatch]
     [Authorize(Roles = Constants.Role_Admin)]
     public async Task<ActionResult<TreasuryInfo>> Update(TreasuryRequestUpdate request)

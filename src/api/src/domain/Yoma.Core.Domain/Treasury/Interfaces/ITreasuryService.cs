@@ -13,7 +13,11 @@ namespace Yoma.Core.Domain.Treasury.Interfaces
 
     Task ZltoRewardAwarded(Models.Treasury treasury, decimal? amount);
 
-    Task ChimoneyCashedOut(Models.Treasury treasury, decimal amount);
+    Task CashOutCompleted(Models.Treasury treasury, decimal amount);
+
+    Task<bool> EnsureCurrentFinancialYear(Models.Treasury treasury);
+
+    Task<bool> ProcessFinancialYearRollover();
 
     Task<decimal> ConvertZltoToUsd(decimal amount);
   }
