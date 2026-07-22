@@ -430,6 +430,14 @@ export enum CustomFieldDataType {
   Option = "Option",
 }
 
+// Existing Yoma lookup used to supply/validate Option values. When set, values
+// are the lookup record IDs (GUIDs). Null = use the definition's inline options.
+export enum CustomFieldLookupType {
+  Country = "Country",
+  Language = "Language",
+  Skill = "Skill",
+}
+
 export interface CustomFieldOption {
   id: string;
   customFieldDefinitionId: string;
@@ -456,7 +464,11 @@ export interface CustomFieldDefinition {
   /** Optional secondary grouping within the primary group. */
   subGroup: string | null;
   dataType: CustomFieldDataType | string; // NB: string from API
-  defaultValue: string | null;
+  /**
+   * Option fields only. When set (Country/Language/Skill), the UI loads choices from the
+   * lookup endpoints and submits lookup GUIDs. Null = use `options` (inline controlled options).
+   */
+  lookupType: CustomFieldLookupType | string | null;
   validationRegex: string | null;
   validationErrorMessage: string | null;
   isRequired: boolean;

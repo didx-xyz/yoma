@@ -57,8 +57,12 @@ import FormInput from "~/components/Common/FormInput";
 import FormMessage, { FormMessageType } from "~/components/Common/FormMessage";
 import FormRadio from "~/components/Common/FormRadio";
 import FormRequiredFieldMessage from "~/components/Common/FormRequiredFieldMessage";
+import FormTextArea from "~/components/Common/FormTextArea";
 import MainLayout from "~/components/Layout/Main";
-import { OpportunityCustomFields } from "~/components/Opportunity/OpportunityCustomFields";
+import {
+  getCustomFieldErrors,
+  OpportunityCustomFields,
+} from "~/components/Opportunity/OpportunityCustomFields";
 import OpportunityPublicDetails from "~/components/Opportunity/OpportunityPublicDetails";
 import { OpportunityPublicSmallComponentV2 } from "~/components/Opportunity/OpportunityPublicSmallV2";
 import { PageBackground } from "~/components/PageBackground";
@@ -408,7 +412,13 @@ const OpportunityAdminDetails: NextPageWithLayout<{
     hidden: opportunity?.hidden ?? false,
     showZltoReward: !!(opportunity?.zltoReward ?? false),
     showZltoRewardPool: !!(opportunity?.zltoRewardPool ?? false),
-    externalId: opportunity?.externalId ?? null,
+    externalId: opportunity?.externalId ?? "",
+    customFields:
+      opportunity?.customFields?.map((f) => ({
+        key: f.key,
+        value: f.value,
+        values: f.values,
+      })) ?? [],
   });
 
   const schemaStep1 = z.object({
@@ -539,9 +549,23 @@ const OpportunityAdminDetails: NextPageWithLayout<{
             }
           }
         }),
+      // definition-driven custom fields; validated against their definitions below
+      customFields: z.array(z.any()).nullish(),
     })
     .superRefine((val, ctx) => {
       if (val == null) return;
+
+      // custom fields must be valid before leaving/saving this step
+      for (const { error } of getCustomFieldErrors(
+        customFieldDefinitions,
+        val.customFields,
+      )) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: error,
+          path: ["customFields"],
+        });
+      }
 
       if (!isJobOpportunity && !val.difficultyId) {
         ctx.addIssue({
@@ -1004,6 +1028,12 @@ const OpportunityAdminDetails: NextPageWithLayout<{
     void triggerStep2();
   }, [isJobOpportunity, triggerStep1, triggerStep2]);
 
+  // re-validate step 2 when the applicable custom-field definitions load/change
+  // (they arrive asynchronously and drive the customFields validation)
+  useEffect(() => {
+    void triggerStep2();
+  }, [customFieldDefinitions, triggerStep2]);
+
   useEffect(() => {
     // trigger validation when watchVerificationEnabled & watchVerificationMethod changes (for required field indicators to refresh)
     triggerStep5();
@@ -1121,7 +1151,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
       nonCompletableReason: null,
       shareWithPartners: formData.shareWithPartners ?? false,
       syncedInfo: null,
-      externalId: formData.externalId ?? null,
+      externalId: formData.externalId ?? "",
     }),
     [
       formData,
@@ -1286,6 +1316,20 @@ const OpportunityAdminDetails: NextPageWithLayout<{
       try {
         let message = "";
 
+        // custom fields: submit the FULL applicable collection (replacement semantics —
+        // the API clears any custom field omitted from the payload). Reconcile against
+        // the current type's definitions so values from a previously selected type are
+        // dropped, and drop empty entries.
+        const definitionKeys = new Set(
+          (customFieldDefinitions ?? []).map((d) => d.key),
+        );
+        data.customFields = (data.customFields ?? []).filter(
+          (v) =>
+            definitionKeys.has(v.key) &&
+            ((v.value != null && v.value.trim() !== "") ||
+              (v.values != null && v.values.length > 0)),
+        );
+
         // convert dates to string in format "YYYY-MM-DD"
         data.dateStart = data.dateStart
           ? moment.utc(data.dateStart).format(DATE_FORMAT_SYSTEM)
@@ -1406,6 +1450,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
       queryClient,
       router,
       returnUrl,
+      customFieldDefinitions,
     ],
   );
 
@@ -1637,7 +1682,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                         showZltoRewardPool: !!(
                           updatedOpportunity.zltoRewardPool ?? false
                         ),
-                        externalId: updatedOpportunity.externalId ?? null,
+                        externalId: updatedOpportunity.externalId ?? "",
                       };
                       setFormData(mapped);
                       setOppExpiredModalVisible(false);
@@ -1856,6 +1901,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                       error={formStateStep1.errors.title?.message}
                     >
                       <FormInput
+                        className="md:w-1/2"
                         inputProps={{
                           type: "text",
                           placeholder: "Enter title...",
@@ -1883,7 +1929,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                             instanceId="typeId"
                             classNames={{
                               control: () =>
-                                "input w-full pr-0 pl-2 !border-gray",
+                                "input w-full pr-0 pl-2 !border-gray md:w-1/2",
                             }}
                             options={opportunityTypesOptions}
                             onBlur={onBlur} // mark the field as touched
@@ -1930,7 +1976,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                             instanceId="engagementTypeId"
                             classNames={{
                               control: () =>
-                                "input w-full !border-gray pr-0 pl-2",
+                                "input w-full !border-gray pr-0 pl-2 md:w-1/2",
                             }}
                             options={engagementTypesOptions}
                             onBlur={onBlur} // mark the field as touched
@@ -1978,7 +2024,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                             instanceId="categories"
                             classNames={{
                               control: () =>
-                                "input w-full !border-gray pr-0 pl-2 py-1 h-fit",
+                                "input w-full !border-gray pr-0 pl-2 py-1 h-fit md:w-1/2",
                             }}
                             isMulti={true}
                             options={categoriesOptions}
@@ -2017,7 +2063,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                     >
                       <input
                         type="text"
-                        className="input border-gray focus:border-gray rounded-md focus:outline-none"
+                        className="input border-gray focus:border-gray rounded-md focus:outline-none md:w-1/2"
                         placeholder="Enter link..."
                         maxLength={2048}
                         {...registerStep1("uRL")}
@@ -2034,12 +2080,12 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                       }
                       error={formStateStep1.errors.summary?.message}
                     >
-                      {/* TODO: replace with FormTextArea component */}
-                      <textarea
-                        className="input textarea border-gray focus:border-gray h-16 w-full rounded-md text-[1rem] leading-tight focus:outline-none"
-                        placeholder="Enter summary..."
-                        maxLength={150}
-                        {...registerStep1("summary")}
+                      <FormTextArea
+                        inputProps={{
+                          placeholder: "Enter summary...",
+                          maxLength: 150,
+                          ...registerStep1("summary"),
+                        }}
                       />
                     </FormField>
 
@@ -2133,7 +2179,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                             instanceId="languages"
                             classNames={{
                               control: () =>
-                                "input w-full !border-gray pr-0 pl-2 h-fit py-1",
+                                "input w-full !border-gray pr-0 pl-2 h-fit py-1 md:w-1/2",
                             }}
                             isMulti={true}
                             options={languagesOptions}
@@ -2180,7 +2226,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                             instanceId="countries"
                             classNames={{
                               control: () =>
-                                "input w-full !border-gray pr-0 pl-2 h-fit py-1",
+                                "input w-full !border-gray pr-0 pl-2 h-fit py-1 md:w-1/2",
                             }}
                             isMulti={true}
                             options={countriesOptions}
@@ -2227,7 +2273,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                             instanceId="difficultyId"
                             classNames={{
                               control: () =>
-                                "input w-full !border-gray pr-0 pl-2",
+                                "input w-full !border-gray pr-0 pl-2 md:w-1/2",
                             }}
                             isMulti={false}
                             isClearable={true}
@@ -2460,20 +2506,23 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                       />
                     </FormField>
 
-                    <div className="mb-4 flex flex-col gap-2">
-                      <h5 className="font-bold tracking-wider">
-                        Additional details
-                      </h5>
-                      <p className="-mt-2 text-sm">
-                        Extra structured fields for this opportunity type,
-                        defined centrally and rendered here automatically.
-                      </p>
-                    </div>
+                    <div className="divider" />
 
                     {/* CUSTOM FIELDS (definition-driven, YOM-1244 / YOM-1255) */}
-                    <OpportunityCustomFields
-                      definitions={customFieldDefinitions}
-                      isLoading={customFieldDefinitionsIsLoading}
+                    {/* Managed by the step 2 form so values partake in zod validation
+                        (gates "Next") and dirty tracking (unsaved-changes dialog). */}
+                    <Controller
+                      control={controlStep2}
+                      name="customFields"
+                      render={({ field: { onChange, value } }) => (
+                        <OpportunityCustomFields
+                          definitions={customFieldDefinitions}
+                          isLoading={customFieldDefinitionsIsLoading}
+                          values={value}
+                          onChange={onChange}
+                          showErrors={formStateStep2.isSubmitted}
+                        />
+                      )}
                     />
 
                     {/* BUTTONS */}

@@ -9,6 +9,8 @@ const FormField: React.FC<{
   showWarningIcon?: boolean;
   showError?: boolean;
   error?: string;
+  /** Optional content rendered inline next to the label (e.g. a badge). */
+  badge?: React.ReactNode;
   children?: React.ReactNode;
 }> = ({
   label,
@@ -17,6 +19,7 @@ const FormField: React.FC<{
   showWarningIcon,
   showError,
   error,
+  badge,
   children,
 }) => {
   return (
@@ -27,6 +30,7 @@ const FormField: React.FC<{
           subLabel={subLabel}
           tooltip={tooltip}
           showWarningIcon={!!showWarningIcon}
+          badge={badge}
         />
       )}
 
