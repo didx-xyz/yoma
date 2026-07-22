@@ -60,9 +60,9 @@ import FormRequiredFieldMessage from "~/components/Common/FormRequiredFieldMessa
 import FormTextArea from "~/components/Common/FormTextArea";
 import MainLayout from "~/components/Layout/Main";
 import {
+  CustomFields,
   getCustomFieldErrors,
-  OpportunityCustomFields,
-} from "~/components/Opportunity/OpportunityCustomFields";
+} from "~/components/Opportunity/CustomFields";
 import OpportunityPublicDetails from "~/components/Opportunity/OpportunityPublicDetails";
 import { OpportunityPublicSmallComponentV2 } from "~/components/Opportunity/OpportunityPublicSmallV2";
 import { PageBackground } from "~/components/PageBackground";
@@ -2515,7 +2515,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                       control={controlStep2}
                       name="customFields"
                       render={({ field: { onChange, value } }) => (
-                        <OpportunityCustomFields
+                        <CustomFields
                           definitions={customFieldDefinitions}
                           isLoading={customFieldDefinitionsIsLoading}
                           values={value}

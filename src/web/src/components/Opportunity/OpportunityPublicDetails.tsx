@@ -2,14 +2,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { AxiosError } from "axios";
 import { useAtomValue, useSetAtom } from "jotai";
 import Image from "next/image";
-import iconClock from "public/images/icon-clock.svg";
-import iconDifficulty from "public/images/icon-difficulty.svg";
-import iconLanguage from "public/images/icon-language.svg";
-import iconLocation from "public/images/icon-location.svg";
 import iconOpen from "public/images/icon-open.svg";
-import iconSkills from "public/images/icon-skills.svg";
 import iconSuccess from "public/images/icon-success.png";
-import iconTopics from "public/images/icon-topics.svg";
 import iconUpload from "public/images/icon-upload.svg";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { FaExclamationTriangle, FaInfoCircle } from "react-icons/fa";
@@ -20,6 +14,14 @@ import {
   IoMdClose,
   IoMdShare,
 } from "react-icons/io";
+import {
+  IoBulbOutline,
+  IoLanguageOutline,
+  IoLocationOutline,
+  IoPricetagsOutline,
+  IoTimeOutline,
+  IoTrendingUpOutline,
+} from "react-icons/io5";
 import { toast } from "react-toastify";
 import { SettingType } from "~/api/models/common";
 import type { MyOpportunityResponseVerify } from "~/api/models/myOpportunity";
@@ -44,6 +46,7 @@ import {
   OpportunityTypeBadge,
 } from "~/components/Opportunity/opportunityTypeTheme";
 import { OpportunityCompletionEdit } from "~/components/Opportunity/OpportunityCompletionEdit";
+import { OpportunityCustomFieldsSection } from "~/components/Opportunity/OpportunityCustomFieldsSection";
 import Share from "~/components/Opportunity/Share";
 import { SignInButton } from "~/components/SignInButton";
 import { ApiErrors } from "~/components/Status/ApiErrors";
@@ -60,6 +63,7 @@ import {
 import { userProfileAtom } from "~/lib/store";
 import { type User } from "~/server/auth";
 import CustomModal from "../Common/CustomModal";
+import DetailSection from "../Common/DetailSection";
 import FormCheckbox from "../Common/FormCheckbox";
 import { Editor } from "../RichText/Editor";
 
@@ -1017,18 +1021,11 @@ const OpportunityPublicDetails: React.FC<{
             <div className="flex flex-col gap-2 rounded-lg shadow-lg md:w-[33%]">
               <div className="divide-gray flex flex-col divide-y rounded-lg bg-white p-4 md:p-6">
                 {(opportunityInfo.skills?.length ?? 0) > 0 && (
-                  <div className="pb-4 first:pt-0 last:pb-0">
-                    <div className="mt-2 flex flex-row items-center gap-1 text-sm font-bold">
-                      <Image
-                        src={iconSkills}
-                        alt="Icon Skills"
-                        width={20}
-                        className="h-auto"
-                        sizes="100vw"
-                        priority={true}
-                      />
-                      <span className="ml-1">Skills you will learn</span>
-                    </div>
+                  <DetailSection
+                    title="Skills you will learn"
+                    icon={<IoBulbOutline className="text-green h-5 w-5" />}
+                    className="pb-4 first:pt-0 last:pb-0"
+                  >
                     <div className="my-2 flex flex-wrap gap-1">
                       {opportunityInfo.skills?.map((item) => (
                         <div
@@ -1039,26 +1036,14 @@ const OpportunityPublicDetails: React.FC<{
                         </div>
                       ))}
                     </div>
-                  </div>
+                  </DetailSection>
                 )}
                 {opportunityInfo.commitmentIntervalCount != null &&
                   opportunityInfo.commitmentInterval && (
-                    <div className="py-4 first:pt-0 last:pb-0">
-                      <div className="flex flex-row items-center gap-1 text-sm font-bold">
-                        <Image
-                          src={iconClock}
-                          alt="Icon Clock"
-                          width={23}
-                          className="h-auto"
-                          sizes="100vw"
-                          priority={true}
-                        />
-
-                        <span className="ml-1">
-                          How much time you will need
-                        </span>
-                      </div>
-
+                    <DetailSection
+                      title="How much time you will need"
+                      icon={<IoTimeOutline className="text-green h-5 w-5" />}
+                    >
                       <div className="my-2 text-sm">
                         {`This task should not take you more than ${
                           opportunityInfo.commitmentIntervalCount
@@ -1076,22 +1061,13 @@ const OpportunityPublicDetails: React.FC<{
                           estimates.
                         </p>
                       </div>
-                    </div>
+                    </DetailSection>
                   )}
                 {(opportunityInfo.categories?.length ?? 0) > 0 && (
-                  <div className="py-4 first:pt-0 last:pb-0">
-                    <div className="flex flex-row items-center gap-1 text-sm font-bold">
-                      <Image
-                        src={iconTopics}
-                        alt="Icon Topics"
-                        width={20}
-                        className="h-auto"
-                        sizes="100vw"
-                        priority={true}
-                      />
-
-                      <span className="ml-1">Topics</span>
-                    </div>
+                  <DetailSection
+                    title="Topics"
+                    icon={<IoPricetagsOutline className="text-green h-5 w-5" />}
+                  >
                     <div className="my-2 flex flex-wrap gap-1">
                       {opportunityInfo.categories?.map((item) => (
                         <div
@@ -1102,22 +1078,13 @@ const OpportunityPublicDetails: React.FC<{
                         </div>
                       ))}
                     </div>
-                  </div>
+                  </DetailSection>
                 )}
                 {(opportunityInfo.languages?.length ?? 0) > 0 && (
-                  <div className="py-4 first:pt-0 last:pb-0">
-                    <div className="flex flex-row items-center gap-1 text-sm font-bold">
-                      <Image
-                        src={iconLanguage}
-                        alt="Icon Language"
-                        width={20}
-                        className="h-auto"
-                        sizes="100vw"
-                        priority={true}
-                      />
-
-                      <span className="ml-1">Languages</span>
-                    </div>
+                  <DetailSection
+                    title="Languages"
+                    icon={<IoLanguageOutline className="text-green h-5 w-5" />}
+                  >
                     <div className="my-2 flex flex-wrap gap-1">
                       {opportunityInfo.languages?.map((item) => (
                         <div
@@ -1128,41 +1095,26 @@ const OpportunityPublicDetails: React.FC<{
                         </div>
                       ))}
                     </div>
-                  </div>
+                  </DetailSection>
                 )}
                 {!!opportunityInfo.difficulty && (
-                  <div className="py-4 first:pt-0 last:pb-0">
-                    <div className="flex flex-row items-center gap-1 text-sm font-bold">
-                      <Image
-                        src={iconDifficulty}
-                        alt="Icon Difficulty"
-                        width={20}
-                        className="h-auto"
-                        sizes="100vw"
-                        priority={true}
-                      />
-
-                      <span className="ml-1">Course difficulty</span>
-                    </div>
-                    <div className="my-2 text-sm">
+                  <DetailSection
+                    title="Course difficulty"
+                    icon={
+                      <IoTrendingUpOutline className="text-green h-5 w-5" />
+                    }
+                  >
+                    <div className="badge bg-green my-2 h-full min-h-6 rounded-md border-0 py-1 text-xs font-semibold text-white">
                       {opportunityInfo.difficulty}
                     </div>
-                  </div>
+                  </DetailSection>
                 )}
                 {(opportunityInfo.countries?.length ?? 0) > 0 && (
-                  <div className="pt-4 first:pt-0">
-                    <div className="flex flex-row items-center gap-1 text-sm font-bold">
-                      <Image
-                        src={iconLocation}
-                        alt="Icon Location"
-                        width={20}
-                        className="h-auto"
-                        sizes="100vw"
-                        priority={true}
-                      />
-
-                      <span className="ml-1">Countries</span>
-                    </div>
+                  <DetailSection
+                    title="Countries"
+                    icon={<IoLocationOutline className="text-green h-5 w-5" />}
+                    className="pt-4 first:pt-0"
+                  >
                     <div className="my-2 flex flex-wrap gap-1">
                       {opportunityInfo.countries?.map((country) => (
                         <div
@@ -1173,8 +1125,13 @@ const OpportunityPublicDetails: React.FC<{
                         </div>
                       ))}
                     </div>
-                  </div>
+                  </DetailSection>
                 )}
+                {/* CUSTOM FIELDS (definition-driven, read-only) */}
+                <OpportunityCustomFieldsSection
+                  type={opportunityInfo.type}
+                  values={opportunityInfo.customFields}
+                />
               </div>
             </div>
           </div>

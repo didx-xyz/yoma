@@ -20,7 +20,11 @@ import { PAGE_SIZE_MEDIUM } from "~/lib/constants";
 import { dateInputToUTC, debounce, utcToDateInput } from "~/lib/utils";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// OpportunityCustomFields (YOM-1244 / YOM-1255 — Task 1)
+// CustomFields (YOM-1244 / YOM-1255)
+//
+// Editable, definition-driven custom fields. Context-agnostic (Opportunity today;
+// MyOpportunity / User later) — pass the applicable definitions in.
+// For read-only display of saved values, see CustomFieldsView.
 //
 // Definition-driven custom fields. Fields are rendered purely from `definitions`
 // (no hardcoded keys, titles, options or opportunity types). One control per
@@ -37,7 +41,7 @@ import { dateInputToUTC, debounce, utcToDateInput } from "~/lib/utils";
 // resubmit the full collection (replacement semantics — omitted keys are cleared).
 // ─────────────────────────────────────────────────────────────────────────────
 
-export interface OpportunityCustomFieldsProps {
+export interface CustomFieldsProps {
   /** Active definitions applicable to the currently selected opportunity type. */
   definitions: CustomFieldDefinition[] | null | undefined;
   /** Current values, joined to definitions by `key`. Managed by the parent form. */
@@ -209,9 +213,7 @@ const SELECT_STYLES = {
   placeholder: (base: any) => ({ ...base, color: "#A3A6AF" }),
 };
 
-export const OpportunityCustomFields: React.FC<
-  OpportunityCustomFieldsProps
-> = ({
+export const CustomFields: React.FC<CustomFieldsProps> = ({
   definitions,
   values,
   onChange,
@@ -628,4 +630,4 @@ export const OpportunityCustomFields: React.FC<
   );
 };
 
-export default OpportunityCustomFields;
+export default CustomFields;
