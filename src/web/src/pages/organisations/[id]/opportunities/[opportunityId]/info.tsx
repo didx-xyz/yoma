@@ -12,7 +12,7 @@ import iconLanguage from "public/images/icon-language.svg";
 import iconLocation from "public/images/icon-location.svg";
 import iconSkills from "public/images/icon-skills.svg";
 import iconTopics from "public/images/icon-topics.svg";
-import { type ParsedUrlQuery } from "querystring";
+import { type ParsedUrlQuery } from "node:querystring";
 import { type ReactElement } from "react";
 import { IoMdArrowRoundBack, IoMdPerson } from "react-icons/io";
 import Moment from "react-moment";
@@ -24,11 +24,19 @@ import {
 import { AvatarImage } from "~/components/AvatarImage";
 import MainLayout from "~/components/Layout/Main";
 import OrgAdminBadges from "~/components/Opportunity/Badges/OrgAdminBadges";
+import ZltoRewardBadge from "~/components/Opportunity/Badges/ZltoRewardBadge";
 import {
   OpportunityActions,
   OpportunityActionOptions,
   OpportunityActionDisplayStyle,
 } from "~/components/Opportunity/OpportunityActions";
+import {
+  getTypeConfig,
+  OpportunityEngagementTypeBadge,
+  OpportunityMetaTextRow,
+  OpportunityOrgCountriesRow,
+  OpportunityTypeBadge,
+} from "~/components/Opportunity/opportunityTypeTheme";
 import { PageBackground } from "~/components/PageBackground";
 import { Editor } from "~/components/RichText/Editor";
 import { InternalServerError } from "~/components/Status/InternalServerError";
@@ -122,6 +130,7 @@ const OpportunityDetails: NextPageWithLayout<{
   const { data: opportunity } = useOpportunityInfoQuery(opportunityId, {
     enabled: !error,
   });
+  const typeConfig = getTypeConfig(opportunity?.type);
 
   if (error) {
     if (error === 401) return <Unauthenticated />;
@@ -152,7 +161,7 @@ const OpportunityDetails: NextPageWithLayout<{
               </li>
               <li className="mx-2 inline font-semibold text-white"> | </li>
               <li className="inline">
-                <div className="inline max-w-[500px] overflow-hidden text-ellipsis whitespace-nowrap text-white">
+                <div className="inline max-w-125 overflow-hidden text-ellipsis whitespace-nowrap text-white">
                   {opportunity?.title}
                 </div>
                 <LimitedFunctionalityBadge />
@@ -192,60 +201,53 @@ const OpportunityDetails: NextPageWithLayout<{
 
         {opportunity && (
           <div className="flex flex-col gap-4">
-            <div className="shadow-custom relative flex grow flex-row gap-1 rounded-lg bg-white p-6">
-              <div className="flex flex-col gap-2 md:grow">
-                <div className="relative">
-                  <h4 className="line-clamp-2 max-w-[80%] grow text-xl font-semibold text-black md:text-2xl">
+            <div className="relative flex grow flex-col rounded-lg bg-white p-4 shadow-lg md:p-6">
+              <div className="flex items-start gap-3">
+                <div className="min-w-0 flex-1">
+                  <h4 className="font-family-nunito line-clamp-2 text-xl font-bold text-black md:text-2xl">
                     {opportunity.title}
                   </h4>
-                  <span className="absolute top-0 right-0">
-                    {/* COMPANY LOGO */}
-                    <AvatarImage
-                      icon={opportunity?.organizationLogoURL ?? null}
-                      alt="Company Logo"
-                      size={60}
+
+                  <div className="mt-1 flex items-center gap-2">
+                    <div className="min-w-0 flex-1">
+                      <OpportunityOrgCountriesRow data={opportunity} />
+                    </div>
+                    <PullSyncBadge opportunity={opportunity} />
+                  </div>
+                </div>
+
+                <div className="shrink-0">
+                  <AvatarImage
+                    icon={opportunity.organizationLogoURL ?? null}
+                    alt="Company Logo"
+                    size={60}
+                  />
+                </div>
+              </div>
+
+              <div className="mt-4 mb-2 flex flex-col gap-2 md:my-2">
+                <div className="flex flex-row flex-wrap items-center gap-2">
+                  <OpportunityTypeBadge
+                    data={opportunity}
+                    className={typeConfig.badgeClassName}
+                  />
+                  <OpportunityEngagementTypeBadge
+                    data={opportunity}
+                    className="bg-gray-light text-gray-dark"
+                  />
+                  {opportunity.zltoRewardEstimate != null && (
+                    <ZltoRewardBadge
+                      amount={opportunity.zltoRewardEstimate}
+                      showToolTips={true}
                     />
-                  </span>
+                  )}
+                  <OrgAdminBadges
+                    opportunity={opportunity}
+                    isAdmin={user?.roles.includes(ROLE_ADMIN)}
+                  />
                 </div>
 
-                <div className="text-gray-dark flex items-center gap-2 text-sm">
-                  By {opportunity.organizationName}
-                  <PullSyncBadge opportunity={opportunity} />
-                </div>
-
-                {/* BADGES */}
-                <OrgAdminBadges
-                  opportunity={opportunity}
-                  isAdmin={user?.roles.includes(ROLE_ADMIN)}
-                />
-
-                {/* DATES */}
-                <div className="text-gray-dark flex flex-col text-sm">
-                  <div>
-                    {opportunity?.dateStart && (
-                      <>
-                        <span className="mr-2 font-bold">Starts:</span>
-                        <span className="text-xs tracking-widest text-black">
-                          <Moment format={DATE_FORMAT_HUMAN} utc={true}>
-                            {opportunity.dateStart}
-                          </Moment>
-                        </span>
-                      </>
-                    )}
-                  </div>
-                  <div>
-                    {opportunity?.dateEnd && (
-                      <>
-                        <span className="mr-2 font-bold">Ends:</span>
-                        <span className="text-xs tracking-widest text-black">
-                          <Moment format={DATE_FORMAT_HUMAN} utc={true}>
-                            {opportunity.dateEnd}
-                          </Moment>
-                        </span>
-                      </>
-                    )}
-                  </div>
-                </div>
+                <OpportunityMetaTextRow data={opportunity} />
               </div>
             </div>
 

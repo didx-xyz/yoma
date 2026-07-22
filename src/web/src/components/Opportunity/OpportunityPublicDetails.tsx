@@ -812,7 +812,7 @@ const OpportunityPublicDetails: React.FC<{
                       showToolTips={true}
                     />
                   )}
-                </div>
+                </div>{" "}
                 <OpportunityMetaTextRow data={opportunityInfo} />
               </div>
             ) : (
