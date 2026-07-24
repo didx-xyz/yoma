@@ -74,7 +74,7 @@ jobs:
     #   ${{ matrix.project }}-changes: ${{ steps.filter.outputs.changes }}
 
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - uses: dorny/paths-filter@7b450fff21473bca461d4b92ce414b9d0420d706 # v4.0.2
@@ -85,7 +85,7 @@ jobs:
             changes:
               - '${{ matrix.dir }}/**'
 
-      - uses: jdx/mise-action@dad1bfd3df957f44999b559dd69dc1671cb4e9ea # v4.2.1
+      - uses: jdx/mise-action@9e7f7633ff6f6d6048a9418a68d48f288f50eb14 # v4.2.3
         if: (steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch') && matrix.lang == 'js'
         with:
           install: true
@@ -109,7 +109,7 @@ jobs:
         with:
           dotnet-version: 10.x
 
-      - uses: wearerequired/lint-action@548d8a7c4b04d3553d32ed5b6e91eb171e10e7bb # v2.3.0
+      - uses: wearerequired/lint-action@124229c6e2974984ba137c67a499ba28bfc33e33 # v3.0.2
         if: steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch'
         with: ${{ matrix.config }} # zizmor: ignore[obfuscation] matrix.config is statically defined in the matrix include block
         env: ${{ matrix.env }}
@@ -149,7 +149,7 @@ jobs:
               NEXT_PUBLIC_ENVIRONMENT=production
 
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       # https://github.com/actions/runner/pull/2477
@@ -178,7 +178,7 @@ jobs:
         with:
           cache-binary: false
           version: latest
-      - uses: docker/login-action@af1e73f918a031802d376d3c8bbc3fe56130a9b0 # v4.4.0
+      - uses: docker/login-action@abd2ef45e78c5afb21d64d4ca52ee8550d9572c7 # v4.5.1
         if: steps.should-run.outputs.run == 'true'
         with:
           registry: ghcr.io
@@ -226,7 +226,7 @@ jobs:
             helm: ./helm/yoma-web
 
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       # https://github.com/actions/runner/pull/2477
@@ -255,7 +255,7 @@ jobs:
         with:
           cache-binary: false
           version: latest
-      - uses: docker/login-action@af1e73f918a031802d376d3c8bbc3fe56130a9b0 # v4.4.0
+      - uses: docker/login-action@abd2ef45e78c5afb21d64d4ca52ee8550d9572c7 # v4.5.1
         if: steps.should-run.outputs.run == 'true'
         with:
           registry: ghcr.io
@@ -311,7 +311,7 @@ jobs:
       cancel-in-progress: true
 
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       # https://github.com/actions/runner/pull/2477
@@ -342,7 +342,7 @@ jobs:
           else
             echo run=false >> $GITHUB_OUTPUT
           fi
-      - uses: docker/login-action@af1e73f918a031802d376d3c8bbc3fe56130a9b0 # v4.4.0
+      - uses: docker/login-action@abd2ef45e78c5afb21d64d4ca52ee8550d9572c7 # v4.5.1
         if: steps.should-run.outputs.run == 'true'
         with:
           registry: ghcr.io
@@ -387,7 +387,7 @@ jobs:
           API_TAG: ${{ steps.filter.outputs.api == 'true' && needs.docker-push.outputs.image_version || 'latest' }}
           YOUTH_TAG: ${{ steps.filter.outputs.web == 'true' && needs.docker-push.outputs.image_version || 'latest' }}
 
-      - uses: jdx/mise-action@dad1bfd3df957f44999b559dd69dc1671cb4e9ea # v4.2.1
+      - uses: jdx/mise-action@9e7f7633ff6f6d6048a9418a68d48f288f50eb14 # v4.2.3
         if: steps.should-run.outputs.run == 'true'
         with:
           install: true
@@ -438,7 +438,7 @@ jobs:
     if: github.triggering_actor != 'dependabot[bot]'
 
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       # https://github.com/actions/runner/pull/2477
@@ -475,7 +475,7 @@ jobs:
       - name: SOPS Binary Installer
         if: steps.should-run.outputs.run == 'true'
         uses: mdgreenwald/mozilla-sops-action@55177c1ff20a2b396280e4c5f53c32b69f0c1e40 # v2.1.1
-      - uses: aws-actions/configure-aws-credentials@517a711dbcd0e402f90c77e7e2f81e849156e31d # v6.2.2
+      - uses: aws-actions/configure-aws-credentials@e6de054238d6b7531b4efff3b6587d9aade6a06c # v6.2.3
         if: steps.should-run.outputs.run == 'true'
         with:
           aws-region: ${{ secrets.AWS_REGION }}
