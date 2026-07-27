@@ -550,7 +550,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
       >
         <OpportunityExport
           totalCount={searchResults?.totalCount ?? 0}
-          searchFilter={searchFilter} // Pass the current search filter
+          searchFilter={adminSearchFilter}
           onClose={() => setExportDialogOpen(false)}
           onSave={() => setExportDialogOpen(false)}
         />
