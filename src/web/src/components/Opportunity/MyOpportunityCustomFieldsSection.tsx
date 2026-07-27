@@ -1,45 +1,45 @@
 import { IoInformationCircleOutline } from "react-icons/io5";
 import { type CustomFieldValueItem } from "~/api/models/opportunity";
 import { CustomFieldsView } from "~/components/Opportunity/CustomFieldsView";
-import { useOpportunityCustomFieldDefinitionsQuery } from "~/hooks/useOpportunityMutations";
+import { useMyOpportunityCustomFieldDefinitionsQuery } from "~/hooks/useOpportunityMutations";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// OpportunityCustomFieldsSection (YOM-1244 / YOM-1255)
+// MyOpportunityCustomFieldsSection (YOM-1244 / YOM-1255)
 //
-// Opportunity-specific wrapper around the generic read-only CustomFieldsView:
-// loads the applicable custom-field definitions for the opportunity type, then
-// renders the saved values as a sidebar "Additional details" section.
-// Used by the org-admin detail page and the public opportunity details.
+// MyOpportunity-specific wrapper around the generic read-only CustomFieldsView:
+// loads the applicable completion custom-field definitions for an opportunity
+// (type resolved server-side), then renders the hydrated completion values.
+// Used by the user's opportunity list cards to surface compact metadata.
 // Renders nothing when there are no values to show.
 // ─────────────────────────────────────────────────────────────────────────────
 
-export interface OpportunityCustomFieldsSectionProps {
-  /** Opportunity type name (enum name, e.g. "Job") used to load the definitions. */
-  type: string | null | undefined;
-  /** The opportunity's hydrated custom-field values. */
+export interface MyOpportunityCustomFieldsSectionProps {
+  /** Opportunity id used to load the applicable completion definitions. */
+  opportunityId: string;
+  /** The completion's hydrated custom-field values. */
   values: CustomFieldValueItem[] | null | undefined;
   /** Optional whitelist/order of definition keys to show. Omitted → all with a value. */
   fields?: string[];
-  /** Gate the definitions fetch (e.g. skip on error/preview). Default true. */
+  /** Gate the definitions fetch (skip when there are no values). Default true. */
   enabled?: boolean;
   /** Section heading; rendered only when there is at least one value. */
   title?: string;
   className?: string;
 }
 
-export const OpportunityCustomFieldsSection: React.FC<
-  OpportunityCustomFieldsSectionProps
+export const MyOpportunityCustomFieldsSection: React.FC<
+  MyOpportunityCustomFieldsSectionProps
 > = ({
-  type,
+  opportunityId,
   values,
   fields,
   enabled = true,
-  title = "Additional details",
+  title = "", //"Additional details",
   className,
 }) => {
-  const { data: definitions } = useOpportunityCustomFieldDefinitionsQuery(
-    type ? [type] : null,
-    { enabled: enabled && !!type },
+  const { data: definitions } = useMyOpportunityCustomFieldDefinitionsQuery(
+    opportunityId,
+    { enabled: enabled && !!opportunityId },
   );
 
   return (
@@ -50,10 +50,9 @@ export const OpportunityCustomFieldsSection: React.FC<
       values={values}
       fields={fields}
       className={className}
-      columns={1}
       hideGrouping={true}
     />
   );
 };
 
-export default OpportunityCustomFieldsSection;
+export default MyOpportunityCustomFieldsSection;

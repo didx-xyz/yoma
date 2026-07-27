@@ -54,6 +54,8 @@ export interface CustomFieldsProps {
   showErrors?: boolean;
   /** react-select menu portal target (defaults to document.body to avoid clipping). */
   menuPortalTarget?: HTMLElement | null;
+  /** Hide group and subgroup section headers. Defaults to false. */
+  hideGrouping?: boolean;
 }
 
 interface CustomFieldGroup {
@@ -220,6 +222,7 @@ export const CustomFields: React.FC<CustomFieldsProps> = ({
   isLoading,
   showErrors,
   menuPortalTarget,
+  hideGrouping = false,
 }) => {
   const groups = useMemo(
     () => groupDefinitions(definitions ?? []),
@@ -564,49 +567,23 @@ export const CustomFields: React.FC<CustomFieldsProps> = ({
         className="flex flex-col gap-4"
         data-testid="opportunity-custom-fields"
       >
-        {groups.map((group) => (
-          <div key={group.group} className="flex flex-col gap-3">
-            <div className="flex items-center gap-3">
-              <span className="text-green shrink-0 text-sm font-semibold tracking-[0.2em] uppercase">
-                {group.group}
-              </span>
-              <span className="border-gray-light h-px flex-1 border-t"></span>
-              <span className="text-gray-dark shrink-0 text-sm font-medium">
-                {group.subGroups.reduce(
-                  (count, subGroup) => count + subGroup.definitions.length,
-                  0,
-                )}{" "}
-                fields
-              </span>
-            </div>
-
-            {group.subGroups.map((subGroup) => (
-              <div
-                key={`${group.group}-${subGroup.subGroup ?? "default"}`}
-                className="flex flex-col gap-3"
-              >
-                {subGroup.definitions.map((definition) => {
+        {hideGrouping ? (
+          <>
+            {groups.flatMap((group) =>
+              group.subGroups.flatMap((subGroup) =>
+                subGroup.definitions.map((definition) => {
                   const error = fieldError(definition);
                   const isBoolean =
                     dataTypeOf(definition) === CustomFieldDataType.Boolean;
-                  const badge = subGroup.subGroup;
 
                   return (
                     <FormField
                       key={definition.key}
-                      // boolean renders its own inline label via FormCheckbox
                       label={isBoolean ? undefined : definition.title}
                       subLabel={
                         isBoolean
                           ? undefined
                           : (definition.description ?? undefined)
-                      }
-                      badge={
-                        badge && !isBoolean ? (
-                          <div className="badge bg-green-light text-green-dark">
-                            {badge}
-                          </div>
-                        ) : undefined
                       }
                       showWarningIcon={!!error}
                       showError={!!(touched[definition.key] || showErrors)}
@@ -620,11 +597,74 @@ export const CustomFields: React.FC<CustomFieldsProps> = ({
                       </div>
                     </FormField>
                   );
-                })}
+                }),
+              ),
+            )}
+          </>
+        ) : (
+          <>
+            {groups.map((group) => (
+              <div key={group.group} className="flex flex-col gap-3">
+                <div className="flex items-center gap-3">
+                  <span className="text-green shrink-0 text-sm font-semibold tracking-[0.2em] uppercase">
+                    {group.group}
+                  </span>
+                  <span className="border-gray-light h-px flex-1 border-t"></span>
+                  <span className="text-gray-dark shrink-0 text-sm font-medium">
+                    {group.subGroups.reduce(
+                      (count, subGroup) => count + subGroup.definitions.length,
+                      0,
+                    )}{" "}
+                    fields
+                  </span>
+                </div>
+
+                {group.subGroups.map((subGroup) => (
+                  <div
+                    key={`${group.group}-${subGroup.subGroup ?? "default"}`}
+                    className="flex flex-col gap-3"
+                  >
+                    {subGroup.definitions.map((definition) => {
+                      const error = fieldError(definition);
+                      const isBoolean =
+                        dataTypeOf(definition) === CustomFieldDataType.Boolean;
+                      const badge = subGroup.subGroup;
+
+                      return (
+                        <FormField
+                          key={definition.key}
+                          label={isBoolean ? undefined : definition.title}
+                          subLabel={
+                            isBoolean
+                              ? undefined
+                              : (definition.description ?? undefined)
+                          }
+                          badge={
+                            badge && !isBoolean ? (
+                              <div className="badge bg-green-light text-green-dark">
+                                {badge}
+                              </div>
+                            ) : undefined
+                          }
+                          showWarningIcon={!!error}
+                          showError={!!(touched[definition.key] || showErrors)}
+                          error={error}
+                        >
+                          <div
+                            data-custom-field-key={definition.key}
+                            data-custom-field-datatype={definition.dataType}
+                          >
+                            {renderControl(definition)}
+                          </div>
+                        </FormField>
+                      );
+                    })}
+                  </div>
+                ))}
               </div>
             ))}
-          </div>
-        ))}
+          </>
+        )}
       </div>
     </>
   );

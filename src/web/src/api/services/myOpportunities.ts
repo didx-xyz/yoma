@@ -1,5 +1,9 @@
 import ApiClient from "~/lib/axiosClient";
-import type { Opportunity, SyncInfoEntityPartner } from "../models/opportunity";
+import type {
+  CustomFieldDefinition,
+  Opportunity,
+  SyncInfoEntityPartner,
+} from "../models/opportunity";
 import type {
   MyOpportunityRequestVerify,
   MyOpportunityRequestVerifyFinalizeBatch,
@@ -52,13 +56,39 @@ export const performActionSendForVerificationManual = async (
   opportunityId: string,
   model: MyOpportunityRequestVerify,
 ): Promise<any> => {
-  const formData = objectToFormData(model);
+  // Custom fields (YOM-1244 / YOM-1255) must be sent as ONE JSON-encoded multipart
+  // field containing the complete array — the API binds it via a custom JSON model
+  // binder. Pull it out before objectToFormData expands the rest into form entries,
+  // then append the serialized array under the same field name.
+  const { customFields, ...rest } = model;
+  const formData = objectToFormData(rest);
+
+  if (customFields != null) {
+    formData.append("customFields", JSON.stringify(customFields));
+  }
 
   await (
     await ApiClient
   ).put(`/myopportunity/action/${opportunityId}/verify`, formData, {
     headers: { "Content-Type": "multipart/form-data" },
   });
+};
+
+// Definition-driven custom fields (YOM-1244 / YOM-1255).
+// Returns active MyOpportunity (completion) custom field definitions applicable to
+// the given opportunity. The opportunity type is resolved server-side; generic and
+// type-specific definitions fall through. Used for the completion form and, on the
+// user's opportunity list cards, to label hydrated completion values.
+export const getMyOpportunityCustomFieldDefinitions = async (
+  opportunityId: string,
+  context?: GetServerSidePropsContext | GetStaticPropsContext,
+): Promise<CustomFieldDefinition[]> => {
+  const instance = context ? ApiServer(context) : await ApiClient;
+
+  const { data } = await instance.get<CustomFieldDefinition[]>(
+    `/myopportunity/${opportunityId}/custom/field/definition`,
+  );
+  return data;
 };
 
 export const getVerificationStatus = async (

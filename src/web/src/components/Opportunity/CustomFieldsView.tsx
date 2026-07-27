@@ -9,6 +9,7 @@ import DetailSection from "~/components/Common/DetailSection";
 import {
   useOpportunityCountriesQuery,
   useOpportunityLanguagesQuery,
+  useSkillsQuery,
 } from "~/hooks/useOpportunityMutations";
 import { utcToDateInput } from "~/lib/utils";
 
@@ -36,6 +37,10 @@ export interface CustomFieldsViewProps {
   /** Optional icon shown next to the heading (only used when `title` is set). */
   icon?: React.ReactNode;
   className?: string;
+  /** Optional number of columns for grid layout. If omitted, uses flex-wrap flow. */
+  columns?: number;
+  /** Hide group and subgroup section headers. Defaults to false. */
+  hideGrouping?: boolean;
 }
 
 const dataTypeOf = (definition: CustomFieldDefinition) =>
@@ -51,6 +56,8 @@ export const CustomFieldsView: React.FC<CustomFieldsViewProps> = ({
   title,
   icon,
   className,
+  columns = 2,
+  hideGrouping = false,
 }) => {
   const defs = useMemo(() => definitions ?? [], [definitions]);
 
@@ -61,12 +68,19 @@ export const CustomFieldsView: React.FC<CustomFieldsViewProps> = ({
   const needsLanguage = defs.some(
     (d) => lookupTypeOf(d) === CustomFieldLookupType.Language,
   );
+  const needsSkill = defs.some(
+    (d) => lookupTypeOf(d) === CustomFieldLookupType.Skill,
+  );
   const { data: countriesData } = useOpportunityCountriesQuery({
     enabled: needsCountry,
   });
   const { data: languagesData } = useOpportunityLanguagesQuery({
     enabled: needsLanguage,
   });
+  const { data: skillsData } = useSkillsQuery(
+    { nameContains: null, pageNumber: 1, pageSize: 500 },
+    { enabled: needsSkill },
+  );
   const countryMap = useMemo(
     () => new Map((countriesData ?? []).map((c) => [c.id, c.name])),
     [countriesData],
@@ -74,6 +88,10 @@ export const CustomFieldsView: React.FC<CustomFieldsViewProps> = ({
   const languageMap = useMemo(
     () => new Map((languagesData ?? []).map((l) => [l.id, l.name])),
     [languagesData],
+  );
+  const skillMap = useMemo(
+    () => new Map((skillsData?.items ?? []).map((s) => [s.id, s.name])),
+    [skillsData?.items],
   );
 
   const valueByKey = useMemo(() => {
@@ -110,7 +128,7 @@ export const CustomFieldsView: React.FC<CustomFieldsViewProps> = ({
       case CustomFieldLookupType.Language:
         return languageMap.get(value) ?? value;
       case CustomFieldLookupType.Skill:
-        return value; // no cheap reverse lookup by id; show the raw value
+        return skillMap.get(value) ?? value;
       default:
         return (
           definition.options?.find(
@@ -147,29 +165,75 @@ export const CustomFieldsView: React.FC<CustomFieldsViewProps> = ({
       if (!item) return null;
       const value = formatValue(definition, item);
       if (!value) return null;
-      return { key: definition.key, title: definition.title, value };
+      return {
+        key: definition.key,
+        title: definition.title,
+        value,
+        group: definition.group,
+        subGroup: definition.subGroup ?? null,
+      };
     })
-    .filter((r): r is { key: string; title: string; value: string } => !!r);
+    .filter(
+      (r): r is {
+        key: string;
+        title: string;
+        value: string;
+        group: string;
+        subGroup: string | null;
+      } => !!r,
+    );
 
   if (rows.length === 0) return null;
 
-  const list = (
-    <div className="flex flex-col gap-1" data-testid="custom-fields-view">
-      {rows.map((r) => (
-        <div
-          key={r.key}
-          className="grid grid-cols-[minmax(0,65%)_1fr] items-center gap-2 text-sm"
-        >
-          <span title={r.title} className="min-w-0 truncate font-semibold">
+  const renderFieldsGrid = (fieldsToRender: typeof rows) => (
+    <div
+      className="text-gray-dark gap-4 text-sm"
+      style={{
+        display: "grid",
+        gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
+      }}
+      data-testid="custom-fields-view"
+    >
+      {fieldsToRender.map((r) => (
+        <div key={r.key} className="flex flex-row justify-between gap-2">
+          <span
+            className="font-semiboldx min-w-40 truncate text-nowrap"
+            title={r.title}
+          >
             {r.title}:
           </span>
-
-          <span
-            title={r.value}
-            className="badge bg-green min-h-6 max-w-full min-w-0 justify-self-start rounded-md border-0 py-1 text-xs font-semibold text-white"
-          >
-            <span className="truncate">{r.value}</span>
+          <span className="line-clamp-2 truncate font-bold" title={r.value}>
+            {r.value}
           </span>
+        </div>
+      ))}
+    </div>
+  );
+
+  const list = hideGrouping ? (
+    renderFieldsGrid(rows)
+  ) : (
+    <div className="space-y-4" data-testid="custom-fields-view">
+      {Object.entries(
+        rows.reduce<
+          Record<
+            string,
+            { group: string; subGroup: string | null; fields: typeof rows }
+          >
+        >((acc, r) => {
+          const groupKey = r.subGroup ? `${r.group}__${r.subGroup}` : r.group;
+          acc[groupKey] ??= { group: r.group, subGroup: r.subGroup, fields: [] };
+          acc[groupKey]!.fields.push(r);
+          return acc;
+        }, {}),
+      ).map(([groupKey, { group, subGroup, fields }]) => (
+        <div key={groupKey}>
+          <div className="mb-2">
+            <h3 className="text-xs font-bold uppercase tracking-wide text-gray-dark">
+              {subGroup ? `${group} - ${subGroup}` : group}
+            </h3>
+          </div>
+          {renderFieldsGrid(fields)}
         </div>
       ))}
     </div>

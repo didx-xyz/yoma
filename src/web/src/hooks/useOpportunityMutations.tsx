@@ -6,6 +6,8 @@ import type {
   Country,
   EngagementType,
   Language,
+  SkillSearchFilter,
+  SkillSearchResults,
   TimeInterval,
 } from "~/api/models/lookups";
 import {
@@ -31,6 +33,7 @@ import {
   getCountries,
   getEngagementTypes,
   getLanguages,
+  getSkills,
   getTimeIntervals,
 } from "~/api/services/lookups";
 import {
@@ -50,7 +53,10 @@ import {
   updateOpportunityHidden,
   updateOpportunityStatus,
 } from "~/api/services/opportunities";
-import { searchMyOpportunitiesAdmin } from "~/api/services/myOpportunities";
+import {
+  getMyOpportunityCustomFieldDefinitions,
+  searchMyOpportunitiesAdmin,
+} from "~/api/services/myOpportunities";
 import { getSchemas } from "~/api/services/credentials";
 import { getOrganisationById } from "~/api/services/organisations";
 import { ApiErrors } from "~/components/Status/ApiErrors";
@@ -114,12 +120,16 @@ export const OPPORTUNITY_QUERY_KEYS = {
   timeIntervals: () => ["timeIntervals"] as const,
   engagementTypes: () => ["engagementTypes"] as const,
   schemas: () => ["schemas"] as const,
+  skills: (filter: SkillSearchFilter) => ["skills", filter] as const,
   organisation: (id: string) => ["organisation", id] as const,
   /** Definition-driven custom field definitions, scoped by opportunity type name(s) */
   customFieldDefinitions: (types?: string[] | null): unknown[] => [
     "opportunityCustomFieldDefinitions",
     ...(types ?? []),
   ],
+  /** MyOpportunity (completion) custom field definitions, scoped by opportunity id */
+  myCustomFieldDefinitions: (opportunityId: string) =>
+    ["myOpportunityCustomFieldDefinitions", opportunityId] as const,
 } as const;
 
 // ─── Query Hooks ──────────────────────────────────────────────────────────────────
@@ -212,6 +222,22 @@ export function useOpportunityCustomFieldDefinitionsQuery(
   });
 }
 
+/**
+ * Definition-driven MyOpportunity (completion) custom field definitions, keyed by
+ * opportunity id. The opportunity type is resolved server-side. Used by the completion
+ * form and by the user's opportunity list cards (to label hydrated completion values).
+ */
+export function useMyOpportunityCustomFieldDefinitionsQuery(
+  opportunityId: string,
+  options?: { enabled?: boolean },
+) {
+  return useQuery<CustomFieldDefinition[]>({
+    queryKey: OPPORTUNITY_QUERY_KEYS.myCustomFieldDefinitions(opportunityId),
+    queryFn: () => getMyOpportunityCustomFieldDefinitions(opportunityId),
+    enabled: !!opportunityId && (options?.enabled ?? true),
+  });
+}
+
 /** Verification types lookup (create/edit page). */
 export function useOpportunityVerificationTypesQuery(options?: {
   enabled?: boolean;
@@ -261,6 +287,18 @@ export function useOpportunitySchemasQuery(options?: { enabled?: boolean }) {
   return useQuery<SSISchema[]>({
     queryKey: OPPORTUNITY_QUERY_KEYS.schemas(),
     queryFn: () => getSchemas(SchemaType.Opportunity),
+    enabled: options?.enabled ?? true,
+  });
+}
+
+/** Skills search/lookup with pagination and optional name filter. */
+export function useSkillsQuery(
+  filter: SkillSearchFilter,
+  options?: { enabled?: boolean },
+) {
+  return useQuery<SkillSearchResults>({
+    queryKey: OPPORTUNITY_QUERY_KEYS.skills(filter),
+    queryFn: () => getSkills(filter),
     enabled: options?.enabled ?? true,
   });
 }

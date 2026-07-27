@@ -14,6 +14,7 @@ import type { MyOpportunityInfo } from "~/api/models/myOpportunity";
 import { DATE_FORMAT_HUMAN } from "~/lib/constants";
 import { fetchClientEnv } from "~/lib/utils";
 import { UserInitialsAvatar } from "../User/UserInitialsAvatar";
+import { MyOpportunityCustomFieldsSection } from "./MyOpportunityCustomFieldsSection";
 
 interface InputProps {
   [id: string]: any;
@@ -240,33 +241,75 @@ export const OpportunityCompletionRead: React.FC<InputProps> = ({
           )}
         </div>
       ))}
-      {data?.dateStart && (
-        <div className="text-gray-dark flex flex-row gap-2 text-sm md:h-3">
-          <div>Started opportunity on: </div>
-          <div className="font-bold">
-            <Moment format={DATE_FORMAT_HUMAN} utc={true}>
-              {data.dateStart}
-            </Moment>
+
+      <div className="text-gray-dark grid grid-cols-1 gap-2 text-sm md:grid-cols-2">
+        {data?.dateStart && (
+          <div className="flex flex-row justify-between gap-2">
+            <span
+              className="font-semiboldx min-w-40 truncate text-nowrap"
+              title="Started on"
+            >
+              Started on:
+            </span>
+            <span
+              className="line-clamp-2 truncate font-bold"
+              title={data.dateStart}
+            >
+              <Moment format={DATE_FORMAT_HUMAN} utc={true}>
+                {data.dateStart}
+              </Moment>
+            </span>
           </div>
-        </div>
-      )}
-      {data?.dateEnd && (
-        <div className="text-gray-dark flex flex-row gap-2 text-sm">
-          <div>Finished opportunity on: </div>
-          <div className="font-bold">
-            <Moment format={DATE_FORMAT_HUMAN} utc={true}>
-              {data.dateEnd}
-            </Moment>
+        )}
+
+        {data?.dateEnd && (
+          <div className="flex flex-row justify-between gap-2">
+            <span
+              className="font-semiboldx min-w-40 truncate text-nowrap"
+              title="Finished on"
+            >
+              Finished on:
+            </span>
+            <span
+              className="line-clamp-2 truncate font-bold"
+              title={data.dateEnd}
+            >
+              <Moment format={DATE_FORMAT_HUMAN} utc={true}>
+                {data.dateEnd}
+              </Moment>
+            </span>
           </div>
-        </div>
-      )}
-      {data?.commitmentInterval && (data?.commitmentIntervalCount ?? 0) > 0 && (
-        <div className="text-gray-dark flex flex-row gap-2 text-sm">
-          <div>Time to complete: </div>
-          <div className="font-bold">
-            {data.commitmentIntervalCount} {data.commitmentInterval}(s)
-          </div>
-        </div>
+        )}
+
+        {data?.commitmentInterval &&
+          (data?.commitmentIntervalCount ?? 0) > 0 && (
+            <div className="flex flex-row justify-between gap-2">
+              <span
+                className="font-semiboldx min-w-40 truncate text-nowrap"
+                title="Time to complete"
+              >
+                Time to complete:
+              </span>
+              <span
+                className="line-clamp-2 truncate font-bold"
+                title={`${data.commitmentIntervalCount} ${data.commitmentInterval}(s)`}
+              >
+                {data.commitmentIntervalCount} {data.commitmentInterval}(s)
+              </span>
+            </div>
+          )}
+      </div>
+
+      {/* CUSTOM FIELDS (definition-driven, YOM-1244 / YOM-1255) */}
+      {/* Read-only completion custom-field values, hydrated on MyOpportunityInfo.
+          Definitions load per opportunity only when there are values; the section
+          renders nothing otherwise. */}
+      {!!data?.customFields?.length && (
+        <MyOpportunityCustomFieldsSection
+          opportunityId={data.opportunityId}
+          values={data.customFields}
+          className="flex flex-col"
+        />
       )}
     </div>
   );

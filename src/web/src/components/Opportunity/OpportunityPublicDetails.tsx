@@ -1127,6 +1127,7 @@ const OpportunityPublicDetails: React.FC<{
                     </div>
                   </DetailSection>
                 )}
+
                 {/* CUSTOM FIELDS (definition-driven, read-only) */}
                 <OpportunityCustomFieldsSection
                   type={opportunityInfo.type}

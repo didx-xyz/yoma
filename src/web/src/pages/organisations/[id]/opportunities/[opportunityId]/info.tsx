@@ -262,7 +262,7 @@ const OpportunityDetails: NextPageWithLayout<{
                 <div className="flex flex-col rounded-lg bg-white p-6">
                   <DetailSection
                     title="Participants"
-                    icon={<IoPeopleOutline className="text-gray h-6 w-6" />}
+                    icon={<IoPeopleOutline className="text-green h-6 w-6" />}
                     className=""
                   >
                     <div className="flex flex-col">

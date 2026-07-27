@@ -1152,6 +1152,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
       shareWithPartners: formData.shareWithPartners ?? false,
       syncedInfo: null,
       externalId: formData.externalId ?? "",
+      customFields: formData.customFields,
     }),
     [
       formData,

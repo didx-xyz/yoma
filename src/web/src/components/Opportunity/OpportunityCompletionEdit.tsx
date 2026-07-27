@@ -17,8 +17,13 @@ import { toast } from "react-toastify";
 import z from "zod";
 import { SpatialType } from "~/api/models/common";
 import type { MyOpportunityRequestVerify } from "~/api/models/myOpportunity";
-import type { OpportunityInfo } from "~/api/models/opportunity";
+import type {
+  CustomFieldValueRequest,
+  OpportunityInfo,
+} from "~/api/models/opportunity";
 import { performActionSendForVerificationManual } from "~/api/services/myOpportunities";
+import { useMyOpportunityCustomFieldDefinitionsQuery } from "~/hooks/useOpportunityMutations";
+import { CustomFields, getCustomFieldErrors } from "./CustomFields";
 import {
   ACCEPTED_AUDIO_TYPES,
   ACCEPTED_AUDIO_TYPES_LABEL,
@@ -59,11 +64,16 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
   const [showFeedback, setShowFeedback] = useState(false);
   const { data: session } = useSession();
 
-  /* DEPRECATED: The opportunity completion UI no longer requires these fields */
-  //   const { data: timeIntervalsData } = useQuery({
-  //     queryKey: ["timeIntervals"],
-  //     queryFn: async () => getTimeIntervals(),
-  //   });
+  // Definition-driven completion custom fields (YOM-1244 / YOM-1255), loaded per
+  // opportunity (type resolved server-side). Renders nothing when none apply.
+  const {
+    data: customFieldDefinitions,
+    isLoading: customFieldDefinitionsIsLoading,
+    isError: customFieldDefinitionsIsError,
+    refetch: refetchCustomFieldDefinitions,
+  } = useMyOpportunityCustomFieldDefinitionsQuery(opportunityInfo?.id ?? "", {
+    enabled: !!opportunityInfo?.id,
+  });
 
   const schema = z
     .object({
@@ -78,83 +88,28 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
       videoUploadId: z.string().optional(),
       dateStart: z.union([z.string(), z.null()]).optional(),
 
-      // DEPRECATED: The opportunity completion UI no longer displays or requires the
-      // "When did you finish?" (dateEnd) and "How long did it take?" (commitmentInterval) inputs.
-      // If these values are not provided, the backend will automatically use the current date/time for dateEnd and the opportunity’s configured commitment interval.
-
-      //   dateEnd: z.union([z.string(), z.null()]).optional(),
-      //   commitmentInterval: z
-      //     .object({
-      //       id: z
-      //         .any()
-      //         .transform((value) => (Array.isArray(value) ? value[0] : value)),
-      //       count: z.preprocess(
-      //         (val) => (val === "" ? undefined : Number(val)),
-      //         z.number(),
-      //       ),
-      //     })
-      //     .nullable()
-      //     .optional(),
-
       recommendable: z.boolean().nullable().optional(),
       starRating: z.preprocess(
         (val) => (val === 0 ? null : val),
         z.number().nullable().optional(),
       ),
       feedback: z.string().nullable().optional(),
+      // definition-driven custom fields; validated against their definitions below
+      customFields: z.array(z.any()).nullish(),
     })
     .superRefine((values, ctx) => {
-      // DEPRECATED: The opportunity completion UI no longer requires these fields
-      // Validate that both dateEnd and commitmentInterval are provided
-      //   if (!values.dateEnd) {
-      //     ctx.addIssue({
-      //       message: "End date is required.",
-      //       code: z.ZodIssueCode.custom,
-      //       path: ["dateEnd"],
-      //     });
-      //   } else {
-      //     // Validate dateEnd
-      //     // Ensure valid date objects with time set to zero for comparison
-      //     const endDateObj = values.dateEnd ? new Date(values.dateEnd) : null;
-      //     const todayObj = new Date();
-      //     const oppEndDateObj = opportunityInfo?.dateEnd
-      //       ? new Date(opportunityInfo.dateEnd)
-      //       : null;
-
-      //     // Set time to 00:00:00 for comparing just the dates
-      //     if (endDateObj) endDateObj.setHours(0, 0, 0, 0);
-      //     todayObj.setHours(0, 0, 0, 0);
-      //     if (oppEndDateObj) oppEndDateObj.setHours(0, 0, 0, 0);
-
-      //     if (endDateObj && endDateObj > todayObj) {
-      //       ctx.addIssue({
-      //         message:
-      //           "End date cannot be in the future. Please select today's date or earlier.",
-      //         code: z.ZodIssueCode.custom,
-      //         path: ["dateEnd"],
-      //       });
-      //     }
-
-      //     if (endDateObj && oppEndDateObj && endDateObj > oppEndDateObj) {
-      //       ctx.addIssue({
-      //         message: `End date cannot be later than the opportunity end date of '${oppEndDateObj.toLocaleDateString()}'.`,
-      //         code: z.ZodIssueCode.custom,
-      //         path: ["dateEnd"],
-      //       });
-      //     }
-      //   }
-
-      //   if (
-      //     !values.commitmentInterval ||
-      //     !values.commitmentInterval.id ||
-      //     (values.commitmentInterval.count ?? 0) <= 0
-      //   ) {
-      //     ctx.addIssue({
-      //       message: "Commitment interval is required.",
-      //       code: z.ZodIssueCode.custom,
-      //       path: ["commitmentInterval"],
-      //     });
-      //   }
+      // custom fields must be valid before submitting (required + typed rules).
+      // Per-field errors also render inline in the CustomFields component.
+      for (const { error } of getCustomFieldErrors(
+        customFieldDefinitions,
+        values.customFields as CustomFieldValueRequest[] | null | undefined,
+      )) {
+        ctx.addIssue({
+          message: error,
+          code: z.ZodIssueCode.custom,
+          path: ["customFields"],
+        });
+      }
 
       // Certificate validation
       if (
@@ -361,20 +316,25 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
         dateStart: data.dateStart || null,
         dateEnd: null,
         commitmentInterval: null,
-        // DEPRECATED: The opportunity completion UI no longer requires these fields
-        // dateEnd: data.dateEnd || null,
-        // commitmentInterval: data.commitmentInterval
-        //   ? {
-        //       id:
-        //         timeIntervalsData?.find(
-        //           (x) => x.name === data.commitmentInterval?.id,
-        //         )?.id ?? "",
-        //       count: data.commitmentInterval.count,
-        //     }
-        //   : null,
         recommendable: data.recommendable || null,
         starRating: data.starRating || null,
         feedback: data.feedback || null,
+        // custom fields: submit the FULL applicable collection (replacement semantics —
+        // the API clears any custom field omitted from the payload). Reconcile against
+        // the current definitions so stale keys are dropped, and drop empty entries.
+        customFields: (() => {
+          const definitionKeys = new Set(
+            (customFieldDefinitions ?? []).map((d) => d.key),
+          );
+          return (
+            (data.customFields ?? []) as CustomFieldValueRequest[]
+          ).filter(
+            (v) =>
+              definitionKeys.has(v.key) &&
+              ((v.value != null && v.value.trim() !== "") ||
+                (v.values != null && v.values.length > 0)),
+          );
+        })(),
       };
 
       // convert dates to UTC string in format "YYYY-MM-DD" while preserving UTC timezone
@@ -383,12 +343,6 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
           ? moment.utc(request.dateStart).format(DATE_FORMAT_SYSTEM)
           : null;
       }
-      // DEPRECATED: The opportunity completion UI no longer requires these fields
-      //   if (request.dateEnd) {
-      //     request.dateEnd = request.dateEnd
-      //       ? moment.utc(request.dateEnd).format(DATE_FORMAT_SYSTEM)
-      //       : null;
-      //   }
 
       setIsLoading(true);
 
@@ -415,13 +369,13 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
           });
         });
     },
-    [onSave, opportunityInfo, session /*, timeIntervalsData*/],
+    [onSave, opportunityInfo, session, customFieldDefinitions],
   );
 
   const {
     handleSubmit,
     setValue,
-    formState: { errors: errors, isValid: isValid },
+    formState: { errors: errors, isValid: isValid, isSubmitted },
     control,
     watch,
     trigger,
@@ -433,70 +387,16 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
   const watchIntervalId = watch("commitmentInterval.id");
   const watchIntervalCount = watch("commitmentInterval.count");
 
-  /* DEPRECATED: The opportunity completion UI no longer requires these fields */
-  //* commitment interval slider
-  //   const [timeIntervalMax, setTimeIntervalMax] = useState(100);
-
-  // set the maximum based on the selected time interval
-  //   useEffect(() => {
-  //     // if watchIntervalId is an array (from SelectButtons) get the first value, else use the value
-  //     const watchInterval = Array.isArray(watchIntervalId)
-  //       ? watchIntervalId[0]
-  //       : watchIntervalId;
-
-  //     let max = 0;
-  //     switch (watchInterval) {
-  //       case "Minute":
-  //         max = 60;
-  //         break;
-  //       case "Hour":
-  //         max = 24;
-  //         break;
-  //       case "Day":
-  //         max = 30;
-  //         break;
-  //       case "Week":
-  //         max = 12;
-  //         break;
-  //       case "Month":
-  //         max = 60;
-  //         break;
-  //     }
-
-  //     setTimeIntervalMax(max);
-
-  //     if (watchIntervalCount > max) {
-  //       setValue("commitmentInterval.count", max);
-  //     }
-  //   }, [watchIntervalId, watchIntervalCount, setTimeIntervalMax, setValue]);
-
-  // DEPRECATED: The opportunity completion UI no longer requires these fields
-  // set default values
-  //   useEffect(() => {
-  //     // Set end date intelligently:
-  //     // - If opportunity end date is in the past, use that as default
-  //     // - If opportunity end date is in the future or doesn't exist, use today's date
-  //     const today = new Date();
-  //     const opportunityEndDate = opportunityInfo?.dateEnd
-  //       ? new Date(opportunityInfo.dateEnd)
-  //       : null;
-
-  //     let defaultDate = today; // Default to today
-
-  //     if (opportunityEndDate && opportunityEndDate <= today) {
-  //       // Only use opportunity end date if it's in the past or today
-  //       defaultDate = opportunityEndDate;
-  //     }
-
-  //     // Convert to UTC ISO string to maintain timezone consistency
-  //     setValue("dateEnd", defaultDate.toISOString());
-  //     setValue("commitmentInterval.id", "Hour");
-  //   }, [setValue, opportunityInfo?.dateEnd]);
-
   // trigger validation for these related fields
   useEffect(() => {
     trigger();
   }, [watchIntervalId, watchIntervalCount, trigger]);
+
+  // re-validate when the applicable custom-field definitions load/change
+  // (they arrive asynchronously and drive the customFields validation)
+  useEffect(() => {
+    void trigger();
+  }, [customFieldDefinitions, trigger]);
 
   return (
     <>
@@ -545,164 +445,6 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                   we&apos;ll add the accreditation to your CV!
                 </div>
               </div>
-
-              {/* DEPRECATED: The opportunity completion UI no longer requires these fields */}
-              {/* WHEN DID YOU FINISH? */}
-              {/* <div
-                className="bg-gray-light flex flex-col rounded-lg border-dotted"
-                style={{ animationDelay: "0.8s" }}
-              >
-                <div className="flex w-full flex-row">
-                  <div className="ml-2 p-4 md:p-6">
-                    <FcCalendar className="size-10" />
-                  </div>
-                  <div className="flex grow flex-col p-4">
-                    <div className="font-semibold md:text-start">
-                      When did you finish?
-                    </div>
-
-                    <div className="text-gray-dark text-sm italic">
-                      Choose the date that you completed this opportunity.
-                    </div>
-
-                    <div className="mt-4 flex flex-col gap-2">
-                      <Controller
-                        control={control}
-                        name="dateEnd"
-                        render={({ field: { onChange, value } }) => (
-                          <input
-                            type="date"
-                            className="input input-sm input-bordered border-gray focus:border-gray block w-36 rounded-md focus:outline-none"
-                            placeholder="End Date"
-                            onChange={(e) => {
-                              // Convert the YYYY-MM-DD string to a UTC ISO string for the form state
-                              if (e.target.value) {
-                                const date = new Date(
-                                  e.target.value + "T00:00:00Z",
-                                );
-                                onChange(date.toISOString());
-                              } else {
-                                onChange(null);
-                              }
-                            }}
-                            // Format the UTC ISO date string to YYYY-MM-DD for the input
-                            value={
-                              value
-                                ? moment.utc(value).format("YYYY-MM-DD")
-                                : ""
-                            }
-                            max={moment().format("YYYY-MM-DD")} // Restrict to today or earlier
-                          />
-                        )}
-                      />
-
-                      {errors.dateEnd && (
-                        <FormMessage
-                          messageType={FormMessageType.Warning}
-                          className="p-0"
-                        >
-                          {`${errors.dateEnd.message}`}
-                        </FormMessage>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div> */}
-
-              {/* DEPRECATED: The opportunity completion UI no longer requires these fields */}
-              {/* HOW LONG DID IT TAKE? */}
-              {/* <div
-                className="bg-gray-light flex flex-col rounded-lg border-dotted"
-                style={{ animationDelay: "0.7s" }}
-              >
-                <div className="flex w-full flex-row">
-                  <div className="ml-2 p-4 md:p-6">
-                    <FcAlarmClock className="size-10" />
-                  </div>
-                  <div className="flex grow flex-col p-4">
-                    <div className="font-semibold">How long did it take?</div>
-
-                    <div className="text-gray-dark text-sm italic">
-                      Choose the time it took to complete this opportunity.
-                    </div>
-
-                    <div className="mt-4 flex flex-col gap-2">
-                        COMMITMENT INTERVALS
-                      <div className="flex flex-col pb-2">
-                        <div className="flex flex-row justify-start gap-4">
-                          <span className="text-gray-dark mt-1 text-xs font-semibold">
-                            0
-                          </span>
-
-                          <Controller
-                            name="commitmentInterval.count"
-                            control={control}
-                            defaultValue={0}
-                            render={({ field: { onChange, value } }) => (
-                              <div className="flex w-full flex-col justify-center text-center md:w-64">
-                                <input
-                                  type="range"
-                                  className="range range-warning bg-white"
-                                  min="0"
-                                  max={timeIntervalMax}
-                                  value={value}
-                                  onChange={(val) => onChange(val)}
-                                />
-                                <span className="text-gray-dark mt-2 -mb-3 h-8 text-xs font-semibold">
-                                  {value > 0 && watchIntervalId != null && (
-                                    <>
-                                      {`${value} ${
-                                        value > 1
-                                          ? `${watchIntervalId}s`
-                                          : watchIntervalId
-                                      }`}
-                                    </>
-                                  )}
-                                </span>
-                              </div>
-                            )}
-                          />
-
-                          <span className="text-gray-dark mt-1 text-xs font-semibold">
-                            {timeIntervalMax}
-                          </span>
-                        </div>
-                        <div className="flex flex-row justify-start gap-4">
-                          <Controller
-                            name="commitmentInterval.id"
-                            control={control}
-                            render={({ field: { onChange, value } }) => (
-                              <SelectButtons
-                                id="selectButtons_commitmentIntervals"
-                                buttons={(timeIntervalsData ?? []).map((x) => ({
-                                  id: x.id,
-                                  title: x.name,
-                                  selected: value?.includes(x.name) ?? false,
-                                }))}
-                                onChange={(val) => {
-                                  const selectedButtons = val.filter(
-                                    (btn) => btn.selected,
-                                  );
-                                  onChange(selectedButtons.map((c) => c.title));
-                                }}
-                              />
-                            )}
-                          />
-                        </div>
-                      </div>
-
-                      {errors.commitmentInterval?.root?.message && (
-                        <FormMessage
-                          messageType={FormMessageType.Warning}
-                          className="p-0"
-                        >
-                          {`${errors.commitmentInterval.root?.message}`}
-                        </FormMessage>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div> */}
 
               {/* FILE UPLOADS */}
               {(opportunityInfo?.verificationTypes?.length ?? 0) > 0 && (
@@ -1035,6 +777,54 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                   )}
                 </div>
               )}
+
+              {/* CUSTOM FIELDS (definition-driven, YOM-1244 / YOM-1255) */}
+              {/* Definitions load per opportunity; the component renders nothing
+                  when none apply (empty state). Values partake in the form's zod
+                  validation and submit as one JSON-encoded multipart field. */}
+
+              <div
+                className="bg-gray-light flex flex-col rounded-lg border-dotted px-8 py-4"
+                style={{ animationDelay: "1.2s" }}
+              >
+                {opportunityInfo && (
+                  <div className="flex w-full flex-col gap-2">
+                    {customFieldDefinitionsIsError ? (
+                      <div className="flex flex-col items-start gap-2">
+                        <FormMessage messageType={FormMessageType.Warning}>
+                          Unable to load additional fields. Please try again.
+                        </FormMessage>
+                        <button
+                          type="button"
+                          className="btn btn-sm border-green text-green hover:bg-green-dark rounded-full bg-white normal-case hover:border-transparent hover:text-white"
+                          onClick={() => void refetchCustomFieldDefinitions()}
+                        >
+                          Retry
+                        </button>
+                      </div>
+                    ) : (
+                      <Controller
+                        control={control}
+                        name="customFields"
+                        render={({ field: { onChange, value } }) => (
+                          <CustomFields
+                            definitions={customFieldDefinitions}
+                            isLoading={customFieldDefinitionsIsLoading}
+                            values={
+                              value as
+                                | CustomFieldValueRequest[]
+                                | null
+                                | undefined
+                            }
+                            onChange={onChange}
+                            showErrors={isSubmitted}
+                          />
+                        )}
+                      />
+                    )}
+                  </div>
+                )}
+              </div>
 
               {/* FEEDBACK - CUSTOM EXPANDABLE SECTION */}
               <div
