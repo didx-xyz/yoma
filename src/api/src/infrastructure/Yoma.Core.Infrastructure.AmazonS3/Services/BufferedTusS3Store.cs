@@ -11,6 +11,7 @@ using Amazon.S3;
 using Amazon.S3.Model;
 using Microsoft.Extensions.Logging;
 using System.Buffers;
+using System.Net.Mime;
 using System.Text;
 using tusdotnet.Interfaces;
 using Yoma.Core.Domain.Core.Helpers;
@@ -106,7 +107,7 @@ namespace Yoma.Core.Infrastructure.AmazonS3.Services
         BucketName = _bucketName,
         Key = S3MetadataKey(fileId),
         ContentBody = Newtonsoft.Json.JsonConvert.SerializeObject(uploadMeta),
-        ContentType = "application/json",
+        ContentType = MediaTypeNames.Application.Json,
         Metadata =
         {
           ["tus-upload-length"] = uploadLength.ToString(),
@@ -629,7 +630,7 @@ namespace Yoma.Core.Infrastructure.AmazonS3.Services
         BucketName = _bucketName,
         Key = S3MetadataKey(fileId),
         ContentBody = Newtonsoft.Json.JsonConvert.SerializeObject(completeMetadata),
-        ContentType = "application/json",
+        ContentType = MediaTypeNames.Application.Json,
         Metadata =
         {
           ["tus-upload-length"] = fullMeta.UploadLength.ToString(),
