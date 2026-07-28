@@ -11,6 +11,7 @@ using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Marketplace.Interfaces.Provider;
 using Yoma.Core.Domain.Marketplace.Models;
+using Yoma.Core.Domain.Marketplace.Models.Provider;
 using Yoma.Core.Domain.Reward.Interfaces.Provider;
 using Yoma.Core.Domain.Reward.Models.Provider;
 using Yoma.Core.Infrastructure.Zlto.Models;
@@ -28,6 +29,11 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
     private const string Header_Authorization = "Authorization";
     private const string Header_Authorization_Value_Prefix = "Bearer";
     private const string Image_Default_Empty_Value = "default";
+    private const string WalletReservation_Currency = "ZLTO";
+    private const string WalletReservation_Reason_CashOut = "cashout";
+    private const string WalletReservation_Description_CashOut = "Yoma cash-out reservation";
+    private const string WalletReservation_Actor_Origin = "yoma_api";
+    private const string WalletReservation_Actor_Name = "Yoma Cash-Out Service";
 
     private static readonly HttpStatusCode[] StatusCode_WalletNotFound = [HttpStatusCode.NotFound, HttpStatusCode.Conflict];
 
@@ -46,22 +52,32 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
 
     #region Public Members
     #region IRewardProviderClient
-    public async Task<(Domain.Reward.Models.Wallet wallet, WalletCreationStatus status)> CreateWallet(Domain.Reward.Models.Provider.WalletRequestCreate request)
+    public async Task<CreateWalletResponse> CreateWallet(CreateWalletRequest request)
     {
       ArgumentNullException.ThrowIfNull(request, nameof(request));
+
+      ArgumentException.ThrowIfNullOrWhiteSpace(request.Username, nameof(request));
+      request.Username = request.Username.Trim();
+
+      ArgumentException.ThrowIfNullOrWhiteSpace(request.DisplayName, nameof(request));
+      request.DisplayName = request.DisplayName.Trim();
 
       //check if wallet already exists
       var existing = await GetWalletByUsername(request.Username);
       if (existing != null)
       {
-        return (new Domain.Reward.Models.Wallet
+        return new CreateWalletResponse
         {
-          Id = existing.WalletId,
-          OwnerId = existing.OwnerId,
-          Balance = existing.ZltoBalance,
-          DateCreated = existing.DateCreated,
-          DateModified = existing.LastUpdated
-        }, WalletCreationStatus.Existing);
+          Wallet = new Domain.Reward.Models.Wallet
+          {
+            Id = existing.WalletId,
+            OwnerId = existing.OwnerId,
+            Balance = existing.ZltoBalance,
+            DateCreated = existing.DateCreated,
+            DateModified = existing.LastUpdated
+          },
+          Status = WalletCreationStatus.Existing
+        };
       }
 
       //attempt legacy migration with initial balance
@@ -76,35 +92,35 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
         DateCreated = account.DateCreated,
         DateModified = account.LastUpdated
       };
-      return (result, status);
+
+      return new CreateWalletResponse { Wallet = result, Status = status };
     }
 
-    public async Task<string> UpdateWalletUsername(string usernameCurrent, string username)
+    public async System.Threading.Tasks.Task UpdateWalletUsername(UpdateWalletUsernameRequest request)
     {
-      ArgumentException.ThrowIfNullOrWhiteSpace(usernameCurrent, nameof(usernameCurrent));
-      usernameCurrent = usernameCurrent.Trim();
+      ArgumentNullException.ThrowIfNull(request, nameof(request));
 
-      ArgumentException.ThrowIfNullOrWhiteSpace(username, nameof(username));
-      username = username.Trim();
+      ArgumentException.ThrowIfNullOrWhiteSpace(request.UsernameCurrent, nameof(request));
+      request.UsernameCurrent = request.UsernameCurrent.Trim();
 
-      if (string.Equals(usernameCurrent, username, StringComparison.OrdinalIgnoreCase))
-        return username;
+      ArgumentException.ThrowIfNullOrWhiteSpace(request.Username, nameof(request));
+      request.Username = request.Username.Trim();
 
-      var request = new WalletRequestUpdateUsername
+      if (string.Equals(request.UsernameCurrent, request.Username, StringComparison.OrdinalIgnoreCase))
+        return;
+
+      var httpRequest = new WalletRequestUpdateUsername
       {
-        UsernameCurrent = usernameCurrent,
-        Username = username
+        UsernameCurrent = request.UsernameCurrent,
+        Username = request.Username
       };
 
-      var response = await _options.Wallet.BaseUrl
+      await _options.Wallet.BaseUrl
         .AppendPathSegment("update_external_account_username")
-        .AppendPathSegment(usernameCurrent)
+        .AppendPathSegment(request.UsernameCurrent)
         .WithAuthHeaders(await GetAuthHeaders())
-        .PutJsonAsync(request)
-        .EnsureSuccessStatusCodeAsync()
-        .ReceiveJson<WalletAccountInfo>();
-
-      return response.WalletId;
+        .PutJsonAsync(httpRequest)
+        .EnsureSuccessStatusCodeAsync();
     }
 
     public async Task<Domain.Reward.Models.Wallet> GetWallet(string walletId)
@@ -130,6 +146,124 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
         DateCreated = response.DateCreated,
         DateModified = response.LastUpdated
       };
+    }
+
+    public async Task<ReserveCashOutResponse> ReserveForCashOut(ReserveCashOutRequest request)
+    {
+      ArgumentNullException.ThrowIfNull(request, nameof(request));
+
+      if (request.TransactionId == Guid.Empty)
+        throw new ArgumentNullException(nameof(request), "Transaction Id is empty");
+
+      ArgumentException.ThrowIfNullOrWhiteSpace(request.WalletId, nameof(request));
+      request.WalletId = request.WalletId.Trim();
+      ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(request.Amount, default, nameof(request));
+
+      if (request.ExpiresAt == default)
+        throw new ArgumentNullException(nameof(request), "Expiration date is empty");
+
+      if (decimal.Truncate(request.Amount) != request.Amount)
+        throw new ArgumentException("Cash-out reservations require a whole ZLTO amount", nameof(request));
+
+      ArgumentOutOfRangeException.ThrowIfGreaterThan(request.Amount, (decimal)int.MaxValue, nameof(request));
+
+      var wallet = await GetWallet(request.WalletId);
+
+      if (string.IsNullOrWhiteSpace(wallet.OwnerId))
+        throw new InvalidOperationException($"Wallet owner id expected for wallet with id '{request.WalletId}'");
+
+      if (request.Amount > wallet.Balance)
+        throw new ArgumentOutOfRangeException(nameof(request), request.Amount,
+          $"Cash-out reservation amount cannot exceed the available wallet balance of '{wallet.Balance}'");
+
+      var authHeaders = await GetAuthHeaders();
+      var transactionId = request.TransactionId.ToString();
+      var httpRequest = new WalletReservationRequestCreate
+      {
+        WalletId = request.WalletId,
+        OwnerId = wallet.OwnerId,
+        Amount = (int)request.Amount,
+        Currency = WalletReservation_Currency,
+        Reason = WalletReservation_Reason_CashOut,
+        Description = WalletReservation_Description_CashOut,
+        ExternalReference = transactionId,
+        IdempotencyKey = transactionId,
+        RequestReference = transactionId,
+        ExpiresAt = request.ExpiresAt,
+        CreatedByOrigin = WalletReservation_Actor_Origin,
+        CreatedById = _accessToken.PartnerId,
+        CreatedByName = WalletReservation_Actor_Name
+      };
+
+      var response = await _options.Wallet.BaseUrl
+        .AppendPathSegment("ip")
+        .AppendPathSegment("docs")
+        .AppendPathSegment("reservations")
+        .WithAuthHeaders(authHeaders)
+        .PostJsonAsync(httpRequest)
+        .EnsureSuccessStatusCodeAsync()
+        .ReceiveJson<WalletReservationResponse>();
+
+      if (string.IsNullOrWhiteSpace(response.Id))
+        throw new InvalidOperationException("Reservation id expected after reserving the wallet balance for cash-out");
+
+      return new ReserveCashOutResponse { Id = response.Id };
+    }
+
+    public async System.Threading.Tasks.Task CommitCashOutReservation(CommitCashOutReservationRequest request)
+    {
+      ArgumentNullException.ThrowIfNull(request, nameof(request));
+      ArgumentException.ThrowIfNullOrWhiteSpace(request.ReservationId, nameof(request));
+      request.ReservationId = request.ReservationId.Trim();
+
+      request.ExternalTransactionReference = request.ExternalTransactionReference?.Trim();
+
+      var authHeaders = await GetAuthHeaders();
+      var httpRequest = new WalletReservationRequestCommit
+      {
+        ExternalPayoutId = request.ExternalTransactionReference,
+        ActorOrigin = WalletReservation_Actor_Origin,
+        ActorId = _accessToken.PartnerId,
+        ActorName = WalletReservation_Actor_Name
+      };
+
+      await _options.Wallet.BaseUrl
+        .AppendPathSegment("ip")
+        .AppendPathSegment("docs")
+        .AppendPathSegment("reservations")
+        .AppendPathSegment(request.ReservationId)
+        .AppendPathSegment("commit")
+        .WithAuthHeaders(authHeaders)
+        .PostJsonAsync(httpRequest)
+        .EnsureSuccessStatusCodeAsync();
+    }
+
+    public async System.Threading.Tasks.Task ReleaseCashOutReservation(ReleaseCashOutReservationRequest request)
+    {
+      ArgumentNullException.ThrowIfNull(request, nameof(request));
+      ArgumentException.ThrowIfNullOrWhiteSpace(request.ReservationId, nameof(request));
+      request.ReservationId = request.ReservationId.Trim();
+
+      request.Reason = request.Reason?.Trim();
+
+      var authHeaders = await GetAuthHeaders();
+      var httpRequest = new WalletReservationRequestRelease
+      {
+        Reason = request.Reason,
+        ActorOrigin = WalletReservation_Actor_Origin,
+        ActorId = _accessToken.PartnerId,
+        ActorName = WalletReservation_Actor_Name
+      };
+
+      await _options.Wallet.BaseUrl
+        .AppendPathSegment("ip")
+        .AppendPathSegment("docs")
+        .AppendPathSegment("reservations")
+        .AppendPathSegment(request.ReservationId)
+        .AppendPathSegment("release")
+        .WithAuthHeaders(authHeaders)
+        .PostJsonAsync(httpRequest)
+        .EnsureSuccessStatusCodeAsync();
     }
 
     public async Task<List<Domain.Reward.Models.WalletVoucher>> ListWalletVouchers(string walletId, int? limit, int? offset)
@@ -343,95 +477,93 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
       }).OrderBy(o => o.Name)];
     }
 
-    public async Task<string> ItemReserve(string walletId, string username, string itemId)
+    public async Task<Domain.Marketplace.Models.Provider.ReserveItemResponse> ReserveItem(ReserveItemRequest request)
     {
-      if (string.IsNullOrWhiteSpace(walletId))
-        throw new ArgumentNullException(nameof(walletId));
-      walletId = walletId.Trim();
+      ArgumentNullException.ThrowIfNull(request, nameof(request));
 
-      if (string.IsNullOrWhiteSpace(username))
-        throw new ArgumentNullException(nameof(username));
-      username = username.Trim();
+      ArgumentException.ThrowIfNullOrWhiteSpace(request.WalletId, nameof(request));
+      request.WalletId = request.WalletId.Trim();
 
-      if (string.IsNullOrWhiteSpace(itemId))
-        throw new ArgumentNullException(nameof(itemId));
-      itemId = itemId.Trim();
+      ArgumentException.ThrowIfNullOrWhiteSpace(request.Username, nameof(request));
+      request.Username = request.Username.Trim();
 
-      var wallet = await GetWallet(walletId);
+      ArgumentException.ThrowIfNullOrWhiteSpace(request.ItemId, nameof(request));
+      request.ItemId = request.ItemId.Trim();
 
-      var request = new ItemActionRequest
+      var wallet = await GetWallet(request.WalletId);
+
+      var httpRequest = new ItemActionRequest
       {
-        Username = username,
+        Username = request.Username,
         WalletOwnerId = wallet.OwnerId
       };
 
       var response = await _options.Store.BaseUrl
         .AppendPathSegment("update_item_reserve_external_partner")
-        .AppendPathSegment(itemId)
+        .AppendPathSegment(request.ItemId)
         .WithAuthHeaders(await GetAuthHeaders())
-        .PutJsonAsync(request)
+        .PutJsonAsync(httpRequest)
         .EnsureSuccessStatusCodeAsync()
-        .ReceiveJson<ReserveItemResponse>();
+        .ReceiveJson<Models.ReserveItemResponse>();
 
       if (response.BankTransactionId <= default(int))
         throw new HttpClientException(HttpStatusCode.InternalServerError, $"Item reservation failed: {(string.IsNullOrWhiteSpace(response.Message) ? "no info" : response.Message)}");
 
-      return response.BankTransactionId.ToString();
+      return new Domain.Marketplace.Models.Provider.ReserveItemResponse { Id = response.BankTransactionId.ToString() };
     }
 
-    public async System.Threading.Tasks.Task ItemReserveReset(string itemId, string transactionId)
+    public async System.Threading.Tasks.Task ReleaseItemReservation(ReleaseItemReservationRequest request)
     {
-      if (string.IsNullOrWhiteSpace(itemId))
-        throw new ArgumentNullException(nameof(itemId));
-      itemId = itemId.Trim();
+      ArgumentNullException.ThrowIfNull(request, nameof(request));
 
-      if (string.IsNullOrWhiteSpace(transactionId))
-        throw new ArgumentNullException(nameof(transactionId));
-      transactionId = transactionId.Trim();
+      ArgumentException.ThrowIfNullOrWhiteSpace(request.ItemId, nameof(request));
+      request.ItemId = request.ItemId.Trim();
+
+      ArgumentException.ThrowIfNullOrWhiteSpace(request.ReservationId, nameof(request));
+      request.ReservationId = request.ReservationId.Trim();
 
       await _options.Store.BaseUrl
         .AppendPathSegment("update_item_reset")
-        .AppendPathSegment(itemId)
-        .AppendPathSegment(transactionId)
+        .AppendPathSegment(request.ItemId)
+        .AppendPathSegment(request.ReservationId)
         .WithAuthHeaders(await GetAuthHeaders())
         .PutAsync()
         .EnsureSuccessStatusCodeAsync();
     }
 
-    public async System.Threading.Tasks.Task ItemSold(string walletId, string username, string itemId, string transactionId)
+    public async System.Threading.Tasks.Task CommitItemReservation(CommitItemReservationRequest request)
     {
-      if (string.IsNullOrWhiteSpace(walletId))
-        throw new ArgumentNullException(nameof(walletId));
-      walletId = walletId.Trim();
+      ArgumentNullException.ThrowIfNull(request, nameof(request));
 
-      if (string.IsNullOrWhiteSpace(username))
-        throw new ArgumentNullException(nameof(username));
-      username = username.Trim();
+      ArgumentException.ThrowIfNullOrWhiteSpace(request.WalletId, nameof(request));
+      request.WalletId = request.WalletId.Trim();
 
-      if (string.IsNullOrWhiteSpace(itemId))
-        throw new ArgumentNullException(nameof(itemId));
-      itemId = itemId.Trim();
+      ArgumentException.ThrowIfNullOrWhiteSpace(request.Username, nameof(request));
+      request.Username = request.Username.Trim();
 
-      if (string.IsNullOrWhiteSpace(transactionId))
-        throw new ArgumentNullException(nameof(transactionId));
-      transactionId = transactionId.Trim();
+      ArgumentException.ThrowIfNullOrWhiteSpace(request.ItemId, nameof(request));
+      request.ItemId = request.ItemId.Trim();
 
-      var wallet = await GetWallet(walletId);
+      ArgumentException.ThrowIfNullOrWhiteSpace(request.ReservationId, nameof(request));
+      request.ReservationId = request.ReservationId.Trim();
 
-      var request = new ItemActionRequest
+      var wallet = await GetWallet(request.WalletId);
+
+      var httpRequest = new ItemActionRequest
       {
-        Username = username,
+        Username = request.Username,
         WalletOwnerId = wallet.OwnerId
       };
 
       await _options.Store.BaseUrl
         .AppendPathSegment("update_item_sold")
-        .AppendPathSegment(itemId)
-        .AppendPathSegment(transactionId)
+        .AppendPathSegment(request.ItemId)
+        .AppendPathSegment(request.ReservationId)
         .WithAuthHeaders(await GetAuthHeaders())
-        .PutJsonAsync(request)
+        .PutJsonAsync(httpRequest)
         .EnsureSuccessStatusCodeAsync();
     }
+
     #endregion IMarketplaceProviderClient
     #endregion
 
@@ -481,7 +613,7 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
       return new KeyValuePair<string, string>(Header_Authorization, $"{Header_Authorization_Value_Prefix} {response.AccessToken}");
     }
 
-    private async Task<WalletAccountInfo> CreateAccount(Domain.Reward.Models.Provider.WalletRequestCreate request)
+    private async Task<WalletAccountInfo> CreateAccount(CreateWalletRequest request)
     {
       var requestAccount = new Models.WalletRequestCreate
       {

@@ -1,6 +1,6 @@
 namespace Yoma.Core.Domain.Reward.Models.Provider
 {
-  public class WalletRequestCreate
+  public sealed class CreateWalletRequest
   {
     public string Username { get; set; } = null!;
 

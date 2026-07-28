@@ -185,14 +185,16 @@ namespace Yoma.Core.Domain.Reward.Services
         throw new InvalidOperationException($"Wallet username '{username}' is already reserved by another wallet");
 
       //attempt wallet creation
-      var request = new WalletRequestCreate
+      var request = new CreateWalletRequest
       {
         Username = username,
         DisplayName = user.DisplayName ?? user.Username,
         Balance = balance
       };
 
-      var (wallet, status) = await _rewardProviderClient.CreateWallet(request);
+      var response = await _rewardProviderClient.CreateWallet(request);
+      var wallet = response.Wallet;
+      var status = response.Status;
 
       switch (status)
       {
@@ -253,7 +255,11 @@ namespace Yoma.Core.Domain.Reward.Services
 
         try
         {
-          await _rewardProviderClient.UpdateWalletUsername(existingItem.Username!, username);
+          await _rewardProviderClient.UpdateWalletUsername(new UpdateWalletUsernameRequest
+          {
+            UsernameCurrent = existingItem.Username!,
+            Username = username
+          });
           existingItem.Username = username;
           //status remains created
 
@@ -379,7 +385,11 @@ namespace Yoma.Core.Domain.Reward.Services
       if (UsernameReservedByAnotherWallet(user.Id, username))
         throw new InvalidOperationException($"Wallet username '{username}' is already reserved by another wallet");
 
-      await _rewardProviderClient.UpdateWalletUsername(existingItem.Username, username);
+      await _rewardProviderClient.UpdateWalletUsername(new UpdateWalletUsernameRequest
+      {
+        UsernameCurrent = existingItem.Username,
+        Username = username
+      });
 
       return username;
     }

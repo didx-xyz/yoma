@@ -15,6 +15,7 @@ using Yoma.Core.Domain.Marketplace.Interfaces;
 using Yoma.Core.Domain.Marketplace.Interfaces.Lookups;
 using Yoma.Core.Domain.Marketplace.Interfaces.Provider;
 using Yoma.Core.Domain.Marketplace.Models;
+using Yoma.Core.Domain.Marketplace.Models.Provider;
 using Yoma.Core.Domain.Marketplace.Validators;
 using Yoma.Core.Domain.MyOpportunity;
 using Yoma.Core.Domain.MyOpportunity.Interfaces;
@@ -250,7 +251,13 @@ namespace Yoma.Core.Domain.Marketplace.Services
       var reserved = false;
       try
       {
-        result.TransactionId = await _marketplaceProviderClient.ItemReserve(walletId, walletUsername, storeItem.Id);
+        var response = await _marketplaceProviderClient.ReserveItem(new ReserveItemRequest
+        {
+          WalletId = walletId,
+          Username = walletUsername,
+          ItemId = storeItem.Id
+        });
+        result.TransactionId = response.Id;
         reserved = true;
 
         result.StatusId = _transactionStatusService.GetByName(TransactionStatus.Reserved.ToString()).Id;
@@ -283,7 +290,13 @@ namespace Yoma.Core.Domain.Marketplace.Services
           transaction.Status = TransactionStatus.Sold;
           transaction = await _transactionLogRepository.Create(transaction);
 
-          await _marketplaceProviderClient.ItemSold(walletId, walletUsername, transaction.ItemId, transaction.TransactionId);
+          await _marketplaceProviderClient.CommitItemReservation(new CommitItemReservationRequest
+          {
+            WalletId = walletId,
+            Username = walletUsername,
+            ItemId = transaction.ItemId,
+            ReservationId = transaction.TransactionId
+          });
           sold = true;
 
           scope.Complete();
@@ -314,7 +327,11 @@ namespace Yoma.Core.Domain.Marketplace.Services
           transaction.Status = TransactionStatus.Released;
           await _transactionLogRepository.Create(transaction);
 
-          await _marketplaceProviderClient.ItemReserveReset(transaction.ItemId, transaction.TransactionId);
+          await _marketplaceProviderClient.ReleaseItemReservation(new ReleaseItemReservationRequest
+          {
+            ItemId = transaction.ItemId,
+            ReservationId = transaction.TransactionId
+          });
           reserveReset = true;
 
           scope.Complete();
