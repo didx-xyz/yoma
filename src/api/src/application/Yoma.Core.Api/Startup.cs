@@ -27,7 +27,6 @@ using Yoma.Core.Domain.IdentityProvider.Interfaces;
 using Yoma.Core.Infrastructure.AmazonS3;
 using Yoma.Core.Infrastructure.AriesCloud;
 using Yoma.Core.Infrastructure.Bitly;
-using Yoma.Core.Infrastructure.Chimoney;
 using Yoma.Core.Infrastructure.Database;
 using Yoma.Core.Infrastructure.Emsi;
 using Yoma.Core.Infrastructure.Keycloak;
@@ -36,6 +35,7 @@ using Yoma.Core.Infrastructure.SendGrid;
 using Yoma.Core.Infrastructure.Shared;
 using Yoma.Core.Infrastructure.Substack;
 using Yoma.Core.Infrastructure.Twilio;
+using Yoma.Core.Infrastructure.YellowCard;
 using Yoma.Core.Infrastructure.Zlto;
 
 namespace Yoma.Core.Api
@@ -87,7 +87,7 @@ namespace Yoma.Core.Api
       services.ConfigureServices_EmailProvider(_configuration);
       services.ConfigureServices_MessageProvider(_configuration);
       services.ConfigureServices_RewardProvider(_configuration);
-      services.ConfigureServices_RewardCashoutProvider(_configuration);
+      services.ConfigureServices_RewardCashOutProvider(_configuration);
       services.ConfigureServices_NewsFeedProvider(_configuration);
       ConfigureServices_SyncProviders(services, _configuration);
       #endregion Configuration
@@ -147,7 +147,7 @@ namespace Yoma.Core.Api
       services.ConfigureServices_InfrastructureEmailProvider(_configuration);
       services.ConfigureServices_InfrastructureMessageProvider(_configuration);
       services.ConfigureServices_InfrastructureRewardProvider();
-      services.ConfigureServices_InfrastructureRewardCashoutProvider();
+      services.ConfigureServices_InfrastructureRewardCashOutProvider();
       services.ConfigureServices_InfrastructureNewsFeedProvider(_configuration, _appSettings);
       ConfigureServices_InfrastructureSyncProviders(services, _configuration, _appSettings);
       #endregion Services & Infrastructure

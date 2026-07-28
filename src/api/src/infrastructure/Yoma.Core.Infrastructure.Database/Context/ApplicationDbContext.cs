@@ -470,7 +470,7 @@ namespace Yoma.Core.Infrastructure.Database.Context
       // Ensures a user cannot receive the same reward more than once for the same source entity.
       // The filter restricts this uniqueness rule to Provider = ZLTO only.
       // This allows multiple rows per user where MyOpportunityId and ReferralLinkUsageId are NULL
-      // for other providers (e.g. Chimoney cash-out payouts).
+      // for other providers (e.g. Yellow Card cash-out payouts).
       builder.Entity<Reward.Entities.RewardTransaction>(entity =>
       {
         entity.Property(e => e.Provider)

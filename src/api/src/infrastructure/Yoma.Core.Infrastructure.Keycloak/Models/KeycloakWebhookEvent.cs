@@ -2,7 +2,7 @@ using Newtonsoft.Json;
 
 namespace Yoma.Core.Infrastructure.Keycloak.Models
 {
-  public class KeycloakWebhookRequest
+  public class KeycloakWebhookEvent
   {
     [JsonProperty("type")]
     public string Type { get; set; } = null!;

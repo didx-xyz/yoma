@@ -15,6 +15,8 @@ using Yoma.Core.Domain.Lookups.Interfaces;
 using Yoma.Core.Domain.Reward.Interfaces;
 using Yoma.Core.Infrastructure.Keycloak;
 using Yoma.Core.Infrastructure.Keycloak.Models;
+using Yoma.Core.Infrastructure.YellowCard.Interfaces;
+using Yoma.Core.Infrastructure.YellowCard.Models;
 
 namespace Yoma.Core.Api.Controllers
 {
@@ -35,6 +37,7 @@ namespace Yoma.Core.Api.Controllers
     private readonly ICountryService _countryService;
     private readonly IEducationService _educationService;
     private readonly IWalletService _walletService;
+    private readonly IYellowCardWebhookParser _yellowCardWebhookParser;
 
     private const string Key_Prefix = "keycloak_event";
     #endregion
@@ -49,7 +52,8 @@ namespace Yoma.Core.Api.Controllers
       IGenderService genderService,
       ICountryService countryService,
       IEducationService educationService,
-      IWalletService walletService)
+      IWalletService walletService,
+      IYellowCardWebhookParser yellowCardWebhookParser)
     {
       _logger = logger ?? throw new ArgumentNullException(nameof(logger));
       _appSettings = appSettings.Value ?? throw new ArgumentNullException(nameof(appSettings));
@@ -61,6 +65,7 @@ namespace Yoma.Core.Api.Controllers
       _countryService = countryService ?? throw new ArgumentNullException(nameof(countryService));
       _educationService = educationService ?? throw new ArgumentNullException(nameof(educationService));
       _walletService = walletService ?? throw new ArgumentNullException(nameof(walletService));
+      _yellowCardWebhookParser = yellowCardWebhookParser ?? throw new ArgumentNullException(nameof(yellowCardWebhookParser));
     }
     #endregion
 
@@ -101,7 +106,7 @@ namespace Yoma.Core.Api.Controllers
               return;
             }
 
-            var payload = request.ToObject<KeycloakWebhookRequest>();
+            var payload = request.ToObject<KeycloakWebhookEvent>();
             if (payload == null)
             {
               if (_logger.IsEnabled(LogLevel.Error)) _logger.LogError("Failed to deserialize payload. Processing skipped");
@@ -162,10 +167,37 @@ namespace Yoma.Core.Api.Controllers
         });
       }
     }
+
+    [HttpPost("webhook/yellowcard")]
+    public IActionResult ReceiveYellowCardWebhook([FromBody] JObject request)
+    {
+      if (request == null)
+        return BadRequest();
+
+      var payload = request.ToObject<YellowCardWebhookEvent>();
+      if (payload == null)
+        return BadRequest();
+
+      try
+      {
+        _yellowCardWebhookParser.Validate(payload);
+
+        // TODO: Map the validated Yellow Card event to a provider-neutral reward-domain event,
+        // process the event idempotently and synchronously, and only then acknowledge the webhook.
+        return StatusCode(StatusCodes.Status501NotImplemented);
+      }
+      catch (NotImplementedException ex)
+      {
+        if (_logger.IsEnabled(LogLevel.Warning))
+          _logger.LogWarning(ex, "Yellow Card webhook received before the integration was implemented");
+
+        return StatusCode(StatusCodes.Status501NotImplemented);
+      }
+    }
     #endregion
 
     #region Private Members
-    private async Task UpdateUserProfile(IdentityActionType type, KeycloakWebhookRequest payload)
+    private async Task UpdateUserProfile(IdentityActionType type, KeycloakWebhookEvent payload)
     {
       if (!Guid.TryParse(payload.UserId, out var userId) || userId == Guid.Empty)
       {
@@ -363,7 +395,7 @@ namespace Yoma.Core.Api.Controllers
       });
     }
 
-    private async Task TrackLogin(KeycloakWebhookRequest payload, User user)
+    private async Task TrackLogin(KeycloakWebhookEvent payload, User user)
     {
       try
       {
