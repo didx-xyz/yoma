@@ -1,4 +1,9 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { type AxiosError } from "axios";
 import { toast } from "react-toastify";
 import { SchemaType, type SSISchema } from "~/api/models/credential";
@@ -102,12 +107,24 @@ export const OPPORTUNITY_QUERY_KEYS = {
     ["OpportunitiesSearch", ...keyParts] as unknown[],
   /** Prefix key to invalidate ALL admin search result pages */
   adminSearchAll: () => ["OpportunitiesSearch"] as const,
-  /** Admin lookup: categories */
-  adminCategories: () => ["AdminOpportunitiesCategories"] as const,
-  /** Admin lookup: countries */
-  adminCountries: () => ["AdminOpportunitiesCountries"] as const,
-  /** Admin lookup: languages */
-  adminLanguages: () => ["AdminOpportunitiesLanguages"] as const,
+  /** Admin (all organisations) status-tab count */
+  adminSearchCount: (status: Status | null, keyParts: string) =>
+    ["OpportunitiesSearch", "totalCount", status, keyParts] as unknown[],
+  /** Admin lookup: categories, optionally scoped to organisation(s) */
+  adminCategories: (organizations?: string[] | null): unknown[] => [
+    "AdminOpportunitiesCategories",
+    ...(organizations ?? []),
+  ],
+  /** Admin lookup: countries, optionally scoped to organisation(s) */
+  adminCountries: (organizations?: string[] | null): unknown[] => [
+    "AdminOpportunitiesCountries",
+    ...(organizations ?? []),
+  ],
+  /** Admin lookup: languages, optionally scoped to organisation(s) */
+  adminLanguages: (organizations?: string[] | null): unknown[] => [
+    "AdminOpportunitiesLanguages",
+    ...(organizations ?? []),
+  ],
   /** Admin lookup: organisations */
   adminOrganisations: () => ["AdminOpportunitiesOrganisations"] as const,
   /** Create/edit page lookups */
@@ -303,7 +320,12 @@ export function useSkillsQuery(
   });
 }
 
-/** Org-admin paginated opportunity list. */
+/**
+ * Org-admin paginated opportunity list.
+ * NB: the previous page's rows are kept while the next page loads, so the list never
+ * collapses to a skeleton mid-paging (which shrinks the document and makes the browser
+ * clamp the scroll position to the top).
+ */
 export function useOrgOpportunitiesListQuery(
   orgId: string,
   searchFilter: OpportunitySearchFilterAdmin,
@@ -314,45 +336,43 @@ export function useOrgOpportunitiesListQuery(
     queryKey: OPPORTUNITY_QUERY_KEYS.orgList(orgId, keyParts),
     queryFn: () => getOpportunitiesAdmin(searchFilter),
     enabled: !!orgId && (options?.enabled ?? true),
+    placeholderData: keepPreviousData,
   });
 }
 
 /**
- * Org-admin status-tab count.
- * Pass `null` as `status` for the “All” tab (queries all 4 statuses).
+ * Status-tab count for the admin & org-admin opportunity search pages.
+ * The count honours every applied filter, so pass the same (id-based) filter as the
+ * search itself — only paging and the statuses are overridden here.
+ * Pass `null` as `status` for the “All” tab (queries all 4 statuses), and `null` as
+ * `orgId` for the admin (all organisations) page.
  */
-export function useOrgOpportunityCountQuery(
-  orgId: string,
-  valueContains: string | null,
+export function useOpportunityStatusCountQuery(
+  orgId: string | null,
+  searchFilter: OpportunitySearchFilterAdmin,
   status: Status | null,
-  types: string[] | null,
   keyParts: string,
   options?: { enabled?: boolean },
 ) {
   return useQuery<number>({
-    queryKey: OPPORTUNITY_QUERY_KEYS.orgListCount(orgId, status, keyParts),
+    queryKey: orgId
+      ? OPPORTUNITY_QUERY_KEYS.orgListCount(orgId, status, keyParts)
+      : OPPORTUNITY_QUERY_KEYS.adminSearchCount(status, keyParts),
     queryFn: () => {
       const filter: OpportunitySearchFilterAdmin = {
+        ...searchFilter,
         pageNumber: 1,
         pageSize: 1,
-        organizations: [orgId],
-        valueContains,
         statuses:
           status !== null
             ? [status]
             : [Status.Active, Status.Expired, Status.Inactive, Status.Deleted],
-        types,
-        categories: null,
-        languages: null,
-        countries: null,
-        startDate: null,
-        endDate: null,
-        featured: null,
-        engagementTypes: null,
       };
       return getOpportunitiesAdmin(filter).then((d) => d.totalCount ?? 0);
     },
-    enabled: !!orgId && (options?.enabled ?? true),
+    enabled: options?.enabled ?? true,
+    // keeps the tab badges stable (no blink) while a new count loads
+    placeholderData: keepPreviousData,
   });
 }
 
@@ -392,35 +412,42 @@ export function useOrgVerificationCountQuery(
   });
 }
 
-/** Admin lookup: opportunity categories. */
-export function useAdminOpportunityCategoriesQuery(options?: {
-  enabled?: boolean;
-}) {
+/**
+ * Admin lookup: opportunity categories.
+ * NB: `organizations` is optional for the Admin role, but REQUIRED for the
+ * Organization Admin role (see OpportunityController).
+ */
+export function useAdminOpportunityCategoriesQuery(
+  organizations?: string[] | null,
+  options?: { enabled?: boolean },
+) {
   return useQuery<OpportunityCategory[]>({
-    queryKey: OPPORTUNITY_QUERY_KEYS.adminCategories(),
-    queryFn: () => getCategoriesAdmin(null),
+    queryKey: OPPORTUNITY_QUERY_KEYS.adminCategories(organizations),
+    queryFn: () => getCategoriesAdmin(organizations ?? null),
     enabled: options?.enabled ?? true,
   });
 }
 
-/** Admin lookup: countries. */
-export function useAdminOpportunityCountriesQuery(options?: {
-  enabled?: boolean;
-}) {
+/** Admin lookup: countries. See note on `organizations` above. */
+export function useAdminOpportunityCountriesQuery(
+  organizations?: string[] | null,
+  options?: { enabled?: boolean },
+) {
   return useQuery<Country[]>({
-    queryKey: OPPORTUNITY_QUERY_KEYS.adminCountries(),
-    queryFn: () => getCountriesAdmin(null),
+    queryKey: OPPORTUNITY_QUERY_KEYS.adminCountries(organizations),
+    queryFn: () => getCountriesAdmin(organizations ?? null),
     enabled: options?.enabled ?? true,
   });
 }
 
-/** Admin lookup: languages. */
-export function useAdminOpportunityLanguagesQuery(options?: {
-  enabled?: boolean;
-}) {
+/** Admin lookup: languages. See note on `organizations` above. */
+export function useAdminOpportunityLanguagesQuery(
+  organizations?: string[] | null,
+  options?: { enabled?: boolean },
+) {
   return useQuery<Language[]>({
-    queryKey: OPPORTUNITY_QUERY_KEYS.adminLanguages(),
-    queryFn: () => getLanguagesAdmin(null),
+    queryKey: OPPORTUNITY_QUERY_KEYS.adminLanguages(organizations),
+    queryFn: () => getLanguagesAdmin(organizations ?? null),
     enabled: options?.enabled ?? true,
   });
 }
@@ -440,6 +467,8 @@ export function useAdminOpportunityOrganisationsQuery(options?: {
  * Admin opportunities search results.
  * Pass the pre-built filter (from a useMemo on the page) and the raw URL
  * param array as `keyParts` so cache invalidation is driven by URL changes.
+ * NB: keeps the previous page's rows while the next page loads — see
+ * useOrgOpportunitiesListQuery.
  */
 export function useAdminOpportunitiesSearchQuery(
   filter: OpportunitySearchFilterAdmin,
@@ -450,6 +479,7 @@ export function useAdminOpportunitiesSearchQuery(
     queryKey: OPPORTUNITY_QUERY_KEYS.adminSearch(keyParts),
     queryFn: () => getOpportunitiesAdmin(filter),
     enabled: options?.enabled ?? true,
+    placeholderData: keepPreviousData,
   });
 }
 

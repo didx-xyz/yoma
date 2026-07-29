@@ -9,41 +9,64 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import iconZlto from "public/images/icon-zlto.svg";
 import { type ParsedUrlQuery } from "querystring";
-import { useCallback, useMemo, useState, type ReactElement } from "react";
+import {
+  useCallback,
+  useMemo,
+  useRef,
+  useState,
+  type ReactElement,
+} from "react";
 import { FaDownload, FaPlusCircle, FaRocket, FaUpload } from "react-icons/fa";
 import { IoIosAdd, IoIosWarning } from "react-icons/io";
-import Select from "react-select";
-import type { SelectOption } from "~/api/models/lookups";
 import {
   Status,
   type OpportunitySearchFilterAdmin,
 } from "~/api/models/opportunity";
-import CustomSlider from "~/components/Carousel/CustomSlider";
 import CustomModal from "~/components/Common/CustomModal";
 import DropdownMenu from "~/components/Common/DropdownMenu";
 import MainLayout from "~/components/Layout/Main";
 import NoRowsMessage from "~/components/NoRowsMessage";
 import OpportunityExport from "~/components/Opportunity/Admin/OpportunityExport";
 import { OpportunityImport } from "~/components/Opportunity/Admin/OpportunityImport";
+import OpportunityAdminFilterBadges from "~/components/Opportunity/Admin/OpportunityAdminFilterBadges";
+import OpportunityAdminSearchToolbar from "~/components/Opportunity/Admin/OpportunityAdminSearchToolbar";
+import OpportunityAdminStatusTabs from "~/components/Opportunity/Admin/OpportunityAdminStatusTabs";
+import {
+  filterToQueryString,
+  getAppliedFilterCount,
+  getFilterKeyParts,
+  isFilterMappingReady,
+  isSearchPerformed as getIsSearchPerformed,
+  mapFilterToApi,
+  OPPORTUNITY_ADMIN_FILTER_OPTIONS,
+  parseFilterFromQuery,
+  parseStatusParam,
+  type OpportunityAdminRouterQuery,
+} from "~/components/Opportunity/Admin/opportunityAdminFilter";
 import {
   OpportunityActionOptions,
   OpportunityActions,
 } from "~/components/Opportunity/OpportunityActions";
+import { OpportunityAdminFilterVertical } from "~/components/Opportunity/OpportunityAdminFilterVertical";
 import PullSyncBadge from "~/components/Opportunity/Badges/PullSyncBadge";
 import OpportunityStatus from "~/components/Opportunity/OpportunityStatus";
 import { PageBackground } from "~/components/PageBackground";
 import { PaginationButtons } from "~/components/PaginationButtons";
-import { SearchInput } from "~/components/SearchInput";
 import { InternalServerError } from "~/components/Status/InternalServerError";
 import LimitedFunctionalityBadge from "~/components/Status/LimitedFunctionalityBadge";
+import { LoadingInline } from "~/components/Status/LoadingInline";
 import { LoadingSkeleton } from "~/components/Status/LoadingSkeleton";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import {
   OPPORTUNITY_QUERY_KEYS,
+  useAdminOpportunityCategoriesQuery,
+  useAdminOpportunityCountriesQuery,
+  useAdminOpportunityLanguagesQuery,
+  useOpportunityCustomFieldDefinitionsQuery,
+  useOpportunityStatusCountQuery,
   useOpportunityTypesQuery,
   useOrgOpportunitiesListQuery,
-  useOrgOpportunityCountQuery,
 } from "~/hooks/useOpportunityMutations";
 import { PAGE_SIZE } from "~/lib/constants";
 import { currentOrganisationInactiveAtom } from "~/lib/store";
@@ -53,10 +76,6 @@ import { authOptions, type User } from "~/server/auth";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
-  query?: string;
-  page?: string;
-  status?: string;
-  typeId?: string;
 }
 
 const getErrorStatus = (error: unknown): number | null => {
@@ -67,7 +86,7 @@ const getErrorStatus = (error: unknown): number | null => {
 // ⚠️ SSR
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { id } = context.params as IParams;
-  const { query, page, status, typeId, returnUrl } = context.query;
+  const { returnUrl } = context.query;
   const session = await getServerSession(context.req, context.res, authOptions);
 
   // 👇 ensure authenticated
@@ -85,10 +104,6 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   return {
     props: {
       id: id,
-      query: query ?? null,
-      page: page ?? null,
-      status: status ?? null,
-      typeId: typeId ?? null,
       theme: theme,
       error: null,
       returnUrl: returnUrl ?? null,
@@ -99,200 +114,242 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 
 const Opportunities: NextPageWithLayout<{
   id: string;
-  query?: string;
-  page?: string;
   theme: string;
   error?: number;
-  status?: string;
-  typeId?: string;
   returnUrl?: string;
   user?: User | null;
-}> = ({ id, query, page, status, typeId, error, returnUrl, user }) => {
+}> = ({ id, error, returnUrl, user }) => {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const myRef = useRef<HTMLDivElement>(null);
   const currentOrganisationInactive = useAtomValue(
     currentOrganisationInactiveAtom,
   );
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
-  const { data: opportunityTypesData } = useOpportunityTypesQuery({
-    enabled: !error,
-  });
+  const [filterFullWindowVisible, setFilterFullWindowVisible] = useState(false);
 
-  const typeOptions = useMemo<SelectOption[]>(
-    () =>
-      (opportunityTypesData ?? []).map((type) => ({
-        value: type.id,
-        label: type.name,
-      })),
-    [opportunityTypesData],
-  );
+  // 👇 filters are driven by the querystring (shared vocabulary with /admin/opportunities)
+  const routerQuery = router.query as OpportunityAdminRouterQuery;
+  const { query, status: statusParam } = routerQuery;
+  const status = useMemo(() => parseStatusParam(statusParam), [statusParam]);
 
-  const selectedTypeOption = useMemo(
-    () => typeOptions.find((option) => option.value === typeId) ?? null,
-    [typeId, typeOptions],
-  );
-
-  // search filter state
+  // display (name-based) filter — what the filter modal and the badges bind to
   const searchFilter = useMemo<OpportunitySearchFilterAdmin>(
-    () => ({
-      pageNumber: page ? parseInt(page.toString()) : 1,
-      pageSize: PAGE_SIZE,
-      organizations: [id],
-      startDate: null,
-      endDate: null,
-      statuses: status
-        ? status.toString().split("|")
-        : [Status.Active, Status.Expired, Status.Inactive, Status.Deleted],
-      types: typeId ? [typeId.toString()] : null,
-      categories: null,
-      languages: null,
-      countries: null,
-      valueContains: query?.toString() ?? null,
-      featured: null,
-      engagementTypes: null,
-    }),
-    [id, page, query, status, typeId],
+    () => parseFilterFromQuery(routerQuery, PAGE_SIZE),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [router.query],
+  );
+
+  const isSearchPerformed = useMemo(
+    () => getIsSearchPerformed(routerQuery),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [router.query],
+  );
+
+  const appliedFilterCount = useMemo(
+    () => getAppliedFilterCount(searchFilter),
+    [searchFilter],
+  );
+
+  //#region LOOKUPS
+  const { data: lookups_types } = useOpportunityTypesQuery({ enabled: !error });
+
+  // NB: the admin lookups require the organisation(s) for the org-admin role
+  const orgScope = useMemo(() => [id], [id]);
+  const { data: lookups_categories } = useAdminOpportunityCategoriesQuery(
+    orgScope,
+    { enabled: !error },
+  );
+  const { data: lookups_countries } = useAdminOpportunityCountriesQuery(
+    orgScope,
+    { enabled: !error },
+  );
+  const { data: lookups_languages } = useAdminOpportunityLanguagesQuery(
+    orgScope,
+    { enabled: !error },
+  );
+
+  // definitions are keyed on the selected types, so they refetch when types change
+  const { data: lookups_customFieldDefinitions } =
+    useOpportunityCustomFieldDefinitionsQuery(searchFilter.types ?? null, {
+      enabled: !error,
+    });
+  //#endregion LOOKUPS
+
+  // the filter values from the querystring are mapped to their corresponding id's
+  const apiFilter = useMemo<OpportunitySearchFilterAdmin>(
+    () =>
+      mapFilterToApi(
+        searchFilter,
+        {
+          types: lookups_types,
+          categories: lookups_categories,
+          countries: lookups_countries,
+          languages: lookups_languages,
+        },
+        id,
+      ),
+    [
+      searchFilter,
+      id,
+      lookups_types,
+      lookups_categories,
+      lookups_countries,
+      lookups_languages,
+    ],
+  );
+
+  // only search once the lookups needed to map the applied filters have loaded
+  const filterMappingReady = useMemo(
+    () =>
+      isFilterMappingReady(searchFilter, {
+        types: lookups_types,
+        categories: lookups_categories,
+        countries: lookups_countries,
+        languages: lookups_languages,
+      }),
+    [
+      searchFilter,
+      lookups_types,
+      lookups_categories,
+      lookups_countries,
+      lookups_languages,
+    ],
   );
 
   // 👇 use prefetched queries from server
   // NB: these queries (with ['opportunities', id]) will be invalidated by create/edit operations on other pages
-  const countKeyParts = `${query?.toString()}_${page?.toString()}_${status?.toString()}_${typeId?.toString()}`;
+  const countKeyParts = useMemo(
+    () => getFilterKeyParts(routerQuery),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [router.query],
+  );
 
   const {
     data: searchResults,
     isLoading: isLoadingSearchResults,
+    isPlaceholderData: isShowingPreviousResults,
     error: searchResultsError,
-  } = useOrgOpportunitiesListQuery(id, searchFilter, countKeyParts, {
-    enabled: !error,
+  } = useOrgOpportunitiesListQuery(id, apiFilter, countKeyParts, {
+    enabled: !error && filterMappingReady,
   });
   const resolvedError =
     error ?? getErrorStatus(searchResultsError) ?? undefined;
 
-  const { data: totalCountAll } = useOrgOpportunityCountQuery(
+  // status tab counts — these honour every applied filter
+  const countsEnabled = !error && filterMappingReady;
+  const { data: totalCountAll } = useOpportunityStatusCountQuery(
     id,
-    searchFilter.valueContains ?? null,
+    apiFilter,
     null,
-    searchFilter.types,
     countKeyParts,
-    { enabled: !error },
+    { enabled: countsEnabled },
   );
-  const { data: totalCountActive } = useOrgOpportunityCountQuery(
+  const { data: totalCountActive } = useOpportunityStatusCountQuery(
     id,
-    searchFilter.valueContains ?? null,
+    apiFilter,
     Status.Active,
-    searchFilter.types,
     countKeyParts,
-    { enabled: !error },
+    { enabled: countsEnabled },
   );
-  const { data: totalCountInactive } = useOrgOpportunityCountQuery(
+  const { data: totalCountInactive } = useOpportunityStatusCountQuery(
     id,
-    searchFilter.valueContains ?? null,
+    apiFilter,
     Status.Inactive,
-    searchFilter.types,
     countKeyParts,
-    { enabled: !error },
+    { enabled: countsEnabled },
   );
-  const { data: totalCountExpired } = useOrgOpportunityCountQuery(
+  const { data: totalCountExpired } = useOpportunityStatusCountQuery(
     id,
-    searchFilter.valueContains ?? null,
+    apiFilter,
     Status.Expired,
-    searchFilter.types,
     countKeyParts,
-    { enabled: !error },
+    { enabled: countsEnabled },
   );
-  const { data: totalCountDeleted } = useOrgOpportunityCountQuery(
+  const { data: totalCountDeleted } = useOpportunityStatusCountQuery(
     id,
-    searchFilter.valueContains ?? null,
+    apiFilter,
     Status.Deleted,
-    searchFilter.types,
     countKeyParts,
-    { enabled: !error },
+    { enabled: countsEnabled },
+  );
+
+  const tabCounts = useMemo(
+    () => ({
+      all: totalCountAll,
+      [Status.Active]: totalCountActive,
+      [Status.Inactive]: totalCountInactive,
+      [Status.Expired]: totalCountExpired,
+      [Status.Deleted]: totalCountDeleted,
+    }),
+    [
+      totalCountAll,
+      totalCountActive,
+      totalCountInactive,
+      totalCountExpired,
+      totalCountDeleted,
+    ],
   );
 
   // 🎈 FUNCTIONS
-  const getSearchFilterAsQueryString = useCallback(
-    (searchFilter: OpportunitySearchFilterAdmin) => {
-      if (!searchFilter) return null;
-
-      // construct querystring parameters from filter
-      const params = new URLSearchParams();
-
-      if (
-        searchFilter.valueContains !== undefined &&
-        searchFilter.valueContains !== null &&
-        searchFilter.valueContains.length > 0
-      )
-        params.append("query", searchFilter.valueContains);
-
-      if (
-        searchFilter?.statuses !== undefined &&
-        searchFilter?.statuses !== null &&
-        searchFilter?.statuses.length > 0 &&
-        searchFilter?.statuses.length !== 4 // hack to prevent all" statuses from being added to the query string
-      )
-        params.append("status", searchFilter?.statuses.join("|"));
-
-      if (
-        searchFilter.types !== undefined &&
-        searchFilter.types !== null &&
-        searchFilter.types.length > 0
-      ) {
-        params.append("typeId", searchFilter.types[0]!);
-      }
-
-      if (
-        searchFilter.pageNumber !== null &&
-        searchFilter.pageNumber !== undefined &&
-        searchFilter.pageNumber !== 1
-      )
-        params.append("page", searchFilter.pageNumber.toString());
-
-      if (params.size === 0) return null;
-      return params;
-    },
-    [],
-  );
-
   const redirectWithSearchFilterParams = useCallback(
     (filter: OpportunitySearchFilterAdmin) => {
       let url = `/organisations/${id}/opportunities`;
-      const params = getSearchFilterAsQueryString(filter);
+      const params = filterToQueryString(filter);
       if (params != null && params.size > 0)
         url = `${url}?${params.toString()}`;
 
       if (url != router.asPath)
         void router.push(url, undefined, { scroll: false });
     },
-    [id, router, getSearchFilterAsQueryString],
+    [id, router],
+  );
+
+  // querystring of the current filters excluding status & paging (used by the tabs)
+  const tabBaseParams = useMemo(
+    () => filterToQueryString({ ...searchFilter, statuses: null }),
+    [searchFilter],
   );
 
   //#region Event Handlers
   const onSearch = useCallback(
     (query: string) => {
-      searchFilter.pageNumber = 1;
-      searchFilter.valueContains = query.length > 2 ? query : null;
-      redirectWithSearchFilterParams(searchFilter);
+      redirectWithSearchFilterParams({
+        ...searchFilter,
+        pageNumber: 1,
+        valueContains: query.length > 2 ? query : null,
+      });
     },
     [searchFilter, redirectWithSearchFilterParams],
   );
 
   const handlePagerChange = useCallback(
     (value: number) => {
-      searchFilter.pageNumber = value;
-      redirectWithSearchFilterParams(searchFilter);
+      redirectWithSearchFilterParams({ ...searchFilter, pageNumber: value });
     },
     [searchFilter, redirectWithSearchFilterParams],
   );
 
-  const onTypeChange = useCallback(
-    (option: SelectOption | null) => {
-      searchFilter.pageNumber = 1;
-      searchFilter.types = option ? [option.value] : null;
-      redirectWithSearchFilterParams(searchFilter);
+  const onSubmitFilter = useCallback(
+    (filter: OpportunitySearchFilterAdmin) => {
+      setFilterFullWindowVisible(false);
+      // the status tab is preserved; paging is reset when filters change
+      redirectWithSearchFilterParams({
+        ...filter,
+        statuses: filter.statuses ?? searchFilter.statuses,
+        pageNumber: 1,
+      });
     },
-    [searchFilter, redirectWithSearchFilterParams],
+    [redirectWithSearchFilterParams, searchFilter.statuses],
   );
+
+  const onClearFilter = useCallback(() => {
+    setFilterFullWindowVisible(false);
+    void router.push(`/organisations/${id}/opportunities`, undefined, {
+      scroll: false,
+    });
+  }, [id, router]);
   //#endregion Event Handlers
 
   if (resolvedError) {
@@ -308,6 +365,42 @@ const Opportunities: NextPageWithLayout<{
       </Head>
 
       <PageBackground className="h-[14.3rem] md:h-[18.4rem]" />
+
+      {/* REFERENCE FOR FILTER POPUP: fix menu z-index issue */}
+      <div ref={myRef} />
+
+      {/* POPUP FILTER */}
+      <CustomModal
+        isOpen={filterFullWindowVisible}
+        shouldCloseOnOverlayClick={true}
+        onRequestClose={() => {
+          setFilterFullWindowVisible(false);
+        }}
+        className={`md:max-h-[600px] md:w-[800px]`}
+      >
+        {lookups_types && lookups_countries && lookups_languages && (
+          <div className="flex h-full flex-col gap-2 overflow-y-auto">
+            <OpportunityAdminFilterVertical
+              htmlRef={myRef.current!}
+              searchFilter={searchFilter}
+              lookups_categories={lookups_categories ?? []}
+              lookups_countries={lookups_countries}
+              lookups_languages={lookups_languages}
+              lookups_types={lookups_types}
+              lookups_organisations={[]} // org-scoped page: not applicable
+              lookups_publishedStates={[]}
+              lookups_statuses={[]} // status is owned by the tabs
+              lookups_customFieldDefinitions={lookups_customFieldDefinitions}
+              submitButtonText="Apply Filters"
+              onCancel={() => setFilterFullWindowVisible(false)}
+              onSubmit={onSubmitFilter}
+              onClear={onClearFilter}
+              clearButtonText="Clear All Filters"
+              filterOptions={OPPORTUNITY_ADMIN_FILTER_OPTIONS}
+            />
+          </div>
+        )}
+      </CustomModal>
 
       {/* IMPORT DIALOG */}
       <CustomModal
@@ -347,7 +440,7 @@ const Opportunities: NextPageWithLayout<{
       >
         <OpportunityExport
           totalCount={searchResults?.totalCount ?? 0}
-          searchFilter={searchFilter}
+          searchFilter={apiFilter} // the export endpoint expects id's, not names
           onClose={() => setExportDialogOpen(false)}
           onSave={() => setExportDialogOpen(false)}
         />
@@ -360,117 +453,20 @@ const Opportunities: NextPageWithLayout<{
           </h3>
 
           {/* TABBED NAVIGATION */}
-          <CustomSlider sliderClassName="!gap-6">
-            <Link
-              href={`/organisations/${id}/opportunities`}
-              role="tab"
-              className={`border-b-4 py-2 whitespace-nowrap text-white ${
-                !status
-                  ? "border-orange"
-                  : "hover:border-orange hover:text-gray"
-              }`}
-            >
-              All
-              {(totalCountAll ?? 0) > 0 && (
-                <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
-                  {totalCountAll}
-                </div>
-              )}
-            </Link>
-            <Link
-              href={`/organisations/${id}/opportunities?status=Active`}
-              role="tab"
-              className={`border-b-4 py-2 whitespace-nowrap text-white ${
-                status === "Active"
-                  ? "border-orange"
-                  : "hover:border-orange hover:text-gray"
-              }`}
-            >
-              Active
-              {(totalCountActive ?? 0) > 0 && (
-                <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
-                  {totalCountActive}
-                </div>
-              )}
-            </Link>
-            <Link
-              href={`/organisations/${id}/opportunities?status=Inactive`}
-              role="tab"
-              className={`border-b-4 py-2 whitespace-nowrap text-white ${
-                status === "Inactive"
-                  ? "border-orange"
-                  : "hover:border-orange hover:text-gray"
-              }`}
-            >
-              Inactive
-              {(totalCountInactive ?? 0) > 0 && (
-                <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
-                  {totalCountInactive}
-                </div>
-              )}
-            </Link>
-            <Link
-              href={`/organisations/${id}/opportunities?status=Expired`}
-              role="tab"
-              className={`border-b-4 py-2 whitespace-nowrap text-white ${
-                status === "Expired"
-                  ? "border-orange"
-                  : "hover:border-orange hover:text-gray"
-              }`}
-            >
-              Expired
-              {(totalCountExpired ?? 0) > 0 && (
-                <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
-                  {totalCountExpired}
-                </div>
-              )}
-            </Link>
-            <Link
-              href={`/organisations/${id}/opportunities?status=Deleted`}
-              role="tab"
-              className={`border-b-4 py-2 whitespace-nowrap text-white ${
-                status === "Deleted"
-                  ? "border-orange"
-                  : "hover:border-orange hover:text-gray"
-              }`}
-            >
-              Archived
-              {(totalCountDeleted ?? 0) > 0 && (
-                <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
-                  {totalCountDeleted}
-                </div>
-              )}
-            </Link>
-          </CustomSlider>
+          <OpportunityAdminStatusTabs
+            basePath={`/organisations/${id}/opportunities`}
+            baseParams={tabBaseParams}
+            status={status}
+            counts={tabCounts}
+          />
 
-          {/* FILTERS */}
-          <div className="flex w-full grow flex-col items-center justify-between gap-4 sm:justify-end md:flex-row">
-            <div className="flex w-full grow flex-row flex-wrap gap-2">
-              <SearchInput defaultValue={query} onSearch={onSearch} />
-              <div className="w-full md:w-60">
-                <Select
-                  instanceId="opportunityTypeFilter"
-                  isClearable={true}
-                  options={typeOptions}
-                  value={selectedTypeOption}
-                  onChange={(option) =>
-                    onTypeChange(option as SelectOption | null)
-                  }
-                  classNames={{
-                    control: () => "input w-full",
-                  }}
-                  styles={{
-                    placeholder: (base) => ({
-                      ...base,
-                      color: "#A3A6AF",
-                    }),
-                  }}
-                  placeholder="Filter by type..."
-                  inputId="input_opportunityTypeFilter"
-                />
-              </div>
-            </div>
-
+          {/* SEARCH & FILTERS */}
+          <OpportunityAdminSearchToolbar
+            defaultValue={query?.toString() ?? null}
+            onSearch={onSearch}
+            openFilter={setFilterFullWindowVisible}
+            appliedFilterCount={appliedFilterCount}
+          >
             <DropdownMenu
               label="Actions"
               items={[
@@ -498,7 +494,17 @@ const Opportunities: NextPageWithLayout<{
                 },
               ]}
             />
-          </div>
+          </OpportunityAdminSearchToolbar>
+
+          {/* APPLIED FILTER BADGES */}
+          {appliedFilterCount > 0 && (
+            <OpportunityAdminFilterBadges
+              searchFilter={searchFilter}
+              lookups_customFieldDefinitions={lookups_customFieldDefinitions}
+              onSubmit={onSubmitFilter}
+              className="-ml-2"
+            />
+          )}
         </div>
 
         {/* MAIN CONTENT */}
@@ -513,9 +519,8 @@ const Opportunities: NextPageWithLayout<{
             {/* NO ROWS */}
             {searchResults &&
               searchResults.items?.length === 0 &&
-              !query &&
-              !status &&
-              !typeId && (
+              !isSearchPerformed &&
+              status === null && (
                 <div className="flex h-fit flex-col items-center rounded-lg bg-white pb-8 md:pb-16">
                   <NoRowsMessage
                     title={"Ready to share amazing opportunities?"}
@@ -544,7 +549,7 @@ const Opportunities: NextPageWithLayout<{
               )}
             {searchResults &&
               searchResults.items?.length === 0 &&
-              (query || status || typeId) && (
+              (isSearchPerformed || status !== null) && (
                 <div className="py-32x flex flex-col place-items-center">
                   <NoRowsMessage
                     title={"No opportunities found"}
@@ -555,7 +560,13 @@ const Opportunities: NextPageWithLayout<{
 
             {/* RESULTS */}
             {searchResults && searchResults.items?.length > 0 && (
-              <>
+              // the previous page stays visible (dimmed) while the next one loads, so
+              // paging never changes the page height and never moves the scroll position
+              <div
+                className={`transition-opacity ${
+                  isShowingPreviousResults ? "opacity-50" : ""
+                }`}
+              >
                 {/* MOBILE */}
                 <div className="flex flex-col gap-4 md:hidden">
                   {searchResults.items.map((opportunity) => (
@@ -594,8 +605,6 @@ const Opportunities: NextPageWithLayout<{
                             OpportunityActionOptions.MAKE_INACTIVE,
                             OpportunityActionOptions.MAKE_VISIBLE,
                             OpportunityActionOptions.MAKE_HIDDEN,
-                            OpportunityActionOptions.MARK_FEATURED,
-                            OpportunityActionOptions.UNMARK_FEATURED,
                             OpportunityActionOptions.DELETE,
                           ]}
                         />
@@ -898,15 +907,28 @@ const Opportunities: NextPageWithLayout<{
                 {/* PAGINATION */}
                 <div className="mt-2 grid place-items-center justify-center">
                   <PaginationButtons
-                    currentPage={page ? parseInt(page) : 1}
+                    currentPage={searchFilter.pageNumber ?? 1}
                     totalItems={searchResults?.totalCount ?? 0}
                     pageSize={PAGE_SIZE}
                     onClick={handlePagerChange}
                     showPages={false}
                     showInfo={true}
                   />
+
+                  {/* fetching the next page: the rows above stay put (dimmed), so this
+                      is the only progress affordance. Fixed height = no layout shift. */}
+                  <div className="flex h-6 items-center">
+                    {isShowingPreviousResults && (
+                      <LoadingInline
+                        classNameSpinner="h-4 w-4 border-purple"
+                        classNameLabel="text-xs text-gray-dark"
+                        className="gap-2"
+                        label="Updating..."
+                      />
+                    )}
+                  </div>
                 </div>
-              </>
+              </div>
             )}
           </>
         )}

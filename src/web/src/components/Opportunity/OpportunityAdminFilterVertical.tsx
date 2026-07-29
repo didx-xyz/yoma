@@ -494,10 +494,10 @@ export const OpportunityAdminFilterVertical: React.FC<{
             {/* DATES */}
             {(filterOptions?.includes(OpportunityFilterOptions.DATE_START) ||
               filterOptions?.includes(OpportunityFilterOptions.DATE_END)) && (
-              <>
-                <div className="collapse-title text-xl font-medium">Dates</div>
+              <div className="collapse-arrow join-item collapse">
                 <input type="checkbox" name="my-accordion-9" />
-                <div className="flex flex-row gap-1 px-4 pb-4">
+                <div className="collapse-title text-xl font-medium">Dates</div>
+                <div className="collapse-content flex flex-row gap-1">
                   {/* DATE START */}
                   {filterOptions?.includes(
                     OpportunityFilterOptions.DATE_START,
@@ -510,14 +510,16 @@ export const OpportunityAdminFilterVertical: React.FC<{
                           <input
                             type="date"
                             className="input input-sm border-gray focus:border-gray w-full rounded-md focus:outline-none"
+                            aria-label="Start date"
                             onBlur={(e) => {
-                              // Only validate and convert when user finishes editing
+                              // Only validate and convert when user finishes editing.
+                              // NB: the filter is applied via the submit button, so both
+                              // dates can be set before searching.
                               if (e.target.value) {
                                 onChange(dateInputToUTC(e.target.value));
                               } else {
                                 onChange("");
                               }
-                              void handleSubmit(onSubmitHandler)();
                             }}
                             defaultValue={utcToDateInput(value || "")}
                           />
@@ -546,6 +548,7 @@ export const OpportunityAdminFilterVertical: React.FC<{
                           <input
                             type="date"
                             className="input input-sm border-gray focus:border-gray w-full rounded-md focus:outline-none"
+                            aria-label="End date"
                             onBlur={(e) => {
                               // Only validate and convert when user finishes editing
                               if (e.target.value) {
@@ -553,7 +556,6 @@ export const OpportunityAdminFilterVertical: React.FC<{
                               } else {
                                 onChange("");
                               }
-                              void handleSubmit(onSubmitHandler)();
                             }}
                             defaultValue={utcToDateInput(value || "")}
                           />
@@ -569,7 +571,7 @@ export const OpportunityAdminFilterVertical: React.FC<{
                     </>
                   )}
                 </div>
-              </>
+              </div>
             )}
 
             {/* CUSTOM FIELDS (definition-driven — YOM-1260) */}

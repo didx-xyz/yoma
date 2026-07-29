@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 interface InputProps {
   [key: string]: any;
@@ -23,6 +23,13 @@ export const PaginationButtons: React.FC<InputProps> = ({
   pageSizes = [50, 100, 500, 1000], // Default page sizes
 }) => {
   const [inputValue, setInputValue] = useState(currentPage);
+
+  // keep the input in sync when the page changes from outside (pager buttons, browser
+  // back/forward). NB: without this the input keeps its stale value whenever the
+  // component stays mounted, e.g. a cached result set that renders without a loading pass.
+  useEffect(() => {
+    setInputValue(currentPage);
+  }, [currentPage]);
 
   // 🧮 calculated fields
   const totalPages = useMemo(() => {
