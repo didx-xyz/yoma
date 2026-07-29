@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Controller, useForm, type FieldValues } from "react-hook-form";
 import { IoMdClose } from "react-icons/io";
 import Select from "react-select";
@@ -7,6 +7,8 @@ import zod from "zod";
 import type { Country, Language, SelectOption } from "~/api/models/lookups";
 import {
   OpportunityFilterOptions,
+  type CustomFieldDefinition,
+  type CustomFieldFilter,
   type OpportunityCategory,
   type OpportunitySearchFilterAdmin,
   type OpportunityType,
@@ -14,6 +16,11 @@ import {
 import type { OrganizationInfo } from "~/api/models/organisation";
 import { dateInputToUTC, utcToDateInput } from "~/lib/utils";
 import { AvatarImage } from "../AvatarImage";
+import {
+  CustomFieldFilters,
+  getCustomFieldFilterErrors,
+  sanitizeCustomFieldFilters,
+} from "./CustomFieldFilters";
 
 export const OpportunityAdminFilterVertical: React.FC<{
   htmlRef: HTMLDivElement;
@@ -25,6 +32,7 @@ export const OpportunityAdminFilterVertical: React.FC<{
   lookups_organisations: OrganizationInfo[];
   lookups_publishedStates: SelectOption[];
   lookups_statuses: SelectOption[];
+  lookups_customFieldDefinitions?: CustomFieldDefinition[];
   onSubmit?: (fieldValues: OpportunitySearchFilterAdmin) => void;
   onCancel?: () => void;
   clearButtonText?: string;
@@ -41,6 +49,7 @@ export const OpportunityAdminFilterVertical: React.FC<{
   lookups_organisations,
   lookups_publishedStates,
   lookups_statuses,
+  lookups_customFieldDefinitions,
   onSubmit,
   onCancel,
   submitButtonText = "Submit",
@@ -48,6 +57,19 @@ export const OpportunityAdminFilterVertical: React.FC<{
   onClear,
   clearButtonText,
 }) => {
+  // ─── Custom fields (definition-driven — YOM-1260) ─────────────────────────
+  // Clause state lives outside the RHF form because the zod resolver strips
+  // unknown keys; it is merged into the payload in onSubmitHandler below.
+  const [customFieldFilters, setCustomFieldFilters] = useState<
+    CustomFieldFilter[]
+  >(searchFilter?.customFields ?? []);
+  const [showCustomFieldErrors, setShowCustomFieldErrors] = useState(false);
+
+  // Sync when the filter prop changes (e.g. modal re-opened with different state)
+  useEffect(() => {
+    setCustomFieldFilters(searchFilter?.customFields ?? []);
+  }, [searchFilter?.customFields]);
+
   const schema = zod.object({
     types: zod.array(zod.string()).optional().nullable(),
     categories: zod.array(zod.string()).optional().nullable(),
@@ -82,9 +104,27 @@ export const OpportunityAdminFilterVertical: React.FC<{
   // form submission handler
   const onSubmitHandler = useCallback(
     (data: FieldValues) => {
-      if (onSubmit) onSubmit(data as OpportunitySearchFilterAdmin);
+      const payload = data as OpportunitySearchFilterAdmin;
+
+      // Merge custom-field clauses (usable ones only). Blocked while any clause
+      // is invalid, so the search is never sent with input the API will reject.
+      const activeCustomFields = sanitizeCustomFieldFilters(customFieldFilters);
+      const customFieldErrors = getCustomFieldFilterErrors(
+        lookups_customFieldDefinitions,
+        activeCustomFields,
+      );
+      if (customFieldErrors.length > 0) {
+        setShowCustomFieldErrors(true);
+        return;
+      }
+      setShowCustomFieldErrors(false);
+
+      payload.customFields =
+        activeCustomFields.length > 0 ? activeCustomFields : null;
+
+      if (onSubmit) onSubmit(payload);
     },
-    [onSubmit],
+    [onSubmit, customFieldFilters, lookups_customFieldDefinitions],
   );
 
   return (
@@ -530,6 +570,25 @@ export const OpportunityAdminFilterVertical: React.FC<{
                   )}
                 </div>
               </>
+            )}
+
+            {/* CUSTOM FIELDS (definition-driven — YOM-1260) */}
+            {(lookups_customFieldDefinitions?.length ?? 0) > 0 && (
+              <div className="collapse-arrow join-item collapse">
+                <input type="checkbox" name="my-accordion-10" />
+                <div className="collapse-title text-xl font-medium">
+                  Additional fields
+                </div>
+                <div className="collapse-content">
+                  <CustomFieldFilters
+                    definitions={lookups_customFieldDefinitions}
+                    value={customFieldFilters}
+                    onChange={setCustomFieldFilters}
+                    showErrors={showCustomFieldErrors}
+                    menuPortalTarget={htmlRef}
+                  />
+                </div>
+              </div>
             )}
           </div>
         </div>

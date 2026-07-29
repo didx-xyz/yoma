@@ -108,6 +108,10 @@ export const OpportunityAdminFilterHorizontal: React.FC<{
     startDate: zod.string().optional().nullable(),
     endDate: zod.string().optional().nullable(),
     statuses: zod.array(zod.string()).optional().nullable(),
+    // Not edited here, but must survive the resolver (which strips unknown keys)
+    // so custom-field clauses set in the vertical filter are not dropped when a
+    // horizontal filter is changed. See CustomFieldFilters (YOM-1260).
+    customFields: zod.any().optional().nullable(),
   });
 
   const form = useForm({

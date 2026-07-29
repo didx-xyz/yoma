@@ -17,6 +17,7 @@ import {
 import { IoMdPerson } from "react-icons/io";
 import type { SelectOption } from "~/api/models/lookups";
 import {
+  type CustomFieldFilter,
   type OpportunitySearchFilterAdmin,
   type OpportunityType,
   OpportunityFilterOptions,
@@ -28,6 +29,7 @@ import {
   useAdminOpportunityLanguagesQuery,
   useAdminOpportunityOrganisationsQuery,
   useAdminOpportunitiesSearchQuery,
+  useOpportunityCustomFieldDefinitionsQuery,
 } from "~/hooks/useOpportunityMutations";
 import CustomModal from "~/components/Common/CustomModal";
 import MainLayout from "~/components/Layout/Main";
@@ -121,7 +123,28 @@ const OpportunitiesAdmin: NextPageWithLayout<{
     startDate,
     endDate,
     statuses,
+    customFields: customFieldsParam,
   } = router.query;
+
+  // custom-field clauses travel through the querystring as JSON (YOM-1260)
+  const customFieldFilters = useMemo<CustomFieldFilter[] | null>(() => {
+    if (!customFieldsParam) return null;
+    try {
+      return JSON.parse(customFieldsParam.toString()) as CustomFieldFilter[];
+    } catch {
+      return null;
+    }
+  }, [customFieldsParam]);
+
+  // definitions are keyed on the selected types, so they refetch when types change
+  const selectedTypeNames = useMemo<string[] | null>(
+    () => (types != undefined ? types.toString().split("|") : null),
+    [types],
+  );
+  const { data: lookups_customFieldDefinitions } =
+    useOpportunityCustomFieldDefinitionsQuery(selectedTypeNames, {
+      enabled: !error,
+    });
 
   const { data: lookups_categories } = useAdminOpportunityCategoriesQuery({
     enabled: !error,
@@ -152,7 +175,8 @@ const OpportunitiesAdmin: NextPageWithLayout<{
       zltoRewardRanges != undefined ||
       startDate != undefined ||
       endDate != undefined ||
-      statuses != undefined
+      statuses != undefined ||
+      customFieldsParam != undefined
     );
   }, [
     query,
@@ -166,6 +190,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
     startDate,
     endDate,
     statuses,
+    customFieldsParam,
   ]);
 
   // QUERY: SEARCH RESULTS
@@ -249,6 +274,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
               })
               .filter((x) => x != "")
           : null,
+      customFields: customFieldFilters,
     }),
     [
       query,
@@ -261,6 +287,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
       startDate,
       endDate,
       statuses,
+      customFieldFilters,
       lookups_types,
       lookups_categories,
       lookups_countries,
@@ -286,6 +313,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
         startDate,
         endDate,
         statuses,
+        customFieldsParam,
       ],
       { enabled: !error },
     );
@@ -306,6 +334,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
       startDate: null,
       endDate: null,
       statuses: null,
+      customFields: null,
     });
 
   // sets the filter values from the querystring to the filter state
@@ -334,6 +363,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
         endDate: endDate != undefined ? endDate.toString() : null,
         statuses:
           statuses != undefined ? statuses?.toString().split("|") : null,
+        customFields: customFieldFilters,
       });
   }, [
     setOpportunitySearchFilter,
@@ -350,6 +380,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
     startDate,
     endDate,
     statuses,
+    customFieldFilters,
   ]);
 
   // disable full-size search filters when resizing to larger screens
@@ -416,6 +447,17 @@ const OpportunitiesAdmin: NextPageWithLayout<{
 
       if (searchFilter.endDate !== undefined && searchFilter.endDate !== null)
         params.append("endDate", searchFilter.endDate);
+
+      // custom-field clauses are serialised as JSON (URLSearchParams encodes it)
+      if (
+        searchFilter.customFields !== undefined &&
+        searchFilter.customFields !== null &&
+        searchFilter.customFields.length > 0
+      )
+        params.append(
+          "customFields",
+          JSON.stringify(searchFilter.customFields),
+        );
 
       if (
         searchFilter.pageNumber !== null &&
@@ -522,6 +564,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                 lookups_organisations={lookups_organisations}
                 lookups_publishedStates={lookups_publishedStates}
                 lookups_statuses={[]}
+                lookups_customFieldDefinitions={lookups_customFieldDefinitions}
                 submitButtonText="Apply Filters"
                 onCancel={onCloseFilter}
                 onSubmit={(e) => onSubmitFilter(e)}

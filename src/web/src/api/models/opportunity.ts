@@ -156,6 +156,7 @@ export interface OpportunitySearchFilterBase extends PaginationFilter {
   engagementTypes: string[] | null;
   featured: boolean | null;
   valueContains: string | null;
+  customFields?: CustomFieldFilter[] | null;
 }
 
 export interface OpportunitySearchResultsInfo extends OpportunitySearchResultsBase {
@@ -436,6 +437,37 @@ export enum CustomFieldLookupType {
   Country = "Country",
   Language = "Language",
   Skill = "Skill",
+}
+
+// Valid filter operators per data type (mirrors server-side validation):
+//   String  → Equals | Contains | AnyOf | Exists
+//   Integer/Decimal/DateTime → Equals | AnyOf | Exists | GreaterThan | GreaterThanOrEqual | LessThan | LessThanOrEqual | Between
+//   Boolean → Equals | AnyOf | Exists
+//   Option  → Equals | AnyOf | AllOf | Exists
+export enum CustomFieldFilterOperator {
+  Equals = "Equals",
+  Contains = "Contains",
+  AnyOf = "AnyOf",
+  AllOf = "AllOf",
+  Exists = "Exists",
+  GreaterThan = "GreaterThan",
+  GreaterThanOrEqual = "GreaterThanOrEqual",
+  LessThan = "LessThan",
+  LessThanOrEqual = "LessThanOrEqual",
+  Between = "Between",
+}
+
+/** One custom-field filter clause sent in OpportunitySearchFilter.customFields. */
+export interface CustomFieldFilter {
+  /** Matches CustomFieldDefinition.key (case-insensitive, server-side). */
+  key: string;
+  operator: CustomFieldFilterOperator;
+  /** Single scalar value (Equals / Contains / GreaterThan* / LessThan* / lower bound of Between). */
+  value?: string | null;
+  /** Upper bound — used only with Between. */
+  valueTo?: string | null;
+  /** Multi-value operators: AnyOf / AllOf. */
+  values?: string[] | null;
 }
 
 export interface CustomFieldOption {

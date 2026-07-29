@@ -117,7 +117,11 @@ function isEmptyEntry(entry: CustomFieldValueRequest | undefined): boolean {
 }
 
 // Validates a non-empty numeric value against the C# API's invariant parsing.
-function numberError(dataType: string, value: string): string | undefined {
+// Exported so the filter UI (CustomFieldFilters) applies the identical rules.
+export function getCustomFieldNumberError(
+  dataType: string,
+  value: string,
+): string | undefined {
   if (dataType === CustomFieldDataType.Integer) {
     if (!INTEGER_REGEX.test(value)) return "Please enter a whole number.";
     const parsed = Number(value);
@@ -168,7 +172,7 @@ export function getCustomFieldError(
   const dataType = dataTypeOf(definition);
 
   if (!empty && entry?.value) {
-    const numErr = numberError(dataType, entry.value);
+    const numErr = getCustomFieldNumberError(dataType, entry.value);
     if (numErr) return numErr;
   }
 
