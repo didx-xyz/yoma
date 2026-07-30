@@ -19,6 +19,7 @@ import {
   Action,
   VerificationStatus,
   type MyOpportunitySearchFilterAdmin,
+  type MyOpportunitySearchResults,
 } from "~/api/models/myOpportunity";
 import {
   Status,
@@ -93,8 +94,11 @@ export const OPPORTUNITY_QUERY_KEYS = {
   /** Prefix key to invalidate all org verification queries */
   verificationListAll: (orgId: string) => ["Verifications", orgId] as const,
   /** Org verifications status-tab count */
-  verificationListCount: (orgId: string, status: VerificationStatus | null) =>
-    ["Verifications", orgId, "TotalCount", status] as const,
+  verificationListCount: (
+    orgId: string,
+    status: VerificationStatus | string | null,
+    keyParts: string,
+  ) => ["Verifications", orgId, "TotalCount", status, keyParts] as const,
   /** Org verification opportunity lookup */
   opportunitiesForVerification: (
     orgId: string,
@@ -383,38 +387,62 @@ export function useOpportunityStatusCountQuery(
 }
 
 /**
- * Org-admin verification status-tab count.
- * Pass `null` as `status` for the “All” tab.
+ * Org-admin verification (submission) search results.
+ * NB: keeps the previous page's rows while the next page loads, so paging never changes the
+ * page height and never moves the scroll position.
+ */
+export function useOrgVerificationsSearchQuery(
+  orgId: string,
+  searchFilter: MyOpportunitySearchFilterAdmin,
+  keyParts: string,
+  options?: { enabled?: boolean },
+) {
+  return useQuery<MyOpportunitySearchResults>({
+    queryKey: OPPORTUNITY_QUERY_KEYS.verificationList(orgId, keyParts),
+    queryFn: () => searchMyOpportunitiesAdmin(searchFilter),
+    enabled: !!orgId && (options?.enabled ?? true),
+    placeholderData: keepPreviousData,
+  });
+}
+
+/**
+ * Org-admin verification status-tab count: the list search with `pageSize: 1`, so the badge
+ * honours every applied filter. Pass `null` as `status` for the “All” tab.
  */
 export function useOrgVerificationCountQuery(
   orgId: string,
-  status: VerificationStatus | null,
+  searchFilter: MyOpportunitySearchFilterAdmin,
+  status: string | null,
+  keyParts: string,
   options?: { enabled?: boolean },
 ) {
   return useQuery<number>({
-    queryKey: OPPORTUNITY_QUERY_KEYS.verificationListCount(orgId, status),
+    queryKey: OPPORTUNITY_QUERY_KEYS.verificationListCount(
+      orgId,
+      status,
+      keyParts,
+    ),
     queryFn: () => {
       const filter: MyOpportunitySearchFilterAdmin = {
+        ...searchFilter,
         pageNumber: 1,
         pageSize: 1,
-        organizations: [orgId],
-        opportunity: null,
-        userId: null,
-        valueContains: null,
         action: Action.Verification,
         verificationStatuses:
           status !== null
             ? [status]
             : [
-                VerificationStatus.Pending,
-                VerificationStatus.Completed,
-                VerificationStatus.Rejected,
+                VerificationStatus[VerificationStatus.Pending],
+                VerificationStatus[VerificationStatus.Completed],
+                VerificationStatus[VerificationStatus.Rejected],
               ],
       };
 
       return searchMyOpportunitiesAdmin(filter).then((d) => d.totalCount ?? 0);
     },
     enabled: !!orgId && (options?.enabled ?? true),
+    // keeps the tab badges stable (no blink) while a new count loads
+    placeholderData: keepPreviousData,
   });
 }
 
