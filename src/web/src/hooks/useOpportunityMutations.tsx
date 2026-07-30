@@ -52,6 +52,7 @@ import {
   getOpportunityCustomFieldDefinitions,
   getOpportunityInfoByIdAdminOrgAdminOrUser,
   getOrganisationsAdmin,
+  searchCriteriaOpportunities,
   getTypes,
   getVerificationTypes,
   updateFeatured,
@@ -127,6 +128,11 @@ export const OPPORTUNITY_QUERY_KEYS = {
   ],
   /** Admin lookup: organisations */
   adminOrganisations: () => ["AdminOpportunitiesOrganisations"] as const,
+  /** Titles for a known set of opportunity id's (labels for id-based filter badges) */
+  criteriaByIds: (ids: string[]): unknown[] => [
+    "OpportunityCriteriaByIds",
+    ...ids,
+  ],
   /** Create/edit page lookups */
   categories: () => ["categories"] as const,
   countries: () => ["countries"] as const,
@@ -449,6 +455,39 @@ export function useAdminOpportunityLanguagesQuery(
     queryKey: OPPORTUNITY_QUERY_KEYS.adminLanguages(organizations),
     queryFn: () => getLanguagesAdmin(organizations ?? null),
     enabled: options?.enabled ?? true,
+  });
+}
+
+/**
+ * Titles for a known set of opportunity id's.
+ *
+ * The opportunity pickers on the links pages are backed by an async search rather than a
+ * full lookup, so those filters stay id-based in the querystring; this resolves the id's
+ * back to titles for the filter badges and for re-hydrating the picker on a deep link.
+ */
+export function useOpportunityTitlesByIdQuery(
+  ids: string[] | null,
+  options?: { enabled?: boolean },
+) {
+  const opportunityIds = ids ?? [];
+
+  return useQuery<OpportunitySearchResultsInfo>({
+    queryKey: OPPORTUNITY_QUERY_KEYS.criteriaByIds(opportunityIds),
+    queryFn: () =>
+      searchCriteriaOpportunities({
+        pageNumber: 1,
+        pageSize: opportunityIds.length,
+        types: null,
+        organizations: null,
+        titleContains: null,
+        opportunities: opportunityIds,
+        countries: null,
+        published: null,
+        verificationEnabled: null,
+        verificationMethod: null,
+        onlyCompletable: false,
+      }),
+    enabled: opportunityIds.length > 0 && (options?.enabled ?? true),
   });
 }
 

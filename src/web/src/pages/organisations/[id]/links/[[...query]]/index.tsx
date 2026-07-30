@@ -8,9 +8,17 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { type ParsedUrlQuery } from "querystring";
-import { useCallback, useMemo, useState, type ReactElement } from "react";
+import {
+  useCallback,
+  useMemo,
+  useRef,
+  useState,
+  type ReactElement,
+} from "react";
+import { FaPlusCircle } from "react-icons/fa";
 import {
   IoIosAdd,
+  IoIosSettings,
   IoMdCalendar,
   IoMdClose,
   IoMdLock,
@@ -19,34 +27,54 @@ import {
 import { IoShareSocialOutline } from "react-icons/io5";
 import Moment from "react-moment";
 import {
-  ActionLinkEntityType,
   ActionLinkStatus,
-  LinkAction,
   type LinkInfo,
   type LinkSearchFilter,
 } from "~/api/models/actionLinks";
+import type { SelectOption } from "~/api/models/lookups";
 import { getLinkById } from "~/api/services/actionLinks";
-import CustomSlider from "~/components/Carousel/CustomSlider";
 import CustomModal from "~/components/Common/CustomModal";
+import DropdownMenu from "~/components/Common/DropdownMenu";
+import {
+  ListPagePagination,
+  ListPageResults,
+} from "~/components/Common/ListPage/ListPageResults";
+import ListPageSearchToolbar, {
+  LIST_PAGE_TOOLBAR_BUTTON_CLASSES,
+} from "~/components/Common/ListPage/ListPageSearchToolbar";
+import ListPageStatusTabs from "~/components/Common/ListPage/ListPageStatusTabs";
+import {
+  buildListPageQueryString,
+  getAppliedFilterCount,
+  getFilterKeyParts,
+  isSearchPerformed as getIsSearchPerformed,
+  parseStatusTab,
+  type ListPageRouterQuery,
+} from "~/components/Common/ListPage/listPageFilter";
 import MainLayout from "~/components/Layout/Main";
 import { LinkActionOptions, LinkActions } from "~/components/Links/LinkActions";
+import LinkAdminFilterBadges from "~/components/Links/LinkAdminFilterBadges";
+import LinkAdminFilterVertical, {
+  LinkAdminFilterOptions,
+} from "~/components/Links/LinkAdminFilterVertical";
 import {
-  LinkFilterOptions,
-  LinkSearchFilters,
-} from "~/components/Links/LinkSearchFilter";
+  LINK_ORG_ADMIN_FILTER_SPEC,
+  LINK_STATUS_PARAM,
+  mapLinkFilterToApi,
+  parseLinkFilterFromQuery,
+} from "~/components/Links/linkAdminFilter";
 import NoRowsMessage from "~/components/NoRowsMessage";
 import { PageBackground } from "~/components/PageBackground";
-import { PaginationButtons } from "~/components/PaginationButtons";
 import { InternalServerError } from "~/components/Status/InternalServerError";
 import LimitedFunctionalityBadge from "~/components/Status/LimitedFunctionalityBadge";
-import { Loading } from "~/components/Status/Loading";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import {
   ACTION_LINK_QUERY_KEYS,
-  useOrgLinkCountQuery,
-  useOrgLinksListQuery,
+  useLinkStatusCountQuery,
+  useLinksSearchQuery,
 } from "~/hooks/useActionLinkMutations";
+import { useOpportunityTitlesByIdQuery } from "~/hooks/useOpportunityMutations";
 import { DATE_FORMAT_HUMAN, PAGE_SIZE } from "~/lib/constants";
 import { currentOrganisationInactiveAtom } from "~/lib/store";
 import { getSafeUrl, getThemeFromRole } from "~/lib/utils";
@@ -55,11 +83,6 @@ import { authOptions } from "~/server/auth";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
-  type?: string;
-  action?: string;
-  status?: string;
-  entities?: string;
-  page?: string;
 }
 
 const getErrorStatus = (error: unknown): number | null => {
@@ -70,8 +93,7 @@ const getErrorStatus = (error: unknown): number | null => {
 // ⚠️ SSR
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { id } = context.params as IParams;
-  const { type, action, statuses, entities, valueContains, page, returnUrl } =
-    context.query;
+  const { returnUrl } = context.query;
   const session = await getServerSession(context.req, context.res, authOptions);
 
   // 👇 ensure authenticated
@@ -86,15 +108,10 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   // 👇 set theme based on role
   const theme = getThemeFromRole(session, id);
 
+  // NB: the filters are driven by the querystring (router.query), not by props
   return {
     props: {
       id: id,
-      type: type ?? null,
-      action: action ?? null,
-      statuses: statuses ?? null,
-      entities: entities ?? null,
-      valueContains: valueContains ?? null,
-      page: page ?? null,
       theme: theme,
       error: null,
       returnUrl: returnUrl ?? null,
@@ -104,28 +121,13 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 
 const Links: NextPageWithLayout<{
   id: string;
-  type?: string;
-  action?: string;
-  statuses?: string;
-  entities?: string;
-  valueContains?: string;
-  page?: string;
   theme: string;
   error?: number;
   returnUrl?: string;
-}> = ({
-  id,
-  type,
-  action,
-  statuses,
-  entities,
-  valueContains,
-  page,
-  error,
-  returnUrl,
-}) => {
+}> = ({ id, error, returnUrl }) => {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const myRef = useRef<HTMLDivElement>(null);
   const currentOrganisationInactive = useAtomValue(
     currentOrganisationInactiveAtom,
   );
@@ -133,153 +135,202 @@ const Links: NextPageWithLayout<{
   const [qrCodeImageData, setQRCodeImageData] = useState<
     string | null | undefined
   >(null);
-  const [isLoading] = useState(false);
+  const [filterFullWindowVisible, setFilterFullWindowVisible] = useState(false);
 
+  // 👇 filters are driven by the querystring (shared vocabulary with /admin/links)
+  const routerQuery = router.query as ListPageRouterQuery;
+  const status = useMemo(
+    () => parseStatusTab(routerQuery, LINK_ORG_ADMIN_FILTER_SPEC),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [router.query],
+  );
+
+  // display filter — what the filter modal and the badges bind to
   const searchFilter = useMemo<LinkSearchFilter>(
-    () => ({
-      pageNumber: page ? parseInt(page.toString()) : 1,
-      pageSize: PAGE_SIZE,
-      entityType: type ?? ActionLinkEntityType.Opportunity,
-      action: action ?? LinkAction.Verify,
-      entities: entities ? entities.toString().split("|") : null,
-      statuses: statuses ? statuses.toString().split("|") : null,
-      organizations: [id],
-      valueContains: valueContains ?? null,
-    }),
-    [action, entities, id, page, statuses, type, valueContains],
+    () =>
+      parseLinkFilterFromQuery(
+        routerQuery,
+        LINK_ORG_ADMIN_FILTER_SPEC,
+        PAGE_SIZE,
+        id,
+      ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [router.query, id],
   );
 
-  const countKeyParts = `${type ?? ""}_${action ?? ""}`;
-  const searchResultsKey = `${type ?? ""}_${action ?? ""}_${statuses ?? ""}_${entities ?? ""}_${valueContains ?? ""}_${page ?? ""}`;
-
-  const { data: links, error: linksError } = useOrgLinksListQuery(
-    id,
-    searchFilter,
-    searchResultsKey,
-    {
-      enabled: !error,
-    },
+  const isSearchPerformed = useMemo(
+    () => getIsSearchPerformed(routerQuery, LINK_ORG_ADMIN_FILTER_SPEC),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [router.query],
   );
+
+  const appliedFilterCount = useMemo(
+    () => getAppliedFilterCount(searchFilter, LINK_ORG_ADMIN_FILTER_SPEC),
+    [searchFilter],
+  );
+
+  //#region LOOKUPS
+  // the opportunity filter is id-based; resolve the titles for the badges & the picker
+  const { data: lookups_entities } = useOpportunityTitlesByIdQuery(
+    searchFilter.entities,
+    { enabled: !error },
+  );
+  const entityOptions = useMemo<SelectOption[]>(
+    () =>
+      (lookups_entities?.items ?? []).map((item) => ({
+        value: item.id,
+        label: item.title,
+      })),
+    [lookups_entities],
+  );
+  //#endregion LOOKUPS
+
+  // org-scoped page: the only mapping is the organisation, which is already an id
+  const apiFilter = useMemo<LinkSearchFilter>(
+    () => mapLinkFilterToApi(searchFilter, {}, id),
+    [searchFilter, id],
+  );
+
+  const filterKeyParts = useMemo(
+    () => getFilterKeyParts(routerQuery, LINK_ORG_ADMIN_FILTER_SPEC),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [router.query],
+  );
+
+  const {
+    data: links,
+    isLoading: isLoadingSearchResults,
+    isPlaceholderData: isShowingPreviousResults,
+    error: linksError,
+  } = useLinksSearchQuery(id, apiFilter, filterKeyParts, {
+    enabled: !error,
+  });
   const resolvedError = error ?? getErrorStatus(linksError) ?? undefined;
-  const { data: totalCountAll } = useOrgLinkCountQuery(
+
+  // status tab counts — these honour every applied filter
+  const { data: totalCountAll } = useLinkStatusCountQuery(
     id,
-    searchFilter.entityType,
-    searchFilter.action,
+    apiFilter,
     null,
-    countKeyParts,
+    filterKeyParts,
     { enabled: !error },
   );
-  const { data: totalCountActive } = useOrgLinkCountQuery(
+  const { data: totalCountActive } = useLinkStatusCountQuery(
     id,
-    searchFilter.entityType,
-    searchFilter.action,
+    apiFilter,
     ActionLinkStatus.Active,
-    countKeyParts,
+    filterKeyParts,
     { enabled: !error },
   );
-  const { data: totalCountInactive } = useOrgLinkCountQuery(
+  const { data: totalCountInactive } = useLinkStatusCountQuery(
     id,
-    searchFilter.entityType,
-    searchFilter.action,
+    apiFilter,
     ActionLinkStatus.Inactive,
-    countKeyParts,
+    filterKeyParts,
     { enabled: !error },
   );
-  const { data: totalCountExpired } = useOrgLinkCountQuery(
+  const { data: totalCountExpired } = useLinkStatusCountQuery(
     id,
-    searchFilter.entityType,
-    searchFilter.action,
+    apiFilter,
     ActionLinkStatus.Expired,
-    countKeyParts,
+    filterKeyParts,
     { enabled: !error },
   );
-  const { data: totalCountLimitReached } = useOrgLinkCountQuery(
+  const { data: totalCountLimitReached } = useLinkStatusCountQuery(
     id,
-    searchFilter.entityType,
-    searchFilter.action,
+    apiFilter,
     ActionLinkStatus.LimitReached,
-    countKeyParts,
+    filterKeyParts,
     { enabled: !error },
   );
-  const { data: totalCountDeleted } = useOrgLinkCountQuery(
+  const { data: totalCountDeleted } = useLinkStatusCountQuery(
     id,
-    searchFilter.entityType,
-    searchFilter.action,
+    apiFilter,
     ActionLinkStatus.Deleted,
-    countKeyParts,
+    filterKeyParts,
     { enabled: !error },
   );
 
-  const linkDetailKey = useCallback(
-    (linkId: string) => ACTION_LINK_QUERY_KEYS.detail(linkId, true),
-    [],
+  const tabCounts = useMemo(
+    () => ({
+      all: totalCountAll,
+      [ActionLinkStatus.Active]: totalCountActive,
+      [ActionLinkStatus.Inactive]: totalCountInactive,
+      [ActionLinkStatus.Expired]: totalCountExpired,
+      [ActionLinkStatus.LimitReached]: totalCountLimitReached,
+      [ActionLinkStatus.Deleted]: totalCountDeleted,
+    }),
+    [
+      totalCountAll,
+      totalCountActive,
+      totalCountInactive,
+      totalCountExpired,
+      totalCountLimitReached,
+      totalCountDeleted,
+    ],
   );
 
   // 🎈 FUNCTIONS
-  const getSearchFilterAsQueryString = useCallback(
-    (searchFilter: LinkSearchFilter) => {
-      if (!searchFilter) return null;
-
-      // construct querystring parameters from filter
-      const params = new URLSearchParams();
-
-      if (
-        searchFilter?.entities?.length !== undefined &&
-        searchFilter.entities.length > 0
-      )
-        params.append("entities", searchFilter.entities.join("|"));
-
-      if (
-        searchFilter?.statuses !== undefined &&
-        searchFilter?.statuses !== null &&
-        searchFilter?.statuses.length > 0
-      )
-        params.append("statuses", searchFilter?.statuses.join("|"));
-
-      if (searchFilter?.valueContains)
-        params.append("valueContains", searchFilter.valueContains);
-
-      if (
-        searchFilter.pageNumber !== null &&
-        searchFilter.pageNumber !== undefined &&
-        searchFilter.pageNumber !== 1
-      )
-        params.append("page", searchFilter.pageNumber.toString());
-
-      if (params.size === 0) return null;
-      return params;
-    },
-    [],
-  );
-
   const redirectWithSearchFilterParams = useCallback(
     (filter: LinkSearchFilter) => {
       let url = `/organisations/${id}/links`;
-      const params = getSearchFilterAsQueryString(filter);
+      const params = buildListPageQueryString(
+        filter,
+        LINK_ORG_ADMIN_FILTER_SPEC,
+      );
       if (params != null && params.size > 0)
         url = `${url}?${params.toString()}`;
 
       if (url != router.asPath)
         void router.push(url, undefined, { scroll: false });
     },
-    [id, router, getSearchFilterAsQueryString],
+    [id, router],
   );
 
-  // filter popup handlers
-  const onSubmitFilter = useCallback(
-    (val: LinkSearchFilter) => {
-      redirectWithSearchFilterParams(val);
-    },
-    [redirectWithSearchFilterParams],
+  // querystring of the current filters excluding status & paging (used by the tabs)
+  const tabBaseParams = useMemo(
+    () =>
+      buildListPageQueryString(
+        { ...searchFilter, statuses: null },
+        LINK_ORG_ADMIN_FILTER_SPEC,
+      ),
+    [searchFilter],
   );
 
-  // 🔔 pager change event
-  const handlePagerChange = useCallback(
-    (value: number) => {
-      searchFilter.pageNumber = value;
-      redirectWithSearchFilterParams(searchFilter);
+  //#region Event Handlers
+  const onSearch = useCallback(
+    (query: string) => {
+      redirectWithSearchFilterParams({
+        ...searchFilter,
+        pageNumber: 1,
+        valueContains: query.length > 2 ? query : null,
+      });
     },
     [searchFilter, redirectWithSearchFilterParams],
+  );
+
+  const handlePagerChange = useCallback(
+    (value: number) => {
+      redirectWithSearchFilterParams({ ...searchFilter, pageNumber: value });
+    },
+    [searchFilter, redirectWithSearchFilterParams],
+  );
+
+  const onCloseFilter = useCallback(() => {
+    setFilterFullWindowVisible(false);
+  }, []);
+
+  const onSubmitFilter = useCallback(
+    (filter: LinkSearchFilter) => {
+      setFilterFullWindowVisible(false);
+      // the status tab is preserved; paging is reset when filters change
+      redirectWithSearchFilterParams({
+        ...filter,
+        statuses: filter.statuses ?? searchFilter.statuses,
+        pageNumber: 1,
+      });
+    },
+    [redirectWithSearchFilterParams, searchFilter.statuses],
   );
 
   const onClick_GenerateQRCode = useCallback(
@@ -287,13 +338,13 @@ const Links: NextPageWithLayout<{
       // fetch the QR code
       queryClient
         .fetchQuery({
-          queryKey: linkDetailKey(item.id),
+          queryKey: ACTION_LINK_QUERY_KEYS.detail(item.id, true),
           queryFn: () => getLinkById(item.id, true),
         })
         .then(() => {
           // get the QR code from the cache
           const qrCode = queryClient.getQueryData<LinkInfo | null>(
-            linkDetailKey(item.id),
+            ACTION_LINK_QUERY_KEYS.detail(item.id, true),
           );
 
           // show the QR code
@@ -301,42 +352,9 @@ const Links: NextPageWithLayout<{
           setShowQRCode(true);
         });
     },
-    [linkDetailKey, queryClient],
+    [queryClient],
   );
-
-  const renderAddLinkButton = useCallback(() => {
-    if (currentOrganisationInactive) {
-      return (
-        <span className="bg-theme flex w-56 cursor-not-allowed flex-row items-center justify-center rounded-full p-1 text-xs whitespace-nowrap text-white brightness-75">
-          Add link (disabled)
-        </span>
-      );
-    }
-
-    return (
-      <Link
-        href={`/organisations/${id}/links/create${`?returnUrl=${encodeURIComponent(
-          getSafeUrl(returnUrl, router.asPath),
-        )}`}`}
-        className="bg-theme btn btn-circle shadow-custom btn-sm btn-secondary h-fit w-fit !border-none p-1 text-xs whitespace-nowrap text-white brightness-105 md:p-2 md:px-4"
-        id="btnCreateLink"
-      >
-        <IoIosAdd className="h-7 w-7 md:h-5 md:w-5" />
-        <span className="hidden md:inline">Add link</span>
-      </Link>
-    );
-  }, [currentOrganisationInactive, id, returnUrl, router]);
-
-  // memo for isSearchPerformed based on filter parameters
-  const isSearchPerformed = useMemo<boolean>(() => {
-    return (
-      type != undefined ||
-      action != undefined ||
-      statuses != undefined ||
-      entities != undefined ||
-      valueContains != undefined
-    );
-  }, [type, action, statuses, entities, valueContains]);
+  //#endregion Event Handlers
 
   if (resolvedError) {
     if (resolvedError === 401) return <Unauthenticated />;
@@ -352,7 +370,28 @@ const Links: NextPageWithLayout<{
 
       <PageBackground className="h-[14.3rem] md:h-[18.4rem]" />
 
-      {isLoading && <Loading />}
+      {/* REFERENCE FOR FILTER POPUP: fix menu z-index issue */}
+      <div ref={myRef} />
+
+      {/* POPUP FILTER */}
+      <CustomModal
+        isOpen={filterFullWindowVisible}
+        shouldCloseOnOverlayClick={true}
+        onRequestClose={onCloseFilter}
+        className={`md:max-h-[300px] md:w-[400px]`}
+      >
+        <div className="flex h-full flex-col gap-2 overflow-y-auto">
+          <LinkAdminFilterVertical
+            htmlRef={myRef.current!}
+            searchFilter={searchFilter}
+            lookups_organisations={[]} // org-scoped page: not applicable
+            entityOptions={entityOptions}
+            onCancel={onCloseFilter}
+            onSubmit={onSubmitFilter}
+            filterOptions={[LinkAdminFilterOptions.ENTITIES]}
+          />
+        </div>
+      </CustomModal>
 
       {/* QR CODE DIALOG */}
       <CustomModal
@@ -421,126 +460,67 @@ const Links: NextPageWithLayout<{
           </h3>
 
           {/* TABBED NAVIGATION */}
-          <CustomSlider sliderClassName="!gap-6">
-            <Link
-              href={`/organisations/${id}/links`}
-              role="tab"
-              className={`border-b-4 py-2 whitespace-nowrap text-white ${
-                !statuses
-                  ? "border-orange"
-                  : "hover:border-orange hover:text-gray"
-              }`}
-            >
-              All
-              {(totalCountAll ?? 0) > 0 && (
-                <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
-                  {totalCountAll}
-                </div>
-              )}
-            </Link>
-            <Link
-              href={`/organisations/${id}/links?statuses=active`}
-              role="tab"
-              className={`border-b-4 py-2 whitespace-nowrap text-white ${
-                statuses === "active"
-                  ? "border-orange"
-                  : "hover:border-orange hover:text-gray"
-              }`}
-            >
-              Active
-              {(totalCountActive ?? 0) > 0 && (
-                <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
-                  {totalCountActive}
-                </div>
-              )}
-            </Link>
-            <Link
-              href={`/organisations/${id}/links?statuses=inactive`}
-              role="tab"
-              className={`border-b-4 py-2 whitespace-nowrap text-white ${
-                statuses === "inactive"
-                  ? "border-orange"
-                  : "hover:border-orange hover:text-gray"
-              }`}
-            >
-              Inactive
-              {(totalCountInactive ?? 0) > 0 && (
-                <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
-                  {totalCountInactive}
-                </div>
-              )}
-            </Link>
-            <Link
-              href={`/organisations/${id}/links?statuses=expired`}
-              role="tab"
-              className={`border-b-4 py-2 whitespace-nowrap text-white ${
-                statuses === "expired"
-                  ? "border-orange"
-                  : "hover:border-orange hover:text-gray"
-              }`}
-            >
-              Expired
-              {(totalCountExpired ?? 0) > 0 && (
-                <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
-                  {totalCountExpired}
-                </div>
-              )}
-            </Link>
-            <Link
-              href={`/organisations/${id}/links?statuses=limitReached`}
-              role="tab"
-              className={`border-b-4 py-2 whitespace-nowrap text-white ${
-                statuses === "limitReached"
-                  ? "border-orange"
-                  : "hover:border-orange hover:text-gray"
-              }`}
-            >
-              Limit Reached
-              {(totalCountLimitReached ?? 0) > 0 && (
-                <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
-                  {totalCountLimitReached}
-                </div>
-              )}
-            </Link>
-            <Link
-              href={`/organisations/${id}/links?statuses=deleted`}
-              role="tab"
-              className={`border-b-4 py-2 whitespace-nowrap text-white ${
-                statuses === "deleted"
-                  ? "border-orange"
-                  : "hover:border-orange hover:text-gray"
-              }`}
-            >
-              Deleted
-              {(totalCountDeleted ?? 0) > 0 && (
-                <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
-                  {totalCountDeleted}
-                </div>
-              )}
-            </Link>
-          </CustomSlider>
+          <ListPageStatusTabs
+            basePath={`/organisations/${id}/links`}
+            baseParams={tabBaseParams}
+            statusSpec={LINK_STATUS_PARAM}
+            status={status}
+            counts={tabCounts}
+            idPrefix="link"
+          />
 
-          {/* FILTERS */}
-          <div className="flex w-full grow items-center justify-between gap-4 sm:justify-end">
-            <LinkSearchFilters
-              searchFilter={searchFilter}
-              filterOptions={[
-                LinkFilterOptions.VALUECONTAINS,
-                LinkFilterOptions.ENTITIES,
+          {/* SEARCH & FILTERS */}
+          <ListPageSearchToolbar
+            defaultValue={searchFilter.valueContains}
+            onSearch={onSearch}
+            openFilter={setFilterFullWindowVisible}
+            appliedFilterCount={appliedFilterCount}
+          >
+            <DropdownMenu
+              label="Actions"
+              triggerIcon={<IoIosSettings className="h-5 w-5" />}
+              // sized & coloured to match the Filters button next to it
+              className="w-full md:w-40"
+              buttonClassName={LIST_PAGE_TOOLBAR_BUTTON_CLASSES}
+              items={[
+                {
+                  label: "Add link",
+                  href: `/organisations/${id}/links/create${`?returnUrl=${encodeURIComponent(
+                    getSafeUrl(returnUrl, router.asPath),
+                  )}`}`,
+                  icon: <FaPlusCircle className="h-4 w-4" />,
+                  disabled: currentOrganisationInactive,
+                  disabledTooltip:
+                    "Links cannot be created while the organisation is inactive",
+                  id: "btnCreateLink",
+                },
               ]}
-              onSubmit={(e) => onSubmitFilter(e)}
             />
+          </ListPageSearchToolbar>
 
-            {renderAddLinkButton()}
-          </div>
+          {/* APPLIED FILTER BADGES */}
+          {appliedFilterCount > 0 && (
+            <LinkAdminFilterBadges
+              searchFilter={searchFilter}
+              spec={LINK_ORG_ADMIN_FILTER_SPEC}
+              entityOptions={entityOptions}
+              onSubmit={onSubmitFilter}
+              className="-ml-2"
+            />
+          )}
         </div>
 
-        <>
+        {/* MAIN CONTENT */}
+        <ListPageResults
+          isLoading={isLoadingSearchResults}
+          isShowingPreviousResults={isShowingPreviousResults}
+          id="results"
+        >
           {/* NO ROWS */}
           {links && links.items?.length === 0 && (
             <>
-              {/* ALL TAB */}
-              {!isSearchPerformed && (
+              {/* ALL TAB, NO FILTERS */}
+              {!isSearchPerformed && status === null && (
                 <div className="flex flex-col items-center">
                   <NoRowsMessage
                     title={"Welcome to Links!"}
@@ -549,11 +529,27 @@ const Links: NextPageWithLayout<{
                     }
                     icon="🚀"
                   />
+
+                  {currentOrganisationInactive ? (
+                    <span className="bg-theme flex w-56 cursor-not-allowed flex-row items-center justify-center rounded-full p-1 text-xs whitespace-nowrap text-white brightness-75">
+                      Add link (disabled)
+                    </span>
+                  ) : (
+                    <Link
+                      href={`/organisations/${id}/links/create${`?returnUrl=${encodeURIComponent(
+                        getSafeUrl(returnUrl, router.asPath),
+                      )}`}`}
+                      className="bg-theme btn btn-primary rounded-3xl border-0 px-16 brightness-105 hover:brightness-110"
+                    >
+                      <IoIosAdd className="mr-1 h-5 w-5" />
+                      Add link
+                    </Link>
+                  )}
                 </div>
               )}
 
-              {/* OTHER TABS */}
-              {isSearchPerformed && (
+              {/* OTHER TABS / FILTERED */}
+              {(isSearchPerformed || status !== null) && (
                 <div className="flex flex-col items-center">
                   <NoRowsMessage
                     title={"No links found"}
@@ -746,14 +742,6 @@ const Links: NextPageWithLayout<{
                           >
                             {item.name}
                           </Link>
-                          {/* {item.description && (
-                            <span
-                              title={item.description}
-                              className="block w-full max-w-[160px] overflow-hidden text-xs text-ellipsis whitespace-nowrap text-gray-500"
-                            >
-                              {item.description}
-                            </span>
-                          )} */}
                         </div>
                       </td>
 
@@ -877,19 +865,17 @@ const Links: NextPageWithLayout<{
               </table>
 
               {/* PAGINATION */}
-              <div className="mt-2 grid place-items-center justify-center">
-                <PaginationButtons
-                  currentPage={page ? parseInt(page) : 1}
-                  totalItems={links?.totalCount ?? 0}
-                  pageSize={PAGE_SIZE}
-                  onClick={handlePagerChange}
-                  showPages={false}
-                  showInfo={true}
-                />
-              </div>
+              <ListPagePagination
+                currentPage={searchFilter.pageNumber ?? 1}
+                totalItems={links?.totalCount ?? 0}
+                pageSize={PAGE_SIZE}
+                onClick={handlePagerChange}
+                isShowingPreviousResults={isShowingPreviousResults}
+                className="mt-2"
+              />
             </>
           )}
-        </>
+        </ListPageResults>
       </div>
     </>
   );
