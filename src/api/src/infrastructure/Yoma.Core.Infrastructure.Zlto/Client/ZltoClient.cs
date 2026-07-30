@@ -73,6 +73,7 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
             Id = existing.WalletId,
             OwnerId = existing.OwnerId,
             Balance = existing.ZltoBalance,
+            ReservedBalance = existing.ReservedZltoBalance,
             DateCreated = existing.DateCreated,
             DateModified = existing.LastUpdated
           },
@@ -143,11 +144,19 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
         Id = response.WalletId,
         OwnerId = response.OwnerId,
         Balance = response.ZltoBalance,
+        ReservedBalance = response.ReservedZltoBalance,
         DateCreated = response.DateCreated,
         DateModified = response.LastUpdated
       };
     }
 
+    // TODO [ZLTO cash-out]: Confirm the remaining reservation contract details before production sign-off:
+    // - minimum/maximum expiration duration and the timing of automatic release;
+    // - lookup/recovery by idempotency key or external reference when reservation creation succeeds but
+    //   the response containing the reservation id is lost;
+    // - whether the provider-neutral reason and Yoma actor values are accepted and external_provider may
+    //   remain omitted; and
+    // - the expected recovery behaviour after commit/release is retried against a terminal reservation.
     public async Task<ReserveCashOutResponse> ReserveForCashOut(ReserveCashOutRequest request)
     {
       ArgumentNullException.ThrowIfNull(request, nameof(request));

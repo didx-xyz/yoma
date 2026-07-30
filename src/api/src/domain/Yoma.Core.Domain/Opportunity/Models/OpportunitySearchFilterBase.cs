@@ -35,6 +35,13 @@ namespace Yoma.Core.Domain.Opportunity.Models
     public List<CustomFieldFilter>? CustomFields { get; set; }
 
     /// <summary>
+    /// Applies the authenticated user's saved presets when filtering opportunities.
+    /// Exposed publicly by <see cref="OpportunitySearchFilter"/> only.
+    /// </summary>
+    [JsonIgnore]
+    internal bool ApplyUserPresets { get; set; }
+
+    /// <summary>
     /// Optionally filters opportunities by their published state. By default, results include opportunities that are published (both the opportunity and its organization are Active), 
     /// regardless of whether they have started (thus published states NotStarted and Active). This default behavior can be overridden
     /// </summary>

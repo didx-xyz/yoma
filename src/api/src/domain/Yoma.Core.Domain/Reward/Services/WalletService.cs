@@ -120,6 +120,7 @@ namespace Yoma.Core.Domain.Reward.Services
           {
             var wallet = await _rewardProviderClient.GetWallet(item.WalletId);
             balance.Available = wallet.Balance;
+            balance.PendingCashOut = wallet.ReservedBalance;
           }
           catch
           {
@@ -131,7 +132,6 @@ namespace Yoma.Core.Domain.Reward.Services
           throw new InvalidOperationException($"Status of '{status}' not supported");
       }
 
-      balance.Total = balance.Pending + balance.Available;
       return (status, balance);
     }
 

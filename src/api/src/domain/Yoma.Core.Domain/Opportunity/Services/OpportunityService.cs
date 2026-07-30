@@ -752,6 +752,17 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       _opportunitySearchFilterValidator.ValidateAndThrow(filter);
 
+      if (filter.ApplyUserPresets)
+      {
+        if (!HttpContextAccessorHelper.UserContextAvailable(_httpContextAccessor))
+          throw new ValidationException($"{nameof(filter.ApplyUserPresets)} requires an authenticated User");
+
+        // TODO(YOM-1244 - User Presets):
+        // Resolve the authenticated user's approved presets into the existing Opportunity core and
+        // custom-field filters once the BA-approved preset values and mapping rules are available.
+        throw new ValidationException("User Preset filtering is not configured");
+      }
+
       _customFieldValueService.ValidateAndHydrateFilters(CustomFieldEntityType.Opportunity, filter.CustomFields);
 
       var query = _opportunityRepository.Query(true);

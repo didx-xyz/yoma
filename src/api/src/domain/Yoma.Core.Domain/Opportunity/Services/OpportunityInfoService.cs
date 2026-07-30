@@ -145,6 +145,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         EngagementTypes = filter.EngagementTypes,
         ValueContains = filter.ValueContains,
         CustomFields = filter.CustomFields,
+        ApplyUserPresets = filter.ApplyUserPresets,
         ExcludeHidden = true,
         PageNumber = filter.PageNumber,
         PageSize = filter.PageSize,

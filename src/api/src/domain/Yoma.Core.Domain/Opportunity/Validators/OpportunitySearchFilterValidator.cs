@@ -57,6 +57,11 @@ namespace Yoma.Core.Domain.Opportunity.Validators
         .Must(HaveUniqueCustomFieldKeys)
         .WithMessage("{PropertyName} contains duplicate field keys.");
 
+      RuleFor(x => x.CustomFields)
+        .Must(x => x == null || x.Count == 0)
+        .When(x => x.ApplyUserPresets)
+        .WithMessage($"{nameof(OpportunitySearchFilter.ApplyUserPresets)} and {{PropertyName}} cannot be specified together.");
+
       RuleForEach(x => x.CustomFields)
         .SetValidator(new CustomFieldFilterValidator());
     }

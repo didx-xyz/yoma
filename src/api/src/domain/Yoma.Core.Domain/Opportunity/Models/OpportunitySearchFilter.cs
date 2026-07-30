@@ -27,6 +27,11 @@ namespace Yoma.Core.Domain.Opportunity.Models
     public new OpportunitySearchFilterZltoReward? ZltoReward { get; set; }
 
     /// <summary>
+    /// Applies the authenticated user's saved presets when filtering opportunities.
+    /// </summary>
+    public new bool ApplyUserPresets { get; set; }
+
+    /// <summary>
     /// Filter results by the most viewed / popular opportunities
     /// </summary>
     public bool? MostViewed { get; set; }

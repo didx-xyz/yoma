@@ -13,7 +13,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
     public List<VerificationStatus>? VerificationStatuses { get; set; }
 
     /// <summary>
-    /// Filters MyOpportunity records using configured custom field values.
+    /// Filters MyOpportunity records using explicitly supplied configured custom-field values.
+    /// Youth searches remain scoped to the authenticated user's records.
     /// </summary>
     public List<CustomFieldFilter>? CustomFields { get; set; }
 
