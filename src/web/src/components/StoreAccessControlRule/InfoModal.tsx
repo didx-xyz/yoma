@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { IoMdClose } from "react-icons/io";
 import iconPassport from "../../../public/images/passport.webp";
+import { BTN_DIALOG_CLOSE, BTN_SECONDARY } from "../Common/buttonStyles";
 import CustomModal from "../Common/CustomModal";
 
 export const InfoModal = ({
@@ -23,10 +24,11 @@ export const InfoModal = ({
             <h1 className="grow"></h1>
             <button
               type="button"
-              className="btn btn-circle text-gray-dark hover:bg-gray"
+              className={BTN_DIALOG_CLOSE}
+              aria-label="Close"
               onClick={onClose}
             >
-              <IoMdClose className="h-6 w-6"></IoMdClose>
+              <IoMdClose className="h-5 w-5" />
             </button>
           </div>
           <div className="flex flex-col items-center justify-center gap-4 p-4 md:p-0">
@@ -102,7 +104,7 @@ export const InfoModal = ({
             <div className="mt-4 flex w-full grow justify-center gap-4">
               <button
                 type="button"
-                className="btn border-purple text-purple hover:bg-purple w-3/4 max-w-[300px] rounded-full bg-white normal-case hover:text-white"
+                className={`${BTN_SECONDARY} w-64`}
                 onClick={onClose}
               >
                 Got it

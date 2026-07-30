@@ -331,7 +331,7 @@ const ReferralPrograms: NextPageWithLayout<{
         isOpen={filterFullWindowVisible}
         shouldCloseOnOverlayClick={true}
         onRequestClose={onCloseFilter}
-        className={`md:max-h-[300px] md:w-[400px]`}
+        className={`md:max-h-[400px] md:w-[500px]`}
       >
         {lookups_countries && (
           <div className="flex h-full flex-col gap-2 overflow-y-auto">

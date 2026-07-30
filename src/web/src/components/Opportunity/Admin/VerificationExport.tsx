@@ -5,6 +5,10 @@ import { IoMdClose, IoMdDownload, IoMdMail } from "react-icons/io";
 import { toast } from "react-toastify";
 import type { MyOpportunitySearchFilterAdmin } from "~/api/models/myOpportunity";
 import { getMyOpportunitiesExportToCSV } from "~/api/services/myOpportunities";
+import {
+  BTN_DIALOG_CLOSE,
+  BTN_SECONDARY,
+} from "~/components/Common/buttonStyles";
 import FormMessage, { FormMessageType } from "~/components/Common/FormMessage";
 import { PAGE_SIZE_MAXIMUM } from "~/lib/constants";
 
@@ -94,10 +98,11 @@ const VerificationExport: React.FC<VerificationExportDialogProps> = ({
         <h1 className="grow"></h1>
         <button
           type="button"
-          className="btn btn-circle text-gray-dark hover:bg-gray"
+          className={BTN_DIALOG_CLOSE}
+          aria-label="Close"
           onClick={onClose}
         >
-          <IoMdClose className="h-6 w-6"></IoMdClose>
+          <IoMdClose className="h-5 w-5" />
         </button>
       </div>
 
@@ -235,7 +240,7 @@ const VerificationExport: React.FC<VerificationExportDialogProps> = ({
           <div className="my-4 flex w-full grow items-center justify-center gap-4">
             <button
               type="button"
-              className="btn border-green text-green btn-outline hover:bg-green w-64 shrink rounded-full bg-white normal-case hover:border-0 hover:text-white"
+              className={`${BTN_SECONDARY} w-64 shrink`}
               onClick={() => {
                 onClose();
                 setIsLoadingDownload(false);

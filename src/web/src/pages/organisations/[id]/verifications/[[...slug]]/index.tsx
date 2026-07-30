@@ -38,6 +38,12 @@ import {
   getOpportunitiesForVerification,
   performActionVerifyBulk,
 } from "~/api/services/myOpportunities";
+import {
+  BTN_DANGER,
+  BTN_DIALOG_CLOSE,
+  BTN_PRIMARY,
+  BTN_SECONDARY,
+} from "~/components/Common/buttonStyles";
 import CustomModal from "~/components/Common/CustomModal";
 import DropdownMenu from "~/components/Common/DropdownMenu";
 import FormMessage, { FormMessageType } from "~/components/Common/FormMessage";
@@ -567,7 +573,7 @@ const OpportunityVerifications: NextPageWithLayout<{
         isOpen={filterFullWindowVisible}
         shouldCloseOnOverlayClick={true}
         onRequestClose={onCloseFilter}
-        className={`md:max-h-[300px] md:w-[400px]`}
+        className={`md:max-h-[300px] md:w-[500px]`}
       >
         <div className="flex h-full flex-col gap-2 overflow-y-auto">
           <VerificationAdminFilterVertical
@@ -589,17 +595,18 @@ const OpportunityVerifications: NextPageWithLayout<{
         className={`md:max-h-[620px] md:w-[800px]`}
       >
         <div className="flex h-full flex-col space-y-2">
-          <div className="bg-green flex flex-row items-center p-4 shadow-lg">
+          <div className="bg-theme flex flex-row items-center p-4 shadow-lg">
             <h4 className="grow pl-2 font-semibold text-white">
               {tempSelectedRows?.length} Participant
               {(selectedRows?.length ?? 0) > 1 ? "s" : ""}
             </h4>
             <button
               type="button"
-              className="btn btn-circle text-gray-dark hover:bg-gray"
+              className={BTN_DIALOG_CLOSE}
+              aria-label="Close"
               onClick={onCloseVerificationModal}
             >
-              <IoMdClose className="h-6 w-6"></IoMdClose>
+              <IoMdClose className="h-5 w-5" />
             </button>
           </div>
 
@@ -628,16 +635,18 @@ const OpportunityVerifications: NextPageWithLayout<{
           {/* BUTTONS */}
           <div className="flex flex-col gap-2 px-6 py-4 pt-2 sm:flex-row sm:place-items-center sm:justify-center">
             <button
-              className="btn border-green text-green btn-outline hover:bg-green w-full shrink rounded-full bg-white normal-case hover:border-0 hover:text-white sm:w-48 md:w-64"
+              type="button"
+              className={`${BTN_SECONDARY} w-full shrink sm:w-48 md:w-64`}
               onClick={onCloseVerificationModal}
             >
-              <IoMdClose className="h-6 w-6" />
+              <IoMdClose className="h-5 w-5" />
               Cancel
             </button>
 
             {(bulkActionApprove == null || !bulkActionApprove) && (
               <button
-                className="btn w-full shrink rounded-full border-red-500 bg-white text-red-500 normal-case hover:border-0 hover:bg-red-500 hover:text-white sm:w-48 md:w-64"
+                type="button"
+                className={`${BTN_DANGER} w-full shrink sm:w-48 md:w-64`}
                 onClick={() => onVerify(false)}
               >
                 <FaThumbsDown className="h-4 w-4" />
@@ -647,7 +656,8 @@ const OpportunityVerifications: NextPageWithLayout<{
 
             {(bulkActionApprove == null || bulkActionApprove) && (
               <button
-                className="btn border-green text-green hover:bg-green w-full shrink rounded-full bg-white normal-case hover:border-0 hover:text-white sm:w-48 md:w-64"
+                type="button"
+                className={`${BTN_PRIMARY} w-full shrink sm:w-48 md:w-64`}
                 onClick={() => onVerify(true)}
               >
                 <FaThumbsUp className="h-4 w-4" />
@@ -666,17 +676,18 @@ const OpportunityVerifications: NextPageWithLayout<{
         className={`md:max-h-[620px] md:w-[800px]`}
       >
         <div className="flex h-full flex-col space-y-2 overflow-y-auto">
-          <div className="bg-green flex flex-row items-center p-4 shadow-lg">
+          <div className="bg-theme flex flex-row items-center p-4 shadow-lg">
             <h4 className="grow pl-2 font-semibold text-white">
               {verificationResponse?.items?.length} Participant
               {(verificationResponse?.items?.length ?? 0) > 1 ? "s" : ""}
             </h4>
             <button
               type="button"
-              className="btn btn-circle text-gray-dark hover:bg-gray"
+              className={BTN_DIALOG_CLOSE}
+              aria-label="Close"
               onClick={onCloseVerificationModal}
             >
-              <IoMdClose className="h-6 w-6"></IoMdClose>
+              <IoMdClose className="h-5 w-5" />
             </button>
           </div>
           <div className="bg-gray flex grow flex-col">
@@ -766,9 +777,10 @@ const OpportunityVerifications: NextPageWithLayout<{
           </div>
 
           {/* BUTTON */}
-          <div className="flex flex-row place-items-center justify-end px-6 py-4 pt-2">
+          <div className="flex flex-row place-items-center justify-center px-6 py-4 pt-2">
             <button
-              className="btn text-green btn-outline btn-sm hover:border-green hover:bg-green flex-nowrap rounded-full px-10 py-5 hover:text-white"
+              type="button"
+              className={`${BTN_SECONDARY} w-64`}
               onClick={onCloseVerificationResultModal}
             >
               Close

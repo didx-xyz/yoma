@@ -17,6 +17,11 @@ import {
   MAX_FILE_SIZE_LABEL,
 } from "~/lib/constants";
 import { toCSVResult } from "~/lib/csv-import-helper";
+import {
+  BTN_DIALOG_CLOSE,
+  BTN_PRIMARY,
+  BTN_SECONDARY,
+} from "../../Common/buttonStyles";
 import { CSVImportResults } from "../../Common/CSVImportResults";
 import FormMessage, { FormMessageType } from "../../Common/FormMessage";
 import { Loading } from "../../Status/Loading";
@@ -194,14 +199,15 @@ export const VerificationImport: React.FC<InputProps> = ({
         onSubmit={handleSubmit(onSubmit)}
       >
         <div className="flex flex-col gap-2">
-          <div className="bg-green flex flex-row p-4 shadow-lg">
+          <div className="bg-theme flex flex-row p-4 shadow-lg">
             <h1 className="grow"></h1>
             <button
               type="button"
-              className="btn btn-circle text-gray-dark hover:bg-gray"
+              className={BTN_DIALOG_CLOSE}
+              aria-label="Close"
               onClick={onClose}
             >
-              <IoMdClose className="h-6 w-6"></IoMdClose>
+              <IoMdClose className="h-5 w-5" />
             </button>
           </div>
           <div className="flex flex-col">
@@ -355,7 +361,7 @@ export const VerificationImport: React.FC<InputProps> = ({
               <div className="mt-4 mb-10 flex w-full grow gap-4">
                 <button
                   type="button"
-                  className="btn border-green text-green btn-outline hover:bg-green w-full shrink rounded-full bg-white normal-case hover:border-0 hover:text-white"
+                  className={`${BTN_SECONDARY} w-full shrink`}
                   onClick={onClose}
                 >
                   Close
@@ -364,7 +370,7 @@ export const VerificationImport: React.FC<InputProps> = ({
                   <>
                     <button
                       type="button"
-                      className="btn bg-green hover:bg-green w-full shrink rounded-full border-0 text-white normal-case hover:border-1 hover:text-white hover:brightness-110"
+                      className={`${BTN_PRIMARY} w-full shrink`}
                       onClick={() => handleSubmit(onValidate)()}
                       disabled={isLoading}
                     >
@@ -372,7 +378,7 @@ export const VerificationImport: React.FC<InputProps> = ({
                     </button>
                     <button
                       type="submit"
-                      className="btn bg-green hover:bg-green w-full shrink rounded-full border-0 text-white normal-case hover:border-1 hover:text-white hover:brightness-110"
+                      className={`${BTN_PRIMARY} w-full shrink`}
                       disabled={isLoading}
                     >
                       Submit
@@ -382,7 +388,7 @@ export const VerificationImport: React.FC<InputProps> = ({
                 {importSuccess && (
                   <button
                     type="button"
-                    className="btn bg-green hover:bg-green w-full shrink rounded-full border-0 text-white normal-case hover:border-1 hover:text-white hover:brightness-110"
+                    className={`${BTN_PRIMARY} w-full shrink`}
                     onClick={() => {
                       setImportSuccess(false);
                       setResult(null);

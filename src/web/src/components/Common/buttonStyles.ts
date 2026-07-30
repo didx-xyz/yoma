@@ -19,6 +19,14 @@ export const BTN_PRIMARY =
 export const BTN_SECONDARY =
   "btn btn-sm border-theme text-theme min-w-28 rounded-full border bg-white px-6 normal-case hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-60";
 
+/**
+ * Outlined destructive action (Decline, Reject…). Same geometry as BTN_SECONDARY so it lines
+ * up beside it; red rather than themed, because "this one is destructive" has to survive the
+ * page theme.
+ */
+export const BTN_DANGER =
+  "btn btn-sm min-w-28 rounded-full border border-red-500 bg-white px-6 text-red-500 normal-case hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-60";
+
 /** Circular icon button that dismisses a dialog (the ✕ in the corner). */
 export const BTN_DIALOG_CLOSE =
   "btn btn-sm btn-circle text-gray-dark hover:bg-gray-light border-none bg-transparent";

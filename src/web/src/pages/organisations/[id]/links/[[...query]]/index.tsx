@@ -33,6 +33,10 @@ import {
 } from "~/api/models/actionLinks";
 import type { SelectOption } from "~/api/models/lookups";
 import { getLinkById } from "~/api/services/actionLinks";
+import {
+  BTN_DIALOG_CLOSE,
+  BTN_SECONDARY,
+} from "~/components/Common/buttonStyles";
 import CustomModal from "~/components/Common/CustomModal";
 import DropdownMenu from "~/components/Common/DropdownMenu";
 import {
@@ -378,7 +382,7 @@ const Links: NextPageWithLayout<{
         isOpen={filterFullWindowVisible}
         shouldCloseOnOverlayClick={true}
         onRequestClose={onCloseFilter}
-        className={`md:max-h-[300px] md:w-[400px]`}
+        className={`md:max-h-[300px] md:w-[500px]`}
       >
         <div className="flex h-full flex-col gap-2 overflow-y-auto">
           <LinkAdminFilterVertical
@@ -405,17 +409,18 @@ const Links: NextPageWithLayout<{
       >
         <div className="flex h-full flex-col gap-2 overflow-y-auto">
           {/* HEADER WITH CLOSE BUTTON */}
-          <div className="bg-green flex flex-row p-4 shadow-lg">
+          <div className="bg-theme flex flex-row p-4 shadow-lg">
             <h1 className="grow"></h1>
             <button
               type="button"
-              className="btn btn-circle text-gray-dark hover:bg-gray"
+              className={BTN_DIALOG_CLOSE}
+              aria-label="Close"
               onClick={() => {
                 setShowQRCode(false);
                 setQRCodeImageData(null);
               }}
             >
-              <IoMdClose className="h-6 w-6"></IoMdClose>
+              <IoMdClose className="h-5 w-5" />
             </button>
           </div>
 
@@ -441,7 +446,7 @@ const Links: NextPageWithLayout<{
 
             <button
               type="button"
-              className="btn border-purple text-purple mt-10 rounded-full bg-white normal-case md:w-[150px]"
+              className={`${BTN_SECONDARY} mt-10 w-64`}
               onClick={() => {
                 setShowQRCode(false);
                 setQRCodeImageData(null);

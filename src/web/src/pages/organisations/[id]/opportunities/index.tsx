@@ -371,7 +371,7 @@ const Opportunities: NextPageWithLayout<{
         onRequestClose={() => {
           setFilterFullWindowVisible(false);
         }}
-        className={`md:max-h-[500px] md:w-[600px]`}
+        className={`md:max-h-[500px] md:w-[500px]`}
       >
         {lookups_types && lookups_countries && lookups_languages && (
           <div className="flex h-full flex-col gap-2 overflow-y-auto">

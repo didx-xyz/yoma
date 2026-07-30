@@ -22,6 +22,10 @@ import {
 } from "~/api/models/actionLinks";
 import type { SelectOption } from "~/api/models/lookups";
 import { getLinkById } from "~/api/services/actionLinks";
+import {
+  BTN_DIALOG_CLOSE,
+  BTN_SECONDARY,
+} from "~/components/Common/buttonStyles";
 import CustomModal from "~/components/Common/CustomModal";
 import LinkAdminFilterBadges from "~/components/Links/LinkAdminFilterBadges";
 import ListPageSearchToolbar from "~/components/Common/ListPage/ListPageSearchToolbar";
@@ -369,7 +373,7 @@ const Links: NextPageWithLayout<{
         isOpen={filterFullWindowVisible}
         shouldCloseOnOverlayClick={true}
         onRequestClose={onCloseFilter}
-        className={`md:max-h-[300px] md:w-[400px]`}
+        className={`md:max-h-[400px] md:w-[500px]`}
       >
         {lookups_organisations && (
           <div className="flex h-full flex-col gap-2 overflow-y-auto">
@@ -405,13 +409,14 @@ const Links: NextPageWithLayout<{
             <h1 className="grow"></h1>
             <button
               type="button"
-              className="bg-theme btn rounded-full border-0 p-3 text-white brightness-75"
+              className={BTN_DIALOG_CLOSE}
+              aria-label="Close"
               onClick={() => {
                 setShowQRCode(false);
                 setQRCodeImageData(null);
               }}
             >
-              <IoMdClose className="h-6 w-6"></IoMdClose>
+              <IoMdClose className="h-5 w-5" />
             </button>
           </div>
           {/* MAIN CONTENT */}
@@ -436,7 +441,7 @@ const Links: NextPageWithLayout<{
 
             <button
               type="button"
-              className="btn border-purple text-purple mt-10 rounded-full bg-white normal-case md:w-[150px]"
+              className={`${BTN_SECONDARY} mt-10 w-64`}
               onClick={() => {
                 setShowQRCode(false);
                 setQRCodeImageData(null);
