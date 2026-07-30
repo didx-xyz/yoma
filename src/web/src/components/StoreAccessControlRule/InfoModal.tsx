@@ -1,8 +1,15 @@
 import Image from "next/image";
-import { IoMdClose } from "react-icons/io";
+import { IoMdCheckmark } from "react-icons/io";
+import { IoInformationCircleOutline } from "react-icons/io5";
 import iconPassport from "../../../public/images/passport.webp";
-import { BTN_DIALOG_CLOSE, BTN_SECONDARY } from "../Common/buttonStyles";
+import { BTN_PRIMARY } from "../Common/buttonStyles";
 import CustomModal from "../Common/CustomModal";
+import {
+  MODAL_ACTION_WIDTH,
+  ModalActions,
+  ModalBody,
+  ModalHeader,
+} from "../Common/ModalChrome";
 
 export const InfoModal = ({
   isOpen,
@@ -19,20 +26,14 @@ export const InfoModal = ({
         onRequestClose={onClose}
         className={`md:max-h-[700px] md:max-w-[600px]`}
       >
-        <div className="flex h-full flex-col gap-2 overflow-y-auto pb-12">
-          <div className="flex flex-row p-4">
-            <h1 className="grow"></h1>
-            <button
-              type="button"
-              className={BTN_DIALOG_CLOSE}
-              aria-label="Close"
-              onClick={onClose}
-            >
-              <IoMdClose className="h-5 w-5" />
-            </button>
-          </div>
-          <div className="flex flex-col items-center justify-center gap-4 p-4 md:p-0">
-            <div className="border-green-dark bg-purple -mt-8 flex h-16 w-16 items-center justify-center rounded-full shadow-lg">
+        <div className="flex h-full flex-col overflow-y-auto">
+          <ModalHeader
+            title="How Store Access Rules Work"
+            icon={<IoInformationCircleOutline className="h-5 w-5" />}
+            onClose={onClose}
+          />
+          <ModalBody className="bg-white">
+            <div className="border-green-dark bg-purple flex h-16 w-16 items-center justify-center rounded-full shadow-lg">
               <Image
                 src={iconPassport}
                 alt="Icon Zlto"
@@ -42,7 +43,6 @@ export const InfoModal = ({
                 priority={true}
               />
             </div>
-            <h3>How Store Access Rules Work</h3>
             <p className="bg-gray-light rounded-lg p-2 text-center md:w-[450px] md:p-4">
               The access to stores and specific items within a store is
               controlled by a set of rules. These rules determine who can access
@@ -100,17 +100,18 @@ export const InfoModal = ({
                 the rules defined for each store and item category.
               </p>
             </div>
+          </ModalBody>
 
-            <div className="mt-4 flex w-full grow justify-center gap-4">
-              <button
-                type="button"
-                className={`${BTN_SECONDARY} w-64`}
-                onClick={onClose}
-              >
-                Got it
-              </button>
-            </div>
-          </div>
+          <ModalActions>
+            <button
+              type="button"
+              className={`${BTN_PRIMARY} ${MODAL_ACTION_WIDTH}`}
+              onClick={onClose}
+            >
+              <IoMdCheckmark className="h-5 w-5" />
+              Got it
+            </button>
+          </ModalActions>
         </div>
       </CustomModal>
     </>

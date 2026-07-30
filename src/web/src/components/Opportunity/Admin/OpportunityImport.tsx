@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { FaUpload } from "react-icons/fa";
 import { FcDocument } from "react-icons/fc";
-import { IoMdClose } from "react-icons/io";
+import { IoMdCheckmark, IoMdClose, IoMdRefresh } from "react-icons/io";
 import { toast } from "react-toastify";
 import z from "zod";
 import { CSVImportResult } from "~/api/models/opportunity";
@@ -17,12 +17,13 @@ import {
   MAX_FILE_SIZE_LABEL,
 } from "~/lib/constants";
 import { toCSVResult } from "~/lib/csv-import-helper";
-import {
-  BTN_DIALOG_CLOSE,
-  BTN_PRIMARY,
-  BTN_SECONDARY,
-} from "../../Common/buttonStyles";
+import { BTN_PRIMARY, BTN_SECONDARY } from "../../Common/buttonStyles";
 import { CSVImportResults } from "../../Common/CSVImportResults";
+import {
+  MODAL_ACTION_WIDTH,
+  ModalActions,
+  ModalHeader,
+} from "../../Common/ModalChrome";
 import FormMessage, { FormMessageType } from "../../Common/FormMessage";
 import { Loading } from "../../Status/Loading";
 import { FileUpload } from "../FileUpload";
@@ -170,30 +171,17 @@ export const OpportunityImport: React.FC<InputProps> = ({
         onSubmit={handleSubmit(onSubmit)}
       >
         <div className="flex flex-col gap-2">
-          <div className="bg-theme flex flex-row p-4 shadow-lg">
-            <h1 className="grow"></h1>
-            <button
-              type="button"
-              className={BTN_DIALOG_CLOSE}
-              onClick={onClose}
-            >
-              <IoMdClose className="h-6 w-6"></IoMdClose>
-            </button>
-          </div>
+          <ModalHeader
+            title="Import Opportunities"
+            icon={<FaUpload className="h-5 w-5" />}
+            onClose={onClose}
+          />
           <div className="flex flex-col">
-            <div className="flex flex-col items-center justify-center gap-4">
-              <div className="border-green-dark -mt-11 mb-4 flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-full bg-white p-1 shadow-lg">
-                <FaUpload className="text-yellow h-8 w-8" />
-              </div>
-            </div>
-
             <div
               className="flex w-full flex-col items-center justify-center gap-2 px-4"
               style={{ animationDelay: "0.4s" }}
             >
               <div className="mb-4 flex flex-col items-center gap-1 text-center">
-                <h3>Import Opportunities</h3>
-
                 <div className="text-gray-dark tracking-wide">
                   Upload a CSV file to import opportunities for your
                   organisation.
@@ -403,29 +391,32 @@ export const OpportunityImport: React.FC<InputProps> = ({
                 </div>
               )}
 
-              <div className="mt-4 mb-10 flex w-full grow gap-4">
+              <ModalActions>
                 <button
                   type="button"
-                  className={`${BTN_SECONDARY} w-full shrink`}
+                  className={`${BTN_SECONDARY} ${MODAL_ACTION_WIDTH}`}
                   onClick={onClose}
                 >
+                  <IoMdClose className="h-5 w-5" />
                   Close
                 </button>
                 {!importSuccess && (
                   <>
                     <button
                       type="button"
-                      className={`${BTN_PRIMARY} w-full shrink`}
+                      className={`${BTN_PRIMARY} ${MODAL_ACTION_WIDTH}`}
                       onClick={() => handleSubmit(onValidate)()}
                       disabled={isLoading}
                     >
+                      <IoMdCheckmark className="h-5 w-5" />
                       Validate
                     </button>
                     <button
                       type="submit"
-                      className={`${BTN_PRIMARY} w-full shrink`}
+                      className={`${BTN_PRIMARY} ${MODAL_ACTION_WIDTH}`}
                       disabled={isLoading}
                     >
+                      <FaUpload className="h-4 w-4" />
                       Submit
                     </button>
                   </>
@@ -433,7 +424,7 @@ export const OpportunityImport: React.FC<InputProps> = ({
                 {importSuccess && (
                   <button
                     type="button"
-                    className={`${BTN_PRIMARY} w-full shrink`}
+                    className={`${BTN_PRIMARY} ${MODAL_ACTION_WIDTH}`}
                     onClick={() => {
                       setImportSuccess(false);
                       setResult(null);
@@ -441,10 +432,11 @@ export const OpportunityImport: React.FC<InputProps> = ({
                     }}
                     disabled={isLoading}
                   >
+                    <IoMdRefresh className="h-5 w-5" />
                     Start Over
                   </button>
                 )}
-              </div>
+              </ModalActions>
             </div>
           </div>
         </div>

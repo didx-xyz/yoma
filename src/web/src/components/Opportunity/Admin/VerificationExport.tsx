@@ -5,11 +5,13 @@ import { IoMdClose, IoMdDownload, IoMdMail } from "react-icons/io";
 import { toast } from "react-toastify";
 import type { MyOpportunitySearchFilterAdmin } from "~/api/models/myOpportunity";
 import { getMyOpportunitiesExportToCSV } from "~/api/services/myOpportunities";
-import {
-  BTN_DIALOG_CLOSE,
-  BTN_SECONDARY,
-} from "~/components/Common/buttonStyles";
+import { BTN_PRIMARY, BTN_SECONDARY } from "~/components/Common/buttonStyles";
 import FormMessage, { FormMessageType } from "~/components/Common/FormMessage";
+import {
+  MODAL_ACTION_WIDTH,
+  ModalActions,
+  ModalHeader,
+} from "~/components/Common/ModalChrome";
 import { PAGE_SIZE_MAXIMUM } from "~/lib/constants";
 
 interface VerificationExportDialogProps {
@@ -94,32 +96,19 @@ const VerificationExport: React.FC<VerificationExportDialogProps> = ({
   return (
     <div className={`flex flex-col gap-2 ${className}`}>
       {/* Header */}
-      <div className="bg-theme flex flex-row p-4 shadow-lg">
-        <h1 className="grow"></h1>
-        <button
-          type="button"
-          className={BTN_DIALOG_CLOSE}
-          aria-label="Close"
-          onClick={onClose}
-        >
-          <IoMdClose className="h-5 w-5" />
-        </button>
-      </div>
+      <ModalHeader
+        title="Export Submissions"
+        icon={<FaDownload className="h-5 w-5" />}
+        onClose={onClose}
+      />
 
       <div className="flex flex-col items-center justify-center gap-4">
-        {/* Icon */}
-        <div className="border-green-dark -mt-11 flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-full bg-white shadow-lg">
-          <FaDownload className="text-yellow h-8 w-8" />
-        </div>
-
         <div
           className="w-full items-center justify-center"
           style={{ animationDelay: "0.4s" }}
         >
-          {/* Title & Description */}
+          {/* Description */}
           <div className="mb-4 flex flex-col items-center gap-1 text-center">
-            <h3>Export Submissions</h3>
-
             <div className="text-gray-dark max-w-md tracking-wide">
               {(totalCount ?? 0) === 0 && (
                 <>
@@ -174,7 +163,7 @@ const VerificationExport: React.FC<VerificationExportDialogProps> = ({
 
                   <button
                     type="button"
-                    className="bg-theme btn w-64 text-white normal-case hover:brightness-110 disabled:border-0 disabled:brightness-90"
+                    className={`${BTN_PRIMARY} w-64`}
                     onClick={handleDownload}
                     disabled={isLoadingDownload || isLoadingEmail}
                   >
@@ -213,7 +202,7 @@ const VerificationExport: React.FC<VerificationExportDialogProps> = ({
 
                   <button
                     type="button"
-                    className="bg-theme btn w-64 text-white normal-case hover:brightness-110 disabled:border-0 disabled:brightness-90"
+                    className={`${BTN_PRIMARY} w-64`}
                     onClick={handleEmail}
                     disabled={isLoadingDownload || isLoadingEmail}
                   >
@@ -237,19 +226,20 @@ const VerificationExport: React.FC<VerificationExportDialogProps> = ({
           )}
 
           {/* Cancel Button */}
-          <div className="my-4 flex w-full grow items-center justify-center gap-4">
+          <ModalActions>
             <button
               type="button"
-              className={`${BTN_SECONDARY} w-64 shrink`}
+              className={`${BTN_SECONDARY} ${MODAL_ACTION_WIDTH}`}
               onClick={() => {
                 onClose();
                 setIsLoadingDownload(false);
                 setIsLoadingEmail(false);
               }}
             >
+              <IoMdClose className="h-5 w-5" />
               Cancel
             </button>
-          </div>
+          </ModalActions>
         </div>
       </div>
     </div>

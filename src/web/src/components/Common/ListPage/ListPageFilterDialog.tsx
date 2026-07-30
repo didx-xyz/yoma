@@ -1,10 +1,11 @@
 import type { FormEventHandler, ReactNode } from "react";
-import { IoMdClose } from "react-icons/io";
+import { IoMdClose, IoMdOptions, IoMdSearch } from "react-icons/io";
+import { BTN_PRIMARY, BTN_SECONDARY } from "~/components/Common/buttonStyles";
 import {
-  BTN_DIALOG_CLOSE,
-  BTN_PRIMARY,
-  BTN_SECONDARY,
-} from "~/components/Common/buttonStyles";
+  MODAL_ACTION_WIDTH,
+  ModalActions,
+  ModalHeader,
+} from "~/components/Common/ModalChrome";
 
 /**
  * Shell for the filter popup shared by the admin list pages: a "Filters" header with a
@@ -80,17 +81,11 @@ export const ListPageFilterDialog: React.FC<{
   additional?: ReactNode;
 }> = ({ onSubmit, onCancel, hiddenInputs, children, additional }) => (
   <form onSubmit={onSubmit} className="flex flex-col">
-    <div className="flex flex-row items-center px-4 py-3">
-      <h1 className="my-auto grow text-lg font-bold">Filters</h1>
-      <button
-        type="button"
-        className={BTN_DIALOG_CLOSE}
-        onClick={onCancel}
-        aria-label="Close"
-      >
-        <IoMdClose className="h-5 w-5" />
-      </button>
-    </div>
+    <ModalHeader
+      title="Filters"
+      icon={<IoMdOptions className="h-5 w-5" />}
+      onClose={onCancel}
+    />
 
     {hiddenInputs}
 
@@ -109,18 +104,20 @@ export const ListPageFilterDialog: React.FC<{
     </div>
 
     {/* BUTTONS */}
-    <div className="flex flex-row items-center justify-center gap-3 px-4 py-4">
+    <ModalActions>
       <button
         type="button"
-        className={`${BTN_SECONDARY} w-28`}
+        className={`${BTN_SECONDARY} ${MODAL_ACTION_WIDTH}`}
         onClick={onCancel}
       >
+        <IoMdClose className="h-5 w-5" />
         Close
       </button>
-      <button type="submit" className={`${BTN_PRIMARY} w-28`}>
+      <button type="submit" className={`${BTN_PRIMARY} ${MODAL_ACTION_WIDTH}`}>
+        <IoMdSearch className="h-5 w-5" />
         Apply
       </button>
-    </div>
+    </ModalActions>
   </form>
 );
 

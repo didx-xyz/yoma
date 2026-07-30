@@ -487,7 +487,7 @@ const Stores: NextPageWithLayout<{
         isOpen={filterFullWindowVisible}
         shouldCloseOnOverlayClick={true}
         onRequestClose={onCloseFilter}
-        className={`md:max-h-[400px] md:w-[500px]`}
+        className={`md:max-h-[400px] md:w-[600px]`}
       >
         {lookups_organisations && (
           <div className="flex h-full flex-col gap-2 overflow-y-auto">

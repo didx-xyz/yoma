@@ -33,11 +33,14 @@ import {
 } from "~/api/models/actionLinks";
 import type { SelectOption } from "~/api/models/lookups";
 import { getLinkById } from "~/api/services/actionLinks";
-import {
-  BTN_DIALOG_CLOSE,
-  BTN_SECONDARY,
-} from "~/components/Common/buttonStyles";
+import { BTN_SECONDARY } from "~/components/Common/buttonStyles";
 import CustomModal from "~/components/Common/CustomModal";
+import {
+  MODAL_ACTION_WIDTH,
+  ModalActions,
+  ModalBody,
+  ModalHeader,
+} from "~/components/Common/ModalChrome";
 import DropdownMenu from "~/components/Common/DropdownMenu";
 import {
   ListPagePagination,
@@ -324,6 +327,11 @@ const Links: NextPageWithLayout<{
     setFilterFullWindowVisible(false);
   }, []);
 
+  const onCloseQRCode = useCallback(() => {
+    setShowQRCode(false);
+    setQRCodeImageData(null);
+  }, []);
+
   const onSubmitFilter = useCallback(
     (filter: LinkSearchFilter) => {
       setFilterFullWindowVisible(false);
@@ -382,7 +390,7 @@ const Links: NextPageWithLayout<{
         isOpen={filterFullWindowVisible}
         shouldCloseOnOverlayClick={true}
         onRequestClose={onCloseFilter}
-        className={`md:max-h-[300px] md:w-[500px]`}
+        className={`md:max-h-[300px] md:w-[600px]`}
       >
         <div className="flex h-full flex-col gap-2 overflow-y-auto">
           <LinkAdminFilterVertical
@@ -401,36 +409,17 @@ const Links: NextPageWithLayout<{
       <CustomModal
         isOpen={showQRCode}
         shouldCloseOnOverlayClick={false}
-        onRequestClose={() => {
-          setShowQRCode(false);
-          setQRCodeImageData(null);
-        }}
+        onRequestClose={onCloseQRCode}
         className={`md:max-h-[650px] md:w-[600px]`}
       >
-        <div className="flex h-full flex-col gap-2 overflow-y-auto">
-          {/* HEADER WITH CLOSE BUTTON */}
-          <div className="bg-theme flex flex-row p-4 shadow-lg">
-            <h1 className="grow"></h1>
-            <button
-              type="button"
-              className={BTN_DIALOG_CLOSE}
-              aria-label="Close"
-              onClick={() => {
-                setShowQRCode(false);
-                setQRCodeImageData(null);
-              }}
-            >
-              <IoMdClose className="h-5 w-5" />
-            </button>
-          </div>
+        <div className="flex h-full flex-col overflow-y-auto">
+          <ModalHeader
+            title="QR code"
+            icon={<IoShareSocialOutline className="h-5 w-5" />}
+            onClose={onCloseQRCode}
+          />
 
-          {/* MAIN CONTENT */}
-          <div className="flex flex-col items-center justify-center gap-4 p-8">
-            <div className="border-green-dark -mt-16 flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-lg">
-              <IoShareSocialOutline className="h-7 w-7" />
-            </div>
-
-            {/* QR CODE */}
+          <ModalBody>
             {showQRCode && qrCodeImageData && (
               <>
                 <h5>Scan the QR Code with your device&apos;s camera</h5>
@@ -443,18 +432,18 @@ const Links: NextPageWithLayout<{
                 />
               </>
             )}
+          </ModalBody>
 
+          <ModalActions>
             <button
               type="button"
-              className={`${BTN_SECONDARY} mt-10 w-64`}
-              onClick={() => {
-                setShowQRCode(false);
-                setQRCodeImageData(null);
-              }}
+              className={`${BTN_SECONDARY} ${MODAL_ACTION_WIDTH}`}
+              onClick={onCloseQRCode}
             >
+              <IoMdClose className="h-5 w-5" />
               Close
             </button>
-          </div>
+          </ModalActions>
         </div>
       </CustomModal>
 

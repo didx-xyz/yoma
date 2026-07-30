@@ -16,8 +16,10 @@ export const BTN_PRIMARY =
   "btn btn-sm bg-theme border-theme min-w-28 rounded-full px-6 normal-case brightness-[1.12] hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-60";
 
 /** Outlined, theme-coloured secondary action (Close, Cancel…). */
+// export const BTN_SECONDARY =
+//   "btn btn-sm border-theme text-theme min-w-28 rounded-full border bg-white px-6 normal-case hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-60";
 export const BTN_SECONDARY =
-  "btn btn-sm border-theme text-theme min-w-28 rounded-full border bg-white px-6 normal-case hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-60";
+  "btn btn-sm border text-gray-dark min-w-28 rounded-full border bg-gray-light px-6 normal-case hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-60";
 
 /**
  * Outlined destructive action (Decline, Reject…). Same geometry as BTN_SECONDARY so it lines
@@ -28,5 +30,8 @@ export const BTN_DANGER =
   "btn btn-sm min-w-28 rounded-full border border-red-500 bg-white px-6 text-red-500 normal-case hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-60";
 
 /** Circular icon button that dismisses a dialog (the ✕ in the corner). */
+// export const BTN_DIALOG_CLOSE =
+//   "btn btn-sm btn-circle text-gray-dark hover:bg-gray-light border-none bg-transparent";
+
 export const BTN_DIALOG_CLOSE =
-  "btn btn-sm btn-circle text-gray-dark hover:bg-gray-light border-none bg-transparent";
+  "btn btn-sm btn-circle text-gray-dark hover:bg-gray-light border bg-transparent";

@@ -23,7 +23,10 @@ import {
   IoMdClose,
   IoMdFlame,
 } from "react-icons/io";
-import { IoInformationCircleOutline } from "react-icons/io5";
+import {
+  IoInformationCircleOutline,
+  IoCheckmarkCircleOutline,
+} from "react-icons/io5";
 import Moment from "react-moment";
 import { toast } from "react-toastify";
 import { type SelectOption } from "~/api/models/lookups";
@@ -40,11 +43,15 @@ import {
 } from "~/api/services/myOpportunities";
 import {
   BTN_DANGER,
-  BTN_DIALOG_CLOSE,
   BTN_PRIMARY,
   BTN_SECONDARY,
 } from "~/components/Common/buttonStyles";
 import CustomModal from "~/components/Common/CustomModal";
+import {
+  MODAL_ACTION_WIDTH,
+  ModalActions,
+  ModalHeader,
+} from "~/components/Common/ModalChrome";
 import DropdownMenu from "~/components/Common/DropdownMenu";
 import FormMessage, { FormMessageType } from "~/components/Common/FormMessage";
 import ListPageFilterBadges from "~/components/Common/ListPage/ListPageFilterBadges";
@@ -573,7 +580,7 @@ const OpportunityVerifications: NextPageWithLayout<{
         isOpen={filterFullWindowVisible}
         shouldCloseOnOverlayClick={true}
         onRequestClose={onCloseFilter}
-        className={`md:max-h-[300px] md:w-[500px]`}
+        className={`md:max-h-[300px] md:w-[600px]`}
       >
         <div className="flex h-full flex-col gap-2 overflow-y-auto">
           <VerificationAdminFilterVertical
@@ -595,20 +602,13 @@ const OpportunityVerifications: NextPageWithLayout<{
         className={`md:max-h-[620px] md:w-[800px]`}
       >
         <div className="flex h-full flex-col space-y-2">
-          <div className="bg-theme flex flex-row items-center p-4 shadow-lg">
-            <h4 className="grow pl-2 font-semibold text-white">
-              {tempSelectedRows?.length} Participant
-              {(selectedRows?.length ?? 0) > 1 ? "s" : ""}
-            </h4>
-            <button
-              type="button"
-              className={BTN_DIALOG_CLOSE}
-              aria-label="Close"
-              onClick={onCloseVerificationModal}
-            >
-              <IoMdClose className="h-5 w-5" />
-            </button>
-          </div>
+          <ModalHeader
+            title={`${tempSelectedRows?.length ?? 0} Participant${
+              (tempSelectedRows?.length ?? 0) > 1 ? "s" : ""
+            }`}
+            icon={<IoCheckmarkCircleOutline className="h-5 w-5" />}
+            onClose={onCloseVerificationModal}
+          />
 
           <div className="bg-gray-light flex grow flex-col gap-3 p-4 pt-4">
             <div className="bg-gray-lightx flex grow flex-col gap-3">
@@ -633,10 +633,10 @@ const OpportunityVerifications: NextPageWithLayout<{
           </div>
 
           {/* BUTTONS */}
-          <div className="flex flex-col gap-2 px-6 py-4 pt-2 sm:flex-row sm:place-items-center sm:justify-center">
+          <ModalActions>
             <button
               type="button"
-              className={`${BTN_SECONDARY} w-full shrink sm:w-48 md:w-64`}
+              className={`${BTN_SECONDARY} ${MODAL_ACTION_WIDTH}`}
               onClick={onCloseVerificationModal}
             >
               <IoMdClose className="h-5 w-5" />
@@ -646,7 +646,7 @@ const OpportunityVerifications: NextPageWithLayout<{
             {(bulkActionApprove == null || !bulkActionApprove) && (
               <button
                 type="button"
-                className={`${BTN_DANGER} w-full shrink sm:w-48 md:w-64`}
+                className={`${BTN_DANGER} ${MODAL_ACTION_WIDTH}`}
                 onClick={() => onVerify(false)}
               >
                 <FaThumbsDown className="h-4 w-4" />
@@ -657,14 +657,14 @@ const OpportunityVerifications: NextPageWithLayout<{
             {(bulkActionApprove == null || bulkActionApprove) && (
               <button
                 type="button"
-                className={`${BTN_PRIMARY} w-full shrink sm:w-48 md:w-64`}
+                className={`${BTN_PRIMARY} ${MODAL_ACTION_WIDTH}`}
                 onClick={() => onVerify(true)}
               >
                 <FaThumbsUp className="h-4 w-4" />
                 Approve
               </button>
             )}
-          </div>
+          </ModalActions>
         </div>
       </CustomModal>
 
@@ -676,20 +676,13 @@ const OpportunityVerifications: NextPageWithLayout<{
         className={`md:max-h-[620px] md:w-[800px]`}
       >
         <div className="flex h-full flex-col space-y-2 overflow-y-auto">
-          <div className="bg-theme flex flex-row items-center p-4 shadow-lg">
-            <h4 className="grow pl-2 font-semibold text-white">
-              {verificationResponse?.items?.length} Participant
-              {(verificationResponse?.items?.length ?? 0) > 1 ? "s" : ""}
-            </h4>
-            <button
-              type="button"
-              className={BTN_DIALOG_CLOSE}
-              aria-label="Close"
-              onClick={onCloseVerificationModal}
-            >
-              <IoMdClose className="h-5 w-5" />
-            </button>
-          </div>
+          <ModalHeader
+            title={`${verificationResponse?.items?.length ?? 0} Participant${
+              (verificationResponse?.items?.length ?? 0) > 1 ? "s" : ""
+            }`}
+            icon={<IoCheckmarkCircleOutline className="h-5 w-5" />}
+            onClose={onCloseVerificationResultModal}
+          />
           <div className="bg-gray flex grow flex-col">
             <div className="bg-gray-light flex grow flex-col px-6 py-8">
               <div className="flex h-full w-full flex-col gap-4 rounded-lg bg-white p-4 text-center">
@@ -777,15 +770,16 @@ const OpportunityVerifications: NextPageWithLayout<{
           </div>
 
           {/* BUTTON */}
-          <div className="flex flex-row place-items-center justify-center px-6 py-4 pt-2">
+          <ModalActions>
             <button
               type="button"
-              className={`${BTN_SECONDARY} w-64`}
+              className={`${BTN_SECONDARY} ${MODAL_ACTION_WIDTH}`}
               onClick={onCloseVerificationResultModal}
             >
+              <IoMdClose className="h-5 w-5" />
               Close
             </button>
-          </div>
+          </ModalActions>
         </div>
       </CustomModal>
 
