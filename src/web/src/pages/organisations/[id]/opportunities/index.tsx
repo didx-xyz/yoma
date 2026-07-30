@@ -17,7 +17,7 @@ import {
   type ReactElement,
 } from "react";
 import { FaDownload, FaPlusCircle, FaRocket, FaUpload } from "react-icons/fa";
-import { IoIosAdd, IoIosWarning } from "react-icons/io";
+import { IoIosAdd, IoIosSettings, IoIosWarning } from "react-icons/io";
 import {
   Status,
   type OpportunitySearchFilterAdmin,
@@ -29,7 +29,9 @@ import NoRowsMessage from "~/components/NoRowsMessage";
 import OpportunityExport from "~/components/Opportunity/Admin/OpportunityExport";
 import { OpportunityImport } from "~/components/Opportunity/Admin/OpportunityImport";
 import OpportunityAdminFilterBadges from "~/components/Opportunity/Admin/OpportunityAdminFilterBadges";
-import OpportunityAdminSearchToolbar from "~/components/Opportunity/Admin/OpportunityAdminSearchToolbar";
+import OpportunityAdminSearchToolbar, {
+  OPPORTUNITY_ADMIN_TOOLBAR_BUTTON_CLASSES,
+} from "~/components/Opportunity/Admin/OpportunityAdminSearchToolbar";
 import OpportunityAdminStatusTabs from "~/components/Opportunity/Admin/OpportunityAdminStatusTabs";
 import {
   filterToQueryString,
@@ -344,12 +346,6 @@ const Opportunities: NextPageWithLayout<{
     [redirectWithSearchFilterParams, searchFilter.statuses],
   );
 
-  const onClearFilter = useCallback(() => {
-    setFilterFullWindowVisible(false);
-    void router.push(`/organisations/${id}/opportunities`, undefined, {
-      scroll: false,
-    });
-  }, [id, router]);
   //#endregion Event Handlers
 
   if (resolvedError) {
@@ -376,7 +372,7 @@ const Opportunities: NextPageWithLayout<{
         onRequestClose={() => {
           setFilterFullWindowVisible(false);
         }}
-        className={`md:max-h-[600px] md:w-[800px]`}
+        className={`md:max-h-[500px] md:w-[600px]`}
       >
         {lookups_types && lookups_countries && lookups_languages && (
           <div className="flex h-full flex-col gap-2 overflow-y-auto">
@@ -391,11 +387,8 @@ const Opportunities: NextPageWithLayout<{
               lookups_publishedStates={[]}
               lookups_statuses={[]} // status is owned by the tabs
               lookups_customFieldDefinitions={lookups_customFieldDefinitions}
-              submitButtonText="Apply Filters"
               onCancel={() => setFilterFullWindowVisible(false)}
               onSubmit={onSubmitFilter}
-              onClear={onClearFilter}
-              clearButtonText="Clear All Filters"
               filterOptions={OPPORTUNITY_ADMIN_FILTER_OPTIONS}
             />
           </div>
@@ -469,6 +462,10 @@ const Opportunities: NextPageWithLayout<{
           >
             <DropdownMenu
               label="Actions"
+              triggerIcon={<IoIosSettings className="h-5 w-5" />}
+              // sized & coloured to match the Filters button next to it
+              className="w-full md:w-40"
+              buttonClassName={OPPORTUNITY_ADMIN_TOOLBAR_BUTTON_CLASSES}
               items={[
                 {
                   label: "Create Opportunity",

@@ -5,6 +5,11 @@ import { IoMdClose, IoMdDownload, IoMdMail } from "react-icons/io";
 import { toast } from "react-toastify";
 import type { OpportunitySearchFilterAdmin } from "~/api/models/opportunity";
 import { getOpportunitiesAdminExportToCSV } from "~/api/services/opportunities";
+import {
+  BTN_DIALOG_CLOSE,
+  BTN_PRIMARY,
+  BTN_SECONDARY,
+} from "~/components/Common/buttonStyles";
 import FormMessage, { FormMessageType } from "~/components/Common/FormMessage";
 import { PAGE_SIZE_MAXIMUM } from "~/lib/constants";
 
@@ -92,11 +97,7 @@ const OpportunityExport: React.FC<OpportunityExportDialogProps> = ({
       {/* Header */}
       <div className="bg-theme flex flex-row p-4 shadow-lg">
         <h1 className="grow"></h1>
-        <button
-          type="button"
-          className="btn btn-circle text-gray-dark hover:bg-gray"
-          onClick={onClose}
-        >
+        <button type="button" className={BTN_DIALOG_CLOSE} onClick={onClose}>
           <IoMdClose className="h-6 w-6"></IoMdClose>
         </button>
       </div>
@@ -169,7 +170,7 @@ const OpportunityExport: React.FC<OpportunityExportDialogProps> = ({
 
                   <button
                     type="button"
-                    className="bg-theme btn w-64 text-white normal-case hover:brightness-110 disabled:border-0 disabled:brightness-90"
+                    className={`${BTN_PRIMARY} w-64`}
                     onClick={handleDownload}
                     disabled={isLoadingDownload || isLoadingEmail}
                   >
@@ -208,7 +209,7 @@ const OpportunityExport: React.FC<OpportunityExportDialogProps> = ({
 
                   <button
                     type="button"
-                    className="bg-theme btn w-64 text-white normal-case hover:brightness-110 disabled:border-0 disabled:brightness-90"
+                    className={`${BTN_PRIMARY} w-64`}
                     onClick={handleEmail}
                     disabled={isLoadingDownload || isLoadingEmail}
                   >
@@ -235,7 +236,7 @@ const OpportunityExport: React.FC<OpportunityExportDialogProps> = ({
           <div className="my-4 flex w-full grow items-center justify-center gap-4">
             <button
               type="button"
-              className="btn border-green text-green btn-outline hover:bg-green w-64 shrink rounded-full bg-white normal-case hover:border-0 hover:text-white"
+              className={`${BTN_SECONDARY} w-64 shrink`}
               onClick={() => {
                 onClose();
                 setIsLoadingDownload(false);

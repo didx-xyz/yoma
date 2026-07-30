@@ -3,6 +3,16 @@ import { IoMdOptions } from "react-icons/io";
 import { SearchInput } from "~/components/SearchInput";
 
 /**
+ * Shared styling for the toolbar buttons (Filters, and the page's Actions dropdown), so
+ * the two always match in size and colour. Colour is theme-driven: blue on the admin
+ * page, green on the org-admin page.
+ * NB: `!rounded-lg` overrides the dropdown trigger's own `rounded-full`, which equal
+ * specificity would otherwise decide by stylesheet order.
+ */
+export const OPPORTUNITY_ADMIN_TOOLBAR_BUTTON_CLASSES =
+  "bg-theme btn btn-sm !h-[38px] w-full items-center justify-center gap-1 !rounded-lg border-none tracking-wide text-white shadow-md brightness-[1.12] hover:brightness-95 md:w-40";
+
+/**
  * Search row shared by the admin (all organisations) and org-admin opportunity search
  * pages: search input + "open filters" button, with an optional actions slot (right).
  */
@@ -28,7 +38,7 @@ export const OpportunityAdminSearchToolbar: React.FC<{
 
         <button
           type="button"
-          className="bg-theme btn btn-sm !h-[38px] w-full items-center justify-center gap-1 rounded-lg border-none tracking-wide text-white shadow-md brightness-[1.12] hover:brightness-95 md:w-40"
+          className={OPPORTUNITY_ADMIN_TOOLBAR_BUTTON_CLASSES}
           onClick={() => openFilter(true)}
           id="btnOpenFilters" // e2e
         >

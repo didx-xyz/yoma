@@ -13,7 +13,7 @@ import {
   type ReactElement,
 } from "react";
 import { FaDownload } from "react-icons/fa";
-import { IoMdPerson } from "react-icons/io";
+import { IoIosSettings, IoMdPerson } from "react-icons/io";
 import {
   Status,
   type OpportunitySearchFilterAdmin,
@@ -35,7 +35,9 @@ import MainLayout from "~/components/Layout/Main";
 import NoRowsMessage from "~/components/NoRowsMessage";
 import OpportunityExport from "~/components/Opportunity/Admin/OpportunityExport";
 import OpportunityAdminFilterBadges from "~/components/Opportunity/Admin/OpportunityAdminFilterBadges";
-import OpportunityAdminSearchToolbar from "~/components/Opportunity/Admin/OpportunityAdminSearchToolbar";
+import OpportunityAdminSearchToolbar, {
+  OPPORTUNITY_ADMIN_TOOLBAR_BUTTON_CLASSES,
+} from "~/components/Opportunity/Admin/OpportunityAdminSearchToolbar";
 import OpportunityAdminStatusTabs from "~/components/Opportunity/Admin/OpportunityAdminStatusTabs";
 import {
   filterToQueryString,
@@ -319,11 +321,6 @@ const OpportunitiesAdmin: NextPageWithLayout<{
     [redirectWithSearchFilterParams, searchFilter.statuses],
   );
 
-  const onClearFilter = useCallback(() => {
-    setFilterFullWindowVisible(false);
-    void router.push("/admin/opportunities", undefined, { scroll: false });
-  }, [router]);
-
   if (error) {
     if (error === 401) return <Unauthenticated />;
     else if (error === 403) return <Unauthorized />;
@@ -345,7 +342,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
         onRequestClose={() => {
           setFilterFullWindowVisible(false);
         }}
-        className={`md:max-h-[600px] md:w-[800px]`}
+        className={`md:max-h-[500px] md:w-[600px]`}
       >
         {lookups_countries && lookups_languages && lookups_organisations && (
           <div className="flex h-full flex-col gap-2 overflow-y-auto">
@@ -360,11 +357,8 @@ const OpportunitiesAdmin: NextPageWithLayout<{
               lookups_publishedStates={[]}
               lookups_statuses={[]} // status is owned by the tabs
               lookups_customFieldDefinitions={lookups_customFieldDefinitions}
-              submitButtonText="Apply Filters"
               onCancel={onCloseFilter}
               onSubmit={onSubmitFilter}
-              onClear={onClearFilter}
-              clearButtonText="Clear All Filters"
               filterOptions={OPPORTUNITY_ADMIN_FILTER_OPTIONS_ALL_ORGS}
             />
           </div>
@@ -414,6 +408,10 @@ const OpportunitiesAdmin: NextPageWithLayout<{
           >
             <DropdownMenu
               label="Actions"
+              triggerIcon={<IoIosSettings className="h-5 w-5" />}
+              // sized & coloured to match the Filters button next to it
+              className="w-full md:w-40"
+              buttonClassName={OPPORTUNITY_ADMIN_TOOLBAR_BUTTON_CLASSES}
               items={[
                 {
                   label: "Export",

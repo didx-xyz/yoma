@@ -900,7 +900,12 @@ const OpportunityVerifications: NextPageWithLayout<{
               </div>
             </div>
 
-            <DropdownMenu label="Actions" items={actionMenuItems} />
+            <DropdownMenu
+              label="Actions"
+              // colour follows the page theme (blue for admin, green for org admin)
+              buttonClassName="bg-theme border-none brightness-[1.12] hover:brightness-95"
+              items={actionMenuItems}
+            />
           </div>
         </div>
 

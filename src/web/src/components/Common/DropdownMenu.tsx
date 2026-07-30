@@ -28,6 +28,12 @@ interface DropdownMenuProps {
   menuClassName?: string;
   title?: string;
   triggerIcon?: ReactNode;
+  /**
+   * Text colour for the menu item icons and for the icon-style trigger (whose icon
+   * inherits it). Defaults to the page theme — blue on admin pages, green on org-admin
+   * pages — which matches the themed trigger button.
+   */
+  colorClassName?: string;
 }
 
 export function DropdownMenu({
@@ -40,6 +46,7 @@ export function DropdownMenu({
   menuClassName,
   title,
   triggerIcon,
+  colorClassName = "text-theme",
 }: DropdownMenuProps) {
   const popoverId = useId().replace(/:/g, "");
   const anchorName = `--dropdown-anchor-${popoverId}`;
@@ -61,12 +68,24 @@ export function DropdownMenu({
     menuRef.current?.hidePopover();
   };
 
+  // layout only — colour comes from the parent via buttonClassName (admin pages are
+  // blue, org-admin pages green), typically by passing the theme-driven `bg-theme`.
+  const TRIGGER_LAYOUT: Record<DropdownMenuDisplayStyle, string> = {
+    [DropdownMenuDisplayStyle.ICON]:
+      "flex cursor-pointer items-center justify-center p-0",
+    [DropdownMenuDisplayStyle.BUTTON]:
+      "flex w-40 flex-row items-center justify-center rounded-full p-1 text-xs whitespace-nowrap hover:cursor-pointer",
+    [DropdownMenuDisplayStyle.DEFAULT]:
+      "btn btn-sm flex-nowrap rounded-full px-4",
+  };
+
+  // icon-style triggers have no fill, so they take the accent colour (the icon inherits
+  // it); filled/outline triggers are coloured by the parent via buttonClassName.
+  const triggerColor =
+    displayStyle === DropdownMenuDisplayStyle.ICON ? colorClassName : "";
+
   const triggerClassName =
-    displayStyle === DropdownMenuDisplayStyle.ICON
-      ? `flex cursor-pointer items-center justify-center p-0 ${buttonClassName ?? ""}`.trim()
-      : displayStyle === DropdownMenuDisplayStyle.BUTTON
-        ? `bg-theme hover:bg-theme disabled:bg-gray-dark flex w-40 flex-row items-center justify-center rounded-full p-1 text-xs whitespace-nowrap text-white brightness-105 hover:cursor-pointer hover:brightness-110 disabled:cursor-not-allowed ${buttonClassName ?? ""}`.trim()
-        : `btn btn-sm border-green bg-white hover:text-white px-4 flex-nowrap rounded-full text-green hover:bg-green ${buttonClassName ?? ""}`.trim();
+    `${TRIGGER_LAYOUT[displayStyle]} ${triggerColor} disabled:cursor-not-allowed disabled:opacity-60 ${buttonClassName ?? ""}`.trim();
 
   return (
     <div className={className}>
@@ -102,7 +121,9 @@ export function DropdownMenu({
                 className="text-base-content hover:bg-base-200 flex items-center gap-3 rounded-xl px-3 py-2 text-xs transition-colors"
               >
                 {item.icon && (
-                  <span className="text-green flex h-5 w-5 items-center justify-center">
+                  <span
+                    className={`${colorClassName} flex h-5 w-5 items-center justify-center`}
+                  >
                     {item.icon}
                   </span>
                 )}
@@ -121,7 +142,9 @@ export function DropdownMenu({
                 className="text-base-content hover:bg-base-200 flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-xs transition-colors disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {item.icon && (
-                  <span className="text-green flex h-5 w-5 items-center justify-center">
+                  <span
+                    className={`${colorClassName} flex h-5 w-5 items-center justify-center`}
+                  >
                     {item.icon}
                   </span>
                 )}
@@ -133,7 +156,9 @@ export function DropdownMenu({
                 className="text-base-content flex cursor-not-allowed items-center gap-3 rounded-xl px-3 py-2 text-xs opacity-50"
               >
                 {item.icon && (
-                  <span className="text-green flex h-5 w-5 items-center justify-center">
+                  <span
+                    className={`${colorClassName} flex h-5 w-5 items-center justify-center`}
+                  >
                     {item.icon}
                   </span>
                 )}
