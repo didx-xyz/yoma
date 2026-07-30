@@ -52,11 +52,10 @@ import {
 import { OpportunityAdminFilterVertical } from "~/components/Opportunity/OpportunityAdminFilterVertical";
 import PullSyncBadge from "~/components/Opportunity/Badges/PullSyncBadge";
 import OpportunityStatus from "~/components/Opportunity/OpportunityStatus";
+import { ListPagePagination } from "~/components/Common/ListPage/ListPageResults";
 import { PageBackground } from "~/components/PageBackground";
-import { PaginationButtons } from "~/components/PaginationButtons";
 import { InternalServerError } from "~/components/Status/InternalServerError";
 import LimitedFunctionalityBadge from "~/components/Status/LimitedFunctionalityBadge";
-import { LoadingInline } from "~/components/Status/LoadingInline";
 import { LoadingSkeleton } from "~/components/Status/LoadingSkeleton";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
@@ -902,29 +901,14 @@ const Opportunities: NextPageWithLayout<{
                 </table>
 
                 {/* PAGINATION */}
-                <div className="mt-2 grid place-items-center justify-center">
-                  <PaginationButtons
-                    currentPage={searchFilter.pageNumber ?? 1}
-                    totalItems={searchResults?.totalCount ?? 0}
-                    pageSize={PAGE_SIZE}
-                    onClick={handlePagerChange}
-                    showPages={false}
-                    showInfo={true}
-                  />
-
-                  {/* fetching the next page: the rows above stay put (dimmed), so this
-                      is the only progress affordance. Fixed height = no layout shift. */}
-                  <div className="flex h-6 items-center">
-                    {isShowingPreviousResults && (
-                      <LoadingInline
-                        classNameSpinner="h-4 w-4 border-purple"
-                        classNameLabel="text-xs text-gray-dark"
-                        className="gap-2"
-                        label="Updating..."
-                      />
-                    )}
-                  </div>
-                </div>
+                <ListPagePagination
+                  currentPage={searchFilter.pageNumber ?? 1}
+                  totalItems={searchResults?.totalCount ?? 0}
+                  pageSize={PAGE_SIZE}
+                  onClick={handlePagerChange}
+                  isShowingPreviousResults={isShowingPreviousResults}
+                  className="mt-2"
+                />
               </div>
             )}
           </>

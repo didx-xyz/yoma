@@ -73,6 +73,7 @@ export const ListPagePagination: React.FC<{
       showPages={showPages}
       showInfo={showInfo}
       showPageSizes={showPageSizes}
+      themed // the list pages are theme-coloured throughout
     />
 
     <div className="flex h-6 items-center">
