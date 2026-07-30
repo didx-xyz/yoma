@@ -1,11 +1,14 @@
-import Link from "next/link";
 import { Status } from "~/api/models/opportunity";
-import CustomSlider from "~/components/Carousel/CustomSlider";
-import { OPPORTUNITY_ADMIN_STATUS_TABS } from "./opportunityAdminFilter";
+import ListPageStatusTabs from "~/components/Common/ListPage/ListPageStatusTabs";
+import {
+  OPPORTUNITY_ADMIN_STATUS_PARAM,
+  OPPORTUNITY_ADMIN_STATUS_TABS,
+} from "./opportunityAdminFilter";
 
 /**
- * Status tab bar shared by the admin (all organisations) and org-admin opportunity
- * search pages. Tabs preserve the other filters by appending to `baseParams`.
+ * Status tab bar for the admin (all organisations) and org-admin opportunity search pages.
+ * A thin wrapper over the shared list-page tab bar that speaks the numeric `Status` enum,
+ * which is what the two pages hold; the querystring carries the enum name.
  */
 export const OpportunityAdminStatusTabs: React.FC<{
   basePath: string;
@@ -15,41 +18,22 @@ export const OpportunityAdminStatusTabs: React.FC<{
   /** count per tab, keyed on the tab's status (`all` for the "All" tab) */
   counts: Partial<Record<Status | "all", number | undefined>>;
 }> = ({ basePath, baseParams, status, counts }) => {
-  const hrefFor = (tabStatus: Status | null) => {
-    const params = new URLSearchParams(baseParams?.toString() ?? "");
-    params.delete("status");
-    params.delete("page"); // paging is meaningless across tabs
-    if (tabStatus !== null) params.append("status", Status[tabStatus]);
-
-    return params.size > 0 ? `${basePath}?${params.toString()}` : basePath;
-  };
+  // the shared component keys counts on the querystring token (the enum name)
+  const countsByName: Record<string, number | undefined> = { all: counts.all };
+  for (const tab of OPPORTUNITY_ADMIN_STATUS_TABS) {
+    if (tab.value === null) continue;
+    countsByName[tab.value] = counts[Status[tab.value as keyof typeof Status]];
+  }
 
   return (
-    <CustomSlider sliderClassName="!gap-6">
-      {OPPORTUNITY_ADMIN_STATUS_TABS.map((tab) => {
-        const count = counts[tab.status ?? "all"];
-        const selected = status === tab.status;
-
-        return (
-          <Link
-            key={`opportunity_status_tab_${tab.label}`}
-            href={hrefFor(tab.status)}
-            scroll={false} // don't yank the viewport when switching tabs
-            role="tab"
-            className={`border-b-4 py-2 whitespace-nowrap text-white ${
-              selected ? "border-orange" : "hover:border-orange hover:text-gray"
-            }`}
-          >
-            {tab.label}
-            {(count ?? 0) > 0 && (
-              <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
-                {count}
-              </div>
-            )}
-          </Link>
-        );
-      })}
-    </CustomSlider>
+    <ListPageStatusTabs
+      basePath={basePath}
+      baseParams={baseParams}
+      statusSpec={OPPORTUNITY_ADMIN_STATUS_PARAM}
+      status={status !== null ? Status[status] : null}
+      counts={countsByName}
+      idPrefix="opportunity"
+    />
   );
 };
 

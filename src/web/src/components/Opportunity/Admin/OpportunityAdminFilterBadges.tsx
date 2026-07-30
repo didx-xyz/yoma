@@ -3,10 +3,10 @@ import type {
   CustomFieldFilter,
   OpportunitySearchFilterAdmin,
 } from "~/api/models/opportunity";
-import FilterBadges from "~/components/FilterBadges";
+import ListPageFilterBadges from "~/components/Common/ListPage/ListPageFilterBadges";
 import { utcToDateInput } from "~/lib/utils";
 import { useCustomFieldFilterLabeler } from "../CustomFieldFilters";
-import { OPPORTUNITY_ADMIN_BADGE_EXCLUDE_KEYS } from "./opportunityAdminFilter";
+import { OPPORTUNITY_ADMIN_FILTER_SPEC } from "./opportunityAdminFilter";
 
 /**
  * Applied-filter badges for the admin opportunity search pages. Values in the display
@@ -30,9 +30,9 @@ export const OpportunityAdminFilterBadges: React.FC<{
   );
 
   return (
-    <FilterBadges
+    <ListPageFilterBadges<OpportunitySearchFilterAdmin>
       searchFilter={searchFilter}
-      excludeKeys={OPPORTUNITY_ADMIN_BADGE_EXCLUDE_KEYS}
+      spec={OPPORTUNITY_ADMIN_FILTER_SPEC}
       className={className}
       resolveValue={(key, value) => {
         if (key === "startDate")
@@ -44,7 +44,7 @@ export const OpportunityAdminFilterBadges: React.FC<{
           return describeCustomFieldFilter(value as CustomFieldFilter);
         return value;
       }}
-      onSubmit={(filter) => onSubmit(filter as OpportunitySearchFilterAdmin)}
+      onSubmit={onSubmit}
     />
   );
 };
