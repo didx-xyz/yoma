@@ -201,196 +201,189 @@ export const VerificationImport: React.FC<InputProps> = ({
       >
         <div className="flex flex-col gap-2">
           <ModalHeader
-            title="Import Submissions"
+            title="Import"
             icon={<FaUpload className="h-5 w-5" />}
             onClose={onClose}
           />
-          <div className="flex flex-col">
-            <div
-              className="flex w-full flex-col items-center justify-center gap-2 px-4"
-              style={{ animationDelay: "0.4s" }}
+          <div className="flex flex-col items-center justify-center gap-4 px-4">
+            {/* Description */}
+            <FormMessage
+              messageType={FormMessageType.Info}
+              classNameLabel="!text-sm"
             >
-              <div className="mb-4 flex flex-col items-center gap-1 text-center">
-                <div className="text-gray-dark tracking-wide">
-                  <p>
-                    Upload a CSV file to import submissions for your
-                    organisation.
-                  </p>
-                </div>
-              </div>
+              Upload a CSV file to import submissions for your organisation.
+            </FormMessage>
 
-              {/* HELP QUESTIONS */}
-              <div className="collapse-arrow border-gray collapse rounded-lg border text-left leading-relaxed">
-                <input type="radio" name="opp-accordion" />
-                <div className="collapse-title font-semibold">
-                  What must the file contain?
+            {/* HELP QUESTIONS */}
+            <div className="collapse-arrow border-gray collapse rounded-lg border text-left leading-relaxed">
+              <input type="radio" name="opp-accordion" />
+              <div className="collapse-title font-semibold">
+                What must the file contain?
+              </div>
+              <div className="collapse-content space-y-4 text-sm">
+                <div>
+                  <p className="font-semibold">Required Properties</p>
+                  <p className="mb-3">
+                    The following properties must be provided for each
+                    opportunity:
+                  </p>
+                  <ul className="ml-5 list-disc text-sm">
+                    <li>Email or Phone Number (at least one required)</li>
+                    <li>
+                      Opportunity External Id (must match existing opportunity)
+                    </li>
+                  </ul>
                 </div>
-                <div className="collapse-content space-y-4 text-sm">
+
+                <div>
+                  <p className="font-semibold">Optional Properties</p>
+                  <p className="mb-3">
+                    These properties can be included if applicable:
+                  </p>
+                  <ul className="ml-5 list-disc text-sm">
+                    <li>FirstName</li>
+                    <li>Surname</li>
+                    <li>Gender (Male, Female, Prefer not to say)</li>
+                    <li>
+                      Country (use ISO CodeAlpha2, e.g. US|GB for United States
+                      and United Kingdom)
+                    </li>
+                  </ul>
+                </div>
+
+                <div className="space-y-4">
                   <div>
-                    <p className="font-semibold">Required Properties</p>
-                    <p className="mb-3">
-                      The following properties must be provided for each
-                      opportunity:
-                    </p>
+                    <p className="text-sm font-semibold">User Creation</p>
                     <ul className="ml-5 list-disc text-sm">
-                      <li>Email or Phone Number (at least one required)</li>
                       <li>
-                        Opportunity External Id (must match existing
-                        opportunity)
+                        If a user does not exist, a new user account will be
+                        created in the database.
+                      </li>
+                      <li>
+                        When the user later registers in the system, the
+                        database account will be automatically linked to their
+                        Keycloak account.
                       </li>
                     </ul>
                   </div>
 
                   <div>
-                    <p className="font-semibold">Optional Properties</p>
-                    <p className="mb-3">
-                      These properties can be included if applicable:
+                    <p className="text-sm font-semibold">
+                      User Profile Updates
                     </p>
                     <ul className="ml-5 list-disc text-sm">
-                      <li>FirstName</li>
-                      <li>Surname</li>
-                      <li>Gender (Male, Female, Prefer not to say)</li>
                       <li>
-                        Country (use ISO CodeAlpha2, e.g. US|GB for United
-                        States and United Kingdom)
+                        If the user already exists but has not registered, the
+                        imported values will update the user&apos;s profile
+                        properties.
+                      </li>
+                      <li>
+                        If the user has already registered, their profile data
+                        will not be updated to reflect the imported values.
                       </li>
                     </ul>
                   </div>
-
-                  <div className="space-y-4">
-                    <div>
-                      <p className="text-sm font-semibold">User Creation</p>
-                      <ul className="ml-5 list-disc text-sm">
-                        <li>
-                          If a user does not exist, a new user account will be
-                          created in the database.
-                        </li>
-                        <li>
-                          When the user later registers in the system, the
-                          database account will be automatically linked to their
-                          Keycloak account.
-                        </li>
-                      </ul>
-                    </div>
-
-                    <div>
-                      <p className="text-sm font-semibold">
-                        User Profile Updates
-                      </p>
-                      <ul className="ml-5 list-disc text-sm">
-                        <li>
-                          If the user already exists but has not registered, the
-                          imported values will update the user&apos;s profile
-                          properties.
-                        </li>
-                        <li>
-                          If the user has already registered, their profile data
-                          will not be updated to reflect the imported values.
-                        </li>
-                      </ul>
-                    </div>
-                  </div>
                 </div>
               </div>
+            </div>
 
-              <div className="bg-base-100x collapse-arrow border-gray collapse rounded-lg border text-left leading-relaxed">
-                <input type="radio" name="opp-accordion" />
-                <div className="collapse-title font-semibold">Sample File</div>
-                <div className="collapse-content text-sm">
-                  <p>
-                    Download a{" "}
-                    <a
-                      href="/docs/MyOpportunityInfoCsvImport_Sample.csv"
-                      target="_blank"
-                      className="text-blue-600 underline"
-                    >
-                      sample import file
-                    </a>{" "}
-                    for reference.
-                  </p>
-                </div>
+            <div className="bg-base-100x collapse-arrow border-gray collapse rounded-lg border text-left leading-relaxed">
+              <input type="radio" name="opp-accordion" />
+              <div className="collapse-title font-semibold">Sample File</div>
+              <div className="collapse-content text-sm">
+                <p>
+                  Download a{" "}
+                  <a
+                    href="/docs/MyOpportunityInfoCsvImport_Sample.csv"
+                    target="_blank"
+                    className="text-blue-600 underline"
+                  >
+                    sample import file
+                  </a>{" "}
+                  for reference.
+                </p>
               </div>
+            </div>
 
-              {/* FILE UPLOAD */}
+            {/* FILE UPLOAD */}
+            {!importSuccess && (
+              <div className="border-gray bg-gray-light flex w-full flex-col rounded-lg border-[1px]">
+                <FileUpload
+                  id="importFileUpload"
+                  files={[]}
+                  fileTypes={[...ACCEPTED_CSV_TYPES].join(",")}
+                  fileTypesLabels={[...ACCEPTED_CSV_TYPES_LABEL].join(",")}
+                  allowMultiple={false}
+                  iconAlt={<FcDocument className="size-10" />}
+                  onUploadComplete={(files) => {
+                    setValue("importFile", files[0]?.file, {
+                      shouldValidate: true,
+                    });
+                    setResult(null); // clear previous results
+                  }}
+                />
+              </div>
+            )}
+
+            {errors.importFile && (
+              <FormMessage messageType={FormMessageType.Warning}>
+                {`${errors.importFile.message}`}
+              </FormMessage>
+            )}
+
+            {/* IMPORT RESPONSE */}
+            {result && (
+              <div ref={resultsRef} className="flex w-full">
+                <CSVImportResults result={result} importType="submissions" />
+              </div>
+            )}
+
+            <ModalActions>
+              <button
+                type="button"
+                className={`${BTN_SECONDARY} ${MODAL_ACTION_WIDTH}`}
+                onClick={onClose}
+              >
+                <IoMdClose className="h-5 w-5" />
+                Close
+              </button>
               {!importSuccess && (
-                <div className="bg-gray-light flex w-full flex-col rounded-lg border-dotted">
-                  <FileUpload
-                    id="importFileUpload"
-                    files={[]}
-                    fileTypes={[...ACCEPTED_CSV_TYPES].join(",")}
-                    fileTypesLabels={[...ACCEPTED_CSV_TYPES_LABEL].join(",")}
-                    allowMultiple={false}
-                    iconAlt={<FcDocument className="size-10" />}
-                    onUploadComplete={(files) => {
-                      setValue("importFile", files[0]?.file, {
-                        shouldValidate: true,
-                      });
-                      setResult(null); // clear previous results
-                    }}
-                  />
-                </div>
-              )}
-
-              {errors.importFile && (
-                <FormMessage messageType={FormMessageType.Warning}>
-                  {`${errors.importFile.message}`}
-                </FormMessage>
-              )}
-
-              {/* IMPORT RESPONSE */}
-              {result && (
-                <div ref={resultsRef} className="flex w-full">
-                  <CSVImportResults result={result} importType="submissions" />
-                </div>
-              )}
-
-              <ModalActions>
-                <button
-                  type="button"
-                  className={`${BTN_SECONDARY} ${MODAL_ACTION_WIDTH}`}
-                  onClick={onClose}
-                >
-                  <IoMdClose className="h-5 w-5" />
-                  Close
-                </button>
-                {!importSuccess && (
-                  <>
-                    <button
-                      type="button"
-                      className={`${BTN_PRIMARY} ${MODAL_ACTION_WIDTH}`}
-                      onClick={() => handleSubmit(onValidate)()}
-                      disabled={isLoading}
-                    >
-                      <IoMdCheckmark className="h-5 w-5" />
-                      Validate
-                    </button>
-                    <button
-                      type="submit"
-                      className={`${BTN_PRIMARY} ${MODAL_ACTION_WIDTH}`}
-                      disabled={isLoading}
-                    >
-                      <FaUpload className="h-4 w-4" />
-                      Submit
-                    </button>
-                  </>
-                )}
-                {importSuccess && (
+                <>
                   <button
                     type="button"
                     className={`${BTN_PRIMARY} ${MODAL_ACTION_WIDTH}`}
-                    onClick={() => {
-                      setImportSuccess(false);
-                      setResult(null);
-                      setValue("importFile", null);
-                    }}
+                    onClick={() => handleSubmit(onValidate)()}
                     disabled={isLoading}
                   >
-                    <IoMdRefresh className="h-5 w-5" />
-                    Start Over
+                    <IoMdCheckmark className="h-5 w-5" />
+                    Validate
                   </button>
-                )}
-              </ModalActions>
-            </div>
+                  <button
+                    type="submit"
+                    className={`${BTN_PRIMARY} ${MODAL_ACTION_WIDTH}`}
+                    disabled={isLoading}
+                  >
+                    <FaUpload className="h-4 w-4" />
+                    Submit
+                  </button>
+                </>
+              )}
+              {importSuccess && (
+                <button
+                  type="button"
+                  className={`${BTN_PRIMARY} ${MODAL_ACTION_WIDTH}`}
+                  onClick={() => {
+                    setImportSuccess(false);
+                    setResult(null);
+                    setValue("importFile", null);
+                  }}
+                  disabled={isLoading}
+                >
+                  <IoMdRefresh className="h-5 w-5" />
+                  Start Over
+                </button>
+              )}
+            </ModalActions>
           </div>
         </div>
       </form>

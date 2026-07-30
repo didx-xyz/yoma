@@ -401,7 +401,7 @@ const Opportunities: NextPageWithLayout<{
         onRequestClose={() => {
           setImportDialogOpen(false);
         }}
-        className={`md:max-h-[650px] md:w-[700px]`}
+        className={`md:w-[600px]`}
       >
         <OpportunityImport
           id={id}
@@ -428,7 +428,7 @@ const Opportunities: NextPageWithLayout<{
         onRequestClose={() => {
           setExportDialogOpen(false);
         }}
-        className={`md:max-h-[740px] md:w-[600px]`}
+        className={`md:w-[600px]`}
       >
         <OpportunityExport
           totalCount={searchResults?.totalCount ?? 0}
