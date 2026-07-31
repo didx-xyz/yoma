@@ -48,7 +48,7 @@ export const ListPageHeader: React.FC<{
     />
 
     {/* pt clears the fixed h-20 navbar */}
-    <div className={`${CONTAINER} flex flex-col gap-4 pt-24 pb-2`}>
+    <div className={`${CONTAINER} flex flex-col gap-4 pt-24`}>
       <div className="flex flex-col gap-1">
         <h3 className="flex flex-wrap items-center gap-2 text-xl font-semibold tracking-normal text-white md:text-3xl">
           {title}

@@ -1,5 +1,4 @@
 import Link from "next/link";
-import CustomSlider from "~/components/Carousel/CustomSlider";
 import {
   statusTabHref,
   type ListPageParamSpec,
@@ -32,7 +31,7 @@ export const ListPageStatusTabs: React.FC<{
   idPrefix = "list_page",
 }) => {
   return (
-    <CustomSlider sliderClassName="!gap-6">
+    <div role="tablist" className="tabs tabs-lift pt-1">
       {(statusSpec.tabs ?? []).map((tab) => {
         const count = counts[tab.value ?? "all"];
         const selected = status === tab.value;
@@ -49,9 +48,11 @@ export const ListPageStatusTabs: React.FC<{
             )}
             scroll={false} // don't yank the viewport when switching tabs
             role="tab"
-            className={`border-b-4 py-2 whitespace-nowrap text-white ${
-              selected ? "border-orange" : "hover:border-orange hover:text-gray"
-            }`}
+            className={
+              selected
+                ? "tab tab-active text-primary [--tab-bg:orange] [--tab-border-color:red]"
+                : "tab border-0"
+            }
           >
             {tab.label}
             {(count ?? 0) > 0 && (
@@ -62,7 +63,7 @@ export const ListPageStatusTabs: React.FC<{
           </Link>
         );
       })}
-    </CustomSlider>
+    </div>
   );
 };
 
