@@ -133,8 +133,12 @@ export const OPPORTUNITY_QUERY_KEYS = {
   /** Admin lookup: organisations */
   adminOrganisations: () => ["AdminOpportunitiesOrganisations"] as const,
   /** Titles for a known set of opportunity id's (labels for id-based filter badges) */
-  criteriaByIds: (ids: string[]): unknown[] => [
+  criteriaByIds: (
+    ids: string[],
+    organizations?: string[] | null,
+  ): unknown[] => [
     "OpportunityCriteriaByIds",
+    ...(organizations ?? []),
     ...ids,
   ],
   /** Create/edit page lookups */
@@ -495,18 +499,24 @@ export function useAdminOpportunityLanguagesQuery(
  */
 export function useOpportunityTitlesByIdQuery(
   ids: string[] | null,
+  organizations: string[] | null,
   options?: { enabled?: boolean },
 ) {
   const opportunityIds = ids ?? [];
 
   return useQuery<OpportunitySearchResultsInfo>({
-    queryKey: OPPORTUNITY_QUERY_KEYS.criteriaByIds(opportunityIds),
+    queryKey: OPPORTUNITY_QUERY_KEYS.criteriaByIds(
+      opportunityIds,
+      organizations,
+    ),
     queryFn: () =>
       searchCriteriaOpportunities({
         pageNumber: 1,
         pageSize: opportunityIds.length,
         types: null,
-        organizations: null,
+        // NB: REQUIRED for the OrganizationAdmin role — the endpoint throws without it
+        // (SearchCriteriaAdminValidateRequest in OpportunityService)
+        organizations: organizations,
         titleContains: null,
         opportunities: opportunityIds,
         countries: null,

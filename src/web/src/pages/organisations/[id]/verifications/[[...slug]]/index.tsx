@@ -599,7 +599,7 @@ const OpportunityVerifications: NextPageWithLayout<{
         isOpen={modalVerifyVisible}
         shouldCloseOnOverlayClick={true}
         onRequestClose={onCloseVerificationModal}
-        className={`md:max-h-[620px] md:w-[800px]`}
+        className={`md:max-h-[620px] md:w-[600px]`}
       >
         <div className="flex h-full flex-col space-y-2">
           <ModalHeader
@@ -673,7 +673,7 @@ const OpportunityVerifications: NextPageWithLayout<{
         isOpen={modalVerificationResultVisible}
         shouldCloseOnOverlayClick={true}
         onRequestClose={onCloseVerificationResultModal}
-        className={`md:max-h-[620px] md:w-[800px]`}
+        className={`md:max-h-[620px] md:w-[600px]`}
       >
         <div className="flex h-full flex-col space-y-2 overflow-y-auto">
           <ModalHeader
@@ -790,7 +790,7 @@ const OpportunityVerifications: NextPageWithLayout<{
         onRequestClose={() => {
           setImportDialogOpen(false);
         }}
-        className={`md:max-h-[650px] md:w-[700px]`}
+        className={`md:w-[600px]`}
       >
         <VerificationImport
           id={id}
@@ -818,7 +818,7 @@ const OpportunityVerifications: NextPageWithLayout<{
         onRequestClose={() => {
           setExportDialogOpen(false);
         }}
-        className={`md:max-h-[740px] md:w-[600px]`}
+        className={`md:max-h-[500px] md:w-[600px]`}
       >
         <VerificationExport
           totalCount={searchResults?.totalCount ?? 0}

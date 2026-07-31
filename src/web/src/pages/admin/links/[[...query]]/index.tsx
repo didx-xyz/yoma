@@ -162,6 +162,7 @@ const Links: NextPageWithLayout<{
   // the opportunity filter is id-based; resolve the titles for the badges & the picker
   const { data: lookups_entities } = useOpportunityTitlesByIdQuery(
     searchFilter.entities,
+    null, // Admin role: the search is not scoped to an organisation
     { enabled: !error },
   );
   const entityOptions = useMemo<SelectOption[]>(

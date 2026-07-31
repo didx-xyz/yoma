@@ -34,6 +34,12 @@ export const LinkAdminFilterVertical: React.FC<{
   htmlRef: HTMLDivElement;
   searchFilter: LinkSearchFilter | null;
   lookups_organisations: OrganizationInfo[];
+  /**
+   * Org-admin page: the organisation from the route. It scopes the opportunity search, which
+   * the API REQUIRES for the OrganizationAdmin role — there is no organisation picker on that
+   * page, so the scope cannot come from the form.
+   */
+  organizationId?: string;
   /** {id, title} for the applied opportunity id's, so the picker shows their titles */
   entityOptions?: SelectOption[];
   onSubmit?: (fieldValues: LinkSearchFilter) => void;
@@ -43,6 +49,7 @@ export const LinkAdminFilterVertical: React.FC<{
   htmlRef,
   searchFilter,
   lookups_organisations,
+  organizationId,
   entityOptions,
   onSubmit,
   onCancel,
@@ -94,17 +101,19 @@ export const LinkAdminFilterVertical: React.FC<{
     });
   }, [entityOptions]);
 
-  // organisations pending in the form scope the opportunity search
+  // the opportunity search is scoped to the organisation(s) in play: the route organisation
+  // on the org-admin page, otherwise whatever is pending in the form (held as names, so it
+  // has to be mapped back to id's through the lookup)
   const selectedOrganisationNames = watch("organizations");
-  const selectedOrganisationIds = useMemo(
-    () =>
-      lookups_organisations
-        .filter((organisation) =>
-          selectedOrganisationNames?.includes(organisation.name),
-        )
-        .map((organisation) => organisation.id),
-    [lookups_organisations, selectedOrganisationNames],
-  );
+  const selectedOrganisationIds = useMemo(() => {
+    if (organizationId) return [organizationId];
+
+    return lookups_organisations
+      .filter((organisation) =>
+        selectedOrganisationNames?.includes(organisation.name),
+      )
+      .map((organisation) => organisation.id);
+  }, [organizationId, lookups_organisations, selectedOrganisationNames]);
 
   // debounce keeps the API from being called on every keystroke
   const loadOpportunities = useMemo(

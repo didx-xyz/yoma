@@ -17,7 +17,6 @@ import {
 } from "react";
 import { FaPlusCircle } from "react-icons/fa";
 import {
-  IoIosAdd,
   IoIosSettings,
   IoMdCalendar,
   IoMdClose,
@@ -177,9 +176,13 @@ const Links: NextPageWithLayout<{
   );
 
   //#region LOOKUPS
+  // NB: the opportunity criteria search REQUIRES the organisation for the org-admin role
+  const orgScope = useMemo(() => [id], [id]);
+
   // the opportunity filter is id-based; resolve the titles for the badges & the picker
   const { data: lookups_entities } = useOpportunityTitlesByIdQuery(
     searchFilter.entities,
+    orgScope,
     { enabled: !error },
   );
   const entityOptions = useMemo<SelectOption[]>(
@@ -397,6 +400,7 @@ const Links: NextPageWithLayout<{
             htmlRef={myRef.current!}
             searchFilter={searchFilter}
             lookups_organisations={[]} // org-scoped page: not applicable
+            organizationId={id} // scopes the opportunity search
             entityOptions={entityOptions}
             onCancel={onCloseFilter}
             onSubmit={onSubmitFilter}
@@ -523,22 +527,6 @@ const Links: NextPageWithLayout<{
                     }
                     icon="🚀"
                   />
-
-                  {currentOrganisationInactive ? (
-                    <span className="bg-theme flex w-56 cursor-not-allowed flex-row items-center justify-center rounded-full p-1 text-xs whitespace-nowrap text-white brightness-75">
-                      Add link (disabled)
-                    </span>
-                  ) : (
-                    <Link
-                      href={`/organisations/${id}/links/create${`?returnUrl=${encodeURIComponent(
-                        getSafeUrl(returnUrl, router.asPath),
-                      )}`}`}
-                      className="bg-theme btn btn-primary rounded-3xl border-0 px-16 brightness-105 hover:brightness-110"
-                    >
-                      <IoIosAdd className="mr-1 h-5 w-5" />
-                      Add link
-                    </Link>
-                  )}
                 </div>
               )}
 

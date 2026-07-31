@@ -86,17 +86,19 @@ export const ListPageFilterDialog: React.FC<{
       icon={<IoMdOptions className="h-5 w-5" />}
       onClose={onCancel}
     />
-
     {hiddenInputs}
-
     <div className="bg-gray-light flex flex-col">
       <div className="join join-vertical w-full">
-        <Accordion title="General" name="my-accordion-general" defaultChecked>
+        <Accordion
+          title="General Filters"
+          name="my-accordion-general"
+          defaultChecked
+        >
           <div className="flex flex-col gap-3 pb-2">{children}</div>
         </Accordion>
 
         {additional && (
-          <Accordion title="Additional" name="my-accordion-additional">
+          <Accordion title="Additional Filters" name="my-accordion-additional">
             {additional}
           </Accordion>
         )}

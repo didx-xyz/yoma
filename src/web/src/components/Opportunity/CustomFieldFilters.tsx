@@ -339,7 +339,7 @@ export function useCustomFieldFilterLabeler(
 // overridden from here, so the native selects/inputs are sized to match it
 // (rather than using the shorter select-sm / input-sm variants).
 const REACT_SELECT_CONTROL_CLASSES =
-  "input w-full !border-gray pr-0 pl-2 h-fit py-1 text-sm";
+  "input w-full !border-gray pr-0 pl-2 py-1 text-sm";
 const NATIVE_CONTROL_CLASSES = "h-10 min-h-10 py-1 text-sm !border-gray";
 const NATIVE_SELECT_CLASSES = `select select-bordered w-full ${NATIVE_CONTROL_CLASSES}`;
 const NATIVE_INPUT_CLASSES = `input input-bordered w-full ${NATIVE_CONTROL_CLASSES}`;
@@ -752,7 +752,7 @@ export const CustomFieldFilters: React.FC<CustomFieldFiltersProps> = ({
               </label>
             )}
 
-            {filter && (
+            {/* {filter && (
               <button
                 type="button"
                 className="btn btn-xs btn-ghost mt-1 w-fit text-xs"
@@ -760,7 +760,7 @@ export const CustomFieldFilters: React.FC<CustomFieldFiltersProps> = ({
               >
                 Clear
               </button>
-            )}
+            )} */}
           </fieldset>
         );
       })}
