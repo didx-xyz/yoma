@@ -1,4 +1,5 @@
 import Link from "next/link";
+import sliderStyles from "~/components/Carousel/CustomSlider.module.css";
 import {
   statusTabHref,
   type ListPageParamSpec,
@@ -31,7 +32,12 @@ export const ListPageStatusTabs: React.FC<{
   idPrefix = "list_page",
 }) => {
   return (
-    <div role="tablist" className="tabs tabs-lift ptx-1">
+    <div
+      role="tablist"
+      // daisyUI's .tabs wraps by default; on narrow screens these scroll sideways instead,
+      // so the lifted tab keeps sitting on the results below it
+      className={`tabs tabs-lift flex-nowrap overflow-x-auto overflow-y-hidden ${sliderStyles.noscrollbar}`}
+    >
       {(statusSpec.tabs ?? []).map((tab) => {
         const count = counts[tab.value ?? "all"];
         const selected = status === tab.value;
@@ -49,11 +55,15 @@ export const ListPageStatusTabs: React.FC<{
             scroll={false} // don't yank the viewport when switching tabs
             role="tab"
             className={
+              // shrink-0 + nowrap so two-word labels ("Limit Reached") stay on one line and
+              // the row scrolls rather than squashing.
               // the selected tab lifts in the page background colour, so it reads as joined
               // to the results below it — hence dark text on it, white on the rest
-              selected
-                ? "tab tab-active text-gray-dark [--tab-bg:var(--color-gray-light)] [--tab-border-color:var(--color-gray-light)]"
-                : "tab border-0 text-white"
+              `tab shrink-0 whitespace-nowrap ${
+                selected
+                  ? "tab-active text-gray-dark [--tab-bg:var(--color-gray-light)] [--tab-border-color:var(--color-gray-light)]"
+                  : "border-0 text-white"
+              }`
             }
           >
             {tab.label}
