@@ -31,7 +31,7 @@ export const ListPageStatusTabs: React.FC<{
   idPrefix = "list_page",
 }) => {
   return (
-    <div role="tablist" className="tabs tabs-lift pt-1">
+    <div role="tablist" className="tabs tabs-lift ptx-1">
       {(statusSpec.tabs ?? []).map((tab) => {
         const count = counts[tab.value ?? "all"];
         const selected = status === tab.value;
@@ -49,9 +49,11 @@ export const ListPageStatusTabs: React.FC<{
             scroll={false} // don't yank the viewport when switching tabs
             role="tab"
             className={
+              // the selected tab lifts in the page background colour, so it reads as joined
+              // to the results below it — hence dark text on it, white on the rest
               selected
-                ? "tab tab-active text-primary [--tab-bg:orange] [--tab-border-color:red]"
-                : "tab border-0"
+                ? "tab tab-active text-gray-dark [--tab-bg:var(--color-gray-light)] [--tab-border-color:var(--color-gray-light)]"
+                : "tab border-0 text-white"
             }
           >
             {tab.label}
