@@ -31,6 +31,11 @@ import {
   ModalHeader,
 } from "~/components/Common/ModalChrome";
 import LinkAdminFilterBadges from "~/components/Links/LinkAdminFilterBadges";
+import {
+  ListPageBody,
+  ListPageHeader,
+  ListPageShell,
+} from "~/components/Common/ListPage/ListPageHeader";
 import ListPageSearchToolbar from "~/components/Common/ListPage/ListPageSearchToolbar";
 import ListPageStatusTabs from "~/components/Common/ListPage/ListPageStatusTabs";
 import {
@@ -58,7 +63,6 @@ import {
 } from "~/components/Links/linkAdminFilter";
 import { LinkActionOptions, LinkActions } from "~/components/Links/LinkActions";
 import NoRowsMessage from "~/components/NoRowsMessage";
-import { PageBackground } from "~/components/PageBackground";
 import { InternalServerError } from "~/components/Status/InternalServerError";
 import LimitedFunctionalityBadge from "~/components/Status/LimitedFunctionalityBadge";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
@@ -372,8 +376,6 @@ const Links: NextPageWithLayout<{
         <title>Yoma | 🔗 Links</title>
       </Head>
 
-      <PageBackground className="h-[14.3rem] md:h-[18.4rem]" />
-
       {/* REFERENCE FOR FILTER POPUP: fix menu z-index issue */}
       <div ref={myRef} />
 
@@ -444,12 +446,15 @@ const Links: NextPageWithLayout<{
         </div>
       </CustomModal>
 
-      <div className="z-10 container mt-14 max-w-7xl px-2 py-8 md:mt-[7rem]">
-        <div className="flex flex-col gap-4 py-4">
-          <h3 className="mt-3 mb-6 flex items-center text-xl font-semibold tracking-normal whitespace-nowrap text-white md:mt-0 md:mb-9 md:text-3xl">
-            🔗 Links <LimitedFunctionalityBadge />
-          </h3>
-
+      <ListPageShell>
+        <ListPageHeader
+          title={
+            <>
+              🔗 Links <LimitedFunctionalityBadge />
+            </>
+          }
+          description="Instant-verify links across all organisations, with their usage and expiry."
+        >
           {/* TABBED NAVIGATION */}
           <ListPageStatusTabs
             basePath="/admin/links"
@@ -478,313 +483,150 @@ const Links: NextPageWithLayout<{
               className="-ml-2"
             />
           )}
-        </div>
+        </ListPageHeader>
 
         {/* MAIN CONTENT */}
-        <ListPageResults
-          isLoading={isLoadingSearchResults}
-          isShowingPreviousResults={isShowingPreviousResults}
-          id="results"
-        >
-          <div className="md:shadow-custom rounded-lg md:bg-white md:p-4">
-            {/* NO ROWS */}
-            {links && links.items?.length === 0 && (
-              <div className="flex h-fit flex-col items-center rounded-lg bg-white pb-8 md:pb-16">
-                <NoRowsMessage
-                  title={"No links found"}
-                  description={
-                    isSearchPerformed || status !== null
-                      ? "Please try refining your search query."
-                      : "This is where you will find all the links that have been created."
-                  }
-                />
-              </div>
-            )}
-
-            {/* GRID */}
-            {links && links.items?.length > 0 && (
-              <>
-                {/* MOBILE */}
-                <div className="flex flex-col gap-4 md:hidden">
-                  {links.items.map((item) => (
-                    <div
-                      key={`sm_${item.id}`}
-                      className="shadow-custom flex flex-col gap-2 rounded-lg bg-white p-4"
-                    >
-                      {/* Link & Actions */}
-                      <div className="border-gray-light flex flex-row gap-2 border-b-2 pb-2">
-                        <div className="flex w-full flex-col gap-1">
-                          <Link
-                            title={item.name}
-                            href={`/organisations/${
-                              item.entityOrganizationId
-                            }/links/${item.id}${`?returnUrl=${encodeURIComponent(
-                              getSafeUrl(returnUrl, router.asPath),
-                            )}`}`}
-                            className="text-gray-dark block w-full max-w-[300px] overflow-hidden text-sm font-semibold text-ellipsis whitespace-nowrap underline"
-                          >
-                            {item.name}
-                          </Link>
-                          {item.description && (
-                            <span
-                              title={item.description}
-                              className="block w-full max-w-[300px] overflow-hidden text-xs text-ellipsis whitespace-nowrap text-gray-500"
-                            >
-                              {item.description}
-                            </span>
-                          )}
-                        </div>
-
-                        <LinkActions
-                          link={item}
-                          onGenerateQRCode={onClick_GenerateQRCode}
-                          returnUrl={returnUrl?.toString()}
-                          actionOptions={[
-                            LinkActionOptions.ACTIVATE,
-                            LinkActionOptions.GO_TO_OVERVIEW,
-                            LinkActionOptions.REMIND_PARTICIPANTS,
-                            LinkActionOptions.COPY_LINK,
-                            LinkActionOptions.GENERATE_QR_CODE,
-                            LinkActionOptions.DELETE,
-                          ]}
-                        />
-                      </div>
-
-                      {/* Opportunity */}
-                      <div className="flex flex-row items-start justify-between py-1">
-                        <span className="text-gray-dark text-sm font-normal">
-                          Opportunity
-                        </span>
-                        <span className="text-sm">
-                          <Link
-                            href={`/organisations/${
-                              item.entityOrganizationId
-                            }/opportunities/${
-                              item.entityId
-                            }/info${`?returnUrl=${encodeURIComponent(
-                              getSafeUrl(returnUrl, router.asPath),
-                            )}`}`}
-                            className="text-gray-dark block max-w-[160px] overflow-hidden text-sm font-normal text-ellipsis whitespace-nowrap underline"
-                          >
-                            {item.entityTitle}
-                          </Link>
-                        </span>
-                      </div>
-
-                      {/* Organisation */}
-                      <div className="flex flex-row items-start justify-between py-1">
-                        <span className="text-gray-dark text-sm font-normal">
-                          Organisation
-                        </span>
-                        <span className="text-sm">
-                          <Link
-                            href={`/organisations/dashboard?organisations=${
-                              item.entityOrganizationId
-                            }${`&returnUrl=${encodeURIComponent(
-                              getSafeUrl(returnUrl, router.asPath),
-                            )}`}`}
-                            className="text-gray-dark block max-w-[160px] overflow-hidden text-sm font-normal text-ellipsis whitespace-nowrap underline"
-                          >
-                            {item.entityOrganizationName}
-                          </Link>
-                        </span>
-                      </div>
-
-                      {/* Usage */}
-                      <div className="flex flex-row items-center justify-between py-1">
-                        <span className="text-gray-dark text-sm font-normal">
-                          Usage
-                        </span>
-                        {item.lockToDistributionList ? (
-                          <span className="badge bg-green-light text-yellow flex items-center">
-                            <IoMdLock className="h-4 w-4" />
-                            <span className="ml-1 text-xs">
-                              {item.usagesTotal ?? "0"} /{" "}
-                              {item.usagesLimit ?? "0"}
-                            </span>
-                          </span>
-                        ) : (
-                          <span className="badge bg-green-light text-green flex items-center">
-                            <IoMdPerson className="h-4 w-4" />
-                            <span className="ml-1 text-xs">
-                              {item.usagesTotal ?? "0"} /{" "}
-                              {item.usagesLimit ?? "0"}
-                            </span>
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Expires */}
-                      <div className="flex flex-row items-center justify-between py-1">
-                        <span className="text-gray-dark text-sm font-normal">
-                          Expires
-                        </span>
-                        {item.dateEnd ? (
-                          <span className="badge bg-yellow-light text-yellow flex items-center">
-                            <IoMdCalendar className="h-4 w-4" />
-                            <span className="ml-1 text-xs">
-                              <Moment format={DATE_FORMAT_HUMAN} utc={true}>
-                                {item.dateEnd}
-                              </Moment>
-                            </span>
-                          </span>
-                        ) : (
-                          <span className="text-xs text-gray-500">N/A</span>
-                        )}
-                      </div>
-
-                      {/* Status */}
-                      <div className="flex flex-row items-center justify-between py-1">
-                        <span className="text-gray-dark text-sm font-normal">
-                          Status
-                        </span>
-                        {item.status == "Active" && (
-                          <span className="badge bg-blue-light text-blue">
-                            Active
-                          </span>
-                        )}
-                        {item.status == "Expired" && (
-                          <span className="badge bg-green-light text-yellow">
-                            Expired
-                          </span>
-                        )}
-                        {item.status == "Inactive" && (
-                          <span className="badge bg-yellow-tint text-yellow">
-                            Inactive
-                          </span>
-                        )}
-                        {item.status == "LimitReached" && (
-                          <span className="badge bg-green-light text-red-400">
-                            Limit Reached
-                          </span>
-                        )}
-                        {item.status == "Deleted" && (
-                          <span className="badge bg-green-light text-red-400">
-                            Deleted
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  ))}
+        <ListPageBody>
+          <ListPageResults
+            isLoading={isLoadingSearchResults}
+            isShowingPreviousResults={isShowingPreviousResults}
+            id="results"
+          >
+            <div className="md:shadow-custom rounded-lg md:bg-white md:p-4">
+              {/* NO ROWS */}
+              {links && links.items?.length === 0 && (
+                <div className="flex h-fit flex-col items-center rounded-lg bg-white pb-8 md:pb-16">
+                  <NoRowsMessage
+                    title={"No links found"}
+                    description={
+                      isSearchPerformed || status !== null
+                        ? "Please try refining your search query."
+                        : "This is where you will find all the links that have been created."
+                    }
+                  />
                 </div>
+              )}
 
-                {/* DEKSTOP */}
-                <table className="border-gray-light hidden border-separate rounded-lg border-x-2 border-t-2 md:table md:table-auto">
-                  <thead>
-                    <tr className="border-gray text-gray-dark">
-                      <th className="border-gray-light border-b-2 !py-4">
-                        Link
-                      </th>
-                      <th className="border-gray-light border-b-2 !py-4">
-                        Opportunity
-                      </th>
-                      <th className="border-gray-light border-b-2 !py-4">
-                        Organisation
-                      </th>
-                      <th className="border-gray-light border-b-2">Usage</th>
-                      <th className="border-gray-light border-b-2">Expires</th>
-                      <th className="border-gray-light border-b-2">Status</th>
-                      <th className="border-gray-light border-b-2 text-center">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
+              {/* GRID */}
+              {links && links.items?.length > 0 && (
+                <>
+                  {/* MOBILE */}
+                  <div className="flex flex-col gap-4 md:hidden">
                     {links.items.map((item) => (
-                      <tr key={`grid_md_${item.id}`} className="">
-                        {/* Link */}
-                        <td className="border-gray-light w-[180px] max-w-[220px] border-b-2 !py-4 align-top">
-                          <div className="flex flex-col gap-1">
+                      <div
+                        key={`sm_${item.id}`}
+                        className="shadow-custom flex flex-col gap-2 rounded-lg bg-white p-4"
+                      >
+                        {/* Link & Actions */}
+                        <div className="border-gray-light flex flex-row gap-2 border-b-2 pb-2">
+                          <div className="flex w-full flex-col gap-1">
                             <Link
                               title={item.name}
                               href={`/organisations/${
                                 item.entityOrganizationId
-                              }/links/${
-                                item.id
-                              }${`?returnUrl=${encodeURIComponent(
+                              }/links/${item.id}${`?returnUrl=${encodeURIComponent(
                                 getSafeUrl(returnUrl, router.asPath),
                               )}`}`}
-                              className="text-gray-dark block w-full max-w-[160px] overflow-hidden text-sm text-ellipsis whitespace-nowrap underline"
+                              className="text-gray-dark block w-full max-w-[300px] overflow-hidden text-sm font-semibold text-ellipsis whitespace-nowrap underline"
                             >
                               {item.name}
                             </Link>
+                            {item.description && (
+                              <span
+                                title={item.description}
+                                className="block w-full max-w-[300px] overflow-hidden text-xs text-ellipsis whitespace-nowrap text-gray-500"
+                              >
+                                {item.description}
+                              </span>
+                            )}
                           </div>
-                        </td>
+
+                          <LinkActions
+                            link={item}
+                            onGenerateQRCode={onClick_GenerateQRCode}
+                            returnUrl={returnUrl?.toString()}
+                            actionOptions={[
+                              LinkActionOptions.ACTIVATE,
+                              LinkActionOptions.GO_TO_OVERVIEW,
+                              LinkActionOptions.REMIND_PARTICIPANTS,
+                              LinkActionOptions.COPY_LINK,
+                              LinkActionOptions.GENERATE_QR_CODE,
+                              LinkActionOptions.DELETE,
+                            ]}
+                          />
+                        </div>
 
                         {/* Opportunity */}
-                        <td className="border-gray-light w-[180px] max-w-[180px] border-b-2 !py-4 align-top">
-                          {item.entityType == "Opportunity" &&
-                            item.entityOrganizationId && (
-                              <Link
-                                title={item.entityTitle}
-                                href={`/organisations/${
-                                  item.entityOrganizationId
-                                }/opportunities/${
-                                  item.entityId
-                                }/info${`?returnUrl=${encodeURIComponent(
-                                  getSafeUrl(returnUrl, router.asPath),
-                                )}`}`}
-                                className="text-gray-dark block w-full max-w-[160px] overflow-hidden text-sm text-ellipsis whitespace-nowrap underline"
-                              >
-                                {item.entityTitle}
-                              </Link>
-                            )}
-                          {item.entityType != "Opportunity" && (
-                            <span
-                              title={item.entityTitle}
-                              className="block w-full max-w-[160px] overflow-hidden text-sm text-ellipsis whitespace-nowrap"
+                        <div className="flex flex-row items-start justify-between py-1">
+                          <span className="text-gray-dark text-sm font-normal">
+                            Opportunity
+                          </span>
+                          <span className="text-sm">
+                            <Link
+                              href={`/organisations/${
+                                item.entityOrganizationId
+                              }/opportunities/${
+                                item.entityId
+                              }/info${`?returnUrl=${encodeURIComponent(
+                                getSafeUrl(returnUrl, router.asPath),
+                              )}`}`}
+                              className="text-gray-dark block max-w-[160px] overflow-hidden text-sm font-normal text-ellipsis whitespace-nowrap underline"
                             >
                               {item.entityTitle}
-                            </span>
-                          )}
-                        </td>
+                            </Link>
+                          </span>
+                        </div>
 
                         {/* Organisation */}
-                        <td className="border-gray-light w-[180px] max-w-[180px] border-b-2 !py-4 align-top">
-                          {item.entityOrganizationId &&
-                            item.entityOrganizationName && (
-                              <Link
-                                href={`/organisations/dashboard?organisations=${
-                                  item.entityOrganizationId
-                                }${`&returnUrl=${encodeURIComponent(
-                                  getSafeUrl(returnUrl, router.asPath),
-                                )}`}`}
-                                className="text-gray-dark block w-full max-w-[160px] overflow-hidden text-sm text-ellipsis whitespace-nowrap underline"
-                              >
-                                {item.entityOrganizationName}
-                              </Link>
-                            )}
-                        </td>
+                        <div className="flex flex-row items-start justify-between py-1">
+                          <span className="text-gray-dark text-sm font-normal">
+                            Organisation
+                          </span>
+                          <span className="text-sm">
+                            <Link
+                              href={`/organisations/dashboard?organisations=${
+                                item.entityOrganizationId
+                              }${`&returnUrl=${encodeURIComponent(
+                                getSafeUrl(returnUrl, router.asPath),
+                              )}`}`}
+                              className="text-gray-dark block max-w-[160px] overflow-hidden text-sm font-normal text-ellipsis whitespace-nowrap underline"
+                            >
+                              {item.entityOrganizationName}
+                            </Link>
+                          </span>
+                        </div>
 
-                        <td className="border-gray-light border-b-2">
-                          {item.lockToDistributionList && (
-                            <span className="badge bg-green-light text-yellow">
+                        {/* Usage */}
+                        <div className="flex flex-row items-center justify-between py-1">
+                          <span className="text-gray-dark text-sm font-normal">
+                            Usage
+                          </span>
+                          {item.lockToDistributionList ? (
+                            <span className="badge bg-green-light text-yellow flex items-center">
                               <IoMdLock className="h-4 w-4" />
                               <span className="ml-1 text-xs">
                                 {item.usagesTotal ?? "0"} /{" "}
-                                {item.usagesLimit !== null
-                                  ? item.usagesLimit
-                                  : "No limit"}
+                                {item.usagesLimit ?? "0"}
                               </span>
                             </span>
-                          )}
-
-                          {!item.lockToDistributionList && (
-                            <span className="badge bg-green-light text-green">
+                          ) : (
+                            <span className="badge bg-green-light text-green flex items-center">
                               <IoMdPerson className="h-4 w-4" />
                               <span className="ml-1 text-xs">
                                 {item.usagesTotal ?? "0"} /{" "}
-                                {item.usagesLimit !== null
-                                  ? item.usagesLimit
-                                  : "No limit"}
+                                {item.usagesLimit ?? "0"}
                               </span>
                             </span>
                           )}
-                        </td>
+                        </div>
 
-                        <td className="border-gray-light border-b-2">
+                        {/* Expires */}
+                        <div className="flex flex-row items-center justify-between py-1">
+                          <span className="text-gray-dark text-sm font-normal">
+                            Expires
+                          </span>
                           {item.dateEnd ? (
-                            <span className="badge bg-yellow-light text-yellow">
+                            <span className="badge bg-yellow-light text-yellow flex items-center">
                               <IoMdCalendar className="h-4 w-4" />
                               <span className="ml-1 text-xs">
                                 <Moment format={DATE_FORMAT_HUMAN} utc={true}>
@@ -793,12 +635,15 @@ const Links: NextPageWithLayout<{
                               </span>
                             </span>
                           ) : (
-                            "N/A"
+                            <span className="text-xs text-gray-500">N/A</span>
                           )}
-                        </td>
+                        </div>
 
-                        {/* STATUS */}
-                        <td className="border-gray-light border-b-2">
+                        {/* Status */}
+                        <div className="flex flex-row items-center justify-between py-1">
+                          <span className="text-gray-dark text-sm font-normal">
+                            Status
+                          </span>
                           {item.status == "Active" && (
                             <span className="badge bg-blue-light text-blue">
                               Active
@@ -824,45 +669,209 @@ const Links: NextPageWithLayout<{
                               Deleted
                             </span>
                           )}
-                        </td>
-
-                        {/* ACTIONS */}
-                        <td className="border-gray-light border-b-2 whitespace-nowrap">
-                          <div className="flex flex-row items-center justify-center gap-2">
-                            <LinkActions
-                              link={item}
-                              onGenerateQRCode={onClick_GenerateQRCode}
-                              returnUrl={returnUrl?.toString()}
-                              actionOptions={[
-                                LinkActionOptions.ACTIVATE,
-                                LinkActionOptions.GO_TO_OVERVIEW,
-                                LinkActionOptions.REMIND_PARTICIPANTS,
-                                LinkActionOptions.COPY_LINK,
-                                LinkActionOptions.GENERATE_QR_CODE,
-                                LinkActionOptions.DELETE,
-                              ]}
-                            />
-                          </div>
-                        </td>
-                      </tr>
+                        </div>
+                      </div>
                     ))}
-                  </tbody>
-                </table>
+                  </div>
 
-                {/* PAGINATION */}
-                <ListPagePagination
-                  currentPage={searchFilter.pageNumber ?? 1}
-                  totalItems={links?.totalCount ?? 0}
-                  pageSize={PAGE_SIZE}
-                  onClick={handlePagerChange}
-                  isShowingPreviousResults={isShowingPreviousResults}
-                  className="mt-2"
-                />
-              </>
-            )}
-          </div>
-        </ListPageResults>
-      </div>
+                  {/* DEKSTOP */}
+                  <table className="border-gray-light hidden border-separate rounded-lg border-x-2 border-t-2 md:table md:table-auto">
+                    <thead>
+                      <tr className="border-gray text-gray-dark">
+                        <th className="border-gray-light border-b-2 !py-4">
+                          Link
+                        </th>
+                        <th className="border-gray-light border-b-2 !py-4">
+                          Opportunity
+                        </th>
+                        <th className="border-gray-light border-b-2 !py-4">
+                          Organisation
+                        </th>
+                        <th className="border-gray-light border-b-2">Usage</th>
+                        <th className="border-gray-light border-b-2">
+                          Expires
+                        </th>
+                        <th className="border-gray-light border-b-2">Status</th>
+                        <th className="border-gray-light border-b-2 text-center">
+                          Actions
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {links.items.map((item) => (
+                        <tr key={`grid_md_${item.id}`} className="">
+                          {/* Link */}
+                          <td className="border-gray-light w-[180px] max-w-[220px] border-b-2 !py-4 align-top">
+                            <div className="flex flex-col gap-1">
+                              <Link
+                                title={item.name}
+                                href={`/organisations/${
+                                  item.entityOrganizationId
+                                }/links/${
+                                  item.id
+                                }${`?returnUrl=${encodeURIComponent(
+                                  getSafeUrl(returnUrl, router.asPath),
+                                )}`}`}
+                                className="text-gray-dark block w-full max-w-[160px] overflow-hidden text-sm text-ellipsis whitespace-nowrap underline"
+                              >
+                                {item.name}
+                              </Link>
+                            </div>
+                          </td>
+
+                          {/* Opportunity */}
+                          <td className="border-gray-light w-[180px] max-w-[180px] border-b-2 !py-4 align-top">
+                            {item.entityType == "Opportunity" &&
+                              item.entityOrganizationId && (
+                                <Link
+                                  title={item.entityTitle}
+                                  href={`/organisations/${
+                                    item.entityOrganizationId
+                                  }/opportunities/${
+                                    item.entityId
+                                  }/info${`?returnUrl=${encodeURIComponent(
+                                    getSafeUrl(returnUrl, router.asPath),
+                                  )}`}`}
+                                  className="text-gray-dark block w-full max-w-[160px] overflow-hidden text-sm text-ellipsis whitespace-nowrap underline"
+                                >
+                                  {item.entityTitle}
+                                </Link>
+                              )}
+                            {item.entityType != "Opportunity" && (
+                              <span
+                                title={item.entityTitle}
+                                className="block w-full max-w-[160px] overflow-hidden text-sm text-ellipsis whitespace-nowrap"
+                              >
+                                {item.entityTitle}
+                              </span>
+                            )}
+                          </td>
+
+                          {/* Organisation */}
+                          <td className="border-gray-light w-[180px] max-w-[180px] border-b-2 !py-4 align-top">
+                            {item.entityOrganizationId &&
+                              item.entityOrganizationName && (
+                                <Link
+                                  href={`/organisations/dashboard?organisations=${
+                                    item.entityOrganizationId
+                                  }${`&returnUrl=${encodeURIComponent(
+                                    getSafeUrl(returnUrl, router.asPath),
+                                  )}`}`}
+                                  className="text-gray-dark block w-full max-w-[160px] overflow-hidden text-sm text-ellipsis whitespace-nowrap underline"
+                                >
+                                  {item.entityOrganizationName}
+                                </Link>
+                              )}
+                          </td>
+
+                          <td className="border-gray-light border-b-2">
+                            {item.lockToDistributionList && (
+                              <span className="badge bg-green-light text-yellow">
+                                <IoMdLock className="h-4 w-4" />
+                                <span className="ml-1 text-xs">
+                                  {item.usagesTotal ?? "0"} /{" "}
+                                  {item.usagesLimit !== null
+                                    ? item.usagesLimit
+                                    : "No limit"}
+                                </span>
+                              </span>
+                            )}
+
+                            {!item.lockToDistributionList && (
+                              <span className="badge bg-green-light text-green">
+                                <IoMdPerson className="h-4 w-4" />
+                                <span className="ml-1 text-xs">
+                                  {item.usagesTotal ?? "0"} /{" "}
+                                  {item.usagesLimit !== null
+                                    ? item.usagesLimit
+                                    : "No limit"}
+                                </span>
+                              </span>
+                            )}
+                          </td>
+
+                          <td className="border-gray-light border-b-2">
+                            {item.dateEnd ? (
+                              <span className="badge bg-yellow-light text-yellow">
+                                <IoMdCalendar className="h-4 w-4" />
+                                <span className="ml-1 text-xs">
+                                  <Moment format={DATE_FORMAT_HUMAN} utc={true}>
+                                    {item.dateEnd}
+                                  </Moment>
+                                </span>
+                              </span>
+                            ) : (
+                              "N/A"
+                            )}
+                          </td>
+
+                          {/* STATUS */}
+                          <td className="border-gray-light border-b-2">
+                            {item.status == "Active" && (
+                              <span className="badge bg-blue-light text-blue">
+                                Active
+                              </span>
+                            )}
+                            {item.status == "Expired" && (
+                              <span className="badge bg-green-light text-yellow">
+                                Expired
+                              </span>
+                            )}
+                            {item.status == "Inactive" && (
+                              <span className="badge bg-yellow-tint text-yellow">
+                                Inactive
+                              </span>
+                            )}
+                            {item.status == "LimitReached" && (
+                              <span className="badge bg-green-light text-red-400">
+                                Limit Reached
+                              </span>
+                            )}
+                            {item.status == "Deleted" && (
+                              <span className="badge bg-green-light text-red-400">
+                                Deleted
+                              </span>
+                            )}
+                          </td>
+
+                          {/* ACTIONS */}
+                          <td className="border-gray-light border-b-2 whitespace-nowrap">
+                            <div className="flex flex-row items-center justify-center gap-2">
+                              <LinkActions
+                                link={item}
+                                onGenerateQRCode={onClick_GenerateQRCode}
+                                returnUrl={returnUrl?.toString()}
+                                actionOptions={[
+                                  LinkActionOptions.ACTIVATE,
+                                  LinkActionOptions.GO_TO_OVERVIEW,
+                                  LinkActionOptions.REMIND_PARTICIPANTS,
+                                  LinkActionOptions.COPY_LINK,
+                                  LinkActionOptions.GENERATE_QR_CODE,
+                                  LinkActionOptions.DELETE,
+                                ]}
+                              />
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+
+                  {/* PAGINATION */}
+                  <ListPagePagination
+                    currentPage={searchFilter.pageNumber ?? 1}
+                    totalItems={links?.totalCount ?? 0}
+                    pageSize={PAGE_SIZE}
+                    onClick={handlePagerChange}
+                    isShowingPreviousResults={isShowingPreviousResults}
+                    className="mt-2"
+                  />
+                </>
+              )}
+            </div>
+          </ListPageResults>
+        </ListPageBody>
+      </ListPageShell>
     </>
   );
 };

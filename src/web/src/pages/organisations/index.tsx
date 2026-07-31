@@ -24,6 +24,11 @@ import {
   ListPagePagination,
   ListPageResults,
 } from "~/components/Common/ListPage/ListPageResults";
+import {
+  ListPageBody,
+  ListPageHeader,
+  ListPageShell,
+} from "~/components/Common/ListPage/ListPageHeader";
 import ListPageSearchToolbar, {
   LIST_PAGE_TOOLBAR_BUTTON_CLASSES,
 } from "~/components/Common/ListPage/ListPageSearchToolbar";
@@ -43,7 +48,6 @@ import {
   ORGANISATION_STATUS_PARAM,
   parseOrganisationFilterFromQuery,
 } from "~/components/Organisation/organisationFilter";
-import { PageBackground } from "~/components/PageBackground";
 import { InternalServerError } from "~/components/Status/InternalServerError";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
@@ -296,14 +300,11 @@ const Organisations: NextPageWithLayout<{
         <title>Yoma | 🏢 Organisations</title>
       </Head>
 
-      <PageBackground className="h-[14.8rem] md:h-[18.4rem]" />
-
-      <div className="z-10 container mt-14 max-w-7xl px-2 py-8 md:mt-[7rem]">
-        <div className="flex flex-col gap-4 py-4">
-          <h3 className="mt-3 mb-6 flex items-center text-xl font-semibold tracking-normal whitespace-nowrap text-white md:mt-0 md:mb-9 md:text-3xl">
-            🏢 Organisations
-          </h3>
-
+      <ListPageShell>
+        <ListPageHeader
+          title={"🏢 Organisations"}
+          description="Organisations registered on Yoma, and where each one is in the approval process."
+        >
           {/* TABBED NAVIGATION */}
           <ListPageStatusTabs
             basePath="/organisations"
@@ -338,73 +339,75 @@ const Organisations: NextPageWithLayout<{
               ]}
             />
           </ListPageSearchToolbar>
-        </div>
+        </ListPageHeader>
 
         {/* MAIN CONTENT */}
-        <ListPageResults
-          isLoading={isLoadingSearchResults}
-          isShowingPreviousResults={isShowingPreviousResults}
-          id="results"
-        >
-          <div className="rounded-lg md:p-4">
-            {/* NO RESULTS */}
-            {searchResults && searchResults.totalCount === 0 && (
-              <div className="flex h-fit flex-col items-center rounded-lg bg-white pb-8 md:pb-16">
-                <NoRowsMessage
-                  title={"No organisations found"}
-                  description={
-                    isSearchPerformed || status !== null
-                      ? "Please try refining your search query."
-                      : "This is where you will find all the organisations that have registered."
-                  }
-                />
+        <ListPageBody>
+          <ListPageResults
+            isLoading={isLoadingSearchResults}
+            isShowingPreviousResults={isShowingPreviousResults}
+            id="results"
+          >
+            <div className="rounded-lg md:p-4">
+              {/* NO RESULTS */}
+              {searchResults && searchResults.totalCount === 0 && (
+                <div className="flex h-fit flex-col items-center rounded-lg bg-white pb-8 md:pb-16">
+                  <NoRowsMessage
+                    title={"No organisations found"}
+                    description={
+                      isSearchPerformed || status !== null
+                        ? "Please try refining your search query."
+                        : "This is where you will find all the organisations that have registered."
+                    }
+                  />
 
-                {!isSearchPerformed && status === null && (
-                  <Link
-                    href={`/organisations/register${`?returnUrl=${encodeURIComponent(
-                      getSafeUrl(returnUrl?.toString(), router.asPath),
-                    )}`}`}
-                    className="bg-theme btn btn-primary rounded-3xl border-0 px-16 brightness-105 hover:brightness-110"
-                    id="btnCreateOrganisation" // e2e
-                  >
-                    <IoIosAdd className="mr-1 h-5 w-5" />
-                    Add organisation
-                  </Link>
-                )}
-              </div>
-            )}
-
-            {/* RESULTS */}
-            {searchResults && searchResults.items.length > 0 && (
-              <>
-                <div className="grid w-full place-items-center">
-                  <div className="xs:grid-cols-1 grid w-full grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                    {searchResults.items.map((item) => (
-                      <OrganisationCardComponent
-                        key={`OrganisationCardComponent_${item.id}`}
-                        item={item}
-                        user={user}
-                        onUpdateStatus={updateStatus}
-                        returnUrl={router.asPath}
-                      />
-                    ))}
-                  </div>
+                  {!isSearchPerformed && status === null && (
+                    <Link
+                      href={`/organisations/register${`?returnUrl=${encodeURIComponent(
+                        getSafeUrl(returnUrl?.toString(), router.asPath),
+                      )}`}`}
+                      className="bg-theme btn btn-primary rounded-3xl border-0 px-16 brightness-105 hover:brightness-110"
+                      id="btnCreateOrganisation" // e2e
+                    >
+                      <IoIosAdd className="mr-1 h-5 w-5" />
+                      Add organisation
+                    </Link>
+                  )}
                 </div>
+              )}
 
-                {/* PAGINATION */}
-                <ListPagePagination
-                  currentPage={searchFilter.pageNumber ?? 1}
-                  totalItems={searchResults?.totalCount ?? 0}
-                  pageSize={PAGE_SIZE}
-                  onClick={handlePagerChange}
-                  isShowingPreviousResults={isShowingPreviousResults}
-                  className="mt-2"
-                />
-              </>
-            )}
-          </div>
-        </ListPageResults>
-      </div>
+              {/* RESULTS */}
+              {searchResults && searchResults.items.length > 0 && (
+                <>
+                  <div className="grid w-full place-items-center">
+                    <div className="xs:grid-cols-1 grid w-full grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                      {searchResults.items.map((item) => (
+                        <OrganisationCardComponent
+                          key={`OrganisationCardComponent_${item.id}`}
+                          item={item}
+                          user={user}
+                          onUpdateStatus={updateStatus}
+                          returnUrl={router.asPath}
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* PAGINATION */}
+                  <ListPagePagination
+                    currentPage={searchFilter.pageNumber ?? 1}
+                    totalItems={searchResults?.totalCount ?? 0}
+                    pageSize={PAGE_SIZE}
+                    onClick={handlePagerChange}
+                    isShowingPreviousResults={isShowingPreviousResults}
+                    className="mt-2"
+                  />
+                </>
+              )}
+            </div>
+          </ListPageResults>
+        </ListPageBody>
+      </ListPageShell>
     </>
   );
 };

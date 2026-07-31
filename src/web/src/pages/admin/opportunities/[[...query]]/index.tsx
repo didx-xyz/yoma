@@ -58,8 +58,12 @@ import {
 import PullSyncBadge from "~/components/Opportunity/Badges/PullSyncBadge";
 import { OpportunityAdminFilterVertical } from "~/components/Opportunity/OpportunityAdminFilterVertical";
 import OpportunityStatus from "~/components/Opportunity/OpportunityStatus";
+import {
+  ListPageBody,
+  ListPageHeader,
+  ListPageShell,
+} from "~/components/Common/ListPage/ListPageHeader";
 import { ListPagePagination } from "~/components/Common/ListPage/ListPageResults";
-import { PageBackground } from "~/components/PageBackground";
 import { InternalServerError } from "~/components/Status/InternalServerError";
 import { LoadingSkeleton } from "~/components/Status/LoadingSkeleton";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
@@ -332,8 +336,6 @@ const OpportunitiesAdmin: NextPageWithLayout<{
         <title>Yoma | 🏆 Opportunities</title>
       </Head>
 
-      <PageBackground className="h-[14.3rem] md:h-[18.4rem]" />
-
       {/* POPUP FILTER */}
       <CustomModal
         isOpen={filterFullWindowVisible}
@@ -384,12 +386,11 @@ const OpportunitiesAdmin: NextPageWithLayout<{
       {/* REFERENCE FOR FILTER POPUP: fix menu z-index issue */}
       <div ref={myRef} />
 
-      <div className="z-10 container mt-14 max-w-7xl px-2 py-8 md:mt-[7rem]">
-        <div className="flex flex-col gap-4 py-4">
-          <h3 className="mt-3 mb-6 flex items-center text-xl font-semibold tracking-normal whitespace-nowrap text-white md:mt-0 md:mb-9 md:text-3xl">
-            🏆 Opportunities
-          </h3>
-
+      <ListPageShell>
+        <ListPageHeader
+          title={"🏆 Opportunities"}
+          description="Every opportunity across all organisations, and the tools to publish, feature or retire them."
+        >
           {/* TABBED NAVIGATION */}
           <OpportunityAdminStatusTabs
             basePath="/admin/opportunities"
@@ -430,96 +431,230 @@ const OpportunitiesAdmin: NextPageWithLayout<{
               className="-ml-2"
             />
           )}
-        </div>
+        </ListPageHeader>
 
         {/* MAIN CONTENT */}
-        {isLoadingSearchResults && (
-          <div className="flex h-fit flex-col items-center rounded-lg bg-white p-8 md:pb-16">
-            <LoadingSkeleton />
-          </div>
-        )}
+        <ListPageBody>
+          {isLoadingSearchResults && (
+            <div className="flex h-fit flex-col items-center rounded-lg bg-white p-8 md:pb-16">
+              <LoadingSkeleton />
+            </div>
+          )}
 
-        {/* SEARCH RESULTS */}
-        {/* the previous page stays visible (dimmed) while the next one loads, so paging
+          {/* SEARCH RESULTS */}
+          {/* the previous page stays visible (dimmed) while the next one loads, so paging
             never changes the page height and never moves the scroll position */}
-        {!isLoadingSearchResults && (
-          <div
-            id="results"
-            className={`transition-opacity ${
-              isShowingPreviousResults ? "opacity-50" : ""
-            }`}
-          >
-            {/* <div className="rounded-lg bg-transparent md:bg-white md:p-4"> */}
-            {/* NO ROWS */}
-            {(!searchResults || searchResults.items?.length === 0) &&
-              !isSearchPerformed &&
-              status === null && (
-                <div className="flex h-fit flex-col items-center rounded-lg bg-white pb-8 md:pb-16">
-                  <NoRowsMessage
-                    title={"You will find your opportunities here"}
-                    description={
-                      "This is where you will find all the awesome opportunities that have been created."
-                    }
-                  />
-                </div>
-              )}
-            {(!searchResults || searchResults.items?.length === 0) &&
-              (isSearchPerformed || status !== null) && (
-                <div className="flex h-fit flex-col items-center rounded-lg bg-white pb-8 md:pb-16">
-                  <NoRowsMessage
-                    title={"No opportunities found"}
-                    description={"Please try refining your search query."}
-                  />
-                </div>
-              )}
+          {!isLoadingSearchResults && (
+            <div
+              id="results"
+              className={`transition-opacity ${
+                isShowingPreviousResults ? "opacity-50" : ""
+              }`}
+            >
+              {/* <div className="rounded-lg bg-transparent md:bg-white md:p-4"> */}
+              {/* NO ROWS */}
+              {(!searchResults || searchResults.items?.length === 0) &&
+                !isSearchPerformed &&
+                status === null && (
+                  <div className="flex h-fit flex-col items-center rounded-lg bg-white pb-8 md:pb-16">
+                    <NoRowsMessage
+                      title={"You will find your opportunities here"}
+                      description={
+                        "This is where you will find all the awesome opportunities that have been created."
+                      }
+                    />
+                  </div>
+                )}
+              {(!searchResults || searchResults.items?.length === 0) &&
+                (isSearchPerformed || status !== null) && (
+                  <div className="flex h-fit flex-col items-center rounded-lg bg-white pb-8 md:pb-16">
+                    <NoRowsMessage
+                      title={"No opportunities found"}
+                      description={"Please try refining your search query."}
+                    />
+                  </div>
+                )}
 
-            {/* RESULTS */}
-            {searchResults && searchResults.items?.length > 0 && (
-              <>
-                {/* MOBILE */}
-                <div className="flex flex-col gap-4 md:hidden">
-                  {searchResults.items.map((opportunity) => (
-                    <div
-                      key={`sm_${opportunity.id}`}
-                      className="shadow-custom flex flex-col justify-between gap-4 rounded-lg bg-white p-4"
-                    >
-                      <div className="border-gray-light flex flex-row gap-2 border-b-2 pb-2">
-                        <span title={opportunity.title} className="w-full">
-                          <Link
-                            href={`/organisations/${opportunity.organizationId}/opportunities/${opportunity.id}/info?returnUrl=${encodeURIComponent(router.asPath)}`}
-                            className="line-clamp-1 text-start font-semibold"
-                          >
-                            {opportunity.title}
-                          </Link>
-                          <PullSyncBadge opportunity={opportunity} />
-                        </span>
-                        <OpportunityActions
-                          opportunity={opportunity}
-                          user={{ roles: [ROLE_ADMIN] }}
-                          organizationId={opportunity.organizationId}
-                          returnUrl={router.asPath}
-                          actionOptions={[
-                            OpportunityActionOptions.EDIT_DETAILS,
-                            OpportunityActionOptions.DOWNLOAD_COMPLETION_FILES,
-                            OpportunityActionOptions.COPY_EXTERNAL_LINK,
-                            OpportunityActionOptions.VIEW_ATTENDANCE_LINKS,
-                            OpportunityActionOptions.CREATE_ATTENDANCE_LINK,
-                            OpportunityActionOptions.MAKE_ACTIVE,
-                            OpportunityActionOptions.MAKE_INACTIVE,
-                            OpportunityActionOptions.MAKE_VISIBLE,
-                            OpportunityActionOptions.MAKE_HIDDEN,
-                            OpportunityActionOptions.MARK_FEATURED,
-                            OpportunityActionOptions.UNMARK_FEATURED,
-                            OpportunityActionOptions.DELETE,
-                          ]}
-                        />
+              {/* RESULTS */}
+              {searchResults && searchResults.items?.length > 0 && (
+                <>
+                  {/* MOBILE */}
+                  <div className="flex flex-col gap-4 md:hidden">
+                    {searchResults.items.map((opportunity) => (
+                      <div
+                        key={`sm_${opportunity.id}`}
+                        className="shadow-custom flex flex-col justify-between gap-4 rounded-lg bg-white p-4"
+                      >
+                        <div className="border-gray-light flex flex-row gap-2 border-b-2 pb-2">
+                          <span title={opportunity.title} className="w-full">
+                            <Link
+                              href={`/organisations/${opportunity.organizationId}/opportunities/${opportunity.id}/info?returnUrl=${encodeURIComponent(router.asPath)}`}
+                              className="line-clamp-1 text-start font-semibold"
+                            >
+                              {opportunity.title}
+                            </Link>
+                            <PullSyncBadge opportunity={opportunity} />
+                          </span>
+                          <OpportunityActions
+                            opportunity={opportunity}
+                            user={{ roles: [ROLE_ADMIN] }}
+                            organizationId={opportunity.organizationId}
+                            returnUrl={router.asPath}
+                            actionOptions={[
+                              OpportunityActionOptions.EDIT_DETAILS,
+                              OpportunityActionOptions.DOWNLOAD_COMPLETION_FILES,
+                              OpportunityActionOptions.COPY_EXTERNAL_LINK,
+                              OpportunityActionOptions.VIEW_ATTENDANCE_LINKS,
+                              OpportunityActionOptions.CREATE_ATTENDANCE_LINK,
+                              OpportunityActionOptions.MAKE_ACTIVE,
+                              OpportunityActionOptions.MAKE_INACTIVE,
+                              OpportunityActionOptions.MAKE_VISIBLE,
+                              OpportunityActionOptions.MAKE_HIDDEN,
+                              OpportunityActionOptions.MARK_FEATURED,
+                              OpportunityActionOptions.UNMARK_FEATURED,
+                              OpportunityActionOptions.DELETE,
+                            ]}
+                          />
+                        </div>
+
+                        <div className="text-gray-dark flex flex-col gap-2">
+                          {/* ZLTO Reward */}
+                          <div className="flex justify-between">
+                            <p className="text-sm tracking-wider">ZLTO</p>
+                            <div className="flex flex-col gap-2">
+                              {opportunity.zltoReward == null && (
+                                <span
+                                  className={`badge bg-orange-light text-orange px-4`}
+                                >
+                                  <span className="ml-1 text-xs">Disabled</span>
+                                </span>
+                              )}
+                              {opportunity.zltoReward != null && (
+                                <span
+                                  className={`badge bg-gray-light text-gray-dark min-w-20 px-4`}
+                                >
+                                  <Image
+                                    src={iconZlto}
+                                    alt="Zlto icon"
+                                    width={16}
+                                    className="h-auto"
+                                  />
+                                  <span className="ml-1 text-xs">
+                                    {opportunity.zltoReward}
+                                  </span>
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* ZLTO Reward Cumulative */}
+                          <div className="flex justify-between">
+                            <p className="text-sm tracking-wider">
+                              ZLTO Cumulative
+                            </p>
+                            <div className="flex flex-col gap-2">
+                              <span
+                                className={`badge bg-gray-light text-gray-dark min-w-20 px-4`}
+                              >
+                                <Image
+                                  src={iconZlto}
+                                  alt="Zlto icon"
+                                  width={16}
+                                  className="h-auto"
+                                />
+                                <span className="ml-1 text-xs">
+                                  {opportunity.zltoRewardCumulative ?? 0}
+                                </span>
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Participants */}
+                          <div className="flex justify-between">
+                            <p className="text-sm tracking-wider">
+                              Participants
+                            </p>
+                            <span
+                              className={`badge min-w-20 ${opportunity.participantCountTotal > 0 ? "bg-green-light text-green" : "bg-gray-light text-gray-dark"}`}
+                            >
+                              <IoMdPerson className="h-4 w-4" />
+                              <span className="ml-1 text-xs">
+                                {opportunity.participantCountTotal}
+                              </span>
+                            </span>
+                          </div>
+
+                          {/* Status */}
+                          <div className="flex justify-between">
+                            <p className="text-sm tracking-wider">Status</p>
+                            <div className="flex justify-start gap-2">
+                              <OpportunityStatus
+                                status={opportunity?.status?.toString()}
+                              />
+                            </div>
+                          </div>
+
+                          {/* Visible */}
+                          <div className="flex justify-between">
+                            <p className="text-sm tracking-wider">Visible</p>
+                            <div className="flex justify-start gap-2">
+                              {opportunity?.hidden ? (
+                                <span className="badge bg-yellow-tint text-yellow w-20">
+                                  Hidden
+                                </span>
+                              ) : (
+                                <span className="badge bg-green-light text-green w-20">
+                                  Visible
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
                       </div>
+                    ))}
+                  </div>
 
-                      <div className="text-gray-dark flex flex-col gap-2">
-                        {/* ZLTO Reward */}
-                        <div className="flex justify-between">
-                          <p className="text-sm tracking-wider">ZLTO</p>
-                          <div className="flex flex-col gap-2">
+                  {/* DESKTOP */}
+                  <table className="border-gray-light hidden border-separate rounded-lg bg-white md:table md:table-auto">
+                    <thead>
+                      <tr className="!border-gray-light text-gray-dark">
+                        <th className="border-gray-light border-b-2 !py-4">
+                          Title
+                        </th>
+                        <th className="border-gray-light border-b-2">ZLTO</th>
+                        <th className="border-gray-light border-b-2">
+                          ZLTO Cumulative
+                        </th>
+                        <th className="border-gray-light border-b-2">
+                          Participants
+                        </th>
+                        <th className="border-gray-light border-b-2">Status</th>
+                        <th className="border-gray-light border-b-2">
+                          Visible
+                        </th>
+                        <th className="border-gray-light border-b-2">
+                          Actions
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {searchResults.items.map((opportunity) => (
+                        <tr key={`md_${opportunity.id}`}>
+                          <td className="border-gray-light border-b-2">
+                            <span
+                              className="tooltip tooltip-top tooltip-secondary"
+                              data-tip={opportunity.title}
+                            >
+                              <Link
+                                href={`/organisations/${opportunity.organizationId}/opportunities/${opportunity.id}/info?returnUrl=${encodeURIComponent(router.asPath)}`}
+                                className="line-clamp-1 text-start"
+                              >
+                                {opportunity.title}
+                              </Link>
+                            </span>
+                            <PullSyncBadge opportunity={opportunity} />
+                          </td>
+                          <td className="border-gray-light w-28 border-b-2 text-center">
                             {opportunity.zltoReward == null && (
                               <span
                                 className={`badge bg-orange-light text-orange px-4`}
@@ -529,7 +664,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                             )}
                             {opportunity.zltoReward != null && (
                               <span
-                                className={`badge bg-gray-light text-gray-dark min-w-20 px-4`}
+                                className={`badge bg-gray-light text-gray-dark px-4`}
                               >
                                 <Image
                                   src={iconZlto}
@@ -542,17 +677,10 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                                 </span>
                               </span>
                             )}
-                          </div>
-                        </div>
-
-                        {/* ZLTO Reward Cumulative */}
-                        <div className="flex justify-between">
-                          <p className="text-sm tracking-wider">
-                            ZLTO Cumulative
-                          </p>
-                          <div className="flex flex-col gap-2">
+                          </td>
+                          <td className="border-gray-light w-28 border-b-2 text-center">
                             <span
-                              className={`badge bg-gray-light text-gray-dark min-w-20 px-4`}
+                              className={`badge bg-gray-light text-gray-dark px-4`}
                             >
                               <Image
                                 src={iconZlto}
@@ -564,36 +692,20 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                                 {opportunity.zltoRewardCumulative ?? 0}
                               </span>
                             </span>
-                          </div>
-                        </div>
-
-                        {/* Participants */}
-                        <div className="flex justify-between">
-                          <p className="text-sm tracking-wider">Participants</p>
-                          <span
-                            className={`badge min-w-20 ${opportunity.participantCountTotal > 0 ? "bg-green-light text-green" : "bg-gray-light text-gray-dark"}`}
-                          >
-                            <IoMdPerson className="h-4 w-4" />
-                            <span className="ml-1 text-xs">
+                          </td>
+                          <td className="border-gray-light border-b-2 text-center">
+                            <span
+                              className={`badge ${opportunity.participantCountTotal > 0 ? "bg-green-light text-green" : "bg-gray-light text-gray-dark"}`}
+                            >
                               {opportunity.participantCountTotal}
                             </span>
-                          </span>
-                        </div>
-
-                        {/* Status */}
-                        <div className="flex justify-between">
-                          <p className="text-sm tracking-wider">Status</p>
-                          <div className="flex justify-start gap-2">
+                          </td>
+                          <td className="border-gray-light border-b-2 text-center">
                             <OpportunityStatus
                               status={opportunity?.status?.toString()}
                             />
-                          </div>
-                        </div>
-
-                        {/* Visible */}
-                        <div className="flex justify-between">
-                          <p className="text-sm tracking-wider">Visible</p>
-                          <div className="flex justify-start gap-2">
+                          </td>
+                          <td className="border-gray-light border-b-2 text-center">
                             {opportunity?.hidden ? (
                               <span className="badge bg-yellow-tint text-yellow w-20">
                                 Hidden
@@ -603,154 +715,51 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                                 Visible
                               </span>
                             )}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* DESKTOP */}
-                <table className="border-gray-light hidden border-separate rounded-lg bg-white md:table md:table-auto">
-                  <thead>
-                    <tr className="!border-gray-light text-gray-dark">
-                      <th className="border-gray-light border-b-2 !py-4">
-                        Title
-                      </th>
-                      <th className="border-gray-light border-b-2">ZLTO</th>
-                      <th className="border-gray-light border-b-2">
-                        ZLTO Cumulative
-                      </th>
-                      <th className="border-gray-light border-b-2">
-                        Participants
-                      </th>
-                      <th className="border-gray-light border-b-2">Status</th>
-                      <th className="border-gray-light border-b-2">Visible</th>
-                      <th className="border-gray-light border-b-2">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {searchResults.items.map((opportunity) => (
-                      <tr key={`md_${opportunity.id}`}>
-                        <td className="border-gray-light border-b-2">
-                          <span
-                            className="tooltip tooltip-top tooltip-secondary"
-                            data-tip={opportunity.title}
-                          >
-                            <Link
-                              href={`/organisations/${opportunity.organizationId}/opportunities/${opportunity.id}/info?returnUrl=${encodeURIComponent(router.asPath)}`}
-                              className="line-clamp-1 text-start"
-                            >
-                              {opportunity.title}
-                            </Link>
-                          </span>
-                          <PullSyncBadge opportunity={opportunity} />
-                        </td>
-                        <td className="border-gray-light w-28 border-b-2 text-center">
-                          {opportunity.zltoReward == null && (
-                            <span
-                              className={`badge bg-orange-light text-orange px-4`}
-                            >
-                              <span className="ml-1 text-xs">Disabled</span>
-                            </span>
-                          )}
-                          {opportunity.zltoReward != null && (
-                            <span
-                              className={`badge bg-gray-light text-gray-dark px-4`}
-                            >
-                              <Image
-                                src={iconZlto}
-                                alt="Zlto icon"
-                                width={16}
-                                className="h-auto"
+                          </td>
+                          <td className="border-gray-light border-b-2 whitespace-nowrap">
+                            <div className="flex flex-row items-center justify-center gap-2">
+                              {/* ACTIONS */}
+                              <OpportunityActions
+                                opportunity={opportunity}
+                                user={{ roles: [ROLE_ADMIN] }}
+                                organizationId={opportunity.organizationId}
+                                returnUrl={router.asPath}
+                                actionOptions={[
+                                  OpportunityActionOptions.EDIT_DETAILS,
+                                  OpportunityActionOptions.DOWNLOAD_COMPLETION_FILES,
+                                  OpportunityActionOptions.COPY_EXTERNAL_LINK,
+                                  OpportunityActionOptions.VIEW_ATTENDANCE_LINKS,
+                                  OpportunityActionOptions.CREATE_ATTENDANCE_LINK,
+                                  OpportunityActionOptions.MAKE_ACTIVE,
+                                  OpportunityActionOptions.MAKE_INACTIVE,
+                                  OpportunityActionOptions.MAKE_VISIBLE,
+                                  OpportunityActionOptions.MAKE_HIDDEN,
+                                  OpportunityActionOptions.MARK_FEATURED,
+                                  OpportunityActionOptions.UNMARK_FEATURED,
+                                  OpportunityActionOptions.DELETE,
+                                ]}
                               />
-                              <span className="ml-1 text-xs">
-                                {opportunity.zltoReward}
-                              </span>
-                            </span>
-                          )}
-                        </td>
-                        <td className="border-gray-light w-28 border-b-2 text-center">
-                          <span
-                            className={`badge bg-gray-light text-gray-dark px-4`}
-                          >
-                            <Image
-                              src={iconZlto}
-                              alt="Zlto icon"
-                              width={16}
-                              className="h-auto"
-                            />
-                            <span className="ml-1 text-xs">
-                              {opportunity.zltoRewardCumulative ?? 0}
-                            </span>
-                          </span>
-                        </td>
-                        <td className="border-gray-light border-b-2 text-center">
-                          <span
-                            className={`badge ${opportunity.participantCountTotal > 0 ? "bg-green-light text-green" : "bg-gray-light text-gray-dark"}`}
-                          >
-                            {opportunity.participantCountTotal}
-                          </span>
-                        </td>
-                        <td className="border-gray-light border-b-2 text-center">
-                          <OpportunityStatus
-                            status={opportunity?.status?.toString()}
-                          />
-                        </td>
-                        <td className="border-gray-light border-b-2 text-center">
-                          {opportunity?.hidden ? (
-                            <span className="badge bg-yellow-tint text-yellow w-20">
-                              Hidden
-                            </span>
-                          ) : (
-                            <span className="badge bg-green-light text-green w-20">
-                              Visible
-                            </span>
-                          )}
-                        </td>
-                        <td className="border-gray-light border-b-2 whitespace-nowrap">
-                          <div className="flex flex-row items-center justify-center gap-2">
-                            {/* ACTIONS */}
-                            <OpportunityActions
-                              opportunity={opportunity}
-                              user={{ roles: [ROLE_ADMIN] }}
-                              organizationId={opportunity.organizationId}
-                              returnUrl={router.asPath}
-                              actionOptions={[
-                                OpportunityActionOptions.EDIT_DETAILS,
-                                OpportunityActionOptions.DOWNLOAD_COMPLETION_FILES,
-                                OpportunityActionOptions.COPY_EXTERNAL_LINK,
-                                OpportunityActionOptions.VIEW_ATTENDANCE_LINKS,
-                                OpportunityActionOptions.CREATE_ATTENDANCE_LINK,
-                                OpportunityActionOptions.MAKE_ACTIVE,
-                                OpportunityActionOptions.MAKE_INACTIVE,
-                                OpportunityActionOptions.MAKE_VISIBLE,
-                                OpportunityActionOptions.MAKE_HIDDEN,
-                                OpportunityActionOptions.MARK_FEATURED,
-                                OpportunityActionOptions.UNMARK_FEATURED,
-                                OpportunityActionOptions.DELETE,
-                              ]}
-                            />
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
 
-                {/* PAGINATION */}
-                <ListPagePagination
-                  currentPage={searchFilter.pageNumber ?? 1}
-                  totalItems={searchResults.totalCount as number}
-                  pageSize={PAGE_SIZE}
-                  onClick={handlePagerChange}
-                  isShowingPreviousResults={isShowingPreviousResults}
-                />
-              </>
-            )}
-          </div>
-        )}
-      </div>
+                  {/* PAGINATION */}
+                  <ListPagePagination
+                    currentPage={searchFilter.pageNumber ?? 1}
+                    totalItems={searchResults.totalCount as number}
+                    pageSize={PAGE_SIZE}
+                    onClick={handlePagerChange}
+                    isShowingPreviousResults={isShowingPreviousResults}
+                  />
+                </>
+              )}
+            </div>
+          )}
+        </ListPageBody>
+      </ListPageShell>
     </>
   );
 };

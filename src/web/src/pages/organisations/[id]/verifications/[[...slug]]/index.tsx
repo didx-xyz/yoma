@@ -59,6 +59,11 @@ import {
   ListPagePagination,
   ListPageResults,
 } from "~/components/Common/ListPage/ListPageResults";
+import {
+  ListPageBody,
+  ListPageHeader,
+  ListPageShell,
+} from "~/components/Common/ListPage/ListPageHeader";
 import ListPageSearchToolbar, {
   LIST_PAGE_TOOLBAR_BUTTON_CLASSES,
 } from "~/components/Common/ListPage/ListPageSearchToolbar";
@@ -85,7 +90,6 @@ import {
   VERIFICATION_FILTER_SPEC,
   VERIFICATION_STATUS_PARAM,
 } from "~/components/Organisation/Verifications/verificationAdminFilter";
-import { PageBackground } from "~/components/PageBackground";
 import { ApiErrors } from "~/components/Status/ApiErrors";
 import { InternalServerError } from "~/components/Status/InternalServerError";
 import LimitedFunctionalityBadge from "~/components/Status/LimitedFunctionalityBadge";
@@ -570,8 +574,6 @@ const OpportunityVerifications: NextPageWithLayout<{
 
       {isLoading && <Loading />}
 
-      <PageBackground className="h-[14.3rem] md:h-[18.4rem]" />
-
       {/* REFERENCE FOR FILTER POPUP: fix menu z-index issue */}
       <div ref={myRef} />
 
@@ -829,12 +831,15 @@ const OpportunityVerifications: NextPageWithLayout<{
       </CustomModal>
 
       {/* PAGE */}
-      <div className="z-10 container mt-14 max-w-7xl px-2 py-8 md:mt-[7rem]">
-        <div className="flex flex-col gap-4 py-4">
-          <h3 className="mt-3 mb-6 flex items-center text-xl font-semibold tracking-normal whitespace-nowrap text-white md:mt-0 md:mb-9 md:text-3xl">
-            ✅ Submissions <LimitedFunctionalityBadge />
-          </h3>
-
+      <ListPageShell>
+        <ListPageHeader
+          title={
+            <>
+              ✅ Submissions <LimitedFunctionalityBadge />
+            </>
+          }
+          description="Completions youth have submitted for your opportunities, awaiting your approval."
+        >
           {/* TABBED NAVIGATION */}
           <ListPageStatusTabs
             basePath={`/organisations/${id}/verifications`}
@@ -881,214 +886,216 @@ const OpportunityVerifications: NextPageWithLayout<{
               }}
             />
           )}
-        </div>
+        </ListPageHeader>
 
         {/* MAIN CONTENT */}
-        <ListPageResults
-          isLoading={isLoadingSearchResults}
-          isShowingPreviousResults={isShowingPreviousResults}
-          id="results"
-        >
-          {/* NO RESULTS */}
-          {searchResults && searchResults.totalCount === 0 && (
-            <div className="flex h-fit flex-col items-center rounded-lg bg-white pb-8 md:pb-16">
-              <NoRowsMessage
-                title={"No results found"}
-                description={
-                  isSearchPerformed || status !== null
-                    ? "Please try refining your search query."
-                    : "This is where you will find the submissions awaiting your review."
-                }
-              />
-            </div>
-          )}
-
-          {/* RESULTS */}
-          {searchResults && searchResults.items?.length > 0 && (
-            <>
-              {/* MOBILE */}
-              <div className="flex flex-col gap-4 md:hidden">
-                {searchResults.items.map((item) => (
-                  <MobileCard
-                    key={`MobileCard_${item.id}`}
-                    item={item}
-                    handleRowSelect={handleRowSelect}
-                    selectedRows={selectedRows}
-                    returnUrl={returnUrl}
-                    id={id}
-                    onVerify={() => {
-                      if (isPartnerManagedSubmission(item)) return;
-                      setBulkActionApprove(null);
-                      setTempSelectedRows([item]);
-                      setModalVerifyVisible(true);
-                    }}
-                  />
-                ))}
+        <ListPageBody>
+          <ListPageResults
+            isLoading={isLoadingSearchResults}
+            isShowingPreviousResults={isShowingPreviousResults}
+            id="results"
+          >
+            {/* NO RESULTS */}
+            {searchResults && searchResults.totalCount === 0 && (
+              <div className="flex h-fit flex-col items-center rounded-lg bg-white pb-8 md:pb-16">
+                <NoRowsMessage
+                  title={"No results found"}
+                  description={
+                    isSearchPerformed || status !== null
+                      ? "Please try refining your search query."
+                      : "This is where you will find the submissions awaiting your review."
+                  }
+                />
               </div>
+            )}
 
-              <table className="border-gray-light hidden w-full border-separate rounded-lg bg-white md:table">
-                <thead>
-                  <tr className="border-gray text-gray-dark">
-                    <th className="border-gray-light w-[35px] !py-4 pr-4">
-                      <input
-                        type="checkbox"
-                        className="checkbox checkbox-sm checkbox-primary"
-                        checked={
-                          selectableItems.length > 0 &&
-                          selectedRows?.length === selectableItems.length
-                        }
-                        onChange={handleAllSelect}
-                      />
-                    </th>
-                    <th className="border-gray-light pl-0">Student</th>
-                    <th className="border-gray-light">Opportunity</th>
-                    <th className="border-gray-light w-[195px]">
-                      Date connected
-                    </th>
-                    <th className="border-gray-light">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
+            {/* RESULTS */}
+            {searchResults && searchResults.items?.length > 0 && (
+              <>
+                {/* MOBILE */}
+                <div className="flex flex-col gap-4 md:hidden">
                   {searchResults.items.map((item) => (
-                    <tr key={item.id}>
-                      <td className="border-gray-light text-gray-dark w-[35px] border-t-2 pt-4 !align-top">
+                    <MobileCard
+                      key={`MobileCard_${item.id}`}
+                      item={item}
+                      handleRowSelect={handleRowSelect}
+                      selectedRows={selectedRows}
+                      returnUrl={returnUrl}
+                      id={id}
+                      onVerify={() => {
+                        if (isPartnerManagedSubmission(item)) return;
+                        setBulkActionApprove(null);
+                        setTempSelectedRows([item]);
+                        setModalVerifyVisible(true);
+                      }}
+                    />
+                  ))}
+                </div>
+
+                <table className="border-gray-light hidden w-full border-separate rounded-lg bg-white md:table">
+                  <thead>
+                    <tr className="border-gray text-gray-dark">
+                      <th className="border-gray-light w-[35px] !py-4 pr-4">
                         <input
                           type="checkbox"
                           className="checkbox checkbox-sm checkbox-primary"
-                          checked={selectedRows?.some((x) => x.id == item.id)}
-                          disabled={isPartnerManagedSubmission(item)}
-                          title={
-                            isPartnerManagedSubmission(item)
-                              ? "Partner-managed submissions cannot be approved or declined manually"
-                              : undefined
+                          checked={
+                            selectableItems.length > 0 &&
+                            selectedRows?.length === selectableItems.length
                           }
-                          onChange={(e) => handleRowSelect(e, item)}
+                          onChange={handleAllSelect}
                         />
-                      </td>
-                      <td className="border-gray-light text-gray-dark w-[200px] border-t-2 pl-0 !align-top">
-                        <div className="flex items-center gap-2 text-sm">
-                          <UserInitialsAvatar
-                            displayName={item?.userDisplayName}
-                            photoURL={item?.userPhotoURL ?? null}
-                            alt="Icon User"
-                            size={32}
-                          />
-                          <div>{item.userDisplayName}</div>
-                        </div>
-                      </td>
-                      <td className="border-gray-light text-gray-dark w-[420px] border-t-2 !align-top">
-                        {(() => {
-                          const detailsHref = `/organisations/${id}/opportunities/${item.opportunityId}/info?returnUrl=${encodeURIComponent(
-                            getSafeUrl(returnUrl?.toString(), router.asPath),
-                          )}`;
-
-                          return (
-                            <Link
-                              className="line-clamp-2 max-w-[420px] font-medium text-black underline"
-                              href={detailsHref}
-                            >
-                              {item.opportunityTitle}
-                            </Link>
-                          );
-                        })()}
-                      </td>
-                      <td className="border-gray-light text-gray-dark w-[185px] border-t-2 !align-top">
-                        {item.dateModified && (
-                          <Moment format={DATE_FORMAT_HUMAN} utc={true}>
-                            {item.dateModified}
-                          </Moment>
-                        )}
-                      </td>
-                      <td className="border-gray-light text-gray-dark w-[140px] border-t-2 !align-top">
-                        <div className="flex justify-start">
-                          {/* Pending Button or Pending Progress (externally managed) */}
-                          {item.verificationStatus &&
-                            item.verificationStatus == "Pending" && (
-                              <div className="flex flex-col gap-2">
-                                {!isPartnerManagedSubmission(item) && (
-                                  <button
-                                    type="button"
-                                    className="btn border-gray text-gray-dark btn-sm hover:bg-gray flex-nowrap bg-white hover:text-white"
-                                    onClick={() => {
-                                      setBulkActionApprove(null);
-                                      setTempSelectedRows([item]);
-                                      setModalVerifyVisible(true);
-                                    }}
-                                  >
-                                    <IoMdAlert className="text-yellow mr-2 h-6 w-6" />
-                                    Pending
-                                  </button>
-                                )}
-
-                                {isPartnerManagedSubmission(item) &&
-                                  item.percentComplete !== null &&
-                                  item.percentComplete !== undefined && (
-                                    <div className="flex w-full max-w-[130px] flex-col gap-1 text-xs">
-                                      <span className="text-gray-dark">
-                                        {item.percentComplete}% complete
-                                        <span
-                                          title={`Managed by ${getPartnerSourceLabel(item)}`}
-                                        >
-                                          <IoInformationCircleOutline className="text-blue ml-1 inline-block size-5" />
-                                        </span>
-                                      </span>
-                                      <div className="h-1.5 w-full overflow-hidden rounded-full bg-gray-200">
-                                        <div
-                                          className="bg-green h-full rounded-full"
-                                          style={{
-                                            width: `${Math.min(Math.max(item.percentComplete ?? 0, 0), 100)}%`,
-                                          }}
-                                        />
-                                      </div>
-                                    </div>
-                                  )}
-                              </div>
-                            )}
-
-                          {/* Status Badges */}
-                          {item.verificationStatus &&
-                            item.verificationStatus == "Completed" && (
-                              <div title="Submission has been completed.">
-                                <span
-                                  className={`badge bg-green-light text-green border-green/10 gap-1 border border-none text-[10px] font-semibold select-none`}
-                                >
-                                  <IoMdCheckmark className="h-3.5 w-3.5" />
-                                  Completed
-                                </span>
-                              </div>
-                            )}
-
-                          {item.verificationStatus &&
-                            item.verificationStatus == "Rejected" && (
-                              <div title="Submission was declined.">
-                                <span
-                                  className={`badge gap-1 border border-none border-red-100 bg-red-50 text-[10px] font-semibold text-red-500 select-none`}
-                                >
-                                  <IoMdClose className="h-3.5 w-3.5" />
-                                  Declined
-                                </span>
-                              </div>
-                            )}
-                        </div>
-                      </td>
+                      </th>
+                      <th className="border-gray-light pl-0">Student</th>
+                      <th className="border-gray-light">Opportunity</th>
+                      <th className="border-gray-light w-[195px]">
+                        Date connected
+                      </th>
+                      <th className="border-gray-light">Status</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {searchResults.items.map((item) => (
+                      <tr key={item.id}>
+                        <td className="border-gray-light text-gray-dark w-[35px] border-t-2 pt-4 !align-top">
+                          <input
+                            type="checkbox"
+                            className="checkbox checkbox-sm checkbox-primary"
+                            checked={selectedRows?.some((x) => x.id == item.id)}
+                            disabled={isPartnerManagedSubmission(item)}
+                            title={
+                              isPartnerManagedSubmission(item)
+                                ? "Partner-managed submissions cannot be approved or declined manually"
+                                : undefined
+                            }
+                            onChange={(e) => handleRowSelect(e, item)}
+                          />
+                        </td>
+                        <td className="border-gray-light text-gray-dark w-[200px] border-t-2 pl-0 !align-top">
+                          <div className="flex items-center gap-2 text-sm">
+                            <UserInitialsAvatar
+                              displayName={item?.userDisplayName}
+                              photoURL={item?.userPhotoURL ?? null}
+                              alt="Icon User"
+                              size={32}
+                            />
+                            <div>{item.userDisplayName}</div>
+                          </div>
+                        </td>
+                        <td className="border-gray-light text-gray-dark w-[420px] border-t-2 !align-top">
+                          {(() => {
+                            const detailsHref = `/organisations/${id}/opportunities/${item.opportunityId}/info?returnUrl=${encodeURIComponent(
+                              getSafeUrl(returnUrl?.toString(), router.asPath),
+                            )}`;
 
-              {/* PAGINATION */}
-              <ListPagePagination
-                currentPage={searchFilter.pageNumber ?? 1}
-                totalItems={searchResults?.totalCount ?? 0}
-                pageSize={PAGE_SIZE}
-                onClick={handlePagerChange}
-                isShowingPreviousResults={isShowingPreviousResults}
-                className="mt-2"
-              />
-            </>
-          )}
-        </ListPageResults>
-      </div>
+                            return (
+                              <Link
+                                className="line-clamp-2 max-w-[420px] font-medium text-black underline"
+                                href={detailsHref}
+                              >
+                                {item.opportunityTitle}
+                              </Link>
+                            );
+                          })()}
+                        </td>
+                        <td className="border-gray-light text-gray-dark w-[185px] border-t-2 !align-top">
+                          {item.dateModified && (
+                            <Moment format={DATE_FORMAT_HUMAN} utc={true}>
+                              {item.dateModified}
+                            </Moment>
+                          )}
+                        </td>
+                        <td className="border-gray-light text-gray-dark w-[140px] border-t-2 !align-top">
+                          <div className="flex justify-start">
+                            {/* Pending Button or Pending Progress (externally managed) */}
+                            {item.verificationStatus &&
+                              item.verificationStatus == "Pending" && (
+                                <div className="flex flex-col gap-2">
+                                  {!isPartnerManagedSubmission(item) && (
+                                    <button
+                                      type="button"
+                                      className="btn border-gray text-gray-dark btn-sm hover:bg-gray flex-nowrap bg-white hover:text-white"
+                                      onClick={() => {
+                                        setBulkActionApprove(null);
+                                        setTempSelectedRows([item]);
+                                        setModalVerifyVisible(true);
+                                      }}
+                                    >
+                                      <IoMdAlert className="text-yellow mr-2 h-6 w-6" />
+                                      Pending
+                                    </button>
+                                  )}
+
+                                  {isPartnerManagedSubmission(item) &&
+                                    item.percentComplete !== null &&
+                                    item.percentComplete !== undefined && (
+                                      <div className="flex w-full max-w-[130px] flex-col gap-1 text-xs">
+                                        <span className="text-gray-dark">
+                                          {item.percentComplete}% complete
+                                          <span
+                                            title={`Managed by ${getPartnerSourceLabel(item)}`}
+                                          >
+                                            <IoInformationCircleOutline className="text-blue ml-1 inline-block size-5" />
+                                          </span>
+                                        </span>
+                                        <div className="h-1.5 w-full overflow-hidden rounded-full bg-gray-200">
+                                          <div
+                                            className="bg-green h-full rounded-full"
+                                            style={{
+                                              width: `${Math.min(Math.max(item.percentComplete ?? 0, 0), 100)}%`,
+                                            }}
+                                          />
+                                        </div>
+                                      </div>
+                                    )}
+                                </div>
+                              )}
+
+                            {/* Status Badges */}
+                            {item.verificationStatus &&
+                              item.verificationStatus == "Completed" && (
+                                <div title="Submission has been completed.">
+                                  <span
+                                    className={`badge bg-green-light text-green border-green/10 gap-1 border border-none text-[10px] font-semibold select-none`}
+                                  >
+                                    <IoMdCheckmark className="h-3.5 w-3.5" />
+                                    Completed
+                                  </span>
+                                </div>
+                              )}
+
+                            {item.verificationStatus &&
+                              item.verificationStatus == "Rejected" && (
+                                <div title="Submission was declined.">
+                                  <span
+                                    className={`badge gap-1 border border-none border-red-100 bg-red-50 text-[10px] font-semibold text-red-500 select-none`}
+                                  >
+                                    <IoMdClose className="h-3.5 w-3.5" />
+                                    Declined
+                                  </span>
+                                </div>
+                              )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+
+                {/* PAGINATION */}
+                <ListPagePagination
+                  currentPage={searchFilter.pageNumber ?? 1}
+                  totalItems={searchResults?.totalCount ?? 0}
+                  pageSize={PAGE_SIZE}
+                  onClick={handlePagerChange}
+                  isShowingPreviousResults={isShowingPreviousResults}
+                  className="mt-2"
+                />
+              </>
+            )}
+          </ListPageResults>
+        </ListPageBody>
+      </ListPageShell>
     </>
   );
 };

@@ -19,6 +19,11 @@ import {
   ListPagePagination,
   ListPageResults,
 } from "~/components/Common/ListPage/ListPageResults";
+import {
+  ListPageBody,
+  ListPageHeader,
+  ListPageShell,
+} from "~/components/Common/ListPage/ListPageHeader";
 import ListPageSearchToolbar, {
   LIST_PAGE_TOOLBAR_BUTTON_CLASSES,
 } from "~/components/Common/ListPage/ListPageSearchToolbar";
@@ -32,7 +37,6 @@ import {
 } from "~/components/Common/ListPage/listPageFilter";
 import MainLayout from "~/components/Layout/Main";
 import NoRowsMessage from "~/components/NoRowsMessage";
-import { PageBackground } from "~/components/PageBackground";
 import { InternalServerError } from "~/components/Status/InternalServerError";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
@@ -203,14 +207,11 @@ const Skills: NextPageWithLayout<{
         <title>Yoma | ⚡Skills</title>
       </Head>
 
-      <PageBackground className="h-[14.8rem] md:h-[18.4rem]" />
-
-      <div className="z-10 container mt-14 max-w-7xl px-2 py-8 md:mt-[7rem]">
-        <div className="flex flex-col gap-4 py-4">
-          <h3 className="mt-3 mb-6 flex items-center text-xl font-semibold tracking-normal whitespace-nowrap text-white md:mt-0 md:mb-9 md:text-3xl">
-            ⚡Skills
-          </h3>
-
+      <ListPageShell>
+        <ListPageHeader
+          title={"⚡Skills"}
+          description="The skills opportunities can award, drawn from the shared skills taxonomy."
+        >
           {/* SEARCH & ACTIONS */}
           {/* NB: no Filters button — there is nothing to filter on beyond the search term */}
           <ListPageSearchToolbar
@@ -232,113 +233,115 @@ const Skills: NextPageWithLayout<{
               ]}
             />
           </ListPageSearchToolbar>
-        </div>
+        </ListPageHeader>
 
         {/* MAIN CONTENT */}
-        <ListPageResults
-          isLoading={isLoadingSearchResults}
-          isShowingPreviousResults={isShowingPreviousResults}
-          skeletonRows={4}
-          id="results"
-        >
-          <div className="md:shadow-custom rounded-lg md:bg-white md:p-4">
-            {/* NO ROWS */}
-            {searchResults && searchResults.items?.length === 0 && (
-              <div className="flex h-fit flex-col items-center rounded-lg bg-white pb-8 md:pb-16">
-                <NoRowsMessage
-                  title={"No skills found"}
-                  description={
-                    searchFilter.nameContains
-                      ? "Please try refining your search query."
-                      : "This is where you will find all the awesome skills that are available"
-                  }
-                />
-              </div>
-            )}
-
-            {/* RESULTS */}
-            {searchResults && searchResults.items?.length > 0 && (
-              <div className="md:overflow-x-hidden">
-                {/* MOBILE */}
-                <div className="flex flex-col gap-4 md:hidden">
-                  {searchResults.items.map((item) => (
-                    <div
-                      key={`sm_${item.id}`}
-                      className="shadow-custom flex flex-col justify-between gap-4 rounded-lg bg-white p-4"
-                    >
-                      <div className="flex flex-row gap-2">
-                        <span title={item.name} className="w-full">
-                          {item.name}
-                        </span>
-
-                        <span title="Copy Skill to clipboard">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              onClick_CopyToClipboard(item.name!);
-                            }}
-                          >
-                            <FaCopy className="text-gray-dark hover:text-blue size-4" />
-                          </button>
-                        </span>
-                      </div>
-                    </div>
-                  ))}
+        <ListPageBody>
+          <ListPageResults
+            isLoading={isLoadingSearchResults}
+            isShowingPreviousResults={isShowingPreviousResults}
+            skeletonRows={4}
+            id="results"
+          >
+            <div className="md:shadow-custom rounded-lg md:bg-white md:p-4">
+              {/* NO ROWS */}
+              {searchResults && searchResults.items?.length === 0 && (
+                <div className="flex h-fit flex-col items-center rounded-lg bg-white pb-8 md:pb-16">
+                  <NoRowsMessage
+                    title={"No skills found"}
+                    description={
+                      searchFilter.nameContains
+                        ? "Please try refining your search query."
+                        : "This is where you will find all the awesome skills that are available"
+                    }
+                  />
                 </div>
+              )}
 
-                {/* DESKTOP */}
-                <table className="border-gray-light hidden border-separate rounded-lg border-x-2 border-t-2 md:table md:table-auto">
-                  <thead>
-                    <tr className="border-gray text-gray-dark">
-                      <th className="border-gray-light border-b-2 !py-4">
-                        Skill
-                      </th>
-                      <th className="border-gray-light border-b-2 text-center">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {searchResults.items.map((opportunity) => (
-                      <tr key={`md_${opportunity.id}`}>
-                        <td className="border-gray-light flex h-14 flex-row items-center gap-2 border-b-2">
-                          {opportunity.name}
-                        </td>
-                        <td className="border-gray-light w-28 border-b-2 text-center">
-                          <span
-                            className="tooltip tooltip-top ml-2"
-                            data-tip="Copy to clipboard"
-                          >
+              {/* RESULTS */}
+              {searchResults && searchResults.items?.length > 0 && (
+                <div className="md:overflow-x-hidden">
+                  {/* MOBILE */}
+                  <div className="flex flex-col gap-4 md:hidden">
+                    {searchResults.items.map((item) => (
+                      <div
+                        key={`sm_${item.id}`}
+                        className="shadow-custom flex flex-col justify-between gap-4 rounded-lg bg-white p-4"
+                      >
+                        <div className="flex flex-row gap-2">
+                          <span title={item.name} className="w-full">
+                            {item.name}
+                          </span>
+
+                          <span title="Copy Skill to clipboard">
                             <button
                               type="button"
                               onClick={() => {
-                                onClick_CopyToClipboard(opportunity.name!);
+                                onClick_CopyToClipboard(item.name!);
                               }}
                             >
                               <FaCopy className="text-gray-dark hover:text-blue size-4" />
                             </button>
                           </span>
-                        </td>
-                      </tr>
+                        </div>
+                      </div>
                     ))}
-                  </tbody>
-                </table>
+                  </div>
 
-                {/* PAGINATION */}
-                <ListPagePagination
-                  currentPage={searchFilter.pageNumber ?? 1}
-                  totalItems={searchResults?.totalCount ?? 0}
-                  pageSize={pageSize}
-                  onClick={handlePagerChange}
-                  isShowingPreviousResults={isShowingPreviousResults}
-                  showPageSizes={true}
-                  className="mt-2"
-                />
-              </div>
-            )}
-          </div>
-        </ListPageResults>
-      </div>
+                  {/* DESKTOP */}
+                  <table className="border-gray-light hidden border-separate rounded-lg border-x-2 border-t-2 md:table md:table-auto">
+                    <thead>
+                      <tr className="border-gray text-gray-dark">
+                        <th className="border-gray-light border-b-2 !py-4">
+                          Skill
+                        </th>
+                        <th className="border-gray-light border-b-2 text-center">
+                          Actions
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {searchResults.items.map((opportunity) => (
+                        <tr key={`md_${opportunity.id}`}>
+                          <td className="border-gray-light flex h-14 flex-row items-center gap-2 border-b-2">
+                            {opportunity.name}
+                          </td>
+                          <td className="border-gray-light w-28 border-b-2 text-center">
+                            <span
+                              className="tooltip tooltip-top ml-2"
+                              data-tip="Copy to clipboard"
+                            >
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  onClick_CopyToClipboard(opportunity.name!);
+                                }}
+                              >
+                                <FaCopy className="text-gray-dark hover:text-blue size-4" />
+                              </button>
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+
+                  {/* PAGINATION */}
+                  <ListPagePagination
+                    currentPage={searchFilter.pageNumber ?? 1}
+                    totalItems={searchResults?.totalCount ?? 0}
+                    pageSize={pageSize}
+                    onClick={handlePagerChange}
+                    isShowingPreviousResults={isShowingPreviousResults}
+                    showPageSizes={true}
+                    className="mt-2"
+                  />
+                </div>
+              )}
+            </div>
+          </ListPageResults>
+        </ListPageBody>
+      </ListPageShell>
     </>
   );
 };
