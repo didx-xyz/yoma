@@ -849,7 +849,10 @@ const OpportunityVerifications: NextPageWithLayout<{
             counts={tabCounts}
             idPrefix="verification"
           />
+        </ListPageHeader>
 
+        {/* MAIN CONTENT */}
+        <ListPageBody>
           {/* SEARCH & FILTERS */}
           <ListPageSearchToolbar
             defaultValue={searchFilter.valueContains}
@@ -866,7 +869,6 @@ const OpportunityVerifications: NextPageWithLayout<{
               items={actionMenuItems}
             />
           </ListPageSearchToolbar>
-
           {/* APPLIED FILTER BADGES */}
           {appliedFilterCount > 0 && (
             <ListPageFilterBadges<MyOpportunitySearchFilterAdmin>
@@ -886,10 +888,6 @@ const OpportunityVerifications: NextPageWithLayout<{
               }}
             />
           )}
-        </ListPageHeader>
-
-        {/* MAIN CONTENT */}
-        <ListPageBody>
           <ListPageResults
             isLoading={isLoadingSearchResults}
             isShowingPreviousResults={isShowingPreviousResults}

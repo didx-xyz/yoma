@@ -523,7 +523,10 @@ const Stores: NextPageWithLayout<{
             counts={tabCounts}
             idPrefix="store_rule"
           />
+        </ListPageHeader>
 
+        {/* MAIN CONTENT */}
+        <ListPageBody>
           {/* SEARCH & FILTERS */}
           <ListPageSearchToolbar
             defaultValue={searchFilter.nameContains}
@@ -554,7 +557,6 @@ const Stores: NextPageWithLayout<{
               ]}
             />
           </ListPageSearchToolbar>
-
           {/* APPLIED FILTER BADGES */}
           {appliedFilterCount > 0 && (
             <ListPageFilterBadges<StoreAccessControlRuleSearchFilter>
@@ -564,10 +566,6 @@ const Stores: NextPageWithLayout<{
               className="-ml-2"
             />
           )}
-        </ListPageHeader>
-
-        {/* MAIN CONTENT */}
-        <ListPageBody>
           <ListPageResults
             isLoading={isLoadingSearchResults}
             isShowingPreviousResults={isShowingPreviousResults}

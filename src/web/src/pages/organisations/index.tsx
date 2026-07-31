@@ -314,7 +314,10 @@ const Organisations: NextPageWithLayout<{
             counts={tabCounts}
             idPrefix="organisation"
           />
+        </ListPageHeader>
 
+        {/* MAIN CONTENT */}
+        <ListPageBody>
           {/* SEARCH & ACTIONS */}
           {/* NB: no Filters button — status is this page's only filter and the tabs own it */}
           <ListPageSearchToolbar
@@ -338,11 +341,7 @@ const Organisations: NextPageWithLayout<{
                 },
               ]}
             />
-          </ListPageSearchToolbar>
-        </ListPageHeader>
-
-        {/* MAIN CONTENT */}
-        <ListPageBody>
+          </ListPageSearchToolbar>{" "}
           <ListPageResults
             isLoading={isLoadingSearchResults}
             isShowingPreviousResults={isShowingPreviousResults}

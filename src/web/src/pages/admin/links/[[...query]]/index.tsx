@@ -464,7 +464,10 @@ const Links: NextPageWithLayout<{
             counts={tabCounts}
             idPrefix="link"
           />
+        </ListPageHeader>
 
+        {/* MAIN CONTENT */}
+        <ListPageBody>
           {/* SEARCH & FILTERS */}
           <ListPageSearchToolbar
             defaultValue={searchFilter.valueContains}
@@ -472,7 +475,6 @@ const Links: NextPageWithLayout<{
             openFilter={setFilterFullWindowVisible}
             appliedFilterCount={appliedFilterCount}
           />
-
           {/* APPLIED FILTER BADGES */}
           {appliedFilterCount > 0 && (
             <LinkAdminFilterBadges
@@ -483,10 +485,6 @@ const Links: NextPageWithLayout<{
               className="-ml-2"
             />
           )}
-        </ListPageHeader>
-
-        {/* MAIN CONTENT */}
-        <ListPageBody>
           <ListPageResults
             isLoading={isLoadingSearchResults}
             isShowingPreviousResults={isShowingPreviousResults}

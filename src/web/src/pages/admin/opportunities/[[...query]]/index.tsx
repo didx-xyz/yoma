@@ -398,7 +398,10 @@ const OpportunitiesAdmin: NextPageWithLayout<{
             status={status}
             counts={tabCounts}
           />
+        </ListPageHeader>
 
+        {/* MAIN CONTENT */}
+        <ListPageBody>
           {/* SEARCH & FILTERS */}
           <OpportunityAdminSearchToolbar
             defaultValue={query?.toString() ?? null}
@@ -421,7 +424,6 @@ const OpportunitiesAdmin: NextPageWithLayout<{
               ]}
             />
           </OpportunityAdminSearchToolbar>
-
           {/* APPLIED FILTER BADGES */}
           {appliedFilterCount > 0 && (
             <OpportunityAdminFilterBadges
@@ -431,16 +433,11 @@ const OpportunitiesAdmin: NextPageWithLayout<{
               className="-ml-2"
             />
           )}
-        </ListPageHeader>
-
-        {/* MAIN CONTENT */}
-        <ListPageBody>
           {isLoadingSearchResults && (
             <div className="flex h-fit flex-col items-center rounded-lg bg-white p-8 md:pb-16">
               <LoadingSkeleton />
             </div>
           )}
-
           {/* SEARCH RESULTS */}
           {/* the previous page stays visible (dimmed) while the next one loads, so paging
             never changes the page height and never moves the scroll position */}

@@ -346,7 +346,10 @@ const Stores: NextPageWithLayout<{
             counts={tabCounts}
             idPrefix="store_rule"
           />
+        </ListPageHeader>
 
+        {/* MAIN CONTENT */}
+        <ListPageBody>
           {/* SEARCH & FILTERS */}
           {/* NB: no create action — authoring a rule is an Admin-role action */}
           <ListPageSearchToolbar
@@ -378,10 +381,6 @@ const Stores: NextPageWithLayout<{
               className="-ml-2"
             />
           )}
-        </ListPageHeader>
-
-        {/* MAIN CONTENT */}
-        <ListPageBody>
           <ListPageResults
             isLoading={isLoadingSearchResults}
             isShowingPreviousResults={isShowingPreviousResults}

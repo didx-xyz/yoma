@@ -366,7 +366,10 @@ const ReferralPrograms: NextPageWithLayout<{
             counts={tabCounts}
             idPrefix="referral_program"
           />
+        </ListPageHeader>
 
+        {/* MAIN CONTENT */}
+        <ListPageBody>
           {/* SEARCH & FILTERS */}
           <ListPageSearchToolbar
             defaultValue={searchFilter.valueContains}
@@ -392,7 +395,6 @@ const ReferralPrograms: NextPageWithLayout<{
               ]}
             />
           </ListPageSearchToolbar>
-
           {/* APPLIED FILTER BADGES */}
           {appliedFilterCount > 0 && (
             <ListPageFilterBadges<ProgramSearchFilterAdmin>
@@ -409,10 +411,6 @@ const ReferralPrograms: NextPageWithLayout<{
               }}
             />
           )}
-        </ListPageHeader>
-
-        {/* MAIN CONTENT */}
-        <ListPageBody>
           <ListPageResults
             isLoading={isLoadingSearchResults}
             isShowingPreviousResults={isShowingPreviousResults}

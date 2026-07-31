@@ -23,11 +23,16 @@ export const ListPageShell: React.FC<{ children: ReactNode }> = ({
   children,
 }) => <div className="flex w-full flex-col">{children}</div>;
 
+/**
+ * The banner carries the title, the description and the status tabs — the tabs are white on
+ * the theme colour and read as attached to it. The search toolbar and the filter badges sit
+ * below in ListPageBody, on the page background.
+ */
 export const ListPageHeader: React.FC<{
   title: ReactNode;
   /** one line on what the page is for; plain text, nothing to open */
   description?: ReactNode;
-  /** status tabs, the search toolbar, the applied-filter badges */
+  /** the status tab bar */
   children?: ReactNode;
 }> = ({ title, description, children }) => (
   <div className="bg-theme relative isolate w-full overflow-hidden">
@@ -43,7 +48,7 @@ export const ListPageHeader: React.FC<{
     />
 
     {/* pt clears the fixed h-20 navbar */}
-    <div className={`${CONTAINER} flex flex-col gap-4 pt-24 pb-6 md:pb-8`}>
+    <div className={`${CONTAINER} flex flex-col gap-4 pt-24 pb-2`}>
       <div className="flex flex-col gap-1">
         <h3 className="flex flex-wrap items-center gap-2 text-xl font-semibold tracking-normal text-white md:text-3xl">
           {title}
@@ -58,12 +63,18 @@ export const ListPageHeader: React.FC<{
   </div>
 );
 
-/** The results column, aligned with the banner above it. */
+/**
+ * Everything below the banner — the chrome and the results — in a column aligned with it.
+ * Children are evenly spaced, so pages list the tabs, toolbar, badges and results as
+ * siblings without wrapper divs.
+ */
 export const ListPageBody: React.FC<{
   className?: string;
   children: ReactNode;
 }> = ({ className = "", children }) => (
-  <div className={`${CONTAINER} py-6 ${className}`}>{children}</div>
+  <div className={`${CONTAINER} flex flex-col gap-4 py-6 ${className}`}>
+    {children}
+  </div>
 );
 
 export default ListPageHeader;

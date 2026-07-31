@@ -456,7 +456,10 @@ const Opportunities: NextPageWithLayout<{
             status={status}
             counts={tabCounts}
           />
+        </ListPageHeader>
 
+        {/* MAIN CONTENT */}
+        <ListPageBody>
           {/* SEARCH & FILTERS */}
           <OpportunityAdminSearchToolbar
             defaultValue={query?.toString() ?? null}
@@ -496,7 +499,6 @@ const Opportunities: NextPageWithLayout<{
               ]}
             />
           </OpportunityAdminSearchToolbar>
-
           {/* APPLIED FILTER BADGES */}
           {appliedFilterCount > 0 && (
             <OpportunityAdminFilterBadges
@@ -506,16 +508,11 @@ const Opportunities: NextPageWithLayout<{
               className="-ml-2"
             />
           )}
-        </ListPageHeader>
-
-        {/* MAIN CONTENT */}
-        <ListPageBody>
           {isLoadingSearchResults && (
             <div className="flex h-fit flex-col items-center rounded-lg bg-white p-8 md:pb-16">
               <LoadingSkeleton />
             </div>
           )}
-
           {!isLoadingSearchResults && (
             <>
               {/* NO ROWS */}

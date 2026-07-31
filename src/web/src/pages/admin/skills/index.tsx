@@ -211,7 +211,10 @@ const Skills: NextPageWithLayout<{
         <ListPageHeader
           title={"⚡Skills"}
           description="The skills opportunities can award, drawn from the shared skills taxonomy."
-        >
+        />
+
+        {/* MAIN CONTENT */}
+        <ListPageBody>
           {/* SEARCH & ACTIONS */}
           {/* NB: no Filters button — there is nothing to filter on beyond the search term */}
           <ListPageSearchToolbar
@@ -232,11 +235,7 @@ const Skills: NextPageWithLayout<{
                 },
               ]}
             />
-          </ListPageSearchToolbar>
-        </ListPageHeader>
-
-        {/* MAIN CONTENT */}
-        <ListPageBody>
+          </ListPageSearchToolbar>{" "}
           <ListPageResults
             isLoading={isLoadingSearchResults}
             isShowingPreviousResults={isShowingPreviousResults}
