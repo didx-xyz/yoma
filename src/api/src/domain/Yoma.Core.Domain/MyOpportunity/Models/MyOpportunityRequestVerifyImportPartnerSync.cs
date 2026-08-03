@@ -4,11 +4,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
   {
     public Guid OpportunityId { get; set; }
 
-    public string? Username => UserEmail ?? UserPhoneNumber;
-
-    public string? UserEmail { get; set; }
-
-    public string? UserPhoneNumber { get; set; }
+    public Guid UserId { get; set; }
 
     public DateTimeOffset? DateStart { get; set; }
 

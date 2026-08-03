@@ -31,6 +31,8 @@ namespace Yoma.Core.Domain.PartnerSync.Services
     private readonly ScheduleJobOptions _scheduleJobOptions;
     private readonly IProcessingService _processingService;
     private readonly IPartnerService _partnerService;
+    private readonly ISyncStateService _syncStateService;
+    private readonly IUserService _userService;
     private readonly IOpportunityService _opportunityService;
     private readonly IOrganizationService _organizationService;
     private readonly IMyOpportunityService _myOpportunityService;
@@ -45,6 +47,8 @@ namespace Yoma.Core.Domain.PartnerSync.Services
         IOptions<ScheduleJobOptions> scheduleJobOptions,
         IProcessingService processingService,
         IPartnerService partnerService,
+        ISyncStateService syncStateService,
+        IUserService userService,
         IOpportunityService opportunityService,
         IOrganizationService organizationService,
         IMyOpportunityService myOpportunityService,
@@ -57,6 +61,8 @@ namespace Yoma.Core.Domain.PartnerSync.Services
       _scheduleJobOptions = scheduleJobOptions.Value ?? throw new ArgumentNullException(nameof(scheduleJobOptions));
       _processingService = processingService ?? throw new ArgumentNullException(nameof(processingService));
       _partnerService = partnerService ?? throw new ArgumentNullException(nameof(partnerService));
+      _syncStateService = syncStateService ?? throw new ArgumentNullException(nameof(syncStateService));
+      _userService = userService ?? throw new ArgumentNullException(nameof(userService));
       _opportunityService = opportunityService ?? throw new ArgumentNullException(nameof(opportunityService));
       _organizationService = organizationService ?? throw new ArgumentNullException(nameof(organizationService));
       _myOpportunityService = myOpportunityService ?? throw new ArgumentNullException(nameof(myOpportunityService));
@@ -931,8 +937,6 @@ namespace Yoma.Core.Domain.PartnerSync.Services
               if (string.IsNullOrWhiteSpace(item.ExternalId))
                 throw new InvalidOperationException("Verification external id expected");
 
-              if (string.IsNullOrWhiteSpace(item.Username))
-                throw new InvalidOperationException("Username expected");
 
               if (_logger.IsEnabled(LogLevel.Information))
                 _logger.LogInformation("Processing sync pull verification item for partner '{partner}', entity type '{entityType}', entity external id '{entityExternalId}', user external id '{userExternalId}'",
@@ -991,11 +995,20 @@ namespace Yoma.Core.Domain.PartnerSync.Services
                 continue;
               }
 
+              var userId = ResolveUserId(partner, item.UserExternalId, item.Username);
+              if (!userId.HasValue)
+              {
+                if (_logger.IsEnabled(LogLevel.Information))
+                  _logger.LogInformation("Processing of partner sync pull verification item skipped: User '{username}' does not exist", item.Username);
+
+                IncrementTrackingSkipped(tracking);
+                continue;
+              }
+
               var request = new MyOpportunityRequestVerifyImportPartnerSync
               {
                 OpportunityId = processingItemExistingOpportunity.OpportunityId.Value,
-                UserEmail = item.UserEmail,
-                UserPhoneNumber = item.UserPhoneNumber,
+                UserId = userId.Value,
                 DateStart = item.DateStart,
                 DateEnd = item.DateEnd,
                 CommitmentInterval = item.CommitmentInterval == null ? null : new MyOpportunityRequestVerifyCommitmentInterval
@@ -1158,6 +1171,15 @@ namespace Yoma.Core.Domain.PartnerSync.Services
         : [.. result.Items.Skip((pageNumber - 1) * pageSize).Take(pageSize)];
 
       return (result, items, pagedByProvider);
+    }
+
+
+    private Guid? ResolveUserId(SyncPartner partner, string userExternalId, string? username)
+    {
+      var userSyncInfo = _syncStateService.GetUserSyncInfo(partner, userExternalId);
+      if (userSyncInfo != null) return userSyncInfo.UserId;
+
+      return _userService.GetByUsernameOrNull(username, false, false)?.Id;
     }
 
     private static void IncrementTrackingSucceeded(PartnerSyncTrackingRequest tracking, SyncAction? action = null)

@@ -959,7 +959,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         .SingleOrDefault(o => o.UserId == user.Id && o.OpportunityId == opportunity.Id && o.ActionId == actionVerificationId)
           ?? throw new ValidationException($"Opportunity '{opportunity.Title}' has not been sent for verification for user '{user.Username}'");
 
-      if (_syncStateService.ListSyncInfoMyOpportunity(myOpportunity.Id)?.Locked == true)
+      if (_syncStateService.GetSyncInfoMyOpportunity(myOpportunity.Id)?.Locked == true)
         throw new ValidationException($"Verification for opportunity '{opportunity.Title}' is externally managed and cannot be deleted");
 
       await PerformActionDeleteVerification(myOpportunity);
@@ -1163,12 +1163,6 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
       await _myOpportunityRequestValidatorVerifyImportPartnerSync.ValidateAndThrowAsync(request);
 
-      request.UserEmail = request.UserEmail?.Trim();
-      if (string.IsNullOrEmpty(request.UserEmail)) request.UserEmail = null;
-
-      request.UserPhoneNumber = request.UserPhoneNumber?.Trim();
-      if (string.IsNullOrEmpty(request.UserPhoneNumber)) request.UserPhoneNumber = null;
-      request.UserPhoneNumber = request.UserPhoneNumber?.NormalizePhoneNumber(true);
 
       var opportunity = _opportunityService.GetById(request.OpportunityId, true, true, false);
 
@@ -1178,12 +1172,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         Skipped = true
       };
 
-      var user = _userService.GetByUsernameOrNull(request.Username, false, false);
-      if (user == null)
-      {
-        result.SkipReason = $"User '{request.Username}' does not exist";
-        return result;
-      }
+      var user = _userService.GetById(request.UserId, false, false);
 
       var actionVerificationId = _myOpportunityActionService.GetByName(Action.Verification.ToString()).Id;
       var myOpportunityExisting = _myOpportunityRepository.Query(false)
@@ -1479,7 +1468,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       myOpportunity.Verifications?.ForEach(v => v.FileURL = GetBlobObjectURL(v.FileStorageType, v.FileKey));
 
       if (myOpportunity.Action == Action.Verification)
-        myOpportunity.SyncedInfo = _syncStateService.ListSyncInfoMyOpportunity(myOpportunity.Id);
+        myOpportunity.SyncedInfo = _syncStateService.GetSyncInfoMyOpportunity(myOpportunity.Id);
     }
 
     private MyOpportunityResponseVerifyStatus GetVerificationStatusInternal(Guid opportunityId, Guid userId)
@@ -1509,7 +1498,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         PercentComplete = myOpportunity.PercentComplete,
         Comment = myOpportunity.CommentVerification,
         DateCompleted = myOpportunity.DateCompleted,
-        SyncedInfo = _syncStateService.ListSyncInfoMyOpportunity(myOpportunity.Id)
+        SyncedInfo = _syncStateService.GetSyncInfoMyOpportunity(myOpportunity.Id)
       };
     }
 
@@ -1653,7 +1642,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         if (item.VerificationStatus != VerificationStatus.Pending)
           throw new ValidationException($"Verification is not {VerificationStatus.Pending.ToDescription().ToLower()} for opportunity '{opportunity.Title}'");
 
-        if (!options.PartnerSyncedVerification && _syncStateService.ListSyncInfoMyOpportunity(item.Id)?.Locked == true)
+        if (!options.PartnerSyncedVerification && _syncStateService.GetSyncInfoMyOpportunity(item.Id)?.Locked == true)
           throw new ValidationException($"Verification for opportunity '{opportunity.Title}' is externally managed and cannot be manually finalized");
 
         // Idempotent no-op: already at requested status

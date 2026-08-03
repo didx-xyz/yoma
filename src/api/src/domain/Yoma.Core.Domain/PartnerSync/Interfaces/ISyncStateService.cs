@@ -5,15 +5,17 @@ namespace Yoma.Core.Domain.PartnerSync.Interfaces
 {
   public interface ISyncStateService
   {
-    SyncInfoEntity? ListSyncInfo(EntityType entityType, Guid entityId, string? url);
+    SyncInfoEntity? GetSyncInfo(EntityType entityType, Guid entityId, string? url);
 
-    SyncInfoMyOpportunity? ListSyncInfoMyOpportunity(Guid myOpportunityId);
+    SyncInfoMyOpportunity? GetSyncInfoMyOpportunity(Guid myOpportunityId);
 
-    SyncInfoUser? ListUserSyncInfo(Guid userId);
+    SyncInfoUser? GetUserSyncInfo(Guid userId);
 
-    SyncInfoUserPartner? GetUserSyncInfo(Guid userId, SyncPartner partner);
+    SyncInfoUserPartner? GetUserSyncInfo(SyncPartner partner, Guid userId);
 
-    Task UpsertUserSyncInfo(Guid userId, string username, string? email, string? phoneNumber, SyncInfoUserPartner syncInfo);
+    SyncInfoUserPartner? GetUserSyncInfo(SyncPartner partner, string externalId);
+
+    Task UpsertUserSyncInfo(Guid userId, SyncInfoUserPartner syncInfo);
 
     Task<bool> AbortSyncPushCreateIfPossible(EntityType entityType, Guid entityId);
   }

@@ -17,6 +17,11 @@ namespace Yoma.Core.Domain.PartnerSync.Models
   /// </summary>
   public sealed class SyncInfoUserPartner
   {
+    /// <summary>
+    /// Yoma user identifier linked to the partner user.
+    /// </summary>
+    public Guid UserId { get; set; }
+
     public SyncPartner Partner { get; set; }
 
     /// <summary>
