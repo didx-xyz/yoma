@@ -143,6 +143,7 @@ WITH partner_orgs("Id", "Name", "WebsiteURL", "CountryCodeAlpha2") AS (
   VALUES
     ('019df6f6-9422-76bb-b382-0e2c65c9006e'::uuid, 'Jobberman - Nigeria', 'https://www.jobberman.com', 'NG'),
     ('019df6ff-428e-73b1-9fe7-11ca6fdad88b'::uuid, 'Jobberman - Ghana', 'https://www.jobberman.com.gh', 'GH'),
+    ('019fc83e-9ff2-7ba2-adbf-c7cbd6bc085e'::uuid, 'JobJack', 'https://www.jobjack.co.za', 'ZA'),
     ('019e01cd-8ee7-757e-9945-67fec6a73e81'::uuid, 'Alison', 'https://alison.com', 'IE')
 )
 INSERT INTO "Entity"."Organization"("Id", "Name", "NameHashValue", "WebsiteURL", "PrimaryContactName", "PrimaryContactEmail", "PrimaryContactPhone", "VATIN", "TaxNumber", "RegistrationNumber",

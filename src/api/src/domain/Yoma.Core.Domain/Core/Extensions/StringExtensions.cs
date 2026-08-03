@@ -80,12 +80,28 @@ namespace Yoma.Core.Domain.Core.Extensions
     /// Converts a string to title case after normalizing and trimming it.
     /// </summary>
     /// <param name="input">The string to convert.</param>
+    /// <param name="onlyWhenAllCaps">Whether to only convert the value when all its letters are uppercase.</param>
     /// <returns>The title-cased string.</returns>
-    public static string TitleCase(this string input)
+    public static string TitleCase(this string input, bool onlyWhenAllCaps = false)
     {
       ArgumentNullException.ThrowIfNull(input, nameof(input));
 
-      return CultureInfo.CurrentCulture.TextInfo.ToTitleCase(input.NormalizeTrim());
+      var normalized = input.NormalizeTrim();
+      if (onlyWhenAllCaps)
+      {
+        var hasLetter = false;
+        foreach (var character in normalized)
+        {
+          if (!char.IsLetter(character)) continue;
+
+          hasLetter = true;
+          if (!char.IsUpper(character)) return normalized;
+        }
+
+        if (!hasLetter) return normalized;
+      }
+
+      return CultureInfo.CurrentCulture.TextInfo.ToTitleCase(normalized.ToLower(CultureInfo.CurrentCulture));
     }
 
     /// <summary>

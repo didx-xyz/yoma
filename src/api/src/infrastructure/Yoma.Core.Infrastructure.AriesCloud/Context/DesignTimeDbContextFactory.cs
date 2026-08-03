@@ -8,10 +8,11 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Context
   {
     public AriesCloudDbContext CreateDbContext(string[] args)
     {
-      IConfigurationRoot configuration = new ConfigurationBuilder()
-          .SetBasePath(Directory.GetCurrentDirectory())
-          .AddJsonFile("appsettings.design.json")
-          .Build();
+      var configuration = new ConfigurationBuilder()
+        .SetBasePath(Directory.GetCurrentDirectory())
+        .AddJsonFile("appsettings.design.json")
+        .Build();
+
       var builder = new DbContextOptionsBuilder<AriesCloudDbContext>();
       var connectionString = configuration.GetConnectionString("SQLConnection");
       builder.UseNpgsql(connectionString);
