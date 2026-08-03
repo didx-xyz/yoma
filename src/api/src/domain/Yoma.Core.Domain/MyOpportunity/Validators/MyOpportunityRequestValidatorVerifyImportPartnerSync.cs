@@ -12,9 +12,9 @@ namespace Yoma.Core.Domain.MyOpportunity.Validators
         .NotEmpty()
         .WithMessage("Opportunity id is required.");
 
-      RuleFor(x => x)
-        .Must(x => !string.IsNullOrEmpty(x.UserEmail) || !string.IsNullOrEmpty(x.UserPhoneNumber))
-        .WithMessage("User email or phone number is required.");
+      RuleFor(x => x.UserId)
+        .NotEmpty()
+        .WithMessage("User id is required.");
 
       RuleFor(x => x.DateEnd)
         .GreaterThanOrEqualTo(x => x.DateStart)

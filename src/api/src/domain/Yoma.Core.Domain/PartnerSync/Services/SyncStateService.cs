@@ -34,7 +34,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
     #endregion
 
     #region Public Members
-    public SyncInfoEntity? ListSyncInfo(EntityType entityType, Guid entityId, string? url)
+    public SyncInfoEntity? GetSyncInfo(EntityType entityType, Guid entityId, string? url)
     {
       var statusAbortedId = _processingStatusService.GetByName(ProcessingStatus.Aborted.ToString()).Id;
 
@@ -81,7 +81,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
       };
     }
 
-    public SyncInfoMyOpportunity? ListSyncInfoMyOpportunity(Guid myOpportunityId)
+    public SyncInfoMyOpportunity? GetSyncInfoMyOpportunity(Guid myOpportunityId)
     {
       if (myOpportunityId == Guid.Empty)
         throw new ArgumentNullException(nameof(myOpportunityId));
@@ -128,7 +128,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
       };
     }
 
-    public SyncInfoUser? ListUserSyncInfo(Guid userId)
+    public SyncInfoUser? GetUserSyncInfo(Guid userId)
     {
       if (userId == Guid.Empty)
         throw new ArgumentNullException(nameof(userId));
@@ -145,7 +145,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
       };
     }
 
-    public SyncInfoUserPartner? GetUserSyncInfo(Guid userId, SyncPartner partner)
+    public SyncInfoUserPartner? GetUserSyncInfo(SyncPartner partner, Guid userId)
     {
       if (userId == Guid.Empty)
         throw new ArgumentNullException(nameof(userId));
@@ -158,24 +158,28 @@ namespace Yoma.Core.Domain.PartnerSync.Services
       return item == null ? null : ToSyncInfoUserPartner(item);
     }
 
+    public SyncInfoUserPartner? GetUserSyncInfo(SyncPartner partner, string externalId)
+    {
+      if (string.IsNullOrWhiteSpace(externalId))
+        throw new ArgumentNullException(nameof(externalId));
+
+      var partnerModel = _partnerService.GetByName(partner.ToString());
+      var item = _partnerUserRepository.Query()
+        .SingleOrDefault(o => o.PartnerId == partnerModel.Id && o.ExternalId == externalId);
+
+      return item == null ? null : ToSyncInfoUserPartner(item);
+    }
+
     public async Task UpsertUserSyncInfo(
       Guid userId,
-      string username,
-      string? email,
-      string? phoneNumber,
       SyncInfoUserPartner syncInfo)
     {
       if (userId == Guid.Empty)
         throw new ArgumentNullException(nameof(userId));
 
-      if (string.IsNullOrWhiteSpace(username))
-        throw new ArgumentNullException(nameof(username));
 
       ArgumentNullException.ThrowIfNull(syncInfo);
 
-      username = username.Trim();
-      email = email?.Trim();
-      phoneNumber = phoneNumber?.Trim();
       syncInfo.ExternalId = syncInfo.ExternalId?.Trim();
 
       var partner = _partnerService.GetByName(syncInfo.Partner.ToString());
@@ -190,9 +194,6 @@ namespace Yoma.Core.Domain.PartnerSync.Services
           PartnerId = partner.Id,
           Partner = syncInfo.Partner,
           UserId = userId,
-          Username = username,
-          Email = email,
-          PhoneNumber = phoneNumber,
           ExternalId = syncInfo.ExternalId,
           DateLastRedirect = syncInfo.DateLastRedirect
         };
@@ -201,9 +202,6 @@ namespace Yoma.Core.Domain.PartnerSync.Services
         return;
       }
 
-      item.Username = username;
-      item.Email = email;
-      item.PhoneNumber = phoneNumber;
       item.ExternalId = syncInfo.ExternalId;
       item.DateLastRedirect = syncInfo.DateLastRedirect;
 
@@ -262,6 +260,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
 
       return new SyncInfoUserPartner
       {
+        UserId = item.UserId,
         Partner = item.Partner,
         ExternalId = item.ExternalId,
         DateLastRedirect = item.DateLastRedirect

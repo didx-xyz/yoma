@@ -95,7 +95,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
         if (string.IsNullOrWhiteSpace(partnerSyncInfo.ExternalId))
           throw new InvalidOperationException("Partner external id is required");
 
-        var userSyncInfo = _syncStateService.ListUserSyncInfo(user.Id);
+        var userSyncInfo = _syncStateService.GetUserSyncInfo(user.Id);
         var country = user.CountryId.HasValue ? _countryService.GetByIdOrNull(user.CountryId.Value) : null;
 
         var providerClient = _providerClientFactoryResolver.CreateClient<ISyncProviderClientUserAuthentication>(
@@ -126,9 +126,6 @@ namespace Yoma.Core.Domain.PartnerSync.Services
 
           await _syncStateService.UpsertUserSyncInfo(
             user.Id,
-            user.Username,
-            user.Email,
-            user.PhoneNumber,
             result.UserSyncInfo);
         }
 
