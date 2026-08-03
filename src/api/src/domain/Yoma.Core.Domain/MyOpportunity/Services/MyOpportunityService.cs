@@ -1172,12 +1172,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         Skipped = true
       };
 
-      var user = _userService.GetByIdOrNull(request.UserId, false, false);
-      if (user == null)
-      {
-        result.SkipReason = $"User '{request.UserId}' does not exist";
-        return result;
-      }
+      var user = _userService.GetById(request.UserId, false, false);
 
       var actionVerificationId = _myOpportunityActionService.GetByName(Action.Verification.ToString()).Id;
       var myOpportunityExisting = _myOpportunityRepository.Query(false)
