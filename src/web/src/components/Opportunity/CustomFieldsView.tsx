@@ -174,7 +174,9 @@ export const CustomFieldsView: React.FC<CustomFieldsViewProps> = ({
       };
     })
     .filter(
-      (r): r is {
+      (
+        r,
+      ): r is {
         key: string;
         title: string;
         value: string;
@@ -222,14 +224,18 @@ export const CustomFieldsView: React.FC<CustomFieldsViewProps> = ({
           >
         >((acc, r) => {
           const groupKey = r.subGroup ? `${r.group}__${r.subGroup}` : r.group;
-          acc[groupKey] ??= { group: r.group, subGroup: r.subGroup, fields: [] };
+          acc[groupKey] ??= {
+            group: r.group,
+            subGroup: r.subGroup,
+            fields: [],
+          };
           acc[groupKey]!.fields.push(r);
           return acc;
         }, {}),
       ).map(([groupKey, { group, subGroup, fields }]) => (
         <div key={groupKey}>
           <div className="mb-2">
-            <h3 className="text-xs font-bold uppercase tracking-wide text-gray-dark">
+            <h3 className="text-gray-dark text-xs font-bold tracking-wide uppercase">
               {subGroup ? `${group} - ${subGroup}` : group}
             </h3>
           </div>

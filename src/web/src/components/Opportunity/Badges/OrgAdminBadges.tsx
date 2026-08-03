@@ -1,4 +1,3 @@
-import { IoMdPause, IoMdPlay } from "react-icons/io";
 import type { OpportunityInfo } from "~/api/models/opportunity";
 
 interface BadgesProps {
