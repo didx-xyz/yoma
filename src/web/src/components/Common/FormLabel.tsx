@@ -10,9 +10,11 @@ const FormLabel: React.FC<{
   showWarningIcon: boolean;
   /** Optional content rendered inline next to the label (e.g. a badge). */
   badge?: React.ReactNode;
-}> = ({ label, subLabel, tooltip, showWarningIcon, badge }) => {
+  /** id of the control this labels — without it the association is visual only. */
+  htmlFor?: string;
+}> = ({ label, subLabel, tooltip, showWarningIcon, badge, htmlFor }) => {
   return (
-    <label className="flex flex-col justify-start gap-0">
+    <label htmlFor={htmlFor} className="flex flex-col justify-start gap-0">
       <span className="flex flex-row items-center gap-2 text-sm font-semibold">
         {label}
 

@@ -1,13 +1,16 @@
-import Link from "next/link";
-import sliderStyles from "~/components/Carousel/CustomSlider.module.css";
 import {
   statusTabHref,
   type ListPageParamSpec,
 } from "~/components/Common/ListPage/listPageFilter";
+import ListPageTabs, {
+  type ListPageTab,
+} from "~/components/Common/ListPage/ListPageTabs";
 
 /**
  * Status tab bar shared by the admin list pages. The tabs own the status filter: they
  * preserve every other filter by appending to `baseParams`, and drop paging.
+ *
+ * The chrome itself lives in ListPageTabs, which the plain view tabs use too.
  */
 export const ListPageStatusTabs: React.FC<{
   basePath: string;
@@ -31,52 +34,15 @@ export const ListPageStatusTabs: React.FC<{
   pageParam = "page",
   idPrefix = "list_page",
 }) => {
-  return (
-    <div
-      role="tablist"
-      // daisyUI's .tabs wraps by default; on narrow screens these scroll sideways instead,
-      // so the lifted tab keeps sitting on the results below it
-      className={`tabs tabs-lift flex-nowrap overflow-x-auto overflow-y-hidden ${sliderStyles.noscrollbar}`}
-    >
-      {(statusSpec.tabs ?? []).map((tab) => {
-        const count = counts[tab.value ?? "all"];
-        const selected = status === tab.value;
+  const tabs: ListPageTab[] = (statusSpec.tabs ?? []).map((tab) => ({
+    key: `${idPrefix}_status_tab_${tab.label}`,
+    label: tab.label,
+    href: statusTabHref(basePath, baseParams, statusSpec, tab.value, pageParam),
+    selected: status === tab.value,
+    count: counts[tab.value ?? "all"],
+  }));
 
-        return (
-          <Link
-            key={`${idPrefix}_status_tab_${tab.label}`}
-            href={statusTabHref(
-              basePath,
-              baseParams,
-              statusSpec,
-              tab.value,
-              pageParam,
-            )}
-            scroll={false} // don't yank the viewport when switching tabs
-            role="tab"
-            className={
-              // shrink-0 + nowrap so two-word labels ("Limit Reached") stay on one line and
-              // the row scrolls rather than squashing.
-              // the selected tab lifts in the page background colour, so it reads as joined
-              // to the results below it — hence dark text on it, white on the rest
-              `tab shrink-0 whitespace-nowrap ${
-                selected
-                  ? "tab-active text-gray-dark [--tab-bg:var(--color-gray-light)] [--tab-border-color:var(--color-gray-light)]"
-                  : "border-0 text-white"
-              }`
-            }
-          >
-            {tab.label}
-            {(count ?? 0) > 0 && (
-              <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
-                {count}
-              </div>
-            )}
-          </Link>
-        );
-      })}
-    </div>
-  );
+  return <ListPageTabs tabs={tabs} ariaLabel="Filter by status" />;
 };
 
 export default ListPageStatusTabs;

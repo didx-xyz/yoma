@@ -134,6 +134,13 @@ const navBarLinksAdmin: TabItem[] = [
     badgeCount: null,
     selected: false,
   },
+  {
+    title: "Treasury",
+    description: "Treasury",
+    url: "/admin/treasury",
+    badgeCount: null,
+    selected: false,
+  },
 ];
 
 export const Navbar: React.FC<{ theme: string }> = (theme) => {

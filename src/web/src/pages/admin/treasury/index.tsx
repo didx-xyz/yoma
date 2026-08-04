@@ -1,0 +1,322 @@
+import { dehydrate, QueryClient } from "@tanstack/react-query";
+import axios, { type AxiosError } from "axios";
+import { type GetServerSidePropsContext } from "next";
+import { getServerSession } from "next-auth";
+import Head from "next/head";
+import { useRouter } from "next/router";
+import { useCallback, useState, type ReactElement } from "react";
+import { toast } from "react-toastify";
+import type {
+  TreasuryFormField,
+  TreasuryRequestUpdate,
+} from "~/api/models/treasury";
+import { getTreasury } from "~/api/services/treasury";
+import { BTN_PRIMARY } from "~/components/Common/buttonStyles";
+import {
+  ListPageBody,
+  ListPageHeader,
+  ListPageShell,
+} from "~/components/Common/ListPage/ListPageHeader";
+import { ListPageResults } from "~/components/Common/ListPage/ListPageResults";
+import {
+  asString,
+  type ListPageRouterQuery,
+} from "~/components/Common/ListPage/listPageFilter";
+import ListPageTabs from "~/components/Common/ListPage/ListPageTabs";
+import MainLayout from "~/components/Layout/Main";
+import NoRowsMessage from "~/components/NoRowsMessage";
+import { ApiErrors } from "~/components/Status/ApiErrors";
+import { InternalServerError } from "~/components/Status/InternalServerError";
+import { Unauthenticated } from "~/components/Status/Unauthenticated";
+import { Unauthorized } from "~/components/Status/Unauthorized";
+import TreasuryCapacityWarnings from "~/components/Treasury/TreasuryCapacityWarnings";
+import TreasuryManagementForm from "~/components/Treasury/TreasuryManagementForm";
+import TreasuryOverview from "~/components/Treasury/TreasuryOverview";
+import TreasuryRolloverConfirmDialog from "~/components/Treasury/TreasuryRolloverConfirmDialog";
+import {
+  TREASURY_QUERY_KEYS,
+  useTreasuryQuery,
+  useTreasuryUpdateMutation,
+} from "~/hooks/useTreasuryMutations";
+import { ROLE_ADMIN } from "~/lib/constants";
+import { config } from "~/lib/react-query-config";
+import type { FinancialYearAssessment } from "~/lib/treasury/financialYear";
+import { mapTreasuryServerErrors } from "~/lib/treasury/serverErrors";
+import { getThemeFromRole } from "~/lib/utils";
+import { type NextPageWithLayout } from "~/pages/_app";
+import { authOptions } from "~/server/auth";
+
+// ⚠️ SSR
+export async function getServerSideProps(context: GetServerSidePropsContext) {
+  const session = await getServerSession(context.req, context.res, authOptions);
+  const queryClient = new QueryClient(config);
+  let errorCode = null;
+
+  // 👇 ensure authenticated
+  if (!session) {
+    return {
+      props: {
+        error: 401,
+      },
+    };
+  }
+
+  // 👇 set theme based on role
+  const theme = getThemeFromRole(session);
+
+  // 👇 Admin only, like GET/PATCH /treasury itself
+  if (!session.user?.roles.includes(ROLE_ADMIN)) {
+    return {
+      props: {
+        theme: theme,
+        error: 403,
+      },
+    };
+  }
+
+  try {
+    // 👇 prefetch queries on server
+    const data = await getTreasury(context);
+    await queryClient.prefetchQuery({
+      queryKey: TREASURY_QUERY_KEYS.detail(),
+      queryFn: () => data,
+    });
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status) {
+      errorCode = error.response.status;
+    } else errorCode = 500;
+  }
+
+  return {
+    props: {
+      dehydratedState: dehydrate(queryClient),
+      theme: theme,
+      error: errorCode,
+    },
+  };
+}
+
+/**
+ * The two views, as banner tabs like every other admin page. Overview is the default and carries no
+ * querystring, matching the "All" tab convention on the list pages — so `/admin/treasury` stays the
+ * canonical url and `?tab=manage` is shareable and survives the back button.
+ */
+const TAB_PARAM = "tab";
+const TAB_MANAGE = "manage";
+
+const treasuryTabHref = (tab: string | null) =>
+  tab === null ? "/admin/treasury" : `/admin/treasury?${TAB_PARAM}=${tab}`;
+
+// 👇 PAGE COMPONENT: Admin → Treasury
+// The top of the reward hierarchy: what is available to award and cash out this financial year, and
+// the configuration behind it. Admin role only.
+const Treasury: NextPageWithLayout<{
+  theme: string;
+  error?: number;
+}> = ({ error }) => {
+  const router = useRouter();
+
+  // 👇 the selected tab is driven by the querystring, not by state
+  const activeTab =
+    asString((router.query as ListPageRouterQuery)[TAB_PARAM]) === TAB_MANAGE
+      ? TAB_MANAGE
+      : null;
+
+  const {
+    data: treasury,
+    isLoading,
+    error: queryError,
+    refetch,
+    isRefetching,
+  } = useTreasuryQuery({ enabled: !error });
+
+  const updateMutation = useTreasuryUpdateMutation();
+
+  /** Set while the rollover guard is waiting for an explicit confirmation. */
+  const [pendingSave, setPendingSave] = useState<{
+    request: TreasuryRequestUpdate;
+    assessment: FinancialYearAssessment;
+  } | null>(null);
+
+  const [serverFieldErrors, setServerFieldErrors] = useState<
+    Partial<Record<TreasuryFormField, string>> | undefined
+  >();
+  const [serverFormErrors, setServerFormErrors] = useState<string[]>([]);
+
+  const save = useCallback(
+    async (request: TreasuryRequestUpdate) => {
+      setServerFieldErrors(undefined);
+      setServerFormErrors([]);
+
+      const financialYearStartBefore = treasury?.financialYearStartDate;
+
+      try {
+        const updated = await updateMutation.mutateAsync(request);
+        setPendingSave(null);
+
+        // A rollover zeroed the totals for the financial year. Show the admin that it happened
+        // rather than leaving them on the form: switch to the Overview, where the reset is visible.
+        const rolledOver =
+          !!financialYearStartBefore &&
+          updated.financialYearStartDate !== financialYearStartBefore;
+
+        if (rolledOver) {
+          toast.success(
+            "Treasury updated — a new financial year has started and totals for the financial year have been reset",
+            { autoClose: 6000 },
+          );
+          void router.push(treasuryTabHref(null), undefined, { scroll: false });
+          return;
+        }
+
+        toast.success("Treasury updated", { autoClose: 2000 });
+      } catch (updateError) {
+        // Close the dialog first — the mapped errors are on the form behind it.
+        setPendingSave(null);
+
+        const mapped = mapTreasuryServerErrors(updateError);
+        if (mapped.isUnmapped) {
+          toast(<ApiErrors error={updateError as AxiosError} />, {
+            type: "error",
+            toastId: "treasury-update-error",
+            autoClose: false,
+            icon: false,
+          });
+          return;
+        }
+
+        // NB: a new object each time, so the form re-applies the errors even when they repeat.
+        setServerFieldErrors({ ...mapped.fieldErrors });
+        setServerFormErrors(mapped.formErrors);
+      }
+    },
+    [updateMutation, router, treasury?.financialYearStartDate],
+  );
+
+  const handleFormSubmit = useCallback(
+    (request: TreasuryRequestUpdate, assessment: FinancialYearAssessment) => {
+      // 🛡️ Rollover guard: a financial-year move forward resets the Treasury's and every
+      // organisation's current-financial-year totals, so it needs an explicit confirmation first.
+      if (assessment.shouldWarn) {
+        setPendingSave({ request, assessment });
+        return;
+      }
+
+      void save(request);
+    },
+    [save],
+  );
+
+  if (error) {
+    if (error === 401) return <Unauthenticated />;
+    else if (error === 403) return <Unauthorized />;
+    else return <InternalServerError />;
+  }
+
+  return (
+    <>
+      <Head>
+        <title>Yoma | 💰Treasury</title>
+      </Head>
+
+      <ListPageShell>
+        <ListPageHeader
+          title={"💰Treasury"}
+          description="What Yoma has available to award and to cash out this financial year, and the settings behind it."
+        >
+          {/* TABBED NAVIGATION */}
+          <ListPageTabs
+            ariaLabel="Treasury views"
+            tabs={[
+              {
+                key: "treasury_tab_overview",
+                label: "Overview",
+                href: treasuryTabHref(null),
+                selected: activeTab === null,
+              },
+              {
+                key: "treasury_tab_manage",
+                label: "Manage",
+                href: treasuryTabHref(TAB_MANAGE),
+                selected: activeTab === TAB_MANAGE,
+              },
+            ]}
+          />
+        </ListPageHeader>
+
+        {/* MAIN CONTENT */}
+        <ListPageBody>
+          <ListPageResults isLoading={isLoading} skeletonRows={2}>
+            {/* ERROR */}
+            {!!queryError && (
+              <div className="shadow-custom flex flex-col items-center gap-4 rounded-lg bg-white p-8">
+                <ApiErrors error={queryError} />
+                <button
+                  type="button"
+                  className={`${BTN_PRIMARY} w-40`}
+                  onClick={() => void refetch()}
+                  disabled={isRefetching}
+                >
+                  {isRefetching ? "Loading..." : "Try again"}
+                </button>
+              </div>
+            )}
+
+            {/* EMPTY — the API keeps exactly one Treasury row, so this is a data problem */}
+            {!queryError && !treasury && (
+              <div className="flex h-fit flex-col items-center rounded-lg bg-white pb-8 md:pb-16">
+                <NoRowsMessage
+                  title={"Treasury unavailable"}
+                  description={
+                    "We couldn't load the Treasury settings. Please try again, or contact support if this continues."
+                  }
+                />
+              </div>
+            )}
+
+            {/* CONTENT */}
+            {!!treasury && (
+              <div className="flex flex-col gap-4">
+                {/* Capacity trouble shows on both tabs: it is read here and fixed there */}
+                <TreasuryCapacityWarnings treasury={treasury} />
+
+                {activeTab === TAB_MANAGE ? (
+                  <TreasuryManagementForm
+                    treasury={treasury}
+                    onSubmit={handleFormSubmit}
+                    isSubmitting={updateMutation.isPending}
+                    serverFieldErrors={serverFieldErrors}
+                    serverFormErrors={serverFormErrors}
+                  />
+                ) : (
+                  <TreasuryOverview treasury={treasury} />
+                )}
+              </div>
+            )}
+          </ListPageResults>
+        </ListPageBody>
+      </ListPageShell>
+
+      <TreasuryRolloverConfirmDialog
+        isOpen={!!pendingSave}
+        assessment={pendingSave?.assessment ?? null}
+        isSubmitting={updateMutation.isPending}
+        onConfirm={() => {
+          if (pendingSave) void save(pendingSave.request);
+        }}
+        onCancel={() => setPendingSave(null)}
+      />
+    </>
+  );
+};
+
+Treasury.getLayout = function getLayout(page: ReactElement) {
+  return <MainLayout>{page}</MainLayout>;
+};
+
+// 👇 return theme from component properties. this is set server-side (getServerSideProps)
+Treasury.theme = function getTheme(page: ReactElement<{ theme: string }>) {
+  return page.props.theme;
+};
+
+export default Treasury;
