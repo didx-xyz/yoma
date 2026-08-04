@@ -115,7 +115,7 @@ namespace Yoma.Core.Infrastructure.JobJack.Client
         URL = item.URL,
         VerificationEnabled = false,
         Status = item.Deleted == true ? Status.Deleted : Status.Active,
-        Keywords = BuildKeywords(item, category.Name),
+        Keywords = BuildKeywords(item),
         DateStart = item.DateStart ?? item.DateCreated,
         DateEnd = item.DateEnd,
         Featured = false,
@@ -264,23 +264,25 @@ namespace Yoma.Core.Infrastructure.JobJack.Client
       return parts.Count == 0 ? null : string.Join(", ", parts.Distinct(StringComparer.OrdinalIgnoreCase));
     }
 
-    private static List<string> BuildKeywords(Opportunity item, string category)
+    private static List<string> BuildKeywords(Opportunity item)
     {
       var result = new List<string>();
 
-      foreach (var keyword in GetKeywordCandidates(item, category))
+      foreach (var keyword in GetKeywordCandidates(item))
         AddKeyword(result, keyword);
 
       return result;
     }
 
-    private static IEnumerable<string?> GetKeywordCandidates(Opportunity item, string category)
+    private static IEnumerable<string?> GetKeywordCandidates(Opportunity item)
     {
       yield return item.Company;
-      yield return Domain.Opportunity.Type.Job.ToString();
       yield return item.ContractType;
-      yield return item.Category;
-      yield return category;
+
+      foreach (var category in item.Category?.Split(
+        OpportunityService.Keywords_Separator,
+        StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries) ?? [])
+        yield return category;
     }
 
     private static void AddKeyword(List<string> keywords, string? value)

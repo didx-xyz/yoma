@@ -446,6 +446,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       // Source priority:
       // - Publisher name
       // - Course type, e.g. certificate/diploma
+      // - Raw Alison category names
       //
       // Must:
       // - remove blank values
@@ -800,6 +801,14 @@ namespace Yoma.Core.Infrastructure.Alison.Client
     {
       yield return publisherName;
       yield return course.Type;
+
+      foreach (var category in course.Categories)
+      {
+        foreach (var categoryName in category.GetName()?.Split(
+          OpportunityService.Keywords_Separator,
+          StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries) ?? [])
+          yield return categoryName;
+      }
     }
 
     private static void AddKeyword(List<string> keywords, string? value)

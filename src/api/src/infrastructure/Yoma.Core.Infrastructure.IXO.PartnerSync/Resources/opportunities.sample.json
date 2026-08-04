@@ -1,0 +1,88 @@
+{
+  "page": 1,
+  "pageSize": 200,
+  "totalPages": 1,
+  "items": [
+    {
+      "externalId": "learn-001",
+      "type": "Learning",
+      "title": "Intro to Digital Literacy",
+      "url": "https://partner.example.com/learning/intro-digital-literacy",
+      "startDate": "2026-01-01T00:00:00Z",
+      "description": "<p>A self-paced course covering core digital skills for first-time internet users.</p>",
+      "summary": "Self-paced digital literacy fundamentals.",
+      "categories": ["Digital Skills"],
+      "countries": ["Worldwide"],
+      "languages": ["en"],
+      "commitment": {
+        "interval": "Hour",
+        "count": 6
+      },
+      "skills": ["Digital Literacy", "Internet Safety"],
+      "difficulty": "Beginner",
+      "engagementType": "Online",
+      "removed": false
+    },
+    {
+      "externalId": "learn-002",
+      "type": "Learning",
+      "title": "Solar Panel Installation Fundamentals",
+      "url": "https://partner.example.com/learning/solar-fundamentals",
+      "startDate": "2026-02-15T00:00:00Z",
+      "endDate": "2026-12-31T00:00:00Z",
+      "description": "<p>Hands-on introduction to residential solar installation and maintenance.</p>",
+      "summary": "Hands-on solar installation basics.",
+      "categories": ["Renewable Energy", "Trades"],
+      "countries": ["ZA", "ZM"],
+      "languages": ["en"],
+      "commitment": {
+        "interval": "Week",
+        "count": 4
+      },
+      "skills": ["Solar Installation", "Electrical Safety"],
+      "difficulty": "Intermediate",
+      "engagementType": "Hybrid",
+      "removed": false
+    },
+    {
+      "externalId": "learn-003",
+      "type": "Learning",
+      "title": "Discontinued: Basic Bookkeeping",
+      "url": "https://partner.example.com/learning/basic-bookkeeping",
+      "startDate": "2025-06-01T00:00:00Z",
+      "description": "<p>This course has been retired.</p>",
+      "countries": ["Worldwide"],
+      "languages": ["en"],
+      "difficulty": "Any Level",
+      "removed": true
+    },
+    {
+      "externalId": "job-001",
+      "type": "Job",
+      "title": "Junior Solar Field Technician",
+      "url": "https://partner.example.com/jobs/junior-solar-field-technician",
+      "startDate": "2026-03-01T00:00:00Z",
+      "description": "<p>Install and maintain residential solar systems as part of a field team.</p><ul><li><strong>Salary:</strong> ZAR 12,000 ? 15,000 / month</li><li><strong>Minimum qualification:</strong> Grade 12 / Matric</li><li><strong>Experience level:</strong> Entry-level</li><li><strong>Experience length:</strong> 0?1 years</li><li><strong>Working hours:</strong> Mon?Fri, 08:00?17:00</li></ul>",
+      "summary": "Entry-level solar installation role.",
+      "categories": ["Renewable Energy"],
+      "countries": ["ZA"],
+      "languages": ["en"],
+      "workType": "On-site",
+      "removed": false
+    },
+    {
+      "externalId": "job-002",
+      "type": "Job",
+      "title": "Remote Customer Support Agent",
+      "url": "https://partner.example.com/jobs/remote-customer-support",
+      "startDate": "2026-04-10T00:00:00Z",
+      "description": "<p>Handle customer enquiries for a growing e-commerce platform.</p><ul><li><strong>Salary:</strong> USD 900 / month</li><li><strong>Experience level:</strong> Mid-level</li><li><strong>Working hours:</strong> Flexible, remote</li></ul>",
+      "summary": "Remote customer support role, flexible hours.",
+      "categories": ["Customer Service"],
+      "countries": ["Worldwide"],
+      "languages": ["en"],
+      "workType": "Remote",
+      "removed": false
+    }
+  ]
+}

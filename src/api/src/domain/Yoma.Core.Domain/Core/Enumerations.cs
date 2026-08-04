@@ -198,6 +198,7 @@ namespace Yoma.Core.Domain.Core
     SAYouth,
     Jobberman,
     Alison,
-    JobJack
+    JobJack,
+    IXO
   }
 }
