@@ -104,7 +104,12 @@ export const RewardStat: React.FC<{
  * background, so they survive every breakpoint without per-cell border juggling.
  */
 export const RewardStatGroup: React.FC<{
-  title: string;
+  /**
+   * Usually a plain label ("ZLTO rewards"). It renders inside a heading, so a node must be phrasing
+   * content — put anything block-level (an avatar, a logo) in `icon` instead, which sits beside it.
+   */
+  title: ReactNode;
+  /** leading visual — a small reward icon on the concept groups, an entity logo on the entity rows */
   icon?: ReactNode;
   /** right-aligned content on the group header — e.g. a status badge */
   action?: ReactNode;

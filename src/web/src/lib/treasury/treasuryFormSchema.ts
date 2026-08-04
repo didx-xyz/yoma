@@ -4,6 +4,7 @@ import {
   type TreasuryInfo,
   type TreasuryRequestUpdate,
 } from "~/api/models/treasury";
+import { amountOrNull, parseAmountInput } from "~/lib/format/amountInput";
 import { formatUsd, formatZlto } from "~/lib/format/rewards";
 import {
   assessFinancialYearChange,
@@ -32,40 +33,6 @@ export interface TreasuryFormValues {
   cashOutPoolCurrentFinancialYearInUsd: string;
   conversionRateZltoPerUsd: string;
 }
-
-type ParsedAmount =
-  | { kind: "empty" }
-  | { kind: "invalid" }
-  | { kind: "value"; value: number; decimals: number };
-
-/**
- * Parses an amount input. Rejects anything that is not plain decimal digits — including the
- * scientific notation a `type="number"` field will happily accept ("1e5") — so a value can never be
- * silently reinterpreted.
- */
-export const parseAmountInput = (raw: string | number): ParsedAmount => {
-  const text = typeof raw === "number" ? raw.toString() : (raw ?? "").trim();
-  if (!text) return { kind: "empty" };
-  // A leading minus parses: the "must be more than 0" rules then give a better message than
-  // "that isn't a number", and they are what the server says too.
-  if (!/^-?(?:\d+(?:\.\d*)?|\.\d+)$/.test(text)) return { kind: "invalid" };
-
-  const value = Number(text);
-  if (!Number.isFinite(value)) return { kind: "invalid" };
-
-  // Trailing zeros are not decimal places the server would object to ($1.50 is two, not three).
-  const fraction = text.split(".")[1] ?? "";
-  let decimals = fraction.length;
-  while (decimals > 0 && fraction[decimals - 1] === "0") decimals--;
-
-  return { kind: "value", value, decimals };
-};
-
-/** The amount as the API wants it: a number, or null for "no allocation". */
-export const amountOrNull = (raw: string): number | null => {
-  const parsed = parseAmountInput(raw);
-  return parsed.kind === "value" ? parsed.value : null;
-};
 
 export const treasuryFormValuesFromInfo = (
   treasury: TreasuryInfo,

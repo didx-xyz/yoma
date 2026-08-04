@@ -5,7 +5,7 @@ import { getServerSession } from "next-auth";
 import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { useCallback, useState, type ReactElement } from "react";
+import { useCallback, useMemo, useState, type ReactElement } from "react";
 import { toast } from "react-toastify";
 import type {
   TreasuryFormField,
@@ -32,6 +32,7 @@ import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import TreasuryCapacityWarnings from "~/components/Treasury/TreasuryCapacityWarnings";
 import TreasuryManagementForm from "~/components/Treasury/TreasuryManagementForm";
+import TreasuryOrganisationsTab from "~/components/Treasury/TreasuryOrganisationsTab";
 import TreasuryOverview from "~/components/Treasury/TreasuryOverview";
 import TreasuryRolloverConfirmDialog from "~/components/Treasury/TreasuryRolloverConfirmDialog";
 import {
@@ -110,6 +111,11 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
  */
 const TAB_PARAM = "tab";
 const TAB_MANAGE = "manage";
+const TAB_ORGANISATIONS = "organisations";
+
+/** The querystring tokens this page recognises; anything else falls back to Overview. */
+const TABS = [TAB_MANAGE, TAB_ORGANISATIONS] as const;
+type TreasuryTab = (typeof TABS)[number];
 
 /** ⚠️ TEMPORARY — part of the mock-scenario dev aid; remove with it. */
 const MOCK_PARAM = "mock";
@@ -135,8 +141,11 @@ const Treasury: NextPageWithLayout<{
   const routerQuery = router.query as ListPageRouterQuery;
 
   // 👇 the selected tab is driven by the querystring, not by state
-  const activeTab =
-    asString(routerQuery[TAB_PARAM]) === TAB_MANAGE ? TAB_MANAGE : null;
+  const activeTab: TreasuryTab | null = useMemo(() => {
+    const raw = asString(routerQuery[TAB_PARAM]);
+    return TABS.find((tab) => tab === raw) ?? null;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [router.query]);
 
   // ⚠️⚠️ MOCK SCENARIOS — TEMPORARY DEV AID, DELETE THIS BLOCK (and
   // lib/treasury/treasuryMockScenarios.ts, and MOCK_PARAM above) BEFORE MERGING ⚠️⚠️
@@ -275,6 +284,12 @@ const Treasury: NextPageWithLayout<{
                 href: treasuryHref(TAB_MANAGE, mockScenario),
                 selected: activeTab === TAB_MANAGE,
               },
+              {
+                key: "treasury_tab_organisations",
+                label: "Organisations",
+                href: treasuryHref(TAB_ORGANISATIONS, mockScenario),
+                selected: activeTab === TAB_ORGANISATIONS,
+              },
             ]}
           />
         </ListPageHeader>
@@ -345,10 +360,11 @@ const Treasury: NextPageWithLayout<{
             {/* CONTENT */}
             {!!treasury && (
               <div className="flex flex-col gap-4">
-                {/* Capacity trouble shows on both tabs: it is read here and fixed there */}
+                {/* Capacity trouble shows on every tab: it is read on Overview, fixed on Manage,
+                    and it is what an admin is looking for when allocating to organisations */}
                 <TreasuryCapacityWarnings treasury={treasury} />
 
-                {activeTab === TAB_MANAGE ? (
+                {activeTab === TAB_MANAGE && (
                   <TreasuryManagementForm
                     treasury={treasury}
                     onSubmit={handleFormSubmit}
@@ -356,9 +372,14 @@ const Treasury: NextPageWithLayout<{
                     serverFieldErrors={serverFieldErrors}
                     serverFormErrors={serverFormErrors}
                   />
-                ) : (
-                  <TreasuryOverview treasury={treasury} />
                 )}
+
+                {/* T2 — the level below Treasury in the hierarchy */}
+                {activeTab === TAB_ORGANISATIONS && (
+                  <TreasuryOrganisationsTab />
+                )}
+
+                {activeTab === null && <TreasuryOverview treasury={treasury} />}
               </div>
             )}
           </ListPageResults>

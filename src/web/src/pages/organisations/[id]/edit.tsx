@@ -19,6 +19,8 @@ import { toast } from "react-toastify";
 import {
   type Organization,
   type OrganizationRequestBase,
+  type OrganizationRewardPoolField,
+  type OrganizationRewardPools,
 } from "~/api/models/organisation";
 import { getCountries } from "~/api/services/lookups";
 import {
@@ -30,11 +32,11 @@ import {
 } from "~/api/services/organisations";
 import { getUserProfile } from "~/api/services/user";
 import type { SettingsRequest } from "~/api/models/common";
-import FormField from "~/components/Common/FormField";
-import FormInput from "~/components/Common/FormInput";
 import FormMessage, { FormMessageType } from "~/components/Common/FormMessage";
 import MainLayout from "~/components/Layout/Main";
 import { LogoTitle } from "~/components/Organisation/LogoTitle";
+import OrganizationRewardPoolsForm from "~/components/Organisation/Rewards/OrganizationRewardPoolsForm";
+import OrganizationRewardStats from "~/components/Organisation/Rewards/OrganizationRewardStats";
 import { OrgAdminsEdit } from "~/components/Organisation/Upsert/OrgAdminsEdit";
 import { OrgContactEdit } from "~/components/Organisation/Upsert/OrgContactEdit";
 import { OrgInfoEdit } from "~/components/Organisation/Upsert/OrgInfoEdit";
@@ -47,8 +49,10 @@ import { InternalServerError } from "~/components/Status/InternalServerError";
 import { Loading } from "~/components/Status/Loading";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
+import { useOrganizationRewardPoolsMutation } from "~/hooks/useOrganizationRewardMutations";
 import { ROLE_ADMIN } from "~/lib/constants";
 import { analytics } from "~/lib/analytics";
+import { mapOrganizationRewardErrors } from "~/lib/organisation/serverErrors";
 import { config } from "~/lib/react-query-config";
 import {
   RoleView,
@@ -195,6 +199,15 @@ const OrganisationUpdate: NextPageWithLayout<{
         organisation?.yomaRewardPoolCurrentFinancialYear ?? null,
       fileVersion: 0,
     });
+
+  // 👇 reward pools: their own mutation + per-field server errors (see onSubmitRewardPools)
+  const rewardPoolsMutation = useOrganizationRewardPoolsMutation();
+  const [rewardServerFieldErrors, setRewardServerFieldErrors] = useState<
+    Partial<Record<OrganizationRewardPoolField, string>> | undefined
+  >();
+  const [rewardServerFormErrors, setRewardServerFormErrors] = useState<
+    string[]
+  >([]);
 
   const menuItems = useMemo(() => {
     const items = [
@@ -403,6 +416,59 @@ const OrganisationUpdate: NextPageWithLayout<{
       return;
     },
     [OrganizationRequestBase, onSubmit],
+  );
+
+  /**
+   * Reward pools save their own way rather than through `onSubmitStep`.
+   *
+   * `PATCH /organization` is a full replacement, and `OrganizationRequestBase` here is seeded once at
+   * first render — so submitting the reward step through it would resend whatever that state happens
+   * to hold. This builds the payload from the freshly queried `organisation` instead (shared with the
+   * Treasury Organisations tab via `organizationRewardPoolsRequest`), and maps validation failures
+   * back onto the pool that caused them instead of a generic toast.
+   */
+  const onSubmitRewardPools = useCallback(
+    async (pools: OrganizationRewardPools) => {
+      if (!organisation) return;
+
+      setRewardServerFieldErrors(undefined);
+      setRewardServerFormErrors([]);
+      toast.dismiss();
+
+      try {
+        await rewardPoolsMutation.mutateAsync({
+          organization: organisation,
+          pools,
+        });
+
+        analytics.trackEvent("organization_reward_pools_updated", {
+          organizationId: organisation.id,
+          organizationName: organisation.name,
+        });
+
+        toast("Reward pools updated", {
+          type: "success",
+          toastId: "organisationRewardPoolsUpdated",
+        });
+      } catch (error) {
+        const mapped = mapOrganizationRewardErrors(error);
+
+        if (mapped.isUnmapped) {
+          toast(<ApiErrors error={error} />, {
+            type: "error",
+            toastId: "organisationRewardPoolsError",
+            autoClose: false,
+            icon: false,
+          });
+          return;
+        }
+
+        // NB: a new object each time, so the form re-applies the errors even when they repeat.
+        setRewardServerFieldErrors({ ...mapped.fieldErrors });
+        setRewardServerFormErrors(mapped.formErrors);
+      }
+    },
+    [organisation, rewardPoolsMutation],
   );
 
   const onSubmitSettings = useCallback(
@@ -669,98 +735,35 @@ const OrganisationUpdate: NextPageWithLayout<{
                 )}
               </>
             )}
-            {currentStep?.id === "lnkOrganisationReward" && (
+            {currentStep?.id === "lnkOrganisationReward" && organisation && (
               <>
                 <div className="flex flex-col text-left">
-                  <h5 className="mb-6 font-bold tracking-wider">Reward pool</h5>
+                  <h5 className="mb-6 font-bold tracking-wider">
+                    Reward pools
+                  </h5>
                 </div>
 
                 <div className="flex flex-col gap-4">
                   <FormMessage messageType={FormMessageType.Info}>
-                    <strong>Organization-Level Pool:</strong> This current
-                    financial year pool covers all opportunities within an
-                    organization. If depleted, no ZLTO can be awarded for any
-                    opportunity under that organization, even if individual
-                    opportunity pools still have ZLTO remaining.
+                    <strong>These pools cover the whole organisation.</strong>{" "}
+                    Every opportunity under it draws from them for this
+                    financial year. Once a pool is used up, nothing more can be
+                    awarded against it — even where an individual opportunity
+                    still has its own reward budget left.
                   </FormMessage>
 
-                  <div className="grid gap-4 md:grid-cols-3">
-                    <div className="w-full">
-                      <FormField
-                        label="Zlto Reward Cumulative (Lifetime)"
-                        tooltip="Represents the total ZLTO awarded by the organization across all time. This is the lifetime cumulative amount."
-                      >
-                        <label className="label-text">
-                          {organisation?.zltoRewardCumulative ?? "N/A"}
-                        </label>
-                      </FormField>
-                    </div>
-                    <div className="w-full">
-                      <FormField
-                        label="Zlto Reward Cumulative"
-                        tooltip="Represents the total amount of ZLTO awarded during the current financial year."
-                      >
-                        <label className="label-text">
-                          {organisation?.zltoRewardCumulativeCurrentFinancialYear ??
-                            "N/A"}
-                        </label>
-                      </FormField>
-                    </div>
-                    <div className="w-full">
-                      <FormField
-                        label="Zlto Reward Balance"
-                        tooltip="Represents the remaining ZLTO available for the current financial year. It is calculated from the current financial year pool minus the current financial year cumulative amount."
-                      >
-                        <label className="label-text">
-                          {organisation?.zltoRewardBalanceCurrentFinancialYear ??
-                            "N/A"}
-                        </label>
-                      </FormField>
-                    </div>
-                  </div>
+                  {/* READ-ONLY FIGURES — the same component as the info page and the Treasury tab */}
+                  <OrganizationRewardStats figures={organisation} columns={2} />
 
-                  <div className="flex flex-col gap-4">
-                    <FormField
-                      label="Zlto Reward Pool"
-                      tooltip="Represents the total ZLTO allocated to the organization for the current financial year. Opportunities draw from this pool through the treasury to organization to opportunity hierarchy."
-                    >
-                      <FormInput
-                        inputProps={{
-                          type: "number",
-                          placeholder:
-                            "Your organisation's current financial year Zlto reward pool",
-                          "data-autocomplete": "zlto-reward-pool",
-                          step: "1",
-                          value:
-                            OrganizationRequestBase.zltoRewardPoolCurrentFinancialYear ??
-                            "",
-                          onChange: (e) => {
-                            const value = e.target.value;
-                            setOrganizationRequestBase((prev) => ({
-                              ...prev,
-                              zltoRewardPoolCurrentFinancialYear:
-                                value === "" ? null : Number(value),
-                            }));
-                          },
-                        }}
-                      />
-                    </FormField>
-
-                    <div className="mt-2 flex justify-end">
-                      <button
-                        type="button"
-                        className="btn btn-success w-full normal-case md:w-auto md:min-w-40"
-                        onClick={() => {
-                          void onSubmitStep(7, {
-                            zltoRewardPoolCurrentFinancialYear:
-                              OrganizationRequestBase.zltoRewardPoolCurrentFinancialYear,
-                          });
-                        }}
-                      >
-                        Save
-                      </button>
-                    </div>
-                  </div>
+                  {/* EDITABLE POOLS */}
+                  <OrganizationRewardPoolsForm
+                    figures={organisation}
+                    onSubmit={onSubmitRewardPools}
+                    isSubmitting={rewardPoolsMutation.isPending}
+                    serverFieldErrors={rewardServerFieldErrors}
+                    serverFormErrors={rewardServerFormErrors}
+                    submitLabel="Save pools"
+                  />
                 </div>
               </>
             )}

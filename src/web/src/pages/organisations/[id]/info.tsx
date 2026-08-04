@@ -13,6 +13,7 @@ import { getOrganisationById } from "~/api/services/organisations";
 import MainLayout from "~/components/Layout/Main";
 import { OrgOverview } from "~/components/Organisation/Detail/OrgOverview";
 import { LogoTitle } from "~/components/Organisation/LogoTitle";
+import OrganizationRewardStats from "~/components/Organisation/Rewards/OrganizationRewardStats";
 import { PageBackground } from "~/components/PageBackground";
 import { InternalServerError } from "~/components/Status/InternalServerError";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
@@ -125,10 +126,29 @@ const OrganisationOverview: NextPageWithLayout<{
         <LogoTitle logoUrl={organisation?.logoURL} title={organisation?.name} />
 
         {/* CONTENT */}
-        <div className="flex flex-col items-center">
+        <div className="flex flex-col items-center gap-4">
           <div className="flex w-full flex-col gap-2 rounded-lg bg-white p-8 shadow-lg lg:w-[600px]">
             <OrgOverview organisation={organisation} />
           </div>
+
+          {/* REWARDS — read-only.
+              NB: this endpoint is Role_Admin + Role_OrganizationAdmin, so an org admin sees their own
+              organisation's reward capacity here. Deliberate (recorded in the working plan): an org
+              admin should be able to see what they have to work with, without being able to change it.
+              Wrap in an isAdmin check if it must become Yoma-admin-only. */}
+          {organisation && (
+            <div className="flex w-full flex-col gap-3 rounded-lg bg-white p-8 shadow-lg lg:w-[600px]">
+              <div className="flex flex-col gap-1">
+                <h6 className="font-bold">Rewards</h6>
+                <p className="text-gray-dark text-xs">
+                  What this organisation can award this financial year, and what
+                  it has awarded all-time. Set by a Yoma administrator.
+                </p>
+              </div>
+
+              <OrganizationRewardStats figures={organisation} columns={2} />
+            </div>
+          )}
         </div>
 
         {/* BUTTONS */}

@@ -25,9 +25,9 @@ import {
   MONTH_OPTIONS,
   type FinancialYearAssessment,
 } from "~/lib/treasury/financialYear";
+import { parseAmountInput } from "~/lib/format/amountInput";
 import {
   buildTreasuryFormSchema,
-  parseAmountInput,
   treasuryFormValuesFromInfo,
   treasuryRequestFromFormValues,
   type TreasuryFormValues,
