@@ -3,6 +3,7 @@ import axios, { type AxiosError } from "axios";
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
 import Head from "next/head";
+import Link from "next/link";
 import { useRouter } from "next/router";
 import { useCallback, useState, type ReactElement } from "react";
 import { toast } from "react-toastify";
@@ -42,6 +43,12 @@ import { ROLE_ADMIN } from "~/lib/constants";
 import { config } from "~/lib/react-query-config";
 import type { FinancialYearAssessment } from "~/lib/treasury/financialYear";
 import { mapTreasuryServerErrors } from "~/lib/treasury/serverErrors";
+// ⚠️ TEMPORARY — mock-scenario dev aid; delete this import with the blocks it feeds
+import {
+  resolveTreasuryMockScenario,
+  TREASURY_MOCK_SCENARIO_KEYS,
+  TREASURY_MOCK_SCENARIOS,
+} from "~/lib/treasury/treasuryMockScenarios";
 import { getThemeFromRole } from "~/lib/utils";
 import { type NextPageWithLayout } from "~/pages/_app";
 import { authOptions } from "~/server/auth";
@@ -104,8 +111,17 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 const TAB_PARAM = "tab";
 const TAB_MANAGE = "manage";
 
-const treasuryTabHref = (tab: string | null) =>
-  tab === null ? "/admin/treasury" : `/admin/treasury?${TAB_PARAM}=${tab}`;
+/** ⚠️ TEMPORARY — part of the mock-scenario dev aid; remove with it. */
+const MOCK_PARAM = "mock";
+
+const treasuryHref = (tab: string | null, mock?: string | null) => {
+  const params = new URLSearchParams();
+  if (tab !== null) params.append(TAB_PARAM, tab);
+  if (mock) params.append(MOCK_PARAM, mock); // ⚠️ TEMPORARY
+  return params.size > 0
+    ? `/admin/treasury?${params.toString()}`
+    : "/admin/treasury";
+};
 
 // 👇 PAGE COMPONENT: Admin → Treasury
 // The top of the reward hierarchy: what is available to award and cash out this financial year, and
@@ -116,19 +132,31 @@ const Treasury: NextPageWithLayout<{
 }> = ({ error }) => {
   const router = useRouter();
 
+  const routerQuery = router.query as ListPageRouterQuery;
+
   // 👇 the selected tab is driven by the querystring, not by state
   const activeTab =
-    asString((router.query as ListPageRouterQuery)[TAB_PARAM]) === TAB_MANAGE
-      ? TAB_MANAGE
-      : null;
+    asString(routerQuery[TAB_PARAM]) === TAB_MANAGE ? TAB_MANAGE : null;
+
+  // ⚠️⚠️ MOCK SCENARIOS — TEMPORARY DEV AID, DELETE THIS BLOCK (and
+  // lib/treasury/treasuryMockScenarios.ts, and MOCK_PARAM above) BEFORE MERGING ⚠️⚠️
+  const mockScenario = resolveTreasuryMockScenario(
+    asString(routerQuery[MOCK_PARAM]),
+  );
+  const mockTreasury = mockScenario
+    ? TREASURY_MOCK_SCENARIOS[mockScenario]
+    : null;
+  // ⚠️⚠️ end MOCK SCENARIOS ⚠️⚠️
 
   const {
-    data: treasury,
+    data,
     isLoading,
     error: queryError,
     refetch,
     isRefetching,
   } = useTreasuryQuery({ enabled: !error });
+
+  const treasury = mockTreasury ?? data; // ⚠️ TEMPORARY: `= data` once the mock goes
 
   const updateMutation = useTreasuryUpdateMutation();
 
@@ -165,7 +193,9 @@ const Treasury: NextPageWithLayout<{
             "Treasury updated — a new financial year has started and totals for the financial year have been reset",
             { autoClose: 6000 },
           );
-          void router.push(treasuryTabHref(null), undefined, { scroll: false });
+          void router.push(treasuryHref(null, mockScenario), undefined, {
+            scroll: false,
+          });
           return;
         }
 
@@ -190,7 +220,12 @@ const Treasury: NextPageWithLayout<{
         setServerFormErrors(mapped.formErrors);
       }
     },
-    [updateMutation, router, treasury?.financialYearStartDate],
+    [
+      updateMutation,
+      router,
+      treasury?.financialYearStartDate,
+      mockScenario, // ⚠️ TEMPORARY: only here to keep the mock in the url after a rollover
+    ],
   );
 
   const handleFormSubmit = useCallback(
@@ -231,13 +266,13 @@ const Treasury: NextPageWithLayout<{
               {
                 key: "treasury_tab_overview",
                 label: "Overview",
-                href: treasuryTabHref(null),
+                href: treasuryHref(null, mockScenario),
                 selected: activeTab === null,
               },
               {
                 key: "treasury_tab_manage",
                 label: "Manage",
-                href: treasuryTabHref(TAB_MANAGE),
+                href: treasuryHref(TAB_MANAGE, mockScenario),
                 selected: activeTab === TAB_MANAGE,
               },
             ]}
@@ -246,9 +281,42 @@ const Treasury: NextPageWithLayout<{
 
         {/* MAIN CONTENT */}
         <ListPageBody>
-          <ListPageResults isLoading={isLoading} skeletonRows={2}>
+          {/* ⚠️⚠️ MOCK SCENARIOS — TEMPORARY DEV AID, DELETE THIS BLOCK BEFORE MERGING ⚠️⚠️ */}
+          {process.env.NODE_ENV !== "production" && (
+            <div className="flex flex-col gap-2 rounded-lg border-2 border-dashed border-amber-400 bg-amber-50 p-3">
+              <span className="text-xs font-semibold text-amber-900">
+                🧪 Mock data (dev only) — the API is not being displayed while a
+                scenario is active. Saving still hits the real API.
+              </span>
+              <div className="flex flex-row flex-wrap gap-1">
+                <Link
+                  href={treasuryHref(activeTab, null)}
+                  scroll={false}
+                  className={`badge badge-sm ${mockScenario === null ? "bg-amber-500 text-white" : "border-amber-300 bg-white text-amber-900"}`}
+                >
+                  live api
+                </Link>
+                {TREASURY_MOCK_SCENARIO_KEYS.map((scenario) => (
+                  <Link
+                    key={scenario}
+                    href={treasuryHref(activeTab, scenario)}
+                    scroll={false}
+                    className={`badge badge-sm ${mockScenario === scenario ? "bg-amber-500 text-white" : "border-amber-300 bg-white text-amber-900"}`}
+                  >
+                    {scenario}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+          {/* ⚠️⚠️ end MOCK SCENARIOS ⚠️⚠️ */}
+
+          <ListPageResults
+            isLoading={!mockTreasury && isLoading}
+            skeletonRows={2}
+          >
             {/* ERROR */}
-            {!!queryError && (
+            {!!queryError && !mockTreasury && (
               <div className="shadow-custom flex flex-col items-center gap-4 rounded-lg bg-white p-8">
                 <ApiErrors error={queryError} />
                 <button
