@@ -80,12 +80,28 @@ namespace Yoma.Core.Domain.Core.Extensions
     /// Converts a string to title case after normalizing and trimming it.
     /// </summary>
     /// <param name="input">The string to convert.</param>
+    /// <param name="onlyWhenAllCaps">Whether to only convert the value when all its letters are uppercase.</param>
     /// <returns>The title-cased string.</returns>
-    public static string TitleCase(this string input)
+    public static string TitleCase(this string input, bool onlyWhenAllCaps = false)
     {
       ArgumentNullException.ThrowIfNull(input, nameof(input));
 
-      return CultureInfo.CurrentCulture.TextInfo.ToTitleCase(input.NormalizeTrim());
+      var normalized = input.NormalizeTrim();
+      if (onlyWhenAllCaps)
+      {
+        var hasLetter = false;
+        foreach (var character in normalized)
+        {
+          if (!char.IsLetter(character)) continue;
+
+          hasLetter = true;
+          if (!char.IsUpper(character)) return normalized;
+        }
+
+        if (!hasLetter) return normalized;
+      }
+
+      return CultureInfo.CurrentCulture.TextInfo.ToTitleCase(normalized.ToLower(CultureInfo.CurrentCulture));
     }
 
     /// <summary>
@@ -213,6 +229,7 @@ namespace Yoma.Core.Domain.Core.Extensions
       if (string.IsNullOrWhiteSpace(input)) return null;
 
       var result = WebUtility.HtmlDecode(input);
+      result = HtmlAnchors().Replace(result, HtmlAnchorToMarkdown);
 
       result = HtmlLineBreaks().Replace(result, "\n");
       result = HtmlBlockStart().Replace(result, "\n\n");
@@ -220,15 +237,19 @@ namespace Yoma.Core.Domain.Core.Extensions
 
       result = HtmlStrongStart().Replace(result, "**");
       result = HtmlStrongEnd().Replace(result, "**");
+      result = MarkdownStrongWhitespace().Replace(result, "${leading}**${content}**${trailing}");
 
       result = HtmlEmphasisStart().Replace(result, "*");
       result = HtmlEmphasisEnd().Replace(result, "*");
+
+      result = HtmlUnderlineStart().Replace(result, "<u>");
+      result = HtmlUnderlineEnd().Replace(result, "</u>");
 
       result = HtmlListItemStart().Replace(result, "- ");
       result = HtmlListItemEnd().Replace(result, "\n");
       result = HtmlListContainerTags().Replace(result, "\n");
 
-      result = HtmlTags().Replace(result, string.Empty);
+      result = HtmlTagsExceptUnderline().Replace(result, string.Empty);
 
       result = result.NormalizeTrimMultiline().NormalizeNullableValue();
       if (string.IsNullOrWhiteSpace(result)) return null;
@@ -257,6 +278,30 @@ namespace Yoma.Core.Domain.Core.Extensions
     #endregion
 
     #region Private Members
+    private static string HtmlAnchorToMarkdown(Match match)
+    {
+      var url = match.Groups["url"].Value.Trim();
+      var text = HtmlTags().Replace(match.Groups["text"].Value, string.Empty).NormalizeTrim();
+
+      if (string.IsNullOrEmpty(text)) text = url;
+
+      if (!Uri.TryCreate(url, UriKind.Absolute, out var uri) ||
+          !(string.Equals(uri.Scheme, Uri.UriSchemeHttp, StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(uri.Scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase)))
+        return text;
+
+      var useFriendlyLabel = string.Equals(text, url, StringComparison.OrdinalIgnoreCase);
+      if (useFriendlyLabel) text = "View Link";
+
+      var markdown = $"[{text}]({uri.AbsoluteUri})";
+      return useFriendlyLabel
+        ? $"[<u>*{text}*</u>]({uri.AbsoluteUri} \"{text}\")"
+        : markdown;
+    }
+
+    [GeneratedRegex(@"(?:\[\s*)?<a\b[^>]*\bhref\s*=\s*(?:""(?<url>[^""]*)""|'(?<url>[^']*)')[^>]*>(?<text>.*?)</a\s*>(?:\s*\])?", RegexOptions.IgnoreCase | RegexOptions.Singleline)]
+    private static partial Regex HtmlAnchors();
+
     [GeneratedRegex(@"<br\s*/?>", RegexOptions.IgnoreCase)]
     private static partial Regex HtmlLineBreaks();
 
@@ -272,8 +317,17 @@ namespace Yoma.Core.Domain.Core.Extensions
     [GeneratedRegex(@"</(strong|b)>", RegexOptions.IgnoreCase)]
     private static partial Regex HtmlStrongEnd();
 
+    [GeneratedRegex(@"\*\*(?<leading>\s*)(?<content>[^*\r\n]*?[^\s*])(?<trailing>\s*)\*\*")]
+    private static partial Regex MarkdownStrongWhitespace();
+
     [GeneratedRegex(@"<(em|i)[^>]*>", RegexOptions.IgnoreCase)]
     private static partial Regex HtmlEmphasisStart();
+
+    [GeneratedRegex(@"<u\b[^>]*>", RegexOptions.IgnoreCase)]
+    private static partial Regex HtmlUnderlineStart();
+
+    [GeneratedRegex(@"</u\s*>", RegexOptions.IgnoreCase)]
+    private static partial Regex HtmlUnderlineEnd();
 
     [GeneratedRegex(@"</(em|i)>", RegexOptions.IgnoreCase)]
     private static partial Regex HtmlEmphasisEnd();
@@ -304,6 +358,9 @@ namespace Yoma.Core.Domain.Core.Extensions
 
     [GeneratedRegex("<.*?>")]
     private static partial Regex HtmlTags();
+
+    [GeneratedRegex(@"<(?!/?u>).*?>", RegexOptions.IgnoreCase)]
+    private static partial Regex HtmlTagsExceptUnderline();
     #endregion
   }
 }

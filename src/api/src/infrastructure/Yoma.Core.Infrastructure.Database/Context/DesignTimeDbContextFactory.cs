@@ -8,10 +8,11 @@ namespace Yoma.Core.Infrastructure.Database.Context
   {
     public ApplicationDbContext CreateDbContext(string[] args)
     {
-      IConfigurationRoot configuration = new ConfigurationBuilder()
-          .SetBasePath(Directory.GetCurrentDirectory())
-          .AddJsonFile("appsettings.design.json")
-          .Build();
+      var configuration = new ConfigurationBuilder()
+        .SetBasePath(Directory.GetCurrentDirectory())
+        .AddJsonFile("appsettings.design.json")
+        .Build();
+
       var builder = new DbContextOptionsBuilder<ApplicationDbContext>();
       var connectionString = configuration.GetConnectionString("SQLConnection");
       builder.UseNpgsql(connectionString);

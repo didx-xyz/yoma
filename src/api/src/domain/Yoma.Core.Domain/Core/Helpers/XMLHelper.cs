@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Xml;
 using System.Xml.Linq;
 using Yoma.Core.Domain.Core.Extensions;
@@ -89,6 +90,21 @@ namespace Yoma.Core.Domain.Core.Helpers
     }
 
     /// <summary>
+    /// Gets the normalized inner content of the first element with the given name; returns null if missing.
+    /// Child elements are preserved as XML while text-only content is returned as text.
+    /// </summary>
+    public static string? GetElementContent(this XContainer? container, XName name, string? @default = null)
+    {
+      if (container?.Element(name) is not XElement element) return @default;
+
+      var value = element.HasElements
+        ? string.Concat(element.Nodes().Select(node => node.ToString(SaveOptions.DisableFormatting)))
+        : element.Value;
+
+      return value.NormalizeNullableValue() ?? @default;
+    }
+
+    /// <summary>
     /// Gets normalized attribute value by name; returns null if missing.
     /// </summary>
     public static string? GetAttribute(this XElement? element, XName name, string? @default = null)
@@ -111,6 +127,22 @@ namespace Yoma.Core.Domain.Core.Helpers
 
       dto = result.Value;
       return true;
+    }
+
+    /// <summary>
+    /// Tries to parse a child element's text as an integer using invariant culture.
+    /// </summary>
+    public static bool TryGetElementInt(this XContainer? container, XName name, out int value)
+    {
+      return int.TryParse(container.GetElementText(name), NumberStyles.Integer, CultureInfo.InvariantCulture, out value);
+    }
+
+    /// <summary>
+    /// Tries to parse a child element's text as a decimal using invariant culture.
+    /// </summary>
+    public static bool TryGetElementDecimal(this XContainer? container, XName name, out decimal value)
+    {
+      return decimal.TryParse(container.GetElementText(name), NumberStyles.Number, CultureInfo.InvariantCulture, out value);
     }
 
     #endregion
