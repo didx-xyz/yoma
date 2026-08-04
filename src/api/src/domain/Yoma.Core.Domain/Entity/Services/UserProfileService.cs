@@ -17,6 +17,9 @@ using Yoma.Core.Domain.Lookups.Interfaces;
 using Yoma.Core.Domain.MyOpportunity;
 using Yoma.Core.Domain.MyOpportunity.Interfaces;
 using Yoma.Core.Domain.MyOpportunity.Models;
+using Yoma.Core.Domain.Payout.Extensions;
+using Yoma.Core.Domain.Payout.Interfaces;
+using Yoma.Core.Domain.Payout.Models;
 using Yoma.Core.Domain.Referral;
 using Yoma.Core.Domain.Referral.Interfaces;
 using Yoma.Core.Domain.Referral.Models;
@@ -37,6 +40,8 @@ namespace Yoma.Core.Domain.Entity.Services
     private readonly IOrganizationService _organizationService;
     private readonly IMyOpportunityService _myOpportunityService;
     private readonly IWalletService _walletService;
+    private readonly IPayoutTransactionService _payoutTransactionService;
+    private readonly IPayoutService _payoutService;
     private readonly ISettingsDefinitionService _settingsDefinitionService;
     private readonly IBlockService _referralBlockService;
     private readonly ILinkService _linkService;
@@ -58,6 +63,8 @@ namespace Yoma.Core.Domain.Entity.Services
       IOrganizationService organizationService,
       IMyOpportunityService myOpportunityService,
       IWalletService walletService,
+      IPayoutTransactionService payoutTransactionService,
+      IPayoutService payoutService,
       ISettingsDefinitionService settingsDefinitionService,
       IBlockService referralBlockService,
       ILinkService linkService,
@@ -77,6 +84,8 @@ namespace Yoma.Core.Domain.Entity.Services
       _organizationService = organizationService;
       _myOpportunityService = myOpportunityService;
       _walletService = walletService;
+      _payoutTransactionService = payoutTransactionService ?? throw new ArgumentNullException(nameof(payoutTransactionService));
+      _payoutService = payoutService ?? throw new ArgumentNullException(nameof(payoutService));
       _settingsDefinitionService = settingsDefinitionService;
       _referralBlockService = referralBlockService;
       _linkService = linkService;
@@ -94,6 +103,13 @@ namespace Yoma.Core.Domain.Entity.Services
       var username = HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false);
       var user = _userService.GetByUsername(username, true, true);
       return ToProfile(user).Result;
+    }
+
+    public async Task<PayoutInfo> PayoutRewards(decimal amount)
+    {
+      var username = HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false);
+      var user = _userService.GetByUsername(username, false, false);
+      return await _payoutService.PayoutRewards(user.Id, amount);
     }
 
     public List<UserSkillInfo>? GetSkills()
@@ -311,11 +327,19 @@ namespace Yoma.Core.Domain.Entity.Services
       var (status, balance) = await _walletService.GetWalletStatusAndBalance(result.Id);
       result.Zlto = new UserProfileZlto
       {
-        Pending = balance.Pending,
+        PendingAwards = balance.Pending,
+        PendingPayout = balance.PendingPayout,
         Available = balance.Available,
         Total = balance.Total,
         WalletCreationStatus = status,
         ZltoOffline = balance.ZltoOffline
+      };
+
+      var payoutPending = _payoutTransactionService.GetActiveByUserIdOrNull(result.Id);
+      result.Payout = new UserProfilePayout
+      {
+        Pending = payoutPending != null,
+        Info = payoutPending?.ToPayoutInfo()
       };
 
       result.AdminsOf = isOnBehalfOfUser ? [] : [.. _organizationService.ListAdminsOf(true).Cast<OrganizationInfo>()];

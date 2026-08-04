@@ -12,6 +12,7 @@ using Yoma.Core.Domain.Entity.Models;
 using Yoma.Core.Domain.IdentityProvider;
 using Yoma.Core.Domain.IdentityProvider.Interfaces;
 using Yoma.Core.Domain.Lookups.Interfaces;
+using Yoma.Core.Domain.Payout.Interfaces;
 using Yoma.Core.Domain.Reward.Interfaces;
 using Yoma.Core.Infrastructure.Keycloak;
 using Yoma.Core.Infrastructure.Keycloak.Models;
@@ -37,6 +38,7 @@ namespace Yoma.Core.Api.Controllers
     private readonly ICountryService _countryService;
     private readonly IEducationService _educationService;
     private readonly IWalletService _walletService;
+    private readonly IPayoutService _payoutService;
     private readonly IYellowCardWebhookParser _yellowCardWebhookParser;
 
     private const string Key_Prefix = "keycloak_event";
@@ -53,6 +55,7 @@ namespace Yoma.Core.Api.Controllers
       ICountryService countryService,
       IEducationService educationService,
       IWalletService walletService,
+      IPayoutService payoutService,
       IYellowCardWebhookParser yellowCardWebhookParser)
     {
       _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -65,6 +68,7 @@ namespace Yoma.Core.Api.Controllers
       _countryService = countryService ?? throw new ArgumentNullException(nameof(countryService));
       _educationService = educationService ?? throw new ArgumentNullException(nameof(educationService));
       _walletService = walletService ?? throw new ArgumentNullException(nameof(walletService));
+      _payoutService = payoutService ?? throw new ArgumentNullException(nameof(payoutService));
       _yellowCardWebhookParser = yellowCardWebhookParser ?? throw new ArgumentNullException(nameof(yellowCardWebhookParser));
     }
     #endregion
@@ -169,7 +173,7 @@ namespace Yoma.Core.Api.Controllers
     }
 
     [HttpPost("webhook/yellowcard")]
-    public IActionResult ReceiveYellowCardWebhook([FromBody] JObject request)
+    public async Task<IActionResult> ReceiveYellowCardWebhook([FromBody] JObject request)
     {
       if (request == null)
         return BadRequest();
@@ -180,11 +184,14 @@ namespace Yoma.Core.Api.Controllers
 
       try
       {
-        _yellowCardWebhookParser.Validate(payload);
+        // TODO [Yellow Card]: Authenticate the webhook according to the confirmed IXO specification.
+        // Signature validation may require the exact raw request body rather than the deserialized event.
+        var response = _yellowCardWebhookParser.Parse(payload);
 
-        // TODO: Map the validated Yellow Card event to a provider-neutral reward-domain event,
-        // process the event idempotently and synchronously, and only then acknowledge the webhook.
-        return StatusCode(StatusCodes.Status501NotImplemented);
+        await _payoutService.ProcessStatus(response);
+
+        // Acknowledge only after the payout outcome was processed successfully so provider retries remain possible.
+        return Ok();
       }
       catch (NotImplementedException ex)
       {

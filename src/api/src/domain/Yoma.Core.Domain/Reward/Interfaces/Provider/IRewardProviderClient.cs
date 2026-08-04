@@ -11,11 +11,11 @@ namespace Yoma.Core.Domain.Reward.Interfaces.Provider
 
     Task<Wallet> GetWallet(string walletId);
 
-    Task<ReserveCashOutResponse> ReserveForCashOut(ReserveCashOutRequest request);
+    Task<ReservePayoutResponse> ReserveForPayout(ReservePayoutRequest request);
 
-    Task CommitCashOutReservation(CommitCashOutReservationRequest request);
+    Task CommitPayoutReservation(CommitPayoutReservationRequest request);
 
-    Task ReleaseCashOutReservation(ReleaseCashOutReservationRequest request);
+    Task ReleasePayoutReservation(ReleasePayoutReservationRequest request);
 
     Task<List<WalletVoucher>> ListWalletVouchers(string walletId, int? limit, int? offset);
 

@@ -6,6 +6,7 @@ using System.Net;
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Entity.Interfaces;
 using Yoma.Core.Domain.Entity.Models;
+using Yoma.Core.Domain.Payout.Models;
 
 namespace Yoma.Core.Api.Controllers
 {
@@ -78,6 +79,22 @@ namespace Yoma.Core.Api.Controllers
       var result = _userProfileService.Get();
 
       if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(Get));
+
+      return StatusCode((int)HttpStatusCode.OK, result);
+    }
+
+    [SwaggerOperation(Summary = "Initiate a ZLTO payout (Authenticated User)",
+      Description = "Reserves the requested ZLTO and initiates the corresponding payout through the configured payout provider")]
+    [HttpPost("payout/zlto")]
+    [ProducesResponseType(typeof(PayoutInfo), (int)HttpStatusCode.OK)]
+    [Authorize(Roles = Constants.Role_User)]
+    public async Task<IActionResult> PayoutZlto([FromQuery] decimal amount)
+    {
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(PayoutZlto));
+
+      var result = await _userProfileService.PayoutRewards(amount);
+
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(PayoutZlto));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }

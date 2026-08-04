@@ -4,6 +4,8 @@ namespace Yoma.Core.Domain.Payout.Interfaces.Provider
 {
   public interface IPayoutProviderClient
   {
-    Task<PayoutResponse> InitiateAsync(PayoutRequest request);
+    Task<PayoutResponse> Initiate(PayoutRequest request);
+
+    Task<PayoutStatusResponse> GetStatus(PayoutStatusRequest request);
   }
 }

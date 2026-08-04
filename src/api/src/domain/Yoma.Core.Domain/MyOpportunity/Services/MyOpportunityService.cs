@@ -1746,7 +1746,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             }
 
             if (result.ZltoReward.HasValue && result.ZltoReward.Value > default(decimal))
-              await _rewardService.ScheduleRewardTransaction(user.Id, Reward.RewardTransactionEntityType.MyOpportunity, item.Id, result.ZltoReward.Value);
+              await _rewardService.ScheduleTransaction(user.Id, Reward.RewardTransactionEntityType.MyOpportunity, item.Id, result.ZltoReward.Value);
 
             if (result.ZltoRewardPoolDepleted == true)
               item.CommentVerification = CommentVerificationAppendInfo(item.CommentVerification, "ZLTO not awarded as reward pool has been depleted");

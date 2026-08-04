@@ -127,6 +127,12 @@ namespace Yoma.Core.Domain.Core.Models
     /// </summary>
     public int MarketplaceItemReservationExpirationInMinutes { get; set; }
 
+    /// <summary>
+    /// Provisional ZLTO payout reservation window. Confirm the supported range and required alignment
+    /// with the IXO / Yellow Card hosted payout expiry before enabling the integration.
+    /// </summary>
+    public int PayoutRewardReservationExpirationInMinutes { get; set; }
+
     public AppSettingsDatabaseRetryPolicy DatabaseRetryPolicy { get; set; } = null!;
 
     public bool? RedisSSLCertificateValidationBypass { get; set; }
@@ -165,6 +171,8 @@ namespace Yoma.Core.Domain.Core.Models
     public int DistributedLockKeycloakEventDurationInSeconds { get; set; }
 
     public int DistributedLockReferralProgressDurationInSeconds { get; set; }
+
+    public int DistributedLockPayoutDurationInSeconds { get; set; }
 
     /// <summary>
     /// Controls whether a referee is restricted to participating in only a single referral program.

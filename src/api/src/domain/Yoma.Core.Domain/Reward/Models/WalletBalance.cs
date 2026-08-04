@@ -10,10 +10,10 @@ namespace Yoma.Core.Domain.Reward.Models
 
     public decimal Pending { get; set; }
 
-    public decimal PendingCashOut { get; set; }
+    public decimal PendingPayout { get; set; }
 
     /// <summary>
-    /// Effective balance after pending rewards are added. Pending cash-out is not deducted here
+    /// Effective balance after pending rewards are added. Pending payout is not deducted here
     /// because it has already been removed from the available wallet balance by the provider.
     /// </summary>
     public decimal Total => Available + Pending;

@@ -3,10 +3,18 @@ namespace Yoma.Core.Domain.Payout.Models.Provider
   public sealed class PayoutResponse
   {
     /// <summary>
-    /// Payout provider's transaction id / reference
+    /// Transaction identifier assigned by the payout provider.
     /// </summary>
-    public string TransactionReference { get; set; } = null!;
+    public string TransactionId { get; set; } = null!;
 
-    public string? PaymentLink { get; set; }
+    /// <summary>
+    /// URL of the provider's hosted payout experience, when applicable.
+    /// </summary>
+    public string? PaymentUrl { get; set; }
+
+    /// <summary>
+    /// Expiration reported by the provider for the hosted payout session.
+    /// </summary>
+    public DateTimeOffset? ExpiresAt { get; set; }
   }
 }

@@ -31,13 +31,13 @@ namespace Yoma.Core.Infrastructure.Database.Treasury.Entities
     public decimal? ZltoRewardCumulativeCurrentFinancialYear { get; set; }
 
     [Column(TypeName = "decimal(12,2)")]
-    public decimal? CashOutPoolCurrentFinancialYearInUsd { get; set; }
+    public decimal? PayoutPoolCurrentFinancialYearInUsd { get; set; }
 
     [Column(TypeName = "decimal(12,2)")]
-    public decimal? CashOutCumulativeInUsd { get; set; }
+    public decimal? PayoutCumulativeInUsd { get; set; }
 
     [Column(TypeName = "decimal(12,2)")]
-    public decimal? CashOutCumulativeCurrentFinancialYearInUsd { get; set; }
+    public decimal? PayoutCumulativeCurrentFinancialYearInUsd { get; set; }
 
     [Required]
     [Column(TypeName = "decimal(18,10)")]

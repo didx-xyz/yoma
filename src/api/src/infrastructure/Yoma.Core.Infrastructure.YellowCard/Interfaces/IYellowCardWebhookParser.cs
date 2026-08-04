@@ -1,9 +1,10 @@
+using Yoma.Core.Domain.Payout.Models.Provider;
 using Yoma.Core.Infrastructure.YellowCard.Models;
 
 namespace Yoma.Core.Infrastructure.YellowCard.Interfaces
 {
   public interface IYellowCardWebhookParser
   {
-    void Validate(YellowCardWebhookEvent payload);
+    PayoutStatusResponse Parse(YellowCardWebhookEvent payload);
   }
 }

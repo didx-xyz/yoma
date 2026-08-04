@@ -30,11 +30,11 @@ namespace Yoma.Core.Api.Controllers
     #region Public Members
     #region Authenticated User Based Actions
     [SwaggerOperation(Summary = "Preview ZLTO to USD conversion (Authenticated User)",
-      Description = "Returns an indicative ZLTO to USD conversion based on the current treasury conversion rate. " +
+      Description = "Returns an indicative ZLTO to USD conversion and whether the Treasury currently has sufficient funds for the payout. " +
       "This is a preview only. The final conversion is determined at the time of transaction and may differ")]
     [HttpGet("conversion/zlto-usd")]
     [Authorize(Roles = Constants.Role_User)]
-    public async Task<ActionResult<decimal>> ConvertZltoToUsd([FromQuery] decimal amount)
+    public async Task<ActionResult<ConversionResponse>> ConvertZltoToUsd([FromQuery] decimal amount)
     {
       if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(ConvertZltoToUsd));
 

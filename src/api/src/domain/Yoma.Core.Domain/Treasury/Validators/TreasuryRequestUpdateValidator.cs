@@ -31,20 +31,20 @@ namespace Yoma.Core.Domain.Treasury.Validators
         .When(x => x.ZltoRewardPoolCurrentFinancialYear.HasValue)
         .WithMessage("ZLTO reward pool for the current financial year must be a whole number.");
 
-      RuleFor(x => x.CashOutPoolCurrentFinancialYearInUsd)
+      RuleFor(x => x.PayoutPoolCurrentFinancialYearInUsd)
         .NotNull()
-        .WithMessage("Cash-out pool for the current financial year (USD) is required.");
+        .WithMessage("Payout pool for the current financial year (USD) is required.");
 
-      RuleFor(x => x.CashOutPoolCurrentFinancialYearInUsd)
+      RuleFor(x => x.PayoutPoolCurrentFinancialYearInUsd)
         .GreaterThan(0m)
-        .When(x => x.CashOutPoolCurrentFinancialYearInUsd.HasValue)
-        .WithMessage("Cash-out pool for the current financial year (USD) must be greater than 0.")
+        .When(x => x.PayoutPoolCurrentFinancialYearInUsd.HasValue)
+        .WithMessage("Payout pool for the current financial year (USD) must be greater than 0.")
         .LessThanOrEqualTo(50_000m)
-        .When(x => x.CashOutPoolCurrentFinancialYearInUsd.HasValue)
-        .WithMessage("Cash-out pool for the current financial year (USD) may not exceed 50,000.")
+        .When(x => x.PayoutPoolCurrentFinancialYearInUsd.HasValue)
+        .WithMessage("Payout pool for the current financial year (USD) may not exceed 50,000.")
         .Must(pool => !pool.HasValue || decimal.Round(pool.Value, 2) == pool.Value)
-        .When(x => x.CashOutPoolCurrentFinancialYearInUsd.HasValue)
-        .WithMessage("Cash-out pool for the current financial year (USD) may not have more than 2 decimal places.");
+        .When(x => x.PayoutPoolCurrentFinancialYearInUsd.HasValue)
+        .WithMessage("Payout pool for the current financial year (USD) may not have more than 2 decimal places.");
 
       RuleFor(x => x.ConversionRateZltoPerUsd)
         .GreaterThan(0m)

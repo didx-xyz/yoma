@@ -2110,6 +2110,99 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.ToTable("ProcessingLog", "PartnerSync");
           });
 
+      modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Payout.Entities.Lookups.PayoutTransactionStatus", b =>
+          {
+            b.Property<Guid>("Id")
+                      .ValueGeneratedOnAdd()
+                      .HasColumnType("uuid");
+
+            b.Property<DateTimeOffset>("DateCreated")
+                      .HasColumnType("timestamp with time zone");
+
+            b.Property<string>("Name")
+                      .IsRequired()
+                      .HasColumnType("varchar(30)");
+
+            b.HasKey("Id")
+                      .HasName("PK_Payout_TransactionStatus");
+
+            b.HasIndex("Name")
+                      .IsUnique()
+                      .HasDatabaseName("IX_Payout_TransactionStatus_Name");
+
+            b.ToTable("TransactionStatus", "Payout");
+          });
+
+      modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Payout.Entities.PayoutTransaction", b =>
+          {
+            b.Property<Guid>("Id")
+                      .ValueGeneratedOnAdd()
+                      .HasColumnType("uuid");
+
+            b.Property<decimal>("Amount")
+                      .HasColumnType("decimal(12,2)");
+
+            b.Property<string>("Currency")
+                      .IsRequired()
+                      .HasColumnType("varchar(10)");
+
+            b.Property<DateTimeOffset>("DateCreated")
+                      .HasColumnType("timestamp with time zone");
+
+            b.Property<DateTimeOffset?>("DateLastReconciled")
+                      .HasColumnType("timestamp with time zone");
+
+            b.Property<DateTimeOffset>("DateModified")
+                      .HasColumnType("timestamp with time zone");
+
+            b.Property<string>("ErrorReason")
+                      .HasColumnType("text");
+
+            b.Property<DateTimeOffset?>("ExpiresAt")
+                      .HasColumnType("timestamp with time zone");
+
+            b.Property<string>("PaymentUrl")
+                      .HasColumnType("varchar(2048)");
+
+            b.Property<string>("Provider")
+                      .IsRequired()
+                      .HasColumnType("varchar(25)");
+
+            b.Property<byte?>("RetryCount")
+                      .HasColumnType("smallint");
+
+            b.Property<DateTimeOffset?>("RewardReservationExpiresAt")
+                      .HasColumnType("timestamp with time zone");
+
+            b.Property<Guid>("StatusId")
+                      .HasColumnType("uuid");
+
+            b.Property<string>("TransactionId")
+                      .HasColumnType("varchar(50)");
+
+            b.Property<string>("Type")
+                      .IsRequired()
+                      .HasColumnType("varchar(25)");
+
+            b.Property<Guid>("UserId")
+                      .HasColumnType("uuid");
+
+            b.HasKey("Id")
+                      .HasName("PK_Payout_Transaction");
+
+            b.HasIndex("StatusId")
+                      .HasDatabaseName("IX_Payout_Transaction_StatusId");
+
+            b.HasIndex("Provider", "TransactionId")
+                      .IsUnique()
+                      .HasDatabaseName("IX_Payout_Transaction_Provider_TransactionId");
+
+            b.HasIndex("UserId", "StatusId", "DateCreated", "DateModified")
+                      .HasDatabaseName("IX_Payout_Transaction_UserId_StatusId_DateCreated_DateModified");
+
+            b.ToTable("Transaction", "Payout");
+          });
+
       modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Referral.Entities.Block", b =>
           {
             b.Property<Guid>("Id")
@@ -2696,6 +2789,9 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.Property<Guid?>("MyOpportunityId")
                       .HasColumnType("uuid");
 
+            b.Property<Guid?>("PayoutTransactionId")
+                      .HasColumnType("uuid");
+
             b.Property<string>("Provider")
                       .IsRequired()
                       .ValueGeneratedOnAdd()
@@ -2704,6 +2800,9 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
             b.Property<Guid?>("ReferralLinkUsageId")
                       .HasColumnType("uuid");
+
+            b.Property<DateTimeOffset?>("ReservationExpiresAt")
+                      .HasColumnType("timestamp with time zone");
 
             b.Property<byte?>("RetryCount")
                       .HasColumnType("smallint");
@@ -2725,15 +2824,19 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
             b.HasIndex("MyOpportunityId");
 
+            b.HasIndex("PayoutTransactionId");
+
             b.HasIndex("ReferralLinkUsageId");
 
             b.HasIndex("StatusId");
 
             b.HasIndex("Provider", "StatusId", "DateCreated", "DateModified");
 
-            b.HasIndex("UserId", "SourceEntityType", "MyOpportunityId", "ReferralLinkUsageId")
+            b.HasIndex("UserId", "SourceEntityType", "MyOpportunityId", "ReferralLinkUsageId", "PayoutTransactionId")
                       .IsUnique()
                       .HasFilter("\"Provider\" = 'ZLTO'");
+
+            NpgsqlIndexBuilderExtensions.AreNullsDistinct(b.HasIndex("UserId", "SourceEntityType", "MyOpportunityId", "ReferralLinkUsageId", "PayoutTransactionId"), false);
 
             b.ToTable("Transaction", "Reward");
           });
@@ -3069,13 +3172,13 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                       .ValueGeneratedOnAdd()
                       .HasColumnType("uuid");
 
-            b.Property<decimal?>("CashOutCumulativeCurrentFinancialYearInUsd")
+            b.Property<decimal?>("PayoutCumulativeCurrentFinancialYearInUsd")
                       .HasColumnType("decimal(12,2)");
 
-            b.Property<decimal?>("CashOutCumulativeInUsd")
+            b.Property<decimal?>("PayoutCumulativeInUsd")
                       .HasColumnType("decimal(12,2)");
 
-            b.Property<decimal?>("CashOutPoolCurrentFinancialYearInUsd")
+            b.Property<decimal?>("PayoutPoolCurrentFinancialYearInUsd")
                       .HasColumnType("decimal(12,2)");
 
             b.Property<decimal>("ConversionRateZltoUsd")
@@ -3765,6 +3868,25 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.Navigation("Status");
           });
 
+      modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Payout.Entities.PayoutTransaction", b =>
+          {
+            b.HasOne("Yoma.Core.Infrastructure.Database.Payout.Entities.Lookups.PayoutTransactionStatus", "Status")
+                      .WithMany()
+                      .HasForeignKey("StatusId")
+                      .OnDelete(DeleteBehavior.NoAction)
+                      .IsRequired();
+
+            b.HasOne("Yoma.Core.Infrastructure.Database.Entity.Entities.User", "User")
+                      .WithMany()
+                      .HasForeignKey("UserId")
+                      .OnDelete(DeleteBehavior.NoAction)
+                      .IsRequired();
+
+            b.Navigation("Status");
+
+            b.Navigation("User");
+          });
+
       modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Referral.Entities.Block", b =>
           {
             b.HasOne("Yoma.Core.Infrastructure.Database.Entity.Entities.User", "CreatedByUser")
@@ -3959,6 +4081,10 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                       .WithMany()
                       .HasForeignKey("MyOpportunityId");
 
+            b.HasOne("Yoma.Core.Infrastructure.Database.Payout.Entities.PayoutTransaction", "PayoutTransaction")
+                      .WithMany()
+                      .HasForeignKey("PayoutTransactionId");
+
             b.HasOne("Yoma.Core.Infrastructure.Database.Referral.Entities.LinkUsage", "ReferralLinkUsage")
                       .WithMany()
                       .HasForeignKey("ReferralLinkUsageId");
@@ -3976,6 +4102,8 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                       .IsRequired();
 
             b.Navigation("MyOpportunity");
+
+            b.Navigation("PayoutTransaction");
 
             b.Navigation("ReferralLinkUsage");
 

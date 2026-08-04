@@ -6,6 +6,8 @@ using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Entity.Interfaces;
+using Yoma.Core.Domain.Payout;
+using Yoma.Core.Domain.Payout.Interfaces;
 using Yoma.Core.Domain.Treasury.Extensions;
 using Yoma.Core.Domain.Treasury.Helpers;
 using Yoma.Core.Domain.Treasury.Interfaces;
@@ -21,6 +23,7 @@ namespace Yoma.Core.Domain.Treasury.Services
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly IRepository<Models.Treasury> _treasuryRepository;
     private readonly IOrganizationService _organizationService;
+    private readonly IPayoutTransactionService _payoutTransactionService;
     private readonly IUserService _userService;
     private readonly IExecutionStrategyService _executionStrategyService;
     #endregion
@@ -31,6 +34,7 @@ namespace Yoma.Core.Domain.Treasury.Services
       IHttpContextAccessor httpContextAccessor,
       IRepository<Models.Treasury> treasuryRepository,
       IOrganizationService organizationService,
+      IPayoutTransactionService payoutTransactionService,
       IUserService userService,
       IExecutionStrategyService executionStrategyService)
     {
@@ -38,6 +42,7 @@ namespace Yoma.Core.Domain.Treasury.Services
       _httpContextAccessor = httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
       _treasuryRepository = treasuryRepository ?? throw new ArgumentNullException(nameof(treasuryRepository));
       _organizationService = organizationService ?? throw new ArgumentNullException(nameof(organizationService));
+      _payoutTransactionService = payoutTransactionService ?? throw new ArgumentNullException(nameof(payoutTransactionService));
       _userService = userService ?? throw new ArgumentNullException(nameof(userService));
       _executionStrategyService = executionStrategyService ?? throw new ArgumentNullException(nameof(executionStrategyService));
     }
@@ -79,10 +84,12 @@ namespace Yoma.Core.Domain.Treasury.Services
             request.ZltoRewardPoolCurrentFinancialYear.Value < zltoRewardCumulativeCurrentFinancialYear)
           throw new ValidationException($"The ZLTO reward pool for the current financial year cannot be less than the cumulative ZLTO rewards ({zltoRewardCumulativeCurrentFinancialYear:F0}) already awarded for the current financial year");
 
-        var cashOutCumulativeCurrentFinancialYearInUsd = requiresRollover ? 0m : result.CashOutCumulativeCurrentFinancialYearInUsd ?? 0m;
-        if (request.CashOutPoolCurrentFinancialYearInUsd.HasValue &&
-            request.CashOutPoolCurrentFinancialYearInUsd.Value < cashOutCumulativeCurrentFinancialYearInUsd)
-          throw new ValidationException($"The cash-out pool for the current financial year cannot be less than the cumulative cash-out amount ({cashOutCumulativeCurrentFinancialYearInUsd:F2} USD) already completed for the current financial year");
+        // TODO [Payout pool]: Include active payout amounts already reserved against the Treasury when
+        // validating a reduced pool, including when a configuration change causes a financial-year rollover.
+        var payoutCumulativeCurrentFinancialYearInUsd = requiresRollover ? 0m : result.PayoutCumulativeCurrentFinancialYearInUsd ?? 0m;
+        if (request.PayoutPoolCurrentFinancialYearInUsd.HasValue &&
+            request.PayoutPoolCurrentFinancialYearInUsd.Value < payoutCumulativeCurrentFinancialYearInUsd)
+          throw new ValidationException($"The payout pool for the current financial year cannot be less than the cumulative payout amount ({payoutCumulativeCurrentFinancialYearInUsd:F2} USD) already completed for the current financial year");
 
         result.FinancialYearStartMonth = request.FinancialYearStartMonth;
         result.FinancialYearStartDay = request.FinancialYearStartDay;
@@ -92,7 +99,7 @@ namespace Yoma.Core.Domain.Treasury.Services
           await ResetCurrentFinancialYear(result, false);
 
         result.ZltoRewardPoolCurrentFinancialYear = request.ZltoRewardPoolCurrentFinancialYear;
-        result.CashOutPoolCurrentFinancialYearInUsd = request.CashOutPoolCurrentFinancialYearInUsd;
+        result.PayoutPoolCurrentFinancialYearInUsd = request.PayoutPoolCurrentFinancialYearInUsd;
         result.ConversionRateZltoUsd = Math.Round(Constants.ConversionRateUsdAmount / request.ConversionRateZltoPerUsd, 10);
 
         result.ModifiedByUserId = ResolveModifiedByUserId();
@@ -104,7 +111,7 @@ namespace Yoma.Core.Domain.Treasury.Services
       return (result ?? throw new DataInconsistencyException("Treasury update did not return a result.")).ToInfo();
     }
 
-    public async Task CashOutCompleted(Models.Treasury treasury, decimal amount)
+    public async Task PayoutCompleted(Models.Treasury treasury, decimal amount)
     {
       ArgumentNullException.ThrowIfNull(treasury, nameof(treasury));
 
@@ -115,8 +122,8 @@ namespace Yoma.Core.Domain.Treasury.Services
 
       await EnsureCurrentFinancialYear(treasury);
 
-      treasury.CashOutCumulativeInUsd = (treasury.CashOutCumulativeInUsd ?? 0m) + amount;
-      treasury.CashOutCumulativeCurrentFinancialYearInUsd = (treasury.CashOutCumulativeCurrentFinancialYearInUsd ?? 0m) + amount;
+      treasury.PayoutCumulativeInUsd = (treasury.PayoutCumulativeInUsd ?? 0m) + amount;
+      treasury.PayoutCumulativeCurrentFinancialYearInUsd = (treasury.PayoutCumulativeCurrentFinancialYearInUsd ?? 0m) + amount;
 
       await _treasuryRepository.Update(treasury);
     }
@@ -178,7 +185,7 @@ namespace Yoma.Core.Domain.Treasury.Services
       return rolloverProcessed;
     }
 
-    public async Task<decimal> ConvertZltoToUsd(decimal amount)
+    public Task<ConversionResponse> ConvertZltoToUsd(decimal amount)
     {
       if (amount <= 0m)
         throw new ValidationException("Amount must be greater than zero");
@@ -187,8 +194,22 @@ namespace Yoma.Core.Domain.Treasury.Services
         throw new ValidationException("Amount must be a whole number");
 
       var treasury = Get();
+      var amountConverted = Math.Round(amount * treasury.ConversionRateZltoUsd, 2, MidpointRounding.AwayFromZero);
 
-      return Math.Round(amount * treasury.ConversionRateZltoUsd, 2, MidpointRounding.AwayFromZero);
+      var fundsAvailable = true;
+      if (treasury.PayoutPoolCurrentFinancialYearInUsd.HasValue)
+      {
+        var amountReserved = _payoutTransactionService.GetAmountActive();
+        var amountCompleted = treasury.PayoutCumulativeCurrentFinancialYearInUsd ?? 0m;
+        var amountAvailable = treasury.PayoutPoolCurrentFinancialYearInUsd.Value - amountCompleted - amountReserved;
+        fundsAvailable = amountConverted <= amountAvailable;
+      }
+
+      return Task.FromResult(new ConversionResponse
+      {
+        Amount = amountConverted,
+        TreasuryFundsAvailable = fundsAvailable
+      });
     }
     #endregion
 
@@ -202,7 +223,7 @@ namespace Yoma.Core.Domain.Treasury.Services
     private async Task ResetCurrentFinancialYear(Models.Treasury treasury, bool actionedBySystem)
     {
       treasury.ZltoRewardCumulativeCurrentFinancialYear = 0m;
-      treasury.CashOutCumulativeCurrentFinancialYearInUsd = 0m;
+      treasury.PayoutCumulativeCurrentFinancialYearInUsd = 0m;
 
       await _organizationService.ResetRewardCumulativesCurrentFinancialYear(actionedBySystem);
     }

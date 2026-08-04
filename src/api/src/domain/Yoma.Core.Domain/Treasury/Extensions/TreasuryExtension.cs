@@ -15,10 +15,10 @@ namespace Yoma.Core.Domain.Treasury.Extensions
         ZltoRewardCumulative = value.ZltoRewardCumulative,
         ZltoRewardCumulativeCurrentFinancialYear = value.ZltoRewardCumulativeCurrentFinancialYear,
         ZltoRewardBalanceCurrentFinancialYear = value.ZltoRewardBalanceCurrentFinancialYear,
-        CashOutPoolCurrentFinancialYearInUsd = value.CashOutPoolCurrentFinancialYearInUsd,
-        CashOutCumulativeInUsd = value.CashOutCumulativeInUsd,
-        CashOutCumulativeCurrentFinancialYearInUsd = value.CashOutCumulativeCurrentFinancialYearInUsd,
-        CashOutBalanceCurrentFinancialYearInUsd = value.CashOutBalanceCurrentFinancialYearInUsd,
+        PayoutPoolCurrentFinancialYearInUsd = value.PayoutPoolCurrentFinancialYearInUsd,
+        PayoutCumulativeInUsd = value.PayoutCumulativeInUsd,
+        PayoutCumulativeCurrentFinancialYearInUsd = value.PayoutCumulativeCurrentFinancialYearInUsd,
+        PayoutBalanceCurrentFinancialYearInUsd = value.PayoutBalanceCurrentFinancialYearInUsd,
         ConversionRateZltoUsd = value.ConversionRateZltoUsd
       };
     }

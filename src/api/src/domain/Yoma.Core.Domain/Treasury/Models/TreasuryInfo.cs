@@ -20,13 +20,13 @@ namespace Yoma.Core.Domain.Treasury.Models
 
     public decimal? ZltoRewardBalanceCurrentFinancialYear { get; set; }
 
-    public decimal? CashOutPoolCurrentFinancialYearInUsd { get; set; }
+    public decimal? PayoutPoolCurrentFinancialYearInUsd { get; set; }
 
-    public decimal? CashOutCumulativeInUsd { get; set; }
+    public decimal? PayoutCumulativeInUsd { get; set; }
 
-    public decimal? CashOutCumulativeCurrentFinancialYearInUsd { get; set; }
+    public decimal? PayoutCumulativeCurrentFinancialYearInUsd { get; set; }
 
-    public decimal? CashOutBalanceCurrentFinancialYearInUsd { get; set; }
+    public decimal? PayoutBalanceCurrentFinancialYearInUsd { get; set; }
 
     [JsonIgnore]
     /// <summary>

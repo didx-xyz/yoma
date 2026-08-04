@@ -5,6 +5,7 @@ using Yoma.Core.Infrastructure.Database.Entity.Entities;
 using Yoma.Core.Infrastructure.Database.Lookups.Entities;
 using Yoma.Core.Infrastructure.Database.Marketplace.Entities.Lookups;
 using Yoma.Core.Infrastructure.Database.Opportunity.Entities;
+using Yoma.Core.Infrastructure.Database.Payout.Entities.Lookups;
 using Yoma.Core.Infrastructure.Database.Referral.Entities;
 using Yoma.Core.Infrastructure.Database.Referral.Entities.Lookups;
 using Yoma.Core.Infrastructure.Database.Reward.Entities.Lookups;
@@ -153,6 +154,14 @@ namespace Yoma.Core.Infrastructure.Database.Context
     public DbSet<PartnerSync.Entities.PartnerSyncUser> PartnerUser { get; set; }
     public DbSet<PartnerSync.Entities.ProcessingLog> PartnerSyncProcessingLog { get; set; }
     #endregion PartnerSync
+
+    #region Payout
+    #region Lookups
+    public DbSet<PayoutTransactionStatus> PayoutTransactionStatus { get; set; }
+    #endregion Lookups
+
+    public DbSet<Payout.Entities.PayoutTransaction> PayoutTransaction { get; set; }
+    #endregion Payout
 
     #region Referral
     #region Lookups
@@ -464,21 +473,38 @@ namespace Yoma.Core.Infrastructure.Database.Context
           .IsUnique()
           .HasFilter(null);
       #endregion
+      #region Payout
+      builder.Entity<Payout.Entities.PayoutTransaction>(entity =>
+      {
+        entity.HasKey(e => e.Id).HasName("PK_Payout_Transaction");
+        entity.HasIndex(e => e.StatusId).HasDatabaseName("IX_Payout_Transaction_StatusId");
+        entity.HasIndex(e => new { e.Provider, e.TransactionId })
+            .HasDatabaseName("IX_Payout_Transaction_Provider_TransactionId");
+        entity.HasIndex(e => new { e.UserId, e.StatusId, e.DateCreated, e.DateModified })
+            .HasDatabaseName("IX_Payout_Transaction_UserId_StatusId_DateCreated_DateModified");
+      });
+
+      builder.Entity<PayoutTransactionStatus>(entity =>
+      {
+        entity.HasKey(e => e.Id).HasName("PK_Payout_TransactionStatus");
+        entity.HasIndex(e => e.Name)
+            .HasDatabaseName("IX_Payout_TransactionStatus_Name");
+      });
+      #endregion Payout
 
       #region Reward
       // Unique constraint for ZLTO reward issuance.
       // Ensures a user cannot receive the same reward more than once for the same source entity.
       // The filter restricts this uniqueness rule to Provider = ZLTO only.
-      // This allows multiple rows per user where MyOpportunityId and ReferralLinkUsageId are NULL
-      // for other providers (e.g. Yellow Card cash-out payouts).
       builder.Entity<Reward.Entities.RewardTransaction>(entity =>
       {
         entity.Property(e => e.Provider)
             .HasConversion<string>()
             .HasDefaultValue(Domain.Reward.Provider.ZLTO.ToString());
 
-        entity.HasIndex(e => new { e.UserId, e.SourceEntityType, e.MyOpportunityId, e.ReferralLinkUsageId })
+        entity.HasIndex(e => new { e.UserId, e.SourceEntityType, e.MyOpportunityId, e.ReferralLinkUsageId, e.PayoutTransactionId })
             .IsUnique()
+            .AreNullsDistinct(false)
             .HasFilter($"\"Provider\" = '{Domain.Reward.Provider.ZLTO}'");
       });
 

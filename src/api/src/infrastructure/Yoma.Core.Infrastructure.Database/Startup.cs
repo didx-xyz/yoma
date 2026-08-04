@@ -25,6 +25,8 @@ using Yoma.Core.Infrastructure.Database.Marketplace.Repositories;
 using Yoma.Core.Infrastructure.Database.Marketplace.Repositories.Lookup;
 using Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories;
 using Yoma.Core.Infrastructure.Database.Opportunity.Repositories;
+using Yoma.Core.Infrastructure.Database.Payout.Repositories;
+using Yoma.Core.Infrastructure.Database.Payout.Repositories.Lookup;
 using Yoma.Core.Infrastructure.Database.Referral.Repositories;
 using Yoma.Core.Infrastructure.Database.Referral.Repositories.Lookups;
 using Yoma.Core.Infrastructure.Database.Reward.Repositories;
@@ -164,6 +166,14 @@ namespace Yoma.Core.Infrastructure.Database
       services.AddScoped<IRepository<Domain.PartnerSync.Models.PartnerUser>, PartnerSync.Repositories.PartnerSyncUserRepository>();
       services.AddScoped<IRepositoryBatched<Domain.PartnerSync.Models.ProcessingLog>, PartnerSync.Repositories.ProcessingLogRepository>();
       #endregion PartnerSync
+
+      #region Payout
+      #region Lookups
+      services.AddScoped<IRepository<Domain.Payout.Models.Lookups.PayoutTransactionStatus>, PayoutTransactionStatusRepository>();
+      #endregion Lookups
+
+      services.AddScoped<IRepository<Domain.Payout.Models.PayoutTransaction>, PayoutTransactionRepository>();
+      #endregion Payout
 
       #region Referral
       #region Lookups

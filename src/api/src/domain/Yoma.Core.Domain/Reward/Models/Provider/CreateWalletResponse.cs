@@ -1,5 +1,3 @@
-using Yoma.Core.Domain.Reward.Models;
-
 namespace Yoma.Core.Domain.Reward.Models.Provider
 {
   public sealed class CreateWalletResponse

@@ -8,7 +8,9 @@ namespace Yoma.Core.Domain.Entity.Models
 
     public decimal Available { get; set; }
 
-    public decimal Pending { get; set; }
+    public decimal PendingAwards { get; set; }
+
+    public decimal PendingPayout { get; set; }
 
     public decimal Total { get; set; }
 

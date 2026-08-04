@@ -30,10 +30,11 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
     private const string Header_Authorization_Value_Prefix = "Bearer";
     private const string Image_Default_Empty_Value = "default";
     private const string WalletReservation_Currency = "ZLTO";
-    private const string WalletReservation_Reason_CashOut = "cashout";
-    private const string WalletReservation_Description_CashOut = "Yoma cash-out reservation";
+    // External ZLTO reservation reason value. Retain the provider contract value until ZLTO confirms otherwise.
+    private const string WalletReservation_Reason_Payout = "cashout";
+    private const string WalletReservation_Description_Payout = "Yoma payout reservation";
     private const string WalletReservation_Actor_Origin = "yoma_api";
-    private const string WalletReservation_Actor_Name = "Yoma Cash-Out Service";
+    private const string WalletReservation_Actor_Name = "Yoma Payout Service";
 
     private static readonly HttpStatusCode[] StatusCode_WalletNotFound = [HttpStatusCode.NotFound, HttpStatusCode.Conflict];
 
@@ -150,14 +151,14 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
       };
     }
 
-    // TODO [ZLTO cash-out]: Confirm the remaining reservation contract details before production sign-off:
+    // TODO [ZLTO payout]: Confirm the remaining reservation contract details before production sign-off:
     // - minimum/maximum expiration duration and the timing of automatic release;
     // - lookup/recovery by idempotency key or external reference when reservation creation succeeds but
     //   the response containing the reservation id is lost;
     // - whether the provider-neutral reason and Yoma actor values are accepted and external_provider may
     //   remain omitted; and
     // - the expected recovery behaviour after commit/release is retried against a terminal reservation.
-    public async Task<ReserveCashOutResponse> ReserveForCashOut(ReserveCashOutRequest request)
+    public async Task<ReservePayoutResponse> ReserveForPayout(ReservePayoutRequest request)
     {
       ArgumentNullException.ThrowIfNull(request, nameof(request));
 
@@ -172,7 +173,7 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
         throw new ArgumentNullException(nameof(request), "Expiration date is empty");
 
       if (decimal.Truncate(request.Amount) != request.Amount)
-        throw new ArgumentException("Cash-out reservations require a whole ZLTO amount", nameof(request));
+        throw new ArgumentException("Payout reservations require a whole ZLTO amount", nameof(request));
 
       ArgumentOutOfRangeException.ThrowIfGreaterThan(request.Amount, (decimal)int.MaxValue, nameof(request));
 
@@ -183,7 +184,7 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
 
       if (request.Amount > wallet.Balance)
         throw new ArgumentOutOfRangeException(nameof(request), request.Amount,
-          $"Cash-out reservation amount cannot exceed the available wallet balance of '{wallet.Balance}'");
+          $"Payout reservation amount cannot exceed the available wallet balance of '{wallet.Balance}'");
 
       var authHeaders = await GetAuthHeaders();
       var transactionId = request.TransactionId.ToString();
@@ -193,8 +194,8 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
         OwnerId = wallet.OwnerId,
         Amount = (int)request.Amount,
         Currency = WalletReservation_Currency,
-        Reason = WalletReservation_Reason_CashOut,
-        Description = WalletReservation_Description_CashOut,
+        Reason = WalletReservation_Reason_Payout,
+        Description = WalletReservation_Description_Payout,
         ExternalReference = transactionId,
         IdempotencyKey = transactionId,
         RequestReference = transactionId,
@@ -214,12 +215,12 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
         .ReceiveJson<WalletReservationResponse>();
 
       if (string.IsNullOrWhiteSpace(response.Id))
-        throw new InvalidOperationException("Reservation id expected after reserving the wallet balance for cash-out");
+        throw new InvalidOperationException("Reservation id expected after reserving the wallet balance for payout");
 
-      return new ReserveCashOutResponse { Id = response.Id };
+      return new ReservePayoutResponse { Id = response.Id };
     }
 
-    public async System.Threading.Tasks.Task CommitCashOutReservation(CommitCashOutReservationRequest request)
+    public async System.Threading.Tasks.Task CommitPayoutReservation(CommitPayoutReservationRequest request)
     {
       ArgumentNullException.ThrowIfNull(request, nameof(request));
       ArgumentException.ThrowIfNullOrWhiteSpace(request.ReservationId, nameof(request));
@@ -247,7 +248,7 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
         .EnsureSuccessStatusCodeAsync();
     }
 
-    public async System.Threading.Tasks.Task ReleaseCashOutReservation(ReleaseCashOutReservationRequest request)
+    public async System.Threading.Tasks.Task ReleasePayoutReservation(ReleasePayoutReservationRequest request)
     {
       ArgumentNullException.ThrowIfNull(request, nameof(request));
       ArgumentException.ThrowIfNullOrWhiteSpace(request.ReservationId, nameof(request));
@@ -624,7 +625,7 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
 
     private async Task<WalletAccountInfo> CreateAccount(CreateWalletRequest request)
     {
-      var requestAccount = new Models.WalletRequestCreate
+      var requestAccount = new WalletRequestCreate
       {
         OwnerOrigin = _accessToken.PartnerName,
         OwnerName = request.DisplayName,

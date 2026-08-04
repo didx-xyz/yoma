@@ -29,9 +29,9 @@ namespace Yoma.Core.Infrastructure.Database.Treasury.Repositories
         ZltoRewardPoolCurrentFinancialYear = entity.ZltoRewardPoolCurrentFinancialYear,
         ZltoRewardCumulative = entity.ZltoRewardCumulative,
         ZltoRewardCumulativeCurrentFinancialYear = entity.ZltoRewardCumulativeCurrentFinancialYear,
-        CashOutPoolCurrentFinancialYearInUsd = entity.CashOutPoolCurrentFinancialYearInUsd,
-        CashOutCumulativeInUsd = entity.CashOutCumulativeInUsd,
-        CashOutCumulativeCurrentFinancialYearInUsd = entity.CashOutCumulativeCurrentFinancialYearInUsd,
+        PayoutPoolCurrentFinancialYearInUsd = entity.PayoutPoolCurrentFinancialYearInUsd,
+        PayoutCumulativeInUsd = entity.PayoutCumulativeInUsd,
+        PayoutCumulativeCurrentFinancialYearInUsd = entity.PayoutCumulativeCurrentFinancialYearInUsd,
         ConversionRateZltoUsd = entity.ConversionRateZltoUsd,
         CreatedByUserId = entity.CreatedByUserId,
         DateCreated = entity.DateCreated,
@@ -54,9 +54,9 @@ namespace Yoma.Core.Infrastructure.Database.Treasury.Repositories
         ZltoRewardPoolCurrentFinancialYear = item.ZltoRewardPoolCurrentFinancialYear,
         ZltoRewardCumulative = item.ZltoRewardCumulative,
         ZltoRewardCumulativeCurrentFinancialYear = item.ZltoRewardCumulativeCurrentFinancialYear,
-        CashOutPoolCurrentFinancialYearInUsd = item.CashOutPoolCurrentFinancialYearInUsd,
-        CashOutCumulativeInUsd = item.CashOutCumulativeInUsd,
-        CashOutCumulativeCurrentFinancialYearInUsd = item.CashOutCumulativeCurrentFinancialYearInUsd,
+        PayoutPoolCurrentFinancialYearInUsd = item.PayoutPoolCurrentFinancialYearInUsd,
+        PayoutCumulativeInUsd = item.PayoutCumulativeInUsd,
+        PayoutCumulativeCurrentFinancialYearInUsd = item.PayoutCumulativeCurrentFinancialYearInUsd,
         ConversionRateZltoUsd = item.ConversionRateZltoUsd,
         DateCreated = item.DateCreated,
         CreatedByUserId = item.CreatedByUserId,
@@ -82,7 +82,7 @@ namespace Yoma.Core.Infrastructure.Database.Treasury.Repositories
         entity.FinancialYearStartMonth != item.FinancialYearStartMonth ||
         entity.FinancialYearStartDay != item.FinancialYearStartDay ||
         entity.ZltoRewardPoolCurrentFinancialYear != item.ZltoRewardPoolCurrentFinancialYear ||
-        entity.CashOutPoolCurrentFinancialYearInUsd != item.CashOutPoolCurrentFinancialYearInUsd ||
+        entity.PayoutPoolCurrentFinancialYearInUsd != item.PayoutPoolCurrentFinancialYearInUsd ||
         entity.ConversionRateZltoUsd != item.ConversionRateZltoUsd;
 
       if (configurationModified)
@@ -103,9 +103,9 @@ namespace Yoma.Core.Infrastructure.Database.Treasury.Repositories
       entity.ZltoRewardPoolCurrentFinancialYear = item.ZltoRewardPoolCurrentFinancialYear;
       entity.ZltoRewardCumulative = item.ZltoRewardCumulative;
       entity.ZltoRewardCumulativeCurrentFinancialYear = item.ZltoRewardCumulativeCurrentFinancialYear;
-      entity.CashOutPoolCurrentFinancialYearInUsd = item.CashOutPoolCurrentFinancialYearInUsd;
-      entity.CashOutCumulativeInUsd = item.CashOutCumulativeInUsd;
-      entity.CashOutCumulativeCurrentFinancialYearInUsd = item.CashOutCumulativeCurrentFinancialYearInUsd;
+      entity.PayoutPoolCurrentFinancialYearInUsd = item.PayoutPoolCurrentFinancialYearInUsd;
+      entity.PayoutCumulativeInUsd = item.PayoutCumulativeInUsd;
+      entity.PayoutCumulativeCurrentFinancialYearInUsd = item.PayoutCumulativeCurrentFinancialYearInUsd;
       entity.ConversionRateZltoUsd = item.ConversionRateZltoUsd;
       await _context.SaveChangesAsync();
 

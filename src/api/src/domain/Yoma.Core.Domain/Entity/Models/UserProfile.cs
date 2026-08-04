@@ -48,6 +48,8 @@ namespace Yoma.Core.Domain.Entity.Models
 
     public UserProfileZlto Zlto { get; set; } = null!;
 
+    public UserProfilePayout Payout { get; set; } = null!;
+
     public UserProfileReferral Referral { get; set; } = null!;
 
     public int OpportunityCountSaved { get; set; }

@@ -808,10 +808,10 @@ namespace Yoma.Core.Domain.Referral.Services
 
             // schedule reward transactions
             if ((rewardReferrer ?? 0m) > 0m)
-              await _rewardService.ScheduleRewardTransaction(myUsage.UserIdReferrer, Reward.RewardTransactionEntityType.ReferralLinkUsage, myUsage.Id, rewardReferrer!.Value);
+              await _rewardService.ScheduleTransaction(myUsage.UserIdReferrer, Reward.RewardTransactionEntityType.ReferralLinkUsage, myUsage.Id, rewardReferrer!.Value);
 
             if ((rewardReferee ?? 0m) > 0m)
-              await _rewardService.ScheduleRewardTransaction(myUsage.UserId, Reward.RewardTransactionEntityType.ReferralLinkUsage, myUsage.Id, rewardReferee!.Value);
+              await _rewardService.ScheduleTransaction(myUsage.UserId, Reward.RewardTransactionEntityType.ReferralLinkUsage, myUsage.Id, rewardReferee!.Value);
 
             await SendNotification(NotificationType.ReferralLink_Completed_ReferrerAwarded, program, link, myUsage);
             await SendNotification(NotificationType.ReferralUsage_Completion, program, link, myUsage);

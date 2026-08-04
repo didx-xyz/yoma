@@ -1,11 +1,14 @@
 using Microsoft.AspNetCore.Http;
 using Yoma.Core.Domain.Entity.Models;
+using Yoma.Core.Domain.Payout.Models;
 
 namespace Yoma.Core.Domain.Entity.Interfaces
 {
   public interface IUserProfileService
   {
     UserProfile Get();
+
+    Task<PayoutInfo> PayoutRewards(decimal amount);
 
     List<UserSkillInfo>? GetSkills();
 
