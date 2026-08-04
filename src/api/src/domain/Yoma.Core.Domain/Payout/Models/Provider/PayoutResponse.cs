@@ -1,7 +1,6 @@
-
-namespace Yoma.Core.Domain.Reward.Models.Provider
+namespace Yoma.Core.Domain.Payout.Models.Provider
 {
-  public sealed class RewardCashOutResponse
+  public sealed class PayoutResponse
   {
     /// <summary>
     /// Payout provider's transaction id / reference

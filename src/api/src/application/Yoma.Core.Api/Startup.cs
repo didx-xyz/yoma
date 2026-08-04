@@ -87,7 +87,7 @@ namespace Yoma.Core.Api
       services.ConfigureServices_EmailProvider(_configuration);
       services.ConfigureServices_MessageProvider(_configuration);
       services.ConfigureServices_RewardProvider(_configuration);
-      services.ConfigureServices_RewardCashOutProvider(_configuration);
+      services.ConfigureServices_PayoutProvider(_configuration);
       services.ConfigureServices_NewsFeedProvider(_configuration);
       ConfigureServices_SyncProviders(services, _configuration);
       #endregion Configuration
@@ -147,7 +147,7 @@ namespace Yoma.Core.Api
       services.ConfigureServices_InfrastructureEmailProvider(_configuration);
       services.ConfigureServices_InfrastructureMessageProvider(_configuration);
       services.ConfigureServices_InfrastructureRewardProvider();
-      services.ConfigureServices_InfrastructureRewardCashOutProvider();
+      services.ConfigureServices_InfrastructurePayoutProvider();
       services.ConfigureServices_InfrastructureNewsFeedProvider(_configuration, _appSettings);
       ConfigureServices_InfrastructureSyncProviders(services, _configuration, _appSettings);
       #endregion Services & Infrastructure

@@ -1,10 +1,10 @@
-using Yoma.Core.Domain.Reward.Interfaces.Provider;
-using Yoma.Core.Domain.Reward.Models.Provider;
+using Yoma.Core.Domain.Payout.Interfaces.Provider;
+using Yoma.Core.Domain.Payout.Models.Provider;
 using Yoma.Core.Infrastructure.YellowCard.Models;
 
 namespace Yoma.Core.Infrastructure.YellowCard.Client
 {
-  public sealed class YellowCardClient : IRewardCashOutProviderClient
+  public sealed class YellowCardClient : IPayoutProviderClient
   {
     #region Constructor
     public YellowCardClient(YellowCardOptions options)
@@ -14,7 +14,7 @@ namespace Yoma.Core.Infrastructure.YellowCard.Client
     #endregion
 
     #region Public Members
-    public Task<RewardCashOutResponse> CashOutAsync(RewardCashOutRequest request)
+    public Task<PayoutResponse> InitiateAsync(PayoutRequest request)
     {
       ArgumentNullException.ThrowIfNull(request, nameof(request));
 

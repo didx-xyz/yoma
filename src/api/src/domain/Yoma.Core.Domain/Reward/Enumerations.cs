@@ -31,7 +31,6 @@ namespace Yoma.Core.Domain.Reward
 
   public enum Provider
   {
-    ZLTO,
-    YellowCard
+    ZLTO
   }
 }

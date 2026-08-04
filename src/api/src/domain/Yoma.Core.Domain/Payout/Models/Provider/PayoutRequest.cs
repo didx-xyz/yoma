@@ -1,6 +1,6 @@
-namespace Yoma.Core.Domain.Reward.Models.Provider
+namespace Yoma.Core.Domain.Payout.Models.Provider
 {
-  public sealed class RewardCashOutRequest
+  public sealed class PayoutRequest
   {
     public Guid TransactionId { get; set; }
 

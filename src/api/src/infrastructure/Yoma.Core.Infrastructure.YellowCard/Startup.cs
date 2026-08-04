@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Yoma.Core.Domain.Reward.Interfaces.Provider;
+using Yoma.Core.Domain.Payout.Interfaces.Provider;
 using Yoma.Core.Infrastructure.YellowCard.Client;
 using Yoma.Core.Infrastructure.YellowCard.Interfaces;
 using Yoma.Core.Infrastructure.YellowCard.Models;
@@ -10,14 +10,14 @@ namespace Yoma.Core.Infrastructure.YellowCard
 {
   public static class Startup
   {
-    public static void ConfigureServices_RewardCashOutProvider(this IServiceCollection services, IConfiguration configuration)
+    public static void ConfigureServices_PayoutProvider(this IServiceCollection services, IConfiguration configuration)
     {
       services.Configure<YellowCardOptions>(options => configuration.GetSection(YellowCardOptions.Section).Bind(options));
     }
 
-    public static void ConfigureServices_InfrastructureRewardCashOutProvider(this IServiceCollection services)
+    public static void ConfigureServices_InfrastructurePayoutProvider(this IServiceCollection services)
     {
-      services.AddScoped<IRewardCashOutProviderClientFactory, YellowCardClientFactory>();
+      services.AddScoped<IPayoutProviderClientFactory, YellowCardClientFactory>();
       services.AddScoped<IYellowCardWebhookParser, YellowCardWebhookParser>();
     }
   }

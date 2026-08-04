@@ -1,10 +1,10 @@
 using Microsoft.Extensions.Options;
-using Yoma.Core.Domain.Reward.Interfaces.Provider;
+using Yoma.Core.Domain.Payout.Interfaces.Provider;
 using Yoma.Core.Infrastructure.YellowCard.Models;
 
 namespace Yoma.Core.Infrastructure.YellowCard.Client
 {
-  public sealed class YellowCardClientFactory : IRewardCashOutProviderClientFactory
+  public sealed class YellowCardClientFactory : IPayoutProviderClientFactory
   {
     #region Class Variables
     private readonly YellowCardOptions _options;
@@ -18,7 +18,7 @@ namespace Yoma.Core.Infrastructure.YellowCard.Client
     }
     #endregion
 
-    public IRewardCashOutProviderClient CreateClient()
+    public IPayoutProviderClient CreateClient()
     {
       return new YellowCardClient(_options);
     }
