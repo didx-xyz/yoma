@@ -26,14 +26,18 @@ namespace Yoma.Core.Infrastructure.JobJack.Client
     private readonly IRepositoryBatched<Opportunity> _opportunityRepository;
     private readonly SyncFilterPullEntityValidator _validator;
 
-    // TODO: Complete the category mappings once JobJack supplies the final industry_sector value list.
+    // Yoma category id -> JobJack industry sectors.
     // Unknown or omitted values intentionally fall back to Other.
     private static readonly Dictionary<Guid, string[]> CategoryMappings = new()
     {
+      // Technology and Digitization
+      { new Guid("fa564c1c-591a-4a6d-8294-20165da8866b"), ["Analytics"] },
       // Business and Entrepreneurship
-      { new Guid("c76786fd-fca9-4633-85b3-11e53486d708"), ["Retail", "Other business service"] },
+      { new Guid("c76786fd-fca9-4633-85b3-11e53486d708"), ["Business Process Outsourcing", "Large industry manufacturing", "Other business service", "Professional Services", "Retail", "Transport & Logistics"] },
+      // Career and Personal Development
+      { new Guid("89f4ab46-0767-494f-a18c-3037f698133a"), ["Personal services"] },
       // Tourism and Hospitality
-      { new Guid("f36051c9-9057-4765-bc2f-9dee82ef60d6"), ["Restaurant"] }
+      { new Guid("f36051c9-9057-4765-bc2f-9dee82ef60d6"), ["Fast food", "Restaurant"] }
     };
     #endregion
 
@@ -118,7 +122,6 @@ namespace Yoma.Core.Infrastructure.JobJack.Client
         Hidden = false,
         Published = true,
         Categories = [category],
-        // TODO: Confirm with JobJack that this opportunity feed will remain South Africa-only.
         Countries = [_countryService.GetByCodeAlpha2(Domain.Core.Country.SouthAfrica.ToDescription())],
         Languages = [_languageService.GetByName(Domain.Core.Language.English.ToString())]
       };
@@ -148,18 +151,68 @@ namespace Yoma.Core.Infrastructure.JobJack.Client
 
     private static string BuildDescription(Opportunity item, string title)
     {
-      var sections = new List<string>();
-      // TODO: Verify that JobJack's HTML5 &ast; entity renders correctly in the Yoma UI; normalize it if displayed literally.
       var description = item.Description.HtmlToMarkdown();
-      sections.Add(string.IsNullOrWhiteSpace(description) ? title : description);
+      if (string.IsNullOrWhiteSpace(description)) description = title;
 
-      AddDetail(sections, "Requirements", item.Requirements.HtmlToMarkdown());
-      AddDetail(sections, "Location", item.Location);
-      AddDetail(sections, "Contract type", item.ContractType);
-      AddDetail(sections, "Opportunities available", item.OpportunitiesAvailable?.ToString());
-      AddDetail(sections, "Salary", BuildSalary(item));
-      AddDetail(sections, "Employment start date", item.EmploymentStartDate?.ToString("dd MMM yyyy"));
-      return string.Join(StringExtensions.MarkdownParagraphBreak, sections);
+      var metadata = new List<string>();
+      var requirements = BuildRequirements(item.Requirements);
+      if (!string.IsNullOrEmpty(requirements)) metadata.Add(requirements);
+
+      AddDetail(metadata, "Location", item.Location);
+      AddDetail(metadata, "Contract type", item.ContractType);
+      AddDetail(metadata, "Positions available", item.OpportunitiesAvailable?.ToString());
+      AddDetail(metadata, "Salary", BuildSalary(item));
+      AddDetail(metadata, "Employment start date", item.EmploymentStartDate?.ToString("dd MMM yyyy"));
+
+      if (metadata.Count > 0)
+        description = $"{description}{StringExtensions.MarkdownParagraphBreak}{string.Join("\n", metadata)}";
+
+      return description.NormalizeTrimMultiline();
+    }
+
+    private static string? BuildRequirements(string? value)
+    {
+      var requirements = NormalizeRequirements(value);
+
+      return requirements.Count switch
+      {
+        0 => null,
+        1 => $"**Requirements:** {requirements[0]}",
+        _ => $"**Requirements:**\n{string.Join("\n", requirements.Select(item => $"- {item}"))}"
+      };
+    }
+
+    private static List<string> NormalizeRequirements(string? value)
+    {
+      value = value.HtmlToMarkdown();
+      if (string.IsNullOrWhiteSpace(value)) return [];
+
+      value = value.Replace(StringExtensions.MarkdownParagraphBreak, "\n", StringComparison.Ordinal);
+      var result = new List<string>();
+
+      foreach (var sourceLine in value.Split('\n', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries))
+      {
+        var line = sourceLine.TrimStart('-', '*', ' ');
+        if (string.IsNullOrWhiteSpace(line)) continue;
+
+        var separatorIndex = line.IndexOf(':');
+        if (separatorIndex < 0)
+        {
+          if (!System.Text.RegularExpressions.Regex.IsMatch(line, @"^(?:[\p{L}-]+\s+)*requirements?$", System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.CultureInvariant))
+            result.Add(line);
+          continue;
+        }
+
+        var label = line[..separatorIndex];
+        label = System.Text.RegularExpressions.Regex.Replace(label, @"\brequirements?\b", string.Empty, System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.CultureInvariant);
+        label = System.Text.RegularExpressions.Regex.Replace(label, @"\s{2,}", " ", System.Text.RegularExpressions.RegexOptions.CultureInvariant).Trim(' ', '-', ':');
+        var detail = line[(separatorIndex + 1)..].Trim();
+        if (string.IsNullOrEmpty(label) && string.IsNullOrEmpty(detail)) continue;
+
+        result.Add(string.IsNullOrEmpty(label) ? detail : $"{label}: {detail}");
+      }
+
+      return result;
     }
 
     private static void AddDetail(List<string> sections, string label, string? value)
@@ -173,10 +226,10 @@ namespace Yoma.Core.Infrastructure.JobJack.Client
       var company = item.Company.HtmlDecode()?.RemoveHtmlTags();
       var city = item.City.HtmlDecode()?.RemoveHtmlTags();
 
-      if (!string.IsNullOrWhiteSpace(company))
+      if (!string.IsNullOrWhiteSpace(company) && !title.Contains(company, StringComparison.OrdinalIgnoreCase))
         title = $"{title} - {company}";
 
-      if (!string.IsNullOrWhiteSpace(city))
+      if (!string.IsNullOrWhiteSpace(city) && !title.Contains(city, StringComparison.OrdinalIgnoreCase))
         title = $"{title} ({city})";
 
       return title.TrimToLengthWithEllipsis(OpportunityService.Title_MaxLength);

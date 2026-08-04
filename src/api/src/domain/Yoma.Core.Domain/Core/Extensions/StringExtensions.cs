@@ -229,6 +229,7 @@ namespace Yoma.Core.Domain.Core.Extensions
       if (string.IsNullOrWhiteSpace(input)) return null;
 
       var result = WebUtility.HtmlDecode(input);
+      result = HtmlAnchors().Replace(result, HtmlAnchorToMarkdown);
 
       result = HtmlLineBreaks().Replace(result, "\n");
       result = HtmlBlockStart().Replace(result, "\n\n");
@@ -273,6 +274,24 @@ namespace Yoma.Core.Domain.Core.Extensions
     #endregion
 
     #region Private Members
+    private static string HtmlAnchorToMarkdown(Match match)
+    {
+      var url = match.Groups["url"].Value.Trim();
+      var text = HtmlTags().Replace(match.Groups["text"].Value, string.Empty).NormalizeTrim();
+
+      if (string.IsNullOrEmpty(text)) text = url;
+
+      if (!Uri.TryCreate(url, UriKind.Absolute, out var uri) ||
+          !(string.Equals(uri.Scheme, Uri.UriSchemeHttp, StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(uri.Scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase)))
+        return text;
+
+      return $"[{text}]({uri.AbsoluteUri})";
+    }
+
+    [GeneratedRegex(@"(?:\[\s*)?<a\b[^>]*\bhref\s*=\s*(?:""(?<url>[^""]*)""|'(?<url>[^']*)')[^>]*>(?<text>.*?)</a\s*>(?:\s*\])?", RegexOptions.IgnoreCase | RegexOptions.Singleline)]
+    private static partial Regex HtmlAnchors();
+
     [GeneratedRegex(@"<br\s*/?>", RegexOptions.IgnoreCase)]
     private static partial Regex HtmlLineBreaks();
 
