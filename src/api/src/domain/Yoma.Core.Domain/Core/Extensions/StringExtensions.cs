@@ -237,6 +237,7 @@ namespace Yoma.Core.Domain.Core.Extensions
 
       result = HtmlStrongStart().Replace(result, "**");
       result = HtmlStrongEnd().Replace(result, "**");
+      result = MarkdownStrongWhitespace().Replace(result, "${leading}**${content}**${trailing}");
 
       result = HtmlEmphasisStart().Replace(result, "*");
       result = HtmlEmphasisEnd().Replace(result, "*");
@@ -306,6 +307,9 @@ namespace Yoma.Core.Domain.Core.Extensions
 
     [GeneratedRegex(@"</(strong|b)>", RegexOptions.IgnoreCase)]
     private static partial Regex HtmlStrongEnd();
+
+    [GeneratedRegex(@"\*\*(?<leading>\s*)(?<content>[^*\r\n]*?[^\s*])(?<trailing>\s*)\*\*")]
+    private static partial Regex MarkdownStrongWhitespace();
 
     [GeneratedRegex(@"<(em|i)[^>]*>", RegexOptions.IgnoreCase)]
     private static partial Regex HtmlEmphasisStart();

@@ -159,7 +159,7 @@ namespace Yoma.Core.Infrastructure.JobJack.Client
       if (!string.IsNullOrEmpty(requirements)) metadata.Add(requirements);
 
       AddDetail(metadata, "Location", item.Location);
-      AddDetail(metadata, "Contract type", item.ContractType);
+      AddDetail(metadata, "Contract type", item.ContractType?.TitleCase());
       AddDetail(metadata, "Positions available", item.OpportunitiesAvailable?.ToString());
       AddDetail(metadata, "Salary", BuildSalary(item));
       AddDetail(metadata, "Employment start date", item.EmploymentStartDate?.ToString("dd MMM yyyy"));
@@ -255,8 +255,8 @@ namespace Yoma.Core.Infrastructure.JobJack.Client
         parts.Add($"Up to {item.SalaryHigh.Value.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)}");
       }
 
-      if (!string.IsNullOrWhiteSpace(item.SalaryFrequency)) parts.Add(item.SalaryFrequency);
-      if (!string.IsNullOrWhiteSpace(item.SalaryType)) parts.Add(item.SalaryType);
+      if (!string.IsNullOrWhiteSpace(item.SalaryFrequency)) parts.Add(item.SalaryFrequency.TitleCase());
+      if (!string.IsNullOrWhiteSpace(item.SalaryType)) parts.Add(item.SalaryType.TitleCase());
       if (!string.IsNullOrWhiteSpace(item.SalaryAdditional)) parts.Add(item.SalaryAdditional);
 
       return parts.Count == 0 ? null : string.Join(", ", parts.Distinct(StringComparer.OrdinalIgnoreCase));
