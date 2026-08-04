@@ -178,7 +178,7 @@ namespace Yoma.Core.Infrastructure.JobJack.Client
       {
         0 => null,
         1 => $"**Requirements:** {requirements[0]}",
-        _ => $"**Requirements:**\n{string.Join("\n", requirements.Select(item => $"- {item}"))}"
+        _ => $"**Requirements:**\n\n{string.Join("\n", requirements.Select(item => $"* {item}"))}\n\n"
       };
     }
 
@@ -225,11 +225,13 @@ namespace Yoma.Core.Infrastructure.JobJack.Client
     {
       var company = item.Company.HtmlDecode()?.RemoveHtmlTags();
       var city = item.City.HtmlDecode()?.RemoveHtmlTags();
+      var companyInTitle = !string.IsNullOrWhiteSpace(company) && title.Contains(company, StringComparison.OrdinalIgnoreCase);
+      var cityInTitle = !string.IsNullOrWhiteSpace(city) && title.Contains(city, StringComparison.OrdinalIgnoreCase);
 
-      if (!string.IsNullOrWhiteSpace(company) && !title.Contains(company, StringComparison.OrdinalIgnoreCase))
-        title = $"{title} - {company}";
+      if (!string.IsNullOrWhiteSpace(company) && !companyInTitle)
+        title = cityInTitle ? $"{title} ({company})" : $"{title} - {company}";
 
-      if (!string.IsNullOrWhiteSpace(city) && !title.Contains(city, StringComparison.OrdinalIgnoreCase))
+      if (!string.IsNullOrWhiteSpace(city) && !cityInTitle)
         title = $"{title} ({city})";
 
       return title.TrimToLengthWithEllipsis(OpportunityService.Title_MaxLength);

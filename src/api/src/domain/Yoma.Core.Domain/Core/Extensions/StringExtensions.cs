@@ -287,7 +287,11 @@ namespace Yoma.Core.Domain.Core.Extensions
             string.Equals(uri.Scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase)))
         return text;
 
-      return $"[{text}]({uri.AbsoluteUri})";
+      var useFriendlyLabel = string.Equals(text, url, StringComparison.OrdinalIgnoreCase);
+      if (useFriendlyLabel) text = "View link";
+
+      var markdown = $"[{text}]({uri.AbsoluteUri})";
+      return useFriendlyLabel ? $"*{markdown}*" : markdown;
     }
 
     [GeneratedRegex(@"(?:\[\s*)?<a\b[^>]*\bhref\s*=\s*(?:""(?<url>[^""]*)""|'(?<url>[^']*)')[^>]*>(?<text>.*?)</a\s*>(?:\s*\])?", RegexOptions.IgnoreCase | RegexOptions.Singleline)]
