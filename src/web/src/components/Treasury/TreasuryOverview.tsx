@@ -46,9 +46,9 @@ export const TreasuryOverview: React.FC<{ treasury: TreasuryInfo }> = ({
     treasury.zltoRewardBalanceCurrentFinancialYear,
     treasury.zltoRewardPoolCurrentFinancialYear,
   );
-  const cashOutTone = rewardBalanceTone(
-    treasury.cashOutBalanceCurrentFinancialYearInUsd,
-    treasury.cashOutPoolCurrentFinancialYearInUsd,
+  const payoutTone = rewardBalanceTone(
+    treasury.payoutBalanceCurrentFinancialYearInUsd,
+    treasury.payoutPoolCurrentFinancialYearInUsd,
   );
 
   const rateConfigured = treasury.conversionRateZltoPerUsd > 0;
@@ -143,15 +143,15 @@ export const TreasuryOverview: React.FC<{ treasury: TreasuryInfo }> = ({
             />
           </RewardStatGroup>
 
-          <RewardStatGroup title="Cash-out (USD)">
+          <RewardStatGroup title="Payout (USD)">
             <RewardStat
-              label="Cash-out pool"
+              label="Payout pool"
               scope="financialYear"
-              value={formatUsd(treasury.cashOutPoolCurrentFinancialYearInUsd)}
-              tooltip="The total value the Treasury has allocated to cash-outs for this financial year."
+              value={formatUsd(treasury.payoutPoolCurrentFinancialYearInUsd)}
+              tooltip="The total value the Treasury has allocated to payouts for this financial year."
               note={
-                treasury.cashOutPoolCurrentFinancialYearInUsd === null
-                  ? "Not set — no cash-outs can be completed"
+                treasury.payoutPoolCurrentFinancialYearInUsd === null
+                  ? "Not set — no payouts can be completed"
                   : undefined
               }
             />
@@ -159,24 +159,24 @@ export const TreasuryOverview: React.FC<{ treasury: TreasuryInfo }> = ({
               label="Paid out"
               scope="financialYear"
               value={formatUsd(
-                treasury.cashOutCumulativeCurrentFinancialYearInUsd,
+                treasury.payoutCumulativeCurrentFinancialYearInUsd,
               )}
-              tooltip="Cash-outs completed since the start of this financial year. Resets to zero on rollover."
+              tooltip="Payouts completed since the start of this financial year. Resets to zero on rollover."
             />
             <RewardStat
               label="Remaining balance"
               scope="financialYear"
               value={formatUsd(
-                treasury.cashOutBalanceCurrentFinancialYearInUsd,
+                treasury.payoutBalanceCurrentFinancialYearInUsd,
               )}
               tooltip={BALANCE_TOOLTIP}
-              tone={balanceStatTone(cashOutTone)}
+              tone={balanceStatTone(payoutTone)}
             />
             <RewardStat
               label="Paid out"
               scope="lifetime"
-              value={formatUsd(treasury.cashOutCumulativeInUsd)}
-              tooltip="Cash-outs completed across all financial years. Never reset."
+              value={formatUsd(treasury.payoutCumulativeInUsd)}
+              tooltip="Payouts completed across all financial years. Never reset."
             />
           </RewardStatGroup>
         </div>
@@ -196,14 +196,14 @@ export const TreasuryOverview: React.FC<{ treasury: TreasuryInfo }> = ({
               </span>
               <span className="text-xs text-gray-500">
                 For example, {formatZlto(CONVERSION_EXAMPLE_ZLTO)} ZLTO is worth
-                approximately {formatUsd(exampleUsd)}. Cash-out values are
+                approximately {formatUsd(exampleUsd)}. Payout values are
                 indicative — the final value is determined at payout.
               </span>
             </>
           ) : (
             <FormMessage messageType={FormMessageType.Warning}>
               No conversion rate is configured, so ZLTO cannot be valued for
-              cash-out. Set one under Manage.
+              payout. Set one under Manage.
             </FormMessage>
           )}
         </div>

@@ -3,11 +3,11 @@
  * Treasury → Referral Program → Referral Link).
  *
  * Typed to match `Yoma.Core.Domain.Treasury.Models.TreasuryInfo` / `TreasuryRequestUpdate` exactly,
- * including the `InUsd` suffixes — the cash-out figures are USD while the reward figures are ZLTO,
+ * including the `InUsd` suffixes — the payout figures are USD while the reward figures are ZLTO,
  * and the suffix is the only thing that says so.
  *
  * All pool / cumulative / balance values here are the **current financial year** and reset when the
- * financial year rolls over. `zltoRewardCumulative` and `cashOutCumulativeInUsd` (no suffix) are the
+ * financial year rolls over. `zltoRewardCumulative` and `payoutCumulativeInUsd` (no suffix) are the
  * **lifetime** totals and never reset.
  */
 export interface TreasuryInfo {
@@ -30,12 +30,12 @@ export interface TreasuryInfo {
   /** server-derived: pool − cumulative for the current financial year; null when no pool is set */
   zltoRewardBalanceCurrentFinancialYear: number | null;
 
-  cashOutPoolCurrentFinancialYearInUsd: number | null;
-  cashOutCumulativeCurrentFinancialYearInUsd: number | null;
+  payoutPoolCurrentFinancialYearInUsd: number | null;
+  payoutCumulativeCurrentFinancialYearInUsd: number | null;
   /** lifetime total paid out — never reset by a financial-year rollover */
-  cashOutCumulativeInUsd: number | null;
+  payoutCumulativeInUsd: number | null;
   /** server-derived: pool − cumulative for the current financial year; null when no pool is set */
-  cashOutBalanceCurrentFinancialYearInUsd: number | null;
+  payoutBalanceCurrentFinancialYearInUsd: number | null;
 
   /**
    * Number of ZLTO equal to `conversionRateUsdAmount` USD. The raw internal rate (the USD value of
@@ -61,7 +61,7 @@ export interface TreasuryRequestUpdate {
   /** optional; null clears the allocation */
   zltoRewardPoolCurrentFinancialYear: number | null;
   /** required by the server validator */
-  cashOutPoolCurrentFinancialYearInUsd: number | null;
+  payoutPoolCurrentFinancialYearInUsd: number | null;
   conversionRateZltoPerUsd: number;
 }
 
@@ -70,7 +70,7 @@ export type TreasuryFormField =
   | "financialYearStartMonth"
   | "financialYearStartDay"
   | "zltoRewardPoolCurrentFinancialYear"
-  | "cashOutPoolCurrentFinancialYearInUsd"
+  | "payoutPoolCurrentFinancialYearInUsd"
   | "conversionRateZltoPerUsd";
 
 /**
@@ -84,9 +84,17 @@ export const TREASURY_LIMITS = {
   /** whole numbers, > 0, ≤ 100,000,000 */
   zltoPoolMax: 100_000_000,
   /** ≤ 2 decimals, > 0, ≤ 50,000 */
-  cashOutPoolMaxUsd: 50_000,
+  payoutPoolMaxUsd: 50_000,
   /** ≤ 4 decimals, > 0, ≤ 1,000 */
   conversionRateMax: 1_000,
   conversionRateDecimals: 4,
-  cashOutPoolDecimals: 2,
+  payoutPoolDecimals: 2,
 } as const;
+
+/** Result of the indicative ZLTO-to-USD conversion. */
+export interface ConversionResponse {
+  amount: number;
+  currency: "USD";
+  /** Whether the Treasury currently has sufficient uncommitted payout funds. */
+  treasuryFundsAvailable: boolean;
+}

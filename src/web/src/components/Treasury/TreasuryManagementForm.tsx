@@ -146,7 +146,7 @@ export const TreasuryManagementForm: React.FC<{
     parseAmountInput(zltoPoolInput).kind === "empty";
 
   const zltoAwarded = treasury.zltoRewardCumulativeCurrentFinancialYear ?? 0;
-  const cashedOut = treasury.cashOutCumulativeCurrentFinancialYearInUsd ?? 0;
+  const paidOut = treasury.payoutCumulativeCurrentFinancialYearInUsd ?? 0;
 
   /** Errors show once a field has been touched, or after a submit attempt. */
   const showError = (field: TreasuryFormField) =>
@@ -163,7 +163,7 @@ export const TreasuryManagementForm: React.FC<{
       <div className="flex flex-col gap-1">
         <h5 className="font-bold tracking-wider">Treasury settings</h5>
         <p className="text-gray-dark text-sm">
-          Set the financial year, how much is available to award and cash out
+          Set the financial year, how much is available to award and pay out
           this financial year, and what ZLTO is worth. Awarded and paid-out
           totals are calculated by the system and can&apos;t be edited.
         </p>
@@ -312,38 +312,38 @@ export const TreasuryManagementForm: React.FC<{
             )}
 
             <FormField
-              label="Cash-out pool (USD)"
-              subLabel={`Up to ${formatUsd(TREASURY_LIMITS.cashOutPoolMaxUsd)}, cents allowed. ${formatUsd(cashedOut)} has been paid out so far this financial year.`}
-              tooltip="The total value available for cash-outs this financial year. Required."
-              htmlFor={fieldId("cashOutPoolCurrentFinancialYearInUsd")}
-              errorId={errorId("cashOutPoolCurrentFinancialYearInUsd")}
-              showError={showError("cashOutPoolCurrentFinancialYearInUsd")}
-              error={errorFor("cashOutPoolCurrentFinancialYearInUsd")}
+              label="Payout pool (USD)"
+              subLabel={`Up to ${formatUsd(TREASURY_LIMITS.payoutPoolMaxUsd)}, cents allowed. ${formatUsd(paidOut)} has been paid out so far this financial year.`}
+              tooltip="The total value available for payouts this financial year. Required."
+              htmlFor={fieldId("payoutPoolCurrentFinancialYearInUsd")}
+              errorId={errorId("payoutPoolCurrentFinancialYearInUsd")}
+              showError={showError("payoutPoolCurrentFinancialYearInUsd")}
+              error={errorFor("payoutPoolCurrentFinancialYearInUsd")}
               showWarningIcon={
-                !!errorFor("cashOutPoolCurrentFinancialYearInUsd")
+                !!errorFor("payoutPoolCurrentFinancialYearInUsd")
               }
             >
               <FormInput
                 inputProps={{
-                  id: fieldId("cashOutPoolCurrentFinancialYearInUsd"),
+                  id: fieldId("payoutPoolCurrentFinancialYearInUsd"),
                   type: "number",
                   inputMode: "decimal",
                   step: "0.01",
                   min: 0.01,
-                  max: TREASURY_LIMITS.cashOutPoolMaxUsd,
+                  max: TREASURY_LIMITS.payoutPoolMaxUsd,
                   placeholder: "e.g. 5000.00",
                   required: true,
                   "aria-describedby": describedBy(
-                    "cashOutPoolCurrentFinancialYearInUsd",
+                    "payoutPoolCurrentFinancialYearInUsd",
                   ),
                   "aria-invalid": !!errorFor(
-                    "cashOutPoolCurrentFinancialYearInUsd",
+                    "payoutPoolCurrentFinancialYearInUsd",
                   ),
-                  ...register("cashOutPoolCurrentFinancialYearInUsd"),
+                  ...register("payoutPoolCurrentFinancialYearInUsd"),
                 }}
               />
               <span
-                id={helpId("cashOutPoolCurrentFinancialYearInUsd")}
+                id={helpId("payoutPoolCurrentFinancialYearInUsd")}
                 className="sr-only"
               >
                 US dollars, up to two decimal places. Required.
@@ -361,7 +361,7 @@ export const TreasuryManagementForm: React.FC<{
             <FormField
               label="How many ZLTO equal 1 USD?"
               subLabel={`Up to ${formatZlto(TREASURY_LIMITS.conversionRateMax)} ZLTO per USD, with at most ${TREASURY_LIMITS.conversionRateDecimals} decimal places.`}
-              tooltip="Used to value ZLTO for cash-out. The value a youth sees before cashing out is indicative — the final value is determined at payout."
+              tooltip="Used to value ZLTO for payout. The value a youth sees before requesting a payout is indicative — the final value is determined at payout."
               htmlFor={fieldId("conversionRateZltoPerUsd")}
               errorId={errorId("conversionRateZltoPerUsd")}
               showError={showError("conversionRateZltoPerUsd")}

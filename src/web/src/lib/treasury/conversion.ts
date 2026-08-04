@@ -4,7 +4,7 @@
  *
  * ⚠️ Indicative only, and only for a rate the admin is *currently typing* — which no endpoint can
  * price, because the rate has not been saved yet. Anything showing a conversion of a real amount
- * (the youth cash-out preview) must call `GET /treasury/conversion/zlto-usd`, which is authoritative.
+ * (the youth payout preview) must call `GET /treasury/conversion/zlto-usd`, which is authoritative.
  *
  * Mirrors the server's arithmetic (TreasuryService.cs:96 and :191): the stored raw rate is
  * 1 USD ÷ (ZLTO per USD) rounded to 10 places, and the USD amount is the ZLTO amount times that,

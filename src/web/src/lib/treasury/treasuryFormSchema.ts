@@ -30,7 +30,7 @@ export interface TreasuryFormValues {
   financialYearStartMonth: number;
   financialYearStartDay: number;
   zltoRewardPoolCurrentFinancialYear: string;
-  cashOutPoolCurrentFinancialYearInUsd: string;
+  payoutPoolCurrentFinancialYearInUsd: string;
   conversionRateZltoPerUsd: string;
 }
 
@@ -41,8 +41,8 @@ export const treasuryFormValuesFromInfo = (
   financialYearStartDay: treasury.financialYearStartDay,
   zltoRewardPoolCurrentFinancialYear:
     treasury.zltoRewardPoolCurrentFinancialYear?.toString() ?? "",
-  cashOutPoolCurrentFinancialYearInUsd:
-    treasury.cashOutPoolCurrentFinancialYearInUsd?.toString() ?? "",
+  payoutPoolCurrentFinancialYearInUsd:
+    treasury.payoutPoolCurrentFinancialYearInUsd?.toString() ?? "",
   conversionRateZltoPerUsd:
     treasury.conversionRateZltoPerUsd > 0
       ? treasury.conversionRateZltoPerUsd.toString()
@@ -58,8 +58,8 @@ export const treasuryRequestFromFormValues = (
   zltoRewardPoolCurrentFinancialYear: amountOrNull(
     values.zltoRewardPoolCurrentFinancialYear,
   ),
-  cashOutPoolCurrentFinancialYearInUsd: amountOrNull(
-    values.cashOutPoolCurrentFinancialYearInUsd,
+  payoutPoolCurrentFinancialYearInUsd: amountOrNull(
+    values.payoutPoolCurrentFinancialYearInUsd,
   ),
   conversionRateZltoPerUsd: amountOrNull(values.conversionRateZltoPerUsd) ?? 0,
 });
@@ -133,21 +133,21 @@ const validateZltoPool = (
 
 /**
  * `TreasuryRequestUpdateValidator:34-47` plus `TreasuryService.Update:83-85`.
- * Required — the server rejects a null cash-out pool outright.
+ * Required — the server rejects a null payout pool outright.
  */
-const validateCashOutPool = (
+const validatePayoutPool = (
   raw: string,
   paidOut: number,
   enforcePaidOutFloor: boolean,
   issue: AddIssue,
 ): void => {
-  const field = "cashOutPoolCurrentFinancialYearInUsd";
+  const field = "payoutPoolCurrentFinancialYearInUsd";
   const pool = parseAmountInput(raw);
 
   if (pool.kind === "empty") {
     issue(
       field,
-      "Enter the cash-out pool for this financial year — it's required.",
+      "Enter the payout pool for this financial year — it's required.",
     );
     return;
   }
@@ -158,16 +158,16 @@ const validateCashOutPool = (
   }
 
   if (pool.value <= 0) {
-    issue(field, "The cash-out pool must be more than $0.");
-  } else if (pool.value > TREASURY_LIMITS.cashOutPoolMaxUsd) {
+    issue(field, "The payout pool must be more than $0.");
+  } else if (pool.value > TREASURY_LIMITS.payoutPoolMaxUsd) {
     issue(
       field,
-      `The cash-out pool can't be more than ${formatUsd(TREASURY_LIMITS.cashOutPoolMaxUsd)}.`,
+      `The payout pool can't be more than ${formatUsd(TREASURY_LIMITS.payoutPoolMaxUsd)}.`,
     );
-  } else if (pool.decimals > TREASURY_LIMITS.cashOutPoolDecimals) {
+  } else if (pool.decimals > TREASURY_LIMITS.payoutPoolDecimals) {
     issue(
       field,
-      `Use at most ${TREASURY_LIMITS.cashOutPoolDecimals} decimal places (cents).`,
+      `Use at most ${TREASURY_LIMITS.payoutPoolDecimals} decimal places (cents).`,
     );
   } else if (enforcePaidOutFloor && pool.value < paidOut) {
     issue(
@@ -213,7 +213,7 @@ export const buildTreasuryFormSchema = (treasury: TreasuryInfo) =>
       financialYearStartMonth: z.coerce.number(),
       financialYearStartDay: z.coerce.number(),
       zltoRewardPoolCurrentFinancialYear: z.string(),
-      cashOutPoolCurrentFinancialYearInUsd: z.string(),
+      payoutPoolCurrentFinancialYearInUsd: z.string(),
       conversionRateZltoPerUsd: z.string(),
     })
     .superRefine((data, ctx) => {
@@ -248,9 +248,9 @@ export const buildTreasuryFormSchema = (treasury: TreasuryInfo) =>
         issue,
       );
 
-      validateCashOutPool(
-        data.cashOutPoolCurrentFinancialYearInUsd,
-        treasury.cashOutCumulativeCurrentFinancialYearInUsd ?? 0,
+      validatePayoutPool(
+        data.payoutPoolCurrentFinancialYearInUsd,
+        treasury.payoutCumulativeCurrentFinancialYearInUsd ?? 0,
         cumulativesHold,
         issue,
       );

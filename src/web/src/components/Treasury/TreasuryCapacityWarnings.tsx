@@ -59,15 +59,15 @@ export const TreasuryCapacityWarnings: React.FC<{
     treasury.zltoRewardBalanceCurrentFinancialYear,
     treasury.zltoRewardPoolCurrentFinancialYear,
   );
-  const cashOutTone = rewardBalanceTone(
-    treasury.cashOutBalanceCurrentFinancialYearInUsd,
-    treasury.cashOutPoolCurrentFinancialYearInUsd,
+  const payoutTone = rewardBalanceTone(
+    treasury.payoutBalanceCurrentFinancialYearInUsd,
+    treasury.payoutPoolCurrentFinancialYearInUsd,
   );
 
   const needsAttention = (tone: RewardBalanceTone) =>
     tone === "low" || tone === "depleted";
 
-  if (!needsAttention(zltoTone) && !needsAttention(cashOutTone)) return null;
+  if (!needsAttention(zltoTone) && !needsAttention(payoutTone)) return null;
 
   return (
     <div className="flex flex-col gap-2">
@@ -84,15 +84,15 @@ export const TreasuryCapacityWarnings: React.FC<{
       />
 
       <CapacityWarning
-        tone={cashOutTone}
-        label="The cash-out pool"
-        balance={formatUsd(treasury.cashOutBalanceCurrentFinancialYearInUsd)}
-        pool={formatUsd(treasury.cashOutPoolCurrentFinancialYearInUsd)}
+        tone={payoutTone}
+        label="The payout pool"
+        balance={formatUsd(treasury.payoutBalanceCurrentFinancialYearInUsd)}
+        pool={formatUsd(treasury.payoutPoolCurrentFinancialYearInUsd)}
         percent={percentRemaining(
-          treasury.cashOutBalanceCurrentFinancialYearInUsd,
-          treasury.cashOutPoolCurrentFinancialYearInUsd,
+          treasury.payoutBalanceCurrentFinancialYearInUsd,
+          treasury.payoutPoolCurrentFinancialYearInUsd,
         )}
-        exhaustedConsequence="No further cash-outs can be completed."
+        exhaustedConsequence="No further payouts can be completed."
       />
     </div>
   );

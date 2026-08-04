@@ -35,10 +35,10 @@ const MATCHERS: Matcher[] = [
     field: "zltoRewardPoolCurrentFinancialYear",
     pattern: /zlto reward pool/i,
   },
-  // "…cannot be less than the cumulative cash-out amount (N USD)…" (TreasuryService:85)
+  // "…cannot be less than the cumulative payout amount (N USD)…" (TreasuryService:85)
   {
-    field: "cashOutPoolCurrentFinancialYearInUsd",
-    pattern: /cash-?out pool/i,
+    field: "payoutPoolCurrentFinancialYearInUsd",
+    pattern: /payout pool/i,
   },
   {
     field: "conversionRateZltoPerUsd",
@@ -51,7 +51,7 @@ const FIELD_BY_PROPERTY_NAME: Record<string, TreasuryFormField> = {
   financialyearstartmonth: "financialYearStartMonth",
   financialyearstartday: "financialYearStartDay",
   zltorewardpoolcurrentfinancialyear: "zltoRewardPoolCurrentFinancialYear",
-  cashoutpoolcurrentfinancialyearinusd: "cashOutPoolCurrentFinancialYearInUsd",
+  payoutpoolcurrentfinancialyearinusd: "payoutPoolCurrentFinancialYearInUsd",
   conversionratezltoperusd: "conversionRateZltoPerUsd",
 };
 

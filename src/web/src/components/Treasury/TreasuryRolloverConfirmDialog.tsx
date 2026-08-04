@@ -92,7 +92,7 @@ export const TreasuryRolloverConfirmDialog: React.FC<{
                 ZLTO and Yoma awarded this financial year, for every
                 organisation
               </li>
-              <li>Cash-outs completed this financial year</li>
+              <li>Payouts completed this financial year</li>
             </ul>
           </div>
 

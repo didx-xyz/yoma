@@ -130,7 +130,7 @@ const treasuryHref = (tab: string | null, mock?: string | null) => {
 };
 
 // 👇 PAGE COMPONENT: Admin → Treasury
-// The top of the reward hierarchy: what is available to award and cash out this financial year, and
+// The top of the reward hierarchy: what is available to award and pay out this financial year, and
 // the configuration behind it. Admin role only.
 const Treasury: NextPageWithLayout<{
   theme: string;
@@ -266,7 +266,7 @@ const Treasury: NextPageWithLayout<{
       <ListPageShell>
         <ListPageHeader
           title={"💰Treasury"}
-          description="What Yoma has available to award and to cash out this financial year, and the settings behind it."
+          description="What Yoma has available to award and to pay out this financial year, and the settings behind it."
         >
           {/* TABBED NAVIGATION */}
           <ListPageTabs

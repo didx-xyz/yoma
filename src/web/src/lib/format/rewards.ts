@@ -1,6 +1,6 @@
 /**
  * Shared formatting and label vocabulary for every reward, pool, cumulative and balance value
- * in the UI — Treasury, Organisation, Opportunity, Referral and Cash-Out.
+ * in the UI — Treasury, Organisation, Opportunity, Referral and Payout.
  *
  * Why one module: the same figures are shown on five surfaces, and the current-financial-year
  * values sit next to the lifetime ones. If each surface formats and labels them itself, the two
