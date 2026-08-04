@@ -178,7 +178,7 @@ namespace Yoma.Core.Infrastructure.JobJack.Client
       {
         0 => null,
         1 => $"**Requirements:** {requirements[0]}",
-        _ => $"**Requirements:**\n\n{string.Join("\n", requirements.Select(item => $"* {item}"))}\n\n"
+        _ => $"**Requirements:**\n{string.Join("\n", requirements)}"
       };
     }
 

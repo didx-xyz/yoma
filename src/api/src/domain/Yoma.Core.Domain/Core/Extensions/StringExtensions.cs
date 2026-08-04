@@ -242,11 +242,14 @@ namespace Yoma.Core.Domain.Core.Extensions
       result = HtmlEmphasisStart().Replace(result, "*");
       result = HtmlEmphasisEnd().Replace(result, "*");
 
+      result = HtmlUnderlineStart().Replace(result, "<u>");
+      result = HtmlUnderlineEnd().Replace(result, "</u>");
+
       result = HtmlListItemStart().Replace(result, "- ");
       result = HtmlListItemEnd().Replace(result, "\n");
       result = HtmlListContainerTags().Replace(result, "\n");
 
-      result = HtmlTags().Replace(result, string.Empty);
+      result = HtmlTagsExceptUnderline().Replace(result, string.Empty);
 
       result = result.NormalizeTrimMultiline().NormalizeNullableValue();
       if (string.IsNullOrWhiteSpace(result)) return null;
@@ -288,10 +291,12 @@ namespace Yoma.Core.Domain.Core.Extensions
         return text;
 
       var useFriendlyLabel = string.Equals(text, url, StringComparison.OrdinalIgnoreCase);
-      if (useFriendlyLabel) text = "View link";
+      if (useFriendlyLabel) text = "View Link";
 
       var markdown = $"[{text}]({uri.AbsoluteUri})";
-      return useFriendlyLabel ? $"*{markdown}*" : markdown;
+      return useFriendlyLabel
+        ? $"[<u>*{text}*</u>]({uri.AbsoluteUri} \"{text}\")"
+        : markdown;
     }
 
     [GeneratedRegex(@"(?:\[\s*)?<a\b[^>]*\bhref\s*=\s*(?:""(?<url>[^""]*)""|'(?<url>[^']*)')[^>]*>(?<text>.*?)</a\s*>(?:\s*\])?", RegexOptions.IgnoreCase | RegexOptions.Singleline)]
@@ -317,6 +322,12 @@ namespace Yoma.Core.Domain.Core.Extensions
 
     [GeneratedRegex(@"<(em|i)[^>]*>", RegexOptions.IgnoreCase)]
     private static partial Regex HtmlEmphasisStart();
+
+    [GeneratedRegex(@"<u\b[^>]*>", RegexOptions.IgnoreCase)]
+    private static partial Regex HtmlUnderlineStart();
+
+    [GeneratedRegex(@"</u\s*>", RegexOptions.IgnoreCase)]
+    private static partial Regex HtmlUnderlineEnd();
 
     [GeneratedRegex(@"</(em|i)>", RegexOptions.IgnoreCase)]
     private static partial Regex HtmlEmphasisEnd();
@@ -347,6 +358,9 @@ namespace Yoma.Core.Domain.Core.Extensions
 
     [GeneratedRegex("<.*?>")]
     private static partial Regex HtmlTags();
+
+    [GeneratedRegex(@"<(?!/?u>).*?>", RegexOptions.IgnoreCase)]
+    private static partial Regex HtmlTagsExceptUnderline();
     #endregion
   }
 }
