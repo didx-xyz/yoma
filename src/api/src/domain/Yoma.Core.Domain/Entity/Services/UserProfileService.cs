@@ -334,7 +334,8 @@ namespace Yoma.Core.Domain.Entity.Services
       var (status, balance) = await _walletService.GetWalletStatusAndBalance(result.Id);
       result.Zlto = new UserProfileZlto
       {
-        PendingAwards = balance.Pending,
+        Balance = balance.Balance,
+        PendingRewards = balance.Pending,
         PendingPayout = balance.PendingPayout,
         Available = balance.Available,
         Total = balance.Total,
