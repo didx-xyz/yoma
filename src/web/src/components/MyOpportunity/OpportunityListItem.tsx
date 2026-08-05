@@ -305,7 +305,7 @@ const OpportunityListItem: React.FC<{
             onClick={openOpportunity}
             type="button"
           >
-            <FaExternalLinkAlt className="size-4" />
+            <FaExternalLinkAlt className="size-3" />
             Open Opportunity
           </button>
 
@@ -316,7 +316,7 @@ const OpportunityListItem: React.FC<{
               onClick={downloadFiles}
               type="button"
             >
-              <FaDownload className="size-4" />
+              <FaDownload className="size-3" />
               Download your completion files (
               {resolvedData.verifications?.length} total)
             </button>

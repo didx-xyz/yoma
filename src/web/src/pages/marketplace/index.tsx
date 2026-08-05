@@ -1,9 +1,8 @@
 import { useAtom, useSetAtom } from "jotai";
 import type { GetStaticProps } from "next";
-import Image from "next/image";
 import { useRouter } from "next/router";
 import { env } from "process";
-import iconLocation from "public/images/icon-location.svg";
+import { IoMdPin } from "react-icons/io";
 import React, {
   useCallback,
   useEffect,
@@ -139,14 +138,7 @@ const Marketplace: NextPageWithLayout<{
           <div className="flex h-full flex-col gap-2 overflow-y-auto pb-12">
             <div className="mt-20 flex flex-col items-center justify-center gap-4 p-4 md:p-0">
               <div className="border-green-dark -mt-8 flex h-14 w-14 items-center justify-center rounded-full bg-white shadow-lg">
-                <Image
-                  src={iconLocation}
-                  alt="Icon Location"
-                  width={40}
-                  className="h-auto"
-                  sizes="100vw"
-                  priority={true}
-                />
+                <IoMdPin className="text-green h-8 w-8" />
               </div>
               <h3>What is your Country?</h3>
               <p className="bg-gray-light rounded-lg p-4 text-center md:w-[450px]">

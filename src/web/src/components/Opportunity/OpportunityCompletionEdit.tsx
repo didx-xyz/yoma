@@ -1,8 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import moment from "moment";
 import { useSession } from "next-auth/react";
-import Image from "next/image";
-import iconSuccess from "public/images/icon-success.png";
 import { useCallback, useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import {
@@ -12,7 +10,7 @@ import {
   FcIdea,
   FcVideoCall,
 } from "react-icons/fc";
-import { IoMdClose } from "react-icons/io";
+import { IoMdArrowUp, IoMdChatbubbles, IoMdClose } from "react-icons/io";
 import { toast } from "react-toastify";
 import z from "zod";
 import { SpatialType } from "~/api/models/common";
@@ -415,20 +413,13 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
               className="btn btn-circle text-gray-dark hover:bg-gray"
               onClick={onClose}
             >
-              <IoMdClose className="h-6 w-6"></IoMdClose>
+              <IoMdClose className="h-5 w-5"></IoMdClose>
             </button>
           </div>
           <div className="flex flex-col">
             <div className="flex flex-col items-center justify-center gap-4">
-              <div className="border-green-dark -mt-11 mb-4 flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-full bg-white p-1 shadow-lg">
-                <Image
-                  src={iconSuccess}
-                  alt="Icon Success"
-                  width={35}
-                  className="h-auto"
-                  sizes="100vw"
-                  priority={true}
-                />
+              <div className="border-green-dark -mt-11 mb-4 flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-full bg-white shadow-lg">
+                <span className="text-4xl">🎉</span>
               </div>
             </div>
 
@@ -843,9 +834,10 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                     <div className="mt-2">
                       <button
                         type="button"
-                        className="btn btn-sm border-green text-green hover:bg-green-dark rounded-full bg-white normal-case hover:border-transparent hover:text-white"
+                        className="btn btn-sm border-green text-green hover:bg-green-dark bg-white hover:text-white"
                         onClick={() => setShowFeedback(!showFeedback)}
                       >
+                        <IoMdChatbubbles className="mr-2 h-5 w-5" />
                         {showFeedback ? "Hide Feedback" : "Give Feedback"}
                       </button>
                     </div>
@@ -945,18 +937,20 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                 </FormMessage>
               )}
 
-              <div className="mt-4 mb-10 flex grow gap-4">
+              <div className="mt-4 mb-10 flex w-full flex-col-reverse gap-4 md:flex-row">
                 <button
                   type="button"
-                  className="btn border-green text-green hover:bg-green-dark w-1/2 shrink rounded-full bg-white normal-case hover:border-transparent hover:text-white"
+                  className="btn border-green text-green hover:bg-green-dark w-full bg-white hover:text-white md:flex-1"
                   onClick={onClose}
                 >
-                  Cancel
+                  <IoMdClose className="mr-2 h-5 w-5" />
+                  Close Window
                 </button>
                 <button
                   type="submit"
-                  className="btn bg-green hover:bg-green-dark w-1/2 shrink rounded-full text-white normal-case"
+                  className="btn bg-green hover:bg-green-dark w-full text-white md:flex-1"
                 >
+                  <IoMdArrowUp className="mr-2 h-5 w-5" />
                   Submit
                 </button>
               </div>

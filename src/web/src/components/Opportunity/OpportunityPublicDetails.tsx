@@ -1,18 +1,20 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { AxiosError } from "axios";
 import { useAtomValue, useSetAtom } from "jotai";
-import Image from "next/image";
-import iconOpen from "public/images/icon-open.svg";
-import iconSuccess from "public/images/icon-success.png";
-import iconUpload from "public/images/icon-upload.svg";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/router";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FaExclamationTriangle, FaInfoCircle } from "react-icons/fa";
 import { FcKey } from "react-icons/fc";
 import {
+  IoMdArrowUp,
   IoMdBookmark,
   IoMdCheckmark,
+  IoMdCheckmarkCircle,
   IoMdClose,
+  IoMdOpen,
   IoMdShare,
+  IoMdTrash,
+  IoMdWarning,
 } from "react-icons/io";
 import {
   IoBulbOutline,
@@ -36,9 +38,9 @@ import {
 } from "~/api/services/myOpportunities";
 import { updateSettings } from "~/api/services/user";
 import { AvatarImage } from "~/components/AvatarImage";
-import PublicBadges from "~/components/Opportunity/Badges/PublicBadges";
 import ZltoRewardBadge from "~/components/Opportunity/Badges/ZltoRewardBadge";
 import {
+  getCommitmentDisplay,
   getTypeConfig,
   OpportunityEngagementTypeBadge,
   OpportunityMetaTextRow,
@@ -56,16 +58,33 @@ import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import { OPPORTUNITY_QUERY_KEYS } from "~/hooks/useOpportunityMutations";
 import analytics from "~/lib/analytics";
-import {
-  OPPORTUNITY_DETAILS_DESIGN_V2,
-  SETTING_USER_POPUP_LEAVINGYOMA,
-} from "~/lib/constants";
+import { SETTING_USER_POPUP_LEAVINGYOMA } from "~/lib/constants";
 import { userProfileAtom } from "~/lib/store";
 import { type User } from "~/server/auth";
 import CustomModal from "../Common/CustomModal";
 import DetailSection from "../Common/DetailSection";
 import FormCheckbox from "../Common/FormCheckbox";
 import { Editor } from "../RichText/Editor";
+
+// 🔐 actions that anonymous users may attempt, but that require an authenticated user.
+// the action is round-tripped through login (see RETURN_ACTION_PARAM) so it can be resumed afterwards
+type LoginRequiredAction = "go" | "save" | "complete";
+
+const LOGIN_REQUIRED_ACTIONS: LoginRequiredAction[] = [
+  "go",
+  "save",
+  "complete",
+];
+
+// query string parameter used to resume the action the user attempted whilst anonymous
+const RETURN_ACTION_PARAM = "returnAction";
+
+const LOGIN_REQUIRED_MESSAGES: Record<LoginRequiredAction, string> = {
+  go: "Please login or register to continue to this opportunity. Your participation and rewards are linked to your Yoma account.",
+  save: "Please login or register to save this opportunity to your profile.",
+  complete:
+    "Please login or register to upload your completion files for this opportunity.",
+};
 
 // this component is used by the public opportunity page,
 // as well as the opportuntity preview on the Create/Edit Opportunity page
@@ -76,10 +95,14 @@ const OpportunityPublicDetails: React.FC<{
   preview: boolean;
 }> = ({ user, opportunityInfo, error, preview }) => {
   const queryClient = useQueryClient();
+  const router = useRouter();
   const hasTrackedView = useRef(false);
+  const hasResumedActionRef = useRef(false);
   // Per-type theming for the new (V2) details design (badge, CTA, accent).
   const typeConfig = getTypeConfig(opportunityInfo?.type);
   const [loginDialogVisible, setLoginDialogVisible] = useState(false);
+  const [loginDialogAction, setLoginDialogAction] =
+    useState<LoginRequiredAction | null>(null);
   const [gotoOpportunityDialogVisible, setGotoOpportunityDialogVisible] =
     useState(false);
   const [
@@ -116,6 +139,15 @@ const OpportunityPublicDetails: React.FC<{
     });
   const submissionSyncInfo =
     verificationStatus?.syncedInfo ?? opportunityInfo.syncedInfo ?? null;
+  const commitmentDisplay = getCommitmentDisplay(opportunityInfo);
+  let commitmentSummary = "";
+  if (commitmentDisplay?.totalHours != null) {
+    const commitmentHoursPluralSuffix =
+      commitmentDisplay.totalHours === 1 ? "" : "s";
+    commitmentSummary = `${commitmentDisplay.totalHours} total hour${commitmentHoursPluralSuffix}`;
+  } else if (commitmentDisplay?.label) {
+    commitmentSummary = commitmentDisplay.label;
+  }
   const partnerSourceLabel =
     submissionSyncInfo?.partners
       ?.map((partner) => partner.partner)
@@ -124,6 +156,12 @@ const OpportunityPublicDetails: React.FC<{
     verificationStatus?.status == "Pending" &&
     (submissionSyncInfo?.syncType === "Pull" ||
       submissionSyncInfo?.locked === true);
+  const externalLinkButtonText =
+    opportunityInfo.type === "Learning" &&
+    isPartnerManagedPendingSubmission &&
+    verificationStatus?.percentComplete != null
+      ? "Continue learning"
+      : typeConfig.gotoExternalLinkButtonText;
 
   useEffect(() => {
     if (!user) return;
@@ -137,14 +175,6 @@ const OpportunityPublicDetails: React.FC<{
     });
   }, [user, isOppSaved, opportunityInfo]);
 
-  // 👀 anonymous users: show login dialog (opportunity details are blurred)
-  useEffect(() => {
-    if (!user) {
-      setLoginDialogVisible(true);
-      return;
-    }
-  }, [user]);
-
   // 📊 ANALYTICS: track opportunity view (only once per component mount)
   useEffect(() => {
     if (!preview && opportunityInfo.id && !hasTrackedView.current) {
@@ -154,13 +184,71 @@ const OpportunityPublicDetails: React.FC<{
   }, [opportunityInfo.id, opportunityInfo.title, preview]);
 
   //#region Event Handlers
-  const onUpdateSavedOpportunity = useCallback(() => {
-    if (!user) {
+  // 🔐 anonymous users may browse the whole page; the login prompt is only raised
+  // when they attempt an action that requires an account
+  const showLoginDialog = useCallback(
+    (action: LoginRequiredAction) => {
+      setLoginDialogAction(action);
       setLoginDialogVisible(true);
-      analytics.trackEvent("opportunity_save_login_required", {
+
+      // 📊 ANALYTICS: track which action raised the login prompt
+      analytics.trackEvent("opportunity_login_required", {
         opportunityId: opportunityInfo.id,
         opportunityTitle: opportunityInfo.title,
+        action: action,
       });
+    },
+    [opportunityInfo.id, opportunityInfo.title],
+  );
+
+  const closeLoginDialog = useCallback(() => {
+    setLoginDialogVisible(false);
+    setLoginDialogAction(null);
+
+    // 📊 ANALYTICS: track dismissal of the login prompt
+    analytics.trackEvent("opportunity_login_required_dismissed", {
+      opportunityId: opportunityInfo.id,
+      opportunityTitle: opportunityInfo.title,
+      action: loginDialogAction,
+    });
+  }, [opportunityInfo.id, opportunityInfo.title, loginDialogAction]);
+
+  // return the user to this opportunity after login, with the attempted action
+  // so that it can be resumed (see the resume effect below)
+  const loginCallbackUrl = useMemo(() => {
+    if (!loginDialogAction || typeof window === "undefined") return undefined;
+
+    const url = new URL(window.location.href);
+    url.searchParams.set(RETURN_ACTION_PARAM, loginDialogAction);
+    return url.href;
+  }, [loginDialogAction]);
+
+  const saveOpportunity = useCallback(() => {
+    saveMyOpportunity(opportunityInfo.id)
+      .then(() => {
+        setIsOppSaved(true);
+        toast.success("Opportunity saved");
+
+        // 📊 ANALYTICS: track opportunity saved
+        analytics.opportunity.saved(opportunityInfo.id, opportunityInfo.title);
+      })
+      .catch((error) => {
+        analytics.trackError(error as Error, {
+          errorType: "opportunity_save_error",
+          opportunityId: opportunityInfo.id,
+        });
+
+        toast(<ApiErrors error={error as AxiosError} />, {
+          type: "error",
+          autoClose: false,
+          icon: false,
+        });
+      });
+  }, [opportunityInfo.id, opportunityInfo.title]);
+
+  const onUpdateSavedOpportunity = useCallback(() => {
+    if (!user) {
+      showLoginDialog("save");
       return;
     }
 
@@ -189,34 +277,25 @@ const OpportunityPublicDetails: React.FC<{
           });
         });
     } else {
-      saveMyOpportunity(opportunityInfo.id)
-        .then(() => {
-          setIsOppSaved(true);
-          toast.success("Opportunity saved");
-
-          // 📊 ANALYTICS: track opportunity saved
-          analytics.opportunity.saved(
-            opportunityInfo.id,
-            opportunityInfo.title,
-          );
-        })
-        .catch((error) => {
-          analytics.trackError(error as Error, {
-            errorType: "opportunity_save_error",
-            opportunityId: opportunityInfo.id,
-          });
-
-          toast(<ApiErrors error={error as AxiosError} />, {
-            type: "error",
-            autoClose: false,
-            icon: false,
-          });
-        });
+      saveOpportunity();
     }
-  }, [opportunityInfo.id, opportunityInfo.title, user, isOppSaved]);
+  }, [
+    opportunityInfo.id,
+    opportunityInfo.title,
+    user,
+    isOppSaved,
+    showLoginDialog,
+    saveOpportunity,
+  ]);
 
   const onProceedToOpportunity = useCallback(async () => {
     if (!opportunityInfo.url) return;
+
+    // 🔐 the partner platform stays unreachable until the user is logged in
+    if (!user) {
+      showLoginDialog("go");
+      return;
+    }
 
     // Open a blank tab immediately from the user-click handler to avoid popup blockers.
     // The tab will be navigated to the resolved URL once the API responds.
@@ -253,18 +332,25 @@ const OpportunityPublicDetails: React.FC<{
     opportunityInfo.title,
     opportunityInfo.syncedInfo,
     user,
+    showLoginDialog,
   ]);
 
   const onGoToOpportunity = useCallback(async () => {
-    const settingDontShowAgain = userProfile?.settings?.items.find(
-      (x) => x.key === SETTING_USER_POPUP_LEAVINGYOMA,
-    )?.value;
-
     // 📊 ANALYTICS: track "Go to opportunity" button click
     analytics.trackEvent("opportunity_go_to_clicked", {
       opportunityId: opportunityInfo.id,
       opportunityTitle: opportunityInfo.title,
     });
+
+    // 🔐 anonymous users: prompt for login/registration instead of engaging with the opportunity
+    if (!user) {
+      showLoginDialog("go");
+      return;
+    }
+
+    const settingDontShowAgain = userProfile?.settings?.items.find(
+      (x) => x.key === SETTING_USER_POPUP_LEAVINGYOMA,
+    )?.value;
 
     if (settingDontShowAgain) {
       await onProceedToOpportunity();
@@ -276,6 +362,8 @@ const OpportunityPublicDetails: React.FC<{
     onProceedToOpportunity,
     opportunityInfo.id,
     opportunityInfo.title,
+    user,
+    showLoginDialog,
   ]);
 
   const onOpportunityCompleted = useCallback(async () => {
@@ -394,6 +482,60 @@ const OpportunityPublicDetails: React.FC<{
   );
   //#endregion Event Handlers
 
+  // 🔐 resume the action the user attempted whilst anonymous, after they logged in / registered
+  useEffect(() => {
+    if (preview || !user || !router.isReady || hasResumedActionRef.current)
+      return;
+
+    const queryValue = router.query[RETURN_ACTION_PARAM];
+    const action = Array.isArray(queryValue) ? queryValue[0] : queryValue;
+
+    if (!LOGIN_REQUIRED_ACTIONS.includes(action as LoginRequiredAction)) return;
+
+    hasResumedActionRef.current = true;
+
+    // remove the parameter so the action is not repeated on refresh or when sharing the url
+    const query = { ...router.query };
+    delete query[RETURN_ACTION_PARAM];
+    void router.replace({ pathname: router.pathname, query }, undefined, {
+      shallow: true,
+    });
+
+    // 📊 ANALYTICS: track resumption of the action that required login
+    analytics.trackEvent("opportunity_login_required_resumed", {
+      opportunityId: opportunityInfo.id,
+      opportunityTitle: opportunityInfo.title,
+      action: action,
+    });
+
+    switch (action as LoginRequiredAction) {
+      case "go":
+        // always confirm via the dialog: navigating to the partner platform straight from
+        // this effect (i.e. not from a click) would be blocked as a popup
+        setGotoOpportunityDialogVisible(true);
+        break;
+      case "complete":
+        setCompleteOpportunityDialogVisible(true);
+        break;
+      case "save":
+        // the user may already have saved it before (e.g. from the search results), so check first
+        isOpportunitySaved(opportunityInfo.id)
+          .then((saved) => {
+            if (saved) setIsOppSaved(true);
+            else saveOpportunity();
+          })
+          .catch(() => saveOpportunity());
+        break;
+    }
+  }, [
+    preview,
+    user,
+    router,
+    opportunityInfo.id,
+    opportunityInfo.title,
+    saveOpportunity,
+  ]);
+
   if (error) {
     if (error === 401) return <Unauthenticated />;
     else if (error === 403) return <Unauthorized />;
@@ -407,14 +549,22 @@ const OpportunityPublicDetails: React.FC<{
           {/* LOGIN DIALOG */}
           <CustomModal
             isOpen={loginDialogVisible}
-            shouldCloseOnOverlayClick={false}
-            onRequestClose={() => {
-              setLoginDialogVisible(false);
-            }}
-            className="inset-2 top-1/2 right-auto bottom-auto left-1/2 h-[350px] w-[280px] -translate-x-1/2 -translate-y-1/2 rounded-2xl md:max-h-[350px] md:w-[600px]"
+            shouldCloseOnOverlayClick={true}
+            onRequestClose={closeLoginDialog}
+            className={`md:max-h-[360px] md:w-[600px]`}
           >
             <div className="flex h-full flex-col gap-2 overflow-y-auto pb-8">
-              <div className="bg-theme flex h-16 flex-row p-4 shadow-lg"></div>
+              <div className="bg-theme flex flex-row items-center p-4 shadow-lg">
+                <h1 className="grow"></h1>
+                <button
+                  type="button"
+                  className="btn btn-circle text-gray-dark hover:bg-gray"
+                  title="Close"
+                  onClick={closeLoginDialog}
+                >
+                  <IoMdClose className="h-5 w-5"></IoMdClose>
+                </button>
+              </div>
               <div className="flex flex-col items-center justify-center gap-4 px-6 pb-8 text-center md:px-12">
                 <div className="border-purple-dark -mt-8 flex items-center justify-center rounded-full bg-white p-2 shadow-lg">
                   <FcKey className="size-8 md:size-10" />
@@ -425,12 +575,27 @@ const OpportunityPublicDetails: React.FC<{
                     Login Required
                   </div>
                   <div className="md:text-md text-sm">
-                    Please login to see this opportunity.
+                    {loginDialogAction
+                      ? LOGIN_REQUIRED_MESSAGES[loginDialogAction]
+                      : "Please login or register to continue."}
                   </div>
                 </div>
 
-                <div className="mt-8 flex grow gap-4">
-                  <SignInButton className="md:w-[150px]" />
+                <div className="mt-6 mb-2 flex w-full flex-col-reverse justify-center gap-4 md:flex-row">
+                  <button
+                    type="button"
+                    className="btn border-green text-green hover:bg-green w-full bg-white hover:text-white md:flex-1"
+                    onClick={closeLoginDialog}
+                  >
+                    <IoMdClose className="mr-2 h-5 w-5" />
+                    Close Window
+                  </button>
+
+                  <SignInButton
+                    className="!bg-green w-full hover:brightness-125! md:flex-1"
+                    callbackUrl={loginCallbackUrl}
+                    showLabel={true}
+                  />
                 </div>
               </div>
             </div>
@@ -455,7 +620,7 @@ const OpportunityPublicDetails: React.FC<{
                     setGotoOpportunityDialogVisible(false);
                   }}
                 >
-                  <IoMdClose className="h-6 w-6"></IoMdClose>
+                  <IoMdClose className="h-5 w-5"></IoMdClose>
                 </button>
               </div>
 
@@ -530,51 +695,25 @@ const OpportunityPublicDetails: React.FC<{
                   </div>
                 </div>
 
-                <div className="my-3 flex w-full grow flex-col justify-center gap-4 px-4 md:flex-row">
+                <div className="my-3 flex w-full flex-col-reverse justify-center gap-4 px-4 md:flex-row">
                   <button
                     type="button"
-                    className="btn bg-green hover:bg-green-dark order-first text-white normal-case md:order-last md:flex-1"
+                    className="btn border-green text-green hover:bg-green-dark w-full bg-white hover:text-white md:flex-1"
+                    onClick={() => setGotoOpportunityDialogVisible(false)}
+                  >
+                    <IoMdClose className="mr-2 h-5 w-5" />
+                    Close Window
+                  </button>
+
+                  <button
+                    type="button"
+                    className="btn bg-green hover:bg-green-dark w-full text-white md:flex-1"
                     onClick={onProceedToOpportunity}
                     disabled={!opportunityInfo.url}
                   >
-                    <Image
-                      src={iconOpen}
-                      alt="Icon Open"
-                      width={20}
-                      className="h-auto"
-                      sizes="100vw"
-                      priority={true}
-                    />
-                    <span className="ml-1">Proceed</span>
+                    <IoMdOpen className="mr-2 h-5 w-5" />
+                    Proceed
                   </button>
-
-                  <button
-                    type="button"
-                    className={
-                      "btn border-green text-green hover:bg-green-dark rounded-full bg-white normal-case hover:border-transparent hover:text-white md:flex-1" +
-                      `${
-                        isOppSaved
-                          ? " bg-yellow-light text-yellow hover:bg-yellow-light hover:text-yellow border-none"
-                          : ""
-                      }`
-                    }
-                    onClick={onUpdateSavedOpportunity}
-                  >
-                    <IoMdBookmark size="20" />
-
-                    <span className="ml-1">
-                      {isOppSaved ? "Opportunty saved" : "Save opportunity"}
-                    </span>
-                  </button>
-
-                  {/* <button
-                    type="button"
-                    className="btn border-green text-green hover:bg-green-dark order-last rounded-full bg-white normal-case hover:border-transparent hover:text-white md:order-first md:flex-1"
-                    onClick={() => setGotoOpportunityDialogVisible(false)}
-                  >
-                    <IoMdClose size="20"></IoMdClose>
-                    Close
-                  </button> */}
                 </div>
               </div>
             </div>
@@ -618,19 +757,12 @@ const OpportunityPublicDetails: React.FC<{
                     setCompleteOpportunitySuccessDialogVisible(false);
                   }}
                 >
-                  <IoMdClose className="h-6 w-6"></IoMdClose>
+                  <IoMdClose className="h-5 w-5"></IoMdClose>
                 </button>
               </div>
               <div className="flex flex-col items-center justify-center gap-4">
                 <div className="border-green-dark -mt-11 flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-full bg-white p-1 shadow-lg">
-                  <Image
-                    src={iconSuccess}
-                    alt="Icon Success"
-                    width={35}
-                    className="h-auto"
-                    sizes="100vw"
-                    priority={true}
-                  />
+                  <IoMdCheckmarkCircle className="text-green h-8 w-8" />
                 </div>
 
                 <h3>Your application has been submitted!</h3>
@@ -644,15 +776,16 @@ const OpportunityPublicDetails: React.FC<{
                   </span>
                   .
                 </div>
-                <div className="mt-4 flex grow gap-4">
+                <div className="mt-4 mb-2 flex w-full justify-center px-4">
                   <button
                     type="button"
-                    className="btn border-green text-green hover:bg-green-dark rounded-full bg-white normal-case hover:text-white md:w-[200px]"
+                    className="btn border-green text-green hover:bg-green-dark w-full bg-white hover:text-white md:w-[200px]"
                     onClick={() =>
                       setCompleteOpportunitySuccessDialogVisible(false)
                     }
                   >
-                    Close
+                    <IoMdClose className="mr-2 h-5 w-5" />
+                    Close Window
                   </button>
                 </div>
               </div>
@@ -666,7 +799,7 @@ const OpportunityPublicDetails: React.FC<{
             onRequestClose={() => {
               setCancelOpportunityDialogVisible(false);
             }}
-            className={`md:max-h-[450px] md:w-[600px]`}
+            className={`md:max-h-[500px] md:w-[600px]`}
           >
             {isLoading && <Loading />}
 
@@ -680,19 +813,19 @@ const OpportunityPublicDetails: React.FC<{
                     setCancelOpportunityDialogVisible(false);
                   }}
                 >
-                  <IoMdClose className="h-6 w-6"></IoMdClose>
+                  <IoMdClose className="h-5 w-5"></IoMdClose>
                 </button>
               </div>
-              <div className="flex flex-col items-center justify-center gap-4">
+              <div className="flex flex-col items-center justify-center gap-4 px-4 pb-8 md:px-12">
                 <div className="border-green-dark -mt-11 flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-full bg-white shadow-lg">
                   <FaExclamationTriangle className="text-yellow h-8 w-8" />
                 </div>
 
-                <div className="font-semibold">
+                <div className="text-center font-semibold">
                   Your application is pending verification.
                 </div>
 
-                <div className="rounded-lg p-4 text-center md:w-[450px]">
+                <div className="w-full text-center">
                   {isPartnerManagedPendingSubmission ? (
                     <>
                       <strong>{partnerSourceLabel}</strong> manages this
@@ -718,32 +851,38 @@ const OpportunityPublicDetails: React.FC<{
                     </>
                   )}
                 </div>
-                <div className="mt-4 flex grow gap-4">
-                  {isPartnerManagedPendingSubmission ? (
-                    <button
-                      type="button"
-                      className="btn border-green text-green hover:bg-green-dark rounded-full bg-white normal-case hover:text-white md:w-[200px]"
-                      onClick={() => setCancelOpportunityDialogVisible(false)}
-                    >
-                      Close
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      className="btn border-green text-green hover:bg-green-dark rounded-full bg-white normal-case hover:text-white md:w-[200px]"
-                      onClick={onOpportunityCancel}
-                      disabled={isLoading}
-                    >
-                      Cancel submission
-                    </button>
-                  )}
-                </div>
+
                 {!isPartnerManagedPendingSubmission && (
-                  <div className="text-gray-dark px-4 text-center text-xs md:w-[450px]">
-                    * This will cancel your submission and delete all uploaded
-                    files.
+                  <div className="flex w-full items-start gap-2 rounded-lg border border-yellow-200 bg-yellow-50 p-3 text-left text-xs">
+                    <IoMdWarning className="text-yellow mt-0.5 h-4 w-4 shrink-0" />
+                    <span>
+                      Clicking <strong>Delete Files</strong> cancels your
+                      submission and permanently <strong>deletes</strong> all
+                      files you uploaded for this opportunity.
+                    </span>
                   </div>
                 )}
+
+                <div className="mt-2 flex w-full flex-col justify-center gap-4 md:flex-row">
+                  <button
+                    type="button"
+                    className="btn border-green text-green hover:bg-green-dark w-full bg-white hover:text-white md:flex-1"
+                    onClick={() => setCancelOpportunityDialogVisible(false)}
+                  >
+                    <IoMdClose className="mr-2 h-5 w-5" />
+                    Close Window
+                  </button>
+
+                  <button
+                    type="button"
+                    className="btn border-green text-green hover:bg-green-dark w-full bg-white hover:text-white md:flex-1"
+                    onClick={onOpportunityCancel}
+                    disabled={isLoading}
+                  >
+                    <IoMdTrash className="mr-2 h-5 w-5" />
+                    Delete Files
+                  </button>
+                </div>
               </div>
             </div>
           </CustomModal>
@@ -768,9 +907,7 @@ const OpportunityPublicDetails: React.FC<{
       )}
 
       {opportunityInfo && (
-        <div
-          className={`flex flex-col gap-4 ${!preview && !user ? "blur-xs" : ""}`}
-        >
+        <div className="flex flex-col gap-4">
           <div className="relative flex grow flex-col rounded-lg bg-white p-4 shadow-lg md:p-6">
             <div className="flex items-start gap-3">
               <div className="min-w-0 flex-1">
@@ -778,15 +915,9 @@ const OpportunityPublicDetails: React.FC<{
                   {opportunityInfo.title}
                 </h4>
 
-                {OPPORTUNITY_DETAILS_DESIGN_V2 ? (
-                  <div className="mt-1">
-                    <OpportunityOrgCountriesRow data={opportunityInfo} />
-                  </div>
-                ) : (
-                  <h6 className="text-gray-dark mt-1 text-sm">
-                    By {opportunityInfo.organizationName}
-                  </h6>
-                )}
+                <div className="mt-1">
+                  <OpportunityOrgCountriesRow data={opportunityInfo} />
+                </div>
               </div>
 
               <div className="shrink-0">
@@ -799,29 +930,25 @@ const OpportunityPublicDetails: React.FC<{
             </div>
 
             {/* BADGES */}
-            {OPPORTUNITY_DETAILS_DESIGN_V2 ? (
-              <div className="mt-4 mb-2 flex flex-col gap-2 md:my-2">
-                <div className="flex flex-row flex-wrap items-center gap-2">
-                  <OpportunityTypeBadge
-                    data={opportunityInfo}
-                    className={typeConfig.badgeClassName}
+            <div className="mt-4 mb-2 flex flex-col gap-2 md:my-2">
+              <div className="flex flex-row flex-wrap items-center gap-2">
+                <OpportunityTypeBadge
+                  data={opportunityInfo}
+                  className={typeConfig.badgeClassName}
+                />
+                <OpportunityEngagementTypeBadge
+                  data={opportunityInfo}
+                  className={"bg-gray-light text-gray-dark"}
+                />
+                {opportunityInfo.zltoRewardEstimate != null && (
+                  <ZltoRewardBadge
+                    amount={opportunityInfo.zltoRewardEstimate}
+                    showToolTips={true}
                   />
-                  <OpportunityEngagementTypeBadge
-                    data={opportunityInfo}
-                    className={"bg-gray-light text-gray-dark"}
-                  />
-                  {opportunityInfo.zltoRewardEstimate != null && (
-                    <ZltoRewardBadge
-                      amount={opportunityInfo.zltoRewardEstimate}
-                      showToolTips={true}
-                    />
-                  )}
-                </div>{" "}
-                <OpportunityMetaTextRow data={opportunityInfo} />
+                )}
               </div>
-            ) : (
-              <PublicBadges opportunity={opportunityInfo} showToolTips={true} />
-            )}
+              <OpportunityMetaTextRow data={opportunityInfo} />
+            </div>
 
             {/* BUTTONS */}
             <div className="mt-2 flex flex-col gap-4 md:flex-row">
@@ -832,28 +959,11 @@ const OpportunityPublicDetails: React.FC<{
                       type="button"
                       className={`btn btn-sm bg-green hover:bg-green-dark disabled:bg-green h-10 w-full rounded-full text-sm text-white normal-case md:w-[250px]`}
                       title="Clicking this button will take you to an external site to continue this opportunity. Remember to return to this page to upload your completion certificate and earn your achievement!"
-                      // className={`btn btn-sm h-10 w-full rounded-full text-sm normal-case md:w-[250px] ${
-                      //   OPPORTUNITY_DETAILS_DESIGN_V2
-                      //     ? typeConfig.ctaClassName
-                      //     : "bg-green hover:bg-green-dark disabled:bg-green text-white disabled:border-0 disabled:text-white"
-                      // }`}
                       onClick={onGoToOpportunity}
                       disabled={preview}
                     >
-                      <Image
-                        src={iconOpen}
-                        alt="Icon Open"
-                        width={20}
-                        className="h-auto"
-                        sizes="100vw"
-                        priority={true}
-                      />
-
-                      <span className="ml-1">
-                        {OPPORTUNITY_DETAILS_DESIGN_V2
-                          ? typeConfig.gotoExternalLinkButtonText
-                          : "Go to opportunity"}
-                      </span>
+                      <IoMdOpen className="mr-1 h-5 w-5" />
+                      {externalLinkButtonText}
                     </button>
                   )}
 
@@ -886,22 +996,12 @@ const OpportunityPublicDetails: React.FC<{
                             if (user) {
                               setCompleteOpportunityDialogVisible(true);
                             } else {
-                              setLoginDialogVisible(true);
+                              showLoginDialog("complete");
                             }
                           }}
                         >
-                          <Image
-                            src={iconUpload}
-                            alt="Icon Upload"
-                            width={20}
-                            className="h-auto"
-                            sizes="100vw"
-                            priority={true}
-                          />
-
-                          <span className="ml-1">
-                            Upload your completion files
-                          </span>
+                          <IoMdArrowUp className="mr-1 h-5 w-5" />
+                          Upload your completion files
                         </button>
                       )}
 
@@ -948,8 +1048,8 @@ const OpportunityPublicDetails: React.FC<{
                             setCancelOpportunityDialogVisible(true);
                           }}
                         >
+                          <FaInfoCircle className="h-4 w-4 shrink-0" />
                           Pending verification
-                          <IoMdClose className="mt-[2px] ml-1 h-4 w-4" />
                         </button>
                       ))}
 
@@ -1038,31 +1138,27 @@ const OpportunityPublicDetails: React.FC<{
                     </div>
                   </DetailSection>
                 )}
-                {opportunityInfo.commitmentIntervalCount != null &&
-                  opportunityInfo.commitmentInterval && (
-                    <DetailSection
-                      title="How much time you will need"
-                      icon={<IoTimeOutline className="text-green h-5 w-5" />}
-                    >
-                      <div className="my-2 text-sm">
-                        {`This task should not take you more than ${
-                          opportunityInfo.commitmentIntervalCount
-                        } ${opportunityInfo.commitmentInterval}${
-                          opportunityInfo.commitmentIntervalCount > 1
-                            ? "s. "
-                            : ". "
-                        }`}
-                        <br />
-                        <p className="mt-2">
-                          The estimated times provided are just a guideline. You
-                          have as much time as you need to complete the tasks at
-                          your own pace. Focus on engaging with the materials
-                          and doing your best without feeling rushed by the time
-                          estimates.
-                        </p>
-                      </div>
-                    </DetailSection>
-                  )}
+                {/* Commitment copy comes from master's `commitmentSummary` (total hours when
+                    the API knows them, else the interval label), rendered in this branch's
+                    shared DetailSection rather than master's hand-rolled block. */}
+                {commitmentSummary && (
+                  <DetailSection
+                    title="How much time you will need"
+                    icon={<IoTimeOutline className="text-green h-5 w-5" />}
+                  >
+                    <div className="my-2 text-sm">
+                      {`This task should not take you more than ${commitmentSummary}.`}
+                      <br />
+                      <p className="mt-2">
+                        The estimated times provided are just a guideline. You
+                        have as much time as you need to complete the tasks at
+                        your own pace. Focus on engaging with the materials and
+                        doing your best without feeling rushed by the time
+                        estimates.
+                      </p>
+                    </div>
+                  </DetailSection>
+                )}
                 {(opportunityInfo.categories?.length ?? 0) > 0 && (
                   <DetailSection
                     title="Topics"

@@ -7,25 +7,14 @@ import {
   IoShareSocialOutline,
 } from "react-icons/io5";
 import { toast } from "react-toastify";
-import { AvatarImage } from "../AvatarImage";
-import PublicBadges from "~/components/Opportunity/Badges/PublicBadges";
 import Image from "next/image";
 import type { OpportunityInfo } from "~/api/models/opportunity";
-import { OPPORTUNITY_DETAILS_DESIGN_V2 } from "~/lib/constants";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { LoadingInline } from "../Status/LoadingInline";
 import { createLinkSharing } from "~/api/services/actionLinks";
 import type { LinkInfo } from "~/api/models/actionLinks";
 import analytics from "~/lib/analytics";
-import ZltoRewardBadge from "./Badges/ZltoRewardBadge";
-import {
-  OpportunityTypeBadge,
-  OpportunityEngagementTypeBadge,
-  OpportunityMetaTextRow,
-  getTypeConfig,
-  OpportunityOrgCountriesRow,
-  OpportunityTitleRow,
-} from "./opportunityTypeTheme";
+import SocialPreview from "./SocialPreview";
 
 interface SharePopupProps {
   opportunity: OpportunityInfo;
@@ -38,8 +27,7 @@ const SharePopup: React.FC<SharePopupProps> = ({ opportunity, onClose }) => {
   const [qrCodeImageData, setQRCodeImageData] = useState<
     string | null | undefined
   >(null);
-  const cancelButtonRef = useRef<HTMLButtonElement>(null); // Per-type theming for the new (V2) details design (badge, CTA, accent).
-  const typeConfig = getTypeConfig(opportunity?.type);
+  const cancelButtonRef = useRef<HTMLButtonElement>(null);
 
   const { data: linkInfo, isLoading: linkInfoIsLoading } =
     useQuery<LinkInfo | null>({
@@ -136,7 +124,7 @@ const SharePopup: React.FC<SharePopupProps> = ({ opportunity, onClose }) => {
           className="btn btn-circle text-gray-dark hover:bg-gray"
           onClick={onClose}
         >
-          <IoMdClose className="h-6 w-6"></IoMdClose>
+          <IoMdClose className="h-5 w-5"></IoMdClose>
         </button>
       </div>
 
@@ -159,123 +147,44 @@ const SharePopup: React.FC<SharePopupProps> = ({ opportunity, onClose }) => {
           <h3>Share this opportunity!</h3>
 
           {/* OPPORTUNITY DETAILS (smaller) */}
-          <div className="shadow-custom mt-4 flex w-full flex-col rounded-lg p-4">
-            <div className="flex gap-4">
-              <div className="mb-1 flex items-center">
-                <AvatarImage
-                  icon={opportunity?.organizationLogoURL ?? null}
-                  alt={`${opportunity?.organizationName} Logo`}
-                  size={60}
-                />
-              </div>
-              <div className="flex flex-col gap-1 md:max-w-[420px]">
-                {/* <h4 className="line-clamp-2 max-w-[170px] overflow-hidden text-[18px] leading-tight font-semibold text-ellipsis md:max-w-[420px]">
-                  {opportunity?.title}
-                </h4> */}
-
-                {OPPORTUNITY_DETAILS_DESIGN_V2 ? (
-                  <>
-                    <OpportunityTitleRow data={opportunity} />
-                    <OpportunityOrgCountriesRow data={opportunity} />
-                  </>
-                ) : (
-                  <>
-                    <h4 className="line-clamp-2 max-w-[170px] overflow-hidden text-[18px] leading-tight font-semibold text-ellipsis md:max-w-[420px]">
-                      {opportunity?.title}
-                    </h4>
-                    <h6 className="text-gray-dark line-clamp-2 max-w-[180px] overflow-hidden text-xs font-medium text-ellipsis md:max-w-[420px]">
-                      By {opportunity?.organizationName}
-                    </h6>
-                  </>
-                )}
-              </div>
-            </div>
-
-            {/* BADGES */}
-            {OPPORTUNITY_DETAILS_DESIGN_V2 ? (
-              <div className="mt-4 mb-2 flex flex-col gap-2 md:my-2">
-                <div className="flex flex-row flex-wrap items-center gap-2">
-                  <OpportunityTypeBadge
-                    data={opportunity}
-                    className={typeConfig.badgeClassName}
-                  />
-                  <OpportunityEngagementTypeBadge
-                    data={opportunity}
-                    className={"bg-gray-light text-gray-dark"}
-                  />
-                  {opportunity.zltoRewardEstimate != null && (
-                    <ZltoRewardBadge amount={opportunity.zltoRewardEstimate} />
-                  )}
-                </div>
-                <OpportunityMetaTextRow data={opportunity} />
-              </div>
-            ) : (
-              <PublicBadges opportunity={opportunity} />
-
-              // DATES
-              // {opportunity?.status == "Active" && (
-              //   <div className="text-gray-dark flex flex-col text-sm">
-              //     <div>
-              //       {opportunity.dateStart && (
-              //         <>
-              //           <span className="mr-2 font-bold">Starts:</span>
-              //           <span className="text-xs tracking-widest text-black">
-              //             <Moment format={DATE_FORMAT_HUMAN} utc={true}>
-              //               {opportunity.dateStart}
-              //             </Moment>
-              //           </span>
-              //         </>
-              //       )}
-              //     </div>
-              //     <div>
-              //       {opportunity.dateEnd && (
-              //         <>
-              //           <span className="mr-2 font-bold">Ends:</span>
-              //           <span className="text-xs tracking-widest text-black">
-              //             <Moment format={DATE_FORMAT_HUMAN} utc={true}>
-              //               {opportunity.dateEnd}
-              //             </Moment>
-              //           </span>
-              //         </>
-              //       )}
-              //     </div>
-              //   </div>
-              // )}
-            )}
-
-            {/* <PublicBadges opportunity={opportunity} /> */}
-          </div>
+          <SocialPreview
+            name={opportunity.title}
+            description={opportunity.description}
+            logoURL={opportunity.organizationLogoURL}
+            organizationName={opportunity.organizationName}
+            opportunity={opportunity}
+          />
 
           {/* BUTTONS */}
-          <div className="mt-10 mb-2 grid w-full grid-cols-1 gap-4 md:mb-6 md:grid-cols-2">
+          <div className="mt-4 mb-2 grid w-full grid-cols-1 gap-4 md:mb-6 md:grid-cols-2">
             <button
               onClick={onClick_CopyToClipboard}
               className="btn border-green text-green hover:bg-green-dark bg-white hover:text-white"
             >
-              <IoCopy className="mr-2 h-6 w-6" />
+              <IoCopy className="mr-2 h-5 w-5" />
               Copy Link
             </button>
             <button
               onClick={onClick_GenerateQRCode}
               className="btn border-green text-green hover:bg-green-dark bg-white hover:text-white"
             >
-              <IoQrCode className="mr-2 h-6 w-6" />
+              <IoQrCode className="mr-2 h-5 w-5" />
               Generate QR Code
+            </button>
+            <button
+              onClick={onClick_MoreOptions}
+              className="btn border-green text-green hover:bg-green-dark bg-white hover:text-white"
+            >
+              <IoEllipsisHorizontalOutline className="mr-2 h-5 w-5" />
+              More options
             </button>
             <button
               type="button"
               onClick={onClose}
               className="btn border-green text-green hover:bg-green-dark bg-white hover:text-white"
             >
-              <IoMdClose className="mr-2 h-6 w-6" />
-              Close
-            </button>
-            <button
-              onClick={onClick_MoreOptions}
-              className="btn border-green text-green hover:bg-green-dark bg-white hover:text-white"
-            >
-              <IoEllipsisHorizontalOutline className="mr-2 h-6 w-6" />
-              More options
+              <IoMdClose className="mr-2 h-5 w-5" />
+              Close Window
             </button>
           </div>
 
@@ -302,6 +211,7 @@ const SharePopup: React.FC<SharePopupProps> = ({ opportunity, onClose }) => {
               onClick={onClose}
               ref={cancelButtonRef}
             >
+              <IoMdClose className="mr-2 h-5 w-5" />
               Close
             </button>
           )}

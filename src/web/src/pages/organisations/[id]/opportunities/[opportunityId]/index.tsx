@@ -64,7 +64,7 @@ import {
   getCustomFieldErrors,
 } from "~/components/Opportunity/CustomFields";
 import OpportunityPublicDetails from "~/components/Opportunity/OpportunityPublicDetails";
-import { OpportunityPublicSmallComponentV2 } from "~/components/Opportunity/OpportunityPublicSmallV2";
+import { OpportunityPublicSmallComponent } from "~/components/Opportunity/OpportunityPublicSmall";
 import { PageBackground } from "~/components/PageBackground";
 import { Editor } from "~/components/RichText/Editor";
 import { ApiErrors } from "~/components/Status/ApiErrors";
@@ -1101,6 +1101,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
           : "",
       commitmentIntervalCount: formData.commitmentIntervalCount ?? 0,
       commitmentIntervalDescription: "",
+      commitmentIntervalTotalHours: null,
       participantLimit: formData.participantLimit,
       participantCountCompleted: 0,
       participantCountPending: 0,
@@ -3512,7 +3513,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
 
                           <div className="mt-4 flex justify-center">
                             <div className="border-grayx rounded-xl shadow-xl">
-                              <OpportunityPublicSmallComponentV2
+                              <OpportunityPublicSmallComponent
                                 key={`opportunity_card_preview`}
                                 preview={true}
                                 data={opportunityInfo}

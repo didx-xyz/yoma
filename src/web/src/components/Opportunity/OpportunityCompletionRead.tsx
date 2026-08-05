@@ -13,6 +13,7 @@ import Moment from "react-moment";
 import type { MyOpportunityInfo } from "~/api/models/myOpportunity";
 import { DATE_FORMAT_HUMAN } from "~/lib/constants";
 import { fetchClientEnv } from "~/lib/utils";
+import { getCommitmentDisplay } from "./opportunityTypeTheme";
 import { UserInitialsAvatar } from "../User/UserInitialsAvatar";
 import { MyOpportunityCustomFieldsSection } from "./MyOpportunityCustomFieldsSection";
 
@@ -26,6 +27,13 @@ export const OpportunityCompletionRead: React.FC<InputProps> = ({
   data,
 }) => {
   const [showLocation, setShowLocation] = useState(false);
+  const commitmentDisplay = getCommitmentDisplay(data);
+  /** Total hours when the API knows them, otherwise the interval label. */
+  let commitmentTimeToComplete = commitmentDisplay?.label ?? "";
+  if (commitmentDisplay?.totalHours != null) {
+    const hourLabel = commitmentDisplay.totalHours === 1 ? "hour" : "hours";
+    commitmentTimeToComplete = `${commitmentDisplay.totalHours} ${hourLabel}`;
+  }
 
   function renderVerificationFile(
     icon: any,
@@ -281,23 +289,25 @@ export const OpportunityCompletionRead: React.FC<InputProps> = ({
           </div>
         )}
 
-        {data?.commitmentInterval &&
-          (data?.commitmentIntervalCount ?? 0) > 0 && (
-            <div className="flex flex-row justify-between gap-2">
-              <span
-                className="font-semiboldx min-w-40 truncate text-nowrap"
-                title="Time to complete"
-              >
-                Time to complete:
-              </span>
-              <span
-                className="line-clamp-2 truncate font-bold"
-                title={`${data.commitmentIntervalCount} ${data.commitmentInterval}(s)`}
-              >
-                {data.commitmentIntervalCount} {data.commitmentInterval}(s)
-              </span>
-            </div>
-          )}
+        {/* Commitment now comes from `getCommitmentDisplay` (master), which prefers the
+            API's total hours and falls back to the interval label. Rendered in this
+            surface's own label/value row rather than master's inline pair. */}
+        {commitmentDisplay && (
+          <div className="flex flex-row justify-between gap-2">
+            <span
+              className="font-semiboldx min-w-40 truncate text-nowrap"
+              title="Time to complete"
+            >
+              Time to complete:
+            </span>
+            <span
+              className="line-clamp-2 truncate font-bold"
+              title={commitmentTimeToComplete}
+            >
+              {commitmentTimeToComplete}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* CUSTOM FIELDS (definition-driven, YOM-1244 / YOM-1255) */}
@@ -310,6 +320,12 @@ export const OpportunityCompletionRead: React.FC<InputProps> = ({
           values={data.customFields}
           className="flex flex-col"
         />
+      )}
+      {commitmentDisplay?.totalHours == null && commitmentDisplay?.label && (
+        <div className="text-gray-dark flex flex-row gap-2 text-sm">
+          <div>Time to complete: </div>
+          <div className="font-bold">{commitmentDisplay.label}</div>
+        </div>
       )}
     </div>
   );

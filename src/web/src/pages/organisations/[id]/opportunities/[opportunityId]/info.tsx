@@ -34,6 +34,7 @@ import {
   OpportunityActionDisplayStyle,
 } from "~/components/Opportunity/OpportunityActions";
 import {
+  getCommitmentDisplay,
   getTypeConfig,
   OpportunityEngagementTypeBadge,
   OpportunityMetaTextRow,
@@ -139,6 +140,16 @@ const OpportunityDetails: NextPageWithLayout<{
     if (error === 401) return <Unauthenticated />;
     else if (error === 403) return <Unauthorized />;
     else return <InternalServerError />;
+  }
+  const commitmentDisplay = opportunity
+    ? getCommitmentDisplay(opportunity)
+    : null;
+  let commitmentSummary = "";
+  if (commitmentDisplay?.totalHours != null) {
+    const hourLabel = commitmentDisplay.totalHours === 1 ? "" : "s";
+    commitmentSummary = `${commitmentDisplay.totalHours} total hour${hourLabel}`;
+  } else if (commitmentDisplay?.label) {
+    commitmentSummary = commitmentDisplay.label;
   }
 
   return (
@@ -360,30 +371,27 @@ const OpportunityDetails: NextPageWithLayout<{
                       </div>
                     </DetailSection>
                   )}
-                  {typeof opportunity?.commitmentIntervalCount === "number" &&
-                    opportunity.commitmentIntervalCount > 0 &&
-                    !!opportunity?.commitmentInterval && (
-                      <DetailSection
-                        title="How much time you will need"
-                        icon={<IoTimeOutline className="text-green h-5 w-5" />}
-                      >
-                        <div className="my-2">
-                          {`This task should not take you more than ${opportunity?.commitmentIntervalCount} ${opportunity?.commitmentInterval}${
-                            (opportunity?.commitmentIntervalCount ?? 0) > 1
-                              ? "s. "
-                              : ". "
-                          }`}
-                          <br />
-                          <p className="mt-2">
-                            The estimated times provided are just a guideline.
-                            You have as much time as you need to complete the
-                            tasks at your own pace. Focus on engaging with the
-                            materials and doing your best without feeling rushed
-                            by the time estimates.
-                          </p>
-                        </div>
-                      </DetailSection>
-                    )}
+                  {/* Gated on master's `commitmentSummary` (total hours when the API knows
+                      them, else the interval label) rather than the raw interval, since that
+                      is what the copy below renders. */}
+                  {!!commitmentSummary && (
+                    <DetailSection
+                      title="How much time you will need"
+                      icon={<IoTimeOutline className="text-green h-5 w-5" />}
+                    >
+                      <div className="my-2">
+                        {`This task should not take you more than ${commitmentSummary}. `}
+                        <br />
+                        <p className="mt-2">
+                          The estimated times provided are just a guideline. You
+                          have as much time as you need to complete the tasks at
+                          your own pace. Focus on engaging with the materials
+                          and doing your best without feeling rushed by the time
+                          estimates.
+                        </p>
+                      </div>
+                    </DetailSection>
+                  )}
                   {(opportunity?.categories?.length ?? 0) > 0 && (
                     <DetailSection
                       title="Topics"

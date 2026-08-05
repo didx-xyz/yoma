@@ -50,8 +50,6 @@ import FilterTab from "~/components/Opportunity/FilterTab";
 import { OpportunitiesGrid } from "~/components/Opportunity/OpportunitiesGrid";
 import { OpportunityFilterVertical } from "~/components/Opportunity/OpportunityFilterVertical";
 import { useCustomFieldFilterLabeler } from "~/components/Opportunity/CustomFieldFilters";
-import { OpportunityPublicSmallComponent } from "~/components/Opportunity/OpportunityPublicSmall";
-import { OpportunityPublicSmallComponentV2 } from "~/components/Opportunity/OpportunityPublicSmallV2";
 import {
   getEngagementConfig,
   getTypeConfig,
@@ -76,6 +74,7 @@ import { OpportunityCategoryHorizontalCard } from "~/components/Opportunity/Oppo
 import { CustomSlider } from "~/components/Carousel";
 import Link from "next/link";
 import { IoMdHeart } from "react-icons/io";
+import { OpportunityPublicSmallComponent } from "~/components/Opportunity/OpportunityPublicSmall";
 
 // 👇 SSG
 // This page is statically generated at build time on server-side
@@ -2144,7 +2143,7 @@ const Opportunities: NextPageWithLayout<{
                           loadData={loadDataJobs}
                           totalAll={opportunities_jobs_render.totalCount!}
                           renderSlide={(item, index) => (
-                            <OpportunityPublicSmallComponentV2
+                            <OpportunityPublicSmallComponent
                               key={`opportunities_jobs_${item.id}_${index}`}
                               data={item}
                               variant="job"
@@ -2183,7 +2182,7 @@ const Opportunities: NextPageWithLayout<{
                               loadData={loadDataOpportunitiesForUserCountry}
                               totalAll={opportunities_user_country!.totalCount!}
                               renderSlide={(item, index) => (
-                                <OpportunityPublicSmallComponentV2
+                                <OpportunityPublicSmallComponent
                                   key={`opportunities_user_country_${item.id}_${index}`}
                                   data={item}
                                 />
@@ -2210,7 +2209,7 @@ const Opportunities: NextPageWithLayout<{
                             loadData={loadDataFeatured}
                             totalAll={opportunities_featured_render.totalCount!}
                             renderSlide={(item, index) => (
-                              <OpportunityPublicSmallComponentV2
+                              <OpportunityPublicSmallComponent
                                 key={`opportunities_featured_${item.id}_${index}`}
                                 data={item}
                               />
@@ -2240,7 +2239,7 @@ const Opportunities: NextPageWithLayout<{
                               opportunities_allOpportunities_render.totalCount!
                             }
                             renderSlide={(item, index) => (
-                              <OpportunityPublicSmallComponentV2
+                              <OpportunityPublicSmallComponent
                                 key={`opportunities_newOpportunities_${item.id}_${index}`}
                                 data={item}
                               />
@@ -2270,7 +2269,7 @@ const Opportunities: NextPageWithLayout<{
                               opportunities_mostCompleted_render.totalCount!
                             }
                             renderSlide={(item, index) => (
-                              <OpportunityPublicSmallComponentV2
+                              <OpportunityPublicSmallComponent
                                 key={`opportunities_mostCompleted_${item.id}_${index}`}
                                 data={item}
                               />
@@ -2297,7 +2296,7 @@ const Opportunities: NextPageWithLayout<{
                             loadData={loadDataLearning}
                             totalAll={opportunities_learning_render.totalCount!}
                             renderSlide={(item, index) => (
-                              <OpportunityPublicSmallComponentV2
+                              <OpportunityPublicSmallComponent
                                 key={`opportunities_learning_${item.id}_${index}`}
                                 data={item}
                               />
@@ -2324,7 +2323,7 @@ const Opportunities: NextPageWithLayout<{
                             loadData={loadDataTasks}
                             totalAll={opportunities_tasks_render.totalCount!}
                             renderSlide={(item, index) => (
-                              <OpportunityPublicSmallComponentV2
+                              <OpportunityPublicSmallComponent
                                 key={`opportunities_tasks_${item.id}_${index}`}
                                 data={item}
                               />
@@ -2351,7 +2350,7 @@ const Opportunities: NextPageWithLayout<{
                             loadData={loadDataEvents}
                             totalAll={opportunities_events_render.totalCount!}
                             renderSlide={(item, index) => (
-                              <OpportunityPublicSmallComponentV2
+                              <OpportunityPublicSmallComponent
                                 key={`opportunities_events_${item.id}_${index}`}
                                 data={item}
                               />
