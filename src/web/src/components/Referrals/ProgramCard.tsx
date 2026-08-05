@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import React from "react";
-import iconClock from "public/images/icon-clock.svg";
+import { IoMdTime } from "react-icons/io";
 import { type Program, type ProgramInfo } from "~/api/models/referrals";
 import ZltoRewardBadge from "../Opportunity/Badges/ZltoRewardBadge";
 import { NoImage } from "~/components/Common/NoImage";
@@ -56,14 +56,7 @@ export const ProgramCard: React.FC<ProgramCardProps> = ({
 
             {(data.completionWindowInDays ?? 0) > 0 && (
               <span className="badge bg-green/20 badge-sm border border-green-200 whitespace-nowrap text-green-700">
-                <Image
-                  src={iconClock}
-                  alt="Clock"
-                  width={16}
-                  className="h-auto"
-                  sizes="100vw"
-                  priority={true}
-                />
+                <IoMdTime className="h-4 w-4" />
                 <span className="ml-1">{`${data.completionWindowInDays} day${data.completionWindowInDays === 1 ? "" : "s"}`}</span>
               </span>
             )}

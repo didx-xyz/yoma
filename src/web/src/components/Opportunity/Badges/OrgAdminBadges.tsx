@@ -1,6 +1,5 @@
 import Image from "next/image";
-import iconClock from "public/images/icon-clock.svg";
-import { IoMdPause, IoMdPerson, IoMdPlay } from "react-icons/io";
+import { IoMdPause, IoMdPerson, IoMdPlay, IoMdTime } from "react-icons/io";
 import type { OpportunityInfo } from "~/api/models/opportunity";
 import { OPPORTUNITY_TYPE_NANE_JOB } from "~/lib/constants";
 import iconZlto from "public/images/icon-zlto.svg";
@@ -17,14 +16,7 @@ const OrgAdminBadges: React.FC<BadgesProps> = ({ opportunity, isAdmin }) => {
     <div className="text-green-dark flex flex-row flex-wrap gap-2 border-none font-bold">
       {!isJobOpportunity && (
         <div className="badge bg-green-light text-green rounded-md border-none text-xs">
-          <Image
-            src={iconClock}
-            alt="Icon Clock"
-            width={20}
-            className="h-auto"
-            sizes="100vw"
-            priority={true}
-          />
+          <IoMdTime className="h-4 w-4" />
 
           <span className="ml-1 text-xs">{`${opportunity?.commitmentIntervalCount} ${opportunity?.commitmentInterval}${
             (opportunity?.commitmentIntervalCount ?? 0 > 1) ? "s" : ""

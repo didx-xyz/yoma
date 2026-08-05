@@ -10,10 +10,9 @@ import { type NextPageWithLayout } from "~/pages/_app";
 import { authOptions } from "~/server/auth";
 import { type ErrorResponseItem } from "~/api/models/common";
 import { config } from "~/lib/react-query-config";
-import { IoMdFlame } from "react-icons/io";
+import { IoMdCheckmarkCircle, IoMdFlame } from "react-icons/io";
 import Image from "next/image";
 import IconRingBuoy from "/public/images/icon-ring-buoy.svg";
-import IconSuccess from "/public/images/icon-success.png";
 import Link from "next/link";
 import { getPublishedOrExpiredByLinkInstantVerify } from "~/api/services/opportunities";
 import type { OpportunityInfo } from "~/api/models/opportunity";
@@ -185,14 +184,7 @@ const OpportunityActionLinkVerify: NextPageWithLayout<{
 
         {action === OpportunityAction.Success && (
           <div className="z-10 flex h-full w-full max-w-md flex-col place-items-center justify-center gap-8 rounded-xl bg-white p-4 md:h-fit md:max-w-2xl md:p-16">
-            <Image
-              src={IconSuccess}
-              alt="Icon Success"
-              width={80}
-              sizes="100vw"
-              priority={true}
-              className="shadow-custom mt-2 h-auto rounded-full p-4"
-            />
+            <IoMdCheckmarkCircle className="text-green shadow-custom mt-2 h-20 w-20 rounded-full p-4" />
             <h2 className="-mb-6 font-bold">Congratulations!</h2>
 
             <p className="text-gray-dark text-center">

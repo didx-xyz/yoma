@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { type ReactNode } from "react";
-import iconClock from "public/images/icon-clock.svg";
+import { IoMdTime } from "react-icons/io";
 import ZltoRewardBadge from "~/components/Opportunity/Badges/ZltoRewardBadge";
 import { ReferralTapCard } from "~/components/Referrals/ReferralTapCard";
 import { NoImage } from "~/components/Common/NoImage";
@@ -39,14 +39,7 @@ export const ReferralProgramSlideCard: React.FC<{
       {showRewardBadge ? <ZltoRewardBadge amount={reward ?? null} /> : null}
       {showTimeBadge && (timeDays ?? 0) > 0 ? (
         <span className="badge bg-green/20 badge-sm border border-green-200 whitespace-nowrap text-green-700">
-          <Image
-            src={iconClock}
-            alt="Clock"
-            width={16}
-            className="h-auto"
-            sizes="100vw"
-            priority={true}
-          />
+          <IoMdTime className="h-4 w-4" />
           <span className="ml-1">{`${timeDays} day${timeDays === 1 ? "" : "s"}`}</span>
         </span>
       ) : null}
