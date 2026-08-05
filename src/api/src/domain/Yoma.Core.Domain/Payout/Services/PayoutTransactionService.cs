@@ -137,7 +137,7 @@ namespace Yoma.Core.Domain.Payout.Services
 
           if (item.Status is PayoutTransactionStatus.Processing or PayoutTransactionStatus.ReconciliationRequired)
           {
-            result.ExpiresAt = item.ExpiresAt ?? result.ExpiresAt;
+            ApplyProviderDetails(result, item);
             result.DateLastReconciled = item.DateLastReconciled;
             result.RetryCount = item.RetryCount;
             result.ErrorReason = item.ErrorReason;
@@ -154,19 +154,17 @@ namespace Yoma.Core.Domain.Payout.Services
             if (!Statuses_CanProcess.Contains(result.Status))
               throw new ValidationException($"{nameof(PayoutTransaction)} can not be processed (current status '{result.Status}'). Required state '{Statuses_CanProcess.JoinNames()}'");
 
-            result.TransactionId = item.TransactionId;
-            result.ExpiresAt = item.ExpiresAt;
+            ApplyProviderDetails(result, item);
             result.DateLastReconciled = item.DateLastReconciled;
             result.RetryCount = null;
             result.ErrorReason = null;
             break;
 
           case PayoutTransactionStatus.ReconciliationRequired:
-            // TODO [Payout reconciliation]: Preserve a known provider TransactionId and ExpiresAt when
-            // initiation succeeds but persisting Processing fails and the payout falls back to reconciliation.
             if (!Statuses_CanReconcile.Contains(result.Status))
               throw new ValidationException($"{nameof(PayoutTransaction)} can not require reconciliation (current status '{result.Status}'). Required state '{Statuses_CanReconcile.JoinNames()}'");
 
+            ApplyProviderDetails(result, item);
             result.DateLastReconciled = item.DateLastReconciled ?? DateTimeOffset.UtcNow;
             result.RetryCount = item.RetryCount;
             result.ErrorReason = item.ErrorReason;
@@ -176,6 +174,7 @@ namespace Yoma.Core.Domain.Payout.Services
             if (!Statuses_CanComplete.Contains(result.Status))
               throw new ValidationException($"{nameof(PayoutTransaction)} can not be completed (current status '{result.Status}'). Required state '{Statuses_CanComplete.JoinNames()}'");
 
+            ApplyProviderDetails(result, item);
             result.DateLastReconciled = item.DateLastReconciled ?? DateTimeOffset.UtcNow;
             result.RetryCount = null;
             result.ErrorReason = null;
@@ -185,6 +184,7 @@ namespace Yoma.Core.Domain.Payout.Services
             if (!Statuses_CanFail.Contains(result.Status))
               throw new ValidationException($"{nameof(PayoutTransaction)} can not be failed (current status '{result.Status}'). Required state '{Statuses_CanFail.JoinNames()}'");
 
+            ApplyProviderDetails(result, item);
             result.DateLastReconciled = item.DateLastReconciled ?? DateTimeOffset.UtcNow;
             result.RetryCount = null;
             result.ErrorReason = item.ErrorReason;
@@ -194,6 +194,7 @@ namespace Yoma.Core.Domain.Payout.Services
             if (!Statuses_CanCancel.Contains(result.Status))
               throw new ValidationException($"{nameof(PayoutTransaction)} can not be cancelled (current status '{result.Status}'). Required state '{Statuses_CanCancel.JoinNames()}'");
 
+            ApplyProviderDetails(result, item);
             result.DateLastReconciled = item.DateLastReconciled ?? DateTimeOffset.UtcNow;
             result.RetryCount = null;
             result.ErrorReason = item.ErrorReason;
@@ -203,6 +204,7 @@ namespace Yoma.Core.Domain.Payout.Services
             if (!Statuses_CanExpire.Contains(result.Status))
               throw new ValidationException($"{nameof(PayoutTransaction)} can not be expired (current status '{result.Status}'). Required state '{Statuses_CanExpire.JoinNames()}'");
 
+            ApplyProviderDetails(result, item);
             result.DateLastReconciled = item.DateLastReconciled ?? DateTimeOffset.UtcNow;
             result.RetryCount = null;
             result.ErrorReason = item.ErrorReason;
@@ -233,6 +235,20 @@ namespace Yoma.Core.Domain.Payout.Services
       var result = query.SingleOrDefault(o => o.Id == id);
 
       return result ?? throw new EntityNotFoundException($"{nameof(PayoutTransaction)} with id '{id}' does not exist");
+    }
+
+    private static void ApplyProviderDetails(PayoutTransaction target, PayoutTransaction source)
+    {
+      if (!string.IsNullOrEmpty(source.TransactionId))
+      {
+        if (!string.IsNullOrEmpty(target.TransactionId) &&
+            !string.Equals(target.TransactionId, source.TransactionId, StringComparison.Ordinal))
+          throw new DataInconsistencyException($"Transaction id mismatch detected for payout transaction with id '{target.Id}'");
+
+        target.TransactionId = source.TransactionId;
+      }
+
+      target.ExpiresAt = source.ExpiresAt ?? target.ExpiresAt;
     }
     #endregion
   }

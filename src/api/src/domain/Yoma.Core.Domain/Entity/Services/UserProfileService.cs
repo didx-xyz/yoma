@@ -40,6 +40,7 @@ namespace Yoma.Core.Domain.Entity.Services
     private readonly IOrganizationService _organizationService;
     private readonly IMyOpportunityService _myOpportunityService;
     private readonly IWalletService _walletService;
+    private readonly IRewardService _rewardService;
     private readonly IPayoutTransactionService _payoutTransactionService;
     private readonly IPayoutService _payoutService;
     private readonly ISettingsDefinitionService _settingsDefinitionService;
@@ -63,6 +64,7 @@ namespace Yoma.Core.Domain.Entity.Services
       IOrganizationService organizationService,
       IMyOpportunityService myOpportunityService,
       IWalletService walletService,
+      IRewardService rewardService,
       IPayoutTransactionService payoutTransactionService,
       IPayoutService payoutService,
       ISettingsDefinitionService settingsDefinitionService,
@@ -84,6 +86,7 @@ namespace Yoma.Core.Domain.Entity.Services
       _organizationService = organizationService;
       _myOpportunityService = myOpportunityService;
       _walletService = walletService;
+      _rewardService = rewardService ?? throw new ArgumentNullException(nameof(rewardService));
       _payoutTransactionService = payoutTransactionService ?? throw new ArgumentNullException(nameof(payoutTransactionService));
       _payoutService = payoutService ?? throw new ArgumentNullException(nameof(payoutService));
       _settingsDefinitionService = settingsDefinitionService;
@@ -331,19 +334,39 @@ namespace Yoma.Core.Domain.Entity.Services
 
       result.Settings = SettingsHelper.FilterByRoles(result.Settings, roles);
 
+      var payoutActive = _payoutTransactionService.GetActiveByUserIdOrNull(result.Id);
+      var pendingPayout = default(decimal);
+      if (payoutActive != null && string.Equals(payoutActive.Type, PayoutType.PayoutRewards.ToString(), StringComparison.OrdinalIgnoreCase))
+      {
+        var rewardReservation = _rewardService.GetByEntity(result.Id, Reward.RewardTransactionEntityType.Payout, payoutActive.Id);
+        if (rewardReservation?.Status == Reward.RewardTransactionStatus.Reserved)
+          pendingPayout = rewardReservation.Amount;
+      }
+
       var (status, balance) = await _walletService.GetWalletStatusAndBalance(result.Id);
+      var zltoOffline = balance.ZltoOffline == true;
+
+      // Yoma's recorded reward reservation is authoritative for PendingPayout and therefore for
+      // the user-facing ledger. ZLTO's ReservedBalance is checked independently to detect a
+      // cross-system reservation mismatch without allowing provider state to rewrite Yoma state.
+      // A mismatch may be transient across the remote/local commit boundary; a persistent warning
+      // indicates that payout reconciliation requires attention.
+      if (!zltoOffline && balance.ReservedBalance != pendingPayout && _logger.IsEnabled(LogLevel.Warning))
+        _logger.LogWarning(
+          "ZLTO reserved balance '{zltoReservedBalance}' differs from Yoma pending payout '{pendingPayout}' for user '{userId}'",
+          balance.ReservedBalance, pendingPayout, result.Id);
+
       result.Zlto = new UserProfileZlto
       {
-        Balance = balance.Balance,
+        Balance = zltoOffline ? null : balance.Available + pendingPayout,
         PendingRewards = balance.Pending,
-        PendingPayout = balance.PendingPayout,
-        Available = balance.Available,
+        PendingPayout = pendingPayout,
+        Available = zltoOffline ? null : balance.Available,
         Total = balance.Total,
         WalletCreationStatus = status,
         ZltoOffline = balance.ZltoOffline
       };
 
-      var payoutActive = _payoutTransactionService.GetActiveByUserIdOrNull(result.Id);
       result.Payout = new UserProfilePayout
       {
         Amount = payoutActive?.Amount,

@@ -264,7 +264,9 @@ namespace Yoma.Core.Domain.Payout.Services
             }
           }
 
-          await InitiatePayout(payout, GetUser(payout.UserId));
+          // ReconcileProcess owns failure-state persistence for this attempt so RetryCount is
+          // incremented once even when provider initiation must be retried from Initiated.
+          await InitiatePayout(payout, GetUser(payout.UserId), false);
           return;
         }
 
@@ -280,8 +282,6 @@ namespace Yoma.Core.Domain.Payout.Services
       }
       catch (Exception ex)
       {
-        // TODO [Payout reconciliation]: Avoid incrementing RetryCount twice when InitiatePayout already
-        // persisted ReconciliationRequired before rethrowing into this outer handler.
         await TryMarkReconciliationRequired(payout, ex.Message);
         throw;
       }
@@ -338,7 +338,10 @@ namespace Yoma.Core.Domain.Payout.Services
       return payout ?? throw new DataInconsistencyException("Payout creation did not return a result");
     }
 
-    private async Task<(PayoutTransaction Payout, PayoutSession Session)> InitiatePayout(PayoutTransaction payout, User user)
+    private async Task<(PayoutTransaction Payout, PayoutSession Session)> InitiatePayout(
+      PayoutTransaction payout,
+      User user,
+      bool markReconciliationOnFailure = true)
     {
       try
       {
@@ -370,7 +373,8 @@ namespace Yoma.Core.Domain.Payout.Services
       }
       catch (Exception ex)
       {
-        await TryMarkReconciliationRequired(payout, $"Payout initiation outcome is not confirmed: {ex.Message}");
+        if (markReconciliationOnFailure)
+          await TryMarkReconciliationRequired(payout, $"Payout initiation outcome is not confirmed: {ex.Message}");
         throw;
       }
     }
@@ -389,12 +393,12 @@ namespace Yoma.Core.Domain.Payout.Services
           !string.Equals(payout.TransactionId, response.TransactionId, StringComparison.Ordinal))
         throw new DataInconsistencyException($"Provider transaction id mismatch detected for payout transaction with id '{payout.Id}'");
 
-      // TODO [Payout reconciliation]: When the first confirmed provider outcome is terminal, persist
-      // response.TransactionId before completing or closing the local payout.
+      // The first confirmed provider response may already be terminal. Carry its transaction id
+      // through every status path so it is persisted for audit and reconciliation.
+      payout.TransactionId = response.TransactionId;
       switch (response.Status)
       {
         case PayoutTransactionStatus.Processing:
-          payout.TransactionId = response.TransactionId;
           payout.DateLastReconciled = DateTimeOffset.UtcNow;
           payout.RetryCount = null;
           payout.ErrorReason = null;
@@ -453,6 +457,7 @@ namespace Yoma.Core.Domain.Payout.Services
         }
 
         EnsureActive(payoutLocked);
+        ApplyProviderDetails(payoutLocked, payout);
 
         if (IsRewardPayout(payoutLocked))
         {
@@ -513,6 +518,7 @@ namespace Yoma.Core.Domain.Payout.Services
         }
 
         EnsureActive(payoutLocked);
+        ApplyProviderDetails(payoutLocked, payout);
 
         if (IsRewardPayout(payoutLocked))
         {
@@ -618,6 +624,20 @@ namespace Yoma.Core.Domain.Payout.Services
     private static bool IsRewardPayout(PayoutTransaction payout)
     {
       return string.Equals(payout.Type, PayoutType.PayoutRewards.ToString(), StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static void ApplyProviderDetails(PayoutTransaction target, PayoutTransaction source)
+    {
+      if (!string.IsNullOrEmpty(source.TransactionId))
+      {
+        if (!string.IsNullOrEmpty(target.TransactionId) &&
+            !string.Equals(target.TransactionId, source.TransactionId, StringComparison.Ordinal))
+          throw new DataInconsistencyException($"Provider transaction id mismatch detected for payout transaction with id '{target.Id}'");
+
+        target.TransactionId = source.TransactionId;
+      }
+
+      target.ExpiresAt = source.ExpiresAt ?? target.ExpiresAt;
     }
 
     private static void EnsureActive(PayoutTransaction payout)

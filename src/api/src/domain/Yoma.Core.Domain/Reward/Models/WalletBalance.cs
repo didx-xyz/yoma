@@ -10,19 +10,19 @@ namespace Yoma.Core.Domain.Reward.Models
 
     public decimal Pending { get; set; }
 
-    public decimal PendingPayout { get; set; }
-
     /// <summary>
-    /// Wallet balance before payout reservations are excluded. ZLTO reports the spendable
-    /// balance and reserved payout balance separately, so this is derived from both values.
+    /// Balance reported as reserved by ZLTO. This is retained only as a cross-system
+    /// consistency check against Yoma's recorded payout reservation. It is not used to
+    /// construct the user-facing ledger.
     /// </summary>
-    public decimal Balance => Available + PendingPayout;
+    public decimal ReservedBalance { get; set; }
 
     /// <summary>
     /// Effective balance after pending rewards are added. Pending payout is not deducted here
     /// because it has already been removed from the available wallet balance by the provider.
+    /// Unavailable while ZLTO is offline because the provider balance cannot be confirmed.
     /// </summary>
-    public decimal Total => Available + Pending;
+    public decimal? Total => ZltoOffline == true ? null : Available + Pending;
 
     public bool? ZltoOffline { get; set; }
   }

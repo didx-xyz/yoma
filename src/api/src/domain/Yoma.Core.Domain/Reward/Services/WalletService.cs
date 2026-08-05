@@ -120,11 +120,10 @@ namespace Yoma.Core.Domain.Reward.Services
           {
             var wallet = await _rewardProviderClient.GetWallet(item.WalletId);
             balance.Available = wallet.Balance;
-            balance.PendingPayout = wallet.ReservedBalance;
+            balance.ReservedBalance = wallet.ReservedBalance;
           }
           catch
           {
-            balance.Available = decimal.Zero;
             balance.ZltoOffline = true;
           }
           break;
