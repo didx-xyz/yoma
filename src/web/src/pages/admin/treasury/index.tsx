@@ -32,6 +32,7 @@ import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import TreasuryCapacityWarnings from "~/components/Treasury/TreasuryCapacityWarnings";
 import TreasuryManagementForm from "~/components/Treasury/TreasuryManagementForm";
+import TreasuryOpportunitiesTab from "~/components/Treasury/TreasuryOpportunitiesTab";
 import TreasuryOrganisationsTab from "~/components/Treasury/TreasuryOrganisationsTab";
 import TreasuryOverview from "~/components/Treasury/TreasuryOverview";
 import TreasuryRolloverConfirmDialog from "~/components/Treasury/TreasuryRolloverConfirmDialog";
@@ -112,9 +113,10 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 const TAB_PARAM = "tab";
 const TAB_MANAGE = "manage";
 const TAB_ORGANISATIONS = "organisations";
+const TAB_OPPORTUNITIES = "opportunities";
 
 /** The querystring tokens this page recognises; anything else falls back to Overview. */
-const TABS = [TAB_MANAGE, TAB_ORGANISATIONS] as const;
+const TABS = [TAB_MANAGE, TAB_ORGANISATIONS, TAB_OPPORTUNITIES] as const;
 type TreasuryTab = (typeof TABS)[number];
 
 /** ⚠️ TEMPORARY — part of the mock-scenario dev aid; remove with it. */
@@ -290,6 +292,12 @@ const Treasury: NextPageWithLayout<{
                 href: treasuryHref(TAB_ORGANISATIONS, mockScenario),
                 selected: activeTab === TAB_ORGANISATIONS,
               },
+              {
+                key: "treasury_tab_opportunities",
+                label: "Opportunities",
+                href: treasuryHref(TAB_OPPORTUNITIES, mockScenario),
+                selected: activeTab === TAB_OPPORTUNITIES,
+              },
             ]}
           />
         </ListPageHeader>
@@ -377,6 +385,11 @@ const Treasury: NextPageWithLayout<{
                 {/* T2 — the level below Treasury in the hierarchy */}
                 {activeTab === TAB_ORGANISATIONS && (
                   <TreasuryOrganisationsTab />
+                )}
+
+                {/* T3 — the level below Organisation: where the capacity is being spent */}
+                {activeTab === TAB_OPPORTUNITIES && (
+                  <TreasuryOpportunitiesTab />
                 )}
 
                 {activeTab === null && <TreasuryOverview treasury={treasury} />}

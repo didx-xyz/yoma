@@ -71,7 +71,8 @@ export const TreasuryOrganisationsTab: React.FC = () => {
       pageSize: PAGE_SIZE,
       valueContains: search.length > 2 ? search : null,
       // Only active organisations can award anything, so those are the ones worth allocating to.
-      statuses: [OrganizationStatus.Active.toString()],
+      // The enum **name**, not the ordinal — see the note in TreasuryOpportunitiesTab.
+      statuses: [OrganizationStatus[OrganizationStatus.Active]],
       organizations: null,
     }),
     [pageNumber, search],

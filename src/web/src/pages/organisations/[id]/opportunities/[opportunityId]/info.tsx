@@ -21,6 +21,7 @@ import { getOpportunityInfoByIdAdminOrgAdminOrUser } from "~/api/services/opport
 import {
   OPPORTUNITY_QUERY_KEYS,
   useOpportunityInfoQuery,
+  useOrganisationByIdQuery,
 } from "~/hooks/useOpportunityMutations";
 import { AvatarImage } from "~/components/AvatarImage";
 import DetailSection from "~/components/Common/DetailSection";
@@ -28,6 +29,7 @@ import { OpportunityCustomFieldsSection } from "~/components/Opportunity/Opportu
 import MainLayout from "~/components/Layout/Main";
 import OrgAdminBadges from "~/components/Opportunity/Badges/OrgAdminBadges";
 import ZltoRewardBadge from "~/components/Opportunity/Badges/ZltoRewardBadge";
+import OpportunityRewardContext from "~/components/Opportunity/Rewards/OpportunityRewardContext";
 import {
   OpportunityActions,
   OpportunityActionOptions,
@@ -135,6 +137,20 @@ const OpportunityDetails: NextPageWithLayout<{
     enabled: !error,
   });
   const typeConfig = getTypeConfig(opportunity?.type);
+
+  /**
+   * The owning organisation, for the reward context block below (T3).
+   *
+   * ⚠️ A second request on purpose. `OpportunityInfo` — what this page fetches — carries **no**
+   * organisation reward fields (`OpportunityInfo.cs`); only the admin payload
+   * (`GET /opportunity/{id}/admin`) does, and even that one omits the organisation's *lifetime*
+   * cumulatives. `GET /organization/{id}` returns all eight figures, which is what
+   * `OrganizationRewardStats` renders, so the block matches the organisation's own page exactly.
+   * Same pattern the sibling edit page already uses for its balance validation.
+   */
+  const { data: organisation } = useOrganisationByIdQuery(id, {
+    enabled: !error,
+  });
 
   if (error) {
     if (error === 401) return <Unauthenticated />;
@@ -472,6 +488,29 @@ const OpportunityDetails: NextPageWithLayout<{
                 </div>
               </div>
             </div>
+
+            {/* REWARDS (T3) — this opportunity's lifetime figures beside the owning
+                organisation's current-financial-year capacity. The two scopes never mix: the
+                labels carry them. Renders only once the organisation has loaded, since a
+                half-populated capacity block on a financial surface is worse than none. */}
+            {organisation && (
+              <div className="flex flex-col gap-3 rounded-lg bg-white p-6 shadow-lg">
+                <div className="flex flex-col gap-1">
+                  <h6 className="font-bold">Rewards</h6>
+                  <p className="text-gray-dark text-xs">
+                    What this opportunity has awarded all-time, and what its
+                    organisation has left to award this financial year. Pools
+                    are set by a Yoma administrator.
+                  </p>
+                </div>
+
+                <OpportunityRewardContext
+                  own={opportunity}
+                  organisation={organisation}
+                  organisationName={opportunity.organizationName}
+                />
+              </div>
+            )}
           </div>
         )}
       </div>

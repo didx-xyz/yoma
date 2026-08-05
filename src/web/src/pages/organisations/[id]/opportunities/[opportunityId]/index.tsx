@@ -102,6 +102,7 @@ import {
   PAGE_SIZE_MEDIUM,
   REGEX_URL_VALIDATION,
 } from "~/lib/constants";
+import { formatZlto, LABEL_SUFFIX_FY } from "~/lib/format/rewards";
 import { config } from "~/lib/react-query-config";
 import {
   dateInputToUTC,
@@ -645,7 +646,8 @@ const OpportunityAdminDetails: NextPageWithLayout<{
           val.zltoReward > organisation.zltoRewardBalanceCurrentFinancialYear
         ) {
           ctx.addIssue({
-            message: `Reward cannot exceed the available balance of ${organisation?.zltoRewardBalanceCurrentFinancialYear}.`,
+            // canonical vocabulary (T0): "remaining balance", scoped to the financial year
+            message: `The reward can't be more than the ${formatZlto(organisation.zltoRewardBalanceCurrentFinancialYear)} ZLTO remaining ${LABEL_SUFFIX_FY}.`,
             code: z.ZodIssueCode.custom,
             path: ["zltoReward"],
             fatal: true,
@@ -699,7 +701,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
               organisation.zltoRewardBalanceCurrentFinancialYear
           ) {
             ctx.addIssue({
-              message: `Reward pool cannot exceed the available balance of ${organisation?.zltoRewardBalanceCurrentFinancialYear}.`,
+              message: `The reward pool can't be more than the ${formatZlto(organisation.zltoRewardBalanceCurrentFinancialYear)} ZLTO remaining ${LABEL_SUFFIX_FY}.`,
               code: z.ZodIssueCode.custom,
               path: ["zltoRewardPool"],
               fatal: true,
@@ -2571,14 +2573,15 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                           support to set it up for your organisation.
                         </FormMessage>
                       )}
+                    {/* Canonical vocabulary (T0): "Remaining balance (this financial year)",
+                        formatted through the shared formatter so it reads identically to the same
+                        figure on the organisation page and in Treasury. */}
                     {!isJobOpportunity &&
                       organisation?.zltoRewardPoolCurrentFinancialYear && (
                         <div className="badge bg-orange !rounded-full px-4 text-white">
-                          Current FY Available Balance:{" "}
-                          {new Intl.NumberFormat().format(
-                            organisation?.zltoRewardBalanceCurrentFinancialYear ??
-                              0,
-                          )}
+                          {`Remaining balance ${LABEL_SUFFIX_FY}: ${formatZlto(
+                            organisation.zltoRewardBalanceCurrentFinancialYear,
+                          )} ZLTO`}
                         </div>
                       )}
                     {!isJobOpportunity && !formStateStep3.isValid && (

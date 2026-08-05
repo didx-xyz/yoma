@@ -43,6 +43,8 @@ export interface Opportunity {
   organizationZltoRewardBalanceCurrentFinancialYear?: number | null;
   yomaReward: number | null;
   yomaRewardPool: number | null;
+  /** server-derived: pool − cumulative, lifetime (`Opportunity.cs:73`) — was missing here */
+  yomaRewardBalance: number | null;
   yomaRewardCumulative: number | null;
   organizationYomaRewardPoolCurrentFinancialYear?: number | null;
   organizationYomaRewardCumulativeCurrentFinancialYear?: number | null;
