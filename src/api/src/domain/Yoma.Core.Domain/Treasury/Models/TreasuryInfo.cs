@@ -1,5 +1,3 @@
-
-
 using Newtonsoft.Json;
 
 namespace Yoma.Core.Domain.Treasury.Models
@@ -18,6 +16,10 @@ namespace Yoma.Core.Domain.Treasury.Models
 
     public decimal? ZltoRewardCumulativeCurrentFinancialYear { get; set; }
 
+    /// <summary>
+    /// Current financial year reward pool less the current financial year reward cumulative.
+    /// Pending or error wallet awards are already included in the cumulative when scheduled.
+    /// </summary>
     public decimal? ZltoRewardBalanceCurrentFinancialYear { get; set; }
 
     public decimal? PayoutPoolCurrentFinancialYearInUsd { get; set; }
@@ -26,7 +28,17 @@ namespace Yoma.Core.Domain.Treasury.Models
 
     public decimal? PayoutCumulativeCurrentFinancialYearInUsd { get; set; }
 
+    /// <summary>
+    /// Current financial year payout pool less the current financial year payout cumulative.
+    /// Only paid-out amounts are included; pending payouts are excluded until completed.
+    /// </summary>
     public decimal? PayoutBalanceCurrentFinancialYearInUsd { get; set; }
+
+    /// <summary>
+    /// Current payout balance less the total pending payouts. Pending payouts include all non-terminal statuses,
+    /// are not limited to the current financial year and remain deducted until completed or closed unsuccessfully.
+    /// </summary>
+    public decimal? PayoutBalanceAvailableCurrentFinancialYearInUsd { get; set; }
 
     [JsonIgnore]
     /// <summary>

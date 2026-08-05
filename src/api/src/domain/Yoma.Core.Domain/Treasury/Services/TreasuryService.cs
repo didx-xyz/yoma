@@ -58,7 +58,9 @@ namespace Yoma.Core.Domain.Treasury.Services
 
     public TreasuryInfo Get()
     {
-      return Get(null).ToInfo();
+      var treasury = Get(null);
+      var payoutTotalPending = _payoutTransactionService.GetTotalPending();
+      return treasury.ToInfo(payoutTotalPending);
     }
 
     public async Task<TreasuryInfo> Update(TreasuryRequestUpdate request)
@@ -68,6 +70,7 @@ namespace Yoma.Core.Domain.Treasury.Services
       await _treasuryRequestUpdateValidator.ValidateAndThrowAsync(request);
 
       Models.Treasury? result = null;
+      var payoutTotalPending = 0m;
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
         using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
@@ -84,12 +87,14 @@ namespace Yoma.Core.Domain.Treasury.Services
             request.ZltoRewardPoolCurrentFinancialYear.Value < zltoRewardCumulativeCurrentFinancialYear)
           throw new ValidationException($"The ZLTO reward pool for the current financial year cannot be less than the cumulative ZLTO rewards ({zltoRewardCumulativeCurrentFinancialYear:F0}) already awarded for the current financial year");
 
-        // TODO [Payout pool]: Include active payout amounts already reserved against the Treasury when
-        // validating a reduced pool, including when a configuration change causes a financial-year rollover.
+        // Ensure the requested current financial year pool covers the current financial year cumulative and all pending
+        // payouts. Pending payouts are not limited to the current financial year and remain funded through a rollover.
+        payoutTotalPending = _payoutTransactionService.GetTotalPending();
         var payoutCumulativeCurrentFinancialYearInUsd = requiresRollover ? 0m : result.PayoutCumulativeCurrentFinancialYearInUsd ?? 0m;
+        var payoutTotalCommitted = payoutCumulativeCurrentFinancialYearInUsd + payoutTotalPending;
         if (request.PayoutPoolCurrentFinancialYearInUsd.HasValue &&
-            request.PayoutPoolCurrentFinancialYearInUsd.Value < payoutCumulativeCurrentFinancialYearInUsd)
-          throw new ValidationException($"The payout pool for the current financial year cannot be less than the cumulative payout amount ({payoutCumulativeCurrentFinancialYearInUsd:F2} USD) already completed for the current financial year");
+            request.PayoutPoolCurrentFinancialYearInUsd.Value < payoutTotalCommitted)
+          throw new ValidationException($"The payout pool for the current financial year cannot be less than the total payout amount ({payoutTotalCommitted:F2} USD) already paid out or pending");
 
         result.FinancialYearStartMonth = request.FinancialYearStartMonth;
         result.FinancialYearStartDay = request.FinancialYearStartDay;
@@ -108,7 +113,7 @@ namespace Yoma.Core.Domain.Treasury.Services
         scope.Complete();
       });
 
-      return (result ?? throw new DataInconsistencyException("Treasury update did not return a result.")).ToInfo();
+      return (result ?? throw new DataInconsistencyException("Treasury update did not return a result.")).ToInfo(payoutTotalPending);
     }
 
     public async Task PayoutCompleted(Models.Treasury treasury, decimal amount)
@@ -120,6 +125,9 @@ namespace Yoma.Core.Domain.Treasury.Services
 
       if (amount == 0m) return;
 
+      // Add the confirmed paid-out amount to the lifetime and current financial year cumulatives. Pool availability was
+      // checked when the payout was created and is not checked again. A payout created in a previous financial year is
+      // allocated to the current financial year when completed.
       await EnsureCurrentFinancialYear(treasury);
 
       treasury.PayoutCumulativeInUsd = (treasury.PayoutCumulativeInUsd ?? 0m) + amount;
@@ -142,6 +150,8 @@ namespace Yoma.Core.Domain.Treasury.Services
       if (amount % 1 != 0)
         throw new ValidationException("Amount must be a whole number");
 
+      // Add the scheduled reward to the lifetime and current financial year cumulatives. Yoma controls reward processing
+      // and retries, so pending or error wallet awards remain allocated and pool availability is not checked again.
       await EnsureCurrentFinancialYear(treasury);
 
       treasury.ZltoRewardCumulative = (treasury.ZltoRewardCumulative ?? 0m) + amount.Value;
@@ -185,7 +195,7 @@ namespace Yoma.Core.Domain.Treasury.Services
       return rolloverProcessed;
     }
 
-    public Task<ConversionResponse> ConvertZltoToUsd(decimal amount)
+    public async Task<ConversionResponse> ConvertZltoToUsd(decimal amount)
     {
       if (amount <= 0m)
         throw new ValidationException("Amount must be greater than zero");
@@ -193,23 +203,28 @@ namespace Yoma.Core.Domain.Treasury.Services
       if (amount % 1 != 0)
         throw new ValidationException("Amount must be a whole number");
 
-      var treasury = Get();
-      var amountConverted = Math.Round(amount * treasury.ConversionRateZltoUsd, 2, MidpointRounding.AwayFromZero);
-
-      var fundsAvailable = true;
-      if (treasury.PayoutPoolCurrentFinancialYearInUsd.HasValue)
+      ConversionResponse? result = null;
+      await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
-        var amountReserved = _payoutTransactionService.GetAmountActive();
-        var amountCompleted = treasury.PayoutCumulativeCurrentFinancialYearInUsd ?? 0m;
-        var amountAvailable = treasury.PayoutPoolCurrentFinancialYearInUsd.Value - amountCompleted - amountReserved;
-        fundsAvailable = amountConverted <= amountAvailable;
-      }
+        using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
 
-      return Task.FromResult(new ConversionResponse
-      {
-        Amount = amountConverted,
-        TreasuryFundsAvailable = fundsAvailable
+        var treasury = Get(LockMode.Wait);
+        await EnsureCurrentFinancialYear(treasury);
+
+        var amountConverted = Math.Round(amount * treasury.ConversionRateZltoUsd, 2, MidpointRounding.AwayFromZero);
+        var payoutTotalPending = _payoutTransactionService.GetTotalPending();
+        var payoutBalanceAvailable = treasury.CalculatePayoutBalanceAvailableCurrentFinancialYearInUsd(payoutTotalPending);
+
+        result = new ConversionResponse
+        {
+          Amount = amountConverted,
+          TreasuryFundsAvailable = !payoutBalanceAvailable.HasValue || amountConverted <= payoutBalanceAvailable.Value
+        };
+
+        scope.Complete();
       });
+
+      return result ?? throw new DataInconsistencyException("Treasury conversion did not return a result");
     }
     #endregion
 
@@ -222,6 +237,9 @@ namespace Yoma.Core.Domain.Treasury.Services
 
     private async Task ResetCurrentFinancialYear(Models.Treasury treasury, bool actionedBySystem)
     {
+      // Reset the current financial year cumulatives. Pending or error rewards remain allocated to the financial year in
+      // which they were scheduled and continue processing. Pending payouts remain in the transaction ledger and reduce
+      // the payout balance available in the current financial year after rollover.
       treasury.ZltoRewardCumulativeCurrentFinancialYear = 0m;
       treasury.PayoutCumulativeCurrentFinancialYearInUsd = 0m;
 

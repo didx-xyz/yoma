@@ -8,7 +8,11 @@ namespace Yoma.Core.Domain.Payout.Interfaces
 
     PayoutTransaction? GetActiveByUserIdOrNull(Guid userId);
 
-    decimal GetAmountActive();
+    /// <summary>
+    /// Returns the total amount of all pending payouts. Pending includes every non-terminal status and is not
+    /// limited to the current financial year.
+    /// </summary>
+    decimal GetTotalPending();
 
     List<PayoutTransaction> ListByUserId(Guid userId);
 

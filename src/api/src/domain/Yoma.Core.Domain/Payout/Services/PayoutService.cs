@@ -19,6 +19,7 @@ using Yoma.Core.Domain.Reward.Interfaces;
 using Yoma.Core.Domain.Reward.Interfaces.Provider;
 using Yoma.Core.Domain.Reward.Models;
 using Yoma.Core.Domain.Reward.Models.Provider;
+using Yoma.Core.Domain.Treasury.Extensions;
 using Yoma.Core.Domain.Treasury.Interfaces;
 using PayoutProvider = Yoma.Core.Domain.Payout.Provider;
 
@@ -47,7 +48,6 @@ namespace Yoma.Core.Domain.Payout.Services
 
     private const string LockIdentifier_Prefix = "payout";
     private const PayoutProvider Provider_Default = PayoutProvider.YellowCard;
-    private const Currency Currency_Default = Currency.USD;
     #endregion
 
     #region Constructor
@@ -311,8 +311,7 @@ namespace Yoma.Core.Domain.Payout.Services
         var treasury = _treasuryService.Get(LockMode.Wait);
         await _treasuryService.EnsureCurrentFinancialYear(treasury);
 
-        var activeStatusIds = Statuses_Active.Select(o => _payoutTransactionStatusService.GetByName(o.ToString()).Id).ToList();
-        if (_payoutTransactionRepository.Query().Any(o => o.UserId == userId && activeStatusIds.Contains(o.StatusId)))
+        if (_payoutTransactionService.GetActiveByUserIdOrNull(userId) != null)
           throw new ValidationException("A payout is already in progress");
 
         var payoutAmount = convertFromZlto
@@ -321,21 +320,15 @@ namespace Yoma.Core.Domain.Payout.Services
 
         ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(payoutAmount, default, nameof(amount));
 
+        // Check pool availability before creating the payout. The available balance is the current financial year pool
+        // less the current financial year cumulative and all pending payouts. Once created, payout processing is not
+        // blocked if the pool is later depleted. The cumulative increases only when the payout is paid out.
         // A null pool intentionally represents uncapped payout processing. Validation currently requires
         // a configured pool, but the domain remains ready for that policy to be relaxed.
-        var pool = treasury.PayoutPoolCurrentFinancialYearInUsd;
-        if (pool.HasValue)
-        {
-          var amountReserved = _payoutTransactionRepository.Query()
-            .Where(o => activeStatusIds.Contains(o.StatusId) && o.Currency == Currency_Default.ToString())
-            .Sum(o => o.Amount);
-
-          var amountCompleted = treasury.PayoutCumulativeCurrentFinancialYearInUsd ?? 0m;
-          var amountAvailable = pool.Value - amountCompleted - amountReserved;
-
-          if (payoutAmount > amountAvailable)
-            throw new ValidationException("There are insufficient funds available to complete this payout");
-        }
+        var payoutTotalPending = _payoutTransactionService.GetTotalPending();
+        var payoutBalanceAvailable = treasury.CalculatePayoutBalanceAvailableCurrentFinancialYearInUsd(payoutTotalPending);
+        if (payoutBalanceAvailable.HasValue && payoutAmount > payoutBalanceAvailable.Value)
+          throw new ValidationException("There are insufficient funds available to complete this payout");
 
         payout = await _payoutTransactionService.Create(userId, type, provider, payoutAmount, rewardReservationExpiresAt);
 
@@ -476,6 +469,9 @@ namespace Yoma.Core.Domain.Payout.Services
           }
         }
 
+        // Complete the pending payout without checking the pool again. Add the paid amount to the lifetime and current
+        // financial year cumulatives, then mark the payout terminal in the same transaction. Removing it from the pending
+        // total prevents the payout balance available from being reduced twice.
         var treasury = _treasuryService.Get(LockMode.Wait);
         await _treasuryService.PayoutCompleted(treasury, payoutLocked.Amount);
 

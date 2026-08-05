@@ -55,9 +55,9 @@ namespace Yoma.Core.Domain.Payout.Services
       return _payoutTransactionRepository.Query().SingleOrDefault(o => o.UserId == userId && statusIds.Contains(o.StatusId));
     }
 
-    public decimal GetAmountActive()
+    // Pending includes every non-terminal payout status.
+    public decimal GetTotalPending()
     {
-
       var statusIds = Statuses_Active.Select(o => _payoutTransactionStatusService.GetByName(o.ToString()).Id).ToList();
       return _payoutTransactionRepository.Query()
         .Where(o => statusIds.Contains(o.StatusId) && o.Currency == Currency.USD.ToString())

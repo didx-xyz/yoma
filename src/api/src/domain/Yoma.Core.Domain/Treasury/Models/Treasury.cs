@@ -24,6 +24,10 @@ namespace Yoma.Core.Domain.Treasury.Models
 
     public decimal? ZltoRewardCumulativeCurrentFinancialYear { get; set; }
 
+    /// <summary>
+    /// Reward balance equals the current financial year pool less the current financial year cumulative.
+    /// The cumulative increases when a reward is scheduled, so pending or error wallet awards are already included.
+    /// </summary>
     public decimal? ZltoRewardBalanceCurrentFinancialYear =>
       ZltoRewardPoolCurrentFinancialYear.HasValue
         ? ZltoRewardPoolCurrentFinancialYear - (ZltoRewardCumulativeCurrentFinancialYear ?? default)
@@ -35,6 +39,10 @@ namespace Yoma.Core.Domain.Treasury.Models
 
     public decimal? PayoutCumulativeCurrentFinancialYearInUsd { get; set; }
 
+    /// <summary>
+    /// Payout balance equals the current financial year pool less the current financial year cumulative.
+    /// Only paid-out amounts are cumulative; pending payouts are deducted separately from the available balance.
+    /// </summary>
     public decimal? PayoutBalanceCurrentFinancialYearInUsd =>
       PayoutPoolCurrentFinancialYearInUsd.HasValue
         ? PayoutPoolCurrentFinancialYearInUsd - (PayoutCumulativeCurrentFinancialYearInUsd ?? default)
