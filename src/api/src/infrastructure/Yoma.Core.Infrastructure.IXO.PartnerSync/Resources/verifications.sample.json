@@ -5,14 +5,14 @@
   "items": [
     {
       "opportunityRef": "learn-001",
-      "userRef": "demo-yoma-user-1",
+      "userRef": "testuser@gmail.com",
       "status": "in-progress",
       "percentComplete": 40,
       "startDate": "2026-06-01T00:00:00Z"
     },
     {
       "opportunityRef": "learn-002",
-      "userRef": "demo-yoma-user-2",
+      "userRef": "testuser@gmail.com",
       "status": "completed",
       "dateCompleted": "2026-07-01T00:00:00Z",
       "endDate": "2026-07-01T00:00:00Z",
@@ -21,19 +21,6 @@
         "interval": "Week",
         "count": 4
       }
-    },
-    {
-      "opportunityRef": "job-001",
-      "userRef": "demo-yoma-user-3",
-      "status": "placed",
-      "dateCompleted": "2026-06-15T00:00:00Z"
-    },
-    {
-      "opportunityRef": "learn-001",
-      "userRef": "demo-yoma-user-4",
-      "status": "pending",
-      "percentComplete": 0,
-      "startDate": "2026-06-25T00:00:00Z"
     }
   ]
 }
