@@ -36,11 +36,11 @@ namespace Yoma.Core.Domain.Payout.Services.Lookups
 
     public Models.Lookups.PayoutTransactionStatus? GetByNameOrNull(string name)
     {
-      if (string.IsNullOrWhiteSpace(name))
+      var nameNormalized = name?.Trim();
+      if (string.IsNullOrEmpty(nameNormalized))
         throw new ArgumentNullException(nameof(name));
-      name = name.Trim();
 
-      return List().SingleOrDefault(o => string.Equals(o.Name, name, StringComparison.OrdinalIgnoreCase));
+      return List().SingleOrDefault(o => string.Equals(o.Name, nameNormalized, StringComparison.OrdinalIgnoreCase));
     }
 
     public Models.Lookups.PayoutTransactionStatus GetById(Guid id)

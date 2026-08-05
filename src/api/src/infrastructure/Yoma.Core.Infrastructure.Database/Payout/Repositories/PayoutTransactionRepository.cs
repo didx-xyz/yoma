@@ -35,7 +35,6 @@ namespace Yoma.Core.Infrastructure.Database.Payout.Repositories
         Amount = entity.Amount,
         Currency = entity.Currency,
         TransactionId = entity.TransactionId,
-        PaymentUrl = entity.PaymentUrl,
         ErrorReason = entity.ErrorReason,
         ExpiresAt = entity.ExpiresAt,
         RewardReservationExpiresAt = entity.RewardReservationExpiresAt,
@@ -62,7 +61,6 @@ namespace Yoma.Core.Infrastructure.Database.Payout.Repositories
         Amount = item.Amount,
         Currency = item.Currency,
         TransactionId = item.TransactionId,
-        PaymentUrl = item.PaymentUrl,
         ErrorReason = item.ErrorReason,
         ExpiresAt = item.ExpiresAt,
         RewardReservationExpiresAt = item.RewardReservationExpiresAt,
@@ -88,7 +86,6 @@ namespace Yoma.Core.Infrastructure.Database.Payout.Repositories
 
       entity.StatusId = item.StatusId;
       entity.TransactionId = item.TransactionId;
-      entity.PaymentUrl = item.PaymentUrl;
       entity.ErrorReason = item.ErrorReason;
       entity.ExpiresAt = item.ExpiresAt;
       entity.RewardReservationExpiresAt = item.RewardReservationExpiresAt;

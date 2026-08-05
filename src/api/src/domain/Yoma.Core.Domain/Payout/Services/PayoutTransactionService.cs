@@ -111,7 +111,6 @@ namespace Yoma.Core.Domain.Payout.Services
       ArgumentNullException.ThrowIfNull(item, nameof(item));
 
       item.TransactionId = item.TransactionId?.Trim();
-      item.PaymentUrl = item.PaymentUrl?.Trim();
       item.ErrorReason = item.ErrorReason?.Trim();
 
       if (!Enum.IsDefined(item.Status))
@@ -156,7 +155,6 @@ namespace Yoma.Core.Domain.Payout.Services
               throw new ValidationException($"{nameof(PayoutTransaction)} can not be processed (current status '{result.Status}'). Required state '{Statuses_CanProcess.JoinNames()}'");
 
             result.TransactionId = item.TransactionId;
-            result.PaymentUrl = item.PaymentUrl;
             result.ExpiresAt = item.ExpiresAt;
             result.DateLastReconciled = item.DateLastReconciled;
             result.RetryCount = null;
@@ -164,7 +162,7 @@ namespace Yoma.Core.Domain.Payout.Services
             break;
 
           case PayoutTransactionStatus.ReconciliationRequired:
-            // TODO [Payout reconciliation]: Preserve a known provider TransactionId, PaymentUrl and ExpiresAt when
+            // TODO [Payout reconciliation]: Preserve a known provider TransactionId and ExpiresAt when
             // initiation succeeds but persisting Processing fails and the payout falls back to reconciliation.
             if (!Statuses_CanReconcile.Contains(result.Status))
               throw new ValidationException($"{nameof(PayoutTransaction)} can not require reconciliation (current status '{result.Status}'). Required state '{Statuses_CanReconcile.JoinNames()}'");

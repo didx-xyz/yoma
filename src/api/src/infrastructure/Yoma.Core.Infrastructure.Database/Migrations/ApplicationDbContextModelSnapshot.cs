@@ -39,8 +39,8 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
             b.ToTable("UnnestedValueDummy", null, t =>
                       {
-                    t.ExcludeFromMigrations();
-                  });
+                        t.ExcludeFromMigrations();
+                      });
 
             b.ToView("unnested_values", (string)null);
           });
@@ -407,8 +407,8 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
             b.ToTable("CustomFieldValue", "Core", t =>
                       {
-                    t.HasCheckConstraint("CK_CustomFieldValue_Entity", "(\"OpportunityId\" IS NOT NULL AND \"MyOpportunityId\" IS NULL) OR (\"OpportunityId\" IS NULL AND \"MyOpportunityId\" IS NOT NULL)");
-                  });
+                        t.HasCheckConstraint("CK_CustomFieldValue_Entity", "(\"OpportunityId\" IS NOT NULL AND \"MyOpportunityId\" IS NULL) OR (\"OpportunityId\" IS NULL AND \"MyOpportunityId\" IS NOT NULL)");
+                      });
           });
 
       modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Core.Entities.DownloadSchedule", b =>
@@ -2160,10 +2160,6 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
             b.Property<DateTimeOffset?>("ExpiresAt")
                       .HasColumnType("timestamp with time zone");
-
-            b.Property<string>("PaymentUrl")
-                      .HasColumnType("varchar(2048)");
-
             b.Property<string>("Provider")
                       .IsRequired()
                       .HasColumnType("varchar(25)");

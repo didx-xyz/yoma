@@ -62,7 +62,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Yoma.Core.Infrastructure.Al
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Yoma.Core.Infrastructure.Jobberman", "src\infrastructure\Yoma.Core.Infrastructure.Jobberman\Yoma.Core.Infrastructure.Jobberman.csproj", "{BE4B5017-6688-C4F4-64A5-9CA5E3189B43}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Yoma.Core.Infrastructure.YellowCard", "src\infrastructure\Yoma.Core.Infrastructure.YellowCard\Yoma.Core.Infrastructure.YellowCard.csproj", "{AC1C46F3-1E52-D66D-9089-7F536A5424D0}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Yoma.Core.Infrastructure.IXO.YellowCard", "src\infrastructure\Yoma.Core.Infrastructure.IXO.YellowCard\Yoma.Core.Infrastructure.IXO.YellowCard.csproj", "{AC1C46F3-1E52-D66D-9089-7F536A5424D0}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

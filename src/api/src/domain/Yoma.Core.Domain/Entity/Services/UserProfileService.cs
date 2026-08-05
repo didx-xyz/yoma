@@ -17,7 +17,7 @@ using Yoma.Core.Domain.Lookups.Interfaces;
 using Yoma.Core.Domain.MyOpportunity;
 using Yoma.Core.Domain.MyOpportunity.Interfaces;
 using Yoma.Core.Domain.MyOpportunity.Models;
-using Yoma.Core.Domain.Payout.Extensions;
+using Yoma.Core.Domain.Payout;
 using Yoma.Core.Domain.Payout.Interfaces;
 using Yoma.Core.Domain.Payout.Models;
 using Yoma.Core.Domain.Referral;
@@ -105,11 +105,18 @@ namespace Yoma.Core.Domain.Entity.Services
       return ToProfile(user).Result;
     }
 
-    public async Task<PayoutInfo> PayoutRewards(decimal amount)
+    public async Task<PayoutSession> PayoutRewards(decimal amount)
     {
       var username = HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false);
       var user = _userService.GetByUsername(username, false, false);
       return await _payoutService.PayoutRewards(user.Id, amount);
+    }
+
+    public async Task<PayoutSession> GetPayoutSession()
+    {
+      var username = HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false);
+      var user = _userService.GetByUsername(username, false, false);
+      return await _payoutService.GetSession(user.Id);
     }
 
     public List<UserSkillInfo>? GetSkills()
@@ -335,11 +342,11 @@ namespace Yoma.Core.Domain.Entity.Services
         ZltoOffline = balance.ZltoOffline
       };
 
-      var payoutPending = _payoutTransactionService.GetActiveByUserIdOrNull(result.Id);
+      var payoutActive = _payoutTransactionService.GetActiveByUserIdOrNull(result.Id);
       result.Payout = new UserProfilePayout
       {
-        Pending = payoutPending != null,
-        Info = payoutPending?.ToPayoutInfo()
+        Amount = payoutActive?.Amount,
+        Currency = payoutActive == null ? null : Enum.Parse<Currency>(payoutActive.Currency, true)
       };
 
       result.AdminsOf = isOnBehalfOfUser ? [] : [.. _organizationService.ListAdminsOf(true).Cast<OrganizationInfo>()];

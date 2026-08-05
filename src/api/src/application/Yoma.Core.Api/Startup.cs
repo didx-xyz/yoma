@@ -35,7 +35,7 @@ using Yoma.Core.Infrastructure.SendGrid;
 using Yoma.Core.Infrastructure.Shared;
 using Yoma.Core.Infrastructure.Substack;
 using Yoma.Core.Infrastructure.Twilio;
-using Yoma.Core.Infrastructure.YellowCard;
+using Yoma.Core.Infrastructure.IXO.YellowCard;
 using Yoma.Core.Infrastructure.Zlto;
 
 namespace Yoma.Core.Api

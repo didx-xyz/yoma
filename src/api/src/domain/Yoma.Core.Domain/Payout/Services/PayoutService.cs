@@ -95,25 +95,57 @@ namespace Yoma.Core.Domain.Payout.Services
       var user = GetUser(userId);
       var payout = await CreatePayout(userId, PayoutType.Payout, Provider_Default, amount, null, false);
 
-      return await _distributedLockService.RunWithLockAsync(GetLockKey(payout.Id), _payoutLockDuration, () => InitiatePayout(payout, user));
+      var result = await _distributedLockService.RunWithLockAsync(GetLockKey(payout.Id), _payoutLockDuration, () => InitiatePayout(payout, user));
+      return result.Payout;
     }
 
-    public async Task<PayoutInfo> PayoutRewards(Guid userId, decimal amount)
+    public async Task<PayoutSession> PayoutRewards(Guid userId, decimal amount)
     {
       if (userId == Guid.Empty)
         throw new ArgumentNullException(nameof(userId));
 
       var rewardReservationExpiresAt = DateTimeOffset.UtcNow.Add(_payoutRewardReservationExpiration);
+      return await PayoutRewards(userId, amount, rewardReservationExpiresAt);
+    }
 
-      var payout = await PayoutRewards(userId, amount, rewardReservationExpiresAt);
-      return payout.ToPayoutInfo();
+    public async Task<PayoutSession> GetSession(Guid userId)
+    {
+      if (userId == Guid.Empty)
+        throw new ArgumentNullException(nameof(userId));
+
+      var payout = _payoutTransactionService.GetActiveByUserIdOrNull(userId)
+        ?? throw new EntityNotFoundException("No active payout exists for the current user");
+
+      return await _distributedLockService.RunWithLockAsync(GetLockKey(payout.Id), _payoutLockDuration, async () =>
+      {
+        payout = GetPayout(payout.Id);
+        EnsureActive(payout);
+
+        if (string.IsNullOrEmpty(payout.TransactionId))
+          throw new InvalidOperationException("The payout provider session is not yet available");
+
+        var response = await _payoutProviderClient.GetSession(new PayoutSessionRequest
+        {
+          Id = payout.Id,
+          TransactionId = payout.TransactionId
+        });
+
+        var session = response.ToPayoutSession(payout);
+        payout.ExpiresAt = session.ExpiresAt;
+        await _payoutTransactionService.UpdateTransaction(payout);
+
+        return session;
+      });
     }
 
     public async Task ProcessStatus(PayoutStatusResponse response)
     {
       ArgumentNullException.ThrowIfNull(response, nameof(response));
-      ArgumentException.ThrowIfNullOrWhiteSpace(response.TransactionId, nameof(response));
-      response.TransactionId = response.TransactionId.Trim();
+
+      var transactionId = response.TransactionId?.Trim();
+      if (string.IsNullOrEmpty(transactionId))
+        throw new ArgumentNullException(nameof(response), "Provider transaction id is empty");
+      response.TransactionId = transactionId;
 
 #pragma warning disable CA1862 // The StringComparison overload cannot be translated by Entity Framework
       var payout = _payoutTransactionRepository.Query().SingleOrDefault(o =>
@@ -146,7 +178,7 @@ namespace Yoma.Core.Domain.Payout.Services
     #endregion
 
     #region Private Members
-    private async Task<PayoutTransaction> PayoutRewards(Guid userId, decimal amount, DateTimeOffset rewardReservationExpiresAt)
+    private async Task<PayoutSession> PayoutRewards(Guid userId, decimal amount, DateTimeOffset rewardReservationExpiresAt)
     {
       // TODO [Payout expiration]: Once the IXO / Yellow Card contract is confirmed, derive or validate a
       // reward reservation window that outlives the provider payout window plus a reconciliation buffer.
@@ -162,7 +194,7 @@ namespace Yoma.Core.Domain.Payout.Services
       if (walletStatus != Reward.WalletCreationStatus.Created)
         throw new ValidationException("The reward wallet is not ready for payout");
 
-      if (string.IsNullOrWhiteSpace(walletBalance.WalletId))
+      if (string.IsNullOrEmpty(walletBalance.WalletId))
         throw new InvalidOperationException($"Wallet id expected with status '{walletStatus}'");
 
       if (walletBalance.Available < amount)
@@ -203,7 +235,8 @@ namespace Yoma.Core.Domain.Payout.Services
           throw;
         }
 
-        return await InitiatePayout(payout, user);
+        var result = await InitiatePayout(payout, user);
+        return result.Session;
       });
     }
 
@@ -312,7 +345,7 @@ namespace Yoma.Core.Domain.Payout.Services
       return payout ?? throw new DataInconsistencyException("Payout creation did not return a result");
     }
 
-    private async Task<PayoutTransaction> InitiatePayout(PayoutTransaction payout, User user)
+    private async Task<(PayoutTransaction Payout, PayoutSession Session)> InitiatePayout(PayoutTransaction payout, User user)
     {
       try
       {
@@ -326,19 +359,21 @@ namespace Yoma.Core.Domain.Payout.Services
           AmountInUSD = payout.Amount
         });
 
-        if (string.IsNullOrWhiteSpace(response.TransactionId))
+        var transactionId = response.TransactionId?.Trim();
+        if (string.IsNullOrEmpty(transactionId))
           throw new InvalidOperationException("Provider transaction id expected after initiating payout");
 
-        payout.TransactionId = response.TransactionId.Trim();
-        payout.PaymentUrl = response.PaymentUrl?.Trim();
+        var session = response.ToPayoutSession(payout);
+        payout.TransactionId = transactionId;
         // Provider expiry is informational. Only a provider-confirmed terminal status may close the
         // payout or release its reward reservation.
-        payout.ExpiresAt = response.ExpiresAt;
+        payout.ExpiresAt = session.ExpiresAt;
         payout.DateLastReconciled = DateTimeOffset.UtcNow;
         payout.RetryCount = null;
         payout.Status = PayoutTransactionStatus.Processing;
 
-        return await _payoutTransactionService.UpdateTransaction(payout);
+        payout = await _payoutTransactionService.UpdateTransaction(payout);
+        return (payout, session);
       }
       catch (Exception ex)
       {
@@ -349,10 +384,15 @@ namespace Yoma.Core.Domain.Payout.Services
 
     private async Task ProcessStatus(PayoutTransaction payout, PayoutStatusResponse response)
     {
+      var transactionId = response.TransactionId?.Trim();
+      if (string.IsNullOrEmpty(transactionId))
+        throw new ArgumentNullException(nameof(response), "Provider transaction id is empty");
+      response.TransactionId = transactionId;
+
       if (!string.Equals(payout.Provider, response.Provider.ToString(), StringComparison.OrdinalIgnoreCase))
         throw new DataInconsistencyException($"Payout provider mismatch detected for payout transaction with id '{payout.Id}'");
 
-      if (!string.IsNullOrWhiteSpace(payout.TransactionId) &&
+      if (!string.IsNullOrEmpty(payout.TransactionId) &&
           !string.Equals(payout.TransactionId, response.TransactionId, StringComparison.Ordinal))
         throw new DataInconsistencyException($"Provider transaction id mismatch detected for payout transaction with id '{payout.Id}'");
 
@@ -361,7 +401,7 @@ namespace Yoma.Core.Domain.Payout.Services
       switch (response.Status)
       {
         case PayoutTransactionStatus.Processing:
-          payout.TransactionId = response.TransactionId.Trim();
+          payout.TransactionId = response.TransactionId;
           payout.DateLastReconciled = DateTimeOffset.UtcNow;
           payout.RetryCount = null;
           payout.ErrorReason = null;
@@ -516,7 +556,6 @@ namespace Yoma.Core.Domain.Payout.Services
       {
         payout.Status = PayoutTransactionStatus.Failed;
         payout.ErrorReason = reason;
-        payout.DateLastReconciled = DateTimeOffset.UtcNow;
         await _payoutTransactionService.UpdateTransaction(payout);
       }
       catch (Exception ex)

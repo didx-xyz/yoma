@@ -8,7 +8,9 @@ namespace Yoma.Core.Domain.Entity.Interfaces
   {
     UserProfile Get();
 
-    Task<PayoutInfo> PayoutRewards(decimal amount);
+    Task<PayoutSession> PayoutRewards(decimal amount);
+
+    Task<PayoutSession> GetPayoutSession();
 
     List<UserSkillInfo>? GetSkills();
 

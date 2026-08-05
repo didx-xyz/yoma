@@ -1,7 +1,7 @@
 using Yoma.Core.Domain.Payout.Models.Provider;
-using Yoma.Core.Infrastructure.YellowCard.Models;
+using Yoma.Core.Infrastructure.IXO.YellowCard.Models;
 
-namespace Yoma.Core.Infrastructure.YellowCard.Interfaces
+namespace Yoma.Core.Infrastructure.IXO.YellowCard.Interfaces
 {
   public interface IYellowCardWebhookParser
   {

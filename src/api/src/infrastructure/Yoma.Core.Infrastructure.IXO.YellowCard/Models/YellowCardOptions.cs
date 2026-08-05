@@ -1,4 +1,4 @@
-namespace Yoma.Core.Infrastructure.YellowCard.Models
+namespace Yoma.Core.Infrastructure.IXO.YellowCard.Models
 {
   public sealed class YellowCardOptions
   {

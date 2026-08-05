@@ -6,6 +6,8 @@ namespace Yoma.Core.Domain.Payout.Interfaces.Provider
   {
     Task<PayoutResponse> Initiate(PayoutRequest request);
 
+    Task<PayoutSessionResponse> GetSession(PayoutSessionRequest request);
+
     Task<PayoutStatusResponse> GetStatus(PayoutStatusRequest request);
   }
 }

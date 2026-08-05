@@ -1,12 +1,12 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Yoma.Core.Domain.Payout.Interfaces.Provider;
-using Yoma.Core.Infrastructure.YellowCard.Client;
-using Yoma.Core.Infrastructure.YellowCard.Interfaces;
-using Yoma.Core.Infrastructure.YellowCard.Models;
-using Yoma.Core.Infrastructure.YellowCard.Services;
+using Yoma.Core.Infrastructure.IXO.YellowCard.Client;
+using Yoma.Core.Infrastructure.IXO.YellowCard.Interfaces;
+using Yoma.Core.Infrastructure.IXO.YellowCard.Models;
+using Yoma.Core.Infrastructure.IXO.YellowCard.Services;
 
-namespace Yoma.Core.Infrastructure.YellowCard
+namespace Yoma.Core.Infrastructure.IXO.YellowCard
 {
   public static class Startup
   {

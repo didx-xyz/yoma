@@ -77,7 +77,6 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             Amount = table.Column<decimal>(type: "numeric(12,2)", nullable: false),
             Currency = table.Column<string>(type: "varchar(10)", nullable: false),
             TransactionId = table.Column<string>(type: "varchar(50)", nullable: true),
-            PaymentUrl = table.Column<string>(type: "varchar(2048)", nullable: true),
             ErrorReason = table.Column<string>(type: "text", nullable: true),
             ExpiresAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
             RewardReservationExpiresAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),

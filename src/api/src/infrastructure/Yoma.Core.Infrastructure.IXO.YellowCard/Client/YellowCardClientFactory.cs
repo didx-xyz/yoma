@@ -1,8 +1,8 @@
 using Microsoft.Extensions.Options;
 using Yoma.Core.Domain.Payout.Interfaces.Provider;
-using Yoma.Core.Infrastructure.YellowCard.Models;
+using Yoma.Core.Infrastructure.IXO.YellowCard.Models;
 
-namespace Yoma.Core.Infrastructure.YellowCard.Client
+namespace Yoma.Core.Infrastructure.IXO.YellowCard.Client
 {
   public sealed class YellowCardClientFactory : IPayoutProviderClientFactory
   {

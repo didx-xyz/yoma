@@ -16,8 +16,8 @@ using Yoma.Core.Domain.Payout.Interfaces;
 using Yoma.Core.Domain.Reward.Interfaces;
 using Yoma.Core.Infrastructure.Keycloak;
 using Yoma.Core.Infrastructure.Keycloak.Models;
-using Yoma.Core.Infrastructure.YellowCard.Interfaces;
-using Yoma.Core.Infrastructure.YellowCard.Models;
+using Yoma.Core.Infrastructure.IXO.YellowCard.Interfaces;
+using Yoma.Core.Infrastructure.IXO.YellowCard.Models;
 
 namespace Yoma.Core.Api.Controllers
 {

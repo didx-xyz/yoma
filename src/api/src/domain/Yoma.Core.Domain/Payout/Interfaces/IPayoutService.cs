@@ -7,7 +7,9 @@ namespace Yoma.Core.Domain.Payout.Interfaces
   {
     Task<PayoutTransaction> Payout(Guid userId, decimal amount);
 
-    Task<PayoutInfo> PayoutRewards(Guid userId, decimal amount);
+    Task<PayoutSession> PayoutRewards(Guid userId, decimal amount);
+
+    Task<PayoutSession> GetSession(Guid userId);
 
     Task ProcessStatus(PayoutStatusResponse response);
 

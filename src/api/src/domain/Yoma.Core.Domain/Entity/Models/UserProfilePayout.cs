@@ -1,11 +1,13 @@
-using Yoma.Core.Domain.Payout.Models;
+using Yoma.Core.Domain.Payout;
 
 namespace Yoma.Core.Domain.Entity.Models
 {
   public sealed class UserProfilePayout
   {
-    public bool Pending { get; set; }
+    public bool Active => Amount.HasValue;
 
-    public PayoutInfo? Info { get; set; }
+    public decimal? Amount { get; set; }
+
+    public Currency? Currency { get; set; }
   }
 }

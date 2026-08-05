@@ -23,11 +23,6 @@ namespace Yoma.Core.Domain.Payout.Models
     /// </summary>
     public string? TransactionId { get; set; }
 
-    /// <summary>
-    /// URL of the payout provider's hosted payout experience, when applicable.
-    /// </summary>
-    public string? PaymentUrl { get; set; }
-
     public string? ErrorReason { get; set; }
 
     /// <summary>

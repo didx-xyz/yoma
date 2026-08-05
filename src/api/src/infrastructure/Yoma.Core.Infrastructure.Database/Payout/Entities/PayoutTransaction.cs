@@ -39,9 +39,6 @@ namespace Yoma.Core.Infrastructure.Database.Payout.Entities
     [Column(TypeName = "varchar(50)")]
     public string? TransactionId { get; set; }
 
-    [Column(TypeName = "varchar(2048)")]
-    public string? PaymentUrl { get; set; }
-
     [Column(TypeName = "text")]
     public string? ErrorReason { get; set; }
 
