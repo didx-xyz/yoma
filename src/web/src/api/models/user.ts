@@ -1,4 +1,5 @@
 import type { SettingType } from "./common";
+import type { PayoutInfo } from "./payout";
 
 export interface User {
   id: string | null;
@@ -62,6 +63,7 @@ export interface UserProfile {
   dateYoIDOnboarded: string | null;
   adminsOf: OrganizationInfo[];
   zlto: UserProfileZlto;
+  payout: UserProfilePayout;
   referral: UserProfileReferral | null;
   opportunityCountSaved: number;
   opportunityCountPending: number;
@@ -97,10 +99,38 @@ export enum ReferralLinkUsageStatus {
 
 export interface UserProfileZlto {
   walletCreationStatus: WalletCreationStatus;
+  /**
+   * What the youth can spend right now. The reward provider removes reserved payout amounts from
+   * this figure the moment a payout is reserved, so it drops as soon as a payout is in flight.
+   */
   available: number;
-  pending: number;
+  /**
+   * Rewards earned but not yet pushed to the reward provider — awaiting the background service.
+   * Counts opportunity and referral rewards only; payout-sourced transactions are excluded
+   * (`RewardService.QueryPendingTransactionSchedule`).
+   *
+   * ⚠️ Was `pending` until the payout refactor (API commit e5209d6c renamed
+   * `UserProfileZlto.Pending`). Same value, new name.
+   */
+  pendingAwards: number;
+  /**
+   * ZLTO the reward provider has reserved for an in-flight payout. Already deducted from
+   * `available`, and **not** deducted again from `total` — so a youth mid-payout can show
+   * `available: 0`, `total: 0` and a non-zero figure here. Treat it as real, committed ZLTO.
+   */
+  pendingPayout: number;
+  /** `available + pendingAwards`, server-derived. Excludes `pendingPayout` — see above. */
   total: number;
+  /** true when the reward provider could not be reached, so `available` and `total` are unreliable */
   zltoOffline: boolean | null;
+}
+
+/** Whether the youth has a payout in flight, and what it is. */
+export interface UserProfilePayout {
+  /** true while a payout is active (not yet completed, failed, cancelled or expired) */
+  pending: boolean;
+  /** the active payout; null when `pending` is false */
+  info: PayoutInfo | null;
 }
 
 export interface SettingsInfo {

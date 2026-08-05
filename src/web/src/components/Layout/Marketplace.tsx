@@ -28,12 +28,15 @@ const MarketplaceLayout: TabProps = ({ children }) => {
 
   useEffect(() => {
     if (userProfile?.zlto) {
+      // `pendingAwards` is the field formerly called `pending` (API commit e5209d6c). ZLTO reserved
+      // for an in-flight payout is `pendingPayout` and is not shown here — the marketplace header is
+      // about what can be spent. See `WalletCard` on YoID for the full breakdown.
       if (userProfile.zlto.zltoOffline) {
-        setProcessing(userProfile.zlto.pending.toLocaleString());
+        setProcessing(userProfile.zlto.pendingAwards.toLocaleString());
         setAvailable("Unable to retrieve value");
         setTotal(userProfile.zlto.total.toLocaleString());
       } else {
-        setProcessing(userProfile.zlto.pending.toLocaleString());
+        setProcessing(userProfile.zlto.pendingAwards.toLocaleString());
         setAvailable(userProfile.zlto.available.toLocaleString());
         setTotal(userProfile.zlto.total.toLocaleString());
       }
