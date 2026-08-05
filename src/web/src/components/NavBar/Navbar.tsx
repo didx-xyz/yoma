@@ -583,6 +583,7 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
                       <SignInButton
                         className="!btn-sm"
                         tabIndex={isDrawerOpen ? 0 : -1}
+                        showLabel={true}
                       />
                     )}
 
