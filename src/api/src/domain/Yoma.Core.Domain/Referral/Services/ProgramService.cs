@@ -1312,7 +1312,7 @@ namespace Yoma.Core.Domain.Referral.Services
 
       if (!includeRewardEstimate) return;
 
-      var treasuryInfo = _treasuryService.Get();
+      var treasuryInfo = _treasuryService.GetInfo();
       program.CalculateEstimatedReward(treasuryInfo.ZltoRewardBalanceCurrentFinancialYear);
     }
 

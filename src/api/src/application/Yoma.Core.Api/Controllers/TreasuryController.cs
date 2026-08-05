@@ -58,7 +58,7 @@ namespace Yoma.Core.Api.Controllers
     {
       if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(Get));
 
-      var result = _treasuryService.Get();
+      var result = _treasuryService.GetInfo();
 
       if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(Get));
 

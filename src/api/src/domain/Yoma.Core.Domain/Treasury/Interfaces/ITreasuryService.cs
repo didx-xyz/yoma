@@ -5,7 +5,7 @@ namespace Yoma.Core.Domain.Treasury.Interfaces
 {
   public interface ITreasuryService
   {
-    TreasuryInfo Get();
+    TreasuryInfo GetInfo();
 
     Models.Treasury Get(LockMode? lockMode = null);
 

@@ -6,7 +6,6 @@ using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Entity.Interfaces;
-using Yoma.Core.Domain.Payout;
 using Yoma.Core.Domain.Payout.Interfaces;
 using Yoma.Core.Domain.Treasury.Extensions;
 using Yoma.Core.Domain.Treasury.Helpers;
@@ -56,9 +55,9 @@ namespace Yoma.Core.Domain.Treasury.Services
       return entity ?? throw new DataInconsistencyException($"Expected exactly one '{nameof(Models.Treasury)}' row but none was found.");
     }
 
-    public TreasuryInfo Get()
+    public TreasuryInfo GetInfo()
     {
-      var treasury = Get(null);
+      var treasury = Get();
       var payoutTotalPending = _payoutTransactionService.GetTotalPending();
       return treasury.ToInfo(payoutTotalPending);
     }
