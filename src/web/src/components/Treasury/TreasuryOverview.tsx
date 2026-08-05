@@ -166,9 +166,7 @@ export const TreasuryOverview: React.FC<{ treasury: TreasuryInfo }> = ({
             <RewardStat
               label="Remaining balance"
               scope="financialYear"
-              value={formatUsd(
-                treasury.payoutBalanceCurrentFinancialYearInUsd,
-              )}
+              value={formatUsd(treasury.payoutBalanceCurrentFinancialYearInUsd)}
               tooltip={BALANCE_TOOLTIP}
               tone={balanceStatTone(payoutTone)}
             />
