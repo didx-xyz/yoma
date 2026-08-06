@@ -41,14 +41,6 @@ export interface Opportunity {
   organizationZltoRewardPoolCurrentFinancialYear?: number | null;
   organizationZltoRewardCumulativeCurrentFinancialYear?: number | null;
   organizationZltoRewardBalanceCurrentFinancialYear?: number | null;
-  yomaReward: number | null;
-  yomaRewardPool: number | null;
-  /** server-derived: pool − cumulative, lifetime (`Opportunity.cs:73`) — was missing here */
-  yomaRewardBalance: number | null;
-  yomaRewardCumulative: number | null;
-  organizationYomaRewardPoolCurrentFinancialYear?: number | null;
-  organizationYomaRewardCumulativeCurrentFinancialYear?: number | null;
-  organizationYomaRewardBalanceCurrentFinancialYear?: number | null;
   verificationEnabled: boolean;
   verificationMethod: VerificationMethod | null;
   difficultyId: string | null;
@@ -103,9 +95,6 @@ export interface OpportunityInfo {
   zltoReward: number | null;
   zltoRewardEstimate: number | null;
   zltoRewardCumulative: number | null;
-  yomaReward: number | null;
-  yomaRewardEstimate: number | null;
-  yomaRewardCumulative: number | null;
   verificationEnabled: boolean;
   verificationMethod: VerificationMethod | null | string; // NB: string
   difficulty: string | null;
@@ -267,9 +256,7 @@ export interface OpportunityRequestBase {
   instructions: string | null;
   uRL: string | null;
   zltoReward: number | null;
-  yomaReward: number | null;
   zltoRewardPool: number | null;
-  yomaRewardPool: number | null;
   verificationEnabled: boolean | null;
   verificationMethod: VerificationMethod | null | string;
   difficultyId: string | null;

@@ -9,8 +9,10 @@
  *
  * Rounding rules follow the API (Treasury/Organization validators):
  *   ZLTO  — whole numbers, thousands separated
- *   Yoma  — 2 decimals
  *   USD   — 2 decimals, "$" prefixed
+ *
+ * ZLTO is the only reward asset; the Yoma reward capability (and its 2-decimal `formatYoma`) was
+ * removed server-side, API `f051dfd8`.
  */
 
 /** Shown for a value the API does not have (null/undefined) — never a blank cell, never "0". */
@@ -59,11 +61,6 @@ const ZLTO_FORMAT = new Intl.NumberFormat("en-US", {
   maximumFractionDigits: 0,
 });
 
-const YOMA_FORMAT = new Intl.NumberFormat("en-US", {
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-});
-
 const RATE_FORMAT = new Intl.NumberFormat("en-US", {
   minimumFractionDigits: 0,
   maximumFractionDigits: 4,
@@ -82,11 +79,6 @@ const isMissing = (value: Amount): value is null | undefined =>
 /** ZLTO: whole number, thousands separated (e.g. `1,000,000`). */
 export function formatZlto(value: Amount, empty: string = EMPTY_VALUE): string {
   return isMissing(value) ? empty : ZLTO_FORMAT.format(value);
-}
-
-/** Yoma rewards: 2 decimals (e.g. `1,000.50`). */
-export function formatYoma(value: Amount, empty: string = EMPTY_VALUE): string {
-  return isMissing(value) ? empty : YOMA_FORMAT.format(value);
 }
 
 /** USD: 2 decimals, "$" prefixed (e.g. `$1,000.50`). The unit word belongs in the heading. */

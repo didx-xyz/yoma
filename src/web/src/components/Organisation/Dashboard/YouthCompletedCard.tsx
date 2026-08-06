@@ -35,10 +35,6 @@ export const YouthCompletedCard: React.FC<{
         <ZltoRewardBadge amount={opportunity.zltoRewardTotal} />
       </div>
       <div className="flex items-center justify-between px-2">
-        <div className="tracking-wider">Yoma Reward Total:</div>
-        <div className="badge">{opportunity.yomaRewardTotal}</div>
-      </div>
-      <div className="flex items-center justify-between px-2">
         <div className="tracking-wider">Opportunity Count:</div>
         <button
           type="button"

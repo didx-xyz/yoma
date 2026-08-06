@@ -195,8 +195,6 @@ const OrganisationUpdate: NextPageWithLayout<{
       ssoClientIdOutbound: organisation?.ssoClientIdOutbound ?? "",
       zltoRewardPoolCurrentFinancialYear:
         organisation?.zltoRewardPoolCurrentFinancialYear ?? null,
-      yomaRewardPoolCurrentFinancialYear:
-        organisation?.yomaRewardPoolCurrentFinancialYear ?? null,
       fileVersion: 0,
     });
 
@@ -281,7 +279,6 @@ const OrganisationUpdate: NextPageWithLayout<{
           ssoClientIdInbound,
           ssoClientIdOutbound,
           zltoRewardPoolCurrentFinancialYear,
-          yomaRewardPoolCurrentFinancialYear,
         } = model;
 
         const modelWithoutLogo = {
@@ -313,7 +310,6 @@ const OrganisationUpdate: NextPageWithLayout<{
           ssoClientIdInbound,
           ssoClientIdOutbound,
           zltoRewardPoolCurrentFinancialYear,
-          yomaRewardPoolCurrentFinancialYear,
           logo: null, // clear logo without changing model reference
         };
 

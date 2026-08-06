@@ -61,12 +61,10 @@ export const organizationRequestFromOrganization = (
   ssoClientIdOutbound: organization.ssoClientIdOutbound ?? null,
   zltoRewardPoolCurrentFinancialYear:
     organization.zltoRewardPoolCurrentFinancialYear,
-  yomaRewardPoolCurrentFinancialYear:
-    organization.yomaRewardPoolCurrentFinancialYear,
   ...overrides,
 });
 
-/** The same payload with only the reward pools changed. */
+/** The same payload with only the reward pool changed. */
 export const organizationRewardPoolsRequest = (
   organization: Organization,
   pools: OrganizationRewardPools,

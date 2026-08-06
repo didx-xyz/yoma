@@ -31,7 +31,6 @@ export interface OrganizationRequestBase {
   ssoClientIdInbound: string | null;
   ssoClientIdOutbound: string | null;
   zltoRewardPoolCurrentFinancialYear: number | null;
-  yomaRewardPoolCurrentFinancialYear: number | null;
 }
 
 export interface OrganizationProviderType {
@@ -71,10 +70,6 @@ export interface Organization {
   zltoRewardCumulative: number | null;
   zltoRewardCumulativeCurrentFinancialYear: number | null;
   zltoRewardBalanceCurrentFinancialYear: number | null;
-  yomaRewardPoolCurrentFinancialYear: number | null;
-  yomaRewardCumulative: number | null;
-  yomaRewardCumulativeCurrentFinancialYear: number | null;
-  yomaRewardBalanceCurrentFinancialYear: number | null;
   dateCreated: string;
   createdByUserId: string;
   dateModified: string;
@@ -128,23 +123,22 @@ export interface OrganizationInfo {
 }
 
 /**
- * The eight reward figures an organisation carries, on both `Organization` and
+ * The four ZLTO reward figures an organisation carries, on both `Organization` and
  * `OrganizationInfoAdmin`. Declared on its own so a component can accept either payload without
  * caring which one it got.
  *
+ * ZLTO is the only reward asset — the Yoma reward capability was removed server-side
+ * (API `f051dfd8`). Do not reintroduce a second asset here without an API contract for it.
+ *
  * Pool / cumulative / balance suffixed `CurrentFinancialYear` reset when the financial year rolls
- * over; `…Cumulative` (no suffix) is the lifetime total and never resets. Balances are derived by
- * the server (`Organization.cs:83,91`) and are `null` when no pool is set — never computed here.
+ * over; `…Cumulative` (no suffix) is the lifetime total and never resets. The balance is derived by
+ * the server (`Organization.cs:83`) and is `null` when no pool is set — never computed here.
  */
 export interface OrganizationRewardFigures {
   zltoRewardPoolCurrentFinancialYear: number | null;
   zltoRewardCumulativeCurrentFinancialYear: number | null;
   zltoRewardCumulative: number | null;
   zltoRewardBalanceCurrentFinancialYear: number | null;
-  yomaRewardPoolCurrentFinancialYear: number | null;
-  yomaRewardCumulativeCurrentFinancialYear: number | null;
-  yomaRewardCumulative: number | null;
-  yomaRewardBalanceCurrentFinancialYear: number | null;
 }
 
 /**
@@ -156,24 +150,20 @@ export interface OrganizationRewardFigures {
 export interface OrganizationInfoAdmin
   extends OrganizationInfo, OrganizationRewardFigures {}
 
-/** The two settable pools — everything else about rewards is derived and read-only. */
+/** The settable pool — everything else about rewards is derived and read-only. */
 export interface OrganizationRewardPools {
   zltoRewardPoolCurrentFinancialYear: number | null;
-  yomaRewardPoolCurrentFinancialYear: number | null;
 }
 
 export type OrganizationRewardPoolField = keyof OrganizationRewardPools;
 
 /**
- * Validation limits, mirrored from `OrganizationRequestValidatorBase.cs:72-79`.
+ * Validation limits, mirrored from `OrganizationRequestValidatorBase.cs:72-76`.
  *
- * NB: the whole-number rule applies to **ZLTO only** — the Yoma pool allows decimals. And the cap is
- * 10 million, not the Treasury's 100 million; never copy a limit across surfaces.
+ * NB: the cap is 10 million, not the Treasury's 100 million; never copy a limit across surfaces.
  */
 export const ORGANIZATION_REWARD_LIMITS = {
   poolMax: 10_000_000,
-  /** Yoma rewards are 2dp, matching how they are displayed */
-  yomaPoolDecimals: 2,
 } as const;
 
 export interface OrganizationRequestUpdateStatus {

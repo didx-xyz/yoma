@@ -11,7 +11,7 @@
 
 ## Problem / Goal
 
-Yoma allocates reward and payout capacity through a hierarchy — **Treasury → Organisation → Opportunity** and **Treasury → Referral Program → Referral Link** — but only fragments of it are visible in the UI. There is no Treasury admin surface at all, organisation Yoma pools round-trip silently without ever being rendered, and youth cannot convert ZLTO to money. This feature builds every surface in that hierarchy: an admin can see and set capacity at each level, and a youth can request a payout.
+Yoma allocates reward and payout capacity through a hierarchy — **Treasury → Organisation → Opportunity** and **Treasury → Referral Program → Referral Link** — but only fragments of it are visible in the UI. There is no Treasury admin surface at all, organisation reward pools round-trip silently without ever being rendered, and youth cannot convert ZLTO to money. This feature builds every surface in that hierarchy: an admin can see and set capacity at each level, and a youth can request a payout.
 
 It is a mission-critical financial surface. Every figure must be formatted, labelled and scoped identically wherever it appears, because the current-financial-year values sit next to the lifetime ones and misreading one for the other is a money error.
 
@@ -41,7 +41,8 @@ All work is on `feature/custom-fields-framework`. The entire Treasury financial-
 - `Balance` is **server-derived and display-only**: `pool − cumulativeCurrentFY`. The UI never computes or submits a balance. It is `null` (not `0`) when no pool is set.
 - Only pools are settable. Cumulatives and balances are read-only everywhere.
 - **Rollover is automated**: daily job `5 0 * * *` UTC plus `EnsureCurrentFinancialYear` guards before every allocation. It zeroes Treasury **and all organisation** current-FY cumulatives; lifetime totals survive. A PATCH that moves the financial year forward also triggers it, so the admin UI must warn before submitting such a change.
-- ZLTO is whole numbers; Yoma rewards 2dp; USD 2dp. Conversion is expressed **N ZLTO = 1 USD**.
+- **Reward capacity is ZLTO-only.** ZLTO is the single reward asset at every level of the hierarchy — Treasury, Organisation, Opportunity and Referral. The parallel Yoma reward was removed server-side on 2026-08-06 (API `f051dfd8`); nothing in the UI may reintroduce a second reward asset without an API contract for it.
+- ZLTO is whole numbers; USD 2dp. Conversion is expressed **N ZLTO = 1 USD**.
 
 ### Treasury availability model — three figures, never conflate
 
@@ -64,7 +65,7 @@ Pending includes **every non-terminal payout regardless of the financial year it
 | `balance` | **nullable.** Wallet balance before payout reservations are excluded. API-derived as `available + pendingPayout`; `null` when the provider is offline |
 | `pendingPayout` | **non-nullable.** Reserved for an active payout, from Yoma's own record. **API returns positive; the UI renders it negative** |
 | `available` | **nullable.** Spendable now. Provider-sourced and **already excludes** `pendingPayout` — never subtract it twice |
-| `pendingRewards` | **non-nullable.** Yoma rewards awaiting transfer to the wallet (was `pendingAwards`) |
+| `pendingRewards` | **non-nullable.** ZLTO rewards awaiting transfer to the wallet (was `pendingAwards`) |
 | `total` | **nullable.** `available + pendingRewards`. Does **not** include `pendingPayout` |
 
 Ledger order: `Balance` → `−Pending payout` → `Available` → `+Pending rewards` → `Total`. Reconciles as `Available = Balance − Pending payout` and `Total = Available + Pending rewards`.
@@ -98,7 +99,7 @@ Binding on every task: **components are built for two homes from the start.** No
 | Conversion rate (ZLTO per USD) | > 0 · ≤ 1,000 · ≤ 4dp | `TreasuryRequestUpdateValidator.cs:49-55` |
 | FY start month + day | day must be valid for month — coupled control | `TreasuryRequestUpdateValidator.cs:15-21` |
 | Treasury pools ≥ current-FY cumulative | both pools · **but the server zeroes the cumulatives first when the FY moves forward, so it then compares against 0** — mirror that or a legitimate save is blocked | `TreasuryService.cs:77-85` (service, not the validator) |
-| Organisation ZLTO/Yoma pools | > 0 · ≤ 10,000,000 · **whole-number applies to ZLTO only** · ≥ current-FY cumulative | `OrganizationRequestValidatorBase.cs:72-79`, `OrganizationService.cs:465-469` |
+| Organisation ZLTO pool | > 0 · ≤ 10,000,000 · whole · ≥ current-FY cumulative | `OrganizationRequestValidatorBase.cs:72-76`, `OrganizationService.cs:465-469` |
 | Referral program pool | ≥ 1 · ≤ 10,000,000 · whole · ≥ total rewards | `admin/referrals/[id]/index.tsx:200-321` |
 | Conversion preview amount | positive whole ZLTO | `TreasuryService.cs:181-192` |
 
@@ -106,7 +107,7 @@ Caps diverge on purpose (100M Treasury / 10M Org / 10M Referral / 50k USD payout
 
 ### Frozen T0 conventions (binding on T3–T6)
 
-- **`lib/format/rewards.ts` is the only place reward numbers are formatted.** `formatZlto` (0dp) · `formatYoma` (2dp) · `formatUsd` (`$`, 2dp) · `formatConversionRate` (≤4dp) · `formatZltoRange` · `rewardBalanceTone`. No new `toLocaleString` / `Intl.NumberFormat` on a reward field anywhere (T6 greps for this). `EMPTY_VALUE = "—"` for null — never blank, never a substituted `0`. `REWARD_BALANCE_LOW_RATIO = 0.1`. Locale pinned `en-US`.
+- **`lib/format/rewards.ts` is the only place reward numbers are formatted.** `formatZlto` (0dp) · `formatUsd` (`$`, 2dp) · `formatConversionRate` (≤4dp) · `formatZltoRange` · `rewardBalanceTone`. (`formatYoma` is gone with the Yoma reward — there is no 2dp reward formatter and no reward field needs one.) No new `toLocaleString` / `Intl.NumberFormat` on a reward field anywhere (T6 greps for this). `EMPTY_VALUE = "—"` for null — never blank, never a substituted `0`. `REWARD_BALANCE_LOW_RATIO = 0.1`. Locale pinned `en-US`.
 - **Label vocabulary, used verbatim**: `LABEL_SUFFIX_FY = "(this financial year)"` · `LABEL_SUFFIX_LIFETIME = "(lifetime)"` · `HEADING_FY = "Current financial year"` · `HEADING_LIFETIME = "All-time"`. Never a bare "Cumulative" — say what it is, then the scope ("Awarded (this financial year)"). USD carries `$` on the value; the word "USD" belongs in the group heading.
 - **The two payout balances (frozen 2026-08-06)** — constants in the same module, with their tooltips, because the wording is what distinguishes them: `LABEL_PAYOUT_BALANCE_COMPLETED = "Remaining balance"` (*the pool minus payouts completed this financial year… not what is available to pay out*) vs `LABEL_PAYOUT_BALANCE_AVAILABLE = "Available to pay out now"` (*the remaining balance minus payouts already in flight… the capacity a new payout is checked against*). **Rewards keep the plain "Remaining balance"** — they have only one balance.
 - **`components/Rewards/RewardStat.tsx`** — `RewardStat` / `RewardStatGroup` / `balanceStatTone`. Values arrive **pre-formatted**; the primitive never formats.
@@ -132,6 +133,7 @@ Caps diverge on purpose (100M Treasury / 10M Org / 10M Referral / 50k USD payout
 - [x] **T1 corrective (e)** — `payoutAvailableDepleted` + `payoutAvailableOvercommitted` mock scenarios
 - [x] **T2 corrective** — `NoImage` placeholder resized to match the 30px logo
 - [x] **Label vocabulary frozen** — the two payout balance labels + tooltips are constants in `lib/format/rewards.ts`
+- [x] **Yoma reward capability removed from the web** — matches API `f051dfd8`; reward capacity is ZLTO-only across T0–T3
 - [ ] **Wallet ledger** — add `balance`, rename `pendingAwards` → `pendingRewards`, render `pendingPayout` negative, handle the nullable offline render
 - [ ] **Authenticated browser pass on T1 + T2 + T3** — now unblocked; the corrective work is in
 - [ ] **Fold the Opportunities tab into Organisations** (owner intent, see the tab note above)
@@ -160,6 +162,8 @@ Caps diverge on purpose (100M Treasury / 10M Org / 10M Referral / 50k USD payout
 - **2026-08-06: no new `serverErrors.ts` matcher was needed.** The pool-floor rejection was assumed to be unmatched, but the actual server text is *"The **payout pool** for the current financial year cannot be less than the total payout amount (N USD) already paid out or pending"*, which the existing broad `/payout pool/i` pattern already routes to the right field — verified against all nine verbatim messages. The lesson is the general one: read the server string before adding a matcher for it.
 - **2026-08-06: the pending total is derived client-side as `completedBalance − availableBalance`** (`lib/treasury/payoutCommitment.ts`). The API returns both balances but not the pending figure, and the form needs it to mirror the server's floor. It is `null`, not `0`, when no pool is set — in which case the client declines to invent a floor and lets the server reject.
 - **2026-08-06: the Opportunities tab is provisional** and will likely be folded into the Organisations tab. Recorded in the tab table above and at the top of `TreasuryOpportunitiesTab.tsx`; a dev-only banner says so in the UI.
+- **2026-08-07: the Yoma reward is gone — reward capacity is ZLTO-only.** API `f051dfd8` removed the whole capability (fields, allocation paths, validator rules and columns); the web now matches. Removed from the models: the four organisation figures, the settable org pool, the opportunity reward/pool/cumulative/balance and its three `organizationYomaReward*CurrentFinancialYear`, `OpportunityInfo`'s three, `MyOpportunityInfo.yomaReward`, and the dashboard's `yomaRewardTotal`. Consequences to carry forward: **`OrganizationRewardFigures` is four fields, not eight** (superseding the 2026-08-05 entry's "needs 8"); `OrganizationRewardPools` is a single key; `formatYoma` and `ORGANIZATION_REWARD_LIMITS.yomaPoolDecimals` are deleted, and with them the decimal(12,2) silent-rounding rule — **no reward field is 2dp any more, only USD is**. The org pool validator is now simply `> 0 · ≤ 10M · whole`. `YouthCompletedCard` had been rendering `{opportunity.yomaRewardTotal}` into an empty badge since the API change — the exact failure mode of `4bfeb55c`, and the reason the interfaces were emptied **first** so `tsc` could find every reader.
+- **2026-08-07: single-field forms and half-empty stat grids were resolved deliberately.** `OrganizationRewardPoolsForm` stays a component at one field — it owns the schema factory, resolver, server-error-to-field plumbing, aria wiring and clear-the-pool warning that both of its homes would otherwise duplicate. Column counts were revisited so no survivor is stranded: `OrganizationRewardStats` keeps `columns` (4 stats divide evenly by 2 and 4), while both summary rows drop to `columns={2}` and `OpportunityRewardContext` falls back to 2 when the payload has no pool — otherwise the info page would render two stats in a four-column row.
 
 ## Links
 

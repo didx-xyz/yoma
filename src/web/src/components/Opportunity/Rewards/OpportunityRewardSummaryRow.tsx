@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { RewardStat, RewardStatGroup } from "~/components/Rewards/RewardStat";
-import { formatYoma, formatZlto } from "~/lib/format/rewards";
+import { formatZlto } from "~/lib/format/rewards";
 import type { OpportunityOwnRewardFigures } from "./OpportunityRewardContext";
 
 /**
@@ -28,7 +28,8 @@ export const OpportunityRewardSummaryRow: React.FC<{
       </span>
     }
     action={action}
-    columns={4}
+    // two stats, so a 2-column grid — 4 would leave half the row empty
+    columns={2}
   >
     <RewardStat
       label="ZLTO per completion"
@@ -38,15 +39,6 @@ export const OpportunityRewardSummaryRow: React.FC<{
       label="ZLTO awarded"
       scope="lifetime"
       value={formatZlto(figures.zltoRewardCumulative)}
-    />
-    <RewardStat
-      label="Yoma per completion"
-      value={formatYoma(figures.yomaReward)}
-    />
-    <RewardStat
-      label="Yoma awarded"
-      scope="lifetime"
-      value={formatYoma(figures.yomaRewardCumulative)}
     />
   </RewardStatGroup>
 );

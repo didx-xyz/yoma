@@ -105,7 +105,6 @@ export interface MyOpportunityInfo {
   percentComplete: number | null;
   dateCompleted: string | null;
   zltoReward: number | null;
-  yomaReward: number | null;
   recommendable: boolean | null;
   starRating: number | null;
   feedback: string | null;

@@ -10,12 +10,14 @@ import { parseApiError } from "~/lib/apiErrorUtils";
  *
  *   - the validator's, which interpolates `'{PropertyName}'` — FluentValidation renders that as the
  *     split property name, e.g. *"'Zlto Reward Pool Current Financial Year' must be greater than 0."*
- *     (`OrganizationRequestValidatorBase.cs:72-79`)
+ *     (`OrganizationRequestValidatorBase.cs:72-76`)
  *   - the service's floors, e.g. *"The Zlto reward pool for the current financial year cannot be less
  *     than the cumulative Zlto rewards (250000) already allocated to participants…"*
  *     (`OrganizationService.cs:465-469`)
  *
- * Both contain the reward name followed by "reward pool", which is what the matchers key on.
+ * Both contain "Zlto reward pool", which is what the matcher keys on. There is one pool since the
+ * Yoma reward capability was removed server-side (API `f051dfd8`); the list shape is kept so the
+ * mapping still reads the same as Treasury's.
  *
  * ⚠️ Reward-pool changes are Admin-only server-side (`OrganizationService.cs:460-463`) and a failure
  * there throws `SecurityException` → **401**, not 403 (`ExceptionResponseMiddleware.cs:54-57`). That
@@ -27,16 +29,11 @@ const MATCHERS: { field: OrganizationRewardPoolField; pattern: RegExp }[] = [
     field: "zltoRewardPoolCurrentFinancialYear",
     pattern: /zlto\s+reward\s+pool/i,
   },
-  {
-    field: "yomaRewardPoolCurrentFinancialYear",
-    pattern: /yoma\s+reward\s+pool/i,
-  },
 ];
 
 /** Server property names, for model-binding failures shaped `"PropertyName: message"`. */
 const FIELD_BY_PROPERTY_NAME: Record<string, OrganizationRewardPoolField> = {
   zltorewardpoolcurrentfinancialyear: "zltoRewardPoolCurrentFinancialYear",
-  yomarewardpoolcurrentfinancialyear: "yomaRewardPoolCurrentFinancialYear",
 };
 
 export interface MappedOrganizationRewardErrors {

@@ -88,10 +88,7 @@ export const TreasuryRolloverConfirmDialog: React.FC<{
             <p className="mb-1 font-semibold">What resets to zero</p>
             <ul className="text-gray-dark ml-5 list-disc">
               <li>ZLTO awarded this financial year, for the Treasury</li>
-              <li>
-                ZLTO and Yoma awarded this financial year, for every
-                organisation
-              </li>
+              <li>ZLTO awarded this financial year, for every organisation</li>
               <li>Payouts completed this financial year</li>
             </ul>
           </div>

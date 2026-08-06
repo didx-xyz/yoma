@@ -394,8 +394,6 @@ const OpportunityAdminDetails: NextPageWithLayout<{
     participantLimit: opportunity?.participantLimit ?? null,
     zltoReward: opportunity?.zltoReward ?? null,
     zltoRewardPool: opportunity?.zltoRewardPool ?? null,
-    yomaReward: opportunity?.yomaReward ?? null,
-    yomaRewardPool: opportunity?.yomaRewardPool ?? null,
     skills: opportunity?.skills?.map((x) => x.id) ?? [],
     keywords: opportunity?.keywords ?? [],
     verificationEnabled: opportunity?.verificationEnabled ?? null,
@@ -1085,9 +1083,6 @@ const OpportunityAdminDetails: NextPageWithLayout<{
       zltoReward: formData.zltoReward,
       zltoRewardCumulative: 0,
       zltoRewardEstimate: formData.zltoReward,
-      yomaReward: formData.yomaReward,
-      yomaRewardCumulative: 0,
-      yomaRewardEstimate: formData.yomaReward,
       verificationEnabled: formData.verificationEnabled ?? false,
       verificationMethod: formData.verificationMethod,
       difficulty:
@@ -1653,9 +1648,6 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                         zltoReward: updatedOpportunity.zltoReward ?? null,
                         zltoRewardPool:
                           updatedOpportunity.zltoRewardPool ?? null,
-                        yomaReward: updatedOpportunity.yomaReward ?? null,
-                        yomaRewardPool:
-                          updatedOpportunity.yomaRewardPool ?? null,
                         skills:
                           updatedOpportunity.skills?.map((x) => x.id) ?? [],
                         keywords: updatedOpportunity.keywords ?? [],
@@ -2490,7 +2482,6 @@ const OpportunityAdminDetails: NextPageWithLayout<{
 
                               // default pool to limit & reward
                               const participantLimit = parseInt(e.target.value);
-                              //const yomaReward = getValuesStep3("yomaReward");
                               const zltoReward = getValuesStep3("zltoReward");
 
                               if (participantLimit !== null) {

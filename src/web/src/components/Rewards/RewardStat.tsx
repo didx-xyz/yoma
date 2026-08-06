@@ -56,7 +56,7 @@ export const RewardStat: React.FC<{
   label: string;
   /** appends the canonical "(this financial year)" / "(lifetime)" wording to the label */
   scope?: RewardStatScope;
-  /** pre-formatted value (formatZlto / formatYoma / formatUsd) */
+  /** pre-formatted value (formatZlto / formatUsd) */
   value: ReactNode;
   tooltip?: string;
   tone?: RewardStatTone;

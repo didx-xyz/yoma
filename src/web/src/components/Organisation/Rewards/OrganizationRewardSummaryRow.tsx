@@ -8,15 +8,14 @@ import {
   RewardStatGroup,
 } from "~/components/Rewards/RewardStat";
 import {
-  formatYoma,
   formatZlto,
   rewardBalanceTone,
   type RewardBalanceTone,
 } from "~/lib/format/rewards";
 
 /**
- * One organisation's reward capacity, compressed to a single row: what each pool holds and what is
- * left of it. The list counterpart to `OrganizationRewardStats` (which shows all eight figures and is
+ * One organisation's reward capacity, compressed to a single row: what the pool holds and what is
+ * left of it. The list counterpart to `OrganizationRewardStats` (which shows all four figures and is
  * used where there is room — the org page and the edit dialog).
  *
  * Built for the Treasury Organisations tab, which renders it N times. Prop-driven: no router, no
@@ -42,22 +41,15 @@ const TONE_BADGE: Record<
   healthy: null,
 };
 
-/** Worst of the two pools — one badge per organisation, so a row reads at a glance. */
-const summaryTone = (figures: OrganizationRewardFigures): RewardBalanceTone => {
-  const tones = new Set<RewardBalanceTone>([
-    rewardBalanceTone(
-      figures.zltoRewardBalanceCurrentFinancialYear,
-      figures.zltoRewardPoolCurrentFinancialYear,
-    ),
-    rewardBalanceTone(
-      figures.yomaRewardBalanceCurrentFinancialYear,
-      figures.yomaRewardPoolCurrentFinancialYear,
-    ),
-  ]);
-
-  const order: RewardBalanceTone[] = ["depleted", "low", "unset", "healthy"];
-  return order.find((tone) => tones.has(tone)) ?? "healthy";
-};
+/**
+ * One badge per organisation, so a row reads at a glance. ZLTO is the only pool, so this is simply
+ * its tone — it used to be the worst of two.
+ */
+const summaryTone = (figures: OrganizationRewardFigures): RewardBalanceTone =>
+  rewardBalanceTone(
+    figures.zltoRewardBalanceCurrentFinancialYear,
+    figures.zltoRewardPoolCurrentFinancialYear,
+  );
 
 export const OrganizationRewardSummaryRow: React.FC<{
   name: string;
@@ -70,17 +62,10 @@ export const OrganizationRewardSummaryRow: React.FC<{
   const tone = summaryTone(figures);
   const badge = TONE_BADGE[tone];
 
-  const zltoTone = rewardBalanceTone(
-    figures.zltoRewardBalanceCurrentFinancialYear,
-    figures.zltoRewardPoolCurrentFinancialYear,
-  );
-  const yomaTone = rewardBalanceTone(
-    figures.yomaRewardBalanceCurrentFinancialYear,
-    figures.yomaRewardPoolCurrentFinancialYear,
-  );
-
   return (
     <RewardStatGroup
+      // two stats, so a 2-column grid — the default 4 would leave half the row empty
+      columns={2}
       // the header identifies the organisation, so the leading visual is its logo
       icon={
         logoURL ? (
@@ -135,18 +120,8 @@ export const OrganizationRewardSummaryRow: React.FC<{
         label="ZLTO remaining"
         scope="financialYear"
         value={formatZlto(figures.zltoRewardBalanceCurrentFinancialYear)}
-        tone={balanceStatTone(zltoTone)}
-      />
-      <RewardStat
-        label="Yoma pool"
-        scope="financialYear"
-        value={formatYoma(figures.yomaRewardPoolCurrentFinancialYear)}
-      />
-      <RewardStat
-        label="Yoma remaining"
-        scope="financialYear"
-        value={formatYoma(figures.yomaRewardBalanceCurrentFinancialYear)}
-        tone={balanceStatTone(yomaTone)}
+        // the badge and the stat now read the same pool, so they share one tone
+        tone={balanceStatTone(tone)}
       />
     </RewardStatGroup>
   );

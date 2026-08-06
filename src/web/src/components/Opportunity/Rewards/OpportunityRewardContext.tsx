@@ -3,7 +3,7 @@ import iconZlto from "public/images/icon-zlto.svg";
 import type { OrganizationRewardFigures } from "~/api/models/organisation";
 import OrganizationRewardStats from "~/components/Organisation/Rewards/OrganizationRewardStats";
 import { RewardStat, RewardStatGroup } from "~/components/Rewards/RewardStat";
-import { formatYoma, formatZlto } from "~/lib/format/rewards";
+import { formatZlto } from "~/lib/format/rewards";
 
 /**
  * An opportunity's reward figures next to the capacity of the organisation that owns it.
@@ -36,10 +36,6 @@ export interface OpportunityOwnRewardFigures {
   zltoRewardCumulative: number | null;
   zltoRewardPool?: number | null;
   zltoRewardBalance?: number | null;
-  yomaReward: number | null;
-  yomaRewardCumulative: number | null;
-  yomaRewardPool?: number | null;
-  yomaRewardBalance?: number | null;
 }
 
 const ZltoIcon = () => (
@@ -68,15 +64,16 @@ export const OpportunityRewardContext: React.FC<{
   className = "flex flex-col gap-4",
 }) => {
   /** The pool is opportunity-level and optional, so only offer it when the payload has it. */
-  const hasOwnPool =
-    own.zltoRewardPool !== undefined || own.yomaRewardPool !== undefined;
+  const hasOwnPool = own.zltoRewardPool !== undefined;
 
   return (
     <div className={className}>
       <RewardStatGroup
         title="This opportunity"
         icon={<ZltoIcon />}
-        columns={columns}
+        // Two stats without the pool, four with it. Falling back to 2 keeps the info payload from
+        // rendering a half-empty four-column row.
+        columns={hasOwnPool ? columns : 2}
       >
         <RewardStat
           label="ZLTO per completion"
@@ -89,18 +86,6 @@ export const OpportunityRewardContext: React.FC<{
           scope="lifetime"
           value={formatZlto(own.zltoRewardCumulative)}
           tooltip="Total ZLTO this opportunity has awarded across all financial years. Never reset."
-        />
-        <RewardStat
-          label="Yoma per completion"
-          value={formatYoma(own.yomaReward)}
-          tooltip="What one youth receives for completing this opportunity. Not a total."
-          note={own.yomaReward === null ? "No Yoma reward" : undefined}
-        />
-        <RewardStat
-          label="Yoma awarded"
-          scope="lifetime"
-          value={formatYoma(own.yomaRewardCumulative)}
-          tooltip="Total Yoma rewards this opportunity has awarded across all financial years. Never reset."
         />
 
         {/* Only on the admin detail payload. Deliberately labelled lifetime: unlike the
@@ -121,21 +106,6 @@ export const OpportunityRewardContext: React.FC<{
               label="ZLTO remaining"
               scope="lifetime"
               value={formatZlto(own.zltoRewardBalance)}
-              tooltip="The opportunity's own pool minus what it has awarded, all-time."
-            />
-            <RewardStat
-              label="Yoma reward pool"
-              scope="lifetime"
-              value={formatYoma(own.yomaRewardPool)}
-              tooltip="A cap on the total Yoma rewards this opportunity may award, for its whole lifetime. Not reset by a financial-year rollover."
-              note={
-                own.yomaRewardPool === null ? "No cap — unlimited" : undefined
-              }
-            />
-            <RewardStat
-              label="Yoma remaining"
-              scope="lifetime"
-              value={formatYoma(own.yomaRewardBalance)}
               tooltip="The opportunity's own pool minus what it has awarded, all-time."
             />
           </>
