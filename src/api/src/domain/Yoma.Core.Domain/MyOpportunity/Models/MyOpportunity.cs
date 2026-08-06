@@ -81,6 +81,9 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
 
     public bool OpportunityCredentialIssuanceEnabled { get; set; }
 
+    /// <summary>
+    /// Full name of the credential schema selected for the opportunity.
+    /// </summary>
     public string? OpportunitySSISchemaName { get; set; }
 
     public bool? OpporunityShareWithPartners { get; set; }

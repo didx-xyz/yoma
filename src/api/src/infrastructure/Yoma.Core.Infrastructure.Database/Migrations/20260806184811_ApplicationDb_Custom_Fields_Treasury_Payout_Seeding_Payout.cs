@@ -2,9 +2,9 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace Yoma.Core.Infrastructure.Database.Migrations
 {
-  internal static class ApplicationDb_Payout_Seeding
+  internal static partial class ApplicationDb_Custom_Fields_Treasury_Payout_Seeding
   {
-    internal static void Seed(MigrationBuilder migrationBuilder)
+    internal static void SeedPayout(MigrationBuilder migrationBuilder)
     {
       #region Payout - Transaction Statuses
       migrationBuilder.InsertData(
@@ -36,7 +36,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
       #endregion Reward - Transaction Statuses
     }
 
-    internal static void Unseed(MigrationBuilder migrationBuilder)
+    internal static void UnseedPayout(MigrationBuilder migrationBuilder)
     {
       migrationBuilder.DeleteData(
         table: "TransactionStatus",

@@ -100,6 +100,9 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
     public bool CredentialIssuanceEnabled { get; set; }
 
+    /// <summary>
+    /// Full name of the credential schema selected for the opportunity.
+    /// </summary>
     public string? SSISchemaName { get; set; }
 
     public bool? Featured { get; set; }

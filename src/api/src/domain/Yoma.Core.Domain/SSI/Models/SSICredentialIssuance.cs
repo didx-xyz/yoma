@@ -10,6 +10,9 @@ namespace Yoma.Core.Domain.SSI.Models
 
     public ArtifactType ArtifactType { get; set; }
 
+    /// <summary>
+    /// Full name of the schema selected when issuance was scheduled.
+    /// </summary>
     public string SchemaName { get; set; } = null!;
 
     public string SchemaVersion { get; set; } = null!;

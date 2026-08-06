@@ -19,8 +19,8 @@ namespace Yoma.Core.Domain.SSI.Interfaces
 
     Task<SSISchema> Update(SSISchemaRequestUpdate request);
 
-    (SSISchemaType schemaType, string displayName) SchemaFullNameValidateAndGetParts(string schemaFullName);
+    (SSISchemaType schemaType, string displayName, string? typeContext) SchemaFullNameValidateAndGetParts(string schemaFullName);
 
-    (SSISchemaType schemaType, string displayName) SchemaIdValidateAndGetParts(string schemaId);
+    (SSISchemaType schemaType, string displayName, string? typeContext) SchemaIdValidateAndGetParts(string schemaId);
   }
 }

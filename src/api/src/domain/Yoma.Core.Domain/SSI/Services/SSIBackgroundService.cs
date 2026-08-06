@@ -467,10 +467,11 @@ namespace Yoma.Core.Domain.SSI.Services
       var schema = await _ssiSchemaService.GetByFullNameOrNull(schemaFullName);
       if (schema == null || schema.ArtifactType != artifactType) //allow switching of artifact stores; version incrementally incremented across stores
       {
-        var (schemaType, displayName) = _ssiSchemaService.SchemaFullNameValidateAndGetParts(schemaFullName);
+        var (schemaType, displayName, typeContext) = _ssiSchemaService.SchemaFullNameValidateAndGetParts(schemaFullName);
         await _ssiSchemaService.Create(new SSISchemaRequestCreate
         {
           TypeId = schemaType.Id,
+          TypeContext = typeContext,
           Name = displayName,
           ArtifactType = artifactType,
           Attributes = attributes

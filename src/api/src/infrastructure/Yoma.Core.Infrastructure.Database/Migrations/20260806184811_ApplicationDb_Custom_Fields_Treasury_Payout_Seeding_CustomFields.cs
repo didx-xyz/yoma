@@ -2,11 +2,11 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace Yoma.Core.Infrastructure.Database.Migrations
 {
-  internal static class ApplicationDb_Custom_Fields_Seeding
+  internal static partial class ApplicationDb_Custom_Fields_Treasury_Payout_Seeding
   {
     private const string TemporaryDescription = "TODO(YOM-1244): Temporary development field; replace with the BA-approved definition.";
 
-    internal static void Seed(MigrationBuilder migrationBuilder)
+    internal static void SeedCustomFields(MigrationBuilder migrationBuilder)
     {
       // TODO(YOM-1244): Replace this complete development seed set with BA-approved definitions and options before release.
       var dateCreated = DateTimeOffset.UtcNow;

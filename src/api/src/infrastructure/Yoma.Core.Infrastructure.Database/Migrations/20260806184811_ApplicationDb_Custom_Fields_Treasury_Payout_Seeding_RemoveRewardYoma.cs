@@ -2,9 +2,9 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace Yoma.Core.Infrastructure.Database.Migrations
 {
-  internal static class ApplicationDb_Remove_Reward_Yoma_Seeding
+  internal static partial class ApplicationDb_Custom_Fields_Treasury_Payout_Seeding
   {
-    internal static void SeedUp(MigrationBuilder migrationBuilder)
+    internal static void SeedRemoveRewardYoma(MigrationBuilder migrationBuilder)
     {
       #region SSI - Schema Entity Property
       migrationBuilder.DeleteData(
@@ -15,7 +15,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
       #endregion SSI - Schema Entity Property
     }
 
-    internal static void SeedDown(MigrationBuilder migrationBuilder)
+    internal static void UnseedRemoveRewardYoma(MigrationBuilder migrationBuilder)
     {
       #region SSI - Schema Entity Property
       migrationBuilder.InsertData(

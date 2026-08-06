@@ -477,7 +477,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
     /// </summary>
     private static async Task<string> EnsureDefinition(ITenantClient clientIssuer, string tenantIssuerId, Domain.SSI.Models.Provider.Schema schema)
     {
-      // Omitted schema.Name (friendly name) from the credential definition tag.
+      // Omitted schema.Name (full name) from the credential definition tag.
       // The tag is not used anywhere internally, and Acapy appends the YoID|Default- prefix.
       // schema.Name is user-defined and variable (up to 125 chars), making the tag length unpredictable.
       // Max tag length allowed by Acapy is 31 characters.

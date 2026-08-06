@@ -136,7 +136,8 @@ namespace Yoma.Core.Domain.SSI.Services
       await _schemaRequestValidatorCreate.ValidateAndThrowAsync(request);
 
       var schemaType = _ssiSchemaTypeService.GetById(request.TypeId);
-      var nameFull = SSISSchemaHelper.ToFullName(schemaType.Type, request.Name);
+      var typeContext = request.TypeContext?.Trim();
+      var nameFull = SSISSchemaHelper.ToFullName(schemaType.Type, request.Name, typeContext);
 
       var existingSchema = await GetByFullNameOrNull(nameFull);
       if (existingSchema != null && existingSchema.ArtifactType == request.ArtifactType) //allow switching of artifact stores; version incrementally incremented across stores
@@ -180,23 +181,28 @@ namespace Yoma.Core.Domain.SSI.Services
       return ConvertToSSISchema(schema);
     }
 
-    public (SSISchemaType schemaType, string displayName) SchemaFullNameValidateAndGetParts(string schemaFullName)
+    public (SSISchemaType schemaType, string displayName, string? typeContext) SchemaFullNameValidateAndGetParts(string schemaFullName)
     {
       if (string.IsNullOrWhiteSpace(schemaFullName))
         throw new ArgumentNullException(nameof(schemaFullName));
       schemaFullName = schemaFullName.Trim();
 
-      var nameParts = schemaFullName.Split(SchemaName_TypeDelimiter); //i.e. Opportunity|Learning
-      if (nameParts.Length != 2)
-        throw new ArgumentException($"Schema name of '{schemaFullName}' is invalid. Expecting [type]:[name]", nameof(schemaFullName));
+      var nameParts = schemaFullName.Split(SchemaName_TypeDelimiter); //i.e. Opportunity|Default or Opportunity|Learning|Default
+      if (nameParts.Length is < 2 or > 3 || nameParts.Any(string.IsNullOrWhiteSpace))
+        throw new ArgumentException($"Schema name of '{schemaFullName}' is invalid. Expecting [type]|[name] or [type]|[typeContext]|[name]", nameof(schemaFullName));
 
       var schemaType = _ssiSchemaTypeService.GetByNameOrNull(nameParts.First());
-      return schemaType == null
-          ? throw new ArgumentException($"Schema full name of '{schemaFullName}' is invalid. Specified type '{nameParts.First()}' does not exist", nameof(schemaFullName))
-          : ((SSISchemaType schemaType, string displayName))(schemaType, nameParts.Last());
+      if (schemaType == null)
+        throw new ArgumentException($"Schema full name of '{schemaFullName}' is invalid. Specified type '{nameParts.First()}' does not exist", nameof(schemaFullName));
+
+      var typeContext = nameParts.Length == 3
+        ? nameParts[1].Trim()
+        : null;
+
+      return (schemaType, nameParts.Last(), typeContext);
     }
 
-    public (SSISchemaType schemaType, string displayName) SchemaIdValidateAndGetParts(string schemaId)
+    public (SSISchemaType schemaType, string displayName, string? typeContext) SchemaIdValidateAndGetParts(string schemaId)
     {
       if (string.IsNullOrWhiteSpace(schemaId))
         throw new ArgumentNullException(nameof(schemaId));
@@ -276,7 +282,7 @@ namespace Yoma.Core.Domain.SSI.Services
       // No matches found for schema attributes that match entities
       if (matchedEntitiesGrouped == null || matchedEntitiesGrouped.Count == 0) return results;
 
-      schemas = [.. schemas.Where(o => o.Name.Split(SchemaName_TypeDelimiter).Length == 2)];
+      schemas = [.. schemas.Where(o => o.Name.Split(SchemaName_TypeDelimiter).Length is 2 or 3)];
 
       results = [.. schemas.Where(o => matchedEntitiesGrouped.ContainsKey(o.Id)).Select(o =>
           ConvertToSSISchema(o, matchedEntitiesGrouped.TryGetValue(o.Id, out var entities) ? entities : null))];
@@ -312,7 +318,7 @@ namespace Yoma.Core.Domain.SSI.Services
 
     private SSISchema ConvertToSSISchema(Schema schema, List<SSISchemaEntity>? matchedEntities)
     {
-      var (schemaType, displayName) = SchemaFullNameValidateAndGetParts(schema.Name);
+      var (schemaType, displayName, typeContext) = SchemaFullNameValidateAndGetParts(schema.Name);
 
       var countEntityProperties = matchedEntities?.Sum(o => o.Properties?.Count);
 
@@ -329,6 +335,7 @@ namespace Yoma.Core.Domain.SSI.Services
         TypeId = schemaType.Id,
         Type = Enum.Parse<SchemaType>(schemaType.Name, true),
         TypeDescription = schemaType.Description,
+        TypeContext = typeContext,
         Version = schema.Version,
         ArtifactType = schema.ArtifactType,
         Entities = matchedEntities ?? [],

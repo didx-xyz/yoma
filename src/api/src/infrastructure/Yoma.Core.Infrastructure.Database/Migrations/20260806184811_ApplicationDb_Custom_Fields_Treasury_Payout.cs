@@ -1,3 +1,4 @@
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -5,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Yoma.Core.Infrastructure.Database.Migrations
 {
   /// <inheritdoc />
-  public partial class ApplicationDb_Custom_Fields : Migration
+  public partial class ApplicationDb_Custom_Fields_Treasury_Payout : Migration
   {
     private static readonly string[] Annotation_Includes_OpportunityId_MyOpportunityId =
       ["OpportunityId", "MyOpportunityId"];
@@ -361,11 +362,110 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           schema: "Reward",
           table: "WalletCreation");
 
+      migrationBuilder.DropIndex(
+          name: "IX_Transaction_UserId_SourceEntityType_MyOpportunityId_Referra~",
+          schema: "Reward",
+          table: "Transaction");
+
+      migrationBuilder.DropIndex(
+          name: "IX_MyOpportunity_VerificationStatusId_DateStart_DateEnd_DateCo~",
+          schema: "Opportunity",
+          table: "MyOpportunity");
+
+      migrationBuilder.DropColumn(
+          name: "YomaRewardCumulative",
+          schema: "Entity",
+          table: "Organization");
+
+      migrationBuilder.DropColumn(
+          name: "YomaRewardCumulativeCurrentFinancialYear",
+          schema: "Entity",
+          table: "Organization");
+
+      migrationBuilder.DropColumn(
+          name: "YomaRewardPoolCurrentFinancialYear",
+          schema: "Entity",
+          table: "Organization");
+
+      migrationBuilder.DropColumn(
+          name: "YomaReward",
+          schema: "Opportunity",
+          table: "Opportunity");
+
+      migrationBuilder.DropColumn(
+          name: "YomaRewardCumulative",
+          schema: "Opportunity",
+          table: "Opportunity");
+
+      migrationBuilder.DropColumn(
+          name: "YomaRewardPool",
+          schema: "Opportunity",
+          table: "Opportunity");
+
+      migrationBuilder.DropColumn(
+          name: "YomaReward",
+          schema: "Opportunity",
+          table: "MyOpportunity");
+
       migrationBuilder.EnsureSchema(
           name: "Core");
 
+      migrationBuilder.EnsureSchema(
+          name: "Payout");
+
+      migrationBuilder.RenameColumn(
+          name: "ChimoneyPoolCurrentFinancialYearInUSD",
+          schema: "Treasury",
+          table: "Treasury",
+          newName: "PayoutPoolCurrentFinancialYearInUsd");
+
+      migrationBuilder.RenameColumn(
+          name: "ChimoneyCumulativeInUSD",
+          schema: "Treasury",
+          table: "Treasury",
+          newName: "PayoutCumulativeInUsd");
+
+      migrationBuilder.RenameColumn(
+          name: "ChimoneyCumulativeCurrentFinancialYearInUSD",
+          schema: "Treasury",
+          table: "Treasury",
+          newName: "PayoutCumulativeCurrentFinancialYearInUsd");
+
       migrationBuilder.AlterDatabase()
           .Annotation("Npgsql:PostgresExtension:pg_trgm", ",,");
+
+      migrationBuilder.AddColumn<Guid>(
+          name: "PayoutTransactionId",
+          schema: "Reward",
+          table: "Transaction",
+          type: "uuid",
+          nullable: true);
+
+      migrationBuilder.AddColumn<DateTimeOffset>(
+          name: "ReservationExpiresAt",
+          schema: "Reward",
+          table: "Transaction",
+          type: "timestamp with time zone",
+          nullable: true);
+
+      migrationBuilder.AddColumn<string>(
+          name: "DisplayName",
+          schema: "Opportunity",
+          table: "OpportunityType",
+          type: "varchar(125)",
+          nullable: true);
+
+      ApplicationDb_Custom_Fields_Treasury_Payout_Seeding.SeedOpportunityTypeDisplayName(migrationBuilder);
+
+      migrationBuilder.AlterColumn<string>(
+          name: "DisplayName",
+          schema: "Opportunity",
+          table: "OpportunityType",
+          type: "varchar(125)",
+          nullable: false,
+          oldClrType: typeof(string),
+          oldType: "varchar(125)",
+          oldNullable: true);
 
       migrationBuilder.CreateTable(
           name: "CustomFieldDefinition",
@@ -395,6 +495,20 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           constraints: table =>
           {
             table.PrimaryKey("PK_CustomFieldDefinition", x => x.Id);
+          });
+
+      migrationBuilder.CreateTable(
+          name: "TransactionStatus",
+          schema: "Payout",
+          columns: table => new
+          {
+            Id = table.Column<Guid>(type: "uuid", nullable: false),
+            Name = table.Column<string>(type: "varchar(30)", nullable: false),
+            DateCreated = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
+          },
+          constraints: table =>
+          {
+            table.PrimaryKey("PK_Payout_TransactionStatus", x => x.Id);
           });
 
       migrationBuilder.CreateTable(
@@ -460,6 +574,71 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                       principalTable: "Opportunity",
                       principalColumn: "Id");
           });
+
+      migrationBuilder.CreateTable(
+          name: "Transaction",
+          schema: "Payout",
+          columns: table => new
+          {
+            Id = table.Column<Guid>(type: "uuid", nullable: false),
+            UserId = table.Column<Guid>(type: "uuid", nullable: false),
+            Type = table.Column<string>(type: "varchar(25)", nullable: false),
+            Provider = table.Column<string>(type: "varchar(25)", nullable: false),
+            StatusId = table.Column<Guid>(type: "uuid", nullable: false),
+            Amount = table.Column<decimal>(type: "numeric(12,2)", nullable: false),
+            Currency = table.Column<string>(type: "varchar(10)", nullable: false),
+            TransactionId = table.Column<string>(type: "varchar(50)", nullable: true),
+            ErrorReason = table.Column<string>(type: "text", nullable: true),
+            ExpiresAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+            RewardReservationExpiresAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+            DateLastReconciled = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+            RetryCount = table.Column<byte>(type: "smallint", nullable: true),
+            DateCreated = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+            DateModified = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
+          },
+          constraints: table =>
+          {
+            table.PrimaryKey("PK_Payout_Transaction", x => x.Id);
+            table.ForeignKey(
+                      name: "FK_Transaction_TransactionStatus_StatusId",
+                      column: x => x.StatusId,
+                      principalSchema: "Payout",
+                      principalTable: "TransactionStatus",
+                      principalColumn: "Id");
+            table.ForeignKey(
+                      name: "FK_Transaction_User_UserId",
+                      column: x => x.UserId,
+                      principalSchema: "Entity",
+                      principalTable: "User",
+                      principalColumn: "Id");
+          });
+
+      migrationBuilder.CreateIndex(
+          name: "IX_Transaction_PayoutTransactionId",
+          schema: "Reward",
+          table: "Transaction",
+          column: "PayoutTransactionId");
+
+      migrationBuilder.CreateIndex(
+          name: "IX_Transaction_UserId_SourceEntityType_MyOpportunityId_Referra~",
+          schema: "Reward",
+          table: "Transaction",
+          columns: ["UserId", "SourceEntityType", "MyOpportunityId", "ReferralLinkUsageId", "PayoutTransactionId"],
+          unique: true,
+          filter: "\"Provider\" = 'ZLTO'")
+          .Annotation("Npgsql:NullsDistinct", false);
+
+      migrationBuilder.CreateIndex(
+          name: "IX_OpportunityType_DisplayName",
+          schema: "Opportunity",
+          table: "OpportunityType",
+          column: "DisplayName");
+
+      migrationBuilder.CreateIndex(
+          name: "IX_MyOpportunity_VerificationStatusId_DateStart_DateEnd_DateCo~",
+          schema: "Opportunity",
+          table: "MyOpportunity",
+          columns: ["VerificationStatusId", "DateStart", "DateEnd", "DateCompleted", "ZltoReward", "Recommendable", "StarRating", "DateCreated", "DateModified"]);
 
       migrationBuilder.CreateIndex(
           name: "IX_CustomFieldDefinition_EntityType_EntityContext_DataType_IsR~",
@@ -539,6 +718,32 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           column: "Value")
           .Annotation("Npgsql:IndexMethod", "GIN")
           .Annotation("Npgsql:IndexOperators", Annotation_Operators_GinTrgm);
+
+      migrationBuilder.CreateIndex(
+          name: "IX_Payout_Transaction_Provider_TransactionId",
+          schema: "Payout",
+          table: "Transaction",
+          columns: ["Provider", "TransactionId"],
+          unique: true);
+
+      migrationBuilder.CreateIndex(
+          name: "IX_Payout_Transaction_StatusId",
+          schema: "Payout",
+          table: "Transaction",
+          column: "StatusId");
+
+      migrationBuilder.CreateIndex(
+          name: "IX_Payout_Transaction_UserId_StatusId_DateCreated_DateModified",
+          schema: "Payout",
+          table: "Transaction",
+          columns: ["UserId", "StatusId", "DateCreated", "DateModified"]);
+
+      migrationBuilder.CreateIndex(
+          name: "IX_Payout_TransactionStatus_Name",
+          schema: "Payout",
+          table: "TransactionStatus",
+          column: "Name",
+          unique: true);
 
       migrationBuilder.AddForeignKey(
           name: "FK_Block_BlockReason_ReasonId",
@@ -1054,6 +1259,15 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           principalColumn: "Id");
 
       migrationBuilder.AddForeignKey(
+          name: "FK_Transaction_Transaction_PayoutTransactionId",
+          schema: "Reward",
+          table: "Transaction",
+          column: "PayoutTransactionId",
+          principalSchema: "Payout",
+          principalTable: "Transaction",
+          principalColumn: "Id");
+
+      migrationBuilder.AddForeignKey(
           name: "FK_Transaction_User_UserId",
           schema: "Reward",
           table: "Transaction",
@@ -1161,12 +1375,17 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           principalTable: "WalletCreationStatus",
           principalColumn: "Id");
 
-      ApplicationDb_Custom_Fields_Seeding.Seed(migrationBuilder);
+      ApplicationDb_Custom_Fields_Treasury_Payout_Seeding.SeedCustomFields(migrationBuilder);
+      ApplicationDb_Custom_Fields_Treasury_Payout_Seeding.SeedTreasury(migrationBuilder);
+      ApplicationDb_Custom_Fields_Treasury_Payout_Seeding.SeedPayout(migrationBuilder);
+      ApplicationDb_Custom_Fields_Treasury_Payout_Seeding.SeedRemoveRewardYoma(migrationBuilder);
     }
 
     /// <inheritdoc />
     protected override void Down(MigrationBuilder migrationBuilder)
     {
+      ApplicationDb_Custom_Fields_Treasury_Payout_Seeding.UnseedPayout(migrationBuilder);
+
       migrationBuilder.DropForeignKey(
           name: "FK_Block_BlockReason_ReasonId",
           schema: "Referral",
@@ -1453,6 +1672,11 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           table: "Transaction");
 
       migrationBuilder.DropForeignKey(
+          name: "FK_Transaction_Transaction_PayoutTransactionId",
+          schema: "Reward",
+          table: "Transaction");
+
+      migrationBuilder.DropForeignKey(
           name: "FK_Transaction_User_UserId",
           schema: "Reward",
           table: "Transaction");
@@ -1521,11 +1745,135 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           schema: "Core");
 
       migrationBuilder.DropTable(
+          name: "Transaction",
+          schema: "Payout");
+
+      migrationBuilder.DropTable(
           name: "CustomFieldDefinition",
           schema: "Core");
 
+      migrationBuilder.DropTable(
+          name: "TransactionStatus",
+          schema: "Payout");
+
+      migrationBuilder.DropIndex(
+          name: "IX_Transaction_PayoutTransactionId",
+          schema: "Reward",
+          table: "Transaction");
+
+      migrationBuilder.DropIndex(
+          name: "IX_Transaction_UserId_SourceEntityType_MyOpportunityId_Referra~",
+          schema: "Reward",
+          table: "Transaction");
+
+      migrationBuilder.DropIndex(
+          name: "IX_OpportunityType_DisplayName",
+          schema: "Opportunity",
+          table: "OpportunityType");
+
+      migrationBuilder.DropIndex(
+          name: "IX_MyOpportunity_VerificationStatusId_DateStart_DateEnd_DateCo~",
+          schema: "Opportunity",
+          table: "MyOpportunity");
+
+      migrationBuilder.DropColumn(
+          name: "PayoutTransactionId",
+          schema: "Reward",
+          table: "Transaction");
+
+      migrationBuilder.DropColumn(
+          name: "ReservationExpiresAt",
+          schema: "Reward",
+          table: "Transaction");
+
+      migrationBuilder.DropColumn(
+          name: "DisplayName",
+          schema: "Opportunity",
+          table: "OpportunityType");
+
+      migrationBuilder.RenameColumn(
+          name: "PayoutPoolCurrentFinancialYearInUsd",
+          schema: "Treasury",
+          table: "Treasury",
+          newName: "ChimoneyPoolCurrentFinancialYearInUSD");
+
+      migrationBuilder.RenameColumn(
+          name: "PayoutCumulativeInUsd",
+          schema: "Treasury",
+          table: "Treasury",
+          newName: "ChimoneyCumulativeInUSD");
+
+      migrationBuilder.RenameColumn(
+          name: "PayoutCumulativeCurrentFinancialYearInUsd",
+          schema: "Treasury",
+          table: "Treasury",
+          newName: "ChimoneyCumulativeCurrentFinancialYearInUSD");
+
       migrationBuilder.AlterDatabase()
           .OldAnnotation("Npgsql:PostgresExtension:pg_trgm", ",,");
+
+      migrationBuilder.AddColumn<decimal>(
+          name: "YomaRewardCumulative",
+          schema: "Entity",
+          table: "Organization",
+          type: "numeric(12,2)",
+          nullable: true);
+
+      migrationBuilder.AddColumn<decimal>(
+          name: "YomaRewardCumulativeCurrentFinancialYear",
+          schema: "Entity",
+          table: "Organization",
+          type: "numeric(12,2)",
+          nullable: true);
+
+      migrationBuilder.AddColumn<decimal>(
+          name: "YomaRewardPoolCurrentFinancialYear",
+          schema: "Entity",
+          table: "Organization",
+          type: "numeric(12,2)",
+          nullable: true);
+
+      migrationBuilder.AddColumn<decimal>(
+          name: "YomaReward",
+          schema: "Opportunity",
+          table: "Opportunity",
+          type: "numeric(8,2)",
+          nullable: true);
+
+      migrationBuilder.AddColumn<decimal>(
+          name: "YomaRewardCumulative",
+          schema: "Opportunity",
+          table: "Opportunity",
+          type: "numeric(12,2)",
+          nullable: true);
+
+      migrationBuilder.AddColumn<decimal>(
+          name: "YomaRewardPool",
+          schema: "Opportunity",
+          table: "Opportunity",
+          type: "numeric(12,2)",
+          nullable: true);
+
+      migrationBuilder.AddColumn<decimal>(
+          name: "YomaReward",
+          schema: "Opportunity",
+          table: "MyOpportunity",
+          type: "numeric(8,2)",
+          nullable: true);
+
+      migrationBuilder.CreateIndex(
+          name: "IX_Transaction_UserId_SourceEntityType_MyOpportunityId_Referra~",
+          schema: "Reward",
+          table: "Transaction",
+          columns: ["UserId", "SourceEntityType", "MyOpportunityId", "ReferralLinkUsageId"],
+          unique: true,
+          filter: "\"Provider\" = 'ZLTO'");
+
+      migrationBuilder.CreateIndex(
+          name: "IX_MyOpportunity_VerificationStatusId_DateStart_DateEnd_DateCo~",
+          schema: "Opportunity",
+          table: "MyOpportunity",
+          columns: ["VerificationStatusId", "DateStart", "DateEnd", "DateCompleted", "ZltoReward", "YomaReward", "Recommendable", "StarRating", "DateCreated", "DateModified"]);
 
       migrationBuilder.AddForeignKey(
           name: "FK_Block_BlockReason_ReasonId",
@@ -2216,6 +2564,8 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           principalTable: "WalletCreationStatus",
           principalColumn: "Id",
           onDelete: ReferentialAction.Cascade);
+
+      ApplicationDb_Custom_Fields_Treasury_Payout_Seeding.UnseedRemoveRewardYoma(migrationBuilder);
     }
   }
 }

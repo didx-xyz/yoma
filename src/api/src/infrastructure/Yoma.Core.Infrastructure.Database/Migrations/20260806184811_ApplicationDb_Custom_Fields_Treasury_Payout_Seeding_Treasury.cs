@@ -2,9 +2,9 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace Yoma.Core.Infrastructure.Database.Migrations
 {
-  internal static class ApplicationDb_Treasury_Seeding
+  internal static partial class ApplicationDb_Custom_Fields_Treasury_Payout_Seeding
   {
-    internal static void Seed(MigrationBuilder migrationBuilder)
+    internal static void SeedTreasury(MigrationBuilder migrationBuilder)
     {
       #region Treasury - Refresh ZLTO Cumulative Totals
       migrationBuilder.Sql("""
