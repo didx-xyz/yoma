@@ -197,7 +197,8 @@ namespace Yoma.Core.Domain.Core
   {
     SAYouth,
     Jobberman,
-    Alison
+    Alison,
+    JobJack
   }
 
   public enum CustomFieldEntityType

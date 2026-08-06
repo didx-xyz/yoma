@@ -224,6 +224,9 @@ services:
       CLIENT_MINI_SASS_URL: "http://localhost:5000"
       CLIENT_MINI_SASS_URL_REDIRECT: "http://localhost:5000/authentication/api/yoma/callback"
       CLIENT_MINI_SASS_SECRET: superSecretMiniSassClientSecret
+      CLIENT_P2E_GLOBAL_ENABLED: "true"
+      CLIENT_P2E_GLOBAL_URL_REDIRECT: https://learningpassport.b2clogin.com/learningpassport.onmicrosoft.com/oauth2/authresp
+      CLIENT_P2E_GLOBAL_SECRET: superSecretP2EGlobalClientSecret
       SA_YOMA_API_PASSWORD: &KCAdminPassword superSecretYomaApiServiceAccountPassword
       SMTP_PASSWORD: superSecretSmtpPassword
       GOOGLE_CLIENT_ID: superSecretClientId

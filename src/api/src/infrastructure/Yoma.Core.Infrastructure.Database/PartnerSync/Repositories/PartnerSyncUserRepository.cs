@@ -28,9 +28,6 @@ namespace Yoma.Core.Infrastructure.Database.PartnerSync.Repositories
         PartnerId = entity.PartnerId,
         Partner = Enum.Parse<SyncPartner>(entity.Partner.Name, true),
         UserId = entity.UserId,
-        Username = entity.Username,
-        Email = entity.Email,
-        PhoneNumber = entity.PhoneNumber,
         ExternalId = entity.ExternalId,
         DateLastRedirect = entity.DateLastRedirect,
         DateCreated = entity.DateCreated,
@@ -48,9 +45,6 @@ namespace Yoma.Core.Infrastructure.Database.PartnerSync.Repositories
         Id = item.Id,
         PartnerId = item.PartnerId,
         UserId = item.UserId,
-        Username = item.Username,
-        Email = item.Email,
-        PhoneNumber = item.PhoneNumber,
         ExternalId = item.ExternalId,
         DateLastRedirect = item.DateLastRedirect,
         DateCreated = item.DateCreated,
@@ -71,9 +65,6 @@ namespace Yoma.Core.Infrastructure.Database.PartnerSync.Repositories
 
       item.DateModified = DateTimeOffset.UtcNow;
 
-      entity.Username = item.Username;
-      entity.Email = item.Email;
-      entity.PhoneNumber = item.PhoneNumber;
       entity.ExternalId = item.ExternalId;
       entity.DateLastRedirect = item.DateLastRedirect;
       entity.DateModified = item.DateModified;

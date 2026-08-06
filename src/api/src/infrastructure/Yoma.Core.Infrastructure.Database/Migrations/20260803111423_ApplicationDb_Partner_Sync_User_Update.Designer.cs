@@ -12,18 +12,17 @@ using Yoma.Core.Infrastructure.Database.Context;
 namespace Yoma.Core.Infrastructure.Database.Migrations
 {
   [DbContext(typeof(ApplicationDbContext))]
-  [Migration("20260806184811_ApplicationDb_Custom_Fields_Treasury_Payout")]
-  partial class ApplicationDb_Custom_Fields_Treasury_Payout
+  [Migration("20260803111423_ApplicationDb_Partner_Sync_User_Update")]
+  partial class ApplicationDb_Partner_Sync_User_Update
   {
     /// <inheritdoc />
     protected override void BuildTargetModel(ModelBuilder modelBuilder)
     {
 #pragma warning disable 612, 618
       modelBuilder
-          .HasAnnotation("ProductVersion", "10.0.10")
+          .HasAnnotation("ProductVersion", "10.0.9")
           .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
-      NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "pg_trgm");
       NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
       modelBuilder.Entity("Yoma.Core.Domain.Core.Models.UnnestedValue", b =>
@@ -225,193 +224,6 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.HasIndex("StorageType", "FileType", "ParentId");
 
             b.ToTable("Blob", "Object");
-          });
-
-      modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Core.Entities.CustomFieldDefinition", b =>
-          {
-            b.Property<Guid>("Id")
-                      .ValueGeneratedOnAdd()
-                      .HasColumnType("uuid");
-
-            b.Property<string>("DataType")
-                      .IsRequired()
-                      .HasColumnType("varchar(50)");
-
-            b.Property<DateTimeOffset>("DateCreated")
-                      .HasColumnType("timestamp with time zone");
-
-            b.Property<DateTimeOffset>("DateModified")
-                      .HasColumnType("timestamp with time zone");
-
-            b.Property<string>("Description")
-                      .HasColumnType("varchar(500)");
-
-            b.Property<string>("EntityContext")
-                      .HasColumnType("varchar(100)");
-
-            b.Property<string>("EntityType")
-                      .IsRequired()
-                      .HasColumnType("varchar(50)");
-
-            b.Property<string>("Group")
-                      .IsRequired()
-                      .HasColumnType("varchar(100)");
-
-            b.Property<bool>("IsActive")
-                      .HasColumnType("boolean");
-
-            b.Property<bool>("IsRequired")
-                      .HasColumnType("boolean");
-
-            b.Property<bool>("IsSystem")
-                      .HasColumnType("boolean");
-
-            b.Property<string>("Key")
-                      .IsRequired()
-                      .HasColumnType("varchar(100)");
-
-            b.Property<string>("LookupType")
-                      .HasColumnType("varchar(50)");
-
-            b.Property<int>("SortOrder")
-                      .HasColumnType("integer");
-
-            b.Property<string>("SubGroup")
-                      .HasColumnType("varchar(100)");
-
-            b.Property<bool?>("SupportsMultiple")
-                      .HasColumnType("boolean");
-
-            b.Property<string>("Title")
-                      .IsRequired()
-                      .HasColumnType("varchar(255)");
-
-            b.Property<string>("ValidationErrorMessage")
-                      .HasColumnType("varchar(500)");
-
-            b.Property<string>("ValidationRegex")
-                      .HasColumnType("varchar(500)");
-
-            b.HasKey("Id");
-
-            b.HasIndex("EntityType", "Key")
-                      .IsUnique()
-                      .HasDatabaseName("UX_CustomFieldDefinition_EntityType_Key");
-
-            b.HasIndex("EntityType", "EntityContext", "DataType", "IsRequired", "IsSystem");
-
-            b.HasIndex("EntityType", "EntityContext", "IsActive", "Group", "SubGroup", "SortOrder");
-
-            b.ToTable("CustomFieldDefinition", "Core");
-          });
-
-      modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Core.Entities.CustomFieldOption", b =>
-          {
-            b.Property<Guid>("Id")
-                      .ValueGeneratedOnAdd()
-                      .HasColumnType("uuid");
-
-            b.Property<Guid>("CustomFieldDefinitionId")
-                      .HasColumnType("uuid");
-
-            b.Property<DateTimeOffset>("DateCreated")
-                      .HasColumnType("timestamp with time zone");
-
-            b.Property<DateTimeOffset>("DateModified")
-                      .HasColumnType("timestamp with time zone");
-
-            b.Property<bool>("IsActive")
-                      .HasColumnType("boolean");
-
-            b.Property<string>("Key")
-                      .IsRequired()
-                      .HasColumnType("varchar(100)");
-
-            b.Property<string>("Name")
-                      .IsRequired()
-                      .HasColumnType("varchar(255)");
-
-            b.Property<int>("SortOrder")
-                      .HasColumnType("integer");
-
-            b.HasKey("Id");
-
-            b.HasIndex("CustomFieldDefinitionId", "Key")
-                      .IsUnique();
-
-            b.HasIndex("CustomFieldDefinitionId", "IsActive", "SortOrder");
-
-            b.ToTable("CustomFieldOption", "Core");
-          });
-
-      modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Core.Entities.CustomFieldValue", b =>
-          {
-            b.Property<Guid>("Id")
-                      .ValueGeneratedOnAdd()
-                      .HasColumnType("uuid");
-
-            b.Property<Guid>("CustomFieldDefinitionId")
-                      .HasColumnType("uuid");
-
-            b.Property<DateTimeOffset>("DateCreated")
-                      .HasColumnType("timestamp with time zone");
-
-            b.Property<DateTimeOffset>("DateModified")
-                      .HasColumnType("timestamp with time zone");
-
-            b.Property<Guid?>("MyOpportunityId")
-                      .HasColumnType("uuid");
-
-            b.Property<Guid?>("OpportunityId")
-                      .HasColumnType("uuid");
-
-            b.Property<string>("Value")
-                      .IsRequired()
-                      .HasColumnType("text");
-
-            b.Property<DateTimeOffset?>("ValueDateTime")
-                      .HasColumnType("timestamp with time zone");
-
-            b.Property<decimal?>("ValueNumeric")
-                      .HasColumnType("numeric");
-
-            b.HasKey("Id");
-
-            b.HasIndex("CustomFieldDefinitionId")
-                      .HasDatabaseName("IX_CustomFieldValue_Definition");
-
-            NpgsqlIndexBuilderExtensions.IncludeProperties(b.HasIndex("CustomFieldDefinitionId"), new[] { "OpportunityId", "MyOpportunityId" });
-
-            b.HasIndex("Value")
-                      .HasDatabaseName("IX_CustomFieldValue_Value_GIN_Trgm");
-
-            NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("Value"), "GIN");
-            NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex("Value"), new[] { "gin_trgm_ops" });
-
-            b.HasIndex("CustomFieldDefinitionId", "ValueDateTime")
-                      .HasDatabaseName("IX_CustomFieldValue_Definition_ValueDateTime")
-                      .HasFilter("\"ValueDateTime\" IS NOT NULL");
-
-            NpgsqlIndexBuilderExtensions.IncludeProperties(b.HasIndex("CustomFieldDefinitionId", "ValueDateTime"), new[] { "OpportunityId", "MyOpportunityId" });
-
-            b.HasIndex("CustomFieldDefinitionId", "ValueNumeric")
-                      .HasDatabaseName("IX_CustomFieldValue_Definition_ValueNumeric")
-                      .HasFilter("\"ValueNumeric\" IS NOT NULL");
-
-            NpgsqlIndexBuilderExtensions.IncludeProperties(b.HasIndex("CustomFieldDefinitionId", "ValueNumeric"), new[] { "OpportunityId", "MyOpportunityId" });
-
-            b.HasIndex("MyOpportunityId", "CustomFieldDefinitionId")
-                      .IsUnique()
-                      .HasFilter("\"MyOpportunityId\" IS NOT NULL");
-
-            b.HasIndex("OpportunityId", "CustomFieldDefinitionId")
-                      .IsUnique()
-                      .HasFilter("\"OpportunityId\" IS NOT NULL");
-
-            b.ToTable("CustomFieldValue", "Core", t =>
-                      {
-                    t.HasCheckConstraint("CK_CustomFieldValue_Entity", "(\"OpportunityId\" IS NOT NULL AND \"MyOpportunityId\" IS NULL) OR (\"OpportunityId\" IS NULL AND \"MyOpportunityId\" IS NOT NULL)");
-                  });
           });
 
       modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Core.Entities.DownloadSchedule", b =>
@@ -673,6 +485,15 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
             b.Property<string>("WebsiteURL")
                       .HasColumnType("varchar(2048)");
+
+            b.Property<decimal?>("YomaRewardCumulative")
+                      .HasColumnType("decimal(12,2)");
+
+            b.Property<decimal?>("YomaRewardCumulativeCurrentFinancialYear")
+                      .HasColumnType("decimal(12,2)");
+
+            b.Property<decimal?>("YomaRewardPoolCurrentFinancialYear")
+                      .HasColumnType("decimal(12,2)");
 
             b.Property<decimal?>("ZltoRewardCumulative")
                       .HasColumnType("decimal(12,2)");
@@ -1411,6 +1232,9 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.Property<Guid?>("VerificationStatusId")
                       .HasColumnType("uuid");
 
+            b.Property<decimal?>("YomaReward")
+                      .HasColumnType("decimal(8,2)");
+
             b.Property<decimal?>("ZltoReward")
                       .HasColumnType("decimal(8,2)");
 
@@ -1425,7 +1249,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.HasIndex("UserId", "OpportunityId", "ActionId")
                       .IsUnique();
 
-            b.HasIndex("VerificationStatusId", "DateStart", "DateEnd", "DateCompleted", "ZltoReward", "Recommendable", "StarRating", "DateCreated", "DateModified");
+            b.HasIndex("VerificationStatusId", "DateStart", "DateEnd", "DateCompleted", "ZltoReward", "YomaReward", "Recommendable", "StarRating", "DateCreated", "DateModified");
 
             b.ToTable("MyOpportunity", "Opportunity");
           });
@@ -1539,17 +1363,11 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.Property<DateTimeOffset>("DateCreated")
                       .HasColumnType("timestamp with time zone");
 
-            b.Property<string>("DisplayName")
-                      .IsRequired()
-                      .HasColumnType("varchar(125)");
-
             b.Property<string>("Name")
                       .IsRequired()
                       .HasColumnType("varchar(20)");
 
             b.HasKey("Id");
-
-            b.HasIndex("DisplayName");
 
             b.HasIndex("Name")
                       .IsUnique();
@@ -1680,6 +1498,15 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
             b.Property<string>("VerificationMethod")
                       .HasColumnType("varchar(20)");
+
+            b.Property<decimal?>("YomaReward")
+                      .HasColumnType("decimal(8,2)");
+
+            b.Property<decimal?>("YomaRewardCumulative")
+                      .HasColumnType("decimal(12,2)");
+
+            b.Property<decimal?>("YomaRewardPool")
+                      .HasColumnType("decimal(12,2)");
 
             b.Property<decimal?>("ZltoReward")
                       .HasColumnType("decimal(8,2)");
@@ -1983,46 +1810,25 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.Property<DateTimeOffset>("DateModified")
                       .HasColumnType("timestamp with time zone");
 
-            b.Property<string>("Email")
-                      .HasColumnType("text");
-
             b.Property<string>("ExternalId")
                       .HasColumnType("text");
 
             b.Property<Guid>("PartnerId")
                       .HasColumnType("uuid");
 
-            b.Property<string>("PhoneNumber")
-                      .HasColumnType("text");
-
             b.Property<Guid>("UserId")
                       .HasColumnType("uuid");
-
-            b.Property<string>("Username")
-                      .IsRequired()
-                      .HasColumnType("text");
 
             b.HasKey("Id")
                       .HasName("PK_PartnerSync_User");
 
             b.HasIndex("UserId");
 
-            b.HasIndex("PartnerId", "Email")
-                      .IsUnique();
-
             b.HasIndex("PartnerId", "ExternalId")
-                      .IsUnique();
-
-            b.HasIndex("PartnerId", "PhoneNumber")
                       .IsUnique();
 
             b.HasIndex("PartnerId", "UserId")
                       .IsUnique();
-
-            b.HasIndex("PartnerId", "Username")
-                      .IsUnique();
-
-            b.HasIndex("PartnerId", "Username", "Email", "PhoneNumber", "ExternalId", "DateCreated", "DateModified");
 
             b.ToTable("User", "PartnerSync");
           });
@@ -2096,96 +1902,6 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.HasIndex("SyncType", "EntityType", "PartnerId", "EntityExternalId", "StatusId", "DateModified");
 
             b.ToTable("ProcessingLog", "PartnerSync");
-          });
-
-      modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Payout.Entities.Lookups.PayoutTransactionStatus", b =>
-          {
-            b.Property<Guid>("Id")
-                      .ValueGeneratedOnAdd()
-                      .HasColumnType("uuid");
-
-            b.Property<DateTimeOffset>("DateCreated")
-                      .HasColumnType("timestamp with time zone");
-
-            b.Property<string>("Name")
-                      .IsRequired()
-                      .HasColumnType("varchar(30)");
-
-            b.HasKey("Id")
-                      .HasName("PK_Payout_TransactionStatus");
-
-            b.HasIndex("Name")
-                      .IsUnique()
-                      .HasDatabaseName("IX_Payout_TransactionStatus_Name");
-
-            b.ToTable("TransactionStatus", "Payout");
-          });
-
-      modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Payout.Entities.PayoutTransaction", b =>
-          {
-            b.Property<Guid>("Id")
-                      .ValueGeneratedOnAdd()
-                      .HasColumnType("uuid");
-
-            b.Property<decimal>("Amount")
-                      .HasColumnType("decimal(12,2)");
-
-            b.Property<string>("Currency")
-                      .IsRequired()
-                      .HasColumnType("varchar(10)");
-
-            b.Property<DateTimeOffset>("DateCreated")
-                      .HasColumnType("timestamp with time zone");
-
-            b.Property<DateTimeOffset?>("DateLastReconciled")
-                      .HasColumnType("timestamp with time zone");
-
-            b.Property<DateTimeOffset>("DateModified")
-                      .HasColumnType("timestamp with time zone");
-
-            b.Property<string>("ErrorReason")
-                      .HasColumnType("text");
-
-            b.Property<DateTimeOffset?>("ExpiresAt")
-                      .HasColumnType("timestamp with time zone");
-
-            b.Property<string>("Provider")
-                      .IsRequired()
-                      .HasColumnType("varchar(25)");
-
-            b.Property<byte?>("RetryCount")
-                      .HasColumnType("smallint");
-
-            b.Property<DateTimeOffset?>("RewardReservationExpiresAt")
-                      .HasColumnType("timestamp with time zone");
-
-            b.Property<Guid>("StatusId")
-                      .HasColumnType("uuid");
-
-            b.Property<string>("TransactionId")
-                      .HasColumnType("varchar(50)");
-
-            b.Property<string>("Type")
-                      .IsRequired()
-                      .HasColumnType("varchar(25)");
-
-            b.Property<Guid>("UserId")
-                      .HasColumnType("uuid");
-
-            b.HasKey("Id")
-                      .HasName("PK_Payout_Transaction");
-
-            b.HasIndex("StatusId")
-                      .HasDatabaseName("IX_Payout_Transaction_StatusId");
-
-            b.HasIndex("Provider", "TransactionId")
-                      .IsUnique()
-                      .HasDatabaseName("IX_Payout_Transaction_Provider_TransactionId");
-
-            b.HasIndex("UserId", "StatusId", "DateCreated", "DateModified")
-                      .HasDatabaseName("IX_Payout_Transaction_UserId_StatusId_DateCreated_DateModified");
-
-            b.ToTable("Transaction", "Payout");
           });
 
       modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Referral.Entities.Block", b =>
@@ -2774,9 +2490,6 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.Property<Guid?>("MyOpportunityId")
                       .HasColumnType("uuid");
 
-            b.Property<Guid?>("PayoutTransactionId")
-                      .HasColumnType("uuid");
-
             b.Property<string>("Provider")
                       .IsRequired()
                       .ValueGeneratedOnAdd()
@@ -2785,9 +2498,6 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
             b.Property<Guid?>("ReferralLinkUsageId")
                       .HasColumnType("uuid");
-
-            b.Property<DateTimeOffset?>("ReservationExpiresAt")
-                      .HasColumnType("timestamp with time zone");
 
             b.Property<byte?>("RetryCount")
                       .HasColumnType("smallint");
@@ -2809,19 +2519,15 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
             b.HasIndex("MyOpportunityId");
 
-            b.HasIndex("PayoutTransactionId");
-
             b.HasIndex("ReferralLinkUsageId");
 
             b.HasIndex("StatusId");
 
             b.HasIndex("Provider", "StatusId", "DateCreated", "DateModified");
 
-            b.HasIndex("UserId", "SourceEntityType", "MyOpportunityId", "ReferralLinkUsageId", "PayoutTransactionId")
+            b.HasIndex("UserId", "SourceEntityType", "MyOpportunityId", "ReferralLinkUsageId")
                       .IsUnique()
                       .HasFilter("\"Provider\" = 'ZLTO'");
-
-            NpgsqlIndexBuilderExtensions.AreNullsDistinct(b.HasIndex("UserId", "SourceEntityType", "MyOpportunityId", "ReferralLinkUsageId", "PayoutTransactionId"), false);
 
             b.ToTable("Transaction", "Reward");
           });
@@ -3157,6 +2863,15 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                       .ValueGeneratedOnAdd()
                       .HasColumnType("uuid");
 
+            b.Property<decimal?>("ChimoneyCumulativeCurrentFinancialYearInUSD")
+                      .HasColumnType("decimal(12,2)");
+
+            b.Property<decimal?>("ChimoneyCumulativeInUSD")
+                      .HasColumnType("decimal(12,2)");
+
+            b.Property<decimal?>("ChimoneyPoolCurrentFinancialYearInUSD")
+                      .HasColumnType("decimal(12,2)");
+
             b.Property<decimal>("ConversionRateZltoUsd")
                       .HasColumnType("decimal(18,10)");
 
@@ -3180,15 +2895,6 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
             b.Property<Guid>("ModifiedByUserId")
                       .HasColumnType("uuid");
-
-            b.Property<decimal?>("PayoutCumulativeCurrentFinancialYearInUsd")
-                      .HasColumnType("decimal(12,2)");
-
-            b.Property<decimal?>("PayoutCumulativeInUsd")
-                      .HasColumnType("decimal(12,2)");
-
-            b.Property<decimal?>("PayoutPoolCurrentFinancialYearInUsd")
-                      .HasColumnType("decimal(12,2)");
 
             b.Property<decimal?>("ZltoRewardCumulative")
                       .HasColumnType("decimal(12,2)");
@@ -3231,7 +2937,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.HasOne("Yoma.Core.Infrastructure.Database.ActionLink.Entities.Lookups.LinkStatus", "Status")
                       .WithMany()
                       .HasForeignKey("StatusId")
-                      .OnDelete(DeleteBehavior.NoAction)
+                      .OnDelete(DeleteBehavior.Cascade)
                       .IsRequired();
 
             b.Navigation("CreatedByUser");
@@ -3248,13 +2954,13 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.HasOne("Yoma.Core.Infrastructure.Database.ActionLink.Entities.Link", "Link")
                       .WithMany()
                       .HasForeignKey("LinkId")
-                      .OnDelete(DeleteBehavior.NoAction)
+                      .OnDelete(DeleteBehavior.Cascade)
                       .IsRequired();
 
             b.HasOne("Yoma.Core.Infrastructure.Database.Entity.Entities.User", "User")
                       .WithMany()
                       .HasForeignKey("UserId")
-                      .OnDelete(DeleteBehavior.NoAction)
+                      .OnDelete(DeleteBehavior.Cascade)
                       .IsRequired();
 
             b.Navigation("Link");
@@ -3271,36 +2977,6 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.Navigation("Parent");
           });
 
-      modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Core.Entities.CustomFieldOption", b =>
-          {
-            b.HasOne("Yoma.Core.Infrastructure.Database.Core.Entities.CustomFieldDefinition", null)
-                      .WithMany("Options")
-                      .HasForeignKey("CustomFieldDefinitionId")
-                      .OnDelete(DeleteBehavior.NoAction)
-                      .IsRequired();
-          });
-
-      modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Core.Entities.CustomFieldValue", b =>
-          {
-            b.HasOne("Yoma.Core.Infrastructure.Database.Core.Entities.CustomFieldDefinition", "CustomFieldDefinition")
-                      .WithMany()
-                      .HasForeignKey("CustomFieldDefinitionId")
-                      .OnDelete(DeleteBehavior.NoAction)
-                      .IsRequired();
-
-            b.HasOne("Yoma.Core.Infrastructure.Database.MyOpportunity.Entities.MyOpportunity", null)
-                      .WithMany("CustomFieldValues")
-                      .HasForeignKey("MyOpportunityId")
-                      .OnDelete(DeleteBehavior.NoAction);
-
-            b.HasOne("Yoma.Core.Infrastructure.Database.Opportunity.Entities.Opportunity", null)
-                      .WithMany("CustomFieldValues")
-                      .HasForeignKey("OpportunityId")
-                      .OnDelete(DeleteBehavior.NoAction);
-
-            b.Navigation("CustomFieldDefinition");
-          });
-
       modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Core.Entities.DownloadSchedule", b =>
           {
             b.HasOne("Yoma.Core.Infrastructure.Database.Core.Entities.BlobObject", "File")
@@ -3310,13 +2986,13 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.HasOne("Yoma.Core.Infrastructure.Database.Core.Entities.Lookups.DownloadScheduleStatus", "Status")
                       .WithMany()
                       .HasForeignKey("StatusId")
-                      .OnDelete(DeleteBehavior.NoAction)
+                      .OnDelete(DeleteBehavior.Cascade)
                       .IsRequired();
 
             b.HasOne("Yoma.Core.Infrastructure.Database.Entity.Entities.User", "User")
                       .WithMany()
                       .HasForeignKey("UserId")
-                      .OnDelete(DeleteBehavior.NoAction)
+                      .OnDelete(DeleteBehavior.Cascade)
                       .IsRequired();
 
             b.Navigation("File");
@@ -3351,7 +3027,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.HasOne("Yoma.Core.Infrastructure.Database.Entity.Entities.Lookups.OrganizationStatus", "Status")
                       .WithMany()
                       .HasForeignKey("StatusId")
-                      .OnDelete(DeleteBehavior.NoAction)
+                      .OnDelete(DeleteBehavior.Cascade)
                       .IsRequired();
 
             b.Navigation("Country");
@@ -3370,13 +3046,13 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.HasOne("Yoma.Core.Infrastructure.Database.Core.Entities.BlobObject", "File")
                       .WithMany()
                       .HasForeignKey("FileId")
-                      .OnDelete(DeleteBehavior.NoAction)
+                      .OnDelete(DeleteBehavior.Cascade)
                       .IsRequired();
 
             b.HasOne("Yoma.Core.Infrastructure.Database.Entity.Entities.Organization", "Organization")
                       .WithMany("Documents")
                       .HasForeignKey("OrganizationId")
-                      .OnDelete(DeleteBehavior.NoAction)
+                      .OnDelete(DeleteBehavior.Cascade)
                       .IsRequired();
 
             b.Navigation("File");
@@ -3389,13 +3065,13 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.HasOne("Yoma.Core.Infrastructure.Database.Entity.Entities.Organization", "Organization")
                       .WithMany("ProviderTypes")
                       .HasForeignKey("OrganizationId")
-                      .OnDelete(DeleteBehavior.NoAction)
+                      .OnDelete(DeleteBehavior.Cascade)
                       .IsRequired();
 
             b.HasOne("Yoma.Core.Infrastructure.Database.Entity.Entities.Lookups.OrganizationProviderType", "ProviderType")
                       .WithMany()
                       .HasForeignKey("ProviderTypeId")
-                      .OnDelete(DeleteBehavior.NoAction)
+                      .OnDelete(DeleteBehavior.Cascade)
                       .IsRequired();
 
             b.Navigation("Organization");
@@ -3408,13 +3084,13 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.HasOne("Yoma.Core.Infrastructure.Database.Entity.Entities.Organization", "Organization")
                       .WithMany("Administrators")
                       .HasForeignKey("OrganizationId")
-                      .OnDelete(DeleteBehavior.NoAction)
+                      .OnDelete(DeleteBehavior.Cascade)
                       .IsRequired();
 
             b.HasOne("Yoma.Core.Infrastructure.Database.Entity.Entities.User", "User")
                       .WithMany()
                       .HasForeignKey("UserId")
-                      .OnDelete(DeleteBehavior.NoAction)
+                      .OnDelete(DeleteBehavior.Cascade)
                       .IsRequired();
 
             b.Navigation("Organization");
@@ -3454,7 +3130,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.HasOne("Yoma.Core.Infrastructure.Database.Entity.Entities.User", "User")
                       .WithMany()
                       .HasForeignKey("UserId")
-                      .OnDelete(DeleteBehavior.NoAction)
+                      .OnDelete(DeleteBehavior.Cascade)
                       .IsRequired();
 
             b.Navigation("User");
@@ -3465,13 +3141,13 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.HasOne("Yoma.Core.Infrastructure.Database.Lookups.Entities.Skill", "Skill")
                       .WithMany()
                       .HasForeignKey("SkillId")
-                      .OnDelete(DeleteBehavior.NoAction)
+                      .OnDelete(DeleteBehavior.Cascade)
                       .IsRequired();
 
             b.HasOne("Yoma.Core.Infrastructure.Database.Entity.Entities.User", "User")
                       .WithMany("Skills")
                       .HasForeignKey("UserId")
-                      .OnDelete(DeleteBehavior.NoAction)
+                      .OnDelete(DeleteBehavior.Cascade)
                       .IsRequired();
 
             b.Navigation("Skill");
@@ -3484,13 +3160,13 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.HasOne("Yoma.Core.Infrastructure.Database.Entity.Entities.Organization", "Organization")
                       .WithMany()
                       .HasForeignKey("OrganizationId")
-                      .OnDelete(DeleteBehavior.NoAction)
+                      .OnDelete(DeleteBehavior.Cascade)
                       .IsRequired();
 
             b.HasOne("Yoma.Core.Infrastructure.Database.Entity.Entities.UserSkill", "UserSkill")
                       .WithMany("Organizations")
                       .HasForeignKey("UserSkillId")
-                      .OnDelete(DeleteBehavior.NoAction)
+                      .OnDelete(DeleteBehavior.Cascade)
                       .IsRequired();
 
             b.Navigation("Organization");
@@ -3507,19 +3183,19 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.HasOne("Yoma.Core.Infrastructure.Database.Entity.Entities.Organization", "Organization")
                       .WithMany()
                       .HasForeignKey("OrganizationId")
-                      .OnDelete(DeleteBehavior.NoAction)
+                      .OnDelete(DeleteBehavior.Cascade)
                       .IsRequired();
 
             b.HasOne("Yoma.Core.Infrastructure.Database.Marketplace.Entities.Lookups.StoreAccessControlRuleStatus", "Status")
                       .WithMany()
                       .HasForeignKey("StatusId")
-                      .OnDelete(DeleteBehavior.NoAction)
+                      .OnDelete(DeleteBehavior.Cascade)
                       .IsRequired();
 
             b.HasOne("Yoma.Core.Infrastructure.Database.Lookups.Entities.Country", "StoreCountry")
                       .WithMany()
                       .HasForeignKey("StoreCountryId")
-                      .OnDelete(DeleteBehavior.NoAction)
+                      .OnDelete(DeleteBehavior.Cascade)
                       .IsRequired();
 
             b.Navigation("Gender");
@@ -3536,13 +3212,13 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.HasOne("Yoma.Core.Infrastructure.Database.Opportunity.Entities.Opportunity", "Opportunity")
                       .WithMany()
                       .HasForeignKey("OpportunityId")
-                      .OnDelete(DeleteBehavior.NoAction)
+                      .OnDelete(DeleteBehavior.Cascade)
                       .IsRequired();
 
             b.HasOne("Yoma.Core.Infrastructure.Database.Marketplace.Entities.StoreAccessControlRule", "StoreAccessControlRule")
                       .WithMany("Opportunities")
                       .HasForeignKey("StoreAccessControlRuleId")
-                      .OnDelete(DeleteBehavior.NoAction)
+                      .OnDelete(DeleteBehavior.Cascade)
                       .IsRequired();
 
             b.Navigation("Opportunity");
@@ -3555,13 +3231,13 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.HasOne("Yoma.Core.Infrastructure.Database.Marketplace.Entities.Lookups.TransactionStatus", "Status")
                       .WithMany()
                       .HasForeignKey("StatusId")
-                      .OnDelete(DeleteBehavior.NoAction)
+                      .OnDelete(DeleteBehavior.Cascade)
                       .IsRequired();
 
             b.HasOne("Yoma.Core.Infrastructure.Database.Entity.Entities.User", "User")
                       .WithMany()
                       .HasForeignKey("UserId")
-                      .OnDelete(DeleteBehavior.NoAction)
+                      .OnDelete(DeleteBehavior.Cascade)
                       .IsRequired();
 
             b.Navigation("Status");
@@ -3574,7 +3250,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.HasOne("Yoma.Core.Infrastructure.Database.MyOpportunity.Entities.Lookups.MyOpportunityAction", "Action")
                       .WithMany()
                       .HasForeignKey("ActionId")
-                      .OnDelete(DeleteBehavior.NoAction)
+                      .OnDelete(DeleteBehavior.Cascade)
                       .IsRequired();
 
             b.HasOne("Yoma.Core.Infrastructure.Database.Lookups.Entities.TimeInterval", "CommitmentInterval")
@@ -3584,13 +3260,13 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.HasOne("Yoma.Core.Infrastructure.Database.Opportunity.Entities.Opportunity", "Opportunity")
                       .WithMany()
                       .HasForeignKey("OpportunityId")
-                      .OnDelete(DeleteBehavior.NoAction)
+                      .OnDelete(DeleteBehavior.Cascade)
                       .IsRequired();
 
             b.HasOne("Yoma.Core.Infrastructure.Database.Entity.Entities.User", "User")
                       .WithMany()
                       .HasForeignKey("UserId")
-                      .OnDelete(DeleteBehavior.NoAction)
+                      .OnDelete(DeleteBehavior.Cascade)
                       .IsRequired();
 
             b.HasOne("Yoma.Core.Infrastructure.Database.MyOpportunity.Entities.Lookups.MyOpportunityVerificationStatus", "VerificationStatus")
@@ -3617,13 +3293,13 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.HasOne("Yoma.Core.Infrastructure.Database.MyOpportunity.Entities.MyOpportunity", "MyOpportunity")
                       .WithMany("Verifications")
                       .HasForeignKey("MyOpportunityId")
-                      .OnDelete(DeleteBehavior.NoAction)
+                      .OnDelete(DeleteBehavior.Cascade)
                       .IsRequired();
 
             b.HasOne("Yoma.Core.Infrastructure.Database.Opportunity.Entities.Lookups.OpportunityVerificationType", "VerificationType")
                       .WithMany()
                       .HasForeignKey("VerificationTypeId")
-                      .OnDelete(DeleteBehavior.NoAction)
+                      .OnDelete(DeleteBehavior.Cascade)
                       .IsRequired();
 
             b.Navigation("File");
@@ -3662,19 +3338,19 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.HasOne("Yoma.Core.Infrastructure.Database.Entity.Entities.Organization", "Organization")
                       .WithMany()
                       .HasForeignKey("OrganizationId")
-                      .OnDelete(DeleteBehavior.NoAction)
+                      .OnDelete(DeleteBehavior.Cascade)
                       .IsRequired();
 
             b.HasOne("Yoma.Core.Infrastructure.Database.Opportunity.Entities.Lookups.OpportunityStatus", "Status")
                       .WithMany()
                       .HasForeignKey("StatusId")
-                      .OnDelete(DeleteBehavior.NoAction)
+                      .OnDelete(DeleteBehavior.Cascade)
                       .IsRequired();
 
             b.HasOne("Yoma.Core.Infrastructure.Database.Opportunity.Entities.Lookups.OpportunityType", "Type")
                       .WithMany()
                       .HasForeignKey("TypeId")
-                      .OnDelete(DeleteBehavior.NoAction)
+                      .OnDelete(DeleteBehavior.Cascade)
                       .IsRequired();
 
             b.Navigation("CommitmentInterval");
@@ -3699,13 +3375,13 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.HasOne("Yoma.Core.Infrastructure.Database.Opportunity.Entities.Lookups.OpportunityCategory", "Category")
                       .WithMany()
                       .HasForeignKey("CategoryId")
-                      .OnDelete(DeleteBehavior.NoAction)
+                      .OnDelete(DeleteBehavior.Cascade)
                       .IsRequired();
 
             b.HasOne("Yoma.Core.Infrastructure.Database.Opportunity.Entities.Opportunity", "Opportunity")
                       .WithMany("Categories")
                       .HasForeignKey("OpportunityId")
-                      .OnDelete(DeleteBehavior.NoAction)
+                      .OnDelete(DeleteBehavior.Cascade)
                       .IsRequired();
 
             b.Navigation("Category");
@@ -3718,13 +3394,13 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.HasOne("Yoma.Core.Infrastructure.Database.Lookups.Entities.Country", "Country")
                       .WithMany()
                       .HasForeignKey("CountryId")
-                      .OnDelete(DeleteBehavior.NoAction)
+                      .OnDelete(DeleteBehavior.Cascade)
                       .IsRequired();
 
             b.HasOne("Yoma.Core.Infrastructure.Database.Opportunity.Entities.Opportunity", "Opportunity")
                       .WithMany("Countries")
                       .HasForeignKey("OpportunityId")
-                      .OnDelete(DeleteBehavior.NoAction)
+                      .OnDelete(DeleteBehavior.Cascade)
                       .IsRequired();
 
             b.Navigation("Country");
@@ -3737,13 +3413,13 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.HasOne("Yoma.Core.Infrastructure.Database.Lookups.Entities.Language", "Language")
                       .WithMany()
                       .HasForeignKey("LanguageId")
-                      .OnDelete(DeleteBehavior.NoAction)
+                      .OnDelete(DeleteBehavior.Cascade)
                       .IsRequired();
 
             b.HasOne("Yoma.Core.Infrastructure.Database.Opportunity.Entities.Opportunity", "Opportunity")
                       .WithMany("Languages")
                       .HasForeignKey("OpportunityId")
-                      .OnDelete(DeleteBehavior.NoAction)
+                      .OnDelete(DeleteBehavior.Cascade)
                       .IsRequired();
 
             b.Navigation("Language");
@@ -3756,13 +3432,13 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.HasOne("Yoma.Core.Infrastructure.Database.Opportunity.Entities.Opportunity", "Opportunity")
                       .WithMany("Skills")
                       .HasForeignKey("OpportunityId")
-                      .OnDelete(DeleteBehavior.NoAction)
+                      .OnDelete(DeleteBehavior.Cascade)
                       .IsRequired();
 
             b.HasOne("Yoma.Core.Infrastructure.Database.Lookups.Entities.Skill", "Skill")
                       .WithMany()
                       .HasForeignKey("SkillId")
-                      .OnDelete(DeleteBehavior.NoAction)
+                      .OnDelete(DeleteBehavior.Cascade)
                       .IsRequired();
 
             b.Navigation("Opportunity");
@@ -3775,13 +3451,13 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.HasOne("Yoma.Core.Infrastructure.Database.Opportunity.Entities.Opportunity", "Opportunity")
                       .WithMany("VerificationTypes")
                       .HasForeignKey("OpportunityId")
-                      .OnDelete(DeleteBehavior.NoAction)
+                      .OnDelete(DeleteBehavior.Cascade)
                       .IsRequired();
 
             b.HasOne("Yoma.Core.Infrastructure.Database.Opportunity.Entities.Lookups.OpportunityVerificationType", "VerificationType")
                       .WithMany()
                       .HasForeignKey("VerificationTypeId")
-                      .OnDelete(DeleteBehavior.NoAction)
+                      .OnDelete(DeleteBehavior.Cascade)
                       .IsRequired();
 
             b.Navigation("Opportunity");
@@ -3794,7 +3470,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.HasOne("Yoma.Core.Infrastructure.Database.PartnerSync.Entities.Lookups.Partner", "Partner")
                       .WithMany()
                       .HasForeignKey("PartnerId")
-                      .OnDelete(DeleteBehavior.NoAction)
+                      .OnDelete(DeleteBehavior.Cascade)
                       .IsRequired();
 
             b.Navigation("Partner");
@@ -3835,13 +3511,13 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.HasOne("Yoma.Core.Infrastructure.Database.PartnerSync.Entities.Lookups.Partner", "Partner")
                       .WithMany()
                       .HasForeignKey("PartnerId")
-                      .OnDelete(DeleteBehavior.NoAction)
+                      .OnDelete(DeleteBehavior.Cascade)
                       .IsRequired();
 
             b.HasOne("Yoma.Core.Infrastructure.Database.PartnerSync.Entities.Lookups.ProcessingStatus", "Status")
                       .WithMany()
                       .HasForeignKey("StatusId")
-                      .OnDelete(DeleteBehavior.NoAction)
+                      .OnDelete(DeleteBehavior.Cascade)
                       .IsRequired();
 
             b.Navigation("MyOpportunity");
@@ -3851,25 +3527,6 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.Navigation("Partner");
 
             b.Navigation("Status");
-          });
-
-      modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Payout.Entities.PayoutTransaction", b =>
-          {
-            b.HasOne("Yoma.Core.Infrastructure.Database.Payout.Entities.Lookups.PayoutTransactionStatus", "Status")
-                      .WithMany()
-                      .HasForeignKey("StatusId")
-                      .OnDelete(DeleteBehavior.NoAction)
-                      .IsRequired();
-
-            b.HasOne("Yoma.Core.Infrastructure.Database.Entity.Entities.User", "User")
-                      .WithMany()
-                      .HasForeignKey("UserId")
-                      .OnDelete(DeleteBehavior.NoAction)
-                      .IsRequired();
-
-            b.Navigation("Status");
-
-            b.Navigation("User");
           });
 
       modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Referral.Entities.Block", b =>
@@ -3889,7 +3546,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.HasOne("Yoma.Core.Infrastructure.Database.Referral.Entities.Lookups.BlockReason", "Reason")
                       .WithMany()
                       .HasForeignKey("ReasonId")
-                      .OnDelete(DeleteBehavior.NoAction)
+                      .OnDelete(DeleteBehavior.Cascade)
                       .IsRequired();
 
             b.HasOne("Yoma.Core.Infrastructure.Database.Entity.Entities.User", "User")
@@ -3912,19 +3569,19 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.HasOne("Yoma.Core.Infrastructure.Database.Referral.Entities.Program", "Program")
                       .WithMany()
                       .HasForeignKey("ProgramId")
-                      .OnDelete(DeleteBehavior.NoAction)
+                      .OnDelete(DeleteBehavior.Cascade)
                       .IsRequired();
 
             b.HasOne("Yoma.Core.Infrastructure.Database.Referral.Entities.Lookups.LinkStatus", "Status")
                       .WithMany()
                       .HasForeignKey("StatusId")
-                      .OnDelete(DeleteBehavior.NoAction)
+                      .OnDelete(DeleteBehavior.Cascade)
                       .IsRequired();
 
             b.HasOne("Yoma.Core.Infrastructure.Database.Entity.Entities.User", "User")
                       .WithMany()
                       .HasForeignKey("UserId")
-                      .OnDelete(DeleteBehavior.NoAction)
+                      .OnDelete(DeleteBehavior.Cascade)
                       .IsRequired();
 
             b.Navigation("Program");
@@ -3939,25 +3596,25 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.HasOne("Yoma.Core.Infrastructure.Database.Referral.Entities.Link", "Link")
                       .WithMany("Usages")
                       .HasForeignKey("LinkId")
-                      .OnDelete(DeleteBehavior.NoAction)
+                      .OnDelete(DeleteBehavior.Cascade)
                       .IsRequired();
 
             b.HasOne("Yoma.Core.Infrastructure.Database.Referral.Entities.Program", "Program")
                       .WithMany()
                       .HasForeignKey("ProgramId")
-                      .OnDelete(DeleteBehavior.NoAction)
+                      .OnDelete(DeleteBehavior.Cascade)
                       .IsRequired();
 
             b.HasOne("Yoma.Core.Infrastructure.Database.Referral.Entities.Lookups.LinkUsageStatus", "Status")
                       .WithMany()
                       .HasForeignKey("StatusId")
-                      .OnDelete(DeleteBehavior.NoAction)
+                      .OnDelete(DeleteBehavior.Cascade)
                       .IsRequired();
 
             b.HasOne("Yoma.Core.Infrastructure.Database.Entity.Entities.User", "User")
                       .WithMany()
                       .HasForeignKey("UserId")
-                      .OnDelete(DeleteBehavior.NoAction)
+                      .OnDelete(DeleteBehavior.Cascade)
                       .IsRequired();
 
             b.Navigation("Link");
@@ -3990,7 +3647,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.HasOne("Yoma.Core.Infrastructure.Database.Referral.Entities.Lookups.ProgramStatus", "Status")
                       .WithMany()
                       .HasForeignKey("StatusId")
-                      .OnDelete(DeleteBehavior.NoAction)
+                      .OnDelete(DeleteBehavior.Cascade)
                       .IsRequired();
 
             b.Navigation("CreatedByUser");
@@ -4007,13 +3664,13 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.HasOne("Yoma.Core.Infrastructure.Database.Lookups.Entities.Country", "Country")
                       .WithMany()
                       .HasForeignKey("CountryId")
-                      .OnDelete(DeleteBehavior.NoAction)
+                      .OnDelete(DeleteBehavior.Cascade)
                       .IsRequired();
 
             b.HasOne("Yoma.Core.Infrastructure.Database.Referral.Entities.Program", "Program")
                       .WithMany("Countries")
                       .HasForeignKey("ProgramId")
-                      .OnDelete(DeleteBehavior.NoAction)
+                      .OnDelete(DeleteBehavior.Cascade)
                       .IsRequired();
 
             b.Navigation("Country");
@@ -4026,7 +3683,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.HasOne("Yoma.Core.Infrastructure.Database.Referral.Entities.Program", "Program")
                       .WithOne("Pathway")
                       .HasForeignKey("Yoma.Core.Infrastructure.Database.Referral.Entities.ProgramPathway", "ProgramId")
-                      .OnDelete(DeleteBehavior.NoAction)
+                      .OnDelete(DeleteBehavior.Cascade)
                       .IsRequired();
 
             b.Navigation("Program");
@@ -4037,7 +3694,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.HasOne("Yoma.Core.Infrastructure.Database.Referral.Entities.ProgramPathway", "Pathway")
                       .WithMany("Steps")
                       .HasForeignKey("PathwayId")
-                      .OnDelete(DeleteBehavior.NoAction)
+                      .OnDelete(DeleteBehavior.Cascade)
                       .IsRequired();
 
             b.Navigation("Pathway");
@@ -4052,7 +3709,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.HasOne("Yoma.Core.Infrastructure.Database.Referral.Entities.ProgramPathwayStep", "Step")
                       .WithMany("Tasks")
                       .HasForeignKey("StepId")
-                      .OnDelete(DeleteBehavior.NoAction)
+                      .OnDelete(DeleteBehavior.Cascade)
                       .IsRequired();
 
             b.Navigation("Opportunity");
@@ -4066,10 +3723,6 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                       .WithMany()
                       .HasForeignKey("MyOpportunityId");
 
-            b.HasOne("Yoma.Core.Infrastructure.Database.Payout.Entities.PayoutTransaction", "PayoutTransaction")
-                      .WithMany()
-                      .HasForeignKey("PayoutTransactionId");
-
             b.HasOne("Yoma.Core.Infrastructure.Database.Referral.Entities.LinkUsage", "ReferralLinkUsage")
                       .WithMany()
                       .HasForeignKey("ReferralLinkUsageId");
@@ -4077,18 +3730,16 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.HasOne("Yoma.Core.Infrastructure.Database.Reward.Entities.Lookups.RewardTransactionStatus", "Status")
                       .WithMany()
                       .HasForeignKey("StatusId")
-                      .OnDelete(DeleteBehavior.NoAction)
+                      .OnDelete(DeleteBehavior.Cascade)
                       .IsRequired();
 
             b.HasOne("Yoma.Core.Infrastructure.Database.Entity.Entities.User", "User")
                       .WithMany()
                       .HasForeignKey("UserId")
-                      .OnDelete(DeleteBehavior.NoAction)
+                      .OnDelete(DeleteBehavior.Cascade)
                       .IsRequired();
 
             b.Navigation("MyOpportunity");
-
-            b.Navigation("PayoutTransaction");
 
             b.Navigation("ReferralLinkUsage");
 
@@ -4102,13 +3753,13 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.HasOne("Yoma.Core.Infrastructure.Database.Reward.Entities.Lookups.WalletCreationStatus", "Status")
                       .WithMany()
                       .HasForeignKey("StatusId")
-                      .OnDelete(DeleteBehavior.NoAction)
+                      .OnDelete(DeleteBehavior.Cascade)
                       .IsRequired();
 
             b.HasOne("Yoma.Core.Infrastructure.Database.Entity.Entities.User", "User")
                       .WithMany()
                       .HasForeignKey("UserId")
-                      .OnDelete(DeleteBehavior.NoAction)
+                      .OnDelete(DeleteBehavior.Cascade)
                       .IsRequired();
 
             b.Navigation("Status");
@@ -4121,7 +3772,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.HasOne("Yoma.Core.Infrastructure.Database.SSI.Entities.Lookups.SSISchemaEntity", "SSISchemaEntity")
                       .WithMany("Properties")
                       .HasForeignKey("SSISchemaEntityId")
-                      .OnDelete(DeleteBehavior.NoAction)
+                      .OnDelete(DeleteBehavior.Cascade)
                       .IsRequired();
 
             b.Navigation("SSISchemaEntity");
@@ -4132,13 +3783,13 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.HasOne("Yoma.Core.Infrastructure.Database.SSI.Entities.Lookups.SSISchemaEntity", "SSISchemaEntity")
                       .WithMany("Types")
                       .HasForeignKey("SSISchemaEntityId")
-                      .OnDelete(DeleteBehavior.NoAction)
+                      .OnDelete(DeleteBehavior.Cascade)
                       .IsRequired();
 
             b.HasOne("Yoma.Core.Infrastructure.Database.SSI.Entities.Lookups.SSISchemaType", "SSISchemaType")
                       .WithMany()
                       .HasForeignKey("SSISchemaTypeId")
-                      .OnDelete(DeleteBehavior.NoAction)
+                      .OnDelete(DeleteBehavior.Cascade)
                       .IsRequired();
 
             b.Navigation("SSISchemaEntity");
@@ -4159,13 +3810,13 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.HasOne("Yoma.Core.Infrastructure.Database.SSI.Entities.Lookups.SSISchemaType", "SchemaType")
                       .WithMany()
                       .HasForeignKey("SchemaTypeId")
-                      .OnDelete(DeleteBehavior.NoAction)
+                      .OnDelete(DeleteBehavior.Cascade)
                       .IsRequired();
 
             b.HasOne("Yoma.Core.Infrastructure.Database.SSI.Entities.Lookups.SSICredentialIssuanceStatus", "Status")
                       .WithMany()
                       .HasForeignKey("StatusId")
-                      .OnDelete(DeleteBehavior.NoAction)
+                      .OnDelete(DeleteBehavior.Cascade)
                       .IsRequired();
 
             b.HasOne("Yoma.Core.Infrastructure.Database.Entity.Entities.User", "User")
@@ -4192,7 +3843,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.HasOne("Yoma.Core.Infrastructure.Database.SSI.Entities.Lookups.SSITenantCreationStatus", "Status")
                       .WithMany()
                       .HasForeignKey("StatusId")
-                      .OnDelete(DeleteBehavior.NoAction)
+                      .OnDelete(DeleteBehavior.Cascade)
                       .IsRequired();
 
             b.HasOne("Yoma.Core.Infrastructure.Database.Entity.Entities.User", "User")
@@ -4225,11 +3876,6 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.Navigation("ModifiedByUser");
           });
 
-      modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Core.Entities.CustomFieldDefinition", b =>
-          {
-            b.Navigation("Options");
-          });
-
       modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Entity.Entities.Organization", b =>
           {
             b.Navigation("Administrators");
@@ -4258,8 +3904,6 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
       modelBuilder.Entity("Yoma.Core.Infrastructure.Database.MyOpportunity.Entities.MyOpportunity", b =>
           {
-            b.Navigation("CustomFieldValues");
-
             b.Navigation("Verifications");
           });
 
@@ -4268,8 +3912,6 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.Navigation("Categories");
 
             b.Navigation("Countries");
-
-            b.Navigation("CustomFieldValues");
 
             b.Navigation("Languages");
 

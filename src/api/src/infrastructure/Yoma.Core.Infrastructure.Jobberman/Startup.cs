@@ -73,7 +73,6 @@ namespace Yoma.Core.Infrastructure.Jobberman
 
       scheduledJobs.ForEach(o => BackgroundJob.Delete(o.Key));
 
-      //news feed synchronization
       BackgroundJob.Enqueue<IOpportunityFeedBackgroundService>(s => s.RefreshFeeds(true)); //execute on startup
       RecurringJob.AddOrUpdate<IOpportunityFeedBackgroundService>("Jobberman Opportunity Feed Synchronization", s => s.RefreshFeeds(false), options.PollSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
     }

@@ -2005,7 +2005,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
     private void ParseComputed(Models.Opportunity opportunity, bool baseOnly = false)
     {
       opportunity.SetPublished();
-      opportunity.SyncedInfo = _syncStateService.ListSyncInfo(PartnerSync.EntityType.Opportunity, opportunity.Id, opportunity.URL);
+      opportunity.SyncedInfo = _syncStateService.GetSyncInfo(PartnerSync.EntityType.Opportunity, opportunity.Id, opportunity.URL);
 
       if (baseOnly) return;
 

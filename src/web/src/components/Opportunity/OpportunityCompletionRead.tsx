@@ -327,6 +327,12 @@ export const OpportunityCompletionRead: React.FC<InputProps> = ({
           <div className="font-bold">{commitmentDisplay.label}</div>
         </div>
       )}
+      {commitmentDisplay?.totalHours == null && commitmentDisplay?.label && (
+        <div className="text-gray-dark flex flex-row gap-2 text-sm">
+          <div>Time to complete: </div>
+          <div className="font-bold">{commitmentDisplay.label}</div>
+        </div>
+      )}
     </div>
   );
 };

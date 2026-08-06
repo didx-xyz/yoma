@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -7,12 +7,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="feed-GH.xml" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <EmbeddedResource Include="feed-GH.xml" />
-    <EmbeddedResource Include="feed-NG.xml" />
+    <EmbeddedResource Include="Resources\jobs.sample-GH.xml" />
+    <EmbeddedResource Include="Resources\jobs.sample-NG.xml" />
   </ItemGroup>
 
   <ItemGroup>

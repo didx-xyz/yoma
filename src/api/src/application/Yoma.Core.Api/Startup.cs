@@ -253,6 +253,8 @@ namespace Yoma.Core.Api
     {
       Infrastructure.Jobberman.Startup.Configure_RecurringJobsSyncProvider(configuration);
 
+      Infrastructure.JobJack.Startup.Configure_RecurringJobsSyncProvider(configuration);
+
       Infrastructure.Alison.Startup.Configure_RecurringJobsSyncProvider(configuration);
     }
 
@@ -262,6 +264,8 @@ namespace Yoma.Core.Api
 
       Infrastructure.Jobberman.Startup.ConfigureServices_SyncProvider(services, configuration);
 
+      Infrastructure.JobJack.Startup.ConfigureServices_SyncProvider(services, configuration);
+
       Infrastructure.Alison.Startup.ConfigureServices_SyncProvider(services, configuration);
     }
 
@@ -270,6 +274,8 @@ namespace Yoma.Core.Api
       Infrastructure.SAYouth.Startup.ConfigureServices_InfrastructureSyncProvider(services);
 
       Infrastructure.Jobberman.Startup.ConfigureServices_InfrastructureSyncProvider(services, configuration, appSettings);
+
+      Infrastructure.JobJack.Startup.ConfigureServices_InfrastructureSyncProvider(services, configuration, appSettings);
 
       Infrastructure.Alison.Startup.ConfigureServices_InfrastructureSyncProvider(services, configuration, appSettings);
     }
@@ -355,6 +361,8 @@ namespace Yoma.Core.Api
     private static void ConfigureServiceProvider_InfrastructureDatabaseSyncProviders(IServiceProvider serviceProvider)
     {
       Infrastructure.Jobberman.Startup.Configure_InfrastructureDatabaseSyncProvider(serviceProvider);
+
+      Infrastructure.JobJack.Startup.Configure_InfrastructureDatabaseSyncProvider(serviceProvider);
 
       Infrastructure.Alison.Startup.Configure_InfrastructureDatabaseSyncProvider(serviceProvider);
     }

@@ -16,7 +16,7 @@ spec:
     metadata:
       name: {{ include "keycloak.fullname" . }}
       labels:
-        {{- include "keycloak.labels" . | nindent 4 }}
+        {{- include "keycloak.labels" . | nindent 8 }}
     spec:
       restartPolicy: Never
       {{- if .Values.postInstallHook.initContainers }}

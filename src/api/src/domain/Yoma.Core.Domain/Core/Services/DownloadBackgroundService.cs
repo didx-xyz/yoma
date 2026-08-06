@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
+using System.Net.Mime;
 using System.Transactions;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
@@ -111,7 +112,7 @@ namespace Yoma.Core.Domain.Core.Services
 
                   (fileName, bytes) = _opportunityInfoService.ExportToCSV(filterOpportunities, false, true);
 
-                  files.Add(FileHelper.FromByteArray(fileName, "text/csv", bytes));
+                  files.Add(FileHelper.FromByteArray(fileName, MediaTypeNames.Text.Csv, bytes));
 
                   notificationMessage = "Opportunities CSV Export";
                   break;
@@ -124,7 +125,7 @@ namespace Yoma.Core.Domain.Core.Services
 
                   (fileName, bytes) = _myOpportunityService.ExportToCSV(filterMyOpportunityVerifications, false, true);
 
-                  files.Add(FileHelper.FromByteArray(fileName, "text/csv", bytes));
+                  files.Add(FileHelper.FromByteArray(fileName, MediaTypeNames.Text.Csv, bytes));
 
                   notificationMessage = "Opportunity Completions CSV Export";
                   break;
