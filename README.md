@@ -8,6 +8,10 @@ Yoma is a comprehensive platform with multiple components working together to de
 - [API Backend](./src/api/README.md) - .NET 9 API powering the platform
 - [Keycloak Integration](./src/keycloak/README.md) - Authentication and authorization services
 
+## 🤖 AI-Assisted Development
+
+This repo follows the [AGENTS.md](./AGENTS.md) standard for AI coding agents (Claude Code, Codex, Cursor, Copilot, etc.), with component-specific instructions in `src/api/AGENTS.md` and `src/web/AGENTS.md`. Feature plans and session handoff documents live in [docs/work](./docs/work/README.md).
+
 ## 👥 User Roles
 
 Yoma Web supports multiple user roles with tailored experiences:
