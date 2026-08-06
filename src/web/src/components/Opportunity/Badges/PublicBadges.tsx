@@ -1,11 +1,10 @@
-import Image from "next/image";
-import iconClock from "public/images/icon-clock.svg";
 import { useMemo } from "react";
 import {
+  IoMdArrowUp,
   IoMdCalendar,
-  IoMdCloudUpload,
   IoMdPerson,
   IoMdPlay,
+  IoMdTime,
   IoMdWarning,
 } from "react-icons/io";
 import {
@@ -54,14 +53,7 @@ const PublicBadges: React.FC<BadgesProps> = ({
           {...(showToolTips && { "data-tip": "Time needed" })}
         >
           <span className="badge badge-sm border border-green-200 bg-green-50 whitespace-nowrap text-green-700">
-            <Image
-              src={iconClock}
-              alt="Icon Clock"
-              width={16}
-              className="h-auto"
-              sizes="100vw"
-              priority={true}
-            />
+            <IoMdTime className="h-4 w-4" />
             <span className="ml-1">
               {commitmentDisplay.totalHours != null
                 ? `${commitmentDisplay.totalHours} ${commitmentDisplay.totalHours === 1 ? "hour" : "hours"}`
@@ -246,7 +238,7 @@ const PublicBadges: React.FC<BadgesProps> = ({
                 })}
               >
                 <span className="badge badge-sm border border-red-200 bg-red-50 whitespace-nowrap text-red-600">
-                  <IoMdCloudUpload className="h-4 w-4" />
+                  <IoMdArrowUp className="h-4 w-4" />
                   <span className="ml-1">Upload Only</span>
                 </span>
               </div>

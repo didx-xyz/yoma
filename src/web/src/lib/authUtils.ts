@@ -4,12 +4,20 @@ import { COOKIE_KEYCLOAK_SESSION } from "~/lib/constants";
 import analytics from "~/lib/analytics";
 import { fetchClientEnv } from "~/lib/utils";
 
-export const handleUserSignIn = async (currentLanguage: string) => {
+export const handleUserSignIn = async (
+  currentLanguage: string,
+  // optionally return the user to a specific url after signing in (defaults to the current page).
+  // used to resume an action the user attempted whilst anonymous e.g. starting an opportunity
+  callbackUrlOverride?: string,
+) => {
   // 📊 ANALYTICS: track login attempt
   analytics.auth.loginAttempt("keycloak");
 
   // ensure signInAgain query string parameter is not present
-  const currentUrl = new URL(window.location.href);
+  const currentUrl = new URL(
+    callbackUrlOverride ?? window.location.href,
+    window.location.origin,
+  );
   const searchParams = currentUrl.searchParams;
   searchParams.delete("signInAgain");
 

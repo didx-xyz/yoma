@@ -3,18 +3,20 @@ import axios from "axios";
 import { useAtomValue } from "jotai";
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import iconClock from "public/images/icon-clock.svg";
-import iconDifficulty from "public/images/icon-difficulty.svg";
-import iconLanguage from "public/images/icon-language.svg";
-import iconLocation from "public/images/icon-location.svg";
-import iconSkills from "public/images/icon-skills.svg";
-import iconTopics from "public/images/icon-topics.svg";
 import { type ParsedUrlQuery } from "querystring";
 import { type ReactElement } from "react";
-import { IoMdArrowRoundBack, IoMdPerson } from "react-icons/io";
+import {
+  IoMdArrowRoundBack,
+  IoMdGlobe,
+  IoMdPerson,
+  IoMdPin,
+  IoMdPricetags,
+  IoMdSchool,
+  IoMdSpeedometer,
+  IoMdTime,
+} from "react-icons/io";
 import Moment from "react-moment";
 import { getOpportunityInfoByIdAdminOrgAdminOrUser } from "~/api/services/opportunities";
 import {
@@ -301,14 +303,7 @@ const OpportunityDetails: NextPageWithLayout<{
                   {(opportunity?.skills?.length ?? 0) > 0 && (
                     <div className="pb-4">
                       <div className="flex flex-row items-center gap-1 text-sm font-bold">
-                        <Image
-                          src={iconSkills}
-                          alt="Icon Skills"
-                          width={20}
-                          className="h-auto"
-                          sizes="100vw"
-                          priority={true}
-                        />
+                        <IoMdSchool className="text-green h-5 w-5" />
 
                         <span className="ml-1">Skills you will learn</span>
                       </div>
@@ -329,14 +324,7 @@ const OpportunityDetails: NextPageWithLayout<{
                     !!commitmentSummary && (
                       <div className="py-4 first:pt-0 last:pb-0">
                         <div className="flex flex-row items-center gap-1 text-sm font-bold">
-                          <Image
-                            src={iconClock}
-                            alt="Icon Clock"
-                            width={20}
-                            className="h-auto"
-                            sizes="100vw"
-                            priority={true}
-                          />
+                          <IoMdTime className="text-green h-5 w-5" />
 
                           <span className="ml-1">
                             How much time you will need
@@ -358,14 +346,7 @@ const OpportunityDetails: NextPageWithLayout<{
                   {(opportunity?.categories?.length ?? 0) > 0 && (
                     <div className="py-4 first:pt-0 last:pb-0">
                       <div className="flex flex-row items-center gap-1 text-sm font-bold">
-                        <Image
-                          src={iconTopics}
-                          alt="Icon Topics"
-                          width={20}
-                          className="h-auto"
-                          sizes="100vw"
-                          priority={true}
-                        />
+                        <IoMdPricetags className="text-green h-5 w-5" />
 
                         <span className="ml-1">Topics</span>
                       </div>
@@ -384,14 +365,7 @@ const OpportunityDetails: NextPageWithLayout<{
                   {(opportunity?.languages?.length ?? 0) > 0 && (
                     <div className="py-4 first:pt-0 last:pb-0">
                       <div className="my-2 flex flex-row items-center gap-1 text-sm font-bold">
-                        <Image
-                          src={iconLanguage}
-                          alt="Icon Language"
-                          width={20}
-                          className="h-auto"
-                          sizes="100vw"
-                          priority={true}
-                        />
+                        <IoMdGlobe className="text-green h-5 w-5" />
 
                         <span className="ml-1">Languages</span>
                       </div>
@@ -410,14 +384,7 @@ const OpportunityDetails: NextPageWithLayout<{
                   {!!opportunity?.difficulty && (
                     <div className="py-4 first:pt-0 last:pb-0">
                       <div className="flex flex-row items-center gap-1 text-sm font-bold">
-                        <Image
-                          src={iconDifficulty}
-                          alt="Icon Difficulty"
-                          width={20}
-                          className="h-auto"
-                          sizes="100vw"
-                          priority={true}
-                        />
+                        <IoMdSpeedometer className="text-green h-5 w-5" />
 
                         <span className="ml-1">Course difficulty</span>
                       </div>
@@ -427,14 +394,7 @@ const OpportunityDetails: NextPageWithLayout<{
                   {(opportunity?.countries?.length ?? 0) > 0 && (
                     <div className="pt-4 first:pt-0">
                       <div className="flex flex-row items-center gap-1 text-sm font-bold">
-                        <Image
-                          src={iconLocation}
-                          alt="Icon Location"
-                          width={20}
-                          className="h-auto"
-                          sizes="100vw"
-                          priority={true}
-                        />
+                        <IoMdPin className="text-green h-5 w-5" />
 
                         <span className="ml-1">Countries</span>
                       </div>

@@ -1,6 +1,6 @@
 import { useAtomValue } from "jotai";
 import React, { useCallback, useState } from "react";
-import { IoMdFingerPrint } from "react-icons/io";
+import { IoMdLogIn } from "react-icons/io";
 import { handleUserSignIn } from "~/lib/authUtils";
 import analytics from "~/lib/analytics";
 import { currentLanguageAtom } from "~/lib/store";
@@ -10,7 +10,11 @@ export const SignInButton: React.FC<{
   className?: string;
   tabIndex?: number;
   hideIcon?: boolean;
-}> = ({ className, tabIndex, hideIcon }) => {
+  // by default the label is hidden on small screens (icon only); set this to always show it
+  showLabel?: boolean;
+  // optionally override where the user is returned to after signing in (defaults to the current page)
+  callbackUrl?: string;
+}> = ({ className, tabIndex, hideIcon, showLabel, callbackUrl }) => {
   const [isButtonLoading, setIsButtonLoading] = useState(false);
   const currentLanguage = useAtomValue(currentLanguageAtom);
 
@@ -24,8 +28,8 @@ export const SignInButton: React.FC<{
     });
 
     // log in with keycloak
-    await handleUserSignIn(currentLanguage);
-  }, [currentLanguage]);
+    await handleUserSignIn(currentLanguage, callbackUrl);
+  }, [currentLanguage, callbackUrl]);
 
   return (
     <button
@@ -38,10 +42,14 @@ export const SignInButton: React.FC<{
       title="Login"
     >
       {isButtonLoading && (
-        <LoadingInline classNameSpinner="h-6 w-6" classNameLabel="hidden" />
+        <LoadingInline classNameSpinner="h-5 w-5" classNameLabel="hidden" />
       )}
-      {!isButtonLoading && !hideIcon && <IoMdFingerPrint className="h-6 w-6" />}
-      <p className={`${hideIcon ? "" : "hidden"} uppercase sm:block`}>Login</p>
+      {!isButtonLoading && !hideIcon && <IoMdLogIn className="h-5 w-5" />}
+      <p
+        className={`${hideIcon || showLabel ? "" : "hidden"} font-family-nunito text-base font-semibold sm:block`}
+      >
+        Login
+      </p>
     </button>
   );
 };

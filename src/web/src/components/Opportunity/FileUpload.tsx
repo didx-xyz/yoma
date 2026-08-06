@@ -1,7 +1,6 @@
 import { type ReactElement, useRef, useState } from "react";
 import Image from "next/image";
-import { IoMdClose } from "react-icons/io";
-import iconUpload from "public/images/icon-upload.svg";
+import { IoMdArrowUp, IoMdClose } from "react-icons/io";
 import { uploadFileWithTus } from "~/api/services/uploads";
 import { toast } from "react-toastify";
 import { MAX_FILE_SIZE, MAX_FILE_SIZE_LABEL } from "~/lib/constants";
@@ -284,14 +283,7 @@ export const FileUpload: React.FC<InputProps> = ({
               className="md:mr-2x md:scale-100x btn btn-circle border-green text-green btn-sm hover:border-green w-[95px] scale-[1.15x] bg-transparent normal-case"
               onClick={fileUpload}
             >
-              <Image
-                src={iconUpload}
-                alt="Icon Upload"
-                width={14}
-                className="h-auto"
-                sizes="100vw"
-                priority={true}
-              />
+              <IoMdArrowUp className="mr-1 h-4 w-4" />
               <span className="inline">Upload</span>
             </button>
             <input
