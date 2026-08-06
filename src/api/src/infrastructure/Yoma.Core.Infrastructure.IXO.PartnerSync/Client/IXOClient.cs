@@ -20,17 +20,16 @@ namespace Yoma.Core.Infrastructure.IXO.PartnerSync.Client
     ISyncProviderClientUserAuthentication
   {
     #region Class Variables
-    // TODO: Replace this POC-only mapping after IXO provides its complete production category list.
     private static readonly Dictionary<Guid, string[]> CategoryMappings = new()
     {
       // Career and Personal Development
-      { new Guid("89f4ab46-0767-494f-a18c-3037f698133a"), ["Customer Service"] },
+      { new Guid("89f4ab46-0767-494f-a18c-3037f698133a"), ["Education", "Social impact"] },
       // Business and Entrepreneurship
-      { new Guid("c76786fd-fca9-4633-85b3-11e53486d708"), ["Trades"] },
+      { new Guid("c76786fd-fca9-4633-85b3-11e53486d708"), ["Green entrepreneurship"] },
       // Environment and Climate
-      { new Guid("d0d322ab-d1d7-44b6-94e8-7b85246aa42e"), ["Renewable Energy"] },
+      { new Guid("d0d322ab-d1d7-44b6-94e8-7b85246aa42e"), ["Circular economy", "Environment & Climate"] },
       // Technology and Digitization
-      { new Guid("fa564c1c-591a-4a6d-8294-20165da8866b"), ["Digital Skills"] }
+      { new Guid("fa564c1c-591a-4a6d-8294-20165da8866b"), ["Digital services"] }
     };
 
     private readonly ILogger<IXOClient> _logger;
