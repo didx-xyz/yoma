@@ -6,6 +6,7 @@ import {
   rewardBalanceTone,
   type RewardBalanceTone,
 } from "~/lib/format/rewards";
+import { derivePayoutTotalPending } from "~/lib/treasury/payoutCommitment";
 
 /**
  * "You are about to run out" — the one thing on this page that an admin must not miss, so it renders
@@ -31,13 +32,23 @@ const CapacityWarning: React.FC<{
   pool: string;
   percent: string;
   exhaustedConsequence: string;
-}> = ({ tone, label, balance, pool, percent, exhaustedConsequence }) => {
+  /** extra sentence explaining the figure — e.g. that payouts in flight are holding funds */
+  detail?: string;
+}> = ({
+  tone,
+  label,
+  balance,
+  pool,
+  percent,
+  exhaustedConsequence,
+  detail,
+}) => {
   if (tone === "depleted")
     return (
       <FormMessage messageType={FormMessageType.Error}>
-        <strong>{label} is exhausted.</strong> {exhaustedConsequence} Increase
-        the pool under Manage to restore capacity for the rest of this financial
-        year.
+        <strong>{label} is exhausted.</strong> {exhaustedConsequence}
+        {detail ? ` ${detail}` : ""} Increase the pool under Manage to restore
+        capacity for the rest of this financial year.
       </FormMessage>
     );
 
@@ -46,6 +57,7 @@ const CapacityWarning: React.FC<{
       <FormMessage messageType={FormMessageType.Warning}>
         <strong>{label} is running low.</strong> {balance} of {pool} left
         {percent ? ` (${percent})` : ""} for this financial year.
+        {detail ? ` ${detail}` : ""}
       </FormMessage>
     );
 
@@ -59,10 +71,25 @@ export const TreasuryCapacityWarnings: React.FC<{
     treasury.zltoRewardBalanceCurrentFinancialYear,
     treasury.zltoRewardPoolCurrentFinancialYear,
   );
+  /**
+   * ⚠️ The **available** balance, not the completed-only one. Payouts in flight are already
+   * committed, so warning off the completed-only balance let this banner stay silent while new
+   * payouts were being refused for lack of funds.
+   */
   const payoutTone = rewardBalanceTone(
-    treasury.payoutBalanceCurrentFinancialYearInUsd,
+    treasury.payoutBalanceAvailableCurrentFinancialYearInUsd,
     treasury.payoutPoolCurrentFinancialYearInUsd,
   );
+
+  /**
+   * Without this, an admin comparing the banner against the "Remaining balance" stat sees two
+   * different numbers and no reason for the gap.
+   */
+  const payoutTotalPending = derivePayoutTotalPending(treasury);
+  const payoutDetail =
+    payoutTotalPending && payoutTotalPending > 0
+      ? `${formatUsd(payoutTotalPending)} is held by payouts already in flight.`
+      : undefined;
 
   const needsAttention = (tone: RewardBalanceTone) =>
     tone === "low" || tone === "depleted";
@@ -86,13 +113,16 @@ export const TreasuryCapacityWarnings: React.FC<{
       <CapacityWarning
         tone={payoutTone}
         label="The payout pool"
-        balance={formatUsd(treasury.payoutBalanceCurrentFinancialYearInUsd)}
+        balance={formatUsd(
+          treasury.payoutBalanceAvailableCurrentFinancialYearInUsd,
+        )}
         pool={formatUsd(treasury.payoutPoolCurrentFinancialYearInUsd)}
         percent={percentRemaining(
-          treasury.payoutBalanceCurrentFinancialYearInUsd,
+          treasury.payoutBalanceAvailableCurrentFinancialYearInUsd,
           treasury.payoutPoolCurrentFinancialYearInUsd,
         )}
-        exhaustedConsequence="No further payouts can be completed."
+        exhaustedConsequence="No further payouts can be started."
+        detail={payoutDetail}
       />
     </div>
   );

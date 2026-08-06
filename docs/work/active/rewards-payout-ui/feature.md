@@ -82,8 +82,10 @@ The hierarchy is managed from one place. Five banner tabs, each also reachable o
 | Overview | *(none)* | T1 | done |
 | Manage | `manage` | T1 | done |
 | Organisations | `organisations` | T2 | done |
-| Opportunities | `opportunities` | T3 | done (reduced — see Decisions) |
+| Opportunities | `opportunities` | T3 | done (reduced, **temporary** — see Decisions) |
 | Referrals | `referrals` | T4 | not started |
+
+⚠️ **The Opportunities tab is provisional and will most likely be folded into the Organisations tab** (owner, 2026-08-06) — an organisation row expanding to reveal the opportunities drawing on its pools, instead of a sibling tab that repeats the organisation heading on every page of results. The *components* are the durable part and are already prop-driven; the tab's own grouping, paging and search are what would be discarded. Do not build on this tab's structure or invest in polishing it.
 
 Binding on every task: **components are built for two homes from the start.** No component reads the router, the session or a route param for its own data — ids, payloads, callbacks and permissions arrive as props; the page owns fetching, mutation, routing and toasts. Nothing assumes a single entity: build the detail view and its compact row variant **in the same task**, never retrofitted. Formatting, labels and validation come from T0. Where a tab needs an endpoint that does not exist, record the gap and ship the tabs that work — **do not invent a contract**.
 
@@ -105,7 +107,8 @@ Caps diverge on purpose (100M Treasury / 10M Org / 10M Referral / 50k USD payout
 ### Frozen T0 conventions (binding on T3–T6)
 
 - **`lib/format/rewards.ts` is the only place reward numbers are formatted.** `formatZlto` (0dp) · `formatYoma` (2dp) · `formatUsd` (`$`, 2dp) · `formatConversionRate` (≤4dp) · `formatZltoRange` · `rewardBalanceTone`. No new `toLocaleString` / `Intl.NumberFormat` on a reward field anywhere (T6 greps for this). `EMPTY_VALUE = "—"` for null — never blank, never a substituted `0`. `REWARD_BALANCE_LOW_RATIO = 0.1`. Locale pinned `en-US`.
-- **Label vocabulary, used verbatim**: `LABEL_SUFFIX_FY = "(this financial year)"` · `LABEL_SUFFIX_LIFETIME = "(lifetime)"` · `HEADING_FY = "Current financial year"` · `HEADING_LIFETIME = "All-time"`. Never a bare "Cumulative" — say what it is, then the scope ("Awarded (this financial year)"). "Remaining balance", not "Balance" or "Available". USD carries `$` on the value; the word "USD" belongs in the group heading.
+- **Label vocabulary, used verbatim**: `LABEL_SUFFIX_FY = "(this financial year)"` · `LABEL_SUFFIX_LIFETIME = "(lifetime)"` · `HEADING_FY = "Current financial year"` · `HEADING_LIFETIME = "All-time"`. Never a bare "Cumulative" — say what it is, then the scope ("Awarded (this financial year)"). USD carries `$` on the value; the word "USD" belongs in the group heading.
+- **The two payout balances (frozen 2026-08-06)** — constants in the same module, with their tooltips, because the wording is what distinguishes them: `LABEL_PAYOUT_BALANCE_COMPLETED = "Remaining balance"` (*the pool minus payouts completed this financial year… not what is available to pay out*) vs `LABEL_PAYOUT_BALANCE_AVAILABLE = "Available to pay out now"` (*the remaining balance minus payouts already in flight… the capacity a new payout is checked against*). **Rewards keep the plain "Remaining balance"** — they have only one balance.
 - **`components/Rewards/RewardStat.tsx`** — `RewardStat` / `RewardStatGroup` / `balanceStatTone`. Values arrive **pre-formatted**; the primitive never formats.
 - **Validation pattern** — react-hook-form + `zodResolver`, schema built by a **factory closing over the server payload** so cross-field floors can reference server cumulatives; all rules in one `superRefine` split into per-field validators, each citing the C# it mirrors. `mode: "onTouched"`. Reference: `lib/treasury/treasuryFormSchema.ts`.
 - **Per-field server errors** — the API discards `PropertyName`, so mapping is **message-text matching**. Reference: `lib/treasury/serverErrors.ts`. Unmatched messages render verbatim above the form; non-400s fall through to `<ApiErrors />`.
@@ -122,14 +125,16 @@ Caps diverge on purpose (100M Treasury / 10M Org / 10M Referral / 50k USD payout
 - [ ] **T4** — Referral Rewards alignment (YOM-1073) + `?tab=referrals`. Must show Treasury **ZLTO reward** figures, not USD payout figures
 - [ ] **T5** — Youth Payout (YOM-1074): amount entry, indicative conversion preview, payout initiation against `POST /user/payout/zlto`
 - [ ] **T6** — Production hardening: consistency, scope-labelling audit, a11y, remove the `?mock=` dev aid
-- [ ] **T1 corrective (a)** — repoint capacity readings to `payoutBalanceAvailableCurrentFinancialYearInUsd` in `TreasuryOverview.tsx` + `TreasuryCapacityWarnings.tsx`, including `balanceStatTone` / `REWARD_BALANCE_LOW_RATIO` inputs
-- [ ] **T1 corrective (b)** — keep the completed-only balance visible but demoted to a completed view
-- [ ] **T1 corrective (c)** — update the pool-floor mirror in `treasuryFormSchema.ts` to `current-FY cumulative + total pending`
-- [ ] **T1 corrective (d)** — add a `serverErrors.ts` matcher for the new pool-floor rejection
-- [ ] **T1 corrective (e)** — add a "balance healthy, available depleted" mock scenario
+- [x] **T1 corrective (a)** — capacity readings repointed to `payoutBalanceAvailableCurrentFinancialYearInUsd` in `TreasuryOverview.tsx` + `TreasuryCapacityWarnings.tsx`, tone inputs included
+- [x] **T1 corrective (b)** — completed-only balance kept, demoted to a plain-toned "Completed payouts only" stat
+- [x] **T1 corrective (c)** — pool-floor mirror now `current-FY cumulative + total pending`, with the pending half retained through a rollover
+- [x] **T1 corrective (d)** — verified: the existing `/payout pool/i` matcher already covers the new rejection; no new matcher needed
+- [x] **T1 corrective (e)** — `payoutAvailableDepleted` + `payoutAvailableOvercommitted` mock scenarios
+- [x] **T2 corrective** — `NoImage` placeholder resized to match the 30px logo
+- [x] **Label vocabulary frozen** — the two payout balance labels + tooltips are constants in `lib/format/rewards.ts`
 - [ ] **Wallet ledger** — add `balance`, rename `pendingAwards` → `pendingRewards`, render `pendingPayout` negative, handle the nullable offline render
-- [ ] **Authenticated browser pass on T1 + T2 + T3** — after the corrective work, or it certifies the wrong numbers
-- [ ] **Label vocabulary sign-off** (Jason) — two balances now render side by side; blocks T4 copy
+- [ ] **Authenticated browser pass on T1 + T2 + T3** — now unblocked; the corrective work is in
+- [ ] **Fold the Opportunities tab into Organisations** (owner intent, see the tab note above)
 
 ## Decisions
 
@@ -150,6 +155,11 @@ Caps diverge on purpose (100M Treasury / 10M Org / 10M Referral / 50k USD payout
 - **2026-08-05: T3's detail block reads the organisation, not the opportunity payload's sub-object.** That sub-object is FY-only (6 fields) while `OrganizationRewardFigures` needs 8, so it would render "—" for every All-time figure. `GET /organization/{id}` gives all eight and lets the block reuse `OrganizationRewardStats` verbatim.
 - **2026-08-05: master's UI was ported web-only, with no merge parent** (`deed965d`). Master's API changes were deliberately excluded. A merge commit would have marked them "intentionally removed" and merging this branch back would delete them; as committed, master stays unmerged and a later full merge still brings the API side in.
 - **2026-08-05: status filters send the enum *name*, not the ordinal.** `OrganizationStatus.Active.toString()` → `"1"` parsed correctly only because the TS and C# ordinals happen to align. Fixed in both Treasury tabs.
+- **2026-08-06: the two payout balance labels are frozen** — "Remaining balance" (completed-only, demoted, plain tone) vs "Available to pay out now" (capacity, carries the tone), each with its tooltip, as constants in `lib/format/rewards.ts`. Applied to T1; T4 copies them verbatim. Rewards keep the unqualified "Remaining balance" since they have only one balance.
+- **2026-08-06: T1's capacity defects fixed.** Both surfaces now tone and warn off the available balance. Where the two balances differ, the UI says why (`"$49,500 in flight"` / `"…is held by payouts already in flight."`) rather than leaving an unexplained gap between two numbers.
+- **2026-08-06: no new `serverErrors.ts` matcher was needed.** The pool-floor rejection was assumed to be unmatched, but the actual server text is *"The **payout pool** for the current financial year cannot be less than the total payout amount (N USD) already paid out or pending"*, which the existing broad `/payout pool/i` pattern already routes to the right field — verified against all nine verbatim messages. The lesson is the general one: read the server string before adding a matcher for it.
+- **2026-08-06: the pending total is derived client-side as `completedBalance − availableBalance`** (`lib/treasury/payoutCommitment.ts`). The API returns both balances but not the pending figure, and the form needs it to mirror the server's floor. It is `null`, not `0`, when no pool is set — in which case the client declines to invent a floor and lets the server reject.
+- **2026-08-06: the Opportunities tab is provisional** and will likely be folded into the Organisations tab. Recorded in the tab table above and at the top of `TreasuryOpportunitiesTab.tsx`; a dev-only banner says so in the UI.
 
 ## Links
 

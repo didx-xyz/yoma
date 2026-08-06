@@ -13,8 +13,13 @@ import {
   formatConversionRate,
   formatUsd,
   formatZlto,
+  LABEL_PAYOUT_BALANCE_AVAILABLE,
+  LABEL_PAYOUT_BALANCE_COMPLETED,
   rewardBalanceTone,
+  TOOLTIP_PAYOUT_BALANCE_AVAILABLE,
+  TOOLTIP_PAYOUT_BALANCE_COMPLETED,
 } from "~/lib/format/rewards";
+import { derivePayoutTotalPending } from "~/lib/treasury/payoutCommitment";
 import {
   CONVERSION_EXAMPLE_ZLTO,
   previewZltoToUsd,
@@ -46,10 +51,22 @@ export const TreasuryOverview: React.FC<{ treasury: TreasuryInfo }> = ({
     treasury.zltoRewardBalanceCurrentFinancialYear,
     treasury.zltoRewardPoolCurrentFinancialYear,
   );
+  /**
+   * ⚠️ Capacity comes from the **available** balance, never the completed-only one. The completed-only
+   * balance ignores payouts already in flight, so toning off it made this surface report "healthy"
+   * while payouts were being refused.
+   */
   const payoutTone = rewardBalanceTone(
-    treasury.payoutBalanceCurrentFinancialYearInUsd,
+    treasury.payoutBalanceAvailableCurrentFinancialYearInUsd,
     treasury.payoutPoolCurrentFinancialYearInUsd,
   );
+
+  /** Says why the two balances differ, so the gap does not look like an error. */
+  const payoutTotalPending = derivePayoutTotalPending(treasury);
+  const pendingNote =
+    payoutTotalPending && payoutTotalPending > 0
+      ? `${formatUsd(payoutTotalPending)} in flight`
+      : undefined;
 
   const rateConfigured = treasury.conversionRateZltoPerUsd > 0;
   const exampleUsd = rateConfigured
@@ -143,7 +160,9 @@ export const TreasuryOverview: React.FC<{ treasury: TreasuryInfo }> = ({
             />
           </RewardStatGroup>
 
-          <RewardStatGroup title="Payout (USD)">
+          {/* Five stats, because the two balances mean different things and both have to be
+              readable. `columns={3}` keeps them from being squeezed to a single line each. */}
+          <RewardStatGroup title="Payout (USD)" columns={3}>
             <RewardStat
               label="Payout pool"
               scope="financialYear"
@@ -164,17 +183,31 @@ export const TreasuryOverview: React.FC<{ treasury: TreasuryInfo }> = ({
               tooltip="Payouts completed since the start of this financial year. Resets to zero on rollover."
             />
             <RewardStat
-              label="Remaining balance"
-              scope="financialYear"
-              value={formatUsd(treasury.payoutBalanceCurrentFinancialYearInUsd)}
-              tooltip={BALANCE_TOOLTIP}
-              tone={balanceStatTone(payoutTone)}
-            />
-            <RewardStat
               label="Paid out"
               scope="lifetime"
               value={formatUsd(treasury.payoutCumulativeInUsd)}
               tooltip="Payouts completed across all financial years. Never reset."
+            />
+
+            {/* Demoted to a completed view: still visible, but plain-toned and explicitly not
+                capacity, so it cannot be read as headroom. */}
+            <RewardStat
+              label={LABEL_PAYOUT_BALANCE_COMPLETED}
+              scope="financialYear"
+              value={formatUsd(treasury.payoutBalanceCurrentFinancialYearInUsd)}
+              tooltip={TOOLTIP_PAYOUT_BALANCE_COMPLETED}
+              note="Completed payouts only"
+            />
+
+            {/* The capacity figure — the one that carries the tone. */}
+            <RewardStat
+              label={LABEL_PAYOUT_BALANCE_AVAILABLE}
+              value={formatUsd(
+                treasury.payoutBalanceAvailableCurrentFinancialYearInUsd,
+              )}
+              tooltip={TOOLTIP_PAYOUT_BALANCE_AVAILABLE}
+              tone={balanceStatTone(payoutTone)}
+              note={pendingNote}
             />
           </RewardStatGroup>
         </div>

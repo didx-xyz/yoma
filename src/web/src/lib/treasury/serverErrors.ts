@@ -35,7 +35,14 @@ const MATCHERS: Matcher[] = [
     field: "zltoRewardPoolCurrentFinancialYear",
     pattern: /zlto reward pool/i,
   },
-  // "…cannot be less than the cumulative payout amount (N USD)…" (TreasuryService:85)
+  /**
+   * Covers all five payout-pool rejections, verified against the verbatim server strings
+   * (2026-08-06): the four validator messages, and the pool floor
+   * "The payout pool for the current financial year cannot be less than the total payout amount
+   * (N USD) already paid out or pending" — `TreasuryService.Update`. The floor message changed when
+   * pending payouts joined the floor; this pattern already matched the new wording, so no separate
+   * matcher is needed. Keep the pattern this broad and it will survive the next rewording too.
+   */
   {
     field: "payoutPoolCurrentFinancialYearInUsd",
     pattern: /payout pool/i,
@@ -64,6 +71,26 @@ export interface MappedTreasuryErrors {
   isUnmapped: boolean;
 }
 
+/**
+ * Splits the `"PropertyName: message"` shape that model-binding failures arrive in
+ * (`ReformatValidationProblemAttribute`) — the only shape that names its own field.
+ *
+ * Matches the prefix only and slices the remainder off, rather than capturing it: a trailing `(.+)$`
+ * group has to backtrack across the whole message and buys nothing.
+ */
+const splitPropertyPrefix = (
+  text: string,
+): { field?: TreasuryFormField; text: string } => {
+  const prefixMatch = /^([A-Za-z]+)\s*:[ \t]*/.exec(text);
+  if (!prefixMatch) return { text };
+
+  const remainder = text.slice(prefixMatch[0].length).trim();
+  if (!remainder) return { text };
+
+  const field = FIELD_BY_PROPERTY_NAME[prefixMatch[1]!.toLowerCase()];
+  return field ? { field, text: remainder } : { text };
+};
+
 export function mapTreasuryServerErrors(error: unknown): MappedTreasuryErrors {
   const { status, errors, message } = parseApiError(error);
 
@@ -79,21 +106,12 @@ export function mapTreasuryServerErrors(error: unknown): MappedTreasuryErrors {
   const formErrors: string[] = [];
 
   for (const raw of messages) {
-    let text = raw.trim();
-    let field: TreasuryFormField | undefined;
-
-    // "PropertyName: message" — take the field from the prefix and show the message alone.
-    const prefixMatch = /^([A-Za-z]+)\s*:\s*(.+)$/s.exec(text);
-    if (prefixMatch) {
-      const candidate =
-        FIELD_BY_PROPERTY_NAME[prefixMatch[1]!.toLowerCase().trim()];
-      if (candidate) {
-        field = candidate;
-        text = prefixMatch[2]!.trim();
-      }
-    }
-
-    field ??= MATCHERS.find((matcher) => matcher.pattern.test(text))?.field;
+    // A named prefix wins; otherwise fall back to matching the message text, which is all the API
+    // gives us for FluentValidation failures.
+    const { field: prefixField, text } = splitPropertyPrefix(raw.trim());
+    const field =
+      prefixField ??
+      MATCHERS.find((matcher) => matcher.pattern.test(text))?.field;
 
     if (field) {
       fieldErrors[field] ??= text;

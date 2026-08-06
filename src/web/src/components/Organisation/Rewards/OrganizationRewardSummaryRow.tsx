@@ -44,7 +44,7 @@ const TONE_BADGE: Record<
 
 /** Worst of the two pools — one badge per organisation, so a row reads at a glance. */
 const summaryTone = (figures: OrganizationRewardFigures): RewardBalanceTone => {
-  const tones = [
+  const tones = new Set<RewardBalanceTone>([
     rewardBalanceTone(
       figures.zltoRewardBalanceCurrentFinancialYear,
       figures.zltoRewardPoolCurrentFinancialYear,
@@ -53,10 +53,10 @@ const summaryTone = (figures: OrganizationRewardFigures): RewardBalanceTone => {
       figures.yomaRewardBalanceCurrentFinancialYear,
       figures.yomaRewardPoolCurrentFinancialYear,
     ),
-  ];
+  ]);
 
   const order: RewardBalanceTone[] = ["depleted", "low", "unset", "healthy"];
-  return order.find((tone) => tones.includes(tone)) ?? "healthy";
+  return order.find((tone) => tones.has(tone)) ?? "healthy";
 };
 
 export const OrganizationRewardSummaryRow: React.FC<{
@@ -98,9 +98,11 @@ export const OrganizationRewardSummaryRow: React.FC<{
             }}
           />
         ) : (
+          // matches the logo's 30px exactly — at 60px a logo-less organisation rendered a
+          // placeholder twice the size of every real logo in the list
           <div
             className="shrink-0 overflow-hidden rounded-lg shadow-md"
-            style={{ width: "60px", height: "60px" }}
+            style={{ width: "30px", height: "30px" }}
           >
             <NoImage iconOnly />
           </div>

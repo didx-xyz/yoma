@@ -34,8 +34,24 @@ export interface TreasuryInfo {
   payoutCumulativeCurrentFinancialYearInUsd: number | null;
   /** lifetime total paid out — never reset by a financial-year rollover */
   payoutCumulativeInUsd: number | null;
-  /** server-derived: pool − cumulative for the current financial year; null when no pool is set */
+  /**
+   * server-derived: pool − cumulative for the current financial year; null when no pool is set.
+   *
+   * ⚠️ **COMPLETED-ONLY. This is not capacity.** Payouts already in flight are not deducted here, so
+   * this figure overstates what can still be paid out. Use `payoutBalanceAvailable…` for capacity,
+   * headroom and every warning; show this one only as the "completed" view.
+   */
   payoutBalanceCurrentFinancialYearInUsd: number | null;
+  /**
+   * server-derived: the completed-only balance minus **every** non-terminal payout — pending payouts
+   * are not limited to the current financial year and stay deducted until they complete or close
+   * unsuccessfully (`TreasuryExtension.CalculatePayoutBalanceAvailable…`). Null when no pool is set.
+   *
+   * **This is capacity.** The payout path gates on the same arithmetic, so anything the UI presents
+   * as "what is left to pay out" must come from here or the admin surface will disagree with what
+   * youth are actually allowed to do.
+   */
+  payoutBalanceAvailableCurrentFinancialYearInUsd: number | null;
 
   /**
    * Number of ZLTO equal to `conversionRateUsdAmount` USD. The raw internal rate (the USD value of

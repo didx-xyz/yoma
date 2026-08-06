@@ -32,6 +32,15 @@ import { PAGE_SIZE } from "~/lib/constants";
  * up under the organisation it draws from. The level below Organisation in the hierarchy
  * (Treasury → Organisation → Opportunity).
  *
+ * ⚠️⚠️ **THIS TAB IS TEMPORARY** (owner, 2026-08-06). It will most likely be **merged into the
+ * Organisations tab** — an organisation row expanding to show the opportunities drawing from its
+ * pools — rather than staying a sibling tab that repeats the organisation heading for every page of
+ * results. Treat the layout here as a placeholder, not a settled design:
+ *   • the *components* are the durable part (`OpportunityRewardSummaryRow`,
+ *     `OrganizationRewardSummaryRow`), and both are already prop-driven, so they move as-is;
+ *   • this file's grouping, paging and search are what would be discarded.
+ * Do not build anything new on top of this tab's structure, and do not invest in polishing it.
+ *
  * ⚠️ SCOPES DO NOT MATCH ACROSS THIS TAB, BY DESIGN. The organisation heading is
  * **current-financial-year** (pool / remaining, reset on rollover); every opportunity row under it is
  * **lifetime** (awarded all-time, never reset). Both carry their scope in the label. Do not "tidy"
@@ -183,6 +192,15 @@ export const TreasuryOpportunitiesTab: React.FC = () => {
           year rolls over.
         </p>
       </div>
+
+      {/* ⚠️ TEMPORARY — see the note at the top of this file. Remove with the tab when this view
+          folds into Organisations. Dev builds only, like the ?mock= aid. */}
+      {process.env.NODE_ENV !== "production" && (
+        <FormMessage messageType={FormMessageType.Info}>
+          This view is provisional and will likely be folded into the
+          Organisations tab.
+        </FormMessage>
+      )}
 
       <ListPageSearchToolbar
         defaultValue={search}

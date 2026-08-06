@@ -30,6 +30,7 @@ const healthy: TreasuryInfo = {
   payoutCumulativeCurrentFinancialYearInUsd: null,
   payoutCumulativeInUsd: null,
   payoutBalanceCurrentFinancialYearInUsd: 50_000,
+  payoutBalanceAvailableCurrentFinancialYearInUsd: 50_000,
   conversionRateZltoPerUsd: 26,
   conversionRateUsdAmount: 1,
 };
@@ -49,19 +50,31 @@ const withZltoAwarded = (
     (base.zltoRewardPoolCurrentFinancialYear ?? 0) - awardedThisYear,
 });
 
+/**
+ * Both payout balances move together: completed = pool − paid out, available = completed − pending.
+ * `pendingNow` is what payouts already in flight are holding — the figure that makes the two balances
+ * differ, and the only way to reach the "healthy balance, no capacity" state.
+ */
 const withPaidOut = (
   base: TreasuryInfo,
   paidOutThisYear: number,
-): TreasuryInfo => ({
-  ...base,
-  payoutCumulativeCurrentFinancialYearInUsd: paidOutThisYear,
-  payoutCumulativeInUsd: Math.max(
-    base.payoutCumulativeInUsd ?? 0,
-    paidOutThisYear,
-  ),
-  payoutBalanceCurrentFinancialYearInUsd:
-    (base.payoutPoolCurrentFinancialYearInUsd ?? 0) - paidOutThisYear,
-});
+  pendingNow = 0,
+): TreasuryInfo => {
+  const completedBalance =
+    (base.payoutPoolCurrentFinancialYearInUsd ?? 0) - paidOutThisYear;
+
+  return {
+    ...base,
+    payoutCumulativeCurrentFinancialYearInUsd: paidOutThisYear,
+    payoutCumulativeInUsd: Math.max(
+      base.payoutCumulativeInUsd ?? 0,
+      paidOutThisYear,
+    ),
+    payoutBalanceCurrentFinancialYearInUsd: completedBalance,
+    payoutBalanceAvailableCurrentFinancialYearInUsd:
+      completedBalance - pendingNow,
+  };
+};
 
 export const TREASURY_MOCK_SCENARIOS = {
   /** No banners — the healthy baseline. */
@@ -85,6 +98,17 @@ export const TREASURY_MOCK_SCENARIOS = {
   /** Both banners at once — ZLTO exhausted, payout running low. */
   bothCritical: withPaidOut(withZltoAwarded(healthy, 100_000), 49_000),
 
+  /**
+   * ⭐ The state the available balance exists to expose, and which was unrepresentable before it:
+   * nothing has been *paid out*, so the completed-only balance is the full $50,000 and looks
+   * perfectly healthy — but $49,500 is held by payouts in flight, so there is no capacity and a new
+   * payout would be refused. The banner must fire and the two stats must disagree.
+   */
+  payoutAvailableDepleted: withPaidOut(healthy, 0, 49_500),
+
+  /** Same shape, one step further: in-flight payouts exceed the pool → available goes negative. */
+  payoutAvailableOvercommitted: withPaidOut(healthy, 10_000, 45_000),
+
   /** Nothing allocated → "Not set" notes on the overview, no banners, empty pool fields. */
   noPools: {
     ...healthy,
@@ -92,6 +116,7 @@ export const TREASURY_MOCK_SCENARIOS = {
     zltoRewardBalanceCurrentFinancialYear: null,
     payoutPoolCurrentFinancialYearInUsd: null,
     payoutBalanceCurrentFinancialYearInUsd: null,
+    payoutBalanceAvailableCurrentFinancialYearInUsd: null,
   },
 
   /** Rate 0 → the conversion warning replaces the "N ZLTO = $1.00" line. */
@@ -115,6 +140,7 @@ export const TREASURY_MOCK_SCENARIOS = {
     payoutCumulativeCurrentFinancialYearInUsd: null,
     payoutCumulativeInUsd: null,
     payoutBalanceCurrentFinancialYearInUsd: null,
+    payoutBalanceAvailableCurrentFinancialYearInUsd: null,
     conversionRateZltoPerUsd: 0,
   },
 } satisfies Record<string, TreasuryInfo>;

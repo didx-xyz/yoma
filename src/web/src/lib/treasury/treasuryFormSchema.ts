@@ -12,6 +12,10 @@ import {
   isValidDayForMonth,
   MONTH_NAMES,
 } from "~/lib/treasury/financialYear";
+import {
+  derivePayoutTotalPending,
+  payoutPoolFloor,
+} from "~/lib/treasury/payoutCommitment";
 
 /**
  * Client-side validation for the Treasury configuration form.
@@ -132,13 +136,25 @@ const validateZltoPool = (
 };
 
 /**
- * `TreasuryRequestUpdateValidator:34-47` plus `TreasuryService.Update:83-85`.
+ * `TreasuryRequestUpdateValidator:34-47` plus the pool floor in `TreasuryService.Update`.
  * Required — the server rejects a null payout pool outright.
+ *
+ * ⚠️ The floor is **`currentFYCumulative + totalPending`**, not the cumulative alone: pending payouts
+ * are already committed and stay funded through a rollover. Two consequences the earlier
+ * completed-only mirror got wrong:
+ *   • a pool between the cumulative and the committed total passed here and was rejected by the
+ *     server, and
+ *   • when the financial year moves forward the cumulative is zeroed but the pending total is **not**,
+ *     so the floor drops to the pending total rather than to zero.
  */
 const validatePayoutPool = (
   raw: string,
-  paidOut: number,
-  enforcePaidOutFloor: boolean,
+  /** the floor the pool may not go below — already accounts for rollover, see `payoutPoolFloor` */
+  committedFloor: number,
+  /** false when the floor cannot be derived (no pool set today) — the server stays the authority */
+  enforceCommittedFloor: boolean,
+  /** the in-flight portion of the floor, for the message; null when not derivable */
+  totalPending: number | null,
   issue: AddIssue,
 ): void => {
   const field = "payoutPoolCurrentFinancialYearInUsd";
@@ -169,10 +185,12 @@ const validatePayoutPool = (
       field,
       `Use at most ${TREASURY_LIMITS.payoutPoolDecimals} decimal places (cents).`,
     );
-  } else if (enforcePaidOutFloor && pool.value < paidOut) {
+  } else if (enforceCommittedFloor && pool.value < committedFloor) {
     issue(
       field,
-      `The pool can't be set below the ${formatUsd(paidOut)} already paid out this financial year.`,
+      totalPending && totalPending > 0
+        ? `The pool can't be set below the ${formatUsd(committedFloor)} already committed — paid out this financial year plus ${formatUsd(totalPending)} in payouts still in flight.`
+        : `The pool can't be set below the ${formatUsd(committedFloor)} already paid out this financial year.`,
     );
   }
 };
@@ -248,10 +266,24 @@ export const buildTreasuryFormSchema = (treasury: TreasuryInfo) =>
         issue,
       );
 
+      /**
+       * The payout floor is not symmetrical with the ZLTO one: pending payouts survive a rollover, so
+       * even when the cumulative is about to be zeroed the pool must still cover what is in flight.
+       * The floor is therefore enforced whenever the pending total is derivable — only the cumulative
+       * half of it is dropped on a rollover.
+       */
+      const payoutTotalPending = derivePayoutTotalPending(treasury);
+      const payoutFloor = payoutPoolFloor({
+        cumulative: treasury.payoutCumulativeCurrentFinancialYearInUsd,
+        totalPending: payoutTotalPending,
+        cumulativeHolds: cumulativesHold,
+      });
+
       validatePayoutPool(
         data.payoutPoolCurrentFinancialYearInUsd,
-        treasury.payoutCumulativeCurrentFinancialYearInUsd ?? 0,
-        cumulativesHold,
+        payoutFloor,
+        cumulativesHold || payoutFloor > 0,
+        payoutTotalPending,
         issue,
       );
 

@@ -1,6 +1,6 @@
 # Work Docs Convention
 
-This folder tracks planned work and session handoffs for AI-assisted development. It replaces Slack handoff messages: handoffs are committed here, and Slack messages link to the committed file. The convention is tool-agnostic — it works identically with Claude Code, Codex, Cursor, Copilot, or no AI at all.
+This folder tracks planned work and session handoffs for AI-assisted development. The convention is tool-agnostic — it works identically with Claude Code, Codex, Cursor, Copilot, or no AI at all.
 
 ## Structure
 

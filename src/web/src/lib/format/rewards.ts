@@ -33,6 +33,20 @@ export const HEADING_FY = "Current financial year";
 export const HEADING_LIFETIME = "All-time";
 
 /**
+ * The two payout balances, which render side by side and mean different things (frozen 2026-08-06).
+ *
+ * "Remaining balance" alone stopped disambiguating them once the API gained the available figure, so
+ * the wording — and the tooltip that explains it — is a constant. Every surface uses these verbatim;
+ * rewards keep the plain "Remaining balance" label because they have only one balance.
+ */
+export const LABEL_PAYOUT_BALANCE_COMPLETED = "Remaining balance";
+export const TOOLTIP_PAYOUT_BALANCE_COMPLETED =
+  "The pool minus payouts completed this financial year. It does not account for payouts already in flight, so it is not what is available to pay out.";
+export const LABEL_PAYOUT_BALANCE_AVAILABLE = "Available to pay out now";
+export const TOOLTIP_PAYOUT_BALANCE_AVAILABLE =
+  "The remaining balance minus payouts already in flight. This is the capacity a new payout is checked against.";
+
+/**
  * A balance under this share of its pool reads as "running low", so an admin sees capacity
  * trouble before allocations start failing rather than after.
  */
