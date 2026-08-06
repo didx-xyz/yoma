@@ -752,7 +752,6 @@ namespace Yoma.Core.Domain.Analytics.Services
             g.Key.UserDateOfBirth,
             g.Key.UserCountry,
             ZltoRewardTotal = g.Sum(o => o.ZltoReward ?? 0),
-            YomaRewardTotal = g.Sum(o => o.YomaReward ?? 0),
             OpportunityCount = g.Count(),
             Opportunities = g.Select(o => new
             {
@@ -788,7 +787,6 @@ namespace Yoma.Core.Domain.Analytics.Services
         Country = youth.UserCountry,
         Age = youth.UserDateOfBirth?.CalculateAge(null),
         ZltoRewardTotal = youth.ZltoRewardTotal,
-        YomaRewardTotal = youth.YomaRewardTotal,
         OpporunityCount = youth.OpportunityCount,
         Opportunities = [.. youth.Opportunities.Select(op => new YouthInfoOpportunity
         {

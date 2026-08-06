@@ -91,8 +91,6 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
         OrganizationStatus = value.OrganizationStatus,
         OrganizationZltoRewardPoolCurrentFinancialYear = value.OrganizationZltoRewardPoolCurrentFinancialYear,
         OrganizationZltoRewardCumulativeCurrentFinancialYear = value.OrganizationZltoRewardCumulativeCurrentFinancialYear,
-        OrganizationYomaRewardPoolCurrentFinancialYear = value.OrganizationYomaRewardPoolCurrentFinancialYear,
-        OrganizationYomaRewardCumulativeCurrentFinancialYear = value.OrganizationYomaRewardCumulativeCurrentFinancialYear,
         VerificationEnabled = value.VerificationEnabled,
         VerificationMethod = value.VerificationMethod,
         Status = value.Status,
@@ -102,9 +100,6 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
         ZltoReward = value.ZltoReward,
         ZltoRewardPool = value.ZltoRewardPool,
         ZltoRewardCumulative = value.ZltoRewardCumulative,
-        YomaReward = value.YomaReward,
-        YomaRewardPool = value.YomaRewardPool,
-        YomaRewardCumulative = value.YomaRewardCumulative,
         Countries = value.Countries
       };
     }
@@ -160,9 +155,6 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
         ZltoReward = value.ZltoReward,
         ZltoRewardEstimate = CalculateEstimatedReward(value.ZltoReward, treasuryZltoRewardBalanceCurrentFinancialYear, value.OrganizationZltoRewardBalanceCurrentFinancialYear, value.ZltoRewardBalance),
         ZltoRewardCumulative = value.ZltoRewardCumulative,
-        YomaReward = value.YomaReward,
-        YomaRewardEstimate = CalculateEstimatedReward(value.YomaReward, null, value.OrganizationYomaRewardBalanceCurrentFinancialYear, value.YomaRewardBalance),
-        YomaRewardCumulative = value.YomaRewardCumulative,
         VerificationEnabled = value.VerificationEnabled,
         VerificationMethod = value.VerificationMethod,
         Difficulty = value.Difficulty,
@@ -229,9 +221,7 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
         Instructions = item.Instructions,
         URL = item.URL,
         ZltoReward = item.ZltoReward,
-        YomaReward = item.YomaReward,
         ZltoRewardPool = item.ZltoRewardPool,
-        YomaRewardPool = item.YomaRewardPool,
         VerificationEnabled = item.VerificationEnabled,
         VerificationMethod = item.VerificationMethod,
         DifficultyId = item.DifficultyId,
@@ -247,9 +237,9 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
         ShareWithPartners = item.ShareWithPartners,
         Hidden = applyHidden ? item.Hidden : null,
         ExternalId = item.ExternalId,
-        Categories = item.Categories.ToList(),
-        Countries = item.Countries.ToList(),
-        Languages = item.Languages.ToList(),
+        Categories = [.. item.Categories],
+        Countries = [.. item.Countries],
+        Languages = [.. item.Languages],
         Skills = item.Skills?.ToList(),
         VerificationTypes = item.VerificationTypes?.Select(o => new OpportunityRequestVerificationType
         {

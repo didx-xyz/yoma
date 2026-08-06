@@ -1733,7 +1733,6 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             var result = await _opportunityService.AllocateRewards(opportunity.Id, !options.AutoFinalizedVerification, options.ImportedOrPartnerSyncedVerification);
             opportunity = result.Opportunity;
             item.ZltoReward = result.ZltoReward;
-            item.YomaReward = result.YomaReward;
             item.DateCompleted = options.DateCompleted ?? DateTimeOffset.UtcNow;
 
             await _userService.AssignSkills(user, opportunity);
@@ -1752,11 +1751,6 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
               item.CommentVerification = CommentVerificationAppendInfo(item.CommentVerification, "ZLTO not awarded as reward pool has been depleted");
             else if (result.ZltoRewardReduced == true)
               item.CommentVerification = CommentVerificationAppendInfo(item.CommentVerification, "ZLTO partially awarded due to insufficient reward pool");
-
-            if (result.YomaRewardPoolDepleted == true)
-              item.CommentVerification = CommentVerificationAppendInfo(item.CommentVerification, "Yoma not awarded as reward pool has been depleted");
-            else if (result.YomaRewardReduced == true)
-              item.CommentVerification = CommentVerificationAppendInfo(item.CommentVerification, "Yoma partially awarded due to insufficient reward pool");
 
             notificationType = NotificationType.Opportunity_Verification_Completed;
             break;
@@ -2103,7 +2097,6 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       myOpportunity.OpportunityTitle = opportunity.Title;
       myOpportunity.OrganizationId = opportunity.OrganizationId;
       myOpportunity.ZltoReward = opportunity.ZltoReward;
-      myOpportunity.YomaReward = opportunity.YomaReward;
 
       if (options.AutoFinalizedVerification) return myOpportunity; //with instant, imported or synced verifications, pending notifications are not sent
 
@@ -2159,7 +2152,6 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
               Comment = myOpportunity.CommentVerification,
               URL = _notificationURLFactory.OpportunityVerificationItemURL(type, myOpportunity.OpportunityId, myOpportunity.OrganizationId),
               ZltoReward = myOpportunity.ZltoReward,
-              YomaReward = myOpportunity.YomaReward
             }
             ]
         };

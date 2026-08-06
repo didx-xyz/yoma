@@ -170,7 +170,6 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
                       Comment = myOp.CommentVerification,
                       URL = _notificationURLFactory.OpportunityVerificationItemURL(notificationType, myOp.OpportunityId, null),
                       ZltoReward = myOp.ZltoReward,
-                      YomaReward = myOp.YomaReward
                     });
                   }
 

@@ -129,8 +129,6 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
 
     public decimal? ZltoReward { get; set; }
 
-    public decimal? YomaReward { get; set; }
-
     public bool? Recommendable { get; set; }
 
     public byte? StarRating { get; set; }

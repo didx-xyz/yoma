@@ -93,14 +93,6 @@ namespace Yoma.Core.Domain.Opportunity.Validators
           .When(x => x.ZltoReward.HasValue)
           .WithMessage("ZLTO reward does not support decimal points.");
 
-      RuleFor(x => x.YomaReward)
-          .GreaterThan(0)
-          .When(x => x.YomaReward.HasValue)
-          .WithMessage("Yoma reward must be greater than 0.")
-          .LessThanOrEqualTo(2000)
-          .When(x => x.YomaReward.HasValue)
-          .WithMessage("Yoma reward must be less than or equal to 2000.");
-
       RuleFor(x => x.ZltoRewardPool)
           .GreaterThan(0)
           .When(x => x.ZltoRewardPool.HasValue)
@@ -113,16 +105,6 @@ namespace Yoma.Core.Domain.Opportunity.Validators
           .Must(zltoRewardPool => zltoRewardPool % 1 == 0)
           .When(x => x.ZltoRewardPool.HasValue)
           .WithMessage("ZLTO reward pool does not support decimal points.");
-
-      RuleFor(x => x.YomaRewardPool)
-          .GreaterThan(0)
-          .When(x => x.YomaRewardPool.HasValue)
-          .WithMessage("Yoma reward pool must be greater than 0.")
-          .Must((model, yomaRewardPool) => !model.YomaRewardPool.HasValue || (model.YomaReward.HasValue && yomaRewardPool >= model.YomaReward))
-          .WithMessage("Yoma reward pool must be greater than or equal to Yoma reward.")
-          .LessThanOrEqualTo(10000000M)
-          .When(x => x.YomaRewardPool.HasValue)
-          .WithMessage("Yoma reward pool must not exceed 10 million.");
 
       RuleFor(x => x.VerificationMethod)
           .NotNull()

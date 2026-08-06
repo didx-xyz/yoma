@@ -42,15 +42,6 @@ namespace Yoma.Core.Domain.Opportunity.Models
     [Name("Zlto Reward Cumulative")]
     public decimal? ZltoRewardCumulative { get; set; }
 
-    [Ignore] //reserved for future use
-    public decimal? YomaReward { get; set; }
-
-    [Ignore] //reserved for future use
-    public decimal? YomaRewardEstimate { get; set; }
-
-    [Ignore] //reserved for future use
-    public decimal? YomaRewardCumulative { get; set; }
-
     [Name("Verification Enabled")]
     [BooleanFalseValues(CSVImportHelper.Boolean_Value_False)]
     [BooleanTrueValues(CSVImportHelper.Boolean_Value_True)]

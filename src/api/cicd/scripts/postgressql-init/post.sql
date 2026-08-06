@@ -283,7 +283,7 @@ BEGIN
 	    -- Insert into the Opportunity table
 	    INSERT INTO "Opportunity"."Opportunity"(
 	        "Id", "Title", "Description", "TypeId", "OrganizationId", "Summary", "Instructions", "URL", "ZltoReward", "ZltoRewardPool",
-	        "ZltoRewardCumulative", "YomaReward", "YomaRewardPool", "YomaRewardCumulative", "VerificationEnabled", "VerificationMethod",
+	        "ZltoRewardCumulative", "VerificationEnabled", "VerificationMethod",
 	        "DifficultyId", "CommitmentIntervalId", "CommitmentIntervalCount", "ParticipantLimit", "ParticipantCount", "StatusId",
 	        "Keywords", "DateStart", "DateEnd", "CredentialIssuanceEnabled", "SSISchemaName", "Featured", "EngagementTypeId", "DateCreated", "CreatedByUserId",
 	        "DateModified", "ModifiedByUserId"
@@ -300,9 +300,6 @@ BEGIN
             (SELECT ROUND((100 + (350 - 100) * RANDOM()))::numeric) as "ZltoReward",
             (SELECT ROUND((1000 + (3500 - 1000) * RANDOM()))::numeric) as "ZltoRewardPool",
 	        NULL as "ZltoRewardCumulative",
-	        NULL as "YomaReward",
-	        NULL as "YomaRewardPool",
-	        NULL as "YomaRewardCumulative",
 	        V_VerificationEnabled as "VerificationEnabled",
 	        CASE WHEN V_VerificationEnabled = true THEN 'Manual' ELSE NULL END as "VerificationMethod",
 	        (SELECT "Id" FROM "Opportunity"."OpportunityDifficulty" ORDER BY RANDOM() LIMIT 1) as "DifficultyId",
@@ -464,13 +461,12 @@ WHERE O."VerificationEnabled" = TRUE;
 /****myOpportunities****/
 -- Viewed
 INSERT INTO "Opportunity"."MyOpportunity"("Id", "UserId", "OpportunityId", "ActionId", "VerificationStatusId", "CommentVerification", "DateStart",
-           "DateEnd", "DateCompleted", "ZltoReward", "YomaReward", "DateCreated", "DateModified")
+           "DateEnd", "DateCompleted", "ZltoReward", "DateCreated", "DateModified")
 SELECT
 	gen_random_uuid(),
 	(SELECT "Id" FROM "Entity"."User" WHERE "Email" = 'testuser@gmail.com'),
 	O."Id",
 	(SELECT "Id" FROM "Opportunity"."MyOpportunityAction" WHERE "Name" = 'Viewed'),
-	NULL,
 	NULL,
 	NULL,
 	NULL,
@@ -484,13 +480,12 @@ WHERE O."StatusId" = (SELECT "Id" FROM "Opportunity"."OpportunityStatus" WHERE "
 
 -- NavigatedExternalLink
 INSERT INTO "Opportunity"."MyOpportunity"("Id", "UserId", "OpportunityId", "ActionId", "VerificationStatusId", "CommentVerification", "DateStart",
-           "DateEnd", "DateCompleted", "ZltoReward", "YomaReward", "DateCreated", "DateModified")
+           "DateEnd", "DateCompleted", "ZltoReward", "DateCreated", "DateModified")
 SELECT
 	gen_random_uuid(),
 	(SELECT "Id" FROM "Entity"."User" WHERE "Email" = 'testuser@gmail.com'),
 	O."Id",
 	(SELECT "Id" FROM "Opportunity"."MyOpportunityAction" WHERE "Name" = 'NavigatedExternalLink'),
-	NULL,
 	NULL,
 	NULL,
 	NULL,
@@ -504,13 +499,12 @@ WHERE O."StatusId" = (SELECT "Id" FROM "Opportunity"."OpportunityStatus" WHERE "
 
 -- Saved
 INSERT INTO "Opportunity"."MyOpportunity"("Id", "UserId", "OpportunityId", "ActionId", "VerificationStatusId", "CommentVerification", "DateStart",
-           "DateEnd", "DateCompleted", "ZltoReward", "YomaReward", "DateCreated", "DateModified")
+           "DateEnd", "DateCompleted", "ZltoReward", "DateCreated", "DateModified")
 SELECT
 	gen_random_uuid(),
 	(SELECT "Id" FROM "Entity"."User" WHERE "Email" = 'testuser@gmail.com'),
 	O."Id",
 	(SELECT "Id" FROM "Opportunity"."MyOpportunityAction" WHERE "Name" = 'Saved'),
-	NULL,
 	NULL,
 	NULL,
 	NULL,
@@ -527,7 +521,7 @@ FETCH NEXT 30 ROWS ONLY;
 
 -- Verification (Pending)
 INSERT INTO "Opportunity"."MyOpportunity"("Id", "UserId", "OpportunityId", "ActionId", "VerificationStatusId", "CommentVerification", "DateStart",
-           "DateEnd", "DateCompleted", "ZltoReward", "YomaReward", "DateCreated", "DateModified")
+           "DateEnd", "DateCompleted", "ZltoReward", "DateCreated", "DateModified")
 SELECT
 	gen_random_uuid(),
 	(SELECT "Id" FROM "Entity"."User" WHERE "Email" = 'testuser@gmail.com'),
@@ -537,7 +531,6 @@ SELECT
 	NULL,
 	O."DateStart",
 	O."DateEnd",
-	NULL,
 	NULL,
 	NULL,
 	(CURRENT_TIMESTAMP AT TIME ZONE 'UTC'),
@@ -550,7 +543,7 @@ FETCH NEXT 30 ROWS ONLY;
 
 -- Verification (Rejected)
 INSERT INTO "Opportunity"."MyOpportunity"("Id", "UserId", "OpportunityId", "ActionId", "VerificationStatusId", "CommentVerification", "DateStart",
-           "DateEnd", "DateCompleted", "ZltoReward", "YomaReward", "DateCreated", "DateModified")
+           "DateEnd", "DateCompleted", "ZltoReward", "DateCreated", "DateModified")
 SELECT
 	gen_random_uuid(),
 	(SELECT "Id" FROM "Entity"."User" WHERE "Email" = 'testuser@gmail.com'),
@@ -560,7 +553,6 @@ SELECT
 	'Rejection Comment',
 	O."DateStart",
 	O."DateEnd",
-	NULL,
 	NULL,
 	NULL,
 	(CURRENT_TIMESTAMP AT TIME ZONE 'UTC'),
@@ -573,7 +565,7 @@ FETCH NEXT 30 ROWS ONLY;
 
 -- Verification (Completed)
 INSERT INTO "Opportunity"."MyOpportunity"("Id", "UserId", "OpportunityId", "ActionId", "VerificationStatusId", "CommentVerification", "DateStart",
-           "DateEnd", "DateCompleted", "ZltoReward", "YomaReward", "DateCreated", "DateModified")
+           "DateEnd", "DateCompleted", "ZltoReward", "DateCreated", "DateModified")
 SELECT
 	gen_random_uuid(),
 	(SELECT "Id" FROM "Entity"."User" WHERE "Email" = 'testuser@gmail.com'),
@@ -585,7 +577,6 @@ SELECT
 	O."DateEnd",
 	(CURRENT_TIMESTAMP AT TIME ZONE 'UTC'),
 	O."ZltoReward",
-	O."YomaReward",
 	(CURRENT_TIMESTAMP AT TIME ZONE 'UTC'),
 	(CURRENT_TIMESTAMP AT TIME ZONE 'UTC')
 FROM "Opportunity"."Opportunity" O
@@ -650,8 +641,7 @@ WITH AggregatedData AS (
     SELECT
         O."Id" AS "OpportunityId",
         COUNT(MO."Id") AS "Count",
-        SUM(MO."ZltoReward") AS "ZltoRewardTotal",
-        SUM(MO."YomaReward") AS "YomaRewardTotal"
+        SUM(MO."ZltoReward") AS "ZltoRewardTotal"
     FROM "Opportunity"."Opportunity" O
     LEFT JOIN "Opportunity"."MyOpportunity" MO ON O."Id" = MO."OpportunityId"
     WHERE MO."ActionId" = (SELECT "Id" FROM "Opportunity"."MyOpportunityAction" WHERE "Name" = 'Verification')
@@ -661,8 +651,7 @@ WITH AggregatedData AS (
 UPDATE "Opportunity"."Opportunity" O
 SET
     "ParticipantCount" = A."Count",
-    "ZltoRewardCumulative" = A."ZltoRewardTotal",
-    "YomaRewardCumulative" = A."YomaRewardTotal"
+    "ZltoRewardCumulative" = A."ZltoRewardTotal"
 FROM AggregatedData A
 WHERE O."Id" = A."OpportunityId";
 
@@ -674,12 +663,7 @@ WITH rewardsums AS (
             WHEN COUNT(O."ZltoRewardCumulative") = 0 THEN NULL
             ELSE SUM(O."ZltoRewardCumulative")
         END AS "ZltoRewardCumulative",
-        CASE
-            WHEN COUNT(O."YomaRewardCumulative") = 0 THEN NULL
-            ELSE SUM(O."YomaRewardCumulative")
-        END AS "YomaRewardCumulative",
-        SUM(O."ZltoRewardPool") AS "TotalZltoRewardPoolCurrentFinancialYear",
-        SUM(O."YomaRewardPool") AS "TotalYomaRewardPoolCurrentFinancialYear"
+        SUM(O."ZltoRewardPool") AS "TotalZltoRewardPoolCurrentFinancialYear"
     FROM
         "Opportunity"."Opportunity" O
     GROUP BY
@@ -691,11 +675,7 @@ SET
     "ZltoRewardCumulative" = rewardsums."ZltoRewardCumulative",
     "ZltoRewardCumulativeCurrentFinancialYear" = rewardsums."ZltoRewardCumulative",
 
-    "YomaRewardCumulative" = rewardsums."YomaRewardCumulative",
-    "YomaRewardCumulativeCurrentFinancialYear" = rewardsums."YomaRewardCumulative",
-
-    "ZltoRewardPoolCurrentFinancialYear" = rewardsums."TotalZltoRewardPoolCurrentFinancialYear",
-    "YomaRewardPoolCurrentFinancialYear" = rewardsums."TotalYomaRewardPoolCurrentFinancialYear"
+    "ZltoRewardPoolCurrentFinancialYear" = rewardsums."TotalZltoRewardPoolCurrentFinancialYear"
 FROM
     rewardsums
 WHERE

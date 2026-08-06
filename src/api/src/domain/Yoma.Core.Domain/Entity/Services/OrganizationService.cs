@@ -305,7 +305,7 @@ namespace Yoma.Core.Domain.Entity.Services
       if (ssoClientSpecified && !HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor))
         throw new SecurityException("Unauthorized");
 
-      var rewardPoolsSpecified = request.ZltoRewardPoolCurrentFinancialYear.HasValue || request.YomaRewardPoolCurrentFinancialYear.HasValue;
+      var rewardPoolsSpecified = request.ZltoRewardPoolCurrentFinancialYear.HasValue;
       if (rewardPoolsSpecified && !HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor))
         throw new SecurityException("Unauthorized");
 
@@ -337,7 +337,6 @@ namespace Yoma.Core.Domain.Entity.Services
         SSOClientIdInbound = request.SSOClientIdInbound,
         Settings = SettingsHelper.ParseInfo(_settingsDefinitionService.ListByEntityType(EntityType.Organization), (string?)null),
         ZltoRewardPoolCurrentFinancialYear = request.ZltoRewardPoolCurrentFinancialYear,
-        YomaRewardPoolCurrentFinancialYear = request.YomaRewardPoolCurrentFinancialYear
       };
 
       var blobObjects = new List<BlobObject>();
@@ -458,15 +457,11 @@ namespace Yoma.Core.Domain.Entity.Services
         throw new SecurityException("Unauthorized");
 
       var rewardPoolsUpdated = request.ZltoRewardPoolCurrentFinancialYear != result.ZltoRewardPoolCurrentFinancialYear;
-      if (!rewardPoolsUpdated) rewardPoolsUpdated = request.YomaRewardPoolCurrentFinancialYear != result.YomaRewardPoolCurrentFinancialYear;
       if (rewardPoolsUpdated && !HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor))
         throw new SecurityException("Unauthorized");
 
       if (request.ZltoRewardPoolCurrentFinancialYear.HasValue && result.ZltoRewardCumulativeCurrentFinancialYear.HasValue && request.ZltoRewardPoolCurrentFinancialYear.Value < result.ZltoRewardCumulativeCurrentFinancialYear.Value)
         throw new ValidationException($"The Zlto reward pool for the current financial year cannot be less than the cumulative Zlto rewards ({result.ZltoRewardCumulativeCurrentFinancialYear.Value:F0}) already allocated to participants for the current financial year");
-
-      if (request.YomaRewardPoolCurrentFinancialYear.HasValue && result.YomaRewardCumulativeCurrentFinancialYear.HasValue && request.YomaRewardPoolCurrentFinancialYear.Value < result.YomaRewardCumulativeCurrentFinancialYear.Value)
-        throw new ValidationException($"The Yoma reward pool for the current financial year cannot be less than the cumulative Yoma rewards ({result.YomaRewardCumulativeCurrentFinancialYear.Value:F2}) already allocated to participants for the current financial year");
 
       var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
 
@@ -487,7 +482,6 @@ namespace Yoma.Core.Domain.Entity.Services
       result.Biography = request.Biography;
       result.ModifiedByUserId = user.Id;
       result.ZltoRewardPoolCurrentFinancialYear = request.ZltoRewardPoolCurrentFinancialYear;
-      result.YomaRewardPoolCurrentFinancialYear = request.YomaRewardPoolCurrentFinancialYear;
 
       ValidateUpdatable(result);
 
@@ -971,35 +965,24 @@ namespace Yoma.Core.Domain.Entity.Services
       foreach (var organization in organizations)
       {
         organization.ZltoRewardCumulativeCurrentFinancialYear = 0m;
-        organization.YomaRewardCumulativeCurrentFinancialYear = 0m;
         organization.ModifiedByUserId = user.Id;
       }
 
       await _organizationRepository.Update(organizations);
     }
 
-    public async Task AllocateRewards(Organization organization, decimal? zltoReward, decimal? yomaReward)
+    public async Task AllocateRewards(Organization organization, decimal? zltoReward)
     {
       ArgumentNullException.ThrowIfNull(organization, nameof(organization));
 
       if (zltoReward.HasValue && zltoReward.Value < default(decimal))
         throw new ArgumentOutOfRangeException(nameof(zltoReward), "Zlto reward must be greater than or equal to zero");
 
-      if (yomaReward.HasValue && yomaReward.Value < default(decimal))
-        throw new ArgumentOutOfRangeException(nameof(yomaReward), "Yoma reward must be greater than or equal to zero");
-
       bool rewardCumulativeUpdated = false;
       if (zltoReward.HasValue)
       {
         organization.ZltoRewardCumulative = (organization.ZltoRewardCumulative ?? default) + zltoReward.Value;
         organization.ZltoRewardCumulativeCurrentFinancialYear = (organization.ZltoRewardCumulativeCurrentFinancialYear ?? default) + zltoReward.Value;
-        rewardCumulativeUpdated = true;
-      }
-
-      if (yomaReward.HasValue)
-      {
-        organization.YomaRewardCumulative = (organization.YomaRewardCumulative ?? default) + yomaReward.Value;
-        organization.YomaRewardCumulativeCurrentFinancialYear = (organization.YomaRewardCumulativeCurrentFinancialYear ?? default) + yomaReward.Value;
         rewardCumulativeUpdated = true;
       }
 

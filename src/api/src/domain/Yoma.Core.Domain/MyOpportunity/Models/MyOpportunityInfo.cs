@@ -117,9 +117,6 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
     [Name("Zlto Reward")]
     public decimal? ZltoReward { get; set; }
 
-    [Ignore] //reserved for future use
-    public decimal? YomaReward { get; set; }
-
     [Ignore]
     public bool? Recommendable { get; set; }
 

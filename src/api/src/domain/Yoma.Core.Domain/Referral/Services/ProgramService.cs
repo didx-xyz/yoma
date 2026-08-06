@@ -1239,8 +1239,6 @@ namespace Yoma.Core.Domain.Referral.Services
             OrganizationStatus = opportunity.OrganizationStatus,
             OrganizationZltoRewardPoolCurrentFinancialYear = opportunity.OrganizationZltoRewardPoolCurrentFinancialYear,
             OrganizationZltoRewardCumulativeCurrentFinancialYear = opportunity.OrganizationZltoRewardCumulativeCurrentFinancialYear,
-            OrganizationYomaRewardPoolCurrentFinancialYear = opportunity.OrganizationYomaRewardPoolCurrentFinancialYear,
-            OrganizationYomaRewardCumulativeCurrentFinancialYear = opportunity.OrganizationYomaRewardCumulativeCurrentFinancialYear,
             VerificationEnabled = opportunity.VerificationEnabled,
             VerificationMethod = opportunity.VerificationMethod,
             Status = opportunity.Status,
@@ -1250,9 +1248,6 @@ namespace Yoma.Core.Domain.Referral.Services
             ZltoReward = opportunity.ZltoReward,
             ZltoRewardPool = opportunity.ZltoRewardPool,
             ZltoRewardCumulative = opportunity.ZltoRewardCumulative,
-            YomaReward = opportunity.YomaReward,
-            YomaRewardPool = opportunity.YomaRewardPool,
-            YomaRewardCumulative = opportunity.YomaRewardCumulative,
             Countries = opportunity.Countries
           };
 

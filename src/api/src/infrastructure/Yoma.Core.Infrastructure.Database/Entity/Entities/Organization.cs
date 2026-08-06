@@ -95,15 +95,6 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Entities
     [Column(TypeName = "decimal(12,2)")]
     public decimal? ZltoRewardCumulativeCurrentFinancialYear { get; set; }
 
-    [Column(TypeName = "decimal(12,2)")]
-    public decimal? YomaRewardPoolCurrentFinancialYear { get; set; }
-
-    [Column(TypeName = "decimal(12,2)")]
-    public decimal? YomaRewardCumulative { get; set; }
-
-    [Column(TypeName = "decimal(12,2)")]
-    public decimal? YomaRewardCumulativeCurrentFinancialYear { get; set; }
-
     [Required]
     public DateTimeOffset DateCreated { get; set; }
 

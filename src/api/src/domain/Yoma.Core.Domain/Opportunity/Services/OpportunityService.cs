@@ -1196,9 +1196,6 @@ namespace Yoma.Core.Domain.Opportunity.Services
       if (request.ZltoReward.HasValue && !organization.ZltoRewardPoolCurrentFinancialYear.HasValue)
         throw new ValidationException($"The opportunity cannot issue Zlto rewards upon completion because the associated organization '{organization.Name}' does not have a Zlto reward pool configured for the current financial year. Please configure an organization-level Zlto reward pool before proceeding");
 
-      if (request.YomaReward.HasValue && !organization.YomaRewardPoolCurrentFinancialYear.HasValue)
-        throw new ValidationException($"The opportunity cannot issue Yoma rewards upon completion because the associated organization '{organization.Name}' does not have a Yoma reward pool configured for the current financial year. Please configure an organization-level Yoma reward pool before proceeding");
-
       var result = new Models.Opportunity
       {
         Title = request.Title.NormalizeTrim(),
@@ -1215,15 +1212,11 @@ namespace Yoma.Core.Domain.Opportunity.Services
         OrganizationStatus = organization.Status,
         OrganizationZltoRewardPoolCurrentFinancialYear = organization.ZltoRewardPoolCurrentFinancialYear,
         OrganizationZltoRewardCumulativeCurrentFinancialYear = organization.ZltoRewardCumulativeCurrentFinancialYear,
-        OrganizationYomaRewardPoolCurrentFinancialYear = organization.YomaRewardPoolCurrentFinancialYear,
-        OrganizationYomaRewardCumulativeCurrentFinancialYear = organization.YomaRewardCumulativeCurrentFinancialYear,
         Summary = request.Summary,
         Instructions = request.Instructions,
         URL = request.URL,
         ZltoReward = request.ZltoReward,
-        YomaReward = request.YomaReward,
         ZltoRewardPool = request.ZltoRewardPool,
-        YomaRewardPool = request.YomaRewardPool,
         VerificationEnabled = request.VerificationEnabled,
         VerificationMethodValue = request.VerificationMethod?.ToString(),
         VerificationMethod = request.VerificationMethod,
@@ -1361,9 +1354,6 @@ namespace Yoma.Core.Domain.Opportunity.Services
       if (request.ZltoReward.HasValue && !organization.ZltoRewardPoolCurrentFinancialYear.HasValue)
         throw new ValidationException($"The opportunity cannot issue Zlto rewards upon completion because the associated organization '{organization.Name}' does not have a Zlto reward pool configured for the current financial year. Please configure an organization-level Zlto reward pool before proceeding");
 
-      if (request.YomaReward.HasValue && !organization.YomaRewardPoolCurrentFinancialYear.HasValue)
-        throw new ValidationException($"The opportunity cannot issue Yoma rewards upon completion because the associated organization '{organization.Name}' does not have a Yoma reward pool configured for the current financial year. Please configure an organization-level Yoma reward pool before proceeding");
-
       //by default, status remains unchanged, except for immediate expiration based on DateEnd (status updated via UpdateStatus)
       if (request.DateEnd.HasValue && request.DateEnd.Value <= DateTimeOffset.UtcNow)
       {
@@ -1373,9 +1363,6 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       if (request.ZltoRewardPool.HasValue && result.ZltoRewardCumulative.HasValue && request.ZltoRewardPool.Value < result.ZltoRewardCumulative.Value)
         throw new ValidationException($"The Zlto reward pool cannot be less than the cumulative Zlto rewards ({result.ZltoRewardCumulative.Value:F0}) already allocated to participants");
-
-      if (request.YomaRewardPool.HasValue && result.YomaRewardCumulative.HasValue && request.YomaRewardPool.Value < result.YomaRewardCumulative.Value)
-        throw new ValidationException($"The Yoma reward pool cannot be less than the cumulative Yoma rewards ({result.YomaRewardCumulative.Value:F2}) already allocated to participants");
 
       result.Title = request.Title.NormalizeTrim();
       result.Description = request.Description;
@@ -1387,15 +1374,11 @@ namespace Yoma.Core.Domain.Opportunity.Services
       result.OrganizationLogoURL = organization.LogoURL;
       result.OrganizationZltoRewardPoolCurrentFinancialYear = organization.ZltoRewardPoolCurrentFinancialYear;
       result.OrganizationZltoRewardCumulativeCurrentFinancialYear = organization.ZltoRewardCumulativeCurrentFinancialYear;
-      result.OrganizationYomaRewardPoolCurrentFinancialYear = organization.YomaRewardPoolCurrentFinancialYear;
-      result.OrganizationYomaRewardCumulativeCurrentFinancialYear = organization.YomaRewardCumulativeCurrentFinancialYear;
       result.Summary = request.Summary;
       result.Instructions = request.Instructions;
       result.URL = request.URL;
       result.ZltoReward = request.ZltoReward;
-      result.YomaReward = request.YomaReward;
       result.ZltoRewardPool = request.ZltoRewardPool;
-      result.YomaRewardPool = request.YomaRewardPool;
       result.VerificationEnabled = request.VerificationEnabled;
       result.VerificationMethod = request.VerificationMethod;
       result.DifficultyId = request.DifficultyId;
@@ -1551,7 +1534,6 @@ namespace Yoma.Core.Domain.Opportunity.Services
         {
           Opportunity = opportunity,
           ZltoReward = opportunity.ZltoReward,
-          YomaReward = opportunity.YomaReward
         };
 
         // zlto reward
@@ -1564,26 +1546,15 @@ namespace Yoma.Core.Domain.Opportunity.Services
         (result.ZltoReward, result.ZltoRewardReduced, result.ZltoRewardPoolDepleted) =
          ProcessRewardAllocation(result.ZltoReward, opportunity.ZltoRewardPool, opportunity.ZltoRewardCumulative, result.ZltoRewardReduced, result.ZltoRewardPoolDepleted);
 
-        // yoma Reward
-        // placeholder added at Organization and Opportunity level; never implemented across Referrals or Treasury
-        (result.YomaReward, result.YomaRewardReduced, result.YomaRewardPoolDepleted) =
-          ProcessRewardAllocation(result.YomaReward, organization.YomaRewardPoolCurrentFinancialYear, organization.YomaRewardCumulativeCurrentFinancialYear, null, null);
-
-        (result.YomaReward, result.YomaRewardReduced, result.YomaRewardPoolDepleted) =
-          ProcessRewardAllocation(result.YomaReward, opportunity.YomaRewardPool, opportunity.YomaRewardCumulative, result.YomaRewardReduced, result.YomaRewardPoolDepleted);
-
         opportunity.ParticipantCount = count;
         opportunity.ModifiedByUserId = user.Id;
 
         // update rewardCumulative, treating null as 0 for the addition
         await _treasuryService.ZltoRewardAwarded(treasury, result.ZltoReward);
-        await _organizationService.AllocateRewards(organization, result.ZltoReward, result.YomaReward);
+        await _organizationService.AllocateRewards(organization, result.ZltoReward);
 
         if (result.ZltoReward.HasValue)
           opportunity.ZltoRewardCumulative = (opportunity.ZltoRewardCumulative ?? default) + result.ZltoReward.Value;
-
-        if (result.YomaReward.HasValue)
-          opportunity.YomaRewardCumulative = (opportunity.YomaRewardCumulative ?? default) + result.YomaReward.Value;
 
         await _opportunityRepository.Update(opportunity);
 
@@ -2474,7 +2445,6 @@ namespace Yoma.Core.Domain.Opportunity.Services
             DateEnd = opportunity.DateEnd,
             URL = _notificationURLFactory.OpportunityPublishedItemURL(type, opportunity.Id, opportunity.OrganizationId),
             ZltoReward = opportunity.ZltoReward,
-            YomaReward = opportunity.YomaReward
           }]
         };
 

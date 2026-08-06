@@ -22,11 +22,7 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
     public decimal? ZltoReward { get; set; }
 
-    public decimal? YomaReward { get; set; }
-
     public decimal? ZltoRewardPool { get; set; }
-
-    public decimal? YomaRewardPool { get; set; }
 
     public bool VerificationEnabled { get; set; }
 

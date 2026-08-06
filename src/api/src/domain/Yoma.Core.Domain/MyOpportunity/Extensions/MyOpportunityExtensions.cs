@@ -68,7 +68,6 @@ namespace Yoma.Core.Domain.MyOpportunity.Extensions
         PercentComplete = value.PercentComplete,
         DateCompleted = value.DateCompleted,
         ZltoReward = value.ZltoReward,
-        YomaReward = value.YomaReward,
         Recommendable = value.Recommendable,
         StarRating = value.StarRating,
         Feedback = value.Feedback,

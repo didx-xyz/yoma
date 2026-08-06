@@ -359,7 +359,6 @@ namespace Yoma.Core.Domain.Opportunity.Services
                 DateEnd = item.DateEnd,
                 URL = _notificationURLFactory.OpportunityPublishedItemURL(notificationType, item.Id, item.OrganizationId),
                 ZltoReward = item.ZltoReward,
-                YomaReward = item.YomaReward
               })]
             };
 

@@ -92,7 +92,6 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories
         PercentComplete = entity.PercentComplete,
         DateCompleted = entity.DateCompleted,
         ZltoReward = entity.ZltoReward,
-        YomaReward = entity.YomaReward,
         Recommendable = entity.Recommendable,
         StarRating = entity.StarRating,
         Feedback = entity.Feedback,
@@ -171,7 +170,6 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories
         PercentComplete = item.PercentComplete,
         DateCompleted = item.DateCompleted,
         ZltoReward = item.ZltoReward,
-        YomaReward = item.YomaReward,
         Recommendable = item.Recommendable,
         StarRating = item.StarRating,
         Feedback = item.Feedback,
@@ -209,7 +207,6 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories
           PercentComplete = item.PercentComplete,
           DateCompleted = item.DateCompleted,
           ZltoReward = item.ZltoReward,
-          YomaReward = item.YomaReward,
           Recommendable = item.Recommendable,
           StarRating = item.StarRating,
           Feedback = item.Feedback,
@@ -248,7 +245,6 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories
       entity.PercentComplete = item.PercentComplete;
       entity.DateCompleted = item.DateCompleted;
       entity.ZltoReward = item.ZltoReward;
-      entity.YomaReward = item.YomaReward;
       entity.Recommendable = item.Recommendable;
       entity.StarRating = item.StarRating;
       entity.Feedback = item.Feedback;
@@ -285,7 +281,6 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories
         entity.PercentComplete = item.PercentComplete;
         entity.DateCompleted = item.DateCompleted;
         entity.ZltoReward = item.ZltoReward;
-        entity.YomaReward = item.YomaReward;
         entity.Recommendable = item.Recommendable;
         entity.StarRating = item.StarRating;
         entity.Feedback = item.Feedback;

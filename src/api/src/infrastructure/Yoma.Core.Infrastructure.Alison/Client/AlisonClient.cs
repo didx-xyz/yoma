@@ -508,9 +508,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
           ParticipantLimit = null,
 
           ZltoReward = null,
-          YomaReward = null,
           ZltoRewardPool = null,
-          YomaRewardPool = null,
 
           CredentialIssuanceEnabled = true,
           SSISchemaName = SSISSchemaHelper.ToFullName(SchemaType.Opportunity, $"Default"),
@@ -528,9 +526,9 @@ namespace Yoma.Core.Infrastructure.Alison.Client
           Hidden = false,
 
           Keywords = keywords,
-          Categories = categories.Select(o => o.Id).ToList(),
-          Countries = countries.Select(o => o.Id).ToList(),
-          Languages = languages.Select(o => o.Id).ToList(),
+          Categories = [.. categories.Select(o => o.Id)],
+          Countries = [.. countries.Select(o => o.Id)],
+          Languages = [.. languages.Select(o => o.Id)],
 
           // Populate when available. Partner sync uses PatchAllowMissingRequired:
           // omitted fields are preserved and key-only fields delete existing values.

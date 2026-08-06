@@ -109,8 +109,6 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
                 OrganizationStatus = Enum.Parse<Domain.Entity.OrganizationStatus>(task.Opportunity.Organization.Status.Name, true),
                 OrganizationZltoRewardPoolCurrentFinancialYear = task.Opportunity.Organization.ZltoRewardPoolCurrentFinancialYear,
                 OrganizationZltoRewardCumulativeCurrentFinancialYear = task.Opportunity.Organization.ZltoRewardCumulativeCurrentFinancialYear,
-                OrganizationYomaRewardPoolCurrentFinancialYear = task.Opportunity.Organization.YomaRewardPoolCurrentFinancialYear,
-                OrganizationYomaRewardCumulativeCurrentFinancialYear = task.Opportunity.Organization.YomaRewardCumulativeCurrentFinancialYear,
                 VerificationEnabled = task.Opportunity.VerificationEnabled,
                 VerificationMethod = string.IsNullOrEmpty(task.Opportunity.VerificationMethod) ? null : Enum.Parse<VerificationMethod>(task.Opportunity.VerificationMethod, true),
                 Status = Enum.Parse<Status>(task.Opportunity.Status.Name, true),
@@ -120,9 +118,6 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
                 ZltoReward = task.Opportunity.ZltoReward,
                 ZltoRewardPool = task.Opportunity.ZltoRewardPool,
                 ZltoRewardCumulative = task.Opportunity.ZltoRewardCumulative,
-                YomaReward = task.Opportunity.YomaReward,
-                YomaRewardPool = task.Opportunity.YomaRewardPool,
-                YomaRewardCumulative = task.Opportunity.YomaRewardCumulative,
                 Countries = task.Opportunity.Countries.Select(oc => new Domain.Lookups.Models.Country
                 {
                   Id = oc.Country.Id,

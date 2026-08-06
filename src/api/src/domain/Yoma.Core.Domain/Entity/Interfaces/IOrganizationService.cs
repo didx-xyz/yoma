@@ -46,7 +46,7 @@ namespace Yoma.Core.Domain.Entity.Interfaces
 
     Task ResetRewardCumulativesCurrentFinancialYear(bool actionedBySystem);
 
-    Task AllocateRewards(Organization organization, decimal? zltoReward, decimal? yomaReward);
+    Task AllocateRewards(Organization organization, decimal? zltoReward);
 
     bool IsAdmin(Guid id, bool throwUnauthorized);
 

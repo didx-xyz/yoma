@@ -33,10 +33,6 @@ namespace Yoma.Core.Domain.Entity.Extensions
         ZltoRewardCumulative = value.ZltoRewardCumulative,
         ZltoRewardCumulativeCurrentFinancialYear = value.ZltoRewardCumulativeCurrentFinancialYear,
         ZltoRewardBalanceCurrentFinancialYear = value.ZltoRewardBalanceCurrentFinancialYear,
-        YomaRewardPoolCurrentFinancialYear = value.YomaRewardPoolCurrentFinancialYear,
-        YomaRewardCumulative = value.YomaRewardCumulative,
-        YomaRewardCumulativeCurrentFinancialYear = value.YomaRewardCumulativeCurrentFinancialYear,
-        YomaRewardBalanceCurrentFinancialYear = value.YomaRewardBalanceCurrentFinancialYear
       };
     }
 
