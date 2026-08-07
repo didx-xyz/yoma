@@ -66,6 +66,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Yoma.Core.Infrastructure.Jo
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Yoma.Core.Infrastructure.JobJack", "src\infrastructure\Yoma.Core.Infrastructure.JobJack\Yoma.Core.Infrastructure.JobJack.csproj", "{F974E82C-DC8C-4ECD-A924-798C2C4FE036}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Yoma.Core.Infrastructure.IXO.PartnerSync", "src\infrastructure\Yoma.Core.Infrastructure.IXO.PartnerSync\Yoma.Core.Infrastructure.IXO.PartnerSync.csproj", "{301CD6E8-FFBC-431C-B89D-C6F58C237C1C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -148,6 +150,10 @@ Global
 		{F974E82C-DC8C-4ECD-A924-798C2C4FE036}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F974E82C-DC8C-4ECD-A924-798C2C4FE036}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F974E82C-DC8C-4ECD-A924-798C2C4FE036}.Release|Any CPU.Build.0 = Release|Any CPU
+		{301CD6E8-FFBC-431C-B89D-C6F58C237C1C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{301CD6E8-FFBC-431C-B89D-C6F58C237C1C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{301CD6E8-FFBC-431C-B89D-C6F58C237C1C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{301CD6E8-FFBC-431C-B89D-C6F58C237C1C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -176,6 +182,7 @@ Global
 		{4EF4C7B3-7211-A81E-D25E-C16B30340D18} = {2129F035-3D60-4CC4-AE25-9BFEE9340D8D}
 		{BE4B5017-6688-C4F4-64A5-9CA5E3189B43} = {2129F035-3D60-4CC4-AE25-9BFEE9340D8D}
 		{F974E82C-DC8C-4ECD-A924-798C2C4FE036} = {2129F035-3D60-4CC4-AE25-9BFEE9340D8D}
+		{301CD6E8-FFBC-431C-B89D-C6F58C237C1C} = {2129F035-3D60-4CC4-AE25-9BFEE9340D8D}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {D658A68F-8A10-4EF2-B8C9-F1350399BF58}
