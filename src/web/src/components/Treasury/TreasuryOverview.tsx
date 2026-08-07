@@ -1,5 +1,3 @@
-import Image from "next/image";
-import iconZlto from "public/images/icon-zlto.svg";
 import { IoMdCalendar, IoMdSwap, IoMdWallet } from "react-icons/io";
 import type { TreasuryInfo } from "~/api/models/treasury";
 import DetailSection from "~/components/Common/DetailSection";
@@ -19,6 +17,7 @@ import {
   TOOLTIP_PAYOUT_BALANCE_AVAILABLE,
   TOOLTIP_PAYOUT_BALANCE_COMPLETED,
 } from "~/lib/format/rewards";
+import TreasuryZltoRewardStats from "~/components/Treasury/TreasuryZltoRewardStats";
 import { derivePayoutTotalPending } from "~/lib/treasury/payoutCommitment";
 import {
   CONVERSION_EXAMPLE_ZLTO,
@@ -41,16 +40,9 @@ import {
  * (TreasuryCapacityWarnings) so they are seen on the Manage tab too.
  */
 
-const BALANCE_TOOLTIP =
-  "The balance is the pool minus what has been awarded so far this financial year. It is calculated by the server.";
-
 export const TreasuryOverview: React.FC<{ treasury: TreasuryInfo }> = ({
   treasury,
 }) => {
-  const zltoTone = rewardBalanceTone(
-    treasury.zltoRewardBalanceCurrentFinancialYear,
-    treasury.zltoRewardPoolCurrentFinancialYear,
-  );
   /**
    * ⚠️ Capacity comes from the **available** balance, never the completed-only one. The completed-only
    * balance ignores payouts already in flight, so toning off it made this surface report "healthy"
@@ -113,52 +105,9 @@ export const TreasuryOverview: React.FC<{ treasury: TreasuryInfo }> = ({
         icon={<IoMdWallet className="text-blue h-4 w-4" />}
       >
         <div className="mt-3 flex flex-col gap-4">
-          <RewardStatGroup
-            title="ZLTO rewards"
-            icon={
-              <Image
-                src={iconZlto}
-                alt=""
-                aria-hidden={true}
-                width={16}
-                height={16}
-                className="h-auto"
-              />
-            }
-          >
-            <RewardStat
-              label="Reward pool"
-              scope="financialYear"
-              value={formatZlto(treasury.zltoRewardPoolCurrentFinancialYear)}
-              tooltip="The total ZLTO the Treasury has allocated for this financial year. Organisations draw from it, and opportunities and referrals draw from them."
-              note={
-                treasury.zltoRewardPoolCurrentFinancialYear === null
-                  ? "Not set — no ZLTO can be awarded"
-                  : undefined
-              }
-            />
-            <RewardStat
-              label="Awarded"
-              scope="financialYear"
-              value={formatZlto(
-                treasury.zltoRewardCumulativeCurrentFinancialYear,
-              )}
-              tooltip="ZLTO awarded since the start of this financial year. Resets to zero on rollover."
-            />
-            <RewardStat
-              label="Remaining balance"
-              scope="financialYear"
-              value={formatZlto(treasury.zltoRewardBalanceCurrentFinancialYear)}
-              tooltip={BALANCE_TOOLTIP}
-              tone={balanceStatTone(zltoTone)}
-            />
-            <RewardStat
-              label="Awarded"
-              scope="lifetime"
-              value={formatZlto(treasury.zltoRewardCumulative)}
-              tooltip="ZLTO awarded across all financial years. Never reset."
-            />
-          </RewardStatGroup>
+          {/* Extracted so the referral surfaces, which show the same four figures beside a
+              programme's own, cannot label them differently. */}
+          <TreasuryZltoRewardStats figures={treasury} />
 
           {/* Five stats, because the two balances mean different things and both have to be
               readable. `columns={3}` keeps them from being squeezed to a single line each. */}

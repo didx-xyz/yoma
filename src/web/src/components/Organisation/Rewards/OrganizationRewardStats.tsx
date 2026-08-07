@@ -58,9 +58,13 @@ export const OrganizationRewardStats: React.FC<{
         scope="financialYear"
         value={formatZlto(figures.zltoRewardPoolCurrentFinancialYear)}
         tooltip="The ZLTO this organisation can award this financial year. It draws from the Treasury pool, and its opportunities draw from it."
+        // ⚠️ A null pool means this level's cap is **not enforced** — the organisation's awards are
+        // then limited only by the Treasury. `ProcessRewardAllocation` skips a level whose pool is
+        // null (`OpportunityService.cs:2172-2194`), so "no ZLTO can be awarded" would be the exact
+        // inverse of what happens.
         note={
           figures.zltoRewardPoolCurrentFinancialYear === null
-            ? "Not set — no ZLTO can be awarded"
+            ? "Not set — this organisation's awards are not capped"
             : undefined
         }
       />

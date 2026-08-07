@@ -35,6 +35,7 @@ import TreasuryManagementForm from "~/components/Treasury/TreasuryManagementForm
 import TreasuryOpportunitiesTab from "~/components/Treasury/TreasuryOpportunitiesTab";
 import TreasuryOrganisationsTab from "~/components/Treasury/TreasuryOrganisationsTab";
 import TreasuryOverview from "~/components/Treasury/TreasuryOverview";
+import TreasuryReferralsTab from "~/components/Treasury/TreasuryReferralsTab";
 import TreasuryRolloverConfirmDialog from "~/components/Treasury/TreasuryRolloverConfirmDialog";
 import {
   TREASURY_QUERY_KEYS,
@@ -114,9 +115,15 @@ const TAB_PARAM = "tab";
 const TAB_MANAGE = "manage";
 const TAB_ORGANISATIONS = "organisations";
 const TAB_OPPORTUNITIES = "opportunities";
+const TAB_REFERRALS = "referrals";
 
 /** The querystring tokens this page recognises; anything else falls back to Overview. */
-const TABS = [TAB_MANAGE, TAB_ORGANISATIONS, TAB_OPPORTUNITIES] as const;
+const TABS = [
+  TAB_MANAGE,
+  TAB_ORGANISATIONS,
+  TAB_OPPORTUNITIES,
+  TAB_REFERRALS,
+] as const;
 type TreasuryTab = (typeof TABS)[number];
 
 /** ⚠️ TEMPORARY — part of the mock-scenario dev aid; remove with it. */
@@ -298,6 +305,12 @@ const Treasury: NextPageWithLayout<{
                 href: treasuryHref(TAB_OPPORTUNITIES, mockScenario),
                 selected: activeTab === TAB_OPPORTUNITIES,
               },
+              {
+                key: "treasury_tab_referrals",
+                label: "Referrals",
+                href: treasuryHref(TAB_REFERRALS, mockScenario),
+                selected: activeTab === TAB_REFERRALS,
+              },
             ]}
           />
         </ListPageHeader>
@@ -390,6 +403,13 @@ const Treasury: NextPageWithLayout<{
                 {/* T3 — the level below Organisation: where the capacity is being spent */}
                 {activeTab === TAB_OPPORTUNITIES && (
                   <TreasuryOpportunitiesTab />
+                )}
+
+                {/* T4 — the hierarchy's second branch: Treasury → Referral Program → Referral Link.
+                    The Treasury is passed down rather than re-fetched, so the tab and the capacity
+                    banner above it can never disagree about the same pool. */}
+                {activeTab === TAB_REFERRALS && (
+                  <TreasuryReferralsTab treasury={treasury} />
                 )}
 
                 {activeTab === null && <TreasuryOverview treasury={treasury} />}
