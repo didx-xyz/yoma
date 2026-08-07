@@ -1187,6 +1187,13 @@ namespace Yoma.Core.Domain.PartnerSync.Services
       var userSyncInfo = _syncStateService.GetUserSyncInfo(partner, userExternalId);
       if (userSyncInfo != null) return userSyncInfo.UserId;
 
+      // IXO may return the Yoma user id directly as userRef when no partner-user link exists.
+      // Keep this fallback IXO-specific so another partner's GUID-shaped external id is never
+      // mistaken for a Yoma user id. Email/mobile username resolution remains the final fallback.
+      if (partner == SyncPartner.IXO && Guid.TryParse(userExternalId, out var userId) &&
+          _userService.GetByIdOrNull(userId, false, false) != null)
+        return userId;
+
       return _userService.GetByUsernameOrNull(username, false, false)?.Id;
     }
 

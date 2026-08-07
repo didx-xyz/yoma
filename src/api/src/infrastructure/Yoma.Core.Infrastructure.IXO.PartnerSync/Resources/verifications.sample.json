@@ -1,0 +1,26 @@
+{
+  "page": 1,
+  "pageSize": 200,
+  "totalPages": 1,
+  "items": [
+    {
+      "opportunityRef": "learn-001",
+      "userRef": "testuser@gmail.com",
+      "status": "in-progress",
+      "percentComplete": 40,
+      "startDate": "2026-06-01T00:00:00Z"
+    },
+    {
+      "opportunityRef": "learn-002",
+      "userRef": "testuser@gmail.com",
+      "status": "completed",
+      "dateCompleted": "2026-07-01T00:00:00Z",
+      "endDate": "2026-07-01T00:00:00Z",
+      "percentComplete": 100,
+      "commitment": {
+        "interval": "Week",
+        "count": 4
+      }
+    }
+  ]
+}

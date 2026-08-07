@@ -6,6 +6,7 @@ using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Lookups.Interfaces;
 using Yoma.Core.Domain.Opportunity;
 using Yoma.Core.Domain.Opportunity.Interfaces.Lookups;
+using Yoma.Core.Domain.Opportunity.Services;
 using Yoma.Core.Domain.PartnerSync.Interfaces.Provider;
 using Yoma.Core.Domain.PartnerSync.Models;
 using Yoma.Core.Domain.PartnerSync.Validators;
@@ -134,7 +135,7 @@ namespace Yoma.Core.Infrastructure.Jobberman.Client
         URL = item.URL,
         VerificationEnabled = false,
         PostAsActive = item.Deleted != true,
-        Keywords = BuildKeywords(item, category.Name),
+        Keywords = BuildKeywords(item),
         DateStart = item.DateStart ?? item.DateCreated,
         DateEnd = item.DateEnd,
         Hidden = false,
@@ -208,20 +209,43 @@ namespace Yoma.Core.Infrastructure.Jobberman.Client
         .NormalizeTrim();
     }
 
-    private static List<string>? BuildKeywords(Opportunity item, string category)
+    private static List<string>? BuildKeywords(Opportunity item)
     {
-      var results = new[]
-      {
-        Domain.Opportunity.Type.Job.ToString(),
-        item.WorkType,
-        category
-      }
-      .Where(o => !string.IsNullOrEmpty(o))
-      .Select(o => o!.Trim())
-      .Distinct(StringComparer.OrdinalIgnoreCase)
-      .ToList();
+      var result = new List<string>();
 
-      return results.Count == 0 ? null : results;
+      foreach (var keyword in GetKeywordCandidates(item))
+        AddKeyword(result, keyword);
+
+      return result.Count == 0 ? null : result;
+    }
+
+    private static IEnumerable<string?> GetKeywordCandidates(Opportunity item)
+    {
+      yield return item.WorkType;
+
+      foreach (var category in item.Category?.Split(
+        OpportunityService.Keywords_Separator,
+        StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries) ?? [])
+        yield return category;
+    }
+
+    private static void AddKeyword(List<string> keywords, string? value)
+    {
+      value = value?.Trim().HtmlDecode().RemoveHtmlTags();
+      if (string.IsNullOrEmpty(value)) return;
+      if (value.Contains(OpportunityService.Keywords_Separator, StringComparison.Ordinal)) return;
+      if (keywords.Any(item => string.Equals(item, value, StringComparison.OrdinalIgnoreCase))) return;
+
+      var currentLength = keywords.Count == 0
+        ? 0
+        : string.Join(OpportunityService.Keywords_Separator, keywords).Length;
+
+      var projectedLength = currentLength + value.Length;
+      if (keywords.Count > 0)
+        projectedLength += OpportunityService.Keywords_Separator.Length;
+
+      if (projectedLength <= OpportunityService.Keywords_CombinedMaxLength)
+        keywords.Add(value);
     }
     #endregion
   }

@@ -1,4 +1,4 @@
-﻿
+
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 18
 VisualStudioVersion = 18.3.11520.95
@@ -67,6 +67,8 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "infrastructure", "infrastructure", "{DFEE68D8-A7D0-1A41-506C-9B74AA9A7B7B}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Yoma.Core.Infrastructure.JobJack", "src\infrastructure\Yoma.Core.Infrastructure.JobJack\Yoma.Core.Infrastructure.JobJack.csproj", "{F1AF13FE-421C-4F18-90F0-A2C1F59FCC6C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Yoma.Core.Infrastructure.IXO.PartnerSync", "src\infrastructure\Yoma.Core.Infrastructure.IXO.PartnerSync\Yoma.Core.Infrastructure.IXO.PartnerSync.csproj", "{301CD6E8-FFBC-431C-B89D-C6F58C237C1C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -306,6 +308,18 @@ Global
 		{F1AF13FE-421C-4F18-90F0-A2C1F59FCC6C}.Release|x64.Build.0 = Release|Any CPU
 		{F1AF13FE-421C-4F18-90F0-A2C1F59FCC6C}.Release|x86.ActiveCfg = Release|Any CPU
 		{F1AF13FE-421C-4F18-90F0-A2C1F59FCC6C}.Release|x86.Build.0 = Release|Any CPU
+		{301CD6E8-FFBC-431C-B89D-C6F58C237C1C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{301CD6E8-FFBC-431C-B89D-C6F58C237C1C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{301CD6E8-FFBC-431C-B89D-C6F58C237C1C}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{301CD6E8-FFBC-431C-B89D-C6F58C237C1C}.Debug|x64.Build.0 = Debug|Any CPU
+		{301CD6E8-FFBC-431C-B89D-C6F58C237C1C}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{301CD6E8-FFBC-431C-B89D-C6F58C237C1C}.Debug|x86.Build.0 = Debug|Any CPU
+		{301CD6E8-FFBC-431C-B89D-C6F58C237C1C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{301CD6E8-FFBC-431C-B89D-C6F58C237C1C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{301CD6E8-FFBC-431C-B89D-C6F58C237C1C}.Release|x64.ActiveCfg = Release|Any CPU
+		{301CD6E8-FFBC-431C-B89D-C6F58C237C1C}.Release|x64.Build.0 = Release|Any CPU
+		{301CD6E8-FFBC-431C-B89D-C6F58C237C1C}.Release|x86.ActiveCfg = Release|Any CPU
+		{301CD6E8-FFBC-431C-B89D-C6F58C237C1C}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -334,6 +348,7 @@ Global
 		{BE4B5017-6688-C4F4-64A5-9CA5E3189B43} = {2129F035-3D60-4CC4-AE25-9BFEE9340D8D}
 		{AC1C46F3-1E52-D66D-9089-7F536A5424D0} = {2129F035-3D60-4CC4-AE25-9BFEE9340D8D}
 		{F1AF13FE-421C-4F18-90F0-A2C1F59FCC6C} = {DFEE68D8-A7D0-1A41-506C-9B74AA9A7B7B}
+		{301CD6E8-FFBC-431C-B89D-C6F58C237C1C} = {2129F035-3D60-4CC4-AE25-9BFEE9340D8D}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {D658A68F-8A10-4EF2-B8C9-F1350399BF58}
