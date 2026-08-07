@@ -78,6 +78,11 @@ namespace Yoma.Core.Domain.SSI.Services.Lookups
       return result.SingleOrDefault();
     }
 
+    /// <summary>
+    /// Indicates whether the attribute exists as a static schema entity property or custom field in any type context.
+    /// This is the broad existence check used by request validation; schema creation and update subsequently validate that
+    /// the attribute is active and applicable to the selected schema type and type context.
+    /// </summary>
     public bool AttributeExists(string attributeName)
     {
       if (string.IsNullOrWhiteSpace(attributeName)) return false;
@@ -90,6 +95,11 @@ namespace Yoma.Core.Domain.SSI.Services.Lookups
           string.Equals(customField.AttributeName, attributeName, StringComparison.OrdinalIgnoreCase)) == true);
     }
 
+    /// <summary>
+    /// Indicates whether the optional type context is supported by the specified schema type.
+    /// Opportunity contexts are resolved against the fixed Opportunity Type names; other schema types currently support
+    /// generic schemas only.
+    /// </summary>
     public bool TypeContextValid(SchemaType type, string? typeContext)
     {
       typeContext = typeContext?.Trim();
@@ -102,24 +112,12 @@ namespace Yoma.Core.Domain.SSI.Services.Lookups
       };
     }
 
-    public List<SSISchemaEntity> List(SchemaType? type)
-    {
-      return List(type, null);
-    }
-
-    public List<SSISchemaEntity> List(SchemaType? type, string? typeContext)
-    {
-      return ListInternal(type, typeContext, true, false);
-    }
-
-    public List<SSISchemaEntity> ListAll(SchemaType? type, bool activeOnly)
-    {
-      return ListInternal(type, null, activeOnly, true);
-    }
-    #endregion
-
-    #region Private Members
-    private List<SSISchemaEntity> ListInternal(SchemaType? type, string? typeContext, bool activeOnly, bool includeAllTypeContexts)
+    /// <summary>
+    /// Lists schema entities and active custom fields applicable to the optional schema type and type context.
+    /// With no context, only generic custom fields are included. With a context, generic fields and fields assigned to that
+    /// context are included.
+    /// </summary>
+    public List<SSISchemaEntity> List(SchemaType? type, string? typeContext = null)
     {
       typeContext = typeContext?.Trim();
       if (string.IsNullOrEmpty(typeContext)) typeContext = null;
@@ -127,6 +125,33 @@ namespace Yoma.Core.Domain.SSI.Services.Lookups
       if (type.HasValue && !TypeContextValid(type.Value, typeContext))
         throw new ArgumentException($"Type context '{typeContext}' is invalid or unsupported for schema type '{type}'", nameof(typeContext));
 
+      var results = ListInternal(type);
+      AddCustomFields(results, entityType => _customFieldDefinitionService.List(entityType, false, true, typeContext));
+
+      return results;
+    }
+
+    /// <summary>
+    /// Lists schema entities with custom fields from every type context, optionally filtered by schema type and active state.
+    /// This is used internally when matching or rendering existing provider schemas because their stored attributes may belong
+    /// to any supported context.
+    /// </summary>
+    public List<SSISchemaEntity> ListAll(SchemaType? type, bool activeOnly)
+    {
+      var results = ListInternal(type);
+      AddCustomFields(results, entityType => _customFieldDefinitionService.ListAll(entityType, false, activeOnly));
+
+      return results;
+    }
+    #endregion
+
+    #region Private Members
+    /// <summary>
+    /// Creates detached results from the persisted static schema entity configuration and applies the optional schema-type filter.
+    /// Dynamic custom fields are populated separately by the calling list method.
+    /// </summary>
+    private List<SSISchemaEntity> ListInternal(SchemaType? type)
+    {
       var results = ListStatic()
         .Select(entity => new SSISchemaEntity
         {
@@ -144,24 +169,28 @@ namespace Yoma.Core.Domain.SSI.Services.Lookups
         results = [.. results.Where(o => o.Types?.Any(t => t.Id == typeId) == true)];
       }
 
-      foreach (var entity in results)
+      return results;
+    }
+
+    /// <summary>
+    /// Populates each compatible schema entity with dynamic custom fields selected by the calling context strategy.
+    /// </summary>
+    private static void AddCustomFields(
+      List<SSISchemaEntity> entities,
+      Func<CustomFieldEntityType, List<CustomFieldDefinition>> listDefinitions)
+    {
+      foreach (var entity in entities)
       {
         if (!Enum.TryParse<CustomFieldEntityType>(entity.Name, true, out var entityType))
           continue;
 
-        var definitions = includeAllTypeContexts
-          ? _customFieldDefinitionService.List(entityType, false, activeOnly)
-          : _customFieldDefinitionService.List(entityType, typeContext, false, activeOnly);
-
-        entity.CustomFields = [.. definitions
+        entity.CustomFields = [.. listDefinitions(entityType)
           .Select(ToCustomField)
           .OrderBy(o => o.Group)
           .ThenBy(o => o.SubGroup)
           .ThenBy(o => o.SortOrder)
           .ThenBy(o => o.NameDisplay)];
       }
-
-      return results;
     }
 
     private List<SSISchemaEntity> ListStatic()

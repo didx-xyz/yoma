@@ -85,7 +85,7 @@ namespace Yoma.Core.Infrastructure.Database
       #endregion
 
       services.AddScoped<IRepository<BlobObject>, BlobObjectRepository>();
-      services.AddScoped<IRepositoryWithNavigation<CustomFieldDefinition>, CustomFieldDefinitionRepository>();
+      services.AddScoped<IRepositoryBatchedWithNavigation<CustomFieldDefinition>, CustomFieldDefinitionRepository>();
       services.AddScoped<IRepository<CustomFieldOption>, CustomFieldOptionRepository>();
       services.AddScoped<IRepository<CustomFieldValue>, CustomFieldValueRepository>();
       services.AddScoped<IRepositoryBatched<DownloadSchedule>, DownloadScheduleRepository>();

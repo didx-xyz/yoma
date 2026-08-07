@@ -6,7 +6,7 @@ using Yoma.Core.Infrastructure.Shared.Extensions;
 
 namespace Yoma.Core.Infrastructure.Database.Core.Repositories
 {
-  public sealed class CustomFieldDefinitionRepository : BaseRepository<Entities.CustomFieldDefinition, Guid>, IRepositoryWithNavigation<Domain.Core.Models.CustomFieldDefinition>
+  public sealed class CustomFieldDefinitionRepository : BaseRepository<Entities.CustomFieldDefinition, Guid>, IRepositoryBatchedWithNavigation<Domain.Core.Models.CustomFieldDefinition>
   {
     #region Constructor
     public CustomFieldDefinitionRepository(ApplicationDbContext context) : base(context)
@@ -75,12 +75,68 @@ namespace Yoma.Core.Infrastructure.Database.Core.Repositories
       return query;
     }
 
-    public async Task<Domain.Core.Models.CustomFieldDefinition> Create(Domain.Core.Models.CustomFieldDefinition item)
-    {
-      item.DateCreated = DateTimeOffset.UtcNow;
-      item.DateModified = DateTimeOffset.UtcNow;
+    public async Task<Domain.Core.Models.CustomFieldDefinition> Create(Domain.Core.Models.CustomFieldDefinition item) =>
+      (await Create([item])).Single();
 
-      var entity = new Entities.CustomFieldDefinition
+    public async Task<List<Domain.Core.Models.CustomFieldDefinition>> Create(List<Domain.Core.Models.CustomFieldDefinition> items)
+    {
+      ArgumentNullException.ThrowIfNull(items);
+      if (items.Count == 0) return items;
+
+      var now = DateTimeOffset.UtcNow;
+      var entities = items.Select(item => Map(item, now)).ToList();
+
+      _context.CustomFieldDefinition.AddRange(entities);
+      await _context.SaveChangesAsync();
+
+      foreach (var (item, entity) in items.Zip(entities))
+        Map(entity, item);
+
+      return items;
+    }
+
+    public async Task<Domain.Core.Models.CustomFieldDefinition> Update(Domain.Core.Models.CustomFieldDefinition item) =>
+      (await Update([item])).Single();
+
+    public async Task<List<Domain.Core.Models.CustomFieldDefinition>> Update(List<Domain.Core.Models.CustomFieldDefinition> items)
+    {
+      ArgumentNullException.ThrowIfNull(items);
+      if (items.Count == 0) return items;
+
+      var ids = items.Select(o => o.Id).ToList();
+      var entities = _context.CustomFieldDefinition.Where(o => ids.Contains(o.Id)).ToList();
+
+      if (entities.Count != items.Count)
+        throw new ArgumentOutOfRangeException(
+          nameof(items),
+          $"Missing {nameof(Entities.CustomFieldDefinition)} records with ids '{string.Join(", ", ids.Except(entities.Select(o => o.Id)))}'");
+
+      var now = DateTimeOffset.UtcNow;
+      foreach (var item in items)
+      {
+        var entity = entities.Single(o => o.Id == item.Id);
+        MapMutable(item, entity, now);
+        Map(entity, item);
+      }
+
+      _context.CustomFieldDefinition.UpdateRange(entities);
+      await _context.SaveChangesAsync();
+
+      return items;
+    }
+
+    public async Task Delete(Domain.Core.Models.CustomFieldDefinition item) => await Delete([item]);
+
+    public Task Delete(List<Domain.Core.Models.CustomFieldDefinition> items)
+    {
+      throw new NotImplementedException();
+    }
+    #endregion
+
+    #region Private Members
+    private static Entities.CustomFieldDefinition Map(Domain.Core.Models.CustomFieldDefinition item, DateTimeOffset now)
+    {
+      return new Entities.CustomFieldDefinition
       {
         Id = item.Id,
         EntityType = item.EntityType,
@@ -100,25 +156,16 @@ namespace Yoma.Core.Infrastructure.Database.Core.Repositories
         IsActive = item.IsActive,
         IsSystem = item.IsSystem,
         IsSchemaMapped = item.IsSchemaMapped,
-        DateCreated = item.DateCreated,
-        DateModified = item.DateModified
+        DateCreated = now,
+        DateModified = now
       };
-
-      _context.CustomFieldDefinition.Add(entity);
-      await _context.SaveChangesAsync();
-
-      item.Id = entity.Id;
-
-      return item;
     }
 
-    public async Task<Domain.Core.Models.CustomFieldDefinition> Update(Domain.Core.Models.CustomFieldDefinition item)
+    private static void MapMutable(
+      Domain.Core.Models.CustomFieldDefinition item,
+      Entities.CustomFieldDefinition entity,
+      DateTimeOffset now)
     {
-      var entity = _context.CustomFieldDefinition.Where(o => o.Id == item.Id).SingleOrDefault()
-        ?? throw new ArgumentOutOfRangeException(nameof(item), $"{nameof(Core.Entities.CustomFieldDefinition)} with id '{item.Id}' does not exist");
-
-      item.DateModified = DateTimeOffset.UtcNow;
-
       entity.EntityType = item.EntityType;
       entity.EntityContext = item.EntityContext;
       entity.Key = item.Key;
@@ -136,21 +183,14 @@ namespace Yoma.Core.Infrastructure.Database.Core.Repositories
       entity.IsActive = item.IsActive;
       entity.IsSystem = item.IsSystem;
       entity.IsSchemaMapped = item.IsSchemaMapped;
-      entity.DateModified = item.DateModified;
-
-      await _context.SaveChangesAsync();
-
-      return item;
+      entity.DateModified = now;
     }
 
-    public async Task Delete(Domain.Core.Models.CustomFieldDefinition item)
+    private static void Map(Entities.CustomFieldDefinition entity, Domain.Core.Models.CustomFieldDefinition item)
     {
-      var entity = _context.CustomFieldDefinition.Where(o => o.Id == item.Id).SingleOrDefault()
-        ?? throw new ArgumentOutOfRangeException(nameof(item), $"{nameof(Core.Entities.CustomFieldDefinition)} with id '{item.Id}' does not exist");
-
-      _context.CustomFieldDefinition.Remove(entity);
-
-      await _context.SaveChangesAsync();
+      item.Id = entity.Id;
+      item.DateCreated = entity.DateCreated;
+      item.DateModified = entity.DateModified;
     }
     #endregion
   }

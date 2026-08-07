@@ -1976,14 +1976,14 @@ namespace Yoma.Core.Domain.Opportunity.Services
         .Select(o => o.ToString())
         .ToList();
 
-      return _customFieldDefinitionService.List(CustomFieldEntityType.Opportunity, contexts, true, true);
+      return _customFieldDefinitionService.ListForContexts(CustomFieldEntityType.Opportunity, contexts, true, true);
     }
 
     public List<CustomFieldDefinition> ListCustomFieldDefinitions(Guid id)
     {
       var opportunity = GetById(id, false, false, true);
 
-      return _customFieldDefinitionService.List(CustomFieldEntityType.Opportunity, opportunity.Type.ToString(), true, true);
+      return _customFieldDefinitionService.List(CustomFieldEntityType.Opportunity, true, true, opportunity.Type.ToString());
     }
     #endregion
 

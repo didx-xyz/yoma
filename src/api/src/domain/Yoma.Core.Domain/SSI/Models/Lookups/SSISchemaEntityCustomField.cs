@@ -38,8 +38,21 @@ namespace Yoma.Core.Domain.SSI.Models.Lookups
 
     public bool IsActive { get; set; }
 
+    /// <summary>
+    /// Indicates that the field is required by a developer-controlled business process.
+    /// Schema management displays this value but does not manage it.
+    /// </summary>
     public bool IsSystem { get; set; }
 
+    /// <summary>
+    /// Indicates that the field has been mapped to at least one credential schema version.
+    /// This persisted value is managed by schema management and initial schema seeding.
+    /// </summary>
     public bool IsSchemaMapped { get; set; }
+
+    /// <summary>
+    /// Indicates that editing restrictions apply because the field is either developer-controlled or schema mapped.
+    /// </summary>
+    public bool IsProtected => IsSystem || IsSchemaMapped;
   }
 }

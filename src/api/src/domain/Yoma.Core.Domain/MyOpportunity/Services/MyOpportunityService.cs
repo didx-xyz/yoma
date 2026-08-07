@@ -1419,7 +1419,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
     {
       var opportunity = _opportunityService.GetById(opportunityId, false, false, false);
 
-      return _customFieldDefinitionService.List(CustomFieldEntityType.MyOpportunity, opportunity.Type.ToString(), true, true);
+      return _customFieldDefinitionService.List(CustomFieldEntityType.MyOpportunity, true, true, opportunity.Type.ToString());
     }
     #endregion
 

@@ -58,9 +58,15 @@ namespace Yoma.Core.Infrastructure.Database.Core.Entities
     [Required]
     public bool IsActive { get; set; }
 
+    /// <summary>
+    /// Developer- and seed-controlled protection for fields required by code, partner mappings or other business processes.
+    /// </summary>
     [Required]
     public bool IsSystem { get; set; }
 
+    /// <summary>
+    /// Admin schema-management and seed-controlled protection for fields mapped to credential schemas.
+    /// </summary>
     [Required]
     public bool IsSchemaMapped { get; set; }
 

@@ -52,7 +52,7 @@ namespace Yoma.Core.Domain.Core.Services
     {
       if (values == null || values.Count == 0) return null;
 
-      var definitions = _customFieldDefinitionService.List(entityType, entityContext, true, true);
+      var definitions = _customFieldDefinitionService.List(entityType, true, true, entityContext);
       var definitionsByKey = definitions.ToDictionary(o => o.Key, StringComparer.OrdinalIgnoreCase);
       var result = new List<CustomFieldValueRequest>();
 
@@ -141,9 +141,9 @@ namespace Yoma.Core.Domain.Core.Services
       {
         var definitionsPrevious = _customFieldDefinitionService.List(
           entityType,
-          entityContextPrevious,
           false,
-          true);
+          true,
+          entityContextPrevious);
 
         definitionsAffected =
         [
@@ -252,7 +252,7 @@ namespace Yoma.Core.Domain.Core.Services
       List<CustomFieldValueRequest>? customFields,
       CustomFieldUpsertMode mode)
     {
-      var definitions = _customFieldDefinitionService.List(entityType, entityContext, true, true);
+      var definitions = _customFieldDefinitionService.List(entityType, true, true, entityContext);
       var requests = customFields ?? [];
 
       if (requests.Count == 0 && definitions.Count == 0)

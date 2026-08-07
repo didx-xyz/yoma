@@ -27,14 +27,14 @@ namespace Yoma.Core.Domain.Core.Services
     // - Test CSV exports using custom-field filters.
     // - Complete final authorization-boundary and regression testing.
     #region Class Variables
-    private readonly IRepositoryWithNavigation<CustomFieldDefinition> _customFieldDefinitionRepository;
+    private readonly IRepositoryBatchedWithNavigation<CustomFieldDefinition> _customFieldDefinitionRepository;
     private readonly IMemoryCache _memoryCache;
     private readonly AppSettings _appSettings;
     #endregion
 
     #region Constructor
     public CustomFieldDefinitionService(
-      IRepositoryWithNavigation<CustomFieldDefinition> customFieldDefinitionRepository,
+      IRepositoryBatchedWithNavigation<CustomFieldDefinition> customFieldDefinitionRepository,
       IMemoryCache memoryCache,
       IOptions<AppSettings> appSettings)
     {
@@ -65,23 +65,12 @@ namespace Yoma.Core.Domain.Core.Services
       return ToResult(result, includeChildItems, activeOnly);
     }
 
-    public List<CustomFieldDefinition> List(CustomFieldEntityType entityType, bool includeChildItems, bool activeOnly)
+    public List<CustomFieldDefinition> List(CustomFieldEntityType entityType, bool includeChildItems, bool activeOnly, string? entityContext = null)
     {
-      var query = ListCached()
-        .Where(o => o.EntityType == entityType.ToString());
-
-      if (activeOnly)
-        query = query.Where(o => o.IsActive);
-
-      return ToResults(query, includeChildItems, activeOnly);
+      return ListForContexts(entityType, string.IsNullOrEmpty(entityContext) ? null : [entityContext], includeChildItems, activeOnly);
     }
 
-    public List<CustomFieldDefinition> List(CustomFieldEntityType entityType, string? entityContext, bool includeChildItems, bool activeOnly)
-    {
-      return List(entityType, string.IsNullOrEmpty(entityContext) ? null : [entityContext], includeChildItems, activeOnly);
-    }
-
-    public List<CustomFieldDefinition> List(CustomFieldEntityType entityType, List<string>? entityContexts, bool includeChildItems, bool activeOnly)
+    public List<CustomFieldDefinition> ListForContexts(CustomFieldEntityType entityType, List<string>? entityContexts, bool includeChildItems, bool activeOnly)
     {
       var contexts = entityContexts?
         .Select(o => o.Trim())
@@ -100,24 +89,36 @@ namespace Yoma.Core.Domain.Core.Services
       return ToResults(query, includeChildItems, activeOnly);
     }
 
+    public List<CustomFieldDefinition> ListAll(CustomFieldEntityType entityType, bool includeChildItems, bool activeOnly)
+    {
+      var query = ListCached()
+        .Where(o => o.EntityType == entityType.ToString());
+
+      if (activeOnly)
+        query = query.Where(o => o.IsActive);
+
+      return ToResults(query, includeChildItems, activeOnly);
+    }
+
     public async Task MarkSchemaMapped(List<Guid> ids)
     {
       ArgumentNullException.ThrowIfNull(ids);
 
-      var definitions = ListCached()
-        .Where(o => ids.Contains(o.Id) && (!o.IsSystem || !o.IsSchemaMapped))
+      var definitions = _customFieldDefinitionRepository.Query(false)
+        .Where(o => ids.Contains(o.Id) && !o.IsSchemaMapped)
         .ToList();
 
       foreach (var definition in definitions)
       {
         // Schema protection is intentionally one-way: provider schema versions and issued credentials are immutable history.
         definition.IsSchemaMapped = true;
-        definition.IsSystem = true;
-        await _customFieldDefinitionRepository.Update(definition);
       }
 
       if (definitions.Count != 0)
+      {
+        await _customFieldDefinitionRepository.Update(definitions);
         _memoryCache.Remove(CacheHelper.GenerateKey<CustomFieldDefinition>());
+      }
     }
     #endregion
 

@@ -298,7 +298,6 @@ namespace Yoma.Core.Domain.SSI.Services
           .SelectMany(entity => entity.CustomFields ?? []))
         {
           customField.IsSchemaMapped = true;
-          customField.IsSystem = true;
         }
       }
 
@@ -375,6 +374,11 @@ namespace Yoma.Core.Domain.SSI.Services
           nameof(request));
     }
 
+    /// <summary>
+    /// Persists local schema-mapping protection after the schema provider upsert succeeds. The provider schema and local database
+    /// cannot share a transaction, so local flags are updated in one atomic batch. Schema listing derives mappings from the provider
+    /// and reapplies missing flags, self-healing if the local update exceptionally failed after the provider accepted the schema.
+    /// </summary>
     private async Task MarkSchemaMapped(List<SSISchemaEntity> schemaEntities, List<string> attributeNames)
     {
       var definitionIds = schemaEntities

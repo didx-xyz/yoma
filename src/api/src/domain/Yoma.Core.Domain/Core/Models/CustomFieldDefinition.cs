@@ -59,19 +59,24 @@ namespace Yoma.Core.Domain.Core.Models
     public bool IsActive { get; set; }
 
     /// <summary>
-    /// Indicates that the field is used by code, partner mapping, credential mapping, or another protected system flow.
-    /// Admins may update presentation metadata such as title, description, grouping and ordering, but cannot deactivate or delete
-    /// the definition, or change its technical contract: entity type/context, key, data type, lookup type, multiple-selection
-    /// behaviour or configured option keys.
+    /// Indicates that the field is required by code, a partner mapping or another developer-controlled business process.
+    /// This persisted flag is managed through development and seeding only; credential schema management must not set or clear it.
     /// </summary>
     public bool IsSystem { get; set; }
 
     /// <summary>
-    /// Indicates that the field has been mapped to at least one credential schema version. This is one-way historical protection:
-    /// removing the field from a later schema version does not clear the flag. A schema-mapped field is also marked as
-    /// <see cref="IsSystem"/> and cannot be hard deleted, deactivated or structurally changed.
+    /// Indicates that the field has been mapped to at least one credential schema version.
+    /// This persisted flag is set by admin schema management or initial schema seeding. Removing the field from a later schema
+    /// version does not clear it because previous schema versions and issued credentials retain the historical dependency.
     /// </summary>
     public bool IsSchemaMapped { get; set; }
+
+    /// <summary>
+    /// Indicates that editing restrictions apply because the field is either developer-controlled or credential-schema mapped.
+    /// Protected fields cannot be hard deleted, deactivated or structurally changed. Presentation metadata such as title,
+    /// description, grouping and ordering may still be updated.
+    /// </summary>
+    public bool IsProtected => IsSystem || IsSchemaMapped;
 
     public DateTimeOffset DateCreated { get; set; }
 
