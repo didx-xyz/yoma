@@ -1,9 +1,11 @@
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
+using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
+using Yoma.Core.Domain.Opportunity.Interfaces.Lookups;
 using Yoma.Core.Domain.SSI.Interfaces.Lookups;
 using Yoma.Core.Domain.SSI.Models.Lookups;
 
@@ -16,18 +18,24 @@ namespace Yoma.Core.Domain.SSI.Services.Lookups
     private readonly IMemoryCache _memoryCache;
     private readonly ISSISchemaTypeService _ssiSchemaTypeService;
     private readonly IRepositoryWithNavigation<SSISchemaEntity> _ssiSchemaEntityRepository;
+    private readonly ICustomFieldDefinitionService _customFieldDefinitionService;
+    private readonly IOpportunityTypeService _opportunityTypeService;
     #endregion
 
     #region Constructor
     public SSISchemaEntityService(IOptions<AppSettings> appSettings,
         IMemoryCache memoryCache,
         ISSISchemaTypeService ssiSchemaTypeService,
-        IRepositoryWithNavigation<SSISchemaEntity> ssiSchemaEntityRepository)
+        IRepositoryWithNavigation<SSISchemaEntity> ssiSchemaEntityRepository,
+        ICustomFieldDefinitionService customFieldDefinitionService,
+        IOpportunityTypeService opportunityTypeService)
     {
       _appSettings = appSettings.Value;
       _memoryCache = memoryCache;
       _ssiSchemaTypeService = ssiSchemaTypeService;
       _ssiSchemaEntityRepository = ssiSchemaEntityRepository;
+      _customFieldDefinitionService = customFieldDefinitionService;
+      _opportunityTypeService = opportunityTypeService;
     }
     #endregion
 
@@ -43,7 +51,7 @@ namespace Yoma.Core.Domain.SSI.Services.Lookups
       if (id == Guid.Empty)
         throw new ArgumentNullException(nameof(id));
 
-      return List(null).SingleOrDefault(o => o.Id == id);
+      return ListAll(null, false).SingleOrDefault(o => o.Id == id);
     }
 
     public SSISchemaEntityProperty GetByAttributeName(string attributeName)
@@ -58,8 +66,10 @@ namespace Yoma.Core.Domain.SSI.Services.Lookups
         throw new ArgumentNullException(nameof(attributeName));
       attributeName = attributeName.Trim();
 
-      var result = List(null).SelectMany(o => o.Properties?.Where(p => string.Equals(p.AttributeName, attributeName, StringComparison.OrdinalIgnoreCase)) ?? []).ToList();
-      if (result == null || result.Count == 0)
+      var result = ListAll(null, false)
+        .SelectMany(o => o.Properties?.Where(p => string.Equals(p.AttributeName, attributeName, StringComparison.OrdinalIgnoreCase)) ?? [])
+        .ToList();
+      if (result.Count == 0)
         throw new ArgumentException($"{nameof(SSISchemaEntityProperty)} not found with attribute name '{attributeName}'", nameof(attributeName));
 
       if (result.Count > 1)
@@ -68,39 +78,154 @@ namespace Yoma.Core.Domain.SSI.Services.Lookups
       return result.SingleOrDefault();
     }
 
+    public bool AttributeExists(string attributeName)
+    {
+      if (string.IsNullOrWhiteSpace(attributeName)) return false;
+      attributeName = attributeName.Trim();
+
+      return ListAll(null, false).Any(entity =>
+        entity.Properties?.Any(property =>
+          string.Equals(property.AttributeName, attributeName, StringComparison.OrdinalIgnoreCase)) == true ||
+        entity.CustomFields?.Any(customField =>
+          string.Equals(customField.AttributeName, attributeName, StringComparison.OrdinalIgnoreCase)) == true);
+    }
+
+    public bool TypeContextValid(SchemaType type, string? typeContext)
+    {
+      typeContext = typeContext?.Trim();
+      if (string.IsNullOrEmpty(typeContext)) return true;
+
+      return type switch
+      {
+        SchemaType.Opportunity => _opportunityTypeService.GetByNameOrNull(typeContext) != null,
+        _ => false
+      };
+    }
+
     public List<SSISchemaEntity> List(SchemaType? type)
     {
-      List<SSISchemaEntity> results;
-      if (!_appSettings.CacheEnabledByCacheItemTypesAsEnum.HasFlag(Core.CacheItemType.Lookups))
-      {
-        results = [.. _ssiSchemaEntityRepository.Query(true)];
-        ReflectEntityTypeInformation(results);
-        results = [.. results.OrderBy(o => o.Name)];
-        results.ForEach(o => o.Properties = o.Properties?.OrderBy(p => p.AttributeName).ToList());
-      }
-      else
-      {
-        results = _memoryCache.GetOrCreate(CacheHelper.GenerateKey<SSISchemaEntity>(), entry =>
-        {
-          entry.SlidingExpiration = TimeSpan.FromHours(_appSettings.CacheSlidingExpirationInHours);
-          entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(_appSettings.CacheAbsoluteExpirationRelativeToNowInDays);
-          var entities = _ssiSchemaEntityRepository.Query(true).ToList();
-          ReflectEntityTypeInformation(entities);
-          entities = [.. entities.OrderBy(o => o.Name)];
-          entities.ForEach(o => o.Properties = o.Properties?.OrderBy(p => p.NameDisplay).ToList());
-          return entities;
-        }) ?? throw new InvalidOperationException($"Failed to retrieve cached list of '{nameof(SSISchemaEntity)}s'");
-      }
+      return List(type, null);
+    }
 
-      if (type == null) return results;
+    public List<SSISchemaEntity> List(SchemaType? type, string? typeContext)
+    {
+      return ListInternal(type, typeContext, true, false);
+    }
 
-      var typeId = _ssiSchemaTypeService.GetByName(type.Value.ToString()).Id;
-      results = [.. results.Where(o => o.Types?.Any(t => t.Id == typeId) == true)];
-      return results;
+    public List<SSISchemaEntity> ListAll(SchemaType? type, bool activeOnly)
+    {
+      return ListInternal(type, null, activeOnly, true);
     }
     #endregion
 
     #region Private Members
+    private List<SSISchemaEntity> ListInternal(SchemaType? type, string? typeContext, bool activeOnly, bool includeAllTypeContexts)
+    {
+      typeContext = typeContext?.Trim();
+      if (string.IsNullOrEmpty(typeContext)) typeContext = null;
+
+      if (type.HasValue && !TypeContextValid(type.Value, typeContext))
+        throw new ArgumentException($"Type context '{typeContext}' is invalid or unsupported for schema type '{type}'", nameof(typeContext));
+
+      var results = ListStatic()
+        .Select(entity => new SSISchemaEntity
+        {
+          Id = entity.Id,
+          Name = entity.Name,
+          TypeName = entity.TypeName,
+          Properties = entity.Properties,
+          Types = entity.Types
+        })
+        .ToList();
+
+      if (type != null)
+      {
+        var typeId = _ssiSchemaTypeService.GetByName(type.Value.ToString()).Id;
+        results = [.. results.Where(o => o.Types?.Any(t => t.Id == typeId) == true)];
+      }
+
+      foreach (var entity in results)
+      {
+        if (!Enum.TryParse<CustomFieldEntityType>(entity.Name, true, out var entityType))
+          continue;
+
+        var definitions = includeAllTypeContexts
+          ? _customFieldDefinitionService.List(entityType, false, activeOnly)
+          : _customFieldDefinitionService.List(entityType, typeContext, false, activeOnly);
+
+        entity.CustomFields = [.. definitions
+          .Select(ToCustomField)
+          .OrderBy(o => o.Group)
+          .ThenBy(o => o.SubGroup)
+          .ThenBy(o => o.SortOrder)
+          .ThenBy(o => o.NameDisplay)];
+      }
+
+      return results;
+    }
+
+    private List<SSISchemaEntity> ListStatic()
+    {
+      if (!_appSettings.CacheEnabledByCacheItemTypesAsEnum.HasFlag(CacheItemType.Lookups))
+      {
+        var results = _ssiSchemaEntityRepository.Query(true).ToList();
+        ReflectEntityTypeInformation(results);
+        results = [.. results.OrderBy(o => o.Name)];
+        results.ForEach(o => o.Properties = o.Properties?.OrderBy(p => p.NameDisplay).ToList());
+        return results;
+      }
+
+      return _memoryCache.GetOrCreate(CacheHelper.GenerateKey<SSISchemaEntity>(), entry =>
+      {
+        entry.SlidingExpiration = TimeSpan.FromHours(_appSettings.CacheSlidingExpirationInHours);
+        entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(_appSettings.CacheAbsoluteExpirationRelativeToNowInDays);
+        var entities = _ssiSchemaEntityRepository.Query(true).ToList();
+        ReflectEntityTypeInformation(entities);
+        entities = [.. entities.OrderBy(o => o.Name)];
+        entities.ForEach(o => o.Properties = o.Properties?.OrderBy(p => p.NameDisplay).ToList());
+        return entities;
+      }) ?? throw new InvalidOperationException($"Failed to retrieve cached list of '{nameof(SSISchemaEntity)}s'");
+    }
+
+    private static SSISchemaEntityCustomField ToCustomField(CustomFieldDefinition definition)
+    {
+      return new SSISchemaEntityCustomField
+      {
+        Id = definition.Id,
+        Key = definition.Key,
+        NameDisplay = definition.Title,
+        Description = definition.Description,
+        AttributeName = $"{definition.EntityType}_{definition.Key}",
+        TypeName = ToTypeName(definition),
+        TypeContext = definition.EntityContext,
+        DataType = definition.DataType,
+        LookupType = definition.LookupType,
+        SupportsMultiple = definition.SupportsMultiple,
+        Group = definition.Group,
+        SubGroup = definition.SubGroup,
+        SortOrder = definition.SortOrder,
+        Required = definition.IsRequired,
+        IsActive = definition.IsActive,
+        IsSystem = definition.IsSystem,
+        IsSchemaMapped = definition.IsSchemaMapped
+      };
+    }
+
+    private static string ToTypeName(CustomFieldDefinition definition)
+    {
+      return definition.DataType switch
+      {
+        CustomFieldDataType.String => nameof(String),
+        CustomFieldDataType.Integer => nameof(Int32),
+        CustomFieldDataType.Decimal => nameof(Decimal),
+        CustomFieldDataType.Boolean => nameof(Boolean),
+        CustomFieldDataType.DateTime => nameof(DateTimeOffset),
+        CustomFieldDataType.Option when definition.SupportsMultiple == true => $"List<{nameof(String)}>",
+        CustomFieldDataType.Option => nameof(String),
+        _ => throw new InvalidOperationException($"Custom field data type '{definition.DataType}' is not supported by credential schema discovery")
+      };
+    }
+
     private static void ReflectEntityTypeInformation(List<SSISchemaEntity>? entities)
     {
       if (entities == null || entities.Count == 0) return;
@@ -153,7 +278,7 @@ namespace Yoma.Core.Domain.SSI.Services.Lookups
             else
             {
               var propTypeDisplayName = string.Empty;
-              if (Nullable.GetUnderlyingType(propInfo.PropertyType) != null) // Nullable<>
+              if (Nullable.GetUnderlyingType(propInfo.PropertyType) != null)
               {
                 var genericArguments = propInfo.PropertyType.GetGenericArguments();
                 if (genericArguments.Length != 1)

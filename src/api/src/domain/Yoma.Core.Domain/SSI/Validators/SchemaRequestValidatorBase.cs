@@ -27,7 +27,7 @@ namespace Yoma.Core.Domain.SSI.Validators
     private bool AttributeExists(string attrib)
     {
       if (string.IsNullOrWhiteSpace(attrib)) return false;
-      return _ssiSchemaEntityService.GetByAttributeNameOrNull(attrib) != null;
+      return _ssiSchemaEntityService.AttributeExists(attrib);
     }
     #endregion
   }

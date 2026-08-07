@@ -50,12 +50,28 @@ namespace Yoma.Core.Domain.Core.Models
 
     public int SortOrder { get; set; }
 
+    /// <summary>
+    /// Controls whether the definition is available for new data capture and discovery.
+    /// Deactivation is the normal retirement mechanism and preserves the definition, configured values and historical meaning.
+    /// Hard deletion is intended only for an unprotected definition that has never been used or referenced; the domain must first
+    /// confirm that no system, partner, schema, option or persisted-value dependencies exist.
+    /// </summary>
     public bool IsActive { get; set; }
 
     /// <summary>
     /// Indicates that the field is used by code, partner mapping, credential mapping, or another protected system flow.
+    /// Admins may update presentation metadata such as title, description, grouping and ordering, but cannot deactivate or delete
+    /// the definition, or change its technical contract: entity type/context, key, data type, lookup type, multiple-selection
+    /// behaviour or configured option keys.
     /// </summary>
     public bool IsSystem { get; set; }
+
+    /// <summary>
+    /// Indicates that the field has been mapped to at least one credential schema version. This is one-way historical protection:
+    /// removing the field from a later schema version does not clear the flag. A schema-mapped field is also marked as
+    /// <see cref="IsSystem"/> and cannot be hard deleted, deactivated or structurally changed.
+    /// </summary>
+    public bool IsSchemaMapped { get; set; }
 
     public DateTimeOffset DateCreated { get; set; }
 

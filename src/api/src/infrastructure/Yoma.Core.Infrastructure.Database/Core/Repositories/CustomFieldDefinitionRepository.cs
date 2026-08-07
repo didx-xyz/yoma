@@ -51,6 +51,7 @@ namespace Yoma.Core.Infrastructure.Database.Core.Repositories
         SortOrder = entity.SortOrder,
         IsActive = entity.IsActive,
         IsSystem = entity.IsSystem,
+        IsSchemaMapped = entity.IsSchemaMapped,
         DateCreated = entity.DateCreated,
         DateModified = entity.DateModified,
         Options = includeChildItems ? entity.Options == null ? null : entity.Options
@@ -98,6 +99,7 @@ namespace Yoma.Core.Infrastructure.Database.Core.Repositories
         SortOrder = item.SortOrder,
         IsActive = item.IsActive,
         IsSystem = item.IsSystem,
+        IsSchemaMapped = item.IsSchemaMapped,
         DateCreated = item.DateCreated,
         DateModified = item.DateModified
       };
@@ -133,6 +135,7 @@ namespace Yoma.Core.Infrastructure.Database.Core.Repositories
       entity.SortOrder = item.SortOrder;
       entity.IsActive = item.IsActive;
       entity.IsSystem = item.IsSystem;
+      entity.IsSchemaMapped = item.IsSchemaMapped;
       entity.DateModified = item.DateModified;
 
       await _context.SaveChangesAsync();

@@ -65,6 +65,17 @@ namespace Yoma.Core.Domain.Core.Services
       return ToResult(result, includeChildItems, activeOnly);
     }
 
+    public List<CustomFieldDefinition> List(CustomFieldEntityType entityType, bool includeChildItems, bool activeOnly)
+    {
+      var query = ListCached()
+        .Where(o => o.EntityType == entityType.ToString());
+
+      if (activeOnly)
+        query = query.Where(o => o.IsActive);
+
+      return ToResults(query, includeChildItems, activeOnly);
+    }
+
     public List<CustomFieldDefinition> List(CustomFieldEntityType entityType, string? entityContext, bool includeChildItems, bool activeOnly)
     {
       return List(entityType, string.IsNullOrEmpty(entityContext) ? null : [entityContext], includeChildItems, activeOnly);
@@ -86,16 +97,41 @@ namespace Yoma.Core.Domain.Core.Services
       if (activeOnly)
         query = query.Where(o => o.IsActive);
 
-      return [.. query
+      return ToResults(query, includeChildItems, activeOnly);
+    }
+
+    public async Task MarkSchemaMapped(List<Guid> ids)
+    {
+      ArgumentNullException.ThrowIfNull(ids);
+
+      var definitions = ListCached()
+        .Where(o => ids.Contains(o.Id) && (!o.IsSystem || !o.IsSchemaMapped))
+        .ToList();
+
+      foreach (var definition in definitions)
+      {
+        // Schema protection is intentionally one-way: provider schema versions and issued credentials are immutable history.
+        definition.IsSchemaMapped = true;
+        definition.IsSystem = true;
+        await _customFieldDefinitionRepository.Update(definition);
+      }
+
+      if (definitions.Count != 0)
+        _memoryCache.Remove(CacheHelper.GenerateKey<CustomFieldDefinition>());
+    }
+    #endregion
+
+    #region Private Members
+    private static List<CustomFieldDefinition> ToResults(IEnumerable<CustomFieldDefinition> definitions, bool includeChildItems, bool activeOnly)
+    {
+      return [.. definitions
         .Select(o => ToResult(o, includeChildItems, activeOnly))
         .OrderBy(o => o.Group)
         .ThenBy(o => o.SubGroup)
         .ThenBy(o => o.SortOrder)
         .ThenBy(o => o.Title)];
     }
-    #endregion
 
-    #region Private Members
     private List<CustomFieldDefinition> ListCached()
     {
       if (!_appSettings.CacheEnabledByCacheItemTypesAsEnum.HasFlag(CacheItemType.Lookups))
@@ -146,6 +182,7 @@ namespace Yoma.Core.Domain.Core.Services
         ValidationErrorMessage = definition.ValidationErrorMessage,
         IsActive = definition.IsActive,
         IsSystem = definition.IsSystem,
+        IsSchemaMapped = definition.IsSchemaMapped,
         DateCreated = definition.DateCreated,
         DateModified = definition.DateModified,
         Options = ToOptions(definition, includeChildItems, activeOnly)

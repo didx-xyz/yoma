@@ -12,6 +12,14 @@ namespace Yoma.Core.Domain.SSI.Interfaces.Lookups
 
     SSISchemaEntityProperty? GetByAttributeNameOrNull(string attributeName);
 
+    bool AttributeExists(string attributeName);
+
+    bool TypeContextValid(SchemaType type, string? typeContext);
+
     List<SSISchemaEntity> List(SchemaType? type);
+
+    List<SSISchemaEntity> List(SchemaType? type, string? typeContext);
+
+    List<SSISchemaEntity> ListAll(SchemaType? type, bool activeOnly);
   }
 }

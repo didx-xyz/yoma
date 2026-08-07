@@ -260,6 +260,9 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.Property<bool>("IsRequired")
                       .HasColumnType("boolean");
 
+            b.Property<bool>("IsSchemaMapped")
+                      .HasColumnType("boolean");
+
             b.Property<bool>("IsSystem")
                       .HasColumnType("boolean");
 
@@ -295,7 +298,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                       .IsUnique()
                       .HasDatabaseName("UX_CustomFieldDefinition_EntityType_Key");
 
-            b.HasIndex("EntityType", "EntityContext", "DataType", "IsRequired", "IsSystem");
+            b.HasIndex("EntityType", "EntityContext", "DataType", "IsRequired", "IsSystem", "IsSchemaMapped");
 
             b.HasIndex("EntityType", "EntityContext", "IsActive", "Group", "SubGroup", "SortOrder");
 

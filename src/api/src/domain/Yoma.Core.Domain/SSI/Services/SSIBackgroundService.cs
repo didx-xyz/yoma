@@ -483,7 +483,9 @@ namespace Yoma.Core.Domain.SSI.Services
       if (schema.ArtifactType != artifactType)
         throw new InvalidOperationException($"Artifact type mismatch detected for existing schema '{schemaFullName}': Requested '{artifactType.ToDescription()}' vs. Existing '{schema.ArtifactType.ToDescription()}'");
 
-      var misMatchesAttributes = attributes.Where(attr => !schema.Entities.Any(entity => entity.Properties?.Any(property => property.AttributeName == attr) == true)).ToList();
+      var misMatchesAttributes = attributes.Where(attr => !schema.Entities.Any(entity =>
+        entity.Properties?.Any(property => property.AttributeName == attr) == true ||
+        entity.CustomFields?.Any(customField => customField.AttributeName == attr) == true)).ToList();
       if (misMatchesAttributes == null || misMatchesAttributes.Count == 0) return;
 
       await _ssiSchemaService.Update(new SSISchemaRequestUpdate

@@ -6,7 +6,7 @@ namespace Yoma.Core.Infrastructure.Database.Core.Entities
 {
   [Table("CustomFieldDefinition", Schema = "Core")]
   [Index(nameof(EntityType), nameof(EntityContext), nameof(IsActive), nameof(Group), nameof(SubGroup), nameof(SortOrder))]
-  [Index(nameof(EntityType), nameof(EntityContext), nameof(DataType), nameof(IsRequired), nameof(IsSystem))]
+  [Index(nameof(EntityType), nameof(EntityContext), nameof(DataType), nameof(IsRequired), nameof(IsSystem), nameof(IsSchemaMapped))]
   public sealed class CustomFieldDefinition : Shared.Entities.BaseEntity<Guid>
   {
     [Required]
@@ -60,6 +60,9 @@ namespace Yoma.Core.Infrastructure.Database.Core.Entities
 
     [Required]
     public bool IsSystem { get; set; }
+
+    [Required]
+    public bool IsSchemaMapped { get; set; }
 
     [Required]
     public DateTimeOffset DateCreated { get; set; }
