@@ -1,12 +1,17 @@
 # Handoff: <feature> — YYYY-MM-DD
 
+<!-- Written after the fact? Title it "… · RECONSTRUCTED", say so here, and name the
+     commits it was rebuilt from. Never pass a reconstruction off as a live record. -->
+
 ## Meta
 
-- **Feature**: <feature-slug>
+- **Feature**: <TICKET> — <short name>
+- **Epic**: [<EPIC-TICKET>](../../README.md)
 - **Date**: YYYY-MM-DD
 - **Session by**: Adrian | Jason
 - **Agent used**: <e.g. Claude Code / Codex / none>
 - **Branch**: <branch name>
+- **Previous handoff**: <filename, or "none">
 
 ## What Was Done
 

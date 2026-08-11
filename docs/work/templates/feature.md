@@ -3,7 +3,8 @@
 ## Meta
 
 - **Feature**: <short name>
-- **Epic**: <optional grouping, or "-">
+- **Epic**: [<EPIC-TICKET>](../README.md)
+- **Ticket**: [<TICKET>](https://linear.app/didx/issue/<TICKET>)
 - **Owner**: Adrian | Jason
 - **Areas**: api | web | both
 - **Status**: planning | in-progress | review | shipped
@@ -19,7 +20,7 @@
 
 ## Plan
 
-<High-level approach. Key files/components affected. Migrations? API contract changes? Note anything the other person's area must accommodate.>
+<High-level approach. Key files/components affected. Migrations? API contract changes? Note anything the other person's area must accommodate. Anything shared with sibling features belongs in the epic README — link to it instead of copying.>
 
 ## Tasks
 
@@ -34,6 +35,8 @@
 
 ## Links
 
+- Epic: [<EPIC-TICKET>](../README.md)
+- Ticket: [<TICKET>](https://linear.app/didx/issue/<TICKET>)
 - PRs:
 - Designs:
 - Related:
