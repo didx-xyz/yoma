@@ -4,8 +4,6 @@ using Yoma.Core.Domain.Entity.Interfaces;
 using Yoma.Core.Domain.Lookups.Interfaces;
 using Yoma.Core.Domain.Opportunity.Interfaces.Lookups;
 using Yoma.Core.Domain.Opportunity.Services;
-using Yoma.Core.Domain.SSI;
-using Yoma.Core.Domain.SSI.Interfaces;
 
 namespace Yoma.Core.Domain.Opportunity.Validators
 {
@@ -23,7 +21,6 @@ namespace Yoma.Core.Domain.Opportunity.Validators
     private readonly ILanguageService _languageService;
     private readonly ISkillService _skillService;
     private readonly IOpportunityVerificationTypeService _opportunityVerificationTypeService;
-    private readonly ISSISchemaService _ssiSchemaService;
     #endregion
 
     #region Constructor
@@ -36,8 +33,7 @@ namespace Yoma.Core.Domain.Opportunity.Validators
         ICountryService countryService,
         ILanguageService languageService,
         ISkillService skillService,
-        IOpportunityVerificationTypeService opportunityVerificationTypeService,
-        ISSISchemaService ssiSchemaService)
+        IOpportunityVerificationTypeService opportunityVerificationTypeService)
     {
       _opportunityTypeService = opportunityTypeService;
       _organizationService = organizationService;
@@ -49,7 +45,6 @@ namespace Yoma.Core.Domain.Opportunity.Validators
       _languageService = languageService;
       _skillService = skillService;
       _opportunityVerificationTypeService = opportunityVerificationTypeService;
-      _ssiSchemaService = ssiSchemaService;
 
       RuleFor(x => x.Title)
           .NotEmpty()
@@ -199,10 +194,6 @@ namespace Yoma.Core.Domain.Opportunity.Validators
           .When(x => x.CredentialIssuanceEnabled)
           .WithMessage("SSI schema name is required when credential issuance is enabled.");
 
-      RuleFor(x => x.SSISchemaName)
-          .Must(SSISchemaExistsAndOfTypeOpportunity)
-          .When(x => !string.IsNullOrEmpty(x.SSISchemaName))
-          .WithMessage("SSI schema does not exist.");
 
       // Engagement type is optional. If specified it must exist.
       RuleFor(x => x.EngagementTypeId)
@@ -355,14 +346,6 @@ namespace Yoma.Core.Domain.Opportunity.Validators
     private bool VerificationTypeExists(VerificationType type)
     {
       return _opportunityVerificationTypeService.GetByTypeOrNull(type) != null;
-    }
-
-    private bool SSISchemaExistsAndOfTypeOpportunity(string? name)
-    {
-      if (string.IsNullOrEmpty(name)) return false;
-      var result = _ssiSchemaService.GetByFullNameOrNull(name).Result;
-
-      return result != null && result.Type == SchemaType.Opportunity;
     }
 
     private bool EngagementTypeExists(Guid? id)

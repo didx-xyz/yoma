@@ -36,6 +36,7 @@ definitions to the BA-approved set (YOM-1264) without a code change.
 | [`YOM-1260-ui-custom-field-filtering-for-opportunities-and-completions/`](./YOM-1260-ui-custom-field-filtering-for-opportunities-and-completions/feature.md) | [YOM-1260](https://linear.app/didx/issue/YOM-1260) | web  | in-progress (opportunity search done) |
 | [`YOM-1277-opportunity-credential-schemas-by-type-and-custom-fields/`](./YOM-1277-opportunity-credential-schemas-by-type-and-custom-fields/feature.md) | [YOM-1277](https://linear.app/didx/issue/YOM-1277) | both | core/API groundwork in progress |
 | [`YOM-1278-api-admin-credential-schema-management-by-type/`](./YOM-1278-api-admin-credential-schema-management-by-type/feature.md) | [YOM-1278](https://linear.app/didx/issue/YOM-1278) | api | partially implemented |
+| [`YOM-1279-api-opportunity-management-credential-schema-selection/`](./YOM-1279-api-opportunity-management-credential-schema-selection/feature.md) | [YOM-1279](https://linear.app/didx/issue/YOM-1279) | api | implemented; review pending |
 
 Tickets with no folder yet — add one when work starts:
 
@@ -45,7 +46,6 @@ Tickets with no folder yet — add one when work starts:
 | [YOM-1261](https://linear.app/didx/issue/YOM-1261) / [YOM-1262](https://linear.app/didx/issue/YOM-1262) | web       | User Presets — manage, and apply to discovery. Blocked                                                     |
 | [YOM-1257](https://linear.app/didx/issue/YOM-1257) / [YOM-1258](https://linear.app/didx/issue/YOM-1258) | api       | User Preset model + preset→filter mapping                                                                  |
 | [YOM-1259](https://linear.app/didx/issue/YOM-1259)                                                      | api       | Opportunity category taxonomy. Unrelated to custom fields; needs only a UI regression check                |
-| [YOM-1279](https://linear.app/didx/issue/YOM-1279)                                                      | api       | Opportunity schema selection; not built yet despite Linear showing In Progress                            |
 | [YOM-1280](https://linear.app/didx/issue/YOM-1280)                                                      | api       | Processing-time schema resolution and credential values; not built yet                                    |
 | [YOM-1281](https://linear.app/didx/issue/YOM-1281) / [YOM-1282](https://linear.app/didx/issue/YOM-1282) / [YOM-1283](https://linear.app/didx/issue/YOM-1283) | web | Credential admin, selection and wallet display; no implementation yet |
 
@@ -72,6 +72,7 @@ Tickets with no folder yet — add one when work starts:
 
 Blocker ownership: BA/PM owns YOM-1264 and the final provider mapping matrix; Adrian owns API
 framework/schema work; Jason owns Web implementation and regression checks.
+
 ## The One Rule
 
 **Nothing may be keyed to a specific custom field.** No hardcoded definition key, title,
@@ -117,10 +118,13 @@ generic schema.
   missing local `IsSchemaMapped` flag if provider persistence succeeded before the local update.
 - Existing `Opportunity|Default` seeding and issuance remain backward compatible; this was verified
   locally after the schema changes by tenant creation and issuance of ten signed JWS credentials.
+- Opportunity management schema discovery returns every generic Opportunity schema plus schemas
+  matching the selected Opportunity Type context; schemas for other types are excluded.
+- Opportunity create/update requires an explicit selection when credential issuance is enabled and
+  validates that the submitted schema is generic or matches the target Opportunity type.
 
-**Stale Linear state:** YOM-1278 is only partially complete. YOM-1279 and YOM-1280 are marked In
-Progress in Linear but their opportunity selection and processing-time issuance changes are not in
-the branch yet.
+**Stale Linear state:** YOM-1278 remains partially complete. YOM-1280 is marked In Progress in
+Linear, but its processing-time issuance changes are not in the branch yet.
 
 ### Shared web building blocks
 

@@ -34,7 +34,7 @@ is split across admin schema management (YOM-1278), Opportunity selection (YOM-1
 - [x] Add Opportunity Type stable names and separate display names.
 - [x] Expose type-aware static and custom-field schema attributes.
 - [x] Persist and self-heal schema-mapped custom-field protection.
-- [ ] Complete explicit Opportunity schema selection and compatibility rules.
+- [x] Complete explicit Opportunity schema selection and compatibility rules.
 - [ ] Resolve and persist the latest schema metadata when issuance is processed.
 - [ ] Map custom-field values and structured Skills into issued credentials.
 - [ ] Complete the three Web surfaces.
@@ -51,4 +51,4 @@ is split across admin schema management (YOM-1278), Opportunity selection (YOM-1
 
 - Epic: [YOM-1244](../README.md)
 - Ticket: [YOM-1277](https://linear.app/didx/issue/YOM-1277/opportunity-credential-schemas-by-type-and-custom-fields)
-- API children: [YOM-1278](../YOM-1278-api-admin-credential-schema-management-by-type/feature.md) · [YOM-1279](https://linear.app/didx/issue/YOM-1279) · [YOM-1280](https://linear.app/didx/issue/YOM-1280)
+- API children: [YOM-1278](../YOM-1278-api-admin-credential-schema-management-by-type/feature.md) · [YOM-1279](../YOM-1279-api-opportunity-management-credential-schema-selection/feature.md) · [YOM-1280](https://linear.app/didx/issue/YOM-1280)

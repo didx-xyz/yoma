@@ -64,8 +64,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Yoma.Core.Infrastructure.Jo
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Yoma.Core.Infrastructure.IXO.YellowCard", "src\infrastructure\Yoma.Core.Infrastructure.IXO.YellowCard\Yoma.Core.Infrastructure.IXO.YellowCard.csproj", "{AC1C46F3-1E52-D66D-9089-7F536A5424D0}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "infrastructure", "infrastructure", "{DFEE68D8-A7D0-1A41-506C-9B74AA9A7B7B}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Yoma.Core.Infrastructure.JobJack", "src\infrastructure\Yoma.Core.Infrastructure.JobJack\Yoma.Core.Infrastructure.JobJack.csproj", "{F1AF13FE-421C-4F18-90F0-A2C1F59FCC6C}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Yoma.Core.Infrastructure.IXO.PartnerSync", "src\infrastructure\Yoma.Core.Infrastructure.IXO.PartnerSync\Yoma.Core.Infrastructure.IXO.PartnerSync.csproj", "{301CD6E8-FFBC-431C-B89D-C6F58C237C1C}"
@@ -347,7 +345,7 @@ Global
 		{4EF4C7B3-7211-A81E-D25E-C16B30340D18} = {2129F035-3D60-4CC4-AE25-9BFEE9340D8D}
 		{BE4B5017-6688-C4F4-64A5-9CA5E3189B43} = {2129F035-3D60-4CC4-AE25-9BFEE9340D8D}
 		{AC1C46F3-1E52-D66D-9089-7F536A5424D0} = {2129F035-3D60-4CC4-AE25-9BFEE9340D8D}
-		{F1AF13FE-421C-4F18-90F0-A2C1F59FCC6C} = {DFEE68D8-A7D0-1A41-506C-9B74AA9A7B7B}
+		{F1AF13FE-421C-4F18-90F0-A2C1F59FCC6C} = {2129F035-3D60-4CC4-AE25-9BFEE9340D8D}
 		{301CD6E8-FFBC-431C-B89D-C6F58C237C1C} = {2129F035-3D60-4CC4-AE25-9BFEE9340D8D}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution

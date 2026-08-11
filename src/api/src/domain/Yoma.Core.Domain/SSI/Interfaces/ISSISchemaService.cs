@@ -11,7 +11,11 @@ namespace Yoma.Core.Domain.SSI.Interfaces
 
     Task<SSISchema?> GetByFullNameOrNull(string fullName);
 
-    Task<List<SSISchema>> List(SchemaType? type);
+    /// <summary>
+    /// Lists the latest schemas, optionally filtered by schema type. When a type context is supplied,
+    /// generic schemas and schemas matching that context are returned.
+    /// </summary>
+    Task<List<SSISchema>> List(SchemaType? type, string? typeContext = null);
 
     Task<List<SSISchema>> List(Guid? typeId);
 

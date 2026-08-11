@@ -34,6 +34,7 @@ using Yoma.Core.Domain.PartnerSync.Interfaces.Lookups;
 using Yoma.Core.Domain.SSI;
 using Yoma.Core.Domain.SSI.Helpers;
 using Yoma.Core.Domain.Treasury.Interfaces;
+using Yoma.Core.Domain.SSI.Interfaces;
 
 namespace Yoma.Core.Domain.Opportunity.Services
 {
@@ -66,6 +67,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
     private readonly IPartnerService _partnerService;
     private readonly ICustomFieldDefinitionService _customFieldDefinitionService;
     private readonly ICustomFieldValueService _customFieldValueService;
+    private readonly ISSISchemaService _ssiSchemaService;
 
     private readonly OpportunityRequestValidatorCreate _opportunityRequestValidatorCreate;
     private readonly OpportunityRequestValidatorUpdate _opportunityRequestValidatorUpdate;
@@ -120,6 +122,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         IPartnerService partnerService,
         ICustomFieldDefinitionService customFieldDefinitionService,
         ICustomFieldValueService customFieldValueService,
+        ISSISchemaService ssiSchemaService,
         OpportunityRequestValidatorCreate opportunityRequestValidatorCreate,
         OpportunityRequestValidatorUpdate opportunityRequestValidatorUpdate,
         OpportunitySearchFilterValidator opportunitySearchFilterValidator,
@@ -159,6 +162,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       _partnerService = partnerService ?? throw new ArgumentNullException(nameof(partnerService));
       _customFieldDefinitionService = customFieldDefinitionService ?? throw new ArgumentNullException(nameof(customFieldDefinitionService));
       _customFieldValueService = customFieldValueService ?? throw new ArgumentNullException(nameof(customFieldValueService));
+      _ssiSchemaService = ssiSchemaService ?? throw new ArgumentNullException(nameof(ssiSchemaService));
 
       _opportunityRequestValidatorCreate = opportunityRequestValidatorCreate ?? throw new ArgumentNullException(nameof(opportunityRequestValidatorCreate));
       _opportunityRequestValidatorUpdate = opportunityRequestValidatorUpdate ?? throw new ArgumentNullException(nameof(opportunityRequestValidatorUpdate));
@@ -1157,6 +1161,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       request.URL = request.URL?.EnsureHttpsScheme();
 
       await _opportunityRequestValidatorCreate.ValidateAndThrowAsync(request);
+      await AssertSSISchemaApplicable(request);
 
       request.DateStart = request.DateStart.RemoveTime();
       if (request.DateEnd.HasValue) request.DateEnd = request.DateEnd.Value.ToEndOfDay();
@@ -1330,6 +1335,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
       var resultCurrent = ObjectHelper.DeepCopy(result);
 
       AssertUpdatable(result);
+
+      await AssertSSISchemaApplicable(request);
 
       //[2024.11.25] backdated opportunities now allowed
       //if (!result.DateStart.Equals(request.DateStart) && request.DateStart < DateTimeOffset.UtcNow.RemoveTime())
@@ -2133,6 +2140,23 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       return (result, isNew ? EventType.Create : EventType.Update);
     }
+    private async Task AssertSSISchemaApplicable(OpportunityRequestBase request)
+    {
+      if (string.IsNullOrEmpty(request.SSISchemaName)) return; // required when credential issuance is enabled; enforced by the request validator
+
+      var schema = await _ssiSchemaService.GetByFullNameOrNull(request.SSISchemaName);
+      if (schema == null || schema.Type != SchemaType.Opportunity)
+        throw new ValidationException("SSI schema does not exist.");
+
+      var opportunityType = _opportunityTypeService.GetById(request.TypeId);
+      if (!string.IsNullOrEmpty(schema.TypeContext) &&
+          !string.Equals(schema.TypeContext, opportunityType.Name, StringComparison.OrdinalIgnoreCase))
+      {
+        throw new ValidationException(
+          $"SSI schema '{request.SSISchemaName}' is not applicable to opportunity type '{opportunityType.DisplayName}'.");
+      }
+    }
+
 
     private string ResolveTitle(string title, Guid? currentOpportunityId, OpportunityUpsertOptions options)
     {

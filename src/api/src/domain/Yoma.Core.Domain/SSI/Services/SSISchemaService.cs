@@ -78,13 +78,25 @@ namespace Yoma.Core.Domain.SSI.Services
       return (await ListCached(true)).SingleOrDefault(o => o.Name == fullName);
     }
 
-    public async Task<List<SSISchema>> List(SchemaType? type)
+    public async Task<List<SSISchema>> List(SchemaType? type, string? typeContext = null)
     {
       var results = await ListCached(true);
 
-      if (type == null) return results;
+      if (type != null)
+        results = [.. results.Where(o => o.Type == type)];
 
-      results = [.. results.Where(o => o.Type == type)];
+      typeContext = typeContext?.Trim();
+      if (string.IsNullOrEmpty(typeContext)) return results;
+
+      if (!type.HasValue || !_ssiSchemaEntityService.TypeContextValid(type.Value, typeContext))
+        throw new ArgumentException($"Type context '{typeContext}' is invalid or unsupported for schema type '{type}'", nameof(typeContext));
+
+      // Opportunity management may select any generic schema or one scoped to the selected Opportunity type.
+      // Schemas scoped to another type are excluded; no schema is selected or substituted by this operation.
+      results = [.. results.Where(o =>
+        string.IsNullOrEmpty(o.TypeContext) ||
+        string.Equals(o.TypeContext, typeContext, StringComparison.OrdinalIgnoreCase))];
+
       return results;
     }
 
