@@ -37,22 +37,22 @@ frozen and shared rather than re-decided per ticket.
 
 | Folder                                                                                                                             | Ticket                                             | Area | Plan tasks | Status                            |
 | ---------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- | ---- | ---------- | --------------------------------- |
-| [`YOM-1053-admin-treasury-capability/`](./YOM-1053-admin-treasury-capability/feature.md) | [YOM-1053](https://linear.app/didx/issue/YOM-1053) | both | — | API complete; Web hardening pending |
-| [`YOM-1058-api-treasury-domain/`](./YOM-1058-api-treasury-domain/feature.md) | [YOM-1058](https://linear.app/didx/issue/YOM-1058) | api | — | review/testing |
-| [`YOM-1061-organization-admin-organization-reward-pools-financial-year/`](./YOM-1061-organization-admin-organization-reward-pools-financial-year/feature.md) | [YOM-1061](https://linear.app/didx/issue/YOM-1061) | both | — | API complete; Web hardening pending |
-| [`YOM-1062-api-organization-domain/`](./YOM-1062-api-organization-domain/feature.md) | [YOM-1062](https://linear.app/didx/issue/YOM-1062) | api | — | review/testing |
-| [`YOM-1095-referrals-admin-reward-pools-and-treasury-financial-year-alignment/`](./YOM-1095-referrals-admin-reward-pools-and-treasury-financial-year-alignment/feature.md) | [YOM-1095](https://linear.app/didx/issue/YOM-1095) | both | — | API complete; Web hardening pending |
-| [`YOM-1052-youth-yellow-card-cash-out/`](./YOM-1052-youth-yellow-card-cash-out/feature.md) | [YOM-1052](https://linear.app/didx/issue/YOM-1052) | both | — | blocked on provider contract |
-| [`YOM-1049-api-zlto-wallet-reservation-capability/`](./YOM-1049-api-zlto-wallet-reservation-capability/feature.md) | [YOM-1049](https://linear.app/didx/issue/YOM-1049) | api | — | implemented; E2E pending |
-| [`YOM-1056-api-zlto-infrastructure-integration/`](./YOM-1056-api-zlto-infrastructure-integration/feature.md) | [YOM-1056](https://linear.app/didx/issue/YOM-1056) | api | — | implemented; E2E pending |
-| [`YOM-1057-api-payout-domain-and-rewards-integration/`](./YOM-1057-api-payout-domain-and-rewards-integration/feature.md) | [YOM-1057](https://linear.app/didx/issue/YOM-1057) | api | — | scaffolded; provider paths pending |
+| [`YOM-1053-admin-treasury-capability/`](./YOM-1053-admin-treasury-capability/feature.md) | [YOM-1053](https://linear.app/didx/issue/YOM-1053) | both | — | in-progress — API complete, web hardening pending |
+| [`YOM-1058-api-treasury-domain/`](./YOM-1058-api-treasury-domain/feature.md) | [YOM-1058](https://linear.app/didx/issue/YOM-1058) | api | — | review |
+| [`YOM-1061-organization-admin-organization-reward-pools-financial-year/`](./YOM-1061-organization-admin-organization-reward-pools-financial-year/feature.md) | [YOM-1061](https://linear.app/didx/issue/YOM-1061) | both | — | in-progress — API complete, web hardening pending |
+| [`YOM-1062-api-organization-domain/`](./YOM-1062-api-organization-domain/feature.md) | [YOM-1062](https://linear.app/didx/issue/YOM-1062) | api | — | review |
+| [`YOM-1095-referrals-admin-reward-pools-and-treasury-financial-year-alignment/`](./YOM-1095-referrals-admin-reward-pools-and-treasury-financial-year-alignment/feature.md) | [YOM-1095](https://linear.app/didx/issue/YOM-1095) | both | — | in-progress — API complete, web hardening pending |
+| [`YOM-1052-youth-yellow-card-cash-out/`](./YOM-1052-youth-yellow-card-cash-out/feature.md) | [YOM-1052](https://linear.app/didx/issue/YOM-1052) | both | — | in-progress — provider contract outstanding |
+| [`YOM-1049-api-zlto-wallet-reservation-capability/`](./YOM-1049-api-zlto-wallet-reservation-capability/feature.md) | [YOM-1049](https://linear.app/didx/issue/YOM-1049) | api | — | in-progress — implemented, E2E pending |
+| [`YOM-1056-api-zlto-infrastructure-integration/`](./YOM-1056-api-zlto-infrastructure-integration/feature.md) | [YOM-1056](https://linear.app/didx/issue/YOM-1056) | api | — | in-progress — implemented, E2E pending |
+| [`YOM-1057-api-payout-domain-and-rewards-integration/`](./YOM-1057-api-payout-domain-and-rewards-integration/feature.md) | [YOM-1057](https://linear.app/didx/issue/YOM-1057) | api | — | in-progress — scaffolded, provider paths pending |
 | [`YOM-1055-api-yellow-card-hosted-payout-integration/`](./YOM-1055-api-yellow-card-hosted-payout-integration/feature.md) | [YOM-1055](https://linear.app/didx/issue/YOM-1055) | api | — | blocked |
 | [`YOM-1059-api-yellow-card-payout-status-integration/`](./YOM-1059-api-yellow-card-payout-status-integration/feature.md) | [YOM-1059](https://linear.app/didx/issue/YOM-1059) | api | — | blocked |
 | [`YOM-1077-sre-webhooks-and-yellow-card-configuration/`](./YOM-1077-sre-webhooks-and-yellow-card-configuration/feature.md) | [YOM-1077](https://linear.app/didx/issue/YOM-1077) | api/SRE | — | blocked |
-| [`YOM-1072-ui-treasury-admin/`](./YOM-1072-ui-treasury-admin/feature.md)                                                           | [YOM-1072](https://linear.app/didx/issue/YOM-1072) | web  | T0, T1     | dev complete, browser pass owed   |
-| [`YOM-1063-ui-organization-and-opportunity-admin/`](./YOM-1063-ui-organization-and-opportunity-admin/feature.md)                   | [YOM-1063](https://linear.app/didx/issue/YOM-1063) | web  | T2, T3     | dev complete (T3 reduced)         |
-| [`YOM-1073-ui-referral-program-rewards-create-update-info/`](./YOM-1073-ui-referral-program-rewards-create-update-info/feature.md) | [YOM-1073](https://linear.app/didx/issue/YOM-1073) | web  | T4         | dev complete, browser pass owed   |
-| [`YOM-1074-ui-youth-yellow-card-cash-out/`](./YOM-1074-ui-youth-yellow-card-cash-out/feature.md)                                   | [YOM-1074](https://linear.app/didx/issue/YOM-1074) | web  | T5         | not started (wallet ledger first) |
+| [`YOM-1072-ui-treasury-admin/`](./YOM-1072-ui-treasury-admin/feature.md)                                                           | [YOM-1072](https://linear.app/didx/issue/YOM-1072) | web  | T0, T1     | in-progress — dev complete, browser pass owed |
+| [`YOM-1063-ui-organization-and-opportunity-admin/`](./YOM-1063-ui-organization-and-opportunity-admin/feature.md)                   | [YOM-1063](https://linear.app/didx/issue/YOM-1063) | web  | T2, T3     | in-progress — dev complete, T3 reduced |
+| [`YOM-1073-ui-referral-program-rewards-create-update-info/`](./YOM-1073-ui-referral-program-rewards-create-update-info/feature.md) | [YOM-1073](https://linear.app/didx/issue/YOM-1073) | web  | T4         | in-progress — dev complete, browser pass owed |
+| [`YOM-1074-ui-youth-yellow-card-cash-out/`](./YOM-1074-ui-youth-yellow-card-cash-out/feature.md)                                   | [YOM-1074](https://linear.app/didx/issue/YOM-1074) | web  | T5         | planning — wallet ledger first |
 
 ### T-number → ticket map
 
