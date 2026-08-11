@@ -4,9 +4,9 @@
 
 - **Epic**: [YOM-1051](https://linear.app/didx/issue/YOM-1051)
 - **Owners**: Adrian (api) · Jason (web)
-- **Areas**: api, web — the docs in this folder cover the **web** side
+- **Areas**: api, web
 - **Status**: in-progress
-- **Started**: 2026-08-03 (web)
+- **Started**: 2026-03-04 (api), 2026-08-03 (web)
 - **Branch**: `feature/custom-fields-framework` — **load-bearing, not convention.** See below.
 
 > ⚠️ **The folder names carry the payout provider because the convention takes the slug verbatim
@@ -37,6 +37,18 @@ frozen and shared rather than re-decided per ticket.
 
 | Folder                                                                                                                             | Ticket                                             | Area | Plan tasks | Status                            |
 | ---------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- | ---- | ---------- | --------------------------------- |
+| [`YOM-1053-admin-treasury-capability/`](./YOM-1053-admin-treasury-capability/feature.md) | [YOM-1053](https://linear.app/didx/issue/YOM-1053) | both | — | API complete; Web hardening pending |
+| [`YOM-1058-api-treasury-domain/`](./YOM-1058-api-treasury-domain/feature.md) | [YOM-1058](https://linear.app/didx/issue/YOM-1058) | api | — | review/testing |
+| [`YOM-1061-organization-admin-organization-reward-pools-financial-year/`](./YOM-1061-organization-admin-organization-reward-pools-financial-year/feature.md) | [YOM-1061](https://linear.app/didx/issue/YOM-1061) | both | — | API complete; Web hardening pending |
+| [`YOM-1062-api-organization-domain/`](./YOM-1062-api-organization-domain/feature.md) | [YOM-1062](https://linear.app/didx/issue/YOM-1062) | api | — | review/testing |
+| [`YOM-1095-referrals-admin-reward-pools-and-treasury-financial-year-alignment/`](./YOM-1095-referrals-admin-reward-pools-and-treasury-financial-year-alignment/feature.md) | [YOM-1095](https://linear.app/didx/issue/YOM-1095) | both | — | API complete; Web hardening pending |
+| [`YOM-1052-youth-yellow-card-cash-out/`](./YOM-1052-youth-yellow-card-cash-out/feature.md) | [YOM-1052](https://linear.app/didx/issue/YOM-1052) | both | — | blocked on provider contract |
+| [`YOM-1049-api-zlto-wallet-reservation-capability/`](./YOM-1049-api-zlto-wallet-reservation-capability/feature.md) | [YOM-1049](https://linear.app/didx/issue/YOM-1049) | api | — | implemented; E2E pending |
+| [`YOM-1056-api-zlto-infrastructure-integration/`](./YOM-1056-api-zlto-infrastructure-integration/feature.md) | [YOM-1056](https://linear.app/didx/issue/YOM-1056) | api | — | implemented; E2E pending |
+| [`YOM-1057-api-payout-domain-and-rewards-integration/`](./YOM-1057-api-payout-domain-and-rewards-integration/feature.md) | [YOM-1057](https://linear.app/didx/issue/YOM-1057) | api | — | scaffolded; provider paths pending |
+| [`YOM-1055-api-yellow-card-hosted-payout-integration/`](./YOM-1055-api-yellow-card-hosted-payout-integration/feature.md) | [YOM-1055](https://linear.app/didx/issue/YOM-1055) | api | — | blocked |
+| [`YOM-1059-api-yellow-card-payout-status-integration/`](./YOM-1059-api-yellow-card-payout-status-integration/feature.md) | [YOM-1059](https://linear.app/didx/issue/YOM-1059) | api | — | blocked |
+| [`YOM-1077-sre-webhooks-and-yellow-card-configuration/`](./YOM-1077-sre-webhooks-and-yellow-card-configuration/feature.md) | [YOM-1077](https://linear.app/didx/issue/YOM-1077) | api/SRE | — | blocked |
 | [`YOM-1072-ui-treasury-admin/`](./YOM-1072-ui-treasury-admin/feature.md)                                                           | [YOM-1072](https://linear.app/didx/issue/YOM-1072) | web  | T0, T1     | dev complete, browser pass owed   |
 | [`YOM-1063-ui-organization-and-opportunity-admin/`](./YOM-1063-ui-organization-and-opportunity-admin/feature.md)                   | [YOM-1063](https://linear.app/didx/issue/YOM-1063) | web  | T2, T3     | dev complete (T3 reduced)         |
 | [`YOM-1073-ui-referral-program-rewards-create-update-info/`](./YOM-1073-ui-referral-program-rewards-create-update-info/feature.md) | [YOM-1073](https://linear.app/didx/issue/YOM-1073) | web  | T4         | dev complete, browser pass owed   |
@@ -58,12 +70,55 @@ out:
 | **T5** | Youth Payout — amount entry, conversion preview, initiation | YOM-1074              |
 | **T6** | Production hardening — consistency + scope-label audit, a11y, remove `?mock=` | **epic-wide**, below |
 
-Related API tickets, for reference — no folder here (Adrian's area):
-[YOM-1053](https://linear.app/didx/issue/YOM-1053) (treasury capability) ·
-[YOM-1057](https://linear.app/didx/issue/YOM-1057) (rewards domain) ·
-[YOM-1058](https://linear.app/didx/issue/YOM-1058) (treasury domain) ·
-[YOM-1061](https://linear.app/didx/issue/YOM-1061) (org reward pools) ·
-[YOM-1095](https://linear.app/didx/issue/YOM-1095) (referral pool alignment).
+Tickets with no folder because no implementation belongs to them yet:
+
+| Ticket | Area | Note |
+| ------ | ---- | ---- |
+| [YOM-1054](https://linear.app/didx/issue/YOM-1054) | business | High-level requirements only. |
+| [YOM-1079](https://linear.app/didx/issue/YOM-1079) | business/provider | IXO/Yellow Card technical specification still outstanding. |
+| [YOM-1048](https://linear.app/didx/issue/YOM-1048) | obsolete | Chimoney-only ticket remains in Linear although that provider was dropped. |
+
+### API implementation state
+
+Verified by reading the Treasury, Payout, Reward and provider handlers, their migrations and TODOs;
+the Treasury figures were also validated through local API/database probes. The branch is authoritative:
+
+- Treasury and Organization financial-year capability is implemented and manually tested.
+- ZLTO reserve/commit/release and reserved wallet balance are implemented against ZLTO's contract.
+- Payout persistence, Reward linkage, capacity, profile ledger, session and reconciliation shells exist.
+- Yellow Card hosted-session, webhook authentication, payload/status mapping and optional polling are
+  not implemented because IXO has not supplied the technical specification.
+- The existing Linear description still says a payment URL is persisted. The code deliberately does
+  not treat the short-lived URL as durable profile state; an active session is refreshed on demand.
+- Cash-out is user-facing wording. API/domain identifiers use provider-neutral `Payout` terminology.
+
+### Why each child exists
+
+| Ticket | Purpose |
+| ------ | ------- |
+| YOM-1052 | Deliver the youth ZLTO-to-USD payout journey. |
+| YOM-1074 | Build the youth-facing payout experience once the provider contract is available. |
+| YOM-1055 | Integrate the hosted Yellow Card payout session. |
+| YOM-1056 | Integrate ZLTO wallet reservation, commit and release operations. |
+| YOM-1057 | Orchestrate payout state across Treasury, rewards, ZLTO and the external provider. |
+| YOM-1059 | Receive or reconcile external payout outcomes. |
+| YOM-1053 | Give platform admins control and visibility over Treasury. |
+| YOM-1058 | Provide Treasury configuration, conversion, allocation and rollover behavior. |
+| YOM-1072 | Build the Treasury admin interface. |
+| YOM-1054 | Track the business/provider readiness needed before end-to-end payout. |
+| YOM-1049 | Ensure the ZLTO wallet supports reservation-based burn safely. |
+| YOM-1079 | Secure the final IXO/Yellow Card agreements and technical contract. |
+| YOM-1048 | Historical Chimoney/KYC confirmation; obsolete after the provider change. |
+| YOM-1061 | Let organisation admins manage current-financial-year reward capacity. |
+| YOM-1062 | Provide the organisation pool/cumulative contract and rollover support. |
+| YOM-1063 | Surface organisation and Opportunity reward capacity in admin UI. |
+| YOM-1095 | Align referral reward pools and reporting with Treasury financial years. |
+| YOM-1073 | Surface referral program reward configuration and capacity in admin UI. |
+| YOM-1077 | Provision secure, environment-specific provider/webhook configuration. |
+
+Blocker ownership: IXO/Yellow Card owns the hosted-session, webhook/status and expiry contract;
+Adrian owns API completion and E2E validation; Robbie/SRE owns environment configuration; Jason
+owns Web completion after the contract stabilises.
 
 ## Shared Contract
 
@@ -84,7 +139,7 @@ Branch state, in order:
 - `cafa61c8` ported master's **UI only**, with no merge parent, so master's API changes stayed out.
 - `55101464` (+ `7204e4f6`) is a **real merge of `origin/master`**, so that debt is discharged.
   The earlier "master is not merged" gotcha no longer applies.
-- Branch-sync verification notes live in [`handoffs/2026-08-07-custom-fields-branch-sync.md`](./handoffs/2026-08-07-custom-fields-branch-sync.md).
+- Branch-sync verification notes belong to the Custom Fields epic and now live in [`YOM-1244/handoffs/2026-08-07-a.md`](../YOM-1244-customizable-fields-framework/handoffs/2026-08-07-a.md).
 
 ### Domain rules (fixed truth)
 
