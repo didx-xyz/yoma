@@ -310,12 +310,13 @@ Not owned by any one child ticket. **T6 in the old numbering.**
 | ---------------------------------------------------------------------- | -------- | -------------------------------------------------------------------------------------------------------------------- |
 | No authenticated browser pass on any reward surface                    | High     | Blocks calling YOM-1072 / YOM-1063 / YOM-1073 done. Unblocked otherwise — the corrective work is in                  |
 | `?mock=` dev aid is committed                                          | High     | Must be removed before this epic merges                                                                              |
-| `[JsonIgnore]` on `OpportunityItem`'s organisation reward fields       | Med      | Keeps the Opportunities tab reduced. Ask Adrian to drop it, or add the fields to `OpportunityInfo`                    |
-| No commit SHA for the wallet nullability change                        | Med      | Ask Adrian; verify the nullable types against the live payload before building the wallet ledger (YOM-1074)          |
 | No server rule ties a referral pool to Treasury capacity               | Low      | Accepted: the UI gives soft guidance. YOM-1073's ticket asks for hard validation — the code does not provide it       |
-| `dotnet test` cannot run locally                                       | Low      | The yoma postgres container publishes no host port and the test settings expect a different port/password            |
 
 ## Cross-Area Notes
+
+- **Wallet nullability is implemented in `08cb6c10a`.** `Balance`, `Available` and `Total` are nullable while ZLTO is offline; pending rewards and Yoma-recorded pending payouts remain available.
+- **Organization reward values remain intentionally hidden on `OpportunityItem`.** The model is a compact selection/listing contract, while `OpportunityInfo` is anonymous and also feeds CSV exports. Do not expose sensitive organization-level reward configuration without an explicit business requirement.
+- **API tests intentionally target a developer-managed local PostgreSQL instance.** The default Docker PostgreSQL service does not publish a host port; Adrian runs focused tests against the local database and matching test configuration.
 
 - **An API field rename is a breaking change for web, and it breaks at _runtime_, not compile
   time** — the TS interface keeps promising a field that never arrives. This has now happened three
