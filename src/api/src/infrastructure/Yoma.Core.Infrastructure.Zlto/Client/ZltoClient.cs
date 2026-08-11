@@ -30,11 +30,13 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
     private const string Header_Authorization_Value_Prefix = "Bearer";
     private const string Image_Default_Empty_Value = "default";
     private const string WalletReservation_Currency = "ZLTO";
-    // External ZLTO reservation reason value. Retain the provider contract value until ZLTO confirms otherwise.
-    private const string WalletReservation_Reason_Payout = "cashout";
+    // Stable ZLTO audit values confirmed for the Yoma / Yellow Card reservation flow.
+    private const string WalletReservation_Reason_Payout = "yoma_cashout";
+    private const string WalletReservation_ExternalProvider = "yellow_card";
     private const string WalletReservation_Description_Payout = "Yoma payout reservation";
     private const string WalletReservation_Actor_Origin = "yoma_api";
-    private const string WalletReservation_Actor_Name = "Yoma Payout Service";
+    private const string WalletReservation_Actor_Id = "yoma";
+    private const string WalletReservation_Actor_Name = "Yoma Cashout Service";
 
     private static readonly HttpStatusCode[] StatusCode_WalletNotFound = [HttpStatusCode.NotFound, HttpStatusCode.Conflict];
 
@@ -151,13 +153,11 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
       };
     }
 
-    // TODO [ZLTO payout]: Confirm the remaining reservation contract details before production sign-off:
-    // - minimum/maximum expiration duration and the timing of automatic release;
-    // - lookup/recovery by idempotency key or external reference when reservation creation succeeds but
-    //   the response containing the reservation id is lost;
-    // - whether the provider-neutral reason and Yoma actor values are accepted and external_provider may
-    //   remain omitted; and
-    // - the expected recovery behaviour after commit/release is retried against a terminal reservation.
+    /// <summary>
+    /// Reserves the requested wallet amount for the Yoma / Yellow Card payout flow. ZLTO imposes no minimum
+    /// or maximum expiration duration; <c>ExpiresAt</c> is an expiry threshold and release occurs when ZLTO's
+    /// expiry processing subsequently runs, rather than being guaranteed at the exact timestamp.
+    /// </summary>
     public async Task<ReservePayoutResponse> ReserveForPayout(ReservePayoutRequest request)
     {
       ArgumentNullException.ThrowIfNull(request, nameof(request));
@@ -195,13 +195,14 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
         Amount = (int)request.Amount,
         Currency = WalletReservation_Currency,
         Reason = WalletReservation_Reason_Payout,
+        ExternalProvider = WalletReservation_ExternalProvider,
         Description = WalletReservation_Description_Payout,
         ExternalReference = transactionId,
         IdempotencyKey = transactionId,
         RequestReference = transactionId,
         ExpiresAt = request.ExpiresAt,
         CreatedByOrigin = WalletReservation_Actor_Origin,
-        CreatedById = _accessToken.PartnerId,
+        CreatedById = WalletReservation_Actor_Id,
         CreatedByName = WalletReservation_Actor_Name
       };
 
@@ -233,7 +234,7 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
       {
         ExternalPayoutId = request.ExternalTransactionReference,
         ActorOrigin = WalletReservation_Actor_Origin,
-        ActorId = _accessToken.PartnerId,
+        ActorId = WalletReservation_Actor_Id,
         ActorName = WalletReservation_Actor_Name
       };
 
@@ -261,7 +262,7 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
       {
         Reason = request.Reason,
         ActorOrigin = WalletReservation_Actor_Origin,
-        ActorId = _accessToken.PartnerId,
+        ActorId = WalletReservation_Actor_Id,
         ActorName = WalletReservation_Actor_Name
       };
 

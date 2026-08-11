@@ -128,8 +128,8 @@ namespace Yoma.Core.Domain.Core.Models
     public int MarketplaceItemReservationExpirationInMinutes { get; set; }
 
     /// <summary>
-    /// Provisional ZLTO payout reservation window. Confirm the supported range and required alignment
-    /// with the IXO / Yellow Card hosted payout expiry before enabling the integration.
+    /// Provisional ZLTO payout reservation duration. ZLTO imposes no minimum or maximum; once confirmed,
+    /// configure this after the Yellow Card payout expiry plus the required processing buffer.
     /// </summary>
     public int PayoutRewardReservationExpirationInMinutes { get; set; }
 

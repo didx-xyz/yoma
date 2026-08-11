@@ -19,6 +19,9 @@ namespace Yoma.Core.Infrastructure.Zlto.Models
     [JsonProperty("reservation_reason")]
     public string Reason { get; set; } = null!;
 
+    [JsonProperty("external_provider")]
+    public string ExternalProvider { get; set; } = null!;
+
     [JsonProperty("reservation_description")]
     public string? Description { get; set; }
 

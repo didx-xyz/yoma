@@ -180,8 +180,9 @@ namespace Yoma.Core.Domain.Payout.Services
     #region Private Members
     private async Task<PayoutSession> PayoutRewards(Guid userId, decimal amount, DateTimeOffset rewardReservationExpiresAt)
     {
-      // TODO [Payout expiration]: Once the IXO / Yellow Card contract is confirmed, derive or validate a
-      // reward reservation window that outlives the provider payout window plus a reconciliation buffer.
+      // TODO [Yellow Card payout expiration]: Once the provider contract is confirmed, set the ZLTO reservation
+      // expiry after the Yellow Card payout expiry plus a processing buffer for delayed responses, reconciliation
+      // and retries. ZLTO imposes no duration limits and treats this as a threshold for asynchronous auto-release.
       if (rewardReservationExpiresAt <= DateTimeOffset.UtcNow)
         throw new ArgumentOutOfRangeException(nameof(rewardReservationExpiresAt), "ZLTO reservation expiration must be in the future");
 
@@ -245,25 +246,26 @@ namespace Yoma.Core.Domain.Payout.Services
       var payout = GetPayout(id);
       if (!Statuses_Active.Contains(payout.Status)) return;
 
-      // TODO [Payout reconciliation]: Handle a missing Reward transaction before branching by payout status.
-      // Recording and inline release can both fail after ZLTO reserved successfully, leaving the payout as
-      // ReconciliationRequired. In that state no payout was initiated; wait for confirmed ZLTO auto-release
-      // and close the payout after RewardReservationExpiresAt instead of querying the payout provider.
       try
       {
+        // ZLTO exposes reservation retrieval only by reservation id. If both persistence and the immediate release
+        // fail after a successful reservation, Yoma has no durable reservation id to reconcile. No payout was
+        // initiated, so do not query the payout provider: wait for the ZLTO expiry threshold, close the local payout,
+        // and let ZLTO's expiry processor release the wallet balance. Until then the reduced available balance
+        // intentionally prevents the user from starting another payout with the same reserved funds.
+        if (IsRewardPayout(payout) && string.IsNullOrEmpty(payout.TransactionId))
+        {
+          var rewardTransaction = _rewardService.GetByEntity(payout.UserId, Reward.RewardTransactionEntityType.Payout, payout.Id);
+          if (rewardTransaction == null)
+          {
+            if (payout.RewardReservationExpiresAt.HasValue && payout.RewardReservationExpiresAt.Value <= DateTimeOffset.UtcNow)
+              await TryMarkFailedBeforePayout(payout, "Reward reservation was not recorded and its expiration threshold elapsed");
+            return;
+          }
+        }
+
         if (payout.Status == PayoutTransactionStatus.Initiated)
         {
-          if (IsRewardPayout(payout))
-          {
-            var rewardTransaction = _rewardService.GetByEntity(payout.UserId, Reward.RewardTransactionEntityType.Payout, payout.Id);
-            if (rewardTransaction == null)
-            {
-              if (payout.RewardReservationExpiresAt.HasValue && payout.RewardReservationExpiresAt.Value <= DateTimeOffset.UtcNow)
-                await TryMarkFailedBeforePayout(payout, "Reward reservation was not recorded and its expiration window elapsed");
-              return;
-            }
-          }
-
           // ReconcileProcess owns failure-state persistence for this attempt so RetryCount is
           // incremented once even when provider initiation must be retried from Initiated.
           await InitiatePayout(payout, GetUser(payout.UserId), false);
@@ -423,9 +425,9 @@ namespace Yoma.Core.Domain.Payout.Services
 
     private async Task Complete(PayoutTransaction payout)
     {
-      // TODO [Payout expiration]: Confirm that the ZLTO reservation cannot expire before the maximum
-      // payout and reconciliation window. A provider-confirmed payment must never be marked Completed
-      // locally unless the reward burn was committed successfully.
+      // The ZLTO reservation must outlive the provider payout and processing buffer (see the initiation TODO).
+      // A provider-confirmed payment must never be marked Completed locally unless the reward burn was
+      // committed successfully.
       RewardTransaction? rewardTransaction = null;
       if (IsRewardPayout(payout))
       {
@@ -584,6 +586,12 @@ namespace Yoma.Core.Domain.Payout.Services
       }
     }
 
+    /// <summary>
+    /// Attempts to release a ZLTO reservation immediately when its domain transaction cannot be persisted. If this
+    /// also fails, the reservation id is written to the critical application log but cannot be recovered through the
+    /// current ZLTO API. The wallet remains reserved until ZLTO processes its expiry threshold; the payout reconciliation
+    /// path waits for that threshold and prevents another payout from using the same balance in the meantime.
+    /// </summary>
     private async Task<bool> TryReleaseReservation(string reservationId, string reason)
     {
       try

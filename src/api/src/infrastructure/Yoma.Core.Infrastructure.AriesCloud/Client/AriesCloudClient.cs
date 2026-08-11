@@ -1,6 +1,7 @@
 using Aries.CloudAPI.DotnetSDK.AspCore.Clients;
 using Aries.CloudAPI.DotnetSDK.AspCore.Clients.Interfaces;
 using Aries.CloudAPI.DotnetSDK.AspCore.Clients.Models;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.Core.Extensions;
@@ -17,7 +18,9 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
   public class AriesCloudClient : ISSIProviderClient
   {
     #region Class Variables
+    private readonly ILogger<AriesCloudClient> _logger;
     private readonly ClientFactory _clientFactory;
+    private readonly IEnvironmentProvider _environmentProvider;
     private readonly ISSEListenerService _sseListenerService;
     private readonly IRepository<Models.Credential> _credentialRepository;
     private readonly IRepository<Models.CredentialSchema> _credentialSchemaRepository;
@@ -27,13 +30,17 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
     #endregion
 
     #region Constructor
-    public AriesCloudClient(ClientFactory clientFactory,
+    public AriesCloudClient(ILogger<AriesCloudClient> logger,
+        ClientFactory clientFactory,
+        IEnvironmentProvider environmentProvider,
         ISSEListenerService sseListenerService,
         IRepository<Models.Credential> credentialRepository,
         IRepository<Models.CredentialSchema> credentialSchemaRepository,
         IRepository<Models.Connection> connectionRepository)
     {
+      _logger = logger ?? throw new ArgumentNullException(nameof(logger));
       _clientFactory = clientFactory;
+      _environmentProvider = environmentProvider ?? throw new ArgumentNullException(nameof(environmentProvider));
       _sseListenerService = sseListenerService;
       _credentialRepository = credentialRepository;
       _credentialSchemaRepository = credentialSchemaRepository;
@@ -251,6 +258,8 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
       if (request.Roles == null || request.Roles.Count == 0)
         throw new ArgumentException($"'{nameof(request.Roles)}' is required", nameof(request));
 
+      ApplyEnvironmentScope(request);
+
       request.ImageUrl = request.ImageUrl?.Trim();
       Uri? imageUri = null;
       if (!string.IsNullOrEmpty(request.ImageUrl) && !Uri.TryCreate(request.ImageUrl, UriKind.Absolute, out imageUri))
@@ -283,6 +292,9 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
       if (diffs.Count != 0)
         throw new DataInconsistencyException(
             $"Role mismatched detected for tenant with label {tenant.Wallet_label} and id '{tenant.Wallet_id}'. Updating of tenant are not supported");
+
+      if (_logger.IsEnabled(LogLevel.Information))
+        _logger.LogInformation("Reused existing SSI tenant with id '{tenantId}' for wallet name '{walletName}'", tenant.Wallet_id, tenant.Wallet_name);
 
       return tenant.Wallet_id;
     }
@@ -424,6 +436,32 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
 
       if (sseEvent == null)
         throw new InvalidOperationException($"Failed to receive SSE event for topic '{Topic.Credentials}' and desired state '{CredentialExchangeState.Done}'");
+    }
+
+    /// <summary>
+    /// Applies a deterministic environment namespace to Local and Development issuer/verifier tenants. These
+    /// environments may share an Aries deployment, so both the provider wallet name and trust-registry label must
+    /// be isolated. The stored Yoma entity referent remains unchanged, while retries and database reseeding within
+    /// the same environment continue to resolve the same Aries tenant.
+    /// </summary>
+    private void ApplyEnvironmentScope(TenantRequest request)
+    {
+      switch (_environmentProvider.Environment)
+      {
+        case Domain.Core.Environment.Local:
+        case Domain.Core.Environment.Development:
+          break;
+
+        default:
+          return;
+      }
+
+      if (!request.Roles.Any(o => o is Role.Issuer or Role.Verifier))
+        return;
+
+      var environment = _environmentProvider.Environment.ToString();
+      request.Referent = HashHelper.ComputeSHA256Hash($"{environment}:{request.Referent}");
+      request.Name = $"{request.Name} {environment}".NormalizeTrim();
     }
 
     private static async Task<Tenant?> GetTenantByWalletNameOrNull(string walletName, ITenantAdminClient client)
