@@ -512,6 +512,8 @@ namespace Yoma.Core.Infrastructure.Alison.Client
           ZltoRewardPool = null,
 
           CredentialIssuanceEnabled = true,
+          // TODO [YOM-1264/YOM-1280]: Review and assign the approved generic or type-specific
+          // credential schema once the final custom fields and schema flavours are agreed.
           SSISchemaName = SSISSchemaHelper.ToFullName(SchemaType.Opportunity, $"Default"),
 
           DifficultyId = difficulty.Id,

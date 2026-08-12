@@ -2063,6 +2063,9 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       var dateEnd = item.DateEnd?.ToDateTimeOffset();
 
+      // TODO [YOM-1264/YOM-1280]: Resolve the approved import schema from the Opportunity type
+      // instead of defaulting new/schema-less imports to Opportunity|Default. Preserve an existing
+      // schema only while it remains compatible with the imported type.
       OpportunityRequestBase? request = null;
       var isNew = false;
       if (existingByExternalId == null)

@@ -1,6 +1,7 @@
 using FluentValidation;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using System.Text.RegularExpressions;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Lookups.Interfaces;
@@ -14,7 +15,7 @@ using Yoma.Core.Infrastructure.JobJack.Models;
 
 namespace Yoma.Core.Infrastructure.JobJack.Client
 {
-  public sealed class JobJackClient : ISyncProviderClientPullEntity<Domain.Opportunity.Models.Opportunity>
+  public sealed partial class JobJackClient : ISyncProviderClientPullEntity<Domain.Opportunity.Models.Opportunity>
   {
     #region Class Variables
     private readonly ILogger<JobJackClient> _logger;
@@ -104,6 +105,9 @@ namespace Yoma.Core.Infrastructure.JobJack.Client
       summary = summary.TrimToLengthWithEllipsis(OpportunityService.Summary_MaxLength);
       var title = BuildTitle(item, summary);
 
+      // Phase 1 is Opportunity sync only; verification and credential issuance remain disabled.
+      // TODO [YOM-1264/YOM-1280]: If a later phase enables them, assign the approved compatible
+      // schema once the final custom fields and schema flavours are agreed.
       var opportunity = new Domain.Opportunity.Models.Opportunity
       {
         Title = title,
@@ -198,14 +202,14 @@ namespace Yoma.Core.Infrastructure.JobJack.Client
         var separatorIndex = line.IndexOf(':');
         if (separatorIndex < 0)
         {
-          if (!System.Text.RegularExpressions.Regex.IsMatch(line, @"^(?:[\p{L}-]+\s+)*requirements?$", System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.CultureInvariant))
+          if (!RequirementsHeading().IsMatch(line))
             result.Add(line);
           continue;
         }
 
         var label = line[..separatorIndex];
-        label = System.Text.RegularExpressions.Regex.Replace(label, @"\brequirements?\b", string.Empty, System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.CultureInvariant);
-        label = System.Text.RegularExpressions.Regex.Replace(label, @"\s{2,}", " ", System.Text.RegularExpressions.RegexOptions.CultureInvariant).Trim(' ', '-', ':');
+        label = RequirementsLabel().Replace(label, string.Empty);
+        label = MultipleSpaces().Replace(label, " ").Trim(' ', '-', ':');
         var detail = line[(separatorIndex + 1)..].Trim();
         if (string.IsNullOrEmpty(label) && string.IsNullOrEmpty(detail)) continue;
 
@@ -315,6 +319,15 @@ namespace Yoma.Core.Infrastructure.JobJack.Client
       value = value?.NormalizeNullableValue();
       return string.IsNullOrEmpty(value) ? null : value.RemoveSpecialCharacters().NormalizeTrim();
     }
+
+    [GeneratedRegex(@"^(?:[\p{L}-]+\s+)*requirements?$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+    private static partial Regex RequirementsHeading();
+
+    [GeneratedRegex(@"\brequirements?\b", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+    private static partial Regex RequirementsLabel();
+
+    [GeneratedRegex(@"\s{2,}", RegexOptions.CultureInvariant)]
+    private static partial Regex MultipleSpaces();
     #endregion
   }
 }

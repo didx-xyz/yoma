@@ -125,6 +125,9 @@ namespace Yoma.Core.Infrastructure.Jobberman.Client
       if (!orgId.HasValue || orgId.Value == Guid.Empty)
         throw new InvalidOperationException($"Feed config for country '{item.CountryCodeAlpha2}': Yoma organization Id not configured");
 
+      // Phase 1 is Opportunity sync only; verification and credential issuance remain disabled.
+      // TODO [YOM-1264/YOM-1280]: If a later phase enables them, assign the approved compatible
+      // schema once the final custom fields and schema flavours are agreed.
       var opportunity = new Domain.Opportunity.Models.OpportunityRequestCreate
       {
         Title = title,

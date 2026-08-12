@@ -70,6 +70,8 @@ namespace Yoma.Core.Infrastructure.IXO.PartnerSync.Client
         ZltoRewardPool = null,
 
         CredentialIssuanceEnabled = true,
+        // TODO [YOM-1264/YOM-1280]: Review and assign the approved generic or type-specific credential
+        // schema per Opportunity type once the final custom fields and schema flavours are agreed.
         SSISchemaName = SSISSchemaHelper.ToFullName(SchemaType.Opportunity, "Default"),
         Skills = skills?.Select(o => o.Id).ToList(),
         ShareWithPartners = false,

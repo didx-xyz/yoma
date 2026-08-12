@@ -122,6 +122,10 @@ generic schema.
   matching the selected Opportunity Type context; schemas for other types are excluded.
 - Opportunity create/update requires an explicit selection when credential issuance is enabled and
   validates that the submitted schema is generic or matches the target Opportunity type.
+- Alison and IXO currently enable credential issuance against the generic `Opportunity|Default`
+  schema. Jobberman and JobJack currently leave credential issuance disabled and do not assign a
+  schema. All four provider mappings must be reviewed against the final field/schema matrix rather
+  than assuming the generic default is correct.
 
 **Stale Linear state:** YOM-1278 remains partially complete. YOM-1280 is marked In Progress in
 Linear, but its processing-time issuance changes are not in the branch yet.

@@ -80,6 +80,8 @@ namespace Yoma.Core.Domain.SSI.Services
 
         if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Processing SSI default schema seeding");
 
+        // TODO [YOM-1264/YOM-1278]: Seed all approved generic and type-specific Opportunity schemas,
+        // including their final core/custom-field mappings, once the BA-approved definitions are available.
         await SeedSchema(ArtifactType.JWS,
              SSISSchemaHelper.ToFullName(SchemaType.Opportunity, $"Default"),
              ["Opportunity_OrganizationName", "Opportunity_OrganizationLogoURL", "Opportunity_Title", "Opportunity_Skills", "Opportunity_Summary", "Opportunity_Type", "MyOpportunity_UserDisplayName", "MyOpportunity_UserDateOfBirth", "MyOpportunity_DateCompleted"]);

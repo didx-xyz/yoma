@@ -35,6 +35,8 @@ is split across admin schema management (YOM-1278), Opportunity selection (YOM-1
 - [x] Expose type-aware static and custom-field schema attributes.
 - [x] Persist and self-heal schema-mapped custom-field protection.
 - [x] Complete explicit Opportunity schema selection and compatibility rules.
+- [ ] Assign approved schemas and issuance behavior across Alison, Jobberman, JobJack and IXO after the final field/schema matrix is approved.
+- [ ] Resolve the approved type-compatible schema automatically for CSV imports after the final matrix is approved.
 - [ ] Resolve and persist the latest schema metadata when issuance is processed.
 - [ ] Map custom-field values and structured Skills into issued credentials.
 - [ ] Complete the three Web surfaces.
@@ -46,6 +48,7 @@ is split across admin schema management (YOM-1278), Opportunity selection (YOM-1
 - 2026-08-06: Generic `Opportunity|Default` is an explicit selectable schema, not an automatic fallback.
 - 2026-08-06: Changing an Opportunity type requires explicit schema reselection.
 - 2026-08-06: Issuance resolves the latest selected schema at processing time, not scheduling time.
+- 2026-08-12: Alison and IXO retain `Opportunity|Default` temporarily; Jobberman and JobJack intentionally keep verification and issuance disabled while their scope remains Opportunity sync only.
 
 ## Links
 
