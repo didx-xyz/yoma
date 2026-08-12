@@ -742,6 +742,8 @@ namespace Yoma.Core.Infrastructure.Alison.Client
     {
       ArgumentNullException.ThrowIfNull(course);
 
+      const string certificateNotice = "***PLEASE NOTE: WHILE YOU WILL BE ASKED TO PURCHASE A PAID ALISON CERTIFICATE UPON COMPLETION, THIS IS OPTIONAL AND NOT A REQUIREMENT TO RECEIVE YOUR VERIFIABLE CREDENTIAL ON YOUR YOID. THE VERIFIABLE CREDENTIAL ON YOUR YOID IS SUFFICIENT PROOF OF COMPLETION.***";
+
       var translation = GetPreferredTranslation(course);
 
       var description = (translation?.Summary).HtmlToMarkdown()
@@ -761,6 +763,8 @@ namespace Yoma.Core.Infrastructure.Alison.Client
 
       if (metadata.Count > 0)
         description = $"{description}{StringExtensions.MarkdownParagraphBreak}{string.Join("\n", metadata)}";
+
+      description = $"{description}{StringExtensions.MarkdownParagraphBreak}{certificateNotice}";
 
       return description.NormalizeTrimMultiline();
     }
