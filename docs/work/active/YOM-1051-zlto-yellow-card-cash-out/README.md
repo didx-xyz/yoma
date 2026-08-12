@@ -294,6 +294,13 @@ Not owned by any one child ticket. **T6 in the old numbering.**
       see the capacity banner without touching data.
 - [ ] **Fold the Opportunities tab into Organisations** (owner intent) — spans YOM-1063 and the
       shared tab shell.
+- [ ] ⚠️ **Re-point the commit citations before this PR merges.** `master` is squash-merged, so the
+      branch commits these docs cite collapse into one `(#NNNN)` commit on landing and every
+      citation dies. **61 of the 66 resolvable SHAs across `docs/work/active/` are branch-only** —
+      `70b2ccd`, `0d7a67ba`, `bd4d01c1`, `f051dfd8`, `08cb6c10a` and the rest. Run the check in
+      `docs/work/README.md`, then swap each for the squashed commit or annotate it. **After the
+      merge this is guesswork** — it is exactly how the Partner Sync provenance was lost. Do this
+      with the `?mock=` removal, in the same pre-merge pass.
 
 ## Out of Scope (whole epic)
 

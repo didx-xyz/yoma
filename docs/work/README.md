@@ -64,33 +64,22 @@ The same test shapes new tickets: if a ticket cannot be described without naming
 or file, it is a task, not a ticket — fold it into a parent and let that parent's task checklist
 carry the breakdown. See `templates/linear-epic.md` and `templates/linear-issue.md`.
 
-## When the history cannot be trusted: context packs
+## Commit citations and squash-merge
 
-Sometimes a doc set arrives whose provenance cannot be verified — work that predates this
-convention, or handoffs citing commits that were squashed away on merge and now resolve nowhere.
-Carrying those forward is worse than not having them: they read as traceable and are not.
+**`master` is squash-merged** — one commit per PR, `… (#1910)`. So every branch SHA a handoff cites
+**stops resolving the moment its PR lands**: the branch commits collapse into one and the originals
+are unreachable. This is not hypothetical; it is what killed the Partner Sync citations, and it is
+why `b5bfe400` survives in that epic while its four siblings do not — that one *is* the squashed
+commit.
 
-In that case, replace them with a **context pack** (`templates/context-pack.md`): one document per
-epic or ticket, keeping every decision, contract and gotcha, and dropping the session narrative.
+Cite branch SHAs while the branch is alive; they are the most precise pointer available. But
+**before a PR merges, re-point or annotate them** — run the check in the Rules below, then either
+swap each hash for the squashed `(#NNNN)` commit or note that it predates the squash. Doing it after
+the merge is guesswork.
 
-**It fires on unverifiable provenance, not on restructuring.** Those are different things:
-
-| Situation                                                              | Do this                                              |
-| ---------------------------------------------------------------------- | ---------------------------------------------------- |
-| Handoffs written live; cited SHAs resolve                              | `git mv` them. They are better evidence than a summary |
-| Handoffs already reconstructed, or SHAs that resolve nowhere           | Write a context pack and archive the originals       |
-| A mix                                                                  | Move the good ones; pack only the unverifiable ones  |
-
-Three rules, or the pack becomes the next problem:
-
-- **Never call it lossless.** It is a reconstruction — the narrative is gone on purpose and only git
-  still has it. A pack that claims nothing was lost licenses exactly the belief the `RECONSTRUCTED`
-  rule exists to prevent. "Decision-complete" is the bar: every decision, contract and gotcha
-  survives.
-- **Never delete the source.** Archive it and say where it went. Git is the lossless layer; the pack
-  is the readable one.
-- **Never pack a pack.** Compressing an already-compressed doc set loses the detail that would let
-  anyone check either version. If a pack is stale, correct it against the code.
+If a doc set has already lost its provenance and cannot be recovered, replace it with a **context
+pack** (`templates/context-pack.md`) — decisions, contracts and gotchas kept, narrative dropped. It
+is a reconstruction, not a lossless copy: never delete the source, and never pack a pack.
 
 ## Lifecycle
 
@@ -134,7 +123,8 @@ edit ticket descriptions unless explicitly asked.
       git cat-file -e "$s^{commit}" 2>/dev/null || echo "MISSING $s in $h"; done; done
   ```
 
-  If the source commits genuinely cannot be identified, write that instead of guessing.
+  If the source commits genuinely cannot be identified, write that instead of guessing. **Run this
+  again before a PR merges** — `master` is squash-merged, so branch SHAs stop resolving on landing.
 
 - **Status is recorded once, in the feature's `feature.md`**, using `planning` | `in-progress` | `review` | `shipped` | `blocked`, optionally followed by ` — <short qualifier>` (e.g. `in-progress — dev complete, browser pass owed`). Epic README tables may repeat it for scanning, but the feature doc wins on conflict — do not invent parallel vocabularies (`production`, `testing`) in the table.
 - `active/` should stay small (a handful of epics). If it grows stale, archive or delete.
