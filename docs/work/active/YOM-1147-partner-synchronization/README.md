@@ -146,8 +146,8 @@ IXO Learning and Job opportunities were confirmed through the Web UI.
 | Provider | Current capability | Source of truth |
 | -------- | ------------------ | --------------- |
 | Jobberman | Production Opportunity pull from RSS/cache | Jobberman client, cache migration and shared pull handler |
-| Alison | Production Opportunity pull, authenticated hand-off and verification import | Alison clients, catalogue service and verification handler |
-| JobJack | XML Opportunity pull implemented and testing; Phase 2 hand-off/verification deferred | JobJack feed service/client and Stage feed validation |
+| Alison | Production Opportunity pull, authenticated hand-off and verification import; course descriptions clarify that paid certificates are optional for YoID credentials | Alison clients, catalogue service and verification handler |
+| JobJack | XML Opportunity pull configured for the Yoma production feed with a refreshed representative embedded sample; final validation remains in progress and Phase 2 hand-off/verification is deferred | JobJack feed service/client, runtime configuration and embedded sample |
 | IXO | Learning/Job pull, user hand-off/linking and verification implemented; external Stage/Production provisioning pending | IXO PartnerSync client, migration, embedded probes and YOM-1276 confirmations |
 
 ### Cross-epic Custom Fields dependency

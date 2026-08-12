@@ -29,6 +29,7 @@ YOM-1202.
 
 - [x] Add client authentication, catalogue paging/cache and migration.
 - [x] Map course content, category, difficulty, commitment and searchable metadata.
+- [x] Add the learner-facing certificate notice to imported Opportunity descriptions.
 - [x] Add omission-based deletion with empty-catalogue protection and retention.
 - [x] Add embedded resources and scheduled refresh.
 - [x] Deploy Opportunity pull to production.
@@ -36,6 +37,7 @@ YOM-1202.
 
 ## Decisions
 
+- 2026-08-12: Imported descriptions clarify that purchasing an Alison certificate is optional; the YoID verifiable credential remains sufficient proof of completion.
 - 2026-05-15: Absence from a valid complete catalogue marks deletion; tombstones retain retry safety before purge.
 - 2026-05-18: Provider HTML is normalized into Yoma-compatible Markdown at ingestion.
 

@@ -31,6 +31,8 @@ maps to Yoma Job opportunities and exposes the local catalogue through the share
 - [x] Add XML retrieval, paging/state tracking, explicit parsing and embedded sample mode.
 - [x] Add content/Markdown, dates, salary, requirements and title normalization.
 - [x] Add category, keyword, country and lookup mappings.
+- [x] Configure the Yoma production feed endpoint.
+- [x] Refresh the embedded sample from the production feed shape for local and controlled-environment validation.
 - [x] Add omission-based terminal deletion with empty-feed protection and retention.
 - [x] Merge implementation to master.
 - [ ] Complete final environment validation and release.
@@ -40,6 +42,7 @@ maps to Yoma Job opportunities and exposes the local catalogue through the share
 
 - 2026-08-03: Explicit XML parsing is preferred because individual malformed fields must not reject the complete feed.
 - 2026-08-04: Provider and city are appended to titles only when absent; Yoma-compatible Markdown is produced at ingestion.
+- 2026-08-12: Runtime configuration targets JobJack's Yoma-specific production feed; embedded-resource mode retains a representative sample of the same feed shape.
 
 ## Links
 
