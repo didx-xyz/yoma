@@ -39,6 +39,10 @@ and it is currently wrong.
 
 ### 1. Wallet ledger contract (`UserProfileZlto`)
 
+Server-side source: **`08cb6c10a`** (`fix(payout): harden reconciliation and ZLTO ledger
+consistency`) — supplied 2026-08-11, so the nullable types below can be checked against real code
+rather than inferred. Read it before building the ledger.
+
 | Field            | Meaning                                                                                                                                               |
 | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `balance`        | **nullable.** Wallet balance before payout reservations are excluded. API-derived as `available + pendingPayout`; `null` when the provider is offline |
@@ -97,6 +101,11 @@ never reconcile or surface a mismatch.**
   with `undefined.toLocaleString()` because the TS interface still declared the old field. Fixed in
   `4bfeb55c`. **Mitigation for the pending `pendingAwards` → `pendingRewards` rename: delete the old
   field from the interface in the same change.** The general rule is in the epic's Cross-Area Notes.
+- **2026-08-11: the wallet nullability change is `08cb6c10a`** — the missing SHA that had this
+  ticket's first task waiting on an assumption. `Balance`, `Available` and `Total` are nullable while
+  ZLTO is offline; `pendingRewards` and the Yoma-recorded `pendingPayout` stay populated, which is
+  exactly the "branch on `null`, not on `zltoOffline`" contract above. Verify the field-by-field
+  types against that commit before writing the ledger, not against this table.
 - **2026-08-05: T5 retitled "Youth Payout".** The API-wide "cash-out" → "payout" rename
   (`e5209d6c` + `df675be4`) is a vocabulary change, not a neutrality fix. **"Cash Out" remains the
   user-facing action**; the internal contract is `payout`.

@@ -27,8 +27,9 @@ validation digest. This doc does not restate them.
 ## Out of Scope
 
 - **List/search columns for organisation reward figures** — no endpoint provides them.
-- **Per-opportunity pool/balance in any list view** — no list endpoint exposes them. See the
-  2026-08-05 decision below; this is why T3's tab ships reduced.
+- **Per-opportunity pool/balance in any list view** — no list endpoint exposes them, and as of
+  2026-08-11 none will: hiding them is a deliberate data-exposure decision, not a gap. See the
+  2026-08-11 decision below; this is why T3's tab ships reduced, permanently.
 - **Organisation self-service pool requests.** Registration deliberately leaves pools `null`;
   allocation is an admin act after approval.
 
@@ -93,7 +94,14 @@ tab — see the epic README. The components are durable; the tab's grouping, pag
   `POST /opportunity/search/filter/opportunity`. The tab therefore shows per-completion reward +
   lifetime awarded per opportunity, grouped under its organisation's current-FY figures. Nothing
   synthesised. **Ask for `[JsonIgnore]` to be dropped, or the fields added to `OpportunityInfo`, to
-  build it as designed.**
+  build it as designed.** _(Answered 2026-08-11 — declined, see below. The reduced tab is permanent.)_
+- **2026-08-11: the `[JsonIgnore]` ask is declined, and this is settled — do not re-raise it.**
+  Adrian's reasoning: `OpportunityItem` is a compact selection/listing contract and `OpportunityInfo`
+  is anonymous and also feeds CSV exports, so neither may carry organisation-level reward
+  configuration without an explicit business requirement. That is a data-exposure decision, not a
+  gap. **Consequences:** the Opportunities tab's reduced scope is permanent, not provisional-pending-API;
+  a per-opportunity pool/balance column in any list view needs a business case first; and the
+  fold-into-Organisations rework cannot assume those figures will ever arrive.
 - **2026-08-05: T3's detail block reads the organisation, not the opportunity payload's
   sub-object.** That sub-object is FY-only while `OrganizationRewardFigures` needs the all-time
   figures too, so it would render "—" for every All-time value. `GET /organization/{id}` gives all
