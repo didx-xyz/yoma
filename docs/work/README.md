@@ -16,6 +16,7 @@ docs/work/
     handoff.md          # → …/handoffs/YYYY-MM-DD-a.md
     linear-epic.md      # paste into the Linear epic description
     linear-issue.md     # paste into the Linear issue description
+    context-pack.md     # replaces handoffs whose provenance cannot be verified
   active/
     YOM-1244-customizable-fields-framework/        # epic = the Linear parent issue
       README.md                                    # epic: scope, ticket map, shared contract
@@ -62,6 +63,34 @@ shared validation where applicable"_ is the signal you are documenting a title, 
 The same test shapes new tickets: if a ticket cannot be described without naming a class, endpoint
 or file, it is a task, not a ticket — fold it into a parent and let that parent's task checklist
 carry the breakdown. See `templates/linear-epic.md` and `templates/linear-issue.md`.
+
+## When the history cannot be trusted: context packs
+
+Sometimes a doc set arrives whose provenance cannot be verified — work that predates this
+convention, or handoffs citing commits that were squashed away on merge and now resolve nowhere.
+Carrying those forward is worse than not having them: they read as traceable and are not.
+
+In that case, replace them with a **context pack** (`templates/context-pack.md`): one document per
+epic or ticket, keeping every decision, contract and gotcha, and dropping the session narrative.
+
+**It fires on unverifiable provenance, not on restructuring.** Those are different things:
+
+| Situation                                                              | Do this                                              |
+| ---------------------------------------------------------------------- | ---------------------------------------------------- |
+| Handoffs written live; cited SHAs resolve                              | `git mv` them. They are better evidence than a summary |
+| Handoffs already reconstructed, or SHAs that resolve nowhere           | Write a context pack and archive the originals       |
+| A mix                                                                  | Move the good ones; pack only the unverifiable ones  |
+
+Three rules, or the pack becomes the next problem:
+
+- **Never call it lossless.** It is a reconstruction — the narrative is gone on purpose and only git
+  still has it. A pack that claims nothing was lost licenses exactly the belief the `RECONSTRUCTED`
+  rule exists to prevent. "Decision-complete" is the bar: every decision, contract and gotcha
+  survives.
+- **Never delete the source.** Archive it and say where it went. Git is the lossless layer; the pack
+  is the readable one.
+- **Never pack a pack.** Compressing an already-compressed doc set loses the detail that would let
+  anyone check either version. If a pack is stale, correct it against the code.
 
 ## Lifecycle
 

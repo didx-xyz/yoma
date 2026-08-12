@@ -78,6 +78,7 @@ Three rules that keep these docs trustworthy:
 - A handoff written after the fact must be marked `RECONSTRUCTED` in its title and name the commits it was rebuilt from — never present a reconstruction as a contemporaneous record.
 - **Every commit SHA written into a doc must resolve.** A citation that does not is worse than none: it reads as provenance and cannot be followed. Copy hashes from `git log`, never from memory, and verify with `git cat-file -e <sha>^{commit}` before committing. If the source commits genuinely cannot be identified, write that instead of guessing.
 - **Status is recorded once, in the feature's `feature.md`** — `planning` | `in-progress` | `review` | `shipped` | `blocked`, optionally followed by ` — <short qualifier>`. Epic README tables may repeat it for scanning, but the feature doc wins on conflict; do not invent parallel vocabularies.
+- **When provenance cannot be verified, write a context pack** (`docs/work/templates/context-pack.md`) instead of carrying the handoffs forward — one document keeping every decision, contract and gotcha, dropping the session narrative. This fires on *unverifiable provenance* (pre-convention work, or SHAs squashed away on merge), **not** on restructuring: handoffs written live with resolving SHAs are better evidence than any summary, so `git mv` those and leave them alone. Never call a pack lossless — it is a reconstruction — never delete the source, and never pack a pack.
 
 ## Linear vs `docs/work` — Where Things Belong
 
