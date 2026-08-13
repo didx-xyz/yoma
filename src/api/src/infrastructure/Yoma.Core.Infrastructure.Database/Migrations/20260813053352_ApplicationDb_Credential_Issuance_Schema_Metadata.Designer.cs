@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Yoma.Core.Infrastructure.Database.Context;
@@ -11,9 +12,11 @@ using Yoma.Core.Infrastructure.Database.Context;
 namespace Yoma.Core.Infrastructure.Database.Migrations
 {
   [DbContext(typeof(ApplicationDbContext))]
-  partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+  [Migration("20260813053352_ApplicationDb_Credential_Issuance_Schema_Metadata")]
+  partial class ApplicationDb_Credential_Issuance_Schema_Metadata
   {
-    protected override void BuildModel(ModelBuilder modelBuilder)
+    /// <inheritdoc />
+    protected override void BuildTargetModel(ModelBuilder modelBuilder)
     {
 #pragma warning disable 612, 618
       modelBuilder
@@ -39,8 +42,8 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
             b.ToTable("UnnestedValueDummy", null, t =>
                       {
-                        t.ExcludeFromMigrations();
-                      });
+                    t.ExcludeFromMigrations();
+                  });
 
             b.ToView("unnested_values", (string)null);
           });
@@ -410,8 +413,8 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
             b.ToTable("CustomFieldValue", "Core", t =>
                       {
-                        t.HasCheckConstraint("CK_CustomFieldValue_Entity", "(\"OpportunityId\" IS NOT NULL AND \"MyOpportunityId\" IS NULL) OR (\"OpportunityId\" IS NULL AND \"MyOpportunityId\" IS NOT NULL)");
-                      });
+                    t.HasCheckConstraint("CK_CustomFieldValue_Entity", "(\"OpportunityId\" IS NOT NULL AND \"MyOpportunityId\" IS NULL) OR (\"OpportunityId\" IS NULL AND \"MyOpportunityId\" IS NOT NULL)");
+                  });
           });
 
       modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Core.Entities.DownloadSchedule", b =>

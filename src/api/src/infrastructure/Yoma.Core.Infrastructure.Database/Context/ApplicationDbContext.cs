@@ -526,8 +526,9 @@ namespace Yoma.Core.Infrastructure.Database.Context
           .HasFilter(null);
 
       builder.Entity<SSICredentialIssuance>()
-          .HasIndex(e => new { e.SchemaName, e.UserId, e.OrganizationId, e.MyOpportunityId })
+          .HasIndex(e => new { e.SchemaTypeId, e.UserId, e.OrganizationId, e.MyOpportunityId })
           .IsUnique()
+          .AreNullsDistinct(false)
           .HasFilter(null);
       #endregion Reward
 
@@ -538,8 +539,9 @@ namespace Yoma.Core.Infrastructure.Database.Context
           .HasFilter(null);
 
       builder.Entity<SSICredentialIssuance>()
-          .HasIndex(e => new { e.SchemaName, e.UserId, e.OrganizationId, e.MyOpportunityId })
+          .HasIndex(e => new { e.SchemaTypeId, e.UserId, e.OrganizationId, e.MyOpportunityId })
           .IsUnique()
+          .AreNullsDistinct(false)
           .HasFilter(null);
       #endregion
 

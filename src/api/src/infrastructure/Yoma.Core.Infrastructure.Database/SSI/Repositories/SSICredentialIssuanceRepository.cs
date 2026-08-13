@@ -81,6 +81,8 @@ namespace Yoma.Core.Infrastructure.Database.SSI.Repositories
 
       item.DateModified = DateTimeOffset.UtcNow;
 
+      // Schema name is immutable after scheduling; version remains null until successful issuance.
+      entity.SchemaVersion = item.SchemaVersion;
       entity.CredentialId = item.CredentialId;
       entity.StatusId = item.StatusId;
       entity.ErrorReason = item.ErrorReason;

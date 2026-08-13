@@ -118,6 +118,28 @@ namespace Yoma.Core.Domain.Core.Services
       }
     }
 
+    public List<string> ResolveDisplayValues(CustomFieldDefinition definition, CustomFieldValueItem item)
+    {
+      ArgumentNullException.ThrowIfNull(definition, nameof(definition));
+      ArgumentNullException.ThrowIfNull(item, nameof(item));
+
+      if (!string.Equals(definition.Key, item.Key, StringComparison.OrdinalIgnoreCase) || definition.DataType != item.DataType)
+        throw new InvalidOperationException($"Custom field value '{item.Key}' does not match definition '{definition.Key}'");
+
+      if (definition.DataType != CustomFieldDataType.Option)
+        return string.IsNullOrEmpty(item.ValueRaw) ? [] : [item.ValueRaw];
+
+      var values = item.Values ?? [];
+      if (definition.LookupType.HasValue)
+      {
+        return [.. values.Select(value => ResolveLookupDisplayValue(definition.LookupType.Value, value))];
+      }
+
+      return [.. values.Select(value => definition.Options?
+        .SingleOrDefault(option => string.Equals(option.Key, value, StringComparison.OrdinalIgnoreCase))?.Name
+        ?? throw new InvalidOperationException($"Option '{value}' for custom field '{definition.Key}' does not exist"))];
+    }
+
     public async Task<List<CustomFieldValueItem>?> Upsert(
       CustomFieldEntityType entityType,
       string? entityContext,
@@ -768,6 +790,28 @@ namespace Yoma.Core.Domain.Core.Services
           nameof(lookupType),
           $"Custom field lookup type '{lookupType}' is not supported")
       };
+    }
+
+    private string ResolveLookupDisplayValue(CustomFieldLookupType lookupType, string value)
+    {
+      if (!Guid.TryParse(value, out var id) || id == Guid.Empty)
+        throw new InvalidOperationException($"Custom field lookup value '{value}' is not a valid identifier");
+
+      return lookupType switch
+      {
+        CustomFieldLookupType.Country =>
+          _countryService.GetByIdOrNull(id)?.Name,
+
+        CustomFieldLookupType.Language =>
+          _languageService.GetByIdOrNull(id)?.Name,
+
+        CustomFieldLookupType.Skill =>
+          _skillService.GetByIdOrNull(id)?.Name,
+
+        _ => throw new ArgumentOutOfRangeException(
+          nameof(lookupType),
+          $"Custom field lookup type '{lookupType}' is not supported")
+      } ?? throw new InvalidOperationException($"Custom field lookup value '{value}' does not exist for lookup type '{lookupType}'");
     }
     #endregion
   }

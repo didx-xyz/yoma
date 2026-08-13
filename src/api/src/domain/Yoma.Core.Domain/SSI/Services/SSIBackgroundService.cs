@@ -1,8 +1,11 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
 using System.Collections;
 using System.Collections.Concurrent;
+using System.Globalization;
+using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
@@ -281,6 +284,8 @@ namespace Yoma.Core.Domain.SSI.Services
               var organizationService = scope.ServiceProvider.GetRequiredService<IOrganizationService>();
               var myOpportunityService = scope.ServiceProvider.GetRequiredService<IMyOpportunityService>();
               var opportunityService = scope.ServiceProvider.GetRequiredService<IOpportunityService>();
+              var customFieldDefinitionService = scope.ServiceProvider.GetRequiredService<ICustomFieldDefinitionService>();
+              var customFieldValueService = scope.ServiceProvider.GetRequiredService<ICustomFieldValueService>();
               var tenantService = scope.ServiceProvider.GetRequiredService<ISSITenantService>();
               var providerClientFactory = scope.ServiceProvider.GetRequiredService<ISSIProviderClientFactory>();
               var providerClient = providerClientFactory.CreateClient();
@@ -293,11 +298,9 @@ namespace Yoma.Core.Domain.SSI.Services
                 {
                   ClientReferent = new KeyValuePair<string, string>(SSISchemaService.SchemaAttribute_Internal_ReferentClient, item.Id.ToString()),
                   SchemaType = item.SchemaType.ToString(),
-                  SchemaName = item.SchemaName,
-                  ArtifactType = item.ArtifactType,
                   Attributes = new Dictionary<string, string>()
                                 {
-                                    { SSISchemaService.SchemaAttribute_Internal_DateIssued, now.ToString()},
+                                    { SSISchemaService.SchemaAttribute_Internal_DateIssued, now.ToString("O", CultureInfo.InvariantCulture)},
                                     { SSISchemaService.SchemaAttribute_Internal_ReferentClient, item.Id.ToString()}
                                 }
                 };
@@ -340,6 +343,10 @@ namespace Yoma.Core.Domain.SSI.Services
                     request.TenantIdHolder = tenantHolder.tenantId;
 
                     schema = await schemaService.GetByFullName(item.SchemaName);
+                    AssertIssuanceSchemaApplicable(schema, item);
+
+                    request.SchemaName = schema.Name;
+                    request.ArtifactType = schema.ArtifactType;
 
                     foreach (var entity in schema.Entities)
                     {
@@ -349,11 +356,11 @@ namespace Yoma.Core.Domain.SSI.Services
                       switch (entityType)
                       {
                         case Type t when t == typeof(User):
-                          ReflectEntityValues(request, entity, t, user);
+                          ReflectEntityValues(request, entity, t, user, customFieldDefinitionService, customFieldValueService);
                           break;
 
                         case Type t when t == typeof(Organization):
-                          ReflectEntityValues(request, entity, t, organization);
+                          ReflectEntityValues(request, entity, t, organization, customFieldDefinitionService, customFieldValueService);
                           break;
 
                         default:
@@ -366,6 +373,7 @@ namespace Yoma.Core.Domain.SSI.Services
                     if (!item.MyOpportunityId.HasValue)
                       throw new InvalidOperationException($"Schema type '{item.SchemaType}': 'My' opportunity id is null");
                     var myOpportunity = myOpportunityService.GetById(item.MyOpportunityId.Value, true, true, false);
+                    var opportunity = opportunityService.GetById(myOpportunity.OpportunityId, true, true, false);
 
                     tenantIssuer = GetTenantId(tenantService, item, EntityType.Organization, myOpportunity.OrganizationId);
                     if (!tenantIssuer.proceed)
@@ -383,7 +391,12 @@ namespace Yoma.Core.Domain.SSI.Services
                     }
                     request.TenantIdHolder = tenantHolder.tenantId;
 
+                    // Scheduling commits the schema name. Later Opportunity changes must not cancel or redirect an
+                    // already scheduled credential; processing resolves only the latest version of that schema.
                     schema = await schemaService.GetByFullName(item.SchemaName);
+                    AssertIssuanceSchemaApplicable(schema, item);
+                    request.SchemaName = schema.Name;
+                    request.ArtifactType = schema.ArtifactType;
 
                     foreach (var entity in schema.Entities)
                     {
@@ -393,12 +406,11 @@ namespace Yoma.Core.Domain.SSI.Services
                       switch (entityType)
                       {
                         case Type t when t == typeof(Opportunity.Models.Opportunity):
-                          var opportunity = opportunityService.GetById(myOpportunity.OpportunityId, true, true, false);
-                          ReflectEntityValues(request, entity, t, opportunity);
+                          ReflectEntityValues(request, entity, t, opportunity, customFieldDefinitionService, customFieldValueService);
                           break;
 
                         case Type t when t == typeof(MyOpportunity.Models.MyOpportunity):
-                          ReflectEntityValues(request, entity, t, myOpportunity);
+                          ReflectEntityValues(request, entity, t, myOpportunity, customFieldDefinitionService, customFieldValueService);
                           break;
 
                         default:
@@ -412,6 +424,9 @@ namespace Yoma.Core.Domain.SSI.Services
                 }
 
                 item.CredentialId = await providerClient.IssueCredential(request);
+                // Schema type, artifact type and full name are fixed at scheduling. Record the resolved version only
+                // after successful issuance so it describes the credential that was actually issued.
+                item.SchemaVersion = schema.Version.ToString();
                 item.Status = CredentialIssuanceStatus.Issued;
                 await credentialService.UpdateScheduleIssuance(item);
 
@@ -451,6 +466,18 @@ namespace Yoma.Core.Domain.SSI.Services
     #endregion
 
     #region Private Members
+    private static void AssertIssuanceSchemaApplicable(SSISchema schema, SSICredentialIssuance item)
+    {
+      if (schema.Type != item.SchemaType)
+        throw new InvalidOperationException($"SSI schema '{schema.Name}' is not applicable to schema type '{item.SchemaType}'");
+
+      if (schema.ArtifactType != item.ArtifactType)
+      {
+        throw new InvalidOperationException(
+          $"SSI schema '{schema.Name}' is not applicable to artifact type '{item.ArtifactType}'");
+      }
+    }
+
     private (bool proceed, string tenantId) GetTenantId(ISSITenantService tenantService, SSICredentialIssuance item, EntityType entityType, Guid entityId)
     {
       var tenantIdIssuer = tenantService.GetTenantIdOrNull(entityType, entityId);
@@ -497,14 +524,11 @@ namespace Yoma.Core.Domain.SSI.Services
       });
     }
 
-    private static void ReflectEntityValues<T>(CredentialIssuanceRequest request, SSISchemaEntity schemaEntity, Type type, T entity)
-             where T : class
-
+    private static void ReflectEntityValues<T>(CredentialIssuanceRequest request, SSISchemaEntity schemaEntity, Type type, T entity,
+      ICustomFieldDefinitionService customFieldDefinitionService, ICustomFieldValueService customFieldValueService)
+      where T : class
     {
-      if (schemaEntity.Properties == null)
-        throw new InvalidOperationException($"Entity properties is null or empty for entity '{schemaEntity.Name}'");
-
-      foreach (var prop in schemaEntity.Properties)
+      foreach (var prop in schemaEntity.Properties ?? [])
       {
         var propNameParts = prop.Name.Split('.');
         if (propNameParts.Length == 0 || propNameParts.Length > 2)
@@ -528,7 +552,7 @@ namespace Yoma.Core.Domain.SSI.Services
           if (prop.Required && valList.Count == 0)
             throw new InvalidOperationException($"Entity property '{prop.Name}' marked as required but is an empty list");
 
-          var nonNullOrEmptyNames = valList
+          var items = valList
                .Cast<object>()
                .Where(item => item != null)
                .Select(item =>
@@ -541,15 +565,59 @@ namespace Yoma.Core.Domain.SSI.Services
                  }
                  return null;
                })
-               .Where(name => !string.IsNullOrEmpty(name)).ToList();
+               .Where(name => !string.IsNullOrEmpty(name))
+               .Select(name => new SSICredentialAttributeItem { Name = name! })
+               .ToList();
 
-          propValue = string.Join(SSICredentialService.CredentialAttribute_OfTypeList_Delimiter, nonNullOrEmptyNames);
-          if (string.IsNullOrEmpty(propValue)) propValue = "n/a";
+          if (prop.Required && items.Count == 0)
+            throw new InvalidOperationException($"Entity property '{prop.Name}' marked as required but contains no values");
+
+          // Complex properties are stored as JSON within the provider's string attribute contract. Wallet rendering
+          // will expose API-native structured items in the next phase; until then the existing display returns JSON.
+          propValue = items.Count == 0 ? "n/a" : JsonConvert.SerializeObject(items);
         }
         else
           propValue = string.IsNullOrEmpty(propValueObject?.ToString()) ? "n/a" : propValueObject.ToString() ?? "n/a";
 
         request.Attributes.Add(prop.AttributeName, propValue);
+      }
+
+      MapCustomFieldValues(request, schemaEntity, entity, customFieldDefinitionService, customFieldValueService);
+    }
+
+    /// <summary>
+    /// Maps dynamic custom fields by their stable definition keys. These values intentionally bypass CLR reflection:
+    /// static schema properties and dynamic custom-field values are separate concerns.
+    /// </summary>
+    private static void MapCustomFieldValues<T>(CredentialIssuanceRequest request, SSISchemaEntity schemaEntity, T entity,
+      ICustomFieldDefinitionService customFieldDefinitionService, ICustomFieldValueService customFieldValueService)
+      where T : class
+    {
+      if (schemaEntity.CustomFields == null || schemaEntity.CustomFields.Count == 0) return;
+
+      if (!Enum.TryParse<CustomFieldEntityType>(schemaEntity.Name, true, out var entityType))
+        throw new InvalidOperationException($"Schema entity '{schemaEntity.Name}' does not support custom fields");
+
+      var values = entity switch
+      {
+        Opportunity.Models.Opportunity opportunity => opportunity.CustomFields,
+        MyOpportunity.Models.MyOpportunity myOpportunity => myOpportunity.CustomFields,
+        _ => throw new InvalidOperationException($"Entity '{schemaEntity.Name}' does not support custom fields")
+      };
+
+      foreach (var customField in schemaEntity.CustomFields)
+      {
+        var definition = customFieldDefinitionService.GetByKey(entityType, customField.Key, true, false);
+        var value = values?.SingleOrDefault(item => string.Equals(item.Key, customField.Key, StringComparison.OrdinalIgnoreCase));
+        var valuesDisplay = value == null ? [] : customFieldValueService.ResolveDisplayValues(definition, value);
+
+        if (customField.Required && valuesDisplay.Count == 0)
+          throw new InvalidOperationException($"Custom field '{customField.Key}' marked as required but has no value");
+
+        request.Attributes.Add(customField.AttributeName,
+          valuesDisplay.Count == 0
+            ? "n/a"
+            : string.Join(SSICredentialService.CredentialAttribute_OfTypeList_Delimiter, valuesDisplay));
       }
     }
     #endregion

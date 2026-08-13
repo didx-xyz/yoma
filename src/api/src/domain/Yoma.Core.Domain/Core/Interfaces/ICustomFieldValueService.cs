@@ -10,6 +10,12 @@ namespace Yoma.Core.Domain.Core.Interfaces
 
     void ValidateAndHydrateFilters(CustomFieldEntityType entityType, List<CustomFieldFilter>? filters);
 
+    /// <summary>
+    /// Resolves a persisted custom-field value to stable human-readable values for external representations
+    /// such as credentials. Inline option keys and lookup identifiers are converted to their display names.
+    /// </summary>
+    List<string> ResolveDisplayValues(CustomFieldDefinition definition, CustomFieldValueItem item);
+
     Task<List<CustomFieldValueItem>?> Upsert(CustomFieldEntityType entityType, string? entityContext, string? entityContextPrevious, Guid? opportunityId, Guid? myOpportunityId, List<CustomFieldValueRequest>? customFields, CustomFieldUpsertMode mode);
 
     Task Delete(CustomFieldEntityType entityType, Guid entityId);

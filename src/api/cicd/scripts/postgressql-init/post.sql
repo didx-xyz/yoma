@@ -41,7 +41,7 @@ WHERE U."YoIDOnboarded" = true;
 -- SSI Credential Issuance (Pending) for YOID onboarded users
 INSERT INTO "SSI"."CredentialIssuance"("Id", "SchemaTypeId", "ArtifactType", "SchemaName", "SchemaVersion", "StatusId", "UserId", "OrganizationId",
                                        "MyOpportunityId", "CredentialId", "ErrorReason", "RetryCount", "DateCreated", "DateModified")
-SELECT gen_random_uuid(), ST."Id" AS "SchemaTypeId", 'ACR' AS "ArtifactType", 'YoID|Default' AS "SchemaName", '1.0' AS "SchemaVersion",
+SELECT gen_random_uuid(), ST."Id" AS "SchemaTypeId", 'ACR' AS "ArtifactType", 'YoID|Default' AS "SchemaName", NULL AS "SchemaVersion",
        CIS."Id" AS "StatusId", U."Id" AS "UserId", NULL AS "OrganizationId", NULL AS "MyOpportunityId", NULL AS "CredentialId",
        NULL AS "ErrorReason", NULL AS "RetryCount", (CURRENT_TIMESTAMP AT TIME ZONE 'UTC') AS "DateCreated", (CURRENT_TIMESTAMP AT TIME ZONE 'UTC') AS "DateModified"
 FROM "Entity"."User" U
@@ -590,7 +590,7 @@ FETCH NEXT 30 ROWS ONLY;
 -- SSI Credential Issuance (Pending) for Verification (Completed) mapped to opportunities with CredentialIssuanceEnabled
 INSERT INTO "SSI"."CredentialIssuance"("Id", "SchemaTypeId", "ArtifactType", "SchemaName", "SchemaVersion", "StatusId", "UserId", "OrganizationId",
            "MyOpportunityId", "CredentialId", "ErrorReason", "RetryCount", "DateCreated", "DateModified")
-SELECT gen_random_uuid(), (SELECT "Id" FROM "SSI"."SchemaType" WHERE "Name" = 'Opportunity'), 'JWS', O."SSISchemaName", '1.0', (SELECT "Id" FROM "SSI"."CredentialIssuanceStatus" WHERE "Name" = 'Pending'),
+SELECT gen_random_uuid(), (SELECT "Id" FROM "SSI"."SchemaType" WHERE "Name" = 'Opportunity'), 'JWS', O."SSISchemaName", NULL, (SELECT "Id" FROM "SSI"."CredentialIssuanceStatus" WHERE "Name" = 'Pending'),
 	NULL, NULL, MO."Id", NULL, NULL, NULL, (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'), (CURRENT_TIMESTAMP AT TIME ZONE 'UTC')
 FROM "Opportunity"."MyOpportunity" MO
 INNER JOIN "Opportunity"."Opportunity" O ON MO."OpportunityId" = O."Id"

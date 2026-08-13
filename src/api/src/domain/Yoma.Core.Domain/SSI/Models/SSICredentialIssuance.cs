@@ -8,14 +8,20 @@ namespace Yoma.Core.Domain.SSI.Models
 
     public SchemaType SchemaType { get; set; }
 
+    /// <summary>
+    /// Artifact type selected when issuance is scheduled. Schema resolution during processing must preserve it.
+    /// </summary>
     public ArtifactType ArtifactType { get; set; }
 
     /// <summary>
-    /// Full name of the schema selected when issuance was scheduled.
+    /// Full schema name committed when issuance is scheduled. Later Opportunity changes do not replace it.
     /// </summary>
     public string SchemaName { get; set; } = null!;
 
-    public string SchemaVersion { get; set; } = null!;
+    /// <summary>
+    /// Schema version used to issue the credential. Null until issuance succeeds.
+    /// </summary>
+    public string? SchemaVersion { get; set; }
 
     public Guid StatusId { get; set; }
 
