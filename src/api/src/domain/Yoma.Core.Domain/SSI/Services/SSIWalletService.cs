@@ -1,5 +1,8 @@
 using FluentValidation;
 using Microsoft.AspNetCore.Http;
+using Newtonsoft.Json;
+using System.Globalization;
+using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Entity.Interfaces;
 using Yoma.Core.Domain.SSI.Interfaces;
@@ -120,6 +123,8 @@ namespace Yoma.Core.Domain.SSI.Services
     private async Task<T> ParseCredential<T>(Models.Provider.Credential item)
         where T : SSICredentialBase, new()
     {
+      // The provider credential carries the immutable schema id, including the exact version used at issuance.
+      // Wallet rendering must never resolve the latest version because labels and mappings may have changed since then.
       var schema = await _ssiSchemaService.GetById(item.SchemaId);
 
       var result = new T
@@ -130,35 +135,26 @@ namespace Yoma.Core.Domain.SSI.Services
         DateIssued = DateTimeHelper.TryParse(item.Attributes.SingleOrDefault(o => string.Equals(o.Key, SSISchemaService.SchemaAttribute_Internal_DateIssued, StringComparison.OrdinalIgnoreCase)).Value),
       };
 
-      var systemPropertiesSchema = schema.Entities.SelectMany(entity => entity.Properties ?? Enumerable.Empty<SSISchemaEntityProperty>())
-          .Where(property => property.System).ToList();
-
       var systemProperties = schema.Entities.SelectMany(entity => entity.Properties ?? Enumerable.Empty<SSISchemaEntityProperty>())
-          .Where(property => property.System && item.Attributes.ContainsKey(property.AttributeName)).ToList();
-
-      var systemPropertiesMismatch = systemPropertiesSchema.Except(systemProperties).ToList();
-
-      if (systemPropertiesMismatch.Count != 0)
-        throw new InvalidOperationException($"System properties mismatch detected for credential with id '{item.Id}' and schema '{schema.Name}': " +
-            $"Expected based on schema '{string.Join(",", systemPropertiesSchema.Select(o => o.AttributeName)).ToList()}' " +
-            $"vs. Credential attributes  '{string.Join(",", systemProperties.Select(o => o.AttributeName)).ToList()}'");
+          .Where(property => property.System).ToList();
 
       foreach (var property in systemProperties)
       {
-        var attribute = item.Attributes.SingleOrDefault(o => string.Equals(o.Key, property.AttributeName, StringComparison.OrdinalIgnoreCase));
+        var attribute = GetCredentialAttributeOrNull(item, schema, property.AttributeName, property.Required);
+        if (!attribute.HasValue) continue;
 
         switch (property.SystemType)
         {
           case SchemaEntityPropertySystemType.Title:
-            result.Title = ParseCredentialAttributeValue(property, attribute);
+            result.Title = ParseCredentialAttributeValue(property, attribute.Value);
             break;
 
           case SchemaEntityPropertySystemType.Issuer:
-            result.Issuer = ParseCredentialAttributeValue(property, attribute);
+            result.Issuer = ParseCredentialAttributeValue(property, attribute.Value);
             break;
 
           case SchemaEntityPropertySystemType.IssuerLogoURL:
-            result.IssuerLogoURL = ParseCredentialAttributeValue(property, attribute);
+            result.IssuerLogoURL = ParseCredentialAttributeValue(property, attribute.Value);
             break;
 
           default:
@@ -172,17 +168,112 @@ namespace Yoma.Core.Domain.SSI.Services
 
       var additionalProperties = schema.Entities.SelectMany(entity => entity.Properties ?? Enumerable.Empty<SSISchemaEntityProperty>())
           .Where(property => !property.System
-          && !SSISchemaService.SchemaAttributes_Internal.Any(i => string.Equals(i, property.AttributeName, StringComparison.OrdinalIgnoreCase))
-          && item.Attributes.ContainsKey(property.AttributeName)).ToList();
+          && !SSISchemaService.SchemaAttributes_Internal.Any(i => string.Equals(i, property.AttributeName, StringComparison.OrdinalIgnoreCase))).ToList();
 
       foreach (var property in additionalProperties)
       {
-        var attribute = item.Attributes.SingleOrDefault(o => string.Equals(o.Key, property.AttributeName, StringComparison.OrdinalIgnoreCase));
-        result.Attributes.Add(new SSICredentialAttribute { Name = property.AttributeName, NameDisplay = property.NameDisplay, ValueDisplay = ParseCredentialAttributeValue(property, attribute) });
+        var attribute = GetCredentialAttributeOrNull(item, schema, property.AttributeName, property.Required);
+        if (attribute.HasValue) result.Attributes.Add(ParseCredentialAttribute(property, attribute.Value));
+      }
+
+      // Custom fields are a new credential capability and therefore require no legacy credential conversion. Their
+      // labels and human-readable option / lookup values come from the exact issued schema and signed attributes.
+      var customFields = schema.Entities.SelectMany(entity => entity.CustomFields ?? Enumerable.Empty<SSISchemaEntityCustomField>()).ToList();
+      foreach (var customField in customFields)
+      {
+        var attribute = GetCredentialAttributeOrNull(item, schema, customField.AttributeName, customField.Required);
+        if (attribute.HasValue) result.Attributes.Add(ParseCredentialAttribute(customField, attribute.Value));
       }
 
       result.Attributes = [.. result.Attributes.OrderBy(o => o.NameDisplay)];
       return result;
+    }
+
+    /// <summary>
+    /// Existing credentials may either contain an optional attribute with the historical "n/a" value or omit it.
+    /// Both remain valid: present values are rendered as signed, missing optional values are omitted, and only a
+    /// missing required attribute is treated as a credential/schema inconsistency.
+    /// </summary>
+    private static KeyValuePair<string, string>? GetCredentialAttributeOrNull(Models.Provider.Credential credential,
+      SSISchema schema, string attributeName, bool required)
+    {
+      var attribute = credential.Attributes.SingleOrDefault(o => string.Equals(o.Key, attributeName, StringComparison.OrdinalIgnoreCase));
+      if (!string.IsNullOrEmpty(attribute.Key)) return attribute;
+
+      if (required)
+      {
+        throw new InvalidOperationException(
+          $"Credential with id '{credential.Id}' does not contain required attribute '{attributeName}' for schema '{schema.Id}'");
+      }
+
+      return null;
+    }
+
+    private static SSICredentialAttribute ParseCredentialAttribute(SSISchemaEntityProperty property, KeyValuePair<string, string> attribute)
+    {
+      var result = new SSICredentialAttribute
+      {
+        Name = property.AttributeName,
+        NameDisplay = property.NameDisplay,
+        ValueDisplay = ParseCredentialAttributeValue(property, attribute)
+      };
+
+      if (!property.TypeName.StartsWith("List<", StringComparison.OrdinalIgnoreCase)) return result;
+
+      // New credentials sign list attributes as JSON. Existing production credentials stored Skills as a comma-
+      // delimited string, so the API normalizes both representations and Web never parses provider data.
+      result.ItemsDisplay = ParseCredentialAttributeItems(attribute.Value);
+      result.ValueDisplay = result.ItemsDisplay.Count == 0
+        ? "n/a"
+        : string.Join(SSICredentialService.CredentialAttribute_OfTypeList_Delimiter, result.ItemsDisplay.Select(o => o.Name));
+      return result;
+    }
+
+    private static SSICredentialAttribute ParseCredentialAttribute(SSISchemaEntityCustomField customField, KeyValuePair<string, string> attribute)
+    {
+      var result = new SSICredentialAttribute
+      {
+        Name = customField.AttributeName,
+        NameDisplay = customField.NameDisplay,
+        ValueDisplay = ParseCredentialAttributeValue(customField, attribute)
+      };
+
+      if (customField.SupportsMultiple != true) return result;
+
+      result.ItemsDisplay = ParseCredentialAttributeItems(attribute.Value);
+      result.ValueDisplay = result.ItemsDisplay.Count == 0
+        ? "n/a"
+        : string.Join(SSICredentialService.CredentialAttribute_OfTypeList_Delimiter, result.ItemsDisplay.Select(o => o.Name));
+      return result;
+    }
+
+    private static List<SSICredentialAttributeItem> ParseCredentialAttributeItems(string? value)
+    {
+      value = value?.Trim();
+      if (string.IsNullOrEmpty(value) || string.Equals(value, "n/a", StringComparison.OrdinalIgnoreCase)) return [];
+
+      if (value.StartsWith('['))
+      {
+        try
+        {
+          var items = JsonConvert.DeserializeObject<List<SSICredentialAttributeItem>>(value)
+            ?? throw new InvalidOperationException("Structured credential attribute deserialized to null");
+
+          if (items.Any(item => string.IsNullOrWhiteSpace(item.Name)))
+            throw new InvalidOperationException("Structured credential attribute contains an item with no name");
+
+          items.ForEach(item => item.Name = item.Name.Trim());
+          return items;
+        }
+        catch (JsonException ex)
+        {
+          throw new InvalidOperationException("Structured credential attribute contains invalid JSON", ex);
+        }
+      }
+
+      return [.. value.Split(SSICredentialService.CredentialAttribute_OfTypeList_Delimiter,
+          StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+        .Select(name => new SSICredentialAttributeItem { Name = name })];
     }
 
     private static string ParseCredentialAttributeValue(SSISchemaEntityProperty property, KeyValuePair<string, string> attribute)
@@ -190,35 +281,98 @@ namespace Yoma.Core.Domain.SSI.Services
       var result = attribute.Value?.Trim();
       if (string.IsNullOrEmpty(result)) return "n/a";
 
-      if (property.Format == null) return result;
-
       var type = string.IsNullOrEmpty(property.DotNetType) ? null : Type.GetType(property.DotNetType);
       if (type == null) return result;
+      type = Nullable.GetUnderlyingType(type) ?? type;
 
       if (type == typeof(string))
-        return string.Format(property.Format, attribute.Value);
-      else if (type == typeof(DateTimeOffset) || type == typeof(DateTimeOffset?))
+        return string.IsNullOrEmpty(property.Format) ? result : string.Format(CultureInfo.InvariantCulture, property.Format, result);
+      else if (type == typeof(bool))
       {
-        if (!DateTimeOffset.TryParse(attribute.Value, out var value) || value == default) return result;
-        return value.ToString(property.Format);
+        if (!bool.TryParse(result, out var value)) return result;
+        return value ? "Yes" : "No";
       }
-      else if (type == typeof(DateTime) || type == typeof(DateTime?))
+      else if (type == typeof(DateTimeOffset))
       {
-        if (!DateTime.TryParse(attribute.Value, out var value) || value == default) return result;
-        return value.ToString(property.Format);
+        var value = ParseCredentialDateTimeOffset(result);
+        if (!value.HasValue) return result;
+        return string.IsNullOrEmpty(property.Format)
+          ? value.Value.ToString("O", CultureInfo.InvariantCulture)
+          : value.Value.ToString(property.Format, CultureInfo.InvariantCulture);
       }
-      else if (type == typeof(decimal) || type == typeof(decimal?))
+      else if (type == typeof(DateTime))
       {
-        if (!decimal.TryParse(attribute.Value, out var value) || value == default) return result;
-        return value.ToString(property.Format);
+        var value = ParseCredentialDateTime(result);
+        if (!value.HasValue) return result;
+        return string.IsNullOrEmpty(property.Format)
+          ? value.Value.ToString("O", CultureInfo.InvariantCulture)
+          : value.Value.ToString(property.Format, CultureInfo.InvariantCulture);
       }
-      else if (type == typeof(float) || type == typeof(float?))
+      else if (type == typeof(decimal))
       {
-        if (!float.TryParse(attribute.Value, out var value) || value == default) return result;
-        return value.ToString(property.Format);
+        if (!decimal.TryParse(result, NumberStyles.Number, CultureInfo.InvariantCulture, out var value)) return result;
+        return value.ToString(property.Format, CultureInfo.InvariantCulture);
       }
-      else
-        throw new InvalidOperationException($"Formatting of '{property.Format}' for type '{type}' not supported");
+      else if (type == typeof(float))
+      {
+        if (!float.TryParse(result, NumberStyles.Float | NumberStyles.AllowThousands, CultureInfo.InvariantCulture, out var value)) return result;
+        return value.ToString(property.Format, CultureInfo.InvariantCulture);
+      }
+      else if (type == typeof(int) || type == typeof(long) || type == typeof(short) || type == typeof(byte))
+      {
+        if (!long.TryParse(result, NumberStyles.Integer, CultureInfo.InvariantCulture, out var value)) return result;
+        return value.ToString(property.Format, CultureInfo.InvariantCulture);
+      }
+
+      if (string.IsNullOrEmpty(property.Format)) return result;
+      throw new InvalidOperationException($"Formatting of '{property.Format}' for type '{type}' not supported");
+    }
+
+    private static string ParseCredentialAttributeValue(SSISchemaEntityCustomField customField, KeyValuePair<string, string> attribute)
+    {
+      var result = attribute.Value?.Trim();
+      if (string.IsNullOrEmpty(result)) return "n/a";
+
+      return customField.DataType switch
+      {
+        CustomFieldDataType.Boolean when bool.TryParse(result, out var value) => value ? "Yes" : "No",
+        CustomFieldDataType.Integer when int.TryParse(result, NumberStyles.Integer, CultureInfo.InvariantCulture, out var value) =>
+          value.ToString(CultureInfo.InvariantCulture),
+        CustomFieldDataType.Decimal when decimal.TryParse(result, NumberStyles.Number, CultureInfo.InvariantCulture, out var value) =>
+          value.ToString(CultureInfo.InvariantCulture),
+        CustomFieldDataType.DateTime when DateTimeHelper.TryParse(result) is DateTimeOffset value =>
+          value.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+        _ => result
+      };
+    }
+
+    /// <summary>
+    /// New credentials use invariant round-trip values. Historical credentials were serialized using the issuing API
+    /// host culture, so current-culture parsing remains as a compatibility fallback after invariant parsing.
+    /// </summary>
+    private static DateTimeOffset? ParseCredentialDateTimeOffset(string value)
+    {
+      var result = DateTimeHelper.TryParse(value);
+      if (result.HasValue) return result;
+
+      if (!DateTimeOffset.TryParse(value, CultureInfo.CurrentCulture,
+        DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out var valueParsed) || valueParsed == default)
+        return null;
+
+      return valueParsed;
+    }
+
+    private static DateTime? ParseCredentialDateTime(string value)
+    {
+      if (DateTime.TryParse(value, CultureInfo.InvariantCulture,
+        DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out var result) && result != default)
+        return result;
+
+      if (!DateTime.TryParse(value, CultureInfo.CurrentCulture,
+        DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out result) || result == default)
+        return null;
+
+      return result;
     }
     #endregion
   }

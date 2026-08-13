@@ -524,6 +524,11 @@ namespace Yoma.Core.Domain.SSI.Services
       });
     }
 
+    /// <summary>
+    /// Maps static schema properties into the signed credential. Required values must be present. JWS credentials
+    /// omit optional values without content; ACR credentials retain an "n/a" placeholder because AnonCreds requires
+    /// every schema attribute to have a value. Wallet retrieval supports both representations.
+    /// </summary>
     private static void ReflectEntityValues<T>(CredentialIssuanceRequest request, SSISchemaEntity schemaEntity, Type type, T entity,
       ICustomFieldDefinitionService customFieldDefinitionService, ICustomFieldValueService customFieldValueService)
       where T : class
@@ -543,6 +548,11 @@ namespace Yoma.Core.Domain.SSI.Services
         var propValueObject = propInfo.GetValue(entity);
         if (prop.Required && propValueObject == null)
           throw new InvalidOperationException($"Entity property '{prop.Name}' marked as required but is null");
+        if (propValueObject == null)
+        {
+          MapOptionalCredentialAttributeWithoutValue(request, prop.AttributeName);
+          continue;
+        }
 
         if (multiPart)
         {
@@ -565,19 +575,43 @@ namespace Yoma.Core.Domain.SSI.Services
                  }
                  return null;
                })
-               .Where(name => !string.IsNullOrEmpty(name))
-               .Select(name => new SSICredentialAttributeItem { Name = name! })
+                .Select(name => name?.Trim())
+                .Where(name => !string.IsNullOrEmpty(name))
+                .Select(name => new SSICredentialAttributeItem { Name = name! })
                .ToList();
 
           if (prop.Required && items.Count == 0)
             throw new InvalidOperationException($"Entity property '{prop.Name}' marked as required but contains no values");
+          if (items.Count == 0)
+          {
+            MapOptionalCredentialAttributeWithoutValue(request, prop.AttributeName);
+            continue;
+          }
 
           // Complex properties are stored as JSON within the provider's string attribute contract. Wallet rendering
-          // will expose API-native structured items in the next phase; until then the existing display returns JSON.
-          propValue = items.Count == 0 ? "n/a" : JsonConvert.SerializeObject(items);
+          // normalizes both this representation and historical comma-delimited values into the same display contract.
+          propValue = JsonConvert.SerializeObject(items);
         }
         else
-          propValue = string.IsNullOrEmpty(propValueObject?.ToString()) ? "n/a" : propValueObject.ToString() ?? "n/a";
+        {
+          // New credentials use culture-independent values. Wallet retrieval retains a current-culture fallback for
+          // credentials issued before this normalization, when DateTime values were serialized by the API host culture.
+          propValue = propValueObject switch
+          {
+            DateTimeOffset value => value.ToString("O", CultureInfo.InvariantCulture),
+            DateTime value => value.ToString("O", CultureInfo.InvariantCulture),
+            IFormattable value => value.ToString(null, CultureInfo.InvariantCulture),
+            _ => propValueObject.ToString()
+          };
+          propValue = propValue?.Trim();
+          if (string.IsNullOrEmpty(propValue))
+          {
+            if (prop.Required)
+              throw new InvalidOperationException($"Entity property '{prop.Name}' marked as required but has no value");
+            MapOptionalCredentialAttributeWithoutValue(request, prop.AttributeName);
+            continue;
+          }
+        }
 
         request.Attributes.Add(prop.AttributeName, propValue);
       }
@@ -613,11 +647,40 @@ namespace Yoma.Core.Domain.SSI.Services
 
         if (customField.Required && valuesDisplay.Count == 0)
           throw new InvalidOperationException($"Custom field '{customField.Key}' marked as required but has no value");
+        if (valuesDisplay.Count == 0)
+        {
+          MapOptionalCredentialAttributeWithoutValue(request, customField.AttributeName);
+          continue;
+        }
 
-        request.Attributes.Add(customField.AttributeName,
-          valuesDisplay.Count == 0
-            ? "n/a"
-            : string.Join(SSICredentialService.CredentialAttribute_OfTypeList_Delimiter, valuesDisplay));
+        // Custom-field credentials are new, so multi-select values use the structured provider representation from
+        // inception. JWS omits optional fields without values, while the shared ACR rule supplies its required placeholder.
+        request.Attributes.Add(customField.AttributeName, valuesDisplay.Count switch
+        {
+          _ when customField.SupportsMultiple == true => JsonConvert.SerializeObject(
+            valuesDisplay.Select(name => new SSICredentialAttributeItem { Name = name })),
+          _ => valuesDisplay.Single()
+        });
+      }
+    }
+
+    /// <summary>
+    /// JWS payloads can omit an optional schema attribute. AnonCreds credential definitions cannot, so ACR uses the
+    /// established "n/a" placeholder while preserving the domain-level distinction that the value is optional.
+    /// </summary>
+    private static void MapOptionalCredentialAttributeWithoutValue(CredentialIssuanceRequest request, string attributeName)
+    {
+      switch (request.ArtifactType)
+      {
+        case ArtifactType.JWS:
+          return;
+
+        case ArtifactType.ACR:
+          request.Attributes.Add(attributeName, "n/a");
+          return;
+
+        default:
+          throw new InvalidOperationException($"Artifact type '{request.ArtifactType}' not supported");
       }
     }
     #endregion

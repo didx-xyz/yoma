@@ -7,7 +7,7 @@
 - **Ticket**: [YOM-1280](https://linear.app/didx/issue/YOM-1280/api-opportunity-credential-issuance-with-custom-fields)
 - **Owner**: Adrian
 - **Areas**: api
-- **Status**: in-progress - issuance mechanics verified; wallet rendering pending
+- **Status**: in-progress - issuance and core wallet display verified; custom-field runtime pending
 - **Started**: 2026-08-12
 
 ## Problem / Goal
@@ -31,10 +31,10 @@ type. Processing must use that scheduled schema even if the Opportunity is later
 issuance is disabled, while resolving and persisting the latest version only when issuance succeeds.
 Map static properties through the existing schema-property metadata and dynamic fields through stable
 custom-field keys. Convert controlled options and lookup identifiers to human-readable values. Store
-Skills as structured JSON inside the provider's existing string attribute contract; the wallet API
-will normalize structured and legacy values for clients. Until that follow-on is implemented, the
-wallet detail contract intentionally returns the structured Skills value as raw JSON in
-`valueDisplay`; Web does not need to parse it as part of this issuance work.
+complex values as structured JSON inside the provider's existing string attribute contract. Wallet
+retrieval uses the immutable schema ID and exact version recorded by the provider credential, formats
+scalar values, and returns API-native structured items. Existing comma-delimited Skills credentials
+are normalized by the API; Web never parses provider JSON.
 
 Shared schema naming, protection and compatibility rules live in the [epic README](../README.md).
 
@@ -54,8 +54,12 @@ Shared schema naming, protection and compatibility rules live in the [epic READM
 - [x] Issue Skills as structured name items instead of a comma-delimited value.
 - [x] Exercise first-attempt generic `Opportunity|Default` issuance across local, Alison,
   Jobberman and IXO data and verify the signed JWS, issuance metadata and wallet API response.
-- [ ] Normalize structured and legacy Skills in the Youth wallet API contract.
-- [ ] Return dynamic custom-field labels and formatted values from the exact issued schema version.
+- [x] Normalize structured and legacy Skills in the Youth wallet API contract.
+- [x] Return dynamic custom-field labels and formatted values from the exact issued schema version.
+- [x] Format scalar dates, booleans and numbers in the API while preserving signed display values for options and lookups.
+- [x] Establish structured issuance and display for multi-select custom fields before CF credentials enter use.
+- [x] Exercise structured Skills, scalar formatting and YoID ACR optional-value handling against a running API.
+- [ ] Exercise legacy comma-delimited Skills and custom-field display against a running API.
 - [ ] Exercise retry, type-specific and required-value failure scenarios against a running API.
 
 ## Decisions
@@ -73,6 +77,22 @@ Shared schema naming, protection and compatibility rules live in the [epic READM
   an invariant-compatible US format and require no compatibility fallback.
 - 2026-08-13: Structured Skills issuance is complete, but wallet normalization is not. Raw JSON in
   `valueDisplay` is the accepted interim API response until the credential display work proceeds.
+- 2026-08-13: Supersedes the interim display decision above: wallet detail now returns a readable
+  `valueDisplay` plus `itemsDisplay` for complex attributes. Existing comma-delimited Skills and new JSON
+  Skills normalize to the same response. `itemsDisplay` is authoritative; `valueDisplay` is display-only
+  because an individual option label may contain commas. Web must not parse either flattened or provider values.
+- 2026-08-13: Wallet retrieval uses the provider credential's immutable schema ID and exact version.
+  A missing required attribute is a data inconsistency and fails. Missing optional attributes are
+  omitted, preserving historical credentials that did not contain them.
+- 2026-08-13: Custom-field credentials have no historical compatibility burden. Multi-select custom
+  fields use structured signed items from inception; scalar option and lookup values are signed and
+  returned using their human-readable display values.
+- 2026-08-13: New JWS credentials do not sign optional attributes with no value. Existing credentials
+  containing the historical `n/a` value continue to return it. The shared YoID ACR path retains `n/a`
+  because AnonCreds requires a value for every attribute declared by its credential definition.
+- 2026-08-13: New static scalar values, including dates, are signed using invariant representations.
+  Wallet display parses invariant values first and retains a current-culture fallback for historical
+  credentials serialized by the issuing API host culture.
 
 ## Links
 

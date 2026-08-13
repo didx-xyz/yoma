@@ -3,8 +3,8 @@ using Newtonsoft.Json;
 namespace Yoma.Core.Domain.SSI.Models
 {
   /// <summary>
-  /// Structured credential attribute item. Skills currently use the human-readable name only because Yoma
-  /// does not yet have a taxonomy-independent skill identifier.
+  /// Structured credential attribute item containing the human-readable value signed into the credential.
+  /// Skills and multi-select custom fields use this common representation; clients do not parse provider JSON.
   /// </summary>
   public sealed class SSICredentialAttributeItem
   {

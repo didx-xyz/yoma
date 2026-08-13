@@ -37,7 +37,7 @@ definitions to the BA-approved set (YOM-1264) without a code change.
 | [`YOM-1277-opportunity-credential-schemas-by-type-and-custom-fields/`](./YOM-1277-opportunity-credential-schemas-by-type-and-custom-fields/feature.md) | [YOM-1277](https://linear.app/didx/issue/YOM-1277) | both | core/API groundwork in progress |
 | [`YOM-1278-api-admin-credential-schema-management-by-type/`](./YOM-1278-api-admin-credential-schema-management-by-type/feature.md) | [YOM-1278](https://linear.app/didx/issue/YOM-1278) | api | partially implemented |
 | [`YOM-1279-api-opportunity-management-credential-schema-selection/`](./YOM-1279-api-opportunity-management-credential-schema-selection/feature.md) | [YOM-1279](https://linear.app/didx/issue/YOM-1279) | api | implemented; review pending |
-| [`YOM-1280-api-opportunity-credential-issuance-with-custom-fields/`](./YOM-1280-api-opportunity-credential-issuance-with-custom-fields/feature.md) | [YOM-1280](https://linear.app/didx/issue/YOM-1280) | api | in-progress - issuance verified; wallet rendering pending |
+| [`YOM-1280-api-opportunity-credential-issuance-with-custom-fields/`](./YOM-1280-api-opportunity-credential-issuance-with-custom-fields/feature.md) | [YOM-1280](https://linear.app/didx/issue/YOM-1280) | api | in-progress - issuance and core wallet display verified; CF runtime pending |
 
 Tickets with no folder yet — add one when work starts:
 
@@ -129,12 +129,17 @@ generic schema.
 - On this branch all four Opportunity pull providers return `OpportunityRequestCreate`, allowing
   custom-field request values and patch semantics to pass through the shared pull pipeline. Master
   remains internally consistent on the earlier domain-model contract until this epic is merged.
-- Structured Skills are now issued as JSON name items. The current wallet detail response exposes
-  that JSON through `valueDisplay`; API-native item rendering and legacy normalization remain part
-  of the credential display follow-on.
+- Structured Skills are issued as JSON name items. Wallet detail resolves the exact immutable schema
+  version used by the credential and returns both readable `valueDisplay` and API-native `itemsDisplay`.
+  Existing comma-delimited production Skills normalize to the same response; Web never parses the
+  provider representation. New multi-select custom-field credentials use structured items from
+  inception, while scalar values are formatted by the API. New JWS credentials omit optional attributes
+  with no value; existing credentials containing historical `n/a` values remain readable unchanged.
+  YoID ACR issuance retains `n/a` because AnonCreds requires every declared schema attribute to have a value.
 
 **Stale Linear state:** YOM-1278 remains partially complete. YOM-1280 processing-time issuance is
-implemented and locally verified on the branch; its wallet display contract remains open.
+implemented and locally verified. Its API wallet display contract is runtime verified for JWS structured
+Skills, scalar formatting and YoID ACR placeholders; custom-field rendering awaits approved mappings.
 
 ### Shared web building blocks
 

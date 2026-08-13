@@ -14,7 +14,7 @@
 
 Allow multiple generic and Opportunity-type-specific credential schemas, expose custom fields as
 schema attributes, require an applicable schema on credential-enabled opportunities, and issue and
-render credentials from the latest selected schema.
+render credentials from the schema identity committed at scheduling and exact version used at issuance.
 
 ## Out of Scope
 
@@ -37,8 +37,9 @@ is split across admin schema management (YOM-1278), Opportunity selection (YOM-1
 - [x] Complete explicit Opportunity schema selection and compatibility rules.
 - [ ] Assign approved schemas and issuance behavior across Alison, Jobberman, JobJack and IXO after the final field/schema matrix is approved.
 - [ ] Resolve the approved type-compatible schema automatically for CSV imports after the final matrix is approved.
-- [ ] Resolve and persist the latest schema metadata when issuance is processed.
-- [ ] Map custom-field values and structured Skills into issued credentials.
+- [x] Resolve and persist the latest version of the scheduled schema when issuance is processed.
+- [x] Map custom-field values and structured Skills into issued credentials.
+- [x] Render scalar and structured attributes from the exact issued schema version through an API-prepared wallet contract.
 - [ ] Complete the three Web surfaces.
 - [ ] Configure startup seeds after the final field/schema matrix is approved.
 
@@ -47,7 +48,8 @@ is split across admin schema management (YOM-1278), Opportunity selection (YOM-1
 - 2026-08-06: Opportunity Type `Name` is a fixed technical code; `DisplayName` may change.
 - 2026-08-06: Generic `Opportunity|Default` is an explicit selectable schema, not an automatic fallback.
 - 2026-08-06: Changing an Opportunity type requires explicit schema reselection.
-- 2026-08-06: Issuance resolves the latest selected schema at processing time, not scheduling time.
+- 2026-08-13: The schema full name, type and artifact are committed at scheduling. Processing resolves
+  the latest version of that scheduled schema, and wallet retrieval renders the exact issued version.
 - 2026-08-12: Alison and IXO retain `Opportunity|Default` temporarily; Jobberman and JobJack intentionally keep verification and issuance disabled while their scope remains Opportunity sync only.
 
 ## Links
