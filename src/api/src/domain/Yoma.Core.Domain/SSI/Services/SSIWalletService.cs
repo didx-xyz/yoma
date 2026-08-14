@@ -5,6 +5,7 @@ using System.Globalization;
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Entity.Interfaces;
+using Yoma.Core.Domain.SSI.Helpers;
 using Yoma.Core.Domain.SSI.Interfaces;
 using Yoma.Core.Domain.SSI.Interfaces.Provider;
 using Yoma.Core.Domain.SSI.Models;
@@ -185,7 +186,11 @@ namespace Yoma.Core.Domain.SSI.Services
         if (attribute.HasValue) result.Attributes.Add(ParseCredentialAttribute(customField, attribute.Value));
       }
 
-      result.Attributes = [.. result.Attributes.OrderBy(o => o.NameDisplay)];
+      // Presentation metadata is deliberately kept outside the signed credential. This allows core and custom-field
+      // attributes to share one stable display contract without creating a new provider schema version for layout changes.
+      // Configured groups are rendered first; attributes without presentation metadata remain supported and fall back
+      // to display-label order.
+      result.Attributes = SSIAttributePresentationHelper.OrderCredentialAttributes(result.Attributes);
       return result;
     }
 
@@ -215,7 +220,10 @@ namespace Yoma.Core.Domain.SSI.Services
       {
         Name = property.AttributeName,
         NameDisplay = property.NameDisplay,
-        ValueDisplay = ParseCredentialAttributeValue(property, attribute)
+        ValueDisplay = ParseCredentialAttributeValue(property, attribute),
+        Group = property.Group,
+        SubGroup = property.SubGroup,
+        SortOrder = property.SortOrder
       };
 
       if (!property.TypeName.StartsWith("List<", StringComparison.OrdinalIgnoreCase)) return result;
@@ -235,7 +243,10 @@ namespace Yoma.Core.Domain.SSI.Services
       {
         Name = customField.AttributeName,
         NameDisplay = customField.NameDisplay,
-        ValueDisplay = ParseCredentialAttributeValue(customField, attribute)
+        ValueDisplay = ParseCredentialAttributeValue(customField, attribute),
+        Group = customField.Group,
+        SubGroup = customField.SubGroup,
+        SortOrder = customField.SortOrder
       };
 
       if (customField.SupportsMultiple != true) return result;

@@ -1,4 +1,4 @@
-Opportunities CSV Import — README
+Opportunities CSV Import - README
 
 This document defines the exact structure, formatting, reference data,
 and validation rules for importing Opportunities via CSV.

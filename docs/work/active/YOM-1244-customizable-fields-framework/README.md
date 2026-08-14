@@ -31,13 +31,16 @@ definitions to the BA-approved set (YOM-1264) without a code change.
 
 | Folder                                                                                                                                                       | Ticket                                             | Area | Status                                |
 | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------- | ---- | ------------------------------------- |
-| [`YOM-1254-api-custom-fields-framework-for-opportunity-and-myopportunity/`](./YOM-1254-api-custom-fields-framework-for-opportunity-and-myopportunity/feature.md) | [YOM-1254](https://linear.app/didx/issue/YOM-1254) | api | framework built; final definitions pending |
-| [`YOM-1255-ui-dynamic-custom-fields-for-opportunities-and-completions/`](./YOM-1255-ui-dynamic-custom-fields-for-opportunities-and-completions/feature.md)   | [YOM-1255](https://linear.app/didx/issue/YOM-1255) | web  | in-progress (T1–T3 done)              |
-| [`YOM-1260-ui-custom-field-filtering-for-opportunities-and-completions/`](./YOM-1260-ui-custom-field-filtering-for-opportunities-and-completions/feature.md) | [YOM-1260](https://linear.app/didx/issue/YOM-1260) | web  | in-progress (opportunity search done) |
-| [`YOM-1277-opportunity-credential-schemas-by-type-and-custom-fields/`](./YOM-1277-opportunity-credential-schemas-by-type-and-custom-fields/feature.md) | [YOM-1277](https://linear.app/didx/issue/YOM-1277) | both | core/API groundwork in progress |
-| [`YOM-1278-api-admin-credential-schema-management-by-type/`](./YOM-1278-api-admin-credential-schema-management-by-type/feature.md) | [YOM-1278](https://linear.app/didx/issue/YOM-1278) | api | partially implemented |
-| [`YOM-1279-api-opportunity-management-credential-schema-selection/`](./YOM-1279-api-opportunity-management-credential-schema-selection/feature.md) | [YOM-1279](https://linear.app/didx/issue/YOM-1279) | api | implemented; review pending |
-| [`YOM-1280-api-opportunity-credential-issuance-with-custom-fields/`](./YOM-1280-api-opportunity-credential-issuance-with-custom-fields/feature.md) | [YOM-1280](https://linear.app/didx/issue/YOM-1280) | api | in-progress - issuance and core wallet display verified; CF runtime pending |
+| [`YOM-1254-api-custom-fields-framework-for-opportunity-and-myopportunity/`](./YOM-1254-api-custom-fields-framework-for-opportunity-and-myopportunity/feature.md) | [YOM-1254](https://linear.app/didx/issue/YOM-1254) | api | in-progress |
+| [`YOM-1255-ui-dynamic-custom-fields-for-opportunities-and-completions/`](./YOM-1255-ui-dynamic-custom-fields-for-opportunities-and-completions/feature.md)   | [YOM-1255](https://linear.app/didx/issue/YOM-1255) | web  | in-progress |
+| [`YOM-1260-ui-custom-field-filtering-for-opportunities-and-completions/`](./YOM-1260-ui-custom-field-filtering-for-opportunities-and-completions/feature.md) | [YOM-1260](https://linear.app/didx/issue/YOM-1260) | web  | in-progress |
+| [`YOM-1277-opportunity-credential-schemas-by-type-and-custom-fields/`](./YOM-1277-opportunity-credential-schemas-by-type-and-custom-fields/feature.md) | [YOM-1277](https://linear.app/didx/issue/YOM-1277) | both | in-progress |
+| [`YOM-1278-api-admin-credential-schema-management-by-type/`](./YOM-1278-api-admin-credential-schema-management-by-type/feature.md) | [YOM-1278](https://linear.app/didx/issue/YOM-1278) | api | in-progress |
+| [`YOM-1279-api-opportunity-management-credential-schema-selection/`](./YOM-1279-api-opportunity-management-credential-schema-selection/feature.md) | [YOM-1279](https://linear.app/didx/issue/YOM-1279) | api | review |
+| [`YOM-1280-api-opportunity-credential-issuance-with-custom-fields/`](./YOM-1280-api-opportunity-credential-issuance-with-custom-fields/feature.md) | [YOM-1280](https://linear.app/didx/issue/YOM-1280) | api | in-progress — issuance and core wallet display verified; custom-field runtime pending |
+| [`YOM-1281-ui-admin-credential-schema-management-by-type/`](./YOM-1281-ui-admin-credential-schema-management-by-type/feature.md) | [YOM-1281](https://linear.app/didx/issue/YOM-1281) | web | planning |
+| [`YOM-1282-ui-opportunity-credential-schema-selection/`](./YOM-1282-ui-opportunity-credential-schema-selection/feature.md) | [YOM-1282](https://linear.app/didx/issue/YOM-1282) | web | planning |
+| [`YOM-1283-ui-youth-opportunity-credential-display/`](./YOM-1283-ui-youth-opportunity-credential-display/feature.md) | [YOM-1283](https://linear.app/didx/issue/YOM-1283) | web | planning — YOM-1280 wallet API contract ready; Web implementation pending |
 
 Tickets with no folder yet — add one when work starts:
 
@@ -47,7 +50,6 @@ Tickets with no folder yet — add one when work starts:
 | [YOM-1261](https://linear.app/didx/issue/YOM-1261) / [YOM-1262](https://linear.app/didx/issue/YOM-1262) | web       | User Presets — manage, and apply to discovery. Blocked                                                     |
 | [YOM-1257](https://linear.app/didx/issue/YOM-1257) / [YOM-1258](https://linear.app/didx/issue/YOM-1258) | api       | User Preset model + preset→filter mapping                                                                  |
 | [YOM-1259](https://linear.app/didx/issue/YOM-1259)                                                      | api       | Opportunity category taxonomy. Unrelated to custom fields; needs only a UI regression check                |
-| [YOM-1281](https://linear.app/didx/issue/YOM-1281) / [YOM-1282](https://linear.app/didx/issue/YOM-1282) / [YOM-1283](https://linear.app/didx/issue/YOM-1283) | web | Credential admin, selection and wallet display; no implementation yet |
 
 ### Why each child exists
 
@@ -136,10 +138,18 @@ generic schema.
   inception, while scalar values are formatted by the API. New JWS credentials omit optional attributes
   with no value; existing credentials containing historical `n/a` values remain readable unchanged.
   YoID ACR issuance retains `n/a` because AnonCreds requires every declared schema attribute to have a value.
+- Fixed credential headers remain outside attribute grouping. Detail attributes use API-owned presentation
+  metadata and are returned in Group -> SubGroup -> SortOrder -> display-label order. Core-property
+  presentation is configured through database migration; custom fields retain their existing configured
+  Group, SubGroup and SortOrder. This metadata is not signed and does not create a provider schema version.
+  Static metadata remains nullable; configured groups render first and an unconfigured attribute safely falls
+  back to display-label order. Core and custom fields may intentionally share exact group/subgroup labels and
+  one coordinated sort-order space because wallet detail returns them in one consolidated attribute list.
 
 **Stale Linear state:** YOM-1278 remains partially complete. YOM-1280 processing-time issuance is
-implemented and locally verified. Its API wallet display contract is runtime verified for JWS structured
-Skills, scalar formatting and YoID ACR placeholders; custom-field rendering awaits approved mappings.
+implemented and locally verified. Its API wallet display contract is runtime verified for grouped YoID ACR
+and Opportunity JWS attributes, structured Skills and scalar formatting; custom-field rendering awaits
+approved mappings.
 
 ### Shared web building blocks
 

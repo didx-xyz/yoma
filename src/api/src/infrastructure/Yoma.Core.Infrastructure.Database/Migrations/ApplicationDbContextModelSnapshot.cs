@@ -2917,6 +2917,9 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.Property<string>("Format")
                       .HasColumnType("varchar(125)");
 
+            b.Property<string>("Group")
+                      .HasColumnType("varchar(100)");
+
             b.Property<string>("Name")
                       .IsRequired()
                       .HasColumnType("varchar(50)");
@@ -2930,6 +2933,12 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
             b.Property<Guid>("SSISchemaEntityId")
                       .HasColumnType("uuid");
+
+            b.Property<int?>("SortOrder")
+                      .HasColumnType("integer");
+
+            b.Property<string>("SubGroup")
+                      .HasColumnType("varchar(100)");
 
             b.Property<string>("SystemType")
                       .HasColumnType("varchar(50)");

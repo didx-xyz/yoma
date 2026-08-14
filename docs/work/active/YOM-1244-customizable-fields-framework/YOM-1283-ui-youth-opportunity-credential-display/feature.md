@@ -7,8 +7,7 @@
 - **Ticket**: [YOM-1283](https://linear.app/didx/issue/YOM-1283/ui-youth-opportunity-credential-display)
 - **Owner**: Jason
 - **Areas**: web
-- **Status**: blocked — YOM-1280 wallet API contract incomplete (Skills normalization and
-  custom-field display values pending)
+- **Status**: planning — YOM-1280 wallet API contract ready; Web implementation pending
 - **Started**: 2026-08-13
 
 ## Problem / Goal
@@ -17,7 +16,9 @@ Display issued Opportunity credentials — static, generic and type-specific cus
 attributes plus structured Skills — through the existing youth wallet experience, rendering only
 what the youth credential API returns. Scalar attributes render API-provided `nameDisplay` and
 `valueDisplay` with no UI-side interpretation or formatting; the Skills attribute renders a
-structured `items` collection (one item per Skill) in place of scalar `valueDisplay`.
+structured `itemsDisplay` collection (one item per Skill) alongside scalar `valueDisplay`.
+Detail attributes also carry API-controlled `group`, optional `subGroup` and `sortOrder`
+presentation metadata and are already returned in display order.
 
 ## Out of Scope
 
@@ -30,21 +31,23 @@ structured `items` collection (one item per Skill) in place of scalar `valueDisp
 
 ## Plan
 
-To be written by the implementation session after reading the web repo, once the blocking API
-contract lands. Per [YOM-1280](../YOM-1280-api-opportunity-credential-issuance-with-custom-fields/feature.md)
-(status 2026-08-13), issuance mechanics are complete but two wallet-contract tasks are open:
-normalizing structured/legacy Skills in the youth wallet API (interim response returns raw JSON
-in `valueDisplay`) and returning dynamic custom-field labels and formatted values from the exact
-issued schema version. Do not build against the interim raw-JSON response — the ticket explicitly
-forbids UI parsing. Shared contract in the [epic README](../README.md#credential-schema-context).
+To be written by the implementation session after reading the web repo. The YOM-1280 wallet contract
+is ready: the API normalizes structured and historical Skills, formats scalar/custom-field values,
+and owns grouping and ordering. Web must render the returned contract and never parse provider JSON.
+Core and custom fields are deliberately mixed in the same ordered `attributes` collection. Web must
+not split or re-sort them: exact matching group/subgroup labels form one section, null subgroup values
+render directly under their group, and null group values render ungrouped after configured groups.
+Shared contract in the [epic README](../README.md#credential-schema-context).
 
 ## Tasks
 
-- [ ] Confirm the YOM-1280 wallet contract (`nameDisplay` / `valueDisplay` / Skills `items`) is
-      live on `feature/custom-fields-framework` before starting.
+- [x] Confirm the YOM-1280 wallet contract (`nameDisplay` / `valueDisplay` / Skills
+      `itemsDisplay`) is live on `feature/custom-fields-framework`.
 - [ ] Render all returned attributes schema-driven: scalar `nameDisplay` + `valueDisplay`
       verbatim, no type-specific formatting, option/lookup resolution or raw-value interpretation.
-- [ ] Render Skills from the structured `items` collection as individual items, not a delimited
+- [ ] Render attributes under the API-provided `group` and optional `subGroup`, preserving the
+      response order across both core and custom fields.
+- [ ] Render Skills from the structured `itemsDisplay` collection as individual items, not a delimited
       string.
 - [ ] Tolerate missing optional attributes without breaking credential details.
 - [ ] Regression: existing generic `Opportunity|Default` and historical scalar credentials
@@ -61,12 +64,14 @@ forbids UI parsing. Shared contract in the [epic README](../README.md#credential
 - 2026-08-13: Marked blocked rather than planning — YOM-1280's youth wallet normalization and
   custom-field display-value tasks are unticked, and its interim contract (raw JSON in
   `valueDisplay` for Skills) is explicitly not to be parsed by Web.
+- 2026-08-14: Supersedes the blocker above. The wallet contract is ready and includes structured
+  `itemsDisplay`, API-formatted scalar values, and API-owned grouping/order metadata.
 
 ## Links
 
 - Epic: [YOM-1244](../README.md)
 - Ticket: [YOM-1283](https://linear.app/didx/issue/YOM-1283/ui-youth-opportunity-credential-display)
 - Parent capability: [YOM-1277](../YOM-1277-opportunity-credential-schemas-by-type-and-custom-fields/feature.md)
-- Blocked by: [YOM-1280](../YOM-1280-api-opportunity-credential-issuance-with-custom-fields/feature.md)
+- API contract: [YOM-1280](../YOM-1280-api-opportunity-credential-issuance-with-custom-fields/feature.md)
 - Siblings: [YOM-1281](../YOM-1281-ui-admin-credential-schema-management-by-type/feature.md) ·
   [YOM-1282](../YOM-1282-ui-opportunity-credential-schema-selection/feature.md)

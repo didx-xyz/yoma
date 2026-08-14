@@ -6,6 +6,7 @@ using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Opportunity.Interfaces.Lookups;
+using Yoma.Core.Domain.SSI.Helpers;
 using Yoma.Core.Domain.SSI.Interfaces.Lookups;
 using Yoma.Core.Domain.SSI.Models.Lookups;
 
@@ -184,12 +185,8 @@ namespace Yoma.Core.Domain.SSI.Services.Lookups
         if (!Enum.TryParse<CustomFieldEntityType>(entity.Name, true, out var entityType))
           continue;
 
-        entity.CustomFields = [.. listDefinitions(entityType)
-          .Select(ToCustomField)
-          .OrderBy(o => o.Group)
-          .ThenBy(o => o.SubGroup)
-          .ThenBy(o => o.SortOrder)
-          .ThenBy(o => o.NameDisplay)];
+        entity.CustomFields = SSIAttributePresentationHelper.OrderCustomFields(
+          listDefinitions(entityType).Select(ToCustomField));
       }
     }
 
@@ -200,7 +197,7 @@ namespace Yoma.Core.Domain.SSI.Services.Lookups
         var results = _ssiSchemaEntityRepository.Query(true).ToList();
         ReflectEntityTypeInformation(results);
         results = [.. results.OrderBy(o => o.Name)];
-        results.ForEach(o => o.Properties = o.Properties?.OrderBy(p => p.NameDisplay).ToList());
+        results.ForEach(o => o.Properties = SSIAttributePresentationHelper.OrderProperties(o.Properties));
         return results;
       }
 
@@ -211,7 +208,7 @@ namespace Yoma.Core.Domain.SSI.Services.Lookups
         var entities = _ssiSchemaEntityRepository.Query(true).ToList();
         ReflectEntityTypeInformation(entities);
         entities = [.. entities.OrderBy(o => o.Name)];
-        entities.ForEach(o => o.Properties = o.Properties?.OrderBy(p => p.NameDisplay).ToList());
+        entities.ForEach(o => o.Properties = SSIAttributePresentationHelper.OrderProperties(o.Properties));
         return entities;
       }) ?? throw new InvalidOperationException($"Failed to retrieve cached list of '{nameof(SSISchemaEntity)}s'");
     }

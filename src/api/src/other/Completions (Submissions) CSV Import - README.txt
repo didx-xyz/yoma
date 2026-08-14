@@ -1,4 +1,4 @@
-# Completions (Submissions) CSV Import — README
+# Completions (Submissions) CSV Import - README
 
 This document defines the exact CSV structure, formatting, reference data, and validations for importing **Completions / Submissions**.  
 It is written for our custom GPT to follow deterministically (no guessing; reference-data only).

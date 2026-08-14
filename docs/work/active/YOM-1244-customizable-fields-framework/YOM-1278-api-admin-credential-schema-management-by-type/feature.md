@@ -38,7 +38,9 @@ protection in the custom-field domain after provider upsert. Shared rules are in
 - [x] Return applicable custom fields separately from static entity properties.
 - [x] Persist `IsSchemaMapped` and expose aggregate `IsProtected`.
 - [x] Repair missing local protection when provider schemas are listed.
+- [x] Persist and expose read-only presentation grouping and ordering for static schema properties.
 - [x] Keep existing generic schema creation, update and issuance backward compatible.
+- [x] Exercise static-property presentation metadata through YoID and Learning-context entity discovery.
 - [ ] Exercise create/update/list with a representative type-specific schema.
 - [ ] Configure final startup seeds after BA approval.
 
@@ -47,6 +49,9 @@ protection in the custom-field domain after provider upsert. Shared rules are in
 - 2026-08-06: Schema Type, Artifact Type, Name and Type Context are immutable identity; updates change attributes only.
 - 2026-08-07: Provider persistence and the application database cannot share a transaction; schema listing performs one-way protection repair.
 - 2026-08-07: `IsSystem` is controlled by developers; schema administration manages only `IsSchemaMapped`.
+- 2026-08-14: Static-property Group, SubGroup and SortOrder are developer-controlled presentation metadata.
+  Schema administrators see fields in that order but cannot edit the presentation configuration. The metadata
+  remains nullable and unconfigured static properties fall back to display-label order.
 
 ## Links
 

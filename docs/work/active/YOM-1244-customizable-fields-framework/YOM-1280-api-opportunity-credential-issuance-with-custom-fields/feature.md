@@ -59,6 +59,8 @@ Shared schema naming, protection and compatibility rules live in the [epic READM
 - [x] Format scalar dates, booleans and numbers in the API while preserving signed display values for options and lookups.
 - [x] Establish structured issuance and display for multi-select custom fields before CF credentials enter use.
 - [x] Exercise structured Skills, scalar formatting and YoID ACR optional-value handling against a running API.
+- [x] Return core and custom-field detail attributes in one grouped, deterministic presentation order.
+- [x] Exercise the consolidated migration and grouped YoID/Opportunity wallet detail against a running API.
 - [ ] Exercise legacy comma-delimited Skills and custom-field display against a running API.
 - [ ] Exercise retry, type-specific and required-value failure scenarios against a running API.
 
@@ -93,6 +95,11 @@ Shared schema naming, protection and compatibility rules live in the [epic READM
 - 2026-08-13: New static scalar values, including dates, are signed using invariant representations.
   Wallet display parses invariant values first and retains a current-culture fallback for historical
   credentials serialized by the issuing API host culture.
+- 2026-08-14: Credential headers remain fixed. Detail attributes return Group, SubGroup and SortOrder
+  metadata and are ordered by Group, SubGroup, SortOrder and display label. Presentation metadata is
+  deliberately outside the signed credential and changing it does not create a schema version. Static
+  presentation metadata is nullable; configured groups render first and unconfigured attributes remain
+  readable in display-label order. Core and custom fields share the consolidated ordering space.
 
 ## Links
 
