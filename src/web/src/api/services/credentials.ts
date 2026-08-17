@@ -5,7 +5,8 @@ import type {
   SSICredential,
   SSISchema,
   SSISchemaEntity,
-  SSISchemaRequest,
+  SSISchemaRequestCreate,
+  SSISchemaRequestUpdate,
   SSISchemaType,
   SSIWalletFilter,
   SSIWalletSearchResults,
@@ -14,6 +15,7 @@ import type {
 
 export const getSchemas = async (
   schemaType?: SchemaType,
+  typeContext?: string | null,
   context?: GetServerSidePropsContext,
 ): Promise<SSISchema[]> => {
   const instance = context ? ApiServer(context) : await ApiClient;
@@ -21,6 +23,8 @@ export const getSchemas = async (
   const params = new URLSearchParams();
   if (schemaType !== undefined && schemaType !== null)
     params.append("schemaType", schemaType.toString());
+  // only honoured together with a schema type; returns generic schemas plus those matching the context
+  if (typeContext) params.append("typeContext", typeContext);
   const { data } = await instance.get<SSISchema[]>(
     `/ssi/schema?${params.toString()}`,
   );
@@ -29,21 +33,24 @@ export const getSchemas = async (
 
 export const getSchemaEntities = async (
   schemaType?: SchemaType,
+  typeContext?: string | null,
   context?: GetServerSidePropsContext,
 ): Promise<SSISchemaEntity[]> => {
-  let querystring = "";
+  const params = new URLSearchParams();
   if (schemaType !== undefined && schemaType !== null)
-    querystring = `?schemaType=${schemaType}`;
+    params.append("schemaType", schemaType.toString());
+  // with no context only generic custom fields are returned; with one, generic + matching fields
+  if (typeContext) params.append("typeContext", typeContext);
 
   const instance = context ? ApiServer(context) : await ApiClient;
   const { data } = await instance.get<SSISchemaEntity[]>(
-    `/ssi/schema/entity${querystring}`,
+    `/ssi/schema/entity?${params.toString()}`,
   );
   return data;
 };
 
 export const createSchema = async (
-  model: SSISchemaRequest,
+  model: SSISchemaRequestCreate,
 ): Promise<SSISchema> => {
   const { data } = await (
     await ApiClient
@@ -52,7 +59,7 @@ export const createSchema = async (
 };
 
 export const updateSchema = async (
-  model: SSISchemaRequest,
+  model: SSISchemaRequestUpdate,
 ): Promise<SSISchema> => {
   const { data } = await (
     await ApiClient

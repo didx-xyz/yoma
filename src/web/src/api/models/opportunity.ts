@@ -323,7 +323,9 @@ export interface OpportunityDifficulty {
 
 export interface OpportunityType {
   id: string;
+  /** Stable identifier. Credential schema type contexts resolve against this, never displayName. */
   name: string;
+  displayName: string;
 }
 
 export interface OpportunitySearchFilterCommitmentInterval {

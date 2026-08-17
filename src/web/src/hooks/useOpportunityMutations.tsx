@@ -317,7 +317,7 @@ export function useOpportunityEngagementTypesQuery(options?: {
 export function useOpportunitySchemasQuery(options?: { enabled?: boolean }) {
   return useQuery<SSISchema[]>({
     queryKey: OPPORTUNITY_QUERY_KEYS.schemas(),
-    queryFn: () => getSchemas(SchemaType.Opportunity),
+    queryFn: () => getSchemas(SchemaType.Opportunity, null),
     enabled: options?.enabled ?? true,
   });
 }

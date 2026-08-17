@@ -29,48 +29,48 @@ definitions to the BA-approved set (YOM-1264) without a code change.
 
 ## Child Features
 
-| Folder                                                                                                                                                       | Ticket                                             | Area | Status                                |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------- | ---- | ------------------------------------- |
-| [`YOM-1254-api-custom-fields-framework-for-opportunity-and-myopportunity/`](./YOM-1254-api-custom-fields-framework-for-opportunity-and-myopportunity/feature.md) | [YOM-1254](https://linear.app/didx/issue/YOM-1254) | api | in-progress |
-| [`YOM-1255-ui-dynamic-custom-fields-for-opportunities-and-completions/`](./YOM-1255-ui-dynamic-custom-fields-for-opportunities-and-completions/feature.md)   | [YOM-1255](https://linear.app/didx/issue/YOM-1255) | web  | in-progress |
-| [`YOM-1260-ui-custom-field-filtering-for-opportunities-and-completions/`](./YOM-1260-ui-custom-field-filtering-for-opportunities-and-completions/feature.md) | [YOM-1260](https://linear.app/didx/issue/YOM-1260) | web  | in-progress |
-| [`YOM-1277-opportunity-credential-schemas-by-type-and-custom-fields/`](./YOM-1277-opportunity-credential-schemas-by-type-and-custom-fields/feature.md) | [YOM-1277](https://linear.app/didx/issue/YOM-1277) | both | in-progress |
-| [`YOM-1278-api-admin-credential-schema-management-by-type/`](./YOM-1278-api-admin-credential-schema-management-by-type/feature.md) | [YOM-1278](https://linear.app/didx/issue/YOM-1278) | api | in-progress |
-| [`YOM-1279-api-opportunity-management-credential-schema-selection/`](./YOM-1279-api-opportunity-management-credential-schema-selection/feature.md) | [YOM-1279](https://linear.app/didx/issue/YOM-1279) | api | review |
-| [`YOM-1280-api-opportunity-credential-issuance-with-custom-fields/`](./YOM-1280-api-opportunity-credential-issuance-with-custom-fields/feature.md) | [YOM-1280](https://linear.app/didx/issue/YOM-1280) | api | in-progress — issuance and core wallet display verified; custom-field runtime pending |
-| [`YOM-1281-ui-admin-credential-schema-management-by-type/`](./YOM-1281-ui-admin-credential-schema-management-by-type/feature.md) | [YOM-1281](https://linear.app/didx/issue/YOM-1281) | web | planning |
-| [`YOM-1282-ui-opportunity-credential-schema-selection/`](./YOM-1282-ui-opportunity-credential-schema-selection/feature.md) | [YOM-1282](https://linear.app/didx/issue/YOM-1282) | web | planning |
-| [`YOM-1283-ui-youth-opportunity-credential-display/`](./YOM-1283-ui-youth-opportunity-credential-display/feature.md) | [YOM-1283](https://linear.app/didx/issue/YOM-1283) | web | planning — YOM-1280 wallet API contract ready; Web implementation pending |
+| Folder                                                                                                                                                           | Ticket                                             | Area | Status                                                                                |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- | ---- | ------------------------------------------------------------------------------------- |
+| [`YOM-1254-api-custom-fields-framework-for-opportunity-and-myopportunity/`](./YOM-1254-api-custom-fields-framework-for-opportunity-and-myopportunity/feature.md) | [YOM-1254](https://linear.app/didx/issue/YOM-1254) | api  | in-progress                                                                           |
+| [`YOM-1255-ui-dynamic-custom-fields-for-opportunities-and-completions/`](./YOM-1255-ui-dynamic-custom-fields-for-opportunities-and-completions/feature.md)       | [YOM-1255](https://linear.app/didx/issue/YOM-1255) | web  | in-progress                                                                           |
+| [`YOM-1260-ui-custom-field-filtering-for-opportunities-and-completions/`](./YOM-1260-ui-custom-field-filtering-for-opportunities-and-completions/feature.md)     | [YOM-1260](https://linear.app/didx/issue/YOM-1260) | web  | in-progress                                                                           |
+| [`YOM-1277-opportunity-credential-schemas-by-type-and-custom-fields/`](./YOM-1277-opportunity-credential-schemas-by-type-and-custom-fields/feature.md)           | [YOM-1277](https://linear.app/didx/issue/YOM-1277) | both | in-progress                                                                           |
+| [`YOM-1278-api-admin-credential-schema-management-by-type/`](./YOM-1278-api-admin-credential-schema-management-by-type/feature.md)                               | [YOM-1278](https://linear.app/didx/issue/YOM-1278) | api  | in-progress                                                                           |
+| [`YOM-1279-api-opportunity-management-credential-schema-selection/`](./YOM-1279-api-opportunity-management-credential-schema-selection/feature.md)               | [YOM-1279](https://linear.app/didx/issue/YOM-1279) | api  | review                                                                                |
+| [`YOM-1280-api-opportunity-credential-issuance-with-custom-fields/`](./YOM-1280-api-opportunity-credential-issuance-with-custom-fields/feature.md)               | [YOM-1280](https://linear.app/didx/issue/YOM-1280) | api  | in-progress — issuance and core wallet display verified; custom-field runtime pending |
+| [`YOM-1281-ui-admin-credential-schema-management-by-type/`](./YOM-1281-ui-admin-credential-schema-management-by-type/feature.md)                                 | [YOM-1281](https://linear.app/didx/issue/YOM-1281) | web  | in-progress — dev complete behind a mock; browser and live-API passes owed            |
+| [`YOM-1282-ui-opportunity-credential-schema-selection/`](./YOM-1282-ui-opportunity-credential-schema-selection/feature.md)                                       | [YOM-1282](https://linear.app/didx/issue/YOM-1282) | web  | planning                                                                              |
+| [`YOM-1283-ui-youth-opportunity-credential-display/`](./YOM-1283-ui-youth-opportunity-credential-display/feature.md)                                             | [YOM-1283](https://linear.app/didx/issue/YOM-1283) | web  | planning — YOM-1280 wallet API contract ready; Web implementation pending             |
 
 Tickets with no folder yet — add one when work starts:
 
-| Ticket                                                                                                  | Area      | Note                                                                                                       |
-| ------------------------------------------------------------------------------------------------------- | --------- | ---------------------------------------------------------------------------------------------------------- |
-| [YOM-1264](https://linear.app/didx/issue/YOM-1264)                                                      | design/BA | Final Opportunity CFs, completion CFs and User Presets. **Blocks YOM-1261**                                |
-| [YOM-1261](https://linear.app/didx/issue/YOM-1261) / [YOM-1262](https://linear.app/didx/issue/YOM-1262) | web       | User Presets — manage, and apply to discovery. Blocked                                                     |
-| [YOM-1257](https://linear.app/didx/issue/YOM-1257) / [YOM-1258](https://linear.app/didx/issue/YOM-1258) | api       | User Preset model + preset→filter mapping                                                                  |
-| [YOM-1259](https://linear.app/didx/issue/YOM-1259)                                                      | api       | Opportunity category taxonomy. Unrelated to custom fields; needs only a UI regression check                |
+| Ticket                                                                                                  | Area      | Note                                                                                        |
+| ------------------------------------------------------------------------------------------------------- | --------- | ------------------------------------------------------------------------------------------- |
+| [YOM-1264](https://linear.app/didx/issue/YOM-1264)                                                      | design/BA | Final Opportunity CFs, completion CFs and User Presets. **Blocks YOM-1261**                 |
+| [YOM-1261](https://linear.app/didx/issue/YOM-1261) / [YOM-1262](https://linear.app/didx/issue/YOM-1262) | web       | User Presets — manage, and apply to discovery. Blocked                                      |
+| [YOM-1257](https://linear.app/didx/issue/YOM-1257) / [YOM-1258](https://linear.app/didx/issue/YOM-1258) | api       | User Preset model + preset→filter mapping                                                   |
+| [YOM-1259](https://linear.app/didx/issue/YOM-1259)                                                      | api       | Opportunity category taxonomy. Unrelated to custom fields; needs only a UI regression check |
 
 ### Why each child exists
 
-| Ticket | Purpose |
-| ------ | ------- |
-| YOM-1254 | Provide the API metadata/value framework shared by Opportunities and completions. |
-| YOM-1255 | Let Web render, capture and display configured fields without hardcoding them. |
-| YOM-1260 | Let youth/admins filter using configured fields. |
-| YOM-1257 | Store reusable youth Opportunity-discovery presets. |
-| YOM-1258 | Translate presets into Opportunity discovery criteria. |
-| YOM-1259 | Align the Opportunity category taxonomy independently of custom fields. |
-| YOM-1261 | Let youth manage their presets. |
-| YOM-1262 | Let youth apply presets during discovery. |
-| YOM-1264 | Supply the BA-approved field and preset definitions that unblock final configuration. |
-| YOM-1277 | Coordinate type-aware Opportunity credential schemas and custom-field credentials. |
+| Ticket   | Purpose                                                                                   |
+| -------- | ----------------------------------------------------------------------------------------- |
+| YOM-1254 | Provide the API metadata/value framework shared by Opportunities and completions.         |
+| YOM-1255 | Let Web render, capture and display configured fields without hardcoding them.            |
+| YOM-1260 | Let youth/admins filter using configured fields.                                          |
+| YOM-1257 | Store reusable youth Opportunity-discovery presets.                                       |
+| YOM-1258 | Translate presets into Opportunity discovery criteria.                                    |
+| YOM-1259 | Align the Opportunity category taxonomy independently of custom fields.                   |
+| YOM-1261 | Let youth manage their presets.                                                           |
+| YOM-1262 | Let youth apply presets during discovery.                                                 |
+| YOM-1264 | Supply the BA-approved field and preset definitions that unblock final configuration.     |
+| YOM-1277 | Coordinate type-aware Opportunity credential schemas and custom-field credentials.        |
 | YOM-1278 | Let platform admins manage compatible schemas and attribute mappings by Opportunity type. |
-| YOM-1279 | Let organisation admins select a compatible schema when managing an Opportunity. |
-| YOM-1280 | Issue the selected schema with current core/custom-field values at processing time. |
-| YOM-1281 | Provide the Web admin surface for type-aware schema management. |
-| YOM-1282 | Provide the Web selection experience during Opportunity management. |
-| YOM-1283 | Render issued scalar and complex credential attributes for youth. |
+| YOM-1279 | Let organisation admins select a compatible schema when managing an Opportunity.          |
+| YOM-1280 | Issue the selected schema with current core/custom-field values at processing time.       |
+| YOM-1281 | Provide the Web admin surface for type-aware schema management.                           |
+| YOM-1282 | Provide the Web selection experience during Opportunity management.                       |
+| YOM-1283 | Render issued scalar and complex credential attributes for youth.                         |
 
 Blocker ownership: BA/PM owns YOM-1264 and the final provider mapping matrix; Adrian owns API
 framework/schema work; Jason owns Web implementation and regression checks.
@@ -163,6 +163,29 @@ Both child features build on the same components — extend these rather than ad
 | Editing        | `components/Opportunity/CustomFields.tsx` (+ `getCustomFieldError(s)`, `getCustomFieldNumberError`)                                                    |
 | Read-only      | `components/Opportunity/CustomFieldsView.tsx`                                                                                                          |
 | Filtering      | `components/Opportunity/CustomFieldFilters.tsx`                                                                                                        |
+
+### Web credential models — changed by YOM-1281, read before starting YOM-1282 / YOM-1283
+
+`api/models/credential.ts` was brought in line with the branch API:
+
+- `SSISchema` gained `typeContext` (null = generic) and `artifactTypeDescription`;
+  `SSISchemaEntity` gained `customFields[]`; `SSISchemaType` gained `type`.
+- `SSISchemaRequest` was split into `SSISchemaRequestCreate` (friendly name + optional
+  `typeContext`) and `SSISchemaRequestUpdate` (**full** name + attributes only).
+- **`ArtifactType.AnonCreds` was renamed `ACR`** to match the API enum, with the friendly text in
+  `ARTIFACT_TYPE_LABELS`. `type` and `artifactType` come back as enum **names**
+  (`"Opportunity"`, `"ACR"`), never ordinals — indexing the TS enum with the old member name
+  yielded `undefined`.
+- `OpportunityType` gained `displayName`. Type contexts resolve against `name`; only `displayName`
+  is shown.
+- Following `60a7a8b4`: `SSISchemaEntityProperty` and `SSICredentialAttribute` both gained
+  `group` / `subGroup` / `sortOrder`. **YOM-1283 renders wallet headings from those**, in the order
+  the API returns — never inferred from the credential payload, and never submitted anywhere.
+
+YOM-1281 also mocks **all** admin schema-management traffic behind one flag
+(`api/services/credentialSchemaAdmin.ts`) while it is in development — that façade is used by the
+admin schema pages only, so `useOpportunitySchemasQuery` and every other surface still call the
+real service.
 
 ## Out of Scope (whole epic)
 
