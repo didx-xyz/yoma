@@ -128,9 +128,19 @@ export interface SSIWalletSearchResults {
   totalCount: number | null;
   items: SSICredentialInfo[];
 }
+/**
+ * A wallet *search* item — the fixed credential header only.
+ *
+ * `SSIWalletService.ParseCredential` returns before populating attributes for this type, so the
+ * response carries no `attributes` at all (confirmed against the running API's schema). Attributes
+ * are a detail-only concern; see `SSICredential`.
+ */
 export interface SSICredentialInfo extends SSICredentialBase {}
 
-export interface SSICredential extends SSICredentialBase {}
+/** A wallet *detail* response — the header plus the issued schema's attributes. */
+export interface SSICredential extends SSICredentialBase {
+  attributes: SSICredentialAttribute[] | null;
+}
 
 export interface SSICredentialBase {
   id: string;
@@ -140,7 +150,6 @@ export interface SSICredentialBase {
   issuerLogoURL: string;
   title: string;
   dateIssued: string | null;
-  attributes: SSICredentialAttribute[];
 }
 
 // NB: the wallet response is already ordered. Consumers render `group`/`subGroup` as headings and
@@ -153,4 +162,23 @@ export interface SSICredentialAttribute {
   group: string | null;
   subGroup: string | null;
   sortOrder: number | null;
+  /**
+   * Authoritative values of a complex attribute — `List<>` statics such as Skills, and
+   * multi-select custom fields. Null for every scalar attribute, and an **empty array** when a
+   * complex attribute carried no value (the API then sets `valueDisplay` to `"n/a"`), so presence
+   * alone is not enough — check the length.
+   */
+  itemsDisplay: SSICredentialAttributeItem[] | null;
+}
+
+/**
+ * One value of a complex credential attribute, as signed into the credential.
+ *
+ * The API normalizes both new structured JSON and historical comma-delimited Skills into this
+ * shape, so web never sees the provider representation. This is authoritative over the sibling
+ * `valueDisplay`, which is a flattened convenience that **must not be split**: an individual value
+ * may itself contain the delimiter.
+ */
+export interface SSICredentialAttributeItem {
+  name: string;
 }

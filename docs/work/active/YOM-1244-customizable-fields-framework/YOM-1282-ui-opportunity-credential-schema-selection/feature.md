@@ -8,7 +8,8 @@
 - **Owner**: Jason
 - **Areas**: web
 - **Status**: in-progress — dev complete and fully exercisable against the local mock; the live-API
-  pass is blocked on the credential provider (Aries CloudAPI, 503)
+  pass became reachable on 2026-08-18 once the credential provider resumed serving reads, except for
+  creating a real type-specific schema
 - **Started**: 2026-08-13
 
 ## Problem / Goal
@@ -79,9 +80,11 @@ See the [handoff](./handoffs/2026-08-17-a.md) for what this does and does not ma
 - [ ] Browser pass against the local mock, including type-change and generic-reselection paths —
       steps 1–8 of the [handoff](./handoffs/2026-08-17-a.md) are all reachable with the provider down.
 - [ ] Verify against a running API on `feature/custom-fields-framework`, and against one real
-      type-specific schema. **Blocked:** the underlying credential provider (Aries CloudAPI) was
-      unavailable (503) throughout feature development, and every server-side schema resolution
-      goes through it.
+      type-specific schema. The underlying credential provider (Aries CloudAPI) was unavailable
+      (503) throughout feature development, and every server-side schema resolution goes through it.
+      **Partly unblocked 2026-08-18** (Jason): the provider serves reads again, so the live pass over
+      `GET /ssi/schema` and opportunity save is reachable — flip the banner to **live**. Still
+      blocked: creating the one real type-specific schema, which needs the failing create/update path.
 
 ## Decisions
 

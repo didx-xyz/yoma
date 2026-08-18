@@ -7,8 +7,9 @@
 - **Ticket**: [YOM-1281](https://linear.app/didx/issue/YOM-1281/ui-admin-credential-schema-management-by-type)
 - **Owner**: Jason
 - **Areas**: web
-- **Status**: in-progress — dev complete behind a mock; browser pass owed, and the live-API pass is
-  blocked on the credential provider (Aries CloudAPI, 503)
+- **Status**: in-progress — dev complete behind a mock; browser pass owed. The live pass over the
+  read surfaces (list, view, discovery) became reachable on 2026-08-18 when the credential provider
+  resumed serving reads; **create and update remain blocked** on it
 - **Started**: 2026-08-13
 
 ## Problem / Goal
@@ -87,7 +88,8 @@ removal list now also covers
 - [ ] Regression: YoID schemas and existing generic `Opportunity|Default` schemas display and
       edit unchanged. _(fixtures cover both; browser pass owed)_
 - [ ] Verify against a running API on `feature/custom-fields-framework` with a representative
-      type-specific schema. _(blocked on flipping the mock flag)_
+      type-specific schema. _(the read surfaces are reachable live since 2026-08-18 — flip the banner
+      to **live**; creating the schema itself still needs the failing provider create/update path)_
 
 ## Decisions
 
