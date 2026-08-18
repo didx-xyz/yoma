@@ -7,9 +7,7 @@
 - **Ticket**: [YOM-1282](https://linear.app/didx/issue/YOM-1282/ui-opportunity-credential-schema-selection)
 - **Owner**: Jason
 - **Areas**: web
-- **Status**: in-progress — dev complete and fully exercisable against the local mock; the live-API
-  pass became reachable on 2026-08-18 once the credential provider resumed serving reads, except for
-  creating a real type-specific schema
+- **Status**: review — pending live API create/edit
 - **Started**: 2026-08-13
 
 ## Problem / Goal
@@ -77,14 +75,11 @@ See the [handoff](./handoffs/2026-08-17-a.md) for what this does and does not ma
 - [x] Editing: populate the current selection when the type is unchanged; apply clear-and-reselect
       when it changes; existing `Opportunity|Default` selections display correctly.
 - [x] Present API validation messages clearly.
-- [ ] Browser pass against the local mock, including type-change and generic-reselection paths —
-      steps 1–8 of the [handoff](./handoffs/2026-08-17-a.md) are all reachable with the provider down.
+- [x] Browser pass, including type-change and generic-reselection paths — steps 1–8 of the
+      [handoff](./handoffs/2026-08-17-a.md).
 - [ ] Verify against a running API on `feature/custom-fields-framework`, and against one real
-      type-specific schema. The underlying credential provider (Aries CloudAPI) was unavailable
-      (503) throughout feature development, and every server-side schema resolution goes through it.
-      **Partly unblocked 2026-08-18** (Jason): the provider serves reads again, so the live pass over
-      `GET /ssi/schema` and opportunity save is reachable — flip the banner to **live**. Still
-      blocked: creating the one real type-specific schema, which needs the failing create/update path.
+      type-specific schema. _(live pass over `GET /ssi/schema` and opportunity save done; the one
+      real type-specific schema still needs the provider create/update path)_
 
 ## Decisions
 

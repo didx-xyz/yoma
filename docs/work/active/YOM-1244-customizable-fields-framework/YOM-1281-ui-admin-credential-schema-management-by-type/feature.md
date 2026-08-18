@@ -7,9 +7,7 @@
 - **Ticket**: [YOM-1281](https://linear.app/didx/issue/YOM-1281/ui-admin-credential-schema-management-by-type)
 - **Owner**: Jason
 - **Areas**: web
-- **Status**: in-progress — dev complete behind a mock; browser pass owed. The live pass over the
-  read surfaces (list, view, discovery) became reachable on 2026-08-18 when the credential provider
-  resumed serving reads; **create and update remain blocked** on it
+- **Status**: review — pending live API create/edit
 - **Started**: 2026-08-13
 
 ## Problem / Goal
@@ -85,11 +83,11 @@ removal list now also covers
 - [x] Existing mappings: visible when editing, removable (next version drops the attribute);
       only active applicable custom fields newly selectable; surface API validation errors.
 - [x] Mock layer for every schema-management read and mutation, behind one flag.
-- [ ] Regression: YoID schemas and existing generic `Opportunity|Default` schemas display and
-      edit unchanged. _(fixtures cover both; browser pass owed)_
+- [x] Regression: YoID schemas and existing generic `Opportunity|Default` schemas display and
+      edit unchanged.
 - [ ] Verify against a running API on `feature/custom-fields-framework` with a representative
-      type-specific schema. _(the read surfaces are reachable live since 2026-08-18 — flip the banner
-      to **live**; creating the schema itself still needs the failing provider create/update path)_
+      type-specific schema. _(read surfaces done live; creating the schema itself still needs the
+      provider create/update path)_
 
 ## Decisions
 

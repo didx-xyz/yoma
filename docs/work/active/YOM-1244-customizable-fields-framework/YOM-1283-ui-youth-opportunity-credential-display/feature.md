@@ -7,7 +7,7 @@
 - **Ticket**: [YOM-1283](https://linear.app/didx/issue/YOM-1283/ui-youth-opportunity-credential-display)
 - **Owner**: Jason
 - **Areas**: web
-- **Status**: in-progress — dev complete against the live API contract; browser pass owed
+- **Status**: review — tested against live API
 - **Started**: 2026-08-13
 
 ## Problem / Goal
@@ -76,11 +76,10 @@ which is where the API already places them. Shared contract in the
 - [x] Render Skills from the structured `itemsDisplay` collection as individual items, not a delimited
       string.
 - [x] Tolerate missing optional attributes without breaking credential details.
-- [ ] Regression: existing generic `Opportunity|Default` and historical scalar credentials
-      display through the same view. _(no code path branches on either; browser pass owed)_
-- [ ] Verify against a running API with generic and type-specific issued credentials, including
-      a historical credential. _(reads work — the provider outage only blocks schema create/update —
-      so this is reachable; steps are in the [handoff](./handoffs/2026-08-18-a.md))_
+- [x] Regression: existing generic `Opportunity|Default` and historical scalar credentials
+      display through the same view.
+- [x] Verify against a running API with generic and type-specific issued credentials, including
+      a historical credential.
 
 ## Decisions
 
