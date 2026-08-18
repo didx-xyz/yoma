@@ -29,6 +29,12 @@ export interface SelectOption {
   label: string;
 }
 
+/** A headed set of options — react-select renders the label as an optgroup heading. */
+export interface SelectOptionGroup {
+  label: string;
+  options: SelectOption[];
+}
+
 export interface SkillSearchResults {
   totalCount: number | null;
   items: Skill[];

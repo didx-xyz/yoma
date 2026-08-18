@@ -64,7 +64,10 @@ import {
   getMyOpportunityCustomFieldDefinitions,
   searchMyOpportunitiesAdmin,
 } from "~/api/services/myOpportunities";
-import { getSchemas } from "~/api/services/credentials";
+// ⚠️ TEMPORARY: reads through the mockable façade rather than `~/api/services/credentials`, because
+// schema resolution goes through the credential provider and that provider is intermittently
+// unavailable. Point this back at `./credentials` when the mock comes out — see the façade's notes.
+import { getSchemas } from "~/api/services/credentialSchemaAdmin";
 import { getOrganisationById } from "~/api/services/organisations";
 import { ApiErrors } from "~/components/Status/ApiErrors";
 import { analytics } from "~/lib/analytics";
@@ -150,7 +153,9 @@ export const OPPORTUNITY_QUERY_KEYS = {
   difficulties: () => ["difficulties"] as const,
   timeIntervals: () => ["timeIntervals"] as const,
   engagementTypes: () => ["engagementTypes"] as const,
-  schemas: () => ["schemas"] as const,
+  /** Scoped by opportunity type context — the applicable set differs per type */
+  schemas: (typeContext?: string | null) =>
+    ["schemas", typeContext ?? null] as const,
   skills: (filter: SkillSearchFilter) => ["skills", filter] as const,
   organisation: (id: string) => ["organisation", id] as const,
   /** Definition-driven custom field definitions, scoped by opportunity type name(s) */
@@ -313,11 +318,21 @@ export function useOpportunityEngagementTypesQuery(options?: {
   });
 }
 
-/** SSI schemas lookup (create/edit page). */
-export function useOpportunitySchemasQuery(options?: { enabled?: boolean }) {
+/**
+ * SSI schemas applicable to an opportunity (create/edit page).
+ *
+ * `typeContext` is the selected opportunity type's stable `name` (never its editable
+ * `displayName`). With one the API returns every generic Opportunity schema plus those scoped
+ * to that type, and excludes schemas scoped to any other type; without one it returns them all,
+ * which is not a valid selection set — so callers must gate `enabled` on having a type.
+ */
+export function useOpportunitySchemasQuery(
+  typeContext?: string | null,
+  options?: { enabled?: boolean },
+) {
   return useQuery<SSISchema[]>({
-    queryKey: OPPORTUNITY_QUERY_KEYS.schemas(),
-    queryFn: () => getSchemas(SchemaType.Opportunity, null),
+    queryKey: OPPORTUNITY_QUERY_KEYS.schemas(typeContext),
+    queryFn: () => getSchemas(SchemaType.Opportunity, typeContext ?? null),
     enabled: options?.enabled ?? true,
   });
 }

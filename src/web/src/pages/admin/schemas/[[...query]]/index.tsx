@@ -23,7 +23,10 @@ import axios from "axios";
 import { InternalServerError } from "~/components/Status/InternalServerError";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 // ⚠️ TEMPORARY — mock dev aid; delete this import with the blocks it feeds
-import { SchemaAdminMockBanner } from "~/components/Schema/SchemaAdminMockBanner";
+import {
+  SchemaAdminMockBanner,
+  useSchemaMockActive,
+} from "~/components/Schema/SchemaAdminMockBanner";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { query, page } = context.query;
@@ -95,8 +98,9 @@ const Schemas: NextPageWithLayout<{
   });
 
   // ⚠️ TEMPORARY: `?mock=empty` exercises the no-rows state. Remove with the mock.
-  const schemas =
-    SCHEMA_ADMIN_MOCK_ENABLED && router.query.mock === "empty" ? [] : data;
+  // Gated on the *active* mode, so it cannot blank out a live list.
+  const mockActive = useSchemaMockActive();
+  const schemas = mockActive && router.query.mock === "empty" ? [] : data;
 
   if (error) {
     if (error === 401) return <Unauthenticated />;

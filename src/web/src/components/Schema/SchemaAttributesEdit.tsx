@@ -5,6 +5,12 @@ import type {
   SSISchemaEntity,
   SSISchemaEntityCustomField,
 } from "~/api/models/credential";
+import type { SelectOption, SelectOptionGroup } from "~/api/models/lookups";
+import {
+  byPresentationOrder,
+  groupLabelOf,
+  type AttributePresentation,
+} from "~/lib/credentials/attributePresentation";
 
 /**
  * An attribute already mapped by the schema that schema-entity discovery no longer offers —
@@ -26,16 +32,10 @@ interface InputProps {
   onChange?: (attributes: string[]) => void;
 }
 
-interface AttributeOption {
-  attributeName: string;
-  nameDisplay: string;
+interface AttributeOption extends AttributePresentation {
   description: string | null;
   typeName: string;
   required: boolean;
-  /** API-supplied presentation metadata. Null group = ungrouped, and sorts last. */
-  group: string | null;
-  subGroup: string | null;
-  sortOrder: number | null;
 }
 
 interface EntitySection {
@@ -46,32 +46,6 @@ interface EntitySection {
   /** System statics — always issued, so listed read-only and never submitted. */
   locked: AttributeOption[];
 }
-
-type SelectOption = { value: string; label: string };
-type SelectOptionGroup = { label: string; options: SelectOption[] };
-
-/** The optgroup heading for an attribute, or null when it is ungrouped. */
-const groupLabelOf = (option: AttributeOption): string | null => {
-  if (!option.group) return null;
-  return option.subGroup
-    ? `${option.group} › ${option.subGroup}`
-    : option.group;
-};
-
-/**
- * Mirrors `SSIAttributePresentationHelper.Order` on the API: configured groups first, then
- * Group → SubGroup → SortOrder → display label → attribute name. Static properties and custom
- * fields share one presentation space, so they are merged and sorted together rather than
- * concatenated — a group name used by both must render once.
- */
-const byPresentationOrder = (a: AttributeOption, b: AttributeOption): number =>
-  Number(!a.group) - Number(!b.group) ||
-  (a.group ?? "").localeCompare(b.group ?? "") ||
-  (a.subGroup ?? "").localeCompare(b.subGroup ?? "") ||
-  (a.sortOrder ?? Number.MAX_SAFE_INTEGER) -
-    (b.sortOrder ?? Number.MAX_SAFE_INTEGER) ||
-  a.nameDisplay.localeCompare(b.nameDisplay) ||
-  a.attributeName.localeCompare(b.attributeName);
 
 const fromCustomField = (
   field: SSISchemaEntityCustomField,

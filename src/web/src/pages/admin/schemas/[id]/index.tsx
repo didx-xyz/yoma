@@ -1016,7 +1016,7 @@ const SchemaCreateEdit: NextPageWithLayout<{
                             </tr>
                           </thead>
                           <tbody>
-                            {/* System attributes  */}
+                            {/* System attributes */}
                             {systemProperties.map((property) => (
                               <tr
                                 key={property.attributeName}

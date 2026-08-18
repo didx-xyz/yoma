@@ -7,7 +7,8 @@
 - **Ticket**: [YOM-1281](https://linear.app/didx/issue/YOM-1281/ui-admin-credential-schema-management-by-type)
 - **Owner**: Jason
 - **Areas**: web
-- **Status**: in-progress — dev complete behind a mock; browser pass and live-API pass owed
+- **Status**: in-progress — dev complete behind a mock; browser pass owed, and the live-API pass is
+  blocked on the credential provider (Aries CloudAPI, 503)
 - **Started**: 2026-08-13
 
 ## Problem / Goal
@@ -54,8 +55,18 @@ The shared naming/context/protection contract is in the
 [YOM-1278](../YOM-1278-api-admin-credential-schema-management-by-type/feature.md).
 
 **All schema-management traffic is mocked for now** — reads _and_ mutations — because publishing a
-provider schema cannot be undone. One flag switches it: `SCHEMA_ADMIN_MOCK_ENABLED` in
-`credentialSchemaAdmin.ts`. See the [handoff](./handoffs/2026-08-14-a.md) for the removal list.
+provider schema cannot be undone. It lives behind one façade, `credentialSchemaAdmin.ts`. See the
+[handoff](./handoffs/2026-08-14-a.md) for the removal list; note that the switch it describes as a
+hand-edited boolean has since become environment-gated (below).
+
+**Scope grew on 2026-08-17.** That façade is no longer admin-only: the Opportunity wizard's schema
+selector reads through it too, because the credential provider went offline and every server-side
+schema resolution reaches it. The flag is now gated on `NEXT_PUBLIC_ENVIRONMENT === "local"`, so the
+mock cannot reach a deployed build, and **which source is serving locally is a per-session choice** —
+the banner carries a mocked/live switch, so the real API can be exercised without a rebuild. The
+removal list now also covers
+`useOpportunitySchemasQuery` and the Credential step's notice — see
+[YOM-1282's handoff](../YOM-1282-ui-opportunity-credential-schema-selection/handoffs/2026-08-17-a.md).
 
 ## Tasks
 

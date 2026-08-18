@@ -38,8 +38,8 @@ definitions to the BA-approved set (YOM-1264) without a code change.
 | [`YOM-1278-api-admin-credential-schema-management-by-type/`](./YOM-1278-api-admin-credential-schema-management-by-type/feature.md)                               | [YOM-1278](https://linear.app/didx/issue/YOM-1278) | api  | in-progress                                                                           |
 | [`YOM-1279-api-opportunity-management-credential-schema-selection/`](./YOM-1279-api-opportunity-management-credential-schema-selection/feature.md)               | [YOM-1279](https://linear.app/didx/issue/YOM-1279) | api  | review                                                                                |
 | [`YOM-1280-api-opportunity-credential-issuance-with-custom-fields/`](./YOM-1280-api-opportunity-credential-issuance-with-custom-fields/feature.md)               | [YOM-1280](https://linear.app/didx/issue/YOM-1280) | api  | in-progress — issuance and core wallet display verified; custom-field runtime pending |
-| [`YOM-1281-ui-admin-credential-schema-management-by-type/`](./YOM-1281-ui-admin-credential-schema-management-by-type/feature.md)                                 | [YOM-1281](https://linear.app/didx/issue/YOM-1281) | web  | in-progress — dev complete behind a mock; browser and live-API passes owed            |
-| [`YOM-1282-ui-opportunity-credential-schema-selection/`](./YOM-1282-ui-opportunity-credential-schema-selection/feature.md)                                       | [YOM-1282](https://linear.app/didx/issue/YOM-1282) | web  | planning                                                                              |
+| [`YOM-1281-ui-admin-credential-schema-management-by-type/`](./YOM-1281-ui-admin-credential-schema-management-by-type/feature.md)                                 | [YOM-1281](https://linear.app/didx/issue/YOM-1281) | web  | in-progress — dev complete behind a mock; live-API pass blocked on the provider (503) |
+| [`YOM-1282-ui-opportunity-credential-schema-selection/`](./YOM-1282-ui-opportunity-credential-schema-selection/feature.md)                                       | [YOM-1282](https://linear.app/didx/issue/YOM-1282) | web  | in-progress — dev complete; live-API pass blocked on the credential provider (503)     |
 | [`YOM-1283-ui-youth-opportunity-credential-display/`](./YOM-1283-ui-youth-opportunity-credential-display/feature.md)                                             | [YOM-1283](https://linear.app/didx/issue/YOM-1283) | web  | planning — YOM-1280 wallet API contract ready; Web implementation pending             |
 
 Tickets with no folder yet — add one when work starts:
@@ -164,6 +164,17 @@ Both child features build on the same components — extend these rather than ad
 | Read-only      | `components/Opportunity/CustomFieldsView.tsx`                                                                                                          |
 | Filtering      | `components/Opportunity/CustomFieldFilters.tsx`                                                                                                        |
 
+Credential surfaces additionally share, extracted by YOM-1282:
+
+| Purpose                                                      | File                                       |
+| ------------------------------------------------------------ | ------------------------------------------ |
+| `byPresentationOrder` / `groupLabelOf` — mirror the API rule | `lib/credentials/attributePresentation.ts` |
+| `SelectOption` / `SelectOptionGroup`                         | `api/models/lookups.ts`                    |
+
+**YOM-1283 must order wallet attributes through `attributePresentation`, not its own copy.** All
+three surfaces have to agree with `SSIAttributePresentationHelper.Order`; a per-component copy is
+how they stop agreeing.
+
 ### Web credential models — changed by YOM-1281, read before starting YOM-1282 / YOM-1283
 
 `api/models/credential.ts` was brought in line with the branch API:
@@ -182,10 +193,21 @@ Both child features build on the same components — extend these rather than ad
   `group` / `subGroup` / `sortOrder`. **YOM-1283 renders wallet headings from those**, in the order
   the API returns — never inferred from the credential payload, and never submitted anywhere.
 
-YOM-1281 also mocks **all** admin schema-management traffic behind one flag
-(`api/services/credentialSchemaAdmin.ts`) while it is in development — that façade is used by the
-admin schema pages only, so `useOpportunitySchemasQuery` and every other surface still call the
-real service.
+**All credential-schema traffic can be mocked in local development**, behind one façade —
+`api/services/credentialSchemaAdmin.ts`. YOM-1281 introduced it for the admin pages, reads _and_
+mutations, because publishing a provider schema cannot be undone; YOM-1282 added the Opportunity
+wizard's selector on 2026-08-17 because the credential provider went offline and
+`SSISchemaService.ListInternal` reaches it for every schema resolution. Nothing else consumes the
+façade — wallet and credential reads (YOM-1283) are unaffected.
+
+`SCHEMA_ADMIN_MOCK_ENABLED` is gated on `NEXT_PUBLIC_ENVIRONMENT === "local"`, so no deployed build
+can serve fixtures while this code exists. Which source serves locally is a **per-session choice**,
+switchable from the mocked/live control on the admin banner and the Credential step.
+
+Two consequences to know before working on either surface: this mocks the **web only**, so
+opportunity save still validates server-side through the provider and fails while it is down; and
+the mock must come out before the PR — the removal list lives in
+[YOM-1282's handoff](./YOM-1282-ui-opportunity-credential-schema-selection/handoffs/2026-08-17-a.md).
 
 ## Out of Scope (whole epic)
 
@@ -203,6 +225,7 @@ real service.
 | YOM-1264 (BA/design) — final field definitions and User Presets | High     | Everything shipped so far runs on seeded `[Sample] …` definitions |
 | YOM-1257 / YOM-1258 (presets API)                               | High     | YOM-1261 / YOM-1262 cannot start                                  |
 | YOM-1260 must land before the presets chain                     | Med      | Presets resolve to filter criteria                                |
+| Credential provider (Aries CloudAPI) returning 503              | Med      | Blocks the live-API pass on YOM-1281 / YOM-1282; both are mocked locally in the meantime |
 
 ## Cross-Area Notes
 

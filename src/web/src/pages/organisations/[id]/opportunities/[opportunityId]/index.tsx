@@ -35,7 +35,11 @@ import Async from "react-select/async";
 import CreatableSelect from "react-select/creatable";
 import { toast } from "react-toastify";
 import z from "zod";
-import type { SelectOption, Skill } from "~/api/models/lookups";
+import type {
+  SelectOption,
+  SelectOptionGroup,
+  Skill,
+} from "~/api/models/lookups";
 import {
   Status,
   VerificationMethod,
@@ -43,6 +47,8 @@ import {
   type OpportunityRequestBase,
   type OpportunityVerificationType,
 } from "~/api/models/opportunity";
+// ⚠️ TEMPORARY: only the mock guard, not a data call — the page reads schemas through the hook
+import { SCHEMA_ADMIN_MOCK_ENABLED } from "~/api/services/credentialSchemaAdmin";
 import { getSkills } from "~/api/services/lookups";
 import {
   createOpportunity,
@@ -66,6 +72,8 @@ import {
 import OpportunityPublicDetails from "~/components/Opportunity/OpportunityPublicDetails";
 import { OpportunityPublicSmallComponent } from "~/components/Opportunity/OpportunityPublicSmall";
 import { PageBackground } from "~/components/PageBackground";
+// ⚠️ TEMPORARY: delete with the mock
+import { SchemaMockNotice } from "~/components/Schema/SchemaAdminMockBanner";
 import { Editor } from "~/components/RichText/Editor";
 import { ApiErrors } from "~/components/Status/ApiErrors";
 import { InternalServerError } from "~/components/Status/InternalServerError";
@@ -102,6 +110,7 @@ import {
   PAGE_SIZE_MEDIUM,
   REGEX_URL_VALIDATION,
 } from "~/lib/constants";
+import { byPresentationOrder } from "~/lib/credentials/attributePresentation";
 import { formatZlto, LABEL_SUFFIX_FY } from "~/lib/format/rewards";
 import { config } from "~/lib/react-query-config";
 import {
@@ -278,11 +287,14 @@ const OpportunityAdminDetails: NextPageWithLayout<{
     () =>
       opportunityTypesData
         ?.filter((c) => {
-          return c.name !== "Other"; // filter out "Other" from the options
+          return c.name !== "Other"; // filter out "Other" from the options (stable name, not the label)
         })
         .map((c) => ({
           value: c.id,
-          label: c.name,
+          // `displayName` is the editable label; `name` is the stable identifier the schema type
+          // context resolves against. Showing the same label the schema group heading uses keeps
+          // the two consistent when an admin renames a type.
+          label: c.displayName || c.name,
         })) ?? [],
     [opportunityTypesData],
   );
@@ -335,17 +347,6 @@ const OpportunityAdminDetails: NextPageWithLayout<{
         label: c.name,
       })) ?? [],
     [engagementTypesData],
-  );
-
-  // Schemas
-  const { data: schemas } = useOpportunitySchemasQuery({ enabled: !error });
-  const schemasOptions = useMemo<SelectOption[]>(
-    () =>
-      schemas?.map((c) => ({
-        value: c.name,
-        label: c.displayName,
-      })) ?? [],
-    [schemas],
   );
 
   // Opportunity
@@ -464,22 +465,68 @@ const OpportunityAdminDetails: NextPageWithLayout<{
     watchTypeId ?? formData.typeId,
   );
 
-  // 👇 Custom Fields (YOM-1244 / YOM-1255 — Task 1)
-  // Resolve the selected opportunity type name (enum name) from the watched typeId.
-  // The definitions query is keyed on this name, so it re-fetches whenever the type changes.
-  const selectedTypeName = useMemo(
+  // 👇 Resolve the selected opportunity type from the watched typeId. Both the custom-field
+  // definitions (YOM-1255) and the applicable credential schemas (YOM-1282) are keyed on its
+  // stable `name` — never its editable `displayName` — so they re-fetch when the type changes.
+  const selectedType = useMemo(
     () =>
       opportunityTypesData?.find(
         (t) => t.id === (watchTypeId ?? formData.typeId),
-      )?.name ?? null,
+      ) ?? null,
     [opportunityTypesData, watchTypeId, formData.typeId],
   );
+  const selectedTypeName = selectedType?.name ?? null;
+
+  // 👇 Custom Fields (YOM-1244 / YOM-1255 — Task 1)
   const {
     data: customFieldDefinitions,
     isLoading: customFieldDefinitionsIsLoading,
   } = useOpportunityCustomFieldDefinitionsQuery(
     selectedTypeName ? [selectedTypeName] : null,
     { enabled: !error && !!selectedTypeName },
+  );
+
+  // 👇 Credential schemas (YOM-1282)
+  // Scoped to the selected opportunity type: the API returns every generic Opportunity schema
+  // plus those scoped to this type, and excludes the rest. Without a context it returns schemas
+  // scoped to *every* type, which must never be offered here — so the query waits for a type.
+  const { data: schemas } = useOpportunitySchemasQuery(selectedTypeName, {
+    enabled: !error && !!selectedTypeName,
+  });
+
+  // Generic and type-specific schemas share a namespace — both may be named "Placement" — so they
+  // are separated into headed groups rather than one flat list. Both the option label and the
+  // group heading come from API metadata; no schema name or opportunity type is hardcoded, and the
+  // full provider name is submitted verbatim rather than reconstructed.
+  const schemasOptions = useMemo<SelectOptionGroup[]>(() => {
+    const generic: SelectOption[] = [];
+    const typeSpecific: SelectOption[] = [];
+
+    for (const schema of schemas ?? [])
+      (schema.typeContext ? typeSpecific : generic).push({
+        value: schema.name,
+        label: schema.displayName,
+      });
+
+    return [
+      ...(generic.length > 0
+        ? [{ label: "All opportunity types", options: generic }]
+        : []),
+      ...(typeSpecific.length > 0
+        ? [
+            {
+              label: selectedType?.displayName ?? selectedType?.name ?? "",
+              options: typeSpecific,
+            },
+          ]
+        : []),
+    ];
+  }, [schemas, selectedType]);
+
+  // react-select resolves the current value against a flat list, not the grouped one
+  const schemasOptionsFlat = useMemo<SelectOption[]>(
+    () => schemasOptions.flatMap((group) => group.options),
+    [schemasOptions],
   );
 
   const schemaStep2 = z
@@ -914,6 +961,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
     formState: formStateStep7,
     control: controlStep7,
     watch: watchStep7,
+    setValue: setValueStep7,
     reset: resetStep7,
     trigger: triggerStep7,
   } = useForm({
@@ -1003,25 +1051,59 @@ const OpportunityAdminDetails: NextPageWithLayout<{
     }
   }, [opportunity?.status, setOppExpiredModalVisible]);
 
-  // credential issuance can only be enabled provided verification is enabled
+  // Credential issuance can only be enabled provided verification is enabled.
+  //
+  // The Credential step has no issuance control of its own — the value is derived from verification
+  // on the previous step — so step 7's form copy has to be written here as well. Updating `formData`
+  // alone is not enough: step 7's react-hook-form state is seeded from it at mount and afterwards
+  // only re-seeded by `resetStep7` on a step submit, so `watchStep7("credentialIssuanceEnabled")`
+  // held a stale value on load and the whole Credential step stayed hidden until the wizard was
+  // stepped through.
   useEffect(() => {
-    if (watchVerificationEnabled) {
-      // check credential issuance if verification is enabled
-      setFormData((prev) => ({
-        ...prev,
-        credentialIssuanceEnabled: watchVerificationEnabled,
-      }));
-    } else if (!watchVerificationEnabled) {
-      // uncheck credential issuance, clear verification method, clear schema, clear participantLimit
-      setFormData((prev) => ({
-        ...prev,
-        credentialIssuanceEnabled: false,
-        verificationMethod: null,
-        ssiSchemaName: null,
-        participantLimit: null,
-      }));
-    }
-  }, [watchVerificationEnabled, setFormData]);
+    const credentialIssuanceEnabled = !!watchVerificationEnabled;
+
+    setValueStep7("credentialIssuanceEnabled", credentialIssuanceEnabled, {
+      shouldValidate: true,
+    });
+    if (!credentialIssuanceEnabled) setValueStep7("ssiSchemaName", null);
+
+    setFormData((prev) => ({
+      ...prev,
+      credentialIssuanceEnabled,
+      // no issuance ⇒ no verification method, no schema, no participant limit
+      ...(credentialIssuanceEnabled
+        ? {}
+        : {
+            verificationMethod: null,
+            ssiSchemaName: null,
+            participantLimit: null,
+          }),
+    }));
+  }, [watchVerificationEnabled, setFormData, setValueStep7]);
+
+  // YOM-1282: the applicable schema set is scoped to the opportunity type, so changing the type
+  // invalidates the current selection and it is cleared. This applies to a generic selection too,
+  // even though the API would still accept it — reselection is deliberate, not inferred.
+  // Guarded on a previously *known* type: the type lookup resolves after first render, and that
+  // initial null → type transition must not wipe an existing opportunity's saved schema.
+  const previousTypeNameRef = useRef<string | null>(null);
+  useEffect(() => {
+    const previousTypeName = previousTypeNameRef.current;
+    previousTypeNameRef.current = selectedTypeName;
+
+    if (
+      !previousTypeName ||
+      !selectedTypeName ||
+      previousTypeName === selectedTypeName
+    )
+      return;
+
+    setValueStep7("ssiSchemaName", null, {
+      shouldValidate: true,
+      shouldDirty: true,
+    });
+    setFormData((prev) => ({ ...prev, ssiSchemaName: null }));
+  }, [selectedTypeName, setValueStep7, setFormData]);
 
   useEffect(() => {
     void triggerStep1();
@@ -1049,11 +1131,25 @@ const OpportunityAdminDetails: NextPageWithLayout<{
     window.scrollTo(0, 0);
   }, [step]);
 
-  // on schema select, show the schema attributes
+  // On schema select, show what the credential will contain. A schema's entities carry its mapped
+  // static properties *and* its mapped custom fields — a type-specific schema exists precisely to
+  // map the latter, so both are listed, merged into the one presentation order the API returns
+  // them in rather than one table per source.
   const schemaAttributes = useMemo(() => {
-    if (watcSSISchemaName) {
-      return schemas?.find((x) => x.name === watcSSISchemaName)?.entities ?? [];
-    } else return [];
+    if (!watcSSISchemaName) return [];
+
+    const entities =
+      schemas?.find((x) => x.name === watcSSISchemaName)?.entities ?? [];
+
+    return entities.flatMap((entity) =>
+      [...(entity.properties ?? []), ...(entity.customFields ?? [])]
+        .sort(byPresentationOrder)
+        .map((attribute) => ({
+          key: `${entity.id}_${attribute.attributeName}`,
+          datasource: entity.name,
+          nameDisplay: attribute.nameDisplay,
+        })),
+    );
   }, [schemas, watcSSISchemaName]);
 
   useEffect(() => {
@@ -3365,6 +3461,9 @@ const OpportunityAdminDetails: NextPageWithLayout<{
 
                     {watchCredentialIssuanceEnabled && (
                       <>
+                        {/* ⚠️ TEMPORARY: delete with the mock */}
+                        {SCHEMA_ADMIN_MOCK_ENABLED && <SchemaMockNotice />}
+
                         <FormField
                           label="Schema"
                           subLabel="What information will be used to issue the credential?"
@@ -3391,11 +3490,19 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                                 }}
                                 options={schemasOptions}
                                 onBlur={onBlur} // mark the field as touched
-                                onChange={(val) => onChange(val?.value)}
-                                value={schemasOptions?.find(
-                                  (c) => c.value === value,
-                                )}
+                                onChange={(val) => onChange(val?.value ?? null)}
+                                value={
+                                  schemasOptionsFlat.find(
+                                    (c) => c.value === value,
+                                  ) ?? null
+                                }
+                                // fix menu z-index issue
+                                menuPortalTarget={htmlRef.current}
                                 styles={{
+                                  menuPortal: (base) => ({
+                                    ...base,
+                                    zIndex: 9999,
+                                  }),
                                   placeholder: (base) => ({
                                     ...base,
                                     color: "#A3A6AF",
@@ -3420,19 +3527,15 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                                   </tr>
                                 </thead>
                                 <tbody>
-                                  {schemaAttributes?.map((attribute) =>
-                                    attribute.properties?.map(
-                                      (property, index) => (
-                                        <tr
-                                          key={`schemaAttributes_${attribute.id}_${index}_${property.id}`}
-                                          className="border-gray text-gray-dark"
-                                        >
-                                          <td>{attribute?.name}</td>
-                                          <td>{property.nameDisplay}</td>
-                                        </tr>
-                                      ),
-                                    ),
-                                  )}
+                                  {schemaAttributes.map((attribute) => (
+                                    <tr
+                                      key={`schemaAttributes_${attribute.key}`}
+                                      className="border-gray text-gray-dark"
+                                    >
+                                      <td>{attribute.datasource}</td>
+                                      <td>{attribute.nameDisplay}</td>
+                                    </tr>
+                                  ))}
                                 </tbody>
                               </table>
                             </div>
