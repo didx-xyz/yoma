@@ -85,7 +85,7 @@ jobs:
             changes:
               - '${{ matrix.dir }}/**'
 
-      - uses: jdx/mise-action@7e36c90d9ab29c415a2384db3006f3ec8a8cc654 # v4.2.4
+      - uses: jdx/mise-action@3c2e0cf82a5b2e5249f0d3635a4d83d0ae861518 # v4.2.5
         if: (steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch') && matrix.lang == 'js'
         with:
           install: true
@@ -173,7 +173,7 @@ jobs:
           else
             echo run=false >> $GITHUB_OUTPUT
           fi
-      - uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4.2.0
+      - uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
         if: steps.should-run.outputs.run == 'true'
         with:
           cache-binary: false
@@ -250,7 +250,7 @@ jobs:
           else
             echo run=false >> $GITHUB_OUTPUT
           fi
-      - uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4.2.0
+      - uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
         if: steps.should-run.outputs.run == 'true'
         with:
           cache-binary: false
@@ -387,7 +387,7 @@ jobs:
           API_TAG: ${{ steps.filter.outputs.api == 'true' && needs.docker-push.outputs.image_version || 'latest' }}
           YOUTH_TAG: ${{ steps.filter.outputs.web == 'true' && needs.docker-push.outputs.image_version || 'latest' }}
 
-      - uses: jdx/mise-action@7e36c90d9ab29c415a2384db3006f3ec8a8cc654 # v4.2.4
+      - uses: jdx/mise-action@3c2e0cf82a5b2e5249f0d3635a4d83d0ae861518 # v4.2.5
         if: steps.should-run.outputs.run == 'true'
         with:
           install: true
