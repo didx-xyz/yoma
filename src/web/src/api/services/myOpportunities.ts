@@ -14,6 +14,7 @@ import type {
   VerificationStatus,
 } from "../models/myOpportunity";
 import { objectToFormData } from "~/lib/utils";
+import { stripSyncedTitleSuffix } from "~/lib/opportunityUtils";
 import type {
   GetServerSidePropsContext,
   GetStaticPropsContext,
@@ -83,6 +84,14 @@ export const searchMyOpportunities = async (
     `/myopportunity/search`,
     filter,
   );
+
+  // strip the partner external id suffix from externally managed opportunities.
+  // NB: syncedInfo here describes the submission, not the opportunity, so the helper
+  // falls back to matching on the external id shape
+  data.items?.forEach((item) => {
+    item.opportunityTitle = stripSyncedTitleSuffix(item.opportunityTitle);
+  });
+
   return data;
 };
 
@@ -96,6 +105,14 @@ export const searchMyOpportunitiesAdmin = async (
     `/myopportunity/search/admin`,
     filter,
   );
+
+  // strip the partner external id suffix from externally managed opportunities.
+  // NB: syncedInfo here describes the submission, not the opportunity, so the helper
+  // falls back to matching on the external id shape
+  data.items?.forEach((item) => {
+    item.opportunityTitle = stripSyncedTitleSuffix(item.opportunityTitle);
+  });
+
   return data;
 };
 
@@ -154,6 +171,14 @@ export const getOpportunitiesForVerification = async (
   const { data } = await instance.get<MyOpportunitySearchCriteriaOpportunity[]>(
     `/myopportunity/search/filter/opportunity${querystring}`,
   );
+
+  // strip the partner external id suffix from externally managed opportunities.
+  // NB: no sync info on this model, so the helper falls back to matching on the
+  // external id shape
+  data?.forEach((item) => {
+    item.title = stripSyncedTitleSuffix(item.title);
+  });
+
   return data;
 };
 
