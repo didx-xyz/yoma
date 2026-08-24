@@ -37,7 +37,7 @@ const OpportunityCategoryHorizontalCard: React.FC<InputProps> = ({
         </div>
 
         <div className="flex grow flex-col gap-1">
-          <h1 className="min-h-8x line-clamp-2 w-[112px] text-center text-xs leading-tight font-semibold whitespace-normal text-black">
+          <h1 className="line-clamp-2 w-[112px] text-center text-xs leading-tight font-semibold whitespace-normal text-black">
             {data.name}
           </h1>
 

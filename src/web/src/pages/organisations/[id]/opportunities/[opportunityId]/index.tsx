@@ -70,7 +70,7 @@ import {
   getCustomFieldErrors,
 } from "~/components/Opportunity/CustomFields";
 import OpportunityPublicDetails from "~/components/Opportunity/OpportunityPublicDetails";
-import { OpportunityPublicSmallComponent } from "~/components/Opportunity/OpportunityPublicSmall";
+import { DefaultCard } from "~/components/Opportunity/OpportunityPublicSmall";
 import { PageBackground } from "~/components/PageBackground";
 // ⚠️ TEMPORARY: delete with the mock
 import { SchemaMockNotice } from "~/components/Schema/SchemaAdminMockBanner";
@@ -3610,7 +3610,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
 
                           <div className="mt-4 flex justify-center">
                             <div className="border-grayx rounded-xl shadow-xl">
-                              <OpportunityPublicSmallComponent
+                              <DefaultCard
                                 key={`opportunity_card_preview`}
                                 preview={true}
                                 data={opportunityInfo}
