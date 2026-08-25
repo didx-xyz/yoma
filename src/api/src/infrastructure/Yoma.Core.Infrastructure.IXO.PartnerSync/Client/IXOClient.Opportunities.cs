@@ -34,10 +34,7 @@ namespace Yoma.Core.Infrastructure.IXO.PartnerSync.Client
 
       var summary = GetSummary(item, title);
 
-      var description = item.Description.HtmlToMarkdown();
-
-      if (string.IsNullOrWhiteSpace(description))
-        description = summary;
+      var description = BuildDescription(item, summary, type);
       var categories = GetCategories(item.Categories);
 
       var countries = GetCountries(item.Countries);
@@ -134,6 +131,33 @@ namespace Yoma.Core.Infrastructure.IXO.PartnerSync.Client
         throw new InvalidOperationException($"IXO opportunity title expected for external id '{item.ExternalId}'");
 
       return title.TrimToLengthWithEllipsis(OpportunityService.Title_MaxLength);
+    }
+
+    private static string BuildDescription(
+      IXOOpportunity item,
+      string fallback,
+      Domain.Opportunity.Type type)
+    {
+      var description = item.Description.HtmlToMarkdown();
+      if (string.IsNullOrWhiteSpace(description)) description = fallback;
+
+      var metadata = new List<string>();
+
+      if (type == Domain.Opportunity.Type.Job)
+        AddDescriptionDetail(metadata, "Work type", item.WorkType);
+
+      AddDescriptionDetail(metadata, "Provider", item.Provider);
+
+      if (metadata.Count > 0)
+        description = $"{description}{StringExtensions.MarkdownParagraphBreak}{string.Join("\n", metadata)}";
+
+      return description.NormalizeTrimMultiline();
+    }
+
+    private static void AddDescriptionDetail(List<string> sections, string label, string? value)
+    {
+      value = value?.HtmlDecode()?.RemoveHtmlTags()?.NormalizeNullableValue();
+      if (!string.IsNullOrEmpty(value)) sections.Add($"**{label}:** {value}");
     }
 
     private static string GetSummary(IXOOpportunity item, string title)

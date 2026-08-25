@@ -78,6 +78,12 @@ namespace Yoma.Core.Infrastructure.IXO.PartnerSync.Services
       if (string.IsNullOrWhiteSpace(response.AccessToken))
         throw new InvalidOperationException("IXO access token response did not contain an access token");
 
+      if (!string.Equals(response.TokenType?.Trim(), "bearer", StringComparison.OrdinalIgnoreCase))
+        throw new InvalidOperationException($"IXO access token response token type '{response.TokenType}' is not supported");
+
+      if (response.ExpiresIn <= 0)
+        throw new InvalidOperationException("IXO access token response expiry must be greater than zero");
+
       return response;
     }
     #endregion

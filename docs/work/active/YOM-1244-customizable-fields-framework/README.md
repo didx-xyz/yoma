@@ -130,7 +130,11 @@ generic schema.
   than assuming the generic default is correct.
 - On this branch all four Opportunity pull providers return `OpportunityRequestCreate`, allowing
   custom-field request values and patch semantics to pass through the shared pull pipeline. Master
-  remains internally consistent on the earlier domain-model contract until this epic is merged.
+  remains internally consistent on the earlier domain-model contract until this epic is merged.- **Baseline refreshed 2026-08-25.** This branch now includes `origin/master` through the official
+  IXO API alignment (`7d7f48460`), the production query-index hotfix (`8e3bc0447`) and external
+  Opportunity title normalization (`6d090b89b`). Existing JobJack and IXO metadata continues to be
+  rendered in descriptions for compatibility. IXO `provider` is appended to the description and
+  `providerLogoUrl` is not displayed; final structured/core mappings remain pending YOM-1264.
 - Structured Skills are issued as JSON name items. Wallet detail resolves the exact immutable schema
   version used by the credential and returns both readable `valueDisplay` and API-native `itemsDisplay`.
   Existing comma-delimited production Skills normalize to the same response; Web never parses the

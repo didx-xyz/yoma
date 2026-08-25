@@ -353,12 +353,26 @@ namespace Yoma.Core.Infrastructure.Database.Context
           .WithMany()
           .HasForeignKey(o => o.ModifiedByUserId)
           .OnDelete(DeleteBehavior.NoAction);
+
+      // Supports the ordered, paginated YoID user listing while keeping the index limited to eligible users.
+      builder.Entity<User>()
+          .HasIndex(o => new { o.DisplayName, o.Id })
+          .HasDatabaseName("IX_User_YoIDOnboarded_DisplayName_Id")
+          .HasFilter($"\"{nameof(Entity.Entities.User.ExternalId)}\" IS NOT NULL AND \"{nameof(Entity.Entities.User.YoIDOnboarded)}\"")
+          .IsCreatedConcurrently();
       #endregion
 
       #region Marketplace
       builder.Entity<TransactionStatus>()
           .HasKey(o => o.Id).HasName("PK_Marketplace_TransactionStatus");
       #endregion Marketplace
+
+      #region MyOpportunity
+      builder.Entity<MyOpportunity.Entities.MyOpportunity>()
+          .HasIndex(o => new { o.ActionId, o.VerificationStatusId, o.OpportunityId, o.DateCompleted })
+          .HasDatabaseName("IX_MyOpportunity_Completed_Aggregation")
+          .IsCreatedConcurrently();
+      #endregion MyOpportunity
 
       #region Opportunity
       builder.Entity<Opportunity.Entities.Opportunity>()

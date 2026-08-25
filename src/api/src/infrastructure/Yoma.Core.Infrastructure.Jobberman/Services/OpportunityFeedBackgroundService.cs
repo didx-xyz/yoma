@@ -3,6 +3,8 @@ using Microsoft.Extensions.Options;
 using System.Net.Http.Headers;
 using System.Transactions;
 using System.Xml.Linq;
+using Yoma.Core.Domain.Core;
+using Environment = System.Environment;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
@@ -70,7 +72,7 @@ namespace Yoma.Core.Infrastructure.Jobberman.Services
         lockAcquired = await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration);
         if (!lockAcquired) return;
 
-        var syncFromExternalPartners = _appSettings.PartnerSyncEnabledEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment);
+        var syncFromExternalPartners = _appSettings.IsPartnerSyncEnabled(SyncPartner.Jobberman, _environmentProvider.Environment);
 
         // Startup refresh is only intended to seed local embedded sample data.
         // Do not trigger the live RSS pull on application startup.
@@ -326,7 +328,7 @@ namespace Yoma.Core.Infrastructure.Jobberman.Services
 
         var description = x.GetElementText("description");
         if (!string.IsNullOrWhiteSpace(salary))
-          description = $"{description}{Environment.NewLine}{Environment.NewLine}Salary: {salary}";
+          description = $"{description}{System.Environment.NewLine}{System.Environment.NewLine}Salary: {salary}";
 
         opportunities.Add(new Opportunity
         {

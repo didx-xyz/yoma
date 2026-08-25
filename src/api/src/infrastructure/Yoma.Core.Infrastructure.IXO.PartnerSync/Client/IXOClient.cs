@@ -128,7 +128,7 @@ namespace Yoma.Core.Infrastructure.IXO.PartnerSync.Client
           "Listing IXO verification sync items for environment '{environment}' from '{dateStart}' to '{dateEnd}', page number '{pageNumber}', page size '{pageSize}'",
           _environmentProvider.Environment, filter.DateStart, filter.DateEnd, filter.PageNumber, filter.PageSize);
 
-      if (!_appSettings.PartnerSyncEnabledEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment))
+      if (!_appSettings.IsPartnerSyncEnabled(SyncPartner.IXO, _environmentProvider.Environment))
         return ListVerificationsFromEmbeddedResource(filter);
 
       return await ListVerificationsFromApi(filter);
@@ -139,7 +139,7 @@ namespace Yoma.Core.Infrastructure.IXO.PartnerSync.Client
       ArgumentNullException.ThrowIfNull(request);
       ValidateUserAccessRequest(request);
 
-      if (!_appSettings.PartnerSyncEnabledEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment))
+      if (!_appSettings.IsPartnerSyncEnabled(SyncPartner.IXO, _environmentProvider.Environment))
       {
         if (_logger.IsEnabled(LogLevel.Information))
           _logger.LogInformation(

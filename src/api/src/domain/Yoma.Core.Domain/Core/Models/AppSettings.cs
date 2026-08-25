@@ -101,9 +101,16 @@ namespace Yoma.Core.Domain.Core.Models
 
     public Environment ShortLinkProviderAsSourceEnabledEnvironmentsAsEnum => ParseEnvironmentInput(ShortLinkProviderAsSourceEnabledEnvironments);
 
-    public string PartnerSyncEnabledEnvironments { get; set; } = null!;
+    public Dictionary<string, string?> PartnerSyncEnabledEnvironments { get; set; } = [];
 
-    public Environment PartnerSyncEnabledEnvironmentsAsEnum => ParseEnvironmentInput(PartnerSyncEnabledEnvironments);
+    public bool IsPartnerSyncEnabled(SyncPartner partner, Environment environment)
+    {
+      var configuredEnvironments = PartnerSyncEnabledEnvironments
+        .SingleOrDefault(item => string.Equals(item.Key, partner.ToString(), StringComparison.OrdinalIgnoreCase))
+        .Value;
+
+      return ParseEnvironmentInput(configuredEnvironments).HasFlag(environment);
+    }
 
     public string SSIEnabledEnvironments { get; set; } = null!;
 
@@ -207,7 +214,7 @@ namespace Yoma.Core.Domain.Core.Models
     #endregion
 
     #region Private Members
-    private static Environment ParseEnvironmentInput(string input)
+    private static Environment ParseEnvironmentInput(string? input)
     {
       var result = Environment.None;
 
@@ -220,7 +227,7 @@ namespace Yoma.Core.Domain.Core.Models
       foreach (var environment in environments)
       {
         if (!Enum.TryParse<Environment>(environment, true, out var parsedValue))
-          throw new ArgumentException($"Test data seeding environment of '{environment}' not supported", nameof(input));
+          throw new ArgumentException($"Environment value '{environment}' is not supported", nameof(input));
         result |= parsedValue;
       }
 

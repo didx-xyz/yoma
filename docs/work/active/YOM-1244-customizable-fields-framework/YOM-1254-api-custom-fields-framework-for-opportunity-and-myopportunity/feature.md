@@ -49,6 +49,9 @@ the BA field map is approved.
 - 2026-07-14: API writes are full replacement, while CSV and PartnerSync use partial-update semantics.
 - 2026-07-15: Numeric and DateTime filters use typed indexed projections rather than runtime text casts.
 - 2026-08-11: The branch and running API are authoritative; Linear still contains implementation detail that now belongs here.
+- 2026-08-25: Synced master’s production JobJack and official IXO providers into the branch’s
+  `OpportunityRequestCreate` custom-field pipeline. Existing description suffixes remain compatible
+  output; final structured mappings remain blocked on the YOM-1264 field/core metadata matrix.
 
 ## Links
 
