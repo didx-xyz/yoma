@@ -23,6 +23,7 @@ import type {
 } from "../models/opportunity";
 import type { OrganizationInfo } from "../models/organisation";
 import type { CSVImportResult } from "../models/opportunity";
+import { stripSyncedTitleSuffix } from "~/lib/opportunityUtils";
 
 export const getOpportunitiesAdmin = async (
   filter: OpportunitySearchFilterAdmin,
@@ -34,6 +35,11 @@ export const getOpportunitiesAdmin = async (
     `/opportunity/search/admin`,
     filter,
   );
+
+  // strip the partner external id suffix from externally managed opportunities
+  data.items?.forEach((item) => {
+    item.title = stripSyncedTitleSuffix(item.title, item.syncedInfo);
+  });
 
   return data;
 };
@@ -221,6 +227,10 @@ export const getOpportunityInfoByIdAdminOrgAdminOrUser = async (
   const { data } = await instance.get<OpportunityInfo>(
     `/opportunity/${id}/auth/info`,
   );
+
+  // strip the partner external id suffix from externally managed opportunities
+  data.title = stripSyncedTitleSuffix(data.title, data.syncedInfo);
+
   return data;
 };
 
@@ -235,6 +245,10 @@ export const getOpportunityInfoById = async (
   const { data } = await instance.get<OpportunityInfo>(
     `/opportunity/${id}/info${includeExpired ? "?includeExpired=true" : ""}`,
   );
+
+  // strip the partner external id suffix from externally managed opportunities
+  data.title = stripSyncedTitleSuffix(data.title, data.syncedInfo);
+
   return data;
 };
 
@@ -252,6 +266,12 @@ export const searchOpportunities = async (
     `/opportunity/search`,
     filter,
   );
+
+  // strip the partner external id suffix from externally managed opportunities
+  data.items?.forEach((item) => {
+    item.title = stripSyncedTitleSuffix(item.title, item.syncedInfo);
+  });
+
   return data;
 };
 
