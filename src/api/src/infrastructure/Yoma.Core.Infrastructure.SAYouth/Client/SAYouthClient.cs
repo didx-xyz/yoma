@@ -2,6 +2,7 @@ using Flurl;
 using Flurl.Http;
 using Microsoft.Extensions.Logging;
 using System.Globalization;
+using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Helpers;
@@ -52,7 +53,7 @@ namespace Yoma.Core.Infrastructure.SAYouth.Client
 
     public async Task<string> Create(SyncRequestPushEntity<Opportunity> request)
     {
-      if (!_appSettings.PartnerSyncEnabledEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment))
+      if (!_appSettings.IsPartnerSyncEnabled(SyncPartner.SAYouth, _environmentProvider.Environment))
       {
         var mockId = Random.Shared.Next(1, int.MaxValue).ToString(CultureInfo.InvariantCulture);
         if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Partner sharing '{action}' skipped for environment '{environment}' and assuming success", nameof(Create), _environmentProvider.Environment);
@@ -75,7 +76,7 @@ namespace Yoma.Core.Infrastructure.SAYouth.Client
 
     public async Task Update(SyncRequestPushEntity<Opportunity> request)
     {
-      if (!_appSettings.PartnerSyncEnabledEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment))
+      if (!_appSettings.IsPartnerSyncEnabled(SyncPartner.SAYouth, _environmentProvider.Environment))
       {
         if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Partner sharing '{action}' skipped for environment '{environment}' and assuming success", nameof(Update), _environmentProvider.Environment);
         return;
@@ -127,7 +128,7 @@ namespace Yoma.Core.Infrastructure.SAYouth.Client
 
     public async Task Delete(string externalId)
     {
-      if (!_appSettings.PartnerSyncEnabledEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment))
+      if (!_appSettings.IsPartnerSyncEnabled(SyncPartner.SAYouth, _environmentProvider.Environment))
       {
         if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Partner sharing '{action}' skipped for environment '{environment}' and assuming success", nameof(Delete), _environmentProvider.Environment);
         return;

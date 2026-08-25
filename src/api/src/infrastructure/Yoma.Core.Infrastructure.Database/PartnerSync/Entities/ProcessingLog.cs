@@ -43,7 +43,9 @@ namespace Yoma.Core.Infrastructure.Database.PartnerSync.Entities
     public Guid StatusId { get; set; }
     public ProcessingStatus Status { get; set; } = null!;
 
-    [Column(TypeName = "varchar(50)")]
+    // Verification processing identities combine the partner opportunity and user references.
+    // Allow both references without truncating the stable id used for retries and reconciliation.
+    [Column(TypeName = "varchar(512)")]
     public string? EntityExternalId { get; set; }
 
     [Column(TypeName = "text")] //MS SQL: varchar(MAX)

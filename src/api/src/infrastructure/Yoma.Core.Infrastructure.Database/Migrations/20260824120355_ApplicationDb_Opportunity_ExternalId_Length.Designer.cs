@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Yoma.Core.Infrastructure.Database.Context;
@@ -11,9 +12,11 @@ using Yoma.Core.Infrastructure.Database.Context;
 namespace Yoma.Core.Infrastructure.Database.Migrations
 {
   [DbContext(typeof(ApplicationDbContext))]
-  partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+  [Migration("20260824120355_ApplicationDb_Opportunity_ExternalId_Length")]
+  partial class ApplicationDb_Opportunity_ExternalId_Length
   {
-    protected override void BuildModel(ModelBuilder modelBuilder)
+    /// <inheritdoc />
+    protected override void BuildTargetModel(ModelBuilder modelBuilder)
     {
 #pragma warning disable 612, 618
       modelBuilder
@@ -38,8 +41,8 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
             b.ToTable("UnnestedValueDummy", null, t =>
                       {
-                        t.ExcludeFromMigrations();
-                      });
+                    t.ExcludeFromMigrations();
+                  });
 
             b.ToView("unnested_values", (string)null);
           });
@@ -683,11 +686,6 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
             b.HasIndex("PhotoId");
 
-            b.HasIndex("DisplayName", "Id")
-                      .HasDatabaseName("IX_User_YoIDOnboarded_DisplayName_Id")
-                      .HasFilter("\"ExternalId\" IS NOT NULL AND \"YoIDOnboarded\"")
-                      .HasAnnotation("Npgsql:CreatedConcurrently", true);
-
             b.HasIndex("FirstName", "Surname", "DisplayName", "EmailConfirmed", "PhoneNumberConfirmed", "DateOfBirth", "DateLastLogin", "YoIDOnboarded", "DateYoIDOnboarded", "DateCreated", "DateModified");
 
             b.ToTable("User", "Entity");
@@ -1242,9 +1240,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
             b.HasKey("Id");
 
-            b.HasIndex("ActionId", "VerificationStatusId", "OpportunityId", "DateCompleted")
-                      .HasDatabaseName("IX_MyOpportunity_Completed_Aggregation")
-                      .HasAnnotation("Npgsql:CreatedConcurrently", true);
+            b.HasIndex("ActionId");
 
             b.HasIndex("CommitmentIntervalId");
 

@@ -23,7 +23,7 @@ namespace Yoma.Core.Infrastructure.IXO.PartnerSync.Models
     public string OpportunitiesPath { get; set; } = null!;
 
     /// <summary>
-    /// API path used to register or authenticate a user and obtain an auto-login token.
+    /// API path used to hand off Yoma user and opportunity context and obtain a short-lived redirect token.
     /// </summary>
     public string UserAccessPath { get; set; } = null!;
 

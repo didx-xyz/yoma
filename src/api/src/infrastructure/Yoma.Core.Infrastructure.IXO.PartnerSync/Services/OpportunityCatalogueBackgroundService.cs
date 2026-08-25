@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using System.Transactions;
+using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
@@ -70,8 +71,7 @@ namespace Yoma.Core.Infrastructure.IXO.PartnerSync.Services
         lockAcquired = await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration);
         if (!lockAcquired) return;
 
-        var syncFromExternalPartners = _appSettings.PartnerSyncEnabledEnvironmentsAsEnum
-          .HasFlag(_environmentProvider.Environment);
+        var syncFromExternalPartners = _appSettings.IsPartnerSyncEnabled(SyncPartner.IXO, _environmentProvider.Environment);
 
         if (onStartupInitialRefresh && syncFromExternalPartners)
         {

@@ -4,23 +4,25 @@
   "totalPages": 1,
   "items": [
     {
-      "opportunityRef": "learn-001",
+      "opportunityRef": "sample-learning-001",
       "userRef": "testuser@gmail.com",
       "status": "in-progress",
-      "percentComplete": 40,
-      "startDate": "2026-06-01T00:00:00Z"
+      "percentComplete": 40.5,
+      "startDate": "2026-06-01T00:00:00Z",
+      "endDate": "2026-06-15T00:00:00Z",
+      "commitment": {
+        "interval": "Hour",
+        "count": 8
+      }
     },
     {
-      "opportunityRef": "learn-002",
+      "opportunityRef": "did:ixo:entity:e8a8d62c02d95fd4780434b9cecc552d",
       "userRef": "testuser@gmail.com",
-      "status": "completed",
+      "status": "placed",
       "dateCompleted": "2026-07-01T00:00:00Z",
       "endDate": "2026-07-01T00:00:00Z",
-      "percentComplete": 100,
-      "commitment": {
-        "interval": "Week",
-        "count": 4
-      }
+      "startDate": "2026-06-04T00:00:00Z",
+      "percentComplete": 100
     }
   ]
 }

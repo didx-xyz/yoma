@@ -108,6 +108,12 @@ namespace Yoma.Core.Infrastructure.IXO.PartnerSync.Client
       if (string.IsNullOrWhiteSpace(response.Token))
         throw new InvalidOperationException("IXO user access response token is required");
 
+      if (!string.Equals(response.TokenType?.Trim(), "bearer", StringComparison.OrdinalIgnoreCase))
+        throw new InvalidOperationException($"IXO user access response token type '{response.TokenType}' is not supported");
+
+      if (response.ExpiresIn <= 0)
+        throw new InvalidOperationException("IXO user access response expiry must be greater than zero");
+
       if (string.IsNullOrWhiteSpace(response.PartnerUserId))
         throw new InvalidOperationException("IXO user access response partner user id is required");
 

@@ -3,6 +3,7 @@ using Microsoft.Extensions.Options;
 using System.Net.Http.Headers;
 using System.Transactions;
 using System.Xml.Linq;
+using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
@@ -68,7 +69,7 @@ namespace Yoma.Core.Infrastructure.JobJack.Services
         lockAcquired = await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration);
         if (!lockAcquired) return;
 
-        var syncFromExternalPartners = _appSettings.PartnerSyncEnabledEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment);
+        var syncFromExternalPartners = _appSettings.IsPartnerSyncEnabled(SyncPartner.JobJack, _environmentProvider.Environment);
 
         // Startup refresh is only intended to seed local embedded sample data.
         // Do not trigger the live XML pull on application startup.

@@ -113,7 +113,7 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Entities
 
     public bool? Hidden { get; set; }
 
-    [Column(TypeName = "varchar(50)")]
+    [Column(TypeName = "varchar(100)")]
     public string? ExternalId { get; set; }
 
     [Required]
