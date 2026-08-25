@@ -158,6 +158,19 @@ namespace Yoma.Core.Infrastructure.IXO.PartnerSync.Client
         };
       }
 
+      // IXO links the handed-off Yoma user to an IXO account by verified email.
+      // Mobile-only users can still navigate to the opportunity, but cannot be linked
+      // or have subsequent verifications resolved through the partner-user mapping.
+      if (string.IsNullOrEmpty(request.Email))
+      {
+        if (_logger.IsEnabled(LogLevel.Information))
+          _logger.LogInformation(
+            "Skipping IXO user access hand-off for Yoma user '{userId}' because IXO requires an email address. The default partner navigation URL will be used",
+            request.UserId);
+
+        return new SyncResultUserAuthentication { URL = request.EntitySyncInfo.URL! };
+      }
+
       return await AuthenticateFromApi(request);
     }
     #endregion
