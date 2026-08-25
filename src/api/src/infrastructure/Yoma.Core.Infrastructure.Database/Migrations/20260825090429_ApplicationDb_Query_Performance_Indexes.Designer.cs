@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Yoma.Core.Infrastructure.Database.Context;
@@ -11,9 +12,11 @@ using Yoma.Core.Infrastructure.Database.Context;
 namespace Yoma.Core.Infrastructure.Database.Migrations
 {
   [DbContext(typeof(ApplicationDbContext))]
-  partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+  [Migration("20260825090429_ApplicationDb_Query_Performance_Indexes")]
+  partial class ApplicationDb_Query_Performance_Indexes
   {
-    protected override void BuildModel(ModelBuilder modelBuilder)
+    /// <inheritdoc />
+    protected override void BuildTargetModel(ModelBuilder modelBuilder)
     {
 #pragma warning disable 612, 618
       modelBuilder
@@ -38,8 +41,8 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
             b.ToTable("UnnestedValueDummy", null, t =>
                       {
-                        t.ExcludeFromMigrations();
-                      });
+                    t.ExcludeFromMigrations();
+                  });
 
             b.ToView("unnested_values", (string)null);
           });
@@ -1242,16 +1245,16 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
             b.HasKey("Id");
 
-            b.HasIndex("ActionId", "VerificationStatusId", "OpportunityId", "DateCompleted")
-                      .HasDatabaseName("IX_MyOpportunity_Completed_Aggregation")
-                      .HasAnnotation("Npgsql:CreatedConcurrently", true);
-
             b.HasIndex("CommitmentIntervalId");
 
             b.HasIndex("OpportunityId");
 
             b.HasIndex("UserId", "OpportunityId", "ActionId")
                       .IsUnique();
+
+            b.HasIndex("ActionId", "VerificationStatusId", "OpportunityId", "DateCompleted")
+                      .HasDatabaseName("IX_MyOpportunity_Completed_Aggregation")
+                      .HasAnnotation("Npgsql:CreatedConcurrently", true);
 
             b.HasIndex("VerificationStatusId", "DateStart", "DateEnd", "DateCompleted", "ZltoReward", "YomaReward", "Recommendable", "StarRating", "DateCreated", "DateModified");
 
@@ -1449,7 +1452,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                       .HasColumnType("uuid");
 
             b.Property<string>("ExternalId")
-                      .HasColumnType("varchar(100)");
+                      .HasColumnType("varchar(50)");
 
             b.Property<bool?>("Featured")
                       .HasColumnType("boolean");
@@ -1854,7 +1857,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                       .HasColumnType("timestamp with time zone");
 
             b.Property<string>("EntityExternalId")
-                      .HasColumnType("varchar(512)");
+                      .HasColumnType("varchar(50)");
 
             b.Property<string>("EntityType")
                       .IsRequired()

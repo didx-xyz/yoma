@@ -1110,11 +1110,11 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       var statusIds = statuses.Select(o => _opportunityStatusService.GetByName(o.ToString()).Id).ToList();
       query = query.Where(o => statusIds.Contains(o.OpportunityStatusId));
 
-      var queryGrouped = query.GroupBy(o => o.OpportunityId)
+      var queryGrouped = query.GroupBy(o => new { o.OpportunityId, o.OpportunityTitle })
       .Select(group => new
       {
-        OpportunityId = group.Key,
-        Title = group.First().OpportunityTitle,
+        group.Key.OpportunityId,
+        Title = group.Key.OpportunityTitle,
         Count = group.Count(),
         MaxDateModified = group.Max(o => o.DateModified) //max date viewed
       });
@@ -1142,11 +1142,11 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       var statusIds = statuses.Select(o => _opportunityStatusService.GetByName(o.ToString()).Id).ToList();
       query = query.Where(o => statusIds.Contains(o.OpportunityStatusId));
 
-      var queryGrouped = query.GroupBy(o => o.OpportunityId)
+      var queryGrouped = query.GroupBy(o => new { o.OpportunityId, o.OpportunityTitle })
       .Select(group => new
       {
-        OpportunityId = group.Key,
-        Title = group.First().OpportunityTitle,
+        group.Key.OpportunityId,
+        Title = group.Key.OpportunityTitle,
         Count = group.Count(),
         MaxDateCompleted = group.Max(o => o.DateCompleted) //max date completed
       });
