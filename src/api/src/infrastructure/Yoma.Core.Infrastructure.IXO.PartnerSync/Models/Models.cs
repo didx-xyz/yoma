@@ -81,6 +81,9 @@ namespace Yoma.Core.Infrastructure.IXO.PartnerSync.Models
     [JsonProperty("summary")]
     public string? Summary { get; set; }
 
+    [JsonProperty("provider")]
+    public string? Provider { get; set; }
+
     [JsonProperty("categories")]
     public List<string> Categories { get; set; } = [];
 
@@ -203,7 +206,7 @@ namespace Yoma.Core.Infrastructure.IXO.PartnerSync.Models
     public DateTimeOffset? DateStart { get; set; }
 
     [JsonProperty("percentComplete")]
-    public int? PercentComplete { get; set; }
+    public decimal? PercentComplete { get; set; }
   }
   #endregion
 }

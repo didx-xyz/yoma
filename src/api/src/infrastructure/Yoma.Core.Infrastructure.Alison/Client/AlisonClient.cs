@@ -142,7 +142,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
 
       ValidateAndNormalizeUserAuthenticationRequest(request);
 
-      if (!_appSettings.PartnerSyncEnabledEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment))
+      if (!_appSettings.IsPartnerSyncEnabled(SyncPartner.Alison, _environmentProvider.Environment))
       {
         if (_logger.IsEnabled(LogLevel.Information))
           _logger.LogInformation(
@@ -192,7 +192,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
           "Listing Alison completed course verification sync items for environment '{environment}' from '{dateStart}' to '{dateEnd}', page number '{pageNumber}', page size '{pageSize}'",
           _environmentProvider.Environment, filter.DateStart, filter.DateEnd, filter.PageNumber, filter.PageSize);
 
-      return !_appSettings.PartnerSyncEnabledEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment)
+      return !_appSettings.IsPartnerSyncEnabled(SyncPartner.Alison, _environmentProvider.Environment)
         ? ListCompletedCoursesFromEmbeddedResource(filter)
         : await ListCompletedCoursesFromApi(filter);
     }

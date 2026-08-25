@@ -20,7 +20,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
         table: "Partner",
         schema: "PartnerSync",
         columns: ["Id", "Name", "Active", "ActionsEnabled", "SyncCapabilities", "DateCreated"],
-        values: ["DB37159B-1B8A-49EF-A2E5-E607DB639532", SyncPartner.IXO.ToString(), false, null, syncCapabilities, DateTimeOffset.UtcNow]);
+        values: ["DB37159B-1B8A-49EF-A2E5-E607DB639532", SyncPartner.IXO.ToString(), true, null, syncCapabilities, DateTimeOffset.UtcNow]);
       #endregion Lookups
       #endregion PartnerSync
     }

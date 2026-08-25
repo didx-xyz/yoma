@@ -4,85 +4,108 @@
   "totalPages": 1,
   "items": [
     {
-      "externalId": "learn-001",
+      "externalId": "did:ixo:entity:dfb992434f162d603f14ecc5d9c731d3",
+      "title": "Youth-Led Inclusion Storytelling",
+      "provider": "ShonaquipSE",
+      "providerLogoUrl": "https://testmx.ixo.earth/_matrix/media/v3/download/testmx.ixo.earth/FKBYOAUxsMKWrvmqvwKZAwHB",
+      "url": "https://jambo.test.yoma.impacts.exchange/entities/did%3Aixo%3Aentity%3Adfb992434f162d603f14ecc5d9c731d3",
+      "startDate": "2026-06-03T12:53:54.611Z",
+      "description": "<p>Advance disability inclusion in South Africa and shift the disability narrative through community-led, youth-led storytelling.. Runs youth-led inclusion storytelling and verifies proposal, publication and engagement claims denominated in Verified Inclusion Story Units (VISU); also designs and fits assistive devices and runs Let us Talk Disability dialogues.. Disability-inclusion ecosystem partner / credential issuer</p><ul><li>Storytelling</li><li>Digital Storytelling</li><li>Media Production</li><li>Content Creation</li><li>Advocacy</li></ul>",
+      "summary": "Got a story that could change how people see disability? If you're 18–35 and live with a disability, create a media piece — video, audio, art or writing — and share it with the world. Four simple steps: sign up, pitch your idea, share your story, then reflect on the impact you made. Your voice, your story, real change.",
+      "categories": [
+        "Social Impact"
+      ],
+      "countries": [
+        "ZA"
+      ],
+      "languages": [
+        "en"
+      ],
+      "removed": false,
+      "type": "Job"
+    },
+    {
+      "externalId": "did:ixo:entity:e8a8d62c02d95fd4780434b9cecc552d",
+      "title": "The Dignity Project",
+      "provider": "GreenPill Cape Town — Dignity Project",
+      "providerLogoUrl": "https://testmx.ixo.earth/_matrix/media/v3/download/testmx.ixo.earth/MVpPqrpmyDvhsbBIJeuJPQFH",
+      "url": "https://jambo.test.yoma.impacts.exchange/entities/did%3Aixo%3Aentity%3Ae8a8d62c02d95fd4780434b9cecc552d",
+      "startDate": "2026-06-03T19:00:46.258Z",
+      "description": "<p>Restore dignity in Vrygrond, Cape Town — clean streets, dignified income for unemployed youth, and waste diverted from landfill — through a community-led, DAO-anchored dignity economy.. Registers and credentials youth Dignity Agents (onboarding, Web3 literacy, role responsibility) and verifies their bin-delivery, street-cleaning, waste-sorting and bin-return claims — triggering prepaid-card payouts and issuing Verified Dignity Units (VDU), one per household-month of bundled service.. DAO-anchored project / impact-credit issuer</p><ul><li>Waste Management</li><li>Recycling</li><li>Web 3.0</li><li>Blockchain</li></ul>",
+      "summary": "Join The Dignity Project in Vrygrond, Cape Town! Become a Dignity Agent: learn the ropes, pick up Web3 basics, and get paid on a prepaid card for real work in your community — delivering bins, cleaning, sorting waste and returning bins. Every approved task pays out automatically. Clean streets, real income, your dignity.",
+      "categories": [
+        "Circular Economy"
+      ],
+      "countries": [
+        "ZA"
+      ],
+      "languages": [
+        "en"
+      ],
+      "removed": false,
+      "type": "Job"
+    },
+    {
+      "externalId": "sample-learning-001",
       "type": "Learning",
-      "title": "Intro to Digital Literacy",
-      "url": "https://partner.example.com/learning/intro-digital-literacy",
-      "startDate": "2026-01-01T00:00:00Z",
-      "description": "<p>A self-paced course covering core digital skills for first-time internet users.</p>",
-      "summary": "Self-paced digital literacy fundamentals.",
-      "categories": ["Digital Skills"],
-      "countries": ["Worldwide"],
-      "languages": ["en"],
+      "title": "Digital Skills for Community Impact",
+      "url": "https://jambo.test.yoma.impacts.exchange/entities/sample-learning-001",
+      "startDate": "2026-06-01T00:00:00Z",
+      "endDate": "2026-12-31T23:59:59Z",
+      "description": "<p>Build practical digital and storytelling skills to support community-led impact initiatives.</p><ul><li>Digital literacy</li><li>Storytelling</li><li>Community engagement</li></ul>",
+      "summary": "Build practical digital skills for community impact.",
+      "categories": [
+        "Education",
+        "Social Impact"
+      ],
+      "countries": [
+        "Worldwide"
+      ],
+      "languages": [
+        "en"
+      ],
       "commitment": {
         "interval": "Hour",
-        "count": 6
+        "count": 8
       },
-      "skills": ["Digital Literacy", "Internet Safety"],
+      "skills": [
+        "Digital Literacy",
+        "Storytelling"
+      ],
+      "keywords": [
+        "Digital Skills",
+        "Community Impact",
+        "Storytelling"
+      ],
       "difficulty": "Beginner",
       "engagementType": "Online",
-      "removed": false
+      "removed": false,
+      "provider": "Sample Learning Provider"
     },
     {
-      "externalId": "learn-002",
-      "type": "Learning",
-      "title": "Solar Panel Installation Fundamentals",
-      "url": "https://partner.example.com/learning/solar-fundamentals",
-      "startDate": "2026-02-15T00:00:00Z",
-      "endDate": "2026-12-31T00:00:00Z",
-      "description": "<p>Hands-on introduction to residential solar installation and maintenance.</p>",
-      "summary": "Hands-on solar installation basics.",
-      "categories": ["Renewable Energy", "Trades"],
-      "countries": ["ZA", "ZM"],
-      "languages": ["en"],
-      "commitment": {
-        "interval": "Week",
-        "count": 4
-      },
-      "skills": ["Solar Installation", "Electrical Safety"],
-      "difficulty": "Intermediate",
-      "engagementType": "Hybrid",
-      "removed": false
-    },
-    {
-      "externalId": "learn-003",
-      "type": "Learning",
-      "title": "Discontinued: Basic Bookkeeping",
-      "url": "https://partner.example.com/learning/basic-bookkeeping",
-      "startDate": "2025-06-01T00:00:00Z",
-      "description": "<p>This course has been retired.</p>",
-      "countries": ["Worldwide"],
-      "languages": ["en"],
-      "difficulty": "Any Level",
+      "externalId": "sample-job-removed-001",
+      "type": "Job",
+      "title": "Community Project Coordinator",
+      "url": "https://jambo.test.yoma.impacts.exchange/entities/sample-job-removed-001",
+      "startDate": "2026-01-15T00:00:00Z",
+      "endDate": "2026-07-31T23:59:59Z",
+      "description": "<p>Coordinate community impact activities and local stakeholder engagement.</p>",
+      "summary": "Coordinate community impact initiatives.",
+      "categories": [
+        "Social Impact"
+      ],
+      "countries": [
+        "ZA"
+      ],
+      "languages": [
+        "en"
+      ],
+      "keywords": [
+        "Project Coordination",
+        "Community Development"
+      ],
+      "workType": "Hybrid",
       "removed": true
-    },
-    {
-      "externalId": "job-001",
-      "type": "Job",
-      "title": "Junior Solar Field Technician",
-      "url": "https://partner.example.com/jobs/junior-solar-field-technician",
-      "startDate": "2026-03-01T00:00:00Z",
-      "description": "<p>Install and maintain residential solar systems as part of a field team.</p><ul><li><strong>Salary:</strong> ZAR 12,000 ? 15,000 / month</li><li><strong>Minimum qualification:</strong> Grade 12 / Matric</li><li><strong>Experience level:</strong> Entry-level</li><li><strong>Experience length:</strong> 0?1 years</li><li><strong>Working hours:</strong> Mon?Fri, 08:00?17:00</li></ul>",
-      "summary": "Entry-level solar installation role.",
-      "categories": ["Renewable Energy"],
-      "countries": ["ZA"],
-      "languages": ["en"],
-      "workType": "On-site",
-      "removed": false
-    },
-    {
-      "externalId": "job-002",
-      "type": "Job",
-      "title": "Remote Customer Support Agent",
-      "url": "https://partner.example.com/jobs/remote-customer-support",
-      "startDate": "2026-04-10T00:00:00Z",
-      "description": "<p>Handle customer enquiries for a growing e-commerce platform.</p><ul><li><strong>Salary:</strong> USD 900 / month</li><li><strong>Experience level:</strong> Mid-level</li><li><strong>Working hours:</strong> Flexible, remote</li></ul>",
-      "summary": "Remote customer support role, flexible hours.",
-      "categories": ["Customer Service"],
-      "countries": ["Worldwide"],
-      "languages": ["en"],
-      "workType": "Remote",
-      "removed": false
     }
   ]
 }

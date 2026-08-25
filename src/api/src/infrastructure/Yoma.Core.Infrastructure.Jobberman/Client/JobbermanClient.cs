@@ -115,7 +115,7 @@ namespace Yoma.Core.Infrastructure.Jobberman.Client
       if (string.IsNullOrWhiteSpace(title))
         throw new InvalidOperationException($"Jobberman opportunity title expected for external id '{item.ExternalId}'");
 
-      var description = item.Description.HtmlToMarkdown() ?? title;
+      var description = BuildDescription(item, title);
       var summary = title;
 
       var feed = _options.Feeds.SingleOrDefault(o => string.Equals(o.CountryCodeAlpha2, item.CountryCodeAlpha2, StringComparison.OrdinalIgnoreCase))
@@ -205,6 +205,26 @@ namespace Yoma.Core.Infrastructure.Jobberman.Client
       return value
         .RemoveSpecialCharacters()
         .NormalizeTrim();
+    }
+
+    private static string BuildDescription(Opportunity item, string fallback)
+    {
+      var description = item.Description.HtmlToMarkdown();
+      if (string.IsNullOrWhiteSpace(description)) description = fallback;
+
+      var metadata = new List<string>();
+      AddDescriptionDetail(metadata, "Contract type", item.WorkType?.TitleCase(onlyWhenAllCaps: true));
+
+      if (metadata.Count > 0)
+        description = $"{description}{StringExtensions.MarkdownParagraphBreak}{string.Join("\n", metadata)}";
+
+      return description.NormalizeTrimMultiline();
+    }
+
+    private static void AddDescriptionDetail(List<string> sections, string label, string? value)
+    {
+      value = value?.NormalizeNullableValue();
+      if (!string.IsNullOrEmpty(value)) sections.Add($"**{label}:** {value}");
     }
 
     private static List<string>? BuildKeywords(Opportunity item)
