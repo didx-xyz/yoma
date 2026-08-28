@@ -5,9 +5,13 @@ using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
+using Yoma.Core.Domain.Entity.Extensions;
+using Yoma.Core.Domain.Entity.Interfaces;
 using Yoma.Core.Domain.Payout.Interfaces;
 using Yoma.Core.Domain.Payout.Interfaces.Lookups;
 using Yoma.Core.Domain.Payout.Models;
+using Yoma.Core.Domain.Payout.Validators;
+using Yoma.Core.Domain.Reward.Interfaces;
 
 namespace Yoma.Core.Domain.Payout.Services
 {
@@ -16,7 +20,10 @@ namespace Yoma.Core.Domain.Payout.Services
     #region Class Variables
     private readonly IPayoutTransactionStatusService _payoutTransactionStatusService;
     private readonly IRepository<PayoutTransaction> _payoutTransactionRepository;
+    private readonly IUserService _userService;
+    private readonly IRewardService _rewardService;
     private readonly IExecutionStrategyService _executionStrategyService;
+    private readonly PayoutTransactionSearchFilterValidator _payoutTransactionSearchFilterValidator;
 
     private static readonly PayoutTransactionStatus[] Statuses_CanProcess = [PayoutTransactionStatus.Initiated, PayoutTransactionStatus.ReconciliationRequired];
     private static readonly PayoutTransactionStatus[] Statuses_CanReconcile = [PayoutTransactionStatus.Initiated, PayoutTransactionStatus.Processing];
@@ -32,11 +39,17 @@ namespace Yoma.Core.Domain.Payout.Services
     public PayoutTransactionService(
       IPayoutTransactionStatusService payoutTransactionStatusService,
       IRepository<PayoutTransaction> payoutTransactionRepository,
-      IExecutionStrategyService executionStrategyService)
+      IUserService userService,
+      IRewardService rewardService,
+      IExecutionStrategyService executionStrategyService,
+      PayoutTransactionSearchFilterValidator payoutTransactionSearchFilterValidator)
     {
       _payoutTransactionStatusService = payoutTransactionStatusService ?? throw new ArgumentNullException(nameof(payoutTransactionStatusService));
       _payoutTransactionRepository = payoutTransactionRepository ?? throw new ArgumentNullException(nameof(payoutTransactionRepository));
+      _userService = userService ?? throw new ArgumentNullException(nameof(userService));
+      _rewardService = rewardService ?? throw new ArgumentNullException(nameof(rewardService));
       _executionStrategyService = executionStrategyService ?? throw new ArgumentNullException(nameof(executionStrategyService));
+      _payoutTransactionSearchFilterValidator = payoutTransactionSearchFilterValidator ?? throw new ArgumentNullException(nameof(payoutTransactionSearchFilterValidator));
     }
     #endregion
 
@@ -44,6 +57,22 @@ namespace Yoma.Core.Domain.Payout.Services
     public PayoutTransaction GetById(Guid id)
     {
       return GetById(id, null);
+    }
+
+    public PayoutTransactionInfo GetInfoById(Guid id)
+    {
+      var transaction = GetById(id);
+      var user = _userService.GetById(transaction.UserId, false, false);
+
+      return new PayoutTransactionInfo
+      {
+        Transaction = transaction,
+        User = user.ToInfo(),
+        RewardTransaction = _rewardService.GetByEntity(
+          transaction.UserId,
+          Reward.RewardTransactionEntityType.Payout,
+          transaction.Id)
+      };
     }
 
     public PayoutTransaction? GetActiveByUserIdOrNull(Guid userId)
@@ -73,6 +102,89 @@ namespace Yoma.Core.Domain.Payout.Services
         .Where(o => o.UserId == userId)
         .OrderByDescending(o => o.DateCreated)
         .ThenByDescending(o => o.Id)];
+    }
+
+    public PayoutTransactionSearchResults Search(PayoutTransactionSearchFilter filter)
+    {
+      ArgumentNullException.ThrowIfNull(filter, nameof(filter));
+
+      _payoutTransactionSearchFilterValidator.ValidateAndThrow(filter);
+
+      var query = _payoutTransactionRepository.Query();
+
+      if (filter.Id.HasValue)
+        query = query.Where(o => o.Id == filter.Id.Value);
+
+      if (filter.UserId.HasValue)
+        query = query.Where(o => o.UserId == filter.UserId.Value);
+
+      if (filter.Types != null && filter.Types.Count != 0)
+      {
+        var types = filter.Types.Distinct().Select(o => o.ToString()).ToList();
+        query = query.Where(o => types.Contains(o.Type));
+      }
+
+      if (filter.Providers != null && filter.Providers.Count != 0)
+      {
+        var providers = filter.Providers.Distinct().Select(o => o.ToString()).ToList();
+        query = query.Where(o => providers.Contains(o.Provider));
+      }
+
+      if (filter.Statuses != null && filter.Statuses.Count != 0)
+      {
+        var statusIds = filter.Statuses.Distinct().Select(o => _payoutTransactionStatusService.GetByName(o.ToString()).Id).ToList();
+        query = query.Where(o => statusIds.Contains(o.StatusId));
+      }
+
+      if (filter.AmountFrom.HasValue)
+        query = query.Where(o => o.Amount >= filter.AmountFrom.Value);
+
+      if (filter.AmountTo.HasValue)
+        query = query.Where(o => o.Amount <= filter.AmountTo.Value);
+
+      if (filter.DateStart.HasValue)
+      {
+        filter.DateStart = filter.DateStart.Value.RemoveTime();
+        query = query.Where(o => o.DateCreated >= filter.DateStart.Value);
+      }
+
+      if (filter.DateEnd.HasValue)
+      {
+        filter.DateEnd = filter.DateEnd.Value.ToEndOfDay();
+        query = query.Where(o => o.DateCreated <= filter.DateEnd.Value);
+      }
+
+      if (!string.IsNullOrWhiteSpace(filter.ValueContains))
+      {
+        filter.ValueContains = filter.ValueContains.Trim();
+        var valueContains = filter.ValueContains.ToLower();
+        var id = Guid.TryParse(filter.ValueContains, out var idParsed) ? idParsed : (Guid?)null;
+
+#pragma warning disable CA1862 // Query provider does not translate StringComparison overloads
+        query = query.Where(o =>
+          (id.HasValue && (o.Id == id.Value || o.UserId == id.Value)) ||
+          (o.Username != null && o.Username.ToLower().Contains(valueContains)) ||
+          (o.UserEmail != null && o.UserEmail.ToLower().Contains(valueContains)) ||
+          (o.UserPhoneNumber != null && o.UserPhoneNumber.ToLower().Contains(valueContains)) ||
+          (o.UserDisplayName != null && o.UserDisplayName.ToLower().Contains(valueContains)) ||
+          (o.TransactionId != null && o.TransactionId.ToLower().Contains(valueContains)) ||
+          (o.ErrorReason != null && o.ErrorReason.ToLower().Contains(valueContains)));
+#pragma warning restore CA1862 // Query provider does not translate StringComparison overloads
+      }
+
+      var results = new PayoutTransactionSearchResults();
+
+      query = query.OrderByDescending(o => o.DateCreated).ThenByDescending(o => o.Id);
+
+      if (filter.PaginationEnabled)
+      {
+        results.TotalCount = query.Count();
+        query = query.Skip((filter.PageNumber.Value - 1) * filter.PageSize.Value).Take(filter.PageSize.Value);
+      }
+
+      results.Items = [.. query];
+
+      return results;
     }
 
     public async Task<PayoutTransaction> Create(Guid userId, PayoutType type, Provider provider, decimal amount, DateTimeOffset? rewardReservationExpiresAt = null)

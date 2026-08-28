@@ -15,5 +15,10 @@ namespace Yoma.Core.Domain.Core.Interfaces
     /// Returns false if the key already existed (duplicate).
     /// </summary>
     Task<bool> TryCreateAsync(string key, [CallerMemberName] string processName = "Unknown");
+
+    /// <summary>
+    /// Removes a previously created idempotency key.
+    /// </summary>
+    Task DeleteAsync(string key, [CallerMemberName] string processName = "Unknown");
   }
 }

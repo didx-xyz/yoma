@@ -25,7 +25,7 @@ journey while Yoma owns reservation, financial capacity, orchestration and recon
 
 Yoma validates Treasury capacity, creates a local payout, reserves ZLTO, initiates a short-lived
 hosted session, and finalizes or releases ZLTO from provider outcomes. The known shared lifecycle
-is in the [epic README](../README.md); provider-specific calls remain blocked.
+is in the [epic README](../README.md); the API implementation is complete and sandbox E2E is pending.
 
 ## Tasks
 
@@ -34,8 +34,8 @@ is in the [epic README](../README.md); provider-specific calls remain blocked.
 - [x] Scaffold Yellow Card hosted-session and status clients.
 - [x] Scaffold secured webhook boundary and reconciliation fallback.
 - [x] Expose profile ledger and resumable-session API contracts.
-- [ ] Implement Yellow Card requests, responses, authentication and status mapping.
-- [ ] Complete and validate the full lifecycle after the technical specification arrives.
+- [x] Implement Yellow Card requests, responses, authentication and status mapping.
+- [ ] Complete and validate the full lifecycle against the confirmed sandbox contract.
 - [ ] Complete the youth Web journey.
 
 ## Decisions
@@ -43,6 +43,8 @@ is in the [epic README](../README.md); provider-specific calls remain blocked.
 - 2026-08-04: API/domain terminology is Payout; Cash Out remains a user-facing rewards action.
 - 2026-08-05: Only one active payout per user is allowed.
 - 2026-08-05: Hosted URLs are short-lived and are refreshed on demand, not treated as durable profile state.
+- 2026-08-28: Resume is available only for an active, non-terminal payout. Although IXO can technically
+  reopen a completed hosted session, Yoma treats Completed as final and does not expose a resume action.
 
 ## Links
 

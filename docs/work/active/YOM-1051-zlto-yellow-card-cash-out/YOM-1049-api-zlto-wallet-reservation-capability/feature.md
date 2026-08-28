@@ -32,13 +32,16 @@ contracts. The reservation ID is persisted in Yoma's reward transaction ledger.
 - [x] Supply correlation/idempotency and Yellow Card/Yoma actor values.
 - [x] Expose reserved balance separately from available wallet balance.
 - [x] Document automatic expiry and rare lost-reservation recovery behavior.
-- [ ] Set the final reservation expiry from Yellow Card expiry plus a processing buffer.
+- [x] Set the final reservation expiry to 30 hours for the confirmed IXO lifecycle.
 - [ ] Validate against the final end-to-end provider flow.
 
 ## Decisions
 
 - 2026-08-11: `expires_at` is a threshold; ZLTO releases after expiry processing, not necessarily at the exact instant.
 - 2026-08-11: If local persistence and inline release both fail, the user waits for ZLTO automatic expiry; no unsupported lookup is assumed.
+- 2026-08-27: IXO keeps unconfirmed payouts active for 24 hours and may take up to six additional hours
+  after confirmation to reach a terminal state. The ZLTO reservation is fixed at 30 hours as a safety net;
+  webhooks and reconciliation still commit or release immediately when a terminal outcome arrives.
 
 ## Links
 

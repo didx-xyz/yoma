@@ -42,13 +42,13 @@ frozen and shared rather than re-decided per ticket.
 | [`YOM-1061-organization-admin-organization-reward-pools-financial-year/`](./YOM-1061-organization-admin-organization-reward-pools-financial-year/feature.md) | [YOM-1061](https://linear.app/didx/issue/YOM-1061) | both | — | in-progress — API complete, web hardening pending |
 | [`YOM-1062-api-organization-domain/`](./YOM-1062-api-organization-domain/feature.md) | [YOM-1062](https://linear.app/didx/issue/YOM-1062) | api | — | review |
 | [`YOM-1095-referrals-admin-reward-pools-and-treasury-financial-year-alignment/`](./YOM-1095-referrals-admin-reward-pools-and-treasury-financial-year-alignment/feature.md) | [YOM-1095](https://linear.app/didx/issue/YOM-1095) | both | — | in-progress — API complete, web hardening pending |
-| [`YOM-1052-youth-yellow-card-cash-out/`](./YOM-1052-youth-yellow-card-cash-out/feature.md) | [YOM-1052](https://linear.app/didx/issue/YOM-1052) | both | — | in-progress — provider contract outstanding |
+| [`YOM-1052-youth-yellow-card-cash-out/`](./YOM-1052-youth-yellow-card-cash-out/feature.md) | [YOM-1052](https://linear.app/didx/issue/YOM-1052) | both | — | in-progress — provider implementation and E2E |
 | [`YOM-1049-api-zlto-wallet-reservation-capability/`](./YOM-1049-api-zlto-wallet-reservation-capability/feature.md) | [YOM-1049](https://linear.app/didx/issue/YOM-1049) | api | — | in-progress — implemented, E2E pending |
 | [`YOM-1056-api-zlto-infrastructure-integration/`](./YOM-1056-api-zlto-infrastructure-integration/feature.md) | [YOM-1056](https://linear.app/didx/issue/YOM-1056) | api | — | in-progress — implemented, E2E pending |
-| [`YOM-1057-api-payout-domain-and-rewards-integration/`](./YOM-1057-api-payout-domain-and-rewards-integration/feature.md) | [YOM-1057](https://linear.app/didx/issue/YOM-1057) | api | — | in-progress — scaffolded, provider paths pending |
-| [`YOM-1055-api-yellow-card-hosted-payout-integration/`](./YOM-1055-api-yellow-card-hosted-payout-integration/feature.md) | [YOM-1055](https://linear.app/didx/issue/YOM-1055) | api | — | blocked |
-| [`YOM-1059-api-yellow-card-payout-status-integration/`](./YOM-1059-api-yellow-card-payout-status-integration/feature.md) | [YOM-1059](https://linear.app/didx/issue/YOM-1059) | api | — | blocked |
-| [`YOM-1077-sre-webhooks-and-yellow-card-configuration/`](./YOM-1077-sre-webhooks-and-yellow-card-configuration/feature.md) | [YOM-1077](https://linear.app/didx/issue/YOM-1077) | api/SRE | — | blocked |
+| [`YOM-1057-api-payout-domain-and-rewards-integration/`](./YOM-1057-api-payout-domain-and-rewards-integration/feature.md) | [YOM-1057](https://linear.app/didx/issue/YOM-1057) | api | — | in-progress — implemented, E2E pending |
+| [`YOM-1055-api-yellow-card-hosted-payout-integration/`](./YOM-1055-api-yellow-card-hosted-payout-integration/feature.md) | [YOM-1055](https://linear.app/didx/issue/YOM-1055) | api | — | in-progress — client implemented, E2E pending |
+| [`YOM-1059-api-yellow-card-payout-status-integration/`](./YOM-1059-api-yellow-card-payout-status-integration/feature.md) | [YOM-1059](https://linear.app/didx/issue/YOM-1059) | api | — | in-progress — implemented, E2E pending |
+| [`YOM-1077-sre-webhooks-and-yellow-card-configuration/`](./YOM-1077-sre-webhooks-and-yellow-card-configuration/feature.md) | [YOM-1077](https://linear.app/didx/issue/YOM-1077) | api/SRE | — | in-progress — environment configuration pending |
 | [`YOM-1072-ui-treasury-admin/`](./YOM-1072-ui-treasury-admin/feature.md)                                                           | [YOM-1072](https://linear.app/didx/issue/YOM-1072) | web  | T0, T1     | in-progress — dev complete, browser pass owed |
 | [`YOM-1063-ui-organization-and-opportunity-admin/`](./YOM-1063-ui-organization-and-opportunity-admin/feature.md)                   | [YOM-1063](https://linear.app/didx/issue/YOM-1063) | web  | T2, T3     | in-progress — dev complete, T3 reduced |
 | [`YOM-1073-ui-referral-program-rewards-create-update-info/`](./YOM-1073-ui-referral-program-rewards-create-update-info/feature.md) | [YOM-1073](https://linear.app/didx/issue/YOM-1073) | web  | T4         | in-progress — dev complete, browser pass owed |
@@ -75,7 +75,7 @@ Tickets with no folder because no implementation belongs to them yet:
 | Ticket | Area | Note |
 | ------ | ---- | ---- |
 | [YOM-1054](https://linear.app/didx/issue/YOM-1054) | business | High-level requirements only. |
-| [YOM-1079](https://linear.app/didx/issue/YOM-1079) | business/provider | IXO/Yellow Card technical specification still outstanding. |
+| [YOM-1079](https://linear.app/didx/issue/YOM-1079) | business/provider | Sandbox contract received; production configuration and credentials remain outstanding. |
 | [YOM-1048](https://linear.app/didx/issue/YOM-1048) | obsolete | Chimoney-only ticket remains in Linear although that provider was dropped. |
 
 ### API implementation state
@@ -86,10 +86,22 @@ the Treasury figures were also validated through local API/database probes. The 
 - Treasury and Organization financial-year capability is implemented and manually tested.
 - ZLTO reserve/commit/release and reserved wallet balance are implemented against ZLTO's contract.
 - Payout persistence, Reward linkage, capacity, profile ledger, session and reconciliation shells exist.
-- Yellow Card hosted-session, webhook authentication, payload/status mapping and optional polling are
-  not implemented because IXO has not supplied the technical specification.
+- Admin Treasury payout transaction lookup and paginated search are exposed from the Treasury API.
+  Search returns lightweight payout and user identity rows; retrieval by id adds the linked ZLTO transaction.
+- Yellow Card OAuth authentication, hosted payout initiation, refreshed-session lookup and
+  reconciliation status lookup are implemented against IXO's generated sandbox OpenAPI.
+- Yellow Card raw-body HMAC authentication, replay suppression and payload/status processing are
+  implemented. Payout.Transaction and Reward.Transaction remain the authoritative processing
+  records; the polling fallback reconciles missed or failed deliveries.
 - The existing Linear description still says a payment URL is persisted. The code deliberately does
   not treat the short-lived URL as durable profile state; an active session is refreshed on demand.
+- IXO hosted sessions last approximately 30 minutes and may be refreshed while the payout is active.
+  Although IXO can technically reopen a completed hosted session, Yoma treats Completed as final and does
+  not offer a resume action. An unconfirmed payout remains resumable
+  for 24 hours; after confirmation it cannot expire and reaches Completed or Failed within approximately six
+  hours at worst. The ZLTO reservation is therefore fixed at
+  30 hours. Webhooks and five-minute reconciliation are the authoritative early commit/release triggers;
+  reservation expiry is only the final safety net.
 - Cash-out is user-facing wording. API/domain identifiers use provider-neutral `Payout` terminology.
 
 ### Why each child exists
@@ -116,9 +128,8 @@ the Treasury figures were also validated through local API/database probes. The 
 | YOM-1073 | Surface referral program reward configuration and capacity in admin UI. |
 | YOM-1077 | Provision secure, environment-specific provider/webhook configuration. |
 
-Blocker ownership: IXO/Yellow Card owns the hosted-session, webhook/status and expiry contract;
-Adrian owns API completion and E2E validation; Robbie/SRE owns environment configuration; Jason
-owns Web completion after the contract stabilises.
+Ownership: IXO/Yellow Card owns production configuration and credentials; Adrian owns API completion
+and E2E validation; Robbie/SRE owns environment configuration; Jason owns Web completion.
 
 ## Shared Contract
 

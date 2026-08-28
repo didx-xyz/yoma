@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System.Text;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
@@ -16,6 +18,7 @@ using Yoma.Core.Domain.Payout.Interfaces;
 using Yoma.Core.Domain.Reward.Interfaces;
 using Yoma.Core.Infrastructure.Keycloak;
 using Yoma.Core.Infrastructure.Keycloak.Models;
+using Yoma.Core.Infrastructure.IXO.YellowCard;
 using Yoma.Core.Infrastructure.IXO.YellowCard.Interfaces;
 using Yoma.Core.Infrastructure.IXO.YellowCard.Models;
 
@@ -41,7 +44,8 @@ namespace Yoma.Core.Api.Controllers
     private readonly IPayoutService _payoutService;
     private readonly IYellowCardWebhookParser _yellowCardWebhookParser;
 
-    private const string Key_Prefix = "keycloak_event";
+    private const string Keycloak_Key_Prefix = "keycloak_event";
+    private const string YellowCard_Key_Prefix = "yellowcard_event";
     #endregion
 
     #region Constructors
@@ -74,6 +78,11 @@ namespace Yoma.Core.Api.Controllers
     #endregion
 
     #region Public Members
+    /// <summary>
+    /// Authenticates and acknowledges the Keycloak webhook before processing it after the response completes.
+    /// Identity-profile synchronization is recoverable and does not require the sender to retry when downstream
+    /// processing fails; failures are logged. Do not use this acknowledgement pattern for financial webhooks.
+    /// </summary>
     [HttpPost("webhook/keycloak")]
     public IActionResult ReceiveKeycloakWebhook([FromBody] JObject request)
     {
@@ -123,7 +132,7 @@ namespace Yoma.Core.Api.Controllers
               return;
             }
 
-            var idempotencyKey = $"{Key_Prefix}:{payload.Id.Trim()}";
+            var idempotencyKey = $"{Keycloak_Key_Prefix}:{payload.Id.Trim()}";
             var proceed = true;
             try
             {
@@ -172,33 +181,114 @@ namespace Yoma.Core.Api.Controllers
       }
     }
 
+    /// <summary>
+    /// Authenticates and processes the Yellow Card financial webhook inline. Success is acknowledged only after
+    /// the payout, reward reservation and Treasury state are durably processed; failures return an error so IXO can
+    /// retry. This must not move to <see cref="HttpResponse.OnCompleted(Func{Task})"/> without a durable queue/outbox.
+    /// </summary>
     [HttpPost("webhook/yellowcard")]
-    public async Task<IActionResult> ReceiveYellowCardWebhook([FromBody] JObject request)
+    public async Task<IActionResult> ReceiveYellowCardWebhook()
     {
-      if (request == null)
-        return BadRequest();
+      string requestBody;
+      using (var reader = new StreamReader(
+        Request.Body,
+        Encoding.UTF8,
+        detectEncodingFromByteOrderMarks: false,
+        bufferSize: 1024,
+        leaveOpen: true))
+        requestBody = await reader.ReadToEndAsync();
 
-      var payload = request.ToObject<YellowCardWebhookEvent>();
-      if (payload == null)
-        return BadRequest();
+      YellowCardWebhookResult webhook;
 
       try
       {
-        // TODO [Yellow Card]: Authenticate the webhook according to the confirmed IXO specification.
-        // Signature validation may require the exact raw request body rather than the deserialized event.
-        var response = _yellowCardWebhookParser.Parse(payload);
-
-        await _payoutService.ProcessStatus(response);
-
-        // Acknowledge only after the payout outcome was processed successfully so provider retries remain possible.
-        return Ok();
+        webhook = _yellowCardWebhookParser.Parse(
+          requestBody,
+          Request.Headers[YellowCardWebhookHeaders.Id].ToString(),
+          Request.Headers[YellowCardWebhookHeaders.Timestamp].ToString(),
+          Request.Headers[YellowCardWebhookHeaders.Signature].ToString());
       }
-      catch (NotImplementedException ex)
+      catch (UnauthorizedAccessException ex)
       {
         if (_logger.IsEnabled(LogLevel.Warning))
-          _logger.LogWarning(ex, "Yellow Card webhook received before the integration was implemented");
+          _logger.LogWarning("Yellow Card webhook authentication failed: {errorMessage}", ex.Message);
 
-        return StatusCode(StatusCodes.Status501NotImplemented);
+        return Unauthorized();
+      }
+      catch (JsonException ex)
+      {
+        if (_logger.IsEnabled(LogLevel.Warning))
+          _logger.LogWarning("Invalid Yellow Card webhook JSON received: {errorMessage}", ex.Message);
+
+        return BadRequest();
+      }
+      catch (ArgumentException ex)
+      {
+        if (_logger.IsEnabled(LogLevel.Warning))
+          _logger.LogWarning("Invalid Yellow Card webhook payload received: {errorMessage}", ex.Message);
+
+        return BadRequest();
+      }
+
+      var idempotencyKey = $"{YellowCard_Key_Prefix}:{webhook.EventId}";
+      var idempotencyKeyCreated = false;
+      try
+      {
+        idempotencyKeyCreated = await _idempotencyService.TryCreateAsync(idempotencyKey);
+        if (!idempotencyKeyCreated)
+        {
+          if (_logger.IsEnabled(LogLevel.Information))
+            _logger.LogInformation("Duplicate Yellow Card webhook event suppressed (id={eventId})", webhook.EventId);
+
+          return Ok();
+        }
+      }
+      catch (Exception ex)
+      {
+        // Payout status transitions are independently idempotent and serialized by payout id. Continue when the
+        // volatile replay cache is unavailable so a legitimate terminal outcome is never dropped.
+        if (_logger.IsEnabled(LogLevel.Error))
+          _logger.LogError(ex, "Yellow Card webhook idempotency check failed for event '{eventId}'; processing continues", webhook.EventId);
+      }
+
+      try
+      {
+        await _payoutService.ProcessStatus(webhook.PayoutStatus);
+
+        if (_logger.IsEnabled(LogLevel.Information))
+          _logger.LogInformation(
+            "Yellow Card webhook event '{eventId}' processed for Yoma payout transaction '{payoutId}' with status '{status}'",
+            webhook.EventId, webhook.PayoutStatus.Id, webhook.PayoutStatus.Status);
+
+        // Acknowledge only after the payout and its reward reservation state were persisted successfully.
+        return Ok();
+      }
+      catch (Exception ex)
+      {
+        if (idempotencyKeyCreated)
+        {
+          try
+          {
+            // Allow IXO's at-least-once delivery to retry a failed processing attempt immediately.
+            await _idempotencyService.DeleteAsync(idempotencyKey);
+          }
+          catch (Exception deleteException)
+          {
+            if (_logger.IsEnabled(LogLevel.Error))
+              _logger.LogError(
+                deleteException,
+                "Failed to remove Yellow Card webhook idempotency key for event '{eventId}'; payout reconciliation remains the fallback",
+                webhook.EventId);
+          }
+        }
+
+        if (_logger.IsEnabled(LogLevel.Error))
+          _logger.LogError(
+            ex,
+            "Failed to process Yellow Card webhook event '{eventId}' for Yoma payout transaction '{payoutId}': {errorMessage}",
+            webhook.EventId, webhook.PayoutStatus.Id, ex.Message);
+
+        return StatusCode(StatusCodes.Status500InternalServerError);
       }
     }
     #endregion
@@ -212,7 +302,7 @@ namespace Yoma.Core.Api.Controllers
         return;
       }
 
-      var lockKey = $"{Key_Prefix}:{userId}";
+      var lockKey = $"{Keycloak_Key_Prefix}:{userId}";
       var lockDuration = TimeSpan.FromSeconds(_appSettings.DistributedLockKeycloakEventDurationInSeconds);
 
       await _distributedLockService.RunWithLockAsync(lockKey, lockDuration, async () =>

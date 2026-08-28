@@ -135,8 +135,9 @@ namespace Yoma.Core.Domain.Core.Models
     public int MarketplaceItemReservationExpirationInMinutes { get; set; }
 
     /// <summary>
-    /// Provisional ZLTO payout reservation duration. ZLTO imposes no minimum or maximum; once confirmed,
-    /// configure this after the Yellow Card payout expiry plus the required processing buffer.
+    /// Payout reward reservation duration in minutes. The configured 30-hour threshold covers IXO's
+    /// 24-hour pre-confirmation resume window plus its bounded six-hour post-confirmation processing window.
+    /// Terminal webhooks and reconciliation normally commit or release the reservation before this threshold.
     /// </summary>
     public int PayoutRewardReservationExpirationInMinutes { get; set; }
 

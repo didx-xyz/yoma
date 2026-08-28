@@ -17,7 +17,6 @@ reservation/burn ledger and Treasury retains financial capacity and cumulative a
 
 ## Out of Scope
 
-- Actual Yellow Card transport until its contract is supplied.
 - Automatic recovery beyond webhook reconciliation and a supported polling fallback.
 - Admin/manual payout endpoints in the first release.
 
@@ -33,10 +32,11 @@ payout, enforce one active payout per user, and reconcile terminal outcomes idem
 - [x] Add payout creation and status-transition service shell.
 - [x] Integrate Treasury capacity and cumulative accounting.
 - [x] Add Rewards reservation ledger states and payout link.
-- [x] Add profile ledger and active payout information.
+- [x] Add profile ledger and active payout information; active is the resumable state.
 - [x] Add reconciliation selection, webhook entry and polling shell.
 - [x] Harden provider-reference, retry and terminal-first persistence.
-- [ ] Complete provider mappings and lifecycle branches against the Yellow Card specification.
+- [x] Complete provider mappings and lifecycle branches against the Yellow Card specification.
+- [x] Expose Admin Treasury payout lookup and lightweight paginated search; enrich linked ZLTO detail only by id.
 - [ ] Validate expiry, delayed webhook and polling behavior end to end.
 
 ## Decisions
@@ -44,6 +44,16 @@ payout, enforce one active payout per user, and reconcile terminal outcomes idem
 - 2026-08-04: Payout owns monetary orchestration; Rewards owns ZLTO reserve/release/process.
 - 2026-08-04: Payout states are Initiated, Processing and terminal outcomes; ZLTO states are Reserved, Released and Processed.
 - 2026-08-05: Yoma's transaction log is the admin/query source; provider lookup is reconciliation fallback only.
+- 2026-08-27: Payout.Transaction remains the payout processing/audit record and
+  Reward.Transaction remains the ZLTO reservation/burn/release record. Webhook event transport
+  state is not duplicated into a second database workflow.
+- 2026-08-27: Treasury exposes the administrative query boundary, but transaction retrieval and
+  filtering remain owned by the Payout domain. This does not introduce manual payout actions.
+- 2026-08-28: Search returns lightweight transaction rows with the standard youth identity fields:
+  user id, username, email, phone number and display name. The repository flattens these fields from the User
+  relationship into every payout query, consistent with other transaction-style domain models. Search does not
+  resolve linked Reward transactions per row; retrieval by id composes the full audit view. Pagination remains
+  API-required, while the service keeps the standard conditional pagination block for future flexibility.
 
 ## Links
 

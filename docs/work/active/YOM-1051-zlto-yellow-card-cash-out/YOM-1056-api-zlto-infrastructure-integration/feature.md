@@ -31,6 +31,7 @@ wallet client patterns.
 - [x] Refactor existing reward-provider methods to request/response models.
 - [x] Preserve existing wallet creation/update behavior.
 - [x] Implement reservation create, commit and release.
+- [x] Apply an explicit transport timeout to payout reservation, commit and release calls.
 - [x] Extend wallet balance with provider reserved balance.
 - [x] Align confirmed provider/actor values with ZLTO guidance.
 - [ ] End-to-end staging validation with the complete payout flow.
@@ -39,6 +40,8 @@ wallet client patterns.
 
 - 2026-07-28: Reward provider interfaces stay reward-scoped; payout orchestration belongs to Payout.
 - 2026-07-28: Action-first method naming is retained (`Reserve`, `Commit`, `Release`, `Create`).
+- 2026-08-27: ZLTO payout operations use a dedicated 30-second transport timeout. This is separate
+  from the configurable reservation expiration threshold that controls how long funds remain reserved.
 
 ## Links
 

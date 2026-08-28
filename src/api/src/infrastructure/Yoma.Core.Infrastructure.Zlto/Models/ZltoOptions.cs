@@ -14,6 +14,12 @@ namespace Yoma.Core.Infrastructure.Zlto.Models
 
     public int PartnerTokenExpirationIntervalInHours { get; set; }
 
+    /// <summary>
+    /// Transport timeout for reservation, commit and release calls used by the payout flow.
+    /// This is independent from the reservation expiration threshold supplied to ZLTO.
+    /// </summary>
+    public int PayoutRequestTimeoutSeconds { get; set; }
+
     public Partner Partner { get; set; } = null!;
 
     public Wallet Wallet { get; set; } = null!;

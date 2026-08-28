@@ -6,6 +6,14 @@ namespace Yoma.Core.Domain.Payout.Models
 
     public Guid UserId { get; set; }
 
+    public string Username { get; set; } = null!;
+
+    public string? UserEmail { get; set; }
+
+    public string? UserPhoneNumber { get; set; }
+
+    public string UserDisplayName { get; set; } = null!;
+
     public string Type { get; set; } = null!;
 
     public string Provider { get; set; } = null!;

@@ -48,6 +48,11 @@ namespace Yoma.Core.Domain.Entity.Models
 
     public UserProfileZlto Zlto { get; set; } = null!;
 
+    /// <summary>
+    /// Identifies the user's current active payout. When <see cref="UserProfilePayout.Active"/> is true,
+    /// the UI must offer Continue cash-out instead of starting another payout; continuing requests a fresh
+    /// hosted session for the existing provider transaction.
+    /// </summary>
     public UserProfilePayout Payout { get; set; } = null!;
 
     public UserProfileReferral Referral { get; set; } = null!;

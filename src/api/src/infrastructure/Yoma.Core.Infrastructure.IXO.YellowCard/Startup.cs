@@ -17,6 +17,7 @@ namespace Yoma.Core.Infrastructure.IXO.YellowCard
 
     public static void ConfigureServices_InfrastructurePayoutProvider(this IServiceCollection services)
     {
+      services.AddSingleton<IYellowCardAuthService, YellowCardAuthService>();
       services.AddScoped<IPayoutProviderClientFactory, YellowCardClientFactory>();
       services.AddScoped<IYellowCardWebhookParser, YellowCardWebhookParser>();
     }

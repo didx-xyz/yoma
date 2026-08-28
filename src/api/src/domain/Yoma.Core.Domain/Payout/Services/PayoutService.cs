@@ -9,6 +9,7 @@ using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Entity.Interfaces;
 using Yoma.Core.Domain.Entity.Models;
+using Yoma.Core.Domain.Lookups.Interfaces;
 using Yoma.Core.Domain.Payout.Extensions;
 using Yoma.Core.Domain.Payout.Interfaces;
 using Yoma.Core.Domain.Payout.Interfaces.Lookups;
@@ -33,6 +34,7 @@ namespace Yoma.Core.Domain.Payout.Services
     private readonly TimeSpan _payoutRewardReservationExpiration;
     private readonly IDistributedLockService _distributedLockService;
     private readonly IUserService _userService;
+    private readonly ICountryService _countryService;
     private readonly IWalletService _walletService;
     private readonly IRewardService _rewardService;
     private readonly IRewardProviderClient _rewardProviderClient;
@@ -56,6 +58,7 @@ namespace Yoma.Core.Domain.Payout.Services
       IOptions<AppSettings> appSettings,
       IDistributedLockService distributedLockService,
       IUserService userService,
+      ICountryService countryService,
       IWalletService walletService,
       IRewardService rewardService,
       IRewardProviderClientFactory rewardProviderClientFactory,
@@ -76,6 +79,7 @@ namespace Yoma.Core.Domain.Payout.Services
       _payoutRewardReservationExpiration = TimeSpan.FromMinutes(settings.PayoutRewardReservationExpirationInMinutes);
       _distributedLockService = distributedLockService ?? throw new ArgumentNullException(nameof(distributedLockService));
       _userService = userService ?? throw new ArgumentNullException(nameof(userService));
+      _countryService = countryService ?? throw new ArgumentNullException(nameof(countryService));
       _walletService = walletService ?? throw new ArgumentNullException(nameof(walletService));
       _rewardService = rewardService ?? throw new ArgumentNullException(nameof(rewardService));
       _rewardProviderClient = (rewardProviderClientFactory ?? throw new ArgumentNullException(nameof(rewardProviderClientFactory))).CreateClient();
@@ -93,6 +97,7 @@ namespace Yoma.Core.Domain.Payout.Services
     public async Task<PayoutTransaction> Payout(Guid userId, decimal amount)
     {
       var user = GetUser(userId);
+      ValidateUserProfileForPayout(user);
       var payout = await CreatePayout(userId, PayoutType.Payout, Provider_Default, amount, null, false);
 
       var result = await _distributedLockService.RunWithLockAsync(GetLockKey(payout.Id), _payoutLockDuration, () => InitiatePayout(payout, user));
@@ -147,15 +152,30 @@ namespace Yoma.Core.Domain.Payout.Services
         throw new ArgumentNullException(nameof(response), "Provider transaction id is empty");
       response.TransactionId = transactionId;
 
+      if (!Enum.IsDefined(response.Provider))
+        throw new ArgumentOutOfRangeException(nameof(response), $"Payout provider of '{response.Provider}' is not supported");
+
 #pragma warning disable CA1862 // The StringComparison overload cannot be translated by Entity Framework
-      var payout = _payoutTransactionRepository.Query().SingleOrDefault(o =>
-        o.Provider.ToLower() == response.Provider.ToString().ToLower() && o.TransactionId == response.TransactionId);
+      var query = _payoutTransactionRepository.Query()
+        .Where(o => o.Provider.ToLower() == response.Provider.ToString().ToLower());
 #pragma warning restore CA1862
 
-      if (payout == null)
-        throw new EntityNotFoundException($"{nameof(PayoutTransaction)} with provider transaction id '{response.TransactionId}' does not exist");
+      // Webhooks and reconciliation responses carry Yoma's idempotency/reference key. Prefer it over the
+      // provider transaction id so an authenticated early webhook can complete initiation persistence safely.
+      var payout = response.Id != Guid.Empty
+        ? query.SingleOrDefault(o => o.Id == response.Id)
+        : query.SingleOrDefault(o => o.TransactionId == response.TransactionId);
 
-      await _distributedLockService.RunWithLockAsync(GetLockKey(payout.Id), _payoutLockDuration, () => ProcessStatus(payout, response));
+      if (payout == null)
+        throw new EntityNotFoundException(
+          response.Id == Guid.Empty
+            ? $"{nameof(PayoutTransaction)} with provider transaction id '{response.TransactionId}' does not exist"
+            : $"{nameof(PayoutTransaction)} with id '{response.Id}' does not exist for provider '{response.Provider}'");
+
+      await _distributedLockService.RunWithLockAsync(
+        GetLockKey(payout.Id),
+        _payoutLockDuration,
+        () => ProcessStatus(GetPayout(payout.Id), response));
     }
 
     public List<PayoutTransaction> ListForReconciliation(int batchSize, List<Guid> idsToSkip)
@@ -180,17 +200,19 @@ namespace Yoma.Core.Domain.Payout.Services
     #region Private Members
     private async Task<PayoutSession> PayoutRewards(Guid userId, decimal amount, DateTimeOffset rewardReservationExpiresAt)
     {
-      // TODO [Yellow Card payout expiration]: Once the provider contract is confirmed, set the ZLTO reservation
-      // expiry after the Yellow Card payout expiry plus a processing buffer for delayed responses, reconciliation
-      // and retries. ZLTO imposes no duration limits and treats this as a threshold for asynchronous auto-release.
+      // IXO keeps an unconfirmed payout resumable for 24 hours and may process a confirmed payout for up to
+      // six additional hours. The 30-hour reward reservation covers that complete provider lifecycle. Webhooks
+      // and five-minute reconciliation still release or commit immediately; expiry is only the final safety net.
+      // The reward provider treats the supplied expiration as an asynchronous threshold rather than an exact release instant.
       if (rewardReservationExpiresAt <= DateTimeOffset.UtcNow)
-        throw new ArgumentOutOfRangeException(nameof(rewardReservationExpiresAt), "ZLTO reservation expiration must be in the future");
+        throw new ArgumentOutOfRangeException(nameof(rewardReservationExpiresAt), "Reward reservation expiration must be in the future");
 
       ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(amount, default, nameof(amount));
       if (decimal.Truncate(amount) != amount)
         throw new ArgumentException("Payout amount must be a whole number", nameof(amount));
 
       var user = GetUser(userId);
+      ValidateUserProfileForPayout(user);
       var (walletStatus, walletBalance) = await _walletService.GetWalletStatusAndBalance(userId);
       if (walletStatus != Reward.WalletCreationStatus.Created)
         throw new ValidationException("The reward wallet is not ready for payout");
@@ -218,7 +240,11 @@ namespace Yoma.Core.Domain.Payout.Services
         }
         catch (Exception ex)
         {
-          await TryMarkFailedBeforePayout(payout, $"Failed to reserve rewards for payout: {ex.Message}");
+          // A timeout or transport failure can occur after the reward provider accepted the reservation but before Yoma
+          // received its id. The provider cannot currently retrieve that reservation by Yoma's external reference, so never mark the
+          // payout failed and permit another cash-out while the outcome is ambiguous. Reconciliation keeps the payout
+          // active until the configured reservation threshold has elapsed and the provider's expiry processor releases it.
+          await TryMarkReconciliationRequired(payout, $"Reward reservation outcome is not confirmed: {ex.Message}");
           throw;
         }
 
@@ -248,11 +274,11 @@ namespace Yoma.Core.Domain.Payout.Services
 
       try
       {
-        // ZLTO exposes reservation retrieval only by reservation id. If both persistence and the immediate release
-        // fail after a successful reservation, Yoma has no durable reservation id to reconcile. No payout was
-        // initiated, so do not query the payout provider: wait for the ZLTO expiry threshold, close the local payout,
-        // and let ZLTO's expiry processor release the wallet balance. Until then the reduced available balance
-        // intentionally prevents the user from starting another payout with the same reserved funds.
+        // The reward provider exposes reservation retrieval only by reservation id. If creation has an ambiguous outcome,
+        // or both persistence and the immediate release fail after a successful reservation, Yoma has no durable
+        // reservation id to reconcile. No payout was initiated, so do not query the payout provider: wait for the reward
+        // reservation expiry threshold, close the local payout, and let its provider release any reserved wallet balance.
+        // Until then the active payout intentionally prevents another payout that could spend the same funds.
         if (IsRewardPayout(payout) && string.IsNullOrEmpty(payout.TransactionId))
         {
           var rewardTransaction = _rewardService.GetByEntity(payout.UserId, Reward.RewardTransactionEntityType.Payout, payout.Id);
@@ -272,8 +298,6 @@ namespace Yoma.Core.Domain.Payout.Services
           return;
         }
 
-        // TODO [Yellow Card]: Confirm lookup by Yoma idempotency key when TransactionId is unknown.
-        // If unsupported, define safe idempotent re-initiation; never risk creating a duplicate payout.
         var response = await _payoutProviderClient.GetStatus(new PayoutStatusRequest
         {
           Id = payout.Id,
@@ -295,6 +319,26 @@ namespace Yoma.Core.Domain.Payout.Services
         throw new ArgumentNullException(nameof(userId));
 
       return _userService.GetById(userId, false, false);
+    }
+
+    /// <summary>
+    /// Validates the profile fields required by the hosted payout provider before Yoma creates a payout
+    /// or reserves the reward. This prevents incomplete profile data from leaving funds unnecessarily reserved.
+    /// </summary>
+    private static void ValidateUserProfileForPayout(User user)
+    {
+      ArgumentNullException.ThrowIfNull(user);
+
+      var missingFields = new List<string>();
+      if (string.IsNullOrWhiteSpace(user.Email)) missingFields.Add("email address");
+      if (string.IsNullOrWhiteSpace(user.FirstName)) missingFields.Add("first name");
+      if (string.IsNullOrWhiteSpace(user.Surname)) missingFields.Add("surname");
+      if (!user.CountryId.HasValue) missingFields.Add("country");
+      if (string.IsNullOrWhiteSpace(user.Gender)) missingFields.Add("gender");
+      if (!user.DateOfBirth.HasValue) missingFields.Add("date of birth");
+
+      if (missingFields.Count != 0)
+        throw new ValidationException($"Complete the following profile information before cashing out: {string.Join(", ", missingFields)}");
     }
 
     private async Task<PayoutTransaction> CreatePayout(
@@ -352,8 +396,16 @@ namespace Yoma.Core.Domain.Payout.Services
         var response = await _payoutProviderClient.Initiate(new PayoutRequest
         {
           TransactionId = payout.Id,
-          Email = user.Email,
+          UserId = user.Id,
+          Username = user.Username,
+          Email = user.Email!,
           PhoneNumber = user.PhoneNumber,
+          FirstName = user.FirstName!,
+          Surname = user.Surname!,
+          CountryCodeAlpha2 = _countryService.GetById(user.CountryId!.Value).CodeAlpha2,
+          Gender = user.Gender!,
+          DateOfBirth = user.DateOfBirth!.Value,
+          Education = user.Education,
           AmountInUSD = payout.Amount
         });
 
@@ -391,6 +443,9 @@ namespace Yoma.Core.Domain.Payout.Services
       if (!string.Equals(payout.Provider, response.Provider.ToString(), StringComparison.OrdinalIgnoreCase))
         throw new DataInconsistencyException($"Payout provider mismatch detected for payout transaction with id '{payout.Id}'");
 
+      if (response.Id != Guid.Empty && payout.Id != response.Id)
+        throw new DataInconsistencyException($"Yoma payout transaction id mismatch detected for payout transaction with id '{payout.Id}'");
+
       if (!string.IsNullOrEmpty(payout.TransactionId) &&
           !string.Equals(payout.TransactionId, response.TransactionId, StringComparison.Ordinal))
         throw new DataInconsistencyException($"Provider transaction id mismatch detected for payout transaction with id '{payout.Id}'");
@@ -398,6 +453,18 @@ namespace Yoma.Core.Domain.Payout.Services
       // The first confirmed provider response may already be terminal. Carry its transaction id
       // through every status path so it is persisted for audit and reconciliation.
       payout.TransactionId = response.TransactionId;
+
+      if (!Statuses_Active.Contains(payout.Status))
+      {
+        // At-least-once delivery and network reordering may deliver an already-applied terminal event or an
+        // earlier processing event after the payout closed. Never regress a terminal local transaction.
+        if (payout.Status == response.Status || response.Status == PayoutTransactionStatus.Processing)
+          return;
+
+        throw new DataInconsistencyException(
+          $"Provider reported terminal status '{response.Status}' for payout transaction with id '{payout.Id}', which is already terminal with status '{payout.Status}'");
+      }
+
       switch (response.Status)
       {
         case PayoutTransactionStatus.Processing:
@@ -425,7 +492,8 @@ namespace Yoma.Core.Domain.Payout.Services
 
     private async Task Complete(PayoutTransaction payout)
     {
-      // The ZLTO reservation must outlive the provider payout and processing buffer (see the initiation TODO).
+      // The reward reservation must outlive IXO's 24-hour pre-confirmation window and bounded six-hour
+      // post-confirmation processing window.
       // A provider-confirmed payment must never be marked Completed locally unless the reward burn was
       // committed successfully.
       RewardTransaction? rewardTransaction = null;
@@ -587,9 +655,9 @@ namespace Yoma.Core.Domain.Payout.Services
     }
 
     /// <summary>
-    /// Attempts to release a ZLTO reservation immediately when its domain transaction cannot be persisted. If this
+    /// Attempts to release a reward reservation immediately when its domain transaction cannot be persisted. If this
     /// also fails, the reservation id is written to the critical application log but cannot be recovered through the
-    /// current ZLTO API. The wallet remains reserved until ZLTO processes its expiry threshold; the payout reconciliation
+    /// current reward-provider API. The wallet remains reserved until the provider processes its expiry threshold; reconciliation
     /// path waits for that threshold and prevents another payout from using the same balance in the meantime.
     /// </summary>
     private async Task<bool> TryReleaseReservation(string reservationId, string reason)

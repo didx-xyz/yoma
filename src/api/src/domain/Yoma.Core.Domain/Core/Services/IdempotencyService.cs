@@ -57,6 +57,19 @@ namespace Yoma.Core.Domain.Core.Services
 
       return created;
     }
+
+    public async Task DeleteAsync(string key, [CallerMemberName] string processName = "Unknown")
+    {
+      ArgumentException.ThrowIfNullOrWhiteSpace(key);
+      key = key.Trim();
+
+      var redisKey = $"{IdempotencyIdentifier_Prefix}:{key}";
+      var deleted = await _connectionMultiplexer.GetDatabase().KeyDeleteAsync(redisKey);
+
+      if (deleted && _logger.IsEnabled(LogLevel.Information))
+        _logger.LogInformation("Idempotency key removed by {hostName} at {timestamp} for process {process}: {key}",
+          System.Environment.MachineName, DateTimeOffset.UtcNow, processName, redisKey);
+    }
     #endregion
   }
 }

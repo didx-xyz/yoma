@@ -129,28 +129,7 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
 
     public async Task<Domain.Reward.Models.Wallet> GetWallet(string walletId)
     {
-      if (string.IsNullOrWhiteSpace(walletId))
-        throw new ArgumentNullException(nameof(walletId));
-      walletId = walletId.Trim();
-
-      var httpResponse = await _options.Wallet.BaseUrl
-           .AppendPathSegment("get_wallet_details")
-           .AppendPathSegment(walletId)
-           .WithAuthHeaders(await GetAuthHeaders())
-           .GetAsync()
-           .EnsureSuccessStatusCodeAsync();
-
-      var response = await httpResponse.GetJsonAsync<WalletResponse>();
-
-      return new Domain.Reward.Models.Wallet
-      {
-        Id = response.WalletId,
-        OwnerId = response.OwnerId,
-        Balance = response.ZltoBalance,
-        ReservedBalance = response.ReservedZltoBalance,
-        DateCreated = response.DateCreated,
-        DateModified = response.LastUpdated
-      };
+      return await GetWalletInternal(walletId, null);
     }
 
     /// <summary>
@@ -177,7 +156,8 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
 
       ArgumentOutOfRangeException.ThrowIfGreaterThan(request.Amount, (decimal)int.MaxValue, nameof(request));
 
-      var wallet = await GetWallet(request.WalletId);
+      var requestTimeout = GetPayoutRequestTimeout();
+      var wallet = await GetWalletInternal(request.WalletId, requestTimeout);
 
       if (string.IsNullOrWhiteSpace(wallet.OwnerId))
         throw new InvalidOperationException($"Wallet owner id expected for wallet with id '{request.WalletId}'");
@@ -186,7 +166,7 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
         throw new ArgumentOutOfRangeException(nameof(request), request.Amount,
           $"Payout reservation amount cannot exceed the available wallet balance of '{wallet.Balance}'");
 
-      var authHeaders = await GetAuthHeaders();
+      var authHeaders = await GetAuthHeaders(requestTimeout);
       var transactionId = request.TransactionId.ToString();
       var httpRequest = new WalletReservationRequestCreate
       {
@@ -211,6 +191,7 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
         .AppendPathSegment("docs")
         .AppendPathSegment("reservations")
         .WithAuthHeaders(authHeaders)
+        .WithTimeout(requestTimeout)
         .PostJsonAsync(httpRequest)
         .EnsureSuccessStatusCodeAsync()
         .ReceiveJson<WalletReservationResponse>();
@@ -229,7 +210,8 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
 
       request.ExternalTransactionReference = request.ExternalTransactionReference?.Trim();
 
-      var authHeaders = await GetAuthHeaders();
+      var requestTimeout = GetPayoutRequestTimeout();
+      var authHeaders = await GetAuthHeaders(requestTimeout);
       var httpRequest = new WalletReservationRequestCommit
       {
         ExternalPayoutId = request.ExternalTransactionReference,
@@ -245,6 +227,7 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
         .AppendPathSegment(request.ReservationId)
         .AppendPathSegment("commit")
         .WithAuthHeaders(authHeaders)
+        .WithTimeout(requestTimeout)
         .PostJsonAsync(httpRequest)
         .EnsureSuccessStatusCodeAsync();
     }
@@ -257,7 +240,8 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
 
       request.Reason = request.Reason?.Trim();
 
-      var authHeaders = await GetAuthHeaders();
+      var requestTimeout = GetPayoutRequestTimeout();
+      var authHeaders = await GetAuthHeaders(requestTimeout);
       var httpRequest = new WalletReservationRequestRelease
       {
         Reason = request.Reason,
@@ -273,6 +257,7 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
         .AppendPathSegment(request.ReservationId)
         .AppendPathSegment("release")
         .WithAuthHeaders(authHeaders)
+        .WithTimeout(requestTimeout)
         .PostJsonAsync(httpRequest)
         .EnsureSuccessStatusCodeAsync();
     }
@@ -579,9 +564,37 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
     #endregion
 
     #region Private Members
-    private async Task<Dictionary<string, string>> GetAuthHeaders()
+    private async Task<Domain.Reward.Models.Wallet> GetWalletInternal(string walletId, TimeSpan? requestTimeout)
     {
-      var authHeaders = new Dictionary<string, string>([GetAuthHeaderApiKey(), await GetAuthHeaderToken()]);
+      if (string.IsNullOrWhiteSpace(walletId))
+        throw new ArgumentNullException(nameof(walletId));
+      walletId = walletId.Trim();
+
+      var httpRequest = _options.Wallet.BaseUrl
+        .AppendPathSegment("get_wallet_details")
+        .AppendPathSegment(walletId)
+        .WithAuthHeaders(await GetAuthHeaders(requestTimeout));
+
+      if (requestTimeout.HasValue)
+        httpRequest = httpRequest.WithTimeout(requestTimeout.Value);
+
+      var httpResponse = await httpRequest.GetAsync().EnsureSuccessStatusCodeAsync();
+      var response = await httpResponse.GetJsonAsync<WalletResponse>();
+
+      return new Domain.Reward.Models.Wallet
+      {
+        Id = response.WalletId,
+        OwnerId = response.OwnerId,
+        Balance = response.ZltoBalance,
+        ReservedBalance = response.ReservedZltoBalance,
+        DateCreated = response.DateCreated,
+        DateModified = response.LastUpdated
+      };
+    }
+
+    private async Task<Dictionary<string, string>> GetAuthHeaders(TimeSpan? requestTimeout = null)
+    {
+      var authHeaders = new Dictionary<string, string>([GetAuthHeaderApiKey(), await GetAuthHeaderToken(requestTimeout)]);
 
       return authHeaders;
     }
@@ -591,7 +604,7 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
       return new KeyValuePair<string, string>(_options.ApiKeyHeaderName, _options.ApiKey);
     }
 
-    private async Task<KeyValuePair<string, string>> GetAuthHeaderToken()
+    private async Task<KeyValuePair<string, string>> GetAuthHeaderToken(TimeSpan? requestTimeout = null)
     {
       if (_accessToken != null && _accessToken.DateExpire > DateTimeOffset.UtcNow)
         return new KeyValuePair<string, string>(Header_Authorization, $"{Header_Authorization_Value_Prefix} {_accessToken.AccessToken}");
@@ -602,9 +615,14 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
         Password = _options.Password
       };
 
-      var response = await _options.Partner.BaseUrl
-         .AppendPathSegment("external_partner_login")
-         .WithAuthHeader(GetAuthHeaderApiKey())
+      var httpRequest = _options.Partner.BaseUrl
+        .AppendPathSegment("external_partner_login")
+        .WithAuthHeader(GetAuthHeaderApiKey());
+
+      if (requestTimeout.HasValue)
+        httpRequest = httpRequest.WithTimeout(requestTimeout.Value);
+
+      var response = await httpRequest
          .PostJsonAsync(request)
          .EnsureSuccessStatusCodeAsync()
          .ReceiveJson<PartnerResponseLogin>();
@@ -622,6 +640,14 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
       };
 
       return new KeyValuePair<string, string>(Header_Authorization, $"{Header_Authorization_Value_Prefix} {response.AccessToken}");
+    }
+
+    private TimeSpan GetPayoutRequestTimeout()
+    {
+      if (_options.PayoutRequestTimeoutSeconds <= 0)
+        throw new InvalidOperationException($"{ZltoOptions.Section}:{nameof(_options.PayoutRequestTimeoutSeconds)} must be greater than zero");
+
+      return TimeSpan.FromSeconds(_options.PayoutRequestTimeoutSeconds);
     }
 
     private async Task<WalletAccountInfo> CreateAccount(CreateWalletRequest request)

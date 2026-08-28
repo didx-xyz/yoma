@@ -6,6 +6,11 @@ namespace Yoma.Core.Domain.Payout.Interfaces
   {
     PayoutTransaction GetById(Guid id);
 
+    /// <summary>
+    /// Returns the administrative payout view, including user identity and the linked reward funding transaction.
+    /// </summary>
+    PayoutTransactionInfo GetInfoById(Guid id);
+
     PayoutTransaction? GetActiveByUserIdOrNull(Guid userId);
 
     /// <summary>
@@ -15,6 +20,11 @@ namespace Yoma.Core.Domain.Payout.Interfaces
     decimal GetTotalPending();
 
     List<PayoutTransaction> ListByUserId(Guid userId);
+
+    /// <summary>
+    /// Searches Yoma's authoritative payout audit records for Treasury administration.
+    /// </summary>
+    PayoutTransactionSearchResults Search(PayoutTransactionSearchFilter filter);
 
     Task<PayoutTransaction> Create(Guid userId, PayoutType type, Payout.Provider provider, decimal amount, DateTimeOffset? rewardReservationExpiresAt = null);
 

@@ -27,6 +27,10 @@ namespace Yoma.Core.Infrastructure.Database.Payout.Repositories
       {
         Id = entity.Id,
         UserId = entity.UserId,
+        Username = entity.User.Email ?? entity.User.PhoneNumber ?? string.Empty,
+        UserEmail = entity.User.Email,
+        UserPhoneNumber = entity.User.PhoneNumber,
+        UserDisplayName = entity.User.DisplayName ?? entity.User.Email ?? entity.User.PhoneNumber ?? string.Empty,
         Type = entity.Type,
         Provider = entity.Provider,
         StatusId = entity.StatusId,

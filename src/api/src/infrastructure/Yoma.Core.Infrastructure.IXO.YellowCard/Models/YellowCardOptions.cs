@@ -4,6 +4,35 @@ namespace Yoma.Core.Infrastructure.IXO.YellowCard.Models
   {
     public const string Section = "IXO:YellowCard";
 
-    // TODO: Add only configuration confirmed by the Yellow Card integration and webhook specifications.
+    /// <summary>
+    /// Base URL of the IXO hosted payout API.
+    /// </summary>
+    public string BaseUrl { get; set; } = null!;
+
+    /// <summary>
+    /// OAuth2 client-credentials token path.
+    /// </summary>
+    public string AccessTokenPath { get; set; } = null!;
+
+    /// <summary>
+    /// Partner payout collection path. Status and session paths are relative to this path.
+    /// </summary>
+    public string PayoutsPath { get; set; } = null!;
+
+    public int RequestTimeoutSeconds { get; set; }
+
+    public string ClientId { get; set; } = null!;
+
+    public string ClientSecret { get; set; } = null!;
+
+    /// <summary>
+    /// Shared HMAC secret used to authenticate webhook deliveries from IXO.
+    /// </summary>
+    public string WebhookSigningSecret { get; set; } = null!;
+
+    /// <summary>
+    /// Maximum permitted clock difference for a webhook delivery timestamp.
+    /// </summary>
+    public int WebhookTimestampToleranceInMinutes { get; set; }
   }
 }

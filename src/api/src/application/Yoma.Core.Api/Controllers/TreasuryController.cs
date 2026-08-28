@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 using Yoma.Core.Domain.Core;
+using Yoma.Core.Domain.Payout.Interfaces;
+using Yoma.Core.Domain.Payout.Models;
 using Yoma.Core.Domain.Treasury.Interfaces;
 using Yoma.Core.Domain.Treasury.Models;
 
@@ -16,14 +18,17 @@ namespace Yoma.Core.Api.Controllers
     #region Class Variables
     private readonly ILogger<TreasuryController> _logger;
     private readonly ITreasuryService _treasuryService;
+    private readonly IPayoutTransactionService _payoutTransactionService;
     #endregion
 
     #region Constructor
     public TreasuryController(ILogger<TreasuryController> logger,
-        ITreasuryService treasuryService)
+        ITreasuryService treasuryService,
+        IPayoutTransactionService payoutTransactionService)
     {
       _logger = logger ?? throw new ArgumentNullException(nameof(logger));
       _treasuryService = treasuryService ?? throw new ArgumentNullException(nameof(treasuryService));
+      _payoutTransactionService = payoutTransactionService ?? throw new ArgumentNullException(nameof(payoutTransactionService));
     }
     #endregion
 
@@ -61,6 +66,39 @@ namespace Yoma.Core.Api.Controllers
       var result = _treasuryService.GetInfo();
 
       if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(Get));
+
+      return Ok(result);
+    }
+
+    [SwaggerOperation(Summary = "Get payout transaction",
+      Description = "Returns Yoma's authoritative payout audit record with the user and linked reward funding transaction")]
+    [HttpGet("payout/transaction/{id}")]
+    [Authorize(Roles = Constants.Role_Admin)]
+    public ActionResult<PayoutTransactionInfo> GetTransaction([FromRoute] Guid id)
+    {
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(GetTransaction));
+
+      var result = _payoutTransactionService.GetInfoById(id);
+
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(GetTransaction));
+
+      return Ok(result);
+    }
+
+    [SwaggerOperation(Summary = "Search payout transactions",
+      Description = "Searches Yoma's authoritative payout audit records for Treasury administration. " +
+      "Supports filtering by user, lifecycle status, payout type, provider, amount and creation date; " +
+      "the general value search includes user identity and Yoma/provider transaction references. " +
+      "Returns lightweight transaction rows; use the transaction id endpoint for linked reward funding detail")]
+    [HttpPost("payout/transaction/search")]
+    [Authorize(Roles = Constants.Role_Admin)]
+    public ActionResult<PayoutTransactionSearchResults> SearchTransactions([FromBody] PayoutTransactionSearchFilter filter)
+    {
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(SearchTransactions));
+
+      var result = _payoutTransactionService.Search(filter);
+
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(SearchTransactions));
 
       return Ok(result);
     }

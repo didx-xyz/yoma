@@ -29,8 +29,7 @@ and the validation digest are all there.
 ## Out of Scope
 
 - **Treasury configuration audit history UI** — persisted server-side, not exposed by any endpoint.
-- **Payout transaction search / history** — no endpoint. The Payout domain owns it and YOM-1072's
-  ticket says it may ship separately from the core overview and management UI.
+- **Manual payout actions** — the transaction surface is query-only.
 - **The tabs owned by sibling tickets** — Organisations and Opportunities (YOM-1063) and Referrals
   (YOM-1073) render inside this page's shell but are built and documented under their own tickets.
 
@@ -57,7 +56,8 @@ Key files:
 | FY guard                         | `lib/treasury/financialYear.ts`                      |
 | ⚠️ Dev aid, must be removed      | `lib/treasury/treasuryMockScenarios.ts`              |
 
-Endpoints: `GET /treasury`, `PATCH /treasury` (Admin), `GET /treasury/conversion/zlto-usd` (User).
+Endpoints: `GET /treasury`, `PATCH /treasury`, `GET /treasury/payout/transaction/{id}` and
+`POST /treasury/payout/transaction/search` (Admin), `GET /treasury/conversion/zlto-usd` (User).
 No migration — every derived figure is API-calculated.
 
 **`PATCH /treasury` is a full replacement.** Omitting `zltoRewardPoolCurrentFinancialYear` clears
@@ -68,6 +68,8 @@ it, after which no ZLTO reward is capped anywhere. Always send current values fo
 - [x] **T0** — Foundations: shared formatters, FY/lifetime vocabulary, `RewardStat` primitive,
       validation + server-error patterns (delivered inside T1; frozen in the epic README)
 - [x] **T1** — `/admin/treasury`, Overview + Manage tabs, rollover guard, capacity warnings
+- [ ] **Payout transactions** — add the Admin query/history surface using the Payout-domain lookup
+      and paginated search now exposed through the Treasury API
 - [x] **T1 corrective (a)** — capacity readings repointed to
       `payoutBalanceAvailableCurrentFinancialYearInUsd` in `TreasuryOverview.tsx` +
       `TreasuryCapacityWarnings.tsx`, tone inputs included
