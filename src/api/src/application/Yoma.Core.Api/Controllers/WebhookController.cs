@@ -231,6 +231,7 @@ namespace Yoma.Core.Api.Controllers
       }
 
       var idempotencyKey = $"{YellowCard_Key_Prefix}:{webhook.EventId}";
+      var eventIdLogValue = webhook.EventId.SanitizeLogValue();
       var idempotencyKeyCreated = false;
       try
       {
@@ -238,7 +239,7 @@ namespace Yoma.Core.Api.Controllers
         if (!idempotencyKeyCreated)
         {
           if (_logger.IsEnabled(LogLevel.Information))
-            _logger.LogInformation("Duplicate Yellow Card webhook event suppressed (id={eventId})", webhook.EventId);
+            _logger.LogInformation("Duplicate Yellow Card webhook event suppressed (id={eventId})", eventIdLogValue);
 
           return Ok();
         }
@@ -248,7 +249,7 @@ namespace Yoma.Core.Api.Controllers
         // Payout status transitions are independently idempotent and serialized by payout id. Continue when the
         // volatile replay cache is unavailable so a legitimate terminal outcome is never dropped.
         if (_logger.IsEnabled(LogLevel.Error))
-          _logger.LogError(ex, "Yellow Card webhook idempotency check failed for event '{eventId}'; processing continues", webhook.EventId);
+          _logger.LogError(ex, "Yellow Card webhook idempotency check failed for event '{eventId}'; processing continues", eventIdLogValue);
       }
 
       try
@@ -258,7 +259,7 @@ namespace Yoma.Core.Api.Controllers
         if (_logger.IsEnabled(LogLevel.Information))
           _logger.LogInformation(
             "Yellow Card webhook event '{eventId}' processed for Yoma payout transaction '{payoutId}' with status '{status}'",
-            webhook.EventId, webhook.PayoutStatus.Id, webhook.PayoutStatus.Status);
+            eventIdLogValue, webhook.PayoutStatus.Id, webhook.PayoutStatus.Status);
 
         // Acknowledge only after the payout and its reward reservation state were persisted successfully.
         return Ok();
@@ -278,7 +279,7 @@ namespace Yoma.Core.Api.Controllers
               _logger.LogError(
                 deleteException,
                 "Failed to remove Yellow Card webhook idempotency key for event '{eventId}'; payout reconciliation remains the fallback",
-                webhook.EventId);
+                eventIdLogValue);
           }
         }
 
@@ -286,7 +287,7 @@ namespace Yoma.Core.Api.Controllers
           _logger.LogError(
             ex,
             "Failed to process Yellow Card webhook event '{eventId}' for Yoma payout transaction '{payoutId}': {errorMessage}",
-            webhook.EventId, webhook.PayoutStatus.Id, ex.Message);
+            eventIdLogValue, webhook.PayoutStatus.Id, ex.Message.SanitizeLogValue());
 
         return StatusCode(StatusCodes.Status500InternalServerError);
       }

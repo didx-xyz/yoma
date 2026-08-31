@@ -53,6 +53,9 @@ state transitions and fallback polling.
   persistence of the provider reference.
 - 2026-08-27: Ignore duplicate terminal outcomes and stale Processing events after a terminal
   outcome. Treat conflicting terminal outcomes as data inconsistencies.
+- 2026-08-31: Sanitize externally supplied webhook and idempotency values only at the logging
+  boundary. Persisted values and authentication inputs remain exact; the shared sanitizer removes
+  both CR and LF characters to prevent log forging across operating systems.
 
 ## Links
 

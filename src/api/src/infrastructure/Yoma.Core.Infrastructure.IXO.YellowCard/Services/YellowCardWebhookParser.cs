@@ -4,6 +4,7 @@ using Newtonsoft.Json;
 using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
+using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Payout.Models.Provider;
 using Yoma.Core.Infrastructure.IXO.YellowCard.Helpers;
 using Yoma.Core.Infrastructure.IXO.YellowCard.Interfaces;
@@ -69,7 +70,7 @@ namespace Yoma.Core.Infrastructure.IXO.YellowCard.Services
       if (_logger.IsEnabled(LogLevel.Information))
         _logger.LogInformation(
           "Authenticated IXO payout webhook event '{eventId}' for Yoma payout transaction '{payoutId}' with provider transaction '{providerTransactionId}' and status '{status}'",
-          payload.EventId, payoutId, payload.ProviderTransactionId, status);
+          payload.EventId.SanitizeLogValue(), payoutId, payload.ProviderTransactionId.SanitizeLogValue(), status);
 
       return new YellowCardWebhookResult
       {

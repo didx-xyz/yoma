@@ -3,6 +3,7 @@ using Microsoft.Extensions.Options;
 using StackExchange.Redis;
 using System.Runtime.CompilerServices;
 using System.Text;
+using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
 
@@ -50,10 +51,10 @@ namespace Yoma.Core.Domain.Core.Services
 
       if (created)
         if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Idempotency key created by {hostName} at {timestamp} for process {process}: {key} (ttl={ttlSeconds}s)",
-          System.Environment.MachineName, DateTimeOffset.UtcNow, processName, redisKey, ttlSeconds);
+          System.Environment.MachineName, DateTimeOffset.UtcNow, processName, redisKey.SanitizeLogValue(), ttlSeconds);
         else
           if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Duplicate idempotency key detected by {hostName} at {timestamp} for process {process}: {key}",
-            System.Environment.MachineName, DateTimeOffset.UtcNow, processName, redisKey);
+            System.Environment.MachineName, DateTimeOffset.UtcNow, processName, redisKey.SanitizeLogValue());
 
       return created;
     }
@@ -68,7 +69,7 @@ namespace Yoma.Core.Domain.Core.Services
 
       if (deleted && _logger.IsEnabled(LogLevel.Information))
         _logger.LogInformation("Idempotency key removed by {hostName} at {timestamp} for process {process}: {key}",
-          System.Environment.MachineName, DateTimeOffset.UtcNow, processName, redisKey);
+          System.Environment.MachineName, DateTimeOffset.UtcNow, processName, redisKey.SanitizeLogValue());
     }
     #endregion
   }
