@@ -111,6 +111,8 @@ namespace Yoma.Core.Infrastructure.IXO.PartnerSync.Client
     {
       value = value?.Trim();
 
+      // TODO: Add Task (displayed as Impact Action in Yoma) once IXO confirms support in its OpenAPI contract.
+      // Task is a non-Job type, so its difficulty, commitment, engagement and verification semantics must be mapped too.
       return Enum.TryParse<Domain.Opportunity.Type>(value, true, out var result) &&
         result is Domain.Opportunity.Type.Learning or Domain.Opportunity.Type.Job
           ? result
