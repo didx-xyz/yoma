@@ -72,7 +72,9 @@ export const getSchemaByName = async (
   context?: GetServerSidePropsContext,
 ): Promise<SSISchema> => {
   const instance = context ? ApiServer(context) : await ApiClient;
-  const { data } = await instance.get<SSISchema>(`/ssi/schema/${name}`);
+  const { data } = await instance.get<SSISchema>(
+    `/ssi/schema/${encodeURIComponent(name)}`,
+  );
   return data;
 };
 

@@ -17,6 +17,7 @@ import {
 } from "~/api/services/organisations";
 import { getUserProfile } from "~/api/services/user";
 import FormMessage, { FormMessageType } from "~/components/Common/FormMessage";
+import { getSafeUrl } from "~/lib/utils";
 import MainLayout from "~/components/Layout/Main";
 import { OrgAdminsEdit } from "~/components/Organisation/Upsert/OrgAdminsEdit";
 import { OrgContactEdit } from "~/components/Organisation/Upsert/OrgContactEdit";
@@ -270,7 +271,8 @@ const OrganisationCreate: NextPageWithLayout<{
   );
 
   const handleCancel = useCallback(() => {
-    router.push(returnUrl?.toString() ?? "/");
+    // getSafeUrl: relative same-origin paths only — a raw returnUrl is an open redirect.
+    router.push(getSafeUrl(returnUrl?.toString(), "/"));
   }, [router, returnUrl]);
 
   // scroll to top on step change

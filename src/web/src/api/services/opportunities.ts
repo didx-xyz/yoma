@@ -171,7 +171,9 @@ export const getOpportunityById = async (
 ): Promise<Opportunity> => {
   const instance = context ? ApiServer(context) : await ApiClient;
 
-  const { data } = await instance.get<Opportunity>(`/opportunity/${id}/admin`);
+  const { data } = await instance.get<Opportunity>(
+    `/opportunity/${encodeURIComponent(id)}/admin`,
+  );
 
   // remove time and timezone from date
   data.dateStart = data.dateStart?.split("T")[0] ?? "";
@@ -225,7 +227,7 @@ export const getOpportunityInfoByIdAdminOrgAdminOrUser = async (
   const instance = context ? ApiServer(context) : await ApiClient;
 
   const { data } = await instance.get<OpportunityInfo>(
-    `/opportunity/${id}/auth/info`,
+    `/opportunity/${encodeURIComponent(id)}/auth/info`,
   );
 
   // strip the partner external id suffix from externally managed opportunities
@@ -243,7 +245,7 @@ export const getOpportunityInfoById = async (
   const instance = context ? ApiServer(context) : await ApiClient;
 
   const { data } = await instance.get<OpportunityInfo>(
-    `/opportunity/${id}/info${includeExpired ? "?includeExpired=true" : ""}`,
+    `/opportunity/${encodeURIComponent(id)}/info${includeExpired ? "?includeExpired=true" : ""}`,
   );
 
   // strip the partner external id suffix from externally managed opportunities
@@ -399,7 +401,7 @@ export const updateOpportunityStatus = async (
   const instance = context ? ApiServer(context) : await ApiClient;
 
   const { data } = await instance.patch<Opportunity>(
-    `/opportunity/${opportunityId}/${status}`,
+    `/opportunity/${encodeURIComponent(opportunityId)}/${encodeURIComponent(status)}`,
   );
   return data;
 };
@@ -466,7 +468,7 @@ export const getPublishedOrExpiredByLinkInstantVerify = async (
 ): Promise<OpportunityInfo> => {
   const instance = context ? ApiServer(context) : await ApiClient;
   const { data } = await instance.get<OpportunityInfo>(
-    `/opportunity/info/link/${linkId}`,
+    `/opportunity/info/link/${encodeURIComponent(linkId)}`,
   );
   return data;
 };
@@ -496,7 +498,7 @@ export const importFromCSV = async (
   if (validateOnly !== undefined)
     params.append("validateOnly", String(validateOnly));
 
-  const url = `/opportunity/import/${organisationId}/csv${
+  const url = `/opportunity/import/${encodeURIComponent(organisationId)}/csv${
     params.toString() ? `?${params.toString()}` : ""
   }`;
 
