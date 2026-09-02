@@ -6,6 +6,20 @@ interface ScrollableContainerProps {
   scrollSpeed?: number;
   showShadows?: boolean;
   scrollToEndOnChange?: boolean;
+  /**
+   * Tailwind `from-*` class for the edge-fade shadows — pass the colour of the surface BEHIND
+   * the scroller (e.g. `from-purple` on the hero, `from-gray-light` on the page body) so the
+   * fade is actually visible. Defaults to the original near-invisible tint, so existing callers
+   * are unaffected.
+   */
+  shadowFromClassName?: string;
+  /**
+   * Classes for the outer wrapper. Defaults to `h-full` (existing callers unaffected — the
+   * Navbar needs it to centre its links in the fixed-height bar). Pass `""` when the scroller
+   * sits inside a definite-height flex parent and must NOT stretch to fill it (e.g. an action
+   * row at the bottom of a fixed-height dialog).
+   */
+  containerClassName?: string;
 }
 
 const ScrollableContainer: React.FC<ScrollableContainerProps> = ({
@@ -14,6 +28,8 @@ const ScrollableContainer: React.FC<ScrollableContainerProps> = ({
   scrollSpeed = 2,
   showShadows = false,
   scrollToEndOnChange = false,
+  shadowFromClassName = "from-gray-light/5",
+  containerClassName = "h-full",
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [showLeftShadow, setShowLeftShadow] = useState(false);
@@ -170,15 +186,19 @@ const ScrollableContainer: React.FC<ScrollableContainerProps> = ({
   const combinedClasses = `${defaultClasses} ${className}`.trim();
 
   return (
-    <div className="relative h-full">
+    <div className={`relative ${containerClassName}`.trim()}>
       {/* Left shadow */}
       {showShadows && showLeftShadow && (
-        <div className="backdrop-blur-smx from-gray-light/5 pointer-events-none absolute top-0 bottom-0 left-0 z-10 w-12 bg-gradient-to-r to-transparent"></div>
+        <div
+          className={`backdrop-blur-smx ${shadowFromClassName} pointer-events-none absolute top-0 bottom-0 left-0 z-10 w-12 bg-linear-to-r to-transparent`}
+        ></div>
       )}
 
       {/* Right shadow */}
       {showShadows && showRightShadow && (
-        <div className="backdrop-blur-smx from-gray-light/5 pointer-events-none absolute top-0 right-0 bottom-0 z-10 w-12 bg-gradient-to-l to-transparent"></div>
+        <div
+          className={`backdrop-blur-smx ${shadowFromClassName} pointer-events-none absolute top-0 right-0 bottom-0 z-10 w-12 bg-linear-to-l to-transparent`}
+        ></div>
       )}
 
       <div

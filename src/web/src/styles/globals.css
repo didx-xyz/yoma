@@ -385,6 +385,13 @@
 }
 
 @layer base {
+  /* Tailwind v4 preflight sets `cursor: default` on buttons (v3 used pointer); daisyUI restores
+     it only for `.btn`. Restore the v3 behaviour so every enabled button reads as clickable. */
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+
   h1 {
     @apply text-2xl tracking-tighter md:text-4xl;
   }

@@ -1,0 +1,31 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git -C /home/admin/work/didx/yoma status --short docs/work/active/YOM-1244-customizable-fields-framework/)",
+      "Bash(SKIP_ENV_VALIDATION=1 npx next build --webpack)",
+      "Bash(cp src/features/discovery/registry/filterSections.ts /tmp/filterSections.before.ts && echo copied)",
+      "Bash(grep -n \"^  h1\\\\|^  h2\\\\|^  h3\\\\|h1,\\\\|h2,\\\\|h3 {\" src/styles/globals.css)",
+      "Bash(git rebase *)",
+      "Bash(git stash *)",
+      "Bash(git ls-tree *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(echo \"build exit: $?\")",
+      "Read(//tmp/**)",
+      "Bash(grep -iE \"error|failed\" /tmp/discover-build.log | head -10; tail -20 /tmp/discover-build.log)",
+      "Bash(pkill -f \"next build\")",
+      "Bash(grep -n \"</div>\\\\s*$\\\\|</dialog>\" src/features/discovery/components/Personalize/PersonalizeDialog.tsx)",
+      "Bash(sed -i 's/bg-gradient-to-r/bg-linear-to-r/; s/bg-gradient-to-l/bg-linear-to-l/' src/components/Carousel/ScrollableContainer.tsx)",
+      "Bash(sed -i 's/md:basis-\\\\[340px\\\\]/md:basis-85/' src/features/discovery/components/Personalize/LiveCountPanel.tsx)",
+      "Bash(sed -i 's|className=\"toggle toggle-sm border-purple-soft text-purple checked:bg-purple bg-white checked:text-white\"|className=\"toggle toggle-sm checked:[--input-color:var\\(--color-purple\\)]\"|' src/features/discovery/components/Filters/PreferencesBlock.tsx src/features/discovery/components/shared/PreferenceBanner.tsx)",
+      "Bash(sed -i 's|className=\"toggle checked:bg-green\"|className=\"toggle checked:[--input-color:var\\(--color-green\\)]\"|' src/features/discovery/components/Personalize/StepBlock.tsx)",
+      "Bash(grep -n \"of \\\\${options.length}\" src/features/discovery/components/Filters/useSectionModel.ts)",
+      "Bash(sed -i 's|: `${selected.length} of ${options.length}`,|: `${selected.length} selected`,|; s|\"2 of 9\" or \"Any\"|\"2 selected\" or \"Any\"|' src/features/discovery/components/Filters/useSectionModel.ts)",
+      "Bash(grep -n \"selected\\\\`\" src/features/discovery/components/Filters/useSectionModel.ts)",
+      "Bash(git commit -m 'feat\\(web\\): discovery iteration — provenance-aware filters, wizard fixes, UI polish *)"
+    ],
+    "additionalDirectories": [
+      "/tmp"
+    ]
+  }
+}

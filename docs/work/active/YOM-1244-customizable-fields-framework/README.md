@@ -34,6 +34,8 @@ definitions to the BA-approved set (YOM-1264) without a code change.
 | [`YOM-1254-api-custom-fields-framework-for-opportunity-and-myopportunity/`](./YOM-1254-api-custom-fields-framework-for-opportunity-and-myopportunity/feature.md) | [YOM-1254](https://linear.app/didx/issue/YOM-1254) | api  | in-progress                                                                           |
 | [`YOM-1255-ui-dynamic-custom-fields-for-opportunities-and-completions/`](./YOM-1255-ui-dynamic-custom-fields-for-opportunities-and-completions/feature.md)       | [YOM-1255](https://linear.app/didx/issue/YOM-1255) | web  | in-progress                                                                           |
 | [`YOM-1260-ui-custom-field-filtering-for-opportunities-and-completions/`](./YOM-1260-ui-custom-field-filtering-for-opportunities-and-completions/feature.md)     | [YOM-1260](https://linear.app/didx/issue/YOM-1260) | web  | in-progress                                                                           |
+| [`YOM-1261-ui-manage-user-presets/`](./YOM-1261-ui-manage-user-presets/feature.md)                                                                             | [YOM-1261](https://linear.app/didx/issue/YOM-1261) | web  | in-progress — mocked; real persistence blocked                                        |
+| [`YOM-1262-ui-apply-user-presets-to-opportunity-discovery/`](./YOM-1262-ui-apply-user-presets-to-opportunity-discovery/feature.md)                             | [YOM-1262](https://linear.app/didx/issue/YOM-1262) | web  | in-progress — mocked; blocked on the presets API for live data                        |
 | [`YOM-1277-opportunity-credential-schemas-by-type-and-custom-fields/`](./YOM-1277-opportunity-credential-schemas-by-type-and-custom-fields/feature.md)           | [YOM-1277](https://linear.app/didx/issue/YOM-1277) | both | in-progress                                                                           |
 | [`YOM-1278-api-admin-credential-schema-management-by-type/`](./YOM-1278-api-admin-credential-schema-management-by-type/feature.md)                               | [YOM-1278](https://linear.app/didx/issue/YOM-1278) | api  | in-progress                                                                           |
 | [`YOM-1279-api-opportunity-management-credential-schema-selection/`](./YOM-1279-api-opportunity-management-credential-schema-selection/feature.md)               | [YOM-1279](https://linear.app/didx/issue/YOM-1279) | api  | review                                                                                |
@@ -46,8 +48,7 @@ Tickets with no folder yet — add one when work starts:
 
 | Ticket                                                                                                  | Area      | Note                                                                                        |
 | ------------------------------------------------------------------------------------------------------- | --------- | ------------------------------------------------------------------------------------------- |
-| [YOM-1264](https://linear.app/didx/issue/YOM-1264)                                                      | design/BA | Final Opportunity CFs, completion CFs and User Presets. **Blocks YOM-1261**                 |
-| [YOM-1261](https://linear.app/didx/issue/YOM-1261) / [YOM-1262](https://linear.app/didx/issue/YOM-1262) | web       | User Presets — manage, and apply to discovery. Blocked                                      |
+| [YOM-1264](https://linear.app/didx/issue/YOM-1264)                                                      | design/BA | Final Opportunity CFs, completion CFs and User Presets. **Blocks YOM-1261 / YOM-1262**      |
 | [YOM-1257](https://linear.app/didx/issue/YOM-1257) / [YOM-1258](https://linear.app/didx/issue/YOM-1258) | api       | User Preset model + preset→filter mapping                                                   |
 | [YOM-1259](https://linear.app/didx/issue/YOM-1259)                                                      | api       | Opportunity category taxonomy. Unrelated to custom fields; needs only a UI regression check |
 
@@ -224,6 +225,50 @@ opportunity save still validates server-side through the provider and fails whil
 the mock must come out before the PR — the removal list lives in
 [YOM-1282's handoff](./YOM-1282-ui-opportunity-credential-schema-selection/handoffs/2026-08-17-a.md).
 
+### Opportunity discovery design — 2026-08-27
+
+Both preset tickets are blocked, and the custom-field expansion has put the existing opportunity
+search page, filter popup and result card in question: the definitions endpoint now returns
+type-conditional groups with their own Group / SubGroup / SortOrder, and the current information
+architecture cannot absorb them. The discovery experience was therefore designed ahead of
+implementation.
+
+| Artefact | Location |
+| --- | --- |
+| Design canvas — 4 pages, 14 artboards, desktop and mobile | **Out of repo** (deliberately — too large to carry as session context). Supplied to build sessions as attached PNG exports |
+| Build brief for the repo session (`IMPLEMENTATION-PROMPT.md`) | **Out of repo**, pasted as the opening message of the build session |
+| Handoff | [`handoffs/2026-08-27-b.md`](./handoffs/2026-08-27-b.md) |
+
+Canvas page 1 is [YOM-1261](./YOM-1261-ui-manage-user-presets/feature.md). Pages 2 and 3 are
+[YOM-1262](./YOM-1262-ui-apply-user-presets-to-opportunity-discovery/feature.md). Page 4 — per-type
+card layouts — belongs to **no ticket**: it is experimental, awaiting a client pick-or-drop, and is
+explicitly excluded from the build brief's scope.
+
+Four cross-cutting decisions from that design, recorded here because they bind more than one child
+feature:
+
+- **A new page and component tree, not a refactor.** `pages/opportunities/[[...query]].tsx`,
+  `OpportunityFilterVertical.tsx` and `FilterBadges.tsx` are not to be modified. The shared building
+  blocks above may be extended **additively** — new exports, no changed signatures, no behaviour
+  change for existing callers. Retiring the old surface is a separate change.
+- **Desktop and mobile must render one registry in one order, enforced by a test.** Both breakpoints
+  consume the same section registry and the same section component; only the container and the
+  control density differ. This is recorded as a rule because the first design revision claimed parity
+  and did not have it, and prose did not catch that.
+- **Presets stay User-domain data.** Restated from Out of Scope below because the natural
+  implementation — routing preferences through the custom-field components, or extending the `User`
+  model — is exactly what the epic forbids. Preferences are mocked behind one façade, following the
+  `SCHEMA_ADMIN_MOCK_ENABLED` pattern documented above.
+- **Nothing in the youth-facing surface is keyed to a specific custom field.** The One Rule applies
+  to the new surface unchanged: the type-specific filter block renders whatever the definitions
+  endpoint returns, in the order returned.
+
+The design also closes a gap in the BA preset mapping worth flagging at epic level: four User Goals
+mapped to Job, Learning, Impact Task and one Category, leaving `Event` reachable from **no goal at
+all** — a preference-driven feed built on that mapping could make every event on the platform
+structurally invisible. An `Attend events` goal closes it. `Other` remains unreachable and is flagged
+rather than papered over. `Start a business` has no agreed mapping and ships visible but inert.
+
 ## Out of Scope (whole epic)
 
 - **Phase-2 admin CRUD for definitions and options.** Definitions are scripted server-side in Phase 1.
@@ -238,7 +283,7 @@ the mock must come out before the PR — the removal list lives in
 | Blocker                                                             | Severity | Note                                                                                                                                                                                                                                                                                                                                                                                                |
 | ------------------------------------------------------------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | YOM-1264 (BA/design) — final field definitions and User Presets     | High     | Everything shipped so far runs on seeded `[Sample] …` definitions                                                                                                                                                                                                                                                                                                                                   |
-| YOM-1257 / YOM-1258 (presets API)                                   | High     | YOM-1261 / YOM-1262 cannot start                                                                                                                                                                                                                                                                                                                                                                    |
+| YOM-1257 / YOM-1258 (presets API)                                   | High     | YOM-1261 / YOM-1262 are **designed** (2026-08-27) but cannot be implemented — no preset model and no preset→filter mapping to build against                                                                                                                                                                                                                                                                                                                                                                    |
 | YOM-1260 must land before the presets chain                         | Med      | Presets resolve to filter criteria                                                                                                                                                                                                                                                                                                                                                                  |
 | Credential provider (Aries CloudAPI) — schema create/update failing | Med      | **Narrowed 2026-08-18** (Jason): reads are serving again, so `GET /ssi/schema` and wallet retrieval work — YOM-1283 was verified live on that basis. Only schema **create/update** still fails, which is the one thing keeping YOM-1281 and YOM-1282 in review: YOM-1281 cannot exercise its mutations, and YOM-1282 cannot reach one real type-specific schema. Both stay mocked locally meanwhile |
 
@@ -247,3 +292,14 @@ the mock must come out before the PR — the removal list lives in
 Web consumes the API contract above verbatim. Anything that changes definition discovery, the
 value shape, replacement semantics or the filter clause shape is a **breaking change for web** —
 flag it in a handoff here before merging.
+
+**Discovery-surface asks for Adrian (2026-08-27, from the YOM-1261/1262 build — details in
+[`handoffs/2026-08-27-c.md`](./handoffs/2026-08-27-c.md)):**
+
+1. `/opportunity/search` ordering: `OrderInstructions` is internal (always DateCreated desc), so
+   the designed *Ending soonest* / *Most ZLTO* sorts ship disabled. Ask: a public sort enum.
+2. The commitment **interval** filter excludes opportunities with no commitment set; the BA preset
+   sheet says they must be **included**. One of the two has to move.
+3. `TotalCountOnly` is internal — the web live count fetches `pageSize: 1` instead. Nice-to-have.
+4. `ApplyUserPresets` is stubbed on the filter; confirm YOM-1258 makes it the real preset→filter
+   path so web can retire its client-side mapping.
