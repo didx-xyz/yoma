@@ -31,7 +31,9 @@ export const saveMyOpportunity = async (
 ): Promise<Opportunity> => {
   const { data } = await (
     await ApiClient
-  ).put<Opportunity>(`/myopportunity/action/${opportunityId}/save`);
+  ).put<Opportunity>(
+    `/myopportunity/action/${encodeURIComponent(opportunityId)}/save`,
+  );
   return data;
 };
 
@@ -40,7 +42,9 @@ export const removeMySavedOpportunity = async (
 ): Promise<Opportunity> => {
   const { data } = await (
     await ApiClient
-  ).delete<Opportunity>(`/myopportunity/action/${opportunityId}/save/remove`);
+  ).delete<Opportunity>(
+    `/myopportunity/action/${encodeURIComponent(opportunityId)}/save/remove`,
+  );
   return data;
 };
 
@@ -49,7 +53,9 @@ export const isOpportunitySaved = async (
 ): Promise<Opportunity> => {
   const { data } = await (
     await ApiClient
-  ).get<Opportunity>(`/myopportunity/action/${opportunityId}/saved`);
+  ).get<Opportunity>(
+    `/myopportunity/action/${encodeURIComponent(opportunityId)}/saved`,
+  );
   return data;
 };
 
@@ -70,9 +76,13 @@ export const performActionSendForVerificationManual = async (
 
   await (
     await ApiClient
-  ).put(`/myopportunity/action/${opportunityId}/verify`, formData, {
-    headers: { "Content-Type": "multipart/form-data" },
-  });
+  ).put(
+    `/myopportunity/action/${encodeURIComponent(opportunityId)}/verify`,
+    formData,
+    {
+      headers: { "Content-Type": "multipart/form-data" },
+    },
+  );
 };
 
 // Definition-driven custom fields (YOM-1244 / YOM-1255).
@@ -87,7 +97,7 @@ export const getMyOpportunityCustomFieldDefinitions = async (
   const instance = context ? ApiServer(context) : await ApiClient;
 
   const { data } = await instance.get<CustomFieldDefinition[]>(
-    `/myopportunity/${opportunityId}/custom/field/definition`,
+    `/myopportunity/${encodeURIComponent(opportunityId)}/custom/field/definition`,
   );
   return data;
 };
@@ -98,7 +108,7 @@ export const getVerificationStatus = async (
 ): Promise<MyOpportunityResponseVerify> => {
   const instance = context ? ApiServer(context) : await ApiClient;
   const { data } = await instance.get<MyOpportunityResponseVerify>(
-    `/myopportunity/action/${opportunityId}/verify/status`,
+    `/myopportunity/action/${encodeURIComponent(opportunityId)}/verify/status`,
   );
 
   return data;
@@ -177,7 +187,9 @@ export const performActionViewed = async (
   context?: GetServerSidePropsContext,
 ): Promise<any> => {
   const instance = context ? ApiServer(context) : await ApiClient;
-  await instance.put(`/myopportunity/action/${opportunityId}/view`);
+  await instance.put(
+    `/myopportunity/action/${encodeURIComponent(opportunityId)}/view`,
+  );
 };
 
 export const getOpportunitiesForVerification = async (
@@ -187,16 +199,11 @@ export const getOpportunitiesForVerification = async (
 ): Promise<MyOpportunitySearchCriteriaOpportunity[]> => {
   const instance = context ? ApiServer(context) : await ApiClient;
 
-  let querystring = "";
-  if (organisations) {
-    querystring += `organizations=${organisations.join(",")}`;
-  }
-  if (verificationStatuses) {
-    querystring += `&verificationStatuses=${verificationStatuses.join(",")}`;
-  }
-  if (querystring.length > 0) {
-    querystring = `?${querystring}`;
-  }
+  const params = new URLSearchParams();
+  if (organisations) params.append("organizations", organisations.join(","));
+  if (verificationStatuses)
+    params.append("verificationStatuses", verificationStatuses.join(","));
+  const querystring = params.size > 0 ? `?${params.toString()}` : "";
 
   const { data } = await instance.get<MyOpportunitySearchCriteriaOpportunity[]>(
     `/myopportunity/search/filter/opportunity${querystring}`,
@@ -217,7 +224,9 @@ export const performActionCancel = async (
   context?: GetServerSidePropsContext,
 ): Promise<any> => {
   const instance = context ? ApiServer(context) : await ApiClient;
-  await instance.delete(`/myopportunity/action/${opportunityId}/verify/delete`);
+  await instance.delete(
+    `/myopportunity/action/${encodeURIComponent(opportunityId)}/verify/delete`,
+  );
 };
 
 export const performActionInstantVerificationManual = async (
@@ -225,7 +234,9 @@ export const performActionInstantVerificationManual = async (
   context?: GetServerSidePropsContext,
 ): Promise<void> => {
   const instance = context ? ApiServer(context) : await ApiClient;
-  await instance.put(`/myopportunity/action/link/${linkId}/verify`);
+  await instance.put(
+    `/myopportunity/action/link/${encodeURIComponent(linkId)}/verify`,
+  );
 };
 
 export const getMyOpportunitiesExportToCSV = async (

@@ -172,17 +172,20 @@ export function getSafeUrl(
   returnUrl: string | undefined,
   defaultUrl: string,
 ): string {
-  // Allow only a path that starts with exactly one "/" and is NOT followed by another "/" (i.e., not "//...")
-  // Also exclude directory traversals like '/../' and '/./'
-  if (
-    typeof returnUrl === "string" &&
-    /^\/(?!\/)/.test(returnUrl) && // starts with single '/', not '//'
-    !returnUrl.includes("/../") &&
-    !returnUrl.includes("/./")
-  ) {
-    return returnUrl;
+  // Allow only a path that starts with exactly one "/" and is NOT followed by another "/" or
+  // "\" (browsers treat "/\evil.com" like "//evil.com").
+  if (typeof returnUrl !== "string" || !/^\/(?![/\\])/.test(returnUrl))
+    return defaultUrl;
+  try {
+    // Parse against a fixed base and RETURN THE RECONSTRUCTED path, never the raw input: the
+    // parser resolves dot segments and percent-encoded traversal, and an input that smuggles an
+    // absolute URL changes the origin and is rejected.
+    const url = new URL(returnUrl, "https://relative.local");
+    if (url.origin !== "https://relative.local") return defaultUrl;
+    return url.pathname + url.search + url.hash;
+  } catch {
+    return defaultUrl;
   }
-  return defaultUrl;
 }
 
 // This function determines the theme to be used based on the user's role and optional organisation ID.
