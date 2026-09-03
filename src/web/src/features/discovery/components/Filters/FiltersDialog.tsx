@@ -1,6 +1,7 @@
 import React from "react";
 import { IoClose } from "react-icons/io5";
 import { useDiscovery } from "../../state/DiscoveryContext";
+import { useDialogDismiss } from "../../state/useDialogDismiss";
 import { CountFooter } from "../shared/CountFooter";
 import { FilterPanelBlocks } from "./FilterPanelBlocks";
 
@@ -13,7 +14,8 @@ export const FiltersDialog: React.FC<{
   onClose: () => void;
   onEditPreferences: () => void;
 }> = ({ open, onClose, onEditPreferences }) => {
-  const { count, counting, dispatch, chips } = useDiscovery();
+  const { count, counting, chips, clearAll, scrollToResults } = useDiscovery();
+  useDialogDismiss(open, onClose);
   if (!open) return null;
 
   return (
@@ -22,8 +24,9 @@ export const FiltersDialog: React.FC<{
       className="bg-overlay fixed inset-0 z-50 m-0 flex h-full max-h-none w-full max-w-none items-center justify-center border-0 p-0 md:p-4"
       aria-label="Filters"
     >
-      {/* Full-screen below md (the sheet normally serves there); centred 820px dialog on md+. */}
-      <div className="shadow-custom flex h-full max-h-full w-full flex-col bg-white md:h-auto md:max-h-[90vh] md:max-w-205 md:rounded-2xl">
+      {/* Full-screen below md (the sheet normally serves there); centred 820px dialog on md+.
+          The rem cap keeps it from stretching into a tower on tall monitors. */}
+      <div className="shadow-custom flex h-full max-h-full w-full flex-col bg-white md:h-auto md:max-h-[min(90vh,52rem)] md:max-w-205 md:rounded-2xl">
         <div className="flex items-center justify-between px-6 pt-5 pb-2">
           <h2 className="flex items-center gap-2 text-base font-bold tracking-normal md:text-lg">
             Filters
@@ -48,8 +51,11 @@ export const FiltersDialog: React.FC<{
         <CountFooter
           count={count}
           counting={counting}
-          onClearAll={() => dispatch({ kind: "clearAll" })}
-          onShowResults={onClose}
+          onClearAll={clearAll}
+          onShowResults={() => {
+            onClose();
+            scrollToResults();
+          }}
         />
       </div>
     </dialog>

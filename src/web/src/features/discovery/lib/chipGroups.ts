@@ -14,7 +14,7 @@ export const PREF_GROUPS: Record<PreferenceKey, string> = {
 };
 
 export const FACET_GROUPS: Partial<Record<keyof DiscoveryFilters, string>> = {
-  type: "Type",
+  types: "Type",
   categories: "Categories",
   countries: "Where",
   engagementTypes: "Format",
@@ -26,6 +26,7 @@ export const FACET_GROUPS: Partial<Record<keyof DiscoveryFilters, string>> = {
 };
 
 export const MANUAL_LIST_FACETS = [
+  "types",
   "categories",
   "countries",
   "engagementTypes",

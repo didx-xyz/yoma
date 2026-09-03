@@ -16,24 +16,31 @@ export const LiveCountPanel: React.FC<{
   const floored = count !== null && count < FLOOR;
 
   let body: React.ReactNode;
-  if (counting || count === null)
+  if (count === null)
+    // Nothing to show yet (first load) — the one case a placeholder block is allowed.
     body = (
       <span className="bg-purple-shade my-1 inline-block h-10 w-28 animate-pulse rounded motion-reduce:animate-none md:h-12" />
     );
-  else if (floored)
+  else if (floored && !counting)
     body = (
       <p className="text-lg leading-snug font-bold md:text-xl">
         That&apos;s a narrow feed — consider widening a choice or two.
       </p>
     );
   else
+    // While recounting, the previous number stays and only the white TEXT blurs — never the
+    // purple panel behind it (browser feedback, 2026-09-03).
     body = (
-      <>
+      <div
+        className={`transition duration-300 motion-reduce:transition-none ${
+          counting ? "opacity-70 blur-[3px]" : ""
+        }`}
+      >
         <p className="text-2xl font-bold md:text-5xl">{formatNumber(count)}</p>
         <p className="text-purple-soft text-sm">
           opportunities match your answers so far
         </p>
-      </>
+      </div>
     );
 
   return (

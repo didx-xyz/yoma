@@ -13,7 +13,8 @@ import { Chip } from "../shared/Chip";
 export const PreferencesBlock: React.FC<{ onEdit: () => void }> = ({
   onEdit,
 }) => {
-  const { state, dispatch, chips, preferences } = useDiscovery();
+  const { state, dispatch, chips, preferences, skipPreference } =
+    useDiscovery();
   const inherited = chips.filter((chip) => chip.prefKey !== null);
 
   // Still loading — render nothing rather than flashing the empty state.
@@ -73,14 +74,7 @@ export const PreferencesBlock: React.FC<{ onEdit: () => void }> = ({
               <Chip
                 key={chip.id}
                 chip={chip}
-                onRemove={() =>
-                  chip.prefKey &&
-                  dispatch({
-                    kind: "setPreferenceSkipped",
-                    key: chip.prefKey,
-                    skipped: true,
-                  })
-                }
+                onRemove={() => chip.prefKey && skipPreference(chip.prefKey)}
                 onUndo={() =>
                   chip.prefKey &&
                   dispatch({

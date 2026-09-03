@@ -2,7 +2,7 @@ import type {
   UserPreferenceScope,
   UserPreferences,
 } from "~/api/models/userPreferences";
-import { EMPTY_USER_PREFERENCES } from "~/api/models/userPreferences";
+import { normalizeUserPreferences } from "~/api/models/userPreferences";
 import {
   readAnonymousPreferences,
   writeAnonymousPreferences,
@@ -29,10 +29,7 @@ const readMockUserPreferences = (): UserPreferences | null => {
   const raw = window.localStorage.getItem(MOCK_USER_STORAGE_KEY);
   if (raw === null) return null;
   try {
-    return {
-      ...EMPTY_USER_PREFERENCES,
-      ...(JSON.parse(raw) as UserPreferences),
-    };
+    return normalizeUserPreferences(JSON.parse(raw));
   } catch {
     return null;
   }

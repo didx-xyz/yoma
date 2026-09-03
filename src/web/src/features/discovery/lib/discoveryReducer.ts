@@ -9,20 +9,43 @@ import { EMPTY_DISCOVERY_FILTERS } from "./types";
 
 /**
  * The single reducer over `DiscoveryState`. Pure — the hook (`useDiscoveryQuery`) only wires it
- * to the router. Every filter change resets the page; a type change also clears the type-scoped
- * custom-field clauses (never silently kept). The view mode changes nothing else.
+ * to the router. Every filter change resets the page; deselecting a type also clears the
+ * type-scoped custom-field clauses (never silently kept — clauses are not tagged by type, so
+ * removal clears them all rather than guessing which belonged to the departed type). The view
+ * mode changes nothing else.
  */
 export type DiscoveryAction =
   | { kind: "patchFilters"; patch: Partial<DiscoveryFilters> }
-  | { kind: "setType"; type: string | null }
+  | { kind: "toggleType"; name: string }
   | { kind: "toggleQuickSearch"; criteria: Partial<DiscoveryFilters> }
   | { kind: "removeManual"; facet: keyof DiscoveryFilters; raw: string }
   | { kind: "setSort"; sort: DiscoverySort }
   | { kind: "setView"; view: DiscoveryViewMode }
   | { kind: "setPage"; page: number }
   | { kind: "setPreferencesOff"; off: boolean }
+  /**
+   * Switch one inherited preference off for this search — AND strip its fragment's values from
+   * the manual filters. Without the strip, a value that is both inherited and manually set
+   * (via a quick search, or picked before preferences resolved) would survive the skip as a
+   * hidden manual duplicate and resurface as a green chip, still filtering. One action, not
+   * two dispatches, because the second would race the router. Undo is `setPreferenceSkipped`.
+   */
+  | {
+      kind: "skipPreference";
+      key: PreferenceKey;
+      fragment: Partial<DiscoveryFilters>;
+    }
   | { kind: "setPreferenceSkipped"; key: PreferenceKey; skipped: boolean }
-  | { kind: "clearAll" };
+  /** Replace the whole skip list — used after "Save to profile" persists the savable skips. */
+  | { kind: "setSkippedPreferences"; keys: PreferenceKey[] }
+  /** The wizard just saved new defaults — stale per-preference skips no longer mean anything. */
+  | { kind: "resetPreferenceOverrides" }
+  /**
+   * Clear all also switches off the active inherited layer for this search (struck-through
+   * chips, undoable) — a youth pressing it means "empty search", not "empty except my preset".
+   * The caller supplies the keys since fragments live outside the reducer.
+   */
+  | { kind: "clearAll"; skipPreferences: PreferenceKey[] };
 
 /** A quick-search badge is "applied" when every value in its owned set is present. */
 export function isQuickSearchApplied(
@@ -84,6 +107,30 @@ export function reduceDiscovery(
   state: DiscoveryState,
   action: DiscoveryAction,
 ): DiscoveryState {
+  const next = reduceAction(state, action);
+
+  // Type-scoped custom-field clauses never outlive their type, WHATEVER removed it — the type
+  // row, the chip's ×, a quick-search toggle, a popover reset, or skipping the inherited Goal
+  // preference (whose fragment supplies a type). Clauses are not tagged by type, so the rule
+  // clears them all rather than guessing which belonged to the departed type.
+  const removedType = state.filters.types.some(
+    (t) => !next.filters.types.includes(t),
+  );
+  const skippedGoal =
+    (action.kind === "setPreferenceSkipped" &&
+      action.key === "goal" &&
+      action.skipped) ||
+    (action.kind === "skipPreference" && action.key === "goal");
+  if ((removedType || skippedGoal) && next.filters.customFields.length > 0)
+    return { ...next, filters: { ...next.filters, customFields: [] } };
+
+  return next;
+}
+
+function reduceAction(
+  state: DiscoveryState,
+  action: DiscoveryAction,
+): DiscoveryState {
   switch (action.kind) {
     case "patchFilters":
       return {
@@ -91,11 +138,16 @@ export function reduceDiscovery(
         filters: { ...state.filters, ...action.patch },
         page: 1,
       };
-    case "setType":
-      // Changing the type swaps the definition groups — clauses scoped to the old type go with it.
+    case "toggleType":
+      // Clause clearing on removal lives in `reduceDiscovery`'s global rule, not here.
       return {
         ...state,
-        filters: { ...state.filters, type: action.type, customFields: [] },
+        filters: {
+          ...state.filters,
+          types: state.filters.types.includes(action.name)
+            ? state.filters.types.filter((t) => t !== action.name)
+            : [...state.filters.types, action.name],
+        },
         page: 1,
       };
     case "toggleQuickSearch": {
@@ -120,6 +172,35 @@ export function reduceDiscovery(
       return { ...state, page: action.page };
     case "setPreferencesOff":
       return { ...state, preferencesOff: action.off, page: 1 };
+    case "skipPreference": {
+      let filters = state.filters;
+      for (const [facet, value] of Object.entries(action.fragment)) {
+        const key = facet as keyof DiscoveryFilters;
+        const current = filters[key];
+        if (Array.isArray(current) && Array.isArray(value))
+          filters = {
+            ...filters,
+            [key]: (current as string[]).filter(
+              (v) => !(value as string[]).includes(v),
+            ),
+          };
+        else if (
+          key === "commitment" &&
+          filters.commitment &&
+          JSON.stringify(filters.commitment) === JSON.stringify(value)
+        )
+          filters = { ...filters, commitment: null };
+      }
+      return {
+        ...state,
+        filters,
+        preferencesSkipped: [
+          ...state.preferencesSkipped.filter((k) => k !== action.key),
+          action.key,
+        ],
+        page: 1,
+      };
+    }
     case "setPreferenceSkipped": {
       const without = state.preferencesSkipped.filter((k) => k !== action.key);
       return {
@@ -128,8 +209,23 @@ export function reduceDiscovery(
         page: 1,
       };
     }
+    case "setSkippedPreferences":
+      return { ...state, preferencesSkipped: action.keys, page: 1 };
+    case "resetPreferenceOverrides":
+      return {
+        ...state,
+        preferencesOff: false,
+        preferencesSkipped: [],
+        page: 1,
+      };
     case "clearAll":
-      // Clears the session's choices; the preference layer (master switch, skips) is its own control.
-      return { ...state, filters: EMPTY_DISCOVERY_FILTERS, page: 1 };
+      return {
+        ...state,
+        filters: EMPTY_DISCOVERY_FILTERS,
+        preferencesSkipped: [
+          ...new Set([...state.preferencesSkipped, ...action.skipPreferences]),
+        ],
+        page: 1,
+      };
   }
 }

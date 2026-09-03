@@ -38,7 +38,6 @@ function fragmentValue(
   fragment: Partial<DiscoveryFilters>,
   resolve: ChipLabelResolver,
 ): string {
-  if (fragment.type) return fragment.type;
   if (fragment.commitment) return commitmentLabel(fragment.commitment, resolve);
   const [facet, values] =
     Object.entries(fragment).find(([, v]) => Array.isArray(v)) ?? [];
@@ -116,8 +115,6 @@ function manualChips(
     });
 
   const chips: DiscoveryChip[] = [];
-  if (manual.type && !covered("type", manual.type))
-    chips.push(manualChip("type", manual.type, manual.type));
   for (const facet of MANUAL_LIST_FACETS)
     for (const value of manual[facet])
       if (!covered(facet, value))

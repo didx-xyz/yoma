@@ -1,3 +1,4 @@
+import { useRouter } from "next/router";
 import React, { useEffect, useMemo, useState } from "react";
 import { IoOptionsOutline, IoSearchOutline } from "react-icons/io5";
 import AnimatedText from "~/components/Opportunity/AnimatedText";
@@ -10,6 +11,7 @@ import { PersonalizeDialog } from "../Personalize/PersonalizeDialog";
 import { DiscoveryResults } from "../Results/DiscoveryResults";
 import { SegmentedSearchBar } from "../SearchBar/SegmentedSearchBar";
 import { FloatingFilterButton } from "../shared/FloatingFilterButton";
+import { KeepAnswersPrompt } from "../shared/KeepAnswersPrompt";
 import { DiscoveryLanding } from "./DiscoveryLanding";
 import { MyOpportunitiesLink } from "./MyOpportunitiesLink";
 import { QuickSearchRow } from "./QuickSearchRow";
@@ -21,8 +23,16 @@ import { QuickSearchRow } from "./QuickSearchRow";
  * this surface's Edit entry points reopen it.
  */
 export const DiscoverySurface: React.FC = () => {
-  const { state, ready, count, preferences, readPersonalizationSeen, chips } =
-    useDiscovery();
+  const {
+    state,
+    ready,
+    count,
+    preferences,
+    migration,
+    readPersonalizationSeen,
+    chips,
+  } = useDiscovery();
+  const router = useRouter();
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [personalizeOpen, setPersonalizeOpen] = useState(false);
   const landing = isDefaultDiscoveryState(state);
@@ -38,12 +48,33 @@ export const DiscoverySurface: React.FC = () => {
     };
   }, [filtersOpen, personalizeOpen]);
 
-  // Auto-open once: never captured (or skipped) before, and only after hydration.
+  // Auto-open once: never captured (or skipped) before, and only after hydration. It yields to
+  // the sign-in "keep your answers" offer — `pendingAnonymous` is `undefined` while that offer
+  // is still being resolved and an object while it is on screen; only `null` clears the way.
   useEffect(() => {
-    if (ready && preferences === null && !readPersonalizationSeen())
+    if (
+      ready &&
+      preferences === null &&
+      migration.pendingAnonymous === null &&
+      !readPersonalizationSeen()
+    )
       setPersonalizeOpen(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- first-visit check only
-  }, [ready, preferences]);
+  }, [ready, preferences, migration.pendingAnonymous]);
+
+  // Deep link from outside the surface (the avatar menu's "My preferences"): ?personalize=1
+  // opens the wizard, then leaves the URL clean — the param is an instruction, not state.
+  useEffect(() => {
+    if (!ready || router.query.personalize !== "1") return;
+    setPersonalizeOpen(true);
+    const query = { ...router.query };
+    delete query.personalize;
+    void router.replace({ pathname: router.pathname, query }, undefined, {
+      shallow: true,
+      scroll: false,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- one-shot per param sighting
+  }, [ready, router.query.personalize]);
 
   const editPreferences = (): void => setPersonalizeOpen(true);
 
@@ -121,7 +152,8 @@ export const DiscoverySurface: React.FC = () => {
 
       <FloatingFilterButton onOpen={() => setFiltersOpen(true)} />
 
-      <main className="mx-auto w-full max-w-7xl px-4 py-4">
+      <main className="mx-auto flex w-full max-w-7xl flex-col gap-4 px-4 py-4">
+        <KeepAnswersPrompt />
         {landing ? (
           <DiscoveryLanding onEditPreferences={editPreferences} now={now} />
         ) : (

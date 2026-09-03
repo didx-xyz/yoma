@@ -9,40 +9,54 @@ import { SectionPopover } from "./SectionPopover";
  * (the same `<FilterSection>` the dialog uses); the deep set lives behind the Filters button at
  * the bar's right end. Two doors, one filter state. There is deliberately no "search" button:
  * every change applies live, so the bar has nothing to submit.
+ *
+ * Popovers anchor left under their segment, except the LAST segment's, which anchors right —
+ * its left edge would otherwise push the 560px panel off the right of the viewport.
  */
 const SEGMENTS: { id: string; label: string }[] = [
+  { id: "search", label: "Search" },
   { id: "type", label: "What" },
   { id: "where", label: "Where" },
-  { id: "time", label: "When" },
+  { id: "time", label: "How long" },
   { id: "pay", label: "Pay" },
 ];
 
 export const SegmentedSearchBar: React.FC<{ onOpenFilters: () => void }> = ({
   onOpenFilters,
 }) => {
-  const { effectiveFilters, chips, lookups, resolveLabel } = useDiscovery();
+  const { effectiveFilters, chips, resolveLabel } = useDiscovery();
   const [openSection, setOpenSection] = useState<string | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
 
-  // Close the open popover on any click outside the bar.
+  // Close the open popover on any click outside the bar, or on Escape.
   useEffect(() => {
     if (!openSection) return;
     const onPointerDown = (e: MouseEvent): void => {
       if (!rootRef.current?.contains(e.target as Node)) setOpenSection(null);
     };
+    const onKey = (e: KeyboardEvent): void => {
+      if (e.key === "Escape") setOpenSection(null);
+    };
     document.addEventListener("mousedown", onPointerDown);
-    return () => document.removeEventListener("mousedown", onPointerDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onPointerDown);
+      document.removeEventListener("keydown", onKey);
+    };
   }, [openSection]);
 
   const summaryFor = (id: string): string => {
     // Effective filters, so preference-inherited values show as the segment values on landing.
     const filters = effectiveFilters;
     switch (id) {
-      case "type":
-        return filters.type
-          ? (lookups.types.find((t) => t.name === filters.type)?.displayName ??
-              filters.type)
-          : "Any type";
+      case "search":
+        return filters.q ?? "Anything";
+      case "type": {
+        if (filters.types.length === 0) return "Any type";
+        const first = resolveLabel("types", filters.types[0]!);
+        const more = filters.types.length - 1;
+        return more > 0 ? `${first} +${more}` : first;
+      }
       case "where": {
         if (filters.countries.length === 0) return "Anywhere";
         const first = resolveLabel("countries", filters.countries[0]!);
@@ -92,6 +106,7 @@ export const SegmentedSearchBar: React.FC<{ onOpenFilters: () => void }> = ({
               {openSection === segment.id && (
                 <SectionPopover
                   sectionId={segment.id}
+                  alignRight={index === SEGMENTS.length - 1}
                   onClose={() => setOpenSection(null)}
                 />
               )}

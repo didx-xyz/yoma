@@ -29,8 +29,14 @@ export interface SectionModel {
 const HAS_REWARD_ID = "has-reward";
 
 export function useSectionModel(section: FilterSectionDef): SectionModel {
-  const { state, dispatch, lookups, effectiveFilters, fragments } =
-    useDiscovery();
+  const {
+    state,
+    dispatch,
+    lookups,
+    effectiveFilters,
+    fragments,
+    skipPreference,
+  } = useDiscovery();
   const { filters } = state;
 
   type ListFacet =
@@ -71,12 +77,7 @@ export function useSectionModel(section: FilterSectionDef): SectionModel {
         const prefKey = selected.includes(id)
           ? owningPreference(facet, id)
           : null;
-        if (prefKey)
-          dispatch({
-            kind: "setPreferenceSkipped",
-            key: prefKey,
-            skipped: true,
-          });
+        if (prefKey) skipPreference(prefKey);
         else
           dispatch({
             kind: "patchFilters",
@@ -127,11 +128,7 @@ export function useSectionModel(section: FilterSectionDef): SectionModel {
             return;
           }
           if (selectedId === id && fragments.maxCommitment)
-            dispatch({
-              kind: "setPreferenceSkipped",
-              key: "maxCommitment",
-              skipped: true,
-            });
+            skipPreference("maxCommitment");
           else
             dispatch({
               kind: "patchFilters",

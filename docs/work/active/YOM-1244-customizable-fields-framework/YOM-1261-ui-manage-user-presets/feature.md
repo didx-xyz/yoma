@@ -123,10 +123,14 @@ Anonymous visitors get it too — answers held in session, with an offer to keep
 - [x] Edit path seeds the wizard from stored preferences (mount-on-open contract, 2026-09-02);
       empty-state invites on both banners are the re-entry point after an unsaved dismiss.
 - [ ] Browser pass of the manual test script — partially done by Jason (2026-08-31→09-02
-      sessions were its findings); full §10 run outstanding.
-- [ ] Saved skills render as raw GUIDs when re-editing — needs id→name resolution.
-- [ ] Avatar-menu re-entry point (third entry point not wired yet).
-- [ ] Anonymous → sign-in "keep your answers" offer (migrate session answers to the stored preset).
+      sessions were its findings); full §10 run outstanding. The 2026-09-03 additions (skills
+      pairs, keep-answers offer, avatar entry) are implemented-but-unverified on screen.
+- [x] Saved skills render as raw GUIDs when re-editing — fixed 2026-09-03: skills stored as
+      `{id, name}` pairs (see Decisions). Confirmed working by Jason's browser pass same day.
+- [x] Avatar-menu re-entry point — "My preferences" in the UserMenu drawer navigates to
+      `/opportunities/discover?personalize=1`; the surface opens the wizard and strips the param.
+- [x] Anonymous → sign-in "keep your answers" offer — `useAnonymousMigration` +
+      `KeepAnswersPrompt`, merge through the façade, never a silent overwrite (see Decisions).
 - [ ] **Blocked**: real persistence, pending YOM-1257 / YOM-1258 (mock-removal list in the
       2026-08-27-c handoff).
 - [ ] **Blocked**: final preference list, pending YOM-1264.
@@ -174,6 +178,26 @@ Anonymous visitors get it too — answers held in session, with an offer to keep
   "Paid & rewards" session filter. Step 5 is language-only, retitled "What languages work for
   you?" — the wizard is now six steps covering seven editable preferences. The live-count caption
   now reads "opportunities match your answers so far", an explicitly filtered total.
+- 2026-09-03: **Skills are stored as `{id, name}` pairs, not bare ids.** The EMSI lookup is
+  search-by-name only, so a stored bare id can never be resolved back to a label when the wizard
+  re-edits a preset — chips rendered raw GUIDs. `UserPreferenceSkill { id, name }` carries the
+  label with the value; `normalizeUserPreferences` runs every store read and **drops** legacy
+  bare-id entries rather than keeping unresolvable GUID chips (mock-era data only). When the
+  presets API lands (YOM-1257), the preset model should either store the pair or the API must
+  return labels — flag for Adrian.
+- 2026-09-03: **The sign-in "keep your answers" offer merges, never overwrites.**
+  `useAnonymousMigration` (state/) + `KeepAnswersPrompt` (shared/): when a signed-in youth still
+  holds session answers, one prompt offers keep/discard. Keep merges into the stored preset via
+  `mergeUserPreferences` — multi-selects union, the session's answers win where both set a single
+  value — through the façade only. Either choice marks personalization seen and clears the
+  session store, which retires the offer; the wizard auto-open yields to a pending offer
+  (tri-state `pendingAnonymous`, `undefined` while the store is being read).
+- 2026-09-03: **The preferences mock is enabled on the DEV preview** — a deliberate departure
+  from the local-only rule, so the team/client can preview the prototype while the presets API is
+  built. Deployed images all bake `NEXT_PUBLIC_ENVIRONMENT=production` (one image, per-env
+  runtime config), so DEV is recognised at runtime by hostname (`DEV_PREVIEW_HOSTS =
+  ["dev.yoma.world"]` in the façade). Stage/production remain excluded. Add the host gate to the
+  mock-removal list (2026-08-27-c) when YOM-1257/1258 land.
 
 ## Links
 

@@ -2,7 +2,7 @@ import type {
   UserPreferenceScope,
   UserPreferences,
 } from "../models/userPreferences";
-import { EMPTY_USER_PREFERENCES } from "../models/userPreferences";
+import { normalizeUserPreferences } from "../models/userPreferences";
 
 /**
  * The real user-preferences service.
@@ -30,10 +30,7 @@ export const readAnonymousPreferences = (): UserPreferences | null => {
   const raw = window.sessionStorage.getItem(ANONYMOUS_STORAGE_KEY);
   if (raw === null) return null;
   try {
-    return {
-      ...EMPTY_USER_PREFERENCES,
-      ...(JSON.parse(raw) as UserPreferences),
-    };
+    return normalizeUserPreferences(JSON.parse(raw));
   } catch {
     return null;
   }

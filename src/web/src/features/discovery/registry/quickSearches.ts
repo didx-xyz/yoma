@@ -46,6 +46,28 @@ const pendingFields = (what: string) =>
 
 export const QUICK_SEARCHES: QuickSearchDef[] = [
   {
+    id: "under-an-hour",
+    icon: IoTimeOutline,
+    label: "Under an hour",
+    unavailableNote: null,
+    resolve: (ctx) => {
+      const hour = ctx.commitmentIntervals.find((i) => i.name === "Hour");
+      return hour ? { commitment: { intervalId: hour.id, count: 1 } } : null;
+    },
+  },
+  {
+    id: "climate-action",
+    icon: IoLeafOutline,
+    label: "Climate action",
+    unavailableNote: null,
+    resolve: (ctx) => {
+      const category = ctx.categories.find((c) =>
+        c.name.toLowerCase().includes("environment"),
+      );
+      return category ? { categories: [category.id] } : null;
+    },
+  },
+  {
     id: "jobs-near-me",
     icon: IoLocationOutline,
     label: "Jobs near me",
@@ -63,7 +85,7 @@ export const QUICK_SEARCHES: QuickSearchDef[] = [
     unavailableNote: "Set your country in your profile to use this one.",
     resolve: (ctx) =>
       ctx.profileCountry
-        ? { type: "Job", countries: [ctx.profileCountry.id] }
+        ? { types: ["Job"], countries: [ctx.profileCountry.id] }
         : null,
   },
   {
@@ -80,33 +102,12 @@ export const QUICK_SEARCHES: QuickSearchDef[] = [
     unavailableNote: pendingFields("The experience-level filter"),
     resolve: () => null, // Experience level / minimum qualification are pending BA fields.
   },
-  {
-    id: "under-an-hour",
-    icon: IoTimeOutline,
-    label: "Under an hour",
-    unavailableNote: null,
-    resolve: (ctx) => {
-      const hour = ctx.commitmentIntervals.find((i) => i.name === "Hour");
-      return hour ? { commitment: { intervalId: hour.id, count: 1 } } : null;
-    },
-  },
+
   {
     id: "accommodations",
     icon: IoAccessibilityOutline,
     label: "With accommodations",
     unavailableNote: pendingFields("The accommodations filter"),
     resolve: () => null, // Accessibility accommodations are pending BA fields.
-  },
-  {
-    id: "climate-action",
-    icon: IoLeafOutline,
-    label: "Climate action",
-    unavailableNote: null,
-    resolve: (ctx) => {
-      const category = ctx.categories.find((c) =>
-        c.name.toLowerCase().includes("environment"),
-      );
-      return category ? { categories: [category.id] } : null;
-    },
   },
 ];

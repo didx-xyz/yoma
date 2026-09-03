@@ -1,28 +1,39 @@
 import React, { useState } from "react";
-import { IoPersonOutline } from "react-icons/io5";
+import { IoPencilOutline, IoPersonOutline } from "react-icons/io5";
 import {
   USER_PREFERENCES_MOCK_ENABLED,
   setUserPreferencesMockActive,
   userPreferencesMockActive,
 } from "~/api/services/userPreferences";
+import {
+  SAVABLE_SKIP_KEYS,
+  applySkipsToPreferences,
+} from "../../lib/preferenceMapping";
 import { useDiscovery } from "../../state/DiscoveryContext";
 import { Message } from "./Message";
 
 /**
  * The preference strip above the results: what the feed is tuned to, the master switch, the edit
- * entry point — and the explicit write-back prompt, offered once only after the youth has
- * actually overridden something (never on load, never automatic).
+ * entry point — and the explicit write-back prompt, shown WHENEVER inherited preferences are
+ * overridden (never on load, never automatic). "Save to profile" persists the overrides
+ * one-tap through the façade: a skipped preference is cleared from the preset. Identity-derived
+ * skips (country, age) have no preset field, so they stay per-search and raise no prompt.
+ * "Not now" dismisses the CURRENT override set only — the next change to the skips brings the
+ * prompt back (the dismissal is keyed to a signature of the skipped keys, not the session).
  */
 const DISMISSED_KEY = "yoma.discovery.writeBackDismissed";
 
 export const PreferenceBanner: React.FC<{ onEdit: () => void }> = ({
   onEdit,
 }) => {
-  const { state, dispatch, chips, preferences } = useDiscovery();
-  const [dismissed, setDismissed] = useState(
+  const { state, dispatch, chips, preferences, savePreferences } =
+    useDiscovery();
+  const [saving, setSaving] = useState(false);
+  const [dismissedSignature, setDismissedSignature] = useState<string | null>(
     () =>
-      typeof window !== "undefined" &&
-      window.sessionStorage.getItem(DISMISSED_KEY) === "1",
+      typeof window !== "undefined"
+        ? window.sessionStorage.getItem(DISMISSED_KEY)
+        : null,
   );
 
   // Still loading — render nothing rather than flashing the empty state.
@@ -46,22 +57,42 @@ export const PreferenceBanner: React.FC<{ onEdit: () => void }> = ({
         <button
           type="button"
           onClick={onEdit}
-          className="btn btn-xs border-gray h-7 rounded-full bg-white text-[11px] font-semibold"
+          className="btn btn-xs bg-purple hover:bg-purple-shade h-7 rounded-full border-none text-[11px] font-semibold text-white"
         >
           Personalize my feed
         </button>
       </div>
     );
 
-  const overridden = state.preferencesSkipped.length > 0;
+  const savableSkips = state.preferencesSkipped.filter((key) =>
+    SAVABLE_SKIP_KEYS.includes(key),
+  );
+  const skipSignature = [...savableSkips].sort().join(",");
+  const notNow = (): void => {
+    window.sessionStorage.setItem(DISMISSED_KEY, skipSignature);
+    setDismissedSignature(skipSignature);
+  };
   const tunedTo = chips
     .filter((c) => c.provenance === "inherited")
     .map((c) => c.value)
     .join(", ");
 
-  const dismiss = (): void => {
-    window.sessionStorage.setItem(DISMISSED_KEY, "1");
-    setDismissed(true);
+  const saveOverrides = (): void => {
+    setSaving(true);
+    void savePreferences(
+      applySkipsToPreferences(preferences, state.preferencesSkipped),
+    )
+      .then(() =>
+        // The persisted skips no longer exist as preferences; only the identity-derived
+        // (unsavable) ones stay switched off for this search.
+        dispatch({
+          kind: "setSkippedPreferences",
+          keys: state.preferencesSkipped.filter(
+            (key) => !SAVABLE_SKIP_KEYS.includes(key),
+          ),
+        }),
+      )
+      .finally(() => setSaving(false));
   };
 
   return (
@@ -94,8 +125,9 @@ export const PreferenceBanner: React.FC<{ onEdit: () => void }> = ({
           <button
             type="button"
             onClick={onEdit}
-            className="btn btn-xs border-gray h-7 rounded-full bg-white text-[11px] font-semibold"
+            className="btn btn-xs bg-purple hover:bg-purple-shade h-7 rounded-full border-none text-[11px] font-semibold text-white"
           >
+            <IoPencilOutline className="h-3 w-3" />
             Edit my preferences
           </button>
           {/* daisyUI 5 toggles colour via --input-color (what toggle-primary sets) — white
@@ -111,27 +143,25 @@ export const PreferenceBanner: React.FC<{ onEdit: () => void }> = ({
           />
         </span>
       </div>
-      {overridden && !dismissed && (
+      {savableSkips.length > 0 && skipSignature !== dismissedSignature && (
         <div className="flex flex-wrap items-center gap-2 rounded-lg bg-white p-2 text-xs">
           <span className="min-w-40 grow basis-56">
-            You changed {state.preferencesSkipped.length} of your preferences.
-            Keep them just for this search, or make them your new defaults.
+            You switched off {savableSkips.length} of your preferences. That
+            lasts for this search — or make it your new default.
           </span>
           <span className="flex items-center gap-2">
             <button
               type="button"
-              onClick={dismiss}
+              onClick={notNow}
               className="text-gray-dark min-h-8 text-xs"
             >
               Not now
             </button>
             <button
               type="button"
-              onClick={() => {
-                onEdit(); // saving defaults is an explicit act — review them in the dialog
-                dismiss();
-              }}
-              className="btn btn-xs bg-green h-7 rounded-full border-none text-[11px] text-white"
+              disabled={saving}
+              onClick={saveOverrides}
+              className="btn btn-xs bg-green h-7 rounded-full border-none text-[11px] text-white disabled:opacity-40"
             >
               Save to profile
             </button>
@@ -141,7 +171,7 @@ export const PreferenceBanner: React.FC<{ onEdit: () => void }> = ({
       {USER_PREFERENCES_MOCK_ENABLED && (
         <Message kind="warning">
           Preferences are {userPreferencesMockActive() ? "mocked" : "live"}{" "}
-          (local development).{" "}
+          (preview — the presets API does not exist yet).{" "}
           <button
             type="button"
             className="underline"

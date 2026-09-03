@@ -13,8 +13,13 @@ import {
  * first, each removable. Replaying one is a plain navigation: the stored query string IS the
  * state. `onMouseDown` is intercepted so choosing an entry doesn't blur (and close) the panel
  * before the click lands.
+ *
+ * `variant="overlay"` (default) floats it under the input; `"inline"` renders it in flow for
+ * hosts that are already a floating panel (the search-bar segment popover).
  */
-export const RecentSearchesPanel: React.FC = () => {
+export const RecentSearchesPanel: React.FC<{
+  variant?: "overlay" | "inline";
+}> = ({ variant = "overlay" }) => {
   const router = useRouter();
   const [entries, setEntries] = useState<RecentSearch[]>(readRecentSearches);
   if (entries.length === 0) return null;
@@ -23,8 +28,19 @@ export const RecentSearchesPanel: React.FC = () => {
   // until the click lands — native buttons only, so no interactive-role gymnastics needed.
   const keepPanelOpen = (e: React.MouseEvent): void => e.preventDefault();
 
+  const remove = (queryString: string): void => {
+    removeRecentSearch(queryString);
+    setEntries((prev) => prev.filter((e) => e.queryString !== queryString));
+  };
+
   return (
-    <div className="border-gray shadow-custom absolute top-full right-0 left-0 z-30 mt-1 rounded-xl border bg-white p-2">
+    <div
+      className={
+        variant === "overlay"
+          ? "border-gray shadow-custom absolute top-full right-0 left-0 z-30 mt-1 rounded-xl border bg-white p-2"
+          : "p-1"
+      }
+    >
       <h3 className="text-gray-dark px-2 pb-1 text-xs font-bold tracking-wide uppercase">
         Recent
       </h3>
@@ -53,12 +69,7 @@ export const RecentSearchesPanel: React.FC = () => {
               type="button"
               aria-label={`Remove recent search ${entry.label}`}
               onMouseDown={keepPanelOpen}
-              onClick={() => {
-                removeRecentSearch(entry.queryString);
-                setEntries((prev) =>
-                  prev.filter((e) => e.queryString !== entry.queryString),
-                );
-              }}
+              onClick={() => remove(entry.queryString)}
               className="text-gray-dark flex h-11 w-11 shrink-0 items-center justify-center"
             >
               <IoClose className="h-4 w-4" />

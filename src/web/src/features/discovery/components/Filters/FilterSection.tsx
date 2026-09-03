@@ -90,7 +90,11 @@ export const FilterSection: React.FC<{
       )}
       {expanded && (
         <div ref={contentRef} className="flex flex-col gap-2 pb-3">
-          <FilterControl section={section} model={model} />
+          <FilterControl
+            section={section}
+            model={model}
+            largeSearch={alwaysOpen}
+          />
           {section.nullRule && section.binding !== null && (
             <Message>{section.nullRule}</Message>
           )}

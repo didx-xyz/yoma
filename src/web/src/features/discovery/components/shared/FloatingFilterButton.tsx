@@ -27,12 +27,14 @@ export const FloatingFilterButton: React.FC<{ onOpen: () => void }> = ({
   }, []);
 
   return (
+    // top-20 = the navbar's h-20 on BOTH breakpoints, so the button hangs from its bottom edge
+    // instead of disappearing behind it (mobile previously used top-16 and lost 16px).
     <button
       type="button"
       onClick={onOpen}
       tabIndex={visible ? 0 : -1}
       aria-hidden={!visible}
-      className={`bg-purple hover:bg-purple-shade shadow-custom fixed top-16 left-1/2 z-30 flex min-h-9 -translate-x-1/2 items-center gap-1.5 rounded-b-xl px-4 text-sm font-semibold text-white transition-opacity duration-300 select-none motion-reduce:transition-none md:top-20 ${
+      className={`bg-purple hover:bg-purple-shade shadow-custom fixed top-20 left-1/2 z-30 flex min-h-9 -translate-x-1/2 items-center gap-1.5 rounded-b-xl px-4 text-sm font-semibold text-white transition-opacity duration-300 select-none motion-reduce:transition-none ${
         visible ? "opacity-100" : "pointer-events-none opacity-0"
       }`}
     >

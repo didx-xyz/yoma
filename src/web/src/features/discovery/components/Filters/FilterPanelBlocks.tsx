@@ -2,11 +2,12 @@ import React, { useRef, useState } from "react";
 import {
   IoAddCircleOutline,
   IoChevronDown,
-  IoSearchOutline,
+  IoFlashOutline,
 } from "react-icons/io5";
 import { FILTER_SECTIONS } from "../../registry/filterSections";
 import { useDiscovery } from "../../state/DiscoveryContext";
 import { QuickSearchRow } from "../Discover/QuickSearchRow";
+import { FreeTextSearchInput } from "../shared/FreeTextSearchInput";
 import { FilterSection } from "./FilterSection";
 import { PreferencesBlock } from "./PreferencesBlock";
 import { RecentSearchesPanel } from "./RecentSearches";
@@ -25,15 +26,9 @@ export const FilterPanelBlocks: React.FC<{ onEditPreferences: () => void }> = ({
   onEditPreferences,
 }) => {
   const { state, dispatch } = useDiscovery();
-  // Transient input draft; the URL stays the source of truth and is committed on Enter/blur.
-  const [draft, setDraft] = useState(state.filters.q ?? "");
   const [inputFocused, setInputFocused] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const moreRef = useRef<HTMLDivElement>(null);
-  const commit = (): void => {
-    const q = draft.trim() === "" ? null : draft.trim();
-    if (q !== state.filters.q) dispatch({ kind: "patchFilters", patch: { q } });
-  };
 
   const toggleMore = (): void => {
     const opening = !moreOpen;
@@ -54,39 +49,30 @@ export const FilterPanelBlocks: React.FC<{ onEditPreferences: () => void }> = ({
   return (
     <div className="flex flex-col gap-4" data-testid="filter-panel-blocks">
       <div className="relative">
-        <label className="input input-bordered flex h-11 items-center gap-2 rounded-full">
-          <IoSearchOutline className="text-gray-dark h-5 w-5" />
-          <input
-            type="text"
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            onFocus={() => setInputFocused(true)}
-            onBlur={() => {
-              setInputFocused(false);
-              commit();
-            }}
-            onKeyDown={(e) => e.key === "Enter" && commit()}
-            placeholder="Search titles, summaries and keywords…"
-            className="grow"
-            aria-label="Search opportunities"
-          />
-        </label>
+        <FreeTextSearchInput
+          initial={state.filters.q}
+          onCommit={(q) => dispatch({ kind: "patchFilters", patch: { q } })}
+          onFocusChange={setInputFocused}
+        />
         {inputFocused && <RecentSearchesPanel />}
       </div>
 
       <section>
-        <h3 className="text-gray-dark pb-2 text-xs font-bold tracking-wide uppercase">
-          Quick searches
-        </h3>
+        <div className="flex items-center gap-3 pb-2">
+          <IoFlashOutline className="text-gray-dark h-4 w-4 shrink-0" />
+          <h3 className="text-gray-dark text-xs font-bold tracking-wide uppercase">
+            Quick searches
+          </h3>
+        </div>
         <QuickSearchRow />
       </section>
 
       <PreferencesBlock onEdit={onEditPreferences} />
 
-      <TypeRow />
-
-      {/* Type-specific filters sit inside the section list so they read as one contiguous set. */}
+      {/* The type row and the type-specific filters sit inside the section list so the whole
+          filter surface reads as one contiguous set with shared dividers. */}
       <div>
+        <TypeRow />
         <TypeSpecificFilters />
         {primary.map((section) => (
           <FilterSection key={section.id} section={section} />
