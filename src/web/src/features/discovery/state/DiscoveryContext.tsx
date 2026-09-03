@@ -1,6 +1,6 @@
 import { useAtomValue } from "jotai";
 import { useRouter } from "next/router";
-import React, { createContext, useContext, useMemo } from "react";
+import React, { createContext, useContext, useMemo, useRef } from "react";
 import type { UserPreferences } from "~/api/models/userPreferences";
 import { userProfileAtom } from "~/lib/store";
 import type { ChipLabelResolver, DiscoveryChip } from "../lib/chipModel";
@@ -11,11 +11,16 @@ import {
   applyInheritedFragments,
   mapPreferencesToFilters,
 } from "../lib/preferenceMapping";
-import type { DiscoveryFilters, DiscoveryState } from "../lib/types";
+import type {
+  DiscoveryFilters,
+  DiscoveryState,
+  PreferenceKey,
+} from "../lib/types";
 import {
   useDiscoveryLookups,
   type DiscoveryLookups,
 } from "./useDiscoveryLookups";
+import { useAnonymousMigration } from "./useAnonymousMigration";
 import { useDiscoveryQuery } from "./useDiscoveryQuery";
 import { usePreferences } from "./usePreferences";
 import { useResultCount } from "./useResultCount";
@@ -29,11 +34,30 @@ export interface DiscoveryContextValue {
   lookups: DiscoveryLookups;
   preferences: UserPreferences | null | undefined;
   savePreferences: (preferences: UserPreferences) => Promise<UserPreferences>;
+  /** The sign-in "keep your answers" offer — see `useAnonymousMigration`. */
+  migration: ReturnType<typeof useAnonymousMigration>;
   fragments: InheritedFragments;
   /** What the search actually runs with: manual state + surviving inherited fragments. */
   effectiveFilters: DiscoveryFilters;
   chips: DiscoveryChip[];
   resolveLabel: ChipLabelResolver;
+  /** Clear the session's choices AND switch off the inherited layer (struck-through, undoable). */
+  clearAll: () => void;
+  /**
+   * Switch one preference off for this search — the ONE deselect path for inherited values
+   * (chip ×, section control, type row, category tile). Also strips the fragment's values from
+   * the manual filters so a manual duplicate cannot survive the skip. Undo via
+   * `setPreferenceSkipped(key, false)`.
+   */
+  skipPreference: (key: PreferenceKey) => void;
+  /** The results count row registers here; `scrollToResults` brings it into view. */
+  resultsAnchorRef: React.RefObject<HTMLDivElement | null>;
+  /**
+   * Scroll to the results header. Called ONLY by explicit "Show N results" actions (dialog and
+   * sheet footers, segment popovers, the wizard's finish) and the pager — never as a side
+   * effect of selecting or changing a filter.
+   */
+  scrollToResults: () => void;
   count: number | null;
   counting: boolean;
   setView: (view: DiscoveryState["view"]) => void;
@@ -51,11 +75,13 @@ export const DiscoveryProvider: React.FC<{ children: React.ReactNode }> = ({
   const lookups = useDiscoveryLookups();
   const profile = useAtomValue(userProfileAtom);
   const {
+    scope,
     preferences,
     save: savePreferences,
     readPersonalizationSeen,
     markPersonalizationSeen,
   } = usePreferences();
+  const migration = useAnonymousMigration(scope, preferences, savePreferences);
 
   const fragments = useMemo(
     () =>
@@ -78,6 +104,11 @@ export const DiscoveryProvider: React.FC<{ children: React.ReactNode }> = ({
     const byId = (items: { id: string; name: string }[]): string =>
       items.find((item) => item.id === value)?.name ?? value;
     switch (facet) {
+      case "types":
+        // State carries the enum NAME; only the displayName is shown.
+        return (
+          lookups.types.find((t) => t.name === value)?.displayName ?? value
+        );
       case "categories":
         return byId(lookups.categories);
       case "countries":
@@ -103,6 +134,33 @@ export const DiscoveryProvider: React.FC<{ children: React.ReactNode }> = ({
     resolveLabel,
   );
 
+  const clearAll = (): void =>
+    dispatch({
+      kind: "clearAll",
+      skipPreferences: Object.keys(fragments) as PreferenceKey[],
+    });
+
+  const skipPreference = (key: PreferenceKey): void =>
+    dispatch({ kind: "skipPreference", key, fragment: fragments[key] ?? {} });
+
+  const resultsAnchorRef = useRef<HTMLDivElement | null>(null);
+  const scrollToResults = (): void => {
+    // The caller is usually a closing overlay: the body scroll-lock (`overflow: hidden`)
+    // releases one render later, and scrolling while locked is silently ignored — so retry over
+    // a few frames until the lock is gone and the anchor exists, instead of hoping one rAF wins.
+    let attempts = 0;
+    const tryScroll = (): void => {
+      attempts += 1;
+      const anchor = resultsAnchorRef.current;
+      if (anchor && document.body.style.overflow !== "hidden") {
+        anchor.scrollIntoView({ behavior: "smooth", block: "start" });
+        return;
+      }
+      if (attempts < 15) requestAnimationFrame(tryScroll);
+    };
+    requestAnimationFrame(tryScroll);
+  };
+
   const { count, counting } = useResultCount(
     effectiveFilters,
     lookups.typeIdByName,
@@ -123,10 +181,15 @@ export const DiscoveryProvider: React.FC<{ children: React.ReactNode }> = ({
     lookups,
     preferences,
     savePreferences,
+    migration,
     fragments,
     effectiveFilters,
     chips,
     resolveLabel,
+    clearAll,
+    skipPreference,
+    resultsAnchorRef,
+    scrollToResults,
     count,
     counting,
     setView,

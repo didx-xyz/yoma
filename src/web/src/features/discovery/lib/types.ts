@@ -12,8 +12,8 @@ import type { CustomFieldFilter } from "~/api/models/opportunity";
 export interface DiscoveryFilters {
   /** Free-text search — `valueContains`. */
   q: string | null;
-  /** Opportunity Type enum NAME (Job | Learning | Event | Task | Other), never the GUID. */
-  type: string | null;
+  /** Opportunity Type enum NAMEs (Job | Learning | Event | Task | Other), never GUIDs. Multi-select. */
+  types: string[];
   /** Opportunity Category ids. */
   categories: string[];
   /** Country ids. */
@@ -30,7 +30,7 @@ export interface DiscoveryFilters {
   languages: string[];
   /** Organization ids ("Provider"). */
   providers: string[];
-  /** Type-scoped custom-field clauses (YOM-1260 shape). Cleared when `type` changes. */
+  /** Type-scoped custom-field clauses (YOM-1260 shape). Cleared when a type is deselected. */
   customFields: CustomFieldFilter[];
 }
 
@@ -65,7 +65,7 @@ export interface DiscoveryState {
 
 export const EMPTY_DISCOVERY_FILTERS: DiscoveryFilters = {
   q: null,
-  type: null,
+  types: [],
   categories: [],
   countries: [],
   engagementTypes: [],

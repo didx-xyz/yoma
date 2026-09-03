@@ -21,12 +21,14 @@ export function buildSearchFilter(
   pageSize: number,
   typeIdByName: Record<string, string>,
 ): OpportunitySearchFilter {
-  const typeId = filters.type ? typeIdByName[filters.type] : undefined;
+  const typeIds = filters.types
+    .map((name) => typeIdByName[name])
+    .filter((id): id is string => !!id);
 
   return {
     pageNumber: page,
     pageSize,
-    types: typeId ? [typeId] : null,
+    types: typeIds.length > 0 ? typeIds : null,
     categories: orNull(filters.categories),
     countries: orNull(filters.countries),
     languages: orNull(filters.languages),

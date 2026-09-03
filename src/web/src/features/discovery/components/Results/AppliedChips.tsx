@@ -1,4 +1,5 @@
 import React from "react";
+import { CustomFieldFilterOperator } from "~/api/models/opportunity";
 import ScrollableContainer from "~/components/Carousel/ScrollableContainer";
 import { useCustomFieldFilterLabeler } from "~/components/Opportunity/CustomFieldFilters";
 import { useOpportunityCustomFieldDefinitionsQuery } from "~/hooks/useOpportunityMutations";
@@ -13,11 +14,12 @@ import { Chip } from "../shared/Chip";
 export const AppliedChips: React.FC<{ pulseChipId?: string | null }> = ({
   pulseChipId,
 }) => {
-  const { state, dispatch, chips } = useDiscovery();
-  const type = state.filters.type;
+  const { state, dispatch, chips, effectiveFilters, clearAll, skipPreference } =
+    useDiscovery();
+  const types = effectiveFilters.types;
   const { data: definitions } = useOpportunityCustomFieldDefinitionsQuery(
-    type ? [type] : null,
-    { enabled: !!type && state.filters.customFields.length > 0 },
+    types.length > 0 ? types : null,
+    { enabled: types.length > 0 && state.filters.customFields.length > 0 },
   );
   const labelFor = useCustomFieldFilterLabeler(definitions);
 
@@ -38,11 +40,7 @@ export const AppliedChips: React.FC<{ pulseChipId?: string | null }> = ({
           pulse={chip.id === pulseChipId}
           onRemove={() =>
             chip.prefKey
-              ? dispatch({
-                  kind: "setPreferenceSkipped",
-                  key: chip.prefKey,
-                  skipped: true,
-                })
+              ? skipPreference(chip.prefKey)
               : chip.facet &&
                 chip.raw !== null &&
                 dispatch({
@@ -66,8 +64,16 @@ export const AppliedChips: React.FC<{ pulseChipId?: string | null }> = ({
           key={`cf:${clause.key}:${clause.operator}`}
           chip={{
             id: `cf:${clause.key}:${clause.operator}`,
-            group: "Details",
-            value: labelFor(clause),
+            // The chip is labelled by the FIELD, never its group/sub-group: the definition
+            // title is what the youth chose under, and the labeler supplies the value.
+            group:
+              definitions?.find(
+                (d) => d.key.toLowerCase() === clause.key.toLowerCase(),
+              )?.title ?? "Details",
+            value:
+              clause.operator === CustomFieldFilterOperator.Exists
+                ? "Has any value"
+                : labelFor(clause),
             provenance: "manual",
             prefKey: null,
             facet: "customFields",
@@ -88,7 +94,7 @@ export const AppliedChips: React.FC<{ pulseChipId?: string | null }> = ({
       ))}
       <button
         type="button"
-        onClick={() => dispatch({ kind: "clearAll" })}
+        onClick={clearAll}
         className="text-purple shrink-0 text-xs font-semibold whitespace-nowrap underline"
       >
         Clear all

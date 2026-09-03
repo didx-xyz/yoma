@@ -303,3 +303,18 @@ flag it in a handoff here before merging.
 3. `TotalCountOnly` is internal — the web live count fetches `pageSize: 1` instead. Nice-to-have.
 4. `ApplyUserPresets` is stubbed on the filter; confirm YOM-1258 makes it the real preset→filter
    path so web can retire its client-side mapping.
+
+**DEV environment skew (found 2026-09-03, affects anyone previewing this branch):**
+`/opportunity/search` on `v3api.dev.yoma.world` fails with `42703: column
+o.YomaRewardPoolCurrentFinancialYear does not exist` (also `o.YomaReward`). Verified cause: the
+DEV database has had this branch's migration
+`20260806191303_ApplicationDb_Custom_Fields_Treasury_Payout` applied — it **drops** the
+Yoma-reward columns — while the pods behind `v3api.dev` are serving a **master-model build**
+whose EF model still maps them (the branch-only definitions endpoint 404s there; web at
+`dev.yoma.world` IS the branch build). `yoma-v3-dev` is a shared, last-deploy-wins environment:
+every PR against `master` deploys its images there, and the API chart's dev values default to
+`image.tag: "master"` when CI's `TAG` is not applied. Migrations only run forward, so any
+master-based deploy after this branch's destructive drops breaks opportunity search until a
+branch API image is redeployed. **Fix**: re-run the branch PR's deploy (or push a commit) so the
+API pod image matches the DB schema — and expect it to re-break whenever another PR deploys to
+DEV, until this epic merges. Owner: Adrian / infra.

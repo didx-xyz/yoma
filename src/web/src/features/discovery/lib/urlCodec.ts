@@ -59,7 +59,7 @@ export function parseDiscoveryQuery(query: Query): DiscoveryState {
   return {
     filters: {
       q: single(query, "q"),
-      type: single(query, "type"),
+      types: list(query, "type"),
       categories: list(query, "cat"),
       countries: list(query, "where"),
       engagementTypes: list(query, "format"),
@@ -93,8 +93,8 @@ export function serializeDiscoveryState(state: DiscoveryState): string {
   const defaults = DEFAULT_DISCOVERY_STATE;
 
   if (filters.q) params.set("q", filters.q);
-  if (filters.type) params.set("type", filters.type);
   const lists: [string, string[]][] = [
+    ["type", filters.types],
     ["cat", filters.categories],
     ["where", filters.countries],
     ["format", filters.engagementTypes],

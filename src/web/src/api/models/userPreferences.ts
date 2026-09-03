@@ -21,6 +21,16 @@ export interface UserPreferenceCommitment {
   count: number;
 }
 
+/**
+ * Skills are stored as `{id, name}` pairs, not bare ids: the EMSI lookup is search-by-name only,
+ * so a bare id cannot be resolved back to a label when the wizard re-edits a stored preset. The
+ * name is display data — anything consuming skills as a filter must use `id`.
+ */
+export interface UserPreferenceSkill {
+  id: string;
+  name: string;
+}
+
 export interface UserPreferenceAccessibility {
   /** Opt-in, off by default, never auto-applied from the profile. */
   enabled: boolean;
@@ -32,8 +42,8 @@ export interface UserPreferences {
   goal: UserGoal | null;
   /** Opportunity Category ids (Opportunity Categories taxonomy). */
   targetCategories: string[];
-  /** EMSI Skill lookup ids, self-reported. Verified skills are read from the profile. */
-  selfReportedSkills: string[];
+  /** EMSI Skill lookup pairs, self-reported. Verified skills are read from the profile. */
+  selfReportedSkills: UserPreferenceSkill[];
   /** Normalised "at most this much time"; opportunities with no commitment set are INCLUDED. */
   maxCommitment: UserPreferenceCommitment | null;
   /** Proposed, awaiting BA sign-off (YOM-1264): EngagementType lookup id. */
@@ -61,4 +71,70 @@ export const EMPTY_USER_PREFERENCES: UserPreferences = {
   engagement: null,
   languages: [],
   accessibility: { enabled: false, needs: [] },
+};
+
+/**
+ * Repairs a stored preset of unknown vintage into the current shape. Client-held stores
+ * (sessionStorage, the local mock) outlive shape changes, so both read paths run parsed JSON
+ * through here. Legacy bare-id skills (pre-`{id, name}`) are dropped rather than kept as
+ * unresolvable GUID chips.
+ */
+export const normalizeUserPreferences = (raw: unknown): UserPreferences => {
+  const parsed = (
+    typeof raw === "object" && raw !== null ? raw : {}
+  ) as Partial<UserPreferences>;
+  return {
+    ...EMPTY_USER_PREFERENCES,
+    ...parsed,
+    selfReportedSkills: Array.isArray(parsed.selfReportedSkills)
+      ? (parsed.selfReportedSkills as unknown[]).filter(
+          (skill): skill is UserPreferenceSkill =>
+            typeof skill === "object" &&
+            skill !== null &&
+            typeof (skill as UserPreferenceSkill).id === "string" &&
+            typeof (skill as UserPreferenceSkill).name === "string",
+        )
+      : [],
+    accessibility: parsed.accessibility ?? EMPTY_USER_PREFERENCES.accessibility,
+  };
+};
+
+/**
+ * Merges session-held anonymous answers into a stored preset (the sign-in "keep your answers"
+ * offer). The anonymous answers are the youth's most recent expression, so they win where set;
+ * multi-selects union so nothing already stored is lost. Never called without the youth's
+ * explicit yes — an existing preset is never overwritten silently.
+ */
+export const mergeUserPreferences = (
+  stored: UserPreferences,
+  anonymous: UserPreferences,
+): UserPreferences => {
+  const union = <T>(a: T[], b: T[], keyOf: (item: T) => string): T[] => {
+    const seen = new Set(a.map(keyOf));
+    return [...a, ...b.filter((item) => !seen.has(keyOf(item)))];
+  };
+  return {
+    goal: anonymous.goal ?? stored.goal,
+    targetCategories: union(
+      stored.targetCategories,
+      anonymous.targetCategories,
+      (id) => id,
+    ),
+    selfReportedSkills: union(
+      stored.selfReportedSkills,
+      anonymous.selfReportedSkills,
+      (skill) => skill.id,
+    ),
+    maxCommitment: anonymous.maxCommitment ?? stored.maxCommitment,
+    engagement: anonymous.engagement ?? stored.engagement,
+    languages: union(stored.languages, anonymous.languages, (id) => id),
+    accessibility: {
+      enabled: stored.accessibility.enabled || anonymous.accessibility.enabled,
+      needs: union(
+        stored.accessibility.needs,
+        anonymous.accessibility.needs,
+        (id) => id,
+      ),
+    },
+  };
 };

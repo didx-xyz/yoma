@@ -141,7 +141,7 @@ export const PREFERENCE_STEPS: PreferenceStepDef[] = [
       {
         kind: "pills",
         prefKey: "maxCommitment",
-        heading: "Time commitment",
+        heading: "How long", // matches the filter section's name
         // Matches the section's null rule: the API's interval filter EXCLUDES unset commitments.
         note: "Opportunities that don't state a time commitment are excluded by this.",
         optionsSource: "commitmentIntervals",

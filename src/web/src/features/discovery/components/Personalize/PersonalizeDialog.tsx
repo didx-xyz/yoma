@@ -12,6 +12,7 @@ import {
 import { EMPTY_DISCOVERY_FILTERS } from "../../lib/types";
 import { PREFERENCE_STEPS } from "../../registry/preferenceSteps";
 import { useDiscovery } from "../../state/DiscoveryContext";
+import { useDialogDismiss } from "../../state/useDialogDismiss";
 import { useResultCount } from "../../state/useResultCount";
 import { Message } from "../shared/Message";
 import { LiveCountPanel } from "./LiveCountPanel";
@@ -31,8 +32,21 @@ import { StepBlock } from "./StepBlock";
 export const PersonalizeDialog: React.FC<{
   onClose: () => void;
 }> = ({ onClose }) => {
-  const { preferences, savePreferences, markPersonalizationSeen, lookups } =
-    useDiscovery();
+  const {
+    preferences,
+    savePreferences,
+    markPersonalizationSeen,
+    lookups,
+    dispatch,
+    scrollToResults,
+  } = useDiscovery();
+
+  // Escape and the browser Back button behave exactly like the X: seen, unsaved, closed.
+  const dismiss = (): void => {
+    markPersonalizationSeen();
+    onClose();
+  };
+  useDialogDismiss(true, dismiss);
   const profile = useAtomValue(userProfileAtom);
   const [step, setStep] = useState(0);
   const [draft, setDraft] = useState<UserPreferences>(
@@ -62,8 +76,12 @@ export const PersonalizeDialog: React.FC<{
 
   const finish = async (): Promise<void> => {
     await savePreferences(draft);
+    // The preset just saved IS the new default — per-preference skips and the master-off switch
+    // referred to the old one, and keeping them would strike out what was just chosen.
+    dispatch({ kind: "resetPreferenceOverrides" });
     markPersonalizationSeen();
     onClose();
+    scrollToResults();
   };
   const advance = (): void => {
     if (last) void finish();
@@ -80,8 +98,9 @@ export const PersonalizeDialog: React.FC<{
       {/* Only the step content scrolls; the purple panel, the progress row and the action
           footer stay put on both breakpoints. */}
       {/* Fixed height on md+ for the same reason the panel is fixed-width: the dialog must not
-          resize as the youth moves between steps of different lengths. */}
-      <div className="flex h-full w-full flex-col overflow-hidden bg-white md:h-[85vh] md:max-w-4xl md:flex-row md:rounded-2xl">
+          resize as the youth moves between steps of different lengths. The rem cap keeps it
+          from stretching into a tower on tall monitors. */}
+      <div className="flex h-full w-full flex-col overflow-hidden bg-white md:h-[min(85vh,46rem)] md:max-w-4xl md:flex-row md:rounded-2xl">
         <LiveCountPanel count={count} counting={counting} />
         <div className="flex min-h-0 grow flex-col p-4 md:p-8">
           <div className="flex items-center gap-1">
@@ -93,17 +112,14 @@ export const PersonalizeDialog: React.FC<{
             ))}
             <button
               type="button"
-              onClick={() => {
-                markPersonalizationSeen();
-                onClose();
-              }}
+              onClick={dismiss}
               aria-label="Close personalization"
               className="hover:bg-gray-light ml-2 flex h-11 w-11 items-center justify-center rounded-full"
             >
               <IoClose className="h-5 w-5" />
             </button>
           </div>
-          <div ref={contentRef} className="min-h-0 grow overflow-y-auto">
+          <div ref={contentRef} className="min-h-0 grow overflow-y-auto pr-2">
             <p className="text-green pt-2 text-xs font-bold tracking-widest uppercase">
               Step {step + 1} of {PREFERENCE_STEPS.length}
             </p>

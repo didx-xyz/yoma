@@ -10,8 +10,14 @@ import { useDiscovery } from "../../state/DiscoveryContext";
  * state carries ids, so this wrapper translates between the two.
  */
 export const CategoryCarousel: React.FC = () => {
-  const { state, dispatch, lookups, effectiveFilters, fragments } =
-    useDiscovery();
+  const {
+    state,
+    dispatch,
+    lookups,
+    effectiveFilters,
+    fragments,
+    skipPreference,
+  } = useDiscovery();
   if (lookups.categories.length === 0) return null;
 
   // Selection reflects the EFFECTIVE filters, so preference-inherited categories light up on
@@ -28,12 +34,7 @@ export const CategoryCarousel: React.FC = () => {
     const inherited =
       effectiveFilters.categories.includes(id) &&
       fragments.targetCategories?.categories?.includes(id);
-    if (inherited)
-      dispatch({
-        kind: "setPreferenceSkipped",
-        key: "targetCategories",
-        skipped: true,
-      });
+    if (inherited) skipPreference("targetCategories");
     else
       dispatch({
         kind: "patchFilters",
@@ -51,10 +52,16 @@ export const CategoryCarousel: React.FC = () => {
           Counts are live and respect your preferences
         </span>
       </div>
+      {/* items-start: the cards are aspect-square, so default cross-axis stretch converts any
+          imposed row height into card WIDTH too — they inflate in both directions. Top-aligned,
+          each card keeps its natural size (the old page's CustomSlider renders them the same
+          way). containerClassName="" drops the wrapper's h-full for the same reason as the
+          wizard footer: never hand this row a height it must fill. */}
       <ScrollableContainer
         showShadows
         shadowFromClassName="from-gray-light" // the page body's background
-        className="flex gap-3 overflow-x-auto pb-2"
+        containerClassName=""
+        className="flex items-start gap-3 overflow-x-auto pb-2"
       >
         {lookups.categories.map((category) => (
           <OpportunityCategoryHorizontalCard

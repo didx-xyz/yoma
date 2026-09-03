@@ -1,5 +1,5 @@
 import React from "react";
-import { formatNumber } from "../../lib/format";
+import { ShowResultsButton } from "./ShowResultsButton";
 
 /**
  * The sticky footer both filter surfaces share: Clear all + "Show N results". The count is live
@@ -19,16 +19,10 @@ export const CountFooter: React.FC<{
     >
       Clear all
     </button>
-    <button
-      type="button"
+    <ShowResultsButton
+      count={count}
+      counting={counting}
       onClick={onShowResults}
-      className="btn bg-purple hover:bg-purple-shade min-h-11 rounded-full border-none px-6 text-white"
-    >
-      {counting || count === null ? (
-        <span className="bg-purple-soft inline-block h-4 w-16 animate-pulse rounded motion-reduce:animate-none" />
-      ) : (
-        <>Show {formatNumber(count)} results</>
-      )}
-    </button>
+    />
   </div>
 );

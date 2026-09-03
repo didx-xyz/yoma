@@ -290,6 +290,20 @@ export const UserMenu: React.FC = () => {
                     Settings
                   </Link>
                 </div>
+
+                {/* Discovery preferences (YOM-1261): re-entry into the personalization wizard —
+                    ?personalize=1 opens it on arrival and is then stripped from the URL. */}
+                <div className="z-10 flex w-full flex-row items-center">
+                  <Link
+                    href="/opportunities/discover?personalize=1"
+                    className="font-nunito btn btn-sm btn-warning w-full text-white"
+                    onClick={() => setDrawerOpen(false)}
+                    tabIndex={isDrawerOpen ? 0 : -1}
+                    title="Edit my preferences"
+                  >
+                    My preferences
+                  </Link>
+                </div>
               </div>
 
               <div className="divider !bg-gray my-2" />

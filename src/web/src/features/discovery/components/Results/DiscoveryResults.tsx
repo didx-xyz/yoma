@@ -9,6 +9,7 @@ import {
   useDiscoveryResults,
 } from "../../state/useDiscoveryResults";
 import { CategoryCarousel } from "../Discover/CategoryCarousel";
+import { Message } from "../shared/Message";
 import { PreferenceBanner } from "../shared/PreferenceBanner";
 import { AppliedChips } from "./AppliedChips";
 import { ResultsGrid } from "./ResultsGrid";
@@ -18,15 +19,25 @@ import { ViewToggle } from "./ViewToggle";
 
 /**
  * The applied-search surface: banner, chips, the category carousel (current position, per the
- * design decision), the count row, then the results in the chosen view. Loading keeps the previous results mounted
- * and blurred — one spinner beside the count, never one per card, `motion-reduce` throughout.
+ * design decision), the count row, then the results in the chosen view. Loading keeps the
+ * previous results mounted and fades them — one spinner beside the count, never one per card,
+ * `motion-reduce` throughout.
  */
 export const DiscoveryResults: React.FC<{
   onEditPreferences: () => void;
   now: Date;
 }> = ({ onEditPreferences, now }) => {
-  const { state, dispatch, effectiveFilters, lookups, ready, setView, chips } =
-    useDiscovery();
+  const {
+    state,
+    dispatch,
+    effectiveFilters,
+    lookups,
+    ready,
+    setView,
+    chips,
+    resultsAnchorRef,
+    scrollToResults,
+  } = useDiscovery();
   const { results, loading } = useDiscoveryResults(
     effectiveFilters,
     state.page,
@@ -41,6 +52,16 @@ export const DiscoveryResults: React.FC<{
   useEffect(() => {
     previousChipIds.current = new Set(chips.map((c) => c.id));
   });
+
+  // Paging jumps back to the count row — the new page starts at its top, not mid-scroll.
+  // (This and the explicit "Show N results" actions are the ONLY scroll triggers; a filter
+  // change never scrolls.)
+  const previousPage = useRef(state.page);
+  useEffect(() => {
+    if (state.page !== previousPage.current) scrollToResults();
+    previousPage.current = state.page;
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- page transitions only
+  }, [state.page]);
 
   // Record the search once its results arrive (imperative side effect, not derived state).
   useEffect(() => {
@@ -57,48 +78,80 @@ export const DiscoveryResults: React.FC<{
   const pages =
     total !== null ? Math.max(1, Math.ceil(total / DISCOVERY_PAGE_SIZE)) : 1;
 
+  // "[count] match(es) for [first filter] + N filter(s)" — states WHAT the count counts while
+  // staying short: first value only, the rest as a count (the chips row above carries the full
+  // set). Struck-through (skipped) chips are not filtering, so they stay out of it.
+  const filterValues = [
+    ...(effectiveFilters.q ? [`“${effectiveFilters.q}”`] : []),
+    ...chips.filter((c) => c.provenance !== "inheritedOff").map((c) => c.value),
+  ];
+  const heading = (count: number): string => {
+    if (filterValues.length === 0)
+      return `${formatNumber(count)} ${count === 1 ? "opportunity" : "opportunities"}`;
+    // Custom-field clauses are chipped separately (not in the chip model), but they filter —
+    // count them in the remainder. A clause can only exist while its type chip does, so
+    // `filterValues` is never empty when clauses are set.
+    const rest = filterValues.length - 1 + effectiveFilters.customFields.length;
+    return `${formatNumber(count)} ${count === 1 ? "match" : "matches"} for ${filterValues[0]}${
+      rest > 0 ? ` + ${rest} ${rest === 1 ? "filter" : "filters"}` : ""
+    }`;
+  };
+
   return (
     <div className="flex flex-col gap-4">
       <PreferenceBanner onEdit={onEditPreferences} />
       <AppliedChips pulseChipId={loading ? newChipId : null} />
       <CategoryCarousel />
-      {/* One drag-scrollable row: count left, controls right — never wraps into page height. */}
-      <ScrollableContainer
-        className="flex items-center gap-3 overflow-x-auto"
-        showShadows={true}
-        shadowFromClassName="from-gray-light" // the page body's background
-      >
-        <h2 className="flex shrink-0 items-center gap-2 text-base font-bold tracking-normal whitespace-nowrap md:text-lg">
-          {loading || total === null ? (
-            <>
+      {/* One drag-scrollable row: count left, controls right — never wraps into page height.
+          The pager scrolls back up to this row, so it carries the anchor ref. */}
+      <div ref={resultsAnchorRef} className="scroll-mt-20">
+        <ScrollableContainer
+          className="flex items-center gap-3 overflow-x-auto"
+          showShadows={true}
+          shadowFromClassName="from-gray-light" // the page body's background
+        >
+          <h2 className="flex shrink-0 items-center gap-2 text-base font-bold tracking-normal whitespace-nowrap md:text-lg">
+            {total === null ? (
               <span className="bg-gray inline-block h-5 w-16 animate-pulse rounded motion-reduce:animate-none" />
+            ) : (
+              // While updating, the previous number stays and only the TEXT blurs — never a
+              // swapped-in placeholder box (browser feedback, 2026-09-03).
               <span
-                className="border-gray-dark inline-block h-3.25 w-3.25 animate-spin rounded-full border-2 border-t-transparent motion-reduce:animate-none"
+                className={`transition duration-300 motion-reduce:transition-none ${
+                  loading ? "opacity-60 blur-[2px]" : ""
+                }`}
+              >
+                {heading(total)}
+              </span>
+            )}
+            {loading && (
+              <span
+                className="border-gray-dark inline-block h-3.25 w-3.25 shrink-0 animate-spin rounded-full border-2 border-t-transparent motion-reduce:animate-none"
                 aria-hidden
               />
-              <span className="text-gray-dark text-sm font-normal">
-                updating
-              </span>
-            </>
-          ) : (
-            <>{formatNumber(total)} opportunities</>
-          )}
-        </h2>
-        <div className="ml-auto flex shrink-0 items-center gap-2 md:gap-3">
-          <SortControl
-            sort={state.sort}
-            onChange={(sort) => dispatch({ kind: "setSort", sort })}
-          />
-          <ViewToggle view={state.view} onChange={setView} />
-        </div>
-      </ScrollableContainer>
+            )}
+          </h2>
+          <div className="ml-auto flex shrink-0 items-center gap-2 md:gap-3">
+            <SortControl
+              sort={state.sort}
+              onChange={(sort) => dispatch({ kind: "setSort", sort })}
+            />
+            <ViewToggle view={state.view} onChange={setView} />
+          </div>
+        </ScrollableContainer>
+      </div>
+      {!loading && total === 0 && (
+        <Message kind="warning">
+          No matches for this search. Refine it — clear a filter or two, widen a
+          choice, or switch a preference back on.
+        </Message>
+      )}
+      {/* Loading keeps the previous results mounted and fades them — no blur, no scale (browser
+          feedback: the background blur read as the page breaking, a plain fade does not). */}
       <div
-        className={
-          loading
-            ? "scale-[0.99] blur-sm transition duration-300 motion-reduce:transition-none"
-            : "transition duration-300 motion-reduce:transition-none"
-        }
-        style={{ opacity: loading ? 0.5 : 1 }}
+        className={`transition-opacity duration-300 motion-reduce:transition-none ${
+          loading ? "opacity-50" : "opacity-100"
+        }`}
       >
         {state.view === "grid" ? (
           <ResultsGrid items={results?.items ?? []} now={now} />

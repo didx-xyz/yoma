@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { IoSearchOutline } from "react-icons/io5";
+import { IoCloseCircle, IoSearchOutline } from "react-icons/io5";
 import type { FilterSectionDef } from "../../registry/filterSections";
 import { Message } from "../shared/Message";
 import type { SectionModel, SectionOption } from "./useSectionModel";
@@ -73,22 +73,41 @@ const ChipSet: React.FC<{ model: SectionModel; filterText?: string }> = ({
   );
 };
 
-const Searchable: React.FC<{ model: SectionModel; placeholder: string }> = ({
-  model,
-  placeholder,
-}) => {
+const Searchable: React.FC<{
+  model: SectionModel;
+  placeholder: string;
+  /** Popover home renders the big rounded input (like block 1); sections keep the compact one. */
+  large?: boolean;
+}> = ({ model, placeholder, large = false }) => {
   const [text, setText] = useState("");
   return (
     <div className="flex flex-col gap-3">
-      <label className="input input-bordered flex h-10 items-center gap-2">
-        <IoSearchOutline className="text-gray-dark h-4 w-4" />
+      <label
+        className={`input input-bordered flex w-full items-center gap-2 ${
+          large ? "h-11 rounded-full" : "h-10"
+        }`}
+      >
+        <IoSearchOutline
+          className={`text-gray-dark ${large ? "h-5 w-5" : "h-4 w-4"}`}
+        />
         <input
           type="text"
           value={text}
           onChange={(e) => setText(e.target.value)}
           placeholder={placeholder}
-          className="grow"
+          className="min-w-0 grow"
         />
+        {text !== "" && (
+          <button
+            type="button"
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={() => setText("")}
+            aria-label="Clear search"
+            className="text-gray-dark flex h-8 w-8 shrink-0 items-center justify-center hover:text-black"
+          >
+            <IoCloseCircle className="h-4 w-4" />
+          </button>
+        )}
       </label>
       <ChipSet model={model} filterText={text} />
     </div>
@@ -98,7 +117,9 @@ const Searchable: React.FC<{ model: SectionModel; placeholder: string }> = ({
 export const FilterControl: React.FC<{
   section: FilterSectionDef;
   model: SectionModel;
-}> = ({ section, model }) => {
+  /** True in the standalone popover home — search inputs render large there. */
+  largeSearch?: boolean;
+}> = ({ section, model, largeSearch = false }) => {
   if (section.binding === null) return <Message>{section.pendingNote}</Message>;
 
   switch (section.control) {
@@ -106,12 +127,19 @@ export const FilterControl: React.FC<{
     case "range":
       return <ChipSet model={model} />;
     case "country":
-      return <Searchable model={model} placeholder="Search countries…" />;
+      return (
+        <Searchable
+          model={model}
+          placeholder="Search countries…"
+          large={largeSearch}
+        />
+      );
     case "lookupSearch":
       return (
         <Searchable
           model={model}
           placeholder={`Search ${section.label.toLowerCase()}…`}
+          large={largeSearch}
         />
       );
     case "gate":

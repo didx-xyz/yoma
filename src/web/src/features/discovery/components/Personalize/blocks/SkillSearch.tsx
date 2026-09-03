@@ -1,27 +1,31 @@
 import React, { useState } from "react";
 import { IoSearchOutline } from "react-icons/io5";
-import type { UserPreferences } from "~/api/models/userPreferences";
+import type {
+  UserPreferences,
+  UserPreferenceSkill,
+} from "~/api/models/userPreferences";
 import { useSkillSearch } from "../usePreferenceOptions";
 import { Pill } from "./Pill";
 
 /**
- * The skills lookup-search block. Labels of already-selected skills are cached locally so a chip
- * keeps its name after the search text (and therefore the result set) has moved on.
+ * The skills lookup-search block. Selections are stored as `{id, name}` pairs (the EMSI lookup is
+ * search-by-name only, so a bare id could never be resolved back to a label when re-editing) —
+ * a chip therefore keeps its name after the search text, the result set, or the session has
+ * moved on.
  */
 export const SkillSearch: React.FC<{
   draft: UserPreferences;
   onPatch: (patch: Partial<UserPreferences>) => void;
 }> = ({ draft, onPatch }) => {
   const [text, setText] = useState("");
-  const [labels, setLabels] = useState<Record<string, string>>({});
   const results = useSkillSearch(text);
+  const selected = draft.selfReportedSkills;
 
-  const toggle = (id: string, label: string): void => {
-    setLabels((prev) => ({ ...prev, [id]: label }));
+  const toggle = (skill: UserPreferenceSkill): void => {
     onPatch({
-      selfReportedSkills: draft.selfReportedSkills.includes(id)
-        ? draft.selfReportedSkills.filter((v) => v !== id)
-        : [...draft.selfReportedSkills, id],
+      selfReportedSkills: selected.some((s) => s.id === skill.id)
+        ? selected.filter((s) => s.id !== skill.id)
+        : [...selected, skill],
     });
   };
 
@@ -38,22 +42,22 @@ export const SkillSearch: React.FC<{
         />
       </label>
       <div className="flex flex-wrap gap-2">
-        {draft.selfReportedSkills.map((id) => (
+        {selected.map((skill) => (
           <Pill
-            key={id}
-            label={labels[id] ?? results.find((s) => s.id === id)?.label ?? id}
+            key={skill.id}
+            label={skill.name}
             active
-            onToggle={() => toggle(id, labels[id] ?? id)}
+            onToggle={() => toggle(skill)}
           />
         ))}
         {results
-          .filter((s) => !draft.selfReportedSkills.includes(s.id))
-          .map((s) => (
+          .filter((r) => !selected.some((s) => s.id === r.id))
+          .map((r) => (
             <Pill
-              key={s.id}
-              label={s.label}
+              key={r.id}
+              label={r.label}
               active={false}
-              onToggle={() => toggle(s.id, s.label)}
+              onToggle={() => toggle({ id: r.id, name: r.label })}
             />
           ))}
       </div>

@@ -59,6 +59,8 @@ export const FACET_FOR_BINDING = {
 export interface FilterSectionDef {
   id: string;
   label: string;
+  /** The label as a plain question — popover titles speak like the wizard, not like a form. */
+  question: string;
   icon: IconType;
   control: FilterControlKind;
   /**
@@ -82,6 +84,7 @@ export const FILTER_SECTIONS: FilterSectionDef[] = [
   {
     id: "categories",
     label: "Categories",
+    question: "Which categories interest you?",
     icon: IoGridOutline,
     control: "chips",
     binding: "categories",
@@ -92,7 +95,8 @@ export const FILTER_SECTIONS: FilterSectionDef[] = [
   },
   {
     id: "where",
-    label: "Location",
+    label: "Where",
+    question: "Where should it be?",
     icon: IoLocationOutline,
     control: "country",
     binding: "countries",
@@ -104,6 +108,7 @@ export const FILTER_SECTIONS: FilterSectionDef[] = [
   {
     id: "format",
     label: "Engagement",
+    question: "How do you want to take part?",
     icon: IoWifiOutline,
     control: "chips",
     binding: "engagementTypes",
@@ -116,7 +121,8 @@ export const FILTER_SECTIONS: FilterSectionDef[] = [
   // the opposite of the BA rule ("includes") — copy states the actual behaviour; flagged to Adrian.
   {
     id: "time",
-    label: "Time commitment",
+    label: "How long",
+    question: "How much time do you have?",
     icon: IoTimeOutline,
     control: "range",
     binding: "commitment",
@@ -128,6 +134,7 @@ export const FILTER_SECTIONS: FilterSectionDef[] = [
   {
     id: "pay",
     label: "Paid & rewards",
+    question: "Should it pay or reward you?",
     icon: IoCashOutline,
     control: "chips",
     binding: "zlto",
@@ -139,6 +146,7 @@ export const FILTER_SECTIONS: FilterSectionDef[] = [
   {
     id: "accessibility",
     label: "Accessibility",
+    question: "Need accommodations?",
     icon: IoShieldCheckmarkOutline,
     control: "gate",
     binding: null,
@@ -151,6 +159,7 @@ export const FILTER_SECTIONS: FilterSectionDef[] = [
   {
     id: "language",
     label: "Language",
+    question: "What languages work for you?",
     icon: IoLanguageOutline,
     control: "chips",
     binding: "languages",
@@ -163,6 +172,7 @@ export const FILTER_SECTIONS: FilterSectionDef[] = [
   {
     id: "skills",
     label: "Skills",
+    question: "What skills do you have?",
     icon: IoSparklesOutline,
     control: "lookupSearch",
     binding: null,
@@ -174,6 +184,7 @@ export const FILTER_SECTIONS: FilterSectionDef[] = [
   {
     id: "sdgs",
     label: "SDGs",
+    question: "Which global goals matter to you?",
     icon: IoGlobeOutline,
     control: "chips",
     binding: null,
@@ -185,6 +196,7 @@ export const FILTER_SECTIONS: FilterSectionDef[] = [
   {
     id: "provider",
     label: "Provider",
+    question: "Who runs it?",
     icon: IoBusinessOutline,
     control: "lookupSearch",
     binding: "providers",

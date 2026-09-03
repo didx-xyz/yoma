@@ -39,7 +39,7 @@ export function mapPreferencesToFilters(
   const fragments: InheritedFragments = {};
 
   const type = preferences.goal ? GOAL_TO_TYPE[preferences.goal] : undefined;
-  if (type) fragments.goal = { type };
+  if (type) fragments.goal = { types: [type] };
 
   if (preferences.targetCategories.length > 0)
     fragments.targetCategories = { categories: preferences.targetCategories };
@@ -87,10 +87,10 @@ function mergeFragment(
   fragment: Partial<DiscoveryFilters>,
 ): DiscoveryFilters {
   const next = { ...merged };
-  if (fragment.type && !next.type) next.type = fragment.type;
   if (fragment.commitment && !next.commitment)
     next.commitment = fragment.commitment;
   for (const facet of [
+    "types",
     "categories",
     "countries",
     "engagementTypes",
@@ -106,3 +106,59 @@ const union = (a: string[], b: string[]): string[] => [
   ...a,
   ...b.filter((x) => !a.includes(x)),
 ];
+
+/**
+ * Preference keys whose skip can be PERSISTED by clearing a preset field. `country` and `age`
+ * are identity-derived (read from the profile, never stored in the preset), so switching them
+ * off can only ever be a per-search choice.
+ */
+export const SAVABLE_SKIP_KEYS: readonly PreferenceKey[] = [
+  "goal",
+  "targetCategories",
+  "skills",
+  "maxCommitment",
+  "engagement",
+  "languages",
+  "accessibility",
+];
+
+/**
+ * "Save to profile" for overridden preferences: a skipped preference means "stop applying this",
+ * so persisting the override CLEARS that field from the preset. Pure; the caller saves the
+ * result through the façade and keeps only the unsavable (identity-derived) skips in the URL.
+ */
+export function applySkipsToPreferences(
+  preferences: UserPreferences,
+  skipped: PreferenceKey[],
+): UserPreferences {
+  const next = { ...preferences };
+  for (const key of skipped) {
+    switch (key) {
+      case "goal":
+        next.goal = null;
+        break;
+      case "targetCategories":
+        next.targetCategories = [];
+        break;
+      case "skills":
+        next.selfReportedSkills = [];
+        break;
+      case "maxCommitment":
+        next.maxCommitment = null;
+        break;
+      case "engagement":
+        next.engagement = null;
+        break;
+      case "languages":
+        next.languages = [];
+        break;
+      case "accessibility":
+        next.accessibility = { enabled: false, needs: [] };
+        break;
+      case "country":
+      case "age":
+        break; // identity-derived — nothing stored to clear
+    }
+  }
+  return next;
+}

@@ -80,8 +80,10 @@ blocks became seven):
 1  free-text search input      (recent searches render beneath it as a typeahead, ≤5, removable)
 2  quick searches
 3  your preferences            (master switch + inherited chips)
-4  what kind of opportunity    (type row — always open, drives block 5)
-5  type-specific filters       (collapsible, purple; from the definitions endpoint)
+4  what kind of opportunity    (type row — always open, MULTI-select since 2026-09-03,
+                                provenance-aware, drives block 5)
+5  type-specific filters       (one collapsible "«Type» filters" section per EFFECTIVE type;
+                                from the definitions endpoint)
 6  the sections                (primary seven: Categories, Location, Engagement, Time commitment,
                                 Paid and rewards, Accessibility, Language — then Skills, SDGs and
                                 Provider behind one "More filters" disclosure, collapsed by
@@ -163,7 +165,8 @@ commitment set; **accessibility excludes** those that have not described their a
       `LIST_COLUMNS` constant; loading keeps previous results blurred, one spinner, pulse on the
       new chip, `motion-reduce` throughout.
 - [x] `Jobs near me` ships **visible and unavailable** with a tooltip (decision: not hidden).
-- [ ] Browser pass of the manual test script (brief §10) — nothing verified on screen yet.
+- [ ] Browser pass of the manual test script (brief §10) — first full pass by Jason 2026-09-03
+      (findings fixed same day, see Decisions); re-verify the round-2 fixes on screen.
 - [ ] Where section: "my country only" switch + province/city reserved-slot note.
 - [ ] Raise the API asks with Adrian: public sort options, commitment null rule, public
       `TotalCountOnly`, `ApplyUserPresets` exposure (see the 2026-08-27-c handoff).
@@ -252,6 +255,95 @@ commitment set; **accessibility excludes** those that have not described their a
   admin "Appearance" section were designed as options for the client (canvas page 4) and are not to
   be built. Two of the six use no image at all by design — Job and Impact task — so their variation
   is salary disclosed / not disclosed and requirements listed / not listed instead.
+- 2026-09-03 (browser-feedback round 2): **Opportunity type is multi-select** (`filters.types:
+  string[]`, URL `type=Job,Event`) and the type row is provenance-aware like every other control —
+  it displays EFFECTIVE types, and deselecting the inherited one skips the Goal preference.
+  Block 5's type-specific filters became **one collapsible section per effective type**, headed
+  "«DisplayName» filters"; clauses are partitioned per section by definition key (generic
+  definitions arrive with every type and edit consistently across open sections). The reducer's
+  `toggleType` clears ALL custom-field clauses when a type is REMOVED (clauses are not tagged by
+  type — clearing beats guessing); adding a type orphans nothing. Also from this round:
+  **Clear all now also switches off the active inherited layer** (struck-through, undoable —
+  "empty search" means empty; `clearAll` on the context supplies the fragment keys); the results
+  header is filter-aware ("N matches for …", skipped chips excluded); the pager scrolls back to
+  the count row; the **Search segment** joined the desktop bar (block 1 in popover form, recents
+  inline) and the LAST segment's popover right-aligns so it cannot overflow the viewport; the
+  loading treatment is a plain opacity fade — the former `blur-sm scale-[0.99]` read as the page
+  breaking — and count updates blur only the TEXT of the previous number, never a swapped-in
+  placeholder box.
+- 2026-09-03 (round 3): **Clause clearing on type removal is a GLOBAL reducer rule**, not a
+  per-action one — the first cut lived in `toggleType` only and missed the chip's ×
+  (`removeManual`), quick-search toggles, popover resets and skipping the inherited Goal.
+  `reduceDiscovery` now post-processes every action: if the types set shrank (or the Goal
+  preference was skipped — its fragment supplies a type), `customFields` clears. Known gap:
+  master-switch-off doesn't clear (it can't tell inherited-type clauses from manual-type ones).
+  Also: custom-field chips are labelled by the FIELD TITLE (`«title»: «value»`, "Has any value"
+  for Exists) instead of the static "Details"; each per-type section nests **one disclosure per
+  definition group** (the More-filters pattern) with sub-group headings inside, clauses
+  partitioned by definition keys at each level; and the results heading is short-form —
+  "N match(es) for «first value» + K filter(s)", where K counts remaining chips AND
+  custom-field clauses (the chips row carries the full set).
+- 2026-09-03: **The write-back prompt returns after each save.** "Save to profile" no longer
+  session-dismisses the prompt (only "Not now" does); instead, the wizard's save dispatches
+  `resetPreferenceOverrides` — the preset just saved IS the new default, so per-preference skips
+  and the master-off switch are cleared. The prompt disappears because nothing is overridden any
+  more, and it can re-offer on the NEXT override.
+- 2026-09-03 (round 4, superseding part of the entry above): **"Save to profile" persists
+  one-tap, and the prompt is unconditional.** Jason reversed the earlier
+  review-in-the-dialog reading: the button now saves directly through the façade —
+  `applySkipsToPreferences` clears each skipped preference's field from the preset (a skipped
+  preference means "stop applying this") — then keeps only the identity-derived skips
+  (`country`, `age`, which have no preset field) in the URL via `setSkippedPreferences`. The
+  session-dismiss state ("Not now" + `yoma.discovery.writeBackDismissed`) is GONE: the prompt
+  shows whenever at least one savable preference is skipped, and retires itself because saving
+  removes the skips. Also in round 4: the type row moved inside the section list and dresses
+  like the universal sections (icon + divider, always open); nested group dividers span full
+  width (content indents, the border doesn't); segment popovers carry question titles from the
+  registry's new `question` field; sections renamed Location → **Where** and Time commitment →
+  **How long** (segment "When" → "How long"); "What kind of opportunity?" → "What **type** of
+  opportunity?"; the banner's Edit button is purple/white with a pencil; the floating filter
+  button uses `top-20` on both breakpoints (the navbar is `h-20` everywhere — mobile's `top-16`
+  hid 16px of it).
+- 2026-09-03 (round 5): **Skipping a preference also strips its values from the manual filters**
+  — the intermittent "removed inherited chip reappears green" bug: a value both inherited AND
+  manually set (quick search, or picked before preferences resolved) survived the skip as a
+  hidden manual duplicate, surfacing as a green chip and still filtering. New compound reducer
+  action `skipPreference {key, fragment}` (one action, not two dispatches — the second would
+  race the router); `skipPreference(key)` on the context is now the ONE deselect path for
+  inherited values (chip ×, section controls, type row, category tiles); undo remains
+  `setPreferenceSkipped(key, false)` and does not resurrect the stripped duplicates (they were
+  redundant while inherited). Also round 5: **"Not now" restored** on the write-back prompt —
+  dismissal is keyed to a SIGNATURE of the skipped keys (sessionStorage), so the prompt returns
+  whenever the override set changes rather than staying dead for the session; the mobile sheet's
+  title matches the desktop dialog ("Filters" + green count badge, aria-label aligned); the
+  What-segment popover renders the shared question-title style (`TypeRow hideHeader` — its own
+  icon/divider header made the popup open with a tall gap).
+- 2026-09-03 (round 6): **One dismiss behaviour for all overlays** — `useDialogDismiss` (state/):
+  Escape closes, and the browser Back button closes via a same-URL sentinel history entry
+  (native `<dialog open>` is non-modal, so the UA handles neither; `showModal` would fight our
+  styling/stacking). Filter tweaks made while an overlay is open sit above the sentinel, so Back
+  first reverts them (URL-as-state, by design) and then closes. **Scroll-to-results is explicit
+  and centralised**: `scrollToResults()` + `resultsAnchorRef` on the context, called ONLY by the
+  Show-N-results actions (dialog/sheet footers, segment popovers, wizard finish) and the pager —
+  never by selecting or changing a filter. Also round 6: both dialogs capped
+  (`min(90vh, 52rem)` filters / `min(85vh, 46rem)` wizard) so tall monitors don't stretch them;
+  Quick searches got its section icon; popover search inputs render the large rounded block-1
+  style via `FilterControl largeSearch` (dialog sections keep the compact one); "Show N results"
+  buttons share `ShowResultsButton` — previous count stays mounted, text-only blur, `min-w-44`
+  against layout shift.
+- 2026-09-03 (round 7): **`useDialogDismiss` no longer consumes its history sentinel on close.**
+  The cleanup-time `history.back()` lands asynchronously, and under React StrictMode's dev
+  double-mount the remounted listener received that self-inflicted popstate and closed the
+  wizard the instant it opened ("Edit my preferences" flicker — only mount-on-open overlays were
+  hit; the always-mounted filter containers never remount). Cost of leaving the sentinel: one
+  silent Back press after a non-Back close; reopening reuses the entry. **`scrollToResults`
+  retries across frames** until the body scroll-lock (`overflow: hidden`, released one render
+  after the overlay closes) is gone and the anchor exists — the single-rAF version silently lost
+  the race, which was the "auto-scroll sometimes doesn't work" report. Also round 7: buttons say
+  "Show N **match(es)**", zero reads plainly "0 matches" and the results section shows a
+  refine-your-search warning; the block-1 search inputs are one shared `FreeTextSearchInput`
+  (explicit search button + clear button, commit on Enter/blur/button, clear commits `null`
+  immediately); section filter inputs got a clear button too.
 
 ## Links
 
