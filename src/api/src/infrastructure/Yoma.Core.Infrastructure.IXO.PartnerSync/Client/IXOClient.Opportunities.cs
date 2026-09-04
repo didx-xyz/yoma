@@ -79,7 +79,7 @@ namespace Yoma.Core.Infrastructure.IXO.PartnerSync.Client
         Languages = languages
       };
 
-      if (type == Domain.Opportunity.Type.Learning)
+      if (type != Domain.Opportunity.Type.Job)
       {
         var difficulty = ResolveDifficulty(item.Difficulty);
         var (Interval, Count) = ResolveCommitment(item.Commitment);
@@ -111,10 +111,13 @@ namespace Yoma.Core.Infrastructure.IXO.PartnerSync.Client
     {
       value = value?.Trim();
 
-      // TODO: Add Task (displayed as Impact Action in Yoma) once IXO confirms support in its OpenAPI contract.
-      // Task is a non-Job type, so its difficulty, commitment, engagement and verification semantics must be mapped too.
+      // Yoma currently stores this opportunity type as Task. The custom-fields initiative will rename
+      // the Yoma lookup to Impact Action, while IXO already emits the future consumer-facing name.
+      if (string.Equals(value, Constants.OpportunityTypeImpactAction, StringComparison.OrdinalIgnoreCase))
+        return Domain.Opportunity.Type.Task;
+
       return Enum.TryParse<Domain.Opportunity.Type>(value, true, out var result) &&
-        result is Domain.Opportunity.Type.Learning or Domain.Opportunity.Type.Job
+        result is Domain.Opportunity.Type.Learning or Domain.Opportunity.Type.Job or Domain.Opportunity.Type.Task
           ? result
           : throw new InvalidOperationException($"IXO opportunity type '{value}' is not supported");
     }

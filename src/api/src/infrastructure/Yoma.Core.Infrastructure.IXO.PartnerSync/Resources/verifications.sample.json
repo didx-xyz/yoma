@@ -16,6 +16,18 @@
       }
     },
     {
+      "opportunityRef": "did:ixo:entity:a7cefea4fea85e125a304d58d5f61700",
+      "userRef": "testuser@gmail.com",
+      "status": "completed",
+      "dateCompleted": "2026-09-04T00:00:00Z",
+      "endDate": "2026-09-04T00:00:00Z",
+      "startDate": "2026-09-04T00:00:00Z",
+      "percentComplete": 100,
+      "commitment": {
+        "interval": "Minute",
+        "count": 1
+      }
+    },    {
       "opportunityRef": "did:ixo:entity:e8a8d62c02d95fd4780434b9cecc552d",
       "userRef": "testuser@gmail.com",
       "status": "placed",
