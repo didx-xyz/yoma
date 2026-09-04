@@ -1,6 +1,6 @@
 import Image from "next/image";
 import iconZltoColor from "public/images/icon-zlto-rounded-color.webp";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { IoIosInformationCircleOutline } from "react-icons/io";
 import type { UserProfile } from "~/api/models/user";
 import NoRowsMessage from "../NoRowsMessage";
@@ -10,25 +10,25 @@ export const WalletCard: React.FC<{
   userProfile: UserProfile;
 }> = ({ userProfile }) => {
   const [zltoModalVisible, setZltoModalVisible] = useState(false);
-  const [processing, setProcessing] = useState("");
-  const [available, setAvailable] = useState("");
-  const [total, setTotal] = useState("");
 
-  useEffect(() => {
-    if (userProfile?.zlto) {
-      if (userProfile.zlto.zltoOffline) {
-        setProcessing(userProfile.zlto.pending.toLocaleString());
-        setAvailable("Unable to retrieve value");
-        setTotal(userProfile.zlto.total.toLocaleString());
-      } else {
-        setProcessing(userProfile.zlto.pending.toLocaleString());
-        setAvailable(userProfile.zlto.available.toLocaleString());
-        setTotal(userProfile.zlto.total.toLocaleString());
-      }
-    }
-  }, [userProfile]);
+  const zlto = userProfile?.zlto;
+  /** rewards awaiting processing — the field formerly called `pending` */
+  const pendingAwards = zlto?.pendingAwards ?? 0;
+  /** already reserved by the reward provider for an in-flight payout, so no longer in `available` */
+  const pendingPayout = zlto?.pendingPayout ?? 0;
 
-  if (total === "0") {
+  const processing = pendingAwards.toLocaleString();
+  const available = zlto?.zltoOffline
+    ? "Unable to retrieve value"
+    : (zlto?.available ?? 0).toLocaleString();
+  const total = (zlto?.total ?? 0).toLocaleString();
+
+  /**
+   * "Nothing yet" means genuinely nothing. ZLTO reserved for a payout has already been taken out of
+   * `available` (and so out of `total`) by the provider, so a youth mid-payout would otherwise be
+   * told they have never earned anything while their ZLTO is in flight.
+   */
+  if ((zlto?.total ?? 0) === 0 && pendingPayout === 0) {
     return (
       <NoRowsMessage
         title={""}
@@ -77,7 +77,7 @@ export const WalletCard: React.FC<{
                 alt="ZLTO"
                 width={18}
               />
-              {available ?? "Loading..."}
+              {available}
             </div>
           </div>
           <div className="flex flex-row items-center">
@@ -90,9 +90,27 @@ export const WalletCard: React.FC<{
                 alt="ZLTO"
                 width={18}
               />
-              {processing ?? "Loading..."}
+              {processing}
             </div>
           </div>
+
+          {/* Only while a payout is in flight — this ZLTO is committed and no longer spendable,
+              so leaving it out would make the balance look like it had simply dropped. */}
+          {pendingPayout > 0 && (
+            <div className="flex flex-row items-center">
+              <p className="w-28">Paying out:</p>
+
+              <div className="flex items-center text-xs font-semibold text-black">
+                <Image
+                  src={iconZltoColor}
+                  className="mr-2 h-auto"
+                  alt="ZLTO"
+                  width={18}
+                />
+                {pendingPayout.toLocaleString()}
+              </div>
+            </div>
+          )}
         </div>
         <div className="relative flex flex-row items-center">
           <p className="w-28 font-bold">Total:</p>
@@ -103,7 +121,7 @@ export const WalletCard: React.FC<{
               alt="ZLTO"
               width={18}
             />
-            {total ?? "Loading..."}
+            {total}
           </div>
         </div>
       </div>

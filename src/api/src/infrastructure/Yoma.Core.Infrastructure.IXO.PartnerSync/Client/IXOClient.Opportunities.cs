@@ -14,7 +14,7 @@ namespace Yoma.Core.Infrastructure.IXO.PartnerSync.Client
   public sealed partial class IXOClient
   {
     #region Private Members
-    private SyncItemEntity<Domain.Opportunity.Models.Opportunity> ToSyncItem(Opportunity cacheItem)
+    private SyncItemEntity<Domain.Opportunity.Models.OpportunityRequestCreate> ToSyncItem(Opportunity cacheItem)
     {
       if (_logger.IsEnabled(LogLevel.Debug))
         _logger.LogDebug("Mapping IXO opportunity '{opportunityExternalId}' from the local catalogue", cacheItem.ExternalId);
@@ -45,38 +45,44 @@ namespace Yoma.Core.Infrastructure.IXO.PartnerSync.Client
 
       var keywords = GetKeywords(item);
 
-      var result = new Domain.Opportunity.Models.Opportunity
+      var result = new Domain.Opportunity.Models.OpportunityRequestCreate
       {
         Title = title,
         Description = description,
         TypeId = opportunityType.Id,
-        Type = opportunityType.Name,
+
         Summary = summary,
         URL = GetRequiredValue(item.URL, "url", item.ExternalId),
         OrganizationId = GetOrganizationId(),
-        OrganizationName = _options.OrganizationName,
+
         DateStart = item.StartDate,
         DateEnd = item.EndDate,
-        Status = deleted ? Status.Deleted : Status.Active,
+        PostAsActive = !deleted,
         VerificationEnabled = true,
         VerificationMethod = VerificationMethod.Automatic,
         VerificationTypes = null,
         ParticipantLimit = null,
         ZltoReward = null,
-        YomaReward = null,
+
         ZltoRewardPool = null,
-        YomaRewardPool = null,
+
         CredentialIssuanceEnabled = true,
+        // TODO [YOM-1264/YOM-1280]: Review and assign the approved generic or type-specific credential
+        // schema per Opportunity type once the final custom fields and schema flavours are agreed.
         SSISchemaName = SSISSchemaHelper.ToFullName(SchemaType.Opportunity, "Default"),
-        Skills = skills,
+        Skills = skills?.Select(o => o.Id).ToList(),
         ShareWithPartners = false,
         Hidden = false,
-        Featured = false,
-        Published = true,
+
+
         Keywords = keywords,
-        Categories = categories,
-        Countries = countries,
-        Languages = languages
+        Categories = categories.Select(o => o.Id).ToList(),
+        Countries = countries.Select(o => o.Id).ToList(),
+        Languages = languages.Select(o => o.Id).ToList(),
+
+        // Populate when available. Partner sync uses PatchAllowMissingRequired:
+        // omitted fields are preserved and key-only fields delete existing values.
+        CustomFields = null
       };
 
       if (type == Domain.Opportunity.Type.Learning)
@@ -91,7 +97,7 @@ namespace Yoma.Core.Infrastructure.IXO.PartnerSync.Client
         result.EngagementTypeId = engagementType.Id;
       }
 
-      return new SyncItemEntity<Domain.Opportunity.Models.Opportunity>
+      return new SyncItemEntity<Domain.Opportunity.Models.OpportunityRequestCreate>
       {
         ExternalId = cacheItem.ExternalId,
         Deleted = deleted,

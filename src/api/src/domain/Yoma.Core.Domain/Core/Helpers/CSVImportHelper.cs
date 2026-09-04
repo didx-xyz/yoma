@@ -6,7 +6,9 @@ using System.Collections.Concurrent;
 using System.ComponentModel.DataAnnotations;
 using System.Globalization;
 using System.Reflection;
+using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.Core.Extensions;
+using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
 
 namespace Yoma.Core.Domain.Core.Helpers
@@ -15,6 +17,11 @@ namespace Yoma.Core.Domain.Core.Helpers
   {
     #region Class Variables
     private static readonly ConcurrentDictionary<Type, PropertyInfo[]> _propsCache = new();
+
+    public const string CustomField_Header_Prefix = "CF:";
+    public const char Value_Delimiter = '|';
+    public const string Boolean_Value_True = "Yes";
+    public const string Boolean_Value_False = "No";
     #endregion
 
     #region Public Members
@@ -70,9 +77,13 @@ namespace Yoma.Core.Domain.Core.Helpers
       };
     }
 
-    // Validates that the CSV header includes all model properties (required + optional);
-    // optional fields may be blank but headers must exist — done for usability (single fixed template) and simpler, consistent validation
-    public static void ValidateHeader<TModel>(CsvReader csv, List<CSVImportErrorRow> errors)
+    /// <summary>
+    /// Validates that the CSV header contains every property defined by the import model.
+    /// Optional model values may be blank, but their columns must remain present to keep
+    /// the import template consistent. Custom-field columns are dynamic and optional, so
+    /// they are validated separately and returned only when present.
+    /// </summary>
+    public static List<string>? ValidateHeader<TModel>(CsvReader csv, List<CSVImportErrorRow> errors, bool allowCustomFieldHeaders)
     {
       ArgumentNullException.ThrowIfNull(csv, nameof(csv));
       ArgumentNullException.ThrowIfNull(errors, nameof(errors));
@@ -83,38 +94,124 @@ namespace Yoma.Core.Domain.Core.Helpers
       if (!csv.Read() || csv.Context?.Reader?.HeaderRecord?.Length == 0)
       {
         AddError(errors, CSVImportErrorType.HeaderMissing, $"Header row is missing or empty. Expected headers {string.Join(", ", modelHeaders)}", 1);
-        return;
+        return null;
       }
 
-      // Register header mapping before reading data rows
+      // Register header mapping before reading data rows.
       csv.ReadHeader();
 
       var header = (csv.Context?.Reader?.HeaderRecord) ?? throw new InvalidOperationException("Header is missing after reading the header row");
+      var customFieldHeaders = allowCustomFieldHeaders
+        ? header.Where(IsCustomFieldHeader).ToList()
+        : null;
+      if (customFieldHeaders?.Count == 0) customFieldHeaders = null;
 
-      // Heuristic: no expected headers were recognized.
-      // This means the header row is invalid and the first data row
-      // was likely treated as the header instead.
+      // Heuristic: no expected model headers were recognized. Dynamic CF columns alone
+      // do not make the fixed import template valid.
       var recognizedCount = header.Count(h => h != null && modelHeaders.Contains(h));
       if (recognizedCount == 0)
       {
         AddError(errors, CSVImportErrorType.HeaderMissing, $"Header row is invalid. Expected headers: {string.Join(", ", modelHeaders)}", 1);
-        return;
+        return customFieldHeaders;
       }
 
       var headerSet = header.ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-      // Duplicate columns in header
+      // Duplicate columns in header.
       var duplicates = header
-          .GroupBy(h => h ?? string.Empty, StringComparer.OrdinalIgnoreCase)
-          .Where(g => g.Count() > 1)
-          .Select(g => g.Key).ToList();
+        .GroupBy(h => h ?? string.Empty, StringComparer.OrdinalIgnoreCase)
+        .Where(g => g.Count() > 1)
+        .Select(g => g.Key)
+        .ToList();
       duplicates.ForEach(o => AddError(errors, CSVImportErrorType.HeaderDuplicateColumn, "Duplicate column defined in the header", 1, o));
 
-      // Unexpected columns in header
-      headerSet.Where(h => !modelHeaders.Contains(h)).ToList().ForEach(h => AddError(errors, CSVImportErrorType.HeaderUnexpectedColumn, "Unexpected column defined in the header", 1, h));
+      // Unexpected columns in header. Dynamic CF columns are validated against active
+      // definitions separately because they are not properties on the fixed import DTO.
+      headerSet
+        .Where(h => !modelHeaders.Contains(h) && !(allowCustomFieldHeaders && IsCustomFieldHeader(h)))
+        .ToList()
+        .ForEach(h => AddError(errors, CSVImportErrorType.HeaderUnexpectedColumn, "Unexpected column defined in the header", 1, h));
 
-      // Missing ANY model property in header
-      modelHeaders.Where(h => !headerSet.Contains(h)).ToList().ForEach(h => AddError(errors, CSVImportErrorType.HeaderColumnMissing, "Header column missing", 1, h));
+      // Missing ANY model property in header.
+      modelHeaders
+        .Where(h => !headerSet.Contains(h))
+        .ToList()
+        .ForEach(h => AddError(errors, CSVImportErrorType.HeaderColumnMissing, "Header column missing", 1, h));
+
+      return customFieldHeaders;
+    }
+
+    public static Dictionary<string, string>? ResolveCustomFieldHeaders(
+      CustomFieldEntityType entityType,
+      List<string>? headers,
+      ICustomFieldDefinitionService customFieldDefinitionService,
+      List<CSVImportErrorRow> errors)
+    {
+      ArgumentNullException.ThrowIfNull(customFieldDefinitionService, nameof(customFieldDefinitionService));
+      ArgumentNullException.ThrowIfNull(errors, nameof(errors));
+
+      if (headers == null || headers.Count == 0) return null;
+
+      var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+      var resolvedKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+      foreach (var header in headers)
+      {
+        var key = header[CustomField_Header_Prefix.Length..];
+        if (string.IsNullOrEmpty(key))
+        {
+          AddError(errors, CSVImportErrorType.HeaderUnexpectedColumn, "Custom field key is missing", 1, header);
+          continue;
+        }
+
+        // Keep the template format deterministic and spreadsheet-friendly:
+        // CF:<DefinitionKey>, for example CF:WorkArrangement, with no whitespace.
+        if (key.Any(char.IsWhiteSpace))
+        {
+          AddError(errors, CSVImportErrorType.HeaderUnexpectedColumn, "Custom field columns must use the format CF:<Key> without spaces", 1, header);
+          continue;
+        }
+
+        CustomFieldDefinition definition;
+        try
+        {
+          definition = customFieldDefinitionService.GetByKey(entityType, key, true, true);
+        }
+        catch (EntityNotFoundException)
+        {
+          AddError(errors, CSVImportErrorType.HeaderUnexpectedColumn, "Active custom field definition does not exist", 1, header);
+          continue;
+        }
+
+        // Different header spellings must not resolve to the same case-insensitive key.
+        if (!resolvedKeys.Add(definition.Key))
+        {
+          AddError(errors, CSVImportErrorType.HeaderDuplicateColumn, "Duplicate custom field column defined in the header", 1, header);
+          continue;
+        }
+
+        result.Add(header, definition.Key);
+      }
+
+      return result.Count == 0 ? null : result;
+    }
+
+    public static Dictionary<string, string?>? ReadCustomFieldValues(
+      CsvReader csv,
+      IReadOnlyDictionary<string, string>? columns)
+    {
+      ArgumentNullException.ThrowIfNull(csv, nameof(csv));
+
+      if (columns == null || columns.Count == 0) return null;
+
+      var result = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
+      foreach (var column in columns)
+      {
+        var value = csv.GetField(column.Key)?.Trim();
+        result.Add(column.Value, string.IsNullOrEmpty(value) ? null : value);
+      }
+
+      return result;
     }
 
     public static CSVImportResult GetResults(List<CSVImportErrorRow> errors)
@@ -251,6 +348,11 @@ namespace Yoma.Core.Domain.Core.Helpers
     #endregion
 
     #region Private Members
+    private static bool IsCustomFieldHeader(string? header)
+    {
+      return header?.StartsWith(CustomField_Header_Prefix, StringComparison.OrdinalIgnoreCase) == true;
+    }
+
     private static string GetPropertyName(PropertyInfo prop)
     {
       return prop.GetCustomAttributes(typeof(NameAttribute), true)

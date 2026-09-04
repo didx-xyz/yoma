@@ -12,7 +12,7 @@ using Yoma.Core.Infrastructure.Alison.Models;
 namespace Yoma.Core.Infrastructure.Alison.Client
 {
   public sealed class AlisonClientFactory :
-    ISyncProviderClientFactory<ISyncProviderClientPullEntity<Domain.Opportunity.Models.Opportunity>>,
+    ISyncProviderClientFactory<ISyncProviderClientPullEntity<Domain.Opportunity.Models.OpportunityRequestCreate>>,
     ISyncProviderClientFactory<ISyncProviderClientPullVerification>,
     ISyncProviderClientFactory<ISyncProviderClientUserAuthentication>
   {
@@ -74,7 +74,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
     #endregion
 
     #region Public Members
-    ISyncProviderClientPullEntity<Domain.Opportunity.Models.Opportunity> ISyncProviderClientFactory<ISyncProviderClientPullEntity<Domain.Opportunity.Models.Opportunity>>.CreateClient()
+    ISyncProviderClientPullEntity<Domain.Opportunity.Models.OpportunityRequestCreate> ISyncProviderClientFactory<ISyncProviderClientPullEntity<Domain.Opportunity.Models.OpportunityRequestCreate>>.CreateClient()
     {
       return CreateClient();
     }

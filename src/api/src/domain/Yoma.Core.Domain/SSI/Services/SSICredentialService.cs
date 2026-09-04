@@ -47,7 +47,6 @@ namespace Yoma.Core.Domain.SSI.Services
         SchemaTypeId = schema.TypeId,
         ArtifactType = schema.ArtifactType,
         SchemaName = schema.Name,
-        SchemaVersion = schema.Version.ToString(),
         StatusId = statusPendingId
       };
 
@@ -90,6 +89,9 @@ namespace Yoma.Core.Domain.SSI.Services
       ArgumentNullException.ThrowIfNull(item, nameof(item));
 
       item.CredentialId = item.CredentialId?.Trim();
+      ArgumentException.ThrowIfNullOrWhiteSpace(item.SchemaName, nameof(item));
+      item.SchemaName = item.SchemaName.Trim();
+      item.SchemaVersion = item.SchemaVersion?.Trim();
 
       var statusId = _ssiCredentialIssuanceStatusService.GetByName(item.Status.ToString()).Id;
       item.StatusId = statusId;
@@ -99,6 +101,8 @@ namespace Yoma.Core.Domain.SSI.Services
         case CredentialIssuanceStatus.Issued:
           if (string.IsNullOrEmpty(item.CredentialId))
             throw new ArgumentNullException(nameof(item), "Credential id required");
+          if (string.IsNullOrEmpty(item.SchemaVersion))
+            throw new ArgumentNullException(nameof(item), "Schema version required");
           item.ErrorReason = null;
           item.RetryCount = null;
           break;
@@ -108,6 +112,9 @@ namespace Yoma.Core.Domain.SSI.Services
             throw new ArgumentNullException(nameof(item), "Error reason required");
 
           item.ErrorReason = item.ErrorReason?.Trim();
+          // Version describes a successfully issued credential only. A retry resolves the latest version of the
+          // schema name committed at scheduling.
+          item.SchemaVersion = null;
           item.RetryCount = (byte?)(item.RetryCount + 1) ?? 0; //1st attempt not counted as a retry
 
           //retry attempts specified and exceeded (-1: infinite retries)
@@ -127,4 +134,3 @@ namespace Yoma.Core.Domain.SSI.Services
     #endregion
   }
 }
-

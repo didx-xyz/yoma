@@ -1,11 +1,8 @@
-import Image from "next/image";
-import iconZlto from "public/images/icon-zlto.svg";
 import { useCallback, useMemo, useState } from "react";
 import { IoMdCopy } from "react-icons/io";
 import {
   IoEyeOffOutline,
   IoGitNetwork,
-  IoInformationCircleOutline,
   IoPersonCircle,
   IoShareOutline,
   IoStarOutline,
@@ -20,7 +17,10 @@ import {
   ProgramLinkReferrer,
   ProgramPathwayInfo,
 } from "~/api/models/referrals";
+import type { TreasuryInfo } from "~/api/models/treasury";
 import { getOrCreateReferralProgramReferrerLink } from "~/api/services/referrals";
+import ReferralProgramRewardStats from "~/components/Referrals/Rewards/ReferralProgramRewardStats";
+import ReferralTreasuryCapacityNotice from "~/components/Referrals/Rewards/ReferralTreasuryCapacityNotice";
 import { useReferralProgramAnalyticsQuery } from "~/hooks/useReferralProgramMutations";
 import { DATE_FORMAT_HUMAN } from "~/lib/constants";
 import { ProgramStatusBadge } from "./ProgramStatusBadge";
@@ -43,6 +43,12 @@ export enum ProgramInfoFilterOptions {
 
 interface AdminProgramInfoProps {
   program: Program;
+  /**
+   * The Treasury pools this programme's rewards are capped by. Admin-only (`GET /treasury`), so the
+   * page owns fetching it and passes it down; omitted, the reward block simply shows the programme's
+   * own figures and the capacity notice stays silent rather than guessing.
+   */
+  treasury?: TreasuryInfo | null;
   filterOptions?: ProgramInfoFilterOptions[];
   isExpanded?: boolean;
   imagePreviewUrl?: string | null;
@@ -51,6 +57,7 @@ interface AdminProgramInfoProps {
 
 export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
   program,
+  treasury,
   filterOptions = [
     ProgramInfoFilterOptions.PREVIEW,
     ProgramInfoFilterOptions.PROGRAM_INFO,
@@ -92,120 +99,14 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
       .join(", ");
   }, [program?.countries]);
 
+  /**
+   * Counts only — completions, ambassadors, claims. Reward figures never come through here: they go
+   * through `lib/format/rewards` inside `ReferralProgramRewardStats`, which is the only place a ZLTO
+   * value is formatted (see the T0 conventions in the working plan).
+   */
   const formatCount = (value: number | null | undefined, fallback = "0") => {
     if (value === null || value === undefined) return fallback;
     return value.toLocaleString("en-US");
-  };
-
-  const renderZltoAmount = (
-    value: number | null | undefined,
-    fallback = "N/A",
-    valueClassName = "font-semibold",
-  ) => {
-    if (value === null || value === undefined) {
-      return fallback;
-    }
-
-    return (
-      <div className="flex items-center gap-1">
-        <Image
-          src={iconZlto}
-          alt="Zlto"
-          width={16}
-          height={16}
-          className="h-auto"
-        />
-        <span className={valueClassName}>{formatCount(value)}</span>
-      </div>
-    );
-  };
-
-  const getRewardEstimateMeta = (
-    configured: number | null | undefined,
-    estimate: number | null | undefined,
-  ) => {
-    if (configured === null || configured === undefined) {
-      return {
-        label: "Not configured",
-        tone: "neutral" as const,
-      };
-    }
-
-    if (estimate === null || estimate === undefined) {
-      return {
-        label: "Estimate unavailable",
-        tone: "neutral" as const,
-      };
-    }
-
-    if (estimate <= 0) {
-      return {
-        label: "Pool exhausted",
-        tone: "danger" as const,
-      };
-    }
-
-    if (estimate < configured) {
-      return {
-        label: "Pool constrained",
-        tone: "warning" as const,
-      };
-    }
-
-    return {
-      label: "Fully payable",
-      tone: "success" as const,
-    };
-  };
-
-  const renderRewardEstimateBadge = (label: string, tone: string) => {
-    if (tone === "danger") {
-      return (
-        <span className="badge badge-sm gap-1 border border-red-200 bg-red-100 px-2.5 !text-[11px] font-medium whitespace-nowrap text-red-800">
-          {label}
-        </span>
-      );
-    }
-
-    if (tone === "warning") {
-      return (
-        <span className="badge badge-sm gap-1 border border-amber-200 bg-amber-100 px-2.5 !text-[11px] font-medium whitespace-nowrap text-amber-800">
-          {label}
-        </span>
-      );
-    }
-
-    if (tone === "success") {
-      return (
-        <span className="badge bg-green/15 badge-sm gap-1 border border-green-200 px-2.5 !text-[11px] font-medium whitespace-nowrap text-green-800">
-          {label}
-        </span>
-      );
-    }
-
-    return (
-      <span className="badge badge-sm gap-1 border border-gray-300 bg-gray-100 px-2.5 !text-[11px] font-medium whitespace-nowrap text-gray-700">
-        {label}
-      </span>
-    );
-  };
-
-  const renderZltoRange = (
-    min: number | null | undefined,
-    max: number | null | undefined,
-  ) => {
-    if (min == null && max == null) return renderZltoAmount(null);
-    if (min === max || max == null)
-      return renderZltoAmount(min, "N/A", "font-semibold text-blue-700");
-    if (min == null)
-      return renderZltoAmount(max, "N/A", "font-semibold text-blue-700");
-    return (
-      <div className="flex items-center gap-1 font-semibold text-blue-700">
-        {renderZltoAmount(min, "N/A", "font-semibold text-blue-700")}
-        <span className="text-blue-400">–</span>
-        {renderZltoAmount(max, "N/A", "font-semibold text-blue-700")}
-      </div>
-    );
   };
 
   // Ensure we always have a data map that includes the opportunity objects already
@@ -582,13 +483,12 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
                       <div className="text-xs font-medium text-gray-500">
                         Remaining
                       </div>
+                      {/* server-derived (`Program.ReferrerBalance`), not subtracted here — the
+                          same rule the reward balances follow */}
                       <div className="text-sm">
-                        {program?.referrerLimit !== null &&
-                        program?.referrerLimit !== undefined
-                          ? formatCount(
-                              program.referrerLimit -
-                                (program.referrerTotal ?? 0),
-                            )
+                        {program?.referrerBalance !== null &&
+                        program?.referrerBalance !== undefined
+                          ? formatCount(program.referrerBalance)
                           : "No limit"}
                       </div>
                     </div>
@@ -691,194 +591,24 @@ export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
               </div>
             </div>
 
-            <div>
-              <h6 className="mb-2 text-sm font-semibold text-gray-700">
+            <div className="flex flex-col gap-3">
+              <h6 className="text-sm font-semibold text-gray-700">
                 ZLTO Rewards
               </h6>
 
-              <div className="space-y-3 overflow-x-auto">
-                <div className="overflow-hidden rounded-lg border border-gray-200">
-                  <div className="border-b border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
-                    Ambassador Reward
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-3">
-                    <div className="border-b border-gray-200 px-4 py-3 md:border-r md:border-b-0">
-                      <div className="text-xs font-medium text-gray-500">
-                        Configured
-                      </div>
-                      <div className="text-sm">
-                        {renderZltoAmount(program?.zltoRewardReferrer)}
-                      </div>
-                    </div>
-                    <div className="border-b border-gray-200 px-4 py-3 md:border-r md:border-b-0">
-                      <div className="flex items-center gap-1 text-xs font-medium text-gray-500">
-                        Estimated Now
-                        <div
-                          className="tooltip tooltip-right cursor-help before:max-w-[16rem] before:text-[11px]"
-                          data-tip="Estimated program-level reward payable to the ambassador if a referral completion happens now. Calculated after reserving the referee estimate first."
-                        >
-                          <IoInformationCircleOutline className="h-3.5 w-3.5 text-gray-400" />
-                        </div>
-                      </div>
-                      <div className="text-sm">
-                        {renderZltoAmount(
-                          program?.zltoRewardEstimate?.referrer,
-                          "N/A",
-                          "font-semibold text-blue-700",
-                        )}
-                      </div>
-                    </div>
-                    <div className="px-4 py-3">
-                      <div className="text-xs font-medium text-gray-500">
-                        Pool Status
-                      </div>
-                      <div className="mt-1">
-                        {(() => {
-                          const meta = getRewardEstimateMeta(
-                            program?.zltoRewardReferrer,
-                            program?.zltoRewardEstimate?.referrer,
-                          );
-                          return renderRewardEstimateBadge(
-                            meta.label,
-                            meta.tone,
-                          );
-                        })()}
-                      </div>
-                    </div>
-                  </div>
-                </div>
+              {/* Soft guidance, never a block: the server does not validate a programme pool
+                  against Treasury capacity, so this notice is the only warning an admin gets
+                  before completions start awarding less than the configured amount. */}
+              <ReferralTreasuryCapacityNotice
+                program={program}
+                treasury={treasury}
+                treasuryManageHref="/admin/treasury?tab=manage"
+              />
 
-                <div className="overflow-hidden rounded-lg border border-gray-200">
-                  <div className="border-b border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
-                    Referee Reward
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-3">
-                    <div className="border-b border-gray-200 px-4 py-3 md:border-r md:border-b-0">
-                      <div className="text-xs font-medium text-gray-500">
-                        Configured
-                      </div>
-                      <div className="text-sm">
-                        {renderZltoAmount(program?.zltoRewardReferee)}
-                      </div>
-                    </div>
-                    <div className="border-b border-gray-200 px-4 py-3 md:border-r md:border-b-0">
-                      <div className="flex items-center gap-1 text-xs font-medium text-gray-500">
-                        Estimated Now
-                        <div
-                          className="tooltip tooltip-right cursor-help before:max-w-[16rem] before:text-[11px]"
-                          data-tip="Estimated program-level reward payable to the referee if a referral completion happens now. Referee has priority over the ambassador when reward pools are capped or partially depleted."
-                        >
-                          <IoInformationCircleOutline className="h-3.5 w-3.5 text-gray-400" />
-                        </div>
-                      </div>
-                      <div className="text-sm">
-                        {renderZltoAmount(
-                          program?.zltoRewardEstimate?.referee,
-                          "N/A",
-                          "font-semibold text-blue-700",
-                        )}
-                      </div>
-                    </div>
-                    <div className="px-4 py-3">
-                      <div className="text-xs font-medium text-gray-500">
-                        Pool Status
-                      </div>
-                      <div className="mt-1">
-                        {(() => {
-                          const meta = getRewardEstimateMeta(
-                            program?.zltoRewardReferee,
-                            program?.zltoRewardEstimate?.referee,
-                          );
-                          return renderRewardEstimateBadge(
-                            meta.label,
-                            meta.tone,
-                          );
-                        })()}
-                      </div>
-                    </div>
-                  </div>
-                  {(program?.zltoRewardEstimate?.refereePathwayMinimum !=
-                    null ||
-                    program?.zltoRewardEstimate?.refereePathwayMaximum !=
-                      null ||
-                    program?.zltoRewardEstimate?.refereeTotalMinimum != null ||
-                    program?.zltoRewardEstimate?.refereeTotalMaximum !=
-                      null) && (
-                    <div className="grid grid-cols-1 border-t border-gray-200 md:grid-cols-3">
-                      <div className="border-b border-gray-200 px-4 py-3 md:border-r md:border-b-0">
-                        <div className="flex items-center gap-1 text-xs font-medium text-gray-500">
-                          Pathway Estimate
-                          <div
-                            className="tooltip tooltip-right cursor-help before:max-w-[16rem] before:text-[11px]"
-                            data-tip="Estimated reward from completing the pathway&#39;s opportunities. Separate from the program-level referee reward. Shows a range based on the shortest to longest completion route."
-                          >
-                            <IoInformationCircleOutline className="h-3.5 w-3.5 text-gray-400" />
-                          </div>
-                        </div>
-                        <div className="text-sm">
-                          {renderZltoRange(
-                            program?.zltoRewardEstimate?.refereePathwayMinimum,
-                            program?.zltoRewardEstimate?.refereePathwayMaximum,
-                          )}
-                        </div>
-                      </div>
-                      <div className="px-4 py-3">
-                        <div className="flex items-center gap-1 text-xs font-medium text-gray-500">
-                          Total Estimate
-                          <div
-                            className="tooltip tooltip-right cursor-help before:max-w-[16rem] before:text-[11px]"
-                            data-tip="Minimum and maximum total estimated reward for the referee: program-level referee reward plus the pathway reward estimate."
-                          >
-                            <IoInformationCircleOutline className="h-3.5 w-3.5 text-gray-400" />
-                          </div>
-                        </div>
-                        <div className="text-sm">
-                          {renderZltoRange(
-                            program?.zltoRewardEstimate?.refereeTotalMinimum,
-                            program?.zltoRewardEstimate?.refereeTotalMaximum,
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                <div className="overflow-hidden rounded-lg border border-gray-200">
-                  <div className="border-b border-gray-200 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-700">
-                    Pool
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-3">
-                    <div className="border-b border-gray-200 px-4 py-3 md:border-r md:border-b-0">
-                      <div className="text-xs font-medium text-gray-500">
-                        Total
-                      </div>
-                      <div className="text-sm">
-                        {renderZltoAmount(program?.zltoRewardPool)}
-                      </div>
-                    </div>
-                    <div className="border-b border-gray-200 px-4 py-3 md:border-r md:border-b-0">
-                      <div className="text-xs font-medium text-gray-500">
-                        Awarded
-                      </div>
-                      <div className="text-sm">
-                        {renderZltoAmount(program?.zltoRewardCumulative, "0")}
-                      </div>
-                    </div>
-                    <div className="px-4 py-3">
-                      <div className="text-xs font-medium text-gray-500">
-                        Remaining
-                      </div>
-                      <div className="text-sm">
-                        {renderZltoAmount(
-                          program?.zltoRewardBalance,
-                          "N/A",
-                          "font-semibold text-blue-600",
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <ReferralProgramRewardStats
+                figures={program}
+                treasury={treasury}
+              />
             </div>
           </div>
         </section>

@@ -75,8 +75,8 @@ namespace Yoma.Core.Domain.Opportunity.Models
     public List<string>? Keywords { get; set; }
 
     [Required]
-    [BooleanFalseValues("No")]
-    [BooleanTrueValues("Yes")]
+    [BooleanFalseValues(CSVImportHelper.Boolean_Value_False)]
+    [BooleanTrueValues(CSVImportHelper.Boolean_Value_True)]
     public bool Hidden { get; set; }
 
     [Required]
@@ -84,6 +84,12 @@ namespace Yoma.Core.Domain.Opportunity.Models
     #endregion
 
     #region Internal Members
+    /// <summary>
+    /// Raw values for only the CF columns present in the CSV file. A null value means
+    /// the column was present but blank (explicit PATCH deletion); an absent key means preserve.
+    /// </summary>
+    internal Dictionary<string, string?>? CustomFieldValues { get; set; }
+
     internal void Validate(List<CSVImportErrorRow> errors, int? rowNumber)
     {
       ArgumentNullException.ThrowIfNull(errors, nameof(errors));

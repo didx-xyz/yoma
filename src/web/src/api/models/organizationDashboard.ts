@@ -164,7 +164,6 @@ export interface YouthInfo {
   country: string | null;
   age: number | null;
   zltoRewardTotal: number;
-  yomaRewardTotal: number;
   opporunityCount: number;
   opportunities: YouthInfoOpportunity[];
 }

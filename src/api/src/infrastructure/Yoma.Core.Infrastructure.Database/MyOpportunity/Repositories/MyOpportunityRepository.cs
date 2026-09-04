@@ -2,16 +2,18 @@ using Microsoft.EntityFrameworkCore;
 using Yoma.Core.Domain.BlobProvider;
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Interfaces;
+using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Entity;
 using Yoma.Core.Domain.MyOpportunity;
 using Yoma.Core.Domain.Opportunity;
 using Yoma.Core.Infrastructure.Database.Context;
+using Yoma.Core.Infrastructure.Database.Core.Extensions;
 using Yoma.Core.Infrastructure.Database.Core.Repositories;
 using Yoma.Core.Infrastructure.Shared.Extensions;
 
 namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories
 {
-  public class MyOpportunityRepository : BaseRepository<Entities.MyOpportunity, Guid>, IRepositoryBatchedWithNavigation<Domain.MyOpportunity.Models.MyOpportunity>
+  public class MyOpportunityRepository : BaseRepository<Entities.MyOpportunity, Guid>, IRepositoryBatchedWithNavigationAndCustomFieldFilter<Domain.MyOpportunity.Models.MyOpportunity>
   {
     #region Constructor
     public MyOpportunityRepository(ApplicationDbContext context) : base(context) { }
@@ -58,7 +60,7 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories
         OpportunityTitle = entity.Opportunity.Title,
         OpportunityDescription = entity.Opportunity.Description,
         OpportunitySummary = entity.Opportunity.Summary,
-        OpportunityType = entity.Opportunity.Type.Name,
+        OpportunityType = Enum.Parse<Domain.Opportunity.Type>(entity.Opportunity.Type.Name, true),
         OpportunityCommitmentIntervalId = entity.Opportunity.CommitmentIntervalId,
         OpportunityCommitmentInterval = entity.Opportunity.CommitmentInterval != null ? Enum.Parse<TimeIntervalOption>(entity.Opportunity.CommitmentInterval.Name, true) : null,
         OpportunityCommitmentIntervalCount = entity.Opportunity.CommitmentIntervalCount,
@@ -90,7 +92,6 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories
         PercentComplete = entity.PercentComplete,
         DateCompleted = entity.DateCompleted,
         ZltoReward = entity.ZltoReward,
-        YomaReward = entity.YomaReward,
         Recommendable = entity.Recommendable,
         StarRating = entity.StarRating,
         Feedback = entity.Feedback,
@@ -116,10 +117,36 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories
                 Id = o.SkillId,
                 Name = o.Skill.Name,
                 InfoURL = o.Skill.InfoURL
-              }).OrderBy(o => o.Name).ToList() : null
+              }).OrderBy(o => o.Name).ToList() : null,
+        CustomFields = entity.CustomFieldValues == null ? null : includeChildItems ?
+              entity.CustomFieldValues
+                .Where(o => o.CustomFieldDefinition.IsActive)
+                .OrderBy(o => o.CustomFieldDefinition.Group)
+                .ThenBy(o => o.CustomFieldDefinition.SubGroup)
+                .ThenBy(o => o.CustomFieldDefinition.SortOrder)
+                .ThenBy(o => o.CustomFieldDefinition.Title)
+                .Select(o => new CustomFieldValueItem
+                {
+                  Key = o.CustomFieldDefinition.Key,
+                  DataType = Enum.Parse<CustomFieldDataType>(o.CustomFieldDefinition.DataType, true),
+                  ValueRaw = o.Value
+                }).ToList() : null,
       });
 
       if (includeChildItems) query = query.AsSplitQuery();
+      return query;
+    }
+
+    public IQueryable<Domain.MyOpportunity.Models.MyOpportunity> WhereCustomFields(IQueryable<Domain.MyOpportunity.Models.MyOpportunity> query, List<CustomFieldFilter>? filters)
+    {
+      if (filters == null || filters.Count == 0) return query;
+
+      foreach (var filter in filters)
+      {
+        var ids = _context.CustomFieldValue.MatchingEntityIds(CustomFieldEntityType.MyOpportunity, filter);
+        query = query.Where(o => ids.Contains(o.Id));
+      }
+
       return query;
     }
 
@@ -143,7 +170,6 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories
         PercentComplete = item.PercentComplete,
         DateCompleted = item.DateCompleted,
         ZltoReward = item.ZltoReward,
-        YomaReward = item.YomaReward,
         Recommendable = item.Recommendable,
         StarRating = item.StarRating,
         Feedback = item.Feedback,
@@ -181,7 +207,6 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories
           PercentComplete = item.PercentComplete,
           DateCompleted = item.DateCompleted,
           ZltoReward = item.ZltoReward,
-          YomaReward = item.YomaReward,
           Recommendable = item.Recommendable,
           StarRating = item.StarRating,
           Feedback = item.Feedback,
@@ -220,7 +245,6 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories
       entity.PercentComplete = item.PercentComplete;
       entity.DateCompleted = item.DateCompleted;
       entity.ZltoReward = item.ZltoReward;
-      entity.YomaReward = item.YomaReward;
       entity.Recommendable = item.Recommendable;
       entity.StarRating = item.StarRating;
       entity.Feedback = item.Feedback;
@@ -257,7 +281,6 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories
         entity.PercentComplete = item.PercentComplete;
         entity.DateCompleted = item.DateCompleted;
         entity.ZltoReward = item.ZltoReward;
-        entity.YomaReward = item.YomaReward;
         entity.Recommendable = item.Recommendable;
         entity.StarRating = item.StarRating;
         entity.Feedback = item.Feedback;

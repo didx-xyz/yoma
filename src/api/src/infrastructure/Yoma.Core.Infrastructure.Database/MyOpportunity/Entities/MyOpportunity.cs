@@ -9,7 +9,7 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Entities
 {
   [Table("MyOpportunity", Schema = "Opportunity")]
   [Index(nameof(UserId), nameof(OpportunityId), nameof(ActionId), IsUnique = true)]
-  [Index(nameof(VerificationStatusId), nameof(DateStart), nameof(DateEnd), nameof(DateCompleted), nameof(ZltoReward), nameof(YomaReward),
+  [Index(nameof(VerificationStatusId), nameof(DateStart), nameof(DateEnd), nameof(DateCompleted), nameof(ZltoReward),
     nameof(Recommendable), nameof(StarRating), nameof(DateCreated), nameof(DateModified))]
   public class MyOpportunity : Shared.Entities.BaseEntity<Guid>
   {
@@ -53,9 +53,6 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Entities
     [Column(TypeName = "decimal(8,2)")]
     public decimal? ZltoReward { get; set; }
 
-    [Column(TypeName = "decimal(8,2)")]
-    public decimal? YomaReward { get; set; }
-
     public bool? Recommendable { get; set; }
 
     public byte? StarRating { get; set; }
@@ -71,5 +68,7 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Entities
     public DateTimeOffset DateModified { get; set; }
 
     public ICollection<MyOpportunityVerification>? Verifications { get; set; }
+
+    public ICollection<Core.Entities.CustomFieldValue>? CustomFieldValues { get; set; }
   }
 }

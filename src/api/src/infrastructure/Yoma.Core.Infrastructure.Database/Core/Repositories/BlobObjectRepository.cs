@@ -56,9 +56,10 @@ namespace Yoma.Core.Infrastructure.Database.Core.Repositories
       };
 
       _context.BlobObject.Add(entity);
+      await _context.SaveChangesAsync();
+
       item.Id = entity.Id;
 
-      await _context.SaveChangesAsync();
       return item;
     }
 

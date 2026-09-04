@@ -385,6 +385,13 @@
 }
 
 @layer base {
+  /* Tailwind v4 preflight sets `cursor: default` on buttons (v3 used pointer); daisyUI restores
+     it only for `.btn`. Restore the v3 behaviour so every enabled button reads as clickable. */
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+
   h1 {
     @apply text-2xl tracking-tighter md:text-4xl;
   }
@@ -507,6 +514,48 @@ html:has(body.content-overflow-y) {
   background-color: var(--color-white);
   color: var(--color-black);
 }
+
+/* foreground counterpart of .bg-theme — for icons/text that must match the page theme
+   (e.g. dropdown menu item icons: blue on admin pages, green on org-admin pages) */
+:root .text-theme {
+  color: var(--color-purple);
+}
+[data-theme="purple"] .text-theme {
+  color: var(--color-purple);
+}
+[data-theme="green"] .text-theme {
+  color: var(--color-green);
+}
+[data-theme="blue"] .text-theme {
+  color: var(--color-blue);
+}
+[data-theme="orange"] .text-theme {
+  color: var(--color-orange);
+}
+[data-theme="white"] .text-theme {
+  color: var(--color-black);
+}
+
+/* border counterpart of .bg-theme — for outline buttons that must match the page theme */
+:root .border-theme {
+  border-color: var(--color-purple);
+}
+[data-theme="purple"] .border-theme {
+  border-color: var(--color-purple);
+}
+[data-theme="green"] .border-theme {
+  border-color: var(--color-green);
+}
+[data-theme="blue"] .border-theme {
+  border-color: var(--color-blue);
+}
+[data-theme="orange"] .border-theme {
+  border-color: var(--color-orange);
+}
+[data-theme="white"] .border-theme {
+  border-color: var(--color-black);
+}
+
 [data-theme="white"] .drawer-side #btnSignIn,
 [data-theme="white"] .drawer-side #btnSignOut {
   background-color: var(--color-purple);

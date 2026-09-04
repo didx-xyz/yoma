@@ -4,16 +4,18 @@ using Yoma.Core.Domain.BlobProvider;
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Interfaces;
+using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Entity;
 using Yoma.Core.Domain.Opportunity;
 using Yoma.Core.Domain.Opportunity.Services;
 using Yoma.Core.Infrastructure.Database.Context;
+using Yoma.Core.Infrastructure.Database.Core.Extensions;
 using Yoma.Core.Infrastructure.Database.Core.Repositories;
 using Yoma.Core.Infrastructure.Shared.Extensions;
 
 namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
 {
-  public class OpportunityRepository : BaseRepository<Entities.Opportunity, Guid>, IRepositoryBatchedValueContainsWithNavigation<Domain.Opportunity.Models.Opportunity>
+  public class OpportunityRepository : BaseRepository<Entities.Opportunity, Guid>, IRepositoryBatchedValueContainsWithNavigationAndCustomFieldFilter<Domain.Opportunity.Models.Opportunity>
   {
     #region Constructor
     public OpportunityRepository(ApplicationDbContext context) : base(context) { }
@@ -43,7 +45,7 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
         Title = entity.Title,
         Description = entity.Description,
         TypeId = entity.TypeId,
-        Type = entity.Type.Name,
+        Type = Enum.Parse<Domain.Opportunity.Type>(entity.Type.Name, true),
         OrganizationId = entity.OrganizationId,
         OrganizationName = entity.Organization.Name,
         OrganizationLogoId = entity.Organization.LogoId,
@@ -53,17 +55,12 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
         OrganizationStatus = Enum.Parse<OrganizationStatus>(entity.Organization.Status.Name, true),
         OrganizationZltoRewardPoolCurrentFinancialYear = entity.Organization.ZltoRewardPoolCurrentFinancialYear,
         OrganizationZltoRewardCumulativeCurrentFinancialYear = entity.Organization.ZltoRewardCumulativeCurrentFinancialYear,
-        OrganizationYomaRewardPoolCurrentFinancialYear = entity.Organization.YomaRewardPoolCurrentFinancialYear,
-        OrganizationYomaRewardCumulativeCurrentFinancialYear = entity.Organization.YomaRewardCumulativeCurrentFinancialYear,
         Summary = entity.Summary,
         Instructions = entity.Instructions,
         URL = entity.URL,
         ZltoReward = entity.ZltoReward,
-        YomaReward = entity.YomaReward,
         ZltoRewardPool = entity.ZltoRewardPool,
-        YomaRewardPool = entity.YomaRewardPool,
         ZltoRewardCumulative = entity.ZltoRewardCumulative,
-        YomaRewardCumulative = entity.YomaRewardCumulative,
         VerificationEnabled = entity.VerificationEnabled,
         VerificationMethodValue = entity.VerificationMethod,
         VerificationMethod = string.IsNullOrEmpty(entity.VerificationMethod) ? null : Enum.Parse<VerificationMethod>(entity.VerificationMethod, true),
@@ -132,7 +129,20 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
                 Type = Enum.Parse<VerificationType>(o.VerificationType.Name, true),
                 DisplayName = o.VerificationType.DisplayName,
                 Description = o.Description ?? o.VerificationType.Description
-              }).OrderBy(o => o.DisplayName).ToList() : null
+              }).OrderBy(o => o.DisplayName).ToList() : null,
+        CustomFields = entity.CustomFieldValues == null ? null : includeChildItems ?
+              entity.CustomFieldValues
+              .Where(o => o.CustomFieldDefinition.IsActive)
+              .OrderBy(o => o.CustomFieldDefinition.Group)
+              .ThenBy(o => o.CustomFieldDefinition.SubGroup)
+              .ThenBy(o => o.CustomFieldDefinition.SortOrder)
+              .ThenBy(o => o.CustomFieldDefinition.Title)
+              .Select(o => new CustomFieldValueItem
+              {
+                Key = o.CustomFieldDefinition.Key,
+                DataType = Enum.Parse<CustomFieldDataType>(o.CustomFieldDefinition.DataType, true),
+                ValueRaw = o.Value
+              }).ToList() : null
       });
 
       if (includeChildItems) query = query.AsSplitQuery();
@@ -157,6 +167,19 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
           || EF.Functions.ToTsVector("english", o.Description).Matches(value));
     }
 
+    public IQueryable<Domain.Opportunity.Models.Opportunity> WhereCustomFields(IQueryable<Domain.Opportunity.Models.Opportunity> query, List<CustomFieldFilter>? filters)
+    {
+      if (filters == null || filters.Count == 0) return query;
+
+      foreach (var filter in filters)
+      {
+        var ids = _context.CustomFieldValue.MatchingEntityIds(CustomFieldEntityType.Opportunity, filter);
+        query = query.Where(o => ids.Contains(o.Id));
+      }
+
+      return query;
+    }
+
     public async Task<Domain.Opportunity.Models.Opportunity> Create(Domain.Opportunity.Models.Opportunity item)
     {
       item.DateCreated = DateTimeOffset.UtcNow;
@@ -173,9 +196,7 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
         Instructions = item.Instructions,
         URL = item.URL,
         ZltoReward = item.ZltoReward,
-        YomaReward = item.YomaReward,
         ZltoRewardPool = item.ZltoRewardPool,
-        YomaRewardPool = item.YomaRewardPool,
         VerificationEnabled = item.VerificationEnabled,
         VerificationMethod = item.VerificationMethod?.ToString(),
         DifficultyId = item.DifficultyId,
@@ -226,11 +247,8 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
           Instructions = item.Instructions,
           URL = item.URL,
           ZltoReward = item.ZltoReward,
-          YomaReward = item.YomaReward,
           ZltoRewardPool = item.ZltoRewardPool,
-          YomaRewardPool = item.YomaRewardPool,
           ZltoRewardCumulative = item.ZltoRewardCumulative,
-          YomaRewardCumulative = item.YomaRewardCumulative,
           VerificationEnabled = item.VerificationEnabled,
           VerificationMethod = item.VerificationMethod?.ToString(),
           DifficultyId = item.DifficultyId,
@@ -284,11 +302,8 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
       entity.Instructions = item.Instructions;
       entity.URL = item.URL;
       entity.ZltoReward = item.ZltoReward;
-      entity.YomaReward = item.YomaReward;
       entity.ZltoRewardPool = item.ZltoRewardPool;
-      entity.YomaRewardPool = item.YomaRewardPool;
       entity.ZltoRewardCumulative = item.ZltoRewardCumulative;
-      entity.YomaRewardCumulative = item.YomaRewardCumulative;
       entity.VerificationEnabled = item.VerificationEnabled;
       entity.VerificationMethod = item.VerificationMethod?.ToString();
       entity.DifficultyId = item.DifficultyId;
@@ -339,11 +354,8 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
         entity.Instructions = item.Instructions;
         entity.URL = item.URL;
         entity.ZltoReward = item.ZltoReward;
-        entity.YomaReward = item.YomaReward;
         entity.ZltoRewardPool = item.ZltoRewardPool;
-        entity.YomaRewardPool = item.YomaRewardPool;
         entity.ZltoRewardCumulative = item.ZltoRewardCumulative;
-        entity.YomaRewardCumulative = item.YomaRewardCumulative;
         entity.VerificationEnabled = item.VerificationEnabled;
         entity.VerificationMethod = item.VerificationMethod?.ToString();
         entity.DifficultyId = item.DifficultyId;

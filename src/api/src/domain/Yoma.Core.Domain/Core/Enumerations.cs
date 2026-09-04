@@ -201,4 +201,84 @@ namespace Yoma.Core.Domain.Core
     JobJack,
     IXO
   }
+
+  public enum CustomFieldEntityType
+  {
+    Opportunity,
+    MyOpportunity
+  }
+
+  public enum CustomFieldDataType
+  {
+    String,
+    Integer,
+    Decimal,
+    Boolean,
+    DateTime,
+    Option
+  }
+
+  public enum CustomFieldFilterOperator
+  {
+    Equals,
+    Contains,
+    AnyOf,
+    AllOf,
+    Exists,
+    GreaterThan,
+    GreaterThanOrEqual,
+    LessThan,
+    LessThanOrEqual,
+    Between
+  }
+
+  public enum CustomFieldLookupType
+  {
+    /// <summary>
+    /// Country lookup values are available from the public relative route <c>api/v3/lookup/country</c>.
+    /// </summary>
+    Country,
+
+    /// <summary>
+    /// Language lookup values are available from the public relative route <c>api/v3/lookup/language</c>.
+    /// </summary>
+    Language,
+
+    /// <summary>
+    /// Skill lookup values are available from the public relative route <c>api/v3/lookup/skill</c>.
+    /// </summary>
+    Skill
+  }
+
+  public enum CustomFieldUpsertMode
+  {
+    /// <summary>
+    /// Do not validate or modify custom-field values.
+    /// Used by flows that do not support custom fields.
+    /// </summary>
+    None,
+
+    /// <summary>
+    /// Apply PUT-style replacement semantics: treat the supplied collection as the complete authoritative custom-field state.
+    /// - Required fields must be supplied.
+    /// - Supplied fields and values are validated and persisted.
+    /// - Existing values for omitted fields are permanently deleted.
+    /// - Each supplied field must have a specified value. Key-only items are not allowed.
+    ///
+    /// Used by standard API create and update flows, matching the PUT replacement semantics
+    /// generally applied to other domain model properties and collections.
+    /// </summary>
+    PutEnforceRequired,
+
+    /// <summary>
+    /// Apply PATCH-style semantics: treat the supplied collection as a partial custom-field update.
+    /// - Required fields may be omitted.
+    /// - Supplied fields and values are validated and persisted.
+    /// - Existing values for omitted fields are preserved.
+    /// - A key-only field causes its existing value to be permanently deleted.
+    ///
+    /// Used by trusted partner synchronization and CSV import flows.
+    /// </summary>
+    PatchAllowMissingRequired
+  }
 }

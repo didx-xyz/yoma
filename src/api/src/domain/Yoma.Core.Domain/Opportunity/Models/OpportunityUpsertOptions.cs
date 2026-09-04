@@ -13,5 +13,7 @@ namespace Yoma.Core.Domain.Opportunity.Models
     public SyncType? SyncTypeActionedBy { get; set; }
 
     public string? SyncExternalId { get; set; }
+
+    public CustomFieldUpsertMode CustomFieldUpsertMode { get; init; } = CustomFieldUpsertMode.None;
   }
 }

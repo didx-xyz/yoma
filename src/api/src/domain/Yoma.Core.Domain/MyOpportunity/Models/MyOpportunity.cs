@@ -1,5 +1,6 @@
 using Newtonsoft.Json;
 using Yoma.Core.Domain.BlobProvider;
+using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Entity;
 using Yoma.Core.Domain.Lookups.Models;
 using Yoma.Core.Domain.PartnerSync.Models;
@@ -55,7 +56,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
 
     public string? OpportunitySummary { get; set; }
 
-    public string OpportunityType { get; set; } = null!;
+    public Opportunity.Type OpportunityType { get; set; }
 
     public Guid OpportunityStatusId { get; set; }
 
@@ -80,6 +81,9 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
 
     public bool OpportunityCredentialIssuanceEnabled { get; set; }
 
+    /// <summary>
+    /// Full name of the credential schema selected for the opportunity.
+    /// </summary>
     public string? OpportunitySSISchemaName { get; set; }
 
     public bool? OpporunityShareWithPartners { get; set; }
@@ -128,8 +132,6 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
 
     public decimal? ZltoReward { get; set; }
 
-    public decimal? YomaReward { get; set; }
-
     public bool? Recommendable { get; set; }
 
     public byte? StarRating { get; set; }
@@ -149,5 +151,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
     public List<MyOpportunityVerification>? Verifications { get; set; }
 
     public List<Skill>? Skills { get; set; }
+
+    public List<CustomFieldValueItem>? CustomFields { get; set; }
   }
 }

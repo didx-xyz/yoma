@@ -1,11 +1,19 @@
 using Microsoft.AspNetCore.Http;
 using Yoma.Core.Domain.Entity.Models;
+using Yoma.Core.Domain.Lookups.Models;
+using Yoma.Core.Domain.Payout.Models;
 
 namespace Yoma.Core.Domain.Entity.Interfaces
 {
   public interface IUserProfileService
   {
     UserProfile Get();
+
+    Task<List<Country>?> ListPayoutCountries();
+
+    Task<PayoutSession> PayoutRewards(decimal amount);
+
+    Task<PayoutSession> GetPayoutSession();
 
     List<UserSkillInfo>? GetSkills();
 

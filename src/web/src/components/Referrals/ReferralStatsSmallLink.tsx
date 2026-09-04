@@ -1,6 +1,7 @@
 import Image from "next/image";
 import React from "react";
 import { type ReferralLink } from "~/api/models/referrals";
+import { formatZlto } from "~/lib/format/rewards";
 
 interface ReferralStatsSmallLinkProps {
   link: ReferralLink;
@@ -148,7 +149,9 @@ export const ReferralStatsSmallLink: React.FC<ReferralStatsSmallLinkProps> = ({
               height={30}
               className="mr-2 h-auto"
             />
-            {(stats.zltoEarned || 0).toLocaleString("en-US")}
+            {/* a reward figure, so it goes through the shared formatter; `?? 0` keeps the existing
+                youth-facing behaviour of showing 0 rather than a dash */}
+            {formatZlto(stats.zltoEarned ?? 0)}
           </div>
         </div>
       </div>

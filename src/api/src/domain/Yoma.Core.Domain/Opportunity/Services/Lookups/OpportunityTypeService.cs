@@ -62,7 +62,8 @@ namespace Yoma.Core.Domain.Opportunity.Services.Lookups
         throw new ArgumentNullException(nameof(value));
       value = value.Trim();
 
-      return [.. List().Where(o => o.Name.Contains(value, StringComparison.CurrentCultureIgnoreCase))];
+      return [.. List().Where(o => o.Name.Contains(value, StringComparison.CurrentCultureIgnoreCase)
+        || o.DisplayName.Contains(value, StringComparison.CurrentCultureIgnoreCase))];
     }
 
     public List<Models.Lookups.OpportunityType> List()

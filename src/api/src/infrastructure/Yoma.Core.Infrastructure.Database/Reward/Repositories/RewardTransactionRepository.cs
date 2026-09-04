@@ -32,10 +32,12 @@ namespace Yoma.Core.Infrastructure.Database.Reward.Repositories
         SourceEntityType = entity.SourceEntityType,
         MyOpportunityId = entity.MyOpportunityId,
         ReferralLinkUsageId = entity.ReferralLinkUsageId,
+        PayoutTransactionId = entity.PayoutTransactionId,
         Amount = entity.Amount,
         TransactionId = entity.TransactionId,
         ErrorReason = entity.ErrorReason,
         RetryCount = entity.RetryCount,
+        ReservationExpiresAt = entity.ReservationExpiresAt,
         DateCreated = entity.DateCreated,
         DateModified = entity.DateModified
       }); ;
@@ -55,10 +57,12 @@ namespace Yoma.Core.Infrastructure.Database.Reward.Repositories
         SourceEntityType = item.SourceEntityType,
         MyOpportunityId = item.MyOpportunityId,
         ReferralLinkUsageId = item.ReferralLinkUsageId,
+        PayoutTransactionId = item.PayoutTransactionId,
         TransactionId = item.TransactionId,
         Amount = item.Amount,
         ErrorReason = item.ErrorReason,
         RetryCount = item.RetryCount,
+        ReservationExpiresAt = item.ReservationExpiresAt,
         DateCreated = item.DateCreated,
         DateModified = item.DateModified
       };
@@ -87,10 +91,12 @@ namespace Yoma.Core.Infrastructure.Database.Reward.Repositories
            SourceEntityType = item.SourceEntityType,
            MyOpportunityId = item.MyOpportunityId,
            ReferralLinkUsageId = item.ReferralLinkUsageId,
+           PayoutTransactionId = item.PayoutTransactionId,
            TransactionId = item.TransactionId,
            Amount = item.Amount,
            ErrorReason = item.ErrorReason,
            RetryCount = item.RetryCount,
+           ReservationExpiresAt = item.ReservationExpiresAt,
            DateCreated = now,
            DateModified = now
          });
@@ -120,6 +126,7 @@ namespace Yoma.Core.Infrastructure.Database.Reward.Repositories
       entity.StatusId = item.StatusId;
       entity.ErrorReason = item.ErrorReason;
       entity.RetryCount = item.RetryCount;
+      entity.ReservationExpiresAt = item.ReservationExpiresAt;
       entity.DateModified = item.DateModified;
 
       await _context.SaveChangesAsync();
@@ -147,6 +154,7 @@ namespace Yoma.Core.Infrastructure.Database.Reward.Repositories
         entity.StatusId = item.StatusId;
         entity.ErrorReason = item.ErrorReason;
         entity.RetryCount = item.RetryCount;
+        entity.ReservationExpiresAt = item.ReservationExpiresAt;
         entity.DateModified = item.DateModified;
       }
 

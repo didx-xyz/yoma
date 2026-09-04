@@ -47,11 +47,13 @@ namespace Yoma.Core.Infrastructure.Alison
 
       // services
       services.AddSingleton<IAlisonAuthService, AlisonAuthService>();
-      services.AddScoped<IExecutionStrategyService, ExecutionStrategyService>();
+      // Register concretely so this provider cannot override the application database
+      // IExecutionStrategyService registration.
+      services.AddScoped<ExecutionStrategyService>();
       services.AddScoped<IOpportunityCatalogueBackgroundService, OpportunityCatalogueBackgroundService>();
 
       // clients
-      services.AddKeyedScoped<ISyncProviderClientFactory<ISyncProviderClientPullEntity<Domain.Opportunity.Models.Opportunity>>, AlisonClientFactory>(SyncPartner.Alison);
+      services.AddKeyedScoped<ISyncProviderClientFactory<ISyncProviderClientPullEntity<Domain.Opportunity.Models.OpportunityRequestCreate>>, AlisonClientFactory>(SyncPartner.Alison);
       services.AddKeyedScoped<ISyncProviderClientFactory<ISyncProviderClientPullVerification>, AlisonClientFactory>(SyncPartner.Alison);
       services.AddKeyedScoped<ISyncProviderClientFactory<ISyncProviderClientUserAuthentication>, AlisonClientFactory>(SyncPartner.Alison);
     }

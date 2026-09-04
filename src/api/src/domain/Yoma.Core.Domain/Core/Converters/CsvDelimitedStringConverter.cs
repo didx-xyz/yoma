@@ -1,5 +1,6 @@
 using CsvHelper.TypeConversion;
 using System.Reflection;
+using Yoma.Core.Domain.Core.Helpers;
 
 namespace Yoma.Core.Domain.Core.Converters
 {
@@ -16,7 +17,7 @@ namespace Yoma.Core.Domain.Core.Converters
 
       if (string.IsNullOrWhiteSpace(text)) return null;
 
-      return text.Split('|').Select(value => value.Trim()).ToList();
+      return text.Split(CSVImportHelper.Value_Delimiter).Select(value => value.Trim()).ToList();
     }
 
     public override string? ConvertToString(object? value, CsvHelper.IWriterRow row, CsvHelper.Configuration.MemberMapData memberMapData)

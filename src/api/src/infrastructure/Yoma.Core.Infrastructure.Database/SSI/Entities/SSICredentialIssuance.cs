@@ -24,9 +24,8 @@ namespace Yoma.Core.Infrastructure.Database.SSI.Entities
     [Column(TypeName = "varchar(125)")]
     public string SchemaName { get; set; } = null!;
 
-    [Required]
     [Column(TypeName = "varchar(20)")]
-    public string SchemaVersion { get; set; } = null!;
+    public string? SchemaVersion { get; set; }
 
     [Required]
     [ForeignKey("StatusId")]

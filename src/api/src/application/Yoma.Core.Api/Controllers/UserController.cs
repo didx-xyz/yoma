@@ -6,6 +6,7 @@ using System.Net;
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Entity.Interfaces;
 using Yoma.Core.Domain.Entity.Models;
+using Yoma.Core.Domain.Payout.Models;
 
 namespace Yoma.Core.Api.Controllers
 {
@@ -78,6 +79,58 @@ namespace Yoma.Core.Api.Controllers
       var result = _userProfileService.Get();
 
       if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(Get));
+
+      return StatusCode((int)HttpStatusCode.OK, result);
+    }
+
+    [SwaggerOperation(Summary = "List countries currently available for payout (Authenticated User)",
+      Description = "Returns Yoma countries whose payout provider currently has at least one active payout channel; returns Service Unavailable when live provider availability cannot be determined")]
+    [HttpGet("payout/countries")]
+    [ProducesResponseType(typeof(List<Domain.Lookups.Models.Country>), (int)HttpStatusCode.OK)]
+    [ProducesResponseType((int)HttpStatusCode.ServiceUnavailable)]
+    [Authorize(Roles = Constants.Role_User)]
+    public async Task<IActionResult> ListPayoutCountries()
+    {
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(ListPayoutCountries));
+
+      var result = await _userProfileService.ListPayoutCountries();
+
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(ListPayoutCountries));
+
+      if (result == null) return StatusCode((int)HttpStatusCode.ServiceUnavailable);
+
+      return StatusCode((int)HttpStatusCode.OK, result);
+    }
+
+    [SwaggerOperation(Summary = "Initiate a ZLTO payout (Authenticated User)",
+      Description = "Reserves the requested ZLTO and initiates the corresponding payout through the configured payout provider")]
+    [HttpPost("payout/zlto")]
+    [ProducesResponseType(typeof(PayoutSession), (int)HttpStatusCode.OK)]
+    [Authorize(Roles = Constants.Role_User)]
+    public async Task<IActionResult> PayoutZlto([FromQuery] decimal amount)
+    {
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(PayoutZlto));
+
+      var result = await _userProfileService.PayoutRewards(amount);
+
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(PayoutZlto));
+
+      return StatusCode((int)HttpStatusCode.OK, result);
+    }
+
+    [SwaggerOperation(Summary = "Get the hosted session for the active ZLTO payout (Authenticated User)",
+      Description = "A user can have only one active payout at a time. Returns a refreshed hosted session and payment URL for it")]
+    [HttpGet("payout/zlto")]
+    [ProducesResponseType(typeof(PayoutSession), (int)HttpStatusCode.OK)]
+    [ProducesResponseType((int)HttpStatusCode.NotFound)]
+    [Authorize(Roles = Constants.Role_User)]
+    public async Task<IActionResult> GetPayoutZltoSession()
+    {
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(GetPayoutZltoSession));
+
+      var result = await _userProfileService.GetPayoutSession();
+
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(GetPayoutZltoSession));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }

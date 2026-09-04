@@ -3,6 +3,7 @@ import {
   ReferralLink,
 } from "~/api/models/referrals";
 import Suspense from "~/components/Common/Suspense";
+import { formatZlto } from "~/lib/format/rewards";
 import { LoadingInline } from "../Status/LoadingInline";
 import Image from "next/image";
 
@@ -103,7 +104,9 @@ const ReferralStatsSmall: React.FC<ReferralStatsSmallProps> = ({
               height={30}
               className="mr-2 h-auto"
             />
-            {(zltoEarned || 0).toLocaleString("en-US")}
+            {/* a reward figure, so it goes through the shared formatter; `?? 0` keeps the existing
+                youth-facing behaviour of showing 0 rather than a dash */}
+            {formatZlto(zltoEarned ?? 0)}
           </div>
         </div>
       </div>

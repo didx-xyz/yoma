@@ -37,6 +37,10 @@ namespace Yoma.Core.Infrastructure.Database.Reward.Entities
     public Guid? ReferralLinkUsageId { get; set; }
     public Referral.Entities.LinkUsage? ReferralLinkUsage { get; set; }
 
+    [ForeignKey("PayoutTransactionId")]
+    public Guid? PayoutTransactionId { get; set; }
+    public Payout.Entities.PayoutTransaction? PayoutTransaction { get; set; }
+
     [Required]
     [Column(TypeName = "decimal(8,2)")]
     public decimal Amount { get; set; }
@@ -48,6 +52,8 @@ namespace Yoma.Core.Infrastructure.Database.Reward.Entities
     public string? ErrorReason { get; set; }
 
     public byte? RetryCount { get; set; }
+
+    public DateTimeOffset? ReservationExpiresAt { get; set; }
 
     [Required]
     public DateTimeOffset DateCreated { get; set; }

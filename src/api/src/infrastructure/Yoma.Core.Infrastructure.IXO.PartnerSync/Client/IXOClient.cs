@@ -15,7 +15,7 @@ using Yoma.Core.Infrastructure.IXO.PartnerSync.Models;
 namespace Yoma.Core.Infrastructure.IXO.PartnerSync.Client
 {
   public sealed partial class IXOClient :
-    ISyncProviderClientPullEntity<Domain.Opportunity.Models.Opportunity>,
+    ISyncProviderClientPullEntity<Domain.Opportunity.Models.OpportunityRequestCreate>,
     ISyncProviderClientPullVerification,
     ISyncProviderClientUserAuthentication
   {
@@ -89,7 +89,7 @@ namespace Yoma.Core.Infrastructure.IXO.PartnerSync.Client
     #endregion
 
     #region Public Members
-    public Task<SyncResultPullEntity<Domain.Opportunity.Models.Opportunity>> List(SyncFilterPullEntity filter)
+    public Task<SyncResultPullEntity<Domain.Opportunity.Models.OpportunityRequestCreate>> List(SyncFilterPullEntity filter)
     {
       ArgumentNullException.ThrowIfNull(filter);
       _syncFilterPullEntityValidator.ValidateAndThrow(filter);
@@ -100,7 +100,7 @@ namespace Yoma.Core.Infrastructure.IXO.PartnerSync.Client
           _environmentProvider.Environment, filter.PageNumber, filter.PageSize);
 
       IQueryable<Opportunity> query = _opportunityRepository.Query().OrderBy(o => o.ExternalId);
-      var result = new SyncResultPullEntity<Domain.Opportunity.Models.Opportunity>();
+      var result = new SyncResultPullEntity<Domain.Opportunity.Models.OpportunityRequestCreate>();
 
       if (filter.PaginationEnabled)
       {

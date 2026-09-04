@@ -134,6 +134,13 @@ namespace Yoma.Core.Domain.Core.Models
     /// </summary>
     public int MarketplaceItemReservationExpirationInMinutes { get; set; }
 
+    /// <summary>
+    /// Payout reward reservation duration in minutes. The configured 30-hour threshold covers IXO's
+    /// 24-hour pre-confirmation resume window plus its bounded six-hour post-confirmation processing window.
+    /// Terminal webhooks and reconciliation normally commit or release the reservation before this threshold.
+    /// </summary>
+    public int PayoutRewardReservationExpirationInMinutes { get; set; }
+
     public AppSettingsDatabaseRetryPolicy DatabaseRetryPolicy { get; set; } = null!;
 
     public bool? RedisSSLCertificateValidationBypass { get; set; }
@@ -172,6 +179,8 @@ namespace Yoma.Core.Domain.Core.Models
     public int DistributedLockKeycloakEventDurationInSeconds { get; set; }
 
     public int DistributedLockReferralProgressDurationInSeconds { get; set; }
+
+    public int DistributedLockPayoutDurationInSeconds { get; set; }
 
     /// <summary>
     /// Controls whether a referee is restricted to participating in only a single referral program.

@@ -47,6 +47,12 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
     #endregion
 
     #region Internal Members
+    /// <summary>
+    /// Raw values for only the CF columns present in the CSV file. A null value means
+    /// the column was present but blank (explicit PATCH deletion); an absent key means preserve.
+    /// </summary>
+    internal Dictionary<string, string?>? CustomFieldValues { get; set; }
+
     internal void Validate(List<CSVImportErrorRow> errors, int? rowNumber)
     {
       if (string.IsNullOrEmpty(Username))

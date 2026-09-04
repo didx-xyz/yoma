@@ -57,7 +57,7 @@ namespace Yoma.Core.Infrastructure.IXO.PartnerSync
       services.AddScoped<IOpportunityCatalogueBackgroundService, OpportunityCatalogueBackgroundService>();
 
       // clients
-      services.AddKeyedScoped<ISyncProviderClientFactory<ISyncProviderClientPullEntity<Domain.Opportunity.Models.Opportunity>>, IXOClientFactory>(SyncPartner.IXO);
+      services.AddKeyedScoped<ISyncProviderClientFactory<ISyncProviderClientPullEntity<Domain.Opportunity.Models.OpportunityRequestCreate>>, IXOClientFactory>(SyncPartner.IXO);
       services.AddKeyedScoped<ISyncProviderClientFactory<ISyncProviderClientPullVerification>, IXOClientFactory>(SyncPartner.IXO);
       services.AddKeyedScoped<ISyncProviderClientFactory<ISyncProviderClientUserAuthentication>, IXOClientFactory>(SyncPartner.IXO);
     }

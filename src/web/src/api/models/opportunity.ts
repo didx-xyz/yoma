@@ -41,12 +41,6 @@ export interface Opportunity {
   organizationZltoRewardPoolCurrentFinancialYear?: number | null;
   organizationZltoRewardCumulativeCurrentFinancialYear?: number | null;
   organizationZltoRewardBalanceCurrentFinancialYear?: number | null;
-  yomaReward: number | null;
-  yomaRewardPool: number | null;
-  yomaRewardCumulative: number | null;
-  organizationYomaRewardPoolCurrentFinancialYear?: number | null;
-  organizationYomaRewardCumulativeCurrentFinancialYear?: number | null;
-  organizationYomaRewardBalanceCurrentFinancialYear?: number | null;
   verificationEnabled: boolean;
   verificationMethod: VerificationMethod | null;
   difficultyId: string | null;
@@ -84,6 +78,7 @@ export interface Opportunity {
   hidden: boolean;
   syncedInfo?: SyncInfoEntity | null;
   externalId: string | null;
+  customFields?: CustomFieldValueItem[] | null;
 }
 
 export interface OpportunityInfo {
@@ -100,9 +95,6 @@ export interface OpportunityInfo {
   zltoReward: number | null;
   zltoRewardEstimate: number | null;
   zltoRewardCumulative: number | null;
-  yomaReward: number | null;
-  yomaRewardEstimate: number | null;
-  yomaRewardCumulative: number | null;
   verificationEnabled: boolean;
   verificationMethod: VerificationMethod | null | string; // NB: string
   difficulty: string | null;
@@ -137,6 +129,7 @@ export interface OpportunityInfo {
   skills: Skill[] | null;
   verificationTypes: OpportunityVerificationType[] | null;
   externalId: string | null;
+  customFields?: CustomFieldValueItem[] | null;
 }
 
 export interface OpportunitySearchFilter extends OpportunitySearchFilterBase {
@@ -156,6 +149,7 @@ export interface OpportunitySearchFilterBase extends PaginationFilter {
   engagementTypes: string[] | null;
   featured: boolean | null;
   valueContains: string | null;
+  customFields?: CustomFieldFilter[] | null;
 }
 
 export interface OpportunitySearchResultsInfo extends OpportunitySearchResultsBase {
@@ -262,9 +256,7 @@ export interface OpportunityRequestBase {
   instructions: string | null;
   uRL: string | null;
   zltoReward: number | null;
-  yomaReward: number | null;
   zltoRewardPool: number | null;
-  yomaRewardPool: number | null;
   verificationEnabled: boolean | null;
   verificationMethod: VerificationMethod | null | string;
   difficultyId: string | null;
@@ -286,6 +278,9 @@ export interface OpportunityRequestBase {
   shareWithPartners: boolean;
   hidden: boolean | null;
   externalId: string | null;
+  // Definition-driven custom fields. Replacement semantics on the API:
+  // the full collection must be resubmitted on every save (omitted keys are cleared).
+  customFields?: CustomFieldValueRequest[] | null;
 }
 
 export interface OpportunityRequestVerificationType {
@@ -328,7 +323,9 @@ export interface OpportunityDifficulty {
 
 export interface OpportunityType {
   id: string;
+  /** Stable identifier. Credential schema type contexts resolve against this, never displayName. */
   name: string;
+  displayName: string;
 }
 
 export interface OpportunitySearchFilterCommitmentInterval {
@@ -412,3 +409,116 @@ export interface OpportunityItem {
   organizationName: string;
   organizationLogoURL: string | null;
 }
+
+//#region Custom Fields (YOM-1244 / YOM-1255)
+// Definition-driven custom fields. The UI must render, validate and submit
+// purely from these definitions — no hardcoded field keys or types.
+// Mirrors the API domain model returned by GET /opportunity/custom/field/definition
+// (Yoma.Core.Domain.Core.Models.CustomFieldDefinition).
+export enum CustomFieldDataType {
+  String = "String",
+  Integer = "Integer",
+  Decimal = "Decimal",
+  Boolean = "Boolean",
+  DateTime = "DateTime",
+  Option = "Option",
+}
+
+// Existing Yoma lookup used to supply/validate Option values. When set, values
+// are the lookup record IDs (GUIDs). Null = use the definition's inline options.
+export enum CustomFieldLookupType {
+  Country = "Country",
+  Language = "Language",
+  Skill = "Skill",
+}
+
+// Valid filter operators per data type (mirrors server-side validation):
+//   String  → Equals | Contains | AnyOf | Exists
+//   Integer/Decimal/DateTime → Equals | AnyOf | Exists | GreaterThan | GreaterThanOrEqual | LessThan | LessThanOrEqual | Between
+//   Boolean → Equals | AnyOf | Exists
+//   Option  → Equals | AnyOf | AllOf | Exists
+export enum CustomFieldFilterOperator {
+  Equals = "Equals",
+  Contains = "Contains",
+  AnyOf = "AnyOf",
+  AllOf = "AllOf",
+  Exists = "Exists",
+  GreaterThan = "GreaterThan",
+  GreaterThanOrEqual = "GreaterThanOrEqual",
+  LessThan = "LessThan",
+  LessThanOrEqual = "LessThanOrEqual",
+  Between = "Between",
+}
+
+/** One custom-field filter clause sent in OpportunitySearchFilter.customFields. */
+export interface CustomFieldFilter {
+  /** Matches CustomFieldDefinition.key (case-insensitive, server-side). */
+  key: string;
+  operator: CustomFieldFilterOperator;
+  /** Single scalar value (Equals / Contains / GreaterThan* / LessThan* / lower bound of Between). */
+  value?: string | null;
+  /** Upper bound — used only with Between. */
+  valueTo?: string | null;
+  /** Multi-value operators: AnyOf / AllOf. */
+  values?: string[] | null;
+}
+
+export interface CustomFieldOption {
+  id: string;
+  customFieldDefinitionId: string;
+  key: string;
+  name: string;
+  sortOrder: number;
+  isActive: boolean;
+  dateCreated: string;
+  dateModified: string;
+}
+
+export interface CustomFieldDefinition {
+  id: string;
+  /** Opportunity | MyOpportunity */
+  entityType: string;
+  /** Optional fall-through context (Opportunity type name). Null applies to all types. */
+  entityContext: string | null;
+  /** Stable technical key used to join definitions with values. */
+  key: string;
+  title: string;
+  description: string | null;
+  /** Primary UI grouping (wizard step / grouped section). */
+  group: string;
+  /** Optional secondary grouping within the primary group. */
+  subGroup: string | null;
+  dataType: CustomFieldDataType | string; // NB: string from API
+  /**
+   * Option fields only. When set (Country/Language/Skill), the UI loads choices from the
+   * lookup endpoints and submits lookup GUIDs. Null = use `options` (inline controlled options).
+   */
+  lookupType: CustomFieldLookupType | string | null;
+  validationRegex: string | null;
+  validationErrorMessage: string | null;
+  isRequired: boolean;
+  /** Applies to Option fields only; null for non-option fields. */
+  supportsMultiple: boolean | null;
+  sortOrder: number;
+  isActive: boolean;
+  isSystem: boolean;
+  dateCreated: string;
+  dateModified: string;
+  options: CustomFieldOption[] | null;
+}
+
+// Submitted on opportunity create/update. Non-option fields use `value`;
+// all Option fields (single- and multi-select) use `values`.
+export interface CustomFieldValueRequest {
+  key: string;
+  value?: string | null;
+  values?: string[] | null;
+}
+
+// Hydrated value returned on opportunity/completion projections.
+export interface CustomFieldValueItem {
+  key: string;
+  value?: string | null;
+  values?: string[] | null;
+}
+//#endregion Custom Fields

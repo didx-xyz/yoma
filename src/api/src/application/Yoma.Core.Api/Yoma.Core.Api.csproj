@@ -16,8 +16,8 @@
   </ItemGroup>
 
   <ItemGroup>
-	<PackageReference Include="Hangfire.AspNetCore" Version="1.8.24" />
-	<PackageReference Include="Hangfire.Core" Version="1.8.24" />
+	<PackageReference Include="Hangfire.AspNetCore" Version="1.8.25" />
+	<PackageReference Include="Hangfire.Core" Version="1.8.25" />
 	<PackageReference Include="Hangfire.Dashboard.BasicAuthorization" Version="1.0.2" />
 	<PackageReference Include="Hangfire.PostgreSql" Version="1.21.1" />
 	<PackageReference Include="Microsoft.AspNetCore.DataProtection.StackExchangeRedis" Version="10.0.11" />
@@ -34,7 +34,7 @@
     <ProjectReference Include="..\..\infrastructure\Yoma.Core.Infrastructure.Alison\Yoma.Core.Infrastructure.Alison.csproj" />
     <ProjectReference Include="..\..\infrastructure\Yoma.Core.Infrastructure.AmazonS3\Yoma.Core.Infrastructure.AmazonS3.csproj" />
     <ProjectReference Include="..\..\infrastructure\Yoma.Core.Infrastructure.AriesCloud\Yoma.Core.Infrastructure.AriesCloud.csproj" />
-    <ProjectReference Include="..\..\infrastructure\Yoma.Core.Infrastructure.Chimoney\Yoma.Core.Infrastructure.Chimoney.csproj" />
+    <ProjectReference Include="..\..\infrastructure\Yoma.Core.Infrastructure.IXO.YellowCard\Yoma.Core.Infrastructure.IXO.YellowCard.csproj" />
     <ProjectReference Include="..\..\infrastructure\Yoma.Core.Infrastructure.Database\Yoma.Core.Infrastructure.Database.csproj" />
     <ProjectReference Include="..\..\infrastructure\Yoma.Core.Infrastructure.Emsi\Yoma.Core.Infrastructure.Emsi.csproj" />
     <ProjectReference Include="..\..\infrastructure\Yoma.Core.Infrastructure.Jobberman\Yoma.Core.Infrastructure.Jobberman.csproj" />

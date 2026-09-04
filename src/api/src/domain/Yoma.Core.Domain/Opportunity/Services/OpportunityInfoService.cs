@@ -55,7 +55,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
     public OpportunityInfo GetById(Guid id, bool ensureOrganizationAuthorization)
     {
       var opportunity = _opportunityService.GetById(id, true, true, ensureOrganizationAuthorization);
-      var treasuryInfo = _treasuryService.Get();
+      var treasuryInfo = _treasuryService.GetInfo();
 
       var result = opportunity.ToOpportunityInfo(treasuryInfo.ZltoRewardBalanceCurrentFinancialYear, _appSettings.AppBaseURL);
       SetEngagementCounts(result);
@@ -70,7 +70,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       link.AssertLinkInstantVerify();
 
       var opportunity = _opportunityService.GetById(link.EntityId, true, true, false);
-      var treasuryInfo = _treasuryService.Get();
+      var treasuryInfo = _treasuryService.GetInfo();
 
       var (publishedOrExpiredResult, message) = opportunity.PublishedOrExpired();
 
@@ -90,7 +90,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
     public OpportunityInfo GetPublishedOrExpiredById(Guid id)
     {
       var opportunity = _opportunityService.GetById(id, true, true, false);
-      var treasuryInfo = _treasuryService.Get();
+      var treasuryInfo = _treasuryService.GetInfo();
 
       var (publishedOrExpiredResult, message) = opportunity.PublishedOrExpired();
 
@@ -111,7 +111,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
     public OpportunitySearchResultsInfo Search(OpportunitySearchFilterAdmin filter, bool ensureOrganizationAuthorization)
     {
       var searchResult = _opportunityService.Search(filter, ensureOrganizationAuthorization);
-      var treasuryInfo = _treasuryService.Get();
+      var treasuryInfo = _treasuryService.GetInfo();
 
       var results = new OpportunitySearchResultsInfo
       {
@@ -144,6 +144,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
         ShareWithPartners = filter.ShareWithPartners,
         EngagementTypes = filter.EngagementTypes,
         ValueContains = filter.ValueContains,
+        CustomFields = filter.CustomFields,
+        ApplyUserPresets = filter.ApplyUserPresets,
         ExcludeHidden = true,
         PageNumber = filter.PageNumber,
         PageSize = filter.PageSize,
@@ -185,7 +187,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       }
 
       var searchResult = _opportunityService.Search(filterInternal, false);
-      var treasuryInfo = _treasuryService.Get();
+      var treasuryInfo = _treasuryService.GetInfo();
 
       var results = new OpportunitySearchResultsInfo
       {

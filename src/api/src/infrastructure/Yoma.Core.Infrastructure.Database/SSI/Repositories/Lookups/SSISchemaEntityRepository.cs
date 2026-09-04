@@ -39,8 +39,11 @@ namespace Yoma.Core.Infrastructure.Database.SSI.Repositories.Lookups
                 System = !string.IsNullOrEmpty(o.SystemType),
                 SystemType = string.IsNullOrEmpty(o.SystemType) ? null : Enum.Parse<SchemaEntityPropertySystemType>(o.SystemType, true),
                 Format = o.Format,
+                Group = o.Group,
+                SubGroup = o.SubGroup,
+                SortOrder = o.SortOrder,
                 Required = o.Required
-              }).OrderBy(o => o.NameDisplay).ToList() : null,
+              }).ToList() : null,
         Types = includeChildItems ?
               entity.Types.Select(o => new SSISchemaType
               {

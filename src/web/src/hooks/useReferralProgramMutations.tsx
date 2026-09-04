@@ -1,4 +1,9 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { type AxiosError } from "axios";
 import { toast } from "react-toastify";
 import {
@@ -56,8 +61,8 @@ export const REFERRAL_PROGRAM_QUERY_KEYS = {
   /** All admin program lists (also used as the invalidation prefix) */
   list: () => ["referralPrograms"] as const,
   /** Tab count per status on the admin list page */
-  listCount: (status: ProgramStatus | null) =>
-    ["referralPrograms", "totalCount", status] as const,
+  listCount: (status: ProgramStatus | null, keyParts: string) =>
+    ["referralPrograms", "totalCount", status, keyParts] as const,
   /** Prefix key to invalidate ALL admin program status-tab counts */
   listCountAll: () => ["referralPrograms", "totalCount"] as const,
   /** All admin link lists (prefix for targeted invalidation) */
@@ -131,28 +136,32 @@ export function useReferralProgramByIdQuery(
 }
 
 /**
- * Admin — total program count for a given status tab.
- * Pass `null` for the "All" tab.
+ * Admin — status-tab count: the list search with `pageSize: 1`, so the badge honours every
+ * applied filter. Pass `null` as `status` for the "All" tab.
  */
 export function useReferralProgramCountQuery(
-  status: ProgramStatus | null,
+  searchFilter: ProgramSearchFilterAdmin,
+  status: string | null,
+  keyParts: string,
   options?: { enabled?: boolean },
 ) {
   return useQuery<number>({
-    queryKey: REFERRAL_PROGRAM_QUERY_KEYS.listCount(status),
+    queryKey: REFERRAL_PROGRAM_QUERY_KEYS.listCount(
+      status as ProgramStatus | null,
+      keyParts,
+    ),
     queryFn: () => {
       const filter: ProgramSearchFilterAdmin = {
+        ...searchFilter,
         pageNumber: 1,
-        pageSize: PAGE_SIZE,
-        countries: null,
-        valueContains: null,
+        pageSize: 1,
         statuses: status !== null ? [status] : null,
-        dateStart: null,
-        dateEnd: null,
       };
       return searchReferralPrograms(filter).then((r) => r.totalCount ?? 0);
     },
     enabled: options?.enabled ?? true,
+    // keeps the tab badges stable (no blink) while a new count loads
+    placeholderData: keepPreviousData,
   });
 }
 
@@ -428,6 +437,9 @@ export function useReferralProgramsAdminQuery(
     queryKey: REFERRAL_PROGRAM_QUERY_KEYS.adminProgramsList(keyParts),
     queryFn: () => searchReferralPrograms(searchFilter),
     enabled: options?.enabled ?? true,
+    // keeps the previous page's rows while the next page loads, so paging never
+    // changes the page height and never moves the scroll position
+    placeholderData: keepPreviousData,
   });
 }
 

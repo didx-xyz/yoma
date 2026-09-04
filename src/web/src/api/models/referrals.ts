@@ -91,11 +91,29 @@ export interface Program {
   completionLimit: number | null;
   completionTotal: number | null;
   completionBalance: number | null;
+  /**
+   * ZLTO for the ambassador on one completion. Paid *after* the referee when the pool cannot cover
+   * both — see `zltoRewardPool`.
+   */
   zltoRewardReferrer: number | null;
+  /** ZLTO for the referee on one completion. Funded first; partial payouts are allowed. */
   zltoRewardReferee: number | null;
+  /**
+   * What the API says it would pay right now, after the Treasury and programme pools are applied
+   * (`ProgramExtensions.CalculateEstimatedReward`). Server-derived — never computed client-side.
+   */
   zltoRewardEstimate: ProgramRewardEstimate | null;
+  /**
+   * A **lifetime** cap on the total ZLTO this programme may award — never reset by a financial-year
+   * rollover, unlike the Treasury and organisation pools.
+   *
+   * ⚠️ `null` means the cap is **not enforced**, i.e. unlimited. It does not mean "nothing can be
+   * awarded": the server only applies a level's cap when that level has a pool.
+   */
   zltoRewardPool: number | null;
+  /** lifetime total awarded to ambassadors and referees combined */
   zltoRewardCumulative: number | null;
+  /** server-derived: pool − cumulative, lifetime; `null` when no pool is set */
   zltoRewardBalance: number | null;
   proofOfPersonhoodRequired: boolean;
   pathwayRequired: boolean;
@@ -106,6 +124,8 @@ export interface Program {
   hidden: boolean;
   referrerLimit: number | null;
   referrerTotal: number | null;
+  /** server-derived: limit − total; `null` when there is no ambassador limit */
+  referrerBalance: number | null;
   dateStart: string;
   dateEnd: string | null;
   dateCreated: string;
