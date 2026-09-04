@@ -37,8 +37,6 @@ namespace Yoma.Core.Infrastructure.IXO.YellowCard.Services
       string? webhookTimestamp,
       string? webhookSignature)
     {
-      ValidateConfiguration();
-
       requestBody = NormalizeRequired(requestBody, nameof(requestBody), false);
       webhookId = NormalizeAuthenticationRequired(webhookId, YellowCardWebhookHeaders.Id);
       webhookTimestamp = NormalizeAuthenticationRequired(webhookTimestamp, YellowCardWebhookHeaders.Timestamp);
@@ -89,14 +87,6 @@ namespace Yoma.Core.Infrastructure.IXO.YellowCard.Services
     #endregion
 
     #region Private Members
-    private void ValidateConfiguration()
-    {
-      NormalizeRequired(_options.WebhookSigningSecret, nameof(_options.WebhookSigningSecret));
-      if (_options.WebhookTimestampToleranceInMinutes <= 0)
-        throw new InvalidOperationException(
-          $"{YellowCardOptions.Section}:{nameof(_options.WebhookTimestampToleranceInMinutes)} must be greater than zero");
-    }
-
     private void ValidateTimestamp(string webhookTimestamp)
     {
       if (!long.TryParse(webhookTimestamp, NumberStyles.None, CultureInfo.InvariantCulture, out var timestampSeconds))

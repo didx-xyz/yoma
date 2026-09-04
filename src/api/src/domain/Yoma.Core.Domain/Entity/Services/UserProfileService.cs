@@ -108,6 +108,11 @@ namespace Yoma.Core.Domain.Entity.Services
       return ToProfile(user).Result;
     }
 
+    public async Task<List<Domain.Lookups.Models.Country>?> ListPayoutCountries()
+    {
+      return await _payoutService.ListCountries();
+    }
+
     public async Task<PayoutSession> PayoutRewards(decimal amount)
     {
       var username = HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false);
@@ -367,8 +372,10 @@ namespace Yoma.Core.Domain.Entity.Services
         ZltoOffline = balance.ZltoOffline
       };
 
+      var payoutCountryAvailability = await _payoutService.IsCountrySupported(result.CountryId);
       result.Payout = new UserProfilePayout
       {
+        CountryAvailability = payoutCountryAvailability,
         Amount = payoutActive?.Amount,
         Currency = payoutActive == null ? null : Enum.Parse<Currency>(payoutActive.Currency, true)
       };

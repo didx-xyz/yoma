@@ -83,6 +83,25 @@ namespace Yoma.Core.Api.Controllers
       return StatusCode((int)HttpStatusCode.OK, result);
     }
 
+    [SwaggerOperation(Summary = "List countries currently available for payout (Authenticated User)",
+      Description = "Returns Yoma countries whose payout provider currently has at least one active payout channel; returns Service Unavailable when live provider availability cannot be determined")]
+    [HttpGet("payout/countries")]
+    [ProducesResponseType(typeof(List<Domain.Lookups.Models.Country>), (int)HttpStatusCode.OK)]
+    [ProducesResponseType((int)HttpStatusCode.ServiceUnavailable)]
+    [Authorize(Roles = Constants.Role_User)]
+    public async Task<IActionResult> ListPayoutCountries()
+    {
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(ListPayoutCountries));
+
+      var result = await _userProfileService.ListPayoutCountries();
+
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(ListPayoutCountries));
+
+      if (result == null) return StatusCode((int)HttpStatusCode.ServiceUnavailable);
+
+      return StatusCode((int)HttpStatusCode.OK, result);
+    }
+
     [SwaggerOperation(Summary = "Initiate a ZLTO payout (Authenticated User)",
       Description = "Reserves the requested ZLTO and initiates the corresponding payout through the configured payout provider")]
     [HttpPost("payout/zlto")]

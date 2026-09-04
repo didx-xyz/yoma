@@ -51,7 +51,8 @@ namespace Yoma.Core.Domain.Entity.Models
     /// <summary>
     /// Identifies the user's current active payout. When <see cref="UserProfilePayout.Active"/> is true,
     /// the UI must offer Continue cash-out instead of starting another payout; continuing requests a fresh
-    /// hosted session for the existing provider transaction.
+    /// hosted session for the existing provider transaction. Active takes precedence over current country
+    /// availability because a provider corridor change must not abandon an in-flight payout.
     /// </summary>
     public UserProfilePayout Payout { get; set; } = null!;
 

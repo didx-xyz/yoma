@@ -90,6 +90,11 @@ the Treasury figures were also validated through local API/database probes. The 
   Search returns lightweight payout and user identity rows; retrieval by id adds the linked ZLTO transaction.
 - Yellow Card OAuth authentication, hosted payout initiation, refreshed-session lookup and
   reconciliation status lookup are implemented against IXO's generated sandbox OpenAPI.
+- Yellow Card's live off-ramp country availability uses the shared in-memory lookup-cache policy, is exposed
+  to authenticated users as standard Yoma Country models and as explicit profile support/offline flags, and is
+  enforced before payout creation or ZLTO reservation.
+  Expected provider unavailability follows the wallet offline pattern rather than failing the complete profile.
+  The hosted provider remains the final authority if a corridor changes after initiation.
 - Yellow Card raw-body HMAC authentication, replay suppression and payload/status processing are
   implemented. Payout.Transaction and Reward.Transaction remain the authoritative processing
   records; the polling fallback reconciles missed or failed deliveries.

@@ -1,11 +1,16 @@
 using Flurl;
 using Flurl.Http;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System.Globalization;
 using System.Net;
+using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.Core.Extensions;
+using Yoma.Core.Domain.Core.Helpers;
+using Yoma.Core.Domain.Core.Models;
+using Yoma.Core.Domain.Lookups.Interfaces;
 using Yoma.Core.Domain.Payout;
 using Yoma.Core.Domain.Payout.Interfaces.Provider;
 using Yoma.Core.Domain.Payout.Models.Provider;
@@ -20,27 +25,60 @@ namespace Yoma.Core.Infrastructure.IXO.YellowCard.Client
   {
     #region Class Variables
     private readonly ILogger<YellowCardClient> _logger;
+    private readonly AppSettings _appSettings;
     private readonly YellowCardOptions _options;
     private readonly IYellowCardAuthService _authService;
+    private readonly IMemoryCache _memoryCache;
+    private readonly ICountryService _countryService;
     #endregion
 
     #region Constructor
     public YellowCardClient(
       ILogger<YellowCardClient> logger,
+      AppSettings appSettings,
       YellowCardOptions options,
-      IYellowCardAuthService authService)
+      IYellowCardAuthService authService,
+      IMemoryCache memoryCache,
+      ICountryService countryService)
     {
       _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+      _appSettings = appSettings ?? throw new ArgumentNullException(nameof(appSettings));
       _options = options ?? throw new ArgumentNullException(nameof(options));
       _authService = authService ?? throw new ArgumentNullException(nameof(authService));
+      _memoryCache = memoryCache ?? throw new ArgumentNullException(nameof(memoryCache));
+      _countryService = countryService ?? throw new ArgumentNullException(nameof(countryService));
     }
     #endregion
 
     #region Public Members
+    /// <inheritdoc />
+    public async Task<PayoutCountries> ListCountriesSupported()
+    {
+      try
+      {
+        if (!_appSettings.CacheEnabledByCacheItemTypesAsEnum.HasFlag(CacheItemType.Lookups))
+          return new PayoutCountries { Countries = await ListCountriesSupportedInternal() };
+
+        var result = await _memoryCache.GetOrCreateAsync(CacheHelper.GenerateKey<YellowCardClient>("supported-countries"), async entry =>
+        {
+          entry.SlidingExpiration = TimeSpan.FromHours(_appSettings.CacheSlidingExpirationInHours);
+          entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(_appSettings.CacheAbsoluteExpirationRelativeToNowInDays);
+          return await ListCountriesSupportedInternal();
+        }) ?? throw new InvalidOperationException("Failed to retrieve cached payout-country availability");
+
+        return new PayoutCountries { Countries = result };
+      }
+      catch (HttpClientException)
+      {
+        // Country availability is live provider guidance. An expected provider outage must not break
+        // the complete user profile; payout initiation remains fail-closed in the domain.
+        return new PayoutCountries { Offline = true };
+      }
+    }
+
     public async Task<PayoutResponse> Initiate(PayoutRequest request)
     {
       ArgumentNullException.ThrowIfNull(request);
-      ValidateConfiguration();
       Validate(request);
 
       if (_logger.IsEnabled(LogLevel.Information))
@@ -84,7 +122,6 @@ namespace Yoma.Core.Infrastructure.IXO.YellowCard.Client
     public async Task<PayoutSessionResponse> GetSession(PayoutSessionRequest request)
     {
       ArgumentNullException.ThrowIfNull(request);
-      ValidateConfiguration();
 
       if (request.Id == Guid.Empty)
         throw new ArgumentNullException(nameof(request), "Payout transaction id is empty");
@@ -120,7 +157,6 @@ namespace Yoma.Core.Infrastructure.IXO.YellowCard.Client
     public async Task<PayoutStatusResponse> GetStatus(PayoutStatusRequest request)
     {
       ArgumentNullException.ThrowIfNull(request);
-      ValidateConfiguration();
 
       if (request.Id == Guid.Empty)
         throw new ArgumentNullException(nameof(request), "Payout transaction id is empty");
@@ -159,6 +195,46 @@ namespace Yoma.Core.Infrastructure.IXO.YellowCard.Client
     #endregion
 
     #region Private Members
+    private async Task<List<Domain.Lookups.Models.Country>> ListCountriesSupportedInternal()
+    {
+      var response = await Execute<YellowCardCountriesResponse>(() =>
+        _options.SupportedCountriesUrl
+          .WithTimeout(TimeSpan.FromSeconds(_options.RequestTimeoutSeconds))
+          .GetAsync());
+
+      if (!response.Success)
+        throw new InvalidOperationException("IXO payout-country response was unsuccessful");
+
+      if (response.Countries == null)
+        throw new InvalidOperationException("IXO payout-country response does not contain a country list");
+
+      var countryCodesAlpha2 = response.Countries
+        .Select(o => o?.Trim().ToUpperInvariant())
+        .Where(o => !string.IsNullOrEmpty(o))
+        .Select(o => o!)
+        .Distinct(StringComparer.OrdinalIgnoreCase)
+        .ToList();
+
+      if (countryCodesAlpha2.Count == 0)
+        throw new InvalidOperationException("IXO payout-country response contains no countries");
+      if (countryCodesAlpha2.Any(o => o.Length != 2 || !o.All(char.IsAsciiLetter)))
+        throw new InvalidOperationException("IXO payout-country response contains an invalid ISO 3166-1 alpha-2 country code");
+      if (response.Count != countryCodesAlpha2.Count)
+        throw new InvalidOperationException("IXO payout-country response count does not match its country list");
+
+      var countries = _countryService.List(true);
+      var unresolvedCodes = countryCodesAlpha2
+        .Where(code => !countries.Any(country => string.Equals(country.CodeAlpha2, code, StringComparison.OrdinalIgnoreCase)))
+        .ToList();
+
+      if (unresolvedCodes.Count != 0)
+        throw new DataInconsistencyException($"IXO returned countries not configured in Yoma: {string.Join(", ", unresolvedCodes)}");
+
+      return [.. countries
+        .Where(country => countryCodesAlpha2.Contains(country.CodeAlpha2, StringComparer.OrdinalIgnoreCase))
+        .OrderBy(country => country.Name)];
+    }
+
     private async Task<TResponse> Execute<TResponse>(
       Func<Task<IFlurlResponse>> request,
       List<HttpStatusCode>? additionalSuccessStatusCodes = null)
@@ -232,23 +308,6 @@ namespace Yoma.Core.Infrastructure.IXO.YellowCard.Client
         throw new ArgumentOutOfRangeException(nameof(request), "Payout amount must be greater than zero");
     }
 
-    private void ValidateConfiguration()
-    {
-      ValidateHttpsUrl(_options.BaseUrl, nameof(_options.BaseUrl));
-      NormalizeRequired(_options.AccessTokenPath, nameof(_options.AccessTokenPath));
-      NormalizeRequired(_options.PayoutsPath, nameof(_options.PayoutsPath));
-      NormalizeRequired(_options.ClientId, nameof(_options.ClientId));
-      NormalizeRequired(_options.ClientSecret, nameof(_options.ClientSecret));
-
-      if (_options.RequestTimeoutSeconds <= 0)
-        throw new InvalidOperationException($"{YellowCardOptions.Section}:{nameof(_options.RequestTimeoutSeconds)} must be greater than zero");
-    }
-
-    private static void ValidateStatus(string status)
-    {
-      _ = YellowCardStatusHelper.ToPayoutStatus(status);
-    }
-
     private static void ValidateSessionStatus(string status)
     {
       if (YellowCardStatusHelper.ToPayoutStatus(status) != PayoutTransactionStatus.Processing)
@@ -268,13 +327,6 @@ namespace Yoma.Core.Infrastructure.IXO.YellowCard.Client
         throw new InvalidOperationException("IXO hosted payout response must contain a valid HTTPS payment URL");
 
       return paymentUrl;
-    }
-
-    private static void ValidateHttpsUrl(string? value, string propertyName)
-    {
-      value = NormalizeRequired(value, propertyName);
-      if (!Uri.TryCreate(value, UriKind.Absolute, out var uri) || uri.Scheme != Uri.UriSchemeHttps)
-        throw new InvalidOperationException($"{YellowCardOptions.Section}:{propertyName} must be a valid HTTPS URL");
     }
 
     private static DateTimeOffset ParseDateTimeOffset(string? value, string propertyName)
