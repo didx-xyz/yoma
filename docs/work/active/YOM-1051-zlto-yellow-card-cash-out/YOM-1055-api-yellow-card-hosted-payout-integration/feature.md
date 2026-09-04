@@ -33,6 +33,9 @@ provider-neutral hosted payout boundary against IXO's generated sandbox OpenAPI 
 - [x] Return active payout data on profile without a stored URL; active is the resumable state.
 - [x] Implement authentication, initiation and refreshed-session lookup.
 - [x] Map actual request/response/error contracts.
+- [x] Expose and cache the provider's live supported-country list.
+- [x] Expose the current profile-country availability in the user profile payout section.
+- [x] Reject unsupported profile countries before payout creation or reward reservation.
 - [x] Reject expired sessions and non-terminal sessions that do not expire before the ZLTO reservation.
 - [x] Set the final ZLTO reservation duration from IXO's confirmed lifecycle.
 
@@ -53,6 +56,15 @@ provider-neutral hosted payout boundary against IXO's generated sandbox OpenAPI 
   additional hours at worst. The ZLTO reservation is therefore fixed at 30 hours.
 - 2026-08-27: IXO requests use a 60-second transport timeout and hosted links must be HTTPS. These
   controls are independent from the provider-returned session expiry and ZLTO reservation duration.
+- 2026-09-01: IXO's public off-ramp country endpoint is the live source of truth for Sandbox and
+  Production. The Yellow Card client resolves its ISO alpha-2 codes to standard Yoma Country models
+  and caches that resolved list using the existing shared in-memory lookup-cache policy. Yoma validates
+  a user's profile country before any payout record or
+  ZLTO reservation is created. The hosted provider remains authoritative if availability changes
+  after initiation; reconciliation never revalidates an active payout's country. The user profile
+  returns a non-nullable `Payout.CountryAvailability` object with separate `Supported` and `Offline` flags.
+  Expected provider HTTP unavailability does not fail the complete profile; the standalone country
+  endpoint returns HTTP 503, while initiation remains fail-closed.
 
 ## Links
 

@@ -34,6 +34,20 @@ namespace Yoma.Core.Infrastructure.IXO.YellowCard.Models
   }
   #endregion
 
+  #region Countries
+  public sealed class YellowCardCountriesResponse
+  {
+    [JsonProperty("success")]
+    public bool Success { get; set; }
+
+    [JsonProperty("count")]
+    public int Count { get; set; }
+
+    [JsonProperty("countries")]
+    public List<string> Countries { get; set; } = [];
+  }
+  #endregion
+
   #region Payouts
   public sealed class YellowCardPayoutRequest
   {

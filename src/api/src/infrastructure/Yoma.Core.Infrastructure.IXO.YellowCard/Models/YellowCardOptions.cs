@@ -10,6 +10,11 @@ namespace Yoma.Core.Infrastructure.IXO.YellowCard.Models
     public string BaseUrl { get; set; } = null!;
 
     /// <summary>
+    /// Public endpoint containing the provider's live payout-country availability.
+    /// </summary>
+    public string SupportedCountriesUrl { get; set; } = null!;
+
+    /// <summary>
     /// OAuth2 client-credentials token path.
     /// </summary>
     public string AccessTokenPath { get; set; } = null!;

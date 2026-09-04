@@ -94,10 +94,35 @@ namespace Yoma.Core.Domain.Payout.Services
 
     #region Public Members
 
+    public async Task<List<Domain.Lookups.Models.Country>?> ListCountries()
+    {
+      var result = await _payoutProviderClient.ListCountriesSupported();
+      if (result.Offline) return null;
+
+      return result.Countries
+        ?? throw new DataInconsistencyException("Payout provider country list expected while provider is online");
+    }
+
+    public async Task<PayoutCountryAvailability> IsCountrySupported(Guid? countryId)
+    {
+      if (!countryId.HasValue || countryId.Value == Guid.Empty) return new PayoutCountryAvailability();
+
+      var result = await _payoutProviderClient.ListCountriesSupported();
+      if (result.Offline) return new PayoutCountryAvailability { Offline = true };
+      if (result.Countries == null)
+        throw new DataInconsistencyException("Payout provider country list expected while provider is online");
+
+      return new PayoutCountryAvailability
+      {
+        Supported = result.Countries.Any(country => country.Id == countryId.Value)
+      };
+    }
+
     public async Task<PayoutTransaction> Payout(Guid userId, decimal amount)
     {
       var user = GetUser(userId);
       ValidateUserProfileForPayout(user);
+      await ValidateUserCountryForPayout(user);
       var payout = await CreatePayout(userId, PayoutType.Payout, Provider_Default, amount, null, false);
 
       var result = await _distributedLockService.RunWithLockAsync(GetLockKey(payout.Id), _payoutLockDuration, () => InitiatePayout(payout, user));
@@ -162,16 +187,12 @@ namespace Yoma.Core.Domain.Payout.Services
 
       // Webhooks and reconciliation responses carry Yoma's idempotency/reference key. Prefer it over the
       // provider transaction id so an authenticated early webhook can complete initiation persistence safely.
-      var payout = response.Id != Guid.Empty
+      var payout = (response.Id != Guid.Empty
         ? query.SingleOrDefault(o => o.Id == response.Id)
-        : query.SingleOrDefault(o => o.TransactionId == response.TransactionId);
-
-      if (payout == null)
-        throw new EntityNotFoundException(
+        : query.SingleOrDefault(o => o.TransactionId == response.TransactionId)) ?? throw new EntityNotFoundException(
           response.Id == Guid.Empty
             ? $"{nameof(PayoutTransaction)} with provider transaction id '{response.TransactionId}' does not exist"
             : $"{nameof(PayoutTransaction)} with id '{response.Id}' does not exist for provider '{response.Provider}'");
-
       await _distributedLockService.RunWithLockAsync(
         GetLockKey(payout.Id),
         _payoutLockDuration,
@@ -213,6 +234,7 @@ namespace Yoma.Core.Domain.Payout.Services
 
       var user = GetUser(userId);
       ValidateUserProfileForPayout(user);
+      await ValidateUserCountryForPayout(user);
       var (walletStatus, walletBalance) = await _walletService.GetWalletStatusAndBalance(userId);
       if (walletStatus != Reward.WalletCreationStatus.Created)
         throw new ValidationException("The reward wallet is not ready for payout");
@@ -339,6 +361,25 @@ namespace Yoma.Core.Domain.Payout.Services
 
       if (missingFields.Count != 0)
         throw new ValidationException($"Complete the following profile information before cashing out: {string.Join(", ", missingFields)}");
+    }
+
+    /// <summary>
+    /// Validates live country availability before payout creation or reward reservation. Availability is intentionally
+    /// not revalidated during reconciliation because a corridor change must not invalidate an already active payout.
+    /// The hosted provider remains the final real-time authority after initiation.
+    /// </summary>
+    private async Task ValidateUserCountryForPayout(User user)
+    {
+      if (!user.CountryId.HasValue)
+        throw new ValidationException("Cash-out is unavailable because your country is not specified");
+
+      var countrySupported = await IsCountrySupported(user.CountryId);
+      if (countrySupported.Offline)
+        throw new ValidationException("Cash-out is currently unavailable; please try again later");
+      if (countrySupported.Supported) return;
+
+      var countryName = _countryService.GetById(user.CountryId.Value).Name;
+      throw new ValidationException($"Cash-out is currently unavailable in {countryName}");
     }
 
     private async Task<PayoutTransaction> CreatePayout(
