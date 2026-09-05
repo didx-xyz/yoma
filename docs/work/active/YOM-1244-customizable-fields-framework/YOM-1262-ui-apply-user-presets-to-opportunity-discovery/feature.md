@@ -345,6 +345,86 @@ commitment set; **accessibility excludes** those that have not described their a
   (explicit search button + clear button, commit on Enter/blur/button, clear commits `null`
   immediately); section filter inputs got a clear button too.
 
+- 2026-09-05 (design-refinement round, from a claude.design review of the running surface —
+  committed separately from rounds 2–7 so the experiment can be reverted whole):
+  - **The master preferences switch now clears custom-field clauses too.** It was the known gap
+    in the 2026-09-03 round-3 rule (it cannot tell an inherited type's clauses from a manual
+    type's); switching the layer off is now treated as "types shrank". Over-clearing is
+    recoverable, a clause filtering on a type that is no longer selected is not visible anywhere
+    and cannot be removed.
+  - **Fetch failures are stated, never silent.** Lookups, the definitions endpoint, the results
+    query and the live count each report failure: an error `<Message>` with Retry in the results
+    region, a one-line "Couldn't load opportunity types — retry" in place of an empty type row,
+    a per-section error where definitions failed, "Show results" without a number on the footer
+    button, and "Count unavailable right now" beside Clear all. An empty option list that looks
+    like "no countries exist" is indistinguishable from a broken page.
+  - **Generic definitions are rendered ONCE across selected types.** The endpoint returns the
+    generic set plus the type's own for every type asked about, with no marker saying which — so
+    Job + Event drew 18 of 24 controls twice. `useTypeDefinitions` intersects the definition keys
+    across the fetched types (what every type returns is by construction not particular to any of
+    them) and renders the intersection as one "Details (all types)" section above the per-type
+    ones, which then carry only their difference. Two types up only: with one type selected the
+    intersection is everything, so that case renders exactly as before. No API change — though an
+    "owning type" marker on definitions would make this exact rather than inferred.
+  - **Category tile counts stay; the "Counts are live and respect your preferences" caption
+    goes.** Verified on the local API: `/opportunity/search/filter/category` returns 2 457 for
+    all ten categories because every seeded opportunity carries all ten (a category-filtered
+    search returns the same total, and a bogus id is rejected — the filter works). That is a
+    fixture artefact, so no code change to the counts. The caption was wrong independently of
+    the data: the counts come from the lookup, which knows nothing about the current search or
+    the youth's preferences. Re-check the counts on DEV once the API redeploys.
+  - **One badge component, three intents.** Amber carried both "not available yet" (SOON) and
+    "consent required" (OPT-IN), so the colour said nothing; OPT-IN moved to neutral grey and
+    amber now means availability alone. FROM THIS TYPE and FROM PREFERENCES share one purple
+    provenance tone (the former was solid purple, the only filled badge on the surface).
+  - **One `SectionHeader` for every block in the filter panel** — universal sections, the type
+    row, the per-type custom-field sections and "More filters" — so icon size, label scale, the
+    value column, badge placement, chevron and divider cannot drift apart again. **The type row
+    is a noun with a value column** ("Type · Job · Event" / "Any type"); its question becomes the
+    subtitle and still titles the popover, where it is the only label on screen. **Helper text is
+    a 13px subtitle**; boxed callouts are reserved for null-rule warnings, which are the only
+    helpers that change what the search returns.
+  - **44px touch targets below `md`** on every option pill, type pill, quick-search badge in a
+    panel, wizard pill and disclosure row. The custom-field controls reach it through a new
+    `largeTouchTargets` prop on YOM-1260's `CustomFieldFilters` — additive and off by default, so
+    the admin and legacy filter panels are untouched (the epic's rule for shared building blocks).
+    The hero's scrolling badge row stays compact: it is not the place a thumb aims carefully.
+  - **One loading treatment, everywhere.** The spinner beside the count and the three shimmer
+    placeholders (results heading, Show-results button, wizard count panel) are gone; what
+    remains is the results fade plus the text-only blur on a previous number. A shimmer promises
+    a number that a failed request will never deliver — the placeholders became "Searching…",
+    "Show results" and "Counting…".
+  - **Spacing is 32px between page blocks and 24px inside the filter panel**, dropping to 24px
+    on the page below `md` where the fold is the scarcer resource. Mobile category tiles lose
+    their square aspect and their count (icon + label only, ~78px instead of ~120px), done with
+    child variants in the carousel rather than a prop, so the legacy page's carousel is untouched.
+  - **A sub-group heading has to earn its level.** A sub-group wrapping exactly one field renders
+    its name as the field's label prefix ("Application · [Sample] Application Required") instead
+    of a heading — five of six sub-groups in the seeded data were one-field headings. Below `md`
+    the heading level goes entirely and every field carries the prefix (`useIsCompact`, the one
+    place this surface asks JavaScript about the viewport, because the change is to the rendered
+    string and not to styling). Indentation is capped at one level, shallower on mobile.
+  - **Quick searches order available-first** (five of seven are inert, and the registry order
+    buried the two that work), and the **sort row collapses to one disabled "More sorts soon"
+    pill below `md`** — two dead pills is a poor use of a 390px row; desktop keeps all three.
+  - **Wording pass.** "Save to profile" → **"Make this my default"** with an inline "Saved. Undo"
+    (the old label contradicted the promise one line above it, and a one-tap write with no way
+    back is not one-tap); the write-back offer merged INTO the preference banner as its second
+    line, so preference state has one home instead of three stacked panels; the banner lists
+    every inherited value, two by name then "+N"; the hero's results line no longer points at
+    chips that are below it; "Up to a hour" → "Up to an hour" (article by sound, silent-h list —
+    a letter-only rule is what produced the bug).
+  - **Build: the zero-results state offers the way out.** "No matches. Try removing a filter:"
+    followed by the applied chips, inline and removable — the same `AppliedChips` component, so
+    there is no second chip implementation. With nothing removable (a free-text miss) it says so
+    instead.
+  - **Build: Copy link on the results heading.** The URL is already the whole search, so a
+    shareable search is one button and no new state. Confirmation is inline, not a toast.
+  - **Recent searches carry a relative time** ("2h ago"), stored as `at` on the entry; entries
+    written before this round have none and simply show the count.
+  - **Per-type card layouts (brief §5) were not built** — the brief marks the section "ignore for
+    this session", and canvas page 4 is still awaiting the client's pick-or-drop.
+
 ## Links
 
 - Epic: [YOM-1244](../README.md)

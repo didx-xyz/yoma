@@ -9,7 +9,8 @@ export const Pill: React.FC<{
   <button
     type="button"
     onClick={onToggle}
-    className={`rounded-full border px-2.5 py-1 text-[11px] md:text-xs ${
+    // 44px on touch, compact from md up — the same rule as the filter panel's option pills.
+    className={`flex min-h-11 items-center rounded-full border px-2.5 text-[11px] md:min-h-9 md:text-xs ${
       active
         ? "border-green bg-green font-semibold text-white"
         : "border-gray hover:border-green bg-white"

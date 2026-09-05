@@ -23,11 +23,11 @@ export function useResultCount(
   filters: DiscoveryFilters,
   typeIdByName: Record<string, string>,
   enabled: boolean,
-): { count: number | null; counting: boolean } {
+): { count: number | null; counting: boolean; failed: boolean } {
   const request = buildSearchFilter(filters, 1, 1, typeIdByName);
   const debouncedKey = useDebouncedValue(JSON.stringify(request), 300);
 
-  const { data, isFetching } = useQuery({
+  const { data, isFetching, isError } = useQuery({
     queryKey: ["discovery", "count", debouncedKey],
     queryFn: () =>
       searchOpportunities(JSON.parse(debouncedKey) as typeof request),
@@ -36,5 +36,11 @@ export function useResultCount(
     staleTime: 60 * 1000,
   });
 
-  return { count: data?.totalCount ?? null, counting: isFetching };
+  // A failed count must not read as "still counting" — the button drops the number and says
+  // "Show results" rather than spinning on a request that is not coming back.
+  return {
+    count: data?.totalCount ?? null,
+    counting: isFetching,
+    failed: isError,
+  };
 }

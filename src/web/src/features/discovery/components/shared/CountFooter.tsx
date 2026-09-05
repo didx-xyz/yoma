@@ -8,17 +8,26 @@ import { ShowResultsButton } from "./ShowResultsButton";
 export const CountFooter: React.FC<{
   count: number | null;
   counting: boolean;
+  /** The count request failed — say so, rather than letting the button look stuck. */
+  countFailed?: boolean;
   onClearAll: () => void;
   onShowResults: () => void;
-}> = ({ count, counting, onClearAll, onShowResults }) => (
+}> = ({ count, counting, countFailed = false, onClearAll, onShowResults }) => (
   <div className="border-gray sticky bottom-0 flex items-center justify-between gap-4 border-t bg-white p-3">
-    <button
-      type="button"
-      onClick={onClearAll}
-      className="text-purple min-h-11 text-sm font-semibold underline"
-    >
-      Clear all
-    </button>
+    <div className="flex min-w-0 flex-col">
+      <button
+        type="button"
+        onClick={onClearAll}
+        className="text-purple min-h-11 self-start text-sm font-semibold underline"
+      >
+        Clear all
+      </button>
+      {countFailed && (
+        <span className="text-gray-dark text-xs">
+          Count unavailable right now.
+        </span>
+      )}
+    </div>
     <ShowResultsButton
       count={count}
       counting={counting}

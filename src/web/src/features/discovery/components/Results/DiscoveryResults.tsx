@@ -9,6 +9,7 @@ import {
   useDiscoveryResults,
 } from "../../state/useDiscoveryResults";
 import { CategoryCarousel } from "../Discover/CategoryCarousel";
+import { CopyLinkButton } from "../shared/CopyLinkButton";
 import { Message } from "../shared/Message";
 import { PreferenceBanner } from "../shared/PreferenceBanner";
 import { AppliedChips } from "./AppliedChips";
@@ -38,7 +39,7 @@ export const DiscoveryResults: React.FC<{
     resultsAnchorRef,
     scrollToResults,
   } = useDiscovery();
-  const { results, loading } = useDiscoveryResults(
+  const { results, loading, failed, retry } = useDiscoveryResults(
     effectiveFilters,
     state.page,
     lookups.typeIdByName,
@@ -77,6 +78,9 @@ export const DiscoveryResults: React.FC<{
   const total = results?.totalCount ?? null;
   const pages =
     total !== null ? Math.max(1, Math.ceil(total / DISCOVERY_PAGE_SIZE)) : 1;
+  // Whether the zero-results state has anything to offer removing (free text is not a chip).
+  const removableFilters =
+    chips.length > 0 || state.filters.customFields.length > 0;
 
   // "[count] match(es) for [first filter] + N filter(s)" — states WHAT the count counts while
   // staying short: first value only, the rest as a count (the chips row above carries the full
@@ -98,7 +102,7 @@ export const DiscoveryResults: React.FC<{
   };
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-6 md:gap-8">
       <PreferenceBanner onEdit={onEditPreferences} />
       <AppliedChips pulseChipId={loading ? newChipId : null} />
       <CategoryCarousel />
@@ -112,7 +116,9 @@ export const DiscoveryResults: React.FC<{
         >
           <h2 className="flex shrink-0 items-center gap-2 text-base font-bold tracking-normal whitespace-nowrap md:text-lg">
             {total === null ? (
-              <span className="bg-gray inline-block h-5 w-16 animate-pulse rounded motion-reduce:animate-none" />
+              // First load only. A static word, not a shimmer: the surface has exactly one
+              // loading treatment (fade the results, blur the previous number).
+              <span className="text-gray-dark font-normal">Searching…</span>
             ) : (
               // While updating, the previous number stays and only the TEXT blurs — never a
               // swapped-in placeholder box (browser feedback, 2026-09-03).
@@ -124,14 +130,9 @@ export const DiscoveryResults: React.FC<{
                 {heading(total)}
               </span>
             )}
-            {loading && (
-              <span
-                className="border-gray-dark inline-block h-3.25 w-3.25 shrink-0 animate-spin rounded-full border-2 border-t-transparent motion-reduce:animate-none"
-                aria-hidden
-              />
-            )}
           </h2>
           <div className="ml-auto flex shrink-0 items-center gap-2 md:gap-3">
+            <CopyLinkButton />
             <SortControl
               sort={state.sort}
               onChange={(sort) => dispatch({ kind: "setSort", sort })}
@@ -140,11 +141,43 @@ export const DiscoveryResults: React.FC<{
           </div>
         </ScrollableContainer>
       </div>
-      {!loading && total === 0 && (
-        <Message kind="warning">
-          No matches for this search. Refine it — clear a filter or two, widen a
-          choice, or switch a preference back on.
+      {failed && (
+        <Message kind="error">
+          Couldn&apos;t load these results.{" "}
+          <button
+            type="button"
+            onClick={retry}
+            className="font-semibold underline"
+          >
+            Retry
+          </button>
         </Message>
+      )}
+      {lookups.failed && !failed && (
+        <Message kind="error">
+          Some filter options couldn&apos;t be loaded, so this search may be
+          incomplete.{" "}
+          <button
+            type="button"
+            onClick={lookups.retry}
+            className="font-semibold underline"
+          >
+            Retry
+          </button>
+        </Message>
+      )}
+      {/* Zero results is a dead end unless the way out is on screen: the applied filters render
+          inline, removable, so relaxing the search is one tap rather than a hunt back up the
+          page (2026-09-05). */}
+      {!loading && !failed && total === 0 && (
+        <div className="flex flex-col gap-2">
+          <Message kind="warning">
+            {removableFilters
+              ? "No matches. Try removing a filter:"
+              : "No matches for this search. Try another word, or widen your filters."}
+          </Message>
+          {removableFilters && <AppliedChips />}
+        </div>
       )}
       {/* Loading keeps the previous results mounted and fades them — no blur, no scale (browser
           feedback: the background blur read as the page breaking, a plain fade does not). */}

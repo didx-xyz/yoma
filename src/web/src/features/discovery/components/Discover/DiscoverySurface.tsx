@@ -12,6 +12,7 @@ import { DiscoveryResults } from "../Results/DiscoveryResults";
 import { SegmentedSearchBar } from "../SearchBar/SegmentedSearchBar";
 import { FloatingFilterButton } from "../shared/FloatingFilterButton";
 import { KeepAnswersPrompt } from "../shared/KeepAnswersPrompt";
+import { PreferencesMockDevTool } from "../shared/PreferencesMockDevTool";
 import { DiscoveryLanding } from "./DiscoveryLanding";
 import { MyOpportunitiesLink } from "./MyOpportunitiesLink";
 import { QuickSearchRow } from "./QuickSearchRow";
@@ -105,8 +106,10 @@ export const DiscoverySurface: React.FC = () => {
                         count !== null
                           ? `${formatNumber(count)} match your search`
                           : "Refine your search with the filters",
-                        "Tap a chip above the results to adjust this search",
-                        "Your preferences shape these results — switch them off any time",
+                        // The chips sit BELOW the hero, so "above the results" pointed the
+                        // wrong way (browser feedback, 2026-09-05).
+                        "Your preferences shape these results — adjust any chip below",
+                        "Switch your preferences off any time — this search only",
                       ]
                 }
               />
@@ -152,7 +155,9 @@ export const DiscoverySurface: React.FC = () => {
 
       <FloatingFilterButton onOpen={() => setFiltersOpen(true)} />
 
-      <main className="mx-auto flex w-full max-w-7xl flex-col gap-4 px-4 py-4">
+      {/* 32px is the page's vertical rhythm — hero → banner → chips → carousel → results — held
+          to 24px below md, where the fold is the scarcer resource. */}
+      <main className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-6 md:gap-8 md:py-8">
         <KeepAnswersPrompt />
         {landing ? (
           <DiscoveryLanding onEditPreferences={editPreferences} now={now} />
@@ -160,6 +165,9 @@ export const DiscoverySurface: React.FC = () => {
           <DiscoveryResults onEditPreferences={editPreferences} now={now} />
         )}
       </main>
+
+      {/* Developer affordance, not user content — a corner of its own on the preview builds. */}
+      <PreferencesMockDevTool />
 
       {/* Same filter state, two containers — the breakpoint picks the chrome, never the content. */}
       <div className="hidden md:contents">

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { IoCloseCircle, IoSearchOutline } from "react-icons/io5";
+import { IoCloseCircleOutline, IoSearchOutline } from "react-icons/io5";
 
 /**
  * The free-text (block 1) search input, shared by the filter panel and the Search-segment
@@ -52,7 +52,7 @@ export const FreeTextSearchInput: React.FC<{
           aria-label="Clear search"
           className="text-gray-dark flex h-8 w-8 shrink-0 items-center justify-center hover:text-black"
         >
-          <IoCloseCircle className="h-5 w-5" />
+          <IoCloseCircleOutline className="h-5 w-5" />
         </button>
       )}
       <button

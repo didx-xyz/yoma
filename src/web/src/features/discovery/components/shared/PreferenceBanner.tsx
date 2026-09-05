@@ -1,33 +1,44 @@
 import React, { useState } from "react";
 import { IoPencilOutline, IoPersonOutline } from "react-icons/io5";
 import {
-  USER_PREFERENCES_MOCK_ENABLED,
-  setUserPreferencesMockActive,
-  userPreferencesMockActive,
-} from "~/api/services/userPreferences";
-import {
   SAVABLE_SKIP_KEYS,
   applySkipsToPreferences,
 } from "../../lib/preferenceMapping";
 import { useDiscovery } from "../../state/DiscoveryContext";
-import { Message } from "./Message";
 
 /**
- * The preference strip above the results: what the feed is tuned to, the master switch, the edit
- * entry point — and the explicit write-back prompt, shown WHENEVER inherited preferences are
- * overridden (never on load, never automatic). "Save to profile" persists the overrides
- * one-tap through the façade: a skipped preference is cleared from the preset. Identity-derived
- * skips (country, age) have no preset field, so they stay per-search and raise no prompt.
- * "Not now" dismisses the CURRENT override set only — the next change to the skips brings the
- * prompt back (the dismissal is keyed to a signature of the skipped keys, not the session).
+ * The preference strip above the results — and the ONE home for preference state on this page.
+ * What the feed is tuned to, the master switch, the edit entry point, and (as a second line
+ * inside the same panel, not a third stacked panel) the write-back offer whenever inherited
+ * preferences are overridden. Never on load, never automatic.
+ *
+ * "Make this my default" persists the overrides one-tap through the façade: a skipped preference
+ * is cleared from the preset. It is deliberately NOT called "save to profile" — the line
+ * directly above promises this never touches the profile or the YoID, and a preset is neither.
+ * Saving leaves an inline undo, because a one-tap write with no way back is not one-tap.
+ * Identity-derived skips (country, age) have no preset field, so they stay per-search and raise
+ * no offer. "Not now" dismisses the CURRENT override set only — the next change to the skips
+ * brings the offer back (the dismissal is keyed to a signature of the skipped keys).
  */
 const DISMISSED_KEY = "yoma.discovery.writeBackDismissed";
+
+/** Inherited values named in the banner before it collapses to "+N". */
+const TUNED_TO_SHOWN = 2;
 
 export const PreferenceBanner: React.FC<{ onEdit: () => void }> = ({
   onEdit,
 }) => {
-  const { state, dispatch, chips, preferences, savePreferences } =
-    useDiscovery();
+  const {
+    state,
+    dispatch,
+    chips,
+    preferences,
+    savePreferences,
+    // Held on the context, not here: saving the last override can flip the surface from results
+    // to landing, which remounts this banner (see `PreferenceSnapshot`).
+    preferenceUndo: undoTo,
+    setPreferenceUndo: setUndoTo,
+  } = useDiscovery();
   const [saving, setSaving] = useState(false);
   const [dismissedSignature, setDismissedSignature] = useState<string | null>(
     () =>
@@ -72,17 +83,30 @@ export const PreferenceBanner: React.FC<{ onEdit: () => void }> = ({
     window.sessionStorage.setItem(DISMISSED_KEY, skipSignature);
     setDismissedSignature(skipSignature);
   };
-  const tunedTo = chips
+
+  // Every inherited value, not just the first: "tuned to Job" hid the four other things the
+  // feed was doing. Two by name, the rest as a count.
+  const inherited = chips
     .filter((c) => c.provenance === "inherited")
-    .map((c) => c.value)
-    .join(", ");
+    .map((c) => c.value);
+  const tunedTo = [
+    ...inherited.slice(0, TUNED_TO_SHOWN),
+    ...(inherited.length > TUNED_TO_SHOWN
+      ? [`+${inherited.length - TUNED_TO_SHOWN}`]
+      : []),
+  ].join(" · ");
 
   const saveOverrides = (): void => {
     setSaving(true);
+    const previous = {
+      preferences,
+      skipped: state.preferencesSkipped,
+    };
     void savePreferences(
       applySkipsToPreferences(preferences, state.preferencesSkipped),
     )
-      .then(() =>
+      .then(() => {
+        setUndoTo(previous);
         // The persisted skips no longer exist as preferences; only the identity-derived
         // (unsavable) ones stay switched off for this search.
         dispatch({
@@ -90,8 +114,19 @@ export const PreferenceBanner: React.FC<{ onEdit: () => void }> = ({
           keys: state.preferencesSkipped.filter(
             (key) => !SAVABLE_SKIP_KEYS.includes(key),
           ),
-        }),
-      )
+        });
+      })
+      .finally(() => setSaving(false));
+  };
+
+  const undoSave = (): void => {
+    if (!undoTo) return;
+    setSaving(true);
+    void savePreferences(undoTo.preferences)
+      .then(() => {
+        dispatch({ kind: "setSkippedPreferences", keys: undoTo.skipped });
+        setUndoTo(null);
+      })
       .finally(() => setSaving(false));
   };
 
@@ -143,11 +178,14 @@ export const PreferenceBanner: React.FC<{ onEdit: () => void }> = ({
           />
         </span>
       </div>
+      {/* Second LINE of this panel, not a panel of its own — preference state has one home. */}
       {savableSkips.length > 0 && skipSignature !== dismissedSignature && (
-        <div className="flex flex-wrap items-center gap-2 rounded-lg bg-white p-2 text-xs">
+        <div className="border-purple-tint flex flex-wrap items-center gap-x-2.5 gap-y-1 border-t pt-2 text-xs">
           <span className="min-w-40 grow basis-56">
-            You switched off {savableSkips.length} of your preferences. That
-            lasts for this search — or make it your new default.
+            {savableSkips.length === 1
+              ? "1 preference is off for this search."
+              : `${savableSkips.length} preferences are off for this search.`}{" "}
+            Keep {savableSkips.length === 1 ? "it" : "them"} off from now on?
           </span>
           <span className="flex items-center gap-2">
             <button
@@ -163,26 +201,23 @@ export const PreferenceBanner: React.FC<{ onEdit: () => void }> = ({
               onClick={saveOverrides}
               className="btn btn-xs bg-green h-7 rounded-full border-none text-[11px] text-white disabled:opacity-40"
             >
-              Save to profile
+              Make this my default
             </button>
           </span>
         </div>
       )}
-      {USER_PREFERENCES_MOCK_ENABLED && (
-        <Message kind="warning">
-          Preferences are {userPreferencesMockActive() ? "mocked" : "live"}{" "}
-          (preview — the presets API does not exist yet).{" "}
+      {undoTo && (
+        <p className="border-purple-tint flex items-center gap-2 border-t pt-2 text-xs">
+          <span className="font-semibold">Saved.</span>
           <button
             type="button"
-            className="underline"
-            onClick={() => {
-              setUserPreferencesMockActive(!userPreferencesMockActive());
-              window.location.reload();
-            }}
+            disabled={saving}
+            onClick={undoSave}
+            className="text-purple font-semibold underline disabled:opacity-40"
           >
-            Switch to {userPreferencesMockActive() ? "live" : "mocked"}
+            Undo
           </button>
-        </Message>
+        </p>
       )}
     </div>
   );

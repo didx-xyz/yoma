@@ -1,7 +1,13 @@
 import withBundleAnalyzer from "@next/bundle-analyzer";
 import withPWA from "next-pwa";
 
-const pwa = withPWA({
+/**
+ * `disable` is a real next-pwa option (5.x README) that its published type omits, so the object
+ * is built loosely and cast at the call — otherwise `tsc --noEmit` fails on a working option.
+ *
+ * @type {Record<string, unknown>}
+ */
+const pwaOptions = {
   dest: "public",
   register: true,
   skipWaiting: true,
@@ -15,7 +21,9 @@ const pwa = withPWA({
   publicExcludes: ["!**/*"], // like this
   buildExcludes: [() => true],
   cacheStartUrl: false,
-});
+};
+
+const pwa = withPWA(/** @type {Parameters<typeof withPWA>[0]} */ (pwaOptions));
 
 /** bundleAnalyzer config */
 const bundleAnalyzer = withBundleAnalyzer({

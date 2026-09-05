@@ -80,6 +80,15 @@ export interface FilterSectionDef {
 const pendingNote =
   "Coming soon — the opportunity fields this filters on arrive with the finalised field definitions (YOM-1264).";
 
+/**
+ * The type row is not a registry section (it binds `types`, which no `FilterSectionBinding`
+ * covers), but it speaks the same two lines as one: a noun in the panel header, the question in
+ * the popover title. Both live here so the two homes cannot drift.
+ */
+export const TYPE_ROW_QUESTION = "What type of opportunity?";
+export const TYPE_ROW_HINT =
+  "Pick one or more — each type adds its own filters.";
+
 export const FILTER_SECTIONS: FilterSectionDef[] = [
   {
     id: "categories",

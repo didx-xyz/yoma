@@ -1,10 +1,11 @@
 import React, { useRef, useState } from "react";
-import { IoChevronDown } from "react-icons/io5";
 import type { FilterSectionDef } from "../../registry/filterSections";
 import { FACET_FOR_BINDING } from "../../registry/filterSections";
 import { useDiscovery } from "../../state/DiscoveryContext";
+import { Badge } from "../shared/Badge";
 import { Message } from "../shared/Message";
 import { FilterControl } from "./FilterControl";
+import { SectionHeader } from "./SectionHeader";
 import { useSectionModel } from "./useSectionModel";
 
 /**
@@ -24,7 +25,6 @@ export const FilterSection: React.FC<{
   const [open, setOpen] = useState(() => model.selected.length > 0);
   const contentRef = useRef<HTMLDivElement>(null);
   const expanded = alwaysOpen || open;
-  const Icon = section.icon;
 
   const toggleOpen = (): void => {
     const opening = !open;
@@ -55,41 +55,30 @@ export const FilterSection: React.FC<{
   return (
     <section className="border-gray border-b py-1">
       {!alwaysOpen && (
-        <button
-          type="button"
-          onClick={toggleOpen}
-          aria-expanded={expanded}
-          className="flex min-h-11 w-full items-center gap-3 py-2 text-left"
-        >
-          <Icon className="text-gray-dark h-4 w-4 shrink-0" />
-          <span className="shrink-0 text-sm font-semibold whitespace-nowrap">
-            {section.label}
-          </span>
-          <span className="text-gray-dark hidden min-w-0 flex-1 truncate text-xs sm:block">
-            {model.summary}
-          </span>
-          <span className="ml-auto flex shrink-0 items-center gap-2">
-            {inheritedActive && (
-              <span
-                title="This search inherits a value here from your preferences"
-                className="bg-purple-tint text-purple rounded px-1.5 py-0.5 text-[10px] font-bold tracking-wide whitespace-nowrap"
-              >
-                FROM PREFERENCES
-              </span>
-            )}
-            {section.optIn && (
-              <span className="bg-yellow-tint text-yellow rounded px-1.5 py-0.5 text-[10px] font-bold tracking-wide whitespace-nowrap">
-                OPT-IN
-              </span>
-            )}
-            <IoChevronDown
-              className={`h-4 w-4 transition-transform motion-reduce:transition-none ${expanded ? "rotate-180" : ""}`}
-            />
-          </span>
-        </button>
+        <SectionHeader
+          icon={section.icon}
+          label={section.label}
+          value={model.summary}
+          expanded={expanded}
+          onToggle={toggleOpen}
+          badges={
+            <>
+              {inheritedActive && (
+                <Badge
+                  intent="provenance"
+                  title="This search inherits a value here from your preferences"
+                >
+                  FROM PREFERENCES
+                </Badge>
+              )}
+              {section.optIn && <Badge intent="consent">OPT-IN</Badge>}
+            </>
+          }
+        />
       )}
+      {/* 12px from the header row to the first control — the panel's one header rhythm. */}
       {expanded && (
-        <div ref={contentRef} className="flex flex-col gap-2 pb-3">
+        <div ref={contentRef} className="flex flex-col gap-2 pt-1 pb-3">
           <FilterControl
             section={section}
             model={model}

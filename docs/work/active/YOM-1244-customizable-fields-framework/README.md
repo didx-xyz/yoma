@@ -304,6 +304,20 @@ flag it in a handoff here before merging.
 4. `ApplyUserPresets` is stubbed on the filter; confirm YOM-1258 makes it the real preset→filter
    path so web can retire its client-side mapping.
 
+**Added 2026-09-05** (from the discovery refinement round — details in
+[`handoffs/2026-09-05-a.md`](./handoffs/2026-09-05-a.md)):
+
+5. **A custom-field definition should say which type owns it.** `GET
+   /opportunity/custom/field/definition?types={Type}` returns the generic definitions plus that
+   type's own, with nothing distinguishing them, so a youth selecting two types was shown the
+   generic set twice. Web now infers it by intersecting the keys returned for each selected type
+   and renders the intersection once — correct in practice, but inference: a definition that is
+   type-specific to two selected types is indistinguishable from a generic one. A flag or a
+   `types[]` on the definition would make it exact.
+6. **Category facet counts** come back as the grand total for every category on local data
+   (a fixture artefact — every seeded opportunity is in all ten). Worth confirming against DEV
+   data; if the counts are genuinely total-only, they have to come off the category tiles.
+
 **DEV environment skew (found 2026-09-03, affects anyone previewing this branch):**
 `/opportunity/search` on `v3api.dev.yoma.world` fails with `42703: column
 o.YomaRewardPoolCurrentFinancialYear does not exist` (also `o.YomaReward`). Verified cause: the

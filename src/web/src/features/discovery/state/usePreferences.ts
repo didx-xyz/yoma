@@ -15,13 +15,16 @@ import {
  *
  * The "seen personalization" marker is separate from the preferences themselves — skipping the
  * dialog still counts as seen, so it never auto-opens twice.
+ *
+ * It lives in `localStorage` for BOTH scopes (2026-09-05): on `sessionStorage` an anonymous
+ * visitor met the auto-opening wizard again in every new tab, which is the opposite of "once".
+ * Per device, like `yoma.discovery.viewMode` — and one marker across scopes, so signing in after
+ * dismissing it does not spring the wizard open a second time.
  */
 const SEEN_KEY = "yoma.discovery.personalizationSeen";
 
-const seenStorage = (scope: UserPreferenceScope): Storage | null => {
-  if (typeof window === "undefined") return null;
-  return scope === "user" ? window.localStorage : window.sessionStorage;
-};
+const seenStorage = (): Storage | null =>
+  typeof window === "undefined" ? null : window.localStorage;
 
 export function usePreferences(): {
   scope: UserPreferenceScope;
@@ -54,8 +57,7 @@ export function usePreferences(): {
     scope,
     preferences: data,
     save,
-    readPersonalizationSeen: () =>
-      seenStorage(scope)?.getItem(SEEN_KEY) === "1",
-    markPersonalizationSeen: () => seenStorage(scope)?.setItem(SEEN_KEY, "1"),
+    readPersonalizationSeen: () => seenStorage()?.getItem(SEEN_KEY) === "1",
+    markPersonalizationSeen: () => seenStorage()?.setItem(SEEN_KEY, "1"),
   };
 }

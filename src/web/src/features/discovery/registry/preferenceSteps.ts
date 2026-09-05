@@ -135,7 +135,7 @@ export const PREFERENCE_STEPS: PreferenceStepDef[] = [
   {
     id: "time-format",
     title: "How much time do you have?",
-    subheading: "A ceiling, not a target — and how you'd like to take part.",
+    subheading: "The most time you can give, and how you'd like to take part.",
     infoNote: null,
     blocks: [
       {
