@@ -1,3 +1,4 @@
+import { upToIntervalLabel } from "../../lib/format";
 import type { PreferenceKey } from "../../lib/types";
 import type { FilterSectionDef } from "../../registry/filterSections";
 import { useDiscovery } from "../../state/DiscoveryContext";
@@ -114,7 +115,7 @@ export function useSectionModel(section: FilterSectionDef): SectionModel {
     case "commitment": {
       const options = lookups.timeIntervals.map((i) => ({
         id: i.id,
-        label: `Up to a ${i.name.toLowerCase()}`,
+        label: upToIntervalLabel(i.name),
         count: null,
       }));
       const manualId = filters.commitment?.intervalId ?? null;

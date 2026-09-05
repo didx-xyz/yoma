@@ -12,14 +12,25 @@ const FLOOR = 5;
 export const LiveCountPanel: React.FC<{
   count: number | null;
   counting: boolean;
-}> = ({ count, counting }) => {
+  /** The count request failed — say so; the wizard still saves fine without it. */
+  failed?: boolean;
+}> = ({ count, counting, failed = false }) => {
   const floored = count !== null && count < FLOOR;
 
   let body: React.ReactNode;
-  if (count === null)
-    // Nothing to show yet (first load) — the one case a placeholder block is allowed.
+  if (failed && count === null)
     body = (
-      <span className="bg-purple-shade my-1 inline-block h-10 w-28 animate-pulse rounded motion-reduce:animate-none md:h-12" />
+      <p className="text-lg leading-snug font-bold md:text-xl">
+        Couldn&apos;t count matches right now — your answers still save.
+      </p>
+    );
+  else if (count === null)
+    // Nothing to show yet (first load, or a count that failed): a word, not a shimmer block.
+    // The surface has one loading treatment and a pulsing rectangle is not it.
+    body = (
+      <p className="text-purple-soft py-1 text-lg leading-snug font-bold md:text-xl">
+        Counting…
+      </p>
     );
   else if (floored && !counting)
     body = (

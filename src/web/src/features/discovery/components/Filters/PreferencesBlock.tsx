@@ -69,7 +69,8 @@ export const PreferencesBlock: React.FC<{ onEdit: () => void }> = ({
       </div>
       {!state.preferencesOff && inherited.length > 0 && (
         <>
-          <ScrollableContainer className="mt-2 flex gap-1.5 overflow-x-auto">
+          {/* 8px between chips, the same gap the results row uses — one chip rhythm. */}
+          <ScrollableContainer className="mt-2 flex gap-2 overflow-x-auto">
             {inherited.map((chip) => (
               <Chip
                 key={chip.id}

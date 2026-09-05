@@ -110,9 +110,10 @@ export function reduceDiscovery(
   const next = reduceAction(state, action);
 
   // Type-scoped custom-field clauses never outlive their type, WHATEVER removed it — the type
-  // row, the chip's ×, a quick-search toggle, a popover reset, or skipping the inherited Goal
-  // preference (whose fragment supplies a type). Clauses are not tagged by type, so the rule
-  // clears them all rather than guessing which belonged to the departed type.
+  // row, the chip's ×, a quick-search toggle, a popover reset, skipping the inherited Goal
+  // preference (whose fragment supplies a type), or switching the whole preference layer off.
+  // Clauses are not tagged by type, so the rule clears them all rather than guessing which
+  // belonged to the departed type.
   const removedType = state.filters.types.some(
     (t) => !next.filters.types.includes(t),
   );
@@ -121,7 +122,16 @@ export function reduceDiscovery(
       action.key === "goal" &&
       action.skipped) ||
     (action.kind === "skipPreference" && action.key === "goal");
-  if ((removedType || skippedGoal) && next.filters.customFields.length > 0)
+  // The master switch was the one type-shrinking path that left clauses behind (it cannot tell
+  // an inherited type's clauses from a manual type's). Treated as "types shrank" from
+  // 2026-09-05: over-clearing is recoverable, a clause filtering on a type no longer selected
+  // is not visible anywhere and cannot be removed.
+  const preferencesSwitchedOff =
+    action.kind === "setPreferencesOff" && action.off;
+  if (
+    (removedType || skippedGoal || preferencesSwitchedOff) &&
+    next.filters.customFields.length > 0
+  )
     return { ...next, filters: { ...next.filters, customFields: [] } };
 
   return next;

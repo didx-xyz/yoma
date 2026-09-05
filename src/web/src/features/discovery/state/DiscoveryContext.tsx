@@ -1,6 +1,12 @@
 import { useAtomValue } from "jotai";
 import { useRouter } from "next/router";
-import React, { createContext, useContext, useMemo, useRef } from "react";
+import React, {
+  createContext,
+  useContext,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import type { UserPreferences } from "~/api/models/userPreferences";
 import { userProfileAtom } from "~/lib/store";
 import type { ChipLabelResolver, DiscoveryChip } from "../lib/chipModel";
@@ -26,6 +32,12 @@ import { usePreferences } from "./usePreferences";
 import { useResultCount } from "./useResultCount";
 import { useViewMode } from "./useViewMode";
 
+/** What "Make this my default" overwrote, so the banner can offer to put it back. */
+export interface PreferenceSnapshot {
+  preferences: UserPreferences;
+  skipped: PreferenceKey[];
+}
+
 /** One context per surface — wiring only; every rule lives in the pure modules it composes. */
 export interface DiscoveryContextValue {
   state: DiscoveryState;
@@ -36,6 +48,14 @@ export interface DiscoveryContextValue {
   savePreferences: (preferences: UserPreferences) => Promise<UserPreferences>;
   /** The sign-in "keep your answers" offer — see `useAnonymousMigration`. */
   migration: ReturnType<typeof useAnonymousMigration>;
+  /**
+   * The preset and skip list as they were before the banner's last "Make this my default" —
+   * what its inline Undo restores. It lives HERE rather than in the banner because saving the
+   * last override can empty the query, which flips the surface from results to landing and
+   * remounts the banner; the offer of an undo must not depend on which of the two is mounted.
+   */
+  preferenceUndo: PreferenceSnapshot | null;
+  setPreferenceUndo: (snapshot: PreferenceSnapshot | null) => void;
   fragments: InheritedFragments;
   /** What the search actually runs with: manual state + surviving inherited fragments. */
   effectiveFilters: DiscoveryFilters;
@@ -60,6 +80,8 @@ export interface DiscoveryContextValue {
   scrollToResults: () => void;
   count: number | null;
   counting: boolean;
+  /** The live count could not be fetched — "Show results" drops the number rather than lying. */
+  countFailed: boolean;
   setView: (view: DiscoveryState["view"]) => void;
   readPersonalizationSeen: () => boolean;
   markPersonalizationSeen: () => void;
@@ -82,6 +104,8 @@ export const DiscoveryProvider: React.FC<{ children: React.ReactNode }> = ({
     markPersonalizationSeen,
   } = usePreferences();
   const migration = useAnonymousMigration(scope, preferences, savePreferences);
+  const [preferenceUndo, setPreferenceUndo] =
+    useState<PreferenceSnapshot | null>(null);
 
   const fragments = useMemo(
     () =>
@@ -161,7 +185,11 @@ export const DiscoveryProvider: React.FC<{ children: React.ReactNode }> = ({
     requestAnimationFrame(tryScroll);
   };
 
-  const { count, counting } = useResultCount(
+  const {
+    count,
+    counting,
+    failed: countFailed,
+  } = useResultCount(
     effectiveFilters,
     lookups.typeIdByName,
     ready && lookups.types.length > 0,
@@ -182,6 +210,8 @@ export const DiscoveryProvider: React.FC<{ children: React.ReactNode }> = ({
     preferences,
     savePreferences,
     migration,
+    preferenceUndo,
+    setPreferenceUndo,
     fragments,
     effectiveFilters,
     chips,
@@ -192,6 +222,7 @@ export const DiscoveryProvider: React.FC<{ children: React.ReactNode }> = ({
     scrollToResults,
     count,
     counting,
+    countFailed,
     setView,
     readPersonalizationSeen,
     markPersonalizationSeen,

@@ -4,6 +4,7 @@ import { IoClose, IoTimeOutline } from "react-icons/io5";
 import type { RecentSearch } from "../../lib/recentSearches";
 import {
   readRecentSearches,
+  relativeTime,
   removeRecentSearch,
 } from "../../lib/recentSearches";
 
@@ -22,6 +23,8 @@ export const RecentSearchesPanel: React.FC<{
 }> = ({ variant = "overlay" }) => {
   const router = useRouter();
   const [entries, setEntries] = useState<RecentSearch[]>(readRecentSearches);
+  // One clock for the panel: every "2h ago" in it is measured from the same instant.
+  const [now] = useState(() => new Date());
   if (entries.length === 0) return null;
 
   // `onMouseDown` preventDefault on the buttons keeps the input focused (and the panel open)
@@ -59,11 +62,16 @@ export const RecentSearchesPanel: React.FC<{
               <span className="min-w-0 truncate text-sm font-semibold">
                 {entry.label}
               </span>
-              {entry.resultCount !== null && (
-                <span className="text-gray-dark ml-auto shrink-0 text-xs whitespace-nowrap">
-                  {entry.resultCount} results
-                </span>
-              )}
+              <span className="text-gray-dark ml-auto shrink-0 text-xs whitespace-nowrap">
+                {[
+                  entry.resultCount !== null
+                    ? `${entry.resultCount} results`
+                    : null,
+                  relativeTime(entry.at, now),
+                ]
+                  .filter(Boolean)
+                  .join(" · ")}
+              </span>
             </button>
             <button
               type="button"

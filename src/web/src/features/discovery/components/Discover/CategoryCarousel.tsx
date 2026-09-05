@@ -44,24 +44,28 @@ export const CategoryCarousel: React.FC = () => {
 
   return (
     <section>
-      <div className="flex flex-col items-baseline justify-between pb-2 md:flex-row">
+      {/* No caption. It used to claim "Counts are live and respect your preferences" — the
+          counts come from the category lookup, which knows nothing about the current search or
+          the youth's preferences, so the line was describing something the page does not do. */}
+      <div className="pb-2">
         <h2 className="text-base font-bold tracking-normal md:text-lg">
           Browse by category
         </h2>
-        <span className="text-gray-dark text-xs">
-          Counts are live and respect your preferences
-        </span>
       </div>
       {/* items-start: the cards are aspect-square, so default cross-axis stretch converts any
           imposed row height into card WIDTH too — they inflate in both directions. Top-aligned,
           each card keeps its natural size (the old page's CustomSlider renders them the same
           way). containerClassName="" drops the wrapper's h-full for the same reason as the
           wizard footer: never hand this row a height it must fill. */}
+      {/* Below md the tiles drop to one line — icon and label, no count and no square aspect —
+          so the results heading clears the fold at 390×844 (the square tiles pushed it to
+          y≈618). Done with child variants rather than a prop on the shared card, so the legacy
+          discovery page's carousel is untouched. */}
       <ScrollableContainer
         showShadows
         shadowFromClassName="from-gray-light" // the page body's background
         containerClassName=""
-        className="flex items-start gap-3 overflow-x-auto pb-2"
+        className="flex items-start gap-3 overflow-x-auto pb-2 max-md:[&_button]:aspect-auto max-md:[&_h1]:line-clamp-1 max-md:[&_h6]:hidden"
       >
         {lookups.categories.map((category) => (
           <OpportunityCategoryHorizontalCard

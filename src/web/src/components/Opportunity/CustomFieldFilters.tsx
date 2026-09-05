@@ -344,6 +344,13 @@ const NATIVE_CONTROL_CLASSES = "h-10 min-h-10 py-1 text-sm !border-gray";
 const NATIVE_SELECT_CLASSES = `select select-bordered w-full ${NATIVE_CONTROL_CLASSES}`;
 const NATIVE_INPUT_CLASSES = `input input-bordered w-full ${NATIVE_CONTROL_CLASSES}`;
 
+// Opt-in 44px touch targets (see `largeTouchTargets`): same controls, sized for a thumb below
+// md. Additive — callers that do not ask for it render exactly as before.
+const TOUCH_CONTROL_CLASSES =
+  "h-11 min-h-11 md:h-10 md:min-h-10 py-1 text-sm !border-gray";
+const TOUCH_SELECT_CLASSES = `select select-bordered w-full ${TOUCH_CONTROL_CLASSES}`;
+const TOUCH_INPUT_CLASSES = `input input-bordered w-full ${TOUCH_CONTROL_CLASSES}`;
+
 const SELECT_STYLES = {
   menuPortal: (base: any) => ({ ...base, zIndex: 9999 }),
   placeholder: (base: any) => ({ ...base, color: "#A3A6AF" }),
@@ -360,6 +367,12 @@ export interface CustomFieldFiltersProps {
   showErrors?: boolean;
   /** react-select menu portal target (defaults to document.body to avoid clipping). */
   menuPortalTarget?: HTMLElement | null;
+  /**
+   * Render the operator select and value inputs at 44px below `md` (WCAG touch target size).
+   * Off by default so existing pointer-first callers (the admin and legacy filter panels) are
+   * unchanged; the youth discovery sheet opts in.
+   */
+  largeTouchTargets?: boolean;
   className?: string;
 }
 
@@ -369,8 +382,19 @@ export const CustomFieldFilters: React.FC<CustomFieldFiltersProps> = ({
   onChange,
   showErrors,
   menuPortalTarget,
+  largeTouchTargets = false,
   className = "",
 }) => {
+  const selectClasses = largeTouchTargets
+    ? TOUCH_SELECT_CLASSES
+    : NATIVE_SELECT_CLASSES;
+  const inputClasses = largeTouchTargets
+    ? TOUCH_INPUT_CLASSES
+    : NATIVE_INPUT_CLASSES;
+  const reactSelectControlClasses = largeTouchTargets
+    ? `${REACT_SELECT_CONTROL_CLASSES} min-h-11 md:min-h-10`
+    : REACT_SELECT_CONTROL_CLASSES;
+
   const ordered = useMemo(
     () => sortCustomFieldDefinitions(definitions ?? []),
     [definitions],
@@ -494,7 +518,7 @@ export const CustomFieldFilters: React.FC<CustomFieldFiltersProps> = ({
         <Async
           instanceId={`customfieldfilter_${key}`}
           classNames={{
-            control: () => REACT_SELECT_CONTROL_CLASSES,
+            control: () => reactSelectControlClasses,
           }}
           isMulti={isMulti}
           isClearable={true}
@@ -539,7 +563,7 @@ export const CustomFieldFilters: React.FC<CustomFieldFiltersProps> = ({
       <Select
         instanceId={`customfieldfilter_${key}`}
         classNames={{
-          control: () => REACT_SELECT_CONTROL_CLASSES,
+          control: () => reactSelectControlClasses,
         }}
         isMulti={isMulti}
         isClearable={true}
@@ -582,7 +606,7 @@ export const CustomFieldFilters: React.FC<CustomFieldFiltersProps> = ({
     if (dataType === CustomFieldDataType.Boolean)
       return (
         <select
-          className={NATIVE_SELECT_CLASSES}
+          className={selectClasses}
           value={filter?.value ?? ""}
           onChange={(e) =>
             setFilter(key, {
@@ -604,7 +628,7 @@ export const CustomFieldFilters: React.FC<CustomFieldFiltersProps> = ({
         <input
           type="text"
           placeholder="Comma separated values..."
-          className={NATIVE_INPUT_CLASSES}
+          className={inputClasses}
           value={(filter?.values ?? []).join(", ")}
           onChange={(e) => {
             const values = e.target.value
@@ -638,7 +662,7 @@ export const CustomFieldFilters: React.FC<CustomFieldFiltersProps> = ({
           ? "1"
           : "any"
         : undefined,
-      className: NATIVE_INPUT_CLASSES,
+      className: inputClasses,
     };
 
     if (operator === OP.Between)
@@ -719,7 +743,7 @@ export const CustomFieldFilters: React.FC<CustomFieldFiltersProps> = ({
 
             <div className="flex flex-col gap-1 sm:flex-row">
               <select
-                className={`${NATIVE_SELECT_CLASSES} sm:w-40`}
+                className={`${selectClasses} sm:w-40`}
                 aria-label={`${definition.title} filter operator`}
                 value={operator}
                 onChange={(e) =>

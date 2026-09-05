@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { IoCloseCircle, IoSearchOutline } from "react-icons/io5";
+import { IoCloseCircleOutline, IoSearchOutline } from "react-icons/io5";
 import type { FilterSectionDef } from "../../registry/filterSections";
 import { Message } from "../shared/Message";
 import type { SectionModel, SectionOption } from "./useSectionModel";
@@ -25,7 +25,8 @@ const OptionChip: React.FC<{
       type="button"
       onClick={onToggle}
       disabled={zero}
-      className={`rounded-full border px-3 py-1.5 text-xs ${variant}`}
+      // 44px on touch, the compact pill from md up.
+      className={`flex min-h-11 items-center rounded-full border px-3 text-xs md:min-h-9 ${variant}`}
     >
       {option.label}
       {option.count !== null && (
@@ -84,7 +85,7 @@ const Searchable: React.FC<{
     <div className="flex flex-col gap-3">
       <label
         className={`input input-bordered flex w-full items-center gap-2 ${
-          large ? "h-11 rounded-full" : "h-10"
+          large ? "h-11 rounded-full" : "h-11 md:h-10"
         }`}
       >
         <IoSearchOutline
@@ -105,7 +106,7 @@ const Searchable: React.FC<{
             aria-label="Clear search"
             className="text-gray-dark flex h-8 w-8 shrink-0 items-center justify-center hover:text-black"
           >
-            <IoCloseCircle className="h-4 w-4" />
+            <IoCloseCircleOutline className="h-4 w-4" />
           </button>
         )}
       </label>

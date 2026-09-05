@@ -1,9 +1,5 @@
 import React, { useRef, useState } from "react";
-import {
-  IoAddCircleOutline,
-  IoChevronDown,
-  IoFlashOutline,
-} from "react-icons/io5";
+import { IoAddCircleOutline, IoFlashOutline } from "react-icons/io5";
 import { FILTER_SECTIONS } from "../../registry/filterSections";
 import { useDiscovery } from "../../state/DiscoveryContext";
 import { QuickSearchRow } from "../Discover/QuickSearchRow";
@@ -11,6 +7,7 @@ import { FreeTextSearchInput } from "../shared/FreeTextSearchInput";
 import { FilterSection } from "./FilterSection";
 import { PreferencesBlock } from "./PreferencesBlock";
 import { RecentSearchesPanel } from "./RecentSearches";
+import { SectionHeader } from "./SectionHeader";
 import { TypeRow } from "./TypeRow";
 import { TypeSpecificFilters } from "./TypeSpecificFilters";
 
@@ -47,7 +44,9 @@ export const FilterPanelBlocks: React.FC<{ onEditPreferences: () => void }> = ({
   const more = FILTER_SECTIONS.filter((s) => s.group === "more");
 
   return (
-    <div className="flex flex-col gap-4" data-testid="filter-panel-blocks">
+    // 24px between blocks — the panel's one vertical rhythm (the section list inside block 6
+    // runs contiguous with dividers instead, by design).
+    <div className="flex flex-col gap-6" data-testid="filter-panel-blocks">
       <div className="relative">
         <FreeTextSearchInput
           initial={state.filters.q}
@@ -58,11 +57,9 @@ export const FilterPanelBlocks: React.FC<{ onEditPreferences: () => void }> = ({
       </div>
 
       <section>
-        <div className="flex items-center gap-3 pb-2">
-          <IoFlashOutline className="text-gray-dark h-4 w-4 shrink-0" />
-          <h3 className="text-gray-dark text-xs font-bold tracking-wide uppercase">
-            Quick searches
-          </h3>
+        <div className="flex items-center gap-3 pb-3">
+          <IoFlashOutline className="text-gray-dark h-5 w-5 shrink-0" />
+          <h3 className="text-[15px] font-semibold">Quick searches</h3>
         </div>
         <QuickSearchRow />
       </section>
@@ -77,21 +74,13 @@ export const FilterPanelBlocks: React.FC<{ onEditPreferences: () => void }> = ({
         {primary.map((section) => (
           <FilterSection key={section.id} section={section} />
         ))}
-        <button
-          type="button"
-          onClick={toggleMore}
-          aria-expanded={moreOpen}
-          className="flex min-h-11 w-full items-center gap-3 py-2 text-left text-sm font-semibold"
-        >
-          <IoAddCircleOutline className="text-gray-dark h-4 w-4 shrink-0" />
-          <span>More filters</span>
-          <span className="text-gray-dark text-xs font-normal">
-            {more.map((s) => s.label).join(" · ")}
-          </span>
-          <IoChevronDown
-            className={`ml-auto h-4 w-4 transition-transform motion-reduce:transition-none ${moreOpen ? "rotate-180" : ""}`}
-          />
-        </button>
+        <SectionHeader
+          icon={IoAddCircleOutline}
+          label="More filters"
+          value={more.map((s) => s.label).join(" · ")}
+          expanded={moreOpen}
+          onToggle={toggleMore}
+        />
         <div ref={moreRef}>
           {moreOpen &&
             more.map((section) => (

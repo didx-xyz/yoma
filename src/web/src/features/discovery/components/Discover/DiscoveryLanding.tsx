@@ -34,7 +34,7 @@ export const DiscoveryLanding: React.FC<{
     .join(", ");
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6 md:gap-8">
       <PreferenceBanner onEdit={onEditPreferences} />
       <AppliedChips />
       <CategoryCarousel />

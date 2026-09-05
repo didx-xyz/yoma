@@ -20,6 +20,9 @@ export function useDiscoveryResults(
 ): {
   results: OpportunitySearchResultsInfo | undefined;
   loading: boolean;
+  /** The search itself failed — the surface says so and offers `retry`, never an empty grid. */
+  failed: boolean;
+  retry: () => void;
 } {
   const request = buildSearchFilter(
     filters,
@@ -28,7 +31,7 @@ export function useDiscoveryResults(
     typeIdByName,
   );
 
-  const { data, isFetching } = useQuery({
+  const { data, isFetching, isError, refetch } = useQuery({
     queryKey: ["discovery", "results", JSON.stringify(request)],
     queryFn: () => searchOpportunities(request),
     enabled,
@@ -36,5 +39,10 @@ export function useDiscoveryResults(
     staleTime: 60 * 1000,
   });
 
-  return { results: data, loading: isFetching };
+  return {
+    results: data,
+    loading: isFetching,
+    failed: isError,
+    retry: () => void refetch(),
+  };
 }

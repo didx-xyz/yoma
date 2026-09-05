@@ -199,6 +199,27 @@ Anonymous visitors get it too — answers held in session, with an offer to keep
   ["dev.yoma.world"]` in the façade). Stage/production remain excluded. Add the host gate to the
   mock-removal list (2026-08-27-c) when YOM-1257/1258 land.
 
+- 2026-09-05 (design-refinement round, committed separately from rounds 2–7):
+  - **`yoma.discovery.personalizationSeen` moved to `localStorage` for both scopes.** On
+    `sessionStorage` an anonymous visitor met the auto-opening wizard again in every new tab,
+    which is the opposite of "once". Per device, like `yoma.discovery.viewMode` — and ONE marker
+    across scopes, so signing in after dismissing the wizard does not spring it open a second
+    time (the sign-in path a youth WITH answers takes is the keep-answers offer, which is
+    unaffected).
+  - **The mocked/live preferences switch left the preference banner** for a fixed dev-tools
+    corner (`PreferencesMockDevTool`, collapsed to a small pill). A youth on the DEV preview was
+    being told about an API that does not exist yet, inside their own content, in the same
+    warning style the product uses for real warnings. The gate is unchanged
+    (`USER_PREFERENCES_MOCK_ENABLED` — local or `DEV_PREVIEW_HOSTS`), so stage and production
+    still mount nothing; add the component to the mock-removal list.
+  - **Wizard copy**: step 4's "A ceiling, not a target — and how you'd like to take part." became
+    "The most time you can give, and how you'd like to take part." (plain, second person, no
+    metaphor), and its pills read "Up to an hour" — the article now follows the sound, in
+    `upToIntervalLabel`, shared with the How-long filter section.
+  - **The wizard's live-count panel states a failed count** ("Couldn't count matches right
+    now — your answers still save") instead of shimmering forever, and its first-load placeholder
+    block became the word "Counting…": one loading treatment across the surface.
+
 ## Links
 
 - Epic: [YOM-1244](../README.md)

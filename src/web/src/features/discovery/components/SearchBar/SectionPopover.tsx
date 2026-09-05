@@ -1,6 +1,9 @@
 import React from "react";
 import type { FilterSectionBinding } from "../../registry/filterSections";
-import { FILTER_SECTIONS } from "../../registry/filterSections";
+import {
+  FILTER_SECTIONS,
+  TYPE_ROW_QUESTION,
+} from "../../registry/filterSections";
 import type { DiscoveryFilters } from "../../lib/types";
 import { useDiscovery } from "../../state/DiscoveryContext";
 import { FilterSection } from "../Filters/FilterSection";
@@ -56,7 +59,7 @@ export const SectionPopover: React.FC<{
     title = "What are you looking for?";
     body = <SearchBody />;
   } else if (sectionId === "type") {
-    title = "What type of opportunity?";
+    title = TYPE_ROW_QUESTION;
     body = <TypeRow hideHeader />;
   } else {
     title = section?.question ?? section?.label ?? null;

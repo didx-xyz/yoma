@@ -6,12 +6,17 @@ import { isQuickSearchApplied } from "../../lib/discoveryReducer";
 import type { QuickSearchContext } from "../../registry/quickSearches";
 import { QUICK_SEARCHES } from "../../registry/quickSearches";
 import { useDiscovery } from "../../state/DiscoveryContext";
+import { Badge } from "../shared/Badge";
 
 /**
  * The quick-search badge row — every home (landing, results, desktop dialog, mobile sheet)
  * renders this one component over the one registry. A badge is a filter set: tapping applies the
  * set it owns, tapping again clears only what it added. Unresolvable badges grey out with their
  * note as a tooltip — visible and inert, never silently missing.
+ *
+ * Usable badges sort first. Availability is resolved at runtime (a profile country, a loaded
+ * lookup), so it cannot be a registry order; with five of seven currently unavailable, the
+ * registry order buried the two that work behind the ones that do not.
  */
 const WRAP_VISIBLE_BEFORE_SHOW_ALL = 5;
 
@@ -38,13 +43,19 @@ export const QuickSearchRow: React.FC<{ wrap?: boolean }> = ({
     };
   }, [lookups, profile?.countryId]);
 
+  // Resolve first, then order: available badges lead, the rest keep their registry order.
+  const resolved = QUICK_SEARCHES.map((badge) => ({
+    badge,
+    criteria: badge.resolve(ctx),
+  }));
+  const ordered = [
+    ...resolved.filter((r) => r.criteria !== null),
+    ...resolved.filter((r) => r.criteria === null),
+  ];
   const visible =
-    wrap && !showAll
-      ? QUICK_SEARCHES.slice(0, WRAP_VISIBLE_BEFORE_SHOW_ALL)
-      : QUICK_SEARCHES;
+    wrap && !showAll ? ordered.slice(0, WRAP_VISIBLE_BEFORE_SHOW_ALL) : ordered;
 
-  const badges = visible.map((badge) => {
-    const criteria = badge.resolve(ctx);
+  const badges = visible.map(({ badge, criteria }) => {
     const label =
       typeof badge.label === "function" ? badge.label(ctx) : badge.label;
     const applied =
@@ -61,15 +72,14 @@ export const QuickSearchRow: React.FC<{ wrap?: boolean }> = ({
         onClick={() =>
           criteria && dispatch({ kind: "toggleQuickSearch", criteria })
         }
-        className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] whitespace-nowrap md:px-3 md:py-1.5 md:text-xs ${badgeClassFor(applied, criteria === null)}`}
+        // Panel homes are thumb-sized (44px); the hero's scrolling row stays compact.
+        className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 text-[11px] whitespace-nowrap md:px-3 md:text-xs ${
+          wrap ? "min-h-11 md:min-h-9" : "min-h-7 md:min-h-9"
+        } ${badgeClassFor(applied, criteria === null)}`}
       >
-        <Icon className="h-3.5 w-3.5 shrink-0" />
+        <Icon className="h-4 w-4 shrink-0" />
         {label}
-        {criteria === null && (
-          <span className="bg-yellow-light text-yellow rounded px-1 py-0.5 text-[9px] font-bold tracking-wide">
-            SOON
-          </span>
-        )}
+        {criteria === null && <Badge intent="availability">SOON</Badge>}
       </button>
     );
   });

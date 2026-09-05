@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { getEducations, getGenders, getSkills } from "~/api/services/lookups";
+import { upToIntervalLabel } from "../../lib/format";
 import type { PreferenceOptionsSource } from "../../registry/preferenceSteps";
 import { useDiscovery } from "../../state/DiscoveryContext";
 
@@ -23,7 +24,7 @@ export function usePreferenceOptions(
     case "commitmentIntervals":
       return lookups.timeIntervals.map((i) => ({
         id: i.id,
-        label: `Up to a ${i.name.toLowerCase()}`,
+        label: upToIntervalLabel(i.name),
       }));
     case "engagementTypes":
       return lookups.engagementTypes.map((e) => ({ id: e.id, label: e.name }));

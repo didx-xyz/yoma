@@ -65,7 +65,11 @@ export const PersonalizeDialog: React.FC<{
     false,
     [],
   );
-  const { count, counting } = useResultCount(
+  const {
+    count,
+    counting,
+    failed: countFailed,
+  } = useResultCount(
     previewFilters,
     lookups.typeIdByName,
     lookups.types.length > 0,
@@ -101,7 +105,11 @@ export const PersonalizeDialog: React.FC<{
           resize as the youth moves between steps of different lengths. The rem cap keeps it
           from stretching into a tower on tall monitors. */}
       <div className="flex h-full w-full flex-col overflow-hidden bg-white md:h-[min(85vh,46rem)] md:max-w-4xl md:flex-row md:rounded-2xl">
-        <LiveCountPanel count={count} counting={counting} />
+        <LiveCountPanel
+          count={count}
+          counting={counting}
+          failed={countFailed}
+        />
         <div className="flex min-h-0 grow flex-col p-4 md:p-8">
           <div className="flex items-center gap-1">
             {PREFERENCE_STEPS.map((s, i) => (
