@@ -77,6 +77,14 @@ export const EMPTY_DISCOVERY_FILTERS: DiscoveryFilters = {
   customFields: [],
 };
 
+/**
+ * Whether this search carries any filter of its own — exactly what "Clear filters" would remove,
+ * which is why the button hides when this is false. The inherited preference layer is NOT part
+ * of it: `clearFilters` never touches it, so it must never be the reason the button appears.
+ */
+export const hasActiveFilters = (filters: DiscoveryFilters): boolean =>
+  JSON.stringify(filters) !== JSON.stringify(EMPTY_DISCOVERY_FILTERS);
+
 export const DEFAULT_DISCOVERY_STATE: DiscoveryState = {
   filters: EMPTY_DISCOVERY_FILTERS,
   preferencesOff: false,

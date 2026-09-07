@@ -439,6 +439,13 @@ commitment set; **accessibility excludes** those that have not described their a
     and the per-chip skip remain the two ways the layer comes off, and both say what they do.
     The reducer action is `clearFilters` (no payload) — `preferencesOff` and `preferencesSkipped`
     are untouched by it.
+  - **The clear action only exists while there is something to clear.** Both homes (the chips row
+    and the sticky footer) hide it unless the session carries a filter of its own —
+    `hasActiveFilters(state.filters)`, exposed as `hasFilters` on the context. The test is the
+    manual filters, deliberately NOT the chips: a row of purely inherited chips has nothing for
+    this button to remove, so offering it there would say the opposite of what the button now
+    does. The footer switched from `justify-between` to `justify-end` + `mr-auto` so the Show
+    button stays put when the left side empties.
   - **The hero's quick-search row scrolls instead of overflowing the page.** Its wrapper was
     `hidden justify-center md:flex`, which made the scroller a flex ITEM sized to its content
     (1322px of badges): `overflow-x-auto` never engaged, so between `md` and ~1350px the row ran

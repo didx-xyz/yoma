@@ -22,6 +22,7 @@ import type {
   DiscoveryState,
   PreferenceKey,
 } from "../lib/types";
+import { hasActiveFilters } from "../lib/types";
 import {
   useDiscoveryLookups,
   type DiscoveryLookups,
@@ -66,6 +67,8 @@ export interface DiscoveryContextValue {
    * and all (2026-09-05 — see the `clearFilters` action).
    */
   clearFilters: () => void;
+  /** Whether anything is there to clear — the Clear filters button hides when nothing is. */
+  hasFilters: boolean;
   /**
    * Switch one preference off for this search — the ONE deselect path for inherited values
    * (chip ×, section control, type row, category tile). Also strips the fragment's values from
@@ -216,6 +219,7 @@ export const DiscoveryProvider: React.FC<{ children: React.ReactNode }> = ({
     chips,
     resolveLabel,
     clearFilters,
+    hasFilters: hasActiveFilters(state.filters),
     skipPreference,
     resultsAnchorRef,
     scrollToResults,
