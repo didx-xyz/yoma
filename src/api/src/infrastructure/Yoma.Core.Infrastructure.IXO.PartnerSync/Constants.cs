@@ -4,6 +4,8 @@ namespace Yoma.Core.Infrastructure.IXO.PartnerSync
   {
     internal const int PageSizeMaximum = 200;
 
+    internal const string OpportunityTypeImpactAction = "Impact Action";
+
     internal const string HeaderAuthorization = "Authorization";
     internal const string HeaderAuthorizationValuePrefix = "Bearer";
 

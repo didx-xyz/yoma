@@ -475,7 +475,7 @@ jobs:
       - name: SOPS Binary Installer
         if: steps.should-run.outputs.run == 'true'
         uses: mdgreenwald/mozilla-sops-action@55177c1ff20a2b396280e4c5f53c32b69f0c1e40 # v2.1.1
-      - uses: aws-actions/configure-aws-credentials@e6de054238d6b7531b4efff3b6587d9aade6a06c # v6.2.3
+      - uses: aws-actions/configure-aws-credentials@cbe3b392738ccf3f987d68400dafcf4b0624a56c # v6.2.4
         if: steps.should-run.outputs.run == 'true'
         with:
           aws-region: ${{ secrets.AWS_REGION }}

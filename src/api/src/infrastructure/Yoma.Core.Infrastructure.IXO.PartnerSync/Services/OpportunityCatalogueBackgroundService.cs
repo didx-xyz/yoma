@@ -347,8 +347,11 @@ namespace Yoma.Core.Infrastructure.IXO.PartnerSync.Services
           throw new InvalidOperationException($"IXO opportunity '{item.ExternalId}' does not contain the required removed flag");
 
         item.Type = (item.Type ?? string.Empty).Trim();
-        if (!string.Equals(item.Type, "Learning", StringComparison.OrdinalIgnoreCase) &&
-            !string.Equals(item.Type, "Job", StringComparison.OrdinalIgnoreCase))
+        // TODO: Replace the temporary IXO wire-value constant with the Yoma opportunity type enum
+        // once Task is renamed to Impact Action by the custom-fields initiative.
+        if (!string.Equals(item.Type, nameof(Domain.Opportunity.Type.Learning), StringComparison.OrdinalIgnoreCase) &&
+            !string.Equals(item.Type, nameof(Domain.Opportunity.Type.Job), StringComparison.OrdinalIgnoreCase) &&
+            !string.Equals(item.Type, Constants.OpportunityTypeImpactAction, StringComparison.OrdinalIgnoreCase))
           throw new InvalidOperationException($"IXO opportunity '{item.ExternalId}' type '{item.Type}' is not supported");
 
         item.Title = (item.Title ?? string.Empty).Trim();
