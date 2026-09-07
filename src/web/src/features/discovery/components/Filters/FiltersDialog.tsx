@@ -14,8 +14,15 @@ export const FiltersDialog: React.FC<{
   onClose: () => void;
   onEditPreferences: () => void;
 }> = ({ open, onClose, onEditPreferences }) => {
-  const { count, counting, countFailed, chips, clearFilters, scrollToResults } =
-    useDiscovery();
+  const {
+    count,
+    counting,
+    countFailed,
+    chips,
+    clearFilters,
+    hasFilters,
+    scrollToResults,
+  } = useDiscovery();
   useDialogDismiss(open, onClose);
   if (!open) return null;
 
@@ -53,6 +60,7 @@ export const FiltersDialog: React.FC<{
           count={count}
           counting={counting}
           countFailed={countFailed}
+          hasFilters={hasFilters}
           onClearFilters={clearFilters}
           onShowResults={() => {
             onClose();

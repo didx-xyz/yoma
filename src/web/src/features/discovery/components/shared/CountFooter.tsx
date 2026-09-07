@@ -12,24 +12,33 @@ export const CountFooter: React.FC<{
   counting: boolean;
   /** The count request failed — say so, rather than letting the button look stuck. */
   countFailed?: boolean;
+  /** Whether this search carries filters of its own; the clear action hides when it does not. */
+  hasFilters: boolean;
   onClearFilters: () => void;
   onShowResults: () => void;
 }> = ({
   count,
   counting,
   countFailed = false,
+  hasFilters,
   onClearFilters,
   onShowResults,
 }) => (
-  <div className="border-gray sticky bottom-0 flex items-center justify-between gap-4 border-t bg-white p-3">
-    <div className="flex min-w-0 flex-col">
-      <button
-        type="button"
-        onClick={onClearFilters}
-        className="text-purple min-h-11 self-start text-sm font-semibold underline"
-      >
-        Clear filters
-      </button>
+  // justify-end + mr-auto, not justify-between: the left block disappears when there is nothing
+  // to clear, and the Show button must not slide across to fill its place.
+  <div className="border-gray sticky bottom-0 flex items-center justify-end gap-4 border-t bg-white p-3">
+    <div className="mr-auto flex min-w-0 flex-col">
+      {/* Only when this search actually carries filters — a button that would do nothing is not
+          an affordance, and here it would also read as "and my preferences go too". */}
+      {hasFilters && (
+        <button
+          type="button"
+          onClick={onClearFilters}
+          className="text-purple min-h-11 self-start text-sm font-semibold underline"
+        >
+          Clear filters
+        </button>
+      )}
       {countFailed && (
         <span className="text-gray-dark text-xs">
           Count unavailable right now.

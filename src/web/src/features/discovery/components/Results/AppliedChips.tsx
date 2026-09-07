@@ -22,6 +22,7 @@ export const AppliedChips: React.FC<{ pulseChipId?: string | null }> = ({
     chips,
     effectiveFilters,
     clearFilters,
+    hasFilters,
     skipPreference,
   } = useDiscovery();
   const types = effectiveFilters.types;
@@ -100,13 +101,18 @@ export const AppliedChips: React.FC<{ pulseChipId?: string | null }> = ({
           onUndo={() => undefined}
         />
       ))}
-      <button
-        type="button"
-        onClick={clearFilters}
-        className="text-purple shrink-0 text-xs font-semibold whitespace-nowrap underline"
-      >
-        Clear filters
-      </button>
+      {/* Only when this search carries filters of its own. A row of purely inherited chips has
+          nothing for this button to clear — offering it there would imply it takes the
+          preferences off too, which is exactly what it must not do. */}
+      {hasFilters && (
+        <button
+          type="button"
+          onClick={clearFilters}
+          className="text-purple shrink-0 text-xs font-semibold whitespace-nowrap underline"
+        >
+          Clear filters
+        </button>
+      )}
     </ScrollableContainer>
   );
 };
