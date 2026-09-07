@@ -289,6 +289,8 @@ rather than papered over. `Start a business` has no agreed mapping and ships vis
 
 ## Cross-Area Notes
 
+**CF release gate — participant counts (2026-09-07):** ship the existing CSV transaction/EF-state fixes together with `20260907114930_ApplicationDb_Opportunity_ParticipantCount_Reconcile`. Pause completion/import writers while migrating (transactional table locks use `NOWAIT`), then audit participant counts and recorded ZLTO totals. The migration changes participant counts only. Adrian repaired production manually and reported a clean audit; monthly/manual post-import reconciliation remains necessary until the code fix is deployed. Disable the monthly reminder after successful CF production validation. Details: [API handoff](./YOM-1254-api-custom-fields-framework-for-opportunity-and-myopportunity/handoffs/2026-09-07-a.md). No Web contract changes.
+
 Web consumes the API contract above verbatim. Anything that changes definition discovery, the
 value shape, replacement semantics or the filter clause shape is a **breaking change for web** —
 flag it in a handoff here before merging.
