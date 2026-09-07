@@ -20,17 +20,31 @@ import {
   getOpportunityTypes,
   getZltoRewardRanges,
 } from "~/api/services/opportunities";
+import type { FacetStatus } from "../lib/apiStatus";
+import { facetStatus } from "../lib/apiStatus";
 
 /**
  * The lookups the discovery surface renders options and labels from. All static-ish reference
  * data, cached for the session. Providers (organisations) and skills are searched on demand by
  * their `lookupSearch` controls rather than loaded up front.
  *
- * A failed lookup is REPORTED, never papered over: an empty option list that looks like "no
- * countries exist" is indistinguishable from a broken page, so `failed` (any lookup) and
- * `typesFailed` (the one the type row and the whole type-specific block depend on) drive an
- * explicit error state with a retry.
+ * A lookup that does not load is REPORTED, never papered over: an empty option list that looks
+ * like "no countries exist" is indistinguishable from a broken page. It is reported IN THE
+ * SECTION IT FEEDS rather than as a banner over the results — one dead facet behind the "More
+ * filters" disclosure should not put a red bar across a working page — and it distinguishes
+ * `unavailable` (404: this API build does not serve the facet) from `failed` (a real fault, with
+ * a Retry). See `lib/apiStatus.ts` for why those two must not read the same.
  */
+export type LookupKey =
+  | "types"
+  | "categories"
+  | "countries"
+  | "languages"
+  | "engagementTypes"
+  | "timeIntervals"
+  | "organizations"
+  | "zltoRanges";
+
 export interface DiscoveryLookups {
   types: OpportunityType[];
   categories: OpportunityCategory[];
@@ -42,11 +56,11 @@ export interface DiscoveryLookups {
   zltoRanges: OpportunitySearchCriteriaZltoRewardRange[];
   /** Opportunity Type enum name → GUID, for the search request. */
   typeIdByName: Record<string, string>;
-  /** At least one lookup could not be loaded — surfaces as an error, never as empty options. */
-  failed: boolean;
+  /** Per lookup: `ok`, `unavailable` (404) or `failed`. Consumed by the section it feeds. */
+  status: Record<LookupKey, FacetStatus>;
   /** The Opportunity Types lookup specifically: the type row and block 5 cannot render without it. */
   typesFailed: boolean;
-  /** Refetch every failed lookup (the Retry action). */
+  /** Refetch every lookup that did not load (the Retry action). */
   retry: () => void;
 }
 
@@ -117,7 +131,25 @@ export function useDiscoveryLookups(): DiscoveryLookups {
     organizations: organizationsQuery.data ?? [],
     zltoRanges: zltoRangesQuery.data ?? [],
     typeIdByName: Object.fromEntries((types ?? []).map((t) => [t.name, t.id])),
-    failed: queries.some((query) => query.isError),
+    status: {
+      types: facetStatus(typesQuery.isError, typesQuery.error),
+      categories: facetStatus(categoriesQuery.isError, categoriesQuery.error),
+      countries: facetStatus(countriesQuery.isError, countriesQuery.error),
+      languages: facetStatus(languagesQuery.isError, languagesQuery.error),
+      engagementTypes: facetStatus(
+        engagementTypesQuery.isError,
+        engagementTypesQuery.error,
+      ),
+      timeIntervals: facetStatus(
+        timeIntervalsQuery.isError,
+        timeIntervalsQuery.error,
+      ),
+      organizations: facetStatus(
+        organizationsQuery.isError,
+        organizationsQuery.error,
+      ),
+      zltoRanges: facetStatus(zltoRangesQuery.isError, zltoRangesQuery.error),
+    },
     typesFailed: typesQuery.isError,
     retry: () => {
       for (const query of queries) if (query.isError) void query.refetch();

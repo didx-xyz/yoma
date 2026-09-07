@@ -455,6 +455,28 @@ commitment set; **accessibility excludes** those that have not described their a
     do not. Worth remembering the shape of this bug: a `ScrollableContainer` inside a flex parent
     needs a width constraint or it silently stops being a scroller.
 
+- 2026-09-05 (DEV-preview pass, before parking the work for team feedback):
+  - **A facet that 404s is "not available from this API yet"; anything else is a failure.**
+    `lib/apiStatus.ts` splits the two, and every lookup carries its own status
+    (`lookups.status[key]`). The brief's §1 rightly demanded that nothing fail silently, but the
+    first cut treated an endpoint the environment does not serve as an outage: on DEV, whose API
+    image has no custom-field endpoints at all, that painted an error over a page that is
+    working as well as it can. A 404 now reads as a plain note — the same visible-but-inert
+    vocabulary the surface already uses for facets the API cannot express — and only real faults
+    get red and a Retry.
+  - **Lookup failures are reported in the section they feed, not over the results.** The
+    page-level "Some filter options couldn't be loaded" banner is gone: the Provider lookup
+    (behind "More filters", 500 on DEV) was putting a red bar across an otherwise working page.
+    `<FilterControl>` renders the note or the error inside its own section, with the null-rule
+    copy suppressed while the options are missing — it describes what the filter does, and it
+    does nothing.
+  - **`next.config.mjs`'s dev-only PWA `disable` was reverted** (with the type cast it required).
+    It was a local-comfort change — service workers in dev — carried on a feature branch that is
+    about discovery; it goes back to the team through its own change if it is still wanted.
+    Consequence worth knowing: in local dev the service worker registers again, so requests it
+    mediates bypass devtools/puppeteer request interception (that is what made the first pass at
+    simulating the DEV 404s look like the interception was broken).
+
 ## Links
 
 - Epic: [YOM-1244](../README.md)

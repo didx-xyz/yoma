@@ -120,8 +120,30 @@ export const FilterControl: React.FC<{
   model: SectionModel;
   /** True in the standalone popover home — search inputs render large there. */
   largeSearch?: boolean;
-}> = ({ section, model, largeSearch = false }) => {
+  /** Retry the lookup behind this section (only used by the `failed` state). */
+  onRetry?: () => void;
+}> = ({ section, model, largeSearch = false, onRetry }) => {
   if (section.binding === null) return <Message>{section.pendingNote}</Message>;
+
+  // The lookup's state is reported HERE, in the section it feeds — never as a banner over the
+  // results: one dead facet behind "More filters" must not put a red bar across a working page.
+  // `unavailable` is a 404 — this API build does not serve the facet, a fact about the
+  // environment rather than a fault. `failed` is a fault, and offers the retry.
+  if (model.status === "unavailable")
+    return <Message>Not available from this API yet.</Message>;
+  if (model.status === "failed")
+    return (
+      <Message kind="error">
+        Couldn&apos;t load these options.{" "}
+        <button
+          type="button"
+          onClick={onRetry}
+          className="font-semibold underline"
+        >
+          Retry
+        </button>
+      </Message>
+    );
 
   switch (section.control) {
     case "chips":

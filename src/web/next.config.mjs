@@ -1,29 +1,17 @@
 import withBundleAnalyzer from "@next/bundle-analyzer";
 import withPWA from "next-pwa";
 
-/**
- * `disable` is a real next-pwa option (5.x README) that its published type omits, so the object
- * is built loosely and cast at the call — otherwise `tsc --noEmit` fails on a working option.
- *
- * @type {Record<string, unknown>}
- */
-const pwaOptions = {
+const pwa = withPWA({
   dest: "public",
   register: true,
   skipWaiting: true,
-  // Dev only: don't register the service worker. Environments that block SWs (Firefox private
-  // windows, automation profiles) reject the registration as an unhandled promise and spam the
-  // dev console; a dev SW also risks serving stale bundles. Production is unaffected.
-  disable: process.env.NODE_ENV === "development",
   // disable prefetching of all assets
   // this prevents downloading all the precached resources when the site is visited for the first time
   runtimeCaching: [],
   publicExcludes: ["!**/*"], // like this
   buildExcludes: [() => true],
   cacheStartUrl: false,
-};
-
-const pwa = withPWA(/** @type {Parameters<typeof withPWA>[0]} */ (pwaOptions));
+});
 
 /** bundleAnalyzer config */
 const bundleAnalyzer = withBundleAnalyzer({

@@ -1,7 +1,12 @@
+import type { FacetStatus } from "../../lib/apiStatus";
 import { upToIntervalLabel } from "../../lib/format";
 import type { PreferenceKey } from "../../lib/types";
-import type { FilterSectionDef } from "../../registry/filterSections";
+import type {
+  FilterSectionBinding,
+  FilterSectionDef,
+} from "../../registry/filterSections";
 import { useDiscovery } from "../../state/DiscoveryContext";
+import type { LookupKey } from "../../state/useDiscoveryLookups";
 
 /**
  * Adapts one registry section to a uniform control model — options, selection, toggle — from the
@@ -25,7 +30,20 @@ export interface SectionModel {
   toggle: (id: string) => void;
   /** Header summary of the current selection, e.g. "2 selected" or "Any". */
   summary: string;
+  /** Whether the lookup behind this section loaded — reported inside the section it feeds. */
+  status: FacetStatus;
 }
+
+/** Which lookup each binding's options come from, for `status`. */
+const LOOKUP_FOR_BINDING: Record<FilterSectionBinding, LookupKey> = {
+  categories: "categories",
+  countries: "countries",
+  engagementTypes: "engagementTypes",
+  commitment: "timeIntervals",
+  zlto: "zltoRanges",
+  languages: "languages",
+  providers: "organizations",
+};
 
 const HAS_REWARD_ID = "has-reward";
 
@@ -39,6 +57,10 @@ export function useSectionModel(section: FilterSectionDef): SectionModel {
     skipPreference,
   } = useDiscovery();
   const { filters } = state;
+  const status: FacetStatus =
+    section.binding === null
+      ? "ok" // no lookup behind it — the pending note already says what it is
+      : lookups.status[LOOKUP_FOR_BINDING[section.binding]];
 
   type ListFacet =
     | "categories"
@@ -86,6 +108,7 @@ export function useSectionModel(section: FilterSectionDef): SectionModel {
           });
       },
       summary: selected.length === 0 ? "Any" : `${selected.length} selected`,
+      status,
     };
   };
 
@@ -139,6 +162,7 @@ export function useSectionModel(section: FilterSectionDef): SectionModel {
         summary: selectedId
           ? (options.find((o) => o.id === selectedId)?.label ?? "Any")
           : "Any",
+        status,
       };
     }
     case "zlto": {
@@ -166,6 +190,7 @@ export function useSectionModel(section: FilterSectionDef): SectionModel {
                   },
           }),
         summary: selected.length === 0 ? "Any" : `${selected.length} selected`,
+        status,
       };
     }
     case null:
@@ -174,6 +199,7 @@ export function useSectionModel(section: FilterSectionDef): SectionModel {
         selected: [],
         toggle: () => undefined,
         summary: "Coming soon",
+        status,
       };
   }
 }

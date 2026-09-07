@@ -29,12 +29,26 @@ import { SectionHeader } from "./SectionHeader";
 export const TypeSpecificFilters: React.FC = () => {
   const { effectiveFilters, lookups } = useDiscovery();
   const types = effectiveFilters.types;
-  const { shared, perType, failed, retry } = useTypeDefinitions(types);
+  const { shared, perType, unavailable, failed, retry } =
+    useTypeDefinitions(types);
 
   if (types.length === 0) return null;
 
   const displayNameOf = (name: string): string =>
     lookups.types.find((t) => t.name === name)?.displayName ?? name;
+
+  // A 404 means this API build has no custom-field definitions at all (the DEV preview, until
+  // the YOM-1254 endpoints deploy). Said once, plainly, and NOT as an error — the block is
+  // conditional by design, so rendering nothing would be the silent placeholder the surface
+  // does not allow, and an error would blame the page for the environment.
+  if (unavailable)
+    return (
+      <section className="border-gray border-b py-2">
+        <Message>
+          Type-specific filters aren&apos;t available from this API yet.
+        </Message>
+      </section>
+    );
 
   if (failed)
     return (
