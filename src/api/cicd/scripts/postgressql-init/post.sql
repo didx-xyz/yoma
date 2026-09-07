@@ -145,7 +145,8 @@ WITH partner_orgs("Id", "Name", "WebsiteURL", "CountryCodeAlpha2") AS (
     ('019df6ff-428e-73b1-9fe7-11ca6fdad88b'::uuid, 'Jobberman - Ghana', 'https://www.jobberman.com.gh', 'GH'),
     ('019fc83e-9ff2-7ba2-adbf-c7cbd6bc085e'::uuid, 'JobJack', 'https://www.jobjack.co.za', 'ZA'),
     ('019e01cd-8ee7-757e-9945-67fec6a73e81'::uuid, 'Alison', 'https://alison.com', 'IE'),
-    ('3538e529-16a2-42a0-86b2-c4b85e538e0c'::uuid, 'IXO', 'https://ixo.world', 'ZA')
+    ('3538e529-16a2-42a0-86b2-c4b85e538e0c'::uuid, 'IXO', 'https://ixo.world', 'ZA'),
+    ('b7838234-9aab-4b12-b6af-f921ec6c9d47'::uuid, 'Umuzi', 'https://umuzi.org', 'ZA')
 )
 INSERT INTO "Entity"."Organization"("Id", "Name", "NameHashValue", "WebsiteURL", "PrimaryContactName", "PrimaryContactEmail", "PrimaryContactPhone", "VATIN", "TaxNumber", "RegistrationNumber",
            "City", "CountryId", "StreetAddress", "Province", "PostalCode", "Tagline", "Biography", "StatusId", "CommentApproval", "DateStatusModified", "LogoId", "DateCreated", "CreatedByUserId", "DateModified", "ModifiedByUserId")

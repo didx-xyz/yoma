@@ -40,6 +40,7 @@
     <ProjectReference Include="..\..\infrastructure\Yoma.Core.Infrastructure.Jobberman\Yoma.Core.Infrastructure.Jobberman.csproj" />
     <ProjectReference Include="..\..\infrastructure\Yoma.Core.Infrastructure.JobJack\Yoma.Core.Infrastructure.JobJack.csproj" />
     <ProjectReference Include="..\..\infrastructure\Yoma.Core.Infrastructure.IXO.PartnerSync\Yoma.Core.Infrastructure.IXO.PartnerSync.csproj" />
+    <ProjectReference Include="..\..\infrastructure\Yoma.Core.Infrastructure.Umuzi\Yoma.Core.Infrastructure.Umuzi.csproj" />
     <ProjectReference Include="..\..\infrastructure\Yoma.Core.Infrastructure.Keycloak\Yoma.Core.Infrastructure.Keycloak.csproj" />
     <ProjectReference Include="..\..\infrastructure\Yoma.Core.Infrastructure.SAYouth\Yoma.Core.Infrastructure.SAYouth.csproj" />
     <ProjectReference Include="..\..\infrastructure\Yoma.Core.Infrastructure.SendGrid\Yoma.Core.Infrastructure.SendGrid.csproj" />
