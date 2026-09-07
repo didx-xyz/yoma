@@ -2,6 +2,7 @@ import { useQueries } from "@tanstack/react-query";
 import type { CustomFieldDefinition } from "~/api/models/opportunity";
 import { getOpportunityCustomFieldDefinitions } from "~/api/services/opportunities";
 import { OPPORTUNITY_QUERY_KEYS } from "~/hooks/useOpportunityMutations";
+import { isNotFoundError } from "../lib/apiStatus";
 
 /**
  * Custom-field definitions for the selected Opportunity types, split into what they SHARE and
@@ -27,6 +28,9 @@ export interface TypeDefinitions {
   /** Per selected type, in selection order: what that type adds over `shared`. */
   perType: { typeName: string; definitions: CustomFieldDefinition[] }[];
   loading: boolean;
+  /** 404: this API build has no custom-field definitions at all (the DEV preview, today). */
+  unavailable: boolean;
+  /** A real fault — offered with a Retry. */
   failed: boolean;
   retry: () => void;
 }
@@ -66,7 +70,12 @@ export function useTypeDefinitions(typeNames: string[]): TypeDefinitions {
       ),
     })),
     loading: queries.some((query) => query.isLoading),
-    failed: queries.some((query) => query.isError),
+    unavailable: queries.some(
+      (query) => query.isError && isNotFoundError(query.error),
+    ),
+    failed: queries.some(
+      (query) => query.isError && !isNotFoundError(query.error),
+    ),
     retry: () => {
       for (const query of queries) if (query.isError) void query.refetch();
     },

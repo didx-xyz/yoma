@@ -21,7 +21,7 @@ export const FilterSection: React.FC<{
   alwaysOpen?: boolean;
 }> = ({ section, alwaysOpen = false }) => {
   const model = useSectionModel(section);
-  const { state, fragments } = useDiscovery();
+  const { state, fragments, lookups } = useDiscovery();
   const [open, setOpen] = useState(() => model.selected.length > 0);
   const contentRef = useRef<HTMLDivElement>(null);
   const expanded = alwaysOpen || open;
@@ -83,10 +83,13 @@ export const FilterSection: React.FC<{
             section={section}
             model={model}
             largeSearch={alwaysOpen}
+            onRetry={lookups.retry}
           />
-          {section.nullRule && section.binding !== null && (
-            <Message>{section.nullRule}</Message>
-          )}
+          {/* The null rule describes what the filter DOES; it has nothing to say when the
+              options never arrived. */}
+          {section.nullRule &&
+            section.binding !== null &&
+            model.status === "ok" && <Message>{section.nullRule}</Message>}
         </div>
       )}
     </section>

@@ -153,19 +153,6 @@ export const DiscoveryResults: React.FC<{
           </button>
         </Message>
       )}
-      {lookups.failed && !failed && (
-        <Message kind="error">
-          Some filter options couldn&apos;t be loaded, so this search may be
-          incomplete.{" "}
-          <button
-            type="button"
-            onClick={lookups.retry}
-            className="font-semibold underline"
-          >
-            Retry
-          </button>
-        </Message>
-      )}
       {/* Zero results is a dead end unless the way out is on screen: the applied filters render
           inline, removable, so relaxing the search is one tap rather than a hunt back up the
           page (2026-09-05). */}
