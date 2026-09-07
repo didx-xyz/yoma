@@ -61,8 +61,11 @@ export interface DiscoveryContextValue {
   effectiveFilters: DiscoveryFilters;
   chips: DiscoveryChip[];
   resolveLabel: ChipLabelResolver;
-  /** Clear the session's choices AND switch off the inherited layer (struck-through, undoable). */
-  clearAll: () => void;
+  /**
+   * Clear this search's filters. The preference layer is NOT part of them: it survives, chips
+   * and all (2026-09-05 — see the `clearFilters` action).
+   */
+  clearFilters: () => void;
   /**
    * Switch one preference off for this search — the ONE deselect path for inherited values
    * (chip ×, section control, type row, category tile). Also strips the fragment's values from
@@ -158,11 +161,7 @@ export const DiscoveryProvider: React.FC<{ children: React.ReactNode }> = ({
     resolveLabel,
   );
 
-  const clearAll = (): void =>
-    dispatch({
-      kind: "clearAll",
-      skipPreferences: Object.keys(fragments) as PreferenceKey[],
-    });
+  const clearFilters = (): void => dispatch({ kind: "clearFilters" });
 
   const skipPreference = (key: PreferenceKey): void =>
     dispatch({ kind: "skipPreference", key, fragment: fragments[key] ?? {} });
@@ -216,7 +215,7 @@ export const DiscoveryProvider: React.FC<{ children: React.ReactNode }> = ({
     effectiveFilters,
     chips,
     resolveLabel,
-    clearAll,
+    clearFilters,
     skipPreference,
     resultsAnchorRef,
     scrollToResults,

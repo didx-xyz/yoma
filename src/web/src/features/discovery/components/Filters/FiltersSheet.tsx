@@ -15,7 +15,7 @@ export const FiltersSheet: React.FC<{
   onClose: () => void;
   onEditPreferences: () => void;
 }> = ({ open, onClose, onEditPreferences }) => {
-  const { count, counting, countFailed, clearAll, chips, scrollToResults } =
+  const { count, counting, countFailed, clearFilters, chips, scrollToResults } =
     useDiscovery();
   useDialogDismiss(open, onClose);
   if (!open) return null;
@@ -36,7 +36,7 @@ export const FiltersSheet: React.FC<{
           <IoClose className="h-5 w-5" />
         </button>
         {/* Same title as the desktop dialog — one surface, two containers. There is deliberately
-            no second clear action up here: the footer's "Clear all" is always reachable, and two
+            no second clear action up here: the footer's "Clear filters" is always reachable, and two
             buttons a screen apart doing the same thing read as two different things. */}
         <h2 className="flex grow items-center justify-center gap-2 text-base font-bold tracking-normal">
           Filters
@@ -56,7 +56,7 @@ export const FiltersSheet: React.FC<{
         count={count}
         counting={counting}
         countFailed={countFailed}
-        onClearAll={clearAll}
+        onClearFilters={clearFilters}
         onShowResults={() => {
           onClose();
           scrollToResults();

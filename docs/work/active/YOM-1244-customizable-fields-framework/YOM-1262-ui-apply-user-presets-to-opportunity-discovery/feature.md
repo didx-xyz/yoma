@@ -425,6 +425,29 @@ commitment set; **accessibility excludes** those that have not described their a
   - **Per-type card layouts (brief §5) were not built** — the brief marks the section "ignore for
     this session", and canvas page 4 is still awaiting the client's pick-or-drop.
 
+- 2026-09-05 (same session, Jason's review of the refinement round — supersedes two bullets in
+  the entry above):
+  - **The mobile category tiles are back to the shared card as it stands** — square, with the
+    count. The compacted mobile variant bought ~45px of fold and cost the tiles their consistency
+    with every other surface that renders `OpportunityCategoryHorizontalCard`; the fold is not
+    worth a second look for the category row. If the fold is revisited, it should be by moving or
+    dropping the row on mobile, not by making the same component look different here.
+  - **"Clear all" is now "Clear filters", and it clears filters ONLY** — reversing the
+    2026-09-03 round-2 reading that pressing it means "empty search" and should therefore also
+    switch off the inherited layer. Preferences are a standing setting, not one of this search's
+    filters, so a button in the filter panel must not silently turn them off; the master switch
+    and the per-chip skip remain the two ways the layer comes off, and both say what they do.
+    The reducer action is `clearFilters` (no payload) — `preferencesOff` and `preferencesSkipped`
+    are untouched by it.
+  - **The hero's quick-search row scrolls instead of overflowing the page.** Its wrapper was
+    `hidden justify-center md:flex`, which made the scroller a flex ITEM sized to its content
+    (1322px of badges): `overflow-x-auto` never engaged, so between `md` and ~1350px the row ran
+    off both edges of the hero with the first badge unreachable at a negative x, and the document
+    itself scrolled sideways. The wrapper is now a block and the row carries
+    `justify-center-safe` — centred while the badges fit, start-aligned and scrollable when they
+    do not. Worth remembering the shape of this bug: a `ScrollableContainer` inside a flex parent
+    needs a width constraint or it silently stops being a scroller.
+
 ## Links
 
 - Epic: [YOM-1244](../README.md)
