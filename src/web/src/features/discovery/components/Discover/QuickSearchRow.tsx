@@ -101,7 +101,9 @@ export const QuickSearchRow: React.FC<{ wrap?: boolean }> = ({
     </div>
   ) : (
     <ScrollableContainer
-      className="flex gap-2 overflow-x-auto pb-1"
+      // `justify-center-safe`: centred while the badges fit, falling back to start-aligned (and
+      // therefore scrollable, with nothing off the left edge) the moment they do not.
+      className="flex justify-center-safe gap-2 overflow-x-auto pb-1"
       showShadows={true}
       shadowFromClassName="from-purple" // the hero's background — the fade must match it
     >

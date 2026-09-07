@@ -41,11 +41,13 @@ export type DiscoveryAction =
   /** The wizard just saved new defaults — stale per-preference skips no longer mean anything. */
   | { kind: "resetPreferenceOverrides" }
   /**
-   * Clear all also switches off the active inherited layer for this search (struck-through
-   * chips, undoable) — a youth pressing it means "empty search", not "empty except my preset".
-   * The caller supplies the keys since fragments live outside the reducer.
+   * Clear the session's FILTERS and nothing else. It deliberately leaves the preference layer
+   * exactly as it is (2026-09-05, reversing the 2026-09-03 round-2 reading that "clear all"
+   * meant an empty search): preferences are a standing setting, not part of this search's
+   * filters, and a control in the filter panel must not silently switch them off. The master
+   * switch and the per-chip skip are how the layer comes off.
    */
-  | { kind: "clearAll"; skipPreferences: PreferenceKey[] };
+  | { kind: "clearFilters" };
 
 /** A quick-search badge is "applied" when every value in its owned set is present. */
 export function isQuickSearchApplied(
@@ -228,14 +230,8 @@ function reduceAction(
         preferencesSkipped: [],
         page: 1,
       };
-    case "clearAll":
-      return {
-        ...state,
-        filters: EMPTY_DISCOVERY_FILTERS,
-        preferencesSkipped: [
-          ...new Set([...state.preferencesSkipped, ...action.skipPreferences]),
-        ],
-        page: 1,
-      };
+    case "clearFilters":
+      // `preferencesOff` and `preferencesSkipped` are deliberately untouched.
+      return { ...state, filters: EMPTY_DISCOVERY_FILTERS, page: 1 };
   }
 }

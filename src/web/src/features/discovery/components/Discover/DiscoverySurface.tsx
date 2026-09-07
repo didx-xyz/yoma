@@ -115,7 +115,12 @@ export const DiscoverySurface: React.FC = () => {
               />
             </div>
           </div>
-          <div className="hidden justify-center md:flex">
+          {/* `block`, not a centring flex row: as a flex ITEM the scroller sized itself to its
+              content (1322px of badges), so `overflow-x-auto` never engaged — between md and
+              ~1350px the row ran off both edges of the hero, the first badge was unreachable at
+              a negative x, and the whole PAGE scrolled sideways. As a block it takes the hero's
+              width and scrolls inside it; the row centres itself when it fits. */}
+          <div className="hidden min-w-0 md:block">
             <QuickSearchRow wrap={false} />
           </div>
           <div className="hidden items-center gap-2 md:flex">

@@ -9,13 +9,21 @@ import { Chip } from "../shared/Chip";
 /**
  * The applied-chip row above the results — all three provenance classes, plus the type-scoped
  * custom-field clauses labelled through YOM-1260's labeler (values only; Exists shows the
- * title). Prominent Clear all.
+ * title). Clear filters sits at the end of the row and takes out the SESSION's filters only —
+ * inherited chips stay, because preferences are a standing setting rather than part of this
+ * search (2026-09-05).
  */
 export const AppliedChips: React.FC<{ pulseChipId?: string | null }> = ({
   pulseChipId,
 }) => {
-  const { state, dispatch, chips, effectiveFilters, clearAll, skipPreference } =
-    useDiscovery();
+  const {
+    state,
+    dispatch,
+    chips,
+    effectiveFilters,
+    clearFilters,
+    skipPreference,
+  } = useDiscovery();
   const types = effectiveFilters.types;
   const { data: definitions } = useOpportunityCustomFieldDefinitionsQuery(
     types.length > 0 ? types : null,
@@ -94,10 +102,10 @@ export const AppliedChips: React.FC<{ pulseChipId?: string | null }> = ({
       ))}
       <button
         type="button"
-        onClick={clearAll}
+        onClick={clearFilters}
         className="text-purple shrink-0 text-xs font-semibold whitespace-nowrap underline"
       >
-        Clear all
+        Clear filters
       </button>
     </ScrollableContainer>
   );

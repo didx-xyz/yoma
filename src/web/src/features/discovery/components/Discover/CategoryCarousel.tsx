@@ -57,15 +57,11 @@ export const CategoryCarousel: React.FC = () => {
           each card keeps its natural size (the old page's CustomSlider renders them the same
           way). containerClassName="" drops the wrapper's h-full for the same reason as the
           wizard footer: never hand this row a height it must fill. */}
-      {/* Below md the tiles drop to one line — icon and label, no count and no square aspect —
-          so the results heading clears the fold at 390×844 (the square tiles pushed it to
-          y≈618). Done with child variants rather than a prop on the shared card, so the legacy
-          discovery page's carousel is untouched. */}
       <ScrollableContainer
         showShadows
         shadowFromClassName="from-gray-light" // the page body's background
         containerClassName=""
-        className="flex items-start gap-3 overflow-x-auto pb-2 max-md:[&_button]:aspect-auto max-md:[&_h1]:line-clamp-1 max-md:[&_h6]:hidden"
+        className="flex items-start gap-3 overflow-x-auto pb-2"
       >
         {lookups.categories.map((category) => (
           <OpportunityCategoryHorizontalCard
