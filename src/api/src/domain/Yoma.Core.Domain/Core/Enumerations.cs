@@ -199,6 +199,7 @@ namespace Yoma.Core.Domain.Core
     Jobberman,
     Alison,
     JobJack,
-    IXO
+    IXO,
+    Umuzi
   }
 }

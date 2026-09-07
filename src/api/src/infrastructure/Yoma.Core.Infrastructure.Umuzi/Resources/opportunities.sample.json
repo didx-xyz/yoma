@@ -1,0 +1,179 @@
+{
+  "items": [
+    {
+      "id": "238fd40f-0e8e-4881-bc33-b6d5b8b54104",
+      "externalId": "56a7e11e-5908-43c2-9bbb-b7e47bb20fdf",
+      "umuziType": "component",
+      "yomaType": "Learning",
+      "title": "testing",
+      "url": "https://umuzi.org/opps/e2e-001",
+      "description": null,
+      "summary": null,
+      "categories": [],
+      "countries": [
+        "ZA"
+      ],
+      "languages": [
+        "en"
+      ],
+      "skills": [],
+      "keywords": [],
+      "startDate": "2026-09-04T09:11:16.355002Z",
+      "endDate": null,
+      "commitmentInterval": null,
+      "commitmentCount": null,
+      "difficulty": "Any Level",
+      "engagementType": null,
+      "active": false,
+      "createdAt": "2026-09-04T09:11:16.381645Z",
+      "updatedAt": "2026-09-04T17:20:32.016339Z"
+    },
+    {
+      "id": "2b7ddf0b-a803-4f61-a55b-4bfd7f02a412",
+      "externalId": "umuzi-e2e-001",
+      "umuziType": "component",
+      "yomaType": "Learning",
+      "title": "E2E test opportunity",
+      "url": "https://umuzi.org/opps/e2e-001",
+      "description": null,
+      "summary": null,
+      "categories": [
+        "Technology and Digitization"
+      ],
+      "countries": [
+        "ZA"
+      ],
+      "languages": [
+        "en"
+      ],
+      "skills": [
+        "SQL"
+      ],
+      "keywords": [],
+      "startDate": "2026-09-01T20:21:14.803313Z",
+      "endDate": null,
+      "commitmentInterval": null,
+      "commitmentCount": null,
+      "difficulty": "Any Level",
+      "engagementType": null,
+      "active": true,
+      "createdAt": "2026-09-01T20:21:14.830034Z",
+      "updatedAt": "2026-09-04T18:47:13.111818Z"
+    },
+    {
+      "id": "3637beab-1709-4f1c-97db-ee16650ed42e",
+      "externalId": "postman-test-001",
+      "umuziType": "component",
+      "yomaType": "Learning",
+      "title": "Postman Test Opportunity",
+      "url": "https://umuzi.org/opportunities/postman-test-001",
+      "description": null,
+      "summary": null,
+      "categories": [],
+      "countries": [
+        "ZA"
+      ],
+      "languages": [
+        "en"
+      ],
+      "skills": [],
+      "keywords": [],
+      "startDate": "2026-09-02T15:15:32.265216Z",
+      "endDate": null,
+      "commitmentInterval": null,
+      "commitmentCount": null,
+      "difficulty": "Any Level",
+      "engagementType": null,
+      "active": true,
+      "createdAt": "2026-09-02T15:15:32.29635Z",
+      "updatedAt": "2026-09-02T15:15:32.29635Z"
+    },
+    {
+      "id": "4a21f594-0759-470b-8023-4c44ec3e2523",
+      "externalId": "f7228a0c-ad49-40fb-a4b1-e255d0a0ea8b",
+      "umuziType": "component",
+      "yomaType": "Learning",
+      "title": "test2",
+      "url": "https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule:~:text=The%20schedule%20event,of%20the%20hour.",
+      "description": "sdfhksdfkjgdsdf",
+      "summary": "sdffsfd",
+      "categories": [],
+      "countries": [
+        "ZA"
+      ],
+      "languages": [
+        "en"
+      ],
+      "skills": [],
+      "keywords": [],
+      "startDate": "2026-09-03T09:23:05.296314Z",
+      "endDate": null,
+      "commitmentInterval": null,
+      "commitmentCount": null,
+      "difficulty": "Any Level",
+      "engagementType": null,
+      "active": true,
+      "createdAt": "2026-09-03T09:23:05.306703Z",
+      "updatedAt": "2026-09-03T09:23:05.306703Z"
+    },
+    {
+      "id": "4f67bb84-1b9e-49eb-900a-b2c54a73dd81",
+      "externalId": "0a1cc36a-d894-409b-9d59-2ccff0a8f306",
+      "umuziType": "event",
+      "yomaType": "Learning",
+      "title": "kxvclnvosidenf",
+      "url": "https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule:~:text=The%20schedule%20event,of%20the%20hour.",
+      "description": "zxczaczczc",
+      "summary": "sdfsfsdf",
+      "categories": [],
+      "countries": [
+        "ZA"
+      ],
+      "languages": [
+        "en"
+      ],
+      "skills": [],
+      "keywords": [],
+      "startDate": "2026-09-03T07:16:47.313165Z",
+      "endDate": null,
+      "commitmentInterval": null,
+      "commitmentCount": null,
+      "difficulty": "Any Level",
+      "engagementType": null,
+      "active": true,
+      "createdAt": "2026-09-03T07:16:47.327769Z",
+      "updatedAt": "2026-09-03T07:16:47.327769Z"
+    },
+    {
+      "id": "fc528e9d-69d1-4db0-9f41-d1e9d153b20d",
+      "externalId": "string",
+      "umuziType": "pathway",
+      "yomaType": "Learning",
+      "title": "string",
+      "url": "string",
+      "description": "string",
+      "summary": "string",
+      "categories": [],
+      "countries": [
+        "ZA"
+      ],
+      "languages": [
+        "en"
+      ],
+      "skills": [],
+      "keywords": [],
+      "startDate": "2026-09-02T09:18:03.702Z",
+      "endDate": "2026-09-02T09:18:03.702Z",
+      "commitmentInterval": "Minute",
+      "commitmentCount": 1,
+      "difficulty": "Any Level",
+      "engagementType": "Online",
+      "active": false,
+      "createdAt": "2026-09-02T09:18:10.435714Z",
+      "updatedAt": "2026-09-02T15:38:49.457772Z"
+    }
+  ],
+  "page": 1,
+  "pageSize": 100,
+  "totalItems": 6
+}

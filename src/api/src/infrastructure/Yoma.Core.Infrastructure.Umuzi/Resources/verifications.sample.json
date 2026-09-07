@@ -1,0 +1,38 @@
+{
+  "items": [
+    {
+      "opportunityExternalId": "umuzi-e2e-001",
+      "yomaUserId": null,
+      "username": "testuser@gmail.com",
+      "status": "completed",
+      "dateCompleted": "2026-09-05T12:00:00Z",
+      "endOrLastActivity": null,
+      "percentComplete": 100,
+      "recordedAt": "2026-09-06T12:00:00Z"
+    },
+    {
+      "opportunityExternalId": "postman-test-001",
+      "yomaUserId": null,
+      "username": "testuser@gmail.com",
+      "status": "in_progress",
+      "dateCompleted": null,
+      "endOrLastActivity": "2026-09-05T12:00:00Z",
+      "percentComplete": 50,
+      "recordedAt": "2026-09-06T12:00:00Z"
+    },
+    {
+      "opportunityExternalId": "f7228a0c-ad49-40fb-a4b1-e255d0a0ea8b",
+      "yomaUserId": null,
+      "username": "testuser@gmail.com",
+      "status": "completed",
+      "dateCompleted": "2026-09-05T12:00:00Z",
+      "endOrLastActivity": null,
+      "percentComplete": 100,
+      "recordedAt": "2026-09-06T12:00:00Z"
+    }
+  ],
+  "page": 1,
+  "pageSize": 100,
+  "totalItems": 3,
+  "_sampleNotes": "Derived from staging 2026-09-07. Local-only adjustments: testuser@gmail.com, no pre-known Yoma GUID, dates aligned after opportunity starts, unfinished dateCompleted null, one record per user/opportunity. No production payload normalization."
+}
