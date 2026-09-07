@@ -6,7 +6,7 @@ services:
     # ports:
     #   - 5432:5432
     volumes:
-      - postgres:/var/lib/postgresql/data
+      - postgres:/var/lib/postgresql
     environment:
       - POSTGRES_PASSWORD=P@ssword1
       - POSTGRES_USER=postgres
@@ -103,7 +103,7 @@ services:
       POSTGRES_USER: keycloak
       POSTGRES_PASSWORD: keycloak
     volumes:
-      - keycloak-pg:/var/lib/postgresql/data
+      - keycloak-pg:/var/lib/postgresql
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "keycloak"]
       interval: 10s
