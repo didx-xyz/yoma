@@ -1,12 +1,12 @@
 name: yoma-v3
 services:
   postgres:
-    image: postgres:16.9-alpine
+    image: docker.io/postgres:18.4-alpine
     container_name: yoma-postgres
     # ports:
     #   - 5432:5432
     volumes:
-      - postgres:/var/lib/postgresql/data
+      - postgres:/var/lib/postgresql
     environment:
       - POSTGRES_PASSWORD=P@ssword1
       - POSTGRES_USER=postgres
@@ -18,7 +18,7 @@ services:
       retries: 3
 
   # pgadmin:
-  #   image: dpage/pgadmin4
+  #   image: docker.io/dpage/pgadmin4
   #   environment:
   #     PGADMIN_DEFAULT_EMAIL: admin@admin.com
   #     PGADMIN_DEFAULT_PASSWORD: root
@@ -26,7 +26,7 @@ services:
   #     - "80:80"
 
   valkey:
-    image: valkey/valkey:8-alpine
+    image: docker.io/valkey/valkey:9-alpine
     container_name: valkey
     ports:
       - 6379:6379
@@ -38,7 +38,7 @@ services:
 
   postgres-init:
     # Initialise the local postgresql server by populating a test user and organisation(s) for local dev
-    image: postgres:17-alpine
+    image: docker.io/postgres:18.4-alpine
     container_name: postgres-init
     depends_on:
       postgres:
@@ -58,7 +58,7 @@ services:
 
   keycloak-init:
     # Initialise the local Keycloak server by adding the bcrypt & webhook provider
-    image: alpine:3
+    image: docker.io/alpine:3
     container_name: keycloak-init
     user: root
     command: |
@@ -94,7 +94,7 @@ services:
       - ../keycloak/providers/jars:/local-providers # our custom JAR folder, mounted in a separate directory and copied to container
 
   keycloak-pg:
-    image: postgres:17-alpine
+    image: docker.io/postgres:18.4-alpine
     container_name: keycloak-pg
     ports:
       - 5432:5432
@@ -103,7 +103,7 @@ services:
       POSTGRES_USER: keycloak
       POSTGRES_PASSWORD: keycloak
     volumes:
-      - keycloak-pg:/var/lib/postgresql/data
+      - keycloak-pg:/var/lib/postgresql
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "keycloak"]
       interval: 10s
@@ -168,7 +168,7 @@ services:
 
   keycloak-health:
     # Wait for Keycloak to be ready before running keycloak-config service
-    image: curlimages/curl
+    image: docker.io/curlimages/curl
     container_name: keycloak-health
     restart: "no"
     command: /bin/sh -c "until curl -fsS http://keycloak:9000/health/ready; do sleep 5; done"
@@ -178,7 +178,7 @@ services:
 
   keycloak-config:
     # Import Keycloak configuration
-    image: adorsys/keycloak-config-cli:6.4.0-26.1.0
+    image: docker.io/adorsys/keycloak-config-cli:6.4.0-26.1.0
     container_name: keycloak-config
     environment:
       KEYCLOAK_URL: "http://keycloak:8080/"
@@ -227,6 +227,9 @@ services:
       CLIENT_P2E_GLOBAL_ENABLED: "true"
       CLIENT_P2E_GLOBAL_URL_REDIRECT: https://learningpassport.b2clogin.com/learningpassport.onmicrosoft.com/oauth2/authresp
       CLIENT_P2E_GLOBAL_SECRET: superSecretP2EGlobalClientSecret
+      CLIENT_P2E_GREEN_ENABLED: "true"
+      CLIENT_P2E_GREEN_URL_REDIRECT: https://green.passport2earning.org/*
+      CLIENT_P2E_GREEN_SECRET: superSecretP2EGreenClientSecret
       SA_YOMA_API_PASSWORD: &KCAdminPassword superSecretYomaApiServiceAccountPassword
       SMTP_PASSWORD: superSecretSmtpPassword
       GOOGLE_CLIENT_ID: superSecretClientId
@@ -244,7 +247,7 @@ services:
 
   # sops: # Decrypt secrets
   #   container_name: sops
-  #   image: mozilla/sops:latest
+  #   image: docker.io/mozilla/sops:latest
   #   command:
   #     [
   #       "/bin/sh",
@@ -256,7 +259,7 @@ services:
   #     - ~/.aws:/root/.aws
 
   keycloak-users:
-    image: curlimages/curl
+    image: docker.io/curlimages/curl
     container_name: keycloak-users
     environment:
       KC_BASE_URL: http://keycloak:8080
@@ -320,7 +323,7 @@ services:
         condition: service_healthy
 
   yoma-api-health:
-    image: curlimages/curl
+    image: docker.io/curlimages/curl
     container_name: yoma-api-health
     restart: "no"
     command: >
@@ -334,7 +337,7 @@ services:
 
   test-harness-health:
     # Wait for sqlserver-init to be finished.
-    image: curlimages/curl
+    image: docker.io/curlimages/curl
     container_name: test-harness-health
     restart: "no"
     command: /bin/sh -c "until curl -fsS http://yoma-api:5000/index.html; do sleep 5; done"
