@@ -318,6 +318,16 @@ flag it in a handoff here before merging.
    (a fixture artefact — every seeded opportunity is in all ten). Worth confirming against DEV
    data; if the counts are genuinely total-only, they have to come off the category tiles.
 
+**Adrian, one API-side conflict resolution on this branch (2026-09-05)** — flagged because it is
+your area and web did not author either side. Merging `master` into
+`feature/custom-fields-framework` (PR #1924) collided on `Opportunity.Type`: master had added
+`Task` for IXO impact actions (#1925 / #1926) while this branch had already added `Event` and
+`Task` with the custom-fields work. Resolved to the union — `Other, Learning, Event, Job, Task`,
+which is this branch's member list unchanged. Safe because the enum resolves by NAME against the
+static lookup table (`Enum.Parse<Type>(entity.Opportunity.Type.Name)`), so nothing is keyed to the
+ordinal. Master's IXO client change auto-merged and still compiles: it maps "Impact Action" onto
+`Type.Task`, which survives in the merged enum. `dotnet build Yoma.Core.sln` is clean.
+
 **DEV environment skew (found 2026-09-03, affects anyone previewing this branch):**
 `/opportunity/search` on `v3api.dev.yoma.world` fails with `42703: column
 o.YomaRewardPoolCurrentFinancialYear does not exist` (also `o.YomaReward`). Verified cause: the
