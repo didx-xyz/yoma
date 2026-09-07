@@ -40,11 +40,14 @@ the BA field map is approved.
 - [x] Add database-side Opportunity and MyOpportunity filtering.
 - [x] Add dynamic CSV import columns and validation.
 - [x] Add PartnerSync request support.
+- [x] Add `ApplicationDb_Opportunity_ParticipantCount_Reconcile` to repair historical counts alongside the CF CSV transaction fix.
+- [ ] Deploy the participant-count migration with CF during a quiet window with completion/import writers paused; run the count/reward audit afterwards and stop the monthly manual-repair reminder only after production validation.
 - [ ] Replace temporary sample definitions with the BA-approved field map.
 - [ ] Re-run end-to-end API, CSV and partner mapping validation against the final definitions.
 
 ## Decisions
 
+- 2026-09-07: The existing CSV rollback/EF-state fix does not repair historical data. Add a separate, data-only migration counting persisted completed verifications across all opportunities, correcting both undercounts and overcounts. Preserve existing null/zero values when no completions exist; leave ZLTO and all other fields unchanged. `Down` must not restore corrupt counters. Production was manually reconciled today and Adrian reported an empty follow-up audit; continue monthly audits and checks immediately after notified CSV imports until CF is deployed. See the [handoff](./handoffs/2026-09-07-a.md).
 - 2026-07-08: Definitions and values are relational and indexed; values are not stored as a JSON blob.
 - 2026-07-14: API writes are full replacement, while CSV and PartnerSync use partial-update semantics.
 - 2026-07-15: Numeric and DateTime filters use typed indexed projections rather than runtime text casts.
