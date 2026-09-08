@@ -16,8 +16,8 @@
   </ItemGroup>
 
   <ItemGroup>
-	<PackageReference Include="Hangfire.AspNetCore" Version="1.8.24" />
-	<PackageReference Include="Hangfire.Core" Version="1.8.24" />
+	<PackageReference Include="Hangfire.AspNetCore" Version="1.8.25" />
+	<PackageReference Include="Hangfire.Core" Version="1.8.25" />
 	<PackageReference Include="Hangfire.Dashboard.BasicAuthorization" Version="1.0.2" />
 	<PackageReference Include="Hangfire.PostgreSql" Version="1.21.1" />
 	<PackageReference Include="Microsoft.AspNetCore.DataProtection.StackExchangeRedis" Version="10.0.11" />
@@ -40,6 +40,7 @@
     <ProjectReference Include="..\..\infrastructure\Yoma.Core.Infrastructure.Jobberman\Yoma.Core.Infrastructure.Jobberman.csproj" />
     <ProjectReference Include="..\..\infrastructure\Yoma.Core.Infrastructure.JobJack\Yoma.Core.Infrastructure.JobJack.csproj" />
     <ProjectReference Include="..\..\infrastructure\Yoma.Core.Infrastructure.IXO.PartnerSync\Yoma.Core.Infrastructure.IXO.PartnerSync.csproj" />
+    <ProjectReference Include="..\..\infrastructure\Yoma.Core.Infrastructure.Umuzi\Yoma.Core.Infrastructure.Umuzi.csproj" />
     <ProjectReference Include="..\..\infrastructure\Yoma.Core.Infrastructure.Keycloak\Yoma.Core.Infrastructure.Keycloak.csproj" />
     <ProjectReference Include="..\..\infrastructure\Yoma.Core.Infrastructure.SAYouth\Yoma.Core.Infrastructure.SAYouth.csproj" />
     <ProjectReference Include="..\..\infrastructure\Yoma.Core.Infrastructure.SendGrid\Yoma.Core.Infrastructure.SendGrid.csproj" />

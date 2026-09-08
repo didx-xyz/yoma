@@ -252,6 +252,7 @@ namespace Yoma.Core.Api
       Infrastructure.Alison.Startup.Configure_RecurringJobsSyncProvider(configuration);
 
       Infrastructure.IXO.PartnerSync.Startup.Configure_RecurringJobsSyncProvider(configuration);
+      Infrastructure.Umuzi.Startup.Configure_RecurringJobsSyncProvider(configuration);
     }
 
     private static void ConfigureServices_SyncProviders(IServiceCollection services, IConfiguration configuration)
@@ -265,6 +266,7 @@ namespace Yoma.Core.Api
       Infrastructure.Alison.Startup.ConfigureServices_SyncProvider(services, configuration);
 
       Infrastructure.IXO.PartnerSync.Startup.ConfigureServices_SyncProvider(services, configuration);
+      Infrastructure.Umuzi.Startup.ConfigureServices_SyncProvider(services, configuration);
     }
 
     private static void ConfigureServices_InfrastructureSyncProviders(IServiceCollection services, IConfiguration configuration, AppSettings appSettings)
@@ -278,6 +280,7 @@ namespace Yoma.Core.Api
       Infrastructure.Alison.Startup.ConfigureServices_InfrastructureSyncProvider(services, configuration, appSettings);
 
       Infrastructure.IXO.PartnerSync.Startup.ConfigureServices_InfrastructureSyncProvider(services, configuration, appSettings);
+      Infrastructure.Umuzi.Startup.ConfigureServices_InfrastructureSyncProvider(services, configuration, appSettings);
     }
 
     private static void ConfigureFlurl()
@@ -367,6 +370,7 @@ namespace Yoma.Core.Api
       Infrastructure.Alison.Startup.Configure_InfrastructureDatabaseSyncProvider(serviceProvider);
 
       Infrastructure.IXO.PartnerSync.Startup.Configure_InfrastructureDatabaseSyncProvider(serviceProvider);
+      Infrastructure.Umuzi.Startup.Configure_InfrastructureDatabaseSyncProvider(serviceProvider);
     }
 
     private void ConfigureRedis(IServiceCollection services, IConfiguration configuration)
