@@ -111,6 +111,9 @@ config-cli:
     CLIENT_MINI_SASS_URL_REDIRECT: https://minisass.org/authentication/api/yoma/callback
     CLIENT_P2E_GLOBAL_URL_REDIRECT: https://learningpassport.b2clogin.com/learningpassport.onmicrosoft.com/oauth2/authresp
     CLIENT_P2E_GREEN_URL_REDIRECT: https://green.passport2earning.org/*
+    CLIENT_P2E_EGYPT_URL_REDIRECT: https://shababbalad.passport2earning.org/*
+    CLIENT_P2E_BANGLADESH_URL_REDIRECT: https://bangladesh.passport2earning.org/*
+    CLIENT_P2E_NIGERIA_URL_REDIRECT: https://nigeria.learningpassport.org/*
     GOOGLE_CLIENT_ID: 1088325631106-l5e6h1lgu0irqqjvb8fko8d7viru716f.apps.googleusercontent.com
     FACEBOOK_CLIENT_ID: "1095100448743505"
 

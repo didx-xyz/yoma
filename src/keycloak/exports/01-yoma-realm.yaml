@@ -277,6 +277,9 @@ roles:
     unicef-kenya: []
     p2e-global: []
     p2e-green: []
+    p2e-egypt: []
+    p2e-bangladesh: []
+    p2e-nigeria: []
     admin-cli: []
     yoma-api: []
     account:
@@ -1144,6 +1147,132 @@ clients:
     secret: $(env:CLIENT_P2E_GREEN_SECRET)
     redirectUris:
       - $(env:CLIENT_P2E_GREEN_URL_REDIRECT)
+    webOrigins: []
+    notBefore: 0
+    bearerOnly: false
+    consentRequired: false
+    standardFlowEnabled: true
+    implicitFlowEnabled: false
+    directAccessGrantsEnabled: false
+    serviceAccountsEnabled: false
+    publicClient: false
+    frontchannelLogout: true
+    protocol: openid-connect
+    attributes:
+      oidc.ciba.grant.enabled: "false"
+      oauth2.device.authorization.grant.enabled: "false"
+      backchannel.logout.session.required: "true"
+      backchannel.logout.revoke.offline.tokens: "false"
+      use.refresh.tokens: "true"
+    authenticationFlowBindingOverrides: {}
+    fullScopeAllowed: false
+    nodeReRegistrationTimeout: -1
+    defaultClientScopes:
+      - web-origins
+      - acr
+      - profile
+      - roles
+      - email
+    optionalClientScopes:
+      - address
+      - phone
+      - offline_access
+      - microprofile-jwt
+  - id: e75db305-4954-4caa-846e-1f82f732a402
+    clientId: p2e-egypt
+    name: p2e-egypt
+    description: Passport to Earning (P2E) Egypt SSO Partner (private client)
+    surrogateAuthRequired: false
+    enabled: $(env:CLIENT_P2E_EGYPT_ENABLED)
+    alwaysDisplayInConsole: false
+    clientAuthenticatorType: client-secret
+    secret: $(env:CLIENT_P2E_EGYPT_SECRET)
+    redirectUris:
+      - $(env:CLIENT_P2E_EGYPT_URL_REDIRECT)
+    webOrigins: []
+    notBefore: 0
+    bearerOnly: false
+    consentRequired: false
+    standardFlowEnabled: true
+    implicitFlowEnabled: false
+    directAccessGrantsEnabled: false
+    serviceAccountsEnabled: false
+    publicClient: false
+    frontchannelLogout: true
+    protocol: openid-connect
+    attributes:
+      oidc.ciba.grant.enabled: "false"
+      oauth2.device.authorization.grant.enabled: "false"
+      backchannel.logout.session.required: "true"
+      backchannel.logout.revoke.offline.tokens: "false"
+      use.refresh.tokens: "true"
+    authenticationFlowBindingOverrides: {}
+    fullScopeAllowed: false
+    nodeReRegistrationTimeout: -1
+    defaultClientScopes:
+      - web-origins
+      - acr
+      - profile
+      - roles
+      - email
+    optionalClientScopes:
+      - address
+      - phone
+      - offline_access
+      - microprofile-jwt
+  - id: e6c35d2f-1346-4e44-b0f7-123cadc70ae3
+    clientId: p2e-bangladesh
+    name: p2e-bangladesh
+    description: Passport to Earning (P2E) Bangladesh SSO Partner (private client)
+    surrogateAuthRequired: false
+    enabled: $(env:CLIENT_P2E_BANGLADESH_ENABLED)
+    alwaysDisplayInConsole: false
+    clientAuthenticatorType: client-secret
+    secret: $(env:CLIENT_P2E_BANGLADESH_SECRET)
+    redirectUris:
+      - $(env:CLIENT_P2E_BANGLADESH_URL_REDIRECT)
+    webOrigins: []
+    notBefore: 0
+    bearerOnly: false
+    consentRequired: false
+    standardFlowEnabled: true
+    implicitFlowEnabled: false
+    directAccessGrantsEnabled: false
+    serviceAccountsEnabled: false
+    publicClient: false
+    frontchannelLogout: true
+    protocol: openid-connect
+    attributes:
+      oidc.ciba.grant.enabled: "false"
+      oauth2.device.authorization.grant.enabled: "false"
+      backchannel.logout.session.required: "true"
+      backchannel.logout.revoke.offline.tokens: "false"
+      use.refresh.tokens: "true"
+    authenticationFlowBindingOverrides: {}
+    fullScopeAllowed: false
+    nodeReRegistrationTimeout: -1
+    defaultClientScopes:
+      - web-origins
+      - acr
+      - profile
+      - roles
+      - email
+    optionalClientScopes:
+      - address
+      - phone
+      - offline_access
+      - microprofile-jwt
+  - id: c40654a5-812f-4ee0-b97c-3a1c37bbe963
+    clientId: p2e-nigeria
+    name: p2e-nigeria
+    description: Passport to Earning (P2E) Nigeria SSO Partner (private client)
+    surrogateAuthRequired: false
+    enabled: $(env:CLIENT_P2E_NIGERIA_ENABLED)
+    alwaysDisplayInConsole: false
+    clientAuthenticatorType: client-secret
+    secret: $(env:CLIENT_P2E_NIGERIA_SECRET)
+    redirectUris:
+      - $(env:CLIENT_P2E_NIGERIA_URL_REDIRECT)
     webOrigins: []
     notBefore: 0
     bearerOnly: false
