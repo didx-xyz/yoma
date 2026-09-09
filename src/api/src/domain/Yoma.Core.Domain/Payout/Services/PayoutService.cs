@@ -312,10 +312,10 @@ namespace Yoma.Core.Domain.Payout.Services
           }
         }
 
-        if (payout.Status == PayoutTransactionStatus.Initiated)
+        if (string.IsNullOrEmpty(payout.TransactionId))
         {
-          // ReconcileProcess owns failure-state persistence for this attempt so RetryCount is
-          // incremented once even when provider initiation must be retried from Initiated.
+          // Initiation is idempotent on Yoma's payout id. Retry when no provider transaction id was persisted,
+          // including a prior ambiguous initiation failure recorded as ReconciliationRequired.
           await InitiatePayout(payout, GetUser(payout.UserId), false);
           return;
         }

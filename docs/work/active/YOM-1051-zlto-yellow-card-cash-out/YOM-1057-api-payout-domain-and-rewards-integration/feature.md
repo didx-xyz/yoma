@@ -37,6 +37,8 @@ payout, enforce one active payout per user, and reconcile terminal outcomes idem
 - [x] Harden provider-reference, retry and terminal-first persistence.
 - [x] Complete provider mappings and lifecycle branches against the Yellow Card specification.
 - [x] Expose Admin Treasury payout lookup and lightweight paginated search; enrich linked ZLTO detail only by id.
+- [x] Verify local recovery from an ambiguous provider-initiation failure, one-active-payout enforcement,
+      reward reservation linkage, profile pending-payout balances and webhook replay suppression.
 - [ ] Validate expiry, delayed webhook and polling behavior end to end.
 
 ## Decisions
@@ -54,6 +56,10 @@ payout, enforce one active payout per user, and reconcile terminal outcomes idem
   relationship into every payout query, consistent with other transaction-style domain models. Search does not
   resolve linked Reward transactions per row; retrieval by id composes the full audit view. Pagination remains
   API-required, while the service keeps the standard conditional pagination block for future flexibility.
+- 2026-09-09: Reconciliation distinguishes an incomplete provider initiation by the absence of
+  `Payout.TransactionId`, not solely by the local status. This permits an idempotent retry after a
+  failed or ambiguous initiation has already moved the payout to ReconciliationRequired, while an
+  existing provider id continues through status reconciliation.
 
 ## Links
 
