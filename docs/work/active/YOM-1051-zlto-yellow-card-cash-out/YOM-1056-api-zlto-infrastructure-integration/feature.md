@@ -34,6 +34,8 @@ wallet client patterns.
 - [x] Apply an explicit transport timeout to payout reservation, commit and release calls.
 - [x] Extend wallet balance with provider reserved balance.
 - [x] Align confirmed provider/actor values with ZLTO guidance.
+- [x] Accept the reservation endpoint's documented `201 Created` response and preserve its returned
+      reservation id for the Reward transaction.
 - [ ] End-to-end staging validation with the complete payout flow.
 
 ## Decisions
@@ -42,6 +44,10 @@ wallet client patterns.
 - 2026-07-28: Action-first method naming is retained (`Reserve`, `Commit`, `Release`, `Create`).
 - 2026-08-27: ZLTO payout operations use a dedicated 30-second transport timeout. This is separate
   from the configurable reservation expiration threshold that controls how long funds remain reserved.
+- 2026-09-09: ZLTO reservation creation returns `201 Created`; commit and release return `200 OK`.
+  The client accepts the operation-specific success status rather than treating a successful reservation
+  as an ambiguous failure. The reservation created during discovery of this mismatch was explicitly
+  released and its local payout record closed for auditability before retesting.
 
 ## Links
 

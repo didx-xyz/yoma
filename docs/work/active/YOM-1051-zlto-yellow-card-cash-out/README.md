@@ -98,6 +98,11 @@ the Treasury figures were also validated through local API/database probes. The 
 - Yellow Card raw-body HMAC authentication, replay suppression and payload/status processing are
   implemented. Payout.Transaction and Reward.Transaction remain the authoritative processing
   records; the polling fallback reconciles missed or failed deliveries.
+- Local sandbox integration testing on 2026-09-09 verified OAuth, ZLTO reservation, Yellow Card
+  initiation recovery, session refresh, the active-payout guard, profile balances, valid processing
+  webhooks, invalid signatures, stale timestamps and event-id replay suppression. The remaining
+  provider E2E is the hosted sign-in/KYC/payout journey and terminal webhook processing on Dev/Stage
+  with a test user whose email inbox is accessible.
 - The existing Linear description still says a payment URL is persisted. The code deliberately does
   not treat the short-lived URL as durable profile state; an active session is refreshed on demand.
 - IXO hosted sessions last approximately 30 minutes and may be refreshed while the payout is active.
@@ -333,6 +338,7 @@ Not owned by any one child ticket. **T6 in the old numbering.**
 | ---------------------------------------------------------------------- | -------- | -------------------------------------------------------------------------------------------------------------------- |
 | No authenticated browser pass on any reward surface                    | High     | Blocks calling YOM-1072 / YOM-1063 / YOM-1073 done. Unblocked otherwise — the corrective work is in                  |
 | `?mock=` dev aid is committed                                          | High     | Must be removed before this epic merges                                                                              |
+| Hosted Yellow Card E2E needs an accessible test email                  | Medium   | WorkOS verifies email and provides no bypass; use a funded Dev/Stage user with an inbox the test team controls.       |
 | No server rule ties a referral pool to Treasury capacity               | Low      | Accepted: the UI gives soft guidance. YOM-1073's ticket asks for hard validation — the code does not provide it       |
 
 ## Cross-Area Notes

@@ -7,7 +7,7 @@
 - **Ticket**: [YOM-1055](https://linear.app/didx/issue/YOM-1055/api-yellow-card-hosted-payout-integration)
 - **Owner**: Adrian
 - **Areas**: api
-- **Status**: in-progress — provider client implemented, sandbox E2E pending
+- **Status**: in-progress — local sandbox integration verified, hosted E2E pending
 - **Started**: 2026-07-28
 
 ## Problem / Goal
@@ -38,6 +38,9 @@ provider-neutral hosted payout boundary against IXO's generated sandbox OpenAPI 
 - [x] Reject unsupported profile countries before payout creation or reward reservation.
 - [x] Reject expired sessions and non-terminal sessions that do not expire before the ZLTO reservation.
 - [x] Set the final ZLTO reservation duration from IXO's confirmed lifecycle.
+- [x] Verify sandbox OAuth, provider initiation recovery, session refresh, active-payout protection
+      and webhook authentication/replay handling through the local API.
+- [ ] Complete the hosted sign-in, KYC, payout confirmation and terminal webhook journey on Dev/Stage.
 
 ## Decisions
 
@@ -65,6 +68,12 @@ provider-neutral hosted payout boundary against IXO's generated sandbox OpenAPI 
   returns a non-nullable `Payout.CountryAvailability` object with separate `Supported` and `Offline` flags.
   Expected provider HTTP unavailability does not fail the complete profile; the standalone country
   endpoint returns HTTP 503, while initiation remains fail-closed.
+- 2026-09-09: Provider initiation is retried idempotently whenever no Yellow Card transaction id was
+  persisted, including a previous ambiguous attempt recorded as ReconciliationRequired. Once the
+  provider id exists, reconciliation uses provider status lookup instead of initiating again.
+- 2026-09-09: WorkOS performs real email verification in Test and has no bypass. Hosted E2E therefore
+  requires a funded Dev/Stage Yoma user whose email inbox is accessible; local signed webhook tests
+  cover only non-terminal processing and transport/security behavior against an active sandbox payout.
 
 ## Links
 

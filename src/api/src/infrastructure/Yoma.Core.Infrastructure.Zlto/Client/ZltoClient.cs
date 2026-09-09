@@ -193,7 +193,7 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
         .WithAuthHeaders(authHeaders)
         .WithTimeout(requestTimeout)
         .PostJsonAsync(httpRequest)
-        .EnsureSuccessStatusCodeAsync()
+        .EnsureSuccessStatusCodeAsync([HttpStatusCode.Created])
         .ReceiveJson<WalletReservationResponse>();
 
       if (string.IsNullOrWhiteSpace(response.Id))
