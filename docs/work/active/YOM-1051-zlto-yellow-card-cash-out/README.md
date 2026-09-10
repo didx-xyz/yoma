@@ -191,52 +191,53 @@ Branch state, in order:
 
 ### Youth cash-out API additions — 2026-09-10
 
-Final contract after Adrian's review; supersedes the profile-summary and dedicated-endpoint proposals.
-No frontend files or migrations changed.
+Current contract after the final profile-visibility review; see handoffs/2026-09-10-d.md under YOM-1057.
+This supersedes returning terminal payouts on the profile. No expiry configuration or data deletion is introduced.
 
-- GET `/api/v3/user` exposes the existing compact payout section:
+- GET `/api/v3/user` keeps the compact payout section:
   `{ countryAvailability, active, status, canResume, amount, currency, dateCreated }`.
-  No transaction id, nested summary, duplicate ZLTO amount or additional youth endpoint.
-- One payout query selects the active transaction first, otherwise the latest terminal transaction.
-  `GetByUserIdOrNull(userId, activeOnly = true)` preserves active-only behaviour for initiation/session
-  guards, including duplicate-active detection. Profile passes false; selection stays user-scoped.
-- `active` derives from Initiated, Processing or ReconciliationRequired, NOT the presence of amount.
-  Before the first payout: status/amount/currency/dateCreated are null, active/canResume are false.
-  After closure: status, USD amount/currency and initiation time remain visible; active/canResume are false.
-  This changes amount/currency's previous null-after-closure semantics: web must use active/status.
-- `canResume` means active with a persisted provider reference, so a session request can be attempted.
-  It is not live provider availability or proof that youth confirmation is still outstanding.
-  Active plus false means setup/recovery pending: offer a later refresh.
+  Only in-flight payouts appear here. When none is active, status/amount/currency/dateCreated are null
+  and active/canResume are false; countryAvailability remains available for a new payout.
+- GET `/api/v3/user/payout/latest` is the on-demand outcome read for the cash-out journey:
+  `{ status, amount, currency, dateCreated, canResume }`. Returns the user's active payout first,
+  otherwise the most recently initiated terminal payout; 404 if the user has no payout.
+  User role is required and identity comes from authenticated context, with no caller-supplied user id.
+- Outcome reads do not contact IXO, refresh sessions, mutate records or enrich reward transactions.
+  No id, raw errors, provider references or duplicated ZLTO amount is exposed.
+- Profile and initiation/session guards use GetByUserIdOrNull with activeOnly=true (default).
+  Only the on-demand endpoint opts into active-or-latest. Profile adds no history lookup or sorting.
+- The outcome endpoint has no age cutoff: it is explicitly requested in the cash-out journey, not rendered
+  permanently in the wallet. Historical records remain available for audit. Avoid repeatedly announcing an
+  old outcome; a latest-state read is not a history/unread-notification mechanism.
+- Active is derived from Initiated, Processing or ReconciliationRequired. CanResume additionally requires
+  a provider reference. It means a session request can be attempted, not a live availability guarantee.
+  Active plus false means setup/recovery pending: allow a later retry.
 - Processing begins at hosted-payout creation, before youth confirmation. Use neutral in-progress copy;
-  the current contract cannot distinguish awaiting confirmation from post-confirmation bank delivery.
-- Completed, Failed, Cancelled and Expired are retained outcomes, not new live provider queries. No
-  terminal payout can resume through Yoma. Provider final fiat-delivery retries after Completed do not
-  reopen Yoma's payout or release its committed reward.
-- Currency separation is intentional: payout.amount is USD; zlto.pendingPayout is reserved ZLTO.
-  After commit/release pendingPayout is zero; the wallet reflects the resulting balance. Do not infer
-  outcome from zero pendingPayout, duplicate rewards in the payout model, or recalculate historical ZLTO
-  from the current conversion rate. Flow D should use status plus the updated wallet; omit an exact
-  historical ZLTO amount unless the UI retained it for that journey.
-- No extra payout/history query or terminal reward lookup is added to profile. The linked reward lookup
-  remains restricted to active reward payouts, as before. Do not poll the complete profile indefinitely:
-  refresh during the cash-out journey/iframe closure, and avoid re-announcing old outcomes on every visit.
-- dateCreated provides the Started label and initiation context for the current journey; it is not the
-  provider confirmation/completion timestamp or a general unread-notification/history mechanism.
-- Conversion preview adds conversionRateZltoPerUsd, using Treasury's four-decimal display calculation.
+  neither status nor canResume reliably distinguishes awaiting confirmation from post-confirmation delivery.
+- Completed, Failed, Cancelled and Expired are read from the outcome endpoint, never resumable through
+  Yoma. Provider final fiat-delivery retries after Completed do not reopen the payout or release committed rewards.
+- Currency separation remains intentional: payout amount/currency is USD, while zlto.pendingPayout is
+  reserved ZLTO. After commit/release pendingPayout is zero and the wallet balance reflects the result.
+  Do not infer outcome from zero, duplicate reward accounting in payout, or calculate historical ZLTO at
+  today's rate. Flow D can show the outcome and updated wallet without an exact historical ZLTO amount.
+- dateCreated is initiation time for the Started label, not confirmation/completion time.
+- Conversion preview includes conversionRateZltoPerUsd using Treasury's four-decimal display calculation.
   Initiation recalculates at the current rate. Preview and initiation reject non-positive/fractional ZLTO
-  with HTTP 400; internal ArgumentException handling is not globally changed.
+  with HTTP 400; global ArgumentException handling is unchanged.
 - Initiate: POST `/api/v3/user/payout/zlto?amount=450` reserves 450 ZLTO and returns
-  `{ amount, currency, paymentUrl, expiresAt }` (USD amount). Use the complete returned paymentUrl,
-  including its fragment token, as the iframe src.
-- Resume/refresh: GET `/api/v3/user/payout/zlto` returns a fresh paymentUrl for the same active payout.
-  Do not POST again to refresh a URL; that attempts a second payout and the active guard rejects it.
-  Session expiry (~30 minutes) does not expire the underlying payout.
-- The hosted journey belongs in an iframe modal INSIDE Yoma. Closing it is not cancellation; refresh
-  profile/wallet for Flow D. No return URL is needed for modal closure. Cross-origin parent code must not
-  inspect the iframe DOM or assume success from its URL; any automatic close/message needs an agreed,
-  origin-validated provider postMessage contract. Authentication embedding exceptions need IXO confirmation.
-- Session errors can be transient; a provider 404 alone does not prove the payout closed. Refresh profile
-  and render the recorded status. Email notification ownership remains separate from these in-app outcomes.
+  `{ amount, currency, paymentUrl, expiresAt }` (USD amount). Use the complete paymentUrl, including
+  its fragment token, as iframe src.
+- Resume/refresh: GET `/api/v3/user/payout/zlto` obtains a fresh URL for the same active payout.
+  Do not POST again to refresh. Hosted-session expiry (~30 minutes) does not expire the underlying payout.
+- Use an iframe modal INSIDE Yoma. Closing it does not cancel or complete the payout. Refresh the
+  wallet/profile and query the outcome endpoint for Flow D; no return URL is needed for modal closure.
+  Do not inspect cross-origin iframe DOM or infer success from its URL. Any automatic close/message needs
+  an agreed origin-validated provider postMessage contract; authentication exceptions need IXO coordination.
+- Session errors may be transient and even a 404 can originate at the provider. Read the outcome endpoint
+  rather than inferring a terminal state from a failed session request.
+- Notification ownership (IXO/Yoma) remains separate from in-app outcome presentation.
+- Automated test additions were removed at Adrian's request; no new tests accompany these changes.
+  API build and Dev integration checks are separate from future maintained automated regression coverage.
 
 ### Treasury availability model — three figures, never conflate
 

@@ -85,7 +85,7 @@ namespace Yoma.Core.Domain.Payout.Services
       if (activeOnly)
         return query.SingleOrDefault(o => statusIds.Contains(o.StatusId));
 
-      // Profile needs the active payout, or the latest outcome after closure, without a second lookup.
+      // On-demand outcome retrieval needs the active payout, or the latest outcome after closure.
       // Prioritizing active state also keeps reservation accounting correct if historical rows were imported later.
       return query.OrderByDescending(o => statusIds.Contains(o.StatusId))
         .ThenByDescending(o => o.DateCreated)

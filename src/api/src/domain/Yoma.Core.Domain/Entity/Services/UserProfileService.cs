@@ -127,6 +127,24 @@ namespace Yoma.Core.Domain.Entity.Services
       return await _payoutService.GetSession(user.Id);
     }
 
+    public PayoutTransactionSummary GetLatestPayoutTransaction()
+    {
+      var username = HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false);
+      var user = _userService.GetByUsername(username, false, false);
+      var payout = _payoutTransactionService.GetByUserIdOrNull(user.Id, false)
+        ?? throw new Yoma.Core.Domain.Core.Exceptions.EntityNotFoundException("No payout exists for the current user");
+
+      return new PayoutTransactionSummary
+      {
+        Status = payout.Status,
+        Amount = payout.Amount,
+        Currency = Enum.Parse<Currency>(payout.Currency, true),
+        DateCreated = payout.DateCreated,
+        CanResume = (payout.Status is PayoutTransactionStatus.Initiated or PayoutTransactionStatus.Processing
+          or PayoutTransactionStatus.ReconciliationRequired) && !string.IsNullOrWhiteSpace(payout.TransactionId)
+      };
+    }
+
     public List<UserSkillInfo>? GetSkills()
     {
       var username = HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false);
@@ -339,7 +357,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
       result.Settings = SettingsHelper.FilterByRoles(result.Settings, roles);
 
-      var payout = _payoutTransactionService.GetByUserIdOrNull(result.Id, false);
+      var payout = _payoutTransactionService.GetByUserIdOrNull(result.Id);
       result.Payout = new UserProfilePayout
       {
         Status = payout?.Status,
