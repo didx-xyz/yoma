@@ -188,12 +188,18 @@ export const RESUME_COPY = {
   linkFailed:
     "We couldn't open your cash out right now. Please try again in a moment.",
   /**
-   * `GET /user/payout/zlto` answered but the provider session does not exist yet
-   * ("The payout provider session is not yet available"), or the payout has moved past the point
-   * where the youth does anything. Both mean: there is nothing to continue, and nothing is wrong.
+   * `GET /user/payout/zlto` answered but the provider session does not exist yet — Yoma has
+   * recorded the payout and has not yet placed it with the provider ("The payout provider session
+   * is not yet available").
+   *
+   * **This is a wait, not a dead end**, and API `8d34eee7` is why: reconciliation retries
+   * initiation whenever the provider transaction id is missing, including from
+   * `ReconciliationRequired`, so a session appears within a reconciliation cycle. So the copy gives
+   * the youth a horizon and the panel keeps its retry — "being processed" would have sent someone
+   * away from a screen that works again in minutes.
    */
   notResumable:
-    "Your cash out is being processed. This can take a few hours, and your wallet will update automatically.",
+    "We're still setting up your cash out. Try again in a few minutes — your Zlto is safe.",
   /** the profile said a payout was active and the API says otherwise — 404 from the session route */
   noLongerActive:
     "This cash out has finished processing. Check your Zlto balance for the outcome.",

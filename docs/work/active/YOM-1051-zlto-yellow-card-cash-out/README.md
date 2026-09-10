@@ -338,9 +338,9 @@ Not owned by any one child ticket. **T6 in the old numbering.**
 | ---------------------------------------------------------------------- | -------- | -------------------------------------------------------------------------------------------------------------------- |
 | No authenticated browser pass on any reward surface                    | High     | Blocks calling YOM-1072 / YOM-1063 / YOM-1073 done. Unblocked otherwise — the corrective work is in                  |
 | `?mock=` dev aid is committed                                          | High     | Must be removed before this epic merges                                                                              |
+| **No youth-facing payout status or terminal outcome** (found 2026-09-10, [YOM-1074](./YOM-1074-ui-youth-yellow-card-cash-out/feature.md)) | High | `UserProfilePayout` has no status and no youth endpoint reports one, so the UI cannot tell "waiting for you" from "processing", and cannot say whether a payout completed, was cancelled or failed. **Blocks the Flow D outcome states**; everything else in T5 ships without it. Needs Adrian |
 | Hosted Yellow Card E2E needs an accessible test email                  | Medium   | WorkOS verifies email and provides no bypass; use a funded Dev/Stage user with an inbox the test team controls.       |
 | No server rule ties a referral pool to Treasury capacity               | Low      | Accepted: the UI gives soft guidance. YOM-1073's ticket asks for hard validation — the code does not provide it       |
-| **No youth-facing payout status or terminal outcome** (found 2026-09-10, [YOM-1074](./YOM-1074-ui-youth-yellow-card-cash-out/feature.md)) | High | `UserProfilePayout` has no status and no youth endpoint reports one, so the UI cannot tell "waiting for you" from "processing", and cannot say whether a payout completed, was cancelled or failed. **Blocks the Flow D outcome states**; everything else in T5 ships without it. Needs Adrian |
 
 ## Cross-Area Notes
 

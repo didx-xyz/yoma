@@ -34,6 +34,13 @@ export const CashOutResumePanel: React.FC<{
   onClose: () => void;
   /** hidden once continuing is pointless — a payout past the youth's part of the journey */
   canContinue?: boolean;
+  /**
+   * Whether to invite the youth to pick up where they left off. Separate from `canContinue`
+   * because the two come apart: a payout Yoma has not yet placed with the provider is worth
+   * retrying (`canContinue`) but there is nothing to pick up yet, so the invitation would be
+   * telling them to finish something that has not started.
+   */
+  invitation?: boolean;
 }> = ({
   zltoAmount,
   estimateUsd,
@@ -42,6 +49,7 @@ export const CashOutResumePanel: React.FC<{
   onContinue,
   onClose,
   canContinue = true,
+  invitation = true,
 }) => (
   <div className="flex flex-col gap-4">
     <div className="flex flex-col">
@@ -57,7 +65,7 @@ export const CashOutResumePanel: React.FC<{
     {/* "Pick up where you left off" is an invitation, so it goes when the invitation does —
         otherwise the panel asks the youth to continue directly above a notice telling them there
         is nothing to continue, with no button between the two. */}
-    {canContinue && (
+    {canContinue && invitation && (
       <div className="bg-blue-light flex flex-col gap-1 rounded-lg px-4 py-3">
         <span className="text-sm font-bold">{RESUME_COPY.title}</span>
         <span className="text-sm leading-6">{RESUME_COPY.body}</span>

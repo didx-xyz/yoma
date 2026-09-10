@@ -449,6 +449,15 @@ wanted.
     `ReconciliationRequired`. So the resume panel shows **no status line**, offers the way back in,
     and lets the *session fetch* answer the question: a session means resumable, the
     `"provider session is not yet available"` refusal means processing, a 404 means it closed.
+    **Amended the same day, after rebasing onto API `8d34eee7`** (`fix: harden cash-out initiation
+    recovery`, 2026-09-09): reconciliation now retries provider initiation whenever `TransactionId`
+    is empty — including from `ReconciliationRequired` — so the middle case is a *wait*, not a dead
+    end. A payout with no session acquires one within a reconciliation cycle, so that state now
+    offers **Try again** and says "We're still setting up your cash out. Try again in a few
+    minutes", where it previously offered Close and said "being processed". It also **drops the
+    "Pick up where you left off" invitation**, which is why `CashOutResumePanel` separates
+    `invitation` from `canContinue`: there is something worth retrying but nothing to pick up until
+    the session exists.
   - **D2/D3/D4 are not built.** Completed, cancelled/expired and failed are indistinguishable from
     here, and the difference is whether someone's money arrived. The wallet cannot be used to infer
     it either (a commit and a release both leave `pendingPayout` at 0). Step 3 therefore renders the

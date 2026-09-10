@@ -76,7 +76,13 @@ type FlowView =
   /** the hand-off: a session exists and the new tab has been asked for */
   | { name: "ready"; paymentUrl: string }
   /** the payout in flight, and the way back into it */
-  | { name: "resume"; notice?: string; canContinue: boolean }
+  | {
+      name: "resume";
+      notice?: string;
+      canContinue: boolean;
+      /** false while the payout has not been placed with the provider — nothing to pick up yet */
+      invitation?: boolean;
+    }
   /** step 3, reached by coming back to this tab — Yoma knows a payout is in flight, no more */
   | { name: "result" }
   | { name: "failed" };
@@ -259,10 +265,15 @@ export const CashOutEntry: React.FC<{
         });
         void refreshProfile();
       } else if (failure.kind === "sessionNotReady") {
+        // Yoma has the payout; the provider does not have it yet. Reconciliation retries initiation
+        // whenever the provider transaction id is missing (API `8d34eee7`), so this resolves on its
+        // own within a cycle — the youth gets a retry and a horizon, not a dead end. No invitation
+        // to "pick up where you left off": there is nothing to pick up until the session exists.
         setView({
           name: "resume",
           notice: RESUME_COPY.notResumable,
-          canContinue: false,
+          canContinue: true,
+          invitation: false,
         });
       } else {
         setView({
@@ -525,6 +536,7 @@ export const CashOutEntry: React.FC<{
               busy={busy}
               notice={view.notice}
               canContinue={view.canContinue}
+              invitation={view.invitation}
               onContinue={() => void continueCashOut()}
               onClose={close}
             />
