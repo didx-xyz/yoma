@@ -15,7 +15,7 @@ namespace Yoma.Core.Domain.Entity.Interfaces
 
     Task<PayoutSession> GetPayoutSession();
 
-    PayoutTransactionSummary GetLatestPayoutTransaction();
+    PayoutTransactionInfo GetLatestPayoutTransaction();
 
     List<UserSkillInfo>? GetSkills();
 

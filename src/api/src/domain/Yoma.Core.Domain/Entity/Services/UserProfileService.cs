@@ -127,11 +127,11 @@ namespace Yoma.Core.Domain.Entity.Services
       return await _payoutService.GetSession(user.Id);
     }
 
-    public PayoutTransactionSummary GetLatestPayoutTransaction()
+    public PayoutTransactionInfo GetLatestPayoutTransaction()
     {
       var username = HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false);
       var user = _userService.GetByUsername(username, false, false);
-      return _payoutTransactionService.GetLatestSummaryByUserId(user.Id);
+      return _payoutTransactionService.GetLatestInfoByUserId(user.Id);
     }
 
     public List<UserSkillInfo>? GetSkills()

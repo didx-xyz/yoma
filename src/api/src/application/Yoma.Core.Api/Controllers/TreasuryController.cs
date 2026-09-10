@@ -74,11 +74,11 @@ namespace Yoma.Core.Api.Controllers
       Description = "Returns Yoma's authoritative payout audit record with the user and linked reward funding transaction")]
     [HttpGet("payout/transaction/{id}")]
     [Authorize(Roles = Constants.Role_Admin)]
-    public ActionResult<PayoutTransactionInfo> GetTransaction([FromRoute] Guid id)
+    public ActionResult<PayoutTransactionAdminInfo> GetTransaction([FromRoute] Guid id)
     {
       if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(GetTransaction));
 
-      var result = _payoutTransactionService.GetInfoById(id);
+      var result = _payoutTransactionService.GetAdminInfoById(id);
 
       if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(GetTransaction));
 

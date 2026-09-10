@@ -9,7 +9,7 @@ namespace Yoma.Core.Domain.Payout.Interfaces
     /// <summary>
     /// Returns the administrative payout view, including user identity and the linked reward funding transaction.
     /// </summary>
-    PayoutTransactionInfo GetInfoById(Guid id);
+    PayoutTransactionAdminInfo GetAdminInfoById(Guid id);
 
     /// <summary>
     /// Returns the user's active payout. With activeOnly false, falls back to the latest terminal payout
@@ -20,7 +20,7 @@ namespace Yoma.Core.Domain.Payout.Interfaces
     /// <summary>
     /// Returns the user's active or latest payout summary; throws when no payout exists.
     /// </summary>
-    PayoutTransactionSummary GetLatestSummaryByUserId(Guid userId);
+    PayoutTransactionInfo GetLatestInfoByUserId(Guid userId);
 
     /// <summary>
     /// Returns the total amount of all pending payouts. Pending includes every non-terminal status and is not
