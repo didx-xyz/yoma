@@ -20,7 +20,7 @@ namespace Yoma.Core.Domain.Entity.Models
       or PayoutTransactionStatus.ReconciliationRequired;
 
     /// <summary>
-    /// Active payout status, or the latest terminal outcome when none is active. Null before the first payout.
+    /// Active payout status only. Null when no payout is in flight; terminal outcomes are queried separately.
     /// Processing starts at hosted-payout creation and does not prove youth confirmation or bank delivery.
     /// </summary>
     public PayoutTransactionStatus? Status { get; set; }
@@ -32,7 +32,7 @@ namespace Yoma.Core.Domain.Entity.Models
     public bool CanResume { get; set; }
 
     /// <summary>
-    /// Active or latest terminal payout amount in Currency (currently USD). Null before the first payout.
+    /// Active payout amount in Currency (currently USD). Null when no payout is in flight.
     /// Separate from the ZLTO reservation and wallet accounting in UserProfileZlto. Amount alone does not imply Active.
     /// </summary>
     public decimal? Amount { get; set; }
@@ -40,7 +40,7 @@ namespace Yoma.Core.Domain.Entity.Models
     public Currency? Currency { get; set; }
 
     /// <summary>
-    /// Initiation time of the active or latest payout, for display in the cash-out journey.
+    /// Initiation time of the active payout. Null when no payout is in flight.
     /// </summary>
     public DateTimeOffset? DateCreated { get; set; }
   }

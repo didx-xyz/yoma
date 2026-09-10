@@ -135,6 +135,23 @@ namespace Yoma.Core.Api.Controllers
       return StatusCode((int)HttpStatusCode.OK, result);
     }
 
+    [SwaggerOperation(Summary = "Get the latest payout state (Authenticated User)",
+      Description = "Returns the current user's active payout, otherwise the latest terminal outcome. Read-only: no provider calls, session creation or reward enrichment")]
+    [HttpGet("payout/latest")]
+    [ProducesResponseType(typeof(PayoutTransactionSummary), (int)HttpStatusCode.OK)]
+    [ProducesResponseType((int)HttpStatusCode.NotFound)]
+    [Authorize(Roles = Constants.Role_User)]
+    public IActionResult GetLatestPayoutTransaction()
+    {
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(GetLatestPayoutTransaction));
+
+      var result = _userProfileService.GetLatestPayoutTransaction();
+
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(GetLatestPayoutTransaction));
+
+      return StatusCode((int)HttpStatusCode.OK, result);
+    }
+
     [SwaggerOperation(Summary = "Get the user's skills, if any (Authenticated User)")]
     [HttpGet("skills")]
     [ProducesResponseType(typeof(List<UserSkillInfo>), (int)HttpStatusCode.OK)]
