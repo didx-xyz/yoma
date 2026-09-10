@@ -18,6 +18,11 @@ namespace Yoma.Core.Domain.Payout.Interfaces
     PayoutTransaction? GetByUserIdOrNull(Guid userId, bool activeOnly = true);
 
     /// <summary>
+    /// Returns the user's active or latest payout summary; throws when no payout exists.
+    /// </summary>
+    PayoutTransactionSummary GetLatestSummaryByUserId(Guid userId);
+
+    /// <summary>
     /// Returns the total amount of all pending payouts. Pending includes every non-terminal status and is not
     /// limited to the current financial year.
     /// </summary>

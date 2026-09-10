@@ -93,6 +93,21 @@ namespace Yoma.Core.Domain.Payout.Services
         .FirstOrDefault();
     }
 
+    public PayoutTransactionSummary GetLatestSummaryByUserId(Guid userId)
+    {
+      var payout = GetByUserIdOrNull(userId, false)
+        ?? throw new EntityNotFoundException("No payout exists for the current user");
+
+      return new PayoutTransactionSummary
+      {
+        Status = payout.Status,
+        Amount = payout.Amount,
+        Currency = Enum.Parse<Currency>(payout.Currency, true),
+        DateCreated = payout.DateCreated,
+        CanResume = Statuses_Active.Contains(payout.Status) && !string.IsNullOrWhiteSpace(payout.TransactionId)
+      };
+    }
+
     // Pending includes every non-terminal payout status.
     public decimal GetTotalPending()
     {
