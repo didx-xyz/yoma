@@ -131,18 +131,7 @@ namespace Yoma.Core.Domain.Entity.Services
     {
       var username = HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false);
       var user = _userService.GetByUsername(username, false, false);
-      var payout = _payoutTransactionService.GetByUserIdOrNull(user.Id, false)
-        ?? throw new Yoma.Core.Domain.Core.Exceptions.EntityNotFoundException("No payout exists for the current user");
-
-      return new PayoutTransactionSummary
-      {
-        Status = payout.Status,
-        Amount = payout.Amount,
-        Currency = Enum.Parse<Currency>(payout.Currency, true),
-        DateCreated = payout.DateCreated,
-        CanResume = (payout.Status is PayoutTransactionStatus.Initiated or PayoutTransactionStatus.Processing
-          or PayoutTransactionStatus.ReconciliationRequired) && !string.IsNullOrWhiteSpace(payout.TransactionId)
-      };
+      return _payoutTransactionService.GetLatestSummaryByUserId(user.Id);
     }
 
     public List<UserSkillInfo>? GetSkills()
