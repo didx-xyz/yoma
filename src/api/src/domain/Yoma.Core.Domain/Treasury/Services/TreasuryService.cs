@@ -217,6 +217,7 @@ namespace Yoma.Core.Domain.Treasury.Services
         result = new ConversionResponse
         {
           Amount = amountConverted,
+          ConversionRateZltoPerUsd = treasury.ToInfo(payoutTotalPending).ConversionRateZltoPerUsd,
           TreasuryFundsAvailable = !payoutBalanceAvailable.HasValue || amountConverted <= payoutBalanceAvailable.Value
         };
 

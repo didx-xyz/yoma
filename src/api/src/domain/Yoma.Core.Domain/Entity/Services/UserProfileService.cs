@@ -339,11 +339,20 @@ namespace Yoma.Core.Domain.Entity.Services
 
       result.Settings = SettingsHelper.FilterByRoles(result.Settings, roles);
 
-      var payoutActive = _payoutTransactionService.GetActiveByUserIdOrNull(result.Id);
-      var pendingPayout = default(decimal);
-      if (payoutActive != null && string.Equals(payoutActive.Type, PayoutType.PayoutRewards.ToString(), StringComparison.OrdinalIgnoreCase))
+      var payout = _payoutTransactionService.GetByUserIdOrNull(result.Id, false);
+      result.Payout = new UserProfilePayout
       {
-        var rewardReservation = _rewardService.GetByEntity(result.Id, Reward.RewardTransactionEntityType.Payout, payoutActive.Id);
+        Status = payout?.Status,
+        Amount = payout?.Amount,
+        Currency = payout == null ? null : Enum.Parse<Currency>(payout.Currency, true),
+        DateCreated = payout?.DateCreated
+      };
+      result.Payout.CanResume = result.Payout.Active && !string.IsNullOrWhiteSpace(payout?.TransactionId);
+
+      var pendingPayout = default(decimal);
+      if (result.Payout.Active && payout != null && string.Equals(payout.Type, PayoutType.PayoutRewards.ToString(), StringComparison.OrdinalIgnoreCase))
+      {
+        var rewardReservation = _rewardService.GetByEntity(result.Id, Reward.RewardTransactionEntityType.Payout, payout.Id);
         if (rewardReservation?.Status == Reward.RewardTransactionStatus.Reserved)
           pendingPayout = rewardReservation.Amount;
       }
@@ -372,13 +381,7 @@ namespace Yoma.Core.Domain.Entity.Services
         ZltoOffline = balance.ZltoOffline
       };
 
-      var payoutCountryAvailability = await _payoutService.IsCountrySupported(result.CountryId);
-      result.Payout = new UserProfilePayout
-      {
-        CountryAvailability = payoutCountryAvailability,
-        Amount = payoutActive?.Amount,
-        Currency = payoutActive == null ? null : Enum.Parse<Currency>(payoutActive.Currency, true)
-      };
+      result.Payout.CountryAvailability = await _payoutService.IsCountrySupported(result.CountryId);
 
       result.AdminsOf = isOnBehalfOfUser ? [] : [.. _organizationService.ListAdminsOf(true).Cast<OrganizationInfo>()];
 

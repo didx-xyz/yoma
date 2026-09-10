@@ -11,7 +11,11 @@ namespace Yoma.Core.Domain.Payout.Interfaces
     /// </summary>
     PayoutTransactionInfo GetInfoById(Guid id);
 
-    PayoutTransaction? GetActiveByUserIdOrNull(Guid userId);
+    /// <summary>
+    /// Returns the user's active payout. With activeOnly false, falls back to the latest terminal payout
+    /// in the same query, without reward enrichment. Active-only callers retain the single-active invariant check.
+    /// </summary>
+    PayoutTransaction? GetByUserIdOrNull(Guid userId, bool activeOnly = true);
 
     /// <summary>
     /// Returns the total amount of all pending payouts. Pending includes every non-terminal status and is not

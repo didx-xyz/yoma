@@ -75,13 +75,22 @@ namespace Yoma.Core.Domain.Payout.Services
       };
     }
 
-    public PayoutTransaction? GetActiveByUserIdOrNull(Guid userId)
+    public PayoutTransaction? GetByUserIdOrNull(Guid userId, bool activeOnly = true)
     {
       if (userId == Guid.Empty)
         throw new ArgumentNullException(nameof(userId));
 
       var statusIds = Statuses_Active.Select(o => _payoutTransactionStatusService.GetByName(o.ToString()).Id).ToList();
-      return _payoutTransactionRepository.Query().SingleOrDefault(o => o.UserId == userId && statusIds.Contains(o.StatusId));
+      var query = _payoutTransactionRepository.Query().Where(o => o.UserId == userId);
+      if (activeOnly)
+        return query.SingleOrDefault(o => statusIds.Contains(o.StatusId));
+
+      // Profile needs the active payout, or the latest outcome after closure, without a second lookup.
+      // Prioritizing active state also keeps reservation accounting correct if historical rows were imported later.
+      return query.OrderByDescending(o => statusIds.Contains(o.StatusId))
+        .ThenByDescending(o => o.DateCreated)
+        .ThenByDescending(o => o.Id)
+        .FirstOrDefault();
     }
 
     // Pending includes every non-terminal payout status.
