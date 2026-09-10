@@ -5,8 +5,8 @@
  * provider is an API-side implementation detail and must never appear in a label, a type name or a
  * comment on this side.
  *
- * Returned by `POST /user/payout/zlto` and embedded in `GET /user/profile` as `payout.info`, so it
- * lives here rather than in `user.ts` — both endpoints hand back the same shape.
+ * "Cash Out" is the user-facing action wording; `payout` is the contract term. Never name the
+ * provider in copy.
  */
 
 /**
@@ -16,11 +16,36 @@
  */
 export type PayoutCurrency = "USD";
 
-/** A single payout, as the youth-facing surfaces see it. */
-export interface PayoutInfo {
+/**
+ * Whether a new payout may be started from the youth's profile country.
+ *
+ * Two independent booleans, not one tri-state: `offline` means the provider's live corridor list
+ * could not be read, so `supported` carries no information and must not be shown as "unsupported".
+ * The corridor list is provider-owned and changes — never hardcode it.
+ *
+ * Mirrors `PayoutCountryAvailability`. Gates **new initiation only**: an active payout stays
+ * resumable even if its corridor is withdrawn.
+ */
+export interface PayoutCountryAvailability {
+  supported: boolean;
+  offline: boolean;
+}
+
+/**
+ * The hosted session a youth is sent to in order to finish a cash out. Returned by both
+ * `POST /user/payout/zlto` (initiation) and `GET /user/payout/zlto` (refresh for an active payout).
+ *
+ * ⚠️ **Receiving one of these is not a completed payout.** It means a session exists; the terminal
+ * outcome is read back from Yoma's own payout record.
+ *
+ * `paymentUrl` is HTTPS-enforced server-side and short-lived (`expiresAt`, ≈30 minutes). Navigate
+ * to it and never persist it — fetch a fresh session instead.
+ */
+export interface PayoutSession {
   /** the settled value in `currency`, not the ZLTO amount it came from */
   amount: number;
   currency: PayoutCurrency;
-  /** where the youth completes or tracks the payout; null until the provider supplies one */
-  paymentUrl: string | null;
+  paymentUrl: string;
+  /** ISO 8601 */
+  expiresAt: string;
 }

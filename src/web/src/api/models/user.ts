@@ -1,5 +1,5 @@
 import type { SettingType } from "./common";
-import type { PayoutInfo } from "./payout";
+import type { PayoutCountryAvailability, PayoutCurrency } from "./payout";
 
 export interface User {
   id: string | null;
@@ -97,40 +97,85 @@ export enum ReferralLinkUsageStatus {
   Expired,
 }
 
+/**
+ * The youth wallet ledger, in the fixed order it is rendered:
+ * `balance` → −`pendingPayout` → `available` → +`pendingRewards` → `total`.
+ *
+ * **Nullability is the offline contract** (API `08cb6c10a`). The three provider-derived figures go
+ * `null` together when the reward provider cannot be reached; the two Yoma-owned figures always
+ * carry a value. Branch on `null`, not on `zltoOffline` — two signals for one state drift, and
+ * `zltoOffline` survives only as the explanatory flag behind the notice. Neither arithmetic nor
+ * truthiness is a safe test: `null + 5` is `5`, and `0` is a legitimate balance.
+ */
 export interface UserProfileZlto {
   walletCreationStatus: WalletCreationStatus;
   /**
-   * What the youth can spend right now. The reward provider removes reserved payout amounts from
-   * this figure the moment a payout is reserved, so it drops as soon as a payout is in flight.
+   * Wallet balance before payout reservations are excluded. Server-derived as
+   * `available + pendingPayout`, so the ledger always reconciles on screen even when `available`
+   * is stale — a summing ledger is not a correctness signal.
    */
-  available: number;
+  balance: number | null;
+  /**
+   * ZLTO the reward provider has reserved for an in-flight payout, taken from **Yoma's own
+   * record**, which is authoritative. Already deducted from `available`, and **not** deducted
+   * again from `total` — so a youth mid-payout can show `available: 0`, `total: 0` and a non-zero
+   * figure here. Treat it as real, committed ZLTO.
+   *
+   * The API returns this positive; the ledger renders it negative. The provider's own reserved
+   * balance is a server-side cross-check only — the UI must never reconcile or surface a mismatch.
+   */
+  pendingPayout: number;
+  /**
+   * What the youth can spend right now. The reward provider removes reserved payout amounts from
+   * this figure the moment a payout is reserved, so it **already excludes** `pendingPayout` —
+   * never subtract it twice. This is the figure a payout amount is checked against.
+   */
+  available: number | null;
   /**
    * Rewards earned but not yet pushed to the reward provider — awaiting the background service.
    * Counts opportunity and referral rewards only; payout-sourced transactions are excluded
    * (`RewardService.QueryPendingTransactionSchedule`).
    *
-   * ⚠️ Was `pending` until the payout refactor (API commit e5209d6c renamed
-   * `UserProfileZlto.Pending`). Same value, new name.
+   * ⚠️ Renamed twice: `pending` → `pendingAwards` (API `e5209d6c`) → `pendingRewards`
+   * (API `08cb6c10a`). Same value throughout.
    */
-  pendingAwards: number;
+  pendingRewards: number;
+  /** `available + pendingRewards`, server-derived. Excludes `pendingPayout` — see above. */
+  total: number | null;
   /**
-   * ZLTO the reward provider has reserved for an in-flight payout. Already deducted from
-   * `available`, and **not** deducted again from `total` — so a youth mid-payout can show
-   * `available: 0`, `total: 0` and a non-zero figure here. Treat it as real, committed ZLTO.
+   * true when the reward provider could not be reached. Explains *why* the three figures above are
+   * `null`; it is not the test for whether they are.
    */
-  pendingPayout: number;
-  /** `available + pendingAwards`, server-derived. Excludes `pendingPayout` — see above. */
-  total: number;
-  /** true when the reward provider could not be reached, so `available` and `total` are unreliable */
   zltoOffline: boolean | null;
 }
 
-/** Whether the youth has a payout in flight, and what it is. */
+/**
+ * Whether the youth may start a cash out, and whether one is already in flight.
+ *
+ * ⚠️ Was `{ pending, info }`. The API replaced it with the shape below (`UserProfilePayout`):
+ * `active` is derived server-side from `amount`, and the payout's value now sits directly on this
+ * object rather than in a nested `info`. Old field names would have arrived as `undefined` at
+ * runtime rather than failing to compile — see the epic's Cross-Area Notes.
+ */
 export interface UserProfilePayout {
-  /** true while a payout is active (not yet completed, failed, cancelled or expired) */
-  pending: boolean;
-  /** the active payout; null when `pending` is false */
-  info: PayoutInfo | null;
+  countryAvailability: PayoutCountryAvailability;
+  /**
+   * true while a non-terminal payout exists. **One active payout per user** — block a second Cash
+   * Out and offer a way back into the hosted journey instead.
+   */
+  active: boolean;
+  /**
+   * The active payout's value **in `currency`** — `PayoutTransaction.Amount`, which is USD. It is
+   * **not** the ZLTO that was reserved for it; that is `zlto.pendingPayout`. Null when none is
+   * active, which is what `active` is derived from server-side.
+   */
+  amount: number | null;
+  currency: PayoutCurrency | null;
+  /**
+   * ⚠️ There is **no payout status here**, so the UI cannot tell a payout waiting on the youth from
+   * one being processed, and cannot report a terminal outcome at all. See YOM-1074's feature doc:
+   * Flows C and D are built to what this object actually says.
+   */
 }
 
 export interface SettingsInfo {

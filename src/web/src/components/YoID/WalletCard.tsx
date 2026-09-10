@@ -3,6 +3,8 @@ import iconZltoColor from "public/images/icon-zlto-rounded-color.webp";
 import { useState } from "react";
 import { IoIosInformationCircleOutline } from "react-icons/io";
 import type { UserProfile } from "~/api/models/user";
+import { CashOutEntry } from "../Payout/CashOutEntry";
+import { ZltoLedger } from "../Rewards/ZltoLedger";
 import NoRowsMessage from "../NoRowsMessage";
 import { ZltoModal } from "./ZltoModal";
 
@@ -12,23 +14,17 @@ export const WalletCard: React.FC<{
   const [zltoModalVisible, setZltoModalVisible] = useState(false);
 
   const zlto = userProfile?.zlto;
-  /** rewards awaiting processing — the field formerly called `pending` */
-  const pendingAwards = zlto?.pendingAwards ?? 0;
-  /** already reserved by the reward provider for an in-flight payout, so no longer in `available` */
-  const pendingPayout = zlto?.pendingPayout ?? 0;
-
-  const processing = pendingAwards.toLocaleString();
-  const available = zlto?.zltoOffline
-    ? "Unable to retrieve value"
-    : (zlto?.available ?? 0).toLocaleString();
-  const total = (zlto?.total ?? 0).toLocaleString();
 
   /**
-   * "Nothing yet" means genuinely nothing. ZLTO reserved for a payout has already been taken out of
-   * `available` (and so out of `total`) by the provider, so a youth mid-payout would otherwise be
-   * told they have never earned anything while their ZLTO is in flight.
+   * "Nothing yet" means genuinely nothing, and it has to be *known* to be nothing.
+   *
+   * `total` is null while the reward provider is offline, so the old `?? 0` collapsed "we cannot
+   * see your balance" into "you have never earned anything" — the worst reading available. It is
+   * only an empty wallet when the server tells us the total is zero and nothing is reserved for a
+   * payout: ZLTO in flight has already been taken out of `available` (and so out of `total`), so a
+   * youth mid-payout would otherwise be told their earnings never happened.
    */
-  if ((zlto?.total ?? 0) === 0 && pendingPayout === 0) {
+  if (!zlto || (zlto.total === 0 && zlto.pendingPayout === 0)) {
     return (
       <NoRowsMessage
         title={""}
@@ -50,10 +46,10 @@ export const WalletCard: React.FC<{
       />
 
       <div className="flex h-full flex-col gap-2 text-xs text-black md:text-sm">
-        <div className="text-gray-dark h-full content-center justify-center gap-2">
+        <div className="text-gray-dark content-center justify-center gap-2">
           <span className="text-xs">
             <span className="font-semibold italic">ZLTO</span> - Your digital
-            wallet for managing rewards and transactions.
+            wallet for rewards.
           </span>
 
           {/* TOOLTIP */}
@@ -66,64 +62,21 @@ export const WalletCard: React.FC<{
             <IoIosInformationCircleOutline className="text-green h-5 w-5" />
           </button>
         </div>
-        <div className="flex flex-col gap-1 border-y-2 border-dotted border-[#FFD69C] py-2">
-          <div className="flex flex-row items-center">
-            <p className="w-28">Available:</p>
 
-            <div className="flex items-center text-xs font-semibold text-black">
-              <Image
-                src={iconZltoColor}
-                className="mr-2 h-auto"
-                alt="ZLTO"
-                width={18}
-              />
-              {available}
-            </div>
-          </div>
-          <div className="flex flex-row items-center">
-            <p className="w-28">Processing:</p>
-
-            <div className="flex items-center text-xs font-semibold text-black">
-              <Image
-                src={iconZltoColor}
-                className="mr-2 h-auto"
-                alt="ZLTO"
-                width={18}
-              />
-              {processing}
-            </div>
-          </div>
-
-          {/* Only while a payout is in flight — this ZLTO is committed and no longer spendable,
-              so leaving it out would make the balance look like it had simply dropped. */}
-          {pendingPayout > 0 && (
-            <div className="flex flex-row items-center">
-              <p className="w-28">Paying out:</p>
-
-              <div className="flex items-center text-xs font-semibold text-black">
-                <Image
-                  src={iconZltoColor}
-                  className="mr-2 h-auto"
-                  alt="ZLTO"
-                  width={18}
-                />
-                {pendingPayout.toLocaleString()}
-              </div>
-            </div>
-          )}
-        </div>
-        <div className="relative flex flex-row items-center">
-          <p className="w-28 font-bold">Total:</p>
-          <div className="badge -ml-2 !rounded-full bg-white px-2 py-2 !font-semibold text-black">
-            <Image
-              src={iconZltoColor}
-              className="mr-2 h-auto"
-              alt="ZLTO"
-              width={18}
-            />
-            {total}
-          </div>
-        </div>
+        {/*
+          Centred in whatever space the card has left. A wallet with nothing in flight collapses to
+          a single "Available" row, and the Yo-ID dashboard cards are a fixed-height grid — pinned
+          to the top, one row left an inch of empty white under it.
+        */}
+        <ZltoLedger
+          zlto={zlto}
+          variant="expanded"
+          className="flex-1 justify-center"
+          /* The Cash Out entry point belongs to the ledger, not to this card: the same button,
+             with the same label rules and the same flow behind it, on both surfaces that show
+             these figures. This card only says which variant it wants. */
+          actions={<CashOutEntry profile={userProfile} variant="expanded" />}
+        />
       </div>
     </>
   );
