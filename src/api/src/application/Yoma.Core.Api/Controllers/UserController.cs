@@ -138,7 +138,7 @@ namespace Yoma.Core.Api.Controllers
     [SwaggerOperation(Summary = "Get the latest payout state (Authenticated User)",
       Description = "Returns the current user's active payout, otherwise the latest terminal outcome. Read-only: no provider calls, session creation or reward enrichment")]
     [HttpGet("payout/latest")]
-    [ProducesResponseType(typeof(PayoutTransactionSummary), (int)HttpStatusCode.OK)]
+    [ProducesResponseType(typeof(PayoutTransactionInfo), (int)HttpStatusCode.OK)]
     [ProducesResponseType((int)HttpStatusCode.NotFound)]
     [Authorize(Roles = Constants.Role_User)]
     public IActionResult GetLatestPayoutTransaction()

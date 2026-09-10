@@ -1,19 +1,29 @@
-using Yoma.Core.Domain.Entity.Models;
-using Yoma.Core.Domain.Reward.Models;
-
 namespace Yoma.Core.Domain.Payout.Models
 {
   /// <summary>
-  /// Administrative payout view combining Yoma's payout audit record with the user and its funding transaction.
-  /// The payout transaction remains authoritative for payout processing; the reward transaction records the
-  /// corresponding reward reservation, release or commit.
+  /// On-demand youth payout state. Excludes raw errors, provider references and reward accounting;
+  /// ZLTO balances and reservations remain in the wallet section of the user profile.
   /// </summary>
   public sealed class PayoutTransactionInfo
   {
-    public PayoutTransaction Transaction { get; set; } = null!;
+    /// <summary>
+    /// Recorded Yoma status. Processing starts at hosted-payout creation, not necessarily youth confirmation.
+    /// </summary>
+    public PayoutTransactionStatus Status { get; set; }
 
-    public UserInfo User { get; set; } = null!;
+    /// <summary>
+    /// Payout amount in Currency (currently USD), not ZLTO.
+    /// </summary>
+    public decimal Amount { get; set; }
 
-    public RewardTransaction? RewardTransaction { get; set; }
+    public Currency Currency { get; set; }
+
+    public DateTimeOffset DateCreated { get; set; }
+
+    /// <summary>
+    /// An active payout has a provider reference and a session may be requested. Not a live availability
+    /// guarantee. Always false for terminal payouts.
+    /// </summary>
+    public bool CanResume { get; set; }
   }
 }

@@ -59,12 +59,12 @@ namespace Yoma.Core.Domain.Payout.Services
       return GetById(id, null);
     }
 
-    public PayoutTransactionInfo GetInfoById(Guid id)
+    public PayoutTransactionAdminInfo GetAdminInfoById(Guid id)
     {
       var transaction = GetById(id);
       var user = _userService.GetById(transaction.UserId, false, false);
 
-      return new PayoutTransactionInfo
+      return new PayoutTransactionAdminInfo
       {
         Transaction = transaction,
         User = user.ToInfo(),
@@ -93,12 +93,12 @@ namespace Yoma.Core.Domain.Payout.Services
         .FirstOrDefault();
     }
 
-    public PayoutTransactionSummary GetLatestSummaryByUserId(Guid userId)
+    public PayoutTransactionInfo GetLatestInfoByUserId(Guid userId)
     {
       var payout = GetByUserIdOrNull(userId, false)
         ?? throw new EntityNotFoundException("No payout exists for the current user");
 
-      return new PayoutTransactionSummary
+      return new PayoutTransactionInfo
       {
         Status = payout.Status,
         Amount = payout.Amount,
