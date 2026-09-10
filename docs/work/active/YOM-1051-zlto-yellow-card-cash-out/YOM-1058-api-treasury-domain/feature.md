@@ -31,6 +31,7 @@ financial rules and Web-visible figures.
 - [x] Complete entity, models, repository, validators and controller.
 - [x] Add lifetime and current-financial-year reward/payout cumulatives.
 - [x] Add conversion preview and funds-available response.
+- [x] Expose the configured ZLTO-per-USD display rate on conversion previews without deriving it from rounded USD.
 - [x] Add pending-payout-aware available balance.
 - [x] Add daily rollover plus inline financial-year guards.
 - [x] Preserve lifetime totals and reset current-year Treasury/Organization totals.
@@ -42,6 +43,8 @@ financial rules and Web-visible figures.
 - 2026-07-21: Payout pool stays nullable in storage but is required by API validation.
 - 2026-08-05: Pending payouts reserve capacity at initiation; completed payouts increase lifetime and the current financial year at completion.
 - 2026-08-05: A payout accepted earlier may complete after pool depletion; finalization is not blocked again.
+- 2026-09-10: Youth conversion previews reuse TreasuryInfo's display-rate calculation; no Treasury pool
+  information is added to the public response. Existing positive/whole-number preview validation already returns 400.
 
 ## Links
 

@@ -143,7 +143,7 @@ namespace Yoma.Core.Domain.Payout.Services
       if (userId == Guid.Empty)
         throw new ArgumentNullException(nameof(userId));
 
-      var payout = _payoutTransactionService.GetActiveByUserIdOrNull(userId)
+      var payout = _payoutTransactionService.GetByUserIdOrNull(userId)
         ?? throw new EntityNotFoundException("No active payout exists for the current user");
 
       return await _distributedLockService.RunWithLockAsync(GetLockKey(payout.Id), _payoutLockDuration, async () =>
@@ -228,9 +228,10 @@ namespace Yoma.Core.Domain.Payout.Services
       if (rewardReservationExpiresAt <= DateTimeOffset.UtcNow)
         throw new ArgumentOutOfRangeException(nameof(rewardReservationExpiresAt), "Reward reservation expiration must be in the future");
 
-      ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(amount, default, nameof(amount));
+      if (amount <= 0m)
+        throw new ValidationException("Payout amount must be greater than zero");
       if (decimal.Truncate(amount) != amount)
-        throw new ArgumentException("Payout amount must be a whole number", nameof(amount));
+        throw new ValidationException("Payout amount must be a whole number");
 
       var user = GetUser(userId);
       ValidateUserProfileForPayout(user);
@@ -398,7 +399,7 @@ namespace Yoma.Core.Domain.Payout.Services
         var treasury = _treasuryService.Get(LockMode.Wait);
         await _treasuryService.EnsureCurrentFinancialYear(treasury);
 
-        if (_payoutTransactionService.GetActiveByUserIdOrNull(userId) != null)
+        if (_payoutTransactionService.GetByUserIdOrNull(userId) != null)
           throw new ValidationException("A payout is already in progress");
 
         var payoutAmount = convertFromZlto

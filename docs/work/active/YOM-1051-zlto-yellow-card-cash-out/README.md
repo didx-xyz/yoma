@@ -189,6 +189,55 @@ Branch state, in order:
 - **Status filters send the enum _name_, not the ordinal.** `OrganizationStatus.Active.toString()`
   → `"1"` parsed only because the TS and C# ordinals happen to align. Use `Enum[Enum.Value]`.
 
+### Youth cash-out API additions — 2026-09-10
+
+Final contract after Adrian's review; supersedes the profile-summary and dedicated-endpoint proposals.
+No frontend files or migrations changed.
+
+- GET `/api/v3/user` exposes the existing compact payout section:
+  `{ countryAvailability, active, status, canResume, amount, currency, dateCreated }`.
+  No transaction id, nested summary, duplicate ZLTO amount or additional youth endpoint.
+- One payout query selects the active transaction first, otherwise the latest terminal transaction.
+  `GetByUserIdOrNull(userId, activeOnly = true)` preserves active-only behaviour for initiation/session
+  guards, including duplicate-active detection. Profile passes false; selection stays user-scoped.
+- `active` derives from Initiated, Processing or ReconciliationRequired, NOT the presence of amount.
+  Before the first payout: status/amount/currency/dateCreated are null, active/canResume are false.
+  After closure: status, USD amount/currency and initiation time remain visible; active/canResume are false.
+  This changes amount/currency's previous null-after-closure semantics: web must use active/status.
+- `canResume` means active with a persisted provider reference, so a session request can be attempted.
+  It is not live provider availability or proof that youth confirmation is still outstanding.
+  Active plus false means setup/recovery pending: offer a later refresh.
+- Processing begins at hosted-payout creation, before youth confirmation. Use neutral in-progress copy;
+  the current contract cannot distinguish awaiting confirmation from post-confirmation bank delivery.
+- Completed, Failed, Cancelled and Expired are retained outcomes, not new live provider queries. No
+  terminal payout can resume through Yoma. Provider final fiat-delivery retries after Completed do not
+  reopen Yoma's payout or release its committed reward.
+- Currency separation is intentional: payout.amount is USD; zlto.pendingPayout is reserved ZLTO.
+  After commit/release pendingPayout is zero; the wallet reflects the resulting balance. Do not infer
+  outcome from zero pendingPayout, duplicate rewards in the payout model, or recalculate historical ZLTO
+  from the current conversion rate. Flow D should use status plus the updated wallet; omit an exact
+  historical ZLTO amount unless the UI retained it for that journey.
+- No extra payout/history query or terminal reward lookup is added to profile. The linked reward lookup
+  remains restricted to active reward payouts, as before. Do not poll the complete profile indefinitely:
+  refresh during the cash-out journey/iframe closure, and avoid re-announcing old outcomes on every visit.
+- dateCreated provides the Started label and initiation context for the current journey; it is not the
+  provider confirmation/completion timestamp or a general unread-notification/history mechanism.
+- Conversion preview adds conversionRateZltoPerUsd, using Treasury's four-decimal display calculation.
+  Initiation recalculates at the current rate. Preview and initiation reject non-positive/fractional ZLTO
+  with HTTP 400; internal ArgumentException handling is not globally changed.
+- Initiate: POST `/api/v3/user/payout/zlto?amount=450` reserves 450 ZLTO and returns
+  `{ amount, currency, paymentUrl, expiresAt }` (USD amount). Use the complete returned paymentUrl,
+  including its fragment token, as the iframe src.
+- Resume/refresh: GET `/api/v3/user/payout/zlto` returns a fresh paymentUrl for the same active payout.
+  Do not POST again to refresh a URL; that attempts a second payout and the active guard rejects it.
+  Session expiry (~30 minutes) does not expire the underlying payout.
+- The hosted journey belongs in an iframe modal INSIDE Yoma. Closing it is not cancellation; refresh
+  profile/wallet for Flow D. No return URL is needed for modal closure. Cross-origin parent code must not
+  inspect the iframe DOM or assume success from its URL; any automatic close/message needs an agreed,
+  origin-validated provider postMessage contract. Authentication embedding exceptions need IXO confirmation.
+- Session errors can be transient; a provider 404 alone does not prove the payout closed. Refresh profile
+  and render the recorded status. Email notification ownership remains separate from these in-app outcomes.
+
 ### Treasury availability model — three figures, never conflate
 
 | Field                                             | Definition                   | Use for                                           |
