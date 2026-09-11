@@ -31,16 +31,27 @@ export const CashOutHostedStep: React.FC<{
   onDone: () => void;
 }> = ({ paymentUrl, onOpenInNewWindow, onDone }) => (
   <div className="flex min-h-0 grow flex-col gap-3">
+    {/*
+      The frame takes every pixel the dialog has left, at whatever size the window is.
+
+      `min-h-0` on both this column and the iframe is what makes that work: a flex child's default
+      `min-height: auto` refuses to shrink below its content, and an iframe's content is a whole
+      other document — so without it the frame keeps its intrinsic 150px or its own min-height and
+      stops tracking the dialog. `h-full` alongside `grow` covers the case where the parent chain
+      hands down a definite height rather than free space.
+    */}
     <iframe
       src={paymentUrl}
       title={HOSTED_COPY.frameTitle}
-      className="border-gray min-h-[420px] w-full grow rounded-lg border bg-white"
+      className="border-gray h-full min-h-0 w-full grow rounded-lg border bg-white"
       allow="camera; microphone; clipboard-write; payment"
       referrerPolicy="no-referrer"
     />
 
     <div className="flex flex-col items-center gap-2">
-      <p className="text-gray-dark text-center text-xs">
+      {/* `w-full` so it wraps: inside `items-center` the paragraph would take its content width
+          and run off the edge of a narrow screen instead of breaking onto a second line. */}
+      <p className="text-gray-dark w-full text-center text-xs">
         {HOSTED_COPY.footerNote}
       </p>
 

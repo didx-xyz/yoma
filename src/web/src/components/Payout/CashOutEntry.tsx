@@ -498,11 +498,23 @@ export const CashOutEntry: React.FC<{
         */
         className={
           view.name === "hosted"
-            ? "md:h-[85vh] md:w-[720px]"
+            ? // Scales with the window rather than sitting at a fixed width: the hosted journey is
+              // a full page with its own forms and identity checks, and every pixel it can have is
+              // one the youth does not have to scroll. Capped so it stays a dialog on a wide
+              // monitor instead of stretching a narrow layout across 2,000px.
+              "md:h-[90vh] md:w-11/12 md:max-w-[1040px]"
             : "md:h-fit md:max-h-[680px] md:w-[520px]"
         }
       >
-        <div className="flex h-full flex-col gap-4 overflow-y-auto p-4 pb-8 text-black">
+        <div
+          className={
+            view.name === "hosted"
+              ? // No scrolling and no bottom padding: the frame scrolls its own document, and the
+                // column has to have a definite height for the frame to fill it.
+                "flex h-full min-h-0 flex-col gap-3 overflow-hidden p-4 text-black"
+              : "flex h-full flex-col gap-4 overflow-y-auto p-4 pb-8 text-black"
+          }
+        >
           <div className="flex flex-row items-start gap-2">
             {/* The title is centred over the content, with the ✕ out of the flow on the right —
                 the grey circular close control the product uses everywhere. */}
