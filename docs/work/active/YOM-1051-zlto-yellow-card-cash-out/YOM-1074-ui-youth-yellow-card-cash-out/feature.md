@@ -348,8 +348,12 @@ wanted.
 - [ ] **Session-backed pass on Dev** — the interactive half (typing, `Max`, 1 → 2 → 3, a real POST,
       the iframe against the real provider). Test wallet funded with 2,000 ZLTO on
       `jason.dicker@didx.co.za`; needs a browser login, so it cannot run headless here.
-- [ ] **Confirm the provider permits framing** — open with IXO. The escape hatch covers a refusal,
-      but a modal that shows a browser's "refused to connect" is not a shippable primary path.
+- [x] **Confirm the provider permits framing** — IXO confirmed it, the Test `/pay` response sets no
+      `X-Frame-Options` and no framing CSP, and the page was seen rendering in the iframe on Dev
+      (2026-09-11). Steps past sign-in are still unproven embedded; a downstream refusal goes to IXO.
+- [ ] **Blocked on the API: the provider rejects Yoma's gender values** — the hosted verification
+      step wants `male | female | other` and Yoma sends `Male` / `Female` / `Prefer not to say`
+      untouched. Blocks the hosted journey for every user; nothing on the UI side can affect it.
 
 ## Decisions
 
@@ -614,6 +618,19 @@ wanted.
   (`ValidationException` in `PayoutRewards`), so "must be greater than zero" and "must be a whole
   number" land on the field like any other rejection. The client guards stay — they are what keeps
   the youth from sending a request at all.
+
+- **2026-09-11: the hosted frame tracks the window, and `min-h-0` is why.** The dialog was a fixed
+  `720px`, and the frame kept its own intrinsic height inside a scrolling column — so the journey
+  sat in a narrow box with white space around it. For the hosted step the dialog is now
+  `md:h-[90vh] md:w-11/12 md:max-w-[1040px]`, its body is `overflow-hidden` with a definite height
+  rather than a scroll container, and the iframe is `h-full min-h-0 w-full grow`. The `min-h-0` is
+  the load-bearing part: a flex child's default `min-height: auto` will not shrink below its
+  content, and an iframe's content is a whole other document. Capped at 1040px so a wide monitor
+  gets a dialog rather than a narrow hosted layout stretched across it. Verified at three sizes.
+- **2026-09-11: Adrian confirmed the enum convention holds in both directions** — the API accepts
+  integers *or* names on the way in, and always serialises PascalCase names on the way out. So the
+  string-enum correction is the convention, not a workaround, and it applies to every web response
+  model. No API change; the sweep of other models for numeric enums is web-side work.
 
 ## Links
 
