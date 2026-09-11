@@ -33,6 +33,7 @@ provider-neutral hosted payout boundary against IXO's generated sandbox OpenAPI 
 - [x] Return active payout data on profile without a stored URL; active is the resumable state.
 - [x] Implement authentication, initiation and refreshed-session lookup.
 - [x] Map actual request/response/error contracts.
+- [x] Normalize gender values for IXO verification; confirm the interim non-disclosure mapping with IXO.
 - [x] Expose and cache the provider's live supported-country list.
 - [x] Expose the current profile-country availability in the user profile payout section.
 - [x] Reject unsupported profile countries before payout creation or reward reservation.
@@ -44,6 +45,9 @@ provider-neutral hosted payout boundary against IXO's generated sandbox OpenAPI 
 
 ## Decisions
 
+- 2026-09-11: The IXO client maps Male/Female to lowercase and Prefer not to say to other,
+  explicitly approved by Adrian as an interim mapping pending IXO confirmation. Yoma lookup values
+  remain unchanged; unrecognized values are rejected rather than silently mapped to other.
 - 2026-08-05: Yoma calls IXO with payout reference, user context and USD amount; the Web never calls Yellow Card directly.
 - 2026-08-05: Resume requests obtain a fresh URL/session on demand because the token is short-lived.
 - 2026-08-27: IXO's generated sandbox OpenAPI is authoritative for OAuth, initiation, session refresh,

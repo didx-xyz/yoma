@@ -24,6 +24,15 @@ namespace Yoma.Core.Infrastructure.IXO.YellowCard.Client
   public sealed class YellowCardClient : IPayoutProviderClient
   {
     #region Class Variables
+    // IXO verification requires lowercase values. Non-disclosure maps to "other" as an
+    // interim integration decision pending IXO confirmation; the Yoma lookup is unchanged.
+    private static readonly Dictionary<string, string> GenderMappings = new(StringComparer.OrdinalIgnoreCase)
+    {
+      { "Male", "male" },
+      { "Female", "female" },
+      { "Prefer not to say", "other" }
+    };
+
     private readonly ILogger<YellowCardClient> _logger;
     private readonly AppSettings _appSettings;
     private readonly YellowCardOptions _options;
@@ -297,7 +306,7 @@ namespace Yoma.Core.Infrastructure.IXO.YellowCard.Client
       request.FirstName = NormalizeRequired(request.FirstName, nameof(request.FirstName));
       request.Surname = NormalizeRequired(request.Surname, nameof(request.Surname));
       request.CountryCodeAlpha2 = NormalizeRequired(request.CountryCodeAlpha2, nameof(request.CountryCodeAlpha2)).ToUpperInvariant();
-      request.Gender = NormalizeRequired(request.Gender, nameof(request.Gender));
+      request.Gender = NormalizeGender(request.Gender);
       request.Education = request.Education?.Trim();
 
       if (request.CountryCodeAlpha2.Length != 2)
@@ -306,6 +315,14 @@ namespace Yoma.Core.Infrastructure.IXO.YellowCard.Client
         throw new ArgumentNullException(nameof(request), "Date of birth is empty");
       if (request.AmountInUSD <= default(decimal))
         throw new ArgumentOutOfRangeException(nameof(request), "Payout amount must be greater than zero");
+    }
+
+    private static string NormalizeGender(string gender)
+    {
+      gender = NormalizeRequired(gender, nameof(gender));
+      return GenderMappings.TryGetValue(gender, out var result)
+        ? result
+        : throw new ArgumentException("Gender is not supported by IXO payout verification", nameof(gender));
     }
 
     private static void ValidateSessionStatus(string status)
