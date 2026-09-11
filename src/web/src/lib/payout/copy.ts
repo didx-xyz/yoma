@@ -167,6 +167,16 @@ export const HOSTED_COPY = {
    * frame that refused to load.
    */
   newWindowAction: "Open in a new window",
+  /**
+   * Appears a few seconds in, whether or not anything is wrong, because a frame that was refused
+   * cannot be detected: a `frame-ancestors` violation still fires `load` on the browser's own error
+   * document, and the frame is cross-origin, so there is nothing to read. Seen on Dev — the
+   * provider's payment page frames fine, but its hosted **sign-in** step sets
+   * `frame-ancestors` without Yoma's origin, so a returning youth gets a blank box. A short prompt
+   * is honest and costs a line; leaving someone in front of that box with their Zlto reserved is
+   * not.
+   */
+  blockedHint: "Not loading? Open it in a new window instead.",
   doneAction: "I'm done",
 } as const;
 

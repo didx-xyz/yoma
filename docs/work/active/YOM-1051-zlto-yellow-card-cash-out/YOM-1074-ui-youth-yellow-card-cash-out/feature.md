@@ -348,9 +348,10 @@ wanted.
 - [ ] **Session-backed pass on Dev** — the interactive half (typing, `Max`, 1 → 2 → 3, a real POST,
       the iframe against the real provider). Test wallet funded with 2,000 ZLTO on
       `jason.dicker@didx.co.za`; needs a browser login, so it cannot run headless here.
-- [x] **Confirm the provider permits framing** — IXO confirmed it, the Test `/pay` response sets no
-      `X-Frame-Options` and no framing CSP, and the page was seen rendering in the iframe on Dev
-      (2026-09-11). Steps past sign-in are still unproven embedded; a downstream refusal goes to IXO.
+- [ ] **Framing works for the payment page, not for the hosted sign-in** (Dev, 2026-09-11). The
+      `/pay` response sets no `X-Frame-Options` and no framing CSP, but the sign-in it redirects to
+      sets `frame-ancestors` without Yoma's origin, so a **returning** youth gets a blank frame.
+      Needs IXO to allowlist Yoma's origins, or the iframe becomes a new window.
 - [ ] **Blocked on the API: the provider rejects Yoma's gender values** — the hosted verification
       step wants `male | female | other` and Yoma sends `Male` / `Female` / `Prefer not to say`
       untouched. Blocks the hosted journey for every user; nothing on the UI side can affect it.
