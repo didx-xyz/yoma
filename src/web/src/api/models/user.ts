@@ -1,5 +1,9 @@
 import type { SettingType } from "./common";
-import type { PayoutCountryAvailability, PayoutCurrency } from "./payout";
+import type {
+  PayoutCountryAvailability,
+  PayoutCurrency,
+  PayoutTransactionStatus,
+} from "./payout";
 
 export interface User {
   id: string | null;
@@ -150,32 +154,46 @@ export interface UserProfileZlto {
 }
 
 /**
- * Whether the youth may start a cash out, and whether one is already in flight.
+ * Whether the youth may start a cash out, and what is already in flight.
  *
- * ⚠️ Was `{ pending, info }`. The API replaced it with the shape below (`UserProfilePayout`):
- * `active` is derived server-side from `amount`, and the payout's value now sits directly on this
- * object rather than in a nested `info`. Old field names would have arrived as `undefined` at
- * runtime rather than failing to compile — see the epic's Cross-Area Notes.
+ * **Active payouts only.** When nothing is in flight, `status`, `amount`, `currency` and
+ * `dateCreated` are null and `active`/`canResume` are false — a finished payout disappears from
+ * here rather than lingering on every wallet view. The outcome of one is read on demand from
+ * `GET /user/payout/latest` (`PayoutTransactionInfo`), inside the cash-out journey.
+ *
+ * ⚠️ Renamed and reshaped twice already: `{ pending, info }` → `{ countryAvailability, active,
+ * amount, currency }` → the shape below (API 2026-09-10). Field drift here arrives as `undefined`
+ * at runtime rather than failing to compile — see the epic's Cross-Area Notes.
  */
 export interface UserProfilePayout {
   countryAvailability: PayoutCountryAvailability;
   /**
-   * true while a non-terminal payout exists. **One active payout per user** — block a second Cash
-   * Out and offer a way back into the hosted journey instead.
+   * true while a non-terminal payout exists — server-derived from `status` being one of
+   * `Initiated` / `Processing` / `ReconciliationRequired`. **One active payout per user**: block a
+   * second Cash Out and offer the way back into this one instead.
    */
   active: boolean;
   /**
+   * The active payout's status; null when none is active. ⚠️ `Processing` begins when the hosted
+   * payout is created, **not** when the youth confirms it — keep the wording neutral.
+   */
+  status: PayoutTransactionStatus | null;
+  /**
+   * Whether a hosted session can be *requested*: active **and** the provider holds a reference.
+   * `active && !canResume` is the setup/recovery window — reconciliation fills the reference in, so
+   * that state is a wait with a retry, not a dead end. It is **not** a live availability guarantee,
+   * and not proof that confirmation is still outstanding.
+   */
+  canResume: boolean;
+  /**
    * The active payout's value **in `currency`** — `PayoutTransaction.Amount`, which is USD. It is
-   * **not** the ZLTO that was reserved for it; that is `zlto.pendingPayout`. Null when none is
-   * active, which is what `active` is derived from server-side.
+   * **not** the ZLTO reserved for it; that is `zlto.pendingPayout`. The separation is deliberate:
+   * do not duplicate ZLTO accounting here or reconstruct it from this at today's rate.
    */
   amount: number | null;
   currency: PayoutCurrency | null;
-  /**
-   * ⚠️ There is **no payout status here**, so the UI cannot tell a payout waiting on the youth from
-   * one being processed, and cannot report a terminal outcome at all. See YOM-1074's feature doc:
-   * Flows C and D are built to what this object actually says.
-   */
+  /** ISO 8601 — when the payout was **initiated**, for the "Started" label. Null when none. */
+  dateCreated: string | null;
 }
 
 export interface SettingsInfo {
@@ -188,11 +206,23 @@ export interface SettingsInfoItem {
   value: any;
 }
 
+/**
+ * ⚠️ **A string enum, because the API sends the enum _name_.** `Startup.cs` registers a strict
+ * string enum converter with no naming strategy, so every enum on the wire is its PascalCase name —
+ * confirmed in the Swagger schema (`"type": "string"`) and in how the rest of the app reads these
+ * fields (`item.status === "Active"`).
+ *
+ * This was declared as a **numeric** enum with four members, and `WalletCreationStatus.Created`
+ * was therefore `2`: `"Created" !== 2` is always true, so the Cash Out gate refused every youth
+ * with "Your wallet is still being set up". It also omitted `PendingUsernameUpdate`, so even the
+ * ordinals were wrong. Mirror `Yoma.Core.Domain.Reward.WalletCreationStatus` exactly.
+ */
 export enum WalletCreationStatus {
-  Unscheduled,
-  Pending,
-  Created,
-  Error,
+  Unscheduled = "Unscheduled",
+  Pending = "Pending",
+  PendingUsernameUpdate = "PendingUsernameUpdate",
+  Created = "Created",
+  Error = "Error",
 }
 
 export interface UserSkillInfo extends Skill {

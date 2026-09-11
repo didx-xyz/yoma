@@ -1,10 +1,12 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSetAtom } from "jotai";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { IoIosTimer, IoMdClose } from "react-icons/io";
-import { IoAlertCircleOutline, IoOpenOutline } from "react-icons/io5";
+import { useCallback, useEffect, useState } from "react";
+import { IoMdClose } from "react-icons/io";
+import { IoAlertCircleOutline } from "react-icons/io5";
+import type { PayoutTransactionInfo } from "~/api/models/payout";
 import type { UserProfile } from "~/api/models/user";
 import {
+  getLatestPayout,
   getZltoPayoutSession,
   initiateZltoPayout,
 } from "~/api/services/payout";
@@ -12,20 +14,21 @@ import { convertZltoToUsd } from "~/api/services/treasury";
 import { getUserProfile } from "~/api/services/user";
 import { BTN_DIALOG_CLOSE } from "~/components/Common/buttonStyles";
 import CustomModal from "~/components/Common/CustomModal";
-import { inferConversionRateZltoPerUsd } from "~/lib/payout/conversion";
 import {
   AMOUNT_COPY,
+  AMOUNT_PROBLEM_COPY,
   AMOUNT_SERVER_REJECTED,
   CASH_OUT_ACTION,
   CASH_OUT_ACTION_CONTINUE,
   CASH_OUT_DISABLED_HELPER,
   FAILURE_COPY,
   GATE_COPY,
-  HANDOFF_COPY,
-  RESULT_COPY,
+  HOSTED_COPY,
+  OUTCOME_COPY,
   RESUME_COPY,
   REVIEW_COPY,
 } from "~/lib/payout/copy";
+import { formatPayoutStarted } from "~/lib/payout/outcome";
 import type { CashOutBlockReason } from "~/lib/payout/eligibility";
 import { cashOutEligibility } from "~/lib/payout/eligibility";
 import { isSafePaymentUrl, openPaymentUrl } from "~/lib/payout/handoff";
@@ -36,7 +39,9 @@ import type { ZltoLedgerVariant } from "../Rewards/ZltoLedger";
 import { CashOutAmountStep, type CashOutPreview } from "./CashOutAmountStep";
 import { CashOutButton } from "./CashOutButton";
 import { CashOutGate } from "./CashOutGate";
+import { CashOutHostedStep } from "./CashOutHostedStep";
 import { CashOutMessageStep } from "./CashOutMessageStep";
+import { CashOutOutcomeStep } from "./CashOutOutcomeStep";
 import { CashOutResumePanel } from "./CashOutResumePanel";
 import { CashOutReviewStep } from "./CashOutReviewStep";
 import { CashOutStepper, type CashOutStep } from "./CashOutStepper";
@@ -63,9 +68,14 @@ import { CashOutStepper, type CashOutStep } from "./CashOutStepper";
  * 3. `treasuryFundsAvailable: false` is a paused panel, never a field error.
  * 4. Only "insufficient reward balance" is a field error; everything else is a state.
  *
+ * The hosted journey runs in an **iframe inside this dialog** (API directive, 2026-09-10), so the
+ * youth never leaves Yoma. Closing it cancels nothing: Yoma re-reads the profile and asks
+ * `GET /user/payout/latest` how the payout actually stands, and shows that.
+ *
  * ⚠️ The hosted URL is **never persisted** — not in storage, not in a route. It lives in this
- * component's state for as long as the dialog is open, because the popup fallback needs something
- * to open, and it dies with the dialog. An active payout gets a fresh session on tap instead.
+ * component's state while the dialog is open and dies with it; an active payout gets a *fresh*
+ * session from `GET /user/payout/zlto` on tap. Never `POST` to refresh — that starts a second
+ * payout.
  */
 
 type FlowView =
@@ -73,8 +83,8 @@ type FlowView =
   | { name: "gate"; reason: CashOutBlockReason; missingFields?: string[] }
   | { name: "amount" }
   | { name: "review"; amount: number; usd: number; rate: number | null }
-  /** the hand-off: a session exists and the new tab has been asked for */
-  | { name: "ready"; paymentUrl: string }
+  /** the hosted journey, embedded */
+  | { name: "hosted"; paymentUrl: string }
   /** the payout in flight, and the way back into it */
   | {
       name: "resume";
@@ -83,8 +93,10 @@ type FlowView =
       /** false while the payout has not been placed with the provider — nothing to pick up yet */
       invitation?: boolean;
     }
-  /** step 3, reached by coming back to this tab — Yoma knows a payout is in flight, no more */
-  | { name: "result" }
+  /** step 3 — the recorded outcome, or `null` when it could not be read */
+  | { name: "outcome"; payout: PayoutTransactionInfo | null }
+  /** reading the outcome, right after the hosted modal closed */
+  | { name: "checking" }
   | { name: "failed" };
 
 /** How long after the last keystroke to price the amount. */
@@ -93,8 +105,9 @@ const PREVIEW_DEBOUNCE_MS = 400;
 const STEP_BY_VIEW: Partial<Record<FlowView["name"], CashOutStep>> = {
   amount: 1,
   review: 2,
-  ready: 3,
-  result: 3,
+  hosted: 3,
+  checking: 3,
+  outcome: 3,
 };
 
 export const CashOutEntry: React.FC<{
@@ -178,10 +191,7 @@ export const CashOutEntry: React.FC<{
     return {
       state: "ready",
       usd: previewQuery.data.amount,
-      rate: inferConversionRateZltoPerUsd(
-        amountValue,
-        previewQuery.data.amount,
-      ),
+      rate: previewQuery.data.conversionRateZltoPerUsd,
       paused: serverPaused || !previewQuery.data.treasuryFundsAvailable,
     };
   })();
@@ -197,6 +207,22 @@ export const CashOutEntry: React.FC<{
     setServerPaused(false);
   }, []);
 
+  /**
+   * Step 3. Reads the recorded outcome — the **only** thing that can say how a cash out went, since
+   * the wallet cannot: a committed reservation and a released one both leave `pendingPayout` at
+   * zero. The profile is refreshed alongside it so the ledger behind the dialog agrees.
+   *
+   * A failed read shows "we couldn't check", never a guessed outcome.
+   */
+  const showOutcome = useCallback(async () => {
+    setView({ name: "checking" });
+    const [payout] = await Promise.all([
+      getLatestPayout().catch(() => null),
+      refreshProfile(),
+    ]);
+    setView({ name: "outcome", payout });
+  }, [refreshProfile]);
+
   const openFlow = useCallback(() => {
     if (eligibility.allowed) {
       setAmountText("");
@@ -210,7 +236,16 @@ export const CashOutEntry: React.FC<{
     // One active payout per user: the answer is to finish that one, not to start another, so the
     // youth goes to the payout in flight rather than to a dialog explaining that they cannot.
     if (eligibility.reason === "activePayout") {
-      setView({ name: "resume", canContinue: true });
+      // `canResume` is known up front now, so the setup window is stated on arrival rather than
+      // discovered by tapping a button that cannot work yet. Retry stays available either way —
+      // reconciliation fills the provider reference in, so the next tap may well succeed.
+      const canResume = profile.payout?.canResume ?? false;
+      setView({
+        name: "resume",
+        canContinue: true,
+        invitation: canResume,
+        notice: canResume ? undefined : RESUME_COPY.notResumable,
+      });
       return;
     }
 
@@ -222,25 +257,28 @@ export const CashOutEntry: React.FC<{
           ? eligibility.missingFields
           : undefined,
     });
-  }, [eligibility]);
+  }, [eligibility, profile.payout?.canResume]);
 
   /** Fetch a *fresh* hosted session for the active payout and hand over. Never a stored URL. */
   const continueCashOut = useCallback(async () => {
     setBusy(true);
-    setView({ name: "resume", canContinue: true });
+    // Keep whatever the panel was already saying about this payout and only clear the notice being
+    // retried — rebuilding the view from scratch would flash the "pick up where you left off"
+    // invitation into a state that deliberately does not offer it.
+    setView((current) =>
+      current.name === "resume"
+        ? { ...current, notice: undefined }
+        : { name: "resume", canContinue: true },
+    );
 
     try {
       const session = await getZltoPayoutSession();
 
-      // 404: the profile said a payout was active and the API says otherwise, so it closed while
-      // this page was open. Nothing is wrong — but there is nothing to continue either.
+      // 404 — but ⚠️ **that alone does not prove the payout closed**: the refusal can originate at
+      // the provider and can be transient. Ask the outcome endpoint what is actually true rather
+      // than telling the youth their cash out has ended.
       if (!session) {
-        setView({
-          name: "resume",
-          notice: RESUME_COPY.noLongerActive,
-          canContinue: false,
-        });
-        void refreshProfile();
+        await showOutcome();
         return;
       }
 
@@ -253,17 +291,11 @@ export const CashOutEntry: React.FC<{
         return;
       }
 
-      openPaymentUrl(session.paymentUrl);
-      setView({ name: "ready", paymentUrl: session.paymentUrl });
+      setView({ name: "hosted", paymentUrl: session.paymentUrl });
     } catch (error) {
       const failure = mapPayoutFailure(error);
       if (failure.kind === "noActivePayout") {
-        setView({
-          name: "resume",
-          notice: RESUME_COPY.noLongerActive,
-          canContinue: false,
-        });
-        void refreshProfile();
+        await showOutcome();
       } else if (failure.kind === "sessionNotReady") {
         // Yoma has the payout; the provider does not have it yet. Reconciliation retries initiation
         // whenever the provider transaction id is missing (API `8d34eee7`), so this resolves on its
@@ -285,14 +317,14 @@ export const CashOutEntry: React.FC<{
     } finally {
       setBusy(false);
     }
-  }, [refreshProfile]);
+  }, [showOutcome]);
 
   /**
-   * `POST /user/payout/zlto?amount=` — the point at which Zlto is reserved.
+   * `POST /user/payout/zlto?amount=` — the point at which Zlto is reserved. **Called once per
+   * payout**: a session is refreshed with `GET`, never by posting again.
    *
-   * Imperative rather than a react-query mutation on purpose: `window.open` has to run as close to
-   * the youth's tap as the round trip allows, and the outcome drives a state machine rather than a
-   * cache.
+   * Imperative rather than a react-query mutation on purpose: the result drives a state machine,
+   * not a cache.
    */
   const initiate = useCallback(
     async (value: number) => {
@@ -303,9 +335,10 @@ export const CashOutEntry: React.FC<{
         const session = await initiateZltoPayout(value);
 
         // The server enforces HTTPS; this is the second check (PR #1924 reports URL-redirect
-        // findings on web). A URL we will not navigate to is not the "we couldn't start your cash
-        // out" screen either: the payout exists and the Zlto is reserved, so the youth goes to the
-        // payout in flight, where Try again fetches a fresh session.
+        // findings on web), and it also keeps a non-https URL out of an iframe `src`. A URL we will
+        // not load is not the "we couldn't start your cash out" screen either: the payout exists
+        // and the Zlto is reserved, so the youth goes to the payout in flight, where Try again
+        // fetches a fresh session.
         if (!isSafePaymentUrl(session.paymentUrl)) {
           void refreshProfile();
           setView({
@@ -316,8 +349,7 @@ export const CashOutEntry: React.FC<{
           return;
         }
 
-        openPaymentUrl(session.paymentUrl);
-        setView({ name: "ready", paymentUrl: session.paymentUrl });
+        setView({ name: "hosted", paymentUrl: session.paymentUrl });
         void refreshProfile();
       } catch (error) {
         const failure = mapPayoutFailure(error);
@@ -330,6 +362,14 @@ export const CashOutEntry: React.FC<{
             setAmountTouched(true);
             setView({ name: "amount" });
             void refreshProfile();
+            break;
+
+          // The client guards both of these, so arriving here means the guard and the server
+          // disagree — show the server's objection on the field rather than a generic failure.
+          case "amountInvalid":
+            setServerAmountError(AMOUNT_PROBLEM_COPY[failure.problem]);
+            setAmountTouched(true);
+            setView({ name: "amount" });
             break;
 
           // Treasury capacity, not the youth's amount. Re-ask the preview so the panel below the
@@ -388,32 +428,25 @@ export const CashOutEntry: React.FC<{
   );
 
   /**
-   * The return view's trigger. There is no provider redirect back into Yoma — nothing in the payout
-   * request carries a return URL — so "coming back" is this tab regaining visibility after losing
-   * it. Requiring it to have been hidden first is what keeps a *blocked* popup (which never takes
-   * focus away) on the hand-off screen, where the button that opens the journey still is.
+   * Closing the hosted journey is the youth's own action — there is no automatic close. It would
+   * need an origin-validated `postMessage` contract with the provider, which does not exist yet;
+   * and the frame is cross-origin, so its DOM and its URL are neither readable nor evidence. The
+   * modal simply stops showing the journey and Yoma asks the API what actually happened.
    */
-  const wasHidden = useRef(false);
-  useEffect(() => {
-    if (view.name !== "ready") {
-      wasHidden.current = false;
+  const closeHosted = useCallback(() => void showOutcome(), [showOutcome]);
+
+  /**
+   * The ✕ and the overlay. Everywhere except the hosted journey it simply closes; there, dismissing
+   * means "I'm finished looking at this", which is the moment to find out what the payout actually
+   * did — so it goes to the outcome rather than vanishing over reserved Zlto.
+   */
+  const dismiss = useCallback(() => {
+    if (view.name === "hosted") {
+      closeHosted();
       return;
     }
-
-    const onVisibilityChange = () => {
-      if (document.hidden) {
-        wasHidden.current = true;
-        return;
-      }
-      if (!wasHidden.current) return;
-      void refreshProfile();
-      setView({ name: "result" });
-    };
-
-    document.addEventListener("visibilitychange", onVisibilityChange);
-    return () =>
-      document.removeEventListener("visibilitychange", onVisibilityChange);
-  }, [view.name, refreshProfile]);
+    close();
+  }, [view.name, closeHosted, close]);
 
   const step = STEP_BY_VIEW[view.name];
   const title = (() => {
@@ -424,6 +457,11 @@ export const CashOutEntry: React.FC<{
         return REVIEW_COPY.dialogTitle;
       case "resume":
         return RESUME_COPY.dialogTitle;
+      case "hosted":
+        return HOSTED_COPY.dialogTitle;
+      case "checking":
+      case "outcome":
+        return OUTCOME_COPY.dialogTitle;
       default:
         return CASH_OUT_ACTION;
     }
@@ -447,13 +485,22 @@ export const CashOutEntry: React.FC<{
       <CustomModal
         isOpen={isOpen}
         shouldCloseOnOverlayClick={false}
-        onRequestClose={close}
-        // `md:h-fit` matters: `CustomModal`'s box is `fixed inset-0`, so without it the dialog is
-        // as tall as its max-height whatever the content, and the amount step sat above 250px of
-        // empty white (the dead-space note from the design review). Mobile keeps the product's
-        // full-screen modal rather than the board's bottom sheet — every other dialog in the app
-        // behaves that way.
-        className="md:h-fit md:max-h-[680px] md:w-[520px]"
+        onRequestClose={dismiss}
+        /*
+          `md:h-fit` matters for the short steps: `CustomModal`'s box is `fixed inset-0`, so without
+          it the dialog is as tall as its max-height whatever the content, and the amount step sat
+          above 250px of empty white (the dead-space note from the design review).
+
+          The hosted journey is the exception — it is someone else's page, with its own forms and
+          identity checks, so it gets a tall fixed frame instead of hugging content it cannot
+          measure. Mobile keeps the product's full-screen modal throughout, which is also the right
+          shape for an embedded journey.
+        */
+        className={
+          view.name === "hosted"
+            ? "md:h-[85vh] md:w-[720px]"
+            : "md:h-fit md:max-h-[680px] md:w-[520px]"
+        }
       >
         <div className="flex h-full flex-col gap-4 overflow-y-auto p-4 pb-8 text-black">
           <div className="flex flex-row items-start gap-2">
@@ -463,7 +510,7 @@ export const CashOutEntry: React.FC<{
             <button
               type="button"
               className={BTN_DIALOG_CLOSE}
-              onClick={close}
+              onClick={dismiss}
               aria-label="Close"
             >
               <IoMdClose className="h-5 w-5" />
@@ -471,7 +518,7 @@ export const CashOutEntry: React.FC<{
           </div>
 
           {step && (
-            <CashOutStepper current={step} resolved={view.name === "result"} />
+            <CashOutStepper current={step} resolved={view.name === "outcome"} />
           )}
 
           {view.name === "gate" && (
@@ -533,6 +580,7 @@ export const CashOutEntry: React.FC<{
               // from two different places on the profile. See `CashOutResumePanel`.
               zltoAmount={profile.zlto?.pendingPayout ?? null}
               estimateUsd={profile.payout?.amount ?? null}
+              started={formatPayoutStarted(profile.payout?.dateCreated)}
               busy={busy}
               notice={view.notice}
               canContinue={view.canContinue}
@@ -542,27 +590,33 @@ export const CashOutEntry: React.FC<{
             />
           )}
 
-          {view.name === "ready" && (
-            <CashOutMessageStep
-              icon={<IoOpenOutline className="h-6 w-6" />}
-              title={HANDOFF_COPY.readyTitle}
-              body={HANDOFF_COPY.readyBody}
-              primary={{
-                label: HANDOFF_COPY.openAction,
-                icon: <IoOpenOutline className="h-4 w-4" aria-hidden="true" />,
-                onClick: () => openPaymentUrl(view.paymentUrl),
-              }}
-              secondary={{ label: HANDOFF_COPY.closeAction, onClick: close }}
+          {view.name === "hosted" && (
+            <CashOutHostedStep
+              paymentUrl={view.paymentUrl}
+              onOpenInNewWindow={() => openPaymentUrl(view.paymentUrl)}
+              onDone={closeHosted}
             />
           )}
 
-          {view.name === "result" && (
-            <CashOutMessageStep
-              icon={<IoIosTimer className="h-6 w-6" />}
-              tone="info"
-              title={RESULT_COPY.processingTitle}
-              body={RESULT_COPY.processingBody}
-              primary={{ label: RESULT_COPY.doneAction, onClick: close }}
+          {/* Reading the outcome. Brief, but it must not flash an answer before it has one. */}
+          {view.name === "checking" && (
+            <div className="flex flex-col items-center gap-3 py-8">
+              <span
+                className="loading loading-spinner loading-md text-purple"
+                aria-hidden="true"
+              />
+              <p className="text-gray-dark text-sm" role="status">
+                {OUTCOME_COPY.checkingBody}
+              </p>
+            </div>
+          )}
+
+          {view.name === "outcome" && (
+            <CashOutOutcomeStep
+              payout={view.payout}
+              onResume={() => void continueCashOut()}
+              onStartAgain={openFlow}
+              onClose={close}
             />
           )}
 

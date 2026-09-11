@@ -52,7 +52,7 @@ frozen and shared rather than re-decided per ticket.
 | [`YOM-1072-ui-treasury-admin/`](./YOM-1072-ui-treasury-admin/feature.md)                                                           | [YOM-1072](https://linear.app/didx/issue/YOM-1072) | web  | T0, T1     | in-progress — dev complete, browser pass owed |
 | [`YOM-1063-ui-organization-and-opportunity-admin/`](./YOM-1063-ui-organization-and-opportunity-admin/feature.md)                   | [YOM-1063](https://linear.app/didx/issue/YOM-1063) | web  | T2, T3     | in-progress — dev complete, T3 reduced |
 | [`YOM-1073-ui-referral-program-rewards-create-update-info/`](./YOM-1073-ui-referral-program-rewards-create-update-info/feature.md) | [YOM-1073](https://linear.app/didx/issue/YOM-1073) | web  | T4         | in-progress — dev complete, browser pass owed |
-| [`YOM-1074-ui-youth-yellow-card-cash-out/`](./YOM-1074-ui-youth-yellow-card-cash-out/feature.md)                                   | [YOM-1074](https://linear.app/didx/issue/YOM-1074) | web  | T5         | in-progress — T5 built; Flow D blocked on API |
+| [`YOM-1074-ui-youth-yellow-card-cash-out/`](./YOM-1074-ui-youth-yellow-card-cash-out/feature.md)                                   | [YOM-1074](https://linear.app/didx/issue/YOM-1074) | web  | T5         | in-progress — T5 built end to end; Dev session pass owed |
 
 ### T-number → ticket map
 
@@ -388,7 +388,8 @@ Not owned by any one child ticket. **T6 in the old numbering.**
 | ---------------------------------------------------------------------- | -------- | -------------------------------------------------------------------------------------------------------------------- |
 | No authenticated browser pass on any reward surface                    | High     | Blocks calling YOM-1072 / YOM-1063 / YOM-1073 done. Unblocked otherwise — the corrective work is in                  |
 | `?mock=` dev aid is committed                                          | High     | Must be removed before this epic merges                                                                              |
-| **No youth-facing payout status or terminal outcome** (found 2026-09-10, [YOM-1074](./YOM-1074-ui-youth-yellow-card-cash-out/feature.md)) | High | `UserProfilePayout` has no status and no youth endpoint reports one, so the UI cannot tell "waiting for you" from "processing", and cannot say whether a payout completed, was cancelled or failed. **Blocks the Flow D outcome states**; everything else in T5 ships without it. Needs Adrian |
+| ~~No youth-facing payout status or terminal outcome~~ | ~~High~~ | **Resolved 2026-09-10** by the API additions above (`status`, `canResume`, `dateCreated`, `GET /user/payout/latest`); Flow D was built against them on 2026-09-11 |
+| **Provider framing of the hosted journey is unconfirmed** (raised 2026-09-11, [YOM-1074](./YOM-1074-ui-youth-yellow-card-cash-out/feature.md)) | Medium | The journey is embedded in an iframe by design. If the provider's headers or authentication refuse framing, the youth sees the browser's own refusal; the "open in a new window" escape hatch covers it, but that is a fallback, not a shippable primary path. Needs IXO confirmation |
 | Hosted Yellow Card E2E needs an accessible test email                  | Medium   | WorkOS verifies email and provides no bypass; use a funded Dev/Stage user with an inbox the test team controls.       |
 | No server rule ties a referral pool to Treasury capacity               | Low      | Accepted: the UI gives soft guidance. YOM-1073's ticket asks for hard validation — the code does not provide it       |
 
@@ -410,12 +411,18 @@ Not owned by any one child ticket. **T6 in the old numbering.**
   reward allocation order is breaking for every child here.
 - **Permissions failures return HTTP 401, not 403**, so `ApiErrors` says "your session has expired"
   for what is actually a permissions problem.
-- **Four things the youth payout journey asks of the API** (found while building T5, 2026-09-10 —
-  detail and consequences in [YOM-1074](./YOM-1074-ui-youth-yellow-card-cash-out/feature.md)):
-  the payout **status** on `UserProfilePayout`; a youth-readable **terminal outcome**; the
-  **conversion rate** on `ConversionResponse` (`[JsonIgnore]` today, so the UI infers the
-  "N ZLTO = 1 USD" line from a 2dp figure and hides it when it cannot); and the active payout's
-  **start time**. Only the first two block anything.
+- **The four things the youth payout journey asked of the API were delivered on 2026-09-10** and
+  wired up on 2026-09-11 — payout `status`/`canResume`/`dateCreated`, `GET /user/payout/latest`,
+  and `conversionRateZltoPerUsd`. See the section above for the contract and
+  [YOM-1074](./YOM-1074-ui-youth-yellow-card-cash-out/feature.md) for what each one changed.
+- ⚠️ **Every enum on this API is a PascalCase *string*, so a numeric TS enum is a latent runtime
+  bug.** `Startup.cs` registers a strict string enum converter; the Swagger schema says
+  `"type": "string"`; most of the web codebase already compares them as strings
+  (`item.status === "Active"`). `WalletCreationStatus` was declared numerically in
+  `api/models/user.ts`, so `"Created" !== WalletCreationStatus.Created` was **always true** and the
+  Cash Out gate refused every youth in the product. Nothing fails to compile, and only a logged-in
+  session shows it. Declare API enums as string enums, mirroring the C# member for member — and
+  check the Swagger schema rather than assuming (`/swagger/v3/swagger.json`, unauthenticated).
 - ⚠️ **`UserProfilePayout.Amount` is USD, not ZLTO** — it is the `PayoutTransaction.Amount`. The
   reserved ZLTO is `UserProfileZlto.PendingPayout`. Two figures for one payout, in two places, in
   two units, both named "amount".
