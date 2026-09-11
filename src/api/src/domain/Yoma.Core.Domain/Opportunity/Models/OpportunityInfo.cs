@@ -1,5 +1,7 @@
 using CsvHelper.Configuration.Attributes;
 using Newtonsoft.Json;
+using Yoma.Core.Domain.Core.Helpers;
+using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Lookups.Models;
 using Yoma.Core.Domain.PartnerSync.Models;
 
@@ -14,7 +16,7 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
     public string Description { get; set; } = null!;
 
-    public string Type { get; set; } = null!;
+    public Type Type { get; set; }
 
     [Ignore]
     public Guid OrganizationId { get; set; }
@@ -40,18 +42,9 @@ namespace Yoma.Core.Domain.Opportunity.Models
     [Name("Zlto Reward Cumulative")]
     public decimal? ZltoRewardCumulative { get; set; }
 
-    [Ignore] //reserved for future use
-    public decimal? YomaReward { get; set; }
-
-    [Ignore] //reserved for future use
-    public decimal? YomaRewardEstimate { get; set; }
-
-    [Ignore] //reserved for future use
-    public decimal? YomaRewardCumulative { get; set; }
-
     [Name("Verification Enabled")]
-    [BooleanFalseValues("No")]
-    [BooleanTrueValues("Yes")]
+    [BooleanFalseValues(CSVImportHelper.Boolean_Value_False)]
+    [BooleanTrueValues(CSVImportHelper.Boolean_Value_True)]
     public bool VerificationEnabled { get; set; }
 
     [Name("Verification Method")]
@@ -86,8 +79,8 @@ namespace Yoma.Core.Domain.Opportunity.Models
     public int ParticipantCountTotal { get; set; }
 
     [Name("Participant Limit Reached")]
-    [BooleanFalseValues("No")]
-    [BooleanTrueValues("Yes")]
+    [BooleanFalseValues(CSVImportHelper.Boolean_Value_False)]
+    [BooleanTrueValues(CSVImportHelper.Boolean_Value_True)]
     public bool ParticipantLimitReached { get; set; }
     #endregion Verification Limits and Counts
 
@@ -116,27 +109,27 @@ namespace Yoma.Core.Domain.Opportunity.Models
     [Name("End Date")]
     public DateTimeOffset? DateEnd { get; set; }
 
-    [BooleanFalseValues("No")]
-    [BooleanTrueValues("Yes")]
+    [BooleanFalseValues(CSVImportHelper.Boolean_Value_False)]
+    [BooleanTrueValues(CSVImportHelper.Boolean_Value_True)]
     public bool Featured { get; set; }
 
     [Name("Engagement Type")]
     public Core.EngagementTypeOption? EngagementType { get; set; }
 
-    [BooleanFalseValues("No")]
-    [BooleanTrueValues("Yes")]
+    [BooleanFalseValues(CSVImportHelper.Boolean_Value_False)]
+    [BooleanTrueValues(CSVImportHelper.Boolean_Value_True)]
     public bool ShareWithPartners { get; set; }
 
-    [BooleanFalseValues("No")]
-    [BooleanTrueValues("Yes")]
+    [BooleanFalseValues(CSVImportHelper.Boolean_Value_False)]
+    [BooleanTrueValues(CSVImportHelper.Boolean_Value_True)]
     public bool Hidden { get; set; }
 
     [JsonIgnore]
     [Name("External Reference / ID")]
     public string? ExternalId { get; set; }
 
-    [BooleanFalseValues("No")]
-    [BooleanTrueValues("Yes")]
+    [BooleanFalseValues(CSVImportHelper.Boolean_Value_False)]
+    [BooleanTrueValues(CSVImportHelper.Boolean_Value_True)]
     public bool Published { get; set; }
 
     [Ignore]
@@ -153,8 +146,8 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
     [JsonIgnore]
     [Name("Externally Managed (Locked)")]
-    [BooleanFalseValues("No")]
-    [BooleanTrueValues("Yes")]
+    [BooleanFalseValues(CSVImportHelper.Boolean_Value_False)]
+    [BooleanTrueValues(CSVImportHelper.Boolean_Value_True)]
     public bool SyncedLocked => SyncedInfo?.Locked == true;
 
     [JsonIgnore]
@@ -199,5 +192,14 @@ namespace Yoma.Core.Domain.Opportunity.Models
     [JsonIgnore]
     [Name("Verification Types")]
     public string? VerificationTypesFlattened => VerificationTypes == null || VerificationTypes.Count == 0 ? null : string.Join(", ", VerificationTypes.Select(o => o.Description));
+
+    [Ignore]
+    public List<CustomFieldValueItem>? CustomFields { get; set; }
+
+    [JsonIgnore]
+    [Name("Custom Fields")]
+    public string? CustomFieldsFlattened => CustomFields == null || CustomFields.Count == 0
+      ? null
+      : string.Join("; ", CustomFields.Select(o => o.DataType == Core.CustomFieldDataType.Option ? $"{o.Key}: {string.Join(", ", o.Values ?? [])}" : $"{o.Key}: {o.Value}"));
   }
 }

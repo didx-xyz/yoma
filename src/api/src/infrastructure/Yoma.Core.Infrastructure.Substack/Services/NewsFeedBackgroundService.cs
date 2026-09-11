@@ -26,7 +26,7 @@ namespace Yoma.Core.Infrastructure.Substack.Services
     private readonly IRepositoryBatchedValueContains<NewsArticle> _newsArticleRepository;
     private readonly IRepository<FeedSyncTracking> _feedSyncTrackingRepository;
     private readonly IDistributedLockService _distributedLockService;
-    private readonly IExecutionStrategyService _executionStrategyService;
+    private readonly ExecutionStrategyService _executionStrategyService;
 
     private static readonly XNamespace XNamespace_MediaNs = "http://search.yahoo.com/mrss/";
     private static readonly XNamespace XNamespace_Content = "http://purl.org/rss/1.0/modules/content/";
@@ -44,7 +44,7 @@ namespace Yoma.Core.Infrastructure.Substack.Services
       IRepositoryBatchedValueContains<NewsArticle> newsArticleRepository,
       IRepository<FeedSyncTracking> feedSyncTrackingRepository,
       IDistributedLockService distributedLockService,
-      IExecutionStrategyService executionStrategyService)
+      ExecutionStrategyService executionStrategyService)
     {
       _logger = logger ?? throw new ArgumentNullException(nameof(logger));
       _environmentProvider = environmentProvider ?? throw new ArgumentNullException(nameof(environmentProvider));

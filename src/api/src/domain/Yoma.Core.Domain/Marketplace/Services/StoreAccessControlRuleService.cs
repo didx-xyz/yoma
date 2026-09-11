@@ -43,7 +43,7 @@ namespace Yoma.Core.Domain.Marketplace.Services
     private readonly IRepositoryBatchedValueContainsWithNavigation<StoreAccessControlRule> _storeAccessControlRuleRepistory;
     private readonly IRepository<StoreAccessControlRuleOpportunity> _storeAccessControlRuleOpportunityRepository;
     private readonly IRepositoryValueContainsWithNavigation<User> _userRepository;
-    private readonly IRepositoryBatchedWithNavigation<MyOpportunity.Models.MyOpportunity> _myOpportunityRepository;
+    private readonly IRepositoryBatchedWithNavigationAndCustomFieldFilter<MyOpportunity.Models.MyOpportunity> _myOpportunityRepository;
     private readonly IExecutionStrategyService _executionStrategyService;
 
     private static readonly StoreAccessControlRuleStatus[] Statuses_Updatable = [StoreAccessControlRuleStatus.Active, StoreAccessControlRuleStatus.Inactive];
@@ -70,7 +70,7 @@ namespace Yoma.Core.Domain.Marketplace.Services
       IRepositoryBatchedValueContainsWithNavigation<StoreAccessControlRule> storeAccessControlRuleRepistory,
       IRepository<StoreAccessControlRuleOpportunity> storeAccessControlRuleOpportunityRepository,
       IRepositoryValueContainsWithNavigation<User> userRepository,
-      IRepositoryBatchedWithNavigation<MyOpportunity.Models.MyOpportunity> myOpportunityRepository,
+      IRepositoryBatchedWithNavigationAndCustomFieldFilter<MyOpportunity.Models.MyOpportunity> myOpportunityRepository,
       IExecutionStrategyService executionStrategyService)
     {
       _appSettings = appSettings.Value;

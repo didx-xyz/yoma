@@ -301,7 +301,7 @@ const OrganisationDetails: NextPageWithLayout<{
       >
         <div className="flex h-full flex-col space-y-2 p-4">
           <div className="flex flex-row space-x-2">
-            <IoMdWarning className="gl-icon-yellow h-6 w-6" />
+            <IoMdWarning className="h-6 w-6" />
             <p className="text-lg">Confirm</p>
           </div>
 

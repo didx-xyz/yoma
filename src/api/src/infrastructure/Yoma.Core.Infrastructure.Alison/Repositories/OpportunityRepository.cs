@@ -1,8 +1,8 @@
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Infrastructure.Alison.Context;
-using Yoma.Core.Infrastructure.Shared.Extensions;
 using Yoma.Core.Infrastructure.Alison.Models;
+using Yoma.Core.Infrastructure.Shared.Extensions;
 
 namespace Yoma.Core.Infrastructure.Alison.Repositories
 {

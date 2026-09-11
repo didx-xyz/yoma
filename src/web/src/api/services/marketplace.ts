@@ -2,6 +2,7 @@ import {
   type GetServerSidePropsContext,
   type GetStaticPropsContext,
 } from "next";
+import { countryCodeSegment, uuidSegment } from "~/lib/apiPath";
 import ApiClient from "~/lib/axiosClient";
 import ApiServer from "~/lib/axiosServer";
 import type { Country } from "../models/lookups";
@@ -36,13 +37,20 @@ export const listSearchCriteriaCountries = async (
   return data;
 };
 
+/**
+ * ⚠️ `countryCodeAlpha2` reaches here straight from the `[country]` route segment, and
+ * `getStaticPaths` uses `fallback: "blocking"`, so **any** URL gets through — and this request is
+ * made server-side with the caller's credentials. Interpolating it raw let a crafted segment walk
+ * the path onto another endpoint (CodeQL: server-side request forgery). `countryCodeSegment`
+ * refuses anything that is not two letters; the page 404s such a URL before it ever gets here.
+ */
 export const listStoreCategories = async (
   countryCodeAlpha2: string,
   context?: GetServerSidePropsContext | GetStaticPropsContext,
 ): Promise<StoreCategory[]> => {
   const instance = context ? ApiServer(context) : await ApiClient;
   const { data } = await instance.get<StoreCategory[]>(
-    `/marketplace/store/${countryCodeAlpha2}/category`,
+    `/marketplace/store/${countryCodeSegment(countryCodeAlpha2)}/category`,
   );
   return data;
 };
@@ -133,13 +141,14 @@ export const listSearchCriteriaStores = async (
   return data;
 };
 
+/** `id` comes from the `[ruleId]` route segment — same exposure as the country code above. */
 export const getStoreAccessControlRuleById = async (
   id: string,
   context?: GetServerSidePropsContext | GetStaticPropsContext,
 ): Promise<StoreAccessControlRuleInfo> => {
   const instance = context ? ApiServer(context) : await ApiClient;
   const { data } = await instance.get<StoreAccessControlRuleInfo>(
-    `/marketplace/store/rule/${id}`,
+    `/marketplace/store/rule/${uuidSegment(id)}`,
   );
   return data;
 };
@@ -188,7 +197,8 @@ export const updateStatusStoreAccessControlRule = async (
 ): Promise<StoreAccessControlRuleInfo> => {
   const instance = context ? ApiServer(context) : await ApiClient;
   const { data } = await instance.patch<StoreAccessControlRuleInfo>(
-    `/marketplace/store/rule/${id}/${status}`,
+    // `status` is a fixed enum value chosen in code, but the id travels from a table row.
+    `/marketplace/store/rule/${uuidSegment(id)}/${status}`,
   );
   return data;
 };

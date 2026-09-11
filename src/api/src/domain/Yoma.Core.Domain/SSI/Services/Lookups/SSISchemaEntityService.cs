@@ -1,9 +1,12 @@
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
+using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
+using Yoma.Core.Domain.Opportunity.Interfaces.Lookups;
+using Yoma.Core.Domain.SSI.Helpers;
 using Yoma.Core.Domain.SSI.Interfaces.Lookups;
 using Yoma.Core.Domain.SSI.Models.Lookups;
 
@@ -16,18 +19,24 @@ namespace Yoma.Core.Domain.SSI.Services.Lookups
     private readonly IMemoryCache _memoryCache;
     private readonly ISSISchemaTypeService _ssiSchemaTypeService;
     private readonly IRepositoryWithNavigation<SSISchemaEntity> _ssiSchemaEntityRepository;
+    private readonly ICustomFieldDefinitionService _customFieldDefinitionService;
+    private readonly IOpportunityTypeService _opportunityTypeService;
     #endregion
 
     #region Constructor
     public SSISchemaEntityService(IOptions<AppSettings> appSettings,
         IMemoryCache memoryCache,
         ISSISchemaTypeService ssiSchemaTypeService,
-        IRepositoryWithNavigation<SSISchemaEntity> ssiSchemaEntityRepository)
+        IRepositoryWithNavigation<SSISchemaEntity> ssiSchemaEntityRepository,
+        ICustomFieldDefinitionService customFieldDefinitionService,
+        IOpportunityTypeService opportunityTypeService)
     {
       _appSettings = appSettings.Value;
       _memoryCache = memoryCache;
       _ssiSchemaTypeService = ssiSchemaTypeService;
       _ssiSchemaEntityRepository = ssiSchemaEntityRepository;
+      _customFieldDefinitionService = customFieldDefinitionService;
+      _opportunityTypeService = opportunityTypeService;
     }
     #endregion
 
@@ -43,7 +52,7 @@ namespace Yoma.Core.Domain.SSI.Services.Lookups
       if (id == Guid.Empty)
         throw new ArgumentNullException(nameof(id));
 
-      return List(null).SingleOrDefault(o => o.Id == id);
+      return ListAll(null, false).SingleOrDefault(o => o.Id == id);
     }
 
     public SSISchemaEntityProperty GetByAttributeName(string attributeName)
@@ -58,8 +67,10 @@ namespace Yoma.Core.Domain.SSI.Services.Lookups
         throw new ArgumentNullException(nameof(attributeName));
       attributeName = attributeName.Trim();
 
-      var result = List(null).SelectMany(o => o.Properties?.Where(p => string.Equals(p.AttributeName, attributeName, StringComparison.OrdinalIgnoreCase)) ?? []).ToList();
-      if (result == null || result.Count == 0)
+      var result = ListAll(null, false)
+        .SelectMany(o => o.Properties?.Where(p => string.Equals(p.AttributeName, attributeName, StringComparison.OrdinalIgnoreCase)) ?? [])
+        .ToList();
+      if (result.Count == 0)
         throw new ArgumentException($"{nameof(SSISchemaEntityProperty)} not found with attribute name '{attributeName}'", nameof(attributeName));
 
       if (result.Count > 1)
@@ -68,39 +79,179 @@ namespace Yoma.Core.Domain.SSI.Services.Lookups
       return result.SingleOrDefault();
     }
 
-    public List<SSISchemaEntity> List(SchemaType? type)
+    /// <summary>
+    /// Indicates whether the attribute exists as a static schema entity property or custom field in any type context.
+    /// This is the broad existence check used by request validation; schema creation and update subsequently validate that
+    /// the attribute is active and applicable to the selected schema type and type context.
+    /// </summary>
+    public bool AttributeExists(string attributeName)
     {
-      List<SSISchemaEntity> results;
-      if (!_appSettings.CacheEnabledByCacheItemTypesAsEnum.HasFlag(Core.CacheItemType.Lookups))
-      {
-        results = [.. _ssiSchemaEntityRepository.Query(true)];
-        ReflectEntityTypeInformation(results);
-        results = [.. results.OrderBy(o => o.Name)];
-        results.ForEach(o => o.Properties = o.Properties?.OrderBy(p => p.AttributeName).ToList());
-      }
-      else
-      {
-        results = _memoryCache.GetOrCreate(CacheHelper.GenerateKey<SSISchemaEntity>(), entry =>
-        {
-          entry.SlidingExpiration = TimeSpan.FromHours(_appSettings.CacheSlidingExpirationInHours);
-          entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(_appSettings.CacheAbsoluteExpirationRelativeToNowInDays);
-          var entities = _ssiSchemaEntityRepository.Query(true).ToList();
-          ReflectEntityTypeInformation(entities);
-          entities = [.. entities.OrderBy(o => o.Name)];
-          entities.ForEach(o => o.Properties = o.Properties?.OrderBy(p => p.NameDisplay).ToList());
-          return entities;
-        }) ?? throw new InvalidOperationException($"Failed to retrieve cached list of '{nameof(SSISchemaEntity)}s'");
-      }
+      if (string.IsNullOrWhiteSpace(attributeName)) return false;
+      attributeName = attributeName.Trim();
 
-      if (type == null) return results;
+      return ListAll(null, false).Any(entity =>
+        entity.Properties?.Any(property =>
+          string.Equals(property.AttributeName, attributeName, StringComparison.OrdinalIgnoreCase)) == true ||
+        entity.CustomFields?.Any(customField =>
+          string.Equals(customField.AttributeName, attributeName, StringComparison.OrdinalIgnoreCase)) == true);
+    }
 
-      var typeId = _ssiSchemaTypeService.GetByName(type.Value.ToString()).Id;
-      results = [.. results.Where(o => o.Types?.Any(t => t.Id == typeId) == true)];
+    /// <summary>
+    /// Indicates whether the optional type context is supported by the specified schema type.
+    /// Opportunity contexts are resolved against the fixed Opportunity Type names; other schema types currently support
+    /// generic schemas only.
+    /// </summary>
+    public bool TypeContextValid(SchemaType type, string? typeContext)
+    {
+      typeContext = typeContext?.Trim();
+      if (string.IsNullOrEmpty(typeContext)) return true;
+
+      return type switch
+      {
+        SchemaType.Opportunity => _opportunityTypeService.GetByNameOrNull(typeContext) != null,
+        _ => false
+      };
+    }
+
+    /// <summary>
+    /// Lists schema entities and active custom fields applicable to the optional schema type and type context.
+    /// With no context, only generic custom fields are included. With a context, generic fields and fields assigned to that
+    /// context are included.
+    /// </summary>
+    public List<SSISchemaEntity> List(SchemaType? type, string? typeContext = null)
+    {
+      typeContext = typeContext?.Trim();
+      if (string.IsNullOrEmpty(typeContext)) typeContext = null;
+
+      if (type.HasValue && !TypeContextValid(type.Value, typeContext))
+        throw new ArgumentException($"Type context '{typeContext}' is invalid or unsupported for schema type '{type}'", nameof(typeContext));
+
+      var results = ListInternal(type);
+      AddCustomFields(results, entityType => _customFieldDefinitionService.List(entityType, false, true, typeContext));
+
+      return results;
+    }
+
+    /// <summary>
+    /// Lists schema entities with custom fields from every type context, optionally filtered by schema type and active state.
+    /// This is used internally when matching or rendering existing provider schemas because their stored attributes may belong
+    /// to any supported context.
+    /// </summary>
+    public List<SSISchemaEntity> ListAll(SchemaType? type, bool activeOnly)
+    {
+      var results = ListInternal(type);
+      AddCustomFields(results, entityType => _customFieldDefinitionService.ListAll(entityType, false, activeOnly));
+
       return results;
     }
     #endregion
 
     #region Private Members
+    /// <summary>
+    /// Creates detached results from the persisted static schema entity configuration and applies the optional schema-type filter.
+    /// Dynamic custom fields are populated separately by the calling list method.
+    /// </summary>
+    private List<SSISchemaEntity> ListInternal(SchemaType? type)
+    {
+      var results = ListStatic()
+        .Select(entity => new SSISchemaEntity
+        {
+          Id = entity.Id,
+          Name = entity.Name,
+          TypeName = entity.TypeName,
+          Properties = entity.Properties,
+          Types = entity.Types
+        })
+        .ToList();
+
+      if (type != null)
+      {
+        var typeId = _ssiSchemaTypeService.GetByName(type.Value.ToString()).Id;
+        results = [.. results.Where(o => o.Types?.Any(t => t.Id == typeId) == true)];
+      }
+
+      return results;
+    }
+
+    /// <summary>
+    /// Populates each compatible schema entity with dynamic custom fields selected by the calling context strategy.
+    /// </summary>
+    private static void AddCustomFields(
+      List<SSISchemaEntity> entities,
+      Func<CustomFieldEntityType, List<CustomFieldDefinition>> listDefinitions)
+    {
+      foreach (var entity in entities)
+      {
+        if (!Enum.TryParse<CustomFieldEntityType>(entity.Name, true, out var entityType))
+          continue;
+
+        entity.CustomFields = SSIAttributePresentationHelper.OrderCustomFields(
+          listDefinitions(entityType).Select(ToCustomField));
+      }
+    }
+
+    private List<SSISchemaEntity> ListStatic()
+    {
+      if (!_appSettings.CacheEnabledByCacheItemTypesAsEnum.HasFlag(CacheItemType.Lookups))
+      {
+        var results = _ssiSchemaEntityRepository.Query(true).ToList();
+        ReflectEntityTypeInformation(results);
+        results = [.. results.OrderBy(o => o.Name)];
+        results.ForEach(o => o.Properties = SSIAttributePresentationHelper.OrderProperties(o.Properties));
+        return results;
+      }
+
+      return _memoryCache.GetOrCreate(CacheHelper.GenerateKey<SSISchemaEntity>(), entry =>
+      {
+        entry.SlidingExpiration = TimeSpan.FromHours(_appSettings.CacheSlidingExpirationInHours);
+        entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(_appSettings.CacheAbsoluteExpirationRelativeToNowInDays);
+        var entities = _ssiSchemaEntityRepository.Query(true).ToList();
+        ReflectEntityTypeInformation(entities);
+        entities = [.. entities.OrderBy(o => o.Name)];
+        entities.ForEach(o => o.Properties = SSIAttributePresentationHelper.OrderProperties(o.Properties));
+        return entities;
+      }) ?? throw new InvalidOperationException($"Failed to retrieve cached list of '{nameof(SSISchemaEntity)}s'");
+    }
+
+    private static SSISchemaEntityCustomField ToCustomField(CustomFieldDefinition definition)
+    {
+      return new SSISchemaEntityCustomField
+      {
+        Id = definition.Id,
+        Key = definition.Key,
+        NameDisplay = definition.Title,
+        Description = definition.Description,
+        AttributeName = $"{definition.EntityType}_{definition.Key}",
+        TypeName = ToTypeName(definition),
+        TypeContext = definition.EntityContext,
+        DataType = definition.DataType,
+        LookupType = definition.LookupType,
+        SupportsMultiple = definition.SupportsMultiple,
+        Group = definition.Group,
+        SubGroup = definition.SubGroup,
+        SortOrder = definition.SortOrder,
+        Required = definition.IsRequired,
+        IsActive = definition.IsActive,
+        IsSystem = definition.IsSystem,
+        IsSchemaMapped = definition.IsSchemaMapped
+      };
+    }
+
+    private static string ToTypeName(CustomFieldDefinition definition)
+    {
+      return definition.DataType switch
+      {
+        CustomFieldDataType.String => nameof(String),
+        CustomFieldDataType.Integer => nameof(Int32),
+        CustomFieldDataType.Decimal => nameof(Decimal),
+        CustomFieldDataType.Boolean => nameof(Boolean),
+        CustomFieldDataType.DateTime => nameof(DateTimeOffset),
+        CustomFieldDataType.Option when definition.SupportsMultiple == true => $"List<{nameof(String)}>",
+        CustomFieldDataType.Option => nameof(String),
+        _ => throw new InvalidOperationException($"Custom field data type '{definition.DataType}' is not supported by credential schema discovery")
+      };
+    }
+
     private static void ReflectEntityTypeInformation(List<SSISchemaEntity>? entities)
     {
       if (entities == null || entities.Count == 0) return;
@@ -153,7 +304,7 @@ namespace Yoma.Core.Domain.SSI.Services.Lookups
             else
             {
               var propTypeDisplayName = string.Empty;
-              if (Nullable.GetUnderlyingType(propInfo.PropertyType) != null) // Nullable<>
+              if (Nullable.GetUnderlyingType(propInfo.PropertyType) != null)
               {
                 var genericArguments = propInfo.PropertyType.GetGenericArguments();
                 if (genericArguments.Length != 1)

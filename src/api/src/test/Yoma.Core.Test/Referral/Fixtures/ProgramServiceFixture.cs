@@ -66,7 +66,7 @@ namespace Yoma.Core.Test.Referral.Fixtures
       LinkStatusService = new Mock<ILinkStatusService>();
 
       TreasuryService = new Mock<ITreasuryService>();
-      TreasuryService.Setup(x => x.Get()).Returns(new TreasuryInfo());
+      TreasuryService.Setup(x => x.GetInfo()).Returns(new TreasuryInfo());
 
       ProgramCountryRepository = new Mock<IRepository<ProgramCountry>>();
       SetupBaseRepository(ProgramCountryRepository);

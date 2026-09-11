@@ -1,5 +1,6 @@
 using Newtonsoft.Json;
 using Yoma.Core.Domain.Core;
+using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
 
@@ -27,6 +28,18 @@ namespace Yoma.Core.Domain.Opportunity.Models
     /// Includes organizations (name), opportunities (title, keywords, description), opportunity types (name), opportunity categories (name) and skills (name) matched on search text
     /// </summary>
     public string? ValueContains { get; set; }
+
+    /// <summary>
+    /// Filters opportunities using configured custom field values.
+    /// </summary>
+    public List<CustomFieldFilter>? CustomFields { get; set; }
+
+    /// <summary>
+    /// Applies the authenticated user's saved presets when filtering opportunities.
+    /// Exposed publicly by <see cref="OpportunitySearchFilter"/> only.
+    /// </summary>
+    [JsonIgnore]
+    internal bool ApplyUserPresets { get; set; }
 
     /// <summary>
     /// Optionally filters opportunities by their published state. By default, results include opportunities that are published (both the opportunity and its organization are Active), 
@@ -79,6 +92,8 @@ namespace Yoma.Core.Domain.Opportunity.Models
       Countries = Countries?.OrderBy(o => o).ToList();
       Organizations = Organizations?.OrderBy(o => o).ToList();
       EngagementTypes = EngagementTypes?.OrderBy(o => o).ToList();
+
+      CustomFields = CustomFields.NormalizeForHashing();
     }
 
     public virtual void SanitizeCollections()
@@ -100,6 +115,9 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
       EngagementTypes = EngagementTypes?.Distinct().ToList();
       if (EngagementTypes?.Count == 0) EngagementTypes = null;
+
+      // Preserve duplicate keys so validation can reject the ambiguous filters instead of silently discarding values.
+      if (CustomFields?.Count == 0) CustomFields = null;
     }
   }
 }

@@ -1,19 +1,34 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Controller, useForm, type FieldValues } from "react-hook-form";
-import { IoMdClose } from "react-icons/io";
 import Select from "react-select";
 import zod from "zod";
 import type { Country, Language, SelectOption } from "~/api/models/lookups";
 import {
   OpportunityFilterOptions,
+  type CustomFieldDefinition,
+  type CustomFieldFilter,
   type OpportunityCategory,
   type OpportunitySearchFilterAdmin,
   type OpportunityType,
 } from "~/api/models/opportunity";
 import type { OrganizationInfo } from "~/api/models/organisation";
+import {
+  DATE_INPUT_CLASSES,
+  FilterField,
+  filterSelectProps,
+  ListPageFilterDialog,
+} from "~/components/Common/ListPage/ListPageFilterDialog";
 import { dateInputToUTC, utcToDateInput } from "~/lib/utils";
-import { AvatarImage } from "../AvatarImage";
+import {
+  CustomFieldFilters,
+  getCustomFieldFilterErrors,
+  sanitizeCustomFieldFilters,
+} from "./CustomFieldFilters";
+
+/** Maps a list of {name} lookups to react-select options (values are names). */
+const toOptions = (items: { name: string }[]): SelectOption[] =>
+  items.map((item) => ({ value: item.name, label: item.name }));
 
 export const OpportunityAdminFilterVertical: React.FC<{
   htmlRef: HTMLDivElement;
@@ -25,12 +40,10 @@ export const OpportunityAdminFilterVertical: React.FC<{
   lookups_organisations: OrganizationInfo[];
   lookups_publishedStates: SelectOption[];
   lookups_statuses: SelectOption[];
+  lookups_customFieldDefinitions?: CustomFieldDefinition[];
   onSubmit?: (fieldValues: OpportunitySearchFilterAdmin) => void;
   onCancel?: () => void;
-  clearButtonText?: string;
-  submitButtonText?: string;
   filterOptions: OpportunityFilterOptions[];
-  onClear?: () => void;
 }> = ({
   htmlRef,
   searchFilter,
@@ -41,13 +54,24 @@ export const OpportunityAdminFilterVertical: React.FC<{
   lookups_organisations,
   lookups_publishedStates,
   lookups_statuses,
+  lookups_customFieldDefinitions,
   onSubmit,
   onCancel,
-  submitButtonText = "Submit",
   filterOptions,
-  onClear,
-  clearButtonText,
 }) => {
+  // ─── Custom fields (definition-driven — YOM-1260) ─────────────────────────
+  // Clause state lives outside the RHF form because the zod resolver strips
+  // unknown keys; it is merged into the payload in onSubmitHandler below.
+  const [customFieldFilters, setCustomFieldFilters] = useState<
+    CustomFieldFilter[]
+  >(searchFilter?.customFields ?? []);
+  const [showCustomFieldErrors, setShowCustomFieldErrors] = useState(false);
+
+  // Sync when the filter prop changes (e.g. modal re-opened with different state)
+  useEffect(() => {
+    setCustomFieldFilters(searchFilter?.customFields ?? []);
+  }, [searchFilter?.customFields]);
+
   const schema = zod.object({
     types: zod.array(zod.string()).optional().nullable(),
     categories: zod.array(zod.string()).optional().nullable(),
@@ -66,7 +90,7 @@ export const OpportunityAdminFilterVertical: React.FC<{
     mode: "all",
     resolver: zodResolver(schema),
   });
-  const { register, handleSubmit, formState, reset } = form;
+  const { handleSubmit, formState, reset } = form;
 
   // set default values
   useEffect(() => {
@@ -82,479 +106,303 @@ export const OpportunityAdminFilterVertical: React.FC<{
   // form submission handler
   const onSubmitHandler = useCallback(
     (data: FieldValues) => {
-      if (onSubmit) onSubmit(data as OpportunitySearchFilterAdmin);
+      const payload = data as OpportunitySearchFilterAdmin;
+
+      // Merge custom-field clauses (usable ones only). Blocked while any clause
+      // is invalid, so the search is never sent with input the API will reject.
+      const activeCustomFields = sanitizeCustomFieldFilters(customFieldFilters);
+      const customFieldErrors = getCustomFieldFilterErrors(
+        lookups_customFieldDefinitions,
+        activeCustomFields,
+      );
+      if (customFieldErrors.length > 0) {
+        setShowCustomFieldErrors(true);
+        return;
+      }
+      setShowCustomFieldErrors(false);
+
+      payload.customFields =
+        activeCustomFields.length > 0 ? activeCustomFields : null;
+
+      if (onSubmit) onSubmit(payload);
     },
-    [onSubmit],
+    [onSubmit, customFieldFilters, lookups_customFieldDefinitions],
   );
 
+  // shared react-select props (portal keeps the menu above the dialog)
+  const selectProps = filterSelectProps(htmlRef);
+
+  const showDates =
+    filterOptions?.includes(OpportunityFilterOptions.DATE_START) ||
+    filterOptions?.includes(OpportunityFilterOptions.DATE_END);
+
   return (
-    <>
-      <form onSubmit={handleSubmit(onSubmitHandler)} className="flex flex-col">
-        <div className="flex flex-row p-4">
-          <h1 className="my-auto grow text-2xl font-bold">Filter</h1>
-          <button
-            type="button"
-            className="btn btn-primary rounded-full px-3"
-            onClick={onCancel}
+    <ListPageFilterDialog
+      onSubmit={handleSubmit(onSubmitHandler)}
+      onCancel={onCancel}
+      hiddenInputs={
+        /* VALUECONTAINS: hidden input, keeps the search term when applying filters */
+        <input
+          type="hidden"
+          {...form.register("valueContains")}
+          value={searchFilter?.valueContains ?? ""}
+        />
+      }
+      additional={
+        /* ADDITIONAL (definition-driven custom fields — YOM-1260) */
+        (lookups_customFieldDefinitions?.length ?? 0) > 0 ? (
+          <CustomFieldFilters
+            definitions={lookups_customFieldDefinitions}
+            value={customFieldFilters}
+            onChange={setCustomFieldFilters}
+            showErrors={showCustomFieldErrors}
+            menuPortalTarget={htmlRef}
+          />
+        ) : (
+          <p className="text-gray-dark pb-2 text-sm italic">
+            No additional fields for the selected type(s).
+          </p>
+        )
+      }
+    >
+      {/* TOPICS */}
+      {lookups_categories?.length > 0 &&
+        filterOptions?.includes(OpportunityFilterOptions.CATEGORIES) && (
+          <FilterField
+            label="Topics"
+            error={formState.errors.categories?.message?.toString()}
           >
-            <IoMdClose className="h-6 w-6"></IoMdClose>
-          </button>
-        </div>
-
-        <div className="bg-gray-light -mb-2 flex flex-col">
-          <div className="join join-vertical w-full">
-            {/* CATEGORIES */}
-            {lookups_categories &&
-              lookups_categories.length > 0 &&
-              (filterOptions?.includes(OpportunityFilterOptions.CATEGORIES) ||
-                filterOptions?.includes(
-                  OpportunityFilterOptions.VIEWALLFILTERSBUTTON,
-                )) && (
-                <div className="collapse-arrow join-item collapse">
-                  <input type="checkbox" name="my-accordion-1" />
-                  <div className="collapse-title text-xl font-medium">
-                    Topics
-                  </div>
-                  <div className="collapse-content">
-                    <div className="flex flex-col items-center justify-center gap-2 pb-8">
-                      <div className="flex w-full flex-col">
-                        {lookups_categories.map((item) => (
-                          <div
-                            key={`fs_searchfilter_categories_${item.id}`}
-                            className="flex h-[70px] grow flex-row items-center justify-center gap-4 p-2"
-                          >
-                            <label
-                              className="flex cursor-pointer items-center justify-center"
-                              htmlFor={`checkbox_${item.id}`}
-                            >
-                              <AvatarImage
-                                icon={item.imageURL ?? null}
-                                alt="Organization Logo"
-                                size={40}
-                              />
-                            </label>
-
-                            <label
-                              className="flex w-full grow cursor-pointer flex-col"
-                              htmlFor={`checkbox_${item.id}`}
-                            >
-                              <div className="flex grow flex-col">
-                                <h1 className="h-7 overflow-hidden text-lg font-semibold text-ellipsis text-black">
-                                  {item.name}
-                                </h1>
-                                <h6 className="text-gray-dark text-sm">
-                                  {item.count} available
-                                </h6>
-                              </div>
-                            </label>
-
-                            <input
-                              type="checkbox"
-                              className="checkbox checkbox-primary"
-                              id={`checkbox_${item.id}`}
-                              {...register("categories")}
-                              value={item.name}
-                            />
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {formState.errors.categories && (
-                      <label className="label font-bold">
-                        <span className="label-text-alt text-red-500 italic">
-                          {`${formState.errors.categories.message}`}
-                        </span>
-                      </label>
-                    )}
-                  </div>
-                </div>
+            <Controller
+              name="categories"
+              control={form.control}
+              defaultValue={searchFilter?.categories}
+              render={({ field: { onChange, value } }) => (
+                <Select
+                  {...selectProps}
+                  instanceId="filter_categories"
+                  options={toOptions(lookups_categories)}
+                  onChange={(val) => onChange(val.map((c) => c.value))}
+                  value={toOptions(
+                    lookups_categories.filter((c) => value?.includes(c.name)),
+                  )}
+                  placeholder="Select topics..."
+                />
               )}
-
-            {/* VALUECONTAINS: hidden input */}
-            <input
-              type="hidden"
-              {...form.register("valueContains")}
-              value={searchFilter?.valueContains ?? ""}
             />
+          </FilterField>
+        )}
 
-            {/* TYPES */}
-            {filterOptions?.includes(OpportunityFilterOptions.TYPES) && (
-              <div className="collapse-arrow join-item collapse">
-                <input type="checkbox" name="my-accordion-2" />
-                <div className="collapse-title text-xl font-medium">
-                  Opportunity type
-                </div>
-                <div className="collapse-content overflow-hidden">
-                  <Controller
-                    name="types"
-                    control={form.control}
-                    defaultValue={searchFilter?.types}
-                    render={({ field: { onChange, value } }) => (
-                      <Select
-                        classNames={{
-                          control: () => "input",
-                        }}
-                        isMulti={true}
-                        options={lookups_types.map((c) => ({
-                          value: c.name,
-                          label: c.name,
-                        }))}
-                        // fix menu z-index issue
-                        menuPortalTarget={htmlRef}
-                        styles={{
-                          menuPortal: (base) => ({ ...base, zIndex: 9999 }),
-                        }}
-                        onChange={(val) => onChange(val.map((c) => c.value))}
-                        value={lookups_types
-                          .filter((c) => value?.includes(c.name))
-                          .map((c) => ({ value: c.name, label: c.name }))}
-                      />
-                    )}
+      {/* TYPE */}
+      {filterOptions?.includes(OpportunityFilterOptions.TYPES) && (
+        <FilterField
+          label="Type"
+          error={formState.errors.types?.message?.toString()}
+        >
+          <Controller
+            name="types"
+            control={form.control}
+            defaultValue={searchFilter?.types}
+            render={({ field: { onChange, value } }) => (
+              <Select
+                {...selectProps}
+                instanceId="filter_types"
+                options={toOptions(lookups_types)}
+                onChange={(val) => onChange(val.map((c) => c.value))}
+                value={toOptions(
+                  lookups_types.filter((c) => value?.includes(c.name)),
+                )}
+                placeholder="Select types..."
+              />
+            )}
+          />
+        </FilterField>
+      )}
+
+      {/* LOCATION */}
+      {filterOptions?.includes(OpportunityFilterOptions.COUNTRIES) && (
+        <FilterField
+          label="Location"
+          error={formState.errors.countries?.message?.toString()}
+        >
+          <Controller
+            name="countries"
+            control={form.control}
+            defaultValue={searchFilter?.countries}
+            render={({ field: { onChange, value } }) => (
+              <Select
+                {...selectProps}
+                instanceId="filter_countries"
+                options={toOptions(lookups_countries)}
+                onChange={(val) => onChange(val.map((c) => c.value))}
+                value={toOptions(
+                  lookups_countries.filter((c) => value?.includes(c.name)),
+                )}
+                placeholder="Select countries..."
+              />
+            )}
+          />
+        </FilterField>
+      )}
+
+      {/* LANGUAGE */}
+      {filterOptions?.includes(OpportunityFilterOptions.LANGUAGES) && (
+        <FilterField
+          label="Language"
+          error={formState.errors.languages?.message?.toString()}
+        >
+          <Controller
+            name="languages"
+            control={form.control}
+            defaultValue={searchFilter?.languages}
+            render={({ field: { onChange, value } }) => (
+              <Select
+                {...selectProps}
+                instanceId="filter_languages"
+                options={toOptions(lookups_languages)}
+                onChange={(val) => onChange(val.map((c) => c.value))}
+                value={toOptions(
+                  lookups_languages.filter((c) => value?.includes(c.name)),
+                )}
+                placeholder="Select languages..."
+              />
+            )}
+          />
+        </FilterField>
+      )}
+
+      {/* ORGANIZATION */}
+      {filterOptions?.includes(OpportunityFilterOptions.ORGANIZATIONS) && (
+        <FilterField
+          label="Organization"
+          error={formState.errors.organizations?.message?.toString()}
+        >
+          <Controller
+            name="organizations"
+            control={form.control}
+            defaultValue={searchFilter?.organizations}
+            render={({ field: { onChange, value } }) => (
+              <Select
+                {...selectProps}
+                instanceId="filter_organizations"
+                options={toOptions(lookups_organisations)}
+                onChange={(val) => onChange(val.map((c) => c.value))}
+                value={toOptions(
+                  lookups_organisations.filter((c) => value?.includes(c.name)),
+                )}
+                placeholder="Select organisations..."
+              />
+            )}
+          />
+        </FilterField>
+      )}
+
+      {/* PUBLISHED STATES */}
+      {filterOptions?.includes(OpportunityFilterOptions.PUBLISHEDSTATES) && (
+        <FilterField
+          label="Published state"
+          error={formState.errors.publishedStates?.message?.toString()}
+        >
+          <Controller
+            name="publishedStates"
+            control={form.control}
+            render={({ field: { onChange, value } }) => (
+              <Select
+                {...selectProps}
+                instanceId="filter_publishedStates"
+                options={lookups_publishedStates}
+                onChange={(val) => onChange(val.map((c) => c.label))}
+                value={lookups_publishedStates.filter((c) =>
+                  value?.includes(c.label),
+                )}
+                placeholder="Select published states..."
+              />
+            )}
+          />
+        </FilterField>
+      )}
+
+      {/* STATUSES */}
+      {filterOptions?.includes(OpportunityFilterOptions.STATUSES) && (
+        <FilterField
+          label="Status"
+          error={formState.errors.statuses?.message?.toString()}
+        >
+          <Controller
+            name="statuses"
+            control={form.control}
+            render={({ field: { onChange, value } }) => (
+              <Select
+                {...selectProps}
+                instanceId="filter_statuses"
+                options={lookups_statuses}
+                onChange={(val) => onChange(val.map((c) => c.label))}
+                value={lookups_statuses.filter((c) => value?.includes(c.label))}
+                placeholder="Select statuses..."
+              />
+            )}
+          />
+        </FilterField>
+      )}
+
+      {/* DATES */}
+      {showDates && (
+        <FilterField
+          label="Dates"
+          error={
+            formState.errors.startDate?.message?.toString() ??
+            formState.errors.endDate?.message?.toString()
+          }
+        >
+          <div className="flex flex-row items-center gap-2">
+            {filterOptions?.includes(OpportunityFilterOptions.DATE_START) && (
+              <Controller
+                control={form.control}
+                name="startDate"
+                render={({ field: { onChange, value } }) => (
+                  <input
+                    type="date"
+                    className={DATE_INPUT_CLASSES}
+                    aria-label="Start date"
+                    onBlur={(e) => {
+                      // Only validate and convert when user finishes editing.
+                      // NB: applied via the Apply button, so both dates can be
+                      // set before searching.
+                      if (e.target.value) {
+                        onChange(dateInputToUTC(e.target.value));
+                      } else {
+                        onChange("");
+                      }
+                    }}
+                    defaultValue={utcToDateInput(value || "")}
                   />
-
-                  {formState.errors.types && (
-                    <label className="label font-bold">
-                      <span className="label-text-alt text-red-500 italic">
-                        {`${formState.errors.types.message}`}
-                      </span>
-                    </label>
-                  )}
-                </div>
-              </div>
+                )}
+              />
             )}
 
-            {/* COUNTRIES */}
-            {filterOptions?.includes(OpportunityFilterOptions.COUNTRIES) && (
-              <div className="collapse-arrow join-item collapse">
-                <input type="checkbox" name="my-accordion-3" />
-                <div className="collapse-title text-xl font-medium">
-                  Location
-                </div>
-                <div className="collapse-content overflow-hidden">
-                  <Controller
-                    name="countries"
-                    control={form.control}
-                    defaultValue={searchFilter?.countries}
-                    render={({ field: { onChange, value } }) => (
-                      <Select
-                        classNames={{
-                          control: () => "input",
-                        }}
-                        isMulti={true}
-                        options={lookups_countries.map((c) => ({
-                          value: c.name,
-                          label: c.name,
-                        }))}
-                        // fix menu z-index issue
-                        menuPortalTarget={htmlRef}
-                        styles={{
-                          menuPortal: (base) => ({ ...base, zIndex: 9999 }),
-                        }}
-                        onChange={(val) => onChange(val.map((c) => c.value))}
-                        value={lookups_countries
-                          .filter((c) => value?.includes(c.name))
-                          .map((c) => ({ value: c.name, label: c.name }))}
-                        placeholder="Select Countries..."
-                      />
-                    )}
+            {filterOptions?.includes(OpportunityFilterOptions.DATE_END) && (
+              <Controller
+                control={form.control}
+                name="endDate"
+                render={({ field: { onChange, value } }) => (
+                  <input
+                    type="date"
+                    className={DATE_INPUT_CLASSES}
+                    aria-label="End date"
+                    onBlur={(e) => {
+                      if (e.target.value) {
+                        onChange(dateInputToUTC(e.target.value));
+                      } else {
+                        onChange("");
+                      }
+                    }}
+                    defaultValue={utcToDateInput(value || "")}
                   />
-
-                  {formState.errors.countries && (
-                    <label className="label font-bold">
-                      <span className="label-text-alt text-red-500 italic">
-                        {`${formState.errors.countries.message}`}
-                      </span>
-                    </label>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* LANGUAGES */}
-            {filterOptions?.includes(OpportunityFilterOptions.LANGUAGES) && (
-              <div className="collapse-arrow join-item collapse">
-                <input type="checkbox" name="my-accordion-4" />
-                <div className="collapse-title text-xl font-medium">
-                  Language
-                </div>
-                <div className="collapse-content overflow-hidden">
-                  <Controller
-                    name="languages"
-                    control={form.control}
-                    defaultValue={searchFilter?.languages}
-                    render={({ field: { onChange, value } }) => (
-                      <Select
-                        classNames={{
-                          control: () => "input",
-                        }}
-                        isMulti={true}
-                        options={lookups_languages.map((c) => ({
-                          value: c.name,
-                          label: c.name,
-                        }))}
-                        // fix menu z-index issue
-                        menuPortalTarget={htmlRef}
-                        styles={{
-                          menuPortal: (base) => ({ ...base, zIndex: 9999 }),
-                        }}
-                        onChange={(val) => onChange(val.map((c) => c.value))}
-                        value={lookups_languages
-                          .filter((c) => value?.includes(c.name))
-                          .map((c) => ({ value: c.name, label: c.name }))}
-                      />
-                    )}
-                  />
-
-                  {formState.errors.languages && (
-                    <label className="label font-bold">
-                      <span className="label-text-alt text-red-500 italic">
-                        {`${formState.errors.languages.message}`}
-                      </span>
-                    </label>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* ORGANIZATIONS */}
-            {filterOptions?.includes(
-              OpportunityFilterOptions.ORGANIZATIONS,
-            ) && (
-              <div className="collapse-arrow join-item collapse">
-                <input type="checkbox" name="my-accordion-5" />
-                <div className="collapse-title text-xl font-medium">
-                  Organisation
-                </div>
-                <div className="collapse-content overflow-hidden">
-                  <Controller
-                    name="organizations"
-                    control={form.control}
-                    defaultValue={searchFilter?.organizations}
-                    render={({ field: { onChange, value } }) => (
-                      <Select
-                        classNames={{
-                          control: () => "input",
-                        }}
-                        isMulti={true}
-                        options={lookups_organisations.map((c) => ({
-                          value: c.name,
-                          label: c.name,
-                        }))}
-                        // fix menu z-index issue
-                        menuPortalTarget={htmlRef}
-                        styles={{
-                          menuPortal: (base) => ({ ...base, zIndex: 9999 }),
-                        }}
-                        onChange={(val) => onChange(val.map((c) => c.value))}
-                        value={lookups_organisations
-                          .filter((c) => value?.includes(c.name))
-                          .map((c) => ({ value: c.name, label: c.name }))}
-                      />
-                    )}
-                  />
-
-                  {formState.errors.organizations && (
-                    <label className="label font-bold">
-                      <span className="label-text-alt text-red-500 italic">
-                        {`${formState.errors.organizations.message}`}
-                      </span>
-                    </label>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* PUBLISHED STATES */}
-            {filterOptions?.includes(
-              OpportunityFilterOptions.PUBLISHEDSTATES,
-            ) && (
-              <div className="collapse-arrow join-item collapse">
-                <input type="checkbox" name="my-accordion-7" />
-                <div className="collapse-title text-xl font-medium">Status</div>
-                <div className="collapse-content overflow-hidden">
-                  <Controller
-                    name="publishedStates"
-                    control={form.control}
-                    render={({ field: { onChange, value } }) => (
-                      <Select
-                        instanceId="publishedStates"
-                        classNames={{
-                          control: () => "input",
-                        }}
-                        isMulti={true}
-                        options={lookups_publishedStates}
-                        // fix menu z-index issue
-                        menuPortalTarget={htmlRef}
-                        styles={{
-                          menuPortal: (base) => ({ ...base, zIndex: 9999 }),
-                        }}
-                        onChange={(val) => onChange(val.map((c) => c.label))}
-                        value={lookups_publishedStates.filter((c) =>
-                          value?.includes(c.label),
-                        )}
-                        placeholder="Status"
-                      />
-                    )}
-                  />
-
-                  {formState.errors.publishedStates && (
-                    <label className="label font-bold">
-                      <span className="label-text-alt text-red-500 italic">
-                        {`${formState.errors.publishedStates.message}`}
-                      </span>
-                    </label>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* STATUSES */}
-            {filterOptions?.includes(OpportunityFilterOptions.STATUSES) && (
-              <div className="collapse-arrow join-item collapse">
-                <input type="checkbox" name="my-accordion-8" />
-                <div className="collapse-title text-xl font-medium">Status</div>
-                <div className="collapse-content">
-                  <Controller
-                    name="statuses"
-                    control={form.control}
-                    render={({ field: { onChange, value } }) => (
-                      <Select
-                        instanceId="statuses"
-                        classNames={{
-                          control: () => "input input-xs",
-                        }}
-                        isMulti={true}
-                        options={lookups_statuses}
-                        // fix menu z-index issue
-                        menuPortalTarget={htmlRef}
-                        styles={{
-                          menuPortal: (base) => ({ ...base, zIndex: 9999 }),
-                        }}
-                        onChange={(val) => onChange(val.map((c) => c.label))}
-                        value={lookups_statuses.filter((c) =>
-                          value?.includes(c.label),
-                        )}
-                        placeholder="Status"
-                      />
-                    )}
-                  />
-
-                  {formState.errors.statuses && (
-                    <label className="label font-bold">
-                      <span className="label-text-alt text-red-500 italic">
-                        {`${formState.errors.statuses.message}`}
-                      </span>
-                    </label>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* DATES */}
-            {(filterOptions?.includes(OpportunityFilterOptions.DATE_START) ||
-              filterOptions?.includes(OpportunityFilterOptions.DATE_END)) && (
-              <>
-                <div className="collapse-title text-xl font-medium">Dates</div>
-                <input type="checkbox" name="my-accordion-9" />
-                <div className="flex flex-row gap-1 px-4 pb-4">
-                  {/* DATE START */}
-                  {filterOptions?.includes(
-                    OpportunityFilterOptions.DATE_START,
-                  ) && (
-                    <>
-                      <Controller
-                        control={form.control}
-                        name="startDate"
-                        render={({ field: { onChange, value } }) => (
-                          <input
-                            type="date"
-                            className="input input-sm border-gray focus:border-gray w-full rounded-md focus:outline-none"
-                            onBlur={(e) => {
-                              // Only validate and convert when user finishes editing
-                              if (e.target.value) {
-                                onChange(dateInputToUTC(e.target.value));
-                              } else {
-                                onChange("");
-                              }
-                              void handleSubmit(onSubmitHandler)();
-                            }}
-                            defaultValue={utcToDateInput(value || "")}
-                          />
-                        )}
-                      />
-
-                      {formState.errors.startDate && (
-                        <label className="label">
-                          <span className="label-text-alt px-4 text-base text-red-500 italic">
-                            {`${formState.errors.startDate.message}`}
-                          </span>
-                        </label>
-                      )}
-                    </>
-                  )}
-
-                  {/* DATE END */}
-                  {filterOptions?.includes(
-                    OpportunityFilterOptions.DATE_END,
-                  ) && (
-                    <>
-                      <Controller
-                        control={form.control}
-                        name="endDate"
-                        render={({ field: { onChange, value } }) => (
-                          <input
-                            type="date"
-                            className="input input-sm border-gray focus:border-gray w-full rounded-md focus:outline-none"
-                            onBlur={(e) => {
-                              // Only validate and convert when user finishes editing
-                              if (e.target.value) {
-                                onChange(dateInputToUTC(e.target.value));
-                              } else {
-                                onChange("");
-                              }
-                              void handleSubmit(onSubmitHandler)();
-                            }}
-                            defaultValue={utcToDateInput(value || "")}
-                          />
-                        )}
-                      />{" "}
-                      {formState.errors.endDate && (
-                        <label className="label">
-                          <span className="label-text-alt px-4 text-base text-red-500 italic">
-                            {`${formState.errors.endDate.message}`}
-                          </span>
-                        </label>
-                      )}
-                    </>
-                  )}
-                </div>
-              </>
+                )}
+              />
             )}
           </div>
-        </div>
-
-        {/* BUTTONS */}
-        <div className="mx-4 my-8 flex flex-col items-center justify-center gap-6 md:flex-row">
-          {onSubmit && (
-            <button
-              type="submit"
-              className="btn btn-primary w-full grow rounded-full md:w-40"
-            >
-              {submitButtonText}
-            </button>
-          )}
-          {onClear && (
-            <button
-              type="button"
-              className="btn btn-warning w-full grow rounded-full md:w-40"
-              onClick={onClear}
-            >
-              {clearButtonText}
-            </button>
-          )}
-        </div>
-      </form>
-    </>
+        </FilterField>
+      )}
+    </ListPageFilterDialog>
   );
 };

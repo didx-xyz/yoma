@@ -5,11 +5,17 @@ namespace Yoma.Core.Domain.Reward.Interfaces.Provider
 {
   public interface IRewardProviderClient
   {
-    Task<(Wallet wallet, Models.Provider.WalletCreationStatus status)> CreateWallet(WalletRequestCreate request);
+    Task<CreateWalletResponse> CreateWallet(CreateWalletRequest request);
 
-    Task<string> UpdateWalletUsername(string usernameCurrent, string username);
+    Task UpdateWalletUsername(UpdateWalletUsernameRequest request);
 
     Task<Wallet> GetWallet(string walletId);
+
+    Task<ReservePayoutResponse> ReserveForPayout(ReservePayoutRequest request);
+
+    Task CommitPayoutReservation(CommitPayoutReservationRequest request);
+
+    Task ReleasePayoutReservation(ReleasePayoutReservationRequest request);
 
     Task<List<WalletVoucher>> ListWalletVouchers(string walletId, int? limit, int? offset);
 

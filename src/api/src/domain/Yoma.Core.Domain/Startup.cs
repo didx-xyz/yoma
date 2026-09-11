@@ -42,6 +42,10 @@ using Yoma.Core.Domain.PartnerSync.Interfaces.Provider;
 using Yoma.Core.Domain.PartnerSync.Services;
 using Yoma.Core.Domain.PartnerSync.Services.Lookups;
 using Yoma.Core.Domain.PartnerSync.Services.Provider;
+using Yoma.Core.Domain.Payout.Interfaces;
+using Yoma.Core.Domain.Payout.Interfaces.Lookups;
+using Yoma.Core.Domain.Payout.Services;
+using Yoma.Core.Domain.Payout.Services.Lookups;
 using Yoma.Core.Domain.Referral.Interfaces;
 using Yoma.Core.Domain.Referral.Interfaces.Lookups;
 using Yoma.Core.Domain.Referral.Services;
@@ -92,6 +96,8 @@ namespace Yoma.Core.Domain
       services.AddScoped<IDownloadScheduleStatusService, DownloadScheduleStatusService>();
       #endregion
       services.AddScoped<IBlobService, BlobService>();
+      services.AddScoped<ICustomFieldDefinitionService, CustomFieldDefinitionService>();
+      services.AddScoped<ICustomFieldValueService, CustomFieldValueService>();
       services.AddSingleton<IDistributedCacheService, DistributedCacheService>();
       services.AddSingleton<IDistributedLockService, DistributedLockService>();
       services.AddSingleton<IIdempotencyService, IdempotencyService>();
@@ -187,6 +193,16 @@ namespace Yoma.Core.Domain
       services.AddScoped<IProcessingService, ProcessingService>();
       #endregion Partner Sync
 
+      #region Payout
+      #region Lookups
+      services.AddScoped<IPayoutTransactionStatusService, PayoutTransactionStatusService>();
+      #endregion Lookups
+
+      services.AddScoped<IPayoutTransactionService, PayoutTransactionService>();
+      services.AddScoped<IPayoutService, PayoutService>();
+      services.AddScoped<IPayoutBackgroundService, PayoutBackgroundService>();
+      #endregion Payout
+
       #region Referral
       #region Lookups
       services.AddScoped<ILinkStatusService, LinkStatusService>();
@@ -234,6 +250,7 @@ namespace Yoma.Core.Domain
 
       #region Treasury
       services.AddScoped<ITreasuryService, TreasuryService>();
+      services.AddScoped<ITreasuryBackgroundService, TreasuryBackgroundService>();
       #endregion Treasury
     }
 
@@ -296,6 +313,16 @@ namespace Yoma.Core.Domain
       RecurringJob.AddOrUpdate<IRewardBackgroundService>(
         $"Rewards Transaction Processing (awarding rewards)",
         s => s.ProcessRewardTransactions(), options.RewardTransactionSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
+
+      //payout
+      RecurringJob.AddOrUpdate<IPayoutBackgroundService>(
+        "Payout Reconciliation",
+        s => s.ProcessReconciliation(), options.PayoutReconciliationSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
+
+      //treasury
+      RecurringJob.AddOrUpdate<ITreasuryBackgroundService>(
+        "Treasury Financial-Year Rollover",
+        s => s.ProcessFinancialYearRollover(), options.TreasuryFinancialYearRolloverSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
 
       //ssi
       BackgroundJob.Enqueue<ISSIBackgroundService>(s => s.SeedSchemas()); //execute on startup; seed default schemas

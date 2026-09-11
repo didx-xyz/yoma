@@ -1,4 +1,5 @@
 using Yoma.Core.Domain.Marketplace.Models;
+using Yoma.Core.Domain.Marketplace.Models.Provider;
 
 namespace Yoma.Core.Domain.Marketplace.Interfaces.Provider
 {
@@ -14,10 +15,10 @@ namespace Yoma.Core.Domain.Marketplace.Interfaces.Provider
 
     Task<List<StoreItem>> ListStoreItems(string storeId, string itemCategoryId, int? limit, int? offset);
 
-    Task<string> ItemReserve(string walletId, string username, string itemId);
+    Task<ReserveItemResponse> ReserveItem(ReserveItemRequest request);
 
-    Task ItemReserveReset(string itemId, string transactionId);
+    Task CommitItemReservation(CommitItemReservationRequest request);
 
-    Task ItemSold(string walletId, string username, string itemId, string transactionId);
+    Task ReleaseItemReservation(ReleaseItemReservationRequest request);
   }
 }

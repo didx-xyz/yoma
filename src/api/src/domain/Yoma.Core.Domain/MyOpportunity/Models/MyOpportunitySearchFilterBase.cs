@@ -1,5 +1,6 @@
 using Newtonsoft.Json;
 using Yoma.Core.Domain.Core;
+using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
 
@@ -10,6 +11,12 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
     public Action Action { get; set; }
 
     public List<VerificationStatus>? VerificationStatuses { get; set; }
+
+    /// <summary>
+    /// Filters MyOpportunity records using explicitly supplied configured custom-field values.
+    /// Youth searches remain scoped to the authenticated user's records.
+    /// </summary>
+    public List<CustomFieldFilter>? CustomFields { get; set; }
 
     [JsonIgnore]
     internal bool TotalCountOnly { get; set; }
@@ -43,12 +50,17 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
       SanitizeCollections();
 
       VerificationStatuses = VerificationStatuses?.OrderBy(o => o).ToList();
+
+      CustomFields = CustomFields.NormalizeForHashing();
     }
 
     public virtual void SanitizeCollections()
     {
       VerificationStatuses = VerificationStatuses?.Distinct().ToList();
       if (VerificationStatuses?.Count == 0) VerificationStatuses = null;
+
+      // Preserve duplicate keys so validation can reject the ambiguous filters instead of silently discarding values.
+      if (CustomFields?.Count == 0) CustomFields = null;
     }
   }
 }

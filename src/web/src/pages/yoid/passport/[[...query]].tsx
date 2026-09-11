@@ -7,9 +7,12 @@ import { useCallback, useState, type ReactElement } from "react";
 import { IoMdCheckmark, IoMdClose } from "react-icons/io";
 import Moment from "react-moment";
 import { toast } from "react-toastify";
-import type {
-  SSICredentialInfo,
-  SSIWalletSearchResults,
+import {
+  ARTIFACT_TYPE_LABELS,
+  type ArtifactType,
+  type SSICredential,
+  type SSICredentialInfo,
+  type SSIWalletSearchResults,
 } from "~/api/models/credential";
 import {
   getCredentialById,
@@ -19,6 +22,7 @@ import { AvatarImage } from "~/components/AvatarImage";
 import Breadcrumb from "~/components/Breadcrumb";
 import CustomModal from "~/components/Common/CustomModal";
 import Suspense from "~/components/Common/Suspense";
+import CredentialAttributes from "~/components/Credentials/CredentialAttributes";
 import YoID from "~/components/Layout/YoID";
 import NoRowsMessage from "~/components/NoRowsMessage";
 import { PaginationButtons } from "~/components/PaginationButtons";
@@ -85,8 +89,9 @@ const MyPassport: NextPageWithLayout<{
   passport_enabled: boolean;
 }> = ({ pageNumber, error, passport_enabled }) => {
   const [credentialDialogVisible, setCredentialDialogVisible] = useState(false);
+  // 👇 the *detail* response — `getCredentialById` returns the attributes the list item lacks
   const [activeCredential, setActiveCredential] =
-    useState<SSICredentialInfo | null>(null);
+    useState<SSICredential | null>(null);
 
   // 👇 use prefetched queries from server
   const {
@@ -188,11 +193,14 @@ const MyPassport: NextPageWithLayout<{
                   />
                 )}
 
-                <div className="flex grow flex-col gap-4 overflow-y-scroll p-4 pt-0 pb-8 md:max-h-[480px] md:min-h-[350px]">
+                <div className="flex grow flex-col gap-4 p-4 pt-0 pb-8">
                   <h4 className="text-center">{activeCredential?.title}</h4>
 
                   {/* CREDENTIAL DETAILS */}
                   <div className="bg-gray-light rounded border-dotted p-4 shadow">
+                    {/* Fixed credential header. Deliberately outside attribute grouping by API
+                        contract — these come from the credential's system properties, not from its
+                        schema attributes, and carry no presentation metadata. */}
                     <ul className="divide-y divide-gray-200">
                       <li className="py-4">
                         <div className="flex justify-between text-sm">
@@ -209,8 +217,12 @@ const MyPassport: NextPageWithLayout<{
                           <p className="font-semibold text-gray-500 md:w-64">
                             Artifact Type
                           </p>
+                          {/* The API returns the enum *name*, so an AnonCreds credential rendered
+                              as the bare "ACR". YOM-1281 added the friendly labels for this. */}
                           <p className="text-end text-gray-900">
-                            {activeCredential?.artifactType}
+                            {ARTIFACT_TYPE_LABELS[
+                              activeCredential.artifactType as keyof typeof ArtifactType
+                            ] ?? activeCredential.artifactType}
                           </p>
                         </div>
                       </li>
@@ -241,20 +253,12 @@ const MyPassport: NextPageWithLayout<{
                           </p>
                         </div>
                       </li>
-                      {/* ATTRIBUTES */}
-                      {activeCredential?.attributes?.map((attr, index) => (
-                        <li key={index} className="py-4">
-                          <div className="flex justify-between text-sm">
-                            <p className="font-semibold text-gray-500 md:w-64">
-                              {attr.nameDisplay}
-                            </p>
-                            <p className="text-end text-gray-900">
-                              {attr.valueDisplay}
-                            </p>
-                          </div>
-                        </li>
-                      ))}
                     </ul>
+
+                    {/* ATTRIBUTES — schema-driven, grouped and ordered entirely by the API */}
+                    <CredentialAttributes
+                      attributes={activeCredential?.attributes}
+                    />
                   </div>
 
                   <div className="mt-4 flex grow items-center justify-center gap-4 pb-14">
@@ -324,10 +328,10 @@ const MyPassport: NextPageWithLayout<{
                     <div className="flex h-full flex-row">
                       <div className="flex grow flex-row items-start justify-start">
                         <div className="flex flex-col items-start justify-start gap-1">
-                          <p className="text-gray-dark line-clamp-2 max-h-[35px] max-w-[210px] overflow-hidden pr-2 text-xs font-medium text-ellipsis">
+                          <p className="text-gray-dark line-clamp-2 overflow-hidden pr-2 text-xs font-medium text-ellipsis">
                             {item.issuer}
                           </p>
-                          <p className="line-clamp-3 max-h-[80px] max-w-[210px] overflow-hidden pr-2 text-sm font-bold text-ellipsis">
+                          <p className="line-clamp-3 overflow-hidden pr-2 text-sm font-bold text-ellipsis">
                             {item.title}
                           </p>
                         </div>

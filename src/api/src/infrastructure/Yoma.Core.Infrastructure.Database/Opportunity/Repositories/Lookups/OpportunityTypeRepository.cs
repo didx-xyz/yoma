@@ -26,7 +26,8 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories.Lookups
       return _context.OpportunityType.Select(entity => new OpportunityType
       {
         Id = entity.Id,
-        Name = entity.Name
+        Name = entity.Name,
+        DisplayName = entity.DisplayName
       });
     }
 

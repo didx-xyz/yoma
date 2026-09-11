@@ -1,5 +1,7 @@
 using CsvHelper.Configuration.Attributes;
 using Newtonsoft.Json;
+using Yoma.Core.Domain.Core.Helpers;
+using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Lookups.Models;
 using Yoma.Core.Domain.PartnerSync.Models;
 
@@ -54,7 +56,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
     public string? OpportunitySummary { get; set; }
 
     [Ignore]
-    public string OpportunityType { get; set; } = null!;
+    public Opportunity.Type OpportunityType { get; set; }
 
     [Ignore]
     public string? OpportunityCommitmentIntervalDescription { get; set; }
@@ -115,9 +117,6 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
     [Name("Zlto Reward")]
     public decimal? ZltoReward { get; set; }
 
-    [Ignore] //reserved for future use
-    public decimal? YomaReward { get; set; }
-
     [Ignore]
     public bool? Recommendable { get; set; }
 
@@ -135,8 +134,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
 
     [JsonIgnore]
     [Name("Externally Managed (Locked)")]
-    [BooleanFalseValues("No")]
-    [BooleanTrueValues("Yes")]
+    [BooleanFalseValues(CSVImportHelper.Boolean_Value_False)]
+    [BooleanTrueValues(CSVImportHelper.Boolean_Value_True)]
     public bool SyncedLocked => SyncedInfo?.Locked == true;
 
     [JsonIgnore]
@@ -152,5 +151,14 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
     [JsonIgnore]
     [Name("Skills")]
     public string? SkillsFlattened => Skills == null || Skills.Count == 0 ? null : string.Join(", ", Skills.Select(o => o.Name));
+
+    [Ignore]
+    public List<CustomFieldValueItem>? CustomFields { get; set; }
+
+    [JsonIgnore]
+    [Name("Custom Fields")]
+    public string? CustomFieldsFlattened => CustomFields == null || CustomFields.Count == 0
+      ? null
+      : string.Join("; ", CustomFields.Select(o => o.DataType == Core.CustomFieldDataType.Option ? $"{o.Key}: {string.Join(", ", o.Values ?? [])}" : $"{o.Key}: {o.Value}"));
   }
 }

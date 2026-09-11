@@ -79,6 +79,9 @@ namespace Yoma.Core.Infrastructure.Zlto.Models
     [JsonProperty("zlto_balance")]
     public decimal ZltoBalance { get; set; }
 
+    [JsonProperty("reserved_zlto_balance")]
+    public decimal ReservedZltoBalance { get; set; }
+
     [JsonProperty("wallet_state")]
     public int WalletState { get; set; }
 

@@ -10,11 +10,12 @@ interface CustomInputHTMLAttributes<T>
   extends React.InputHTMLAttributes<T>, DataAttributes {}
 
 const FormInput: React.FC<{
+  className?: string;
   inputProps?: CustomInputHTMLAttributes<HTMLInputElement>;
-}> = ({ inputProps }) => {
+}> = ({ className, inputProps }) => {
   return (
     <input
-      className="input border-gray focus:border-gray w-full rounded-md focus:outline-none"
+      className={`input border-gray focus:border-gray w-full rounded-md focus:outline-none ${className ?? ""}`}
       {...inputProps}
     />
   );

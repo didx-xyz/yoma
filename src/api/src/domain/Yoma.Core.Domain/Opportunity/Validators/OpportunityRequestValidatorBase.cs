@@ -1,10 +1,9 @@
 using FluentValidation;
+using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Entity.Interfaces;
 using Yoma.Core.Domain.Lookups.Interfaces;
 using Yoma.Core.Domain.Opportunity.Interfaces.Lookups;
 using Yoma.Core.Domain.Opportunity.Services;
-using Yoma.Core.Domain.SSI;
-using Yoma.Core.Domain.SSI.Interfaces;
 
 namespace Yoma.Core.Domain.Opportunity.Validators
 {
@@ -22,7 +21,6 @@ namespace Yoma.Core.Domain.Opportunity.Validators
     private readonly ILanguageService _languageService;
     private readonly ISkillService _skillService;
     private readonly IOpportunityVerificationTypeService _opportunityVerificationTypeService;
-    private readonly ISSISchemaService _ssiSchemaService;
     #endregion
 
     #region Constructor
@@ -35,8 +33,7 @@ namespace Yoma.Core.Domain.Opportunity.Validators
         ICountryService countryService,
         ILanguageService languageService,
         ISkillService skillService,
-        IOpportunityVerificationTypeService opportunityVerificationTypeService,
-        ISSISchemaService ssiSchemaService)
+        IOpportunityVerificationTypeService opportunityVerificationTypeService)
     {
       _opportunityTypeService = opportunityTypeService;
       _organizationService = organizationService;
@@ -48,7 +45,6 @@ namespace Yoma.Core.Domain.Opportunity.Validators
       _languageService = languageService;
       _skillService = skillService;
       _opportunityVerificationTypeService = opportunityVerificationTypeService;
-      _ssiSchemaService = ssiSchemaService;
 
       RuleFor(x => x.Title)
           .NotEmpty()
@@ -92,14 +88,6 @@ namespace Yoma.Core.Domain.Opportunity.Validators
           .When(x => x.ZltoReward.HasValue)
           .WithMessage("ZLTO reward does not support decimal points.");
 
-      RuleFor(x => x.YomaReward)
-          .GreaterThan(0)
-          .When(x => x.YomaReward.HasValue)
-          .WithMessage("Yoma reward must be greater than 0.")
-          .LessThanOrEqualTo(2000)
-          .When(x => x.YomaReward.HasValue)
-          .WithMessage("Yoma reward must be less than or equal to 2000.");
-
       RuleFor(x => x.ZltoRewardPool)
           .GreaterThan(0)
           .When(x => x.ZltoRewardPool.HasValue)
@@ -112,16 +100,6 @@ namespace Yoma.Core.Domain.Opportunity.Validators
           .Must(zltoRewardPool => zltoRewardPool % 1 == 0)
           .When(x => x.ZltoRewardPool.HasValue)
           .WithMessage("ZLTO reward pool does not support decimal points.");
-
-      RuleFor(x => x.YomaRewardPool)
-          .GreaterThan(0)
-          .When(x => x.YomaRewardPool.HasValue)
-          .WithMessage("Yoma reward pool must be greater than 0.")
-          .Must((model, yomaRewardPool) => !model.YomaRewardPool.HasValue || (model.YomaReward.HasValue && yomaRewardPool >= model.YomaReward))
-          .WithMessage("Yoma reward pool must be greater than or equal to Yoma reward.")
-          .LessThanOrEqualTo(10000000M)
-          .When(x => x.YomaRewardPool.HasValue)
-          .WithMessage("Yoma reward pool must not exceed 10 million.");
 
       RuleFor(x => x.VerificationMethod)
           .NotNull()
@@ -216,10 +194,6 @@ namespace Yoma.Core.Domain.Opportunity.Validators
           .When(x => x.CredentialIssuanceEnabled)
           .WithMessage("SSI schema name is required when credential issuance is enabled.");
 
-      RuleFor(x => x.SSISchemaName)
-          .Must(SSISchemaExistsAndOfTypeOpportunity)
-          .When(x => !string.IsNullOrEmpty(x.SSISchemaName))
-          .WithMessage("SSI schema does not exist.");
 
       // Engagement type is optional. If specified it must exist.
       RuleFor(x => x.EngagementTypeId)
@@ -266,6 +240,29 @@ namespace Yoma.Core.Domain.Opportunity.Validators
       RuleFor(opportunity => opportunity.ShareWithPartners)
           .Must((opportunity, shareWithPartners) => shareWithPartners != true || opportunity.Hidden != true)
           .WithMessage("A hidden opportunity cannot be shared with partners.");
+
+      RuleFor(x => x.CustomFields)
+        .Must(CustomFieldKeysUnique)
+        .WithMessage("Custom field keys must be unique.");
+
+      RuleForEach(x => x.CustomFields).ChildRules(field =>
+      {
+        field.RuleFor(x => x.Key)
+          .NotEmpty()
+          .WithMessage("Custom field key is required.");
+
+        field.RuleFor(x => x)
+          .Must(CustomFieldValueSpecified)
+          .WithMessage("Custom field must specify exactly one of value or values; values must contain at least one item.");
+
+        field.RuleFor(x => x.Value)
+          .Must(value => string.IsNullOrWhiteSpace(value) || !value.Contains(CustomFieldValue.Value_Delimiter))
+          .WithMessage("Custom field value contains an invalid delimiter character.");
+
+        field.RuleFor(x => x.Values)
+          .Must(values => values == null || values.All(value => !string.IsNullOrWhiteSpace(value) && !value.Contains(CustomFieldValue.Value_Delimiter)))
+          .WithMessage("Custom field values contain empty values or invalid delimiter characters.");
+      });
     }
     #endregion
 
@@ -351,19 +348,38 @@ namespace Yoma.Core.Domain.Opportunity.Validators
       return _opportunityVerificationTypeService.GetByTypeOrNull(type) != null;
     }
 
-    private bool SSISchemaExistsAndOfTypeOpportunity(string? name)
-    {
-      if (string.IsNullOrEmpty(name)) return false;
-      var result = _ssiSchemaService.GetByFullNameOrNull(name).Result;
-
-      return result != null && result.Type == SchemaType.Opportunity;
-    }
-
     private bool EngagementTypeExists(Guid? id)
     {
       if (!id.HasValue) return true;
       if (id.Value == Guid.Empty) return false;
       return _engagementTypeService.GetByIdOrNull(id.Value) != null;
+    }
+
+    private static bool CustomFieldKeysUnique(List<CustomFieldValueRequest>? customFields)
+    {
+      if (customFields == null) return true;
+
+      var keys = customFields
+        .Where(o => !string.IsNullOrWhiteSpace(o.Key))
+        .Select(o => o.Key.Trim())
+        .ToList();
+
+      return keys.Count == keys.Distinct(StringComparer.OrdinalIgnoreCase).Count();
+    }
+
+    private static bool CustomFieldValueSpecified(CustomFieldValueRequest customField)
+    {
+      var hasValue = !string.IsNullOrWhiteSpace(customField.Value);
+      var hasValues = customField.Values != null;
+
+      // PATCH normalizes a key-only item into an explicit deletion. It is valid only
+      // when neither scalar nor option values were supplied with the deletion request.
+      if (customField.Delete)
+        return !hasValue && (!hasValues || customField.Values!.Count == 0);
+
+      // A normal item must use exactly one value representation: Value for scalar
+      // fields or a non-empty Values collection for option fields.
+      return hasValue != hasValues && (!hasValues || customField.Values!.Count != 0);
     }
     #endregion
   }

@@ -36,7 +36,7 @@ GO
 --ssi credential issuance (pending) for YOID onboarded users
 INSERT INTO [SSI].[CredentialIssuance]([Id],[SchemaTypeId],[ArtifactType],[SchemaName],[SchemaVersion],[StatusId],[UserId],[OrganizationId]
            ,[MyOpportunityId],[CredentialId],[ErrorReason],[RetryCount],[DateCreated],[DateModified])
-SELECT NEWID(),(SELECT [Id] FROM [SSI].[SchemaType] WHERE [Name] = 'YoID'),'Indy','YoID|Default','1.0',(SELECT [Id] FROM [SSI].[CredentialIssuanceStatus] WHERE [Name] = 'Pending'),
+SELECT NEWID(),(SELECT [Id] FROM [SSI].[SchemaType] WHERE [Name] = 'YoID'),'Indy','YoID|Default',NULL,(SELECT [Id] FROM [SSI].[CredentialIssuanceStatus] WHERE [Name] = 'Pending'),
 	U.[Id],NULL,NULL,NULL,NULL,NULL,GETDATE(),GETDATE()
 FROM [Entity].[User] U
 WHERE U.[YoIDOnboarded] = 1
@@ -135,9 +135,6 @@ BEGIN
 		[ZltoReward],
 		[ZltoRewardPool],
 		[ZltoRewardCumulative],
-		[YomaReward],
-		[YomaRewardPool],
-		[YomaRewardCumulative],
 		[VerificationEnabled],
 		[VerificationMethod],
 		[DifficultyId],
@@ -165,9 +162,6 @@ BEGIN
 		'https://www.google.com/',
 		(SELECT ROUND(100 + (350 - 100) * RAND(), 2)) as [ZltoReward],
 		(SELECT ROUND(1000 + (3500 - 1000) * RAND(), 2)) as [ZltoRewardPool],
-		NULL,
-		(SELECT ROUND(100 + (350 - 100) * RAND(), 2)) as [YomaReward],
-		(SELECT ROUND(1000 + (3500 - 1000) * RAND(), 2)) as [YomaRewardPool],
 		NULL,
 		@VerificationEnabled,
     CASE WHEN @VerificationEnabled = 1 THEN 'Manual' ELSE NULL END,
@@ -262,13 +256,12 @@ GO
 /****myOpportunities****/
 --viewed
 INSERT INTO [Opportunity].[MyOpportunity]([Id],[UserId],[OpportunityId],[ActionId],[VerificationStatusId],[CommentVerification],[DateStart]
-           ,[DateEnd],[DateCompleted],[ZltoReward],[YomaReward],[DateCreated],[DateModified])
+           ,[DateEnd],[DateCompleted],[ZltoReward],[DateCreated],[DateModified])
 SELECT
 	NEWID() ,
 	(SELECT [Id] FROM [Entity].[User] WHERE [Email] = 'testuser@gmail.com'),
 	O.[Id],
 	(SELECT [Id] FROM [Opportunity].[MyOpportunityAction] WHERE [Name] = 'Viewed'),
-	NULL,
 	NULL,
 	NULL,
 	NULL,
@@ -286,13 +279,12 @@ GO
 
 --saved
 INSERT INTO [Opportunity].[MyOpportunity]([Id],[UserId],[OpportunityId],[ActionId],[VerificationStatusId],[CommentVerification],[DateStart]
-           ,[DateEnd],[DateCompleted],[ZltoReward],[YomaReward],[DateCreated],[DateModified])
+           ,[DateEnd],[DateCompleted],[ZltoReward],[DateCreated],[DateModified])
 SELECT
 	NEWID() ,
 	(SELECT [Id] FROM [Entity].[User] WHERE [Email] = 'testuser@gmail.com'),
 	O.[Id],
 	(SELECT [Id] FROM [Opportunity].[MyOpportunityAction] WHERE [Name] = 'Saved'),
-	NULL,
 	NULL,
 	NULL,
 	NULL,
@@ -310,7 +302,7 @@ GO
 
 --verification (pending)
 INSERT INTO [Opportunity].[MyOpportunity]([Id],[UserId],[OpportunityId],[ActionId],[VerificationStatusId],[CommentVerification],[DateStart]
-           ,[DateEnd],[DateCompleted],[ZltoReward],[YomaReward],[DateCreated],[DateModified])
+           ,[DateEnd],[DateCompleted],[ZltoReward],[DateCreated],[DateModified])
 SELECT
 	NEWID() ,
 	(SELECT [Id] FROM [Entity].[User] WHERE [Email] = 'testuser@gmail.com'),
@@ -320,7 +312,6 @@ SELECT
 	NULL,
 	CAST(DATEADD(DAY, 1, O.[DateStart]) AS DATE),
 	CAST(DATEADD(DAY, 2, O.[DateStart]) AS DATE),
-	NULL,
 	NULL,
 	NULL,
 	GETDATE(),
@@ -334,7 +325,7 @@ GO
 
 --verification (rejected)
 INSERT INTO [Opportunity].[MyOpportunity]([Id],[UserId],[OpportunityId],[ActionId],[VerificationStatusId],[CommentVerification],[DateStart]
-           ,[DateEnd],[DateCompleted],[ZltoReward],[YomaReward],[DateCreated],[DateModified])
+           ,[DateEnd],[DateCompleted],[ZltoReward],[DateCreated],[DateModified])
 SELECT
 	NEWID() ,
 	(SELECT [Id] FROM [Entity].[User] WHERE [Email] = 'testuser@gmail.com'),
@@ -344,7 +335,6 @@ SELECT
 	'Rejection Comment',
 	CAST(DATEADD(DAY, 1, O.[DateStart]) AS DATE),
 	CAST(DATEADD(DAY, 2, O.[DateStart]) AS DATE),
-	NULL,
 	NULL,
 	NULL,
 	GETDATE(),
@@ -358,7 +348,7 @@ GO
 
 --verification (completed)
 INSERT INTO [Opportunity].[MyOpportunity]([Id],[UserId],[OpportunityId],[ActionId],[VerificationStatusId],[CommentVerification],[DateStart]
-           ,[DateEnd],[DateCompleted],[ZltoReward],[YomaReward],[DateCreated],[DateModified])
+           ,[DateEnd],[DateCompleted],[ZltoReward],[DateCreated],[DateModified])
 SELECT
 	NEWID() ,
 	(SELECT [Id] FROM [Entity].[User] WHERE [Email] = 'testuser@gmail.com'),
@@ -370,7 +360,6 @@ SELECT
 	CAST(DATEADD(DAY, 2, O.[DateStart]) AS DATE),
 	GETDATE(),
 	O.[ZltoReward],
-	O.[YomaReward],
 	GETDATE(),
 	GETDATE()
 FROM [Opportunity].[Opportunity] O
@@ -383,7 +372,7 @@ GO
 --ssi credential issuance (pending) for verification (completed) mapped to opportunities with CredentialIssuanceEnabled
 INSERT INTO [SSI].[CredentialIssuance]([Id],[SchemaTypeId],[ArtifactType],[SchemaName],[SchemaVersion],[StatusId],[UserId],[OrganizationId]
            ,[MyOpportunityId],[CredentialId],[ErrorReason],[RetryCount],[DateCreated],[DateModified])
-SELECT NEWID(),(SELECT [Id] FROM [SSI].[SchemaType] WHERE [Name] = 'Opportunity'),'Indy',O.SSISchemaName,'1.5',(SELECT [Id] FROM [SSI].[CredentialIssuanceStatus] WHERE [Name] = 'Pending'), --TODO: Ld_proof
+SELECT NEWID(),(SELECT [Id] FROM [SSI].[SchemaType] WHERE [Name] = 'Opportunity'),'Indy',O.SSISchemaName,NULL,(SELECT [Id] FROM [SSI].[CredentialIssuanceStatus] WHERE [Name] = 'Pending'), --TODO: Ld_proof
 	NULL,NULL,MO.Id,NULL,NULL,NULL,GETDATE(),GETDATE()
 FROM [Opportunity].[MyOpportunity] MO
 INNER JOIN [Opportunity].[Opportunity] O ON MO.OpportunityId = O.Id
@@ -445,8 +434,7 @@ WITH AggregatedData AS (
     SELECT
         O.[Id] AS OpportunityId,
         COUNT(MO.[Id]) AS [Count],
-        SUM(MO.[ZltoReward]) AS [ZltoRewardTotal],
-        SUM(MO.[YomaReward]) AS [YomaRewardTotal]
+        SUM(MO.[ZltoReward]) AS [ZltoRewardTotal]
     FROM [Opportunity].[Opportunity] O
     LEFT JOIN [Opportunity].[MyOpportunity] MO ON O.[Id] = MO.[OpportunityId]
     WHERE MO.[ActionId] = (SELECT [Id] FROM [Opportunity].[MyOpportunityAction] WHERE [Name] = 'Verification')
@@ -456,8 +444,7 @@ WITH AggregatedData AS (
 UPDATE O
 SET
     O.[ParticipantCount] = A.[Count],
-    O.[ZltoRewardCumulative] = A.[ZltoRewardTotal],
-    O.[YomaRewardCumulative] = A.[YomaRewardTotal]
+    O.[ZltoRewardCumulative] = A.[ZltoRewardTotal]
 FROM [Opportunity].[Opportunity] O
 INNER JOIN AggregatedData A ON O.[Id] = A.OpportunityId;
 GO

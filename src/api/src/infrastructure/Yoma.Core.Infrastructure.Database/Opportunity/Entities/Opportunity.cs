@@ -55,15 +55,6 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Entities
     [Column(TypeName = "decimal(12,2)")]
     public decimal? ZltoRewardCumulative { get; set; }
 
-    [Column(TypeName = "decimal(8,2)")]
-    public decimal? YomaReward { get; set; }
-
-    [Column(TypeName = "decimal(12,2)")]
-    public decimal? YomaRewardPool { get; set; }
-
-    [Column(TypeName = "decimal(12,2)")]
-    public decimal? YomaRewardCumulative { get; set; }
-
     [Required]
     public bool VerificationEnabled { get; set; }
 
@@ -141,5 +132,7 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Entities
     public ICollection<OpportunitySkill>? Skills { get; set; }
 
     public ICollection<OpportunityVerificationType>? VerificationTypes { get; set; }
+
+    public ICollection<Core.Entities.CustomFieldValue>? CustomFieldValues { get; set; }
   }
 }

@@ -81,10 +81,5 @@ namespace Yoma.Core.Domain.Notification.Models
     [JsonProperty("zltoRewardFormatted")]
     public string? ZltoRewardFormatted => ZltoReward.HasValue ? ZltoReward.Value.ToString("0.00") : decimal.Zero.ToString("0.00");
 
-    [JsonProperty("yomaReward")]
-    public decimal? YomaReward { get; set; }
-
-    [JsonProperty("yomaRewardFormatted")]
-    public string? YomaRewardFormatted => YomaReward.HasValue ? YomaReward.Value.ToString("0.00") : decimal.Zero.ToString("0.00");
   }
 }

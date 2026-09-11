@@ -67,11 +67,8 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
         SSOClientIdInbound = entity.SSOClientIdInbound,
         SettingsRaw = entity.Settings,
         ZltoRewardPoolCurrentFinancialYear = entity.ZltoRewardPoolCurrentFinancialYear,
-        YomaRewardPoolCurrentFinancialYear = entity.YomaRewardPoolCurrentFinancialYear,
         ZltoRewardCumulative = entity.ZltoRewardCumulative,
-        YomaRewardCumulative = entity.YomaRewardCumulative,
         ZltoRewardCumulativeCurrentFinancialYear = entity.ZltoRewardCumulativeCurrentFinancialYear,
-        YomaRewardCumulativeCurrentFinancialYear = entity.YomaRewardCumulativeCurrentFinancialYear,
         DateCreated = entity.DateCreated,
         CreatedByUserId = entity.CreatedByUserId,
         DateModified = entity.DateModified,
@@ -157,7 +154,6 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
         SSOClientIdInbound = item.SSOClientIdInbound,
         Settings = item.SettingsRaw,
         ZltoRewardPoolCurrentFinancialYear = item.ZltoRewardPoolCurrentFinancialYear,
-        YomaRewardPoolCurrentFinancialYear = item.YomaRewardPoolCurrentFinancialYear,
         DateCreated = item.DateCreated,
         CreatedByUserId = item.CreatedByUserId,
         DateModified = item.DateModified,
@@ -206,7 +202,6 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
            SSOClientIdInbound = item.SSOClientIdInbound,
            Settings = item.SettingsRaw,
            ZltoRewardPoolCurrentFinancialYear = item.ZltoRewardPoolCurrentFinancialYear,
-           YomaRewardPoolCurrentFinancialYear = item.YomaRewardPoolCurrentFinancialYear,
            DateCreated = now,
            CreatedByUserId = item.CreatedByUserId,
            DateModified = now,
@@ -258,11 +253,8 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
       entity.SSOClientIdInbound = item.SSOClientIdInbound;
       entity.Settings = item.SettingsRaw;
       entity.ZltoRewardPoolCurrentFinancialYear = item.ZltoRewardPoolCurrentFinancialYear;
-      entity.YomaRewardPoolCurrentFinancialYear = item.YomaRewardPoolCurrentFinancialYear;
       entity.ZltoRewardCumulative = item.ZltoRewardCumulative;
-      entity.YomaRewardCumulative = item.YomaRewardCumulative;
       entity.ZltoRewardCumulativeCurrentFinancialYear = item.ZltoRewardCumulativeCurrentFinancialYear;
-      entity.YomaRewardCumulativeCurrentFinancialYear = item.YomaRewardCumulativeCurrentFinancialYear;
       entity.DateModified = item.DateModified;
       entity.ModifiedByUserId = item.ModifiedByUserId;
 
@@ -311,11 +303,8 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
         entity.SSOClientIdInbound = item.SSOClientIdInbound;
         entity.Settings = item.SettingsRaw;
         entity.ZltoRewardPoolCurrentFinancialYear = item.ZltoRewardPoolCurrentFinancialYear;
-        entity.YomaRewardPoolCurrentFinancialYear = item.YomaRewardPoolCurrentFinancialYear;
         entity.ZltoRewardCumulative = item.ZltoRewardCumulative;
-        entity.YomaRewardCumulative = item.YomaRewardCumulative;
         entity.ZltoRewardCumulativeCurrentFinancialYear = item.ZltoRewardCumulativeCurrentFinancialYear;
-        entity.YomaRewardCumulativeCurrentFinancialYear = item.YomaRewardCumulativeCurrentFinancialYear;
         entity.DateModified = item.DateModified;
         entity.ModifiedByUserId = item.ModifiedByUserId;
       }

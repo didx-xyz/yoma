@@ -11,11 +11,18 @@ import type {
   TimeInterval,
 } from "~/api/models/lookups";
 import {
+  type CustomFieldDefinition,
+  type CustomFieldFilter,
   type OpportunitySearchFilter,
   type OpportunityType,
 } from "~/api/models/opportunity";
 import type { OrganizationInfo } from "~/api/models/organisation";
 import SelectButtons from "../Common/SelectButtons";
+import {
+  CustomFieldFilters,
+  getCustomFieldFilterErrors,
+  sanitizeCustomFieldFilters,
+} from "./CustomFieldFilters";
 import {
   getEngagementConfig,
   getTypeConfig,
@@ -34,6 +41,7 @@ export const OpportunityFilterVertical: React.FC<{
   lookups_organisations: OrganizationInfo[];
   lookups_timeIntervals: TimeInterval[];
   lookups_publishedStates: SelectOption[];
+  lookups_customFieldDefinitions?: CustomFieldDefinition[];
   initialMyCountryOnly?: boolean;
   onApplyMyCountryOnly?: (checked: boolean) => void;
   onSubmit?: (
@@ -54,6 +62,7 @@ export const OpportunityFilterVertical: React.FC<{
   lookups_organisations,
   lookups_timeIntervals,
   lookups_publishedStates,
+  lookups_customFieldDefinitions,
   initialMyCountryOnly,
   onApplyMyCountryOnly,
   onSubmit,
@@ -64,6 +73,20 @@ export const OpportunityFilterVertical: React.FC<{
   userProfile,
 }) => {
   const currentLanguage = useAtomValue(currentLanguageAtom);
+
+  // ─── Custom fields local state ────────────────────────────────────────────
+  // Clause state lives here (not in the RHF form) because the zod resolver strips
+  // unknown keys; it is merged into the payload in onSubmitHandler below.
+  const [customFieldFilters, setCustomFieldFilters] = useState<
+    CustomFieldFilter[]
+  >(searchFilter?.customFields ?? []);
+  const [showCustomFieldErrors, setShowCustomFieldErrors] = useState(false);
+
+  // Sync when the filter prop changes (e.g. modal re-opened with different state)
+  useEffect(() => {
+    setCustomFieldFilters(searchFilter?.customFields ?? []);
+  }, [searchFilter?.customFields]);
+  // ─── End custom fields ────────────────────────────────────────────────────
 
   const [myCountryOnlyDraft, setMyCountryOnlyDraft] = useState<boolean>(
     initialMyCountryOnly ?? false,
@@ -176,9 +199,31 @@ export const OpportunityFilterVertical: React.FC<{
         payload.countries = null;
       }
 
+      // Merge custom-field clauses (usable ones only). Blocked while any clause
+      // is invalid, so the search is never sent with input the API will reject.
+      const activeCfFilters = sanitizeCustomFieldFilters(customFieldFilters);
+      const cfErrors = getCustomFieldFilterErrors(
+        lookups_customFieldDefinitions,
+        activeCfFilters,
+      );
+      if (cfErrors.length > 0) {
+        setShowCustomFieldErrors(true);
+        return;
+      }
+      setShowCustomFieldErrors(false);
+
+      payload.customFields =
+        activeCfFilters.length > 0 ? activeCfFilters : null;
+
       if (onSubmit) onSubmit(payload, myCountryOnlyDraft);
     },
-    [myCountryOnlyDraft, onApplyMyCountryOnly, onSubmit],
+    [
+      myCountryOnlyDraft,
+      onApplyMyCountryOnly,
+      onSubmit,
+      customFieldFilters,
+      lookups_customFieldDefinitions,
+    ],
   );
 
   // set default values
@@ -656,6 +701,14 @@ export const OpportunityFilterVertical: React.FC<{
             </label>
           )}
         </fieldset>
+
+        {/* CUSTOM FIELDS (definition-driven — YOM-1260) */}
+        <CustomFieldFilters
+          definitions={lookups_customFieldDefinitions}
+          value={customFieldFilters}
+          onChange={setCustomFieldFilters}
+          showErrors={showCustomFieldErrors}
+        />
       </div>
 
       {/* BUTTONS */}

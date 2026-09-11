@@ -1,4 +1,6 @@
+using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Interfaces;
+using Yoma.Core.Domain.Core.Models;
 
 namespace Yoma.Core.Domain.Opportunity.Models
 {
@@ -20,11 +22,7 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
     public decimal? ZltoReward { get; set; }
 
-    public decimal? YomaReward { get; set; }
-
     public decimal? ZltoRewardPool { get; set; }
-
-    public decimal? YomaRewardPool { get; set; }
 
     public bool VerificationEnabled { get; set; }
 
@@ -46,6 +44,9 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
     public bool CredentialIssuanceEnabled { get; set; }
 
+    /// <summary>
+    /// Full name of the credential schema selected for the opportunity.
+    /// </summary>
     public string? SSISchemaName { get; set; }
 
     public Guid? EngagementTypeId { get; set; }
@@ -66,6 +67,8 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
     public List<OpportunityRequestVerificationType>? VerificationTypes { get; set; }
 
+    public List<CustomFieldValueRequest>? CustomFields { get; set; }
+
     public virtual void NormalizeForHashing()
     {
       SanitizeCollections();
@@ -76,6 +79,7 @@ namespace Yoma.Core.Domain.Opportunity.Models
       Languages = [.. Languages.OrderBy(o => o)];
       Skills = Skills?.OrderBy(o => o).ToList();
       VerificationTypes = VerificationTypes?.OrderBy(o => o.Type).ThenBy(o => o.Description, StringComparer.Ordinal).ToList();
+      CustomFields.NormalizeForHashing();
     }
 
     public virtual void SanitizeCollections()
@@ -92,6 +96,9 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
       VerificationTypes = VerificationTypes?.DistinctBy(o => new { o.Type, o.Description }).ToList();
       if (VerificationTypes?.Count == 0) VerificationTypes = null;
+
+      // Preserve duplicate keys so validation can reject ambiguous values.
+      if (CustomFields?.Count == 0) CustomFields = null;
     }
   }
 }

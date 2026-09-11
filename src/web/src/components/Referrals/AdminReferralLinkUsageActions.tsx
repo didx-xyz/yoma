@@ -49,9 +49,7 @@ export const AdminReferralLinkUsageActions: React.FC<
         label="Actions"
         items={menuItems}
         displayStyle={DropdownMenuDisplayStyle.ICON}
-        triggerIcon={
-          <IoIosSettings className="text-green size-5 hover:brightness-125" />
-        }
+        triggerIcon={<IoIosSettings className="size-5 hover:brightness-125" />}
         title="Actions"
       />
     </>

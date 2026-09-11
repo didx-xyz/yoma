@@ -16,8 +16,6 @@ namespace Yoma.Core.Domain.Analytics.Models
 
     public decimal ZltoRewardTotal { get; set; }
 
-    public decimal YomaRewardTotal { get; set; }
-
     public int OpporunityCount { get; set; }
 
     public List<YouthInfoOpportunity> Opportunities { get; set; } = null!;

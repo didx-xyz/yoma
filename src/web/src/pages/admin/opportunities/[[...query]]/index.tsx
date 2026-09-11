@@ -1,4 +1,3 @@
-import { useAtomValue } from "jotai";
 import type { GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
 import Head from "next/head";
@@ -8,18 +7,17 @@ import { useRouter } from "next/router";
 import iconZlto from "public/images/icon-zlto.svg";
 import {
   useCallback,
-  useEffect,
   useMemo,
   useRef,
   useState,
   type ReactElement,
 } from "react";
-import { IoMdPerson } from "react-icons/io";
-import type { SelectOption } from "~/api/models/lookups";
+import { FaDownload } from "react-icons/fa";
+import { IoIosSettings, IoMdPerson } from "react-icons/io";
 import {
+  Status,
   type OpportunitySearchFilterAdmin,
   type OpportunityType,
-  OpportunityFilterOptions,
 } from "~/api/models/opportunity";
 import { getOpportunityTypes } from "~/api/services/opportunities";
 import {
@@ -28,28 +26,49 @@ import {
   useAdminOpportunityLanguagesQuery,
   useAdminOpportunityOrganisationsQuery,
   useAdminOpportunitiesSearchQuery,
+  useOpportunityCustomFieldDefinitionsQuery,
+  useOpportunityStatusCountQuery,
 } from "~/hooks/useOpportunityMutations";
 import CustomModal from "~/components/Common/CustomModal";
+import DropdownMenu from "~/components/Common/DropdownMenu";
 import MainLayout from "~/components/Layout/Main";
 import NoRowsMessage from "~/components/NoRowsMessage";
 import OpportunityExport from "~/components/Opportunity/Admin/OpportunityExport";
+import OpportunityAdminFilterBadges from "~/components/Opportunity/Admin/OpportunityAdminFilterBadges";
+import OpportunityAdminSearchToolbar, {
+  OPPORTUNITY_ADMIN_TOOLBAR_BUTTON_CLASSES,
+} from "~/components/Opportunity/Admin/OpportunityAdminSearchToolbar";
+import OpportunityAdminStatusTabs from "~/components/Opportunity/Admin/OpportunityAdminStatusTabs";
+import {
+  filterToQueryString,
+  getAppliedFilterCount,
+  getFilterKeyParts,
+  isFilterMappingReady,
+  isSearchPerformed as getIsSearchPerformed,
+  mapFilterToApi,
+  OPPORTUNITY_ADMIN_FILTER_OPTIONS_ALL_ORGS,
+  parseFilterFromQuery,
+  parseStatusParam,
+  type OpportunityAdminRouterQuery,
+} from "~/components/Opportunity/Admin/opportunityAdminFilter";
 import {
   OpportunityActions,
   OpportunityActionOptions,
 } from "~/components/Opportunity/OpportunityActions";
 import PullSyncBadge from "~/components/Opportunity/Badges/PullSyncBadge";
-import { OpportunityAdminFilterHorizontal } from "~/components/Opportunity/OpportunityAdminFilterHorizontal";
 import { OpportunityAdminFilterVertical } from "~/components/Opportunity/OpportunityAdminFilterVertical";
 import OpportunityStatus from "~/components/Opportunity/OpportunityStatus";
-import { PageBackground } from "~/components/PageBackground";
-import { PaginationButtons } from "~/components/PaginationButtons";
-import { SearchInputLarge } from "~/components/SearchInputLarge";
+import {
+  ListPageBody,
+  ListPageHeader,
+  ListPageShell,
+} from "~/components/Common/ListPage/ListPageHeader";
+import { ListPagePagination } from "~/components/Common/ListPage/ListPageResults";
 import { InternalServerError } from "~/components/Status/InternalServerError";
-import { Loading } from "~/components/Status/Loading";
+import { LoadingSkeleton } from "~/components/Status/LoadingSkeleton";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import { PAGE_SIZE, ROLE_ADMIN, THEME_BLUE } from "~/lib/constants";
-import { screenWidthAtom } from "~/lib/store";
 import { type NextPageWithLayout } from "~/pages/_app";
 import { authOptions } from "~/server/auth";
 
@@ -88,380 +107,201 @@ const OpportunitiesAdmin: NextPageWithLayout<{
   const router = useRouter();
   const myRef = useRef<HTMLDivElement>(null);
   const [filterFullWindowVisible, setFilterFullWindowVisible] = useState(false);
-  const smallDisplay = useAtomValue(screenWidthAtom);
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
 
-  const lookups_publishedStates: SelectOption[] = [
-    { value: "0", label: "Not started" },
-    { value: "1", label: "Active" },
-    { value: "2", label: "Expired" },
-  ];
+  // 👇 filters are driven by the querystring (shared vocabulary with the org-admin page)
+  const routerQuery = router.query as OpportunityAdminRouterQuery;
+  const { query, status: statusParam } = routerQuery;
+  const status = useMemo(() => parseStatusParam(statusParam), [statusParam]);
 
-  const lookups_statuses = useMemo<SelectOption[]>(
-    () => [
-      { value: "0", label: "Active" },
-      { value: "1", label: "Archived" },
-      { value: "2", label: "Expired" },
-      { value: "3", label: "Inactive" },
-    ],
-    [],
+  // display (name-based) filter — what the filter modal and the badges bind to
+  const searchFilter = useMemo<OpportunitySearchFilterAdmin>(
+    () => parseFilterFromQuery(routerQuery, PAGE_SIZE),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [router.query],
   );
 
-  // get filter parameters from route
-  const {
-    query,
-    page,
-    categories,
-    countries,
-    languages,
-    types,
-    commitmentIntervals,
-    organizations,
-    zltoRewardRanges,
-    startDate,
-    endDate,
-    statuses,
-  } = router.query;
+  const isSearchPerformed = useMemo(
+    () => getIsSearchPerformed(routerQuery),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [router.query],
+  );
 
-  const { data: lookups_categories } = useAdminOpportunityCategoriesQuery({
+  const appliedFilterCount = useMemo(
+    () => getAppliedFilterCount(searchFilter),
+    [searchFilter],
+  );
+
+  //#region LOOKUPS
+  // definitions are keyed on the selected types, so they refetch when types change
+  const { data: lookups_customFieldDefinitions } =
+    useOpportunityCustomFieldDefinitionsQuery(searchFilter.types ?? null, {
+      enabled: !error,
+    });
+
+  const { data: lookups_categories } = useAdminOpportunityCategoriesQuery(
+    null,
+    { enabled: !error },
+  );
+
+  const { data: lookups_countries } = useAdminOpportunityCountriesQuery(null, {
     enabled: !error,
   });
 
-  const { data: lookups_countries } = useAdminOpportunityCountriesQuery({
-    enabled: !error,
-  });
-
-  const { data: lookups_languages } = useAdminOpportunityLanguagesQuery({
+  const { data: lookups_languages } = useAdminOpportunityLanguagesQuery(null, {
     enabled: !error,
   });
 
   const { data: lookups_organisations } = useAdminOpportunityOrganisationsQuery(
     { enabled: !error },
   );
+  //#endregion LOOKUPS
 
-  // memo for isSearchPerformed based on filter parameters
-  const isSearchPerformed = useMemo<boolean>(() => {
-    return (
-      query != undefined ||
-      categories != undefined ||
-      countries != undefined ||
-      languages != undefined ||
-      types != undefined ||
-      commitmentIntervals != undefined ||
-      organizations != undefined ||
-      zltoRewardRanges != undefined ||
-      startDate != undefined ||
-      endDate != undefined ||
-      statuses != undefined
-    );
-  }, [
-    query,
-    categories,
-    countries,
-    languages,
-    types,
-    commitmentIntervals,
-    organizations,
-    zltoRewardRanges,
-    startDate,
-    endDate,
-    statuses,
-  ]);
-
-  // QUERY: SEARCH RESULTS
-  // the filter values from the querystring are mapped to it's corresponding id
-  const adminSearchFilter = useMemo<OpportunitySearchFilterAdmin>(
-    () => ({
-      pageNumber: page ? parseInt(page.toString()) : 1,
-      pageSize: PAGE_SIZE,
-      valueContains: query ? decodeURIComponent(query.toString()) : null,
-      featured: null,
-      types:
-        types != undefined
-          ? types
-              ?.toString()
-              .split("|")
-              .map((x) => {
-                const item = lookups_types.find((y) => y.name === x);
-                return item ? item?.id : "";
-              })
-              .filter((x) => x != "")
-          : null,
-      engagementTypes: null,
-      categories:
-        categories != undefined
-          ? categories
-              ?.toString()
-              .split("|")
-              .map((x) => {
-                const item = lookups_categories?.find((y) => y.name === x);
-                return item ? item?.id : "";
-              })
-              .filter((x) => x != "")
-          : null,
-      countries:
-        countries != undefined
-          ? countries
-              ?.toString()
-              .split("|")
-              .map((x) => {
-                const item = lookups_countries?.find((y) => y.name === x);
-                return item ? item?.id : "";
-              })
-              .filter((x) => x != "")
-          : null,
-      languages:
-        languages != undefined
-          ? languages
-              ?.toString()
-              .split("|") // use | delimiter as some languages contain ',' e.g (Catalan, Valencian)
-              .map((x) => {
-                const item = lookups_languages?.find((y) => y.name === x);
-                return item ? item?.id : "";
-              })
-              .filter((x) => x != "")
-          : null,
-      organizations:
-        organizations != undefined
-          ? organizations
-              ?.toString()
-              .split("|")
-              .map((x) => {
-                const item = lookups_organisations?.find((y) => y.name === x);
-                return item ? item?.id : "";
-              })
-              .filter((x) => x != "")
-          : null,
-      startDate: startDate != undefined ? startDate.toString() : null,
-      endDate: endDate != undefined ? endDate.toString() : null,
-      statuses:
-        statuses != undefined
-          ? statuses
-              ?.toString()
-              .split("|")
-              .map((x) => {
-                // Convert "Archived" display label to "Deleted" for API lookup
-                if (x === "Archived") {
-                  return "1"; // Value for Deleted status
-                }
-                const item = lookups_statuses.find((y) => y.label === x);
-                return item ? item?.value : "";
-              })
-              .filter((x) => x != "")
-          : null,
-    }),
+  // the filter values from the querystring are mapped to their corresponding id's
+  const apiFilter = useMemo<OpportunitySearchFilterAdmin>(
+    () =>
+      mapFilterToApi(searchFilter, {
+        types: lookups_types,
+        categories: lookups_categories,
+        countries: lookups_countries,
+        languages: lookups_languages,
+        organisations: lookups_organisations,
+      }),
     [
-      query,
-      page,
-      categories,
-      countries,
-      languages,
-      types,
-      organizations,
-      startDate,
-      endDate,
-      statuses,
+      searchFilter,
       lookups_types,
       lookups_categories,
       lookups_countries,
       lookups_languages,
       lookups_organisations,
-      lookups_statuses,
     ],
   );
 
-  const { data: searchResults, isLoading: isLoadingSearchResults } =
-    useAdminOpportunitiesSearchQuery(
-      adminSearchFilter,
-      [
-        query,
-        page,
-        categories,
-        countries,
-        languages,
-        types,
-        commitmentIntervals,
-        organizations,
-        zltoRewardRanges,
-        startDate,
-        endDate,
-        statuses,
-      ],
-      { enabled: !error },
-    );
-
-  // search filter state
-  const [searchFilter, setOpportunitySearchFilter] =
-    useState<OpportunitySearchFilterAdmin>({
-      pageNumber: page ? parseInt(page.toString()) : 1,
-      pageSize: PAGE_SIZE,
-      categories: null,
-      countries: null,
-      languages: null,
-      types: null,
-      engagementTypes: null,
-      valueContains: null,
-      featured: null,
-      organizations: null,
-      startDate: null,
-      endDate: null,
-      statuses: null,
-    });
-
-  // sets the filter values from the querystring to the filter state
-  useEffect(() => {
-    if (isSearchPerformed)
-      setOpportunitySearchFilter({
-        pageNumber: page ? parseInt(page.toString()) : 1,
-        pageSize: PAGE_SIZE,
-        valueContains: query ? decodeURIComponent(query.toString()) : null,
-        featured: null,
-        types: types != undefined ? types?.toString().split("|") : null,
-        engagementTypes: null,
-        categories:
-          categories != undefined ? categories?.toString().split("|") : null,
-        countries:
-          countries != undefined && countries != null
-            ? countries?.toString().split("|")
-            : null,
-        languages:
-          languages != undefined ? languages?.toString().split("|") : null, // use | delimiter as some languages contain ',' e.g (Catalan, Valencian)
-        organizations:
-          organizations != undefined
-            ? organizations?.toString().split("|")
-            : null,
-        startDate: startDate != undefined ? startDate.toString() : null,
-        endDate: endDate != undefined ? endDate.toString() : null,
-        statuses:
-          statuses != undefined ? statuses?.toString().split("|") : null,
-      });
-  }, [
-    setOpportunitySearchFilter,
-    isSearchPerformed,
-    query,
-    page,
-    categories,
-    countries,
-    languages,
-    types,
-    commitmentIntervals,
-    organizations,
-    zltoRewardRanges,
-    startDate,
-    endDate,
-    statuses,
-  ]);
-
-  // disable full-size search filters when resizing to larger screens
-  useEffect(() => {
-    if (!smallDisplay) setFilterFullWindowVisible(false);
-  }, [smallDisplay]);
-
-  // 🎈 FUNCTIONS
-  const getSearchFilterAsQueryString = useCallback(
-    (searchFilter: OpportunitySearchFilterAdmin) => {
-      if (!searchFilter) return null;
-
-      // construct querystring parameters from filter
-      const params = new URLSearchParams();
-      if (
-        searchFilter.valueContains !== undefined &&
-        searchFilter.valueContains !== null &&
-        searchFilter.valueContains.length > 0
-      )
-        params.append("query", searchFilter.valueContains);
-
-      if (
-        searchFilter?.categories?.length !== undefined &&
-        searchFilter.categories.length > 0
-      )
-        params.append("categories", searchFilter.categories.join("|"));
-
-      if (
-        searchFilter?.countries?.length !== undefined &&
-        searchFilter.countries.length > 0
-      )
-        params.append("countries", searchFilter.countries.join("|"));
-
-      if (
-        searchFilter?.languages?.length !== undefined &&
-        searchFilter.languages.length > 0
-      )
-        params.append("languages", searchFilter.languages.join("|"));
-
-      if (
-        searchFilter?.types?.length !== undefined &&
-        searchFilter.types.length > 0
-      )
-        params.append("types", searchFilter.types.join("|"));
-
-      if (
-        searchFilter?.organizations?.length !== undefined &&
-        searchFilter.organizations.length > 0
-      )
-        params.append("organizations", searchFilter.organizations.join("|"));
-
-      if (
-        searchFilter?.statuses !== undefined &&
-        searchFilter?.statuses !== null &&
-        searchFilter?.statuses.length > 0
-      )
-        params.append("statuses", searchFilter?.statuses.join("|"));
-
-      if (
-        searchFilter.startDate !== undefined &&
-        searchFilter.startDate !== null
-      )
-        params.append("startDate", searchFilter.startDate);
-
-      if (searchFilter.endDate !== undefined && searchFilter.endDate !== null)
-        params.append("endDate", searchFilter.endDate);
-
-      if (
-        searchFilter.pageNumber !== null &&
-        searchFilter.pageNumber !== undefined &&
-        searchFilter.pageNumber !== 1
-      )
-        params.append("page", searchFilter.pageNumber.toString());
-
-      if (params.size === 0) return null;
-      return params;
-    },
-    [],
+  // only search once the lookups needed to map the applied filters have loaded
+  const filterMappingReady = useMemo(
+    () =>
+      isFilterMappingReady(searchFilter, {
+        types: lookups_types,
+        categories: lookups_categories,
+        countries: lookups_countries,
+        languages: lookups_languages,
+        organisations: lookups_organisations,
+      }),
+    [
+      searchFilter,
+      lookups_types,
+      lookups_categories,
+      lookups_countries,
+      lookups_languages,
+      lookups_organisations,
+    ],
   );
 
+  const filterKeyParts = useMemo(
+    () => getFilterKeyParts(routerQuery),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [router.query],
+  );
+
+  // QUERY: SEARCH RESULTS
+  const {
+    data: searchResults,
+    isLoading: isLoadingSearchResults,
+    isPlaceholderData: isShowingPreviousResults,
+  } = useAdminOpportunitiesSearchQuery(apiFilter, [filterKeyParts], {
+    enabled: !error && filterMappingReady,
+  });
+
+  // status tab counts — these honour every applied filter
+  const countsEnabled = !error && filterMappingReady;
+  const { data: totalCountAll } = useOpportunityStatusCountQuery(
+    null,
+    apiFilter,
+    null,
+    filterKeyParts,
+    { enabled: countsEnabled },
+  );
+  const { data: totalCountActive } = useOpportunityStatusCountQuery(
+    null,
+    apiFilter,
+    Status.Active,
+    filterKeyParts,
+    { enabled: countsEnabled },
+  );
+  const { data: totalCountInactive } = useOpportunityStatusCountQuery(
+    null,
+    apiFilter,
+    Status.Inactive,
+    filterKeyParts,
+    { enabled: countsEnabled },
+  );
+  const { data: totalCountExpired } = useOpportunityStatusCountQuery(
+    null,
+    apiFilter,
+    Status.Expired,
+    filterKeyParts,
+    { enabled: countsEnabled },
+  );
+  const { data: totalCountDeleted } = useOpportunityStatusCountQuery(
+    null,
+    apiFilter,
+    Status.Deleted,
+    filterKeyParts,
+    { enabled: countsEnabled },
+  );
+
+  const tabCounts = useMemo(
+    () => ({
+      all: totalCountAll,
+      [Status.Active]: totalCountActive,
+      [Status.Inactive]: totalCountInactive,
+      [Status.Expired]: totalCountExpired,
+      [Status.Deleted]: totalCountDeleted,
+    }),
+    [
+      totalCountAll,
+      totalCountActive,
+      totalCountInactive,
+      totalCountExpired,
+      totalCountDeleted,
+    ],
+  );
+
+  // 🎈 FUNCTIONS
   const redirectWithSearchFilterParams = useCallback(
     (filter: OpportunitySearchFilterAdmin) => {
       let url = "/admin/opportunities";
-      const params = getSearchFilterAsQueryString(filter);
+      const params = filterToQueryString(filter);
       if (params != null && params.size > 0)
         url = `/admin/opportunities?${params.toString()}`;
 
       if (url != router.asPath)
         void router.push(url, undefined, { scroll: false });
     },
-    [router, getSearchFilterAsQueryString],
+    [router],
+  );
+
+  // querystring of the current filters excluding status & paging (used by the tabs)
+  const tabBaseParams = useMemo(
+    () => filterToQueryString({ ...searchFilter, statuses: null }),
+    [searchFilter],
   );
 
   // 🔔 CHANGE EVENTS
   const handlePagerChange = useCallback(
     (value: number) => {
-      searchFilter.pageNumber = value;
-      redirectWithSearchFilterParams(searchFilter);
+      redirectWithSearchFilterParams({ ...searchFilter, pageNumber: value });
     },
     [searchFilter, redirectWithSearchFilterParams],
   );
 
   const onSearchInputSubmit = useCallback(
     (query: string) => {
-      if (query && query.length > 2) {
-        // uri encode the search value
-        const searchValueEncoded = encodeURIComponent(query);
-        query = searchValueEncoded;
-      }
-
-      searchFilter.valueContains = query;
-      redirectWithSearchFilterParams(searchFilter);
+      redirectWithSearchFilterParams({
+        ...searchFilter,
+        pageNumber: 1,
+        valueContains: query.length > 2 ? query : null,
+      });
     },
     [searchFilter, redirectWithSearchFilterParams],
   );
@@ -472,15 +312,17 @@ const OpportunitiesAdmin: NextPageWithLayout<{
   }, [setFilterFullWindowVisible]);
 
   const onSubmitFilter = useCallback(
-    (val: OpportunitySearchFilterAdmin) => {
-      redirectWithSearchFilterParams(val);
+    (filter: OpportunitySearchFilterAdmin) => {
+      setFilterFullWindowVisible(false);
+      // the status tab is preserved; paging is reset when filters change
+      redirectWithSearchFilterParams({
+        ...filter,
+        statuses: filter.statuses ?? searchFilter.statuses,
+        pageNumber: 1,
+      });
     },
-    [redirectWithSearchFilterParams],
+    [redirectWithSearchFilterParams, searchFilter.statuses],
   );
-
-  const onClearFilter = useCallback(() => {
-    void router.push("/admin/opportunities", undefined, { scroll: true });
-  }, [router]);
 
   if (error) {
     if (error === 401) return <Unauthenticated />;
@@ -494,10 +336,6 @@ const OpportunitiesAdmin: NextPageWithLayout<{
         <title>Yoma | 🏆 Opportunities</title>
       </Head>
 
-      <PageBackground className="h-[14.8rem] md:h-[18.4rem]" />
-
-      {isLoadingSearchResults && <Loading />}
-
       {/* POPUP FILTER */}
       <CustomModal
         isOpen={filterFullWindowVisible}
@@ -505,38 +343,27 @@ const OpportunitiesAdmin: NextPageWithLayout<{
         onRequestClose={() => {
           setFilterFullWindowVisible(false);
         }}
-        className={`md:max-h-[600px] md:w-[800px]`}
+        className={`md:max-h-[500px] md:w-[600px]`}
       >
-        {lookups_categories &&
-          lookups_countries &&
-          lookups_languages &&
-          lookups_organisations && (
-            <div className="flex h-full flex-col gap-2 overflow-y-auto">
-              <OpportunityAdminFilterVertical
-                htmlRef={myRef.current!}
-                searchFilter={searchFilter}
-                lookups_categories={lookups_categories}
-                lookups_countries={lookups_countries}
-                lookups_languages={lookups_languages}
-                lookups_types={lookups_types}
-                lookups_organisations={lookups_organisations}
-                lookups_publishedStates={lookups_publishedStates}
-                lookups_statuses={[]}
-                submitButtonText="Apply Filters"
-                onCancel={onCloseFilter}
-                onSubmit={(e) => onSubmitFilter(e)}
-                onClear={onClearFilter}
-                clearButtonText="Clear All Filters"
-                filterOptions={[
-                  OpportunityFilterOptions.CATEGORIES,
-                  OpportunityFilterOptions.TYPES,
-                  OpportunityFilterOptions.COUNTRIES,
-                  OpportunityFilterOptions.LANGUAGES,
-                  OpportunityFilterOptions.ORGANIZATIONS,
-                ]}
-              />
-            </div>
-          )}
+        {lookups_countries && lookups_languages && lookups_organisations && (
+          <div className="flex h-full flex-col gap-2 overflow-y-auto">
+            <OpportunityAdminFilterVertical
+              htmlRef={myRef.current!}
+              searchFilter={searchFilter}
+              lookups_categories={lookups_categories ?? []}
+              lookups_countries={lookups_countries}
+              lookups_languages={lookups_languages}
+              lookups_types={lookups_types}
+              lookups_organisations={lookups_organisations}
+              lookups_publishedStates={[]}
+              lookups_statuses={[]} // status is owned by the tabs
+              lookups_customFieldDefinitions={lookups_customFieldDefinitions}
+              onCancel={onCloseFilter}
+              onSubmit={onSubmitFilter}
+              filterOptions={OPPORTUNITY_ADMIN_FILTER_OPTIONS_ALL_ORGS}
+            />
+          </div>
+        )}
       </CustomModal>
 
       {/* EXPORT DIALOG */}
@@ -550,7 +377,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
       >
         <OpportunityExport
           totalCount={searchResults?.totalCount ?? 0}
-          searchFilter={adminSearchFilter}
+          searchFilter={apiFilter} // the export endpoint expects id's, not names
           onClose={() => setExportDialogOpen(false)}
           onSave={() => setExportDialogOpen(false)}
         />
@@ -559,65 +386,73 @@ const OpportunitiesAdmin: NextPageWithLayout<{
       {/* REFERENCE FOR FILTER POPUP: fix menu z-index issue */}
       <div ref={myRef} />
 
-      <div className="z-10 container mt-14 max-w-7xl px-2 py-8 md:mt-[7rem]">
-        <div className="flex flex-col gap-4 py-4">
-          <h3 className="mt-3 mb-6 flex items-center text-3xl font-semibold tracking-normal text-white md:mt-0 md:mb-9">
-            🏆 Opportunities
-          </h3>
+      <ListPageShell>
+        <ListPageHeader
+          title={"🏆 Opportunities"}
+          description="Every opportunity across all organisations, and the tools to publish, feature or retire them."
+        >
+          {/* TABBED NAVIGATION */}
+          <OpportunityAdminStatusTabs
+            basePath="/admin/opportunities"
+            baseParams={tabBaseParams}
+            status={status}
+            counts={tabCounts}
+          />
+        </ListPageHeader>
 
-          <div className="-mt-5 flex w-full grow items-center justify-between gap-4 sm:justify-end">
-            <SearchInputLarge
-              openFilter={setFilterFullWindowVisible}
-              maxWidth={400}
-              defaultValue={query ? decodeURIComponent(query.toString()) : null}
-              onSearch={onSearchInputSubmit}
+        {/* MAIN CONTENT */}
+        <ListPageBody>
+          {/* SEARCH & FILTERS */}
+          <OpportunityAdminSearchToolbar
+            defaultValue={query?.toString() ?? null}
+            onSearch={onSearchInputSubmit}
+            openFilter={setFilterFullWindowVisible}
+            appliedFilterCount={appliedFilterCount}
+          >
+            <DropdownMenu
+              label="Actions"
+              triggerIcon={<IoIosSettings className="h-5 w-5" />}
+              // sized & coloured to match the Filters button next to it
+              className="w-full md:w-40"
+              buttonClassName={OPPORTUNITY_ADMIN_TOOLBAR_BUTTON_CLASSES}
+              items={[
+                {
+                  label: "Export",
+                  onClick: () => setExportDialogOpen(true),
+                  icon: <FaDownload className="h-4 w-4" />,
+                },
+              ]}
             />
-          </div>
-
-          {/* FILTER ROW: CATEGORIES DROPDOWN FILTERS (SELECT) FOR COUNTRIES, LANGUAGES, TYPE, ORGANISATIONS ETC  */}
-          {lookups_categories &&
-            lookups_countries &&
-            lookups_languages &&
-            lookups_organisations && (
-              <OpportunityAdminFilterHorizontal
-                htmlRef={myRef.current!}
-                searchFilter={searchFilter}
-                lookups_categories={lookups_categories}
-                lookups_countries={lookups_countries}
-                lookups_languages={lookups_languages}
-                lookups_types={lookups_types}
-                lookups_organisations={lookups_organisations}
-                lookups_publishedStates={lookups_publishedStates}
-                lookups_statuses={lookups_statuses}
-                clearButtonText="Clear"
-                onClear={onClearFilter}
-                onSubmit={onSubmitFilter}
-                onOpenFilterFullWindow={() => {
-                  setFilterFullWindowVisible(!filterFullWindowVisible);
-                }}
-                filterOptions={[
-                  OpportunityFilterOptions.TYPES,
-                  OpportunityFilterOptions.COUNTRIES,
-                  OpportunityFilterOptions.LANGUAGES,
-                  OpportunityFilterOptions.ORGANIZATIONS,
-                  OpportunityFilterOptions.DATE_START,
-                  OpportunityFilterOptions.DATE_END,
-                  OpportunityFilterOptions.STATUSES,
-                  OpportunityFilterOptions.VIEWALLFILTERSBUTTON,
-                ]}
-                totalCount={searchResults?.totalCount ?? 0}
-                exportToCsv={setExportDialogOpen}
-              />
-            )}
-        </div>
-
-        {/* SEARCH RESULTS */}
-        {!isLoadingSearchResults && (
-          <div id="results">
-            <div className="rounded-lg bg-transparent md:bg-white md:p-4">
+          </OpportunityAdminSearchToolbar>
+          {/* APPLIED FILTER BADGES */}
+          {appliedFilterCount > 0 && (
+            <OpportunityAdminFilterBadges
+              searchFilter={searchFilter}
+              lookups_customFieldDefinitions={lookups_customFieldDefinitions}
+              onSubmit={onSubmitFilter}
+              className="-ml-2"
+            />
+          )}
+          {isLoadingSearchResults && (
+            <div className="flex h-fit flex-col items-center rounded-lg bg-white p-8 md:pb-16">
+              <LoadingSkeleton />
+            </div>
+          )}
+          {/* SEARCH RESULTS */}
+          {/* the previous page stays visible (dimmed) while the next one loads, so paging
+            never changes the page height and never moves the scroll position */}
+          {!isLoadingSearchResults && (
+            <div
+              id="results"
+              className={`transition-opacity ${
+                isShowingPreviousResults ? "opacity-50" : ""
+              }`}
+            >
+              {/* <div className="rounded-lg bg-transparent md:bg-white md:p-4"> */}
               {/* NO ROWS */}
               {(!searchResults || searchResults.items?.length === 0) &&
-                !isSearchPerformed && (
+                !isSearchPerformed &&
+                status === null && (
                   <div className="flex h-fit flex-col items-center rounded-lg bg-white pb-8 md:pb-16">
                     <NoRowsMessage
                       title={"You will find your opportunities here"}
@@ -628,7 +463,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                   </div>
                 )}
               {(!searchResults || searchResults.items?.length === 0) &&
-                isSearchPerformed && (
+                (isSearchPerformed || status !== null) && (
                   <div className="flex h-fit flex-col items-center rounded-lg bg-white pb-8 md:pb-16">
                     <NoRowsMessage
                       title={"No opportunities found"}
@@ -777,7 +612,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                   </div>
 
                   {/* DESKTOP */}
-                  <table className="border-gray-light hidden border-separate rounded-lg border-x-2 border-t-2 md:table md:table-auto">
+                  <table className="border-gray-light hidden border-separate rounded-lg bg-white md:table md:table-auto">
                     <thead>
                       <tr className="!border-gray-light text-gray-dark">
                         <th className="border-gray-light border-b-2 !py-4">
@@ -909,22 +744,19 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                   </table>
 
                   {/* PAGINATION */}
-                  <div className="mt-4 grid place-items-center justify-center">
-                    <PaginationButtons
-                      currentPage={page ? parseInt(page.toString()) : 1}
-                      totalItems={searchResults.totalCount as number}
-                      pageSize={PAGE_SIZE}
-                      showPages={false}
-                      showInfo={true}
-                      onClick={handlePagerChange}
-                    />
-                  </div>
+                  <ListPagePagination
+                    currentPage={searchFilter.pageNumber ?? 1}
+                    totalItems={searchResults.totalCount as number}
+                    pageSize={PAGE_SIZE}
+                    onClick={handlePagerChange}
+                    isShowingPreviousResults={isShowingPreviousResults}
+                  />
                 </>
               )}
             </div>
-          </div>
-        )}
-      </div>
+          )}
+        </ListPageBody>
+      </ListPageShell>
     </>
   );
 };

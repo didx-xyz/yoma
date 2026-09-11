@@ -17,18 +17,17 @@ import {
   useEffect,
   useMemo,
 } from "react";
-import { Controller, useForm, type FieldValues } from "react-hook-form";
+import { Controller, useForm, useWatch } from "react-hook-form";
 import Select from "react-select";
 import { toast } from "react-toastify";
 import z from "zod";
-import { type OpportunityRequestBase } from "~/api/models/opportunity";
 import MainLayout from "~/components/Layout/Main";
 import { ApiErrors } from "~/components/Status/ApiErrors";
 import { Loading } from "~/components/Status/Loading";
 import { authOptions, type User } from "~/server/auth";
 import { PageBackground } from "~/components/PageBackground";
 import Link from "next/link";
-import { IoMdArrowRoundBack } from "react-icons/io";
+import { IoMdArrowRoundBack, IoMdLock } from "react-icons/io";
 import type { NextPageWithLayout } from "~/pages/_app";
 import axios from "axios";
 import {
@@ -37,25 +36,79 @@ import {
   getSchemaByName,
   getSchemaTypes,
   getSchemaEntities,
-} from "~/api/services/credentials";
+  SCHEMA_ADMIN_MOCK_ENABLED,
+} from "~/api/services/credentialSchemaAdmin";
+import { getOpportunityTypes } from "~/api/services/opportunities";
 import {
+  ARTIFACT_TYPE_LABELS,
   ArtifactType,
   SchemaType,
   type SSISchema,
-  type SSISchemaRequest,
+  type SSISchemaType,
 } from "~/api/models/credential";
-import { SchemaAttributesEdit } from "~/components/Schema/SchemaAttributesEdit";
-import type { SelectOption } from "~/api/models/lookups";
+import type { OpportunityType } from "~/api/models/opportunity";
+import {
+  SchemaAttributesEdit,
+  type SchemaRetiredAttribute,
+} from "~/components/Schema/SchemaAttributesEdit";
 import { ROLE_ADMIN, THEME_BLUE } from "~/lib/constants";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import { config } from "~/lib/react-query-config";
 import { analytics } from "~/lib/analytics";
 import { InternalServerError } from "~/components/Status/InternalServerError";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
+// ⚠️ TEMPORARY — mock dev aid; delete this import with the blocks it feeds
+import { SchemaAdminMockBanner } from "~/components/Schema/SchemaAdminMockBanner";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
 }
+
+/** Working state for the wizard. Identity fields are only editable while creating. */
+interface SchemaFormState {
+  /** Friendly name when creating; the full provider name when updating. */
+  name: string;
+  typeId: string;
+  /** Opportunity schemas only — the Opportunity Type *name*. null = generic. */
+  typeContext: string | null;
+  artifactType: ArtifactType | null;
+  attributes: string[];
+}
+
+const EMPTY_FORM: SchemaFormState = {
+  name: "",
+  typeId: "",
+  typeContext: null,
+  artifactType: null,
+  attributes: [],
+};
+
+/** Non-system statics and mapped custom fields — what the admin actually chose. */
+const mappedAttributes = (schema: SSISchema | undefined): string[] =>
+  schema?.entities?.flatMap((entity) => [
+    ...(entity.properties ?? [])
+      .filter((property) => !property.system)
+      .map((property) => property.attributeName),
+    ...(entity.customFields ?? []).map((field) => field.attributeName),
+  ]) ?? [];
+
+const toFormState = (schema: SSISchema | undefined): SchemaFormState => {
+  if (!schema) return EMPTY_FORM;
+
+  return {
+    name: schema.name,
+    typeId: schema.typeId,
+    typeContext: schema.typeContext,
+    // the enum arrives as its name ("JWS" / "ACR"), not an ordinal
+    artifactType:
+      typeof schema.artifactType === "string"
+        ? (ArtifactType[
+            schema.artifactType as keyof typeof ArtifactType
+          ] as ArtifactType)
+        : schema.artifactType,
+    attributes: mappedAttributes(schema),
+  };
+};
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { id } = context.params as IParams;
@@ -79,32 +132,33 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     };
   }
 
-  try {
-    const dataSchemaTypes = (await getSchemaTypes(context)).map((c) => ({
-      value: c.id,
-      label: c.name,
-    }));
+  // ⚠️ TEMPORARY: with the mock active the store lives in the browser, so server prefetching would
+  // hydrate a stale copy that never refetches (staleTime is an hour). Remove with the mock.
+  if (!SCHEMA_ADMIN_MOCK_ENABLED) {
+    try {
+      const dataSchemaTypes = await getSchemaTypes(context);
 
-    await queryClient.prefetchQuery({
-      queryKey: ["schemaTypes"],
-      queryFn: () => dataSchemaTypes,
-    });
-
-    if (id !== "create") {
-      const data = await getSchemaByName(id, context);
       await queryClient.prefetchQuery({
-        queryKey: ["schema", id],
-        queryFn: () => data,
+        queryKey: ["schemaTypes"],
+        queryFn: () => dataSchemaTypes,
       });
+
+      if (id !== "create") {
+        const data = await getSchemaByName(id, context);
+        await queryClient.prefetchQuery({
+          queryKey: ["schema", id],
+          queryFn: () => data,
+        });
+      }
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response?.status) {
+        if (error.response.status === 404) {
+          return {
+            notFound: true,
+          };
+        } else errorCode = error.response.status;
+      } else errorCode = 500;
     }
-  } catch (error) {
-    if (axios.isAxiosError(error) && error.response?.status) {
-      if (error.response.status === 404) {
-        return {
-          notFound: true,
-        };
-      } else errorCode = error.response.status;
-    } else errorCode = 500;
   }
 
   return {
@@ -123,64 +177,100 @@ const SchemaCreateEdit: NextPageWithLayout<{
   error?: number;
 }> = ({ id, error }) => {
   const queryClient = useQueryClient();
+  const isCreate = id === "create";
 
   const { data: schema } = useQuery<SSISchema>({
     queryKey: ["schema", id],
     queryFn: () => getSchemaByName(id),
-    enabled: id !== "create",
+    enabled: !isCreate && !error,
   });
-  const { data: schemaTypes } = useQuery<SelectOption[]>({
+  const { data: schemaTypes } = useQuery<SSISchemaType[]>({
     queryKey: ["schemaTypes"],
-    queryFn: async () =>
-      (await getSchemaTypes()).map((c) => ({
-        value: c.id,
-        label: c.name,
-      })),
+    queryFn: () => getSchemaTypes(),
+    enabled: !error,
   });
+  const { data: opportunityTypes } = useQuery<OpportunityType[]>({
+    queryKey: ["opportunityTypes"],
+    queryFn: () => getOpportunityTypes(),
+    enabled: !error,
+  });
+
+  const schemaTypeOptions = useMemo(
+    () =>
+      schemaTypes?.map((type) => ({ value: type.id, label: type.name })) ?? [],
+    [schemaTypes],
+  );
+
+  // Submits the stable Opportunity Type name; displays the editable display name.
+  const opportunityTypeOptions = useMemo(
+    () => [
+      { value: "", label: "Generic — all opportunity types" },
+      ...(opportunityTypes?.map((type) => ({
+        value: type.name,
+        label: type.displayName || type.name,
+      })) ?? []),
+    ],
+    [opportunityTypes],
+  );
+
+  const artifactTypeOptions = useMemo(
+    () =>
+      Object.keys(ArtifactType)
+        .filter((key) => isNaN(Number(key)))
+        .map((key) => ({
+          value: ArtifactType[key as keyof typeof ArtifactType],
+          label: ARTIFACT_TYPE_LABELS[key as keyof typeof ArtifactType],
+        })),
+    [],
+  );
 
   const [step, setStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
+  const [formData, setFormData] = useState<SchemaFormState>(() =>
+    isCreate ? EMPTY_FORM : toFormState(schema),
+  );
 
   const handleCancel = () => {
     void router.push(`/admin/schemas`);
   };
 
-  const [formData, setFormData] = useState<SSISchemaRequest>({
-    name: schema?.name ?? "",
-    typeId: schema?.typeId!,
-    // enum value comes as string from server, convert to number
-    artifactType: schema?.artifactType
-      ? ArtifactType[schema.artifactType]
-      : null,
-    attributes:
-      schema?.entities
-        ?.flatMap((x) => x.properties)
-        .filter((x) => x?.system == false)
-        .map((x) => x?.attributeName!) ?? [],
-  });
-
   const onSubmit = useCallback(
-    async (data: SSISchemaRequest) => {
+    async (data: SchemaFormState) => {
       setIsLoading(true);
 
       try {
-        // update api
-        if (id === "create") await createSchema(data);
-        else await updateSchema(data);
+        // update api — identity is immutable, so an update carries the full name and attributes only
+        if (isCreate)
+          await createSchema({
+            name: data.name,
+            typeId: data.typeId,
+            typeContext: data.typeContext,
+            artifactType: data.artifactType,
+            attributes: data.attributes,
+          });
+        else
+          await updateSchema({
+            name: data.name,
+            attributes: data.attributes,
+          });
 
         // 📊 ANALYTICS: track schema creation/update
         analytics.trackEvent("admin_schema_saved", {
           schemaName: data.name,
-          action: id == "create" ? "created" : "updated",
+          action: isCreate ? "created" : "updated",
         });
 
-        toast(`Schema ${id == "create" ? "created" : "updated"}.`, {
+        toast(`Schema ${isCreate ? "created" : "updated"}.`, {
           type: "success",
           toastId: "schema",
         });
 
-        // invalidate queries
-        await queryClient.invalidateQueries({ queryKey: ["schemas"] });
+        // invalidate queries — the list is keyed `Schemas_{query}_{page}`
+        await queryClient.invalidateQueries({
+          predicate: (query) =>
+            typeof query.queryKey[0] === "string" &&
+            query.queryKey[0].startsWith("Schemas_"),
+        });
         await queryClient.invalidateQueries({ queryKey: ["schema", id] });
       } catch (error) {
         toast(<ApiErrors error={error as AxiosError} />, {
@@ -198,27 +288,35 @@ const SchemaCreateEdit: NextPageWithLayout<{
       setIsLoading(false);
 
       // redirect to list after create
-      if (id === "create") void router.push(`/admin/schemas`);
+      if (isCreate) void router.push(`/admin/schemas`);
     },
-    [setIsLoading, id, queryClient],
+    [setIsLoading, id, isCreate, queryClient],
   );
 
   // form submission handler
   const onSubmitStep = useCallback(
-    async (step: number, data: FieldValues) => {
-      // reset attributes if type changed
-      if (id === "create" && step === 2 && formData.typeId != data.typeId) {
-        formData.attributes = [];
-      }
+    async (step: number, data: Partial<SchemaFormState>) => {
+      // identity drives which attributes are applicable, so a change to it invalidates the selection
+      const identityChanged =
+        isCreate &&
+        step === 2 &&
+        (formData.typeId != data.typeId ||
+          (formData.typeContext ?? null) != (data.typeContext ?? null));
 
-      // set form data
-      const model = {
+      const model: SchemaFormState = {
         ...formData,
-        ...(data as OpportunityRequestBase),
+        ...data,
+        // `typeContext` is only in `data` on the step-1 submit, where a null means the admin chose
+        // generic — a deliberate value, not a missing one, so it must not fall back to the previous
+        // selection. Later steps omit the key entirely and keep what was chosen.
+        typeContext:
+          ("typeContext" in data ? data.typeContext : formData.typeContext) ??
+          null,
+        ...(identityChanged ? { attributes: [] } : {}),
       };
       setFormData(model);
 
-      if (id === "create") {
+      if (isCreate) {
         if (step === 4) {
           // submit on last page when creating new schema
           await onSubmit(model);
@@ -233,17 +331,27 @@ const SchemaCreateEdit: NextPageWithLayout<{
       }
       setStep(step);
     },
-    [id, setStep, formData, setFormData, onSubmit],
+    [isCreate, setStep, formData, setFormData, onSubmit],
   );
 
+  const schemaName = z
+    .string()
+    .min(1, "Schema name is required.")
+    .max(255, "Schema name cannot exceed 255 characters.");
+
   const schemaStep1 = z.object({
-    name: z
-      .string()
-      .min(1, "Schema name is required.")
-      .max(255, "Schema name cannot exceed 255 characters."),
+    // When creating, this is the friendly name and the API composes the full name from it, so the
+    // delimiters are reserved. When updating it *is* the full name — `Opportunity|Job|Placement` —
+    // and holds those very characters, so the rule must not apply.
+    name: isCreate
+      ? schemaName.refine((value) => !/[|:]/.test(value), {
+          message: "Schema name cannot contain the characters | or :",
+        })
+      : schemaName,
     typeId: z
       .string({ required_error: "Schema type is required." })
       .min(1, "Schema type is required."),
+    typeContext: z.string().nullable().optional(),
     artifactType: z.number({
       invalid_type_error: "Artifact type is required.",
     }),
@@ -262,6 +370,8 @@ const SchemaCreateEdit: NextPageWithLayout<{
     handleSubmit: handleSubmitStep1,
     formState: { errors: errorsStep1, isValid: isValidStep1 },
     control: controlStep1,
+    reset: resetStep1,
+    setValue: setValueStep1,
   } = useForm({
     resolver: zodResolver(schemaStep1),
     defaultValues: formData,
@@ -284,47 +394,123 @@ const SchemaCreateEdit: NextPageWithLayout<{
     defaultValues: formData,
   });
 
+  // the schema arrives after first render (and always does with the mock, which skips SSR
+  // prefetching), so seed the wizard once it lands
+  useEffect(() => {
+    if (isCreate || !schema) return;
+    const seeded = toFormState(schema);
+    setFormData(seeded);
+    resetStep1(seeded);
+  }, [isCreate, schema, resetStep1]);
+
+  const watchedTypeId = useWatch({ control: controlStep1, name: "typeId" });
+  const watchedSchemaType = schemaTypes?.find(
+    (type) => type.id === watchedTypeId,
+  );
+  // the type context is defined for Opportunity schemas only
+  const supportsTypeContext = watchedSchemaType?.type === "Opportunity";
+
+  useEffect(() => {
+    if (!isCreate || supportsTypeContext) return;
+    setValueStep1("typeContext", null);
+  }, [isCreate, supportsTypeContext, setValueStep1]);
+
   // scroll to top on step change
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [step]);
 
+  const committedSchemaType = schemaTypes?.find(
+    (type) => type.id === formData.typeId,
+  );
+
   const { data: schemaEntities } = useQuery({
-    queryKey: ["schemaEntities", formData.typeId],
+    queryKey: ["schemaEntities", formData.typeId, formData.typeContext],
     queryFn: () =>
       getSchemaEntities(
-        SchemaType[
-          schemaTypes?.find((x) => x.value == formData.typeId)
-            ?.label as keyof typeof SchemaType
-        ],
+        SchemaType[committedSchemaType!.name as keyof typeof SchemaType],
+        formData.typeContext,
       ),
-    enabled: formData.typeId != null && !error,
+    enabled: !!committedSchemaType && !error,
   });
-  const systemSchemaEntities = useMemo(
+
+  const systemProperties = useMemo(
     () =>
-      schemaEntities?.map((x) => ({
-        ...x,
-        properties: x.properties?.filter((x) => x.system == true),
-      })) ?? [],
+      (schemaEntities ?? []).flatMap((entity) =>
+        (entity.properties ?? [])
+          .filter((property) => property.system)
+          .map((property) => ({
+            entityName: entity.name,
+            nameDisplay: property.nameDisplay,
+            attributeName: property.attributeName,
+          })),
+      ),
     [schemaEntities],
   );
 
-  const renderAttribute = useCallback(
-    (attributeName: string, index: number) => {
-      const schemaEntity = schemaEntities?.find((x) =>
-        x.properties?.some((y) => y.attributeName == attributeName),
-      );
-      const dataSource = schemaEntity?.name;
-      const nameDisplay = schemaEntity?.properties?.find(
-        (y) => y.attributeName == attributeName,
-      )?.nameDisplay;
+  /** Every attribute discovery currently offers for this schema type and context. */
+  const availableAttributes = useMemo(
+    () =>
+      new Set(
+        (schemaEntities ?? []).flatMap((entity) => [
+          ...(entity.properties ?? [])
+            .filter((property) => !property.system)
+            .map((property) => property.attributeName),
+          ...(entity.customFields ?? []).map((field) => field.attributeName),
+        ]),
+      ),
+    [schemaEntities],
+  );
 
-      return (
-        <tr key={`${index}_${attributeName}`}>
-          <td>{dataSource}</td>
-          <td>{nameDisplay}</td>
-        </tr>
-      );
+  /**
+   * Mappings on the current version that discovery no longer offers — a deactivated custom field,
+   * say. The API rejects them if resubmitted, so they are surfaced and then dropped.
+   */
+  const retiredAttributes = useMemo<SchemaRetiredAttribute[]>(() => {
+    if (isCreate || !schema || !schemaEntities) return [];
+
+    return schema.entities.flatMap((entity) => [
+      ...(entity.properties ?? [])
+        .filter(
+          (property) =>
+            !property.system &&
+            !availableAttributes.has(property.attributeName),
+        )
+        .map((property) => ({
+          attributeName: property.attributeName,
+          nameDisplay: property.nameDisplay,
+          entityName: entity.name,
+          detail: null,
+        })),
+      ...(entity.customFields ?? [])
+        .filter((field) => !availableAttributes.has(field.attributeName))
+        .map((field) => ({
+          attributeName: field.attributeName,
+          nameDisplay: field.nameDisplay,
+          entityName: entity.name,
+          detail:
+            [field.group, field.subGroup].filter(Boolean).join(" · ") || null,
+        })),
+    ]);
+  }, [isCreate, schema, schemaEntities, availableAttributes]);
+
+  /** Resolves an attribute back to its datasource and display name for the review step. */
+  const describeAttribute = useCallback(
+    (attributeName: string) => {
+      for (const entity of schemaEntities ?? []) {
+        const property = entity.properties?.find(
+          (candidate) => candidate.attributeName === attributeName,
+        );
+        if (property)
+          return { entityName: entity.name, nameDisplay: property.nameDisplay };
+
+        const field = entity.customFields?.find(
+          (candidate) => candidate.attributeName === attributeName,
+        );
+        if (field)
+          return { entityName: entity.name, nameDisplay: field.nameDisplay };
+      }
+      return { entityName: "", nameDisplay: attributeName };
     },
     [schemaEntities],
   );
@@ -335,12 +521,19 @@ const SchemaCreateEdit: NextPageWithLayout<{
     else return <InternalServerError />;
   }
 
+  const readOnlyIdentityHint = "Cannot be changed for existing schemas";
+
   return (
     <>
       {isLoading && <Loading />}
       <PageBackground />
 
       <div className="z-10 container mt-20 max-w-5xl px-2 py-4">
+        {/* ⚠️⚠️ TEMPORARY MOCK BANNER — delete with the mock ⚠️⚠️ */}
+        {SCHEMA_ADMIN_MOCK_ENABLED && (
+          <SchemaAdminMockBanner current={schema?.name} />
+        )}
+
         {/* BREADCRUMB */}
         <div className="breadcrumbs text-sm text-white">
           <ul>
@@ -355,14 +548,14 @@ const SchemaCreateEdit: NextPageWithLayout<{
             </li>
             <li>
               <div className="max-w-[600px] overflow-hidden text-ellipsis whitespace-nowrap text-white">
-                {id == "create" ? "Create" : <>{schema?.displayName}</>}
+                {isCreate ? "Create" : <>{schema?.displayName}</>}
               </div>
             </li>
           </ul>
         </div>
 
         <h4 className="pb-2 pl-5 text-white">
-          {id == "create" ? "New schema" : schema?.displayName}
+          {isCreate ? "New schema" : schema?.displayName}
         </h4>
 
         <div className="flex flex-col gap-2 md:flex-row">
@@ -406,7 +599,7 @@ const SchemaCreateEdit: NextPageWithLayout<{
             </li>
 
             {/* only show preview when creating new schema */}
-            {id === "create" && (
+            {isCreate && (
               <li onClick={() => setStep(3)}>
                 <a
                   className={`${
@@ -451,7 +644,7 @@ const SchemaCreateEdit: NextPageWithLayout<{
           >
             <option>General information</option>
             <option>Attributes</option>
-            <option>Review</option>
+            {isCreate && <option>Review</option>}
           </select>
 
           {/* forms */}
@@ -461,23 +654,26 @@ const SchemaCreateEdit: NextPageWithLayout<{
                 <>
                   <div className="flex flex-col">
                     <h6 className="font-bold">General information</h6>
-                    {/* <p className="my-2 text-sm">
-                      Information about the opportunity that young people can
-                      explore
-                    </p> */}
+                    {!isCreate && (
+                      <p className="text-gray-dark my-2 text-sm">
+                        Schema identity is fixed once the schema exists. Change
+                        the attributes on the next step — saving publishes a new
+                        version.
+                      </p>
+                    )}
                   </div>
 
                   <form
                     className="flex flex-col gap-2"
                     onSubmit={handleSubmitStep1((data) =>
-                      onSubmitStep(2, data),
+                      onSubmitStep(2, data as Partial<SchemaFormState>),
                     )}
                   >
                     <fieldset className="fieldset">
                       <label className="label">
                         <span className="label-text">Schema name</span>
                       </label>
-                      {id === "create" && (
+                      {isCreate && (
                         <input
                           type="text"
                           className="input border-gray focus:border-gray rounded-md focus:outline-none"
@@ -487,13 +683,14 @@ const SchemaCreateEdit: NextPageWithLayout<{
                         />
                       )}
 
-                      {id !== "create" && (
+                      {!isCreate && (
                         <input
                           type="text"
                           className="input border-gray focus:border-gray rounded-md focus:outline-none"
                           value={schema?.displayName ?? ""}
                           contentEditable
                           disabled={true}
+                          readOnly
                         />
                       )}
 
@@ -505,10 +702,10 @@ const SchemaCreateEdit: NextPageWithLayout<{
                         </label>
                       )}
 
-                      {id !== "create" && (
+                      {!isCreate && (
                         <label className="label">
-                          <span className="label-text-alt text-red-500 italic">
-                            Schema name cannot be changed for existing schemas
+                          <span className="label-text-alt text-gray-dark italic">
+                            {readOnlyIdentityHint}
                           </span>
                         </label>
                       )}
@@ -526,10 +723,14 @@ const SchemaCreateEdit: NextPageWithLayout<{
                             classNames={{
                               control: () => "input",
                             }}
-                            options={schemaTypes}
+                            options={schemaTypeOptions}
                             onChange={(val) => onChange(val?.value)}
-                            value={schemaTypes?.find((c) => c.value === value)}
-                            isDisabled={id !== "create"}
+                            value={
+                              schemaTypeOptions.find(
+                                (c) => c.value === value,
+                              ) ?? null
+                            }
+                            isDisabled={!isCreate}
                             placeholder="Select schema type"
                           />
                         )}
@@ -543,14 +744,52 @@ const SchemaCreateEdit: NextPageWithLayout<{
                         </label>
                       )}
 
-                      {id !== "create" && (
+                      {!isCreate && (
                         <label className="label">
-                          <span className="label-text-alt text-red-500 italic">
-                            Schema type cannot be changed for existing schemas
+                          <span className="label-text-alt text-gray-dark italic">
+                            {readOnlyIdentityHint}
                           </span>
                         </label>
                       )}
                     </fieldset>
+
+                    {/* OPPORTUNITY TYPE — only meaningful for Opportunity schemas.
+                        Hidden and cleared for every other schema type. */}
+                    {supportsTypeContext && (
+                      <fieldset className="fieldset">
+                        <label className="label">
+                          <span className="label-text">Opportunity type</span>
+                        </label>
+                        <Controller
+                          control={controlStep1}
+                          name="typeContext"
+                          render={({ field: { onChange, value } }) => (
+                            <Select
+                              classNames={{
+                                control: () => "input",
+                              }}
+                              options={opportunityTypeOptions}
+                              onChange={(val) => onChange(val?.value || null)}
+                              value={
+                                opportunityTypeOptions.find(
+                                  (c) => c.value === (value ?? ""),
+                                ) ?? null
+                              }
+                              isDisabled={!isCreate}
+                              placeholder="Select opportunity type"
+                            />
+                          )}
+                        />
+
+                        <label className="label">
+                          <span className="label-text-alt text-gray-dark italic">
+                            {isCreate
+                              ? "Leave generic to make the schema available to every opportunity type."
+                              : readOnlyIdentityHint}
+                          </span>
+                        </label>
+                      </fieldset>
+                    )}
 
                     <fieldset className="fieldset">
                       <label className="label">
@@ -566,25 +805,14 @@ const SchemaCreateEdit: NextPageWithLayout<{
                               control: () => "input",
                             }}
                             isMulti={false}
-                            options={Object.keys(ArtifactType)
-                              .filter((key) => isNaN(Number(key)))
-                              .map((key) => ({
-                                value:
-                                  ArtifactType[
-                                    key as keyof typeof ArtifactType
-                                  ],
-                                label: key,
-                              }))}
+                            options={artifactTypeOptions}
                             onChange={(val) => onChange(val?.value)}
                             value={
-                              value != null
-                                ? {
-                                    value: value,
-                                    label: ArtifactType[value as ArtifactType],
-                                  }
-                                : null
+                              artifactTypeOptions.find(
+                                (option) => option.value === value,
+                              ) ?? null
                             }
-                            isDisabled={id !== "create"}
+                            isDisabled={!isCreate}
                             placeholder="Select artifact type"
                           />
                         )}
@@ -598,10 +826,10 @@ const SchemaCreateEdit: NextPageWithLayout<{
                         </label>
                       )}
 
-                      {id !== "create" && (
+                      {!isCreate && (
                         <label className="label">
-                          <span className="label-text-alt text-red-500 italic">
-                            Artifact type cannot be changed for existing schemas
+                          <span className="label-text-alt text-gray-dark italic">
+                            {readOnlyIdentityHint}
                           </span>
                         </label>
                       )}
@@ -609,7 +837,7 @@ const SchemaCreateEdit: NextPageWithLayout<{
 
                     {/* BUTTONS */}
                     <div className="my-4 flex items-center justify-center gap-2">
-                      {id === "create" && (
+                      {isCreate && (
                         <button
                           type="button"
                           className="btn btn-sm btn-warning grow"
@@ -633,15 +861,15 @@ const SchemaCreateEdit: NextPageWithLayout<{
                 <>
                   <div className="flex flex-col">
                     <h6 className="font-bold">Attributes</h6>
-                    {/* <p className="my-2 text-sm">
-                      Detailed particulars about the opportunity
-                    </p> */}
+                    <p className="text-gray-dark my-2 text-sm">
+                      Attributes available for this schema / opportunity type.
+                    </p>
                   </div>
 
                   <form
                     className="flex flex-col gap-2"
                     onSubmit={handleSubmitStep2((data) =>
-                      onSubmitStep(3, data),
+                      onSubmitStep(3, data as Partial<SchemaFormState>),
                     )}
                   >
                     <fieldset className="fieldset">
@@ -652,6 +880,7 @@ const SchemaCreateEdit: NextPageWithLayout<{
                           <SchemaAttributesEdit
                             defaultValue={formData.attributes}
                             schemaEntities={schemaEntities}
+                            retiredAttributes={retiredAttributes}
                             onChange={onChange}
                           />
                         )}
@@ -682,7 +911,7 @@ const SchemaCreateEdit: NextPageWithLayout<{
                         type="submit"
                         className="btn btn-sm btn-success grow"
                       >
-                        {id === "create" ? "Next" : "Submit"}
+                        {isCreate ? "Next" : "Submit"}
                       </button>
                     </div>
                   </form>
@@ -690,19 +919,16 @@ const SchemaCreateEdit: NextPageWithLayout<{
               )}
 
               {/* only show preview when creating new schema */}
-              {step === 3 && id === "create" && (
+              {step === 3 && isCreate && (
                 <>
                   <div className="mb-2 flex flex-col">
                     <h6 className="font-bold">Review</h6>
-                    {/* <p className="my-2 text-sm">
-                      Detailed particulars about the opportunity
-                    </p> */}
                   </div>
 
                   <form
                     className="flex flex-col gap-2"
                     onSubmit={handleSubmitStep3((data) =>
-                      onSubmitStep(4, data),
+                      onSubmitStep(4, data as Partial<SchemaFormState>),
                     )}
                   >
                     <fieldset className="fieldset">
@@ -730,19 +956,25 @@ const SchemaCreateEdit: NextPageWithLayout<{
                         </span>
                       </label>
                       <label className="label-text text-sm">
-                        {
-                          schemaTypes?.find((x) => x.value == formData.typeId)
-                            ?.label
-                        }
+                        {committedSchemaType?.name}
                       </label>
-                      {errorsStep1.name && (
+                    </fieldset>
+
+                    {supportsTypeContext && (
+                      <fieldset className="fieldset">
                         <label className="label">
-                          <span className="label-text-alt text-red-500 italic">
-                            {`${errorsStep1.name.message}`}
+                          <span className="label-text -ml-1 font-bold">
+                            Opportunity type
                           </span>
                         </label>
-                      )}
-                    </fieldset>
+                        <label className="label-text text-sm">
+                          {opportunityTypeOptions.find(
+                            (option) =>
+                              option.value === (formData.typeContext ?? ""),
+                          )?.label ?? "Generic — all opportunity types"}
+                        </label>
+                      </fieldset>
+                    )}
 
                     <fieldset className="fieldset">
                       <label className="label">
@@ -752,7 +984,11 @@ const SchemaCreateEdit: NextPageWithLayout<{
                       </label>
                       <label className="label-text text-sm">
                         {formData.artifactType != null
-                          ? ArtifactType[formData.artifactType as ArtifactType]
+                          ? ARTIFACT_TYPE_LABELS[
+                              ArtifactType[
+                                formData.artifactType
+                              ] as keyof typeof ArtifactType
+                            ]
                           : ""}
                       </label>
                       {errorsStep1.artifactType && (
@@ -772,64 +1008,47 @@ const SchemaCreateEdit: NextPageWithLayout<{
                       </label>
 
                       <div className="flex flex-col gap-2">
-                        <label className="label">
-                          <span className="label-text">System attributes</span>
-                        </label>
-
                         <table className="table w-full">
                           <thead>
                             <tr className="border-gray text-gray-dark">
-                              <th className="w-[260px]">Datasource</th>
+                              <th className="w-65">Datasource</th>
                               <th>Attribute</th>
                             </tr>
                           </thead>
                           <tbody>
-                            {systemSchemaEntities?.map((x) =>
-                              ({
-                                ...x,
-                                properties: x.properties?.filter(
-                                  (x) => x.system == true,
-                                ),
-                              }).properties?.map((attribute, index) => (
-                                <>
-                                  {renderAttribute(
-                                    attribute.attributeName,
-                                    index,
-                                  )}
-                                </>
-                              )),
-                            ) ?? []}
-                          </tbody>
-                        </table>
-
-                        <label className="label">
-                          <span className="label-text">
-                            Additional attributes
-                          </span>
-                        </label>
-
-                        <table className="table w-full">
-                          <thead>
-                            <tr className="border-gray text-gray-dark">
-                              <th className="w-[260px]">Datasource</th>
-                              <th>Attribute</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {formData.attributes?.map((attribute, index) => (
-                              <>{renderAttribute(attribute, index)}</>
+                            {/* System attributes */}
+                            {systemProperties.map((property) => (
+                              <tr
+                                key={property.attributeName}
+                                className="border-gray text-gray-dark"
+                              >
+                                <td>{property.entityName}</td>
+                                <td>
+                                  <IoMdLock
+                                    className="mr-1 inline-block h-3 w-3"
+                                    title="Always issued — cannot be removed"
+                                  />
+                                  {property.nameDisplay}
+                                </td>
+                              </tr>
                             ))}
+                            {/* Additional attributes */}
+                            {formData.attributes?.map((attribute) => {
+                              const described = describeAttribute(attribute);
+                              return (
+                                <tr
+                                  key={attribute}
+                                  className="border-gray text-gray-dark"
+                                >
+                                  <td>{described.entityName}</td>
+                                  <td>{described.nameDisplay}</td>
+                                </tr>
+                              );
+                            })}
                           </tbody>
                         </table>
                       </div>
 
-                      {/* <label className="label-text text-sm">
-                        <ul>
-                          {formData.attributes.map((attr) => (
-                            <li key={`review_${attr}`}>{attr}</li>
-                          ))}
-                        </ul>
-                      </label> */}
                       {errorsStep2.attributes && (
                         <label className="label">
                           <span className="label-text-alt text-red-500 italic">

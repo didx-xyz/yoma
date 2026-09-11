@@ -445,12 +445,19 @@ export const OpportunityActions: React.FC<OpportunityActionsProps> = ({
             ? DropdownMenuDisplayStyle.BUTTON
             : DropdownMenuDisplayStyle.ICON
         }
+        // colour follows the page theme (blue for admin, green for org admin)
+        buttonClassName={
+          displayStyle === OpportunityActionDisplayStyle.BUTTON
+            ? "bg-theme brightness-105 hover:brightness-110"
+            : undefined
+        }
+        // NB: no colour here — the icon inherits it from the trigger (page theme)
         triggerIcon={
           <IoIosSettings
             className={
               displayStyle === OpportunityActionDisplayStyle.BUTTON
                 ? "mr-1 h-5 w-5"
-                : "text-green hover:text-blue size-5"
+                : "size-5 hover:brightness-110"
             }
           />
         }

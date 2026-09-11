@@ -68,7 +68,6 @@ namespace Yoma.Core.Domain.MyOpportunity.Extensions
         PercentComplete = value.PercentComplete,
         DateCompleted = value.DateCompleted,
         ZltoReward = value.ZltoReward,
-        YomaReward = value.YomaReward,
         Recommendable = value.Recommendable,
         StarRating = value.StarRating,
         Feedback = value.Feedback,
@@ -82,7 +81,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Extensions
               FileURL = o.FileURL,
               Geometry = string.IsNullOrEmpty(o.GeometryProperties) ? null : JsonConvert.DeserializeObject<Geometry>(o.GeometryProperties)
             }).ToList(),
-        Skills = value.Skills
+        Skills = value.Skills,
+        CustomFields = value.CustomFields,
       };
 
       return result;

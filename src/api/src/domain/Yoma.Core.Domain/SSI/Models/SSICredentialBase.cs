@@ -10,7 +10,7 @@ namespace Yoma.Core.Domain.SSI.Models
 
     public string Issuer { get; set; } = null!;
 
-    public string IssuerLogoURL { get; set; } = null!;
+    public string? IssuerLogoURL { get; set; }
 
     public string Title { get; set; } = null!;
 

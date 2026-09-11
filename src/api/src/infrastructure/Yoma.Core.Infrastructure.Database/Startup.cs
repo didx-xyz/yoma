@@ -25,6 +25,8 @@ using Yoma.Core.Infrastructure.Database.Marketplace.Repositories;
 using Yoma.Core.Infrastructure.Database.Marketplace.Repositories.Lookup;
 using Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories;
 using Yoma.Core.Infrastructure.Database.Opportunity.Repositories;
+using Yoma.Core.Infrastructure.Database.Payout.Repositories;
+using Yoma.Core.Infrastructure.Database.Payout.Repositories.Lookup;
 using Yoma.Core.Infrastructure.Database.Referral.Repositories;
 using Yoma.Core.Infrastructure.Database.Referral.Repositories.Lookups;
 using Yoma.Core.Infrastructure.Database.Reward.Repositories;
@@ -82,8 +84,11 @@ namespace Yoma.Core.Infrastructure.Database
       services.AddScoped<IRepository<DownloadScheduleStatus>, DownloadScheduleStatusRepository>();
       #endregion
 
-      services.AddScoped<IRepositoryBatched<DownloadSchedule>, DownloadScheduleRepository>();
       services.AddScoped<IRepository<BlobObject>, BlobObjectRepository>();
+      services.AddScoped<IRepositoryBatchedWithNavigation<CustomFieldDefinition>, CustomFieldDefinitionRepository>();
+      services.AddScoped<IRepository<CustomFieldOption>, CustomFieldOptionRepository>();
+      services.AddScoped<IRepository<CustomFieldValue>, CustomFieldValueRepository>();
+      services.AddScoped<IRepositoryBatched<DownloadSchedule>, DownloadScheduleRepository>();
       services.AddScoped<IExecutionStrategyService, ExecutionStrategyService>();
       #endregion Core
 
@@ -130,7 +135,7 @@ namespace Yoma.Core.Infrastructure.Database
       services.AddScoped<IRepository<Domain.MyOpportunity.Models.Lookups.MyOpportunityVerificationStatus>, MyOpportunity.Repositories.Lookups.MyOpportunityVerificationStatusRepository>();
       #endregion Lookups
 
-      services.AddScoped<IRepositoryBatchedWithNavigation<Domain.MyOpportunity.Models.MyOpportunity>, MyOpportunityRepository>();
+      services.AddScoped<IRepositoryBatchedWithNavigationAndCustomFieldFilter<Domain.MyOpportunity.Models.MyOpportunity>, MyOpportunityRepository>();
       services.AddScoped<IRepository<Domain.MyOpportunity.Models.MyOpportunityVerification>, MyOpportunityVerificationRepository>();
       #endregion MyOpportunity
 
@@ -143,7 +148,7 @@ namespace Yoma.Core.Infrastructure.Database
       services.AddScoped<IRepository<Domain.Opportunity.Models.Lookups.OpportunityVerificationType>, Opportunity.Repositories.Lookups.OpportunityVerificationTypeRepository>();
       #endregion Lookups
 
-      services.AddScoped<IRepositoryBatchedValueContainsWithNavigation<Domain.Opportunity.Models.Opportunity>, OpportunityRepository>();
+      services.AddScoped<IRepositoryBatchedValueContainsWithNavigationAndCustomFieldFilter<Domain.Opportunity.Models.Opportunity>, OpportunityRepository>();
       services.AddScoped<IRepository<OpportunityCategory>, OpportunityCategoryRepository>();
       services.AddScoped<IRepository<OpportunityCountry>, OpportunityCountryRepository>();
       services.AddScoped<IRepository<OpportunityLanguage>, OpportunityLanguageRepository>();
@@ -161,6 +166,14 @@ namespace Yoma.Core.Infrastructure.Database
       services.AddScoped<IRepository<Domain.PartnerSync.Models.PartnerUser>, PartnerSync.Repositories.PartnerSyncUserRepository>();
       services.AddScoped<IRepositoryBatched<Domain.PartnerSync.Models.ProcessingLog>, PartnerSync.Repositories.ProcessingLogRepository>();
       #endregion PartnerSync
+
+      #region Payout
+      #region Lookups
+      services.AddScoped<IRepository<Domain.Payout.Models.Lookups.PayoutTransactionStatus>, PayoutTransactionStatusRepository>();
+      #endregion Lookups
+
+      services.AddScoped<IRepository<Domain.Payout.Models.PayoutTransaction>, PayoutTransactionRepository>();
+      #endregion Payout
 
       #region Referral
       #region Lookups
@@ -212,10 +225,10 @@ namespace Yoma.Core.Infrastructure.Database
     public static void Configure_InfrastructureDatabase(this IServiceProvider serviceProvider)
     {
       using var scope = serviceProvider.CreateScope();
-      var logger = scope.ServiceProvider.GetService<ILogger<ApplicationDbContext>>() ?? throw new InvalidOperationException($"Failed to get an instance of the service '{nameof(ILogger<ApplicationDbContext>)}'");
+      var logger = scope.ServiceProvider.GetService<ILogger<ApplicationDbContext>>() ?? throw new InvalidOperationException($"Failed to get an instance of the service '{nameof(ILogger<>)}'");
       logger.LogDebug("Applying database migrations...");
 
-      var context = scope.ServiceProvider.GetService<ApplicationDbContext>() ?? throw new InvalidOperationException($"Failed to get an instance of the service '{nameof(ILogger<ApplicationDbContext>)}'");
+      var context = scope.ServiceProvider.GetService<ApplicationDbContext>() ?? throw new InvalidOperationException($"Failed to get an instance of the service '{nameof(ILogger<>)}'");
 
       // migrate db
       context.Database.Migrate();

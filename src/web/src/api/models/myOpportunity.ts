@@ -5,7 +5,12 @@ import type {
   PaginationFilter,
   TimeIntervalOption,
 } from "./common";
-import type { SyncInfoEntity, VerificationType } from "./opportunity";
+import type {
+  CustomFieldValueItem,
+  CustomFieldValueRequest,
+  SyncInfoEntity,
+  VerificationType,
+} from "./opportunity";
 
 export interface MyOpportunityRequestVerify {
   certificate?: FormFile | null;
@@ -23,6 +28,9 @@ export interface MyOpportunityRequestVerify {
   recommendable: boolean | null;
   starRating: number | null;
   feedback: string | null;
+  // Definition-driven custom fields (YOM-1244 / YOM-1255). Submitted as one
+  // JSON-encoded multipart field; replacement semantics (full collection).
+  customFields?: CustomFieldValueRequest[] | null;
 }
 
 export interface MyOpportunityRequestVerifyCommitmentInterval {
@@ -97,7 +105,6 @@ export interface MyOpportunityInfo {
   percentComplete: number | null;
   dateCompleted: string | null;
   zltoReward: number | null;
-  yomaReward: number | null;
   recommendable: boolean | null;
   starRating: number | null;
   feedback: string | null;
@@ -105,6 +112,9 @@ export interface MyOpportunityInfo {
   syncedInfo: SyncInfoEntity | null;
   verifications: MyOpportunityInfoVerification[] | null;
   skills: Skill[] | null;
+  // Hydrated completion custom-field values (YOM-1244 / YOM-1255), joined to
+  // MyOpportunity definitions by key. Forward-looking until the API projects them.
+  customFields?: CustomFieldValueItem[] | null;
 }
 
 export interface Skill {

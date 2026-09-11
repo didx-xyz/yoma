@@ -88,12 +88,28 @@ const config = {
     silenceDeprecations: ["legacy-js-api"],
   },
 
+  // NB: keep this the ONLY `rewrites` key — a duplicate key in this object literal silently
+  // replaces the earlier one (that is how the dev proxy below was lost on first attempt).
   async rewrites() {
     return [
       {
         source: "/auth/:path*",
         destination: `https://${process.env.KEYCLOAK_HOSTNAME}/auth/:path*`,
       },
+      /**
+       * Dev only: same-origin proxy to the local API, for browsers whose policies block
+       * cross-origin localhost hosts (e.g. managed/automation profiles that only allow the
+       * app's own origin). Point NEXT_PUBLIC_API_BASE_URL at http://localhost:3000/api/proxy
+       * in .env to use it. Absent outside development, so deployed builds are unaffected.
+       */
+      ...(process.env.NODE_ENV === "development"
+        ? [
+            {
+              source: "/api/proxy/:path*",
+              destination: "http://localhost:5000/api/v3/:path*",
+            },
+          ]
+        : []),
     ];
   },
 };

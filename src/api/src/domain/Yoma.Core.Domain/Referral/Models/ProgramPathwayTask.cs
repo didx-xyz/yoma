@@ -73,7 +73,7 @@ namespace Yoma.Core.Domain.Referral.Models
           if (Opportunity == null)
             throw new DataInconsistencyException("Pathway task entity type is 'Opportunity' but no opportunity is assigned");
 
-          var isJob = string.Equals(Opportunity.Type, Domain.Opportunity.Type.Job.ToString(), StringComparison.OrdinalIgnoreCase);
+          var isJob = Opportunity.Type == Domain.Opportunity.Type.Job;
 
           if (isJob)
           {

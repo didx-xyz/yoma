@@ -22,11 +22,13 @@ namespace Yoma.Core.Domain.SSI.Interfaces.Provider
     /// <summary>
     /// Get the latest version of a schema with the specified name. Exception is thrown if not found
     /// </summary>
+    /// <param name="name">Full schema name.</param>
     Task<Schema> GetSchemaByName(string name);
 
     /// <summary>
     /// Get the latest version of a schema with the specified name. If not found return null
     /// </summary>
+    /// <param name="name">Full schema name.</param>
     Task<Schema?> GetSchemaByNameOrNull(string name);
 
     /// <summary>

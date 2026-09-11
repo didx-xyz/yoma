@@ -13,6 +13,8 @@ namespace Yoma.Core.Domain.SSI.Models.Lookups
 
     public List<SSISchemaEntityProperty>? Properties { get; set; }
 
+    public List<SSISchemaEntityCustomField>? CustomFields { get; set; }
+
     public List<SSISchemaType>? Types { get; set; }
   }
 }

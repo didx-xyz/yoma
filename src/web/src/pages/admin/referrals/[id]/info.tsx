@@ -20,6 +20,7 @@ import { Loading } from "~/components/Status/Loading";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import { useReferralProgramByIdQuery } from "~/hooks/useReferralProgramMutations";
+import { useTreasuryQuery } from "~/hooks/useTreasuryMutations";
 import { THEME_BLUE } from "~/lib/constants";
 import { getSafeUrl } from "~/lib/utils";
 import type { NextPageWithLayout } from "~/pages/_app";
@@ -35,6 +36,18 @@ const ReferralProgramInfo: NextPageWithLayout = () => {
     error: programError,
   } = useReferralProgramByIdQuery(id, {
     enabled: sessionStatus === "authenticated" && router.isReady && !!id,
+  });
+
+  /**
+   * The Treasury caps what this programme can award, so the reward block shows both. Admin-only, like
+   * `GET /referral/program/{id}/admin` above it — the page owns the fetch and passes it down, because
+   * the reward components are prop-driven and render in the Treasury tab too.
+   *
+   * A failure here is deliberately not surfaced: the programme's own figures still render, and the
+   * capacity notice simply stays silent rather than guessing at capacity it could not read.
+   */
+  const { data: treasury } = useTreasuryQuery({
+    enabled: sessionStatus === "authenticated" && router.isReady,
   });
 
   const error = axios.isAxiosError(programError)
@@ -113,6 +126,7 @@ const ReferralProgramInfo: NextPageWithLayout = () => {
           {program && (
             <AdminProgramInfo
               program={program}
+              treasury={treasury}
               filterOptions={[
                 ProgramInfoFilterOptions.PREVIEW,
                 ProgramInfoFilterOptions.PROGRAM_INFO,

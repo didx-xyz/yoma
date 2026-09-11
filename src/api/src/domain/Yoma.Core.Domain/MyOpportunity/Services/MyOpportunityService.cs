@@ -72,6 +72,9 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
     private readonly ISyncUserAuthenticationService _syncUserAuthenticationService;
     private readonly ISyncStateService _syncStateService;
     private readonly IProcessingService _syncProcessingService;
+    private readonly ICustomFieldDefinitionService _customFieldDefinitionService;
+    private readonly ICustomFieldValueService _customFieldValueService;
+
     private readonly MyOpportunitySearchFilterVerificationFilesAdminValidator _myOpportunitySearchFilterVerificationFilesAdminValidator;
     private readonly MyOpportunitySearchFilterAdminValidator _myOpportunitySearchFilterAdminValidator;
     private readonly MyOpportunityRequestValidatorVerify _myOpportunityRequestValidatorVerify;
@@ -80,7 +83,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
     private readonly MyOpportunityRequestValidatorVerifyImportCsv _myOpportunityRequestValidatorVerifyImportCsv;
     private readonly MyOpportunityRequestValidatorVerifyImportPartnerSync _myOpportunityRequestValidatorVerifyImportPartnerSync;
     private readonly IMediator _mediator;
-    private readonly IRepositoryBatchedWithNavigation<Models.MyOpportunity> _myOpportunityRepository;
+
+    private readonly IRepositoryBatchedWithNavigationAndCustomFieldFilter<Models.MyOpportunity> _myOpportunityRepository;
     private readonly IRepository<MyOpportunityVerification> _myOpportunityVerificationRepository;
     private readonly IExecutionStrategyService _executionStrategyService;
 
@@ -117,6 +121,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         ISyncUserAuthenticationService syncUserAuthenticationService,
         ISyncStateService syncStateService,
         IProcessingService syncProcessingService,
+        ICustomFieldDefinitionService customFieldDefinitionService,
+        ICustomFieldValueService customFieldValueService,
         MyOpportunitySearchFilterVerificationFilesAdminValidator myOpportunitySearchFilterVerificationFilesAdminValidator,
         MyOpportunitySearchFilterAdminValidator myOpportunitySearchFilterAdminValidator,
         MyOpportunityRequestValidatorVerify myOpportunityRequestValidatorVerify,
@@ -125,7 +131,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         MyOpportunityRequestValidatorVerifyImportCsv myOpportunityRequestValidatorVerifyImportCsv,
         MyOpportunityRequestValidatorVerifyImportPartnerSync myOpportunityRequestValidatorVerifyImportPartnerSync,
         IMediator mediator,
-        IRepositoryBatchedWithNavigation<Models.MyOpportunity> myOpportunityRepository,
+        IRepositoryBatchedWithNavigationAndCustomFieldFilter<Models.MyOpportunity> myOpportunityRepository,
         IRepository<MyOpportunityVerification> myOpportunityVerificationRepository,
         IExecutionStrategyService executionStrategyService)
     {
@@ -154,6 +160,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       _syncUserAuthenticationService = syncUserAuthenticationService ?? throw new ArgumentNullException(nameof(syncUserAuthenticationService));
       _syncStateService = syncStateService ?? throw new ArgumentNullException(nameof(syncStateService));
       _syncProcessingService = syncProcessingService ?? throw new ArgumentNullException(nameof(syncProcessingService));
+      _customFieldDefinitionService = customFieldDefinitionService ?? throw new ArgumentNullException(nameof(customFieldDefinitionService));
+      _customFieldValueService = customFieldValueService ?? throw new ArgumentNullException(nameof(customFieldValueService));
       _myOpportunitySearchFilterVerificationFilesAdminValidator = myOpportunitySearchFilterVerificationFilesAdminValidator ?? throw new ArgumentNullException(nameof(myOpportunitySearchFilterVerificationFilesAdminValidator));
       _myOpportunitySearchFilterAdminValidator = myOpportunitySearchFilterAdminValidator ?? throw new ArgumentNullException(nameof(myOpportunitySearchFilterAdminValidator));
       _myOpportunityRequestValidatorVerify = myOpportunityRequestValidatorVerify ?? throw new ArgumentNullException(nameof(myOpportunityRequestValidatorVerify));
@@ -503,6 +511,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         UserId = user.Id,
         Action = filter.Action,
         VerificationStatuses = filter.VerificationStatuses,
+        CustomFields = filter.CustomFields,
         TotalCountOnly = filter.TotalCountOnly,
         PageNumber = filter.PageNumber,
         PageSize = filter.PageSize,
@@ -579,6 +588,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
       _myOpportunitySearchFilterAdminValidator.ValidateAndThrow(filter);
 
+      _customFieldValueService.ValidateAndHydrateFilters(CustomFieldEntityType.MyOpportunity, filter.CustomFields);
+
       var actionId = _myOpportunityActionService.GetByName(filter.Action.ToString()).Id;
       var opportunityStatusActiveId = _opportunityStatusService.GetByName(Status.Active.ToString()).Id;
       var opportunityStatusExpiredId = _opportunityStatusService.GetByName(Status.Expired.ToString()).Id;
@@ -627,6 +638,9 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
         query = query.Where(predicate);
       }
+
+      //custom fields
+      query = _myOpportunityRepository.WhereCustomFields(query, filter.CustomFields);
 
       var orderInstructions = new List<FilterOrdering<Models.MyOpportunity>>();
       switch (filter.Action)
@@ -868,7 +882,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       await _myOpportunityRepository.Delete(myOpportunity);
     }
 
-    public async Task PerformActionSendForVerificationManual(Guid userId, Guid opportunityId, MyOpportunityRequestVerify request, bool overridePending)
+    public async Task PerformActionSendForVerificationManualSeed(Guid userId, Guid opportunityId, MyOpportunityRequestVerify request, bool overridePending)
     {
       var user = _userService.GetById(userId, false, false);
 
@@ -889,7 +903,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       var options = new MyOpportunityVerificationOptions
       {
         RequiredVerificationMethod = VerificationMethod.Manual,
-        MutateBlobStorage = true
+        MutateBlobStorage = true,
+        CustomFieldUpsertMode = CustomFieldUpsertMode.PutEnforceRequired
       };
 
       await PerformActionSendForVerification(user, opportunityId, request, options);
@@ -1206,7 +1221,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             PartnerSyncedVerification = true,
             EnqueueOutcomes = true,
             MutateBlobStorage = true,
-            PublishEvents = true
+            PublishEvents = true,
+            CustomFieldUpsertMode = CustomFieldUpsertMode.PatchAllowMissingRequired
           };
 
           var requestVerify = new MyOpportunityRequestVerify
@@ -1214,7 +1230,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             DateStart = request.DateStart,
             DateEnd = request.DateEnd,
             CommitmentInterval = request.CommitmentInterval,
-            PercentComplete = request.PercentComplete
+            PercentComplete = request.PercentComplete,
+            CustomFields = request.CustomFields
           };
 
           var myOpportunity = await PerformActionSendForVerification(user, opportunity.Id, requestVerify, options);
@@ -1263,7 +1280,13 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
       // Validate header before reading data rows
       // Stop if errors — prevents invalid column-to-property mapping
-      CSVImportHelper.ValidateHeader<MyOpportunityInfoCsvImport>(csv, errors);
+      var customFieldHeaders = CSVImportHelper.ValidateHeader<MyOpportunityInfoCsvImport>(csv, errors, true);
+      if (CSVImportHelper.ContainsHeaderErrors(errors)) return CSVImportHelper.GetResults(errors);
+      var customFieldColumns = CSVImportHelper.ResolveCustomFieldHeaders(
+        CustomFieldEntityType.MyOpportunity,
+        customFieldHeaders,
+        _customFieldDefinitionService,
+        errors);
       if (CSVImportHelper.ContainsHeaderErrors(errors)) return CSVImportHelper.GetResults(errors);
 
       // PASS A — probe: parse + invoke domain logic per row in its own scope, but never Complete().
@@ -1293,6 +1316,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
           }
 
           dto = csv.GetRecord<MyOpportunityInfoCsvImport>();
+          dto.CustomFieldValues = CSVImportHelper.ReadCustomFieldValues(csv, customFieldColumns);
           dto.PhoneNumber = dto.PhoneNumber?.NormalizePhoneNumber(true);
 
           dto.Validate(errors, rowNumber);
@@ -1313,8 +1337,9 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
             await ProcessImportVerification(request, dto, true); //probe only; notifications not send, events not raised and blobs no blobl storage mutation
             if (!string.IsNullOrEmpty(dto.VerificationEntry)) probedVerifications.Add(dto.VerificationEntry);
-            //probe only, do not commit the scope; disposed as aborted
-          });
+            // Probe only: do not commit the scope. Clear EF tracking after rollback so
+            // accepted in-memory state cannot leak into the commit pass.
+          }, true);
         }
         catch (Exception ex)
         {
@@ -1389,6 +1414,13 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
       return items;
     }
+
+    public List<CustomFieldDefinition> ListCustomFieldDefinitions(Guid opportunityId)
+    {
+      var opportunity = _opportunityService.GetById(opportunityId, false, false, false);
+
+      return _customFieldDefinitionService.List(CustomFieldEntityType.MyOpportunity, true, true, opportunity.Type.ToString());
+    }
     #endregion
 
     #region Private Members
@@ -1433,6 +1465,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
           }
 
           if (beforeDelete != null) await beforeDelete();
+
+          await _customFieldValueService.Delete(CustomFieldEntityType.MyOpportunity, myOpportunity.Id);
 
           await _myOpportunityRepository.Delete(myOpportunity);
 
@@ -1543,6 +1577,10 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         throw new ValidationException("Opportunity external id required");
 
       var opportunity = _opportunityService.GetByExternalId(requestImport.OrganizationId, item.OpportunityExternalId, true, true);
+      var customFields = _customFieldValueService.ParseCSVValues(
+        CustomFieldEntityType.MyOpportunity,
+        opportunity.Type.ToString(),
+        item.CustomFieldValues);
 
       var user = _userService.GetByUsernameOrNull(item.Username, false, false);
 
@@ -1580,11 +1618,17 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         EnqueueOutcomes = true,
         MutateBlobStorage = !probeOnly,
         SendNotification = !probeOnly,
-        PublishEvents = !probeOnly
+        PublishEvents = !probeOnly,
+        CustomFieldUpsertMode = CustomFieldUpsertMode.PatchAllowMissingRequired
       };
 
+      // CSV imports are PATCH operations: omitted CF columns preserve existing values,
+      // blank cells delete values, and populated cells are validated and upserted.
       // Verification method must be automatic; imported verifications are auto-finalized, so pending notifications are not sent.
-      await PerformActionSendForVerification(user, opportunity.Id, new MyOpportunityRequestVerify(), options);
+      await PerformActionSendForVerification(user, opportunity.Id, new MyOpportunityRequestVerify
+      {
+        CustomFields = customFields
+      }, options);
 
       await FinalizeVerification(user, opportunity, VerificationStatus.Completed, options);
     }
@@ -1678,7 +1722,6 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             var result = await _opportunityService.AllocateRewards(opportunity.Id, !options.AutoFinalizedVerification, options.ImportedOrPartnerSyncedVerification);
             opportunity = result.Opportunity;
             item.ZltoReward = result.ZltoReward;
-            item.YomaReward = result.YomaReward;
             item.DateCompleted = options.DateCompleted ?? DateTimeOffset.UtcNow;
 
             await _userService.AssignSkills(user, opportunity);
@@ -1691,17 +1734,12 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             }
 
             if (result.ZltoReward.HasValue && result.ZltoReward.Value > default(decimal))
-              await _rewardService.ScheduleRewardTransaction(user.Id, Reward.RewardTransactionEntityType.MyOpportunity, item.Id, result.ZltoReward.Value);
+              await _rewardService.ScheduleTransaction(user.Id, Reward.RewardTransactionEntityType.MyOpportunity, item.Id, result.ZltoReward.Value);
 
             if (result.ZltoRewardPoolDepleted == true)
               item.CommentVerification = CommentVerificationAppendInfo(item.CommentVerification, "ZLTO not awarded as reward pool has been depleted");
             else if (result.ZltoRewardReduced == true)
               item.CommentVerification = CommentVerificationAppendInfo(item.CommentVerification, "ZLTO partially awarded due to insufficient reward pool");
-
-            if (result.YomaRewardPoolDepleted == true)
-              item.CommentVerification = CommentVerificationAppendInfo(item.CommentVerification, "Yoma not awarded as reward pool has been depleted");
-            else if (result.YomaRewardReduced == true)
-              item.CommentVerification = CommentVerificationAppendInfo(item.CommentVerification, "Yoma partially awarded due to insufficient reward pool");
 
             notificationType = NotificationType.Opportunity_Verification_Completed;
             break;
@@ -1932,6 +1970,9 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       ArgumentNullException.ThrowIfNull(request, nameof(request));
       ArgumentNullException.ThrowIfNull(options, nameof(options));
 
+      if (options.CustomFieldUpsertMode == CustomFieldUpsertMode.PatchAllowMissingRequired)
+        request.CustomFields.NormalizeForPatch();
+
       var opportunity = _opportunityService.GetById(opportunityId, true, true, false);
 
       PerformActionSendForVerificationApplyDefaults(request, opportunity, options);
@@ -2017,7 +2058,23 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       myOpportunity.StarRating = request.StarRating;
       myOpportunity.Feedback = request.Feedback;
 
+      // Validate before processing because a new MyOpportunity must be persisted before
+      // its custom field values can be inserted. Upsert validates and normalizes again
+      // intentionally so it remains safe as a standalone operation.
+      if (options.CustomFieldUpsertMode.Process())
+        _customFieldValueService.Validate(CustomFieldEntityType.MyOpportunity, opportunity.Type.ToString(), request.CustomFields, options.CustomFieldUpsertMode);
+
       myOpportunity = await PerformActionSendForVerificationProcessVerificationTypes(request, opportunity, myOpportunity, options, isNew);
+
+      if (options.CustomFieldUpsertMode.Process())
+        myOpportunity.CustomFields = await _customFieldValueService.Upsert(
+          CustomFieldEntityType.MyOpportunity,
+          opportunity.Type.ToString(),
+          null,
+          null,
+          myOpportunity.Id,
+          request.CustomFields,
+          options.CustomFieldUpsertMode);
 
       //used by notifications
       myOpportunity.Username = user.Username;
@@ -2029,7 +2086,6 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       myOpportunity.OpportunityTitle = opportunity.Title;
       myOpportunity.OrganizationId = opportunity.OrganizationId;
       myOpportunity.ZltoReward = opportunity.ZltoReward;
-      myOpportunity.YomaReward = opportunity.YomaReward;
 
       if (options.AutoFinalizedVerification) return myOpportunity; //with instant, imported or synced verifications, pending notifications are not sent
 
@@ -2085,7 +2141,6 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
               Comment = myOpportunity.CommentVerification,
               URL = _notificationURLFactory.OpportunityVerificationItemURL(type, myOpportunity.OpportunityId, myOpportunity.OrganizationId),
               ZltoReward = myOpportunity.ZltoReward,
-              YomaReward = myOpportunity.YomaReward
             }
             ]
         };

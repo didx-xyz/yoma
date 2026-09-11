@@ -15,7 +15,7 @@ const AnimatedText: React.FC<AnimatedTextProps> = ({ sentences }) => {
         setIndex((prevIndex) => (prevIndex + 1) % sentences.length);
         setFade(true);
       }, 500);
-    }, 3000); // Change sentence every 3 seconds
+    }, 6000); // Change sentence every 6 seconds
 
     return () => clearInterval(interval);
   }, [sentences.length]);

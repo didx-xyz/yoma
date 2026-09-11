@@ -61,11 +61,15 @@ export const updateOrganisationLogo = async (
   const formData = new FormData();
   formData.append("file", file);
 
-  const { data } = await instance.patch(`/organization/${id}/logo`, formData, {
-    headers: {
-      "Content-Type": "multipart/form-data",
+  const { data } = await instance.patch(
+    `/organization/${encodeURIComponent(id)}/logo`,
+    formData,
+    {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
     },
-  });
+  );
 
   return data;
 };
@@ -75,8 +79,9 @@ export const getOrganisationById = async (
   context?: GetServerSidePropsContext | GetStaticPropsContext,
 ): Promise<Organization> => {
   const instance = context ? ApiServer(context) : await ApiClient;
-  console.warn("getOrganisationById", id);
-  const { data } = await instance.get<Organization>(`/organization/${id}`);
+  const { data } = await instance.get<Organization>(
+    `/organization/${encodeURIComponent(id)}`,
+  );
   return data;
 };
 
@@ -97,7 +102,9 @@ export const getOrganisationAdminsById = async (
   context?: GetServerSidePropsContext,
 ): Promise<UserInfo[]> => {
   const instance = context ? ApiServer(context) : await ApiClient;
-  const { data } = await instance.get<UserInfo[]>(`/organization/${id}/admin`);
+  const { data } = await instance.get<UserInfo[]>(
+    `/organization/${encodeURIComponent(id)}/admin`,
+  );
   return data;
 };
 
@@ -107,7 +114,10 @@ export const patchOrganisationStatus = async (
 ) => {
   await (
     await ApiClient
-  ).patch<Organization>(`/organization/${id}/status`, model);
+  ).patch<Organization>(
+    `/organization/${encodeURIComponent(id)}/status`,
+    model,
+  );
 };
 
 export const getOrganisationSettingsById = async (
@@ -115,7 +125,9 @@ export const getOrganisationSettingsById = async (
   context?: GetServerSidePropsContext,
 ): Promise<Settings> => {
   const instance = context ? ApiServer(context) : await ApiClient;
-  const { data } = await instance.get<Settings>(`/organization/${id}/settings`);
+  const { data } = await instance.get<Settings>(
+    `/organization/${encodeURIComponent(id)}/settings`,
+  );
   return data;
 };
 
@@ -125,5 +137,8 @@ export const updateOrganisationSettings = async (
 ) => {
   await (
     await ApiClient
-  ).patch<Organization>(`/organization/${id}/settings`, model);
+  ).patch<Organization>(
+    `/organization/${encodeURIComponent(id)}/settings`,
+    model,
+  );
 };
