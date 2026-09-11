@@ -48,6 +48,7 @@ import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import { useConfirmationModalContext } from "~/context/modalConfirmationContext";
 import analytics from "~/lib/analytics";
+import { isCountryCodeAlpha2 } from "~/lib/apiPath";
 import { COUNTRY_CODE_WW, THEME_BLUE } from "~/lib/constants";
 import { userCountrySelectionAtom, userProfileAtom } from "~/lib/store";
 import { type NextPageWithLayout } from "~/pages/_app";
@@ -181,6 +182,15 @@ export const getStaticProps: GetStaticProps = async (context) => {
     };
 
   const { country } = context.params as IParams;
+
+  /*
+    `fallback: "blocking"` means any URL reaches this function, not only the countries
+    `getStaticPaths` generated — and `country` is then interpolated into a server-side API request
+    carrying the caller's credentials. A malformed segment is a page that does not exist, so it is
+    answered as one here; the service layer refuses it again on its own (`lib/apiPath.ts`).
+  */
+  if (!isCountryCodeAlpha2(country)) return { notFound: true };
+
   const { lookups_countries, data_storeItems } = await fetchMarketplaceData(
     country,
     context,
