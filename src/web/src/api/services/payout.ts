@@ -2,7 +2,7 @@ import type { GetServerSidePropsContext, GetStaticPropsContext } from "next";
 import ApiClient from "~/lib/axiosClient";
 import ApiServer from "~/lib/axiosServer";
 import type { Country } from "../models/lookups";
-import type { PayoutSession } from "../models/payout";
+import type { PayoutSession, PayoutTransactionInfo } from "../models/payout";
 
 /**
  * `GET /user/payout/countries` — **User** role. The countries whose payout provider currently has
@@ -59,11 +59,13 @@ export const initiateZltoPayout = async (
 
 /**
  * `GET /user/payout/zlto` — **User** role. A **freshly refreshed** hosted session for the active
- * payout, or `null` when there is no active payout (the API answers **404**, which is the same fact
- * as `profile.payout.active === false` from the other direction).
+ * payout, or `null` when the API answers **404**.
  *
- * Call this on tap, every time. Hosted sessions last ≈30 minutes and the provider issues a new one
- * on request, so there is nothing to cache and a stored URL must never be reused.
+ * Call this on tap, every time: sessions last ≈30 minutes, the provider issues a new one on
+ * request, and **`POST` must never be used to refresh** — that would start a second payout.
+ *
+ * ⚠️ **A 404 here does not prove the payout closed.** The refusal can originate at the provider and
+ * can be transient. Read `getLatestPayout` before telling a youth anything terminal.
  */
 export const getZltoPayoutSession = async (
   context?: GetServerSidePropsContext | GetStaticPropsContext,
@@ -72,6 +74,31 @@ export const getZltoPayoutSession = async (
   const { data, status } = await instance.get<PayoutSession>(
     "/user/payout/zlto",
     // 404 is the documented "no active payout" answer, not a failure — take it as data.
+    { validateStatus: (s) => (s >= 200 && s < 300) || s === 404 },
+  );
+  return status === 404 ? null : data;
+};
+
+/**
+ * `GET /user/payout/latest` — **User** role. The youth's active payout, or their most recently
+ * initiated terminal one; `null` when they have never cashed out (**404**).
+ *
+ * **The only way to read an outcome.** The profile carries active payouts only, and an outcome can
+ * never be inferred from the wallet: a committed reservation and a released one both leave
+ * `pendingPayout` at zero.
+ *
+ * Read-only and cheap — no provider call, no session creation, no mutation. But it is a
+ * *latest-state* read, not a history feed: ask for it **inside the cash-out journey** (on closing
+ * the hosted modal, or when the youth asks how it went), never as an unread-notification banner
+ * that re-announces an old outcome on every visit.
+ */
+export const getLatestPayout = async (
+  context?: GetServerSidePropsContext | GetStaticPropsContext,
+): Promise<PayoutTransactionInfo | null> => {
+  const instance = context ? ApiServer(context) : await ApiClient;
+  const { data, status } = await instance.get<PayoutTransactionInfo>(
+    "/user/payout/latest",
+    // 404 means "this youth has no payout at all", which is an answer, not a failure.
     { validateStatus: (s) => (s >= 200 && s < 300) || s === 404 },
   );
   return status === 404 ? null : data;

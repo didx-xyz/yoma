@@ -111,6 +111,12 @@ export const TREASURY_LIMITS = {
 export interface ConversionResponse {
   amount: number;
   currency: "USD";
+  /**
+   * ZLTO per 1 USD, at the Treasury's own 4-decimal display precision — the same figure the admin
+   * surface shows. **Use it; never infer the rate from `amount`,** which has already been rounded
+   * to two decimal places. Initiation recalculates at the current rate, so this is indicative too.
+   */
+  conversionRateZltoPerUsd: number;
   /** Whether the Treasury currently has sufficient uncommitted payout funds. */
   treasuryFundsAvailable: boolean;
 }

@@ -145,19 +145,29 @@ export const REVIEW_COPY = {
   backAction: "Back",
 } as const;
 
-export const HANDOFF_COPY = {
+/**
+ * The hosted journey, which runs in an **iframe inside Yoma** (API directive, 2026-09-10) rather
+ * than in a new tab. The youth never leaves the product, so there is no "we opened a window for
+ * you" to explain and no popup to be blocked.
+ *
+ * Closing the modal neither cancels nor completes anything — it just stops showing the journey, and
+ * Yoma then asks the API how the payout actually stands.
+ */
+export const HOSTED_COPY = {
   preparingTitle: "Preparing your cash out…",
+  dialogTitle: "Finish your cash out",
+  /** the iframe's accessible name — the provider is not named, here or anywhere */
+  frameTitle: "Secure cash out",
+  /** under the frame, so closing never reads as cancelling */
+  footerNote:
+    "Closing this won't cancel your cash out — we'll check how it's going.",
   /**
-   * One screen covers both outcomes of the hand-off, because the browser does not reliably tell us
-   * which one happened: the initiation is a round trip, so `window.open` runs outside the youth's
-   * tap and a popup blocker can swallow the new tab silently. Their Zlto is already reserved by
-   * then, so "nothing happened" is the one reading to avoid — hence a button that is always there.
+   * The escape hatch. Embedding is subject to the provider's own framing and authentication rules
+   * (IXO coordination is open), and a youth with Zlto already reserved cannot be left staring at a
+   * frame that refused to load.
    */
-  readyTitle: "Your cash out is ready",
-  readyBody:
-    "A new window should have opened. If nothing opened, use the button below.",
-  openAction: "Open cash out",
-  closeAction: "Close",
+  newWindowAction: "Open in a new window",
+  doneAction: "I'm done",
 } as const;
 
 export const FAILURE_COPY = {
@@ -168,17 +178,20 @@ export const FAILURE_COPY = {
 } as const;
 
 /**
- * The active-payout panel (Flow C). It shows what Yoma actually knows about the payout in flight:
- * the reserved Zlto (the wallet's `pendingPayout`) and its estimated value (`payout.amount`).
+ * The active-payout panel (Flow C): the payout in flight and the way back into it — the reserved
+ * Zlto (the wallet's `pendingPayout`), its value in USD (`payout.amount`) and when it started
+ * (`payout.dateCreated`).
  *
- * There is deliberately no status line distinguishing "waiting for you" from "processing", and no
- * start time: the profile carries neither. See the feature doc — resolving that needs the payout
- * status on `UserProfilePayout`.
+ * ⚠️ **No status line, deliberately, even though `status` now exists.** `Processing` begins when
+ * the hosted payout is created, not when the youth confirms it, so neither `status` nor `canResume`
+ * separates "still needs you" from "confirmed and on its way". Naming a status here would put a
+ * claim on screen the contract cannot support; `canResume` decides what is *offered* instead.
  */
 export const RESUME_COPY = {
   dialogTitle: "Your cash out",
   amountLabel: "Amount",
   estimateLabel: "Estimated",
+  startedLabel: "Started",
   title: "Pick up where you left off",
   body: "You started a cash out but haven't finished it. Continue to complete it — your Zlto stays held until it's done.",
   continueAction: CASH_OUT_ACTION_CONTINUE,
@@ -200,28 +213,69 @@ export const RESUME_COPY = {
    */
   notResumable:
     "We're still setting up your cash out. Try again in a few minutes — your Zlto is safe.",
-  /** the profile said a payout was active and the API says otherwise — 404 from the session route */
+  /**
+   * The session route answered 404. ⚠️ **That alone does not prove the payout closed** — the
+   * refusal can originate at the provider and can be transient — so this is never shown on its own:
+   * the caller reads the outcome endpoint and shows the real outcome instead. It survives only as
+   * the fallback for when that read also fails.
+   */
   noLongerActive:
-    "This cash out has finished processing. Check your Zlto balance for the outcome.",
+    "We couldn't open your cash out just now. Check back in a few minutes.",
 } as const;
 
 /**
- * Step 3. **Not an outcome** — Yoma does not know one yet, and receiving a hosted session is not a
- * completed payout.
+ * Step 3 — Flow D, read from `GET /user/payout/latest` when the hosted modal closes. **Never
+ * inferred from the wallet**: a committed reservation and a released one both leave
+ * `pendingPayout` at zero, so only the recorded status can tell a youth whether their money
+ * arrived.
  *
- * The four drawn outcome states (completed / cancelled / expired / failed) are not built: no
- * youth-facing endpoint reports a payout's terminal status, so the UI cannot tell which of them
- * happened without inventing it. Recorded as a gap in the feature doc.
+ * Four rules hold this copy together:
+ *
+ * - **In-progress is neutral.** `Processing` starts at hosted-payout creation, before the youth
+ *   confirms anything, so nothing here may suggest money is on its way.
+ * - **Expired is not cancelled.** One is a clock running out, the other is a decision — telling
+ *   someone they cancelled something they did not is its own small injustice.
+ * - **Unsuccessful outcomes are neutral, not apologetic and never blaming.** The Zlto comes back.
+ * - **No historical Zlto figure.** The API deliberately does not carry one, and recomputing it at
+ *   today's rate would invent a number. The USD amount is real and the wallet shows the rest.
  */
-export const RESULT_COPY = {
-  processingTitle: "Thanks — your cash out is being processed",
-  /**
-   * The board's body is "This can take a few hours. We'll update your wallet when it's done."
-   * This adds the "if you haven't already" clause, because the view is reached by coming back to
-   * this tab — which a youth may do having abandoned the hosted journey rather than finished it.
-   * Yoma cannot tell the two apart, so the copy must be true either way.
-   */
-  processingBody:
-    "Finish up with our secure payout partner if you haven't already. This can take a few hours — we'll update your wallet when it's done.",
+export const OUTCOME_COPY = {
+  dialogTitle: "Your cash out",
+  amountLabel: "Amount",
+  startedLabel: "Started",
+
+  inProgressTitle: "Your cash out is in progress",
+  inProgressBody:
+    "We'll update your wallet as soon as it's done. This can take a few hours.",
+  /** active but with no provider reference yet — reconciliation is still placing it */
+  settingUpTitle: "We're still setting up your cash out",
+  settingUpBody:
+    "This usually takes a few minutes. Your Zlto is safe while we finish.",
+
+  completedTitle: "Your cash out is complete",
+  completedBody:
+    "The payment has been sent. Your wallet has been updated to match.",
+
+  cancelledTitle: "Your cash out was cancelled",
+  cancelledBody: "Your Zlto is back in your wallet, ready to use.",
+
+  expiredTitle: "Your cash out expired",
+  expiredBody:
+    "The time to finish it ran out, so we returned your Zlto to your wallet.",
+
+  failedTitle: "Your cash out didn't go through",
+  failedBody:
+    "Your Zlto has been returned to your wallet. You can try again whenever you're ready.",
+
+  /** the outcome read itself failed — say so plainly rather than guessing at an outcome */
+  unknownTitle: "We couldn't check your cash out",
+  unknownBody:
+    "Nothing is lost. Open your wallet again in a few minutes to see where it stands.",
+
+  /** shown while the outcome is being read — a moment, but never a guess in the meantime */
+  checkingBody: "Checking how your cash out went…",
+
+  continueAction: CASH_OUT_ACTION_CONTINUE,
+  startAgainAction: "Start a new cash out",
   doneAction: "Back to wallet",
 } as const;

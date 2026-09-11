@@ -11,15 +11,16 @@ import { CashOutSummaryRow, CashOutZltoAmount } from "./CashOutSummary";
  * issues a fresh one on request, so there is nothing here to store and a stored URL must never be
  * reused.
  *
- * What it can show, and why it shows no more than this:
+ * What it shows, and why it shows no more than this:
  *
  * - **Amount** is the wallet's `pendingPayout` — the Zlto Yoma has reserved for this payout.
- * - **Estimated** is `profile.payout.amount`, which is the payout's value **in USD**, not Zlto.
- * - **No start time**, because `UserProfilePayout` carries none.
- * - **No status line.** The board distinguishes "Waiting for you to finish" from "Processing", but
- *   the profile carries no payout status — `active` is derived from the amount alone. Guessing
- *   which one applies would be inventing a fact about someone's money, so the panel says neither
- *   and simply offers the way back in. Recorded as a gap in the feature doc.
+ * - **Estimated** is `profile.payout.amount`, the payout's value **in USD**, not Zlto.
+ * - **Started** is `profile.payout.dateCreated`, which is the *initiation* time — not confirmation,
+ *   not completion.
+ * - **Still no status line**, although `status` now exists. `Processing` begins when the hosted
+ *   payout is created, before the youth confirms anything, so neither it nor `canResume` separates
+ *   "still needs you" from "confirmed and on its way". `canResume` decides what is offered; naming
+ *   a status would make a claim the contract cannot support.
  */
 
 export const CashOutResumePanel: React.FC<{
@@ -27,6 +28,8 @@ export const CashOutResumePanel: React.FC<{
   zltoAmount: number | null;
   /** the payout's value in `currency` — `payout.amount`; null when the API sent none */
   estimateUsd: number | null;
+  /** `payout.dateCreated`, pre-formatted by `formatPayoutStarted`; the row drops out when null */
+  started?: string | null;
   busy: boolean;
   /** set when the session fetch failed, or when there is nothing to continue */
   notice?: string;
@@ -44,6 +47,7 @@ export const CashOutResumePanel: React.FC<{
 }> = ({
   zltoAmount,
   estimateUsd,
+  started,
   busy,
   notice,
   onContinue,
@@ -60,6 +64,12 @@ export const CashOutResumePanel: React.FC<{
       <CashOutSummaryRow label={RESUME_COPY.estimateLabel}>
         {formatUsd(estimateUsd)}
       </CashOutSummaryRow>
+
+      {started && (
+        <CashOutSummaryRow label={RESUME_COPY.startedLabel}>
+          {started}
+        </CashOutSummaryRow>
+      )}
     </div>
 
     {/* "Pick up where you left off" is an invitation, so it goes when the invitation does —

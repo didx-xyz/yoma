@@ -17,6 +17,8 @@ const TONES = {
   neutral: "bg-purple-tint text-purple",
   info: "bg-blue-light text-blue-dark",
   warning: "bg-orange-light text-orange",
+  /** reserved for a *confirmed* completed payout — never for "we sent you off to finish it" */
+  success: "bg-green-light text-green",
 } as const;
 
 export const CashOutMessageStep: React.FC<{

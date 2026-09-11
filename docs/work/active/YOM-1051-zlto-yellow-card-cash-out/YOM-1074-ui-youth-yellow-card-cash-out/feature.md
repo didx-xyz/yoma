@@ -7,8 +7,8 @@
 - **Ticket**: [YOM-1074](https://linear.app/didx/issue/YOM-1074)
 - **Owner**: Jason
 - **Areas**: web
-- **Status**: in-progress — T5 built (entry point, amount, preview, initiation, hand-off, resume,
-  result), browser-verified; Flow D outcome states blocked on an API gap
+- **Status**: in-progress — T5 built end to end (entry point, amount, preview, initiation, hosted
+  iframe journey, resume, outcomes), browser-verified; a session-backed pass on Dev is what remains
 - **Started**: 2026-09-09
 - **Plan tasks**: **T5**
 - **Rebuilt**: 2026-09-08 — clean-slate rewrite against the epic README and the API child docs (YOM-1052 / 1055 / 1057 / 1059) and their 2026-08-27 → 2026-09-01 handoffs
@@ -157,9 +157,14 @@ Source: YOM-1052 / 1055 / 1057 decisions of 2026-08-27 and 2026-08-28.
   | `Expired` | yes | the provider's processing window elapsed |
 
   `PayoutService.Statuses_Active` is `[Initiated, Processing, ReconciliationRequired]` — that trio
-  is what `profile.payout.active` means. ⚠️ **None of these names reaches the youth UI**: the
-  profile carries no status and there is no youth-facing payout record, so this table constrains
-  what the UI may *claim*, not what it can display. See the 2026-09-10 decision.
+  is what `profile.payout.active` means.
+
+  **Superseded 2026-09-11:** the note here said none of these names reaches the youth UI. The API
+  now sends `status` on the profile (active payouts only) and on `GET /user/payout/latest`, so the
+  four terminal names drive Flow D directly. ⚠️ The one claim the UI still may not make is *which
+  kind of in-progress* a payout is in: **`Processing` begins when the hosted payout is created, not
+  when the youth confirms it**, so the active trio is presented as one neutral "in progress" and
+  `canResume` decides only what is offered. Statuses arrive as **PascalCase strings**, not ordinals.
 - Timings for copy: unconfirmed payout resumable for 24 hours; once confirmed it cannot expire and
   reaches terminal within ≈6 hours at worst; ZLTO reservation is the 30-hour safety net. Say
   "this can take a few hours", never a guarantee.
@@ -256,8 +261,9 @@ close control, light blue-grey info panels, purple outline/primary buttons. No n
 | B1 gate (7 states) | `lib/payout/eligibility.ts` — profile `payout.countryAvailability { supported, offline }`, the six profile fields, `zlto.walletCreationStatus`, `zlto.available`, `payout.active`. `GET /api/v3/user/payout/countries` (503 → `null`) is for *listing* corridors, not for gating — the profile already carries the answer for the youth's own country |
 | B2 preview / paused | `GET /treasury/conversion/zlto-usd` → `{ amount, currency, treasuryFundsAvailable }`; `false` = paused state |
 | B4 hand-off, B5 failures | `POST /user/payout/zlto`; HTTPS-only hosted URL; conflict = active payout exists |
-| C resumable / processing | `profile.payout.active` + `zlto.pendingPayout` (reserved ZLTO) + `payout.amount` (USD); session refresh via `GET /api/v3/user/payout/zlto` → `PayoutSession { amount, currency, paymentUrl, expiresAt }`, 404 when none. **The two states are not separable** — no status on the profile (2026-09-10) |
-| D outcomes | **Nothing supplies them.** Enum verified (Plan §4) but no youth-facing endpoint reports a payout's status, so only "processing" is built |
+| C resumable / processing | `profile.payout { active, status, canResume, amount, currency, dateCreated }` + `zlto.pendingPayout` (reserved ZLTO); session refresh via `GET /api/v3/user/payout/zlto` → `PayoutSession { amount, currency, paymentUrl, expiresAt }`, 404 when none. `canResume` decides what is offered; the two in-progress states are still **not worded apart** (`Processing` precedes confirmation) |
+| B4 hosted journey | `PayoutSession.paymentUrl` used verbatim, fragment token and all, as an **iframe `src`** inside Yoma. Closing the modal cancels nothing |
+| D outcomes | `GET /api/v3/user/payout/latest` → `PayoutTransactionInfo { status, amount, currency, dateCreated, canResume }`, 404 when the youth has no payout. Read on closing the hosted modal. **Never** inferred from the wallet |
 
 Figures on the artboards are sample values (rate 120 ZLTO = 1 USD); status names in Flows C–D
 are configuration until the enum is read. The longer standalone brief, including the YOM-1072
@@ -323,17 +329,27 @@ wanted.
 - [x] **Active-payout state** — the entry point becomes **Continue cash out** and opens
       `CashOutResumePanel`, which fetches a fresh session **on tap**. A second Cash Out cannot be
       started (the gate's `activePayout` copy is the panel's notice for the initiation race).
-- [ ] **Outcome states** — **blocked, not skipped.** Processing is built; completed /
-      cancelled-expired / failed are not, because **no youth-facing endpoint reports a payout's
-      terminal status** (see Decisions, 2026-09-10). Toast variants wait on the same gap.
+- [x] **Outcome states** — unblocked by `GET /user/payout/latest` (API 2026-09-10) and built:
+      completed, cancelled, **expired (worded distinctly)**, failed, plus neutral in-progress and
+      still-setting-up. Read from the recorded status only, never inferred from the wallet. Toast
+      variants are still not built — the outcome belongs inside the journey, not as a banner that
+      re-announces an old payout on every visit (API guidance).
+- [x] **Hosted journey embedded** — iframe modal inside Yoma rather than a new tab (API directive),
+      with the "open in a new window" escape hatch for providers or browsers that refuse framing.
 - [x] Entry points on both the Marketplace wallet and the Yo-ID Wallet.
 - [x] Per-field server-error mapping for the payout request (`lib/payout/serverErrors.ts`) —
       every pattern quotes the verbatim server string it matches.
 - [x] Payout status enum names — read and recorded below.
 - [x] Session-endpoint route recorded: `GET /api/v3/user/payout/zlto`.
-- [ ] **API asks raised by T5** (all four in the 2026-09-10 handoff, none blocking what is built
-      except the first): payout **status** on `UserProfilePayout`; a youth-readable **terminal
-      outcome**; the **conversion rate** on `ConversionResponse`; the active payout's **start time**.
+- [x] **API asks raised by T5 — all four delivered 2026-09-10** (Adrian): payout `status` and
+      `canResume` on `UserProfilePayout`, `GET /user/payout/latest` for outcomes,
+      `conversionRateZltoPerUsd` on the conversion preview, and `dateCreated` for "Started". Wired
+      up 2026-09-11; the rate *inference* is deleted.
+- [ ] **Session-backed pass on Dev** — the interactive half (typing, `Max`, 1 → 2 → 3, a real POST,
+      the iframe against the real provider). Test wallet funded with 2,000 ZLTO on
+      `jason.dicker@didx.co.za`; needs a browser login, so it cannot run headless here.
+- [ ] **Confirm the provider permits framing** — open with IXO. The escape hatch covers a refusal,
+      but a modal that shows a browser's "refused to connect" is not a shippable primary path.
 
 ## Decisions
 
@@ -547,6 +563,57 @@ wanted.
   completing opportunities" empty state, which is better for a youth who has never earned. The
   disabled Cash Out plus helper line therefore appears when `available` is zero but something else
   is in flight. Changing that empty state is copy churn outside this task.
+
+- **2026-09-11: `WalletCreationStatus` was a numeric TS enum, and the gate would have refused every
+  youth in the product.** The API serialises every enum as its **PascalCase name** (`Startup.cs`
+  registers a strict string enum converter; the Swagger schema says `"type": "string"`), so
+  `walletCreationStatus` arrives as `"Created"` while `WalletCreationStatus.Created` was `2`.
+  `"Created" !== 2` is always true, so **every** profile failed the wallet check and Cash Out was
+  unreachable behind "Your wallet is still being set up". The enum was also missing
+  `PendingUsernameUpdate`, so its ordinals were wrong anyway. Now a string enum mirroring the C#.
+  Two lessons worth keeping: the rest of this codebase already reads these fields as strings
+  (`item.status === "Active"`), and a numeric TS enum against this API is a latent bug wherever it
+  appears. **Caught by reading the Swagger schema, not by `tsc`** — nothing about it fails to
+  compile, and only a logged-in session would have shown it.
+- **2026-09-11: all four API asks landed, so the workarounds are deleted rather than kept.**
+  `profile.payout` now carries `status`, `canResume` and `dateCreated`; `GET /user/payout/latest`
+  returns the outcome; the conversion preview carries `conversionRateZltoPerUsd`. Consequently:
+  `lib/payout/conversion.ts` no longer *infers* a rate from the rounded USD figure (the interval
+  arithmetic and its suppression rule are gone — the line is exact for every amount now, including
+  the small ones it used to hide from); the resume panel shows **Started**; and Flow D exists.
+- **2026-09-11: the hosted journey is an iframe inside Yoma, not a new tab** (API directive). The
+  youth stays in the product, there is no popup to be blocked, and the "a new window should have
+  opened" screen is gone with it. Consequences, all deliberate: the dialog grows to
+  `md:h-[85vh] md:w-[720px]` for that step only; `openPaymentUrl` survives **solely** as an escape
+  hatch, because framing depends on the provider's headers and IXO coordination is still open, and
+  a youth with Zlto reserved cannot be left in front of a frame that refused to load; and the
+  visibility-based "return view" is gone, because nobody leaves.
+- **2026-09-11: closing the hosted modal reads the outcome; it never assumes one.** The frame is
+  cross-origin, so its DOM and its URL are neither readable nor evidence, and there is no
+  `postMessage` contract yet (that would need an origin-validated agreement with the provider). So
+  ✕ or "I'm done" refreshes the profile, calls `GET /user/payout/latest`, and shows what that says —
+  with a "we couldn't check" state when the read itself fails, never a guessed outcome.
+- **2026-09-11: Flow D is built from the recorded status only, and expired is worded apart from
+  cancelled.** A clock running out is not a decision someone made, and telling a youth they
+  cancelled something they did not is its own small injustice. Only `Completed` gets the success
+  treatment; cancelled, expired and failed are neutral — the Zlto came back and nobody did anything
+  wrong. **No historical ZLTO figure appears anywhere in Flow D**: the API deliberately does not
+  carry one and recomputing it at today's rate would invent a number on a money screen, so the USD
+  amount and the updated wallet carry it instead.
+- **2026-09-11: still no status *line*, even now that `status` exists.** `Processing` begins when
+  the hosted payout is created, before the youth confirms anything, so neither it nor `canResume`
+  separates "still needs you" from "confirmed and on its way". The active trio is therefore one
+  neutral "in progress", and `canResume` decides only what is *offered* — the resume invitation when
+  a session can be requested, a "we're still setting this up" wait when the provider reference has
+  not landed yet. That second state is now known **on opening** rather than discovered by tapping.
+- **2026-09-11: a 404 from the session endpoint no longer means "your cash out ended".** It can
+  originate at the provider and can be transient (API note), so it routes to the outcome read
+  instead of to a terminal message. `RESUME_COPY.noLongerActive` survives only as the fallback for
+  when that read also fails.
+- **2026-09-11: the two amount rules are 400s now**, not the unmapped 500s they were
+  (`ValidationException` in `PayoutRewards`), so "must be greater than zero" and "must be a whole
+  number" land on the field like any other rejection. The client guards stay — they are what keeps
+  the youth from sending a request at all.
 
 ## Links
 

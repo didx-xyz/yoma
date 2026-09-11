@@ -25,6 +25,12 @@ export type PayoutFailure =
   /** the wallet refused the amount — the only per-field error in the flow */
   | { kind: "amountRejected" }
   /**
+   * The amount itself was rejected. Client-guarded, so it should not arrive — but since API
+   * 2026-09-10 these are proper `ValidationException`s (HTTP 400) rather than the unmapped 500s
+   * they used to be, so they can be shown on the field instead of becoming a generic failure.
+   */
+  | { kind: "amountInvalid"; problem: "notPositive" | "notWhole" }
+  /**
    * Treasury capacity, not the youth's amount: "There are insufficient funds available to complete
    * this payout" (`CreatePayout`, checked under the Treasury lock). The same condition the preview
    * reports as `treasuryFundsAvailable: false`, arriving a moment later — so it must render as the
@@ -62,6 +68,17 @@ const MATCHERS: Matcher[] = [
     // "Insufficient reward balance for payout. Current available balance 'N'" — the wallet.
     pattern: /insufficient reward balance/i,
     failure: { kind: "amountRejected" },
+  },
+  {
+    // "Payout amount must be greater than zero" (initiation) and "Amount must be greater than
+    // zero" (the conversion preview) — one pattern covers both.
+    pattern: /amount must be greater than zero/i,
+    failure: { kind: "amountInvalid", problem: "notPositive" },
+  },
+  {
+    // "Payout amount must be a whole number" / "Amount must be a whole number".
+    pattern: /amount must be a whole number/i,
+    failure: { kind: "amountInvalid", problem: "notWhole" },
   },
   {
     // "Complete the following profile information before cashing out: …" and
