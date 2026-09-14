@@ -39,7 +39,6 @@ import {
   hasDismissedRefereeWelcomeModalAtom,
   hasShownRefereePendingToastAtom,
   hasSkippedSettingsDialogAtom,
-  profileCompletionRequestedAtom,
   rumConsentAtom,
   screenWidthAtom,
   userProfileAtom,
@@ -89,9 +88,6 @@ export const Global: React.FC = () => {
   );
   const [hasSkippedSettingsDialog, setHasSkippedSettingsDialog] = useAtom(
     hasSkippedSettingsDialogAtom,
-  );
-  const [profileCompletionRequested, setProfileCompletionRequested] = useAtom(
-    profileCompletionRequestedAtom,
   );
   const setScreenWidthAtom = useSetAtom(screenWidthAtom);
 
@@ -567,25 +563,11 @@ export const Global: React.FC = () => {
     router.asPath,
   ]);
 
-  // 🔔 PROFILE COMPLETION REQUESTED (from elsewhere in the app)
-  // e.g. a partner hand-off that cannot run until first name / surname / country are known
-  useEffect(() => {
-    if (!profileCompletionRequested) return;
-
-    // consume the request regardless, so it cannot re-open the dialog later
-    setProfileCompletionRequested(false);
-
-    if (!userProfile || isUserProfileCompleted(userProfile)) return;
-
-    setUpdateProfileDialogVisible(true);
-  }, [profileCompletionRequested, setProfileCompletionRequested, userProfile]);
-
   // Reset one-time checks on logout
   useEffect(() => {
     if (sessionStatus === "unauthenticated") {
       toast.dismiss("referee-referral-reminder");
       postLoginChecksTriggeredRef.current = false;
-      setProfileCompletionRequested(false);
       setHasShownRefereePendingToast(false);
       setHasDismissedRefereeWelcomeModal(false);
       setHasSkippedSettingsDialog(false);
@@ -597,7 +579,6 @@ export const Global: React.FC = () => {
     setHasShownRefereePendingToast,
     setHasSkippedSettingsDialog,
     setFirstActionableRefereeReferralUrl,
-    setProfileCompletionRequested,
   ]);
 
   // 🎯 ANALYTICS: Session Management

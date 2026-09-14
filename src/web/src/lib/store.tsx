@@ -102,11 +102,6 @@ const hasSkippedSettingsDialogAtom = atomWithStorage<boolean>(
   { getOnInit: true },
 );
 
-// set by any component that needs the user to supply missing profile details before it can
-// continue (e.g. a partner hand-off). Global.tsx consumes the request and opens the
-// "complete your profile" dialog, then resets the atom.
-const profileCompletionRequestedAtom = atom(false);
-
 export {
   userProfileAtom,
   screenWidthAtom,
@@ -121,5 +116,4 @@ export {
   hasShownRefereePendingToastAtom,
   hasDismissedRefereeWelcomeModalAtom,
   hasSkippedSettingsDialogAtom,
-  profileCompletionRequestedAtom,
 };
