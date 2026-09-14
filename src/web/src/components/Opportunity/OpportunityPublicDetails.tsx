@@ -34,7 +34,7 @@ import {
   removeMySavedOpportunity,
   saveMyOpportunity,
 } from "~/api/services/myOpportunities";
-import { updateSettings } from "~/api/services/user";
+import { getUserProfile, updateSettings } from "~/api/services/user";
 import { AvatarImage } from "~/components/AvatarImage";
 import ZltoRewardBadge from "~/components/Opportunity/Badges/ZltoRewardBadge";
 import {
@@ -56,7 +56,8 @@ import { Unauthorized } from "~/components/Status/Unauthorized";
 import { OPPORTUNITY_QUERY_KEYS } from "~/hooks/useOpportunityMutations";
 import analytics from "~/lib/analytics";
 import { SETTING_USER_POPUP_LEAVINGYOMA } from "~/lib/constants";
-import { userProfileAtom } from "~/lib/store";
+import { profileCompletionRequestedAtom, userProfileAtom } from "~/lib/store";
+import { isUserProfileCompleted } from "~/lib/utils/profile";
 import { type User } from "~/server/auth";
 import CustomModal from "../Common/CustomModal";
 import FormCheckbox from "../Common/FormCheckbox";
@@ -117,6 +118,9 @@ const OpportunityPublicDetails: React.FC<{
   const [isLoading, setIsLoading] = useState(false);
   const userProfile = useAtomValue(userProfileAtom);
   const setUserProfile = useSetAtom(userProfileAtom);
+  const setProfileCompletionRequested = useSetAtom(
+    profileCompletionRequestedAtom,
+  );
 
   const { data: verificationStatus, isLoading: verificationStatusIsLoading } =
     useQuery<MyOpportunityResponseVerify | null>({
@@ -284,6 +288,45 @@ const OpportunityPublicDetails: React.FC<{
     saveOpportunity,
   ]);
 
+  // ask Global.tsx to raise the "complete your profile" dialog; the user stays on this page,
+  // so they can retry the hand-off as soon as they have supplied the missing details
+  const showProfileCompletionPrompt = useCallback(() => {
+    setProfileCompletionRequested(true);
+
+    // 📊 ANALYTICS: track hand-offs blocked by an incomplete profile
+    analytics.trackEvent("opportunity_profile_incomplete", {
+      opportunityId: opportunityInfo.id,
+      opportunityTitle: opportunityInfo.title,
+    });
+  }, [
+    setProfileCompletionRequested,
+    opportunityInfo.id,
+    opportunityInfo.title,
+  ]);
+
+  // the profile atom is populated by Global.tsx after login, but a hand-off can be attempted
+  // before that has landed - fetch it on demand rather than assuming it is complete
+  const loadUserProfile = useCallback(async () => {
+    try {
+      const profile = await getUserProfile();
+      setUserProfile(profile);
+      return profile;
+    } catch (error) {
+      analytics.trackError(error as Error, {
+        errorType: "opportunity_user_profile_load_error",
+        opportunityId: opportunityInfo.id,
+      });
+
+      toast(<ApiErrors error={error as AxiosError} />, {
+        type: "error",
+        autoClose: false,
+        icon: false,
+      });
+
+      return null;
+    }
+  }, [setUserProfile, opportunityInfo.id]);
+
   const onProceedToOpportunity = useCallback(async () => {
     if (!opportunityInfo.url) return;
 
@@ -293,20 +336,51 @@ const OpportunityPublicDetails: React.FC<{
       return;
     }
 
+    // 🔐 partners register/authenticate the user with their Yoma profile details (first name,
+    // surname, country), so the hand-off must not run against an incomplete profile.
+    // Resolve without awaiting when the profile is already loaded, so the blank tab below is
+    // still opened synchronously from the click handler (popup blockers).
+    let profile = userProfile;
+    if (!profile) {
+      profile = await loadUserProfile();
+      if (!profile) return;
+    }
+
+    if (!isUserProfileCompleted(profile)) {
+      showProfileCompletionPrompt();
+      return;
+    }
+
     // Open a blank tab immediately from the user-click handler to avoid popup blockers.
     // The tab will be navigated to the resolved URL once the API responds.
     const win = window.open("", "_blank");
 
     let redirectUrl = opportunityInfo.url;
 
-    if (user && opportunityInfo.syncedInfo?.syncType === "Pull") {
+    if (opportunityInfo.syncedInfo?.syncType === "Pull") {
       try {
         const result = await performActionNavigateExternalLink(
           opportunityInfo.id,
         );
         if (result?.url) redirectUrl = result.url;
-      } catch {
-        // fall back to opportunityInfo.url on error
+      } catch (error) {
+        // This call pre-authenticates the user with the partner. Falling back to the raw
+        // opportunity url would drop them on the partner platform unregistered, so surface
+        // the failure instead of handing off silently.
+        win?.close();
+
+        analytics.trackError(error as Error, {
+          errorType: "opportunity_external_link_preauth_error",
+          opportunityId: opportunityInfo.id,
+        });
+
+        toast(<ApiErrors error={error as AxiosError} />, {
+          type: "error",
+          autoClose: false,
+          icon: false,
+        });
+
+        return;
       }
     }
 
@@ -328,7 +402,10 @@ const OpportunityPublicDetails: React.FC<{
     opportunityInfo.title,
     opportunityInfo.syncedInfo,
     user,
+    userProfile,
     showLoginDialog,
+    showProfileCompletionPrompt,
+    loadUserProfile,
   ]);
 
   const onGoToOpportunity = useCallback(async () => {
@@ -341,6 +418,14 @@ const OpportunityPublicDetails: React.FC<{
     // 🔐 anonymous users: prompt for login/registration instead of engaging with the opportunity
     if (!user) {
       showLoginDialog("go");
+      return;
+    }
+
+    // 🔐 prompt for the details the partner needs up front, rather than after the user has
+    // worked through the "leaving Yoma" dialog. onProceedToOpportunity remains the
+    // authoritative gate, and covers the case where the profile has not loaded yet.
+    if (userProfile && !isUserProfileCompleted(userProfile)) {
+      showProfileCompletionPrompt();
       return;
     }
 
@@ -360,6 +445,7 @@ const OpportunityPublicDetails: React.FC<{
     opportunityInfo.title,
     user,
     showLoginDialog,
+    showProfileCompletionPrompt,
   ]);
 
   const onOpportunityCompleted = useCallback(async () => {

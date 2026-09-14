@@ -39,6 +39,7 @@ import {
   hasDismissedRefereeWelcomeModalAtom,
   hasShownRefereePendingToastAtom,
   hasSkippedSettingsDialogAtom,
+  profileCompletionRequestedAtom,
   rumConsentAtom,
   screenWidthAtom,
   userProfileAtom,
@@ -88,6 +89,9 @@ export const Global: React.FC = () => {
   );
   const [hasSkippedSettingsDialog, setHasSkippedSettingsDialog] = useAtom(
     hasSkippedSettingsDialogAtom,
+  );
+  const [profileCompletionRequested, setProfileCompletionRequested] = useAtom(
+    profileCompletionRequestedAtom,
   );
   const setScreenWidthAtom = useSetAtom(screenWidthAtom);
 
@@ -396,6 +400,9 @@ export const Global: React.FC = () => {
   //#region Functions
   //TODO: CAUTION! the purpose of this section is to perform necessary checks immediately after login to ensure the user has completed their profile.
   // `/referrals/claim/[programId].tsx` handles profile completion inline as part of the INITIATED state
+  // Returns true when the checks were actually evaluated, false when they were deferred
+  // (no profile yet, or the current page handles profile completion inline). Callers use
+  // this to decide whether the one-time trigger has been consumed - see the effect below.
   const postLoginChecks = useCallback(
     (
       userProfile: UserProfile,
@@ -403,8 +410,8 @@ export const Global: React.FC = () => {
         skipSettings?: boolean;
         skipPhoto?: boolean;
       },
-    ) => {
-      if (!userProfile) return;
+    ): boolean => {
+      if (!userProfile) return false;
 
       const skipSettings = options?.skipSettings ?? false;
       //const skipPhoto = options?.skipPhoto ?? false;
@@ -418,7 +425,7 @@ export const Global: React.FC = () => {
         currentPath.includes("/referrals/claim") ||
         currentPath.includes("/referrals/progress")
       ) {
-        return;
+        return false;
       }
 
       if (!isUserProfileCompleted(userProfile)) {
@@ -446,6 +453,8 @@ export const Global: React.FC = () => {
           showRefereeReferralReminder();
         }, 0);
       }
+
+      return true;
     },
     [
       actionableRefereeReferral,
@@ -540,8 +549,12 @@ export const Global: React.FC = () => {
       !(shouldWaitForRefereeReferralData && refereeLinkUsagesFetching) &&
       !postLoginChecksTriggeredRef.current
     ) {
-      postLoginChecksTriggeredRef.current = true;
-      postLoginChecks(userProfile);
+      // Only consume the one-time trigger once the checks have actually run. Pages that
+      // handle profile completion inline defer them, and re-running on route change means
+      // an incomplete user still gets prompted as soon as they navigate away from one.
+      if (postLoginChecks(userProfile)) {
+        postLoginChecksTriggeredRef.current = true;
+      }
     }
   }, [
     postLoginChecks,
@@ -549,13 +562,30 @@ export const Global: React.FC = () => {
     refereeLinkUsagesFetching,
     shouldWaitForRefereeReferralData,
     userProfile,
+    // routePathRef is updated by an effect declared above this one, so it is already
+    // current by the time this runs for the new route
+    router.asPath,
   ]);
+
+  // 🔔 PROFILE COMPLETION REQUESTED (from elsewhere in the app)
+  // e.g. a partner hand-off that cannot run until first name / surname / country are known
+  useEffect(() => {
+    if (!profileCompletionRequested) return;
+
+    // consume the request regardless, so it cannot re-open the dialog later
+    setProfileCompletionRequested(false);
+
+    if (!userProfile || isUserProfileCompleted(userProfile)) return;
+
+    setUpdateProfileDialogVisible(true);
+  }, [profileCompletionRequested, setProfileCompletionRequested, userProfile]);
 
   // Reset one-time checks on logout
   useEffect(() => {
     if (sessionStatus === "unauthenticated") {
       toast.dismiss("referee-referral-reminder");
       postLoginChecksTriggeredRef.current = false;
+      setProfileCompletionRequested(false);
       setHasShownRefereePendingToast(false);
       setHasDismissedRefereeWelcomeModal(false);
       setHasSkippedSettingsDialog(false);
@@ -567,6 +597,7 @@ export const Global: React.FC = () => {
     setHasShownRefereePendingToast,
     setHasSkippedSettingsDialog,
     setFirstActionableRefereeReferralUrl,
+    setProfileCompletionRequested,
   ]);
 
   // 🎯 ANALYTICS: Session Management
