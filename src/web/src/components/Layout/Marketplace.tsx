@@ -135,24 +135,25 @@ const MarketplaceLayout: TabProps = ({ children }) => {
                     </div>
                   </div>
 
-                  <div className="flex flex-row gap-4">
-                    <button
-                      type="button"
-                      className="btn !border-blue-dark rounded-full !border-2 !border-solid !bg-transparent text-white brightness-110 hover:!border-white hover:!brightness-100"
-                      onClick={() => {
-                        setWhatIsZltoDialogVisible(true);
-                      }}
-                    >
-                      What is Zlto?
-                    </button>
+                  <div className="flex flex-col gap-4 md:flex-row">
+                    <div className="flex flex-row gap-4">
+                      <button
+                        type="button"
+                        className="btn !border-blue-dark rounded-full !border-2 !border-solid !bg-transparent text-white brightness-110 hover:!border-white hover:!brightness-100"
+                        onClick={() => {
+                          setWhatIsZltoDialogVisible(true);
+                        }}
+                      >
+                        What is Zlto?
+                      </button>
 
-                    <Link
-                      href="/yoid/wallet"
-                      className="btn !border-blue-dark rounded-full !border-2 !border-solid !bg-transparent text-white brightness-110 hover:!border-white hover:!brightness-100"
-                    >
-                      My vouchers
-                    </Link>
-
+                      <Link
+                        href="/yoid/wallet"
+                        className="btn !border-blue-dark rounded-full !border-2 !border-solid !bg-transparent text-white brightness-110 hover:!border-white hover:!brightness-100"
+                      >
+                        My vouchers
+                      </Link>
+                    </div>
                     {/*
                       The Cash Out entry point. `CashOutEntry` is the single implementation —
                       label, disabled state, gate, amount, review and hand-off all live in it, and

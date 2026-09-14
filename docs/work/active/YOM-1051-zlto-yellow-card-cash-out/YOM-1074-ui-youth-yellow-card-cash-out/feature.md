@@ -633,6 +633,18 @@ wanted.
   string-enum correction is the convention, not a workaround, and it applies to every web response
   model. No API change; the sweep of other models for numeric enums is web-side work.
 
+- **2026-09-11: a dev-only state gallery at `/dev/cash-out`**, so copy and layout can be worked on
+  while the hosted journey is unreachable (its sign-in refuses framing, and verification rejects
+  Yoma's gender values). Every screen, in the real dialog, one click apart, deep-linkable by
+  `?scene=`; the frame source is switchable between a stand-in journey, a site that refuses framing
+  — the blank box a returning youth currently gets — and blank.
+  **Built as standalone pages rather than a `?mock=` parameter**, which is the lesson of the
+  Treasury aid: that one is threaded through a production page and is now a blocker to unpick, while
+  these import the real components, touch no production code, and 404 in a production build.
+  Removing them is deleting two files. On the T6 list either way.
+  The chrome those screens sit in moved to `CashOutDialog` in the same change, so the gallery shows
+  the real dialog by construction instead of a copy that drifts.
+
 ## Links
 
 - Epic: [YOM-1051](../README.md)

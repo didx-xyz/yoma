@@ -73,7 +73,7 @@ export const CashOutButton: React.FC<{
         onClick={onClick}
         disabled={isDisabled}
         aria-describedby={disabledHelper ? helperId : undefined}
-        className={`whitespace-nowrap ${
+        className={`w-full whitespace-nowrap ${
           isDisabled ? style.disabled : style.enabled
         }`}
       >

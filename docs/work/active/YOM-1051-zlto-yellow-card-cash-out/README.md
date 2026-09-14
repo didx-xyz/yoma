@@ -355,10 +355,14 @@ protection would be lost.
 Not owned by any one child ticket. **T6 in the old numbering.**
 
 - [ ] **T6 — production hardening.** Consistency and scope-labelling audit across all five tabs and
-      every reward surface, a11y pass, and **removal of the `?mock=` dev aid** —
-      `lib/treasury/treasuryMockScenarios.ts` plus the three `⚠️⚠️ MOCK SCENARIOS` blocks and
-      `MOCK_PARAM` in `pages/admin/treasury/index.tsx`, and the dev-only banner in
-      `TreasuryOpportunitiesTab.tsx`. **This must not merge as-is.**
+      every reward surface, a11y pass, and **removal of the two dev aids**. **Neither must merge.**
+  - **`?mock=`** — `lib/treasury/treasuryMockScenarios.ts` plus the three `⚠️⚠️ MOCK SCENARIOS`
+    blocks and `MOCK_PARAM` in `pages/admin/treasury/index.tsx`, and the dev-only banner in
+    `TreasuryOpportunitiesTab.tsx`. Woven into a production page, so unpicking it needs care.
+  - **The Cash Out state gallery** — `pages/dev/cash-out.tsx` and `pages/dev/cash-out-provider.tsx`.
+    Deliberately built as standalone pages that import the real components and 404 in a production
+    build, *because* of how much work the `?mock=` approach turned out to be: removing these is
+    deleting two files, with nothing to unpick.
 - [ ] **Authenticated browser pass** across YOM-1072 + YOM-1063 + YOM-1073. No reward surface in
       this epic has been visually verified. Seeded admin `testadminuser@gmail.com`, credentials at
       `src/api/cicd/scripts/postgressql-init/post.sql:18`. Use `?mock=payoutAvailableDepleted` to

@@ -1,7 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSetAtom } from "jotai";
 import { useCallback, useEffect, useState } from "react";
-import { IoMdClose } from "react-icons/io";
 import { IoAlertCircleOutline } from "react-icons/io5";
 import type { PayoutTransactionInfo } from "~/api/models/payout";
 import type { UserProfile } from "~/api/models/user";
@@ -12,8 +11,6 @@ import {
 } from "~/api/services/payout";
 import { convertZltoToUsd } from "~/api/services/treasury";
 import { getUserProfile } from "~/api/services/user";
-import { BTN_DIALOG_CLOSE } from "~/components/Common/buttonStyles";
-import CustomModal from "~/components/Common/CustomModal";
 import {
   AMOUNT_COPY,
   AMOUNT_PROBLEM_COPY,
@@ -44,7 +41,8 @@ import { CashOutMessageStep } from "./CashOutMessageStep";
 import { CashOutOutcomeStep } from "./CashOutOutcomeStep";
 import { CashOutResumePanel } from "./CashOutResumePanel";
 import { CashOutReviewStep } from "./CashOutReviewStep";
-import { CashOutStepper, type CashOutStep } from "./CashOutStepper";
+import { CashOutDialog } from "./CashOutDialog";
+import type { CashOutStep } from "./CashOutStepper";
 
 /**
  * The Cash Out entry point and the flow behind it: the button on the ledger, the eligibility gate,
@@ -482,57 +480,15 @@ export const CashOutEntry: React.FC<{
         onClick={openFlow}
       />
 
-      <CustomModal
+      <CashOutDialog
         isOpen={isOpen}
-        shouldCloseOnOverlayClick={false}
-        onRequestClose={dismiss}
-        /*
-          `md:h-fit` matters for the short steps: `CustomModal`'s box is `fixed inset-0`, so without
-          it the dialog is as tall as its max-height whatever the content, and the amount step sat
-          above 250px of empty white (the dead-space note from the design review).
-
-          The hosted journey is the exception — it is someone else's page, with its own forms and
-          identity checks, so it gets a tall fixed frame instead of hugging content it cannot
-          measure. Mobile keeps the product's full-screen modal throughout, which is also the right
-          shape for an embedded journey.
-        */
-        className={
-          view.name === "hosted"
-            ? // Scales with the window rather than sitting at a fixed width: the hosted journey is
-              // a full page with its own forms and identity checks, and every pixel it can have is
-              // one the youth does not have to scroll. Capped so it stays a dialog on a wide
-              // monitor instead of stretching a narrow layout across 2,000px.
-              "md:h-[90vh] md:w-11/12 md:max-w-[1040px]"
-            : "md:h-fit md:max-h-[680px] md:w-[520px]"
-        }
+        title={title}
+        step={step}
+        stepResolved={view.name === "outcome"}
+        hosted={view.name === "hosted"}
+        onClose={dismiss}
       >
-        <div
-          className={
-            view.name === "hosted"
-              ? // No scrolling and no bottom padding: the frame scrolls its own document, and the
-                // column has to have a definite height for the frame to fill it.
-                "flex h-full min-h-0 flex-col gap-3 overflow-hidden p-4 text-black"
-              : "flex h-full flex-col gap-4 overflow-y-auto p-4 pb-8 text-black"
-          }
-        >
-          <div className="flex flex-row items-start gap-2">
-            {/* The title is centred over the content, with the ✕ out of the flow on the right —
-                the grey circular close control the product uses everywhere. */}
-            <h4 className="grow pt-1 text-center">{title}</h4>
-            <button
-              type="button"
-              className={BTN_DIALOG_CLOSE}
-              onClick={dismiss}
-              aria-label="Close"
-            >
-              <IoMdClose className="h-5 w-5" />
-            </button>
-          </div>
-
-          {step && (
-            <CashOutStepper current={step} resolved={view.name === "outcome"} />
-          )}
-
+        <>
           {view.name === "gate" && (
             <CashOutGate
               reason={view.reason}
@@ -645,8 +601,8 @@ export const CashOutEntry: React.FC<{
               secondary={{ label: FAILURE_COPY.closeAction, onClick: close }}
             />
           )}
-        </div>
-      </CustomModal>
+        </>
+      </CashOutDialog>
     </>
   );
 };
