@@ -244,7 +244,7 @@ namespace Yoma.Core.Infrastructure.IXO.YellowCard.Client
         .OrderBy(country => country.Name)];
     }
 
-    private async Task<TResponse> Execute<TResponse>(
+    private static async Task<TResponse> Execute<TResponse>(
       Func<Task<IFlurlResponse>> request,
       List<HttpStatusCode>? additionalSuccessStatusCodes = null)
     {
