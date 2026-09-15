@@ -1,6 +1,5 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
 using Yoma.Core.Domain.Payout.Interfaces.Provider;
 using Yoma.Core.Infrastructure.IXO.YellowCard.Client;
 using Yoma.Core.Infrastructure.IXO.YellowCard.Interfaces;
@@ -13,6 +12,10 @@ namespace Yoma.Core.Infrastructure.IXO.YellowCard
   {
     public static void ConfigureServices_PayoutProvider(this IServiceCollection services, IConfiguration configuration)
     {
+      // TODO: Before the EOM merge/Stage rollout, Robbie must confirm Dev and Stage use the same IXO
+      // YellowCard Test configuration (endpoints, client credentials and matching webhook signing secret).
+      // Coordinate with IXO to repoint webhook delivery from Dev to Stage, then verify signed delivery on Stage.
+      // Keep Production endpoints and credentials separate; do not switch webhook delivery before Stage is ready.
       services
         .AddOptions<YellowCardOptions>()
         .Bind(configuration.GetSection(YellowCardOptions.Section))

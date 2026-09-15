@@ -14,7 +14,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
         values:
         [
           "035c5da1-c6b2-48fc-8703-51becc8a74ab", "User", "User_Notifications_Payouts", "Cash-outs",
-          "Updates when your cash-out completes, is cancelled, expires or fails",
+          "Updates on your cash-outs",
           "Notifications", "General", (short)16, "[\"User\"]", "true", "Boolean", true, true
         ]);
     }

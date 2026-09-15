@@ -51,6 +51,8 @@ payout, enforce one active payout per user, and reconcile terminal outcomes idem
 
 ## Decisions
 
+- 2026-09-15 wording review: shorten the Cash-outs preference description to "Updates on your cash-outs". Seed-only change; already-migrated Dev/local databases retain the previous wording until reset/reseed. No preference or notification behavior changes.
+
 - 2026-09-15 final review: payout preference uses a dedicated migration seed helper. Actual SendGrid
   IDs are local-only, not committed; environment configuration supplies them on deployment.
 

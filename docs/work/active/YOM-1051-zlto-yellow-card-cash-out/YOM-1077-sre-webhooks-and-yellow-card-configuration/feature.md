@@ -28,8 +28,11 @@ webhook settings and Production values remain external configuration owned with 
 - [x] Confirm webhook security, retries and source allow-list requirements.
 - [x] Configure reconciliation schedule after provider polling was confirmed.
 - [ ] Add readiness/health checks required for production.
+- [ ] Before the EOM Stage rollout, Robbie must verify matching Dev/Stage IXO YellowCard Test configuration; coordinate IXO's webhook switch from Dev to Stage and verify signed delivery. Keep Production configuration separate.
 
 ## Decisions
+
+- 2026-09-15: Record the Stage cutover as a searchable TODO beside YellowCard configuration binding. No environment or webhook changes until Stage is ready.
 
 - 2026-07-28: No speculative provider configuration is introduced.
 - 2026-08-27: IXO's generated OpenAPI and HMAC webhook specification are the configuration contract.
