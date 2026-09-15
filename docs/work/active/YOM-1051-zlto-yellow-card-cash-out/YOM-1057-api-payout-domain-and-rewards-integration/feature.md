@@ -42,11 +42,32 @@ payout, enforce one active payout per user, and reconcile terminal outcomes idem
 - [x] Verify local recovery from an ambiguous provider-initiation failure, one-active-payout enforcement,
       reward reservation linkage, profile pending-payout balances and webhook replay suppression.
 - [ ] Validate expiry, delayed webhook and polling behavior end to end.
+- [x] Add best-effort email notifications after settled Completed/Cancelled/Expired/Failed transitions.
+- [x] Add one default-enabled payout notification preference and shared email payload.
+- [x] Configure the four SendGrid template IDs supplied by Adrian in ignored local settings; committed configuration uses placeholders.
+- [ ] Verify deployed template configuration and live email delivery for all four outcomes.
 - [ ] Add maintained automated payout regression coverage during technical-debt work; temporary tests
       exercised on 2026-09-10 were removed before commit at Adrian's request.
 
 ## Decisions
 
+- 2026-09-15 final review: payout preference uses a dedicated migration seed helper. Actual SendGrid
+  IDs are local-only, not committed; environment configuration supplies them on deployment.
+
+- 2026-09-15 migration review: consolidate the undeployed notification setting with CF/Treasury/Payout
+  and SSI, preserving the complete original operations. Keep participant-count repair separate.
+  Deployed migrations stay immutable; local/Dev reset is owned by Adrian. See the epic migration note.
+
+- 2026-09-15: Yoma owns payout outcome emails; Adrian has informed IXO. Reuse existing best-effort
+  notification delivery: email-only, one user preference, four templates sharing one data model.
+  Errors are logged, never affect settlement, and are not retried. No outbox or delivery tracking.
+  Send only after a new settled terminal transition commits; replayed terminal events do not resend.
+  Early initiation failures without a recorded settled reward do not send misleading refund claims.
+  Templates own the subject/heading/body and use simple youth-friendly wording. Omit technical
+  references; Completed does not promise final bank delivery.
+- 2026-09-15 review: Payout_Youth_* identifies the notification audience, not a payout currency.
+  The setting remains User_Notifications_Payouts in the user-notifications group. YoIDWalletURL
+  names the destination explicitly. ContentVariables follows other models without enabling phone delivery.
 - 2026-08-04: Payout owns monetary orchestration; Rewards owns ZLTO reserve/release/process.
 - 2026-08-04: Payout states are Initiated, Processing and terminal outcomes; ZLTO states are Reserved, Released and Processed.
 - 2026-08-05: Yoma's transaction log is the admin/query source; provider lookup is reconciliation fallback only.

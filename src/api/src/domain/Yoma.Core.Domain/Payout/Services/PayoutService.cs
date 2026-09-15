@@ -10,6 +10,9 @@ using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Entity.Interfaces;
 using Yoma.Core.Domain.Entity.Models;
 using Yoma.Core.Domain.Lookups.Interfaces;
+using Yoma.Core.Domain.Notification;
+using Yoma.Core.Domain.Notification.Interfaces;
+using Yoma.Core.Domain.Notification.Models;
 using Yoma.Core.Domain.Payout.Extensions;
 using Yoma.Core.Domain.Payout.Interfaces;
 using Yoma.Core.Domain.Payout.Interfaces.Lookups;
@@ -44,6 +47,8 @@ namespace Yoma.Core.Domain.Payout.Services
     private readonly IPayoutProviderClient _payoutProviderClient;
     private readonly ITreasuryService _treasuryService;
     private readonly IExecutionStrategyService _executionStrategyService;
+    private readonly INotificationDeliveryService _notificationDeliveryService;
+    private readonly INotificationURLFactory _notificationURLFactory;
 
     private static readonly PayoutTransactionStatus[] Statuses_Active =
       [PayoutTransactionStatus.Initiated, PayoutTransactionStatus.Processing, PayoutTransactionStatus.ReconciliationRequired];
@@ -67,7 +72,9 @@ namespace Yoma.Core.Domain.Payout.Services
       IPayoutTransactionStatusService payoutTransactionStatusService,
       IPayoutProviderClientFactory payoutProviderClientFactory,
       ITreasuryService treasuryService,
-      IExecutionStrategyService executionStrategyService)
+      IExecutionStrategyService executionStrategyService,
+      INotificationDeliveryService notificationDeliveryService,
+      INotificationURLFactory notificationURLFactory)
     {
       _logger = logger ?? throw new ArgumentNullException(nameof(logger));
       var settings = (appSettings ?? throw new ArgumentNullException(nameof(appSettings))).Value;
@@ -89,6 +96,8 @@ namespace Yoma.Core.Domain.Payout.Services
       _payoutProviderClient = (payoutProviderClientFactory ?? throw new ArgumentNullException(nameof(payoutProviderClientFactory))).CreateClient();
       _treasuryService = treasuryService ?? throw new ArgumentNullException(nameof(treasuryService));
       _executionStrategyService = executionStrategyService ?? throw new ArgumentNullException(nameof(executionStrategyService));
+      _notificationDeliveryService = notificationDeliveryService ?? throw new ArgumentNullException(nameof(notificationDeliveryService));
+      _notificationURLFactory = notificationURLFactory ?? throw new ArgumentNullException(nameof(notificationURLFactory));
     }
     #endregion
 
@@ -557,8 +566,10 @@ namespace Yoma.Core.Domain.Payout.Services
         }
       }
 
+      var transitioned = false;
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
+        transitioned = false;
         using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
 
         var payoutLocked = GetPayout(payout.Id, LockMode.Wait);
@@ -595,7 +606,11 @@ namespace Yoma.Core.Domain.Payout.Services
         await UpdatePayoutTerminal(payoutLocked, PayoutTransactionStatus.Completed, null);
 
         scope.Complete();
+        transitioned = true;
       });
+
+      if (transitioned)
+        await SendNotification(payout, PayoutTransactionStatus.Completed);
     }
 
     private async Task CloseUnsuccessful(PayoutTransaction payout, PayoutTransactionStatus status, string? reason)
@@ -618,8 +633,10 @@ namespace Yoma.Core.Domain.Payout.Services
         }
       }
 
+      var transitioned = false;
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
+        transitioned = false;
         using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
 
         var payoutLocked = GetPayout(payout.Id, LockMode.Wait);
@@ -651,7 +668,57 @@ namespace Yoma.Core.Domain.Payout.Services
         await UpdatePayoutTerminal(payoutLocked, status, reason);
 
         scope.Complete();
+        transitioned = true;
       });
+
+      if (transitioned)
+        await SendNotification(payout, status);
+    }
+
+    /// <summary>
+    /// Best-effort email after settlement and database commit, only for a new terminal transition.
+    /// Failures must never reopen a payout or fail its webhook/reconciliation. No delivery retry is
+    /// intended: a crash after commit may lose the email, matching the existing notification policy.
+    /// </summary>
+    private async Task SendNotification(PayoutTransaction payout, PayoutTransactionStatus status)
+    {
+      try
+      {
+        if (!IsRewardPayout(payout)) return;
+
+        var type = status switch
+        {
+          PayoutTransactionStatus.Completed => NotificationType.Payout_Youth_Completed,
+          PayoutTransactionStatus.Cancelled => NotificationType.Payout_Youth_Cancelled,
+          PayoutTransactionStatus.Expired => NotificationType.Payout_Youth_Expired,
+          PayoutTransactionStatus.Failed => NotificationType.Payout_Youth_Failed,
+          _ => throw new ArgumentOutOfRangeException(nameof(status), status, "Only terminal payout outcomes support notifications")
+        };
+        var user = GetUser(payout.UserId);
+        var reward = _rewardService.GetByEntity(payout.UserId, Reward.RewardTransactionEntityType.Payout, payout.Id)
+          ?? throw new DataInconsistencyException($"Reward transaction expected for payout notification '{payout.Id}'");
+        var expectedRewardStatus = status == PayoutTransactionStatus.Completed
+          ? Reward.RewardTransactionStatus.Processed
+          : Reward.RewardTransactionStatus.Released;
+        if (reward.Status != expectedRewardStatus)
+          throw new DataInconsistencyException($"Settled reward transaction expected for payout notification '{payout.Id}'");
+
+        var data = new NotificationPayout
+        {
+          Amount = payout.Amount,
+          Currency = payout.Currency,
+          ZltoAmount = reward.Amount,
+          YoIDWalletURL = _notificationURLFactory.YoIDWalletURL()
+        };
+        List<NotificationRecipient> recipients =
+          [new() { Username = user.Username, Email = user.Email, EmailConfirmed = user.EmailConfirmed, DisplayName = user.DisplayName }];
+
+        await _notificationDeliveryService.Send(type, recipients, data);
+      }
+      catch (Exception ex)
+      {
+        _logger.LogError(ex, "Failed to send payout outcome notification for payout '{payoutId}' with status '{status}'", payout.Id, status);
+      }
     }
 
     private async Task UpdatePayoutTerminal(PayoutTransaction payout, PayoutTransactionStatus status, string? reason)

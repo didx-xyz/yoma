@@ -143,6 +143,23 @@ and E2E validation; Robbie/SRE owns environment configuration; Jason owns Web co
 
 ## Shared Contract
 
+### Payout outcome emails — 2026-09-15
+
+- Yoma owns the four terminal outcome emails: Completed, Cancelled, Expired and Failed.
+  No initiation, progress or ReconciliationRequired email, and no SMS/WhatsApp fallback.
+- Existing best-effort delivery is intentional: log failures without failing settlement, retries,
+  outbox or delivery tracking. Only new settled terminal transitions attempt a send after commit.
+- One settings definition: User_Notifications_Payouts (Cash-outs), User role, default true.
+  Existing users inherit the default through SettingsHelper; saved false is respected.
+  Jason: verify the setting appears in the existing settings UI and can be toggled; no web changes here.
+- Four SendGrid template configuration keys (Payout_Youth_Completed, Payout_Youth_Cancelled, Payout_Youth_Expired,
+  Payout_Youth_Failed) receive separate template IDs, sharing one data model. Templates own the wording;
+  youth emails contain no technical references. Adrian supplied all four template IDs; they are in
+  ignored local settings only. Committed configuration has placeholders. Deployed environments must
+  supply the IDs separately; live delivery still requires verification.
+- The shared payload and remaining verification are documented in
+  [the notification handoff](./YOM-1057-api-payout-domain-and-rewards-integration/handoffs/2026-09-15-a.md).
+
 Everything in this section is **verified against the code on this branch**, and is binding on every
 child. Feature docs link here rather than restating it.
 
@@ -399,6 +416,12 @@ Not owned by any one child ticket. **T6 in the old numbering.**
 | No server rule ties a referral pool to Treasury capacity               | Low      | Accepted: the UI gives soft guidance. YOM-1073's ticket asks for hard validation — the code does not provide it       |
 
 ## Cross-Area Notes
+
+- **Undeployed migration consolidation (2026-09-15):** CF/Treasury/Payout, SSI and the payout
+  notification setting now ship in `20260915100000_ApplicationDb_Custom_Fields_Treasury_Payout_SSI`;
+  the participant-count repair remains separate immediately afterwards. All deployed migrations are
+  unchanged. Adrian will reset local/Dev before deployment. See the
+  [shared migration handoff](../YOM-1244-customizable-fields-framework/handoffs/2026-09-15-a.md).
 
 - **Wallet nullability is implemented in `08cb6c10a`.** `Balance`, `Available` and `Total` are nullable while ZLTO is offline; pending rewards and Yoma-recorded pending payouts remain available.
 - **Organization reward values remain intentionally hidden on `OpportunityItem`.** The model is a compact selection/listing contract, while `OpportunityInfo` is anonymous and also feeds CSV exports. Do not expose sensitive organization-level reward configuration without an explicit business requirement.

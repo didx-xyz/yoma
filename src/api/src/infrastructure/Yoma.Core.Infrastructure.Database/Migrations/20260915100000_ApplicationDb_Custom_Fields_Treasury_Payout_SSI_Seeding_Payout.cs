@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace Yoma.Core.Infrastructure.Database.Migrations
 {
-  internal static partial class ApplicationDb_Custom_Fields_Treasury_Payout_Seeding
+  internal static partial class ApplicationDb_Custom_Fields_Treasury_Payout_SSI_Seeding
   {
     internal static void SeedPayout(MigrationBuilder migrationBuilder)
     {

@@ -5,14 +5,17 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Yoma.Core.Infrastructure.Database.Migrations
 {
   /// <inheritdoc />
-  public partial class ApplicationDb_Custom_Fields_Treasury_Payout : Migration
+  public partial class ApplicationDb_Custom_Fields_Treasury_Payout_SSI : Migration
   {
+    #region Private Members
     private static readonly string[] Annotation_Includes_OpportunityId_MyOpportunityId =
       ["OpportunityId", "MyOpportunityId"];
 
     private static readonly string[] Annotation_Operators_GinTrgm =
       ["gin_trgm_ops"];
+    #endregion
 
+    #region Protected Members
     /// <inheritdoc />
     protected override void Up(MigrationBuilder migrationBuilder)
     {
@@ -454,7 +457,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           type: "varchar(125)",
           nullable: true);
 
-      ApplicationDb_Custom_Fields_Treasury_Payout_Seeding.SeedOpportunityTypeDisplayName(migrationBuilder);
+      ApplicationDb_Custom_Fields_Treasury_Payout_SSI_Seeding.SeedOpportunityTypeDisplayName(migrationBuilder);
 
       migrationBuilder.AlterColumn<string>(
           name: "DisplayName",
@@ -1374,16 +1377,141 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           principalTable: "WalletCreationStatus",
           principalColumn: "Id");
 
-      ApplicationDb_Custom_Fields_Treasury_Payout_Seeding.SeedCustomFields(migrationBuilder);
-      ApplicationDb_Custom_Fields_Treasury_Payout_Seeding.SeedTreasury(migrationBuilder);
-      ApplicationDb_Custom_Fields_Treasury_Payout_Seeding.SeedPayout(migrationBuilder);
-      ApplicationDb_Custom_Fields_Treasury_Payout_Seeding.SeedRemoveRewardYoma(migrationBuilder);
+      ApplicationDb_Custom_Fields_Treasury_Payout_SSI_Seeding.SeedCustomFields(migrationBuilder);
+      ApplicationDb_Custom_Fields_Treasury_Payout_SSI_Seeding.SeedTreasury(migrationBuilder);
+      ApplicationDb_Custom_Fields_Treasury_Payout_SSI_Seeding.SeedPayout(migrationBuilder);
+      ApplicationDb_Custom_Fields_Treasury_Payout_SSI_Seeding.SeedRemoveRewardYoma(migrationBuilder);
+
+      migrationBuilder.DropIndex(
+          name: "IX_CustomFieldDefinition_EntityType_EntityContext_DataType_IsR~",
+          schema: "Core",
+          table: "CustomFieldDefinition");
+
+      migrationBuilder.DropIndex(
+          name: "IX_CredentialIssuance_SchemaName_UserId_OrganizationId_MyOppor~",
+          schema: "SSI",
+          table: "CredentialIssuance");
+
+      migrationBuilder.AddColumn<string>(
+          name: "Group",
+          schema: "SSI",
+          table: "SchemaEntityProperty",
+          type: "varchar(100)",
+          nullable: true);
+
+      migrationBuilder.AddColumn<int>(
+          name: "SortOrder",
+          schema: "SSI",
+          table: "SchemaEntityProperty",
+          type: "integer",
+          nullable: true);
+
+      migrationBuilder.AddColumn<string>(
+          name: "SubGroup",
+          schema: "SSI",
+          table: "SchemaEntityProperty",
+          type: "varchar(100)",
+          nullable: true);
+
+      migrationBuilder.AddColumn<bool>(
+          name: "IsSchemaMapped",
+          schema: "Core",
+          table: "CustomFieldDefinition",
+          type: "boolean",
+          nullable: false,
+          defaultValue: false);
+
+      migrationBuilder.AlterColumn<string>(
+          name: "SchemaVersion",
+          schema: "SSI",
+          table: "CredentialIssuance",
+          type: "varchar(20)",
+          nullable: true,
+          oldClrType: typeof(string),
+          oldType: "varchar(20)");
+
+      migrationBuilder.CreateIndex(
+          name: "IX_CustomFieldDefinition_EntityType_EntityContext_DataType_IsR~",
+          schema: "Core",
+          table: "CustomFieldDefinition",
+          columns: ["EntityType", "EntityContext", "DataType", "IsRequired", "IsSystem", "IsSchemaMapped"]);
+
+      migrationBuilder.CreateIndex(
+          name: "IX_CredentialIssuance_SchemaTypeId_UserId_OrganizationId_MyOpp~",
+          schema: "SSI",
+          table: "CredentialIssuance",
+          columns: ["SchemaTypeId", "UserId", "OrganizationId", "MyOpportunityId"],
+          unique: true)
+          .Annotation("Npgsql:NullsDistinct", false);
+
+      ApplicationDb_Custom_Fields_Treasury_Payout_SSI_Seeding.SeedCredentialIssuance(migrationBuilder);
+      ApplicationDb_Custom_Fields_Treasury_Payout_SSI_Seeding.SeedSchemaEntityProperties(migrationBuilder);
+
+      ApplicationDb_Custom_Fields_Treasury_Payout_SSI_Seeding.SeedSettings(migrationBuilder);
     }
 
     /// <inheritdoc />
     protected override void Down(MigrationBuilder migrationBuilder)
     {
-      ApplicationDb_Custom_Fields_Treasury_Payout_Seeding.UnseedPayout(migrationBuilder);
+      ApplicationDb_Custom_Fields_Treasury_Payout_SSI_Seeding.UnseedSettings(migrationBuilder);
+
+      ApplicationDb_Custom_Fields_Treasury_Payout_SSI_Seeding.UnseedCredentialIssuance(migrationBuilder);
+
+      migrationBuilder.DropIndex(
+          name: "IX_CustomFieldDefinition_EntityType_EntityContext_DataType_IsR~",
+          schema: "Core",
+          table: "CustomFieldDefinition");
+
+      migrationBuilder.DropIndex(
+          name: "IX_CredentialIssuance_SchemaTypeId_UserId_OrganizationId_MyOpp~",
+          schema: "SSI",
+          table: "CredentialIssuance");
+
+      migrationBuilder.DropColumn(
+          name: "Group",
+          schema: "SSI",
+          table: "SchemaEntityProperty");
+
+      migrationBuilder.DropColumn(
+          name: "SortOrder",
+          schema: "SSI",
+          table: "SchemaEntityProperty");
+
+      migrationBuilder.DropColumn(
+          name: "SubGroup",
+          schema: "SSI",
+          table: "SchemaEntityProperty");
+
+      migrationBuilder.DropColumn(
+          name: "IsSchemaMapped",
+          schema: "Core",
+          table: "CustomFieldDefinition");
+
+      migrationBuilder.AlterColumn<string>(
+          name: "SchemaVersion",
+          schema: "SSI",
+          table: "CredentialIssuance",
+          type: "varchar(20)",
+          nullable: false,
+          defaultValue: "",
+          oldClrType: typeof(string),
+          oldType: "varchar(20)",
+          oldNullable: true);
+
+      migrationBuilder.CreateIndex(
+          name: "IX_CustomFieldDefinition_EntityType_EntityContext_DataType_IsR~",
+          schema: "Core",
+          table: "CustomFieldDefinition",
+          columns: ["EntityType", "EntityContext", "DataType", "IsRequired", "IsSystem"]);
+
+      migrationBuilder.CreateIndex(
+          name: "IX_CredentialIssuance_SchemaName_UserId_OrganizationId_MyOppor~",
+          schema: "SSI",
+          table: "CredentialIssuance",
+          columns: ["SchemaName", "UserId", "OrganizationId", "MyOpportunityId"],
+          unique: true);
+
+      ApplicationDb_Custom_Fields_Treasury_Payout_SSI_Seeding.UnseedPayout(migrationBuilder);
 
       migrationBuilder.DropForeignKey(
           name: "FK_Block_BlockReason_ReasonId",
@@ -2564,7 +2692,8 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           principalColumn: "Id",
           onDelete: ReferentialAction.Cascade);
 
-      ApplicationDb_Custom_Fields_Treasury_Payout_Seeding.UnseedRemoveRewardYoma(migrationBuilder);
+      ApplicationDb_Custom_Fields_Treasury_Payout_SSI_Seeding.UnseedRemoveRewardYoma(migrationBuilder);
     }
+    #endregion
   }
 }

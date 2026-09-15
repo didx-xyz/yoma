@@ -12,7 +12,7 @@ using Yoma.Core.Infrastructure.Database.Context;
 namespace Yoma.Core.Infrastructure.Database.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260907114930_ApplicationDb_Opportunity_ParticipantCount_Reconcile")]
+    [Migration("20260915100001_ApplicationDb_Opportunity_ParticipantCount_Reconcile")]
     partial class ApplicationDb_Opportunity_ParticipantCount_Reconcile
     {
         /// <inheritdoc />
