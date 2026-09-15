@@ -64,7 +64,9 @@ namespace Yoma.Core.Infrastructure.Substack
       services.AddScoped<INewsFeedProviderClientFactory, SubstackClientFactory>();
 
       //service
-      services.AddScoped<IExecutionStrategyService, ExecutionStrategyService>();
+      // Register concretely so this provider cannot override the application database
+      // IExecutionStrategyService registration.
+      services.AddScoped<ExecutionStrategyService>();
       services.AddScoped<INewsFeedBackgroundService, NewsFeedBackgroundService>();
 
       //health check

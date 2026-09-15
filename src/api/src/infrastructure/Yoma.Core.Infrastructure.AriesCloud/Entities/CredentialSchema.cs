@@ -12,6 +12,9 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Entities
     [Column(TypeName = "varchar(125)")]
     public override required string Id { get; set; }
 
+    /// <summary>
+    /// Full schema name persisted for the SSI provider.
+    /// </summary>
     [Required]
     [Column(TypeName = "varchar(125)")]
     public string Name { get; set; } = null!;

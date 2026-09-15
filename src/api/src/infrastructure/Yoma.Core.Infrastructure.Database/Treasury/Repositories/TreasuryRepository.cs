@@ -29,9 +29,9 @@ namespace Yoma.Core.Infrastructure.Database.Treasury.Repositories
         ZltoRewardPoolCurrentFinancialYear = entity.ZltoRewardPoolCurrentFinancialYear,
         ZltoRewardCumulative = entity.ZltoRewardCumulative,
         ZltoRewardCumulativeCurrentFinancialYear = entity.ZltoRewardCumulativeCurrentFinancialYear,
-        ChimoneyPoolCurrentFinancialYearInUSD = entity.ChimoneyPoolCurrentFinancialYearInUSD,
-        ChimoneyCumulativeInUSD = entity.ChimoneyCumulativeInUSD,
-        ChimoneyCumulativeCurrentFinancialYearInUSD = entity.ChimoneyCumulativeCurrentFinancialYearInUSD,
+        PayoutPoolCurrentFinancialYearInUsd = entity.PayoutPoolCurrentFinancialYearInUsd,
+        PayoutCumulativeInUsd = entity.PayoutCumulativeInUsd,
+        PayoutCumulativeCurrentFinancialYearInUsd = entity.PayoutCumulativeCurrentFinancialYearInUsd,
         ConversionRateZltoUsd = entity.ConversionRateZltoUsd,
         CreatedByUserId = entity.CreatedByUserId,
         DateCreated = entity.DateCreated,
@@ -54,9 +54,9 @@ namespace Yoma.Core.Infrastructure.Database.Treasury.Repositories
         ZltoRewardPoolCurrentFinancialYear = item.ZltoRewardPoolCurrentFinancialYear,
         ZltoRewardCumulative = item.ZltoRewardCumulative,
         ZltoRewardCumulativeCurrentFinancialYear = item.ZltoRewardCumulativeCurrentFinancialYear,
-        ChimoneyPoolCurrentFinancialYearInUSD = item.ChimoneyPoolCurrentFinancialYearInUSD,
-        ChimoneyCumulativeInUSD = item.ChimoneyCumulativeInUSD,
-        ChimoneyCumulativeCurrentFinancialYearInUSD = item.ChimoneyCumulativeCurrentFinancialYearInUSD,
+        PayoutPoolCurrentFinancialYearInUsd = item.PayoutPoolCurrentFinancialYearInUsd,
+        PayoutCumulativeInUsd = item.PayoutCumulativeInUsd,
+        PayoutCumulativeCurrentFinancialYearInUsd = item.PayoutCumulativeCurrentFinancialYearInUsd,
         ConversionRateZltoUsd = item.ConversionRateZltoUsd,
         DateCreated = item.DateCreated,
         CreatedByUserId = item.CreatedByUserId,
@@ -76,17 +76,37 @@ namespace Yoma.Core.Infrastructure.Database.Treasury.Repositories
       var entity = _context.Treasury.Where(o => o.Id == item.Id).SingleOrDefault()
        ?? throw new ArgumentOutOfRangeException(nameof(item), $"{nameof(Entities.Treasury)} with id '{item.Id}' does not exist");
 
-      item.DateModified = DateTimeOffset.UtcNow;
+      // Treasury audit fields track admin configuration changes only. Cumulative increments and automatic
+      // financial-year rollover must preserve the last admin and configuration-modified timestamp.
+      var configurationModified =
+        entity.FinancialYearStartMonth != item.FinancialYearStartMonth ||
+        entity.FinancialYearStartDay != item.FinancialYearStartDay ||
+        entity.ZltoRewardPoolCurrentFinancialYear != item.ZltoRewardPoolCurrentFinancialYear ||
+        entity.PayoutPoolCurrentFinancialYearInUsd != item.PayoutPoolCurrentFinancialYearInUsd ||
+        entity.ConversionRateZltoUsd != item.ConversionRateZltoUsd;
+
+      if (configurationModified)
+      {
+        item.DateModified = DateTimeOffset.UtcNow;
+        entity.DateModified = item.DateModified;
+        entity.ModifiedByUserId = item.ModifiedByUserId;
+      }
+      else
+      {
+        item.DateModified = entity.DateModified;
+        item.ModifiedByUserId = entity.ModifiedByUserId;
+      }
 
       entity.FinancialYearStartMonth = item.FinancialYearStartMonth;
       entity.FinancialYearStartDay = item.FinancialYearStartDay;
       entity.FinancialYearStartDate = item.FinancialYearStartDate;
       entity.ZltoRewardPoolCurrentFinancialYear = item.ZltoRewardPoolCurrentFinancialYear;
-      entity.ChimoneyPoolCurrentFinancialYearInUSD = item.ChimoneyPoolCurrentFinancialYearInUSD;
+      entity.ZltoRewardCumulative = item.ZltoRewardCumulative;
+      entity.ZltoRewardCumulativeCurrentFinancialYear = item.ZltoRewardCumulativeCurrentFinancialYear;
+      entity.PayoutPoolCurrentFinancialYearInUsd = item.PayoutPoolCurrentFinancialYearInUsd;
+      entity.PayoutCumulativeInUsd = item.PayoutCumulativeInUsd;
+      entity.PayoutCumulativeCurrentFinancialYearInUsd = item.PayoutCumulativeCurrentFinancialYearInUsd;
       entity.ConversionRateZltoUsd = item.ConversionRateZltoUsd;
-      entity.DateModified = item.DateModified;
-      entity.ModifiedByUserId = item.ModifiedByUserId;
-
       await _context.SaveChangesAsync();
 
       return item;

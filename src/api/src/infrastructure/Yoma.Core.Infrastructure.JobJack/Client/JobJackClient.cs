@@ -1,6 +1,7 @@
 using FluentValidation;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using System.Text.RegularExpressions;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Lookups.Interfaces;
@@ -14,7 +15,7 @@ using Yoma.Core.Infrastructure.JobJack.Models;
 
 namespace Yoma.Core.Infrastructure.JobJack.Client
 {
-  public sealed class JobJackClient : ISyncProviderClientPullEntity<Domain.Opportunity.Models.Opportunity>
+  public sealed partial class JobJackClient : ISyncProviderClientPullEntity<Domain.Opportunity.Models.OpportunityRequestCreate>
   {
     #region Class Variables
     private readonly ILogger<JobJackClient> _logger;
@@ -64,7 +65,7 @@ namespace Yoma.Core.Infrastructure.JobJack.Client
     #endregion
 
     #region Public Members
-    public Task<SyncResultPullEntity<Domain.Opportunity.Models.Opportunity>> List(SyncFilterPullEntity filter)
+    public Task<SyncResultPullEntity<Domain.Opportunity.Models.OpportunityRequestCreate>> List(SyncFilterPullEntity filter)
     {
       ArgumentNullException.ThrowIfNull(filter);
       _validator.ValidateAndThrow(filter);
@@ -73,7 +74,7 @@ namespace Yoma.Core.Infrastructure.JobJack.Client
         _logger.LogInformation("Listing JobJack opportunities for pull sync: PaginationEnabled={PaginationEnabled}, PageNumber={PageNumber}, PageSize={PageSize}", filter.PaginationEnabled, filter.PageNumber, filter.PageSize);
 
       IQueryable<Opportunity> query = _opportunityRepository.Query().OrderBy(o => o.ExternalId);
-      var result = new SyncResultPullEntity<Domain.Opportunity.Models.Opportunity>();
+      var result = new SyncResultPullEntity<Domain.Opportunity.Models.OpportunityRequestCreate>();
 
       if (filter.PaginationEnabled)
       {
@@ -87,7 +88,7 @@ namespace Yoma.Core.Infrastructure.JobJack.Client
     #endregion
 
     #region Private Members
-    private SyncItemEntity<Domain.Opportunity.Models.Opportunity> ToOpportunity(Opportunity item)
+    private SyncItemEntity<Domain.Opportunity.Models.OpportunityRequestCreate> ToOpportunity(Opportunity item)
     {
       var organizationId = _options.OrganizationIdYoma;
       if (!organizationId.HasValue || organizationId.Value == Guid.Empty)
@@ -104,29 +105,29 @@ namespace Yoma.Core.Infrastructure.JobJack.Client
       summary = summary.TrimToLengthWithEllipsis(OpportunityService.Summary_MaxLength);
       var title = BuildTitle(item, summary);
 
-      var opportunity = new Domain.Opportunity.Models.Opportunity
+      // Phase 1 is Opportunity sync only; verification and credential issuance remain disabled.
+      // TODO [YOM-1264/YOM-1280]: If a later phase enables them, assign the approved compatible
+      // schema once the final custom fields and schema flavours are agreed.
+      var opportunity = new Domain.Opportunity.Models.OpportunityRequestCreate
       {
         Title = title,
         Description = BuildDescription(item, summary),
         TypeId = type.Id,
-        Type = type.Name,
         OrganizationId = organizationId.Value,
         Summary = summary,
         URL = item.URL,
         VerificationEnabled = false,
-        Status = item.Deleted == true ? Status.Deleted : Status.Active,
+        PostAsActive = item.Deleted != true,
         Keywords = BuildKeywords(item),
         DateStart = item.DateStart ?? item.DateCreated,
         DateEnd = item.DateEnd,
-        Featured = false,
         Hidden = false,
-        Published = true,
-        Categories = [category],
-        Countries = [_countryService.GetByCodeAlpha2(Domain.Core.Country.SouthAfrica.ToDescription())],
-        Languages = [_languageService.GetByName(Domain.Core.Language.English.ToString())]
+        Categories = [category.Id],
+        Countries = [_countryService.GetByCodeAlpha2(Domain.Core.Country.SouthAfrica.ToDescription()).Id],
+        Languages = [_languageService.GetByName(Domain.Core.Language.English.ToString()).Id]
       };
 
-      return new SyncItemEntity<Domain.Opportunity.Models.Opportunity>
+      return new SyncItemEntity<Domain.Opportunity.Models.OpportunityRequestCreate>
       {
         ExternalId = item.ExternalId,
         Deleted = item.Deleted == true,
@@ -198,14 +199,14 @@ namespace Yoma.Core.Infrastructure.JobJack.Client
         var separatorIndex = line.IndexOf(':');
         if (separatorIndex < 0)
         {
-          if (!System.Text.RegularExpressions.Regex.IsMatch(line, @"^(?:[\p{L}-]+\s+)*requirements?$", System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.CultureInvariant))
+          if (!RequirementsHeading().IsMatch(line))
             result.Add(line);
           continue;
         }
 
         var label = line[..separatorIndex];
-        label = System.Text.RegularExpressions.Regex.Replace(label, @"\brequirements?\b", string.Empty, System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.CultureInvariant);
-        label = System.Text.RegularExpressions.Regex.Replace(label, @"\s{2,}", " ", System.Text.RegularExpressions.RegexOptions.CultureInvariant).Trim(' ', '-', ':');
+        label = RequirementsLabel().Replace(label, string.Empty);
+        label = MultipleSpaces().Replace(label, " ").Trim(' ', '-', ':');
         var detail = line[(separatorIndex + 1)..].Trim();
         if (string.IsNullOrEmpty(label) && string.IsNullOrEmpty(detail)) continue;
 
@@ -315,6 +316,15 @@ namespace Yoma.Core.Infrastructure.JobJack.Client
       value = value?.NormalizeNullableValue();
       return string.IsNullOrEmpty(value) ? null : value.RemoveSpecialCharacters().NormalizeTrim();
     }
+
+    [GeneratedRegex(@"^(?:[\p{L}-]+\s+)*requirements?$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+    private static partial Regex RequirementsHeading();
+
+    [GeneratedRegex(@"\brequirements?\b", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+    private static partial Regex RequirementsLabel();
+
+    [GeneratedRegex(@"\s{2,}", RegexOptions.CultureInvariant)]
+    private static partial Regex MultipleSpaces();
     #endregion
   }
 }

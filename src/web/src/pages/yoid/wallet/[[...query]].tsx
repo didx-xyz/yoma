@@ -243,7 +243,9 @@ const MyWallet: NextPageWithLayout<{
         <div className="flex flex-col gap-8">
           <div className="flex w-full flex-col gap-2 sm:w-[300px] md:w-[350px] lg:w-[400px]">
             <Header title="💸 My Wallet" />
-            <div className="flex h-[185px] w-full flex-col gap-4 rounded-lg bg-white p-4 shadow">
+            {/* min-h, not h: the wallet ledger grows to five rows plus an offline notice, and a
+                clipped balance is worse than a taller card. */}
+            <div className="flex min-h-[185px] w-full flex-col gap-4 rounded-lg bg-white p-4 shadow">
               <Suspense
                 isLoading={!userProfile}
                 loader={

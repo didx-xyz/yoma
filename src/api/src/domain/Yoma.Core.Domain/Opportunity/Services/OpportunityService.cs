@@ -34,6 +34,7 @@ using Yoma.Core.Domain.PartnerSync.Interfaces.Lookups;
 using Yoma.Core.Domain.SSI;
 using Yoma.Core.Domain.SSI.Helpers;
 using Yoma.Core.Domain.Treasury.Interfaces;
+using Yoma.Core.Domain.SSI.Interfaces;
 
 namespace Yoma.Core.Domain.Opportunity.Services
 {
@@ -64,6 +65,9 @@ namespace Yoma.Core.Domain.Opportunity.Services
     private readonly ISyncStateService _syncStateService;
     private readonly ITreasuryService _treasuryService;
     private readonly IPartnerService _partnerService;
+    private readonly ICustomFieldDefinitionService _customFieldDefinitionService;
+    private readonly ICustomFieldValueService _customFieldValueService;
+    private readonly ISSISchemaService _ssiSchemaService;
 
     private readonly OpportunityRequestValidatorCreate _opportunityRequestValidatorCreate;
     private readonly OpportunityRequestValidatorUpdate _opportunityRequestValidatorUpdate;
@@ -72,7 +76,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
     private readonly IMediator _mediator;
 
-    private readonly IRepositoryBatchedValueContainsWithNavigation<Models.Opportunity> _opportunityRepository;
+    private readonly IRepositoryBatchedValueContainsWithNavigationAndCustomFieldFilter<Models.Opportunity> _opportunityRepository;
     private readonly IRepository<OpportunityCategory> _opportunityCategoryRepository;
     private readonly IRepository<OpportunityCountry> _opportunityCountryRepository;
     private readonly IRepository<OpportunityLanguage> _opportunityLanguageRepository;
@@ -116,12 +120,15 @@ namespace Yoma.Core.Domain.Opportunity.Services
         ISyncStateService syncStateService,
         ITreasuryService treasuryService,
         IPartnerService partnerService,
+        ICustomFieldDefinitionService customFieldDefinitionService,
+        ICustomFieldValueService customFieldValueService,
+        ISSISchemaService ssiSchemaService,
         OpportunityRequestValidatorCreate opportunityRequestValidatorCreate,
         OpportunityRequestValidatorUpdate opportunityRequestValidatorUpdate,
         OpportunitySearchFilterValidator opportunitySearchFilterValidator,
         OpportunitySearchFilterCriteriaValidator opportunitySearchFilterCriteriaValidator,
         IMediator mediator,
-        IRepositoryBatchedValueContainsWithNavigation<Models.Opportunity> opportunityRepository,
+        IRepositoryBatchedValueContainsWithNavigationAndCustomFieldFilter<Models.Opportunity> opportunityRepository,
         IRepository<OpportunityCategory> opportunityCategoryRepository,
         IRepository<OpportunityCountry> opportunityCountryRepository,
         IRepository<OpportunityLanguage> opportunityLanguageRepository,
@@ -153,6 +160,9 @@ namespace Yoma.Core.Domain.Opportunity.Services
       _syncStateService = syncStateService ?? throw new ArgumentNullException(nameof(syncStateService));
       _treasuryService = treasuryService ?? throw new ArgumentNullException(nameof(treasuryService));
       _partnerService = partnerService ?? throw new ArgumentNullException(nameof(partnerService));
+      _customFieldDefinitionService = customFieldDefinitionService ?? throw new ArgumentNullException(nameof(customFieldDefinitionService));
+      _customFieldValueService = customFieldValueService ?? throw new ArgumentNullException(nameof(customFieldValueService));
+      _ssiSchemaService = ssiSchemaService ?? throw new ArgumentNullException(nameof(ssiSchemaService));
 
       _opportunityRequestValidatorCreate = opportunityRequestValidatorCreate ?? throw new ArgumentNullException(nameof(opportunityRequestValidatorCreate));
       _opportunityRequestValidatorUpdate = opportunityRequestValidatorUpdate ?? throw new ArgumentNullException(nameof(opportunityRequestValidatorUpdate));
@@ -746,6 +756,19 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       _opportunitySearchFilterValidator.ValidateAndThrow(filter);
 
+      if (filter.ApplyUserPresets)
+      {
+        if (!HttpContextAccessorHelper.UserContextAvailable(_httpContextAccessor))
+          throw new ValidationException($"{nameof(filter.ApplyUserPresets)} requires an authenticated User");
+
+        // TODO(YOM-1244 - User Presets):
+        // Resolve the authenticated user's approved presets into the existing Opportunity core and
+        // custom-field filters once the BA-approved preset values and mapping rules are available.
+        throw new ValidationException("User Preset filtering is not configured");
+      }
+
+      _customFieldValueService.ValidateAndHydrateFilters(CustomFieldEntityType.Opportunity, filter.CustomFields);
+
       var query = _opportunityRepository.Query(true);
 
       //date range
@@ -971,6 +994,9 @@ namespace Yoma.Core.Domain.Opportunity.Services
         query = query.Where(predicate);
       }
 
+      //custom fields
+      query = _opportunityRepository.WhereCustomFields(query, filter.CustomFields);
+
       var result = new OpportunitySearchResults();
 
       if (filter.TotalCountOnly)
@@ -1018,7 +1044,13 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       // Validate header before reading data rows
       // Stop if errors — prevents invalid column-to-property mapping
-      CSVImportHelper.ValidateHeader<OpportunityInfoCsvImport>(csv, errors);
+      var customFieldHeaders = CSVImportHelper.ValidateHeader<OpportunityInfoCsvImport>(csv, errors, true);
+      if (CSVImportHelper.ContainsHeaderErrors(errors)) return CSVImportHelper.GetResults(errors);
+      var customFieldColumns = CSVImportHelper.ResolveCustomFieldHeaders(
+        CustomFieldEntityType.Opportunity,
+        customFieldHeaders,
+        _customFieldDefinitionService,
+        errors);
       if (CSVImportHelper.ContainsHeaderErrors(errors)) return CSVImportHelper.GetResults(errors);
 
       // PASS A — probe: parse + invoke domain logic per row in its own scope, but never Complete().
@@ -1048,6 +1080,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
           }
 
           dto = csv.GetRecord<OpportunityInfoCsvImport>();
+          dto.CustomFieldValues = CSVImportHelper.ReadCustomFieldValues(csv, customFieldColumns);
           dto.Validate(errors, rowNumber);
 
           if (!string.IsNullOrEmpty(dto.Title) && probedTitles.Contains(dto.Title))
@@ -1074,8 +1107,9 @@ namespace Yoma.Core.Domain.Opportunity.Services
             await ProcessImportAndUpsertOpportunity(organizationId, dto, true); //probe only; notifications not send
             probedTitles.Add(dto.Title); //required; validated during processing
             probedExternalIds.Add(dto.ExternalId); //required; validated during processing
-            //probe only, do not commit the scope; disposed as aborted
-          });
+            // Probe only: do not commit the scope. Clear EF tracking after rollback so
+            // accepted in-memory state cannot leak into the commit pass.
+          }, true);
         }
         catch (Exception ex)
         {
@@ -1121,9 +1155,13 @@ namespace Yoma.Core.Domain.Opportunity.Services
       ArgumentNullException.ThrowIfNull(request, nameof(request));
       ArgumentNullException.ThrowIfNull(options, nameof(options));
 
+      if (options.CustomFieldUpsertMode == CustomFieldUpsertMode.PatchAllowMissingRequired)
+        request.CustomFields.NormalizeForPatch();
+
       request.URL = request.URL?.EnsureHttpsScheme();
 
       await _opportunityRequestValidatorCreate.ValidateAndThrowAsync(request);
+      await AssertSSISchemaApplicable(request);
 
       request.DateStart = request.DateStart.RemoveTime();
       if (request.DateEnd.HasValue) request.DateEnd = request.DateEnd.Value.ToEndOfDay();
@@ -1163,15 +1201,12 @@ namespace Yoma.Core.Domain.Opportunity.Services
       if (request.ZltoReward.HasValue && !organization.ZltoRewardPoolCurrentFinancialYear.HasValue)
         throw new ValidationException($"The opportunity cannot issue Zlto rewards upon completion because the associated organization '{organization.Name}' does not have a Zlto reward pool configured for the current financial year. Please configure an organization-level Zlto reward pool before proceeding");
 
-      if (request.YomaReward.HasValue && !organization.YomaRewardPoolCurrentFinancialYear.HasValue)
-        throw new ValidationException($"The opportunity cannot issue Yoma rewards upon completion because the associated organization '{organization.Name}' does not have a Yoma reward pool configured for the current financial year. Please configure an organization-level Yoma reward pool before proceeding");
-
       var result = new Models.Opportunity
       {
         Title = request.Title.NormalizeTrim(),
         Description = request.Description,
         TypeId = request.TypeId,
-        Type = _opportunityTypeService.GetById(request.TypeId).Name,
+        Type = Enum.Parse<Type>(_opportunityTypeService.GetById(request.TypeId).Name, true),
         OrganizationId = request.OrganizationId,
         OrganizationName = organization.Name,
         OrganizationLogoId = organization.LogoId,
@@ -1182,15 +1217,11 @@ namespace Yoma.Core.Domain.Opportunity.Services
         OrganizationStatus = organization.Status,
         OrganizationZltoRewardPoolCurrentFinancialYear = organization.ZltoRewardPoolCurrentFinancialYear,
         OrganizationZltoRewardCumulativeCurrentFinancialYear = organization.ZltoRewardCumulativeCurrentFinancialYear,
-        OrganizationYomaRewardPoolCurrentFinancialYear = organization.YomaRewardPoolCurrentFinancialYear,
-        OrganizationYomaRewardCumulativeCurrentFinancialYear = organization.YomaRewardCumulativeCurrentFinancialYear,
         Summary = request.Summary,
         Instructions = request.Instructions,
         URL = request.URL,
         ZltoReward = request.ZltoReward,
-        YomaReward = request.YomaReward,
         ZltoRewardPool = request.ZltoRewardPool,
-        YomaRewardPool = request.YomaRewardPool,
         VerificationEnabled = request.VerificationEnabled,
         VerificationMethodValue = request.VerificationMethod?.ToString(),
         VerificationMethod = request.VerificationMethod,
@@ -1256,6 +1287,17 @@ namespace Yoma.Core.Domain.Opportunity.Services
         // verification types (optional)
         result = await AssignVerificationTypes(result, request.VerificationTypes);
 
+        // custom fields (optional)
+        if (options.CustomFieldUpsertMode.Process())
+          result.CustomFields = await _customFieldValueService.Upsert(
+            CustomFieldEntityType.Opportunity,
+            result.Type.ToString(),
+            null,
+            result.Id,
+            null,
+            request.CustomFields,
+            options.CustomFieldUpsertMode);
+
         scope.Complete();
       });
 
@@ -1276,6 +1318,9 @@ namespace Yoma.Core.Domain.Opportunity.Services
       ArgumentNullException.ThrowIfNull(request, nameof(request));
       ArgumentNullException.ThrowIfNull(options, nameof(options));
 
+      if (options.CustomFieldUpsertMode == CustomFieldUpsertMode.PatchAllowMissingRequired)
+        request.CustomFields.NormalizeForPatch();
+
       request.URL = request.URL?.EnsureHttpsScheme();
 
       await _opportunityRequestValidatorUpdate.ValidateAndThrowAsync(request);
@@ -1290,6 +1335,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
       var resultCurrent = ObjectHelper.DeepCopy(result);
 
       AssertUpdatable(result);
+
+      await AssertSSISchemaApplicable(request);
 
       //[2024.11.25] backdated opportunities now allowed
       //if (!result.DateStart.Equals(request.DateStart) && request.DateStart < DateTimeOffset.UtcNow.RemoveTime())
@@ -1314,9 +1361,6 @@ namespace Yoma.Core.Domain.Opportunity.Services
       if (request.ZltoReward.HasValue && !organization.ZltoRewardPoolCurrentFinancialYear.HasValue)
         throw new ValidationException($"The opportunity cannot issue Zlto rewards upon completion because the associated organization '{organization.Name}' does not have a Zlto reward pool configured for the current financial year. Please configure an organization-level Zlto reward pool before proceeding");
 
-      if (request.YomaReward.HasValue && !organization.YomaRewardPoolCurrentFinancialYear.HasValue)
-        throw new ValidationException($"The opportunity cannot issue Yoma rewards upon completion because the associated organization '{organization.Name}' does not have a Yoma reward pool configured for the current financial year. Please configure an organization-level Yoma reward pool before proceeding");
-
       //by default, status remains unchanged, except for immediate expiration based on DateEnd (status updated via UpdateStatus)
       if (request.DateEnd.HasValue && request.DateEnd.Value <= DateTimeOffset.UtcNow)
       {
@@ -1327,28 +1371,21 @@ namespace Yoma.Core.Domain.Opportunity.Services
       if (request.ZltoRewardPool.HasValue && result.ZltoRewardCumulative.HasValue && request.ZltoRewardPool.Value < result.ZltoRewardCumulative.Value)
         throw new ValidationException($"The Zlto reward pool cannot be less than the cumulative Zlto rewards ({result.ZltoRewardCumulative.Value:F0}) already allocated to participants");
 
-      if (request.YomaRewardPool.HasValue && result.YomaRewardCumulative.HasValue && request.YomaRewardPool.Value < result.YomaRewardCumulative.Value)
-        throw new ValidationException($"The Yoma reward pool cannot be less than the cumulative Yoma rewards ({result.YomaRewardCumulative.Value:F2}) already allocated to participants");
-
       result.Title = request.Title.NormalizeTrim();
       result.Description = request.Description;
       result.TypeId = request.TypeId;
-      result.Type = _opportunityTypeService.GetById(request.TypeId).Name;
+      result.Type = Enum.Parse<Type>(_opportunityTypeService.GetById(request.TypeId).Name, true);
       result.OrganizationId = request.OrganizationId;
       result.OrganizationName = organization.Name;
       result.OrganizationLogoId = organization.LogoId;
       result.OrganizationLogoURL = organization.LogoURL;
       result.OrganizationZltoRewardPoolCurrentFinancialYear = organization.ZltoRewardPoolCurrentFinancialYear;
       result.OrganizationZltoRewardCumulativeCurrentFinancialYear = organization.ZltoRewardCumulativeCurrentFinancialYear;
-      result.OrganizationYomaRewardPoolCurrentFinancialYear = organization.YomaRewardPoolCurrentFinancialYear;
-      result.OrganizationYomaRewardCumulativeCurrentFinancialYear = organization.YomaRewardCumulativeCurrentFinancialYear;
       result.Summary = request.Summary;
       result.Instructions = request.Instructions;
       result.URL = request.URL;
       result.ZltoReward = request.ZltoReward;
-      result.YomaReward = request.YomaReward;
       result.ZltoRewardPool = request.ZltoRewardPool;
-      result.YomaRewardPool = request.YomaRewardPool;
       result.VerificationEnabled = request.VerificationEnabled;
       result.VerificationMethod = request.VerificationMethod;
       result.DifficultyId = request.DifficultyId;
@@ -1429,6 +1466,17 @@ namespace Yoma.Core.Domain.Opportunity.Services
         result = await RemoveVerificationTypes(result, result.VerificationTypes?.Select(o => o.Type).Except(request.VerificationTypes?.Select(o => o.Type) ?? []).ToList());
         result = await AssignVerificationTypes(result, request.VerificationTypes);
 
+        // custom fields (optional)
+        if (options.CustomFieldUpsertMode.Process())
+          result.CustomFields = await _customFieldValueService.Upsert(
+            CustomFieldEntityType.Opportunity,
+            result.Type.ToString(),
+            resultCurrent.Type.ToString(),
+            result.Id,
+            null,
+            request.CustomFields,
+            options.CustomFieldUpsertMode);
+
         scope.Complete();
       });
 
@@ -1484,15 +1532,15 @@ namespace Yoma.Core.Domain.Opportunity.Services
         if (opportunity.ParticipantLimit.HasValue && count > opportunity.ParticipantLimit.Value)
           throw new ValidationException($"The number of participants cannot exceed the limit. The current count is '{opportunity.ParticipantCount ?? 0}', and the limit is '{opportunity.ParticipantLimit.Value}'. Please edit the opportunity to increase or remove the limit, or reject the verification request");
 
-        organization = _organizationService.GetById(opportunity.OrganizationId, false, true, false, LockMode.Wait);
         var treasury = _treasuryService.Get(LockMode.Wait);
+        await _treasuryService.EnsureCurrentFinancialYear(treasury);
+        organization = _organizationService.GetById(opportunity.OrganizationId, false, true, false, LockMode.Wait);
         var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsernameSystem, false, false);
 
         result = new OpportunityAllocateRewardResponse
         {
           Opportunity = opportunity,
           ZltoReward = opportunity.ZltoReward,
-          YomaReward = opportunity.YomaReward
         };
 
         // zlto reward
@@ -1505,26 +1553,15 @@ namespace Yoma.Core.Domain.Opportunity.Services
         (result.ZltoReward, result.ZltoRewardReduced, result.ZltoRewardPoolDepleted) =
          ProcessRewardAllocation(result.ZltoReward, opportunity.ZltoRewardPool, opportunity.ZltoRewardCumulative, result.ZltoRewardReduced, result.ZltoRewardPoolDepleted);
 
-        // yoma Reward
-        // placeholder added at Organization and Opportunity level; never implemented across Referrals or Treasury
-        (result.YomaReward, result.YomaRewardReduced, result.YomaRewardPoolDepleted) =
-          ProcessRewardAllocation(result.YomaReward, organization.YomaRewardPoolCurrentFinancialYear, organization.YomaRewardCumulativeCurrentFinancialYear, null, null);
-
-        (result.YomaReward, result.YomaRewardReduced, result.YomaRewardPoolDepleted) =
-          ProcessRewardAllocation(result.YomaReward, opportunity.YomaRewardPool, opportunity.YomaRewardCumulative, result.YomaRewardReduced, result.YomaRewardPoolDepleted);
-
         opportunity.ParticipantCount = count;
         opportunity.ModifiedByUserId = user.Id;
 
         // update rewardCumulative, treating null as 0 for the addition
         await _treasuryService.ZltoRewardAwarded(treasury, result.ZltoReward);
-        await _organizationService.AllocateRewards(organization, result.ZltoReward, result.YomaReward);
+        await _organizationService.AllocateRewards(organization, result.ZltoReward);
 
         if (result.ZltoReward.HasValue)
           opportunity.ZltoRewardCumulative = (opportunity.ZltoRewardCumulative ?? default) + result.ZltoReward.Value;
-
-        if (result.YomaReward.HasValue)
-          opportunity.YomaRewardCumulative = (opportunity.YomaRewardCumulative ?? default) + result.YomaReward.Value;
 
         await _opportunityRepository.Update(opportunity);
 
@@ -1938,6 +1975,23 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       return result;
     }
+
+    public List<CustomFieldDefinition> ListCustomFieldDefinitions(List<Type>? types)
+    {
+      var contexts = types?
+        .Distinct()
+        .Select(o => o.ToString())
+        .ToList();
+
+      return _customFieldDefinitionService.ListForContexts(CustomFieldEntityType.Opportunity, contexts, true, true);
+    }
+
+    public List<CustomFieldDefinition> ListCustomFieldDefinitions(Guid id)
+    {
+      var opportunity = GetById(id, false, false, true);
+
+      return _customFieldDefinitionService.List(CustomFieldEntityType.Opportunity, true, true, opportunity.Type.ToString());
+    }
     #endregion
 
     #region Private Members
@@ -1972,6 +2026,10 @@ namespace Yoma.Core.Domain.Opportunity.Services
       item.ExternalId = item.ExternalId.Trim();
 
       var type = _opportunityTypeService.GetByName(item.Type);
+      var customFields = _customFieldValueService.ParseCSVValues(
+        CustomFieldEntityType.Opportunity,
+        type.Name,
+        item.CustomFieldValues);
 
       var engagementType = string.IsNullOrWhiteSpace(item.Engagement) ? null : _engagementTypeService.GetByName(item.Engagement);
 
@@ -2005,6 +2063,9 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       var dateEnd = item.DateEnd?.ToDateTimeOffset();
 
+      // TODO [YOM-1264/YOM-1280]: Resolve the approved import schema from the Opportunity type
+      // instead of defaulting new/schema-less imports to Opportunity|Default. Preserve an existing
+      // schema only while it remains compatible with the imported type.
       OpportunityRequestBase? request = null;
       var isNew = false;
       if (existingByExternalId == null)
@@ -2059,23 +2120,46 @@ namespace Yoma.Core.Domain.Opportunity.Services
       //Instructions
       //ShareWithPartners
 
+      request.CustomFields = customFields;
+
+      // CSV imports are PATCH operations: omitted CF columns preserve existing values,
+      // blank cells delete values, and populated cells are validated and upserted.
       // Events raised by invoking method upon transaction completion
       var result = isNew
         ? await Create((OpportunityRequestCreate)request, new OpportunityUpsertOptions
         {
           EnsureOrganizationAuthorization = false,
           RaiseEvents = false,
-          SendNotifications = !probeOnly
+          SendNotifications = !probeOnly,
+          CustomFieldUpsertMode = CustomFieldUpsertMode.PatchAllowMissingRequired
         })
         : await Update((OpportunityRequestUpdate)request, new OpportunityUpsertOptions
         {
           EnsureOrganizationAuthorization = false,
           RaiseEvents = false,
-          SendNotifications = false
+          SendNotifications = false,
+          CustomFieldUpsertMode = CustomFieldUpsertMode.PatchAllowMissingRequired
         });
 
       return (result, isNew ? EventType.Create : EventType.Update);
     }
+    private async Task AssertSSISchemaApplicable(OpportunityRequestBase request)
+    {
+      if (string.IsNullOrEmpty(request.SSISchemaName)) return; // required when credential issuance is enabled; enforced by the request validator
+
+      var schema = await _ssiSchemaService.GetByFullNameOrNull(request.SSISchemaName);
+      if (schema == null || schema.Type != SchemaType.Opportunity)
+        throw new ValidationException("SSI schema does not exist.");
+
+      var opportunityType = _opportunityTypeService.GetById(request.TypeId);
+      if (!string.IsNullOrEmpty(schema.TypeContext) &&
+          !string.Equals(schema.TypeContext, opportunityType.Name, StringComparison.OrdinalIgnoreCase))
+      {
+        throw new ValidationException(
+          $"SSI schema '{request.SSISchemaName}' is not applicable to opportunity type '{opportunityType.DisplayName}'.");
+      }
+    }
+
 
     private string ResolveTitle(string title, Guid? currentOpportunityId, OpportunityUpsertOptions options)
     {
@@ -2388,7 +2472,6 @@ namespace Yoma.Core.Domain.Opportunity.Services
             DateEnd = opportunity.DateEnd,
             URL = _notificationURLFactory.OpportunityPublishedItemURL(type, opportunity.Id, opportunity.OrganizationId),
             ZltoReward = opportunity.ZltoReward,
-            YomaReward = opportunity.YomaReward
           }]
         };
 

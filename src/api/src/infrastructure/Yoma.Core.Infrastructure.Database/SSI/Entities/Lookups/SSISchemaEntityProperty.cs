@@ -34,6 +34,14 @@ namespace Yoma.Core.Infrastructure.Database.SSI.Entities.Lookups
     [Column(TypeName = "varchar(125)")]
     public string? Format { get; set; }
 
+    [Column(TypeName = "varchar(100)")]
+    public string? Group { get; set; }
+
+    [Column(TypeName = "varchar(100)")]
+    public string? SubGroup { get; set; }
+
+    public int? SortOrder { get; set; }
+
     [Required]
     public DateTimeOffset DateCreated { get; set; }
   }

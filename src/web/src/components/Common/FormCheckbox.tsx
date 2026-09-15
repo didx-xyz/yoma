@@ -10,7 +10,7 @@ const FormCheckbox: React.FC<{
       <input
         type="checkbox"
         id={id}
-        className="checkbox checkbox-primary disabled:border-gray"
+        className="checkbox checkbox-secondary disabled:border-gray"
         {...inputProps}
       />
       <span className="label-text ml-4">{label}</span>

@@ -8,9 +8,16 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { type ParsedUrlQuery } from "querystring";
-import { useCallback, useMemo, useState, type ReactElement } from "react";
 import {
-  IoIosAdd,
+  useCallback,
+  useMemo,
+  useRef,
+  useState,
+  type ReactElement,
+} from "react";
+import { FaPlusCircle } from "react-icons/fa";
+import {
+  IoIosSettings,
   IoMdCalendar,
   IoMdClose,
   IoMdLock,
@@ -19,34 +26,65 @@ import {
 import { IoShareSocialOutline } from "react-icons/io5";
 import Moment from "react-moment";
 import {
-  ActionLinkEntityType,
   ActionLinkStatus,
-  LinkAction,
   type LinkInfo,
   type LinkSearchFilter,
 } from "~/api/models/actionLinks";
+import type { SelectOption } from "~/api/models/lookups";
 import { getLinkById } from "~/api/services/actionLinks";
-import CustomSlider from "~/components/Carousel/CustomSlider";
+import { BTN_SECONDARY } from "~/components/Common/buttonStyles";
 import CustomModal from "~/components/Common/CustomModal";
+import {
+  MODAL_ACTION_WIDTH,
+  ModalActions,
+  ModalBody,
+  ModalHeader,
+} from "~/components/Common/ModalChrome";
+import DropdownMenu from "~/components/Common/DropdownMenu";
+import {
+  ListPagePagination,
+  ListPageResults,
+} from "~/components/Common/ListPage/ListPageResults";
+import {
+  ListPageBody,
+  ListPageHeader,
+  ListPageShell,
+} from "~/components/Common/ListPage/ListPageHeader";
+import ListPageSearchToolbar, {
+  LIST_PAGE_TOOLBAR_BUTTON_CLASSES,
+} from "~/components/Common/ListPage/ListPageSearchToolbar";
+import ListPageStatusTabs from "~/components/Common/ListPage/ListPageStatusTabs";
+import {
+  buildListPageQueryString,
+  getAppliedFilterCount,
+  getFilterKeyParts,
+  isSearchPerformed as getIsSearchPerformed,
+  parseStatusTab,
+  type ListPageRouterQuery,
+} from "~/components/Common/ListPage/listPageFilter";
 import MainLayout from "~/components/Layout/Main";
 import { LinkActionOptions, LinkActions } from "~/components/Links/LinkActions";
+import LinkAdminFilterBadges from "~/components/Links/LinkAdminFilterBadges";
+import LinkAdminFilterVertical, {
+  LinkAdminFilterOptions,
+} from "~/components/Links/LinkAdminFilterVertical";
 import {
-  LinkFilterOptions,
-  LinkSearchFilters,
-} from "~/components/Links/LinkSearchFilter";
+  LINK_ORG_ADMIN_FILTER_SPEC,
+  LINK_STATUS_PARAM,
+  mapLinkFilterToApi,
+  parseLinkFilterFromQuery,
+} from "~/components/Links/linkAdminFilter";
 import NoRowsMessage from "~/components/NoRowsMessage";
-import { PageBackground } from "~/components/PageBackground";
-import { PaginationButtons } from "~/components/PaginationButtons";
 import { InternalServerError } from "~/components/Status/InternalServerError";
 import LimitedFunctionalityBadge from "~/components/Status/LimitedFunctionalityBadge";
-import { Loading } from "~/components/Status/Loading";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import {
   ACTION_LINK_QUERY_KEYS,
-  useOrgLinkCountQuery,
-  useOrgLinksListQuery,
+  useLinkStatusCountQuery,
+  useLinksSearchQuery,
 } from "~/hooks/useActionLinkMutations";
+import { useOpportunityTitlesByIdQuery } from "~/hooks/useOpportunityMutations";
 import { DATE_FORMAT_HUMAN, PAGE_SIZE } from "~/lib/constants";
 import { currentOrganisationInactiveAtom } from "~/lib/store";
 import { getSafeUrl, getThemeFromRole } from "~/lib/utils";
@@ -55,11 +93,6 @@ import { authOptions } from "~/server/auth";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
-  type?: string;
-  action?: string;
-  status?: string;
-  entities?: string;
-  page?: string;
 }
 
 const getErrorStatus = (error: unknown): number | null => {
@@ -70,8 +103,7 @@ const getErrorStatus = (error: unknown): number | null => {
 // ⚠️ SSR
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { id } = context.params as IParams;
-  const { type, action, statuses, entities, valueContains, page, returnUrl } =
-    context.query;
+  const { returnUrl } = context.query;
   const session = await getServerSession(context.req, context.res, authOptions);
 
   // 👇 ensure authenticated
@@ -86,15 +118,10 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   // 👇 set theme based on role
   const theme = getThemeFromRole(session, id);
 
+  // NB: the filters are driven by the querystring (router.query), not by props
   return {
     props: {
       id: id,
-      type: type ?? null,
-      action: action ?? null,
-      statuses: statuses ?? null,
-      entities: entities ?? null,
-      valueContains: valueContains ?? null,
-      page: page ?? null,
       theme: theme,
       error: null,
       returnUrl: returnUrl ?? null,
@@ -104,28 +131,13 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 
 const Links: NextPageWithLayout<{
   id: string;
-  type?: string;
-  action?: string;
-  statuses?: string;
-  entities?: string;
-  valueContains?: string;
-  page?: string;
   theme: string;
   error?: number;
   returnUrl?: string;
-}> = ({
-  id,
-  type,
-  action,
-  statuses,
-  entities,
-  valueContains,
-  page,
-  error,
-  returnUrl,
-}) => {
+}> = ({ id, error, returnUrl }) => {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const myRef = useRef<HTMLDivElement>(null);
   const currentOrganisationInactive = useAtomValue(
     currentOrganisationInactiveAtom,
   );
@@ -133,153 +145,211 @@ const Links: NextPageWithLayout<{
   const [qrCodeImageData, setQRCodeImageData] = useState<
     string | null | undefined
   >(null);
-  const [isLoading] = useState(false);
+  const [filterFullWindowVisible, setFilterFullWindowVisible] = useState(false);
 
+  // 👇 filters are driven by the querystring (shared vocabulary with /admin/links)
+  const routerQuery = router.query as ListPageRouterQuery;
+  const status = useMemo(
+    () => parseStatusTab(routerQuery, LINK_ORG_ADMIN_FILTER_SPEC),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [router.query],
+  );
+
+  // display filter — what the filter modal and the badges bind to
   const searchFilter = useMemo<LinkSearchFilter>(
-    () => ({
-      pageNumber: page ? parseInt(page.toString()) : 1,
-      pageSize: PAGE_SIZE,
-      entityType: type ?? ActionLinkEntityType.Opportunity,
-      action: action ?? LinkAction.Verify,
-      entities: entities ? entities.toString().split("|") : null,
-      statuses: statuses ? statuses.toString().split("|") : null,
-      organizations: [id],
-      valueContains: valueContains ?? null,
-    }),
-    [action, entities, id, page, statuses, type, valueContains],
+    () =>
+      parseLinkFilterFromQuery(
+        routerQuery,
+        LINK_ORG_ADMIN_FILTER_SPEC,
+        PAGE_SIZE,
+        id,
+      ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [router.query, id],
   );
 
-  const countKeyParts = `${type ?? ""}_${action ?? ""}`;
-  const searchResultsKey = `${type ?? ""}_${action ?? ""}_${statuses ?? ""}_${entities ?? ""}_${valueContains ?? ""}_${page ?? ""}`;
-
-  const { data: links, error: linksError } = useOrgLinksListQuery(
-    id,
-    searchFilter,
-    searchResultsKey,
-    {
-      enabled: !error,
-    },
+  const isSearchPerformed = useMemo(
+    () => getIsSearchPerformed(routerQuery, LINK_ORG_ADMIN_FILTER_SPEC),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [router.query],
   );
+
+  const appliedFilterCount = useMemo(
+    () => getAppliedFilterCount(searchFilter, LINK_ORG_ADMIN_FILTER_SPEC),
+    [searchFilter],
+  );
+
+  //#region LOOKUPS
+  // NB: the opportunity criteria search REQUIRES the organisation for the org-admin role
+  const orgScope = useMemo(() => [id], [id]);
+
+  // the opportunity filter is id-based; resolve the titles for the badges & the picker
+  const { data: lookups_entities } = useOpportunityTitlesByIdQuery(
+    searchFilter.entities,
+    orgScope,
+    { enabled: !error },
+  );
+  const entityOptions = useMemo<SelectOption[]>(
+    () =>
+      (lookups_entities?.items ?? []).map((item) => ({
+        value: item.id,
+        label: item.title,
+      })),
+    [lookups_entities],
+  );
+  //#endregion LOOKUPS
+
+  // org-scoped page: the only mapping is the organisation, which is already an id
+  const apiFilter = useMemo<LinkSearchFilter>(
+    () => mapLinkFilterToApi(searchFilter, {}, id),
+    [searchFilter, id],
+  );
+
+  const filterKeyParts = useMemo(
+    () => getFilterKeyParts(routerQuery, LINK_ORG_ADMIN_FILTER_SPEC),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [router.query],
+  );
+
+  const {
+    data: links,
+    isLoading: isLoadingSearchResults,
+    isPlaceholderData: isShowingPreviousResults,
+    error: linksError,
+  } = useLinksSearchQuery(id, apiFilter, filterKeyParts, {
+    enabled: !error,
+  });
   const resolvedError = error ?? getErrorStatus(linksError) ?? undefined;
-  const { data: totalCountAll } = useOrgLinkCountQuery(
+
+  // status tab counts — these honour every applied filter
+  const { data: totalCountAll } = useLinkStatusCountQuery(
     id,
-    searchFilter.entityType,
-    searchFilter.action,
+    apiFilter,
     null,
-    countKeyParts,
+    filterKeyParts,
     { enabled: !error },
   );
-  const { data: totalCountActive } = useOrgLinkCountQuery(
+  const { data: totalCountActive } = useLinkStatusCountQuery(
     id,
-    searchFilter.entityType,
-    searchFilter.action,
+    apiFilter,
     ActionLinkStatus.Active,
-    countKeyParts,
+    filterKeyParts,
     { enabled: !error },
   );
-  const { data: totalCountInactive } = useOrgLinkCountQuery(
+  const { data: totalCountInactive } = useLinkStatusCountQuery(
     id,
-    searchFilter.entityType,
-    searchFilter.action,
+    apiFilter,
     ActionLinkStatus.Inactive,
-    countKeyParts,
+    filterKeyParts,
     { enabled: !error },
   );
-  const { data: totalCountExpired } = useOrgLinkCountQuery(
+  const { data: totalCountExpired } = useLinkStatusCountQuery(
     id,
-    searchFilter.entityType,
-    searchFilter.action,
+    apiFilter,
     ActionLinkStatus.Expired,
-    countKeyParts,
+    filterKeyParts,
     { enabled: !error },
   );
-  const { data: totalCountLimitReached } = useOrgLinkCountQuery(
+  const { data: totalCountLimitReached } = useLinkStatusCountQuery(
     id,
-    searchFilter.entityType,
-    searchFilter.action,
+    apiFilter,
     ActionLinkStatus.LimitReached,
-    countKeyParts,
+    filterKeyParts,
     { enabled: !error },
   );
-  const { data: totalCountDeleted } = useOrgLinkCountQuery(
+  const { data: totalCountDeleted } = useLinkStatusCountQuery(
     id,
-    searchFilter.entityType,
-    searchFilter.action,
+    apiFilter,
     ActionLinkStatus.Deleted,
-    countKeyParts,
+    filterKeyParts,
     { enabled: !error },
   );
 
-  const linkDetailKey = useCallback(
-    (linkId: string) => ACTION_LINK_QUERY_KEYS.detail(linkId, true),
-    [],
+  const tabCounts = useMemo(
+    () => ({
+      all: totalCountAll,
+      [ActionLinkStatus.Active]: totalCountActive,
+      [ActionLinkStatus.Inactive]: totalCountInactive,
+      [ActionLinkStatus.Expired]: totalCountExpired,
+      [ActionLinkStatus.LimitReached]: totalCountLimitReached,
+      [ActionLinkStatus.Deleted]: totalCountDeleted,
+    }),
+    [
+      totalCountAll,
+      totalCountActive,
+      totalCountInactive,
+      totalCountExpired,
+      totalCountLimitReached,
+      totalCountDeleted,
+    ],
   );
 
   // 🎈 FUNCTIONS
-  const getSearchFilterAsQueryString = useCallback(
-    (searchFilter: LinkSearchFilter) => {
-      if (!searchFilter) return null;
-
-      // construct querystring parameters from filter
-      const params = new URLSearchParams();
-
-      if (
-        searchFilter?.entities?.length !== undefined &&
-        searchFilter.entities.length > 0
-      )
-        params.append("entities", searchFilter.entities.join("|"));
-
-      if (
-        searchFilter?.statuses !== undefined &&
-        searchFilter?.statuses !== null &&
-        searchFilter?.statuses.length > 0
-      )
-        params.append("statuses", searchFilter?.statuses.join("|"));
-
-      if (searchFilter?.valueContains)
-        params.append("valueContains", searchFilter.valueContains);
-
-      if (
-        searchFilter.pageNumber !== null &&
-        searchFilter.pageNumber !== undefined &&
-        searchFilter.pageNumber !== 1
-      )
-        params.append("page", searchFilter.pageNumber.toString());
-
-      if (params.size === 0) return null;
-      return params;
-    },
-    [],
-  );
-
   const redirectWithSearchFilterParams = useCallback(
     (filter: LinkSearchFilter) => {
       let url = `/organisations/${id}/links`;
-      const params = getSearchFilterAsQueryString(filter);
+      const params = buildListPageQueryString(
+        filter,
+        LINK_ORG_ADMIN_FILTER_SPEC,
+      );
       if (params != null && params.size > 0)
         url = `${url}?${params.toString()}`;
 
       if (url != router.asPath)
         void router.push(url, undefined, { scroll: false });
     },
-    [id, router, getSearchFilterAsQueryString],
+    [id, router],
   );
 
-  // filter popup handlers
-  const onSubmitFilter = useCallback(
-    (val: LinkSearchFilter) => {
-      redirectWithSearchFilterParams(val);
-    },
-    [redirectWithSearchFilterParams],
+  // querystring of the current filters excluding status & paging (used by the tabs)
+  const tabBaseParams = useMemo(
+    () =>
+      buildListPageQueryString(
+        { ...searchFilter, statuses: null },
+        LINK_ORG_ADMIN_FILTER_SPEC,
+      ),
+    [searchFilter],
   );
 
-  // 🔔 pager change event
-  const handlePagerChange = useCallback(
-    (value: number) => {
-      searchFilter.pageNumber = value;
-      redirectWithSearchFilterParams(searchFilter);
+  //#region Event Handlers
+  const onSearch = useCallback(
+    (query: string) => {
+      redirectWithSearchFilterParams({
+        ...searchFilter,
+        pageNumber: 1,
+        valueContains: query.length > 2 ? query : null,
+      });
     },
     [searchFilter, redirectWithSearchFilterParams],
+  );
+
+  const handlePagerChange = useCallback(
+    (value: number) => {
+      redirectWithSearchFilterParams({ ...searchFilter, pageNumber: value });
+    },
+    [searchFilter, redirectWithSearchFilterParams],
+  );
+
+  const onCloseFilter = useCallback(() => {
+    setFilterFullWindowVisible(false);
+  }, []);
+
+  const onCloseQRCode = useCallback(() => {
+    setShowQRCode(false);
+    setQRCodeImageData(null);
+  }, []);
+
+  const onSubmitFilter = useCallback(
+    (filter: LinkSearchFilter) => {
+      setFilterFullWindowVisible(false);
+      // the status tab is preserved; paging is reset when filters change
+      redirectWithSearchFilterParams({
+        ...filter,
+        statuses: filter.statuses ?? searchFilter.statuses,
+        pageNumber: 1,
+      });
+    },
+    [redirectWithSearchFilterParams, searchFilter.statuses],
   );
 
   const onClick_GenerateQRCode = useCallback(
@@ -287,13 +357,13 @@ const Links: NextPageWithLayout<{
       // fetch the QR code
       queryClient
         .fetchQuery({
-          queryKey: linkDetailKey(item.id),
+          queryKey: ACTION_LINK_QUERY_KEYS.detail(item.id, true),
           queryFn: () => getLinkById(item.id, true),
         })
         .then(() => {
           // get the QR code from the cache
           const qrCode = queryClient.getQueryData<LinkInfo | null>(
-            linkDetailKey(item.id),
+            ACTION_LINK_QUERY_KEYS.detail(item.id, true),
           );
 
           // show the QR code
@@ -301,42 +371,9 @@ const Links: NextPageWithLayout<{
           setShowQRCode(true);
         });
     },
-    [linkDetailKey, queryClient],
+    [queryClient],
   );
-
-  const renderAddLinkButton = useCallback(() => {
-    if (currentOrganisationInactive) {
-      return (
-        <span className="bg-theme flex w-56 cursor-not-allowed flex-row items-center justify-center rounded-full p-1 text-xs whitespace-nowrap text-white brightness-75">
-          Add link (disabled)
-        </span>
-      );
-    }
-
-    return (
-      <Link
-        href={`/organisations/${id}/links/create${`?returnUrl=${encodeURIComponent(
-          getSafeUrl(returnUrl, router.asPath),
-        )}`}`}
-        className="bg-theme btn btn-circle shadow-custom btn-sm btn-secondary h-fit w-fit !border-none p-1 text-xs whitespace-nowrap text-white brightness-105 md:p-2 md:px-4"
-        id="btnCreateLink"
-      >
-        <IoIosAdd className="h-7 w-7 md:h-5 md:w-5" />
-        <span className="hidden md:inline">Add link</span>
-      </Link>
-    );
-  }, [currentOrganisationInactive, id, returnUrl, router]);
-
-  // memo for isSearchPerformed based on filter parameters
-  const isSearchPerformed = useMemo<boolean>(() => {
-    return (
-      type != undefined ||
-      action != undefined ||
-      statuses != undefined ||
-      entities != undefined ||
-      valueContains != undefined
-    );
-  }, [type, action, statuses, entities, valueContains]);
+  //#endregion Event Handlers
 
   if (resolvedError) {
     if (resolvedError === 401) return <Unauthenticated />;
@@ -350,43 +387,45 @@ const Links: NextPageWithLayout<{
         <title>Yoma | 🔗 Links</title>
       </Head>
 
-      <PageBackground className="h-[14.3rem] md:h-[18.4rem]" />
+      {/* REFERENCE FOR FILTER POPUP: fix menu z-index issue */}
+      <div ref={myRef} />
 
-      {isLoading && <Loading />}
+      {/* POPUP FILTER */}
+      <CustomModal
+        isOpen={filterFullWindowVisible}
+        shouldCloseOnOverlayClick={true}
+        onRequestClose={onCloseFilter}
+        className={`md:max-h-[400px] md:w-[600px]`}
+      >
+        <div className="flex h-full flex-col gap-2 overflow-y-auto">
+          <LinkAdminFilterVertical
+            htmlRef={myRef.current!}
+            searchFilter={searchFilter}
+            lookups_organisations={[]} // org-scoped page: not applicable
+            organizationId={id} // scopes the opportunity search
+            entityOptions={entityOptions}
+            onCancel={onCloseFilter}
+            onSubmit={onSubmitFilter}
+            filterOptions={[LinkAdminFilterOptions.ENTITIES]}
+          />
+        </div>
+      </CustomModal>
 
       {/* QR CODE DIALOG */}
       <CustomModal
         isOpen={showQRCode}
         shouldCloseOnOverlayClick={false}
-        onRequestClose={() => {
-          setShowQRCode(false);
-          setQRCodeImageData(null);
-        }}
+        onRequestClose={onCloseQRCode}
         className={`md:max-h-[650px] md:w-[600px]`}
       >
-        <div className="flex h-full flex-col gap-2 overflow-y-auto">
-          {/* HEADER WITH CLOSE BUTTON */}
-          <div className="bg-green flex flex-row p-4 shadow-lg">
-            <h1 className="grow"></h1>
-            <button
-              type="button"
-              className="btn btn-circle text-gray-dark hover:bg-gray"
-              onClick={() => {
-                setShowQRCode(false);
-                setQRCodeImageData(null);
-              }}
-            >
-              <IoMdClose className="h-6 w-6"></IoMdClose>
-            </button>
-          </div>
+        <div className="flex h-full flex-col overflow-y-auto">
+          <ModalHeader
+            title="QR code"
+            icon={<IoShareSocialOutline className="h-5 w-5" />}
+            onClose={onCloseQRCode}
+          />
 
-          {/* MAIN CONTENT */}
-          <div className="flex flex-col items-center justify-center gap-4 p-8">
-            <div className="border-green-dark -mt-16 flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-lg">
-              <IoShareSocialOutline className="h-7 w-7" />
-            </div>
-
-            {/* QR CODE */}
+          <ModalBody>
             {showQRCode && qrCodeImageData && (
               <>
                 <h5>Scan the QR Code with your device&apos;s camera</h5>
@@ -399,342 +438,127 @@ const Links: NextPageWithLayout<{
                 />
               </>
             )}
+          </ModalBody>
 
+          <ModalActions>
             <button
               type="button"
-              className="btn border-purple text-purple mt-10 rounded-full bg-white normal-case md:w-[150px]"
-              onClick={() => {
-                setShowQRCode(false);
-                setQRCodeImageData(null);
-              }}
+              className={`${BTN_SECONDARY} ${MODAL_ACTION_WIDTH}`}
+              onClick={onCloseQRCode}
             >
+              <IoMdClose className="h-5 w-5" />
               Close
             </button>
-          </div>
+          </ModalActions>
         </div>
       </CustomModal>
 
-      <div className="z-10 container mt-14 max-w-7xl px-2 py-8 md:mt-[7rem]">
-        <div className="flex flex-col gap-4 py-4">
-          <h3 className="mt-3 mb-6 flex items-center text-xl font-semibold tracking-normal whitespace-nowrap text-white md:mt-0 md:mb-9 md:text-3xl">
-            🔗 Links <LimitedFunctionalityBadge />
-          </h3>
-
-          {/* TABBED NAVIGATION */}
-          <CustomSlider sliderClassName="!gap-6">
-            <Link
-              href={`/organisations/${id}/links`}
-              role="tab"
-              className={`border-b-4 py-2 whitespace-nowrap text-white ${
-                !statuses
-                  ? "border-orange"
-                  : "hover:border-orange hover:text-gray"
-              }`}
-            >
-              All
-              {(totalCountAll ?? 0) > 0 && (
-                <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
-                  {totalCountAll}
-                </div>
-              )}
-            </Link>
-            <Link
-              href={`/organisations/${id}/links?statuses=active`}
-              role="tab"
-              className={`border-b-4 py-2 whitespace-nowrap text-white ${
-                statuses === "active"
-                  ? "border-orange"
-                  : "hover:border-orange hover:text-gray"
-              }`}
-            >
-              Active
-              {(totalCountActive ?? 0) > 0 && (
-                <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
-                  {totalCountActive}
-                </div>
-              )}
-            </Link>
-            <Link
-              href={`/organisations/${id}/links?statuses=inactive`}
-              role="tab"
-              className={`border-b-4 py-2 whitespace-nowrap text-white ${
-                statuses === "inactive"
-                  ? "border-orange"
-                  : "hover:border-orange hover:text-gray"
-              }`}
-            >
-              Inactive
-              {(totalCountInactive ?? 0) > 0 && (
-                <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
-                  {totalCountInactive}
-                </div>
-              )}
-            </Link>
-            <Link
-              href={`/organisations/${id}/links?statuses=expired`}
-              role="tab"
-              className={`border-b-4 py-2 whitespace-nowrap text-white ${
-                statuses === "expired"
-                  ? "border-orange"
-                  : "hover:border-orange hover:text-gray"
-              }`}
-            >
-              Expired
-              {(totalCountExpired ?? 0) > 0 && (
-                <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
-                  {totalCountExpired}
-                </div>
-              )}
-            </Link>
-            <Link
-              href={`/organisations/${id}/links?statuses=limitReached`}
-              role="tab"
-              className={`border-b-4 py-2 whitespace-nowrap text-white ${
-                statuses === "limitReached"
-                  ? "border-orange"
-                  : "hover:border-orange hover:text-gray"
-              }`}
-            >
-              Limit Reached
-              {(totalCountLimitReached ?? 0) > 0 && (
-                <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
-                  {totalCountLimitReached}
-                </div>
-              )}
-            </Link>
-            <Link
-              href={`/organisations/${id}/links?statuses=deleted`}
-              role="tab"
-              className={`border-b-4 py-2 whitespace-nowrap text-white ${
-                statuses === "deleted"
-                  ? "border-orange"
-                  : "hover:border-orange hover:text-gray"
-              }`}
-            >
-              Deleted
-              {(totalCountDeleted ?? 0) > 0 && (
-                <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
-                  {totalCountDeleted}
-                </div>
-              )}
-            </Link>
-          </CustomSlider>
-
-          {/* FILTERS */}
-          <div className="flex w-full grow items-center justify-between gap-4 sm:justify-end">
-            <LinkSearchFilters
-              searchFilter={searchFilter}
-              filterOptions={[
-                LinkFilterOptions.VALUECONTAINS,
-                LinkFilterOptions.ENTITIES,
-              ]}
-              onSubmit={(e) => onSubmitFilter(e)}
-            />
-
-            {renderAddLinkButton()}
-          </div>
-        </div>
-
-        <>
-          {/* NO ROWS */}
-          {links && links.items?.length === 0 && (
+      <ListPageShell>
+        <ListPageHeader
+          title={
             <>
-              {/* ALL TAB */}
-              {!isSearchPerformed && (
-                <div className="flex flex-col items-center">
-                  <NoRowsMessage
-                    title={"Welcome to Links!"}
-                    description={
-                      "Create a link to auto-verify participants for your opportunities!<br/><br/>When the link is clicked, Youth will enter Yoma to claim their opportunity.<br/><br/>The link needs limits on usage and an expiry date.<br/><br/>Create a QR code from your link, and let youth scan to complete."
-                    }
-                    icon="🚀"
-                  />
-                </div>
-              )}
-
-              {/* OTHER TABS */}
-              {isSearchPerformed && (
-                <div className="flex flex-col items-center">
-                  <NoRowsMessage
-                    title={"No links found"}
-                    description={"Please try refining your search query."}
-                  />
-                </div>
-              )}
+              🔗 Links <LimitedFunctionalityBadge />
             </>
+          }
+          description="Links that let youth claim your opportunities instantly, with usage limits and expiry."
+        >
+          {/* TABBED NAVIGATION */}
+          <ListPageStatusTabs
+            basePath={`/organisations/${id}/links`}
+            baseParams={tabBaseParams}
+            statusSpec={LINK_STATUS_PARAM}
+            status={status}
+            counts={tabCounts}
+            idPrefix="link"
+          />
+        </ListPageHeader>
+
+        {/* MAIN CONTENT */}
+        <ListPageBody>
+          {/* SEARCH & FILTERS */}
+          <ListPageSearchToolbar
+            defaultValue={searchFilter.valueContains}
+            onSearch={onSearch}
+            openFilter={setFilterFullWindowVisible}
+            appliedFilterCount={appliedFilterCount}
+          >
+            <DropdownMenu
+              label="Actions"
+              triggerIcon={<IoIosSettings className="h-5 w-5" />}
+              // sized & coloured to match the Filters button next to it
+              className="w-full md:w-40"
+              buttonClassName={LIST_PAGE_TOOLBAR_BUTTON_CLASSES}
+              items={[
+                {
+                  label: "Add link",
+                  href: `/organisations/${id}/links/create${`?returnUrl=${encodeURIComponent(
+                    getSafeUrl(returnUrl, router.asPath),
+                  )}`}`,
+                  icon: <FaPlusCircle className="h-4 w-4" />,
+                  disabled: currentOrganisationInactive,
+                  disabledTooltip:
+                    "Links cannot be created while the organisation is inactive",
+                  id: "btnCreateLink",
+                },
+              ]}
+            />
+          </ListPageSearchToolbar>
+          {/* APPLIED FILTER BADGES */}
+          {appliedFilterCount > 0 && (
+            <LinkAdminFilterBadges
+              searchFilter={searchFilter}
+              spec={LINK_ORG_ADMIN_FILTER_SPEC}
+              entityOptions={entityOptions}
+              onSubmit={onSubmitFilter}
+              className="-ml-2"
+            />
           )}
-
-          {/* GRID */}
-          {links && links.items?.length > 0 && (
-            <>
-              {/* MOBILE */}
-              <div className="flex flex-col gap-4 md:hidden">
-                {links.items.map((item) => (
-                  <div
-                    key={`sm_${item.id}`}
-                    className="shadow-custom flex flex-col gap-2 rounded-lg bg-white p-4"
-                  >
-                    {/* Link & Actions */}
-                    <div className="flex flex-row gap-2">
-                      <div className="flex w-full flex-col gap-1">
-                        <Link
-                          title={item.name}
-                          href={`/organisations/${
-                            item.entityOrganizationId
-                          }/links/${item.id}${`?returnUrl=${encodeURIComponent(
-                            getSafeUrl(returnUrl, router.asPath),
-                          )}`}`}
-                          className="text-gray-dark block w-full max-w-[300px] overflow-hidden text-sm font-semibold text-ellipsis whitespace-nowrap underline"
-                        >
-                          {item.name}
-                        </Link>
-                        {item.description && (
-                          <span
-                            title={item.description}
-                            className="block w-full max-w-[300px] overflow-hidden text-xs text-ellipsis whitespace-nowrap text-gray-500"
-                          >
-                            {item.description}
-                          </span>
-                        )}
-                      </div>
-
-                      <LinkActions
-                        link={item}
-                        onGenerateQRCode={onClick_GenerateQRCode}
-                        returnUrl={returnUrl?.toString()}
-                        organizationId={id}
-                        actionOptions={[
-                          LinkActionOptions.ACTIVATE,
-                          LinkActionOptions.GO_TO_OVERVIEW,
-                          LinkActionOptions.REMIND_PARTICIPANTS,
-                          LinkActionOptions.COPY_LINK,
-                          LinkActionOptions.GENERATE_QR_CODE,
-                          LinkActionOptions.DELETE,
-                        ]}
-                      />
-                    </div>
-
-                    {/* Opportunity */}
-                    <div className="flex flex-row items-start justify-between py-1">
-                      <span className="text-gray-dark text-sm font-normal">
-                        Opportunity
-                      </span>
-                      <span className="text-sm">
-                        <Link
-                          href={`/organisations/${
-                            item.entityOrganizationId
-                          }/opportunities/${
-                            item.entityId
-                          }/info${`?returnUrl=${encodeURIComponent(
-                            getSafeUrl(returnUrl, router.asPath),
-                          )}`}`}
-                          className="text-gray-dark block max-w-[160px] overflow-hidden text-sm font-normal text-ellipsis whitespace-nowrap underline"
-                        >
-                          {item.entityTitle}
-                        </Link>
-                      </span>
-                    </div>
-
-                    {/* Usage */}
-                    <div className="flex flex-row items-center justify-between py-1">
-                      <span className="text-gray-dark text-sm font-normal">
-                        Usage
-                      </span>
-                      {item.lockToDistributionList ? (
-                        <span className="badge bg-green-light text-yellow flex items-center">
-                          <IoMdLock className="h-4 w-4" />
-                          <span className="ml-1 text-xs">
-                            {item.usagesTotal ?? "0"} /{" "}
-                            {item.usagesLimit !== null
-                              ? item.usagesLimit
-                              : "No limit"}
-                          </span>
-                        </span>
-                      ) : (
-                        <span className="badge bg-green-light text-green flex items-center">
-                          <IoMdPerson className="h-4 w-4" />
-                          <span className="ml-1 text-xs">
-                            {item.usagesTotal ?? "0"} /{" "}
-                            {item.usagesLimit !== null
-                              ? item.usagesLimit
-                              : "No limit"}
-                          </span>
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Expires */}
-                    <div className="flex flex-row items-center justify-between py-1">
-                      <span className="text-gray-dark text-sm font-normal">
-                        Expires
-                      </span>
-                      {item.dateEnd ? (
-                        <span className="badge bg-yellow-light text-yellow flex items-center">
-                          <IoMdCalendar className="h-4 w-4" />
-                          <span className="ml-1 text-xs">
-                            <Moment format={DATE_FORMAT_HUMAN} utc={true}>
-                              {item.dateEnd}
-                            </Moment>
-                          </span>
-                        </span>
-                      ) : (
-                        <span className="text-xs text-gray-500">N/A</span>
-                      )}
-                    </div>
-
-                    {/* Status */}
-                    <div className="flex flex-row items-center justify-between py-1">
-                      <span className="text-gray-dark text-sm font-normal">
-                        Status
-                      </span>
-                      {item.status == "Active" && (
-                        <span className="badge bg-blue-light text-blue">
-                          Active
-                        </span>
-                      )}
-                      {item.status == "Expired" && (
-                        <span className="badge bg-green-light text-yellow">
-                          Expired
-                        </span>
-                      )}
-                      {item.status == "Inactive" && (
-                        <span className="badge bg-yellow-tint text-yellow">
-                          Inactive
-                        </span>
-                      )}
-                      {item.status == "LimitReached" && (
-                        <span className="badge bg-green-light text-red-400">
-                          Limit Reached
-                        </span>
-                      )}
-                      {item.status == "Deleted" && (
-                        <span className="badge bg-green-light text-red-400">
-                          Deleted
-                        </span>
-                      )}
-                    </div>
+          <ListPageResults
+            isLoading={isLoadingSearchResults}
+            isShowingPreviousResults={isShowingPreviousResults}
+            id="results"
+          >
+            {/* NO ROWS */}
+            {links && links.items?.length === 0 && (
+              <>
+                {/* ALL TAB, NO FILTERS */}
+                {!isSearchPerformed && status === null && (
+                  <div className="flex flex-col items-center">
+                    <NoRowsMessage
+                      title={"Welcome to Links!"}
+                      description={
+                        "Create a link to auto-verify participants for your opportunities!<br/><br/>When the link is clicked, Youth will enter Yoma to claim their opportunity.<br/><br/>The link needs limits on usage and an expiry date.<br/><br/>Create a QR code from your link, and let youth scan to complete."
+                      }
+                      icon="🚀"
+                    />
                   </div>
-                ))}
-              </div>
+                )}
 
-              {/* DEKSTOP */}
-              <table className="border-gray-light hidden border-separate rounded-lg bg-white md:table md:table-auto">
-                <thead>
-                  <tr className="border-gray text-gray-dark">
-                    <th className="border-gray-light !py-4">Link</th>
-                    <th className="border-gray-light !py-4">Opportunity</th>
-                    <th className="border-gray-light">Usage</th>
-                    <th className="border-gray-light">Expires</th>
-                    <th className="border-gray-light">Status</th>
-                    <th className="border-gray-light text-center">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
+                {/* OTHER TABS / FILTERED */}
+                {(isSearchPerformed || status !== null) && (
+                  <div className="flex flex-col items-center">
+                    <NoRowsMessage
+                      title={"No links found"}
+                      description={"Please try refining your search query."}
+                    />
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* GRID */}
+            {links && links.items?.length > 0 && (
+              <>
+                {/* MOBILE */}
+                <div className="flex flex-col gap-4 md:hidden">
                   {links.items.map((item) => (
-                    <tr key={`grid_md_${item.id}`} className="">
-                      {/* Link */}
-                      <td className="border-gray-light w-[180px] max-w-[220px] border-t-2 !py-4 align-top">
-                        <div className="flex flex-col gap-1">
+                    <div
+                      key={`sm_${item.id}`}
+                      className="shadow-custom flex flex-col gap-2 rounded-lg bg-white p-4"
+                    >
+                      {/* Link & Actions */}
+                      <div className="flex flex-row gap-2">
+                        <div className="flex w-full flex-col gap-1">
                           <Link
                             title={item.name}
                             href={`/organisations/${
@@ -742,74 +566,92 @@ const Links: NextPageWithLayout<{
                             }/links/${item.id}${`?returnUrl=${encodeURIComponent(
                               getSafeUrl(returnUrl, router.asPath),
                             )}`}`}
-                            className="text-gray-dark block w-full max-w-[160px] overflow-hidden text-sm text-ellipsis whitespace-nowrap underline"
+                            className="text-gray-dark block w-full max-w-[300px] overflow-hidden text-sm font-semibold text-ellipsis whitespace-nowrap underline"
                           >
                             {item.name}
                           </Link>
-                          {/* {item.description && (
+                          {item.description && (
                             <span
                               title={item.description}
-                              className="block w-full max-w-[160px] overflow-hidden text-xs text-ellipsis whitespace-nowrap text-gray-500"
+                              className="block w-full max-w-[300px] overflow-hidden text-xs text-ellipsis whitespace-nowrap text-gray-500"
                             >
                               {item.description}
                             </span>
-                          )} */}
+                          )}
                         </div>
-                      </td>
+
+                        <LinkActions
+                          link={item}
+                          onGenerateQRCode={onClick_GenerateQRCode}
+                          returnUrl={returnUrl?.toString()}
+                          organizationId={id}
+                          actionOptions={[
+                            LinkActionOptions.ACTIVATE,
+                            LinkActionOptions.GO_TO_OVERVIEW,
+                            LinkActionOptions.REMIND_PARTICIPANTS,
+                            LinkActionOptions.COPY_LINK,
+                            LinkActionOptions.GENERATE_QR_CODE,
+                            LinkActionOptions.DELETE,
+                          ]}
+                        />
+                      </div>
 
                       {/* Opportunity */}
-                      <td className="border-gray-light w-[180px] max-w-[180px] border-t-2 !py-4 align-top">
-                        {item.entityType == "Opportunity" &&
-                          item.entityOrganizationId && (
-                            <Link
-                              title={item.entityTitle}
-                              href={`/organisations/${
-                                item.entityOrganizationId
-                              }/opportunities/${
-                                item.entityId
-                              }/info${`?returnUrl=${encodeURIComponent(
-                                getSafeUrl(returnUrl, router.asPath),
-                              )}`}`}
-                              className="text-gray-dark block w-full max-w-[160px] overflow-hidden text-sm text-ellipsis whitespace-nowrap underline"
-                            >
-                              {item.entityTitle}
-                            </Link>
-                          )}
-                        {item.entityType != "Opportunity" && (
-                          <span
-                            title={item.entityTitle}
-                            className="block w-full max-w-[160px] overflow-hidden text-sm text-ellipsis whitespace-nowrap"
+                      <div className="flex flex-row items-start justify-between py-1">
+                        <span className="text-gray-dark text-sm font-normal">
+                          Opportunity
+                        </span>
+                        <span className="text-sm">
+                          <Link
+                            href={`/organisations/${
+                              item.entityOrganizationId
+                            }/opportunities/${
+                              item.entityId
+                            }/info${`?returnUrl=${encodeURIComponent(
+                              getSafeUrl(returnUrl, router.asPath),
+                            )}`}`}
+                            className="text-gray-dark block max-w-[160px] overflow-hidden text-sm font-normal text-ellipsis whitespace-nowrap underline"
                           >
                             {item.entityTitle}
-                          </span>
-                        )}
-                      </td>
+                          </Link>
+                        </span>
+                      </div>
 
-                      <td className="border-gray-light border-t-2">
-                        {item.lockToDistributionList && (
-                          <span className="badge bg-green-light text-yellow">
+                      {/* Usage */}
+                      <div className="flex flex-row items-center justify-between py-1">
+                        <span className="text-gray-dark text-sm font-normal">
+                          Usage
+                        </span>
+                        {item.lockToDistributionList ? (
+                          <span className="badge bg-green-light text-yellow flex items-center">
                             <IoMdLock className="h-4 w-4" />
                             <span className="ml-1 text-xs">
                               {item.usagesTotal ?? "0"} /{" "}
-                              {item.usagesLimit ?? "0"}
+                              {item.usagesLimit !== null
+                                ? item.usagesLimit
+                                : "No limit"}
                             </span>
                           </span>
-                        )}
-
-                        {!item.lockToDistributionList && (
-                          <span className="badge bg-green-light text-green">
+                        ) : (
+                          <span className="badge bg-green-light text-green flex items-center">
                             <IoMdPerson className="h-4 w-4" />
                             <span className="ml-1 text-xs">
                               {item.usagesTotal ?? "0"} /{" "}
-                              {item.usagesLimit ?? "0"}
+                              {item.usagesLimit !== null
+                                ? item.usagesLimit
+                                : "No limit"}
                             </span>
                           </span>
                         )}
-                      </td>
+                      </div>
 
-                      <td className="border-gray-light border-t-2">
+                      {/* Expires */}
+                      <div className="flex flex-row items-center justify-between py-1">
+                        <span className="text-gray-dark text-sm font-normal">
+                          Expires
+                        </span>
                         {item.dateEnd ? (
-                          <span className="badge bg-yellow-light text-yellow">
+                          <span className="badge bg-yellow-light text-yellow flex items-center">
                             <IoMdCalendar className="h-4 w-4" />
                             <span className="ml-1 text-xs">
                               <Moment format={DATE_FORMAT_HUMAN} utc={true}>
@@ -818,12 +660,15 @@ const Links: NextPageWithLayout<{
                             </span>
                           </span>
                         ) : (
-                          "N/A"
+                          <span className="text-xs text-gray-500">N/A</span>
                         )}
-                      </td>
+                      </div>
 
-                      {/* STATUS */}
-                      <td className="border-gray-light border-t-2">
+                      {/* Status */}
+                      <div className="flex flex-row items-center justify-between py-1">
+                        <span className="text-gray-dark text-sm font-normal">
+                          Status
+                        </span>
                         {item.status == "Active" && (
                           <span className="badge bg-blue-light text-blue">
                             Active
@@ -849,48 +694,176 @@ const Links: NextPageWithLayout<{
                             Deleted
                           </span>
                         )}
-                      </td>
-
-                      {/* BUTTONS */}
-                      <td className="border-gray-light border-t-2 whitespace-nowrap">
-                        <div className="flex flex-row items-center justify-center gap-2">
-                          {/* ACTIONS */}
-                          <LinkActions
-                            link={item}
-                            onGenerateQRCode={onClick_GenerateQRCode}
-                            returnUrl={returnUrl?.toString()}
-                            organizationId={id}
-                            actionOptions={[
-                              LinkActionOptions.ACTIVATE,
-                              LinkActionOptions.GO_TO_OVERVIEW,
-                              LinkActionOptions.REMIND_PARTICIPANTS,
-                              LinkActionOptions.COPY_LINK,
-                              LinkActionOptions.GENERATE_QR_CODE,
-                              LinkActionOptions.DELETE,
-                            ]}
-                          />
-                        </div>
-                      </td>
-                    </tr>
+                      </div>
+                    </div>
                   ))}
-                </tbody>
-              </table>
+                </div>
 
-              {/* PAGINATION */}
-              <div className="mt-2 grid place-items-center justify-center">
-                <PaginationButtons
-                  currentPage={page ? parseInt(page) : 1}
+                {/* DEKSTOP */}
+                <table className="border-gray-light hidden border-separate rounded-lg bg-white md:table md:table-auto">
+                  <thead>
+                    <tr className="border-gray text-gray-dark">
+                      <th className="border-gray-light !py-4">Link</th>
+                      <th className="border-gray-light !py-4">Opportunity</th>
+                      <th className="border-gray-light">Usage</th>
+                      <th className="border-gray-light">Expires</th>
+                      <th className="border-gray-light">Status</th>
+                      <th className="border-gray-light text-center">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {links.items.map((item) => (
+                      <tr key={`grid_md_${item.id}`} className="">
+                        {/* Link */}
+                        <td className="border-gray-light w-[180px] max-w-[220px] border-t-2 !py-4 align-top">
+                          <div className="flex flex-col gap-1">
+                            <Link
+                              title={item.name}
+                              href={`/organisations/${
+                                item.entityOrganizationId
+                              }/links/${item.id}${`?returnUrl=${encodeURIComponent(
+                                getSafeUrl(returnUrl, router.asPath),
+                              )}`}`}
+                              className="text-gray-dark block w-full max-w-[160px] overflow-hidden text-sm text-ellipsis whitespace-nowrap underline"
+                            >
+                              {item.name}
+                            </Link>
+                          </div>
+                        </td>
+
+                        {/* Opportunity */}
+                        <td className="border-gray-light w-[180px] max-w-[180px] border-t-2 !py-4 align-top">
+                          {item.entityType == "Opportunity" &&
+                            item.entityOrganizationId && (
+                              <Link
+                                title={item.entityTitle}
+                                href={`/organisations/${
+                                  item.entityOrganizationId
+                                }/opportunities/${
+                                  item.entityId
+                                }/info${`?returnUrl=${encodeURIComponent(
+                                  getSafeUrl(returnUrl, router.asPath),
+                                )}`}`}
+                                className="text-gray-dark block w-full max-w-[160px] overflow-hidden text-sm text-ellipsis whitespace-nowrap underline"
+                              >
+                                {item.entityTitle}
+                              </Link>
+                            )}
+                          {item.entityType != "Opportunity" && (
+                            <span
+                              title={item.entityTitle}
+                              className="block w-full max-w-[160px] overflow-hidden text-sm text-ellipsis whitespace-nowrap"
+                            >
+                              {item.entityTitle}
+                            </span>
+                          )}
+                        </td>
+
+                        <td className="border-gray-light border-t-2">
+                          {item.lockToDistributionList && (
+                            <span className="badge bg-green-light text-yellow">
+                              <IoMdLock className="h-4 w-4" />
+                              <span className="ml-1 text-xs">
+                                {item.usagesTotal ?? "0"} /{" "}
+                                {item.usagesLimit ?? "0"}
+                              </span>
+                            </span>
+                          )}
+
+                          {!item.lockToDistributionList && (
+                            <span className="badge bg-green-light text-green">
+                              <IoMdPerson className="h-4 w-4" />
+                              <span className="ml-1 text-xs">
+                                {item.usagesTotal ?? "0"} /{" "}
+                                {item.usagesLimit ?? "0"}
+                              </span>
+                            </span>
+                          )}
+                        </td>
+
+                        <td className="border-gray-light border-t-2">
+                          {item.dateEnd ? (
+                            <span className="badge bg-yellow-light text-yellow">
+                              <IoMdCalendar className="h-4 w-4" />
+                              <span className="ml-1 text-xs">
+                                <Moment format={DATE_FORMAT_HUMAN} utc={true}>
+                                  {item.dateEnd}
+                                </Moment>
+                              </span>
+                            </span>
+                          ) : (
+                            "N/A"
+                          )}
+                        </td>
+
+                        {/* STATUS */}
+                        <td className="border-gray-light border-t-2">
+                          {item.status == "Active" && (
+                            <span className="badge bg-blue-light text-blue">
+                              Active
+                            </span>
+                          )}
+                          {item.status == "Expired" && (
+                            <span className="badge bg-green-light text-yellow">
+                              Expired
+                            </span>
+                          )}
+                          {item.status == "Inactive" && (
+                            <span className="badge bg-yellow-tint text-yellow">
+                              Inactive
+                            </span>
+                          )}
+                          {item.status == "LimitReached" && (
+                            <span className="badge bg-green-light text-red-400">
+                              Limit Reached
+                            </span>
+                          )}
+                          {item.status == "Deleted" && (
+                            <span className="badge bg-green-light text-red-400">
+                              Deleted
+                            </span>
+                          )}
+                        </td>
+
+                        {/* BUTTONS */}
+                        <td className="border-gray-light border-t-2 whitespace-nowrap">
+                          <div className="flex flex-row items-center justify-center gap-2">
+                            {/* ACTIONS */}
+                            <LinkActions
+                              link={item}
+                              onGenerateQRCode={onClick_GenerateQRCode}
+                              returnUrl={returnUrl?.toString()}
+                              organizationId={id}
+                              actionOptions={[
+                                LinkActionOptions.ACTIVATE,
+                                LinkActionOptions.GO_TO_OVERVIEW,
+                                LinkActionOptions.REMIND_PARTICIPANTS,
+                                LinkActionOptions.COPY_LINK,
+                                LinkActionOptions.GENERATE_QR_CODE,
+                                LinkActionOptions.DELETE,
+                              ]}
+                            />
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+
+                {/* PAGINATION */}
+                <ListPagePagination
+                  currentPage={searchFilter.pageNumber ?? 1}
                   totalItems={links?.totalCount ?? 0}
                   pageSize={PAGE_SIZE}
                   onClick={handlePagerChange}
-                  showPages={false}
-                  showInfo={true}
+                  isShowingPreviousResults={isShowingPreviousResults}
+                  className="mt-2"
                 />
-              </div>
-            </>
-          )}
-        </>
-      </div>
+              </>
+            )}
+          </ListPageResults>
+        </ListPageBody>
+      </ListPageShell>
     </>
   );
 };

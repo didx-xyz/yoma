@@ -32,7 +32,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
     private readonly INotificationURLFactory _notificationURLFactory;
     private readonly INotificationDeliveryService _notificationDeliveryService;
     private readonly IDistributedLockService _distributedLockService;
-    private readonly IRepositoryBatchedWithNavigation<Models.MyOpportunity> _myOpportunityRepository;
+    private readonly IRepositoryBatchedWithNavigationAndCustomFieldFilter<Models.MyOpportunity> _myOpportunityRepository;
     private readonly IRepository<MyOpportunityVerification> _myOpportunityVerificationRepository;
 
     internal static readonly VerificationStatus[] Statuses_Rejectable = [VerificationStatus.Pending];
@@ -50,7 +50,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         INotificationURLFactory notificationURLFactory,
         INotificationDeliveryService notificationDeliveryService,
         IDistributedLockService distributedLockService,
-        IRepositoryBatchedWithNavigation<Models.MyOpportunity> myOpportunityRepository,
+        IRepositoryBatchedWithNavigationAndCustomFieldFilter<Models.MyOpportunity> myOpportunityRepository,
         IRepository<MyOpportunityVerification> myOpportunityVerificationRepository)
     {
       _logger = logger;
@@ -170,7 +170,6 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
                       Comment = myOp.CommentVerification,
                       URL = _notificationURLFactory.OpportunityVerificationItemURL(notificationType, myOp.OpportunityId, null),
                       ZltoReward = myOp.ZltoReward,
-                      YomaReward = myOp.YomaReward
                     });
                   }
 
@@ -395,7 +394,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             }
           }
 
-          await _myOpportunityService.PerformActionSendForVerificationManual(item.UserId, item.OpportunityId, request, true);
+          await _myOpportunityService.PerformActionSendForVerificationManualSeed(item.UserId, item.OpportunityId, request, true);
 
         }
         catch (FluentValidation.ValidationException ex)

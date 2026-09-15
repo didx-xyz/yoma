@@ -63,6 +63,7 @@ import {
   ReferralProgramActionOptions,
 } from "~/components/Referrals/AdminReferralProgramActions";
 import ProgramImageUpload from "~/components/Referrals/ProgramImageUpload";
+import ReferralTreasuryCapacityNotice from "~/components/Referrals/Rewards/ReferralTreasuryCapacityNotice";
 import { Editor } from "~/components/RichText/Editor";
 import { ProgramStatusBadge } from "~/components/Referrals/ProgramStatusBadge";
 import { ApiErrors } from "~/components/Status/ApiErrors";
@@ -75,7 +76,9 @@ import {
   useReferralProgramByIdQuery,
   useReferralProgramStatusMutation,
 } from "~/hooks/useReferralProgramMutations";
+import { useTreasuryQuery } from "~/hooks/useTreasuryMutations";
 import { COUNTRY_CODE_WW, THEME_BLUE } from "~/lib/constants";
+import { amountOrNull } from "~/lib/format/amountInput";
 import {
   dateInputToUTC,
   dateInputToUTCEndOfDay,
@@ -631,6 +634,15 @@ const ReferralProgramForm: NextPageWithLayout = () => {
     ? (programError.response?.status ?? 500)
     : null;
 
+  /**
+   * The Treasury pool a referral completion draws from before the programme's own. Admin-only, like
+   * every endpoint on this page; used for the soft capacity notice on the Completion & Rewards step
+   * and for nothing else, so a failure here is silent rather than blocking the form.
+   */
+  const { data: treasury } = useTreasuryQuery({
+    enabled: sessionStatus === "authenticated" && router.isReady,
+  });
+
   const statusMutation = useReferralProgramStatusMutation({
     programId: id,
     programName: program?.name,
@@ -687,6 +699,7 @@ const ReferralProgramForm: NextPageWithLayout = () => {
       hidden: false,
       referrerLimit: null,
       referrerTotal: null,
+      referrerBalance: null,
       completionTotal: null,
       status: "Active",
       statusId: "1",
@@ -843,6 +856,36 @@ const ReferralProgramForm: NextPageWithLayout = () => {
   const completionLimitRefereeWatch = watchStep3("completionLimitReferee");
   const completionLimitWatch = watchStep3("completionLimit");
   const completionWindowInDaysWatch = watchStep3("completionWindowInDays");
+
+  /**
+   * The reward figures the Treasury-capacity notice reads on step 3, assembled from what the admin
+   * has typed plus what the server has already derived.
+   *
+   * ⚠️ The programme cap is only applied when the pool field still matches the **saved** pool. A pool
+   * the admin has just typed has no server-derived balance to go with it, and the UI never computes a
+   * balance (working plan, domain rules) — so the programme cap is dropped and the notice falls back
+   * to the Treasury cap alone. Understating the cap is safe; inventing a balance is not.
+   */
+  const capacityFigures = useMemo(() => {
+    const typedPool = amountOrNull(String(zltoRewardPoolWatch ?? ""));
+    const savedPool = program?.zltoRewardPool ?? null;
+    const poolIsSaved = typedPool === savedPool;
+
+    return {
+      zltoRewardReferrer: amountOrNull(String(zltoRewardReferrerWatch ?? "")),
+      zltoRewardReferee: amountOrNull(String(zltoRewardRefereeWatch ?? "")),
+      zltoRewardPool: poolIsSaved ? savedPool : null,
+      zltoRewardBalance: poolIsSaved
+        ? (program?.zltoRewardBalance ?? null)
+        : null,
+    };
+  }, [
+    zltoRewardReferrerWatch,
+    zltoRewardRefereeWatch,
+    zltoRewardPoolWatch,
+    program?.zltoRewardPool,
+    program?.zltoRewardBalance,
+  ]);
 
   const step1ImageWatch = watchStep1("image" as any) as any;
   const step1ImageUrlWatch = watchStep1("imageURL" as any) as
@@ -2434,6 +2477,16 @@ const ReferralProgramForm: NextPageWithLayout = () => {
                     {/* ZLTO Rewards */}
                     <div className="flex flex-col gap-4">
                       <h6 className="font-semibold">ZLTO Rewards</h6>
+
+                      {/* Soft guidance, deliberately non-blocking: the server never checks a
+                          programme pool against Treasury capacity, so nothing here sets a field
+                          error or disables Next. It only says what a completion would actually pay
+                          today. */}
+                      <ReferralTreasuryCapacityNotice
+                        program={capacityFigures}
+                        treasury={treasury}
+                        treasuryManageHref="/admin/treasury?tab=manage"
+                      />
 
                       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                         <FormField

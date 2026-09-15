@@ -53,7 +53,9 @@ namespace Yoma.Core.Infrastructure.AriesCloud
       services.AddScoped<ISSIProviderClientFactory, AriesCloudClientFactory>();
 
       //service
-      services.AddScoped<IExecutionStrategyService, ExecutionStrategyService>();
+      // Register concretely so this provider cannot override the application database
+      // IExecutionStrategyService registration.
+      services.AddScoped<ExecutionStrategyService>();
       services.AddScoped<ISSEListenerService, SSEListenerService>();
     }
 

@@ -5,6 +5,7 @@ using Yoma.Core.Infrastructure.Database.Entity.Entities;
 using Yoma.Core.Infrastructure.Database.Lookups.Entities;
 using Yoma.Core.Infrastructure.Database.Marketplace.Entities.Lookups;
 using Yoma.Core.Infrastructure.Database.Opportunity.Entities;
+using Yoma.Core.Infrastructure.Database.Payout.Entities.Lookups;
 using Yoma.Core.Infrastructure.Database.Referral.Entities;
 using Yoma.Core.Infrastructure.Database.Referral.Entities.Lookups;
 using Yoma.Core.Infrastructure.Database.Reward.Entities.Lookups;
@@ -38,6 +39,12 @@ namespace Yoma.Core.Infrastructure.Database.Context
     #endregion Lookups
 
     public DbSet<BlobObject> BlobObject { get; set; }
+
+    public DbSet<CustomFieldDefinition> CustomFieldDefinition { get; set; }
+
+    public DbSet<CustomFieldOption> CustomFieldOption { get; set; }
+
+    public DbSet<CustomFieldValue> CustomFieldValue { get; set; }
 
     public DbSet<DownloadSchedule> DownloadSchedule { get; set; }
     #endregion Core
@@ -148,6 +155,14 @@ namespace Yoma.Core.Infrastructure.Database.Context
     public DbSet<PartnerSync.Entities.ProcessingLog> PartnerSyncProcessingLog { get; set; }
     #endregion PartnerSync
 
+    #region Payout
+    #region Lookups
+    public DbSet<PayoutTransactionStatus> PayoutTransactionStatus { get; set; }
+    #endregion Lookups
+
+    public DbSet<Payout.Entities.PayoutTransaction> PayoutTransaction { get; set; }
+    #endregion Payout
+
     #region Referral
     #region Lookups
     public DbSet<BlockReason> ReferralBlockReason { get; set; }
@@ -217,6 +232,8 @@ namespace Yoma.Core.Infrastructure.Database.Context
     #region Protected Members
     protected override void OnModelCreating(ModelBuilder builder)
     {
+      builder.HasPostgresExtension("pg_trgm");
+
       builder.Entity<Domain.Core.Models.UnnestedValue>(eb =>
       {
         eb.HasKey(x => x.Id); // keep the key for joins and EF tracking
@@ -254,6 +271,75 @@ namespace Yoma.Core.Infrastructure.Database.Context
           .HasForeignKey(o => o.ModifiedByUserId)
           .OnDelete(DeleteBehavior.NoAction);
       #endregion
+
+      #region Core
+      builder.Entity<CustomFieldDefinition>(entity =>
+      {
+        entity.HasIndex(e => new { e.EntityType, e.Key })
+          .IsUnique()
+          .HasDatabaseName("UX_CustomFieldDefinition_EntityType_Key");
+      });
+
+      builder.Entity<CustomFieldOption>(entity =>
+      {
+        entity.HasOne<CustomFieldDefinition>()
+          .WithMany(e => e.Options)
+          .HasForeignKey(e => e.CustomFieldDefinitionId)
+          .OnDelete(DeleteBehavior.NoAction);
+      });
+
+      builder.Entity<CustomFieldValue>(entity =>
+      {
+        entity.ToTable("CustomFieldValue", "Core", table =>
+        {
+          table.HasCheckConstraint(
+            "CK_CustomFieldValue_Entity",
+            $"(\"{nameof(Core.Entities.CustomFieldValue.OpportunityId)}\" IS NOT NULL AND \"{nameof(Core.Entities.CustomFieldValue.MyOpportunityId)}\" IS NULL) OR (\"{nameof(Core.Entities.CustomFieldValue.OpportunityId)}\" IS NULL AND \"{nameof(Core.Entities.CustomFieldValue.MyOpportunityId)}\" IS NOT NULL)");
+        });
+
+        entity.HasIndex(o => o.Value)
+          .HasMethod("GIN")
+          .HasOperators("gin_trgm_ops")
+          .HasDatabaseName("IX_CustomFieldValue_Value_GIN_Trgm");
+
+        entity.HasIndex(o => o.CustomFieldDefinitionId)
+          .IncludeProperties(o => new { o.OpportunityId, o.MyOpportunityId })
+          .HasDatabaseName("IX_CustomFieldValue_Definition");
+
+        entity.HasIndex(o => new { o.CustomFieldDefinitionId, o.ValueNumeric })
+          .IncludeProperties(o => new { o.OpportunityId, o.MyOpportunityId })
+          .HasFilter($"\"{nameof(Core.Entities.CustomFieldValue.ValueNumeric)}\" IS NOT NULL")
+          .HasDatabaseName("IX_CustomFieldValue_Definition_ValueNumeric");
+
+        entity.HasIndex(o => new { o.CustomFieldDefinitionId, o.ValueDateTime })
+          .IncludeProperties(o => new { o.OpportunityId, o.MyOpportunityId })
+          .HasFilter($"\"{nameof(Core.Entities.CustomFieldValue.ValueDateTime)}\" IS NOT NULL")
+          .HasDatabaseName("IX_CustomFieldValue_Definition_ValueDateTime");
+
+        entity.HasIndex(e => new { e.OpportunityId, e.CustomFieldDefinitionId })
+          .IsUnique()
+          .HasFilter($"\"{nameof(Core.Entities.CustomFieldValue.OpportunityId)}\" IS NOT NULL");
+
+        entity.HasIndex(e => new { e.MyOpportunityId, e.CustomFieldDefinitionId })
+          .IsUnique()
+          .HasFilter($"\"{nameof(Core.Entities.CustomFieldValue.MyOpportunityId)}\" IS NOT NULL");
+
+        entity.HasOne(e => e.CustomFieldDefinition)
+          .WithMany()
+          .HasForeignKey(e => e.CustomFieldDefinitionId)
+          .OnDelete(DeleteBehavior.NoAction);
+
+        entity.HasOne<Opportunity.Entities.Opportunity>()
+          .WithMany(o => o.CustomFieldValues)
+          .HasForeignKey(e => e.OpportunityId)
+          .OnDelete(DeleteBehavior.NoAction);
+
+        entity.HasOne<MyOpportunity.Entities.MyOpportunity>()
+          .WithMany(e => e.CustomFieldValues)
+          .HasForeignKey(e => e.MyOpportunityId)
+          .OnDelete(DeleteBehavior.NoAction);
+      });
+      #endregion Core
 
       #region Entity
       builder.Entity<Organization>()
@@ -401,21 +487,38 @@ namespace Yoma.Core.Infrastructure.Database.Context
           .IsUnique()
           .HasFilter(null);
       #endregion
+      #region Payout
+      builder.Entity<Payout.Entities.PayoutTransaction>(entity =>
+      {
+        entity.HasKey(e => e.Id).HasName("PK_Payout_Transaction");
+        entity.HasIndex(e => e.StatusId).HasDatabaseName("IX_Payout_Transaction_StatusId");
+        entity.HasIndex(e => new { e.Provider, e.TransactionId })
+            .HasDatabaseName("IX_Payout_Transaction_Provider_TransactionId");
+        entity.HasIndex(e => new { e.UserId, e.StatusId, e.DateCreated, e.DateModified })
+            .HasDatabaseName("IX_Payout_Transaction_UserId_StatusId_DateCreated_DateModified");
+      });
+
+      builder.Entity<PayoutTransactionStatus>(entity =>
+      {
+        entity.HasKey(e => e.Id).HasName("PK_Payout_TransactionStatus");
+        entity.HasIndex(e => e.Name)
+            .HasDatabaseName("IX_Payout_TransactionStatus_Name");
+      });
+      #endregion Payout
 
       #region Reward
       // Unique constraint for ZLTO reward issuance.
       // Ensures a user cannot receive the same reward more than once for the same source entity.
       // The filter restricts this uniqueness rule to Provider = ZLTO only.
-      // This allows multiple rows per user where MyOpportunityId and ReferralLinkUsageId are NULL
-      // for other providers (e.g. Chimoney cash-out payouts).
       builder.Entity<Reward.Entities.RewardTransaction>(entity =>
       {
         entity.Property(e => e.Provider)
             .HasConversion<string>()
             .HasDefaultValue(Domain.Reward.Provider.ZLTO.ToString());
 
-        entity.HasIndex(e => new { e.UserId, e.SourceEntityType, e.MyOpportunityId, e.ReferralLinkUsageId })
+        entity.HasIndex(e => new { e.UserId, e.SourceEntityType, e.MyOpportunityId, e.ReferralLinkUsageId, e.PayoutTransactionId })
             .IsUnique()
+            .AreNullsDistinct(false)
             .HasFilter($"\"Provider\" = '{Domain.Reward.Provider.ZLTO}'");
       });
 
@@ -437,8 +540,9 @@ namespace Yoma.Core.Infrastructure.Database.Context
           .HasFilter(null);
 
       builder.Entity<SSICredentialIssuance>()
-          .HasIndex(e => new { e.SchemaName, e.UserId, e.OrganizationId, e.MyOpportunityId })
+          .HasIndex(e => new { e.SchemaTypeId, e.UserId, e.OrganizationId, e.MyOpportunityId })
           .IsUnique()
+          .AreNullsDistinct(false)
           .HasFilter(null);
       #endregion Reward
 
@@ -449,8 +553,9 @@ namespace Yoma.Core.Infrastructure.Database.Context
           .HasFilter(null);
 
       builder.Entity<SSICredentialIssuance>()
-          .HasIndex(e => new { e.SchemaName, e.UserId, e.OrganizationId, e.MyOpportunityId })
+          .HasIndex(e => new { e.SchemaTypeId, e.UserId, e.OrganizationId, e.MyOpportunityId })
           .IsUnique()
+          .AreNullsDistinct(false)
           .HasFilter(null);
       #endregion
 
@@ -467,6 +572,16 @@ namespace Yoma.Core.Infrastructure.Database.Context
           .HasForeignKey(o => o.ModifiedByUserId)
           .OnDelete(DeleteBehavior.NoAction);
       #endregion Treasury
+
+      // Entity deletion is orchestrated explicitly by domain services.
+      // Prevent required relationships from inheriting EF's cascade-delete convention.
+      foreach (var foreignKey in builder.Model
+        .GetEntityTypes()
+        .SelectMany(o => o.GetForeignKeys())
+        .Where(o => o.DeleteBehavior == DeleteBehavior.Cascade))
+      {
+        foreignKey.DeleteBehavior = DeleteBehavior.NoAction;
+      }
     }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)

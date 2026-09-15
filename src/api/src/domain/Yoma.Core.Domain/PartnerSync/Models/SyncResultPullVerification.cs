@@ -1,3 +1,5 @@
+using Yoma.Core.Domain.Core.Models;
+
 namespace Yoma.Core.Domain.PartnerSync.Models
 {
   /// <summary>
@@ -67,6 +69,8 @@ namespace Yoma.Core.Domain.PartnerSync.Models
     public decimal? PercentComplete { get; set; }
 
     public DateTimeOffset? DateCompleted { get; set; }
+
+    public List<CustomFieldValueRequest>? CustomFields { get; set; }
   }
 
   public sealed class SyncItemVerificationCommitmentInterval

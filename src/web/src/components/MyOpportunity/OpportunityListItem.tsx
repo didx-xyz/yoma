@@ -12,6 +12,7 @@ import {
 import { FaDownload, FaExternalLinkAlt } from "react-icons/fa";
 import { IoMdAlert, IoMdCheckmark, IoMdClose } from "react-icons/io";
 import PullSyncBadge from "../Opportunity/Badges/PullSyncBadge";
+import { MyOpportunityCustomFieldsSection } from "../Opportunity/MyOpportunityCustomFieldsSection";
 import { OPPORTUNITY_QUERY_KEYS } from "~/hooks/useOpportunityMutations";
 
 export interface OpportunityListItemBadgeConfig {
@@ -31,6 +32,10 @@ export interface OpportunityListItemConfig {
   showDownloadFiles?: boolean;
   showComment?: boolean;
   showSkills?: boolean;
+  /** Show hydrated completion custom-field metadata (YOM-1244 / YOM-1255). */
+  showCustomFields?: boolean;
+  /** Optional whitelist/order of custom-field keys to show (keep cards compact). */
+  customFieldsWhitelist?: string[];
   pageContextBadge?: OpportunityListItemBadgeConfig | null;
 }
 
@@ -83,6 +88,7 @@ const OpportunityListItem: React.FC<{
     showDownloadFiles: true,
     showComment: true,
     showSkills: pathname.includes("completed"),
+    showCustomFields: true, //TODO: enable when unblocked by (YOM-1244): Temporary development field; replace with the BA-approved definition.
     ...config,
   };
 
@@ -278,6 +284,20 @@ const OpportunityListItem: React.FC<{
             </div>
           </>
         )}
+
+        {/* CUSTOM FIELDS (definition-driven, YOM-1244 / YOM-1255) */}
+        {/* Definitions load per opportunity only when the item has values; the
+            section renders nothing otherwise. Values are forward-looking until
+            the MyOpportunity search projection hydrates them. */}
+        {resolvedConfig.showCustomFields &&
+          !!resolvedData.customFields?.length && (
+            <MyOpportunityCustomFieldsSection
+              opportunityId={resolvedData.opportunityId}
+              values={resolvedData.customFields}
+              fields={resolvedConfig.customFieldsWhitelist}
+              className="flex flex-col"
+            />
+          )}
 
         <div className="flex flex-wrap gap-2">
           <button

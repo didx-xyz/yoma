@@ -12,12 +12,15 @@ namespace Yoma.Core.Domain.Core.Converters
     #region Public Members
     public override bool CanConvert(Type objectType) => objectType == typeof(string);
 
-    public override object? ReadJson(JsonReader reader, Type objectType,
-                                    object? existingValue, JsonSerializer serializer)
+    public override object? ReadJson(JsonReader reader, Type objectType, object? existingValue, JsonSerializer serializer)
     {
-      if (reader.Value == null) return null;
+      if (reader.TokenType == JsonToken.Null) return null;
 
-      var result = ((string)reader.Value).Trim();
+      if (reader.TokenType != JsonToken.String || reader.Value is not string value)
+        throw new JsonSerializationException(
+          $"Expected a string value but received token '{reader.TokenType}'.");
+
+      var result = value.Trim();
 
       return string.IsNullOrEmpty(result) ? null : result;
     }

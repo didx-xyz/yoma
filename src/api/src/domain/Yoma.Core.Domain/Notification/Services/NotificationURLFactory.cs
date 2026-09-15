@@ -23,6 +23,8 @@ namespace Yoma.Core.Domain.Notification.Services
     #endregion
 
     #region Public Members
+    public string YoIDWalletURL() => _appSettings.AppBaseURL.AppendPathSegment("yoid").AppendPathSegment("wallet").ToString();
+
     public string ReferralDashboardURL(NotificationType notificationType, Guid programId)
     {
       if (programId == Guid.Empty)

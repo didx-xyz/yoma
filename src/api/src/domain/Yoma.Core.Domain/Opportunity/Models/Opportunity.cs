@@ -1,5 +1,6 @@
 using Newtonsoft.Json;
 using Yoma.Core.Domain.BlobProvider;
+using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Entity;
 using Yoma.Core.Domain.Lookups.Models;
 using Yoma.Core.Domain.Opportunity.Extensions;
@@ -17,7 +18,7 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
     public Guid TypeId { get; set; }
 
-    public string Type { get; set; } = null!;
+    public Type Type { get; set; }
 
     public Guid OrganizationId { get; set; }
 
@@ -43,12 +44,6 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
     public decimal? OrganizationZltoRewardBalanceCurrentFinancialYear => OrganizationZltoRewardPoolCurrentFinancialYear.HasValue ? OrganizationZltoRewardPoolCurrentFinancialYear - (OrganizationZltoRewardCumulativeCurrentFinancialYear ?? default) : null;
 
-    public decimal? OrganizationYomaRewardPoolCurrentFinancialYear { get; set; }
-
-    public decimal? OrganizationYomaRewardCumulativeCurrentFinancialYear { get; set; }
-
-    public decimal? OrganizationYomaRewardBalanceCurrentFinancialYear => OrganizationYomaRewardPoolCurrentFinancialYear.HasValue ? OrganizationYomaRewardPoolCurrentFinancialYear - (OrganizationYomaRewardCumulativeCurrentFinancialYear ?? default) : null;
-
     public string? Summary { get; set; }
 
     public string? Instructions { get; set; }
@@ -62,14 +57,6 @@ namespace Yoma.Core.Domain.Opportunity.Models
     public decimal? ZltoRewardCumulative { get; set; }
 
     public decimal? ZltoRewardBalance => ZltoRewardPool.HasValue ? ZltoRewardPool - (ZltoRewardCumulative ?? default) : null;
-
-    public decimal? YomaReward { get; set; }
-
-    public decimal? YomaRewardPool { get; set; }
-
-    public decimal? YomaRewardCumulative { get; set; }
-
-    public decimal? YomaRewardBalance => YomaRewardPool.HasValue ? YomaRewardPool - (YomaRewardCumulative ?? default) : null;
 
     public bool VerificationEnabled { get; set; }
 
@@ -113,6 +100,9 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
     public bool CredentialIssuanceEnabled { get; set; }
 
+    /// <summary>
+    /// Full name of the credential schema selected for the opportunity.
+    /// </summary>
     public string? SSISchemaName { get; set; }
 
     public bool? Featured { get; set; }
@@ -178,5 +168,7 @@ namespace Yoma.Core.Domain.Opportunity.Models
     public List<Skill>? Skills { get; set; }
 
     public List<Lookups.OpportunityVerificationType>? VerificationTypes { get; set; }
+
+    public List<CustomFieldValueItem>? CustomFields { get; set; }
   }
 }

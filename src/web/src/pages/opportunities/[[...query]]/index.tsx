@@ -21,6 +21,7 @@ import type {
 import { Action } from "~/api/models/myOpportunity";
 import {
   PublishedState,
+  type CustomFieldFilter,
   type OpportunityCategory,
   type OpportunitySearchFilter,
   type OpportunitySearchResultsInfo,
@@ -37,6 +38,7 @@ import {
   searchOpportunities,
 } from "~/api/services/opportunities";
 import { searchMyOpportunities } from "~/api/services/myOpportunities";
+import { useOpportunityCustomFieldDefinitionsQuery } from "~/hooks/useOpportunityMutations";
 import CustomCarousel from "~/components/Carousel/CustomCarousel";
 import CustomCarouselV3 from "~/components/Carousel/CustomCarouselV3";
 import CustomModal from "~/components/Common/CustomModal";
@@ -47,6 +49,7 @@ import AnimatedText from "~/components/Opportunity/AnimatedText";
 import FilterTab from "~/components/Opportunity/FilterTab";
 import { OpportunitiesGrid } from "~/components/Opportunity/OpportunitiesGrid";
 import { OpportunityFilterVertical } from "~/components/Opportunity/OpportunityFilterVertical";
+import { useCustomFieldFilterLabeler } from "~/components/Opportunity/CustomFieldFilters";
 import {
   getEngagementConfig,
   getTypeConfig,
@@ -321,7 +324,7 @@ const Opportunities: NextPageWithLayout<{
 
   useEffect(() => {
     const isSearchUrl = (url: string) => {
-      return /[?&](?:query|page|categories|countries|countryScope|languages|types|engagementTypes|intervalCount|intervalType|organizations|zltoReward|mostViewed|mostCompleted|featured|publishedStates)=/.test(
+      return /[?&](?:query|page|categories|countries|countryScope|languages|types|engagementTypes|intervalCount|intervalType|organizations|zltoReward|mostViewed|mostCompleted|featured|publishedStates|customFields)=/.test(
         url,
       );
     };
@@ -828,6 +831,7 @@ const Opportunities: NextPageWithLayout<{
     mostCompleted,
     featured,
     publishedStates,
+    customFields: customFieldsParam,
   } = router.query;
 
   // memo for isSearchPerformed based on filter parameters
@@ -847,7 +851,8 @@ const Opportunities: NextPageWithLayout<{
       mostViewed != undefined ||
       mostCompleted != undefined ||
       featured != undefined ||
-      publishedStates != undefined
+      publishedStates != undefined ||
+      customFieldsParam != undefined
     );
   }, [
     query,
@@ -865,7 +870,21 @@ const Opportunities: NextPageWithLayout<{
     mostCompleted,
     featured,
     publishedStates,
+    customFieldsParam,
   ]);
+
+  // Custom field definitions — keyed on selected types so re-fetches when type filter changes
+  const selectedTypes = useMemo(
+    () => (types != undefined ? types.toString().split("|") : null),
+    [types],
+  );
+  const { data: lookups_customFieldDefinitions } =
+    useOpportunityCustomFieldDefinitionsQuery(selectedTypes);
+
+  // resolves a custom-field clause to its display value (option / lookup names)
+  const describeCustomFieldFilter = useCustomFieldFilterLabeler(
+    lookups_customFieldDefinitions,
+  );
 
   // search filter state
   // this is the current filter state based on the querystring parameters
@@ -922,6 +941,16 @@ const Opportunities: NextPageWithLayout<{
         publishedStates != undefined
           ? publishedStates?.toString().split("|")
           : null,
+      customFields: (() => {
+        if (!customFieldsParam) return null;
+        try {
+          return JSON.parse(
+            customFieldsParam.toString(),
+          ) as CustomFieldFilter[];
+        } catch {
+          return null;
+        }
+      })(),
     };
   }, [
     page,
@@ -939,6 +968,7 @@ const Opportunities: NextPageWithLayout<{
     languages,
     organizations,
     publishedStates,
+    customFieldsParam,
   ]);
 
   const filterBadgeExcludeKeys = useMemo(() => ["pageNumber", "pageSize"], []);
@@ -1052,6 +1082,7 @@ const Opportunities: NextPageWithLayout<{
         featured,
         engagementTypes,
         publishedStates,
+        customFieldsParam,
         landingMyCountryOnly,
         countryScopeParam,
         sessionStatus,
@@ -1194,6 +1225,7 @@ const Opportunities: NextPageWithLayout<{
             zltoReward != undefined
               ? { ranges: null, hasReward: Boolean(zltoReward) }
               : null,
+          customFields: searchFilter.customFields ?? null,
         });
       },
       enabled:
@@ -1308,6 +1340,17 @@ const Opportunities: NextPageWithLayout<{
         params.append(
           "publishedStates",
           searchFilter?.publishedStates.join("|"),
+        );
+
+      if (
+        searchFilter?.customFields !== undefined &&
+        searchFilter?.customFields !== null &&
+        searchFilter.customFields.length > 0
+      )
+        // serialised as JSON; URLSearchParams handles the encoding
+        params.append(
+          "customFields",
+          JSON.stringify(searchFilter.customFields),
         );
 
       if (
@@ -1880,6 +1923,7 @@ const Opportunities: NextPageWithLayout<{
             lookups_organisations={lookups_organisations}
             lookups_timeIntervals={lookups_timeIntervals}
             lookups_publishedStates={lookups_publishedStates}
+            lookups_customFieldDefinitions={lookups_customFieldDefinitions}
             initialMyCountryOnly={landingMyCountryOnly}
             onApplyMyCountryOnly={(checked) => setLandingMyCountryOnly(checked)}
             submitButtonText="Apply Filters"
@@ -2046,6 +2090,11 @@ const Opportunities: NextPageWithLayout<{
                         return getEngagementConfig(value)?.label ?? value;
                       } else if (key === "types") {
                         return getTypeConfig(value).label;
+                      } else if (key === "customFields") {
+                        // one badge per clause, showing its value(s) only
+                        return describeCustomFieldFilter(
+                          value as CustomFieldFilter,
+                        );
                       }
                       return value;
                     }}

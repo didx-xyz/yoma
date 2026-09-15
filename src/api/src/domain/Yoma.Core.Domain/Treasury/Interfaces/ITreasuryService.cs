@@ -5,7 +5,7 @@ namespace Yoma.Core.Domain.Treasury.Interfaces
 {
   public interface ITreasuryService
   {
-    TreasuryInfo Get();
+    TreasuryInfo GetInfo();
 
     Models.Treasury Get(LockMode? lockMode = null);
 
@@ -13,8 +13,12 @@ namespace Yoma.Core.Domain.Treasury.Interfaces
 
     Task ZltoRewardAwarded(Models.Treasury treasury, decimal? amount);
 
-    Task ChimoneyCashedOut(Models.Treasury treasury, decimal amount);
+    Task PayoutCompleted(Models.Treasury treasury, decimal amount);
 
-    Task<decimal> ConvertZltoToUsd(decimal amount);
+    Task<bool> EnsureCurrentFinancialYear(Models.Treasury treasury);
+
+    Task<bool> ProcessFinancialYearRollover();
+
+    Task<ConversionResponse> ConvertZltoToUsd(decimal amount);
   }
 }

@@ -38,6 +38,12 @@ namespace Yoma.Core.Domain.Notification.Services
       var setting = type switch
       {
         // user
+        NotificationType.Payout_Youth_Completed
+          or NotificationType.Payout_Youth_Cancelled
+          or NotificationType.Payout_Youth_Expired
+          or NotificationType.Payout_Youth_Failed
+          => Setting.User_Notifications_Payouts,
+
         NotificationType.Opportunity_Verification_Rejected
           or NotificationType.Opportunity_Verification_Completed
           or NotificationType.Opportunity_Verification_Pending

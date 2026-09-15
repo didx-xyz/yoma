@@ -6,6 +6,9 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Models
   {
     public string Id { get; set; } = null!;
 
+    /// <summary>
+    /// Full schema name returned by the SSI provider.
+    /// </summary>
     public string Name { get; set; } = null!;
 
     public string Version { get; set; } = null!;

@@ -48,6 +48,7 @@ import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import { useConfirmationModalContext } from "~/context/modalConfirmationContext";
 import analytics from "~/lib/analytics";
+import { isCountryCodeAlpha2 } from "~/lib/apiPath";
 import { COUNTRY_CODE_WW, THEME_BLUE } from "~/lib/constants";
 import { userCountrySelectionAtom, userProfileAtom } from "~/lib/store";
 import { type NextPageWithLayout } from "~/pages/_app";
@@ -181,6 +182,15 @@ export const getStaticProps: GetStaticProps = async (context) => {
     };
 
   const { country } = context.params as IParams;
+
+  /*
+    `fallback: "blocking"` means any URL reaches this function, not only the countries
+    `getStaticPaths` generated — and `country` is then interpolated into a server-side API request
+    carrying the caller's credentials. A malformed segment is a page that does not exist, so it is
+    answered as one here; the service layer refuses it again on its own (`lib/apiPath.ts`).
+  */
+  if (!isCountryCodeAlpha2(country)) return { notFound: true };
+
   const { lookups_countries, data_storeItems } = await fetchMarketplaceData(
     country,
     context,
@@ -358,13 +368,54 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
             className="flex h-full flex-col space-y-2 text-gray-500"
           >
             <div className="flex flex-row space-x-2">
-              <IoMdWarning className="gl-icon-yellow h-6 w-6" />
+              <IoMdWarning className="h-6 w-6" />
               <p className="text-lg">Unavailable</p>
             </div>
 
             <div>
               <p className="text-sm leading-6">
                 This item is currently not available. Please try again later.
+              </p>
+            </div>
+          </div>,
+          false,
+          true,
+        );
+
+        return;
+      }
+
+      // check balance is known
+      //
+      // `available` is null while the reward provider is offline, and a null read as 0 fails the
+      // price check below — telling someone with plenty of ZLTO that they cannot afford an item.
+      // We do not know the balance, so we say that; the purchase would fail against the provider
+      // anyway.
+      if (userProfile.zlto.available == null) {
+        // 📊 ANALYTICS: track balance unavailable
+        analytics.trackEvent("marketplace_balance_unavailable", {
+          itemId: item.id,
+          itemName: item.name,
+          storeId: item.storeId,
+          itemAmount: item.amount,
+        });
+
+        // show confirm dialog
+        await modalContext.showConfirmation(
+          "",
+          <div
+            key="confirm-dialog-content"
+            className="flex h-full flex-col space-y-2 text-gray-500"
+          >
+            <div className="flex flex-row space-x-2">
+              <IoMdWarning className="h-6 w-6" />
+              <p className="text-lg">Balance unavailable</p>
+            </div>
+
+            <div>
+              <p className="text-sm leading-6">
+                We can&apos;t check your Zlto balance right now. Your Zlto is
+                safe — please try again in a few minutes.
               </p>
             </div>
           </div>,
@@ -395,7 +446,7 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
             className="flex h-full flex-col space-y-2 text-gray-500"
           >
             <div className="flex flex-row space-x-2">
-              <IoMdWarning className="gl-icon-yellow h-6 w-6" />
+              <IoMdWarning className="h-6 w-6" />
               <p className="text-lg">Insufficient funds</p>
             </div>
 

@@ -47,11 +47,13 @@ namespace Yoma.Core.Infrastructure.Jobberman
       services.AddScoped<IRepository<FeedSyncTracking>, FeedSyncTrackingRepository>();
 
       // services
-      services.AddScoped<IExecutionStrategyService, ExecutionStrategyService>();
+      // Register concretely so this provider cannot override the application database
+      // IExecutionStrategyService registration.
+      services.AddScoped<ExecutionStrategyService>();
       services.AddScoped<IOpportunityFeedBackgroundService, OpportunityFeedBackgroundService>();
 
       // client
-      services.AddKeyedScoped<ISyncProviderClientFactory<ISyncProviderClientPullEntity<Domain.Opportunity.Models.Opportunity>>, JobbermanClientFactory>(SyncPartner.Jobberman);
+      services.AddKeyedScoped<ISyncProviderClientFactory<ISyncProviderClientPullEntity<Domain.Opportunity.Models.OpportunityRequestCreate>>, JobbermanClientFactory>(SyncPartner.Jobberman);
     }
 
     public static void Configure_InfrastructureDatabaseSyncProvider(this IServiceProvider serviceProvider)

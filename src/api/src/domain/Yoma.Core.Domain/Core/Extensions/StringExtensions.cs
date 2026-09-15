@@ -21,7 +21,11 @@ namespace Yoma.Core.Domain.Core.Extensions
     {
       ArgumentNullException.ThrowIfNull(input, nameof(input));
 
-      return input.Replace(System.Environment.NewLine, string.Empty);
+      // External values may contain either CRLF or standalone CR/LF characters, regardless of
+      // the operating system hosting the API. Remove both characters to prevent log forging.
+      return input
+        .Replace("\r", string.Empty, StringComparison.Ordinal)
+        .Replace("\n", string.Empty, StringComparison.Ordinal);
     }
 
     /// <summary>

@@ -10,12 +10,5 @@ namespace Yoma.Core.Domain.Entity.Models
 
     public decimal? ZltoRewardBalanceCurrentFinancialYear { get; set; }
 
-    public decimal? YomaRewardPoolCurrentFinancialYear { get; set; }
-
-    public decimal? YomaRewardCumulative { get; set; }
-
-    public decimal? YomaRewardCumulativeCurrentFinancialYear { get; set; }
-
-    public decimal? YomaRewardBalanceCurrentFinancialYear { get; set; }
   }
 }
