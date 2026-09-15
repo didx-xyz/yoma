@@ -60,6 +60,7 @@ import { OPPORTUNITY_QUERY_KEYS } from "~/hooks/useOpportunityMutations";
 import analytics from "~/lib/analytics";
 import { SETTING_USER_POPUP_LEAVINGYOMA } from "~/lib/constants";
 import { userProfileAtom } from "~/lib/store";
+import { isUserProfileCompleted } from "~/lib/utils/profile";
 import { type User } from "~/server/auth";
 import CustomModal from "../Common/CustomModal";
 import DetailSection from "../Common/DetailSection";
@@ -121,6 +122,14 @@ const OpportunityPublicDetails: React.FC<{
   const [isLoading, setIsLoading] = useState(false);
   const userProfile = useAtomValue(userProfileAtom);
   const setUserProfile = useSetAtom(userProfileAtom);
+  // 🔐 `user` is server-rendered (getServerSideProps), but userProfile is fetched client-side
+  // by Global.tsx, so there is a window on every page load where the user is logged in and
+  // the profile is still null. Treat "not loaded yet" as "not usable" so the partner hand-off
+  // fails closed rather than slipping through that window.
+  // Note: isUserProfileCompleted returns null (not false) for a null profile, hence `!== true`.
+  const profileReadyForPartnerHandoff =
+    isUserProfileCompleted(userProfile) === true;
+  const blockPartnerHandoff = !!user && !profileReadyForPartnerHandoff;
 
   const { data: verificationStatus, isLoading: verificationStatusIsLoading } =
     useQuery<MyOpportunityResponseVerify | null>({
@@ -297,20 +306,43 @@ const OpportunityPublicDetails: React.FC<{
       return;
     }
 
+    // 🔐 partners register/authenticate the user with their Yoma profile details (first name,
+    // surname, country), so the hand-off must not run against an incomplete profile.
+    // The button is already disabled in this state - this is a backstop in case it is ever
+    // driven from somewhere that does not honour `disabled`. Global.tsx raises the
+    // "complete your profile" dialog, so there is nothing to surface here.
+    if (blockPartnerHandoff) return;
+
     // Open a blank tab immediately from the user-click handler to avoid popup blockers.
     // The tab will be navigated to the resolved URL once the API responds.
     const win = window.open("", "_blank");
 
     let redirectUrl = opportunityInfo.url;
 
-    if (user && opportunityInfo.syncedInfo?.syncType === "Pull") {
+    if (opportunityInfo.syncedInfo?.syncType === "Pull") {
       try {
         const result = await performActionNavigateExternalLink(
           opportunityInfo.id,
         );
         if (result?.url) redirectUrl = result.url;
-      } catch {
-        // fall back to opportunityInfo.url on error
+      } catch (error) {
+        // This call pre-authenticates the user with the partner. Falling back to the raw
+        // opportunity url would drop them on the partner platform unregistered, so surface
+        // the failure instead of handing off silently.
+        win?.close();
+
+        analytics.trackError(error as Error, {
+          errorType: "opportunity_external_link_preauth_error",
+          opportunityId: opportunityInfo.id,
+        });
+
+        toast(<ApiErrors error={error as AxiosError} />, {
+          type: "error",
+          autoClose: false,
+          icon: false,
+        });
+
+        return;
       }
     }
 
@@ -332,6 +364,7 @@ const OpportunityPublicDetails: React.FC<{
     opportunityInfo.title,
     opportunityInfo.syncedInfo,
     user,
+    blockPartnerHandoff,
     showLoginDialog,
   ]);
 
@@ -348,6 +381,10 @@ const OpportunityPublicDetails: React.FC<{
       return;
     }
 
+    // 🔐 backstop, as above: never open the "leaving Yoma" dialog for a profile the partner
+    // cannot register. The button carrying this handler is already disabled in this state.
+    if (blockPartnerHandoff) return;
+
     const settingDontShowAgain = userProfile?.settings?.items.find(
       (x) => x.key === SETTING_USER_POPUP_LEAVINGYOMA,
     )?.value;
@@ -363,6 +400,7 @@ const OpportunityPublicDetails: React.FC<{
     opportunityInfo.id,
     opportunityInfo.title,
     user,
+    blockPartnerHandoff,
     showLoginDialog,
   ]);
 
@@ -709,7 +747,7 @@ const OpportunityPublicDetails: React.FC<{
                     type="button"
                     className="btn bg-green hover:bg-green-dark w-full text-white md:flex-1"
                     onClick={onProceedToOpportunity}
-                    disabled={!opportunityInfo.url}
+                    disabled={!opportunityInfo.url || blockPartnerHandoff}
                   >
                     <IoMdOpen className="mr-2 h-5 w-5" />
                     Proceed
@@ -960,7 +998,7 @@ const OpportunityPublicDetails: React.FC<{
                       className={`btn btn-sm bg-green hover:bg-green-dark disabled:bg-green h-10 w-full rounded-full text-sm text-white normal-case md:w-[250px]`}
                       title="Clicking this button will take you to an external site to continue this opportunity. Remember to return to this page to upload your completion certificate and earn your achievement!"
                       onClick={onGoToOpportunity}
-                      disabled={preview}
+                      disabled={preview || blockPartnerHandoff}
                     >
                       <IoMdOpen className="mr-1 h-5 w-5" />
                       {externalLinkButtonText}

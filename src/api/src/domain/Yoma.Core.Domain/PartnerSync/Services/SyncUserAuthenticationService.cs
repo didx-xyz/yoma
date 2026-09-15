@@ -1,3 +1,5 @@
+using FluentValidation;
+using FluentValidation.Results;
 using Microsoft.Extensions.Logging;
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Exceptions;
@@ -69,7 +71,8 @@ namespace Yoma.Core.Domain.PartnerSync.Services
     /// <summary>
     /// Attempts to authenticate/link the user with the configured synchronized partner.
     ///
-    /// This is best-effort only. If partner authentication is not configured, supported, or fails,
+    /// Missing required profile fields produce a validation response for the UI to resolve.
+    /// Otherwise this is best-effort: if partner authentication is not configured, supported, or fails,
     /// the existing default partner URL remains unchanged so the user can still navigate
     /// to the external opportunity manually.
     /// </summary>
@@ -98,10 +101,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
         var userSyncInfo = _syncStateService.GetUserSyncInfo(user.Id);
         var country = user.CountryId.HasValue ? _countryService.GetByIdOrNull(user.CountryId.Value) : null;
 
-        var providerClient = _providerClientFactoryResolver.CreateClient<ISyncProviderClientUserAuthentication>(
-          partnerSyncInfo.Partner);
-
-        var result = await providerClient.Authenticate(new SyncRequestUserAuthentication
+        var request = new SyncRequestUserAuthentication
         {
           UserId = user.Id,
           Username = user.Username,
@@ -112,7 +112,15 @@ namespace Yoma.Core.Domain.PartnerSync.Services
           Country = country,
           EntitySyncInfo = partnerSyncInfo,
           UserSyncInfo = userSyncInfo?.Partners.SingleOrDefault(o => o.Partner == partnerSyncInfo.Partner)
-        });
+        };
+
+        // Validate before constructing/calling the provider. These errors must reach the UI,
+        // rather than silently falling back to a URL without the required user hand-off.
+        ValidateUserProfile(request);
+
+        var providerClient = _providerClientFactoryResolver.CreateClient<ISyncProviderClientUserAuthentication>(
+          partnerSyncInfo.Partner);
+        var result = await providerClient.Authenticate(request);
 
         if (string.IsNullOrWhiteSpace(result.URL))
           throw new InvalidOperationException("Authentication result URL is required");
@@ -131,7 +139,7 @@ namespace Yoma.Core.Domain.PartnerSync.Services
 
         partnerSyncInfo.URL = result.URL.Trim();
       }
-      catch (Exception ex)
+      catch (Exception ex) when (ex is not ValidationException)
       {
         if (_logger.IsEnabled(LogLevel.Warning))
           _logger.LogWarning(ex,
@@ -140,6 +148,39 @@ namespace Yoma.Core.Domain.PartnerSync.Services
       }
 
       return partnerSyncInfo;
+    }
+
+    /// <summary>
+    /// Validates only fields required by the selected partner authentication path, not general
+    /// Yoma onboarding. Email-less redirects remain supported; linked Alison login needs no
+    /// registration profile. Partners without these requirements retain their current behaviour.
+    /// </summary>
+    private static void ValidateUserProfile(SyncRequestUserAuthentication request)
+    {
+      if (string.IsNullOrWhiteSpace(request.Email)) return;
+
+      switch (request.EntitySyncInfo.Partner)
+      {
+        case SyncPartner.Alison when request.UserSyncInfo?.IsLinked != true:
+        case SyncPartner.IXO:
+          break;
+        default:
+          return;
+      }
+
+      var errors = new List<ValidationFailure>();
+      var partner = request.EntitySyncInfo.Partner;
+      if (string.IsNullOrWhiteSpace(request.FirstName))
+        errors.Add(new ValidationFailure(nameof(request.FirstName),
+          $"Please complete your Yoma profile: first name is required to continue to {partner}."));
+      if (string.IsNullOrWhiteSpace(request.Surname))
+        errors.Add(new ValidationFailure(nameof(request.Surname),
+          $"Please complete your Yoma profile: surname is required to continue to {partner}."));
+      if (request.Country == null)
+        errors.Add(new ValidationFailure(nameof(request.Country),
+          $"Please complete your Yoma profile: country is required to continue to {partner}."));
+
+      if (errors.Count > 0) throw new ValidationException(errors);
     }
 
     /// <summary>

@@ -1,3 +1,4 @@
+using Newtonsoft.Json;
 using Yoma.Core.Domain.Core;
 
 namespace Yoma.Core.Domain.PartnerSync.Models
@@ -28,6 +29,13 @@ namespace Yoma.Core.Domain.PartnerSync.Models
     /// Partner-side user identifier, when provided by the partner.
     /// </summary>
     public string? ExternalId { get; set; }
+
+    /// <summary>
+    /// Whether Yoma has a partner-side user identifier. This does not indicate whether
+    /// an unlinked account already exists on the partner platform.
+    /// </summary>
+    [JsonIgnore]
+    public bool IsLinked => !string.IsNullOrWhiteSpace(ExternalId);
 
     /// <summary>
     /// Date Yoma last redirected the user to the partner through a partner-authenticated flow.

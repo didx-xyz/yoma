@@ -166,7 +166,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
         return new SyncResultUserAuthentication { URL = request.EntitySyncInfo.URL! };
       }
 
-      return !string.IsNullOrEmpty(request.UserSyncInfo?.ExternalId) ? await LoginExistingUser(request) : await RegisterOrLoginUser(request);
+      return request.UserSyncInfo?.IsLinked == true ? await LoginExistingUser(request) : await RegisterOrLoginUser(request);
     }
 
     public Task<SyncResultPullEntity<OpportunityRequestCreate>> List(SyncFilterPullEntity filter)
