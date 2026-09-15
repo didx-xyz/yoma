@@ -38,6 +38,13 @@ export interface CashOutOutcomeView {
   canResume: boolean;
   /** offer a fresh cash out — only once nothing is in flight and the Zlto is back */
   canStartAgain: boolean;
+  /**
+   * Whether step 3 has actually resolved — **a tick on the stepper is a claim**, and it was being
+   * made on every outcome view, including the ones that mean the opposite (design review
+   * 2026-09-14). Only a recorded terminal status resolves the step; in progress, still setting up
+   * and "we couldn't check" leave it live, because the cash out is still going.
+   */
+  resolved: boolean;
 }
 
 export const describeOutcome = (
@@ -51,6 +58,7 @@ export const describeOutcome = (
       showDetails: false,
       canResume: false,
       canStartAgain: false,
+      resolved: false,
     };
 
   switch (info.status) {
@@ -64,6 +72,7 @@ export const describeOutcome = (
         // A completed payout is final — the provider may still retry fiat delivery behind the
         // scenes, but nothing about that is the youth's to restart.
         canStartAgain: false,
+        resolved: true,
       };
 
     case PayoutTransactionStatus.Cancelled:
@@ -74,6 +83,7 @@ export const describeOutcome = (
         showDetails: true,
         canResume: false,
         canStartAgain: true,
+        resolved: true,
       };
 
     case PayoutTransactionStatus.Expired:
@@ -84,6 +94,7 @@ export const describeOutcome = (
         showDetails: true,
         canResume: false,
         canStartAgain: true,
+        resolved: true,
       };
 
     case PayoutTransactionStatus.Failed:
@@ -94,6 +105,7 @@ export const describeOutcome = (
         showDetails: true,
         canResume: false,
         canStartAgain: true,
+        resolved: true,
       };
 
     default:
@@ -108,6 +120,7 @@ export const describeOutcome = (
             showDetails: true,
             canResume: true,
             canStartAgain: false,
+            resolved: false,
           }
         : {
             kind: "settingUp",
@@ -116,6 +129,7 @@ export const describeOutcome = (
             showDetails: false,
             canResume: false,
             canStartAgain: false,
+            resolved: false,
           };
   }
 };

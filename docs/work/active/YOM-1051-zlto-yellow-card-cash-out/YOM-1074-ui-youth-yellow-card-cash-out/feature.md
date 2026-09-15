@@ -308,10 +308,13 @@ wanted.
 
 ## Tasks
 
-- [ ] **Design pass** — 39 artboards drafted and redrawn against the 2026-09-09 decisions;
-      delivered 2026-09-10 as a local canvas file (see Links). **Still owed:** review of the boards
-      not yet seen (A5–A9, B1, B2 empty/error/loading, B3–B5, C, D, M), and the copy sheet — all
-      seven gate bodies and every Flow C/D string are drafts until it exists.
+- [x] **Design pass** — 39 artboards drafted and redrawn against the 2026-09-09 decisions,
+      delivered 2026-09-10. Superseded 2026-09-14 by a review of the **built** flow (all 31 states,
+      via `/dev/cash-out`): [`design-review-2026-09-14.md`](./design-review-2026-09-14.md).
+- [x] **Copy sheet** — [`copy-sheet.md`](./copy-sheet.md), every user-facing string, applied
+      2026-09-14. Two decisions were the owner's ("Check", "Use all"); three were settled from the
+      API code; one string and the toasts were deliberately not applied. The header of the sheet
+      records each.
 
 - [x] **Wallet ledger** — `components/Rewards/ZltoLedger.tsx`, compact + expanded variants, wired
       into the Marketplace hero and the Yo-ID `WalletCard`. Model updated to the verified server
@@ -644,6 +647,65 @@ wanted.
   Removing them is deleting two files. On the T6 list either way.
   The chrome those screens sit in moved to `CashOutDialog` in the same change, so the gallery shows
   the real dialog by construction instead of a copy that drifts.
+
+- **2026-09-14: the stepper was ticking step 3 on four screens that mean the opposite.** Checking,
+  in progress, still setting up and "we couldn't check" all rendered step 3 resolved, because
+  `CashOutEntry` resolved it for the outcome *view* rather than for a terminal *status*. A tick is a
+  claim, and it was the most confident wrong signal in the flow. `describeOutcome` now carries a
+  `resolved` flag that only `Completed` / `Cancelled` / `Expired` / `Failed` set. The dev gallery
+  derives it the same way instead of declaring it — it had been hardcoding `stepResolved: true`,
+  which is precisely the drift the gallery exists to prevent. Found by the design review, not by us.
+- **2026-09-14: the copy sheet is applied, and three of its five open decisions were answered from
+  the API rather than by preference.** "Estimated" never "Sent" on a completed payout, because
+  `PayoutTransaction.Amount` is fixed at initiation and never updated; no Continue without a preview,
+  because the review step has no estimate to show; and the "we'll release it back to you" wording is
+  accurate against the real release path. The two genuinely editorial ones went the designer's way —
+  **"Check"** rather than "Review" (the product's other uses are admin-only, a different reader) and
+  **"Use all"** rather than "Max".
+- **2026-09-14: one proposed string was refused.** `RESUME_NO_LONGER_ACTIVE` — "This cash out has
+  ended" — re-introduces the claim removed on 2026-09-11: a 404 from the session endpoint can
+  originate at the provider and can be transient, so it does not prove closure. That string stays
+  non-committal and is only ever a fallback for when the outcome read *also* fails.
+- **2026-09-14: the hosted dialog's escape hatch lives in one place, on a timer, and claims
+  nothing.** A `frame-ancestors` refusal cannot be detected — it still fires `load`, on a document
+  we cannot read — so the four-second prompt became a fixed-height `role="status"` slot that shows
+  "Loading…" and then "Taking a while?" with the only "Open in a new window" control beside it. The
+  second footer button is gone, the footer no longer reflows, and "Not loading?" (which asserted a
+  failure we cannot see) is now a question.
+- **2026-09-14: "pending", not "on hold" — the prose follows the ledger, not the other way round**
+  (owner). The copy sheet made "on hold" the single phrase for a reservation and banned "pending";
+  the ledger row on the hero and the wallet card says **"Pending cash out"**, and that row is the
+  most-seen surface in the flow. Copy that points at a word already on screen beats copy that
+  introduces a second one for the same thing, so every dialog says "Your Zlto stays pending until
+  it's done" and Flow A is untouched. `REVIEW_COPY.holdNote` renamed `pendingNote` so the key does
+  not outlive the wording.
+- **2026-09-14: `RESULT_ROW_USD` stays "Estimated" even on a completed payout** (owner). It reads
+  oddly beside a finished payment, but the alternative — a neutral "Amount" — brings back the
+  one-word-two-units clash with the resume panel's ZLTO row, and the API cannot support "Sent".
+- **2026-09-14: `CashOutDialog` extracted**, so the state machine is not also a layout and the dev
+  gallery renders the real chrome by construction rather than a copy of it.
+- **2026-09-15: two shapes, named.** `CashOutMessage` is a screen's own point — round tinted badge,
+  heading, centred body — and now backs the result screens, the gate and the active-payout panel,
+  which had been drawing the same act three different ways. `CashOutNote` is something said
+  *alongside* the content — icon left, text left, never the primary action — and backs the review's
+  hand-off note, the paused panel and the resume panel's failure notice. Keeping them separate is
+  the point: a badge in the middle of a screen announces, a tinted strip beside content qualifies.
+- **2026-09-15: `CashOutResumePanel` takes a `state` discriminator** (`resumable` / `settingUp` /
+  `ended`) instead of four independent flags. The mapping from state to heading, icon, tone and verb
+  lived in `CashOutEntry`, so every caller had to repeat it — and the dev gallery got it wrong twice,
+  showing a headless message and the wrong button verb on a screen the flow renders correctly.
+  Derived inside the component, that class of drift is gone.
+- **2026-09-15: secondary actions are full-width outlined pills, not ghost text.** `w-full` on a
+  ghost button fills the row invisibly — it looks identical at 80px and 480px — so Cancel, Back,
+  Close and "Back to my wallet" now carry a border on white: same footprint as the primary, still
+  quieter. The gate's centred row of two auto-width buttons stacks the same way; it was the last
+  screen not following the pattern and it wrapped awkwardly at 320px.
+- **⚠️ 2026-09-15: Chrome will not open a window below ~500px on Windows, so a narrow headless
+  window does not test a narrow layout** — it lays out at 500 and crops. This produced a false
+  "the whole product overflows on mobile" finding on 2026-09-11, now retracted in that handoff. The
+  dev gallery's width preview renders the dialog in an **iframe**, which has its own layout
+  viewport, so 320 there is genuinely 320. At a real 320 the only defect was the amount step
+  breaking "Use all" across two lines; everything else fits.
 
 ## Links
 

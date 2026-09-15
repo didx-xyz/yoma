@@ -1,29 +1,18 @@
 import type { ReactNode } from "react";
+import { CashOutMessage, type CashOutMessageTone } from "./CashOutMessage";
 
 /**
- * The one-message shape the boards use for the hand-off, the failures and the result: a tinted
- * circular icon, a title, a line of body copy, then a primary action over a quiet one.
+ * A whole screen built around one message: `CashOutMessage` for the badge, heading and body, then
+ * whatever the screen needs to show, then a primary action over a quiet one.
  *
- * One primitive rather than three near-identical components, because these three screens are read
- * in sequence by the same youth and any drift between them shows up as the product changing shape
- * mid-flow.
- *
- * `tone` decides the icon's colour only. **None of these screens is styled as an error**, including
- * the failures: a payout Yoma could not start is Yoma's problem, nothing has left the wallet, and
- * red would tell the youth they did something wrong.
+ * The hand-off, the failures and the eight result states all use this. The gate and the
+ * active-payout panel need their own arrangement below the message — a field list, a summary of
+ * what is in flight — so they compose `CashOutMessage` directly rather than going through here.
  */
-
-const TONES = {
-  neutral: "bg-purple-tint text-purple",
-  info: "bg-blue-light text-blue-dark",
-  warning: "bg-orange-light text-orange",
-  /** reserved for a *confirmed* completed payout — never for "we sent you off to finish it" */
-  success: "bg-green-light text-green",
-} as const;
 
 export const CashOutMessageStep: React.FC<{
   icon: ReactNode;
-  tone?: keyof typeof TONES;
+  tone?: CashOutMessageTone;
   title: string;
   body: string;
   /** the action that moves the youth on; omitted when there is nothing to do */
@@ -42,16 +31,22 @@ export const CashOutMessageStep: React.FC<{
   error,
   children,
 }) => (
-  <div className="flex flex-col items-center gap-4 text-center">
-    <span
-      className={`flex h-14 w-14 items-center justify-center rounded-full ${TONES[tone]}`}
-      aria-hidden="true"
-    >
-      {icon}
-    </span>
-
-    <h5 className="text-black">{title}</h5>
-    <p className="text-gray-dark text-sm leading-6">{body}</p>
+  /*
+    On a phone the dialog is full-screen, and this content used to stack from the top and stop
+    half-way down — leaving the primary action in the middle of the screen rather than at the end of
+    the thumb's reach (design review 2026-09-14). `grow` on the message block centres it in whatever
+    space there is, and `mt-auto` pins the actions to the bottom. On desktop the dialog hugs its
+    content, so there is no spare space and neither has any effect. The DOM order is unchanged, so
+    nothing moves for a screen reader.
+  */
+  <div className="flex grow flex-col items-center gap-4 text-center">
+    <CashOutMessage
+      icon={icon}
+      tone={tone}
+      title={title}
+      body={body}
+      className="grow justify-center"
+    />
 
     {children}
 
@@ -64,7 +59,7 @@ export const CashOutMessageStep: React.FC<{
       </p>
     )}
 
-    <div className="flex w-full flex-col items-center gap-2">
+    <div className="mt-auto flex w-full flex-col items-center gap-2 pt-2">
       {primary && (
         <button
           type="button"
@@ -80,7 +75,7 @@ export const CashOutMessageStep: React.FC<{
         <button
           type="button"
           onClick={secondary.onClick}
-          className="btn btn-ghost text-gray-dark rounded-full normal-case"
+          className="btn border-gray text-gray-dark hover:bg-gray-light w-full rounded-full border bg-white normal-case"
         >
           {secondary.label}
         </button>

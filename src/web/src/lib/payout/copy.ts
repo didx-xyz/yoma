@@ -38,10 +38,8 @@ export const CASH_OUT_ACTION_CONTINUE = "Continue cash out";
 export const CASH_OUT_DISABLED_HELPER: Partial<
   Record<CashOutBlockReason, string>
 > = {
-  balanceUnknown:
-    "Cash Out is unavailable while your balance can't be checked.",
-  nothingAvailable:
-    "Nothing is available to cash out yet. Complete opportunities to earn Zlto.",
+  balanceUnknown: "Balance not available right now",
+  nothingAvailable: "Nothing to cash out yet",
 };
 
 /**
@@ -53,48 +51,74 @@ export const CASH_OUT_DISABLED_HELPER: Partial<
  */
 export const GATE_COPY: Record<
   CashOutBlockReason,
-  { title: string; body: string }
+  {
+    title: string;
+    body: string;
+    /** a quiet route to the thing that would unblock them, where one exists */
+    link?: { label: string; href: string };
+  }
 > = {
   activePayout: {
-    title: "You already have a cash out in progress",
-    body: "You can have one cash out at a time. Finish or wait for your current cash out first.",
+    title: "You have a cash out in progress",
+    body: "You can only have one cash out at a time. Finish this one first.",
   },
   profileIncomplete: {
+    // Names who needs the data, and the colon introduces the list of missing fields below it.
     title: "Complete your profile to cash out",
-    body: "We need a few more details before you can cash out.",
+    body: "Our secure payout partner needs these details before you can cash out:",
   },
   providerOffline: {
-    title: "Cash Out is temporarily unavailable",
+    title: "Cash Out isn't available right now",
     body: "Please try again later. Your Zlto is safe.",
   },
   countryUnsupported: {
+    // "Your Zlto is safe" belongs to states where something could have gone wrong; nothing did.
     title: "Cash Out isn't available in your country yet",
-    body: "We're working on adding more countries. Your Zlto is safe and you can still spend it on the marketplace.",
+    body: "We're working on adding more countries. You can still spend your Zlto in the marketplace.",
+    link: { label: "Check my country in my profile", href: "/user/profile" },
   },
   walletNotReady: {
     title: "Your wallet is still being set up",
-    body: "This usually takes a few minutes. Please try again shortly.",
+    body: "This usually takes a few minutes. Please try again soon.",
   },
   balanceUnknown: {
+    // Deliberately the same words as `providerOffline`: the same situation, seen by the youth.
     title: "We can't check your balance right now",
-    body: "Please try again in a few minutes. Your Zlto is safe.",
+    body: "Please try again later. Your Zlto is safe.",
   },
   nothingAvailable: {
     title: "You don't have any Zlto to cash out yet",
-    body: "Complete opportunities to earn Zlto, then come back to cash it out.",
+    body: "Complete opportunities to earn Zlto. Then come back here.",
+    // The one gate whose fix is a link away — Close-only made it a dead end.
+    link: { label: "Find opportunities", href: "/opportunities" },
   },
 };
 
-/** The three-step indicator. Step 3 resolves on the result view, never on the hand-off. */
-export const STEP_LABELS = ["Amount", "Review", "Result"] as const;
+/** The profile fields the gate lists, and the button that goes and fixes them. */
+export const GATE_PROFILE_ACTION = "Update my profile";
+export const GATE_CLOSE_ACTION = "Close";
+
+/**
+ * The three-step indicator. Step 3 resolves on the result view, never on the hand-off — and only
+ * for a *terminal* outcome (see `outcome.ts`; a tick is a claim).
+ *
+ * "Check" rather than "Review" (copy review 2026-09-14): "review" is not a word this reader uses.
+ * The product does say "Review" elsewhere, but only on admin surfaces, which have a different
+ * audience — flip both this and `REVIEW_COPY.dialogTitle` together if that is reconsidered.
+ */
+export const STEP_LABELS = ["Amount", "Check", "Result"] as const;
 
 export const AMOUNT_COPY = {
   dialogTitle: "Cash Out",
   availableLabel: "Available to cash out",
-  fieldLabel: "Amount to cash out",
-  maxAction: "Max",
+  /** A question, not a noun phrase: it tells a first-time user what the field is for. */
+  fieldLabel: "How much Zlto do you want to cash out?",
+  /** "Use all" says what happens; "Max" is jargon (copy review 2026-09-14). */
+  maxAction: "Use all",
   unit: "ZLTO",
   estimateLabel: "Estimated",
+  /** The estimate label alone does not tell a first-time reader why it is an estimate. */
+  estimateNote: "The final amount may be a little different.",
   continueAction: "Continue",
   cancelAction: "Cancel",
   /**
@@ -104,9 +128,12 @@ export const AMOUNT_COPY = {
    */
   pausedTitle: "Cash Out is paused for now",
   pausedBody:
-    "Yoma's cash-out funds for this period have been used up. Your Zlto is safe and you can try again later.",
+    "Yoma's cash-out funds for this period are used up. Your Zlto is safe. Try again later.",
   /** the preview could not be fetched — the amount is still valid, so this is not a field error */
-  estimateFailed: "We couldn't work out an estimate just now.",
+  estimateFailed: "We couldn't work out an estimate. Try again in a moment.",
+  estimateRetryAction: "Try again",
+  /** screen-reader text for the skeleton on the USD figure */
+  estimateLoading: "Working out your estimate…",
 } as const;
 
 /**
@@ -117,8 +144,9 @@ export const AMOUNT_COPY = {
  */
 export const AMOUNT_PROBLEM_COPY = {
   invalid: "Enter an amount in Zlto, using numbers only.",
-  notPositive: "Enter an amount greater than 0.",
-  notWhole: "Enter a whole number of Zlto.",
+  notPositive: "Enter an amount more than 0.",
+  /** The second sentence is the plain-language gloss — "whole number" is not universal. */
+  notWhole: "Zlto must be a whole number. No decimals.",
 } as const;
 
 export const amountAboveAvailableMessage = (available: number): string =>
@@ -131,17 +159,21 @@ export const amountAboveAvailableMessage = (available: number): string =>
  * point refreshes the profile when this happens, so the ledger corrects itself behind the dialog.
  */
 export const AMOUNT_SERVER_REJECTED =
-  "That's more than you have available to cash out right now.";
+  "That's more than you have available. We've updated your balance.";
 
 export const REVIEW_COPY = {
-  dialogTitle: "Review your cash out",
+  dialogTitle: "Check your cash out",
   amountLabel: "Amount",
   estimateLabel: "Estimated",
   rateLabel: "Rate",
+  /** What happens next, in order — no "processed" (a status word) and no "held" (see the pending note). */
   handoffNote:
-    "You'll continue to our secure payout partner to finish. This may take a few minutes. Your Zlto will be held while your cash out is processed.",
-  estimateNote: "The final amount may differ slightly from the estimate.",
-  confirmAction: "Continue to cash out",
+    "Next, our secure payout partner will ask where to send your money.",
+  pendingNote: "Your Zlto stays pending until your cash out is finished.",
+  estimateNote: "The final amount may be a little different from the estimate.",
+  /** The heading already says cash out; a short label reads faster. */
+  confirmAction: "Continue",
+  confirmBusyAction: "Starting your cash out…",
   backAction: "Back",
 } as const;
 
@@ -156,11 +188,20 @@ export const REVIEW_COPY = {
 export const HOSTED_COPY = {
   preparingTitle: "Preparing your cash out…",
   dialogTitle: "Finish your cash out",
+  /** one line under the title: whose page this is, before they see it */
+  lead: "Our secure payout partner will take it from here.",
   /** the iframe's accessible name — the provider is not named, here or anywhere */
   frameTitle: "Secure cash out",
-  /** under the frame, so closing never reads as cancelling */
+  /** the status slot, present from first paint so nothing appears from nowhere */
+  statusLoading: "Loading…",
+  /** what the ✕ actually does, for a screen reader */
+  closeLabel: "Close and check my cash out",
+  /**
+   * Says what the button does. The previous line answered a question the youth had not asked
+   * ("what if I close it?") and left the one they had to the button label.
+   */
   footerNote:
-    "Closing this won't cancel your cash out — we'll check how it's going.",
+    "Your Zlto stays pending while you finish. When you're done, tap I'm done and we'll check how it went.",
   /**
    * The escape hatch. Embedding is subject to the provider's own framing and authentication rules
    * (IXO coordination is open), and a youth with Zlto already reserved cannot be left staring at a
@@ -168,21 +209,30 @@ export const HOSTED_COPY = {
    */
   newWindowAction: "Open in a new window",
   /**
-   * Appears a few seconds in, whether or not anything is wrong, because a frame that was refused
-   * cannot be detected: a `frame-ancestors` violation still fires `load` on the browser's own error
-   * document, and the frame is cross-origin, so there is nothing to read. Seen on Dev — the
-   * provider's payment page frames fine, but its hosted **sign-in** step sets
-   * `frame-ancestors` without Yoma's origin, so a returning youth gets a blank box. A short prompt
-   * is honest and costs a line; leaving someone in front of that box with their Zlto reserved is
-   * not.
+   * Replaces the "Loading…" in the status slot a few seconds in, whether or not anything is wrong,
+   * because a frame that was refused cannot be detected: a `frame-ancestors` violation still fires
+   * `load` on the browser's own error document, and the frame is cross-origin, so there is nothing
+   * to read. Seen on Dev — the provider's payment page frames fine, but its hosted **sign-in** step
+   * sets `frame-ancestors` without Yoma's origin, so a returning youth gets a blank box.
+   *
+   * ⚠️ It asks rather than asserts: "Not loading?" claimed the frame had failed, which we do not
+   * know (copy review 2026-09-14).
    */
-  blockedHint: "Not loading? Open it in a new window instead.",
+  blockedHint: "Taking a while?",
   doneAction: "I'm done",
 } as const;
 
 export const FAILURE_COPY = {
   createFailedTitle: "We couldn't start your cash out",
-  createFailedBody: "Nothing has been taken from your wallet.",
+  /**
+   * ⚠️ It used to say "Nothing has been taken from your wallet", which **can be false**:
+   * `PayoutRewards` can fail after reserving. The entry point checks the profile before showing
+   * this screen at all, but the copy must be true in both cases even so — and the release is real,
+   * whether immediate (`TryReleaseReservation`), by reconciliation, or by the reservation expiry.
+   * No timing promise, because that last path is hours.
+   */
+  createFailedBody:
+    "Something went wrong on our side. Please try again. If your wallet shows Zlto as pending, we'll release it back to you.",
   retryAction: "Try again",
   closeAction: "Close",
 } as const;
@@ -202,10 +252,14 @@ export const RESUME_COPY = {
   amountLabel: "Amount",
   estimateLabel: "Estimated",
   startedLabel: "Started",
-  title: "Pick up where you left off",
-  body: "You started a cash out but haven't finished it. Continue to complete it — your Zlto stays held until it's done.",
+  /** Same words as the hosted dialog's title, which is where the button goes. */
+  title: "Finish your cash out",
+  body: "You started this cash out but haven't finished it. Your Zlto stays pending until it's done.",
   continueAction: CASH_OUT_ACTION_CONTINUE,
+  continueBusyAction: "Getting your cash out ready…",
   retryAction: "Try again",
+  /** nothing failed in the setup window — they are checking, not retrying */
+  checkAgainAction: "Check again",
   closeAction: "Close",
   /** the session fetch failed — the payout is untouched, so the tone stays neutral */
   linkFailed:
@@ -221,8 +275,10 @@ export const RESUME_COPY = {
    * the youth a horizon and the panel keeps its retry — "being processed" would have sent someone
    * away from a screen that works again in minutes.
    */
+  notResumableTitle: "We're still setting up your cash out",
+  /** word for word the same as `OUTCOME_COPY.settingUpBody` — it is the same situation */
   notResumable:
-    "We're still setting up your cash out. Try again in a few minutes — your Zlto is safe.",
+    "This usually takes a few minutes. Your Zlto stays pending until it's done.",
   /**
    * The session route answered 404. ⚠️ **That alone does not prove the payout closed** — the
    * refusal can originate at the provider and can be transient — so this is never shown on its own:
@@ -251,41 +307,57 @@ export const RESUME_COPY = {
  */
 export const OUTCOME_COPY = {
   dialogTitle: "Your cash out",
-  amountLabel: "Amount",
+  /**
+   * ⚠️ **"Estimated", not "Amount".** The resume panel labels the *ZLTO* figure "Amount"; labelling
+   * the USD one the same word two screens later was one word for two units. "Estimated" is also
+   * what the youth saw on the amount step, and it stays true even on a completed payout:
+   * `PayoutTransaction.Amount` is computed at initiation and never updated afterwards
+   * (`UpdatePayoutTerminal` touches status, error, reconciliation and retry only), so Yoma cannot
+   * call it the amount that landed.
+   */
+  amountLabel: "Estimated",
   startedLabel: "Started",
 
   inProgressTitle: "Your cash out is in progress",
+  /**
+   * Ends with where the Zlto is, and explains why a Continue button can sit under an in-progress
+   * message: the youth may not have finished with the partner, and Yoma cannot tell.
+   */
   inProgressBody:
-    "We'll update your wallet as soon as it's done. This can take a few hours.",
+    "This can take a few hours. Your Zlto stays pending until it's done. If you haven't finished with our payout partner yet, you can continue below.",
   /** active but with no provider reference yet — reconciliation is still placing it */
   settingUpTitle: "We're still setting up your cash out",
   settingUpBody:
-    "This usually takes a few minutes. Your Zlto is safe while we finish.",
+    "This usually takes a few minutes. Your Zlto stays pending until it's done.",
 
   completedTitle: "Your cash out is complete",
-  completedBody:
-    "The payment has been sent. Your wallet has been updated to match.",
+  completedBody: "The money has been sent. Your wallet shows your new balance.",
 
   cancelledTitle: "Your cash out was cancelled",
-  cancelledBody: "Your Zlto is back in your wallet, ready to use.",
+  cancelledBody:
+    "No money was sent. Your Zlto is back in your wallet. You can start again any time.",
 
-  expiredTitle: "Your cash out expired",
+  /** "Expired" is a word this reader meets on milk and passports, not on their own actions. */
+  expiredTitle: "Your cash out ran out of time",
   expiredBody:
-    "The time to finish it ran out, so we returned your Zlto to your wallet.",
+    "It wasn't finished in time, so it closed. No money was sent. Your Zlto is back in your wallet.",
 
   failedTitle: "Your cash out didn't go through",
+  /** Says what failed — the payment, not the youth — and that no money moved, before comforting. */
   failedBody:
-    "Your Zlto has been returned to your wallet. You can try again whenever you're ready.",
+    "Something went wrong with the payment. No money was sent. Your Zlto is back in your wallet. You can try again when you're ready.",
 
   /** the outcome read itself failed — say so plainly rather than guessing at an outcome */
   unknownTitle: "We couldn't check your cash out",
-  unknownBody:
-    "Nothing is lost. Open your wallet again in a few minutes to see where it stands.",
+  /** True without having read anything: our failure to read it did not touch the cash out. */
+  unknownBody: "Your cash out is safe. Check again in a few minutes.",
 
-  /** shown while the outcome is being read — a moment, but never a guess in the meantime */
-  checkingBody: "Checking how your cash out went…",
+  /** shown while the outcome is being read — "how it went" presumes it ended; it may not have */
+  checkingBody: "Checking your cash out…",
 
   continueAction: CASH_OUT_ACTION_CONTINUE,
+  /** a read failure and a setup wait are both worth another look, and neither is a retry */
+  checkAgainAction: "Check again",
   startAgainAction: "Start a new cash out",
-  doneAction: "Back to wallet",
+  doneAction: "Back to my wallet",
 } as const;

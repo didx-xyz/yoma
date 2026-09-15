@@ -1,6 +1,13 @@
-import { IoOpenOutline, IoRefreshOutline } from "react-icons/io5";
+import { IoIosTimer } from "react-icons/io";
+import {
+  IoAlertCircleOutline,
+  IoHourglassOutline,
+  IoRefreshOutline,
+} from "react-icons/io5";
 import { RESUME_COPY } from "~/lib/payout/copy";
 import { formatUsd } from "~/lib/format/rewards";
+import { CashOutMessage } from "./CashOutMessage";
+import { CashOutNote } from "./CashOutNote";
 import { CashOutSummaryRow, CashOutZltoAmount } from "./CashOutSummary";
 
 /**
@@ -23,6 +30,21 @@ import { CashOutSummaryRow, CashOutZltoAmount } from "./CashOutSummary";
  *   a status would make a claim the contract cannot support.
  */
 
+/**
+ * Which of the three things this panel is. **A discriminator rather than a handful of independent
+ * flags**: the mapping from state to heading, icon, tone and button label used to live in the
+ * caller, so every caller had to repeat it — and the dev gallery got it wrong twice, showing a
+ * headless message and the wrong verb on a screen the flow renders correctly. Derived here, that
+ * cannot happen.
+ */
+export type CashOutResumeState =
+  /** a session can be requested: invite them back in */
+  | "resumable"
+  /** active, but Yoma has not placed it with the provider yet — a wait, not a failure */
+  | "settingUp"
+  /** nothing left to continue; the panel only reports and closes */
+  | "ended";
+
 export const CashOutResumePanel: React.FC<{
   /** reserved Zlto — `zlto.pendingPayout`; null while the reward provider is offline */
   zltoAmount: number | null;
@@ -30,101 +52,132 @@ export const CashOutResumePanel: React.FC<{
   estimateUsd: number | null;
   /** `payout.dateCreated`, pre-formatted by `formatPayoutStarted`; the row drops out when null */
   started?: string | null;
+  state?: CashOutResumeState;
   busy: boolean;
-  /** set when the session fetch failed, or when there is nothing to continue */
+  /**
+   * A transient problem to show *beneath* the invitation — a failed session fetch, or the race
+   * where another tab started the payout first. Only meaningful while `resumable`; the other two
+   * states are already saying the whole story in the message.
+   */
   notice?: string;
   onContinue: () => void;
   onClose: () => void;
-  /** hidden once continuing is pointless — a payout past the youth's part of the journey */
-  canContinue?: boolean;
-  /**
-   * Whether to invite the youth to pick up where they left off. Separate from `canContinue`
-   * because the two come apart: a payout Yoma has not yet placed with the provider is worth
-   * retrying (`canContinue`) but there is nothing to pick up yet, so the invitation would be
-   * telling them to finish something that has not started.
-   */
-  invitation?: boolean;
 }> = ({
   zltoAmount,
   estimateUsd,
   started,
+  state = "resumable",
   busy,
   notice,
   onContinue,
   onClose,
-  canContinue = true,
-  invitation = true,
-}) => (
-  <div className="flex flex-col gap-4">
-    <div className="flex flex-col">
-      <CashOutSummaryRow label={RESUME_COPY.amountLabel} divided={false}>
-        <CashOutZltoAmount amount={zltoAmount} />
-      </CashOutSummaryRow>
+}) => {
+  /*
+    The same shape as the result screens — badge, heading, body, then the figures — because this is
+    the same object seen a moment earlier, and drawing it as a tinted panel instead made a youth
+    work out twice that it was their cash out (design review 2026-09-14).
+  */
+  const message = {
+    resumable: {
+      icon: <IoIosTimer className="h-6 w-6" />,
+      tone: "info" as const,
+      title: RESUME_COPY.title as string | undefined,
+      body: RESUME_COPY.body,
+    },
+    settingUp: {
+      icon: <IoHourglassOutline className="h-6 w-6" />,
+      tone: "info" as const,
+      title: RESUME_COPY.notResumableTitle as string | undefined,
+      body: RESUME_COPY.notResumable,
+    },
+    ended: {
+      icon: <IoAlertCircleOutline className="h-6 w-6" />,
+      // Never red: whatever happened, the payout is untouched and the youth did nothing wrong.
+      tone: "warning" as const,
+      title: undefined,
+      body: RESUME_COPY.noLongerActive,
+    },
+  }[state];
 
-      <CashOutSummaryRow label={RESUME_COPY.estimateLabel}>
-        {formatUsd(estimateUsd)}
-      </CashOutSummaryRow>
+  /** Nothing to continue once it has ended; a wait is checked on, a failure is retried. */
+  const canContinue = state !== "ended";
+  const actionLabel =
+    state === "settingUp"
+      ? RESUME_COPY.checkAgainAction
+      : notice
+        ? RESUME_COPY.retryAction
+        : RESUME_COPY.continueAction;
 
-      {started && (
-        <CashOutSummaryRow label={RESUME_COPY.startedLabel}>
-          {started}
+  /** Only a transient failure sits below the message; the other states *are* the message. */
+  const inlineNotice = state === "resumable" ? notice : undefined;
+
+  return (
+    <div className="flex grow flex-col gap-4">
+      <CashOutMessage
+        icon={message.icon}
+        tone={message.tone}
+        title={message.title}
+        body={message.body}
+      />
+
+      <div className="flex flex-col">
+        <CashOutSummaryRow label={RESUME_COPY.amountLabel} divided={false}>
+          <CashOutZltoAmount amount={zltoAmount} />
         </CashOutSummaryRow>
-      )}
-    </div>
 
-    {/* "Pick up where you left off" is an invitation, so it goes when the invitation does —
-        otherwise the panel asks the youth to continue directly above a notice telling them there
-        is nothing to continue, with no button between the two. */}
-    {canContinue && invitation && (
-      <div className="bg-blue-light flex flex-col gap-1 rounded-lg px-4 py-3">
-        <span className="text-sm font-bold">{RESUME_COPY.title}</span>
-        <span className="text-sm leading-6">{RESUME_COPY.body}</span>
+        <CashOutSummaryRow label={RESUME_COPY.estimateLabel}>
+          {formatUsd(estimateUsd)}
+        </CashOutSummaryRow>
+
+        {started && (
+          <CashOutSummaryRow label={RESUME_COPY.startedLabel}>
+            {started}
+          </CashOutSummaryRow>
+        )}
       </div>
-    )}
 
-    {/* Neutral, not red: whatever went wrong, the payout is untouched and the youth did nothing. */}
-    {notice && (
-      <p
-        role="alert"
-        className="bg-orange-light rounded-lg px-4 py-3 text-sm leading-6"
-      >
-        {notice}
-      </p>
-    )}
+      {inlineNotice && (
+        <CashOutNote
+          icon={<IoAlertCircleOutline className="h-5 w-5" />}
+          tone="warning"
+          role="alert"
+        >
+          {inlineNotice}
+        </CashOutNote>
+      )}
 
-    <div className="flex flex-col items-center gap-2">
-      {canContinue && (
+      <div className="mt-auto flex flex-col items-center gap-2 pt-2">
+        {canContinue && (
+          <button
+            type="button"
+            onClick={onContinue}
+            disabled={busy}
+            className={`w-full rounded-full normal-case ${
+              busy
+                ? "btn btn-disabled"
+                : "btn bg-purple hover:bg-purple text-white hover:text-white"
+            }`}
+          >
+            {busy ? (
+              <span
+                className="loading loading-spinner loading-xs"
+                aria-hidden="true"
+              />
+            ) : actionLabel === RESUME_COPY.continueAction ? null : (
+              <IoRefreshOutline className="h-4 w-4" aria-hidden="true" />
+            )}
+            {busy ? RESUME_COPY.continueBusyAction : actionLabel}
+          </button>
+        )}
+
         <button
           type="button"
-          onClick={onContinue}
-          disabled={busy}
-          className={`w-full rounded-full normal-case ${
-            busy
-              ? "btn btn-disabled"
-              : "btn bg-purple hover:bg-purple text-white hover:text-white"
-          }`}
+          onClick={onClose}
+          className="btn border-gray text-gray-dark hover:bg-gray-light w-full rounded-full border bg-white normal-case"
         >
-          {busy ? (
-            <span
-              className="loading loading-spinner loading-xs"
-              aria-hidden="true"
-            />
-          ) : notice ? (
-            <IoRefreshOutline className="h-4 w-4" aria-hidden="true" />
-          ) : (
-            <IoOpenOutline className="h-4 w-4" aria-hidden="true" />
-          )}
-          {notice ? RESUME_COPY.retryAction : RESUME_COPY.continueAction}
+          {RESUME_COPY.closeAction}
         </button>
-      )}
-
-      <button
-        type="button"
-        onClick={onClose}
-        className="btn btn-ghost text-gray-dark rounded-full normal-case"
-      >
-        {RESUME_COPY.closeAction}
-      </button>
+      </div>
     </div>
-  </div>
-);
+  );
+};

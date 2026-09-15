@@ -25,23 +25,42 @@ import {
   RESUME_COPY,
   REVIEW_COPY,
 } from "~/lib/payout/copy";
-import { formatPayoutStarted } from "~/lib/payout/outcome";
+import { describeOutcome, formatPayoutStarted } from "~/lib/payout/outcome";
 
 /**
- * ⚠️⚠️ **TEMPORARY DEV AID — DELETE THIS FILE (and `dev/cash-out-provider.tsx`) BEFORE MERGING.**
- * Listed with the `?mock=` removal in the epic's T6 hardening item. ⚠️⚠️
+ * ⚠️ **DEV AID — remove before the production release.** Tracked in the epic's T6 hardening item
+ * alongside the Treasury `?mock=` removal.
  *
- * Every Cash Out screen, in the real dialog, one click apart — so copy and layout can be worked on
- * without a funded wallet, a provider account, or the hosted journey being reachable at all.
+ * **To remove it, delete two files and nothing else:**
  *
- * Deliberately built as a **standalone page that imports the real components**, rather than the
- * `?mock=` approach taken for Treasury. That one is woven into a production page and is now a
- * blocker to unpick; this one touches no production code, so removing it is deleting two files.
+ * 1. `src/web/src/pages/dev/cash-out.tsx` (this file)
+ * 2. `src/web/src/pages/dev/cash-out-provider.tsx` (the stand-in journey its iframe points at)
  *
- * It renders through `CashOutDialog`, the same chrome the flow uses, so what you see here is what
- * ships. The strings all live in `lib/payout/copy.ts` — edit there and this reloads.
+ * There is nothing to unpick: no production module imports either of them, and they import
+ * production components rather than the other way round. `grep -rn "dev/cash-out" src/web/src`
+ * should return only these two files — if it ever returns more, something has grown a dependency on
+ * the aid and *that* is what needs removing first. This is deliberately not the `?mock=` approach
+ * taken for Treasury, which is threaded through a live page and is now a blocker to unpick.
  *
- * Not reachable in production: `getStaticProps` answers 404 in a production build.
+ * **Safe to leave in meanwhile.** Both files answer `notFound` from `getStaticProps` when
+ * `NODE_ENV === "production"`, so a production build serves 404 for `/dev/cash-out` even if they
+ * ship. That is a safety net, not a reason to keep them: they are dev scaffolding and carry no
+ * tests, no a11y pass and no review.
+ *
+ * ---
+ *
+ * What it is: every Cash Out screen, in the real dialog, one click apart — so copy and layout can be
+ * worked on without a funded wallet, a provider account, or the hosted journey being reachable.
+ *
+ * - It renders through `CashOutDialog` and the real step components, so what you see is what ships.
+ *   Where the flow *derives* something, derive it here too (`describeOutcome(...).resolved`, the
+ *   resume panel's `state`) — hardcoding it is how this page has twice shown a screen the flow
+ *   renders correctly.
+ * - Strings live in `lib/payout/copy.ts`; edit there and this reloads.
+ * - `?scene=` and `?width=` are linkable, so a state at a width is one URL.
+ * - The width preview renders the dialog in an iframe because Chrome will not open a window below
+ *   ~500px on Windows: dragging the browser narrow (or `--window-size=320`) lays out at 500 and
+ *   simply crops. An iframe gets its own layout viewport, so 320 there is genuinely 320.
  */
 
 // ⚠️ TEMPORARY — part of the dev aid.
@@ -357,12 +376,14 @@ const SCENES: Scene[] = [
     name: outcome.name,
     title: OUTCOME_COPY.dialogTitle,
     step: 3,
-    stepResolved: true,
+    // Derived, not declared: the gallery must not claim a step is resolved where the flow would not.
+    stepResolved: describeOutcome(outcome.payout).resolved,
     render: () => (
       <CashOutOutcomeStep
         payout={outcome.payout}
         onResume={noop}
         onStartAgain={noop}
+        onCheckAgain={noop}
         onClose={noop}
       />
     ),
@@ -438,9 +459,24 @@ const SCENES: Scene[] = [
         zltoAmount={100}
         estimateUsd={2.22}
         started={started}
+        state="settingUp"
         busy={false}
-        notice={RESUME_COPY.notResumable}
-        invitation={false}
+        onContinue={noop}
+        onClose={noop}
+      />
+    ),
+  },
+  {
+    group: "Resume",
+    name: "ended",
+    title: RESUME_COPY.dialogTitle,
+    render: () => (
+      <CashOutResumePanel
+        zltoAmount={100}
+        estimateUsd={2.22}
+        started={started}
+        state="ended"
+        busy={false}
         onContinue={noop}
         onClose={noop}
       />
@@ -457,6 +493,10 @@ const FRAME_SOURCES = [
   { name: "blank", url: "about:blank" },
 ];
 
+/** Narrow viewports worth checking. 320 is the smallest phone still in real use. */
+const PREVIEW_WIDTHS = ["full", 320, 360, 390] as const;
+type PreviewWidth = (typeof PREVIEW_WIDTHS)[number];
+
 /** `Gate · activePayout` → `gate-activepayout`, so a state can be linked to and bookmarked. */
 const sceneSlug = (scene: Scene) =>
   `${scene.group}-${scene.name}`.toLowerCase().replace(/[^a-z0-9]+/g, "-");
@@ -464,6 +504,12 @@ const sceneSlug = (scene: Scene) =>
 export default function CashOutStates() {
   const [sceneIndex, setSceneIndex] = useState(1);
   const [frameUrl, setFrameUrl] = useState(FRAME_SOURCES[0]!.url);
+  const [panelOpen, setPanelOpen] = useState(false);
+  const [width, setWidth] = useState<PreviewWidth>("full");
+  /** `?bare=1` renders the dialog alone, so the width preview can frame it in an iframe. */
+  const [bare, setBare] = useState(false);
+  /** viewport width × document width — the second being larger is horizontal overflow. */
+  const [size, setSize] = useState<{ view: number; doc: number } | null>(null);
   const scene = SCENES[sceneIndex]!;
 
   // Read after mount, not during render: branching on `window` while rendering is a hydration
@@ -472,7 +518,32 @@ export default function CashOutStates() {
     const wanted = new URLSearchParams(window.location.search).get("scene");
     const found = SCENES.findIndex((item) => sceneSlug(item) === wanted);
     if (found >= 0) setSceneIndex(found);
+    // Open on a desktop, out of the way on a phone — at 320px the panel is most of the screen.
+    setPanelOpen(window.innerWidth >= 768);
+
+    const params = new URLSearchParams(window.location.search);
+    setBare(params.has("bare"));
+    // Linkable like the scene, so "this state, at this width" is one URL.
+    const wantedWidth = Number(params.get("width"));
+    if (PREVIEW_WIDTHS.includes(wantedWidth as PreviewWidth))
+      setWidth(wantedWidth as PreviewWidth);
   }, []);
+
+  /*
+    A readout rather than an eyeball: at narrow widths the question "does this fit?" is answered by
+    whether the document is wider than the viewport, and that is a number. Anything clipped in a
+    screenshot is either this — real overflow — or the shot being narrower than the layout.
+  */
+  useEffect(() => {
+    const measure = () =>
+      setSize({
+        view: window.innerWidth,
+        doc: document.documentElement.scrollWidth,
+      });
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, [sceneIndex, panelOpen]);
 
   const selectScene = (index: number) => {
     setSceneIndex(index);
@@ -481,6 +552,36 @@ export default function CashOutStates() {
     window.history.replaceState(null, "", url);
   };
 
+  // Inside the width preview: the dialog and nothing else, plus the readout, since the whole
+  // question at 320px is whether anything overflows.
+  if (bare) {
+    return (
+      <>
+        <CashOutDialog
+          isOpen
+          title={scene.title}
+          step={scene.step}
+          stepResolved={scene.stepResolved}
+          hosted={scene.hosted}
+          onClose={noop}
+        >
+          {scene.render({ frameUrl })}
+        </CashOutDialog>
+
+        {size && (
+          <span
+            className={`fixed top-1 right-1 z-70 rounded px-1.5 py-0.5 font-mono text-[10px] text-white ${
+              size.doc > size.view ? "bg-red-500" : "bg-black/50"
+            }`}
+          >
+            {size.view}
+            {size.doc > size.view ? ` ⟶ ${size.doc}` : " ✓"}
+          </span>
+        )}
+      </>
+    );
+  }
+
   return (
     <>
       <Head>
@@ -488,16 +589,72 @@ export default function CashOutStates() {
       </Head>
 
       <div className="flex min-h-screen flex-col gap-4 bg-white p-4 text-black md:flex-row">
+        {/*
+          The toggle, always reachable and above everything: at 320px the panel covers four fifths
+          of the screen, so testing a dialog at phone width means getting it out of the way. It also
+          carries the width readout, which is the whole point of being here at 320 — `doc > view` is
+          horizontal overflow, in numbers rather than in a guess about a screenshot.
+        */}
+        <button
+          type="button"
+          onClick={() => setPanelOpen((open) => !open)}
+          className="bg-purple fixed bottom-3 left-3 z-70 flex flex-row items-center gap-2 rounded-full px-4 py-2 text-xs font-bold text-white shadow-lg"
+        >
+          {panelOpen ? "Hide" : "States"}
+          {size && (
+            <span
+              className={`rounded-full px-2 py-0.5 font-mono text-[10px] ${
+                size.doc > size.view ? "bg-red-500" : "bg-white/20"
+              }`}
+            >
+              {size.view}
+              {size.doc > size.view ? ` ⟶ ${size.doc}` : ""}
+            </span>
+          )}
+        </button>
+
         {/* Floated above the dialog: `CustomModal` renders a full-screen overlay that swallows
             clicks, so an in-flow picker would be visible and unusable. `z-50` is the modal's, so
             this sits one above it. */}
-        <aside className="border-gray fixed top-16 bottom-0 left-0 z-60 flex w-64 shrink-0 flex-col gap-3 overflow-y-auto border-r bg-white p-3 shadow-lg">
+        <aside
+          className={`border-gray fixed top-16 bottom-0 left-0 z-60 w-64 shrink-0 flex-col gap-3 overflow-y-auto border-r bg-white p-3 pb-16 shadow-lg ${
+            panelOpen ? "flex" : "hidden"
+          }`}
+        >
           <div>
             <h5>Cash Out states</h5>
             <p className="text-gray-dark text-xs">
               Dev only. Copy lives in{" "}
               <code className="text-[11px]">lib/payout/copy.ts</code>.
             </p>
+          </div>
+
+          {/* Chrome will not open a window narrower than ~500px on Windows, so the only honest way
+              to see a phone width is to give the dialog its own viewport. */}
+          <div className="flex flex-col gap-1 text-xs">
+            <span className="font-semibold">Preview width</span>
+            <div className="flex flex-row flex-wrap gap-1">
+              {PREVIEW_WIDTHS.map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  onClick={() => {
+                    setWidth(option);
+                    const url = new URL(window.location.href);
+                    if (option === "full") url.searchParams.delete("width");
+                    else url.searchParams.set("width", String(option));
+                    window.history.replaceState(null, "", url);
+                  }}
+                  className={`rounded px-2 py-1 text-[11px] ${
+                    option === width
+                      ? "bg-purple text-white"
+                      : "bg-gray-light hover:bg-gray"
+                  }`}
+                >
+                  {option === "full" ? "full" : `${option}px`}
+                </button>
+              ))}
+            </div>
           </div>
 
           <label className="flex flex-col gap-1 text-xs">
@@ -561,17 +718,39 @@ export default function CashOutStates() {
           </div>
         </aside>
 
-        <main className="grow md:pl-64">
-          <CashOutDialog
-            isOpen
-            title={scene.title}
-            step={scene.step}
-            stepResolved={scene.stepResolved}
-            hosted={scene.hosted}
-            onClose={noop}
-          >
-            {scene.render({ frameUrl })}
-          </CashOutDialog>
+        <main className={`grow ${panelOpen ? "md:pl-64" : ""}`}>
+          {width === "full" ? (
+            <CashOutDialog
+              isOpen
+              title={scene.title}
+              step={scene.step}
+              stepResolved={scene.stepResolved}
+              hosted={scene.hosted}
+              onClose={noop}
+            >
+              {scene.render({ frameUrl })}
+            </CashOutDialog>
+          ) : (
+            /*
+              A real narrow viewport, not a narrow window. Chrome will not open a window below about
+              500px on Windows, so `--window-size=320` and dragging the browser both lie: the page
+              lays out at 500 and the edges are simply cropped. An iframe has its own layout
+              viewport, so 320 here is genuinely 320 — which is the only way to answer "does this
+              fit a small phone?" without devtools emulation.
+            */
+            <div className="flex flex-col items-center gap-2 py-4">
+              <span className="text-gray-dark text-xs">
+                {width}px viewport — a real one, not a cropped window
+              </span>
+              <iframe
+                key={`${width}-${sceneSlug(scene)}`}
+                title={`Cash Out at ${width}px`}
+                src={`/dev/cash-out?bare=1&scene=${sceneSlug(scene)}`}
+                style={{ width: `${width}px` }}
+                className="border-gray h-[720px] rounded-2xl border-4 bg-white"
+              />
+            </div>
+          )}
         </main>
       </div>
     </>

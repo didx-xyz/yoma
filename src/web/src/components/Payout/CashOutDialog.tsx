@@ -35,6 +35,12 @@ export const CashOutDialog: React.FC<{
   stepResolved?: boolean;
   /** the hosted journey's shape: tall, window-scaled, no body scrolling */
   hosted?: boolean;
+  /**
+   * What the ✕ does, for a screen reader. On most screens it closes; on the hosted journey it also
+   * reads the outcome, and saying so is the difference between dismissing a dialog and finishing a
+   * step (copy review 2026-09-14).
+   */
+  closeLabel?: string;
   onClose: () => void;
   children: ReactNode;
 }> = ({
@@ -43,6 +49,7 @@ export const CashOutDialog: React.FC<{
   step,
   stepResolved = false,
   hosted = false,
+  closeLabel = "Close",
   onClose,
   children,
 }) => (
@@ -65,15 +72,13 @@ export const CashOutDialog: React.FC<{
           : "flex h-full flex-col gap-4 overflow-y-auto p-4 pb-8 text-black"
       }
     >
-      <div className="flex flex-row items-start gap-2">
-        {/* The title is centred over the content, with the ✕ out of the flow on the right — the
-            grey circular close control the product uses everywhere. */}
-        <h4 className="grow pt-1 text-center">{title}</h4>
+      <div className="flex flex-row items-center gap-2">
+        <h4 className="grow pl-2 text-center text-xl font-semibold">{title}</h4>
         <button
           type="button"
           className={BTN_DIALOG_CLOSE}
           onClick={onClose}
-          aria-label="Close"
+          aria-label={closeLabel}
         >
           <IoMdClose className="h-5 w-5" />
         </button>

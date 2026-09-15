@@ -25,7 +25,7 @@ import {
   RESUME_COPY,
   REVIEW_COPY,
 } from "~/lib/payout/copy";
-import { formatPayoutStarted } from "~/lib/payout/outcome";
+import { describeOutcome, formatPayoutStarted } from "~/lib/payout/outcome";
 import type { CashOutBlockReason } from "~/lib/payout/eligibility";
 import { cashOutEligibility } from "~/lib/payout/eligibility";
 import { isSafePaymentUrl, openPaymentUrl } from "~/lib/payout/handoff";
@@ -39,7 +39,10 @@ import { CashOutGate } from "./CashOutGate";
 import { CashOutHostedStep } from "./CashOutHostedStep";
 import { CashOutMessageStep } from "./CashOutMessageStep";
 import { CashOutOutcomeStep } from "./CashOutOutcomeStep";
-import { CashOutResumePanel } from "./CashOutResumePanel";
+import {
+  CashOutResumePanel,
+  type CashOutResumeState,
+} from "./CashOutResumePanel";
 import { CashOutReviewStep } from "./CashOutReviewStep";
 import { CashOutDialog } from "./CashOutDialog";
 import type { CashOutStep } from "./CashOutStepper";
@@ -84,13 +87,7 @@ type FlowView =
   /** the hosted journey, embedded */
   | { name: "hosted"; paymentUrl: string }
   /** the payout in flight, and the way back into it */
-  | {
-      name: "resume";
-      notice?: string;
-      canContinue: boolean;
-      /** false while the payout has not been placed with the provider — nothing to pick up yet */
-      invitation?: boolean;
-    }
+  | { name: "resume"; state?: CashOutResumeState; notice?: string }
   /** step 3 — the recorded outcome, or `null` when it could not be read */
   | { name: "outcome"; payout: PayoutTransactionInfo | null }
   /** reading the outcome, right after the hosted modal closed */
@@ -237,12 +234,9 @@ export const CashOutEntry: React.FC<{
       // `canResume` is known up front now, so the setup window is stated on arrival rather than
       // discovered by tapping a button that cannot work yet. Retry stays available either way —
       // reconciliation fills the provider reference in, so the next tap may well succeed.
-      const canResume = profile.payout?.canResume ?? false;
       setView({
         name: "resume",
-        canContinue: true,
-        invitation: canResume,
-        notice: canResume ? undefined : RESUME_COPY.notResumable,
+        state: profile.payout?.canResume ? "resumable" : "settingUp",
       });
       return;
     }
@@ -266,7 +260,7 @@ export const CashOutEntry: React.FC<{
     setView((current) =>
       current.name === "resume"
         ? { ...current, notice: undefined }
-        : { name: "resume", canContinue: true },
+        : { name: "resume" },
     );
 
     try {
@@ -281,11 +275,7 @@ export const CashOutEntry: React.FC<{
       }
 
       if (!isSafePaymentUrl(session.paymentUrl)) {
-        setView({
-          name: "resume",
-          notice: RESUME_COPY.linkFailed,
-          canContinue: true,
-        });
+        setView({ name: "resume", notice: RESUME_COPY.linkFailed });
         return;
       }
 
@@ -299,18 +289,9 @@ export const CashOutEntry: React.FC<{
         // whenever the provider transaction id is missing (API `8d34eee7`), so this resolves on its
         // own within a cycle — the youth gets a retry and a horizon, not a dead end. No invitation
         // to "pick up where you left off": there is nothing to pick up until the session exists.
-        setView({
-          name: "resume",
-          notice: RESUME_COPY.notResumable,
-          canContinue: true,
-          invitation: false,
-        });
+        setView({ name: "resume", state: "settingUp" });
       } else {
-        setView({
-          name: "resume",
-          notice: RESUME_COPY.linkFailed,
-          canContinue: true,
-        });
+        setView({ name: "resume", notice: RESUME_COPY.linkFailed });
       }
     } finally {
       setBusy(false);
@@ -339,11 +320,7 @@ export const CashOutEntry: React.FC<{
         // fetches a fresh session.
         if (!isSafePaymentUrl(session.paymentUrl)) {
           void refreshProfile();
-          setView({
-            name: "resume",
-            notice: RESUME_COPY.linkFailed,
-            canContinue: true,
-          });
+          setView({ name: "resume", notice: RESUME_COPY.linkFailed });
           return;
         }
 
@@ -385,11 +362,7 @@ export const CashOutEntry: React.FC<{
           case "gate":
             void refreshProfile();
             if (failure.reason === "activePayout") {
-              setView({
-                name: "resume",
-                notice: GATE_COPY.activePayout.body,
-                canContinue: true,
-              });
+              setView({ name: "resume", notice: GATE_COPY.activePayout.body });
             } else {
               setView({ name: "gate", reason: failure.reason });
             }
@@ -407,11 +380,7 @@ export const CashOutEntry: React.FC<{
           default: {
             const refreshed = await refreshProfile();
             if (refreshed?.payout?.active) {
-              setView({
-                name: "resume",
-                notice: RESUME_COPY.linkFailed,
-                canContinue: true,
-              });
+              setView({ name: "resume", notice: RESUME_COPY.linkFailed });
             } else {
               setView({ name: "failed" });
             }
@@ -484,8 +453,13 @@ export const CashOutEntry: React.FC<{
         isOpen={isOpen}
         title={title}
         step={step}
-        stepResolved={view.name === "outcome"}
+        /* A tick claims the cash out resolved, so only a recorded terminal status earns one —
+           "in progress", "still setting up" and "we couldn't check" leave step 3 live. */
+        stepResolved={
+          view.name === "outcome" && describeOutcome(view.payout).resolved
+        }
         hosted={view.name === "hosted"}
+        closeLabel={view.name === "hosted" ? HOSTED_COPY.closeLabel : undefined}
         onClose={dismiss}
       >
         <>
@@ -550,9 +524,8 @@ export const CashOutEntry: React.FC<{
               estimateUsd={profile.payout?.amount ?? null}
               started={formatPayoutStarted(profile.payout?.dateCreated)}
               busy={busy}
+              state={view.state}
               notice={view.notice}
-              canContinue={view.canContinue}
-              invitation={view.invitation}
               onContinue={() => void continueCashOut()}
               onClose={close}
             />
@@ -584,6 +557,7 @@ export const CashOutEntry: React.FC<{
               payout={view.payout}
               onResume={() => void continueCashOut()}
               onStartAgain={openFlow}
+              onCheckAgain={() => void showOutcome()}
               onClose={close}
             />
           )}

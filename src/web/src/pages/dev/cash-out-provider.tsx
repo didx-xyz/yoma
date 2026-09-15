@@ -2,7 +2,9 @@ import type { GetStaticProps } from "next";
 import Head from "next/head";
 
 /**
- * ⚠️⚠️ **TEMPORARY DEV AID — DELETE THIS FILE WITH `dev/cash-out.tsx` BEFORE MERGING.** ⚠️⚠️
+ * ⚠️ **DEV AID — delete with `dev/cash-out.tsx` before the production release.** See that file's
+ * header for the removal note; there is nothing to unpick beyond deleting the two files. Serves
+ * 404 in a production build meanwhile (`getStaticProps` below).
  *
  * A stand-in for the hosted journey, so the iframe has something plausible in it while the real one
  * is unreachable (its sign-in step refuses to be framed, and verification rejects Yoma's gender

@@ -2,6 +2,7 @@ import Image from "next/image";
 import iconZltoColor from "public/images/icon-zlto-rounded-color.webp";
 import { IoPauseCircleOutline } from "react-icons/io5";
 import FormError from "../Common/FormError";
+import { CashOutNote } from "./CashOutNote";
 import type { CashOutAmountProblem } from "~/lib/payout/amount";
 import { conversionRateLine } from "~/lib/payout/conversion";
 import {
@@ -64,6 +65,8 @@ export const CashOutAmountStep: React.FC<{
   /** a server rejection of an amount this component considers valid — the profile was stale */
   serverError?: string;
   preview: CashOutPreview;
+  /** re-asks for the estimate after a failed preview; without it that state has no way forward */
+  onRetryEstimate?: () => void;
   canContinue: boolean;
   onContinue: () => void;
   onCancel: () => void;
@@ -75,6 +78,7 @@ export const CashOutAmountStep: React.FC<{
   problem,
   showProblem,
   serverError,
+  onRetryEstimate,
   preview,
   canContinue,
   onContinue,
@@ -101,14 +105,16 @@ export const CashOutAmountStep: React.FC<{
 
       <div className="flex flex-col gap-1">
         {/* Label and Max as siblings: a button inside a <label> would also fire the label. */}
-        <div className="flex flex-row items-baseline justify-between gap-4">
+        <div className="flex flex-row items-baseline justify-between gap-3">
           <label htmlFor={FIELD_ID} className="text-sm font-semibold">
             {AMOUNT_COPY.fieldLabel}
           </label>
+          {/* `shrink-0` and no wrapping: at 320px the question beside it takes two lines, and
+              without this the action broke across them too ("Use / all"). */}
           <button
             type="button"
             onClick={onMax}
-            className="text-purple text-sm font-bold underline-offset-2 hover:underline"
+            className="text-purple shrink-0 text-sm font-bold whitespace-nowrap underline-offset-2 hover:underline"
           >
             {AMOUNT_COPY.maxAction}
           </button>
@@ -161,7 +167,7 @@ export const CashOutAmountStep: React.FC<{
           // The skeleton sits on the USD figure only: the rest of the panel is not in flight.
           <span
             className="skeleton h-6 w-20 rounded"
-            aria-label="Working out your estimate"
+            aria-label={AMOUNT_COPY.estimateLoading}
           />
         ) : (
           <span className="text-lg font-bold tabular-nums">
@@ -170,19 +176,41 @@ export const CashOutAmountStep: React.FC<{
         )}
       </div>
 
+      {/* Why it is an estimate, said once there is one to qualify — the label alone does not tell a
+          first-time reader (copy review 2026-09-14). */}
+      {preview.state === "ready" && (
+        <p className="text-gray-dark -mt-2 text-xs">
+          {AMOUNT_COPY.estimateNote}
+        </p>
+      )}
+
+      {/* A failed preview is not a field error, but it *is* a dead end without a retry: Continue
+          needs an estimate, so without one the youth has nothing to press (copy review
+          2026-09-14). */}
       {preview.state === "failed" && (
-        <p className="text-gray-dark text-xs">{AMOUNT_COPY.estimateFailed}</p>
+        <p className="text-gray-dark flex flex-row flex-wrap items-center gap-2 text-xs">
+          {AMOUNT_COPY.estimateFailed}
+          {onRetryEstimate && (
+            <button
+              type="button"
+              onClick={onRetryEstimate}
+              className="text-purple font-bold underline-offset-2 hover:underline"
+            >
+              {AMOUNT_COPY.estimateRetryAction}
+            </button>
+          )}
+        </p>
       )}
 
       {/* PAUSED — Yoma's own funds, not the youth's amount, and never styled as an error. */}
       {paused && (
-        <div className="bg-orange-light flex flex-row items-start gap-3 rounded-lg px-4 py-3">
-          <IoPauseCircleOutline className="text-orange mt-0.5 h-5 w-5 shrink-0" />
-          <div className="flex flex-col gap-1">
-            <span className="text-sm font-bold">{AMOUNT_COPY.pausedTitle}</span>
-            <span className="text-sm leading-6">{AMOUNT_COPY.pausedBody}</span>
-          </div>
-        </div>
+        <CashOutNote
+          icon={<IoPauseCircleOutline className="h-5 w-5" />}
+          tone="warning"
+          title={AMOUNT_COPY.pausedTitle}
+        >
+          {AMOUNT_COPY.pausedBody}
+        </CashOutNote>
       )}
 
       <div className="flex flex-col items-center gap-2">
@@ -204,7 +232,7 @@ export const CashOutAmountStep: React.FC<{
         <button
           type="button"
           onClick={onCancel}
-          className="btn btn-ghost text-gray-dark rounded-full normal-case"
+          className="btn border-gray text-gray-dark hover:bg-gray-light w-full rounded-full border bg-white normal-case"
         >
           {AMOUNT_COPY.cancelAction}
         </button>

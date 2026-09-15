@@ -1,8 +1,12 @@
 import { IoIosLock } from "react-icons/io";
-import { IoChevronBackOutline } from "react-icons/io5";
+import {
+  IoArrowForwardCircleOutline,
+  IoChevronBackOutline,
+} from "react-icons/io5";
 import { conversionRateLine } from "~/lib/payout/conversion";
 import { REVIEW_COPY } from "~/lib/payout/copy";
 import { formatUsd } from "~/lib/format/rewards";
+import { CashOutNote } from "./CashOutNote";
 import { CashOutSummaryRow, CashOutZltoAmount } from "./CashOutSummary";
 
 /**
@@ -46,10 +50,15 @@ export const CashOutReviewStep: React.FC<{
         )}
       </div>
 
-      <div className="bg-blue-light flex flex-col gap-2 rounded-lg px-4 py-3">
-        <p className="text-sm leading-6">{REVIEW_COPY.handoffNote}</p>
-        <p className="text-gray-dark text-xs">{REVIEW_COPY.estimateNote}</p>
-      </div>
+      {/* What happens next, then where the Zlto is — in that order, one idea per sentence. */}
+      <CashOutNote icon={<IoArrowForwardCircleOutline className="h-5 w-5" />}>
+        <p>
+          {REVIEW_COPY.handoffNote} {REVIEW_COPY.pendingNote}
+        </p>
+        <p className="text-gray-dark mt-1 text-xs">
+          {REVIEW_COPY.estimateNote}
+        </p>
+      </CashOutNote>
 
       <div className="flex flex-col items-center gap-2">
         <button
@@ -70,14 +79,14 @@ export const CashOutReviewStep: React.FC<{
           ) : (
             <IoIosLock className="h-4 w-4" aria-hidden="true" />
           )}
-          {REVIEW_COPY.confirmAction}
+          {busy ? REVIEW_COPY.confirmBusyAction : REVIEW_COPY.confirmAction}
         </button>
 
         <button
           type="button"
           onClick={onBack}
           disabled={busy}
-          className="btn btn-ghost text-gray-dark rounded-full normal-case"
+          className="btn border-gray text-gray-dark hover:bg-gray-light w-full rounded-full border bg-white normal-case"
         >
           <IoChevronBackOutline className="h-4 w-4" aria-hidden="true" />
           {REVIEW_COPY.backAction}

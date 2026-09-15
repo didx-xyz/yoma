@@ -53,6 +53,9 @@ export const CashOutHostedStep: React.FC<{
 
   return (
     <div className="flex min-h-0 grow flex-col gap-3">
+      {/* Whose page this is, before they see it. */}
+      <p className="text-gray-dark text-center text-xs">{HOSTED_COPY.lead}</p>
+
       {/*
       The frame takes every pixel the dialog has left, at whatever size the window is.
 
@@ -71,38 +74,54 @@ export const CashOutHostedStep: React.FC<{
       />
 
       <div className="flex flex-col items-center gap-2">
+        {/*
+          The status slot: present from the first paint, fixed height, and the **only** place the
+          escape hatch lives. It used to be a sentence appended into the note below after four
+          seconds, which reflowed the footer and put the way out in two places at once (copy review
+          2026-09-14). `aria-live="polite"` so the change is announced without interrupting.
+        */}
+        <div
+          role="status"
+          aria-live="polite"
+          className="flex h-11 flex-row flex-wrap items-center justify-center gap-2 text-xs"
+        >
+          {showFallbackHint ? (
+            <>
+              <span className="text-gray-dark">{HOSTED_COPY.blockedHint}</span>
+              <button
+                type="button"
+                onClick={onOpenInNewWindow}
+                className="text-purple inline-flex items-center gap-1 font-bold underline-offset-2 hover:underline"
+              >
+                <IoOpenOutline className="h-4 w-4" aria-hidden="true" />
+                {HOSTED_COPY.newWindowAction}
+              </button>
+            </>
+          ) : (
+            <span className="text-gray-dark inline-flex items-center gap-2">
+              <span
+                className="loading loading-spinner loading-xs"
+                aria-hidden="true"
+              />
+              {HOSTED_COPY.statusLoading}
+            </span>
+          )}
+        </div>
+
         {/* `w-full` so it wraps: inside `items-center` the paragraph would take its content width
             and run off the edge of a narrow screen instead of breaking onto a second line. */}
         <p className="text-gray-dark w-full text-center text-xs">
           {HOSTED_COPY.footerNote}
-          {showFallbackHint && (
-            <>
-              {" "}
-              <span className="text-black">{HOSTED_COPY.blockedHint}</span>
-            </>
-          )}
         </p>
 
-        <div className="flex flex-row flex-wrap items-center justify-center gap-2">
-          <button
-            type="button"
-            onClick={onDone}
-            className="btn bg-purple hover:bg-purple rounded-full px-8 text-white normal-case hover:text-white"
-          >
-            {HOSTED_COPY.doneAction}
-          </button>
-
-          {/* Deliberately secondary: the modal is the intended experience, and this exists for the
-              youth whose browser or the provider's framing rules will not allow it. */}
-          <button
-            type="button"
-            onClick={onOpenInNewWindow}
-            className="btn btn-ghost text-gray-dark rounded-full text-xs normal-case"
-          >
-            <IoOpenOutline className="h-4 w-4" aria-hidden="true" />
-            {HOSTED_COPY.newWindowAction}
-          </button>
-        </div>
+        {/* One primary action. The way out is in the status slot above, not competing here. */}
+        <button
+          type="button"
+          onClick={onDone}
+          className="btn bg-purple hover:bg-purple w-full rounded-full px-8 text-white normal-case hover:text-white md:w-auto md:self-end"
+        >
+          {HOSTED_COPY.doneAction}
+        </button>
       </div>
     </div>
   );

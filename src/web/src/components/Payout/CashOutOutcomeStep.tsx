@@ -53,16 +53,28 @@ export const CashOutOutcomeStep: React.FC<{
   payout: PayoutTransactionInfo | null;
   onResume: () => void;
   onStartAgain: () => void;
+  /** re-reads the outcome — for the states that are still moving, or that could not be read */
+  onCheckAgain?: () => void;
   onClose: () => void;
-}> = ({ payout, onResume, onStartAgain, onClose }) => {
+}> = ({ payout, onResume, onStartAgain, onCheckAgain, onClose }) => {
   const view = describeOutcome(payout);
   const started = formatPayoutStarted(payout?.dateCreated);
+
+  /**
+   * Every screen offers something to do, and "leave" is the last resort rather than the default.
+   * The two states that are neither terminal nor resumable — still setting up, and a failed read —
+   * get **Check again**, which is the honest action for both: nothing failed on the youth's side,
+   * and looking again is what would actually help (copy review 2026-09-14).
+   */
+  const canCheckAgain = view.kind === "settingUp" || view.kind === "unknown";
 
   const primary = view.canResume
     ? { label: OUTCOME_COPY.continueAction, onClick: onResume }
     : view.canStartAgain
       ? { label: OUTCOME_COPY.startAgainAction, onClick: onStartAgain }
-      : { label: OUTCOME_COPY.doneAction, onClick: onClose };
+      : canCheckAgain && onCheckAgain
+        ? { label: OUTCOME_COPY.checkAgainAction, onClick: onCheckAgain }
+        : { label: OUTCOME_COPY.doneAction, onClick: onClose };
 
   return (
     <CashOutMessageStep
@@ -73,9 +85,9 @@ export const CashOutOutcomeStep: React.FC<{
       primary={primary}
       // Once the primary action is something other than "leave", the youth still needs a way out.
       secondary={
-        view.canResume || view.canStartAgain
-          ? { label: OUTCOME_COPY.doneAction, onClick: onClose }
-          : undefined
+        primary.label === OUTCOME_COPY.doneAction
+          ? undefined
+          : { label: OUTCOME_COPY.doneAction, onClick: onClose }
       }
     >
       {view.showDetails && payout && (
