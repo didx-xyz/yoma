@@ -1179,14 +1179,23 @@ namespace Yoma.Core.Domain.PartnerSync.Services
       var userSyncInfo = _syncStateService.GetUserSyncInfo(partner, userExternalId);
       if (userSyncInfo != null) return userSyncInfo.UserId;
 
-      // IXO may return the Yoma user id directly as userRef when no partner-user link exists.
-      // Keep this fallback IXO-specific so another partner's GUID-shaped external id is never
-      // mistaken for a Yoma user id. Email/mobile username resolution remains the final fallback.
-      if (partner == SyncPartner.IXO && Guid.TryParse(userExternalId, out var userId) &&
-          _userService.GetByIdOrNull(userId, false, false) != null)
-        return userId;
+      switch (partner)
+      {
+        case SyncPartner.IXO:
+        case SyncPartner.Umuzi:
+          // IXO may return our id as userRef; Umuzi explicitly returns yomaUserId in phase one.
+          // Only these contracts allow interpreting the external reference as a Yoma id.
+          if (Guid.TryParse(userExternalId, out var userId) &&
+              _userService.GetByIdOrNull(userId, false, false) != null)
+            return userId;
 
-      return _userService.GetByUsernameOrNull(username, false, false)?.Id;
+          // If the id cannot be resolved, use the same current-username fallback as other partners.
+          goto default;
+
+        default:
+          // Do not interpret other partners' GUID-shaped external ids as Yoma user ids.
+          return _userService.GetByUsernameOrNull(username, false, false)?.Id;
+      }
     }
 
     private static void IncrementTrackingSucceeded(PartnerSyncTrackingRequest tracking, SyncAction? action = null)
@@ -1235,6 +1244,4 @@ namespace Yoma.Core.Domain.PartnerSync.Services
     #endregion
   }
 }
-
-
 

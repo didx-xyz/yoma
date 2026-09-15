@@ -4,7 +4,6 @@ using System.Net.Http.Headers;
 using System.Transactions;
 using System.Xml.Linq;
 using Yoma.Core.Domain.Core;
-using Environment = System.Environment;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
