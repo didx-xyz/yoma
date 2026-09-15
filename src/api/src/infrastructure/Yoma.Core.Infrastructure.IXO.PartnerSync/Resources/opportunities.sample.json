@@ -83,6 +83,75 @@
       "provider": "Sample Learning Provider"
     },
     {
+      "externalId": "did:ixo:entity:8f795da7337f4d811ded9e8fd5aead43",
+      "title": "Learning",
+      "provider": "LearningLLC",
+      "providerLogoUrl": "https://studio.ixo.earth/domain-profile-default.png",
+      "url": "https://jambo.test.yoma.impacts.exchange/entities/did%3Aixo%3Aentity%3A8f795da7337f4d811ded9e8fd5aead43",
+      "startDate": "2026-09-03T22:07:09.554Z",
+      "endDate": "2027-12-31T00:00:00Z",
+      "description": "<p>A learning domain offered by LearningLLC, used to prove the claim, evaluation and credential-issuance path on IXO testnet before anything runs for real.. Hosts one claim protocol and one claim collection whose survey asks a single question - have you completed the learning? - and mirrors the resulting opportunity to yoma.world.. Test learning issuer</p><ul><li>Learning Management</li></ul>",
+      "summary": "A one-question learning opportunity. Complete the learning, confirm you have finished, and once your claim is approved the credential is issued. This is a test listing offered by LearningLLC to prove the Yoma credential flow end to end — it is not a real course and carries no reward.",
+
+      "countries": [
+        "LI"
+      ],
+      "languages": [
+        "en"
+      ],
+      "removed": false,
+      "type": "Learning",
+      "skills": [
+        "Learning Management"
+      ],
+      "keywords": [
+        "learning",
+        "course",
+        "completion",
+        "testing",
+        "sandbox",
+        "testnet",
+        "verifiable credentials",
+        "Yoma",
+        "LearningLLC"
+      ]
+    },
+    {
+      "externalId": "did:ixo:entity:a7cefea4fea85e125a304d58d5f61700",
+      "title": "Impact Task Test",
+      "provider": "Impact_LLC",
+      "providerLogoUrl": "https://studio.ixo.earth/domain-profile-default.png",
+      "url": "https://jambo.test.yoma.impacts.exchange/entities/did%3Aixo%3Aentity%3Aa7cefea4fea85e125a304d58d5f61700",
+      "startDate": "2026-09-03T21:29:45.006Z",
+      "endDate": "2027-12-31T00:00:00Z",
+      "description": "<p>A test task domain offered by Impact_LLC, used to prove the claim, evaluation and credential-issuance path on IXO testnet before anything runs for real.. Hosts one claim protocol and one claim collection whose survey asks a single question — have you made an impact? — and mirrors the resulting opportunity to yoma.world.. Test task issuer</p><ul><li>advocacy</li></ul>",
+      "summary": "A one-question impact task. Answer whether you have made an impact, and once your claim is approved the credential is issued. It takes under a minute. This is a test listing offered by Impact_LLC to prove the Yoma credential flow end to end — it is not real work and carries no reward.",
+      "categories": [
+        "Social Impact"
+      ],
+      "countries": [
+        "LI"
+      ],
+      "languages": [
+        "en"
+      ],
+      "removed": false,
+      "type": "Impact Action",
+      "skills": [
+        "advocacy"
+      ],
+      "keywords": [
+        "impact",
+        "impact task",
+        "testing",
+        "sandbox",
+        "testnet",
+        "verifiable credentials",
+        "claims",
+        "Yoma",
+        "Impact_LLC"
+      ]
+    },    {
       "externalId": "sample-job-removed-001",
       "type": "Job",
       "title": "Community Project Coordinator",

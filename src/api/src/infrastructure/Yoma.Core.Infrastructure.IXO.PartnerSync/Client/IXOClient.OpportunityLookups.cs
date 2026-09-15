@@ -123,7 +123,7 @@ namespace Yoma.Core.Infrastructure.IXO.PartnerSync.Client
         return _opportunityDifficultyService.GetByName(Difficulty.AnyLevel.ToDescription());
 
       return _opportunityDifficultyService.GetByNameOrNull(value)
-        ?? throw new InvalidOperationException($"IXO learning difficulty '{value}' is not supported");
+        ?? throw new InvalidOperationException($"IXO opportunity difficulty '{value}' is not supported");
     }
 
     private (Domain.Lookups.Models.TimeInterval Interval, short Count) ResolveCommitment(Commitment? commitment)
@@ -151,7 +151,7 @@ namespace Yoma.Core.Infrastructure.IXO.PartnerSync.Client
         value = EngagementTypeOption.Online.ToString();
 
       return _engagementTypeService.GetByNameOrNull(value)
-        ?? throw new InvalidOperationException($"IXO learning engagement type '{value}' is not supported");
+        ?? throw new InvalidOperationException($"IXO opportunity engagement type '{value}' is not supported");
     }
 
     private static List<string>? GetKeywords(IXOOpportunity item)
