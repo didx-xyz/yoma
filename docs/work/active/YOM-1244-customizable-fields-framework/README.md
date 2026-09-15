@@ -289,6 +289,8 @@ rather than papered over. `Start a business` has no agreed mapping and ships vis
 
 ## Cross-Area Notes
 
+**Cash-out-first release (2026-09-15):** temporary CF seeding is disabled in the consolidated migration; the sample helper remains for reference. Fresh deployments receive no CF definitions/options. Jason must hide the CF UI for this release. Existing Local/Dev samples remain until reset or separately cleaned; this edit does not delete persisted data. Approved definitions will require a new migration once this migration has shipped.
+
 **Migration sequence consolidated (2026-09-15):** the undeployed CF/Treasury/Payout, SSI and payout
 notification-setting migrations now form `20260915100000_ApplicationDb_Custom_Fields_Treasury_Payout_SSI`.
 The participant-count repair stays separate as `20260915100001_ApplicationDb_Opportunity_ParticipantCount_Reconcile`.

@@ -442,8 +442,6 @@ namespace Yoma.Core.Domain.Payout.Services
     {
       try
       {
-        // TODO [Yellow Card communication]: Confirm whether IXO / Yellow Card communicates payout progress
-        // and terminal outcomes directly to the user. If not, Yoma must send its own notifications.
         var response = await _payoutProviderClient.Initiate(new PayoutRequest
         {
           TransactionId = payout.Id,
