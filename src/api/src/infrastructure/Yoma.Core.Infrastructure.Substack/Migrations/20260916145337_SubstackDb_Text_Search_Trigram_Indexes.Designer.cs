@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Yoma.Core.Infrastructure.Substack.Context;
@@ -11,9 +12,11 @@ using Yoma.Core.Infrastructure.Substack.Context;
 namespace Yoma.Core.Infrastructure.Substack.Migrations
 {
     [DbContext(typeof(SubstackDbContext))]
-    partial class SubstackDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260916145337_SubstackDb_Text_Search_Trigram_Indexes")]
+    partial class SubstackDb_Text_Search_Trigram_Indexes
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

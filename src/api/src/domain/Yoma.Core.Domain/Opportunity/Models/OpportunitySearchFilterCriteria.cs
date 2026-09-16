@@ -21,13 +21,13 @@ namespace Yoma.Core.Domain.Opportunity.Models
     public VerificationMethod? VerificationMethod { get; set; }
 
     /// <summary>
-    /// When true → returns opportunities that youth can currently complete (via the portal or action link).  
+    /// When true → returns opportunities that youth can currently complete through manual or provider verification.
     /// Default = false → no filtering / effect.
     ///
     /// Logic aligns with <see cref="Opportunity.OpportunityExtensions.Extensions.EvaluateCompletable"/>:
     /// • Opportunity is Published (Status = Active + Active organization + DateStart ≤ now) OR Status = Expired  
     /// • VerificationEnabled = true  
-    /// • VerificationMethod = Manual  
+    /// • VerificationMethod = Manual or Automatic
     /// • Not Hidden (null / false)
     ///
     /// Criteria Restrictions: Cannot be combined with Published, VerificationEnabled, or VerificationMethod filters.

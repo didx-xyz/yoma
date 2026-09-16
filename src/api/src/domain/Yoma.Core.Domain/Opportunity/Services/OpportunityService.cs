@@ -313,7 +313,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
         query = query.Where(
           o => ((o.StatusId == statusActiveId && o.OrganizationStatusId == statusOrganizationActiveId && o.DateStart <= DateTimeOffset.UtcNow) || o.StatusId == statusExpiredId)
           && o.VerificationEnabled
-          && o.VerificationMethodValue == VerificationMethod.Manual.ToString()
+          && (o.VerificationMethodValue == VerificationMethod.Manual.ToString()
+            || o.VerificationMethodValue == VerificationMethod.Automatic.ToString())
           && o.Hidden != true);
       }
       else
