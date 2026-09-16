@@ -1,4 +1,4 @@
-import { QueryClient, dehydrate, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useAtom } from "jotai";
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
@@ -24,7 +24,6 @@ import { PaginationInfoComponent } from "~/components/PaginationInfo";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import { WalletCard } from "~/components/YoID/WalletCard";
 import { PAGE_SIZE } from "~/lib/constants";
-import { config } from "~/lib/react-query-config";
 import { userProfileAtom } from "~/lib/store";
 import { authOptions } from "~/server/auth";
 import { type NextPageWithLayout } from "../../_app";
@@ -42,26 +41,11 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     };
   }
 
-  const queryClient = new QueryClient(config);
   const { page } = context.query;
   const pageNumber = page ? parseInt(page.toString()) : 1;
 
-  // 👇 prefetch queries on server
-  await queryClient.prefetchQuery({
-    queryKey: ["Wallet", pageNumber],
-    queryFn: () =>
-      searchVouchers(
-        {
-          pageNumber: pageNumber,
-          pageSize: PAGE_SIZE,
-        },
-        context,
-      ),
-  });
-
   return {
     props: {
-      dehydratedState: dehydrate(queryClient),
       user: session?.user ?? null,
       pageNumber: pageNumber,
     },

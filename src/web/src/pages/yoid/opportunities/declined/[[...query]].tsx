@@ -1,4 +1,4 @@
-import { QueryClient, dehydrate, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
 import Head from "next/head";
@@ -15,7 +15,6 @@ import { PaginationButtons } from "~/components/PaginationButtons";
 import { PaginationInfoComponent } from "~/components/PaginationInfo";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import { PAGE_SIZE } from "~/lib/constants";
-import { config } from "~/lib/react-query-config";
 import { authOptions } from "~/server/auth";
 import { type NextPageWithLayout } from "../../../_app";
 
@@ -36,29 +35,12 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     };
   }
 
-  const queryClient = new QueryClient(config);
   const { id } = context.params as IParams;
   const { query, page } = context.query;
   const pageNumber = page ? Number.parseInt(page.toString()) : 1;
 
-  // 👇 prefetch queries on server
-  await queryClient.prefetchQuery({
-    queryKey: ["MyOpportunities_Rejected", pageNumber],
-    queryFn: () =>
-      searchMyOpportunities(
-        {
-          action: Action.Verification,
-          verificationStatuses: [VerificationStatus.Rejected],
-          pageNumber: pageNumber,
-          pageSize: PAGE_SIZE,
-        },
-        context,
-      ),
-  });
-
   return {
     props: {
-      dehydratedState: dehydrate(queryClient),
       user: session?.user ?? null,
       id: id ?? null,
       query: query ?? null,

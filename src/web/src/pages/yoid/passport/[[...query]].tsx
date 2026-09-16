@@ -1,4 +1,4 @@
-import { QueryClient, dehydrate, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
 import Head from "next/head";
@@ -29,7 +29,6 @@ import { PaginationButtons } from "~/components/PaginationButtons";
 import { PaginationInfoComponent } from "~/components/PaginationInfo";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import { DATETIME_FORMAT_SYSTEM, PAGE_SIZE } from "~/lib/constants";
-import { config } from "~/lib/react-query-config";
 import { authOptions } from "~/server/auth";
 import { type NextPageWithLayout } from "../../_app";
 import { env } from "process";
@@ -55,27 +54,11 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       props: { passport_enabled },
     };
 
-  const queryClient = new QueryClient(config);
   const { page } = context.query;
   const pageNumber = page ? parseInt(page.toString()) : 1;
 
-  // 👇 prefetch queries on server
-  await queryClient.prefetchQuery({
-    queryKey: [`Credentials_${pageNumber}`],
-    queryFn: () =>
-      searchCredentials(
-        {
-          pageNumber: pageNumber,
-          pageSize: PAGE_SIZE,
-          schemaType: null,
-        },
-        context,
-      ),
-  });
-
   return {
     props: {
-      dehydratedState: dehydrate(queryClient),
       user: session?.user ?? null,
       pageNumber: pageNumber,
       passport_enabled,
