@@ -53,6 +53,14 @@ interface Matcher {
 /** Ordered: first match wins, so the more specific patterns come first. */
 const MATCHERS: Matcher[] = [
   {
+    // "Cash-out is not available" — the environment kill-switch, `PayoutService`'s first guard on
+    // both initiation methods (API 2026-09-16). ⚠️ Distinct from "Cash-out is currently
+    // unavailable…" below, which is the provider's corridor list; matched first because it is
+    // checked first and because the two read almost alike.
+    pattern: /cash-out is not available/i,
+    failure: { kind: "gate", reason: "payoutDisabled" },
+  },
+  {
     // "A payout is already in progress" — CreatePayout, under the Treasury lock. The initiation
     // race: eligibility passed on a profile fetched before the other tab started a payout.
     pattern: /payout is already in progress/i,

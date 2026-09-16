@@ -4,7 +4,7 @@ import Head from "next/head";
 /**
  * ⚠️ **DEV AID — delete with `dev/cash-out.tsx` before the production release.** See that file's
  * header for the removal note; there is nothing to unpick beyond deleting the two files. Serves
- * 404 in a production build meanwhile (`getStaticProps` below).
+ * 404 in every deployed environment meanwhile (`getStaticProps` below).
  *
  * A stand-in for the hosted journey, so the iframe has something plausible in it while the real one
  * is unreachable (its sign-in step refuses to be framed, and verification rejects Yoma's gender
@@ -19,9 +19,15 @@ import Head from "next/head";
  * see the empty frame on its own.
  */
 
-// ⚠️ TEMPORARY — part of the dev aid.
+// ⚠️ TEMPORARY — part of the dev aid. Same guard as `dev/cash-out.tsx`, and the reasoning for both
+// halves of it is in that file's header: `NODE_ENV` cannot tell a local production build from a
+// deployed one, because every deployed image is built with `NEXT_PUBLIC_ENVIRONMENT=production`.
+// Deliberately duplicated rather than shared — removing this aid must stay "delete two files".
 export const getStaticProps: GetStaticProps = async () => {
-  if (process.env.NODE_ENV === "production") return { notFound: true };
+  const local =
+    process.env.NODE_ENV !== "production" ||
+    process.env.NEXT_PUBLIC_ENVIRONMENT === "local";
+  if (!local) return { notFound: true };
   return { props: {} };
 };
 

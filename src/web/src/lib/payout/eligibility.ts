@@ -13,6 +13,7 @@ import { WalletCreationStatus } from "~/api/models/user";
  * Read from `PayoutService.PayoutRewards` / `ValidateUserProfileForPayout` /
  * `ValidateUserCountryForPayout` on `feature/custom-fields-framework`:
  *
+ *   0. new payouts are enabled in this environment
  *   1. amount is positive and whole      → belongs to the amount step, not the gate
  *   2. six profile fields are present
  *   3. country is known, online, supported
@@ -45,6 +46,12 @@ const REQUIRED_PROFILE_FIELDS: {
 export type CashOutBlockReason =
   /** one active payout per user — the answer is to finish that one, not to start another */
   | "activePayout"
+  /**
+   * New cash outs are switched off in this environment (`payout.enabled`). Not an outage and not
+   * anything the youth can clear — the entry point hides itself rather than showing this, so the
+   * gate copy is only reached when the server refuses an initiation the client thought was fine.
+   */
+  | "payoutDisabled"
   /** the hosted journey needs profile fields the youth has not filled in */
   | "profileIncomplete"
   /** the provider's live corridor list could not be read — not an error, and not "unsupported" */
@@ -70,6 +77,18 @@ export const cashOutEligibility = (
   // First, because it overrides everything else: a payout already in flight is resumable whatever
   // the corridor list now says, and the server never re-validates availability for it.
   if (profile.payout?.active) return { allowed: false, reason: "activePayout" };
+
+  /**
+   * The server's *first* guard, checked here second — deliberately. `PayoutRewards` rejects a
+   * disabled environment before anything else, but it has no opinion about resuming, and the
+   * active-payout branch above is the resume route. Reversing these two would strand a youth with
+   * Zlto already reserved behind a "not available" screen the moment the switch was flipped.
+   *
+   * `=== false`, not `!enabled`: see `UserProfilePayout.enabled` — absent means an API without the
+   * gate, not a gate that is closed.
+   */
+  if (profile.payout?.enabled === false)
+    return { allowed: false, reason: "payoutDisabled" };
 
   const missingFields = REQUIRED_PROFILE_FIELDS.filter(
     (field) => !field.present(profile),

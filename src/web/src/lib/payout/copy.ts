@@ -62,6 +62,20 @@ export const GATE_COPY: Record<
     title: "You have a cash out in progress",
     body: "You can only have one cash out at a time. Finish this one first.",
   },
+  /**
+   * The environment kill-switch (`payout.enabled`). **Rarely seen**: the entry point hides the
+   * button entirely rather than offering one that explains itself, so this is the backstop for the
+   * race where the switch is flipped between the profile load and the request.
+   *
+   * No "try again later" and no "coming soon" — unlike `providerOffline`, which is minutes, this
+   * one can stay closed for weeks, and neither a horizon nor a promise is ours to give. It says
+   * where the Zlto is and what can still be done with it, and stops.
+   */
+  payoutDisabled: {
+    title: "Cash Out isn't available right now",
+    body: "Your Zlto is safe in your wallet, and you can still spend it in the marketplace.",
+    link: { label: "Go to the marketplace", href: "/marketplace" },
+  },
   profileIncomplete: {
     // Names who needs the data, and the colon introduces the list of missing fields below it.
     title: "Complete your profile to cash out",
@@ -359,5 +373,5 @@ export const OUTCOME_COPY = {
   /** a read failure and a setup wait are both worth another look, and neither is a retry */
   checkAgainAction: "Check again",
   startAgainAction: "Start a new cash out",
-  doneAction: "Back to my wallet",
+  doneAction: "Close",
 } as const;

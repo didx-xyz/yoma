@@ -68,12 +68,15 @@ export const CashOutDialog: React.FC<{
     <div
       className={
         hosted
-          ? "flex h-full min-h-0 flex-col gap-3 overflow-hidden p-4 text-black"
+          ? "gap-3x flex h-full min-h-0 flex-col overflow-hidden p-4 text-black"
           : "flex h-full flex-col gap-4 overflow-y-auto p-4 pb-8 text-black"
       }
     >
-      <div className="flex flex-row items-center gap-2">
-        <h4 className="grow pl-2 text-center text-xl font-semibold">{title}</h4>
+      <div className="flex flex-row justify-end gap-2">
+        <h4 className="font-family-nunito grow pl-2 text-center text-xl font-semibold">
+          {title}
+        </h4>
+
         <button
           type="button"
           className={BTN_DIALOG_CLOSE}

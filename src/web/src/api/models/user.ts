@@ -166,6 +166,26 @@ export interface UserProfileZlto {
  * at runtime rather than failing to compile — see the epic's Cross-Area Notes.
  */
 export interface UserProfilePayout {
+  /**
+   * **The release kill-switch for NEW cash outs** — `AppSettings:PayoutEnabledEnvironments`,
+   * evaluated server-side for the environment this API is running in (`Staging, Production` as
+   * committed, so Local and Dev are off). API 2026-09-16.
+   *
+   * It is *not* provider health, country support, wallet readiness or balance — those are the
+   * checks below and they all still apply when this is true. `PayoutService.Payout` /
+   * `PayoutRewards` reject initiation with 400 "Cash-out is not available" **before** any
+   * transaction, provider call or Zlto reservation, so this is the server's first guard and the
+   * client mirrors it as such.
+   *
+   * ⚠️ **It does not stop a payout already in flight.** Resume, the hosted session, webhooks and
+   * reconciliation are all untouched, so `active` / `canResume` must keep working when this is
+   * false — hide the way *in*, never the way *out*.
+   *
+   * Absent on an API older than 2026-09-16, which arrives as `undefined`. Read it as
+   * `enabled === false` rather than `!enabled`: an API without the field is an API without the
+   * gate, and treating "old" as "off" would hide Cash Out everywhere it is actually available.
+   */
+  enabled: boolean;
   countryAvailability: PayoutCountryAvailability;
   /**
    * true while a non-terminal payout exists — server-derived from `status` being one of

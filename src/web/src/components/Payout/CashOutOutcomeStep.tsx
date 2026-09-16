@@ -53,10 +53,26 @@ export const CashOutOutcomeStep: React.FC<{
   payout: PayoutTransactionInfo | null;
   onResume: () => void;
   onStartAgain: () => void;
+  /**
+   * Whether a *new* cash out may be started — `payout.enabled`, the environment kill-switch.
+   * Defaults to true, so only a caller that knows otherwise has to say so.
+   *
+   * A terminal outcome is exactly where the switch can bite: the entry point hides itself when new
+   * cash outs are off, but a youth who was already mid-flow lands here, and "Start a new cash out"
+   * would send them straight into a gate refusing it. They get the way out instead.
+   */
+  canStartNew?: boolean;
   /** re-reads the outcome — for the states that are still moving, or that could not be read */
   onCheckAgain?: () => void;
   onClose: () => void;
-}> = ({ payout, onResume, onStartAgain, onCheckAgain, onClose }) => {
+}> = ({
+  payout,
+  onResume,
+  onStartAgain,
+  canStartNew = true,
+  onCheckAgain,
+  onClose,
+}) => {
   const view = describeOutcome(payout);
   const started = formatPayoutStarted(payout?.dateCreated);
 
@@ -70,7 +86,7 @@ export const CashOutOutcomeStep: React.FC<{
 
   const primary = view.canResume
     ? { label: OUTCOME_COPY.continueAction, onClick: onResume }
-    : view.canStartAgain
+    : view.canStartAgain && canStartNew
       ? { label: OUTCOME_COPY.startAgainAction, onClick: onStartAgain }
       : canCheckAgain && onCheckAgain
         ? { label: OUTCOME_COPY.checkAgainAction, onClick: onCheckAgain }

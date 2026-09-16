@@ -36,6 +36,7 @@ import { CashOutMessage, type CashOutMessageTone } from "./CashOutMessage";
  */
 const TONE: Record<CashOutBlockReason, CashOutMessageTone> = {
   activePayout: "warning",
+  payoutDisabled: "info",
   profileIncomplete: "warning",
   providerOffline: "info",
   countryUnsupported: "info",
@@ -47,6 +48,7 @@ const TONE: Record<CashOutBlockReason, CashOutMessageTone> = {
 /** The same two icons as before, now in the round badge every other screen uses. */
 const ICON: Record<CashOutBlockReason, React.ReactNode> = {
   activePayout: <IoMdWarning className="h-6 w-6" />,
+  payoutDisabled: <IoIosInformationCircleOutline className="h-6 w-6" />,
   profileIncomplete: <IoMdWarning className="h-6 w-6" />,
   providerOffline: <IoIosInformationCircleOutline className="h-6 w-6" />,
   countryUnsupported: <IoIosInformationCircleOutline className="h-6 w-6" />,
@@ -74,20 +76,25 @@ export const CashOutGate: React.FC<{
         title={content.title}
         body={content.body}
         className="grow justify-center"
-      />
+      >
+        {/* Inside the message, because the body ends on a colon and this finishes it. As a sibling
+            it was outside the block that `grow justify-center` centres, so it sat down next to the
+            buttons instead — a list of missing fields half a screen from the sentence introducing
+            it (reported 2026-09-16).
 
-      {/* A plain disc list, deliberately: a tick beside "Email address" reads as *done*, which is
-          the opposite of what this list means. Centred as a block, left-aligned inside it, so the
-          fields stay scannable under a centred message. */}
-      {reason === "profileIncomplete" && missingFields?.length ? (
-        <ul className="text-gray-dark mx-auto w-fit list-disc pl-6 text-left text-sm">
-          {missingFields.map((field) => (
-            <li key={field} className="first-letter:uppercase">
-              {field}
-            </li>
-          ))}
-        </ul>
-      ) : null}
+            A plain disc list, deliberately: a tick beside "Email address" reads as *done*, which is
+            the opposite of what this list means. Centred as a block, left-aligned inside it, so the
+            fields stay scannable under a centred message. */}
+        {reason === "profileIncomplete" && missingFields?.length ? (
+          <ul className="text-gray-dark mx-auto w-fit list-disc pl-6 text-left text-sm">
+            {missingFields.map((field) => (
+              <li key={field} className="first-letter:uppercase">
+                {field}
+              </li>
+            ))}
+          </ul>
+        ) : null}
+      </CashOutMessage>
 
       <div className="mt-auto flex flex-col items-center gap-2 pt-2">
         {reason === "profileIncomplete" && (

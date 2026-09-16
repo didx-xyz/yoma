@@ -31,8 +31,20 @@ export const CashOutMessage: React.FC<{
   /** optional: a notice that is its own screen may have nothing to head it */
   title?: string;
   body: string;
+  /**
+   * Part of the message rather than something below it — for a body that does not finish on its
+   * own, like the gate's "…needs these details before you can cash out:" and the list that
+   * completes it.
+   *
+   * ⚠️ **Why it belongs in here and not in the caller.** Screens that centre this block pass
+   * `grow justify-center`, which centres *the block* and pushes every later sibling to the bottom
+   * of the dialog. A continuation left outside therefore lands next to the buttons, half a screen
+   * from the sentence it finishes. Anything that is genuinely a separate section — a summary of
+   * figures, an alert — stays outside and should.
+   */
+  children?: ReactNode;
   className?: string;
-}> = ({ icon, tone = "neutral", title, body, className = "" }) => (
+}> = ({ icon, tone = "neutral", title, body, children, className = "" }) => (
   <div className={`flex flex-col items-center gap-4 text-center ${className}`}>
     <span
       className={`flex h-14 w-14 items-center justify-center rounded-full ${TONES[tone]}`}
@@ -49,5 +61,8 @@ export const CashOutMessage: React.FC<{
       </h5>
     )}
     <p className="text-gray-dark text-[15px] leading-6">{body}</p>
+
+    {/* Tighter than the block's own rhythm: this finishes the sentence above it. */}
+    {children && <div className="-mt-2">{children}</div>}
   </div>
 );

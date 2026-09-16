@@ -8,6 +8,11 @@ and wallet when false, but retain active-payout status/resume and terminal-outco
 wallet and balance checks still apply when true. API initiation independently enforces the flag.
 Existing reconciliation and webhook processing remain enabled. See the
 [API/UI handoff](./YOM-1057-api-payout-domain-and-rewards-integration/handoffs/2026-09-16-a.md).
+
+**Web side done 2026-09-16** — the entry point is *hidden* where the switch is off, not disabled, and
+an active payout keeps its Continue. Read `enabled` as `=== false`: absent means an API older than
+this change, i.e. no gate. See
+[YOM-1074's handoff](./YOM-1074-ui-youth-yellow-card-cash-out/handoffs/2026-09-16-a.md).
 Production still requires its own correct credentials/endpoints before deployment; inclusion in this
 list is not a readiness check. No Helm secrets were edited for this change.
 

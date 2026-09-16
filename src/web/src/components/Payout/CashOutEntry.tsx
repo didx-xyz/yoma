@@ -434,6 +434,32 @@ export const CashOutEntry: React.FC<{
     }
   })();
 
+  /**
+   * The release kill-switch (`payout.enabled`, API 2026-09-16). With new cash outs off in this
+   * environment the entry point **renders nothing at all** — hidden, not disabled: a disabled
+   * button is for a reason the ledger already shows (an unknown balance, a known zero), and this
+   * one is invisible there. Advertising an action that has never been announced in this
+   * environment, and that could stay off for weeks, only generates the question it cannot answer.
+   *
+   * ⚠️ **A payout already in flight keeps its way back.** The switch governs initiation only — the
+   * API leaves resume, webhooks and reconciliation alone — so a youth with Zlto reserved still gets
+   * the button, reading "Continue cash out", and `openFlow` still routes them to the resume panel.
+   * Hiding the whole thing here would strand them.
+   *
+   * This is not the enforcement. The API refuses initiation independently, and
+   * `mapPayoutFailure` maps its "Cash-out is not available" onto the gate for the race where the
+   * switch is flipped between the profile load and the request.
+   *
+   * ⚠️ `isOpen` guards a real disappearing act, not a hypothetical one. The last thing a youth
+   * with an active payout does is reach the result screen — and `showOutcome` refreshes the
+   * profile, so at that exact moment `active` goes false and this reason becomes the live one.
+   * Without the guard the dialog would unmount from under them as the outcome arrived. Nothing is
+   * hidden mid-flow; the entry point goes once the flow is closed.
+   */
+  const payoutDisabled =
+    !eligibility.allowed && eligibility.reason === "payoutDisabled";
+  if (payoutDisabled && !isOpen) return null;
+
   return (
     <>
       <CashOutButton
@@ -557,6 +583,7 @@ export const CashOutEntry: React.FC<{
               payout={view.payout}
               onResume={() => void continueCashOut()}
               onStartAgain={openFlow}
+              canStartNew={!payoutDisabled}
               onCheckAgain={() => void showOutcome()}
               onClose={close}
             />

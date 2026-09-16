@@ -88,9 +88,14 @@ never reaches a form that will be rejected.
 profile check is six fields, not just email.** The order below is the server's order, so the reason
 the UI shows is the reason the API would have given. Implemented in `lib/payout/eligibility.ts`.
 
+⚠️ **A sixth check landed 2026-09-16: the environment kill-switch** (`payout.enabled`, row 0b). It
+is the server's *first* guard and the client's *second*, and that inversion is deliberate — see the
+Decisions log.
+
 | # | Check | Source | UI state |
 | - | ----- | ------ | -------- |
 | 0 | Active payout | profile `payout.active` | "You already have a cash out in progress" — **Continue cash out**. Checked first: the server never re-validates availability for an active payout |
+| 0b | New cash outs enabled in this environment | profile `payout.enabled` | **Nothing at all** — the entry point renders no button. The gate copy exists as a backstop for the initiation race only |
 | 1 | Profile complete — **email, first name, surname, country, gender, date of birth** | `ValidateUserProfileForPayout` | "Complete your profile to cash out" + the missing fields, primary to `/user/profile` |
 | 2 | Provider reachable | profile `payout.countryAvailability.offline` | "Cash Out is temporarily unavailable" — follows the **wallet-offline pattern**; not an error. **Checked before `supported`**, as the server does: while offline, `supported` carries no information |
 | 3 | Country supported | profile `payout.countryAvailability.supported` | "Cash Out isn't available in your country yet" — friendly, Close only |
@@ -643,8 +648,8 @@ wanted.
   — the blank box a returning youth currently gets — and blank.
   **Built as standalone pages rather than a `?mock=` parameter**, which is the lesson of the
   Treasury aid: that one is threaded through a production page and is now a blocker to unpick, while
-  these import the real components, touch no production code, and 404 in a production build.
-  Removing them is deleting two files. On the T6 list either way.
+  these import the real components, touch no production code, and 404 in every deployed
+  environment. Removing them is deleting two files. On the T6 list either way.
   The chrome those screens sit in moved to `CashOutDialog` in the same change, so the gallery shows
   the real dialog by construction instead of a copy that drifts.
 
@@ -706,6 +711,34 @@ wanted.
   dev gallery's width preview renders the dialog in an **iframe**, which has its own layout
   viewport, so 320 there is genuinely 320. At a real 320 the only defect was the amount step
   breaking "Use all" across two lines; everything else fits.
+- **2026-09-16: the kill-switch hides the entry point rather than disabling it.** `payout.enabled`
+  is an *environment* switch (`AppSettings:PayoutEnabledEnvironments` = `Staging, Production`), so
+  where it is off the feature has not been announced at all. A disabled button is reserved for the
+  two reasons the ledger already shows on screen — an unknown balance and a known zero — and this
+  one is invisible there; a greyed "Cash Out" with an explanation would advertise something that may
+  stay off for weeks and answer a question nobody asked. Same call the framework switch made on
+  `/opportunities/discover` (`25c95e1a`): the surface goes, not its shell.
+- **2026-09-16: `enabled` is read as `=== false`, never `!enabled`.** The field is absent on an API
+  older than 2026-09-16 and arrives as `undefined`. An API without the field is an API without the
+  gate, so treating absent as "off" would hide Cash Out in every environment where it actually
+  works. The failure mode of the other reading is a button that 400s, which the gate already handles.
+- **2026-09-16: the client checks `enabled` *second*, though the server checks it first.**
+  `PayoutRewards` rejects a disabled environment before anything else, but it has no opinion about
+  *resuming* — resume, the hosted session, webhooks and reconciliation are all untouched. The
+  active-payout branch is the resume route, so it has to win. Reversing the two would strand a youth
+  with Zlto already reserved behind a "not available" screen the moment the switch was flipped.
+- **⚠️ 2026-09-16: hiding the entry point on eligibility alone unmounts the dialog mid-flow.**
+  `showOutcome` refreshes the profile, so when a payout reaches a terminal status `active` goes
+  false — and if the switch is off, `payoutDisabled` becomes the live reason at that exact instant.
+  The entry point would return `null` and the result screen would vanish as it arrived. The hide is
+  gated on `!isOpen`: nothing disappears mid-flow, the entry point goes once the flow is closed.
+  `CashOutOutcomeStep` takes `canStartNew` for the same window, so that screen offers the way out
+  instead of a "Start a new cash out" the server would refuse.
+- **2026-09-16: the gallery's gate list is derived from `GATE_COPY`, not written out.** A
+  hand-written `CashOutBlockReason[]` accepts a *subset* without complaint, so `payoutDisabled`
+  compiled fine and simply never appeared. `GATE_COPY` is a total `Record`, so its keys make the
+  gallery exhaustive by construction — the fourth instance of the drift the gallery exists to catch,
+  and the first one closed structurally rather than by hand.
 
 ## Links
 

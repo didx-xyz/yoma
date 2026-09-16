@@ -21,6 +21,7 @@ import type { CashOutBlockReason } from "~/lib/payout/eligibility";
 import {
   AMOUNT_COPY,
   FAILURE_COPY,
+  GATE_COPY,
   OUTCOME_COPY,
   RESUME_COPY,
   REVIEW_COPY,
@@ -42,10 +43,11 @@ import { describeOutcome, formatPayoutStarted } from "~/lib/payout/outcome";
  * the aid and *that* is what needs removing first. This is deliberately not the `?mock=` approach
  * taken for Treasury, which is threaded through a live page and is now a blocker to unpick.
  *
- * **Safe to leave in meanwhile.** Both files answer `notFound` from `getStaticProps` when
- * `NODE_ENV === "production"`, so a production build serves 404 for `/dev/cash-out` even if they
- * ship. That is a safety net, not a reason to keep them: they are dev scaffolding and carry no
- * tests, no a11y pass and no review.
+ * **Safe to leave in meanwhile.** Both files answer `notFound` from `getStaticProps` for anything
+ * that is not a developer's own machine, so every deployed environment — DEV included — serves 404
+ * for `/dev/cash-out` even if they ship. See the guard below for why that test is not `NODE_ENV`.
+ * It is a safety net, not a reason to keep them: they are dev scaffolding and carry no tests, no
+ * a11y pass and no review.
  *
  * ---
  *
@@ -63,9 +65,31 @@ import { describeOutcome, formatPayoutStarted } from "~/lib/payout/outcome";
  *   simply crops. An iframe gets its own layout viewport, so 320 there is genuinely 320.
  */
 
-// ⚠️ TEMPORARY — part of the dev aid.
+/**
+ * ⚠️ TEMPORARY — part of the dev aid.
+ *
+ * Serves the page on a developer's own machine and 404s everywhere else. **`NODE_ENV` alone cannot
+ * tell those apart**: it is `production` for `pnpm build && pnpm start` too, which is how you
+ * reproduce anything that only misbehaves in a production build — and that is exactly when the
+ * gallery would vanish. Both halves are needed:
+ *
+ * - `NODE_ENV !== "production"` covers `next dev`, whatever `.env` happens to say. `.env` is not
+ *   committed, so a teammate's value is not ours to assume.
+ * - `NEXT_PUBLIC_ENVIRONMENT === "local"` covers a local production build. It is the repo's own
+ *   test for "a developer's machine" (`server/auth.ts`, `api/services/userPreferences.ts`), and it
+ *   is the only one that works: **every deployed image is built with
+ *   `NEXT_PUBLIC_ENVIRONMENT=production`**, DEV included — one image, per-environment runtime
+ *   config — so no deployed build can satisfy it.
+ *
+ * Widening this is the one edit here that can reach a deployed environment. `dev.yoma.world` runs
+ * the same image as production; the discovery mock reaches it only by matching `window.location`
+ * at runtime, deliberately and with its own kill-switch. Nothing here should follow.
+ */
 export const getStaticProps: GetStaticProps = async () => {
-  if (process.env.NODE_ENV === "production") return { notFound: true };
+  const local =
+    process.env.NODE_ENV !== "production" ||
+    process.env.NEXT_PUBLIC_ENVIRONMENT === "local";
+  if (!local) return { notFound: true };
   return { props: {} };
 };
 
@@ -107,15 +131,13 @@ type Scene = {
   render: (ctx: { frameUrl: string }) => React.ReactNode;
 };
 
-const GATE_REASONS: CashOutBlockReason[] = [
-  "activePayout",
-  "profileIncomplete",
-  "providerOffline",
-  "countryUnsupported",
-  "walletNotReady",
-  "balanceUnknown",
-  "nothingAvailable",
-];
+/**
+ * Derived from `GATE_COPY`, not listed — a hand-written array is typed `CashOutBlockReason[]`,
+ * which accepts a *subset* happily, so a new reason would compile and silently never appear here.
+ * `GATE_COPY` is a total `Record<CashOutBlockReason, …>`, so reading its keys makes the gallery
+ * exhaustive by construction. (`payoutDisabled` was the reason that caught this.)
+ */
+const GATE_REASONS = Object.keys(GATE_COPY) as CashOutBlockReason[];
 
 const OUTCOMES: { name: string; payout: PayoutTransactionInfo | null }[] = [
   { name: "completed", payout: payout(PayoutTransactionStatus.Completed) },
@@ -388,6 +410,29 @@ const SCENES: Scene[] = [
       />
     ),
   })),
+  {
+    /**
+     * The same terminal outcome with the environment kill-switch off. The only screen where
+     * `payout.enabled: false` is still visible — the entry point hides itself everywhere else — so
+     * it is the only place the missing "Start a new cash out" can be checked.
+     */
+    group: "Result",
+    name: "cancelled · new cash outs off",
+    title: OUTCOME_COPY.dialogTitle,
+    step: 3,
+    stepResolved: describeOutcome(payout(PayoutTransactionStatus.Cancelled))
+      .resolved,
+    render: () => (
+      <CashOutOutcomeStep
+        payout={payout(PayoutTransactionStatus.Cancelled)}
+        onResume={noop}
+        onStartAgain={noop}
+        canStartNew={false}
+        onCheckAgain={noop}
+        onClose={noop}
+      />
+    ),
+  },
   {
     group: "Result",
     name: "initiation failed",
