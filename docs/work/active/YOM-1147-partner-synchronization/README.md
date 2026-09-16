@@ -22,12 +22,12 @@ hand-off/linking and importing externally determined verification outcomes. Shar
 tracking, idempotency and lifecycle rules live in the domain; each partner owns only its transport,
 authentication, catalogue persistence and mapping.
 
-Production integrations include Jobberman, Alison and IXO. IXO delivery is complete; JobJack Phase 1 sign-off is being reconciled with Adrian. Umuzi is code-complete but blocked on partner learner-page/URL readiness before end-to-end staging validation.
+Production integrations include Jobberman, Alison, JobJack Phase 1 and IXO; these deliveries are complete. Umuzi is code-complete but blocked on partner learner-page/URL readiness before end-to-end staging validation.
 
 ## September 2026 reconciliation
 
 - [YOM-1295 — Umuzi Phase 1](./YOM-1295-partner-synchronization-umuzi-phase-1/feature.md): blocked pending partner readiness; Linear uses In Progress because this team has no Blocked status.
-- [YOM-1296 — Jobberman non-production sample feeds](https://linear.app/didx/issue/YOM-1296): Todo, low priority, Robbie; implementation task remains in YOM-1166's feature checklist.
+- [YOM-1296 — Jobberman non-production sample feeds](https://linear.app/didx/issue/YOM-1296): Done; Adrian confirmed the fix was completed on 15 September. Tracked in YOM-1166's feature checklist.
 - Original foundation and Alison/Jobberman delivery tickets stay Done. The continuing project remains In Progress; no historical parent relationships are restructured.
 - SA Youth is Push, not a pull provider; its reported sandbox outage is outside this reconciliation.
 
@@ -82,9 +82,9 @@ Production integrations include Jobberman, Alison and IXO. IXO delivery is compl
 | [`YOM-1239-api-support-verification-imports-for-deleted-pull-synced-opportunities/`](./YOM-1239-api-support-verification-imports-for-deleted-pull-synced-opportunities/feature.md) | [YOM-1239](https://linear.app/didx/issue/YOM-1239) | api | shipped |
 | [`YOM-1247-show-partner-provided-progress-on-completion-submissions-for-synced/`](./YOM-1247-show-partner-provided-progress-on-completion-submissions-for-synced/feature.md) | [YOM-1247](https://linear.app/didx/issue/YOM-1247) | api/web | shipped |
 | [`YOM-1248-api-support-partner-provided-progress-sync-for-myopportunity/`](./YOM-1248-api-support-partner-provided-progress-sync-for-myopportunity/feature.md) | [YOM-1248](https://linear.app/didx/issue/YOM-1248) | api | shipped |
-| [`YOM-1270-partner-synchronization-jobjack-opportunity-sync/`](./YOM-1270-partner-synchronization-jobjack-opportunity-sync/feature.md) | [YOM-1270](https://linear.app/didx/issue/YOM-1270) | api/business | in-progress |
-| [`YOM-1271-api-jobjack-opportunity-pull-sync/`](./YOM-1271-api-jobjack-opportunity-pull-sync/feature.md) | [YOM-1271](https://linear.app/didx/issue/YOM-1271) | api | review |
-| [`YOM-1272-feed-mappings-and-business-rules/`](./YOM-1272-feed-mappings-and-business-rules/feature.md) | [YOM-1272](https://linear.app/didx/issue/YOM-1272) | api/business | in-progress |
+| [`YOM-1270-partner-synchronization-jobjack-opportunity-sync/`](./YOM-1270-partner-synchronization-jobjack-opportunity-sync/feature.md) | [YOM-1270](https://linear.app/didx/issue/YOM-1270) | api/business | shipped |
+| [`YOM-1271-api-jobjack-opportunity-pull-sync/`](./YOM-1271-api-jobjack-opportunity-pull-sync/feature.md) | [YOM-1271](https://linear.app/didx/issue/YOM-1271) | api | shipped |
+| [`YOM-1272-feed-mappings-and-business-rules/`](./YOM-1272-feed-mappings-and-business-rules/feature.md) | [YOM-1272](https://linear.app/didx/issue/YOM-1272) | api/business | shipped |
 | [`YOM-1274-partner-synchronization-ixo-yie-full-sync/`](./YOM-1274-partner-synchronization-ixo-yie-full-sync/feature.md) | [YOM-1274](https://linear.app/didx/issue/YOM-1274) | api/business | shipped |
 | [`YOM-1275-api-ixo-yie-full-partner-pull-sync/`](./YOM-1275-api-ixo-yie-full-partner-pull-sync/feature.md) | [YOM-1275](https://linear.app/didx/issue/YOM-1275) | api | shipped |
 | [`YOM-1276-ixo-yie-full-sync-production-api-and-business-readiness/`](./YOM-1276-ixo-yie-full-sync-production-api-and-business-readiness/feature.md) | [YOM-1276](https://linear.app/didx/issue/YOM-1276) | business/SRE | shipped |
@@ -154,7 +154,7 @@ IXO Learning and Job opportunities were confirmed through the Web UI.
 | -------- | ------------------ | --------------- |
 | Jobberman | Production Opportunity pull from RSS/cache | Jobberman client, cache migration and shared pull handler |
 | Alison | Production Opportunity pull, authenticated hand-off and verification import; course descriptions clarify that paid certificates are optional for YoID credentials | Alison clients, catalogue service and verification handler |
-| JobJack | XML Opportunity pull configured for the Yoma production feed with a refreshed representative embedded sample; final validation remains in progress and Phase 2 hand-off/verification is deferred | JobJack feed service/client, runtime configuration and embedded sample |
+| JobJack | XML Opportunity pull configured for the Yoma production feed with a refreshed representative embedded sample; Phase 1 is confirmed live in production and Phase 2 hand-off/verification is deferred | JobJack feed service/client, runtime configuration and embedded sample |
 | IXO | Shipped: Learning/Job/Task pull, user hand-off/linking and verification; production catalogue published, approved claim imported on Stage | YOM-1274, YOM-1275, YOM-1276 and September validation evidence |
 | Umuzi | Code-complete: Learning/Job catalogue, correlation-only redirect and verification; full Stage journey blocked on partner readiness | YOM-1295 and PR #1929 |
 
@@ -180,8 +180,6 @@ key-only item only for deliberate deletion. No provider may hardcode temporary `
 | ------- | -------- | ---- |
 | BA-approved custom fields and partner mapping matrix | High | Blocks cross-provider custom-field mapping refactor. |
 | Umuzi learner URLs and redirect capture | High | Partner must complete both before Yoma Stage end-to-end testing; production connection details remain outstanding. |
-| Jobberman dev/Stage sample configuration | Low | YOM-1296 assigned to Robbie; original production delivery remains shipped. |
-| JobJack production validation/sign-off | Medium | Code is implemented; Phase 1 remains in testing. |
 
 ## Cross-Area Notes
 

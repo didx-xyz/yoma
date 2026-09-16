@@ -7,7 +7,7 @@
 - **Ticket**: [YOM-1270](https://linear.app/didx/issue/YOM-1270/partner-synchronization-jobjack-opportunity-sync)
 - **Owner**: Adrian
 - **Areas**: api
-- **Status**: in-progress
+- **Status**: shipped
 - **Started**: 2026-08-03
 
 ## Problem / Goal
@@ -29,9 +29,11 @@ lifecycle rules are in the [epic README](../README.md).
 - [x] Implement XML opportunity synchronization.
 - [x] Complete content, salary, requirement, keyword and category mappings.
 - [x] Configure Local/Dev/Stage/Production organization identity.
-- [ ] Complete Stage/Production validation and business sign-off.
+- [x] Phase 1 confirmed in production by Adrian on 16 September 2026; close the stale delivery gate.
 
 ## Decisions
+
+- 2026-09-16: Adrian confirmed JobJack Phase 1 is already in production. Close stale Phase 1 tracking; Phase 2 and CF remapping remain separate. This status correction is not a new deployment or independent validation run.
 
 - 2026-08-03: Ship Opportunity sync first; deeper integration is a later phase.
 

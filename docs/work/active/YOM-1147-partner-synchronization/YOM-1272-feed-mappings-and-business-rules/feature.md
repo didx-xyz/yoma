@@ -7,7 +7,7 @@
 - **Ticket**: [YOM-1272](https://linear.app/didx/issue/YOM-1272/feed-mappings-and-business-rules)
 - **Owner**: Adrian and Product
 - **Areas**: api
-- **Status**: in-progress
+- **Status**: shipped
 - **Started**: 2026-08-03
 
 ## Problem / Goal
@@ -33,6 +33,8 @@ to Other; raw partner terms remain searchable where useful.
 - [ ] Reassess partner-specific fields through Custom Fields after final definitions exist.
 
 ## Decisions
+
+- 2026-09-16: Adrian confirmed JobJack Phase 1 is already in production. Close stale Phase 1 tracking; Phase 2 and CF remapping remain separate. This status correction is not a new deployment or independent validation run.
 
 - 2026-08-04: Organization-name suffixes in supplied category examples were informative and not part of category names.
 - 2026-08-04: Unknown/missing sectors safely map to Other.

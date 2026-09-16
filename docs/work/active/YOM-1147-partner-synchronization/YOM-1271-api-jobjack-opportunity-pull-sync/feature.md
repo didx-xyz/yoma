@@ -7,7 +7,7 @@
 - **Ticket**: [YOM-1271](https://linear.app/didx/issue/YOM-1271/api-jobjack-opportunity-pull-sync)
 - **Owner**: Adrian
 - **Areas**: api
-- **Status**: review
+- **Status**: shipped
 - **Started**: 2026-08-03
 
 ## Problem / Goal
@@ -35,10 +35,12 @@ maps to Yoma Job opportunities and exposes the local catalogue through the share
 - [x] Refresh the embedded sample from the production feed shape for local and controlled-environment validation.
 - [x] Add omission-based terminal deletion with empty-feed protection and retention.
 - [x] Merge implementation to master.
-- [ ] Complete final environment validation and release.
+- [x] Phase 1 production release confirmed by Adrian on 16 September 2026.
 - [ ] Revisit custom-field mappings after YOM-1244 field approval.
 
 ## Decisions
+
+- 2026-09-16: Adrian confirmed JobJack Phase 1 is already in production. Close stale Phase 1 tracking; Phase 2 and CF remapping remain separate. This status correction is not a new deployment or independent validation run.
 
 - 2026-08-03: Explicit XML parsing is preferred because individual malformed fields must not reject the complete feed.
 - 2026-08-04: Provider and city are appended to titles only when absent; Yoma-compatible Markdown is produced at ingestion.

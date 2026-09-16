@@ -35,7 +35,7 @@ actions.
 - [x] Deploy to production.
 - [ ] Revisit provider metadata when final custom-field definitions are approved.
 
-- [ ] YOM-1296: Robbie to correct `appSettings.Jobberman.Feeds` entries for GH/NG in dev/Stage to `Resources.jobs.sample-GH.xml` / `Resources.jobs.sample-NG.xml` and verify successful sample-feed runs. Do not change production live-feed behaviour.
+- [x] YOM-1296: Robbie to correct `appSettings.Jobberman.Feeds` entries for GH/NG in dev/Stage to `Resources.jobs.sample-GH.xml` / `Resources.jobs.sample-NG.xml` and verify successful sample-feed runs. Do not change production live-feed behaviour. Completed 15 September 2026, confirmed by Adrian on 16 September.
 
 ## Decisions
 
