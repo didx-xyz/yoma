@@ -20,6 +20,14 @@ namespace Yoma.Core.Infrastructure.Substack.Context
     #region Protected Members
     protected override void OnModelCreating(ModelBuilder builder)
     {
+      builder.HasPostgresExtension("pg_trgm");
+
+      builder.Entity<NewsArticle>()
+          .HasIndex(o => o.Title, "IX_NewsArticle_Title_Trgm")
+          .HasMethod("gin")
+          .HasOperators("gin_trgm_ops")
+          .IsCreatedConcurrently();
+
       foreach (var entityType in builder.Model.GetEntityTypes())
       {
         foreach (var property in entityType.GetProperties())

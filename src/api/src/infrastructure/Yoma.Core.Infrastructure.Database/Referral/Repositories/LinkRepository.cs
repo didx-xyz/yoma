@@ -97,11 +97,13 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
 
     public Expression<Func<ReferralLink, bool>> Contains(Expression<Func<ReferralLink, bool>> predicate, string value)
     {
+      // Email and phone are searched separately, so search the raw display name rather than
+      // its COALESCE fallback. This preserves matches and exposes the indexed column.
       //MS SQL: Contains
       return predicate.Or(o =>
           EF.Functions.ILike(o.Name, $"%{value}%") ||
           (!string.IsNullOrEmpty(o.Description) && EF.Functions.ILike(o.Description, $"%{value}%")) ||
-          (!string.IsNullOrEmpty(o.UserDisplayName) && EF.Functions.ILike(o.UserDisplayName, $"%{value}%")) ||
+          _context.User.Any(user => user.Id == o.UserId && !string.IsNullOrEmpty(user.DisplayName) && EF.Functions.ILike(user.DisplayName, $"%{value}%")) ||
           (!string.IsNullOrEmpty(o.UserEmail) && EF.Functions.ILike(o.UserEmail, $"%{value}%")) ||
           (!string.IsNullOrEmpty(o.UserPhoneNumber) && EF.Functions.ILike(o.UserPhoneNumber, $"%{value}%"))
       );
@@ -113,7 +115,7 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
       return query.Where(o =>
           EF.Functions.ILike(o.Name, $"%{value}%") ||
           (!string.IsNullOrEmpty(o.Description) && EF.Functions.ILike(o.Description, $"%{value}%")) ||
-          (!string.IsNullOrEmpty(o.UserDisplayName) && EF.Functions.ILike(o.UserDisplayName, $"%{value}%")) ||
+          _context.User.Any(user => user.Id == o.UserId && !string.IsNullOrEmpty(user.DisplayName) && EF.Functions.ILike(user.DisplayName, $"%{value}%")) ||
           (!string.IsNullOrEmpty(o.UserEmail) && EF.Functions.ILike(o.UserEmail, $"%{value}%")) ||
           (!string.IsNullOrEmpty(o.UserPhoneNumber) && EF.Functions.ILike(o.UserPhoneNumber, $"%{value}%"))
       );
