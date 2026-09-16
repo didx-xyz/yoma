@@ -97,12 +97,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
 
     public IQueryable<Domain.Entity.Models.User> Contains(IQueryable<Domain.Entity.Models.User> query, string value)
     {
-      //MS SQL: Contains
-      return query.Where(o => (!string.IsNullOrEmpty(o.Email) && EF.Functions.ILike(o.Email, $"%{value}%"))
-        || (!string.IsNullOrEmpty(o.FirstName) && EF.Functions.ILike(o.FirstName, $"%{value}%"))
-        || (!string.IsNullOrEmpty(o.Surname) && EF.Functions.ILike(o.Surname, $"%{value}%"))
-        || (!string.IsNullOrEmpty(o.DisplayName) && EF.Functions.ILike(o.DisplayName, $"%{value}%"))
-        || (!string.IsNullOrEmpty(o.PhoneNumber) && EF.Functions.ILike(o.PhoneNumber, $"%{value}%")));
+      return this.WhereContains(query, value);
     }
 
     public async Task<Domain.Entity.Models.User> Create(Domain.Entity.Models.User item)

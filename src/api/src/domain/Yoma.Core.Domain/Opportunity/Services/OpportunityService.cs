@@ -338,7 +338,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       if (filter.PaginationEnabled)
       {
         results.TotalCount = query.Count();
-        query = query.Skip((filter.PageNumber.Value - 1) * filter.PageSize.Value).Take(filter.PageSize.Value);
+        query = query.Page(filter);
       }
       results.Items = [.. query.ToList().Select(o => o.ToOpportunityItem())];
 
@@ -750,6 +750,11 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
     public OpportunitySearchResults Search(OpportunitySearchFilterAdmin filter, bool ensureOrganizationAuthorization)
     {
+      return Search(filter, ensureOrganizationAuthorization, hydratePageSeparately: true);
+    }
+
+    public OpportunitySearchResults Search(OpportunitySearchFilterAdmin filter, bool ensureOrganizationAuthorization, bool hydratePageSeparately)
+    {
       ArgumentNullException.ThrowIfNull(filter, nameof(filter));
 
       ParseOpportunitySearchFilterCommitmentInterval(filter);
@@ -966,6 +971,11 @@ namespace Yoma.Core.Domain.Opportunity.Services
       if (filter.ExcludeHidden)
         query = query.Where(o => !o.Hidden.HasValue || o.Hidden == false);
 
+      // Recheck non-text filters during hydration, including authorization and visibility guards.
+      // Keep custom-field constraints on both page selection and hydration.
+      query = _opportunityRepository.WhereCustomFields(query, filter.CustomFields);
+      var hydrationQuery = query;
+
       //valueContains (includes organizations, types, categories, opportunities and skills)
       if (!string.IsNullOrEmpty(filter.ValueContains))
       {
@@ -1001,9 +1011,6 @@ namespace Yoma.Core.Domain.Opportunity.Services
         query = query.Where(o => matchedOpportunityIds.Contains(o.Id));
       }
 
-      //custom fields
-      query = _opportunityRepository.WhereCustomFields(query, filter.CustomFields);
-
       var result = new OpportunitySearchResults();
 
       if (filter.TotalCountOnly)
@@ -1019,24 +1026,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         query = query.ApplyFiltersAndOrdering(filter.OrderInstructions);
 
       //pagination
-      if (filter.PaginationEnabled)
-      {
-        result.TotalCount = query.Count();
-        //Select the ordered IDs first; split hydration must not repeat the search for every child collection.
-        var ids = query.Skip((filter.PageNumber.Value - 1) * filter.PageSize.Value).Take(filter.PageSize.Value)
-          .Select(o => o.Id).ToList();
-
-        if (ids.Count == 0)
-          result.Items = [];
-        else
-        {
-          var itemsById = _opportunityRepository.Query(true).Where(o => ids.Contains(o.Id)).ToDictionary(o => o.Id);
-          //Restore page order. As with existing split reads, concurrently deleted rows may disappear.
-          result.Items = [.. ids.Where(itemsById.ContainsKey).Select(id => itemsById[id])];
-        }
-      }
-      else
-        result.Items = [.. query];
+      (result.TotalCount, result.Items) = query.ToPageWithChildren(filter, o => o.Id, hydrationQuery, hydratePageSeparately);
 
       result.Items.ForEach(o => ParseComputed(o));
 

@@ -193,13 +193,6 @@ namespace Yoma.Core.Domain.Referral.Services
       if (filter.ProgramId.HasValue)
         query = query.Where(o => o.ProgramId == filter.ProgramId.Value);
 
-      //valueContains
-      if (!string.IsNullOrEmpty(filter.ValueContains))
-      {
-        filter.ValueContains = filter.ValueContains.Trim();
-        query = _linkRepository.Contains(query, filter.ValueContains);
-      }
-
       //statuses
       if (filter.Statuses != null && filter.Statuses.Count != 0)
       {
@@ -221,6 +214,16 @@ namespace Yoma.Core.Domain.Referral.Services
         query = query.Where(o => o.DateCreated <= filter.DateEnd.Value);
       }
 
+      // Recheck non-text filters during hydration, including authorization and visibility guards.
+      var hydrationQuery = query;
+
+      //valueContains
+      if (!string.IsNullOrEmpty(filter.ValueContains))
+      {
+        filter.ValueContains = filter.ValueContains.Trim();
+        query = _linkRepository.Contains(query, filter.ValueContains);
+      }
+
       var results = new ReferralLinkSearchResults();
 
       if (filter.TotalCountOnly)
@@ -235,13 +238,7 @@ namespace Yoma.Core.Domain.Referral.Services
         .ThenBy(o => o.UserDisplayName)
         .ThenBy(o => o.Id);
 
-      if (filter.PaginationEnabled)
-      {
-        results.TotalCount = query.Count();
-        query = query.Skip((filter.PageNumber.Value - 1) * filter.PageSize.Value).Take(filter.PageSize.Value);
-      }
-
-      results.Items = [.. query];
+      (results.TotalCount, results.Items) = query.ToPageWithChildren(filter, o => o.Id, hydrationQuery);
 
       results.Items.ForEach(o =>
       {

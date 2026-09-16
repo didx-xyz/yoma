@@ -97,28 +97,13 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
 
     public Expression<Func<ReferralLink, bool>> Contains(Expression<Func<ReferralLink, bool>> predicate, string value)
     {
-      // Email and phone are searched separately, so search the raw display name rather than
-      // its COALESCE fallback. This preserves matches and exposes the indexed column.
-      //MS SQL: Contains
-      return predicate.Or(o =>
-          EF.Functions.ILike(o.Name, $"%{value}%") ||
-          (!string.IsNullOrEmpty(o.Description) && EF.Functions.ILike(o.Description, $"%{value}%")) ||
-          _context.User.Any(user => user.Id == o.UserId && !string.IsNullOrEmpty(user.DisplayName) && EF.Functions.ILike(user.DisplayName, $"%{value}%")) ||
-          (!string.IsNullOrEmpty(o.UserEmail) && EF.Functions.ILike(o.UserEmail, $"%{value}%")) ||
-          (!string.IsNullOrEmpty(o.UserPhoneNumber) && EF.Functions.ILike(o.UserPhoneNumber, $"%{value}%"))
-      );
+      var matchedIds = MatchingIds(value);
+      return predicate.Or(o => matchedIds.Contains(o.Id));
     }
 
     public IQueryable<ReferralLink> Contains(IQueryable<ReferralLink> query, string value)
     {
-      //MS SQL: Contains
-      return query.Where(o =>
-          EF.Functions.ILike(o.Name, $"%{value}%") ||
-          (!string.IsNullOrEmpty(o.Description) && EF.Functions.ILike(o.Description, $"%{value}%")) ||
-          _context.User.Any(user => user.Id == o.UserId && !string.IsNullOrEmpty(user.DisplayName) && EF.Functions.ILike(user.DisplayName, $"%{value}%")) ||
-          (!string.IsNullOrEmpty(o.UserEmail) && EF.Functions.ILike(o.UserEmail, $"%{value}%")) ||
-          (!string.IsNullOrEmpty(o.UserPhoneNumber) && EF.Functions.ILike(o.UserPhoneNumber, $"%{value}%"))
-      );
+      return this.WhereContains(query, value);
     }
 
     public async Task<ReferralLink> Create(ReferralLink item)
@@ -244,6 +229,20 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
     public Task Delete(List<ReferralLink> items)
     {
       throw new NotImplementedException();
+    }
+    #endregion
+
+    #region Private Members
+    private IQueryable<Guid> MatchingIds(string value)
+    {
+      // Email and phone cover the display-name fallback; keep searches on the raw indexed columns.
+      var userIds = _context.User.Where(o =>
+        (!string.IsNullOrEmpty(o.DisplayName) && EF.Functions.ILike(o.DisplayName, $"%{value}%"))
+        || (!string.IsNullOrEmpty(o.Email) && EF.Functions.ILike(o.Email, $"%{value}%"))
+        || (!string.IsNullOrEmpty(o.PhoneNumber) && EF.Functions.ILike(o.PhoneNumber, $"%{value}%"))).Select(o => o.Id);
+      var ownIds = _context.ReferralLink.Where(o => EF.Functions.ILike(o.Name, $"%{value}%")
+        || (!string.IsNullOrEmpty(o.Description) && EF.Functions.ILike(o.Description, $"%{value}%"))).Select(o => o.Id);
+      return ownIds.Union(_context.ReferralLink.Where(o => userIds.Contains(o.UserId)).Select(o => o.Id));
     }
     #endregion
   }

@@ -45,8 +45,7 @@ namespace Yoma.Core.Infrastructure.Database.Lookups.Repositories
 
     public IQueryable<Domain.Lookups.Models.Skill> Contains(IQueryable<Domain.Lookups.Models.Skill> query, string value)
     {
-      //MS SQL: Contains
-      return query.Where(o => EF.Functions.ILike(o.Name, $"%{value}%"));
+      return this.WhereContains(query, value);
     }
 
     public async Task<Domain.Lookups.Models.Skill> Create(Domain.Lookups.Models.Skill item)

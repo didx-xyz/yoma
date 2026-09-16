@@ -184,10 +184,6 @@ namespace Yoma.Core.Domain.Marketplace.Services
 
       var query = _storeAccessControlRuleRepistory.Query(true);
 
-      //nameContains
-      if (!string.IsNullOrEmpty(filter.NameContains))
-        query = _storeAccessControlRuleRepistory.Contains(query, filter.NameContains);
-
       //stores
       if (filter.Stores != null && filter.Stores.Count != 0)
       {
@@ -218,19 +214,20 @@ namespace Yoma.Core.Domain.Marketplace.Services
         query = query.Where(o => statusIds.Contains(o.StatusId));
       }
 
+      // Recheck non-text filters during hydration, including authorization and visibility guards.
+      var hydrationQuery = query;
+
+      //nameContains
+      if (!string.IsNullOrEmpty(filter.NameContains))
+        query = _storeAccessControlRuleRepistory.Contains(query, filter.NameContains);
+
       if (!filter.UnrestrictedQuery)
         query = query.OrderBy(o => o.Name).ThenBy(o => o.Id);
 
       var result = new StoreAccessControlRuleSearchResults();
 
       //pagination
-      if (filter.PaginationEnabled)
-      {
-        result.TotalCount = query.Count();
-        query = query.Skip((filter.PageNumber.Value - 1) * filter.PageSize.Value).Take(filter.PageSize.Value);
-      }
-
-      result.Items = [.. query];
+      (result.TotalCount, result.Items) = query.ToPageWithChildren(filter, o => o.Id, hydrationQuery);
       return result;
     }
 

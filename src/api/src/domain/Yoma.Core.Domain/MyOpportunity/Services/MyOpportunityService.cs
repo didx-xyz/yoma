@@ -409,7 +409,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       if (filter.PaginationEnabled)
       {
         results.TotalCount = verificationQuery.Count();
-        verificationQuery = verificationQuery.Skip((filter.PageNumber.Value - 1) * filter.PageSize.Value).Take(filter.PageSize.Value);
+        verificationQuery = verificationQuery.Page(filter);
       }
 
       var items = verificationQuery.ToList();
@@ -625,20 +625,6 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       if (filter.Opportunity.HasValue)
         query = query.Where(o => o.OpportunityId == filter.Opportunity);
 
-      //valueContains (opportunities and users) 
-      if (!string.IsNullOrEmpty(filter.ValueContains))
-      {
-        var predicate = PredicateBuilder.False<Models.MyOpportunity>();
-
-        var matchedOpportunityIds = _opportunityService.Contains(filter.ValueContains, false, false).Select(o => o.Id).ToList();
-        predicate = predicate.Or(o => matchedOpportunityIds.Contains(o.OpportunityId));
-
-        var matchedUserIds = _userService.Contains(filter.ValueContains, false, false).Select(o => o.Id).ToList();
-        predicate = predicate.Or(o => matchedUserIds.Contains(o.UserId));
-
-        query = query.Where(predicate);
-      }
-
       //custom fields
       query = _myOpportunityRepository.WhereCustomFields(query, filter.CustomFields);
 
@@ -704,6 +690,23 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
           throw new InvalidOperationException($"Unknown / unsupported '{nameof(filter.Action)}' of '{filter.Action}'");
       }
 
+      // Recheck non-text filters during hydration, including authorization and visibility guards.
+      var hydrationQuery = query;
+
+      //valueContains (opportunities and users)
+      if (!string.IsNullOrEmpty(filter.ValueContains))
+      {
+        var predicate = PredicateBuilder.False<Models.MyOpportunity>();
+
+        var matchedOpportunityIds = _opportunityService.Contains(filter.ValueContains, false, false).Select(o => o.Id).ToList();
+        predicate = predicate.Or(o => matchedOpportunityIds.Contains(o.OpportunityId));
+
+        var matchedUserIds = _userService.Contains(filter.ValueContains, false, false).Select(o => o.Id).ToList();
+        predicate = predicate.Or(o => matchedUserIds.Contains(o.UserId));
+
+        query = query.Where(predicate);
+      }
+
       var result = new MyOpportunitySearchResults();
 
       if (filter.TotalCountOnly)
@@ -719,20 +722,21 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       }
 
       //pagination
-      if (filter.PaginationEnabled)
-      {
-        result.TotalCount = query.Count();
-        query = query.Skip((filter.PageNumber.Value - 1) * filter.PageSize.Value).Take(filter.PageSize.Value);
-      }
-
-      var items = query.ToList();
+      var (totalCount, items) = query.ToPageWithChildren(filter, o => o.Id, hydrationQuery);
+      result.TotalCount = totalCount;
 
       if (!filter.UnrestrictedQuery) items.ForEach(ParseComputed);
 
       result.Items = [.. items.Select(o => o.ToInfo())];
       if (filter.UnrestrictedQuery) return result;
 
-      result.Items.ForEach(o => SetEngagementCounts(o));
+      var engagementCounts = ListEngagementCounts([.. result.Items.Select(o => o.OpportunityId)])
+        .ToDictionary(o => o.OpportunityId);
+      result.Items.ForEach(o =>
+      {
+        if (engagementCounts.TryGetValue(o.OpportunityId, out var counts))
+          o.OpportunityParticipantCountTotal += counts.ParticipantCountPending;
+      });
       return result;
     }
 
