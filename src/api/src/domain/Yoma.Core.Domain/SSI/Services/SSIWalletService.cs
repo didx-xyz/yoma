@@ -1,5 +1,6 @@
 using FluentValidation;
 using Microsoft.AspNetCore.Http;
+using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Entity.Interfaces;
 using Yoma.Core.Domain.SSI.Interfaces;
@@ -111,7 +112,7 @@ namespace Yoma.Core.Domain.SSI.Services
       if (filter.PaginationEnabled)
       {
         result.TotalCount = result.Items.Count;
-        result.Items = [.. result.Items.Skip((filter.PageNumber.Value - 1) * filter.PageSize.Value).Take(filter.PageSize.Value)];
+        result.Items = [.. result.Items.Page(filter)];
       }
 
       return result;

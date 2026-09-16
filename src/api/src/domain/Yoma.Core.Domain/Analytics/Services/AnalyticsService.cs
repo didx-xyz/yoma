@@ -731,7 +731,7 @@ namespace Yoma.Core.Domain.Analytics.Services
       if (filter.PaginationEnabled)
       {
         result.TotalCount = query.Count();
-        query = query.Skip((filter.PageNumber.Value - 1) * filter.PageSize.Value).Take(filter.PageSize.Value);
+        query = query.Page(filter);
       }
 
       result.Items = [.. query];
@@ -778,7 +778,7 @@ namespace Yoma.Core.Domain.Analytics.Services
       if (filter.PaginationEnabled)
       {
         result.TotalCount = query.Count();
-        query = query.Skip((filter.PageNumber.Value - 1) * filter.PageSize.Value).Take(filter.PageSize.Value);
+        query = query.Page(filter);
       }
 
       result.Items = [.. query.ToList().Select(youth => new YouthInfo
@@ -829,7 +829,7 @@ namespace Yoma.Core.Domain.Analytics.Services
       if (filter.PaginationEnabled)
       {
         result.TotalCount = queryOrganization.Count();
-        queryOrganization = queryOrganization.Skip((filter.PageNumber.Value - 1) * filter.PageSize.Value).Take(filter.PageSize.Value);
+        queryOrganization = queryOrganization.Page(filter);
       }
 
       var organizations = queryOrganization.ToList();

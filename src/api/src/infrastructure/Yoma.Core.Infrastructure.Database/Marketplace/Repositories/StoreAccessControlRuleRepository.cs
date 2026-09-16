@@ -110,8 +110,7 @@ namespace Yoma.Core.Infrastructure.Database.Marketplace.Repositories
 
     public IQueryable<StoreAccessControlRule> Contains(IQueryable<StoreAccessControlRule> query, string value)
     {
-      //MS SQL: Contains
-      return query.Where(o => EF.Functions.ILike(o.Name, $"%{value}%"));
+      return this.WhereContains(query, value);
     }
 
     public async Task<StoreAccessControlRule> Create(StoreAccessControlRule item)

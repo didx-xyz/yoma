@@ -1,6 +1,7 @@
 using FluentValidation;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using System.Text.RegularExpressions;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Lookups.Interfaces;
@@ -14,7 +15,7 @@ using Yoma.Core.Infrastructure.JobJack.Models;
 
 namespace Yoma.Core.Infrastructure.JobJack.Client
 {
-  public sealed class JobJackClient : ISyncProviderClientPullEntity<Domain.Opportunity.Models.Opportunity>
+  public sealed partial class JobJackClient : ISyncProviderClientPullEntity<Domain.Opportunity.Models.Opportunity>
   {
     #region Class Variables
     private readonly ILogger<JobJackClient> _logger;
@@ -78,7 +79,7 @@ namespace Yoma.Core.Infrastructure.JobJack.Client
       if (filter.PaginationEnabled)
       {
         result.TotalCount = query.Count();
-        query = query.Skip((filter.PageNumber.Value - 1) * filter.PageSize.Value).Take(filter.PageSize.Value);
+        query = query.Page(filter);
       }
 
       result.Items = [.. query.ToList().Select(ToOpportunity)];
@@ -198,14 +199,14 @@ namespace Yoma.Core.Infrastructure.JobJack.Client
         var separatorIndex = line.IndexOf(':');
         if (separatorIndex < 0)
         {
-          if (!System.Text.RegularExpressions.Regex.IsMatch(line, @"^(?:[\p{L}-]+\s+)*requirements?$", System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.CultureInvariant))
+          if (!RequirementsHeadingRegex().IsMatch(line))
             result.Add(line);
           continue;
         }
 
         var label = line[..separatorIndex];
-        label = System.Text.RegularExpressions.Regex.Replace(label, @"\brequirements?\b", string.Empty, System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.CultureInvariant);
-        label = System.Text.RegularExpressions.Regex.Replace(label, @"\s{2,}", " ", System.Text.RegularExpressions.RegexOptions.CultureInvariant).Trim(' ', '-', ':');
+        label = RequirementsLabelRegex().Replace(label, string.Empty);
+        label = RepeatedWhitespaceRegex().Replace(label, " ").Trim(' ', '-', ':');
         var detail = line[(separatorIndex + 1)..].Trim();
         if (string.IsNullOrEmpty(label) && string.IsNullOrEmpty(detail)) continue;
 
@@ -309,6 +310,15 @@ namespace Yoma.Core.Infrastructure.JobJack.Client
 
       keywords.Add(value);
     }
+
+    [GeneratedRegex(@"^(?:[\p{L}-]+\s+)*requirements?$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+    private static partial Regex RequirementsHeadingRegex();
+
+    [GeneratedRegex(@"\brequirements?\b", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+    private static partial Regex RequirementsLabelRegex();
+
+    [GeneratedRegex(@"\s{2,}", RegexOptions.CultureInvariant)]
+    private static partial Regex RepeatedWhitespaceRegex();
 
     private static string? NormalizeLookupKey(string? value)
     {

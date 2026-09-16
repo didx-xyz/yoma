@@ -150,11 +150,7 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
 
     public IQueryable<Domain.Opportunity.Models.Opportunity> Contains(IQueryable<Domain.Opportunity.Models.Opportunity> query, string value)
     {
-      //MS SQL: Contains
-      return query.Where(o => EF.Functions.ILike(o.Title, $"%{value}%")
-          || (!string.IsNullOrEmpty(o.Summary) && EF.Functions.ILike(o.Summary, $"%{value}%"))
-          || (!string.IsNullOrEmpty(o.KeywordsFlattened) && EF.Functions.ILike(o.KeywordsFlattened, $"%{value}%"))
-          || EF.Functions.ToTsVector("english", o.Description).Matches(value));
+      return this.WhereContains(query, value);
     }
 
     public async Task<Domain.Opportunity.Models.Opportunity> Create(Domain.Opportunity.Models.Opportunity item)

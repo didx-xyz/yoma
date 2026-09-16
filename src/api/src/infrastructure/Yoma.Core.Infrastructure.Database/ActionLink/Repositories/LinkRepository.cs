@@ -57,20 +57,13 @@ namespace Yoma.Core.Infrastructure.Database.ActionLink.Repositories
 
     public Expression<Func<Link, bool>> Contains(Expression<Func<Link, bool>> predicate, string value)
     {
-      //MS SQL: Contains
-      return predicate.Or(o => EF.Functions.ILike(o.Name, $"%{value}%")
-        || (!string.IsNullOrEmpty(o.Description) && EF.Functions.ILike(o.Description, $"%{value}%"))
-        || (!string.IsNullOrEmpty(o.OpportunityTitle) && EF.Functions.ILike(o.OpportunityTitle, $"%{value}%"))
-        || (!string.IsNullOrEmpty(o.OpportunityOrganizationName) && EF.Functions.ILike(o.OpportunityOrganizationName, $"%{value}%")));
+      var matchedIds = MatchingIds(value);
+      return predicate.Or(o => matchedIds.Contains(o.Id));
     }
 
     public IQueryable<Link> Contains(IQueryable<Link> query, string value)
     {
-      //MS SQL: Contains
-      return query.Where(o => EF.Functions.ILike(o.Name, $"%{value}%")
-       || (!string.IsNullOrEmpty(o.Description) && EF.Functions.ILike(o.Description, $"%{value}%"))
-       || (!string.IsNullOrEmpty(o.OpportunityTitle) && EF.Functions.ILike(o.OpportunityTitle, $"%{value}%"))
-       || (!string.IsNullOrEmpty(o.OpportunityOrganizationName) && EF.Functions.ILike(o.OpportunityOrganizationName, $"%{value}%")));
+      return this.WhereContains(query, value);
     }
 
     public IQueryable<UnnestedValue> UnnestValues(IEnumerable<string> values)
@@ -217,6 +210,21 @@ namespace Yoma.Core.Infrastructure.Database.ActionLink.Repositories
     public Task Delete(List<Link> items)
     {
       throw new NotImplementedException();
+    }
+    #endregion
+
+    #region Private Members
+    private IQueryable<Guid> MatchingIds(string value)
+    {
+      // Separate matching tables so each branch can use its text indexes. Keep the set in SQL.
+      var ownIds = _context.Link.Where(o => EF.Functions.ILike(o.Name, $"%{value}%")
+        || (!string.IsNullOrEmpty(o.Description) && EF.Functions.ILike(o.Description, $"%{value}%"))).Select(o => o.Id);
+      var opportunityIds = _context.Opportunity.Where(o => !string.IsNullOrEmpty(o.Title)
+        && EF.Functions.ILike(o.Title, $"%{value}%")).Select(o => o.Id);
+      var organizationIds = _context.Organization.Where(o => !string.IsNullOrEmpty(o.Name)
+        && EF.Functions.ILike(o.Name, $"%{value}%")).Select(o => o.Id);
+      return ownIds.Union(_context.Link.Where(o => o.Opportunity != null && opportunityIds.Contains(o.Opportunity.Id)).Select(o => o.Id))
+        .Union(_context.Link.Where(o => o.Opportunity != null && organizationIds.Contains(o.Opportunity.OrganizationId)).Select(o => o.Id));
     }
     #endregion
   }

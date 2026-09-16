@@ -120,8 +120,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
 
     public IQueryable<Domain.Entity.Models.Organization> Contains(IQueryable<Domain.Entity.Models.Organization> query, string value)
     {
-      //MS SQL: Contains
-      return query.Where(o => EF.Functions.ILike(o.Name, $"%{value}%"));
+      return this.WhereContains(query, value);
     }
 
     public async Task<Domain.Entity.Models.Organization> Create(Domain.Entity.Models.Organization item)

@@ -42,20 +42,13 @@ namespace Yoma.Core.Infrastructure.Database.ActionLink.Repositories
 
     public Expression<Func<LinkUsageLog, bool>> Contains(Expression<Func<LinkUsageLog, bool>> predicate, string value)
     {
-      // Email and phone are searched separately, so search the raw display name rather than
-      // its COALESCE fallback. This preserves matches and exposes the indexed column.
-      //MS SQL: Contains
-      return predicate.Or(o => (!string.IsNullOrEmpty(o.UserEmail) && EF.Functions.ILike(o.UserEmail, $"%{value}%"))
-        || _context.User.Any(user => user.Id == o.UserId && !string.IsNullOrEmpty(user.DisplayName) && EF.Functions.ILike(user.DisplayName, $"%{value}%"))
-        || (!string.IsNullOrEmpty(o.UserPhoneNumber) && EF.Functions.ILike(o.UserPhoneNumber, $"%{value}%")));
+      var userIds = MatchingUserIds(value);
+      return predicate.Or(o => userIds.Contains(o.UserId));
     }
 
     public IQueryable<LinkUsageLog> Contains(IQueryable<LinkUsageLog> query, string value)
     {
-      //MS SQL: Contains
-      return query.Where(o => (!string.IsNullOrEmpty(o.UserEmail) && EF.Functions.ILike(o.UserEmail, $"%{value}%"))
-        || _context.User.Any(user => user.Id == o.UserId && !string.IsNullOrEmpty(user.DisplayName) && EF.Functions.ILike(user.DisplayName, $"%{value}%"))
-        || (!string.IsNullOrEmpty(o.UserPhoneNumber) && EF.Functions.ILike(o.UserPhoneNumber, $"%{value}%")));
+      return this.WhereContains(query, value);
     }
 
     public async Task<LinkUsageLog> Create(LinkUsageLog item)
@@ -86,6 +79,17 @@ namespace Yoma.Core.Infrastructure.Database.ActionLink.Repositories
     public Task Delete(LinkUsageLog item)
     {
       throw new NotImplementedException();
+    }
+    #endregion
+
+    #region Private Members
+    private IQueryable<Guid> MatchingUserIds(string value)
+    {
+      // Email and phone cover the display-name fallback; keep searches on the raw indexed columns.
+      return _context.User.Where(o =>
+        (!string.IsNullOrEmpty(o.DisplayName) && EF.Functions.ILike(o.DisplayName, $"%{value}%"))
+        || (!string.IsNullOrEmpty(o.Email) && EF.Functions.ILike(o.Email, $"%{value}%"))
+        || (!string.IsNullOrEmpty(o.PhoneNumber) && EF.Functions.ILike(o.PhoneNumber, $"%{value}%"))).Select(o => o.Id);
     }
     #endregion
   }

@@ -186,7 +186,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
       if (filter.PaginationEnabled)
       {
         results.TotalCount = query.Count();
-        query = query.Skip((filter.PageNumber.Value - 1) * filter.PageSize.Value).Take(filter.PageSize.Value);
+        query = query.Page(filter);
       }
 
       results.Items = [.. query.ToList().Select(o => o.ToLinkInfo(false))];
@@ -485,7 +485,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
           if (filter.PaginationEnabled)
           {
             result.TotalCount = queryAll.Count();
-            queryAll = queryAll.Skip((filter.PageNumber.Value - 1) * filter.PageSize.Value).Take(filter.PageSize.Value);
+            queryAll = queryAll.Page(filter);
           }
 
           result.Items = [.. queryAll];
@@ -503,7 +503,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
           if (filter.PaginationEnabled)
           {
             result.TotalCount = query.Count();
-            query = query.Skip((filter.PageNumber.Value - 1) * filter.PageSize.Value).Take(filter.PageSize.Value);
+            query = query.Page(filter);
           }
 
           result.Items = [.. query.Select(o => new LinkSearchResultsUsageItem

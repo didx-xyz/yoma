@@ -171,10 +171,7 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
 
     public IQueryable<Program> Contains(IQueryable<Program> query, string value)
     {
-      //MS SQL: Contains
-      return query.Where(o => EF.Functions.ILike(o.Name, $"%{value}%")
-          || (!string.IsNullOrEmpty(o.Summary) && EF.Functions.ILike(o.Summary, $"%{value}%"))
-          || (!string.IsNullOrEmpty(o.Description) && EF.Functions.ToTsVector("english", o.Description).Matches(value)));
+      return this.WhereContains(query, value);
     }
 
     public async Task<Program> Create(Program item)

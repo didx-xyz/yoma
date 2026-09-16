@@ -401,7 +401,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       if (filter.PaginationEnabled)
       {
         results.TotalCount = verificationQuery.Count();
-        verificationQuery = verificationQuery.Skip((filter.PageNumber.Value - 1) * filter.PageSize.Value).Take(filter.PageSize.Value);
+        verificationQuery = verificationQuery.Page(filter);
       }
 
       var items = verificationQuery.ToList();
@@ -614,20 +614,6 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       if (filter.Opportunity.HasValue)
         query = query.Where(o => o.OpportunityId == filter.Opportunity);
 
-      //valueContains (opportunities and users) 
-      if (!string.IsNullOrEmpty(filter.ValueContains))
-      {
-        var predicate = PredicateBuilder.False<Models.MyOpportunity>();
-
-        var matchedOpportunityIds = _opportunityService.Contains(filter.ValueContains, false, false).Select(o => o.Id).ToList();
-        predicate = predicate.Or(o => matchedOpportunityIds.Contains(o.OpportunityId));
-
-        var matchedUserIds = _userService.Contains(filter.ValueContains, false, false).Select(o => o.Id).ToList();
-        predicate = predicate.Or(o => matchedUserIds.Contains(o.UserId));
-
-        query = query.Where(predicate);
-      }
-
       var orderInstructions = new List<FilterOrdering<Models.MyOpportunity>>();
       switch (filter.Action)
       {
@@ -690,6 +676,23 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
           throw new InvalidOperationException($"Unknown / unsupported '{nameof(filter.Action)}' of '{filter.Action}'");
       }
 
+      // Recheck non-text filters during hydration, including authorization and visibility guards.
+      var hydrationQuery = query;
+
+      //valueContains (opportunities and users)
+      if (!string.IsNullOrEmpty(filter.ValueContains))
+      {
+        var predicate = PredicateBuilder.False<Models.MyOpportunity>();
+
+        var matchedOpportunityIds = _opportunityService.Contains(filter.ValueContains, false, false).Select(o => o.Id).ToList();
+        predicate = predicate.Or(o => matchedOpportunityIds.Contains(o.OpportunityId));
+
+        var matchedUserIds = _userService.Contains(filter.ValueContains, false, false).Select(o => o.Id).ToList();
+        predicate = predicate.Or(o => matchedUserIds.Contains(o.UserId));
+
+        query = query.Where(predicate);
+      }
+
       var result = new MyOpportunitySearchResults();
 
       if (filter.TotalCountOnly)
@@ -705,20 +708,21 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       }
 
       //pagination
-      if (filter.PaginationEnabled)
-      {
-        result.TotalCount = query.Count();
-        query = query.Skip((filter.PageNumber.Value - 1) * filter.PageSize.Value).Take(filter.PageSize.Value);
-      }
-
-      var items = query.ToList();
+      var (totalCount, items) = query.ToPageWithChildren(filter, o => o.Id, hydrationQuery);
+      result.TotalCount = totalCount;
 
       if (!filter.UnrestrictedQuery) items.ForEach(ParseComputed);
 
       result.Items = [.. items.Select(o => o.ToInfo())];
       if (filter.UnrestrictedQuery) return result;
 
-      result.Items.ForEach(o => SetEngagementCounts(o));
+      var engagementCounts = ListEngagementCounts([.. result.Items.Select(o => o.OpportunityId)])
+        .ToDictionary(o => o.OpportunityId);
+      result.Items.ForEach(o =>
+      {
+        if (engagementCounts.TryGetValue(o.OpportunityId, out var counts))
+          o.OpportunityParticipantCountTotal += counts.ParticipantCountPending;
+      });
       return result;
     }
 
@@ -1093,6 +1097,36 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       };
 
       await FinalizeVerification(user, opportunity, request.Status, options);
+    }
+
+    public List<MyOpportunityEngagementCounts> ListEngagementCounts(List<Guid> opportunityIds)
+    {
+      ArgumentNullException.ThrowIfNull(opportunityIds, nameof(opportunityIds));
+      if (opportunityIds.Count == 0) return [];
+      opportunityIds = [.. opportunityIds.Distinct()];
+
+      var actionViewedId = _myOpportunityActionService.GetByName(Action.Viewed.ToString()).Id;
+      var actionNavigatedId = _myOpportunityActionService.GetByName(Action.NavigatedExternalLink.ToString()).Id;
+      var actionVerificationId = _myOpportunityActionService.GetByName(Action.Verification.ToString()).Id;
+      var verificationPendingId = _myOpportunityVerificationStatusService.GetByName(VerificationStatus.Pending.ToString()).Id;
+      var opportunityStatusActiveId = _opportunityStatusService.GetByName(Status.Active.ToString()).Id;
+      var opportunityStatusExpiredId = _opportunityStatusService.GetByName(Status.Expired.ToString()).Id;
+      var organizationStatusActiveId = _organizationStatusService.GetByName(OrganizationStatus.Active.ToString()).Id;
+
+      //Keep the existing Search count predicates, including MyOpportunity.DateStart for pending verification.
+      return [.. _myOpportunityRepository.Query(false)
+        .Where(o => opportunityIds.Contains(o.OpportunityId))
+        .GroupBy(o => o.OpportunityId)
+        .Select(group => new MyOpportunityEngagementCounts
+        {
+          OpportunityId = group.Key,
+          CountViewed = group.Count(o => o.ActionId == actionViewedId),
+          CountNavigatedExternalLink = group.Count(o => o.ActionId == actionNavigatedId),
+          ParticipantCountPending = group.Count(o =>
+            o.ActionId == actionVerificationId && o.VerificationStatusId == verificationPendingId &&
+            ((o.OpportunityStatusId == opportunityStatusActiveId && o.DateStart <= DateTimeOffset.UtcNow) ||
+              o.OpportunityStatusId == opportunityStatusExpiredId) && o.OrganizationStatusId == organizationStatusActiveId)
+        })];
     }
 
     public Dictionary<Guid, int>? ListAggregatedOpportunityByViewed(bool includeExpired)

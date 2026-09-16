@@ -2,8 +2,8 @@ using Flurl;
 using Flurl.Http;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using Yoma.Core.Domain.PartnerSync;
 using Yoma.Core.Domain.Core.Extensions;
+using Yoma.Core.Domain.PartnerSync;
 using Yoma.Core.Domain.PartnerSync.Models;
 using Yoma.Core.Infrastructure.IXO.PartnerSync.Models;
 
@@ -29,9 +29,7 @@ namespace Yoma.Core.Infrastructure.IXO.PartnerSync.Client
 
       if (filter.PaginationEnabled)
       {
-        items = [.. items
-          .Skip((filter.PageNumber!.Value - 1) * filter.PageSize!.Value)
-          .Take(filter.PageSize.Value)];
+        items = [.. items.Page(filter)];
       }
 
       result.Items = [.. items.Select(ToSyncItem)];

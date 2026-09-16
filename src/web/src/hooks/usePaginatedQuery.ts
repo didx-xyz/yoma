@@ -34,15 +34,17 @@ export function usePaginatedQuery<T>({
     queryKey: [...queryKey, "infinite", pageSize],
     queryFn: ({ pageParam }) => queryFn(pageParam as number, pageSize),
     initialPageParam: 1,
-    getNextPageParam: (lastPage, allPages) => {
-      const loadedCount = allPages.reduce(
-        (acc, page) => acc + page.items.length,
-        0,
-      );
-      if (loadedCount < lastPage.totalCount) {
-        return allPages.length + 1;
+    getNextPageParam: (lastPage, _allPages, lastPageParam) => {
+      // Advance by requested pages, not returned rows: concurrent changes can leave a short page.
+      // Counting loaded items can leave See More enabled forever when rows disappeared between reads.
+      // A short nonempty page may still have a next page; an empty page stops even with a stale total.
+      if (
+        lastPage.items.length === 0 ||
+        lastPageParam * pageSize >= lastPage.totalCount
+      ) {
+        return undefined;
       }
-      return undefined;
+      return lastPageParam + 1;
     },
     enabled,
   });
