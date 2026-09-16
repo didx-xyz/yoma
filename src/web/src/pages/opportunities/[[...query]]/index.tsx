@@ -39,7 +39,6 @@ import {
 } from "~/api/services/opportunities";
 import { searchMyOpportunities } from "~/api/services/myOpportunities";
 import { useOpportunityCustomFieldDefinitionsQuery } from "~/hooks/useOpportunityMutations";
-import CustomCarousel from "~/components/Carousel/CustomCarousel";
 import CustomCarouselV3 from "~/components/Carousel/CustomCarouselV3";
 import CustomModal from "~/components/Common/CustomModal";
 import FilterBadges from "~/components/FilterBadges";
@@ -60,7 +59,6 @@ import { PaginationButtons } from "~/components/PaginationButtons";
 import { LoadingSkeleton } from "~/components/Status/LoadingSkeleton";
 import {
   COUNTRY_CODE_WW,
-  OPPORTUNITY_SEARCH_DESIGN_V2,
   OPPORTUNITY_TYPE_ID_EVENT,
   OPPORTUNITY_TYPE_ID_LEARNING,
   OPPORTUNITY_TYPE_ID_MICROTASK,
@@ -2116,425 +2114,247 @@ const Opportunities: NextPageWithLayout<{
               {/* CAROUSELS (kept mounted; hidden while overlay is active) */}
               <div className={landingOverlayActive ? "invisible" : ""}>
                 <div className="flex flex-col gap-2">
-                  {OPPORTUNITY_SEARCH_DESIGN_V2 ? (
-                    <>
-                      {/* JOBS */}
-                      <div className="divider !bg-gray" />
-                      {(opportunities_jobs_render?.totalCount ?? 0) > 0 ? (
+                  {/* JOBS */}
+                  <div className="divider !bg-gray" />
+                  {(opportunities_jobs_render?.totalCount ?? 0) > 0 ? (
+                    <CustomCarouselV3
+                      id={`opportunities_jobs`}
+                      className="border-purple from-purple-tint to-purple-tint/40 rounded-2xl border-2 bg-gradient-to-br p-4 md:p-6"
+                      badgeText="Jobs · New"
+                      badgeIcon={<IoBriefcase className="mr-2 size-3" />}
+                      subTextAvailable={`${opportunities_jobs_render.totalCount} ${
+                        opportunities_jobs_render.totalCount === 1
+                          ? "job"
+                          : "jobs"
+                      } available`}
+                      title="Jobs in your area"
+                      subtitle={
+                        sessionStatus === "authenticated" &&
+                        landingMyCountryOnly &&
+                        userCountryInfo
+                          ? `${userCountryInfo.name} & Worldwide`
+                          : "Worldwide"
+                      }
+                      viewAllUrl={appendLandingCountryToUrl(
+                        "/opportunities?types=Job",
+                      )}
+                      data={opportunities_jobs_render.items}
+                      loadData={loadDataJobs}
+                      JobCard
+                      totalAll={opportunities_jobs_render.totalCount!}
+                      renderSlide={(item, index) => (
+                        <JobCardSmall
+                          key={`opportunities_jobs_${item.id}_${index}`}
+                          data={item}
+                        />
+                      )}
+                    />
+                  ) : (
+                    <div className="flex flex-col items-center justify-center gap-2 rounded-lg bg-white p-8 text-center">
+                      <p className="text-gray-dark font-semibold">
+                        New jobs coming soon... 💼
+                      </p>
+                      <p className="text-gray-dark text-sm">
+                        Check back later for exciting job opportunities.
+                      </p>
+                    </div>
+                  )}
+
+                  {/* OPPORTUNITIES FOR USER'S COUNTRY - ONLY FOR LOGGED-IN USERS */}
+                  {sessionStatus === "authenticated" &&
+                    landingMyCountryOnly &&
+                    userCountryInfo &&
+                    (opportunities_user_country?.totalCount ?? 0) > 0 && (
+                      <>
+                        <div className="divider !bg-gray" />
                         <CustomCarouselV3
-                          id={`opportunities_jobs`}
-                          className="border-purple from-purple-tint to-purple-tint/40 rounded-2xl border-2 bg-gradient-to-br p-4 md:p-6"
-                          badgeText="Jobs · New"
-                          badgeIcon={<IoBriefcase className="mr-2 size-3" />}
-                          subTextAvailable={`${opportunities_jobs_render.totalCount} ${
-                            opportunities_jobs_render.totalCount === 1
-                              ? "job"
-                              : "jobs"
-                          } available`}
-                          title="Jobs in your area"
-                          subtitle={
-                            sessionStatus === "authenticated" &&
-                            landingMyCountryOnly &&
-                            userCountryInfo
-                              ? `${userCountryInfo.name} & Worldwide`
-                              : "Worldwide"
-                          }
+                          id={`opportunities_user_country`}
+                          // badgeText="Local"
+                          // badgeClassName="bg-purple text-white"
+                          title={`Opportunities in ${userCountryInfo.name}`}
+                          description="Explore opportunities in your country"
                           viewAllUrl={appendLandingCountryToUrl(
-                            "/opportunities?types=Job",
+                            "/opportunities?page=1",
                           )}
-                          data={opportunities_jobs_render.items}
-                          loadData={loadDataJobs}
-                          JobCard
-                          totalAll={opportunities_jobs_render.totalCount!}
+                          viewAllText={`See All (${opportunities_user_country!.totalCount}) →`}
+                          data={opportunities_user_country!.items}
+                          loadData={loadDataOpportunitiesForUserCountry}
+                          totalAll={opportunities_user_country!.totalCount!}
                           renderSlide={(item, index) => (
-                            <JobCardSmall
-                              key={`opportunities_jobs_${item.id}_${index}`}
+                            <DefaultCard
+                              key={`opportunities_user_country_${item.id}_${index}`}
                               data={item}
                             />
                           )}
                         />
-                      ) : (
-                        <div className="flex flex-col items-center justify-center gap-2 rounded-lg bg-white p-8 text-center">
-                          <p className="text-gray-dark font-semibold">
-                            New jobs coming soon... 💼
-                          </p>
-                          <p className="text-gray-dark text-sm">
-                            Check back later for exciting job opportunities.
-                          </p>
-                        </div>
-                      )}
+                      </>
+                    )}
 
-                      {/* OPPORTUNITIES FOR USER'S COUNTRY - ONLY FOR LOGGED-IN USERS */}
-                      {sessionStatus === "authenticated" &&
-                        landingMyCountryOnly &&
-                        userCountryInfo &&
-                        (opportunities_user_country?.totalCount ?? 0) > 0 && (
-                          <>
-                            <div className="divider !bg-gray" />
-                            <CustomCarouselV3
-                              id={`opportunities_user_country`}
-                              // badgeText="Local"
-                              // badgeClassName="bg-purple text-white"
-                              title={`Opportunities in ${userCountryInfo.name}`}
-                              description="Explore opportunities in your country"
-                              viewAllUrl={appendLandingCountryToUrl(
-                                "/opportunities?page=1",
-                              )}
-                              viewAllText={`See All (${opportunities_user_country!.totalCount}) →`}
-                              data={opportunities_user_country!.items}
-                              loadData={loadDataOpportunitiesForUserCountry}
-                              totalAll={opportunities_user_country!.totalCount!}
-                              renderSlide={(item, index) => (
-                                <DefaultCard
-                                  key={`opportunities_user_country_${item.id}_${index}`}
-                                  data={item}
-                                />
-                              )}
-                            />
-                          </>
-                        )}
-
-                      {/* FEATURED */}
-                      {(opportunities_featured_render?.totalCount ?? 0) > 0 && (
-                        <>
-                          <div className="divider !bg-gray" />
-                          <CustomCarouselV3
-                            id={`opportunities_featured`}
-                            // badgeText="Featured"
-                            // badgeClassName="bg-orange text-white"
-                            title="Featured"
-                            description="Explore our featured opportunities"
-                            viewAllUrl={appendLandingCountryToUrl(
-                              "/opportunities?featured=true",
-                            )}
-                            viewAllText={`See All (${opportunities_featured_render.totalCount}) →`}
-                            data={opportunities_featured_render.items}
-                            loadData={loadDataFeatured}
-                            totalAll={opportunities_featured_render.totalCount!}
-                            renderSlide={(item, index) => (
-                              <DefaultCard
-                                key={`opportunities_featured_${item.id}_${index}`}
-                                data={item}
-                              />
-                            )}
-                          />
-                        </>
-                      )}
-
-                      {/* NEW */}
-                      {(opportunities_allOpportunities_render?.totalCount ??
-                        0) > 0 && (
-                        <>
-                          <div className="divider !bg-gray" />
-                          <CustomCarouselV3
-                            id={`opportunities_newOpportunities`}
-                            //badgeText="New"
-                            //badgeClassName="bg-green text-white"
-                            title="New"
-                            description="Fresh opportunities, updated daily"
-                            viewAllUrl={appendLandingCountryToUrl(
-                              "/opportunities?page=1",
-                            )}
-                            viewAllText={`See All (${opportunities_allOpportunities_render.totalCount}) →`}
-                            data={opportunities_allOpportunities_render.items}
-                            loadData={loadDataOpportunities}
-                            totalAll={
-                              opportunities_allOpportunities_render.totalCount!
-                            }
-                            renderSlide={(item, index) => (
-                              <DefaultCard
-                                key={`opportunities_newOpportunities_${item.id}_${index}`}
-                                data={item}
-                              />
-                            )}
-                          />
-                        </>
-                      )}
-
-                      {/* MOST COMPLETED */}
-                      {(opportunities_mostCompleted_render?.totalCount ?? 0) >
-                        0 && (
-                        <>
-                          <div className="divider !bg-gray" />
-                          <CustomCarouselV3
-                            id={`opportunities_mostCompleted`}
-                            // badgeText="Popular"
-                            // badgeClassName="bg-purple text-white"
-                            title="Trending & Popular"
-                            description="The most completed opportunities"
-                            viewAllUrl={appendLandingCountryToUrl(
-                              "/opportunities?mostCompleted=true",
-                            )}
-                            viewAllText={`See All (${opportunities_mostCompleted_render.totalCount}) →`}
-                            data={opportunities_mostCompleted_render.items}
-                            loadData={loadDataMostCompleted}
-                            totalAll={
-                              opportunities_mostCompleted_render.totalCount!
-                            }
-                            renderSlide={(item, index) => (
-                              <DefaultCard
-                                key={`opportunities_mostCompleted_${item.id}_${index}`}
-                                data={item}
-                              />
-                            )}
-                          />
-                        </>
-                      )}
-
-                      {/* LEARNING COURSES */}
-                      {(opportunities_learning_render?.totalCount ?? 0) > 0 && (
-                        <>
-                          <div className="divider !bg-gray" />
-                          <CustomCarouselV3
-                            id={`opportunities_learning`}
-                            // badgeText="Learning"
-                            // badgeClassName="bg-green text-white"
-                            title="Learning Courses"
-                            description="Discover exciting online courses"
-                            viewAllUrl={appendLandingCountryToUrl(
-                              "/opportunities?types=Learning",
-                            )}
-                            viewAllText={`See All (${opportunities_learning_render.totalCount}) →`}
-                            data={opportunities_learning_render.items}
-                            loadData={loadDataLearning}
-                            totalAll={opportunities_learning_render.totalCount!}
-                            renderSlide={(item, index) => (
-                              <DefaultCard
-                                key={`opportunities_learning_${item.id}_${index}`}
-                                data={item}
-                              />
-                            )}
-                          />
-                        </>
-                      )}
-
-                      {/* TASKS */}
-                      {(opportunities_tasks_render?.totalCount ?? 0) > 0 && (
-                        <>
-                          <div className="divider !bg-gray" />
-                          <CustomCarouselV3
-                            id={`opportunities_tasks`}
-                            // badgeText="Micro-task"
-                            // badgeClassName="bg-orange text-white"
-                            title="Tasks"
-                            description="Contribute to real-world projects"
-                            viewAllUrl={appendLandingCountryToUrl(
-                              "/opportunities?types=Micro-task",
-                            )}
-                            viewAllText={`See All (${opportunities_tasks_render.totalCount}) →`}
-                            data={opportunities_tasks_render.items}
-                            loadData={loadDataTasks}
-                            totalAll={opportunities_tasks_render.totalCount!}
-                            renderSlide={(item, index) => (
-                              <DefaultCard
-                                key={`opportunities_tasks_${item.id}_${index}`}
-                                data={item}
-                              />
-                            )}
-                          />
-                        </>
-                      )}
-
-                      {/* EVENTS */}
-                      {(opportunities_events_render?.totalCount ?? 0) > 0 && (
-                        <>
-                          <div className="divider !bg-gray" />
-                          <CustomCarouselV3
-                            id={`opportunities_events`}
-                            // badgeText="Event"
-                            // badgeClassName="bg-blue text-white"
-                            title="Events"
-                            description="Explore events to attend"
-                            viewAllUrl={appendLandingCountryToUrl(
-                              "/opportunities?types=Event",
-                            )}
-                            viewAllText={`See All (${opportunities_events_render.totalCount}) →`}
-                            data={opportunities_events_render.items}
-                            loadData={loadDataEvents}
-                            totalAll={opportunities_events_render.totalCount!}
-                            renderSlide={(item, index) => (
-                              <DefaultCard
-                                key={`opportunities_events_${item.id}_${index}`}
-                                data={item}
-                              />
-                            )}
-                          />
-                        </>
-                      )}
-                    </>
-                  ) : (
+                  {/* FEATURED */}
+                  {(opportunities_featured_render?.totalCount ?? 0) > 0 && (
                     <>
-                      {/* === ORIGINAL pre-#1855 carousels (OPPORTUNITY_SEARCH_DESIGN_V2 = false) === */}
-                      {/* No dedicated Jobs carousel in the original design; jobs appear within the generic carousels. */}
-                      {sessionStatus === "authenticated" &&
-                        landingMyCountryOnly &&
-                        userCountryInfo &&
-                        (opportunities_user_country?.totalCount ?? 0) > 0 && (
-                          <>
-                            <div className="divider !bg-gray" />
-                            <CustomCarousel
-                              id={`opportunities_user_country`}
-                              title={`Opportunities in ${userCountryInfo.name} 🗺️`}
-                              description="Explore opportunities in your country."
-                              viewAllUrl={appendLandingCountryToUrl(
-                                "/opportunities?page=1",
-                              )}
-                              data={opportunities_user_country!.items}
-                              loadData={loadDataOpportunitiesForUserCountry}
-                              totalAll={opportunities_user_country!.totalCount!}
-                              renderSlide={(item, index) => (
-                                <DefaultCard
-                                  key={`opportunities_user_country_${item.id}_${index}`}
-                                  data={item}
-                                />
-                              )}
-                            />
-                          </>
+                      <div className="divider !bg-gray" />
+                      <CustomCarouselV3
+                        id={`opportunities_featured`}
+                        // badgeText="Featured"
+                        // badgeClassName="bg-orange text-white"
+                        title="Featured"
+                        description="Explore our featured opportunities"
+                        viewAllUrl={appendLandingCountryToUrl(
+                          "/opportunities?featured=true",
                         )}
-
-                      {(opportunities_featured_render?.totalCount ?? 0) > 0 && (
-                        <>
-                          <div className="divider !bg-gray" />
-                          <CustomCarousel
-                            id={`opportunities_featured`}
-                            title="Featured 🌟"
-                            description="Explore our featured opportunities."
-                            viewAllUrl={appendLandingCountryToUrl(
-                              "/opportunities?featured=true",
-                            )}
-                            data={opportunities_featured_render.items}
-                            loadData={loadDataFeatured}
-                            totalAll={opportunities_featured_render.totalCount!}
-                            renderSlide={(item, index) => (
-                              <DefaultCard
-                                key={`opportunities_featured_${item.id}_${index}`}
-                                data={item}
-                              />
-                            )}
+                        viewAllText={`See All (${opportunities_featured_render.totalCount}) →`}
+                        data={opportunities_featured_render.items}
+                        loadData={loadDataFeatured}
+                        totalAll={opportunities_featured_render.totalCount!}
+                        renderSlide={(item, index) => (
+                          <DefaultCard
+                            key={`opportunities_featured_${item.id}_${index}`}
+                            data={item}
                           />
-                        </>
-                      )}
+                        )}
+                      />
+                    </>
+                  )}
 
-                      {(opportunities_allOpportunities_render?.totalCount ??
-                        0) > 0 && (
-                        <>
-                          <div className="divider !bg-gray" />
-                          <CustomCarousel
-                            id={`opportunities_newOpportunities`}
-                            title="New 🆕"
-                            description="Fresh opportunities, updated daily."
-                            viewAllUrl={appendLandingCountryToUrl(
-                              "/opportunities?page=1",
-                            )}
-                            data={opportunities_allOpportunities_render.items}
-                            loadData={loadDataOpportunities}
-                            totalAll={
-                              opportunities_allOpportunities_render.totalCount!
-                            }
-                            renderSlide={(item, index) => (
-                              <DefaultCard
-                                key={`opportunities_newOpportunities_${item.id}_${index}`}
-                                data={item}
-                              />
-                            )}
+                  {/* NEW */}
+                  {(opportunities_allOpportunities_render?.totalCount ?? 0) >
+                    0 && (
+                    <>
+                      <div className="divider !bg-gray" />
+                      <CustomCarouselV3
+                        id={`opportunities_newOpportunities`}
+                        //badgeText="New"
+                        //badgeClassName="bg-green text-white"
+                        title="New"
+                        description="Fresh opportunities, updated daily"
+                        viewAllUrl={appendLandingCountryToUrl(
+                          "/opportunities?page=1",
+                        )}
+                        viewAllText={`See All (${opportunities_allOpportunities_render.totalCount}) →`}
+                        data={opportunities_allOpportunities_render.items}
+                        loadData={loadDataOpportunities}
+                        totalAll={
+                          opportunities_allOpportunities_render.totalCount!
+                        }
+                        renderSlide={(item, index) => (
+                          <DefaultCard
+                            key={`opportunities_newOpportunities_${item.id}_${index}`}
+                            data={item}
                           />
-                        </>
-                      )}
+                        )}
+                      />
+                    </>
+                  )}
 
-                      {(opportunities_mostCompleted_render?.totalCount ?? 0) >
-                        0 && (
-                        <>
-                          <div className="divider !bg-gray" />
-                          <CustomCarousel
-                            id={`opportunities_mostCompleted`}
-                            title="Most completed 🏆"
-                            description="The most completed opportunities."
-                            viewAllUrl={appendLandingCountryToUrl(
-                              "/opportunities?mostCompleted=true",
-                            )}
-                            data={opportunities_mostCompleted_render.items}
-                            loadData={loadDataMostCompleted}
-                            totalAll={
-                              opportunities_mostCompleted_render.totalCount!
-                            }
-                            renderSlide={(item, index) => (
-                              <DefaultCard
-                                key={`opportunities_mostCompleted_${item.id}_${index}`}
-                                data={item}
-                              />
-                            )}
+                  {/* MOST COMPLETED */}
+                  {(opportunities_mostCompleted_render?.totalCount ?? 0) >
+                    0 && (
+                    <>
+                      <div className="divider !bg-gray" />
+                      <CustomCarouselV3
+                        id={`opportunities_mostCompleted`}
+                        // badgeText="Popular"
+                        // badgeClassName="bg-purple text-white"
+                        title="Trending & Popular"
+                        description="The most completed opportunities"
+                        viewAllUrl={appendLandingCountryToUrl(
+                          "/opportunities?mostCompleted=true",
+                        )}
+                        viewAllText={`See All (${opportunities_mostCompleted_render.totalCount}) →`}
+                        data={opportunities_mostCompleted_render.items}
+                        loadData={loadDataMostCompleted}
+                        totalAll={
+                          opportunities_mostCompleted_render.totalCount!
+                        }
+                        renderSlide={(item, index) => (
+                          <DefaultCard
+                            key={`opportunities_mostCompleted_${item.id}_${index}`}
+                            data={item}
                           />
-                        </>
-                      )}
+                        )}
+                      />
+                    </>
+                  )}
 
-                      {(opportunities_learning_render?.totalCount ?? 0) > 0 && (
-                        <>
-                          <div className="divider !bg-gray" />
-                          <CustomCarousel
-                            id={`opportunities_learning`}
-                            title="Learning Courses 📚"
-                            description="Discover exciting online courses."
-                            viewAllUrl={appendLandingCountryToUrl(
-                              "/opportunities?types=Learning",
-                            )}
-                            data={opportunities_learning_render.items}
-                            loadData={loadDataLearning}
-                            totalAll={opportunities_learning_render.totalCount!}
-                            renderSlide={(item, index) => (
-                              <DefaultCard
-                                key={`opportunities_learning_${item.id}_${index}`}
-                                data={item}
-                              />
-                            )}
+                  {/* LEARNING COURSES */}
+                  {(opportunities_learning_render?.totalCount ?? 0) > 0 && (
+                    <>
+                      <div className="divider !bg-gray" />
+                      <CustomCarouselV3
+                        id={`opportunities_learning`}
+                        // badgeText="Learning"
+                        // badgeClassName="bg-green text-white"
+                        title="Learning Courses"
+                        description="Discover exciting online courses"
+                        viewAllUrl={appendLandingCountryToUrl(
+                          "/opportunities?types=Learning",
+                        )}
+                        viewAllText={`See All (${opportunities_learning_render.totalCount}) →`}
+                        data={opportunities_learning_render.items}
+                        loadData={loadDataLearning}
+                        totalAll={opportunities_learning_render.totalCount!}
+                        renderSlide={(item, index) => (
+                          <DefaultCard
+                            key={`opportunities_learning_${item.id}_${index}`}
+                            data={item}
                           />
-                        </>
-                      )}
+                        )}
+                      />
+                    </>
+                  )}
 
-                      {(opportunities_tasks_render?.totalCount ?? 0) > 0 && (
-                        <>
-                          <div className="divider !bg-gray" />
-                          <CustomCarousel
-                            id={`opportunities_tasks`}
-                            title="Micro-tasks ⚡"
-                            description="Contribute to real-world projects."
-                            viewAllUrl={appendLandingCountryToUrl(
-                              "/opportunities?types=Micro-task",
-                            )}
-                            data={opportunities_tasks_render.items}
-                            loadData={loadDataTasks}
-                            totalAll={opportunities_tasks_render.totalCount!}
-                            renderSlide={(item, index) => (
-                              <DefaultCard
-                                key={`opportunities_tasks_${item.id}_${index}`}
-                                data={item}
-                              />
-                            )}
+                  {/* TASKS */}
+                  {(opportunities_tasks_render?.totalCount ?? 0) > 0 && (
+                    <>
+                      <div className="divider !bg-gray" />
+                      <CustomCarouselV3
+                        id={`opportunities_tasks`}
+                        // badgeText="Micro-task"
+                        // badgeClassName="bg-orange text-white"
+                        title="Tasks"
+                        description="Contribute to real-world projects"
+                        viewAllUrl={appendLandingCountryToUrl(
+                          "/opportunities?types=Micro-task",
+                        )}
+                        viewAllText={`See All (${opportunities_tasks_render.totalCount}) →`}
+                        data={opportunities_tasks_render.items}
+                        loadData={loadDataTasks}
+                        totalAll={opportunities_tasks_render.totalCount!}
+                        renderSlide={(item, index) => (
+                          <DefaultCard
+                            key={`opportunities_tasks_${item.id}_${index}`}
+                            data={item}
                           />
-                        </>
-                      )}
+                        )}
+                      />
+                    </>
+                  )}
 
-                      {(opportunities_events_render?.totalCount ?? 0) > 0 && (
-                        <>
-                          <div className="divider !bg-gray" />
-                          <CustomCarousel
-                            id={`opportunities_events`}
-                            title="Events 🎉"
-                            description="Explore events to attend."
-                            viewAllUrl={appendLandingCountryToUrl(
-                              "/opportunities?types=Event",
-                            )}
-                            data={opportunities_events_render.items}
-                            loadData={loadDataEvents}
-                            totalAll={opportunities_events_render.totalCount!}
-                            renderSlide={(item, index) => (
-                              <DefaultCard
-                                key={`opportunities_events_${item.id}_${index}`}
-                                data={item}
-                              />
-                            )}
+                  {/* EVENTS */}
+                  {(opportunities_events_render?.totalCount ?? 0) > 0 && (
+                    <>
+                      <div className="divider !bg-gray" />
+                      <CustomCarouselV3
+                        id={`opportunities_events`}
+                        // badgeText="Event"
+                        // badgeClassName="bg-blue text-white"
+                        title="Events"
+                        description="Explore events to attend"
+                        viewAllUrl={appendLandingCountryToUrl(
+                          "/opportunities?types=Event",
+                        )}
+                        viewAllText={`See All (${opportunities_events_render.totalCount}) →`}
+                        data={opportunities_events_render.items}
+                        loadData={loadDataEvents}
+                        totalAll={opportunities_events_render.totalCount!}
+                        renderSlide={(item, index) => (
+                          <DefaultCard
+                            key={`opportunities_events_${item.id}_${index}`}
+                            data={item}
                           />
-                        </>
-                      )}
+                        )}
+                      />
                     </>
                   )}
                 </div>
