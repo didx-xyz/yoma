@@ -97,12 +97,16 @@ const FilterBadges: React.FC<{
   const content = (
     <>
       {filteredKeys.map(([key, value]) => {
-        const renderBadge = (item: string) => {
+        const renderBadge = (item: any, index = 0) => {
           const lookup = resolveValue(key, item);
+          // items are not always primitives (e.g. custom-field filter clauses),
+          // so the index keeps the key unique where String(item) would not
           return (
             <button
               type="button"
-              key={`searchFilter_filter_badge_${key}_${item}`}
+              key={`searchFilter_filter_badge_${key}_${index}_${
+                typeof item === "object" && item !== null ? "" : item
+              }`}
               className="bg-green-light text-green flex max-w-[150px] cursor-pointer items-center rounded-md border-none px-2 py-1 select-none sm:max-w-[200px]"
               onClick={() => removeFilter(key, item)}
             >
@@ -116,7 +120,9 @@ const FilterBadges: React.FC<{
         };
 
         if (Array.isArray(value) && value.length > 0) {
-          return value.map((item: string) => renderBadge(item));
+          return value.map((item: any, index: number) =>
+            renderBadge(item, index),
+          );
         } else if (resolveValue(key, value as string) ?? (value as string)) {
           return renderBadge(value as string);
         }

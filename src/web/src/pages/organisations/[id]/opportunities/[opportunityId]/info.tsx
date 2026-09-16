@@ -5,40 +5,51 @@ import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { type ParsedUrlQuery } from "querystring";
+import { type ParsedUrlQuery } from "node:querystring";
 import { type ReactElement } from "react";
+import { IoMdArrowRoundBack } from "react-icons/io";
 import {
-  IoMdArrowRoundBack,
-  IoMdGlobe,
-  IoMdPerson,
-  IoMdPin,
-  IoMdPricetags,
-  IoMdSchool,
-  IoMdSpeedometer,
-  IoMdTime,
-} from "react-icons/io";
-import Moment from "react-moment";
+  IoBulbOutline,
+  IoLanguageOutline,
+  IoLocationOutline,
+  IoPeopleOutline,
+  IoPricetagsOutline,
+  IoTimeOutline,
+  IoTrendingUpOutline,
+} from "react-icons/io5";
 import { getOpportunityInfoByIdAdminOrgAdminOrUser } from "~/api/services/opportunities";
 import {
   OPPORTUNITY_QUERY_KEYS,
   useOpportunityInfoQuery,
+  useOrganisationByIdQuery,
 } from "~/hooks/useOpportunityMutations";
 import { AvatarImage } from "~/components/AvatarImage";
+import DetailSection from "~/components/Common/DetailSection";
+import { OpportunityCustomFieldsSection } from "~/components/Opportunity/OpportunityCustomFieldsSection";
 import MainLayout from "~/components/Layout/Main";
 import OrgAdminBadges from "~/components/Opportunity/Badges/OrgAdminBadges";
-import { getCommitmentDisplay } from "~/components/Opportunity/opportunityTypeTheme";
+import ZltoRewardBadge from "~/components/Opportunity/Badges/ZltoRewardBadge";
+import OpportunityRewardContext from "~/components/Opportunity/Rewards/OpportunityRewardContext";
 import {
   OpportunityActions,
   OpportunityActionOptions,
   OpportunityActionDisplayStyle,
 } from "~/components/Opportunity/OpportunityActions";
+import {
+  getCommitmentDisplay,
+  getTypeConfig,
+  OpportunityEngagementTypeBadge,
+  OpportunityMetaTextRow,
+  OpportunityOrgCountriesRow,
+  OpportunityTypeBadge,
+} from "~/components/Opportunity/opportunityTypeTheme";
 import { PageBackground } from "~/components/PageBackground";
 import { Editor } from "~/components/RichText/Editor";
 import { InternalServerError } from "~/components/Status/InternalServerError";
 import LimitedFunctionalityBadge from "~/components/Status/LimitedFunctionalityBadge";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
-import { DATE_FORMAT_HUMAN, ROLE_ADMIN } from "~/lib/constants";
+import { ROLE_ADMIN } from "~/lib/constants";
 import { config } from "~/lib/react-query-config";
 import { currentOrganisationInactiveAtom } from "~/lib/store";
 import { getSafeUrl, getThemeFromRole } from "~/lib/utils";
@@ -125,6 +136,21 @@ const OpportunityDetails: NextPageWithLayout<{
   const { data: opportunity } = useOpportunityInfoQuery(opportunityId, {
     enabled: !error,
   });
+  const typeConfig = getTypeConfig(opportunity?.type);
+
+  /**
+   * The owning organisation, for the reward context block below (T3).
+   *
+   * ⚠️ A second request on purpose. `OpportunityInfo` — what this page fetches — carries **no**
+   * organisation reward fields (`OpportunityInfo.cs`); only the admin payload
+   * (`GET /opportunity/{id}/admin`) does, and even that one omits the organisation's *lifetime*
+   * cumulatives. `GET /organization/{id}` returns all eight figures, which is what
+   * `OrganizationRewardStats` renders, so the block matches the organisation's own page exactly.
+   * Same pattern the sibling edit page already uses for its balance validation.
+   */
+  const { data: organisation } = useOrganisationByIdQuery(id, {
+    enabled: !error,
+  });
 
   if (error) {
     if (error === 401) return <Unauthenticated />;
@@ -165,7 +191,7 @@ const OpportunityDetails: NextPageWithLayout<{
               </li>
               <li className="mx-2 inline font-semibold text-white"> | </li>
               <li className="inline">
-                <div className="inline max-w-[500px] overflow-hidden text-ellipsis whitespace-nowrap text-white">
+                <div className="inline max-w-125 overflow-hidden text-ellipsis whitespace-nowrap text-white">
                   {opportunity?.title}
                 </div>
                 <LimitedFunctionalityBadge />
@@ -205,60 +231,53 @@ const OpportunityDetails: NextPageWithLayout<{
 
         {opportunity && (
           <div className="flex flex-col gap-4">
-            <div className="shadow-custom relative flex grow flex-row gap-1 rounded-lg bg-white p-6">
-              <div className="flex flex-col gap-2 md:grow">
-                <div className="relative">
-                  <h4 className="line-clamp-2 max-w-[80%] grow text-xl font-semibold text-black md:text-2xl">
+            <div className="relative flex grow flex-col rounded-lg bg-white p-4 shadow-lg md:p-6">
+              <div className="flex items-start gap-3">
+                <div className="min-w-0 flex-1">
+                  <h4 className="font-family-nunito line-clamp-2 text-xl font-bold text-black md:text-2xl">
                     {opportunity.title}
                   </h4>
-                  <span className="absolute top-0 right-0">
-                    {/* COMPANY LOGO */}
-                    <AvatarImage
-                      icon={opportunity?.organizationLogoURL ?? null}
-                      alt="Company Logo"
-                      size={60}
+
+                  <div className="mt-1 flex items-center gap-2">
+                    <div className="min-w-0 flex-1">
+                      <OpportunityOrgCountriesRow data={opportunity} />
+                    </div>
+                    <PullSyncBadge opportunity={opportunity} />
+                  </div>
+                </div>
+
+                <div className="shrink-0">
+                  <AvatarImage
+                    icon={opportunity.organizationLogoURL ?? null}
+                    alt="Company Logo"
+                    size={60}
+                  />
+                </div>
+              </div>
+
+              <div className="mt-4 mb-2 flex flex-col gap-2 md:my-2">
+                <div className="flex flex-row flex-wrap items-center gap-2">
+                  <OpportunityTypeBadge
+                    data={opportunity}
+                    className={typeConfig.badgeClassName}
+                  />
+                  <OpportunityEngagementTypeBadge
+                    data={opportunity}
+                    className="bg-gray-light text-gray-dark"
+                  />
+                  {opportunity.zltoRewardEstimate != null && (
+                    <ZltoRewardBadge
+                      amount={opportunity.zltoRewardEstimate}
+                      showToolTips={true}
                     />
-                  </span>
+                  )}
+                  <OrgAdminBadges
+                    opportunity={opportunity}
+                    isAdmin={user?.roles.includes(ROLE_ADMIN)}
+                  />
                 </div>
 
-                <div className="text-gray-dark flex items-center gap-2 text-sm">
-                  By {opportunity.organizationName}
-                  <PullSyncBadge opportunity={opportunity} />
-                </div>
-
-                {/* BADGES */}
-                <OrgAdminBadges
-                  opportunity={opportunity}
-                  isAdmin={user?.roles.includes(ROLE_ADMIN)}
-                />
-
-                {/* DATES */}
-                <div className="text-gray-dark flex flex-col text-sm">
-                  <div>
-                    {opportunity?.dateStart && (
-                      <>
-                        <span className="mr-2 font-bold">Starts:</span>
-                        <span className="text-xs tracking-widest text-black">
-                          <Moment format={DATE_FORMAT_HUMAN} utc={true}>
-                            {opportunity.dateStart}
-                          </Moment>
-                        </span>
-                      </>
-                    )}
-                  </div>
-                  <div>
-                    {opportunity?.dateEnd && (
-                      <>
-                        <span className="mr-2 font-bold">Ends:</span>
-                        <span className="text-xs tracking-widest text-black">
-                          <Moment format={DATE_FORMAT_HUMAN} utc={true}>
-                            {opportunity.dateEnd}
-                          </Moment>
-                        </span>
-                      </>
-                    )}
-                  </div>
-                </div>
+                <OpportunityMetaTextRow data={opportunity} />
               </div>
             </div>
 
@@ -268,45 +287,94 @@ const OpportunityDetails: NextPageWithLayout<{
               </div>
               <div className="flex w-full flex-col gap-2 md:w-[33%]">
                 <div className="flex flex-col rounded-lg bg-white p-6">
-                  <div className="mb-2 flex flex-row items-center gap-1 text-sm font-bold">
-                    <IoMdPerson className="text-gray h-6 w-6" />
-                    Participants
-                  </div>
-                  <div className="bg-gray flex flex-row items-center gap-4 rounded-lg p-4">
-                    <div className="text-gray-dark text-3xl font-bold">
-                      {opportunity?.participantCountTotal ?? 0}
-                    </div>
-
-                    {(opportunity?.participantCountPending ?? 0) > 0 && (
-                      <Link
-                        href={`/organisations/${id}/verifications?opportunity=${opportunityId}&verificationStatus=Pending${
-                          returnUrl
-                            ? `&returnUrl=${encodeURIComponent(
-                                returnUrl.toString(),
-                              )}`
-                            : ""
-                        }`}
-                      >
-                        <div className="bg-yellow-light flex flex-row items-center gap-2 rounded-lg p-1">
-                          <div className="badge bg-yellow badge-warning rounded-lg text-white">
-                            {opportunity?.participantCountPending}
-                          </div>
-                          <div className="text-yellow text-xs font-bold">
-                            to be verified
-                          </div>
+                  <DetailSection
+                    title="Participants"
+                    icon={<IoPeopleOutline className="text-green h-6 w-6" />}
+                    className=""
+                  >
+                    <div className="flex flex-col">
+                      <div className="my-2 flex flex-row gap-2 text-sm">
+                        {/* Total */}
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="font-semibold">Total</span>
+                          <span
+                            className={`badge h-full min-h-6 rounded-md border-0 py-1 text-xs font-semibold ${
+                              (opportunity?.participantCountTotal ?? 0) > 0
+                                ? "bg-green text-white"
+                                : "bg-gray-light text-gray-dark"
+                            }`}
+                          >
+                            {opportunity?.participantCountTotal ?? 0}
+                          </span>
                         </div>
-                      </Link>
-                    )}
-                  </div>
+
+                        {/* Completed */}
+                        {(opportunity?.participantCountCompleted ?? 0) > 0 && (
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="font-semibold">Completed</span>
+                            <span
+                              className={`badge h-full min-h-6 rounded-md border-0 py-1 text-xs font-semibold ${
+                                (opportunity?.participantCountCompleted ?? 0) >
+                                0
+                                  ? "bg-green text-white"
+                                  : "bg-gray-light text-gray-dark"
+                              }`}
+                            >
+                              {opportunity?.participantCountCompleted ?? 0}
+                            </span>
+                          </div>
+                        )}
+
+                        {/* Pending verification (clickable when > 0) */}
+                        {(opportunity?.participantCountPending ?? 0) > 0 && (
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="font-semibold">Pending</span>
+                            <Link
+                              href={`/organisations/${id}/verifications?opportunity=${opportunityId}&verificationStatus=Pending${
+                                returnUrl
+                                  ? `&returnUrl=${encodeURIComponent(
+                                      returnUrl.toString(),
+                                    )}`
+                                  : ""
+                              }`}
+                              className="badge bg-yellow h-full min-h-6 cursor-pointer rounded-md border-0 py-1 text-xs font-semibold text-white hover:brightness-95"
+                            >
+                              {opportunity?.participantCountPending}
+                            </Link>
+                          </div>
+                        )}
+                      </div>
+                      <div>
+                        {/* Limit (only when set) */}
+                        {opportunity?.participantLimit != null && (
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold">Limit</span>
+                            <span className="badge bg-green h-full min-h-6 rounded-md border-0 py-1 text-xs font-semibold text-white">
+                              {opportunity.participantLimit}
+                            </span>
+                          </div>
+                        )}
+
+                        {/* Limit reached (only when reached) */}
+                        {opportunity?.participantLimitReached && (
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold">Limit reached</span>
+                            <span className="badge bg-orange h-full min-h-6 rounded-md border-0 py-1 text-xs font-semibold text-white">
+                              Yes
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </DetailSection>
                 </div>
                 <div className="divide-gray flex flex-col divide-y rounded-lg bg-white p-6">
                   {(opportunity?.skills?.length ?? 0) > 0 && (
-                    <div className="pb-4">
-                      <div className="flex flex-row items-center gap-1 text-sm font-bold">
-                        <IoMdSchool className="text-green h-5 w-5" />
-
-                        <span className="ml-1">Skills you will learn</span>
-                      </div>
+                    <DetailSection
+                      title="Skills you will learn"
+                      icon={<IoBulbOutline className="text-green h-5 w-5" />}
+                      className="pb-4"
+                    >
                       <div className="my-2 flex flex-wrap gap-2">
                         {opportunity?.skills?.map((item) => (
                           <div
@@ -317,39 +385,36 @@ const OpportunityDetails: NextPageWithLayout<{
                           </div>
                         ))}
                       </div>
-                    </div>
+                    </DetailSection>
                   )}
-                  {typeof opportunity?.commitmentIntervalCount === "number" &&
-                    opportunity.commitmentIntervalCount > 0 &&
-                    !!commitmentSummary && (
-                      <div className="py-4 first:pt-0 last:pb-0">
-                        <div className="flex flex-row items-center gap-1 text-sm font-bold">
-                          <IoMdTime className="text-green h-5 w-5" />
-
-                          <span className="ml-1">
-                            How much time you will need
-                          </span>
-                        </div>
-                        <div className="my-2">
-                          {`This task should not take you more than ${commitmentSummary}. `}
-                          <br />
-                          <p className="mt-2">
-                            The estimated times provided are just a guideline.
-                            You have as much time as you need to complete the
-                            tasks at your own pace. Focus on engaging with the
-                            materials and doing your best without feeling rushed
-                            by the time estimates.
-                          </p>
-                        </div>
+                  {/* Gated on master's `commitmentSummary` (total hours when the API knows
+                      them, else the interval label) rather than the raw interval, since that
+                      is what the copy below renders. */}
+                  {!!commitmentSummary && (
+                    <DetailSection
+                      title="How much time you will need"
+                      icon={<IoTimeOutline className="text-green h-5 w-5" />}
+                    >
+                      <div className="my-2">
+                        {`This task should not take you more than ${commitmentSummary}. `}
+                        <br />
+                        <p className="mt-2">
+                          The estimated times provided are just a guideline. You
+                          have as much time as you need to complete the tasks at
+                          your own pace. Focus on engaging with the materials
+                          and doing your best without feeling rushed by the time
+                          estimates.
+                        </p>
                       </div>
-                    )}
+                    </DetailSection>
+                  )}
                   {(opportunity?.categories?.length ?? 0) > 0 && (
-                    <div className="py-4 first:pt-0 last:pb-0">
-                      <div className="flex flex-row items-center gap-1 text-sm font-bold">
-                        <IoMdPricetags className="text-green h-5 w-5" />
-
-                        <span className="ml-1">Topics</span>
-                      </div>
+                    <DetailSection
+                      title="Topics"
+                      icon={
+                        <IoPricetagsOutline className="text-green h-5 w-5" />
+                      }
+                    >
                       <div className="my-2 flex flex-wrap gap-2">
                         {opportunity?.categories?.map((item) => (
                           <div
@@ -360,15 +425,15 @@ const OpportunityDetails: NextPageWithLayout<{
                           </div>
                         ))}
                       </div>
-                    </div>
+                    </DetailSection>
                   )}
                   {(opportunity?.languages?.length ?? 0) > 0 && (
-                    <div className="py-4 first:pt-0 last:pb-0">
-                      <div className="my-2 flex flex-row items-center gap-1 text-sm font-bold">
-                        <IoMdGlobe className="text-green h-5 w-5" />
-
-                        <span className="ml-1">Languages</span>
-                      </div>
+                    <DetailSection
+                      title="Languages"
+                      icon={
+                        <IoLanguageOutline className="text-green h-5 w-5" />
+                      }
+                    >
                       <div className="my-2 flex flex-wrap gap-2">
                         {opportunity?.languages?.map((item) => (
                           <div
@@ -379,25 +444,28 @@ const OpportunityDetails: NextPageWithLayout<{
                           </div>
                         ))}
                       </div>
-                    </div>
+                    </DetailSection>
                   )}
                   {!!opportunity?.difficulty && (
-                    <div className="py-4 first:pt-0 last:pb-0">
-                      <div className="flex flex-row items-center gap-1 text-sm font-bold">
-                        <IoMdSpeedometer className="text-green h-5 w-5" />
-
-                        <span className="ml-1">Course difficulty</span>
+                    <DetailSection
+                      title="Course difficulty"
+                      icon={
+                        <IoTrendingUpOutline className="text-green h-5 w-5" />
+                      }
+                    >
+                      <div className="badge bg-green my-2 h-full min-h-6 rounded-md border-0 py-1 text-xs font-semibold text-white">
+                        {opportunity.difficulty}
                       </div>
-                      <div className="my-2">{opportunity?.difficulty}</div>
-                    </div>
+                    </DetailSection>
                   )}
                   {(opportunity?.countries?.length ?? 0) > 0 && (
-                    <div className="pt-4 first:pt-0">
-                      <div className="flex flex-row items-center gap-1 text-sm font-bold">
-                        <IoMdPin className="text-green h-5 w-5" />
-
-                        <span className="ml-1">Countries</span>
-                      </div>
+                    <DetailSection
+                      title="Countries"
+                      icon={
+                        <IoLocationOutline className="text-green h-5 w-5" />
+                      }
+                      className="pt-4 first:pt-0"
+                    >
                       <div className="my-2 flex flex-wrap gap-2">
                         {opportunity?.countries?.map((country) => (
                           <div
@@ -408,11 +476,41 @@ const OpportunityDetails: NextPageWithLayout<{
                           </div>
                         ))}
                       </div>
-                    </div>
+                    </DetailSection>
                   )}
+                  {/* CUSTOM FIELDS (definition-driven, read-only). Renders nothing
+                      when there are no values. */}
+                  <OpportunityCustomFieldsSection
+                    type={opportunity?.type}
+                    values={opportunity?.customFields}
+                    enabled={!error}
+                  />
                 </div>
               </div>
             </div>
+
+            {/* REWARDS (T3) — this opportunity's lifetime figures beside the owning
+                organisation's current-financial-year capacity. The two scopes never mix: the
+                labels carry them. Renders only once the organisation has loaded, since a
+                half-populated capacity block on a financial surface is worse than none. */}
+            {organisation && (
+              <div className="flex flex-col gap-3 rounded-lg bg-white p-6 shadow-lg">
+                <div className="flex flex-col gap-1">
+                  <h6 className="font-bold">Rewards</h6>
+                  <p className="text-gray-dark text-xs">
+                    What this opportunity has awarded all-time, and what its
+                    organisation has left to award this financial year. Pools
+                    are set by a Yoma administrator.
+                  </p>
+                </div>
+
+                <OpportunityRewardContext
+                  own={opportunity}
+                  organisation={organisation}
+                  organisationName={opportunity.organizationName}
+                />
+              </div>
+            )}
           </div>
         )}
       </div>

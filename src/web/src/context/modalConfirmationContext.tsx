@@ -1,4 +1,5 @@
 import React, { useContext, useMemo, useRef, useState } from "react";
+import { BTN_PRIMARY, BTN_SECONDARY } from "~/components/Common/buttonStyles";
 import CustomModal from "~/components/Common/CustomModal";
 
 type ResolverType = (value: boolean) => void;
@@ -23,12 +24,27 @@ const useModalShow = (): UseModalShowReturnType => {
   };
 };
 
+/**
+ * Button styling for the confirmation dialog. Defaults to the page theme (blue on admin
+ * pages, green on org-admin pages), so the dialog conforms to the page it was opened
+ * from. Pass these to override — they replace the defaults rather than adding to them,
+ * as competing colour utilities have equal specificity.
+ */
+export interface ConfirmationButtonClassNames {
+  ok?: string;
+  cancel?: string;
+}
+
+const DEFAULT_OK_CLASSES = `${BTN_PRIMARY} w-1/2 shrink`;
+const DEFAULT_CANCEL_CLASSES = `${BTN_SECONDARY} w-1/2 shrink`;
+
 interface ModalContextType {
   showConfirmation: (
     title: string,
     message: string | React.ReactElement,
     showCancelButton?: boolean,
     showOkButton?: boolean,
+    buttonClassNames?: ConfirmationButtonClassNames,
   ) => Promise<boolean>;
 }
 
@@ -49,6 +65,7 @@ const ConfirmationModalContextProvider: React.FC<
     message: string | React.ReactElement;
     showCancelButton?: boolean;
     showOkButton?: boolean;
+    buttonClassNames?: ConfirmationButtonClassNames;
   } | null>();
   const resolver = useRef<ResolverType | null>(null);
 
@@ -59,12 +76,14 @@ const ConfirmationModalContextProvider: React.FC<
         message: string | React.ReactElement,
         showCancelButton?: boolean,
         showOkButton?: boolean,
+        buttonClassNames?: ConfirmationButtonClassNames,
       ): Promise<boolean> => {
         setContent({
           title,
           message,
           showCancelButton,
           showOkButton,
+          buttonClassNames,
         });
         setShow(true);
         return new Promise<boolean>((resolve) => {
@@ -114,7 +133,9 @@ const ConfirmationModalContextProvider: React.FC<
               {(content.showCancelButton == null ||
                 content.showCancelButton == true) && (
                 <button
-                  className="btn border-purple text-purple btn-outline btn-sm btn-primary w-1/2 shrink rounded-full bg-white normal-case"
+                  className={
+                    content.buttonClassNames?.cancel ?? DEFAULT_CANCEL_CLASSES
+                  }
                   onClick={handleCancel}
                 >
                   Cancel
@@ -123,7 +144,7 @@ const ConfirmationModalContextProvider: React.FC<
               {(content.showOkButton == null ||
                 content.showOkButton == true) && (
                 <button
-                  className="btn bg-purple btn-sm btn-primary w-1/2 shrink rounded-full text-white normal-case"
+                  className={content.buttonClassNames?.ok ?? DEFAULT_OK_CLASSES}
                   onClick={handleOk}
                 >
                   OK

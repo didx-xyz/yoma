@@ -86,9 +86,37 @@ export const OPPORTUNITY_TYPE_ID_OTHER = "5D67758F-3F06-47C6-8B62-420B33126665";
 export const OPPORTUNITY_TYPE_ID_JOB = "9C2D1A8E-3A4B-4F7A-9E2D-7F1C6B8A2D55";
 export const OPPORTUNITY_TYPE_NANE_JOB = "Job";
 
-// Design kill-switches (true = new design from #1855+, false = original pre-#1855 look).
-// Flip to false to revert that surface to the original design without a code revert.
-export const OPPORTUNITY_SEARCH_DESIGN_V2 = true; // carousels + cards on /opportunities
+// ─────────────────────────────────────────────────────────────────────────────
+// Customizable fields framework (YOM-1244) — release kill-switch.
+//
+// `false` ships the branch WITHOUT the custom-fields work, so cash-out can release while the
+// framework waits on its blockers: the BA-approved field set (YOM-1264), the presets API
+// (YOM-1257 / YOM-1258), and a live pass over credential schema create/update
+// (YOM-1281 / YOM-1282).
+//
+// The discovery redesign is NOT part of that release — it goes off with the framework, below.
+//
+// What it turns off:
+//   • every custom-field surface — the opportunity and completion editors, the read-only
+//     "Additional details" sections, and custom-field filtering on all four search pages
+//     plus the discovery panel. The two definition queries are disabled at source, so
+//     nothing is fetched and every dependent block collapses to nothing;
+//   • the custom-field parts of credential schema administration — the Opportunity Type
+//     context selector, the Opportunity Type column, and custom fields in the attribute
+//     picker. The pages themselves predate this epic and stay, serving live data;
+//   • every mocked/dev panel in the epic — the schema mock banner and notice, and the
+//     discovery preferences dev tool. Both mock façades are forced to their real service,
+//     so no fixture can serve regardless of environment or a stale localStorage choice;
+//   • the `/opportunities/discover` page entirely — it is the preset-driven prototype, so it
+//     404s and the user menu's "My preferences" link goes with it. `/opportunities` is
+//     untouched and remains the discovery surface.
+//
+// What it deliberately leaves alone: the credential schema selector on the opportunity
+// wizard's Credential step and the youth passport credential display. Both predate this
+// epic on `master` and work without custom fields.
+//
+// Setting this to `true` restores the full framework; nothing else needs changing.
+export const CUSTOM_FIELDS_ENABLED = false;
 
 export const THEME_BLUE = "blue";
 export const THEME_GREEN = "green";

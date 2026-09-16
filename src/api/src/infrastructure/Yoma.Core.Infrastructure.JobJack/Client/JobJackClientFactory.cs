@@ -9,7 +9,7 @@ using Yoma.Core.Infrastructure.JobJack.Models;
 
 namespace Yoma.Core.Infrastructure.JobJack.Client
 {
-  public sealed class JobJackClientFactory : ISyncProviderClientFactory<ISyncProviderClientPullEntity<Domain.Opportunity.Models.Opportunity>>
+  public sealed class JobJackClientFactory : ISyncProviderClientFactory<ISyncProviderClientPullEntity<Domain.Opportunity.Models.OpportunityRequestCreate>>
   {
     #region Class Variables
     private readonly ILogger<JobJackClient> _logger;
@@ -40,7 +40,7 @@ namespace Yoma.Core.Infrastructure.JobJack.Client
     #endregion
 
     #region Public Members
-    public ISyncProviderClientPullEntity<Domain.Opportunity.Models.Opportunity> CreateClient() =>
+    public ISyncProviderClientPullEntity<Domain.Opportunity.Models.OpportunityRequestCreate> CreateClient() =>
       new JobJackClient(_logger, _options, _opportunityTypeService, _opportunityCategoryService,
         _countryService, _languageService, _opportunityRepository, _validator);
     #endregion

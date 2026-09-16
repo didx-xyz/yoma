@@ -4,6 +4,9 @@ namespace Yoma.Core.Domain.SSI.Models.Provider
   {
     public string Id { get; set; } = null!;
 
+    /// <summary>
+    /// Full schema name used by the SSI provider.
+    /// </summary>
     public string Name { get; set; } = null!;
 
     public Version Version { get; set; } = null!;

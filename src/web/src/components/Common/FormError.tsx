@@ -1,8 +1,16 @@
 const FormError: React.FC<{
   label: string;
-}> = ({ label }) => {
+  /** referenced by the control's aria-describedby / aria-errormessage, when supplied */
+  id?: string;
+}> = ({ label, id }) => {
   return (
-    <span className="text-start text-xs text-red-500 italic">{label}</span>
+    <span
+      id={id}
+      role="alert"
+      className="text-start text-xs text-red-500 italic"
+    >
+      {label}
+    </span>
   );
 };
 

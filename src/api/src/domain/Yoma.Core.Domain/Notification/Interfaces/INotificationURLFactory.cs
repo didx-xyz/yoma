@@ -2,6 +2,8 @@ namespace Yoma.Core.Domain.Notification.Interfaces
 {
   public interface INotificationURLFactory
   {
+    string YoIDWalletURL();
+
     string OrganizationApprovalItemURL(NotificationType notificationType, Guid organizationId);
 
     string OpportunityVerificationItemURL(NotificationType notificationType, Guid opportunityId, Guid? organizationId);

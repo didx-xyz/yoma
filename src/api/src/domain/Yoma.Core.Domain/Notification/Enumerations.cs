@@ -70,36 +70,108 @@ namespace Yoma.Core.Domain.Notification
   -------------------------------------------------------------
   */
 
+  /*
+  Youth Payout Notifications - Future Short Message Templates
+  -------------------------------------------------------------
+  These drafts define ContentVariables if phone delivery is introduced.
+  Channel routing remains owned by NotificationDeliveryService.
+  {{1}} = environment suffix (empty in Production).
+  {{2}} = wallet link: full URL in SMS; path/query in the WhatsApp button.
+  WhatsApp buttons use an environment-specific Yoma base URL followed by /{{2}}.
+  SMS has no button: the wallet URL appears as plain text in the message.
+  Keep amounts, currency and technical references out of these short messages.
+  Review provider approval and rendered SMS length before enabling delivery;
+  URL/suffix length can vary, so do not assume a fixed segment count.
+
+  -------------------------------------------------------------
+  NotificationType.Payout_Youth_Completed
+
+  WhatsApp:
+  Hi there{{1}}
+  Your cash-out is complete. Your ZLTO has been deducted from your wallet.
+  Button: View My Wallet - URL: <Yoma base URL>/{{2}}
+
+  SMS:
+  Yoma{{1}} - Cash-out complete. Your ZLTO was deducted. Wallet: {{2}}
+
+  -------------------------------------------------------------
+  NotificationType.Payout_Youth_Cancelled
+
+  WhatsApp:
+  Hi there{{1}}
+  Your cash-out was cancelled. Your ZLTO is available in your wallet again.
+  Button: View My Wallet - URL: <Yoma base URL>/{{2}}
+
+  SMS:
+  Yoma{{1}} - Cash-out cancelled. Your ZLTO is available again. Wallet: {{2}}
+
+  -------------------------------------------------------------
+  NotificationType.Payout_Youth_Expired
+
+  WhatsApp:
+  Hi there{{1}}
+  The time to confirm your cash-out ran out. Your ZLTO is available in your
+  wallet again. You can start a new cash-out when you are ready.
+  Button: View My Wallet - URL: <Yoma base URL>/{{2}}
+
+  SMS:
+  Yoma{{1}} - Cash-out expired. Your ZLTO is available again. Wallet: {{2}}
+
+  -------------------------------------------------------------
+  NotificationType.Payout_Youth_Failed
+
+  WhatsApp:
+  Hi there{{1}}
+  Your cash-out did not go through. Your ZLTO is available in your wallet
+  again. Please try again later.
+  Button: View My Wallet - URL: <Yoma base URL>/{{2}}
+
+  SMS:
+  Yoma{{1}} - Cash-out failed. Your ZLTO is available again. Wallet: {{2}}
+  -------------------------------------------------------------
+  */
+
   public enum NotificationType
   {
-    Organization_Approval_Requested, //sent to admin
-    Organization_Approval_Approved, //sent to organization admin
-    Organization_Approval_Declined, //sent to organization admin
-    Opportunity_Verification_Rejected, //sent to youth
-    Opportunity_Verification_Completed, //sent to youth
-    Opportunity_Expiration_Expired, //sent to organization admin
-    Opportunity_Expiration_WithinNextDays, //sent to organization admin
-    Opportunity_Posted_Admin, //sent to admin
-    Opportunity_Verification_Pending, //sent to youth
-    Opportunity_Verification_Pending_Admin, //sent to organization admin
-    ActionLink_Verify_Distribution, //sent to youth mailing / distribution list
-    ActionLink_Verify_Activated, //sent to organization admin
-    Opportunity_Published, //sent to youth
-    Download, //sent to admin or organization admin
+    // Organization approval — recipients indicated per outcome
+    Organization_Approval_Requested, // admin
+    Organization_Approval_Approved, // organization admin
+    Organization_Approval_Declined, // organization admin
 
-    // sent to admin
+    // Opportunities and action links — recipients indicated per event
+    Opportunity_Verification_Rejected, // youth
+    Opportunity_Verification_Completed, // youth
+    Opportunity_Expiration_Expired, // organization admin
+    Opportunity_Expiration_WithinNextDays, // organization admin
+    Opportunity_Posted_Admin, // admin
+    Opportunity_Verification_Pending, // youth
+    Opportunity_Verification_Pending_Admin, // organization admin
+    ActionLink_Verify_Distribution, // youth mailing / distribution list
+    ActionLink_Verify_Activated, // organization admin
+    Opportunity_Published, // youth
+
+    // Downloads — admin or organization admin
+    Download,
+
+    // Referral program health — admin
     ReferralProgram_Expiration_Expired,          // program reached End Date (if specified) OR remained UnCompletable beyond the 15-day grace period (configurable) → program expired
     ReferralProgram_Expiration_WithinNextDays,   // program approaching End Date — sent once per day during the final 3 days (configurable) before expiration
     ReferralProgram_UnCompletable,               // pathway became Un-Completable — send immediately, then sent once per day during the final 5 days (configurable) before expiration
 
-    // sent to referrer (youth)
+    // Referral rewards and access — referrer (youth)
     ReferralLink_Completed_ReferrerAwarded,      // a referee completed and the referrer received reward > 0 Zlto
     Referral_Blocked_Referrer,                   // referrer was blocked from using the referral system
     Referral_Unblocked_Referrer,                 // referrer was unblocked and can use the referral system again
 
-    // sent to referee (youth)
+    // Referral participation — referee (youth)
     ReferralUsage_Welcome,                       // referee claimed a referral link (welcome message + instructions)
-    ReferralUsage_Completion                     // referee completed the referral program associated with the claimed link (includes note of any reward earned)
+    ReferralUsage_Completion,                    // referee completed the referral program associated with the claimed link (includes note of any reward earned)
+
+    // Payout outcomes — youth
+    Payout_Youth_Completed,
+    Payout_Youth_Cancelled,
+    Payout_Youth_Expired,
+    Payout_Youth_Failed
   }
 
   [Flags]

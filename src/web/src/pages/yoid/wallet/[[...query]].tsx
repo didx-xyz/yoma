@@ -1,4 +1,4 @@
-import { QueryClient, dehydrate, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useAtom } from "jotai";
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
@@ -24,7 +24,6 @@ import { PaginationInfoComponent } from "~/components/PaginationInfo";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import { WalletCard } from "~/components/YoID/WalletCard";
 import { PAGE_SIZE } from "~/lib/constants";
-import { config } from "~/lib/react-query-config";
 import { userProfileAtom } from "~/lib/store";
 import { authOptions } from "~/server/auth";
 import { type NextPageWithLayout } from "../../_app";
@@ -42,26 +41,11 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     };
   }
 
-  const queryClient = new QueryClient(config);
   const { page } = context.query;
   const pageNumber = page ? parseInt(page.toString()) : 1;
 
-  // 👇 prefetch queries on server
-  await queryClient.prefetchQuery({
-    queryKey: ["Wallet", pageNumber],
-    queryFn: () =>
-      searchVouchers(
-        {
-          pageNumber: pageNumber,
-          pageSize: PAGE_SIZE,
-        },
-        context,
-      ),
-  });
-
   return {
     props: {
-      dehydratedState: dehydrate(queryClient),
       user: session?.user ?? null,
       pageNumber: pageNumber,
     },
@@ -243,7 +227,9 @@ const MyWallet: NextPageWithLayout<{
         <div className="flex flex-col gap-8">
           <div className="flex w-full flex-col gap-2 sm:w-[300px] md:w-[350px] lg:w-[400px]">
             <Header title="💸 My Wallet" />
-            <div className="flex h-[185px] w-full flex-col gap-4 rounded-lg bg-white p-4 shadow">
+            {/* min-h, not h: the wallet ledger grows to five rows plus an offline notice, and a
+                clipped balance is worse than a taller card. */}
+            <div className="flex min-h-[185px] w-full flex-col gap-4 rounded-lg bg-white p-4 shadow">
               <Suspense
                 isLoading={!userProfile}
                 loader={

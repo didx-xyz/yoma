@@ -46,6 +46,7 @@ namespace Yoma.Core.Domain.Entity
     User_Notification_Opportunity_Published,
     User_Notification_Opportunity_Completion,
     User_Notifications_Referrals,
+    User_Notifications_Payouts,
 
     // Organization admin notifications
     Organization_Admin_Notification_Opportunity_Expiration,

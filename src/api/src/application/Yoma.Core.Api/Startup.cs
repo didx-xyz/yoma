@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.OpenApi;
+using Newtonsoft.Json;
 using StackExchange.Redis;
 using System.Net.Mime;
 using tusdotnet.Helpers;
@@ -26,7 +27,6 @@ using Yoma.Core.Domain.IdentityProvider.Interfaces;
 using Yoma.Core.Infrastructure.AmazonS3;
 using Yoma.Core.Infrastructure.AriesCloud;
 using Yoma.Core.Infrastructure.Bitly;
-using Yoma.Core.Infrastructure.Chimoney;
 using Yoma.Core.Infrastructure.Database;
 using Yoma.Core.Infrastructure.Emsi;
 using Yoma.Core.Infrastructure.Keycloak;
@@ -35,6 +35,7 @@ using Yoma.Core.Infrastructure.SendGrid;
 using Yoma.Core.Infrastructure.Shared;
 using Yoma.Core.Infrastructure.Substack;
 using Yoma.Core.Infrastructure.Twilio;
+using Yoma.Core.Infrastructure.IXO.YellowCard;
 using Yoma.Core.Infrastructure.Zlto;
 
 namespace Yoma.Core.Api
@@ -86,7 +87,7 @@ namespace Yoma.Core.Api
       services.ConfigureServices_EmailProvider(_configuration);
       services.ConfigureServices_MessageProvider(_configuration);
       services.ConfigureServices_RewardProvider(_configuration);
-      services.ConfigureServices_RewardCashoutProvider(_configuration);
+      services.ConfigureServices_PayoutProvider(_configuration);
       services.ConfigureServices_NewsFeedProvider(_configuration);
       ConfigureServices_SyncProviders(services, _configuration);
       #endregion Configuration
@@ -100,12 +101,17 @@ namespace Yoma.Core.Api
       })
       .AddNewtonsoftJson(options =>
       {
+        // Prevent date-like JSON strings from being parsed before the destination type is known.
+        // DateTime and DateTimeOffset properties are still parsed according to their declared types.
+        options.SerializerSettings.DateParseHandling = DateParseHandling.None;
+
         options.SerializerSettings.Converters.Add(new StrictStringEnumConverter //extends Newtonsoft.Json StringEnumConverter
         {
           AllowIntegerValues = true,
           RejectUndefinedValues = true,
           // no NamingStrategy set → default (PascalCase) output
         });
+
         options.SerializerSettings.Converters.Add(new StringTrimmingConverter());
       });
 
@@ -141,7 +147,7 @@ namespace Yoma.Core.Api
       services.ConfigureServices_InfrastructureEmailProvider(_configuration);
       services.ConfigureServices_InfrastructureMessageProvider(_configuration);
       services.ConfigureServices_InfrastructureRewardProvider();
-      services.ConfigureServices_InfrastructureRewardCashoutProvider();
+      services.ConfigureServices_InfrastructurePayoutProvider();
       services.ConfigureServices_InfrastructureNewsFeedProvider(_configuration, _appSettings);
       ConfigureServices_InfrastructureSyncProviders(services, _configuration, _appSettings);
       #endregion Services & Infrastructure
@@ -372,6 +378,7 @@ namespace Yoma.Core.Api
     private void ConfigureRedis(IServiceCollection services, IConfiguration configuration)
     {
       const string RedisKey_DataProtection = "yoma.core.api:keys:data_protection";
+      const string ApplicationName_DataProtection = "yoma.core.api";
 
       var connectionString = configuration.GetConnectionString(ConnectionStrings_RedisConnection);
       if (string.IsNullOrWhiteSpace(connectionString))
@@ -387,7 +394,9 @@ namespace Yoma.Core.Api
 
       var connectionMultiplexer = ConnectionMultiplexer.Connect(options);
       services.AddSingleton<IConnectionMultiplexer>(connectionMultiplexer);
-      services.AddDataProtection().PersistKeysToStackExchangeRedis(connectionMultiplexer, RedisKey_DataProtection);
+      services.AddDataProtection()
+        .SetApplicationName(ApplicationName_DataProtection)
+        .PersistKeysToStackExchangeRedis(connectionMultiplexer, RedisKey_DataProtection);
     }
 
     private void ConfigureSwagger(IServiceCollection services)
@@ -421,6 +430,7 @@ namespace Yoma.Core.Api
         });
 
         c.OperationFilter<ProducesResponseTypesErrorFilter>();
+        c.OperationFilter<JsonFormDataOperationFilter>();
 
         c.AddSecurityDefinition(Constants.AuthenticationScheme_ClientCredentials, new OpenApiSecurityScheme
         {

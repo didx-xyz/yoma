@@ -51,7 +51,7 @@ namespace Yoma.Core.Infrastructure.JobJack
       services.AddScoped<IOpportunityFeedBackgroundService, OpportunityFeedBackgroundService>();
 
       // client
-      services.AddKeyedScoped<ISyncProviderClientFactory<ISyncProviderClientPullEntity<Domain.Opportunity.Models.Opportunity>>, JobJackClientFactory>(SyncPartner.JobJack);
+      services.AddKeyedScoped<ISyncProviderClientFactory<ISyncProviderClientPullEntity<Domain.Opportunity.Models.OpportunityRequestCreate>>, JobJackClientFactory>(SyncPartner.JobJack);
     }
 
     public static void Configure_InfrastructureDatabaseSyncProvider(this IServiceProvider serviceProvider)

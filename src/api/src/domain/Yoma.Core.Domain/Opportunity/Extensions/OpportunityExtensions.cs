@@ -4,6 +4,7 @@ using Yoma.Core.Domain.ActionLink;
 using Yoma.Core.Domain.ActionLink.Models;
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Extensions;
+using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Opportunity.Models;
 
 namespace Yoma.Core.Domain.Opportunity.Extensions
@@ -90,8 +91,6 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
         OrganizationStatus = value.OrganizationStatus,
         OrganizationZltoRewardPoolCurrentFinancialYear = value.OrganizationZltoRewardPoolCurrentFinancialYear,
         OrganizationZltoRewardCumulativeCurrentFinancialYear = value.OrganizationZltoRewardCumulativeCurrentFinancialYear,
-        OrganizationYomaRewardPoolCurrentFinancialYear = value.OrganizationYomaRewardPoolCurrentFinancialYear,
-        OrganizationYomaRewardCumulativeCurrentFinancialYear = value.OrganizationYomaRewardCumulativeCurrentFinancialYear,
         VerificationEnabled = value.VerificationEnabled,
         VerificationMethod = value.VerificationMethod,
         Status = value.Status,
@@ -101,9 +100,6 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
         ZltoReward = value.ZltoReward,
         ZltoRewardPool = value.ZltoRewardPool,
         ZltoRewardCumulative = value.ZltoRewardCumulative,
-        YomaReward = value.YomaReward,
-        YomaRewardPool = value.YomaRewardPool,
-        YomaRewardCumulative = value.YomaRewardCumulative,
         Countries = value.Countries
       };
     }
@@ -159,9 +155,6 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
         ZltoReward = value.ZltoReward,
         ZltoRewardEstimate = CalculateEstimatedReward(value.ZltoReward, treasuryZltoRewardBalanceCurrentFinancialYear, value.OrganizationZltoRewardBalanceCurrentFinancialYear, value.ZltoRewardBalance),
         ZltoRewardCumulative = value.ZltoRewardCumulative,
-        YomaReward = value.YomaReward,
-        YomaRewardEstimate = CalculateEstimatedReward(value.YomaReward, null, value.OrganizationYomaRewardBalanceCurrentFinancialYear, value.YomaRewardBalance),
-        YomaRewardCumulative = value.YomaRewardCumulative,
         VerificationEnabled = value.VerificationEnabled,
         VerificationMethod = value.VerificationMethod,
         Difficulty = value.Difficulty,
@@ -191,7 +184,8 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
         Countries = value.Countries,
         Languages = value.Languages,
         Skills = value.Skills,
-        VerificationTypes = value.VerificationTypes
+        VerificationTypes = value.VerificationTypes,
+        CustomFields = value.CustomFields,
       };
     }
 
@@ -209,52 +203,7 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
       return EvaluateCompletable(item.Title, item.Status, item.Hidden, item.OrganizationStatus, item.VerificationEnabled, item.VerificationMethod, item.DateStart, out reason);
     }
 
-    public static OpportunityRequestCreate ToRequestCreate(this Models.Opportunity item)
-    {
-      ArgumentNullException.ThrowIfNull(item, nameof(item));
-
-      return new OpportunityRequestCreate
-      {
-        Title = item.Title,
-        Description = item.Description,
-        TypeId = item.TypeId,
-        OrganizationId = item.OrganizationId,
-        Summary = item.Summary,
-        Instructions = item.Instructions,
-        URL = item.URL,
-        ZltoReward = item.ZltoReward,
-        YomaReward = item.YomaReward,
-        ZltoRewardPool = item.ZltoRewardPool,
-        YomaRewardPool = item.YomaRewardPool,
-        VerificationEnabled = item.VerificationEnabled,
-        VerificationMethod = item.VerificationMethod,
-        DifficultyId = item.DifficultyId,
-        CommitmentIntervalId = item.CommitmentIntervalId,
-        CommitmentIntervalCount = item.CommitmentIntervalCount,
-        ParticipantLimit = item.ParticipantLimit,
-        Keywords = item.Keywords,
-        DateStart = item.DateStart,
-        DateEnd = item.DateEnd,
-        CredentialIssuanceEnabled = item.CredentialIssuanceEnabled,
-        SSISchemaName = item.SSISchemaName,
-        EngagementTypeId = item.EngagementTypeId,
-        ShareWithPartners = item.ShareWithPartners,
-        Hidden = item.Hidden,
-        ExternalId = item.ExternalId,
-        Categories = item.Categories?.Select(o => o.Id).ToList() ?? [],
-        Countries = item.Countries?.Select(o => o.Id).ToList() ?? [],
-        Languages = item.Languages?.Select(o => o.Id).ToList() ?? [],
-        Skills = item.Skills?.Select(o => o.Id).ToList(),
-        VerificationTypes = item.VerificationTypes?.Select(o => new OpportunityRequestVerificationType
-        {
-          Type = o.Type,
-          Description = o.Description
-        }).ToList(),
-        PostAsActive = item.Status == Status.Active
-      };
-    }
-
-    public static OpportunityRequestUpdate ToRequestUpdate(this Models.Opportunity item, Guid id, bool applyHidden = true)
+    public static OpportunityRequestUpdate ToRequestUpdate(this OpportunityRequestCreate item, Guid id, bool applyHidden = true)
     {
       ArgumentNullException.ThrowIfNull(item, nameof(item));
 
@@ -272,16 +221,14 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
         Instructions = item.Instructions,
         URL = item.URL,
         ZltoReward = item.ZltoReward,
-        YomaReward = item.YomaReward,
         ZltoRewardPool = item.ZltoRewardPool,
-        YomaRewardPool = item.YomaRewardPool,
         VerificationEnabled = item.VerificationEnabled,
         VerificationMethod = item.VerificationMethod,
         DifficultyId = item.DifficultyId,
         CommitmentIntervalId = item.CommitmentIntervalId,
         CommitmentIntervalCount = item.CommitmentIntervalCount,
         ParticipantLimit = item.ParticipantLimit,
-        Keywords = item.Keywords,
+        Keywords = item.Keywords?.ToList(),
         DateStart = item.DateStart,
         DateEnd = item.DateEnd,
         CredentialIssuanceEnabled = item.CredentialIssuanceEnabled,
@@ -290,14 +237,20 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
         ShareWithPartners = item.ShareWithPartners,
         Hidden = applyHidden ? item.Hidden : null,
         ExternalId = item.ExternalId,
-        Categories = item.Categories?.Select(o => o.Id).ToList() ?? [],
-        Countries = item.Countries?.Select(o => o.Id).ToList() ?? [],
-        Languages = item.Languages?.Select(o => o.Id).ToList() ?? [],
-        Skills = item.Skills?.Select(o => o.Id).ToList(),
+        Categories = [.. item.Categories],
+        Countries = [.. item.Countries],
+        Languages = [.. item.Languages],
+        Skills = item.Skills?.ToList(),
         VerificationTypes = item.VerificationTypes?.Select(o => new OpportunityRequestVerificationType
         {
           Type = o.Type,
           Description = o.Description
+        }).ToList(),
+        CustomFields = item.CustomFields?.Select(o => new CustomFieldValueRequest
+        {
+          Key = o.Key,
+          Value = o.Value,
+          Values = o.Values?.ToList()
         }).ToList()
       };
     }

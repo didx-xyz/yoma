@@ -152,6 +152,12 @@ namespace Yoma.Core.Domain.Notification.Services
             => MessageType.Email,
 
         // youth
+        NotificationType.Payout_Youth_Completed
+            or NotificationType.Payout_Youth_Cancelled
+            or NotificationType.Payout_Youth_Expired
+            or NotificationType.Payout_Youth_Failed
+            => MessageType.Email,
+
         NotificationType.Opportunity_Verification_Rejected
             or NotificationType.Opportunity_Verification_Completed
             => MessageType.Email | MessageType.SMS | MessageType.WhatsApp,

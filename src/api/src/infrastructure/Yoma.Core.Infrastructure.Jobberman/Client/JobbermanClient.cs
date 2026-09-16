@@ -14,7 +14,7 @@ using Yoma.Core.Infrastructure.Jobberman.Models;
 
 namespace Yoma.Core.Infrastructure.Jobberman.Client
 {
-  public sealed class JobbermanClient : ISyncProviderClientPullEntity<Domain.Opportunity.Models.Opportunity>
+  public sealed class JobbermanClient : ISyncProviderClientPullEntity<Domain.Opportunity.Models.OpportunityRequestCreate>
   {
     #region Class Variables
     private readonly ILogger<JobbermanClient> _logger;
@@ -72,7 +72,7 @@ namespace Yoma.Core.Infrastructure.Jobberman.Client
     #endregion
 
     #region Public Members
-    public Task<SyncResultPullEntity<Domain.Opportunity.Models.Opportunity>> List(SyncFilterPullEntity filter)
+    public Task<SyncResultPullEntity<Domain.Opportunity.Models.OpportunityRequestCreate>> List(SyncFilterPullEntity filter)
     {
       ArgumentNullException.ThrowIfNull(filter, nameof(filter));
 
@@ -86,7 +86,7 @@ namespace Yoma.Core.Infrastructure.Jobberman.Client
       var query = _opportunityRepository.Query().Where(o => o.Duplicate != true);
       query = query.OrderBy(o => o.ExternalId);
 
-      var result = new SyncResultPullEntity<Domain.Opportunity.Models.Opportunity>();
+      var result = new SyncResultPullEntity<Domain.Opportunity.Models.OpportunityRequestCreate>();
 
       if (filter.PaginationEnabled)
       {
@@ -101,7 +101,7 @@ namespace Yoma.Core.Infrastructure.Jobberman.Client
     #endregion
 
     #region Private Members
-    private SyncItemEntity<Domain.Opportunity.Models.Opportunity> ToOpportunity(Opportunity item)
+    private SyncItemEntity<Domain.Opportunity.Models.OpportunityRequestCreate> ToOpportunity(Opportunity item)
     {
       ArgumentNullException.ThrowIfNull(item, nameof(item));
 
@@ -125,30 +125,35 @@ namespace Yoma.Core.Infrastructure.Jobberman.Client
       if (!orgId.HasValue || orgId.Value == Guid.Empty)
         throw new InvalidOperationException($"Feed config for country '{item.CountryCodeAlpha2}': Yoma organization Id not configured");
 
-      var opportunity = new Domain.Opportunity.Models.Opportunity
+      // Phase 1 is Opportunity sync only; verification and credential issuance remain disabled.
+      // TODO [YOM-1264/YOM-1280]: If a later phase enables them, assign the approved compatible
+      // schema once the final custom fields and schema flavours are agreed.
+      var opportunity = new Domain.Opportunity.Models.OpportunityRequestCreate
       {
         Title = title,
         Description = description,
         TypeId = opportunityType.Id,
-        Type = opportunityType.Name,
         OrganizationId = orgId.Value,
         Summary = summary,
         URL = item.URL,
         VerificationEnabled = false,
-        Status = item.Deleted == true ? Status.Deleted : Status.Active,
+        PostAsActive = item.Deleted != true,
         Keywords = BuildKeywords(item),
         DateStart = item.DateStart ?? item.DateCreated,
         DateEnd = item.DateEnd,
-        Featured = false,
         Hidden = false,
-        Published = true,
-        Categories = [category],
-        Countries = [country],
-        Languages = [language]
+        Categories = [category.Id],
+        Countries = [country.Id],
+        Languages = [language.Id],
+
+        // Populate when available. Partner sync uses PatchAllowMissingRequired:
+        // omitted fields are preserved and key-only fields delete existing values.
+        CustomFields = null
+
         // ExternalId: Opportunity.ExternalId is used by CSV imports; pull synchronization must set the external identifier on the SyncItem.
       };
 
-      return new SyncItemEntity<Domain.Opportunity.Models.Opportunity>
+      return new SyncItemEntity<Domain.Opportunity.Models.OpportunityRequestCreate>
       {
         ExternalId = item.ExternalId,
         Deleted = item.Deleted == true,

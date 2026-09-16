@@ -4,7 +4,6 @@ using System.Net.Http.Headers;
 using System.Transactions;
 using System.Xml.Linq;
 using Yoma.Core.Domain.Core;
-using Environment = System.Environment;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
@@ -27,7 +26,7 @@ namespace Yoma.Core.Infrastructure.Jobberman.Services
     private readonly IRepositoryBatched<Opportunity> _opportunityRepository;
     private readonly IRepository<FeedSyncTracking> _feedSyncTrackingRepository;
     private readonly IDistributedLockService _distributedLockService;
-    private readonly IExecutionStrategyService _executionStrategyService;
+    private readonly ExecutionStrategyService _executionStrategyService;
 
     private static readonly XNamespace XNamespace_MediaNs = "http://search.yahoo.com/mrss/";
     #endregion
@@ -43,7 +42,7 @@ namespace Yoma.Core.Infrastructure.Jobberman.Services
       IRepositoryBatched<Opportunity> opportunityRepository,
       IRepository<FeedSyncTracking> feedSyncTrackingRepository,
       IDistributedLockService distributedLockService,
-      IExecutionStrategyService executionStrategyService)
+      ExecutionStrategyService executionStrategyService)
     {
       _logger = logger ?? throw new ArgumentNullException(nameof(logger));
       _environmentProvider = environmentProvider ?? throw new ArgumentNullException(nameof(environmentProvider));

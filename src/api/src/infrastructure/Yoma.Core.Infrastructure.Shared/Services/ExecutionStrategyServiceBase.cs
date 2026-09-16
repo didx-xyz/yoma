@@ -35,23 +35,32 @@ namespace Yoma.Core.Infrastructure.Shared.Services
       _context = context ?? throw new ArgumentNullException(nameof(context));
     }
 
-    public async Task ExecuteInExecutionStrategyAsync(Func<Task> transactionBody)
+    public async Task ExecuteInExecutionStrategyAsync(Func<Task> transactionBody, bool clearTrackedChanges = false)
     {
       ArgumentNullException.ThrowIfNull(transactionBody);
 
-      // IMPORTANT:
-      // If an ambient TransactionScope exists, we are already inside a user-initiated transaction.
-      // EF's execution strategy may retry by re-invoking the delegate, but TransactionScope cannot be safely retried once
-      // it has begun doing work (locks/writes). In this scenario we execute directly and rely on the OUTER strategy/scope
-      // boundary (the top-level unit of work) to handle retries.
-      if (Transaction.Current != null)
+      try
       {
-        await transactionBody.Invoke();
-        return;
-      }
+        // IMPORTANT:
+        // If an ambient TransactionScope exists, we are already inside a user-initiated transaction.
+        // EF's execution strategy may retry by re-invoking the delegate, but TransactionScope cannot be safely retried once
+        // it has begun doing work (locks/writes). In this scenario we execute directly and rely on the OUTER strategy/scope
+        // boundary (the top-level unit of work) to handle retries.
+        if (Transaction.Current != null)
+        {
+          await transactionBody.Invoke();
+          return;
+        }
 
-      var executionStrategy = _context.Database.CreateExecutionStrategy();
-      await executionStrategy.ExecuteAsync(transactionBody.Invoke);
+        var executionStrategy = _context.Database.CreateExecutionStrategy();
+        await executionStrategy.ExecuteAsync(transactionBody.Invoke);
+      }
+      finally
+      {
+        // Rolled-back probe transactions leave EF entities in their accepted in-memory state.
+        // Clear tracking when requested so that state cannot leak into a later commit pass.
+        if (clearTrackedChanges) _context.ChangeTracker.Clear();
+      }
     }
 
     public void ExecuteInExecutionStrategy(Action transactionBody)

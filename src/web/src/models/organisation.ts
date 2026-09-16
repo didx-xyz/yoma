@@ -30,7 +30,6 @@ export interface OrganizationRequestViewModel {
   ssoClientIdInbound: string | null;
   ssoClientIdOutbound: string | null;
   zltoRewardPoolCurrentFinancialYear: number | null;
-  yomaRewardPoolCurrentFinancialYear: number | null;
 
   fileVersion: number; // for tracking changes
 }

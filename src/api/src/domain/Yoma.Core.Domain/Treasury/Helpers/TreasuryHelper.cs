@@ -5,12 +5,8 @@ namespace Yoma.Core.Domain.Treasury.Helpers
     /// <summary>
     /// Determines the financial year start date based on the newly configured start month/day,
     /// and decides whether the current financial year cumulatives must roll over.
-    ///
-    /// Rollover only occurs when:
-    ///   • the newly configured financial year start date moves forward compared to the previously stored one, and
-    ///   • the new start date is still in the future (after today)
-    ///
-    /// In all other cases the current financial year cumulatives are preserved.
+    /// Rollover occurs when the calculated start of the current financial year moves
+    /// forward compared to the persisted financial year start date.
     /// </summary>
     public static (DateOnly financialYearStartDate, bool requiresRollover) EvaluateFinancialYear(
       int newStartMonth,
@@ -31,19 +27,16 @@ namespace Yoma.Core.Domain.Treasury.Helpers
 
       var today = DateOnly.FromDateTime(DateTime.UtcNow);
 
-      // Adjust day safely for the current year (handles Feb 29 on non-leap years)
-      var safeDay = Math.Min(newStartDay, DateTime.DaysInMonth(today.Year, newStartMonth));
+      var candidateDay = Math.Min(newStartDay, DateTime.DaysInMonth(today.Year, newStartMonth));
+      var candidate = new DateOnly(today.Year, newStartMonth, candidateDay);
 
-      var candidate = new DateOnly(today.Year, newStartMonth, safeDay);
+      // Clamp the configured day against the selected financial-year year. Subtracting a year from
+      // an already-clamped date would incorrectly turn a configured 29 February 2024 into 28 February.
+      var financialYearStartYear = candidate <= today ? today.Year : today.Year - 1;
+      var financialYearStartDay = Math.Min(newStartDay, DateTime.DaysInMonth(financialYearStartYear, newStartMonth));
+      var newFinancialYearStart = new DateOnly(financialYearStartYear, newStartMonth, financialYearStartDay);
 
-      var newFinancialYearStart =
-        candidate >= today
-        ? candidate
-        : candidate.AddYears(-1);
-
-      var requiresRollover =
-        newFinancialYearStart > currentFinancialYearStartDate &&
-        newFinancialYearStart > today;
+      var requiresRollover = newFinancialYearStart > currentFinancialYearStartDate;
 
       return (newFinancialYearStart, requiresRollover);
     }

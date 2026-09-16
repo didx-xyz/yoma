@@ -82,7 +82,6 @@ namespace Yoma.Core.Test.Notification
         DateEnd = DateTime.UtcNow.AddDays(7),
         CommentVerification = null,
         ZltoReward = 100,
-        YomaReward = 50,
         OpportunityId = Guid.NewGuid(),
         OrganizationId = Guid.NewGuid()
       };
@@ -106,7 +105,6 @@ namespace Yoma.Core.Test.Notification
         DateStart = DateTimeOffset.UtcNow.AddDays(1),
         DateEnd = DateTimeOffset.UtcNow.AddDays(10),
         ZltoReward = 100,
-        YomaReward = 50,
         OrganizationId = Guid.NewGuid()
       };
     }
@@ -126,7 +124,6 @@ namespace Yoma.Core.Test.Notification
                 Comment = myOpportunity.CommentVerification,
                 URL = _notificationURLFactory.OpportunityVerificationItemURL(type, myOpportunity.OpportunityId, myOpportunity.OrganizationId),
                 ZltoReward = myOpportunity.ZltoReward,
-                YomaReward = myOpportunity.YomaReward
               }
           ]
       };
@@ -150,7 +147,6 @@ namespace Yoma.Core.Test.Notification
                 DateEnd = opportunity.DateEnd,
                 URL = _notificationURLFactory.OpportunityPublishedItemURL(NotificationType.Opportunity_Published, opportunity.Id, opportunity.OrganizationId),
                 ZltoReward = opportunity.ZltoReward,
-                YomaReward = opportunity.YomaReward
             }
           ]
       };

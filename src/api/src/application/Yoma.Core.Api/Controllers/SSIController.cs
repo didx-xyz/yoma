@@ -63,11 +63,11 @@ namespace Yoma.Core.Api.Controllers
     [HttpGet("schema/entity")]
     [ProducesResponseType(typeof(List<SSISchemaEntity>), (int)HttpStatusCode.OK)]
     [Authorize(Roles = Constants.Role_Admin)]
-    public IActionResult ListSchemaEntities([FromQuery] SchemaType schemaType)
+    public IActionResult ListSchemaEntities([FromQuery] SchemaType schemaType, [FromQuery] string? typeContext)
     {
       if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(ListSchemaEntities));
 
-      var result = _ssiSchemaEntityService.List(schemaType);
+      var result = _ssiSchemaEntityService.List(schemaType, typeContext);
 
       if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(ListSchemaEntities));
 
@@ -75,15 +75,15 @@ namespace Yoma.Core.Api.Controllers
     }
 
     [SwaggerOperation(Summary = "Return a list of configured schemas (Admin or Organization Admin roles required)",
-      Description = "Results reflect the latest version of each schema, optionally filtered by type, and includes the schema's associated entities (objects) and properties")]
+      Description = "Results reflect the latest version of each schema, optionally filtered by type. When a type context is supplied, generic schemas and schemas matching that context are returned.")]
     [HttpGet("schema")]
     [ProducesResponseType(typeof(List<SSISchema>), (int)HttpStatusCode.OK)]
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
-    public async Task<IActionResult> ListSchemas([FromQuery] SchemaType? schemaType)
+    public async Task<IActionResult> ListSchemas([FromQuery] SchemaType? schemaType, [FromQuery] string? typeContext)
     {
       if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(ListSchemas));
 
-      var result = await _ssiSchemaService.List(schemaType);
+      var result = await _ssiSchemaService.List(schemaType, typeContext);
 
       if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(ListSchemas));
 

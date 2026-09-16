@@ -85,8 +85,6 @@ namespace Yoma.Core.Domain.Referral.Extensions
                 OrganizationStatus = task.Opportunity.OrganizationStatus,
                 OrganizationZltoRewardPoolCurrentFinancialYear = task.Opportunity.OrganizationZltoRewardPoolCurrentFinancialYear,
                 OrganizationZltoRewardCumulativeCurrentFinancialYear = task.Opportunity.OrganizationZltoRewardCumulativeCurrentFinancialYear,
-                OrganizationYomaRewardPoolCurrentFinancialYear = task.Opportunity.OrganizationYomaRewardPoolCurrentFinancialYear,
-                OrganizationYomaRewardCumulativeCurrentFinancialYear = task.Opportunity.OrganizationYomaRewardCumulativeCurrentFinancialYear,
                 VerificationEnabled = task.Opportunity.VerificationEnabled,
                 VerificationMethod = task.Opportunity.VerificationMethod,
                 Status = task.Opportunity.Status,
@@ -96,9 +94,6 @@ namespace Yoma.Core.Domain.Referral.Extensions
                 ZltoReward = task.Opportunity.ZltoReward,
                 ZltoRewardPool = task.Opportunity.ZltoRewardPool,
                 ZltoRewardCumulative = task.Opportunity.ZltoRewardCumulative,
-                YomaReward = task.Opportunity.YomaReward,
-                YomaRewardPool = task.Opportunity.YomaRewardPool,
-                YomaRewardCumulative = task.Opportunity.YomaRewardCumulative,
                 Countries = task.Opportunity.Countries
               },
               ProgramCountries = task.ProgramCountries,

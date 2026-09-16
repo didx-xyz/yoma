@@ -41,15 +41,6 @@ namespace Yoma.Core.Domain.Opportunity.Models
     public decimal? OrganizationZltoRewardBalanceCurrentFinancialYear => OrganizationZltoRewardPoolCurrentFinancialYear.HasValue ? OrganizationZltoRewardPoolCurrentFinancialYear - (OrganizationZltoRewardCumulativeCurrentFinancialYear ?? default) : null;
 
     [JsonIgnore]
-    public decimal? OrganizationYomaRewardPoolCurrentFinancialYear { get; set; }
-
-    [JsonIgnore]
-    public decimal? OrganizationYomaRewardCumulativeCurrentFinancialYear { get; set; }
-
-    [JsonIgnore]
-    public decimal? OrganizationYomaRewardBalanceCurrentFinancialYear => OrganizationYomaRewardPoolCurrentFinancialYear.HasValue ? OrganizationYomaRewardPoolCurrentFinancialYear - (OrganizationYomaRewardCumulativeCurrentFinancialYear ?? default) : null;
-
-    [JsonIgnore]
     public bool VerificationEnabled { get; set; }
 
     [JsonIgnore]
@@ -65,7 +56,7 @@ namespace Yoma.Core.Domain.Opportunity.Models
     public DateTimeOffset DateStart { get; set; }
 
     [JsonIgnore]
-    public string Type { get; set; } = null!;
+    public Type Type { get; set; }
 
     [JsonIgnore]
     public decimal? ZltoReward { get; set; }
@@ -78,18 +69,6 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
     [JsonIgnore]
     public decimal? ZltoRewardBalance => ZltoRewardPool.HasValue ? ZltoRewardPool - (ZltoRewardCumulative ?? default) : null;
-
-    [JsonIgnore]
-    public decimal? YomaReward { get; set; }
-
-    [JsonIgnore]
-    public decimal? YomaRewardPool { get; set; }
-
-    [JsonIgnore]
-    public decimal? YomaRewardCumulative { get; set; }
-
-    [JsonIgnore]
-    public decimal? YomaRewardBalance => YomaRewardPool.HasValue ? YomaRewardPool - (YomaRewardCumulative ?? default) : null;
 
     [JsonIgnore]
     public bool IsCompletable

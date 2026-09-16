@@ -15,8 +15,13 @@ import { toast } from "react-toastify";
 import z from "zod";
 import { SpatialType } from "~/api/models/common";
 import type { MyOpportunityRequestVerify } from "~/api/models/myOpportunity";
-import type { OpportunityInfo } from "~/api/models/opportunity";
+import type {
+  CustomFieldValueRequest,
+  OpportunityInfo,
+} from "~/api/models/opportunity";
 import { performActionSendForVerificationManual } from "~/api/services/myOpportunities";
+import { useMyOpportunityCustomFieldDefinitionsQuery } from "~/hooks/useOpportunityMutations";
+import { CustomFields, getCustomFieldErrors } from "./CustomFields";
 import {
   ACCEPTED_AUDIO_TYPES,
   ACCEPTED_AUDIO_TYPES_LABEL,
@@ -26,6 +31,7 @@ import {
   ACCEPTED_IMAGE_TYPES_LABEL,
   ACCEPTED_VIDEO_TYPES,
   ACCEPTED_VIDEO_TYPES_LABEL,
+  CUSTOM_FIELDS_ENABLED,
   DATE_FORMAT_SYSTEM,
   MAX_FILE_SIZE,
   MAX_FILE_SIZE_LABEL,
@@ -57,6 +63,17 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
   const [showFeedback, setShowFeedback] = useState(false);
   const { data: session } = useSession();
 
+  // Definition-driven completion custom fields (YOM-1244 / YOM-1255), loaded per
+  // opportunity (type resolved server-side). Renders nothing when none apply.
+  const {
+    data: customFieldDefinitions,
+    isLoading: customFieldDefinitionsIsLoading,
+    isError: customFieldDefinitionsIsError,
+    refetch: refetchCustomFieldDefinitions,
+  } = useMyOpportunityCustomFieldDefinitionsQuery(opportunityInfo?.id ?? "", {
+    enabled: !!opportunityInfo?.id,
+  });
+
   const schema = z
     .object({
       certificate: z.any(),
@@ -69,14 +86,30 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
       video: z.any(),
       videoUploadId: z.string().optional(),
       dateStart: z.union([z.string(), z.null()]).optional(),
+
       recommendable: z.boolean().nullable().optional(),
       starRating: z.preprocess(
         (val) => (val === 0 ? null : val),
         z.number().nullable().optional(),
       ),
       feedback: z.string().nullable().optional(),
+      // definition-driven custom fields; validated against their definitions below
+      customFields: z.array(z.any()).nullish(),
     })
     .superRefine((values, ctx) => {
+      // custom fields must be valid before submitting (required + typed rules).
+      // Per-field errors also render inline in the CustomFields component.
+      for (const { error } of getCustomFieldErrors(
+        customFieldDefinitions,
+        values.customFields as CustomFieldValueRequest[] | null | undefined,
+      )) {
+        ctx.addIssue({
+          message: error,
+          code: z.ZodIssueCode.custom,
+          path: ["customFields"],
+        });
+      }
+
       // Certificate validation
       if (
         opportunityInfo?.verificationTypes?.find((x) => x.type == "FileUpload")
@@ -282,10 +315,25 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
         dateStart: data.dateStart || null,
         dateEnd: null,
         commitmentInterval: null,
-
         recommendable: data.recommendable || null,
         starRating: data.starRating || null,
         feedback: data.feedback || null,
+        // custom fields: submit the FULL applicable collection (replacement semantics —
+        // the API clears any custom field omitted from the payload). Reconcile against
+        // the current definitions so stale keys are dropped, and drop empty entries.
+        customFields: (() => {
+          const definitionKeys = new Set(
+            (customFieldDefinitions ?? []).map((d) => d.key),
+          );
+          return (
+            (data.customFields ?? []) as CustomFieldValueRequest[]
+          ).filter(
+            (v) =>
+              definitionKeys.has(v.key) &&
+              ((v.value != null && v.value.trim() !== "") ||
+                (v.values != null && v.values.length > 0)),
+          );
+        })(),
       };
 
       // convert dates to UTC string in format "YYYY-MM-DD" while preserving UTC timezone
@@ -320,13 +368,13 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
           });
         });
     },
-    [onSave, opportunityInfo, session],
+    [onSave, opportunityInfo, session, customFieldDefinitions],
   );
 
   const {
     handleSubmit,
     setValue,
-    formState: { errors: errors, isValid: isValid },
+    formState: { errors: errors, isValid: isValid, isSubmitted },
     control,
     watch,
     trigger,
@@ -342,6 +390,12 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
   useEffect(() => {
     trigger();
   }, [watchIntervalId, watchIntervalCount, trigger]);
+
+  // re-validate when the applicable custom-field definitions load/change
+  // (they arrive asynchronously and drive the customFields validation)
+  useEffect(() => {
+    void trigger();
+  }, [customFieldDefinitions, trigger]);
 
   return (
     <>
@@ -712,6 +766,59 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                         )}
                       </div>
                     </LocationPicker>
+                  )}
+                </div>
+              )}
+
+              {/* CUSTOM FIELDS (definition-driven, YOM-1244 / YOM-1255) */}
+              {/* Definitions load per opportunity; the component renders nothing
+                  when none apply (empty state). Values partake in the form's zod
+                  validation and submit as one JSON-encoded multipart field. */}
+              {/* The panel is gated on the flag, not just on having no definitions: the
+                  grey card below is the wrapper, so leaving it to the empty state would
+                  render an empty box on every completion form. */}
+
+              {CUSTOM_FIELDS_ENABLED && (
+                <div
+                  className="bg-gray-light flex flex-col rounded-lg border-dotted px-8 py-4"
+                  style={{ animationDelay: "1.2s" }}
+                >
+                  {opportunityInfo && (
+                    <div className="flex w-full flex-col gap-2">
+                      {customFieldDefinitionsIsError ? (
+                        <div className="flex flex-col items-start gap-2">
+                          <FormMessage messageType={FormMessageType.Warning}>
+                            Unable to load additional fields. Please try again.
+                          </FormMessage>
+                          <button
+                            type="button"
+                            className="btn btn-sm border-green text-green hover:bg-green-dark rounded-full bg-white normal-case hover:border-transparent hover:text-white"
+                            onClick={() => void refetchCustomFieldDefinitions()}
+                          >
+                            Retry
+                          </button>
+                        </div>
+                      ) : (
+                        <Controller
+                          control={control}
+                          name="customFields"
+                          render={({ field: { onChange, value } }) => (
+                            <CustomFields
+                              definitions={customFieldDefinitions}
+                              isLoading={customFieldDefinitionsIsLoading}
+                              values={
+                                value as
+                                  | CustomFieldValueRequest[]
+                                  | null
+                                  | undefined
+                              }
+                              onChange={onChange}
+                              showErrors={isSubmitted}
+                            />
+                          )}
+                        />
+                      )}
+                    </div>
                   )}
                 </div>
               )}

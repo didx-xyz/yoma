@@ -4,6 +4,9 @@ namespace Yoma.Core.Domain.SSI.Models.Provider
   {
     public KeyValuePair<string, string> ClientReferent { get; set; }
 
+    /// <summary>
+    /// Full name of the schema used to issue the credential.
+    /// </summary>
     public string SchemaName { get; set; } = null!;
 
     public string SchemaType { get; set; } = null!;

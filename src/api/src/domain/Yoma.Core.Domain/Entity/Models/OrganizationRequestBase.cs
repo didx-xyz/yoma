@@ -72,6 +72,5 @@ namespace Yoma.Core.Domain.Entity.Models
 
     public decimal? ZltoRewardPoolCurrentFinancialYear { get; set; }
 
-    public decimal? YomaRewardPoolCurrentFinancialYear { get; set; }
   }
 }

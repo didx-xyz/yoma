@@ -40,13 +40,13 @@ namespace Yoma.Core.Api.Controllers
         IOpportunityTypeService opportunityTypeService,
         IOpportunityVerificationTypeService opportunityVerificationTypeService)
     {
-      _logger = logger;
-      _opportunityService = opportunityService;
-      _opportunityInfoService = opportunityInfoService;
-      _opportunityCategoryService = opportunityCategoryService;
-      _opportunityDifficultyService = opportunityDifficultyService;
-      _opportunityTypeService = opportunityTypeService;
-      _opportunityVerificationTypeService = opportunityVerificationTypeService;
+      _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+      _opportunityService = opportunityService ?? throw new ArgumentNullException(nameof(opportunityService));
+      _opportunityInfoService = opportunityInfoService ?? throw new ArgumentNullException(nameof(opportunityInfoService));
+      _opportunityCategoryService = opportunityCategoryService ?? throw new ArgumentNullException(nameof(opportunityCategoryService));
+      _opportunityDifficultyService = opportunityDifficultyService ?? throw new ArgumentNullException(nameof(opportunityDifficultyService));
+      _opportunityTypeService = opportunityTypeService ?? throw new ArgumentNullException(nameof(opportunityTypeService));
+      _opportunityVerificationTypeService = opportunityVerificationTypeService ?? throw new ArgumentNullException(nameof(opportunityVerificationTypeService));
     }
     #endregion
 
@@ -206,6 +206,22 @@ namespace Yoma.Core.Api.Controllers
       var result = _opportunityService.ListOpportunitySearchCriteriaZltoRewardRanges(publishedStates);
 
       if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(ListOpportunitySearchCriteriaZltoRewardRanges));
+
+      return StatusCode((int)HttpStatusCode.OK, result);
+    }
+
+    [SwaggerOperation(Summary = "Return active custom field definitions for the supplied opportunity types (Anonymous)",
+      Description = "When no types are supplied, only definitions applicable to all opportunity types are returned")]
+    [HttpGet("custom/field/definition")]
+    [ProducesResponseType(typeof(List<CustomFieldDefinition>), (int)HttpStatusCode.OK)]
+    [AllowAnonymous]
+    public IActionResult ListCustomFieldDefinitions([FromQuery] List<Domain.Opportunity.Type>? types)
+    {
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(ListCustomFieldDefinitions));
+
+      var result = _opportunityService.ListCustomFieldDefinitions(types);
+
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(ListCustomFieldDefinitions));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
@@ -432,7 +448,8 @@ namespace Yoma.Core.Api.Controllers
       {
         EnsureOrganizationAuthorization = true,
         RaiseEvents = true,
-        SendNotifications = true
+        SendNotifications = true,
+        CustomFieldUpsertMode = CustomFieldUpsertMode.PutEnforceRequired
       });
 
       if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(Create));
@@ -452,7 +469,8 @@ namespace Yoma.Core.Api.Controllers
       {
         EnsureOrganizationAuthorization = true,
         RaiseEvents = true,
-        SendNotifications = false
+        SendNotifications = false,
+        CustomFieldUpsertMode = CustomFieldUpsertMode.PutEnforceRequired
       });
 
       if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(Update));
@@ -653,6 +671,21 @@ namespace Yoma.Core.Api.Controllers
       if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(RemoveVerificationTypes));
 
       return StatusCode((int)HttpStatusCode.OK);
+    }
+
+    [SwaggerOperation(Summary = "Return active custom field definitions for an opportunity")]
+    [HttpGet("{id}/custom/field/definition")]
+    [ProducesResponseType(typeof(List<CustomFieldDefinition>), (int)HttpStatusCode.OK)]
+    [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
+    public IActionResult ListCustomFieldDefinitions([FromRoute] Guid id)
+    {
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(ListCustomFieldDefinitions));
+
+      var result = _opportunityService.ListCustomFieldDefinitions(id);
+
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(ListCustomFieldDefinitions));
+
+      return StatusCode((int)HttpStatusCode.OK, result);
     }
     #endregion Administrative Actions
     #endregion

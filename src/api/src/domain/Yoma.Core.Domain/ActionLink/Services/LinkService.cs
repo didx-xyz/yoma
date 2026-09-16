@@ -627,7 +627,6 @@ namespace Yoma.Core.Domain.ActionLink.Services
             DateEnd = opportunity.DateEnd,
             URL = link.ShortURL,
             ZltoReward = opportunity.ZltoReward,
-            YomaReward = opportunity.YomaReward
           }
         ]
       };

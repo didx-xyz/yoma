@@ -32,10 +32,14 @@ namespace Yoma.Core.Domain.Opportunity
     Video
   }
 
+  /// <summary>
+  /// Member names match static db name
+  /// </summary>
   public enum Type
   {
     Other,
     Learning,
+    Event,
     Job,
     Task
   }

@@ -87,6 +87,12 @@ namespace Yoma.Core.Domain.Core.Models
 
     public int RewardTransactionScheduleMaxIntervalInHours { get; set; }
 
+    public string PayoutReconciliationSchedule { get; set; } = null!;
+
+    public int PayoutReconciliationScheduleBatchSize { get; set; }
+
+    public string TreasuryFinancialYearRolloverSchedule { get; set; } = null!;
+
     public string ActionLinkExpirationSchedule { get; set; } = null!;
 
     public int ActionLinkExpirationScheduleBatchSize { get; set; }

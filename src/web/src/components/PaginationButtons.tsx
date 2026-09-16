@@ -1,4 +1,30 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+
+/**
+ * Button styling. `themed` colours the pager to the page theme — blue on admin pages, green
+ * on org-admin pages — instead of daisyUI's fixed `btn-secondary`. It is opt-in, so the
+ * pagers on the many pages that do not follow the admin list-page pattern are untouched.
+ *
+ * NB: `bg-theme` / `border-theme` / `text-theme` are hand-written, unlayered CSS, so they
+ * beat daisyUI's layered `btn-*` rules. That includes the disabled background — hence the
+ * explicit disabled opacity — and it means `hover:bg-theme` cannot exist, hence brightness
+ * for the hover state. `bg-theme` also sets the foreground colour, so no `text-*` needed.
+ */
+const BUTTON_CLASSES = {
+  default: {
+    nav: "btn join-item btn-secondary",
+    pageActive: "btn btn-active join-item btn-secondary",
+    pageInactive: "btn join-item btn-secondary",
+  },
+  themed: {
+    nav: "btn join-item bg-theme border-none brightness-[1.12] hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-40",
+    // the current page is rendered disabled, but it should read as current rather than
+    // unavailable, so it keeps full colour
+    pageActive: "btn btn-active join-item bg-theme border-none",
+    pageInactive:
+      "btn join-item border-theme text-theme border bg-white hover:brightness-95",
+  },
+} as const;
 
 interface InputProps {
   [key: string]: any;
@@ -10,6 +36,8 @@ interface InputProps {
   onClick: (page: number, pageSize?: number) => void;
   showPageSizes?: boolean; // New prop to toggle page size dropdown
   pageSizes?: number[]; // Optional array of page sizes
+  /** colour the buttons to the page theme instead of daisyUI's fixed secondary */
+  themed?: boolean;
 }
 
 export const PaginationButtons: React.FC<InputProps> = ({
@@ -21,8 +49,17 @@ export const PaginationButtons: React.FC<InputProps> = ({
   onClick,
   showPageSizes,
   pageSizes = [50, 100, 500, 1000], // Default page sizes
+  themed = false,
 }) => {
+  const buttonClasses = BUTTON_CLASSES[themed ? "themed" : "default"];
   const [inputValue, setInputValue] = useState(currentPage);
+
+  // keep the input in sync when the page changes from outside (pager buttons, browser
+  // back/forward). NB: without this the input keeps its stale value whenever the
+  // component stays mounted, e.g. a cached result set that renders without a loading pass.
+  useEffect(() => {
+    setInputValue(currentPage);
+  }, [currentPage]);
 
   // 🧮 calculated fields
   const totalPages = useMemo(() => {
@@ -110,7 +147,7 @@ export const PaginationButtons: React.FC<InputProps> = ({
         <button
           key={`PaginationItem_Prev`}
           type="button"
-          className="btn join-item btn-secondary"
+          className={buttonClasses.nav}
           disabled={currentPage <= 1}
           onClick={() => handlePagerChange(currentPage - 1)}
         >
@@ -126,7 +163,7 @@ export const PaginationButtons: React.FC<InputProps> = ({
                 {pageNumber === currentPage && (
                   <button
                     type="button"
-                    className="btn btn-active join-item btn-secondary"
+                    className={buttonClasses.pageActive}
                     disabled
                   >
                     {pageNumber}
@@ -136,7 +173,7 @@ export const PaginationButtons: React.FC<InputProps> = ({
                 {pageNumber !== currentPage && (
                   <button
                     type="button"
-                    className="btn join-item btn-secondary"
+                    className={buttonClasses.pageInactive}
                     onClick={() => handlePagerChange(pageNumber)}
                   >
                     {pageNumber}
@@ -169,8 +206,7 @@ export const PaginationButtons: React.FC<InputProps> = ({
         <button
           key={`PaginationItem_Next`}
           type="button"
-          //className="btn btn-square btn-sm bg-gray hover:bg-gray !rounded-md border-0 text-black disabled:invisible"
-          className="btn join-item btn-secondary"
+          className={buttonClasses.nav}
           disabled={totalPages != null && currentPage >= totalPages}
           onClick={() => handlePagerChange(currentPage + 1)}
         >
