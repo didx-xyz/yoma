@@ -119,7 +119,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         Items = searchResult.Items == null ? null : [.. searchResult.Items.Select(o => o.ToOpportunityInfo(treasuryInfo.ZltoRewardBalanceCurrentFinancialYear, _appSettings.AppBaseURL))],
       };
 
-      results.Items?.ForEach(SetEngagementCounts);
+      SetEngagementCounts(results.Items);
 
       return results;
     }
@@ -195,7 +195,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         Items = searchResult.Items == null ? null : [.. searchResult.Items.Select(o => o.ToOpportunityInfo(treasuryInfo.ZltoRewardBalanceCurrentFinancialYear, _appSettings.AppBaseURL))],
       };
 
-      results.Items?.ForEach(SetEngagementCounts);
+      SetEngagementCounts(results.Items);
       return results;
     }
 
@@ -230,6 +230,25 @@ namespace Yoma.Core.Domain.Opportunity.Services
     #endregion
 
     #region Private Members
+    private void SetEngagementCounts(List<OpportunityInfo>? results)
+    {
+      if (results == null || results.Count == 0) return;
+
+      var counts = _myOpportunityService.ListEngagementCounts([.. results.Select(o => o.Id)])
+        .ToDictionary(o => o.OpportunityId);
+      results.ForEach(item =>
+      {
+        if (counts.TryGetValue(item.Id, out var count))
+        {
+          item.CountViewed = count.CountViewed;
+          item.CountNavigatedExternalLink = count.CountNavigatedExternalLink;
+          item.ParticipantCountPending = count.ParticipantCountPending;
+        }
+
+        item.ParticipantCountTotal = item.ParticipantCountCompleted + item.ParticipantCountPending;
+      });
+    }
+
     private void SetEngagementCounts(OpportunityInfo result)
     {
       var filter = new MyOpportunitySearchFilterAdmin

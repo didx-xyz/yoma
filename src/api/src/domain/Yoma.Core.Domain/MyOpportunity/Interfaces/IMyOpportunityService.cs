@@ -58,6 +58,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Interfaces
 
     Dictionary<Guid, int>? ListAggregatedOpportunityByViewed(bool includeExpired);
 
+    List<MyOpportunityEngagementCounts> ListEngagementCounts(List<Guid> opportunityIds);
+
     Dictionary<Guid, int>? ListAggregatedOpportunityByCompleted(bool includeExpired);
 
     Task PerformActionInstantVerification(Guid linkId);
