@@ -336,12 +336,12 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
     }
 
     /// <summary>
-    /// Determines whether an opportunity is currently completable by youth (via portal or action link).
+    /// Determines whether an opportunity is currently completable through manual or provider verification.
     ///
     /// Logic aligns fully with <see cref="OpportunitySearchFilterCriteria.OnlyCompletable"/>:
     /// • Opportunity is Published (Status = Active + Active organization + DateStart ≤ now) OR Status = Expired  
     /// • VerificationEnabled = true  
-    /// • VerificationMethod = Manual  
+    /// • VerificationMethod = Manual or Automatic
     /// • Not Hidden (null / false)
     /// </summary>
     private static bool EvaluateCompletable(
@@ -364,7 +364,7 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
         hidden != true &&
         canSendForVerification &&
         verificationEnabled &&
-        verificationMethod == VerificationMethod.Manual;
+        verificationMethod is VerificationMethod.Manual or VerificationMethod.Automatic;
 
       if (isCompletable)
         return true;
@@ -387,8 +387,8 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
       if (!verificationEnabled)
         reasons.Add("verification is not enabled");
 
-      if (verificationMethod != VerificationMethod.Manual)
-        reasons.Add($"'{VerificationMethod.Manual}' verification is required");
+      if (verificationMethod is not (VerificationMethod.Manual or VerificationMethod.Automatic))
+        reasons.Add($"'{VerificationMethod.Manual}' or '{VerificationMethod.Automatic}' verification is required");
 
       reason = $"Opportunity '{title}' cannot be completed because {string.Join(", ", reasons)}";
       return false;

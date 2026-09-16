@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Yoma.Core.Infrastructure.Database.Context;
@@ -11,9 +12,11 @@ using Yoma.Core.Infrastructure.Database.Context;
 namespace Yoma.Core.Infrastructure.Database.Migrations
 {
   [DbContext(typeof(ApplicationDbContext))]
-  partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+  [Migration("20260916145228_ApplicationDb_Text_Search_Trigram_Indexes")]
+  partial class ApplicationDb_Text_Search_Trigram_Indexes
   {
-    protected override void BuildModel(ModelBuilder modelBuilder)
+    /// <inheritdoc />
+    protected override void BuildTargetModel(ModelBuilder modelBuilder)
     {
 #pragma warning disable 612, 618
       modelBuilder
@@ -39,8 +42,8 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
             b.ToTable("UnnestedValueDummy", null, t =>
                       {
-                        t.ExcludeFromMigrations();
-                      });
+                    t.ExcludeFromMigrations();
+                  });
 
             b.ToView("unnested_values", (string)null);
           });
@@ -127,13 +130,13 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.HasIndex("Name", "EntityType", "Action", "StatusId", "OpportunityId", "DateEnd", "DateCreated");
 
             b.HasIndex(new[] { "Description" }, "IX_ActionLink_Link_Description_Trgm")
-                .HasAnnotation("Npgsql:CreatedConcurrently", true);
+                      .HasAnnotation("Npgsql:CreatedConcurrently", true);
 
             NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex(new[] { "Description" }, "IX_ActionLink_Link_Description_Trgm"), "gin");
             NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex(new[] { "Description" }, "IX_ActionLink_Link_Description_Trgm"), new[] { "gin_trgm_ops" });
 
             b.HasIndex(new[] { "Name" }, "IX_ActionLink_Link_Name_Trgm")
-                .HasAnnotation("Npgsql:CreatedConcurrently", true);
+                      .HasAnnotation("Npgsql:CreatedConcurrently", true);
 
             NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex(new[] { "Name" }, "IX_ActionLink_Link_Name_Trgm"), "gin");
             NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex(new[] { "Name" }, "IX_ActionLink_Link_Name_Trgm"), new[] { "gin_trgm_ops" });
@@ -533,7 +536,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.HasIndex("StatusId", "DateStatusModified", "DateCreated", "CreatedByUserId", "DateModified", "ModifiedByUserId");
 
             b.HasIndex(new[] { "Name" }, "IX_Organization_Name_Trgm")
-                .HasAnnotation("Npgsql:CreatedConcurrently", true);
+                      .HasAnnotation("Npgsql:CreatedConcurrently", true);
 
             NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex(new[] { "Name" }, "IX_Organization_Name_Trgm"), "gin");
             NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex(new[] { "Name" }, "IX_Organization_Name_Trgm"), new[] { "gin_trgm_ops" });
@@ -710,31 +713,31 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.HasIndex("FirstName", "Surname", "DisplayName", "EmailConfirmed", "PhoneNumberConfirmed", "DateOfBirth", "DateLastLogin", "YoIDOnboarded", "DateYoIDOnboarded", "DateCreated", "DateModified");
 
             b.HasIndex(new[] { "DisplayName" }, "IX_User_DisplayName_Trgm")
-                .HasAnnotation("Npgsql:CreatedConcurrently", true);
+                      .HasAnnotation("Npgsql:CreatedConcurrently", true);
 
             NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex(new[] { "DisplayName" }, "IX_User_DisplayName_Trgm"), "gin");
             NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex(new[] { "DisplayName" }, "IX_User_DisplayName_Trgm"), new[] { "gin_trgm_ops" });
 
             b.HasIndex(new[] { "Email" }, "IX_User_Email_Trgm")
-                .HasAnnotation("Npgsql:CreatedConcurrently", true);
+                      .HasAnnotation("Npgsql:CreatedConcurrently", true);
 
             NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex(new[] { "Email" }, "IX_User_Email_Trgm"), "gin");
             NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex(new[] { "Email" }, "IX_User_Email_Trgm"), new[] { "gin_trgm_ops" });
 
             b.HasIndex(new[] { "FirstName" }, "IX_User_FirstName_Trgm")
-                .HasAnnotation("Npgsql:CreatedConcurrently", true);
+                      .HasAnnotation("Npgsql:CreatedConcurrently", true);
 
             NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex(new[] { "FirstName" }, "IX_User_FirstName_Trgm"), "gin");
             NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex(new[] { "FirstName" }, "IX_User_FirstName_Trgm"), new[] { "gin_trgm_ops" });
 
             b.HasIndex(new[] { "PhoneNumber" }, "IX_User_PhoneNumber_Trgm")
-                .HasAnnotation("Npgsql:CreatedConcurrently", true);
+                      .HasAnnotation("Npgsql:CreatedConcurrently", true);
 
             NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex(new[] { "PhoneNumber" }, "IX_User_PhoneNumber_Trgm"), "gin");
             NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex(new[] { "PhoneNumber" }, "IX_User_PhoneNumber_Trgm"), new[] { "gin_trgm_ops" });
 
             b.HasIndex(new[] { "Surname" }, "IX_User_Surname_Trgm")
-                .HasAnnotation("Npgsql:CreatedConcurrently", true);
+                      .HasAnnotation("Npgsql:CreatedConcurrently", true);
 
             NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex(new[] { "Surname" }, "IX_User_Surname_Trgm"), "gin");
             NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex(new[] { "Surname" }, "IX_User_Surname_Trgm"), new[] { "gin_trgm_ops" });
@@ -992,7 +995,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                       .IsUnique();
 
             b.HasIndex(new[] { "Name" }, "IX_Skill_Name_Trgm")
-                .HasAnnotation("Npgsql:CreatedConcurrently", true);
+                      .HasAnnotation("Npgsql:CreatedConcurrently", true);
 
             NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex(new[] { "Name" }, "IX_Skill_Name_Trgm"), "gin");
             NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex(new[] { "Name" }, "IX_Skill_Name_Trgm"), new[] { "gin_trgm_ops" });
@@ -1124,7 +1127,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.HasIndex("Name", "OrganizationId", "StoreId", "StatusId", "DateCreated", "DateModified");
 
             b.HasIndex(new[] { "Name" }, "IX_StoreAccessControlRule_Name_Trgm")
-                .HasAnnotation("Npgsql:CreatedConcurrently", true);
+                      .HasAnnotation("Npgsql:CreatedConcurrently", true);
 
             NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex(new[] { "Name" }, "IX_StoreAccessControlRule_Name_Trgm"), "gin");
             NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex(new[] { "Name" }, "IX_StoreAccessControlRule_Name_Trgm"), new[] { "gin_trgm_ops" });
@@ -1311,8 +1314,8 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                       .IsUnique();
 
             b.HasIndex("ActionId", "VerificationStatusId", "OpportunityId", "DateCompleted")
-                .HasDatabaseName("IX_MyOpportunity_Completed_Aggregation")
-                .HasAnnotation("Npgsql:CreatedConcurrently", true);
+                      .HasDatabaseName("IX_MyOpportunity_Completed_Aggregation")
+                      .HasAnnotation("Npgsql:CreatedConcurrently", true);
 
             b.HasIndex("VerificationStatusId", "DateStart", "DateEnd", "DateCompleted", "ZltoReward", "YomaReward", "Recommendable", "StarRating", "DateCreated", "DateModified");
 
@@ -1610,19 +1613,19 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.HasIndex("TypeId", "OrganizationId", "ZltoReward", "DifficultyId", "CommitmentIntervalId", "CommitmentIntervalCount", "StatusId", "Keywords", "DateStart", "DateEnd", "CredentialIssuanceEnabled", "Featured", "EngagementTypeId", "ShareWithPartners", "Hidden", "DateCreated", "CreatedByUserId", "DateModified", "ModifiedByUserId");
 
             b.HasIndex(new[] { "Keywords" }, "IX_Opportunity_Keywords_Trgm")
-                .HasAnnotation("Npgsql:CreatedConcurrently", true);
+                      .HasAnnotation("Npgsql:CreatedConcurrently", true);
 
             NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex(new[] { "Keywords" }, "IX_Opportunity_Keywords_Trgm"), "gin");
             NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex(new[] { "Keywords" }, "IX_Opportunity_Keywords_Trgm"), new[] { "gin_trgm_ops" });
 
             b.HasIndex(new[] { "Summary" }, "IX_Opportunity_Summary_Trgm")
-                .HasAnnotation("Npgsql:CreatedConcurrently", true);
+                      .HasAnnotation("Npgsql:CreatedConcurrently", true);
 
             NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex(new[] { "Summary" }, "IX_Opportunity_Summary_Trgm"), "gin");
             NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex(new[] { "Summary" }, "IX_Opportunity_Summary_Trgm"), new[] { "gin_trgm_ops" });
 
             b.HasIndex(new[] { "Title" }, "IX_Opportunity_Title_Trgm")
-                .HasAnnotation("Npgsql:CreatedConcurrently", true);
+                      .HasAnnotation("Npgsql:CreatedConcurrently", true);
 
             NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex(new[] { "Title" }, "IX_Opportunity_Title_Trgm"), "gin");
             NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex(new[] { "Title" }, "IX_Opportunity_Title_Trgm"), new[] { "gin_trgm_ops" });
@@ -2099,13 +2102,13 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.HasIndex("UserId", "ProgramId", "StatusId", "DateCreated", "DateModified");
 
             b.HasIndex(new[] { "Description" }, "IX_Referral_Link_Description_Trgm")
-                .HasAnnotation("Npgsql:CreatedConcurrently", true);
+                      .HasAnnotation("Npgsql:CreatedConcurrently", true);
 
             NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex(new[] { "Description" }, "IX_Referral_Link_Description_Trgm"), "gin");
             NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex(new[] { "Description" }, "IX_Referral_Link_Description_Trgm"), new[] { "gin_trgm_ops" });
 
             b.HasIndex(new[] { "Name" }, "IX_Referral_Link_Name_Trgm")
-                .HasAnnotation("Npgsql:CreatedConcurrently", true);
+                      .HasAnnotation("Npgsql:CreatedConcurrently", true);
 
             NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex(new[] { "Name" }, "IX_Referral_Link_Name_Trgm"), "gin");
             NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex(new[] { "Name" }, "IX_Referral_Link_Name_Trgm"), new[] { "gin_trgm_ops" });
@@ -2364,13 +2367,13 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.HasIndex("Summary", "StatusId", "IsDefault", "Hidden", "DateStart", "DateEnd", "DateCreated", "DateModified");
 
             b.HasIndex(new[] { "Name" }, "IX_Program_Name_Trgm")
-                .HasAnnotation("Npgsql:CreatedConcurrently", true);
+                      .HasAnnotation("Npgsql:CreatedConcurrently", true);
 
             NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex(new[] { "Name" }, "IX_Program_Name_Trgm"), "gin");
             NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex(new[] { "Name" }, "IX_Program_Name_Trgm"), new[] { "gin_trgm_ops" });
 
             b.HasIndex(new[] { "Summary" }, "IX_Program_Summary_Trgm")
-                .HasAnnotation("Npgsql:CreatedConcurrently", true);
+                      .HasAnnotation("Npgsql:CreatedConcurrently", true);
 
             NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex(new[] { "Summary" }, "IX_Program_Summary_Trgm"), "gin");
             NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex(new[] { "Summary" }, "IX_Program_Summary_Trgm"), new[] { "gin_trgm_ops" });

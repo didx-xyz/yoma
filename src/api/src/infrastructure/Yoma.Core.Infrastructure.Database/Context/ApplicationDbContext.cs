@@ -217,6 +217,111 @@ namespace Yoma.Core.Infrastructure.Database.Context
     #region Protected Members
     protected override void OnModelCreating(ModelBuilder builder)
     {
+      // Match raw substring-search columns while preserving existing B-tree indexes.
+      builder.HasPostgresExtension("pg_trgm");
+
+      builder.Entity<Opportunity.Entities.Opportunity>()
+          .HasIndex(o => o.Title, "IX_Opportunity_Title_Trgm")
+          .HasMethod("gin")
+          .HasOperators("gin_trgm_ops")
+          .IsCreatedConcurrently();
+
+      builder.Entity<Opportunity.Entities.Opportunity>()
+          .HasIndex(o => o.Summary, "IX_Opportunity_Summary_Trgm")
+          .HasMethod("gin")
+          .HasOperators("gin_trgm_ops")
+          .IsCreatedConcurrently();
+
+      builder.Entity<Opportunity.Entities.Opportunity>()
+          .HasIndex(o => o.Keywords, "IX_Opportunity_Keywords_Trgm")
+          .HasMethod("gin")
+          .HasOperators("gin_trgm_ops")
+          .IsCreatedConcurrently();
+
+      builder.Entity<User>()
+          .HasIndex(o => o.Email, "IX_User_Email_Trgm")
+          .HasMethod("gin")
+          .HasOperators("gin_trgm_ops")
+          .IsCreatedConcurrently();
+
+      builder.Entity<User>()
+          .HasIndex(o => o.FirstName, "IX_User_FirstName_Trgm")
+          .HasMethod("gin")
+          .HasOperators("gin_trgm_ops")
+          .IsCreatedConcurrently();
+
+      builder.Entity<User>()
+          .HasIndex(o => o.Surname, "IX_User_Surname_Trgm")
+          .HasMethod("gin")
+          .HasOperators("gin_trgm_ops")
+          .IsCreatedConcurrently();
+
+      builder.Entity<User>()
+          .HasIndex(o => o.DisplayName, "IX_User_DisplayName_Trgm")
+          .HasMethod("gin")
+          .HasOperators("gin_trgm_ops")
+          .IsCreatedConcurrently();
+
+      builder.Entity<User>()
+          .HasIndex(o => o.PhoneNumber, "IX_User_PhoneNumber_Trgm")
+          .HasMethod("gin")
+          .HasOperators("gin_trgm_ops")
+          .IsCreatedConcurrently();
+
+      builder.Entity<Organization>()
+          .HasIndex(o => o.Name, "IX_Organization_Name_Trgm")
+          .HasMethod("gin")
+          .HasOperators("gin_trgm_ops")
+          .IsCreatedConcurrently();
+
+      builder.Entity<Program>()
+          .HasIndex(o => o.Name, "IX_Program_Name_Trgm")
+          .HasMethod("gin")
+          .HasOperators("gin_trgm_ops")
+          .IsCreatedConcurrently();
+
+      builder.Entity<Program>()
+          .HasIndex(o => o.Summary, "IX_Program_Summary_Trgm")
+          .HasMethod("gin")
+          .HasOperators("gin_trgm_ops")
+          .IsCreatedConcurrently();
+
+      builder.Entity<Referral.Entities.Link>()
+          .HasIndex(o => o.Name, "IX_Referral_Link_Name_Trgm")
+          .HasMethod("gin")
+          .HasOperators("gin_trgm_ops")
+          .IsCreatedConcurrently();
+
+      builder.Entity<Referral.Entities.Link>()
+          .HasIndex(o => o.Description, "IX_Referral_Link_Description_Trgm")
+          .HasMethod("gin")
+          .HasOperators("gin_trgm_ops")
+          .IsCreatedConcurrently();
+
+      builder.Entity<ActionLink.Entities.Link>()
+          .HasIndex(o => o.Name, "IX_ActionLink_Link_Name_Trgm")
+          .HasMethod("gin")
+          .HasOperators("gin_trgm_ops")
+          .IsCreatedConcurrently();
+
+      builder.Entity<ActionLink.Entities.Link>()
+          .HasIndex(o => o.Description, "IX_ActionLink_Link_Description_Trgm")
+          .HasMethod("gin")
+          .HasOperators("gin_trgm_ops")
+          .IsCreatedConcurrently();
+
+      builder.Entity<Marketplace.Entities.StoreAccessControlRule>()
+          .HasIndex(o => o.Name, "IX_StoreAccessControlRule_Name_Trgm")
+          .HasMethod("gin")
+          .HasOperators("gin_trgm_ops")
+          .IsCreatedConcurrently();
+
+      builder.Entity<Skill>()
+          .HasIndex(o => o.Name, "IX_Skill_Name_Trgm")
+          .HasMethod("gin")
+          .HasOperators("gin_trgm_ops")
+          .IsCreatedConcurrently();
+
       builder.Entity<Domain.Core.Models.UnnestedValue>(eb =>
       {
         eb.HasKey(x => x.Id); // keep the key for joins and EF tracking
