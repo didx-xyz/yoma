@@ -7,7 +7,7 @@
 - **Ticket**: [YOM-1276](https://linear.app/didx/issue/YOM-1276/ixo-yie-full-sync-production-api-and-business-readiness)
 - **Owner**: Product and SRE, with Adrian
 - **Areas**: api
-- **Status**: in-progress
+- **Status**: shipped
 - **Started**: 2026-08-04
 
 ## Problem / Goal
@@ -30,11 +30,13 @@ payload details and code paths remain in this folder and YOM-1275 rather than Li
 - [x] Confirm user hand-off fields and terminal completed/placed behavior.
 - [x] Confirm custom fields are optional until the cross-partner capability is ready.
 - [x] Validate representative embedded opportunities and verification locally/Stage.
-- [ ] Receive and validate IXO Stage/testing endpoint and credentials.
-- [ ] Receive and configure IXO Production endpoint, credentials and Yoma organization.
-- [ ] Enable external synchronization only after environment validation.
+- [x] Receive and validate IXO Stage/testing endpoint and credentials.
+- [x] Receive and configure IXO Production endpoint, credentials and Yoma organization.
+- [x] Enable Production catalogue synchronization; complete approved-claim Stage verification validation.
 
 ## Decisions
+
+- 2026-09-16: Delivery reconciled to shipped from Adrian's production/staging results: World Cleanup Day published in production on 14 September; the approved Impact Task Test claim synchronized on staging on 15 September, with Completed status, 100% progress and participant count one. Credential issuance was queued, not observed as issued in that final run. In-progress claim publication was not demonstrated. Cash-out and CF mapping are separate scope. Historical readiness decisions below are superseded by this delivery update.
 
 - 2026-08-07: Stage may use embedded representative resources until IXO provisions the final environment.
 - 2026-08-07: Production synchronization remains disabled in capability configuration until ready.

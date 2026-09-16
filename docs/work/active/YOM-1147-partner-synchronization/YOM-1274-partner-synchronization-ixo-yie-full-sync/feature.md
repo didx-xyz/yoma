@@ -7,7 +7,7 @@
 - **Ticket**: [YOM-1274](https://linear.app/didx/issue/YOM-1274/partner-synchronization-ixo-yie-full-sync)
 - **Owner**: Adrian
 - **Areas**: api
-- **Status**: in-progress
+- **Status**: shipped
 - **Started**: 2026-08-04
 
 ## Problem / Goal
@@ -30,10 +30,12 @@ PartnerSync rules are in the [epic README](../README.md).
 - [x] Implement complete POC-compatible integration.
 - [x] Validate embedded Learning/Job feeds and verification locally and on Stage.
 - [x] Confirm user context and terminal outcome rules with IXO.
-- [ ] Validate against provisioned IXO Stage/testing APIs.
-- [ ] Configure and enable Production when supplied.
+- [x] Validate against provisioned IXO Stage/testing APIs.
+- [x] Configure and enable Production.
 
 ## Decisions
+
+- 2026-09-16: Delivery reconciled to shipped from Adrian's production/staging results: World Cleanup Day published in production on 14 September; the approved Impact Task Test claim synchronized on staging on 15 September, with Completed status, 100% progress and participant count one. Credential issuance was queued, not observed as issued in that final run. In-progress claim publication was not demonstrated. Cash-out and CF mapping are separate scope. Historical readiness decisions below are superseded by this delivery update.
 
 - 2026-08-04: IXO is the partner organization; YIE describes the impacts platform/ecosystem.
 - 2026-08-04: IXO selects the catalogue subset; Yoma does not manually filter it.

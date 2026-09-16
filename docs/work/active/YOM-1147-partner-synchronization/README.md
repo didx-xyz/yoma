@@ -22,7 +22,14 @@ hand-off/linking and importing externally determined verification outcomes. Shar
 tracking, idempotency and lifecycle rules live in the domain; each partner owns only its transport,
 authentication, catalogue persistence and mapping.
 
-Production integrations are Jobberman and Alison. JobJack and IXO are implemented and in testing.
+Production integrations include Jobberman, Alison and IXO. IXO delivery is complete; JobJack Phase 1 sign-off is being reconciled with Adrian. Umuzi is code-complete but blocked on partner learner-page/URL readiness before end-to-end staging validation.
+
+## September 2026 reconciliation
+
+- [YOM-1295 — Umuzi Phase 1](./YOM-1295-partner-synchronization-umuzi-phase-1/feature.md): blocked pending partner readiness; Linear uses In Progress because this team has no Blocked status.
+- [YOM-1296 — Jobberman non-production sample feeds](https://linear.app/didx/issue/YOM-1296): Todo, low priority, Robbie; implementation task remains in YOM-1166's feature checklist.
+- Original foundation and Alison/Jobberman delivery tickets stay Done. The continuing project remains In Progress; no historical parent relationships are restructured.
+- SA Youth is Push, not a pull provider; its reported sandbox outage is outside this reconciliation.
 
 ## Child Features
 
@@ -52,35 +59,35 @@ Production integrations are Jobberman and Alison. JobJack and IXO are implemente
 
 | Folder | Ticket | Area | Status |
 | ------ | ------ | ---- | ------ |
-| [`YOM-1166-api-add-jobberman-pull-provider-integration/`](./YOM-1166-api-add-jobberman-pull-provider-integration/feature.md) | [YOM-1166](https://linear.app/didx/issue/YOM-1166) | api | production |
-| [`YOM-1167-api-add-alison-pull-provider-integration/`](./YOM-1167-api-add-alison-pull-provider-integration/feature.md) | [YOM-1167](https://linear.app/didx/issue/YOM-1167) | api | production |
-| [`YOM-1202-partner-synchronization-verification/`](./YOM-1202-partner-synchronization-verification/feature.md) | [YOM-1202](https://linear.app/didx/issue/YOM-1202) | api | production |
-| [`YOM-1203-api-add-partnersync-scope-support-to-partner-capability-configuration/`](./YOM-1203-api-add-partnersync-scope-support-to-partner-capability-configuration/feature.md) | [YOM-1203](https://linear.app/didx/issue/YOM-1203) | api | production |
-| [`YOM-1204-api-update-partner-lookup-model-and-migration-for-sync-capabilities/`](./YOM-1204-api-update-partner-lookup-model-and-migration-for-sync-capabilities/feature.md) | [YOM-1204](https://linear.app/didx/issue/YOM-1204) | api | production |
-| [`YOM-1205-api-refactor-partnerservice-capability-filtering-by-sync-scope/`](./YOM-1205-api-refactor-partnerservice-capability-filtering-by-sync-scope/feature.md) | [YOM-1205](https://linear.app/didx/issue/YOM-1205) | api | production |
-| [`YOM-1206-api-split-partnersync-provider-interfaces-by-sync-scope/`](./YOM-1206-api-split-partnersync-provider-interfaces-by-sync-scope/feature.md) | [YOM-1206](https://linear.app/didx/issue/YOM-1206) | api | production |
-| [`YOM-1207-api-add-partnersync-verification-pull-request-and-result-models/`](./YOM-1207-api-add-partnersync-verification-pull-request-and-result-models/feature.md) | [YOM-1207](https://linear.app/didx/issue/YOM-1207) | api | production |
-| [`YOM-1208-api-add-validation-for-partnersync-verification-pull-filter/`](./YOM-1208-api-add-validation-for-partnersync-verification-pull-filter/feature.md) | [YOM-1208](https://linear.app/didx/issue/YOM-1208) | api | production |
-| [`YOM-1209-api-add-partnersynctracking-entity-for-run-and-checkpoint-state/`](./YOM-1209-api-add-partnersynctracking-entity-for-run-and-checkpoint-state/feature.md) | [YOM-1209](https://linear.app/didx/issue/YOM-1209) | api | production |
-| [`YOM-1210-api-add-partnersync-verification-pull-orchestration/`](./YOM-1210-api-add-partnersync-verification-pull-orchestration/feature.md) | [YOM-1210](https://linear.app/didx/issue/YOM-1210) | api | production |
-| [`YOM-1211-api-add-myopportunity-verification-import-flow-for-partner-sync/`](./YOM-1211-api-add-myopportunity-verification-import-flow-for-partner-sync/feature.md) | [YOM-1211](https://linear.app/didx/issue/YOM-1211) | api | production |
-| [`YOM-1212-api-add-partner-verification-import-idempotency-and-skip-handling/`](./YOM-1212-api-add-partner-verification-import-idempotency-and-skip-handling/feature.md) | [YOM-1212](https://linear.app/didx/issue/YOM-1212) | api | production |
-| [`YOM-1213-api-integrate-alison-completed-course-data-endpoint/`](./YOM-1213-api-integrate-alison-completed-course-data-endpoint/feature.md) | [YOM-1213](https://linear.app/didx/issue/YOM-1213) | api | production |
-| [`YOM-1214-api-add-alison-verification-sync-configuration/`](./YOM-1214-api-add-alison-verification-sync-configuration/feature.md) | [YOM-1214](https://linear.app/didx/issue/YOM-1214) | api | production |
-| [`YOM-1215-api-add-partnersync-verification-observability-and-tests/`](./YOM-1215-api-add-partnersync-verification-observability-and-tests/feature.md) | [YOM-1215](https://linear.app/didx/issue/YOM-1215) | api | production |
-| [`YOM-1218-api-improve-alison-completion-commitment-mapping/`](./YOM-1218-api-improve-alison-completion-commitment-mapping/feature.md) | [YOM-1218](https://linear.app/didx/issue/YOM-1218) | api | production |
-| [`YOM-1219-api-add-alison-organisation-linked-user-registration-and-redirect-flow/`](./YOM-1219-api-add-alison-organisation-linked-user-registration-and-redirect-flow/feature.md) | [YOM-1219](https://linear.app/didx/issue/YOM-1219) | api | production |
-| [`YOM-1222-api-improve-obfuscation-of-sensitive-fields-in-shared-flurl-http/`](./YOM-1222-api-improve-obfuscation-of-sensitive-fields-in-shared-flurl-http/feature.md) | [YOM-1222](https://linear.app/didx/issue/YOM-1222) | api | production |
-| [`YOM-1240-api-improve-partner-sync-tracking-run-summaries/`](./YOM-1240-api-improve-partner-sync-tracking-run-summaries/feature.md) | [YOM-1240](https://linear.app/didx/issue/YOM-1240) | api | production |
-| [`YOM-1239-api-support-verification-imports-for-deleted-pull-synced-opportunities/`](./YOM-1239-api-support-verification-imports-for-deleted-pull-synced-opportunities/feature.md) | [YOM-1239](https://linear.app/didx/issue/YOM-1239) | api | production |
-| [`YOM-1247-show-partner-provided-progress-on-completion-submissions-for-synced/`](./YOM-1247-show-partner-provided-progress-on-completion-submissions-for-synced/feature.md) | [YOM-1247](https://linear.app/didx/issue/YOM-1247) | api/web | production |
-| [`YOM-1248-api-support-partner-provided-progress-sync-for-myopportunity/`](./YOM-1248-api-support-partner-provided-progress-sync-for-myopportunity/feature.md) | [YOM-1248](https://linear.app/didx/issue/YOM-1248) | api | production |
-| [`YOM-1270-partner-synchronization-jobjack-opportunity-sync/`](./YOM-1270-partner-synchronization-jobjack-opportunity-sync/feature.md) | [YOM-1270](https://linear.app/didx/issue/YOM-1270) | api/business | testing |
-| [`YOM-1271-api-jobjack-opportunity-pull-sync/`](./YOM-1271-api-jobjack-opportunity-pull-sync/feature.md) | [YOM-1271](https://linear.app/didx/issue/YOM-1271) | api | testing |
+| [`YOM-1166-api-add-jobberman-pull-provider-integration/`](./YOM-1166-api-add-jobberman-pull-provider-integration/feature.md) | [YOM-1166](https://linear.app/didx/issue/YOM-1166) | api | shipped |
+| [`YOM-1167-api-add-alison-pull-provider-integration/`](./YOM-1167-api-add-alison-pull-provider-integration/feature.md) | [YOM-1167](https://linear.app/didx/issue/YOM-1167) | api | shipped |
+| [`YOM-1202-partner-synchronization-verification/`](./YOM-1202-partner-synchronization-verification/feature.md) | [YOM-1202](https://linear.app/didx/issue/YOM-1202) | api | shipped |
+| [`YOM-1203-api-add-partnersync-scope-support-to-partner-capability-configuration/`](./YOM-1203-api-add-partnersync-scope-support-to-partner-capability-configuration/feature.md) | [YOM-1203](https://linear.app/didx/issue/YOM-1203) | api | shipped |
+| [`YOM-1204-api-update-partner-lookup-model-and-migration-for-sync-capabilities/`](./YOM-1204-api-update-partner-lookup-model-and-migration-for-sync-capabilities/feature.md) | [YOM-1204](https://linear.app/didx/issue/YOM-1204) | api | shipped |
+| [`YOM-1205-api-refactor-partnerservice-capability-filtering-by-sync-scope/`](./YOM-1205-api-refactor-partnerservice-capability-filtering-by-sync-scope/feature.md) | [YOM-1205](https://linear.app/didx/issue/YOM-1205) | api | shipped |
+| [`YOM-1206-api-split-partnersync-provider-interfaces-by-sync-scope/`](./YOM-1206-api-split-partnersync-provider-interfaces-by-sync-scope/feature.md) | [YOM-1206](https://linear.app/didx/issue/YOM-1206) | api | shipped |
+| [`YOM-1207-api-add-partnersync-verification-pull-request-and-result-models/`](./YOM-1207-api-add-partnersync-verification-pull-request-and-result-models/feature.md) | [YOM-1207](https://linear.app/didx/issue/YOM-1207) | api | shipped |
+| [`YOM-1208-api-add-validation-for-partnersync-verification-pull-filter/`](./YOM-1208-api-add-validation-for-partnersync-verification-pull-filter/feature.md) | [YOM-1208](https://linear.app/didx/issue/YOM-1208) | api | shipped |
+| [`YOM-1209-api-add-partnersynctracking-entity-for-run-and-checkpoint-state/`](./YOM-1209-api-add-partnersynctracking-entity-for-run-and-checkpoint-state/feature.md) | [YOM-1209](https://linear.app/didx/issue/YOM-1209) | api | shipped |
+| [`YOM-1210-api-add-partnersync-verification-pull-orchestration/`](./YOM-1210-api-add-partnersync-verification-pull-orchestration/feature.md) | [YOM-1210](https://linear.app/didx/issue/YOM-1210) | api | shipped |
+| [`YOM-1211-api-add-myopportunity-verification-import-flow-for-partner-sync/`](./YOM-1211-api-add-myopportunity-verification-import-flow-for-partner-sync/feature.md) | [YOM-1211](https://linear.app/didx/issue/YOM-1211) | api | shipped |
+| [`YOM-1212-api-add-partner-verification-import-idempotency-and-skip-handling/`](./YOM-1212-api-add-partner-verification-import-idempotency-and-skip-handling/feature.md) | [YOM-1212](https://linear.app/didx/issue/YOM-1212) | api | shipped |
+| [`YOM-1213-api-integrate-alison-completed-course-data-endpoint/`](./YOM-1213-api-integrate-alison-completed-course-data-endpoint/feature.md) | [YOM-1213](https://linear.app/didx/issue/YOM-1213) | api | shipped |
+| [`YOM-1214-api-add-alison-verification-sync-configuration/`](./YOM-1214-api-add-alison-verification-sync-configuration/feature.md) | [YOM-1214](https://linear.app/didx/issue/YOM-1214) | api | shipped |
+| [`YOM-1215-api-add-partnersync-verification-observability-and-tests/`](./YOM-1215-api-add-partnersync-verification-observability-and-tests/feature.md) | [YOM-1215](https://linear.app/didx/issue/YOM-1215) | api | shipped |
+| [`YOM-1218-api-improve-alison-completion-commitment-mapping/`](./YOM-1218-api-improve-alison-completion-commitment-mapping/feature.md) | [YOM-1218](https://linear.app/didx/issue/YOM-1218) | api | shipped |
+| [`YOM-1219-api-add-alison-organisation-linked-user-registration-and-redirect-flow/`](./YOM-1219-api-add-alison-organisation-linked-user-registration-and-redirect-flow/feature.md) | [YOM-1219](https://linear.app/didx/issue/YOM-1219) | api | shipped |
+| [`YOM-1222-api-improve-obfuscation-of-sensitive-fields-in-shared-flurl-http/`](./YOM-1222-api-improve-obfuscation-of-sensitive-fields-in-shared-flurl-http/feature.md) | [YOM-1222](https://linear.app/didx/issue/YOM-1222) | api | shipped |
+| [`YOM-1240-api-improve-partner-sync-tracking-run-summaries/`](./YOM-1240-api-improve-partner-sync-tracking-run-summaries/feature.md) | [YOM-1240](https://linear.app/didx/issue/YOM-1240) | api | shipped |
+| [`YOM-1239-api-support-verification-imports-for-deleted-pull-synced-opportunities/`](./YOM-1239-api-support-verification-imports-for-deleted-pull-synced-opportunities/feature.md) | [YOM-1239](https://linear.app/didx/issue/YOM-1239) | api | shipped |
+| [`YOM-1247-show-partner-provided-progress-on-completion-submissions-for-synced/`](./YOM-1247-show-partner-provided-progress-on-completion-submissions-for-synced/feature.md) | [YOM-1247](https://linear.app/didx/issue/YOM-1247) | api/web | shipped |
+| [`YOM-1248-api-support-partner-provided-progress-sync-for-myopportunity/`](./YOM-1248-api-support-partner-provided-progress-sync-for-myopportunity/feature.md) | [YOM-1248](https://linear.app/didx/issue/YOM-1248) | api | shipped |
+| [`YOM-1270-partner-synchronization-jobjack-opportunity-sync/`](./YOM-1270-partner-synchronization-jobjack-opportunity-sync/feature.md) | [YOM-1270](https://linear.app/didx/issue/YOM-1270) | api/business | in-progress |
+| [`YOM-1271-api-jobjack-opportunity-pull-sync/`](./YOM-1271-api-jobjack-opportunity-pull-sync/feature.md) | [YOM-1271](https://linear.app/didx/issue/YOM-1271) | api | review |
 | [`YOM-1272-feed-mappings-and-business-rules/`](./YOM-1272-feed-mappings-and-business-rules/feature.md) | [YOM-1272](https://linear.app/didx/issue/YOM-1272) | api/business | in-progress |
-| [`YOM-1274-partner-synchronization-ixo-yie-full-sync/`](./YOM-1274-partner-synchronization-ixo-yie-full-sync/feature.md) | [YOM-1274](https://linear.app/didx/issue/YOM-1274) | api/business | in-progress |
-| [`YOM-1275-api-ixo-yie-full-partner-pull-sync/`](./YOM-1275-api-ixo-yie-full-partner-pull-sync/feature.md) | [YOM-1275](https://linear.app/didx/issue/YOM-1275) | api | testing |
-| [`YOM-1276-ixo-yie-full-sync-production-api-and-business-readiness/`](./YOM-1276-ixo-yie-full-sync-production-api-and-business-readiness/feature.md) | [YOM-1276](https://linear.app/didx/issue/YOM-1276) | business/SRE | in-progress |
+| [`YOM-1274-partner-synchronization-ixo-yie-full-sync/`](./YOM-1274-partner-synchronization-ixo-yie-full-sync/feature.md) | [YOM-1274](https://linear.app/didx/issue/YOM-1274) | api/business | shipped |
+| [`YOM-1275-api-ixo-yie-full-partner-pull-sync/`](./YOM-1275-api-ixo-yie-full-partner-pull-sync/feature.md) | [YOM-1275](https://linear.app/didx/issue/YOM-1275) | api | shipped |
+| [`YOM-1276-ixo-yie-full-sync-production-api-and-business-readiness/`](./YOM-1276-ixo-yie-full-sync-production-api-and-business-readiness/feature.md) | [YOM-1276](https://linear.app/didx/issue/YOM-1276) | business/SRE | shipped |
 
 Ticket with no API folder:
 
@@ -148,14 +155,15 @@ IXO Learning and Job opportunities were confirmed through the Web UI.
 | Jobberman | Production Opportunity pull from RSS/cache | Jobberman client, cache migration and shared pull handler |
 | Alison | Production Opportunity pull, authenticated hand-off and verification import; course descriptions clarify that paid certificates are optional for YoID credentials | Alison clients, catalogue service and verification handler |
 | JobJack | XML Opportunity pull configured for the Yoma production feed with a refreshed representative embedded sample; final validation remains in progress and Phase 2 hand-off/verification is deferred | JobJack feed service/client, runtime configuration and embedded sample |
-| IXO | Learning/Job pull, user hand-off/linking and verification implemented; external Stage/Production provisioning pending | IXO PartnerSync client, migration, embedded probes and YOM-1276 confirmations |
+| IXO | Shipped: Learning/Job/Task pull, user hand-off/linking and verification; production catalogue published, approved claim imported on Stage | YOM-1274, YOM-1275, YOM-1276 and September validation evidence |
+| Umuzi | Code-complete: Learning/Job catalogue, correlation-only redirect and verification; full Stage journey blocked on partner readiness | YOM-1295 and PR #1929 |
 
 ### Cross-epic Custom Fields dependency
 
 Partner requests already accept custom-field values with patch semantics, but provider mappings do
 not yet populate them. Once the BA-approved definitions are available under
 [YOM-1244](../YOM-1244-customizable-fields-framework/README.md), review Jobberman, Alison, JobJack
-and IXO together. Mappings must use stable definition keys, preserve omitted values, and use a
+IXO and Umuzi together. Mappings must use stable definition keys, preserve omitted values, and use a
 key-only item only for deliberate deletion. No provider may hardcode temporary `[Sample]` keys.
 
 ## Out of Scope (whole epic)
@@ -163,7 +171,7 @@ key-only item only for deliberate deletion. No provider may hardcode temporary `
 - Replacing partner-controlled source data or manually curating provider catalogues in Yoma.
 - Implementing final custom-field mappings before the shared field map is approved.
 - JobJack user pre-authentication, verification and credential integration in Phase 1.
-- Enabling IXO external Production sync before its final environments and credentials exist.
+- Umuzi Phase 2 pre-authentication and the separately assessed account lookup/creation capability.
 - Consolidating provider infrastructure databases; each integration retains its own transport/cache boundary.
 
 ## Blockers
@@ -171,7 +179,8 @@ key-only item only for deliberate deletion. No provider may hardcode temporary `
 | Blocker | Severity | Note |
 | ------- | -------- | ---- |
 | BA-approved custom fields and partner mapping matrix | High | Blocks cross-provider custom-field mapping refactor. |
-| IXO final Stage/Production environments and credentials | High | Embedded Stage validation works; external activation waits. |
+| Umuzi learner URLs and redirect capture | High | Partner must complete both before Yoma Stage end-to-end testing; production connection details remain outstanding. |
+| Jobberman dev/Stage sample configuration | Low | YOM-1296 assigned to Robbie; original production delivery remains shipped. |
 | JobJack production validation/sign-off | Medium | Code is implemented; Phase 1 remains in testing. |
 
 ## Cross-Area Notes

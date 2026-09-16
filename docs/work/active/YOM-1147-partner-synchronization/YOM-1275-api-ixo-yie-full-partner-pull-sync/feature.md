@@ -7,7 +7,7 @@
 - **Ticket**: [YOM-1275](https://linear.app/didx/issue/YOM-1275/api-ixo-yie-full-partner-pull-sync)
 - **Owner**: Adrian
 - **Areas**: api
-- **Status**: review
+- **Status**: shipped
 - **Started**: 2026-08-04
 
 ## Problem / Goal
@@ -34,10 +34,12 @@ map Learning/Job records, and support permanent user links plus verification pag
 - [x] Add startup/recurring catalogue refresh and shared provider registration.
 - [x] Merge implementation to master and then into the Custom Fields branch.
 - [x] Validate embedded feeds, tenant creation, completions and credential issuance locally/Stage.
-- [ ] Validate minor contract differences against IXO's provisioned environments.
+- [x] Validate and incorporate contract differences against IXO's provisioned environments, including Impact Action / Task support.
 - [ ] Revisit custom-field mappings after YOM-1244 field approval.
 
 ## Decisions
+
+- 2026-09-16: Delivery reconciled to shipped from Adrian's production/staging results: World Cleanup Day published in production on 14 September; the approved Impact Task Test claim synchronized on staging on 15 September, with Completed status, 100% progress and participant count one. Credential issuance was queued, not observed as issued in that final run. In-progress claim publication was not demonstrated. Cash-out and CF mapping are separate scope. Historical readiness decisions below are superseded by this delivery update.
 
 - 2026-08-04: `removed: true` is authoritative; omission from a valid full snapshot is fallback.
 - 2026-08-04: User resolution prefers the permanent partner link, then documented Yoma ID, then current username.
