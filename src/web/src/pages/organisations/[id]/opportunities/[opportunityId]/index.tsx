@@ -2597,7 +2597,9 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                       />
                     </FormField>
 
-                    <div className="divider" />
+                    {(customFieldDefinitions?.length ?? 0) > 0 && (
+                      <div className="divider" />
+                    )}
 
                     {/* CUSTOM FIELDS (definition-driven, YOM-1244 / YOM-1255) */}
                     {/* Managed by the step 2 form so values partake in zod validation

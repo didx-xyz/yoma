@@ -2,6 +2,7 @@ import { useQueries } from "@tanstack/react-query";
 import type { CustomFieldDefinition } from "~/api/models/opportunity";
 import { getOpportunityCustomFieldDefinitions } from "~/api/services/opportunities";
 import { OPPORTUNITY_QUERY_KEYS } from "~/hooks/useOpportunityMutations";
+import { CUSTOM_FIELDS_ENABLED } from "~/lib/constants";
 import { isNotFoundError } from "../lib/apiStatus";
 
 /**
@@ -40,6 +41,10 @@ export function useTypeDefinitions(typeNames: string[]): TypeDefinitions {
     queries: typeNames.map((name) => ({
       queryKey: OPPORTUNITY_QUERY_KEYS.customFieldDefinitions([name]),
       queryFn: () => getOpportunityCustomFieldDefinitions([name]),
+      // Gated here as well as in `useOpportunityCustomFieldDefinitionsQuery`: this is a
+      // `useQueries` loop reusing that hook's key and fetcher, not a call to the hook itself,
+      // so the hook's own `CUSTOM_FIELDS_ENABLED` guard does not reach it.
+      enabled: CUSTOM_FIELDS_ENABLED,
     })),
   });
 

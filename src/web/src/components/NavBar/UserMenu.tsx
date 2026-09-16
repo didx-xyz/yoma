@@ -18,7 +18,7 @@ import { searchCredentials } from "~/api/services/credentials";
 import { searchMyOpportunitiesSummary } from "~/api/services/myOpportunities";
 import { getUserSkills } from "~/api/services/user";
 import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
-import { MAXINT32 } from "~/lib/constants";
+import { CUSTOM_FIELDS_ENABLED, MAXINT32 } from "~/lib/constants";
 import {
   activeNavigationRoleViewAtom,
   currentOrganisationLogoAtom,
@@ -292,18 +292,22 @@ export const UserMenu: React.FC = () => {
                 </div>
 
                 {/* Discovery preferences (YOM-1261): re-entry into the personalization wizard —
-                    ?personalize=1 opens it on arrival and is then stripped from the URL. */}
-                <div className="z-10 flex w-full flex-row items-center">
-                  <Link
-                    href="/opportunities/discover?personalize=1"
-                    className="font-nunito btn btn-sm btn-warning w-full text-white"
-                    onClick={() => setDrawerOpen(false)}
-                    tabIndex={isDrawerOpen ? 0 : -1}
-                    title="Edit my preferences"
-                  >
-                    My preferences
-                  </Link>
-                </div>
+                    ?personalize=1 opens it on arrival and is then stripped from the URL.
+                    Hidden with the framework: /opportunities/discover 404s when it is off, so
+                    leaving this would put a dead link in the user menu. */}
+                {CUSTOM_FIELDS_ENABLED && (
+                  <div className="z-10 flex w-full flex-row items-center">
+                    <Link
+                      href="/opportunities/discover?personalize=1"
+                      className="font-nunito btn btn-sm btn-warning w-full text-white"
+                      onClick={() => setDrawerOpen(false)}
+                      tabIndex={isDrawerOpen ? 0 : -1}
+                      title="Edit my preferences"
+                    >
+                      My preferences
+                    </Link>
+                  </div>
+                )}
               </div>
 
               <div className="divider !bg-gray my-2" />

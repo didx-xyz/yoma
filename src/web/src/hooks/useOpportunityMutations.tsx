@@ -7,6 +7,7 @@ import {
 import { type AxiosError } from "axios";
 import { toast } from "react-toastify";
 import { SchemaType, type SSISchema } from "~/api/models/credential";
+import { CUSTOM_FIELDS_ENABLED } from "~/lib/constants";
 import type {
   Country,
   EngagementType,
@@ -246,6 +247,11 @@ export function useOpportunityTypesQuery(options?: { enabled?: boolean }) {
  * Definition-driven custom field definitions (create/edit page).
  * Keyed on the selected opportunity type name(s), so the query re-runs whenever the
  * watched opportunity type changes. `types` are enum names: Other | Learning | Event | Job | Task.
+ *
+ * Disabled outright when `CUSTOM_FIELDS_ENABLED` is off. This is the chokepoint for the whole
+ * read side of the framework: every editor, read-only section and filter panel keys off the
+ * definitions, and each already renders nothing when there are none — so switching the query off
+ * both silences the network calls and collapses the UI, with no per-surface guard needed.
  */
 export function useOpportunityCustomFieldDefinitionsQuery(
   types: string[] | null,
@@ -254,7 +260,7 @@ export function useOpportunityCustomFieldDefinitionsQuery(
   return useQuery<CustomFieldDefinition[]>({
     queryKey: OPPORTUNITY_QUERY_KEYS.customFieldDefinitions(types),
     queryFn: () => getOpportunityCustomFieldDefinitions(types),
-    enabled: options?.enabled ?? true,
+    enabled: CUSTOM_FIELDS_ENABLED && (options?.enabled ?? true),
   });
 }
 
@@ -262,6 +268,8 @@ export function useOpportunityCustomFieldDefinitionsQuery(
  * Definition-driven MyOpportunity (completion) custom field definitions, keyed by
  * opportunity id. The opportunity type is resolved server-side. Used by the completion
  * form and by the user's opportunity list cards (to label hydrated completion values).
+ *
+ * Disabled outright when `CUSTOM_FIELDS_ENABLED` is off — see the note above.
  */
 export function useMyOpportunityCustomFieldDefinitionsQuery(
   opportunityId: string,
@@ -270,7 +278,8 @@ export function useMyOpportunityCustomFieldDefinitionsQuery(
   return useQuery<CustomFieldDefinition[]>({
     queryKey: OPPORTUNITY_QUERY_KEYS.myCustomFieldDefinitions(opportunityId),
     queryFn: () => getMyOpportunityCustomFieldDefinitions(opportunityId),
-    enabled: !!opportunityId && (options?.enabled ?? true),
+    enabled:
+      CUSTOM_FIELDS_ENABLED && !!opportunityId && (options?.enabled ?? true),
   });
 }
 

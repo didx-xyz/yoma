@@ -15,7 +15,7 @@ import {
   useOpportunityLanguagesQuery,
   useSkillsQuery,
 } from "~/hooks/useOpportunityMutations";
-import { PAGE_SIZE_MEDIUM } from "~/lib/constants";
+import { CUSTOM_FIELDS_ENABLED, PAGE_SIZE_MEDIUM } from "~/lib/constants";
 import { dateInputToUTC, debounce, utcToDateInput } from "~/lib/utils";
 import { getCustomFieldNumberError } from "./CustomFields";
 
@@ -38,11 +38,11 @@ import { getCustomFieldNumberError } from "./CustomFields";
 // fields (Country / Language / Skill) submit lookup GUIDs.
 // ─────────────────────────────────────────────────────────────────────────────
 
-// TODO(YOM-1260): pending BA-approved definitions, we may need to temporarily
-// switch custom-field filtering off (public + admin) without unpicking the wiring.
-// Uncomment the line below (and comment out the one after it) to disable it.
-// export const CUSTOM_FIELD_FILTERS_ENABLED = false;
-export const CUSTOM_FIELD_FILTERS_ENABLED = true;
+// Custom-field filtering (public + admin) switches off with the rest of the framework rather
+// than on a switch of its own — this used to be a hand-edited boolean with a TODO(YOM-1260)
+// asking for exactly the release gate `CUSTOM_FIELDS_ENABLED` now provides. Kept as a named
+// export because the filter panels read it directly.
+export const CUSTOM_FIELD_FILTERS_ENABLED = CUSTOM_FIELDS_ENABLED;
 
 const OP = CustomFieldFilterOperator;
 

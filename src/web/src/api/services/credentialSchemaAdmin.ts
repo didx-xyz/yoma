@@ -1,5 +1,6 @@
 import * as real from "./credentials";
 import * as mock from "~/lib/credentials/schemaAdminMockApi";
+import { CUSTOM_FIELDS_ENABLED } from "~/lib/constants";
 
 /**
  * The data source for every credential-schema call the web app makes:
@@ -19,6 +20,10 @@ import * as mock from "~/lib/credentials/schemaAdminMockApi";
  * this code still exists. Whether the mock *is* serving locally is a per-session choice; see
  * `schemaMockActive`, so the real API can be exercised without a rebuild.
  *
+ * It is additionally gated on `CUSTOM_FIELDS_ENABLED`: with the framework switched off for a
+ * release, this façade resolves to the real service everywhere, including locally, and a
+ * `localStorage` choice left on "mock" from an earlier session cannot revive it.
+ *
  * NB: this mocks the *web* only. Opportunity create/update still validates the submitted schema
  * server-side (`OpportunityService.AssertSSISchemaApplicable`), which also reaches the provider —
  * so with the provider down the selector works but saving with credential issuance enabled fails.
@@ -28,7 +33,7 @@ import * as mock from "~/lib/credentials/schemaAdminMockApi";
  * `./credentials` directly.
  */
 export const SCHEMA_ADMIN_MOCK_ENABLED =
-  process.env.NEXT_PUBLIC_ENVIRONMENT === "local";
+  CUSTOM_FIELDS_ENABLED && process.env.NEXT_PUBLIC_ENVIRONMENT === "local";
 
 const SCHEMA_MOCK_MODE_KEY = "yoma.schemaMockMode";
 

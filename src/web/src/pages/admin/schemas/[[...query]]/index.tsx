@@ -16,7 +16,7 @@ import {
   SCHEMA_ADMIN_MOCK_ENABLED,
 } from "~/api/services/credentialSchemaAdmin";
 import type { SSISchema } from "~/api/models/credential";
-import { ROLE_ADMIN, THEME_BLUE } from "~/lib/constants";
+import { CUSTOM_FIELDS_ENABLED, ROLE_ADMIN, THEME_BLUE } from "~/lib/constants";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import { config } from "~/lib/react-query-config";
 import axios from "axios";
@@ -157,7 +157,9 @@ const Schemas: NextPageWithLayout<{
                   <tr className="border-gray text-gray-dark">
                     <th>Name</th>
                     <th>Type</th>
-                    <th>Opportunity type</th>
+                    {/* the type context is part of the custom-fields framework — with it off
+                        every schema is generic, so the column would read "All" throughout */}
+                    {CUSTOM_FIELDS_ENABLED && <th>Opportunity type</th>}
                     <th>Version</th>
                     <th>Attributes</th>
                     <th>Artifact</th>
@@ -176,11 +178,13 @@ const Schemas: NextPageWithLayout<{
                       </td>
                       <td>{schema.typeDescription}</td>
                       {/* the API-supplied context; empty for generic schemas */}
-                      <td>
-                        {schema.typeContext ?? (
-                          <span className="text-gray italic">All</span>
-                        )}
-                      </td>
+                      {CUSTOM_FIELDS_ENABLED && (
+                        <td>
+                          {schema.typeContext ?? (
+                            <span className="text-gray italic">All</span>
+                          )}
+                        </td>
+                      )}
                       <td>{schema.version}</td>
                       <td>{schema.propertyCount}</td>
                       <td>{schema.artifactTypeDescription}</td>

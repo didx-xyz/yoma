@@ -1,5 +1,6 @@
 import * as real from "./userPreferencesLive";
 import * as mock from "~/features/discovery/mocks/userPreferences";
+import { CUSTOM_FIELDS_ENABLED } from "~/lib/constants";
 
 /**
  * The data source for every user-preferences call the web app makes (YOM-1261 personalization,
@@ -27,10 +28,17 @@ import * as mock from "~/features/discovery/mocks/userPreferences";
 /** The DEV preview host — never stage or production. */
 const DEV_PREVIEW_HOSTS = ["dev.yoma.world"];
 
+/**
+ * Gated on `CUSTOM_FIELDS_ENABLED` as well as the environment. The DEV allowance above is what
+ * makes that necessary: this is the one mock in the epic that reaches a deployed build, so with
+ * the framework switched off for a release the flag has to close the DEV door too — otherwise the
+ * preview keeps serving fixtures and the `PreferencesMockDevTool` pill keeps mounting.
+ */
 export const USER_PREFERENCES_MOCK_ENABLED =
-  process.env.NEXT_PUBLIC_ENVIRONMENT === "local" ||
-  (typeof window !== "undefined" &&
-    DEV_PREVIEW_HOSTS.includes(window.location.hostname));
+  CUSTOM_FIELDS_ENABLED &&
+  (process.env.NEXT_PUBLIC_ENVIRONMENT === "local" ||
+    (typeof window !== "undefined" &&
+      DEV_PREVIEW_HOSTS.includes(window.location.hostname)));
 
 const MOCK_MODE_KEY = "yoma.discovery.preferencesMockMode";
 

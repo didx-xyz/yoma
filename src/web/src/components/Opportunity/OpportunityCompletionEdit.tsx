@@ -31,6 +31,7 @@ import {
   ACCEPTED_IMAGE_TYPES_LABEL,
   ACCEPTED_VIDEO_TYPES,
   ACCEPTED_VIDEO_TYPES_LABEL,
+  CUSTOM_FIELDS_ENABLED,
   DATE_FORMAT_SYSTEM,
   MAX_FILE_SIZE,
   MAX_FILE_SIZE_LABEL,
@@ -773,49 +774,54 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
               {/* Definitions load per opportunity; the component renders nothing
                   when none apply (empty state). Values partake in the form's zod
                   validation and submit as one JSON-encoded multipart field. */}
+              {/* The panel is gated on the flag, not just on having no definitions: the
+                  grey card below is the wrapper, so leaving it to the empty state would
+                  render an empty box on every completion form. */}
 
-              <div
-                className="bg-gray-light flex flex-col rounded-lg border-dotted px-8 py-4"
-                style={{ animationDelay: "1.2s" }}
-              >
-                {opportunityInfo && (
-                  <div className="flex w-full flex-col gap-2">
-                    {customFieldDefinitionsIsError ? (
-                      <div className="flex flex-col items-start gap-2">
-                        <FormMessage messageType={FormMessageType.Warning}>
-                          Unable to load additional fields. Please try again.
-                        </FormMessage>
-                        <button
-                          type="button"
-                          className="btn btn-sm border-green text-green hover:bg-green-dark rounded-full bg-white normal-case hover:border-transparent hover:text-white"
-                          onClick={() => void refetchCustomFieldDefinitions()}
-                        >
-                          Retry
-                        </button>
-                      </div>
-                    ) : (
-                      <Controller
-                        control={control}
-                        name="customFields"
-                        render={({ field: { onChange, value } }) => (
-                          <CustomFields
-                            definitions={customFieldDefinitions}
-                            isLoading={customFieldDefinitionsIsLoading}
-                            values={
-                              value as
-                                | CustomFieldValueRequest[]
-                                | null
-                                | undefined
-                            }
-                            onChange={onChange}
-                            showErrors={isSubmitted}
-                          />
-                        )}
-                      />
-                    )}
-                  </div>
-                )}
-              </div>
+              {CUSTOM_FIELDS_ENABLED && (
+                <div
+                  className="bg-gray-light flex flex-col rounded-lg border-dotted px-8 py-4"
+                  style={{ animationDelay: "1.2s" }}
+                >
+                  {opportunityInfo && (
+                    <div className="flex w-full flex-col gap-2">
+                      {customFieldDefinitionsIsError ? (
+                        <div className="flex flex-col items-start gap-2">
+                          <FormMessage messageType={FormMessageType.Warning}>
+                            Unable to load additional fields. Please try again.
+                          </FormMessage>
+                          <button
+                            type="button"
+                            className="btn btn-sm border-green text-green hover:bg-green-dark rounded-full bg-white normal-case hover:border-transparent hover:text-white"
+                            onClick={() => void refetchCustomFieldDefinitions()}
+                          >
+                            Retry
+                          </button>
+                        </div>
+                      ) : (
+                        <Controller
+                          control={control}
+                          name="customFields"
+                          render={({ field: { onChange, value } }) => (
+                            <CustomFields
+                              definitions={customFieldDefinitions}
+                              isLoading={customFieldDefinitionsIsLoading}
+                              values={
+                                value as
+                                  | CustomFieldValueRequest[]
+                                  | null
+                                  | undefined
+                              }
+                              onChange={onChange}
+                              showErrors={isSubmitted}
+                            />
+                          )}
+                        />
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* FEEDBACK - CUSTOM EXPANDABLE SECTION */}
               <div

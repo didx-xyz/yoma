@@ -6,6 +6,7 @@ import type {
   SSISchemaEntityCustomField,
 } from "~/api/models/credential";
 import type { SelectOption, SelectOptionGroup } from "~/api/models/lookups";
+import { CUSTOM_FIELDS_ENABLED } from "~/lib/constants";
 import {
   byPresentationOrder,
   groupLabelOf,
@@ -89,7 +90,13 @@ const buildSections = (
         name: entity.name,
         options: [
           ...statics.filter((o) => !o.system).map((o) => o.option),
-          ...(entity.customFields ?? []).map(fromCustomField),
+          // Custom fields are only selectable as schema attributes while the framework is on.
+          // Discovery still returns them if the API has any; leaving the schema's *existing*
+          // mappings alone is deliberate — they are read back from the schema itself, and
+          // hiding a mapped attribute would silently drop it on the next save.
+          ...(CUSTOM_FIELDS_ENABLED
+            ? (entity.customFields ?? []).map(fromCustomField)
+            : []),
         ].sort(byPresentationOrder),
         // system properties carry no presentation metadata — they render in the credential's
         // fixed header — so the API's own order is kept

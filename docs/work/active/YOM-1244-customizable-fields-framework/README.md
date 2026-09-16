@@ -34,8 +34,8 @@ definitions to the BA-approved set (YOM-1264) without a code change.
 | [`YOM-1254-api-custom-fields-framework-for-opportunity-and-myopportunity/`](./YOM-1254-api-custom-fields-framework-for-opportunity-and-myopportunity/feature.md) | [YOM-1254](https://linear.app/didx/issue/YOM-1254) | api  | in-progress                                                                           |
 | [`YOM-1255-ui-dynamic-custom-fields-for-opportunities-and-completions/`](./YOM-1255-ui-dynamic-custom-fields-for-opportunities-and-completions/feature.md)       | [YOM-1255](https://linear.app/didx/issue/YOM-1255) | web  | in-progress                                                                           |
 | [`YOM-1260-ui-custom-field-filtering-for-opportunities-and-completions/`](./YOM-1260-ui-custom-field-filtering-for-opportunities-and-completions/feature.md)     | [YOM-1260](https://linear.app/didx/issue/YOM-1260) | web  | in-progress                                                                           |
-| [`YOM-1261-ui-manage-user-presets/`](./YOM-1261-ui-manage-user-presets/feature.md)                                                                             | [YOM-1261](https://linear.app/didx/issue/YOM-1261) | web  | in-progress — mocked; real persistence blocked                                        |
-| [`YOM-1262-ui-apply-user-presets-to-opportunity-discovery/`](./YOM-1262-ui-apply-user-presets-to-opportunity-discovery/feature.md)                             | [YOM-1262](https://linear.app/didx/issue/YOM-1262) | web  | in-progress — mocked; blocked on the presets API for live data                        |
+| [`YOM-1261-ui-manage-user-presets/`](./YOM-1261-ui-manage-user-presets/feature.md)                                                                               | [YOM-1261](https://linear.app/didx/issue/YOM-1261) | web  | in-progress — mocked; real persistence blocked                                        |
+| [`YOM-1262-ui-apply-user-presets-to-opportunity-discovery/`](./YOM-1262-ui-apply-user-presets-to-opportunity-discovery/feature.md)                               | [YOM-1262](https://linear.app/didx/issue/YOM-1262) | web  | in-progress — mocked; blocked on the presets API for live data                        |
 | [`YOM-1277-opportunity-credential-schemas-by-type-and-custom-fields/`](./YOM-1277-opportunity-credential-schemas-by-type-and-custom-fields/feature.md)           | [YOM-1277](https://linear.app/didx/issue/YOM-1277) | both | in-progress                                                                           |
 | [`YOM-1278-api-admin-credential-schema-management-by-type/`](./YOM-1278-api-admin-credential-schema-management-by-type/feature.md)                               | [YOM-1278](https://linear.app/didx/issue/YOM-1278) | api  | in-progress                                                                           |
 | [`YOM-1279-api-opportunity-management-credential-schema-selection/`](./YOM-1279-api-opportunity-management-credential-schema-selection/feature.md)               | [YOM-1279](https://linear.app/didx/issue/YOM-1279) | api  | review                                                                                |
@@ -82,6 +82,42 @@ framework/schema work; Jason owns Web implementation and regression checks.
 option value, group or opportunity type, anywhere. Phase-1 definitions are temporary scripted
 metadata that the BA will replace wholesale; anything referencing a `[Sample] …` field breaks
 on that swap. Every surface renders from the definitions the API returns.
+
+## Release kill-switch — read before touching any web surface
+
+**`CUSTOM_FIELDS_ENABLED` in `src/web/src/lib/constants.ts` is currently `false`** (2026-09-16).
+The branch ships a release _without_ this framework, so cash-out can go out while the framework
+waits on YOM-1264, YOM-1257/1258, and a live pass over credential schema create/update. Flip it to
+`true` to restore everything — nothing else needs changing, though it is a build-time constant, so
+it needs a rebuild rather than an env change.
+
+**The discovery redesign must not go live in this release.** It is off by the same flag, not by a
+separate one: `/opportunities/discover` 404s and its user-menu link is hidden. Cash-out is the only
+thing this release adds on top of `master`.
+
+It is wired at **chokepoints, not per surface**: both custom-field definition queries and the
+discovery `useTypeDefinitions` loop are disabled at source, and because every consumer already
+rendered nothing on an empty definition set, the whole UI collapses on its own. The two mock
+façades (`SCHEMA_ADMIN_MOCK_ENABLED`, `USER_PREFERENCES_MOCK_ENABLED`) are gated on it too, so no
+fixture or dev panel can serve — including on `dev.yoma.world`, the one place a mock reached a
+deployed build.
+
+**`/opportunities/discover` goes off entirely** — it is the preset-driven prototype, so the page
+404s and the user menu's "My preferences" link is hidden with it. `/opportunities` is untouched and
+remains the discovery surface for this release.
+
+Two things it does **not** do, both of which have bitten already — see the
+[handoff](./handoffs/2026-09-16-a.md) for detail:
+
+- **It does not protect stored custom-field values.** The save paths reconcile against the loaded
+  definitions, so with none loaded they submit an empty collection into a replacement-mode upsert.
+  On any environment that still has definitions and values seeded, editing an opportunity or
+  completion through the web deletes them.
+- **It does not remove the mocks.** They are still in the tree and still owed their removal before
+  the framework's own PR.
+
+When adding a gate: never write `...(CUSTOM_FIELDS_ENABLED ? [x] : [])` at module scope. It
+type-checks and compiles, then fails the production build with a bare-identifier `ReferenceError`.
 
 ## Shared API Contract
 
@@ -233,11 +269,11 @@ type-conditional groups with their own Group / SubGroup / SortOrder, and the cur
 architecture cannot absorb them. The discovery experience was therefore designed ahead of
 implementation.
 
-| Artefact | Location |
-| --- | --- |
-| Design canvas — 4 pages, 14 artboards, desktop and mobile | **Out of repo** (deliberately — too large to carry as session context). Supplied to build sessions as attached PNG exports |
-| Build brief for the repo session (`IMPLEMENTATION-PROMPT.md`) | **Out of repo**, pasted as the opening message of the build session |
-| Handoff | [`handoffs/2026-08-27-b.md`](./handoffs/2026-08-27-b.md) |
+| Artefact                                                      | Location                                                                                                                   |
+| ------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| Design canvas — 4 pages, 14 artboards, desktop and mobile     | **Out of repo** (deliberately — too large to carry as session context). Supplied to build sessions as attached PNG exports |
+| Build brief for the repo session (`IMPLEMENTATION-PROMPT.md`) | **Out of repo**, pasted as the opening message of the build session                                                        |
+| Handoff                                                       | [`handoffs/2026-08-27-b.md`](./handoffs/2026-08-27-b.md)                                                                   |
 
 Canvas page 1 is [YOM-1261](./YOM-1261-ui-manage-user-presets/feature.md). Pages 2 and 3 are
 [YOM-1262](./YOM-1262-ui-apply-user-presets-to-opportunity-discovery/feature.md). Page 4 — per-type
@@ -283,7 +319,7 @@ rather than papered over. `Start a business` has no agreed mapping and ships vis
 | Blocker                                                             | Severity | Note                                                                                                                                                                                                                                                                                                                                                                                                |
 | ------------------------------------------------------------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | YOM-1264 (BA/design) — final field definitions and User Presets     | High     | Everything shipped so far runs on seeded `[Sample] …` definitions                                                                                                                                                                                                                                                                                                                                   |
-| YOM-1257 / YOM-1258 (presets API)                                   | High     | YOM-1261 / YOM-1262 are **designed** (2026-08-27) but cannot be implemented — no preset model and no preset→filter mapping to build against                                                                                                                                                                                                                                                                                                                                                                    |
+| YOM-1257 / YOM-1258 (presets API)                                   | High     | YOM-1261 / YOM-1262 are **designed** (2026-08-27) but cannot be implemented — no preset model and no preset→filter mapping to build against                                                                                                                                                                                                                                                         |
 | YOM-1260 must land before the presets chain                         | Med      | Presets resolve to filter criteria                                                                                                                                                                                                                                                                                                                                                                  |
 | Credential provider (Aries CloudAPI) — schema create/update failing | Med      | **Narrowed 2026-08-18** (Jason): reads are serving again, so `GET /ssi/schema` and wallet retrieval work — YOM-1283 was verified live on that basis. Only schema **create/update** still fails, which is the one thing keeping YOM-1281 and YOM-1282 in review: YOM-1281 cannot exercise its mutations, and YOM-1282 cannot reach one real type-specific schema. Both stay mocked locally meanwhile |
 
@@ -309,7 +345,7 @@ flag it in a handoff here before merging.
 [`handoffs/2026-08-27-c.md`](./handoffs/2026-08-27-c.md)):**
 
 1. `/opportunity/search` ordering: `OrderInstructions` is internal (always DateCreated desc), so
-   the designed *Ending soonest* / *Most ZLTO* sorts ship disabled. Ask: a public sort enum.
+   the designed _Ending soonest_ / _Most ZLTO_ sorts ship disabled. Ask: a public sort enum.
 2. The commitment **interval** filter excludes opportunities with no commitment set; the BA preset
    sheet says they must be **included**. One of the two has to move.
 3. `TotalCountOnly` is internal — the web live count fetches `pageSize: 1` instead. Nice-to-have.
@@ -320,7 +356,7 @@ flag it in a handoff here before merging.
 [`handoffs/2026-09-05-a.md`](./handoffs/2026-09-05-a.md)):
 
 5. **A custom-field definition should say which type owns it.** `GET
-   /opportunity/custom/field/definition?types={Type}` returns the generic definitions plus that
+/opportunity/custom/field/definition?types={Type}` returns the generic definitions plus that
    type's own, with nothing distinguishing them, so a youth selecting two types was shown the
    generic set twice. Web now infers it by intersecting the keys returned for each selected type
    and renders the intersection once — correct in practice, but inference: a definition that is

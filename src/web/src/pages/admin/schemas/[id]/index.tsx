@@ -51,7 +51,7 @@ import {
   SchemaAttributesEdit,
   type SchemaRetiredAttribute,
 } from "~/components/Schema/SchemaAttributesEdit";
-import { ROLE_ADMIN, THEME_BLUE } from "~/lib/constants";
+import { CUSTOM_FIELDS_ENABLED, ROLE_ADMIN, THEME_BLUE } from "~/lib/constants";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import { config } from "~/lib/react-query-config";
 import { analytics } from "~/lib/analytics";
@@ -407,8 +407,12 @@ const SchemaCreateEdit: NextPageWithLayout<{
   const watchedSchemaType = schemaTypes?.find(
     (type) => type.id === watchedTypeId,
   );
-  // the type context is defined for Opportunity schemas only
-  const supportsTypeContext = watchedSchemaType?.type === "Opportunity";
+  // The type context is defined for Opportunity schemas only, and is itself part of the
+  // custom-fields framework — a type-scoped schema exists to carry a type's custom fields. With
+  // the framework off the selector is hidden and every schema created here is generic, which is
+  // what the pre-YOM-1281 page did. The effect below then clears the value on create.
+  const supportsTypeContext =
+    CUSTOM_FIELDS_ENABLED && watchedSchemaType?.type === "Opportunity";
 
   useEffect(() => {
     if (!isCreate || supportsTypeContext) return;
