@@ -33,6 +33,8 @@ namespace Yoma.Core.Domain.Payout.Services
   {
     #region Class Variables
     private readonly ILogger<PayoutService> _logger;
+    private readonly AppSettings _appSettings;
+    private readonly IEnvironmentProvider _environmentProvider;
     private readonly TimeSpan _payoutLockDuration;
     private readonly TimeSpan _payoutRewardReservationExpiration;
     private readonly IDistributedLockService _distributedLockService;
@@ -61,6 +63,7 @@ namespace Yoma.Core.Domain.Payout.Services
     public PayoutService(
       ILogger<PayoutService> logger,
       IOptions<AppSettings> appSettings,
+      IEnvironmentProvider environmentProvider,
       IDistributedLockService distributedLockService,
       IUserService userService,
       ICountryService countryService,
@@ -78,6 +81,8 @@ namespace Yoma.Core.Domain.Payout.Services
     {
       _logger = logger ?? throw new ArgumentNullException(nameof(logger));
       var settings = (appSettings ?? throw new ArgumentNullException(nameof(appSettings))).Value;
+      _appSettings = settings;
+      _environmentProvider = environmentProvider ?? throw new ArgumentNullException(nameof(environmentProvider));
       if (settings.DistributedLockPayoutDurationInSeconds <= 0)
         throw new InvalidOperationException($"{nameof(AppSettings)}:{nameof(settings.DistributedLockPayoutDurationInSeconds)} must be greater than zero");
       _payoutLockDuration = TimeSpan.FromSeconds(settings.DistributedLockPayoutDurationInSeconds);
@@ -102,6 +107,8 @@ namespace Yoma.Core.Domain.Payout.Services
     #endregion
 
     #region Public Members
+
+    public bool Enabled => _appSettings.PayoutEnabledEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment);
 
     public async Task<List<Domain.Lookups.Models.Country>?> ListCountries()
     {
@@ -129,6 +136,9 @@ namespace Yoma.Core.Domain.Payout.Services
 
     public async Task<PayoutTransaction> Payout(Guid userId, decimal amount)
     {
+      if (!Enabled)
+        throw new ValidationException("Cash-out is not available");
+
       var user = GetUser(userId);
       ValidateUserProfileForPayout(user);
       await ValidateUserCountryForPayout(user);
@@ -140,6 +150,9 @@ namespace Yoma.Core.Domain.Payout.Services
 
     public async Task<PayoutSession> PayoutRewards(Guid userId, decimal amount)
     {
+      if (!Enabled)
+        throw new ValidationException("Cash-out is not available");
+
       if (userId == Guid.Empty)
         throw new ArgumentNullException(nameof(userId));
 

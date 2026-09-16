@@ -51,6 +51,7 @@ payout, enforce one active payout per user, and reconcile terminal outcomes idem
 
 ## Decisions
 
+- 2026-09-16: `AppSettings:PayoutEnabledEnvironments` uses the existing comma-separated environment convention, configured as `Staging, Production`. Profile `payout.enabled` reports new-initiation enablement. Both public payout initiation paths reject disabled environments before writes/reservations with HTTP 400. Existing payout resume, reconciliation, webhooks, terminal outcomes and notifications remain operational. Jason must gate new cash-out UI actions independently from existing active-payout rendering. Production credentials and rollout verification remain prerequisites; this flag does not select provider endpoints.
 - 2026-09-15 wording review: shorten the Cash-outs preference description to "Updates on your cash-outs". Seed-only change; already-migrated Dev/local databases retain the previous wording until reset/reseed. No preference or notification behavior changes.
 
 - 2026-09-15 final review: payout preference uses a dedicated migration seed helper. Actual SendGrid

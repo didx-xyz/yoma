@@ -6,6 +6,8 @@ namespace Yoma.Core.Domain.Payout.Interfaces
 {
   public interface IPayoutService
   {
+    bool Enabled { get; }
+
     Task<List<Country>?> ListCountries();
 
     Task<PayoutCountryAvailability> IsCountrySupported(Guid? countryId);

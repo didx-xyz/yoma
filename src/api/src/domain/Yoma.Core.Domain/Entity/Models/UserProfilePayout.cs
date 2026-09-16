@@ -6,6 +6,12 @@ namespace Yoma.Core.Domain.Entity.Models
   public sealed class UserProfilePayout
   {
     /// <summary>
+    /// New payouts are enabled in this environment. Independent of country/provider availability.
+    /// When false, existing active payouts may still resume and settle.
+    /// </summary>
+    public bool Enabled { get; set; }
+
+    /// <summary>
     /// Indicates whether the user's profile country is currently supported and whether the provider's
     /// live country availability could be determined. This controls new payout initiation only; an active
     /// payout remains resumable regardless of country availability.

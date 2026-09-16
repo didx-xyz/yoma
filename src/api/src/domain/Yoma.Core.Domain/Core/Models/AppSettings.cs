@@ -81,6 +81,10 @@ namespace Yoma.Core.Domain.Core.Models
 
     public Environment SendGridEnabledEnvironmentsAsEnum => ParseEnvironmentInput(SendGridEnabledEnvironments);
 
+    public string PayoutEnabledEnvironments { get; set; } = null!;
+
+    public Environment PayoutEnabledEnvironmentsAsEnum => ParseEnvironmentInput(PayoutEnabledEnvironments);
+
     public string SentryEnabledEnvironments { get; set; } = null!;
 
     public Environment SentryEnabledEnvironmentsAsEnum => ParseEnvironmentInput(SentryEnabledEnvironments);

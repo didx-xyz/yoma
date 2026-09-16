@@ -349,6 +349,7 @@ namespace Yoma.Core.Domain.Entity.Services
       var payout = _payoutTransactionService.GetByUserIdOrNull(result.Id);
       result.Payout = new UserProfilePayout
       {
+        Enabled = _payoutService.Enabled,
         Status = payout?.Status,
         Amount = payout?.Amount,
         Currency = payout == null ? null : Enum.Parse<Currency>(payout.Currency, true),

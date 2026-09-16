@@ -1,5 +1,16 @@
 # Epic: YOM-1051 — ZLTO Payout (Treasury, Reward Pools and Youth Cash-Out)
 
+## Environment gate — 2026-09-16
+
+`AppSettings:PayoutEnabledEnvironments` is configured as `Staging, Production`. New profile field
+`payout.enabled` controls NEW cash-out actions only. Jason: hide/disable initiation in the Marketplace
+and wallet when false, but retain active-payout status/resume and terminal-outcome handling. Country,
+wallet and balance checks still apply when true. API initiation independently enforces the flag.
+Existing reconciliation and webhook processing remain enabled. See the
+[API/UI handoff](./YOM-1057-api-payout-domain-and-rewards-integration/handoffs/2026-09-16-a.md).
+Production still requires its own correct credentials/endpoints before deployment; inclusion in this
+list is not a readiness check. No Helm secrets were edited for this change.
+
 ## Meta
 
 - **Epic**: [YOM-1051](https://linear.app/didx/issue/YOM-1051)
