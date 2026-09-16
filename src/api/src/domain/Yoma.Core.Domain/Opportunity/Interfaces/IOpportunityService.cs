@@ -44,6 +44,8 @@ namespace Yoma.Core.Domain.Opportunity.Interfaces
 
     OpportunitySearchResults Search(OpportunitySearchFilterAdmin filter, bool ensureOrganizationAuthorization);
 
+    OpportunitySearchResults Search(OpportunitySearchFilterAdmin filter, bool ensureOrganizationAuthorization, bool hydratePageSeparately);
+
     Task<CSVImportResult> ImportFromCSV(IFormFile file, Guid organizationId, bool ensureOrganizationAuthorization, bool? validateOnly = null);
 
     Task<Models.Opportunity> Create(OpportunityRequestCreate request, OpportunityUpsertOptions options);

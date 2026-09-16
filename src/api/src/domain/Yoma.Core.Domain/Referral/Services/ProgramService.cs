@@ -305,13 +305,6 @@ namespace Yoma.Core.Domain.Referral.Services
           || (includesWorldwide && !queryProgramCountries.Any(programCountry => programCountry.ProgramId == program.Id)));
       }
 
-      //valueContains
-      if (!string.IsNullOrEmpty(filter.ValueContains))
-      {
-        filter.ValueContains = filter.ValueContains.Trim();
-        query = _programRepository.Contains(query, filter.ValueContains);
-      }
-
       if (filter.PublishedStates != null)
       {
         var statusActiveId = _programStatusService.GetByName(ProgramStatus.Active.ToString()).Id;
@@ -371,6 +364,16 @@ namespace Yoma.Core.Domain.Referral.Services
         query = query.Where(o => o.MultipleLinksAllowed || !queryLinks.Any(l => l.ProgramId == o.Id && l.UserId == filter.UserIdReferrer.Value && l.StatusId == statusActiveId));
       }
 
+      // Recheck non-text filters during hydration, including authorization and visibility guards.
+      var hydrationQuery = query;
+
+      //valueContains
+      if (!string.IsNullOrEmpty(filter.ValueContains))
+      {
+        filter.ValueContains = filter.ValueContains.Trim();
+        query = _programRepository.Contains(query, filter.ValueContains);
+      }
+
       var results = new ProgramSearchResults();
 
       if (filter.TotalCountOnly)
@@ -381,13 +384,7 @@ namespace Yoma.Core.Domain.Referral.Services
 
       query = query.OrderBy(o => o.Name).ThenBy(o => o.Id);
 
-      if (filter.PaginationEnabled)
-      {
-        results.TotalCount = query.Count();
-        query = query.Skip((filter.PageNumber.Value - 1) * filter.PageSize.Value).Take(filter.PageSize.Value);
-      }
-
-      results.Items = [.. query];
+      (results.TotalCount, results.Items) = query.ToPageWithChildren(filter, o => o.Id, hydrationQuery);
       results.Items.ForEach(o => ParseComputed(o));
 
       return results;

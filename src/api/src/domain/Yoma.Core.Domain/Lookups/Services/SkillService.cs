@@ -124,7 +124,7 @@ namespace Yoma.Core.Domain.Lookups.Services
       if (filter.PaginationEnabled)
       {
         results.TotalCount = query.Count();
-        query = query.Skip((filter.PageNumber.Value - 1) * filter.PageSize.Value).Take(filter.PageSize.Value);
+        query = query.Page(filter);
       }
 
       results.Items = [.. query];

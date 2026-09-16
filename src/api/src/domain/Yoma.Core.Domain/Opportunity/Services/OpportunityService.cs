@@ -338,7 +338,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       if (filter.PaginationEnabled)
       {
         results.TotalCount = query.Count();
-        query = query.Skip((filter.PageNumber.Value - 1) * filter.PageSize.Value).Take(filter.PageSize.Value);
+        query = query.Page(filter);
       }
       results.Items = [.. query.ToList().Select(o => o.ToOpportunityItem())];
 
@@ -750,6 +750,11 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
     public OpportunitySearchResults Search(OpportunitySearchFilterAdmin filter, bool ensureOrganizationAuthorization)
     {
+      return Search(filter, ensureOrganizationAuthorization, hydratePageSeparately: true);
+    }
+
+    public OpportunitySearchResults Search(OpportunitySearchFilterAdmin filter, bool ensureOrganizationAuthorization, bool hydratePageSeparately)
+    {
       ArgumentNullException.ThrowIfNull(filter, nameof(filter));
 
       ParseOpportunitySearchFilterCommitmentInterval(filter);
@@ -966,37 +971,45 @@ namespace Yoma.Core.Domain.Opportunity.Services
       if (filter.ExcludeHidden)
         query = query.Where(o => !o.Hidden.HasValue || o.Hidden == false);
 
+      // Recheck non-text filters during hydration, including authorization and visibility guards.
+      // Keep custom-field constraints on both page selection and hydration.
+      query = _opportunityRepository.WhereCustomFields(query, filter.CustomFields);
+      var hydrationQuery = query;
+
       //valueContains (includes organizations, types, categories, opportunities and skills)
       if (!string.IsNullOrEmpty(filter.ValueContains))
       {
-        var predicate = PredicateBuilder.False<Models.Opportunity>();
+        //Keep text and related-entity matches in separate ID queries so cross-table OR branches
+        //do not prevent use of the text indexes. Union preserves OR semantics without duplicate results.
+        var matchedOpportunityIds = _opportunityRepository.Contains(_opportunityRepository.Query(false), filter.ValueContains)
+          .Select(o => o.Id);
 
         //organizations
         var matchedOrganizationIds = _organizationService.Contains(filter.ValueContains, false, false).Select(o => o.Id).Distinct().ToList();
-        predicate = predicate.Or(o => matchedOrganizationIds.Contains(o.OrganizationId));
+        if (matchedOrganizationIds.Count != 0)
+          matchedOpportunityIds = matchedOpportunityIds.Union(_opportunityRepository.Query(false)
+            .Where(o => matchedOrganizationIds.Contains(o.OrganizationId)).Select(o => o.Id));
 
         //types
         var matchedTypeIds = _opportunityTypeService.Contains(filter.ValueContains).Select(o => o.Id).Distinct().ToList();
-        predicate = predicate.Or(o => matchedTypeIds.Contains(o.TypeId));
+        if (matchedTypeIds.Count != 0)
+          matchedOpportunityIds = matchedOpportunityIds.Union(_opportunityRepository.Query(false)
+            .Where(o => matchedTypeIds.Contains(o.TypeId)).Select(o => o.Id));
 
         //categories
         var matchedCategoryIds = _opportunityCategoryService.Contains(filter.ValueContains).Select(o => o.Id).Distinct().ToList();
-        predicate = predicate.Or(opportunity => _opportunityCategoryRepository.Query().Any(
-           opportunityCategory => matchedCategoryIds.Contains(opportunityCategory.CategoryId) && opportunityCategory.OpportunityId == opportunity.Id));
-
-        //opportunities
-        predicate = _opportunityRepository.Contains(predicate, filter.ValueContains);
+        if (matchedCategoryIds.Count != 0)
+          matchedOpportunityIds = matchedOpportunityIds.Union(_opportunityCategoryRepository.Query()
+            .Where(o => matchedCategoryIds.Contains(o.CategoryId)).Select(o => o.OpportunityId));
 
         //skills
         var matchedSkillIds = _skillService.Contains(filter.ValueContains).Select(o => o.Id).Distinct().ToList();
-        predicate = predicate.Or(opportunity => _opportunitySkillRepository.Query().Any(
-           opportunitySkill => matchedSkillIds.Contains(opportunitySkill.SkillId) && opportunitySkill.OpportunityId == opportunity.Id));
+        if (matchedSkillIds.Count != 0)
+          matchedOpportunityIds = matchedOpportunityIds.Union(_opportunitySkillRepository.Query()
+            .Where(o => matchedSkillIds.Contains(o.SkillId)).Select(o => o.OpportunityId));
 
-        query = query.Where(predicate);
+        query = query.Where(o => matchedOpportunityIds.Contains(o.Id));
       }
-
-      //custom fields
-      query = _opportunityRepository.WhereCustomFields(query, filter.CustomFields);
 
       var result = new OpportunitySearchResults();
 
@@ -1013,13 +1026,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         query = query.ApplyFiltersAndOrdering(filter.OrderInstructions);
 
       //pagination
-      if (filter.PaginationEnabled)
-      {
-        result.TotalCount = query.Count();
-        query = query.Skip((filter.PageNumber.Value - 1) * filter.PageSize.Value).Take(filter.PageSize.Value);
-      }
-
-      result.Items = [.. query];
+      (result.TotalCount, result.Items) = query.ToPageWithChildren(filter, o => o.Id, hydrationQuery, hydratePageSeparately);
 
       result.Items.ForEach(o => ParseComputed(o));
 

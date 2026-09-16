@@ -79,7 +79,7 @@ namespace Yoma.Core.Infrastructure.JobJack.Client
       if (filter.PaginationEnabled)
       {
         result.TotalCount = query.Count();
-        query = query.Skip((filter.PageNumber.Value - 1) * filter.PageSize.Value).Take(filter.PageSize.Value);
+        query = query.Page(filter);
       }
 
       result.Items = [.. query.ToList().Select(ToOpportunity)];

@@ -260,7 +260,7 @@ namespace Yoma.Core.Domain.Entity.Services
       if (filter.PaginationEnabled)
       {
         results.TotalCount = query.Count();
-        query = query.Skip((filter.PageNumber.Value - 1) * filter.PageSize.Value).Take(filter.PageSize.Value);
+        query = query.Page(filter);
       }
 
       var resultsInternal = query.ToList();

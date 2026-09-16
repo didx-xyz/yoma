@@ -41,6 +41,9 @@ namespace Yoma.Core.Domain.Entity.Events
         };
 
         OpportunitySearchResults? result = null;
+        // These results drive events, not browsing. Keep the original filtered paging path:
+        // separate hydration could publish a row whose status/organization changed after ID selection.
+        // Do not hold a new snapshot transaction across mediator/provider calls in this loop.
         do
         {
           switch (notification.Entity.Status)
@@ -50,7 +53,7 @@ namespace Yoma.Core.Domain.Entity.Events
               //raise update events for all active opportunities
               filter.Statuses = [Status.Active];
 
-              result = _opportunityService.Search(filter, false);
+              result = _opportunityService.Search(filter, false, hydratePageSeparately: false);
 
               if (result.Items == null || result.Items.Count == 0) return;
 
@@ -63,7 +66,7 @@ namespace Yoma.Core.Domain.Entity.Events
               //raise delete events for all active, inactive and expired opportunities
               filter.Statuses = [Status.Active, Status.Inactive, Status.Expired];
 
-              result = _opportunityService.Search(filter, false);
+              result = _opportunityService.Search(filter, false, hydratePageSeparately: false);
               if (result.Items == null || result.Items.Count == 0) return;
 
               foreach (var item in result.Items)

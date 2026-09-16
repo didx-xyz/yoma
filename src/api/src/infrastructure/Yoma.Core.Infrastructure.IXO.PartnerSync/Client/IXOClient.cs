@@ -2,6 +2,7 @@ using FluentValidation;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Yoma.Core.Domain.Core;
+using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Lookups.Interfaces;
@@ -105,9 +106,7 @@ namespace Yoma.Core.Infrastructure.IXO.PartnerSync.Client
       if (filter.PaginationEnabled)
       {
         result.TotalCount = query.Count();
-        query = query
-          .Skip((filter.PageNumber!.Value - 1) * filter.PageSize!.Value)
-          .Take(filter.PageSize.Value);
+        query = query.Page(filter);
       }
 
       result.Items = [.. query.ToList().Select(ToSyncItem)];

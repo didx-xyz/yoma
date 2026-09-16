@@ -46,8 +46,7 @@ namespace Yoma.Core.Infrastructure.Substack.Repositories
 
     public IQueryable<NewsArticle> Contains(IQueryable<NewsArticle> query, string value)
     {
-      return query.Where(o => EF.Functions.ILike(o.Title, $"%{value}%")
-        || EF.Functions.ToTsVector("english", o.Description).Matches(value));
+      return this.WhereContains(query, value);
     }
 
     public async Task<NewsArticle> Create(NewsArticle item)
