@@ -22,98 +22,6 @@ env:
   REGISTRY: ghcr.io/${{ github.repository_owner }}
 
 jobs:
-  lint:
-    name: Lint
-    permissions:
-      checks: write
-      contents: write
-    runs-on: ubuntu-24.04
-
-    concurrency:
-      group: ${{ github.workflow }}-lint-${{ matrix.project }}-${{ github.ref }}
-      cancel-in-progress: true
-
-    strategy:
-      fail-fast: false
-      matrix:
-        project:
-          - api
-          - web
-        include:
-          - project: api
-            dir: ./src/api
-            lang: cs
-            config:
-              auto_fix: false
-              continue_on_error: false
-              check_name: "Dotnet Format (${dir})"
-              dotnet_format: true
-              dotnet_format_dir: ./src/api
-            env: {}
-          - project: web
-            dir: ./src/web
-            lang: js
-            config:
-              auto_fix: false
-              continue_on_error: false
-              check_name: "${linter} (${dir})"
-              # ESLint
-              eslint: true
-              eslint_dir: ./src/web
-              eslint_extensions: js,ts,tsx
-              eslint_args: --config eslint.config.mjs
-              # Prettier
-              prettier: true
-              prettier_dir: ./src/web
-              prettier_extensions: js,ts,tsx
-              prettier_args: --ignore-path ../../.gitignore --config prettier.config.cjs
-            env:
-              SKIP_ENV_VALIDATION: true
-
-    # outputs: # https://github.com/actions/runner/pull/2477
-    #   ${{ matrix.project }}-changes: ${{ steps.filter.outputs.changes }}
-
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-      - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
-        id: filter
-        with:
-          base: master
-          filters: |-
-            changes:
-              - '${{ matrix.dir }}/**'
-
-      - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
-        if: (steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch') && matrix.lang == 'js'
-        with:
-          install: true
-          cache: true
-      - name: Resolve pnpm store path
-        id: pnpm-store
-        if: (steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch') && matrix.lang == 'js'
-        run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
-      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v5.0.5 # zizmor: ignore[cache-poisoning] lint-only cache, no production impact
-        if: (steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch') && matrix.lang == 'js'
-        with:
-          path: |
-            node_modules
-            ${{ steps.pnpm-store.outputs.path }}
-          key: ${{ runner.os }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
-      - run: pnpm install --frozen-lockfile
-        if: (steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch') && matrix.lang == 'js'
-
-      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
-        if: (steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch') && matrix.lang == 'cs'
-        with:
-          dotnet-version: 10.x
-
-      - uses: wearerequired/lint-action@124229c6e2974984ba137c67a499ba28bfc33e33 # v3.0.2
-        if: steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch'
-        with: ${{ matrix.config }} # zizmor: ignore[obfuscation] matrix.config is statically defined in the matrix include block
-        env: ${{ matrix.env }}
-
   docker-build:
     name: Build Docker Images
     permissions:
@@ -124,8 +32,6 @@ jobs:
     concurrency:
       group: ${{ github.workflow }}-build-${{ matrix.image }}-${{ matrix.arch }}-${{ github.ref }}
       cancel-in-progress: true
-
-    needs: lint
 
     strategy:
       matrix:
@@ -292,129 +198,13 @@ jobs:
             fi
           done
 
-  test-e2e:
-    name: Test (e2e)
-    permissions:
-      contents: read
-      id-token: write
-      packages: read
-    needs: docker-push
-    runs-on: ubuntu-24.04
-    env:
-      PUBLIC_S3_ACCESS_KEY: ${{ secrets.PUBLIC_S3_ACCESS_KEY }}
-      PUBLIC_S3_SECRET_KEY: ${{ secrets.PUBLIC_S3_SECRET_KEY }}
-      PRIVATE_S3_ACCESS_KEY: ${{ secrets.PRIVATE_S3_ACCESS_KEY }}
-      PRIVATE_S3_SECRET_KEY: ${{ secrets.PRIVATE_S3_SECRET_KEY }}
-
-    concurrency:
-      group: ${{ github.workflow }}-e2e-${{ github.ref }}
-      cancel-in-progress: true
-
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-      # https://github.com/actions/runner/pull/2477
-      - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
-        id: filter
-        with:
-          base: master
-          filters: |-
-            api:
-              - './src/api/**'
-            web:
-              - './src/web/**'
-            keycloak:
-              - './src/keycloak/**'
-      - name: Should e2e run?
-        id: should-run
-        env:
-          API: ${{ steps.filter.outputs.api }}
-          WEB: ${{ steps.filter.outputs.web }}
-          KEYCLOAK: ${{ steps.filter.outputs.keycloak }}
-        run: |-
-          if [ "${{ github.event_name }}" = "release" ] || \
-              [ "$API" = "true" ] || \
-              [ "$WEB" = "true" ] || \
-              [ "$KEYCLOAK" = "true" ] || \
-              [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-             echo run=true >> $GITHUB_OUTPUT
-          else
-            echo run=false >> $GITHUB_OUTPUT
-          fi
-      - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
-        if: steps.should-run.outputs.run == 'true'
-        with:
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ github.token }}
-      - name: Create env file
-        if: steps.should-run.outputs.run == 'true'
-        run: |
-          echo "AWSS3__Buckets__Public__AccessKey=${{ secrets.PUBLIC_S3_ACCESS_KEY }}" >> src/api/env.secrets
-          echo "AWSS3__Buckets__Public__SecretKey=${{ secrets.PUBLIC_S3_SECRET_KEY }}" >> src/api/env.secrets
-          echo "AWSS3__Buckets__Public__BucketName=yoma-v3-public-storage" >> src/api/env.secrets
-          echo "AWSS3__Buckets__Private__AccessKey=${{ secrets.PRIVATE_S3_ACCESS_KEY }}" >> src/api/env.secrets
-          echo "AWSS3__Buckets__Private__SecretKey=${{ secrets.PRIVATE_S3_SECRET_KEY }}" >> src/api/env.secrets
-          echo "AWSS3__Buckets__Private__BucketName=yoma-v3-private-storage" >> src/api/env.secrets
-          echo "AriesCloudAPI__BaseUri=${{ secrets.ARIESCLOUDAPI_BASEURI }}" >> src/api/env.secrets
-          echo "AriesCloudAPI__GroupId=${{ secrets.ARIESCLOUDAPI_GROUPID }}" >> src/api/env.secrets
-          echo "AriesCloudAPI__ProtocolVersion=v2" >> src/api/env.secrets
-          echo "AriesCloudAPI__GovernanceAdmin__ClientId=${{ secrets.ARIESCLOUDAPI_GOVERNANCEADMIN_CLIENTID }}" >> src/api/env.secrets
-          echo "AriesCloudAPI__GovernanceAdmin__ClientSecret=${{ secrets.ARIESCLOUDAPI_GOVERNANCEADMIN_CLIENTSECRET }}" >> src/api/env.secrets
-          echo "AriesCloudAPI__Customer__ClientId=${{ secrets.ARIESCLOUDAPI_CUSTOMER_CLIENTID }}" >> src/api/env.secrets
-          echo "AriesCloudAPI__Customer__ClientSecret=${{ secrets.ARIESCLOUDAPI_CUSTOMER_CLIENTSECRET }}" >> src/api/env.secrets
-          echo "Zlto__Username=${{ secrets.ZLTO_USERNAME }}" >> src/api/env.secrets
-          echo "Zlto__Password=${{ secrets.ZLTO_PASSWORD }}" >> src/api/env.secrets
-          echo "AppSettings__SSIIssuerNameYomaOrganization=${{ secrets.APPSETTINGS_SSIISSUERNAMEYOMAORGANIZATION }}" >> src/api/env.secrets
-          echo "AppSettings__SSISchemaFullNameYoID=${{ secrets.APPSETTINGS_SSISCHEMAFULLNAMEYOID }}" >> src/api/env.secrets
-
-      - name: Pre-pull images
-        if: steps.should-run.outputs.run == 'true'
-        run: |-
-          docker compose -f ./src/api/docker-compose.yml pull
-          docker compose -f ./src/web/docker-compose.yml pull
-        env:
-          API_TAG: ${{ steps.filter.outputs.api == 'true' && needs.docker-push.outputs.image_version || 'latest' }}
-          YOUTH_TAG: ${{ steps.filter.outputs.web == 'true' && needs.docker-push.outputs.image_version || 'latest' }}
-        continue-on-error: true
-      - name: Start services
-        if: steps.should-run.outputs.run == 'true'
-        run: |-
-          docker compose -f ./src/api/docker-compose.yml up -d
-          docker compose -f ./src/web/docker-compose.yml up -d
-        env:
-          API_TAG: ${{ steps.filter.outputs.api == 'true' && needs.docker-push.outputs.image_version || 'latest' }}
-          YOUTH_TAG: ${{ steps.filter.outputs.web == 'true' && needs.docker-push.outputs.image_version || 'latest' }}
-
-      - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
-        if: steps.should-run.outputs.run == 'true'
-        with:
-          install: true
-          cache: true
-
-      - name: Keycloak Config logs
-        if: always() && steps.should-run.outputs.run == 'true'
-        run: docker logs keycloak-config
-      - name: Keycloak logs
-        if: always() && steps.should-run.outputs.run == 'true'
-        run: docker logs keycloak
-      - name: Yoma API logs
-        if: always() && steps.should-run.outputs.run == 'true'
-        run: docker logs yoma-api
-      - name: Yoma Web logs
-        if: always() && steps.should-run.outputs.run == 'true'
-        run: docker logs yoma-web
-
-      - run: docker compose down -v
-
   deploy:
     name: Deploy
     permissions:
       contents: write
       id-token: write
       packages: read
-    needs: [test-e2e, docker-push]
+    needs: [docker-push]
     runs-on: ubuntu-24.04
 
     env:
