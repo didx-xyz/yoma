@@ -36,7 +36,9 @@ namespace Yoma.Core.Test.Core
       };
       var entities = users.Select((user, i) => new PayoutEntity
       {
-        Id = Id(11 + i), UserId = user.Id, User = user,
+        Id = Id(11 + i),
+        UserId = user.Id,
+        User = user,
         TransactionId = i == 3 ? "MATCH%_\\" : null,
         ErrorReason = i == 4 ? "MATCH%_\\" : null,
         Amount = i + 1
@@ -45,11 +47,15 @@ namespace Yoma.Core.Test.Core
       context.PayoutTransaction = Set(entities);
       var items = entities.Select(o => new PayoutTransaction
       {
-        Id = o.Id, UserId = o.UserId, Amount = o.Amount,
+        Id = o.Id,
+        UserId = o.UserId,
+        Amount = o.Amount,
         Username = o.User.Email ?? o.User.PhoneNumber ?? string.Empty,
-        UserEmail = o.User.Email, UserPhoneNumber = o.User.PhoneNumber,
+        UserEmail = o.User.Email,
+        UserPhoneNumber = o.User.PhoneNumber,
         UserDisplayName = o.User.DisplayName ?? o.User.Email ?? o.User.PhoneNumber ?? string.Empty,
-        TransactionId = o.TransactionId, ErrorReason = o.ErrorReason
+        TransactionId = o.TransactionId,
+        ErrorReason = o.ErrorReason
       }).AsQueryable();
       var repository = new PayoutTransactionRepository(context);
       var lower = value.ToLower();
