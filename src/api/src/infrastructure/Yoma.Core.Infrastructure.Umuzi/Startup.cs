@@ -57,7 +57,7 @@ namespace Yoma.Core.Infrastructure.Umuzi
       services.AddScoped<IOpportunityCatalogueBackgroundService, OpportunityCatalogueBackgroundService>();
 
       // clients
-      services.AddKeyedScoped<ISyncProviderClientFactory<ISyncProviderClientPullEntity<Domain.Opportunity.Models.Opportunity>>, UmuziClientFactory>(SyncPartner.Umuzi);
+      services.AddKeyedScoped<ISyncProviderClientFactory<ISyncProviderClientPullEntity<Domain.Opportunity.Models.OpportunityRequestCreate>>, UmuziClientFactory>(SyncPartner.Umuzi);
       services.AddKeyedScoped<ISyncProviderClientFactory<ISyncProviderClientPullVerification>, UmuziClientFactory>(SyncPartner.Umuzi);
       services.AddKeyedScoped<ISyncProviderClientFactory<ISyncProviderClientUserAuthentication>, UmuziClientFactory>(SyncPartner.Umuzi);
     }

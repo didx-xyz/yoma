@@ -13,16 +13,16 @@ namespace Yoma.Core.Infrastructure.Umuzi.Client
   public sealed partial class UmuziClient
   {
     #region Private Members
-    private SyncItemEntity<Domain.Opportunity.Models.Opportunity> ToSyncItem(Opportunity cacheItem)
+    private SyncItemEntity<Domain.Opportunity.Models.OpportunityRequestCreate> ToSyncItem(Opportunity cacheItem)
     {
       // Tombstones carry identity only. Removed upstream records may contain incomplete
       // metadata; deletion must not depend on resolving obsolete lookup values.
       if (cacheItem.Deleted == true)
-        return new SyncItemEntity<Domain.Opportunity.Models.Opportunity>
+        return new SyncItemEntity<Domain.Opportunity.Models.OpportunityRequestCreate>
         {
           ExternalId = cacheItem.ExternalId,
           Deleted = true,
-          Item = new Domain.Opportunity.Models.Opportunity { Status = Status.Deleted }
+          Item = new Domain.Opportunity.Models.OpportunityRequestCreate()
         };
 
       if (_logger.IsEnabled(LogLevel.Debug))
@@ -54,38 +54,32 @@ namespace Yoma.Core.Infrastructure.Umuzi.Client
 
       var keywords = GetKeywords(item);
 
-      var result = new Domain.Opportunity.Models.Opportunity
+      var result = new Domain.Opportunity.Models.OpportunityRequestCreate
       {
         Title = title,
         Description = description,
         TypeId = opportunityType.Id,
-        Type = opportunityType.Name,
         Summary = summary,
         URL = GetRequiredValue(item.URL, "url", item.ExternalId),
         OrganizationId = GetOrganizationId(),
-        OrganizationName = _options.OrganizationName,
         DateStart = item.StartDate,
         DateEnd = item.EndDate,
-        Status = deleted ? Status.Deleted : Status.Active,
+        PostAsActive = !deleted,
         VerificationEnabled = true,
         VerificationMethod = VerificationMethod.Automatic,
         VerificationTypes = null,
         ParticipantLimit = null,
         ZltoReward = null,
-        YomaReward = null,
         ZltoRewardPool = null,
-        YomaRewardPool = null,
         CredentialIssuanceEnabled = true,
         SSISchemaName = SSISSchemaHelper.ToFullName(SchemaType.Opportunity, "Default"),
-        Skills = skills,
+        Skills = skills?.Select(o => o.Id).ToList(),
         ShareWithPartners = false,
         Hidden = false,
-        Featured = false,
-        Published = true,
         Keywords = keywords,
-        Categories = categories,
-        Countries = countries,
-        Languages = languages
+        Categories = categories.Select(o => o.Id).ToList(),
+        Countries = countries.Select(o => o.Id).ToList(),
+        Languages = languages.Select(o => o.Id).ToList()
       };
 
       if (type != Domain.Opportunity.Type.Job)
@@ -100,7 +94,7 @@ namespace Yoma.Core.Infrastructure.Umuzi.Client
         result.EngagementTypeId = engagementType.Id;
       }
 
-      return new SyncItemEntity<Domain.Opportunity.Models.Opportunity>
+      return new SyncItemEntity<Domain.Opportunity.Models.OpportunityRequestCreate>
       {
         ExternalId = cacheItem.ExternalId,
         Deleted = deleted,
