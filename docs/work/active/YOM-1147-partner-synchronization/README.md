@@ -183,6 +183,17 @@ key-only item only for deliberate deletion. No provider may hardcode temporary `
 
 ## Cross-Area Notes
 
+### Shared skill matching — 2026-09-17
+
+- [x] Harden the shared resolver: exact names first, no parenthetical-only aliases,
+  no numeric-version stripping, and no first-wins ambiguous matches.
+- [x] Verify cached and uncached behaviour with regression tests before review.
+- [ ] Adrian review, then Stage validation of remapped opportunity skills before release.
+- Scope: surfaced by YOM-1295 Stage testing, applies to all consumers of the shared
+  resolver. Planned month-end release with Umuzi/cash-outs, not a hotfix.
+- Per Adrian, track this work in repository handovers only; no Linear changes.
+- See [handover](handoffs/2026-09-17-a.md) for tests, trade-offs and release checks.
+
 Web must treat pull-synced opportunities as provider-managed and preserve partner navigation. New
 partner metadata should arrive through core fields or approved custom-field definitions, not
 provider-specific UI branches. API contract changes affecting display or navigation require a Web
