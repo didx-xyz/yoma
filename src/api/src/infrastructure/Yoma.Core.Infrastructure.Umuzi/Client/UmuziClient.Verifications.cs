@@ -25,7 +25,7 @@ namespace Yoma.Core.Infrastructure.Umuzi.Client
         .ThenBy(o => o.OpportunityExternalId).ThenBy(o => o.YomaUserId ?? o.Username).ToList();
       var result = new SyncResultPullVerification { TotalCount = items.Count };
       if (filter.PaginationEnabled)
-        items = [.. items.Skip((filter.PageNumber!.Value - 1) * filter.PageSize!.Value).Take(filter.PageSize.Value)];
+        items = [.. items.Page(filter)];
       result.Items = [.. items.Select(ToSyncItem)];
       return result;
     }
