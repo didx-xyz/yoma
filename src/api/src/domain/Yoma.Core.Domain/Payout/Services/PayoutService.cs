@@ -44,7 +44,7 @@ namespace Yoma.Core.Domain.Payout.Services
     private readonly IRewardService _rewardService;
     private readonly IRewardProviderClient _rewardProviderClient;
     private readonly IPayoutTransactionService _payoutTransactionService;
-    private readonly IRepository<PayoutTransaction> _payoutTransactionRepository;
+    private readonly IRepositoryValueContains<PayoutTransaction> _payoutTransactionRepository;
     private readonly IPayoutTransactionStatusService _payoutTransactionStatusService;
     private readonly IPayoutProviderClient _payoutProviderClient;
     private readonly ITreasuryService _treasuryService;
@@ -71,7 +71,7 @@ namespace Yoma.Core.Domain.Payout.Services
       IRewardService rewardService,
       IRewardProviderClientFactory rewardProviderClientFactory,
       IPayoutTransactionService payoutTransactionService,
-      IRepository<PayoutTransaction> payoutTransactionRepository,
+      IRepositoryValueContains<PayoutTransaction> payoutTransactionRepository,
       IPayoutTransactionStatusService payoutTransactionStatusService,
       IPayoutProviderClientFactory payoutProviderClientFactory,
       ITreasuryService treasuryService,

@@ -1,4 +1,6 @@
+using System.Linq.Expressions;
 using Yoma.Core.Domain.Core;
+using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Payout;
 using Yoma.Core.Domain.Payout.Models;
@@ -8,7 +10,7 @@ using Yoma.Core.Infrastructure.Shared.Extensions;
 
 namespace Yoma.Core.Infrastructure.Database.Payout.Repositories
 {
-  public sealed class PayoutTransactionRepository : BaseRepository<Entities.PayoutTransaction, Guid>, IRepository<PayoutTransaction>
+  public sealed class PayoutTransactionRepository : BaseRepository<Entities.PayoutTransaction, Guid>, IRepositoryValueContains<PayoutTransaction>
   {
     #region Constructor
     public PayoutTransactionRepository(ApplicationDbContext context)
@@ -47,6 +49,17 @@ namespace Yoma.Core.Infrastructure.Database.Payout.Repositories
         DateCreated = entity.DateCreated,
         DateModified = entity.DateModified
       });
+    }
+
+    public Expression<Func<PayoutTransaction, bool>> Contains(Expression<Func<PayoutTransaction, bool>> predicate, string value)
+    {
+      var matchedIds = MatchingIds(value);
+      return predicate.Or(o => matchedIds.Contains(o.Id));
+    }
+
+    public IQueryable<PayoutTransaction> Contains(IQueryable<PayoutTransaction> query, string value)
+    {
+      return this.WhereContains(query, value);
     }
 
     public async Task<PayoutTransaction> Create(PayoutTransaction item)
@@ -105,6 +118,37 @@ namespace Yoma.Core.Infrastructure.Database.Payout.Repositories
     public Task Delete(PayoutTransaction item)
     {
       throw new NotImplementedException();
+    }
+    #endregion
+
+    #region Private Members
+    private IQueryable<Guid> MatchingIds(string value)
+    {
+      var valueContains = value.ToLower();
+
+      // Preserve lower + literal Contains semantics (not ILIKE wildcards). Matching each
+      // table separately avoids a cross-table OR; no matching ID list is materialized.
+      // Username/display-name fallbacks add no matches beyond these source fields:
+      // email and phone were already searched independently in the original predicate.
+#pragma warning disable CA1862 // Query provider does not translate StringComparison overloads
+      var userIds = _context.User.Where(o =>
+        (o.Email != null && o.Email.ToLower().Contains(valueContains)) ||
+        (o.PhoneNumber != null && o.PhoneNumber.ToLower().Contains(valueContains)) ||
+        (o.DisplayName != null && o.DisplayName.ToLower().Contains(valueContains)))
+        .Select(o => o.Id);
+
+      var matchedIds = _context.PayoutTransaction.Where(o =>
+        (o.TransactionId != null && o.TransactionId.ToLower().Contains(valueContains)) ||
+        (o.ErrorReason != null && o.ErrorReason.ToLower().Contains(valueContains)))
+        .Select(o => o.Id)
+        .Union(_context.PayoutTransaction.Where(o => userIds.Contains(o.UserId)).Select(o => o.Id));
+#pragma warning restore CA1862 // Query provider does not translate StringComparison overloads
+
+      if (Guid.TryParse(value, out var id))
+        matchedIds = matchedIds.Union(_context.PayoutTransaction
+          .Where(o => o.Id == id || o.UserId == id).Select(o => o.Id));
+
+      return matchedIds;
     }
     #endregion
   }

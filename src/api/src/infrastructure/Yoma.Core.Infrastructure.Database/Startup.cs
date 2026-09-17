@@ -172,7 +172,7 @@ namespace Yoma.Core.Infrastructure.Database
       services.AddScoped<IRepository<Domain.Payout.Models.Lookups.PayoutTransactionStatus>, PayoutTransactionStatusRepository>();
       #endregion Lookups
 
-      services.AddScoped<IRepository<Domain.Payout.Models.PayoutTransaction>, PayoutTransactionRepository>();
+      services.AddScoped<IRepositoryValueContains<Domain.Payout.Models.PayoutTransaction>, PayoutTransactionRepository>();
       #endregion Payout
 
       #region Referral

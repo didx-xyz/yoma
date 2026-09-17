@@ -19,7 +19,7 @@ namespace Yoma.Core.Domain.Payout.Services
   {
     #region Class Variables
     private readonly IPayoutTransactionStatusService _payoutTransactionStatusService;
-    private readonly IRepository<PayoutTransaction> _payoutTransactionRepository;
+    private readonly IRepositoryValueContains<PayoutTransaction> _payoutTransactionRepository;
     private readonly IUserService _userService;
     private readonly IRewardService _rewardService;
     private readonly IExecutionStrategyService _executionStrategyService;
@@ -38,7 +38,7 @@ namespace Yoma.Core.Domain.Payout.Services
     #region Constructor
     public PayoutTransactionService(
       IPayoutTransactionStatusService payoutTransactionStatusService,
-      IRepository<PayoutTransaction> payoutTransactionRepository,
+      IRepositoryValueContains<PayoutTransaction> payoutTransactionRepository,
       IUserService userService,
       IRewardService rewardService,
       IExecutionStrategyService executionStrategyService,
@@ -181,19 +181,7 @@ namespace Yoma.Core.Domain.Payout.Services
       if (!string.IsNullOrWhiteSpace(filter.ValueContains))
       {
         filter.ValueContains = filter.ValueContains.Trim();
-        var valueContains = filter.ValueContains.ToLower();
-        var id = Guid.TryParse(filter.ValueContains, out var idParsed) ? idParsed : (Guid?)null;
-
-#pragma warning disable CA1862 // Query provider does not translate StringComparison overloads
-        query = query.Where(o =>
-          (id.HasValue && (o.Id == id.Value || o.UserId == id.Value)) ||
-          (o.Username != null && o.Username.ToLower().Contains(valueContains)) ||
-          (o.UserEmail != null && o.UserEmail.ToLower().Contains(valueContains)) ||
-          (o.UserPhoneNumber != null && o.UserPhoneNumber.ToLower().Contains(valueContains)) ||
-          (o.UserDisplayName != null && o.UserDisplayName.ToLower().Contains(valueContains)) ||
-          (o.TransactionId != null && o.TransactionId.ToLower().Contains(valueContains)) ||
-          (o.ErrorReason != null && o.ErrorReason.ToLower().Contains(valueContains)));
-#pragma warning restore CA1862 // Query provider does not translate StringComparison overloads
+        query = _payoutTransactionRepository.Contains(query, filter.ValueContains);
       }
 
       var results = new PayoutTransactionSearchResults();
@@ -203,7 +191,8 @@ namespace Yoma.Core.Domain.Payout.Services
       if (filter.PaginationEnabled)
       {
         results.TotalCount = query.Count();
-        query = query.Skip((filter.PageNumber.Value - 1) * filter.PageSize.Value).Take(filter.PageSize.Value);
+        // Flat projection, with no split child collections: keep one paged read.
+        query = query.Page(filter);
       }
 
       results.Items = [.. query];

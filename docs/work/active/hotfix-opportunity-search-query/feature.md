@@ -70,7 +70,7 @@ For impact, page 1/12 and the supplied two country IDs, with normal planner sett
 - [x] Retain original filtered paging for organization-status event publication via the shared helper's hydratePageSeparately opt-out.
 - [x] Final independent review: preserve all non-text hydration guards and verify a real organization reassignment between ID selection and hydration in isolated PostgreSQL.
 - [x] Review the patch with Adrian.
-- [ ] After merge, audit master-only additions (CF, payout/treasury and any other new search paths) against the shared paging and matching helpers; repeat equivalent result tests.
+- [x] Audit master-only additions (CF, payout/treasury and other new search paths); payout follow-up implemented locally with regression tests. See [master audit](handoffs/2026-09-17-master-audit.md). Review and Stage validation remain pending.
 - [ ] Apply the same audit to the pending Umuzi PR after it incorporates the hotfix; do not assume the production-baseline audit covers it.
 - [x] Prepare the master-based PR branch locally after review, preserving master-only custom-field filters and JobJack contracts.
 - [ ] Push the explicitly named PR branch and open the PR to master with Adrian; never push this branch to current.
