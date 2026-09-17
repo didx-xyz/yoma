@@ -77,10 +77,12 @@ For impact, page 1/12 and the supplied two country IDs, with normal planner sett
 - [x] Adrian manually smoke-tested opportunity search/filter/paging/detail, profile tabs, referrals, organisation verifications, action links and store access rules; final feedback was that it works and is fast.
 - [x] Prepare local current by cherry-picking merged PR #1939 while preserving production-only contracts; prove API/web source equivalence to the previously tested production-baseline candidate.
 - [ ] Push current and create the next agreed release in the morning, with Adrian. No overnight Production deployment.
+- [x] Capture repeatable public Production endpoint baseline before release: five fixed cases, 20 serial requests, all HTTP 200; payloads/counts/ordered IDs/timings saved under benchmarks/.
 - [ ] Measure the exact original country-filtered requests and Production workload after release; Stage timings are not a measured Production speedup.
 
 ## Decisions
 
+- 2026-09-17: At Adrian's request, capture a bounded public Production benchmark before release and repeat the unchanged script after deployment. Country-filtered impact page-one median is 11,623.28 ms over three repeat samples; customer hold is 2,730.19 ms. These are full HTTP timings, not SQL-only timings. Results and method are in benchmarks/README.md; no speedup claimed until the after run.
 - 2026-09-17: Adrian approved Stage browsing and requested local cherry-pick preparation only, with push/release deferred until morning. Fetched origin/master and origin/current before applying merged PR #1939. Retain production's absence of CF/cash-out, verified against the original candidate, rather than importing master-only references during conflict resolution. No remote write this session.
 - 2026-09-17: Stage's active referral carousel does not exercise the shared hook's retired, commented-out modal consumer. Retain the locally validated hook fix but do not claim it was UI-tested. Organisation-status mutation and non-admin authorization scenarios were also not manually exercised in this smoke pass.
 - 2026-09-16: Correct accidental `current` push using an exact expected-SHA force-with-lease, after Adrian authorized recovery. Remote `current` again matches `v3.12.8`. Remove the original hotfix branch's incorrect upstream and create the master PR branch with `--no-track`; do not inherit `origin/master` or `origin/current` as its push destination. See the latest handoff for verified references and release steps.
