@@ -73,13 +73,21 @@ namespace Yoma.Core.Domain.Lookups.Services
 
       var lookup = GetLookupByNormalizedName();
 
+      // Prefer the full name before considering lossy formatting or taxonomy aliases.
+      if (lookup.ExactNames.TryGetValue(name, out var exact)) return exact;
+      var normalized = NormalizeLookupKey(name);
+      if (normalized == null) return null;
+      if (lookup.NormalizedNames.TryGetValue(normalized, out var fullName)) return fullName;
+
+      Skill? result = null;
       foreach (var key in GetLookupKeys(name))
       {
-        if (lookup.TryGetValue(key, out var result))
-          return result;
+        if (!lookup.Aliases.TryGetValue(key, out var candidate)) continue;
+        if (candidate == null || (result != null && result.Id != candidate.Id)) return null;
+        result = candidate;
       }
 
-      return null;
+      return result;
     }
 
     public Skill GetById(Guid id)
@@ -251,7 +259,7 @@ namespace Yoma.Core.Domain.Lookups.Services
       return result;
     }
 
-    private Dictionary<string, Skill> GetLookupByNormalizedName()
+    private SkillNameLookup GetLookupByNormalizedName()
     {
       if (!_appSettings.CacheEnabledByCacheItemTypesAsEnum.HasFlag(Core.CacheItemType.Lookups))
         return BuildLookupByNormalizedName();
@@ -267,38 +275,47 @@ namespace Yoma.Core.Domain.Lookups.Services
       return result;
     }
 
-    private Dictionary<string, Skill> BuildLookupByNormalizedName()
+    private SkillNameLookup BuildLookupByNormalizedName()
     {
-      var result = new Dictionary<string, Skill>(StringComparer.OrdinalIgnoreCase);
+      var result = new SkillNameLookup();
 
       foreach (var skill in List())
       {
-        foreach (var key in GetLookupKeys(skill.Name))
-          result.TryAdd(key, skill); //multiple normalized keys can point to the same skill
+        AddSkillLookup(result.ExactNames, skill.Name.Trim(), skill);
+        var normalized = NormalizeLookupKey(skill.Name);
+        if (normalized != null) AddSkillLookup(result.NormalizedNames, normalized, skill);
+
+        foreach (var candidate in GetLookupCandidates(skill.Name))
+          foreach (var key in GetLookupKeys(candidate))
+            AddSkillLookup(result.Aliases, key, skill);
       }
 
       return result;
+    }
+
+    private sealed class SkillNameLookup
+    {
+      public Dictionary<string, Skill?> ExactNames { get; } = new(StringComparer.OrdinalIgnoreCase);
+      public Dictionary<string, Skill?> NormalizedNames { get; } = new(StringComparer.OrdinalIgnoreCase);
+      public Dictionary<string, Skill?> Aliases { get; } = new(StringComparer.OrdinalIgnoreCase);
+    }
+
+    private static void AddSkillLookup(Dictionary<string, Skill?> lookup, string key, Skill skill)
+    {
+      // Null preserves ambiguity, independently of repository order or later candidates.
+      if (!lookup.TryAdd(key, skill) && lookup[key]?.Id != skill.Id) lookup[key] = null;
     }
 
     private static IEnumerable<string> GetLookupKeys(string? value)
     {
       var result = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-      foreach (var candidate in GetLookupCandidates(value))
-      {
-        var normalized = NormalizeLookupKey(candidate);
-        if (normalized == null) continue;
+      var normalized = NormalizeLookupKey(value);
+      if (normalized == null) yield break;
 
-        AddLookupKey(result, normalized);
-
-        var withoutConnectorWords = RemoveConnectorWords(normalized);
-        if (withoutConnectorWords != null)
-          AddLookupKey(result, withoutConnectorWords);
-
-        var withoutTrailingNumbers = RemoveTrailingNumericTokens(normalized);
-        if (withoutTrailingNumbers != null)
-          AddLookupKey(result, withoutTrailingNumbers);
-      }
+      AddLookupKey(result, normalized);
+      var withoutConnectorWords = RemoveConnectorWords(normalized);
+      if (withoutConnectorWords != null) AddLookupKey(result, withoutConnectorWords);
 
       foreach (var key in result)
         yield return key;
@@ -320,9 +337,8 @@ namespace Yoma.Core.Domain.Lookups.Services
       if (withoutParentheses != null)
         yield return withoutParentheses;
 
-      var parentheticalValue = value.Substring(openIndex + 1, closeIndex - openIndex - 1).NormalizeNullableValue();
-      if (parentheticalValue != null)
-        yield return parentheticalValue;
+      // Never treat a qualifier as a standalone skill (e.g. ActiveXObject (JavaScript)).
+      // Only catalogue names produce these aliases; explicit input qualifiers stay intact.
     }
 
     private static void AddLookupKey(HashSet<string> result, string value)
@@ -345,27 +361,6 @@ namespace Yoma.Core.Domain.Lookups.Services
       return result != null && !result.EqualsOrdinalIgnoreCase(value)
         ? result
         : null;
-    }
-
-    private static string? RemoveTrailingNumericTokens(string value)
-    {
-      var parts = value
-        .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-        .ToList();
-
-      if (parts.Count <= 1) return null;
-
-      var changed = false;
-
-      while (parts.Count > 1 && parts[^1].All(char.IsDigit))
-      {
-        parts.RemoveAt(parts.Count - 1);
-        changed = true;
-      }
-
-      if (!changed) return null;
-
-      return string.Join(' ', parts).NormalizeNullableValue();
     }
 
     private static string? NormalizeLookupKey(string? value)
