@@ -5,7 +5,8 @@ import { useEffect, useState } from "react";
  * World Cleanup Day campaign banner — shown on the landing state of `/opportunities`
  * only (under the category chips, above the Jobs carousel).
  *
- * Variant 1 "Yoma Purple" of the approved mock: gradient + copy, no campaign artwork.
+ * Variant 2 "Green" (Option D palette) of the approved mock: gradient + copy, no campaign
+ * artwork. The orange campaign chip carries over from Variant 1 unchanged.
  * The surface itself is deliberately NOT a link — there are two CTAs, so each button is
  * its own tap target (min 44px).
  *
@@ -43,9 +44,10 @@ const CAMPAIGN_END = new Date("2026-09-27T23:59:59+02:00");
 const BTN_BASE =
   "group inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl px-6 text-center text-sm font-extrabold transition-all duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white md:w-auto md:text-[15px] md:whitespace-nowrap";
 
-const BTN_OUTLINE = `${BTN_BASE} border-2 border-white/55 text-white hover:border-white hover:bg-white/15`;
+const BTN_OUTLINE = `${BTN_BASE} border-2 border-white/60 text-white hover:border-white hover:bg-white/15`;
 
-const BTN_PRIMARY = `${BTN_BASE} bg-orange text-purple shadow-sm hover:brightness-95 hover:shadow-md`;
+/** White on green — the primary CTA of the green variant; its label is the mid-gradient green. */
+const BTN_PRIMARY = `${BTN_BASE} bg-white text-[#2f6b4f] shadow-sm hover:brightness-95 hover:shadow-md`;
 
 /** Nudges right on hover, alongside the button's own colour change. */
 const Arrow: React.FC = () => (
@@ -71,12 +73,12 @@ export const WorldCleanupDayBanner: React.FC = () => {
   return (
     <>
       <div className="divider !bg-gray" />
-      <div className="relative my-2 overflow-hidden rounded-2xl bg-[linear-gradient(150deg,#41204b_0%,#5b3370_100%)] p-5 md:bg-[linear-gradient(100deg,#41204b_0%,#57306a_78%,#6a4180_100%)] md:px-8 md:py-6">
+      <div className="relative my-2 overflow-hidden rounded-2xl bg-[linear-gradient(150deg,#1e4d36_0%,#2f6b4f_100%)] p-5 md:bg-[linear-gradient(100deg,#1e4d36_0%,#2f6b4f_70%,#3a7d5c_100%)] md:px-8 md:py-6">
         {/* Ornamental wash, desktop only — on mobile the mock drops it, where it would sit
           behind the copy rather than beside it. */}
         <div
           aria-hidden
-          className="bg-orange/12 pointer-events-none absolute -top-10 -right-10 hidden size-[280px] rounded-full md:block"
+          className="pointer-events-none absolute -bottom-20 -left-15 hidden size-75 rounded-full bg-white/7 md:block"
         />
 
         <div className="relative flex flex-col gap-4 md:flex-row md:items-center md:gap-7">
@@ -85,7 +87,7 @@ export const WorldCleanupDayBanner: React.FC = () => {
               <span className="bg-orange text-purple rounded-full px-3 py-1 text-[11px] leading-none font-extrabold tracking-[0.08em]">
                 WORLD CLEANUP DAY
               </span>
-              <span className="rounded-full bg-white/15 px-3 py-1 text-[11px] leading-none font-extrabold tracking-[0.08em] text-white">
+              <span className="rounded-full bg-white/20 px-3 py-1 text-[11px] leading-none font-extrabold tracking-[0.08em] text-white">
                 {CAMPAIGN_DATE_LABEL}
               </span>
             </div>
@@ -94,8 +96,8 @@ export const WorldCleanupDayBanner: React.FC = () => {
               Clean up your corner of the world this {CAMPAIGN_DAY_NAME}!
             </h2>
 
-            <p className="text-purple-tint max-w-2xl text-sm md:text-[15px]">
-              Map it, clean it, prove it — and earn a verifiable credential,
+            <p className="max-w-2xl text-sm text-[#d9ece1] md:text-[15px]">
+              Find it, clean it, prove it — and earn a verifiable credential,
               your achievement certificate, for taking part.
             </p>
           </div>
