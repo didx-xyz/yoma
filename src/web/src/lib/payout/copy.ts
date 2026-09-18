@@ -193,8 +193,13 @@ export const REVIEW_COPY = {
 
 /**
  * The hosted journey, which runs in an **iframe inside Yoma** (API directive, 2026-09-10) rather
- * than in a new tab. The youth never leaves the product, so there is no "we opened a window for
- * you" to explain and no popup to be blocked.
+ * than in a new tab. The youth never leaves the product for the payment page itself.
+ *
+ * ⚠️ **They do leave it for sign-in and identity checks** (IXO, 2026-09-18). WorkOS refuses to be
+ * framed at all, so rather than allowlisting Yoma's origin the provider now opens those two steps
+ * in a **popup of its own**, returning to the frame afterwards. That is their code in their
+ * document — Yoma neither opens the popup nor can observe it — so the copy's job is to say it will
+ * happen before it happens, and to offer a way through when a popup blocker eats it.
  *
  * Closing the modal neither cancels nor completes anything — it just stops showing the journey, and
  * Yoma then asks the API how the payout actually stands.
@@ -202,12 +207,16 @@ export const REVIEW_COPY = {
 export const HOSTED_COPY = {
   preparingTitle: "Preparing your cash out…",
   dialogTitle: "Finish your cash out",
-  /** one line under the title: whose page this is, before they see it */
-  lead: "Our secure payout partner will take it from here.",
+  /**
+   * Under the title: whose page this is, and that part of it happens elsewhere.
+   *
+   * The second sentence is the whole point — a window appearing unannounced on a money screen reads
+   * as something going wrong, and a window that never appears reads as nothing happening at all.
+   * Said up front, both become expected.
+   */
+  lead: "Our secure payout partner will take it from here. Signing in and identity checks open in a separate window.",
   /** the iframe's accessible name — the provider is not named, here or anywhere */
   frameTitle: "Secure cash out",
-  /** the status slot, present from first paint so nothing appears from nowhere */
-  statusLoading: "Loading…",
   /** what the ✕ actually does, for a screen reader */
   closeLabel: "Close and check my cash out",
   /**
@@ -217,22 +226,27 @@ export const HOSTED_COPY = {
   footerNote:
     "Your Zlto stays pending while you finish. When you're done, tap I'm done and we'll check how it went.",
   /**
-   * The escape hatch. Embedding is subject to the provider's own framing and authentication rules
-   * (IXO coordination is open), and a youth with Zlto already reserved cannot be left staring at a
-   * frame that refused to load.
+   * The escape hatch: the whole journey in a tab of its own, where sign-in is top-level and no
+   * popup is needed. **Not** a way to re-open the blocked popup — Yoma has no handle on it.
+   *
+   * IXO asked for this to be kept (2026-09-18) and it is now the *only* recovery from a blocked
+   * popup, so it is visible from first paint rather than on a timer. See `blockedHint`.
    */
   newWindowAction: "Open in a new window",
   /**
-   * Replaces the "Loading…" in the status slot a few seconds in, whether or not anything is wrong,
-   * because a frame that was refused cannot be detected: a `frame-ancestors` violation still fires
-   * `load` on the browser's own error document, and the frame is cross-origin, so there is nothing
-   * to read. Seen on Dev — the provider's payment page frames fine, but its hosted **sign-in** step
-   * sets `frame-ancestors` without Yoma's origin, so a returning youth gets a blank box.
+   * Sits beside the escape hatch, permanently.
    *
-   * ⚠️ It asks rather than asserts: "Not loading?" claimed the frame had failed, which we do not
-   * know (copy review 2026-09-14).
+   * ⚠️ **It used to be "Taking a while?", on a four-second timer**, and both were written for a
+   * different failure: a frame that would not render. IXO's popup change makes that one rare and
+   * introduces one the timer cannot serve — the frame renders perfectly, the youth taps sign-in,
+   * and *nothing happens* because the popup was blocked. That can land at any point in the journey,
+   * long after four seconds, and it is invisible to us: the popup is attempted by their code in
+   * their document, so there is no event, no return value and nothing cross-origin to read.
+   *
+   * So it asks about the window rather than the page, and it never goes away. It still asks rather
+   * than asserts — we do not know that anything failed (copy review 2026-09-14).
    */
-  blockedHint: "Taking a while?",
+  blockedHint: "Window didn't open?",
   doneAction: "I'm done",
 } as const;
 
