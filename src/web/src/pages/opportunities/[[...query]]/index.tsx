@@ -52,6 +52,7 @@ import {
   getTypeConfig,
 } from "~/components/Opportunity/opportunityTypeTheme";
 import { OppSearchInputLarge } from "~/components/Opportunity/OppSearchInputLarge";
+import { WorldCleanupDayBanner } from "~/components/Opportunity/WorldCleanupDayBanner";
 import { PageBackground } from "~/components/PageBackground";
 import { PaginationButtons } from "~/components/PaginationButtons";
 import { LoadingSkeleton } from "~/components/Status/LoadingSkeleton";
@@ -2063,6 +2064,9 @@ const Opportunities: NextPageWithLayout<{
               {landingOverlayActive && (
                 <LoadingSkeleton rows={4} columns={3} className="p-4" />
               )}
+
+              {/* CAMPAIGN BANNER (self-retires at the end of its display window) */}
+              <WorldCleanupDayBanner />
 
               {/* CAROUSELS (kept mounted; hidden while overlay is active) */}
               <div className={landingOverlayActive ? "invisible" : ""}>
