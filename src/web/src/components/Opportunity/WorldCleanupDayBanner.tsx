@@ -15,11 +15,16 @@ import { useEffect, useState } from "react";
  */
 
 /**
- * The cleanup opportunities on the overview. Double-encoded on purpose: the page pre-encodes
- * the search value (`onSearchInputSubmit`) and `URLSearchParams.toString()` encodes it again,
- * so this is byte-for-byte what the search box itself produces for "clean up".
+ * The cleanup opportunities on the overview.
+ *
+ * `countryScope=my` is carried through whenever the youth's "My country" scope is in effect,
+ * so the search they land on is scoped the same way as the page they clicked from. The scope
+ * is not always in the URL — on the landing page it lives in component state, defaulting ON
+ * for signed-in users — so the page passes its own `wantsMyScopeForSearch` down rather than
+ * this component re-deriving it from the querystring and getting the default case wrong.
  */
-const HREF_CLEANUP_SEARCH = "/opportunities?query=clean%2520up";
+const buildCleanupSearchHref = (myCountryOnly: boolean): string =>
+  `/opportunities?query=cleanup${myCountryOnly ? "&countryScope=my" : ""}`;
 
 /** The global cleanup opportunity — hard-coded to production per the campaign brief. */
 const HREF_GLOBAL_CLEANUP =
@@ -59,7 +64,10 @@ const Arrow: React.FC = () => (
   </span>
 );
 
-export const WorldCleanupDayBanner: React.FC = () => {
+export const WorldCleanupDayBanner: React.FC<{
+  /** Whether the "My country" scope is currently in effect for the youth's search. */
+  myCountryOnly: boolean;
+}> = ({ myCountryOnly }) => {
   // The page is statically generated, so a build-time date check would either bake in a stale
   // answer or disagree with the client and trip hydration. Decide after mount instead: the
   // banner fades in a frame late, which is fine for a promo and wrong for nothing.
@@ -104,7 +112,10 @@ export const WorldCleanupDayBanner: React.FC = () => {
 
           {/* Stacked under the copy on mobile, a column beside it from md up. */}
           <div className="flex shrink-0 flex-col gap-2.5">
-            <Link href={HREF_CLEANUP_SEARCH} className={BTN_OUTLINE}>
+            <Link
+              href={buildCleanupSearchHref(myCountryOnly)}
+              className={BTN_OUTLINE}
+            >
               Find your cleanup opportunity
               <Arrow />
             </Link>

@@ -2066,7 +2066,7 @@ const Opportunities: NextPageWithLayout<{
               )}
 
               {/* CAMPAIGN BANNER (self-retires at the end of its display window) */}
-              <WorldCleanupDayBanner />
+              <WorldCleanupDayBanner myCountryOnly={wantsMyScopeForSearch} />
 
               {/* CAROUSELS (kept mounted; hidden while overlay is active) */}
               <div className={landingOverlayActive ? "invisible" : ""}>
