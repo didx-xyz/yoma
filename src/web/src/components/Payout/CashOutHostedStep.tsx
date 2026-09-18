@@ -1,11 +1,9 @@
-import { useEffect, useState } from "react";
 import { IoOpenOutline } from "react-icons/io5";
 import { HOSTED_COPY } from "~/lib/payout/copy";
 
 /**
  * The hosted journey, embedded **inside Yoma** (API directive, 2026-09-10). The youth confirms
- * their cash out here without leaving the product, and without a new tab that a popup blocker can
- * swallow.
+ * their cash out here without leaving the product.
  *
  * What this component may and may not do:
  *
@@ -17,40 +15,38 @@ import { HOSTED_COPY } from "~/lib/payout/copy";
  * - **Closing cancels nothing.** The footer says so, because a modal that vanishes over someone's
  *   reserved Zlto invites exactly the wrong conclusion.
  *
- * `allow` grants the camera and microphone the provider's identity checks may need — a frame
- * without them fails silently at the worst moment. No `sandbox` attribute: the hosted journey needs
- * scripts, forms, its own storage and its own navigation, and an allow-list assembled by guesswork
- * would break authentication in ways only the provider could diagnose.
+ * ## The popup, and why there is no `sandbox` attribute
  *
- * ⚠️ **Framing is only half-true today (verified on Dev, 2026-09-11).** The provider's payment page
- * frames fine — it sets no `X-Frame-Options` and no framing CSP. Its hosted **sign-in** step does:
- * `frame-ancestors` lists a handful of unrelated origins and not Yoma's, so a youth who already has
- * an account gets a blank box where the sign-in should be. Nothing here can detect that (a refused
- * frame still fires `load`, on a document we cannot read), which is why the escape hatch is not
- * optional and why the prompt below appears on a timer rather than on a diagnosis. Raised with IXO.
+ * ⚠️ **Sign-in and identity checks do not run in this frame. The provider opens them in a popup**
+ * (IXO, 2026-09-18). WorkOS refuses framing outright — `frame-ancestors` without Yoma's origin,
+ * found on Dev 2026-09-11 — and rather than allowlisting us, IXO moved those steps out. The popup
+ * is opened by their code in their document and returns to the frame afterwards; Yoma neither opens
+ * it nor can see it.
+ *
+ * **There is deliberately no `sandbox` attribute, and adding one would break this.** IXO's note
+ * asks for `allow-popups` and `allow-popups-to-escape-sandbox` *if* the frame is sandboxed — it is
+ * not, and `sandbox` is deny-by-default, so introducing it to satisfy that line would strip
+ * scripts, forms, storage and navigation from a journey that needs all four. Without the attribute
+ * the frame may already open popups. Nothing else of Yoma's interferes either: the app sets no CSP,
+ * no `Cross-Origin-Opener-Policy` and no `X-Frame-Options` (checked in `next.config.mjs`, the web
+ * ingress and `_document.tsx`, 2026-09-18), and `allow` is a Permissions-Policy delegation list
+ * with no popup feature in it.
+ *
+ * `allow` grants the camera and microphone the provider's identity checks may need — a frame
+ * without them fails silently at the worst moment. Possibly redundant now that verification opens
+ * in a popup, which carries its own permission prompts; left in place until IXO confirms, because
+ * the failure mode of removing it too early is a youth stuck at a camera step that never starts.
+ *
+ * **A blocked popup is undetectable from here**, for the same reason a refused frame was: it
+ * happens in a document we cannot read. So the way out is permanent rather than prompted — see the
+ * status slot below.
  */
-/** How long to let the frame settle before mentioning the way out of it. */
-const FALLBACK_HINT_DELAY_MS = 4_000;
 
 export const CashOutHostedStep: React.FC<{
   paymentUrl: string;
   onOpenInNewWindow: () => void;
   onDone: () => void;
 }> = ({ paymentUrl, onOpenInNewWindow, onDone }) => {
-  const [showFallbackHint, setShowFallbackHint] = useState(false);
-
-  // Time-based on purpose, and it makes no claim about the frame: a refused frame still fires
-  // `load` on the browser's error page, and cross-origin there is nothing to inspect. So this is a
-  // prompt, not a diagnosis — it appears whether the journey loaded or not.
-  useEffect(() => {
-    setShowFallbackHint(false);
-    const timer = setTimeout(
-      () => setShowFallbackHint(true),
-      FALLBACK_HINT_DELAY_MS,
-    );
-    return () => clearTimeout(timer);
-  }, [paymentUrl]);
-
   return (
     <div className="flex min-h-0 grow flex-col gap-3">
       {/* Whose page this is, before they see it. */}
@@ -75,37 +71,29 @@ export const CashOutHostedStep: React.FC<{
 
       <div className="flex flex-col items-center gap-2">
         {/*
-          The status slot: present from the first paint, fixed height, and the **only** place the
-          escape hatch lives. It used to be a sentence appended into the note below after four
-          seconds, which reflowed the footer and put the way out in two places at once (copy review
-          2026-09-14). `aria-live="polite"` so the change is announced without interrupting.
+          The status slot: the **only** place the escape hatch lives, and it is now here from the
+          first paint and never leaves.
+
+          ⚠️ It used to spend four seconds showing "Loading…" first, on the theory that the way out
+          was only wanted once the frame had visibly failed. IXO's popup change retires that theory:
+          the frame renders fine and the failure arrives later, when a tap on sign-in opens nothing.
+          A youth who taps within four seconds would have watched a spinner instead of finding the
+          one control that helps, and one who taps at thirty seconds would have needed it back.
+          Neither is detectable, so it is simply always available.
+
+          Static content, so no `aria-live` — there is no change to announce. The fixed height is
+          kept so the footer never reflows.
         */}
-        <div
-          role="status"
-          aria-live="polite"
-          className="flex h-11 flex-row flex-wrap items-center justify-center gap-2 text-xs"
-        >
-          {showFallbackHint ? (
-            <>
-              <span className="text-gray-dark">{HOSTED_COPY.blockedHint}</span>
-              <button
-                type="button"
-                onClick={onOpenInNewWindow}
-                className="text-purple inline-flex items-center gap-1 font-bold underline-offset-2 hover:underline"
-              >
-                <IoOpenOutline className="h-4 w-4" aria-hidden="true" />
-                {HOSTED_COPY.newWindowAction}
-              </button>
-            </>
-          ) : (
-            <span className="text-gray-dark inline-flex items-center gap-2">
-              <span
-                className="loading loading-spinner loading-xs"
-                aria-hidden="true"
-              />
-              {HOSTED_COPY.statusLoading}
-            </span>
-          )}
+        <div className="flex h-11 flex-row flex-wrap items-center justify-center gap-2 text-xs">
+          <span className="text-gray-dark">{HOSTED_COPY.blockedHint}</span>
+          <button
+            type="button"
+            onClick={onOpenInNewWindow}
+            className="text-purple inline-flex items-center gap-1 font-bold underline-offset-2 hover:underline"
+          >
+            <IoOpenOutline className="h-4 w-4" aria-hidden="true" />
+            {HOSTED_COPY.newWindowAction}
+          </button>
         </div>
 
         {/* `w-full` so it wraps: inside `items-center` the paragraph would take its content width

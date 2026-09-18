@@ -55,6 +55,18 @@ export const CashOutDialog: React.FC<{
 }) => (
   <CustomModal
     isOpen={isOpen}
+    /**
+     * ⚠️ **Load-bearing since IXO's popup change (2026-09-18) — do not "improve" this to true.**
+     *
+     * Sign-in and identity checks now happen in a popup the provider opens, and that popup returns
+     * to *this* iframe when it is done. A stray click on the overlay while the youth is away in
+     * that window would unmount the frame and leave the popup with nothing to come back to, over
+     * Zlto that is already reserved.
+     *
+     * It also governs the Escape key: `CustomModal` only registers its `keydown` handler when this
+     * is true, so both dismissal routes are closed by the one flag. The ✕ and "I'm done" remain the
+     * only ways out, and both of them read the outcome rather than just vanishing.
+     */
     shouldCloseOnOverlayClick={false}
     onRequestClose={onClose}
     className={
@@ -68,7 +80,7 @@ export const CashOutDialog: React.FC<{
     <div
       className={
         hosted
-          ? "gap-3x flex h-full min-h-0 flex-col overflow-hidden p-4 text-black"
+          ? "flex h-full min-h-0 flex-col gap-3 overflow-hidden p-4 text-black"
           : "flex h-full flex-col gap-4 overflow-y-auto p-4 pb-8 text-black"
       }
     >

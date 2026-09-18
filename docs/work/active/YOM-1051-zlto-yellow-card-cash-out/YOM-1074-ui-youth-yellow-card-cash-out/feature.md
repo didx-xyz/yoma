@@ -739,6 +739,32 @@ wanted.
   compiled fine and simply never appeared. `GATE_COPY` is a total `Record`, so its keys make the
   gallery exhaustive by construction — the fourth instance of the drift the gallery exists to catch,
   and the first one closed structurally rather than by hand.
+- **2026-09-18: the iframe stays; IXO moved sign-in and KYC into a popup.** Their message mentions
+  popups, which reads at first like "open the journey in a new window" — it is the opposite. The
+  payment page stays embedded and *they* call `window.open` for the two steps WorkOS will not allow
+  to be framed. Yoma opens nothing and can observe nothing; the frame is unchanged.
+- **⚠️ 2026-09-18: do not add a `sandbox` attribute.** IXO's note asks for `allow-popups` and
+  `allow-popups-to-escape-sandbox` **if** the frame is sandboxed. It is not, and `sandbox` is
+  deny-by-default — adding it to satisfy that sentence would strip scripts, forms, storage and
+  navigation from a journey that needs all four, and `allow-popups-to-escape-sandbox` is meaningless
+  without it. Verified 2026-09-18 that nothing else of Yoma's blocks a popup either: no `headers()`
+  in `next.config.mjs`, no security headers on the web ingress (rewrites and proxy buffers only), no
+  CSP `<meta>` in `_document.tsx`, and `allow` is a Permissions-Policy list with no popup feature.
+- **2026-09-18: the escape hatch is permanent, not timed.** "Taking a while?" appeared four seconds
+  after frame load, written for a frame that would not render. The new failure is the opposite
+  shape: the frame renders perfectly and the tap on sign-in does nothing because the popup was
+  blocked — at any point in the journey, and undetectable for the same reason the refused frame was.
+  A youth who taps inside four seconds would have watched a spinner instead of finding the one
+  control that helps. So the timer, the spinner and `statusLoading` are gone, and the hint reads
+  **"Window didn't open?"** — asking about the window rather than the page.
+- **2026-09-18: `shouldCloseOnOverlayClick={false}` is now load-bearing.** It was tidiness; under the
+  popup flow it is what keeps the frame alive while the youth is away in the popup that has to
+  return to it. It also governs Escape, since `CustomModal` only registers that handler when the
+  flag is true. Commented in place so nobody relaxes it.
+- **2026-09-18: a mobile reload is recovered by resume, not by persisting the URL** (Adrian). If the
+  tab is evicted while the youth is in the popup, the profile refresh shows an active payout and
+  "Continue cash out" fetches a fresh session from GET `/user/payout/zlto`. The no-persistence rule
+  is unchanged and the recovery path already existed — this confirms it is the intended one.
 
 ## Links
 
