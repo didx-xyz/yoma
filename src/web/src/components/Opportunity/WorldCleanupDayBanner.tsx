@@ -24,11 +24,14 @@ const HREF_CLEANUP_SEARCH = "/opportunities?query=clean%2520up";
 const HREF_GLOBAL_CLEANUP =
   "https://yoma.world/opportunities/01a068f6-4f1b-7871-9dfb-3de7e2254940";
 
-/** Date chip, verbatim from the mock. */
-const CAMPAIGN_DATE_LABEL = "SAT 20 SEP";
+/** Date chip. The mock said "SAT 20 SEP"; 20 Sep 2026 is a Sunday. */
+const CAMPAIGN_DATE_LABEL = "SUN 20 SEP";
+
+/** Weekday in the headline — kept beside the chip so the two can never drift apart. */
+const CAMPAIGN_DAY_NAME = "Sunday";
 
 /**
- * Auto-retire, end of day Tue 27 Sep SAST — the brief's display window (late enough to catch
+ * Auto-retire, end of day Sun 27 Sep SAST — the brief's display window (late enough to catch
  * weekend submissions). Delete this component's usage when the campaign is done for good.
  */
 const CAMPAIGN_END = new Date("2026-09-27T23:59:59+02:00");
@@ -88,7 +91,7 @@ export const WorldCleanupDayBanner: React.FC = () => {
             </div>
 
             <h2 className="text-xl leading-tight font-extrabold text-white md:text-3xl">
-              Clean up your corner of the world this Saturday!
+              Clean up your corner of the world this {CAMPAIGN_DAY_NAME}!
             </h2>
 
             <p className="text-purple-tint max-w-2xl text-sm md:text-[15px]">
