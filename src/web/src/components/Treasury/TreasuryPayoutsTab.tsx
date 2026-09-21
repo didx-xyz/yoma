@@ -1,11 +1,17 @@
 import { useCallback, useMemo, useRef, useState } from "react";
+import { IoMdClose } from "react-icons/io";
 import type { PayoutTransaction } from "~/api/models/payout";
 import { BTN_SECONDARY } from "~/components/Common/buttonStyles";
 import CustomModal from "~/components/Common/CustomModal";
 import FilterBadges from "~/components/FilterBadges";
 import { ListPagePagination } from "~/components/Common/ListPage/ListPageResults";
 import { ListPageSearchToolbar } from "~/components/Common/ListPage/ListPageSearchToolbar";
-import { ModalBody, ModalHeader } from "~/components/Common/ModalChrome";
+import {
+  MODAL_ACTION_WIDTH,
+  ModalActions,
+  ModalBody,
+  ModalHeader,
+} from "~/components/Common/ModalChrome";
 import NoRowsMessage from "~/components/NoRowsMessage";
 import PayoutTransactionDetail from "~/components/Payout/PayoutTransactionDetail";
 import PayoutTransactionFilterVertical from "~/components/Payout/PayoutTransactionFilterVertical";
@@ -260,6 +266,19 @@ export const TreasuryPayoutsTab: React.FC = () => {
 
             {!!detail && <PayoutTransactionDetail info={detail} />}
           </ModalBody>
+
+          {/* Dismiss only — there is nothing to apply on a read-only record. Same
+              button as the filter popup's Close, so the two dialogs end the same way. */}
+          <ModalActions>
+            <button
+              type="button"
+              className={`${BTN_SECONDARY} ${MODAL_ACTION_WIDTH}`}
+              onClick={() => setSelected(null)}
+            >
+              <IoMdClose className="h-5 w-5" />
+              Close
+            </button>
+          </ModalActions>
         </div>
       </CustomModal>
     </div>
