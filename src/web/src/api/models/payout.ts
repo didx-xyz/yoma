@@ -1,5 +1,3 @@
-import type { Country } from "./lookups";
-
 /**
  * Payout — moving a youth's ZLTO out of the platform as real money.
  *
@@ -12,6 +10,7 @@ import type { Country } from "./lookups";
  */
 
 import type { PaginationFilter } from "./common";
+import type { Country } from "./lookups";
 import type { UserInfo } from "./organisation";
 
 /**
@@ -57,10 +56,13 @@ export const isPayoutActive = (
  * `GET /user/payout/latest` — the youth's active payout, or their most recently initiated terminal
  * one. **This is the only place an outcome can be read**; the profile carries active payouts only.
  *
- * Deliberately carries no id, no provider reference, no error text and **no ZLTO amount**: `amount`
- * is USD. The ZLTO that was reserved is gone from the wallet's `pendingPayout` once the payout
- * closes, and it must not be reconstructed at today's rate — Flow D shows the outcome and the
- * updated wallet, not a historical ZLTO figure.
+ * Carries no provider reference, no error text and **no ZLTO amount**: `amount` is USD. The ZLTO
+ * that was reserved is gone from the wallet's `pendingPayout` once the payout closes, and it must
+ * not be reconstructed at today's rate — Flow D shows the outcome and the updated wallet, not a
+ * historical ZLTO figure.
+ *
+ * ⚠️ It *did* carry no id either, until API 2026-09-21 added one for cancellation. That is the only
+ * reason it exists — see `id` below — and it remains something to match against, never to store.
  *
  * Ask for it **inside the cash-out journey** (on closing the hosted modal, or when checking how it
  * went). It is a latest-state read, not a history feed and not an unread-notification mechanism, so
