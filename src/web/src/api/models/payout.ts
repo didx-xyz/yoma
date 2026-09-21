@@ -1,3 +1,5 @@
+import type { Country } from "./lookups";
+
 /**
  * Payout — moving a youth's ZLTO out of the platform as real money.
  *
@@ -62,6 +64,16 @@ export const isPayoutActive = (
  * do not announce an old outcome on every visit to the wallet.
  */
 export interface PayoutTransactionInfo {
+  /**
+   * The Yoma payout transaction id (API 2026-09-21). **The same id as `PayoutSession.payoutId`**,
+   * and the one to POST to the cancel endpoint.
+   *
+   * ⚠️ It exists so eligibility can be *matched to a payout*, not so it can be stored. Apply a
+   * `canCancel` read only when this id equals the id of the session on screen — a mismatch means
+   * the screen is stale and belongs to a payout that is no longer the active one, and acting on it
+   * would cancel the wrong thing.
+   */
+  id: string;
   status: PayoutTransactionStatus;
   /** in `currency` — USD, not ZLTO */
   amount: number;
@@ -70,6 +82,24 @@ export interface PayoutTransactionInfo {
   dateCreated: string;
   /** true only while active *and* the provider has a reference to request a session against */
   canResume: boolean;
+  /**
+   * Whether the provider will currently accept a cancellation (API 2026-09-21). **Three-valued, and
+   * all three matter:**
+   *
+   * - `true` — offer Cancel.
+   * - `false` — do not. Terminal payouts are always false, and so is one the youth has already
+   *   submitted at the provider.
+   * - `null` / absent — **unknown**, not "no". The provider reference is missing, or the status
+   *   call failed. Do not offer Cancel, and do not tell the youth it is unavailable either; offer
+   *   another look.
+   *
+   * ⚠️ **Not derivable locally, which is why it is not on the profile.** Yoma's `Processing` covers
+   * both "the provider has it and has not been told to go" and "the youth has submitted it", and
+   * only the provider can separate them. It is a snapshot: the provider re-checks atomically on
+   * cancel and may still refuse. Reading it costs a provider round-trip, so it is fetched on
+   * demand next to the interaction, never on profile load.
+   */
+  canCancel?: boolean | null;
 }
 
 /**
@@ -85,6 +115,45 @@ export interface PayoutTransactionInfo {
 export interface PayoutCountryAvailability {
   supported: boolean;
   offline: boolean;
+  /**
+   * The smallest **USD** payout this country will accept (API 2026-09-21), or null.
+   *
+   * ⚠️ **Null means "no minimum enforced by Yoma" — never "any amount is fine".** It is also what
+   * an unsupported, unspecified or offline country returns, and those are blocked by `supported` /
+   * `offline` regardless. Null must never be read as permission to cash out, and a missing minimum
+   * must never be replaced with an invented one.
+   *
+   * It is a *country* floor, not a corridor floor: the hosted provider is still the authority once
+   * the youth picks where the money goes, so nothing here may promise the payout will be accepted.
+   *
+   * ⚠️ Compare it against the **conversion preview's USD figure**, never against the ZLTO the youth
+   * typed, and never against a threshold reverse-calculated from the displayed rate. Optional
+   * because a rolling deployment can serve an API that predates it.
+   */
+  minimumAmount?: number | null;
+  /**
+   * The currency `minimumAmount` is expressed in — USD today, and **separate from the active
+   * payout's `currency` on purpose**. Changing country changes this; it must never relabel a payout
+   * already in flight.
+   *
+   * ⚠️ **This is metadata, not multi-currency support.** If it is ever anything but USD, that is
+   * unusable contract data: do not convert, do not compare it numerically against the USD preview,
+   * and do not infer a payout currency from it. A supported country sends USD even when
+   * `minimumAmount` is null.
+   */
+  currency?: PayoutCurrency | null;
+}
+
+/**
+ * `GET /user/payout/countries` — a supported country, with its payout limits (API 2026-09-21).
+ *
+ * The limits belong to *payout* countries only; the general `Country` lookup is unchanged and must
+ * stay that way.
+ */
+export interface PayoutCountry extends Country {
+  /** see `PayoutCountryAvailability.minimumAmount` — same figure, same caveats */
+  minimumAmount?: number | null;
+  currency?: PayoutCurrency | null;
 }
 
 /**
@@ -104,6 +173,22 @@ export interface PayoutCountryAvailability {
  * without a URL is useless to the caller — `isSafePaymentUrl` is what actually guards it.
  */
 export interface PayoutSession {
+  /**
+   * The Yoma payout transaction this session belongs to (API 2026-09-21) — the same id as
+   * `PayoutTransactionInfo.id`, and the one the cancel endpoint takes.
+   *
+   * ⚠️ Cancel **this** id, the one on screen. Never re-resolve "the user's active payout" at the
+   * moment of cancelling: if the screen is stale, that resolves to a *different* payout and cancels
+   * something the youth never looked at. Optional for rolling deployment; without it, Cancel cannot
+   * be offered at all, because there is nothing safe to address.
+   */
+  payoutId?: string;
+  /**
+   * Whether the provider would accept a cancellation, as of this session response. `true` is the
+   * only value that may enable Cancel — see `PayoutTransactionInfo.canCancel` for why absent is
+   * "unknown" rather than "no", and why this is a snapshot the provider may still overrule.
+   */
+  canCancel?: boolean;
   /** the settled value in `currency`, not the ZLTO amount it came from */
   amount: number;
   currency: PayoutCurrency;

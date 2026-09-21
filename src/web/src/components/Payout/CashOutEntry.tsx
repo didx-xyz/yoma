@@ -1,10 +1,14 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSetAtom } from "jotai";
 import { useCallback, useEffect, useState } from "react";
-import { IoAlertCircleOutline } from "react-icons/io5";
-import type { PayoutTransactionInfo } from "~/api/models/payout";
+import {
+  IoAlertCircleOutline,
+  IoCheckmarkCircleOutline,
+} from "react-icons/io5";
+import type { PayoutSession, PayoutTransactionInfo } from "~/api/models/payout";
 import type { UserProfile } from "~/api/models/user";
 import {
+  cancelPayout,
   getLatestPayout,
   getZltoPayoutSession,
   initiateZltoPayout,
@@ -15,16 +19,19 @@ import {
   AMOUNT_COPY,
   AMOUNT_PROBLEM_COPY,
   AMOUNT_SERVER_REJECTED,
+  CANCEL_COPY,
   CASH_OUT_ACTION,
   CASH_OUT_ACTION_CONTINUE,
   CASH_OUT_DISABLED_HELPER,
   FAILURE_COPY,
   GATE_COPY,
   HOSTED_COPY,
+  MINIMUM_COPY,
   OUTCOME_COPY,
   RESUME_COPY,
   REVIEW_COPY,
 } from "~/lib/payout/copy";
+import { cashOutMinimum, isBelowCashOutMinimum } from "~/lib/payout/minimum";
 import { describeOutcome, formatPayoutStarted } from "~/lib/payout/outcome";
 import type { CashOutBlockReason } from "~/lib/payout/eligibility";
 import { cashOutEligibility } from "~/lib/payout/eligibility";
@@ -86,8 +93,25 @@ type FlowView =
   | { name: "review"; amount: number; usd: number; rate: number | null }
   /** the hosted journey, embedded */
   | { name: "hosted"; paymentUrl: string }
-  /** the payout in flight, and the way back into it */
-  | { name: "resume"; state?: CashOutResumeState; notice?: string }
+  /**
+   * The payout in flight, and the ways to act on it.
+   *
+   * ⚠️ **It carries the session now** (API 2026-09-21). Cancellation eligibility only exists on a
+   * session (or a matched `latest` read), and Cancel has to sit beside Continue *before* the youth
+   * goes near the hosted screen — so the session is fetched when this view opens rather than when
+   * Continue is tapped. It lives here, in dialog memory, and dies with the dialog: never stored,
+   * never re-fetched by `POST`.
+   */
+  | {
+      name: "resume";
+      state?: CashOutResumeState;
+      notice?: string;
+      session?: PayoutSession;
+    }
+  /** the cancellation confirmation, holding the id it will act on and nothing else */
+  | { name: "cancelConfirm"; payoutId: string }
+  | { name: "cancelling"; payoutId: string }
+  | { name: "cancelled" }
   /** step 3 — the recorded outcome, or `null` when it could not be read */
   | { name: "outcome"; payout: PayoutTransactionInfo | null }
   /** reading the outcome, right after the hosted modal closed */
@@ -128,6 +152,13 @@ export const CashOutEntry: React.FC<{
   const eligibility = cashOutEligibility(profile);
   const available = profile.zlto?.available ?? 0;
   const isOpen = view.name !== "closed";
+
+  /**
+   * The country's floor, from the profile — the same figure the server checks, so no request is
+   * spent asking for it again. Re-derived on every render, which is what makes a country change
+   * show the new minimum rather than the old one.
+   */
+  const minimum = cashOutMinimum(profile.payout?.countryAvailability);
 
   const amount = parseCashOutAmount(amountText, available);
   /** The amount worth pricing, or null when there is nothing valid to price. */
@@ -191,8 +222,21 @@ export const CashOutEntry: React.FC<{
     };
   })();
 
+  /**
+   * ⚠️ Judged against the **preview's** USD figure, and only a preview that belongs to what is in
+   * the field right now — `preview.state === "ready"` already guarantees that (it is false while
+   * `debouncedAmount` trails `amountValue`), so a stale estimate can never qualify a smaller new
+   * amount. Never the typed ZLTO, and never a threshold back-calculated from the rounded rate.
+   */
+  const belowMinimum =
+    preview.state === "ready" && isBelowCashOutMinimum(minimum, preview.usd);
+
   const canContinue =
-    amount.ok && preview.state === "ready" && !preview.paused && !busy;
+    amount.ok &&
+    preview.state === "ready" &&
+    !preview.paused &&
+    !belowMinimum &&
+    !busy;
 
   const close = useCallback(() => {
     setView({ name: "closed" });
@@ -218,49 +262,23 @@ export const CashOutEntry: React.FC<{
     setView({ name: "outcome", payout });
   }, [refreshProfile]);
 
-  const openFlow = useCallback(() => {
-    if (eligibility.allowed) {
-      setAmountText("");
-      setAmountTouched(false);
-      setServerAmountError(undefined);
-      setServerPaused(false);
-      setView({ name: "amount" });
-      return;
-    }
-
-    // One active payout per user: the answer is to finish that one, not to start another, so the
-    // youth goes to the payout in flight rather than to a dialog explaining that they cannot.
-    if (eligibility.reason === "activePayout") {
-      // `canResume` is known up front now, so the setup window is stated on arrival rather than
-      // discovered by tapping a button that cannot work yet. Retry stays available either way —
-      // reconciliation fills the provider reference in, so the next tap may well succeed.
-      setView({
-        name: "resume",
-        state: profile.payout?.canResume ? "resumable" : "settingUp",
-      });
-      return;
-    }
-
-    setView({
-      name: "gate",
-      reason: eligibility.reason,
-      missingFields:
-        eligibility.reason === "profileIncomplete"
-          ? eligibility.missingFields
-          : undefined,
-    });
-  }, [eligibility, profile.payout?.canResume]);
-
-  /** Fetch a *fresh* hosted session for the active payout and hand over. Never a stored URL. */
-  const continueCashOut = useCallback(async () => {
-    setBusy(true);
-    // Keep whatever the panel was already saying about this payout and only clear the notice being
-    // retried — rebuilding the view from scratch would flash the "pick up where you left off"
-    // invitation into a state that deliberately does not offer it.
+  /**
+   * Fetch a *fresh* hosted session for the active payout and park it on the resume view — the URL
+   * for Continue and `canCancel` for Cancel, from one request.
+   *
+   * Every outcome lands on a state the panel can render; nothing here hands the youth to the
+   * provider, because the point of fetching early is to let them choose first.
+   */
+  const loadResumeSession = useCallback(async () => {
     setView((current) =>
       current.name === "resume"
-        ? { ...current, notice: undefined }
-        : { name: "resume" },
+        ? {
+            ...current,
+            state: "loading",
+            notice: undefined,
+            session: undefined,
+          }
+        : { name: "resume", state: "loading" },
     );
 
     try {
@@ -279,7 +297,7 @@ export const CashOutEntry: React.FC<{
         return;
       }
 
-      setView({ name: "hosted", paymentUrl: session.paymentUrl });
+      setView({ name: "resume", state: "resumable", session });
     } catch (error) {
       const failure = mapPayoutFailure(error);
       if (failure.kind === "noActivePayout") {
@@ -293,10 +311,172 @@ export const CashOutEntry: React.FC<{
       } else {
         setView({ name: "resume", notice: RESUME_COPY.linkFailed });
       }
+    }
+  }, [showOutcome]);
+
+  const openFlow = useCallback(() => {
+    if (eligibility.allowed) {
+      setAmountText("");
+      setAmountTouched(false);
+      setServerAmountError(undefined);
+      setServerPaused(false);
+      setView({ name: "amount" });
+      return;
+    }
+
+    // One active payout per user: the answer is to finish that one, not to start another, so the
+    // youth goes to the payout in flight rather than to a dialog explaining that they cannot.
+    if (eligibility.reason === "activePayout") {
+      // `canResume: false` means Yoma has the payout and the provider does not yet — there is no
+      // session to fetch and nothing to cancel there, so it says so immediately rather than
+      // spending a request to find out.
+      if (!profile.payout?.canResume) {
+        setView({ name: "resume", state: "settingUp" });
+        return;
+      }
+      // Otherwise fetch the session *now*, not on Continue. It carries the cancellation eligibility
+      // (API 2026-09-21), and Cancel has to be offered beside Continue rather than discovered after
+      // the youth has already been handed to the provider.
+      setView({ name: "resume", state: "loading" });
+      void loadResumeSession();
+      return;
+    }
+
+    setView({
+      name: "gate",
+      reason: eligibility.reason,
+      missingFields:
+        eligibility.reason === "profileIncomplete"
+          ? eligibility.missingFields
+          : undefined,
+    });
+  }, [eligibility, profile.payout?.canResume, loadResumeSession]);
+
+  /**
+   * Continue into the hosted journey. **Reuses the session already fetched for this panel** rather
+   * than asking for another — it was issued moments ago for this payout, and a second request buys
+   * nothing. A session past its `expiresAt` is refetched; `POST` is never used to refresh, because
+   * that starts a second payout.
+   */
+  const continueCashOut = useCallback(async () => {
+    const current = view.name === "resume" ? view.session : undefined;
+    const stillValid =
+      current &&
+      isSafePaymentUrl(current.paymentUrl) &&
+      new Date(current.expiresAt).getTime() > Date.now();
+
+    if (stillValid) {
+      setView({ name: "hosted", paymentUrl: current.paymentUrl });
+      return;
+    }
+
+    setBusy(true);
+    try {
+      await loadResumeSession();
+      // Deliberately *not* chained into the hosted view: the refetch may have landed on
+      // "still setting up" or a failure, and forcing the youth onward from here would override the
+      // state the panel just worked out. They press Continue again on a panel that now has a
+      // session — one extra tap, and never a hand-off built on a stale assumption.
     } finally {
       setBusy(false);
     }
-  }, [showOutcome]);
+  }, [view, loadResumeSession]);
+
+  /**
+   * Re-read cancellation eligibility when the session's answer was `null` — unknown, not "no".
+   *
+   * Uses `GET /user/payout/latest` rather than another session: the session on screen is still
+   * valid and refreshing it would cost a provider round-trip to learn one boolean.
+   *
+   * ⚠️ **The id match is the safety check, not a formality.** `latest` answers about whatever
+   * payout is current, which on a stale screen is a *different* one. Applying its `canCancel` to
+   * the session in front of the youth would arm a Cancel button for a payout they are not looking
+   * at — so a mismatch discards this session and starts again rather than reconciling the two.
+   */
+  const checkCancelEligibility = useCallback(async () => {
+    const session = view.name === "resume" ? view.session : undefined;
+    if (!session?.payoutId) return;
+
+    setBusy(true);
+    try {
+      const latest = await getLatestPayout();
+
+      if (latest && latest.id !== session.payoutId) {
+        await loadResumeSession();
+        return;
+      }
+
+      setView((current) =>
+        current.name === "resume" && current.session
+          ? {
+              ...current,
+              session: {
+                ...current.session,
+                canCancel: latest?.canCancel ?? undefined,
+              },
+            }
+          : current,
+      );
+    } catch {
+      // Still unknown, and the panel already says so. Nothing has changed and nothing is claimed.
+    } finally {
+      setBusy(false);
+    }
+  }, [view, loadResumeSession]);
+
+  /**
+   * Cancel the payout **on screen**, by the id the session gave us.
+   *
+   * ⚠️ Never re-resolve "the active payout" here. If this dialog has gone stale, that resolves to a
+   * different payout, and the endpoint would cancel it — releasing Zlto the youth never asked to
+   * release. The id travels with the confirmation view for exactly that reason.
+   *
+   * Nothing is released optimistically: the API answers only after the provider has agreed *and*
+   * the reservation has been released, so success is the single thing that licenses the success
+   * screen. A refusal means the provider took a submission in the meantime — the payout is intact
+   * and on its way, which is a fact worth stating plainly rather than an error to apologise for.
+   */
+  const confirmCancel = useCallback(
+    async (payoutId: string) => {
+      setView({ name: "cancelling", payoutId });
+
+      try {
+        await cancelPayout(payoutId);
+
+        // Both the wallet and the payout state have moved: the reservation is released and the
+        // payout is terminal. Refresh before showing the result so the ledger behind the dialog
+        // agrees with it.
+        await refreshProfile();
+        void queryClient.invalidateQueries({ queryKey: ["Payout"] });
+        setView({ name: "cancelled" });
+      } catch (error) {
+        const failure = mapPayoutFailure(error);
+
+        // 404 — the id is unknown to the server, which on this path means the payout moved on.
+        // Ask what it actually is rather than guessing from a failed cancellation.
+        if (failure.kind === "noActivePayout") {
+          await showOutcome();
+          return;
+        }
+
+        // Anything else: the payout is untouched. Back to the panel with the session refetched, so
+        // what it offers reflects the state that just refused us.
+        const refused = failure.kind !== "failed";
+        await loadResumeSession();
+        setView((current) =>
+          current.name === "resume"
+            ? {
+                ...current,
+                notice: refused
+                  ? CANCEL_COPY.refusedBody
+                  : CANCEL_COPY.failedBody,
+              }
+            : current,
+        );
+      }
+    },
+    [refreshProfile, queryClient, showOutcome, loadResumeSession],
+  );
 
   /**
    * `POST /user/payout/zlto?amount=` — the point at which Zlto is reserved. **Called once per
@@ -345,6 +525,17 @@ export const CashOutEntry: React.FC<{
             setServerAmountError(AMOUNT_PROBLEM_COPY[failure.problem]);
             setAmountTouched(true);
             setView({ name: "amount" });
+            break;
+
+          // The country floor refused an amount the client had cleared, so the limit or the rate
+          // moved underneath us. Refresh the profile — that is what carries the minimum, so the
+          // hint under the field corrects itself — and put them back on the field with the amount
+          // they typed still in it.
+          case "belowMinimum":
+            setServerAmountError(MINIMUM_COPY.serverRejected);
+            setAmountTouched(true);
+            setView({ name: "amount" });
+            void refreshProfile();
             break;
 
           // Treasury capacity, not the youth's amount. Re-ask the preview so the panel below the
@@ -424,6 +615,10 @@ export const CashOutEntry: React.FC<{
         return REVIEW_COPY.dialogTitle;
       case "resume":
         return RESUME_COPY.dialogTitle;
+      case "cancelConfirm":
+      case "cancelling":
+      case "cancelled":
+        return CANCEL_COPY.dialogTitle;
       case "hosted":
         return HOSTED_COPY.dialogTitle;
       case "checking":
@@ -516,6 +711,8 @@ export const CashOutEntry: React.FC<{
               problem={amount.ok ? undefined : amount.problem}
               showProblem={amountTouched}
               serverError={serverAmountError}
+              minimumUsd={minimum.amount}
+              belowMinimum={belowMinimum}
               preview={preview}
               canContinue={canContinue}
               onContinue={() => {
@@ -552,8 +749,69 @@ export const CashOutEntry: React.FC<{
               busy={busy}
               state={view.state}
               notice={view.notice}
+              // Straight from the session this panel is holding — never from the profile, which
+              // cannot know it, and never inferred from `canResume`, which answers a different
+              // question. Without a `payoutId` there is nothing safe to cancel, so nothing is
+              // offered however eligible the provider says the payout is.
+              canCancel={
+                view.session?.payoutId ? view.session.canCancel : false
+              }
+              onCancel={
+                view.session?.payoutId
+                  ? () =>
+                      setView({
+                        name: "cancelConfirm",
+                        payoutId: view.session!.payoutId!,
+                      })
+                  : undefined
+              }
+              onCheckCancel={() => void checkCancelEligibility()}
               onContinue={() => void continueCashOut()}
               onClose={close}
+            />
+          )}
+
+          {/* The confirmation, carrying the id it will act on. A full screen rather than a nested
+              dialog: this is a money decision, and the consequence — where the Zlto goes — deserves
+              the same room the other outcomes get. */}
+          {view.name === "cancelConfirm" && (
+            <CashOutMessageStep
+              icon={<IoAlertCircleOutline className="h-6 w-6" />}
+              tone="warning"
+              title={CANCEL_COPY.confirmTitle}
+              body={CANCEL_COPY.confirmBody}
+              primary={{
+                label: CANCEL_COPY.confirmAction,
+                onClick: () => void confirmCancel(view.payoutId),
+              }}
+              // Leaving is the safe default here, so it gets the quieter treatment but stays
+              // present and full width — the youth may well have arrived by mistake.
+              secondary={{
+                label: CANCEL_COPY.keepAction,
+                onClick: () => void loadResumeSession(),
+              }}
+            />
+          )}
+
+          {view.name === "cancelling" && (
+            <div className="flex flex-col items-center gap-3 py-8">
+              <span
+                className="loading loading-spinner loading-md text-purple"
+                aria-hidden="true"
+              />
+              <p className="text-gray-dark text-sm" role="status">
+                {CANCEL_COPY.confirmBusyAction}
+              </p>
+            </div>
+          )}
+
+          {view.name === "cancelled" && (
+            <CashOutMessageStep
+              icon={<IoCheckmarkCircleOutline className="h-6 w-6" />}
+              tone="success"
+              title={CANCEL_COPY.successTitle}
+              body={CANCEL_COPY.successBody}
+              primary={{ label: OUTCOME_COPY.doneAction, onClick: close }}
             />
           )}
 

@@ -1,8 +1,12 @@
 import type { GetServerSidePropsContext, GetStaticPropsContext } from "next";
 import ApiClient from "~/lib/axiosClient";
 import ApiServer from "~/lib/axiosServer";
-import type { Country } from "../models/lookups";
-import type { PayoutSession, PayoutTransactionInfo } from "../models/payout";
+import { uuidSegment } from "~/lib/apiPath";
+import type {
+  PayoutCountry,
+  PayoutSession,
+  PayoutTransactionInfo,
+} from "../models/payout";
 
 /**
  * `GET /user/payout/countries` — **User** role. The countries whose payout provider currently has
@@ -15,12 +19,16 @@ import type { PayoutSession, PayoutTransactionInfo } from "../models/payout";
  * "we don't know", not "your country is unsupported", and the two must not read the same way — so
  * this resolves to `null` for offline rather than throwing or returning `[]`. An empty array is a
  * different, meaningful answer: the provider is reachable and supports nothing.
+ *
+ * Each item carries `minimumAmount` / `currency` since API 2026-09-21 — **payout countries only**;
+ * the general country lookup is a different contract and keeps no limits. The youth flow reads the
+ * *profile's* copy of the same figure rather than calling this, so nothing here costs a request.
  */
 export const listPayoutCountries = async (
   context?: GetServerSidePropsContext | GetStaticPropsContext,
-): Promise<Country[] | null> => {
+): Promise<PayoutCountry[] | null> => {
   const instance = context ? ApiServer(context) : await ApiClient;
-  const { data, status } = await instance.get<Country[]>(
+  const { data, status } = await instance.get<PayoutCountry[]>(
     "/user/payout/countries",
     // 503 is a documented outcome of this endpoint, not a failure — take it as data.
     { validateStatus: (s) => (s >= 200 && s < 300) || s === 503 },
@@ -102,4 +110,34 @@ export const getLatestPayout = async (
     { validateStatus: (s) => (s >= 200 && s < 300) || s === 404 },
   );
   return status === 404 ? null : data;
+};
+
+/**
+ * `POST /user/payout/{payoutId}/cancel` — **User** role. Cancels the payout **and releases the
+ * reserved Zlto**, answering an empty `200 OK` once both have been processed.
+ *
+ * ⚠️ **Pass the id that is on the youth's screen** — `PayoutSession.payoutId`, or
+ * `PayoutTransactionInfo.id` once it has been matched to it. Never re-resolve "the active payout"
+ * here: on a stale screen that is a *different* payout, and this endpoint would dutifully cancel it.
+ * The server checks ownership and the exact id, so a mismatch is refused rather than substituted —
+ * but the client must not rely on that to be pointing at the right thing.
+ *
+ * **Success is success and nothing else is.** A 200 means cancelled and released; the API only
+ * answers after local settlement, and a repeat of an already-cancelled payout is idempotent. A
+ * refusal — the provider having accepted a submission in the meantime — arrives as **HTTP 400 with
+ * the provider's message** (Yoma's middleware maps the provider's 409), and an unknown reference as
+ * **404**. Neither is a cancellation: show the error and re-read the state. There is no structured
+ * status on the error body to branch on.
+ *
+ * Nothing may be released optimistically. Eligibility was a snapshot; the provider decides the race
+ * with a submission in another tab, atomically, at this moment.
+ */
+export const cancelPayout = async (
+  payoutId: string,
+  context?: GetServerSidePropsContext | GetStaticPropsContext,
+): Promise<void> => {
+  const instance = context ? ApiServer(context) : await ApiClient;
+  // Validated then encoded, like every other route parameter here — a payout id reaches this from
+  // an API response rather than a route, but the rule does not change (CodeQL, PR #1924).
+  await instance.post(`/user/payout/${uuidSegment(payoutId)}/cancel`);
 };

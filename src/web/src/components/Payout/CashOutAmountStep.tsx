@@ -8,6 +8,7 @@ import { conversionRateLine } from "~/lib/payout/conversion";
 import {
   AMOUNT_COPY,
   AMOUNT_PROBLEM_COPY,
+  MINIMUM_COPY,
   amountAboveAvailableMessage,
 } from "~/lib/payout/copy";
 import { EMPTY_VALUE, formatUsd, formatZlto } from "~/lib/format/rewards";
@@ -64,6 +65,18 @@ export const CashOutAmountStep: React.FC<{
   showProblem: boolean;
   /** a server rejection of an amount this component considers valid — the profile was stale */
   serverError?: string;
+  /**
+   * The country's floor in USD, already vetted by `cashOutMinimum` — null when there is none to
+   * enforce, or when the API's figure was unusable. Shown from first paint, because finding out
+   * about a minimum only after typing an amount and pressing Continue wastes the youth's time.
+   */
+  minimumUsd?: number | null;
+  /**
+   * The estimate falls short of `minimumUsd`. Decided by the caller against the **preview's USD
+   * figure** for the amount currently in the field — never against the typed ZLTO, and never from a
+   * stale preview (see `lib/payout/minimum.ts`).
+   */
+  belowMinimum?: boolean;
   preview: CashOutPreview;
   /** re-asks for the estimate after a failed preview; without it that state has no way forward */
   onRetryEstimate?: () => void;
@@ -78,15 +91,25 @@ export const CashOutAmountStep: React.FC<{
   problem,
   showProblem,
   serverError,
+  minimumUsd,
+  belowMinimum,
   onRetryEstimate,
   preview,
   canContinue,
   onContinue,
   onCancel,
 }) => {
+  /*
+    Precedence, and it is not arbitrary: the server's objection wins because it is the only one
+    based on what is actually true; then the amount's own problems, because "more than you have" is
+    a bigger obstacle than "less than the minimum" and fixing it may clear both; then the floor.
+  */
   const fieldError =
     serverError ??
-    (showProblem && problem ? problemMessage(problem, available) : null);
+    (showProblem && problem ? problemMessage(problem, available) : null) ??
+    (belowMinimum && minimumUsd != null
+      ? MINIMUM_COPY.below(formatUsd(minimumUsd))
+      : null);
   const paused = preview.state === "ready" && preview.paused;
   const rateLine =
     preview.state === "ready" ? conversionRateLine(preview.rate) : null;
@@ -102,6 +125,15 @@ export const CashOutAmountStep: React.FC<{
           <span className="sr-only">{AMOUNT_COPY.unit}</span>
         </span>
       </p>
+
+      {/* The floor, stated up front alongside the ceiling. Absent when there is none to enforce —
+          and absent, too, when the API's figure was unusable, because an invented minimum on a
+          money screen is worse than no minimum (see lib/payout/minimum.ts). */}
+      {minimumUsd != null && (
+        <p className="text-gray-dark -mt-3 text-center text-xs">
+          {MINIMUM_COPY.note(formatUsd(minimumUsd))}
+        </p>
+      )}
 
       <div className="flex flex-col gap-1">
         {/* Label and Max as siblings: a button inside a <label> would also fire the label. */}

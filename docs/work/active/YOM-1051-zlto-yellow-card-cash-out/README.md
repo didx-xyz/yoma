@@ -12,6 +12,15 @@ with a provider reference use a status GET, not a session refresh. Unknown eligi
 No profile provider call is added. Existing valid sessions can be retained while checking latest-info;
 match latest-info id to session payoutId before applying eligibility.
 
+**Web side done 2026-09-21.** The session is now fetched when the active-payout panel *opens*
+rather than when Continue is tapped — Cancel has to be offered beside Continue, and eligibility only
+exists on a session. It is held in dialog memory, reused for Continue, refetched when expired, and
+never persisted. Cancel appears only for `canCancel === true` **and** a `payoutId`; `null` is
+"unknown" and gets a note plus a re-check, never a missing button. The id on screen is the id
+POSTed — the flow never re-resolves "the active payout" at cancel time, which on a stale dialog
+would release a different payout. See
+[YOM-1074's handoff](./YOM-1074-ui-youth-yellow-card-cash-out/handoffs/2026-09-21-b.md).
+
 ## Country minimum contract — 2026-09-21
 
 - `GET /api/v3/user/payout/countries` preserves the country array and existing country fields;
@@ -38,6 +47,16 @@ match latest-info id to session payoutId before applying eligibility.
   hard-coded approximate country amounts. Hosted channel validation remains authoritative.
 - Jason: implementation instructions and test matrix are in
   [the API handoff](./YOM-1057-api-payout-domain-and-rewards-integration/handoffs/2026-09-21-a.md).
+
+**Web side done 2026-09-21.** The floor is read from the profile (no extra request), shown under the
+field from first paint, and compared against the **conversion preview's USD figure** — never the
+typed ZLTO, never a threshold back-calculated from the rounded display rate. Equal passes. A
+non-USD or negative minimum is treated as unusable contract data: no figure is shown and nothing is
+blocked client-side, because the server enforces the real rule and blocking on data we cannot read
+would lock a youth out of their own money. The server's refusal maps to a field error that quotes no
+figure and refreshes the profile, so the hint corrects itself. Enforcement stays dormant until IXO
+supply real minimums. See
+[YOM-1074's handoff](./YOM-1074-ui-youth-yellow-card-cash-out/handoffs/2026-09-21-b.md).
 
 ## Environment gate — 2026-09-16
 
