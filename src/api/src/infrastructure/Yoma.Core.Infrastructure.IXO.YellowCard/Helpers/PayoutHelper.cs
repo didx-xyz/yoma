@@ -7,6 +7,27 @@ namespace Yoma.Core.Infrastructure.IXO.YellowCard.Helpers
 {
   internal static class PayoutHelper
   {
+    internal static Domain.Payout.Models.PayoutCountry ToPayoutCountry(
+      Domain.Lookups.Models.Country country, YellowCardCountryLimits? limits)
+    {
+      var minimum = limits?.LowestMinUsd;
+      if (minimum < 0)
+        throw new Domain.Core.Exceptions.DataInconsistencyException("IXO returned a negative country payout minimum");
+
+      return new Domain.Payout.Models.PayoutCountry
+      {
+        Id = country.Id,
+        Name = country.Name,
+        CodeAlpha2 = country.CodeAlpha2,
+        CodeAlpha3 = country.CodeAlpha3,
+        CodeNumeric = country.CodeNumeric,
+        // lowestMinUsd already includes IXO's exchange-rate buffer. Zero means no minimum.
+        // The provider's currency field labels local channel amounts, not this USD value.
+        MinimumAmount = minimum == 0 ? null : minimum,
+        Currency = Currency.USD
+      };
+    }
+
     internal static PayoutTransactionStatus ToPayoutStatus(string? status)
     {
       status = status?.Trim();

@@ -36,8 +36,8 @@ payout, enforce one active payout per user, and reconcile terminal outcomes idem
 - [x] Prepare nullable country minimum metadata on supported countries and UserProfilePayout.
 - [x] Enforce supplied country minimum on both new-payout paths before persistence/reservation.
 - [x] Add focused minimum boundary, rounding, lookup and no-side-effect regression tests.
-- [ ] Map and verify IXO's final extended countries response when supplied; current minimums remain null.
-- [ ] Jason: wire profile country minimum into cash-out amount entry and server-error handling.
+- [x] Map and verify IXO's final extended countries response: lowestMinUsd, zero-to-null and one-hour cache cap.
+- [x] Jason: wire profile country minimum into cash-out amount entry and server-error handling (Stage validation remains).
 
 - [x] Add Payout domain, status/type/provider models, repository and migration.
 - [x] Add payout creation and status-transition service shell.
@@ -89,8 +89,9 @@ payout, enforce one active payout per user, and reconcile terminal outcomes idem
   Existing amount/currency remain active-payout-only so profile country changes cannot relabel
   an active payout. Availability flags retain their meaning; the nested model now serializes the minimum metadata.
   The shared contract is recorded once in the epic README; Jason's implementation handoff is
-  `handoffs/2026-09-21-a.md`. Existing IXO country-code strings remain supported until its final
-  shape is confirmed; adapter minimum is explicitly null meanwhile. Cancellation was added later
+  `handoffs/2026-09-21-a.md`. The initially unmapped adapter is superseded by the final confirmed
+  mapping in `handoffs/2026-09-21-c.md`: request limits=true and use lowestMinUsd directly in USD,
+  zero/missing/null means no minimum, cache capped at one hour. Cancellation was added later
   in this branch under the separate decision above.
 
 - 2026-09-16: `AppSettings:PayoutEnabledEnvironments` uses the existing comma-separated environment convention, configured as `Staging, Production`. Profile `payout.enabled` reports new-initiation enablement. Both public payout initiation paths reject disabled environments before writes/reservations with HTTP 400. Existing payout resume, reconciliation, webhooks, terminal outcomes and notifications remain operational. Jason must gate new cash-out UI actions independently from existing active-payout rendering. Production credentials and rollout verification remain prerequisites; this flag does not select provider endpoints.

@@ -69,10 +69,12 @@ namespace Yoma.Core.Infrastructure.IXO.YellowCard.Client
         if (!_appSettings.CacheEnabledByCacheItemTypesAsEnum.HasFlag(CacheItemType.Lookups))
           return new PayoutCountries { Countries = await ListCountriesSupportedInternal() };
 
-        var result = await _memoryCache.GetOrCreateAsync(CacheHelper.GenerateKey<YellowCardClient>("supported-countries"), async entry =>
+        var result = await _memoryCache.GetOrCreateAsync(CacheHelper.GenerateKey<YellowCardClient>("supported-countries-with-limits"), async entry =>
         {
-          entry.SlidingExpiration = TimeSpan.FromHours(_appSettings.CacheSlidingExpirationInHours);
-          entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(_appSettings.CacheAbsoluteExpirationRelativeToNowInDays);
+          // Reuse the configured lookup duration as an absolute expiry, not a sliding expiry.
+          // IXO permits caching dynamic limits/rates for at most one hour, even under frequent reads.
+          entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(
+            Math.Min(1, _appSettings.CacheSlidingExpirationInHours));
           return await ListCountriesSupportedInternal();
         }) ?? throw new InvalidOperationException("Failed to retrieve cached payout-country availability");
 
@@ -244,6 +246,7 @@ namespace Yoma.Core.Infrastructure.IXO.YellowCard.Client
     {
       var response = await Execute<YellowCardCountriesResponse>(() =>
         _options.SupportedCountriesUrl
+          .SetQueryParam("limits", "true")
           .WithTimeout(TimeSpan.FromSeconds(_options.RequestTimeoutSeconds))
           .GetAsync());
 
@@ -275,21 +278,12 @@ namespace Yoma.Core.Infrastructure.IXO.YellowCard.Client
       if (unresolvedCodes.Count != 0)
         throw new DataInconsistencyException($"IXO returned countries not configured in Yoma: {string.Join(", ", unresolvedCodes)}");
 
+      var limits = response.Limits?.ToDictionary(o => o.Key.Trim(), o => o.Value, StringComparer.OrdinalIgnoreCase);
+
       return [.. countries
         .Where(country => countryCodesAlpha2.Contains(country.CodeAlpha2, StringComparer.OrdinalIgnoreCase))
         .OrderBy(country => country.Name)
-        .Select(country => new PayoutCountry
-        {
-          Id = country.Id,
-          Name = country.Name,
-          CodeAlpha2 = country.CodeAlpha2,
-          CodeAlpha3 = country.CodeAlpha3,
-          CodeNumeric = country.CodeNumeric,
-          // IXO currently returns country-code strings only. Map its per-country USD minimum
-          // here once the extended wire contract is confirmed; do not guess the JSON field.
-          MinimumAmount = null,
-          Currency = Domain.Payout.Currency.USD
-        })];
+        .Select(country => PayoutHelper.ToPayoutCountry(country, limits?.GetValueOrDefault(country.CodeAlpha2)))];
     }
 
     private static async Task<TResponse> Execute<TResponse>(

@@ -45,6 +45,19 @@ namespace Yoma.Core.Infrastructure.IXO.YellowCard.Models
 
     [JsonProperty("countries")]
     public List<string> Countries { get; set; } = [];
+
+    [JsonProperty("limits")]
+    public Dictionary<string, YellowCardCountryLimits?>? Limits { get; set; }
+  }
+
+  public sealed class YellowCardCountryLimits
+  {
+    [JsonProperty("lowestMinUsd")]
+      public decimal? LowestMinUsd { get; set; }
+
+      /// <summary>Highest provider maximum across payout methods in USD; null means no maximum. Not enforced by Yoma; hosted per-method checks remain authoritative.</summary>
+      [JsonProperty("highestMaxUsd")]
+      public decimal? HighestMaxUsd { get; set; }
   }
   #endregion
 
