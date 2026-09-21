@@ -1,5 +1,44 @@
 # Epic: YOM-1051 — ZLTO Payout (Treasury, Reward Pools and Youth Cash-Out)
 
+## Cancellation contract — 2026-09-21
+
+Cancellation is now implemented locally too; see the [cancellation handover](./YOM-1057-api-payout-domain-and-rewards-integration/handoffs/2026-09-21-b.md).
+The existing start/resume session response adds payoutId and canCancel (provider initiated only).
+POST /api/v3/user/payout/{payoutId}/cancel returns empty 200 OK after cancellation/release is processed.
+No additional provider request is added to profile. Minimum amounts still await IXO's country contract.
+Latest payout information includes id; session payoutId refers to the same Yoma transaction.
+Latest payout information also includes nullable canCancel: terminal=false locally; active payouts
+with a provider reference use a status GET, not a session refresh. Unknown eligibility is null.
+No profile provider call is added. Existing valid sessions can be retained while checking latest-info;
+match latest-info id to session payoutId before applying eligibility.
+
+## Country minimum contract — 2026-09-21
+
+- `GET /api/v3/user/payout/countries` preserves the country array and existing country fields;
+  each item adds `minimumAmount: number | null` and `currency: "USD"`.
+- Profile exposes the SAME country limit at `payout.countryAvailability.minimumAmount` and
+  `payout.countryAvailability.currency`.
+  Existing `payout.amount` and `payout.currency` remain active-payout-only and null when none exists.
+  Changing profile country updates the minimum metadata, never the active payout amount/currency.
+  CountryAvailability retains supported/offline and adds nullable minimum/currency fields.
+- Both monetary concepts remain USD-only. The separate minimum currency preserves their meaning
+  and the original active-payout contract; it adds no currency selection, FX calculation or
+  multi-currency processing. Those would need coordinated provider/Treasury/API/UI work later.
+- Null minimum means no minimum enforced by Yoma, NOT provider availability or a promise that
+  all destination channels accept any amount. Unsupported/unspecified/offline country has null
+  countryAvailability.minimumAmount and countryAvailability.currency. Supported countries supply USD for currency
+  even when minimum is null. An active payout's currency remains independent in every case.
+- The existing provider country lookup/cache carries the metadata: no extra provider call on
+  profile or initiation, no conversion response change, global setting or migration.
+- Both initiation paths enforce the minimum against the actual USD payout (ZLTO conversion rounded
+  to two decimals away from zero at the locked current Treasury rate), before payout creation or
+  reward reservation. Equal is allowed. Resume/reconciliation/settlement do not reapply new limits.
+- IXO currently returns country-code strings only. Minimums deliberately remain null until the
+  extended response shape and JSON field are supplied and mapped. No guessed wire field or
+  hard-coded approximate country amounts. Hosted channel validation remains authoritative.
+- Jason: implementation instructions and test matrix are in
+  [the API handoff](./YOM-1057-api-payout-domain-and-rewards-integration/handoffs/2026-09-21-a.md).
+
 ## Environment gate — 2026-09-16
 
 `AppSettings:PayoutEnabledEnvironments` is configured as `Staging, Production`. New profile field

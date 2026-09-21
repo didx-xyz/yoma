@@ -20,7 +20,7 @@ namespace Yoma.Core.Infrastructure.IXO.YellowCard.Models
     public string AccessTokenPath { get; set; } = null!;
 
     /// <summary>
-    /// Partner payout collection path. Status and session paths are relative to this path.
+    /// Partner payout collection path. Status, session and cancellation paths are relative to this path.
     /// </summary>
     public string PayoutsPath { get; set; } = null!;
 

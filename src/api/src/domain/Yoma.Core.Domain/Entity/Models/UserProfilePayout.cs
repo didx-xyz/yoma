@@ -3,6 +3,13 @@ using Yoma.Core.Domain.Payout.Models;
 
 namespace Yoma.Core.Domain.Entity.Models
 {
+  /// <summary>
+  /// Profile payout summary and country availability. CanCancel is intentionally excluded:
+  /// local status cannot distinguish provider initiation from submission, and checking the
+  /// provider on every profile load would add latency while still returning a snapshot.
+  /// Obtain cancellation eligibility on demand from PayoutSession or PayoutTransactionInfo;
+  /// the provider rechecks it atomically when cancellation is requested.
+  /// </summary>
   public sealed class UserProfilePayout
   {
     /// <summary>
@@ -43,6 +50,10 @@ namespace Yoma.Core.Domain.Entity.Models
     /// </summary>
     public decimal? Amount { get; set; }
 
+    /// <summary>
+    /// Currency of the active payout Amount (currently USD). Null when no payout is in flight.
+    /// Independent of the current profile country's CountryAvailability.Currency.
+    /// </summary>
     public Currency? Currency { get; set; }
 
     /// <summary>

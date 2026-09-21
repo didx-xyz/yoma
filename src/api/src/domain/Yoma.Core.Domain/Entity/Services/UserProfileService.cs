@@ -108,7 +108,7 @@ namespace Yoma.Core.Domain.Entity.Services
       return ToProfile(user).Result;
     }
 
-    public async Task<List<Domain.Lookups.Models.Country>?> ListPayoutCountries()
+    public async Task<List<PayoutCountry>?> ListPayoutCountries()
     {
       return await _payoutService.ListCountries();
     }
@@ -127,11 +127,18 @@ namespace Yoma.Core.Domain.Entity.Services
       return await _payoutService.GetSession(user.Id);
     }
 
-    public PayoutTransactionInfo GetLatestPayoutTransaction()
+    public async Task<PayoutTransactionInfo> GetLatestPayoutTransaction()
     {
       var username = HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false);
       var user = _userService.GetByUsername(username, false, false);
-      return _payoutTransactionService.GetLatestInfoByUserId(user.Id);
+      return await _payoutService.GetLatestInfoByUserId(user.Id);
+    }
+
+    public async Task CancelPayout(Guid payoutId)
+    {
+      var username = HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false);
+      var user = _userService.GetByUsername(username, false, false);
+      await _payoutService.Cancel(user.Id, payoutId);
     }
 
     public List<UserSkillInfo>? GetSkills()

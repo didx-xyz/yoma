@@ -56,7 +56,7 @@ namespace Yoma.Core.Infrastructure.IXO.YellowCard.Services
         throw new ArgumentException("Yellow Card webhook contains an invalid Yoma payout transaction id", nameof(requestBody));
 
       payload.ProviderTransactionId = NormalizeRequired(payload.ProviderTransactionId, nameof(payload.ProviderTransactionId));
-      var status = YellowCardStatusHelper.ToPayoutStatus(payload.Status);
+      var status = PayoutHelper.ToPayoutStatus(payload.Status);
 
       if (!DateTimeOffset.TryParse(
           payload.OccurredAt,

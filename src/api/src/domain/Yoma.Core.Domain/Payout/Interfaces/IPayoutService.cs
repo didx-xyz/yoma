@@ -1,4 +1,3 @@
-using Yoma.Core.Domain.Lookups.Models;
 using Yoma.Core.Domain.Payout.Models;
 using Yoma.Core.Domain.Payout.Models.Provider;
 
@@ -8,7 +7,7 @@ namespace Yoma.Core.Domain.Payout.Interfaces
   {
     bool Enabled { get; }
 
-    Task<List<Country>?> ListCountries();
+    Task<List<PayoutCountry>?> ListCountries();
 
     Task<PayoutCountryAvailability> IsCountrySupported(Guid? countryId);
 
@@ -17,6 +16,10 @@ namespace Yoma.Core.Domain.Payout.Interfaces
     Task<PayoutSession> PayoutRewards(Guid userId, decimal amount);
 
     Task<PayoutSession> GetSession(Guid userId);
+
+    Task Cancel(Guid userId, Guid payoutId);
+
+    Task<PayoutTransactionInfo> GetLatestInfoByUserId(Guid userId);
 
     Task ProcessStatus(PayoutStatusResponse response);
 

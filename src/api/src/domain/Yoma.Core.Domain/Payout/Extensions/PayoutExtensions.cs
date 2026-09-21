@@ -8,16 +8,16 @@ namespace Yoma.Core.Domain.Payout.Extensions
     public static PayoutSession ToPayoutSession(this PayoutResponse value, PayoutTransaction payout)
     {
       ArgumentNullException.ThrowIfNull(value, nameof(value));
-      return ToPayoutSession(payout, value.PaymentUrl, value.ExpiresAt);
+      return ToPayoutSession(payout, value.PaymentUrl, value.ExpiresAt, value.CanCancel);
     }
 
     public static PayoutSession ToPayoutSession(this PayoutSessionResponse value, PayoutTransaction payout)
     {
       ArgumentNullException.ThrowIfNull(value, nameof(value));
-      return ToPayoutSession(payout, value.PaymentUrl, value.ExpiresAt);
+      return ToPayoutSession(payout, value.PaymentUrl, value.ExpiresAt, value.CanCancel);
     }
 
-    private static PayoutSession ToPayoutSession(PayoutTransaction payout, string paymentUrl, DateTimeOffset expiresAt)
+    private static PayoutSession ToPayoutSession(PayoutTransaction payout, string paymentUrl, DateTimeOffset expiresAt, bool canCancel)
     {
       ArgumentNullException.ThrowIfNull(payout, nameof(payout));
 
@@ -33,6 +33,8 @@ namespace Yoma.Core.Domain.Payout.Extensions
 
       return new PayoutSession
       {
+        PayoutId = payout.Id,
+        CanCancel = canCancel,
         Amount = payout.Amount,
         PaymentUrl = paymentUrlNormalized,
         ExpiresAt = expiresAt

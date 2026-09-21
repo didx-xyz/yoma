@@ -15,6 +15,12 @@ namespace Yoma.Core.Domain.Payout.Models.Provider
 
     public PayoutTransactionStatus Status { get; set; }
 
+    /// <summary>
+    /// Provider cancellation eligibility when supplied by a status lookup. Null when unknown;
+    /// the normalized Processing status alone does not distinguish initiated from submitted.
+    /// </summary>
+    public bool? CanCancel { get; set; }
+
     public string? ErrorReason { get; set; }
   }
 }

@@ -84,9 +84,9 @@ namespace Yoma.Core.Api.Controllers
     }
 
     [SwaggerOperation(Summary = "List countries currently available for payout (Authenticated User)",
-      Description = "Returns Yoma countries whose payout provider currently has at least one active payout channel; returns Service Unavailable when live provider availability cannot be determined")]
+      Description = "Returns supported payout countries with nullable minimum amount and currency; returns Service Unavailable when live provider availability cannot be determined")]
     [HttpGet("payout/countries")]
-    [ProducesResponseType(typeof(List<Domain.Lookups.Models.Country>), (int)HttpStatusCode.OK)]
+    [ProducesResponseType(typeof(List<PayoutCountry>), (int)HttpStatusCode.OK)]
     [ProducesResponseType((int)HttpStatusCode.ServiceUnavailable)]
     [Authorize(Roles = Constants.Role_User)]
     public async Task<IActionResult> ListPayoutCountries()
@@ -118,6 +118,22 @@ namespace Yoma.Core.Api.Controllers
       return StatusCode((int)HttpStatusCode.OK, result);
     }
 
+    [SwaggerOperation(Summary = "Cancel the current user's specified payout (Authenticated User)",
+      Description = "Provider atomically checks cancellation eligibility. Success is returned only after cancellation and local reservation release are processed; already-cancelled requests are idempotent")]
+    [HttpPost("payout/{payoutId}/cancel")]
+    [ProducesResponseType((int)HttpStatusCode.OK)]
+    [Authorize(Roles = Constants.Role_User)]
+    public async Task<IActionResult> CancelPayout([FromRoute] Guid payoutId)
+    {
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(CancelPayout));
+
+      await _userProfileService.CancelPayout(payoutId);
+
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(CancelPayout));
+
+      return StatusCode((int)HttpStatusCode.OK);
+    }
+
     [SwaggerOperation(Summary = "Get the hosted session for the active ZLTO payout (Authenticated User)",
       Description = "A user can have only one active payout at a time. Returns a refreshed hosted session and payment URL for it")]
     [HttpGet("payout/zlto")]
@@ -136,16 +152,16 @@ namespace Yoma.Core.Api.Controllers
     }
 
     [SwaggerOperation(Summary = "Get the latest payout state (Authenticated User)",
-      Description = "Returns the current user's active payout, otherwise the latest terminal outcome. Read-only: no provider calls, session creation or reward enrichment")]
+      Description = "Returns the current user's active payout, otherwise the latest terminal outcome. Active payouts include best-effort provider cancellation eligibility; no session creation or reward enrichment")]
     [HttpGet("payout/latest")]
     [ProducesResponseType(typeof(PayoutTransactionInfo), (int)HttpStatusCode.OK)]
     [ProducesResponseType((int)HttpStatusCode.NotFound)]
     [Authorize(Roles = Constants.Role_User)]
-    public IActionResult GetLatestPayoutTransaction()
+    public async Task<IActionResult> GetLatestPayoutTransaction()
     {
       if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(GetLatestPayoutTransaction));
 
-      var result = _userProfileService.GetLatestPayoutTransaction();
+      var result = await _userProfileService.GetLatestPayoutTransaction();
 
       if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(GetLatestPayoutTransaction));
 

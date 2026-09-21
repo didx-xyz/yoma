@@ -5,7 +5,7 @@ namespace Yoma.Core.Domain.Payout.Interfaces.Provider
   public interface IPayoutProviderClient
   {
     /// <summary>
-    /// Returns the countries currently supported by the payout provider as standard Yoma country models,
+    /// Returns supported payout countries, preserving standard country fields and adding nullable minimums,
     /// together with live provider availability.
     /// </summary>
     Task<PayoutCountries> ListCountriesSupported();
@@ -15,5 +15,8 @@ namespace Yoma.Core.Domain.Payout.Interfaces.Provider
     Task<PayoutSessionResponse> GetSession(PayoutSessionRequest request);
 
     Task<PayoutStatusResponse> GetStatus(PayoutStatusRequest request);
+
+    /// <summary>Cancel the specified payout atomically at the provider. Only a confirmed Cancelled response is success.</summary>
+    Task<PayoutStatusResponse> Cancel(PayoutCancellationRequest request);
   }
 }

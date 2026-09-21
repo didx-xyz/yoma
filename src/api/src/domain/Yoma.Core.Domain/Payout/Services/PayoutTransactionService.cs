@@ -100,6 +100,7 @@ namespace Yoma.Core.Domain.Payout.Services
 
       return new PayoutTransactionInfo
       {
+        Id = payout.Id,
         Status = payout.Status,
         Amount = payout.Amount,
         Currency = Enum.Parse<Currency>(payout.Currency, true),

@@ -110,7 +110,7 @@ namespace Yoma.Core.Domain.Payout.Services
 
     public bool Enabled => _appSettings.PayoutEnabledEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment);
 
-    public async Task<List<Domain.Lookups.Models.Country>?> ListCountries()
+    public async Task<List<PayoutCountry>?> ListCountries()
     {
       var result = await _payoutProviderClient.ListCountriesSupported();
       if (result.Offline) return null;
@@ -128,9 +128,12 @@ namespace Yoma.Core.Domain.Payout.Services
       if (result.Countries == null)
         throw new DataInconsistencyException("Payout provider country list expected while provider is online");
 
+      var country = result.Countries.SingleOrDefault(o => o.Id == countryId.Value);
       return new PayoutCountryAvailability
       {
-        Supported = result.Countries.Any(country => country.Id == countryId.Value)
+        Supported = country != null,
+        MinimumAmount = country?.MinimumAmount,
+        Currency = country?.Currency
       };
     }
 
@@ -141,8 +144,8 @@ namespace Yoma.Core.Domain.Payout.Services
 
       var user = GetUser(userId);
       ValidateUserProfileForPayout(user);
-      await ValidateUserCountryForPayout(user);
-      var payout = await CreatePayout(userId, PayoutType.Payout, Provider_Default, amount, null, false);
+      var country = await ValidateUserCountryForPayout(user);
+      var payout = await CreatePayout(userId, PayoutType.Payout, Provider_Default, amount, null, false, country);
 
       var result = await _distributedLockService.RunWithLockAsync(GetLockKey(payout.Id), _payoutLockDuration, () => InitiatePayout(payout, user));
       return result.Payout;
@@ -187,6 +190,94 @@ namespace Yoma.Core.Domain.Payout.Services
         await _payoutTransactionService.UpdateTransaction(payout);
 
         return session;
+      });
+    }
+
+    public async Task<PayoutTransactionInfo> GetLatestInfoByUserId(Guid userId)
+    {
+      var result = _payoutTransactionService.GetLatestInfoByUserId(userId);
+      result.CanCancel = null;
+      if (!Statuses_Active.Contains(result.Status))
+      {
+        result.CanCancel = false;
+        return result;
+      }
+
+      // Enrich this exact payout, never whichever payout became latest during the request.
+      // This read does not reconcile, settle, or create/refresh a hosted session.
+      var payout = GetPayout(result.Id);
+      if (payout.UserId != userId)
+        throw new EntityNotFoundException("Payout does not exist");
+      if (!IsRewardPayout(payout))
+      {
+        result.CanCancel = false;
+        return result;
+      }
+      if (!Statuses_Active.Contains(payout.Status))
+      {
+        result.Status = payout.Status;
+        result.CanResume = false;
+        result.CanCancel = false;
+        return result;
+      }
+      if (string.IsNullOrWhiteSpace(payout.TransactionId)) return result;
+
+      try
+      {
+        var response = await _payoutProviderClient.GetStatus(new PayoutStatusRequest
+        {
+          Id = payout.Id,
+          TransactionId = payout.TransactionId
+        });
+        if (response.Id != payout.Id ||
+            !string.Equals(response.TransactionId, payout.TransactionId, StringComparison.Ordinal) ||
+            !string.Equals(response.Provider.ToString(), payout.Provider, StringComparison.OrdinalIgnoreCase))
+          throw new DataInconsistencyException("Provider status does not match the requested payout");
+
+        result.CanCancel = response.CanCancel;
+      }
+      catch (Exception ex) when (ex is not OperationCanceledException)
+      {
+        // Eligibility is optional live guidance. Preserve local outcome information on provider
+        // failures (including an unknown reference), but never report unknown as cancellable.
+        _logger.LogWarning(ex, "Failed to determine cancellation eligibility for payout transaction '{payoutId}'", payout.Id);
+        result.CanCancel = null;
+      }
+
+      return result;
+    }
+
+    public async Task Cancel(Guid userId, Guid payoutId)
+    {
+      if (userId == Guid.Empty || payoutId == Guid.Empty)
+        throw new ValidationException("User and payout references are required");
+
+      await _distributedLockService.RunWithLockAsync(GetLockKey(payoutId), _payoutLockDuration, async () =>
+      {
+        var payout = GetPayout(payoutId);
+        // Scope by authenticated user, including terminal replays. Never disclose another user's payout.
+        if (payout.UserId != userId || !IsRewardPayout(payout))
+          throw new EntityNotFoundException("Payout does not exist");
+        if (payout.Status == PayoutTransactionStatus.Cancelled) return;
+        if (!Statuses_Active.Contains(payout.Status))
+          throw new ValidationException("This cash-out can no longer be cancelled");
+        if (string.IsNullOrWhiteSpace(payout.TransactionId))
+          throw new ValidationException("Cash-out setup is not yet confirmed; please try again later");
+
+        // Do not use the local Processing state as proof of eligibility: IXO initiated and
+        // processing both map to it. The provider arbitrates cancel versus submit atomically.
+        // On 404/409/timeouts, leave local state and reserved funds intact for reconciliation.
+        var response = await _payoutProviderClient.Cancel(new PayoutCancellationRequest
+        {
+          Id = payout.Id,
+          TransactionId = payout.TransactionId
+        });
+        if (response.Id != payout.Id || response.Status != PayoutTransactionStatus.Cancelled)
+          throw new DataInconsistencyException("Provider cancellation was not confirmed for this payout");
+
+        // Already inside the SAME lock used by webhook and reconciliation. Use the private
+        // handler, not the public locking entry point, to avoid recursive acquisition.
+        await ProcessStatus(GetPayout(payout.Id), response);
       });
     }
 
@@ -257,7 +348,7 @@ namespace Yoma.Core.Domain.Payout.Services
 
       var user = GetUser(userId);
       ValidateUserProfileForPayout(user);
-      await ValidateUserCountryForPayout(user);
+      var country = await ValidateUserCountryForPayout(user);
       var (walletStatus, walletBalance) = await _walletService.GetWalletStatusAndBalance(userId);
       if (walletStatus != Reward.WalletCreationStatus.Created)
         throw new ValidationException("The reward wallet is not ready for payout");
@@ -268,7 +359,7 @@ namespace Yoma.Core.Domain.Payout.Services
       if (walletBalance.Available < amount)
         throw new ValidationException($"Insufficient reward balance for payout. Current available balance '{walletBalance.Available:N2}'");
 
-      var payout = await CreatePayout(userId, PayoutType.PayoutRewards, Provider_Default, amount, rewardReservationExpiresAt, true);
+      var payout = await CreatePayout(userId, PayoutType.PayoutRewards, Provider_Default, amount, rewardReservationExpiresAt, true, country);
 
       return await _distributedLockService.RunWithLockAsync(GetLockKey(payout.Id), _payoutLockDuration, async () =>
       {
@@ -391,7 +482,7 @@ namespace Yoma.Core.Domain.Payout.Services
     /// not revalidated during reconciliation because a corridor change must not invalidate an already active payout.
     /// The hosted provider remains the final real-time authority after initiation.
     /// </summary>
-    private async Task ValidateUserCountryForPayout(User user)
+    private async Task<PayoutCountryAvailability> ValidateUserCountryForPayout(User user)
     {
       if (!user.CountryId.HasValue)
         throw new ValidationException("Cash-out is unavailable because your country is not specified");
@@ -399,7 +490,7 @@ namespace Yoma.Core.Domain.Payout.Services
       var countrySupported = await IsCountrySupported(user.CountryId);
       if (countrySupported.Offline)
         throw new ValidationException("Cash-out is currently unavailable; please try again later");
-      if (countrySupported.Supported) return;
+      if (countrySupported.Supported) return countrySupported;
 
       var countryName = _countryService.GetById(user.CountryId.Value).Name;
       throw new ValidationException($"Cash-out is currently unavailable in {countryName}");
@@ -411,7 +502,8 @@ namespace Yoma.Core.Domain.Payout.Services
       PayoutProvider provider,
       decimal amount,
       DateTimeOffset? rewardReservationExpiresAt,
-      bool convertFromZlto)
+      bool convertFromZlto,
+      PayoutCountryAvailability country)
     {
       PayoutTransaction? payout = null;
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
@@ -429,6 +521,10 @@ namespace Yoma.Core.Domain.Payout.Services
           : amount;
 
         ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(payoutAmount, default, nameof(amount));
+
+        // Validate the rounded USD payout at the locked Treasury rate, not the UI preview.
+        // Only new payouts pass here; updated limits never block resume or settlement.
+        country.ValidateMinimumAmount(payoutAmount);
 
         // Check pool availability before creating the payout. The available balance is the current financial year pool
         // less the current financial year cumulative and all pending payouts. Once created, payout processing is not
