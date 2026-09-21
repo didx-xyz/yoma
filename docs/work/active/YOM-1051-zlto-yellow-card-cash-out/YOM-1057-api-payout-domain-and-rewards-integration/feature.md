@@ -28,6 +28,17 @@ payout, enforce one active payout per user, and reconcile terminal outcomes idem
 
 ## Tasks
 
+- [x] Implement authenticated exact-payout cancellation using IXO's atomic cancel endpoint.
+- [x] Expose provider-derived cancellation eligibility in the existing session response, without profile RPCs.
+- [x] Cover cancellation replay, ownership, provider refusal and webhook races with isolated tests.
+- [ ] Jason: wire cancellation confirmation and session eligibility; validate end-to-end on Stage.
+
+- [x] Prepare nullable country minimum metadata on supported countries and UserProfilePayout.
+- [x] Enforce supplied country minimum on both new-payout paths before persistence/reservation.
+- [x] Add focused minimum boundary, rounding, lookup and no-side-effect regression tests.
+- [x] Map and verify IXO's final extended countries response: lowestMinUsd, zero-to-null and one-hour cache cap.
+- [x] Jason: wire profile country minimum into cash-out amount entry and server-error handling (Stage validation remains).
+
 - [x] Add Payout domain, status/type/provider models, repository and migration.
 - [x] Add payout creation and status-transition service shell.
 - [x] Integrate Treasury capacity and cumulative accounting.
@@ -46,10 +57,42 @@ payout, enforce one active payout per user, and reconcile terminal outcomes idem
 - [x] Add one default-enabled payout notification preference and shared email payload.
 - [x] Configure the four SendGrid template IDs supplied by Adrian in ignored local settings; committed configuration uses placeholders.
 - [ ] Verify deployed template configuration and live email delivery for all four outcomes.
-- [ ] Add maintained automated payout regression coverage during technical-debt work; temporary tests
-      exercised on 2026-09-10 were removed before commit at Adrian's request.
+- [x] Add focused maintained tests for cancellation and country-minimum preparation (2026-09-21).
+- [ ] Extend automated coverage to the remaining payout lifecycle; temporary tests exercised on
+      2026-09-10 were removed before commit at Adrian's request.
 
 ## Decisions
+
+- 2026-09-21: Also expose nullable CanCancel on on-demand PayoutTransactionInfo. When an in-memory
+  session remains valid, UI can check status without refreshing it. Active payouts use a best-effort
+  provider status GET; terminal payouts return false locally, unknown returns null. No profile call,
+  settlement or reconciliation is added. This supersedes latest-info's database-only implementation.
+
+- 2026-09-21: Keep CanCancel off the profile. It requires current provider state, unlike local
+  CanResume, and a profile RPC adds latency without guaranteeing eligibility at execution time.
+  Fetch the existing session when the manage/resume dialog opens; show Continue and Cancel
+  before IXO handoff. IXO atomically rechecks the actual cancellation. UI details are in handoff b.
+
+- 2026-09-21: Match existing controller conventions: cancellation returns empty 200 OK, not 204;
+  typed Guid model binding validates the unconstrained route parameter. Existing endpoints stay unchanged.
+
+- 2026-09-21: Cancellation targets the exact session payoutId, not whichever payout is active later.
+  IXO initiated alone means cancellable; local Processing merges provider states and cannot decide this.
+  Successful response uses the existing settlement path under the webhook/reconciliation lock;
+  refused or uncertain outcomes never trigger a local release. Shared contract and UI handover
+  are in the epic README and handoff 2026-09-21-b.md.
+
+- 2026-09-21: Use dynamic provider country minimums, not the initially proposed global setting or
+  conversion response field. Nullable amount + currency follows Yoma's monetary contract. Per
+  Adrian's final review direction exposes `payout.countryAvailability.minimumAmount` and
+  `payout.countryAvailability.currency`, superseding the parent-level forwarding properties.
+  Existing amount/currency remain active-payout-only so profile country changes cannot relabel
+  an active payout. Availability flags retain their meaning; the nested model now serializes the minimum metadata.
+  The shared contract is recorded once in the epic README; Jason's implementation handoff is
+  `handoffs/2026-09-21-a.md`. The initially unmapped adapter is superseded by the final confirmed
+  mapping in `handoffs/2026-09-21-c.md`: request limits=true and use lowestMinUsd directly in USD,
+  zero/missing/null means no minimum, cache capped at one hour. Cancellation was added later
+  in this branch under the separate decision above.
 
 - 2026-09-16: `AppSettings:PayoutEnabledEnvironments` uses the existing comma-separated environment convention, configured as `Staging, Production`. Profile `payout.enabled` reports new-initiation enablement. Both public payout initiation paths reject disabled environments before writes/reservations with HTTP 400. Existing payout resume, reconciliation, webhooks, terminal outcomes and notifications remain operational. Jason must gate new cash-out UI actions independently from existing active-payout rendering. Production credentials and rollout verification remain prerequisites; this flag does not select provider endpoints.
 - 2026-09-15 wording review: shorten the Cash-outs preference description to "Updates on your cash-outs". Seed-only change; already-migrated Dev/local databases retain the previous wording until reset/reseed. No preference or notification behavior changes.

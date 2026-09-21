@@ -879,6 +879,38 @@ why this is written down rather than dismissed.
   blank, and navigate it afterwards — the pattern iOS Safari enforces. So a block in an ordinary
   browser would be user configuration, not a bug either side can fix.
 
+- **2026-09-21: the session is fetched when the active-payout panel opens, not when Continue is
+  tapped.** Cancellation eligibility only exists on a session, and Cancel has to sit beside Continue
+  *before* the youth is handed to the provider — you cannot offer it after the hand-off. So the
+  panel gained a `loading` state, `FlowView.resume` carries the `PayoutSession`, and Continue reuses
+  it rather than asking again. Expiry is checked before reuse; `POST` is still never a refresh.
+- **⚠️ 2026-09-21: cancel the id on screen, never "the active payout".** `confirmCancel` takes the
+  `payoutId` the confirmation view carries. Re-resolving at cancel time would, on a stale dialog,
+  release a payout the youth never looked at. The same rule governs the eligibility re-check: a
+  `latest` read whose `id` does not match the session is discarded and the session refetched, rather
+  than reconciled.
+- **2026-09-21: `canCancel === true` is the only value that offers Cancel.** `null` is *unknown* —
+  the provider reference is missing or the status call failed — and a missing button would assert
+  "not allowed" on evidence we do not have. It gets a quiet note and a re-check link instead, the
+  same shape as the amount step's failed-estimate retry. `settingUp` never offers it: Yoma has the
+  payout and the provider does not, so there is nothing there to cancel.
+- **2026-09-21: Cancel is outlined, not red, and sits between Continue and Close.** Cancelling is a
+  choice a youth is entitled to make, not a destructive mistake to be warned away from — the
+  consequence is spelled out on the confirmation step, which is also why a mis-tap next to Continue
+  costs one screen rather than any money.
+- **2026-09-21: the country minimum is compared against the *preview's* USD figure.** Not the typed
+  ZLTO (different unit) and not a threshold reverse-calculated from the displayed rate (rounded for
+  display, so wrong exactly at the boundary). `preview.state === "ready"` already guarantees the
+  estimate belongs to what is in the field, so a stale preview cannot qualify a smaller new amount.
+- **2026-09-21: an unusable minimum suppresses the claim, not the flow.** A non-USD or negative
+  minimum shows no figure — any figure would be invented — but blocks nothing client-side. The
+  server enforces the real rule; blocking on contract data we cannot read would lock a youth out of
+  their own money over someone else's bug.
+- **2026-09-21: the server's minimum refusal quotes no figure.** `belowMinimum` maps to
+  `MINIMUM_COPY.serverRejected` and refreshes the profile, so the hint under the field corrects
+  itself. The server's message carries the real number, but parsing a figure out of a sentence is a
+  contract nobody agreed to — and the number we were holding has just been proved stale either way.
+
 ## Links
 
 - Epic: [YOM-1051](../README.md)

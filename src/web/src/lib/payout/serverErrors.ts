@@ -37,6 +37,17 @@ export type PayoutFailure =
    * paused panel, never as a field error.
    */
   | { kind: "paused" }
+  /**
+   * The country minimum refused the amount (API 2026-09-21) — "The minimum cash-out amount for your
+   * country is 7.00 USD". The client checks the same rule against the preview, so reaching here
+   * means the limit or the rate moved underneath it. A field error, and the caller refreshes the
+   * profile so the hint corrects itself.
+   *
+   * ⚠️ The server's figure is deliberately **not** parsed out of the message. A regex over a
+   * sentence is a contract nobody agreed to, and the copy quotes no figure precisely because the
+   * one we held was just proved stale.
+   */
+  | { kind: "belowMinimum" }
   /** one of the gate's own conditions, changed since the profile was fetched */
   | { kind: "gate"; reason: CashOutBlockReason }
   /** 404 from `GET /user/payout/zlto` — the profile said active, the API says otherwise */
@@ -76,6 +87,13 @@ const MATCHERS: Matcher[] = [
     // "Insufficient reward balance for payout. Current available balance 'N'" — the wallet.
     pattern: /insufficient reward balance/i,
     failure: { kind: "amountRejected" },
+  },
+  {
+    // "The minimum cash-out amount for your country is 7.00 USD" — the country floor, checked
+    // against the USD amount before the payout row or the reservation exists
+    // (`PayoutCountryAvailabilityExtensions.ValidateMinimumAmount`).
+    pattern: /minimum cash-out amount for your country/i,
+    failure: { kind: "belowMinimum" },
   },
   {
     // "Payout amount must be greater than zero" (initiation) and "Amount must be greater than

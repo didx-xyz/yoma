@@ -151,6 +151,36 @@ export const AMOUNT_COPY = {
 } as const;
 
 /**
+ * The country minimum (API 2026-09-21). Shown **before** the youth commits to an amount, because
+ * discovering a floor only after typing a number and pressing Continue is the version of this that
+ * wastes their time.
+ *
+ * Two rules the wording has to respect:
+ *
+ * - **It is a country floor, not a promise.** The provider decides once the youth picks where the
+ *   money goes, so nothing here may say the payout will be accepted.
+ * - **The figure is USD, and the field is ZLTO.** Every string names its unit, because the one
+ *   thing worse than no minimum is a youth reading "7.00" as ZLTO.
+ */
+export const MINIMUM_COPY = {
+  /** the standing hint under the field, present from first paint when a minimum applies */
+  note: (formattedUsd: string) => `The smallest cash out is ${formattedUsd}.`,
+  /**
+   * The field error once the estimate is in and falls short. Names the estimate rather than the
+   * typed figure, because the estimate is what the server compares — and says which way to move.
+   */
+  below: (formattedUsd: string) =>
+    `That's below the smallest cash out of ${formattedUsd}. Enter more Zlto.`,
+  /**
+   * The server refused on a minimum the client thought was met — the limit or the rate moved
+   * between the profile load and the request. Quotes **no figure**: the one we hold has just been
+   * proved stale, and the entry point refreshes the profile so the hint above corrects itself.
+   */
+  serverRejected:
+    "The smallest cash out has changed. We've updated it — please check the amount.",
+} as const;
+
+/**
  * Amount-field problems, in the server's own order of checks. Only the last of these is a field
  * error server-side; the rest are client-side guards that stop a request the API answers with a
  * 500 (`ArgumentOutOfRangeException` / `ArgumentException` are not mapped to 400 —
@@ -315,6 +345,65 @@ export const RESUME_COPY = {
    */
   noLongerActive:
     "We couldn't open your cash out just now. Check back in a few minutes.",
+
+  /** while the session and cancellation eligibility are being fetched, on opening the panel */
+  loadingBody: "Getting your cash out…",
+} as const;
+
+/**
+ * Cancelling an active cash out (API 2026-09-21).
+ *
+ * ⚠️ **Only offered when the provider says `canCancel === true`.** Unknown is not "no" and must not
+ * be worded as one — see `CANCEL_COPY.unknown`. Eligibility is a snapshot: the provider re-checks
+ * atomically, and a youth who has already submitted at the provider will be refused even though the
+ * button was there a moment ago. So the copy never promises the cancellation will work, only that
+ * it is being asked for.
+ *
+ * What cancelling actually does, and what the copy may therefore claim: the payout is cancelled
+ * **and the reserved Zlto is released**, both before the API answers. So "your Zlto goes back" is
+ * true on success — and only on success, which is why nothing is said optimistically.
+ */
+export const CANCEL_COPY = {
+  /** the action, beside Continue, on the active-payout panel */
+  action: "Cancel cash out",
+
+  dialogTitle: "Cancel this cash out?",
+  /**
+   * The confirmation. Says where the Zlto goes, and that starting again is possible — the fear
+   * being answered is "will I lose it", not "is this reversible".
+   */
+  confirmTitle: "Cancel this cash out?",
+  confirmBody:
+    "Your Zlto goes back into your wallet and this cash out stops. You can start a new one whenever you like.",
+  /** Plain verbs: "Yes/No" beside "Cancel" is a sentence nobody can parse. */
+  confirmAction: "Yes, cancel it",
+  confirmBusyAction: "Cancelling…",
+  keepAction: "Keep my cash out",
+
+  successTitle: "Your cash out is cancelled",
+  successBody:
+    "Your Zlto is back in your wallet. You can start a new cash out whenever you're ready.",
+
+  /**
+   * The provider refused — almost always because the youth has already submitted it on the
+   * provider's side, which means it is genuinely on its way rather than broken. Neutral, and it
+   * does not blame a race nobody could have seen.
+   */
+  refusedTitle: "We couldn't cancel this cash out",
+  refusedBody:
+    "It may already be on its way. Nothing has changed — check below for where it stands.",
+  /** the request failed for some other reason; the payout is untouched */
+  failedBody:
+    "We couldn't cancel your cash out just now. Nothing has changed. Please try again in a moment.",
+  retryAction: "Try again",
+
+  /**
+   * `canCancel` came back null — the provider reference is missing, or the status call failed.
+   * **Not "you cannot cancel"**: we do not know, and saying either thing would be a claim. The
+   * panel simply offers another look instead of the button.
+   */
+  unknown: "We couldn't check whether this can be cancelled right now.",
+  checkAgainAction: "Check again",
 } as const;
 
 /**

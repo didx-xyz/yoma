@@ -13,6 +13,7 @@ using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Lookups.Interfaces;
 using Yoma.Core.Domain.Payout;
 using Yoma.Core.Domain.Payout.Interfaces.Provider;
+using Yoma.Core.Domain.Payout.Models;
 using Yoma.Core.Domain.Payout.Models.Provider;
 using Yoma.Core.Infrastructure.IXO.YellowCard.Interfaces;
 using Yoma.Core.Infrastructure.IXO.YellowCard.Helpers;
@@ -68,10 +69,12 @@ namespace Yoma.Core.Infrastructure.IXO.YellowCard.Client
         if (!_appSettings.CacheEnabledByCacheItemTypesAsEnum.HasFlag(CacheItemType.Lookups))
           return new PayoutCountries { Countries = await ListCountriesSupportedInternal() };
 
-        var result = await _memoryCache.GetOrCreateAsync(CacheHelper.GenerateKey<YellowCardClient>("supported-countries"), async entry =>
+        var result = await _memoryCache.GetOrCreateAsync(CacheHelper.GenerateKey<YellowCardClient>("supported-countries-with-limits"), async entry =>
         {
-          entry.SlidingExpiration = TimeSpan.FromHours(_appSettings.CacheSlidingExpirationInHours);
-          entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(_appSettings.CacheAbsoluteExpirationRelativeToNowInDays);
+          // Reuse the configured lookup duration as an absolute expiry, not a sliding expiry.
+          // IXO permits caching dynamic limits/rates for at most one hour, even under frequent reads.
+          entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(
+            Math.Min(1, _appSettings.CacheSlidingExpirationInHours));
           return await ListCountriesSupportedInternal();
         }) ?? throw new InvalidOperationException("Failed to retrieve cached payout-country availability");
 
@@ -118,7 +121,7 @@ namespace Yoma.Core.Infrastructure.IXO.YellowCard.Client
           .PostJsonAsync(httpRequest),
         [HttpStatusCode.Created]);
 
-      var result = ToPayoutResponse(response);
+      var result = PayoutHelper.ToPayoutResponse(response);
 
       if (_logger.IsEnabled(LogLevel.Information))
         _logger.LogInformation(
@@ -154,13 +157,7 @@ namespace Yoma.Core.Infrastructure.IXO.YellowCard.Client
       if (!string.Equals(providerTransactionId, request.TransactionId, StringComparison.Ordinal))
         throw new InvalidOperationException($"IXO provider transaction id mismatch for Yoma payout transaction '{request.Id}'");
 
-      ValidateSessionStatus(response.Status);
-
-      return new PayoutSessionResponse
-      {
-        PaymentUrl = NormalizePaymentUrl(response.PaymentUrl),
-        ExpiresAt = ParseDateTimeOffset(response.ExpiresAt, nameof(response.ExpiresAt))
-      };
+      return PayoutHelper.ToPayoutSessionResponse(response);
     }
 
     public async Task<PayoutStatusResponse> GetStatus(PayoutStatusRequest request)
@@ -184,30 +181,72 @@ namespace Yoma.Core.Infrastructure.IXO.YellowCard.Client
           .WithTimeout(TimeSpan.FromSeconds(_options.RequestTimeoutSeconds))
           .GetAsync());
 
-      if (!Guid.TryParse(response.YomaTransactionId, out var yomaTransactionId) || yomaTransactionId != request.Id)
-        throw new InvalidOperationException($"IXO returned an invalid Yoma payout transaction reference for '{request.Id}'");
-
-      var providerTransactionId = NormalizeRequired(response.ProviderTransactionId, nameof(response.ProviderTransactionId));
-      if (!string.IsNullOrEmpty(request.TransactionId) &&
-          !string.Equals(providerTransactionId, request.TransactionId, StringComparison.Ordinal))
-        throw new InvalidOperationException($"IXO provider transaction id mismatch for Yoma payout transaction '{request.Id}'");
-
-      return new PayoutStatusResponse
-      {
-        Id = request.Id,
-        Provider = PayoutProvider.YellowCard,
-        TransactionId = providerTransactionId,
-        Status = YellowCardStatusHelper.ToPayoutStatus(response.Status),
-        ErrorReason = response.ErrorReason?.Trim()
-      };
+      return ToStatusResponse(response, request.Id, request.TransactionId);
     }
+
+    public async Task<PayoutStatusResponse> Cancel(PayoutCancellationRequest request)
+    {
+      ArgumentNullException.ThrowIfNull(request);
+
+      if (request.Id == Guid.Empty)
+        throw new ArgumentNullException(nameof(request), "Payout transaction id is empty");
+
+      request.TransactionId = NormalizeRequired(request.TransactionId, nameof(request.TransactionId));
+
+      if (_logger.IsEnabled(LogLevel.Information))
+        _logger.LogInformation("Cancelling IXO hosted payout for Yoma payout transaction '{payoutId}'", request.Id);
+
+      var authHeader = await _authService.GetAuthHeader();
+      // Same partner token and Yoma reference as status/session. 409/404 are errors, not
+      // evidence that funds may be released. Network uncertainty is left to reconciliation.
+      var response = await Execute<YellowCardPayoutStatusResponse>(() =>
+        _options.BaseUrl
+          .AppendPathSegment(_options.PayoutsPath)
+          .AppendPathSegment(request.Id.ToString())
+          .AppendPathSegment("cancel")
+          .WithAuthHeader(authHeader)
+          .WithTimeout(TimeSpan.FromSeconds(_options.RequestTimeoutSeconds))
+          .PostAsync());
+
+      var result = ToStatusResponse(response, request.Id, request.TransactionId);
+      if (result.Status != PayoutTransactionStatus.Cancelled)
+        throw new InvalidOperationException("IXO returned an unconfirmed cancellation outcome");
+
+      if (_logger.IsEnabled(LogLevel.Information))
+        _logger.LogInformation("IXO hosted payout cancelled for Yoma payout transaction '{payoutId}'", request.Id);
+
+      return result;
+    }
+
     #endregion
 
     #region Private Members
-    private async Task<List<Domain.Lookups.Models.Country>> ListCountriesSupportedInternal()
+    private static PayoutStatusResponse ToStatusResponse(YellowCardPayoutStatusResponse response, Guid id, string? transactionId)
+    {
+      if (!Guid.TryParse(response.YomaTransactionId, out var yomaTransactionId) || yomaTransactionId != id)
+        throw new InvalidOperationException($"IXO returned an invalid Yoma payout transaction reference for '{id}'");
+
+      var providerTransactionId = NormalizeRequired(response.ProviderTransactionId, nameof(response.ProviderTransactionId));
+      if (!string.IsNullOrEmpty(transactionId) &&
+          !string.Equals(providerTransactionId, transactionId, StringComparison.Ordinal))
+        throw new InvalidOperationException($"IXO provider transaction id mismatch for Yoma payout transaction '{id}'");
+
+      return new PayoutStatusResponse
+      {
+        Id = id,
+        Provider = PayoutProvider.YellowCard,
+        TransactionId = providerTransactionId,
+        Status = PayoutHelper.ToPayoutStatus(response.Status),
+        CanCancel = PayoutHelper.CanCancel(response.Status),
+        ErrorReason = response.ErrorReason?.Trim()
+      };
+    }
+
+    private async Task<List<PayoutCountry>> ListCountriesSupportedInternal()
     {
       var response = await Execute<YellowCardCountriesResponse>(() =>
         _options.SupportedCountriesUrl
+          .SetQueryParam("limits", "true")
           .WithTimeout(TimeSpan.FromSeconds(_options.RequestTimeoutSeconds))
           .GetAsync());
 
@@ -239,9 +278,12 @@ namespace Yoma.Core.Infrastructure.IXO.YellowCard.Client
       if (unresolvedCodes.Count != 0)
         throw new DataInconsistencyException($"IXO returned countries not configured in Yoma: {string.Join(", ", unresolvedCodes)}");
 
+      var limits = response.Limits?.ToDictionary(o => o.Key.Trim(), o => o.Value, StringComparer.OrdinalIgnoreCase);
+
       return [.. countries
         .Where(country => countryCodesAlpha2.Contains(country.CodeAlpha2, StringComparer.OrdinalIgnoreCase))
-        .OrderBy(country => country.Name)];
+        .OrderBy(country => country.Name)
+        .Select(country => PayoutHelper.ToPayoutCountry(country, limits?.GetValueOrDefault(country.CodeAlpha2)))];
     }
 
     private static async Task<TResponse> Execute<TResponse>(
@@ -280,19 +322,6 @@ namespace Yoma.Core.Infrastructure.IXO.YellowCard.Client
       return exception;
     }
 
-    private static PayoutResponse ToPayoutResponse(YellowCardPayoutSessionResponse response)
-    {
-      ArgumentNullException.ThrowIfNull(response);
-      ValidateSessionStatus(response.Status);
-
-      return new PayoutResponse
-      {
-        TransactionId = NormalizeRequired(response.ProviderTransactionId, nameof(response.ProviderTransactionId)),
-        PaymentUrl = NormalizePaymentUrl(response.PaymentUrl),
-        ExpiresAt = ParseDateTimeOffset(response.ExpiresAt, nameof(response.ExpiresAt))
-      };
-    }
-
     private static void Validate(PayoutRequest request)
     {
       if (request.TransactionId == Guid.Empty)
@@ -325,34 +354,12 @@ namespace Yoma.Core.Infrastructure.IXO.YellowCard.Client
         : throw new ArgumentException("Gender is not supported by IXO payout verification", nameof(gender));
     }
 
-    private static void ValidateSessionStatus(string status)
-    {
-      if (YellowCardStatusHelper.ToPayoutStatus(status) != PayoutTransactionStatus.Processing)
-        throw new InvalidOperationException($"IXO hosted payout session cannot be returned for status '{status}'");
-    }
-
     private static string NormalizeRequired(string? value, string parameterName)
     {
       value = value?.Trim();
       return string.IsNullOrEmpty(value) ? throw new ArgumentNullException(parameterName) : value;
     }
 
-    private static string NormalizePaymentUrl(string? paymentUrl)
-    {
-      paymentUrl = NormalizeRequired(paymentUrl, nameof(paymentUrl));
-      if (!Uri.TryCreate(paymentUrl, UriKind.Absolute, out var uri) || uri.Scheme != Uri.UriSchemeHttps)
-        throw new InvalidOperationException("IXO hosted payout response must contain a valid HTTPS payment URL");
-
-      return paymentUrl;
-    }
-
-    private static DateTimeOffset ParseDateTimeOffset(string? value, string propertyName)
-    {
-      if (!DateTimeOffset.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var result))
-        throw new InvalidOperationException($"IXO hosted payout response contains an invalid '{propertyName}' value");
-
-      return result;
-    }
     #endregion
   }
 }

@@ -1,5 +1,67 @@
 # Epic: YOM-1051 — ZLTO Payout (Treasury, Reward Pools and Youth Cash-Out)
 
+## Cancellation contract — 2026-09-21
+
+Cancellation is now implemented locally too; see the [cancellation handover](./YOM-1057-api-payout-domain-and-rewards-integration/handoffs/2026-09-21-b.md).
+The existing start/resume session response adds payoutId and canCancel (provider initiated only).
+POST /api/v3/user/payout/{payoutId}/cancel returns empty 200 OK after cancellation/release is processed.
+No additional provider request is added to profile. IXO country minimums are now mapped; see the country contract below.
+Latest payout information includes id; session payoutId refers to the same Yoma transaction.
+Latest payout information also includes nullable canCancel: terminal=false locally; active payouts
+with a provider reference use a status GET, not a session refresh. Unknown eligibility is null.
+No profile provider call is added. Existing valid sessions can be retained while checking latest-info;
+match latest-info id to session payoutId before applying eligibility.
+
+**Web side done 2026-09-21.** The session is now fetched when the active-payout panel *opens*
+rather than when Continue is tapped — Cancel has to be offered beside Continue. Eligibility is
+available on sessions and on-demand latest-info. The session is held in dialog memory, reused for Continue, refetched when expired, and
+never persisted. Cancel appears only for `canCancel === true` **and** a `payoutId`; `null` is
+"unknown" and gets a note plus a re-check, never a missing button. The id on screen is the id
+POSTed — the flow never re-resolves "the active payout" at cancel time, which on a stale dialog
+would release a different payout. See
+[YOM-1074's handoff](./YOM-1074-ui-youth-yellow-card-cash-out/handoffs/2026-09-21-b.md).
+
+## Country minimum contract — 2026-09-21
+
+- `GET /api/v3/user/payout/countries` preserves the country array and existing country fields;
+  each item adds `minimumAmount: number | null` and `currency: "USD"`.
+- Profile exposes the SAME country limit at `payout.countryAvailability.minimumAmount` and
+  `payout.countryAvailability.currency`.
+  Existing `payout.amount` and `payout.currency` remain active-payout-only and null when none exists.
+  Changing profile country updates the minimum metadata, never the active payout amount/currency.
+  CountryAvailability retains supported/offline and adds nullable minimum/currency fields.
+- Both monetary concepts remain USD-only. The separate minimum currency preserves their meaning
+  and the original active-payout contract; it adds no currency selection, FX calculation or
+  multi-currency processing. Those would need coordinated provider/Treasury/API/UI work later.
+- Null minimum means no minimum enforced by Yoma, NOT provider availability or a promise that
+  all destination channels accept any amount. Unsupported/unspecified/offline country has null
+  countryAvailability.minimumAmount and countryAvailability.currency. Supported countries supply USD for currency
+  even when minimum is null. An active payout's currency remains independent in every case.
+- The existing provider country lookup/cache carries the metadata: no extra provider call on
+  profile or initiation, no conversion response change, global setting or migration.
+- Both initiation paths enforce the minimum against the actual USD payout (ZLTO conversion rounded
+  to two decimals away from zero at the locked current Treasury rate), before payout creation or
+  reward reservation. Equal is allowed. Resume/reconciliation/settlement do not reapply new limits.
+- IXO's existing public countries request now adds `limits=true`. Map `limits[countryCode].lowestMinUsd`
+  directly to minimumAmount in USD; its 5% buffer is already included. Do not use the local channel
+  currency or perform another conversion. Zero, null or missing limits map to no minimum (null).
+  Negative values are rejected as invalid provider data. Hosted per-method validation remains authoritative.
+  The existing lookup cache has an absolute maximum lifetime of one hour. No extra profile request,
+  migration, environment configuration or UI shape change is needed.
+- Final mapping and verification: [handover](./YOM-1057-api-payout-domain-and-rewards-integration/handoffs/2026-09-21-c.md).
+- Jason: implementation instructions and test matrix are in
+  [the API handoff](./YOM-1057-api-payout-domain-and-rewards-integration/handoffs/2026-09-21-a.md).
+
+**Web side done 2026-09-21.** The floor is read from the profile (no extra request), shown under the
+field from first paint, and compared against the **conversion preview's USD figure** — never the
+typed ZLTO, never a threshold back-calculated from the rounded display rate. Equal passes. A
+non-USD or negative minimum is treated as unusable contract data: no figure is shown and nothing is
+blocked client-side, because the server enforces the real rule and blocking on data we cannot read
+would lock a youth out of their own money. The server's refusal maps to a field error that quotes no
+figure and refreshes the profile, so the hint corrects itself. The completed provider mapping now
+supplies real minimums when this branch is deployed. See
+[YOM-1074's handoff](./YOM-1074-ui-youth-yellow-card-cash-out/handoffs/2026-09-21-b.md).
+
 ## Environment gate — 2026-09-16
 
 `AppSettings:PayoutEnabledEnvironments` is configured as `Staging, Production`. New profile field

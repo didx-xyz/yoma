@@ -6,6 +6,8 @@ namespace Yoma.Core.Domain.Payout.Models
   /// </summary>
   public sealed class PayoutTransactionInfo
   {
+    public Guid Id { get; set; }
+
     /// <summary>
     /// Recorded Yoma status. Processing starts at hosted-payout creation, not necessarily youth confirmation.
     /// </summary>
@@ -25,5 +27,12 @@ namespace Yoma.Core.Domain.Payout.Models
     /// guarantee. Always false for terminal payouts.
     /// </summary>
     public bool CanResume { get; set; }
+
+    /// <summary>
+    /// Current provider cancellation eligibility. False for terminal payouts; null when eligibility
+    /// cannot be determined. A snapshot only: the provider rechecks atomically when cancelling.
+    /// Checking eligibility does not create or refresh a hosted session.
+    /// </summary>
+    public bool? CanCancel { get; set; }
   }
 }

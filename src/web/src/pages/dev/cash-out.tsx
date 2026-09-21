@@ -1,8 +1,11 @@
 import type { GetStaticProps } from "next";
 import Head from "next/head";
 import { useEffect, useState } from "react";
-import { IoAlertCircleOutline } from "react-icons/io5";
-import type { PayoutTransactionInfo } from "~/api/models/payout";
+import {
+  IoAlertCircleOutline,
+  IoCheckmarkCircleOutline,
+} from "react-icons/io5";
+import type { PayoutSession, PayoutTransactionInfo } from "~/api/models/payout";
 import { PayoutTransactionStatus } from "~/api/models/payout";
 import { CashOutAmountStep } from "~/components/Payout/CashOutAmountStep";
 import { CashOutButton } from "~/components/Payout/CashOutButton";
@@ -20,6 +23,7 @@ import { WalletCreationStatus } from "~/api/models/user";
 import type { CashOutBlockReason } from "~/lib/payout/eligibility";
 import {
   AMOUNT_COPY,
+  CANCEL_COPY,
   FAILURE_COPY,
   GATE_COPY,
   OUTCOME_COPY,
@@ -108,11 +112,22 @@ const payout = (
   status: PayoutTransactionStatus,
   canResume = false,
 ): PayoutTransactionInfo => ({
+  id: "3f1c9a52-0000-4000-8000-000000000001",
   status,
   amount: 2.22,
   currency: "USD",
   dateCreated: new Date(Date.now() - 42 * 60 * 1000).toISOString(),
   canResume,
+});
+
+/** A session for the resume scenes — `payoutId` and `canCancel` are what the panel branches on. */
+const session = (canCancel?: boolean): PayoutSession => ({
+  payoutId: "3f1c9a52-0000-4000-8000-000000000001",
+  canCancel,
+  amount: 2.22,
+  currency: "USD",
+  paymentUrl: "https://example.invalid/hosted",
+  expiresAt: new Date(Date.now() + 25 * 60 * 1000).toISOString(),
 });
 
 const started = formatPayoutStarted(
@@ -226,6 +241,53 @@ const SCENES: Scene[] = [
         problem="aboveAvailable"
         showProblem
         preview={{ state: "idle" }}
+        canContinue={false}
+        onContinue={noop}
+        onCancel={noop}
+      />
+    ),
+  },
+  {
+    /* A country floor, met. The hint is present from first paint, before any amount is typed —
+       which is the whole point of showing it rather than only enforcing it. */
+    group: "Amount",
+    name: "minimum · met",
+    title: AMOUNT_COPY.dialogTitle,
+    step: 1,
+    render: () => (
+      <CashOutAmountStep
+        available={2000}
+        value="400"
+        onChange={noop}
+        onMax={noop}
+        showProblem={false}
+        minimumUsd={7}
+        belowMinimum={false}
+        preview={{ state: "ready", usd: 8.89, rate: 45, paused: false }}
+        canContinue
+        onContinue={noop}
+        onCancel={noop}
+      />
+    ),
+  },
+  {
+    /* Below it. ⚠️ `belowMinimum` is decided against the *estimate*, not the ZLTO in the field —
+       the flow derives it from the preview (see lib/payout/minimum.ts), so the gallery states the
+       pair that would actually occur together rather than an arbitrary one. */
+    group: "Amount",
+    name: "minimum · below",
+    title: AMOUNT_COPY.dialogTitle,
+    step: 1,
+    render: () => (
+      <CashOutAmountStep
+        available={2000}
+        value="100"
+        onChange={noop}
+        onMax={noop}
+        showProblem
+        minimumUsd={7}
+        belowMinimum
+        preview={{ state: "ready", usd: 2.22, rate: 45, paused: false }}
         canContinue={false}
         onContinue={noop}
         onCancel={noop}
@@ -434,6 +496,54 @@ const SCENES: Scene[] = [
     ),
   },
   {
+    group: "Cancel",
+    name: "confirm",
+    title: CANCEL_COPY.dialogTitle,
+    render: () => (
+      <CashOutMessageStep
+        icon={<IoAlertCircleOutline className="h-6 w-6" />}
+        tone="warning"
+        title={CANCEL_COPY.confirmTitle}
+        body={CANCEL_COPY.confirmBody}
+        primary={{ label: CANCEL_COPY.confirmAction, onClick: noop }}
+        secondary={{ label: CANCEL_COPY.keepAction, onClick: noop }}
+      />
+    ),
+  },
+  {
+    group: "Cancel",
+    name: "cancelled",
+    title: CANCEL_COPY.dialogTitle,
+    render: () => (
+      <CashOutMessageStep
+        icon={<IoCheckmarkCircleOutline className="h-6 w-6" />}
+        tone="success"
+        title={CANCEL_COPY.successTitle}
+        body={CANCEL_COPY.successBody}
+        primary={{ label: OUTCOME_COPY.doneAction, onClick: noop }}
+      />
+    ),
+  },
+  {
+    /* The provider took a submission first. Back on the panel, with the refusal as its notice —
+       which is why this is a Resume screen wearing a Cancel message, not a screen of its own. */
+    group: "Cancel",
+    name: "refused",
+    title: RESUME_COPY.dialogTitle,
+    render: () => (
+      <CashOutResumePanel
+        zltoAmount={100}
+        estimateUsd={2.22}
+        started={started}
+        busy={false}
+        canCancel={false}
+        notice={CANCEL_COPY.refusedBody}
+        onContinue={noop}
+        onClose={noop}
+      />
+    ),
+  },
+  {
     group: "Result",
     name: "initiation failed",
     title: AMOUNT_COPY.dialogTitle,
@@ -458,6 +568,62 @@ const SCENES: Scene[] = [
         zltoAmount={100}
         estimateUsd={2.22}
         started={started}
+        busy={false}
+        canCancel={false}
+        onContinue={noop}
+        onClose={noop}
+      />
+    ),
+  },
+  {
+    /* The three values of `canCancel` are three different screens, and only one of them has a
+       Cancel button. Derived nowhere — the flow passes the session's own answer — so they are
+       listed rather than computed. */
+    group: "Resume",
+    name: "cancellable",
+    title: RESUME_COPY.dialogTitle,
+    render: () => (
+      <CashOutResumePanel
+        zltoAmount={100}
+        estimateUsd={2.22}
+        started={started}
+        busy={false}
+        canCancel={session(true).canCancel}
+        onCancel={noop}
+        onCheckCancel={noop}
+        onContinue={noop}
+        onClose={noop}
+      />
+    ),
+  },
+  {
+    group: "Resume",
+    name: "eligibility unknown",
+    title: RESUME_COPY.dialogTitle,
+    render: () => (
+      <CashOutResumePanel
+        zltoAmount={100}
+        estimateUsd={2.22}
+        started={started}
+        busy={false}
+        canCancel={null}
+        onCancel={noop}
+        onCheckCancel={noop}
+        onContinue={noop}
+        onClose={noop}
+      />
+    ),
+  },
+  {
+    group: "Resume",
+    name: "loading session",
+    title: RESUME_COPY.dialogTitle,
+    render: () => (
+      <CashOutResumePanel
+        zltoAmount={100}
+        estimateUsd={2.22}
+        started={started}
+        state="loading"
         busy={false}
         onContinue={noop}
         onClose={noop}

@@ -9,13 +9,15 @@ namespace Yoma.Core.Domain.Entity.Interfaces
   {
     UserProfile Get();
 
-    Task<List<Country>?> ListPayoutCountries();
+    Task<List<PayoutCountry>?> ListPayoutCountries();
 
     Task<PayoutSession> PayoutRewards(decimal amount);
 
     Task<PayoutSession> GetPayoutSession();
 
-    PayoutTransactionInfo GetLatestPayoutTransaction();
+    Task CancelPayout(Guid payoutId);
+
+    Task<PayoutTransactionInfo> GetLatestPayoutTransaction();
 
     List<UserSkillInfo>? GetSkills();
 

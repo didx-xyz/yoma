@@ -1,5 +1,3 @@
-using Yoma.Core.Domain.Lookups.Models;
-
 namespace Yoma.Core.Domain.Payout.Models.Provider
 {
   /// <summary>
@@ -8,7 +6,7 @@ namespace Yoma.Core.Domain.Payout.Models.Provider
   /// </summary>
   public sealed class PayoutCountries
   {
-    public List<Country>? Countries { get; set; }
+    public List<PayoutCountry>? Countries { get; set; }
 
     public bool Offline { get; set; }
   }

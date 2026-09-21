@@ -2,6 +2,8 @@ namespace Yoma.Core.Domain.Payout.Models.Provider
 {
   public sealed class PayoutResponse
   {
+    public bool CanCancel { get; set; }
+
     /// <summary>
     /// Transaction identifier assigned by the payout provider.
     /// </summary>
