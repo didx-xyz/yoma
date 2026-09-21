@@ -35,6 +35,7 @@ import TreasuryManagementForm from "~/components/Treasury/TreasuryManagementForm
 import TreasuryOpportunitiesTab from "~/components/Treasury/TreasuryOpportunitiesTab";
 import TreasuryOrganisationsTab from "~/components/Treasury/TreasuryOrganisationsTab";
 import TreasuryOverview from "~/components/Treasury/TreasuryOverview";
+import TreasuryPayoutsTab from "~/components/Treasury/TreasuryPayoutsTab";
 import TreasuryReferralsTab from "~/components/Treasury/TreasuryReferralsTab";
 import TreasuryRolloverConfirmDialog from "~/components/Treasury/TreasuryRolloverConfirmDialog";
 import {
@@ -116,6 +117,7 @@ const TAB_MANAGE = "manage";
 const TAB_ORGANISATIONS = "organisations";
 const TAB_OPPORTUNITIES = "opportunities";
 const TAB_REFERRALS = "referrals";
+const TAB_PAYOUTS = "payouts";
 
 /** The querystring tokens this page recognises; anything else falls back to Overview. */
 const TABS = [
@@ -123,6 +125,7 @@ const TABS = [
   TAB_ORGANISATIONS,
   TAB_OPPORTUNITIES,
   TAB_REFERRALS,
+  TAB_PAYOUTS,
 ] as const;
 type TreasuryTab = (typeof TABS)[number];
 
@@ -311,6 +314,12 @@ const Treasury: NextPageWithLayout<{
                 href: treasuryHref(TAB_REFERRALS, mockScenario),
                 selected: activeTab === TAB_REFERRALS,
               },
+              {
+                key: "treasury_tab_payouts",
+                label: "Payouts",
+                href: treasuryHref(TAB_PAYOUTS, mockScenario),
+                selected: activeTab === TAB_PAYOUTS,
+              },
             ]}
           />
         </ListPageHeader>
@@ -411,6 +420,11 @@ const Treasury: NextPageWithLayout<{
                 {activeTab === TAB_REFERRALS && (
                   <TreasuryReferralsTab treasury={treasury} />
                 )}
+
+                {/* Where the payout pool above actually went: the audit record for every payout,
+                    query-only. Takes no Treasury prop — it reports transactions, and the capacity
+                    banner above it already owns the pool figures. */}
+                {activeTab === TAB_PAYOUTS && <TreasuryPayoutsTab />}
 
                 {activeTab === null && <TreasuryOverview treasury={treasury} />}
               </div>
