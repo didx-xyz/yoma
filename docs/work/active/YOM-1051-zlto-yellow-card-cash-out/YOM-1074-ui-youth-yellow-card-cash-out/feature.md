@@ -311,6 +311,89 @@ gate state 0 is that screen; B5's conflict variant is kept for the initiation ra
 Flow C shows no `expiresAt` on the resume panel by design; add "link valid until HH:MM" only if
 wanted.
 
+## In-app browsers (webviews) — deferred detection
+
+**Decision, 2026-09-21 (owner): rely on the fallbacks; do not detect.** This section exists so the
+option is recorded properly rather than rediscovered, and so nobody writes the naive version.
+
+### The problem
+
+IXO do not support the embedded flow inside in-app browsers — *"we do not support the embedded flow
+there and I would not try"* (2026-09-21). Those webviews block or mangle new windows, and **some
+replace the whole view with the sign-in page, destroying the iframe**. So it is not simply a blocked
+popup with a graceful message: the frame can vanish underneath the youth, which means the "Open in a
+new window" control sitting beneath it may not be there to use.
+
+IXO's supported path is the **standalone page** — the same `paymentUrl`, opened *top-level*, where
+their page uses a full-window redirect and never pops.
+
+### What a webview is
+
+A web page rendered by a native app through the platform's embedded web component — `WKWebView` on
+iOS, `android.webkit.WebView` on Android — inside the app's own interface. There is no address bar,
+the host app controls navigation, and the user never leaves that app.
+
+**What is *not* a webview, and must never be treated as one:**
+
+- Standalone browsers — Safari, Chrome, Firefox, Samsung Internet, Edge.
+- **Chrome Custom Tabs (Android) and `SFSafariViewController` (iOS).** These open *over* an app and
+  look much the same to a user, but they are the real browser: they share its storage, honour its
+  popup behaviour and support `window.open` normally. Apps increasingly use these instead of a raw
+  WebView. They are also largely indistinguishable from the standalone browser by User-Agent — which
+  is fine, because they need no special handling, and a detector that caught them would push working
+  users off the supported path for nothing.
+
+The problem set is the apps that still embed a raw WebView and intercept navigation: Facebook,
+Messenger, Instagram, WhatsApp, TikTok, Snapchat, LinkedIn, X/Twitter, WeChat, Line, Pinterest.
+
+### How it would be detected, and why that is fragile
+
+Host apps append a token to the User-Agent:
+
+| App                  | Token(s)                          |
+| -------------------- | --------------------------------- |
+| Facebook / Messenger | `FBAN`, `FBAV`, `FB_IAB`          |
+| Instagram            | `Instagram`                       |
+| WhatsApp             | `WhatsApp`                        |
+| TikTok               | `BytedanceWebview`, `musical_ly`  |
+| LinkedIn             | `LinkedInApp`                     |
+| Snapchat             | `Snapchat`                        |
+| X / Twitter          | `Twitter`                         |
+| WeChat               | `MicroMessenger`                  |
+| Line                 | `Line/`                           |
+| Android, generic     | `; wv)`                           |
+
+Four reasons this decays:
+
+1. **The tokens are conventions, not standards.** Apps add, rename and drop them; Facebook has
+   changed its set more than once. The list is an allowlist of known offenders that rots.
+2. **`; wv)` is the only near-standard signal, and it is Android-only** — and an app can replace the
+   User-Agent string outright.
+3. **iOS offers no reliable generic signal.** A `WKWebView` reports essentially Mobile Safari's
+   User-Agent. The usual heuristic — a Mobile Safari string missing the `Safari/` token — both
+   misfires on legitimate browsers and misses apps that leave the token in place.
+4. So detection will always have false negatives, and its false *positives* are the expensive ones:
+   sending a youth on a perfectly good browser out of Yoma for no reason.
+
+### What a positive match would do
+
+Not render the iframe at all, and navigate top-level with `window.location.assign(paymentUrl)` —
+**not** `window.open`, which is the thing that does not work there. That takes the youth out of Yoma
+entirely, which the epic's iframe directive otherwise forbids, so it needs sign-off as a deliberate
+exception rather than arriving as an implementation detail. Return is the youth navigating back; the
+recovery is the resume path that already exists.
+
+### Why it is deferred, and what would change the answer
+
+The fallbacks cover it manually today — ours below the frame, and the link IXO render inside their
+own page when a popup is refused. Against that, detection is fragile, its failure mode is
+user-visible, and **there is no evidence yet of how often this actually bites.**
+
+That evidence is obtainable without building anything: the User-Agent is on the initiate request, so
+payouts that are started and never completed can be bucketed by webview token. Revisit if abandoned
+payouts turn out to concentrate there — Yoma's social referral traffic makes that plausible, which is
+why this is written down rather than dismissed.
+
 ## Tasks
 
 - [x] **Design pass** — 39 artboards drafted and redrawn against the 2026-09-09 decisions,
@@ -765,6 +848,36 @@ wanted.
   tab is evicted while the youth is in the popup, the profile refresh shows an active payout and
   "Continue cash out" fetches a fresh session from GET `/user/payout/zlto`. The no-persistence rule
   is unchanged and the recovery path already existed — this confirms it is the intended one.
+
+- **2026-09-21: `camera` and `microphone` removed from the iframe's `allow`.** IXO confirmed nothing
+  inside the frame ever asks for either — capture, ComplyCube and the QR hand-off to a phone all run
+  in the KYC window, top-level on their origin, prompting for itself. Delegating them was granting a
+  payment frame two of the most sensitive permissions a browser has for no reason. `payment` went
+  too: it delegates the Payment Request API, and bank/mobile-money details are collected on the
+  provider's own pages. **`clipboard-write` went too** (owner) — nothing in the frame is believed to
+  copy anything, so the frame is now delegated nothing at all and the `allow` attribute is gone. Its
+  Permissions-Policy default is `self`, so the symptom of being wrong is a copy control in the
+  journey that silently does nothing rather than an error; that is the one thing to watch on STAGE.
+- **2026-09-21: the mobile questions are closed.** iOS Safari, iOS Chrome *and* Android Chrome all
+  run the full loop on a Yoma-style host page. A completed sign-in survives a reload of the Yoma tab
+  because the provider's session is stored on their origin, partitioned to the Yoma site — so
+  re-embedding with a fresh payment URL returns the youth to the right step. That is exactly the
+  resume path already built, confirmed from the other side.
+- **⚠️ 2026-09-21: the session is partitioned, so the frame and a top-level tab do not share it.**
+  Signing in through "Open in a new window" does not sign the youth in inside the frame. It does not
+  strand them — they finish in that tab — but nothing may assume state carries between the two.
+- **⚠️ 2026-09-21: IXO do not support the embedded flow in in-app browsers, and neither should we.**
+  Facebook/Instagram/WhatsApp webviews block or mangle new windows, and *some replace the whole view
+  with the sign-in page, destroying the iframe* — not a blocked popup with a graceful message, the
+  frame simply gone. Their supported path is the same `paymentUrl` opened **top-level**, where their
+  page redirects full-window and never pops. **Resolved the same day (owner): rely on the fallbacks,
+  do not detect.** Detection is fragile, its false positives push working users off the supported
+  path, and nothing yet says how often this bites. Recorded in full — what a webview is, what is
+  wrongly mistaken for one, the User-Agent tokens, and the evidence that would reopen it — under
+  [In-app browsers (webviews)](#in-app-browsers-webviews--deferred-detection) above.
+- **2026-09-21: popup timing is not a risk.** IXO open the window synchronously in the click handler,
+  blank, and navigate it afterwards — the pattern iOS Safari enforces. So a block in an ordinary
+  browser would be user configuration, not a bug either side can fix.
 
 ## Links
 

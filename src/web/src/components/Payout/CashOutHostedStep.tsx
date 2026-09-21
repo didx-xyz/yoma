@@ -21,7 +21,9 @@ import { HOSTED_COPY } from "~/lib/payout/copy";
  * (IXO, 2026-09-18). WorkOS refuses framing outright — `frame-ancestors` without Yoma's origin,
  * found on Dev 2026-09-11 — and rather than allowlisting us, IXO moved those steps out. The popup
  * is opened by their code in their document and returns to the frame afterwards; Yoma neither opens
- * it nor can see it.
+ * it nor can see it. They confirmed it is opened **synchronously in the click handler**, blank, and
+ * navigated afterwards (IXO, 2026-09-21) — the pattern iOS Safari requires, so a block here is a
+ * browser policy rather than a bug either side can fix.
  *
  * **There is deliberately no `sandbox` attribute, and adding one would break this.** IXO's note
  * asks for `allow-popups` and `allow-popups-to-escape-sandbox` *if* the frame is sandboxed — it is
@@ -29,17 +31,43 @@ import { HOSTED_COPY } from "~/lib/payout/copy";
  * scripts, forms, storage and navigation from a journey that needs all four. Without the attribute
  * the frame may already open popups. Nothing else of Yoma's interferes either: the app sets no CSP,
  * no `Cross-Origin-Opener-Policy` and no `X-Frame-Options` (checked in `next.config.mjs`, the web
- * ingress and `_document.tsx`, 2026-09-18), and `allow` is a Permissions-Policy delegation list
- * with no popup feature in it.
+ * ingress and `_document.tsx`, 2026-09-18).
  *
- * `allow` grants the camera and microphone the provider's identity checks may need — a frame
- * without them fails silently at the worst moment. Possibly redundant now that verification opens
- * in a popup, which carries its own permission prompts; left in place until IXO confirms, because
- * the failure mode of removing it too early is a youth stuck at a camera step that never starts.
+ * ## No `allow` attribute: the frame is delegated nothing
+ *
+ * It used to carry `camera; microphone; clipboard-write; payment`. All four are gone.
+ *
+ * **`camera` and `microphone`** because IXO confirmed nothing inside this frame ever asks for
+ * either (2026-09-21) — identity capture, ComplyCube and its QR hand-off to a phone all run in the
+ * KYC window, which is top-level on their origin and prompts for itself. Delegating them was
+ * granting a payment frame two of the most sensitive permissions a browser has, for no reason.
+ *
+ * **`payment`** delegates the browser's Payment Request API, which this flow does not use: the
+ * provider collects bank and mobile-money details on its own pages.
+ *
+ * **`clipboard-write`** (owner, 2026-09-21) — nothing in the frame is believed to copy anything.
+ * Note its Permissions-Policy default is `self`, so a cross-origin frame *would* need the grant if
+ * that ever changed: the symptom of being wrong here is a copy control in the journey that silently
+ * does nothing, not an error. That is the one thing to watch for on STAGE.
+ *
+ * Adding any of them back is a conversation, not a quiet re-grant — this is a money surface, and
+ * the reason each one went is written down above.
  *
  * **A blocked popup is undetectable from here**, for the same reason a refused frame was: it
  * happens in a document we cannot read. So the way out is permanent rather than prompted — see the
  * status slot below.
+ *
+ * ⚠️ **In-app browsers get the fallback, not a different path** (owner, 2026-09-21). IXO do not
+ * support the embedded flow inside Facebook, Instagram or WhatsApp webviews — those block or mangle
+ * new windows, and some replace the whole view with the sign-in page, destroying this frame. Their
+ * supported path there is the payment URL opened *top-level*, where their page redirects
+ * full-window instead of popping.
+ *
+ * **Yoma deliberately does not detect them.** A youth in one falls back to the permanent "Open in a
+ * new window" below, or to the equivalent link IXO render inside their own page. Detection is
+ * recorded as possible future work — with a definition of what counts as a webview and how it would
+ * be sniffed — in this ticket's `feature.md`. Read that before attempting it; the naive version is
+ * both fragile and wrong about Custom Tabs.
  */
 
 export const CashOutHostedStep: React.FC<{
@@ -65,7 +93,6 @@ export const CashOutHostedStep: React.FC<{
         src={paymentUrl}
         title={HOSTED_COPY.frameTitle}
         className="border-gray h-full min-h-0 w-full grow rounded-lg border bg-white"
-        allow="camera; microphone; clipboard-write; payment"
         referrerPolicy="no-referrer"
       />
 
