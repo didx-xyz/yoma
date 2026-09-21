@@ -36,9 +36,10 @@ and the validation digest are all there.
 ## Plan
 
 `/admin/treasury`, Admin role only, with banner tabs. This ticket owns the page shell, the tab
-routing (`?tab=`), the Overview tab and the Manage tab; siblings own the other three tab bodies.
-The `TreasuryInfo` payload is fetched once by the page and **passed down as a prop** to every tab —
-so no tab can disagree with the capacity banner rendered above it.
+routing (`?tab=`), the Overview, Manage and Payouts tabs; siblings own the other three tab bodies.
+The `TreasuryInfo` payload is fetched once by the page and **passed down as a prop** to every tab
+that needs it — so no tab can disagree with the capacity banner rendered above it. Payouts takes no
+Treasury prop: it reports transactions, and the banner already owns the pool figures.
 
 Key files:
 
@@ -50,7 +51,12 @@ Key files:
 | Capacity banners (all tabs)      | `components/Treasury/TreasuryCapacityWarnings.tsx`   |
 | Rollover confirmation            | `components/Treasury/TreasuryRolloverConfirmDialog.tsx` |
 | Shared ZLTO stat group           | `components/Treasury/TreasuryZltoRewardStats.tsx`    |
+| Payouts tab (`?tab=payouts`)     | `components/Treasury/TreasuryPayoutsTab.tsx`         |
+| Payout row / detail / badge      | `components/Payout/PayoutTransactionSummaryRow.tsx`, `PayoutTransactionDetail.tsx`, `PayoutStatusBadge.tsx` |
+| Payout filter popup              | `components/Payout/PayoutTransactionFilterVertical.tsx` |
+| Admin payout vocabulary + filter mapping | `lib/payout/adminTransactions.ts`            |
 | Model + limits                   | `api/models/treasury.ts`                             |
+| Payout audit contract            | `api/models/payout.ts` (admin section), `api/services/treasury.ts` |
 | Form schema / server errors      | `lib/treasury/treasuryFormSchema.ts`, `lib/treasury/serverErrors.ts` |
 | Pending + pool floor             | `lib/treasury/payoutCommitment.ts`                   |
 | FY guard                         | `lib/treasury/financialYear.ts`                      |
@@ -68,8 +74,9 @@ it, after which no ZLTO reward is capped anywhere. Always send current values fo
 - [x] **T0** — Foundations: shared formatters, FY/lifetime vocabulary, `RewardStat` primitive,
       validation + server-error patterns (delivered inside T1; frozen in the epic README)
 - [x] **T1** — `/admin/treasury`, Overview + Manage tabs, rollover guard, capacity warnings
-- [ ] **Payout transactions** — add the Admin query/history surface using the Payout-domain lookup
-      and paginated search now exposed through the Treasury API
+- [x] **Payout transactions** — Admin query/history surface at `?tab=payouts`: search, status/type/
+      amount/date filters, paginated rows and a detail dialog carrying the payout, the youth and the
+      linked ZLTO reservation. Query-only. Built 2026-09-21; browser pass owed with it
 - [x] **T1 corrective (a)** — capacity readings repointed to
       `payoutBalanceAvailableCurrentFinancialYearInUsd` in `TreasuryOverview.tsx` +
       `TreasuryCapacityWarnings.tsx`, tone inputs included
@@ -86,8 +93,10 @@ it, after which no ZLTO reward is capped anywhere. Always send current values fo
       server behaviour; now "Not set — ZLTO rewards are not capped by the Treasury" (done during T4)
 - [x] **`TreasuryZltoRewardStats` extracted** from `TreasuryOverview` so referral surfaces reuse it
       rather than duplicating the four figures (done during T4)
-- [ ] **Authenticated browser pass** — Overview → Manage → a real save → the rollover dialog.
-      Tracked epic-wide; this ticket is the largest part of it
+- [ ] **Authenticated browser pass** — Overview → Manage → a real save → the rollover dialog, plus
+      Payouts → search → filters → a row's detail dialog. Tracked epic-wide; this ticket is the
+      largest part of it. Payouts additionally needs **data**: a local database has no payout rows,
+      so it wants Dev/Stage or a seeded transaction
 - [ ] **Remove the `?mock=` dev aid** — tracked as epic-wide T6, but the code is all in this ticket's files
 
 ## Decisions
@@ -122,6 +131,34 @@ it, after which no ZLTO reward is capped anywhere. Always send current values fo
   Organisations and Opportunities tabs take none. Deliberate asymmetry: the referral rows fold the
   Treasury balance into a derived "payable per completion", and a second fetch could disagree with
   the banner above it. Recorded here because this ticket owns the page shell.
+- **2026-09-21: the Payouts tab shows no provider and offers no provider filter.** The search
+  contract has `providers`, the row carries `provider`, and there is exactly one value it can ever
+  hold today. Rendering it would put the payout provider's name on an admin screen, which the epic
+  forbids ("provider-neutral everywhere"), in exchange for a filter with a single option and a
+  column that never varies. Both the model field and the filter key are typed and commented, so
+  adding them is a UI change only — do it when a second provider exists.
+- **2026-09-21: the payout filter is plain state, not the react-hook-form + zod factory.** The
+  frozen validation pattern exists for the forms that *submit* money, where per-field server errors
+  have to be mapped back by message text. A query filter has two rules (`amount > 0`, `amountTo >=
+  amountFrom`, plus the date-order pair) and no server-error mapping, so the schema factory would
+  be ceremony around four inputs. The rules are mirrored from
+  `PayoutTransactionSearchFilterValidator` and cited in the component.
+- **2026-09-21: the tab's filters live in component state, like its siblings.** `?tab=payouts`
+  already owns the url and the Organisations/Opportunities tabs set the precedent. The cost is
+  real and known: an admin cannot share a link to a filtered list or to one payout. That is the
+  trigger to move this onto the querystring — not a general tidy-up.
+- **2026-09-21: the two payout amounts are kept in separate, unit-labelled groups.** The payout's
+  `amount` is USD and the linked reward transaction's is ZLTO, and the API calls both "amount"
+  (epic gotcha). The detail dialog puts them under "Payout (USD)" and "ZLTO funding", formatted
+  with `formatUsd` / `formatZlto` respectively; the row shows only the USD figure, because the
+  ZLTO is not on the search projection and must never be reconstructed at today's rate.
+- **2026-09-21: admin status wording is deliberately not the youth's.** `lib/payout/copy.ts` and
+  `outcome.ts` collapse the three active statuses into one neutral "in progress" and say nothing a
+  youth cannot act on. The admin surface needs the recorded status by name plus what it means for
+  the ZLTO (held / burned / returned), so `lib/payout/adminTransactions.ts` is a separate
+  vocabulary. `Failed` is toned amber rather than red on purpose — a failed payout released the
+  reservation, so nothing needs rescuing; `ReconciliationRequired` is the state that wants
+  attention, because the outcome is unknown and the ZLTO is still held.
 
 ## Links
 
@@ -132,5 +169,7 @@ it, after which no ZLTO reward is capped anywhere. Always send current values fo
   [YOM-1058](https://linear.app/didx/issue/YOM-1058) (api treasury domain)
 - Handoffs covering this ticket: [`handoffs/`](./handoffs/) — `2026-08-05-a.md` (seed; T0–T3 state
   and the T1 corrective list), `2026-08-06-a.md` (T1 correctives landed), `2026-08-11-a.md`
-  (docs restructure). The Yoma-reward removal touched this ticket's rollover dialog copy — see
+  (docs restructure), `2026-08-27-a.md` (Adrian: the payout transaction API contract),
+  `2026-09-21-a.md` (the Payouts tab built against it). The Yoma-reward removal touched this
+  ticket's rollover dialog copy — see
   [`../YOM-1063-…/handoffs/2026-08-07-a.md`](../YOM-1063-ui-organization-and-opportunity-admin/handoffs/2026-08-07-a.md).

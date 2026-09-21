@@ -23,7 +23,8 @@ list is not a readiness check. No Helm secrets were edited for this change.
 - **Areas**: api, web
 - **Status**: in-progress
 - **Started**: 2026-03-04 (api), 2026-08-03 (web)
-- **Branch**: `feature/custom-fields-framework` — **load-bearing, not convention.** See below.
+- **Branch**: `master` — `feature/custom-fields-framework` was squash-merged as `20a4f268` (#1924)
+  on 2026-09-16. New work branches from master; see the branch section below for what changed.
 
 > ⚠️ **The folder names carry the payout provider because the convention takes the slug verbatim
 > from the Linear URL.** That is a filing decision, not a copy decision. The provider-neutrality
@@ -65,7 +66,7 @@ frozen and shared rather than re-decided per ticket.
 | [`YOM-1055-api-yellow-card-hosted-payout-integration/`](./YOM-1055-api-yellow-card-hosted-payout-integration/feature.md) | [YOM-1055](https://linear.app/didx/issue/YOM-1055) | api | — | in-progress — client implemented, E2E pending |
 | [`YOM-1059-api-yellow-card-payout-status-integration/`](./YOM-1059-api-yellow-card-payout-status-integration/feature.md) | [YOM-1059](https://linear.app/didx/issue/YOM-1059) | api | — | in-progress — implemented, E2E pending |
 | [`YOM-1077-sre-webhooks-and-yellow-card-configuration/`](./YOM-1077-sre-webhooks-and-yellow-card-configuration/feature.md) | [YOM-1077](https://linear.app/didx/issue/YOM-1077) | api/SRE | — | in-progress — environment configuration pending |
-| [`YOM-1072-ui-treasury-admin/`](./YOM-1072-ui-treasury-admin/feature.md)                                                           | [YOM-1072](https://linear.app/didx/issue/YOM-1072) | web  | T0, T1     | in-progress — dev complete, browser pass owed |
+| [`YOM-1072-ui-treasury-admin/`](./YOM-1072-ui-treasury-admin/feature.md)                                                           | [YOM-1072](https://linear.app/didx/issue/YOM-1072) | web  | T0, T1     | in-progress — dev complete (incl. Payouts tab, 2026-09-21), browser pass owed |
 | [`YOM-1063-ui-organization-and-opportunity-admin/`](./YOM-1063-ui-organization-and-opportunity-admin/feature.md)                   | [YOM-1063](https://linear.app/didx/issue/YOM-1063) | web  | T2, T3     | in-progress — dev complete, T3 reduced |
 | [`YOM-1073-ui-referral-program-rewards-create-update-info/`](./YOM-1073-ui-referral-program-rewards-create-update-info/feature.md) | [YOM-1073](https://linear.app/didx/issue/YOM-1073) | web  | T4         | in-progress — dev complete, browser pass owed |
 | [`YOM-1074-ui-youth-yellow-card-cash-out/`](./YOM-1074-ui-youth-yellow-card-cash-out/feature.md)                                   | [YOM-1074](https://linear.app/didx/issue/YOM-1074) | web  | T5         | in-progress — T5 built end to end; Dev session pass owed |
@@ -104,6 +105,8 @@ the Treasury figures were also validated through local API/database probes. The 
 - Payout persistence, Reward linkage, capacity, profile ledger, session and reconciliation shells exist.
 - Admin Treasury payout transaction lookup and paginated search are exposed from the Treasury API.
   Search returns lightweight payout and user identity rows; retrieval by id adds the linked ZLTO transaction.
+  The web surface for both is the Payouts tab, built 2026-09-21 — query-only, and the provider is
+  neither shown nor filterable (one provider, and naming it breaks the copy rule).
 - Yellow Card OAuth authentication, hosted payout initiation, refreshed-session lookup and
   reconciliation status lookup are implemented against IXO's generated sandbox OpenAPI.
 - Yellow Card's live off-ramp country availability uses the shared in-memory lookup-cache policy, is exposed
@@ -179,12 +182,19 @@ and E2E validation; Robbie/SRE owns environment configuration; Jason owns Web co
 Everything in this section is **verified against the code on this branch**, and is binding on every
 child. Feature docs link here rather than restating it.
 
-### Branch — load-bearing, not convention
+### Branch — ⚠️ merged 2026-09-16; this section is history
 
-All work is on `feature/custom-fields-framework`. The entire Treasury financial-year capability
-exists **only** here (commit `70b2ccd`, not an ancestor of `origin/master`). On master the Treasury
-fields are still `Chimoney…InUSD` and `ITreasuryService` still has `ChimoneyCashedOut()` — building
-there ships the provider-specific naming this epic forbids.
+> **`feature/custom-fields-framework` was squash-merged into `master` as `20a4f268` (#1924) on
+> 2026-09-16.** Verified 2026-09-21: `20a4f268` is an ancestor of master, master carries the whole
+> Treasury/payout surface, and no `Chimoney` identifier remains in the Treasury domain. **Branch
+> from `master` now** — the warning below is kept because every handoff before that date was
+> written under it, and because the squash is what killed the SHA citations (see Remaining Work).
+
+All work was on `feature/custom-fields-framework`. The entire Treasury financial-year capability
+existed **only** there (commit `70b2ccd`, not an ancestor of `origin/master` *at the time*). On
+master the Treasury fields were still `Chimoney…InUSD` and `ITreasuryService` still had
+`ChimoneyCashedOut()` — building there would have shipped the provider-specific naming this epic
+forbids.
 
 **Never name a payout provider in user-facing copy.** Provider-neutral everywhere.
 
@@ -325,7 +335,7 @@ is a _do not_, not a gap.
 
 ### `/admin/treasury` is the aggregation point (owner directive, 2026-08-04)
 
-The hierarchy is managed from one place. Five banner tabs, each also reachable on the surface where
+The hierarchy is managed from one place. Six banner tabs, each also reachable on the surface where
 that level naturally lives:
 
 | Tab           | `?tab=`         | Ticket   | Status                                        |
@@ -335,6 +345,7 @@ that level naturally lives:
 | Organisations | `organisations` | YOM-1063 | done                                          |
 | Opportunities | `opportunities` | YOM-1063 | done (reduced, **temporary**)                 |
 | Referrals     | `referrals`     | YOM-1073 | done                                          |
+| Payouts       | `payouts`       | YOM-1072 | done (2026-09-21) — query-only audit surface  |
 
 ⚠️ **The Opportunities tab is provisional and will most likely be folded into the Organisations
 tab** (owner, 2026-08-06). The _components_ are the durable part and are already prop-driven; the
@@ -427,15 +438,22 @@ Not owned by any one child ticket. **T6 in the old numbering.**
       this epic has been visually verified. Seeded admin `testadminuser@gmail.com`, credentials at
       `src/api/cicd/scripts/postgressql-init/post.sql:18`. Use `?mock=payoutAvailableDepleted` to
       see the capacity banner without touching data.
+      ⚠️ **The seeded admin exists in the API database but not in local Keycloak** (checked
+      2026-09-21: the realm export carries no users, and a password grant for it is refused), so
+      the pass needs a Keycloak user provisioned first — or Dev. The Payouts tab additionally needs
+      payout **rows**, which a fresh local database has none of; `?mock=` does not cover it, since
+      that dev aid only substitutes the Treasury record.
 - [ ] **Fold the Opportunities tab into Organisations** (owner intent) — spans YOM-1063 and the
       shared tab shell.
-- [ ] ⚠️ **Re-point the commit citations before this PR merges.** `master` is squash-merged, so the
-      branch commits these docs cite collapse into one `(#NNNN)` commit on landing and every
-      citation dies. **61 of the 66 resolvable SHAs across `docs/work/active/` are branch-only** —
-      `70b2ccd`, `0d7a67ba`, `bd4d01c1`, `f051dfd8`, `08cb6c10a` and the rest. Run the check in
-      `docs/work/README.md`, then swap each for the squashed commit or annotate it. **After the
-      merge this is guesswork** — it is exactly how the Partner Sync provenance was lost. Do this
-      with the `?mock=` removal, in the same pre-merge pass.
+- [ ] ⚠️ **The commit citations were not re-pointed and the PR has now merged.** The squash
+      happened on 2026-09-16 (`20a4f268`, #1924), so the window closed. Verified 2026-09-21:
+      `70b2ccd`, `0d7a67ba`, `f051dfd8`, `48540971` and `08cb6c10a` still resolve in a local clone
+      that fetched the branch, but **none is an ancestor of `master`** — they survive only where
+      GitHub keeps the PR head (`refs/pull/1741/head`, `refs/pull/1924/head`), not in the repo's
+      own history. Do not add more branch SHAs. When these are next touched, annotate each with
+      "branch-only, squashed into `20a4f268` (#1924)" rather than guessing an equivalent, or
+      replace the doc set with a context pack (`docs/work/templates/context-pack.md`). The
+      `?mock=` removal is now independent of this and still owed.
 
 ## Out of Scope (whole epic)
 
