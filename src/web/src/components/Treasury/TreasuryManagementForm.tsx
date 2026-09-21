@@ -278,6 +278,7 @@ export const TreasuryManagementForm: React.FC<{
               error={errorFor("zltoRewardPoolCurrentFinancialYear")}
             >
               <FormInput
+                className="md:max-w-1/2"
                 inputProps={{
                   id: fieldId("zltoRewardPoolCurrentFinancialYear"),
                   type: "number",
@@ -324,6 +325,7 @@ export const TreasuryManagementForm: React.FC<{
               }
             >
               <FormInput
+                className="md:max-w-1/2"
                 inputProps={{
                   id: fieldId("payoutPoolCurrentFinancialYearInUsd"),
                   type: "number",
