@@ -21,7 +21,9 @@ import { HOSTED_COPY } from "~/lib/payout/copy";
  * (IXO, 2026-09-18). WorkOS refuses framing outright — `frame-ancestors` without Yoma's origin,
  * found on Dev 2026-09-11 — and rather than allowlisting us, IXO moved those steps out. The popup
  * is opened by their code in their document and returns to the frame afterwards; Yoma neither opens
- * it nor can see it.
+ * it nor can see it. They confirmed it is opened **synchronously in the click handler**, blank, and
+ * navigated afterwards (IXO, 2026-09-21) — the pattern iOS Safari requires, so a block here is a
+ * browser policy rather than a bug either side can fix.
  *
  * **There is deliberately no `sandbox` attribute, and adding one would break this.** IXO's note
  * asks for `allow-popups` and `allow-popups-to-escape-sandbox` *if* the frame is sandboxed — it is
@@ -29,17 +31,33 @@ import { HOSTED_COPY } from "~/lib/payout/copy";
  * scripts, forms, storage and navigation from a journey that needs all four. Without the attribute
  * the frame may already open popups. Nothing else of Yoma's interferes either: the app sets no CSP,
  * no `Cross-Origin-Opener-Policy` and no `X-Frame-Options` (checked in `next.config.mjs`, the web
- * ingress and `_document.tsx`, 2026-09-18), and `allow` is a Permissions-Policy delegation list
- * with no popup feature in it.
+ * ingress and `_document.tsx`, 2026-09-18).
  *
- * `allow` grants the camera and microphone the provider's identity checks may need — a frame
- * without them fails silently at the worst moment. Possibly redundant now that verification opens
- * in a popup, which carries its own permission prompts; left in place until IXO confirms, because
- * the failure mode of removing it too early is a youth stuck at a camera step that never starts.
+ * ## `allow` — what is delegated, and what was taken away
+ *
+ * **`camera` and `microphone` are gone** (IXO, 2026-09-21): identity capture, ComplyCube and its
+ * QR hand-off to a phone all run in the KYC window, which is top-level on their origin and prompts
+ * for itself. *Nothing inside this frame ever asks for either*, so delegating them was granting a
+ * payment frame two of the most sensitive permissions a browser has, for no reason.
+ *
+ * `payment` went with them — that delegates the browser's Payment Request API, and the provider
+ * collects bank and mobile-money details on its own pages rather than through it.
+ *
+ * `clipboard-write` stays. It is the one feature with a plausible in-frame use (a reference to
+ * copy), IXO were not asked about it directly, and its Permissions-Policy default is `self` — so a
+ * cross-origin frame does need the grant. Harmless if unused; a silently dead copy button if
+ * removed and wrong. Drop it once STAGE shows nothing needs it.
  *
  * **A blocked popup is undetectable from here**, for the same reason a refused frame was: it
  * happens in a document we cannot read. So the way out is permanent rather than prompted — see the
  * status slot below.
+ *
+ * ⚠️ **In-app browsers are out of scope for this component** (IXO, 2026-09-21): Facebook, Instagram
+ * and WhatsApp webviews block or mangle new windows, and some replace the whole view with the
+ * sign-in page, destroying the frame. IXO's supported path there is not an iframe at all — it is
+ * the payment URL opened top-level, where their page redirects full-window instead of popping. Yoma
+ * does not detect webviews today, so in one the youth falls back to the permanent "Open in a new
+ * window" below, or to the equivalent link IXO render inside their own page. See the epic README.
  */
 
 export const CashOutHostedStep: React.FC<{
@@ -65,7 +83,7 @@ export const CashOutHostedStep: React.FC<{
         src={paymentUrl}
         title={HOSTED_COPY.frameTitle}
         className="border-gray h-full min-h-0 w-full grow rounded-lg border bg-white"
-        allow="camera; microphone; clipboard-write; payment"
+        allow="clipboard-write"
         referrerPolicy="no-referrer"
       />
 

@@ -272,11 +272,29 @@ This supersedes returning terminal payouts on the profile. No expiry configurati
   must therefore not be sandboxed — it is not, and adding `sandbox` to satisfy IXO's conditional note
   about `allow-popups` would break it, since `sandbox` is deny-by-default. Yoma sets no CSP, no
   `Cross-Origin-Opener-Policy` and no `X-Frame-Options`, so nothing of ours blocks a popup.
-- **Mobile recovery after a tab reload is the resume path, not persistence** (Adrian, 2026-09-18). If
-  Yoma reloads while the youth is away in the popup, refresh the profile; an active payout means
-  "Continue cash out" calls GET `/api/v3/user/payout/zlto` for a fresh session and URL. Still never
-  persist the URL, and never POST again. IXO have confirmed desktop Chrome and iOS Safari/Chrome;
-  Android Chrome and the tab-eviction case are **not** yet confirmed.
+- **The frame needs no camera or microphone delegation** (IXO, 2026-09-21). Identity capture,
+  ComplyCube and its QR hand-off to a phone all run in the KYC window, which is top-level on the
+  provider's origin and prompts for itself; nothing inside the frame ever asks. Both were removed
+  from `allow`, along with `payment` (the Payment Request API, which this flow does not use).
+  `clipboard-write` is kept for now — unasked, plausibly used for a reference to copy, and its
+  Permissions-Policy default is `self`, so a cross-origin frame does need the grant.
+- **Mobile recovery after a tab reload is the resume path, not persistence** (Adrian, 2026-09-18;
+  confirmed independently by IXO, 2026-09-21). If Yoma reloads while the youth is away, refresh the
+  profile; an active payout means "Continue cash out" calls GET `/api/v3/user/payout/zlto` for a
+  fresh session and URL. Still never persist the URL, and never POST again. IXO's side of it: a
+  **completed sign-in survives the reload** because the session lives on their origin, partitioned to
+  the Yoma site — re-embedding with a refreshed payment URL lands the youth back at the payout or KYC
+  step with no second sign-in. A reload *mid* sign-in simply means tapping Sign in again; the parked
+  code is single-use and expires in five minutes.
+- **Mobile is confirmed on all three targets** (IXO, 2026-09-21): iOS Safari, iOS Chrome and Android
+  Chrome, each run as the full loop on a Yoma-style host page. The frame waits in the background
+  while the youth is on the sign-in page and has moved on by the time they switch back; that page
+  ends on a "done, you can close this" screen. This closes the Android/eviction gap left open on
+  2026-09-18.
+- **⚠️ Partitioned storage cuts both ways.** The session is keyed to *Yoma-site + provider-origin*, so
+  the iframe and a top-level tab on the provider's domain are **different partitions**. A youth who
+  signs in via "Open in a new window" has not signed in inside the frame. They finish in that tab, so
+  it does not block them — but do not build anything that assumes state carries between the two.
 - Notification ownership (IXO/Yoma) remains separate from in-app outcome presentation.
 - Automated test additions were removed at Adrian's request; no new tests accompany these changes.
   API build and Dev integration checks are separate from future maintained automated regression coverage.
@@ -437,7 +455,8 @@ Not owned by any one child ticket. **T6 in the old numbering.**
 | ~~No youth-facing payout status or terminal outcome~~ | ~~High~~ | **Resolved 2026-09-10** by the API additions above (`status`, `canResume`, `dateCreated`, `GET /user/payout/latest`); Flow D was built against them on 2026-09-11 |
 | **Gender is rejected by the provider's verification step** (found 2026-09-11 on Dev, [YOM-1074](./YOM-1074-ui-youth-yellow-card-cash-out/feature.md)) | High | The hosted KYC answers `'personDetails.gender' should be equal to one of the allowed values: male, female, other`. Yoma's lookup is `Female`/`Male`/`Prefer not to say` and `YellowCardClient` sends it untouched, so **every** value is refused — two for case, the third because it is not in the provider's set. Blocks the hosted journey for every user. API-side mapping needed (`Male → male`, `Female → female`, else `other`); no UI change can affect it |
 | ~~**The hosted sign-in step refuses to be framed**~~ (found 2026-09-11 on Dev, [YOM-1074](./YOM-1074-ui-youth-yellow-card-cash-out/feature.md)) | ~~High~~ | **Resolved by design change 2026-09-18.** There was no allowlist to be granted — WorkOS does not permit framed sign-in at all — so IXO moved sign-in *and* KYC into a **popup their page opens**, returning to the frame afterwards. The iframe stays; Yoma's only change is the escape hatch below. See the row under it for what this trades the problem for |
-| **A blocked popup ends the journey, and Yoma cannot see it** (IXO design change, 2026-09-18) | Medium | Sign-in and KYC are now popups opened by the provider's code in the provider's document, so a popup blocker produces a tap that does nothing — no event, no return value, nothing cross-origin to read. Mitigated, not solved: "Open in a new window" is permanent rather than timed, and takes the whole journey top-level where no popup is needed. **Open with IXO:** in-app browsers (Facebook/Instagram/WhatsApp webviews, a large share of this audience) where popups are commonly blocked outright, and whether their `window.open` is called synchronously in the click handler — if it awaits anything first, every browser blocks it regardless of what Yoma does |
+| **A blocked popup ends the journey, and Yoma cannot see it** (IXO design change, 2026-09-18) | Low | Sign-in and KYC are popups opened by the provider's code in the provider's document, so a blocker produces a tap that does nothing — no event, nothing cross-origin to read. **Narrowed 2026-09-21:** IXO confirmed the popup is opened synchronously in the click handler, blank, and navigated afterwards, which is the pattern iOS Safari requires — so an ordinary browser should not block it. "Open in a new window" is permanent and takes the journey top-level either way. What remains is the webview row below |
+| **The embedded flow is unsupported in in-app browsers** (IXO, 2026-09-21) | High | Facebook, Instagram and WhatsApp webviews block or mangle new windows, and **some replace the whole view with the sign-in page, destroying the iframe** — so this is not a blocked-popup case with a graceful message, it can be the frame disappearing. IXO's words: "we do not support the embedded flow there and I would not try." Their supported path is the **standalone page** — the same `paymentUrl`, opened top-level, where their page uses a full-window redirect and no popup at all. Yoma does not detect webviews, so today a youth in one relies on the permanent "Open in a new window", or on the equivalent link IXO render inside their own page when the popup is refused. **Decision owed:** detect webviews and skip the iframe, or keep relying on the fallbacks. Material for this audience — social referral traffic arrives in these webviews |
 | Hosted Yellow Card E2E needs an accessible test email                  | Medium   | WorkOS verifies email and provides no bypass; use a funded Dev/Stage user with an inbox the test team controls.       |
 | No server rule ties a referral pool to Treasury capacity               | Low      | Accepted: the UI gives soft guidance. YOM-1073's ticket asks for hard validation — the code does not provide it       |
 

@@ -766,6 +766,32 @@ wanted.
   "Continue cash out" fetches a fresh session from GET `/user/payout/zlto`. The no-persistence rule
   is unchanged and the recovery path already existed — this confirms it is the intended one.
 
+- **2026-09-21: `camera` and `microphone` removed from the iframe's `allow`.** IXO confirmed nothing
+  inside the frame ever asks for either — capture, ComplyCube and the QR hand-off to a phone all run
+  in the KYC window, top-level on their origin, prompting for itself. Delegating them was granting a
+  payment frame two of the most sensitive permissions a browser has for no reason. `payment` went
+  too: it delegates the Payment Request API, and bank/mobile-money details are collected on the
+  provider's own pages. **`clipboard-write` stays** — the one feature with a plausible in-frame use,
+  not asked about directly, and its Permissions-Policy default is `self`, so a cross-origin frame
+  genuinely needs the grant. Harmless if unused; a silently dead copy button if removed and wrong.
+- **2026-09-21: the mobile questions are closed.** iOS Safari, iOS Chrome *and* Android Chrome all
+  run the full loop on a Yoma-style host page. A completed sign-in survives a reload of the Yoma tab
+  because the provider's session is stored on their origin, partitioned to the Yoma site — so
+  re-embedding with a fresh payment URL returns the youth to the right step. That is exactly the
+  resume path already built, confirmed from the other side.
+- **⚠️ 2026-09-21: the session is partitioned, so the frame and a top-level tab do not share it.**
+  Signing in through "Open in a new window" does not sign the youth in inside the frame. It does not
+  strand them — they finish in that tab — but nothing may assume state carries between the two.
+- **⚠️ 2026-09-21: IXO do not support the embedded flow in in-app browsers, and neither should we.**
+  Facebook/Instagram/WhatsApp webviews block or mangle new windows, and *some replace the whole view
+  with the sign-in page, destroying the iframe* — not a blocked popup with a graceful message, the
+  frame simply gone. Their supported path is the same `paymentUrl` opened **top-level**, where their
+  page redirects full-window and never pops. Yoma does not detect webviews today; the decision
+  between detecting them and relying on the fallbacks is open and recorded in the epic README.
+- **2026-09-21: popup timing is not a risk.** IXO open the window synchronously in the click handler,
+  blank, and navigate it afterwards — the pattern iOS Safari enforces. So a block in an ordinary
+  browser would be user configuration, not a bug either side can fix.
+
 ## Links
 
 - Epic: [YOM-1051](../README.md)
