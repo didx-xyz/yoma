@@ -116,9 +116,9 @@ namespace Yoma.Core.Test.Core
       var payout = new PayoutTransaction { Id = Guid.NewGuid(), Amount = 10 };
       var expiry = DateTimeOffset.UtcNow.AddMinutes(20);
       var started = new PayoutResponse
-        { CanCancel = canCancel, PaymentUrl = "https://ixo.test/pay", ExpiresAt = expiry }.ToPayoutSession(payout);
+      { CanCancel = canCancel, PaymentUrl = "https://ixo.test/pay", ExpiresAt = expiry }.ToPayoutSession(payout);
       var resumed = new PayoutSessionResponse
-        { CanCancel = canCancel, PaymentUrl = "https://ixo.test/pay", ExpiresAt = expiry }.ToPayoutSession(payout);
+      { CanCancel = canCancel, PaymentUrl = "https://ixo.test/pay", ExpiresAt = expiry }.ToPayoutSession(payout);
       Assert.Equal(payout.Id, started.PayoutId);
       Assert.Equal(payout.Id, resumed.PayoutId);
       Assert.Equal(canCancel, started.CanCancel);
@@ -132,15 +132,20 @@ namespace Yoma.Core.Test.Core
     {
       var payout = new PayoutTransaction
       {
-        Id = Guid.NewGuid(), UserId = Guid.NewGuid(), StatusId = Guid.NewGuid(),
-        Status = status, Amount = 10, Currency = "USD", TransactionId = "pay_test"
+        Id = Guid.NewGuid(),
+        UserId = Guid.NewGuid(),
+        StatusId = Guid.NewGuid(),
+        Status = status,
+        Amount = 10,
+        Currency = "USD",
+        TransactionId = "pay_test"
       };
       var repository = new Mock<IRepositoryValueContains<PayoutTransaction>>();
       repository.Setup(p => p.Query()).Returns(new[] { payout }.AsQueryable());
       var statuses = new Mock<IPayoutTransactionStatusService>();
       statuses.Setup(p => p.GetByName(It.IsAny<string>())).Returns((string name) =>
         new Domain.Payout.Models.Lookups.PayoutTransactionStatus
-          { Id = name == status.ToString() ? payout.StatusId : Guid.NewGuid(), Name = name });
+        { Id = name == status.ToString() ? payout.StatusId : Guid.NewGuid(), Name = name });
       var service = new PayoutTransactionService(statuses.Object, repository.Object,
         Mock.Of<IUserService>(), Mock.Of<IRewardService>(), Mock.Of<IExecutionStrategyService>(),
         new PayoutTransactionSearchFilterValidator());
@@ -276,8 +281,14 @@ namespace Yoma.Core.Test.Core
       public List<string> LockKeys { get; } = [];
       public PayoutTransaction Payout { get; } = new()
       {
-        Id = Guid.NewGuid(), UserId = Guid.NewGuid(), TransactionId = "pay_test",
-        Status = PayoutTransactionStatus.Processing, Provider = "YellowCard", Type = "PayoutRewards", Currency = "USD", Amount = 10
+        Id = Guid.NewGuid(),
+        UserId = Guid.NewGuid(),
+        TransactionId = "pay_test",
+        Status = PayoutTransactionStatus.Processing,
+        Provider = "YellowCard",
+        Type = "PayoutRewards",
+        Currency = "USD",
+        Amount = 10
       };
       public RewardTransaction Reward { get; } = new() { Status = RewardTransactionStatus.Reserved, TransactionId = "res_test", Amount = 450 };
       public Mock<IPayoutProviderClient> Provider { get; } = new();
@@ -285,7 +296,7 @@ namespace Yoma.Core.Test.Core
       public Mock<INotificationDeliveryService> Notifications { get; } = new();
       public PayoutService Service { get; }
       public PayoutStatusResponse Response() => new()
-        { Id = Payout.Id, TransactionId = "pay_test", Provider = Domain.Payout.Provider.YellowCard, Status = PayoutTransactionStatus.Cancelled };
+      { Id = Payout.Id, TransactionId = "pay_test", Provider = Domain.Payout.Provider.YellowCard, Status = PayoutTransactionStatus.Cancelled };
 
       public Fixture()
       {
@@ -311,7 +322,10 @@ namespace Yoma.Core.Test.Core
         var transactions = new Mock<IPayoutTransactionService>();
         transactions.Setup(p => p.GetLatestInfoByUserId(Payout.UserId)).Returns(() => new PayoutTransactionInfo
         {
-          Id = Payout.Id, Status = Payout.Status, Amount = Payout.Amount, Currency = Currency.USD,
+          Id = Payout.Id,
+          Status = Payout.Status,
+          Amount = Payout.Amount,
+          Currency = Currency.USD,
           DateCreated = Payout.DateCreated
         });
         locks.Setup(p => p.RunWithLockAsync(It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<Func<Task>>(), It.IsAny<string>()))
@@ -323,7 +337,7 @@ namespace Yoma.Core.Test.Core
             try { await action(); } finally { _mutex.Release(); }
           });
         Service = new PayoutService(Mock.Of<ILogger<PayoutService>>(), Options.Create(new AppSettings
-          { DistributedLockPayoutDurationInSeconds = 30, PayoutRewardReservationExpirationInMinutes = 1800 }),
+        { DistributedLockPayoutDurationInSeconds = 30, PayoutRewardReservationExpirationInMinutes = 1800 }),
           Mock.Of<IEnvironmentProvider>(), locks.Object, users.Object, Mock.Of<ICountryService>(),
           Mock.Of<IWalletService>(), rewards.Object, rewardFactory.Object, transactions.Object,
           repo.Object, statuses.Object, providerFactory.Object, Mock.Of<ITreasuryService>(), strategy.Object,

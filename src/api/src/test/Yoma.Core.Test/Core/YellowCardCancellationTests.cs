@@ -46,8 +46,10 @@ namespace Yoma.Core.Test.Core
       var expiry = DateTimeOffset.UtcNow.AddMinutes(20);
       http.RespondWithJson(new
       {
-        providerTransactionId = " pay_test ", paymentUrl = " https://ixo.test/pay ",
-        expiresAt = expiry.ToString("O"), status
+        providerTransactionId = " pay_test ",
+        paymentUrl = " https://ixo.test/pay ",
+        expiresAt = expiry.ToString("O"),
+        status
       }, initiate ? 201 : 200);
       if (initiate)
       {
@@ -60,7 +62,7 @@ namespace Yoma.Core.Test.Core
       else
       {
         var result = await CreateClient().GetSession(new PayoutSessionRequest
-          { Id = Guid.NewGuid(), TransactionId = "pay_test" });
+        { Id = Guid.NewGuid(), TransactionId = "pay_test" });
         Assert.Equal(canCancel, result.CanCancel);
         Assert.Equal("https://ixo.test/pay", result.PaymentUrl);
         Assert.Equal(expiry, result.ExpiresAt);
@@ -87,9 +89,15 @@ namespace Yoma.Core.Test.Core
 
     private static PayoutRequest CreateRequest() => new()
     {
-      TransactionId = Guid.NewGuid(), UserId = Guid.NewGuid(), Username = "test",
-      Email = "test@example.org", FirstName = "Test", Surname = "User",
-      CountryCodeAlpha2 = "ZA", Gender = "Male", DateOfBirth = DateTimeOffset.UtcNow.AddYears(-25),
+      TransactionId = Guid.NewGuid(),
+      UserId = Guid.NewGuid(),
+      Username = "test",
+      Email = "test@example.org",
+      FirstName = "Test",
+      Surname = "User",
+      CountryCodeAlpha2 = "ZA",
+      Gender = "Male",
+      DateOfBirth = DateTimeOffset.UtcNow.AddYears(-25),
       AmountInUSD = 10
     };
 
@@ -138,7 +146,8 @@ namespace Yoma.Core.Test.Core
       http.RespondWithJson(new
       {
         yomaTransactionId = wrongId ? Guid.NewGuid() : id,
-        providerTransactionId = wrongProviderId ? "different" : "pay_test", status
+        providerTransactionId = wrongProviderId ? "different" : "pay_test",
+        status
       });
       await Assert.ThrowsAsync<InvalidOperationException>(() => CreateClient().Cancel(
         new PayoutCancellationRequest { Id = id, TransactionId = "pay_test" }));
@@ -152,8 +161,10 @@ namespace Yoma.Core.Test.Core
       using var http = new HttpTest();
       http.RespondWithJson(new
       {
-        providerTransactionId = "pay_test", paymentUrl = "https://ixo.test/pay",
-        expiresAt = DateTimeOffset.UtcNow.AddMinutes(20).ToString("O"), status
+        providerTransactionId = "pay_test",
+        paymentUrl = "https://ixo.test/pay",
+        expiresAt = DateTimeOffset.UtcNow.AddMinutes(20).ToString("O"),
+        status
       });
       var session = await CreateClient().GetSession(new PayoutSessionRequest { Id = Guid.NewGuid(), TransactionId = "pay_test" });
       Assert.Equal(expected, session.CanCancel);

@@ -52,9 +52,9 @@ namespace Yoma.Core.Test.Core
     public void MalformedLimitIsNotSilentlyIgnored()
     {
       Assert.Throws<DataInconsistencyException>(() => new PayoutCountryAvailability
-        { MinimumAmount = -1, Currency = Currency.USD }.ValidateMinimumAmount(10));
+      { MinimumAmount = -1, Currency = Currency.USD }.ValidateMinimumAmount(10));
       Assert.Throws<DataInconsistencyException>(() => new PayoutCountryAvailability
-        { MinimumAmount = 1, Currency = null }.ValidateMinimumAmount(10));
+      { MinimumAmount = 1, Currency = null }.ValidateMinimumAmount(10));
     }
 
     [Theory]
@@ -65,7 +65,7 @@ namespace Yoma.Core.Test.Core
       var profile = new UserProfilePayout
       {
         CountryAvailability = new PayoutCountryAvailability
-          { Supported = true, MinimumAmount = minimum, Currency = Currency.USD }
+        { Supported = true, MinimumAmount = minimum, Currency = Currency.USD }
       };
       Assert.Equal(minimum.HasValue ? (decimal?)minimum.Value : null, profile.CountryAvailability.MinimumAmount);
       Assert.Null(profile.Amount);
@@ -93,10 +93,12 @@ namespace Yoma.Core.Test.Core
     {
       var profile = new UserProfilePayout
       {
-        Status = PayoutTransactionStatus.Processing, CanResume = true,
-        Amount = 10m, Currency = Currency.USD,
+        Status = PayoutTransactionStatus.Processing,
+        CanResume = true,
+        Amount = 10m,
+        Currency = Currency.USD,
         CountryAvailability = new PayoutCountryAvailability
-          { Supported = true, MinimumAmount = 7m, Currency = Currency.USD }
+        { Supported = true, MinimumAmount = 7m, Currency = Currency.USD }
       };
       // Separate sources even if future currencies are added; do not invent another enum value today.
       profile.CountryAvailability = new PayoutCountryAvailability();
@@ -107,7 +109,7 @@ namespace Yoma.Core.Test.Core
       Assert.True(profile.Active);
       Assert.True(profile.CanResume);
       profile.CountryAvailability = new PayoutCountryAvailability
-        { Supported = true, MinimumAmount = 12m, Currency = Currency.USD };
+      { Supported = true, MinimumAmount = 12m, Currency = Currency.USD };
       Assert.Equal(12m, profile.CountryAvailability.MinimumAmount);
       Assert.Equal(10m, profile.Amount);
       Assert.True(profile.CanResume);
@@ -185,8 +187,13 @@ namespace Yoma.Core.Test.Core
     {
       public User User { get; } = new()
       {
-        Id = Guid.NewGuid(), CountryId = Guid.NewGuid(), Email = "test@example.org",
-        FirstName = "Test", Surname = "User", Gender = "Other", DateOfBirth = DateTimeOffset.UtcNow.AddYears(-25)
+        Id = Guid.NewGuid(),
+        CountryId = Guid.NewGuid(),
+        Email = "test@example.org",
+        FirstName = "Test",
+        Surname = "User",
+        Gender = "Other",
+        DateOfBirth = DateTimeOffset.UtcNow.AddYears(-25)
       };
       public Mock<IPayoutProviderClient> Provider { get; } = new();
       public Mock<IRewardProviderClient> RewardProvider { get; } = new(MockBehavior.Strict);
@@ -216,7 +223,7 @@ namespace Yoma.Core.Test.Core
         var environment = new Mock<IEnvironmentProvider>();
         environment.SetupGet(p => p.Environment).Returns(Domain.Core.Environment.Staging);
         Service = new PayoutService(Mock.Of<ILogger<PayoutService>>(), Options.Create(new AppSettings
-          { PayoutEnabledEnvironments = "Staging", DistributedLockPayoutDurationInSeconds = 30, PayoutRewardReservationExpirationInMinutes = 1800 }),
+        { PayoutEnabledEnvironments = "Staging", DistributedLockPayoutDurationInSeconds = 30, PayoutRewardReservationExpirationInMinutes = 1800 }),
           environment.Object, Mock.Of<IDistributedLockService>(), users.Object, Mock.Of<ICountryService>(),
           wallets.Object, Mock.Of<IRewardService>(), rewardFactory.Object, Transactions.Object,
           Mock.Of<IRepositoryValueContains<PayoutTransaction>>(), Mock.Of<IPayoutTransactionStatusService>(),
