@@ -33,19 +33,24 @@ namespace Yoma.Core.Infrastructure.Umuzi.Client
     ISyncProviderClientUserAuthentication
   {
     #region Class Variables
-    // Umuzi's confirmed category vocabulary maps to the existing Yoma category IDs.
+    // Retain Umuzi's source vocabulary; resolve it to the approved Yoma taxonomy.
     private static readonly Dictionary<Guid, string[]> CategoryMappings = new()
     {
-      { new Guid("2ccbacf7-1ed9-4e20-bb7c-43edfdb3f950"), ["Agriculture"] },
-      // Accept both Umuzi's spelling and Yoma's display name.
-      { new Guid("1dc39a5d-e049-4cfe-b708-855fce97b86e"), ["AI Data and Analytics", "AI, Data and Analytics"] },
+      // Agriculture, Food, Environment and Climate
+      { new Guid("2ccbacf7-1ed9-4e20-bb7c-43edfdb3f950"), ["Agriculture", "Environment and Climate"] },
+      // Technology, AI & Data
+      { new Guid("fa564c1c-591a-4a6d-8294-20165da8866b"), ["AI Data and Analytics", "AI, Data and Analytics", "Technology and Digitization"] },
+      // Business, Finance & Marketing
       { new Guid("c76786fd-fca9-4633-85b3-11e53486d708"), ["Business and Entrepreneurship"] },
+      // Personal Development & Career Readiness
       { new Guid("89f4ab46-0767-494f-a18c-3037f698133a"), ["Career and Personal Development"] },
+      // Creative, Media & Design
       { new Guid("7afb66ad-164e-46a3-933f-a0bac1ca1923"), ["Creative Industry and Arts"] },
-      { new Guid("d0d322ab-d1d7-44b6-94e8-7b85246aa42e"), ["Environment and Climate"] },
+      // Health, Safety & Wellbeing
       { new Guid("6e6a5f23-6d2e-4f45-8b4d-5d9c9a6b1e71"), ["Health and Care"] },
-      { new Guid("fa564c1c-591a-4a6d-8294-20165da8866b"), ["Technology and Digitization"] },
+      // Hospitality & Tourism
       { new Guid("f36051c9-9057-4765-bc2f-9dee82ef60d6"), ["Tourism and Hospitality"] },
+      // Other
       { new Guid("b89c5e91-9cbb-4a0e-991f-f987eebf9b70"), ["Other"] }
     };
 

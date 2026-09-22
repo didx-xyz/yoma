@@ -7,8 +7,8 @@
 - **Areas**: api, web
 - **Status**: in-progress
 - **Started**: 2026-07-08 (api), 2026-07-21 (web)
-- **Branch**: `feature/custom-fields-framework` — **load-bearing, not convention.** The
-  custom-field API exists only here; there is nothing to build against on `master`.
+- **Branch**: `feature/cf-implementation` — fresh from origin/master on 2026-09-22.
+  The original framework has merged; older branch-only notes below are historical.
 
 > Retro-created on 2026-08-11. The web work began before the `docs/work` convention landed
 > (`a9518de0`), so the child feature docs and the pre-2026-08-11 handoffs were reconstructed
@@ -28,6 +28,11 @@ metadata**, so the UI survives the swap from today's temporary seeded `[Sample] 
 definitions to the BA-approved set (YOM-1264) without a code change.
 
 ## Child Features
+
+| [YOM-1259 taxonomy implementation](./YOM-1259-api-update-the-opportunity-category-lookup-to-the-new-taxonomy/feature.md) | API / Adrian | in-progress |
+| --- | --- | --- |
+
+Taxonomy CSV imports accept final names only; partner-specific vocabulary is handled separately.
 
 | Folder                                                                                                                                                           | Ticket                                             | Area | Status                                                                                |
 | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- | ---- | ------------------------------------------------------------------------------------- |
@@ -50,7 +55,6 @@ Tickets with no folder yet — add one when work starts:
 | ------------------------------------------------------------------------------------------------------- | --------- | ------------------------------------------------------------------------------------------- |
 | [YOM-1264](https://linear.app/didx/issue/YOM-1264)                                                      | design/BA | Final Opportunity CFs, completion CFs and User Presets. **Blocks YOM-1261 / YOM-1262**      |
 | [YOM-1257](https://linear.app/didx/issue/YOM-1257) / [YOM-1258](https://linear.app/didx/issue/YOM-1258) | api       | User Preset model + preset→filter mapping                                                   |
-| [YOM-1259](https://linear.app/didx/issue/YOM-1259)                                                      | api       | Opportunity category taxonomy. Unrelated to custom fields; needs only a UI regression check |
 
 ### Why each child exists
 

@@ -32,19 +32,29 @@ namespace Yoma.Core.Infrastructure.Jobberman.Client
     // Unknown or omitted values default to Other.
     private static readonly Dictionary<Guid, string[]> JobbermanCategoryMappings = new()
     {
-      // Business and Entrepreneurship
-      { new Guid("c76786fd-fca9-4633-85b3-11e53486d708"), ["Accounting, Auditing & Finance", "Building & Architecture", "Consulting & Strategy", "Legal Services", "Product & Project Management", "Estate Agents & Property Management", "Quality Control & Assurance", "Management & Business Development", "Sales", "Supply Chain & Procurement", "Trades & Services", "Driver & Transport Services"] },
-      // Career and Personal Development
-      { new Guid("89f4ab46-0767-494f-a18c-3037f698133a"), ["Admin & Office", "Customer Service & Support", "Human Resources", "Community & Social Services", "Research, Teaching & Training"] },
-      // Creative Industry and Arts
-      { new Guid("7afb66ad-164e-46a3-933f-a0bac1ca1923"), ["Creative & Design", "Marketing & Communications"] },
-      // Technology and Digitization
-      { new Guid("fa564c1c-591a-4a6d-8294-20165da8866b"), ["Engineering & Technology", "Software & Data"] },
-      // Agriculture
+      // Business, Finance & Marketing
+      { new Guid("c76786fd-fca9-4633-85b3-11e53486d708"), ["Accounting, Auditing & Finance", "Consulting & Strategy", "Product & Project Management", "Estate Agents & Property Management", "Quality Control & Assurance", "Management & Business Development", "Sales", "Supply Chain & Procurement", "Trades & Services", "Driver & Transport Services", "Marketing & Communications"] },
+      // Engineering, Science & Mathematics
+      { new Guid("15ba04a2-5b3d-4d40-aa20-62ea38c9769a"), ["Building & Architecture", "Engineering & Technology"] },
+      // Law, Governance & Compliance
+      { new Guid("944c4b9a-8dc8-4e18-8913-2a01461a4f9b"), ["Legal Services"] },
+      // Office, Admin & Professional Skills
+      { new Guid("0529387f-b8fe-4166-ba03-54293370197f"), ["Admin & Office", "Customer Service & Support", "Human Resources"] },
+      // History, Society & Human Rights
+      { new Guid("1612eb90-806b-40db-bc6e-a428780581dc"), ["Community & Social Services"] },
+      // Education & Teaching
+      { new Guid("1e8e59ae-4009-48ef-8c09-a72d6af068c7"), ["Research, Teaching & Training"] },
+      // Creative, Media & Design
+      { new Guid("7afb66ad-164e-46a3-933f-a0bac1ca1923"), ["Creative & Design"] },
+      // Technology, AI & Data
+      { new Guid("fa564c1c-591a-4a6d-8294-20165da8866b"), ["Software & Data"] },
+      // Agriculture, Food, Environment and Climate
       { new Guid("2ccbacf7-1ed9-4e20-bb7c-43edfdb3f950"), ["Farming & Agriculture"] },
-      // Tourism and Hospitality
-      { new Guid("f36051c9-9057-4765-bc2f-9dee82ef60d6"), ["Food Services & Catering", "Hospitality & Leisure"] },
-      // Health and Care
+      // Retail & Food Services
+      { new Guid("8a1778eb-0cd3-434c-bfb6-15788fd0b678"), ["Food Services & Catering"] },
+      // Hospitality & Tourism
+      { new Guid("f36051c9-9057-4765-bc2f-9dee82ef60d6"), ["Hospitality & Leisure"] },
+      // Health, Safety & Wellbeing
       { new Guid("6e6a5f23-6d2e-4f45-8b4d-5d9c9a6b1e71"), ["Medical & Pharmaceutical"] }
     };
     #endregion

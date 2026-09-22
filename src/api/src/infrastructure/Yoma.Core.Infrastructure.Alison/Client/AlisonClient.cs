@@ -38,23 +38,29 @@ namespace Yoma.Core.Infrastructure.Alison.Client
     // If unresolved, default to Other.
     private static readonly Dictionary<Guid, string[]> Categories_Map = new()
     {
-      // Agriculture
-      { new Guid("2ccbacf7-1ed9-4e20-bb7c-43edfdb3f950"), ["agriculture", "farming"] },
-      // Career and Personal Development
-      { new Guid("89f4ab46-0767-494f-a18c-3037f698133a"), ["language", "education", "personal-development"] },
-      // Business and Entrepreneurship
-      { new Guid("c76786fd-fca9-4633-85b3-11e53486d708"), ["business", "marketing", "engineering", "management", "entrepreneurship", "finance", "economics", "law", "accounting", "e-commerce", "sales", "digital-marketing", "marketing/social-media", "marketing/sales", "marketing/retail"] },
-      // Environment and Climate
-      { new Guid("d0d322ab-d1d7-44b6-94e8-7b85246aa42e"), ["education/climate-change", "engineering/renewable-energy"] },
-      // Technology and Digitization
-      { new Guid("fa564c1c-591a-4a6d-8294-20165da8866b"), ["it", "network-and-security", "software-development", "software-tools", "it-management", "software-engineering", "it/administration", "it/aws", "it/ccna", "it/comptia", "it/computer-networking", "it/data-security", "it/devops", "it/microsoft", "it/security", "it/server"] },
-      // Tourism and Hospitality
+      // Agriculture, Food, Environment and Climate
+      { new Guid("2ccbacf7-1ed9-4e20-bb7c-43edfdb3f950"), ["agriculture", "farming", "education/climate-change", "engineering/renewable-energy"] },
+      // Languages & Communication
+      { new Guid("be1c903e-87bb-41cd-8da4-1f2f286d7dc9"), ["language"] },
+      // Education & Teaching
+      { new Guid("1e8e59ae-4009-48ef-8c09-a72d6af068c7"), ["education"] },
+      // Personal Development & Career Readiness
+      { new Guid("89f4ab46-0767-494f-a18c-3037f698133a"), ["personal-development"] },
+      // Business, Finance & Marketing
+      { new Guid("c76786fd-fca9-4633-85b3-11e53486d708"), ["business", "marketing", "management", "entrepreneurship", "finance", "economics", "accounting", "e-commerce", "sales", "digital-marketing", "marketing/social-media", "marketing/sales"] },
+      // Engineering, Science & Mathematics
+      { new Guid("15ba04a2-5b3d-4d40-aa20-62ea38c9769a"), ["engineering"] },
+      // Law, Governance & Compliance
+      { new Guid("944c4b9a-8dc8-4e18-8913-2a01461a4f9b"), ["law"] },
+      // Retail & Food Services
+      { new Guid("8a1778eb-0cd3-434c-bfb6-15788fd0b678"), ["marketing/retail"] },
+      // Technology, AI & Data
+      { new Guid("fa564c1c-591a-4a6d-8294-20165da8866b"), ["it", "network-and-security", "software-development", "software-tools", "it-management", "software-engineering", "it/administration", "it/aws", "it/ccna", "it/comptia", "it/computer-networking", "it/data-security", "it/devops", "it/microsoft", "it/security", "it/server", "data-science", "databases"] },
+      // Hospitality & Tourism
       { new Guid("f36051c9-9057-4765-bc2f-9dee82ef60d6"), ["tourism-and-hospitality", "language/travel"] },
-      // AI, Data and Analytics
-      { new Guid("1dc39a5d-e049-4cfe-b708-855fce97b86e"), ["data-science", "databases"] },
-      // Creative Industry and Arts
+      // Creative, Media & Design
       { new Guid("7afb66ad-164e-46a3-933f-a0bac1ca1923"), ["media-and-journalism", "music", "photography", "literature", "education/music-theory"] },
-      // Health and Care
+      // Health, Safety & Wellbeing
       { new Guid("6e6a5f23-6d2e-4f45-8b4d-5d9c9a6b1e71"), ["health", "mental-health", "health-care", "nursing", "caregiving", "nutrition", "pharmacology", "personal-development/health", "personal-development/mental-health", "personal-development/depression", "personal-development/anxiety", "personal-development/diet", "fitness", "health-and-safety", "business/health-and-safety", "engineering/health-and-safety", "management/health-and-safety", "management/nursing"] }
     };
 

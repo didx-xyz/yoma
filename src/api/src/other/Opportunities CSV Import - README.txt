@@ -135,6 +135,8 @@ Headers must exist but values may be empty.
 
 - CSV delimiter: `,`
 - Multi-select delimiter: `|`
+- Enclose the entire CSV cell in double quotes when it contains commas, double quotes, or line breaks. Escape an embedded double quote by doubling it.
+- Category names can contain commas. Keep the complete name intact and use `|` between categories, e.g. `"Technology, AI & Data|Other"`. Commas inside a category name are not multi-select separators.
 - Booleans: `Yes` / `No` only
 - Dates: `YYYY-MM-DD` or `YYYY/MM/DD`
 - Languages: ISO alpha-2 codes from opportunities_languages.json
@@ -146,6 +148,12 @@ Headers must exist but values may be empty.
 6) Reference Data
 
 All values must come from the JSON reference files.
+
+After the category taxonomy migration, refresh opportunities_categories.json
+from the target environment's migrated category lookup before generating imports.
+Use only the current approved category names; legacy names are not accepted as
+CSV aliases. Partner-specific legacy category mappings do not apply to CSV imports.
+Retain Other where appropriate; it remains a valid category.
 
 Values must match **exactly**.
 

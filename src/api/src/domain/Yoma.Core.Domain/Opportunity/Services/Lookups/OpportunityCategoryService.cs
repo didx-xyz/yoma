@@ -10,6 +10,14 @@ namespace Yoma.Core.Domain.Opportunity.Services.Lookups
 {
   public class OpportunityCategoryService : IOpportunityCategoryService
   {
+    // TODO(YOM-1259): Remove the legacy category icons from the shared S3 category-icon folder
+    // only after the taxonomy migration and updated partner mappings are deployed to ALL environments
+    // (including Production), old references/caches are retired, and the rollback window has closed.
+    // Delete: Agriculture.svg, AIDataAndAnalytics.svg, BusinessAndEntrepreneurship.svg,
+    // CareerAndPersonalDevelopment.svg, CreativeIndustryAndArts.svg, EnvironmentAndClimate.svg,
+    // HealthAndCare.svg, TechnologyAndDigitization.svg, TourismAndHospitality.svg.
+    // KEEP Other.svg (still used by the new taxonomy) and all 15 new category icons.
+
     #region Class Variables
     private readonly AppSettings _appSettings;
     private readonly IMemoryCache _memoryCache;
@@ -69,7 +77,9 @@ namespace Yoma.Core.Domain.Opportunity.Services.Lookups
     public List<OpportunityCategory> List()
     {
       if (!_appSettings.CacheEnabledByCacheItemTypesAsEnum.HasFlag(Core.CacheItemType.Lookups))
-        return [.. _opportunityCategoryRepository.Query().OrderBy(o => o.Name)];
+        return [.. _opportunityCategoryRepository.Query()
+          .OrderBy(o => o.Name == Category.Other.ToString()) //  Move "Other" to the end
+          .ThenBy(o => o.Name)];
 
       var result = _memoryCache.GetOrCreate(CacheHelper.GenerateKey<OpportunityCategory>(), entry =>
       {

@@ -23,13 +23,15 @@ namespace Yoma.Core.Infrastructure.IXO.PartnerSync.Client
     #region Class Variables
     private static readonly Dictionary<Guid, string[]> CategoryMappings = new()
     {
-      // Career and Personal Development
-      { new Guid("89f4ab46-0767-494f-a18c-3037f698133a"), ["Education", "Social impact"] },
-      // Business and Entrepreneurship
+      // Education & Teaching
+      { new Guid("1e8e59ae-4009-48ef-8c09-a72d6af068c7"), ["Education"] },
+      // History, Society & Human Rights
+      { new Guid("1612eb90-806b-40db-bc6e-a428780581dc"), ["Social impact"] },
+      // Business, Finance & Marketing
       { new Guid("c76786fd-fca9-4633-85b3-11e53486d708"), ["Green entrepreneurship"] },
-      // Environment and Climate
-      { new Guid("d0d322ab-d1d7-44b6-94e8-7b85246aa42e"), ["Circular economy", "Environment & Climate"] },
-      // Technology and Digitization
+      // Agriculture, Food, Environment and Climate
+      { new Guid("2ccbacf7-1ed9-4e20-bb7c-43edfdb3f950"), ["Circular economy", "Environment & Climate"] },
+      // Technology, AI & Data
       { new Guid("fa564c1c-591a-4a6d-8294-20165da8866b"), ["Digital services"] }
     };
 

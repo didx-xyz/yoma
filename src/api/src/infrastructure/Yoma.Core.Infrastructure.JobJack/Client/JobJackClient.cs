@@ -31,14 +31,18 @@ namespace Yoma.Core.Infrastructure.JobJack.Client
     // Unknown or omitted values intentionally fall back to Other.
     private static readonly Dictionary<Guid, string[]> CategoryMappings = new()
     {
-      // Technology and Digitization
+      // Technology, AI & Data
       { new Guid("fa564c1c-591a-4a6d-8294-20165da8866b"), ["Analytics"] },
-      // Business and Entrepreneurship
-      { new Guid("c76786fd-fca9-4633-85b3-11e53486d708"), ["Business Process Outsourcing", "Large industry manufacturing", "Other business service", "Professional Services", "Retail", "Transport & Logistics"] },
-      // Career and Personal Development
-      { new Guid("89f4ab46-0767-494f-a18c-3037f698133a"), ["Personal services"] },
-      // Tourism and Hospitality
-      { new Guid("f36051c9-9057-4765-bc2f-9dee82ef60d6"), ["Fast food", "Restaurant"] }
+      // Office, Admin & Professional Skills
+      { new Guid("0529387f-b8fe-4166-ba03-54293370197f"), ["Business Process Outsourcing", "Other business service", "Professional Services"] },
+      // Engineering, Science & Mathematics
+      { new Guid("15ba04a2-5b3d-4d40-aa20-62ea38c9769a"), ["Large industry manufacturing"] },
+      // Retail & Food Services
+      { new Guid("8a1778eb-0cd3-434c-bfb6-15788fd0b678"), ["Retail", "Fast food", "Restaurant"] },
+      // Business, Finance & Marketing
+      { new Guid("c76786fd-fca9-4633-85b3-11e53486d708"), ["Transport & Logistics"] },
+      // Personal Development & Career Readiness
+      { new Guid("89f4ab46-0767-494f-a18c-3037f698133a"), ["Personal services"] }
     };
     #endregion
 
