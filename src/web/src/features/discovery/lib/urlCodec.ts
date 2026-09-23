@@ -18,6 +18,10 @@ import {
  * Custom-field clauses travel as JSON in ONE `cf` param, YOM-1260's transport: `URLSearchParams`
  * does the encoding — never `encodeURIComponent` on top of it. Defaults are omitted so a clean
  * landing has a clean URL.
+ *
+ * Engagement travels as `engagement=` (a list; renamed from `format=` on 2026-09-22 when the
+ * segment replaced Pay on the bar — nothing reads the old name). There has never been a `pay=`
+ * param: the Paid and rewards section writes `reward=` and `zlto=`, unchanged.
  */
 
 type Query = Record<string, string | string[] | undefined>;
@@ -62,7 +66,7 @@ export function parseDiscoveryQuery(query: Query): DiscoveryState {
       types: list(query, "type"),
       categories: list(query, "cat"),
       countries: list(query, "where"),
-      engagementTypes: list(query, "format"),
+      engagementTypes: list(query, "engagement"),
       commitment:
         intervalId && Number.isFinite(count) && count > 0
           ? { intervalId, count }
@@ -97,7 +101,7 @@ export function serializeDiscoveryState(state: DiscoveryState): string {
     ["type", filters.types],
     ["cat", filters.categories],
     ["where", filters.countries],
-    ["format", filters.engagementTypes],
+    ["engagement", filters.engagementTypes],
     ["zlto", filters.zltoRanges],
     ["lang", filters.languages],
     ["org", filters.providers],

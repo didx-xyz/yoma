@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { getEducations, getGenders, getSkills } from "~/api/services/lookups";
+import { engagementLabel } from "../../lib/engagementLabels";
 import { upToIntervalLabel } from "../../lib/format";
 import type { PreferenceOptionsSource } from "../../registry/preferenceSteps";
 import { useDiscovery } from "../../state/DiscoveryContext";
@@ -27,7 +28,10 @@ export function usePreferenceOptions(
         label: upToIntervalLabel(i.name),
       }));
     case "engagementTypes":
-      return lookups.engagementTypes.map((e) => ({ id: e.id, label: e.name }));
+      return lookups.engagementTypes.map((e) => ({
+        id: e.id,
+        label: engagementLabel(e.name),
+      }));
     case "languages":
       return lookups.languages.map((l) => ({ id: l.id, label: l.name }));
     case "skills": // searched on demand by the lookupSearch block, not listed up front

@@ -12,13 +12,17 @@ import { SectionPopover } from "./SectionPopover";
  *
  * Popovers anchor left under their segment, except the LAST segment's, which anchors right —
  * its left edge would otherwise push the 560px panel off the right of the viewport.
+ *
+ * SEARCH · WHAT · WHERE · HOW LONG · ENGAGEMENT (2026-09-22): Engagement replaced Pay, which
+ * moved under "More filters". Registry-backed segments use the SECTION id, so the popover reuses
+ * the Engagement section definition — one definition, two homes.
  */
 const SEGMENTS: { id: string; label: string }[] = [
   { id: "search", label: "Search" },
   { id: "type", label: "What" },
   { id: "where", label: "Where" },
   { id: "time", label: "How long" },
-  { id: "pay", label: "Pay" },
+  { id: "engagement", label: "Engagement" },
 ];
 
 export const SegmentedSearchBar: React.FC<{ onOpenFilters: () => void }> = ({
@@ -67,10 +71,17 @@ export const SegmentedSearchBar: React.FC<{ onOpenFilters: () => void }> = ({
         return filters.commitment
           ? `Up to ${filters.commitment.count} ${resolveLabel("commitment", filters.commitment.intervalId).toLowerCase()}`
           : "Any time";
-      case "pay":
-        return filters.hasReward || filters.zltoRanges.length > 0
-          ? "With rewards"
-          : "Any";
+      case "engagement": {
+        // "Any" · one value · "Remote +1" — through resolveLabel, so the engagement display map
+        // (Online → Remote, Offline → On-site) applies here as everywhere.
+        if (filters.engagementTypes.length === 0) return "Any";
+        const first = resolveLabel(
+          "engagementTypes",
+          filters.engagementTypes[0]!,
+        );
+        const more = filters.engagementTypes.length - 1;
+        return more > 0 ? `${first} +${more}` : first;
+      }
       default:
         return FILTER_SECTIONS.find((s) => s.id === id)?.label ?? id;
     }

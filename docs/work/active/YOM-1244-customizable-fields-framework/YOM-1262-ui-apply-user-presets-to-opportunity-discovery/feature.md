@@ -34,7 +34,7 @@ Capturing preferences is [YOM-1261](../YOM-1261-ui-manage-user-presets/feature.m
 | [YOM-1257](https://linear.app/didx/issue/YOM-1257) / [YOM-1258](https://linear.app/didx/issue/YOM-1258) (api) | No preset model, no preset→filter mapping. Preferences are mocked behind one façade |
 | [YOM-1264](https://linear.app/didx/issue/YOM-1264) (BA/design) | The preference set and the final filter mapping are not signed off |
 | [YOM-1260](https://linear.app/didx/issue/YOM-1260) must land first | Presets resolve to filter criteria, so this builds on that feature's clause shape and operator matrix |
-| User Location decision (Adrian) | `Jobs near me` needs coordinates. Ships visible and unavailable meanwhile |
+| User Location decision (Adrian) | `Jobs near me` needs coordinates. **Parked, not rendered** (2026-09-22) — it stays in the badge registry as a parked entry and never draws until the decision lands |
 
 ## Out of Scope
 
@@ -74,23 +74,35 @@ Adding a section or a badge must be a data change with no new JSX.
 
 Both breakpoints render the same blocks in the same order (revised 2026-08-31: recent searches
 moved out of the block list into a typeahead under the input, and the sections trimmed — eight
-blocks became seven):
+blocks became seven; revised 2026-09-22: recents capped at 3, Paid and rewards demoted behind
+"More filters" when Engagement took its place on the search bar, quick-search badges render only
+when filterable):
 
 ```
-1  free-text search input      (recent searches render beneath it as a typeahead, ≤5, removable)
-2  quick searches
+1  free-text search input      (recent searches render beneath it as a typeahead, ≤3, removable,
+                                "Clear recent")
+2  quick searches              (shipped badges only — Under an hour · Climate action · Remote ·
+                                Jobs in my country [signed-in with a profile country]; no SOON
+                                state, no "Show all N")
 3  your preferences            (master switch + inherited chips)
 4  what kind of opportunity    (type row — always open, MULTI-select since 2026-09-03,
-                                provenance-aware, drives block 5)
-5  type-specific filters       (one collapsible "«Type» filters" section per EFFECTIVE type;
-                                from the definitions endpoint)
-6  the sections                (primary seven: Categories, Location, Engagement, Time commitment,
-                                Paid and rewards, Accessibility, Language — then Skills, SDGs and
+                                provenance-aware, drives block 5; fixed order Job · Learning ·
+                                Task · Event · Other by enum name, labels from displayName)
+5  type-specific filters       (one collapsible "«Type» filters" section per EFFECTIVE type, plus
+                                "Details (all types)" for two or more; from the definitions
+                                endpoint)
+6  the sections                (primary six: Categories · Where · Engagement · How long ·
+                                Accessibility · Language — then Paid and rewards · Skills · SDGs ·
                                 Provider behind one "More filters" disclosure, collapsed by
                                 default. "Who it is for" removed from the youth surface: admin
                                 targeting never restricts who can apply)
-7  sticky footer               (Clear all + "Show N results")
+7  sticky footer               (Clear filters + "Show N matches")
 ```
+
+The desktop search bar is SEARCH · WHAT · WHERE · HOW LONG · ENGAGEMENT plus Filters with its
+applied count; each registry-backed segment opens its section as a popover (one definition, two
+homes). Below `md` the badge row sits inside the purple header **above** the search pill, which
+carries a one-line summary of the effective filters ("Jobs · South Africa · Remote +1 · +3").
 
 The only differences between breakpoints are the **container** — desktop is a centred dialog with
 anchored popovers, mobile is one full-screen sheet — and control **density**. Never the set, never
@@ -144,6 +156,17 @@ The full table is in the build brief, §6. Two deliberate inconsistencies to pre
 words in the UI because a youth cannot infer them: **time commitment includes** opportunities with no
 commitment set; **accessibility excludes** those that have not described their accommodations.
 
+> **Corrected 2026-09-22 (BA sign-off).** Accessibility no longer excludes: opportunities that have
+> not described their accommodations **stay in the results for now** (canvas p3, "Accessibility:
+> stays in results for now"; BA All Opportunities sheet, "Null represents Not Specified"). The
+> wizard's step-6 sentence saying the toggle hides them is removed, the section's null-rule line
+> says "includes … for now", and the mapping must never exclude Not specified. Time commitment's
+> rule is unchanged in intent (include) but the search API still excludes — the copy states the
+> actual behaviour and the API ask stays open. The one-line null rules per section are now:
+> How long — excludes for now (API) · Engagement — includes for now (API; BA says hide while set)
+> · Accessibility — includes for now · Paid — includes, sorted last (once the field exists) ·
+> Language — no null case (the API requires at least one language on every opportunity).
+
 `MinimumQualification`, `ExperienceLevel` and Age are filterable **by** the youth and never applied
 **for** them — a weight, never a gate, per the BA instruction. Marked `GUIDE ONLY` in the UI.
 
@@ -164,16 +187,48 @@ commitment set; **accessibility excludes** those that have not described their a
 - [x] Grid card (fixed height, pinned footer, clamped title) + compact list sharing one
       `LIST_COLUMNS` constant; loading keeps previous results blurred, one spinner, pulse on the
       new chip, `motion-reduce` throughout.
-- [x] `Jobs near me` ships **visible and unavailable** with a tooltip (decision: not hidden).
+- [x] ~~`Jobs near me` ships **visible and unavailable** with a tooltip (decision: not hidden).~~
+      **Reversed 2026-09-22**: parked, not rendered — see Decisions.
+- [x] 2026-09-22 client feedback + BA alignment (Pass 1, session 2026-09-23): PAY → ENGAGEMENT
+      segment with `engagement=` in the URL; Paid and rewards under More filters; badges render
+      only when filterable (Remote added; Jobs in my country conditional on profile country);
+      mobile badge row above the pill + pill summary line; recents capped at 3 with Clear recent;
+      wizard step 1 rationale box gone and Start a business mapped by category name; engagement
+      preference multi-select; accessibility copy no longer claims exclusion; type row order
+      fixed by enum name; one engagement display map; card status rule (`lib/cardStatus.ts`);
+      Where reserved inputs; Provider typeahead; Skills caption; Paid and rewards composite with
+      ZLTO hidden while Type includes Job; SOON / "Show all N" styling removed from badges.
 - [ ] Browser pass of the manual test script (brief §10) — first full pass by Jason 2026-09-03
-      (findings fixed same day, see Decisions); re-verify the round-2 fixes on screen.
-- [ ] Where section: "my country only" switch + province/city reserved-slot note.
+      (findings fixed same day, see Decisions); re-verify the round-2 fixes on screen, then the
+      2026-09-23 handoff's manual test steps.
+- [~] Where section: province/city/distance **reserved inputs drawn disabled** (2026-09-22); the
+      "my country only" switch is still not built.
 - [ ] Raise the API asks with Adrian: public sort options, commitment null rule, public
-      `TotalCountOnly`, `ApplyUserPresets` exposure (see the 2026-08-27-c handoff).
+      `TotalCountOnly`, `ApplyUserPresets` exposure (2026-08-27-c handoff) **plus epic README
+      asks 7–13 (2026-09-22)**: Task displayName "Impact task", engagement rename with IDs kept,
+      engagement null exclusion, Is Paid null sort-last, DEV facet counts, Active state ignoring
+      DateEnd, batched facet counts.
 - [ ] **Blocked**: live preset data, pending YOM-1257 / YOM-1258; mock-removal list in the
       2026-08-27-c handoff.
 - [ ] Client decision on the per-type card layouts (canvas page 4) — if taken up, it becomes its own
       ticket with two new opportunity fields.
+- [ ] **Regression check once the BA field set is seeded (YOM-1264):** the per-type sections render
+      the Job / Impact task / Event / Learning groups from the definitions endpoint with no code
+      change; the Paid half of Paid and rewards, Accessibility, Skills and SDGs come alive through
+      their bindings (not through definition keys); the parked badges (Paid & remote, No
+      experience needed, With accommodations, Climate action + SDG 13) get their filter sets from
+      the new core facets and flip to `shipped`; the Job rules on screen (Pay interval "Per
+      engagement (once-off)", Salary range disabled when Salary disclosed = No, Permanent and
+      Fixed-term exclusive, Minimum qualification GUIDE ONLY) hold with no per-field code.
+- [ ] **Regression check once the category taxonomy migration (YOM-1259) is deployed:** 16 tiles
+      on the carousel and 16 chips in Categories / wizard Interests with "Show all 16"; the
+      Climate action badge resolves "Agriculture, Food, Environment and Climate"; Start a business
+      resolves "Business, Finance & Marketing"; drop the pre-migration names from
+      `quickSearches.ts` and `preferenceMapping.ts` once no environment serves them; confirm the
+      facet counts are no longer grand totals on DEV.
+- [ ] **Regression check once the API renames Engagement Type values:** delete
+      `lib/engagementLabels.ts` (it becomes identity) and confirm cards, chips, the section, the
+      bar segment and wizard step 4 all read Remote / On-site / Hybrid from the lookup.
 
 ## Decisions
 
@@ -476,6 +531,188 @@ commitment set; **accessibility excludes** those that have not described their a
     Consequence worth knowing: in local dev the service worker registers again, so requests it
     mediates bypass devtools/puppeteer request interception (that is what made the first pass at
     simulating the DEV 404s look like the interception was broken).
+
+- 2026-09-22 (client feedback on the revised canvas `yoma-search-discovery_3.html` + BA sign-off
+  of September 2026; built 2026-09-23 — handoff
+  [`handoffs/2026-09-23-a.md`](./handoffs/2026-09-23-a.md)):
+  - **PAY → ENGAGEMENT on the search bar, on every breakpoint.** The bar is SEARCH · WHAT · WHERE
+    · HOW LONG · ENGAGEMENT. Values Any · Remote · On-site · Hybrid, multi-select, summary "Any" /
+    one value / "Remote +1". The popover reuses the Engagement section definition — the section id
+    is the segment id, one definition, two homes. **Paid and rewards moved under "More filters"**
+    (order there: Paid and rewards · Skills · SDGs · Provider), so the primary list is six. URL:
+    `engagement=` as a list, renamed from `format=`; nothing reads the old name. There was never
+    a `pay=` param — the section's `reward=` / `zlto=` are unchanged.
+  - **Engagement null rule: web states the actual behaviour, not the BA rule.** BA says hide
+    opportunities with no engagement type while the filter is set; the search API includes them
+    (`!o.EngagementTypeId.HasValue || …`) and web cannot exclude client-side over server paging.
+    The section's line says "includes … for now" and the exclusion is epic README ask #9.
+  - **Quick-search badges render only what filters today** — reversing 2026-08-27's "Jobs near me
+    ships visible and unavailable" and the SOON state with it. Shipped: Under an hour · Climate
+    action (category resolved by NAME at runtime, accepting "Agriculture, Food, Environment and
+    Climate" then the pre-migration "Environment and Climate") · **Remote (new)** (engagement
+    type by name, "Remote" then "Online") · Jobs in my country (Type Job + profile country;
+    **renders only for a signed-in youth whose profile has a country** — anonymous users never
+    see it). Paid & remote, No experience needed, With accommodations, Climate action + SDG 13
+    and Jobs near me stay in the registry as `parked` entries that never render and carry no
+    definition keys. With four badges the dialog shows no "Show all N" and the hero row fits at
+    1280 / 1440. A badge still applies its whole set and tapping again clears only what it added.
+    **No per-badge counts** (Jason, 2026-09-23: never issue one search per badge) — the canvas's
+    "zero-result badges grey out with the count visible" is not built; a batched facet-count
+    endpoint is filed as README ask #13.
+  - **Mobile badge row moved into the purple header above the search pill**, on landing and
+    results, matching desktop; horizontal scroll, compact density, `min-h-8` reserved so the
+    header does not jump when lookups resolve. The pill gained a second line summarising the
+    effective filters ("Jobs · South Africa · Remote +1 · +3": type · where · engagement each as
+    "first +N", then a count of the other facets in play).
+  - **Recent searches 5 → 3**, per device, newest first, across every home (Search segment
+    popover, filters dialog, mobile sheet — one component). Removing one promotes the next stored
+    entry (the panel re-reads the store), "Clear recent" empties it; relative time and removable
+    rows kept. Entries stored under the old cap collapse to three on read.
+  - **Wizard.** Step 1: the info box under the goal cards is gone (it was design rationale);
+    "Start a business" loses COMING SOON and is **mapped to a Category** — "Business, Finance &
+    Marketing", resolved by name at runtime against the lookup (accepting "Business and
+    Entrepreneurship" pre-migration), never a hard-coded id. Its inherited chip therefore takes
+    the facet's group ("Categories: …" rather than "Type: …"), and every provenance-aware control
+    now asks `owningPreference()` which preference supplies a value instead of assuming Interests
+    owns categories and Goal owns types. "Attend events" → Type Event kept, still awaiting BA
+    confirmation. Step 4: **engagement preference is a list** (`UserPreferences.engagement:
+    string[]`; the façade normalises a stored single id to a one-element list; merge unions;
+    skip-to-save clears to `[]`). Time commitment carries "Awaiting BA sign-off". Step 6: the
+    sentence saying the accessibility toggle hides opportunities without accommodation data is
+    removed — the mapping must not exclude Not specified (correction under the Plan's
+    "two deliberate inconsistencies"). Identity captions read Birth date → age range (applied
+    silently), Gender → ranking only (privacy sign-off pending), Education → no filter.
+  - **Type row order is fixed by enum NAME** — Job · Learning · Task · Event · Other, unknown
+    types after, in `lib/typeOrder.ts`, applied at the lookup so every type list agrees. Labels
+    keep coming from `displayName`; "Task" → "Impact task" is reference data and is **README ask
+    #7**, not a web display map. Multi-select and per-type sections unchanged.
+  - **One engagement display map** — Online → Remote, Offline → On-site, Hybrid → Hybrid — in
+    `lib/engagementLabels.ts`, used by cards, applied chips, the Engagement section, the bar
+    segment and wizard step 4. **Temporary**: it becomes identity when the API renames the
+    values with IDs preserved (README ask #8) and is then deleted.
+  - **Sections (BA alignment).** Where reserves Province / Region and City as disabled free-text
+    "contains" inputs and Distance as a disabled input, declared in the registry (`reserved`),
+    until the Location API and the User Location decision land. Provider is a **typeahead** —
+    nothing listed until you type, then up to eight names matching anywhere, chosen ones as
+    removable chips (a new `typeahead` control kind; the org list is hundreds long). Skills
+    carries the caption "For jobs this matches required skills; for everything else, the skills
+    you will earn" (a new `hint` field rendered as the header subtitle). Paid and rewards is a
+    composite `rewards` control: the Paid half inert until Is Paid / Reward Type exist, the ZLTO
+    half live — and **hidden while Type includes Job** with the line "Jobs do not carry ZLTO."
+    (Jason: hide, not grey; keyed to the core Type enum via `OPPORTUNITY_TYPE_NANE_JOB`, not to a
+    custom field; an already-set ZLTO filter stays removable in the chips row). Categories,
+    wizard Interests and the tiles read the category lookup and take 16 values without code —
+    "Show all N" is data-driven. Null-rule copy is one line per section (see the Plan
+    correction), and a section with no API facet yet still states its rule.
+  - **Card status rule** (`lib/cardStatus.ts`, shared by grid card and compact row). Trace: the
+    search's Active published state checks status and start date but not end date, so items
+    past their end date keep returning until the expiry job runs; on seeded fixtures every item
+    shares one fixed end date (local 2026-09-21, DEV 2026-09-23) and `participantCountTotal` is
+    0 — hence "Closed" beside "N of N places left" on every card. The web side was right to say
+    Closed and wrong to show places next to it; the data side is a stale fixture. Rule: status
+    not Active OR end date passed → "Closed", places hidden; participant limit reached → "No
+    places left"; otherwise the closing label and "X of Y places left". README ask #12 covers the
+    API side (exclude past end dates from Active, or seed rolling dates).
+  - **Housekeeping.** The `prefs: mock` dev pill's gate is confirmed:
+    `USER_PREFERENCES_MOCK_ENABLED` = flag AND (local environment OR `dev.yoma.world` hostname),
+    so stage and production never mount it; **the DEV allowance stays** (Jason, 2026-09-23 —
+    "leave the mocked stuff for now"). The badge `availability` intent (SOON) and the
+    "Show all N" on the badge row were removed as dead; the `comingSoon` card pattern in the
+    wizard registry is kept (documented, currently unused). Mocks themselves untouched; the
+    2026-08-27-c removal list stands.
+  - **Applied chips stay one per value** ("Engagement: Remote", "Engagement: Hybrid") rather than
+    the canvas's single "Engagement: Remote, Hybrid" — per-value removal needs per-value chips;
+    the group label changed Format → Engagement.
+  - **Not built, by decision or dependency:** per-badge counts (above); the "Pay not specified"
+    results divider (needs Is Paid and a public sort); the wizard sidebar's "2 ways to take part"
+    summary (the live-count panel has no per-step summary today); the "my country only" switch.
+
+## BA sign-off summary (2026-09-22)
+
+Copied from the BA Considerations workbook (sheets All Opportunities, Jobs, Impact Action & Event,
+User; September 2026), restricted to what changes THIS surface. Status: **existing** = core field
+already on `OpportunityInfo` / the search filter · **renamed** = same field, new values or label ·
+**new** = does not exist on the API yet. Where a null rule differs from what the search does
+today, the section copy states today's behaviour (see the Plan correction).
+
+**Core (all types)**
+
+| Field | Status | Values | Null rule | Where it shows here |
+| --- | --- | --- | --- | --- |
+| Type (`TypeId`) | renamed | Job · Learning · **Impact Task** (was Task) · Event · Other; IDs kept, CSV accepts both | n/a (required) | type row, badges, chips — `displayName` verbatim, README ask #7 |
+| Categories | renamed (taxonomy) | the approved 16 (YOM-1259); Other kept | n/a (required) | tiles, Categories section, wizard Interests, Climate action badge, Start a business goal |
+| Location (was Countries) | renamed / expanding | Country → Province/Region → City (+ optional coordinates); Province and City free text, case-insensitive "contains" | n/a (required) | Where: country live; province / city / distance reserved disabled |
+| Languages | existing | ISO lookup; required, ≥1 | **no null case** — every opportunity lists one | Language section |
+| Skills | existing | EMSI lookup; for Jobs = required skills, elsewhere = skills earned | not specified stays | Skills (inert — no search facet), card chips |
+| Commitment interval + count | existing | Minute · Hour · Day · Week · Month; required non-Job, optional Job | **stays in results** (BA) — API still excludes | How long, Under an hour badge |
+| Engagement Type | renamed | **Remote** (was Online) · **On-site** (was Offline) · Hybrid; optional; IDs kept | **hidden while a value is selected** (BA) — API still includes | Engagement segment / section, Remote badge, cards, chips, wizard step 4 |
+| Reward Type | new, required | None · ZLTO · Partner Incentive; **Job: None or Partner Incentive only** | defaults to None on migration | Paid and rewards — ZLTO hidden while Type includes Job |
+| Partner Incentive Amount + Currency | new | positive decimal + ISO 4217 code; informational, Yoma processes nothing | not specified stays | card money badge (partner-paid line) — typed, not yet fed |
+| ZLTO Reward | existing | > 0, ≤ 2000, whole; non-Job only once Reward Type lands | n/a | Paid and rewards, card / row reward slot |
+| Is Paid | new, nullable boolean | Yes · No; explicit, not derived | **stays in results, sorted last** | Paid half of Paid and rewards (inert), parked "Paid & remote" badge |
+| Accessibility Support + Available Accommodations (+ Other description) | new | Yes · No · Available on request; 16-value multi-select | **stays in results for now**; matching rule "supports all selected" | Accessibility section (inert), wizard step 6 toggle, parked "With accommodations" badge |
+| Minimum / Maximum Age | new, optional | open-ended range | both null = no restriction; youth without DoB not blocked | inherited-not-removable age chip (designed; no facet yet) |
+| Targeted Groups | new, informational | Open to All · Youth with Disabilities · Women/Girls · Men/Boys · Rural · Urban · Refugee/Displaced · Second-Chance Learners | never restricts eligibility | **not on the youth surface** ("Who it is for" removed) |
+| SDGs | new, optional multi-select | the 17 goals, all types incl. Jobs | not specified stays | SDGs section (inert), parked "Climate action + SDG 13" badge |
+| Provider | new, optional free text | e.g. KFC, University of Pretoria; informational | null = not specified; "contains" filter | Provider typeahead (today over the Organisation lookup — the new field is not on the API) |
+| Application deadline (Jobs) | existing (`DateEnd` reused) | required for manually created Jobs | — | card due date / Closed |
+
+**Type-specific (custom/metadata fields — rendered from the definitions endpoint, never keyed in
+web)**
+
+| Type | Field | Status | Values / rule on screen |
+| --- | --- | --- | --- |
+| Job | Salary Disclosed | new, required | Yes · No — **No disables Salary range, Currency, Pay interval** |
+| Job | Salary range (Minimum / Maximum) + Currency | new | ISO 4217; either bound optional; Currency + Pay interval required when a value is supplied |
+| Job | Pay Interval | new, conditionally required | Per Year · Per Month · Per Hour · **Per Engagement (Once-Off)** (replaces Per Gig / Per Task) |
+| Job | Employment Type | new, required multi-select | Permanent · Fixed-Term · Internship · Apprenticeship · Freelance/Consultancy · Temporary/Seasonal — **Permanent and Fixed-Term cannot be combined** |
+| Job | Work Schedule | new, required | Full-Time · Part-Time |
+| Job | Employment Duration | new, conditional | number + Months / Years; **Permanent** as an option |
+| Job | Minimum Qualification | new, required | expanded Education lookup (Primary … PhD, No Formal Education, Other) — **GUIDE ONLY**, a weight never a gate |
+| Job | Experience Level | new, required | None (No Previous Experience Required) · Entry / Junior (1–3) · Mid (4–6) · Senior (7+) — filterable metadata, not a gate |
+| Job | Preferred Skills | new, optional | EMSI; informational "bonus skills" |
+| Job | Industry | new, required | UN ISIC section level |
+| Job | Job Category | new, required | ISCO-08 two-digit sub-major group |
+| Impact Task | Difficulty | moved from core to CF | Entry Level · Experience Needed · Skills Required |
+| Impact Task | Tools Required | new, optional multi-select | controlled list + Other with description |
+| Impact Action | Verified Activity Type | new, optional | controlled generic list (phase one by script) |
+| Event | Difficulty | moved from core to CF | Open to All · Familiarity Needed · Experienced Individuals |
+| Learning / Other | Difficulty | moved from core to CF | Beginner · Intermediate · Advanced · Any Level |
+
+**User preset (User sheet) — what the wizard captures**
+
+| Preset field | Status | Mapping | Null rule |
+| --- | --- | --- | --- |
+| User Goal | new, single-select | Get a Job → Type Job · Learn New Skills → Learning · Volunteer / Make an Impact → Impact Task · **Start a Business → Category "Business, Finance & Marketing"**; Attend events → Event is a design proposal | not applied when unset |
+| Target Career Categories | new, multi-select | Opportunity Categories, any overlap | not applied when empty |
+| Maximum Time Commitment | new (in contention — AWAITING SIGN-OFF) | interval + count, normalised, ≤ | **include Not specified** |
+| Engagement Preference | new, **multi-select** (BA feedback) | Engagement Type | **exclude opportunities with no engagement type** |
+| Paid Work Preference | proposed | Any · Paid · Unpaid → Is Paid | not paid still displayed, sorted last — **removed as a stored preference 2026-08-31; session filter only** |
+| Preferred Languages | proposed | Opportunity Languages, any overlap | remain visible if other fields match |
+| Self-Reported + Verified Skills | new / existing | Job Required Skills only, any overlap | — |
+| Accessibility Needs | new, opt-in, sensitive | same accommodations lookup; never shared | include Not specified for now |
+| Country / Date of Birth / Gender / Education | existing profile fields, read only | country → Location; DoB → Min/Max Age (open bounds, skipped when unknown); Gender → ranking only vs Targeted Groups; Education → no filter | — |
+
+## Unresolved before build
+
+Open questions carried from the canvas review (`Screens Review.pdf`, "Open for review") and the
+BA sheets. Owner placeholders: Client / BA / API / Web.
+
+| # | Question | Owner | Status |
+| --- | --- | --- | --- |
+| 1 | Should the question-title voice ("How do you want to take part?") carry into the dialog's section headers, or stay popover-only with plain nouns in the dialog? Built popover-only. | Client | open |
+| 2 | Loading artboard shows blur + shimmer; the build uses a plain opacity fade (2026-09-03 browser feedback). Should the artboard match the build? Built: fade. | Client / Web | open |
+| 3 | "Attend events" goal is a design proposal — confirm or drop. Built selectable → Type Event. | BA | open |
+| 4 | Engagement null rule: BA says hide while set; the search includes. Move the API or the rule? Built: copy states the API behaviour. | API / BA | open (README ask #9) |
+| 5 | Commitment null rule: BA says include; the search excludes. | API | open (README ask #2) |
+| 6 | Time commitment as a stored preference is "in contention" on the BA sheet. Built with "Awaiting BA sign-off". | BA | open |
+| 7 | Gender → ranking only: privacy and business rules to confirm before any implementation. Nothing built. | BA | open |
+| 8 | Is Paid: approve capturing explicitly (not derived). Web assumes explicit. | BA / API | open |
+| 9 | Distance / "Jobs near me": live device coordinates, stored User Location, or both? Badge parked. | API (Adrian) | open |
+| 10 | Task `displayName` → "Impact task": reference-data change and CSV alias. | API | open (README ask #7) |
+| 11 | Engagement value rename with IDs preserved; when it ships, delete `lib/engagementLabels.ts`. | API | open (README ask #8) |
+| 12 | Per-badge live counts: not without a batched count endpoint. | API (suggestion) / Web | open (README ask #13) |
+| 13 | Should ZLTO stay hidden (built) or grey with the note when Type includes Job alongside other types? An already-set ZLTO filter remains only in the chips row. | Client / Web | decided hide (Jason, 2026-09-23); revisit if the mixed-type case confuses |
 
 ## Links
 

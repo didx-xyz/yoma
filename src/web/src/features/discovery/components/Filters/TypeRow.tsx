@@ -1,5 +1,6 @@
 import React from "react";
 import { IoShapesOutline } from "react-icons/io5";
+import { owningPreference } from "../../lib/preferenceMapping";
 import {
   TYPE_ROW_HINT,
   TYPE_ROW_QUESTION,
@@ -18,7 +19,10 @@ import { SectionHeader } from "./SectionHeader";
  * filters, and deselecting one clears the type-scoped clauses (handled in the reducer, not
  * here). Provenance-aware like every other control: selection shows the EFFECTIVE types, and
  * deselecting the inherited one skips the Goal preference for this search — the same semantics
- * as removing its chip. State carries the enum `name`; the label shows `displayName`.
+ * as removing its chip. State carries the enum `name`; the label shows `displayName`. Order
+ * comes from the lookup, already sorted Job · Learning · Task · Event · Other by `lib/typeOrder`
+ * (a sixth type lands after these; the row wraps). "Task" reading "Impact task" is reference
+ * data — the displayName ask sits with the API — so there is no display map here.
  */
 export const TypeRow: React.FC<{
   /** The popover supplies its own question title — skip the section header and divider. */
@@ -38,10 +42,10 @@ export const TypeRow: React.FC<{
       dispatch({ kind: "toggleType", name });
       return;
     }
-    const inherited =
-      effectiveFilters.types.includes(name) &&
-      fragments.goal?.types?.includes(name);
-    if (inherited) skipPreference("goal");
+    const prefKey = effectiveFilters.types.includes(name)
+      ? owningPreference(fragments, "types", name)
+      : null;
+    if (prefKey) skipPreference(prefKey);
     else dispatch({ kind: "toggleType", name });
   };
 

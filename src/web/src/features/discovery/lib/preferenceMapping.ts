@@ -2,29 +2,55 @@ import type { UserGoal, UserPreferences } from "~/api/models/userPreferences";
 import type { DiscoveryFilters, PreferenceKey } from "./types";
 
 /**
- * Preference → filter mapping, per the BA sheet (build brief §6). Pure; the ONLY place this table
- * exists. Implement exactly the sheet — do not invent extra mappings.
+ * Preference → filter mapping, per the BA sheet (build brief §6, User sheet 2026-09-22). Pure;
+ * the ONLY place this table exists. Implement exactly the sheet — do not invent extra mappings.
  *
  * Rows the current search API cannot express are deliberately absent rather than approximated:
  * - skills   → "Job required skills only": no core facet; pending YOM-1264 fields.
  * - age      → computed age within range: no core facet on `/opportunity/search`.
  * - accessibility → accommodation fields are pending YOM-1264 (and are custom fields, which
- *              nothing may be keyed to).
+ *              nothing may be keyed to). When they land the rule INCLUDES opportunities that
+ *              have not described their accommodations (BA, 2026-09-22) — never an exclusion.
  * - gender   → ranking only, never a gate; no visible filter.
  * - education → no phase-one filter; deferred to the AI project.
  */
 
-/** Identity fields the mapping READS (never writes), resolved by the caller from the profile. */
+/**
+ * What the mapping READS (never writes): identity fields resolved by the caller from the
+ * profile, and the category lookup so a goal that maps to a CATEGORY resolves by name at
+ * runtime — never a hard-coded id, and robust to the taxonomy migration (YOM-1259).
+ */
 export interface PreferenceProfileContext {
   countryId: string | null;
+  categories: { id: string; name: string }[];
 }
 
-/** `"biz"` deliberately absent — no agreed mapping; the goal ships inert. Do not guess one. */
 const GOAL_TO_TYPE: Partial<Record<UserGoal, string>> = {
   job: "Job",
   learn: "Learning",
-  event: "Event",
+  event: "Event", // design proposal, awaiting BA confirmation — see the feature doc
   impact: "Task", // the enum name is Task; the label is "Impact task"
+};
+
+/**
+ * "Start a business" maps to a Category, not a Type (BA sheet, 2026-09-22). The approved
+ * taxonomy name first, the pre-migration name second; exact, case-insensitive; first match wins.
+ */
+const GOAL_TO_CATEGORY_NAMES: Partial<Record<UserGoal, readonly string[]>> = {
+  biz: ["Business, Finance & Marketing", "Business and Entrepreneurship"],
+};
+
+const categoryByName = (
+  categories: { id: string; name: string }[],
+  names: readonly string[],
+): string | null => {
+  for (const name of names) {
+    const hit = categories.find(
+      (c) => c.name.toLowerCase() === name.toLowerCase(),
+    );
+    if (hit) return hit.id;
+  }
+  return null;
 };
 
 /** One fragment per preference, so each inherited chip can be switched off individually. */
@@ -38,8 +64,17 @@ export function mapPreferencesToFilters(
 ): InheritedFragments {
   const fragments: InheritedFragments = {};
 
-  const type = preferences.goal ? GOAL_TO_TYPE[preferences.goal] : undefined;
-  if (type) fragments.goal = { types: [type] };
+  if (preferences.goal) {
+    const type = GOAL_TO_TYPE[preferences.goal];
+    const categoryNames = GOAL_TO_CATEGORY_NAMES[preferences.goal];
+    const categoryId = categoryNames
+      ? categoryByName(profile.categories, categoryNames)
+      : null;
+    if (type) fragments.goal = { types: [type] };
+    else if (categoryId) fragments.goal = { categories: [categoryId] };
+    // A category goal whose name is not in the loaded lookup yields no fragment — visible as
+    // "nothing inherited" rather than a wrong filter.
+  }
 
   if (preferences.targetCategories.length > 0)
     fragments.targetCategories = { categories: preferences.targetCategories };
@@ -50,8 +85,8 @@ export function mapPreferencesToFilters(
   if (preferences.maxCommitment)
     fragments.maxCommitment = { commitment: preferences.maxCommitment };
 
-  if (preferences.engagement)
-    fragments.engagement = { engagementTypes: [preferences.engagement] };
+  if (preferences.engagement.length > 0)
+    fragments.engagement = { engagementTypes: preferences.engagement };
 
   if (preferences.languages.length > 0)
     fragments.languages = { languages: preferences.languages };
@@ -108,6 +143,25 @@ const union = (a: string[], b: string[]): string[] => [
 ];
 
 /**
+ * The preference whose surviving fragment supplies `value` on `facet`, if any — the ONE lookup
+ * every provenance-aware control uses to decide whether deselecting a value means "skip its
+ * preference" (section chips, category tiles, the type row).
+ */
+export function owningPreference(
+  fragments: InheritedFragments,
+  facet: keyof DiscoveryFilters,
+  value: string,
+): PreferenceKey | null {
+  const entry = (
+    Object.entries(fragments) as [PreferenceKey, Partial<DiscoveryFilters>][]
+  ).find(([, fragment]) => {
+    const values = fragment[facet];
+    return Array.isArray(values) && (values as string[]).includes(value);
+  });
+  return entry?.[0] ?? null;
+}
+
+/**
  * Preference keys whose skip can be PERSISTED by clearing a preset field. `country` and `age`
  * are identity-derived (read from the profile, never stored in the preset), so switching them
  * off can only ever be a per-search choice.
@@ -147,7 +201,7 @@ export function applySkipsToPreferences(
         next.maxCommitment = null;
         break;
       case "engagement":
-        next.engagement = null;
+        next.engagement = [];
         break;
       case "languages":
         next.languages = [];

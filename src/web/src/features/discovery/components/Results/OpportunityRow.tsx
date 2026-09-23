@@ -2,7 +2,7 @@ import Link from "next/link";
 import React from "react";
 import { IoChevronForward } from "react-icons/io5";
 import type { OpportunityInfo } from "~/api/models/opportunity";
-import { closingInfo } from "../../lib/dates";
+import { cardStatus } from "../../lib/cardStatus";
 import { formatNumber } from "../../lib/format";
 import { LIST_COLUMNS } from "./listColumns";
 import { typeBadgeClass } from "./typeBadge";
@@ -18,7 +18,8 @@ export const OpportunityRow: React.FC<{
   opportunity: OpportunityInfo;
   now: Date;
 }> = ({ opportunity, now }) => {
-  const closing = closingInfo(opportunity.dateEnd, now);
+  // Same status rule as the grid card (`lib/cardStatus.ts`): a closed opportunity says so.
+  const { closing } = cardStatus(opportunity, now);
   const closesClass = closing.urgent
     ? "font-semibold text-pink"
     : "text-gray-dark";

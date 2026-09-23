@@ -1,6 +1,7 @@
 import React from "react";
 import ScrollableContainer from "~/components/Carousel/ScrollableContainer";
 import { OpportunityCategoryHorizontalCard } from "~/components/Opportunity/OpportunityCategoryHorizontalCard";
+import { owningPreference } from "../../lib/preferenceMapping";
 import { useDiscovery } from "../../state/DiscoveryContext";
 
 /**
@@ -21,7 +22,9 @@ export const CategoryCarousel: React.FC = () => {
   if (lookups.categories.length === 0) return null;
 
   // Selection reflects the EFFECTIVE filters, so preference-inherited categories light up on
-  // landing. Deselecting an inherited one skips the preference — same semantics as its chip.
+  // landing. Deselecting an inherited one skips the preference that supplies it — same
+  // semantics as its chip. Looked up generically: Interests supplies categories, and so does
+  // the "Start a business" Goal (2026-09-22).
   const toggleCategory = (id: string): void => {
     const manual = state.filters.categories;
     if (manual.includes(id)) {
@@ -31,10 +34,10 @@ export const CategoryCarousel: React.FC = () => {
       });
       return;
     }
-    const inherited =
-      effectiveFilters.categories.includes(id) &&
-      fragments.targetCategories?.categories?.includes(id);
-    if (inherited) skipPreference("targetCategories");
+    const prefKey = effectiveFilters.categories.includes(id)
+      ? owningPreference(fragments, "categories", id)
+      : null;
+    if (prefKey) skipPreference(prefKey);
     else
       dispatch({
         kind: "patchFilters",

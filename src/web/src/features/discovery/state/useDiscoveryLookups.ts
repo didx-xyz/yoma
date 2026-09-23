@@ -22,6 +22,7 @@ import {
 } from "~/api/services/opportunities";
 import type { FacetStatus } from "../lib/apiStatus";
 import { facetStatus } from "../lib/apiStatus";
+import { sortTypes } from "../lib/typeOrder";
 
 /**
  * The lookups the discovery surface renders options and labels from. All static-ish reference
@@ -119,7 +120,9 @@ export function useDiscoveryLookups(): DiscoveryLookups {
     organizationsQuery,
     zltoRangesQuery,
   ];
-  const types = typesQuery.data;
+  // Presented in the fixed enum-name order (Job · Learning · Task · Event · Other, unknown types
+  // after) everywhere on the surface; labels still come from `displayName`.
+  const types = typesQuery.data ? sortTypes(typesQuery.data) : undefined;
 
   return {
     types: types ?? [],

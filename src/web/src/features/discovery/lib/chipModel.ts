@@ -48,6 +48,12 @@ function fragmentValue(
   return "";
 }
 
+/** The chip group for whatever facet a fragment carries — `null` for an empty fragment. */
+const facetGroup = (fragment: Partial<DiscoveryFilters>): string | null => {
+  const facet = Object.keys(fragment)[0] as keyof DiscoveryFilters | undefined;
+  return facet ? (FACET_GROUPS[facet] ?? null) : null;
+};
+
 const manualChip = (
   facet: keyof DiscoveryFilters,
   raw: string,
@@ -83,7 +89,9 @@ export function buildChips(
   ];
 }
 
-// Inherited first, in mapping order. Hidden wholesale only by the master switch.
+// Inherited first, in mapping order. Hidden wholesale only by the master switch. The group is
+// the preference's own label where it has one, else the label of the facet the fragment carries
+// (the Goal fragment is a Type for four goals and a Category for "Start a business").
 function inheritedChips(
   entries: [PreferenceKey, Partial<DiscoveryFilters>][],
   preferencesOff: boolean,
@@ -93,7 +101,7 @@ function inheritedChips(
   if (preferencesOff) return [];
   return entries.map(([key, fragment]) => ({
     id: `pref:${key}`,
-    group: PREF_GROUPS[key],
+    group: PREF_GROUPS[key] ?? facetGroup(fragment) ?? key,
     value: fragmentValue(fragment, resolve),
     provenance: skipped.includes(key) ? "inheritedOff" : "inherited",
     prefKey: key,

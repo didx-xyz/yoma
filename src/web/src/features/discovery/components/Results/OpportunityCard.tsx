@@ -2,7 +2,8 @@ import Image from "next/image";
 import Link from "next/link";
 import React from "react";
 import type { OpportunityInfo } from "~/api/models/opportunity";
-import { closingInfo } from "../../lib/dates";
+import { cardStatus } from "../../lib/cardStatus";
+import { engagementLabel } from "../../lib/engagementLabels";
 import { MoneyBadge } from "./MoneyBadge";
 import { typeBadgeClass } from "./typeBadge";
 
@@ -13,33 +14,22 @@ import { typeBadgeClass } from "./typeBadge";
  * per-type layout must share this box.
  *
  * Field set (2026-08-31 revision §7): type badge + reward · title · location + engagement (one
- * meta line) · up to two skill chips + a "+N" counter · due date (urgency inside seven days,
- * the one rule in `lib/dates.ts`) · participant places. Both
- * `participantLimit` and `participantCountTotal` are exposed on `OpportunityInfo`, so
- * "X of Y places left" renders from exposed fields only.
+ * meta line, engagement through the one display map) · up to two skill chips + a "+N" counter ·
+ * due date and participant places, both from `lib/cardStatus.ts` — the one rule that keeps
+ * "Closed" and "N of N places left" from appearing together.
  */
-const placesLeft = (opportunity: OpportunityInfo): string | null => {
-  if (opportunity.participantLimit === null) return null;
-  const left = Math.max(
-    0,
-    opportunity.participantLimit - opportunity.participantCountTotal,
-  );
-  return `${left} of ${opportunity.participantLimit} places left`;
-};
-
 export const OpportunityCard: React.FC<{
   opportunity: OpportunityInfo;
   now: Date;
 }> = ({ opportunity, now }) => {
-  const closing = closingInfo(opportunity.dateEnd, now);
+  const { closing, places } = cardStatus(opportunity, now);
   const skills = opportunity.skills ?? [];
   const location = opportunity.countries?.[0]?.name ?? null;
   const engagement =
     typeof opportunity.engagementType === "string"
-      ? opportunity.engagementType
+      ? engagementLabel(opportunity.engagementType)
       : null;
   const meta = [location, engagement].filter(Boolean).join(" · ");
-  const places = placesLeft(opportunity);
 
   return (
     <Link

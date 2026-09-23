@@ -22,9 +22,10 @@ export const StepBlock: React.FC<{
 }> = ({ block, draft, onPatch }) => {
   const options = usePreferenceOptions(block.optionsSource);
 
-  // Single-select semantics keyed by the PREFERENCE, not by the block kind — `rows` and `pills`
+  // Selection semantics keyed by the PREFERENCE, not by the block kind — `rows` and `pills`
   // are purely visual, so the registry can swap kinds without cross-wiring another preference.
-  const singleSelect = (): {
+  // Time commitment is single-select (one maximum); engagement is multi-select (2026-09-22).
+  const pillSelection = (): {
     active: (id: string) => boolean;
     toggle: (id: string) => void;
   } => {
@@ -40,9 +41,8 @@ export const StepBlock: React.FC<{
           }),
       };
     return {
-      active: (id) => draft.engagement === id,
-      toggle: (id) =>
-        onPatch({ engagement: draft.engagement === id ? null : id }),
+      active: (id) => draft.engagement.includes(id),
+      toggle: (id) => onPatch({ engagement: toggleIn(draft.engagement, id) }),
     };
   };
 
@@ -76,7 +76,7 @@ export const StepBlock: React.FC<{
       }
       case "rows":
       case "pills": {
-        const { active, toggle } = singleSelect();
+        const { active, toggle } = pillSelection();
         const entries =
           block.entries ?? options.map((o) => ({ id: o.id, label: o.label }));
         return (

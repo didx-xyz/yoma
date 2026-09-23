@@ -309,6 +309,16 @@ all** — a preference-driven feed built on that mapping could make every event 
 structurally invisible. An `Attend events` goal closes it. `Other` remains unreachable and is flagged
 rather than papered over. `Start a business` has no agreed mapping and ships visible but inert.
 
+**Updated 2026-09-22 (BA sign-off + client review of the revised canvas).** `Start a business` now
+has a BA mapping — Opportunity Category "Business, Finance & Marketing" (a category, not a type) —
+and is selectable; web resolves the category by name at runtime against the lookup, accepting the
+pre-migration "Business and Entrepreneurship" until YOM-1259 lands everywhere. `Attend events`
+remains a design proposal **awaiting BA confirmation**; it stays selectable and mapped to `Event`
+because the alternative is the structural invisibility above. Detail and the other decisions of
+that review are in
+[YOM-1262's feature doc](./YOM-1262-ui-apply-user-presets-to-opportunity-discovery/feature.md),
+Decisions 2026-09-22.
+
 ## Out of Scope (whole epic)
 
 - **Phase-2 admin CRUD for definitions and options.** Definitions are scripted server-side in Phase 1.
@@ -370,6 +380,45 @@ flag it in a handoff here before merging.
    (a fixture artefact — every seeded opportunity is in all ten). Worth confirming against DEV
    data; if the counts are genuinely total-only, they have to come off the category tiles.
 
+**Added 2026-09-22** (from the BA sign-off / client-review pass on YOM-1262 — details in
+[`YOM-1262 …/handoffs/2026-09-23-a.md`](./YOM-1262-ui-apply-user-presets-to-opportunity-discovery/handoffs/2026-09-23-a.md)).
+Reference-data and behaviour changes the discovery surface is built to absorb without code once
+the API ships them; until then web states the actual behaviour in copy:
+
+7. **Opportunity Type `DisplayName` "Impact task" for `Task`.** The BA sheet renames the type
+   (API, UI, reference data; CSV accepts both). Web renders `displayName` verbatim and has
+   deliberately NOT added a display map — the row currently reads "Task" on local and DEV because
+   the seed sets `DisplayName = Name`.
+8. **Engagement Type value rename, IDs preserved** — Remote (was Online), On-site (was Offline),
+   Hybrid unchanged (BA sheet, all types). Web carries a one-module display map
+   (`features/discovery/lib/engagementLabels.ts`) that becomes identity once the lookup renames;
+   delete it then.
+9. **Engagement filter null rule.** BA: opportunities with no engagement type are **hidden while
+   the filter is set**. The search currently does the opposite (`!o.EngagementTypeId.HasValue ||
+   …` in `OpportunityService`). Web cannot enforce this client-side (server paging), so the
+   section copy states the current behaviour. Ask #2 (commitment interval must **include** nulls)
+   still stands — together they are the two null rules where web and BA disagree with the API.
+10. **`Is Paid` null handling: keep in results, sort last** (BA sheet, User + All Opportunities).
+    Depends on the field existing and on a public sort (ask #1). The results page's "Pay not
+    specified" divider is designed but not built until both land.
+11. **Category facet counts on DEV are also grand totals** (verified 2026-09-23:
+    `/opportunity/search/filter/category` returns ~1 000 for every one of the ten old-taxonomy
+    categories; local returns 2 488 for every one of the new sixteen). Same fixture artefact as
+    #6 — every seeded opportunity carries every category. Not a code fault, but the tiles cannot
+    be judged until one environment has real category spread.
+12. **Search `PublishedState.Active` ignores `DateEnd`.** It checks `StatusId = Active` and
+    `DateStart <= now`, so an opportunity whose end date has passed keeps returning until the
+    expiry job flips its status. On seeded data that is every item (local fixtures all end
+    2026-09-21; DEV's all end 2026-09-23), which is why every card read "Closed". Web now derives
+    "Closed" from status OR end date and hides places on a closed card. Ask, low priority: either
+    exclude `DateEnd < now` from the Active published state, or seed fixtures with rolling future
+    end dates so the preview does not go stale overnight.
+13. **Performance suggestion, not a blocker — batched facet counts.** The design shows a live
+    count per quick-search badge and greys a badge that would return zero. Web will not issue one
+    search request per badge (Jason, 2026-09-23), so badges carry no count. A single endpoint that
+    returns counts for N filter sets in one round trip (or `TotalCountOnly` made public, ask #3,
+    plus batching) would make both the badge counts and the wizard's live count cheaper.
+
 **Adrian, one API-side conflict resolution on this branch (2026-09-05)** — flagged because it is
 your area and web did not author either side. Merging `master` into
 `feature/custom-fields-framework` (PR #1924) collided on `Opportunity.Type`: master had added
@@ -394,3 +443,7 @@ master-based deploy after this branch's destructive drops breaks opportunity sea
 branch API image is redeployed. **Fix**: re-run the branch PR's deploy (or push a commit) so the
 API pod image matches the DB schema — and expect it to re-break whenever another PR deploys to
 DEV, until this epic merges. Owner: Adrian / infra.
+
+## Changelog
+
+- 2026-09-22: YOM-1262 aligned to the BA sign-off and client review — Engagement replaces Pay on the search bar, badges render only when filterable, recents capped at 3, Start a business mapped; asks 7–13 above filed for Adrian.

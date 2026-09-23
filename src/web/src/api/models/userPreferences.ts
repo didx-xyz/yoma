@@ -38,7 +38,7 @@ export interface UserPreferenceAccessibility {
 }
 
 export interface UserPreferences {
-  /** `"biz"` has no agreed filter mapping and is not selectable in the UI (COMING SOON). */
+  /** `"biz"` maps to a Category (Business, Finance & Marketing) rather than a Type — BA, 2026-09-22. */
   goal: UserGoal | null;
   /** Opportunity Category ids (Opportunity Categories taxonomy). */
   targetCategories: string[];
@@ -46,8 +46,12 @@ export interface UserPreferences {
   selfReportedSkills: UserPreferenceSkill[];
   /** Normalised "at most this much time"; opportunities with no commitment set are INCLUDED. */
   maxCommitment: UserPreferenceCommitment | null;
-  /** Proposed, awaiting BA sign-off (YOM-1264): EngagementType lookup id. */
-  engagement: string | null;
+  /**
+   * EngagementType lookup ids — MULTI-select since 2026-09-22 (BA: "allow multi select of
+   * engagement type"). Was a single nullable id; `normalizeUserPreferences` lifts a stored
+   * string into a one-element list.
+   */
+  engagement: string[];
   // paidWork was removed as a STORED preference (2026-08-31 revision brief §4);
   // pay remains fully available as a session filter (the "Paid & rewards" section).
   /** Proposed, awaiting BA sign-off (YOM-1264): Language lookup ids. */
@@ -55,7 +59,8 @@ export interface UserPreferences {
   /**
    * Sensitive. Never included in any outbound payload, partner sync, credential or analytics
    * event — including the mere fact that the filter is enabled. When on, opportunities that have
-   * not described their accommodations are EXCLUDED (stated in words in the UI).
+   * not described their accommodations stay IN the results for now (BA rule, 2026-09-22; stated
+   * in words in the UI).
    */
   accessibility: UserPreferenceAccessibility;
 }
@@ -68,9 +73,16 @@ export const EMPTY_USER_PREFERENCES: UserPreferences = {
   targetCategories: [],
   selfReportedSkills: [],
   maxCommitment: null,
-  engagement: null,
+  engagement: [],
   languages: [],
   accessibility: { enabled: false, needs: [] },
+};
+
+/** Pre-2026-09-22 presets stored engagement as one nullable id; anything else unexpected → none. */
+const normalizeEngagement = (raw: unknown): string[] => {
+  if (Array.isArray(raw))
+    return raw.filter((id): id is string => typeof id === "string");
+  return typeof raw === "string" && raw !== "" ? [raw] : [];
 };
 
 /**
@@ -96,6 +108,9 @@ export const normalizeUserPreferences = (raw: unknown): UserPreferences => {
         )
       : [],
     accessibility: parsed.accessibility ?? EMPTY_USER_PREFERENCES.accessibility,
+    engagement: normalizeEngagement(
+      (parsed as { engagement?: unknown }).engagement,
+    ),
   };
 };
 
@@ -126,7 +141,7 @@ export const mergeUserPreferences = (
       (skill) => skill.id,
     ),
     maxCommitment: anonymous.maxCommitment ?? stored.maxCommitment,
-    engagement: anonymous.engagement ?? stored.engagement,
+    engagement: union(stored.engagement, anonymous.engagement, (id) => id),
     languages: union(stored.languages, anonymous.languages, (id) => id),
     accessibility: {
       enabled: stored.accessibility.enabled || anonymous.accessibility.enabled,

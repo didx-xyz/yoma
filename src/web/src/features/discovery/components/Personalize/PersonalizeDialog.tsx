@@ -61,7 +61,10 @@ export const PersonalizeDialog: React.FC<{
 
   const previewFilters = applyInheritedFragments(
     EMPTY_DISCOVERY_FILTERS,
-    mapPreferencesToFilters(draft, { countryId: profile?.countryId ?? null }),
+    mapPreferencesToFilters(draft, {
+      countryId: profile?.countryId ?? null,
+      categories: lookups.categories,
+    }),
     false,
     [],
   );

@@ -13,7 +13,8 @@ import type { PreferenceKey } from "../lib/types";
  * preferences; `<StepBlock kind=…>` is the single kind→control switch. Adding a preference is a
  * data change here — no new JSX. Entries with `comingSoon` render a badge and are NOT selectable;
  * that is the reusable pattern for anything the BA has not settled (visible and inert beats
- * quietly missing).
+ * quietly missing). No entry carries it today — "Start a business" was the last, and the BA
+ * mapping landed on 2026-09-22.
  */
 
 export type StepBlockKind =
@@ -58,6 +59,7 @@ export interface PreferenceStepDef {
   id: string;
   title: string;
   subheading: string;
+  /** A boxed note under the step's blocks — for rules the youth needs, never design rationale. */
   infoNote: string | null;
   blocks: StepBlockDef[];
 }
@@ -65,13 +67,16 @@ export interface PreferenceStepDef {
 const PROPOSED = "Proposed — awaiting BA sign-off (YOM-1264).";
 
 export const PREFERENCE_STEPS: PreferenceStepDef[] = [
+  // Goal mapping per the BA sheet (2026-09-22): Get a job → Job · Learn new skills → Learning ·
+  // Volunteer → Impact Task · Start a business → Category "Business, Finance & Marketing".
+  // "Attend events" is a design proposal still awaiting BA confirmation (it closes the gap where
+  // Events were reachable from no goal) — kept selectable, recorded in the feature doc.
   {
     id: "goal",
     title: "What brings you to Yoma?",
     subheading:
       "One choice only — it sets the shape of your feed, and you can change it any time.",
-    infoNote:
-      "Attend events is new — it closes a gap where Events were reachable from no goal at all. Start a business is shown but marked coming soon: it is the one goal with no agreed filter mapping yet, so it stays visible and inert rather than quietly missing.",
+    infoNote: null,
     blocks: [
       {
         kind: "cards",
@@ -88,12 +93,7 @@ export const PREFERENCE_STEPS: PreferenceStepDef[] = [
             label: "Volunteer & give back",
             icon: IoHeartOutline,
           },
-          {
-            id: "biz",
-            label: "Start a business",
-            icon: IoStarOutline,
-            comingSoon: true,
-          },
+          { id: "biz", label: "Start a business", icon: IoStarOutline },
         ],
       },
     ],
@@ -142,16 +142,18 @@ export const PREFERENCE_STEPS: PreferenceStepDef[] = [
         kind: "pills",
         prefKey: "maxCommitment",
         heading: "How long", // matches the filter section's name
-        // Matches the section's null rule: the API's interval filter EXCLUDES unset commitments.
-        note: "Opportunities that don't state a time commitment are excluded by this.",
+        // Time commitment is still AWAITING SIGN-OFF (BA sheet: "in contention"). Matches the
+        // section's null rule: the API's interval filter EXCLUDES unset commitments for now.
+        note: "Awaiting BA sign-off (YOM-1264). Opportunities that don't state a time commitment are excluded by this for now.",
         optionsSource: "commitmentIntervals",
         entries: null,
       },
+      // Multi-select since 2026-09-22 (BA: allow multi-select of engagement type).
       {
         kind: "pills",
         prefKey: "engagement",
         heading: "How you take part",
-        note: PROPOSED,
+        note: "Pick any that suit you.",
         optionsSource: "engagementTypes",
         entries: null,
       },
@@ -184,7 +186,9 @@ export const PREFERENCE_STEPS: PreferenceStepDef[] = [
         kind: "toggle",
         prefKey: "accessibility",
         heading: "Accessibility",
-        note: "Turning this on will exclude opportunities that haven't described their accommodations. It is never shared outside Yoma — not with partners, not in credentials, not in analytics.",
+        // BA rule (2026-09-22): opportunities that have not described their accommodations stay
+        // in the results — the toggle must never exclude Not specified.
+        note: "Opportunities that haven't described their accommodations stay in your results for now. It is never shared outside Yoma — not with partners, not in credentials, not in analytics.",
         optionsSource: null,
         entries: null,
       },
@@ -203,17 +207,17 @@ export const PREFERENCE_STEPS: PreferenceStepDef[] = [
           {
             id: "dateOfBirth",
             label: "Date of birth",
-            caption: "Maps to: age range",
+            caption: "Maps to: age range (applied silently)",
           },
           {
             id: "gender",
             label: "Gender",
-            caption: "Ranking only — never a filter",
+            caption: "Ranking only — privacy sign-off pending",
           },
           {
             id: "education",
             label: "Education",
-            caption: "No filter yet — deferred to the AI project",
+            caption: "No filter",
           },
         ],
       },

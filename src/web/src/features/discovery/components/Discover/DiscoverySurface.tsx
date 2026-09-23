@@ -19,7 +19,7 @@ import { QuickSearchRow } from "./QuickSearchRow";
 
 /**
  * The whole discovery surface under one provider: the purple hero (badges above the segmented
- * bar on desktop; one search pill on mobile), then landing or results. Personalization opens
+ * bar on desktop; badges above one search pill on mobile), then landing or results. Personalization opens
  * automatically on the first visit only; afterwards the banner, the sheet's preference block and
  * this surface's Edit entry points reopen it.
  */
@@ -32,6 +32,8 @@ export const DiscoverySurface: React.FC = () => {
     migration,
     readPersonalizationSeen,
     chips,
+    effectiveFilters,
+    resolveLabel,
   } = useDiscovery();
   const router = useRouter();
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -78,6 +80,37 @@ export const DiscoverySurface: React.FC = () => {
   }, [ready, router.query.personalize]);
 
   const editPreferences = (): void => setPersonalizeOpen(true);
+
+  // The compact pill's second line — "Jobs · South Africa · Remote +1 · +3": the three facets the
+  // desktop bar names (type, where, engagement — each first value "+N"), then a count of the other
+  // facets in play. Effective filters, so the inherited layer shows on landing as it does on the
+  // desktop bar.
+  const pillSummary = ((): string | null => {
+    const f = effectiveFilters;
+    const firstPlus = (
+      facet: "types" | "countries" | "engagementTypes",
+    ): string | null => {
+      const values = f[facet];
+      if (values.length === 0) return null;
+      const first = resolveLabel(facet, values[0]!);
+      return values.length > 1 ? `${first} +${values.length - 1}` : first;
+    };
+    const named = [
+      firstPlus("types"),
+      firstPlus("countries"),
+      firstPlus("engagementTypes"),
+    ].filter((s): s is string => s !== null);
+    const others = [
+      f.categories.length > 0,
+      f.commitment !== null,
+      f.hasReward !== null || f.zltoRanges.length > 0,
+      f.languages.length > 0,
+      f.providers.length > 0,
+      f.customFields.length > 0,
+    ].filter(Boolean).length;
+    const parts = [...named, ...(others > 0 ? [`+${others}`] : [])];
+    return parts.length > 0 ? parts.join(" · ") : null;
+  })();
 
   return (
     // MainLayout centres a flex child, so the root must claim the full width itself —
@@ -129,17 +162,28 @@ export const DiscoverySurface: React.FC = () => {
             </div>
             <MyOpportunitiesLink />
           </div>
+          {/* Below md the badge row sits ABOVE the search pill, inside the purple header, matching
+              desktop (2026-09-22). It scrolls sideways at compact density; `min-h-8` reserves its
+              line so the header does not jump when the lookups resolve and the badges appear. */}
+          <div className="min-h-8 min-w-0 md:hidden">
+            <QuickSearchRow wrap={false} />
+          </div>
           <div className="flex items-center gap-2 md:hidden">
             <button
               type="button"
               onClick={() => setFiltersOpen(true)}
-              className="flex min-h-12 grow items-center gap-3 rounded-full bg-white px-4 text-left text-black"
+              className="flex min-h-12 grow items-center gap-3 rounded-full bg-white px-4 py-1.5 text-left text-black"
             >
               <IoSearchOutline className="text-gray-dark h-5 w-5 shrink-0" />
-              <span className="grow">
-                <span className="block text-sm font-semibold">
+              <span className="min-w-0 grow">
+                <span className="block truncate text-sm font-semibold">
                   {state.filters.q ?? "Search opportunities"}
                 </span>
+                {pillSummary && (
+                  <span className="text-gray-dark block truncate text-[11px]">
+                    {pillSummary}
+                  </span>
+                )}
               </span>
               <span className="text-gray-dark flex shrink-0 items-center gap-1">
                 <IoOptionsOutline className="h-5 w-5" />
@@ -151,9 +195,6 @@ export const DiscoverySurface: React.FC = () => {
               </span>
             </button>
             <MyOpportunitiesLink />
-          </div>
-          <div className="md:hidden">
-            <QuickSearchRow wrap={false} />
           </div>
         </div>
       </header>

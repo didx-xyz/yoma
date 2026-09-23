@@ -1,6 +1,8 @@
+import { OPPORTUNITY_TYPE_NANE_JOB } from "~/lib/constants";
 import type { FacetStatus } from "../../lib/apiStatus";
+import { engagementLabel } from "../../lib/engagementLabels";
 import { upToIntervalLabel } from "../../lib/format";
-import type { PreferenceKey } from "../../lib/types";
+import { owningPreference } from "../../lib/preferenceMapping";
 import type {
   FilterSectionBinding,
   FilterSectionDef,
@@ -32,6 +34,8 @@ export interface SectionModel {
   summary: string;
   /** Whether the lookup behind this section loaded — reported inside the section it feeds. */
   status: FacetStatus;
+  /** A one-line reason the options are withheld right now (e.g. ZLTO while Type includes Job). */
+  notice: string | null;
 }
 
 /** Which lookup each binding's options come from, for `status`. */
@@ -69,17 +73,6 @@ export function useSectionModel(section: FilterSectionDef): SectionModel {
     | "languages"
     | "providers";
 
-  /** The preference whose fragment supplies `value` for `facet`, if any. */
-  const owningPreference = (
-    facet: ListFacet,
-    value: string,
-  ): PreferenceKey | null => {
-    const entry = Object.entries(fragments).find(([, fragment]) =>
-      fragment[facet]?.includes(value),
-    );
-    return (entry?.[0] as PreferenceKey) ?? null;
-  };
-
   const listModel = (
     options: SectionOption[],
     facet: ListFacet,
@@ -98,7 +91,7 @@ export function useSectionModel(section: FilterSectionDef): SectionModel {
           return;
         }
         const prefKey = selected.includes(id)
-          ? owningPreference(facet, id)
+          ? owningPreference(fragments, facet, id)
           : null;
         if (prefKey) skipPreference(prefKey);
         else
@@ -109,6 +102,7 @@ export function useSectionModel(section: FilterSectionDef): SectionModel {
       },
       summary: selected.length === 0 ? "Any" : `${selected.length} selected`,
       status,
+      notice: null,
     };
   };
 
@@ -128,7 +122,15 @@ export function useSectionModel(section: FilterSectionDef): SectionModel {
     case "countries":
       return listModel(named(lookups.countries), "countries");
     case "engagementTypes":
-      return listModel(named(lookups.engagementTypes), "engagementTypes");
+      // Display names through the ONE engagement map (Online → Remote, Offline → On-site).
+      return listModel(
+        lookups.engagementTypes.map((e) => ({
+          id: e.id,
+          label: engagementLabel(e.name),
+          count: null,
+        })),
+        "engagementTypes",
+      );
     case "languages":
       return listModel(named(lookups.languages), "languages");
     case "providers":
@@ -163,17 +165,27 @@ export function useSectionModel(section: FilterSectionDef): SectionModel {
           ? (options.find((o) => o.id === selectedId)?.label ?? "Any")
           : "Any",
         status,
+        notice: null,
       };
     }
     case "zlto": {
-      const options: SectionOption[] = [
-        { id: HAS_REWARD_ID, label: "With ZLTO reward", count: null },
-        ...named(lookups.zltoRanges),
-      ];
       const selected = [
         ...(filters.hasReward === true ? [HAS_REWARD_ID] : []),
         ...filters.zltoRanges,
       ];
+      // Jobs do not carry ZLTO (BA Reward Type rule): while the effective types include Job the
+      // ZLTO options are withheld and the reason stated. Keyed to the core Type enum name — the
+      // same constant the legacy badges use — not to any custom field. An already-set ZLTO
+      // filter stays visible (and removable) in the applied chips.
+      const jobSelected = effectiveFilters.types.includes(
+        OPPORTUNITY_TYPE_NANE_JOB,
+      );
+      const options: SectionOption[] = jobSelected
+        ? []
+        : [
+            { id: HAS_REWARD_ID, label: "With ZLTO reward", count: null },
+            ...named(lookups.zltoRanges),
+          ];
       return {
         options,
         selected,
@@ -191,6 +203,7 @@ export function useSectionModel(section: FilterSectionDef): SectionModel {
           }),
         summary: selected.length === 0 ? "Any" : `${selected.length} selected`,
         status,
+        notice: jobSelected ? "Jobs do not carry ZLTO." : null,
       };
     }
     case null:
@@ -200,6 +213,7 @@ export function useSectionModel(section: FilterSectionDef): SectionModel {
         toggle: () => undefined,
         summary: "Coming soon",
         status,
+        notice: null,
       };
   }
 }

@@ -59,6 +59,7 @@ export const FilterSection: React.FC<{
           icon={section.icon}
           label={section.label}
           value={model.summary}
+          subtitle={expanded ? section.hint : null}
           expanded={expanded}
           onToggle={toggleOpen}
           badges={
@@ -79,6 +80,12 @@ export const FilterSection: React.FC<{
       {/* 12px from the header row to the first control — the panel's one header rhythm. */}
       {expanded && (
         <div ref={contentRef} className="flex flex-col gap-2 pt-1 pb-3">
+          {/* The popover has no header row, so the hint goes above the control there. */}
+          {alwaysOpen && section.hint && (
+            <p className="text-gray-dark text-[13px] leading-snug">
+              {section.hint}
+            </p>
+          )}
           <FilterControl
             section={section}
             model={model}
@@ -86,10 +93,12 @@ export const FilterSection: React.FC<{
             onRetry={lookups.retry}
           />
           {/* The null rule describes what the filter DOES; it has nothing to say when the
-              options never arrived. */}
+              options never arrived. A section with no API facet yet still states its rule — the
+              BA asked for one line per section, and the line is what the youth will get. */}
           {section.nullRule &&
-            section.binding !== null &&
-            model.status === "ok" && <Message>{section.nullRule}</Message>}
+            (section.binding === null || model.status === "ok") && (
+              <Message>{section.nullRule}</Message>
+            )}
         </div>
       )}
     </section>

@@ -11,6 +11,7 @@ import type { UserPreferences } from "~/api/models/userPreferences";
 import { userProfileAtom } from "~/lib/store";
 import type { ChipLabelResolver, DiscoveryChip } from "../lib/chipModel";
 import { buildChips } from "../lib/chipModel";
+import { engagementLabel } from "../lib/engagementLabels";
 import type { DiscoveryAction } from "../lib/discoveryReducer";
 import type { InheritedFragments } from "../lib/preferenceMapping";
 import {
@@ -118,9 +119,10 @@ export const DiscoveryProvider: React.FC<{ children: React.ReactNode }> = ({
       preferences
         ? mapPreferencesToFilters(preferences, {
             countryId: profile?.countryId ?? null,
+            categories: lookups.categories,
           })
         : {},
-    [preferences, profile?.countryId],
+    [preferences, profile?.countryId, lookups.categories],
   );
 
   const effectiveFilters = applyInheritedFragments(
@@ -144,7 +146,8 @@ export const DiscoveryProvider: React.FC<{ children: React.ReactNode }> = ({
       case "countries":
         return byId(lookups.countries);
       case "engagementTypes":
-        return byId(lookups.engagementTypes);
+        // Through the ONE engagement display map (Online → Remote, Offline → On-site).
+        return engagementLabel(byId(lookups.engagementTypes));
       case "commitment":
         return byId(lookups.timeIntervals);
       case "languages":
