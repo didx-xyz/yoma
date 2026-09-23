@@ -1009,6 +1009,14 @@ namespace Yoma.Core.Domain.Referral.Services
       // They are not stored values — each is dynamically calculated based on the current Steps/Tasks state.
       ToInfoParseProgressPathway(result, program);
 
+      // Completed is terminal: current programme requirements must not reduce its progress.
+      if (item.Status == ReferralLinkUsageStatus.Completed)
+      {
+        result.PercentComplete = 100m;
+        result.EffectiveCompleted = true;
+        return RedactInfo(result, contextRole);
+      }
+
       // Weighted progress model (0–100):
       // - YoID onboarding:       25% (always counted)
       // - Proof of Personhood:   25% (if required)
