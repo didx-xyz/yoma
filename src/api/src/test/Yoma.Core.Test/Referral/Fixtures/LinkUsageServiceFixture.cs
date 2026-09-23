@@ -74,8 +74,8 @@ namespace Yoma.Core.Test.Referral.Fixtures
 
       ExecutionStrategyService = new Mock<IExecutionStrategyService>();
       ExecutionStrategyService
-        .Setup(x => x.ExecuteInExecutionStrategyAsync(It.IsAny<Func<Task>>()))
-        .Returns<Func<Task>>(async action => await action());
+        .Setup(x => x.ExecuteInExecutionStrategyAsync(It.IsAny<Func<Task>>(), It.IsAny<bool>()))
+        .Returns((Func<Task> action, bool _) => action());
       ExecutionStrategyService
         .Setup(x => x.ExecuteInExecutionStrategy(It.IsAny<Action>()))
         .Callback<Action>(action => action());
