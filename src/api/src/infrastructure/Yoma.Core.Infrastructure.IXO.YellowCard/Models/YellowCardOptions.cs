@@ -9,6 +9,9 @@ namespace Yoma.Core.Infrastructure.IXO.YellowCard.Models
     /// </summary>
     public string BaseUrl { get; set; } = null!;
 
+    /// <summary>Hosted wallet landing page for completed cash-out users.</summary>
+    public string WalletUrl { get; set; } = null!;
+
     /// <summary>
     /// Public endpoint containing the provider's live payout-country availability.
     /// </summary>

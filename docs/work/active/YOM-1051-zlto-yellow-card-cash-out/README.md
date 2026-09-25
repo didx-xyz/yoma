@@ -300,17 +300,20 @@ Current contract after the final profile-visibility review; see handoffs/2026-09
 This supersedes returning terminal payouts on the profile. No expiry configuration or data deletion is introduced.
 
 - GET `/api/v3/user` keeps the compact payout section:
-  `{ countryAvailability, active, status, canResume, amount, currency, dateCreated }`.
-  Only in-flight payouts appear here. When none is active, status/amount/currency/dateCreated are null
-  and active/canResume are false; countryAvailability remains available for a new payout.
+  `{ countryAvailability, active, status, canResume, amount, currency, dateCreated, walletAvailable, walletUrl }`.
+  Only in-flight payout details appear here. When none is active, status/amount/currency/dateCreated are null
+  and active/canResume are false; countryAvailability and lifetime wallet access remain available.
 - GET `/api/v3/user/payout/latest` is the on-demand outcome read for the cash-out journey:
-  `{ status, amount, currency, dateCreated, canResume }`. Returns the user's active payout first,
+  `{ status, amount, currency, dateCreated, canResume, canCancel }`.
+  Returns the user's active payout first,
   otherwise the most recently initiated terminal payout; 404 if the user has no payout.
   User role is required and identity comes from authenticated context, with no caller-supplied user id.
-- Outcome reads do not contact IXO, refresh sessions, mutate records or enrich reward transactions.
-  No id, raw errors, provider references or duplicated ZLTO amount is exposed.
+- Outcome reads may check IXO status for `canCancel` on active payouts, but do not refresh sessions,
+  mutate records or enrich reward transactions. The Yoma payout id supports exact cancellation;
+  raw errors, provider references and duplicated ZLTO amount are not exposed.
 - Profile and initiation/session guards use GetByUserIdOrNull with activeOnly=true (default).
-  Only the on-demand endpoint opts into active-or-latest. Profile adds no history lookup or sorting.
+  Only the on-demand endpoint opts into active-or-latest. The profile makes one separate indexed
+  existence check for completed cash-outs to expose wallet access, not terminal payout details.
 - The outcome endpoint has no age cutoff: it is explicitly requested in the cash-out journey, not rendered
   permanently in the wallet. Historical records remain available for audit. Avoid repeatedly announcing an
   old outcome; a latest-state read is not a history/unread-notification mechanism.
@@ -321,6 +324,22 @@ This supersedes returning terminal payouts on the profile. No expiry configurati
   neither status nor canResume reliably distinguishes awaiting confirmation from post-confirmation delivery.
 - Completed, Failed, Cancelled and Expired are read from the outcome endpoint, never resumable through
   Yoma. Provider final fiat-delivery retries after Completed do not reopen the payout or release committed rewards.
+- `payout.walletAvailable` is true and `payout.walletUrl` is populated once the user has any completed
+  cash-out. These fields are on the profile payout section, beside the Cash Out entry point;
+  no latest-info request is needed to render the wallet button. The hosted-wallet URL is required
+  configuration. A newer payout does not remove wallet access.
+  This is a navigation affordance, not a wallet-balance or bank-delivery signal. Jason owns the button;
+  do not label it as a retry or promise that funds remain in the wallet.
+
+  **Web side done 2026-09-25.** `CashOutWalletLink` on the Yo-ID wallet card, beside Cash Out.
+  Deliberately a **sibling** of `CashOutEntry` rather than part of it: the entry point renders
+  nothing when the kill-switch is off, and wallet access must survive that — money already sent is
+  not new initiation. Rendered only when `walletAvailable === true` *and* the URL passes an HTTPS
+  check, opened top-level in a new tab with `noopener noreferrer`, never in the hosted iframe.
+  `showOutcome` now re-reads the profile after a **Completed** outcome, closing the race Adrian
+  flagged. The label is provider-neutral per the epic rule; see
+  [YOM-1074's handoff](./YOM-1074-ui-youth-yellow-card-cash-out/handoffs/2026-09-25-a.md) for the
+  naming question that is still open.
 - Currency separation remains intentional: payout amount/currency is USD, while zlto.pendingPayout is
   reserved ZLTO. After commit/release pendingPayout is zero and the wallet balance reflects the result.
   Do not infer outcome from zero, duplicate reward accounting in payout, or calculate historical ZLTO at

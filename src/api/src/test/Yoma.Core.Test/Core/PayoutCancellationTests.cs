@@ -95,6 +95,37 @@ namespace Yoma.Core.Test.Core
       f.Provider.VerifyNoOtherCalls();
     }
 
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void WalletAccessRequiresCompletedCashOut(bool hasCompletedPayout)
+    {
+      using var f = new Fixture();
+      f.Payouts.Add(new PayoutTransaction
+      {
+        Id = Guid.NewGuid(),
+        UserId = Guid.NewGuid(),
+        StatusId = f.CompletedStatusId,
+        Status = PayoutTransactionStatus.Completed,
+        Type = "PayoutRewards",
+        Provider = "YellowCard"
+      });
+      if (hasCompletedPayout)
+        f.Payouts.Add(new PayoutTransaction
+        {
+          Id = Guid.NewGuid(),
+          UserId = f.Payout.UserId,
+          StatusId = f.CompletedStatusId,
+          Status = PayoutTransactionStatus.Completed,
+          Type = "PayoutRewards",
+          Provider = "YellowCard"
+        });
+      var (available, walletUrl) = f.Service.GetWalletAccessByUserId(f.Payout.UserId);
+
+      Assert.Equal(hasCompletedPayout, available);
+      Assert.Equal(hasCompletedPayout ? "https://ixo.test/wallet" : null, walletUrl);
+    }
+
     [Fact]
     public async Task LatestInfoRejectsMismatchedEligibility()
     {
@@ -292,6 +323,8 @@ namespace Yoma.Core.Test.Core
       };
       public RewardTransaction Reward { get; } = new() { Status = RewardTransactionStatus.Reserved, TransactionId = "res_test", Amount = 450 };
       public Mock<IPayoutProviderClient> Provider { get; } = new();
+      public Guid CompletedStatusId { get; } = Guid.NewGuid();
+      public List<PayoutTransaction> Payouts { get; } = [];
       public Mock<IRewardProviderClient> RewardProvider { get; } = new();
       public Mock<INotificationDeliveryService> Notifications { get; } = new();
       public PayoutService Service { get; }
@@ -300,20 +333,23 @@ namespace Yoma.Core.Test.Core
 
       public Fixture()
       {
+        Payouts.Add(Payout);
         var providerFactory = new Mock<IPayoutProviderClientFactory>();
         providerFactory.Setup(p => p.CreateClient()).Returns(Provider.Object);
+        Provider.SetupGet(p => p.WalletUrl).Returns("https://ixo.test/wallet");
         Provider.Setup(p => p.Cancel(It.IsAny<PayoutCancellationRequest>())).ReturnsAsync(() => Response());
         var rewardFactory = new Mock<IRewardProviderClientFactory>();
         rewardFactory.Setup(p => p.CreateClient()).Returns(RewardProvider.Object);
         var repo = new Mock<IRepositoryValueContains<PayoutTransaction>>();
-        repo.Setup(p => p.Query()).Returns(() => new[] { Payout }.AsQueryable());
-        repo.Setup(p => p.Query(It.IsAny<LockMode>())).Returns(() => new[] { Payout }.AsQueryable());
+        repo.Setup(p => p.Query()).Returns(() => Payouts.AsQueryable());
+        repo.Setup(p => p.Query(It.IsAny<LockMode>())).Returns(() => Payouts.AsQueryable());
         repo.Setup(p => p.Update(It.IsAny<PayoutTransaction>())).ReturnsAsync((PayoutTransaction p) => p);
         var rewards = new Mock<IRewardService>();
         rewards.Setup(p => p.GetByEntity(Payout.UserId, RewardTransactionEntityType.Payout, Payout.Id, It.IsAny<LockMode?>())).Returns(Reward);
         var statuses = new Mock<IPayoutTransactionStatusService>();
         statuses.Setup(p => p.GetByName(It.IsAny<string>())).Returns((string name) =>
-          new Domain.Payout.Models.Lookups.PayoutTransactionStatus { Id = Guid.NewGuid(), Name = name });
+          new Domain.Payout.Models.Lookups.PayoutTransactionStatus
+          { Id = name == PayoutTransactionStatus.Completed.ToString() ? CompletedStatusId : Guid.NewGuid(), Name = name });
         var users = new Mock<IUserService>();
         users.Setup(p => p.GetById(Payout.UserId, false, false)).Returns(new User { Id = Payout.UserId, Email = "test@example.org" });
         var strategy = new Mock<IExecutionStrategyService>();

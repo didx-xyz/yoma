@@ -21,6 +21,9 @@ namespace Yoma.Core.Domain.Payout.Interfaces
 
     Task<PayoutTransactionInfo> GetLatestInfoByUserId(Guid userId);
 
+    /// <summary>Hosted wallet access after the user's first completed cash-out.</summary>
+    (bool Available, string? Url) GetWalletAccessByUserId(Guid userId);
+
     Task ProcessStatus(PayoutStatusResponse response);
 
     List<PayoutTransaction> ListForReconciliation(int batchSize, List<Guid> idsToSkip);

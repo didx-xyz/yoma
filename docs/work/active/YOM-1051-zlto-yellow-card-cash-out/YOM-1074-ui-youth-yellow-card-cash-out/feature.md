@@ -911,6 +911,40 @@ why this is written down rather than dismissed.
   itself. The server's message carries the real number, but parsing a figure out of a sentence is a
   contract nobody agreed to — and the number we were holding has just been proved stale either way.
 
+- **2026-09-25: the wallet link is a sibling of `CashOutEntry`, not part of it.** `CashOutEntry`
+  returns `null` when the environment kill-switch is off, and wallet access is *independent* of it —
+  money already sent is not new initiation, and closing the door to it because new cash outs are
+  paused would strand a youth away from their own funds. Same for a withdrawn corridor. So
+  `CashOutWalletLink` is its own component in the ledger's actions slot, with no opinion about
+  eligibility, the gate, or an active payout.
+- **2026-09-25: rendered only on `walletAvailable === true` *and* a valid HTTPS `walletUrl`.** Both,
+  not either: the flag is the API's answer about this youth, the URL check is about the
+  environment's configuration, and the realistic failure is the second one — the landing URL is
+  per-environment and Production must override the committed Test value. A link to nowhere on a
+  money screen is worse than no link. `=== true` for the same reason as `payout.enabled`: absent
+  means an older API, which is "cannot tell", not "yes".
+- **⚠️ 2026-09-25: `showOutcome` re-reads the profile after a Completed outcome.** Its two reads are
+  concurrent, so the completion webhook can land between them — the outcome returns `Completed`
+  while the profile still says `walletAvailable: false`, and the youth is told their cash out is
+  complete on a screen whose wallet link is missing, exactly when they want it. The extra read fires
+  only for `Completed`, the one status that flips the flag. It does not cover a webhook arriving
+  after the dialog closes; nothing pushes into the page.
+- **2026-09-25: the link opens top-level in a new tab, never the hosted iframe.** It is a durable
+  landing page the youth signs into, not a 30-minute payment session, and the payment URL is the
+  wrong URL entirely. `noopener noreferrer`, because it is a third-party site.
+- **2026-09-25: the label is "View my cash-outs" — no "wallet" in it at all** (owner). The button
+  sits on the Yo-ID *Wallet* card beside a Zlto balance, so any label containing "wallet" competes
+  with what the youth is already looking at. The first attempt, "View my cash-out wallet",
+  distinguished the two by being longer; naming what they went to *do* sidesteps the clash instead,
+  and is shorter. It also stays clear of claiming anything about a balance, which "wallet" edges
+  towards.
+- **⚠️ 2026-09-25: the label is provider-neutral, and that is an open question rather than a settled
+  one.** The epic rule says never name the provider; the API's field names follow it
+  (`walletAvailable`, not `ixoWallet`); the request that prompted this work said "View IXO wallet".
+  There is a fair argument that naming a third-party destination is *better* for someone about to
+  leave the product. `WALLET_ACCESS_COPY.action` is the single string to change if that argument is
+  had and won.
+
 ## Links
 
 - Epic: [YOM-1051](../README.md)

@@ -20,8 +20,13 @@
  * True only for an absolute `https:` URL. Anything else — `http:`, `javascript:`, `data:`, a
  * protocol-relative `//host`, a relative path, an unparseable string — is refused, and the caller
  * treats a refusal as a failed initiation rather than navigating.
+ *
+ * Used for the hosted payment URL and for the wallet landing page. The wallet URL comes from
+ * environment configuration rather than a provider response, so the realistic failure it guards
+ * against is a misconfigured environment, not an attack — but the check costs nothing and the
+ * consequence of navigating somewhere unintended from a money screen is the same either way.
  */
-export const isSafePaymentUrl = (url: string | null | undefined): boolean => {
+export const isSafeExternalUrl = (url: string | null | undefined): boolean => {
   if (!url) return false;
   try {
     return new URL(url).protocol === "https:";
@@ -29,6 +34,13 @@ export const isSafePaymentUrl = (url: string | null | undefined): boolean => {
     return false;
   }
 };
+
+/**
+ * The same check, under the name the hand-off uses. Kept as its own export because the payment URL
+ * and the wallet URL are different contracts with different lifetimes — one is a 30-minute session
+ * token, the other a durable landing page — and a shared name would invite treating them alike.
+ */
+export const isSafePaymentUrl = isSafeExternalUrl;
 
 /**
  * The escape hatch: opens the hosted journey in a new tab.
