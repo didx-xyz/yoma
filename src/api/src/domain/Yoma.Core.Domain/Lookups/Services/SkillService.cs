@@ -25,6 +25,18 @@ namespace Yoma.Core.Domain.Lookups.Services
     private readonly SkillSearchFilterValidator _searchFilterValidator;
     private readonly IRepositoryBatchedValueContains<Skill> _skillRepository;
     private readonly IDistributedLockService _distributedLockService;
+
+    // Reviewed cross-framework aliases shared by all consumers. Targets must exist in
+    // the catalogue; arbitrary domain qualifiers must never be discarded to infer a match.
+    private static readonly Dictionary<string, string> SkillAliases = new(StringComparer.OrdinalIgnoreCase)
+    {
+      { "Python (Programming Language)", "Python" },
+      { "JavaScript (Programming Language)", "JavaScript" },
+      { "SQL (Programming Language)", "SQL" },
+      { "Git (Version Control System)", "Git" },
+      { "Django (Web Framework)", "Django" },
+      { "Cascading Style Sheets (CSS)", "CSS" }
+    };
     #endregion
 
     #region Constructor
@@ -285,8 +297,13 @@ namespace Yoma.Core.Domain.Lookups.Services
         var normalized = NormalizeLookupKey(skill.Name);
         if (normalized != null) AddSkillLookup(result.NormalizedNames, normalized, skill);
 
-        foreach (var candidate in GetLookupCandidates(skill.Name))
-          foreach (var key in GetLookupKeys(candidate))
+        // Qualifiers carry meaning: uniqueness alone cannot justify Programming -> Programming (Music).
+        // Generate formatting aliases from the full name only; never discard or extract qualifiers.
+        foreach (var key in GetLookupKeys(skill.Name))
+          AddSkillLookup(result.Aliases, key, skill);
+
+        if (SkillAliases.TryGetValue(skill.Name.Trim(), out var alias))
+          foreach (var key in GetLookupKeys(alias))
             AddSkillLookup(result.Aliases, key, skill);
       }
 
@@ -319,26 +336,6 @@ namespace Yoma.Core.Domain.Lookups.Services
 
       foreach (var key in result)
         yield return key;
-    }
-
-    private static IEnumerable<string> GetLookupCandidates(string? value)
-    {
-      value = value?.NormalizeNullableValue();
-      if (value == null) yield break;
-
-      yield return value;
-
-      var openIndex = value.IndexOf('(', StringComparison.Ordinal);
-      var closeIndex = value.IndexOf(')', StringComparison.Ordinal);
-
-      if (openIndex < 0 || closeIndex <= openIndex) yield break;
-
-      var withoutParentheses = $"{value[..openIndex]} {value[(closeIndex + 1)..]}".NormalizeNullableValue();
-      if (withoutParentheses != null)
-        yield return withoutParentheses;
-
-      // Never treat a qualifier as a standalone skill (e.g. ActiveXObject (JavaScript)).
-      // Only catalogue names produce these aliases; explicit input qualifiers stay intact.
     }
 
     private static void AddLookupKey(HashSet<string> result, string value)
