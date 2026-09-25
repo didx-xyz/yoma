@@ -330,6 +330,16 @@ This supersedes returning terminal payouts on the profile. No expiry configurati
   configuration. A newer payout does not remove wallet access.
   This is a navigation affordance, not a wallet-balance or bank-delivery signal. Jason owns the button;
   do not label it as a retry or promise that funds remain in the wallet.
+
+  **Web side done 2026-09-25.** `CashOutWalletLink` on the Yo-ID wallet card, beside Cash Out.
+  Deliberately a **sibling** of `CashOutEntry` rather than part of it: the entry point renders
+  nothing when the kill-switch is off, and wallet access must survive that — money already sent is
+  not new initiation. Rendered only when `walletAvailable === true` *and* the URL passes an HTTPS
+  check, opened top-level in a new tab with `noopener noreferrer`, never in the hosted iframe.
+  `showOutcome` now re-reads the profile after a **Completed** outcome, closing the race Adrian
+  flagged. The label is provider-neutral per the epic rule; see
+  [YOM-1074's handoff](./YOM-1074-ui-youth-yellow-card-cash-out/handoffs/2026-09-25-a.md) for the
+  naming question that is still open.
 - Currency separation remains intentional: payout amount/currency is USD, while zlto.pendingPayout is
   reserved ZLTO. After commit/release pendingPayout is zero and the wallet balance reflects the result.
   Do not infer outcome from zero, duplicate reward accounting in payout, or calculate historical ZLTO at

@@ -15,10 +15,11 @@ import { CashOutHostedStep } from "~/components/Payout/CashOutHostedStep";
 import { CashOutMessageStep } from "~/components/Payout/CashOutMessageStep";
 import { CashOutOutcomeStep } from "~/components/Payout/CashOutOutcomeStep";
 import { CashOutResumePanel } from "~/components/Payout/CashOutResumePanel";
+import { CashOutWalletLink } from "~/components/Payout/CashOutWalletLink";
 import { CashOutReviewStep } from "~/components/Payout/CashOutReviewStep";
 import type { CashOutStep } from "~/components/Payout/CashOutStepper";
 import { ZltoLedger } from "~/components/Rewards/ZltoLedger";
-import type { UserProfileZlto } from "~/api/models/user";
+import type { UserProfile, UserProfileZlto } from "~/api/models/user";
 import { WalletCreationStatus } from "~/api/models/user";
 import type { CashOutBlockReason } from "~/lib/payout/eligibility";
 import {
@@ -129,6 +130,18 @@ const session = (canCancel?: boolean): PayoutSession => ({
   paymentUrl: "https://example.invalid/hosted",
   expiresAt: new Date(Date.now() + 25 * 60 * 1000).toISOString(),
 });
+
+/**
+ * A profile with a completed cash out behind it. Only the two wallet fields matter — the link reads
+ * nothing else — but it is typed as the real `UserProfile` so a contract change breaks this page
+ * rather than quietly rendering the wrong thing.
+ */
+const walletProfile = {
+  payout: {
+    walletAvailable: true,
+    walletUrl: "https://test.zlato.offramp.yoma.ixo.earth",
+  },
+} as unknown as UserProfile;
 
 const started = formatPayoutStarted(
   new Date(Date.now() - 42 * 60 * 1000).toISOString(),
@@ -905,6 +918,11 @@ export default function CashOutStates() {
             <span className="text-gray-dark text-xs font-semibold">
               Entry point
             </span>
+            {/* Captioned, because these are not in the scene list and "where do I see X?" is
+                otherwise answered by scrolling and guessing. */}
+            <span className="text-gray-dark text-[11px]">
+              Marketplace hero · nothing in flight
+            </span>
             <div className="bg-blue flex flex-col items-center gap-2 rounded-lg p-3">
               <ZltoLedger zlto={zlto()} variant="compact" />
               <CashOutButton
@@ -913,6 +931,10 @@ export default function CashOutStates() {
                 onClick={noop}
               />
             </div>
+
+            <span className="text-gray-dark text-[11px]">
+              Yo-ID wallet card · payout in flight
+            </span>
             <div className="border-gray flex flex-col gap-2 rounded-lg border p-3">
               <ZltoLedger
                 zlto={zlto({ pendingPayout: 100, balance: 2100 })}
@@ -923,6 +945,59 @@ export default function CashOutStates() {
                     label="Continue cash out"
                     onClick={noop}
                   />
+                }
+              />
+            </div>
+
+            {/* The wallet card once a cash out has completed: Cash Out plus the way back to money
+                already sent. `CashOutWalletLink` reads the profile itself, so this passes a shaped
+                one rather than props — which also makes it the place to check that the link stays
+                hidden without `walletAvailable`. */}
+            <span className="text-gray-dark text-[11px]">
+              Yo-ID wallet card · after a completed cash out
+            </span>
+            <div className="border-gray flex flex-col gap-2 rounded-lg border p-3">
+              <ZltoLedger
+                zlto={zlto()}
+                variant="expanded"
+                actions={
+                  <>
+                    <CashOutButton
+                      variant="expanded"
+                      label="Cash Out"
+                      onClick={noop}
+                    />
+                    <CashOutWalletLink
+                      profile={walletProfile}
+                      variant="expanded"
+                    />
+                  </>
+                }
+              />
+            </div>
+
+            {/* The same card without `walletAvailable` — the link must render nothing at all. It is
+                here because "absent" is the state that ships until a youth completes a cash out,
+                and a gallery that only shows the happy case cannot catch it appearing too early. */}
+            <span className="text-gray-dark text-[11px]">
+              Yo-ID wallet card · no completed cash out (no link)
+            </span>
+            <div className="border-gray flex flex-col gap-2 rounded-lg border p-3">
+              <ZltoLedger
+                zlto={zlto()}
+                variant="expanded"
+                actions={
+                  <>
+                    <CashOutButton
+                      variant="expanded"
+                      label="Cash Out"
+                      onClick={noop}
+                    />
+                    <CashOutWalletLink
+                      profile={{} as UserProfile}
+                      variant="expanded"
+                    />
+                  </>
                 }
               />
             </div>

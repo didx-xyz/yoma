@@ -4,6 +4,7 @@ import { useState } from "react";
 import { IoIosInformationCircleOutline } from "react-icons/io";
 import type { UserProfile } from "~/api/models/user";
 import { CashOutEntry } from "../Payout/CashOutEntry";
+import { CashOutWalletLink } from "../Payout/CashOutWalletLink";
 import { ZltoLedger } from "../Rewards/ZltoLedger";
 import NoRowsMessage from "../NoRowsMessage";
 import { ZltoModal } from "./ZltoModal";
@@ -74,8 +75,17 @@ export const WalletCard: React.FC<{
           className="flex-1 justify-center"
           /* The Cash Out entry point belongs to the ledger, not to this card: the same button,
              with the same label rules and the same flow behind it, on both surfaces that show
-             these figures. This card only says which variant it wants. */
-          actions={<CashOutEntry profile={userProfile} variant="expanded" />}
+             these figures. This card only says which variant it wants.
+
+             The wallet link is a *sibling*, not part of that flow — it leads to money already sent,
+             so it survives the kill-switch and a withdrawn corridor, both of which make
+             `CashOutEntry` render nothing. It shows itself only once a cash out has completed. */
+          actions={
+            <>
+              <CashOutEntry profile={userProfile} variant="expanded" />
+              <CashOutWalletLink profile={userProfile} variant="expanded" />
+            </>
+          }
         />
       </div>
     </>

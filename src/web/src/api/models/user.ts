@@ -186,6 +186,32 @@ export interface UserProfilePayout {
    * gate, and treating "old" as "off" would hide Cash Out everywhere it is actually available.
    */
   enabled: boolean;
+  /**
+   * The youth has completed **at least one** cash out, so the provider holds a wallet they can sign
+   * into (API 2026-09-25). Derived from a single existence check over their own completed
+   * reward-funded payouts — no provider call, so it costs nothing on profile load.
+   *
+   * ⚠️ **It says a wallet exists and nothing else.** Not that there is money in it, not that a bank
+   * or mobile-money delivery succeeded, not that anything can be retried. `Completed` marks
+   * Yoma-to-wallet completion, not final delivery — which is exactly why the link is worth having,
+   * and exactly why no copy beside it may make a claim about a balance.
+   *
+   * **Independent of `enabled` and of country availability.** Those gate *new* cash outs; this is a
+   * door to money already sent, and closing it because new payouts are switched off, or because a
+   * corridor was withdrawn, would strand a youth away from their own funds. A newer pending or
+   * failed payout does not clear it either.
+   */
+  walletAvailable?: boolean;
+  /**
+   * Where that wallet lives — the provider's hosted landing page, configured per environment
+   * (`IXO:YellowCard:WalletUrl`) and **null until the first completed cash out**.
+   *
+   * ⚠️ Not the payment-session URL and not derived from the API base URL: it is a durable page the
+   * youth signs into, so it is opened **top-level**, never in the hosted-journey iframe. Validate
+   * the scheme before navigating (`isSafeExternalUrl`) — it arrives from configuration, and a
+   * misconfigured environment is the realistic failure, not an attack.
+   */
+  walletUrl?: string | null;
   countryAvailability: PayoutCountryAvailability;
   /**
    * true while a non-terminal payout exists — server-derived from `status` being one of
