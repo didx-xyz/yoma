@@ -26,6 +26,15 @@ namespace Yoma.Core.Domain.Entity.Models
     public PayoutCountryAvailability CountryAvailability { get; set; } = new();
 
     /// <summary>
+    /// The user has completed at least one cash-out and can open the provider's wallet.
+    /// This does not indicate a wallet balance or successful bank/mobile-money delivery.
+    /// </summary>
+    public bool WalletAvailable { get; set; }
+
+    /// <summary>Hosted wallet landing page; null until the user completes a cash-out.</summary>
+    public string? WalletUrl { get; set; }
+
+    /// <summary>
     /// Indicates an existing non-terminal payout. Do not create a second payout. Offer Continue cash-out when
     /// CanResume is true; otherwise show setup/recovery pending and allow a later refresh.
     /// </summary>

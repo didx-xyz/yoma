@@ -28,6 +28,9 @@ payout, enforce one active payout per user, and reconcile terminal outcomes idem
 
 ## Tasks
 
+- [x] Expose provider-neutral payout wallet availability and URL on the user profile payout summary.
+- [ ] Configure the separate hosted-wallet URL for Stage and Production; Jason to add the wallet button.
+
 - [x] Implement authenticated exact-payout cancellation using IXO's atomic cancel endpoint.
 - [x] Expose provider-derived cancellation eligibility in the existing session response, without profile RPCs.
 - [x] Cover cancellation replay, ownership, provider refusal and webhook races with isolated tests.
@@ -62,6 +65,16 @@ payout, enforce one active payout per user, and reconcile terminal outcomes idem
       2026-09-10 were removed before commit at Adrian's request.
 
 ## Decisions
+
+- 2026-09-25: `GET /user` exposes `payout.walletAvailable` and nullable
+  `payout.walletUrl`. The wallet link is offered after any completed reward-funded cash-out,
+  even if a newer payout is pending or failed; it does not assert wallet balance or bank delivery.
+  The profile performs one user-scoped existence check for a Completed transaction, without a
+  provider request. The payout service returns an explicit availability flag and nullable URL;
+  the profile does not infer availability from the URL string. `GET /user/payout/latest` remains
+  for outcomes and live cancellation guidance.
+  The hosted landing-page URL is configured separately from the provider API BaseUrl as
+  `IXO:YellowCard:WalletUrl`; the application validates this required HTTPS URL at startup.
 
 - 2026-09-21: Also expose nullable CanCancel on on-demand PayoutTransactionInfo. When an in-memory
   session remains valid, UI can check status without refreshing it. Active payouts use a best-effort
