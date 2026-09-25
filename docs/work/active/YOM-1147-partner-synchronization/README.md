@@ -185,6 +185,13 @@ key-only item only for deliberate deletion. No provider may hardcode temporary `
 
 ### Shared skill matching — 2026-09-17
 
+September 25 follow-up: Stage revealed `Programming` -> `Programming (Music)`.
+Uniqueness is not semantic equivalence. The shared fix removes all automatic
+qualifier stripping. Full canonical and formatting matches remain; a small shared
+reviewed alias map preserves Python, JavaScript, SQL, Git, Django and CSS matches
+only against their explicit canonical targets. Unknown aliases are not inferred.
+See [follow-up handover](handoffs/2026-09-25-a.md). Pending review and Stage validation.
+
 - [x] Harden the shared resolver: exact names first, no parenthetical-only aliases,
   no numeric-version stripping, and no first-wins ambiguous matches.
 - [x] Verify cached and uncached behaviour with regression tests before review.

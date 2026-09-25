@@ -44,14 +44,21 @@ namespace Yoma.Core.Test.Lookups
     }
 
     [Theory]
+    [InlineData("Python (Programming Language)", "Python (Programming Language)")]
+    [InlineData("python programming language", "Python (Programming Language)")]
     [InlineData("Python", "Python (Programming Language)")]
+    [InlineData("JavaScript", "JavaScript (Programming Language)")]
+    [InlineData("SQL", "SQL (Programming Language)")]
+    [InlineData("Git", "Git (Version Control System)")]
+    [InlineData("Django", "Django (Web Framework)")]
+    [InlineData("CSS", "Cascading Style Sheets (CSS)")]
     [InlineData("community-outreach", "Community Outreach")]
     [InlineData("CommunityOutreach", "Community Outreach")]
     [InlineData("Research &amp; Development", "Research and Development")]
     [InlineData("Research Development", "Research and Development")]
     [InlineData("C sharp", "C#")]
     [InlineData("C plus plus", "C++")]
-    public void PreservesUnambiguousFormattingAndBaseNameMatches(string input, string name)
+    public void PreservesUnambiguousFullNameAndFormattingMatches(string input, string name)
     {
       using var fixture = new Fixture(true, name);
       Assert.Equal(name, fixture.Service.GetByNameNormalizedOrNull(input)?.Name);
@@ -62,10 +69,10 @@ namespace Yoma.Core.Test.Lookups
     [InlineData(true)]
     public void AmbiguousAliasesNeverPickTheFirstSkill(bool cached)
     {
-      using var fixture = new Fixture(cached, "Python (Programming Language)", "Python (Snake)",
+      using var fixture = new Fixture(cached, "Programming (Music)", "Programming (Other Domain)",
         "A B C", "AB C", "Research and Development", "Research Development");
 
-      Assert.Null(fixture.Service.GetByNameNormalizedOrNull("Python"));
+      Assert.Null(fixture.Service.GetByNameNormalizedOrNull("Programming"));
       Assert.Null(fixture.Service.GetByNameNormalizedOrNull("A BC"));
       Assert.Equal("AB C", fixture.Service.GetByNameNormalizedOrNull("AB C")?.Name);
       Assert.Equal("Research and Development",
@@ -90,6 +97,49 @@ namespace Yoma.Core.Test.Lookups
     {
       using var fixture = new Fixture(false, "Python");
       Assert.Throws<ArgumentNullException>(() => fixture.Service.GetByNameNormalizedOrNull(input!));
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void QualifiersAreRequiredEvenWhenOnlyOneCandidateExists(bool cached)
+    {
+      using var fixture = new Fixture(cached, "Programming (Music)", "Python (Snake)",
+        "Example (Programming Language)", "Example (Music) Practice");
+
+      foreach (var name in new[] { "Programming", "Music", "Python", "Example", "Example Practice" })
+        Assert.Null(fixture.Service.GetByNameNormalizedOrNull(name));
+
+      Assert.Equal("Programming (Music)", fixture.Service.GetByNameNormalizedOrNull(" programming (music) ")?.Name);
+      Assert.Equal("Programming (Music)", fixture.Service.GetByNameNormalizedOrNull("programming music")?.Name);
+      Assert.Null(fixture.Service.GetByNameNormalizedOrNull("Programming (Computer Science)"));
+      Assert.Null(fixture.Service.GetByNameNormalizedOrNull("Programming"));
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void UnqualifiedCanonicalNameStillMatchesAlongsideQualifiedSkills(bool cached)
+    {
+      using var fixture = new Fixture(cached, "Programming (Music)", "Programming", "Programming (Computer Science)");
+      Assert.Equal("Programming", fixture.Service.GetByNameNormalizedOrNull(" PROGRAMMING ")?.Name);
+      Assert.Equal("Programming (Computer Science)",
+        fixture.Service.GetByNameNormalizedOrNull("programming computer science")?.Name);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void ReviewedAliasesKeepExactPriorityAndRejectCollisions(bool cached)
+    {
+      using var exact = new Fixture(cached, "Python", "Python (Programming Language)", "Python (Snake)");
+      Assert.Equal("Python", exact.Service.GetByNameNormalizedOrNull("Python")?.Name);
+      using var qualified = new Fixture(cached, "Python (Programming Language)", "Python (Snake)");
+      Assert.Equal("Python (Programming Language)", qualified.Service.GetByNameNormalizedOrNull("Python")?.Name);
+      using var collision = new Fixture(cached, "Python (Programming Language)", "Py thon");
+      Assert.Null(collision.Service.GetByNameNormalizedOrNull("Python"));
+      using var duplicate = new Fixture(cached, "Python (Programming Language)", "Python (Programming Language)");
+      Assert.Null(duplicate.Service.GetByNameNormalizedOrNull("Python"));
     }
 
     private sealed class Fixture : IDisposable
