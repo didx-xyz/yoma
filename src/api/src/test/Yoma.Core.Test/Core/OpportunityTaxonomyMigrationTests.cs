@@ -11,6 +11,7 @@ using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Opportunity.Models.Lookups;
 using Yoma.Core.Domain.Opportunity.Services.Lookups;
+using Yoma.Core.Domain.Core.Extensions;
 using Xunit;
 using Yoma.Core.Infrastructure.Database.Context;
 using Yoma.Core.Infrastructure.Database.Migrations;
@@ -150,11 +151,38 @@ namespace Yoma.Core.Test.Core
     public void UsesTransactionalSeedersAndPreservesRetainedIds()
     {
       var migration = new ApplicationDb_CF_Configuration();
-      Assert.Equal(7, migration.UpOperations.OfType<UpdateDataOperation>().Count());
+      Assert.Equal(8, migration.UpOperations.OfType<UpdateDataOperation>().Count());
       var additions = Assert.Single(migration.UpOperations.OfType<InsertDataOperation>());
       Assert.Equal(8, additions.Values.GetLength(0));
       Assert.All(migration.UpOperations.OfType<SqlOperation>(), operation => Assert.False(operation.SuppressTransaction));
       Assert.Throws<NotSupportedException>(() => migration.DownOperations);
+    }
+
+    [Fact]
+    public void ImpactActionEnumAndLookupUseNameAndDescription()
+    {
+      var id = Guid.NewGuid();
+      var repository = new Mock<IRepository<OpportunityType>>();
+      repository.Setup(item => item.Query()).Returns(new List<OpportunityType>
+      {
+        new() { Id = id, Name = "ImpactAction", DisplayName = "Impact Action" }
+      }.AsQueryable());
+      var service = new OpportunityTypeService(Options.Create(new AppSettings
+      {
+        CacheEnabledByCacheItemTypes = ""
+      }), Mock.Of<IMemoryCache>(), repository.Object);
+
+      Assert.Equal(id, service.GetByName(Domain.Opportunity.Type.ImpactAction.ToString()).Id);
+      Assert.Equal("Impact Action", Domain.Opportunity.Type.ImpactAction.ToDescription());
+    }
+
+    [Fact]
+    public void IXOImpactActionMapsToRenamedOpportunityType()
+    {
+      var parse = typeof(Infrastructure.IXO.PartnerSync.Client.IXOClient).GetMethod("ParseOpportunityType",
+        System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+      Assert.NotNull(parse);
+      Assert.Equal(Domain.Opportunity.Type.ImpactAction, parse.Invoke(null, ["Impact Action"]));
     }
 
     [Fact]
@@ -183,6 +211,17 @@ namespace Yoma.Core.Test.Core
       var original = await ReadLinks(connection, transaction);
       await ApplyMigration(connection, transaction);
       var migrated = await ReadLinks(connection, transaction);
+
+      await using (var typeCommand = new NpgsqlCommand("""
+        SELECT "Id", "Name", "DisplayName" FROM "Opportunity"."OpportunityType"
+        """, connection, transaction))
+      await using (var typeReader = await typeCommand.ExecuteReaderAsync(TestContext.Current.CancellationToken))
+      {
+        Assert.True(await typeReader.ReadAsync(TestContext.Current.CancellationToken));
+        Assert.Equal(new Guid("f12a9d90-a8f6-4914-8ca5-6acf209f7312"), typeReader.GetGuid(0));
+        Assert.Equal("ImpactAction", typeReader.GetString(1));
+        Assert.Equal("Impact Action", typeReader.GetString(2));
+      }
 
       for (var combination = 0; combination < 1024; combination++)
       {
@@ -322,6 +361,11 @@ namespace Yoma.Core.Test.Core
       await Execute(connection, transaction, """
         CREATE SCHEMA "Opportunity";
         CREATE TABLE "Opportunity"."Opportunity" ("Id" uuid PRIMARY KEY);
+        CREATE TABLE "Opportunity"."OpportunityType" (
+          "Id" uuid PRIMARY KEY, "Name" varchar(125) NOT NULL UNIQUE,
+          "DisplayName" varchar(125) NOT NULL);
+        INSERT INTO "Opportunity"."OpportunityType" VALUES (
+          'f12a9d90-a8f6-4914-8ca5-6acf209f7312', 'Task', 'Task');
         CREATE TABLE "Opportunity"."OpportunityCategory" (
           "Id" uuid PRIMARY KEY, "Name" varchar(125) NOT NULL UNIQUE,
           "ImageURL" varchar(2048) NOT NULL, "DateCreated" timestamptz NOT NULL);

@@ -41,7 +41,8 @@ namespace Yoma.Core.Domain.Opportunity
     Learning,
     Event,
     Job,
-    Task
+    [Description("Impact Action")]
+    ImpactAction
   }
 
   public enum Category

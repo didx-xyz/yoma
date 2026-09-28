@@ -117,13 +117,12 @@ namespace Yoma.Core.Infrastructure.IXO.PartnerSync.Client
     {
       value = value?.Trim();
 
-      // Yoma currently stores this opportunity type as Task. The custom-fields initiative will rename
-      // the Yoma lookup to Impact Action, while IXO already emits the future consumer-facing name.
+      // IXO sends the lookup display name; the enum and lookup Name are ImpactAction.
       if (string.Equals(value, Constants.OpportunityTypeImpactAction, StringComparison.OrdinalIgnoreCase))
-        return Domain.Opportunity.Type.Task;
+        return Domain.Opportunity.Type.ImpactAction;
 
       return Enum.TryParse<Domain.Opportunity.Type>(value, true, out var result) &&
-        result is Domain.Opportunity.Type.Learning or Domain.Opportunity.Type.Job or Domain.Opportunity.Type.Task
+        result is Domain.Opportunity.Type.Learning or Domain.Opportunity.Type.Job or Domain.Opportunity.Type.ImpactAction
           ? result
           : throw new InvalidOperationException($"IXO opportunity type '{value}' is not supported");
     }

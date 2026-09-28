@@ -45,9 +45,11 @@ the BA field map is approved.
 - [x] Disable temporary sample seeding for the cash-out release; retain the framework and sample helper.
 - [ ] Introduce the approved field map in a new migration when CF is released.
 - [ ] Re-run end-to-end API, CSV and partner mapping validation against the final definitions.
+- [x] Rename the `Task` lookup and enum to `ImpactAction` in place, with `[Description("Impact Action")]` and matching display name; update CSV sample and IXO mapping.
 
 ## Decisions
 
+- 2026-09-28: Adrian confirmed **Impact Action** as the final opportunity type, superseding the workbook's Impact Task wording. Follow the existing lookup pattern: rename enum and lookup Name to `ImpactAction`, use `[Description("Impact Action")]` and the same lookup DisplayName, and preserve the existing lookup ID. No Task-specific custom fields or SSI schemas have been seeded, so no context migration or compatibility code is needed. IXO continues to send `Impact Action` and maps to `ImpactAction`. CSV imports use the lookup Name.
 - 2026-09-15: Skip only `SeedCustomFields` in the undeployed consolidated migration for the cash-out-first release. Keep all other seeds and the sample helper intact. Existing Local/Dev databases are not cleaned by this edit; newly migrated Stage/Production databases receive no sample definitions. After this migration ships, introduce approved fields through a new migration, not by re-enabling this call.
 - 2026-09-07: The existing CSV rollback/EF-state fix does not repair historical data. Add a separate, data-only migration counting persisted completed verifications across all opportunities, correcting both undercounts and overcounts. Preserve existing null/zero values when no completions exist; leave ZLTO and all other fields unchanged. `Down` must not restore corrupt counters. Production was manually reconciled today and Adrian reported an empty follow-up audit; continue monthly audits and checks immediately after notified CSV imports until CF is deployed. See the [handoff](./handoffs/2026-09-07-a.md).
 - 2026-07-08: Definitions and values are relational and indexed; values are not stored as a JSON blob.

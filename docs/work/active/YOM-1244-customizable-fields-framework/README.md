@@ -304,7 +304,7 @@ feature:
   endpoint returns, in the order returned.
 
 The design also closes a gap in the BA preset mapping worth flagging at epic level: four User Goals
-mapped to Job, Learning, Impact Task and one Category, leaving `Event` reachable from **no goal at
+mapped to Job, Learning, the `ImpactAction` type and one Category, leaving `Event` reachable from **no goal at
 all** — a preference-driven feed built on that mapping could make every event on the platform
 structurally invisible. An `Attend events` goal closes it. `Other` remains unreachable and is flagged
 rather than papered over. `Start a business` has no agreed mapping and ships visible but inert.
@@ -385,8 +385,12 @@ flag it in a handoff here before merging.
 Reference-data and behaviour changes the discovery surface is built to absorb without code once
 the API ships them; until then web states the actual behaviour in copy:
 
-7. **Opportunity Type `DisplayName` "Impact task" for `Task`.** The BA sheet renames the type
-   (API, UI, reference data; CSV accepts both). Web renders `displayName` verbatim and has
+7. **Opportunity Type `ImpactAction`, displayed as "Impact Action".** Adrian confirmed the final
+   name on 2026-09-28, superseding the workbook's "Impact Task" wording. Rename the lookup `Name`
+   and enum together while retaining its existing ID. No Task-specific custom fields or schemas
+   have been seeded, so this migration has no associated context rows to update.
+   CSV imports use `ImpactAction`; IXO's "Impact Action" wire value maps to that enum.
+   Web renders `displayName` verbatim and has
    deliberately NOT added a display map — the row currently reads "Task" on local and DEV because
    the seed sets `DisplayName = Name`.
 8. **Engagement Type value rename, IDs preserved** — Remote (was Online), On-site (was Offline),
@@ -428,6 +432,8 @@ which is this branch's member list unchanged. Safe because the enum resolves by 
 static lookup table (`Enum.Parse<Type>(entity.Opportunity.Type.Name)`), so nothing is keyed to the
 ordinal. Master's IXO client change auto-merged and still compiles: it maps "Impact Action" onto
 `Type.Task`, which survives in the merged enum. `dotnet build Yoma.Core.sln` is clean.
+This records the 2026-09-03 merge state; the 2026-09-28 CF change above subsequently renames
+the enum and lookup Name to `ImpactAction` while retaining the same lookup ID.
 
 **DEV environment skew (found 2026-09-03, affects anyone previewing this branch):**
 `/opportunity/search` on `v3api.dev.yoma.world` fails with `42703: column

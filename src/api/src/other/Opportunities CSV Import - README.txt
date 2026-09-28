@@ -72,7 +72,7 @@ These headers must exist, and values must comply with rules.
 The following fields are always required:
 
 - Title — required; 1–150 characters
-- Type — required; must match opportunities_types.json (name)
+- Type — required; use a name from opportunities_types.json (ImpactAction for the displayed Impact Action type).
 - Categories — required; ≥1 from opportunities_categories.json (name); `|`-delimited
 - Summary — required; 1–150 characters
 - Description — required

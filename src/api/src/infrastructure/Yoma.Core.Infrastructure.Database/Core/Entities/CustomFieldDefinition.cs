@@ -14,7 +14,7 @@ namespace Yoma.Core.Infrastructure.Database.Core.Entities
     public string EntityType { get; set; } = null!; // Opportunity, MyOpportunity
 
     [Column(TypeName = "varchar(100)")]
-    public string? EntityContext { get; set; } // null = all; otherwise Job/Learning/Event/Task/Other
+    public string? EntityContext { get; set; } // null = all; otherwise Job/Learning/Event/ImpactAction/Other
 
     [Required]
     [Column(TypeName = "varchar(100)")]
