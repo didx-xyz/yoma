@@ -56,6 +56,14 @@ Tickets with no folder yet — add one when work starts:
 | [YOM-1264](https://linear.app/didx/issue/YOM-1264)                                                      | design/BA | Final Opportunity CFs, completion CFs and User Presets. **Blocks YOM-1261 / YOM-1262**      |
 | [YOM-1257](https://linear.app/didx/issue/YOM-1257) / [YOM-1258](https://linear.app/didx/issue/YOM-1258) | api       | User Preset model + preset→filter mapping                                                   |
 
+### User preset foundations — Education (2026-09-28)
+
+- [x] Keep the existing optional `User.EducationId` / `UserProfile.EducationId`; no new user column.
+- [x] Expand the controlled Education lookup to eleven values, retaining all five existing IDs and mapping the old tertiary row to "Tertiary (Qualification not specified)"; new qualifications use "Tertiary - …".
+- [x] Align both Keycloak realm-export Education option lists with the lookup.
+- [ ] Robbie: prepare and execute the Stage and Production Keycloak DB changes in the [living migration handover](handoffs/2026-09-28-keycloak.md) when the CF release reaches each environment. The Yoma database migration does not rewrite Keycloak user values, and existing realms do not automatically reimport changed exports.
+- [ ] Reuse the Education lookup for Job Minimum Qualification when the approved Job custom-field definitions are seeded. No automatic eligibility gate in phase one.
+
 ### Why each child exists
 
 | Ticket   | Purpose                                                                                   |

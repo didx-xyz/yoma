@@ -151,9 +151,10 @@ namespace Yoma.Core.Test.Core
     public void UsesTransactionalSeedersAndPreservesRetainedIds()
     {
       var migration = new ApplicationDb_CF_Configuration();
-      Assert.Equal(8, migration.UpOperations.OfType<UpdateDataOperation>().Count());
-      var additions = Assert.Single(migration.UpOperations.OfType<InsertDataOperation>());
-      Assert.Equal(8, additions.Values.GetLength(0));
+      Assert.Equal(9, migration.UpOperations.OfType<UpdateDataOperation>().Count());
+      var additions = migration.UpOperations.OfType<InsertDataOperation>().ToList();
+      Assert.Equal(8, Assert.Single(additions, item => item.Table == "OpportunityCategory").Values.GetLength(0));
+      Assert.Equal(6, Assert.Single(additions, item => item.Table == "Education").Values.GetLength(0));
       Assert.All(migration.UpOperations.OfType<SqlOperation>(), operation => Assert.False(operation.SuppressTransaction));
       Assert.Throws<NotSupportedException>(() => migration.DownOperations);
     }
@@ -221,6 +222,28 @@ namespace Yoma.Core.Test.Core
         Assert.Equal(new Guid("f12a9d90-a8f6-4914-8ca5-6acf209f7312"), typeReader.GetGuid(0));
         Assert.Equal("ImpactAction", typeReader.GetString(1));
         Assert.Equal("Impact Action", typeReader.GetString(2));
+      }
+
+      await using (var educationCommand = new NpgsqlCommand("""
+        SELECT "Id", "Name" FROM "Lookup"."Education"
+        """, connection, transaction))
+      await using (var educationReader = await educationCommand.ExecuteReaderAsync(TestContext.Current.CancellationToken))
+      {
+        var values = new Dictionary<Guid, string>();
+        while (await educationReader.ReadAsync(TestContext.Current.CancellationToken))
+          values.Add(educationReader.GetGuid(0), educationReader.GetString(1));
+        Assert.Equal(11, values.Count);
+        Assert.Equal("Primary (Grade 1–7 or equivalent)", values[new Guid("BEEBEA3B-381E-4BD8-91D8-319089AB14DA")]);
+        Assert.Equal("Secondary (Grade 8–12, Matric or equivalent)", values[new Guid("5642E521-34B9-4DC8-BFFA-B975F5C95D99")]);
+        Assert.Equal("Tertiary (Qualification not specified)", values[new Guid("2C0F0175-7007-40BF-9BF9-6D15B793BC09")]);
+        Assert.Equal("No formal education (No schooling attended)", values[new Guid("D306BEA3-04AA-4778-969F-4F92DA45559E")]);
+        Assert.Equal("Other", values[new Guid("D0DDBF9F-6AF1-46BE-9465-BD6B8D47B752")]);
+        Assert.Contains("Tertiary - Certificate", values.Values);
+        Assert.Contains("Tertiary - Diploma", values.Values);
+        Assert.Contains("Tertiary - Bachelor’s Degree", values.Values);
+        Assert.Contains("Tertiary - Honours Degree", values.Values);
+        Assert.Contains("Tertiary - Master’s Degree", values.Values);
+        Assert.Contains("Tertiary - PhD", values.Values);
       }
 
       for (var combination = 0; combination < 1024; combination++)
@@ -359,6 +382,16 @@ namespace Yoma.Core.Test.Core
     private static async Task CreateFixture(NpgsqlConnection connection, NpgsqlTransaction transaction)
     {
       await Execute(connection, transaction, """
+        CREATE SCHEMA "Lookup";
+        CREATE TABLE "Lookup"."Education" (
+          "Id" uuid PRIMARY KEY, "Name" varchar(125) NOT NULL UNIQUE,
+          "DateCreated" timestamptz NOT NULL);
+        INSERT INTO "Lookup"."Education" VALUES
+          ('BEEBEA3B-381E-4BD8-91D8-319089AB14DA', 'Primary (Grade 1–7 or equivalent)', CURRENT_TIMESTAMP),
+          ('5642E521-34B9-4DC8-BFFA-B975F5C95D99', 'Secondary (Grade 8–12, Matric or equivalent)', CURRENT_TIMESTAMP),
+          ('2C0F0175-7007-40BF-9BF9-6D15B793BC09', 'Tertiary (Diploma, Degree or equivalent)', CURRENT_TIMESTAMP),
+          ('D306BEA3-04AA-4778-969F-4F92DA45559E', 'No formal education (No schooling attended)', CURRENT_TIMESTAMP),
+          ('D0DDBF9F-6AF1-46BE-9465-BD6B8D47B752', 'Other', CURRENT_TIMESTAMP);
         CREATE SCHEMA "Opportunity";
         CREATE TABLE "Opportunity"."Opportunity" ("Id" uuid PRIMARY KEY);
         CREATE TABLE "Opportunity"."OpportunityType" (

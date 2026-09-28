@@ -13,6 +13,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
       ApplicationDb_CF_Configuration_Seeding_OpportunityTypes.Seed(migrationBuilder);
       ApplicationDb_CF_Configuration_Seeding_OpportunityCategories.Seed(migrationBuilder);
       ApplicationDb_CF_Configuration_Seeding_OpportunityCategoryMappings.Seed(migrationBuilder);
+      ApplicationDb_CF_Configuration_Seeding_Education.Seed(migrationBuilder);
     }
 
     /// <inheritdoc />
