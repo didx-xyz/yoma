@@ -147,7 +147,9 @@ namespace Yoma.Core.Infrastructure.Umuzi.Client
     {
       value = value?.Trim();
       if (string.IsNullOrEmpty(value))
-        value = EngagementTypeOption.Online.ToString();
+        value = EngagementTypeOption.Remote.ToString();
+      else if (EngagementTypeMappings.TryGetValue(value, out var mapped))
+        value = mapped.ToString();
 
       return _engagementTypeService.GetByNameOrNull(value)
         ?? throw new InvalidOperationException($"Umuzi opportunity engagement type '{value}' is not supported");

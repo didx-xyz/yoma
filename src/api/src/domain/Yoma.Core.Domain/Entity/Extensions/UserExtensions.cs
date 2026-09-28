@@ -86,6 +86,10 @@ namespace Yoma.Core.Domain.Entity.Extensions
         PhoneNumberConfirmed = value.PhoneNumberConfirmed,
         CountryId = value.CountryId,
         EducationId = value.EducationId,
+        Region = value.Region,
+        City = value.City,
+        Coordinates = value.Coordinates,
+        LocationSource = value.LocationSource,
         GenderId = value.GenderId,
         DateOfBirth = value.DateOfBirth,
         PhotoId = value.PhotoId,
@@ -98,5 +102,6 @@ namespace Yoma.Core.Domain.Entity.Extensions
         DateModified = value.DateModified
       };
     }
+
   }
 }

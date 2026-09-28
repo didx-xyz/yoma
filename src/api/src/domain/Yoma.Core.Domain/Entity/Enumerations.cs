@@ -1,5 +1,13 @@
+using System.ComponentModel;
+
 namespace Yoma.Core.Domain.Entity
 {
+  public enum UserSkillType
+  {
+    SelfAttested,
+    Verified
+  }
+
   public enum OrganizationStatus
   {
     Inactive, //flagged as declined if inactive and not modified for x days

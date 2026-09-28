@@ -56,6 +56,8 @@ namespace Yoma.Core.Infrastructure.Database.Context
     public DbSet<Entity.Entities.Lookups.OrganizationProviderType> OrganizationProviderType { get; set; }
 
     public DbSet<Entity.Entities.Lookups.SettingsDefinition> SettingsDefinition { get; set; }
+
+    public DbSet<Entity.Entities.Lookups.UserGoal> UserGoal { get; set; }
     #endregion Lookups
 
     public DbSet<Organization> Organization { get; set; }
@@ -72,10 +74,19 @@ namespace Yoma.Core.Infrastructure.Database.Context
 
     public DbSet<UserSkill> UserSkills { get; set; }
 
+    public DbSet<UserPreferences> UserPreferences { get; set; }
+
+    public DbSet<UserPreferenceCategory> UserPreferenceCategories { get; set; }
+    public DbSet<UserPreferenceAccessibilityRequirement> UserPreferenceAccessibilityRequirements { get; set; }
+
+    public DbSet<UserPreferenceLanguage> UserPreferenceLanguages { get; set; }
+
     public DbSet<UserSkillOrganization> UserSkillOrganizations { get; set; }
     #endregion Entity
 
     #region Lookups
+    public DbSet<Accessibility> Accessibility { get; set; }
+
     public DbSet<Country> Country { get; set; }
 
     public DbSet<Education> Education { get; set; }
@@ -445,6 +456,10 @@ namespace Yoma.Core.Infrastructure.Database.Context
       #endregion Core
 
       #region Entity
+      builder.Entity<UserSkill>()
+          .Property(o => o.Type)
+          .HasDefaultValue(Domain.Entity.UserSkillType.Verified.ToString());
+
       builder.Entity<Organization>()
           .HasOne(o => o.CreatedByUser)
           .WithMany()

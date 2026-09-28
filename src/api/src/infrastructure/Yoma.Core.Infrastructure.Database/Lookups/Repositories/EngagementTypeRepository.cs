@@ -26,7 +26,8 @@ namespace Yoma.Core.Infrastructure.Database.Lookups.Repositories
       return _context.EngagementType.Select(entity => new Domain.Lookups.Models.EngagementType
       {
         Id = entity.Id,
-        Name = entity.Name
+        Name = entity.Name,
+        DisplayName = entity.DisplayName
       });
     }
 

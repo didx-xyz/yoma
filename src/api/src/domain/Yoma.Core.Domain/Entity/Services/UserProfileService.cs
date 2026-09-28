@@ -6,6 +6,7 @@ using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
+using Yoma.Core.Domain.Core.Validators;
 using Yoma.Core.Domain.Entity.Extensions;
 using Yoma.Core.Domain.Entity.Helpers;
 using Yoma.Core.Domain.Entity.Interfaces;
@@ -49,7 +50,10 @@ namespace Yoma.Core.Domain.Entity.Services
     private readonly ILinkUsageService _linkUsageService;
     private readonly UserRequestCreateProfileValidator _userRequestCreateProfileValidator;
     private readonly UserRequestUpdateProfileValidator _userRequestUpdateProfileValidator;
+    private readonly UserPreferencesRequestValidator _userPreferencesRequestValidator;
+    private readonly UserRequestUpdateLocationValidator _locationValidator;
     private readonly IRepositoryValueContainsWithNavigation<User> _userRepository;
+    private readonly IRepository<UserPreferences> _userPreferencesRepository;
     private readonly IExecutionStrategyService _executionStrategyService;
     #endregion
 
@@ -73,30 +77,36 @@ namespace Yoma.Core.Domain.Entity.Services
       ILinkUsageService linkUsageService,
       UserRequestCreateProfileValidator userRequestCreateProfileValidator,
       UserRequestUpdateProfileValidator userRequestUpdateProfileValidator,
+      UserPreferencesRequestValidator userPreferencesRequestValidator,
+      UserRequestUpdateLocationValidator locationValidator,
       IRepositoryValueContainsWithNavigation<User> userRepository,
+      IRepository<UserPreferences> userPreferencesRepository,
       IExecutionStrategyService executionStrategyService)
     {
-      _logger = logger;
-      _identityProviderClient = identityProviderClientFactory.CreateClient();
-      _httpContextAccessor = httpContextAccessor;
-      _userService = userService;
-      _genderService = genderService;
-      _countryService = countryService;
-      _educationService = educationService;
-      _organizationService = organizationService;
-      _myOpportunityService = myOpportunityService;
-      _walletService = walletService;
+      _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+      _identityProviderClient = (identityProviderClientFactory ?? throw new ArgumentNullException(nameof(identityProviderClientFactory))).CreateClient();
+      _httpContextAccessor = httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
+      _userService = userService ?? throw new ArgumentNullException(nameof(userService));
+      _genderService = genderService ?? throw new ArgumentNullException(nameof(genderService));
+      _countryService = countryService ?? throw new ArgumentNullException(nameof(countryService));
+      _educationService = educationService ?? throw new ArgumentNullException(nameof(educationService));
+      _organizationService = organizationService ?? throw new ArgumentNullException(nameof(organizationService));
+      _myOpportunityService = myOpportunityService ?? throw new ArgumentNullException(nameof(myOpportunityService));
+      _walletService = walletService ?? throw new ArgumentNullException(nameof(walletService));
       _rewardService = rewardService ?? throw new ArgumentNullException(nameof(rewardService));
       _payoutTransactionService = payoutTransactionService ?? throw new ArgumentNullException(nameof(payoutTransactionService));
       _payoutService = payoutService ?? throw new ArgumentNullException(nameof(payoutService));
-      _settingsDefinitionService = settingsDefinitionService;
-      _referralBlockService = referralBlockService;
-      _linkService = linkService;
-      _linkUsageService = linkUsageService;
-      _userRequestCreateProfileValidator = userRequestCreateProfileValidator;
-      _userRequestUpdateProfileValidator = userRequestUpdateProfileValidator;
-      _userRepository = userRepository;
-      _executionStrategyService = executionStrategyService;
+      _settingsDefinitionService = settingsDefinitionService ?? throw new ArgumentNullException(nameof(settingsDefinitionService));
+      _referralBlockService = referralBlockService ?? throw new ArgumentNullException(nameof(referralBlockService));
+      _linkService = linkService ?? throw new ArgumentNullException(nameof(linkService));
+      _linkUsageService = linkUsageService ?? throw new ArgumentNullException(nameof(linkUsageService));
+      _userRequestCreateProfileValidator = userRequestCreateProfileValidator ?? throw new ArgumentNullException(nameof(userRequestCreateProfileValidator));
+      _userRequestUpdateProfileValidator = userRequestUpdateProfileValidator ?? throw new ArgumentNullException(nameof(userRequestUpdateProfileValidator));
+      _userPreferencesRequestValidator = userPreferencesRequestValidator ?? throw new ArgumentNullException(nameof(userPreferencesRequestValidator));
+      _locationValidator = locationValidator ?? throw new ArgumentNullException(nameof(locationValidator));
+      _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
+      _userPreferencesRepository = userPreferencesRepository ?? throw new ArgumentNullException(nameof(userPreferencesRepository));
+      _executionStrategyService = executionStrategyService ?? throw new ArgumentNullException(nameof(executionStrategyService));
     }
     #endregion
 
@@ -104,8 +114,108 @@ namespace Yoma.Core.Domain.Entity.Services
     public UserProfile Get()
     {
       var username = HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false);
-      var user = _userService.GetByUsername(username, true, true);
+      var user = _userService.GetByUsername(username, false, true);
       return ToProfile(user).Result;
+    }
+
+    public async Task<UserProfile> UpdateLocation(UserRequestUpdateLocation request)
+    {
+      ArgumentNullException.ThrowIfNull(request);
+
+      await _locationValidator.ValidateAsync(request, options =>
+      {
+        options.IncludeRuleSets("default", "Country");
+        options.ThrowOnFailures();
+      });
+
+      var username = HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false);
+      var user = _userService.GetByUsername(username, false, true);
+
+      // Preserve the other profile fields and reuse the existing country / identity-provider update flow.
+      return await Update(new UserRequestUpdateProfile
+      {
+        Email = user.Email,
+        FirstName = user.FirstName ?? string.Empty,
+        Surname = user.Surname ?? string.Empty,
+        EducationId = user.EducationId,
+        GenderId = user.GenderId,
+        DateOfBirth = user.DateOfBirth,
+        CountryId = request.CountryId,
+        Region = request.Region,
+        City = request.City,
+        Coordinates = request.Coordinates,
+        LocationSource = request.LocationSource
+      });
+    }
+
+    public UserPreferences GetPreferences()
+    {
+      var username = HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false);
+      var user = _userService.GetByUsername(username, true, false);
+      var preferences = _userPreferencesRepository.Query().SingleOrDefault(item => item.UserId == user.Id)
+        ?? new UserPreferences { UserId = user.Id };
+      preferences.SkillsSelfAttested = user.Skills?.Where(item => item.Type == UserSkillType.SelfAttested)
+        .Select(item => new Domain.Lookups.Models.Skill { Id = item.Id, Name = item.Name, InfoURL = item.InfoURL })
+        .OrderBy(item => item.Name).ToList() ?? [];
+      return preferences;
+    }
+
+    public async Task<UserPreferences> UpdatePreferences(UserPreferencesRequest request)
+    {
+      ArgumentNullException.ThrowIfNull(request, nameof(request));
+
+      await _userPreferencesRequestValidator.ValidateAndThrowAsync(request);
+
+      var username = HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false);
+
+      await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+      {
+        using var scope = TransactionScopeHelper.CreateReadCommitted();
+        var user = _userService.GetByUsername(username, true, false);
+        var preferences = _userPreferencesRepository.Query().SingleOrDefault(item => item.UserId == user.Id);
+
+        // The request replaces all current preferences; only self-attested skill rows may be removed.
+        var isNew = preferences == null;
+        preferences ??= new UserPreferences { UserId = user.Id };
+        preferences.GoalId = request.GoalId;
+        preferences.CommitmentIntervalId = request.CommitmentIntervalId;
+        preferences.CommitmentIntervalCount = request.CommitmentIntervalCount;
+        preferences.EngagementTypeId = request.EngagementTypeId;
+        preferences.Incentivized = request.Incentivized;
+        preferences.AccessibilityRequirementOtherDescription = request.AccessibilityRequirementOtherDescription;
+        if (isNew)
+          await _userPreferencesRepository.Create(preferences);
+        else
+          await _userPreferencesRepository.Update(preferences);
+
+        var categoriesToRemove = preferences.Categories.Where(o =>
+          request.Categories == null || !request.Categories.Contains(o.Id))
+          .Select(o => o.Id).ToList();
+        await _userService.RemovePreferenceCategories(user, categoriesToRemove);
+        await _userService.AssignPreferenceCategories(user, request.Categories);
+
+        var accessibilityRequirementsToRemove = preferences.AccessibilityRequirements.Where(o =>
+          request.AccessibilityRequirements == null || !request.AccessibilityRequirements.Contains(o.Id))
+          .Select(o => o.Id).ToList();
+        await _userService.RemoveAccessibilityRequirements(user, accessibilityRequirementsToRemove);
+        await _userService.AssignAccessibilityRequirements(user, request.AccessibilityRequirements);
+
+        var languagesToRemove = preferences.Languages.Where(o =>
+          request.Languages == null || !request.Languages.Contains(o.Id)).Select(o => o.Id).ToList();
+        await _userService.RemovePreferenceLanguages(user, languagesToRemove);
+        await _userService.AssignPreferenceLanguages(user, request.Languages);
+
+        var skillsToRemove = user.Skills?.Where(o => o.Type == UserSkillType.SelfAttested &&
+          (request.SkillsSelfAttested == null || !request.SkillsSelfAttested.Contains(o.Id))).Select(o => o.Id).ToList();
+        await _userService.RemoveSkillsSelfAttested(user, skillsToRemove);
+        await _userService.AssignSkillsSelfAttested(user, request.SkillsSelfAttested);
+
+        scope.Complete();
+      });
+
+      // Preference links and skills are written by separate services, not maintained on this projected model.
+      // Reload after commit so the response contains their current lookup details and verified skill precedence.
+      return GetPreferences();
     }
 
     public async Task<List<PayoutCountry>?> ListPayoutCountries()
@@ -141,11 +251,11 @@ namespace Yoma.Core.Domain.Entity.Services
       await _payoutService.Cancel(user.Id, payoutId);
     }
 
-    public List<UserSkillInfo>? GetSkills()
+    public List<UserSkillInfo>? GetSkills(UserSkillType? type)
     {
       var username = HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false);
       var user = _userService.GetByUsername(username, true, true);
-      return user.Skills;
+      return type.HasValue ? user.Skills?.Where(o => o.Type == type.Value).ToList() : user.Skills;
     }
 
     public Settings GetSettings()
@@ -199,7 +309,7 @@ namespace Yoma.Core.Domain.Entity.Services
       if (existingByPhone != null)
         throw new ValidationException($"{nameof(User)} with the specified phone number '{request.PhoneNumber}' already exists");
 
-      var countryId = string.IsNullOrEmpty(request.CountryCodeAlpha2) ? (Guid?)null : _countryService.GetByCodeAlpha2(request.CountryCodeAlpha2).Id;
+      var countryId = _countryService.GetByCodeAlpha2(request.CountryCodeAlpha2).Id;
 
       //neither email or phone number is flagged as confirmed; both will be confirmed by keycloak and flagged as such on 1st login
       var result = new User
@@ -216,7 +326,11 @@ namespace Yoma.Core.Domain.Entity.Services
         EducationId = request.EducationId,
         GenderId = request.GenderId,
         DateOfBirth = request.DateOfBirth.RemoveTime(),
-        Settings = SettingsHelper.ParseInfo(_settingsDefinitionService.ListByEntityType(EntityType.User), (string?)null)
+        Settings = SettingsHelper.ParseInfo(_settingsDefinitionService.ListByEntityType(EntityType.User), (string?)null),
+        Region = request.Region,
+        City = request.City,
+        Coordinates = request.Coordinates,
+        LocationSource = request.LocationSource
       };
       result.SetDisplayName();
 
@@ -291,6 +405,10 @@ namespace Yoma.Core.Domain.Entity.Services
       result.DisplayName = request.DisplayName;
       result.SetDisplayName();
       result.CountryId = request.CountryId;
+      result.Region = request.Region;
+      result.City = request.City;
+      result.Coordinates = request.Coordinates;
+      result.LocationSource = request.LocationSource;
       result.EducationId = request.EducationId;
       result.GenderId = request.GenderId;
       result.DateOfBirth = request.DateOfBirth?.RemoveTime();

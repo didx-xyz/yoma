@@ -97,18 +97,24 @@ namespace Yoma.Core.Infrastructure.Database
       services.AddScoped<IRepository<Domain.Entity.Models.Lookups.OrganizationStatus>, Entity.Repositories.Lookups.OrganizationStatusRepository>();
       services.AddScoped<IRepository<Domain.Entity.Models.Lookups.OrganizationProviderType>, Entity.Repositories.Lookups.OrganizationProviderTypeRepository>();
       services.AddScoped<IRepository<Domain.Entity.Models.Lookups.SettingsDefinition>, Entity.Repositories.Lookups.SettingsDefinitionRepository>();
+      services.AddScoped<IRepository<Domain.Entity.Models.Lookups.UserGoal>, Entity.Repositories.Lookups.UserGoalRepository>();
       #endregion Lookups
       services.AddScoped<IRepository<OrganizationDocument>, OrganizationDocumentRepository>();
       services.AddScoped<IRepository<OrganizationProviderType>, OrganizationProviderTypeRepository>();
       services.AddScoped<IRepositoryBatchedValueContainsWithNavigation<Organization>, OrganizationRepository>();
       services.AddScoped<IRepository<OrganizationUser>, OrganizationUserRepository>();
       services.AddScoped<IRepositoryValueContainsWithNavigation<User>, UserRepository>();
+      services.AddScoped<IRepository<UserPreferences>, UserPreferencesRepository>();
       services.AddScoped<IRepository<UserLoginHistory>, UserLoginHistoryRepository>();
       services.AddScoped<IRepository<UserSkill>, UserSkillRepository>();
+      services.AddScoped<IRepository<UserPreferenceCategory>, UserPreferenceCategoryRepository>();
+      services.AddScoped<IRepository<UserPreferenceLanguage>, UserPreferenceLanguageRepository>();
       services.AddScoped<IRepository<UserSkillOrganization>, UserSkillOrganizationRepository>();
       #endregion Entity
 
       #region Lookups
+      services.AddScoped<IRepository<Accessibility>, AccessibilityRepository>();
+      services.AddScoped<IRepository<UserPreferenceAccessibilityRequirement>, UserPreferenceAccessibilityRequirementRepository>();
       services.AddScoped<IRepository<Country>, CountryRepository>();
       services.AddScoped<IRepository<Education>, EducationRepository>();
       services.AddScoped<IRepository<EngagementType>, EngagementTypeRepository>();

@@ -15,9 +15,25 @@ namespace Yoma.Core.Domain.Entity.Validators
 
     #region Constructor
     public UserRequestCreateProfileValidator(ICountryService countryService, IEducationService educationService,
-        IGenderService genderService) : base(educationService, genderService)
+        IGenderService genderService, UserRequestUpdateLocationValidator locationValidator) : base(educationService, genderService)
     {
-      _countryService = countryService;
+      _countryService = countryService ?? throw new ArgumentNullException(nameof(countryService));
+      ArgumentNullException.ThrowIfNull(locationValidator);
+      RuleFor(x => new UserRequestUpdateLocation
+      {
+        Region = x.Region,
+        City = x.City,
+        Coordinates = x.Coordinates,
+        LocationSource = x.LocationSource
+      }).SetValidator(locationValidator);
+
+      RuleFor(x => x.GenderId).NotEmpty().WithMessage("'Gender' is required.");
+      RuleFor(x => x.DateOfBirth).NotNull().WithMessage("'Date of Birth' is required.")
+        .DependentRules(() =>
+        {
+          RuleFor(x => x.DateOfBirth).Must(date => date!.Value.Date >= new DateTime(1900, 1, 1))
+            .WithMessage("'Date of Birth' must be on or after 1 January 1900.");
+        });
 
       RuleFor(x => x.FirstName).NotEmpty().WithMessage("'First Name' is required.")
         .DependentRules(() =>

@@ -41,6 +41,7 @@ if [ ! -z "${ADMIN_USER}" ]; then
             "dateOfBirth": ["01/01/2001"],
             "country": ["Afghanistan"],
             "gender": ["Male"],
+            "education": ["Tertiary (Qualification not specified)"],
             "terms_and_conditions": ["Yes"]
           },
           "credentials": [{
@@ -89,6 +90,7 @@ if [ ! -z "${ORG_ADMIN_USER}" ]; then
             "dateOfBirth": ["01/01/2001"],
             "country": ["Afghanistan"],
             "gender": ["Male"],
+            "education": ["Tertiary (Qualification not specified)"],
             "terms_and_conditions": ["Yes"]
           },
           "credentials": [{
@@ -137,6 +139,7 @@ if [ ! -z "${TEST_USER}" ]; then
             "dateOfBirth": ["01/01/2001"],
             "country": ["Afghanistan"],
             "gender": ["Male"],
+            "education": ["Tertiary (Qualification not specified)"],
             "terms_and_conditions": ["Yes"]
           },
           "credentials": [{
@@ -175,12 +178,6 @@ if [ ! -z "${YOMA_SYSTEM_USER}" ]; then
           "firstName": "Yoma",
           "lastName": "System",
           "email": "'"${YOMA_SYSTEM_USER}"'",
-          "attributes": {
-            "dateOfBirth": ["01/01/2001"],
-            "country": ["Afghanistan"],
-            "gender": ["Male"],
-            "terms_and_conditions": ["Yes"]
-          },
           "credentials": [{
             "type": "password",
             "value": "'"${YOMA_SYSTEM_USER_PASSWORD}"'",

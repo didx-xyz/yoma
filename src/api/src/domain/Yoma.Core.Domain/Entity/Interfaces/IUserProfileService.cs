@@ -9,6 +9,12 @@ namespace Yoma.Core.Domain.Entity.Interfaces
   {
     UserProfile Get();
 
+    Task<UserProfile> UpdateLocation(UserRequestUpdateLocation request);
+
+    UserPreferences GetPreferences();
+
+    Task<UserPreferences> UpdatePreferences(UserPreferencesRequest request);
+
     Task<List<PayoutCountry>?> ListPayoutCountries();
 
     Task<PayoutSession> PayoutRewards(decimal amount);
@@ -19,7 +25,7 @@ namespace Yoma.Core.Domain.Entity.Interfaces
 
     Task<PayoutTransactionInfo> GetLatestPayoutTransaction();
 
-    List<UserSkillInfo>? GetSkills();
+    List<UserSkillInfo>? GetSkills(UserSkillType? type);
 
     Settings GetSettings();
 

@@ -22,6 +22,15 @@ namespace Yoma.Core.Domain.Entity.Models
 
     public Guid? CountryId { get; set; }
 
+    public string? Region { get; set; }
+
+    public string? City { get; set; }
+
+    /// <summary>City centre as [longitude, latitude], without elevation. Stored only in Yoma.</summary>
+    public double[]? Coordinates { get; set; }
+
+    public Core.LocationSource? LocationSource { get; set; }
+
     public Guid? EducationId { get; set; }
 
     public Guid? GenderId { get; set; }

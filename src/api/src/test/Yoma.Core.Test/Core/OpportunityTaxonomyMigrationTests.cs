@@ -151,10 +151,71 @@ namespace Yoma.Core.Test.Core
     public void UsesTransactionalSeedersAndPreservesRetainedIds()
     {
       var migration = new ApplicationDb_CF_Configuration();
-      Assert.Equal(9, migration.UpOperations.OfType<UpdateDataOperation>().Count());
+      var typeColumn = Assert.Single(migration.UpOperations.OfType<AddColumnOperation>(),
+        item => item.Table == "UserSkills" && item.Name == "Type");
+      Assert.Equal("Verified", typeColumn.DefaultValue);
+      var dateModifiedColumn = Assert.Single(migration.UpOperations.OfType<AddColumnOperation>(),
+        item => item.Table == "UserSkills" && item.Name == "DateModified");
+      Assert.True(dateModifiedColumn.IsNullable);
+      var dateModifiedNotNull = Assert.Single(migration.UpOperations.OfType<AlterColumnOperation>(),
+        item => item.Table == "UserSkills" && item.Name == "DateModified");
+      Assert.False(dateModifiedNotNull.IsNullable);
+      Assert.Contains(migration.UpOperations.OfType<SqlOperation>(), item =>
+        item.Sql.Contains("SET \"DateModified\" = \"DateCreated\"", StringComparison.Ordinal));
+      var preferredCategories = Assert.Single(migration.UpOperations.OfType<CreateTableOperation>(),
+        item => item.Name == "UserPreferenceCategories" && item.Schema == "Entity");
+      Assert.Contains(preferredCategories.ForeignKeys, item =>
+        item.PrincipalTable == "UserPreferences" && item.PrincipalSchema == "Entity");
+      Assert.Contains(preferredCategories.ForeignKeys, item =>
+        item.PrincipalTable == "OpportunityCategory" && item.PrincipalSchema == "Opportunity");
+      Assert.Contains(migration.UpOperations.OfType<CreateIndexOperation>(), item =>
+        item.Table == "UserPreferenceCategories" && item.IsUnique &&
+        item.Columns.SequenceEqual(["UserId", "CategoryId"]));
+      Assert.Equal(12, migration.UpOperations.OfType<UpdateDataOperation>().Count());
+      var engagementRenames = migration.UpOperations.OfType<UpdateDataOperation>()
+        .Where(item => item.Table == "EngagementType" && item.Schema == "Lookup").ToList();
+      Assert.Equal(3, engagementRenames.Count);
+      Assert.Contains(engagementRenames, item => item.KeyValues[0, 0]?.ToString()?.Equals(
+        "0B2AAF7A-FDCF-4015-9668-D06BDEBAFA09", StringComparison.OrdinalIgnoreCase) == true &&
+        item.Values[0, 0]?.ToString() == "Remote");
+      Assert.Contains(engagementRenames, item => item.KeyValues[0, 0]?.ToString()?.Equals(
+        "171A5E0A-B4DB-49F1-A03E-96B5975650A7", StringComparison.OrdinalIgnoreCase) == true &&
+        item.Values[0, 0]?.ToString() == "OnSite" && item.Values[0, 1]?.ToString() == "On-site");
+      Assert.Contains(migration.UpOperations.OfType<AddColumnOperation>(), item =>
+        item.Table == "EngagementType" && item.Schema == "Lookup" && item.Name == "DisplayName");
+      var preferences = Assert.Single(migration.UpOperations.OfType<CreateTableOperation>(), item =>
+        item.Name == "UserPreferences" && item.Schema == "Entity");
+      Assert.Contains(preferences.Columns, item => item.Name == "Incentivized" && item.ClrType == typeof(bool) && item.IsNullable);
+      Assert.Contains(preferences.Columns, item => item.Name == "EngagementTypeId" && item.IsNullable);
+      Assert.Contains(preferences.ForeignKeys, item => item.PrincipalTable == "User" && item.PrincipalSchema == "Entity");
+      Assert.Contains(preferences.ForeignKeys, item => item.PrincipalTable == "EngagementType" && item.PrincipalSchema == "Lookup");
       var additions = migration.UpOperations.OfType<InsertDataOperation>().ToList();
       Assert.Equal(8, Assert.Single(additions, item => item.Table == "OpportunityCategory").Values.GetLength(0));
       Assert.Equal(6, Assert.Single(additions, item => item.Table == "Education").Values.GetLength(0));
+      Assert.Equal(5, Assert.Single(additions, item => item.Table == "UserGoal").Values.GetLength(0));
+      Assert.Contains(preferences.Columns, item => item.Name == "GoalId" && item.IsNullable);
+      Assert.Contains(preferences.ForeignKeys, item => item.PrincipalTable == "UserGoal" && item.PrincipalSchema == "Entity");
+      Assert.Contains(preferences.Columns, item => item.Name == "CommitmentIntervalId" && item.IsNullable);
+      Assert.Contains(preferences.Columns, item => item.Name == "CommitmentIntervalCount" && item.IsNullable && item.ColumnType == "smallint");
+      Assert.Contains(preferences.ForeignKeys, item => item.PrincipalTable == "TimeInterval" && item.PrincipalSchema == "Lookup");
+      Assert.Equal(16, Assert.Single(additions, item => item.Table == "Accessibility").Values.GetLength(0));
+      var accessibilityRequirements = Assert.Single(migration.UpOperations.OfType<CreateTableOperation>(), item =>
+        item.Name == "UserPreferenceAccessibilityRequirements" && item.Schema == "Entity");
+      Assert.Contains(accessibilityRequirements.ForeignKeys, item =>
+        item.PrincipalTable == "UserPreferences" && item.PrincipalSchema == "Entity");
+      Assert.Contains(accessibilityRequirements.ForeignKeys, item =>
+        item.PrincipalTable == "Accessibility" && item.PrincipalSchema == "Lookup");
+      Assert.Contains(migration.UpOperations.OfType<CreateIndexOperation>(), item =>
+        item.Table == "UserPreferenceAccessibilityRequirements" && item.IsUnique &&
+        item.Columns.SequenceEqual(["UserId", "AccessibilityId"]));
+      Assert.Contains(preferences.Columns, item => item.Name == "AccessibilityRequirementOtherDescription" && item.IsNullable &&
+        item.ColumnType == "varchar(500)");
+      var languages = Assert.Single(migration.UpOperations.OfType<CreateTableOperation>(), item =>
+        item.Name == "UserPreferenceLanguages" && item.Schema == "Entity");
+      Assert.Contains(languages.ForeignKeys, item => item.PrincipalTable == "UserPreferences" && item.PrincipalSchema == "Entity");
+      Assert.Contains(languages.ForeignKeys, item => item.PrincipalTable == "Language" && item.PrincipalSchema == "Lookup");
+      Assert.Contains(migration.UpOperations.OfType<CreateIndexOperation>(), item =>
+        item.Table == "UserPreferenceLanguages" && item.IsUnique && item.Columns.SequenceEqual(["UserId", "LanguageId"]));
       Assert.All(migration.UpOperations.OfType<SqlOperation>(), operation => Assert.False(operation.SuppressTransaction));
       Assert.Throws<NotSupportedException>(() => migration.DownOperations);
     }
@@ -212,6 +273,24 @@ namespace Yoma.Core.Test.Core
       var original = await ReadLinks(connection, transaction);
       await ApplyMigration(connection, transaction);
       var migrated = await ReadLinks(connection, transaction);
+
+      await using (var skillCommand = new NpgsqlCommand("""
+        SELECT "Type", "DateCreated", "DateModified" FROM "Entity"."UserSkills"
+        """, connection, transaction))
+      {
+        await using var skillReader = await skillCommand.ExecuteReaderAsync(TestContext.Current.CancellationToken);
+        Assert.True(await skillReader.ReadAsync(TestContext.Current.CancellationToken));
+        Assert.Equal("Verified", skillReader.GetString(0));
+        Assert.Equal(skillReader.GetFieldValue<DateTimeOffset>(1), skillReader.GetFieldValue<DateTimeOffset>(2));
+      }
+
+      await using (var nullableCommand = new NpgsqlCommand("""
+        SELECT is_nullable FROM information_schema.columns
+        WHERE table_schema = 'Entity' AND table_name = 'UserSkills' AND column_name = 'DateModified'
+        """, connection, transaction))
+      {
+        Assert.Equal("NO", await nullableCommand.ExecuteScalarAsync(TestContext.Current.CancellationToken));
+      }
 
       await using (var typeCommand = new NpgsqlCommand("""
         SELECT "Id", "Name", "DisplayName" FROM "Opportunity"."OpportunityType"
@@ -383,6 +462,9 @@ namespace Yoma.Core.Test.Core
     {
       await Execute(connection, transaction, """
         CREATE SCHEMA "Lookup";
+        CREATE SCHEMA "Entity";
+        CREATE TABLE "Entity"."UserSkills" ("Id" uuid PRIMARY KEY, "DateCreated" timestamptz NOT NULL);
+        INSERT INTO "Entity"."UserSkills" VALUES (gen_random_uuid(), '2024-01-15T12:00:00Z'::timestamptz);
         CREATE TABLE "Lookup"."Education" (
           "Id" uuid PRIMARY KEY, "Name" varchar(125) NOT NULL UNIQUE,
           "DateCreated" timestamptz NOT NULL);

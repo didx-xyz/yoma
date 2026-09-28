@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 using System.Linq.Expressions;
 using Yoma.Core.Domain.BlobProvider;
 using Yoma.Core.Domain.Core;
@@ -48,6 +49,10 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
         PhoneNumberConfirmed = entity.PhoneNumberConfirmed,
         CountryId = entity.CountryId,
         Country = entity.Country == null ? null : entity.Country.Name,
+        Region = entity.Region,
+        City = entity.City,
+        Coordinates = entity.Coordinates == null ? null : JsonConvert.DeserializeObject<double[]>(entity.Coordinates),
+        LocationSource = entity.LocationSource == null ? null : Enum.Parse<LocationSource>(entity.LocationSource),
         EducationId = entity.EducationId,
         Education = entity.Education == null ? null : entity.Education.Name,
         PhotoId = entity.PhotoId,
@@ -63,12 +68,13 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
         SettingsRaw = entity.Settings,
         DateCreated = entity.DateCreated,
         DateModified = entity.DateModified,
-        Skills = entity.Skills == null ? null : includeChildItems ?
+        Skills = !includeChildItems || entity.Skills == null ? null :
               entity.Skills.Select(o => new Domain.Entity.Models.UserSkillInfo
               {
                 Id = o.SkillId,
                 Name = o.Skill.Name,
                 InfoURL = o.Skill.InfoURL,
+                Type = Enum.Parse<Domain.Entity.UserSkillType>(o.Type),
                 Organizations = o.Organizations.Select(o => new Domain.Entity.Models.UserSkillOrganizationInfo
                 {
                   Id = o.Id,
@@ -78,7 +84,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
                   LogoKey = o.Organization.Logo == null ? null : o.Organization.Logo.Key,
                 }).OrderBy(o => o.Name).ToList()
 
-              }).OrderBy(o => o.Name).ToList() : null
+              }).OrderBy(o => o.Name).ToList()
       });
 
       if (includeChildItems) query = query.AsSplitQuery();
@@ -118,6 +124,10 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
         PhoneNumber = item.PhoneNumber,
         PhoneNumberConfirmed = item.PhoneNumberConfirmed,
         CountryId = item.CountryId,
+        Region = item.Region,
+        City = item.City,
+        Coordinates = item.Coordinates == null ? null : JsonConvert.SerializeObject(item.Coordinates),
+        LocationSource = item.LocationSource?.ToString(),
         EducationId = item.EducationId,
         PhotoId = item.PhotoId,
         GenderId = item.GenderId,
@@ -152,6 +162,10 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
       entity.PhoneNumber = item.PhoneNumber;
       entity.PhoneNumberConfirmed = item.PhoneNumberConfirmed;
       entity.CountryId = item.CountryId;
+      entity.Region = item.Region;
+      entity.City = item.City;
+      entity.Coordinates = item.Coordinates == null ? null : JsonConvert.SerializeObject(item.Coordinates);
+      entity.LocationSource = item.LocationSource?.ToString();
       entity.EducationId = item.EducationId;
       entity.PhotoId = item.PhotoId;
       entity.GenderId = item.GenderId;

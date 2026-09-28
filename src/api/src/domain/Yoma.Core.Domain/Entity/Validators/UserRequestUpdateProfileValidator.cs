@@ -14,9 +14,25 @@ namespace Yoma.Core.Domain.Entity.Validators
 
     #region Constructor
     public UserRequestUpdateProfileValidator(ICountryService countryService, IEducationService educationService,
-        IGenderService genderService) : base(educationService, genderService)
+        IGenderService genderService, UserRequestUpdateLocationValidator locationValidator) : base(educationService, genderService)
     {
-      _countryService = countryService;
+      _countryService = countryService ?? throw new ArgumentNullException(nameof(countryService));
+      ArgumentNullException.ThrowIfNull(locationValidator);
+      RuleFor(x => new UserRequestUpdateLocation
+      {
+        Region = x.Region,
+        City = x.City,
+        Coordinates = x.Coordinates,
+        LocationSource = x.LocationSource
+      }).SetValidator(locationValidator);
+
+      RuleFor(x => x.GenderId).NotEmpty().WithMessage("'Gender' is required.");
+      RuleFor(x => x.DateOfBirth).NotNull().WithMessage("'Date of Birth' is required.")
+        .DependentRules(() =>
+        {
+          RuleFor(x => x.DateOfBirth).Must(date => date!.Value.Date >= new DateTime(1900, 1, 1))
+            .WithMessage("'Date of Birth' must be on or after 1 January 1900.");
+        });
 
       RuleFor(x => x.FirstName).NotEmpty().WithMessage("'First Name' is required.")
         .DependentRules(() =>
@@ -31,17 +47,21 @@ namespace Yoma.Core.Domain.Entity.Validators
           RuleFor(x => x.Surname).Length(1, 125).WithMessage("'{PropertyName}' must be between 1 and 125 characters.");
         });
 
-      RuleFor(x => x.CountryId).Must(CountryExists).WithMessage($"Specified 'Country' is invalid / does not exist. 'Worldwide' is not allowed as a country selection.");
+      RuleFor(x => x.CountryId).NotEmpty().WithMessage("'Country' is required.")
+        .DependentRules(() =>
+        {
+          RuleFor(x => x.CountryId).Must(CountryExists)
+            .WithMessage("Specified 'Country' is invalid / does not exist. 'Worldwide' is not allowed as a country selection.");
+        });
     }
     #endregion
 
     #region Private Members
-    private bool CountryExists(Guid? id)
+    private bool CountryExists(Guid id)
     {
-      if (!id.HasValue) return true;
-      if (id.Value == Guid.Empty) return false;
+      if (id == Guid.Empty) return false;
 
-      var country = _countryService.GetByIdOrNull(id.Value);
+      var country = _countryService.GetByIdOrNull(id);
       if (country == null) return false;
 
       var countryIdWorldwide = _countryService.GetByCodeAlpha2(Country.Worldwide.ToDescription());

@@ -485,8 +485,8 @@ namespace Yoma.Core.Infrastructure.Alison.Client
       var (interval, count) = GetCommitment(course);
 
       // Engagement type:
-      // Alison provides online courses only, so all synced Alison opportunities are mapped as Online.
-      var engagementType = _engagementTypeService.GetByName(EngagementTypeOption.Online.ToString());
+      // Alison provides remote courses only.
+      var engagementType = _engagementTypeService.GetByName(EngagementTypeOption.Remote.ToString());
 
       return new SyncItemEntity<OpportunityRequestCreate>
       {

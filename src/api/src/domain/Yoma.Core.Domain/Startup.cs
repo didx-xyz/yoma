@@ -111,6 +111,7 @@ namespace Yoma.Core.Domain
       services.AddScoped<IOrganizationStatusService, OrganizationStatusService>();
       services.AddScoped<IOrganizationProviderTypeService, OrganizationProviderTypeService>();
       services.AddScoped<ISettingsDefinitionService, SettingsDefinitionService>();
+      services.AddScoped<IUserGoalService, UserGoalService>();
       #endregion Lookups
 
       services.AddScoped<IOrganizationService, OrganizationService>();
@@ -121,6 +122,7 @@ namespace Yoma.Core.Domain
       #endregion Entity
 
       #region Lookups
+      services.AddScoped<IAccessibilityService, AccessibilityService>();
       services.AddScoped<ICountryService, CountryService>();
       services.AddScoped<IEducationService, EducationService>();
       services.AddScoped<IEngagementTypeService, EngagementTypeService>();

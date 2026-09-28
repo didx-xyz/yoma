@@ -35,6 +35,12 @@ namespace Yoma.Core.Infrastructure.IXO.PartnerSync.Client
       { new Guid("fa564c1c-591a-4a6d-8294-20165da8866b"), ["Digital services"] }
     };
 
+    private static readonly Dictionary<string, EngagementTypeOption> EngagementTypeMappings = new(StringComparer.OrdinalIgnoreCase)
+    {
+      ["Online"] = EngagementTypeOption.Remote,
+      ["Offline"] = EngagementTypeOption.OnSite
+    };
+
     private readonly ILogger<IXOClient> _logger;
     private readonly IEnvironmentProvider _environmentProvider;
     private readonly AppSettings _appSettings;

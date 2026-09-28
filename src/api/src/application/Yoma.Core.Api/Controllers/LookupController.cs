@@ -15,6 +15,7 @@ namespace Yoma.Core.Api.Controllers
   {
     #region Class Variables
     private readonly ILogger<UserController> _logger;
+    private readonly IAccessibilityService _accessibilityService;
     private readonly ICountryService _countryService;
     private readonly IEducationService _educationService;
     private readonly IEngagementTypeService _engagementTypeService;
@@ -27,6 +28,7 @@ namespace Yoma.Core.Api.Controllers
     #region Constructor
     public LookupController(
         ILogger<UserController> logger,
+        IAccessibilityService accessibilityService,
         ICountryService countryService,
         IEducationService educationService,
         IEngagementTypeService engagementTypeService,
@@ -35,19 +37,34 @@ namespace Yoma.Core.Api.Controllers
         ISkillService skillService,
         ITimeIntervalService timeIntervalService)
     {
-      _logger = logger;
-      _countryService = countryService;
-      _educationService = educationService;
-      _engagementTypeService = engagementTypeService;
-      _genderService = genderService;
-      _languageService = languageService;
-      _skillService = skillService;
-      _timeIntervalService = timeIntervalService;
+      _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+      _accessibilityService = accessibilityService ?? throw new ArgumentNullException(nameof(accessibilityService));
+      _countryService = countryService ?? throw new ArgumentNullException(nameof(countryService));
+      _educationService = educationService ?? throw new ArgumentNullException(nameof(educationService));
+      _engagementTypeService = engagementTypeService ?? throw new ArgumentNullException(nameof(engagementTypeService));
+      _genderService = genderService ?? throw new ArgumentNullException(nameof(genderService));
+      _languageService = languageService ?? throw new ArgumentNullException(nameof(languageService));
+      _skillService = skillService ?? throw new ArgumentNullException(nameof(skillService));
+      _timeIntervalService = timeIntervalService ?? throw new ArgumentNullException(nameof(timeIntervalService));
     }
     #endregion
 
     #region Public Members
     #region Anonymous Actions
+    [SwaggerOperation(Summary = "Return a list of accessibility options")]
+    [HttpGet("accessibility")]
+    [ProducesResponseType(typeof(List<Accessibility>), (int)HttpStatusCode.OK)]
+    public IActionResult ListAccessibility()
+    {
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(ListAccessibility));
+
+      var result = _accessibilityService.List();
+
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(ListAccessibility));
+
+      return StatusCode((int)HttpStatusCode.OK, result);
+    }
+
     [SwaggerOperation(Summary = "Return a list of countries. Optionally exclude Worldwide")]
     [HttpGet("country")]
     [ProducesResponseType(typeof(List<Country>), (int)HttpStatusCode.OK)]

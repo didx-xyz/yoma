@@ -1,12 +1,8 @@
 namespace Yoma.Core.Domain.Entity.Models
 {
-  public class UserRequestUpdateProfile : UserRequestBase
+  public class UserRequestUpdateProfile : UserRequestProfileBase
   {
-    public string FirstName { get; set; } = null!;
-
-    public string Surname { get; set; } = null!;
-
-    public Guid? CountryId { get; set; }
+    public Guid CountryId { get; set; }
 
     public bool UpdatePhoneNumber { get; set; }
 

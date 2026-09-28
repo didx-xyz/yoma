@@ -148,7 +148,9 @@ namespace Yoma.Core.Infrastructure.IXO.PartnerSync.Client
     {
       value = value?.Trim();
       if (string.IsNullOrEmpty(value))
-        value = EngagementTypeOption.Online.ToString();
+        value = EngagementTypeOption.Remote.ToString();
+      else if (EngagementTypeMappings.TryGetValue(value, out var mapped))
+        value = mapped.ToString();
 
       return _engagementTypeService.GetByNameOrNull(value)
         ?? throw new InvalidOperationException($"IXO opportunity engagement type '{value}' is not supported");

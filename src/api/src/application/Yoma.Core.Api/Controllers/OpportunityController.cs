@@ -242,6 +242,21 @@ namespace Yoma.Core.Api.Controllers
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
+
+    [SwaggerOperation(Summary = "Return a list of opportunity categories (Authenticated User)")]
+    [HttpGet("category")]
+    [ProducesResponseType(typeof(List<Domain.Opportunity.Models.Lookups.OpportunityCategory>), (int)HttpStatusCode.OK)]
+    [Authorize(Roles = $"{Constants.Role_User}, {Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
+    public IActionResult ListOpportunityCategories()
+    {
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(ListOpportunityCategories));
+
+      var result = _opportunityCategoryService.List();
+
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(ListOpportunityCategories));
+
+      return StatusCode((int)HttpStatusCode.OK, result);
+    }
     #endregion Authenticated User Based Actions
 
     #region Administrative Actions
@@ -320,21 +335,6 @@ namespace Yoma.Core.Api.Controllers
       var result = _opportunityService.SearchCriteriaOpportunities(filter, true);
 
       if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(SearchCriteriaOpportunities));
-
-      return StatusCode((int)HttpStatusCode.OK, result);
-    }
-
-    [SwaggerOperation(Summary = "Return a list of opportunity categories")]
-    [HttpGet("category")]
-    [ProducesResponseType(typeof(List<Domain.Opportunity.Models.Lookups.OpportunityCategory>), (int)HttpStatusCode.OK)]
-    [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
-    public IActionResult ListOpportunityCategories()
-    {
-      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(ListOpportunityCategories));
-
-      var result = _opportunityCategoryService.List();
-
-      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(ListOpportunityCategories));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }

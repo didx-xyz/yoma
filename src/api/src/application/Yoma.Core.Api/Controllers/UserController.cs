@@ -4,7 +4,9 @@ using Swashbuckle.AspNetCore.Annotations;
 using System.ComponentModel.DataAnnotations;
 using System.Net;
 using Yoma.Core.Domain.Core;
+using Yoma.Core.Domain.Entity;
 using Yoma.Core.Domain.Entity.Interfaces;
+using Yoma.Core.Domain.Entity.Interfaces.Lookups;
 using Yoma.Core.Domain.Entity.Models;
 using Yoma.Core.Domain.Payout.Models;
 
@@ -20,17 +22,20 @@ namespace Yoma.Core.Api.Controllers
     private readonly ILogger<UserController> _logger;
     private readonly IUserService _userService;
     private readonly IUserProfileService _userProfileService;
+    private readonly IUserGoalService _userGoalService;
     #endregion
 
     #region Constructor
     public UserController(
         ILogger<UserController> logger,
         IUserService userService,
-        IUserProfileService userProfileService)
+        IUserProfileService userProfileService,
+        IUserGoalService userGoalService)
     {
-      _logger = logger;
-      _userService = userService;
-      _userProfileService = userProfileService;
+      _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+      _userService = userService ?? throw new ArgumentNullException(nameof(userService));
+      _userProfileService = userProfileService ?? throw new ArgumentNullException(nameof(userProfileService));
+      _userGoalService = userGoalService ?? throw new ArgumentNullException(nameof(userGoalService));
     }
     #endregion
 
@@ -68,6 +73,21 @@ namespace Yoma.Core.Api.Controllers
     #endregion Administrative Actions
 
     #region Authenticated User Based Actions
+    [SwaggerOperation(Summary = "Return a list of User Goals (Authenticated User)")]
+    [HttpGet("goal")]
+    [ProducesResponseType(typeof(List<Domain.Entity.Models.Lookups.UserGoal>), (int)HttpStatusCode.OK)]
+    [Authorize(Roles = Constants.Role_User)]
+    public IActionResult ListGoals()
+    {
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(ListGoals));
+
+      var result = _userGoalService.List();
+
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(ListGoals));
+
+      return StatusCode((int)HttpStatusCode.OK, result);
+    }
+
     [SwaggerOperation(Summary = "Get the user (Authenticated User)")]
     [HttpGet("")]
     [ProducesResponseType(typeof(UserProfile), (int)HttpStatusCode.OK)]
@@ -172,13 +192,59 @@ namespace Yoma.Core.Api.Controllers
     [HttpGet("skills")]
     [ProducesResponseType(typeof(List<UserSkillInfo>), (int)HttpStatusCode.OK)]
     [Authorize(Roles = $"{Constants.Role_User}")]
-    public IActionResult GetSkills()
+    public IActionResult GetSkills([FromQuery] UserSkillType? type = null)
     {
       if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(GetSkills));
 
-      var result = _userProfileService.GetSkills();
+      var result = _userProfileService.GetSkills(type);
 
       if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(GetSkills));
+
+      return StatusCode((int)HttpStatusCode.OK, result);
+    }
+
+    [SwaggerOperation(Summary = "Update the user's location (Authenticated User)",
+      Description = "Updates the required profile country and replaces its optional region, city, city-centre coordinates and source. Send only countryId to clear the optional details. Uses profile validation and returns the updated profile.")]
+    [HttpPatch("location")]
+    [ProducesResponseType(typeof(UserProfile), (int)HttpStatusCode.OK)]
+    [Authorize(Roles = Constants.Role_User)]
+    public async Task<IActionResult> UpdateLocation([FromBody] UserRequestUpdateLocation request)
+    {
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(UpdateLocation));
+
+      var result = await _userProfileService.UpdateLocation(request);
+
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(UpdateLocation));
+
+      return StatusCode((int)HttpStatusCode.OK, result);
+    }
+
+    [SwaggerOperation(Summary = "Get the user's preferences (Authenticated User)")]
+    [HttpGet("preferences")]
+    [ProducesResponseType(typeof(UserPreferences), (int)HttpStatusCode.OK)]
+    [Authorize(Roles = Constants.Role_User)]
+    public IActionResult GetPreferences()
+    {
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(GetPreferences));
+
+      var result = _userProfileService.GetPreferences();
+
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(GetPreferences));
+
+      return StatusCode((int)HttpStatusCode.OK, result);
+    }
+
+    [SwaggerOperation(Summary = "Update the user's preferences (Authenticated User)")]
+    [HttpPatch("preferences")]
+    [ProducesResponseType(typeof(UserPreferences), (int)HttpStatusCode.OK)]
+    [Authorize(Roles = Constants.Role_User)]
+    public async Task<IActionResult> UpdatePreferences([FromBody] UserPreferencesRequest request)
+    {
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(UpdatePreferences));
+
+      var result = await _userProfileService.UpdatePreferences(request);
+
+      if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(UpdatePreferences));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }

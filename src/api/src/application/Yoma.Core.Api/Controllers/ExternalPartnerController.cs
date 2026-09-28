@@ -36,6 +36,7 @@ namespace Yoma.Core.Api.Controllers
 
     #region Public Members
     #region Authenticated Actions
+    [Obsolete("This external partner endpoint is deprecated.")]
     [SwaggerOperation(Summary = "Get a list of users who completed verification for the specified opportunity",
       Description = "Returns a list of users who have completed verification for the specified opportunity, including the date of completion. No user completions will be returned if the opportunity is not shared with partners. Additionally, users who opted not to share their email will not be included in the response")]
     [HttpGet("opportunity/{opportunityId}/verify/completed")]
@@ -51,6 +52,7 @@ namespace Yoma.Core.Api.Controllers
       return StatusCode((int)HttpStatusCode.OK, result);
     }
 
+    [Obsolete("This external partner endpoint is deprecated.")]
     [SwaggerOperation(Summary = "Create a user profile",
       Description = "Creates the user in both the identity provider and Yoma. Either a phone number or an email address must be provided. " +
                     "Both are initially unconfirmed. Phone number will be verified upon first login using OTP. " +

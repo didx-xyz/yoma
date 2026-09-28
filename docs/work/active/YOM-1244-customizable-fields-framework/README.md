@@ -34,9 +34,14 @@ definitions to the BA-approved set (YOM-1264) without a code change.
 
 Taxonomy CSV imports accept final names only; partner-specific vocabulary is handled separately.
 
+The shared Engagement Type lookup now has enum-compatible keys `Remote`, `OnSite`, `Hybrid` and display names `Remote`, `On-site`, `Hybrid`. Existing lookup IDs and Opportunity associations are retained. CSV import/export and the ordinary lookup service use canonical names only. Each partner with an engagement field explicitly maps its legacy wire values `Online`/`Offline` to `Remote`/`OnSite` before lookup resolution; this does not make them CSV aliases. User engagement preference is single-select; Opportunity discovery's engagement filter can remain multi-select.
+
+The User preference formerly proposed as `PaidWorkPreference` is now nullable `UserPreferences.Incentivized` and applies to every Opportunity type. This means a preference for any incentive, not only wages or cash. The sheet's proposed Opportunity `Is Paid` field and discovery mapping need revisiting before implementation; `IsIncentivized` is the candidate name, while Reward Type still describes the incentive. No matching/ranking is part of the User-preferences change. Preferences are a one-to-one User-owned table, with category, accessibility and language selections in preference-owned link tables; skills remain in UserSkills. The self-service API uses `categories` and `languages` under UserPreferences, not User or UserProfile fields.
+
 | Folder                                                                                                                                                           | Ticket                                             | Area | Status                                                                                |
 | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- | ---- | ------------------------------------------------------------------------------------- |
 | [`YOM-1254-api-custom-fields-framework-for-opportunity-and-myopportunity/`](./YOM-1254-api-custom-fields-framework-for-opportunity-and-myopportunity/feature.md) | [YOM-1254](https://linear.app/didx/issue/YOM-1254) | api  | in-progress                                                                           |
+| [`YOM-1257-api-extend-the-user-model-with-user-presets/`](./YOM-1257-api-extend-the-user-model-with-user-presets/feature.md)                         | [YOM-1257](https://linear.app/didx/issue/YOM-1257) | api  | in-progress                                                                           |
 | [`YOM-1255-ui-dynamic-custom-fields-for-opportunities-and-completions/`](./YOM-1255-ui-dynamic-custom-fields-for-opportunities-and-completions/feature.md)       | [YOM-1255](https://linear.app/didx/issue/YOM-1255) | web  | in-progress                                                                           |
 | [`YOM-1260-ui-custom-field-filtering-for-opportunities-and-completions/`](./YOM-1260-ui-custom-field-filtering-for-opportunities-and-completions/feature.md)     | [YOM-1260](https://linear.app/didx/issue/YOM-1260) | web  | in-progress                                                                           |
 | [`YOM-1261-ui-manage-user-presets/`](./YOM-1261-ui-manage-user-presets/feature.md)                                                                               | [YOM-1261](https://linear.app/didx/issue/YOM-1261) | web  | in-progress — mocked; real persistence blocked                                        |
@@ -54,9 +59,13 @@ Tickets with no folder yet — add one when work starts:
 | Ticket                                                                                                  | Area      | Note                                                                                        |
 | ------------------------------------------------------------------------------------------------------- | --------- | ------------------------------------------------------------------------------------------- |
 | [YOM-1264](https://linear.app/didx/issue/YOM-1264)                                                      | design/BA | Final Opportunity CFs, completion CFs and User Presets. **Blocks YOM-1261 / YOM-1262**      |
-| [YOM-1257](https://linear.app/didx/issue/YOM-1257) / [YOM-1258](https://linear.app/didx/issue/YOM-1258) | api       | User Preset model + preset→filter mapping                                                   |
+| [YOM-1258](https://linear.app/didx/issue/YOM-1258)                                                      | api       | Map User Preferences to Opportunity filters                                                |
+
+Job opportunity skills represent role requirements, not evidence of attainment. Completing a Job must not award those skills as Verified; the CF branch now enforces this centrally, and the same fix requires a separate Production hotfix before CF ships.
 
 ### User preset foundations — Education (2026-09-28)
+
+User location extends the existing profile country. Profile create/update accepts flat `region`, `city`, `coordinates` and `locationSource` fields, and `PATCH /api/v3/user/location` provides a focused update returning the full profile. Both reuse the dedicated location-request validator, without a Location model or interface. The dedicated request is `{ countryId, region, city, coordinates: [longitude, latitude] | null, locationSource }`; country remains solely the parent profile `countryId`. Source uses provider-neutral enum names `Lookup`, `Device`, `Manual`; provider place IDs are not persisted or exposed. Coordinates are the city centre, with no elevation or precise device fix, persisted in one nullable JSONB column. The Yoma profile editor continues synchronizing country to Keycloak; the new location fields remain only in Yoma and are not UserPreferences. Jason should refresh cached profile state from either update response and clear/reselect the place when changing country. Opportunity location cardinality/storage and radius search remain future work; retain `LOCATION_SEARCH_LIVE = false` until that search contract is implemented. See the [user-preferences handover](YOM-1257-api-extend-the-user-model-with-user-presets/handoffs/2026-09-28-a.md) for payload and clearing rules.
 
 - [x] Keep the existing optional `User.EducationId` / `UserProfile.EducationId`; no new user column.
 - [x] Expand the controlled Education lookup to eleven values, retaining all five existing IDs and mapping the old tertiary row to "Tertiary (Qualification not specified)"; new qualifications use "Tertiary - …".
@@ -303,10 +312,12 @@ feature:
   consume the same section registry and the same section component; only the container and the
   control density differ. This is recorded as a rule because the first design revision claimed parity
   and did not have it, and prose did not catch that.
-- **Presets stay User-domain data.** Restated from Out of Scope below because the natural
-  implementation — routing preferences through the custom-field components, or extending the `User`
-  model — is exactly what the epic forbids. Preferences are mocked behind one façade, following the
-  `SCHEMA_ADMIN_MOCK_ENABLED` pattern documented above.
+- **Presets stay User-domain data.** The earlier design note ruling out extension of `User` was
+  superseded by the 2026-09-28 YOM-1257 decision: stable single-select values live on `User`,
+  multi-select values use User-owned link tables, and preferences have dedicated authenticated
+  GET/PATCH endpoints. They do not route through custom-field components or the frequently
+  loaded and UI-cached youth profile response; the existing admin User model exposes its fields.
+  The web mock remains behind its existing façade until wired to this API.
 - **Nothing in the youth-facing surface is keyed to a specific custom field.** The One Rule applies
   to the new surface unchanged: the type-specific filter block renders whatever the definitions
   endpoint returns, in the order returned.

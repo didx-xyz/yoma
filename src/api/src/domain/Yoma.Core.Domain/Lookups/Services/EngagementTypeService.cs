@@ -8,7 +8,7 @@ using Yoma.Core.Domain.Lookups.Models;
 
 namespace Yoma.Core.Domain.Lookups.Services
 {
-  internal class EngagementTypeService : IEngagementTypeService
+  public class EngagementTypeService : IEngagementTypeService
   {
     #region Class Variables
     private readonly AppSettings _appSettings;
@@ -21,9 +21,9 @@ namespace Yoma.Core.Domain.Lookups.Services
         IMemoryCache memoryCache,
         IRepository<EngagementType> engagementTypeRepository)
     {
-      _appSettings = appSettings.Value;
-      _memoryCache = memoryCache;
-      _engagementTypeRepository = engagementTypeRepository;
+      _appSettings = appSettings?.Value ?? throw new ArgumentNullException(nameof(appSettings));
+      _memoryCache = memoryCache ?? throw new ArgumentNullException(nameof(memoryCache));
+      _engagementTypeRepository = engagementTypeRepository ?? throw new ArgumentNullException(nameof(engagementTypeRepository));
     }
     #endregion
 
@@ -67,7 +67,7 @@ namespace Yoma.Core.Domain.Lookups.Services
         entry.SlidingExpiration = TimeSpan.FromHours(_appSettings.CacheSlidingExpirationInHours);
         entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(_appSettings.CacheAbsoluteExpirationRelativeToNowInDays);
         return _engagementTypeRepository.Query().OrderBy(o => o.Name).ToList();
-      }) ?? throw new InvalidOperationException($"Failed to retrieve cached list of '{nameof(Gender)}s'");
+      }) ?? throw new InvalidOperationException($"Failed to retrieve cached list of '{nameof(EngagementType)}s'");
       return result;
     }
     #endregion

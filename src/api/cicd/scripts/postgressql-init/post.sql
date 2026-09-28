@@ -607,21 +607,26 @@ WHERE MO."ActionId" = (SELECT "Id" FROM "Opportunity"."MyOpportunityAction" WHER
 		AND MO."VerificationStatusId" = (SELECT "Id" FROM "Opportunity"."MyOpportunityVerificationStatus" WHERE "Name" = 'Completed')
 		AND MO."ZltoReward" > 0;
 
--- Verification (Completed): Assign User Skills
-INSERT INTO "Entity"."UserSkills"("Id", "UserId", "SkillId", "DateCreated")
+-- Verification (Completed): Assign verified skills. Job skills are requirements, not completion awards.
+INSERT INTO "Entity"."UserSkills"("Id", "UserId", "SkillId", "Type", "DateCreated", "DateModified")
 SELECT gen_random_uuid(),
     (SELECT "Id" FROM "Entity"."User" WHERE "Email" = 'testuser@gmail.com'),
     "Skills"."SkillId",
+    'Verified',
+    (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'),
     (CURRENT_TIMESTAMP AT TIME ZONE 'UTC')
 FROM (
     SELECT DISTINCT OS."SkillId"
     FROM "Opportunity"."MyOpportunity" MO
     INNER JOIN "Opportunity"."OpportunitySkills" OS ON MO."OpportunityId" = OS."OpportunityId"
+    INNER JOIN "Opportunity"."Opportunity" OP ON OP."Id" = MO."OpportunityId"
     WHERE MO."ActionId" = (SELECT "Id" FROM "Opportunity"."MyOpportunityAction" WHERE "Name" = 'Verification')
         AND MO."VerificationStatusId" = (SELECT "Id" FROM "Opportunity"."MyOpportunityVerificationStatus" WHERE "Name" = 'Completed')
+        AND MO."UserId" = (SELECT "Id" FROM "Entity"."User" WHERE "Email" = 'testuser@gmail.com')
+        AND OP."TypeId" <> (SELECT "Id" FROM "Opportunity"."OpportunityType" WHERE "Name" = 'Job')
 ) AS "Skills";
 
--- Verification (Completed): Assign User Skill Organizations
+-- Only the same user's non-Job completions establish awarding organisations.
 INSERT INTO "Entity"."UserSkillOrganizations"("Id", "UserSkillId", "OrganizationId", "DateCreated")
 SELECT
     gen_random_uuid() AS "Id",
@@ -633,8 +638,11 @@ FROM
 INNER JOIN "Opportunity"."OpportunitySkills" OS ON "UserSkills"."SkillId" = OS."SkillId"
 INNER JOIN "Opportunity"."Opportunity" OP ON OP."Id" = OS."OpportunityId"
 INNER JOIN "Opportunity"."MyOpportunity" MO ON MO."OpportunityId" = OS."OpportunityId"
+    AND MO."UserId" = "UserSkills"."UserId"
     AND MO."ActionId" = (SELECT "Id" FROM "Opportunity"."MyOpportunityAction" WHERE "Name" = 'Verification')
     AND MO."VerificationStatusId" = (SELECT "Id" FROM "Opportunity"."MyOpportunityVerificationStatus" WHERE "Name" = 'Completed')
+WHERE OP."TypeId" <> (SELECT "Id" FROM "Opportunity"."OpportunityType" WHERE "Name" = 'Job')
+    AND "UserSkills"."Type" = 'Verified'
 GROUP BY
     "UserSkills"."Id",
     OP."OrganizationId";

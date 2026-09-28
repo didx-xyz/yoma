@@ -41,6 +41,22 @@ namespace Yoma.Core.Domain.Entity.Interfaces
 
     Task AssignSkills(User user, Opportunity.Models.Opportunity opportunity);
 
+    Task AssignSkillsSelfAttested(User user, List<Guid>? skillIds);
+
+    Task RemoveSkillsSelfAttested(User user, List<Guid>? skillIds);
+
+    Task AssignPreferenceCategories(User user, List<Guid>? categoryIds);
+
+    Task RemovePreferenceCategories(User user, List<Guid>? categoryIds);
+
+    Task AssignAccessibilityRequirements(User user, List<Guid>? accessibilityIds);
+
+    Task RemoveAccessibilityRequirements(User user, List<Guid>? accessibilityIds);
+
+    Task AssignPreferenceLanguages(User user, List<Guid>? languageIds);
+
+    Task RemovePreferenceLanguages(User user, List<Guid>? languageIds);
+
     Task<User> YoIDOnboard(string username);
 
     Task<User> YoIDOnboard(User user);

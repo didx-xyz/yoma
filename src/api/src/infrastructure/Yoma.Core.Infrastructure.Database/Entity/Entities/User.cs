@@ -38,6 +38,21 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Entities
     public Guid? CountryId { get; set; }
     public Country? Country { get; set; }
 
+    #region Location
+    [Column(TypeName = "varchar(255)")]
+    public string? Region { get; set; }
+
+    [Column(TypeName = "varchar(255)")]
+    public string? City { get; set; }
+
+    [Column(TypeName = "jsonb")]
+    public string? Coordinates { get; set; }
+
+    [Column(TypeName = "varchar(25)")]
+    public string? LocationSource { get; set; }
+
+    #endregion
+
     [ForeignKey("EducationId")]
     public Guid? EducationId { get; set; }
     public Education? Education { get; set; }
@@ -70,6 +85,8 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Entities
     public DateTimeOffset DateModified { get; set; }
 
     public ICollection<UserSkill>? Skills { get; set; }
+
+    public UserPreferences? Preferences { get; set; }
 
     public ICollection<Block>? Blocks { get; set; }
   }

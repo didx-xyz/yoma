@@ -77,9 +77,9 @@ namespace Yoma.Core.Infrastructure.Umuzi.Client
         ShareWithPartners = false,
         Hidden = false,
         Keywords = keywords,
-        Categories = categories.Select(o => o.Id).ToList(),
-        Countries = countries.Select(o => o.Id).ToList(),
-        Languages = languages.Select(o => o.Id).ToList()
+        Categories = [.. categories.Select(o => o.Id)],
+        Countries = [.. countries.Select(o => o.Id)],
+        Languages = [.. languages.Select(o => o.Id)]
       };
 
       if (type != Domain.Opportunity.Type.Job)

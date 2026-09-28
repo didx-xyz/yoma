@@ -2,6 +2,15 @@ using System.ComponentModel;
 
 namespace Yoma.Core.Domain.Core
 {
+  public enum LocationSource
+  {
+    // Selected from a location provider's search/autocomplete results.
+    Lookup,
+    // Resolved using the device's location.
+    Device,
+    Manual
+  }
+
   public enum LockMode
   {
     // SELECT ... FOR UPDATE
@@ -113,8 +122,9 @@ namespace Yoma.Core.Domain.Core
 
   public enum EngagementTypeOption
   {
-    Online,
-    Offline,
+    Remote,
+    [Description("On-site")]
+    OnSite,
     Hybrid
   }
 

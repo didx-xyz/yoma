@@ -54,6 +54,12 @@ namespace Yoma.Core.Infrastructure.Umuzi.Client
       { new Guid("b89c5e91-9cbb-4a0e-991f-f987eebf9b70"), ["Other"] }
     };
 
+    private static readonly Dictionary<string, EngagementTypeOption> EngagementTypeMappings = new(StringComparer.OrdinalIgnoreCase)
+    {
+      ["Online"] = EngagementTypeOption.Remote,
+      ["Offline"] = EngagementTypeOption.OnSite
+    };
+
     private readonly ILogger<UmuziClient> _logger;
     private readonly IEnvironmentProvider _environmentProvider;
     private readonly AppSettings _appSettings;
