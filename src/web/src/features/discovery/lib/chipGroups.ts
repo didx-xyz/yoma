@@ -10,6 +10,7 @@ import type { DiscoveryFilters, PreferenceKey } from "./types";
 export const PREF_GROUPS: Partial<Record<PreferenceKey, string>> = {
   targetCategories: "Interests",
   country: "Where",
+  location: "Where",
   age: "Age",
   skills: "Skills",
   maxCommitment: "Time",
@@ -22,6 +23,9 @@ export const FACET_GROUPS: Partial<Record<keyof DiscoveryFilters, string>> = {
   types: "Type",
   categories: "Categories",
   countries: "Where",
+  region: "Where",
+  city: "Where",
+  radiusKm: "Distance",
   engagementTypes: "Engagement",
   commitment: "Time",
   hasReward: "Rewards",

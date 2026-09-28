@@ -2,27 +2,21 @@ import { useAtomValue } from "jotai";
 import React from "react";
 import { userProfileAtom } from "~/lib/store";
 import type { StepBlockEntry } from "../../../registry/preferenceSteps";
-import { useDiscovery } from "../../../state/DiscoveryContext";
 import { useIdentityLookups } from "../usePreferenceOptions";
 
 /**
  * The read-only identity block — the fields the mapping reads and never writes, each captioned
- * with what it maps to. Nothing in the wizard can change these.
+ * with what it maps to. Nothing in the wizard can change these. Country is not here: it has its
+ * own block in step 4 (`LocationBlock`), beside the region and city that belong to it.
  */
 export const IdentityReadonly: React.FC<{ entries: StepBlockEntry[] }> = ({
   entries,
 }) => {
   const profile = useAtomValue(userProfileAtom);
-  const { lookups } = useDiscovery();
   const identity = useIdentityLookups();
 
   const valueOf = (id: string): string => {
     switch (id) {
-      case "country":
-        return (
-          lookups.countries.find((c) => c.id === profile?.countryId)?.name ??
-          "Not set"
-        );
       case "dateOfBirth":
         return profile?.dateOfBirth?.slice(0, 10) ?? "Not set";
       case "gender":

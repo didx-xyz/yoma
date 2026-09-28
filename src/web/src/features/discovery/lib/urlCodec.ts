@@ -1,5 +1,7 @@
 import type { CustomFieldFilter } from "~/api/models/opportunity";
+import { RADIUS_OPTIONS_KM } from "./location";
 import type {
+  DiscoveryFilters,
   DiscoveryState,
   DiscoverySort,
   DiscoveryViewMode,
@@ -22,6 +24,10 @@ import {
  * Engagement travels as `engagement=` (a list; renamed from `format=` on 2026-09-22 when the
  * segment replaced Pay on the bar — nothing reads the old name). There has never been a `pay=`
  * param: the Paid and rewards section writes `reward=` and `zlto=`, unchanged.
+ *
+ * Location below country: `region=` and `city=` (English names), `pt=lat,lng` (the picked
+ * city's centroid, ROUNDED to 2 decimals ≈ 1 km — Copy link shares the URL, so it must never
+ * carry more precision than "which city") and `km=` (one of the radius options).
  */
 
 type Query = Record<string, string | string[] | undefined>;
@@ -33,6 +39,20 @@ const single = (query: Query, key: string): string | null => {
 
 const list = (query: Query, key: string): string[] =>
   single(query, key)?.split(",").filter(Boolean) ?? [];
+
+const parsePoint = (raw: string | null): DiscoveryFilters["point"] => {
+  const [lat, lng] = raw?.split(",").map(Number) ?? [];
+  return lat !== undefined &&
+    lng !== undefined &&
+    Number.isFinite(lat) &&
+    Number.isFinite(lng) &&
+    Math.abs(lat) <= 90 &&
+    Math.abs(lng) <= 180
+    ? { latitude: lat, longitude: lng }
+    : null;
+};
+
+const round2 = (n: number): string => (Math.round(n * 100) / 100).toString();
 
 const parseCustomFields = (raw: string | null): CustomFieldFilter[] => {
   if (!raw) return [];
@@ -59,6 +79,7 @@ export function parseDiscoveryQuery(query: Query): DiscoveryState {
   const sort = single(query, "sort");
   const view = single(query, "view");
   const page = Number(single(query, "page"));
+  const km = Number(single(query, "km"));
 
   return {
     filters: {
@@ -66,6 +87,12 @@ export function parseDiscoveryQuery(query: Query): DiscoveryState {
       types: list(query, "type"),
       categories: list(query, "cat"),
       countries: list(query, "where"),
+      region: single(query, "region"),
+      city: single(query, "city"),
+      point: parsePoint(single(query, "pt")),
+      radiusKm: (RADIUS_OPTIONS_KM as readonly number[]).includes(km)
+        ? km
+        : null,
       engagementTypes: list(query, "engagement"),
       commitment:
         intervalId && Number.isFinite(count) && count > 0
@@ -108,6 +135,14 @@ export function serializeDiscoveryState(state: DiscoveryState): string {
   ];
   for (const [key, values] of lists)
     if (values.length > 0) params.set(key, values.join(","));
+  if (filters.region) params.set("region", filters.region);
+  if (filters.city) params.set("city", filters.city);
+  if (filters.point)
+    params.set(
+      "pt",
+      `${round2(filters.point.latitude)},${round2(filters.point.longitude)}`,
+    );
+  if (filters.radiusKm !== null) params.set("km", String(filters.radiusKm));
   if (filters.commitment)
     params.set(
       "time",

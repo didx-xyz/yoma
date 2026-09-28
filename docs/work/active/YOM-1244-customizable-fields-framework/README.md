@@ -431,6 +431,25 @@ the API ships them; until then web states the actual behaviour in copy:
     returns counts for N filter sets in one round trip (or `TotalCountOnly` made public, ask #3,
     plus batching) would make both the badge counts and the wizard's live count cheaper.
 
+**Added 2026-09-28** (User Location, built on YOM-1262 against a mock — details in
+[`YOM-1262 …/handoffs/2026-09-28-a.md`](./YOM-1262-ui-apply-user-presets-to-opportunity-discovery/handoffs/2026-09-28-a.md)).
+The web side is built to an ASSUMED contract; please confirm or correct:
+
+14. **User location.** Country stays `User.countryId` (profile PATCH, unchanged). Region, city and
+    coordinates go through the new user-location PATCH and come back on the profile response.
+    Web holds `{ countryId, region, city, coordinates: { latitude, longitude }, source, placeId }`;
+    it would like the API to store at least `region`, `city`, `latitude`, `longitude` and the
+    country they were picked under (so a later profile-country change can mark them stale).
+    Names are English (Google Places / Geocoder, `language=en`) unless typed by hand.
+    Coordinates are the **city centroid**, never a device fix.
+15. **Location search filter.** Web will send region and city (single values, "contains",
+    case-insensitive) only with exactly one country, and distance as a point + radius in km
+    (10 / 25 / 50 / 100). **Null rule (Jason, 2026-09-28): opportunities with no region / city
+    are included.** Distance with a point should replace the region / city match, not add to it.
+    Until this exists, `LOCATION_SEARCH_LIVE = false` keeps all three out of the request.
+16. **Opportunity coordinates** — distance needs them on opportunities, or at least a centroid per
+    opportunity city. Without them "Jobs near me" can only ever be a city match.
+
 **Adrian, one API-side conflict resolution on this branch (2026-09-05)** — flagged because it is
 your area and web did not author either side. Merging `master` into
 `feature/custom-fields-framework` (PR #1924) collided on `Opportunity.Type`: master had added
@@ -460,4 +479,5 @@ DEV, until this epic merges. Owner: Adrian / infra.
 
 ## Changelog
 
+- 2026-09-28: User Location built on YOM-1262 / YOM-1261 against a mock — country stays the profile field; region / city / centroid via the shared `LocationInput` (Google Places + Geocoder); asks 14–16 filed for Adrian.
 - 2026-09-22: YOM-1262 aligned to the BA sign-off and client review — Engagement replaces Pay on the search bar, badges render only when filterable, recents capped at 3, Start a business mapped; asks 7–13 above filed for Adrian.

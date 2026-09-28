@@ -9,7 +9,7 @@ import {
 import type { PreferenceKey } from "../lib/types";
 
 /**
- * The personalization wizard (YOM-1261), as data. Six steps cover the seven editable
+ * The personalization wizard (YOM-1261), as data. Six steps cover the eight editable
  * preferences; `<StepBlock kind=…>` is the single kind→control switch. Adding a preference is a
  * data change here — no new JSX. Entries with `comingSoon` render a badge and are NOT selectable;
  * that is the reusable pattern for anything the BA has not settled (visible and inert beats
@@ -24,7 +24,9 @@ export type StepBlockKind =
   | "pills"
   | "toggle"
   | "lookupSearch"
-  | "readonly";
+  | "readonly"
+  /** Country (anonymous) or the profile country (signed-in), then region / city. */
+  | "location";
 
 export type PreferenceOptionsSource =
   | "categories"
@@ -162,10 +164,22 @@ export const PREFERENCE_STEPS: PreferenceStepDef[] = [
   // Pay was removed as a stored preference (2026-08-31 revision §4) — it stays a session filter.
   {
     id: "language",
-    title: "What languages work for you?",
-    subheading: "The languages you're comfortable working in.",
+    title: "Where are you, and what languages work for you?",
+    subheading:
+      "Where you're based, and the languages you're comfortable working in.",
     infoNote: null,
     blocks: [
+      // Step 5, above Languages, rather than a step of its own (Jason, 2026-09-28: keep the
+      // steps to a minimum; moved here from under Engagement the same day). The profile country
+      // moved here from the read-only identity block.
+      {
+        kind: "location",
+        prefKey: "location",
+        heading: "Where you are",
+        note: null,
+        optionsSource: null,
+        entries: null,
+      },
       {
         kind: "chips",
         prefKey: "languages",
@@ -199,11 +213,6 @@ export const PREFERENCE_STEPS: PreferenceStepDef[] = [
         note: "These are used to shape your feed and are never written by this dialog.",
         optionsSource: null,
         entries: [
-          {
-            id: "country",
-            label: "Country",
-            caption: "Maps to: location country",
-          },
           {
             id: "dateOfBirth",
             label: "Date of birth",

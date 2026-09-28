@@ -2,6 +2,7 @@ import { OPPORTUNITY_TYPE_NANE_JOB } from "~/lib/constants";
 import type { FacetStatus } from "../../lib/apiStatus";
 import { engagementLabel } from "../../lib/engagementLabels";
 import { upToIntervalLabel } from "../../lib/format";
+import { whereSummary } from "../../lib/location";
 import { owningPreference } from "../../lib/preferenceMapping";
 import type {
   FilterSectionBinding,
@@ -119,8 +120,18 @@ export function useSectionModel(section: FilterSectionDef): SectionModel {
         })),
         "categories",
       );
-    case "countries":
-      return listModel(named(lookups.countries), "countries");
+    case "countries": {
+      // The header reads the most specific place in play, like the bar segment and the pill.
+      const model = listModel(named(lookups.countries), "countries");
+      return {
+        ...model,
+        summary:
+          whereSummary(
+            effectiveFilters,
+            (id) => lookups.countries.find((c) => c.id === id)?.name ?? id,
+          ) ?? "Anywhere",
+      };
+    }
     case "engagementTypes":
       // Display names through the ONE engagement map (Online → Remote, Offline → On-site).
       return listModel(

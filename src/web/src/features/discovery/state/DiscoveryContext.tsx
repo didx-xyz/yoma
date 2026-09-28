@@ -7,12 +7,16 @@ import React, {
   useRef,
   useState,
 } from "react";
-import type { UserPreferences } from "~/api/models/userPreferences";
+import type {
+  UserPreferenceScope,
+  UserPreferences,
+} from "~/api/models/userPreferences";
 import { userProfileAtom } from "~/lib/store";
 import type { ChipLabelResolver, DiscoveryChip } from "../lib/chipModel";
 import { buildChips } from "../lib/chipModel";
 import { engagementLabel } from "../lib/engagementLabels";
 import type { DiscoveryAction } from "../lib/discoveryReducer";
+import { homeCountryId as resolveHomeCountryId } from "../lib/location";
 import type { InheritedFragments } from "../lib/preferenceMapping";
 import {
   applyInheritedFragments,
@@ -47,6 +51,13 @@ export interface DiscoveryContextValue {
   ready: boolean;
   lookups: DiscoveryLookups;
   preferences: UserPreferences | null | undefined;
+  /** Signed-in (`user`) or not — decides who owns the country (profile vs session answer). */
+  scope: UserPreferenceScope;
+  /**
+   * The youth's country: the profile's when signed in, the session answer when anonymous. The
+   * inherited country and the country the stored region / city must belong to.
+   */
+  homeCountryId: string | null;
   savePreferences: (preferences: UserPreferences) => Promise<UserPreferences>;
   /** The sign-in "keep your answers" offer — see `useAnonymousMigration`. */
   migration: ReturnType<typeof useAnonymousMigration>;
@@ -110,7 +121,17 @@ export const DiscoveryProvider: React.FC<{ children: React.ReactNode }> = ({
     readPersonalizationSeen,
     markPersonalizationSeen,
   } = usePreferences();
-  const migration = useAnonymousMigration(scope, preferences, savePreferences);
+  const migration = useAnonymousMigration(
+    scope,
+    preferences,
+    savePreferences,
+    profile?.countryId ?? null,
+  );
+  const homeCountryId = resolveHomeCountryId(
+    scope,
+    profile?.countryId ?? null,
+    preferences,
+  );
   const [preferenceUndo, setPreferenceUndo] =
     useState<PreferenceSnapshot | null>(null);
 
@@ -118,11 +139,11 @@ export const DiscoveryProvider: React.FC<{ children: React.ReactNode }> = ({
     () =>
       preferences
         ? mapPreferencesToFilters(preferences, {
-            countryId: profile?.countryId ?? null,
+            countryId: homeCountryId,
             categories: lookups.categories,
           })
         : {},
-    [preferences, profile?.countryId, lookups.categories],
+    [preferences, homeCountryId, lookups.categories],
   );
 
   const effectiveFilters = applyInheritedFragments(
@@ -213,6 +234,8 @@ export const DiscoveryProvider: React.FC<{ children: React.ReactNode }> = ({
     ready,
     lookups,
     preferences,
+    scope,
+    homeCountryId,
     savePreferences,
     migration,
     preferenceUndo,

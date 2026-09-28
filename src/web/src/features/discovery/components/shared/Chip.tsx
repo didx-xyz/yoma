@@ -1,5 +1,10 @@
 import React from "react";
-import { IoArrowUndoOutline, IoClose, IoPersonOutline } from "react-icons/io5";
+import {
+  IoArrowUndoOutline,
+  IoClose,
+  IoInformationCircleOutline,
+  IoPersonOutline,
+} from "react-icons/io5";
 import type { DiscoveryChip } from "../../lib/chipModel";
 
 /**
@@ -10,7 +15,13 @@ import type { DiscoveryChip } from "../../lib/chipModel";
  * Long labels wrap to two lines below `md` and truncate from there: `max-w-40 truncate` cut the
  * second chip in half on a 390px row ("Interests: AI, Data and Ana…"), and a chip whose value is
  * unreadable is not a chip. Desktop keeps one line — there is room, and the row stays scannable.
+ *
+ * A `pending` chip (region / city / distance until the Location search API lands) is drawn with
+ * a dashed outline and says so in its title: it is part of the search's state and the URL, but
+ * not of the results. An `inheritedInapplicable` chip is ghosted with no action — the note is
+ * the whole message.
  */
+const PENDING_TITLE = " — not applied to results yet";
 export const Chip: React.FC<{
   chip: DiscoveryChip;
   onRemove: () => void;
@@ -18,11 +29,30 @@ export const Chip: React.FC<{
   pulse?: boolean;
 }> = ({ chip, onRemove, onUndo, pulse }) => {
   const label = `${chip.group}: ${chip.value}`;
+  const pending = chip.pending ? "border border-dashed border-current" : "";
+  const title = chip.pending ? `${label}${PENDING_TITLE}` : label;
+
+  if (chip.provenance === "inheritedInapplicable")
+    return (
+      <span
+        title={chip.note ? `${label} — ${chip.note}` : label}
+        className="bg-gray-light text-gray-dark inline-flex min-h-8 shrink-0 items-center gap-1 rounded-full px-3 py-1 text-xs"
+      >
+        <IoPersonOutline className="h-4 w-4 shrink-0 opacity-60" />
+        <span className="line-clamp-2 max-w-40 opacity-60 md:truncate">
+          {label}
+        </span>
+        <IoInformationCircleOutline
+          className="h-4 w-4 shrink-0"
+          aria-label={chip.note ?? undefined}
+        />
+      </span>
+    );
 
   if (chip.provenance === "inheritedOff")
     return (
       <span
-        title={label}
+        title={title}
         className="bg-gray-light text-gray-dark inline-flex shrink-0 items-center gap-1 rounded-full px-3 py-1 text-xs"
       >
         <IoPersonOutline className="h-4 w-4 shrink-0 opacity-60" />
@@ -43,10 +73,10 @@ export const Chip: React.FC<{
   const inherited = chip.provenance === "inherited";
   return (
     <span
-      title={label}
+      title={title}
       className={`inline-flex shrink-0 items-center gap-1 rounded-full px-3 py-1 text-xs motion-reduce:animate-none ${
         inherited ? "bg-purple-tint text-purple" : "bg-green-light text-green"
-      } ${pulse ? "animate-pulse" : ""}`}
+      } ${pending} ${pulse ? "animate-pulse" : ""}`}
     >
       {inherited && <IoPersonOutline className="h-4 w-4 shrink-0" />}
       <span className="line-clamp-2 max-w-40 md:truncate">{label}</span>

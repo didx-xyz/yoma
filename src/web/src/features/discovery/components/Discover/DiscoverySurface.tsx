@@ -3,6 +3,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { IoOptionsOutline, IoSearchOutline } from "react-icons/io5";
 import AnimatedText from "~/components/Opportunity/AnimatedText";
 import { formatNumber } from "../../lib/format";
+import { whereSummary } from "../../lib/location";
 import { isDefaultDiscoveryState } from "../../lib/urlCodec";
 import { useDiscovery } from "../../state/DiscoveryContext";
 import { FiltersDialog } from "../Filters/FiltersDialog";
@@ -87,9 +88,7 @@ export const DiscoverySurface: React.FC = () => {
   // desktop bar.
   const pillSummary = ((): string | null => {
     const f = effectiveFilters;
-    const firstPlus = (
-      facet: "types" | "countries" | "engagementTypes",
-    ): string | null => {
+    const firstPlus = (facet: "types" | "engagementTypes"): string | null => {
       const values = f[facet];
       if (values.length === 0) return null;
       const first = resolveLabel(facet, values[0]!);
@@ -97,7 +96,7 @@ export const DiscoverySurface: React.FC = () => {
     };
     const named = [
       firstPlus("types"),
-      firstPlus("countries"),
+      whereSummary(f, (id) => resolveLabel("countries", id)),
       firstPlus("engagementTypes"),
     ].filter((s): s is string => s !== null);
     const others = [

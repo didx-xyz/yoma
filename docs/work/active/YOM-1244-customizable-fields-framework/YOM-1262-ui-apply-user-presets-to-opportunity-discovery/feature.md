@@ -34,7 +34,7 @@ Capturing preferences is [YOM-1261](../YOM-1261-ui-manage-user-presets/feature.m
 | [YOM-1257](https://linear.app/didx/issue/YOM-1257) / [YOM-1258](https://linear.app/didx/issue/YOM-1258) (api) | No preset model, no preset→filter mapping. Preferences are mocked behind one façade |
 | [YOM-1264](https://linear.app/didx/issue/YOM-1264) (BA/design) | The preference set and the final filter mapping are not signed off |
 | [YOM-1260](https://linear.app/didx/issue/YOM-1260) must land first | Presets resolve to filter criteria, so this builds on that feature's clause shape and operator matrix |
-| User Location decision (Adrian) | `Jobs near me` needs coordinates. **Parked, not rendered** (2026-09-22) — it stays in the badge registry as a parked entry and never draws until the decision lands |
+| Location API (Adrian) — in development | Decided 2026-09-28: country = profile, region / city / centroid = a user-location preference with its own PATCH. **Built against a mock** — the controls, URL, chips, inheritance and `Jobs near me` are live, but the search does not filter on region / city / distance until `LOCATION_SEARCH_LIVE` flips (the surface says "not applied yet") |
 
 ## Out of Scope
 
@@ -82,8 +82,9 @@ when filterable):
 1  free-text search input      (recent searches render beneath it as a typeahead, ≤3, removable,
                                 "Clear recent")
 2  quick searches              (shipped badges only — Under an hour · Climate action · Remote ·
-                                Jobs in my country [signed-in with a profile country]; no SOON
-                                state, no "Show all N")
+                                Jobs in my country [a known country — profile, or anonymous
+                                session answer] · Jobs near me [a city centroid in effect]; no
+                                SOON state, no "Show all N")
 3  your preferences            (master switch + inherited chips)
 4  what kind of opportunity    (type row — always open, MULTI-select since 2026-09-03,
                                 provenance-aware, drives block 5; fixed order Job · Learning ·
@@ -201,8 +202,24 @@ commitment set; **accessibility excludes** those that have not described their a
 - [ ] Browser pass of the manual test script (brief §10) — first full pass by Jason 2026-09-03
       (findings fixed same day, see Decisions); re-verify the round-2 fixes on screen, then the
       2026-09-23 handoff's manual test steps.
-- [~] Where section: province/city/distance **reserved inputs drawn disabled** (2026-09-22); the
-      "my country only" switch is still not built.
+- [x] Where section: region / city / distance **live** through the shared `LocationInput`
+      (2026-09-28, see Decisions) — mocked search: not sent until `LOCATION_SEARCH_LIVE` flips.
+      The "my country only" switch is still not built.
+- [x] User location (2026-09-28): wizard block in step 5 above Languages, Where section, bar
+      segment + mobile pill summary, chips (incl. the inapplicable class), `Jobs near me`
+      shipped, sign-in merge rule. Browser pass on local, anonymous only — see the 2026-09-28
+      handoff.
+- [ ] **When the Location search API lands:** map `region` / `city` / `point` + `radiusKm` in
+      `lib/searchRequest.ts` (the one place), flip `LOCATION_SEARCH_LIVE` in `lib/location.ts`,
+      and confirm the null rule (no region / city → included) on the API side.
+- [ ] **When the user-location PATCH lands:** wire it in `userPreferencesLive.ts` (the preset PUT
+      must NOT carry `location`), read the stored place from the profile response, and drop it
+      from the mock.
+- [ ] Signed-in browser pass on DEV (read-only profile country, stale-place warning, "Change your
+      profile country" on a device mismatch, keep-answers dropping a place from another country).
+- [ ] **Follow-up, out of scope here:** the admin opportunity edit page adopts the same
+      `LocationInput` (`src/components/Location/`), so opportunity region / city strings come from
+      the same source as the youth's. Needs its own ticket; it touches opportunity fields.
 - [ ] Raise the API asks with Adrian: public sort options, commitment null rule, public
       `TotalCountOnly`, `ApplyUserPresets` exposure (2026-08-27-c handoff) **plus epic README
       asks 7–13 (2026-09-22)**: Task displayName "Impact task", engagement rename with IDs kept,
@@ -627,6 +644,80 @@ commitment set; **accessibility excludes** those that have not described their a
     results divider (needs Is Paid and a public sort); the wizard sidebar's "2 ways to take part"
     summary (the live-count panel has no per-step summary today); the "my country only" switch.
 
+- 2026-09-28 (User Location — analysed, agreed with Jason and built the same day, against a mock
+  because the API is still in development; handoff
+  [`handoffs/2026-09-28-a.md`](./handoffs/2026-09-28-a.md)):
+  - **Country is the global profile `countryId`**, edited only in `UserProfileForm` — other
+    features read it too, so the wizard shows it read-only with a link to the profile. **Region,
+    city and coordinates are a user-location preference** set in the wizard and saved through a
+    separate PATCH (API in development) that the profile response will return. For an
+    **anonymous** youth there is no profile, so the wizard offers a country picker and the whole
+    location lives in the session with their other answers.
+  - **Web model:** `location: UserLocation` on `UserPreferences` (`countryId` + `region` / `city`
+    / `coordinates` / `source` / `placeId`), so the wizard draft, normaliser, merge and session
+    store carry it with no new plumbing; the façade owns the split to the location PATCH. The
+    stored `countryId` records the country the place was picked in: when the profile country
+    changes, the place is **stale** — never applied, and the wizard asks for it again.
+  - **Capture: Google Places (New) autocomplete + the Maps JS Geocoder**, already integrated (no
+    new dependency). Places are searched within ONE country, in English. Verified 2026-09-28: the
+    suggestion list echoes the language typed ("Kaapstad"), the resolved place is English
+    ("Cape Town", "Western Cape") — only the resolved place is stored. Picking a city fills its
+    region; picking another region clears the city. **Free text is the fallback** (Maps
+    unavailable, or no match and the youth presses Enter): stored as typed, trimmed, no
+    coordinates, hinted "use the English name". Reverse geocoding must go through Maps JS — the
+    Geocoding REST endpoint refuses referrer-restricted browser keys.
+  - **Coordinates are the city's centroid, never the device fix**, with the always-visible line
+    "Location may not be accurate — we use your nearest place or city, never your exact
+    position." URLs round them to 2 decimals (`pt=`), because Copy link shares the URL.
+  - **"Use my location" in another country is not applied.** Anonymous wizard: "Switch to
+    Kenya"; filters: "Search in Kenya instead" (one `patchFilters` that also skips the inherited
+    country — `skip` on the action, so the two cannot race); signed in: a link to change the
+    profile country.
+  - **Inheritance.** One `location` preference (chip "Where: Durban, KwaZulu-Natal"), skippable
+    and savable (skip-to-save clears the place, keeps the country). It applies **only while the
+    search is for exactly the youth's country and names no place of its own**
+    (`locationFragmentState`); otherwise its chip takes a fourth class, `inheritedInapplicable`
+    — ghosted, no undo, the note says why ("Not applied — this search is for Kenya" / "pick one
+    country" / "uses the place you picked here"). Agreed: a country override switches the
+    inherited place off for that search. **Distance is never inherited** — a standing radius
+    would quietly hide most of the feed.
+  - **Filters.** `region`, `city`, `point` (centroid) and `radiusKm` on `DiscoveryFilters`; URL
+    `region=`, `city=`, `pt=`, `km=`. Region / city need exactly one effective country
+    (Worldwide does not count); distance needs a point — a city picked from the list or the
+    inherited one. Radius options 10 / 25 / 50 / 100 km, default 25. A global reducer rule
+    (`clearOrphanedPlace`, like the clause rule) clears the search's own place whenever the
+    country may have changed; removing the city chip drops its centroid.
+  - **Null rule (Jason): opportunities that name no region or city are INCLUDED** — the section's
+    line says so.
+  - **Mocked search, stated in the product.** `LOCATION_SEARCH_LIVE = false` in `lib/location.ts`:
+    the request builder sends no region / city / distance, location chips are drawn dashed with
+    "not applied to results yet", the results heading does not count them, and the Where section
+    and results carry "Region, city and distance aren't applied to results yet — location search
+    is still being built." No client-side filtering over server paging.
+  - **Where summary is one function** (`whereSummary`) for the bar segment, the mobile pill and
+    the section header: "25 km of Cape Town" → "Cape Town" → "Western Cape" → "South Africa +1".
+  - **Wizard placement: step 5, above Languages**, no new step (Jason: keep the steps to a
+    minimum). First built under Engagement in step 4; Jason moved it to step 5 in review the
+    same day, and the step reads "Where are you, and what languages work for you?". The Country
+    row left the read-only identity block.
+  - **A selected option is never hidden behind "Show all N"** (found in review the same day, via
+    the Where segment). The country list shows its first eight; a country picked through the
+    search box and then un-searched vanished from view while it still filtered — the chips read
+    one country, the segment "Kenya +1", and the Where section "one country at a time", with no
+    visible way to deselect it. `ChipSet` (`FilterControl.tsx`) now keeps every selected option
+    visible, in lookup order (nothing jumps under the cursor). Shared by every chip section, so
+    Categories and the other lookups get the same guarantee. Region / city / distance render
+    only for exactly one real country; otherwise one line says what unlocks them (none / several
+    / Worldwide).
+  - **Badges.** `Jobs near me` **shipped** (Type Job + 25 km around the effective point; absent
+    without one). `Jobs in my country` now renders for an anonymous youth who gave a country —
+    it was signed-in-only only because anonymous youth had no country.
+  - **Sign-in "keep your answers": the profile country wins.** The anonymous place carries over
+    only if it was picked in the profile's country; otherwise the offer says it will not be kept.
+  - **`LocationInput` is a shared app component** (`src/components/Location/`), not a discovery
+    one, so the admin opportunity form can adopt it — the follow-up in Tasks. The admin side is
+    the weakest link in matching: opportunity region / city are admin free text today.
+
 ## BA sign-off summary (2026-09-22)
 
 Copied from the BA Considerations workbook (sheets All Opportunities, Jobs, Impact Action & Event,
@@ -641,7 +732,7 @@ today, the section copy states today's behaviour (see the Plan correction).
 | --- | --- | --- | --- | --- |
 | Type (`TypeId`) | renamed | Job · Learning · **Impact Task** (was Task) · Event · Other; IDs kept, CSV accepts both | n/a (required) | type row, badges, chips — `displayName` verbatim, README ask #7 |
 | Categories | renamed (taxonomy) | the approved 16 (YOM-1259); Other kept | n/a (required) | tiles, Categories section, wizard Interests, Climate action badge, Start a business goal |
-| Location (was Countries) | renamed / expanding | Country → Province/Region → City (+ optional coordinates); Province and City free text, case-insensitive "contains" | n/a (required) | Where: country live; province / city / distance reserved disabled |
+| Location (was Countries) | renamed / expanding | Country → Province/Region → City (+ optional coordinates); Province and City free text, case-insensitive "contains" | n/a (required); **no region / city → included** (Jason, 2026-09-28) | Where: country live; region / city / distance live controls, not sent yet (mocked search) |
 | Languages | existing | ISO lookup; required, ≥1 | **no null case** — every opportunity lists one | Language section |
 | Skills | existing | EMSI lookup; for Jobs = required skills, elsewhere = skills earned | not specified stays | Skills (inert — no search facet), card chips |
 | Commitment interval + count | existing | Minute · Hour · Day · Week · Month; required non-Job, optional Job | **stays in results** (BA) — API still excludes | How long, Under an hour badge |
@@ -708,7 +799,7 @@ BA sheets. Owner placeholders: Client / BA / API / Web.
 | 6 | Time commitment as a stored preference is "in contention" on the BA sheet. Built with "Awaiting BA sign-off". | BA | open |
 | 7 | Gender → ranking only: privacy and business rules to confirm before any implementation. Nothing built. | BA | open |
 | 8 | Is Paid: approve capturing explicitly (not derived). Web assumes explicit. | BA / API | open |
-| 9 | Distance / "Jobs near me": live device coordinates, stored User Location, or both? Badge parked. | API (Adrian) | open |
+| 9 | Distance / "Jobs near me": live device coordinates, stored User Location, or both? | API (Adrian) / Web | decided 2026-09-28 — stored user location (city centroid, never the device fix); "Use my location" only fills it. Badge shipped, search mocked |
 | 10 | Task `displayName` → "Impact task": reference-data change and CSV alias. | API | open (README ask #7) |
 | 11 | Engagement value rename with IDs preserved; when it ships, delete `lib/engagementLabels.ts`. | API | open (README ask #8) |
 | 12 | Per-badge live counts: not without a batched count endpoint. | API (suggestion) / Web | open (README ask #13) |

@@ -1,3 +1,4 @@
+import type { LocationCoordinates } from "~/api/models/location";
 import type { CustomFieldFilter } from "~/api/models/opportunity";
 
 /**
@@ -18,6 +19,20 @@ export interface DiscoveryFilters {
   categories: string[];
   /** Country ids. */
   countries: string[];
+  /**
+   * Region / province and city — English names, "contains" matching once the Location search
+   * API lands (opportunities that name no region or city stay in the results). Only meaningful
+   * with exactly one effective country; cleared whenever the country changes.
+   */
+  region: string | null;
+  city: string | null;
+  /**
+   * Centroid of the picked city, carried so Distance can measure from it. Never a filter on its
+   * own and never the device fix; `null` for a typed city.
+   */
+  point: LocationCoordinates | null;
+  /** "Within N km" of the effective point (a picked city, or the inherited location). */
+  radiusKm: number | null;
   /** EngagementType ids ("How you take part"). */
   engagementTypes: string[];
   /** "Up to" commitment — TimeInterval id + count. Opportunities with none set are INCLUDED. */
@@ -39,6 +54,7 @@ export const PREFERENCE_KEYS = [
   "goal",
   "targetCategories",
   "country",
+  "location",
   "age",
   "skills",
   "maxCommitment",
@@ -68,6 +84,10 @@ export const EMPTY_DISCOVERY_FILTERS: DiscoveryFilters = {
   types: [],
   categories: [],
   countries: [],
+  region: null,
+  city: null,
+  point: null,
+  radiusKm: null,
   engagementTypes: [],
   commitment: null,
   hasReward: null,

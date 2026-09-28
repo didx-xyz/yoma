@@ -1,5 +1,10 @@
+import { useAtomValue } from "jotai";
 import React, { useState } from "react";
 import { IoSparklesOutline } from "react-icons/io5";
+import { hasPlace } from "~/api/models/location";
+import { anonymousLocationCarriesOver } from "~/api/models/userPreferences";
+import { userProfileAtom } from "~/lib/store";
+import { placeLabel } from "../../lib/location";
 import { useDiscovery } from "../../state/DiscoveryContext";
 
 /**
@@ -8,12 +13,23 @@ import { useDiscovery } from "../../state/DiscoveryContext";
  * into the stored preset (never a silent overwrite); discarding lets them go with the session.
  * Renders nothing until both the offer and the stored preset have resolved — keeping must merge
  * against the real preset, not a loading placeholder.
+ *
+ * The profile country wins over the session's: a place answered anonymously in another country
+ * is not kept, and the offer says so before the youth decides.
  */
 export const KeepAnswersPrompt: React.FC = () => {
   const { preferences, migration, markPersonalizationSeen } = useDiscovery();
   const [busy, setBusy] = useState(false);
+  const profile = useAtomValue(userProfileAtom);
 
   if (!migration.pendingAnonymous || preferences === undefined) return null;
+
+  const pending = migration.pendingAnonymous;
+  const droppedPlace =
+    hasPlace(pending.location) &&
+    !anonymousLocationCarriesOver(pending, profile?.countryId ?? null)
+      ? placeLabel(pending.location)
+      : null;
 
   const act = (action: () => Promise<void>) => (): void => {
     setBusy(true);
@@ -37,6 +53,8 @@ export const KeepAnswersPrompt: React.FC = () => {
           {preferences === null
             ? "They become your saved preferences and shape every search."
             : "They will be added to your saved preferences — nothing you saved is removed."}
+          {droppedPlace &&
+            ` ${droppedPlace} isn't in your profile country, so it won't be kept.`}
         </span>
       </p>
       <span className="flex items-center gap-2">

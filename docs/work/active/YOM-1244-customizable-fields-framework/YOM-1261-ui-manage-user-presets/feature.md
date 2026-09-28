@@ -131,6 +131,9 @@ Anonymous visitors get it too — answers held in session, with an offer to keep
       `/opportunities/discover?personalize=1`; the surface opens the wizard and strips the param.
 - [x] Anonymous → sign-in "keep your answers" offer — `useAnonymousMigration` +
       `KeepAnswersPrompt`, merge through the façade, never a silent overwrite (see Decisions).
+- [x] Location block in step 5 above Languages (2026-09-28; first built under Engagement in step 4) — profile country read-only (signed
+      in) or a country picker (anonymous), then region / city through the shared
+      `LocationInput`. The Country row left the identity block. Detail in YOM-1262's Decisions.
 - [ ] **Blocked**: real persistence, pending YOM-1257 / YOM-1258 (mock-removal list in the
       2026-08-27-c handoff).
 - [ ] **Blocked**: final preference list, pending YOM-1264.
@@ -219,6 +222,15 @@ Anonymous visitors get it too — answers held in session, with an offer to keep
   - **The wizard's live-count panel states a failed count** ("Couldn't count matches right
     now — your answers still save") instead of shimmering forever, and its first-load placeholder
     block became the word "Counting…": one loading treatment across the surface.
+
+- 2026-09-28: **The wizard captures the youth's location, in step 5 above Languages** (no new
+  step; moved there from under Engagement in Jason's review, and the step reads "Where are you,
+  and what languages work for you?"). Region / city / centroid are a preference saved through a separate user-location PATCH
+  (API in development); country stays the global profile field, shown read-only when signed in
+  and picked in the wizard only by an anonymous youth. The sign-in merge keeps an anonymous place
+  only when it is in the profile's country. Full rule set, mocks and verification:
+  [YOM-1262 feature doc](../YOM-1262-ui-apply-user-presets-to-opportunity-discovery/feature.md),
+  Decisions 2026-09-28.
 
 ## Links
 

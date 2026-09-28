@@ -9,6 +9,7 @@ import {
   applyInheritedFragments,
   mapPreferencesToFilters,
 } from "../../lib/preferenceMapping";
+import { homeCountryId } from "../../lib/location";
 import { EMPTY_DISCOVERY_FILTERS } from "../../lib/types";
 import { PREFERENCE_STEPS } from "../../registry/preferenceSteps";
 import { useDiscovery } from "../../state/DiscoveryContext";
@@ -39,6 +40,7 @@ export const PersonalizeDialog: React.FC<{
     lookups,
     dispatch,
     scrollToResults,
+    scope,
   } = useDiscovery();
 
   // Escape and the browser Back button behave exactly like the X: seen, unsaved, closed.
@@ -62,7 +64,8 @@ export const PersonalizeDialog: React.FC<{
   const previewFilters = applyInheritedFragments(
     EMPTY_DISCOVERY_FILTERS,
     mapPreferencesToFilters(draft, {
-      countryId: profile?.countryId ?? null,
+      // The DRAFT's country for an anonymous youth — the live count follows the picker.
+      countryId: homeCountryId(scope, profile?.countryId ?? null, draft),
       categories: lookups.categories,
     }),
     false,

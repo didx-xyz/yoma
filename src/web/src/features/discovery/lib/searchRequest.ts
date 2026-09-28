@@ -31,6 +31,11 @@ export function buildSearchFilter(
     types: typeIds.length > 0 ? typeIds : null,
     categories: orNull(filters.categories),
     countries: orNull(filters.countries),
+    // Region, city and distance are deliberately NOT sent: the Location search API is still in
+    // development (`LOCATION_SEARCH_LIVE` in ./location). When it lands, map `filters.region`,
+    // `filters.city` and `filters.point` + `filters.radiusKm` HERE — the one place the request
+    // is built — and flip the flag. Distance, when set with a point, replaces the region / city
+    // match rather than adding to it.
     languages: orNull(filters.languages),
     organizations: orNull(filters.providers),
     engagementTypes: orNull(filters.engagementTypes),

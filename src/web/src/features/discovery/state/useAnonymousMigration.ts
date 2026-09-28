@@ -28,6 +28,8 @@ export function useAnonymousMigration(
   /** The signed-in youth's stored preset — `undefined` while loading. */
   stored: UserPreferences | null | undefined,
   saveStored: (preferences: UserPreferences) => Promise<UserPreferences>,
+  /** The profile's global country — it wins over the session's; see `mergeUserPreferences`. */
+  profileCountryId: string | null,
 ): {
   /**
    * Session-held answers awaiting the youth's keep/discard decision. `undefined` = still
@@ -69,10 +71,14 @@ export function useAnonymousMigration(
     // would clobber an existing preset. The prompt only renders once it has resolved.
     if (!pendingAnonymous || stored === undefined) return;
     await saveStored(
-      mergeUserPreferences(stored ?? EMPTY_USER_PREFERENCES, pendingAnonymous),
+      mergeUserPreferences(
+        stored ?? EMPTY_USER_PREFERENCES,
+        pendingAnonymous,
+        profileCountryId,
+      ),
     );
     await retire();
-  }, [pendingAnonymous, stored, saveStored, retire]);
+  }, [pendingAnonymous, stored, saveStored, retire, profileCountryId]);
 
   return {
     pendingAnonymous,

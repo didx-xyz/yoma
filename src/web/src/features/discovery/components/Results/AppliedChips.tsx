@@ -7,7 +7,7 @@ import { useDiscovery } from "../../state/DiscoveryContext";
 import { Chip } from "../shared/Chip";
 
 /**
- * The applied-chip row above the results — all three provenance classes, plus the type-scoped
+ * The applied-chip row above the results — every provenance class, plus the type-scoped
  * custom-field clauses labelled through YOM-1260's labeler (values only; Exists shows the
  * title). Clear filters sits at the end of the row and takes out the SESSION's filters only —
  * inherited chips stay, because preferences are a standing setting rather than part of this
@@ -87,6 +87,8 @@ export const AppliedChips: React.FC<{ pulseChipId?: string | null }> = ({
             prefKey: null,
             facet: "customFields",
             raw: null,
+            pending: false,
+            note: null,
           }}
           onRemove={() =>
             dispatch({

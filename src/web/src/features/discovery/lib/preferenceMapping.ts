@@ -1,4 +1,6 @@
 import type { UserGoal, UserPreferences } from "~/api/models/userPreferences";
+import { EMPTY_USER_LOCATION } from "~/api/models/userPreferences";
+import { activeUserLocation, locationFragmentState } from "./location";
 import type { DiscoveryFilters, PreferenceKey } from "./types";
 
 /**
@@ -21,6 +23,10 @@ import type { DiscoveryFilters, PreferenceKey } from "./types";
  * runtime — never a hard-coded id, and robust to the taxonomy migration (YOM-1259).
  */
 export interface PreferenceProfileContext {
+  /**
+   * The youth's country — the profile's when signed in, the session answer when anonymous
+   * (`homeCountryId` in `./location`). Region and city apply only under this country.
+   */
   countryId: string | null;
   categories: { id: string; name: string }[];
 }
@@ -79,8 +85,18 @@ export function mapPreferencesToFilters(
   if (preferences.targetCategories.length > 0)
     fragments.targetCategories = { categories: preferences.targetCategories };
 
-  // Phase one is country only — no province or city on the user side.
   if (profile.countryId) fragments.country = { countries: [profile.countryId] };
+
+  // Region / city / centroid, only while they still belong to the youth's country. The
+  // fragment never carries a radius: distance is applied deliberately (the Distance control or
+  // "Jobs near me"), never inherited — a standing radius would quietly hide most of the feed.
+  const location = activeUserLocation(preferences.location, profile.countryId);
+  if (location)
+    fragments.location = {
+      region: location.region,
+      city: location.city,
+      point: location.coordinates,
+    };
 
   if (preferences.maxCommitment)
     fragments.maxCommitment = { commitment: preferences.maxCommitment };
@@ -107,13 +123,29 @@ export function applyInheritedFragments(
 ): DiscoveryFilters {
   if (preferencesOff) return manual;
 
-  return (
+  const merged = (
     Object.entries(fragments) as [PreferenceKey, Partial<DiscoveryFilters>][]
   )
-    .filter(([key]) => !skipped.includes(key))
-    .reduce((merged, [, fragment]) => mergeFragment(merged, fragment), {
+    .filter(([key]) => key !== "location" && !skipped.includes(key))
+    .reduce((acc, [, fragment]) => mergeFragment(acc, fragment), {
       ...manual,
     });
+
+  // The inherited place is all-or-nothing and conditional: it joins only while the search is
+  // for exactly its country and names no place of its own (`locationFragmentState`).
+  const place = fragments.location;
+  if (
+    place &&
+    locationFragmentState(manual, fragments, preferencesOff, skipped) ===
+      "applied"
+  )
+    return {
+      ...merged,
+      region: place.region ?? null,
+      city: place.city ?? null,
+      point: place.point ?? null,
+    };
+  return merged;
 }
 
 /** Scalars keep the manual value when present; array facets union ("any of" both ways). */
@@ -163,12 +195,13 @@ export function owningPreference(
 
 /**
  * Preference keys whose skip can be PERSISTED by clearing a preset field. `country` and `age`
- * are identity-derived (read from the profile, never stored in the preset), so switching them
- * off can only ever be a per-search choice.
+ * are identity-derived (country is the global profile field, edited only on the profile page;
+ * never stored in the preset), so switching them off can only ever be a per-search choice.
  */
 export const SAVABLE_SKIP_KEYS: readonly PreferenceKey[] = [
   "goal",
   "targetCategories",
+  "location",
   "skills",
   "maxCommitment",
   "engagement",
@@ -208,6 +241,13 @@ export function applySkipsToPreferences(
         break;
       case "accessibility":
         next.accessibility = { enabled: false, needs: [] };
+        break;
+      case "location":
+        // The place goes; the country it was picked in stays (anonymous: it IS their country).
+        next.location = {
+          ...EMPTY_USER_LOCATION,
+          countryId: next.location.countryId,
+        };
         break;
       case "country":
       case "age":

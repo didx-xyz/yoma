@@ -31,7 +31,8 @@ import {
 /** Closed set of controls; `<FilterControl kind=…>` is the single kind→component switch. */
 export type FilterControlKind =
   | "chips"
-  | "country"
+  /** Country multi-select, then region / city (one country) and distance — the Where section. */
+  | "location"
   | "gate"
   | "lookupSearch"
   | "range"
@@ -65,12 +66,6 @@ export const FACET_FOR_BINDING = {
   providers: null,
 } as const satisfies Record<FilterSectionBinding, string | null>;
 
-/** A control drawn in place for a facet the API does not filter on yet — disabled, labelled. */
-export interface ReservedInput {
-  label: string;
-  placeholder: string;
-}
-
 export interface FilterSectionDef {
   id: string;
   label: string;
@@ -94,8 +89,6 @@ export interface FilterSectionDef {
    */
   nullRule: string | null;
   pendingNote: string | null;
-  /** Disabled inputs holding the place of facets that arrive with a later API (Where). */
-  reserved: { inputs: ReservedInput[]; note: string } | null;
   /** `primary` renders in the main list; `more` sits behind the "More filters" disclosure. */
   group: "primary" | "more";
 }
@@ -124,31 +117,24 @@ export const FILTER_SECTIONS: FilterSectionDef[] = [
     hint: null,
     nullRule: null,
     pendingNote: null,
-    reserved: null,
     group: "primary",
   },
-  // Province/Region, City and Distance are drawn disabled: the BA's Location model (Country →
-  // Province/Region → City, free-text "contains" on the last two) and the User Location decision
-  // both sit with the API. Reserved here so the section's shape does not change when they land.
+  // The BA's Location model: Country → Province/Region → City (English names, "contains"), plus
+  // distance from the picked city's centroid. Region and city need exactly one country; the
+  // search does not filter on them yet (LOCATION_SEARCH_LIVE) and the control says so.
   {
     id: "where",
     label: "Where",
     question: "Where should it be?",
     icon: IoLocationOutline,
-    control: "country",
+    control: "location",
     binding: "countries",
     optIn: false,
     hint: null,
-    nullRule: null,
+    // Jason, 2026-09-28: opportunities with no region or city are INCLUDED.
+    nullRule:
+      "Opportunities that don't name a region or city stay in your results.",
     pendingNote: null,
-    reserved: {
-      inputs: [
-        { label: "Province / Region", placeholder: "Contains…" },
-        { label: "City", placeholder: "Contains…" },
-        { label: "Distance", placeholder: "Within … km of you" },
-      ],
-      note: "Province, city and distance arrive with the Location API; distance also needs your location, which Yoma doesn't collect yet.",
-    },
     group: "primary",
   },
   // The id doubles as the search-bar segment id (SEARCH · WHAT · WHERE · HOW LONG · ENGAGEMENT).
@@ -167,7 +153,6 @@ export const FILTER_SECTIONS: FilterSectionDef[] = [
     nullRule:
       "Includes opportunities that don't say how you take part — for now; they'll be hidden while this is set once the search API applies the rule.",
     pendingNote: null,
-    reserved: null,
     group: "primary",
   },
   // NB: the API currently EXCLUDES opportunities with no commitment set from an interval filter,
@@ -184,7 +169,6 @@ export const FILTER_SECTIONS: FilterSectionDef[] = [
     nullRule:
       "Excludes opportunities that don't state a time commitment — for now; the rule is to include them once the search API changes.",
     pendingNote: null,
-    reserved: null,
     group: "primary",
   },
   {
@@ -199,7 +183,6 @@ export const FILTER_SECTIONS: FilterSectionDef[] = [
     nullRule:
       "Includes opportunities that haven't described their accommodations — for now.",
     pendingNote,
-    reserved: null,
     group: "primary",
   },
   // Every opportunity carries at least one language (the API requires it on create), so there
@@ -216,7 +199,6 @@ export const FILTER_SECTIONS: FilterSectionDef[] = [
     nullRule:
       "Every opportunity lists at least one language, so none are left out for missing data.",
     pendingNote: null,
-    reserved: null,
     group: "primary",
   },
   // Demoted 2026-09-22 when Engagement took Pay's place on the search bar. The ZLTO half is live
@@ -234,7 +216,6 @@ export const FILTER_SECTIONS: FilterSectionDef[] = [
       "Opportunities that don't say whether they pay stay in the results, sorted last — once the paid filter is live.",
     pendingNote:
       "Paid / not paid arrives with the Is Paid field (YOM-1264). ZLTO rewards filter today.",
-    reserved: null,
     group: "more",
   },
   // Demoted, not deleted — partners ask for Provider; Skills and SDGs await their API facets.
@@ -249,7 +230,6 @@ export const FILTER_SECTIONS: FilterSectionDef[] = [
     hint: "For jobs this matches required skills; for everything else, the skills you will earn.",
     nullRule: null,
     pendingNote,
-    reserved: null,
     group: "more",
   },
   {
@@ -263,7 +243,6 @@ export const FILTER_SECTIONS: FilterSectionDef[] = [
     hint: null,
     nullRule: null,
     pendingNote,
-    reserved: null,
     group: "more",
   },
   {
@@ -277,7 +256,6 @@ export const FILTER_SECTIONS: FilterSectionDef[] = [
     hint: "Type part of a name — matches anywhere in it.",
     nullRule: null,
     pendingNote: null,
-    reserved: null,
     group: "more",
   },
 ];

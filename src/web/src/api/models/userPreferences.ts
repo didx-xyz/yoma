@@ -1,3 +1,10 @@
+import type { LocationPlace } from "./location";
+import {
+  EMPTY_LOCATION_PLACE,
+  hasPlace,
+  normalizeLocationPlace,
+} from "./location";
+
 /**
  * User discovery preferences — a User-domain preset, NOT a custom field (epic rule: presets must
  * not be built through the custom-field models or components).
@@ -63,7 +70,40 @@ export interface UserPreferences {
    * in words in the UI).
    */
   accessibility: UserPreferenceAccessibility;
+  /** Region / city / centroid (and, anonymous only, country) — see `UserLocation`. */
+  location: UserLocation;
 }
+
+/**
+ * Where the youth is — region, city and the city's centroid, set in the wizard.
+ *
+ * Country is NOT owned here for a signed-in youth: it is the global profile `countryId`, edited
+ * only on the profile page. `countryId` records the country the region and city were picked in,
+ * so a later profile-country change marks them stale (not applied) instead of pairing a South
+ * African city with a Kenyan profile. For an anonymous youth there is no profile, so
+ * `countryId` IS their country, held in the session with their other answers.
+ *
+ * Signed-in, the region / city / coordinates persist through the user-location PATCH (API in
+ * development) rather than the preset endpoint — the façade owns that split.
+ */
+export interface UserLocation extends LocationPlace {
+  countryId: string | null;
+}
+
+export const EMPTY_USER_LOCATION: UserLocation = {
+  countryId: null,
+  ...EMPTY_LOCATION_PLACE,
+};
+
+const normalizeUserLocation = (raw: unknown): UserLocation => ({
+  countryId:
+    typeof raw === "object" &&
+    raw !== null &&
+    typeof (raw as { countryId?: unknown }).countryId === "string"
+      ? (raw as { countryId: string }).countryId
+      : null,
+  ...normalizeLocationPlace(raw),
+});
 
 /** Where anonymous answers live (session) vs a signed-in youth's preset (their profile). */
 export type UserPreferenceScope = "user" | "anonymous";
@@ -76,6 +116,7 @@ export const EMPTY_USER_PREFERENCES: UserPreferences = {
   engagement: [],
   languages: [],
   accessibility: { enabled: false, needs: [] },
+  location: EMPTY_USER_LOCATION,
 };
 
 /** Pre-2026-09-22 presets stored engagement as one nullable id; anything else unexpected → none. */
@@ -111,6 +152,9 @@ export const normalizeUserPreferences = (raw: unknown): UserPreferences => {
     engagement: normalizeEngagement(
       (parsed as { engagement?: unknown }).engagement,
     ),
+    location: normalizeUserLocation(
+      (parsed as { location?: unknown }).location,
+    ),
   };
 };
 
@@ -119,10 +163,24 @@ export const normalizeUserPreferences = (raw: unknown): UserPreferences => {
  * offer). The anonymous answers are the youth's most recent expression, so they win where set;
  * multi-selects union so nothing already stored is lost. Never called without the youth's
  * explicit yes — an existing preset is never overwritten silently.
+ *
+ * Location: the PROFILE country always wins — it is the global country, not an answer. The
+ * anonymous region / city / centroid carry over only when they were picked in that same
+ * country (`anonymousLocationCarriesOver`); otherwise the stored location stays as it was and
+ * the offer says the place was dropped.
  */
+export const anonymousLocationCarriesOver = (
+  anonymous: UserPreferences,
+  profileCountryId: string | null,
+): boolean =>
+  hasPlace(anonymous.location) &&
+  profileCountryId !== null &&
+  anonymous.location.countryId === profileCountryId;
+
 export const mergeUserPreferences = (
   stored: UserPreferences,
   anonymous: UserPreferences,
+  profileCountryId: string | null,
 ): UserPreferences => {
   const union = <T>(a: T[], b: T[], keyOf: (item: T) => string): T[] => {
     const seen = new Set(a.map(keyOf));
@@ -151,5 +209,8 @@ export const mergeUserPreferences = (
         (id) => id,
       ),
     },
+    location: anonymousLocationCarriesOver(anonymous, profileCountryId)
+      ? anonymous.location
+      : stored.location,
   };
 };

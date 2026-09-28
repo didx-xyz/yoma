@@ -65,7 +65,10 @@ export const saveUserPreferences = async (
     writeAnonymousPreferences(preferences);
     return preferences;
   }
-  return notImplemented(); // TODO(YOM-1257): PUT the preset for the authenticated user
+  // TODO(YOM-1257): PUT the preset for the authenticated user — WITHOUT `location`: region /
+  // city / coordinates go to the separate user-location PATCH (API in development) and come
+  // back on the user profile; country is the profile's `countryId` and is never sent from here.
+  return notImplemented();
 };
 
 export const clearUserPreferences = async (

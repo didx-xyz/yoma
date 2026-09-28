@@ -4,12 +4,10 @@ import {
   IoCloseCircleOutline,
   IoSearchOutline,
 } from "react-icons/io5";
-import type {
-  FilterSectionDef,
-  ReservedInput,
-} from "../../registry/filterSections";
+import type { FilterSectionDef } from "../../registry/filterSections";
 import { Message } from "../shared/Message";
 import type { SectionModel, SectionOption } from "./useSectionModel";
+import { WhereControl } from "./WhereControl";
 
 /**
  * The ONE kind→control switch. Every section on every breakpoint renders through here; a new
@@ -59,7 +57,15 @@ const ChipSet: React.FC<{ model: SectionModel; filterText?: string }> = ({
         o.label.toLowerCase().includes(filterText.toLowerCase()),
       )
     : model.options;
-  const visible = showAll ? options : options.slice(0, VISIBLE_BEFORE_SHOW_ALL);
+  // A selected option is never hidden behind "Show all N": pick Kenya from a search, clear the
+  // search, and Kenya must still be on screen (and deselectable) — otherwise the chips say one
+  // country while the search, the segment and the Where section say two. Selected options past
+  // the cut keep their lookup order, so nothing jumps under the cursor when it is picked.
+  const visible = showAll
+    ? options
+    : options.filter(
+        (o, i) => i < VISIBLE_BEFORE_SHOW_ALL || model.selected.includes(o.id),
+      );
   return (
     <div className="flex flex-wrap items-center gap-2">
       {visible.map((option) => (
@@ -70,7 +76,7 @@ const ChipSet: React.FC<{ model: SectionModel; filterText?: string }> = ({
           onToggle={() => model.toggle(option.id)}
         />
       ))}
-      {!showAll && options.length > VISIBLE_BEFORE_SHOW_ALL && (
+      {!showAll && options.length > visible.length && (
         <button
           type="button"
           onClick={() => setShowAll(true)}
@@ -218,33 +224,6 @@ const Typeahead: React.FC<{
   );
 };
 
-/** Disabled inputs holding the place of facets that arrive with a later API. */
-const ReservedInputs: React.FC<{ inputs: ReservedInput[]; note: string }> = ({
-  inputs,
-  note,
-}) => (
-  <div className="flex flex-col gap-2">
-    <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-      {inputs.map((input) => (
-        <label key={input.label} className="flex flex-col gap-1">
-          <span className="text-gray-dark text-[11px] font-semibold tracking-wide uppercase">
-            {input.label}
-          </span>
-          <input
-            type="text"
-            disabled
-            aria-disabled
-            placeholder={input.placeholder}
-            title={note}
-            className="input input-bordered h-10 w-full disabled:opacity-60"
-          />
-        </label>
-      ))}
-    </div>
-    <Message>{note}</Message>
-  </div>
-);
-
 /**
  * Paid and rewards: the Paid half is drawn inert (no Is Paid field on the API yet) above the ZLTO
  * half, which filters today. When the section model withholds the ZLTO options (Type includes
@@ -321,20 +300,15 @@ export const FilterControl: React.FC<{
     case "chips":
     case "range":
       return <ChipSet model={model} />;
-    case "country":
+    case "location":
       return (
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-4">
           <Searchable
             model={model}
             placeholder="Search countries…"
             large={largeSearch}
           />
-          {section.reserved && (
-            <ReservedInputs
-              inputs={section.reserved.inputs}
-              note={section.reserved.note}
-            />
-          )}
+          <WhereControl />
         </div>
       );
     case "lookupSearch":

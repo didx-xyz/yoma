@@ -11,6 +11,7 @@ import {
   IoWifiOutline,
 } from "react-icons/io5";
 import { ENGAGEMENT_NAME_ALIASES } from "../lib/engagementLabels";
+import { DEFAULT_RADIUS_KM } from "../lib/location";
 import type { DiscoveryFilters } from "../lib/types";
 
 /**
@@ -32,7 +33,10 @@ import type { DiscoveryFilters } from "../lib/types";
  */
 
 export interface QuickSearchContext {
+  /** The youth's country — the profile's, or the anonymous session answer. */
   profileCountry: { id: string; name: string } | null;
+  /** Whether a city centroid is in effect (picked here, or the inherited location). */
+  hasPoint: boolean;
   categories: { id: string; name: string }[];
   commitmentIntervals: { id: string; name: string }[];
   engagementTypes: { id: string; name: string }[];
@@ -113,7 +117,8 @@ export const QUICK_SEARCHES: QuickSearchDef[] = [
       return remote ? { engagementTypes: [remote.id] } : null;
     },
   },
-  // Renders only for a signed-in youth whose profile has a country; anonymous users never see it.
+  // Renders only when the youth's country is known — the profile's when signed in, or the
+  // country an anonymous youth gave in the wizard (2026-09-28); otherwise absent.
   {
     id: "jobs-in-country",
     icon: IoBriefcaseOutline,
@@ -162,12 +167,17 @@ export const QUICK_SEARCHES: QuickSearchDef[] = [
     needs: "SDGs (core field, YOM-1264)",
     resolve: () => null,
   },
+  // Shipped 2026-09-28 (mocked search): Job + the default radius around the EFFECTIVE point —
+  // the youth's inherited city, or one picked for this search. Absent without a point. The
+  // radius is applied by the badge, never inherited; the search ignores it until the Location
+  // API lands (LOCATION_SEARCH_LIVE), and the chip is drawn dashed to say so.
   {
     id: "jobs-near-me",
     icon: IoLocationOutline,
     label: "Jobs near me",
-    status: "parked",
-    needs: "User Location decision (Adrian) — coordinates",
-    resolve: () => null,
+    status: "shipped",
+    needs: null,
+    resolve: (ctx) =>
+      ctx.hasPoint ? { types: ["Job"], radiusKm: DEFAULT_RADIUS_KM } : null,
   },
 ];

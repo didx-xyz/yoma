@@ -1,7 +1,5 @@
-import { useAtomValue } from "jotai";
 import React, { useMemo } from "react";
 import ScrollableContainer from "~/components/Carousel/ScrollableContainer";
-import { userProfileAtom } from "~/lib/store";
 import { isQuickSearchApplied } from "../../lib/discoveryReducer";
 import type { QuickSearchContext } from "../../registry/quickSearches";
 import { QUICK_SEARCHES } from "../../registry/quickSearches";
@@ -15,7 +13,8 @@ import { useDiscovery } from "../../state/DiscoveryContext";
  * Only what filters today is drawn (2026-09-22): shipped badges whose criteria resolve, in
  * registry order. There is no SOON state and no "Show all N" — with four badges the row fits one
  * line on desktop and scrolls sideways inside the mobile header. A badge that cannot resolve
- * (anonymous visitor for "Jobs in my country"; lookups still loading) is absent, not greyed.
+ * (no known country for "Jobs in my country", no city for "Jobs near me"; lookups still
+ * loading) is absent, not greyed.
  * Per-badge counts are deliberately NOT fetched — each would be another search request; a
  * batched facet-count endpoint is filed as an API ask.
  */
@@ -27,19 +26,21 @@ const badgeClassFor = (applied: boolean): string =>
 export const QuickSearchRow: React.FC<{ wrap?: boolean }> = ({
   wrap = true,
 }) => {
-  const { state, dispatch, lookups } = useDiscovery();
-  const profile = useAtomValue(userProfileAtom);
+  const { state, dispatch, lookups, homeCountryId, effectiveFilters } =
+    useDiscovery();
+  const hasPoint = effectiveFilters.point !== null;
 
   const ctx: QuickSearchContext = useMemo(() => {
     const country =
-      lookups.countries.find((c) => c.id === profile?.countryId) ?? null;
+      lookups.countries.find((c) => c.id === homeCountryId) ?? null;
     return {
       profileCountry: country ? { id: country.id, name: country.name } : null,
+      hasPoint,
       categories: lookups.categories,
       commitmentIntervals: lookups.timeIntervals,
       engagementTypes: lookups.engagementTypes,
     };
-  }, [lookups, profile?.countryId]);
+  }, [lookups, homeCountryId, hasPoint]);
 
   const badges = QUICK_SEARCHES.filter((badge) => badge.status === "shipped")
     .map((badge) => ({ badge, criteria: badge.resolve(ctx) }))

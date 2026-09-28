@@ -1,6 +1,11 @@
 import React, { useEffect, useRef } from "react";
 import ScrollableContainer from "~/components/Carousel/ScrollableContainer";
 import { formatNumber } from "../../lib/format";
+import {
+  hasLocationFilter,
+  LOCATION_NOT_APPLIED,
+  LOCATION_SEARCH_LIVE,
+} from "../../lib/location";
 import { recordRecentSearch } from "../../lib/recentSearches";
 import { serializeDiscoveryState } from "../../lib/urlCodec";
 import { useDiscovery } from "../../state/DiscoveryContext";
@@ -84,10 +89,18 @@ export const DiscoveryResults: React.FC<{
 
   // "[count] match(es) for [first filter] + N filter(s)" — states WHAT the count counts while
   // staying short: first value only, the rest as a count (the chips row above carries the full
-  // set). Struck-through (skipped) chips are not filtering, so they stay out of it.
+  // set). Struck-through (skipped) and inapplicable chips are not filtering, and neither are
+  // pending ones (region / city / distance until the Location search lands) — none of them may
+  // claim the count.
   const filterValues = [
     ...(effectiveFilters.q ? [`“${effectiveFilters.q}”`] : []),
-    ...chips.filter((c) => c.provenance !== "inheritedOff").map((c) => c.value),
+    ...chips
+      .filter(
+        (c) =>
+          (c.provenance === "inherited" || c.provenance === "manual") &&
+          !c.pending,
+      )
+      .map((c) => c.value),
   ];
   const heading = (count: number): string => {
     if (filterValues.length === 0)
@@ -141,6 +154,9 @@ export const DiscoveryResults: React.FC<{
           </div>
         </ScrollableContainer>
       </div>
+      {!LOCATION_SEARCH_LIVE && hasLocationFilter(effectiveFilters) && (
+        <Message kind="warning">{LOCATION_NOT_APPLIED}</Message>
+      )}
       {failed && (
         <Message kind="error">
           Couldn&apos;t load these results.{" "}

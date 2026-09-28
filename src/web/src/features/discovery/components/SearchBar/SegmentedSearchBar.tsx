@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { IoOptionsOutline } from "react-icons/io5";
+import { whereSummary } from "../../lib/location";
 import { FILTER_SECTIONS } from "../../registry/filterSections";
 import { useDiscovery } from "../../state/DiscoveryContext";
 import { SectionPopover } from "./SectionPopover";
@@ -61,12 +62,12 @@ export const SegmentedSearchBar: React.FC<{ onOpenFilters: () => void }> = ({
         const more = filters.types.length - 1;
         return more > 0 ? `${first} +${more}` : first;
       }
-      case "where": {
-        if (filters.countries.length === 0) return "Anywhere";
-        const first = resolveLabel("countries", filters.countries[0]!);
-        const more = filters.countries.length - 1;
-        return more > 0 ? `${first} +${more}` : first;
-      }
+      case "where":
+        // Most specific first — "25 km of Cape Town", "Cape Town", "Western Cape", "South Africa +1".
+        return (
+          whereSummary(filters, (id) => resolveLabel("countries", id)) ??
+          "Anywhere"
+        );
       case "time":
         return filters.commitment
           ? `Up to ${filters.commitment.count} ${resolveLabel("commitment", filters.commitment.intervalId).toLowerCase()}`

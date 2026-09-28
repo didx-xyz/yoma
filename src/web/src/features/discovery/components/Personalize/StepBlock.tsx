@@ -5,6 +5,7 @@ import { Message } from "../shared/Message";
 import { usePreferenceOptions } from "./usePreferenceOptions";
 import { GoalCards } from "./blocks/GoalCards";
 import { IdentityReadonly } from "./blocks/IdentityReadonly";
+import { LocationBlock } from "./blocks/LocationBlock";
 import { Pill } from "./blocks/Pill";
 import { SkillSearch } from "./blocks/SkillSearch";
 
@@ -123,6 +124,8 @@ export const StepBlock: React.FC<{
         return <SkillSearch draft={draft} onPatch={onPatch} />;
       case "readonly":
         return <IdentityReadonly entries={block.entries ?? []} />;
+      case "location":
+        return <LocationBlock draft={draft} onPatch={onPatch} />;
     }
   };
 

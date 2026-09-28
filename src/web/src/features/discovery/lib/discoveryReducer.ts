@@ -15,7 +15,15 @@ import { EMPTY_DISCOVERY_FILTERS } from "./types";
  * mode changes nothing else.
  */
 export type DiscoveryAction =
-  | { kind: "patchFilters"; patch: Partial<DiscoveryFilters> }
+  | {
+      kind: "patchFilters";
+      patch: Partial<DiscoveryFilters>;
+      /**
+       * Preferences to switch off in the SAME change — e.g. "search in Kenya instead" must drop
+       * the inherited South Africa, or the two would union into a two-country search.
+       */
+      skip?: PreferenceKey[];
+    }
   | { kind: "toggleType"; name: string }
   | { kind: "toggleQuickSearch"; criteria: Partial<DiscoveryFilters> }
   | { kind: "removeManual"; facet: keyof DiscoveryFilters; raw: string }
@@ -105,11 +113,56 @@ const removeFromFacet = (
   return { ...filters, [facet]: scalarDefault(facet) };
 };
 
+const PLACE_CLEARED: Pick<
+  DiscoveryFilters,
+  "region" | "city" | "point" | "radiusKm"
+> = { region: null, city: null, point: null, radiusKm: null };
+
+/**
+ * A region / city picked in this search belongs to the one country it was picked under. When the
+ * country the search is for may have changed — the manual countries changed, the inherited
+ * country was skipped or restored, or the whole preference layer switched — the place (and the
+ * distance measured from it) no longer means anything, so it goes. Global, like the clause rule
+ * below, so no action can leave a South African city on a Kenyan search.
+ */
+function clearOrphanedPlace(
+  state: DiscoveryState,
+  next: DiscoveryState,
+  action: DiscoveryAction,
+): DiscoveryState {
+  const f = next.filters;
+  if (
+    f.region === null &&
+    f.city === null &&
+    f.point === null &&
+    f.radiusKm === null
+  )
+    return next;
+  // A patch that sets the place together with its country ("search in Kenya instead") is the
+  // one change that knows which country the place belongs to.
+  if (
+    action.kind === "patchFilters" &&
+    ("region" in action.patch || "city" in action.patch)
+  )
+    return next;
+  const countriesChanged =
+    JSON.stringify(state.filters.countries) !== JSON.stringify(f.countries);
+  const countryLayerChanged =
+    ((action.kind === "skipPreference" ||
+      action.kind === "setPreferenceSkipped") &&
+      action.key === "country") ||
+    (action.kind === "setPreferencesOff" &&
+      action.off !== state.preferencesOff);
+  return countriesChanged || countryLayerChanged
+    ? { ...next, filters: { ...f, ...PLACE_CLEARED } }
+    : next;
+}
+
 export function reduceDiscovery(
   state: DiscoveryState,
   action: DiscoveryAction,
 ): DiscoveryState {
-  const next = reduceAction(state, action);
+  const next = clearOrphanedPlace(state, reduceAction(state, action), action);
 
   // Type-scoped custom-field clauses never outlive their type, WHATEVER removed it — the type
   // row, the chip's ×, a quick-search toggle, a popover reset, skipping the inherited Goal
@@ -148,6 +201,14 @@ function reduceAction(
       return {
         ...state,
         filters: { ...state.filters, ...action.patch },
+        preferencesSkipped: action.skip
+          ? [
+              ...state.preferencesSkipped.filter(
+                (k) => !action.skip!.includes(k),
+              ),
+              ...action.skip,
+            ]
+          : state.preferencesSkipped,
         page: 1,
       };
     case "toggleType":
@@ -170,12 +231,12 @@ function reduceAction(
         page: 1,
       };
     }
-    case "removeManual":
-      return {
-        ...state,
-        filters: removeFromFacet(state.filters, action.facet, action.raw),
-        page: 1,
-      };
+    case "removeManual": {
+      let filters = removeFromFacet(state.filters, action.facet, action.raw);
+      // The centroid belongs to the city: removing the city removes what distance measured from.
+      if (action.facet === "city") filters = { ...filters, point: null };
+      return { ...state, filters, page: 1 };
+    }
     case "setSort":
       return { ...state, sort: action.sort, page: 1 };
     case "setView":
