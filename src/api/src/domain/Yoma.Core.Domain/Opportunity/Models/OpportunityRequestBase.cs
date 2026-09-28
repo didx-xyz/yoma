@@ -59,7 +59,11 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
     public List<Guid> Categories { get; set; } = null!;
 
-    public List<Guid> Countries { get; set; } = null!;
+    /// <summary>
+    /// Selected countries and their optional location details, one entry per country.
+    /// Omitted details are cleared.
+    /// </summary>
+    public List<OpportunityRequestCountry> Countries { get; set; } = null!;
 
     public List<Guid> Languages { get; set; } = null!;
 
@@ -75,7 +79,7 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
       Keywords = Keywords?.OrderBy(o => o, StringComparer.Ordinal).ToList();
       Categories = [.. Categories.OrderBy(o => o)];
-      Countries = [.. Countries.OrderBy(o => o)];
+      Countries = [.. Countries.OrderBy(o => o?.CountryId)];
       Languages = [.. Languages.OrderBy(o => o)];
       Skills = Skills?.OrderBy(o => o).ToList();
       VerificationTypes = VerificationTypes?.OrderBy(o => o.Type).ThenBy(o => o.Description, StringComparer.Ordinal).ToList();
@@ -88,7 +92,7 @@ namespace Yoma.Core.Domain.Opportunity.Models
       if (Keywords?.Count == 0) Keywords = null;
 
       Categories = [.. Categories.Distinct()];
-      Countries = [.. Countries.Distinct()];
+      // Duplicate country entries are rejected by validation rather than silently losing location data.
       Languages = [.. Languages.Distinct()];
 
       Skills = Skills?.Distinct().ToList();

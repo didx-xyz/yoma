@@ -463,6 +463,15 @@ namespace Yoma.Core.Test.Core
       await Execute(connection, transaction, """
         CREATE SCHEMA "Lookup";
         CREATE SCHEMA "Entity";
+        CREATE TABLE "Entity"."User" ("Id" uuid PRIMARY KEY);
+        CREATE TABLE "Lookup"."TimeInterval" ("Id" uuid PRIMARY KEY);
+        CREATE TABLE "Lookup"."Language" ("Id" uuid PRIMARY KEY);
+        CREATE TABLE "Lookup"."EngagementType" (
+          "Id" uuid PRIMARY KEY, "Name" varchar(125) NOT NULL);
+        INSERT INTO "Lookup"."EngagementType" VALUES
+          ('0b2aaf7a-fdcf-4015-9668-d06bdebafa09', 'Online'),
+          ('171a5e0a-b4db-49f1-a03e-96b5975650a7', 'Offline'),
+          ('6c0405a9-87b6-4834-9068-a928ceecf85b', 'Hybrid');
         CREATE TABLE "Entity"."UserSkills" ("Id" uuid PRIMARY KEY, "DateCreated" timestamptz NOT NULL);
         INSERT INTO "Entity"."UserSkills" VALUES (gen_random_uuid(), '2024-01-15T12:00:00Z'::timestamptz);
         CREATE TABLE "Lookup"."Education" (
@@ -476,6 +485,8 @@ namespace Yoma.Core.Test.Core
           ('D0DDBF9F-6AF1-46BE-9465-BD6B8D47B752', 'Other', CURRENT_TIMESTAMP);
         CREATE SCHEMA "Opportunity";
         CREATE TABLE "Opportunity"."Opportunity" ("Id" uuid PRIMARY KEY);
+        CREATE TABLE "Opportunity"."OpportunityCountries" (
+          "Id" uuid PRIMARY KEY, "DateCreated" timestamptz NOT NULL);
         CREATE TABLE "Opportunity"."OpportunityType" (
           "Id" uuid PRIMARY KEY, "Name" varchar(125) NOT NULL UNIQUE,
           "DisplayName" varchar(125) NOT NULL);
@@ -504,7 +515,7 @@ namespace Yoma.Core.Test.Core
     private static async Task ApplyMigration(NpgsqlConnection connection, NpgsqlTransaction transaction)
     {
       using var context = new ApplicationDbContext(new DbContextOptionsBuilder<ApplicationDbContext>()
-        .UseNpgsql(connection.ConnectionString).Options);
+        .UseNpgsql(connection.ConnectionString, options => options.UseNetTopologySuite()).Options);
       var commands = context.GetService<IMigrationsSqlGenerator>().Generate(
         new ApplicationDb_CF_Configuration().UpOperations, context.GetService<IDesignTimeModel>().Model);
       foreach (var command in commands)

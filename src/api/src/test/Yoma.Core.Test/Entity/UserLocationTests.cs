@@ -112,10 +112,10 @@ namespace Yoma.Core.Test.Entity
     }
 
     [Fact]
-    public void UserProjectionWithJsonCoordinatesTranslatesWithoutLoadingChildren()
+    public void UserProjectionWithSpatialCoordinatesTranslatesWithoutLoadingChildren()
     {
       var options = new DbContextOptionsBuilder<ApplicationDbContext>()
-        .UseNpgsql("Host=localhost;Database=location_projection;Username=test;Password=test").Options;
+        .UseNpgsql("Host=localhost;Database=location_projection;Username=test;Password=test", options => options.UseNetTopologySuite()).Options;
       using var context = new ApplicationDbContext(options);
       var query = new UserRepository(context).Query(false).Where(user => user.Id == Guid.Empty).ToQueryString();
       Assert.Contains("Coordinates", query);

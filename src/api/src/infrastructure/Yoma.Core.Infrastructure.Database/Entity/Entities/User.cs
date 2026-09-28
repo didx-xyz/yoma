@@ -45,8 +45,8 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Entities
     [Column(TypeName = "varchar(255)")]
     public string? City { get; set; }
 
-    [Column(TypeName = "jsonb")]
-    public string? Coordinates { get; set; }
+    [Column(TypeName = "geography (point, 4326)")]
+    public NetTopologySuite.Geometries.Point? Coordinates { get; set; }
 
     [Column(TypeName = "varchar(25)")]
     public string? LocationSource { get; set; }

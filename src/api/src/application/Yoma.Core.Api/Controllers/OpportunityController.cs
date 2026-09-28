@@ -553,15 +553,15 @@ namespace Yoma.Core.Api.Controllers
       return StatusCode((int)HttpStatusCode.OK);
     }
 
-    [SwaggerOperation(Summary = "Assign country(ies) to the specified opportunity")]
+    [SwaggerOperation(Summary = "Assign country(ies) and optional location details to the specified opportunity")]
     [HttpPatch("{id}/assign/countries")]
     [ProducesResponseType((int)HttpStatusCode.OK)]
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
-    public async Task<IActionResult> AssignCountries([FromRoute] Guid id, [Required][FromBody] List<Guid> countryIds)
+    public async Task<IActionResult> AssignCountries([FromRoute] Guid id, [Required][FromBody] List<OpportunityRequestCountry> countries)
     {
       if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Handling request {requestName}", nameof(AssignCountries));
 
-      await _opportunityService.AssignCountries(id, countryIds, true);
+      await _opportunityService.AssignCountries(id, countries, true);
 
       if (_logger.IsEnabled(LogLevel.Information)) _logger.LogInformation("Request {requestName} handled", nameof(AssignCountries));
 

@@ -1,4 +1,5 @@
 using FluentValidation;
+using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Core.Validators;
 using Yoma.Core.Domain.Opportunity.Models;
@@ -14,7 +15,23 @@ namespace Yoma.Core.Domain.Opportunity.Validators
       RuleFor(x => x.Types).Must(x => x == null || x.Count == 0 || x.All(id => id != Guid.Empty)).WithMessage("{PropertyName} contains empty value(s).");
       RuleFor(x => x.Categories).Must(x => x == null || x.Count == 0 || x.All(id => id != Guid.Empty)).WithMessage("{PropertyName} contains empty value(s).");
       RuleFor(x => x.Languages).Must(x => x == null || x.Count == 0 || x.All(id => id != Guid.Empty)).WithMessage("{PropertyName} contains empty value(s).");
-      RuleFor(x => x.Countries).Must(x => x == null || x.Count == 0 || x.All(id => id != Guid.Empty)).WithMessage("{PropertyName} contains empty value(s).");
+      RuleFor(x => x.Countries).Must(x => x == null ||
+        x.All(o => o != null) && x.Select(o => o.CountryId).Distinct().Count() == x.Count)
+        .WithMessage("Countries must contain one non-empty entry per country.");
+      RuleForEach(x => x.Countries).ChildRules(country =>
+      {
+        country.RuleFor(x => x.CountryId).NotEmpty();
+        country.RuleFor(x => x.Region).MaximumLength(Constants.Region_MaxLength);
+        country.RuleFor(x => x.City).MaximumLength(Constants.City_MaxLength);
+        country.RuleFor(x => x).Must(x => x.Region == null && x.City == null)
+          .When(x => x.RadiusKm.HasValue || x.Coordinates != null)
+          .WithMessage("Specify either region/city or coordinates and radius, not both.");
+        country.RuleFor(x => x).Must(x => (x.Coordinates != null) == x.RadiusKm.HasValue)
+          .WithMessage("Coordinates and radius must be supplied together.");
+        country.RuleFor(x => x.RadiusKm).Must(x => x.HasValue && double.IsFinite(x.Value * 1000) && x.Value > 0)
+          .When(x => x.RadiusKm.HasValue).WithMessage("Radius must be a finite positive number of kilometres.");
+        country.RuleFor(x => x.Coordinates!).SetValidator(new CoordinatesValidator()).When(x => x.Coordinates != null);
+      });
       RuleFor(x => x.Organizations).Must(x => x == null || x.Count == 0 || x.All(id => id != Guid.Empty)).WithMessage("{PropertyName} contains empty value(s).");
       RuleFor(x => x.EngagementTypes).Must(x => x == null || x.Count == 0 || x.All(id => id != Guid.Empty)).WithMessage("{PropertyName} contains empty value(s).");
       RuleFor(x => x.ValueContains).Length(3, 50).When(x => !string.IsNullOrEmpty(x.ValueContains));

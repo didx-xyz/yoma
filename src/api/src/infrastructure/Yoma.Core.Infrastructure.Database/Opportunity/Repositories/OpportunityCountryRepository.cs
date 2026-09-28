@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Opportunity.Models;
@@ -7,7 +8,7 @@ using Yoma.Core.Infrastructure.Shared.Extensions;
 
 namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
 {
-  public class OpportunityCountryRepository : BaseRepository<Entities.OpportunityCountry, Guid>, IRepository<OpportunityCountry>
+  public class OpportunityCountryRepository : BaseRepository<Entities.OpportunityCountry, Guid>, IRepositoryPropertyContainsWithSpatial<OpportunityCountry>
   {
     #region Constructor
     public OpportunityCountryRepository(ApplicationDbContext context) : base(context) { }
@@ -32,21 +33,57 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
         OrganizationStatusId = entity.Opportunity.Organization.Status.Id,
         CountryId = entity.CountryId,
         CountryName = entity.Country.Name,
+        Region = entity.Region,
+        City = entity.City,
+        Coordinates = Core.Helpers.CoordinatesHelper.ToArray(entity.Coordinates),
+        DateModified = entity.DateModified,
         DateCreated = entity.DateCreated
       });
+    }
+
+    public Expression<Func<OpportunityCountry, bool>> Contains(Expression<Func<OpportunityCountry, string?>> property, string value)
+    {
+      return Core.Helpers.PropertyContainsHelper.Contains(property, value);
+    }
+
+    public IQueryable<OpportunityCountry> Contains(IQueryable<OpportunityCountry> query, Expression<Func<OpportunityCountry, string?>> property, string value)
+    {
+      ArgumentNullException.ThrowIfNull(query);
+
+      return query.Where(Contains(property, value));
+    }
+
+    public IQueryable<OpportunityCountry> WithinRadius(IQueryable<OpportunityCountry> query, double[] coordinates, double radiusKm)
+    {
+      ArgumentNullException.ThrowIfNull(query);
+      ArgumentNullException.ThrowIfNull(coordinates);
+
+      var centre = Core.Helpers.CoordinatesHelper.ToPoint(coordinates)!;
+      var distanceMetres = radiusKm * 1000;
+
+      // Geography uses metres; Npgsql translates this to index-aware ST_DWithin.
+      var matchingIds = _context.OpportunityCountries
+        .Where(o => o.Coordinates != null && o.Coordinates.IsWithinDistance(centre, distanceMetres))
+        .Select(o => o.Id);
+
+      return query.Where(o => matchingIds.Contains(o.Id));
     }
 
     public async Task<OpportunityCountry> Create(OpportunityCountry item)
     {
       item.DateCreated = DateTimeOffset.UtcNow;
+      item.DateModified = item.DateCreated;
 
       var entity = new Entities.OpportunityCountry
       {
         Id = item.Id,
         OpportunityId = item.OpportunityId,
         CountryId = item.CountryId,
+        Region = item.Region,
+        City = item.City,
+        Coordinates = Core.Helpers.CoordinatesHelper.ToPoint(item.Coordinates),
+        DateModified = item.DateModified,
         DateCreated = item.DateCreated,
-
       };
 
       _context.OpportunityCountries.Add(entity);
@@ -56,9 +93,20 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
       return item;
     }
 
-    public Task<OpportunityCountry> Update(OpportunityCountry item)
+    public async Task<OpportunityCountry> Update(OpportunityCountry item)
     {
-      throw new NotImplementedException();
+      var entity = _context.OpportunityCountries.SingleOrDefault(o => o.Id == item.Id)
+        ?? throw new ArgumentOutOfRangeException(nameof(item), $"{nameof(OpportunityCountry)} with id '{item.Id}' does not exist");
+
+      item.DateModified = DateTimeOffset.UtcNow;
+
+      entity.Region = item.Region;
+      entity.City = item.City;
+      entity.Coordinates = Core.Helpers.CoordinatesHelper.ToPoint(item.Coordinates);
+      entity.DateModified = item.DateModified;
+
+      await _context.SaveChangesAsync();
+      return item;
     }
 
     public async Task Delete(OpportunityCountry item)

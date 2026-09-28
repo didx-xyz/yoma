@@ -33,8 +33,10 @@ namespace Yoma.Core.Domain.Opportunity.Validators
         ICountryService countryService,
         ILanguageService languageService,
         ISkillService skillService,
-        IOpportunityVerificationTypeService opportunityVerificationTypeService)
+        IOpportunityVerificationTypeService opportunityVerificationTypeService,
+        OpportunityRequestCountryValidator opportunityRequestCountryValidator)
     {
+      ArgumentNullException.ThrowIfNull(opportunityRequestCountryValidator);
       _opportunityTypeService = opportunityTypeService;
       _organizationService = organizationService;
       _opportunityDifficultyService = opportunityDifficultyService;
@@ -205,8 +207,13 @@ namespace Yoma.Core.Domain.Opportunity.Validators
           .WithMessage("Categories are required and must exist.");
 
       RuleFor(x => x.Countries)
-          .Must(countries => countries != null && countries.Count != 0 && countries.All(id => id != Guid.Empty && CountryExists(id)))
+          .Must(countries => countries != null && countries.Count != 0 && countries.All(o => o != null && o.CountryId != Guid.Empty && CountryExists(o.CountryId)))
           .WithMessage("Countries are required and must exist.");
+
+      RuleFor(x => x.Countries).Must(locations => locations == null ||
+        locations.All(o => o != null) && locations.Select(o => o.CountryId).Distinct().Count() == locations.Count)
+        .WithMessage("Locations must contain one non-empty entry per country.");
+      RuleForEach(x => x.Countries).SetValidator(opportunityRequestCountryValidator);
 
       RuleFor(x => x.Languages)
           .Must(languages => languages != null && languages.Count != 0 && languages.All(id => id != Guid.Empty && LanguageExists(id)))

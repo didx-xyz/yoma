@@ -10,6 +10,9 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
     /// <inheritdoc />
     protected override void Up(MigrationBuilder migrationBuilder)
     {
+      // EF's non-transactional migration warning is expected: CONCURRENTLY requires suppressTransaction.
+      // An interrupted run may need index cleanup because these operations cannot roll back atomically.
+      // Already deployed; retain the migration structure. Fresh Local/Dev databases replay it and log the warning.
       migrationBuilder.CreateIndex(
           name: "IX_User_YoIDOnboarded_DisplayName_Id",
           schema: "Entity",

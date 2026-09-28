@@ -371,8 +371,8 @@ FROM "Opportunity"."Opportunity" O
 CROSS JOIN "Opportunity"."OpportunityCategory" OC;
 
 -- Countries (ensure ZA or WW always present; cover WW-only / ZA-only / ZA+random)
-INSERT INTO "Opportunity"."OpportunityCountries"("Id", "OpportunityId", "CountryId", "DateCreated")
-SELECT gen_random_uuid(), O."Id", C."CountryId", (CURRENT_TIMESTAMP AT TIME ZONE 'UTC')
+INSERT INTO "Opportunity"."OpportunityCountries"("Id", "OpportunityId", "CountryId", "DateCreated", "DateModified")
+SELECT gen_random_uuid(), O."Id", C."CountryId", (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'), (CURRENT_TIMESTAMP AT TIME ZONE 'UTC')
 FROM "Opportunity"."Opportunity" O
 CROSS JOIN LATERAL (
   -- 40%: WW only

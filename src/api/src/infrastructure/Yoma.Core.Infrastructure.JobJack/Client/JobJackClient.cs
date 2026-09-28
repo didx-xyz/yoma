@@ -127,7 +127,14 @@ namespace Yoma.Core.Infrastructure.JobJack.Client
         DateEnd = item.DateEnd,
         Hidden = false,
         Categories = [category.Id],
-        Countries = [_countryService.GetByCodeAlpha2(Domain.Core.Country.SouthAfrica.ToDescription()).Id],
+        // Only structured partner fields are mapped; free-form Location is not parsed or geocoded.
+        Countries =
+          [new Domain.Opportunity.Models.OpportunityRequestCountry
+          {
+            CountryId = _countryService.GetByCodeAlpha2(Domain.Core.Country.SouthAfrica.ToDescription()).Id,
+            Region = item.Province?.NormalizeNullableValue(),
+            City = item.City?.NormalizeNullableValue()
+          }],
         Languages = [_languageService.GetByName(Domain.Core.Language.English.ToString()).Id]
       };
 
@@ -163,6 +170,7 @@ namespace Yoma.Core.Infrastructure.JobJack.Client
       var requirements = BuildRequirements(item.Requirements);
       if (!string.IsNullOrEmpty(requirements)) metadata.Add(requirements);
 
+      // Free-form location may contain detail beyond the structured city/province; retain it without parsing.
       AddDetail(metadata, "Location", item.Location);
       AddDetail(metadata, "Contract type", item.ContractType?.TitleCase());
       AddDetail(metadata, "Positions available", item.OpportunitiesAvailable?.ToString());
@@ -233,6 +241,8 @@ namespace Yoma.Core.Infrastructure.JobJack.Client
       var companyInTitle = !string.IsNullOrWhiteSpace(company) && title.Contains(company, StringComparison.OrdinalIgnoreCase);
       var cityInTitle = !string.IsNullOrWhiteSpace(city) && title.Contains(city, StringComparison.OrdinalIgnoreCase);
 
+      // Retain company/city distinctions for otherwise identical job titles across placements.
+      // Structured country details support filtering but do not replace this title distinction.
       if (!string.IsNullOrWhiteSpace(company) && !companyInTitle)
         title = cityInTitle ? $"{title} ({company})" : $"{title} - {company}";
 

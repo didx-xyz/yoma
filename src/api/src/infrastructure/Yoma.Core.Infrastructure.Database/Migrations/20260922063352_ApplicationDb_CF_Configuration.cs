@@ -7,13 +7,106 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
   /// <inheritdoc />
   public partial class ApplicationDb_CF_Configuration : Migration
   {
+    private static readonly string[] TrigramIndexOperators = ["gin_trgm_ops"];
+
     /// <inheritdoc />
     protected override void Up(MigrationBuilder migrationBuilder)
     {
-      migrationBuilder.AddColumn<string>(name: "Region", schema: "Entity", table: "User", type: "varchar(255)", nullable: true);
-      migrationBuilder.AddColumn<string>(name: "City", schema: "Entity", table: "User", type: "varchar(255)", nullable: true);
-      migrationBuilder.AddColumn<string>(name: "Coordinates", schema: "Entity", table: "User", type: "jsonb", nullable: true);
-      migrationBuilder.AddColumn<string>(name: "LocationSource", schema: "Entity", table: "User", type: "varchar(25)", nullable: true);
+      migrationBuilder.AlterDatabase()
+        .Annotation("Npgsql:PostgresExtension:postgis", ",,")
+        .Annotation("Npgsql:PostgresExtension:pg_trgm", ",,")
+        .OldAnnotation("Npgsql:PostgresExtension:pg_trgm", ",,");
+
+      migrationBuilder.AddColumn<string>(
+        name: "Region",
+        schema: "Opportunity",
+        table: "OpportunityCountries",
+        type: "varchar(255)",
+        nullable: true);
+
+      migrationBuilder.AddColumn<string>(
+        name: "City",
+        schema: "Opportunity",
+        table: "OpportunityCountries",
+        type: "varchar(255)",
+        nullable: true);
+
+      migrationBuilder.AddColumn<NetTopologySuite.Geometries.Point>(
+        name: "Coordinates",
+        schema: "Opportunity",
+        table: "OpportunityCountries",
+        type: "geography (point, 4326)",
+        nullable: true);
+
+      migrationBuilder.CreateIndex(
+        name: "IX_OpportunityCountries_Coordinates",
+        schema: "Opportunity",
+        table: "OpportunityCountries",
+        column: "Coordinates")
+        .Annotation("Npgsql:IndexMethod", "gist");
+
+      migrationBuilder.CreateIndex(
+        name: "IX_OpportunityCountries_Region",
+        schema: "Opportunity",
+        table: "OpportunityCountries",
+        column: "Region")
+        .Annotation("Npgsql:IndexMethod", "gin")
+        .Annotation("Npgsql:IndexOperators", TrigramIndexOperators);
+
+      migrationBuilder.CreateIndex(
+        name: "IX_OpportunityCountries_City",
+        schema: "Opportunity",
+        table: "OpportunityCountries",
+        column: "City")
+        .Annotation("Npgsql:IndexMethod", "gin")
+        .Annotation("Npgsql:IndexOperators", TrigramIndexOperators);
+
+      migrationBuilder.AddColumn<DateTimeOffset>(
+        name: "DateModified",
+        schema: "Opportunity",
+        table: "OpportunityCountries",
+        type: "timestamp with time zone",
+        nullable: true);
+
+      migrationBuilder.Sql("UPDATE \"Opportunity\".\"OpportunityCountries\" SET \"DateModified\" = \"DateCreated\"");
+
+      migrationBuilder.AlterColumn<DateTimeOffset>(
+        name: "DateModified",
+        schema: "Opportunity",
+        table: "OpportunityCountries",
+        type: "timestamp with time zone",
+        nullable: false,
+        oldClrType: typeof(DateTimeOffset),
+        oldType: "timestamp with time zone",
+        oldNullable: true);
+
+      migrationBuilder.AddColumn<string>(
+        name: "Region",
+        schema: "Entity",
+        table: "User",
+        type: "varchar(255)",
+        nullable: true);
+
+      migrationBuilder.AddColumn<string>(
+        name: "City",
+        schema: "Entity",
+        table: "User",
+        type: "varchar(255)",
+        nullable: true);
+
+      migrationBuilder.AddColumn<NetTopologySuite.Geometries.Point>(
+        name: "Coordinates",
+        schema: "Entity",
+        table: "User",
+        type: "geography (point, 4326)",
+        nullable: true);
+
+      migrationBuilder.AddColumn<string>(
+        name: "LocationSource",
+        schema: "Entity",
+        table: "User",
+        type: "varchar(25)",
+        nullable: true);
 
       migrationBuilder.AddColumn<string>(
         name: "Type",
@@ -78,15 +171,49 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
         constraints: table =>
         {
           table.PrimaryKey("PK_UserPreferences", x => x.UserId);
-          table.ForeignKey(name: "FK_UserPreferences_User_UserId", column: x => x.UserId, principalSchema: "Entity", principalTable: "User", principalColumn: "Id");
-          table.ForeignKey(name: "FK_UserPreferences_UserGoal_GoalId", column: x => x.GoalId, principalSchema: "Entity", principalTable: "UserGoal", principalColumn: "Id");
-          table.ForeignKey(name: "FK_UserPreferences_TimeInterval_CommitmentIntervalId", column: x => x.CommitmentIntervalId, principalSchema: "Lookup", principalTable: "TimeInterval", principalColumn: "Id");
-          table.ForeignKey(name: "FK_UserPreferences_EngagementType_EngagementTypeId", column: x => x.EngagementTypeId, principalSchema: "Lookup", principalTable: "EngagementType", principalColumn: "Id");
+          table.ForeignKey(
+            name: "FK_UserPreferences_User_UserId",
+            column: x => x.UserId,
+            principalSchema: "Entity",
+            principalTable: "User",
+            principalColumn: "Id");
+          table.ForeignKey(
+            name: "FK_UserPreferences_UserGoal_GoalId",
+            column: x => x.GoalId,
+            principalSchema: "Entity",
+            principalTable: "UserGoal",
+            principalColumn: "Id");
+          table.ForeignKey(
+            name: "FK_UserPreferences_TimeInterval_CommitmentIntervalId",
+            column: x => x.CommitmentIntervalId,
+            principalSchema: "Lookup",
+            principalTable: "TimeInterval",
+            principalColumn: "Id");
+          table.ForeignKey(
+            name: "FK_UserPreferences_EngagementType_EngagementTypeId",
+            column: x => x.EngagementTypeId,
+            principalSchema: "Lookup",
+            principalTable: "EngagementType",
+            principalColumn: "Id");
         });
 
-      migrationBuilder.CreateIndex(name: "IX_UserPreferences_GoalId", schema: "Entity", table: "UserPreferences", column: "GoalId");
-      migrationBuilder.CreateIndex(name: "IX_UserPreferences_CommitmentIntervalId", schema: "Entity", table: "UserPreferences", column: "CommitmentIntervalId");
-      migrationBuilder.CreateIndex(name: "IX_UserPreferences_EngagementTypeId", schema: "Entity", table: "UserPreferences", column: "EngagementTypeId");
+      migrationBuilder.CreateIndex(
+        name: "IX_UserPreferences_GoalId",
+        schema: "Entity",
+        table: "UserPreferences",
+        column: "GoalId");
+
+      migrationBuilder.CreateIndex(
+        name: "IX_UserPreferences_CommitmentIntervalId",
+        schema: "Entity",
+        table: "UserPreferences",
+        column: "CommitmentIntervalId");
+
+      migrationBuilder.CreateIndex(
+        name: "IX_UserPreferences_EngagementTypeId",
+        schema: "Entity",
+        table: "UserPreferences",
+        column: "EngagementTypeId");
 
       migrationBuilder.CreateTable(
         name: "UserPreferenceCategories",
@@ -101,12 +228,32 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
         constraints: table =>
         {
           table.PrimaryKey("PK_UserPreferenceCategories", x => x.Id);
-          table.ForeignKey(name: "FK_UserPreferenceCategories_OpportunityCategory_CategoryId", column: x => x.CategoryId, principalSchema: "Opportunity", principalTable: "OpportunityCategory", principalColumn: "Id");
-          table.ForeignKey(name: "FK_UserPreferenceCategories_UserPreferences_UserId", column: x => x.UserId, principalSchema: "Entity", principalTable: "UserPreferences", principalColumn: "UserId");
+          table.ForeignKey(
+            name: "FK_UserPreferenceCategories_OpportunityCategory_CategoryId",
+            column: x => x.CategoryId,
+            principalSchema: "Opportunity",
+            principalTable: "OpportunityCategory",
+            principalColumn: "Id");
+          table.ForeignKey(
+            name: "FK_UserPreferenceCategories_UserPreferences_UserId",
+            column: x => x.UserId,
+            principalSchema: "Entity",
+            principalTable: "UserPreferences",
+            principalColumn: "UserId");
         });
 
-      migrationBuilder.CreateIndex(name: "IX_UserPreferenceCategories_CategoryId", schema: "Entity", table: "UserPreferenceCategories", column: "CategoryId");
-      migrationBuilder.CreateIndex(name: "IX_UserPreferenceCategories_UserId_CategoryId", schema: "Entity", table: "UserPreferenceCategories", columns: ["UserId", "CategoryId"], unique: true);
+      migrationBuilder.CreateIndex(
+        name: "IX_UserPreferenceCategories_CategoryId",
+        schema: "Entity",
+        table: "UserPreferenceCategories",
+        column: "CategoryId");
+
+      migrationBuilder.CreateIndex(
+        name: "IX_UserPreferenceCategories_UserId_CategoryId",
+        schema: "Entity",
+        table: "UserPreferenceCategories",
+        columns: ["UserId", "CategoryId"],
+        unique: true);
 
       migrationBuilder.CreateTable(
         name: "Accessibility",
@@ -179,16 +326,32 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
         constraints: table =>
         {
           table.PrimaryKey("PK_UserPreferenceLanguages", x => x.Id);
-          table.ForeignKey(name: "FK_UserPreferenceLanguages_UserPreferences_UserId", column: x => x.UserId,
-            principalSchema: "Entity", principalTable: "UserPreferences", principalColumn: "UserId");
-          table.ForeignKey(name: "FK_UserPreferenceLanguages_Language_LanguageId", column: x => x.LanguageId,
-            principalSchema: "Lookup", principalTable: "Language", principalColumn: "Id");
+          table.ForeignKey(
+            name: "FK_UserPreferenceLanguages_UserPreferences_UserId",
+            column: x => x.UserId,
+            principalSchema: "Entity",
+            principalTable: "UserPreferences",
+            principalColumn: "UserId");
+          table.ForeignKey(
+            name: "FK_UserPreferenceLanguages_Language_LanguageId",
+            column: x => x.LanguageId,
+            principalSchema: "Lookup",
+            principalTable: "Language",
+            principalColumn: "Id");
         });
 
-      migrationBuilder.CreateIndex(name: "IX_UserPreferenceLanguages_LanguageId", schema: "Entity",
-        table: "UserPreferenceLanguages", column: "LanguageId");
-      migrationBuilder.CreateIndex(name: "IX_UserPreferenceLanguages_UserId_LanguageId", schema: "Entity",
-        table: "UserPreferenceLanguages", columns: ["UserId", "LanguageId"], unique: true);
+      migrationBuilder.CreateIndex(
+        name: "IX_UserPreferenceLanguages_LanguageId",
+        schema: "Entity",
+        table: "UserPreferenceLanguages",
+        column: "LanguageId");
+
+      migrationBuilder.CreateIndex(
+        name: "IX_UserPreferenceLanguages_UserId_LanguageId",
+        schema: "Entity",
+        table: "UserPreferenceLanguages",
+        columns: ["UserId", "LanguageId"],
+        unique: true);
 
       migrationBuilder.AddColumn<string>(
         name: "DisplayName",
@@ -206,6 +369,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
       ApplicationDb_CF_Configuration_Seeding_EngagementTypes.Seed(migrationBuilder);
 
       migrationBuilder.Sql("UPDATE \"Lookup\".\"EngagementType\" SET \"DisplayName\" = \"Name\" WHERE \"DisplayName\" IS NULL");
+
       migrationBuilder.AlterColumn<string>(
         name: "DisplayName",
         schema: "Lookup",

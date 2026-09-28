@@ -66,7 +66,7 @@ namespace Yoma.Core.Domain.Opportunity.Interfaces
 
     Task<Models.Opportunity> RemoveCategories(Guid id, List<Guid> categoryIds, bool ensureOrganizationAuthorization);
 
-    Task<Models.Opportunity> AssignCountries(Guid id, List<Guid> countryIds, bool ensureOrganizationAuthorization);
+    Task<Models.Opportunity> AssignCountries(Guid id, List<Models.OpportunityRequestCountry> countries, bool ensureOrganizationAuthorization);
 
     Task<Models.Opportunity> RemoveCountries(Guid id, List<Guid> countryIds, bool ensureOrganizationAuthorization);
 

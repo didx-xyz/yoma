@@ -161,7 +161,7 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
     public List<Lookups.OpportunityCategory>? Categories { get; set; }
 
-    public List<Country>? Countries { get; set; }
+    public List<OpportunityCountryInfo>? Countries { get; set; }
 
     public List<Language>? Languages { get; set; }
 

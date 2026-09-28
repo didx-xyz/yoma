@@ -20,6 +20,14 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
     public string CountryName { get; set; } = null!;
 
+    public string? Region { get; set; }
+
+    public string? City { get; set; }
+
+    public double[]? Coordinates { get; set; }
+
+    public DateTimeOffset DateModified { get; set; }
+
     public DateTimeOffset DateCreated { get; set; }
   }
 }

@@ -245,6 +245,10 @@ namespace Yoma.Core.Infrastructure.Database.Context
     {
       // Match raw substring-search columns while preserving existing B-tree indexes.
       builder.HasPostgresExtension("pg_trgm");
+      builder.HasPostgresExtension("postgis");
+      builder.Entity<OpportunityCountry>().HasIndex(o => o.Coordinates).HasMethod("gist");
+      builder.Entity<OpportunityCountry>().HasIndex(o => o.Region).HasMethod("gin").HasOperators("gin_trgm_ops");
+      builder.Entity<OpportunityCountry>().HasIndex(o => o.City).HasMethod("gin").HasOperators("gin_trgm_ops");
 
       builder.Entity<Opportunity.Entities.Opportunity>()
           .HasIndex(o => o.Title, "IX_Opportunity_Title_Trgm")

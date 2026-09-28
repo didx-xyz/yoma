@@ -51,7 +51,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
         Country = entity.Country == null ? null : entity.Country.Name,
         Region = entity.Region,
         City = entity.City,
-        Coordinates = entity.Coordinates == null ? null : JsonConvert.DeserializeObject<double[]>(entity.Coordinates),
+        Coordinates = Core.Helpers.CoordinatesHelper.ToArray(entity.Coordinates),
         LocationSource = entity.LocationSource == null ? null : Enum.Parse<LocationSource>(entity.LocationSource),
         EducationId = entity.EducationId,
         Education = entity.Education == null ? null : entity.Education.Name,
@@ -126,7 +126,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
         CountryId = item.CountryId,
         Region = item.Region,
         City = item.City,
-        Coordinates = item.Coordinates == null ? null : JsonConvert.SerializeObject(item.Coordinates),
+        Coordinates = Core.Helpers.CoordinatesHelper.ToPoint(item.Coordinates),
         LocationSource = item.LocationSource?.ToString(),
         EducationId = item.EducationId,
         PhotoId = item.PhotoId,
@@ -164,7 +164,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
       entity.CountryId = item.CountryId;
       entity.Region = item.Region;
       entity.City = item.City;
-      entity.Coordinates = item.Coordinates == null ? null : JsonConvert.SerializeObject(item.Coordinates);
+      entity.Coordinates = Core.Helpers.CoordinatesHelper.ToPoint(item.Coordinates);
       entity.LocationSource = item.LocationSource?.ToString();
       entity.EducationId = item.EducationId;
       entity.PhotoId = item.PhotoId;

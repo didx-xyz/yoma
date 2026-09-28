@@ -21,6 +21,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
         .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
       NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "pg_trgm");
+      NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "postgis");
       NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
       modelBuilder.Entity("Yoma.Core.Domain.Core.Models.UnnestedValue", b =>
@@ -870,8 +871,8 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           b.Property<string>("City")
             .HasColumnType("varchar(255)");
 
-          b.Property<string>("Coordinates")
-            .HasColumnType("jsonb");
+          b.Property<NetTopologySuite.Geometries.Point>("Coordinates")
+            .HasColumnType("geography (point, 4326)");
 
           b.Property<string>("Region")
             .HasColumnType("varchar(255)");
@@ -2014,6 +2015,11 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
       modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Opportunity.Entities.OpportunityCountry", b =>
         {
+          b.Property<string>("Region").HasColumnType("varchar(255)");
+          b.Property<string>("City").HasColumnType("varchar(255)");
+          b.Property<NetTopologySuite.Geometries.Point>("Coordinates").HasColumnType("geography (point, 4326)");
+          b.Property<DateTimeOffset>("DateModified").HasColumnType("timestamp with time zone");
+
           b.Property<Guid>("Id")
             .ValueGeneratedOnAdd()
             .HasColumnType("uuid");
@@ -2035,6 +2041,9 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             .IsUnique();
 
           b.ToTable("OpportunityCountries", "Opportunity");
+          b.HasIndex("Coordinates").HasAnnotation("Npgsql:IndexMethod", "gist");
+          b.HasIndex("Region").HasAnnotation("Npgsql:IndexMethod", "gin").HasAnnotation("Npgsql:IndexOperators", new[] { "gin_trgm_ops" });
+          b.HasIndex("City").HasAnnotation("Npgsql:IndexMethod", "gin").HasAnnotation("Npgsql:IndexOperators", new[] { "gin_trgm_ops" });
         });
 
       modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Opportunity.Entities.OpportunityLanguage", b =>

@@ -105,7 +105,7 @@ namespace Yoma.Core.Test.Core
     private static Guid Id(int value) => Guid.Parse($"00000000-0000-0000-0000-{value:000000000000}");
 
     private static ApplicationDbContext CreateContext() => new(new DbContextOptionsBuilder<ApplicationDbContext>()
-      .UseNpgsql("Host=localhost;Database=translation_only;Username=unused;Password=unused").Options);
+      .UseNpgsql("Host=localhost;Database=translation_only;Username=unused;Password=unused", options => options.UseNetTopologySuite()).Options);
 
     private static DbSet<T> Set<T>(IEnumerable<T> items) where T : class
     {

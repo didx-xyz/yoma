@@ -49,6 +49,7 @@ namespace Yoma.Core.Infrastructure.Database
       {
         options.UseNpgsql(configuration.Configuration_ConnectionString(), npgsqlOptions =>
               {
+                npgsqlOptions.UseNetTopologySuite();
                 npgsqlOptions.EnableRetryOnFailure(
                           maxRetryCount: appSettings.DatabaseRetryPolicy.MaxRetryCount,
                           maxRetryDelay: TimeSpan.FromSeconds(appSettings.DatabaseRetryPolicy.MaxRetryDelayInSeconds),
@@ -157,6 +158,7 @@ namespace Yoma.Core.Infrastructure.Database
       services.AddScoped<IRepositoryBatchedValueContainsWithNavigationAndCustomFieldFilter<Domain.Opportunity.Models.Opportunity>, OpportunityRepository>();
       services.AddScoped<IRepository<OpportunityCategory>, OpportunityCategoryRepository>();
       services.AddScoped<IRepository<OpportunityCountry>, OpportunityCountryRepository>();
+      services.AddScoped<IRepositoryPropertyContainsWithSpatial<OpportunityCountry>, OpportunityCountryRepository>();
       services.AddScoped<IRepository<OpportunityLanguage>, OpportunityLanguageRepository>();
       services.AddScoped<IRepository<OpportunitySkill>, OpportunitySkillRepository>();
       services.AddScoped<IRepository<OpportunityVerificationType>, OpportunityVerificationTypeRepository>();

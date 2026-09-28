@@ -14,7 +14,11 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
     public List<Guid>? Languages { get; set; }
 
-    public List<Guid>? Countries { get; set; }
+    /// <summary>
+    /// Match any selected country, applying its optional location criteria to the same country mapping.
+    /// Country entries are independent alternatives; criteria are not combined across countries.
+    /// </summary>
+    public List<OpportunitySearchFilterCountry>? Countries { get; set; }
 
     public List<Guid>? Organizations { get; set; }
 
@@ -89,7 +93,7 @@ namespace Yoma.Core.Domain.Opportunity.Models
       Types = Types?.OrderBy(o => o).ToList();
       Categories = Categories?.OrderBy(o => o).ToList();
       Languages = Languages?.OrderBy(o => o).ToList();
-      Countries = Countries?.OrderBy(o => o).ToList();
+      Countries = Countries?.OrderBy(o => o?.CountryId).ToList();
       Organizations = Organizations?.OrderBy(o => o).ToList();
       EngagementTypes = EngagementTypes?.OrderBy(o => o).ToList();
 
@@ -107,7 +111,7 @@ namespace Yoma.Core.Domain.Opportunity.Models
       Languages = Languages?.Distinct().ToList();
       if (Languages?.Count == 0) Languages = null;
 
-      Countries = Countries?.Distinct().ToList();
+      // Preserve duplicate countries so validation rejects ambiguous location filters.
       if (Countries?.Count == 0) Countries = null;
 
       Organizations = Organizations?.Distinct().ToList();

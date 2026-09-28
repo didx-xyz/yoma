@@ -166,7 +166,7 @@ namespace Yoma.Core.Domain.Opportunity.Models
     public string? CategoriesFlattened => Categories == null || Categories.Count == 0 ? null : string.Join(", ", Categories.Select(o => o.Name));
 
     [Ignore]
-    public List<Country>? Countries { get; set; }
+    public List<OpportunityCountryInfo>? Countries { get; set; }
 
     [JsonIgnore]
     [Name("Countries")]

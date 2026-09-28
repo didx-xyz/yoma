@@ -238,7 +238,13 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
         Hidden = applyHidden ? item.Hidden : null,
         ExternalId = item.ExternalId,
         Categories = [.. item.Categories],
-        Countries = [.. item.Countries],
+        Countries = item.Countries.Select(o => new OpportunityRequestCountry
+        {
+          CountryId = o.CountryId,
+          Region = o.Region,
+          City = o.City,
+          Coordinates = o.Coordinates?.ToArray()
+        }).ToList(),
         Languages = [.. item.Languages],
         Skills = item.Skills?.ToList(),
         VerificationTypes = item.VerificationTypes?.Select(o => new OpportunityRequestVerificationType

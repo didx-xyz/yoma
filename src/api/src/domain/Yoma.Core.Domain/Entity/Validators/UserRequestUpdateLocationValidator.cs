@@ -1,6 +1,7 @@
 using FluentValidation;
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Extensions;
+using Yoma.Core.Domain.Core.Validators;
 using Yoma.Core.Domain.Entity.Models;
 using Yoma.Core.Domain.Lookups.Interfaces;
 
@@ -26,8 +27,8 @@ namespace Yoma.Core.Domain.Entity.Validators
           });
       });
 
-      RuleFor(x => x.Region).MaximumLength(255);
-      RuleFor(x => x.City).MaximumLength(255);
+      RuleFor(x => x.Region).MaximumLength(Constants.Region_MaxLength);
+      RuleFor(x => x.City).MaximumLength(Constants.City_MaxLength);
       RuleFor(x => x.LocationSource).IsInEnum().When(x => x.LocationSource.HasValue);
 
       RuleFor(x => x).Must(x => !string.IsNullOrWhiteSpace(x.Region) || !string.IsNullOrWhiteSpace(x.City) ||
@@ -39,13 +40,7 @@ namespace Yoma.Core.Domain.Entity.Validators
         RuleFor(x => x.City).NotEmpty().WithMessage("City is required when coordinates are specified.");
         RuleFor(x => x.LocationSource).NotEqual(LocationSource.Manual)
           .WithMessage("Manual locations cannot include city-centre coordinates.");
-        RuleFor(x => x.Coordinates).Cascade(CascadeMode.Stop)
-          .Must(values => values!.Length == 2)
-          .WithMessage("Coordinates must contain exactly two values: longitude, latitude.")
-          .Must(values => double.IsFinite(values![0]) && values[0] >= -180 && values[0] <= 180)
-          .WithMessage("Longitude must be a finite value between -180 and 180.")
-          .Must(values => double.IsFinite(values![1]) && values[1] >= -90 && values[1] <= 90)
-          .WithMessage("Latitude must be a finite value between -90 and 90.");
+        RuleFor(x => x.Coordinates!).SetValidator(new CoordinatesValidator());
       });
     }
   }

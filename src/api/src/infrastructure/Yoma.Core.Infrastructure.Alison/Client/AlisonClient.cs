@@ -536,7 +536,7 @@ namespace Yoma.Core.Infrastructure.Alison.Client
 
           Keywords = keywords,
           Categories = [.. categories.Select(o => o.Id)],
-          Countries = [.. countries.Select(o => o.Id)],
+          Countries = [.. countries.Select(o => new Domain.Opportunity.Models.OpportunityRequestCountry { CountryId = o.Id })],
           Languages = [.. languages.Select(o => o.Id)],
 
           // Populate when available. Partner sync uses PatchAllowMissingRequired:

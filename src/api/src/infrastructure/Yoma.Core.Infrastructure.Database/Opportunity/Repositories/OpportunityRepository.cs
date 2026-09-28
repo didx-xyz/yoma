@@ -100,13 +100,16 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
                 ImageURL = o.Category.ImageURL
               }).OrderBy(o => o.Name).ToList() : null,
         Countries = includeChildItems ?
-              entity.Countries.Select(o => new Domain.Lookups.Models.Country
+              entity.Countries.Select(o => new Domain.Opportunity.Models.OpportunityCountryInfo
               {
                 Id = o.CountryId,
                 Name = o.Country.Name,
                 CodeAlpha2 = o.Country.CodeAlpha2,
                 CodeAlpha3 = o.Country.CodeAlpha3,
-                CodeNumeric = o.Country.CodeNumeric
+                CodeNumeric = o.Country.CodeNumeric,
+                Region = o.Region,
+                City = o.City,
+                Coordinates = Core.Helpers.CoordinatesHelper.ToArray(o.Coordinates)
               }).OrderBy(o => o.Name).ToList() : null,
         Languages = includeChildItems ?
               entity.Languages.Select(o => new Domain.Lookups.Models.Language

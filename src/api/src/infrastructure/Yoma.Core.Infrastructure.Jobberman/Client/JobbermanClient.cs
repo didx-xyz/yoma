@@ -153,7 +153,7 @@ namespace Yoma.Core.Infrastructure.Jobberman.Client
         DateEnd = item.DateEnd,
         Hidden = false,
         Categories = [category.Id],
-        Countries = [country.Id],
+        Countries = [new Domain.Opportunity.Models.OpportunityRequestCountry { CountryId = country.Id }],
         Languages = [language.Id],
 
         // Populate when available. Partner sync uses PatchAllowMissingRequired:

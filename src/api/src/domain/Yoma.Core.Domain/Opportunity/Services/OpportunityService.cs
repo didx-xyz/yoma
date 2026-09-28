@@ -71,6 +71,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
     private readonly OpportunityRequestValidatorCreate _opportunityRequestValidatorCreate;
     private readonly OpportunityRequestValidatorUpdate _opportunityRequestValidatorUpdate;
+    private readonly OpportunityRequestCountryValidator _opportunityRequestCountryValidator;
     private readonly OpportunitySearchFilterValidator _opportunitySearchFilterValidator;
     private readonly OpportunitySearchFilterCriteriaValidator _opportunitySearchFilterCriteriaValidator;
 
@@ -78,7 +79,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
     private readonly IRepositoryBatchedValueContainsWithNavigationAndCustomFieldFilter<Models.Opportunity> _opportunityRepository;
     private readonly IRepository<OpportunityCategory> _opportunityCategoryRepository;
-    private readonly IRepository<OpportunityCountry> _opportunityCountryRepository;
+    private readonly IRepositoryPropertyContainsWithSpatial<OpportunityCountry> _opportunityCountryRepository;
     private readonly IRepository<OpportunityLanguage> _opportunityLanguageRepository;
     private readonly IRepository<OpportunitySkill> _opportunitySkillRepository;
     private readonly IRepository<OpportunityVerificationType> _opportunityVerificationTypeRepository;
@@ -125,12 +126,13 @@ namespace Yoma.Core.Domain.Opportunity.Services
         ISSISchemaService ssiSchemaService,
         OpportunityRequestValidatorCreate opportunityRequestValidatorCreate,
         OpportunityRequestValidatorUpdate opportunityRequestValidatorUpdate,
+        OpportunityRequestCountryValidator opportunityRequestCountryValidator,
         OpportunitySearchFilterValidator opportunitySearchFilterValidator,
         OpportunitySearchFilterCriteriaValidator opportunitySearchFilterCriteriaValidator,
         IMediator mediator,
         IRepositoryBatchedValueContainsWithNavigationAndCustomFieldFilter<Models.Opportunity> opportunityRepository,
         IRepository<OpportunityCategory> opportunityCategoryRepository,
-        IRepository<OpportunityCountry> opportunityCountryRepository,
+        IRepositoryPropertyContainsWithSpatial<OpportunityCountry> opportunityCountryRepository,
         IRepository<OpportunityLanguage> opportunityLanguageRepository,
         IRepository<OpportunitySkill> opportunitySkillRepository,
         IRepository<OpportunityVerificationType> opportunityVerificationTypeRepository,
@@ -166,6 +168,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       _opportunityRequestValidatorCreate = opportunityRequestValidatorCreate ?? throw new ArgumentNullException(nameof(opportunityRequestValidatorCreate));
       _opportunityRequestValidatorUpdate = opportunityRequestValidatorUpdate ?? throw new ArgumentNullException(nameof(opportunityRequestValidatorUpdate));
+      _opportunityRequestCountryValidator = opportunityRequestCountryValidator ?? throw new ArgumentNullException(nameof(opportunityRequestCountryValidator));
       _opportunitySearchFilterValidator = opportunitySearchFilterValidator ?? throw new ArgumentNullException(nameof(opportunitySearchFilterValidator));
       _opportunitySearchFilterCriteriaValidator = opportunitySearchFilterCriteriaValidator ?? throw new ArgumentNullException(nameof(opportunitySearchFilterCriteriaValidator));
 
@@ -828,12 +831,30 @@ namespace Yoma.Core.Domain.Opportunity.Services
            opportunityLanguage => filter.Languages.Contains(opportunityLanguage.LanguageId) && opportunityLanguage.OpportunityId == opportunity.Id));
       }
 
-      //countries
-      if (filter.Countries != null && filter.Countries.Count != 0)
+      // Country and location must match a single mapping, not different countries on the opportunity.
+      if (filter.Countries?.Count > 0)
       {
-        filter.Countries = [.. filter.Countries.Distinct()];
-        query = query.Where(opportunity => _opportunityCountryRepository.Query().Any(
-          opportunityCountry => filter.Countries.Contains(opportunityCountry.CountryId) && opportunityCountry.OpportunityId == opportunity.Id));
+        var countryPredicate = PredicateBuilder.False<Models.Opportunity>();
+        foreach (var country in filter.Countries)
+        {
+          var locations = _opportunityCountryRepository.Query().Where(o => o.CountryId == country.CountryId);
+          // Validation makes radius and region/city mutually exclusive. Unknown coordinates cannot establish distance.
+          if (country.RadiusKm.HasValue && country.Coordinates != null)
+            locations = _opportunityCountryRepository.WithinRadius(locations, country.Coordinates, country.RadiusKm.Value);
+          else
+          {
+            // AND the supplied text criteria on this mapping, retaining unspecified fields for incomplete partner data.
+            if (!string.IsNullOrEmpty(country.Region))
+              locations = locations.Where(_opportunityCountryRepository.Contains(o => o.Region, country.Region)
+                .Or(o => o.Region == null));
+            if (!string.IsNullOrEmpty(country.City))
+              locations = locations.Where(_opportunityCountryRepository.Contains(o => o.City, country.City)
+                .Or(o => o.City == null));
+          }
+          // Country entries are alternatives, as with the former list of country IDs.
+          countryPredicate = countryPredicate.Or(opportunity => locations.Any(location => location.OpportunityId == opportunity.Id));
+        }
+        query = query.Where(countryPredicate);
       }
 
       if (filter.PublishedStates != null)
@@ -1447,7 +1468,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
             [nameof(Models.Opportunity.ShareWithPartners)] = request.ShareWithPartners,
             [nameof(Models.Opportunity.TypeId)] = request.TypeId,
             [nameof(Models.Opportunity.DateEnd)] = request.DateEnd,
-            [nameof(Models.Opportunity.Countries)] = request.Countries
+            [nameof(Models.Opportunity.Countries)] = request.Countries.Select(o => o.CountryId).ToList()
           },
           abortSyncPushCreateIfPossible: true,
           actionedByPartnerSyncPull: options.SyncTypeActionedBy == SyncType.Pull);
@@ -1459,7 +1480,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         result = await AssignCategories(result, request.Categories);
 
         // countries
-        result = await RemoveCountries(result, result.Countries?.Where(o => !request.Countries.Contains(o.Id)).Select(o => o.Id).ToList());
+        result = await RemoveCountries(result, result.Countries?.Where(o => !request.Countries.Any(c => c.CountryId == o.Id)).Select(o => o.Id).ToList());
         result = await AssignCountries(result, request.Countries);
 
         // languages
@@ -1708,7 +1729,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       return result;
     }
 
-    public async Task<Models.Opportunity> AssignCountries(Guid id, List<Guid> countryIds, bool ensureOrganizationAuthorization)
+    public async Task<Models.Opportunity> AssignCountries(Guid id, List<OpportunityRequestCountry> countries, bool ensureOrganizationAuthorization)
     {
       var result = GetById(id, true, true, ensureOrganizationAuthorization);
       var resultCurrent = ObjectHelper.DeepCopy(result);
@@ -1721,7 +1742,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       {
         using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
 
-        result = await AssignCountries(result, countryIds);
+        result = await AssignCountries(result, countries);
 
         await AssertUpdatablePartnerSync(UpdateAction.Countries, resultCurrent,
          new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase)
@@ -2112,7 +2133,14 @@ namespace Yoma.Core.Domain.Opportunity.Services
       request.Summary = item.Summary;
       request.Description = item.Description;
       request.Languages = [.. languages.Select(o => o.Id)];
-      request.Countries = [.. countries.Select(o => o.Id)];
+      // CSV remains country-only; retain stored location details for countries still selected.
+      var countryLocations = existingByExternalId == null ? [] : _opportunityCountryRepository.Query()
+        .Where(o => o.OpportunityId == existingByExternalId.Id).ToList();
+      request.Countries = [.. countries.Select(o =>
+      {
+        var location = countryLocations.SingleOrDefault(c => c.CountryId == o.Id);
+        return new OpportunityRequestCountry { CountryId = o.Id, Region = location?.Region, City = location?.City, Coordinates = location?.Coordinates };
+      })];
       request.DifficultyId = difficulty?.Id;
       request.CommitmentIntervalCount = item.CommitmentIntervalCount;
       request.CommitmentIntervalId = commitmentInterval?.Id;
@@ -2550,36 +2578,54 @@ namespace Yoma.Core.Domain.Opportunity.Services
       return _blobService.GetURL(storageType.Value, key);
     }
 
-    private async Task<Models.Opportunity> AssignCountries(Models.Opportunity opportunity, List<Guid> countryIds)
+    private async Task<Models.Opportunity> AssignCountries(Models.Opportunity opportunity, List<OpportunityRequestCountry> countries)
     {
-      if (countryIds == null || countryIds.Count == 0)
-        throw new ArgumentNullException(nameof(countryIds));
-
-      countryIds = [.. countryIds.Distinct()];
-
-      var results = new List<Domain.Lookups.Models.Country>();
+      if (countries == null || countries.Count == 0)
+        throw new ArgumentNullException(nameof(countries));
+      if (countries.Any(o => o == null) || countries.Select(o => o.CountryId).Distinct().Count() != countries.Count)
+        throw new ValidationException("Countries must contain one non-empty entry per country.");
+      foreach (var location in countries)
+        await _opportunityRequestCountryValidator.ValidateAndThrowAsync(location);
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
         using var scope = TransactionScopeHelper.CreateReadCommitted();
-        foreach (var countryId in countryIds)
+        foreach (var location in countries)
         {
+          var countryId = location.CountryId;
           var country = _countryService.GetById(countryId);
-          results.Add(country);
 
           var item = _opportunityCountryRepository.Query().SingleOrDefault(o => o.OpportunityId == opportunity.Id && o.CountryId == country.Id);
 
-          if (item != null) continue;
+          if (item != null)
+          {
+            // Assigning an existing country replaces its optional details; omitted details are cleared.
+            item.Region = location.Region;
+            item.City = location.City;
+            item.Coordinates = location.Coordinates;
+            await _opportunityCountryRepository.Update(item);
+            var current = opportunity.Countries?.SingleOrDefault(o => o.Id == countryId);
+            if (current != null)
+            {
+              current.Region = item.Region;
+              current.City = item.City;
+              current.Coordinates = item.Coordinates;
+            }
+            continue;
+          }
           item = new OpportunityCountry
           {
             OpportunityId = opportunity.Id,
-            CountryId = country.Id
+            CountryId = country.Id,
+            Region = location.Region,
+            City = location.City,
+            Coordinates = location.Coordinates
           };
 
           await _opportunityCountryRepository.Create(item);
 
           opportunity.Countries ??= [];
-          opportunity.Countries.Add(new Domain.Lookups.Models.Country { Id = country.Id, Name = country.Name, CodeAlpha2 = country.CodeAlpha2, CodeAlpha3 = country.CodeAlpha3, CodeNumeric = country.CodeNumeric });
+          opportunity.Countries.Add(new OpportunityCountryInfo { Id = country.Id, Name = country.Name, CodeAlpha2 = country.CodeAlpha2, CodeAlpha3 = country.CodeAlpha3, CodeNumeric = country.CodeNumeric, Region = item.Region, City = item.City, Coordinates = item.Coordinates });
         }
 
         scope.Complete();
