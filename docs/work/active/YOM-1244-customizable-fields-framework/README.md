@@ -59,7 +59,7 @@ Tickets with no folder yet — add one when work starts:
 | Ticket                                                                                                  | Area      | Note                                                                                        |
 | ------------------------------------------------------------------------------------------------------- | --------- | ------------------------------------------------------------------------------------------- |
 | [YOM-1264](https://linear.app/didx/issue/YOM-1264)                                                      | design/BA | Final Opportunity CFs, completion CFs and User Presets. **Blocks YOM-1261 / YOM-1262**      |
-| [YOM-1258](https://linear.app/didx/issue/YOM-1258)                                                      | api       | Map User Preferences to Opportunity filters                                                |
+| [YOM-1258](https://linear.app/didx/issue/YOM-1258)                                                      | api       | API-side preset mapping superseded: Web composes effective filters; API executes them. Confirm ticket disposition with PM. |
 
 Job opportunity skills represent role requirements, not evidence of attainment. Completing a Job must not award those skills as Verified; the CF branch now enforces this centrally, and the same fix requires a separate Production hotfix before CF ships.
 
@@ -81,7 +81,7 @@ User location extends the existing profile country. User/profile upsert requests
 | YOM-1255 | Let Web render, capture and display configured fields without hardcoding them.            |
 | YOM-1260 | Let youth/admins filter using configured fields.                                          |
 | YOM-1257 | Store reusable youth Opportunity-discovery presets.                                       |
-| YOM-1258 | Translate presets into Opportunity discovery criteria.                                    |
+| YOM-1258 | Superseded API-side mapping proposal; Web composes saved preferences into search criteria. |
 | YOM-1259 | Align the Opportunity category taxonomy independently of custom fields.                   |
 | YOM-1261 | Let youth manage their presets.                                                           |
 | YOM-1262 | Let youth apply presets during discovery.                                                 |
@@ -365,7 +365,7 @@ Decisions 2026-09-22.
 - **Credential (SSI) mapping UI.** Tracked on the API side.
 - **User-level custom fields.** The framework covers Opportunity and MyOpportunity only.
 - **User Presets** are **User-domain data, not custom fields** — YOM-1261 / YOM-1262 must not be
-  built through the custom-field components, and they are blocked on YOM-1264 + YOM-1257 / YOM-1258.
+  built through the custom-field components. The Web maps saved preferences to ordinary Opportunity filter criteria; the API does not load preferences during search.
 - **Opportunity taxonomy migration** (YOM-1259) — an Opportunity-domain lookup.
 
 ## Blockers
@@ -373,7 +373,7 @@ Decisions 2026-09-22.
 | Blocker                                                             | Severity | Note                                                                                                                                                                                                                                                                                                                                                                                                |
 | ------------------------------------------------------------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | YOM-1264 (BA/design) — final field definitions and User Presets     | High     | Everything shipped so far runs on seeded `[Sample] …` definitions                                                                                                                                                                                                                                                                                                                                   |
-| YOM-1257 / YOM-1258 (presets API)                                   | High     | YOM-1261 / YOM-1262 are **designed** (2026-08-27) but cannot be implemented — no preset model and no preset→filter mapping to build against                                                                                                                                                                                                                                                         |
+| YOM-1257 (preferences API)                                          | Med      | Preferences storage and self-service endpoints exist. Jason's prototype still uses a mock façade; Web must wire it to the live contract and send the effective filter request. API-side preset mapping (YOM-1258) is no longer required.                                                                                                                                                    |
 | YOM-1260 must land before the presets chain                         | Med      | Presets resolve to filter criteria                                                                                                                                                                                                                                                                                                                                                                  |
 | Credential provider (Aries CloudAPI) — schema create/update failing | Med      | **Narrowed 2026-08-18** (Jason): reads are serving again, so `GET /ssi/schema` and wallet retrieval work — YOM-1283 was verified live on that basis. Only schema **create/update** still fails, which is the one thing keeping YOM-1281 and YOM-1282 in review: YOM-1281 cannot exercise its mutations, and YOM-1282 cannot reach one real type-specific schema. Both stay mocked locally meanwhile |
 
@@ -404,9 +404,8 @@ flag it in a handoff here before merging.
    the designed _Ending soonest_ / _Most ZLTO_ sorts ship disabled. Ask: a public sort enum.
 2. The commitment **interval** filter excludes opportunities with no commitment set; the BA preset
    sheet says they must be **included**. One of the two has to move.
-3. `TotalCountOnly` is internal — the web live count fetches `pageSize: 1` instead. Nice-to-have.
-4. `ApplyUserPresets` is stubbed on the filter; confirm YOM-1258 makes it the real preset→filter
-   path so web can retire its client-side mapping.
+3. **Resolved 2026-09-29:** public `TotalCountOnly` uses the same search predicates and returns `totalCount` with no items; pagination is optional. Web can replace its `pageSize: 1` live-count request.
+4. **Superseded 2026-09-29:** the API-side `ApplyUserPresets` stub is removed. Web owns preference inheritance, skips and overrides and sends the effective criteria to the ordinary Opportunity search API. The API executes all core and CF filters, including count-only searches.
 
 **Added 2026-09-05** (from the discovery refinement round — details in
 [`handoffs/2026-09-05-a.md`](./handoffs/2026-09-05-a.md)):

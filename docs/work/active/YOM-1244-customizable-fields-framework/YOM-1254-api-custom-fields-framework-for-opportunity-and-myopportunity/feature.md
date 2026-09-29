@@ -32,6 +32,7 @@ the BA field map is approved.
 
 ## Tasks
 
+- [x] Remove the inert API-side preset flag and expose public count-only Opportunity search using the existing database count path. Web composes saved preferences and manual overrides into the effective filter request.
 - [x] Seed optional MyOpportunity completion fields for Job employment start date, Impact Action impact achieved and Event role; add date-only CF handling, CSV sample and focused tests. Credential schema mapping remains the final CF phase.
 - [ ] Confirm whether actual Job placement terms are returned by partners before adding completion-level Employment Type and Work Schedule. Employment duration remains follow-up reporting, not a completion-time field.
 - [x] Implement Impact Action Tools required / Other description and Verified activity type, with seeded options, conditional validation, API CSV sample and focused tests.
@@ -63,6 +64,7 @@ the BA field map is approved.
 
 ## Decisions
 
+- 2026-09-29: Adrian chose client-side preference-to-filter composition, matching Jason's prototype. Opportunity search does not load User Preferences and accepts the effective core/CF criteria directly. Remove `ApplyUserPresets`; expose `TotalCountOnly` on the public search filter. A count-only response contains `totalCount` and no items, using the same predicates as ordinary search without item hydration, engagement counts or treasury lookup. Pagination is optional for this path. See the 2026-09-29 handoff for the Web contract and prototype gaps.
 - 2026-09-29: The three MyOpportunity completion fields are optional. Job Employment Start Date is date-only (`yyyy-MM-dd`), Impact Achieved accepts text up to 1000 characters, and Event Role is a controlled single-select with no default. Adrian confirmed that instant links intentionally skip custom-field processing; no Event-specific verification logic is added. Existing completed records are not backfilled; credential mapping follows in the final CF phase. The sheet's Job placement-status and Event/Impact duplicate completion booleans are not added.
 - 2026-09-29: Impact Action adds optional Tools required, conditional Other tool description (500 characters) and optional Verified activity type. Adrian approved expanding the tool list and confirmed Impact Achieved belongs to MyOpportunity. Only Other drives code logic and needs an enum. Event receives no additional Opportunity fields here; confirmation was requested from Mpho. Existing difficulty, core rewards, verification and provider are reused. See the consolidated handover.
 

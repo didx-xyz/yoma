@@ -81,7 +81,7 @@ namespace Yoma.Core.Api.Controllers
 
     [SwaggerOperation(
     Summary = "Search for published opportunities based on the supplied filter (Anonymous)",
-      Description = "By default, results include opportunities that are published (both the opportunity and its organization are Active), regardless of whether they have started (thus published states NotStarted and Active). This default behavior can be overridden")]
+      Description = "By default, results include opportunities that are published (both the opportunity and its organization are Active), regardless of whether they have started (thus published states NotStarted and Active). This default behavior can be overridden. Set TotalCountOnly to return only TotalCount without loading result items; pagination is then optional.")]
     [HttpPost("search")]
     [ProducesResponseType(typeof(OpportunitySearchResultsInfo), (int)HttpStatusCode.OK)]
     [AllowAnonymous]

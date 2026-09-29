@@ -154,7 +154,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         EngagementTypes = filter.EngagementTypes,
         ValueContains = filter.ValueContains,
         CustomFields = filter.CustomFields,
-        ApplyUserPresets = filter.ApplyUserPresets,
+        TotalCountOnly = filter.TotalCountOnly,
         ExcludeHidden = true,
         PageNumber = filter.PageNumber,
         PageSize = filter.PageSize,
@@ -196,6 +196,9 @@ namespace Yoma.Core.Domain.Opportunity.Services
       }
 
       var searchResult = _opportunityService.Search(filterInternal, false);
+      if (filter.TotalCountOnly)
+        return new OpportunitySearchResultsInfo { TotalCount = searchResult.TotalCount };
+
       var treasuryInfo = _treasuryService.GetInfo();
 
       var results = new OpportunitySearchResultsInfo

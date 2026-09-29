@@ -1,6 +1,7 @@
 using FluentValidation;
 using FluentValidation.Results;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 using Yoma.Core.Infrastructure.Database.Context;
 using Yoma.Core.Infrastructure.Database.Opportunity.Repositories;
 using Yoma.Core.Domain.Entity.Interfaces;
@@ -24,6 +25,17 @@ namespace Yoma.Core.Test.Core
     private static readonly Guid AccommodationId = Guid.NewGuid();
     private static readonly Guid OtherId = Guid.NewGuid();
     private static readonly Guid OpenToAllId = Guid.NewGuid();
+
+    [Fact]
+    public void PublicOpportunitySearchSupportsCountOnlyWithoutPresetFlag()
+    {
+      var filter = new OpportunitySearchFilter { TotalCountOnly = true };
+      var json = JsonConvert.SerializeObject(filter);
+
+      Assert.Contains("\"TotalCountOnly\":true", json);
+      Assert.DoesNotContain("ApplyUserPresets", json);
+      Assert.True(JsonConvert.DeserializeObject<OpportunitySearchFilter>(json)!.TotalCountOnly);
+    }
 
     [Theory]
     [InlineData(false, null, true)]
